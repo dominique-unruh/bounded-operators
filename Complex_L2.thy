@@ -822,11 +822,58 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogona
   "\<lambda>S. {x::'a vector. \<forall>y\<in>S. is_orthogonal x y}" 
   by (fact is_subspace_orthog)
 
+(* Existence of the projection onto a subspace *)
+lemma ProjExists:
+\<open>\<forall> h::'a vector. \<exists> k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
+for M :: \<open>'a subspace\<close>
+  sorry
+
+lemma subspace_as_set_minus:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
+  sorry
+
+lemma SubspaceAndOrtho:
+\<open>r - s \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<Longrightarrow> r = s\<close>
+  sorry
+
+(* Uniqueness of the projection onto a subspace *)
+lemma ProjUnique:
+\<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M \<Longrightarrow>
+ h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M \<Longrightarrow>
+r = s\<close>
+for M :: \<open>'a subspace\<close>
+proof-
+  assume \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>
+  assume \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>
+  have \<open>h - r \<in> subspace_as_set (ortho M)\<close> 
+    by (simp add: \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>)
+  have \<open>h - s \<in> subspace_as_set (ortho M)\<close>
+    by (simp add: \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>)
+  have \<open>r \<in> subspace_as_set M\<close>
+    by (simp add: \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>)
+  have \<open>s \<in> subspace_as_set M\<close>
+    by (simp add: \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>)
+  have \<open>r - s \<in> subspace_as_set M\<close>
+    by (simp add: \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close> \<open>s \<in> subspace_as_set M\<close> subspace_as_set_minus)
+  have \<open>(h - s) - (h - r) \<in> subspace_as_set (ortho M)\<close>    
+    using \<open>h - s \<in> subspace_as_set (ortho M)\<close> \<open>h - r \<in> subspace_as_set (ortho M)\<close> subspace_as_set_minus
+    by metis
+  hence \<open>r - s \<in> subspace_as_set (ortho M)\<close>
+    by simp
+  hence \<open>r - s \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
+    using  \<open>r - s \<in> subspace_as_set M\<close>
+    by simp
+  thus ?thesis
+    using SubspaceAndOrtho by auto
+qed
+
 (* Existence and uniqueness of the projection onto a subspace *)
 lemma preProjExistsUnique:
 \<open>\<forall> h::'a vector. \<exists>! k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
 for M :: \<open>'a subspace\<close>
-  sorry
+  apply auto
+  using ProjExists apply blast
+  using ProjUnique by auto
 
 (* Defining property of the projection *)
 definition ProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
