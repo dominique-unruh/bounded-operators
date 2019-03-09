@@ -822,9 +822,10 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogona
   "\<lambda>S. {x::'a vector. \<forall>y\<in>S. is_orthogonal x y}" 
   by (fact is_subspace_orthog)
 
+
 (* Existence of the projection onto a subspace *)
 lemma ProjExists:
-\<open>\<forall> h::'a vector. \<exists> k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
+\<open>\<exists> k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
 for M :: \<open>'a subspace\<close>
   sorry
 
