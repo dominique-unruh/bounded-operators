@@ -833,7 +833,30 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogona
   "\<lambda>S. {x::'a vector. \<forall>y\<in>S. is_orthogonal x y}" 
   by (fact is_subspace_orthog)
 
+lemma subspace_as_set_scalar:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> (c::complex) *\<^sub>C r \<in> subspace_as_set M\<close>
+  using is_subspace.smult_closed subspace_to_set by auto
 
+lemma subspace_as_set_opp:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> - r \<in> subspace_as_set M\<close>
+  using subspace_as_set_scalar 
+  by (metis scaleC_minus1_left)
+
+lemma subspace_as_set_minus:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
+  using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
+
+lemma polar_norm:
+\<open>norm (x - y)^2 = (norm x)^2 + (norm y)^2 - 2*Re (cinner x y)\<close>
+  sorry
+
+(* There exists a unique point k in M such that the distance between h and M reaches
+ its minimum at k *)
+
+lemma DistMinExistsUnique:
+\<open>\<forall> M. \<forall> h. \<exists>! k. (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h k \<le> dist h t) 
+ \<and> k \<in> subspace_as_set M\<close>
+  sorry
 
 (* Definition of projection using distance *)
 definition DProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
@@ -844,7 +867,8 @@ definition DProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightar
 (* Existence of projection onto a subspace defined via distance *)
 lemma DProjDefPropE: 
 \<open>\<exists> P. DProjDefProp P\<close>
-  sorry
+  using DProjDefProp_def DistMinExistsUnique 
+  by metis
 
 definition dproj :: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
 \<open>dproj \<equiv> SOME P. DProjDefProp P\<close>
@@ -867,7 +891,29 @@ lemma dproj_ex2:
 lemma predProjExistsA:
 \<open>f \<in> subspace_as_set M \<Longrightarrow> 2 * Re ( cinner f ( h - ((dproj M) h) ) ) \<le> (norm f)^2\<close>
 for M :: \<open>'a subspace\<close>
-  sorry
+proof-
+  assume \<open>f \<in> subspace_as_set M\<close>
+  have \<open>(dproj M) h \<in> subspace_as_set M\<close>
+    by (simp add: dproj_ex1)
+  hence \<open>(f + (dproj M) h) \<in> subspace_as_set M\<close> using \<open>f \<in> subspace_as_set M\<close> 
+    using is_subspace.additive_closed subspace_to_set by auto
+  hence \<open>dist h ((dproj M) h) \<le> dist h (f + (dproj M) h)\<close>
+    by (simp add: dproj_ex2)
+  hence \<open>norm (h - ((dproj M) h)) \<le> norm ( h - (f + (dproj M) h) )\<close>
+    by (simp add: dist_vector_def)
+  hence \<open>norm (h - ((dproj M) h))^2 \<le> norm ( h - (f + (dproj M) h) )^2\<close>
+    using norm_ge_zero power_mono by blast
+  hence \<open>norm (h - ((dproj M) h))^2 \<le> norm ( (h - (dproj M) h) - f )^2\<close>
+    by (simp add: diff_add_eq_diff_diff_swap)
+  hence \<open>norm (h - ((dproj M) h))^2 \<le> 
+    ( norm (h - ((dproj M) h)) )^2 + (norm f)^2 - 2*Re (cinner (h - (dproj M) h) f)\<close>
+    by (simp add: polar_norm)
+  hence \<open>0 \<le> (norm f)^2 - 2*Re (cinner (h - (dproj M) h) f)\<close>  by linarith
+  hence \<open>2*Re (cinner (h - (dproj M) h) f) \<le> (norm f)^2\<close>  by simp
+  thus ?thesis  
+    by (smt norm_minus_commute polar_norm)
+qed
+
 
 lemma NormScalar:
 \<open>norm (k *\<^sub>C f) = (abs k) *(norm f)\<close>
@@ -973,18 +1019,6 @@ lemma ProjExists:
 for M :: \<open>'a subspace\<close>
   using dProjExists dproj_ex1 by blast
 
-lemma subspace_as_set_scalar:
- \<open>r \<in> subspace_as_set M \<Longrightarrow> (c::complex) *\<^sub>C r \<in> subspace_as_set M\<close>
-  using is_subspace.smult_closed subspace_to_set by auto
-
-lemma subspace_as_set_opp:
- \<open>r \<in> subspace_as_set M \<Longrightarrow> - r \<in> subspace_as_set M\<close>
-  using subspace_as_set_scalar 
-  by (metis scaleC_minus1_left)
-
-lemma subspace_as_set_minus:
- \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
-  using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
 
 lemma SubspaceAndOrthoEq0A:
 \<open>(0::'a vector) \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
