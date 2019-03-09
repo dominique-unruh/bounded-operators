@@ -4,6 +4,17 @@ theory Complex_L2
     Extended_Sorry
 begin
 
+section \<open>Preliminaries\<close>
+
+lemma polar_form:
+\<open>z \<noteq> (0::complex) \<Longrightarrow> \<exists> r::real. \<exists> u::complex.
+ r > (0::real) \<and>  abs u = (1::real) \<and> (z::complex) = (complex_of_real r)*u\<close>
+  sorry
+
+lemma AbsComplexReal:
+\<open>abs ((complex_of_real t)) = (t::real)\<close>
+  sorry
+
 hide_const (open) span
 
 section \<open>l2 norm - untyped\<close>
@@ -823,11 +834,144 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogona
   by (fact is_subspace_orthog)
 
 
+
+(* Definition of projection using distance *)
+definition DProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
+\<open> DProjDefProp \<equiv>
+ \<lambda> P. \<forall> M. \<forall> h.  (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h ((P M) h) \<le> dist h t) 
+ \<and> (P M) h \<in> subspace_as_set M\<close>
+
+(* Existence of projection onto a subspace defined via distance *)
+lemma DProjDefPropE: 
+\<open>\<exists> P. DProjDefProp P\<close>
+  sorry
+
+definition dproj :: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
+\<open>dproj \<equiv> SOME P. DProjDefProp P\<close>
+
+lemma DProjDefPropE_explicit: 
+\<open>DProjDefProp (dproj)\<close>
+  unfolding dproj_def
+  by (simp add: DProjDefPropE someI_ex)
+
+lemma dproj_ex1:
+\<open>(dproj M) h \<in> subspace_as_set M\<close>
+  using DProjDefPropE_explicit 
+  by (metis DProjDefProp_def)
+
+lemma dproj_ex2:
+\<open> t \<in> subspace_as_set M \<Longrightarrow> dist h ((dproj M) h) \<le> dist h t\<close>
+  using DProjDefPropE_explicit 
+  by (metis DProjDefProp_def)
+
+lemma predProjExistsA:
+\<open>f \<in> subspace_as_set M \<Longrightarrow> 2 * Re ( cinner f ( h - ((dproj M) h) ) ) \<le> (norm f)^2\<close>
+for M :: \<open>'a subspace\<close>
+  sorry
+
+lemma NormScalar:
+\<open>norm (k *\<^sub>C f) = (abs k) *(norm f)\<close>
+  by (metis norm_scaleR scaleR_scaleC)
+
+lemma predProjExistsInv:
+\<open>f \<in> subspace_as_set M \<Longrightarrow> cinner f (h - ((dproj M) h)) = 0\<close>
+for M :: \<open>'a subspace\<close>
+proof(rule classical)
+    assume \<open>f \<in> subspace_as_set M\<close>
+    assume \<open>\<not> (cinner f ( h - ((dproj M) h) ) = 0)\<close>
+    hence  \<open>cinner f ( h - ((dproj M) h) ) \<noteq> 0\<close> by blast
+    then obtain r::real and u::complex where \<open>r > (0::real)\<close> and \<open>abs u = (1::real)\<close> 
+        and \<open>cinner f ( h - ((dproj M) h) ) = (complex_of_real r) * u\<close>
+      using polar_form by blast
+    have \<open>\<forall> t::real. ((complex_of_real t)*u) *\<^sub>C f \<in> subspace_as_set M\<close>
+      using \<open>f \<in> subspace_as_set M\<close> is_subspace.smult_closed subspace_to_set by auto
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> (norm ( ((complex_of_real t)*u) *\<^sub>C f ))^2\<close>
+      using predProjExistsA by blast
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> ( abs((complex_of_real t)*u) * (norm f) )^2\<close>
+      by (simp add: abs_complex_def less_eq_complex_def)
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> ( (abs (complex_of_real t))*(abs u) * (norm f) )^2\<close>
+      by (simp add: abs_mult)
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> ( (abs (complex_of_real t)) * (norm f) )^2\<close>
+      by (simp add: \<open>\<bar>u\<bar> = complex_of_real 1\<close>)
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> ( t * (norm f) )^2\<close>
+      by (metis AbsComplexReal complex_of_real_mono_iff of_real_mult of_real_power)
+    hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
+       \<le> t^2 * (norm f)^2\<close>
+      by (simp add: power_mult_distrib)
+    hence \<open>\<forall> t::real. 2 * Re ( cnj ((complex_of_real t)*u) * cinner f ( h - ((dproj M) h) ) )
+       \<le> t^2 * (norm f)^2\<close>
+      by simp
+    hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * cnj u * cinner f ( h - ((dproj M) h) ) )
+       \<le> t^2 * (norm f)^2\<close>
+      by simp
+   hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * cnj u * (complex_of_real r)*u )
+       \<le> t^2 * (norm f)^2\<close>
+     by (metis \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> complex_scaleC_def mult_scaleC_left)
+   hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * (complex_of_real r) * (cnj u * u) )
+       \<le> t^2 * (norm f)^2\<close>
+     by (metis \<open>\<forall>t. 2 * Re (complex_of_real t * cnj u * cinner f (h - dproj M h)) \<le> t\<^sup>2 * (norm f)\<^sup>2\<close> \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> semiring_normalization_rules(13))
+   hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * (complex_of_real r) )
+       \<le> t^2 * (norm f)^2\<close>
+     using \<open>\<bar>u\<bar> = complex_of_real 1\<close> cnj_x_x by auto
+   hence \<open>\<forall> t::real. 2 * t * r \<le> t^2 * (norm f)^2\<close>
+   proof -
+     have "\<forall>ra. 2 * Re (complex_of_real ra * cnj u * (complex_of_real r * u)) \<le> (ra * norm f)\<^sup>2"
+       by (metis (no_types) \<open>\<forall>t. 2 * Re (complex_of_real t * cnj u * cinner f (h - dproj M h)) \<le> t\<^sup>2 * (norm f)\<^sup>2\<close> \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> power_mult_distrib)
+     then have f1: "\<forall>ra. 2 * Re (u * cnj u * complex_of_real (r * ra)) \<le> (ra * norm f)\<^sup>2"
+       by (simp add: mult.commute semiring_normalization_rules(13))
+     have f2: "\<forall>r. (1::real) * r = r"
+       by (metis mult.right_neutral mult_numeral_1)
+     have f3: "(1::complex) = 1\<^sup>2"
+       by auto
+     have "\<forall>c. \<bar>c\<bar>\<^sup>2 = c * cnj c"
+       by (metis cnj_x_x mult.commute)
+     then have "\<forall>ra. r * (2 * ra) \<le> (ra * norm f)\<^sup>2"
+       using f3 f2 f1 by (metis Re_complex_of_real \<open>\<bar>u\<bar> = complex_of_real 1\<close> of_real_1 of_real_mult semiring_normalization_rules(13))
+     then show ?thesis
+       by (simp add: mult.commute power_mult_distrib)
+   qed
+   hence \<open>\<forall> t::real. t > 0 \<longrightarrow> 2 * t * r \<le> t^2 * (norm f)^2\<close>
+     by simp
+   hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r)*t \<le> (t * (norm f)^2)*t\<close>
+     by (simp add: power2_eq_square)
+   hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r) \<le> (t * (norm f)^2)\<close>
+     by (simp add: AbsComplexReal)
+   hence \<open>\<forall> t::real. t > 0 \<longrightarrow> r \<le> t * ( (norm f)^2/2 )\<close>
+     by auto
+   have \<open>r / ( (norm f)^2) > 0\<close> 
+     using \<open>0 < r\<close> \<open>\<forall>t>0. r \<le> t * ((norm f)\<^sup>2 / 2)\<close> zero_less_divide_iff by fastforce
+   hence \<open>r \<le> (r / ( (norm f)^2)) * ( (norm f)^2/2 )\<close>
+     using  \<open>\<forall> t::real. t > 0 \<longrightarrow> r \<le> t * ( (norm f)^2/2 )\<close>
+     by blast
+   hence \<open>1 \<le> 1/2\<close> 
+     by (smt \<open>0 < r / (norm f)\<^sup>2\<close> \<open>0 < r\<close> \<open>\<forall>t>0. 2 * r \<le> t * (norm f)\<^sup>2\<close> eq_divide_eq)
+   thus ?thesis 
+     by (smt half_bounded_equal)
+qed
+
+
+lemma predProjExists:
+\<open>f \<in> subspace_as_set M \<Longrightarrow> cinner (h - ((dproj M) h)) f = 0\<close>
+for M :: \<open>'a subspace\<close>
+  using predProjExistsInv 
+  by (metis cinner_commute complex_cnj_zero)
+
+lemma dProjExists:
+\<open>h - ((dproj M) h) \<in> subspace_as_set (ortho M)\<close>
+for M :: \<open>'a subspace\<close>
+  using predProjExists 
+  by (simp add: predProjExists is_orthogonal_def ortho.rep_eq)
+
 (* Existence of the projection onto a subspace *)
 lemma ProjExists:
 \<open>\<exists> k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
 for M :: \<open>'a subspace\<close>
-  sorry
+  using dProjExists dproj_ex1 by blast
 
 lemma subspace_as_set_scalar:
  \<open>r \<in> subspace_as_set M \<Longrightarrow> (c::complex) *\<^sub>C r \<in> subspace_as_set M\<close>
@@ -841,7 +985,6 @@ lemma subspace_as_set_opp:
 lemma subspace_as_set_minus:
  \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
   using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
-
 
 lemma SubspaceAndOrthoEq0A:
 \<open>(0::'a vector) \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
