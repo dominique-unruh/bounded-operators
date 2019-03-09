@@ -822,9 +822,79 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogona
   "\<lambda>S. {x::'a vector. \<forall>y\<in>S. is_orthogonal x y}" 
   by (fact is_subspace_orthog)
 
+(* Existence and uniqueness of the projection onto a subspace *)
+lemma preProjExistsUnique:
+\<open>\<forall> h::'a vector. \<exists>! k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
+for M :: \<open>'a subspace\<close>
+  sorry
+
+(* Defining property of the projection *)
+definition ProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
+\<open>ProjDefProp \<equiv>
+ \<lambda> P. \<forall> M. \<forall> h. h - (P M) h \<in> subspace_as_set (ortho M) \<and> (P M) h \<in> subspace_as_set M\<close>
+
+lemma ProjExistsUnique:
+\<open>\<exists> P. ProjDefProp P\<close>
+  using preProjExistsUnique ProjDefProp_def
+  by metis
+
+definition proj:: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
+\<open>proj \<equiv> SOME P. ProjDefProp P\<close>
+
+lemma ProjExistsUniqueI_ex:
+\<open>ProjDefProp proj\<close>
+  unfolding proj_def  
+  by (simp add: ProjExistsUnique exE_some)
+
+lemma projE1:
+\<open>h - (proj M) h \<in> subspace_as_set (ortho M)\<close>
+  using ProjExistsUniqueI_ex
+  by (metis ProjDefProp_def)
+
+lemma projE2:
+\<open>(proj M) h \<in> subspace_as_set M\<close>
+  using ProjExistsUniqueI_ex
+  by (metis ProjDefProp_def)
+
+lemma proj_kernelA:
+\<open>h \<in> subspace_as_set (ortho M) \<Longrightarrow> (proj M) h = (0::'a vector)\<close>
+  by (metis diff_zero is_subspace_contains_0 mem_Collect_eq preProjExistsUnique projE1 projE2 subspace_to_set)
+
+lemma proj_kernelB:
+\<open>(proj M) h = (0::'a vector)  \<Longrightarrow> h \<in> subspace_as_set (ortho M)\<close>
+  by (metis diff_zero projE1)
+
+lemma proj_kernel:
+\<open>(proj M) h = (0::'a vector)  \<longleftrightarrow> h \<in> subspace_as_set (ortho M)\<close>
+  using proj_kernelA proj_kernelB
+  by blast
+
+lemma proj_idempotency:
+\<open>(proj M) ((proj M) h) = (proj M) h\<close>
+  by (metis cancel_comm_monoid_add_class.diff_cancel is_subspace_contains_0 mem_Collect_eq preProjExistsUnique projE1 projE2 proj_kernelA subspace_to_set)
+
+lemma proj_ranAA:
+\<open>(proj M) h \<in> subspace_as_set M\<close>
+  by (simp add: projE2)
+
+
+lemma proj_ranA:
+\<open>\<exists> k ::'a vector. h = (proj M) k \<Longrightarrow> h \<in> subspace_as_set M\<close>
+  using proj_ranAA
+  by auto
+
+lemma proj_ranB:
+\<open>h \<in> subspace_as_set M \<Longrightarrow> (\<exists> k ::'a vector. h = (proj M) k)\<close>
+  by (metis Abs_subspace_cases Abs_subspace_inverse cancel_comm_monoid_add_class.diff_cancel  preProjExistsUnique projE1  proj_kernel proj_ranA)
+
+lemma proj_ran:
+\<open>(\<exists> k ::'a vector. h = (proj M) k) \<longleftrightarrow> h \<in> subspace_as_set M\<close>
+  using proj_ranA proj_ranB
+  by blast
+
 lemma ortho_twice[simp]: "ortho (ortho x) = x"
   for x :: "'a subspace"
-  by (cheat TODO6)
+  sorry
 
 lemma ortho_leq[simp]: "ortho a \<le> ortho b \<longleftrightarrow> a \<ge> b"
 proof 
