@@ -828,13 +828,56 @@ lemma ProjExists:
 for M :: \<open>'a subspace\<close>
   sorry
 
+lemma subspace_as_set_scalar:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> (c::complex) *\<^sub>C r \<in> subspace_as_set M\<close>
+  using is_subspace.smult_closed subspace_to_set by auto
+
+lemma subspace_as_set_opp:
+ \<open>r \<in> subspace_as_set M \<Longrightarrow> - r \<in> subspace_as_set M\<close>
+  using subspace_as_set_scalar 
+  by (metis scaleC_minus1_left)
+
 lemma subspace_as_set_minus:
  \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
-  sorry
+  using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
+
+
+lemma SubspaceAndOrthoEq0A:
+\<open>(0::'a vector) \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
+  using is_subspace_contains_0 subspace_to_set by auto
+
+lemma SubspaceAndOrthoEq0B:
+\<open>x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<Longrightarrow> x = (0::'a vector)\<close>
+proof-
+  assume \<open>x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
+  hence \<open>x \<in> subspace_as_set M\<close> 
+    by auto
+  have \<open>x \<in> subspace_as_set (ortho M)\<close> 
+    using \<open>x \<in> subspace_as_set M \<inter> subspace_as_set (ortho M)\<close> by auto
+  hence \<open>cinner x x = 0\<close> 
+    by (simp add: \<open>x \<in> subspace_as_set M\<close> is_orthogonal_def ortho.rep_eq) 
+  thus ?thesis 
+    by auto
+qed
+
+lemma SubspaceAndOrthoEq0AA:
+\<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<supseteq> { (0::'a vector) } \<close>
+  using SubspaceAndOrthoEq0A
+  by blast
+
+lemma SubspaceAndOrthoEq0BB:
+\<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<subseteq> { (0::'a vector) } \<close>
+  using SubspaceAndOrthoEq0B
+  by blast
+
+lemma SubspaceAndOrthoEq0:
+\<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) = { (0::'a vector) } \<close>
+  using SubspaceAndOrthoEq0AA SubspaceAndOrthoEq0BB
+  by blast
 
 lemma SubspaceAndOrtho:
 \<open>r - s \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<Longrightarrow> r = s\<close>
-  sorry
+  by (metis SubspaceAndOrthoEq0 eq_iff_diff_eq_0 singletonD subspace_zero_bot zero_subspace.rep_eq)
 
 (* Uniqueness of the projection onto a subspace *)
 lemma ProjUnique:
@@ -923,7 +966,6 @@ lemma proj_idempotency:
 lemma proj_ranAA:
 \<open>(proj M) h \<in> subspace_as_set M\<close>
   by (simp add: projE2)
-
 
 lemma proj_ranA:
 \<open>\<exists> k ::'a vector. h = (proj M) k \<Longrightarrow> h \<in> subspace_as_set M\<close>
