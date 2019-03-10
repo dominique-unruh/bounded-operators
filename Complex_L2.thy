@@ -858,34 +858,46 @@ lemma ParallelogramLaw:
 \<open>(norm (f+g))^2 + (norm (f-g))^2 = 2*((norm f)^2 + (norm g)^2)\<close>
   sorry
 
+
 lemma DistMinExistsUniqueConvexZ:
 \<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists>! k. (\<forall> t. t \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k \<in> S\<close>
-sorry
-(*
 proof-
   assume \<open>closed S\<close>
   assume \<open>S \<noteq> {}\<close>
-  have \<open>{norm t| t. t \<in> S} \<noteq> {}\<close>
+  have \<open>{(norm t)^2| t. t \<in> S} \<noteq> {}\<close>
     by (simp add: \<open>S \<noteq> {}\<close>)
-  obtain d::real where \<open>d = Inf {norm t| t. t \<in> S}\<close>
-    by auto
-  hence \<open>d \<ge> 0\<close> 
-    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def)
-  obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall> n. r n \<in> S\<close> and \<open>lim (\<lambda> n. norm (r n)) = d\<close>
-    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
-  have  \<open>lim (\<lambda> n. (norm (r n)))^2 = d^2\<close>
-    using  \<open>lim (\<lambda> n. norm (r n)) = d\<close> 
+  have \<open>\<forall> t. (norm t)^2 \<ge> 0\<close>
     by simp
-  have False 
-    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_apply)
+  hence \<open>bdd_below {(norm t)^2| t. t \<in> S}\<close>
+    by (smt bdd_belowI mem_Collect_eq)
+  obtain dd::real where \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>
+    by auto   
+  have \<open>\<forall> \<epsilon> > 0. \<exists> v \<in> {(norm t)^2| t. t \<in> S}. v < dd + \<epsilon>\<close>
+    using  \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>  \<open>{(norm t)^2 |t. t \<in> S} \<noteq> {}\<close>  
+    by (meson cInf_lessD less_add_same_cancel1)
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> S. (norm t)^2 < dd + \<epsilon>\<close>
+    by auto
+  then obtain f::\<open>real \<Rightarrow> 'a vector\<close> where \<open>\<forall> \<epsilon> > 0. (f \<epsilon>) \<in> S \<and> (norm (f \<epsilon>))^2 < dd + \<epsilon>\<close>
+    by metis
+ obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>r \<equiv> \<lambda> n::nat. f (1/(n+1))\<close>
+    by blast
+  have \<open>\<forall> n::nat. r n = f (1/(n+1)) \<close> 
+    by (metis \<open>r \<equiv> \<lambda>x. f (1 / (real x + 1))\<close> of_nat_1 of_nat_add)
 
-    hence \<open>\<forall> \<epsilon>. \<exists> N. \<forall> n. \<epsilon> > 0 \<and> n \<ge> N \<longrightarrow> (norm (r n))^2  < d + \<epsilon>\<close>
-    by (simp add: add.commute diff_less_eq)
+  hence  \<open>\<forall> n::nat. r n \<in> S \<and> (norm (r n))^2 < dd + (1/(n+1))\<close>
+    by (simp add: \<open>\<forall>\<epsilon>>0. f \<epsilon> \<in> S \<and> (norm (f \<epsilon>))\<^sup>2 < dd + \<epsilon>\<close> zero_less_Fract_iff)
+  hence \<open>\<forall> n. r n \<in> S\<close> 
+    by simp
+  have \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close>
+    using  \<open>\<forall> n::nat. r n \<in> S \<and> (norm (r n))^2 < dd + (1/(n+1))\<close>
+    by (simp add: add.commute)
+
 
   have \<open>\<forall> m n. (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 + (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
     = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2)\<close>
     by (simp add: ParallelogramLaw)
-  hence \<open>\<forall> m n. ((norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 + (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 
+  hence \<open>\<forall> m n. ((norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 + (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2)
+ - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 
     = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
     by smt
   hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
@@ -901,20 +913,56 @@ proof-
     = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
     by simp
 
+  have \<open>(0::real) < (1/2)\<close> by simp 
+  have \<open>(1/2) < (1::real)\<close> by simp 
+
+
+  have \<open>\<forall> p \<in> {(norm t)^2| t. t \<in> S}. p \<ge> dd\<close>
+   using  \<open>bdd_below {(norm t)^2| t. t \<in> S}\<close>  \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>
+   by (simp add: cInf_lower)
+  hence \<open>\<forall> t \<in> S. (norm t)^2 \<ge> dd\<close> 
+    by blast
+
   assume \<open>convex S\<close>
-  hence \<open>\<forall> m n. (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) \<in> S\<close>
-    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
-  hence \<open>\<forall> m n. norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ) \<ge> d\<close>
-    by (metis AbsComplexReal Re_complex_of_real abs_complex_def add.inverse_inverse diff_0 diff_le_eq norm_ge_zero norm_of_real o_def real_norm_def )
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ))^2 \<ge> d^2\<close>
-    using \<open>d \<ge> 0\<close> 
-    by (meson complex_of_real_mono_iff power_mono)
+  hence \<open>\<forall> m n. \<forall> t::real. 0 < t \<and> t < 1 \<longrightarrow>  t*\<^sub>C(r n) + (1 - t)*\<^sub>C(r m) \<in> S\<close>
+    by (simp add: Complex_L2.convex_def \<open>\<forall>n. r n \<in> S\<close>)
+  hence \<open>\<forall> m n. (1/2)*\<^sub>C(r n) + (1 - (1/2))*\<^sub>C(r m) \<in> S\<close>
+    using \<open>(0::real) < (1/2)\<close> \<open>(1/2) < (1::real)\<close> 
+    by (smt add_diff_cancel_right' complex_of_real_pos_iff diff_numeral_special(9) nice_ordered_field_class.gt_half_sum of_real_1 of_real_add of_real_divide one_add_one ordered_field_class.sign_simps(34))
+  hence \<open>\<forall> m n. ( norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ) )^2 \<ge> dd\<close>
+    using  \<open>\<forall> t \<in> S. (norm t)^2 \<ge> dd\<close> by auto      
   hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    \<le> ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - d^2\<close>
+    \<le> ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - dd\<close>
     using  \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
     by simp
-*)
+  hence \<open>\<forall> m n. ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2
+    < ((1/2)*( dd + (1/(n+1)) ) + (1/2)*( dd + (1/(m+1)) )) - dd\<close>
+    using \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close> 
+    by (smt \<open>0 < 1 / 2\<close> \<open>\<forall>m n. dd \<le> (norm (timesScalarVec (1 / 2) (r n) + timesScalarVec (1 / 2) (r m)))\<^sup>2\<close> real_mult_le_cancel_iff2)
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    < ((1/2)*( dd + (1/(n+1)) ) + (1/2)*( dd + (1/(m+1))))  - dd\<close>
+    by (simp add: \<open>\<forall>m n. (norm (timesScalarVec (1 / 2) (r n) - timesScalarVec (1 / 2) (r m)))\<^sup>2 = 1 / 2 * (norm (r n))\<^sup>2 + 1 / 2 * (norm (r m))\<^sup>2 - (norm (timesScalarVec (1 / 2) (r n) + timesScalarVec (1 / 2) (r m)))\<^sup>2\<close>)
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    < (1/2)* dd + (1/2)*(1/(n+1))  + (1/2)* dd + (1/2)*(1/(m+1)) - dd\<close>
+    by (simp add: distrib_left)
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
+    by simp
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C( (r n) - (r m) ) ) )^2
+    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
+    by (simp add: complex_vector.scale_right_diff_distrib)  
+  hence \<open>\<forall> m n. (1/4)*((norm ( (r n) - (r m) ) ))^2
+    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
+    by (simp add: power_divide)
+  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2
+    < 4*( (1/2)*(1/(n+1)) + (1/2)*(1/(m+1)) )\<close> 
+    by simp
+  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2
+    <  4*(1/2)*(1/(n+1)) + 4*(1/2)*(1/(m+1)) \<close>
+    sorry
+    show ?thesis sorry
+  qed
 
 lemma TransConvex:
 \<open>convex S \<Longrightarrow> convex {s + h| s. s \<in> S}\<close>
@@ -1341,7 +1389,6 @@ lemma proj_ran:
 lemma ortho_twice[simp]: "ortho (ortho x) = x"
   for x :: "'a subspace"
   sorry
-
 
 
 lemma ortho_leq[simp]: "ortho a \<le> ortho b \<longleftrightarrow> a \<ge> b"
