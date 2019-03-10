@@ -11,9 +11,6 @@ lemma polar_form:
  r > (0::real) \<and>  abs u = (1::real) \<and> (z::complex) = (complex_of_real r)*u\<close>
   sorry
 
-lemma AbsComplexReal:
-\<open>abs ((complex_of_real t)) = (t::real)\<close>
-  sorry
 
 hide_const (open) span
 
@@ -857,9 +854,67 @@ definition convex:: \<open>'a vector set \<Rightarrow> bool\<close> where
 \<open>convex \<equiv> \<lambda> S. \<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
 (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close>
 
+lemma ParallelogramLaw:
+\<open>(norm (f+g))^2 + (norm (f-g))^2 = 2*((norm f)^2 + (norm g)^2)\<close>
+  sorry
+
 lemma DistMinExistsUniqueConvexZ:
 \<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists>! k. (\<forall> t. t \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k \<in> S\<close>
-  sorry
+sorry
+(*
+proof-
+  assume \<open>closed S\<close>
+  assume \<open>S \<noteq> {}\<close>
+  have \<open>{norm t| t. t \<in> S} \<noteq> {}\<close>
+    by (simp add: \<open>S \<noteq> {}\<close>)
+  obtain d::real where \<open>d = Inf {norm t| t. t \<in> S}\<close>
+    by auto
+  hence \<open>d \<ge> 0\<close> 
+    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def)
+  obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall> n. r n \<in> S\<close> and \<open>lim (\<lambda> n. norm (r n)) = d\<close>
+    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
+  have  \<open>lim (\<lambda> n. (norm (r n)))^2 = d^2\<close>
+    using  \<open>lim (\<lambda> n. norm (r n)) = d\<close> 
+    by simp
+  have False 
+    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_apply)
+
+    hence \<open>\<forall> \<epsilon>. \<exists> N. \<forall> n. \<epsilon> > 0 \<and> n \<ge> N \<longrightarrow> (norm (r n))^2  < d + \<epsilon>\<close>
+    by (simp add: add.commute diff_less_eq)
+
+  have \<open>\<forall> m n. (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 + (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
+    = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2)\<close>
+    by (simp add: ParallelogramLaw)
+  hence \<open>\<forall> m n. ((norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 + (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 
+    = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by smt
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by auto
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    = 2*(((1/2)*(norm (r n)))^2 + ((1/2)*(norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by simp
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    = 2*((1/4)*((norm (r n)))^2 + (1/4)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by (simp add: power_divide)
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by simp
+
+  assume \<open>convex S\<close>
+  hence \<open>\<forall> m n. (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) \<in> S\<close>
+    by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
+  hence \<open>\<forall> m n. norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ) \<ge> d\<close>
+    by (metis AbsComplexReal Re_complex_of_real abs_complex_def add.inverse_inverse diff_0 diff_le_eq norm_ge_zero norm_of_real o_def real_norm_def )
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ))^2 \<ge> d^2\<close>
+    using \<open>d \<ge> 0\<close> 
+    by (meson complex_of_real_mono_iff power_mono)
+  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    \<le> ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - d^2\<close>
+    using  \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+    = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    by simp
+*)
 
 lemma TransConvex:
 \<open>convex S \<Longrightarrow> convex {s + h| s. s \<in> S}\<close>
@@ -902,7 +957,7 @@ qed
 
 lemma TransClosed:
 \<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
-  by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
+  sorry
 
 lemma TransNonEmpty:
 \<open>(S::('a vector) set) \<noteq> {} \<Longrightarrow> {s + h| s. s \<in> S} \<noteq> {}\<close>
@@ -1055,7 +1110,20 @@ proof(rule classical)
       by (simp add: \<open>\<bar>u\<bar> = complex_of_real 1\<close>)
     hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
        \<le> ( t * (norm f) )^2\<close>
-      by (metis AbsComplexReal complex_of_real_mono_iff of_real_mult of_real_power)
+      using   complex_of_real_mono_iff of_real_mult of_real_power
+proof -
+  have f1: "\<forall>r. r\<^sup>2 = (norm (of_real r::real))\<^sup>2"
+    by (metis norm_of_real power2_abs)
+    have f2: "1 = \<bar>u\<bar>"
+      by (simp add: \<open>\<bar>u\<bar> = complex_of_real 1\<close>)
+  have f3: "\<forall>v r. norm (timesScalarVec (complex_of_real r) (v::'a vector)) = norm (of_real (r * norm v)::real)"
+    by (simp add: abs_mult)
+  have "\<forall>c v. norm (timesScalarVec c (v::'a vector)) = norm (timesScalarVec \<bar>c\<bar> v)"
+    by (simp add: abs_complex_def)
+    then show ?thesis
+      using f3 f2 f1 by (metis (no_types) \<open>\<forall>t. 2 * Re (cinner (timesScalarVec (complex_of_real t * u) f) (h - dproj M h)) \<le> (norm (timesScalarVec (complex_of_real t * u) f))\<^sup>2\<close> mult.right_neutral scaleC_scaleC)
+qed
+
     hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
        \<le> t^2 * (norm f)^2\<close>
       by (simp add: power_mult_distrib)
@@ -1096,7 +1164,8 @@ proof(rule classical)
    hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r)*t \<le> (t * (norm f)^2)*t\<close>
      by (simp add: power2_eq_square)
    hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r) \<le> (t * (norm f)^2)\<close>
-     by (simp add: AbsComplexReal)
+     by simp
+
    hence \<open>\<forall> t::real. t > 0 \<longrightarrow> r \<le> t * ( (norm f)^2/2 )\<close>
      by auto
    have \<open>r / ( (norm f)^2) > 0\<close> 
@@ -1272,6 +1341,8 @@ lemma proj_ran:
 lemma ortho_twice[simp]: "ortho (ortho x) = x"
   for x :: "'a subspace"
   sorry
+
+
 
 lemma ortho_leq[simp]: "ortho a \<le> ortho b \<longleftrightarrow> a \<ge> b"
 proof 
