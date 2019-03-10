@@ -853,10 +853,120 @@ lemma polar_norm:
 (* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *)
 
-lemma DistMinExistsUnique:
-\<open>\<forall> M. \<forall> h. \<exists>! k. (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h k \<le> dist h t) 
- \<and> k \<in> subspace_as_set M\<close>
+definition convex:: \<open>'a vector set \<Rightarrow> bool\<close> where
+\<open>convex \<equiv> \<lambda> S. \<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+(x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close>
+
+lemma DistMinExistsUniqueConvexZ:
+\<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists>! k. (\<forall> t. t \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k \<in> S\<close>
   sorry
+
+lemma TransConvex:
+\<open>convex S \<Longrightarrow> convex {s + h| s. s \<in> S}\<close>
+proof-
+  assume \<open>convex S\<close>
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close> 
+    by (simp add: Complex_L2.convex_def)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x + (1 - t) *\<^sub>C y) + h \<in> {s + h| s. s \<in> S}\<close> 
+    by blast
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x + (1 - t) *\<^sub>C y) + (t *\<^sub>C h + (1 - t) *\<^sub>C h) \<in> {s + h| s. s \<in> S}\<close> 
+    by (metis (no_types, lifting) add.commute scaleC_collapse)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + ( (1 - t) *\<^sub>C y + t *\<^sub>C h ) + (1 - t) *\<^sub>C h \<in> {s + h| s. s \<in> S}\<close> 
+    by (simp add: add.assoc)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + ( t *\<^sub>C h + (1 - t) *\<^sub>C y ) + (1 - t) *\<^sub>C h \<in> {s + h| s. s \<in> S}\<close> 
+    by (simp add: add.commute)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x +  t *\<^sub>C h) + ((1 - t) *\<^sub>C y  + (1 - t) *\<^sub>C h) \<in> {s + h| s. s \<in> S}\<close> 
+    by (simp add: add.assoc)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
+    by (simp add: scaleC_add_right)
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x + h \<in> {s + h| s. s \<in> S} \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
+    by simp
+  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
+  (x + h \<in> {s + h| s. s \<in> S} \<and> y + h \<in> {s + h| s. s \<in> S}  \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
+    by simp
+  hence \<open>\<forall> u::'a vector. \<forall> v::'a vector. \<forall> t::real.
+  (u \<in> {s + h| s. s \<in> S} \<and> v \<in> {s + h| s. s \<in> S}  \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C u + (1 - t) *\<^sub>C v \<in> {s + h| s. s \<in> S}\<close> 
+    by blast
+  thus ?thesis 
+    by (simp add: Complex_L2.convex_def)
+qed
+
+
+lemma TransClosed:
+\<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
+  by (smt AbsComplexReal abs_complex_def minus_of_real_eq_of_real_iff norm_of_real o_def of_real_minus)
+
+lemma TransNonEmpty:
+\<open>(S::('a vector) set) \<noteq> {} \<Longrightarrow> {s + h| s. s \<in> S} \<noteq> {}\<close>
+  by simp
+
+lemma DistMinExistsUniqueConvex:
+\<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists>! k. (\<forall> t. t \<in> S \<longrightarrow> dist h k \<le> dist h t) \<and> k \<in> S\<close>
+proof-
+  assume \<open>convex S\<close>
+  hence \<open>\<forall> h. convex {s + h| s. s \<in> S}\<close> using TransConvex by auto
+  hence \<open>convex {s + (-h)| s. s \<in> S}\<close> by blast
+  assume \<open>closed S\<close>
+  hence \<open>\<forall> h. closed {s + h| s. s \<in> S}\<close> using TransClosed by auto
+  hence \<open>closed {s + (-h)| s. s \<in> S}\<close> by blast
+  assume \<open>S \<noteq> {}\<close>
+  hence \<open>\<forall> h. {s + h| s. s \<in> S} \<noteq> {}\<close> using TransNonEmpty by auto
+  hence \<open>{s + (-h)| s. s \<in> S} \<noteq> {}\<close> by blast
+  have \<open>\<exists>! k. (\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
+    using DistMinExistsUniqueConvexZ \<open>Complex_L2.convex {s + - h |s. s \<in> S}\<close> \<open>closed {s + - h |s. s \<in> S}\<close> \<open>{s + - h |s. s \<in> S} \<noteq> {}\<close> by blast
+  have \<open>\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longleftrightarrow> t + h \<in> {s | s. s \<in> S}\<close>
+    by force
+  hence  \<open>\<exists>! k. (\<forall> t. t + h \<in> {s| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
+    using  \<open>\<exists>! k. (\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
+    by auto
+  hence  \<open>\<exists>! k. (\<forall> t. t + h \<in> {s| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> {s| s. s \<in> S}\<close>
+    using  \<open>\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longleftrightarrow> t + h \<in> {s | s. s \<in> S}\<close>
+    by auto
+  hence  \<open>\<exists>! k. (\<forall> t. t + h \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> {s| s. s \<in> S}\<close>
+    by auto
+  hence  \<open>\<exists>! k. (\<forall> t. t + h \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> S\<close>
+    by auto
+  hence  \<open>\<exists>! kk. (\<forall> t. t + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm t) \<and> (kk - h) + h \<in> S\<close>
+    by (metis add_diff_cancel diff_add_cancel)
+  hence  \<open>\<exists>! kk. (\<forall> t. t + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm t) \<and> kk \<in> S\<close>
+    by simp
+  hence  \<open>\<exists>! kk. (\<forall> tt. (tt - h) + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm (tt - h)) \<and> kk \<in> S\<close>
+    by (metis add_diff_cancel)
+  hence  \<open>\<exists>! kk. (\<forall> tt. tt \<in> S \<longrightarrow> norm (kk - h) \<le> norm (tt - h)) \<and> kk \<in> S\<close>
+    by simp
+  hence  \<open>\<exists>! kk. (\<forall> tt. tt \<in> S \<longrightarrow> dist kk h \<le> dist tt h) \<and> kk \<in> S\<close>
+    using Real_Vector_Spaces.dist_norm_class.dist_norm by metis
+  hence  \<open>\<exists>! kk. (\<forall> tt. tt \<in> S \<longrightarrow> dist h kk \<le> dist h tt) \<and> kk \<in> S\<close>
+    using Real_Vector_Spaces.metric_space_class.dist_commute 
+    by metis
+  thus ?thesis by blast
+qed
+                            
+lemma SubspaceConvex:
+\<open>convex (subspace_as_set M)\<close>
+  by (metis Complex_L2.convex_def is_subspace.additive_closed mem_Collect_eq subspace_as_set_scalar subspace_to_set)
+
+lemma DistMinExistsUnique:
+\<open>\<forall> h. \<exists>! k. (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h k \<le> dist h t) 
+ \<and> k \<in> subspace_as_set M\<close>
+proof-
+  have \<open>convex (subspace_as_set M)\<close> 
+    by (simp add: SubspaceConvex)
+  have \<open>closed (subspace_as_set M)\<close> 
+    using is_subspace.closed subspace_to_set by auto
+  have \<open>subspace_as_set M \<noteq> {}\<close> 
+    using is_subspace_contains_0 subspace_to_set by auto
+  from  \<open>convex (subspace_as_set M)\<close> \<open>closed (subspace_as_set M)\<close> \<open>subspace_as_set M \<noteq> {}\<close>
+  show ?thesis using DistMinExistsUniqueConvex by metis
+qed
 
 (* Definition of projection using distance *)
 definition DProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
