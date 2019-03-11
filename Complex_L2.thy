@@ -1082,11 +1082,72 @@ proof-
     by (simp add: Complex_L2.convex_def)
 qed
 
+lemma LimSumConst:
+  fixes r::\<open>nat \<Rightarrow> 'a vector\<close> and h R::\<open>'a vector\<close>
+  assumes \<open>r \<longlonglongrightarrow> R\<close>
+  shows \<open> (\<lambda> n::nat. (r n) + h)  \<longlonglongrightarrow> R + h \<close>
+  sorry
+
+lemma preTransClosed:
+\<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
+         convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close>
+proof-
+  assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
+  assume \<open>convergent t\<close>
+  assume \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+  obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+    by metis
+  from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
+  have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
+
+  from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
+  have  \<open>\<forall>n. r n \<in> S\<close> by simp
+
+  have \<open> convergent (\<lambda>n. t n) \<close> using  \<open>convergent t\<close> by blast
+  hence \<open> convergent (\<lambda>n. (r n) + h) \<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
+    by simp
+
+  have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
+    using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
+  hence \<open>\<exists>s. lim (\<lambda>n. t n) = s + h \<and> s \<in> S\<close> using  \<open>\<forall>n. t n = (r n) + h\<close> by simp
+  hence \<open>\<exists>s. lim t = s + h \<and> s \<in> S\<close> by simp
+  thus ?thesis by blast
+qed
 
 lemma TransClosed:
   \<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
-  sorry
-
+proof-
+  assume \<open>closed S\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
+    using closed_sequentially convergent_LIMSEQ_iff by blast
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+    by blast
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
+    by auto
+  have \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close>
+  proof -
+    have "\<forall>f v. \<not> f \<longlonglongrightarrow> (v::'a vector) \<or> (THE v. f \<longlonglongrightarrow> v) = v"
+      by (metis limI lim_def)
+    then show ?thesis
+      by (metis LimSumConst convergent_def lim_def)
+  qed
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
+    using  \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
+     add_diff_cancel_left' by auto
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
+    using convergent_add_const_right_iff by blast
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
+    using preTransClosed by auto
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
+    by simp
+  thus ?thesis using  convergent_LIMSEQ_iff 
+    by (metis (no_types, lifting) closed_sequential_limits limI)
+qed
+                                        
 lemma TransNonEmpty:
   \<open>(S::('a vector) set) \<noteq> {} \<Longrightarrow> {s + h| s. s \<in> S} \<noteq> {}\<close>
   by simp
@@ -1492,5 +1553,6 @@ lemma ortho_bot[simp]: "ortho bot = top"
   apply (subst ortho_twice[symmetric, of top])
   apply (subst ortho_leq)
   by simp
+
 
 end
