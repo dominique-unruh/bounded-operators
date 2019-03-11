@@ -847,20 +847,52 @@ lemma polar_norm:
   \<open>norm (x - y)^2 = (norm x)^2 + (norm y)^2 - 2*Re (cinner x y)\<close>
   sorry
 
+lemma ParallelogramLaw:
+  \<open>(norm (f+g))^2 + (norm (f-g))^2 = 2*((norm f)^2 + (norm g)^2)\<close>
+  sorry
+
+lemma LimSumConst:
+  fixes r::\<open>nat \<Rightarrow> 'a vector\<close> and h R::\<open>'a vector\<close>
+  assumes \<open>r \<longlonglongrightarrow> R\<close>
+  shows \<open> (\<lambda> n::nat. (r n) + h)  \<longlonglongrightarrow> R + h \<close>
+proof-
+  from \<open>r \<longlonglongrightarrow> R\<close> 
+  have \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> n. n \<ge> N \<longrightarrow> norm ( (r n) - R ) < \<epsilon>\<close>
+    by (simp add: LIMSEQ_iff)
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> n. n \<ge> N \<longrightarrow> norm ( ((r n)+h) - (R+h) ) < \<epsilon>\<close>
+    by simp
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> n. n \<ge> N \<longrightarrow> norm ( (\<lambda> m. (r m)+h) n - (R+h) ) < \<epsilon>\<close>
+    by simp
+  thus ?thesis using  LIMSEQ_iff by fastforce
+qed
+
+lemma OneOverNConvZ: \<open>( \<lambda> n::nat.   1/(n+1) ) \<longlonglongrightarrow> (0::real)\<close>
+proof-
+  have \<open>( \<lambda> n::nat.   1/n ) \<longlonglongrightarrow> (0::real)\<close>
+    by (simp add: lim_inverse_n')
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n::nat. n \<ge> N \<longrightarrow> norm ( 1/n ) < \<epsilon>\<close> 
+    by (simp add: LIMSEQ_iff)
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n::nat. n+1 \<ge> N \<longrightarrow> norm ( 1/(n+1) ) < \<epsilon>\<close> 
+    using Suc_eq_plus1 by blast
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n::nat. n+1 \<ge> N+1 \<longrightarrow> norm ( 1/(n+1) ) < \<epsilon>\<close> 
+    by (metis (mono_tags, hide_lams) Suc_eq_plus1 Suc_le_mono inverse_eq_divide le_less_trans less_add_one less_le real_norm_def)
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n::nat. n \<ge> N \<longrightarrow> norm ( 1/(n+1) ) < \<epsilon>\<close> 
+    by simp
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n::nat. n \<ge> N \<longrightarrow> dist (1/ (real (n+1))) (0::real) < \<epsilon>\<close> 
+    by (simp add: add.commute)
+  hence \<open>( \<lambda> n::nat.   1/(n+1) ) \<longlonglongrightarrow> (0::real)\<close> 
+    by (simp add: lim_sequentially)
+  thus ?thesis by blast
+qed
+
 (* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *)
+
 
 definition convex:: \<open>'a vector set \<Rightarrow> bool\<close> where
   \<open>convex \<equiv> \<lambda> S. \<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
 (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close>
 
-lemma ParallelogramLaw:
-  \<open>(norm (f+g))^2 + (norm (f-g))^2 = 2*((norm f)^2 + (norm g)^2)\<close>
-  sorry
-
-lemma OneOverNConvZ: \<open>( \<lambda> n::nat.   1/(n+1) ) \<longlonglongrightarrow> (0::real)\<close>
-  (*  using  convergent_Suc_iff lim_1_over_n *)
-  sorry
 
 lemma OneOverNConvZ_left_add: \<open>(\<lambda> n::nat. dd + (1/(n+1))) \<longlonglongrightarrow> (dd::real)\<close>
   by (metis OneOverNConvZ add.right_neutral tendsto_add_const_iff)
@@ -1082,11 +1114,6 @@ proof-
     by (simp add: Complex_L2.convex_def)
 qed
 
-lemma LimSumConst:
-  fixes r::\<open>nat \<Rightarrow> 'a vector\<close> and h R::\<open>'a vector\<close>
-  assumes \<open>r \<longlonglongrightarrow> R\<close>
-  shows \<open> (\<lambda> n::nat. (r n) + h)  \<longlonglongrightarrow> R + h \<close>
-  sorry
 
 lemma preTransClosed:
 \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
@@ -1099,14 +1126,11 @@ proof-
     by metis
   from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
   have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
-
   from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
   have  \<open>\<forall>n. r n \<in> S\<close> by simp
-
   have \<open> convergent (\<lambda>n. t n) \<close> using  \<open>convergent t\<close> by blast
   hence \<open> convergent (\<lambda>n. (r n) + h) \<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
     by simp
-
   have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
     using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
   hence \<open>\<exists>s. lim (\<lambda>n. t n) = s + h \<and> s \<in> S\<close> using  \<open>\<forall>n. t n = (r n) + h\<close> by simp
