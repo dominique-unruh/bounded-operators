@@ -1554,6 +1554,7 @@ lemma projE2:
   using ProjExistsUniqueI_ex
   by (metis ProjDefProp_def)
 
+
 lemma proj_kernelA:
   \<open>h \<in> subspace_as_set (ortho M) \<Longrightarrow> (proj M) h = (0::'a vector)\<close>
   by (metis diff_zero is_subspace_contains_0 mem_Collect_eq preProjExistsUnique projE1 projE2 subspace_to_set)
@@ -1593,18 +1594,61 @@ lemma proj_ran:
 definition IdV ::\<open>'a vector \<Rightarrow> 'a vector\<close> where
   \<open>IdV \<equiv> \<lambda> x::'a vector. x\<close>
 
-lemma ProjOntoOrthoDef:
-  \<open> ProjDefProp ( \<lambda> M. (IdV - (proj (ortho M)))  ) \<close>
-  sorry
+lemma ProjOntoOrthoA:
+  \<open> (IdV -  proj M) x \<in> subspace_as_set (ortho M) \<close>
+  by (simp add: IdV_def projE1)
 
-lemma ProjUniq:
-  \<open> ProjDefProp P \<Longrightarrow> ProjDefProp Q \<Longrightarrow> P = Q \<close>
-  sorry
+lemma preProjOntoOrthoBX:
+  \<open>  x \<in> subspace_as_set M \<Longrightarrow> x \<in> subspace_as_set (ortho (ortho M)) \<close>
+proof-
+  assume \<open>x \<in> subspace_as_set M\<close>
+  have \<open>\<forall> y \<in> subspace_as_set (ortho M). cinner x y = 0\<close> 
+    using \<open>x \<in> subspace_as_set M\<close> is_orthogonal_def ortho.rep_eq orthogonal_comm by fastforce
+  thus ?thesis 
+    by (simp add: is_orthogonal_def ortho.rep_eq)
+qed
+
+lemma preProjOntoOrthoB:
+  \<open>  proj M x \<in> subspace_as_set (ortho (ortho M)) \<close>
+  using preProjOntoOrthoBX 
+  using proj_ranA by blast
+
+lemma ProjOntoOrthoB:
+  \<open> x - ((IdV -  proj M) x) \<in> subspace_as_set (ortho (ortho M)) \<close>
+  unfolding IdV_def
+  apply auto
+  using preProjOntoOrthoB by blast
+
+lemma proj_uniq:
+  \<open>    \<forall> x. x - P x \<in> subspace_as_set (ortho M)
+ \<Longrightarrow> \<forall> x. P x \<in> subspace_as_set M
+ \<Longrightarrow> P = proj M \<close>
+proof-
+  assume \<open>\<forall> x. x - P x \<in> subspace_as_set (ortho M)\<close>
+  assume \<open>\<forall> x. P x \<in> subspace_as_set M\<close>
+  have  \<open>\<forall> x. x - (proj M) x \<in> subspace_as_set (ortho M)\<close>
+    by (simp add: projE1)
+  have  \<open>\<forall> x.  (proj M) x \<in> subspace_as_set  M\<close>
+    by (simp add: proj_ranAA)
+  have  \<open>\<forall> x.  P x - (proj M) x \<in> subspace_as_set  M\<close>
+    by (simp add: \<open>\<forall>x. P x \<in> subspace_as_set M\<close> \<open>\<forall>x. proj M x \<in> subspace_as_set M\<close> subspace_as_set_minus)
+  have  \<open>\<forall> x.  (x - (proj M) x) -  (x - P x) \<in> subspace_as_set (ortho M)\<close>
+    using \<open>\<forall>x. x - P x \<in> subspace_as_set (ortho M)\<close> \<open>\<forall>x. x - proj M x \<in> subspace_as_set (ortho M)\<close> subspace_as_set_minus by blast
+  hence \<open>\<forall> x.  P x - (proj M) x \<in> subspace_as_set (ortho M)\<close>
+    using add_diff_cancel_left by auto
+  hence  \<open>\<forall> x.  P x - (proj M) x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
+    by (simp add: \<open>\<forall>x. P x - proj M x \<in> subspace_as_set M\<close>)
+  hence \<open>\<forall> x. P x - (proj M) x = (0::'a vector)\<close> 
+    by (simp add: SubspaceAndOrthoEq0)
+  hence \<open>\<forall> x. P x =  (proj M) x\<close> 
+    by auto
+  thus ?thesis by auto
+qed
 
 lemma ProjOntoOrtho:
-  \<open> IdV - (proj (ortho M)) = proj M \<close>
-  using ProjOntoOrthoDef ProjUniq
-  by (metis ProjExistsUniqueI_ex)
+  \<open> IdV -  proj M = proj (ortho M) \<close>
+  using ProjOntoOrthoA ProjOntoOrthoB proj_uniq 
+  by (metis dProjExists dproj_ex1 minus_apply)
 
 lemma IdVMinusProjKernelA:
   \<open>(  IdV - (proj  M) ) x = (0::'a vector) \<Longrightarrow>  x \<in> subspace_as_set M\<close>
@@ -1627,7 +1671,7 @@ proof-
   hence \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
         x \<in> subspace_as_set (ortho (ortho M)) \<close>
     using ProjOntoOrtho 
-    by (metis (no_types, lifting) IdV_def  diff_zero eq_iff_diff_eq_0 minus_apply projE1)
+    by (metis (no_types, lifting)   diff_zero  projE1)
   have   \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
         x \<in> subspace_as_set M\<close> 
     using IdVMinusProjKernel by blast
