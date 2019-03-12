@@ -1606,10 +1606,17 @@ lemma ProjOntoOrtho:
   using ProjOntoOrthoDef ProjUniq
   by (metis ProjExistsUniqueI_ex)
 
+lemma IdVMinusProjKernelA:
+  \<open>(  IdV - (proj  M) ) x = (0::'a vector) \<Longrightarrow>  x \<in> subspace_as_set M\<close>
+  by (metis IdV_def add.inverse_neutral diff_0 diff_eq_diff_eq minus_apply proj_ranA)
+
+lemma IdVMinusProjKernelB:
+  \<open>x \<in> subspace_as_set M \<Longrightarrow> (  IdV - (proj  M) ) x = (0::'a vector)\<close>
+  by (metis IdV_def fun_diff_def proj_idempotency proj_ranB right_minus_eq)
+
 lemma IdVMinusProjKernel:
-  \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
-        x \<in> subspace_as_set M\<close>
-  sorry
+  \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>  x \<in> subspace_as_set M\<close>
+  using IdVMinusProjKernelA IdVMinusProjKernelB by blast
 
 lemma ortho_twice[simp]: "ortho (ortho M) = M"
   for M :: "'a subspace"
