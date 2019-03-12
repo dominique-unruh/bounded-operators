@@ -9,8 +9,22 @@ section \<open>Preliminaries\<close>
 lemma polar_form:
   \<open>z \<noteq> (0::complex) \<Longrightarrow> \<exists> r::real. \<exists> u::complex.
  r > (0::real) \<and>  abs u = (1::real) \<and> (z::complex) = (complex_of_real r)*u\<close>
-  sorry
-
+proof-
+  assume \<open>z \<noteq> (0::complex)\<close> 
+  obtain r::real where \<open>r = abs z\<close> 
+    by (simp add: abs_complex_def)
+  have \<open>r \<ge> 0\<close> 
+    using \<open>complex_of_real r = \<bar>z\<bar>\<close> abs_nn complex_of_real_nn_iff by fastforce
+  hence \<open>r > 0\<close> using  \<open>z \<noteq> (0::complex)\<close> 
+    by (smt Re_complex_of_real \<open>complex_of_real r = \<bar>z\<bar>\<close> abs_complex_def norm_le_zero_iff o_apply)
+  obtain u :: complex where \<open>u = z/r\<close> 
+    by simp
+  from \<open>u = z/r\<close>  \<open>r > 0\<close>  \<open>r = abs z\<close>
+  have \<open>abs u = (1::real)\<close> 
+    by auto
+  show ?thesis 
+    by (metis \<open>0 < r\<close> \<open>\<bar>u\<bar> = complex_of_real 1\<close> \<open>complex_of_real r = \<bar>z\<bar>\<close> \<open>u = z / complex_of_real r\<close> abs_mult divide_inverse division_ring_divide_zero nonzero_eq_divide_eq of_real_1 one_neq_zero ordered_field_class.sign_simps(5))
+qed
 
 hide_const (open) span
 
@@ -843,13 +857,37 @@ lemma subspace_as_set_minus:
   \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
   using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
 
+lemma polar_normPlus:
+  \<open>(norm (x + y))^2 = (norm x)^2 + (norm y)^2 + 2*Re (cinner x y)\<close>
+proof-
+  have \<open> cinner x y + cinner y x =  cinner x y + cnj (cinner x y)\<close>
+    by simp
+  hence \<open> cinner x y + cinner y x = 2* Re ( cinner x y ) \<close>
+    using complex_add_cnj by presburger
+
+  have \<open>(norm (x + y))^2 = cinner (x+y) (x+y)\<close> 
+    using power2_norm_eq_cinner' by auto
+  hence \<open>(norm (x + y))^2 = cinner x x + cinner x y + cinner y x + cinner y y\<close>
+    by (simp add: cinner_left_distrib cinner_right_distrib)
+  thus ?thesis using  \<open> cinner x y + cinner y x = 2* Re ( cinner x y ) \<close>
+    by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))  
+qed
+
 lemma polar_norm:
-  \<open>norm (x - y)^2 = (norm x)^2 + (norm y)^2 - 2*Re (cinner x y)\<close>
-  sorry
+  \<open>(norm (x - y))^2 = (norm x)^2 + (norm y)^2 - 2*Re (cinner x y)\<close>
+proof-
+  have \<open>norm (x + (-y))^2 = (norm x)^2 + (norm (-y))^2 + 2*Re (cinner x (-y))\<close>
+    using polar_normPlus by blast
+  hence \<open>norm (x -y)^2 = (norm x)^2 + (norm y)^2 - 2*Re (cinner x y)\<close>
+    by simp
+  thus ?thesis 
+    by blast
+qed
 
 lemma ParallelogramLaw:
-  \<open>(norm (f+g))^2 + (norm (f-g))^2 = 2*((norm f)^2 + (norm g)^2)\<close>
-  sorry
+  fixes x y :: \<open>'a vector\<close>
+  shows  \<open>(norm (x+y))^2 + (norm (x-y))^2 = 2*((norm x)^2 + (norm y)^2)\<close>
+  by (simp add: polar_norm polar_normPlus)
 
 lemma LimSumConst:
   fixes r::\<open>nat \<Rightarrow> 'a vector\<close> and h R::\<open>'a vector\<close>
