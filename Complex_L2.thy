@@ -1154,7 +1154,7 @@ qed
 
 
 lemma preTransClosed:
-\<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
+  \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
          convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close>
 proof-
   assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
@@ -1199,7 +1199,7 @@ proof-
   qed
   hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
     using  \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
-     add_diff_cancel_left' by auto
+      add_diff_cancel_left' by auto
   hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
     using convergent_add_const_right_iff by blast
   hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
@@ -1209,7 +1209,7 @@ proof-
   thus ?thesis using  convergent_LIMSEQ_iff 
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
-                                        
+
 lemma TransNonEmpty:
   \<open>(S::('a vector) set) \<noteq> {} \<Longrightarrow> {s + h| s. s \<in> S} \<noteq> {}\<close>
   by simp
@@ -1589,10 +1589,50 @@ lemma proj_ran:
   using proj_ranA proj_ranB
   by blast
 
-lemma ortho_twice[simp]: "ortho (ortho x) = x"
-  for x :: "'a subspace"
+(* Identity operator for 'a vectors *)
+definition IdV ::\<open>'a vector \<Rightarrow> 'a vector\<close> where
+  \<open>IdV \<equiv> \<lambda> x::'a vector. x\<close>
+
+lemma ProjOntoOrthoDef:
+  \<open> ProjDefProp ( \<lambda> M. (IdV - (proj (ortho M)))  ) \<close>
   sorry
 
+lemma ProjUniq:
+  \<open> ProjDefProp P \<Longrightarrow> ProjDefProp Q \<Longrightarrow> P = Q \<close>
+  sorry
+
+lemma ProjOntoOrtho:
+  \<open> IdV - (proj (ortho M)) = proj M \<close>
+  using ProjOntoOrthoDef ProjUniq
+  by (metis ProjExistsUniqueI_ex)
+
+lemma IdVMinusProjKernel:
+  \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
+        x \<in> subspace_as_set M\<close>
+  sorry
+
+lemma ortho_twice[simp]: "ortho (ortho M) = M"
+  for M :: "'a subspace"
+proof-
+  have \<open> \<forall> x. (proj (ortho M)) x = (0::'a vector) \<longleftrightarrow>
+        x \<in> subspace_as_set (ortho (ortho M)) \<close>
+    by (simp add: proj_kernel)
+  hence \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
+        x \<in> subspace_as_set (ortho (ortho M)) \<close>
+    using ProjOntoOrtho 
+    by (metis (no_types, lifting) IdV_def  diff_zero eq_iff_diff_eq_0 minus_apply projE1)
+  have   \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
+        x \<in> subspace_as_set M\<close> 
+    using IdVMinusProjKernel by blast
+  hence \<open>\<forall> x. x \<in> subspace_as_set (ortho (ortho M)) \<longleftrightarrow> x \<in> subspace_as_set M\<close>
+    using  \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>
+        x \<in> subspace_as_set (ortho (ortho M)) \<close> 
+    by simp
+  hence \<open>subspace_as_set (ortho (ortho M)) = subspace_as_set M\<close>
+    by blast
+  thus ?thesis
+    by (metis subspace_to_set_inject)
+qed
 
 lemma ortho_leq[simp]: "ortho a \<le> ortho b \<longleftrightarrow> a \<ge> b"
 proof 
