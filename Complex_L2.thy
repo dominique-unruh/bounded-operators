@@ -6,6 +6,7 @@ begin
 
 section \<open>Preliminaries\<close>
 
+(* TODO: to Missing.thy or similar *)
 lemma polar_form:
   \<open>z \<noteq> (0::complex) \<Longrightarrow> \<exists> r::real. \<exists> u::complex.
  r > (0::real) \<and>  abs u = (1::real) \<and> (z::complex) = (complex_of_real r)*u\<close>
@@ -583,13 +584,17 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
+
 definition "is_orthogonal x y = (cinner x y = 0)"
+
+definition "orthogonal_complement S = {x. \<forall>y\<in>S. is_orthogonal x y}" 
 
 lemma orthogonal_comm: "is_orthogonal \<psi> \<phi> = is_orthogonal \<phi> \<psi>"
   unfolding is_orthogonal_def apply (subst cinner_commute) by blast
 
+(* TODO: move \<rightarrow> Complex_Vector_Space *)
 locale is_subspace =
-  fixes A::"'a vector set"
+  fixes A::"'a::complex_normed_vector set"
   assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
   assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
   assumes closed: "closed A"
@@ -635,7 +640,7 @@ lemma is_subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> is_subspace
 
 
 
-lemma is_subspace_orthog[simp]: "is_subspace A \<Longrightarrow> is_subspace {\<psi>. (\<forall>\<phi>\<in>A. is_orthogonal \<psi> \<phi>)}"
+lemma is_subspace_orthog[simp]: "is_subspace A \<Longrightarrow> is_subspace (orthogonal_complement A)"
   by (cheat TODO6)
 
 lemma is_subspace_plus: "is_subspace A \<Longrightarrow> is_subspace B \<Longrightarrow> is_subspace {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" (* Proof above has only one missing step *)
@@ -840,23 +845,26 @@ lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a subspace"
 lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a subspace"
   by (simp add: add_increasing)
 
-lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is (* Orthogonal complement *)
-  "\<lambda>S. {x::'a vector. \<forall>y\<in>S. is_orthogonal x y}" 
+lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is orthogonal_complement 
   by (fact is_subspace_orthog)
 
+(* TODO probably not needed *)
 lemma subspace_as_set_scalar:
   \<open>r \<in> subspace_as_set M \<Longrightarrow> (c::complex) *\<^sub>C r \<in> subspace_as_set M\<close>
   using is_subspace.smult_closed subspace_to_set by auto
 
+(* TODO probably not needed *)
 lemma subspace_as_set_opp:
   \<open>r \<in> subspace_as_set M \<Longrightarrow> - r \<in> subspace_as_set M\<close>
   using subspace_as_set_scalar 
   by (metis scaleC_minus1_left)
 
+(* TODO probably not needed *)
 lemma subspace_as_set_minus:
   \<open>r \<in> subspace_as_set M \<Longrightarrow> s \<in> subspace_as_set M \<Longrightarrow> r - s \<in> subspace_as_set M\<close>
   using is_subspace.additive_closed subspace_as_set_opp subspace_to_set by fastforce
 
+(* TODO \<rightarrow> Complex_Inner_Product *)
 lemma polar_normPlus:
   \<open>(norm (x + y))^2 = (norm x)^2 + (norm y)^2 + 2*Re (cinner x y)\<close>
 proof-
@@ -889,6 +897,15 @@ lemma ParallelogramLaw:
   shows  \<open>(norm (x+y))^2 + (norm (x-y))^2 = 2*((norm x)^2 + (norm y)^2)\<close>
   by (simp add: polar_norm polar_normPlus)
 
+(*
+Example for searching stuff:
+find_theorems "_ \<longlonglongrightarrow> _ + _"
+find_theorems "_ \<longlongrightarrow> (_ + _) sequentially"
+find_theorems tendsto "(+)"
+thm tendsto_add
+*)
+
+(* TODO: remove & use tendsto_add instead *)
 lemma LimSumConst:
   fixes r::\<open>nat \<Rightarrow> 'a vector\<close> and h R::\<open>'a vector\<close>
   assumes \<open>r \<longlonglongrightarrow> R\<close>
@@ -904,7 +921,9 @@ proof-
   thus ?thesis using  LIMSEQ_iff by fastforce
 qed
 
+(* TODO remove, use LIMSEQ_ignore_initial_segment +  lim_inverse_n' instead *)
 lemma OneOverNConvZ: \<open>( \<lambda> n::nat.   1/(n+1) ) \<longlonglongrightarrow> (0::real)\<close>
+  thm LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
 proof-
   have \<open>( \<lambda> n::nat.   1/n ) \<longlonglongrightarrow> (0::real)\<close>
     by (simp add: lim_inverse_n')
@@ -926,21 +945,25 @@ qed
 (* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *)
 
+find_theorems name:convex
 
+(* TODO: remove, use Convex_Euclidean_Space.convex instead *)
 definition convex:: \<open>'a vector set \<Rightarrow> bool\<close> where
   \<open>convex \<equiv> \<lambda> S. \<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
 (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close>
 
-
+(* TODO: remove (do in a "have") *)
 lemma OneOverNConvZ_left_add: \<open>(\<lambda> n::nat. dd + (1/(n+1))) \<longlonglongrightarrow> (dd::real)\<close>
   by (metis OneOverNConvZ add.right_neutral tendsto_add_const_iff)
 
+(* TODO: remove, use lim_mono instead *)
 lemma MonotLim:
   fixes r s :: \<open>nat \<Rightarrow> real\<close>
   assumes  \<open>\<forall> n::nat. r n \<le> s n\<close> and \<open>r \<longlonglongrightarrow> (R::real)\<close> and  \<open>s \<longlonglongrightarrow> (S::real)\<close>
   shows \<open>R \<le> S\<close>
   using assms(1) assms(2) assms(3) lim_mono by blast
 
+(* TODO: for all "copied" theorems, add book reference, thm number *)
 lemma DistMinExistsConvexZ:
   \<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists> k. (\<forall> t. t \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k \<in> S\<close>
 proof-
@@ -977,25 +1000,54 @@ proof-
   have \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close>
     using  \<open>\<forall> n::nat. r n \<in> S \<and> (norm (r n))^2 < dd + (1/(n+1))\<close>
     by (simp add: add.commute)
-  have \<open>\<forall> m n. (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 + (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
+  have xxx: \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+      = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close> for n m
+  proof -
+
+(* Example: 
+    have "(a :: real) = b"
+      sorry
+    also have "b = c"
+      sorry
+    also have "c \<le> d"
+      sorry
+    also have "d \<le> e"
+      sorry
+    finally have "a \<le> e" by simp
+
+    have "(a :: real) = b"
+      sorry
+    also have "\<dots> = c" (is "_ = ?rhs")
+      sorry
+    also have "?rhs \<le> d"
+      sorry
+    also have "\<dots> \<le> e"
+      sorry
+    finally have "a \<le> e" by simp
+
+    moreover / ultimately
+*)
+
+    have \<open>(norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 + (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
     = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2)\<close>
-    by (simp add: ParallelogramLaw)
-  hence \<open>\<forall> m n. ((norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 + (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2)
+      by (simp add: ParallelogramLaw)
+    hence \<open>((norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 + (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2)
  - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2 
     = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
-    by smt
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+      by smt
+    hence \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     = 2*((norm ((1/2)*\<^sub>C(r n)))^2 + (norm ((1/2)*\<^sub>C(r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
-    by auto
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+      by auto
+    hence \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     = 2*(((1/2)*(norm (r n)))^2 + ((1/2)*(norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
-    by simp
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+      by simp
+    hence \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     = 2*((1/4)*((norm (r n)))^2 + (1/4)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
-    by (simp add: power_divide)
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
+      by (simp add: power_divide)
+    thus \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
-    by simp
+      by simp
+  qed
   have \<open>(0::real) < (1/2)\<close> by simp 
   have \<open>(1/2) < (1::real)\<close> by simp 
   have \<open>\<forall> p \<in> {(norm t)^2| t. t \<in> S}. p \<ge> dd\<close>
@@ -1015,8 +1067,8 @@ proof-
     using  \<open>\<forall> t \<in> S. (norm t)^2 \<ge> dd\<close> by auto      
   hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
     \<le> ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - dd\<close>
-    using  \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close>
+    using xxx (* TODO Use name instead *) (* \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
+    = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close> *)
     by simp
   hence \<open>\<forall> m n. ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2
     < ((1/2)*( dd + (1/(n+1)) ) + (1/2)*( dd + (1/(m+1)) )) - dd\<close>
@@ -1114,6 +1166,7 @@ proof-
     using \<open>lim r \<in> S\<close> \<open>r \<longlonglongrightarrow> k\<close> limI by blast
 qed
 
+(* TODO: probably exists wrt. to other convex definition *)
 lemma TransConvex:
   \<open>convex S \<Longrightarrow> convex {s + h| s. s \<in> S}\<close>
 proof-
@@ -1152,6 +1205,7 @@ proof-
     by (simp add: Complex_L2.convex_def)
 qed
 
+(* TODO: continue discussing from here *)
 
 lemma preTransClosed:
   \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
@@ -1441,7 +1495,7 @@ lemma dProjExists:
   \<open>h - ((dproj M) h) \<in> subspace_as_set (ortho M)\<close>
   for M :: \<open>'a subspace\<close>
   using predProjExists 
-  by (simp add: predProjExists is_orthogonal_def ortho.rep_eq)
+  by (simp add: predProjExists is_orthogonal_def ortho.rep_eq orthogonal_complement_def)
 
 (* Existence of the projection onto a subspace *)
 lemma ProjExists:
@@ -1661,6 +1715,23 @@ lemma IdVMinusProjKernelB:
 lemma IdVMinusProjKernel:
   \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>  x \<in> subspace_as_set M\<close>
   using IdVMinusProjKernelA IdVMinusProjKernelB by blast
+
+(* TODO \<rightarrow> Complex_Inner_Product *)
+lemma orthogonal_complement_twice:
+  fixes M :: "'a::complex_inner set" (* TODO: probably needs stronger type class *)
+  assumes "is_subspace M"
+  shows "orthogonal_complement (orthogonal_complement M) = M"
+  sorry
+
+(* TODO \<rightarrow> Complex_Inner_Product *)
+lemma orthogonal_complement_is_subspace:
+  assumes "is_subspace M"
+  shows "is_subspace (orthogonal_complement M)"
+  sorry
+
+(* Could be made the definition of ortho *)
+lemma "subspace_as_set (ortho M) = orthogonal_complement (subspace_as_set M)"
+  sorry
 
 lemma ortho_twice[simp]: "ortho (ortho M) = M"
   for M :: "'a subspace"
