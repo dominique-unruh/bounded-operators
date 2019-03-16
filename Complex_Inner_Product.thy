@@ -1,37 +1,54 @@
+(*  Title:      Bounded-Operators/Complex_Inner_Product.thy
+  Author:     Dominique Unruh, University of Tartu
+  Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+
+References:
+
+@book{conway2013course,
+title={A course in functional analysis},
+author={Conway, John B},
+volume={96},
+year={2013},
+publisher={Springer Science \& Business Media}
+}
+
+*)
+
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
-imports Complex_Main Complex_Vector_Spaces "HOL-Analysis.Inner_Product"
+  imports Complex_Main Complex_Vector_Spaces "HOL-Analysis.Inner_Product"
 begin
 
 subsection \<open>Complex inner product spaces\<close>
 
 text \<open>
-  Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
-  \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
+Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
+\<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::open set \<Rightarrow> bool\<close>)\<close>
+(\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::open set \<Rightarrow> bool\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::dist \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+(\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::dist \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
+(\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
+(\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"
   assumes cinner_commute: "cinner x y = cnj (cinner y x)"
-  and cinner_add_left: "cinner (x + y) z = cinner x z + cinner y z"
-  and cinner_scaleC_left [simp]: "cinner (scaleC r x) y = cnj r * (cinner x y)"
-  and cinner_ge_zero [simp]: "0 \<le> cinner x x"
-  and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
-  and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
+    and cinner_add_left: "cinner (x + y) z = cinner x z + cinner y z"
+    and cinner_scaleC_left [simp]: "cinner (scaleC r x) y = cnj r * (cinner x y)"
+    and cinner_ge_zero [simp]: "0 \<le> cinner x x"
+    and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
+    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
 begin
+
 
 lemma cinner_real: "cinner x x \<in> \<real>"
   by (simp add: reals_zero_comparable_iff)
@@ -226,6 +243,13 @@ qed
 
 end
 
+
+abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infixl "\<bullet>" 50 )
+  where \<open>x \<bullet> y \<equiv> cinner x y\<close>
+
+abbreviation norm_abbr::"'a::complex_inner \<Rightarrow> real" ("\<parallel>_\<parallel>" 50 )
+  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
+
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
   shows "cinner a (b / of_complex m) = (cinner a b) / m"
@@ -237,21 +261,21 @@ lemma cinner_divide_left:
   apply (subst cinner_commute) apply (subst cinner_divide_right) by simp
 
 text \<open>
-  Re-enable constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
-  \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
+Re-enable constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
+\<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::topological_space set \<Rightarrow> bool\<close>)\<close>
+(\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::topological_space set \<Rightarrow> bool\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
+(\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+(\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
 
 setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
+(\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
 
 lemma bounded_sesquilinear_cinner:
   "bounded_sesquilinear (cinner::'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex)"
@@ -304,7 +328,7 @@ lemmas has_derivative_cinner_left [derivative_intros] =
 
 lemma differentiable_cinner [simp]:
   "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
-        (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
+      (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
 
@@ -390,10 +414,10 @@ subsection \<open>Gradient derivative\<close>
 
 definition
   cgderiv ::
-    "['a::complex_inner \<Rightarrow> complex, 'a, 'a] \<Rightarrow> bool"
-          ("(cGDERIV (_)/ (_)/ :> (_))" [1000, 1000, 60] 60)
-where
-  "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> (cinner D)"
+  "['a::complex_inner \<Rightarrow> complex, 'a, 'a] \<Rightarrow> bool"
+  ("(cGDERIV (_)/ (_)/ :> (_))" [1000, 1000, 60] 60)
+  where
+    "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> (cinner D)"
 
 lemma cgderiv_deriv [simp]: "cGDERIV f x :> D \<longleftrightarrow> DERIV f x :> (cnj D)"
   by (simp only: cgderiv_def has_field_derivative_def cinner_complex_def[THEN ext])
@@ -414,35 +438,35 @@ lemma cGDERIV_const: "cGDERIV (\<lambda>x. k) x :> 0"
   unfolding cgderiv_def cinner_zero_left[THEN ext] by (rule has_derivative_const)
 
 lemma cGDERIV_add:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-     \<Longrightarrow> cGDERIV (\<lambda>x. f x + g x) x :> df + dg"
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+   \<Longrightarrow> cGDERIV (\<lambda>x. f x + g x) x :> df + dg"
   unfolding cgderiv_def cinner_add_left[THEN ext] by (rule has_derivative_add)
 
 lemma cGDERIV_minus:
-    "cGDERIV f x :> df \<Longrightarrow> cGDERIV (\<lambda>x. - f x) x :> - df"
+  "cGDERIV f x :> df \<Longrightarrow> cGDERIV (\<lambda>x. - f x) x :> - df"
   unfolding cgderiv_def cinner_minus_left[THEN ext] by (rule has_derivative_minus)
 
 lemma cGDERIV_diff:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-     \<Longrightarrow> cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+   \<Longrightarrow> cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
 lemmas has_derivative_scaleC[simp, derivative_intros] = 
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
 
 lemma cGDERIV_scaleC:
-    "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-     \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
-      :> (scaleC (cnj (f x)) dg + scaleC (cnj df) (cnj (g x)))"
+  "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+   \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
+    :> (scaleC (cnj (f x)) dg + scaleC (cnj df) (cnj (g x)))"
   unfolding cgderiv_def has_field_derivative_def cinner_add_left cinner_scaleC_left
   apply (rule has_derivative_subst)
-  apply (erule (1) has_derivative_scaleC)
+   apply (erule (1) has_derivative_scaleC)
   by (simp add: ac_simps)
-  
+
 
 lemma cGDERIV_mult:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-     \<Longrightarrow> cGDERIV (\<lambda>x. f x * g x) x :> scaleC (cnj (f x)) dg + scaleC (cnj (g x)) df"
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+   \<Longrightarrow> cGDERIV (\<lambda>x. f x * g x) x :> scaleC (cnj (f x)) dg + scaleC (cnj (g x)) df"
   unfolding cgderiv_def
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_mult)
@@ -451,15 +475,15 @@ lemma cGDERIV_mult:
   by (simp add: cinner_add ac_simps)
 
 lemma cGDERIV_inverse:
-    "\<lbrakk>cGDERIV f x :> df; f x \<noteq> 0\<rbrakk>
-     \<Longrightarrow> cGDERIV (\<lambda>x. inverse (f x)) x :> cnj (- (inverse (f x))\<^sup>2) *\<^sub>C df"
+  "\<lbrakk>cGDERIV f x :> df; f x \<noteq> 0\<rbrakk>
+   \<Longrightarrow> cGDERIV (\<lambda>x. inverse (f x)) x :> cnj (- (inverse (f x))\<^sup>2) *\<^sub>C df"
   apply (erule cGDERIV_DERIV_compose, simp)
   by (erule DERIV_inverse [folded numeral_2_eq_2])
 
 (* TODO: 
 
 lemma cGDERIV_norm:
-  assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
+assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
 
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
 *)
@@ -471,5 +495,67 @@ end
 class chilbert_space = complex_inner + complete_space begin
 subclass hilbert_space by standard
 end
+
+subsection \<open>Some identities\<close>
+
+lemma polarization_identity_plus:
+  \<open>(\<parallel>x + y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 + 2*Re (x \<bullet> y)\<close>
+    (* Reference: In the proof of Corollary 1.5 in conway2013course *)
+proof-
+  have \<open>(x \<bullet> y) + (y \<bullet> x) = (x \<bullet> y) + cnj (x \<bullet> y)\<close>
+    by simp
+  hence \<open>(x \<bullet> y) + (y \<bullet> x) = 2* Re (x \<bullet> y) \<close>
+    using complex_add_cnj by presburger
+  have \<open>(\<parallel>x + y\<parallel>)^2 = ( (x+y) \<bullet> (x+y) )\<close> 
+    using power2_norm_eq_cinner' by auto
+  hence \<open>(\<parallel>x + y\<parallel>)^2 = (x \<bullet> x) + (x \<bullet> y) + (y \<bullet> x) + (y \<bullet> y)\<close>
+    by (simp add: cinner_left_distrib cinner_right_distrib)
+  thus ?thesis using  \<open>(x \<bullet> y) + (y \<bullet> x) = 2* Re (x \<bullet> y)\<close>
+    by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))
+qed
+
+lemma polarization_identity_minus:
+  \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<bullet> y)\<close>
+proof-
+  have \<open>(\<parallel>x + (-y)\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>(-y)\<parallel>)^2 + 2*Re (x \<bullet> (-y))\<close>
+    using polarization_identity_plus by blast
+  hence \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<bullet> y)\<close>
+    by simp
+  thus ?thesis 
+    by blast
+qed
+
+proposition ParallelogramLaw:
+  fixes x y :: "'a::complex_inner"
+  shows \<open>(\<parallel>x+y\<parallel>)^2 + (\<parallel>x-y\<parallel>)^2 = 2*( (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 )\<close>
+    (* Reference: Theorem 2.3 in conway2013course *)
+  by (simp add: polarization_identity_minus polarization_identity_plus)
+
+corollary ParallelogramLawVersion1:
+  \<open>(\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>)^2
+    = (1/2)*( (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>)^2\<close>
+    (* Reference: In the proof of  Theorem 2.5 in conway2013course *)
+proof -
+  have \<open>(\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>)^2 + (\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>)^2 
+  = 2*((\<parallel>(1/2) *\<^sub>C x\<parallel>)^2 + ( \<parallel>(1/2) *\<^sub>C y\<parallel>)^2)\<close>
+    using ParallelogramLaw by blast
+  also have \<open>... = 2*( ((1/2) * (\<parallel>x\<parallel>))^2 + ((1/2) * (\<parallel>y\<parallel>))^2)\<close>
+    by auto
+  also have \<open>... = 2*( (1/2)^2 * (\<parallel>x\<parallel>)^2 +  (1/2)^2 * (\<parallel>y\<parallel>)^2 )\<close>
+    by (metis power_mult_distrib)
+  also have \<open>... = 2*( (1/4) * (\<parallel>x\<parallel>)^2 +  (1/4) * (\<parallel>y\<parallel>)^2 )\<close>
+    by (metis (no_types, lifting) mult.right_neutral numeral_Bit0 one_add_one one_power2 power2_sum power_divide)
+  also have \<open>... = 2*(1/4) * (\<parallel>x\<parallel>)^2 + 2*(1/4) * (\<parallel>y\<parallel>)^2\<close>
+    by auto
+  also have \<open>... = (1/2) * (\<parallel>x\<parallel>)^2 + (1/2) * (\<parallel>y\<parallel>)^2\<close>
+    by auto
+  also have \<open>... = (1/2) * ( (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 )\<close>
+    by auto
+  finally have \<open>(\<parallel>(1 / 2) *\<^sub>C x + (1 / 2) *\<^sub>C y\<parallel>)\<^sup>2 + (\<parallel>(1 / 2) *\<^sub>C x - (1 / 2) *\<^sub>C y\<parallel>)\<^sup>2
+                   = 1 / 2 * ((\<parallel>x\<parallel>)\<^sup>2 + (\<parallel>y\<parallel>)\<^sup>2)\<close>
+    by blast
+  thus ?thesis 
+    by (metis add_diff_cancel_left')
+qed
 
 end
