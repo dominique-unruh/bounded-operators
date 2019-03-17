@@ -496,7 +496,7 @@ class chilbert_space = complex_inner + complete_space begin
 subclass hilbert_space by standard
 end
 
-subsection \<open>Some identities\<close>
+subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
   \<open>(\<parallel>x + y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 + 2*Re (x \<bullet> y)\<close>
@@ -557,5 +557,11 @@ proof -
   thus ?thesis 
     by (metis add_diff_cancel_left')
 qed
+
+
+theorem PythagoreanId:
+\<open>x \<bullet> y = 0 \<Longrightarrow> (\<parallel> x + y \<parallel>)^2 = (\<parallel> x \<parallel>)^2 + (\<parallel> y \<parallel>)^2\<close> 
+    (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
+  by (simp add: polarization_identity_plus)
 
 end
