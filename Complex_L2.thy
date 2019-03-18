@@ -861,6 +861,7 @@ qed
 
 thm LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
 
+
 subsection {* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *}
 
@@ -875,14 +876,388 @@ lemma ExistenceUniquenessMinNorm:
   fixes M :: \<open>('a vector) set\<close>
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
-  sorry
+proof-
+  have \<open>\<exists> k. k min (\<lambda> x. \<parallel>x\<parallel>) on M\<close> 
+  proof-
+    have \<open>\<exists> k. k min (\<lambda> x. (\<parallel>x\<parallel>)^2) on M\<close>
+    proof-
+      obtain d where \<open>d = Inf { (\<parallel>x\<parallel>)^2 | x. x \<in> M }\<close>
+        by blast
+      have \<open>{ (\<parallel>x\<parallel>)^2 | x. x \<in> M } \<noteq> {}\<close>
+        by (simp add: assms(3))
+      have \<open>\<forall> x. (\<parallel>x\<parallel>)^2 \<ge> 0\<close>
+        by simp
+      hence \<open>bdd_below  { (\<parallel>x\<parallel>)^2 | x. x \<in> M }\<close>
+        by fastforce
+      have \<open>x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)^2\<close> for x
+      proof -
+        assume a1: "x \<in> M"
+        have "\<forall>v. (\<exists>va. Re (\<langle>v | v\<rangle> ) = (\<parallel>va\<parallel>)\<^sup>2 \<and> va \<in> M) \<or> v \<notin> M"
+          by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
+        then have "Re (\<langle>x | x\<rangle> ) \<in> {(\<parallel>v\<parallel>)\<^sup>2 |v. v \<in> M}"
+          using a1 by blast
+        then show ?thesis
+          by (metis (lifting) Re_complex_of_real \<open>bdd_below {(\<parallel>x\<parallel>)\<^sup>2 |x. x \<in> M}\<close> \<open>d = Inf {(\<parallel>x\<parallel>)\<^sup>2 |x. x \<in> M}\<close> cInf_lower power2_norm_eq_cinner')
+      qed
+      have  \<open>\<forall> n::nat. \<exists> x \<in> M.  (\<parallel>x\<parallel>)^2 < d + 1/(n+1)\<close>
+      proof-
+        have \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> { (\<parallel>x\<parallel>)^2 | x. x \<in> M }.  t < d + \<epsilon>\<close>
+          using \<open>d = Inf { (\<parallel>x\<parallel>)^2 | x. x \<in> M }\<close>  \<open>{ (\<parallel>x\<parallel>)^2 | x. x \<in> M } \<noteq> {}\<close>  \<open>bdd_below  { (\<parallel>x\<parallel>)^2 | x. x \<in> M }\<close>
+          by (meson cInf_lessD less_add_same_cancel1)
+        hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  (\<parallel>x\<parallel>)^2 < d + \<epsilon>\<close>
+          by auto    
+        hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  (\<parallel>x\<parallel>)^2 < d + \<epsilon>\<close>
+          by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close>)
+        thus ?thesis by auto
+      qed
+      then obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall> n. r n \<in> M \<and>  (\<parallel> r n \<parallel>)^2 < d + 1/(n+1)\<close>
+        by metis
+      have \<open>\<forall> n. r n \<in> M\<close> 
+        by (simp add: \<open>\<forall>n. r n \<in> M \<and>  (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close>)
+      have \<open>\<forall> n. (\<parallel> r n \<parallel>)^2 < d + 1/(n+1)\<close>
+        by (simp add: \<open>\<forall>n. r n \<in> M \<and> (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close>)    
+      have \<open>(\<parallel> (r n) - (r m) \<parallel>)^2 < 2*(1/(n+1) + 1/(m+1))\<close> for m n 
+      proof-
+        have \<open> (\<parallel> r n \<parallel>)^2 < d + 1/(n+1)\<close>
+          by (metis \<open>\<forall>n. r n \<in> M \<and> (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close>  of_nat_1 of_nat_add)
+        have \<open> (\<parallel> r m \<parallel>)^2 < d + 1/(m+1)\<close>
+          by (metis \<open>\<forall>n. r n \<in> M \<and> (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close>  of_nat_1 of_nat_add)
+        have \<open>(r n) \<in> M\<close> 
+          by (simp add: \<open>\<forall>n. r n \<in> M\<close>)
+        moreover have \<open>(r m) \<in> M\<close> 
+          by (simp add: \<open>\<forall>n. r n \<in> M\<close>)
+        ultimately have \<open>(1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<in> M\<close>
+          using \<open>convex M\<close> 
+          by (simp add: convexD)
+        hence \<open> (\<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>)^2 \<ge> d\<close>
+          by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close>)
+        have \<open>(\<parallel> (1/2) *\<^sub>R (r n) - (1/2) *\<^sub>R (r m) \<parallel>)^2
+              = (1/2)*( (\<parallel> r n \<parallel>)^2 + (\<parallel> r m \<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>)^2\<close> 
+          using  ParallelogramLawVersion1 
+          by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
+        also have  \<open>...  
+              < (1/2)*( d + 1/(n+1) + (\<parallel> r m \<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>)^2\<close>
+          using \<open>(\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / real (n + 1)\<close> by auto
+        also have  \<open>...  
+              < (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - (\<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>)^2\<close>
+          using \<open>(\<parallel>r m\<parallel>)\<^sup>2 < d + 1 / real (m + 1)\<close> by auto
+        also have  \<open>...  
+              \<le> (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - d\<close>
+          by (simp add: \<open>d \<le> (\<parallel>(1 / 2) *\<^sub>R r n + (1 / 2) *\<^sub>R r m\<parallel>)\<^sup>2\<close>)
+        also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) + 2*d ) - d\<close>
+          by simp
+        also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + (1/2)*(2*d) - d\<close>
+          by (simp add: distrib_left)
+        also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + d - d\<close>
+          by simp
+        also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) )\<close>
+          by simp
+        finally have \<open> (\<parallel>(1 / 2) *\<^sub>R r n - (1 / 2) *\<^sub>R r m\<parallel>)\<^sup>2 < 1 / 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by blast
+        hence \<open> (\<parallel>(1 / 2) *\<^sub>R (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by (simp add: scale_right_diff_distrib)
+        hence \<open> ((1 / 2)*(\<parallel> (r n - r m) \<parallel>))\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by simp
+        hence \<open> (1 / 2)^2*((\<parallel> (r n - r m) \<parallel>))\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by (metis power_mult_distrib)
+        hence \<open> (1 / 4) *((\<parallel> (r n - r m) \<parallel>))\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by (simp add: power_divide)
+        hence \<open> (\<parallel> (r n - r m) \<parallel>)\<^sup>2 < 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+          by simp
+        thus ?thesis 
+          by (metis of_nat_1 of_nat_add)
+      qed
+      hence  \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> (\<parallel> (r n) - (r m) \<parallel>)^2 < \<epsilon>^2\<close> for \<epsilon>
+      proof-
+        assume \<open>\<epsilon> > 0\<close>
+        obtain N::nat where \<open>1/(N + 1) < \<epsilon>^2/4\<close>
+          using LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
+          by (metis Suc_eq_plus1 \<open>0 < \<epsilon>\<close> nat_approx_posE zero_less_divide_iff zero_less_numeral zero_less_power )
+        hence \<open>4/(N + 1) < \<epsilon>^2\<close>
+          by simp
+        have \<open>n \<ge> N \<Longrightarrow> m \<ge> N \<Longrightarrow> 2*(1/(n+1) + 1/(m+1)) < \<epsilon>^2\<close> for m n::nat
+        proof-
+          assume \<open>n \<ge> N\<close>
+          hence \<open>1/(n+1) \<le> 1/(N+1)\<close> 
+            by (simp add: linordered_field_class.frac_le)
+          assume \<open>m \<ge> N\<close>
+          hence \<open>1/(m+1) \<le> 1/(N+1)\<close> 
+            by (simp add: linordered_field_class.frac_le)
+          have  \<open>2*(1/(n+1) + 1/(m+1)) \<le> 4/(N+1)\<close>
+            using  \<open>1/(n+1) \<le> 1/(N+1)\<close>  \<open>1/(m+1) \<le> 1/(N+1)\<close>
+            by simp
+          thus ?thesis using \<open>4/(N + 1) < \<epsilon>^2\<close> 
+            by linarith
+        qed
+        hence \<open> n \<ge> N \<Longrightarrow> m \<ge> N \<Longrightarrow> (\<parallel> (r n) - (r m) \<parallel>)^2 < \<epsilon>^2\<close> for m n::nat
+          by (smt \<open>\<And>n m. (\<parallel>r n - r m\<parallel>)\<^sup>2 < 2 * (1 / (real n + 1) + 1 / (real m + 1))\<close> of_nat_1 of_nat_add)
+        thus ?thesis 
+          by blast
+      qed
+      hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> (\<parallel> (r n) - (r m) \<parallel>)^2 < \<epsilon>^2\<close>
+        by blast
+      hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> (\<parallel> (r n) - (r m) \<parallel>) < \<epsilon>\<close>
+        by (meson less_eq_real_def power_less_imp_less_base)
+      hence \<open>Cauchy r\<close>
+        using CauchyI by fastforce
+      then obtain k where \<open>r \<longlonglongrightarrow> k\<close>
+        using  convergent_eq_Cauchy by auto
+      have \<open>k \<in> M\<close> using \<open>closed M\<close>
+        using \<open>\<forall>n. r n \<in> M\<close> \<open>r \<longlonglongrightarrow> k\<close> closed_sequentially by auto
+      have  \<open>(\<lambda> n.  (\<parallel> r n \<parallel>)^2) \<longlonglongrightarrow>  (\<parallel> k \<parallel>)^2\<close>
+        by (simp add: \<open>r \<longlonglongrightarrow> k\<close> tendsto_norm tendsto_power)
+      moreover  have  \<open>(\<lambda> n.  (\<parallel> r n \<parallel>)^2) \<longlonglongrightarrow>  d\<close>
+      proof-
+        have \<open>\<bar>(\<parallel> r n \<parallel>)^2 - d\<bar> < 1/(n+1)\<close> for n :: nat
+          by (smt \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close> \<open>\<forall>n. r n \<in> M \<and> (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close> of_nat_1 of_nat_add)
+        moreover have \<open>(\<lambda>n. 1 / real (n + 1)) \<longlonglongrightarrow> 0\<close> 
+          using  LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1] by blast        
+        ultimately have \<open>(\<lambda> n. \<bar>(\<parallel> r n \<parallel>)^2 - d\<bar> ) \<longlonglongrightarrow> 0\<close> 
+          by (simp add: LIMSEQ_norm_0)
+        hence \<open>(\<lambda> n. (\<parallel> r n \<parallel>)^2 - d ) \<longlonglongrightarrow> 0\<close> 
+          by (simp add: tendsto_rabs_zero_iff)
+        moreover have \<open>(\<lambda> n. d ) \<longlonglongrightarrow> d\<close>
+          by simp
+        ultimately have \<open>(\<lambda> n. ((\<parallel> r n \<parallel>)^2 - d)+d ) \<longlonglongrightarrow> 0+d\<close> 
+          using tendsto_add by fastforce
+        thus ?thesis by simp
+      qed
+      ultimately have \<open>d = (\<parallel> k \<parallel>)^2\<close>
+        using LIMSEQ_unique by auto
+      hence \<open>t \<in> M \<Longrightarrow> (\<parallel> k \<parallel>)^2 \<le> (\<parallel> t \<parallel>)^2\<close> for t
+        using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close> by auto
+      thus ?thesis using \<open>k \<in> M\<close> 
+        by (metis Reaches_Min_def \<open>d = (\<parallel>k\<parallel>)\<^sup>2\<close>)
+    qed
+
+    thus ?thesis 
+      by (smt Reaches_Min_def norm_ge_zero power2_eq_square power2_le_imp_le)
+  qed
+  moreover have \<open>r min (\<lambda> x. \<parallel>x\<parallel>) on M \<Longrightarrow> s min (\<lambda> x. \<parallel>x\<parallel>) on M \<Longrightarrow> r = s\<close> for r s
+  proof-
+    assume \<open>r min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
+    assume \<open>s min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
+    have \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>)^2
+      = (1/2)*( (\<parallel>r\<parallel>)^2 + (\<parallel>s\<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)^2\<close> 
+      using  ParallelogramLawVersion1 
+      by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
+    moreover have \<open>(\<parallel>r\<parallel>)^2 \<le> (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)^2\<close>
+    proof-
+      have \<open>r \<in> M\<close> 
+        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close>)
+      moreover have \<open>s \<in> M\<close> 
+        by (meson Reaches_Min_def \<open>s min norm_abbr on M\<close>)
+      ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close> 
+        by (simp add: convexD)
+      hence \<open>(\<parallel>r\<parallel>) \<le> (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)\<close>
+        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close>)
+      thus ?thesis 
+        by (simp add: power_mono)
+    qed
+    moreover have \<open>(\<parallel>r\<parallel>)^2 = (\<parallel>s\<parallel>)^2\<close>
+    proof-
+      have \<open>(\<parallel>r\<parallel>) \<le> (\<parallel>s\<parallel>)\<close> 
+        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close> \<open>s min norm_abbr on M\<close>)
+      moreover have \<open>(\<parallel>s\<parallel>) \<le> (\<parallel>r\<parallel>)\<close> 
+        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close> \<open>s min norm_abbr on M\<close>)
+      ultimately show ?thesis by simp
+    qed
+    ultimately have \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>)^2 \<le> 0\<close>
+      by simp
+    hence \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>)^2 = 0\<close>
+      by simp
+    hence \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>) = 0\<close>
+      by auto
+    hence \<open>(1/2) *\<^sub>R r - (1/2) *\<^sub>R s = 0\<close>
+      using norm_eq_zero by blast
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis 
+    by auto
+qed
+
+lemma TransClosed:
+  \<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
+proof-
+  assume \<open>closed S\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
+    using closed_sequentially convergent_LIMSEQ_iff by blast
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+    by blast
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
+    by auto
+  have \<open>convergent r \<Longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close> for r::\<open>nat \<Rightarrow> 'a vector\<close>
+  proof-
+    assume \<open>convergent r\<close>
+    then obtain R where \<open>r \<longlonglongrightarrow> R\<close>
+      using convergent_def by auto
+    have \<open>(\<lambda> n. h) \<longlonglongrightarrow> h\<close>
+      by simp
+    have \<open>(\<lambda> n. (r n)+h) \<longlonglongrightarrow> R + h\<close>  
+      using  \<open>r \<longlonglongrightarrow> R\<close>  \<open>(\<lambda> n. h) \<longlonglongrightarrow> h\<close> tendsto_add
+      by fastforce
+    thus ?thesis 
+      by (metis \<open>r \<longlonglongrightarrow> R\<close> limI)
+  qed
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
+    using  \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
+      add_diff_cancel_left' by auto
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
+    using convergent_add_const_right_iff by blast
+  have \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S)
+ \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)
+ \<Longrightarrow>   convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close> for t
+  proof-
+    assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
+    assume \<open>convergent t\<close>
+    assume \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+    obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+      by metis
+    from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
+    have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
+    from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
+    have  \<open>\<forall>n. r n \<in> S\<close> by simp
+    have \<open> convergent (\<lambda>n. t n) \<close> using  \<open>convergent t\<close> by blast
+    hence \<open> convergent (\<lambda>n. (r n) + h) \<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
+      by simp
+    have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
+      using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
+    hence \<open>\<exists>s. lim (\<lambda>n. t n) = s + h \<and> s \<in> S\<close> using  \<open>\<forall>n. t n = (r n) + h\<close> by simp
+    hence \<open>\<exists>s. lim t = s + h \<and> s \<in> S\<close> by simp
+    thus ?thesis by blast
+  qed
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
+    using \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n + h \<in> {s + h |s. s \<in> S}) \<longrightarrow> lim (\<lambda>n. r n + h) \<in> {s + h |s. s \<in> S}\<close> by auto   
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
+    by simp
+  thus ?thesis using  convergent_LIMSEQ_iff 
+    by (metis (no_types, lifting) closed_sequential_limits limI)
+qed
+
+lemma TransConvex:
+  \<open>convex S \<Longrightarrow> convex {s - h| s. s \<in> S}\<close>
+proof-
+  assume \<open>convex S\<close>
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
+    by (simp add: convex_def)
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> (u *\<^sub>R x + v *\<^sub>R y) - h \<in> {s - h| s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> (u *\<^sub>R x + v *\<^sub>R y) - (u + v) *\<^sub>R h \<in> {s - h| s. s \<in> S}\<close>
+    by simp
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> (u *\<^sub>R x + v *\<^sub>R y) - (u *\<^sub>R h + v *\<^sub>R h) \<in> {s - h| s. s \<in> S}\<close>
+    by (smt \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> mem_Collect_eq scaleR_collapse)
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y -  u  *\<^sub>R h - v  *\<^sub>R h \<in> {s - h| s. s \<in> S}\<close>
+    by (simp add: diff_diff_add)
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> (u *\<^sub>R x - u *\<^sub>R  h) + (v *\<^sub>R y - v *\<^sub>R  h) \<in> {s - h| s. s \<in> S}\<close>
+    by (simp add: add_diff_add diff_diff_add)
+  hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R (x - h) + v *\<^sub>R (y - h) \<in> {s - h| s. s \<in> S}\<close>
+    by (simp add: scale_right_diff_distrib)
+  hence \<open>\<forall>x\<in> {s - h| s. s \<in> S}. \<forall>y\<in> {s - h| s. s \<in> S}. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> {s - h| s. s \<in> S}\<close>
+    by auto
+  thus ?thesis 
+    by (simp add: convex_def)
+qed
+
 
 theorem ExistenceUniquenessMinDist:
   fixes M :: \<open>('a vector) set\<close> and h :: \<open>'a vector\<close>
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. k min (\<lambda> x. dist x h) on M\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
-  sorry
+proof-
+  have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
+    by (simp add: assms(3))
+  moreover have \<open>closed {m - h| m. m \<in> M}\<close>
+  proof-
+    have \<open>closed {m + (- h)| m. m \<in> M}\<close>
+      using  \<open>closed M\<close> TransClosed by blast
+    thus ?thesis by simp
+  qed
+  moreover have \<open>convex {m - h| m. m \<in> M}\<close>
+    using \<open>convex M\<close> TransConvex by blast
+  ultimately have \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
+    by (simp add: ExistenceUniquenessMinNorm)
+  have \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+  proof-
+    have \<open>\<exists> k. k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+    proof-
+      obtain k where \<open>k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
+        using  \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close> by blast
+      from  \<open>k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
+      have \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)) \<and> k \<in> {m - h |m. m \<in> M}\<close>
+        by (simp add: Reaches_Min_def)
+      hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
+        by blast
+      hence \<open>\<forall>t. t + h \<in> M \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
+        by auto
+      hence \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
+        by auto
+      hence \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>(k+h)-h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
+        by auto
+      from \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)) \<and> k \<in> {m - h |m. m \<in> M}\<close>
+      have  \<open>k \<in> {m - h |m. m \<in> M}\<close>
+        by blast
+      hence  \<open>k + h \<in> M\<close>
+        by auto
+      have \<open>(k + h) min (\<lambda> x. \<parallel>x - h\<parallel>) on {m| m. m \<in> M}\<close>
+        using \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>(k+h)-h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>  \<open>k + h \<in> M\<close>
+        by (simp add: Reaches_Min_def)
+      thus ?thesis 
+        by auto
+    qed 
+    moreover have \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> t min (\<lambda> x. \<parallel>x - h\<parallel>) on M
+                    \<Longrightarrow> k = t\<close> for k t
+    proof-
+      have \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> (k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close> for k
+      proof-
+        assume \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+        hence \<open>(\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)) \<and> k \<in> M\<close>
+          by (metis Reaches_Min_def)
+        hence \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
+          by blast
+        hence \<open>\<forall>t. t - h \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
+          by auto
+        hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
+          by blast
+        have \<open>k \<in> M\<close>
+          using \<open>(\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)) \<and> k \<in> M\<close> by blast
+        hence \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
+          by auto
+        have  \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
+          using  \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
+            \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
+            Reaches_Min_def
+          by smt
+        thus ?thesis by blast
+      qed
+
+      assume \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+      hence  \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
+        by (simp add: \<open>\<And>k. k min (\<lambda>x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> k - h min norm_abbr on {m - h |m. m \<in> M}\<close>)
+
+      assume \<open>t min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+      hence  \<open>(t - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
+        by (simp add: \<open>\<And>k. k min (\<lambda>x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> k - h min norm_abbr on {m - h |m. m \<in> M}\<close>)
+
+      from \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close> 
+        \<open>(t - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
+      show ?thesis 
+        by (metis (no_types, lifting) \<open>\<exists>!k. k min norm_abbr on {m - h |m. m \<in> M}\<close> diff_add_cancel)
+    qed
+    ultimately show ?thesis by blast
+  qed
+  moreover have \<open>(\<lambda> x. dist x h) = (\<lambda> x. \<parallel>x - h\<parallel>)\<close>
+    by (simp add: dist_norm)
+  ultimately show ?thesis by simp
+qed
 
 theorem DistMinOrtho:
   fixes M::\<open>'a subspace\<close> and h k::\<open>'a vector\<close>
@@ -1675,14 +2050,32 @@ proof-
 qed
 
 
-lemma ortho_leq[simp]: "ortho a \<le> ortho b \<longleftrightarrow> a \<ge> b"
+lemma ortho_leq[simp]: "ortho A \<le> ortho B \<longleftrightarrow> A \<ge> B"
 proof 
-  show d1: "b \<le> a \<Longrightarrow> ortho a \<le> ortho b" for a b :: "'a subspace"
-    (*  apply transfer by auto *)
-    sorry
-  show "ortho a \<le> ortho b \<Longrightarrow> b \<le> a"
-    apply (subst ortho_twice[symmetric, of a])
-    apply (subst ortho_twice[symmetric, of b])
+  show d1: "B \<le> A \<Longrightarrow> ortho A \<le> ortho B" for A B :: "'a subspace"
+  proof-
+    assume "B \<le> A"
+    hence \<open>subspace_as_set B \<subseteq> subspace_as_set A\<close>
+      using less_eq_subspace.rep_eq by auto
+    hence \<open>x \<in> subspace_as_set (ortho A) \<Longrightarrow> x \<in> subspace_as_set (ortho B)\<close> for x
+    proof-
+      assume \<open>x \<in> subspace_as_set (ortho A)\<close>
+      hence \<open>\<forall> y \<in> subspace_as_set A. x \<bottom> y\<close> 
+        by (simp add: ortho.rep_eq orthogonal_complement_def)
+      hence \<open>\<forall> y \<in> subspace_as_set B. x \<bottom> y\<close> 
+        using  \<open>subspace_as_set B \<subseteq> subspace_as_set A\<close> 
+        by (simp add: subset_eq)
+      thus ?thesis
+        using ortho.rep_eq orthogonal_complement_def by fastforce
+    qed
+    hence \<open>subspace_as_set (ortho A) \<le> subspace_as_set (ortho B)\<close>
+      by blast
+    show ?thesis 
+      by (simp add: \<open>subspace_as_set (ortho A) \<subseteq> subspace_as_set (ortho B)\<close> less_eq_subspace.rep_eq)
+  qed
+  show "ortho A \<le> ortho B \<Longrightarrow> B \<le> A"
+    apply (subst ortho_twice[symmetric, of A])
+    apply (subst ortho_twice[symmetric, of B])
     by (rule d1)
 qed
 
@@ -1699,753 +2092,19 @@ lemma ortho_bot[simp]: "ortho bot = top"
   by simp
 
 
-
-
-(*
-proof
-
-  have \<open>{(norm t)^2| t. t \<in> S} \<noteq> {}\<close>
-    by (simp add: \<open>S \<noteq> {}\<close>)
-  have \<open>\<forall> t. (norm t)^2 \<ge> 0\<close>
-    by simp
-  hence \<open>bdd_below {(norm t)^2| t. t \<in> S}\<close>
-    by (smt bdd_belowI  mem_Collect_eq)
-  obtain dd::real where \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>
-    by auto 
-  have \<open>dd \<ge> 0\<close>
-    using  \<open>\<forall> t. (norm t)^2 \<ge> 0\<close>  \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>  \<open>{(norm t)^2| t. t \<in> S} \<noteq> {}\<close>
-    by (smt cInf_greatest mem_Collect_eq norm_ge_zero vector_choose_size zero_le_power2)
-  then obtain d :: real where \<open>d^2 = dd\<close> and \<open>d \<ge> (0::real)\<close> 
-    using real_sqrt_pow2 
-    by (metis Inner_Product.norm_eq_square norm_imp_pos_and_ge  real_norm_def real_sqrt_abs real_sqrt_power real_sqrt_unique)
-  have \<open>\<forall> \<epsilon> > 0. \<exists> v \<in> {(norm t)^2| t. t \<in> S}. v < dd + \<epsilon>\<close>
-    using  \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>  \<open>{(norm t)^2 |t. t \<in> S} \<noteq> {}\<close>  
-    by (meson cInf_lessD less_add_same_cancel1)
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> S. (norm t)^2 < dd + \<epsilon>\<close>
-    by auto
-  then obtain f::\<open>real \<Rightarrow> 'a vector\<close> where \<open>\<forall> \<epsilon> > 0. (f \<epsilon>) \<in> S \<and> (norm (f \<epsilon>))^2 < dd + \<epsilon>\<close>
-    by metis
-  obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>r \<equiv> \<lambda> n::nat. f (1/(n+1))\<close>
-    by blast
-  have \<open>\<forall> n::nat. r n = f (1/(n+1)) \<close> 
-    by (metis \<open>r \<equiv> \<lambda>x. f (1 / (real x + 1))\<close> of_nat_1 of_nat_add)
-  hence  \<open>\<forall> n::nat. r n \<in> S \<and> (norm (r n))^2 < dd + (1/(n+1))\<close>
-    by (simp add: \<open>\<forall>\<epsilon>>0. f \<epsilon> \<in> S \<and> (norm (f \<epsilon>))\<^sup>2 < dd + \<epsilon>\<close> zero_less_Fract_iff)
-  hence \<open>\<forall> n. r n \<in> S\<close> 
-    by simp
-  have \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close>
-    using  \<open>\<forall> n::nat. r n \<in> S \<and> (norm (r n))^2 < dd + (1/(n+1))\<close>
-    by (simp add: add.commute)
-  have xxx: \<open>(norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-      = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close> for n m
-sorry
-
-  have \<open>(0::real) \<le> (1/2)\<close> by simp 
-  have \<open>(1/2) \<le> (1::real)\<close> by simp 
-  have \<open>\<forall> p \<in> {(norm t)^2| t. t \<in> S}. p \<ge> dd\<close>
-    using  \<open>bdd_below {(norm t)^2| t. t \<in> S}\<close>  \<open>dd = Inf {(norm t)^2| t. t \<in> S}\<close>
-    by (simp add: cInf_lower)
-  hence \<open>\<forall> t \<in> S. (norm t)^2 \<ge> dd\<close> 
-    by blast
-  have \<open>\<forall> n::nat. dd \<le> (norm (r n))^2\<close>  
-    by (simp add: \<open>\<forall>n. r n \<in> S\<close> \<open>\<forall>t\<in>S. dd \<le> (norm t)\<^sup>2\<close>)
-  assume \<open>convex S\<close>
-  hence \<open>\<forall> m n. \<forall> t::real. 0 \<le> t \<and> t \<le> 1 \<longrightarrow>  t*\<^sub>C(r n) + (1 - t)*\<^sub>C(r m) \<in> S\<close>
-    using convex_def \<open>\<forall>n. r n \<in> S\<close>
-    sorry
-  hence \<open>\<forall> m n. (1/2)*\<^sub>C(r n) + (1 - (1/2))*\<^sub>C(r m) \<in> S\<close>
-    using \<open>(0::real) \<le> (1/2)\<close> \<open>(1/2) \<le> (1::real)\<close> 
-    by (metis (mono_tags, lifting) complex_of_real_mono complex_of_real_nn_iff of_real_1 of_real_add of_real_divide one_add_one)
-  hence \<open>\<forall> m n. ( norm ( (1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m) ) )^2 \<ge> dd\<close>
-    using  \<open>\<forall> t \<in> S. (norm t)^2 \<ge> dd\<close> by auto      
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    \<le> ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - dd\<close>
-    using xxx (* TODO Use name instead *) (* \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2 
-    = ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2\<close> *)
-    by simp
-  hence \<open>\<forall> m n. ((1/2)*((norm (r n)))^2 + (1/2)*((norm (r m)))^2) - (norm ((1/2)*\<^sub>C(r n) + (1/2)*\<^sub>C(r m)))^2
-    < ((1/2)*( dd + (1/(n+1)) ) + (1/2)*( dd + (1/(m+1)) )) - dd\<close>
-    using \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close>  \<open>0 \<le> 1 / 2\<close>
-      \<open>\<forall>m n. dd \<le> (norm (timesScalarVec (1 / 2) (r n) + timesScalarVec (1 / 2) (r m)))\<^sup>2\<close> 
-      real_mult_le_cancel_iff2
-    sorry
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    < ((1/2)*( dd + (1/(n+1)) ) + (1/2)*( dd + (1/(m+1))))  - dd\<close>
-    using  is_subspace.smult_closed subspace_to_set
-    by (simp add: xxx)
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    < (1/2)* dd + (1/2)*(1/(n+1))  + (1/2)* dd + (1/2)*(1/(m+1)) - dd\<close>
-    by (simp add: distrib_left)
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C(r n) - (1/2)*\<^sub>C(r m) ) )^2
-    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
-    by simp
-  hence \<open>\<forall> m n. (norm ( (1/2)*\<^sub>C( (r n) - (r m) ) ) )^2
-    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
-    by (simp add: complex_vector.scale_right_diff_distrib)  
-  hence \<open>\<forall> m n. (1/4)*((norm ( (r n) - (r m) ) ))^2
-    <  (1/2)*(1/(n+1)) + (1/2)*(1/(m+1))\<close> 
-    by (simp add: power_divide)
-  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2  < 4*( (1/2)*(1/(n+1)) + (1/2)*(1/(m+1)) )\<close> 
-    by simp
-  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2  < 4*( (1/2)*(1/(n+1)) ) + 4*( (1/2)*(1/(m+1)) )\<close> 
-    by simp
-  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2  < (4*(1/2) )*(1/(n+1))  + (4* (1/2))*(1/(m+1)) \<close> 
-    by (metis (mono_tags, hide_lams) Groups.add_ac(2) Groups.mult_ac(1) \<open>\<forall>m n. (norm (r n - r m))\<^sup>2 < 4 * (1 / 2 * (1 / (real n + 1)) + 1 / 2 * (1 / (real m + 1)))\<close> distrib_left norm_minus_commute)
-  hence \<open>\<forall> m n. ((norm ( (r n) - (r m) ) ))^2  < 2*(1/(n+1))  + 2*(1/(m+1)) \<close> 
-    by simp
-  hence \<open>\<forall> N. \<forall> m n. m+1 \<ge> N+1 \<and> n+1 \<ge> N+1 \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 2*(1/(n+1))  + 2*(1/(m+1)) \<close> 
-    by blast
-  hence \<open>\<forall> N::nat. \<forall> m n. m+1 \<ge> N+1 \<and> n+1 \<ge> N+1 \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 2*(1/(N+1))  + 2*(1/(N+1)) \<close> 
-    using Suc_eq_plus1 inverse_of_nat_le nat.simps(3) of_nat_1 of_nat_add
-    by smt
-  hence \<open>\<forall> N::nat. \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 2*(1/(N+1))  + 2*(1/(N+1)) \<close> 
-    by simp
-  hence \<open>\<forall> N::nat. \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 4/(N+1)\<close> 
-    by simp
-  have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. 1/(N+1) < \<epsilon>/4\<close>
-    by (metis Suc_eq_plus1 nat_approx_posE  zero_less_divide_iff zero_less_numeral)
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. 4*( 1/(N+1) ) < \<epsilon>\<close>
-    by (metis Suc_eq_plus1 less_divide_eq_numeral1(1) mult.commute)
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. 4/(N+1)  < \<epsilon>\<close>
-    by simp
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. 4/(N+1)  < \<epsilon> \<and> ( \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 4/(N+1) )\<close> 
-    using  \<open>\<forall> N::nat. \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2 < 4/(N+1)\<close>
-    by meson
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat.  \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2  < \<epsilon>\<close> 
-    by fastforce
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat.  \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2  < \<epsilon>^2\<close> 
-    by simp
-  have \<open> \<forall> m n. norm ( (r n) - (r m) ) \<ge> 0\<close>
-    by simp
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat.  \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>(norm ( (r n) - (r m) ) )  < \<epsilon>\<close> 
-    using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat.  \<forall> m n. m \<ge> N \<and> n \<ge> N \<longrightarrow>((norm ( (r n) - (r m) ) ))^2  < \<epsilon>^2\<close> 
-    by (meson less_le power2_less_imp_less)
-  hence \<open>Cauchy r\<close> 
-    by (metis Cauchy_def dist_norm)
-  hence \<open>convergent r\<close> 
-    using Cauchy_convergent_iff by auto
-  assume \<open>closed S\<close>
-  hence \<open>lim r \<in> S\<close> using \<open>convergent r\<close> 
-    using \<open>\<forall>n. r n \<in> S\<close> closed_sequentially convergent_LIMSEQ_iff by blast
-  have \<open>\<forall> t \<in> S. d^2 \<le> (norm t)^2 \<close>
-    by (simp add: \<open>\<forall>t\<in>S. dd \<le> (norm t)\<^sup>2\<close> \<open>d\<^sup>2 = dd\<close>)
-  hence \<open>\<forall> t \<in> S. d \<le> (norm t)\<close>
-    using norm_ge_zero power2_le_imp_le by blast    
-  obtain k::\<open>'a vector\<close> where  \<open>r \<longlonglongrightarrow> k\<close>
-    using \<open>convergent r\<close> convergentD by auto
-  have \<open>(\<lambda> n. (norm (r n))) \<longlonglongrightarrow> norm k\<close>
-    by (simp add: \<open>r \<longlonglongrightarrow> k\<close> tendsto_norm)
-  hence \<open>(\<lambda> n. (norm (r n))^2) \<longlonglongrightarrow> (norm k)^2\<close>
-    by (simp add: tendsto_power)
-  have \<open>dd \<le> (norm k)^2\<close> 
-    using \<open>\<forall>t\<in>S. dd \<le> (norm t)\<^sup>2\<close> \<open>lim r \<in> S\<close> \<open>r \<longlonglongrightarrow> k\<close> limI by auto
-  have \<open>(\<lambda> n::nat. dd + (1/(real (n+1)))) \<longlonglongrightarrow> (dd::real)\<close>
-    sorry
-  from \<open>\<forall> n. (norm (r n))^2 < dd + (1/(n+1))\<close>
-  have \<open>\<forall> n. (norm (r n))^2 \<le> dd + (1/(n+1))\<close>
-    by smt
-  hence  \<open>\<forall> n. (norm (r n))^2 \<le> dd + (1/(real (n+1)))\<close> 
-    by (metis Groups.add_ac(2) Suc_eq_plus1 \<open>\<forall>n. (norm (r n))\<^sup>2 < dd + 1 / (real n + 1)\<close> less_eq_real_def linorder_not_le semiring_1_class.of_nat_simps(2))
-  have \<open>(norm k)^2 \<le> dd\<close> 
-    using  \<open>\<forall> n. (norm (r n))^2 \<le> dd + (1/(real (n+1)))\<close>
-      \<open>(\<lambda> n::nat. dd + (1/(real (n+1)))) \<longlonglongrightarrow> (dd::real)\<close> \<open>(\<lambda> n. (norm (r n))^2) \<longlonglongrightarrow> (norm k)^2\<close>
-(*
-    unfolding tendsto_def
-    using lim_mono
-    by (metis One_nat_def \<open>(\<lambda>n. (norm (r n))\<^sup>2) \<longlonglongrightarrow> (norm k)\<^sup>2\<close> \<open>(\<lambda>n. dd + 1 / real (n + 1)) \<longlonglongrightarrow> dd\<close> \<open>(\<lambda>n. norm (r n)) \<longlonglongrightarrow> norm k\<close> add_0_right add_Suc_right convergent_def limI one_add_one)
-*)
-  sorry
-
-  have  \<open>(norm k)^2 = dd\<close> 
-    using \<open>(norm k)\<^sup>2 \<le> dd\<close> \<open>dd \<le> (norm k)\<^sup>2\<close> by linarith  
-  hence  \<open>(norm k)^2 = d^2\<close> 
-    by (simp add: \<open>d\<^sup>2 = dd\<close>)
-  hence  \<open>norm k = d\<close> 
-    using \<open>0 \<le> d\<close> by auto
-  have \<open>\<forall> t\<in>S. norm k \<le> norm t\<close>
-    by (simp add: \<open>\<forall>t\<in>S. d \<le> norm t\<close> \<open>norm k = d\<close>)
-  thus ?thesis 
-    using \<open>lim r \<in> S\<close> \<open>r \<longlonglongrightarrow> k\<close> limI by blast
-qed
-
-
-(* TODO: probably exists wrt. to other convex definition *)
-lemma TransConvex:
-  \<open>convex S \<Longrightarrow> convex {s + h| s. s \<in> S}\<close>
-proof-
-  assume \<open>convex S\<close>
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + (1 - t) *\<^sub>C y \<in> S\<close> 
-    by (simp add: Complex_L2.convex_def)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x + (1 - t) *\<^sub>C y) + h \<in> {s + h| s. s \<in> S}\<close> 
-    by blast
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x + (1 - t) *\<^sub>C y) + (t *\<^sub>C h + (1 - t) *\<^sub>C h) \<in> {s + h| s. s \<in> S}\<close> 
-    by (metis (no_types, lifting) add.commute scaleC_collapse)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + ( (1 - t) *\<^sub>C y + t *\<^sub>C h ) + (1 - t) *\<^sub>C h \<in> {s + h| s. s \<in> S}\<close> 
-    by (simp add: add.assoc)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C x + ( t *\<^sub>C h + (1 - t) *\<^sub>C y ) + (1 - t) *\<^sub>C h \<in> {s + h| s. s \<in> S}\<close> 
-    by (simp add: add.commute)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> (t *\<^sub>C x +  t *\<^sub>C h) + ((1 - t) *\<^sub>C y  + (1 - t) *\<^sub>C h) \<in> {s + h| s. s \<in> S}\<close> 
-    by (simp add: add.assoc)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x \<in> S \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
-    by (simp add: scaleC_add_right)
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x + h \<in> {s + h| s. s \<in> S} \<and> y \<in> S \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
-    by simp
-  hence \<open>\<forall> x::'a vector. \<forall> y::'a vector. \<forall> t::real.
-  (x + h \<in> {s + h| s. s \<in> S} \<and> y + h \<in> {s + h| s. s \<in> S}  \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C (x +  h) + (1 - t) *\<^sub>C (y  + h) \<in> {s + h| s. s \<in> S}\<close> 
-    by simp
-  hence \<open>\<forall> u::'a vector. \<forall> v::'a vector. \<forall> t::real.
-  (u \<in> {s + h| s. s \<in> S} \<and> v \<in> {s + h| s. s \<in> S}  \<and> 0 < t \<and> t < 1) \<longrightarrow> t *\<^sub>C u + (1 - t) *\<^sub>C v \<in> {s + h| s. s \<in> S}\<close> 
-    by blast
-  thus ?thesis 
-    by (simp add: Complex_L2.convex_def)
-qed
-
-(* TODO: continue discussing from here *)
-
-lemma preTransClosed:
-  \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<Longrightarrow>
-         convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close>
-proof-
-  assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
-  assume \<open>convergent t\<close>
-  assume \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
-  obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
-    by metis
-  from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
-  have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
-  from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
-  have  \<open>\<forall>n. r n \<in> S\<close> by simp
-  have \<open> convergent (\<lambda>n. t n) \<close> using  \<open>convergent t\<close> by blast
-  hence \<open> convergent (\<lambda>n. (r n) + h) \<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
-    by simp
-  have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
-    using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
-  hence \<open>\<exists>s. lim (\<lambda>n. t n) = s + h \<and> s \<in> S\<close> using  \<open>\<forall>n. t n = (r n) + h\<close> by simp
-  hence \<open>\<exists>s. lim t = s + h \<and> s \<in> S\<close> by simp
-  thus ?thesis by blast
-qed
-
-lemma TransClosed:
-  \<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
-proof-
-  assume \<open>closed S\<close>
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
-    using closed_sequentially convergent_LIMSEQ_iff by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
-    by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
-    by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
-    by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
-    by auto
-  have \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close>
-(*
-    unfolding lim_def tendsto_def
-    using tendsto_add
-    by metis
-*)
-    sorry
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
-    using  \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
-      add_diff_cancel_left' by auto
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
-    using convergent_add_const_right_iff by blast
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
-    using preTransClosed by auto
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
-    by simp
-  thus ?thesis using  convergent_LIMSEQ_iff 
-    by (metis (no_types, lifting) closed_sequential_limits limI)
-qed
-
-lemma TransNonEmpty:
-  \<open>(S::('a vector) set) \<noteq> {} \<Longrightarrow> {s + h| s. s \<in> S} \<noteq> {}\<close>
-  by simp
-
-lemma DistMinExistsConvex:
-  \<open>convex S \<Longrightarrow> closed S \<Longrightarrow> S \<noteq> {}  \<Longrightarrow> \<exists> k. (\<forall> t. t \<in> S \<longrightarrow> dist h k \<le> dist h t) \<and> k \<in> S\<close>
-proof-
-  assume \<open>convex S\<close>
-  hence \<open>\<forall> h. convex {s + h| s. s \<in> S}\<close> using TransConvex by auto
-  hence \<open>convex {s + (-h)| s. s \<in> S}\<close> by blast
-  assume \<open>closed S\<close>
-  hence \<open>\<forall> h. closed {s + h| s. s \<in> S}\<close> using TransClosed by auto
-  hence \<open>closed {s + (-h)| s. s \<in> S}\<close> by blast
-  assume \<open>S \<noteq> {}\<close>
-  hence \<open>\<forall> h. {s + h| s. s \<in> S} \<noteq> {}\<close> using TransNonEmpty by auto
-  hence \<open>{s + (-h)| s. s \<in> S} \<noteq> {}\<close> by blast
-  have \<open>\<exists> k. (\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
-    using DistMinExistsConvexZ \<open>Complex_L2.convex {s + - h |s. s \<in> S}\<close> \<open>closed {s + - h |s. s \<in> S}\<close> \<open>{s + - h |s. s \<in> S} \<noteq> {}\<close> by blast
-  have \<open>\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longleftrightarrow> t + h \<in> {s | s. s \<in> S}\<close>
-    by force
-  hence  \<open>\<exists> k. (\<forall> t. t + h \<in> {s| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
-    using  \<open>\<exists> k. (\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k \<in> {s + (-h)| s. s \<in> S}\<close>
-    by auto
-  hence  \<open>\<exists> k. (\<forall> t. t + h \<in> {s| s. s \<in> S} \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> {s| s. s \<in> S}\<close>
-    using  \<open>\<forall> t. t \<in> {s + (-h)| s. s \<in> S} \<longleftrightarrow> t + h \<in> {s | s. s \<in> S}\<close>
-    by auto
-  hence  \<open>\<exists> k. (\<forall> t. t + h \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> {s| s. s \<in> S}\<close>
-    by auto
-  hence  \<open>\<exists> k. (\<forall> t. t + h \<in> S \<longrightarrow> norm k \<le> norm t) \<and> k + h \<in> S\<close>
-    by auto
-  hence  \<open>\<exists> kk. (\<forall> t. t + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm t) \<and> (kk - h) + h \<in> S\<close>
-    by (metis add_diff_cancel diff_add_cancel)
-  hence  \<open>\<exists> kk. (\<forall> t. t + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm t) \<and> kk \<in> S\<close>
-    by simp
-  hence  \<open>\<exists> kk. (\<forall> tt. (tt - h) + h \<in> S \<longrightarrow> norm (kk - h) \<le> norm (tt - h)) \<and> kk \<in> S\<close>
-    by metis
-  hence  \<open>\<exists> kk. (\<forall> tt. tt \<in> S \<longrightarrow> norm (kk - h) \<le> norm (tt - h)) \<and> kk \<in> S\<close>
-    by simp
-  hence  \<open>\<exists> kk. (\<forall> tt. tt \<in> S \<longrightarrow> dist kk h \<le> dist tt h) \<and> kk \<in> S\<close>
-    using Real_Vector_Spaces.dist_norm_class.dist_norm by metis
-  hence  \<open>\<exists> kk. (\<forall> tt. tt \<in> S \<longrightarrow> dist h kk \<le> dist h tt) \<and> kk \<in> S\<close>
-    using Real_Vector_Spaces.metric_space_class.dist_commute 
-    by metis
-  thus ?thesis by blast
-qed
-
-lemma SubspaceConvex:
-  \<open>convex (subspace_as_set M)\<close>
-  by (metis Complex_L2.convex_def is_subspace.additive_closed is_subspace.smult_closed mem_Collect_eq subspace_to_set)
-
-lemma DistMinExists:
-  \<open>\<forall> h. \<exists> k. (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h k \<le> dist h t) 
- \<and> k \<in> subspace_as_set M\<close>
-proof-
-  have \<open>convex (subspace_as_set M)\<close> 
-    by (simp add: SubspaceConvex)
-  have \<open>closed (subspace_as_set M)\<close> 
-    using is_subspace.closed subspace_to_set by auto
-  have \<open>subspace_as_set M \<noteq> {}\<close> 
-    using is_subspace_contains_0 subspace_to_set by auto
-  from  \<open>convex (subspace_as_set M)\<close> \<open>closed (subspace_as_set M)\<close> \<open>subspace_as_set M \<noteq> {}\<close>
-  show ?thesis using DistMinExistsConvex by metis
-qed
-
-(* Definition of projection using distance *)
-definition DProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
-  \<open> DProjDefProp \<equiv>
- \<lambda> P. \<forall> M. \<forall> h.  (\<forall> t. t \<in> subspace_as_set M \<longrightarrow> dist h ((P M) h) \<le> dist h t) 
- \<and> (P M) h \<in> subspace_as_set M\<close>
-
-(* Existence of projection onto a subspace defined via distance *)
-lemma DProjDefPropE: 
-  \<open>\<exists> P. DProjDefProp P\<close>
-  using DProjDefProp_def DistMinExists 
-  by metis
-
-definition dproj :: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
-  \<open>dproj \<equiv> SOME P. DProjDefProp P\<close>
-
-lemma DProjDefPropE_explicit: 
-  \<open>DProjDefProp (dproj)\<close>
-  unfolding dproj_def
-  by (simp add: DProjDefPropE someI_ex)
-
-lemma dproj_ex1:
-  \<open>(dproj M) h \<in> subspace_as_set M\<close>
-  using DProjDefPropE_explicit 
-  by (metis DProjDefProp_def)
-
-lemma dproj_ex2:
-  \<open> t \<in> subspace_as_set M \<Longrightarrow> dist h ((dproj M) h) \<le> dist h t\<close>
-  using DProjDefPropE_explicit 
-  by (metis DProjDefProp_def)
-
-lemma predProjExistsA:
-  \<open>f \<in> subspace_as_set M \<Longrightarrow> 2 * Re ( cinner f ( h - ((dproj M) h) ) ) \<le> (norm f)^2\<close>
-  for M :: \<open>'a subspace\<close>
-proof-
-  assume \<open>f \<in> subspace_as_set M\<close>
-  have \<open>(dproj M) h \<in> subspace_as_set M\<close>
-    by (simp add: dproj_ex1)
-  hence \<open>(f + (dproj M) h) \<in> subspace_as_set M\<close> using \<open>f \<in> subspace_as_set M\<close> 
-    using is_subspace.additive_closed subspace_to_set by auto
-  hence \<open>dist h ((dproj M) h) \<le> dist h (f + (dproj M) h)\<close>
-    by (simp add: dproj_ex2)
-  hence \<open>norm (h - ((dproj M) h)) \<le> norm ( h - (f + (dproj M) h) )\<close>
-    by (simp add: dist_vector_def)
-  hence \<open>norm (h - ((dproj M) h))^2 \<le> norm ( h - (f + (dproj M) h) )^2\<close>
-    using norm_ge_zero power_mono by blast
-  hence \<open>norm (h - ((dproj M) h))^2 \<le> norm ( (h - (dproj M) h) - f )^2\<close>
-    by (simp add: diff_add_eq_diff_diff_swap)
-  hence \<open>norm (h - ((dproj M) h))^2 \<le> 
-    ( norm (h - ((dproj M) h)) )^2 + (norm f)^2 - 2*Re (cinner (h - (dproj M) h) f)\<close>
-    by (simp add: polarization_identity_minus)   
-
-  hence \<open>0 \<le> (norm f)^2 - 2*Re (cinner (h - (dproj M) h) f)\<close>  by linarith
-  hence \<open>2*Re (cinner (h - (dproj M) h) f) \<le> (norm f)^2\<close>  by simp
-  thus ?thesis  
-    by (smt add.commute polarization_identity_plus)
-qed
-
-
-lemma NormScalar:
-  \<open>norm (k *\<^sub>C f) = (abs k) *(norm f)\<close>
-  by (metis norm_scaleR scaleR_scaleC)
-
-lemma predProjExistsInv:
-  \<open>f \<in> subspace_as_set M \<Longrightarrow> cinner f (h - ((dproj M) h)) = 0\<close>
-  for M :: \<open>'a subspace\<close>
-proof(rule classical)
-  assume \<open>f \<in> subspace_as_set M\<close>
-  assume \<open>\<not> (cinner f ( h - ((dproj M) h) ) = 0)\<close>
-  hence  \<open>cinner f ( h - ((dproj M) h) ) \<noteq> 0\<close> by blast
-  then obtain r::real and u::complex where \<open>r > (0::real)\<close> and \<open>abs u = (1::real)\<close> 
-    and \<open>cinner f ( h - ((dproj M) h) ) = (complex_of_real r) * u\<close>
-    using polar_form by blast
-  have \<open>\<forall> t::real. ((complex_of_real t)*u) *\<^sub>C f \<in> subspace_as_set M\<close>
-    using \<open>f \<in> subspace_as_set M\<close> is_subspace.smult_closed subspace_to_set by auto
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> (norm ( ((complex_of_real t)*u) *\<^sub>C f ))^2\<close>
-    using predProjExistsA by blast
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> ( abs((complex_of_real t)*u) * (norm f) )^2\<close>
-    by (simp add: abs_complex_def less_eq_complex_def)
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> ( (abs (complex_of_real t))*(abs u) * (norm f) )^2\<close>
-    by (simp add: abs_mult)
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> ( (abs (complex_of_real t)) * (norm f) )^2\<close>
-    by (simp add: \<open>\<bar>u\<bar> = complex_of_real 1\<close>)
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> ( t * (norm f) )^2\<close>
-    using   complex_of_real_mono_iff of_real_mult of_real_power
-  proof -
-    have f1: "\<forall>r. r\<^sup>2 = (norm (of_real r::real))\<^sup>2"
-      by (metis norm_of_real power2_abs)
-    have f2: "1 = \<bar>u\<bar>"
-      by (simp add: \<open>\<bar>u\<bar> = complex_of_real 1\<close>)
-    have f3: "\<forall>v r. norm (timesScalarVec (complex_of_real r) (v::'a vector)) = norm (of_real (r * norm v)::real)"
-      by (simp add: abs_mult)
-    have "\<forall>c v. norm (timesScalarVec c (v::'a vector)) = norm (timesScalarVec \<bar>c\<bar> v)"
-      by (simp add: abs_complex_def)
-    then show ?thesis
-      using f3 f2 f1 by (metis (no_types) \<open>\<forall>t. 2 * Re (cinner (timesScalarVec (complex_of_real t * u) f) (h - dproj M h)) \<le> (norm (timesScalarVec (complex_of_real t * u) f))\<^sup>2\<close> mult.right_neutral scaleC_scaleC)
-  qed
-
-  hence \<open>\<forall> t::real. 2 * Re ( cinner ( ((complex_of_real t)*u) *\<^sub>C f ) ( h - ((dproj M) h) ) )
-       \<le> t^2 * (norm f)^2\<close>
-    by (simp add: power_mult_distrib)
-  hence \<open>\<forall> t::real. 2 * Re ( cnj ((complex_of_real t)*u) * cinner f ( h - ((dproj M) h) ) )
-       \<le> t^2 * (norm f)^2\<close>
-    by simp
-  hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * cnj u * cinner f ( h - ((dproj M) h) ) )
-       \<le> t^2 * (norm f)^2\<close>
-    by simp
-  hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * cnj u * (complex_of_real r)*u )
-       \<le> t^2 * (norm f)^2\<close>
-    by (metis \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> complex_scaleC_def mult_scaleC_left)
-  hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * (complex_of_real r) * (cnj u * u) )
-       \<le> t^2 * (norm f)^2\<close>
-    by (metis \<open>\<forall>t. 2 * Re (complex_of_real t * cnj u * cinner f (h - dproj M h)) \<le> t\<^sup>2 * (norm f)\<^sup>2\<close> \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> semiring_normalization_rules(13))
-  hence \<open>\<forall> t::real. 2 * Re ( (complex_of_real t) * (complex_of_real r) )
-       \<le> t^2 * (norm f)^2\<close>
-    using \<open>\<bar>u\<bar> = complex_of_real 1\<close> cnj_x_x by auto
-  hence \<open>\<forall> t::real. 2 * t * r \<le> t^2 * (norm f)^2\<close>
-  proof -
-    have "\<forall>ra. 2 * Re (complex_of_real ra * cnj u * (complex_of_real r * u)) \<le> (ra * norm f)\<^sup>2"
-      by (metis (no_types) \<open>\<forall>t. 2 * Re (complex_of_real t * cnj u * cinner f (h - dproj M h)) \<le> t\<^sup>2 * (norm f)\<^sup>2\<close> \<open>cinner f (h - dproj M h) = complex_of_real r * u\<close> power_mult_distrib)
-    then have f1: "\<forall>ra. 2 * Re (u * cnj u * complex_of_real (r * ra)) \<le> (ra * norm f)\<^sup>2"
-      by (simp add: mult.commute semiring_normalization_rules(13))
-    have f2: "\<forall>r. (1::real) * r = r"
-      by (metis mult.right_neutral mult_numeral_1)
-    have f3: "(1::complex) = 1\<^sup>2"
-      by auto
-    have "\<forall>c. \<bar>c\<bar>\<^sup>2 = c * cnj c"
-      by (metis cnj_x_x mult.commute)
-    then have "\<forall>ra. r * (2 * ra) \<le> (ra * norm f)\<^sup>2"
-      using f3 f2 f1 by (metis Re_complex_of_real \<open>\<bar>u\<bar> = complex_of_real 1\<close> of_real_1 of_real_mult semiring_normalization_rules(13))
-    then show ?thesis
-      by (simp add: mult.commute power_mult_distrib)
-  qed
-  hence \<open>\<forall> t::real. t > 0 \<longrightarrow> 2 * t * r \<le> t^2 * (norm f)^2\<close>
-    by simp
-  hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r)*t \<le> (t * (norm f)^2)*t\<close>
-    by (simp add: power2_eq_square)
-  hence \<open>\<forall> t::real. t > 0 \<longrightarrow> (2 * r) \<le> (t * (norm f)^2)\<close>
-    by simp
-
-  hence \<open>\<forall> t::real. t > 0 \<longrightarrow> r \<le> t * ( (norm f)^2/2 )\<close>
-    by auto
-  have \<open>r / ( (norm f)^2) > 0\<close> 
-    using \<open>0 < r\<close> \<open>\<forall>t>0. r \<le> t * ((norm f)\<^sup>2 / 2)\<close> zero_less_divide_iff by fastforce
-  hence \<open>r \<le> (r / ( (norm f)^2)) * ( (norm f)^2/2 )\<close>
-    using  \<open>\<forall> t::real. t > 0 \<longrightarrow> r \<le> t * ( (norm f)^2/2 )\<close>
-    by blast
-  hence \<open>1 \<le> 1/2\<close> 
-    by (smt \<open>0 < r / (norm f)\<^sup>2\<close> \<open>0 < r\<close> \<open>\<forall>t>0. 2 * r \<le> t * (norm f)\<^sup>2\<close> eq_divide_eq)
-  thus ?thesis 
-    by (smt half_bounded_equal)
-qed
-
-
-lemma predProjExists:
-  \<open>f \<in> subspace_as_set M \<Longrightarrow> cinner (h - ((dproj M) h)) f = 0\<close>
-  for M :: \<open>'a subspace\<close>
-  using predProjExistsInv 
-  by (metis cinner_commute complex_cnj_zero)
-
-lemma dProjExists:
-  \<open>h - ((dproj M) h) \<in> subspace_as_set (ortho M)\<close>
-  for M :: \<open>'a subspace\<close>
-  using predProjExists 
-  by (simp add: predProjExists is_orthogonal_def ortho.rep_eq orthogonal_complement_def)
-
-(* Existence of the projection onto a subspace *)
-lemma ProjExists:
-  \<open>\<exists> k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
-  for M :: \<open>'a subspace\<close>
-  using dProjExists dproj_ex1 by blast
-
-
-lemma SubspaceAndOrthoEq0A:
-  \<open>(0::'a vector) \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
-  using is_subspace_contains_0 subspace_to_set by auto
-
-lemma SubspaceAndOrthoEq0B:
-  \<open>x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<Longrightarrow> x = (0::'a vector)\<close>
-proof-
-  assume \<open>x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
-  hence \<open>x \<in> subspace_as_set M\<close> 
-    by auto
-  have \<open>x \<in> subspace_as_set (ortho M)\<close> 
-    using \<open>x \<in> subspace_as_set M \<inter> subspace_as_set (ortho M)\<close> by auto
-  hence \<open>cinner x x = 0\<close>   
-    sorry
-(*    by (simp add: \<open>x \<in> subspace_as_set M\<close> is_orthogonal_def ortho.rep_eq) *)
-  thus ?thesis
-    by auto
-qed
-
-lemma SubspaceAndOrthoEq0AA:
-  \<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<supseteq> { (0::'a vector) } \<close>
-  using SubspaceAndOrthoEq0A
-  by blast
-
-lemma SubspaceAndOrthoEq0BB:
-  \<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<subseteq> { (0::'a vector) } \<close>
-  using SubspaceAndOrthoEq0B
-  by blast
-
-lemma SubspaceAndOrthoEq0:
-  \<open>(subspace_as_set M) \<inter> (subspace_as_set (ortho M)) = { (0::'a vector) } \<close>
-  using SubspaceAndOrthoEq0AA SubspaceAndOrthoEq0BB
-  by blast
-
-lemma SubspaceAndOrtho:
-  \<open>r - s \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M)) \<Longrightarrow> r = s\<close>
-  by (metis SubspaceAndOrthoEq0 eq_iff_diff_eq_0 singletonD subspace_zero_bot zero_subspace.rep_eq)
-
-(* Uniqueness of the projection onto a subspace *)
-lemma ProjUnique:
-  \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M \<Longrightarrow>
- h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M \<Longrightarrow>
-r = s\<close>
-  for M :: \<open>'a subspace\<close>
-proof-
-  assume \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>
-  assume \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>
-  have \<open>h - r \<in> subspace_as_set (ortho M)\<close> 
-    by (simp add: \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>)
-  have \<open>h - s \<in> subspace_as_set (ortho M)\<close>
-    by (simp add: \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>)
-  have \<open>r \<in> subspace_as_set M\<close>
-    by (simp add: \<open>h - r \<in> subspace_as_set (ortho M) \<and> r \<in> subspace_as_set M\<close>)
-  have \<open>s \<in> subspace_as_set M\<close>
-    by (simp add: \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close>)
-  have \<open>r - s \<in> subspace_as_set M\<close>
-    by (metis \<open>h - s \<in> subspace_as_set (ortho M) \<and> s \<in> subspace_as_set M\<close> \<open>r \<in> subspace_as_set M\<close> is_subspace.additive_closed is_subspace.smult_closed mem_Collect_eq scaleC_minus1_left subspace_to_set uminus_add_conv_diff)
-
-
-  have \<open>(h - s) - (h - r) \<in> subspace_as_set (ortho M)\<close>
-    using \<open>h - s \<in> subspace_as_set (ortho M)\<close> \<open>h - r \<in> subspace_as_set (ortho M)\<close> 
-    by (metis \<open>h - r \<in> subspace_as_set (ortho M)\<close> \<open>h - s \<in> subspace_as_set (ortho M)\<close> ab_group_add_class.ab_diff_conv_add_uminus is_subspace.additive_closed is_subspace.smult_closed mem_Collect_eq scaleC_minus1_left subspace_to_set)
-  
-  hence \<open>r - s \<in> subspace_as_set (ortho M)\<close>
-    by simp
-  hence \<open>r - s \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
-    using  \<open>r - s \<in> subspace_as_set M\<close>
-    by simp
-  thus ?thesis
-    using SubspaceAndOrtho by auto
-qed
-
-(* Existence and uniqueness of the projection onto a subspace *)
-lemma preProjExistsUnique:
-  \<open>\<forall> h::'a vector. \<exists>! k::'a vector. h - k \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M\<close>
-  for M :: \<open>'a subspace\<close>
-  apply auto
-  using ProjExists apply blast
-  using ProjUnique by auto
-
-(* Defining property of the projection *)
-definition ProjDefProp:: \<open>('a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)) \<Rightarrow> bool\<close> where
-  \<open>ProjDefProp \<equiv>
- \<lambda> P. \<forall> M. \<forall> h. h - (P M) h \<in> subspace_as_set (ortho M) \<and> (P M) h \<in> subspace_as_set M\<close>
-
-lemma ProjExistsUnique:
-  \<open>\<exists> P. ProjDefProp P\<close>
-  using preProjExistsUnique ProjDefProp_def
-  by metis
-
-definition proj:: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
-  \<open>proj \<equiv> SOME P. ProjDefProp P\<close>
-
-lemma ProjExistsUniqueI_ex:
-  \<open>ProjDefProp proj\<close>
-  unfolding proj_def  
-  by (simp add: ProjExistsUnique exE_some)
-
-lemma projE1:
-  \<open>h - (proj M) h \<in> subspace_as_set (ortho M)\<close>
-  using ProjExistsUniqueI_ex
-  by (metis ProjDefProp_def)
-
-lemma projE2:
-  \<open>(proj M) h \<in> subspace_as_set M\<close>
-  using ProjExistsUniqueI_ex
-  by (metis ProjDefProp_def)
-
-
-lemma proj_kernelA:
-  \<open>h \<in> subspace_as_set (ortho M) \<Longrightarrow> (proj M) h = (0::'a vector)\<close>
-  by (metis diff_zero is_subspace_contains_0 mem_Collect_eq preProjExistsUnique projE1 projE2 subspace_to_set)
-
-lemma proj_kernelB:
-  \<open>(proj M) h = (0::'a vector)  \<Longrightarrow> h \<in> subspace_as_set (ortho M)\<close>
-  by (metis diff_zero projE1)
-
-lemma proj_kernel:
-  \<open>(proj M) h = (0::'a vector)  \<longleftrightarrow> h \<in> subspace_as_set (ortho M)\<close>
-  using proj_kernelA proj_kernelB
-  by blast
-
-lemma proj_idempotency:
-  \<open>(proj M) ((proj M) h) = (proj M) h\<close>
-  by (metis cancel_comm_monoid_add_class.diff_cancel is_subspace_contains_0 mem_Collect_eq preProjExistsUnique projE1 projE2 proj_kernelA subspace_to_set)
-
-lemma proj_ranAA:
-  \<open>(proj M) h \<in> subspace_as_set M\<close>
-  by (simp add: projE2)
-
-lemma proj_ranA:
-  \<open>\<exists> k ::'a vector. h = (proj M) k \<Longrightarrow> h \<in> subspace_as_set M\<close>
-  using proj_ranAA
-  by auto
-
-lemma proj_ranB:
-  \<open>h \<in> subspace_as_set M \<Longrightarrow> (\<exists> k ::'a vector. h = (proj M) k)\<close>
-  by (metis Abs_subspace_cases Abs_subspace_inverse cancel_comm_monoid_add_class.diff_cancel  preProjExistsUnique projE1  proj_kernel proj_ranA)
-
-lemma proj_ran:
-  \<open>(\<exists> k ::'a vector. h = (proj M) k) \<longleftrightarrow> h \<in> subspace_as_set M\<close>
-  using proj_ranA proj_ranB
-  by blast
-
-(* Identity operator for 'a vectors *)
-definition IdV ::\<open>'a vector \<Rightarrow> 'a vector\<close> where
-  \<open>IdV \<equiv> \<lambda> x::'a vector. x\<close>
-
-lemma ProjOntoOrthoA:
-  \<open> (IdV -  proj M) x \<in> subspace_as_set (ortho M) \<close>
-  by (simp add: IdV_def projE1)
-
-lemma preProjOntoOrthoBX:
-  \<open>  x \<in> subspace_as_set M \<Longrightarrow> x \<in> subspace_as_set (ortho (ortho M)) \<close>
-proof-
-  assume \<open>x \<in> subspace_as_set M\<close>
-  have \<open>\<forall> y \<in> subspace_as_set (ortho M). cinner x y = 0\<close> 
-(* 
-    using \<open>x \<in> subspace_as_set M\<close> is_orthogonal_def ortho.rep_eq orthogonal_comm 
-    by fastforce *)
-    sorry
-  thus ?thesis sorry
-(*  by (simp add: is_orthogonal_def ortho.rep_eq) *)
-qed
-
-lemma preProjOntoOrthoB:
-  \<open>  proj M x \<in> subspace_as_set (ortho (ortho M)) \<close>
-  using preProjOntoOrthoBX 
-  using proj_ranA by blast
-
-lemma ProjOntoOrthoB:
-  \<open> x - ((IdV -  proj M) x) \<in> subspace_as_set (ortho (ortho M)) \<close>
-  unfolding IdV_def
-  apply auto
-  using preProjOntoOrthoB by blast
-
-lemma proj_uniq:
-  \<open>    \<forall> x. x - P x \<in> subspace_as_set (ortho M)
- \<Longrightarrow> \<forall> x. P x \<in> subspace_as_set M
- \<Longrightarrow> P = proj M \<close>
-proof-
-  assume \<open>\<forall> x. x - P x \<in> subspace_as_set (ortho M)\<close>
-  assume \<open>\<forall> x. P x \<in> subspace_as_set M\<close>
-  have  \<open>\<forall> x. x - (proj M) x \<in> subspace_as_set (ortho M)\<close>
-    by (simp add: projE1)
-  have  \<open>\<forall> x.  (proj M) x \<in> subspace_as_set  M\<close>
-    by (simp add: proj_ranAA)
-  have  \<open>\<forall> x.  P x - (proj M) x \<in> subspace_as_set  M\<close>
-    using ProjUnique SubspaceAndOrthoEq0 \<open>\<forall>x. P x \<in> subspace_as_set M\<close> \<open>\<forall>x. proj M x \<in> subspace_as_set M\<close> \<open>\<forall>x. x - P x \<in> subspace_as_set (ortho M)\<close> projE1 by fastforce
-
-  have  \<open>\<forall> x.  (x - (proj M) x) -  (x - P x) \<in> subspace_as_set (ortho M)\<close>
-    using ProjUnique SubspaceAndOrthoEq0 \<open>\<forall>x. P x \<in> subspace_as_set M\<close> \<open>\<forall>x. proj M x \<in> subspace_as_set M\<close> \<open>\<forall>x. x - P x \<in> subspace_as_set (ortho M)\<close> projE1 by fastforce
-
-  hence \<open>\<forall> x.  P x - (proj M) x \<in> subspace_as_set (ortho M)\<close>
-    using add_diff_cancel_left by auto
-  hence  \<open>\<forall> x.  P x - (proj M) x \<in> (subspace_as_set M) \<inter> (subspace_as_set (ortho M))\<close>
-    by (simp add: \<open>\<forall>x. P x - proj M x \<in> subspace_as_set M\<close>)
-  hence \<open>\<forall> x. P x - (proj M) x = (0::'a vector)\<close> 
-    by (simp add: SubspaceAndOrthoEq0)
-  hence \<open>\<forall> x. P x =  (proj M) x\<close> 
-    by auto
-  thus ?thesis by auto
-qed
-
-lemma ProjOntoOrtho:
-  \<open> IdV -  proj M = proj (ortho M) \<close>
-  using ProjOntoOrthoA ProjOntoOrthoB proj_uniq 
-  by (metis dProjExists dproj_ex1 minus_apply)
-
-lemma IdVMinusProjKernelA:
-  \<open>(  IdV - (proj  M) ) x = (0::'a vector) \<Longrightarrow>  x \<in> subspace_as_set M\<close>
-  by (metis IdV_def add.inverse_neutral diff_0 diff_eq_diff_eq minus_apply proj_ranA)
-
-lemma IdVMinusProjKernelB:
-  \<open>x \<in> subspace_as_set M \<Longrightarrow> (  IdV - (proj  M) ) x = (0::'a vector)\<close>
-  by (metis IdV_def fun_diff_def proj_idempotency proj_ranB right_minus_eq)
-
-lemma IdVMinusProjKernel:
-  \<open> \<forall> x. (  IdV - (proj  M) ) x = (0::'a vector) \<longleftrightarrow>  x \<in> subspace_as_set M\<close>
-  using IdVMinusProjKernelA IdVMinusProjKernelB by blast
-
-(* TODO \<rightarrow> Complex_Inner_Product *)
-lemma orthogonal_complement_twice:
-  fixes M :: "'a::complex_inner set" (* TODO: probably needs stronger type class *)
+corollary orthogonal_complement_twice:
+  fixes M :: "('a vector) set" 
   assumes "is_subspace M"
   shows "orthogonal_complement (orthogonal_complement M) = M"
-  sorry
+  by (metis Abs_subspace_inverse assms mem_Collect_eq ortho.rep_eq ortho_twice)
 
-(* TODO \<rightarrow> Complex_Inner_Product *)
-lemma orthogonal_complement_is_subspace:
+corollary orthogonal_complement_is_subspace:
   assumes "is_subspace M"
   shows "is_subspace (orthogonal_complement M)"
-  sorry
+  by (simp add: assms)
 
-(* Could be made the definition of ortho *)
-lemma "subspace_as_set (ortho M) = orthogonal_complement (subspace_as_set M)"
-  sorry
+corollary "subspace_as_set (ortho M) = orthogonal_complement (subspace_as_set M)"
+  using Complex_L2.ortho.rep_eq by auto
 
-*)
 
 end
