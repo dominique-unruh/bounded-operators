@@ -818,8 +818,10 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_su
 lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 
-(* TODO remove *)                               
+
+(* TODO remove *)
 abbreviation subspace_as_set :: "'a subspace \<Rightarrow> 'a vector set" where "subspace_as_set == subspace_to_set"
+
 
 definition [code del]: "span A = Inf {S. A \<subseteq> subspace_as_set S}"
   (* definition [code del]: "spanState A = Inf {S. state_to_vector ` A \<subseteq> subspace_as_set S}" *)
@@ -865,26 +867,39 @@ thm LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
 subsection {* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *}
 
+(*
 (* TODO: replace by arg_min_on *)
 definition Reaches_Min :: \<open>('a \<Rightarrow> real) \<Rightarrow> 'a set  \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>Reaches_Min \<equiv> \<lambda> f. \<lambda> M. \<lambda> k. (\<forall> t. t \<in> M \<longrightarrow> f k \<le> f t) \<and> k \<in> M\<close>
+*)
 
 (* find_theorems name:min name:exist
 find_consts name:min
  *)
-
+(*
 (* k is the minimum of f on S *)
 abbreviation reaches_min_abb :: \<open>'a \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> 'a set \<Rightarrow> bool\<close> ("_ min _ on _" [20, 20, 20] 50) where
   \<open>(k min f on M) \<equiv> Reaches_Min f M k\<close>
+*)
+
+definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
+  \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
+
 
 lemma ExistenceUniquenessMinNorm:
-  fixes M :: \<open>('a vector) set\<close> (* TODO: use most general type class, banach_space *)
+  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
+  shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
+(*
+It is not possible to generalize to Banach spaces, at least in the obvious way, the results from 
+Conway's book, in which the parallelogram law is involved, because a Banach space in which this 
+identity holds is automatically a Hilbert space.
+*)
+
 proof-
-  have \<open>\<exists> k. k min (\<lambda> x. \<parallel>x\<parallel>) on M\<close> 
+  have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
   proof-
-    have \<open>\<exists> k. k min (\<lambda> x. (\<parallel>x\<parallel>)^2) on M\<close>
+    have \<open>\<exists> k. is_arg_min_on (\<lambda> x. (\<parallel>x\<parallel>)^2) M k\<close>
     proof-
       obtain d where \<open>d = Inf { (\<parallel>x\<parallel>)^2 | x. x \<in> M }\<close>
         by blast
@@ -915,7 +930,7 @@ proof-
           by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close>)
         thus ?thesis by auto
       qed
-      then obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall> n. r n \<in> M \<and>  (\<parallel> r n \<parallel>)^2 < d + 1/(n+1)\<close>
+      then obtain r::\<open>nat \<Rightarrow> 'a::{complex_inner, complete_space}\<close> where \<open>\<forall> n. r n \<in> M \<and>  (\<parallel> r n \<parallel>)^2 < d + 1/(n+1)\<close>
         by metis
       have \<open>\<forall> n. r n \<in> M\<close> 
         by (simp add: \<open>\<forall>n. r n \<in> M \<and>  (\<parallel>r n\<parallel>)\<^sup>2 < d + 1 / (real n + 1)\<close>)
@@ -1035,17 +1050,20 @@ proof-
         using LIMSEQ_unique by auto
       hence \<open>t \<in> M \<Longrightarrow> (\<parallel> k \<parallel>)^2 \<le> (\<parallel> t \<parallel>)^2\<close> for t
         using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> (\<parallel>x\<parallel>)\<^sup>2\<close> by auto
-      thus ?thesis using \<open>k \<in> M\<close> 
-        by (metis Reaches_Min_def \<open>d = (\<parallel>k\<parallel>)\<^sup>2\<close>)
+      thus ?thesis using \<open>k \<in> M\<close>
+        unfolding is_arg_min_on_def
+        using is_arg_min_def \<open>d = (\<parallel>k\<parallel>)\<^sup>2\<close>
+        by smt
     qed
 
     thus ?thesis 
-      by (smt Reaches_Min_def norm_ge_zero power2_eq_square power2_le_imp_le)
+      unfolding is_arg_min_on_def
+      by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
   qed
-  moreover have \<open>r min (\<lambda> x. \<parallel>x\<parallel>) on M \<Longrightarrow> s min (\<lambda> x. \<parallel>x\<parallel>) on M \<Longrightarrow> r = s\<close> for r s
+  moreover have \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r \<Longrightarrow> is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s \<Longrightarrow> r = s\<close> for r s
   proof-
-    assume \<open>r min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
-    assume \<open>s min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
+    assume \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close>
+    assume \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>
     have \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>)^2
       = (1/2)*( (\<parallel>r\<parallel>)^2 + (\<parallel>s\<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)^2\<close> 
       using  ParallelogramLawVersion1 
@@ -1053,22 +1071,32 @@ proof-
     moreover have \<open>(\<parallel>r\<parallel>)^2 \<le> (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)^2\<close>
     proof-
       have \<open>r \<in> M\<close> 
-        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close>)
+        using \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close>
+        by (simp add: is_arg_min_def is_arg_min_on_def)
       moreover have \<open>s \<in> M\<close> 
-        by (meson Reaches_Min_def \<open>s min norm_abbr on M\<close>)
-      ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close> 
+        using \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>
+        by (simp add: is_arg_min_def is_arg_min_on_def)
+      ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
         by (simp add: convexD)
-      hence \<open>(\<parallel>r\<parallel>) \<le> (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)\<close>
-        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close>)
-      thus ?thesis 
-        by (simp add: power_mono)
+      hence \<open> (\<parallel>r\<parallel>) \<le> (\<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>)\<close>
+        using  \<open>is_arg_min_on norm_abbr M r\<close>
+        unfolding is_arg_min_on_def
+        by (smt is_arg_min_def)
+      thus ?thesis
+        using norm_ge_zero power_mono by blast
     qed
-    moreover have \<open>(\<parallel>r\<parallel>)^2 = (\<parallel>s\<parallel>)^2\<close>
+    moreover have \<open>(\<parallel>r\<parallel>) = (\<parallel>s\<parallel>)\<close>
     proof-
       have \<open>(\<parallel>r\<parallel>) \<le> (\<parallel>s\<parallel>)\<close> 
-        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close> \<open>s min norm_abbr on M\<close>)
-      moreover have \<open>(\<parallel>s\<parallel>) \<le> (\<parallel>r\<parallel>)\<close> 
-        by (meson Reaches_Min_def \<open>r min norm_abbr on M\<close> \<open>s min norm_abbr on M\<close>)
+        using  \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close> \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>  is_arg_min_def 
+        unfolding is_arg_min_on_def
+        by smt
+
+      moreover have \<open>(\<parallel>s\<parallel>) \<le> (\<parallel>r\<parallel>)\<close>
+        using  \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close> \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>  is_arg_min_def 
+        unfolding is_arg_min_on_def
+        by smt
+
       ultimately show ?thesis by simp
     qed
     ultimately have \<open>(\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>)^2 \<le> 0\<close>
@@ -1088,7 +1116,6 @@ qed
 term  "x::_::topological_monoid_add"
 
 find_theorems "closed" "(+)"
-
 
 
 (* Connected.closed_translation shows the same thing, but only for 'a::real_normed_vector *)
@@ -1451,7 +1478,7 @@ qed
 
 lemma SubspaceConvex:
   \<open>convex (subspace_as_set M)\<close> for M :: \<open>'a subspace\<close>
-(* TODO: for M :: "'a::sometypeclass set" *)
+  (* TODO: for M :: "'a::sometypeclass set" *)
 proof-
   have \<open>\<forall>x\<in>(subspace_as_set M). \<forall>y\<in>(subspace_as_set M). \<forall>u. \<forall>v. u *\<^sub>C x + v *\<^sub>C y \<in> (subspace_as_set M)\<close>
     by (metis is_subspace.additive_closed is_subspace.smult_closed mem_Collect_eq subspace_to_set)
@@ -1505,7 +1532,7 @@ definition additive_op :: \<open>('a::semigroup_add \<Rightarrow> 'a::semigroup_
   \<open>additive_op f = (\<forall> x. \<forall> y. f (x + y) = f x + f y)\<close>
 
 term bounded_clinear
-(*
+  (*
 term bounded_clinear
 
 context additive begin
@@ -1904,7 +1931,7 @@ qed
 (* Not all bounded operators have closed range, e.g., the projections onto open subspaces *)
 
 lemma ran_op_lin:
-(* TODO: using sets *)
+  (* TODO: using sets *)
   \<open>bounded_linear_op f \<Longrightarrow> subspace_as_set (ran_op f) = closure {x. \<exists> y. f y = x}\<close>
 proof-
   assume \<open>bounded_linear_op f\<close>
@@ -1960,7 +1987,7 @@ qed
 
 theorem projPropertiesE:
   \<open>ran_op  (proj M) = M\<close>
-(* TODO using sets *)
+  (* TODO using sets *)
   (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   have \<open>x \<in> subspace_as_set M \<Longrightarrow> x \<in> subspace_as_set (ran_op  (proj M))\<close> for x
