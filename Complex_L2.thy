@@ -580,12 +580,12 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-abbreviation cinner_Dirac::"'a vector \<Rightarrow> 'a vector \<Rightarrow> complex" ( "\<langle>_ | _\<rangle> " [20, 20] 50 )
+abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle>_ | _\<rangle> " )
   where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
 
 definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
 
-abbreviation is_orthogonal_abbr::"'a vector \<Rightarrow> 'a vector \<Rightarrow> bool" ( "_ \<bottom> _ " [20, 20] 50 )
+abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
   where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
 
 definition "orthogonal_complement S = {x. \<forall>y\<in>S. x \<bottom> y}" 
@@ -865,15 +865,20 @@ thm LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
 subsection {* There exists a unique point k in M such that the distance between h and M reaches
  its minimum at k *}
 
+(* TODO: replace by arg_min_on *)
 definition Reaches_Min :: \<open>('a \<Rightarrow> real) \<Rightarrow> 'a set  \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>Reaches_Min \<equiv> \<lambda> f. \<lambda> M. \<lambda> k. (\<forall> t. t \<in> M \<longrightarrow> f k \<le> f t) \<and> k \<in> M\<close>
+
+(* find_theorems name:min name:exist
+find_consts name:min
+ *)
 
 (* k is the minimum of f on S *)
 abbreviation reaches_min_abb :: \<open>'a \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> 'a set \<Rightarrow> bool\<close> ("_ min _ on _" [20, 20, 20] 50) where
   \<open>(k min f on M) \<equiv> Reaches_Min f M k\<close>
 
 lemma ExistenceUniquenessMinNorm:
-  fixes M :: \<open>('a vector) set\<close>
+  fixes M :: \<open>('a vector) set\<close> (* TODO: use most general type class, banach_space *)
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on M\<close>
 proof-
@@ -1080,21 +1085,28 @@ proof-
     by auto
 qed
 
+term  "x::_::topological_monoid_add"
+
+find_theorems "closed" "(+)"
+
+
+
+(* Connected.closed_translation shows the same thing, but only for 'a::real_normed_vector *)
 lemma TransClosed:
-  \<open>closed (S::('a vector) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
+  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
 proof-
   assume \<open>closed S\<close>
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
     using closed_sequentially convergent_LIMSEQ_iff by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
     by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
     by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
     by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
     by auto
-  have \<open>convergent r \<Longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close> for r::\<open>nat \<Rightarrow> 'a vector\<close>
+  have \<open>convergent r \<Longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close> for r::\<open>nat \<Rightarrow> 'a\<close>
   proof-
     assume \<open>convergent r\<close>
     then obtain R where \<open>r \<longlonglongrightarrow> R\<close>
@@ -1107,19 +1119,19 @@ proof-
     thus ?thesis 
       by (metis \<open>r \<longlonglongrightarrow> R\<close> limI)
   qed
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
-    using  \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
+    using  \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
       add_diff_cancel_left' by auto
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
     using convergent_add_const_right_iff by blast
-  have \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a vector)) \<and> (\<forall>n. r n \<in> S)
+  have \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a)) \<and> (\<forall>n. r n \<in> S)
  \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)
  \<Longrightarrow>   convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close> for t
   proof-
     assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
     assume \<open>convergent t\<close>
     assume \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
-    obtain r::\<open>nat \<Rightarrow> 'a vector\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+    obtain r::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
       by metis
     from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
     have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
@@ -1134,14 +1146,15 @@ proof-
     hence \<open>\<exists>s. lim t = s + h \<and> s \<in> S\<close> by simp
     thus ?thesis by blast
   qed
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
     using \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n + h \<in> {s + h |s. s \<in> S}) \<longrightarrow> lim (\<lambda>n. r n + h) \<in> {s + h |s. s \<in> S}\<close> by auto   
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a vector. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> t::nat \<Rightarrow> 'a. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
     by simp
-  thus ?thesis using  convergent_LIMSEQ_iff 
+  thus ?thesis unfolding convergent_LIMSEQ_iff 
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
 
+(* TODO: probably exists *)
 lemma TransConvex:
   \<open>convex S \<Longrightarrow> convex {s - h| s. s \<in> S}\<close>
 proof-
@@ -1168,7 +1181,7 @@ qed
 
 
 theorem ExistenceUniquenessMinDist:
-  fixes M :: \<open>('a vector) set\<close> and h :: \<open>'a vector\<close>
+  fixes M :: \<open>('a vector) set\<close> and h :: \<open>'a vector\<close> (* TODO: generalize type class *)
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. k min (\<lambda> x. dist x h) on M\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
@@ -1258,6 +1271,18 @@ proof-
     by (simp add: dist_norm)
   ultimately show ?thesis by simp
 qed
+
+term closed_linear_set
+theorem DistMinOrtho:
+  fixes M::\<open>'a::complex_inner set\<close> and h k::\<open>'a\<close> (* or some similar class *)
+  assumes "is_subspace M"
+  shows  \<open>( k min (\<lambda> x. dist x h) on M )
+       \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
+
+(* 
+  term "orthogonal_comp"
+  term "orthogonal"
+ *)
 
 theorem DistMinOrtho:
   fixes M::\<open>'a subspace\<close> and h k::\<open>'a vector\<close>
@@ -1426,6 +1451,7 @@ qed
 
 lemma SubspaceConvex:
   \<open>convex (subspace_as_set M)\<close> for M :: \<open>'a subspace\<close>
+(* TODO: for M :: "'a::sometypeclass set" *)
 proof-
   have \<open>\<forall>x\<in>(subspace_as_set M). \<forall>y\<in>(subspace_as_set M). \<forall>u. \<forall>v. u *\<^sub>C x + v *\<^sub>C y \<in> (subspace_as_set M)\<close>
     by (metis is_subspace.additive_closed is_subspace.smult_closed mem_Collect_eq subspace_to_set)
@@ -1437,7 +1463,7 @@ proof-
 qed
 
 corollary ExistenceUniquenessProj:
-  fixes M :: \<open>'a subspace\<close>
+  fixes M :: \<open>'a subspace\<close> (* TODO: 'a set *)
   shows  \<open>\<forall> h. \<exists>! k. (h - k) \<in> subspace_as_set ( ortho M ) \<and> k \<in> subspace_as_set M\<close>
 proof-  
   have \<open>subspace_as_set M \<noteq> {}\<close> 
@@ -1453,7 +1479,7 @@ proof-
 qed
 
 (* Definition of projection onto the subspace M *)
-definition proj :: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where
+definition proj :: \<open>'a subspace \<Rightarrow> ('a vector \<Rightarrow> 'a vector)\<close> where (* using 'a::something set, 'a\<Rightarrow>'a *)
   \<open>proj \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> subspace_as_set (ortho M) \<and> k \<in> subspace_as_set M)\<close>
 
 lemma proj_intro1:
@@ -1469,20 +1495,51 @@ lemma proj_fixed_points:
   by (metis (no_types, hide_lams) Abs_subspace_cases Abs_subspace_inverse  ExistenceUniquenessProj  is_subspace_contains_0  mem_Collect_eq  proj_intro1 proj_intro2 right_minus_eq)
 
 (* Homogeneous degree 1 operator *)
+(* TODO perhaps not define? (Equivalent to the scaleC axiom in locale clinear) *)
 definition homogeneous_deg_1_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> bool\<close> where
-  \<open>homogeneous_deg_1_op \<equiv> \<lambda> f. \<forall> x. \<forall> t. f (t *\<^sub>C x) = t *\<^sub>C f x\<close>
+  \<open>homogeneous_deg_1_op f = (\<forall> x. \<forall> t. f (t *\<^sub>C x) = t *\<^sub>C f x)\<close>
 
 (* Additive operator *)
-definition additive_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> bool\<close> where
-  \<open>additive_op \<equiv> \<lambda> f. \<forall> x. \<forall> y. f (x + y) = f x + f y\<close>
+(* TODO: use Modules.additive instead *)
+definition additive_op :: \<open>('a::semigroup_add \<Rightarrow> 'a::semigroup_add) \<Rightarrow> bool\<close> where
+  \<open>additive_op f = (\<forall> x. \<forall> y. f (x + y) = f x + f y)\<close>
+
+term bounded_clinear
+(*
+term bounded_clinear
+
+context additive begin
+thm zero
+end
+
+thm additive.zero
+term Modules.additive
+thm Modules.additive_def
+*)
 
 (* Bounded operator*)
+(* TODO: Use bounded_clinear, and clinear *)
 definition bounded_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> bool\<close> where
-  \<open>bounded_op \<equiv> \<lambda> f. \<exists> M > 0. \<forall> x. (\<parallel> f x \<parallel>) \<le> M * (\<parallel> x \<parallel>) \<close>
+  \<open>bounded_op \<equiv> \<lambda> f. \<exists> M > 0. \<forall> x. \<parallel> f x \<parallel> \<le> M * \<parallel> x \<parallel> \<close>
+
+(* term \<open>\<lambda> f. \<exists> M > 0. \<forall> x. (\<parallel> f x \<parallel>) \<le> M * (\<parallel> x \<parallel>) \<close>
+term   \<open>\<lambda> f. \<exists> M > 0. \<forall> x. (\<bar> f x \<bar>) \<le> M * (\<bar> x \<bar>) \<close>
+term abs
+ *)
 
 (* Linear operator *)
 definition bounded_linear_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> bool\<close> where
   \<open>bounded_linear_op \<equiv> \<lambda> f. homogeneous_deg_1_op f \<and> additive_op f \<and> bounded_op f\<close>
+
+find_theorems "open ?S" "open (?f -` ?S)"
+find_theorems "?r \<longlonglongrightarrow> ?L"  "(\<lambda> n. ?f (?r n)) \<longlonglongrightarrow> ?f ?L"
+find_theorems isCont "_ \<longlonglongrightarrow> _"
+
+thm continuous_at_sequentiallyI
+
+lemma bounded_linear_continuous:
+  assumes \<open>bounded_clinear f\<close> (* Or: bounded_linear *)
+  shows "isCont f x"
 
 lemma bounded_linear_continuous:
   \<open>bounded_linear_op f  \<Longrightarrow> r \<longlonglongrightarrow> L  \<Longrightarrow> (\<lambda> n. f (r n)) \<longlonglongrightarrow> f L\<close> 
@@ -1510,23 +1567,28 @@ proof-
 qed
 
 (* Homogeneous degree 1 set *)
+(* TODO remove? *)
 definition homogeneous_deg_1_set :: \<open>('a vector) set \<Rightarrow> bool\<close> where
   \<open>homogeneous_deg_1_set \<equiv> \<lambda> S. \<forall> x. \<forall> t. x \<in> S \<longrightarrow> (t *\<^sub>C x) \<in> S\<close>
 
 (* Additive set *)
+(* TODO remove? Or find in Isabelle library *)
 definition additive_set ::  \<open>('a vector) set \<Rightarrow> bool\<close> where
   \<open>additive_set \<equiv> \<lambda> S. \<forall> x. \<forall> y. x \<in> S \<and> y \<in> S \<longrightarrow> x + y \<in> S\<close>
 
 (* Closed linear set *)
+(* TODO: use is_subspace instead *)
 definition closed_linear_set :: \<open>('a vector) set \<Rightarrow> bool\<close> where
   \<open>closed_linear_set \<equiv> \<lambda> S. 0 \<in> S \<and> homogeneous_deg_1_set S \<and> additive_set S \<and> closed S\<close>
 
+(* TODO remove *)
 lemma linear_set_as_subspace:
   \<open>closed_linear_set A \<Longrightarrow> \<exists> S. subspace_as_set S = A\<close> for A :: \<open>('a vector) set\<close>
   unfolding closed_linear_set_def additive_set_def homogeneous_deg_1_set_def
   using is_subspace_def subspace_to_set_cases
   by (metis mem_Collect_eq)
 
+(* TODO state on sets, or remove *)
 lemma linear_set_span:
   \<open>closed_linear_set A \<Longrightarrow> subspace_as_set (span A) = A\<close> for A :: \<open>('a vector) set\<close>
 proof-                
@@ -1547,7 +1609,7 @@ proof-
 qed
 
 theorem projPropertiesB:
-  \<open>(\<parallel> (proj M) h \<parallel>) \<le> (\<parallel> h \<parallel>)\<close>
+  \<open>\<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
   (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   have \<open>h - (proj M) h \<in> subspace_as_set (ortho M)\<close> 
@@ -1647,9 +1709,11 @@ theorem projPropertiesC:
   using proj_fixed_points proj_intro2 by fastforce
 
 (* Kernet of an operator *)
+(* TODO define on sets *)
 definition ker_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> 'a subspace\<close> where
   \<open>ker_op \<equiv> \<lambda> f. span {x. f x = 0}\<close>
 
+(* TODO: remove (but keep some subproofs, e.g. is_subspace (ker_op S?) )  *)
 lemma ker_op_lin:
   \<open>bounded_linear_op f \<Longrightarrow> subspace_as_set (ker_op f) =  {x. f x = 0}\<close>
 proof-
@@ -1753,9 +1817,14 @@ qed
 
 
 (* Range of an operator *)
+(* TODO using sets *)
 definition ran_op :: \<open>('a vector \<Rightarrow> 'a vector) \<Rightarrow> 'a subspace\<close> where
   \<open>ran_op \<equiv> \<lambda> f. span {x. \<exists> y. f y = x}\<close>
 
+lemma isCont_scaleC:
+  "isCont (\<lambda>x. c *\<^sub>C x) y"
+
+(* TODO the above instead *)
 lemma tendsto_mult_left_cvect: "(f \<longlonglongrightarrow> l) \<Longrightarrow> ((\<lambda>x. c *\<^sub>C (f x)) \<longlonglongrightarrow> c  *\<^sub>C  l)"
   for l::\<open>'a vector\<close> and f::\<open>nat \<Rightarrow> 'a vector\<close> 
 proof(cases \<open>c = 0\<close>)
@@ -1835,6 +1904,7 @@ qed
 (* Not all bounded operators have closed range, e.g., the projections onto open subspaces *)
 
 lemma ran_op_lin:
+(* TODO: using sets *)
   \<open>bounded_linear_op f \<Longrightarrow> subspace_as_set (ran_op f) = closure {x. \<exists> y. f y = x}\<close>
 proof-
   assume \<open>bounded_linear_op f\<close>
@@ -1890,6 +1960,7 @@ qed
 
 theorem projPropertiesE:
   \<open>ran_op  (proj M) = M\<close>
+(* TODO using sets *)
   (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   have \<open>x \<in> subspace_as_set M \<Longrightarrow> x \<in> subspace_as_set (ran_op  (proj M))\<close> for x
@@ -1957,9 +2028,11 @@ proof-
 qed
 
 (* Identity operator for 'a vectors *)
+(* TODO: use id *)
 definition IdV ::\<open>'a vector \<Rightarrow> 'a vector\<close> where
   \<open>IdV \<equiv> \<lambda> x::'a vector. x\<close>
 
+(* TODO: on sets, typeclass inner_product *)
 lemma pre_ortho_twice: "M \<le> ortho (ortho M)" for M :: \<open>'a subspace\<close>
 proof-
   have \<open>x \<in> subspace_as_set M \<Longrightarrow> x \<in> subspace_as_set ( ortho (ortho M) )\<close> for x
@@ -2049,7 +2122,7 @@ proof-
   finally show ?thesis by blast
 qed
 
-
+(* TODO as sets, but keep this one as corollary! *)
 lemma ortho_leq[simp]: "ortho A \<le> ortho B \<longleftrightarrow> A \<ge> B"
 proof 
   show d1: "B \<le> A \<Longrightarrow> ortho A \<le> ortho B" for A B :: "'a subspace"

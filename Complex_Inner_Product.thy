@@ -244,10 +244,10 @@ qed
 end
 
 
-abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infixl "\<bullet>" 50 )
+abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infixl "\<bullet>" 67)
   where \<open>x \<bullet> y \<equiv> cinner x y\<close>
 
-abbreviation norm_abbr::"'a::complex_inner \<Rightarrow> real" ("\<parallel>_\<parallel>" 50 )
+abbreviation norm_abbr::"'a::complex_inner \<Rightarrow> real" ("\<parallel>_\<parallel>")
   where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
 
 lemma cinner_divide_right:
@@ -296,8 +296,9 @@ proof
   qed
 qed
 
-term bounded_bilinear
+(* term bounded_bilinear
 thm bounded_bilinear.tendsto
+ *)
 
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
