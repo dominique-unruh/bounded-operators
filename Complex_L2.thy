@@ -1181,9 +1181,12 @@ proof-
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
 
+(*
 (* TODO: probably exists *)
 lemma TransConvex:
   \<open>convex S \<Longrightarrow> convex {s - h| s. s \<in> S}\<close>
+  using convex_translation 
+  
 proof-
   assume \<open>convex S\<close>
   hence \<open>\<forall>x\<in>S. \<forall>y\<in>S. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
@@ -1205,12 +1208,12 @@ proof-
   thus ?thesis 
     by (simp add: convex_def)
 qed
-
+*)
 
 theorem ExistenceUniquenessMinDist:
-  fixes M :: \<open>('a vector) set\<close> and h :: \<open>'a vector\<close> (* TODO: generalize type class *)
+  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close> and h :: 'a 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. k min (\<lambda> x. dist x h) on M\<close>
+  shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
 proof-
   have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
@@ -1222,18 +1225,27 @@ proof-
     thus ?thesis by simp
   qed
   moreover have \<open>convex {m - h| m. m \<in> M}\<close>
-    using \<open>convex M\<close> TransConvex by blast
-  ultimately have \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
-    by (simp add: ExistenceUniquenessMinNorm)
-  have \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
   proof-
-    have \<open>\<exists> k. k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
+    have \<open>convex ((\<lambda>x. -h + x) ` M)\<close>
+      using convex_translation \<open>convex M\<close> by blast
+    hence \<open>convex ((\<lambda>x.  x - h) ` M)\<close> by simp
+    moreover have \<open>{(\<lambda>x.  x - h) m | m. m \<in> M} = ((\<lambda>x.  x - h) ` M)\<close>
+      by auto
+    ultimately show ?thesis by simp
+  qed
+  ultimately have \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
+    by (simp add: ExistenceUniquenessMinNorm)
+  have \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
+  proof-
+    have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
     proof-
-      obtain k where \<open>k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
-        using  \<open>\<exists>! k. k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close> by blast
-      from  \<open>k min (\<lambda> x. \<parallel>x\<parallel>) on {m - h| m. m \<in> M}\<close>
+      obtain k where \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
+        using  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close> by blast
       have \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)) \<and> k \<in> {m - h |m. m \<in> M}\<close>
-        by (simp add: Reaches_Min_def)
+        using is_arg_min_def  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
+        unfolding is_arg_min_on_def
+        by smt
+
       hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
         by blast
       hence \<open>\<forall>t. t + h \<in> M \<longrightarrow> (\<parallel>k\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
@@ -1247,50 +1259,62 @@ proof-
         by blast
       hence  \<open>k + h \<in> M\<close>
         by auto
-      have \<open>(k + h) min (\<lambda> x. \<parallel>x - h\<parallel>) on {m| m. m \<in> M}\<close>
-        using \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>(k+h)-h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>  \<open>k + h \<in> M\<close>
-        by (simp add: Reaches_Min_def)
+
+      have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) {m| m. m \<in> M} (k + h)\<close>
+      proof-
+        have \<open>\<nexists>y. y \<in> {m |m. m \<in> M} \<and> \<parallel>y - h\<parallel> < \<parallel>(k + h) - h\<parallel>\<close>
+          using \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>(k+h)-h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>  
+          by auto
+        thus ?thesis
+          using \<open>k + h \<in> M\<close>
+          unfolding is_arg_min_on_def
+          by (simp add: is_arg_min_def)
+      qed
       thus ?thesis 
         by auto
     qed 
-    moreover have \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> t min (\<lambda> x. \<parallel>x - h\<parallel>) on M
+    moreover have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<Longrightarrow> is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  t
                     \<Longrightarrow> k = t\<close> for k t
     proof-
-      have \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> (k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close> for k
+      have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<Longrightarrow> is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h |m. m \<in> M} (k - h)\<close> for k
       proof-
-        assume \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
-        hence \<open>(\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)) \<and> k \<in> M\<close>
-          by (metis Reaches_Min_def)
+        assume \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<close>
         hence \<open>\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
-          by blast
+          unfolding is_arg_min_on_def
+          by (meson is_arg_min_linorder)
+
         hence \<open>\<forall>t. t - h \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)\<close>
           by auto
         hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
           by blast
         have \<open>k \<in> M\<close>
-          using \<open>(\<forall>t. t \<in> M \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t - h\<parallel>)) \<and> k \<in> M\<close> by blast
+          using  \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<close>
+          unfolding is_arg_min_on_def
+          using is_arg_min_def
+          by (simp add: is_arg_min_linorder)
+
         hence \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
           by auto
-        have  \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
+        have  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h |m. m \<in> M} (k - h)\<close>
           using  \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> (\<parallel>k - h\<parallel>) \<le> (\<parallel>t\<parallel>)\<close>
             \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
-            Reaches_Min_def
+            is_arg_min_def
+          unfolding is_arg_min_on_def
           by smt
         thus ?thesis by blast
       qed
 
-      assume \<open>k min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
-      hence  \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
-        by (simp add: \<open>\<And>k. k min (\<lambda>x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> k - h min norm_abbr on {m - h |m. m \<in> M}\<close>)
+      assume \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
+      hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (k - h)\<close>
+        by (simp add: \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close>)
 
-      assume \<open>t min (\<lambda> x. \<parallel>x - h\<parallel>) on M\<close>
-      hence  \<open>(t - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
-        by (simp add: \<open>\<And>k. k min (\<lambda>x. \<parallel>x - h\<parallel>) on M \<Longrightarrow> k - h min norm_abbr on {m - h |m. m \<in> M}\<close>)
+      assume  \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M t\<close> 
+      hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (t - h)\<close>
+        using \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> by auto
 
-      from \<open>(k - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close> 
-        \<open>(t - h) min (\<lambda> x. \<parallel>x\<parallel>) on {m - h |m. m \<in> M}\<close>
       show ?thesis 
-        by (metis (no_types, lifting) \<open>\<exists>!k. k min norm_abbr on {m - h |m. m \<in> M}\<close> diff_add_cancel)
+        by (metis (no_types, lifting) \<open>\<exists>!k. is_arg_min_on norm_abbr {m - h |m. m \<in> M} k\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (t - h)\<close> diff_add_cancel)
+
     qed
     ultimately show ?thesis by blast
   qed
@@ -1298,6 +1322,7 @@ proof-
     by (simp add: dist_norm)
   ultimately show ?thesis by simp
 qed
+
 
 term closed_linear_set
 theorem DistMinOrtho:
