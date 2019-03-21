@@ -600,12 +600,13 @@ lift_definition inf_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightar
 instance .. end
 
 instantiation subspace :: (type)sup begin  (* Sum of spaces *)
-lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
-  by (rule is_subspace_plus)
+lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
+  by (rule is_closed_subspace_plus)
+
 instance .. end
 instantiation subspace :: (type)plus begin  (* Sum of spaces *)
-lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
-  by (rule is_subspace_plus)
+lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
+  by (rule is_closed_subspace_plus)
 instance .. end
 
 lemma subspace_sup_plus: "(sup :: 'a subspace \<Rightarrow> _ \<Rightarrow> _) = (+)" 
@@ -651,25 +652,34 @@ end
 instantiation subspace :: (type)order_bot begin
 lift_definition bot_subspace :: "'a subspace" is "{0::'a vector}" by (fact is_subspace_0)
 instance apply intro_classes
-  apply transfer by (simp add: is_subspace_contains_0)
+  apply transfer 
+  using is_subspace_0 ortho_bot ortho_leq by blast
+
 end
 lemma subspace_zero_bot: "(0::_ subspace) = bot" 
   unfolding zero_subspace_def bot_subspace_def by simp
 
 instantiation subspace :: (type)ab_semigroup_add begin
-instance apply intro_classes
-   apply transfer apply auto using add.assoc apply blast apply (metis add.semigroup_axioms semigroup.assoc)
-  apply transfer apply auto using add.commute by blast+
+instance
+  apply intro_classes
+  apply transfer
+  using is_closed_subspace_asso
+  unfolding  closed_sum_def
+   apply auto
+  by (smt Collect_cong add.commute plus_subspace.rep_eq subspace_to_set_inject)
 end
 
 instantiation subspace :: (type)ordered_ab_semigroup_add begin
-instance apply intro_classes
-  apply transfer by auto
+instance apply intro_classes apply transfer
+  using is_closed_subspace_ord 
+  by (smt Collect_mono_iff closure_mono subset_iff)
+
 end
 
 instantiation subspace :: (type)comm_monoid_add begin
 instance apply intro_classes
-  apply transfer by auto
+  apply transfer using is_closed_subspace_zero unfolding closed_sum_def
+  by fastforce
 end
 
 instantiation subspace :: (type)semilattice_sup begin
@@ -794,13 +804,6 @@ proof-
     by (metis (no_types, lifting)  INF_greatest Inf_subspace.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> subspace_as_set S} \<longrightarrow> A \<subseteq> subspace_as_set S\<close>)
   thus ?thesis using span_def by metis
 qed
-
-
-thm LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
-
-
-subsection {* There exists a unique point k in M such that the distance between h and M reaches
- its minimum at k *}
 
 
 
