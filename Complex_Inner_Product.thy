@@ -17,7 +17,7 @@ publisher={Springer Science \& Business Media}
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
-  imports Complex_Main Complex_Vector_Spaces "HOL-Analysis.Inner_Product"
+  imports  "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces "HOL-Analysis.Inner_Product"
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -243,9 +243,11 @@ qed
 
 end
 
+abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle>_ | _\<rangle> " )
+  where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
 
-abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infixl "\<bullet>" 67)
-  where \<open>x \<bullet> y \<equiv> cinner x y\<close>
+abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infixl "\<cdot>" 67)
+  where \<open>x \<cdot> y \<equiv> cinner x y\<close>
 
 abbreviation norm_abbr::"'a::complex_inner \<Rightarrow> real" ("\<parallel>_\<parallel>")
   where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
@@ -500,27 +502,27 @@ end
 subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
-  \<open>(\<parallel>x + y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 + 2*Re (x \<bullet> y)\<close>
-    (* Reference: In the proof of Corollary 1.5 in conway2013course *)
+  \<open>(\<parallel>x + y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 + 2*Re (x \<cdot> y)\<close>
+  (* Reference: In the proof of Corollary 1.5 in conway2013course *)
 proof-
-  have \<open>(x \<bullet> y) + (y \<bullet> x) = (x \<bullet> y) + cnj (x \<bullet> y)\<close>
+  have \<open>(x \<cdot> y) + (y \<cdot> x) = (x \<cdot> y) + cnj (x \<cdot> y)\<close>
     by simp
-  hence \<open>(x \<bullet> y) + (y \<bullet> x) = 2* Re (x \<bullet> y) \<close>
+  hence \<open>(x \<cdot> y) + (y \<cdot> x) = 2* Re (x \<cdot> y) \<close>
     using complex_add_cnj by presburger
-  have \<open>(\<parallel>x + y\<parallel>)^2 = ( (x+y) \<bullet> (x+y) )\<close> 
+  have \<open>(\<parallel>x + y\<parallel>)^2 = ( (x+y) \<cdot> (x+y) )\<close> 
     using power2_norm_eq_cinner' by auto
-  hence \<open>(\<parallel>x + y\<parallel>)^2 = (x \<bullet> x) + (x \<bullet> y) + (y \<bullet> x) + (y \<bullet> y)\<close>
+  hence \<open>(\<parallel>x + y\<parallel>)^2 = (x \<cdot> x) + (x \<cdot> y) + (y \<cdot> x) + (y \<cdot> y)\<close>
     by (simp add: cinner_left_distrib cinner_right_distrib)
-  thus ?thesis using  \<open>(x \<bullet> y) + (y \<bullet> x) = 2* Re (x \<bullet> y)\<close>
+  thus ?thesis using  \<open>(x \<cdot> y) + (y \<cdot> x) = 2* Re (x \<cdot> y)\<close>
     by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))
 qed
 
 lemma polarization_identity_minus:
-  \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<bullet> y)\<close>
+  \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<cdot> y)\<close>
 proof-
-  have \<open>(\<parallel>x + (-y)\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>(-y)\<parallel>)^2 + 2*Re (x \<bullet> (-y))\<close>
+  have \<open>(\<parallel>x + (-y)\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>(-y)\<parallel>)^2 + 2*Re (x \<cdot> (-y))\<close>
     using polarization_identity_plus by blast
-  hence \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<bullet> y)\<close>
+  hence \<open>(\<parallel>x - y\<parallel>)^2 = (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 - 2*Re (x \<cdot> y)\<close>
     by simp
   thus ?thesis 
     by blast
@@ -535,7 +537,7 @@ proposition ParallelogramLaw:
 corollary ParallelogramLawVersion1:
   \<open>(\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>)^2
     = (1/2)*( (\<parallel>x\<parallel>)^2 + (\<parallel>y\<parallel>)^2 ) - (\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>)^2\<close>
-    (* Reference: In the proof of  Theorem 2.5 in conway2013course *)
+  (* Reference: In the proof of  Theorem 2.5 in conway2013course *)
 proof -
   have \<open>(\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>)^2 + (\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>)^2 
   = 2*((\<parallel>(1/2) *\<^sub>C x\<parallel>)^2 + ( \<parallel>(1/2) *\<^sub>C y\<parallel>)^2)\<close>
@@ -561,8 +563,195 @@ qed
 
 
 theorem PythagoreanId:
-\<open>x \<bullet> y = 0 \<Longrightarrow> (\<parallel> x + y \<parallel>)^2 = (\<parallel> x \<parallel>)^2 + (\<parallel> y \<parallel>)^2\<close> 
-    (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
+  \<open>x \<cdot> y = 0 \<Longrightarrow> (\<parallel> x + y \<parallel>)^2 = (\<parallel> x \<parallel>)^2 + (\<parallel> y \<parallel>)^2\<close> 
+  (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
   by (simp add: polarization_identity_plus)
+
+
+subsection \<open>Orthogonality\<close>
+
+definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
+
+abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
+  where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
+
+definition "orthogonal_complement S = {x. \<forall>y\<in>S. x \<bottom> y}" 
+
+abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> ('a::complex_inner) set" ("_\<^sub>\<bottom>")
+  where \<open>M\<^sub>\<bottom> \<equiv> (orthogonal_complement M)\<close>
+
+lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
+  unfolding is_orthogonal_def apply (subst cinner_commute) by blast
+
+locale is_subspace =
+  fixes A::"('a::complex_normed_vector) set"
+  assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
+  assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
+  assumes closed: "closed A"
+  assumes zero: "0 \<in> A"
+
+
+abbreviation is_closed_abbr::"('a::topological_space) set \<Rightarrow> bool" ("_ is-closed")
+  where \<open>M is-closed \<equiv> closed M\<close>
+
+abbreviation is_subspace_abbr::"('a::complex_inner) set \<Rightarrow>  bool" ("_ is-a-closed-subspace")
+  where \<open>M is-a-closed-subspace \<equiv> is_subspace M\<close>
+
+
+lemma is_subspace_0[simp]: "{0} is-a-closed-subspace"
+  apply (rule is_subspace.intro) by auto
+
+lemma is_subspace_UNIV[simp]: "UNIV is-a-closed-subspace"
+  apply (rule is_subspace.intro) by auto
+
+lemma is_subspace_inter[simp]: assumes "A is-a-closed-subspace" and "B is-a-closed-subspace" shows "(A\<inter>B) is-a-closed-subspace"
+  apply (rule is_subspace.intro) 
+  using assms[unfolded is_subspace_def]
+  by auto
+
+lemma is_subspace_contains_0: "A is-a-closed-subspace \<Longrightarrow> 0 \<in> A"
+  unfolding is_subspace_def by auto
+
+(* lemma is_subspace_plus: assumes "is_subspace A" and "is_subspace B" shows "is_subspace {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
+  apply (rule is_subspace.intro) 
+proof -
+  fix x y c assume x: "x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" and y: "y \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}"
+  from x y show "x + y \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}"
+    using assms[unfolded is_subspace_def]
+    by (smt add.assoc add.commute mem_Collect_eq)
+  from x obtain xA xB where sum: "x = xA + xB" and "xA : A" and "xB : B"
+    by auto
+  have cxA: "timesScalarVec c xA : A"
+    by (simp add: \<open>xA \<in> A\<close> assms(1) is_subspace.smult_closed)
+  have cxB: "timesScalarVec c xB : B"
+    by (simp add: \<open>xB \<in> B\<close> assms(2) is_subspace.smult_closed)
+  show "timesScalarVec c x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" 
+    unfolding sum timesScalarVec_add_right using cxA cxB by auto
+next
+  show "closed {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" by auto
+  show "0 \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" 
+    using assms[unfolded is_subspace_def] apply auto by force
+qed *)
+
+lemma is_subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> x is-a-closed-subspace) \<Longrightarrow> (\<Inter>AA) is-a-closed-subspace"
+  apply (rule is_subspace.intro) unfolding is_subspace_def by auto
+
+
+lemma is_subspace_orthog[simp]: "A is-a-closed-subspace \<Longrightarrow> (A\<^sub>\<bottom>) is-a-closed-subspace"
+  for A :: \<open>('a::complex_inner) set\<close>
+proof-
+  assume \<open>A is-a-closed-subspace\<close>
+  have  "x\<in>(A\<^sub>\<bottom>) \<Longrightarrow> y\<in>(A\<^sub>\<bottom>) \<Longrightarrow> x+y\<in>(A\<^sub>\<bottom>)" for x y
+  proof-
+    assume \<open>x\<in>(A\<^sub>\<bottom>)\<close>
+    assume \<open>y\<in>(A\<^sub>\<bottom>)\<close>
+    hence  \<open>\<forall> z \<in> A. \<langle> z | y \<rangle> = 0\<close> 
+      using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
+    moreover have   \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> = 0\<close> using  \<open>x\<in>(A\<^sub>\<bottom>)\<close>
+      using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
+    ultimately have \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> +  \<langle> z | y \<rangle> = 0\<close>
+      by simp
+    hence  \<open>\<forall> z \<in> A. \<langle> z | x + y \<rangle> = 0\<close> 
+      by (simp add: cinner_right_distrib)
+    thus ?thesis 
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+  qed
+  moreover have "x\<in>(A\<^sub>\<bottom>) \<Longrightarrow> c *\<^sub>C x \<in> (A\<^sub>\<bottom>)" for x c
+  proof-
+    assume \<open>x \<in> (A\<^sub>\<bottom>)\<close>
+    hence \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>
+      using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
+    hence \<open>\<forall> y \<in> A. c*\<langle> y | x \<rangle> = 0\<close>
+      by simp
+    hence \<open>\<forall> y \<in> A. \<langle> y | c *\<^sub>C x \<rangle> = 0\<close>
+      by simp
+    thus ?thesis 
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+  qed
+  moreover have  "(A\<^sub>\<bottom>) is-closed"
+  proof-
+    have \<open>\<lbrakk>(\<forall> n::nat. x n \<in> (A\<^sub>\<bottom>)); x \<longlonglongrightarrow> l \<rbrakk> \<Longrightarrow> l \<in> (A\<^sub>\<bottom>)\<close> for x::\<open>nat \<Rightarrow> ('a::complex_inner)\<close> and l::\<open>('a::complex_inner)\<close>
+    proof-
+      assume \<open>\<forall> n::nat. x n \<in> (A\<^sub>\<bottom>)\<close>
+      hence \<open>\<forall> y \<in> A. \<forall> n. \<langle> y | x n \<rangle> = 0\<close>
+        by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+      assume \<open>x \<longlonglongrightarrow> l\<close>
+      moreover have \<open>isCont (\<lambda> x. \<langle> y | x \<rangle>) l\<close> for y
+      proof-
+        have \<open>bounded_clinear (\<lambda> x. \<langle> y | x \<rangle>)\<close> 
+          by (simp add: bounded_clinear_cinner_right)
+        thus ?thesis
+          by simp
+      qed
+      ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y | v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y | v \<rangle>) l\<close> for y
+        using isCont_tendsto_compose by fastforce
+      hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y | x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y | l \<rangle>\<close>
+        by simp
+      hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y | l \<rangle>\<close> 
+        using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y | x n \<rangle> = 0\<close> 
+        by fastforce
+      hence  \<open>\<forall> y \<in> A. \<langle> y | l \<rangle> = 0\<close> 
+        using limI by fastforce
+      thus ?thesis 
+        by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    qed
+    thus ?thesis 
+      using closed_sequential_limits by blast
+  qed
+  moreover have  "0 \<in> (A\<^sub>\<bottom>)"
+    by (simp add: is_orthogonal_def orthogonal_complement_def)
+  ultimately show ?thesis 
+    by (simp add: is_subspace_def)
+qed
+
+
+
+lemma is_subspace_plus:
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
+    and \<open>{\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B} is-closed\<close>
+  shows \<open>{\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B} is-a-closed-subspace\<close>
+proof-
+  obtain C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+    by blast
+  have  "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
+  proof-
+    assume \<open>x \<in> C\<close>
+    then obtain xA xB where \<open>x = xA + xB\<close> and \<open>xA \<in> A\<close> and \<open>xB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    assume \<open>y \<in> C\<close>
+    then obtain yA yB where \<open>y = yA + yB\<close> and \<open>yA \<in> A\<close> and \<open>yB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    have \<open>x + y = (xA + yA) +  (xB + yB)\<close>
+      by (simp add: \<open>x = xA + xB\<close> \<open>y = yA + yB\<close>)
+    moreover have \<open>xA + yA \<in> A\<close> 
+      by (simp add: \<open>xA \<in> A\<close> \<open>yA \<in> A\<close> assms(1) is_subspace.additive_closed)
+    moreover have \<open>xB + yB \<in> B\<close> 
+      by (simp add: \<open>xB \<in> B\<close> \<open>yB \<in> B\<close> assms(2) is_subspace.additive_closed)
+    ultimately show ?thesis 
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+  qed
+  moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
+  proof-
+    assume \<open>x \<in> C\<close>
+    then obtain xA xB where \<open>x = xA + xB\<close> and \<open>xA \<in> A\<close> and \<open>xB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    have \<open>c *\<^sub>C x = (c *\<^sub>C xA) + (c *\<^sub>C xB)\<close>
+      by (simp add: \<open>x = xA + xB\<close> scaleC_add_right)
+    moreover have \<open>c *\<^sub>C xA \<in> A\<close>
+      by (simp add: \<open>xA \<in> A\<close> assms(1) is_subspace.smult_closed)
+    moreover have \<open>c *\<^sub>C xB \<in> B\<close>
+      by (simp add: \<open>xB \<in> B\<close> assms(2) is_subspace.smult_closed)
+    ultimately show ?thesis 
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+  qed
+  moreover have  "C is-closed"
+    by (simp add: \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> assms(3))
+  moreover have  "0 \<in> C"
+    by (metis (mono_tags, lifting) \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0 is_subspace_contains_0 mem_Collect_eq)
+  ultimately show ?thesis 
+    by (simp add: \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> is_subspace_def)
+qed
+
+
 
 end

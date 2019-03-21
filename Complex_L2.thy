@@ -580,71 +580,6 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle>_ | _\<rangle> " )
-  where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
-
-definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
-
-abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
-  where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
-
-definition "orthogonal_complement S = {x. \<forall>y\<in>S. x \<bottom> y}" 
-
-lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
-  unfolding is_orthogonal_def apply (subst cinner_commute) by blast
-
-(* TODO: move \<rightarrow> Complex_Vector_Space *)
-locale is_subspace =
-  fixes A::"'a::complex_normed_vector set"
-  assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
-  assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
-  assumes closed: "closed A"
-  assumes zero: "0 \<in> A"
-
-lemma is_subspace_0[simp]: "is_subspace {0}"
-  apply (rule is_subspace.intro) by auto
-
-lemma is_subspace_UNIV[simp]: "is_subspace UNIV"
-  apply (rule is_subspace.intro) by auto
-
-lemma is_subspace_inter[simp]: assumes "is_subspace A" and "is_subspace B" shows "is_subspace (A\<inter>B)"
-  apply (rule is_subspace.intro) 
-  using assms[unfolded is_subspace_def]
-  by auto
-
-lemma is_subspace_contains_0: "is_subspace A \<Longrightarrow> 0 \<in> A"
-  unfolding is_subspace_def by auto
-
-(* lemma is_subspace_plus: assumes "is_subspace A" and "is_subspace B" shows "is_subspace {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
-  apply (rule is_subspace.intro) 
-proof -
-  fix x y c assume x: "x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" and y: "y \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}"
-  from x y show "x + y \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}"
-    using assms[unfolded is_subspace_def]
-    by (smt add.assoc add.commute mem_Collect_eq)
-  from x obtain xA xB where sum: "x = xA + xB" and "xA : A" and "xB : B"
-    by auto
-  have cxA: "timesScalarVec c xA : A"
-    by (simp add: \<open>xA \<in> A\<close> assms(1) is_subspace.smult_closed)
-  have cxB: "timesScalarVec c xB : B"
-    by (simp add: \<open>xB \<in> B\<close> assms(2) is_subspace.smult_closed)
-  show "timesScalarVec c x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" 
-    unfolding sum timesScalarVec_add_right using cxA cxB by auto
-next
-  show "closed {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" by auto
-  show "0 \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}" 
-    using assms[unfolded is_subspace_def] apply auto by force
-qed *)
-
-lemma is_subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> is_subspace x) \<Longrightarrow> is_subspace (\<Inter>AA)"
-  apply (rule is_subspace.intro) unfolding is_subspace_def by auto
-
-lemma is_subspace_orthog[simp]: "is_subspace A \<Longrightarrow> is_subspace (orthogonal_complement A)"
-  by (cheat TODO6)
-
-lemma is_subspace_plus: "is_subspace A \<Longrightarrow> is_subspace B \<Longrightarrow> is_subspace {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" (* Proof above has only one missing step *)
-  for A B :: "'a vector set"
-  by (cheat TODO6)
 
 typedef 'a subspace = "{A::'a vector set. is_subspace A}"
   morphisms subspace_to_set Abs_subspace
@@ -1838,13 +1773,12 @@ proof-
     hence  \<open>x - (id -  proj M) x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
       by simp
     thus ?thesis
-      using ExistenceUniquenessProj proj_intro1 proj_intro2 
-      by (metis \<open>(id - proj M) x \<in> orthogonal_complement M\<close> \<open>is_subspace M\<close> diff_0 diff_0_right id_apply is_subspace_orthog minus_diff_eq proj_uniq)
+      by (metis \<open>(id - proj M) x \<in> orthogonal_complement M\<close> \<open>is_subspace M\<close>   is_subspace_orthog  proj_uniq)
   qed
   thus ?thesis by blast
 qed
 
-corollary ortho_twice[simp]: "orthogonal_complement (orthogonal_complement M) = M"
+corollary ortho_twice[simp]: "is_subspace M \<Longrightarrow> orthogonal_complement (orthogonal_complement M) = M"
   sorry
     (* Reference: Corollary 2.8 in conway2013course *)
 (*
@@ -1898,62 +1832,16 @@ proof-
 qed
 *)
 
-(* TODO as sets, but keep this one as corollary! *)
-lemma ortho_leq[simp]: "ortho A \<le> ortho B \<longleftrightarrow> A \<ge> B"
-proof 
-  show d1: "B \<le> A \<Longrightarrow> ortho A \<le> ortho B" for A B :: "'a subspace"
-  proof-
-    assume "B \<le> A"
-    hence \<open>subspace_as_set B \<subseteq> subspace_as_set A\<close>
-      using less_eq_subspace.rep_eq by auto
-    hence \<open>x \<in> subspace_as_set (ortho A) \<Longrightarrow> x \<in> subspace_as_set (ortho B)\<close> for x
-    proof-
-      assume \<open>x \<in> subspace_as_set (ortho A)\<close>
-      hence \<open>\<forall> y \<in> subspace_as_set A. x \<bottom> y\<close> 
-        by (simp add: ortho.rep_eq orthogonal_complement_def)
-      hence \<open>\<forall> y \<in> subspace_as_set B. x \<bottom> y\<close> 
-        using  \<open>subspace_as_set B \<subseteq> subspace_as_set A\<close> 
-        by (simp add: subset_eq)
-      thus ?thesis
-        using ortho.rep_eq orthogonal_complement_def by fastforce
-    qed
-    hence \<open>subspace_as_set (ortho A) \<le> subspace_as_set (ortho B)\<close>
-      by blast
-    show ?thesis 
-      by (simp add: \<open>subspace_as_set (ortho A) \<subseteq> subspace_as_set (ortho B)\<close> less_eq_subspace.rep_eq)
-  qed
-  show "ortho A \<le> ortho B \<Longrightarrow> B \<le> A"
-    apply (subst ortho_twice[symmetric, of A])
-    apply (subst ortho_twice[symmetric, of B])
-    by (rule d1)
-qed
+lemma ortho_leq[simp]: "is_subspace A \<Longrightarrow> is_subspace B 
+          \<Longrightarrow> orthogonal_complement A \<subseteq> orthogonal_complement B \<longleftrightarrow> A \<supseteq> B"
+  for A B :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  sorry
 
-lemma ortho_top[simp]: "ortho top = bot"
-  apply (rule le_bot)
-  apply (subst ortho_twice[symmetric, of bot])
-  apply (subst ortho_leq)
-  by simp
+lemma ortho_top[simp]: "orthogonal_complement (top::('a::{complex_inner, complete_space}) set) = {0}"
+  sorry
 
-lemma ortho_bot[simp]: "ortho bot = top"
-  apply (rule top_le)
-  apply (subst ortho_twice[symmetric, of top])
-  apply (subst ortho_leq)
-  by simp
-
-
-corollary orthogonal_complement_twice:
-  fixes M :: "('a vector) set" 
-  assumes "is_subspace M"
-  shows "orthogonal_complement (orthogonal_complement M) = M"
-  by (metis Abs_subspace_inverse assms mem_Collect_eq ortho.rep_eq ortho_twice)
-
-corollary orthogonal_complement_is_subspace:
-  assumes "is_subspace M"
-  shows "is_subspace (orthogonal_complement M)"
-  by (simp add: assms)
-
-corollary "subspace_as_set (ortho M) = orthogonal_complement (subspace_as_set M)"
-  using Complex_L2.ortho.rep_eq by auto
+lemma ortho_bot[simp]: "orthogonal_complement ({0}::('a::{complex_inner, complete_space}) set) = top"
+  sorry
 
 
 end
