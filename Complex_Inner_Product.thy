@@ -604,9 +604,44 @@ abbreviation is_subspace_abbr::"('a::{complex_vector,topological_space}) set \<R
   where \<open>M is-a-closed-subspace \<equiv> is_subspace M\<close>
 
 lemma is_subspace_closure:
+  fixes A::"('a::complex_inner) set"
   assumes \<open>A is-a-subspace\<close>
   shows \<open>(closure A) is-a-subspace\<close>
-  sorry
+proof-
+  have "x\<in>(closure A) \<Longrightarrow> y\<in>(closure A) \<Longrightarrow> x+y\<in>(closure A)" for x y
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    assume \<open>y\<in>(closure A)\<close>
+    then obtain yy where \<open>\<forall> n::nat. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
+      by (simp add: \<open>\<forall>n. xx n \<in> A\<close> \<open>\<forall>n. yy n \<in> A\<close> assms is_general_subspace.additive_closed)
+    hence  \<open>(\<lambda> n. (xx n) + (yy n)) \<longlonglongrightarrow> x + y\<close> using  \<open>xx \<longlonglongrightarrow> x\<close> \<open>yy \<longlonglongrightarrow> y\<close> 
+      by (simp add: tendsto_add)
+    thus ?thesis using  \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close>
+      by (meson closure_sequential)
+  qed
+  moreover have "x\<in>(closure A) \<Longrightarrow> c *\<^sub>C x \<in> (closure A)" for x c
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      by (simp add: \<open>\<forall>n. xx n \<in> A\<close> assms is_general_subspace.smult_closed)
+    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
+      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
+    hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose)
+    thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      by (meson closure_sequential)
+  qed
+  moreover have "0 \<in> (closure A)"
+    using assms closure_subset is_general_subspace.zero by fastforce
+  ultimately show ?thesis 
+    by (simp add: is_general_subspace_def)
+qed
 
 lemma is_subspace_plus:
   assumes \<open>A is-a-subspace\<close> and \<open>B is-a-subspace\<close>
@@ -651,31 +686,6 @@ proof-
     by (simp add: \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> is_general_subspace_def)
 qed
 
-definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-\<open>closed_sum A B = (closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B})\<close>
-
-lemma is_closed_subspace_asso:
-  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
-  shows \<open>closed_sum A (closed_sum B C) = closed_sum (closed_sum A B) C\<close>
-  sorry
-
-
-lemma is_closed_subspace_comm:
-  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
-  shows \<open>closed_sum A B = closed_sum B A\<close>
-  sorry
-
-lemma is_closed_subspace_ord:
-  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
-    and \<open>A \<subseteq> B\<close>
-  shows \<open>closed_sum C A \<subseteq> closed_sum C B\<close>
-  sorry
-
-
-lemma is_closed_subspace_zero:
-  assumes \<open>A is-a-closed-subspace\<close>
-  shows \<open>closed_sum ({0}) A = A\<close>
-  sorry
 
 lemma is_subspace_0[simp]: 
 "({0} :: ('a::{complex_vector,t1_space}) set)  is-a-closed-subspace"
@@ -1875,6 +1885,56 @@ lemma ortho_bot[simp]:
 = (top::('a::{complex_inner, complete_space}) set)"
   using is_subspace_UNIV ortho_twice by fastforce
 
+
+subsection {* Disjunction *}
+
+definition general_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+\<open>general_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+
+abbreviation general_sum_abbr::  \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("_ \<plusminus> _") where
+\<open>A \<plusminus> B  \<equiv> general_sum A B\<close>
+
+abbreviation closure_abbr::  \<open>('a::{topological_space}) set \<Rightarrow> 'a set\<close> ("cl _") where
+\<open>cl A \<equiv> closure A\<close>
+
+definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+\<open>closed_sum A B = cl (A \<plusminus> B)\<close>
+
+abbreviation closed_sum_abbr::  \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("_ \<minusplus> _") where
+\<open>A \<minusplus> B  \<equiv> closed_sum A B\<close>
+
+lemma sum_existential:
+\<open>x \<in> (A \<plusminus> B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
+proof -
+  assume "x \<in> (A \<plusminus> B)"
+  then have "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
+    using general_sum_def by blast
+  then show ?thesis
+    by (metis (lifting))
+qed
+
+lemma is_closed_subspace_comm:
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
+  shows \<open>(A \<minusplus> B) = (B \<minusplus> A)\<close>
+  by (smt Collect_cong add.commute closed_sum_def general_sum_def)
+
+lemma is_closed_subspace_asso:
+  fixes A B C::"('a::complex_inner) set"
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
+  shows \<open>(A \<minusplus> (B \<minusplus> C)) = ((A \<minusplus> B) \<minusplus> C)\<close>
+  sorry
+
+lemma is_closed_subspace_ord:
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
+    and \<open>A \<subseteq> B\<close>
+  shows \<open>(C\<minusplus>A) \<subseteq>(C\<minusplus>B)\<close>
+  sorry
+
+
+lemma is_closed_subspace_zero:
+  assumes \<open>A is-a-closed-subspace\<close>
+  shows \<open>(({0})\<minusplus>A) = A\<close>
+  sorry
 
 subsection {* Direct sum *}
 
