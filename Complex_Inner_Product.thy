@@ -1918,11 +1918,55 @@ lemma is_closed_subspace_comm:
   shows \<open>(A \<minusplus> B) = (B \<minusplus> A)\<close>
   by (smt Collect_cong add.commute closed_sum_def general_sum_def)
 
+lemma OrthoClosed:
+  fixes A ::"('a::{complex_inner, complete_space}) set"
+  assumes \<open>A is-a-subspace\<close>
+  shows \<open>(A\<^sub>\<bottom>) is-closed\<close>
+  sorry
+
+lemma DeMorganOrtho:
+  fixes A B::"('a::{complex_inner, complete_space}) set"
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
+  shows \<open>(A \<minusplus> B)\<^sub>\<bottom> = (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close>
+  sorry
+
+lemma DeMorganOrthoDual:
+  fixes A B::"('a::{complex_inner, complete_space}) set"
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
+  shows  \<open>(A \<inter> B)\<^sub>\<bottom> = ((A\<^sub>\<bottom>) \<plusminus> (B\<^sub>\<bottom>))\<close>
+  sorry
+
+
 lemma is_closed_subspace_asso:
-  fixes A B C::"('a::complex_inner) set"
+  fixes A B C::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
   shows \<open>(A \<minusplus> (B \<minusplus> C)) = ((A \<minusplus> B) \<minusplus> C)\<close>
-  sorry
+proof-
+  have \<open>(B \<minusplus> C) is-a-subspace\<close>
+    by (simp add: assms(2) assms(3) closed_sum_def general_sum_def is_subspace.subspace is_subspace_closure is_subspace_plus)
+  moreover have \<open>(B \<minusplus> C) is-closed\<close> 
+    by (simp add: closed_sum_def)
+  ultimately have \<open>(B \<minusplus> C) is-a-closed-subspace\<close>
+    by (simp add: is_subspace_def)
+  hence \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close>
+    by (metis (mono_tags, lifting) assms(1) closed_closure closed_sum_def general_sum_def is_subspace_closure is_subspace_def is_subspace_plus)
+  have \<open>(A \<minusplus> (B \<minusplus> C)) = (((A \<minusplus> (B \<minusplus> C))\<^sub>\<bottom>)\<^sub>\<bottom>)\<close>
+     by (smt \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close> ortho_twice)
+  also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B \<minusplus> C)\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
+     by (simp add: DeMorganOrtho \<open>(B \<minusplus> C) is-a-closed-subspace\<close> assms(1))
+  also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B\<^sub>\<bottom>) \<inter> (C\<^sub>\<bottom>))  )\<^sub>\<bottom>)\<close>
+    by (simp add: DeMorganOrtho assms(2) assms(3))
+  also have  \<open>... = ((  ((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)) \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
+    by (simp add: inf_assoc)
+  also have  \<open>... = ((  ((((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>)\<^sub>\<bottom>)  \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
+    by (metis assms(1) assms(2) is_subspace_inter is_subspace_orthog ortho_twice)
+  also have  \<open>... = (( ( (((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>) \<plusminus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
+      by  (smt DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
+  also have  \<open>... = (( ( (A \<plusminus> B) \<plusminus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
+    by (metis DeMorganOrthoDual assms(1) assms(2) is_subspace_orthog ortho_twice)
+  finally show ?thesis 
+    by (metis (no_types, lifting) DeMorganOrthoDual OrthoClosed assms(1) assms(2) assms(3) closed_sum_def closure_closed is_subspace.subspace is_subspace_inter is_subspace_orthog ortho_twice)
+qed
 
 lemma is_closed_subspace_ord:
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>

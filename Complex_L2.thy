@@ -664,9 +664,16 @@ instance
   apply intro_classes
   apply transfer
   using is_closed_subspace_asso
-  unfolding  closed_sum_def
-   apply auto
-  by (smt Collect_cong add.commute plus_subspace.rep_eq subspace_to_set_inject)
+  unfolding closed_sum_def 
+  unfolding general_sum_def
+   apply blast
+  
+  apply transfer
+  using is_closed_subspace_comm
+  unfolding closed_sum_def 
+  unfolding general_sum_def
+  apply blast
+  done
 end
 
 instantiation subspace :: (type)ordered_ab_semigroup_add begin
