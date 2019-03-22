@@ -79,7 +79,7 @@ proof -
     unfolding has_ell2_norm_def unfolding L2_set_def
     apply (rewrite asm_rl[of "(\<lambda>A. sqrt (sum (\<lambda>i. ((cmod \<circ> x) i)\<^sup>2) A)) ` Collect finite 
                             = sqrt ` (\<lambda>A. (\<Sum>i\<in>A. (cmod (x i))\<^sup>2)) ` Collect finite"])
-     apply auto[1]
+    apply auto[1]
     apply (subst bdd_sqrt[symmetric])
     by (simp add: monoI)
 qed
@@ -104,7 +104,7 @@ lemma SUP_max:
   assumes "m:M"
   shows "(SUP x:M. f x) = f m"
   apply (rule antisym)
-   apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
+  apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
   by (metis assms(1) assms(2) assms(3) bdd_aboveI bdd_above_image_mono cSUP_upper)
 
 
@@ -162,7 +162,7 @@ proof -
       apply (subst sum.insert_remove)
       using F_F0 assms apply auto
       apply (subst sum.cong[where B=F0 and h="\<lambda>_. 0"])
-        apply (simp add: \<open>a \<notin> F0\<close>)
+      apply (simp add: \<open>a \<notin> F0\<close>)
       using \<open>a \<notin> F0\<close> apply auto[1]
       by simp
   qed
@@ -214,7 +214,6 @@ proof -
     by (simp add: ordered_comm_semiring_class.comm_mult_left_mono that) 
   then show has: "has_ell2_norm (\<lambda>i. c * x i)"
     unfolding has_ell2_norm_L2_set bdd_above_def using L2_set_mul[symmetric] by auto
-
   have "ell2_norm (\<lambda>i. c * x i) = SUPREMUM (Collect finite) (L2_set (cmod \<circ> (\<lambda>i. c * x i)))"
     apply (rule ell2_norm_L2_set) by (rule has)
   also have "\<dots> = SUPREMUM (Collect finite) (\<lambda>F. cmod c * L2_set (cmod \<circ> x) F)"
@@ -222,12 +221,12 @@ proof -
   also have "\<dots> = cmod c * ell2_norm x" 
     apply (subst ell2_norm_L2_set) apply (fact assms)
     apply (subst continuous_at_Sup_mono[where f="\<lambda>x. cmod c * x"])
-        apply (simp add: mono_def ordered_comm_semiring_class.comm_mult_left_mono)
-       apply (rule continuous_mult)
+    apply (simp add: mono_def ordered_comm_semiring_class.comm_mult_left_mono)
+    apply (rule continuous_mult)
     using continuous_const apply blast
-       apply simp
-      apply blast
-     apply (meson assms has_ell2_norm_L2_set)
+    apply simp
+    apply blast
+    apply (meson assms has_ell2_norm_L2_set)
     by auto
   finally show "ell2_norm (\<lambda>i. c * x i) = cmod c * ell2_norm x" .
 qed
@@ -247,7 +246,6 @@ proof -
       by (rule L2_set_triangle_ineq)
     finally show ?thesis .
   qed
-
   obtain Mx My where Mx: "Mx \<ge> L2_set (cmod o x) F" and My: "My \<ge> L2_set (cmod o y) F" if "finite F" for F
     using assms unfolding has_ell2_norm_L2_set bdd_above_def by auto
   then have MxMy: "Mx + My \<ge> L2_set (cmod \<circ> x) F + L2_set (cmod \<circ> y) F" if "finite F" for F
@@ -258,7 +256,6 @@ proof -
     using triangle that by fastforce
   then show has: "has_ell2_norm (\<lambda>i. x i + y i)"
     unfolding has_ell2_norm_L2_set bdd_above_def by auto
-
   have SUP_plus: "(SUP x:A. f x + g x) \<le> (SUP x:A. f x) + (SUP x:A. g x)" 
     if notempty: "A\<noteq>{}" and bddf: "bdd_above (f`A)"and bddg: "bdd_above (g`A)"
     for f g :: "'a set \<Rightarrow> real" and A
@@ -277,17 +274,16 @@ proof -
     show ?thesis
       apply (rule cSup_least) using notempty xleq by auto
   qed
-
   show "ell2_norm (\<lambda>i. x i + y i) \<le> ell2_norm x + ell2_norm y"
     apply (subst ell2_norm_L2_set, fact has)
     apply (subst ell2_norm_L2_set, fact assms)+
     apply (rule order.trans[rotated])
-     apply (rule SUP_plus)
-       apply auto[1]
-      apply (meson assms(1) has_ell2_norm_L2_set)
-     apply (meson assms(2) has_ell2_norm_L2_set)
+    apply (rule SUP_plus)
+    apply auto[1]
+    apply (meson assms(1) has_ell2_norm_L2_set)
+    apply (meson assms(2) has_ell2_norm_L2_set)
     apply (rule cSUP_subset_mono)
-       apply auto
+    apply auto
     using MxMy unfolding bdd_above_def apply auto[1]
     using triangle by fastforce
 qed
@@ -315,23 +311,23 @@ lift_definition plus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 
 lift_definition minus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>f g x. f x - g x"
   apply (subst ab_group_add_class.ab_diff_conv_add_uminus)
   apply (rule ell2_norm_triangle) 
-   apply auto by (simp add: has_ell2_norm_def)
+  apply auto by (simp add: has_ell2_norm_def)
 lift_definition scaleR_vector :: "real \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>r f x. complex_of_real r * f x"
   by (rule ell2_norm_smult)
 lift_definition scaleC_vector :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c f x. c * f x"
   by (rule ell2_norm_smult)
 
 instance apply intro_classes
-           apply (transfer; rule ext; simp)
-           apply (transfer; rule ext; simp)
-          apply (transfer; rule ext; simp)
-         apply (transfer; rule ext; simp)
-        apply (transfer; rule ext; simp)
-       apply (transfer; rule ext; simp)
-      apply (transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
-     apply (transfer; rule ext; simp add: distrib_left)
-    apply (transfer; rule ext; simp add: distrib_right)
-   apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; rule ext; simp)
+  apply (transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
+  apply (transfer; rule ext; simp add: distrib_left)
+  apply (transfer; rule ext; simp add: distrib_right)
+  apply (transfer; rule ext; simp)
   by (transfer; rule ext; simp)
 end
 
@@ -343,9 +339,9 @@ definition "uniformity = (INF e:{0<..}. principal {(x::'a vector, y). norm (x - 
 definition "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a vector set"
 instance apply intro_classes
   unfolding dist_vector_def sgn_vector_def uniformity_vector_def open_vector_def apply simp_all
-     apply transfer apply (fact ell2_norm_0)
-    apply transfer apply (fact ell2_norm_triangle)
-   apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
+  apply transfer apply (fact ell2_norm_0)
+  apply transfer apply (fact ell2_norm_triangle)
+  apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
   apply transfer by (simp add: ell2_norm_smult(2)) 
 end
 
@@ -392,11 +388,10 @@ proof standard
       using cnj_x z by (rule abs_summable_product) 
     have cnj_y_z:"(\<lambda>i. cnj (y i) * z i) abs_summable_on UNIV"
       using cnj_y z by (rule abs_summable_product) 
-
     show "(\<Sum>\<^sub>ai. cnj (x i + y i) * z i) = (\<Sum>\<^sub>ai. cnj (x i) * z i) + (\<Sum>\<^sub>ai. cnj (y i) * z i)"
       apply (subst infsetsum_add[symmetric])
-        apply (fact cnj_x_z)
-       apply (fact cnj_y_z)
+      apply (fact cnj_x_z)
+      apply (fact cnj_y_z)
       by (simp add: distrib_left mult.commute)
   qed
 
@@ -449,7 +444,7 @@ proof standard
       also have "\<dots> = (\<Sum>\<^sub>ai\<in>{i}. cnj (x i) * x i)" by auto
       also have "\<dots> \<le> (\<Sum>\<^sub>ai. cnj (x i) * x i)"
         apply (rule infsetsum_subset_complex)
-          apply (fact cmod_x2)
+        apply (fact cmod_x2)
         by auto
       also from eq0 have "\<dots> = 0" by assumption
       finally show False by simp
@@ -484,7 +479,7 @@ proof transfer
   also have "\<dots> \<le> ell2_norm x"
     apply (subst ell2_norm_L2_set, fact has)
     apply (rule cSUP_upper)
-     apply simp
+    apply simp
     using has unfolding has_ell2_norm_L2_set by simp
   finally show "cmod (x i) \<le> ell2_norm x" by assumption
 qed
@@ -576,8 +571,8 @@ abbreviation "timesScalarVec \<equiv> (scaleC :: complex \<Rightarrow> 'a vector
 lemma ell2_ket[simp]: "norm (ket i) = 1"
   apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
   apply (rule cSUP_eq_maximum)
-   apply (rule_tac x="{i}" in bexI)
-    apply auto
+  apply (rule_tac x="{i}" in bexI)
+  apply auto
   by (rule ell2_1)
 
 
@@ -645,9 +640,9 @@ qed
 
 instantiation subspace :: (type)order begin
 instance apply intro_classes
-     apply transfer apply (simp add: subset_not_subset_eq)
-    apply transfer apply simp
-   apply transfer apply simp
+  apply transfer apply (simp add: subset_not_subset_eq)
+  apply transfer apply simp
+  apply transfer apply simp
   apply transfer by simp
 end
 
@@ -669,11 +664,11 @@ lemma subspace_zero_bot: "(0::_ subspace) = bot"
 instantiation subspace :: (type)ab_semigroup_add begin
 instance
   apply intro_classes
-   apply transfer
+  apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
   unfolding general_sum_def
-   apply blast
+  apply blast
 
   apply transfer
   using is_closed_subspace_comm
