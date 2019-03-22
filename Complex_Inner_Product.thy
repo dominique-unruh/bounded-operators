@@ -577,6 +577,7 @@ abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarro
 
 definition "orthogonal_complement S = {x. \<forall>y\<in>S. x \<bottom> y}" 
 
+(* NEW *)
 abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> ('a::complex_inner) set" ("_\<^sub>\<bottom>")
   where \<open>M\<^sub>\<bottom> \<equiv> (orthogonal_complement M)\<close>
 
@@ -589,31 +590,40 @@ locale is_general_subspace =
   assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
   assumes zero: "0 \<in> A"
 
+(* NEW *)
 abbreviation is_general_subspace_abbr::"('a::complex_vector) set \<Rightarrow>  bool" ("_ is-a-subspace")
   where \<open>M is-a-subspace \<equiv> is_general_subspace M\<close>
 
+(* NEW *)
 abbreviation is_closed_abbr::"('a::topological_space) set \<Rightarrow> bool" ("_ is-closed")
   where \<open>M is-closed \<equiv> closed M\<close>
 
+(* NEW *)
 locale is_subspace =
   fixes A::"('a::{complex_vector,topological_space}) set"
   assumes subspace: "A is-a-subspace"
   assumes closed: "A is-closed"
 
+(* NEW *)
+abbreviation closure_abbr::  \<open>('a::{topological_space}) set \<Rightarrow> 'a set\<close> ("cl _") where
+  \<open>cl A \<equiv> closure A\<close>
+
+(* NEW *)
 abbreviation is_subspace_abbr::"('a::{complex_vector,topological_space}) set \<Rightarrow>  bool" ("_ is-a-closed-subspace")
   where \<open>M is-a-closed-subspace \<equiv> is_subspace M\<close>
 
-lemma is_subspace_closure:
+(* NEW *)
+lemma is_subspace_cl:
   fixes A::"('a::complex_inner) set"
   assumes \<open>A is-a-subspace\<close>
-  shows \<open>(closure A) is-a-subspace\<close>
+  shows \<open>(cl A) is-a-subspace\<close>
 proof-
-  have "x\<in>(closure A) \<Longrightarrow> y\<in>(closure A) \<Longrightarrow> x+y\<in>(closure A)" for x y
+  have "x\<in>(cl A) \<Longrightarrow> y\<in>(cl A) \<Longrightarrow> x+y\<in>(cl A)" for x y
   proof-
-    assume \<open>x\<in>(closure A)\<close>
+    assume \<open>x\<in>(cl A)\<close>
     then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
       using closure_sequential by blast
-    assume \<open>y\<in>(closure A)\<close>
+    assume \<open>y\<in>(cl A)\<close>
     then obtain yy where \<open>\<forall> n::nat. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
       using closure_sequential by blast
     have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
@@ -623,9 +633,9 @@ proof-
     thus ?thesis using  \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close>
       by (meson closure_sequential)
   qed
-  moreover have "x\<in>(closure A) \<Longrightarrow> c *\<^sub>C x \<in> (closure A)" for x c
+  moreover have "x\<in>(cl A) \<Longrightarrow> c *\<^sub>C x \<in> (cl A)" for x c
   proof-
-    assume \<open>x\<in>(closure A)\<close>
+    assume \<open>x\<in>(cl A)\<close>
     then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
       using closure_sequential by blast
     have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
@@ -637,7 +647,7 @@ proof-
     thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
       by (meson closure_sequential)
   qed
-  moreover have "0 \<in> (closure A)"
+  moreover have "0 \<in> (cl A)"
     using assms closure_subset is_general_subspace.zero by fastforce
   ultimately show ?thesis 
     by (simp add: is_general_subspace_def)
@@ -688,7 +698,7 @@ qed
 
 
 lemma is_subspace_0[simp]: 
-"({0} :: ('a::{complex_vector,t1_space}) set)  is-a-closed-subspace"
+  "({0} :: ('a::{complex_vector,t1_space}) set)  is-a-closed-subspace"
 proof-
   have \<open>{0} is-a-subspace\<close>
     using add.right_neutral is_general_subspace_def scaleC_right.zero by blast
@@ -719,7 +729,7 @@ proof-
     moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
       by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) is_general_subspace_def is_subspace_def)
     moreover have "0 \<in> C" 
-    using  \<open>C = A \<inter> B\<close> assms(1) assms(2) is_general_subspace_def is_subspace_def by fastforce
+      using  \<open>C = A \<inter> B\<close> assms(1) assms(2) is_general_subspace_def is_subspace_def by fastforce
     ultimately show ?thesis 
       by (simp add: is_general_subspace_def)
   qed
@@ -733,7 +743,7 @@ qed
 
 
 lemma is_subspace_INF[simp]:
-"\<forall> A \<in> \<A>. (A is-a-closed-subspace) \<Longrightarrow> (\<Inter>\<A>) is-a-closed-subspace"
+  "\<forall> A \<in> \<A>. (A is-a-closed-subspace) \<Longrightarrow> (\<Inter>\<A>) is-a-closed-subspace"
 proof-
   assume \<open>\<forall> A \<in> \<A>. (A is-a-closed-subspace)\<close>
   have \<open>(\<Inter>\<A>) is-a-subspace\<close>
@@ -816,12 +826,11 @@ subsection {* Minimum distance *}
 definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
-
 lemma ExistenceUniquenessMinNorm:
   fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
-(*
+    (*
 It is not possible to generalize to Banach spaces, at least in the obvious way, the results from 
 Conway's book, in which the parallelogram law is involved, because a Banach space in which this 
 identity holds is automatically a Hilbert space.
@@ -1044,7 +1053,6 @@ proof-
     by auto
 qed
 
-(* Connected.closed_translation shows the same thing, but only for 'a::real_normed_vector *)
 lemma TransClosed:
   \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
 proof-
@@ -1461,7 +1469,7 @@ lemma bounded_linear_continuous:
 theorem projPropertiesB:
   \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-  (* Reference: Theorem 2.7 in conway2013course *)
+    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   hence \<open>h - (proj M) h \<in> orthogonal_complement M\<close> 
@@ -1486,7 +1494,7 @@ qed
 theorem projPropertiesA:
   \<open>is_subspace M \<Longrightarrow> bounded_clinear (proj M)\<close> 
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-  (* Reference: Theorem 2.7 (version) in conway2013course *)
+    (* Reference: Theorem 2.7 (version) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   hence \<open>is_subspace (orthogonal_complement M)\<close>
@@ -1573,10 +1581,9 @@ qed
 
 
 theorem projPropertiesC:
-  \<open>is_subspace M \<Longrightarrow> (proj M) \<circ> (proj M) = proj M\<close>
+  \<open>M is-a-closed-subspace \<Longrightarrow> (proj M) \<circ> (proj M) = proj M\<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-
-  (* Reference: Theorem 2.7 in conway2013course *)
+    (* Reference: Theorem 2.7 in conway2013course *)
   using proj_fixed_points proj_intro2 by fastforce
 
 definition ker_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'a set\<close> where
@@ -1657,10 +1664,9 @@ qed
 theorem projPropertiesD:
   \<open>M is-a-closed-subspace \<Longrightarrow> ker_op  (proj M) = (M\<^sub>\<bottom>)\<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-  (* Reference: Theorem 2.7 in conway2013course *)
+    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close> 
-
   have \<open>x \<in> orthogonal_complement M \<Longrightarrow> x \<in>  (ker_op  (proj M))\<close> for x
   proof-
     assume \<open>x \<in> orthogonal_complement M\<close>
@@ -1673,7 +1679,6 @@ proof-
     thus ?thesis
       by simp
   qed
-
   moreover have \<open>x \<in> ker_op  (proj M) \<Longrightarrow> x \<in> orthogonal_complement M\<close> for x
   proof-
     assume \<open>x \<in> ker_op  (proj M)\<close>
@@ -1688,7 +1693,6 @@ proof-
     thus ?thesis
       by simp
   qed
-
   ultimately have \<open>orthogonal_complement M = ker_op  (proj M)\<close>         
     by blast
   thus ?thesis 
@@ -1735,7 +1739,7 @@ proof-
   proof-
     have \<open>0 = f 0\<close> 
       using \<open>clinear f\<close> additive.zero clinear_def by auto    
-      hence \<open>0 \<in> ran_op f\<close>
+    hence \<open>0 \<in> ran_op f\<close>
       by (metis (mono_tags, lifting) mem_Collect_eq ran_op_def)
     thus ?thesis 
       by (simp add: \<open>A = ran_op f\<close>)
@@ -1747,7 +1751,7 @@ qed
 theorem projPropertiesE:
   \<open>M is-a-closed-subspace \<Longrightarrow> ran_op  (proj M) = M\<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-  (* Reference: Theorem 2.7 in conway2013course *)
+    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>M is-a-closed-subspace\<close>
   have \<open>x \<in> ran_op  (proj M) \<Longrightarrow> x \<in> M\<close> for x
@@ -1775,9 +1779,9 @@ qed
 
 
 lemma ProjOntoOrtho:
-  \<open>is_subspace M \<Longrightarrow> id - proj M = proj (M\<^sub>\<bottom>) \<close>
+  \<open>M is-a-closed-subspace \<Longrightarrow> id - proj M = proj (M\<^sub>\<bottom>) \<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
-  (* Reference: Exercice 2 (section 2, chapter I) in conway2013course *)
+    (* Reference: Exercice 2 (section 2, chapter I) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   have   \<open> (id -  proj M) x = (proj ((M\<^sub>\<bottom>))) x \<close> for x
@@ -1816,7 +1820,7 @@ proof-
       assume \<open>x \<in> M\<close>
       hence \<open>(proj M) x = x\<close>
         using \<open>M is-a-closed-subspace\<close> proj_fixed_points by auto
-        hence \<open>(id - (proj M)) x = 0\<close> 
+      hence \<open>(id - (proj M)) x = 0\<close> 
         by simp
       hence \<open>x \<in> {v. (id - (proj M)) v = 0}\<close>
         by simp
@@ -1870,7 +1874,7 @@ proof-
 qed
 
 lemma ortho_top[simp]: 
-" ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
+  " ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
 = ({0}::('a::{complex_inner, complete_space}) set)"
 proof-
   have \<open>({0}::('a::{complex_inner, complete_space}) set) \<subseteq>  ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>)\<close>
@@ -1881,30 +1885,31 @@ proof-
 qed
 
 lemma ortho_bot[simp]:
-" (({0}::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
+  " (({0}::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
 = (top::('a::{complex_inner, complete_space}) set)"
   using is_subspace_UNIV ortho_twice by fastforce
 
 
 subsection {* Disjunction *}
 
+(* NEW *)
 definition general_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-\<open>general_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+  \<open>general_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
+(* NEW *)
 abbreviation general_sum_abbr::  \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("_ \<plusminus> _") where
-\<open>A \<plusminus> B  \<equiv> general_sum A B\<close>
+  \<open>A \<plusminus> B  \<equiv> general_sum A B\<close>
 
-abbreviation closure_abbr::  \<open>('a::{topological_space}) set \<Rightarrow> 'a set\<close> ("cl _") where
-\<open>cl A \<equiv> closure A\<close>
-
+(* NEW *)
 definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-\<open>closed_sum A B = cl (A \<plusminus> B)\<close>
+  \<open>closed_sum A B = cl (A \<plusminus> B)\<close>
 
+(* NEW *)
 abbreviation closed_sum_abbr::  \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("_ \<minusplus> _") where
-\<open>A \<minusplus> B  \<equiv> closed_sum A B\<close>
+  \<open>A \<minusplus> B  \<equiv> closed_sum A B\<close>
 
 lemma sum_existential:
-\<open>x \<in> (A \<plusminus> B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
+  \<open>x \<in> (A \<plusminus> B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
 proof -
   assume "x \<in> (A \<plusminus> B)"
   then have "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
@@ -1913,29 +1918,140 @@ proof -
     by (metis (lifting))
 qed
 
-lemma is_closed_subspace_comm:
+lemma is_closed_subspace_comm:                                                                 
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>(A \<minusplus> B) = (B \<minusplus> A)\<close>
   by (smt Collect_cong add.commute closed_sum_def general_sum_def)
 
+(* NEW *)
 lemma OrthoClosed:
   fixes A ::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-subspace\<close>
-  shows \<open>(A\<^sub>\<bottom>) is-closed\<close>
-  sorry
+  shows \<open>(A\<^sub>\<bottom>) is-closed\<close>                                                
+proof-
+  have \<open>\<forall> n. x n \<in> (A\<^sub>\<bottom>) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (A\<^sub>\<bottom>)\<close> for x l
+  proof-
+    assume \<open>\<forall> n. x n \<in> (A\<^sub>\<bottom>)\<close>
+    hence \<open>\<forall> n. \<forall> y \<in> A. \<langle> y | x n \<rangle> = 0\<close>
+      by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+    assume \<open>x \<longlonglongrightarrow> l\<close>
+    moreover have \<open>isCont (\<lambda> t. \<langle> y | t \<rangle>) l\<close> for y
+      by simp
+    ultimately have \<open>(\<lambda> n. (\<langle> y | x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close> for y 
+      by (simp add: isCont_tendsto_compose)
+    hence \<open>\<forall> y \<in> A. (\<lambda> n. (\<langle> y | x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close>
+      by simp
+    hence \<open>\<forall> y \<in> A. (\<lambda> n. 0 ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close>
+      using  \<open>\<forall> n. \<forall> y \<in> A. \<langle> y | x n \<rangle> = 0\<close> by fastforce
+    hence \<open>\<forall> y \<in> A. \<langle> y | l \<rangle> = 0\<close> 
+      using limI by fastforce
+    thus ?thesis 
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+  qed
+  thus ?thesis 
+    using closed_sequential_limits by blast
+qed
 
-lemma DeMorganOrtho:
+(* NEW *)
+lemma OrthoClosedEq:
+  fixes A ::"('a::{complex_inner, complete_space}) set"
+  assumes \<open>A is-a-subspace\<close>
+  shows \<open>(A\<^sub>\<bottom>) = ((cl A)\<^sub>\<bottom>) \<close>                                                
+proof-
+  have \<open>x \<in> (A\<^sub>\<bottom>) \<Longrightarrow> x \<in> ((cl A)\<^sub>\<bottom>)\<close> for x
+  proof-
+    assume \<open>x \<in> (A\<^sub>\<bottom>)\<close>
+    hence \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>
+      by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+    hence \<open>y \<in> cl A \<Longrightarrow> \<langle> y | x \<rangle> = 0\<close> for y
+    proof-
+      assume \<open>y \<in> cl A\<close>  
+      then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close> 
+        by (meson closure_sequential)
+      have \<open>isCont (\<lambda> t. \<langle> t | x \<rangle>) y\<close>
+        by simp
+      hence \<open>(\<lambda> n. \<langle> yy n | x \<rangle>) \<longlonglongrightarrow>  \<langle> y | x \<rangle>\<close>
+        using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
+        by fastforce
+      hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y | x \<rangle>\<close>
+        using \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
+      thus ?thesis 
+        using limI by force
+    qed
+    thus ?thesis 
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+  qed
+  moreover have \<open>x \<in> ((cl A)\<^sub>\<bottom>) \<Longrightarrow> x \<in> (A\<^sub>\<bottom>)\<close> for x
+    by (smt closure_subset mem_Collect_eq orthogonal_complement_def subset_eq)
+  ultimately show ?thesis by blast
+qed
+
+(* NEW *)
+lemma DeMorganOrtho:        
   fixes A B::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>(A \<minusplus> B)\<^sub>\<bottom> = (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close>
-  sorry
+proof-
+  have \<open>x \<in> ((A \<minusplus> B)\<^sub>\<bottom>) \<Longrightarrow> x \<in> (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close> for x
+  proof-
+    assume \<open>x \<in> ((A \<minusplus> B)\<^sub>\<bottom>)\<close>
+    moreover have \<open>((A \<minusplus> B)\<^sub>\<bottom>) = ((A \<plusminus> B)\<^sub>\<bottom>)\<close>
+      by (simp add: OrthoClosedEq assms(1) assms(2) closed_sum_def general_sum_def is_subspace.subspace is_subspace_plus)
+    ultimately have \<open>x \<in> ((A \<plusminus> B)\<^sub>\<bottom>)\<close>
+      by smt
+    hence \<open>\<forall> z \<in> (A \<plusminus> B). \<langle> z | x \<rangle> = 0\<close> 
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    hence \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> = 0\<close> 
+      using assms(2) general_sum_def is_general_subspace.zero is_subspace.subspace by force
+    hence \<open>x \<in> (A\<^sub>\<bottom>)\<close>
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    from  \<open>\<forall> z \<in> (A \<plusminus> B). \<langle> z | x \<rangle> = 0\<close> 
+    have \<open>\<forall> z \<in> B. \<langle> z | x \<rangle> = 0\<close> 
+      by (smt Groups.add_ac(2) add.right_neutral assms(1) general_sum_def is_general_subspace.zero is_subspace.subspace mem_Collect_eq)
+    hence \<open>x \<in> (B\<^sub>\<bottom>)\<close>
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    show ?thesis 
+      using \<open>x \<in> (A\<^sub>\<bottom>)\<close> \<open>x \<in> (B\<^sub>\<bottom>)\<close> by auto
+  qed
+  moreover have \<open>x \<in> (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>) \<Longrightarrow> x \<in> ((A \<minusplus> B)\<^sub>\<bottom>)\<close> for x
+  proof-
+    assume \<open>x \<in> (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close>
+    hence \<open>x \<in> (A\<^sub>\<bottom>)\<close> by blast
+    hence \<open> \<forall> y\<in> A. \<langle> y | x \<rangle> = 0\<close>
+      by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+    have \<open>x \<in> (B\<^sub>\<bottom>)\<close> using \<open>x \<in> (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close> by blast
+    hence \<open>\<forall> y\<in> B. \<langle> y | x \<rangle> = 0\<close>
+      by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+    have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b | x \<rangle> = 0\<close>
+      by (simp add: \<open>\<forall>y\<in>A. y \<cdot> x = 0\<close> \<open>\<forall>y\<in>B. y \<cdot> x = 0\<close> cinner_left_distrib)
+    hence \<open>\<forall> y \<in> (A \<plusminus> B). \<langle> y | x \<rangle> = 0\<close>
+      using sum_existential by blast
+    hence \<open>x \<in> ((A \<plusminus> B)\<^sub>\<bottom>)\<close>
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    moreover have \<open>((A \<plusminus> B)\<^sub>\<bottom>) = ((A \<minusplus> B)\<^sub>\<bottom>)\<close>
+      by (simp add: OrthoClosedEq assms(1) assms(2) closed_sum_def general_sum_def is_subspace.subspace is_subspace_plus)
+    ultimately have \<open>x \<in> ((A \<minusplus> B)\<^sub>\<bottom>)\<close>
+      by blast
+    thus ?thesis
+      by blast
+  qed
+  ultimately show ?thesis by blast
+qed
 
+(* NEW *)
 lemma DeMorganOrthoDual:
   fixes A B::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
-  shows  \<open>(A \<inter> B)\<^sub>\<bottom> = ((A\<^sub>\<bottom>) \<plusminus> (B\<^sub>\<bottom>))\<close>
-  sorry
-
+  shows  \<open>(A \<inter> B)\<^sub>\<bottom> = ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<close>  
+proof-
+  have \<open>(A \<inter> B)\<^sub>\<bottom> = ((((A\<^sub>\<bottom>)\<^sub>\<bottom>) \<inter> ((B\<^sub>\<bottom>)\<^sub>\<bottom>))\<^sub>\<bottom>)\<close>
+    by (metis assms(1) assms(2) ortho_twice)
+  also have \<open>... = (( ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<^sub>\<bottom> )\<^sub>\<bottom>)\<close>
+    using DeMorganOrtho assms(1) assms(2) is_subspace_orthog by force
+  also have \<open>... = ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<close>
+    by (metis (no_types, lifting) assms(1) assms(2) closed_closure closed_sum_def general_sum_def is_subspace.subspace is_subspace_cl is_subspace_def is_subspace_orthog is_subspace_plus ortho_twice)
+  finally show ?thesis by blast
+qed
 
 lemma is_closed_subspace_asso:
   fixes A B C::"('a::{complex_inner, complete_space}) set"
@@ -1943,29 +2059,29 @@ lemma is_closed_subspace_asso:
   shows \<open>(A \<minusplus> (B \<minusplus> C)) = ((A \<minusplus> B) \<minusplus> C)\<close>
 proof-
   have \<open>(B \<minusplus> C) is-a-subspace\<close>
-    by (simp add: assms(2) assms(3) closed_sum_def general_sum_def is_subspace.subspace is_subspace_closure is_subspace_plus)
+    by (simp add: assms(2) assms(3) closed_sum_def general_sum_def is_subspace.subspace is_subspace_cl is_subspace_plus)
   moreover have \<open>(B \<minusplus> C) is-closed\<close> 
     by (simp add: closed_sum_def)
   ultimately have \<open>(B \<minusplus> C) is-a-closed-subspace\<close>
     by (simp add: is_subspace_def)
   hence \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close>
-    by (metis (mono_tags, lifting) assms(1) closed_closure closed_sum_def general_sum_def is_subspace_closure is_subspace_def is_subspace_plus)
+    by (metis DeMorganOrthoDual assms(1) is_subspace_inter is_subspace_orthog ortho_twice)
   have \<open>(A \<minusplus> (B \<minusplus> C)) = (((A \<minusplus> (B \<minusplus> C))\<^sub>\<bottom>)\<^sub>\<bottom>)\<close>
-     by (smt \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close> ortho_twice)
+    by (smt \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close> ortho_twice)
   also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B \<minusplus> C)\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
-     by (simp add: DeMorganOrtho \<open>(B \<minusplus> C) is-a-closed-subspace\<close> assms(1))
+    by (simp add: DeMorganOrtho \<open>(B \<minusplus> C) is-a-closed-subspace\<close> assms(1))
   also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B\<^sub>\<bottom>) \<inter> (C\<^sub>\<bottom>))  )\<^sub>\<bottom>)\<close>
     by (simp add: DeMorganOrtho assms(2) assms(3))
   also have  \<open>... = ((  ((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)) \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
     by (simp add: inf_assoc)
   also have  \<open>... = ((  ((((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>)\<^sub>\<bottom>)  \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
     by (metis assms(1) assms(2) is_subspace_inter is_subspace_orthog ortho_twice)
-  also have  \<open>... = (( ( (((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>) \<plusminus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
-      by  (smt DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
-  also have  \<open>... = (( ( (A \<plusminus> B) \<plusminus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
+  also have  \<open>... = (( ( (((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>) \<minusplus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
+    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
+  also have  \<open>... = (( ( (A \<minusplus> B) \<minusplus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
     by (metis DeMorganOrthoDual assms(1) assms(2) is_subspace_orthog ortho_twice)
   finally show ?thesis 
-    by (metis (no_types, lifting) DeMorganOrthoDual OrthoClosed assms(1) assms(2) assms(3) closed_sum_def closure_closed is_subspace.subspace is_subspace_inter is_subspace_orthog ortho_twice)
+    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
 qed
 
 lemma is_closed_subspace_ord:
@@ -1983,10 +2099,10 @@ lemma is_closed_subspace_zero:
 subsection {* Direct sum *}
 
 definition InternalDirectSum :: \<open>('a::ab_group_add) set \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> bool\<close> where
-\<open>InternalDirectSum C A B = (C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B} \<and> A \<inter> B = {0})\<close>                                    
+  \<open>InternalDirectSum C A B = (C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B} \<and> A \<inter> B = {0})\<close>                                    
 
 abbreviation InternalDirectSum_abbr :: \<open>('a::ab_group_add) set \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> bool\<close> ("_ =  _ \<oplus> _") where
-\<open>C = A \<oplus> B \<equiv> InternalDirectSum C A B\<close>
+  \<open>C = A \<oplus> B \<equiv> InternalDirectSum C A B\<close>
 
 lemma is_subspace_oplus:
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
@@ -1995,14 +2111,14 @@ lemma is_subspace_oplus:
 proof-
   have \<open>C is-a-subspace\<close>
   proof-
-   have \<open>A is-a-subspace\<close>
+    have \<open>A is-a-subspace\<close>
       by (simp add: assms(1) is_subspace.subspace)  
-   moreover have \<open>B is-a-subspace\<close>
-    by (simp add: assms(2) is_subspace.subspace)
-   moreover have \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close> using \<open>C = A \<oplus> B\<close> InternalDirectSum_def 
-    by blast
-  ultimately show ?thesis 
-    by (simp add: is_subspace_plus)
+    moreover have \<open>B is-a-subspace\<close>
+      by (simp add: assms(2) is_subspace.subspace)
+    moreover have \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close> using \<open>C = A \<oplus> B\<close> InternalDirectSum_def 
+      by blast
+    ultimately show ?thesis 
+      by (simp add: is_subspace_plus)
   qed
   moreover have \<open>C is-closed\<close>
     sorry
