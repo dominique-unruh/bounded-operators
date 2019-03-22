@@ -601,12 +601,19 @@ instance .. end
 
 instantiation subspace :: (type)sup begin  (* Sum of spaces *)
 lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
-  by (rule is_closed_subspace_plus)
+  using is_subspace_closed_plus
+  unfolding closed_sum_def
+  unfolding general_sum_def
+  by auto
 
 instance .. end
 instantiation subspace :: (type)plus begin  (* Sum of spaces *)
 lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
-  by (rule is_closed_subspace_plus)
+  using is_subspace_closed_plus
+  unfolding closed_sum_def
+  unfolding general_sum_def
+  by auto
+
 instance .. end
 
 lemma subspace_sup_plus: "(sup :: 'a subspace \<Rightarrow> _ \<Rightarrow> _) = (+)" 
@@ -662,12 +669,12 @@ lemma subspace_zero_bot: "(0::_ subspace) = bot"
 instantiation subspace :: (type)ab_semigroup_add begin
 instance
   apply intro_classes
-  apply transfer
+   apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
   unfolding general_sum_def
    apply blast
-  
+
   apply transfer
   using is_closed_subspace_comm
   unfolding closed_sum_def 
@@ -685,7 +692,10 @@ end
 
 instantiation subspace :: (type)comm_monoid_add begin
 instance apply intro_classes
-  apply transfer using is_closed_subspace_zero unfolding closed_sum_def
+  apply transfer
+  using is_closed_subspace_zero
+  unfolding closed_sum_def
+  unfolding general_sum_def
   by fastforce
 end
 
@@ -693,13 +703,24 @@ instantiation subspace :: (type)semilattice_sup begin
 instance proof intro_classes
   fix x y z :: "'a subspace"
   show "x \<le> x \<squnion> y"
-    apply transfer apply auto apply (rule exI, rule exI[of _ 0]) using is_subspace_contains_0 by auto
+    apply transfer
+    using is_closed_subspace_universal_inclusion_left
+    unfolding closed_sum_def
+    unfolding general_sum_def
+    by blast
   show "y \<le> x \<squnion> y"
-    apply transfer apply auto apply (rule exI[of _ 0]) using is_subspace_contains_0 by auto
+    apply transfer
+    using is_closed_subspace_universal_inclusion_right
+    unfolding closed_sum_def
+    unfolding general_sum_def
+    by blast
+
   show "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y \<squnion> z \<le> x"
-    apply transfer apply auto
-    apply (rule is_subspace.additive_closed)
-    by auto
+    apply transfer
+    using is_closed_subspace_universal_inclusion_inverse
+    unfolding closed_sum_def
+    unfolding general_sum_def
+    by blast
 qed
 end
 
@@ -712,8 +733,8 @@ end
 
 instantiation subspace :: (type)semilattice_inf begin
 instance apply intro_classes
-    apply transfer apply simp
-   apply transfer apply simp
+  apply transfer apply simp
+  apply transfer apply simp
   apply transfer by simp
 end
 
@@ -743,7 +764,7 @@ instance proof intro_classes
     by auto
   have "Inf UNIV = (bot::'a subspace)"    
     apply (rule antisym)
-     apply (rule Inf_le) apply simp
+    apply (rule Inf_le) apply simp
     apply (rule le_Inf) by simp
   thus "Sup {} = (bot::'a subspace)"
     unfolding Sup_subspace_def by auto
@@ -765,7 +786,12 @@ lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \
 
 lemma bot_plus[simp]: "bot + x = x" for x :: "'a subspace"
   apply transfer
-  unfolding sup_subspace_def[symmetric] by simp
+  unfolding sup_subspace_def[symmetric] 
+  using is_closed_subspace_zero
+  unfolding closed_sum_def
+  unfolding general_sum_def
+  by blast
+
 lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
@@ -811,9 +837,6 @@ proof-
     by (metis (no_types, lifting)  INF_greatest Inf_subspace.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> subspace_as_set S} \<longrightarrow> A \<subseteq> subspace_as_set S\<close>)
   thus ?thesis using span_def by metis
 qed
-
-
-
 
 
 end
