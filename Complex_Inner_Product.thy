@@ -2084,48 +2084,19 @@ proof-
     by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
 qed
 
-lemma is_closed_subspace_ord:
-  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
-    and \<open>A \<subseteq> B\<close>
-  shows \<open>(C\<minusplus>A) \<subseteq>(C\<minusplus>B)\<close>
-  sorry
-
 
 lemma is_closed_subspace_zero:
+  fixes A :: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close>
-  shows \<open>(({0})\<minusplus>A) = A\<close>
-  sorry
+  shows \<open>(({0}::('a::{complex_inner, complete_space}) set)\<minusplus>A) = A\<close>
+  by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms is_subspace_UNIV is_subspace_orthog ortho_top ortho_twice orthogonal_complement_def)
 
-subsection {* Direct sum *}
-
-definition InternalDirectSum :: \<open>('a::ab_group_add) set \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> bool\<close> where
-  \<open>InternalDirectSum C A B = (C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B} \<and> A \<inter> B = {0})\<close>                                    
-
-abbreviation InternalDirectSum_abbr :: \<open>('a::ab_group_add) set \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> bool\<close> ("_ =  _ \<oplus> _") where
-  \<open>C = A \<oplus> B \<equiv> InternalDirectSum C A B\<close>
-
-lemma is_subspace_oplus:
-  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
-    and \<open>C = A \<oplus> B\<close>
-  shows \<open>C is-a-closed-subspace\<close>
-proof-
-  have \<open>C is-a-subspace\<close>
-  proof-
-    have \<open>A is-a-subspace\<close>
-      by (simp add: assms(1) is_subspace.subspace)  
-    moreover have \<open>B is-a-subspace\<close>
-      by (simp add: assms(2) is_subspace.subspace)
-    moreover have \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close> using \<open>C = A \<oplus> B\<close> InternalDirectSum_def 
-      by blast
-    ultimately show ?thesis 
-      by (simp add: is_subspace_plus)
-  qed
-  moreover have \<open>C is-closed\<close>
-    sorry
-  ultimately show ?thesis 
-    by (simp add: is_subspace_def)
-
-qed
+lemma is_closed_subspace_ord:
+  fixes A B C:: \<open>('a::{complex_inner, complete_space}) set\<close>
+  assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
+    and \<open>A \<subseteq> B\<close>
+  shows \<open>(C\<minusplus>A) \<subseteq> (C\<minusplus>B)\<close>
+  by (smt DeMorganOrthoDual Int_Collect_mono assms(1) assms(2) assms(3) assms(4) is_closed_subspace_comm is_subspace_inter is_subspace_orthog ortho_leq ortho_twice orthogonal_complement_def)
 
 
 end
