@@ -40,58 +40,63 @@ setup \<open>Sign.add_const_constraint
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
+abbreviation cnj_abbr:: \<open>complex \<Rightarrow> complex\<close> ("/_/\<^sup>\<bullet>") where
+\<open>x\<^sup>\<bullet> \<equiv> cnj x\<close>
+
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
-  fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"
-  assumes cinner_commute: "cinner x y = cnj (cinner y x)"
-    and cinner_add_left: "cinner (x + y) z = cinner x z + cinner y z"
-    and cinner_scaleC_left [simp]: "cinner (scaleC r x) y = cnj r * (cinner x y)"
-    and cinner_ge_zero [simp]: "0 \<le> cinner x x"
-    and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
-    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
+  fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  (infix "\<star>" 67) (* NEW *)
+  assumes cinner_commute: "x \<star> y = ((y \<star> x)\<^sup>\<bullet>)"
+    and cinner_add_left: "(x + y) \<star> z = (x \<star> z) +  (y \<star> z)"
+    and cinner_scaleC_left [simp]: "(r *\<^sub>C x) \<star> y = (r\<^sup>\<bullet>) * (x \<star> y)"
+    and cinner_ge_zero [simp]: "0 \<le> x \<star> x"
+    and cinner_eq_zero_iff [simp]: "x \<star> x = 0 \<longleftrightarrow> x = 0"
+    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (x \<star> x))"
 begin
 
+abbreviation norm_abbr::"'a \<Rightarrow> real" ("\<parallel>/_ /\<parallel>")
+  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
 
-lemma cinner_real: "cinner x x \<in> \<real>"
+lemma cinner_real: "x \<star> x \<in> \<real>"
   by (simp add: reals_zero_comparable_iff)
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 
-lemma cinner_zero_left [simp]: "cinner 0 x = 0"
+lemma cinner_zero_left [simp]: "0 \<star> x = 0"
   using cinner_add_left [of 0 0 x] by simp
 
-lemma cinner_minus_left [simp]: "cinner (- x) y = - cinner x y"
+lemma cinner_minus_left [simp]: "(- x) \<star> y = - (x \<star> y)"
   using cinner_add_left [of x "- x" y]
   by (metis (mono_tags, lifting) cancel_ab_semigroup_add_class.add_diff_cancel_left' cinner_zero_left group_add_class.diff_0 local.right_minus)
 
-lemma cinner_diff_left: "cinner (x - y) z = cinner x z - cinner y z"
+lemma cinner_diff_left: "(x - y) \<star> z = (x \<star> z) - (y \<star> z)"
   using cinner_add_left [of x "- y" z] by simp
 
-lemma cinner_sum_left: "cinner (\<Sum>x\<in>A. f x) y = (\<Sum>x\<in>A. cinner (f x) y)"
+lemma cinner_sum_left: "(\<Sum>x\<in>A. f x) \<star> y = (\<Sum>x\<in>A. ((f x) \<star> y) )"
   by (cases "finite A", induct set: finite, simp_all add: cinner_add_left)
 
 text \<open>Transfer distributivity rules to right argument.\<close>
 
-lemma cinner_add_right: "cinner x (y + z) = cinner x y + cinner x z"
+lemma cinner_add_right: "x \<star> (y + z) = (x \<star> y) + (x \<star> z)"
   using cinner_add_left [of y z x]
   by (metis complex_cnj_add local.cinner_commute)
 
-lemma cinner_scaleC_right [simp]: "cinner x (scaleC r y) = r * (cinner x y)"
+lemma cinner_scaleC_right [simp]: "x \<star> (r *\<^sub>C y) = r * (x \<star> y)"
   using cinner_scaleC_left [of r y x]
   by (metis complex_cnj_cnj complex_cnj_mult local.cinner_commute)
 
-lemma cinner_zero_right [simp]: "cinner x 0 = 0"
+lemma cinner_zero_right [simp]: "x \<star> 0 = 0"
   using cinner_zero_left [of x] 
   by (metis (mono_tags, lifting) complex_cnj_zero local.cinner_commute) 
 
-lemma cinner_minus_right [simp]: "cinner x (- y) = - cinner x y"
+lemma cinner_minus_right [simp]: "x \<star> (- y) = - (x \<star> y)"
   using cinner_minus_left [of y x]
   by (metis complex_cnj_minus local.cinner_commute)
 
-lemma cinner_diff_right: "cinner x (y - z) = cinner x y - cinner x z"
+lemma cinner_diff_right: "x \<star> (y - z) = (x \<star> y) - (x \<star> z)"
   using cinner_diff_left [of y z x]
   by (metis complex_cnj_diff local.cinner_commute)
 
-lemma cinner_sum_right: "cinner x (\<Sum>y\<in>A. f y) = (\<Sum>y\<in>A. cinner x (f y))"
+lemma cinner_sum_right: "x \<star> (\<Sum>y\<in>A. f y) = (\<Sum>y\<in>A. x \<star> (f y))"
   apply (subst cinner_commute)
   apply (subst (2) cinner_commute)
   unfolding cnj_sum[symmetric]
@@ -106,43 +111,43 @@ lemmas cinner_left_distrib = cinner_add_left
 lemmas cinner_right_distrib = cinner_add_right
 lemmas cinner_distrib = cinner_left_distrib cinner_right_distrib
 
-lemma cinner_gt_zero_iff [simp]: "0 < cinner x x \<longleftrightarrow> x \<noteq> 0"
+lemma cinner_gt_zero_iff [simp]: "0 < x \<star> x \<longleftrightarrow> x \<noteq> 0"
   by (simp add: order_less_le)
 
-lemma power2_norm_eq_cinner: "(norm x)\<^sup>2 = cmod (cinner x x)"
+lemma power2_norm_eq_cinner: "(\<parallel>x\<parallel>)\<^sup>2 = cmod (x \<star> x)"
   by (simp add: norm_eq_sqrt_cinner)
 
 
-lemma power2_norm_eq_cinner': "complex_of_real ((norm x)\<^sup>2) = cinner x x"
+lemma power2_norm_eq_cinner': "complex_of_real ((\<parallel> x \<parallel>)\<^sup>2) = x \<star> x"
   apply (subst power2_norm_eq_cinner)
   using cinner_ge_zero by (rule complex_of_real_cmod)
 
-lemma power2_norm_eq_cinner'': "(complex_of_real (norm x))\<^sup>2 = cinner x x"
+lemma power2_norm_eq_cinner'': "(complex_of_real (\<parallel>x\<parallel>))\<^sup>2 = x \<star> x"
   using power2_norm_eq_cinner' by simp
 
 
 text \<open>Identities involving complex multiplication and division.\<close>
 
-lemma cinner_mult_left: "cinner (of_complex m * a) b = cnj m * (cinner a b)"
+lemma cinner_mult_left: "(of_complex m * a) \<star> b =  (m\<^sup>\<bullet>) * (a \<star> b)"
   unfolding of_complex_def by simp
 
-lemma cinner_mult_right: "cinner a (of_complex m * b) = m * (cinner a b)"
+lemma cinner_mult_right: "a \<star> (of_complex m * b) = m * (a \<star> b)"
   by (metis complex_inner_class.cinner_scaleC_right scaleC_conv_of_complex)
 
-lemma cinner_mult_left': "cinner (a * of_complex m) b = cnj m * (cinner a b)"
+lemma cinner_mult_left': "(a * of_complex m) \<star> b =  (m\<^sup>\<bullet>) * (a \<star> b)"
   using cinner_mult_left by (simp add: of_complex_def)
 
-lemma cinner_mult_right': "cinner a (b * of_complex m) = (cinner a b) * m"
+lemma cinner_mult_right': "a \<star> (b * of_complex m) = (a \<star> b) * m"
   by (simp add: of_complex_def complex_inner_class.cinner_scaleC_right)
 
 lemma Cauchy_Schwarz_ineq:
-  "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
+  "(x \<star> y) * ( (x \<star> y)\<^sup>\<bullet> ) \<le> (x \<star> x) * (y \<star> y)"
 proof (cases)
   assume "y = 0"
   thus ?thesis by simp
 next
   assume y: "y \<noteq> 0"
-  have [simp]: "cnj (cinner y y) = cinner y y" for y
+  have [simp]: "(y \<star> y)\<^sup>\<bullet> = y \<star> y" for y
     by (metis local.cinner_commute)
   define r where "r = cnj (cinner x y) / cinner y y"
   have "0 \<le> cinner (x - scaleC r y) (x - scaleC r y)"
@@ -160,10 +165,10 @@ next
     by (simp add: pos_divide_le_eq y)
 qed
 
-lemma Im_cinner_x_x[simp]: "Im (cinner x x) = 0"
+lemma Im_cinner_x_x[simp]: "Im (x \<star> x) = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp
 
-lemma cinner_norm_sq: "cinner x x = complex_of_real ((norm x)^2)"
+lemma cinner_norm_sq: "x \<star> x = complex_of_real ((\<parallel>x\<parallel>)^2)"
 proof -
   define r where "r = Re (cinner x x)"
   have r: "cinner x x = complex_of_real r"
@@ -178,7 +183,7 @@ proof -
 qed
 
 lemma Cauchy_Schwarz_ineq2:
-  "cmod (cinner x y) \<le> norm x * norm y"
+  "cmod (x \<star> y) \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
   have ineq: "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
     using Cauchy_Schwarz_ineq .
@@ -195,7 +200,7 @@ proof (rule power2_le_imp_le)
     by (simp add: local.norm_eq_sqrt_cinner)
 qed
 
-lemma norm_cauchy_schwarz: "abs (cinner x y) \<le> complex_of_real (norm x) * complex_of_real (norm y)"
+lemma norm_cauchy_schwarz: "\<bar>x \<star> y\<bar> \<le> complex_of_real (\<parallel>x\<parallel>) * complex_of_real (\<parallel>y\<parallel>)"
   using Cauchy_Schwarz_ineq2 [of x y, THEN complex_of_real_mono]
   unfolding abs_complex_def
   by auto
@@ -247,20 +252,15 @@ end
 abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle> /_/ | /_/ \<rangle> " )
   where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
 
-abbreviation cinner_abbr::"'a::complex_inner \<Rightarrow> 'a::complex_inner \<Rightarrow> complex" (infix "\<^emph>" 67)
-  where \<open>x \<^emph> y \<equiv> cinner x y\<close>
-
-abbreviation norm_abbr::"'a::complex_inner \<Rightarrow> real" ("\<parallel> /_ /\<parallel>")
-  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
 
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
-  shows "cinner a (b / of_complex m) = (cinner a b) / m"
+  shows "cinner a (b / of_complex m) = (a \<star> b) / m"
   by (metis (no_types, lifting) cinner_mult_right' divide_inverse divide_self_if inverse_eq_divide of_complex_divide of_complex_eq_0_iff one_neq_zero)
 
 lemma cinner_divide_left:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
-  shows "cinner (a / of_complex m) b = (cinner a b) / cnj m"
+  shows "(a / of_complex m) \<star> b = (a \<star> b) / (m\<^sup>\<bullet>)"
   apply (subst cinner_commute) apply (subst cinner_divide_right) by simp
 
 text \<open>
@@ -341,7 +341,7 @@ subsection \<open>Class instances\<close>
 instantiation complex :: complex_inner
 begin
 
-definition cinner_complex_def [simp]: "cinner x y = cnj x * y"
+definition cinner_complex_def [simp]: "cinner x y = (x\<^sup>\<bullet>) * y"
 
 instance
 proof
@@ -367,23 +367,23 @@ qed
 end
 
 lemma
-  shows complex_inner_1_left[simp]: "cinner 1 x = x"
-    and complex_inner_1_right[simp]: "cinner x 1 = cnj x"
+  shows complex_inner_1_left[simp]: "1 \<star> x = x"
+    and complex_inner_1_right[simp]: "x \<star> 1 = (x\<^sup>\<bullet>)"
   by simp_all
 
-lemma norm_eq_square: "norm x = a \<longleftrightarrow> 0 \<le> a \<and> cinner x x = complex_of_real (a\<^sup>2)"
+lemma norm_eq_square: "norm x = a \<longleftrightarrow> 0 \<le> a \<and> x \<star> x = complex_of_real (a\<^sup>2)"
   by (metis cinner_norm_sq norm_ge_zero of_real_eq_iff power2_eq_imp_eq)
 
-lemma norm_le_square: "norm x \<le> a \<longleftrightarrow> 0 \<le> a \<and> cinner x x \<le> complex_of_real (a\<^sup>2)"
+lemma norm_le_square: "norm x \<le> a \<longleftrightarrow> 0 \<le> a \<and>  x \<star> x \<le> complex_of_real (a\<^sup>2)"
   by (metis add.left_neutral add.right_neutral add_mono_thms_linordered_field(4) cinner_norm_sq complex_of_real_mono_iff norm_ge_zero not_le power2_le_imp_le power_mono)
 
-lemma norm_ge_square: "norm x \<ge> a \<longleftrightarrow> a \<le> 0 \<or> cinner x x \<ge> complex_of_real (a\<^sup>2)"
+lemma norm_ge_square: "norm x \<ge> a \<longleftrightarrow> a \<le> 0 \<or> x \<star> x \<ge> complex_of_real (a\<^sup>2)"
   by (smt complex_of_real_mono_iff norm_ge_zero power2_le_imp_le power2_norm_eq_cinner')
 
-lemma norm_lt_square: "norm x < a \<longleftrightarrow> 0 < a \<and> cinner x x < complex_of_real (a\<^sup>2)"
+lemma norm_lt_square: "norm x < a \<longleftrightarrow> 0 < a \<and> x \<star> x < complex_of_real (a\<^sup>2)"
   by (smt Complex_Inner_Product.norm_eq_square Complex_Inner_Product.norm_le_square less_le)
 
-lemma norm_gt_square: "norm x > a \<longleftrightarrow> a < 0 \<or> cinner x x > complex_of_real (a\<^sup>2)"
+lemma norm_gt_square: "norm x > a \<longleftrightarrow> a < 0 \<or> x \<star> x > complex_of_real (a\<^sup>2)"
   by (smt Complex_Inner_Product.norm_le_square less_le norm_of_real of_real_power power2_norm_eq_cinner'')
 
 text\<open>Dot product in terms of the norm rather than conversely.\<close>
@@ -503,27 +503,27 @@ end
 subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
-  \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re (x \<^emph> y)\<close>
+  \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re (x \<star> y)\<close>
   (* Reference: In the proof of Corollary 1.5 in conway2013course *)
 proof-
-  have \<open>(x \<^emph> y) + (y \<^emph> x) = (x \<^emph> y) + cnj (x \<^emph> y)\<close>
+  have \<open>(x \<star> y) + (y \<star> x) = (x \<star> y) + cnj (x \<star> y)\<close>
     by simp
-  hence \<open>(x \<^emph> y) + (y \<^emph> x) = 2* Re (x \<^emph> y) \<close>
+  hence \<open>(x \<star> y) + (y \<star> x) = 2* Re (x \<star> y) \<close>
     using complex_add_cnj by presburger
-  have \<open>\<parallel>x + y\<parallel>^2 = ( (x+y) \<^emph> (x+y) )\<close> 
+  have \<open>\<parallel>x + y\<parallel>^2 = ( (x+y) \<star> (x+y) )\<close> 
     using power2_norm_eq_cinner' by auto
-  hence \<open>\<parallel>x + y\<parallel>^2 = (x \<^emph> x) + (x \<^emph> y) + (y \<^emph> x) + (y \<^emph> y)\<close>
+  hence \<open>\<parallel>x + y\<parallel>^2 = (x \<star> x) + (x \<star> y) + (y \<star> x) + (y \<star> y)\<close>
     by (simp add: cinner_left_distrib cinner_right_distrib)
-  thus ?thesis using  \<open>(x \<^emph> y) + (y \<^emph> x) = 2* Re (x \<^emph> y)\<close>
+  thus ?thesis using  \<open>(x \<star> y) + (y \<star> x) = 2* Re (x \<star> y)\<close>
     by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))
 qed
 
 lemma polarization_identity_minus:
-  \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (x \<^emph> y)\<close>
+  \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (x \<star> y)\<close>
 proof-
-  have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2*Re (x \<^emph> (-y))\<close>
+  have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2*Re (x \<star> (-y))\<close>
     using polarization_identity_plus by blast
-  hence \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (x \<^emph> y)\<close>
+  hence \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (x \<star> y)\<close>
     by simp
   thus ?thesis 
     by blast
@@ -564,7 +564,7 @@ qed
 
 
 theorem PythagoreanId:
-  \<open>x \<^emph> y = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
+  \<open>x \<star> y = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
   (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
   by (simp add: polarization_identity_plus)
 
@@ -576,7 +576,7 @@ definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
 abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
   where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
 
-definition "orthogonal_complement S = {x. \<forall>y\<in>S. x \<bottom> y}" 
+definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. x \<bottom> y}" 
 
 (* NEW *)
 abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> ('a::complex_inner) set" ("/_/\<^sub>\<bottom>")
@@ -1221,7 +1221,6 @@ proof-
         using \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> by auto
       show ?thesis 
         by (metis (no_types, lifting) \<open>\<exists>!k. is_arg_min_on norm_abbr {m - h |m. m \<in> M} k\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (t - h)\<close> diff_add_cancel)
-
     qed
     ultimately show ?thesis by blast
   qed
@@ -1282,7 +1281,7 @@ proof-
         proof-
           have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
                 (\<forall> c::real.  2 * Re (\<langle> h - k | c *\<^sub>R f \<rangle>) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
-            by (metis \<open>\<And>f. f \<in> M \<Longrightarrow> 2 * Re ((h - k) \<^emph> f) \<le> \<parallel>f\<parallel>\<^sup>2\<close> assms is_general_subspace.smult_closed is_subspace.subspace scaleR_scaleC)
+            by (metis \<open>\<And>f. f \<in> M \<Longrightarrow> 2 * Re ((h - k) \<star> f) \<le> \<parallel>f\<parallel>\<^sup>2\<close> assms is_general_subspace.smult_closed is_subspace.subspace scaleR_scaleC)
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
                 (\<forall> c::real. c * (2 * Re (\<langle> h - k | f \<rangle>)) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
             by (metis Re_complex_of_real cinner_scaleC_right complex_add_cnj complex_cnj_complex_of_real complex_cnj_mult of_real_mult scaleR_scaleC semiring_normalization_rules(34))
@@ -2019,7 +2018,7 @@ proof-
     hence \<open>\<forall> y\<in> B. \<langle> y | x \<rangle> = 0\<close>
       by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
     have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b | x \<rangle> = 0\<close>
-      by (simp add: \<open>\<forall>y\<in>A. y \<^emph> x = 0\<close> \<open>\<forall>y\<in>B. y \<^emph> x = 0\<close> cinner_left_distrib)
+      by (simp add: \<open>\<forall>y\<in>A. y \<star> x = 0\<close> \<open>\<forall>y\<in>B. y \<star> x = 0\<close> cinner_left_distrib)
     hence \<open>\<forall> y \<in> (A \<plusminus> B). \<langle> y | x \<rangle> = 0\<close>
       using sum_existential by blast
     hence \<open>x \<in> ((A \<plusminus> B)\<^sub>\<bottom>)\<close>
