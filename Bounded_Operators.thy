@@ -1,5 +1,27 @@
+(*  Title:      Bounded-Operators/Bounded_Operators.thy
+    Author:     Dominique Unruh, University of Tartu
+    Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+
+References:
+
+ @book{conway2013course,
+  title={A course in functional analysis},
+  author={Conway, John B},
+  volume={96},
+  year={2013},
+  publisher={Springer Science \& Business Media}
+}
+
+*)
+
+
+(*
+We will derive the properties of bounded operators from 
+the properties of Cstar_algebras
+*)
+
 theory Bounded_Operators
-  imports Complex_L2 "HOL-Library.Adhoc_Overloading" Extended_Sorry
+  imports Cstar_Algebras Complex_L2 "HOL-Library.Adhoc_Overloading" Extended_Sorry
 begin
 
 
