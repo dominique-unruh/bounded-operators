@@ -18,7 +18,12 @@ section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
- "HOL-Analysis.Inner_Product" "HOL-Library.LaTeXsugar"
+ "HOL-Analysis.Inner_Product" "HOL-Library.LaTeXsugar" (* NEW *) 
+(*
+ HOL-Library.LaTeXsugar is to use the symbol \<emptyset>, which is recommended (aesthetics) 
+in the "sugar tutorial" (see Documentation of Isabelle/HOL)
+*)
+
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -39,9 +44,6 @@ setup \<open>Sign.add_const_constraint
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
-
-abbreviation cnj_abbr:: \<open>complex \<Rightarrow> complex\<close> ("/_/\<^sup>\<bullet>") where
-\<open>x\<^sup>\<bullet> \<equiv> cnj x\<close>
 
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  (infix "\<star>" 67) (* NEW *)

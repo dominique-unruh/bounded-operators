@@ -1,3 +1,19 @@
+(* Title:      Bounded-Operators/Complex_Vector_Spaces.thy
+   Author:     Dominique Unruh, University of Tartu
+   Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+
+References:
+
+@book{conway2013course,
+title={A course in functional analysis},
+author={Conway, John B},
+volume={96},
+year={2013},
+publisher={Springer Science \& Business Media}
+}
+
+*)
+
 
 (* Follows closely Real_Vector_Spaces. It contains analogues of the lemmas and definition from
 there except where an ordering on the complex numbers would be needed, or where the resulting
@@ -9,6 +25,10 @@ section \<open>Vector Spaces and Algebras over the Complex Numbers\<close>
 theory Complex_Vector_Spaces
   imports Ordered_Complex HOL.Topological_Spaces
 begin
+
+abbreviation cnj_abbr:: \<open>complex \<Rightarrow> complex\<close> ("/_/\<^sup>\<bullet>") where
+\<open>x\<^sup>\<bullet> \<equiv> cnj x\<close>
+
 
 
 subsection \<open>Complex vector spaces\<close>
@@ -27,10 +47,10 @@ lemma scaleC_real: assumes "r\<in>\<real>" shows "r *\<^sub>C x = Re r *\<^sub>R
 end
 
 class complex_vector = scaleC + ab_group_add +
-  assumes scaleC_add_right: "scaleC a (x + y) = scaleC a x + scaleC a y"
-  and scaleC_add_left: "scaleC (a + b) x = scaleC a x + scaleC b x"
-  and scaleC_scaleC[simp]: "scaleC a (scaleC b x) = scaleC (a * b) x"
-  and scaleC_one[simp]: "scaleC 1 x = x"
+  assumes scaleC_add_right: "a *\<^sub>C (x + y) = (a *\<^sub>C x) + (a *\<^sub>C y)"
+  and scaleC_add_left: "scaleC (a + b) x = (a *\<^sub>C x) + (b *\<^sub>C x)"
+  and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
+  and scaleC_one[simp]: "1 *\<^sub>C x = x"
 
 interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   apply unfold_locales
@@ -691,9 +711,8 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
 
 
 subsection \<open>Bounded Linear and Bilinear Operators\<close>
-
 locale clinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
-  assumes scaleC: "f (scaleC r x) = scaleC r (f x)"
+  assumes scaleC: "f (r *\<^sub>C x) = r  *\<^sub>C (f x)"
 
 sublocale clinear \<subseteq> linear
   apply (rule linearI)
