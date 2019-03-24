@@ -19,6 +19,7 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
     Extended_Sorry
+
 begin
 
 section \<open>Preliminaries\<close>
@@ -79,7 +80,7 @@ proof -
     unfolding has_ell2_norm_def unfolding L2_set_def
     apply (rewrite asm_rl[of "(\<lambda>A. sqrt (sum (\<lambda>i. ((cmod \<circ> x) i)\<^sup>2) A)) ` Collect finite 
                             = sqrt ` (\<lambda>A. (\<Sum>i\<in>A. (cmod (x i))\<^sup>2)) ` Collect finite"])
-    apply auto[1]
+     apply auto[1]
     apply (subst bdd_sqrt[symmetric])
     by (simp add: monoI)
 qed
@@ -104,7 +105,7 @@ lemma SUP_max:
   assumes "m:M"
   shows "(SUP x:M. f x) = f m"
   apply (rule antisym)
-  apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
+   apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
   by (metis assms(1) assms(2) assms(3) bdd_aboveI bdd_above_image_mono cSUP_upper)
 
 
@@ -162,7 +163,7 @@ proof -
       apply (subst sum.insert_remove)
       using F_F0 assms apply auto
       apply (subst sum.cong[where B=F0 and h="\<lambda>_. 0"])
-      apply (simp add: \<open>a \<notin> F0\<close>)
+        apply (simp add: \<open>a \<notin> F0\<close>)
       using \<open>a \<notin> F0\<close> apply auto[1]
       by simp
   qed
@@ -221,12 +222,12 @@ proof -
   also have "\<dots> = cmod c * ell2_norm x" 
     apply (subst ell2_norm_L2_set) apply (fact assms)
     apply (subst continuous_at_Sup_mono[where f="\<lambda>x. cmod c * x"])
-    apply (simp add: mono_def ordered_comm_semiring_class.comm_mult_left_mono)
-    apply (rule continuous_mult)
+        apply (simp add: mono_def ordered_comm_semiring_class.comm_mult_left_mono)
+       apply (rule continuous_mult)
     using continuous_const apply blast
-    apply simp
-    apply blast
-    apply (meson assms has_ell2_norm_L2_set)
+       apply simp
+      apply blast
+     apply (meson assms has_ell2_norm_L2_set)
     by auto
   finally show "ell2_norm (\<lambda>i. c * x i) = cmod c * ell2_norm x" .
 qed
@@ -278,12 +279,12 @@ proof -
     apply (subst ell2_norm_L2_set, fact has)
     apply (subst ell2_norm_L2_set, fact assms)+
     apply (rule order.trans[rotated])
-    apply (rule SUP_plus)
-    apply auto[1]
-    apply (meson assms(1) has_ell2_norm_L2_set)
-    apply (meson assms(2) has_ell2_norm_L2_set)
+     apply (rule SUP_plus)
+       apply auto[1]
+      apply (meson assms(1) has_ell2_norm_L2_set)
+     apply (meson assms(2) has_ell2_norm_L2_set)
     apply (rule cSUP_subset_mono)
-    apply auto
+       apply auto
     using MxMy unfolding bdd_above_def apply auto[1]
     using triangle by fastforce
 qed
@@ -311,23 +312,23 @@ lift_definition plus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 
 lift_definition minus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>f g x. f x - g x"
   apply (subst ab_group_add_class.ab_diff_conv_add_uminus)
   apply (rule ell2_norm_triangle) 
-  apply auto by (simp add: has_ell2_norm_def)
+   apply auto by (simp add: has_ell2_norm_def)
 lift_definition scaleR_vector :: "real \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>r f x. complex_of_real r * f x"
   by (rule ell2_norm_smult)
 lift_definition scaleC_vector :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c f x. c * f x"
   by (rule ell2_norm_smult)
 
 instance apply intro_classes
-  apply (transfer; rule ext; simp)
-  apply (transfer; rule ext; simp)
-  apply (transfer; rule ext; simp)
-  apply (transfer; rule ext; simp)
-  apply (transfer; rule ext; simp)
-  apply (transfer; rule ext; simp)
-  apply (transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
-  apply (transfer; rule ext; simp add: distrib_left)
-  apply (transfer; rule ext; simp add: distrib_right)
-  apply (transfer; rule ext; simp)
+           apply (transfer; rule ext; simp)
+           apply (transfer; rule ext; simp)
+          apply (transfer; rule ext; simp)
+         apply (transfer; rule ext; simp)
+        apply (transfer; rule ext; simp)
+       apply (transfer; rule ext; simp)
+      apply (transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
+     apply (transfer; rule ext; simp add: distrib_left)
+    apply (transfer; rule ext; simp add: distrib_right)
+   apply (transfer; rule ext; simp)
   by (transfer; rule ext; simp)
 end
 
@@ -339,21 +340,11 @@ definition "uniformity = (INF e:{0<..}. principal {(x::'a vector, y). norm (x - 
 definition "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a vector set"
 instance apply intro_classes
   unfolding dist_vector_def sgn_vector_def uniformity_vector_def open_vector_def apply simp_all
-  apply transfer apply (fact ell2_norm_0)
-  apply transfer apply (fact ell2_norm_triangle)
-  apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
+     apply transfer apply (fact ell2_norm_0)
+    apply transfer apply (fact ell2_norm_triangle)
+   apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
   apply transfer by (simp add: ell2_norm_smult(2)) 
 end
-
-
-(* TODO: move *)
-lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
-
-lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
 
 
 instantiation vector :: (type) complex_inner begin
@@ -390,8 +381,8 @@ proof standard
       using cnj_y z by (rule abs_summable_product) 
     show "(\<Sum>\<^sub>ai. cnj (x i + y i) * z i) = (\<Sum>\<^sub>ai. cnj (x i) * z i) + (\<Sum>\<^sub>ai. cnj (y i) * z i)"
       apply (subst infsetsum_add[symmetric])
-      apply (fact cnj_x_z)
-      apply (fact cnj_y_z)
+        apply (fact cnj_x_z)
+       apply (fact cnj_y_z)
       by (simp add: distrib_left mult.commute)
   qed
 
@@ -422,8 +413,11 @@ proof standard
     have "0 = (\<Sum>\<^sub>ai::'a. 0)" by auto
     also have "\<dots> \<le> (\<Sum>\<^sub>ai. cnj (x i) * x i)"
       apply (rule infsetsum_mono_complex)
-      using sum by auto
-    finally show "0 \<le> (\<Sum>\<^sub>ai. cnj (x i) * x i)" by assumption
+      using sum 
+        apply simp
+       apply (simp add: sum)
+      by (simp add: less_eq_complex_def)
+      finally show "0 \<le> (\<Sum>\<^sub>ai. cnj (x i) * x i)" by assumption
   qed
 
   show "(cinner x x = 0) = (x = 0)"
@@ -440,12 +434,15 @@ proof standard
       assume "x \<noteq> (\<lambda>_. 0)"
       then obtain i where "x i \<noteq> 0" by auto
       then have "0 < cnj (x i) * x i"
-        using le_less by fastforce
+        using le_less less_eq_complex_def by fastforce
+
       also have "\<dots> = (\<Sum>\<^sub>ai\<in>{i}. cnj (x i) * x i)" by auto
       also have "\<dots> \<le> (\<Sum>\<^sub>ai. cnj (x i) * x i)"
         apply (rule infsetsum_subset_complex)
-        apply (fact cmod_x2)
-        by auto
+          apply (fact cmod_x2)
+         apply simp
+        by (simp add: less_eq_complex_def)
+
       also from eq0 have "\<dots> = 0" by assumption
       finally show False by simp
     qed
@@ -465,7 +462,11 @@ proof standard
     also have "\<dots> = sqrt (\<Sum>\<^sub>ai. cmod (cnj (x i) * x i))"
       unfolding norm_complex_def power2_eq_square by auto
     also have "\<dots> = sqrt (cmod (\<Sum>\<^sub>ai. cnj (x i) * x i))"
-      apply (subst infsetsum_cmod) using sum by auto
+      apply (subst infsetsum_cmod) using sum 
+      apply simp 
+       apply (simp add: less_eq_complex_def)
+      by auto
+
     finally show "ell2_norm x = sqrt (cmod (\<Sum>\<^sub>ai. cnj (x i) * x i))" by assumption
   qed
 qed
@@ -479,7 +480,7 @@ proof transfer
   also have "\<dots> \<le> ell2_norm x"
     apply (subst ell2_norm_L2_set, fact has)
     apply (rule cSUP_upper)
-    apply simp
+     apply simp
     using has unfolding has_ell2_norm_L2_set by simp
   finally show "cmod (x i) \<le> ell2_norm x" by assumption
 qed
@@ -509,9 +510,10 @@ proof -
     by (meson le_less_trans) 
 qed
 
+
 instantiation vector :: (type) chilbert_space begin
-instance by (cheat vector_chilbert_space)
-    (* proof intro_classes
+instance  by (cheat vector_chilbert_space)  (* NEW *)
+(* 
   fix X :: "nat \<Rightarrow> 'a vector"
   assume "Cauchy X"
   define x where "x i = Rep_vector (X i)" for i
@@ -527,7 +529,8 @@ instance by (cheat vector_chilbert_space)
     unfolding convergent_def by metis
 
   define L where "L = Abs_vector Lx"
-  have "has_ell2_norm Lx" by cheat
+  have "has_ell2_norm Lx"
+    sorry
   then have [transfer_rule]: "pcr_vector (=) Lx L"
     unfolding vector.pcr_cr_eq cr_vector_def
     unfolding L_def apply (subst Abs_vector_inverse) by auto
@@ -537,42 +540,44 @@ instance by (cheat vector_chilbert_space)
     fix r::real assume "0<r"
     show "\<exists>no. \<forall>n\<ge>no. norm (X n - L) < r"
       apply transfer
-      by cheat
+      sorry
   qed
-
   show "convergent X"
     using XL by (rule convergentI)
-qed *)
+*)
 end
 
+(*
 (* TODO remove and document *)
 abbreviation "timesScalarVec \<equiv> (scaleC :: complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector)"
+replacement of timesScalarVec by scaleC (Occam's razor)
+*)
 
-(* lift_definition timesScalarVec :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c x i. c * x i"
+(* lift_definition scaleC :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c x i. c * x i"
   by (fact ell2_norm_smult) *)
-(* scaleC_scaleC: lemma timesScalarVec_twice[simp]: "timesScalarVec a (timesScalarVec b \<psi>) = timesScalarVec (a*b) \<psi>"
+(* scaleC_scaleC: lemma scaleC_twice[simp]: "scaleC a (scaleC b \<psi>) = scaleC (a*b) \<psi>"
   by (transfer, auto) *)
 
-(* scaleC_minus1_left - lemma uminus_vector: "(-\<psi>) = timesScalarVec (-1) \<psi>"
+(* scaleC_minus1_left - lemma uminus_vector: "(-\<psi>) = scaleC (-1) \<psi>"
   apply transfer by auto *)
 
-(* scaleC_one - lemma one_times_vec[simp]: "timesScalarVec 1 \<psi> = \<psi>"
+(* scaleC_one - lemma one_times_vec[simp]: "scaleC 1 \<psi> = \<psi>"
   apply transfer by simp *)
 
-(* scaleC_zero_right -- lemma times_zero_vec[simp]: "timesScalarVec c 0 = 0"
+(* scaleC_zero_right -- lemma times_zero_vec[simp]: "scaleC c 0 = 0"
   apply transfer by simp *)
 
-(* scaleC_add_right -- lemma timesScalarVec_add_right: "timesScalarVec c (x+y) = timesScalarVec c x + timesScalarVec c y" 
+(* scaleC_add_right -- lemma scaleC_add_right: "scaleC c (x+y) = scaleC c x + scaleC c y" 
   apply transfer apply (rule ext) by algebra *)
 
-(* scaleC_add_left - lemma timesScalarVec_add_left: "timesScalarVec (c+d) x = timesScalarVec c x + timesScalarVec d x"
+(* scaleC_add_left - lemma scaleC_add_left: "scaleC (c+d) x = scaleC c x + scaleC d x"
   apply transfer apply (rule ext) by algebra *)
 
 lemma ell2_ket[simp]: "norm (ket i) = 1"
   apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
   apply (rule cSUP_eq_maximum)
-  apply (rule_tac x="{i}" in bexI)
-  apply auto
+   apply (rule_tac x="{i}" in bexI)
+    apply auto
   by (rule ell2_1)
 
 
@@ -640,9 +645,9 @@ qed
 
 instantiation subspace :: (type)order begin
 instance apply intro_classes
-  apply transfer apply (simp add: subset_not_subset_eq)
-  apply transfer apply simp
-  apply transfer apply simp
+     apply transfer apply (simp add: subset_not_subset_eq)
+    apply transfer apply simp
+   apply transfer apply simp
   apply transfer by simp
 end
 
@@ -664,11 +669,11 @@ lemma subspace_zero_bot: "(0::_ subspace) = bot"
 instantiation subspace :: (type)ab_semigroup_add begin
 instance
   apply intro_classes
-  apply transfer
+   apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
   unfolding general_sum_def
-  apply blast
+   apply blast
 
   apply transfer
   using is_closed_subspace_comm
@@ -728,8 +733,8 @@ end
 
 instantiation subspace :: (type)semilattice_inf begin
 instance apply intro_classes
-  apply transfer apply simp
-  apply transfer apply simp
+    apply transfer apply simp
+   apply transfer apply simp
   apply transfer by simp
 end
 
@@ -759,7 +764,7 @@ instance proof intro_classes
     by auto
   have "Inf UNIV = (bot::'a subspace)"    
     apply (rule antisym)
-    apply (rule Inf_le) apply simp
+     apply (rule Inf_le) apply simp
     apply (rule le_Inf) by simp
   thus "Sup {} = (bot::'a subspace)"
     unfolding Sup_subspace_def by auto
@@ -791,22 +796,63 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_su
 lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 
+(* NEW *)
+(* (* TODO remove *)
+abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a vector set" where "subspace_as_set == subspace_to_set"
 
-(* TODO remove *)
-abbreviation subspace_as_set :: "'a subspace \<Rightarrow> 'a vector set" where "subspace_as_set == subspace_to_set"
+removed
+*)
 
-
-definition [code del]: "span A = Inf {S. A \<subseteq> subspace_as_set S}"
-  (* definition [code del]: "spanState A = Inf {S. state_to_vector ` A \<subseteq> subspace_as_set S}" *)
+definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
+  (* definition [code del]: "spanState A = Inf {S. state_to_vector ` A \<subseteq> subspace_to_set S}" *)
   (* consts span :: "'a set \<Rightarrow> 'b subspace"
 adhoc_overloading span (* spanState *) spanVector *)
 
 (* lemma span_vector_state: "spanState A = spanVector (state_to_vector ` A)"
   by (simp add: spanState_def spanVector_def)  *)
 
-lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { timesScalarVec a \<psi> } = span {\<psi>}"
+lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>::"'a vector"
-  by (cheat TODO6)
+    (* NEW *)
+proof-
+  assume \<open>a \<noteq> 0\<close>
+  have \<open>span {\<psi>} = Inf {S | S::'a subspace. {\<psi>} \<subseteq> subspace_to_set S }\<close>
+    by (metis Complex_L2.span_def)
+  also have \<open>... = Inf {S | S::'a subspace. \<psi> \<in> subspace_to_set S }\<close>
+    by simp
+  also have \<open>... = Inf {S | S::'a subspace. a *\<^sub>C \<psi> \<in> subspace_to_set S }\<close>
+  proof-
+    have \<open>\<psi> \<in> subspace_to_set S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
+    proof-
+      have \<open>(subspace_to_set S) is-a-closed-subspace \<close>
+        using subspace_to_set by auto
+      hence \<open>\<psi> \<in> subspace_to_set S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
+        by (metis Abs_subspace_cases Abs_subspace_inverse is_general_subspace.smult_closed is_subspace.subspace mem_Collect_eq)
+      moreover have  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S \<Longrightarrow> \<psi> \<in> subspace_to_set S\<close> for S
+      proof-
+        assume \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close>
+        obtain b where \<open>b * a = 1\<close> using \<open>a \<noteq> 0\<close> 
+          by (metis divide_complex_def divide_self_if mult.commute)
+        have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> subspace_to_set S\<close> 
+          using  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> is_general_subspace.smult_closed
+            is_subspace.subspace subspace_to_set
+          by fastforce
+        hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> subspace_to_set S\<close> 
+          by simp
+        thus ?thesis using  \<open>b * a = 1\<close> by simp
+      qed                       
+      ultimately show ?thesis by blast
+    qed
+    thus ?thesis by simp
+  qed
+  also have \<open>... = Inf {S | S::'a subspace. {a *\<^sub>C \<psi>} \<subseteq> subspace_to_set S }\<close>
+    by auto
+  also have \<open>... = span {a *\<^sub>C \<psi>}\<close> 
+    by (metis Complex_L2.span_def)
+  finally have  \<open>span {\<psi>} = span {a *\<^sub>C \<psi>}\<close>
+    by blast
+  thus ?thesis by auto
+qed
 
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b subspace"
@@ -822,14 +868,14 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is orthogonal_c
   by (fact is_subspace_orthog)
 
 lemma span_superset:
-  \<open>A \<subseteq> subspace_as_set (span A)\<close> for A :: \<open>('a vector) set\<close>
+  \<open>A \<subseteq> subspace_to_set (span A)\<close> for A :: \<open>('a vector) set\<close>
 proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> subspace_as_set S} \<longrightarrow> A \<subseteq> subspace_as_set S\<close>
+  have \<open>\<forall> S. S \<in> {S. A \<subseteq> subspace_to_set S} \<longrightarrow> A \<subseteq> subspace_to_set S\<close>
     by simp
-  hence \<open>A \<subseteq> \<Inter> {subspace_as_set S| S. A \<subseteq> subspace_as_set S}\<close>
+  hence \<open>A \<subseteq> \<Inter> {subspace_to_set S| S. A \<subseteq> subspace_to_set S}\<close>
     by blast
-  hence \<open>A \<subseteq> subspace_as_set( Inf {S| S. A \<subseteq> subspace_as_set S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_subspace.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> subspace_as_set S} \<longrightarrow> A \<subseteq> subspace_as_set S\<close>)
+  hence \<open>A \<subseteq> subspace_to_set( Inf {S| S. A \<subseteq> subspace_to_set S})\<close>
+    by (metis (no_types, lifting)  INF_greatest Inf_subspace.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> subspace_to_set S} \<longrightarrow> A \<subseteq> subspace_to_set S\<close>)
   thus ?thesis using span_def by metis
 qed
 

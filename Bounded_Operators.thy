@@ -48,9 +48,10 @@ consts
   adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
  timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'c) bounded" 
 (* and applyOp :: "('a,'b) bounded \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
- applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace"
+ applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace" 
  timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
  timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace"
+
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" by (cheat "applyOp_0")
 lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" by (cheat times_applyOp)
@@ -65,7 +66,6 @@ lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint
 
 lemma timesOp_assoc_subspace: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" by (cheat timesOp_assoc_subspace)
 (* for S :: "'a subspace" and B :: "('a,'b) bounded" and A :: "('b,'c) bounded" *)
-
 
 (* TODO: inline into definition of + in instantiation *)
 consts plusOp :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
