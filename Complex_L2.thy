@@ -93,9 +93,13 @@ notation
 
 
 (* TODO: rename *)
-typedef 'a vector = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
+
+(* NEW *)
+(* 'a ell2 renamed as 'a ell2 *)
+
+typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
-setup_lifting type_definition_vector
+setup_lifting type_definition_ell2
   (* derive universe vector *)
 
 lemma SUP_max:
@@ -291,7 +295,7 @@ qed
 
 
 
-lift_definition ket :: "'a \<Rightarrow> 'a vector" is "\<lambda>x y. if x=y then 1 else 0"
+lift_definition ket :: "'a \<Rightarrow> 'a ell2" is "\<lambda>x y. if x=y then 1 else 0"
   unfolding has_ell2_norm_def bdd_above_def apply simp
   apply (rule exI[of _ 1], rule allI, rule impI)
   by (rule ell2_1)
@@ -304,18 +308,18 @@ lemma cSUP_eq_maximum:
   by (metis (mono_tags, hide_lams) assms(1) assms(2) cSup_eq_maximum imageE image_eqI)
 
 
-instantiation vector :: (type)complex_vector begin
-lift_definition zero_vector :: "'a vector" is "\<lambda>_.0" by (auto simp: has_ell2_norm_def)
-lift_definition uminus_vector :: "'a vector \<Rightarrow> 'a vector" is uminus by (simp add: has_ell2_norm_def)
-lift_definition plus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>f g x. f x + g x"
+instantiation ell2 :: (type)complex_vector begin
+lift_definition zero_ell2 :: "'a ell2" is "\<lambda>_. 0" by (auto simp: has_ell2_norm_def)
+lift_definition uminus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2" is uminus by (simp add: has_ell2_norm_def)
+lift_definition plus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>f g x. f x + g x"
   by (rule ell2_norm_triangle) 
-lift_definition minus_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>f g x. f x - g x"
+lift_definition minus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>f g x. f x - g x"
   apply (subst ab_group_add_class.ab_diff_conv_add_uminus)
   apply (rule ell2_norm_triangle) 
    apply auto by (simp add: has_ell2_norm_def)
-lift_definition scaleR_vector :: "real \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>r f x. complex_of_real r * f x"
+lift_definition scaleR_ell2 :: "real \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>r f x. complex_of_real r * f x"
   by (rule ell2_norm_smult)
-lift_definition scaleC_vector :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c f x. c * f x"
+lift_definition scaleC_ell2 :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>c f x. c * f x"
   by (rule ell2_norm_smult)
 
 instance apply intro_classes
@@ -332,14 +336,15 @@ instance apply intro_classes
   by (transfer; rule ext; simp)
 end
 
-instantiation vector :: (type)complex_normed_vector begin
-lift_definition norm_vector :: "'a vector \<Rightarrow> real" is ell2_norm .
-definition "dist x y = norm (x - y)" for x y::"'a vector"
-definition "sgn x = x /\<^sub>R norm x" for x::"'a vector"
-definition "uniformity = (INF e:{0<..}. principal {(x::'a vector, y). norm (x - y) < e})"
-definition "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a vector set"
+
+instantiation ell2 :: (type)complex_normed_vector begin
+lift_definition norm_ell2 :: "'a ell2 \<Rightarrow> real" is ell2_norm .
+definition "dist x y = norm (x - y)" for x y::"'a ell2"
+definition "sgn x = x /\<^sub>R norm x" for x::"'a ell2"
+definition "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
+definition "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
 instance apply intro_classes
-  unfolding dist_vector_def sgn_vector_def uniformity_vector_def open_vector_def apply simp_all
+  unfolding dist_ell2_def sgn_ell2_def uniformity_ell2_def open_ell2_def apply simp_all
      apply transfer apply (fact ell2_norm_0)
     apply transfer apply (fact ell2_norm_triangle)
    apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
@@ -347,12 +352,12 @@ instance apply intro_classes
 end
 
 
-instantiation vector :: (type) complex_inner begin
-lift_definition cinner_vector :: "'a vector \<Rightarrow> 'a vector \<Rightarrow> complex" is 
+instantiation ell2 :: (type) complex_inner begin
+lift_definition cinner_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> complex" is 
   "\<lambda>x y. infsetsum (\<lambda>i. (cnj (x i) * y i)) UNIV" .
 instance
 proof standard
-  fix x y z :: "'a vector" fix c :: complex
+  fix x y z :: "'a ell2" fix c :: complex
   show "cinner x y = cnj (cinner y x)"
   proof transfer
     fix x y :: "'a\<Rightarrow>complex" assume "has_ell2_norm x" and "has_ell2_norm y"
@@ -472,7 +477,7 @@ proof standard
 qed
 end
 
-lemma norm_vector_component: "norm (Rep_vector x i) \<le> norm x"
+lemma norm_ell2_component: "norm (Rep_ell2 x i) \<le> norm x"
 proof transfer
   fix x :: "'a \<Rightarrow> complex" and i
   assume has: "has_ell2_norm x"
@@ -485,9 +490,9 @@ proof transfer
   finally show "cmod (x i) \<le> ell2_norm x" by assumption
 qed
 
-lemma Cauchy_vector_component: 
+lemma Cauchy_ell2_component: 
   fixes X
-  defines "x i == Rep_vector (X i)"
+  defines "x i == Rep_ell2 (X i)"
   shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
 proof -
   assume "Cauchy X"
@@ -495,11 +500,11 @@ proof -
   proof -
     have "dist (X i) (X i') = norm (X i - X i')"
       unfolding dist_norm by simp
-    also have "norm (X i - X i') \<ge> norm (Rep_vector (X i - X i') j)"
-      by (rule norm_vector_component)
-    also have "Rep_vector (X i - X i') j = x i j - x i' j"
+    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
+      by (rule norm_ell2_component)
+    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
       unfolding x_def
-      by (metis add_implies_diff diff_add_cancel plus_vector.rep_eq) 
+      by (metis add_implies_diff diff_add_cancel plus_ell2.rep_eq) 
     also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
       unfolding dist_norm by simp
     finally show ?thesis by assumption
@@ -530,34 +535,34 @@ lemma convergence_pointwise_to_ell2_same_limit:
   sorry
 
 
-instantiation vector :: (type) chilbert_space 
+instantiation ell2 :: (type) chilbert_space 
 begin
 instance
 proof  (* NEW *)
-  fix x :: \<open>nat \<Rightarrow> 'a vector\<close>
-  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_vector (x n) )\<close>
-    using Rep_vector by auto
+  fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
+  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
+    using Rep_ell2 by auto
   assume \<open>Cauchy x\<close>
-  have \<open>Cauchy (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t::'a
-    by (simp add: Cauchy_vector_component \<open>Cauchy x\<close>)
-  hence \<open>convergent (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t ::'a
+  have \<open>Cauchy (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t::'a
+    by (simp add: Cauchy_ell2_component \<open>Cauchy x\<close>)
+  hence \<open>convergent (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t ::'a
     by (simp add: Cauchy_convergent)
-  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_vector (x n)) t ) \<longlonglongrightarrow> s\<close>
+  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_ell2 (x n)) t ) \<longlonglongrightarrow> s\<close>
     by (simp add: convergentD)
-  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_vector (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
+  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
     using pointwise_convergent_to_def
     by metis
-  then obtain l where \<open>(\<lambda> n. Rep_vector (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
+  then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
     by auto
-  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_vector (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
-  using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_vector (x n) )\<close>
+  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
+  using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
     convergence_pointwise_to_ell2_same_limit 
   by blast
-  obtain L::\<open>'a vector\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) ) \<longlonglongrightarrow> 0\<close>
-    using Rep_vector_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_vector (x n) - l)) \<longlonglongrightarrow> 0\<close>
+  obtain L::\<open>'a ell2\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
+    using Rep_ell2_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_ell2 (x n) - l)) \<longlonglongrightarrow> 0\<close>
     by auto
-  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) )  < \<epsilon>\<close>
-    using  \<open>(\<lambda> n. ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) ) \<longlonglongrightarrow> 0\<close>
+  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) )  < \<epsilon>\<close>
+    using  \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
     by (simp add: LIMSEQ_iff)
   hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
     sorry
@@ -569,24 +574,24 @@ end
 
 (* (* Old proof *)
  (* by (cheat vector_chilbert_space) *)
-  fix X :: "nat \<Rightarrow> 'a vector"
+  fix X :: "nat \<Rightarrow> 'a ell2"
   assume "Cauchy X"
-  define x where "x i = Rep_vector (X i)" for i
-  then have [transfer_rule]: "rel_fun (=) (pcr_vector (=)) x X"
-    unfolding vector.pcr_cr_eq cr_vector_def rel_fun_def by simp
+  define x where "x i = Rep_ell2 (X i)" for i
+  then have [transfer_rule]: "rel_fun (=) (pcr_ell2 (=)) x X"
+    unfolding vector.pcr_cr_eq cr_ell2_def rel_fun_def by simp
   from \<open>Cauchy X\<close> have "Cauchy (\<lambda>i. x i j)" for j
     unfolding x_def
-    by (rule Cauchy_vector_component)
+    by (rule Cauchy_ell2_component)
   hence "convergent (\<lambda>i. x i j)" for j
     by (simp add: Cauchy_convergent_iff)
   then obtain Lx where "(\<lambda>i. x i j) \<longlonglongrightarrow> Lx j" for j
     unfolding convergent_def by metis
-  define L where "L = Abs_vector Lx"
+  define L where "L = Abs_ell2 Lx"
   have "has_ell2_norm Lx"
     sorry
-  then have [transfer_rule]: "pcr_vector (=) Lx L"
-    unfolding vector.pcr_cr_eq cr_vector_def
-    unfolding L_def apply (subst Abs_vector_inverse) by auto
+  then have [transfer_rule]: "pcr_ell2 (=) Lx L"
+    unfolding vector.pcr_cr_eq cr_ell2_def
+    unfolding L_def apply (subst Abs_ell2_inverse) by auto
   have XL: "X \<longlonglongrightarrow> L"
   proof (rule LIMSEQ_I)
     fix r::real assume "0<r"
@@ -601,16 +606,16 @@ qed
 
 (*
 (* TODO remove and document *)
-abbreviation "timesScalarVec \<equiv> (scaleC :: complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector)"
+abbreviation "timesScalarVec \<equiv> (scaleC :: complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2)"
 replacement of timesScalarVec by scaleC (Occam's razor)
 *)
 
-(* lift_definition scaleC :: "complex \<Rightarrow> 'a vector \<Rightarrow> 'a vector" is "\<lambda>c x i. c * x i"
+(* lift_definition scaleC :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>c x i. c * x i"
   by (fact ell2_norm_smult) *)
 (* scaleC_scaleC: lemma scaleC_twice[simp]: "scaleC a (scaleC b \<psi>) = scaleC (a*b) \<psi>"
   by (transfer, auto) *)
 
-(* scaleC_minus1_left - lemma uminus_vector: "(-\<psi>) = scaleC (-1) \<psi>"
+(* scaleC_minus1_left - lemma uminus_ell2: "(-\<psi>) = scaleC (-1) \<psi>"
   apply transfer by auto *)
 
 (* scaleC_one - lemma one_times_vec[simp]: "scaleC 1 \<psi> = \<psi>"
@@ -633,18 +638,18 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
   by (rule ell2_1)
 
 
-typedef 'a subspace = "{A::'a vector set. is_subspace A}"
+typedef 'a subspace = "{A::'a ell2 set. is_subspace A}"
   morphisms subspace_to_set Abs_subspace
   apply (rule exI[of _ "{0}"]) by simp
 setup_lifting type_definition_subspace
   (* derive universe subspace *)
 
 instantiation subspace :: (type)zero begin (* The subspace {0} *)
-lift_definition zero_subspace :: "'a subspace" is "{0::'a vector}" by simp
+lift_definition zero_subspace :: "'a subspace" is "{0::'a ell2}" by simp
 instance .. end
 
 instantiation subspace :: (type)top begin  (* The full space *)
-lift_definition top_subspace :: "'a subspace" is "UNIV::'a vector set" by simp
+lift_definition top_subspace :: "'a subspace" is "UNIV::'a ell2 set" by simp
 instance .. end
 
 instantiation subspace :: (type)inf begin  (* Intersection *)
@@ -652,7 +657,7 @@ lift_definition inf_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightar
 instance .. end
 
 instantiation subspace :: (type)sup begin  (* Sum of spaces *)
-lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
+lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
   using is_subspace_closed_plus
   unfolding closed_sum_def
   unfolding general_sum_def
@@ -660,7 +665,7 @@ lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightar
 
 instance .. end
 instantiation subspace :: (type)plus begin  (* Sum of spaces *)
-lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a vector set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
+lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
   using is_subspace_closed_plus
   unfolding closed_sum_def
   unfolding general_sum_def
@@ -672,7 +677,7 @@ lemma subspace_sup_plus: "(sup :: 'a subspace \<Rightarrow> _ \<Rightarrow> _) =
   unfolding sup_subspace_def plus_subspace_def by simp
 
 instantiation subspace :: (type)Inf begin  (* Intersection *)
-lift_definition Inf_subspace :: "'a subspace set \<Rightarrow> 'a subspace" is "Inf :: 'a vector set set \<Rightarrow> 'a vector set" by simp
+lift_definition Inf_subspace :: "'a subspace set \<Rightarrow> 'a subspace" is "Inf :: 'a ell2 set set \<Rightarrow> 'a ell2 set" by simp
 instance .. end
 
 instantiation subspace :: (type)ord begin  
@@ -688,10 +693,10 @@ instance .. end
 
 lemma subspace_zero_not_top[simp]: "(0::'a subspace) \<noteq> top"
 proof transfer 
-  have "ket undefined \<noteq> (0::'a vector)"
+  have "ket undefined \<noteq> (0::'a ell2)"
     apply transfer
     by (meson one_neq_zero)
-  thus "{0::'a vector} \<noteq> UNIV" by auto
+  thus "{0::'a ell2} \<noteq> UNIV" by auto
 qed
 
 
@@ -709,7 +714,7 @@ instance apply intro_classes
 end
 
 instantiation subspace :: (type)order_bot begin
-lift_definition bot_subspace :: "'a subspace" is "{0::'a vector}" by (fact is_subspace_0)
+lift_definition bot_subspace :: "'a subspace" is "{0::'a ell2}" by (fact is_subspace_0)
 instance apply intro_classes
   apply transfer 
   using is_subspace_0 ortho_bot ortho_leq by blast
@@ -850,21 +855,21 @@ lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_
 
 (* NEW *)
 (* (* TODO remove *)
-abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a vector set" where "subspace_as_set == subspace_to_set"
+abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a ell2 set" where "subspace_as_set == subspace_to_set"
 
 removed
 *)
 
 definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
-  (* definition [code del]: "spanState A = Inf {S. state_to_vector ` A \<subseteq> subspace_to_set S}" *)
+  (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> subspace_to_set S}" *)
   (* consts span :: "'a set \<Rightarrow> 'b subspace"
 adhoc_overloading span (* spanState *) spanVector *)
 
-(* lemma span_vector_state: "spanState A = spanVector (state_to_vector ` A)"
+(* lemma span_ell2_state: "spanState A = spanVector (state_to_ell2 ` A)"
   by (simp add: spanState_def spanVector_def)  *)
 
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
-  for \<psi>::"'a vector"
+  for \<psi>::"'a ell2"
     (* NEW *)
 proof-
   assume \<open>a \<noteq> 0\<close>
@@ -920,7 +925,7 @@ lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is orthogonal_c
   by (fact is_subspace_orthog)
 
 lemma span_superset:
-  \<open>A \<subseteq> subspace_to_set (span A)\<close> for A :: \<open>('a vector) set\<close>
+  \<open>A \<subseteq> subspace_to_set (span A)\<close> for A :: \<open>('a ell2) set\<close>
 proof-
   have \<open>\<forall> S. S \<in> {S. A \<subseteq> subspace_to_set S} \<longrightarrow> A \<subseteq> subspace_to_set S\<close>
     by simp
