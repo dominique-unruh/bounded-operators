@@ -529,11 +529,26 @@ definition pointwise_convergent::\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b
 
 (* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
-  fixes x :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
-  assumes \<open>x \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> n::nat. has_ell2_norm (x n)\<close>                          
-  shows \<open>has_ell2_norm l \<and> ( \<lambda> n. ell2_norm ( (x n) - l ) ) \<longlonglongrightarrow> 0\<close> 
-  sorry
-
+  fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
+  assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>                          
+  shows \<open>has_ell2_norm l \<and> ( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close> 
+proof-
+  have \<open>has_ell2_norm l\<close>
+  proof-
+    have \<open>(\<lambda> k. (a k) t) \<longlonglongrightarrow> l t\<close> for t :: 'a
+      by (metis assms(1) pointwise_convergent_to_def)
+    hence  \<open>\<forall> \<epsilon> > 0. \<exists> K::nat. \<forall> k \<ge> K.  dist ((\<lambda> k. (a k) t) k)  (l t) < \<epsilon>\<close> for t :: 'a
+      by (metis LIMSEQ_iff dist_commute  dist_norm)
+    hence  \<open>\<forall> \<epsilon> > 0. \<exists> K::nat. \<forall> k \<ge> K.  norm ( ((\<lambda> k. (a k) t) k) - (l t) ) < \<epsilon>\<close> for t :: 'a 
+      by (metis Suc_leD dist_norm)
+    have \<open>bdd_above (sum (\<lambda>i. (cmod (l i))\<^sup>2) ` Collect finite)\<close>
+      sorry
+    thus ?thesis using has_ell2_norm_def by blast
+  qed
+  moreover have \<open>( \<lambda> n. ell2_norm ( (a n) - l ) ) \<longlonglongrightarrow> 0\<close>
+    sorry
+  ultimately show ?thesis by blast
+qed
 
 instantiation ell2 :: (type) chilbert_space 
 begin
