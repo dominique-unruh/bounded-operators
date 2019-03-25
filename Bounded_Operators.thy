@@ -22,8 +22,8 @@ the properties of Cstar_algebras
 
 theory Bounded_Operators
   imports (* NEW *) Cstar_Algebras Complex_L2 "HOL-Library.Adhoc_Overloading" Extended_Sorry
-begin
 
+begin
 
 subsection \<open>Bounded operators\<close>
 

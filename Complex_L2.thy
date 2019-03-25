@@ -510,16 +510,48 @@ proof -
     by (meson le_less_trans) 
 qed
 
+(* NEW *)
+definition pointwise_convergent:: \<open>( nat \<Rightarrow> ('a vector) ) \<Rightarrow> bool\<close> where
+\<open>pointwise_convergent x = (\<forall> t::'a. convergent (\<lambda> n. (Rep_vector (x n)) t ) )\<close>
+
+
+(* NEW *)
+lemma convergence_pointwise_to_ell2:
+\<open>pointwise_convergent x \<Longrightarrow> convergent x\<close>
+for x :: \<open>nat \<Rightarrow> 'a vector\<close>
+  sorry
+
+(* NEW *)
+lemma vector_complete:
+\<open>Cauchy x \<Longrightarrow> convergent x\<close>
+for x :: \<open>nat \<Rightarrow> 'a vector\<close>
+proof-
+  assume \<open>Cauchy x\<close>
+  have \<open>Cauchy (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t::'a
+    by (simp add: Cauchy_vector_component \<open>Cauchy x\<close>)
+  hence \<open>convergent (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t ::'a
+    by (simp add: Cauchy_convergent)
+  thus ?thesis 
+    by (simp add: convergence_pointwise_to_ell2 pointwise_convergent_def)
+qed
 
 instantiation vector :: (type) chilbert_space begin
-instance  by (cheat vector_chilbert_space)  (* NEW *)
-(* 
+instance (* by (cheat vector_chilbert_space) *)  (* NEW *)
+proof
+  fix x :: \<open>nat \<Rightarrow> 'a vector\<close>
+  assume \<open>Cauchy x\<close>
+  thus "convergent x"
+    using vector_complete by blast
+qed
+
+end
+
+(* (* Old proof *)
   fix X :: "nat \<Rightarrow> 'a vector"
   assume "Cauchy X"
   define x where "x i = Rep_vector (X i)" for i
   then have [transfer_rule]: "rel_fun (=) (pcr_vector (=)) x X"
     unfolding vector.pcr_cr_eq cr_vector_def rel_fun_def by simp
-
   from \<open>Cauchy X\<close> have "Cauchy (\<lambda>i. x i j)" for j
     unfolding x_def
     by (rule Cauchy_vector_component)
@@ -527,25 +559,23 @@ instance  by (cheat vector_chilbert_space)  (* NEW *)
     by (simp add: Cauchy_convergent_iff)
   then obtain Lx where "(\<lambda>i. x i j) \<longlonglongrightarrow> Lx j" for j
     unfolding convergent_def by metis
-
   define L where "L = Abs_vector Lx"
   have "has_ell2_norm Lx"
     sorry
   then have [transfer_rule]: "pcr_vector (=) Lx L"
     unfolding vector.pcr_cr_eq cr_vector_def
     unfolding L_def apply (subst Abs_vector_inverse) by auto
-
   have XL: "X \<longlonglongrightarrow> L"
   proof (rule LIMSEQ_I)
     fix r::real assume "0<r"
     show "\<exists>no. \<forall>n\<ge>no. norm (X n - L) < r"
-      apply transfer
       sorry
   qed
   show "convergent X"
-    using XL by (rule convergentI)
+    using XL by (rule convergentI) 
+qed
 *)
-end
+
 
 (*
 (* TODO remove and document *)
