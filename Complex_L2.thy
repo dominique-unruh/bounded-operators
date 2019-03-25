@@ -511,42 +511,58 @@ proof -
 qed
 
 (* NEW *)
-definition pointwise_convergent:: \<open>( nat \<Rightarrow> ('a vector) ) \<Rightarrow> bool\<close> where
-\<open>pointwise_convergent x = (\<forall> t::'a. convergent (\<lambda> n. (Rep_vector (x n)) t ) )\<close>
+definition pointwise_convergent_to :: 
+\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> where
+\<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t ) \<longlonglongrightarrow> l t)\<close>
+
+abbreviation pointwise_convergent_to_abbr :: 
+\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close>  ("/_/ \<midarrow>pointwise\<rightarrow> /_/") where
+\<open>x \<midarrow>pointwise\<rightarrow> l \<equiv> pointwise_convergent_to x l\<close>
+
+definition pointwise_convergent::\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> bool\<close> where
+\<open>pointwise_convergent x = (\<exists> l. (x \<midarrow>pointwise\<rightarrow> l) )\<close>
 
 (* NEW *)
-lemma convergence_pointwise_to_ell2:
-\<open>pointwise_convergent x \<Longrightarrow> convergent x\<close>                           
-for x :: \<open>nat \<Rightarrow> 'a vector\<close>
-proof-
-  assume \<open>pointwise_convergent x\<close>
-  hence \<open>\<forall> t::'a. \<exists> s. ( \<lambda> n. (Rep_vector (x n)) t ) \<longlonglongrightarrow> s\<close>
-    by (simp add: convergent_def pointwise_convergent_def)
-  then obtain l::\<open>'a \<Rightarrow> complex\<close> where
-      \<open>\<forall> t::'a. ( \<lambda> n. (Rep_vector (x n)) t ) \<longlonglongrightarrow> l t\<close>
-    by metis    
-  hence \<open>has_ell2_norm l\<close>
-    sorry
-  then obtain L:: \<open>'a vector\<close> where \<open>Rep_vector L = l\<close>
-    using Rep_vector_cases by blast
-  have \<open>x \<longlonglongrightarrow> L\<close>
-    sorry
-  thus ?thesis
-    using convergentI by auto
-qed
+lemma convergence_pointwise_to_ell2_same_limit:
+  fixes x :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
+  assumes \<open>x \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> n::nat. has_ell2_norm (x n)\<close>                          
+  shows \<open>has_ell2_norm l \<and> ( \<lambda> n. ell2_norm ( (x n) - l ) ) \<longlonglongrightarrow> 0\<close> 
+  sorry
+
 
 instantiation vector :: (type) chilbert_space 
 begin
 instance
 proof  (* NEW *)
   fix x :: \<open>nat \<Rightarrow> 'a vector\<close>
+  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_vector (x n) )\<close>
+    using Rep_vector by auto
   assume \<open>Cauchy x\<close>
   have \<open>Cauchy (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t::'a
     by (simp add: Cauchy_vector_component \<open>Cauchy x\<close>)
   hence \<open>convergent (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t ::'a
     by (simp add: Cauchy_convergent)
-  thus "convergent x"
-    by (simp add: convergence_pointwise_to_ell2 pointwise_convergent_def)
+  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_vector (x n)) t ) \<longlonglongrightarrow> s\<close>
+    by (simp add: convergentD)
+  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_vector (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
+    using pointwise_convergent_to_def
+    by metis
+  then obtain l where \<open>(\<lambda> n. Rep_vector (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
+    by auto
+  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_vector (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
+  using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_vector (x n) )\<close>
+    convergence_pointwise_to_ell2_same_limit 
+  by blast
+  obtain L::\<open>'a vector\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) ) \<longlonglongrightarrow> 0\<close>
+    using Rep_vector_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_vector (x n) - l)) \<longlonglongrightarrow> 0\<close>
+    by auto
+  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) )  < \<epsilon>\<close>
+    using  \<open>(\<lambda> n. ell2_norm ( (Rep_vector (x n)) - Rep_vector L ) ) \<longlonglongrightarrow> 0\<close>
+    by (simp add: LIMSEQ_iff)
+  hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
+    sorry
+  thus \<open>convergent x\<close>
+    by (simp add: LIMSEQ_iff convergentI)
 qed
 
 end
