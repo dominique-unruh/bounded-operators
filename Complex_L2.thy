@@ -541,8 +541,35 @@ proof-
       by (metis LIMSEQ_iff dist_commute  dist_norm)
     hence  \<open>\<forall> \<epsilon> > 0. \<exists> K::nat. \<forall> k \<ge> K.  norm ( ((\<lambda> k. (a k) t) k) - (l t) ) < \<epsilon>\<close> for t :: 'a 
       by (metis Suc_leD dist_norm)
-    have \<open>bdd_above (sum (\<lambda>i. (cmod (l i))\<^sup>2) ` Collect finite)\<close>
+    have \<open>finite S \<Longrightarrow> 
+          sqrt (sum (\<lambda>i. (cmod (l i))\<^sup>2) S) \<le> 
+          sqrt (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) S) + 
+          sqrt (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) S)\<close> for k :: nat and S :: \<open>'a set\<close>
       sorry
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close> for k :: nat
+      sorry
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k) i  - l i))\<^sup>2) ` Collect finite)\<close> for k :: nat
+      sorry
+    ultimately have  \<open>bdd_above (sum (\<lambda>i. (cmod (l i))\<^sup>2) ` Collect finite)\<close>
+    proof-
+      obtain u::real where \<open>finite S \<Longrightarrow> (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) S) \<le> u\<close> for k :: nat and S :: \<open>'a set\<close>
+        using \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close>
+              \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
+        sorry
+      obtain v::real where \<open>finite S \<Longrightarrow> (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) S) \<le> v\<close> for k :: nat and S :: \<open>'a set\<close>
+        using \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) ` Collect finite)\<close>
+        sorry
+      have \<open>finite S \<Longrightarrow> 
+          sqrt (sum (\<lambda>i. (cmod (l i))\<^sup>2) S) \<le> sqrt u + sqrt v\<close> for k :: nat and S :: \<open>'a set\<close>
+        using  \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close>
+          \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) ` Collect finite)\<close>
+        sorry
+      hence \<open>finite S \<Longrightarrow> 
+          sum (\<lambda>i. (cmod (l i))\<^sup>2) S \<le> (sqrt u + sqrt v)^2\<close> for k :: nat and S :: \<open>'a set\<close>
+        by (simp add: sqrt_le_D)
+      thus ?thesis 
+        by fastforce
+    qed
     thus ?thesis using has_ell2_norm_def by blast
   qed
   moreover have \<open>( \<lambda> n. ell2_norm ( (a n) - l ) ) \<longlonglongrightarrow> 0\<close>
