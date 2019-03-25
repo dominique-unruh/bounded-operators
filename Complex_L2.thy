@@ -521,19 +521,6 @@ lemma convergence_pointwise_to_ell2:
 for x :: \<open>nat \<Rightarrow> 'a vector\<close>
   sorry
 
-(* NEW *)
-lemma vector_complete:
-\<open>Cauchy x \<Longrightarrow> convergent x\<close>
-for x :: \<open>nat \<Rightarrow> 'a vector\<close>
-proof-
-  assume \<open>Cauchy x\<close>
-  have \<open>Cauchy (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t::'a
-    by (simp add: Cauchy_vector_component \<open>Cauchy x\<close>)
-  hence \<open>convergent (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t ::'a
-    by (simp add: Cauchy_convergent)
-  thus ?thesis 
-    by (simp add: convergence_pointwise_to_ell2 pointwise_convergent_def)
-qed
 
 instantiation vector :: (type) chilbert_space begin
 instance (* by (cheat vector_chilbert_space) *)  (* NEW *)
@@ -541,7 +528,16 @@ proof
   fix x :: \<open>nat \<Rightarrow> 'a vector\<close>
   assume \<open>Cauchy x\<close>
   thus "convergent x"
-    using vector_complete by blast
+  proof-
+    assume \<open>Cauchy x\<close>
+    have \<open>Cauchy (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t::'a
+      by (simp add: Cauchy_vector_component \<open>Cauchy x\<close>)
+    hence \<open>convergent (\<lambda> n::nat. (Rep_vector (x n)) t)\<close> for t ::'a
+      by (simp add: Cauchy_convergent)
+    thus ?thesis 
+      by (simp add: convergence_pointwise_to_ell2 pointwise_convergent_def)
+  qed
+
 qed
 
 end
