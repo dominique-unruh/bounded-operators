@@ -577,9 +577,61 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-instantiation ell2 :: (type) chilbert_space 
+instantiation ell2 :: (type) chilbert_space
 begin
 instance
+proof  (* NEW *)
+(*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
+  assume \<open>Cauchy x\<close>
+  then have "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (x m - x n) < e"
+    by (simp add: dist_norm Cauchy_def)
+  then have "\<exists>L. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. \<parallel>x n - L \<parallel> < r"
+  proof transfer
+    fix x :: "nat \<Rightarrow> ('a \<Rightarrow> complex)"
+    assume "pred_fun top has_ell2_norm x"
+    assume "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>xa. x m xa - x n xa) < e"
+    show "\<exists>L\<in>Collect has_ell2_norm. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. ell2_norm (\<lambda>xa. x n xa - L xa) < r"
+      sorry
+  qed
+  thus \<open>convergent x\<close>
+    by (simp add: LIMSEQ_iff convergent_def)
+ *)
+  fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
+  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
+    using Rep_ell2 by auto
+  assume \<open>Cauchy x\<close>
+  have \<open>Cauchy (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t::'a
+    by (simp add: Cauchy_ell2_component \<open>Cauchy x\<close>)
+  hence \<open>convergent (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t ::'a
+    by (simp add: Cauchy_convergent)
+  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_ell2 (x n)) t ) \<longlonglongrightarrow> s\<close>
+    by (simp add: convergentD)
+  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
+    using pointwise_convergent_to_def
+    by metis
+  then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
+    by auto
+  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
+  using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
+    convergence_pointwise_to_ell2_same_limit 
+  by blast
+  obtain L::\<open>'a ell2\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
+    using Rep_ell2_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_ell2 (x n) - l)) \<longlonglongrightarrow> 0\<close>
+    by auto
+  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) )  < \<epsilon>\<close>
+    using  \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
+    by (simp add: LIMSEQ_iff)
+  hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
+    (* TODO *)
+    apply transfer apply (simp add: fun_diff_def)
+    apply (subst (asm) abs_of_nonneg)
+     apply auto
+    by (cheat fixme)
+  thus \<open>convergent x\<close>
+    by (simp add: LIMSEQ_iff convergentI)
+qed
+
+(*
 proof  (* NEW *)
   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
   have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
@@ -611,6 +663,7 @@ proof  (* NEW *)
   thus \<open>convergent x\<close>
     by (simp add: LIMSEQ_iff convergentI)
 qed
+*)
 
 end
 
