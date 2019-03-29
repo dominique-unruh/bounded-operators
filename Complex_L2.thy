@@ -19,7 +19,7 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
     Extended_Sorry
-
+    
 begin
 
 section \<open>Preliminaries\<close>
@@ -545,25 +545,25 @@ proof-
           sqrt (sum (\<lambda>i. (cmod (l i))\<^sup>2) S) \<le> 
           sqrt (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) S) + 
           sqrt (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) S)\<close> for k :: nat and S :: \<open>'a set\<close>
-      sorry
+      by (cheat fixme)
     moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close> for k :: nat
-      sorry
+      by (cheat fixme)
     moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k) i  - l i))\<^sup>2) ` Collect finite)\<close> for k :: nat
-      sorry
+      by (cheat fixme)
     ultimately have  \<open>bdd_above (sum (\<lambda>i. (cmod (l i))\<^sup>2) ` Collect finite)\<close>
     proof-
       obtain u::real where \<open>finite S \<Longrightarrow> (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) S) \<le> u\<close> for k :: nat and S :: \<open>'a set\<close>
         using \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close>
               \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
-        sorry
+        by (cheat fixme)
       obtain v::real where \<open>finite S \<Longrightarrow> (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) S) \<le> v\<close> for k :: nat and S :: \<open>'a set\<close>
         using \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) ` Collect finite)\<close>
-        sorry
+        by (cheat fixme)
       have \<open>finite S \<Longrightarrow> 
           sqrt (sum (\<lambda>i. (cmod (l i))\<^sup>2) S) \<le> sqrt u + sqrt v\<close> for k :: nat and S :: \<open>'a set\<close>
         using  \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i))\<^sup>2) ` Collect finite)\<close>
           \<open>\<And> k. bdd_above (sum (\<lambda>i. (cmod ((a k) i - l i))\<^sup>2) ` Collect finite)\<close>
-        sorry
+        by (cheat fixme)
       hence \<open>finite S \<Longrightarrow> 
           sum (\<lambda>i. (cmod (l i))\<^sup>2) S \<le> (sqrt u + sqrt v)^2\<close> for k :: nat and S :: \<open>'a set\<close>
         by (simp add: sqrt_le_D)
@@ -573,7 +573,7 @@ proof-
     thus ?thesis using has_ell2_norm_def by blast
   qed
   moreover have \<open>( \<lambda> n. ell2_norm ( (a n) - l ) ) \<longlonglongrightarrow> 0\<close>
-    sorry
+    by (cheat fixme)
   ultimately show ?thesis by blast
 qed
 
@@ -607,7 +607,7 @@ proof  (* NEW *)
     using  \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
     by (simp add: LIMSEQ_iff)
   hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
-    sorry
+    by (cheat fixme)
   thus \<open>convergent x\<close>
     by (simp add: LIMSEQ_iff convergentI)
 qed
@@ -630,7 +630,7 @@ end
     unfolding convergent_def by metis
   define L where "L = Abs_ell2 Lx"
   have "has_ell2_norm Lx"
-    sorry
+    by (cheat fixme)
   then have [transfer_rule]: "pcr_ell2 (=) Lx L"
     unfolding vector.pcr_cr_eq cr_ell2_def
     unfolding L_def apply (subst Abs_ell2_inverse) by auto
@@ -638,7 +638,7 @@ end
   proof (rule LIMSEQ_I)
     fix r::real assume "0<r"
     show "\<exists>no. \<forall>n\<ge>no. norm (X n - L) < r"
-      sorry
+      by (cheat fixme)
   qed
   show "convergent X"
     using XL by (rule convergentI) 
@@ -902,6 +902,8 @@ abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a ell2 set" where "s
 removed
 *)
 
+
+
 definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
   (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> subspace_to_set S}" *)
   (* consts span :: "'a set \<Rightarrow> 'b subspace"
@@ -978,5 +980,13 @@ proof-
   thus ?thesis using span_def by metis
 qed
 
+lemma ortho_bot[simp]: "ortho bot = top"
+  apply transfer by simp
 
+lemma ortho_top[simp]: "ortho top = bot"
+  apply transfer by simp
+
+lemma ortho_twice[simp]: "ortho (ortho S) = S"
+  apply transfer
+  using orthogonal_complement_twice by blast 
 end

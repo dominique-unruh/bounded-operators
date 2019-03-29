@@ -29,6 +29,9 @@ begin
 abbreviation cnj_abbr:: \<open>complex \<Rightarrow> complex\<close> ("/_/\<^sup>\<bullet>") where
 \<open>x\<^sup>\<bullet> \<equiv> cnj x\<close>
 
+(* TODO: discuss where to put *)
+notation norm ("\<parallel>/_ /\<parallel>")
+
 
 
 subsection \<open>Complex vector spaces\<close>

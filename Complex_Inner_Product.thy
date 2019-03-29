@@ -18,11 +18,7 @@ section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
- "HOL-Analysis.Inner_Product" "HOL-Library.LaTeXsugar" (* NEW *) 
-(*
- HOL-Library.LaTeXsugar is to use the symbol \<emptyset>, which is recommended (aesthetics) 
-in the "sugar tutorial" (see Documentation of Isabelle/HOL)
-*)
+ "HOL-Analysis.Inner_Product" (* "HOL-Library.LaTeXsugar" *) 
 
 begin
 
@@ -55,8 +51,8 @@ class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dis
     and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (x \<star> x))"
 begin
 
-abbreviation norm_abbr::"'a \<Rightarrow> real" ("\<parallel>/_ /\<parallel>")
-  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close>
+(* abbreviation norm_abbr::"'a \<Rightarrow> real" ("\<parallel>/_ /\<parallel>")
+  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close> *)
 
 lemma cinner_real: "x \<star> x \<in> \<real>"
   by (simp add: reals_zero_comparable_iff)
@@ -538,9 +534,10 @@ proposition ParallelogramLaw:
   by (simp add: polarization_identity_minus polarization_identity_plus)
 
 corollary ParallelogramLawVersion1:
-  \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
+  fixes x :: "'a::complex_inner"
+  shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
     = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
-  (* Reference: In the proof of  Theorem 2.5 in conway2013course *)
+  (* Reference: In the proof of  Theorem 2.5 in conway2013course *) 
 proof -
   have \<open>\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2 + \<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2 
   = 2*( \<parallel>(1/2) *\<^sub>C x\<parallel>^2 +  \<parallel>(1/2) *\<^sub>C y\<parallel>^2)\<close>
@@ -840,7 +837,7 @@ definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a
 
 lemma ExistenceUniquenessMinNorm:
   fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close>  
-  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> \<emptyset>\<close>
+  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
     (*
 It is not possible to generalize to Banach spaces, at least in the obvious way, the results from 
@@ -855,7 +852,7 @@ proof-
     proof-
       obtain d where \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
         by blast
-      have \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> \<emptyset>\<close>
+      have \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>
         by (simp add: assms(3))
       have \<open>\<forall> x. \<parallel>x\<parallel>^2 \<ge> 0\<close>
         by simp
@@ -874,7 +871,7 @@ proof-
       have  \<open>\<forall> n::nat. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + 1/(n+1)\<close>
       proof-
         have \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> { \<parallel>x\<parallel>^2 | x. x \<in> M }.  t < d + \<epsilon>\<close>
-          using \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>  \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> \<emptyset>\<close>  \<open>bdd_below  { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
+          using \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>  \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>  \<open>bdd_below  { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
           by (meson cInf_lessD less_add_same_cancel1)
         hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + \<epsilon>\<close>
           by auto    
@@ -1031,7 +1028,7 @@ proof-
       ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
         by (simp add: convexD)
       hence \<open> \<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
-        using  \<open>is_arg_min_on norm_abbr M r\<close>
+        using  \<open>is_arg_min_on norm M r\<close>
         unfolding is_arg_min_on_def
         by (smt is_arg_min_def)
       thus ?thesis
@@ -1128,11 +1125,11 @@ qed
 
 theorem ExistenceUniquenessMinDist:
   fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close> and h :: 'a 
-  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> \<emptyset>\<close>
+  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
 proof-
-  have \<open>{m - h| m. m \<in> M} \<noteq> \<emptyset>\<close>
+  have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
     by (simp add: assms(3))
   moreover have \<open>closed {m - h| m. m \<in> M}\<close>
   proof-
@@ -1217,12 +1214,12 @@ proof-
       qed
       assume \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
       hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (k - h)\<close>
-        by (simp add: \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close>)
+        by (simp add: \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close>)
       assume  \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M t\<close> 
       hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (t - h)\<close>
-        using \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> by auto
+        using \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close> by auto
       show ?thesis 
-        by (metis (no_types, lifting) \<open>\<exists>!k. is_arg_min_on norm_abbr {m - h |m. m \<in> M} k\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (k - h)\<close> \<open>is_arg_min_on norm_abbr {m - h |m. m \<in> M} (t - h)\<close> diff_add_cancel)
+        by (metis (no_types, lifting) \<open>\<exists>!k. is_arg_min_on norm {m - h |m. m \<in> M} k\<close> \<open>is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close> \<open>is_arg_min_on norm {m - h |m. m \<in> M} (t - h)\<close> diff_add_cancel)
     qed
     ultimately show ?thesis by blast
   qed
@@ -1424,7 +1421,7 @@ proof-
   have \<open>0 \<in> M\<close> 
     using  \<open>is_subspace M\<close>
     by (simp add: is_general_subspace.zero is_subspace.subspace)
-  hence \<open>M \<noteq> \<emptyset>\<close> by blast
+  hence \<open>M \<noteq> {}\<close> by blast
   have \<open>closed  M\<close>
     using  \<open>is_subspace M\<close>
     by (simp add: is_subspace.closed)
@@ -1432,10 +1429,10 @@ proof-
     using  \<open>is_subspace M\<close>
     by (simp add: SubspaceConvex)
   have \<open>\<forall> h. \<exists>! k.  is_arg_min_on (\<lambda> x. dist x h) M k\<close>
-    by (simp add: ExistenceUniquenessMinDist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> \<emptyset>\<close>)
+    by (simp add: ExistenceUniquenessMinDist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
     using DistMinOrtho 
-    by (smt Collect_cong Collect_empty_eq_bot ExistenceUniquenessMinDist \<open>M \<noteq> \<emptyset>\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
+    by (smt Collect_cong Collect_empty_eq_bot ExistenceUniquenessMinDist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
 qed
 
 (* Definition of projection onto the subspace M *)
@@ -1800,7 +1797,7 @@ proof-
   thus ?thesis by blast
 qed
 
-corollary ortho_twice[simp]: "M is-a-closed-subspace \<Longrightarrow> M = ((M\<^sub>\<bottom>)\<^sub>\<bottom>)"
+corollary orthogonal_complement_twice: "M is-a-closed-subspace \<Longrightarrow> ((M\<^sub>\<bottom>)\<^sub>\<bottom>) = M"
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
     (* Reference: Corollary 2.8 in conway2013course *)
 proof-
@@ -1862,9 +1859,9 @@ proof-
   moreover have  \<open> (A\<^sub>\<bottom>) \<subseteq> (B\<^sub>\<bottom>) \<Longrightarrow> ((A\<^sub>\<bottom>)\<^sub>\<bottom>) \<supseteq> ((B\<^sub>\<bottom>)\<^sub>\<bottom>)\<close>
     by (simp add: orthogonal_complement_def subset_eq)
   moreover have \<open>A =  ((A\<^sub>\<bottom>)\<^sub>\<bottom>)\<close> 
-    by (simp add: assms(1))
+    by (simp add: orthogonal_complement_twice assms(1))
   moreover have \<open>B =  ((B\<^sub>\<bottom>)\<^sub>\<bottom>)\<close> 
-    by (simp add: assms(2))
+    by (simp add: orthogonal_complement_twice assms(2))
   ultimately show ?thesis 
     by blast
 qed
@@ -1876,14 +1873,14 @@ proof-
   have \<open>({0}::('a::{complex_inner, complete_space}) set) \<subseteq>  ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>)\<close>
     by (simp add: is_general_subspace.zero is_subspace.subspace)
   moreover have  \<open>({0}::('a::{complex_inner, complete_space}) set) \<supseteq>  ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>)\<close>
-    by (metis is_subspace_0 is_subspace_UNIV is_subspace_orthog ortho_leq ortho_twice top_greatest)
+    by (metis is_subspace_0 is_subspace_UNIV is_subspace_orthog ortho_leq orthogonal_complement_twice top_greatest)
   ultimately show ?thesis by blast
 qed
 
 lemma ortho_bot[simp]:
   " (({0}::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
 = (top::('a::{complex_inner, complete_space}) set)"
-  using is_subspace_UNIV ortho_twice by fastforce
+  using is_subspace_UNIV orthogonal_complement_twice by fastforce
 
 
 subsection {* Closed sum *}
@@ -2042,11 +2039,11 @@ lemma DeMorganOrthoDual:
   shows  \<open>(A \<inter> B)\<^sub>\<bottom> = ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<close>  
 proof-
   have \<open>(A \<inter> B)\<^sub>\<bottom> = ((((A\<^sub>\<bottom>)\<^sub>\<bottom>) \<inter> ((B\<^sub>\<bottom>)\<^sub>\<bottom>))\<^sub>\<bottom>)\<close>
-    by (metis assms(1) assms(2) ortho_twice)
+    by (metis assms(1) assms(2) orthogonal_complement_twice)
   also have \<open>... = (( ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<^sub>\<bottom> )\<^sub>\<bottom>)\<close>
     using DeMorganOrtho assms(1) assms(2) is_subspace_orthog by force
   also have \<open>... = ((A\<^sub>\<bottom>) \<minusplus> (B\<^sub>\<bottom>))\<close>
-    by (metis (no_types, lifting) assms(1) assms(2) closed_closure closed_sum_def general_sum_def is_subspace.subspace is_subspace_cl is_subspace_def is_subspace_orthog is_subspace_plus ortho_twice)
+    by (metis (no_types, lifting) assms(1) assms(2) closed_closure closed_sum_def general_sum_def is_subspace.subspace is_subspace_cl is_subspace_def is_subspace_orthog is_subspace_plus orthogonal_complement_twice)
   finally show ?thesis by blast
 qed
 
@@ -2063,9 +2060,9 @@ proof-
   ultimately have \<open>(B \<minusplus> C) is-a-closed-subspace\<close>
     by (simp add: is_subspace_def)
   hence \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close>
-    by (metis DeMorganOrthoDual assms(1) is_subspace_inter is_subspace_orthog ortho_twice)
+    by (metis DeMorganOrthoDual assms(1) is_subspace_inter is_subspace_orthog orthogonal_complement_twice)
   have \<open>(A \<minusplus> (B \<minusplus> C)) = (((A \<minusplus> (B \<minusplus> C))\<^sub>\<bottom>)\<^sub>\<bottom>)\<close>
-    by (smt \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close> ortho_twice)
+    by (smt \<open>(A \<minusplus> (B \<minusplus> C)) is-a-closed-subspace\<close> orthogonal_complement_twice)
   also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B \<minusplus> C)\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
     by (simp add: DeMorganOrtho \<open>(B \<minusplus> C) is-a-closed-subspace\<close> assms(1))
   also have  \<open>... = ((  (A\<^sub>\<bottom>) \<inter> ((B\<^sub>\<bottom>) \<inter> (C\<^sub>\<bottom>))  )\<^sub>\<bottom>)\<close>
@@ -2073,13 +2070,13 @@ proof-
   also have  \<open>... = ((  ((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)) \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
     by (simp add: inf_assoc)
   also have  \<open>... = ((  ((((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>)\<^sub>\<bottom>)  \<inter> (C\<^sub>\<bottom>)  )\<^sub>\<bottom>)\<close>
-    by (metis assms(1) assms(2) is_subspace_inter is_subspace_orthog ortho_twice)
+    by (metis assms(1) assms(2) is_subspace_inter is_subspace_orthog orthogonal_complement_twice)
   also have  \<open>... = (( ( (((A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>))\<^sub>\<bottom>) \<minusplus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
-    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
+    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog orthogonal_complement_twice)
   also have  \<open>... = (( ( (A \<minusplus> B) \<minusplus> C )\<^sub>\<bottom>  )\<^sub>\<bottom>)\<close>
-    by (metis DeMorganOrthoDual assms(1) assms(2) is_subspace_orthog ortho_twice)
+    by (metis DeMorganOrthoDual assms(1) assms(2) is_subspace_orthog orthogonal_complement_twice)
   finally show ?thesis 
-    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog ortho_twice)
+    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog orthogonal_complement_twice)
 qed
 
 (* NEW *)
@@ -2087,7 +2084,7 @@ lemma is_closed_subspace_zero:
   fixes A :: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close>
   shows \<open>(({0}::('a::{complex_inner, complete_space}) set)\<minusplus>A) = A\<close>
-  by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms is_subspace_UNIV is_subspace_orthog ortho_top ortho_twice orthogonal_complement_def)
+  by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms is_subspace_UNIV is_subspace_orthog ortho_top orthogonal_complement_twice orthogonal_complement_def)
 
 (* NEW *)
 lemma is_closed_subspace_ord:
@@ -2095,7 +2092,7 @@ lemma is_closed_subspace_ord:
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
     and \<open>A \<subseteq> B\<close>
   shows \<open>(C\<minusplus>A) \<subseteq> (C\<minusplus>B)\<close>
-  by (smt DeMorganOrthoDual Int_Collect_mono assms(1) assms(2) assms(3) assms(4) is_closed_subspace_comm is_subspace_inter is_subspace_orthog ortho_leq ortho_twice orthogonal_complement_def)
+  by (smt DeMorganOrthoDual Int_Collect_mono assms(1) assms(2) assms(3) assms(4) is_closed_subspace_comm is_subspace_inter is_subspace_orthog ortho_leq orthogonal_complement_twice orthogonal_complement_def)
 
 (* NEW *)
 lemma is_closed_subspace_universal_inclusion_left:

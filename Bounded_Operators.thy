@@ -25,9 +25,10 @@ theory Bounded_Operators
 
 begin
 
+
 subsection \<open>Bounded operators\<close>
 
-typedef ('a,'b) bounded = "{A::'a vector\<Rightarrow>'b vector. bounded_clinear A}"
+typedef ('a,'b) bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_bounded
@@ -47,7 +48,7 @@ end
 consts
   adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
  timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'c) bounded" 
-(* and applyOp :: "('a,'b) bounded \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
+(* and applyOp :: "('a,'b) bounded \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" *)
  applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace" 
  timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
  timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace"
@@ -109,7 +110,7 @@ lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a,'b) bounded" by (cheat adjo
 (* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhoc_overloading
-  cdot timesOp applyOp applyOpSpace timesScalarOp timesScalarSpace timesScalarVec
+  cdot timesOp applyOp applyOpSpace timesScalarOp timesScalarSpace
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   for A B :: "'a subspace" and U :: "('a,'b) bounded"
@@ -130,8 +131,8 @@ lemma op_scalar_op[simp]: "A \<cdot> (a \<cdot> B) = a \<cdot> (A \<cdot> B)"
   for a :: complex and A :: "('a,'b) bounded" and B :: "('c,'a) bounded" by (cheat op_scalar_op)
 lemma scalar_scalar_op[simp]: "a \<cdot> (b \<cdot> A) = (a*b) \<cdot> A"
   for a b :: complex and A  :: "('a,'b) bounded" by (cheat scalar_scalar_op)
-lemma scalar_op_vec[simp]: "(a \<cdot> A) \<cdot> \<psi> = a \<cdot> (A \<cdot> \<psi>)" 
-  for a :: complex and A :: "('a,'b) bounded" and \<psi> :: "'a vector" by (cheat scalar_op_vec)
+lemma scalar_op_vec[simp]: "(a \<cdot> A) \<cdot> \<psi> = a *\<^sub>C (A \<cdot> \<psi>)" 
+  for a :: complex and A :: "('a,'b) bounded" and \<psi> :: "'a ell2" by (cheat scalar_op_vec)
 lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a \<cdot> A = a \<cdot> B \<Longrightarrow> A=B" for A B :: "('a,'b)bounded" and a::complex 
   by (cheat add_scalar_mult)
 
@@ -141,7 +142,7 @@ and apply_0[simp]: "applyOp U 0 = 0"
 and times_idOp1[simp]: "U \<cdot> idOp = U"
 and times_idOp2[simp]: "idOp \<cdot> V = V"
 and idOp_adjoint[simp]: "idOp* = idOp"
-for \<psi> :: "'a vector" and S :: "'a subspace" and U :: "('a,'b) bounded" and V :: "('b,'a) bounded"
+for \<psi> :: "'a ell2" and S :: "'a subspace" and U :: "('a,'b) bounded" and V :: "('b,'a) bounded"
   by (cheat apply_idOp_space)
 
 lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
@@ -281,8 +282,6 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
-
-
 lemma unitary_image[simp]: "unitary U \<Longrightarrow> applyOpSpace U top = top"
   for U :: "('a,'a) bounded"
   by (cheat TODO1)
@@ -290,14 +289,14 @@ lemma unitary_image[simp]: "unitary U \<Longrightarrow> applyOpSpace U top = top
 lemma unitary_id[simp]: "unitary idOp"
   unfolding unitary_def by simp
 
-consts vector_to_bounded :: "'a vector \<Rightarrow> (unit,'a) bounded"
-lemma vector_to_bounded_applyOp: "vector_to_bounded (A\<cdot>\<psi>) = A \<cdot> vector_to_bounded \<psi>" for A :: "(_,_)bounded"
+consts ell2_to_bounded :: "'a ell2 \<Rightarrow> (unit,'a) bounded"
+lemma ell2_to_bounded_applyOp: "ell2_to_bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_bounded \<psi>" for A :: "(_,_)bounded"
   by (cheat TODO5)
 
-lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<cdot> vector_to_bounded \<psi>" for a::complex
-  apply (rewrite at "a\<cdot>\<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp)\<cdot>\<psi>"])
+lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_bounded \<psi>" for a::complex
+  apply (rewrite at "a *\<^sub>C \<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp) \<cdot> \<psi>"])
    apply simp
-  apply (subst vector_to_bounded_applyOp)
+  apply (subst ell2_to_bounded_applyOp)
   by simp
 
 
@@ -340,10 +339,10 @@ lemma Proj_leq: "Proj S \<cdot> A \<le> S"
 lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"('a,'b)bounded"
   by (cheat TODO2)
 
-abbreviation proj :: "'a vector \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
+abbreviation proj :: "'a ell2 \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
 
 lemma proj_scalar_mult[simp]: 
-  "a \<noteq> 0 \<Longrightarrow> proj (a \<cdot> \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a vector"
+  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a ell2"
   by (cheat TODO2)
 
 
@@ -357,7 +356,7 @@ section \<open>Tensor products\<close>
 
 consts "tensorOp" :: "('a,'b) bounded \<Rightarrow> ('c,'d) bounded \<Rightarrow> ('a*'c,'b*'d) bounded"
 consts "tensorSpace" :: "'a subspace \<Rightarrow> 'c subspace \<Rightarrow> ('a*'c) subspace"
-consts "tensorVec" :: "'a vector \<Rightarrow> 'c vector \<Rightarrow> ('a*'c) vector"
+consts "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2"
 consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infix "\<otimes>" 71)
 adhoc_overloading tensor tensorOp tensorSpace tensorVec
 
@@ -401,16 +400,15 @@ lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot> (V1 \<otimes> V2) = (U1 \<c
 consts remove_qvar_unit_op :: "('a*unit,'a) bounded"
 
 
-definition addState :: "'a vector \<Rightarrow> ('b,'b*'a) bounded" where
-  "addState \<psi> = idOp \<otimes> (vector_to_bounded \<psi>) \<cdot> remove_qvar_unit_op*"
+definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) bounded" where
+  "addState \<psi> = idOp \<otimes> (ell2_to_bounded \<psi>) \<cdot> remove_qvar_unit_op*"
 
-lemma addState_times_scalar[simp]: "addState (a \<cdot> \<psi>) = a \<cdot> addState \<psi>" for a::complex and psi::"'a vector"
-  unfolding addState_def by (simp add: vector_to_bounded_scalar_times)
+lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a \<cdot> addState \<psi>" for a::complex and psi::"'a ell2"
+  unfolding addState_def by (simp add: ell2_to_bounded_scalar_times)
 
 lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjoint V)"
   for U :: "('a,'b) bounded" and V :: "('c,'d) bounded"
   by (cheat TODO3)
-
 
 lemma tensor_unitary[simp]: 
   assumes "unitary U" and "unitary V"

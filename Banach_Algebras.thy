@@ -4,11 +4,11 @@
 *)
 
 theory Banach_Algebras
-  imports Banach_Spaces "HOL-Library.Adhoc_Overloading" 
+  imports Complex_Vector_Spaces "HOL-Library.Adhoc_Overloading" Extended_Sorry
 begin
 
 
-class cbanach_algebra = cbanach_space +
+class cbanach_algebra = cbanach +
   fixes banach_mult :: "'a \<Rightarrow> 'a \<Rightarrow> 'a"  ("_/\<degree>/_") 
     and unit :: 'a ("\<one>")
   assumes
@@ -25,10 +25,10 @@ class cbanach_algebra = cbanach_space +
 begin
 
 lemma zero_left: \<open>(0\<degree>y) = 0\<close>
-  by (metis local.BAlg2 local.eq_add_iff)
+  by (metis local.BAlg2 local.add_cancel_right_right)
 
 lemma zero_right: \<open>(x\<degree>0) = 0\<close>
-  by (metis local.BAlg4 local.eq_add_iff)
+  by (metis local.BAlg4 local.add_cancel_right_right)
 
 lemma isCont_mult_left: \<open>isCont (\<lambda> x. (x\<degree>y)) t\<close>
 proof(cases \<open>y = 0\<close>)
@@ -41,21 +41,26 @@ next
   case False
   hence \<open>y \<noteq> 0\<close> by auto
   have  \<open>\<parallel> y \<parallel> > 0\<close>
-    using cbanach_space_class.norm_zero
-    by (smt False ab_group_add_class.ab_diff_conv_add_uminus cancel_semigroup_add_class.add_left_cancel cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg7 group_add_class.right_minus_eq)
+    (* find_theorems "norm _ = 0 \<longleftrightarrow> _ = 0" *)
+    (* using cbanach_class.norm_zero *)
+    (* by (sxxxmt False ab_group_add_class.ab_diff_conv_add_uminus cancel_semigroup_add_class.add_left_cancel cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg7 group_add_class.right_minus_eq) *)
+    by (cheat fixme)
   have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> \<delta> > 0. \<forall> s. dist s t < \<delta> \<longrightarrow> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) < \<epsilon>\<close> for \<epsilon>
   proof-
     assume \<open>\<epsilon> > 0\<close>
     obtain \<delta> where \<open>\<delta> = \<epsilon> / (\<parallel>y\<parallel>)\<close> by blast
     have  \<open>\<delta> > 0\<close> 
-      by (simp add: \<open>0 < \<epsilon>\<close> \<open>0 < \<parallel>y\<parallel>\<close> \<open>\<delta> = \<epsilon> / \<parallel>y\<parallel>\<close>)
+      (* by (simp add: \<open>0 < \<epsilon>\<close> \<open>0 < \<parallel>y\<parallel>\<close> \<open>\<delta> = \<epsilon> / \<parallel>y\<parallel>\<close>) *)
+      by (cheat fixme)
     have \<open>dist s t < \<delta> \<Longrightarrow> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) < \<epsilon>\<close> for s
     proof-
       assume \<open>dist s t < \<delta>\<close>
       hence \<open>\<parallel> s - t \<parallel> < \<delta>\<close> 
-        by (simp add: cbanach_space_class.dist_norm)
+        (* by (simp add: cbanach_space_class.dist_norm) *)
+        by (cheat fixme)
       have \<open> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) =  \<parallel> ((\<lambda> x. (x\<degree>y)) s) - ((\<lambda> x. (x\<degree>y)) t) \<parallel>\<close>
-        by (simp add: cbanach_space_class.dist_norm)
+        (* by (simp add: cbanach_space_class.dist_norm) *)
+        by (cheat fixme)
       hence \<open> ... =  \<parallel> (s\<degree>y) - (t\<degree>y) \<parallel>\<close>
         by simp
       hence \<open> ... =  \<parallel> (s - t) \<degree> y \<parallel>\<close>
@@ -64,7 +69,8 @@ next
         using cbanach_algebra_class.BAlg1 by auto
       hence \<open> ... <  \<delta> * \<parallel> y \<parallel>\<close>
         using  \<open>\<parallel> s - t \<parallel> < \<delta>\<close> 
-        by (simp add: \<open>0 < \<parallel>y\<parallel>\<close>)
+          by (cheat fixme)
+        (* by (simp add: \<open>0 < \<parallel>y\<parallel>\<close>) *)
       also have \<open> ... <  (\<epsilon> / (\<parallel>y\<parallel>)) * \<parallel> y \<parallel>\<close>
         using  \<open>\<delta> = \<epsilon> / (\<parallel>y\<parallel>)\<close> \<open>\<delta> > 0\<close>     
         by (smt False cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg6 cbanach_algebra_class.BAlg7 cbanach_algebra_class.BAlg8 cbanach_algebra_class.zero_right monoid_add_class.add.right_neutral monoid_add_class.add_0_left)
@@ -84,7 +90,8 @@ next
   hence \<open>\<forall> \<epsilon> > 0. \<exists> \<delta> > 0. \<forall> s. dist s t < \<delta> \<longrightarrow> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) < \<epsilon>\<close>
     by blast
   thus ?thesis 
-    by (simp add: continuous_at_eps_delta)  
+    by (cheat fixme)
+  (* by (simp add: continuous_at_eps_delta)   *)
 qed
 
 
@@ -99,21 +106,25 @@ next
   case False
   hence \<open>y \<noteq> 0\<close> by auto
   have  \<open>\<parallel> y \<parallel> > 0\<close>
-    using cbanach_space_class.norm_zero
-    by (smt False ab_group_add_class.ab_diff_conv_add_uminus cancel_semigroup_add_class.add_left_cancel cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg7 group_add_class.right_minus_eq)
+    by (cheat fixme)
+  (* using cbanach_space_class.norm_zero *)
+    (* by (smxt False ab_group_add_class.ab_diff_conv_add_uminus cancel_semigroup_add_class.add_left_cancel cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg7 group_add_class.right_minus_eq) *)
   have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> \<delta> > 0. \<forall> s. dist s t < \<delta> \<longrightarrow> dist ((\<lambda> x. (y\<degree>x)) s) ((\<lambda> x. (y\<degree>x)) t) < \<epsilon>\<close> for \<epsilon>
   proof-
     assume \<open>\<epsilon> > 0\<close>
     obtain \<delta> where \<open>\<delta> = \<epsilon> / (\<parallel>y\<parallel>)\<close> by blast
     have  \<open>\<delta> > 0\<close> 
-      by (simp add: \<open>0 < \<epsilon>\<close> \<open>0 < \<parallel>y\<parallel>\<close> \<open>\<delta> = \<epsilon> / \<parallel>y\<parallel>\<close>)
+      by (cheat fixme)
+    (* by (simp add: \<open>0 < \<epsilon>\<close> \<open>0 < \<parallel>y\<parallel>\<close> \<open>\<delta> = \<epsilon> / \<parallel>y\<parallel>\<close>) *)
     have \<open>dist s t < \<delta> \<Longrightarrow> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) < \<epsilon>\<close> for s
     proof-
       assume \<open>dist s t < \<delta>\<close>
       hence \<open>\<parallel> s - t \<parallel> < \<delta>\<close> 
-        by (simp add: cbanach_space_class.dist_norm)
+        by (cheat fixme)
+      (* by (simp add: cbanach_space_class.dist_norm) *)
       have \<open> dist ((\<lambda> x. (y\<degree>x)) s) ((\<lambda> x. (y\<degree>x)) t) =  \<parallel> ((\<lambda> x. (y\<degree>x)) s) - ((\<lambda> x. (y\<degree>x)) t) \<parallel>\<close>
-        by (simp add: cbanach_space_class.dist_norm)
+        by (cheat fixme)
+      (* by (simp add: cbanach_space_class.dist_norm) *)
       hence \<open> ... =  \<parallel> (y\<degree>s) - (y\<degree>t) \<parallel>\<close>
         by simp
       hence \<open> ... =  \<parallel> y \<degree> (s - t) \<parallel>\<close>
@@ -124,7 +135,8 @@ next
         using cbanach_algebra_class.BAlg1 by auto
       hence \<open> ... <  \<delta> * \<parallel> y \<parallel>\<close>
         using  \<open>\<parallel> s - t \<parallel> < \<delta>\<close> 
-        by (simp add: \<open>0 < \<parallel>y\<parallel>\<close>)
+          by (cheat fixme)
+        (* by (simp add: \<open>0 < \<parallel>y\<parallel>\<close>) *)
       also have \<open> ... <  (\<epsilon> / (\<parallel>y\<parallel>)) * \<parallel> y \<parallel>\<close>
         using  \<open>\<delta> = \<epsilon> / (\<parallel>y\<parallel>)\<close> \<open>\<delta> > 0\<close>     
         by (smt False cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg6 cbanach_algebra_class.BAlg7 cbanach_algebra_class.BAlg8 cbanach_algebra_class.zero_right monoid_add_class.add.right_neutral monoid_add_class.add_0_left)
@@ -139,12 +151,14 @@ next
     hence \<open>\<forall> s. dist s t < \<delta> \<longrightarrow> dist ((\<lambda> x. (x\<degree>y)) s) ((\<lambda> x. (x\<degree>y)) t) < \<epsilon>\<close>
       by simp
     show ?thesis 
-      by (smt False cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg6 cbanach_algebra_class.BAlg7 cbanach_algebra_class.BAlg8 cbanach_algebra_class.zero_right monoid_add_class.add.right_neutral monoid_add_class.add_0_left)
+      by (cheat fixme)
+    (* by (sxmt False cbanach_algebra_class.BAlg4 cbanach_algebra_class.BAlg6 cbanach_algebra_class.BAlg7 cbanach_algebra_class.BAlg8 cbanach_algebra_class.zero_right monoid_add_class.add.right_neutral monoid_add_class.add_0_left) *)
   qed
   hence \<open>\<forall> \<epsilon> > 0. \<exists> \<delta> > 0. \<forall> s. dist s t < \<delta> \<longrightarrow> dist ((\<lambda> x. (y\<degree>x)) s) ((\<lambda> x. (y\<degree>x)) t) < \<epsilon>\<close>
     by blast
   thus ?thesis 
-    by (simp add: continuous_at_eps_delta)  
+    by (cheat fixme)
+  (* by (simp add: continuous_at_eps_delta)   *)
 qed
 
 end
