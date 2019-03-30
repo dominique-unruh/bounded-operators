@@ -1583,7 +1583,12 @@ theorem projPropertiesC:
     (* Reference: Theorem 2.7 in conway2013course *)
   using proj_fixed_points proj_intro2 by fastforce
 
+(* TODO: complex_vector can be generalized *)
+(* TODO: move to different theory *)
+(* TODO: Does it exist already? *)
 definition ker_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'a set\<close> where
+  (* TODO shorter (preimage notation): f -` {0} *)
+  (* TODO: better for definitions: Use = instead of \<equiv>. And use \<lambda>-free notation. (E.g., ker_op f = \<dots>) *)
   \<open>ker_op \<equiv> \<lambda> f. {x. f x = 0}\<close>
 
 lemma ker_op_lin:
@@ -1692,7 +1697,7 @@ proof-
     by blast
 qed
 
-
+(* TODO: already exists: "range" *)
 definition ran_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'b set\<close> where
   \<open>ran_op \<equiv> \<lambda> f. {x. \<exists> y. f y = x}\<close>
 
