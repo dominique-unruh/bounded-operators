@@ -118,10 +118,11 @@ definition "ell2_norm x = sqrt (SUP F:{F. finite F}. sum (\<lambda>i. (norm(x i)
 lemma ell2_norm_L2_set: 
   assumes "has_ell2_norm x"
   shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
+  (* TODO: doesn't work in Isabelle2019. Probably best to be just redone in nice Isar style *)
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
-  using assms unfolding has_ell2_norm_def by auto
+  using assms unfolding has_ell2_norm_def by (auto simp: image_image)
 
 lemma ell2_norm_infsetsum:
   assumes "has_ell2_norm x"
@@ -232,7 +233,7 @@ proof -
        apply simp
       apply blast
      apply (meson assms has_ell2_norm_L2_set)
-    by auto
+    by (metis SUP_cong image_image)
   finally show "ell2_norm (\<lambda>i. c * x i) = cmod c * ell2_norm x" .
 qed
 

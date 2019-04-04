@@ -122,7 +122,7 @@ subclass (in complex_field) real_field ..
 
 instantiation complex :: scaleC
 begin
-definition complex_scaleC_def [simp]: "scaleC = ( * )"
+definition complex_scaleC_def [simp]: "scaleC = (*)"
 instance 
   apply intro_classes
   apply (rule ext)
@@ -729,7 +729,7 @@ lemma clinear_imp_scaleC:
 
 corollary complex_clinearD:
   fixes f :: "complex \<Rightarrow> complex"
-  assumes "clinear f" obtains c where "f = ( * ) c"
+  assumes "clinear f" obtains c where "f = (*) c"
   by (rule clinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
 
 lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
@@ -1076,7 +1076,7 @@ proof -
   qed
 qed
 
-lemma bounded_cbilinear_mult: "bounded_cbilinear (( * ) :: 'a \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_algebra)"
+lemma bounded_cbilinear_mult: "bounded_cbilinear ((*) :: 'a \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_algebra)"
   apply (rule bounded_cbilinear.intro)
       apply (rule distrib_right)
      apply (rule distrib_left)

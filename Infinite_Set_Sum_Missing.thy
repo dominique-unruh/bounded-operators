@@ -519,7 +519,8 @@ proof -
     also have "\<dots> = SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum f)"
       apply (subst ennreal_Sup)
       using sum_F_A apply fastforce
-      by auto
+      apply blast
+      by (metis image_image)
     finally show "x \<le> ennreal (SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum f))" by simp
   qed
   finally have leq: "infsetsum f A \<le> SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum f)"
