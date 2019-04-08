@@ -42,7 +42,7 @@ setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
-  fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  (infix "\<star>" 67) (* NEW *)
+  fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  (infix "\<star>" 67) 
   assumes cinner_commute: "x \<star> y = ((y \<star> x)\<^sup>\<bullet>)"
     and cinner_add_left: "(x + y) \<star> z = (x \<star> z) +  (y \<star> z)"
     and cinner_scaleC_left [simp]: "(r *\<^sub>C x) \<star> y = (r\<^sup>\<bullet>) * (x \<star> y)"
@@ -577,7 +577,7 @@ abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarro
 
 definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. x \<bottom> y}" 
 
-(* NEW *)
+
 abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> ('a::complex_inner) set" ("/_/\<^sub>\<bottom>")
   where \<open>M\<^sub>\<bottom> \<equiv> (orthogonal_complement M)\<close>
 
@@ -590,29 +590,29 @@ locale is_general_subspace =
   assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
   assumes zero: "0 \<in> A"
 
-(* NEW *)
+
 abbreviation is_general_subspace_abbr::"('a::complex_vector) set \<Rightarrow>  bool" ("_ is-a-subspace")
   where \<open>M is-a-subspace \<equiv> is_general_subspace M\<close>
 
-(* NEW *)
+
 abbreviation is_closed_abbr::"('a::topological_space) set \<Rightarrow> bool" ("_ is-closed")
   where \<open>M is-closed \<equiv> closed M\<close>
 
-(* NEW *)
+
 locale is_subspace =
   fixes A::"('a::{complex_vector,topological_space}) set"
   assumes subspace: "A is-a-subspace"
   assumes closed: "A is-closed"
 
-(* NEW *)
+
 abbreviation closure_abbr::  \<open>('a::{topological_space}) set \<Rightarrow> 'a set\<close> ("cl /_/") where
   \<open>cl A \<equiv> closure A\<close>
 
-(* NEW *)
+
 abbreviation is_subspace_abbr::"('a::{complex_vector,topological_space}) set \<Rightarrow>  bool" ("_ is-a-closed-subspace")
   where \<open>M is-a-closed-subspace \<equiv> is_subspace M\<close>
 
-(* NEW *)
+
 lemma is_subspace_cl:
   fixes A::"('a::complex_inner) set"
   assumes \<open>A is-a-subspace\<close>
@@ -654,11 +654,11 @@ proof-
 qed
 
 
-(* NEW *)
+
 definition general_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>general_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
-(* NEW *)
+
 abbreviation general_sum_abbr::  \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("/_/ \<plusminus> /_/") where
   \<open>A \<plusminus> B  \<equiv> general_sum A B\<close>
 
@@ -1890,15 +1890,15 @@ lemma ortho_bot[simp]:
 
 subsection {* Closed sum *}
 
-(* NEW *)
+
 definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>closed_sum A B = cl (A \<plusminus> B)\<close>
 
-(* NEW *)
+
 abbreviation closed_sum_abbr::  \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("_ \<minusplus> _") where
   \<open>A \<minusplus> B  \<equiv> closed_sum A B\<close>
 
-(* NEW *)
+
 lemma sum_existential:
   \<open>x \<in> (A \<plusminus> B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
 proof -
@@ -1909,13 +1909,13 @@ proof -
     by (metis (lifting))
 qed
 
-(* NEW *)
+
 lemma is_closed_subspace_comm:                                                                 
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>(A \<minusplus> B) = (B \<minusplus> A)\<close>
   by (smt Collect_cong add.commute closed_sum_def general_sum_def)
 
-(* NEW *)
+
 lemma OrthoClosed:
   fixes A ::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-subspace\<close>
@@ -1944,7 +1944,7 @@ proof-
     using closed_sequential_limits by blast
 qed
 
-(* NEW *)
+
 lemma OrthoClosedEq:
   fixes A ::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-subspace\<close>
@@ -1978,14 +1978,14 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-(* NEW *)
+
 lemma is_subspace_closed_plus:
   fixes A B::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>(A \<minusplus> B) is-a-closed-subspace\<close>
   by (metis (no_types, lifting) assms(1) assms(2) closed_closure closed_sum_def general_sum_def is_subspace_cl is_subspace_def is_subspace_plus)
 
-(* NEW *)
+
 lemma DeMorganOrtho:        
   fixes A B::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
@@ -2037,7 +2037,7 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-(* NEW *)
+
 lemma DeMorganOrthoDual:
   fixes A B::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
@@ -2052,7 +2052,7 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* NEW *)
+
 lemma is_closed_subspace_asso:
   fixes A B C::"('a::{complex_inner, complete_space}) set"
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
@@ -2084,14 +2084,14 @@ proof-
     by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) is_subspace_inter is_subspace_orthog orthogonal_complement_twice)
 qed
 
-(* NEW *)
+
 lemma is_closed_subspace_zero:
   fixes A :: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close>
   shows \<open>(({0}::('a::{complex_inner, complete_space}) set)\<minusplus>A) = A\<close>
   by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms is_subspace_UNIV is_subspace_orthog ortho_top orthogonal_complement_twice orthogonal_complement_def)
 
-(* NEW *)
+
 lemma is_closed_subspace_ord:
   fixes A B C:: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>
@@ -2099,21 +2099,21 @@ lemma is_closed_subspace_ord:
   shows \<open>(C\<minusplus>A) \<subseteq> (C\<minusplus>B)\<close>
   by (smt DeMorganOrthoDual Int_Collect_mono assms(1) assms(2) assms(3) assms(4) is_closed_subspace_comm is_subspace_inter is_subspace_orthog ortho_leq orthogonal_complement_twice orthogonal_complement_def)
 
-(* NEW *)
+
 lemma is_closed_subspace_universal_inclusion_left:
   fixes A B:: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>A \<subseteq> (A\<minusplus>B)\<close>
   by (metis DeMorganOrtho Int_lower1 assms(1) assms(2) is_subspace_closed_plus ortho_leq)
 
-(* NEW *)
+
 lemma is_closed_subspace_universal_inclusion_right:
   fixes A B:: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close>
   shows \<open>B \<subseteq> (A\<minusplus>B)\<close>
   by (metis assms(1) assms(2)  is_closed_subspace_comm is_closed_subspace_universal_inclusion_left)
 
-(* NEW *)
+
 lemma is_closed_subspace_universal_inclusion_inverse:
   fixes A B C:: \<open>('a::{complex_inner, complete_space}) set\<close>
   assumes \<open>A is-a-closed-subspace\<close> and \<open>B is-a-closed-subspace\<close> and \<open>C is-a-closed-subspace\<close>

@@ -92,10 +92,6 @@ notation
   sup (infixl "\<squnion>" 65) 
 
 
-(* TODO: rename *)
-
-(* NEW *)
-(* 'a ell2 renamed as 'a ell2 *)
 
 typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
@@ -233,7 +229,7 @@ proof -
        apply simp
       apply blast
      apply (meson assms has_ell2_norm_L2_set)
-    by (metis SUP_cong image_image)
+    by (metis image_image)
   finally show "ell2_norm (\<lambda>i. c * x i) = cmod c * ell2_norm x" .
 qed
 
@@ -516,7 +512,7 @@ proof -
     by (meson le_less_trans) 
 qed
 
-(* NEW *)
+
 definition pointwise_convergent_to :: 
 \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> where
 \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t ) \<longlonglongrightarrow> l t)\<close>
@@ -528,11 +524,31 @@ abbreviation pointwise_convergent_to_abbr ::
 definition pointwise_convergent::\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> bool\<close> where
 \<open>pointwise_convergent x = (\<exists> l. (x \<midarrow>pointwise\<rightarrow> l) )\<close>
 
-(* NEW *)
+lemma has_ell2_norm_explicit:
+\<open>has_ell2_norm f \<longleftrightarrow> ( \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod (f x))^2) \<le> M )\<close>
+for f::\<open>'a \<Rightarrow> complex\<close>
+proof-
+  have \<open>has_ell2_norm f \<Longrightarrow> ( \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod (f x))^2) \<le> M )\<close>
+    by (simp add: bdd_above_def has_ell2_norm_def)
+  moreover have \<open>( \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod (f x))^2) \<le> M ) \<Longrightarrow> has_ell2_norm f\<close>
+    by (simp add: bdd_above_def has_ell2_norm_def)
+  ultimately show ?thesis
+    by auto
+qed
+
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>                          
   shows \<open>has_ell2_norm l \<and> ( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close> 
+proof-
+  have \<open>has_ell2_norm l\<close>
+    sorry
+  moreover have \<open>( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
+    sorry
+  ultimately show ?thesis by auto
+qed
+
+(*
 proof-
   have \<open>has_ell2_norm l\<close>
   proof-
@@ -577,11 +593,12 @@ proof-
     by (cheat fixme)
   ultimately show ?thesis by blast
 qed
+*)
 
 instantiation ell2 :: (type) chilbert_space
 begin
 instance
-proof  (* NEW *)
+proof  
 (*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
   assume \<open>Cauchy x\<close>
   then have "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (x m - x n) < e"
@@ -633,7 +650,7 @@ proof  (* NEW *)
 qed
 
 (*
-proof  (* NEW *)
+proof  
   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
   have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
     using Rep_ell2 by auto
@@ -949,14 +966,11 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_su
 lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 
-(* NEW *)
 (* (* TODO remove *)
 abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a ell2 set" where "subspace_as_set == subspace_to_set"
 
 removed
 *)
-
-
 
 definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
   (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> subspace_to_set S}" *)
@@ -968,7 +982,7 @@ adhoc_overloading span (* spanState *) spanVector *)
 
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>::"'a ell2"
-    (* NEW *)
+    
 proof-
   assume \<open>a \<noteq> 0\<close>
   have \<open>span {\<psi>} = Inf {S | S::'a subspace. {\<psi>} \<subseteq> subspace_to_set S }\<close>
