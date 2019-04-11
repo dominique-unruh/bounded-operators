@@ -573,7 +573,7 @@ lemma CauchyImplies_ell2Bounded:
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
   shows \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
   sorry
-(*
+    (*
 proof-
   from  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)   \<le> \<epsilon>\<close>
   obtain N::nat where \<open> \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)   \<le> (1::real)\<close>
@@ -694,15 +694,50 @@ proof-
           then obtain NN where \<open>\<forall> x::'a. \<forall> \<epsilon>::real. \<forall> m::nat. 
                     \<epsilon> > 0 \<and> m \<ge> NN x \<epsilon> \<longrightarrow> (cmod (l x - (a m) x)) < \<epsilon>\<close>
             by blast                 
-          have \<open>S \<noteq> {} \<Longrightarrow> {NN x (1/(card S))| x. x \<in> S} \<noteq> {}\<close> for S::\<open>'a set\<close>
-            by blast
-          have \<open>finite S \<Longrightarrow> finite {NN x (1/(card S))| x. x \<in> S}\<close> for S::\<open>'a set\<close>
-            by simp
           obtain NS where \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow> NS S = Sup {NN x (1/(card S))| x. x \<in> S}\<close>
             by fastforce
           have  \<open>\<forall> S::'a set.  finite S \<and> S \<noteq> {} \<longrightarrow> 
              (\<forall> x \<in> S. (cmod (l x - (a (NS S)) x)) < 1/(card S) )\<close>
-            sorry
+          proof- 
+            have  \<open>finite S \<Longrightarrow> S \<noteq> {}
+             \<Longrightarrow> x \<in> S \<Longrightarrow> (cmod (l x - (a (NS S)) x)) < 1/(card S)\<close>
+              for S::\<open>'a set\<close> and x::'a
+            proof- 
+              assume \<open>finite S\<close>
+              hence \<open>finite {NN x (1/(card S))| x. x \<in> S}\<close>
+                by auto
+              assume \<open>S \<noteq> {}\<close>
+              hence \<open>{NN x (1/(card S))| x. x \<in> S} \<noteq> {}\<close>
+                by auto
+              assume \<open>x \<in> S\<close>
+              hence \<open>\<forall> \<epsilon>::real. \<forall> m::nat. 
+                    \<epsilon> > 0 \<and> m \<ge> NN x \<epsilon> \<longrightarrow> (cmod (l x - (a m) x)) < \<epsilon>\<close>
+                using   \<open>\<forall> x::'a. \<forall> \<epsilon>::real. \<forall> m::nat. 
+                    \<epsilon> > 0 \<and> m \<ge> NN x \<epsilon> \<longrightarrow> (cmod (l x - (a m) x)) < \<epsilon>\<close>
+                by blast
+              hence \<open>\<forall> m::nat. 
+                     1/(card S) > 0 \<and> m \<ge> NN x (1/(card S)) \<longrightarrow> (cmod (l x - (a m) x)) < 1/(card S)\<close>
+                by blast
+              hence \<open>\<forall> m::nat. 
+                      m \<ge> NN x (1/(card S)) \<longrightarrow> (cmod (l x - (a m) x)) < 1/(card S)\<close>
+                using \<open>S \<noteq> {}\<close> \<open>finite S\<close> card_0_eq by auto
+              moreover have \<open>NS S \<ge> NN x (1/(card S))\<close>
+              proof- 
+                from \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow> NS S = Sup {NN x (1/(card S))| x. x \<in> S}\<close>
+                have \<open>NS S = Sup {NN x (1/(card S))| x. x \<in> S}\<close>
+                  using \<open>S \<noteq> {}\<close> \<open>finite S\<close> by auto   
+                hence \<open>NS S \<ge> NN x (1/(card S))\<close>
+                  using \<open>x \<in> S\<close> \<open>{NN x (1/(card S))| x. x \<in> S} \<noteq> {}\<close>
+                    \<open>finite {NN x (1/(card S))| x. x \<in> S}\<close>
+                    le_cSup_finite by auto
+                thus ?thesis by blast
+              qed 
+              ultimately have  \<open>(cmod (l x - (a (NS S)) x)) < 1/(card S)\<close>
+                by simp
+              thus ?thesis by blast
+            qed
+            thus ?thesis by blast
+          qed 
           hence  \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
                     (\<forall> x \<in> S. (cmod (l x - (a  (NS S)) x))^2 < (1/(card S))^2 )\<close>
             by (simp add: power_strict_mono)
@@ -735,11 +770,8 @@ proof-
           thus ?thesis
             by blast
         qed 
-        moreover have \<open>\<forall> S::'a set.  S = {} \<longrightarrow> sqrt (\<Sum> x\<in>S. (cmod (l x - (a m) x))^2) \<le> 0\<close> 
-          for m
-          by simp
-        ultimately show ?thesis
-          by (metis (full_types) real_sqrt_zero sum.empty)
+        thus ?thesis
+          by smt
       qed 
       then obtain m::\<open>'a set \<Rightarrow> nat\<close> and U::real where 
         \<open>\<forall> S::'a set.  finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. (cmod (l x - (a (m S)) x))^2) \<le> U\<close>
@@ -984,10 +1016,11 @@ proof
     by metis
   then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
     by auto
+  (* NEW *)
   hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
     using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
       convergence_pointwise_to_ell2_same_limit 
-    sorry
+    sorry (* we need to use the fact that the sequence {x n} is Cauchy *)
   obtain L::\<open>'a ell2\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
     using Rep_ell2_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_ell2 (x n) - l)) \<longlonglongrightarrow> 0\<close>
     by auto
