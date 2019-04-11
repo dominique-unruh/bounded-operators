@@ -544,6 +544,23 @@ lemma triangIneq_ell2:
   sorry
 
 (* NEW *)
+lemma triangIneq_ell2InsideMinus:
+  fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
+  assumes \<open>finite S\<close>
+  shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x - g x))^2)
+   \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
+proof-
+  have  \<open>sqrt (\<Sum> x\<in>S. (cmod (f x - g x))^2)
+      = sqrt (\<Sum> x\<in>S. (cmod (f x + (- g x)))^2)\<close>
+    by simp
+  also have \<open>... \<le>  sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (- g x))^2)\<close>
+    by (metis (no_types) assms triangIneq_ell2)
+  also have \<open>... \<le>  sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
+    by auto
+  finally show ?thesis by blast
+qed
+
+(* NEW *)
 lemma triangIneq_ell2Minus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>finite S\<close>
@@ -572,99 +589,126 @@ lemma CauchyImplies_ell2Bounded:
   assumes \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
   shows \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
-  sorry
-    (*
 proof-
-  from  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)   \<le> \<epsilon>\<close>
-  obtain N::nat where \<open> \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)   \<le> (1::real)\<close>
-    using less_numeral_extra(1) by blast
-  from \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)   \<le> (1::real)\<close>
-  have \<open>\<forall> m \<ge> N.  \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (1::real)\<close>
+  from  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+  have  \<open>\<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> (1::real)\<close>
+    by auto
+  then obtain N where
+    \<open> \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2) \<le> (1::real)\<close>
     by blast
-  have  \<open>m \<ge> N \<Longrightarrow> \<exists> M::real. \<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. (cmod ((a m) x))^2)  \<le> M\<close>
-  proof-
-    assume \<open>m \<ge> N\<close>
-    have \<open>\<forall> S::'a set. finite S \<longrightarrow>  (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (1::real)\<close>
-      using \<open>N \<le> m\<close> \<open>\<forall>m\<ge>N. \<forall>S. finite S \<longrightarrow> (\<Sum>x\<in>S. (cmod (a m x - a N x))\<^sup>2) \<le> 1\<close> by blast
-    hence \<open>\<forall> S::'a set. finite S \<longrightarrow>  sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (1::real)\<close>
-      by simp
-    have \<open>has_ell2_norm (a N)\<close>
-      by (simp add: assms(2))
-    then obtain C::real
-      where \<open>\<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( (a N) x ) )^2) \<le> C\<close>
-      by (metis assms(2) has_ell2_norm_explicit real_sqrt_le_iff)
-    have  \<open>\<forall> S::'a set. finite S \<longrightarrow>  
-       sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) ) )^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) + sqrt (\<Sum> x\<in>S. ( cmod ( (a N) x ) )^2)\<close>
-    proof-
-      have \<open>\<forall> S::'a set. finite S \<longrightarrow>  
-       sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) ) )^2) = sqrt (\<Sum> x\<in>S. ( cmod ( (((a m) x) - ((a N) x)) +  ((a N) x) ) )^2)\<close>
-        by auto
-      moreover have \<open>finite S \<Longrightarrow>  
-         sqrt (\<Sum> x\<in>S. ( cmod ( (((a m) x) - ((a N) x)) + ((a N) x) ) )^2) \<le>
-         sqrt (\<Sum> x\<in>S. ( cmod ( (((a m) x) - ((a N) x)) ) )^2) +  sqrt (\<Sum> x\<in>S. ( cmod ( (a N) x ) )^2)\<close>
-        for S::\<open>'a set\<close>
-      proof-
-        assume \<open>finite S\<close>
-        hence  \<open>sqrt (\<Sum> x\<in>S. ( (cmod (f x + g x)) )^2)
-   \<le> sqrt (\<Sum> x\<in>S. ( (cmod (f x)) )^2) + sqrt (\<Sum> x\<in>S. ( (cmod (g x)) )^2)\<close>
-          for f g :: \<open>'a \<Rightarrow> complex\<close>
-          using triangIneq_ell2 by blast
-        hence  \<open>sqrt (\<Sum> x\<in>S. ( (cmod (f x + (a N) x)) )^2)
-   \<le> sqrt (\<Sum> x\<in>S. ( (cmod (f x)) )^2) + sqrt (\<Sum> x\<in>S. ( (cmod ((a N) x)) )^2)\<close>
-          for f :: \<open>'a \<Rightarrow> complex\<close>           
+  hence \<open> \<forall> m \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (1::real)\<close>
+    by blast
+  have \<open>\<exists> K. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K\<close>
+  proof-       
+    have  \<open>\<exists> K. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K\<close>
+    proof- 
+      have  \<open>\<exists> K. \<forall> m. \<forall> S::'a set. m < N \<longrightarrow> (finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K)\<close>
+      proof(cases \<open>N = 0\<close>)
+        case True
+        then show ?thesis by blast
+      next
+        case False
+        from \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
+        have \<open>\<forall> k::nat. \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> M\<close>
+          using has_ell2_norm_explicit
+          by auto
+        then obtain MM::\<open>nat \<Rightarrow> real\<close> where
+          \<open>\<forall> k::nat. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> MM k\<close>
+          by metis
+        have \<open>finite {MM k| k::nat. k < N}\<close> by auto
+        moreover have \<open>{MM k| k::nat. k < N} \<noteq> {}\<close>
+          using False by auto
+        ultimately obtain C where \<open>C = Sup {MM k| k::nat. k < N}\<close>
           by blast
-        hence  \<open>sqrt (\<Sum> x\<in>S. ( (cmod ((\<lambda> t::'a. (a m) t - (a N) t) x + (a N) x)) )^2)
-   \<le> sqrt (\<Sum> x\<in>S. ( (cmod ((\<lambda> t::'a. (a m) t - (a N) t) x)) )^2) + sqrt (\<Sum> x\<in>S. ( (cmod ((a N) x)) )^2)\<close>
+        have \<open>\<forall> m < N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> MM m\<close>  
+          using \<open>\<forall> k::nat. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> MM k\<close>
+          by blast
+        moreover have  \<open>\<forall> m < N. MM m \<le> C\<close>
+          using  \<open>C = Sup {MM k| k::nat. k < N}\<close> \<open>finite {MM k| k::nat. k < N}\<close> 
+            \<open>{MM k| k::nat. k < N} \<noteq> {}\<close>   
+          using le_cSup_finite by blast
+        ultimately have  \<open>\<forall> m < N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> C\<close>
           by fastforce
-        hence  \<open>sqrt (\<Sum> x\<in>S. ( (cmod ( ((a m) x - (a N) x)  + (a N) x)) )^2)
-   \<le> sqrt (\<Sum> x\<in>S. ( (cmod ( (a m) x - (a N) x )) )^2) + sqrt (\<Sum> x\<in>S. ( (cmod ((a N) x)) )^2)\<close>
-          by simp
+        obtain D where \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> D\<close>
+          using \<open>\<forall>k. \<exists>M. \<forall>S. finite S \<longrightarrow> (\<Sum>x\<in>S. (cmod (a k x))\<^sup>2) \<le> M\<close> by blast
+        have  \<open>finite S \<Longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) + sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2)\<close>
+          for m ::nat and S::\<open>'a set\<close>
+          by (simp add: triangIneq_ell2InsideMinus)
+        have  \<open>m < N \<Longrightarrow> finite S \<Longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> sqrt C + sqrt D\<close>
+          for m::nat and S::\<open>'a set\<close>
+        proof- 
+          assume \<open>m < N\<close>
+          assume \<open>finite S\<close>
+          have \<open>sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) + sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2)\<close>
+            by (simp add: \<open>\<And>m S. finite S \<Longrightarrow> sqrt (\<Sum>x\<in>S. (cmod (a m x - a N x))\<^sup>2) \<le> sqrt (\<Sum>x\<in>S. (cmod (a m x))\<^sup>2) + sqrt (\<Sum>x\<in>S. (cmod (a N x))\<^sup>2)\<close> \<open>finite S\<close>)
+          moreover have \<open>(\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> C\<close>
+            using  \<open>\<forall> m < N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> C\<close>
+              \<open>finite S\<close> \<open>m < N\<close> by blast
+          moreover have \<open>(\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> D\<close>
+            using   \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> D\<close>
+              \<open>finite S\<close> by blast 
+          ultimately show ?thesis
+            by (smt real_sqrt_le_mono)            
+        qed 
+        hence  \<open>m < N \<Longrightarrow> finite S \<Longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (sqrt C + sqrt D)^2\<close>
+          for m::nat and S::\<open>'a set\<close>
+          by (simp add: sqrt_le_D)
         thus ?thesis
           by blast 
-      qed
+      qed 
+      moreover have  \<open>\<exists> K. \<forall> m. \<forall> S::'a set. m \<ge> N \<longrightarrow> (finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K)\<close>
+        using  \<open> \<forall> m \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> (1::real)\<close>
+        by blast
+      ultimately have \<open>\<exists> K. \<forall> m. \<forall> S::'a set. (m < N \<or> m \<ge> N) \<longrightarrow> (finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K)\<close>
+        by smt
+      moreover have \<open>(m < N \<or> m \<ge> N)\<close>
+        for m :: nat
+        by auto
       ultimately show ?thesis
-        by presburger 
-    qed
-    hence  \<open>\<forall> S::'a set. finite S \<longrightarrow>  
-       sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) ) )^2) \<le> (1::real) + C\<close>
-      by (smt \<open>\<forall>S. finite S \<longrightarrow> sqrt (\<Sum>x\<in>S. (cmod (a N x))\<^sup>2) \<le> C\<close> \<open>\<forall>S. finite S \<longrightarrow> sqrt (\<Sum>x\<in>S. (cmod (a m x - a N x))\<^sup>2) \<le> 1\<close>)
+        by simp 
+    qed 
     thus ?thesis
-      using sqrt_le_D by auto
+      by (meson real_sqrt_le_iff) 
   qed
-  moreover have \<open>m < N \<Longrightarrow> \<exists> M::real. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
-  proof(cases \<open>N = 0\<close>)
-    case True
-    then show ?thesis 
-      using calculation by blast
-  next
-    case False
-    from \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
-    have \<open>\<forall> k::nat. \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> M\<close>
-      using has_ell2_norm_explicit
-      by auto
-    then obtain MM::\<open>nat \<Rightarrow> real\<close> where
-      \<open>\<forall> k::nat. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> MM k\<close>
-      by metis
-    have \<open>finite {MM k| k::nat. k < N}\<close> by auto
-    moreover have \<open>{MM k| k::nat. k < N} \<noteq> {}\<close>
-      using False by auto
-    ultimately obtain C where \<open>C = Sup {MM k| k::nat. k < N}\<close>
+  then obtain K where \<open>\<forall> m. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K\<close>
+    by auto
+  have \<open>finite S \<Longrightarrow>  sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2) + sqrt (\<Sum> x\<in>S. (cmod ((a n) x))^2)\<close>
+    for m n :: nat and S::\<open>'a set\<close>
+    by (simp add: triangIneq_ell2Minus) 
+  hence \<open>finite S \<Longrightarrow>  sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) + sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2)\<close>
+    for m :: nat and S::\<open>'a set\<close>
+    by blast
+  have \<open>\<exists> M. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> M\<close>
+    using \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>   
+    unfolding has_ell2_norm_def
+    by (metis assms(2) has_ell2_norm_explicit real_sqrt_le_iff)
+  then obtain M where \<open> \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> M\<close>
+    by blast
+  have \<open>finite S \<Longrightarrow> sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> K + M\<close>
+    for S::\<open>'a set\<close> and m::nat
+  proof-
+    assume \<open>finite  S\<close>
+    hence \<open>sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) + sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2)\<close>
+      using  \<open>\<And> S::'a set. \<And>m::nat.  finite S \<Longrightarrow>  sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) + sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2)\<close>
       by blast
-    assume \<open>m < N\<close>
-    have \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> MM m\<close>  
-      using \<open>\<forall> k::nat. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a k) x))^2) \<le> MM k\<close>
+    moreover have \<open>sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> M\<close>
+      using  \<open> \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. (cmod ((a N) x))^2) \<le> M\<close>  \<open>finite  S\<close>
       by blast
-    moreover have  \<open>MM m \<le> C\<close>
-      using  \<open>C = Sup {MM k| k::nat. k < N}\<close> \<open>finite {MM k| k::nat. k < N}\<close> 
-        \<open>{MM k| k::nat. k < N} \<noteq> {}\<close>  \<open>m < N\<close>  
-      using le_cSup_finite by blast
-    ultimately have  \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> C\<close>
-      by auto      
-    thus ?thesis by auto
+    ultimately have \<open>sqrt (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) + M\<close>
+      by simp
+    moreover have \<open>sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K\<close>
+      using  \<open>\<forall> m. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K\<close>
+        \<open>finite S\<close> by blast
+    ultimately show ?thesis
+      by linarith 
   qed
-  ultimately show ?thesis by fastforce
+  hence \<open>finite S \<Longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> (K + M)^2\<close>
+    for S::\<open>'a set\<close> and m::nat
+    using \<open>\<And>m S. finite S \<Longrightarrow> sqrt (\<Sum>x\<in>S. (cmod (a m x))\<^sup>2) \<le> K + M\<close> sqrt_le_D by blast
+  thus ?thesis
+    by blast 
 qed
-*)
+
 
 (* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
@@ -763,7 +807,7 @@ proof-
                 using \<open>S \<noteq> {}\<close> \<open>\<forall>S. finite' S \<longrightarrow> (\<Sum>x\<in>S. (cmod (l x - a (NS S) x))\<^sup>2) < 1 / real (card S)\<close> \<open>finite S\<close> by blast
               moreover have \<open>1/(card S) \<le> 1\<close>
                 using  \<open>finite S\<close>  \<open>S \<noteq> {}\<close>
-                 card_0_eq by fastforce
+                  card_0_eq by fastforce
               ultimately show ?thesis by auto
             qed 
             thus ?thesis by blast
@@ -1031,7 +1075,7 @@ proof
     by metis
   then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
     by auto
-  (* NEW *)
+      (* NEW *)
   hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
     using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
       convergence_pointwise_to_ell2_same_limit 
@@ -1046,7 +1090,7 @@ proof
     (* TODO *)
     apply transfer apply (simp add: fun_diff_def)
     apply (subst (asm) abs_of_nonneg)
-     apply auto
+    apply auto
     by (cheat fixme)
   thus \<open>convergent x\<close>
     by (simp add: LIMSEQ_iff convergentI)
@@ -1149,8 +1193,8 @@ replacement of timesScalarVec by scaleC (Occam's razor)
 lemma ell2_ket[simp]: "norm (ket i) = 1"
   apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
   apply (rule cSUP_eq_maximum)
-   apply (rule_tac x="{i}" in bexI)
-    apply auto
+  apply (rule_tac x="{i}" in bexI)
+  apply auto
   by (rule ell2_1)
 
 
@@ -1218,9 +1262,9 @@ qed
 
 instantiation subspace :: (type)order begin
 instance apply intro_classes
-     apply transfer apply (simp add: subset_not_subset_eq)
-    apply transfer apply simp
-   apply transfer apply simp
+  apply transfer apply (simp add: subset_not_subset_eq)
+  apply transfer apply simp
+  apply transfer apply simp
   apply transfer by simp
 end
 
@@ -1242,11 +1286,11 @@ lemma subspace_zero_bot: "(0::_ subspace) = bot"
 instantiation subspace :: (type)ab_semigroup_add begin
 instance
   apply intro_classes
-   apply transfer
+  apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
   unfolding general_sum_def
-   apply blast
+  apply blast
 
   apply transfer
   using is_closed_subspace_comm
@@ -1306,8 +1350,8 @@ end
 
 instantiation subspace :: (type)semilattice_inf begin
 instance apply intro_classes
-    apply transfer apply simp
-   apply transfer apply simp
+  apply transfer apply simp
+  apply transfer apply simp
   apply transfer by simp
 end
 
@@ -1337,7 +1381,7 @@ instance proof intro_classes
     by auto
   have "Inf UNIV = (bot::'a subspace)"    
     apply (rule antisym)
-     apply (rule Inf_le) apply simp
+    apply (rule Inf_le) apply simp
     apply (rule le_Inf) by simp
   thus "Sup {} = (bot::'a subspace)"
     unfolding Sup_subspace_def by auto
