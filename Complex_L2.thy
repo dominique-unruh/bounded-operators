@@ -743,16 +743,31 @@ proof-
             by (simp add: power_strict_mono)
           hence  \<open>\<forall> S::'a set.  finite S \<and> S \<noteq> {} \<longrightarrow>
              (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < (\<Sum> x \<in> S. (1/(card S))^2 )\<close>
-            sorry
+            by (meson sum_strict_mono)
           hence  \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
              (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < (1/(card S))^2*(card S)\<close>
             by (simp add: ordered_field_class.sign_simps(24))
           hence \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
             (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < 1/(card S)\<close>
-            sorry
-          hence \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
-            (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < 1\<close>
-            sorry
+            by (metis (no_types, lifting) mult_of_nat_commute power_one_over real_divide_square_eq semiring_normalization_rules(29) times_divide_eq_right)            
+          have \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
+            (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < (1::real)\<close>
+          proof-
+            have \<open>finite S \<Longrightarrow> S \<noteq> {} \<Longrightarrow>
+            (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < (1::real)\<close>
+              for  S::\<open>'a set\<close>
+            proof-
+              assume \<open>finite S\<close>
+              assume \<open>S \<noteq> {}\<close>
+              have \<open>(\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < 1/(card S)\<close>
+                using \<open>S \<noteq> {}\<close> \<open>\<forall>S. finite' S \<longrightarrow> (\<Sum>x\<in>S. (cmod (l x - a (NS S) x))\<^sup>2) < 1 / real (card S)\<close> \<open>finite S\<close> by blast
+              moreover have \<open>1/(card S) \<le> 1\<close>
+                using  \<open>finite S\<close>  \<open>S \<noteq> {}\<close>
+                 card_0_eq by fastforce
+              ultimately show ?thesis by auto
+            qed 
+            thus ?thesis by blast
+          qed
           hence \<open>\<forall> S::'a set. finite' S \<longrightarrow>
             (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) \<le> (1::real)\<close>
             by fastforce
