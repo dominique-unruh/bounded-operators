@@ -19,7 +19,9 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
     Extended_Sorry
-
+"HOL-ex.Sketch_and_Explore"
+(* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
+Or "sketch bla" for a proof outline starting with "proof bla" *)
 begin
 
 section \<open>Preliminaries\<close>
@@ -525,6 +527,7 @@ definition pointwise_convergent::\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b
 lemma has_ell2_norm_explicit:
   \<open>has_ell2_norm f \<longleftrightarrow> ( \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod (f x))^2) \<le> M )\<close>
   for f::\<open>'a \<Rightarrow> complex\<close>
+  unfolding bdd_above_def L2_set_def
 proof-
   have \<open>has_ell2_norm f \<Longrightarrow> ( \<exists> M::real. \<forall> S:: 'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod (f x))^2) \<le> M )\<close>
     by (simp add: bdd_above_def has_ell2_norm_def)
@@ -535,15 +538,14 @@ proof-
 qed
 
 
-(* NEW *)
 lemma triangIneq_ell2:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
-  assumes \<open>finite S\<close>
+  assumes \<open>finite S\<close> (* TODO: assumption not needed by Groups_Big.comm_monoid_add_class.sum *)
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
+(* TODO: "copy" proof L2_set_triangle_ineq *)
   sorry
 
-(* NEW *)
 lemma triangIneq_ell2InsideMinus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>finite S\<close>
@@ -560,7 +562,6 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* NEW *)
 lemma triangIneq_ell2Minus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>finite S\<close>
@@ -582,10 +583,9 @@ proof-
     using \<open>sqrt (\<Sum>x\<in>S. (cmod (f x - g x + g x))\<^sup>2) \<le> sqrt (\<Sum>x\<in>S. (cmod (f x - g x))\<^sup>2) + sqrt (\<Sum>x\<in>S. (cmod (g x))\<^sup>2)\<close> \<open>sqrt (\<Sum>x\<in>S. (cmod (f x))\<^sup>2) = sqrt (\<Sum>x\<in>S. (cmod (f x - g x + g x))\<^sup>2)\<close> by linarith
 qed
 
-
-(* NEW *)
 lemma CauchyImplies_ell2Bounded:                         
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
+  (* TODO: use \<And>\<epsilon> \<And>k *)
   assumes \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
   shows \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
@@ -709,13 +709,12 @@ proof-
     by blast 
 qed
 
-
-(* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
     and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-  shows \<open>has_ell2_norm l \<and> ( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close> 
+  (* TODO: split into two theorems *)
+  shows \<open>has_ell2_norm l \<and> ( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
 proof-
   have \<open>has_ell2_norm l\<close>
   proof-
@@ -1040,11 +1039,30 @@ proof-
 qed
 *)
 
+(* TODO *)
+lemma givemeaname_and_makeprettier:
+  fixes X :: "nat \<Rightarrow> 'a \<Rightarrow> complex"
+  shows "\<forall>x. has_ell2_norm (X x) \<Longrightarrow>
+         \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>x. X m x - X n x) < e \<Longrightarrow>
+         \<exists>l. has_ell2_norm l \<and> (\<forall>r>0. \<exists>no. \<forall>n\<ge>no. ell2_norm (\<lambda>x. X n x - l x) < r)"
+  sorry
 
 instantiation ell2 :: (type) chilbert_space
 begin
 instance
-proof  
+proof
+  fix X :: "nat \<Rightarrow> 'a ell2"
+  assume cauchy: "Cauchy (X::nat \<Rightarrow> 'a ell2)"
+  then have "\<exists>l. X \<longlonglongrightarrow> l"
+    unfolding LIMSEQ_def Cauchy_def dist_norm
+    apply transfer apply simp
+    apply (rule givemeaname_and_makeprettier)
+    by auto
+  then show "convergent (X::nat \<Rightarrow> 'a ell2)"
+    using convergent_def by blast
+qed
+
+
   (*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
   assume \<open>Cauchy x\<close>
   then have "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (x m - x n) < e"
@@ -1060,7 +1078,7 @@ proof
   thus \<open>convergent x\<close>
     by (simp add: LIMSEQ_iff convergent_def)
  *)
-  fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
+(*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
   have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
     using Rep_ell2 by auto
   assume \<open>Cauchy x\<close>
@@ -1075,7 +1093,6 @@ proof
     by metis
   then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
     by auto
-      (* NEW *)
   hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
     using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
       convergence_pointwise_to_ell2_same_limit 
@@ -1095,6 +1112,7 @@ proof
   thus \<open>convergent x\<close>
     by (simp add: LIMSEQ_iff convergentI)
 qed
+ *)
 
 (*
 proof  

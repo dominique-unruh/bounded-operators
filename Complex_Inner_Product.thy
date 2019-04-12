@@ -19,7 +19,6 @@ section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
  "HOL-Analysis.Inner_Product" (* "HOL-Library.LaTeXsugar" *) 
-
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -584,17 +583,18 @@ abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> 
 lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
   unfolding is_orthogonal_def apply (subst cinner_commute) by blast
 
+(* TODO: rename: linear manifold (following Conway) *)
 locale is_general_subspace =
   fixes A::"('a::complex_vector) set"
   assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
   assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
   assumes zero: "0 \<in> A"
 
-
 abbreviation is_general_subspace_abbr::"('a::complex_vector) set \<Rightarrow>  bool" ("_ is-a-subspace")
   where \<open>M is-a-subspace \<equiv> is_general_subspace M\<close>
 
 
+(* TODO remove *)
 abbreviation is_closed_abbr::"('a::topological_space) set \<Rightarrow> bool" ("_ is-closed")
   where \<open>M is-closed \<equiv> closed M\<close>
 
@@ -604,14 +604,13 @@ locale is_subspace =
   assumes subspace: "A is-a-subspace"
   assumes closed: "A is-closed"
 
-
+(* TODO If keep: into bundle, use notation. Or remove? *)
 abbreviation closure_abbr::  \<open>('a::{topological_space}) set \<Rightarrow> 'a set\<close> ("cl /_/") where
   \<open>cl A \<equiv> closure A\<close>
 
-
+(* TODO remove *)
 abbreviation is_subspace_abbr::"('a::{complex_vector,topological_space}) set \<Rightarrow>  bool" ("_ is-a-closed-subspace")
   where \<open>M is-a-closed-subspace \<equiv> is_subspace M\<close>
-
 
 lemma is_subspace_cl:
   fixes A::"('a::complex_inner) set"
@@ -654,13 +653,14 @@ proof-
 qed
 
 
-
+(* TODO: rename Minkoswki sum *)
 definition general_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>general_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
-
-abbreviation general_sum_abbr::  \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("/_/ \<plusminus> /_/") where
-  \<open>A \<plusminus> B  \<equiv> general_sum A B\<close>
+(* TODO notation or remove. +\<^sub>m or something? *)
+notation general_sum (infixl "\<plusminus>" 65)
+(* abbreviation general_sum_abbr::  \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> ("/_/ \<plusminus> /_/") where
+  \<open>A \<plusminus> B  \<equiv> general_sum A B\<close> *)
 
 lemma is_subspace_plus:
   assumes \<open>A is-a-subspace\<close> and \<open>B is-a-subspace\<close>

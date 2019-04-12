@@ -7,9 +7,8 @@ theory Banach_Algebras
   imports Complex_Vector_Spaces "HOL-Library.Adhoc_Overloading" Extended_Sorry
 begin
 
-
 class cbanach_algebra = cbanach +
-  fixes banach_mult :: "'a \<Rightarrow> 'a \<Rightarrow> 'a"  ("_/\<degree>/_") 
+  fixes banach_mult :: "'a \<Rightarrow> 'a \<Rightarrow> 'a"  (infixl "\<degree>" 70)
     and unit :: 'a ("\<one>")
   assumes
     BAlg1: \<open>\<parallel> x \<degree> y \<parallel> \<le> \<parallel> x \<parallel> * \<parallel> y \<parallel>\<close> and
