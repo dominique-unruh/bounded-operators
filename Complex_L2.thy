@@ -19,8 +19,8 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
     Extended_Sorry
-"HOL-ex.Sketch_and_Explore"
-(* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
+    "HOL-ex.Sketch_and_Explore"
+    (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
 Or "sketch bla" for a proof outline starting with "proof bla" *)
 begin
 
@@ -536,16 +536,196 @@ proof-
   ultimately show ?thesis
     by auto
 qed
-
+  
 
 lemma triangIneq_ell2:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>finite S\<close> (* TODO: assumption not needed by Groups_Big.comm_monoid_add_class.sum *)
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
-(* TODO: "copy" proof L2_set_triangle_ineq *)
-  using L2_set_triangle_ineq
-  sorry
+proof- (* NEW *)
+  (* Reduction from the complex case to the real case, which was already proved
+in L2_set_triangle_ineq *)
+  define SB :: \<open>('a\<times>bool) set\<close> where
+    \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
+  have \<open>{(x, True) | x. x \<in> S} \<inter> {(x, False) | x. x \<in> S} = {}\<close>
+    by blast
+  have \<open>finite {(x, True) | x. x \<in> S}\<close>
+    using \<open>finite S\<close>
+    by simp
+  have \<open>finite {(x, False) | x. x \<in> S}\<close>
+    using \<open>finite S\<close>
+    by simp
+  have \<open>{(x, True) | x. x \<in> S} =  (\<lambda> t. (t, True))`S\<close>
+    by auto      
+  have \<open>{(x, False) | x. x \<in> S} =  (\<lambda> t. (t, False))`S\<close>
+    by auto      
+  have \<open>inj (\<lambda> x. (x, True))\<close>
+    by (meson Pair_inject injI)
+  have \<open>inj (\<lambda> x. (x, False))\<close>
+    by (meson Pair_inject injI)
+  define F::\<open>'a\<times>bool \<Rightarrow> real\<close> where 
+    \<open>F z = (if snd z then  Re (f (fst z)) else Im (f (fst z)) )\<close>
+  for z::\<open>'a\<times>bool\<close>
+  define G::\<open>'a\<times>bool \<Rightarrow> real\<close> where 
+    \<open>G z = (if snd z then  Re (g (fst z)) else Im (g (fst z)) )\<close>
+  for z::\<open>'a\<times>bool\<close>
+  have \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
+       = sqrt (\<Sum> x\<in>S. ( (Re (f x) + Re (g x))^2 + (Im (f x) + Im (g x))^2 ))\<close>
+  proof-
+    have  \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
+      = sqrt (\<Sum> x\<in>S. (cmod ( Complex (Re (f x) + Re (g x)) (Im (f x) + Im (g x)) ))^2)\<close>
+      by (simp add: plus_complex.code)
+    also have  \<open>...
+   = sqrt (\<Sum> x\<in>S. ( sqrt ( (Re (f x) + Re (g x))^2 + (Im (f x) + Im (g x))^2 ) )^2)\<close>
+      using complex_norm by auto
+    finally show ?thesis by simp
+  qed
+  also have \<open>...
+       = sqrt ( (\<Sum> x\<in>S.  (Re (f x) + Re (g x))^2) + (\<Sum> x\<in>S.  (Im (f x) + Im (g x))^2)  )\<close>
+    by (simp add: sum.distrib)
+  also have \<open>...
+       = sqrt ( (\<Sum> x\<in>S.  (F (x, True) + G (x, True))^2) 
+            +  (\<Sum> x\<in>S.  (F (x, False) + G (x, False))^2) )\<close>
+    using     \<open>\<And> z. F z = (if snd z then  Re (f (fst z)) else Im (f (fst z)) )\<close>
+      \<open>\<And> z. G z = (if snd z then  Re (g (fst z)) else Im (g (fst z)) )\<close>
+    by simp
+  also have \<open>...
+       = sqrt ( (\<Sum> z \<in> (\<lambda> t. (t, True))`S.  (F z + G z)^2) 
+            +  (\<Sum> z \<in> (\<lambda> t. (t, False))`S.  (F z + G z)^2) )\<close>
+  proof-
+    have  \<open>(\<Sum> x\<in>S. (F (x, True) + G (x, True))^2) 
+        = (\<Sum> z \<in> (\<lambda> t. (t, True))`S.  (F z + G z)^2)\<close>
+    proof -
+      have f1: "\<not> inj_on (\<lambda>a. (a, True)) S \<or> v5_22 (\<lambda>a. (F (a, True) + G (a, True))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a::'a, True)) \<in> S \<and> (F (v5_22 (\<lambda>a. (F (a, True) + G (a, True))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, True)), True) + G (v5_22 (\<lambda>a. (F (a, True) + G (a, True))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, True)), True))\<^sup>2 \<noteq> (F (v5_22 (\<lambda>a. (F (a, True) + G (a, True))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, True)), True) + G (v5_22 (\<lambda>a. (F (a, True) + G (a, True))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, True)), True))\<^sup>2 \<or> (\<Sum>p\<in>(\<lambda>a. (a, True)) ` S. (F p + G p)\<^sup>2) = (\<Sum>a\<in>S. (F (a, True) + G (a, True))\<^sup>2)"
+        by (simp add: sum.reindex_cong)
+      have f2: "\<forall>A f. (\<exists>a aa. ((a::'a) \<in> A \<and> aa \<in> A \<and> (f a::'a \<times> bool) = f aa) \<and> a \<noteq> aa) \<or> inj_on f A"
+        by (meson inj_onI)
+      have "\<forall>f a aa. \<not> inj f \<or> ((f (a::'a)::'a \<times> bool) = f aa) = (a = aa)"
+        by (metis inj_eq)
+      then have "inj_on (\<lambda>a. (a, True)) S"
+        using f2 by (metis (no_types) \<open>inj (\<lambda>x. (x, True))\<close>)
+      then show ?thesis
+        using f1 by linarith
+    qed
+    moreover have  \<open>(\<Sum> x\<in>S. (F (x, False) + G (x, False))^2) 
+        = (\<Sum> z \<in> (\<lambda> t. (t, False))`S.  (F z + G z)^2)\<close>
+      using \<open>inj (\<lambda> x. (x, False))\<close> \<open>finite S\<close>
+        inj_eq inj_onI sum.reindex_cong
+    proof -
+      have f1: "\<not> inj_on (\<lambda>a. (a, False)) S \<or> v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a::'a, False)) \<in> S \<and> (F (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False) + G (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False))\<^sup>2 \<noteq> (F (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False) + G (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False))\<^sup>2 \<or> (\<Sum>p\<in>(\<lambda>a. (a, False)) ` S. (F p + G p)\<^sup>2) = (\<Sum>a\<in>S. (F (a, False) + G (a, False))\<^sup>2)"
+        by (simp add: sum.reindex_cong)
+      have f2: "\<forall>A f. (\<exists>a aa. ((a::'a) \<in> A \<and> aa \<in> A \<and> (f a::'a \<times> bool) = f aa) \<and> a \<noteq> aa) \<or> inj_on f A"
+        by (meson inj_onI)
+      have "\<forall>f a aa. \<not> inj f \<or> ((f (a::'a)::'a \<times> bool) = f aa) = (a = aa)"
+        by (metis inj_eq)
+      then have "inj_on (\<lambda>a. (a, False)) S"
+        using f2 by (metis (no_types) \<open>inj (\<lambda>x. (x, False))\<close>)
+      then show ?thesis
+        using f1 by linarith
+    qed
+    ultimately show ?thesis
+      by simp 
+  qed 
+  also have \<open>...
+       = sqrt ( (\<Sum> z\<in>{(x, True) | x. x \<in> S}.  (F z + G z)^2) 
+            +  (\<Sum> z\<in>{(x, False) | x. x \<in> S}.  (F z + G z)^2) )\<close>
+    by (simp add: Setcompr_eq_image)
+  also have \<open>...
+        = sqrt ( \<Sum> z\<in>SB. (F z + G z)^2 )\<close>
+    using \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
+      \<open>{(x, True) | x. x \<in> S} \<inter> {(x, False) | x. x \<in> S} = {}\<close>
+      \<open>finite {(x, True) | x. x \<in> S}\<close>
+      \<open>finite {(x, False) | x. x \<in> S}\<close>
+    by (simp add: sum.union_disjoint)
+  also have \<open>... \<le> sqrt ( \<Sum> z\<in>SB. (F z)^2 ) +  sqrt ( \<Sum> z\<in>SB. (G z)^2 )\<close>
+    using L2_set_triangle_ineq
+    by (metis L2_set_def)
+  also have \<open>... = sqrt ( (\<Sum> z\<in>{(x, True) | x. x \<in> S}. (F z)^2)
+                    +(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (F z)^2) )
+                   + sqrt ( (\<Sum> z\<in>{(x, True) | x. x \<in> S}. (G z)^2)
+                    +(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (G z)^2) )\<close>
+  proof-
+    have \<open>(\<Sum> z\<in>SB. (F z)^2) = (\<Sum> z\<in>{(x, True) | x. x \<in> S}. (F z)^2)
+                    +(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (F z)^2)\<close>
+      using  \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
+        \<open>{(x, True) | x. x \<in> S} \<inter> {(x, False) | x. x \<in> S} = {}\<close>
+        \<open>finite {(x, True) | x. x \<in> S}\<close>  \<open>finite {(x, False) | x. x \<in> S}\<close>
+      by (simp add: sum.union_disjoint)    
+    moreover have  \<open>(\<Sum> z\<in>SB. (G z)^2) = (\<Sum> z\<in>{(x, True) | x. x \<in> S}. (G z)^2)
+                    +(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (G z)^2)\<close>
+      using  \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
+        \<open>{(x, True) | x. x \<in> S} \<inter> {(x, False) | x. x \<in> S} = {}\<close>
+        \<open>finite {(x, True) | x. x \<in> S}\<close>  \<open>finite {(x, False) | x. x \<in> S}\<close>
+      by (simp add: sum.union_disjoint)
+    ultimately show ?thesis 
+      using \<open>sqrt (\<Sum>z\<in>SB. (F z + G z)\<^sup>2) \<le> sqrt (\<Sum>z\<in>SB. (F z)\<^sup>2) + sqrt (\<Sum>z\<in>SB. (G z)\<^sup>2)\<close>
+      by simp   
+  qed  
+  also have \<open>... = sqrt ( (\<Sum> x\<in>S. (F (x, True))^2)+(\<Sum> x\<in>S. (F (x, False))^2) ) + sqrt ( (\<Sum> x\<in>S. (G (x, True))^2)+(\<Sum> x\<in>S. (G (x, False))^2) )\<close>
+  proof- 
+    have \<open>(\<Sum> z\<in>{(x, True) | x. x \<in> S}. (F z)^2) = (\<Sum> x\<in>S. (F (x, True))^2)\<close>
+    proof-
+      have \<open>(\<Sum> z\<in>{(x, True) | x. x \<in> S}. (F z)^2)
+            = (\<Sum> x\<in>S. (F ( (\<lambda> t. (t, True)) x ))^2)\<close>
+        using Pair_inject  sum.eq_general image_iff \<open>{(x, True) | x. x \<in> S} =  (\<lambda> t. (t, True))`S\<close>
+        by smt
+      thus ?thesis 
+        by blast        
+    qed
+    moreover have \<open>(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (F z)^2) = (\<Sum> x\<in>S. (F (x, False))^2)\<close>
+    proof-
+      have \<open>(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (F z)^2)
+            = (\<Sum> x\<in>S. (F ( (\<lambda> t. (t, False)) x ))^2)\<close>
+        using Pair_inject  sum.eq_general image_iff \<open>{(x, False) | x. x \<in> S} =  (\<lambda> t. (t, False))`S\<close>
+        by smt
+      thus ?thesis 
+        by blast        
+    qed
+    moreover have \<open>(\<Sum> z\<in>{(x, True) | x. x \<in> S}. (G z)^2) = (\<Sum> x\<in>S. (G (x, True))^2)\<close>
+    proof-
+      have \<open>(\<Sum> z\<in>{(x, True) | x. x \<in> S}. (G z)^2)
+            = (\<Sum> x\<in>S. (G ( (\<lambda> t. (t, True)) x ))^2)\<close>
+        using Pair_inject  sum.eq_general image_iff \<open>{(x, True) | x. x \<in> S} =  (\<lambda> t. (t, True))`S\<close>
+        by smt
+      thus ?thesis 
+        by blast        
+    qed
+    moreover have \<open>(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (G z)^2) = (\<Sum> x\<in>S. (G (x, False))^2)\<close>
+    proof-
+      have \<open>(\<Sum> z\<in>{(x, False) | x. x \<in> S}. (G z)^2)
+            = (\<Sum> x\<in>S. (G ( (\<lambda> t. (t, False)) x ))^2)\<close>
+        using Pair_inject  sum.eq_general image_iff \<open>{(x, False) | x. x \<in> S} =  (\<lambda> t. (t, False))`S\<close>
+        by smt
+      thus ?thesis 
+        by blast        
+    qed
+    ultimately show ?thesis 
+      using \<open>sqrt (\<Sum>z\<in>SB. (F z)\<^sup>2) + sqrt (\<Sum>z\<in>SB. (G z)\<^sup>2) =
+    sqrt
+     ((\<Sum>z\<in>{(x, True) |x. x \<in> S}. (F z)\<^sup>2) +
+      (\<Sum>z\<in>{(x, False) |x. x \<in> S}. (F z)\<^sup>2)) +
+    sqrt
+     ((\<Sum>z\<in>{(x, True) |x. x \<in> S}. (G z)\<^sup>2) + (\<Sum>z\<in>{(x, False) |x. x \<in> S}. (G z)\<^sup>2))\<close>
+      by simp
+  qed 
+  also have \<open>... = sqrt ( (\<Sum> x\<in>S. (F (x, True))^2 +  (F (x, False))^2) ) +
+                   sqrt ( (\<Sum> x\<in>S. (G (x, True))^2 +  (G (x, False))^2) )\<close>
+    by (simp add: sum.distrib)
+  also have  \<open>... = sqrt ( \<Sum> x\<in>S. ( (Re (f x))^2 + (Im (f x))^2 ) )
+             +  sqrt ( \<Sum> x\<in>S. ( (Re (g x))^2 + (Im (g x))^2 ) )\<close>
+    using \<open>\<And> z. F z = (if snd z then  Re (f (fst z)) else Im (f (fst z)) )\<close>
+      \<open>\<And> z. G z = (if snd z then  Re (g (fst z)) else Im (g (fst z)) )\<close>
+    by simp
+  also have  \<open>... = sqrt ( \<Sum> x\<in>S. ( cmod ( Complex (Re (f x)) (Im (f x)) ) )^2 )
+          + sqrt ( \<Sum> x\<in>S. ( cmod ( Complex (Re (g x)) (Im (g x)) ) )^2 )\<close>
+    using cmod_def
+    by simp
+  also have \<open>... = sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
+    by simp
+  finally show ?thesis by blast
+qed
+
 
 lemma triangIneq_ell2InsideMinus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
@@ -586,7 +766,7 @@ qed
 
 lemma CauchyImplies_ell2Bounded:                         
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
-  (* TODO: use \<And>\<epsilon> \<And>k *)
+    (* TODO: use \<And>\<epsilon> \<And>k *)
   assumes \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
   shows \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
@@ -904,151 +1084,7 @@ proof
     using convergent_def by blast
 qed
 
-
-  (*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
-  assume \<open>Cauchy x\<close>
-  then have "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (x m - x n) < e"
-    by (simp add: dist_norm Cauchy_def)
-  then have "\<exists>L. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. \<parallel>x n - L \<parallel> < r"
-  proof transfer
-    fix x :: "nat \<Rightarrow> ('a \<Rightarrow> complex)"
-    assume "pred_fun top has_ell2_norm x"
-    assume "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>xa. x m xa - x n xa) < e"
-    show "\<exists>L\<in>Collect has_ell2_norm. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. ell2_norm (\<lambda>xa. x n xa - L xa) < r"
-      sorry
-  qed
-  thus \<open>convergent x\<close>
-    by (simp add: LIMSEQ_iff convergent_def)
- *)
-(*   fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
-  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
-    using Rep_ell2 by auto
-  assume \<open>Cauchy x\<close>
-  have \<open>\<forall> t::'a. Cauchy (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close>
-    by (simp add: Cauchy_ell2_component \<open>Cauchy x\<close>)
-  hence \<open>convergent (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t ::'a
-    by (simp add: Cauchy_convergent)
-  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_ell2 (x n)) t ) \<longlonglongrightarrow> s\<close>
-    by (simp add: convergentD)
-  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
-    using pointwise_convergent_to_def
-    by metis
-  then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
-    by auto
-  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
-    using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
-      convergence_pointwise_to_ell2_same_limit 
-    sorry (* we need to use the fact that the sequence {x n} is Cauchy *)
-  obtain L::\<open>'a ell2\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
-    using Rep_ell2_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_ell2 (x n) - l)) \<longlonglongrightarrow> 0\<close>
-    by auto
-  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) )  < \<epsilon>\<close>
-    using  \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
-    by (simp add: LIMSEQ_iff)
-  hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
-    (* TODO *)
-    apply transfer apply (simp add: fun_diff_def)
-    apply (subst (asm) abs_of_nonneg)
-    apply auto
-    by (cheat fixme)
-  thus \<open>convergent x\<close>
-    by (simp add: LIMSEQ_iff convergentI)
-qed
- *)
-
-(*
-proof  
-  fix x :: \<open>nat \<Rightarrow> 'a ell2\<close>
-  have \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
-    using Rep_ell2 by auto
-  assume \<open>Cauchy x\<close>
-  have \<open>Cauchy (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t::'a
-    by (simp add: Cauchy_ell2_component \<open>Cauchy x\<close>)
-  hence \<open>convergent (\<lambda> n::nat. (Rep_ell2 (x n)) t)\<close> for t ::'a
-    by (simp add: Cauchy_convergent)
-  then have \<open>\<forall> t::'a. \<exists> s. (\<lambda> n. (Rep_ell2 (x n)) t ) \<longlonglongrightarrow> s\<close>
-    by (simp add: convergentD)
-  hence  \<open>\<exists> l. ( (\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l)\<close>
-    using pointwise_convergent_to_def
-    by metis
-  then obtain l where \<open>(\<lambda> n. Rep_ell2 (x n)) \<midarrow>pointwise\<rightarrow> l\<close>
-    by auto
-  hence  \<open>has_ell2_norm l \<and> (\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - l ) ) \<longlonglongrightarrow> 0\<close>
-  using  \<open>\<forall> n::nat. has_ell2_norm ( Rep_ell2 (x n) )\<close>
-    convergence_pointwise_to_ell2_same_limit 
-  by blast
-  obtain L::\<open>'a ell2\<close> where \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
-    using Rep_ell2_cases \<open>has_ell2_norm l \<and> (\<lambda>n. ell2_norm (Rep_ell2 (x n) - l)) \<longlonglongrightarrow> 0\<close>
-    by auto
-  have \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N. abs ( ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) )  < \<epsilon>\<close>
-    using  \<open>(\<lambda> n. ell2_norm ( (Rep_ell2 (x n)) - Rep_ell2 L ) ) \<longlonglongrightarrow> 0\<close>
-    by (simp add: LIMSEQ_iff)
-  hence \<open>\<forall> \<epsilon>>0. \<exists> N::nat. \<forall> n\<ge>N.  norm ( (x n) - L ) < \<epsilon>\<close>
-    by (cheat fixme)
-  thus \<open>convergent x\<close>
-    by (simp add: LIMSEQ_iff convergentI)
-qed
-*)
-
 end
-
-(* (* Old proof *)
- (* by (cheat vector_chilbert_space) *)
-  fix X :: "nat \<Rightarrow> 'a ell2"
-  assume "Cauchy X"
-  define x where "x i = Rep_ell2 (X i)" for i
-  then have [transfer_rule]: "rel_fun (=) (pcr_ell2 (=)) x X"
-    unfolding vector.pcr_cr_eq cr_ell2_def rel_fun_def by simp
-  from \<open>Cauchy X\<close> have "Cauchy (\<lambda>i. x i j)" for j
-    unfolding x_def
-    by (rule Cauchy_ell2_component)
-  hence "convergent (\<lambda>i. x i j)" for j
-    by (simp add: Cauchy_convergent_iff)
-  then obtain Lx where "(\<lambda>i. x i j) \<longlonglongrightarrow> Lx j" for j
-    unfolding convergent_def by metis
-  define L where "L = Abs_ell2 Lx"
-  have "has_ell2_norm Lx"
-    by (cheat fixme)
-  then have [transfer_rule]: "pcr_ell2 (=) Lx L"
-    unfolding vector.pcr_cr_eq cr_ell2_def
-    unfolding L_def apply (subst Abs_ell2_inverse) by auto
-  have XL: "X \<longlonglongrightarrow> L"
-  proof (rule LIMSEQ_I)
-    fix r::real assume "0<r"
-    show "\<exists>no. \<forall>n\<ge>no. norm (X n - L) < r"
-      by (cheat fixme)
-  qed
-  show "convergent X"
-    using XL by (rule convergentI) 
-qed
-*)
-
-
-(*
-(* TODO remove and document *)
-abbreviation "timesScalarVec \<equiv> (scaleC :: complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2)"
-replacement of timesScalarVec by scaleC (Occam's razor)
-*)
-
-(* lift_definition scaleC :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>c x i. c * x i"
-  by (fact ell2_norm_smult) *)
-(* scaleC_scaleC: lemma scaleC_twice[simp]: "scaleC a (scaleC b \<psi>) = scaleC (a*b) \<psi>"
-  by (transfer, auto) *)
-
-(* scaleC_minus1_left - lemma uminus_ell2: "(-\<psi>) = scaleC (-1) \<psi>"
-  apply transfer by auto *)
-
-(* scaleC_one - lemma one_times_vec[simp]: "scaleC 1 \<psi> = \<psi>"
-  apply transfer by simp *)
-
-(* scaleC_zero_right -- lemma times_zero_vec[simp]: "scaleC c 0 = 0"
-  apply transfer by simp *)
-
-(* scaleC_add_right -- lemma scaleC_add_right: "scaleC c (x+y) = scaleC c x + scaleC c y" 
-  apply transfer apply (rule ext) by algebra *)
-
-(* scaleC_add_left - lemma scaleC_add_left: "scaleC (c+d) x = scaleC c x + scaleC d x"
-  apply transfer apply (rule ext) by algebra *)
 
 lemma ell2_ket[simp]: "norm (ket i) = 1"
   apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
@@ -1273,11 +1309,6 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_su
 lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
 
-(* (* TODO remove *)
-abbreviation subspace_to_set :: "'a subspace \<Rightarrow> 'a ell2 set" where "subspace_as_set == subspace_to_set"
-
-removed
-*)
 
 definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
   (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> subspace_to_set S}" *)
