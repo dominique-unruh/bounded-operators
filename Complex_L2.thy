@@ -513,6 +513,15 @@ proof -
 qed
 
 
+(* NEW *)
+(* This is a clarification of what the ell2_norm means,
+because the original definition is rather dense in concepts *)
+lemma ellnorm_as_sup_set: 
+ \<open>ell2_norm f = sqrt (Sup { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })\<close>
+ for f :: \<open>'a \<Rightarrow> complex\<close>
+  using setcompr_eq_image ell2_norm_def
+  by (simp add: ell2_norm_def setcompr_eq_image)
+
 definition pointwise_convergent_to :: 
   \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> where
   \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t ) \<longlonglongrightarrow> l t)\<close>
@@ -1054,14 +1063,91 @@ proof-
 qed
 
 (* NEW *)
+lemma has_ell2_norm_diff: \<open>has_ell2_norm a \<Longrightarrow> has_ell2_norm b \<Longrightarrow> has_ell2_norm (a - b)\<close>
+  for a b :: \<open>'a \<Rightarrow> complex\<close>
+proof-
+  assume \<open>has_ell2_norm b\<close> 
+  hence \<open>has_ell2_norm (\<lambda> x. (-1::complex) * b x)\<close>
+    using ell2_norm_smult
+    by blast 
+  hence \<open>has_ell2_norm (\<lambda> x. - b x)\<close>
+    by simp
+  hence \<open>has_ell2_norm (- b)\<close>
+    by (metis Rep_ell2 Rep_ell2_cases \<open>has_ell2_norm b\<close> mem_Collect_eq uminus_ell2.rep_eq)
+  moreover assume \<open>has_ell2_norm a\<close>
+  ultimately have \<open>has_ell2_norm (\<lambda> x. a x + (- b) x)\<close>
+    using ell2_norm_triangle
+    by blast
+  hence \<open>has_ell2_norm (\<lambda> x. a x - b x)\<close>
+    by simp
+  hence \<open>has_ell2_norm (\<lambda> x. (a - b) x)\<close>
+    by simp
+  thus ?thesis
+    by (simp add: \<open>has_ell2_norm (a - b)\<close>)
+qed
+
+(* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
     and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
   shows \<open>( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
-  sorry
+proof-
+  have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) < \<epsilon>\<close>
+    sorry
+  have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. \<bar> (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) \<bar> < \<epsilon>\<close>
+  proof-
+    obtain x where
+      \<open>x \<in> (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+    for k::nat
+      by (metis finite.emptyI image_iff mem_Collect_eq sum.empty)      
+    moreover have \<open>(0::real) \<le> x\<close>
+    proof-
+      from \<open>\<And> k. x \<in> (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+      obtain S k where \<open>x = sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) S\<close>
+        by (meson image_iff)
+      have  \<open>\<forall> i\<in>S. (cmod ((a k - l) i))\<^sup>2 \<ge> 0\<close>
+        by simp
+      thus ?thesis
+        by (simp add: \<open>x = (\<Sum>i\<in>S. (cmod ((a k - l) i))\<^sup>2)\<close> sum_nonneg)
+    qed 
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+      for k::nat
+    proof-
+      have \<open>has_ell2_norm ((a k) - l)\<close>
+      proof- 
+        have \<open>has_ell2_norm (a k)\<close>
+          using  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
+          by blast
+        moreover have \<open>has_ell2_norm l\<close>
+          using convergence_pointwise_ell2_norm_exists
+            \<open>a \<midarrow>pointwise\<rightarrow> l\<close> \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
+            \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+          by blast          
+        ultimately show ?thesis using has_ell2_norm_diff
+          by auto 
+      qed 
+      thus ?thesis unfolding has_ell2_norm_def
+        by auto     
+    qed 
+    ultimately have \<open>(0::real) \<le> (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))\<close>
+      for k::nat 
+      using cSup_upper2
+      by blast 
+    thus ?thesis 
+      using NthRoot.real_sqrt_ge_zero  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) < \<epsilon>\<close>
+      by simp
+  qed
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. dist (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) 0 < \<epsilon>\<close>
+    by simp
+  hence \<open>(\<lambda>k. sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) \<longlonglongrightarrow> 0\<close>
+    by (simp add: metric_LIMSEQ_I)
+  thus ?thesis unfolding ell2_norm_def by blast 
+qed
 
-(* TODO *)
+
+
+(* TODO *) 
 lemma givemeaname_and_makeprettier:
   fixes X :: "nat \<Rightarrow> 'a \<Rightarrow> complex"
   shows "\<forall>x. has_ell2_norm (X x) \<Longrightarrow>
