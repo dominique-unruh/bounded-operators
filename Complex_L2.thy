@@ -514,13 +514,16 @@ qed
 
 
 (* NEW *)
-(* This is a clarification of what the ell2_norm means,
-because the original definition is rather dense in concepts *)
 lemma ellnorm_as_sup_set: 
- \<open>ell2_norm f = sqrt (Sup { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })\<close>
- for f :: \<open>'a \<Rightarrow> complex\<close>
-  using setcompr_eq_image ell2_norm_def
-  by (simp add: ell2_norm_def setcompr_eq_image)
+  fixes f :: \<open>'a \<Rightarrow> complex\<close>
+  assumes \<open>has_ell2_norm f\<close>
+  shows \<open>ell2_norm f = Sup { sqrt (\<Sum> i \<in> S. (cmod (f i))\<^sup>2)  | S::'a set. finite S }\<close>
+proof-
+  have \<open>ell2_norm f = sqrt (Sup { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })\<close>
+    by (simp add: ell2_norm_def setcompr_eq_image)
+  show ?thesis sorry
+qed
+
 
 definition pointwise_convergent_to :: 
   \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> where
@@ -545,7 +548,7 @@ proof-
   ultimately show ?thesis
     by auto
 qed
-  
+
 
 lemma triangIneq_ell2:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
@@ -1093,8 +1096,95 @@ lemma convergence_pointwise_to_ell2_same_limit:
     and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
   shows \<open>( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
 proof-
-  have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) < \<epsilon>\<close>
+  have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+    for k::nat
+  proof-
+    have \<open>has_ell2_norm ((a k) - l)\<close>
+    proof- 
+      have \<open>has_ell2_norm (a k)\<close>
+        using  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
+        by blast
+      moreover have \<open>has_ell2_norm l\<close>
+        using convergence_pointwise_ell2_norm_exists
+          \<open>a \<midarrow>pointwise\<rightarrow> l\<close> \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
+          \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+        by blast          
+      ultimately show ?thesis using has_ell2_norm_diff
+        by auto 
+    qed 
+    thus ?thesis unfolding has_ell2_norm_def
+      by auto     
+  qed 
+  have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> k \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  \<le> \<epsilon>\<close>
+    for \<epsilon> :: real
     sorry
+  have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> k \<ge> N. Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>\<close>
+    for \<epsilon> :: real
+  proof-
+    assume \<open>\<epsilon> > 0\<close>
+    hence \<open>\<exists> N::nat. \<forall> k \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  \<le> \<epsilon>\<close>
+      using  \<open>\<And> \<epsilon>. \<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> k \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  \<le> \<epsilon>\<close>
+      by blast
+    then obtain N where \<open>\<forall> k \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2) \<le> \<epsilon>\<close>
+      by blast
+    have \<open>{ sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<noteq> {}\<close>
+      for k::nat
+      by blast
+    moreover have \<open>bdd_above { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }\<close>
+      for k::nat
+    proof- 
+      from \<open>\<And> k::nat. bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+      have \<open>bdd_above { (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }\<close>
+        by (simp add: setcompr_eq_image)
+      then obtain M where  \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2) \<le> M\<close>
+        using bdd_above_def
+          \<open>\<And>k. bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close> has_ell2_norm_def has_ell2_norm_explicit by fastforce 
+      hence  \<open>\<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2) \<le> sqrt M\<close>
+        by simp
+      thus ?thesis  using bdd_above_def
+        by (smt mem_Collect_eq) 
+    qed 
+    ultimately have \<open>(Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>) 
+\<longleftrightarrow> (\<forall> x \<in> { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }. x \<le> \<epsilon>)\<close>
+      for k :: nat
+      by (simp add: cSup_le_iff)
+    have \<open>\<forall> k \<ge> N. \<forall> x \<in> { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }. x \<le> \<epsilon>\<close>
+      using  \<open>\<forall> k \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2) \<le> \<epsilon>\<close>
+      by auto
+    thus ?thesis using  \<open>\<And> k. (Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>) 
+\<longleftrightarrow> (\<forall> x \<in> { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }. x \<le> \<epsilon>)\<close>
+      by blast
+  qed 
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>\<close>
+    by blast
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } < \<epsilon>\<close>
+  proof-
+    from \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>\<close>
+    have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S } \<le> \<epsilon>/2\<close>
+      using half_gt_zero_iff by blast
+    moreover have \<open>\<forall> (\<epsilon>::real) > 0. \<epsilon> / 2 < \<epsilon>\<close>
+      by simp
+    ultimately show ?thesis by fastforce
+  qed
+  moreover have \<open>ell2_norm (a k - l) = Sup { sqrt (\<Sum> i \<in> S. (cmod ((a k - l) i))\<^sup>2)  | S::'a set. finite S }\<close>
+    for k::nat
+  proof-
+    have \<open>has_ell2_norm l\<close>
+      using convergence_pointwise_ell2_norm_exists
+        \<open>a \<midarrow>pointwise\<rightarrow> l\<close> \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
+        \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+      by blast
+    hence \<open>has_ell2_norm (a k - l)\<close>
+      using  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
+        has_ell2_norm_diff
+      by blast
+    thus ?thesis using ellnorm_as_sup_set
+      by blast 
+  qed
+  ultimately have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. ell2_norm (a k - l) < \<epsilon>\<close>
+    by simp
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) < \<epsilon>\<close>
+    using ell2_norm_def by metis
   have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. \<bar> (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) \<bar> < \<epsilon>\<close>
   proof-
     obtain x where
@@ -1111,29 +1201,11 @@ proof-
       thus ?thesis
         by (simp add: \<open>x = (\<Sum>i\<in>S. (cmod ((a k - l) i))\<^sup>2)\<close> sum_nonneg)
     qed 
-    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
-      for k::nat
-    proof-
-      have \<open>has_ell2_norm ((a k) - l)\<close>
-      proof- 
-        have \<open>has_ell2_norm (a k)\<close>
-          using  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
-          by blast
-        moreover have \<open>has_ell2_norm l\<close>
-          using convergence_pointwise_ell2_norm_exists
-            \<open>a \<midarrow>pointwise\<rightarrow> l\<close> \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
-            \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-          by blast          
-        ultimately show ?thesis using has_ell2_norm_diff
-          by auto 
-      qed 
-      thus ?thesis unfolding has_ell2_norm_def
-        by auto     
-    qed 
     ultimately have \<open>(0::real) \<le> (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))\<close>
       for k::nat 
-      using cSup_upper2
-      by blast 
+      using \<open>\<And> k::nat. bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
+        cSup_upper2
+      by blast  
     thus ?thesis 
       using NthRoot.real_sqrt_ge_zero  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> k \<ge> N. (sqrt (Sup (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite))) < \<epsilon>\<close>
       by simp
@@ -1144,7 +1216,6 @@ proof-
     by (simp add: metric_LIMSEQ_I)
   thus ?thesis unfolding ell2_norm_def by blast 
 qed
-
 
 
 (* TODO *) 
@@ -1175,8 +1246,8 @@ end
 lemma ell2_ket[simp]: "norm (ket i) = 1"
   apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
   apply (rule cSUP_eq_maximum)
-  apply (rule_tac x="{i}" in bexI)
-  apply auto
+   apply (rule_tac x="{i}" in bexI)
+    apply auto
   by (rule ell2_1)
 
 
@@ -1202,7 +1273,7 @@ instantiation subspace :: (type)sup begin  (* Sum of spaces *)
 lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
   using is_subspace_closed_plus
   unfolding closed_sum_def
-  unfolding general_sum_def
+  unfolding Minkoswki_sum_def
   by auto
 
 instance .. end
@@ -1210,7 +1281,7 @@ instantiation subspace :: (type)plus begin  (* Sum of spaces *)
 lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
   using is_subspace_closed_plus
   unfolding closed_sum_def
-  unfolding general_sum_def
+  unfolding Minkoswki_sum_def
   by auto
 
 instance .. end
@@ -1244,9 +1315,9 @@ qed
 
 instantiation subspace :: (type)order begin
 instance apply intro_classes
-  apply transfer apply (simp add: subset_not_subset_eq)
-  apply transfer apply simp
-  apply transfer apply simp
+     apply transfer apply (simp add: subset_not_subset_eq)
+    apply transfer apply simp
+   apply transfer apply simp
   apply transfer by simp
 end
 
@@ -1268,16 +1339,16 @@ lemma subspace_zero_bot: "(0::_ subspace) = bot"
 instantiation subspace :: (type)ab_semigroup_add begin
 instance
   apply intro_classes
-  apply transfer
+   apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
-  unfolding general_sum_def
-  apply blast
+  unfolding Minkoswki_sum_def
+   apply blast
 
   apply transfer
   using is_closed_subspace_comm
   unfolding closed_sum_def 
-  unfolding general_sum_def
+  unfolding Minkoswki_sum_def
   apply blast
   done
 end
@@ -1294,7 +1365,7 @@ instance apply intro_classes
   apply transfer
   using is_closed_subspace_zero
   unfolding closed_sum_def
-  unfolding general_sum_def
+  unfolding Minkoswki_sum_def
   by fastforce
 end
 
@@ -1305,20 +1376,20 @@ instance proof intro_classes
     apply transfer
     using is_closed_subspace_universal_inclusion_left
     unfolding closed_sum_def
-    unfolding general_sum_def
+    unfolding Minkoswki_sum_def
     by blast
   show "y \<le> x \<squnion> y"
     apply transfer
     using is_closed_subspace_universal_inclusion_right
     unfolding closed_sum_def
-    unfolding general_sum_def
+    unfolding Minkoswki_sum_def
     by blast
 
   show "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y \<squnion> z \<le> x"
     apply transfer
     using is_closed_subspace_universal_inclusion_inverse
     unfolding closed_sum_def
-    unfolding general_sum_def
+    unfolding Minkoswki_sum_def
     by blast
 qed
 end
@@ -1388,7 +1459,7 @@ lemma bot_plus[simp]: "bot + x = x" for x :: "'a subspace"
   unfolding sup_subspace_def[symmetric] 
   using is_closed_subspace_zero
   unfolding closed_sum_def
-  unfolding general_sum_def
+  unfolding Minkoswki_sum_def
   by blast
 
 lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
@@ -1417,17 +1488,17 @@ proof-
   proof-
     have \<open>\<psi> \<in> subspace_to_set S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
     proof-
-      have \<open>(subspace_to_set S) is-a-closed-subspace \<close>
+      have \<open>is_subspace (subspace_to_set S)  \<close>
         using subspace_to_set by auto
       hence \<open>\<psi> \<in> subspace_to_set S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
-        by (metis Abs_subspace_cases Abs_subspace_inverse is_general_subspace.smult_closed is_subspace.subspace mem_Collect_eq)
+        by (metis Abs_subspace_cases Abs_subspace_inverse is_linear_manifold.smult_closed is_subspace.subspace mem_Collect_eq)
       moreover have  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S \<Longrightarrow> \<psi> \<in> subspace_to_set S\<close> for S
       proof-
         assume \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close>
         obtain b where \<open>b * a = 1\<close> using \<open>a \<noteq> 0\<close> 
           by (metis divide_complex_def divide_self_if mult.commute)
         have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> subspace_to_set S\<close> 
-          using  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> is_general_subspace.smult_closed
+          using  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> is_linear_manifold.smult_closed
             is_subspace.subspace subspace_to_set
           by fastforce
         hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> subspace_to_set S\<close> 
