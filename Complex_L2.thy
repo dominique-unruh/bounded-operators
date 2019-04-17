@@ -1089,6 +1089,7 @@ proof-
     by (simp add: \<open>has_ell2_norm (a - b)\<close>)
 qed
 
+
 (* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
@@ -1132,10 +1133,118 @@ proof-
           have \<open>\<exists> M::nat. \<forall> n \<ge> M.
            finite' S \<longrightarrow> sqrt (\<Sum> x \<in> S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon>\<close>
             for S :: \<open>'a set\<close>
-          proof- (* begin *)
-
-            show ?thesis sorry
-          qed  (* end *)
+          proof- 
+            from \<open>a \<midarrow>pointwise\<rightarrow> l\<close>
+            have \<open>(\<lambda> n. (a n) x) \<longlonglongrightarrow> l x\<close>
+              for x::'a
+              by (simp add: pointwise_convergent_to_def)
+            hence \<open>\<forall> x::'a. \<forall> \<epsilon> > 0. \<exists> N. \<forall> n \<ge> N. dist ((a n) x) (l x) < \<epsilon>\<close>
+              by (meson LIMSEQ_iff_nz)
+            hence \<open>\<forall> x::'a. \<forall> \<epsilon> > 0. \<exists> N. \<forall> n \<ge> N. cmod ( ((a n) x) - (l x) ) < \<epsilon>\<close>
+              by (simp add: dist_norm)
+            then obtain NN where \<open>\<forall> x::'a. \<forall> \<epsilon> > 0. \<forall> n \<ge>  NN x \<epsilon>. cmod ( ((a n) x) - (l x) ) < \<epsilon>\<close>
+              by metis
+            define NS::\<open>'a set \<Rightarrow> real \<Rightarrow> nat\<close> where
+              \<open>NS \<equiv> (\<lambda> S. \<lambda> \<epsilon>. Sup {NN x (\<epsilon>/(card S))| x. x \<in> S})\<close>
+            have \<open>n \<ge> NS S \<epsilon> \<Longrightarrow> finite' S \<Longrightarrow>
+                 sqrt (\<Sum> x \<in> S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon>/(sqrt (card S))\<close>
+              for n
+            proof- 
+              assume \<open>n \<ge> NS S \<epsilon>\<close>
+              assume \<open>finite' S\<close>
+              hence \<open>{NN x (\<epsilon>/(card S))| x. x \<in> S} \<noteq> {}\<close>
+                by simp
+              have \<open>bdd_above {NN x (\<epsilon>/(card S))| x. x \<in> S}\<close>
+                using \<open>finite' S\<close> by simp
+              have \<open>card S \<noteq> 0\<close> 
+                using \<open>finite' S\<close> by simp
+              hence \<open>\<forall> x::'a. \<forall> \<epsilon> > 0. \<forall> n \<ge> NN x (\<epsilon>/(card S)). cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+                using \<open>\<forall>x \<epsilon>. 0 < \<epsilon> \<longrightarrow> (\<forall>n\<ge>NN x \<epsilon>. cmod (a n x - l x) < \<epsilon>)\<close> by auto
+              hence \<open>\<forall> x::'a. \<forall> n \<ge> NN x (\<epsilon>/(card S)). cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+                using \<open>\<epsilon> > 0\<close> by blast
+              hence \<open>\<forall> x\<in>S. \<forall> n \<ge> NN x (\<epsilon>/(card S)). cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+                by blast
+              hence \<open>\<forall> x\<in>S. \<forall> n \<ge> NS S \<epsilon>. cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+              proof-
+                have \<open>x\<in>S \<Longrightarrow> n \<ge> NS S \<epsilon> \<Longrightarrow> cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+                  for x n
+                proof-
+                  assume \<open>x \<in> S\<close>
+                  assume \<open>n \<ge> NS S \<epsilon>\<close>
+                  hence \<open>n \<ge> NN x (\<epsilon>/(card S))\<close>
+                    using  \<open>{NN x (\<epsilon>/(card S))| x. x \<in> S} \<noteq> {}\<close>
+                      \<open>bdd_above {NN x (\<epsilon>/(card S))| x. x \<in> S}\<close>
+                    by (metis (mono_tags, lifting) NS_def \<open>x \<in> S\<close> cSup_upper mem_Collect_eq order.trans)
+                  thus ?thesis 
+                    using  \<open>\<forall> x\<in>S. \<forall> n \<ge> NN x (\<epsilon>/(card S)). cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S)\<close>
+                      \<open>x \<in> S\<close> by blast
+                qed
+                thus ?thesis by blast
+              qed
+              hence \<open>\<forall> n \<ge> NS S \<epsilon>. (\<forall> x\<in>S. cmod ( ((a n) x) - (l x) ) < \<epsilon>/(card S))\<close>
+                by blast
+              hence \<open>\<forall> n \<ge> NS S \<epsilon>. (\<forall> x\<in>S. (cmod ( ((a n) x) - (l x) ))^2 < (\<epsilon>/(card S))^2)\<close>
+                by (simp add: power_strict_mono)
+              hence \<open>n \<ge> NS S \<epsilon> \<Longrightarrow> sqrt (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < \<epsilon>/ (sqrt (card S))\<close>
+                for n
+              proof-
+                assume \<open>n \<ge> NS S \<epsilon>\<close>
+                hence \<open>x\<in>S \<Longrightarrow> (cmod ( ((a n) x) - (l x) ))^2 < (\<epsilon>/(card S))^2\<close>
+                  for x
+                  by (simp add: \<open>\<forall>n\<ge>NS S \<epsilon>. \<forall>x\<in>S. (cmod (a n x - l x))\<^sup>2 < (\<epsilon> / real (card S))\<^sup>2\<close>)
+                hence \<open>(\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < (\<Sum> x \<in> S. (\<epsilon>/(card S))^2)\<close>
+                  using \<open>finite' S\<close> sum_strict_mono
+                  by smt
+                hence \<open>(\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < (card S) * (\<epsilon>/(card S))^2\<close>
+                  by simp
+                hence \<open> (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < (card S) * \<epsilon>^2/(card S)^2\<close>
+                  by (simp add: power_divide) 
+                hence \<open> (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < \<epsilon>^2/(card S)\<close>
+                  by (metis (no_types, lifting) of_nat_power power2_eq_square real_divide_square_eq)
+                hence \<open>sqrt (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < sqrt (\<epsilon>^2/(card S))\<close>
+                  using real_sqrt_less_iff by blast
+                hence \<open>sqrt (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < (sqrt (\<epsilon>^2))/ (sqrt (card S))\<close>
+                  by (simp add: real_sqrt_divide)
+                hence \<open>sqrt (\<Sum> x \<in> S. (cmod ( ((a n) x) - (l x) ))^2) < \<epsilon>/ (sqrt (card S))\<close>
+                  using \<open>\<epsilon> > 0\<close> by simp
+                thus ?thesis by blast
+              qed
+              thus ?thesis using \<open>NS S \<epsilon> \<le> n\<close>
+                by auto
+            qed 
+            hence \<open>n \<ge> NS S \<epsilon> \<Longrightarrow> finite' S \<Longrightarrow>
+                 sqrt (\<Sum> x \<in> S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon>\<close>
+              for n
+            proof-
+              assume \<open>n \<ge> NS S \<epsilon>\<close>
+              moreover assume \<open>finite' S\<close>
+              ultimately have \<open>sqrt (\<Sum> x \<in> S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon>/(sqrt (card S))\<close>
+                using \<open>\<And>n. \<lbrakk>NS S \<epsilon> \<le> n; finite' S\<rbrakk> \<Longrightarrow> sqrt (\<Sum>x\<in>S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon> / sqrt (real (card S))\<close> by auto
+              moreover have \<open>sqrt (card S) \<ge> 1\<close>
+              proof-
+                have \<open>card S \<ge> 1\<close> using \<open>finite' S\<close>
+                  by (simp add: leI)
+                thus ?thesis by simp
+              qed
+              ultimately show ?thesis
+              proof -
+                have f1: "\<not> (1::real) \<le> 0"
+                  by auto
+                have f2: "\<forall>x1. ((0::real) < x1) = (\<not> x1 \<le> 0)"
+                  by auto
+                have f3: "\<forall>x0 x1 x2 x3. ((x3::real) / x0 \<le> x2 / x1) = (x3 / x0 + - 1 * (x2 / x1) \<le> 0)"
+                  by auto
+                have "0 \<le> \<epsilon>"
+                  using \<open>0 < \<epsilon>\<close> by linarith
+                then have "\<epsilon> / sqrt (real (card S)) + - 1 * (\<epsilon> / 1) \<le> 0"
+                  using f3 f2 f1 \<open>1 \<le> sqrt (real (card S))\<close> nice_ordered_field_class.frac_le by blast
+                then show ?thesis
+                  using \<open>sqrt (\<Sum>x\<in>S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon> / sqrt (real (card S))\<close> by force
+              qed 
+            qed
+            thus ?thesis
+              by blast 
+          qed  
           thus ?thesis by blast
         qed
         moreover have \<open>\<epsilon>/2 > 0\<close> using \<open>\<epsilon> > 0\<close> by simp
