@@ -1560,10 +1560,87 @@ lemma ell2_Cauchy_pointwiseConverges:
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
     and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
   shows \<open>\<exists> l. (a \<midarrow>pointwise\<rightarrow> l)\<close>
-  sorry
+proof-
+  have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( ((a m) x) - ((a n) x) ) \<le> \<epsilon>\<close>
+    for \<epsilon> :: real and x::'a 
+  proof-
+    assume \<open>\<epsilon> > 0\<close>
+    hence \<open>\<epsilon>^2 > 0\<close>
+      by simp
+    hence \<open>\<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+      using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+      by blast
+    then obtain N
+      where \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+      by blast
+    have \<open>m \<ge> N \<Longrightarrow> n \<ge> N \<Longrightarrow> cmod ( ((a m) x) - ((a n) x) ) \<le> \<epsilon>\<close>
+      for m n
+    proof- 
+      assume \<open>m \<ge> N\<close>
+      moreover assume \<open>n \<ge> N\<close>
+      ultimately have \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+        using \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+        by blast
+      moreover have \<open>finite {x}\<close>
+        by auto
+      ultimately have \<open>(\<Sum> t\<in>{x}. ( cmod ( ((a m) t) - ((a n) t) ) )^2)  \<le> \<epsilon>^2\<close>        
+        by blast
+      hence \<open> ( cmod ( ((a m) x) - ((a n) x) ) )^2  \<le> \<epsilon>^2\<close>        
+        by simp
+      moreover have \<open> cmod ( ((a m) x) - ((a n) x) ) \<ge> 0\<close>
+        by simp
+      ultimately have \<open> ( cmod ( ((a m) x) - ((a n) x) ) )  \<le> \<epsilon>\<close>        
+        using \<open>\<epsilon> > 0\<close>
+        using power2_le_imp_le by fastforce   
+      thus ?thesis by blast
+    qed 
+    thus ?thesis by blast
+  qed 
+  hence \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
+    for \<epsilon> :: real and x::'a 
+    by blast
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
+    for x::'a 
+    by blast
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) < \<epsilon>\<close>
+    for x::'a 
+  proof-
+    from \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
+    have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+      using half_gt_zero by blast
+    hence \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) < \<epsilon>\<close>
+      for \<epsilon>::real
+    proof-
+      assume \<open>\<epsilon> > 0\<close>
+      hence \<open> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+        using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+        by blast
+      moreover have \<open>\<epsilon>/2 < \<epsilon>\<close>
+        using \<open>\<epsilon> > 0\<close>
+        by simp
+      ultimately show ?thesis by smt
+    qed
+    thus ?thesis 
+      by blast
+  qed
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  dist ((\<lambda> k. (a k) x) m) ((\<lambda> k. (a k) x) n)  < \<epsilon>\<close>
+    for x::'a
+    by (simp add: dist_norm)  
+  hence \<open>Cauchy (\<lambda> k. (a k) x)\<close>
+    for x::'a
+    using Cauchy_altdef2 by fastforce     
+  hence \<open>\<exists> r::complex. (\<lambda> n. (a n) x ) \<longlonglongrightarrow> r\<close>
+    for x::'a
+    by (simp add: convergent_eq_Cauchy) 
+  hence \<open>\<exists> l::'a \<Rightarrow> complex. \<forall> x::'a. (\<lambda> n. (a n) x ) \<longlonglongrightarrow> l x\<close>
+    by metis                                        
+  thus ?thesis 
+    unfolding pointwise_convergent_to_def
+    by blast    
+qed
 
 
-(* TODO *) 
+(* NEW *) 
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
