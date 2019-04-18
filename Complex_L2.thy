@@ -519,9 +519,83 @@ lemma ellnorm_as_sup_set:
   assumes \<open>has_ell2_norm f\<close>
   shows \<open>ell2_norm f = Sup { sqrt (\<Sum> i \<in> S. (cmod (f i))\<^sup>2)  | S::'a set. finite S }\<close>
 proof-
+  have  \<open>S \<noteq> {} \<Longrightarrow> bdd_above S  \<Longrightarrow> \<forall> x \<in> S. x \<ge> 0 \<Longrightarrow> Sup (sqrt ` S) = sqrt (Sup S)\<close>
+    for S :: \<open>real set\<close>
+  proof-
+    have \<open>S \<noteq> {} \<Longrightarrow> bdd_above S \<Longrightarrow> \<forall> x \<in> S. x \<ge> 0 \<Longrightarrow> Sup (power2 ` S) \<le> power2 (Sup S)\<close>
+      for S :: \<open>real set\<close>
+    proof-
+      assume \<open>S \<noteq> {}\<close> and \<open>bdd_above S\<close> and \<open>\<forall> x \<in> S. x \<ge> 0\<close>
+      have \<open>x \<in> (power2 ` S) \<Longrightarrow> x \<le> power2 (Sup S)\<close>
+        for x
+      proof-
+        assume \<open>x \<in> (power2 ` S)\<close>
+        then obtain y where \<open>x = power2 y\<close> and \<open>y \<in> S\<close> by blast
+        have \<open>y \<le> Sup S\<close> using  \<open>y \<in> S\<close>  \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close>
+          by (simp add: cSup_upper)
+        hence \<open>power2 y \<le> power2 (Sup S)\<close>
+          by (simp add: \<open>y \<in> S\<close>  \<open>\<forall> x \<in> S. x \<ge> 0\<close> power_mono)
+        thus ?thesis using  \<open>x = power2 y\<close> by blast
+      qed
+      thus ?thesis using cSup_le_iff \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close>
+        by (simp add: cSup_least)
+    qed 
+    assume \<open>S \<noteq> {}\<close> and \<open>bdd_above S\<close> and \<open>\<forall> x \<in> S. x \<ge> 0\<close>
+    have \<open>mono sqrt\<close>
+      by (simp add: mono_def) 
+    have \<open>Sup (sqrt ` S) \<le> sqrt (Sup S)\<close>
+      using  \<open>mono sqrt\<close>
+      by (simp add: \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close> bdd_above_image_mono cSUP_le_iff cSup_upper) 
+    moreover have \<open>sqrt (Sup S) \<le> Sup (sqrt ` S)\<close>
+    proof- 
+      have \<open>(Sup ( power2 ` (sqrt ` S) )) \<le> power2 (Sup (sqrt ` S))\<close>
+      proof-
+        have \<open>sqrt ` S \<noteq> {}\<close>
+          by (simp add: \<open>S \<noteq> {}\<close>) 
+        moreover have \<open>bdd_above (sqrt ` S)\<close>
+          by (meson  \<open>bdd_above S\<close> bdd_aboveI2 bdd_above_def real_sqrt_le_iff)   
+        ultimately show ?thesis 
+          using \<open>\<And> S. S \<noteq> {} \<Longrightarrow> bdd_above S \<Longrightarrow> \<forall> x \<in> S. x \<ge> 0 \<Longrightarrow> Sup (power2 ` S) \<le> power2 (Sup S)\<close>
+          by (simp add: \<open>\<forall> x \<in> S. x \<ge> 0\<close>) 
+      qed
+      hence \<open>(Sup ( (\<lambda> t. t^2) ` (sqrt ` S) )) \<le> (Sup (sqrt ` S))^2\<close>
+        by simp
+      moreover have \<open>(\<lambda> t. t^2) ` (sqrt ` S) = S\<close>
+      proof-
+        have  \<open>(\<lambda> t. t^2) ` (sqrt ` S) \<subseteq> S\<close>
+          by (simp add: \<open>\<forall> x \<in> S. x \<ge> 0\<close> image_subset_iff)
+        moreover have  \<open>S \<subseteq> (\<lambda> t. t^2) ` (sqrt ` S)\<close>
+          by (simp add: \<open>\<forall> x \<in> S. x \<ge> 0\<close> image_iff subsetI)
+        ultimately show ?thesis by blast
+      qed
+      ultimately have \<open>(Sup S) \<le> (Sup (sqrt ` S))^2\<close>
+        by simp
+      moreover have \<open>Sup S \<ge> 0\<close>
+        using \<open>\<forall> x \<in> S. x \<ge> 0\<close>
+          \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close> cSup_upper2 by auto 
+      ultimately show ?thesis
+        by (metis all_not_in_conv  \<open>S \<noteq> {}\<close>  \<open>bdd_above S\<close>  \<open>\<forall> x \<in> S. x \<ge> 0\<close> bdd_aboveI2 bdd_above_def cSup_upper2 empty_is_image image_iff real_le_lsqrt real_sqrt_ge_0_iff real_sqrt_le_iff)  
+    qed 
+    ultimately show ?thesis by simp
+  qed
   have \<open>ell2_norm f = sqrt (Sup { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })\<close>
     by (simp add: ell2_norm_def setcompr_eq_image)
-  show ?thesis sorry
+  have \<open>{ \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S } \<noteq> {}\<close>
+    by auto
+  moreover have \<open>bdd_above { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S }\<close>
+    by (metis (no_types) assms has_ell2_norm_def setcompr_eq_image)
+  moreover have \<open>\<forall> x \<in> { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S }. x \<ge> 0\<close>
+  proof-
+    have \<open>finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod (f i))\<^sup>2) \<ge> 0 \<close>
+      for S::\<open>'a set\<close>
+      by (simp add: sum_nonneg)
+    thus ?thesis by blast
+  qed 
+  ultimately have \<open>Sup (sqrt ` { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })
+ = sqrt (Sup ({ \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S }))\<close>
+    by (simp add:  \<open>\<And> S. S \<noteq> {} \<Longrightarrow> bdd_above S  \<Longrightarrow> \<forall> x \<in> S. x \<ge> 0 \<Longrightarrow> Sup (sqrt ` S) = sqrt (Sup S)\<close>)
+  thus ?thesis using \<open>ell2_norm f = sqrt (Sup { \<Sum> i \<in> S. (cmod (f i))\<^sup>2  | S::'a set. finite S })\<close>
+    by (simp add: image_image setcompr_eq_image)
 qed
 
 
@@ -1482,11 +1556,12 @@ qed
 
 
 (* TODO *) 
-lemma givemeaname_and_makeprettier:
+lemma completeness_ell2:
   fixes X :: "nat \<Rightarrow> 'a \<Rightarrow> complex"
   shows "\<forall>x. has_ell2_norm (X x) \<Longrightarrow>
          \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>x. X m x - X n x) < e \<Longrightarrow>
          \<exists>l. has_ell2_norm l \<and> (\<forall>r>0. \<exists>no. \<forall>n\<ge>no. ell2_norm (\<lambda>x. X n x - l x) < r)"
+  using convergence_pointwise_to_ell2_same_limit has_ell2_norm_diff
   sorry
 
 instantiation ell2 :: (type) chilbert_space
@@ -1498,7 +1573,7 @@ proof
   then have "\<exists>l. X \<longlonglongrightarrow> l"
     unfolding LIMSEQ_def Cauchy_def dist_norm
     apply transfer apply simp
-    apply (rule givemeaname_and_makeprettier)
+    apply (rule completeness_ell2)
     by auto
   then show "convergent (X::nat \<Rightarrow> 'a ell2)"
     using convergent_def by blast
