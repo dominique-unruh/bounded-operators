@@ -72,7 +72,7 @@ lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>
 
 lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   apply transfer apply (auto intro!: exI[of _ 0])
-  by (simp add: is_general_subspace.zero is_subspace.subspace) 
+  by (simp add: is_linear_manifold.zero is_subspace.subspace) 
 
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"

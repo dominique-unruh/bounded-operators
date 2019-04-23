@@ -513,7 +513,6 @@ proof -
 qed
 
 
-(* NEW *)
 lemma ellnorm_as_sup_set: 
   fixes f :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>has_ell2_norm f\<close>
@@ -626,12 +625,16 @@ qed
 
 lemma triangIneq_ell2:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
-  assumes \<open>finite S\<close> (* TODO: assumption not needed by Groups_Big.comm_monoid_add_class.sum *)
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
-proof- (* NEW *)
+proof (cases \<open>finite S\<close>)
+  case False
+  then show ?thesis
+    by auto
+next
+  case True
   (* Reduction from the complex case to the real case, which was already proved
-in L2_set_triangle_ineq *)
+     in L2_set_triangle_ineq *)
   define SB :: \<open>('a\<times>bool) set\<close> where
     \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
   have \<open>{(x, True) | x. x \<in> S} \<inter> {(x, False) | x. x \<in> S} = {}\<close>
@@ -698,7 +701,7 @@ in L2_set_triangle_ineq *)
         = (\<Sum> z \<in> (\<lambda> t. (t, False))`S.  (F z + G z)^2)\<close>
       using \<open>inj (\<lambda> x. (x, False))\<close> \<open>finite S\<close>
         inj_eq inj_onI sum.reindex_cong
-    proof -
+    proof - (* Sledgehammer proof *)
       have f1: "\<not> inj_on (\<lambda>a. (a, False)) S \<or> v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a::'a, False)) \<in> S \<and> (F (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False) + G (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False))\<^sup>2 \<noteq> (F (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False) + G (v5_22 (\<lambda>a. (F (a, False) + G (a, False))\<^sup>2) (\<lambda>p. (F p + G p)\<^sup>2) S (\<lambda>a. (a, False)), False))\<^sup>2 \<or> (\<Sum>p\<in>(\<lambda>a. (a, False)) ` S. (F p + G p)\<^sup>2) = (\<Sum>a\<in>S. (F (a, False) + G (a, False))\<^sup>2)"
         by (simp add: sum.reindex_cong)
       have f2: "\<forall>A f. (\<exists>a aa. ((a::'a) \<in> A \<and> aa \<in> A \<and> (f a::'a \<times> bool) = f aa) \<and> a \<noteq> aa) \<or> inj_on f A"
@@ -815,7 +818,6 @@ qed
 
 lemma triangIneq_ell2InsideMinus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
-  assumes \<open>finite S\<close>
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x - g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
 proof-
@@ -823,7 +825,7 @@ proof-
       = sqrt (\<Sum> x\<in>S. (cmod (f x + (- g x)))^2)\<close>
     by simp
   also have \<open>... \<le>  sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (- g x))^2)\<close>
-    by (metis (no_types) assms triangIneq_ell2)
+    by (metis (no_types) triangIneq_ell2)
   also have \<open>... \<le>  sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
     by auto
   finally show ?thesis by blast
@@ -831,7 +833,6 @@ qed
 
 lemma triangIneq_ell2Minus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
-  assumes \<open>finite S\<close>
   shows \<open>sqrt (\<Sum> x\<in>S.  (cmod (f x) )^2) 
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x - g x))^2) + sqrt (\<Sum> x\<in>S. ( cmod (g x) )^2)\<close>
 proof-
@@ -841,8 +842,8 @@ proof-
     by auto
   hence \<open>... \<le> sqrt (\<Sum> x\<in>S. (cmod ((\<lambda> t. f t - g t) x) )^2)
              + sqrt (\<Sum> x\<in>S. (cmod (g x) )^2)\<close>
-    using triangIneq_ell2  \<open>finite S\<close>
-    by (metis (no_types) triangIneq_ell2 assms)
+    using triangIneq_ell2
+    by (metis (no_types) triangIneq_ell2)
   hence \<open>... \<le> sqrt (\<Sum> x\<in>S. (cmod (f x - g x) )^2)
              + sqrt (\<Sum> x\<in>S. (cmod (g x) )^2)\<close>
     by auto
@@ -1139,7 +1140,6 @@ proof-
   thus ?thesis using has_ell2_norm_explicit by auto 
 qed
 
-(* NEW *)
 lemma has_ell2_norm_diff: \<open>has_ell2_norm a \<Longrightarrow> has_ell2_norm b \<Longrightarrow> has_ell2_norm (a - b)\<close>
   for a b :: \<open>'a \<Rightarrow> complex\<close>
 proof-
@@ -1163,12 +1163,13 @@ proof-
     by (simp add: \<open>has_ell2_norm (a - b)\<close>)
 qed
 
+find_theorems Cauchy norm
+thm Cauchy_iff
 
-(* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
-    and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+    and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2) \<le> \<epsilon>\<close>
   shows \<open>( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
 proof-
   have \<open>bdd_above (sum (\<lambda>i. (cmod ((a k - l) i))\<^sup>2) ` Collect finite)\<close>
@@ -1554,7 +1555,6 @@ proof-
 qed
 
 
-(* NEW *)
 lemma ell2_Cauchy_pointwiseConverges:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
@@ -1640,7 +1640,6 @@ proof-
 qed
 
 
-(* NEW *) 
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
@@ -1783,7 +1782,6 @@ proof
   then show "convergent (X::nat \<Rightarrow> 'a ell2)"
     using convergent_def by blast
 qed
-
 end
 
 lemma ell2_ket[simp]: "norm (ket i) = 1"
