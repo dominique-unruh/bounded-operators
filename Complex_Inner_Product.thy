@@ -1796,7 +1796,7 @@ proof-
       by simp
     have \<open>(proj M) x \<in>  M\<close> 
       by (simp add: \<open>is_subspace M\<close> proj_intro2)
-    hence  \<open>x - (id -  proj M) x \<in>  M\<close>
+    hence  \<open>x - (id - proj M) x \<in>  M\<close>
       by simp
     hence \<open>(proj M) x \<in>  ((M\<^sub>\<bottom>)\<^sub>\<bottom>)\<close>
       using pre_ortho_twice  \<open>is_subspace M\<close>  \<open>(proj M) x \<in>  M\<close>  is_subspace.subspace by blast
