@@ -18,7 +18,6 @@ References:
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
-    Extended_Sorry
     "HOL-ex.Sketch_and_Explore"
     (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
 Or "sketch bla" for a proof outline starting with "proof bla" *)
@@ -513,7 +512,7 @@ proof -
 qed
 
 
-(* NEW *)
+
 lemma ellnorm_as_sup_set: 
   fixes f :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>has_ell2_norm f\<close>
@@ -629,7 +628,7 @@ lemma triangIneq_ell2:
   assumes \<open>finite S\<close> (* TODO: assumption not needed by Groups_Big.comm_monoid_add_class.sum *)
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
-proof- (* NEW *)
+proof- 
   (* Reduction from the complex case to the real case, which was already proved
 in L2_set_triangle_ineq *)
   define SB :: \<open>('a\<times>bool) set\<close> where
@@ -812,7 +811,6 @@ in L2_set_triangle_ineq *)
   finally show ?thesis by blast
 qed
 
-
 lemma triangIneq_ell2InsideMinus:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>finite S\<close>
@@ -852,7 +850,6 @@ qed
 
 lemma CauchyImplies_ell2Bounded:                         
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
-    (* TODO: use \<And>\<epsilon> \<And>k *)
   assumes \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
   shows \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
@@ -1139,7 +1136,6 @@ proof-
   thus ?thesis using has_ell2_norm_explicit by auto 
 qed
 
-(* NEW *)
 lemma has_ell2_norm_diff: \<open>has_ell2_norm a \<Longrightarrow> has_ell2_norm b \<Longrightarrow> has_ell2_norm (a - b)\<close>
   for a b :: \<open>'a \<Rightarrow> complex\<close>
 proof-
@@ -1163,8 +1159,6 @@ proof-
     by (simp add: \<open>has_ell2_norm (a - b)\<close>)
 qed
 
-
-(* NEW *)
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
@@ -1554,7 +1548,7 @@ proof-
 qed
 
 
-(* NEW *)
+
 lemma ell2_Cauchy_pointwiseConverges:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
@@ -1640,7 +1634,7 @@ proof-
 qed
 
 
-(* NEW *) 
+
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>

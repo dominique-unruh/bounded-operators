@@ -1468,7 +1468,7 @@ lemma proj_fixed_points:
 
 lemma bounded_linear_continuous:
   assumes \<open>bounded_clinear f\<close> 
-  shows "isCont f x"
+  shows \<open>isCont f x\<close>
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
 theorem projPropertiesB:

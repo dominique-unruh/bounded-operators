@@ -2,7 +2,7 @@
     Author:     Dominique Unruh, University of Tartu
     Author:     Jose Manuel Rodriguez Caballero, University of Tartu
 
-References:
+References:             
 
  @book{conway2013course,
   title={A course in functional analysis},
@@ -21,9 +21,9 @@ the properties of Cstar_algebras
 *)
 
 theory Bounded_Operators
-  imports Complex_L2 "HOL-Library.Adhoc_Overloading" Extended_Sorry
+  imports Complex_L2 "HOL-Library.Adhoc_Overloading" 
+    "HOL-Analysis.Abstract_Topology" Extended_Sorry
 begin
-
 
 subsection \<open>Bounded operators\<close>
 
@@ -31,7 +31,7 @@ typedef ('a,'b) bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_bounded
-(* derive universe bounded *)
+  (* derive universe bounded *)
 
 lift_definition idOp :: "('a,'a)bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
@@ -45,9 +45,115 @@ lift_definition timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Righ
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
-lift_definition applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace" is
+(* NEW *)
+lemma bound_op_characterization: 
+ \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
+  by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans ordered_field_class.sign_simps(24) zero_le_mult_iff)
+
+(* NEW *)
+lemma bounded_clinear_comp:
+  \<open>bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (f \<circ> g)\<close>
+proof-
+  assume \<open>bounded_clinear f\<close>
+  assume \<open>bounded_clinear g\<close>
+  have \<open>clinear (f \<circ> g)\<close>
+  proof-
+    have \<open>clinear f\<close>
+      by (simp add: \<open>bounded_clinear f\<close> bounded_clinear.clinear)
+    moreover have \<open>clinear g\<close>
+      by (simp add: \<open>bounded_clinear g\<close> bounded_clinear.clinear)
+    ultimately show ?thesis
+    proof - (* automatically generated *)
+      obtain cc :: "('c \<Rightarrow> 'b) \<Rightarrow> complex" and cca :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" where
+        f1: "\<forall>x0. (\<exists>v1 v2. x0 (v1 *\<^sub>C v2) \<noteq> v1 *\<^sub>C x0 v2) = (x0 (cc x0 *\<^sub>C cca x0) \<noteq> cc x0 *\<^sub>C x0 (cca x0))"
+        by moura
+      obtain ccb :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" and ccc :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" where
+        f2: "\<forall>x0. (\<exists>v1 v2. x0 (v1 + v2) \<noteq> x0 v1 + x0 v2) = (x0 (ccb x0 + ccc x0) \<noteq> x0 (ccb x0) + x0 (ccc x0))"
+        by moura
+      have "\<forall>c ca. g (c + ca) = g c + g ca"
+        by (meson Modules.additive_def \<open>clinear g\<close> clinear.axioms(1))
+      then have f3: "(f \<circ> g) (ccb (f \<circ> g) + ccc (f \<circ> g)) = (f \<circ> g) (ccb (f \<circ> g)) + (f \<circ> g) (ccc (f \<circ> g))"
+        by (simp add: \<open>clinear f\<close> additive.add clinear.axioms(1))
+      have "(f \<circ> g) (cc (f \<circ> g) *\<^sub>C cca (f \<circ> g)) = cc (f \<circ> g) *\<^sub>C (f \<circ> g) (cca (f \<circ> g))"
+        by (simp add: \<open>clinear f\<close> \<open>clinear g\<close> clinear.scaleC)
+      then show ?thesis
+        using f3 f2 f1 by (meson clinearI)
+    qed
+  qed
+  moreover have \<open>\<exists>K. \<forall>x. \<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>x\<parallel> * K\<close>
+  proof-
+    have \<open>\<exists> K\<^sub>f. \<forall>x. K\<^sub>f \<ge> 0 \<and> \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
+      using \<open>bounded_clinear f\<close> bound_op_characterization 
+      by blast
+    then obtain K\<^sub>f where \<open> K\<^sub>f \<ge> 0\<close> and \<open>\<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
+      by metis
+    have \<open>\<exists> K\<^sub>g. \<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close>
+      using \<open>bounded_clinear g\<close> bounded_clinear.bounded by blast 
+    then obtain K\<^sub>g where \<open>\<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close>
+      by metis
+    have \<open>\<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g * K\<^sub>f\<close>
+      for x
+    proof-                             
+      have \<open>\<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>f (g x)\<parallel>\<close>
+        by simp
+      also have \<open>... \<le> \<parallel>g x\<parallel> * K\<^sub>f\<close>
+        by (simp add: \<open>\<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>)
+      also have \<open>... \<le> (\<parallel>x\<parallel> * K\<^sub>g) * K\<^sub>f\<close>
+        using \<open>K\<^sub>f \<ge> 0\<close>
+        by (metis \<open>\<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close> mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
+      finally show ?thesis
+        by simp
+    qed
+    thus ?thesis 
+      by (metis  comp_eq_dest_lhs linordered_field_class.sign_simps(23) )
+  qed
+  ultimately show ?thesis 
+    using bounded_clinear_def bounded_clinear_axioms_def by blast
+qed
+
+(* NEW *)
+lemma bounded_clinear_bounded:
+  \<open>bounded_clinear f \<Longrightarrow> closed S \<Longrightarrow> closed (f ` S)\<close>
+  sorry
+
+(* NEW *)
+lemma PREapplyOpSpace:
+  fixes f::\<open>('a::{complex_inner, complete_space}) \<Rightarrow> ('b::{complex_inner, complete_space})\<close> 
+    and S::\<open>'a set\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close>
+  shows  \<open>is_subspace {f x |x. x \<in> S}\<close>
+proof-
+  have \<open>bounded_clinear (proj S)\<close>
+    using \<open>is_subspace S\<close> projPropertiesA by blast
+  hence \<open>bounded_clinear (f \<circ> (proj S))\<close>
+    using  \<open>bounded_clinear f\<close> bounded_clinear_comp by blast
+  hence \<open>clinear (f \<circ> (proj S))\<close>
+    unfolding bounded_clinear_def
+    by blast
+  hence \<open>is_linear_manifold (ran_op (f \<circ> (proj S)))\<close>
+    using ran_op_lin
+    by blast
+  hence \<open>is_linear_manifold {x. \<exists> y. (f \<circ> (proj S)) y = x}\<close>
+    unfolding ran_op_def by blast
+  moreover have \<open>{f x |x. x \<in> S} = {x. \<exists> y. (f \<circ> (proj S)) y = x}\<close>
+    by (metis assms(2) comp_apply proj_fixed_points proj_intro2)
+  ultimately have  \<open>is_linear_manifold {f x |x. x \<in> S}\<close>
+    by simp
+  have \<open>closed S\<close>
+    unfolding is_subspace_def
+    using \<open>is_subspace S\<close> 
+    by (simp add: is_subspace.closed)
+  hence \<open>closed (f ` S)\<close>
+    using bounded_clinear_bounded  \<open>bounded_clinear f\<close>
+    by blast    
+  thus ?thesis using \<open>is_linear_manifold {f x |x. x \<in> S}\<close>              
+    by (simp add: is_subspace_def Setcompr_eq_image)
+qed
+
+
+lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
   "\<lambda>A S. {A x|x. x\<in>S}"
-  by (cheat applyOpSpace)
+  by (rule PREapplyOpSpace) (* NEW *)
 
 (* TODO: instantiation of scaleC instead! *)
 lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
@@ -72,7 +178,7 @@ lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>
 
 lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   apply transfer apply (auto intro!: exI[of _ 0])
-  by (simp add: is_general_subspace.zero is_subspace.subspace) 
+  by (simp add: is_linear_manifold.zero is_subspace.subspace) 
 
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"
@@ -158,7 +264,7 @@ lemma op_scalar_op[simp]: "A \<cdot> (a \<cdot> B) = a \<cdot> (A \<cdot> B)"
   for a :: complex and A :: "('a,'b) bounded" and B :: "('c,'a) bounded"
   apply transfer
   by (simp add: bounded_clinear.clinear clinear.scaleC o_def)
-  
+
 lemma scalar_scalar_op[simp]: "a \<cdot> (b \<cdot> A) = (a*b) \<cdot> A"
   for a b :: complex and A  :: "('a,'b) bounded"
   apply transfer by auto
@@ -241,7 +347,7 @@ lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
   by (cheat TODO5)
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
-for \<pi> :: "'a \<Rightarrow> 'b option"
+  for \<pi> :: "'a \<Rightarrow> 'b option"
   by (cheat TODO1)
 
 
@@ -381,7 +487,7 @@ lemma ell2_to_bounded_applyOp: "ell2_to_bounded (A\<cdot>\<psi>) = A \<cdot> ell
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_bounded \<psi>" for a::complex
   apply (rewrite at "a *\<^sub>C \<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp) \<cdot> \<psi>"])
-   apply simp
+  apply simp
   apply (subst ell2_to_bounded_applyOp)
   by simp
 
@@ -405,7 +511,7 @@ lemma kernel_id[simp]: "kernel idOp = 0"
 lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a\<cdot>A) = eigenspace (b/a) A"
   unfolding eigenspace_def
   apply (rewrite at "kernel \<hole>" DEADID.rel_mono_strong[where y="a \<cdot> (A - b / a \<cdot> idOp)"])
-   apply auto[1]
+  apply auto[1]
   by (subst kernel_scalar_times, auto)
 
 
@@ -438,7 +544,7 @@ lemma proj_scalar_mult[simp]:
 
 lemma move_plus:
   "Proj (ortho C) \<cdot> A \<le> B \<Longrightarrow> A \<le> B + C"
-for A B C::"'a subspace"
+  for A B C::"'a subspace"
   by (cheat TODO2)
 
 
@@ -484,7 +590,7 @@ lemma tensor_scalar_mult2[simp]: "A \<otimes> (a \<cdot> B) = a \<cdot> (A \<oti
 
 lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot> (V1 \<otimes> V2) = (U1 \<cdot> V1) \<otimes> (U2 \<cdot> V2)"
   for V1 :: "('a1,'b1) bounded" and U1 :: "('b1,'c1) bounded"
-   and V2 :: "('a2,'b2) bounded" and U2 :: "('b2,'c2) bounded"
+    and V2 :: "('a2,'b2) bounded" and U2 :: "('b2,'c2) bounded"
   by (cheat TODO3)
 
 consts remove_qvar_unit_op :: "('a*unit,'a) bounded"
