@@ -47,7 +47,7 @@ lift_definition timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Righ
 
 (* NEW *)
 lemma bound_op_characterization: 
- \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
+  \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
   by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans ordered_field_class.sign_simps(24) zero_le_mult_iff)
 
 (* NEW *)
@@ -112,16 +112,11 @@ proof-
 qed
 
 (* NEW *)
-lemma bounded_clinear_bounded:
-  \<open>bounded_clinear f \<Longrightarrow> closed S \<Longrightarrow> closed (f ` S)\<close>
-  sorry
-
-(* NEW *)
 lemma PREapplyOpSpace:
-  fixes f::\<open>('a::{complex_inner, complete_space}) \<Rightarrow> ('b::{complex_inner, complete_space})\<close> 
+  fixes f::\<open>('a::{complex_inner, complete_space}) \<Rightarrow> ('b::{complex_inner, complete_space})\<close>
     and S::\<open>'a set\<close>
   assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close>
-  shows  \<open>is_subspace {f x |x. x \<in> S}\<close>
+  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
 proof-
   have \<open>bounded_clinear (proj S)\<close>
     using \<open>is_subspace S\<close> projPropertiesA by blast
@@ -139,21 +134,27 @@ proof-
     by (metis assms(2) comp_apply proj_fixed_points proj_intro2)
   ultimately have  \<open>is_linear_manifold {f x |x. x \<in> S}\<close>
     by simp
-  have \<open>closed S\<close>
-    unfolding is_subspace_def
-    using \<open>is_subspace S\<close> 
-    by (simp add: is_subspace.closed)
-  hence \<open>closed (f ` S)\<close>
-    using bounded_clinear_bounded  \<open>bounded_clinear f\<close>
-    by blast    
-  thus ?thesis using \<open>is_linear_manifold {f x |x. x \<in> S}\<close>              
-    by (simp add: is_subspace_def Setcompr_eq_image)
+  hence  \<open>is_linear_manifold (closure {f x |x. x \<in> S})\<close>
+    by (simp add: is_subspace_cl)
+  moreover have \<open>closed (closure {f x |x. x \<in> S})\<close>
+    by auto
+  ultimately show ?thesis
+    using is_subspace_def by blast
 qed
+
+(* NEW *)
+lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
+  "\<lambda>A S. closure {A x|x. x\<in>S}"
+  by (simp add: PREapplyOpSpace)
+
+(* This is false. 
+Link to the counterexample: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed
 
 
 lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
   "\<lambda>A S. {A x|x. x\<in>S}"
   by (rule PREapplyOpSpace) (* NEW *)
+*)
 
 (* TODO: instantiation of scaleC instead! *)
 lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
@@ -162,8 +163,10 @@ lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Righta
 
 (* TODO: is this even a meaningful operation? Do we use it anywhere? Remove? *)
 (* TODO: instantiation of scaleC instead! *)
+
+(* NEW *) (* closure added *)
 lift_definition timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
-  "\<lambda>c S. {c *\<^sub>C x|x. x\<in>S}"
+  "\<lambda>c S. closure {c *\<^sub>C x|x. x\<in>S}"
   by (smt Collect_cong applyOpSpace.rsp bounded_clinear_scaleC_right eq_onp_same_args rel_fun_eq_onp_rel)
 
 consts
@@ -178,7 +181,10 @@ lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>
 
 lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   apply transfer apply (auto intro!: exI[of _ 0])
-  by (simp add: is_linear_manifold.zero is_subspace.subspace) 
+  using  is_linear_manifold.zero is_subspace.subspace
+  apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq)
+  using  is_linear_manifold.zero is_subspace.subspace
+  by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin)
 
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"
@@ -197,8 +203,66 @@ lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)"
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
   by (cheat times_adjoint)
 
+(* NEW *) (* for the proof of timesOp_assoc_subspace *)
+lemma PREtimesOp_assoc_subspace:
+  fixes A B S
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+    and \<open>is_subspace S\<close>
+  shows \<open>closure {(A \<circ> B) x |x. x \<in> S} =
+       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
+proof-
+  have  \<open>closure {(A \<circ> B) x |x. x \<in> S} \<subseteq>
+       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
+    by (smt closure_mono closure_subset comp_apply mem_Collect_eq subset_iff)
+  moreover have  \<open>closure {(A \<circ> B) x |x. x \<in> S} \<supseteq>
+       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
+  proof-
+    have \<open>t \<in> {A x |x. x \<in> closure {B x |x. x \<in> S}}
+        \<Longrightarrow> t \<in> closure {(A \<circ> B) x |x. x \<in> S}\<close>
+      for t
+    proof-
+      assume \<open>t \<in> {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
+      then obtain u where 
+         \<open>t = A u\<close> and \<open>u \<in> closure {B x |x. x \<in> S}\<close>
+        by auto
+      from  \<open>u \<in> closure {B x |x. x \<in> S}\<close> 
+      obtain v where \<open>v \<longlonglongrightarrow> u\<close>
+          and \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
+        using closure_sequential by blast
+      from  \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
+      have \<open>\<forall> n. \<exists> x \<in> S.  v n = B x\<close>
+        by auto
+      then obtain w where \<open>w n \<in> S\<close> and \<open>v n = B (w n)\<close>
+        for n
+        by metis
+      have \<open>(\<lambda> n. B (w n) ) \<longlonglongrightarrow> u\<close>
+        using  \<open>\<And> n. v n = B (w n)\<close> \<open>v \<longlonglongrightarrow> u\<close>
+        by presburger
+      moreover have \<open>isCont A x\<close>
+        for x
+        using \<open>bounded_clinear A\<close>
+        by (simp add: bounded_linear_continuous)
+      ultimately have \<open>(\<lambda> n. A (B (w n)) ) \<longlonglongrightarrow> t\<close>
+        using  \<open>t = A u\<close>
+         isCont_tendsto_compose by blast
+      hence  \<open>(\<lambda> n. (A \<circ> B) (w n) ) \<longlonglongrightarrow> t\<close>
+        by simp                               
+      thus ?thesis using \<open>\<And> n. w n \<in> S\<close>
+        using closure_sequential by fastforce
+    qed
+    hence \<open> {A x |x. x \<in> closure {B x |x. x \<in> S}}
+        \<subseteq> closure {(A \<circ> B) x |x. x \<in> S}\<close>
+      by blast
+    thus ?thesis
+      by (metis (no_types, lifting) closure_closure closure_mono) 
+  qed
+  ultimately show ?thesis by blast
+qed
+
 lemma timesOp_assoc_subspace: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
-  apply transfer by auto
+  apply transfer
+(* NEW *) (* new proof *)
+  using PREtimesOp_assoc_subspace by blast
 
 instantiation bounded :: (type,type) ab_group_add begin
 lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
@@ -218,7 +282,6 @@ end
 (* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_subspace[symmetric] add.assoc[where ?'a="('a,'b) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_subspace add.assoc[where ?'a="('a,'b) bounded"]
-
 
 lemma scalar_times_op_add[simp]: "timesScalarOp a (A+B) = timesScalarOp a A + timesScalarOp a B"
   apply transfer
@@ -340,7 +403,6 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
-
 consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a,'b) bounded"
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
     applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
@@ -350,17 +412,15 @@ lemma classical_operator_adjoint[simp]:
   for \<pi> :: "'a \<Rightarrow> 'b option"
   by (cheat TODO1)
 
-
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot> classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   apply (rule equal_basis)
   unfolding times_applyOp
   apply (subst classical_operator_basis, simp)+
   apply (case_tac "\<rho> x")
-   apply auto
+  apply auto
   apply (subst classical_operator_basis, simp)
   by auto
-
 
 lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
   apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
@@ -513,8 +573,6 @@ lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a\<cdot>A) = eigenspac
   apply (rewrite at "kernel \<hole>" DEADID.rel_mono_strong[where y="a \<cdot> (A - b / a \<cdot> idOp)"])
   apply auto[1]
   by (subst kernel_scalar_times, auto)
-
-
 
 section \<open>Projectors\<close>
 
