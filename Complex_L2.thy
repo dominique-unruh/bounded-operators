@@ -512,10 +512,7 @@ proof -
 qed
 
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 4fdb5f7e0b31800c553eaaeaf2c7e04e9c64a860
 lemma ellnorm_as_sup_set: 
   fixes f :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>has_ell2_norm f\<close>
@@ -630,16 +627,12 @@ lemma triangIneq_ell2:
   fixes S :: \<open>'a set\<close> and f g :: \<open>'a \<Rightarrow> complex\<close>
   shows \<open>sqrt (\<Sum> x\<in>S. (cmod (f x + g x))^2)
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
-<<<<<<< HEAD
-proof- 
-=======
 proof (cases \<open>finite S\<close>)
   case False
   then show ?thesis
     by auto
 next
   case True
->>>>>>> 4fdb5f7e0b31800c553eaaeaf2c7e04e9c64a860
   (* Reduction from the complex case to the real case, which was already proved
      in L2_set_triangle_ineq *)
   define SB :: \<open>('a\<times>bool) set\<close> where
@@ -1557,10 +1550,6 @@ proof-
 qed
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 4fdb5f7e0b31800c553eaaeaf2c7e04e9c64a860
 lemma ell2_Cauchy_pointwiseConverges:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
@@ -1646,10 +1635,7 @@ proof-
 qed
 
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 4fdb5f7e0b31800c553eaaeaf2c7e04e9c64a860
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
