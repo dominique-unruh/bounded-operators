@@ -59,9 +59,10 @@ end
 
 class complex_vector = scaleC + ab_group_add +
   assumes scaleC_add_right: "a *\<^sub>C (x + y) = (a *\<^sub>C x) + (a *\<^sub>C y)"
-  and scaleC_add_left: "scaleC (a + b) x = (a *\<^sub>C x) + (b *\<^sub>C x)"
+  and scaleC_add_left: "(a + b) *\<^sub>C x = (a *\<^sub>C x) + (b *\<^sub>C x)"
   and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
   and scaleC_one[simp]: "1 *\<^sub>C x = x"
+
 
 interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   apply unfold_locales
@@ -652,7 +653,7 @@ subsection \<open>Complex normed vector spaces\<close>
 
 class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   real_normed_vector + 
-  assumes norm_scaleC [simp]: "norm (scaleC a x) = cmod a * norm x"
+  assumes norm_scaleC [simp]: "\<parallel> a *\<^sub>C x \<parallel> = (cmod a) * \<parallel> x \<parallel>"
 
 class complex_normed_algebra = complex_algebra + complex_normed_vector + real_normed_algebra
   (* assumes norm_mult_ineq: "norm (x * y) \<le> norm x * norm y" *)
@@ -933,8 +934,8 @@ locale bounded_cbilinear =
     (infixl "**" 70)
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
-    and scaleC_left: "prod (scaleC r a) b = scaleC r (prod a b)"
-    and scaleC_right: "prod a (scaleC r b) = scaleC r (prod a b)"
+    and scaleC_left: "prod (r *\<^sub>C a) b = scaleC r (prod a b)"
+    and scaleC_right: "prod a (r *\<^sub>C b) = scaleC r (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
@@ -1267,7 +1268,6 @@ class cbanach = complex_normed_vector + complete_space
 subclass (in cbanach) banach ..
 
 instance complex :: cbanach ..
-
 
 (* From Series.thy *)
 
