@@ -1168,12 +1168,6 @@ proof-
     by (simp add: \<open>has_ell2_norm (a - b)\<close>)
 qed
 
-<<<<<<< HEAD
-=======
-find_theorems Cauchy norm
-thm Cauchy_iff
-
->>>>>>> 4fdb5f7e0b31800c553eaaeaf2c7e04e9c64a860
 lemma convergence_pointwise_to_ell2_same_limit:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close> and l :: \<open>'a \<Rightarrow> complex\<close>
   assumes \<open>a \<midarrow>pointwise\<rightarrow> l\<close> and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 

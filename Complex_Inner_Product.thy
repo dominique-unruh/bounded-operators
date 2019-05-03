@@ -47,11 +47,9 @@ class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dis
     and cinner_scaleC_left [simp]: "(r *\<^sub>C x) \<star> y = (r\<^sup>\<bullet>) * (x \<star> y)"
     and cinner_ge_zero [simp]: "0 \<le> x \<star> x"
     and cinner_eq_zero_iff [simp]: "x \<star> x = 0 \<longleftrightarrow> x = 0"
-    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (x \<star> x))"
+    and norm_eq_sqrt_cinner: "\<parallel> x \<parallel> = sqrt (cmod (x \<star> x))"
 begin
 
-(* abbreviation norm_abbr::"'a \<Rightarrow> real" ("\<parallel>/_ /\<parallel>")
-  where \<open>\<parallel>x\<parallel> \<equiv> norm x\<close> *)
 
 lemma cinner_real: "x \<star> x \<in> \<real>"
   by (simp add: reals_zero_comparable_iff)
@@ -248,7 +246,6 @@ end
 
 abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle> /_/ | /_/ \<rangle> " )
   where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
-
 
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
@@ -845,12 +842,6 @@ lemma ExistenceUniquenessMinNorm:
   fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
-    (*
-It is not possible to generalize to Banach spaces, at least in the obvious way, the results from 
-Conway's book, in which the parallelogram law is involved, because a Banach space in which this 
-identity holds is automatically a Hilbert space.
-*)
-
 proof-
   have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
   proof-
