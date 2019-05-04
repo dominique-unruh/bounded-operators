@@ -1762,7 +1762,7 @@ proof-
     thus ?thesis by simp
   qed 
   ultimately show ?thesis by blast
-qed
+qed                                                    
 
 instantiation ell2 :: (type) chilbert_space
 begin
@@ -1775,7 +1775,7 @@ proof
     apply transfer apply simp
     apply (rule completeness_ell2)
     by auto
-  then show "convergent (X::nat \<Rightarrow> 'a ell2)"
+  thus "convergent (X::nat \<Rightarrow> 'a ell2)"
     using convergent_def by blast
 qed
 end
