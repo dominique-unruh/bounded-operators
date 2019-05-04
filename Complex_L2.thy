@@ -108,7 +108,7 @@ lemma SUP_max:
   by (metis assms(1) assms(2) assms(3) bdd_aboveI bdd_above_image_mono cSUP_upper)
 
 
-definition "ell2_norm x = sqrt (SUP F:{F. finite F}. sum (\<lambda>i. (norm(x i))^2) F)"
+definition "ell2_norm x = sqrt (SUP F:{F. finite F}. sum (\<lambda>i. \<parallel>x i\<parallel>^2) F)"
 
 lemma ell2_norm_L2_set: 
   assumes "has_ell2_norm x"

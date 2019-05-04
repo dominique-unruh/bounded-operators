@@ -26,10 +26,6 @@ theory Complex_Vector_Spaces
   imports Ordered_Complex HOL.Topological_Spaces
 begin
 
-(* abbreviation cnj_abbr:: \<open>complex \<Rightarrow> complex\<close> ("/_/\<^sup>\<bullet>") where
-\<open>x\<^sup>\<bullet> \<equiv> cnj x\<close>
-term "cnj" *)
-notation cnj ("/_/\<^sup>\<bullet>")
 
 (* TODO: discuss where to put *)
 notation norm ("\<parallel>_\<parallel>")
