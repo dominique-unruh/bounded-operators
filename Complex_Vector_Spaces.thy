@@ -23,7 +23,7 @@ lemma would be an immediate special case of the corresponding real-vector-space 
 section \<open>Vector Spaces and Algebras over the Complex Numbers\<close>
 
 theory Complex_Vector_Spaces
-  imports Ordered_Complex HOL.Topological_Spaces
+  imports Ordered_Complex HOL.Topological_Spaces Extended_Sorry "HOL-Analysis.Elementary_Topology"
 begin
 
 
@@ -684,6 +684,14 @@ lemma norm_of_complex_addn [simp]:
 lemma norm_of_complex_diff [simp]:
   "norm (of_complex b - of_complex a :: 'a::complex_normed_algebra_1) \<le> cmod (b - a)"
   by (metis norm_of_complex of_complex_diff order_refl)
+
+(* TODO move where appropriate *)
+lemma closed_scaleC: "closed (scaleC \<alpha> ` S)" if "closed S" for S::"'a::complex_normed_vector set"
+  by (cheat closed_scaleC)
+
+lemma closure_scaleC: "closure (scaleC \<alpha> ` S) = scaleC \<alpha> ` closure S" for S::"'a::complex_normed_vector set"
+  by (cheat closure_scaleC)
+  (* See:closure_scaleR *)
 
 
 subsection \<open>Class instances for complex numbers\<close>

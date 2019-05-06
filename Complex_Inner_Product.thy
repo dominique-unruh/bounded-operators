@@ -486,12 +486,12 @@ assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
 *)
 
-class hilbert_space = complex_inner + complete_space begin
+(* class hilbert_space = real_inner + complete_space begin
 subclass banach by standard
-end
+end *)
 
 class chilbert_space = complex_inner + complete_space begin
-subclass hilbert_space by standard
+subclass cbanach by standard
 end
 
 subsection \<open>Some identities and inequalities\<close>
@@ -585,8 +585,6 @@ locale is_linear_manifold =
   assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
   assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
   assumes zero: "0 \<in> A"
-
-
 
 locale is_subspace =
   fixes A::"('a::{complex_vector,topological_space}) set"

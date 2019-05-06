@@ -45,12 +45,11 @@ lift_definition timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Righ
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
-(* NEW *)
+(* TODO: rename bounded_clinearE' *)
 lemma bound_op_characterization: 
   \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
   by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans ordered_field_class.sign_simps(24) zero_le_mult_iff)
 
-(* NEW *)
 lemma bounded_clinear_comp:
   \<open>bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (f \<circ> g)\<close>
 proof-
@@ -111,12 +110,56 @@ proof-
     using bounded_clinear_def bounded_clinear_axioms_def by blast
 qed
 
-(* NEW *)
+lemma is_linear_manifold_image:
+  assumes "clinear f" and "is_linear_manifold S"
+  shows "is_linear_manifold (f ` S)"
+  apply (rule is_linear_manifold.intro)
+  subgoal proof - (* sledgehammer proof *)
+    fix x :: 'b and y :: 'b
+    assume a1: "x \<in> f ` S"
+    assume a2: "y \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
+      by blast
+    then have "aa S f x + aa S f y \<in> S"
+      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
+    then show "x + y \<in> f ` S"
+      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
+  qed
+  subgoal proof -
+    fix x :: 'b and c :: complex
+    assume a1: "x \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
+      using a1 by (simp add: Bex_def_raw image_iff)
+    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
+      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
+    then show "c *\<^sub>C x \<in> f ` S"
+      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
+  qed
+  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
+
 lemma PREapplyOpSpace:
-  fixes f::\<open>('a::{complex_inner, complete_space}) \<Rightarrow> ('b::{complex_inner, complete_space})\<close>
+  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
     and S::\<open>'a set\<close>
-  assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close>
-  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+  (* assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close> *)
+  assumes "clinear f" and "is_linear_manifold S"
+  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close> (* TODO: use f ` S *)
+proof -
+  have "is_linear_manifold {f x |x. x \<in> S}"
+    using assms is_linear_manifold_image
+    by (simp add: is_linear_manifold_image Setcompr_eq_image)
+  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+    apply (rule_tac is_subspace.intro)
+    using is_subspace_cl apply blast
+    by blast
+qed
+
+(* 
 proof-
   have \<open>bounded_clinear (proj S)\<close>
     using \<open>is_subspace S\<close> projPropertiesA by blast
@@ -141,20 +184,13 @@ proof-
   ultimately show ?thesis
     using is_subspace_def by blast
 qed
+ *)
 
-(* NEW *)
+(* Note that without "closure", applyOpSpace would not in general return a subspace.
+   See: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed *)
 lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
   "\<lambda>A S. closure {A x|x. x\<in>S}"
-  by (simp add: PREapplyOpSpace)
-
-(* This is false. 
-Link to the counterexample: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed
-
-
-lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
-  "\<lambda>A S. {A x|x. x\<in>S}"
-  by (rule PREapplyOpSpace) (* NEW *)
-*)
+  using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
 
 (* TODO: instantiation of scaleC instead! *)
 lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
@@ -164,10 +200,11 @@ lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Righta
 (* TODO: is this even a meaningful operation? Do we use it anywhere? Remove? *)
 (* TODO: instantiation of scaleC instead! *)
 
-(* NEW *) (* closure added *)
 lift_definition timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
-  "\<lambda>c S. closure {c *\<^sub>C x|x. x\<in>S}"
-  by (smt Collect_cong applyOpSpace.rsp bounded_clinear_scaleC_right eq_onp_same_args rel_fun_eq_onp_rel)
+  "\<lambda>c S. scaleC c ` S"
+  apply (rule is_subspace.intro)
+  using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
+  by (simp add: closed_scaleC is_subspace.closed)
 
 consts
   adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
@@ -181,10 +218,10 @@ lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>
 
 lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   apply transfer apply (auto intro!: exI[of _ 0])
-  using  is_linear_manifold.zero is_subspace.subspace
-  apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq)
-  using  is_linear_manifold.zero is_subspace.subspace
-  by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin)
+  using  is_linear_manifold.zero is_subspace.subspace  by auto
+  (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
+(*   using  is_linear_manifold.zero is_subspace.subspace
+  by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
 
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"
@@ -203,7 +240,6 @@ lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)"
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
   by (cheat times_adjoint)
 
-(* NEW *) (* for the proof of timesOp_assoc_subspace *)
 lemma PREtimesOp_assoc_subspace:
   fixes A B S
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
@@ -261,7 +297,6 @@ qed
 
 lemma timesOp_assoc_subspace: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
   apply transfer
-(* NEW *) (* new proof *)
   using PREtimesOp_assoc_subspace by blast
 
 instantiation bounded :: (type,type) ab_group_add begin
@@ -309,10 +344,20 @@ lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   apply transfer 
   by (cheat cdot_plus_distrib)
 
+
 lemma scalar_op_subspace_assoc [simp]: 
   "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"('a,'b)bounded" and S::"'a subspace"
-  apply transfer by auto
-
+proof transfer
+  fix \<alpha> and A::"'a ell2 \<Rightarrow> 'b ell2" and S
+  have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
+    by (simp add: closure_scaleC setcompr_eq_image)
+  also have "\<dots> = closure {\<alpha> *\<^sub>C A x |x. x \<in> S}" (is "_ = ?nonnested")
+    by (simp add: Setcompr_eq_image image_image)
+(*   have "closed {\<alpha> *\<^sub>C x| x. x\<in>S}" if "closed S"
+    using that
+    by auto *)
+  finally show "?nonnested = ?nested" by simp
+qed
 
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
