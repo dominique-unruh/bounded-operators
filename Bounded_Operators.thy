@@ -313,6 +313,7 @@ lemma scalar_op_subspace_assoc [simp]:
   "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"('a,'b)bounded" and S::"'a subspace"
   apply transfer by auto
 
+
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
 
@@ -341,7 +342,7 @@ lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a \<cdot> A = a \<cdot> B \
   by (meson complex_vector.scale_cancel_left)
 
 lemma apply_idOp_space[simp]: "applyOpSpace idOp S = S"
-  apply transfer by simp
+  apply transfer by (simp add: is_subspace.closed)
 
 lemma apply_0[simp]: "applyOp U 0 = 0"
   using additive.zero applyOp bounded_clinear.clinear clinear.axioms(1) by blast
