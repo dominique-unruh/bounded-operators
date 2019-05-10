@@ -1435,7 +1435,7 @@ definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_in
   \<open>proj \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> (M\<^sub>\<bottom>) \<and> k \<in>  M)\<close>
 
 lemma proj_intro1:
-  \<open>is_subspace M   \<Longrightarrow> h - (proj M) h \<in> orthogonal_complement M\<close>
+  \<open>is_subspace M  \<Longrightarrow> h - (proj M) h \<in> orthogonal_complement M\<close>
   for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
   by (metis (no_types, lifting) Complex_Inner_Product.proj_def ExistenceUniquenessProj theI)
 

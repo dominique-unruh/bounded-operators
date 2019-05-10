@@ -206,8 +206,41 @@ lift_definition timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightar
   using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
   by (simp add: closed_scaleC is_subspace.closed)
 
+(* NEW *)
+(* I will define the adjoint.
 consts
   adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
+*)
+
+
+(* NEW *)
+(* Existence of an adjoint operator *)
+theorem ExistenceAdjointOp:
+  fixes F::\<open>'a ell2 \<Rightarrow> 'b ell2\<close>
+  assumes \<open>bounded_clinear F\<close>
+  shows \<open>\<exists>! G:: 'b ell2 \<Rightarrow> 'a ell2. (
+(bounded_clinear G) \<and> 
+( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )
+)\<close>
+proof-
+(* Uniqueness *)
+  have \<open>(bounded_clinear G) \<and> 
+    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )
+      \<Longrightarrow>
+    (bounded_clinear H) \<and> 
+    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (H y)) )
+      \<Longrightarrow> 
+    G = H\<close>
+    for G H
+    sorry
+(* Existence *)
+  moreover have \<open>\<exists> G:: 'b ell2 \<Rightarrow> 'a ell2. (
+    (bounded_clinear G) \<and> 
+    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )
+      )\<close>
+    sorry
+  ultimately show ?thesis by blast
+qed
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
   apply transfer
@@ -224,15 +257,37 @@ lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
 
 
+(* NEW *)
+lemma PREtimesScalarSpace_not0: 
+  fixes a S
+  assumes \<open>a \<noteq> 0\<close> and \<open>is_subspace S\<close>
+  shows \<open>(*\<^sub>C) a ` S = S\<close>
+proof-
+  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
+    for x
+    using assms(2) is_linear_manifold.smult_closed is_subspace.subspace by fastforce
+  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
+    for x
+  proof - (* automatically generated *)
+    assume "x \<in> S"
+    then have "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
+      using assms(2) is_linear_manifold_def is_subspace.subspace scaleC_one by blast
+    then have "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
+      using assms(1) by auto
+    then show ?thesis
+      by (meson image_iff)
+  qed 
+  ultimately show ?thesis by blast
+qed
+
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"
-  apply transfer apply auto
-  by (cheat timesScalarSpace_not0)
+  apply transfer using PREtimesScalarSpace_not0 by blast
 
 lemma one_times_op[simp]: "timesScalarOp (1::complex) B = B" 
   apply transfer by simp
 
 lemma scalar_times_adj[simp]: "(timesScalarOp a A)* = timesScalarOp (cnj a) (A*)" for A::"('a,'b)bounded"
-  by (cheat scalar_times_adj)
+  apply transfer sorry
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
   apply transfer by auto
