@@ -32,15 +32,15 @@ definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::com
 (* NEW *)
 (* https://en.wikipedia.org/wiki/Riesz_representation_theorem *)
 theorem Riesz_Frechet_representation:
-  fixes f::\<open>'a ell2 \<Rightarrow> complex\<close>
+  fixes f::\<open>'a::chilbert_space \<Rightarrow> complex\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists> t::'a ell2. ( \<parallel>t\<parallel> = norm_bounded f ) \<and> ( \<forall> x :: 'a ell2.  f x = (t \<cdot> x) )\<close>
+  shows \<open>\<exists> t::'a. ( \<parallel>t\<parallel> = norm_bounded f ) \<and> ( \<forall> x :: 'a.  f x = (t \<cdot> x) )\<close>
   sorry
 
 (* NEW *)
 corollary Existence_of_adjoint: 
-  \<open>bounded_clinear G \<Longrightarrow> \<exists> F:: 'a ell2 \<Rightarrow> 'b ell2. ( 
-   \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot> y) = (x \<cdot> (G y))
+  \<open>bounded_clinear G \<Longrightarrow> \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space. ( 
+   \<forall> x::'a. \<forall> y::'b. ((F x) \<cdot> y) = (x \<cdot> (G y))
 )\<close>
 proof-
   assume \<open>bounded_clinear G\<close>
@@ -50,7 +50,7 @@ proof-
     using  \<open>bounded_clinear G\<close>
     unfolding bounded_clinear_def
     by (simp add: bounded_clinear_axioms_def) 
-  define g :: \<open>'a ell2 \<Rightarrow> ('b ell2 \<Rightarrow> complex)\<close> where
+  define g :: \<open>'a \<Rightarrow> ('b \<Rightarrow> complex)\<close> where
     \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
   have \<open>bounded_clinear (g x)\<close>
     for x
@@ -76,16 +76,15 @@ proof-
     ultimately show ?thesis unfolding bounded_linear_def
       using bounded_clinear.intro bounded_clinear_axioms_def by auto 
   qed
-  hence  \<open>\<forall> x. \<exists> t::'b ell2. ( \<parallel>t\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b ell2.  (g x) y = (t \<cdot> y) )\<close>
+  hence  \<open>\<forall> x. \<exists> t::'b. ( \<parallel>t\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = (t \<cdot> y) )\<close>
     using Riesz_Frechet_representation by blast
-  hence  \<open>\<exists> F. \<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b ell2.  (g x) y = ((F x) \<cdot> y) )\<close>
+  hence  \<open>\<exists> F. \<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
     by metis
-  then obtain F where \<open>\<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b ell2.  (g x) y = ((F x) \<cdot> y) )\<close>
+  then obtain F where \<open>\<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
     by blast
   thus ?thesis using  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
     by auto
 qed
-
 
 
 end

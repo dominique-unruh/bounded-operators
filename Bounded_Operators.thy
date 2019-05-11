@@ -28,6 +28,9 @@ begin
 
 subsection \<open>Bounded operators\<close>
 
+(* NEW *)
+(* Could be possible to change ell2 by chilbert_space in this file
+in order to work in a more abstract setting *)
 typedef ('a,'b) bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_bounded
   using bounded_clinear_zero by blast
