@@ -100,17 +100,19 @@ proof-
   thus ?thesis by metis
 qed
 
-definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space)
- \<Rightarrow> ('a::chilbert_space \<Rightarrow> 'b::chilbert_space)\<close> where
+definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space) 
+ \<Rightarrow> ('a::chilbert_space \<Rightarrow> 'b::chilbert_space)\<close> where 
 \<open>Adj \<equiv> SOME Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. ((Adj G) x) \<cdot> y = x \<cdot> (G y)
 )\<close>
 
+notation Adj ("_\<^sup>\<dagger>" [99] 100)
+
 lemma AdjI: \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<Longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. ((Adj G) x) \<cdot> y = x \<cdot> (G y) )\<close>
+   \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
   using Existence_of_adjoint2 Adj_def
-  by (smt tfl_some) 
+  by (smt tfl_some)
 
 end
