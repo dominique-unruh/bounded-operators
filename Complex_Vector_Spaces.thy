@@ -756,7 +756,7 @@ lemma clinearI:
   by standard (rule assms)+
 
 locale bounded_clinear = clinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
-  assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+  assumes bounded: "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
 begin
 
 sublocale bounded_linear
