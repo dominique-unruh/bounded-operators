@@ -22,7 +22,8 @@ the properties of Cstar_algebras
 
 theory Bounded_Operators
   imports Complex_L2 "HOL-Library.Adhoc_Overloading" 
-    "HOL-Analysis.Abstract_Topology" Extended_Sorry
+    "HOL-Analysis.Abstract_Topology"  Extended_Sorry
+    Dual_Hilbert_space (* NEW *) (* New file Dual_Hilbert_space *)
 begin
 
 subsection \<open>Bounded operators\<close>
@@ -206,86 +207,9 @@ lift_definition timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightar
   using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
   by (simp add: closed_scaleC is_subspace.closed)
 
-(* NEW *)
-(* I will define the adjoint.
+
 consts
   adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
-*)
-
-(* NEW *)
-lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
-  by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
-
-(* NEW *)
-definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) \<Rightarrow> real\<close> where
-\<open>norm_bounded \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K}\<close>
-
-(* NEW *)
-(* https://en.wikipedia.org/wiki/Riesz_representation_theorem *)
-theorem Riesz_Frechet_representation:
-  fixes f::\<open>'a ell2 \<Rightarrow> complex\<close>
-  assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists> t::'a ell2. ( \<parallel>t\<parallel> = norm_bounded f ) \<and> ( \<forall> x :: 'a ell2.  f x = (x \<cdot> t) )\<close>
-  sorry
-
-(* NEW *)
-(* Existence of an adjoint operator *)
-(* http://mathonline.wikidot.com/the-adjoint-of-a-bounded-linear-operator-between-banach-spac *)
-theorem ExistenceAdjointOp:
-  fixes F::\<open>'a ell2 \<Rightarrow> 'b ell2\<close>
-  assumes \<open>bounded_clinear F\<close>
-  shows \<open>\<exists>! G:: 'b ell2 \<Rightarrow> 'a ell2. (
-(bounded_clinear G) \<and> 
-( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )
-)\<close>
-proof-
-  (* Uniqueness *)
-  have \<open>(bounded_clinear G) \<and> 
-    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )
-      \<Longrightarrow>
-    (bounded_clinear H) \<and> 
-    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (H y)) )
-      \<Longrightarrow> 
-    G = H\<close>
-    for G H
-  proof-
-    assume \<open>(bounded_clinear G) \<and> 
-    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y)) )\<close>
-    hence \<open>bounded_clinear G\<close> and \<open> \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y))\<close>
-       apply auto done
-    assume \<open>(bounded_clinear H) \<and> 
-    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (H y)) )\<close>
-    hence \<open>bounded_clinear H\<close> and \<open> \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (H y))\<close>
-       apply auto done
-    have \<open>clinear (G - H)\<close>
-      using \<open>bounded_clinear G\<close> \<open>bounded_clinear H\<close> bounded_clinearDiff
-      bounded_clinear_def by blast
-    from  \<open>\<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (G y))\<close>  \<open>\<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot>  y) = (x \<cdot> (H y))\<close>
-    have  \<open>\<forall> x::'a ell2. \<forall> y::'b ell2. 0 = (x \<cdot> (G y)) - (x \<cdot> (H y))\<close>
-      by auto
-    hence  \<open>\<forall> x::'a ell2. \<forall> y::'b ell2. 0 = x \<cdot> ((G y) - (H y))\<close>
-      by (simp add: cinner_diff_right)
-    hence  \<open>\<forall> x::'a ell2. \<forall> y::'b ell2. 0 = x \<cdot> ((G - H) y)\<close>
-      by simp
-    hence  \<open>\<forall> x::'a ell2. 0 = x \<cdot> ((G - H) y)\<close>
-      for y::\<open>'b ell2\<close>
-      by blast
-    hence  \<open>0 = ((G - H) y)\<close>
-      for y::\<open>'b ell2\<close>
-      by (smt cinner_eq_zero_iff)
-    hence  \<open>G y = H y\<close>
-      for y::\<open>'b ell2\<close>
-      by simp
-    thus ?thesis by auto 
-  qed
-    (* Existence *)
-  moreover have \<open>\<exists> G:: 'b ell2 \<Rightarrow> 'a ell2. (
-    (bounded_clinear G) \<and> 
-    ( \<forall> x::'a ell2. \<forall> y::'b ell2. ((F x) \<cdot> y) = (x \<cdot> (G y)) )
-      )\<close>
-    sorry
-  ultimately show ?thesis by blast
-qed
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
   apply transfer
