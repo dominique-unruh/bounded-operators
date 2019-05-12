@@ -49,7 +49,7 @@ type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
 (* NEW *)
 lemma ker_ortho_nonzero:
   fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
-  assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> (orthogonal_complement (ker_op f))\<close> 
   shows \<open>f x \<noteq> 0\<close>
 proof(rule classical)
   have \<open>is_subspace (ker_op f)\<close> using \<open>bounded_clinear f\<close>
@@ -57,35 +57,35 @@ proof(rule classical)
   assume \<open>\<not>(f x \<noteq> 0)\<close>
   hence \<open>x \<in> ker_op f\<close>
     by (simp add: ker_op_def) 
-  moreover have \<open>(ker_op f)\<inter>(((ker_op f))\<^sub>\<bottom>) = {0}\<close>
+  moreover have \<open>(ker_op f)\<inter>(orthogonal_complement (ker_op f)) = {0}\<close>
     using \<open>is_subspace (ker_op f)\<close>
     by (simp add: ortho_inter_zero) 
-  ultimately have  \<open>x \<notin> ((ker_op f)\<^sub>\<bottom>)\<close> using \<open>x \<noteq> 0\<close>
+  ultimately have  \<open>x \<notin> orthogonal_complement (ker_op f)\<close> using \<open>x \<noteq> 0\<close>
     by (smt Int_iff empty_iff insert_iff) 
-  thus ?thesis using \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> by blast
+  thus ?thesis using \<open>x \<in> orthogonal_complement (ker_op f)\<close> by blast
 qed
 
 (* NEW *)
 lemma ker_unidim:
   fixes f :: \<open>('a::chilbert_space) functional\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>proportion ((ker_op f)\<^sub>\<bottom>)\<close>
+  shows \<open>proportion (orthogonal_complement (ker_op f))\<close>
 proof-
-  have \<open>x \<in> ((ker_op f)\<^sub>\<bottom>) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in>((ker_op f)\<^sub>\<bottom>) \<Longrightarrow> y \<noteq> 0 
+  have \<open>x \<in> (orthogonal_complement (ker_op f)) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in> orthogonal_complement (ker_op f) \<Longrightarrow> y \<noteq> 0 
     \<Longrightarrow> \<exists> k. x = k *\<^sub>C y\<close>
     for x y
   proof-
-    assume \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>((ker_op f)\<^sub>\<bottom>)\<close> and \<open>y \<noteq> 0\<close>
+    assume \<open>x \<in> (orthogonal_complement (ker_op f))\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>(orthogonal_complement (ker_op f))\<close> and \<open>y \<noteq> 0\<close>
     from \<open>bounded_clinear f\<close> 
     have \<open>is_subspace (ker_op f)\<close>
       by (simp add: ker_op_lin)
-    hence \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+    hence \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
       by simp
     hence \<open>f x \<noteq> 0\<close>
-      using ker_ortho_nonzero \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> \<open>x \<noteq> 0\<close> assms by auto 
-    from \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+      using ker_ortho_nonzero \<open>x \<in> (orthogonal_complement (ker_op f))\<close> \<open>x \<noteq> 0\<close> assms by auto 
+    from \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
     have \<open>f y \<noteq> 0\<close>
-      using ker_ortho_nonzero \<open>y \<in> ((ker_op f)\<^sub>\<bottom>)\<close> \<open>y \<noteq> 0\<close> assms by auto 
+      using ker_ortho_nonzero \<open>y \<in> (orthogonal_complement (ker_op f))\<close> \<open>y \<noteq> 0\<close> assms by auto 
     from  \<open>f x \<noteq> 0\<close>  \<open>f y \<noteq> 0\<close>
     have \<open>\<exists> k. (f x) = k*(f y)\<close>
       by (metis add.inverse_inverse minus_divide_eq_eq)
@@ -109,12 +109,12 @@ proof-
       by (simp add: ortho_inter_zero)
     moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (ker_op f)\<close>
     proof-
-      from  \<open>y \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
-      have  \<open>k *\<^sub>C y \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
-        using \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+      from  \<open>y \<in> (orthogonal_complement (ker_op f))\<close>
+      have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (ker_op f))\<close>
+        using \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
         unfolding is_subspace_def
         by (simp add: is_linear_manifold.smult_closed)
-      thus ?thesis using  \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close>  \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+      thus ?thesis using  \<open>x \<in> (orthogonal_complement (ker_op f))\<close>  \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
         unfolding is_subspace_def
         by (metis \<open>is_subspace (ker_op f)\<close> add_diff_cancel_left' calculation(1) diff_add_cancel diff_zero is_linear_manifold.zero is_subspace.subspace proj_uniq)
     qed
@@ -143,21 +143,21 @@ next
   then show ?thesis 
   proof-
     from \<open>bounded_clinear f\<close>
-    have \<open>proportion ((ker_op f)\<^sub>\<bottom>)\<close>
+    have \<open>proportion (orthogonal_complement (ker_op f))\<close>
       by (simp add: ker_unidim)
-    moreover have \<open>\<exists> h \<in> ((ker_op f)\<^sub>\<bottom>). h \<noteq> 0\<close>
+    moreover have \<open>\<exists> h \<in> (orthogonal_complement (ker_op f)). h \<noteq> 0\<close>
       by (metis ExistenceUniquenessProj False assms diff_0_right ker_op_lin orthogonal_complement_twice projPropertiesA projPropertiesD proj_fixed_points proj_ker_simp)
-    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>((ker_op f)\<^sub>\<bottom>). \<exists> k. x = k *\<^sub>C t)\<close>
+    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (ker_op f)). \<exists> k. x = k *\<^sub>C t)\<close>
       by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
-    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>((ker_op f)\<^sub>\<bottom>). \<exists> k. x = k *\<^sub>C t\<close>
+    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>(orthogonal_complement (ker_op f)). \<exists> k. x = k *\<^sub>C t\<close>
       by blast
-    have  \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
+    have  \<open>is_subspace ( orthogonal_complement (ker_op f))\<close>
       by (simp add: assms ker_op_lin)
-    hence  \<open>t \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+    hence  \<open>t \<in> (orthogonal_complement (ker_op f))\<close>
     proof-
-      have \<open>\<exists> s \<in> ((ker_op f)\<^sub>\<bottom>). s \<noteq> 0\<close>
+      have \<open>\<exists> s \<in> (orthogonal_complement (ker_op f)). s \<noteq> 0\<close>
         by (simp add: \<open>\<exists>h\<in>orthogonal_complement (ker_op f). h \<noteq> 0\<close>)
-      then obtain s where \<open>s \<in> ((ker_op f)\<^sub>\<bottom>)\<close> and \<open>s \<noteq> 0\<close>
+      then obtain s where \<open>s \<in> (orthogonal_complement (ker_op f))\<close> and \<open>s \<noteq> 0\<close>
         by blast
       have \<open>\<exists> k. s = k *\<^sub>C t\<close>
         by (simp add: \<open>\<forall>x\<in>orthogonal_complement (ker_op f). \<exists>k. x = k *\<^sub>C t\<close> \<open>s \<in> orthogonal_complement (ker_op f)\<close>)
@@ -168,28 +168,28 @@ next
         by (simp add: \<open>s = k *\<^sub>C t\<close>) 
       hence  \<open>(1/k) *\<^sub>C s = t\<close>
         using  \<open>s = k *\<^sub>C t\<close> by simp
-      moreover have \<open>(1/k) *\<^sub>C s \<in>  ((ker_op f)\<^sub>\<bottom>)\<close>
-        using \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
+      moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (ker_op f))\<close>
+        using \<open>is_subspace  (orthogonal_complement (ker_op f))\<close>
         unfolding is_subspace_def
         by (simp add: \<open>s \<in> orthogonal_complement (ker_op f)\<close> is_linear_manifold.smult_closed)
       ultimately show ?thesis
         by simp 
     qed
-    have \<open>proj ((ker_op f)\<^sub>\<bottom>) x = ((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t\<close>
+    have \<open>proj (orthogonal_complement (ker_op f)) x = ((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t\<close>
       for x
-      using inner_product_proj \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
-        \<open>\<forall> m \<in>  ((ker_op f)\<^sub>\<bottom>). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+      using inner_product_proj \<open>is_subspace  (orthogonal_complement (ker_op f))\<close>
+        \<open>\<forall> m \<in>  (orthogonal_complement (ker_op f)). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> (orthogonal_complement (ker_op f))\<close>
       by (simp add: inner_product_proj \<open>t \<noteq> 0\<close>)
-    hence \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
+    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
       for x
       using \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
       by (simp add: clinear.scaleC)
-    hence \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
+    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
       for x
     proof-
-      from \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
-      have \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((f t)/(t \<cdot> t)) * (t \<cdot> x)\<close>
+      from \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
+      have \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((f t)/(t \<cdot> t)) * (t \<cdot> x)\<close>
         by simp
       thus ?thesis
         by auto 
@@ -285,8 +285,6 @@ lemma AdjI: \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_s
    \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
   using Existence_of_adjoint2 Adj_def
   by (smt tfl_some)
-
-
 
 
 end
