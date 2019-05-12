@@ -837,7 +837,7 @@ definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
 lemma ExistenceUniquenessMinNorm:
-  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close>  
+  fixes M :: \<open>('a::chilbert_space) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
 proof-
@@ -874,7 +874,7 @@ proof-
           by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
         thus ?thesis by auto
       qed
-      then obtain r::\<open>nat \<Rightarrow> 'a::{complex_inner, complete_space}\<close> where \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
+      then obtain r::\<open>nat \<Rightarrow> 'a::chilbert_space\<close> where \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
         by metis
       have \<open>\<forall> n. r n \<in> M\<close> 
         by (simp add: \<open>\<forall>n. r n \<in> M \<and>  \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>)
@@ -1119,7 +1119,7 @@ qed
 
 
 theorem ExistenceUniquenessMinDist:
-  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close> and h :: 'a 
+  fixes M :: \<open>('a::chilbert_space) set\<close> and h :: 'a 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
@@ -1224,7 +1224,7 @@ proof-
 qed
 
 theorem DistMinOrtho:
-  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close> and h k::\<open>'a\<close> 
+  fixes M :: \<open>('a::chilbert_space) set\<close> and h k::\<open>'a\<close> 
   assumes "is_subspace M"
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (M\<^sub>\<bottom>) \<and> k \<in> M\<close>
     (* Reference: Theorem 2.6 in conway2013course *)
@@ -1409,7 +1409,7 @@ proof-
 qed
 
 corollary ExistenceUniquenessProj:
-  fixes M :: \<open>('a::{complex_inner, complete_space}) set\<close> 
+  fixes M :: \<open>('a::chilbert_space) set\<close> 
   assumes \<open>is_subspace M\<close>
   shows  \<open>\<forall> h. \<exists>! k. (h - k) \<in> orthogonal_complement M \<and> k \<in> M\<close>
 proof-  
@@ -1436,23 +1436,23 @@ definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_in
 
 lemma proj_intro1:
   \<open>is_subspace M  \<Longrightarrow> h - (proj M) h \<in> orthogonal_complement M\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
   by (metis (no_types, lifting) Complex_Inner_Product.proj_def ExistenceUniquenessProj theI)
 
 lemma proj_intro2:
   \<open>is_subspace M  \<Longrightarrow> (proj M) h \<in> M\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
   by (metis (no_types, lifting) Complex_Inner_Product.proj_def ExistenceUniquenessProj theI)
 
 lemma proj_uniq:
-  fixes  M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes  M :: \<open>('a::chilbert_space) set\<close>
   assumes  \<open>is_subspace M\<close> and \<open>h - x \<in> orthogonal_complement M\<close> and \<open>x \<in> M\<close>
   shows \<open>(proj M) h = x\<close>
   by (smt ExistenceUniquenessProj add.commute assms(1) assms(2) assms(3) orthogonal_complement_def proj_intro1 proj_intro2 uminus_add_conv_diff)
 
 lemma proj_fixed_points:                         
   \<open>is_subspace M  \<Longrightarrow> x \<in> M \<Longrightarrow> (proj M) x = x\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
   by (simp add: is_linear_manifold.zero is_subspace.subspace proj_uniq)
 
 lemma bounded_linear_continuous:
@@ -1462,7 +1462,7 @@ lemma bounded_linear_continuous:
 
 theorem projPropertiesB:
   \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
@@ -1487,7 +1487,7 @@ qed
 
 theorem projPropertiesA:
   \<open>is_subspace M \<Longrightarrow> bounded_clinear (proj M)\<close> 
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Theorem 2.7 (version) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
@@ -1574,7 +1574,7 @@ qed
 
 theorem projPropertiesC:
   \<open>is_subspace M \<Longrightarrow> (proj M) \<circ> (proj M) = proj M\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Theorem 2.7 in conway2013course *)
   using proj_fixed_points proj_intro2 by fastforce
 
@@ -1656,7 +1656,7 @@ qed
 
 theorem projPropertiesD:
   \<open>is_subspace M  \<Longrightarrow> ker_op  (proj M) = (M\<^sub>\<bottom>)\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close> 
@@ -1743,7 +1743,7 @@ qed
 
 theorem projPropertiesE:
   \<open>is_subspace M \<Longrightarrow> ran_op  (proj M) = M\<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
@@ -1773,7 +1773,7 @@ qed
 
 lemma ProjOntoOrtho:
   \<open>is_subspace M  \<Longrightarrow> id - proj M = proj (M\<^sub>\<bottom>) \<close>
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Exercice 2 (section 2, chapter I) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
@@ -1798,7 +1798,7 @@ proof-
 qed
 
 corollary orthogonal_complement_twice: "is_subspace M \<Longrightarrow> ((M\<^sub>\<bottom>)\<^sub>\<bottom>) = M"
-  for M :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
     (* Reference: Corollary 2.8 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
@@ -1850,7 +1850,7 @@ proof-
 qed
 
 lemma ortho_leq[simp]:
-  fixes  A B :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes  A B :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close> and  \<open>is_subspace B\<close>
   shows \<open>(A\<^sub>\<bottom>) \<subseteq> (B\<^sub>\<bottom>) \<longleftrightarrow> A \<supseteq> B\<close>
 proof-
@@ -1867,19 +1867,19 @@ proof-
 qed
 
 lemma ortho_top[simp]: 
-  " ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
-= ({0}::('a::{complex_inner, complete_space}) set)"
+  " ((top::('a::chilbert_space) set)\<^sub>\<bottom>) 
+= ({0}::('a::chilbert_space) set)"
 proof-
-  have \<open>({0}::('a::{complex_inner, complete_space}) set) \<subseteq>  ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>)\<close>
+  have \<open>({0}::('a::chilbert_space) set) \<subseteq>  ((top::('a::chilbert_space) set)\<^sub>\<bottom>)\<close>
     by (simp add: is_linear_manifold.zero is_subspace.subspace)
-  moreover have  \<open>({0}::('a::{complex_inner, complete_space}) set) \<supseteq>  ((top::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>)\<close>
+  moreover have  \<open>({0}::('a::chilbert_space) set) \<supseteq>  ((top::('a::chilbert_space) set)\<^sub>\<bottom>)\<close>
     by (metis is_subspace_0 is_subspace_UNIV is_subspace_orthog ortho_leq orthogonal_complement_twice top_greatest)
   ultimately show ?thesis by blast
 qed
 
 lemma ortho_bot[simp]:
-  " (({0}::('a::{complex_inner, complete_space}) set)\<^sub>\<bottom>) 
-= (top::('a::{complex_inner, complete_space}) set)"
+  " (({0}::('a::chilbert_space) set)\<^sub>\<bottom>) 
+= (top::('a::chilbert_space) set)"
   using is_subspace_UNIV orthogonal_complement_twice by fastforce
 
 
@@ -1909,7 +1909,7 @@ lemma is_closed_subspace_comm:
 
 
 lemma OrthoClosed:
-  fixes A ::"('a::{complex_inner, complete_space}) set"
+  fixes A ::"('a::chilbert_space) set"
   assumes \<open>is_linear_manifold A\<close>
   shows \<open>closed (A\<^sub>\<bottom>)\<close>                                                
 proof-
@@ -1938,7 +1938,7 @@ qed
 
 
 lemma OrthoClosedEq:
-  fixes A ::"('a::{complex_inner, complete_space}) set"
+  fixes A ::"('a::chilbert_space) set"
   assumes \<open>is_linear_manifold A\<close>
   shows \<open>(A\<^sub>\<bottom>) = ((closure A)\<^sub>\<bottom>) \<close>                                                
 proof-
@@ -1972,14 +1972,14 @@ qed
 
 
 lemma is_subspace_closed_plus:
-  fixes A B::"('a::{complex_inner, complete_space}) set"
+  fixes A B::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>is_subspace (A +\<^sub>M B)\<close>
   by (simp add: assms(1) assms(2) closed_sum_def is_subspace.intro is_subspace.subspace is_subspace_cl is_subspace_plus)
 
 
 lemma DeMorganOrtho:        
-  fixes A B::"('a::{complex_inner, complete_space}) set"
+  fixes A B::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>(A +\<^sub>M B)\<^sub>\<bottom> = (A\<^sub>\<bottom>) \<inter> (B\<^sub>\<bottom>)\<close>
 proof-
@@ -2031,7 +2031,7 @@ qed
 
 
 lemma DeMorganOrthoDual:
-  fixes A B::"('a::{complex_inner, complete_space}) set"
+  fixes A B::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows  \<open>(A \<inter> B)\<^sub>\<bottom> = ((A\<^sub>\<bottom>) +\<^sub>M (B\<^sub>\<bottom>))\<close>  
 proof-
@@ -2046,7 +2046,7 @@ qed
 
 
 lemma is_closed_subspace_asso:
-  fixes A B C::"('a::{complex_inner, complete_space}) set"
+  fixes A B C::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
   shows \<open>(A +\<^sub>M (B +\<^sub>M C)) = ((A +\<^sub>M B) +\<^sub>M C)\<close>
 proof-
@@ -2078,14 +2078,14 @@ qed
 
 
 lemma is_closed_subspace_zero:
-  fixes A :: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes A :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close>
-  shows \<open>(({0}::('a::{complex_inner, complete_space}) set)+\<^sub>MA) = A\<close>
+  shows \<open>(({0}::('a::chilbert_space) set)+\<^sub>MA) = A\<close>
   by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms is_subspace_UNIV is_subspace_orthog ortho_top orthogonal_complement_twice orthogonal_complement_def)
 
 
 lemma is_closed_subspace_ord:
-  fixes A B C:: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes A B C:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
     and \<open>A \<subseteq> B\<close>
   shows \<open>(C+\<^sub>MA) \<subseteq> (C+\<^sub>MB)\<close>
@@ -2093,20 +2093,20 @@ lemma is_closed_subspace_ord:
 
 
 lemma is_closed_subspace_universal_inclusion_left:
-  fixes A B:: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>A \<subseteq> (A +\<^sub>M B)\<close>
   by (metis DeMorganOrtho Int_lower1 assms(1) assms(2) is_subspace_closed_plus ortho_leq)
 
 lemma is_closed_subspace_universal_inclusion_right:
-  fixes A B:: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>B \<subseteq> (A +\<^sub>M B)\<close>
   by (metis assms(1) assms(2)  is_closed_subspace_comm is_closed_subspace_universal_inclusion_left)
 
 
 lemma is_closed_subspace_universal_inclusion_inverse:
-  fixes A B C:: \<open>('a::{complex_inner, complete_space}) set\<close>
+  fixes A B C:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
     and \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
@@ -2152,5 +2152,79 @@ proof(rule classical)
     by auto
   thus ?thesis using \<open>x \<noteq> 0\<close> by blast
 qed
+
+(* NEW *)            
+lemma ortho_decomp:
+  fixes x :: \<open>'a::chilbert_space\<close>
+  assumes  \<open>is_subspace M\<close>
+  shows \<open>x = (proj M) x + (proj (orthogonal_complement M)) x\<close>
+  by (metis ProjOntoOrtho assms diff_add_cancel id_apply is_subspace_orthog minus_apply orthogonal_complement_twice)
+
+(* NEW *)
+lemma ortho_decomp_linear:
+  fixes x :: \<open>'a::chilbert_space\<close>
+  assumes  \<open>is_subspace M\<close> and \<open>bounded_clinear f\<close>
+  shows \<open>f x = f ( (proj M) x ) + f ( (proj (orthogonal_complement M)) x )\<close>
+proof-
+  have \<open>x =  (proj M) x +  (proj (orthogonal_complement M)) x\<close>
+    using  \<open>is_subspace M\<close> ortho_decomp by blast
+  thus ?thesis 
+    using  \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
+    by (metis additive.add clinear.axioms(1))
+qed
+
+(* NEW *)
+lemma proj_ker_simp:
+  fixes x :: \<open>'a::chilbert_space\<close>
+  assumes \<open>bounded_clinear f\<close>
+  shows \<open>f (proj (ker_op f) x) = 0\<close>
+proof-
+  from \<open>bounded_clinear f\<close>
+  have \<open>is_subspace (ker_op f)\<close>
+    by (simp add: ker_op_lin)
+  hence \<open>proj (ker_op f) x \<in> ker_op f\<close>
+    by (simp add: proj_intro2)
+  thus ?thesis using ker_op_def
+    by (simp add: ker_op_def)
+qed
+
+(* NEW *)
+lemma inner_product_proj:
+  fixes x t :: \<open>'a::chilbert_space\<close>
+  assumes \<open>is_subspace M\<close> and \<open>t \<noteq> 0\<close> and \<open>t \<in> M\<close>
+    and \<open>\<forall> m \<in> M. \<exists> k. m = k *\<^sub>C t\<close>
+  shows \<open>proj M x = ((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t\<close>
+proof-
+  have \<open>(t \<cdot> t) \<noteq> 0\<close>
+    using \<open>t \<noteq> 0\<close>
+    by simp
+  obtain k where \<open>(proj M) x = k *\<^sub>C t\<close>
+    using assms(1) assms(4) proj_intro2 by blast    
+  have \<open>((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t =
+ ((t \<cdot> ((proj M) x + (proj (orthogonal_complement M)) x))/(t \<cdot> t)) *\<^sub>C t\<close>
+    using assms(1) ortho_decomp by fastforce
+  also have \<open>... = ((t \<cdot> ((proj M) x))/(t \<cdot> t)) *\<^sub>C t\<close>
+  proof-
+    have \<open> (proj (orthogonal_complement M)) x \<in> orthogonal_complement M\<close>
+      by (simp add: assms(1) proj_intro2)
+    hence \<open>t \<cdot> (proj (orthogonal_complement M)) x = 0\<close>
+      using \<open>t \<in> M\<close>
+      unfolding orthogonal_complement_def
+      unfolding is_orthogonal_def
+      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm)
+    thus ?thesis
+      by (simp add: cinner_right_distrib) 
+  qed
+  also have \<open>... = ((t \<cdot> (k *\<^sub>C t))/(t \<cdot> t)) *\<^sub>C t\<close>
+    using \<open>(proj M) x = k *\<^sub>C t\<close> 
+    by simp
+  also have \<open>... = ((k*(t \<cdot> t))/(t \<cdot> t)) *\<^sub>C t\<close>
+    by simp   
+  also have \<open>... = k *\<^sub>C t\<close>
+    using  \<open>(t \<cdot> t) \<noteq> 0\<close> by simp
+  finally show ?thesis using \<open>(proj M) x = k *\<^sub>C t\<close> 
+    by auto
+qed
+
 
 end

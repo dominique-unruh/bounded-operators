@@ -31,13 +31,22 @@ definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::com
 
 (* NEW *)
 definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
-\<open>proportion S =  (
+  \<open>proportion S =  (
   \<forall> x y. x \<in> S \<and> x \<noteq> 0 \<and> y \<in> S \<and> y \<noteq> 0 \<longrightarrow> (\<exists> k. x = k *\<^sub>C y) 
 )\<close>
 
+(* NEW *)
+lemma proportion_existence:
+  \<open>proportion S \<Longrightarrow> S \<noteq> {} \<Longrightarrow> \<exists> t \<in> S. (\<forall> x \<in> S. \<exists> k. x = k *\<^sub>C t)\<close>
+  using complex_vector.scale_zero_left ex_in_conv proportion_def
+  by metis
+
+(* NEW *)
 (* functional *)
 type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
-                                       
+
+
+(* NEW *)
 lemma ker_ortho_nonzero:
   fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
   assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> 
@@ -49,12 +58,13 @@ proof(rule classical)
   hence \<open>x \<in> ker_op f\<close>
     by (simp add: ker_op_def) 
   moreover have \<open>(ker_op f)\<inter>(((ker_op f))\<^sub>\<bottom>) = {0}\<close>
-    using \<open>is_subspace (ker_op f)\<close> sorry
+    using \<open>is_subspace (ker_op f)\<close>
+    by (simp add: ortho_inter_zero) 
   ultimately have  \<open>x \<notin> ((ker_op f)\<^sub>\<bottom>)\<close> using \<open>x \<noteq> 0\<close>
     by (smt Int_iff empty_iff insert_iff) 
   thus ?thesis using \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> by blast
 qed
-                                               
+
 (* NEW *)
 lemma ker_unidim:
   fixes f :: \<open>('a::chilbert_space) functional\<close>
@@ -72,19 +82,131 @@ proof-
     hence \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
       by simp
     hence \<open>f x \<noteq> 0\<close>
-
+      using ker_ortho_nonzero \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> \<open>x \<noteq> 0\<close> assms by auto 
+    from \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+    have \<open>f y \<noteq> 0\<close>
+      using ker_ortho_nonzero \<open>y \<in> ((ker_op f)\<^sub>\<bottom>)\<close> \<open>y \<noteq> 0\<close> assms by auto 
+    from  \<open>f x \<noteq> 0\<close>  \<open>f y \<noteq> 0\<close>
+    have \<open>\<exists> k. (f x) = k*(f y)\<close>
+      by (metis add.inverse_inverse minus_divide_eq_eq)
+    then obtain k where \<open>(f x) = k*(f y)\<close>
+      by blast
+    hence  \<open>(f x) = (f (k *\<^sub>C y))\<close>
+      using  \<open>bounded_clinear f\<close>
+      unfolding bounded_clinear_def
+      by (simp add: clinear.scaleC)
+    hence  \<open>(f x) - (f (k *\<^sub>C y)) = 0\<close>
+      by simp
+    hence  \<open>f (x - (k *\<^sub>C y)) = 0\<close>
+      using  \<open>bounded_clinear f\<close>
+      unfolding bounded_clinear_def
+      by (simp add: additive.diff clinear.axioms(1))
+    hence  \<open>(x - (k *\<^sub>C y)) \<in> ker_op f\<close>
+      using ker_op_def
+      by (simp add: ker_op_def)
+    moreover have \<open>(ker_op f) \<inter> (orthogonal_complement (ker_op f)) = {0}\<close>
+      using \<open>is_subspace (ker_op f)\<close>
+      by (simp add: ortho_inter_zero)
+    moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (ker_op f)\<close>
+    proof-
+      from  \<open>y \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+      have  \<open>k *\<^sub>C y \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+        using \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+        unfolding is_subspace_def
+        by (simp add: is_linear_manifold.smult_closed)
+      thus ?thesis using  \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close>  \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+        unfolding is_subspace_def
+        by (metis \<open>is_subspace (ker_op f)\<close> add_diff_cancel_left' calculation(1) diff_add_cancel diff_zero is_linear_manifold.zero is_subspace.subspace proj_uniq)
+    qed
+    ultimately have \<open>x - (k *\<^sub>C y) = 0\<close>
+      using \<open>f (x - k *\<^sub>C y) = 0\<close> \<open>x - k *\<^sub>C y \<in> orthogonal_complement (ker_op f)\<close> 
+        assms ker_ortho_nonzero by blast
+    thus ?thesis by simp
   qed 
   thus ?thesis
     by (simp add: proportion_def) 
 qed
 
+
 (* NEW *)
 (* https://en.wikipedia.org/wiki/Riesz_representation_theorem *)
-theorem Riesz_Frechet_representation:
+lemma Riesz_Frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> complex\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists> t::'a. ( \<parallel>t\<parallel> = norm_bounded f ) \<and> ( \<forall> x :: 'a.  f x = (t \<cdot> x) )\<close>
-  sorry
+  shows \<open>\<exists> t::'a.  \<forall> x :: 'a.  f x = (t \<cdot> x)\<close>
+proof(cases \<open>\<forall> x. f x = 0\<close>)
+  case True
+  then show ?thesis
+    by (metis cinner_zero_left) 
+next
+  case False
+  then show ?thesis 
+  proof-
+    from \<open>bounded_clinear f\<close>
+    have \<open>proportion ((ker_op f)\<^sub>\<bottom>)\<close>
+      by (simp add: ker_unidim)
+    moreover have \<open>\<exists> h \<in> ((ker_op f)\<^sub>\<bottom>). h \<noteq> 0\<close>
+      by (metis ExistenceUniquenessProj False assms diff_0_right ker_op_lin orthogonal_complement_twice projPropertiesA projPropertiesD proj_fixed_points proj_ker_simp)
+    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>((ker_op f)\<^sub>\<bottom>). \<exists> k. x = k *\<^sub>C t)\<close>
+      by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
+    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>((ker_op f)\<^sub>\<bottom>). \<exists> k. x = k *\<^sub>C t\<close>
+      by blast
+    have  \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
+      by (simp add: assms ker_op_lin)
+    hence  \<open>t \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+    proof-
+      have \<open>\<exists> s \<in> ((ker_op f)\<^sub>\<bottom>). s \<noteq> 0\<close>
+        by (simp add: \<open>\<exists>h\<in>orthogonal_complement (ker_op f). h \<noteq> 0\<close>)
+      then obtain s where \<open>s \<in> ((ker_op f)\<^sub>\<bottom>)\<close> and \<open>s \<noteq> 0\<close>
+        by blast
+      have \<open>\<exists> k. s = k *\<^sub>C t\<close>
+        by (simp add: \<open>\<forall>x\<in>orthogonal_complement (ker_op f). \<exists>k. x = k *\<^sub>C t\<close> \<open>s \<in> orthogonal_complement (ker_op f)\<close>)
+      then obtain k where \<open>s = k *\<^sub>C t\<close>
+        by blast
+      have  \<open>k \<noteq> 0\<close>
+        using \<open>s \<noteq> 0\<close>
+        by (simp add: \<open>s = k *\<^sub>C t\<close>) 
+      hence  \<open>(1/k) *\<^sub>C s = t\<close>
+        using  \<open>s = k *\<^sub>C t\<close> by simp
+      moreover have \<open>(1/k) *\<^sub>C s \<in>  ((ker_op f)\<^sub>\<bottom>)\<close>
+        using \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
+        unfolding is_subspace_def
+        by (simp add: \<open>s \<in> orthogonal_complement (ker_op f)\<close> is_linear_manifold.smult_closed)
+      ultimately show ?thesis
+        by simp 
+    qed
+    have \<open>proj ((ker_op f)\<^sub>\<bottom>) x = ((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t\<close>
+      for x
+      using inner_product_proj \<open>is_subspace  ((ker_op f)\<^sub>\<bottom>)\<close>
+        \<open>\<forall> m \<in>  ((ker_op f)\<^sub>\<bottom>). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> ((ker_op f)\<^sub>\<bottom>)\<close>
+      by (simp add: inner_product_proj \<open>t \<noteq> 0\<close>)
+    hence \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
+      for x
+      using \<open>bounded_clinear f\<close>
+      unfolding bounded_clinear_def
+      by (simp add: clinear.scaleC)
+    hence \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
+      for x
+    proof-
+      from \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
+      have \<open>f (proj ((ker_op f)\<^sub>\<bottom>) x) = ((f t)/(t \<cdot> t)) * (t \<cdot> x)\<close>
+        by simp
+      thus ?thesis
+        by auto 
+    qed
+    moreover have \<open>f (proj ((ker_op f)) x) = 0\<close>
+      for x
+      using proj_ker_simp
+      by (simp add: proj_ker_simp assms) 
+    ultimately have \<open>f x =  (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
+      for x
+      using ortho_decomp_linear
+      by (metis add.left_neutral assms ker_op_lin) 
+    thus ?thesis
+      by blast  
+  qed
+qed
+
 
 (* NEW *)
 corollary Existence_of_adjoint: 
@@ -125,11 +247,11 @@ proof-
     ultimately show ?thesis unfolding bounded_linear_def
       using bounded_clinear.intro bounded_clinear_axioms_def by auto 
   qed
-  hence  \<open>\<forall> x. \<exists> t::'b. ( \<parallel>t\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = (t \<cdot> y) )\<close>
-    using Riesz_Frechet_representation by blast
-  hence  \<open>\<exists> F. \<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
+  hence  \<open>\<forall> x. \<exists> t::'b. ( \<forall> y :: 'b.  (g x) y = (t \<cdot> y) )\<close>
+    using  Riesz_Frechet_representation_existence by blast
+  hence  \<open>\<exists> F. \<forall> x. ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
     by metis
-  then obtain F where \<open>\<forall> x. ( \<parallel>F x\<parallel> = norm_bounded (g x) ) \<and> ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
+  then obtain F where \<open>\<forall> x. ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
     by blast
   thus ?thesis using  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
     by auto
@@ -145,13 +267,13 @@ proof-
   have   \<open>\<forall> G. \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space.
  bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. ((F x) \<cdot> y) = (x \<cdot> (G y)) )\<close>
-  using Existence_of_adjoint by blast
+    using Existence_of_adjoint by blast
   thus ?thesis by metis
 qed
 
 definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space) 
  \<Rightarrow> ('a::chilbert_space \<Rightarrow> 'b::chilbert_space)\<close> where 
-\<open>Adj \<equiv> SOME Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
+  \<open>Adj \<equiv> SOME Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. ((Adj G) x) \<cdot> y = x \<cdot> (G y)
 )\<close>
@@ -163,5 +285,8 @@ lemma AdjI: \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_s
    \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
   using Existence_of_adjoint2 Adj_def
   by (smt tfl_some)
+
+
+
 
 end
