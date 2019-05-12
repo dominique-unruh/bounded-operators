@@ -30,6 +30,55 @@ definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::com
   \<open>norm_bounded \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K}\<close>
 
 (* NEW *)
+definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
+\<open>proportion S =  (
+  \<forall> x y. x \<in> S \<and> x \<noteq> 0 \<and> y \<in> S \<and> y \<noteq> 0 \<longrightarrow> (\<exists> k. x = k *\<^sub>C y) 
+)\<close>
+
+(* functional *)
+type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
+                                       
+lemma ker_ortho_nonzero:
+  fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
+  assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> 
+  shows \<open>f x \<noteq> 0\<close>
+proof(rule classical)
+  have \<open>is_subspace (ker_op f)\<close> using \<open>bounded_clinear f\<close>
+    by (simp add: ker_op_lin) 
+  assume \<open>\<not>(f x \<noteq> 0)\<close>
+  hence \<open>x \<in> ker_op f\<close>
+    by (simp add: ker_op_def) 
+  moreover have \<open>(ker_op f)\<inter>(((ker_op f))\<^sub>\<bottom>) = {0}\<close>
+    using \<open>is_subspace (ker_op f)\<close> sorry
+  ultimately have  \<open>x \<notin> ((ker_op f)\<^sub>\<bottom>)\<close> using \<open>x \<noteq> 0\<close>
+    by (smt Int_iff empty_iff insert_iff) 
+  thus ?thesis using \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> by blast
+qed
+                                               
+(* NEW *)
+lemma ker_unidim:
+  fixes f :: \<open>('a::chilbert_space) functional\<close>
+  assumes \<open>bounded_clinear f\<close>
+  shows \<open>proportion ((ker_op f)\<^sub>\<bottom>)\<close>
+proof-
+  have \<open>x \<in> ((ker_op f)\<^sub>\<bottom>) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in>((ker_op f)\<^sub>\<bottom>) \<Longrightarrow> y \<noteq> 0 
+    \<Longrightarrow> \<exists> k. x = k *\<^sub>C y\<close>
+    for x y
+  proof-
+    assume \<open>x \<in> ((ker_op f)\<^sub>\<bottom>)\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>((ker_op f)\<^sub>\<bottom>)\<close> and \<open>y \<noteq> 0\<close>
+    from \<open>bounded_clinear f\<close> 
+    have \<open>is_subspace (ker_op f)\<close>
+      by (simp add: ker_op_lin)
+    hence \<open>is_subspace ((ker_op f)\<^sub>\<bottom>)\<close>
+      by simp
+    hence \<open>f x \<noteq> 0\<close>
+
+  qed 
+  thus ?thesis
+    by (simp add: proportion_def) 
+qed
+
+(* NEW *)
 (* https://en.wikipedia.org/wiki/Riesz_representation_theorem *)
 theorem Riesz_Frechet_representation:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> complex\<close>

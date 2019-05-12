@@ -18,7 +18,7 @@ section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
- "HOL-Analysis.Inner_Product" (* "HOL-Library.LaTeXsugar" *) 
+    "HOL-Analysis.Inner_Product" (* "HOL-Library.LaTeXsugar" *) 
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -533,7 +533,7 @@ corollary ParallelogramLawVersion1:
   fixes x :: "'a::complex_inner"
   shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
     = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
-  (* Reference: In the proof of  Theorem 2.5 in conway2013course *) 
+    (* Reference: In the proof of  Theorem 2.5 in conway2013course *) 
 proof -
   have \<open>\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2 + \<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2 
   = 2*( \<parallel>(1/2) *\<^sub>C x\<parallel>^2 +  \<parallel>(1/2) *\<^sub>C y\<parallel>^2)\<close>
@@ -731,33 +731,33 @@ lemma is_subspace_INF[simp]:
 proof-
   assume \<open>\<forall> A \<in> \<A>. (is_subspace A)\<close>
   have \<open>is_linear_manifold (\<Inter>\<A>)\<close>
-proof -
-  obtain aa :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
-    f1: "\<forall>x0. (\<exists>v1 v2. v1 \<in> x0 \<and> v2 *\<^sub>C v1 \<notin> x0) = (aa x0 \<in> x0 \<and> cc x0 *\<^sub>C aa x0 \<notin> x0)"
-    by moura
-  obtain aaa :: "'a set \<Rightarrow> 'a" and aab :: "'a set \<Rightarrow> 'a" where
-    "\<forall>x0. (\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0) = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)"
-by moura
-  then have f2: "\<forall>A. (\<not> is_linear_manifold A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (is_linear_manifold A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
-    using f1 by (metis (no_types) is_linear_manifold_def)
-  obtain AA :: "'a set set \<Rightarrow> 'a \<Rightarrow> 'a set" where
-    "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 \<notin> v2) = (AA x0 x1 \<in> x0 \<and> x1 \<notin> AA x0 x1)"
-    by moura
-  then have f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
-    by auto
-  have f4: "\<forall>A. \<not> is_subspace (A::'a set) \<or> is_linear_manifold A"
-    by (metis is_subspace.subspace)
-  have f5: "\<forall>A. A \<notin> \<A> \<or> is_subspace A"
-    by (metis \<open>\<forall>A\<in>\<A>. is_subspace A\<close>)
-  then have f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
-    using f4 f3 f2 by meson
-  have f7: "0 \<in> \<Inter> \<A>"
-    using f5 f4 f3 f2 by meson
-  have "aaa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aab (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aaa (\<Inter> \<A>) + aab (\<Inter> \<A>) \<in> \<Inter> \<A>"
-    using f5 f4 f3 f2 by meson
-  then show ?thesis
-    using f7 f6 f2 by (metis (no_types))
-qed
+  proof -
+    obtain aa :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
+      f1: "\<forall>x0. (\<exists>v1 v2. v1 \<in> x0 \<and> v2 *\<^sub>C v1 \<notin> x0) = (aa x0 \<in> x0 \<and> cc x0 *\<^sub>C aa x0 \<notin> x0)"
+      by moura
+    obtain aaa :: "'a set \<Rightarrow> 'a" and aab :: "'a set \<Rightarrow> 'a" where
+      "\<forall>x0. (\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0) = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)"
+      by moura
+    then have f2: "\<forall>A. (\<not> is_linear_manifold A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (is_linear_manifold A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
+      using f1 by (metis (no_types) is_linear_manifold_def)
+    obtain AA :: "'a set set \<Rightarrow> 'a \<Rightarrow> 'a set" where
+      "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 \<notin> v2) = (AA x0 x1 \<in> x0 \<and> x1 \<notin> AA x0 x1)"
+      by moura
+    then have f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
+      by auto
+    have f4: "\<forall>A. \<not> is_subspace (A::'a set) \<or> is_linear_manifold A"
+      by (metis is_subspace.subspace)
+    have f5: "\<forall>A. A \<notin> \<A> \<or> is_subspace A"
+      by (metis \<open>\<forall>A\<in>\<A>. is_subspace A\<close>)
+    then have f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
+      using f4 f3 f2 by meson
+    have f7: "0 \<in> \<Inter> \<A>"
+      using f5 f4 f3 f2 by meson
+    have "aaa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aab (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aaa (\<Inter> \<A>) + aab (\<Inter> \<A>) \<in> \<Inter> \<A>"
+      using f5 f4 f3 f2 by meson
+    then show ?thesis
+      using f7 f6 f2 by (metis (no_types))
+  qed
   moreover have \<open>closed (\<Inter>\<A>)\<close>
     by (simp add: \<open>\<forall>A\<in>\<A>. is_subspace A\<close> closed_Inter is_subspace.closed)
   ultimately show ?thesis 
@@ -2112,5 +2112,45 @@ lemma is_closed_subspace_universal_inclusion_inverse:
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
   by (metis DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest is_subspace_closed_plus ortho_leq)
 
+(* NEW *)
+lemma ortho_inter_zero: \<open>is_subspace M \<Longrightarrow> M \<inter> (orthogonal_complement M) = {0}\<close>
+proof(rule classical)
+  assume  \<open>is_subspace M\<close>
+  assume \<open>\<not>(M \<inter> (orthogonal_complement M) = {0})\<close>
+  moreover have \<open>{0} \<subseteq> M \<inter> (orthogonal_complement M)\<close>
+  proof-
+    have \<open>0 \<in> M\<close> using \<open>is_subspace M\<close>
+      by (simp add: is_linear_manifold.zero is_subspace.subspace)
+    moreover have \<open>0 \<in> orthogonal_complement M\<close>
+    proof-
+      have \<open>is_subspace (orthogonal_complement M)\<close>
+        using \<open>is_subspace M\<close>
+        by simp  
+      thus ?thesis 
+        by (simp add: is_linear_manifold.zero is_subspace.subspace)
+    qed
+    ultimately show ?thesis by blast
+  qed
+  ultimately have \<open>\<exists> x. x \<noteq> 0 \<and> x \<in>  M \<inter> (orthogonal_complement M)\<close>
+    by (smt dual_order.antisym singleton_iff subsetI)
+  then obtain x where \<open>x \<noteq> 0\<close> and \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
+    by blast
+  from  \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
+  have \<open>x \<in> M\<close> by blast
+  from \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
+  have \<open>x \<in> orthogonal_complement M\<close>              
+    by blast
+  hence \<open>y \<in> M \<Longrightarrow> x \<cdot> y = 0\<close>
+    for y
+    unfolding orthogonal_complement_def
+    unfolding is_orthogonal_def
+    by simp
+  hence \<open>x \<cdot> x = 0\<close>
+    using \<open>x \<in> M\<close>
+    by simp
+  hence \<open>x = 0\<close>
+    by auto
+  thus ?thesis using \<open>x \<noteq> 0\<close> by blast
+qed
 
 end
