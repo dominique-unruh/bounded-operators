@@ -214,7 +214,7 @@ corollary Existence_of_adjoint:
    \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>)
 )\<close>
 proof-
-  include notation_norm
+(*  include notation_norm *) (* NEW *)
   assume \<open>bounded_clinear G\<close>
   hence \<open>clinear G\<close>
     unfolding bounded_clinear_def by blast
@@ -326,7 +326,7 @@ qed
 lemma Adj_bounded_clinear:
   \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof-
-  include notation_norm
+(*  include notation_norm *) (* NEW *)
   assume \<open>bounded_clinear A\<close>
   have \<open>\<langle>((A\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y
