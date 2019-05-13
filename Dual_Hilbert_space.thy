@@ -133,7 +133,7 @@ qed
 lemma Riesz_Frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> complex\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists> t::'a.  \<forall> x :: 'a.  f x = (t \<cdot> x)\<close>
+  shows \<open>\<exists> t::'a.  \<forall> x :: 'a.  f x = \<langle>t , x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
   then show ?thesis
@@ -175,21 +175,21 @@ next
       ultimately show ?thesis
         by simp 
     qed
-    have \<open>proj (orthogonal_complement (ker_op f)) x = ((t \<cdot> x)/(t \<cdot> t)) *\<^sub>C t\<close>
+    have \<open>proj (orthogonal_complement (ker_op f)) x = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
       for x
       using inner_product_proj \<open>is_subspace  (orthogonal_complement (ker_op f))\<close>
         \<open>\<forall> m \<in>  (orthogonal_complement (ker_op f)). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> (orthogonal_complement (ker_op f))\<close>
       by (simp add: inner_product_proj \<open>t \<noteq> 0\<close>)
-    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
+    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
       for x
       using \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
       by (simp add: clinear.scaleC)
-    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
+    hence \<open>f (proj (orthogonal_complement (ker_op f)) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
     proof-
-      from \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((t \<cdot> x)/(t \<cdot> t)) * (f t)\<close>
-      have \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((f t)/(t \<cdot> t)) * (t \<cdot> x)\<close>
+      from \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
+      have \<open>f (proj (orthogonal_complement (ker_op f)) x) = ((f t)/(\<langle>t , t\<rangle>)) * (\<langle>t , x\<rangle>)\<close>
         by simp
       thus ?thesis
         by auto 
@@ -198,7 +198,7 @@ next
       for x
       using proj_ker_simp
       by (simp add: proj_ker_simp assms) 
-    ultimately have \<open>f x =  (((cnj (f t))/(t \<cdot> t)) *\<^sub>C t) \<cdot> x\<close>
+    ultimately have \<open>f x = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
       using ortho_decomp_linear
       by (metis add.left_neutral assms ker_op_lin) 
@@ -211,7 +211,7 @@ qed
 (* NEW *)
 corollary Existence_of_adjoint: 
   \<open>bounded_clinear G \<Longrightarrow> \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space. ( 
-   \<forall> x::'a. \<forall> y::'b. ((F x) \<cdot> y) = (x \<cdot> (G y))
+   \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>)
 )\<close>
 proof-
   assume \<open>bounded_clinear G\<close>
@@ -222,7 +222,7 @@ proof-
     unfolding bounded_clinear_def
     by (simp add: bounded_clinear_axioms_def) 
   define g :: \<open>'a \<Rightarrow> ('b \<Rightarrow> complex)\<close> where
-    \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
+    \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
   have \<open>bounded_clinear (g x)\<close>
     for x
   proof-
@@ -230,30 +230,30 @@ proof-
     proof-
       have \<open>(g x) (a + b) = (g x) a + (g x) b\<close>
         for a b
-        unfolding  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
+        unfolding  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
         using  \<open>clinear G\<close>
         by (simp add: additive.add cinner_right_distrib clinear_def)
       moreover have  \<open>(g x) (k *\<^sub>C a) = k *\<^sub>C ((g x) a)\<close>
         for a k
-        unfolding  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
+        unfolding g_def
         using  \<open>clinear G\<close>
         by (simp add: clinear.scaleC)
       ultimately show ?thesis
         by (simp add: clinearI) 
     qed
     moreover have \<open>\<exists> M. \<forall> y. \<parallel> (g x) y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
-      using \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close> \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
+      using \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close> g_def
       by (simp add: \<open>bounded_clinear G\<close> bounded_clinear.bounded bounded_clinear_cinner_right_comp)
     ultimately show ?thesis unfolding bounded_linear_def
       using bounded_clinear.intro bounded_clinear_axioms_def by auto 
   qed
-  hence  \<open>\<forall> x. \<exists> t::'b. ( \<forall> y :: 'b.  (g x) y = (t \<cdot> y) )\<close>
+  hence  \<open>\<forall> x. \<exists> t::'b. ( \<forall> y :: 'b.  (g x) y = (\<langle>t , y\<rangle>) )\<close>
     using  Riesz_Frechet_representation_existence by blast
-  hence  \<open>\<exists> F. \<forall> x. ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
+  hence  \<open>\<exists> F. \<forall> x. ( \<forall> y :: 'b.  (g x) y = (\<langle>(F x) , y\<rangle>) )\<close>
     by metis
-  then obtain F where \<open>\<forall> x. ( \<forall> y :: 'b.  (g x) y = ((F x) \<cdot> y) )\<close>
+  then obtain F where \<open>\<forall> x. ( \<forall> y :: 'b.  (g x) y = (\<langle>(F x) , y\<rangle>) )\<close>
     by blast
-  thus ?thesis using  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (x \<cdot> (G y)) )\<close>
+  thus ?thesis using  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
     by auto
 qed
 
@@ -261,12 +261,12 @@ qed
 corollary Existence_of_adjoint2: 
   \<open>\<exists> Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. ((Adj G) x) \<cdot> y = x \<cdot> (G y)
+   \<forall> x::'a. \<forall> y::'b. \<langle>(Adj G) x , y\<rangle> = \<langle>x , (G y)\<rangle>
 )\<close>
 proof-
   have   \<open>\<forall> G. \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space.
  bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. ((F x) \<cdot> y) = (x \<cdot> (G y)) )\<close>
+   \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>) )\<close>
     using Existence_of_adjoint by blast
   thus ?thesis by metis
 qed
@@ -275,19 +275,19 @@ definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space)
  \<Rightarrow> ('a::chilbert_space \<Rightarrow> 'b::chilbert_space)\<close> where 
   \<open>Adj \<equiv> SOME Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. ((Adj G) x) \<cdot> y = x \<cdot> (G y)
+   \<forall> x::'a. \<forall> y::'b. \<langle>((Adj G) x) , y\<rangle> = \<langle>x , (G y)\<rangle>
 )\<close>
 
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
 lemma AdjI: \<open>bounded_clinear G \<Longrightarrow> 
- \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) \<close>
+ \<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> \<close>
   for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
 proof-
   assume \<open>bounded_clinear G\<close> 
   moreover have \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
+   \<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> )\<close>
     using Existence_of_adjoint2 Adj_def
     by (smt tfl_some)
   ultimately show ?thesis by blast  
@@ -297,19 +297,19 @@ qed
 (* NEW *)
 lemma AdjUniq:
   \<open>bounded_clinear G \<Longrightarrow>  
-   \<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)  \<Longrightarrow> F = G\<^sup>\<dagger>\<close>
+   \<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>  \<Longrightarrow> F = G\<^sup>\<dagger>\<close>
   for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
     and F:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
 proof-
   assume  \<open>bounded_clinear G\<close>  
-  assume\<open>\<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)\<close>
-  moreover have \<open>\<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y)\<close>
+  assume\<open>\<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
+  moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
     using  \<open>bounded_clinear G\<close> AdjI by blast
   ultimately have  \<open>\<forall> x::'a. \<forall> y::'b. 
-    ((F x) \<cdot> y )-(((G\<^sup>\<dagger>) x) \<cdot> y) = 0\<close>
+    (\<langle>(F x) , y\<rangle> )-(\<langle>((G\<^sup>\<dagger>) x) , y\<rangle>) = 0\<close>
     by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | G y \<rangle>\<close> \<open>\<forall>x y. \<langle> F x | y \<rangle> = \<langle> x | G y \<rangle>\<close>)
   hence  \<open>\<forall> x::'a. \<forall> y::'b. 
-    (((F x) - ((G\<^sup>\<dagger>) x)) \<cdot> y ) = 0\<close>
+    (\<langle>((F x) - ((G\<^sup>\<dagger>) x)) , y\<rangle> ) = 0\<close>
     by (simp add: cinner_diff_left)
   hence \<open>\<forall> x::'a. (F x) - ((G\<^sup>\<dagger>) x) = 0\<close>
     by (metis cinner_gt_zero_iff cinner_zero_left)
@@ -326,12 +326,12 @@ lemma Adj_bounded_clinear:
   \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof-
   assume \<open>bounded_clinear A\<close>
-  have \<open>((A\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (A y)\<close>
+  have \<open>\<langle>((A\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y
     by (simp add: AdjI \<open>bounded_clinear A\<close>)
   have \<open>Modules.additive (A\<^sup>\<dagger>)\<close>
   proof-
-    have \<open>((A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2)) \<cdot> y = 0\<close>
+    have \<open>\<langle>((A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2)) , y\<rangle> = 0\<close>
       for x1 x2 y
       by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close> cinner_diff_left cinner_left_distrib)        
     hence \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close>
@@ -343,25 +343,25 @@ proof-
   moreover have \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C  (A\<^sup>\<dagger>) x\<close>
     for r x
   proof-
-    have \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y = (r *\<^sub>C x) \<cdot> (A y)\<close>
+    have \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> = \<langle>(r *\<^sub>C x) , (A y)\<rangle>\<close>
       for y
       by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
-    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y = (cnj r) * ( x \<cdot> (A y))\<close>
+    hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> = (cnj r) * ( \<langle>x , (A y)\<rangle>)\<close>
       for y
       by simp
-    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (x \<cdot> ((cnj r) *\<^sub>C A y))\<close>
+    hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (\<langle>x , ((cnj r) *\<^sub>C A y)\<rangle>)\<close>
       for y
       by simp
-    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (cnj r) * (x \<cdot> A y)\<close>
+    hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (cnj r) * (\<langle>x , A y\<rangle>)\<close>
       for y
       by auto
-    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (cnj r) * ((A\<^sup>\<dagger>) x \<cdot> y)\<close>
+    hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (cnj r) * (\<langle>(A\<^sup>\<dagger>) x , y\<rangle>)\<close>
       for y
       by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
-    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (r *\<^sub>C (A\<^sup>\<dagger>) x \<cdot> y)\<close>
+    hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (\<langle>r *\<^sub>C (A\<^sup>\<dagger>) x , y\<rangle>)\<close>
       for y
       by simp
-    hence \<open>(((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x )) \<cdot> y = 0\<close>
+    hence \<open>\<langle>(((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x )) , y\<rangle> = 0\<close>
       for y
       by (simp add: \<open>\<And>y. \<langle> (A\<^sup>\<dagger>) (r *\<^sub>C x) | y \<rangle> = \<langle> r *\<^sub>C (A\<^sup>\<dagger>) x | y \<rangle>\<close> cinner_diff_left)
     hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x ) = 0\<close>
@@ -371,19 +371,19 @@ proof-
   qed
   moreover have \<open>(\<exists>K. \<forall>x. \<parallel> (A\<^sup>\<dagger>) x\<parallel> \<le> \<parallel>x\<parallel> * K)\<close>
   proof-
-    have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = ((A\<^sup>\<dagger>) x) \<cdot> ((A\<^sup>\<dagger>) x)\<close>
+    have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<langle>((A\<^sup>\<dagger>) x) , ((A\<^sup>\<dagger>) x)\<rangle>\<close>
       for x
       using power2_norm_eq_cinner' by auto
     moreover have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<ge> 0\<close>
       for x
       by simp
-    ultimately have  \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> ((A\<^sup>\<dagger>) x) \<cdot> ((A\<^sup>\<dagger>) x) \<bar>\<close>
+    ultimately have  \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>((A\<^sup>\<dagger>) x) , ((A\<^sup>\<dagger>) x)\<rangle> \<bar>\<close>
       for x
       by (simp add: abs_pos)
-    hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> x \<cdot> (A ((A\<^sup>\<dagger>) x)) \<bar>\<close>
+    hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x , (A ((A\<^sup>\<dagger>) x))\<rangle> \<bar>\<close>
       for x
       by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
-    moreover have  \<open>\<bar>x \<cdot> (A ((A\<^sup>\<dagger>) x))\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
+    moreover have  \<open>\<bar>\<langle>x , (A ((A\<^sup>\<dagger>) x))\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
       for x
       by (simp add: complex_inner_class.norm_cauchy_schwarz)
     ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
