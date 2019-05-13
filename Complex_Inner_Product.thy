@@ -47,7 +47,7 @@ class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dis
     and cinner_scaleC_left [simp]: "cinner (r *\<^sub>C x) y = (cnj r) * (cinner x y)"
     and cinner_ge_zero [simp]: "0 \<le> cinner x x"
     and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
-    and norm_eq_sqrt_cinner: "\<parallel> x \<parallel> = sqrt (cmod (cinner x x))"
+    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
 begin
 
 
@@ -106,18 +106,24 @@ lemmas cinner_left_distrib = cinner_add_left
 lemmas cinner_right_distrib = cinner_add_right
 lemmas cinner_distrib = cinner_left_distrib cinner_right_distrib
 
-lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x , x\<rangle> \<longleftrightarrow> x \<noteq> 0"
+lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x, x\<rangle> \<longleftrightarrow> x \<noteq> 0"
   by (simp add: order_less_le)
 
-lemma power2_norm_eq_cinner: "(\<parallel>x\<parallel>)\<^sup>2 = cmod (\<langle>x , x\<rangle>)"
+lemma power2_norm_eq_cinner:
+  includes notation_norm
+  shows "\<parallel>x\<parallel>\<^sup>2 = cmod \<langle>x, x\<rangle>"
   by (simp add: norm_eq_sqrt_cinner)
 
 
-lemma power2_norm_eq_cinner': "complex_of_real ((\<parallel> x \<parallel>)\<^sup>2) = \<langle>x , x\<rangle>"
+lemma power2_norm_eq_cinner':
+  includes notation_norm
+  shows "complex_of_real (\<parallel> x \<parallel>\<^sup>2) = \<langle>x, x\<rangle>"
   apply (subst power2_norm_eq_cinner)
   using cinner_ge_zero by (rule complex_of_real_cmod)
 
-lemma power2_norm_eq_cinner'': "(complex_of_real (\<parallel>x\<parallel>))\<^sup>2 = \<langle>x , x\<rangle>"
+lemma power2_norm_eq_cinner'':
+  includes notation_norm
+  shows "(complex_of_real \<parallel>x\<parallel>)\<^sup>2 = \<langle>x, x\<rangle>"
   using power2_norm_eq_cinner' by simp
 
 
@@ -163,7 +169,9 @@ qed
 lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp
 
-lemma cinner_norm_sq: "\<langle>x , x\<rangle> = complex_of_real ((\<parallel>x\<parallel>)^2)"
+lemma cinner_norm_sq:
+  includes notation_norm
+  shows "\<langle>x, x\<rangle> = complex_of_real (\<parallel>x\<parallel>^2)"
 proof -
   define r where "r = Re (cinner x x)"
   have r: "cinner x x = complex_of_real r"
@@ -178,7 +186,8 @@ proof -
 qed
 
 lemma Cauchy_Schwarz_ineq2:
-  "cmod (\<langle>x , y\<rangle>) \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
+  includes notation_norm
+  shows "cmod \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
   have ineq: "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
     using Cauchy_Schwarz_ineq .
@@ -195,7 +204,9 @@ proof (rule power2_le_imp_le)
     by (simp add: local.norm_eq_sqrt_cinner)
 qed
 
-lemma norm_cauchy_schwarz: "\<bar>\<langle>x , y\<rangle>\<bar> \<le> complex_of_real (\<parallel>x\<parallel>) * complex_of_real (\<parallel>y\<parallel>)"
+lemma norm_cauchy_schwarz:
+  includes notation_norm
+  shows "\<bar>\<langle>x , y\<rangle>\<bar> \<le> complex_of_real \<parallel>x\<parallel> * complex_of_real \<parallel>y\<parallel>"
   using Cauchy_Schwarz_ineq2 [of x y, THEN complex_of_real_mono]
   unfolding abs_complex_def
   by auto
@@ -497,7 +508,8 @@ end
 subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
-  \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re (\<langle>x , y\<rangle>)\<close>
+  includes notation_norm
+  shows \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re \<langle>x, y\<rangle>\<close>
   (* Reference: In the proof of Corollary 1.5 in conway2013course *)
 proof-
   have \<open>(\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) = (\<langle>x , y\<rangle>) + cnj (\<langle>x , y\<rangle>)\<close>
@@ -513,7 +525,8 @@ proof-
 qed
 
 lemma polarization_identity_minus:
-  \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (\<langle>x , y\<rangle>)\<close>
+  includes notation_norm
+  shows \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re \<langle>x, y\<rangle>\<close>
 proof-
   have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2*Re (\<langle>x , (-y)\<rangle>)\<close>
     using polarization_identity_plus by blast
@@ -561,7 +574,8 @@ qed
 
 
 theorem PythagoreanId:
-  \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
+  includes notation_norm
+  shows \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
   (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
   by (simp add: polarization_identity_plus)
 
