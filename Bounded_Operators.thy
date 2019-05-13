@@ -258,24 +258,8 @@ lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSp
 lemma one_times_op[simp]: "timesScalarOp (1::complex) B = B" 
   apply transfer by simp
 
-(* NEW *)
-lemma PREscalar_times_adj: 
-  fixes a::complex and A::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
-    and y::'b
-  assumes \<open>bounded_linear A\<close>
-  shows "((\<lambda> x. a *\<^sub>C (A x))\<^sup>\<dagger>) y = (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) y)" 
-proof-
-  have \<open>bounded_clinear (\<lambda> x. a *\<^sub>C (A x))\<close>
-    sorry
-  have \<open>((cnj a) *\<^sub>C ((A\<^sup>\<dagger>) y)) \<cdot> x = y \<cdot> ((\<lambda> x. a *\<^sub>C (A x)) x)\<close>
-    for x
-    sorry
-  thus ?thesis sorry
-qed
-
 lemma scalar_times_adj[simp]: "(timesScalarOp a A)* = timesScalarOp (cnj a) (A*)" for A::"('a,'b)bounded"
-  apply transfer by (cheat PREscalar_times_adj)
-
+  apply transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
   apply transfer by auto

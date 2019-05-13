@@ -282,25 +282,26 @@ notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
 lemma AdjI: \<open>bounded_clinear G \<Longrightarrow> 
  \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) \<close>
-for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+  for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
 proof-
   assume \<open>bounded_clinear G\<close> 
   moreover have \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
-  using Existence_of_adjoint2 Adj_def
-  by (smt tfl_some)
+    using Existence_of_adjoint2 Adj_def
+    by (smt tfl_some)
   ultimately show ?thesis by blast  
 qed
 
 
 (* NEW *)
-lemma AdjUniq:  
-\<open>bounded_clinear F \<Longrightarrow> bounded_clinear G \<Longrightarrow>  
+lemma AdjUniq:
+  \<open>bounded_clinear G \<Longrightarrow>  
    \<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)  \<Longrightarrow> F = G\<^sup>\<dagger>\<close>
-for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+  for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+    and F:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
 proof-
-  assume \<open>bounded_clinear F\<close> and \<open>bounded_clinear G\<close>  
+  assume  \<open>bounded_clinear G\<close>  
   assume\<open>\<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)\<close>
   moreover have \<open>\<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y)\<close>
     using  \<open>bounded_clinear G\<close> AdjI by blast
@@ -319,5 +320,113 @@ proof-
   thus ?thesis by auto
 qed
 
+
+(* NEW *)
+lemma Adj_bounded_clinear:
+  \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
+proof-
+  assume \<open>bounded_clinear A\<close>
+  have \<open>((A\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (A y)\<close>
+    for x y
+    by (simp add: AdjI \<open>bounded_clinear A\<close>)
+  have \<open>Modules.additive (A\<^sup>\<dagger>)\<close>
+  proof-
+    have \<open>((A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2)) \<cdot> y = 0\<close>
+      for x1 x2 y
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close> cinner_diff_left cinner_left_distrib)        
+    hence \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close>
+      for x1 x2
+      using cinner_eq_zero_iff by blast
+    thus ?thesis
+      by (simp add: \<open>\<And>x2 x1. (A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close> additive.intro eq_iff_diff_eq_0) 
+  qed 
+  moreover have \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C  (A\<^sup>\<dagger>) x\<close>
+    for r x
+  proof-
+    have \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y = (r *\<^sub>C x) \<cdot> (A y)\<close>
+      for y
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y = (cnj r) * ( x \<cdot> (A y))\<close>
+      for y
+      by simp
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (x \<cdot> ((cnj r) *\<^sub>C A y))\<close>
+      for y
+      by simp
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (cnj r) * (x \<cdot> A y)\<close>
+      for y
+      by auto
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (cnj r) * ((A\<^sup>\<dagger>) x \<cdot> y)\<close>
+      for y
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) \<cdot> y =  (r *\<^sub>C (A\<^sup>\<dagger>) x \<cdot> y)\<close>
+      for y
+      by simp
+    hence \<open>(((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x )) \<cdot> y = 0\<close>
+      for y
+      by (simp add: \<open>\<And>y. \<langle> (A\<^sup>\<dagger>) (r *\<^sub>C x) | y \<rangle> = \<langle> r *\<^sub>C (A\<^sup>\<dagger>) x | y \<rangle>\<close> cinner_diff_left)
+    hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x ) = 0\<close>
+      using cinner_eq_zero_iff by blast
+    thus ?thesis
+      by (simp add: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) - r *\<^sub>C (A\<^sup>\<dagger>) x = 0\<close> eq_iff_diff_eq_0) 
+  qed
+  moreover have \<open>(\<exists>K. \<forall>x. \<parallel> (A\<^sup>\<dagger>) x\<parallel> \<le> \<parallel>x\<parallel> * K)\<close>
+  proof-
+    have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = ((A\<^sup>\<dagger>) x) \<cdot> ((A\<^sup>\<dagger>) x)\<close>
+      for x
+      using power2_norm_eq_cinner' by auto
+    moreover have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<ge> 0\<close>
+      for x
+      by simp
+    ultimately have  \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> ((A\<^sup>\<dagger>) x) \<cdot> ((A\<^sup>\<dagger>) x) \<bar>\<close>
+      for x
+      by (simp add: abs_pos)
+    hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> x \<cdot> (A ((A\<^sup>\<dagger>) x)) \<bar>\<close>
+      for x
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+    moreover have  \<open>\<bar>x \<cdot> (A ((A\<^sup>\<dagger>) x))\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
+      for x
+      by (simp add: complex_inner_class.norm_cauchy_schwarz)
+    ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
+      for x
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close> complex_inner_class.Cauchy_Schwarz_ineq2 power2_norm_eq_cinner)
+    moreover have \<open>\<exists> M. M \<ge> 0 \<and> (\<forall> x.  \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
+    proof-
+      have \<open>\<exists> M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
+        using \<open>bounded_clinear A\<close>
+        by (metis (mono_tags, hide_lams) bounded_clinear.bounded linear mult_nonneg_nonpos mult_zero_right norm_ge_zero order.trans semiring_normalization_rules(7)) 
+      then obtain M where \<open>M \<ge> 0\<close> and \<open>\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+        by blast
+      have \<open>\<forall> x. \<parallel>x\<parallel> \<ge> 0\<close>
+        by simp
+      hence \<open>\<forall> x.  \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+        using  \<open>\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+        by (smt ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale) 
+      thus ?thesis using \<open>M \<ge> 0\<close> by blast
+    qed
+    ultimately have  \<open>\<exists> M. M \<ge> 0 \<and> (\<forall> x. \<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<le> \<parallel>x\<parallel> *  M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
+      by (meson order.trans)
+    then obtain M where \<open>M \<ge> 0\<close> and \<open>\<forall> x. \<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<le> \<parallel>x\<parallel> *  M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+      by blast
+    have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel> \<le> \<parallel>x\<parallel> *  M\<close>
+      for x
+    proof(cases \<open> \<parallel>(A\<^sup>\<dagger>) x\<parallel> = 0\<close>)
+      case True
+      thus ?thesis
+        by (simp add: \<open>0 \<le> M\<close>) 
+    next
+      case False
+      have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<le> \<parallel>x\<parallel> *  M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+        using \<open>\<forall> x. \<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<le> \<parallel>x\<parallel> *  M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
+        by simp
+      thus ?thesis
+        by (smt False mult_right_cancel mult_right_mono norm_ge_zero semiring_normalization_rules(29)) 
+    qed
+    thus ?thesis by blast
+  qed
+  ultimately show ?thesis
+    unfolding bounded_clinear_def
+    unfolding clinear_def
+    by (simp add: bounded_clinear_axioms_def clinear_axioms.intro)
+qed
 
 end
