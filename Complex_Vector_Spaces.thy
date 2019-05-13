@@ -28,7 +28,9 @@ begin
 
 
 (* TODO: discuss where to put *)
+bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
+end
 
 (* TODO: gather all notation in bundles.
 
@@ -649,7 +651,7 @@ subsection \<open>Complex normed vector spaces\<close>
 
 class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   real_normed_vector + 
-  assumes norm_scaleC [simp]: "\<parallel> a *\<^sub>C x \<parallel> = (cmod a) * \<parallel> x \<parallel>"
+  assumes norm_scaleC [simp]: "norm (a *\<^sub>C x) = (cmod a) * norm x"
 
 class complex_normed_algebra = complex_algebra + complex_normed_vector + real_normed_algebra
   (* assumes norm_mult_ineq: "norm (x * y) \<le> norm x * norm y" *)
@@ -756,7 +758,7 @@ lemma clinearI:
   by standard (rule assms)+
 
 locale bounded_clinear = clinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
-  assumes bounded: "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
 begin
 
 sublocale bounded_linear

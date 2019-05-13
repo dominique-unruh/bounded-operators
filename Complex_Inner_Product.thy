@@ -524,12 +524,14 @@ proof-
 qed
 
 proposition ParallelogramLaw:
+  includes notation_norm
   fixes x y :: "'a::complex_inner"
   shows \<open>\<parallel>x+y\<parallel>^2 + \<parallel>x-y\<parallel>^2 = 2*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
     (* Reference: Theorem 2.3 in conway2013course *)
   by (simp add: polarization_identity_minus polarization_identity_plus)
 
 corollary ParallelogramLawVersion1:
+  includes notation_norm
   fixes x :: "'a::complex_inner"
   shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
     = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
@@ -838,6 +840,7 @@ definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
 lemma ExistenceUniquenessMinNorm:
+  includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
@@ -1125,6 +1128,7 @@ theorem ExistenceUniquenessMinDist:
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
 proof-
+  include notation_norm
   have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
     by (simp add: assms(3))
   moreover have \<open>closed {m - h| m. m \<in> M}\<close>
@@ -1230,6 +1234,7 @@ theorem DistMinOrtho:
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
     (* Reference: Theorem 2.6 in conway2013course *)
 proof-
+  include notation_norm
   have \<open>is_arg_min_on (\<lambda> x. dist x h) M k
      \<Longrightarrow>  h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
   proof-
@@ -1462,8 +1467,9 @@ lemma bounded_linear_continuous:
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
 theorem projPropertiesB:
-  \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
-  for M :: \<open>('a::chilbert_space) set\<close>
+  includes notation_norm
+  fixes M :: \<open>('a::chilbert_space) set\<close>
+  shows \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
     (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>

@@ -27,7 +27,7 @@ lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longri
 (* NEW *)
 (* The norm of a bouded operator *)
 definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) \<Rightarrow> real\<close> where
-  \<open>norm_bounded \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K}\<close>
+  \<open>norm_bounded \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. norm (f x) \<le> norm x * K}\<close>
 
 (* NEW *)
 definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
@@ -214,6 +214,7 @@ corollary Existence_of_adjoint:
    \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>)
 )\<close>
 proof-
+  include notation_norm
   assume \<open>bounded_clinear G\<close>
   hence \<open>clinear G\<close>
     unfolding bounded_clinear_def by blast
@@ -325,6 +326,7 @@ qed
 lemma Adj_bounded_clinear:
   \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof-
+  include notation_norm
   assume \<open>bounded_clinear A\<close>
   have \<open>\<langle>((A\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y

@@ -7,11 +7,12 @@ theory Banach_Algebras
   imports Complex_Vector_Spaces "HOL-Library.Adhoc_Overloading" Extended_Sorry
 begin
 
+(* TODO: Should inherit from classes one, times (possibly others for the different axioms) *)
 class cbanach_algebra = cbanach +
   fixes banach_mult :: "'a \<Rightarrow> 'a \<Rightarrow> 'a"  (infixl "\<degree>" 70)
     and unit :: 'a ("\<one>")
   assumes
-    BAlg1: \<open>\<parallel> x \<degree> y \<parallel> \<le> \<parallel> x \<parallel> * \<parallel> y \<parallel>\<close> and
+    BAlg1: \<open>norm (x \<degree> y) \<le> norm x * norm y\<close> and
     BAlg2: \<open>((x + y) \<degree> z) = (x \<degree> z) + (y \<degree> z)\<close> and
     BAlg3: \<open>((c *\<^sub>C x) \<degree> y) = c *\<^sub>C (x \<degree> y)\<close> and
     BAlg4: \<open>(z \<degree> (x + y)) = (z \<degree> x) + (z \<degree> x)\<close> and
@@ -19,7 +20,7 @@ class cbanach_algebra = cbanach +
     BAlg6: \<open>(x \<degree> (y \<degree> z)) = ((x \<degree> y) \<degree> z)\<close> and
     BAlg7: \<open>(\<one> \<degree> x) = x\<close>  and
     BAlg8: \<open>(x \<degree> \<one>) = x\<close>  and
-    BAlg9: \<open>\<parallel>\<one>\<parallel> \<le> 1\<close> 
+    BAlg9: \<open>norm \<one> \<le> 1\<close> 
 
 begin
 
@@ -37,6 +38,7 @@ proof(cases \<open>y = 0\<close>)
   ultimately show ?thesis using zero_right 
     by (simp add: cbanach_algebra_class.zero_right) 
 next
+  include notation_norm
   case False
   hence \<open>y \<noteq> 0\<close> by auto
   have  \<open>\<parallel> y \<parallel> > 0\<close>
@@ -102,6 +104,7 @@ proof(cases \<open>y = 0\<close>)
   ultimately show ?thesis using zero_right 
     by (simp add: cbanach_algebra_class.zero_left) 
 next
+  include notation_norm
   case False
   hence \<open>y \<noteq> 0\<close> by auto
   have  \<open>\<parallel> y \<parallel> > 0\<close>
