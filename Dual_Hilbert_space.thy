@@ -280,11 +280,44 @@ definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space)
 
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
-lemma AdjI: \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
- bounded_clinear G \<Longrightarrow> ( 
+lemma AdjI: \<open>bounded_clinear G \<Longrightarrow> 
+ \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) \<close>
+for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+proof-
+  assume \<open>bounded_clinear G\<close> 
+  moreover have \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
+ bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y) )\<close>
   using Existence_of_adjoint2 Adj_def
   by (smt tfl_some)
+  ultimately show ?thesis by blast  
+qed
+
+
+(* NEW *)
+lemma AdjUniq:  
+\<open>bounded_clinear F \<Longrightarrow> bounded_clinear G \<Longrightarrow>  
+   \<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)  \<Longrightarrow> F = G\<^sup>\<dagger>\<close>
+for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+proof-
+  assume \<open>bounded_clinear F\<close> and \<open>bounded_clinear G\<close>  
+  assume\<open>\<forall> x::'a. \<forall> y::'b. (F x) \<cdot> y = x \<cdot> (G y)\<close>
+  moreover have \<open>\<forall> x::'a. \<forall> y::'b. ((G\<^sup>\<dagger>) x) \<cdot> y = x \<cdot> (G y)\<close>
+    using  \<open>bounded_clinear G\<close> AdjI by blast
+  ultimately have  \<open>\<forall> x::'a. \<forall> y::'b. 
+    ((F x) \<cdot> y )-(((G\<^sup>\<dagger>) x) \<cdot> y) = 0\<close>
+    by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | G y \<rangle>\<close> \<open>\<forall>x y. \<langle> F x | y \<rangle> = \<langle> x | G y \<rangle>\<close>)
+  hence  \<open>\<forall> x::'a. \<forall> y::'b. 
+    (((F x) - ((G\<^sup>\<dagger>) x)) \<cdot> y ) = 0\<close>
+    by (simp add: cinner_diff_left)
+  hence \<open>\<forall> x::'a. (F x) - ((G\<^sup>\<dagger>) x) = 0\<close>
+    by (metis cinner_gt_zero_iff cinner_zero_left)
+  hence \<open>\<forall> x::'a. (F - (G\<^sup>\<dagger>)) x = 0\<close>
+    by simp
+  hence \<open>\<forall> x::'a. F x = (G\<^sup>\<dagger>) x\<close>
+    by (simp add: \<open>\<forall>x. F x - (G\<^sup>\<dagger>) x = 0\<close> eq_iff_diff_eq_0)
+  thus ?thesis by auto
+qed
 
 
 end
