@@ -110,19 +110,19 @@ lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x, x\<rangle> \<longleftrightarro
   by (simp add: order_less_le)
 
 lemma power2_norm_eq_cinner:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows "\<parallel>x\<parallel>\<^sup>2 = cmod \<langle>x, x\<rangle>"
   by (simp add: norm_eq_sqrt_cinner)
 
 
 lemma power2_norm_eq_cinner':
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows "complex_of_real (\<parallel> x \<parallel>\<^sup>2) = \<langle>x, x\<rangle>"
   apply (subst power2_norm_eq_cinner)
   using cinner_ge_zero by (rule complex_of_real_cmod)
 
 lemma power2_norm_eq_cinner'':
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows "(complex_of_real \<parallel>x\<parallel>)\<^sup>2 = \<langle>x, x\<rangle>"
   using power2_norm_eq_cinner' by simp
 
@@ -170,7 +170,7 @@ lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp
 
 lemma cinner_norm_sq:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows "\<langle>x, x\<rangle> = complex_of_real (\<parallel>x\<parallel>^2)"
 proof -
   define r where "r = Re (cinner x x)"
@@ -186,7 +186,7 @@ proof -
 qed
 
 lemma Cauchy_Schwarz_ineq2:
-(* includes notation_norm *) (* NEW *)
+includes notation_norm 
   shows "cmod \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
   have ineq: "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
@@ -205,7 +205,7 @@ proof (rule power2_le_imp_le)
 qed
 
 lemma norm_cauchy_schwarz:
-(* includes notation_norm *) (* NEW *)
+includes notation_norm 
   shows "\<bar>\<langle>x , y\<rangle>\<bar> \<le> complex_of_real \<parallel>x\<parallel> * complex_of_real \<parallel>y\<parallel>"
   using Cauchy_Schwarz_ineq2 [of x y, THEN complex_of_real_mono]
   unfolding abs_complex_def
@@ -508,7 +508,7 @@ end
 subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re \<langle>x, y\<rangle>\<close>
   (* Reference: In the proof of Corollary 1.5 in conway2013course *)
 proof-
@@ -525,7 +525,7 @@ proof-
 qed
 
 lemma polarization_identity_minus:
-(* includes notation_norm *) (* NEW *)
+includes notation_norm 
   shows \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re \<langle>x, y\<rangle>\<close>
 proof-
   have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2*Re (\<langle>x , (-y)\<rangle>)\<close>
@@ -537,14 +537,14 @@ proof-
 qed
 
 proposition ParallelogramLaw:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   fixes x y :: "'a::complex_inner"
   shows \<open>\<parallel>x+y\<parallel>^2 + \<parallel>x-y\<parallel>^2 = 2*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
     (* Reference: Theorem 2.3 in conway2013course *)
   by (simp add: polarization_identity_minus polarization_identity_plus)
 
 corollary ParallelogramLawVersion1:
-(*  includes notation_norm *)
+  includes notation_norm
   fixes x :: "'a::complex_inner"
   shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
     = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
@@ -574,7 +574,7 @@ qed
 
 
 theorem PythagoreanId:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   shows \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
   (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
   by (simp add: polarization_identity_plus)
@@ -854,7 +854,7 @@ definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
 lemma ExistenceUniquenessMinNorm:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
@@ -1142,7 +1142,7 @@ theorem ExistenceUniquenessMinDist:
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
     (* Reference: Theorem 2.5 in conway2013course *)
 proof-
-(*  include notation_norm *) (* NEW *)
+  include notation_norm 
   have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
     by (simp add: assms(3))
   moreover have \<open>closed {m - h| m. m \<in> M}\<close>
@@ -1248,7 +1248,7 @@ theorem DistMinOrtho:
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
     (* Reference: Theorem 2.6 in conway2013course *)
 proof-
-(*  include notation_norm *) (* NEW *)
+  include notation_norm
   have \<open>is_arg_min_on (\<lambda> x. dist x h) M k
      \<Longrightarrow>  h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
   proof-
@@ -1481,7 +1481,7 @@ lemma bounded_linear_continuous:
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
 theorem projPropertiesB:
-(*  includes notation_norm *) (* NEW *)
+includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>
   shows \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
     (* Reference: Theorem 2.7 in conway2013course *)

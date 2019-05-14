@@ -57,7 +57,7 @@ lemma bound_op_characterization:
 lemma bounded_clinear_comp:
   \<open>bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (f \<circ> g)\<close>
 proof-
-(*  include notation_norm *)
+  include notation_norm 
   assume \<open>bounded_clinear f\<close>
   assume \<open>bounded_clinear g\<close>
   have \<open>clinear (f \<circ> g)\<close>
