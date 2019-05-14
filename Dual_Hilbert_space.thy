@@ -436,14 +436,73 @@ proof-
 qed
 
 section \<open>Dual space\<close>
-(* This is an important particular case of ('a, 'b) bounded,
+  (* This is an important particular case of ('a, 'b) bounded,
 where 'b is the set of complex numbers. *)
 
 (* NEW *)
 typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
+  morphisms Rep_dual Abs_dual
   using bounded_clinear_zero by blast
 setup_lifting type_definition_dual
   (* derive universe vector *)
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "zero"
+begin
+definition
+  "0 = Abs_dual (\<lambda> x::'a. (0::complex))"
+instance ..
+end
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "uminus"
+begin
+definition
+  "- x = Abs_dual (\<lambda> t::'a. - Rep_dual x t)"
+instance ..
+end
+
+(* NEW *)
+lemma dual_eqI:
+  \<open>Rep_dual m = Rep_dual n \<Longrightarrow> m = n\<close>
+  by (simp add: Rep_dual_inject)
+
+(* NEW *)
+lemma dual_eq_iff:
+  "m = n \<longleftrightarrow> Rep_dual m = Rep_dual n"
+  by (simp add: Rep_dual_inject)
+
+(* NEW *)
+lemma Abs_dual_Rep_dual [code abstype]:
+  \<open>Abs_dual (Rep_dual n) = n\<close>
+  by (fact Rep_dual_inverse)
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "semigroup_add"
+begin
+definition 
+  "x + y = Abs_dual (\<lambda> t::'a. Rep_dual x t + Rep_dual y t)"
+
+instance
+proof      
+  fix a b c :: \<open>('a::chilbert_space) dual\<close>
+  show \<open>a + b + c = a + (b + c)\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (a + b + c) x = Rep_dual (a + (b + c)) x\<close>
+      for x
+    proof -
+      have "Rep_dual a x + Rep_dual b x + Rep_dual c x = Rep_dual a x + (Rep_dual b x + Rep_dual c x)"
+        by auto
+      then show ?thesis
+        by (metis (no_types) Abs_dual_inverse Rep_dual bounded_clinear_add mem_Collect_eq plus_dual_def)
+    qed     
+    thus \<open>Rep_dual (a + b + c) = Rep_dual (a + (b + c))\<close>
+      by blast 
+  qed
+qed
+
+end
 
 
 
