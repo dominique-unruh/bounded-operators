@@ -20,6 +20,8 @@ theory Dual_Hilbert_space
     "HOL-Analysis.Abstract_Topology" Extended_Sorry
 begin
 
+section \<open>Riesz Frechet representation\<close>
+
 (* NEW *)
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
   by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
@@ -44,7 +46,6 @@ lemma proportion_existence:
 (* NEW *)
 (* functional *)
 type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
-
 
 (* NEW *)
 lemma ker_ortho_nonzero:
@@ -207,6 +208,9 @@ next
   qed
 qed
 
+
+
+section \<open> Adjoint \<close>
 
 (* NEW *)
 corollary Existence_of_adjoint: 
@@ -430,5 +434,17 @@ proof-
     unfolding clinear_def
     by (simp add: bounded_clinear_axioms_def clinear_axioms.intro)
 qed
+
+section \<open>Dual space\<close>
+(* This is an important particular case of ('a, 'b) bounded,
+where 'b is the set of complex numbers. *)
+
+(* NEW *)
+typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
+  using bounded_clinear_zero by blast
+setup_lifting type_definition_dual
+  (* derive universe vector *)
+
+
 
 end
