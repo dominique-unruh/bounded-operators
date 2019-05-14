@@ -440,6 +440,8 @@ section \<open>Dual space\<close>
 where 'b is the set of complex numbers. *)
 
 (* NEW *)
+(* TODO: define for topological_vector_space? (continuous functionals) *)
+(* TODO: is there an advantage in not simply using 'a dual = ('a,complex) bounded? *)
 typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
   morphisms Rep_dual Abs_dual
   using bounded_clinear_zero by blast
