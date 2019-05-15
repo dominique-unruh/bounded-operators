@@ -445,12 +445,13 @@ the brac-ket notation *)
 
 (* NEW *)
 (* TODO: define for topological_vector_space? (continuous functionals) *)
-(* TODO: is there an advantage in not simply using 'a dual = ('a,complex) bounded? *)
+(* TODO: is there an advantage in not simply using type_synonym 'a dual = ('a,complex) bounded? *)
 typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
-  morphisms Rep_dual Abs_dual
+  morphisms Rep_dual Abs_dual (* TODO These are the default names. Why mention them here? *)
   using bounded_clinear_zero by blast
 setup_lifting type_definition_dual
-  (* derive universe vector *)
+
+(* TODO: all the instantiations are probably better done with lift_definition *)
 
 (* NEW *)
 instantiation dual :: (chilbert_space) "zero"
@@ -469,16 +470,20 @@ instance ..
 end
 
 (* NEW *)
+(* TODO exists: Rep_dual_inject[THEN iffD1] *)
 lemma dual_eqI:
   \<open>Rep_dual m = Rep_dual n \<Longrightarrow> m = n\<close>
   by (simp add: Rep_dual_inject)
 
 (* NEW *)
+(* TODO exists: Rep_dual_inject[symmetric] *)
 lemma dual_eq_iff:
   "m = n \<longleftrightarrow> Rep_dual m = Rep_dual n"
   by (simp add: Rep_dual_inject)
 
 (* NEW *)
+(* TODO exists: Rep_dual_inverse *)
+(* TODO: why "code abstype"? *)
 lemma Abs_dual_Rep_dual [code abstype]:
   \<open>Abs_dual (Rep_dual n) = n\<close>
   by (fact Rep_dual_inverse)
