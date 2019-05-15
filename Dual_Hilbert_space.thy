@@ -444,6 +444,8 @@ between a Hilbert space and its dual of a Hilbert space is the justification of
 the brac-ket notation *)
 
 (* NEW *)
+(* TODO: define for topological_vector_space? (continuous functionals) *)
+(* TODO: is there an advantage in not simply using 'a dual = ('a,complex) bounded? *)
 typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
   morphisms Rep_dual Abs_dual
   using bounded_clinear_zero by blast

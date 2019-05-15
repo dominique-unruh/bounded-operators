@@ -4,6 +4,8 @@
 
 References:
 
+(* TODO: should be in separate bibtex file (Isabelle supports bibtex) *)
+
 @book{conway2013course,
 title={A course in functional analysis},
 author={Conway, John B},

@@ -584,6 +584,7 @@ subsection \<open>Orthogonality\<close>
 
 definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
 
+(* TODO use notation command instead of abbreviation! *)
 abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
   where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
 
@@ -597,6 +598,7 @@ abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> 
 lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
   unfolding is_orthogonal_def apply (subst cinner_commute) by blast
 
+(* TODO reference textbook *)
 locale is_linear_manifold =
   fixes A::"('a::complex_vector) set"
   assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
@@ -648,7 +650,7 @@ proof-
     by (simp add: is_linear_manifold_def)
 qed
 
-
+(* TODO reference definition? *)
 definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
@@ -850,6 +852,9 @@ qed
 
 subsection \<open>Minimum distance\<close>
 
+find_consts "'a set \<Rightarrow> ('a \<Rightarrow> bool)"
+
+(* TODO I wouldn't introduce a new constant just for notational variant *)
 definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
@@ -1451,6 +1456,7 @@ proof-
 qed
 
 (* Definition of projection onto the subspace M *)
+(* TODO reference definition *)
 definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where (* using 'a::something set, 'a\<Rightarrow>'a *)
   \<open>proj \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> (orthogonal_complement M) \<and> k \<in>  M)\<close>
 
@@ -1906,7 +1912,7 @@ lemma ortho_bot[simp]:
 
 subsection \<open>Closed sum\<close>
 
-
+(* TODO: is there a textbook reference? *)
 definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>closed_sum A B = closure (A +\<^sub>m B)\<close>
 
