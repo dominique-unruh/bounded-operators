@@ -439,6 +439,10 @@ section \<open>Dual space\<close>
   (* This is an important particular case of ('a, 'b) bounded,
 where 'b is the set of complex numbers. *)
 
+(* The interpretation of Riesz representation theorem as an anti-isomorphism
+between a Hilbert space and its dual of a Hilbert space is the justification of 
+the brac-ket notation *)
+
 (* NEW *)
 typedef (overloaded) ('a::chilbert_space) dual = "{f::'a functional. bounded_clinear f}"
   morphisms Rep_dual Abs_dual
@@ -481,7 +485,7 @@ lemma Abs_dual_Rep_dual [code abstype]:
 instantiation dual :: (chilbert_space) "semigroup_add"
 begin
 definition 
-  "x + y = Abs_dual (\<lambda> t::'a. Rep_dual x t + Rep_dual y t)"
+  \<open>x + y = Abs_dual (\<lambda> t::'a. Rep_dual x t + Rep_dual y t)\<close>
 
 instance
 proof      
@@ -504,6 +508,123 @@ qed
 
 end
 
+(* NEW *)
+instantiation dual :: (chilbert_space) "comm_monoid_add" begin
+instance
+proof
+  fix a b :: \<open>'a::chilbert_space dual\<close>
+  show \<open>a + b = b + a\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (a + b) x = Rep_dual (b + a) x\<close>
+      for x
+    proof-
+      have  \<open>Rep_dual a x + Rep_dual b x  = Rep_dual b x + Rep_dual a x\<close>
+        by simp
+      hence  \<open>Rep_dual (a + b) x = Rep_dual (b + a) x\<close>
+      proof -
+        have "\<forall>d. bounded_clinear (Rep_dual (d::'a dual))"
+          by (metis Rep_dual mem_Collect_eq)
+        then show ?thesis
+          by (simp add: Abs_dual_inverse bounded_clinear_add plus_dual_def)
+      qed 
+      thus ?thesis by blast
+    qed
+    thus \<open>Rep_dual (a + b) = Rep_dual (b + a)\<close> by blast
+  qed
+
+  fix a :: \<open>'a::chilbert_space dual\<close>
+  show \<open>0 + a = a\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>(Rep_dual 0) x + Rep_dual a x = Rep_dual a x\<close>
+      for x
+      by (simp add: Abs_dual_inverse zero_dual_def)
+    hence \<open>Rep_dual (0 + a) x = Rep_dual a x\<close>
+      for x
+      using  Abs_dual_inverse
+      by (metis (full_types) Rep_dual bounded_clinear_add mem_Collect_eq plus_dual_def)  
+    thus \<open>Rep_dual (0 + a) = Rep_dual a\<close> by blast
+  qed
+qed
+
+end
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "ab_group_add" begin
+definition
+  \<open>x - y = Abs_dual (\<lambda> t::'a. Rep_dual x t - Rep_dual y t)\<close>
+instance
+proof
+  fix a::\<open>'a::chilbert_space dual\<close>
+  show \<open>- a + a = 0\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>- Rep_dual a x + Rep_dual a x = 0\<close>
+      for x
+      by simp
+    moreover have \<open>(0::complex) = (Rep_dual (0::'a dual)) x\<close>
+      for x
+      using  Abs_dual_inverse
+      by (simp add: Abs_dual_inverse zero_dual_def)
+    ultimately have \<open>- Rep_dual a x + Rep_dual a x = Rep_dual 0 x\<close>
+      for x
+      by simp       
+    moreover have \<open>Rep_dual (- a) x = - Rep_dual a x\<close>
+      for x
+      using  Abs_dual_inverse
+      by (metis Rep_dual bounded_clinear_minus mem_Collect_eq uminus_dual_def)     
+    ultimately have \<open>Rep_dual (- a) x + Rep_dual a x = Rep_dual 0 x\<close>
+      for x
+      by simp
+    hence \<open>Rep_dual (- a + a) x = Rep_dual 0 x\<close>
+      for x
+      using  Abs_dual_inverse
+      by (metis (full_types) Rep_dual bounded_clinear_add mem_Collect_eq plus_dual_def) 
+    thus \<open>Rep_dual (- a + a) = Rep_dual 0\<close> by blast
+  qed
+
+  fix a b::\<open>'a::chilbert_space dual\<close>
+  show \<open>a - b = a + - b\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (a - b) x = Rep_dual a x - Rep_dual b x\<close>
+      for x
+    proof -
+      have "\<forall>d. bounded_clinear (Rep_dual (d::'a dual))"
+        using Rep_dual by blast
+      then show ?thesis
+        by (simp add: Abs_dual_inverse bounded_clinear_sub minus_dual_def)
+    qed
+    moreover have \<open>Rep_dual (a + (- b)) x = Rep_dual a x + Rep_dual (- b) x\<close>
+      for x
+      by (metis (no_types) Abs_dual_inverse Rep_dual bounded_clinear_add mem_Collect_eq plus_dual_def)
+    moreover have \<open> - Rep_dual b x = Rep_dual (- b) x\<close> 
+      for x  
+      using  Abs_dual_inverse
+      by (metis Rep_dual bounded_clinear_minus mem_Collect_eq uminus_dual_def)     
+    ultimately have  \<open>Rep_dual (a - b) x = Rep_dual (a + (- b)) x\<close> 
+      for x  
+      by simp
+    thus \<open>Rep_dual (a - b) = Rep_dual (a + - b)\<close> by blast
+  qed
+qed
+end
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "complex_vector" begin
+instance sorry
+end
+
+(* NEW *)
+instantiation dual :: (chilbert_space) "complex_normed_vector" begin
+instance sorry
+end
+
+instantiation dual :: (chilbert_space) "chilbert_space" begin
+(* The inner product is defined using Riesz representation theorem *)
+instance sorry
+end
 
 
 end
