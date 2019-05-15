@@ -620,17 +620,18 @@ end
 
 (* NEW *)
 instantiation dual :: (chilbert_space) "complex_vector" begin
-instance sorry
+instance by (cheat "dual complex_vector")
 end
 
 (* NEW *)
 instantiation dual :: (chilbert_space) "complex_normed_vector" begin
-instance sorry
+instance by (cheat "dual complex_normed_vector")
 end
 
 instantiation dual :: (chilbert_space) "chilbert_space" begin
 (* The inner product is defined using Riesz representation theorem *)
-instance sorry
+(* TODO: is that the same as the Hilbert-Schmidt inner product? *)
+instance by (cheat "dual chilbert_space")
 end
 
 
