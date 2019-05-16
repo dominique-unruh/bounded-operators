@@ -462,6 +462,7 @@ setup_lifting type_definition_Bounded
 (* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "zero"
 begin
+(* TODO use lift_definition *)
 definition
   "0 = Abs_Bounded (\<lambda> x::'a. 0)"
 instance ..
@@ -1474,6 +1475,8 @@ typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_s
 
 setup_lifting type_definition_linear_space
 
+(* TODO: define on sets first and lift? *)
+(* TODO: I would define only finite_dim and just negate it for infinite_dim (avoid too many definitions) *)
 definition infinite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
 \<open>infinite_dim S = (
 \<exists> f::nat \<Rightarrow> 'a linear_space.
@@ -1490,10 +1493,14 @@ subsection \<open>Tensor product\<close>
 
 (* Tensor product *)
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
+(* TODO: is that compatible (isomorphic) with tensorVec? *)
 = \<open>{ A :: ('a dual, 'b) Bounded. finite_dim (Abs_linear_space ((Rep_Bounded A) ` UNIV)) }\<close>
   sorry
 
+(* TODO: universal property of tensor products *)
+
 (* Embedding of (x,y) into the tensor product as x\<otimes>y *)
+(* TODO: Shouldn't this be called "tensor" or similar then? *)
 definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
 \<open>HS_embedding x = Abs_tensor ( Abs_Bounded (\<lambda> w::'a dual. ( (Rep_Bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close>
 
