@@ -26,41 +26,37 @@ theory Bounded_Operators
 begin
 
 subsection \<open>Preliminaries\<close>
-(* NEW *)
+
 (* The complex numbers are a Hilbert space *)
 instantiation complex :: "chilbert_space" begin
-
 instance by (cheat "dual chilbert_space")
 end
 
 
 subsection \<open>Riesz Representation\<close>
-(* NEW *)
+
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
   by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
 
-(* NEW *)
 (* The norm of a bouded operator *)
-definition norm_bounded::\<open>('a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) \<Rightarrow> real\<close> where
-  \<open>norm_bounded \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. norm (f x) \<le> norm x * K}\<close>
+definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
+  \<open>operator_norm \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. norm (f x) \<le> norm x * K}\<close>
 
-(* NEW *)
+(* TODO: remove and define locally in lemma *)
 definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
   \<open>proportion S =  (
   \<forall> x y. x \<in> S \<and> x \<noteq> 0 \<and> y \<in> S \<and> y \<noteq> 0 \<longrightarrow> (\<exists> k. x = k *\<^sub>C y) 
 )\<close>
 
-(* NEW *)
+(* TODO: locally *)
 lemma proportion_existence:
   \<open>proportion S \<Longrightarrow> S \<noteq> {} \<Longrightarrow> \<exists> t \<in> S. (\<forall> x \<in> S. \<exists> k. x = k *\<^sub>C t)\<close>
   using complex_vector.scale_zero_left ex_in_conv proportion_def
   by metis
 
-(* NEW *)
 (* functional *)
 type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
 
-(* NEW *)
 lemma ker_ortho_nonzero:
   fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
   assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> (orthogonal_complement (ker_op f))\<close> 
@@ -72,14 +68,13 @@ proof(rule classical)
   hence \<open>x \<in> ker_op f\<close>
     by (simp add: ker_op_def) 
   moreover have \<open>(ker_op f)\<inter>(orthogonal_complement (ker_op f)) = {0}\<close>
-    using \<open>is_subspace (ker_op f)\<close>
-    by (simp add: ortho_inter_zero) 
+    using \<open>is_subspace (ker_op f)\<close> is_linear_manifold.zero is_subspace.subspace ortho_inter_zero by auto
   ultimately have  \<open>x \<notin> orthogonal_complement (ker_op f)\<close> using \<open>x \<noteq> 0\<close>
     by (smt Int_iff empty_iff insert_iff) 
   thus ?thesis using \<open>x \<in> orthogonal_complement (ker_op f)\<close> by blast
 qed
 
-(* NEW *)
+(* TODO: local in Riesz_Frechet_representation_existence *)
 lemma ker_unidim:
   fixes f :: \<open>('a::chilbert_space) functional\<close>
   assumes \<open>bounded_clinear f\<close>
@@ -119,8 +114,7 @@ proof-
       using ker_op_def
       by (simp add: ker_op_def)
     moreover have \<open>(ker_op f) \<inter> (orthogonal_complement (ker_op f)) = {0}\<close>
-      using \<open>is_subspace (ker_op f)\<close>
-      by (simp add: ortho_inter_zero)
+      by (simp add: \<open>is_subspace (ker_op f)\<close> is_linear_manifold.zero is_subspace.subspace ortho_inter_zero)
     moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (ker_op f)\<close>
     proof-
       from  \<open>y \<in> (orthogonal_complement (ker_op f))\<close>
@@ -141,13 +135,11 @@ proof-
     by (simp add: proportion_def) 
 qed
 
-
-(* NEW *)
 (* https://en.wikipedia.org/wiki/Riesz_representation_theorem *)
 lemma Riesz_Frechet_representation_existence:
-  fixes f::\<open>'a::chilbert_space \<Rightarrow> complex\<close>
+  fixes f::\<open>'a::chilbert_space functional\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists> t::'a.  \<forall> x :: 'a.  f x = \<langle>t , x\<rangle>\<close>
+  shows \<open>\<exists>t.  \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
   then show ?thesis
@@ -214,8 +206,7 @@ next
       by (simp add: proj_ker_simp assms) 
     ultimately have \<open>f x = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
-      using ortho_decomp_linear
-      by (metis add.left_neutral assms ker_op_lin) 
+      by (smt \<open>t \<in> orthogonal_complement (ker_op f)\<close> additive.add assms bounded_clinear_def cinner_simps(1) cinner_simps(5) cinner_simps(6) cinner_zero_left clinear.axioms(1) ker_op_lin ortho_decomp projPropertiesA projPropertiesD proj_fixed_points proj_ker_simp proj_ker_simp)
     thus ?thesis
       by blast  
   qed
@@ -223,16 +214,16 @@ qed
 
 subsection \<open>Adjoin\<close>
 
+definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>)\<close>
+  for G :: "'b::complex_inner \<Rightarrow> 'a::complex_inner"
 
-(* NEW *)
-corollary Existence_of_adjoint: 
-  \<open>bounded_clinear G \<Longrightarrow> \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space. ( 
-   \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>)
-)\<close>
-proof-
+lemma Adj_is_adjoint:
+  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::chilbert_space"
+  assumes \<open>bounded_clinear G\<close>
+  shows \<open>\<forall>x. \<forall>y. \<langle>Adj G x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
+proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>"])
   include notation_norm
-  assume \<open>bounded_clinear G\<close>
-  hence \<open>clinear G\<close>
+  from assms have \<open>clinear G\<close>
     unfolding bounded_clinear_def by blast
   have  \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
     using  \<open>bounded_clinear G\<close>
@@ -270,61 +261,41 @@ proof-
     by metis
   then obtain F where \<open>\<forall> x. ( \<forall> y :: 'b.  (g x) y = (\<langle>(F x) , y\<rangle>) )\<close>
     by blast
-  thus ?thesis using  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
+  thus "\<exists>x. \<forall>xa y. \<langle>x xa, y\<rangle> = \<langle>xa, G y\<rangle>" using  g_def
     by auto
 qed
-
-(* NEW *)
-corollary Existence_of_adjoint2: 
-  \<open>\<exists> Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
- bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. \<langle>(Adj G) x , y\<rangle> = \<langle>x , (G y)\<rangle>
-)\<close>
-proof-
-  have   \<open>\<forall> G. \<exists> F:: 'a::chilbert_space \<Rightarrow> 'b::chilbert_space.
- bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. (\<langle>(F x) , y\<rangle>) = (\<langle>x , (G y)\<rangle>) )\<close>
-    using Existence_of_adjoint by blast
-  thus ?thesis by metis
-qed
-
-definition Adj::\<open>('b::chilbert_space \<Rightarrow> 'a::chilbert_space) 
- \<Rightarrow> ('a::chilbert_space \<Rightarrow> 'b::chilbert_space)\<close> where 
-  \<open>Adj \<equiv> SOME Adj. \<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
- bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. \<langle>((Adj G) x) , y\<rangle> = \<langle>x , (G y)\<rangle>
-)\<close>
 
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
 lemma AdjI: \<open>bounded_clinear G \<Longrightarrow> 
- \<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> \<close>
+ \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> \<close>
   for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
 proof-
   assume \<open>bounded_clinear G\<close> 
   moreover have \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
  bounded_clinear G \<longrightarrow> ( 
    \<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> )\<close>
-    using Existence_of_adjoint2 Adj_def
+    using Adj_is_adjoint 
     by (smt tfl_some)
   ultimately show ?thesis by blast  
 qed
 
 
-(* NEW *)
 lemma AdjUniq:
-  \<open>bounded_clinear G \<Longrightarrow>  
-   \<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>  \<Longrightarrow> F = G\<^sup>\<dagger>\<close>
-  for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
+  fixes G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
     and F:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  assumes "bounded_clinear G"
+  assumes F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
+  shows \<open>F = G\<^sup>\<dagger>\<close>
 proof-
-  assume  \<open>bounded_clinear G\<close>  
-  assume\<open>\<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
+  (* assume \<open>bounded_clinear G\<close>   *)
+  (* assume\<open>\<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close> *)
+  note F_is_adjoint
   moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
     using  \<open>bounded_clinear G\<close> AdjI by blast
   ultimately have  \<open>\<forall> x::'a. \<forall> y::'b. 
     (\<langle>(F x) , y\<rangle> )-(\<langle>((G\<^sup>\<dagger>) x) , y\<rangle>) = 0\<close>
-    by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | G y \<rangle>\<close> \<open>\<forall>x y. \<langle> F x | y \<rangle> = \<langle> x | G y \<rangle>\<close>)
+    by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , G y \<rangle>\<close> F_is_adjoint)
   hence  \<open>\<forall> x::'a. \<forall> y::'b. 
     (\<langle>((F x) - ((G\<^sup>\<dagger>) x)) , y\<rangle> ) = 0\<close>
     by (simp add: cinner_diff_left)
@@ -337,21 +308,20 @@ proof-
   thus ?thesis by auto
 qed
 
-
-(* NEW *)
 lemma Adj_bounded_clinear:
-  \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
+  fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  shows \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof-
   include notation_norm 
   assume \<open>bounded_clinear A\<close>
-  have \<open>\<langle>((A\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
+  have \<open>\<langle>((A\<^sup>\<dagger>) x), y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y
-    by (simp add: AdjI \<open>bounded_clinear A\<close>)
+    by (auto intro: AdjI \<open>bounded_clinear A\<close>)
   have \<open>Modules.additive (A\<^sup>\<dagger>)\<close>
   proof-
     have \<open>\<langle>((A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2)) , y\<rangle> = 0\<close>
       for x1 x2 y
-      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close> cinner_diff_left cinner_left_distrib)        
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , A y \<rangle>\<close> cinner_diff_left cinner_left_distrib)        
     hence \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close>
       for x1 x2
       using cinner_eq_zero_iff by blast
@@ -363,7 +333,7 @@ proof-
   proof-
     have \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> = \<langle>(r *\<^sub>C x) , (A y)\<rangle>\<close>
       for y
-      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , A y \<rangle>\<close>)
     hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> = (cnj r) * ( \<langle>x , (A y)\<rangle>)\<close>
       for y
       by simp
@@ -375,13 +345,13 @@ proof-
       by auto
     hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (cnj r) * (\<langle>(A\<^sup>\<dagger>) x , y\<rangle>)\<close>
       for y
-      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , A y \<rangle>\<close>)
     hence \<open>\<langle>((A\<^sup>\<dagger>) (r *\<^sub>C x)) , y\<rangle> =  (\<langle>r *\<^sub>C (A\<^sup>\<dagger>) x , y\<rangle>)\<close>
       for y
       by simp
     hence \<open>\<langle>(((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x )) , y\<rangle> = 0\<close>
       for y
-      by (simp add: \<open>\<And>y. \<langle> (A\<^sup>\<dagger>) (r *\<^sub>C x) | y \<rangle> = \<langle> r *\<^sub>C (A\<^sup>\<dagger>) x | y \<rangle>\<close> cinner_diff_left)
+      by (simp add: \<open>\<And>y. \<langle> (A\<^sup>\<dagger>) (r *\<^sub>C x) , y \<rangle> = \<langle> r *\<^sub>C (A\<^sup>\<dagger>) x , y \<rangle>\<close> cinner_diff_left)
     hence \<open>((A\<^sup>\<dagger>) (r *\<^sub>C x)) - (r *\<^sub>C (A\<^sup>\<dagger>) x ) = 0\<close>
       using cinner_eq_zero_iff by blast
     thus ?thesis
@@ -400,13 +370,13 @@ proof-
       by (simp add: abs_pos)
     hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x , (A ((A\<^sup>\<dagger>) x))\<rangle> \<bar>\<close>
       for x
-      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close>)
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , A y \<rangle>\<close>)
     moreover have  \<open>\<bar>\<langle>x , (A ((A\<^sup>\<dagger>) x))\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
       for x
       by (simp add: complex_inner_class.norm_cauchy_schwarz)
     ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
       for x
-      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x | y \<rangle> = \<langle> x | A y \<rangle>\<close> complex_inner_class.Cauchy_Schwarz_ineq2 power2_norm_eq_cinner)
+      by (simp add: \<open>\<And>y x. \<langle> (A\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , A y \<rangle>\<close> complex_inner_class.Cauchy_Schwarz_ineq2 power2_norm_eq_cinner)
     moreover have \<open>\<exists> M. M \<ge> 0 \<and> (\<forall> x.  \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
     proof-
       have \<open>\<exists> M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
@@ -450,86 +420,66 @@ qed
 
 subsection \<open>Bounded operators\<close>
 
-(* NEW *)
-
 (* Notice that ('a, 'b) Bounded is more general than ('a, 'b) bounded *)
-typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) Bounded 
-= \<open>{A :: 'a \<Rightarrow> 'b. bounded_clinear A}\<close>
+typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) Bounded
+    = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   using bounded_clinear_zero by blast
 
 setup_lifting type_definition_Bounded
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "zero"
 begin
-(* TODO use lift_definition *)
-definition
-  "0 = Abs_Bounded (\<lambda> x::'a. 0)"
+lift_definition zero_Bounded :: "('a,'b) Bounded" is "\<lambda>x. 0"
+  by (fact bounded_clinear_zero)
 instance ..
 end
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "uminus"
 begin
-definition
-  "- x = Abs_Bounded (\<lambda> t::'a. - Rep_Bounded x t)"
+lift_definition uminus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is "\<lambda>x t. - x t"
+  by (rule bounded_clinear_minus)
 instance ..
 end
 
-(* NEW *)
+(*
 (* TODO exists: Rep_Bounded_inject[THEN iffD1] *)
 lemma Bounded_eqI:
   \<open>Rep_Bounded m = Rep_Bounded n \<Longrightarrow> m = n\<close>
   by (simp add: Rep_Bounded_inject)
 
-(* NEW *)
 (* TODO exists: Rep_Bounded_inject[symmetric] *)
 lemma Bounded_eq_iff:
   "m = n \<longleftrightarrow> Rep_Bounded m = Rep_Bounded n"
   by (simp add: Rep_Bounded_inject)
 
-(* NEW *)
 (* TODO exists: Rep_Bounded_inverse *)
 (* TODO: why "code abstype"? *)
 lemma Abs_Bounded_Rep_Bounded [code abstype]:
   \<open>Abs_Bounded (Rep_Bounded n) = n\<close>
-  by (fact Rep_Bounded_inverse)
+  by (fact Rep_Bounded_inverse) *)
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "semigroup_add"
 begin
-definition 
-  \<open>x + y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t + Rep_Bounded y t)\<close>
+lift_definition plus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+      \<open>\<lambda>x y t. x t + y t\<close>
+  by (fact bounded_clinear_add)
+  (* \<open>x + y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t + Rep_Bounded y t)\<close> *)
 
 instance
 proof      
   fix a b c :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply (simp add: Bounded_eq_iff)
-  proof-
-    have \<open>Rep_Bounded (a + b + c) x = Rep_Bounded (a + (b + c)) x\<close>
-      for x
-    proof -
-      have "Rep_Bounded a x + Rep_Bounded b x + Rep_Bounded c x = Rep_Bounded a x + (Rep_Bounded b x + Rep_Bounded c x)"
-        by auto
-      then show ?thesis
-        by (metis (no_types) Abs_Bounded_inverse Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)
-    qed     
-    thus \<open>Rep_Bounded (a + b + c) = Rep_Bounded (a + (b + c))\<close>
-      by blast 
-  qed
+    apply transfer by auto
 qed
-
 end
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "comm_monoid_add" begin
 instance
 proof
   fix a b :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>a + b = b + a\<close>
-    apply (simp add: Bounded_eq_iff)
-  proof-
+    apply transfer by auto
+(*   proof-
     have \<open>Rep_Bounded (a + b) x = Rep_Bounded (b + a) x\<close>
       for x
     proof-
@@ -545,11 +495,13 @@ proof
       thus ?thesis by blast
     qed
     thus \<open>Rep_Bounded (a + b) = Rep_Bounded (b + a)\<close> by blast
-  qed
+  qed *)
 
   fix a :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>0 + a = a\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer by auto
+
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>(Rep_Bounded 0) x + Rep_Bounded a x = Rep_Bounded a x\<close>
       for x
@@ -559,20 +511,23 @@ proof
       using  Abs_Bounded_inverse
       by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)  
     thus \<open>Rep_Bounded (0 + a) = Rep_Bounded a\<close> by blast
-  qed
+  qed *)
 qed
 
 end
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "ab_group_add" begin
-definition
-  \<open>x - y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t - Rep_Bounded y t)\<close>
+lift_definition minus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+      \<open>\<lambda>x y t. x t - y t\<close>
+  by (fact bounded_clinear_sub)
+(* definition
+  \<open>x - y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t - Rep_Bounded y t)\<close> *)
 instance
 proof
   fix a::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>- a + a = 0\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer by auto
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>- Rep_Bounded a x + Rep_Bounded a x = 0\<close>
       for x
@@ -596,11 +551,12 @@ proof
       using  Abs_Bounded_inverse
       by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def) 
     thus \<open>Rep_Bounded (- a + a) = Rep_Bounded 0\<close> by blast
-  qed
+  qed *)
 
   fix a b::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer by auto
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>Rep_Bounded (a - b) x = Rep_Bounded a x - Rep_Bounded b x\<close>
       for x
@@ -621,28 +577,39 @@ proof
       for x  
       by simp
     thus \<open>Rep_Bounded (a - b) = Rep_Bounded (a + - b)\<close> by blast
-  qed
+  qed *)
 qed
 end
 
-(* NEW *)
 instantiation Bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
+lift_definition scaleC_Bounded :: "complex \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+    \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
+  by (fact bounded_clinear_const_scaleC)
+lift_definition scaleR_Bounded :: "real \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+    \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
+  sorry
+
+(* definition
+  \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_Bounded x) t ))\<close>
 definition
-  \<open>(*\<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_Bounded x) t ))\<close>
-definition
-  \<open>(*\<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_Bounded x) t ))\<close>
+  \<open>( * \<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_Bounded x) t ))\<close> *)
 
 instance
   apply intro_classes
 proof
   fix r and x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
+    apply transfer
+    by (simp add: scaleR_scaleC) 
+    (* by auto
     apply (simp add: Bounded_eq_iff)
-    by (simp add: scaleC_Bounded_def scaleR_Bounded_def scaleR_scaleC)
+    by (simp add: scaleC_Bounded_def scaleR_Bounded_def scaleR_scaleC) *)
 
   fix a and x y::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer
+    by (simp add: scaleC_add_right) 
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
       for t
@@ -651,20 +618,22 @@ proof
         using scaleC_add_right by blast
       hence \<open>a *\<^sub>C Rep_Bounded (x + y) t = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close>
         using Abs_Bounded_inverse
-        by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)
+        by (mxetis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)
       hence \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x) t + Rep_Bounded (a *\<^sub>C y) t\<close>
-        by (metis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>a *\<^sub>C Rep_Bounded (x + y) t = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
+        by (mexis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>a *\<^sub>C Rep_Bounded (x + y) t = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
       hence \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
-        by (metis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x) t + Rep_Bounded (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_Bounded_def)
+        by (metxis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x) t + Rep_Bounded (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_Bounded_def)
       thus ?thesis by blast
     qed
     thus \<open>Rep_Bounded (a *\<^sub>C (x + y)) = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y)\<close>
       by auto
-  qed
+  qed *)
 
   fix a b and x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer
+    by (simp add: scaleC_left.add)
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>Rep_Bounded ((a + b) *\<^sub>C x) t = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
       for t
@@ -689,11 +658,12 @@ proof
       thus ?thesis by blast
     qed
     thus \<open>Rep_Bounded ((a + b) *\<^sub>C x) = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x)\<close> by blast
-  qed
+  qed *)
 
   fix a b::complex and x :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
-    apply (simp add: Bounded_eq_iff)
+    apply transfer by auto
+(*     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>Rep_Bounded (a *\<^sub>C b *\<^sub>C x) t = Rep_Bounded ((a * b) *\<^sub>C x) t\<close>
       for t
@@ -710,10 +680,12 @@ proof
     qed
     thus \<open>Rep_Bounded (a *\<^sub>C b *\<^sub>C x) = Rep_Bounded ((a * b) *\<^sub>C x)\<close>
       by blast
-  qed
+  qed *)
 
   fix x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
   show \<open>1 *\<^sub>C x = x\<close>
+    apply transfer by auto
+(* 
     apply (simp add: Bounded_eq_iff)
   proof-
     have \<open>Rep_Bounded (1 *\<^sub>C x) t = Rep_Bounded x t\<close>
@@ -721,35 +693,27 @@ proof
       using Abs_Bounded_inverse
       by (metis (full_types) Rep_Bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def scaleC_one)
     thus \<open>Rep_Bounded (1 *\<^sub>C x) = Rep_Bounded x\<close> by blast
-  qed
+  qed *)
 qed
 
 end
 
-
-
-(* NEW *)
-instantiation Bounded :: (chilbert_space, chilbert_space) "chilbert_space" begin
-  (* The inner product is defined using Riesz representation theorem *)
-  (* TODO: is that the same as the Hilbert-Schmidt inner product? *)
-
-instance by (cheat "dual chilbert_space")
+instantiation Bounded :: (chilbert_space, chilbert_space) "cbanach" begin
+lift_definition norm_Bounded :: "('a,'b) Bounded \<Rightarrow> real" is operator_norm .
+instance
+  by (cheat Bounded_cbanach)
 end
 
 
 
-(* NEW *)
-(* Could be possible to change ell2 by chilbert_space in this file
-in order to work in a more abstract setting *)
-
-
+(* TODO: get rid of this (in QRHL) *)
 typedef ('a,'b) bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_bounded
   (* derive universe bounded *)
 
-
+(* TODO define for Bounded *)
 lift_definition idOp :: "('a,'a)bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
 
@@ -758,6 +722,7 @@ lift_definition zero_bounded :: "('a,'b) bounded" is "\<lambda>_. 0" by simp
 instance ..
 end
 
+(* TODO define for Bounded *)
 lift_definition timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'c) bounded" is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
@@ -943,10 +908,12 @@ lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
   by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
 
 
-(* NEW *)
+
+(* TODO rename, e.g., subspace_scale_invariant *)
 lemma PREtimesScalarSpace_not0: 
   fixes a S
   assumes \<open>a \<noteq> 0\<close> and \<open>is_subspace S\<close>
+    (* TODO: is_linear_manifold instead? *)
   shows \<open>(*\<^sub>C) a ` S = S\<close>
 proof-
   have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
@@ -1463,10 +1430,30 @@ subsection \<open>Dual\<close>
 between a Hilbert space and its dual of a Hilbert space is the justification of 
 the brac-ket notation *)
 
-(* NEW *)
-type_synonym 'a dual = \<open>('a,complex) Bounded\<close>
 
+class topological_real_vector = real_vector + topological_ab_group_add +
+  assumes "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>R snd x :> nhds (a *\<^sub>R b)" 
+class topological_complex_vector = complex_vector + topological_ab_group_add +
+  assumes "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
 
+subclass (in topological_complex_vector) topological_real_vector
+  apply standard unfolding scaleR_scaleC sorry
+
+subclass (in cbanach) topological_complex_vector
+  apply standard sorry
+
+subclass (in banach) topological_real_vector
+  apply standard sorry
+
+lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
+  unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
+ 
+typedef (overloaded) 'a dual = \<open>{f::'a::topological_complex_vector\<Rightarrow>complex. continuous_on UNIV f \<and> clinear f}\<close>
+  apply (rule exI[where x="\<lambda>f. 0"]) by auto
+
+instantiation dual :: (complex_normed_vector) chilbert_space begin
+instance sorry
+end
 
 subsection \<open>Dimension\<close>
 
@@ -1475,40 +1462,52 @@ typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_s
 
 setup_lifting type_definition_linear_space
 
-(* TODO: define on sets first and lift? *)
+lift_definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> is
+  \<open>\<lambda>S. \<exists>G. finite G \<and> complex_vector.span G = S\<close> .
+
+(* lift_definition infinite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> is
+\<open>\<lambda>S. (
+\<exists> f::nat \<Rightarrow> 'a set.
+(\<forall>n. is_subspace (f n)) \<and>
+(\<forall> n. f n \<subset> f (Suc n)) \<and>
+(\<forall> n. f n \<subseteq> S)
+)\<close> *)
+
+
+(* (* TODO: define on sets first and lift? *)
 (* TODO: I would define only finite_dim and just negate it for infinite_dim (avoid too many definitions) *)
 definition infinite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
 \<open>infinite_dim S = (
 \<exists> f::nat \<Rightarrow> 'a linear_space.
 (\<forall> n::nat. Rep_linear_space (f n) \<subset> Rep_linear_space (f (Suc n))) \<and>
 (\<forall> n::nat. Rep_linear_space (f n) \<subseteq> Rep_linear_space S)
-)\<close>
+)\<close> *)
 
-definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
-\<open>finite_dim S = ( \<not> (infinite_dim S) )\<close>
+(* definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
+\<open>finite_dim S = ( \<not> (infinite_dim S) )\<close> *)
 
 
-(* NEW *)
 subsection \<open>Tensor product\<close>
 
-(* Tensor product *)
+(* TODO: define Tensor later as "('a dual, 'b) hilbert_schmidt" *)
+
+(* (* Tensor product *)
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
 (* TODO: is that compatible (isomorphic) with tensorVec? *)
 = \<open>{ A :: ('a dual, 'b) Bounded. finite_dim (Abs_linear_space ((Rep_Bounded A) ` UNIV)) }\<close>
-  sorry
+  sorry *)
 
 (* TODO: universal property of tensor products *)
 
 (* Embedding of (x,y) into the tensor product as x\<otimes>y *)
 (* TODO: Shouldn't this be called "tensor" or similar then? *)
-definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
-\<open>HS_embedding x = Abs_tensor ( Abs_Bounded (\<lambda> w::'a dual. ( (Rep_Bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close>
+(* definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
+\<open>HS_embedding x = Abs_tensor ( Abs_Bounded (\<lambda> w::'a dual. ( (Rep_Bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close> *)
 
-(* NEW *)
 (* The tensor product of two Hilbert spaces is a Hilbert space *)
-instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
+(* instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
 instance sorry
-end
+end *)
 
 
 

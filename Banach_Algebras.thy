@@ -7,8 +7,9 @@ theory Banach_Algebras
   imports Complex_Vector_Spaces "HOL-Library.Adhoc_Overloading" Extended_Sorry
 begin
 
-(* TODO: Should inherit from classes one, times (possibly others for the different axioms) *)
-class cbanach_algebra = cbanach +
+class cbanach_algebra = cbanach + monoid_mult +
+(* TODO remove those fixes and remove axioms that are already in monoid_mult.
+Possibly add some typeclass about ring or similar? *)
   fixes banach_mult :: "'a \<Rightarrow> 'a \<Rightarrow> 'a"  (infixl "\<degree>" 70)
     and unit :: 'a ("\<one>")
   assumes

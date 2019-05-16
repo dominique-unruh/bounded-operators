@@ -2,16 +2,6 @@
    Author:     Dominique Unruh, University of Tartu
    Author:     Jose Manuel Rodriguez Caballero, University of Tartu
 
-References:
-
-@book{conway2013course,
-title={A course in functional analysis},
-author={Conway, John B},
-volume={96},
-year={2013},
-publisher={Springer Science \& Business Media}
-}
-
 *)
 
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
@@ -255,8 +245,8 @@ qed
 
 end
 
-abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle> /_/ | /_/ \<rangle> " )
-  where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close>
+(* abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle> /_/ | /_/ \<rangle> " )
+  where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close> *)
 
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
@@ -508,9 +498,9 @@ end
 subsection \<open>Some identities and inequalities\<close>
 
 lemma polarization_identity_plus:
-includes notation_norm
+  includes notation_norm
   shows \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re \<langle>x, y\<rangle>\<close>
-  (* Reference: In the proof of Corollary 1.5 in conway2013course *)
+    \<comment> \<open>Shown in the proof of Corollary 1.5 in @{cite conway2013course}\<close> 
 proof-
   have \<open>(\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) = (\<langle>x , y\<rangle>) + cnj (\<langle>x , y\<rangle>)\<close>
     by simp
@@ -582,7 +572,7 @@ includes notation_norm
 
 subsection \<open>Orthogonality\<close>
 
-definition "is_orthogonal x y = (\<langle> x | y \<rangle> = 0)"
+definition "is_orthogonal x y = (\<langle> x, y \<rangle> = 0)"
 
 (* TODO use notation command instead of abbreviation! *)
 abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
@@ -791,13 +781,13 @@ proof-
   proof-
     assume \<open>x\<in>(orthogonal_complement A)\<close>
     assume \<open>y\<in>(orthogonal_complement A)\<close>
-    hence  \<open>\<forall> z \<in> A. \<langle> z | y \<rangle> = 0\<close> 
+    hence  \<open>\<forall> z \<in> A. \<langle>z, y\<rangle> = 0\<close> 
       using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
-    moreover have   \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> = 0\<close> using  \<open>x\<in>(orthogonal_complement A)\<close>
+    moreover have   \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> = 0\<close> using  \<open>x\<in>(orthogonal_complement A)\<close>
       using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
-    ultimately have \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> +  \<langle> z | y \<rangle> = 0\<close>
+    ultimately have \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> +  \<langle>z, y\<rangle> = 0\<close>
       by simp
-    hence  \<open>\<forall> z \<in> A. \<langle> z | x + y \<rangle> = 0\<close> 
+    hence  \<open>\<forall> z \<in> A. \<langle> z , x + y \<rangle> = 0\<close> 
       by (simp add: cinner_right_distrib)
     thus ?thesis 
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -805,11 +795,11 @@ proof-
   moreover have "x\<in>(orthogonal_complement A) \<Longrightarrow> c *\<^sub>C x \<in> (orthogonal_complement A)" for x c
   proof-
     assume \<open>x \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
       using is_orthogonal_def orthogonal_comm orthogonal_complement_def by fastforce
-    hence \<open>\<forall> y \<in> A. c*\<langle> y | x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> A. c*\<langle> y , x \<rangle> = 0\<close>
       by simp
-    hence \<open>\<forall> y \<in> A. \<langle> y | c *\<^sub>C x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> A. \<langle> y , c *\<^sub>C x \<rangle> = 0\<close>
       by simp
     thus ?thesis 
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -819,24 +809,24 @@ proof-
     have \<open>\<lbrakk>(\<forall> n::nat. x n \<in> (orthogonal_complement A)); x \<longlonglongrightarrow> l \<rbrakk> \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x::\<open>nat \<Rightarrow> ('a::complex_inner)\<close> and l::\<open>('a::complex_inner)\<close>
     proof-
       assume \<open>\<forall> n::nat. x n \<in> (orthogonal_complement A)\<close>
-      hence \<open>\<forall> y \<in> A. \<forall> n. \<langle> y | x n \<rangle> = 0\<close>
+      hence \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
         by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
       assume \<open>x \<longlonglongrightarrow> l\<close>
-      moreover have \<open>isCont (\<lambda> x. \<langle> y | x \<rangle>) l\<close> for y
+      moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
       proof-
-        have \<open>bounded_clinear (\<lambda> x. \<langle> y | x \<rangle>)\<close> 
+        have \<open>bounded_clinear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
           by (simp add: bounded_clinear_cinner_right)
         thus ?thesis
           by simp
       qed
-      ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y | v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y | v \<rangle>) l\<close> for y
+      ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
         using isCont_tendsto_compose by fastforce
-      hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y | x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y | l \<rangle>\<close>
+      hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y , x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close>
         by simp
-      hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y | l \<rangle>\<close> 
-        using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y | x n \<rangle> = 0\<close> 
+      hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close> 
+        using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close> 
         by fastforce
-      hence  \<open>\<forall> y \<in> A. \<langle> y | l \<rangle> = 0\<close> 
+      hence  \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
         using limI by fastforce
       thus ?thesis 
         by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -879,9 +869,9 @@ proof-
       have \<open>x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>^2\<close> for x
       proof -
         assume a1: "x \<in> M"
-        have "\<forall>v. (\<exists>va. Re (\<langle>v | v\<rangle> ) = \<parallel>va\<parallel>\<^sup>2 \<and> va \<in> M) \<or> v \<notin> M"
+        have "\<forall>v. (\<exists>va. Re (\<langle>v , v\<rangle> ) = \<parallel>va\<parallel>\<^sup>2 \<and> va \<in> M) \<or> v \<notin> M"
           by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
-        then have "Re (\<langle>x | x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
+        then have "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
           using a1 by blast
         then show ?thesis
           by (metis (lifting) Re_complex_of_real \<open>bdd_below {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> \<open>d = Inf {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> cInf_lower power2_norm_eq_cinner')
@@ -1263,12 +1253,12 @@ proof-
       by (simp add: is_arg_min_def)
     moreover have \<open>h - k \<in> orthogonal_complement M\<close>
     proof-
-      have \<open>f \<in> M \<Longrightarrow> \<langle> h - k | f \<rangle> = 0\<close> for f
+      have \<open>f \<in> M \<Longrightarrow> \<langle> h - k , f \<rangle> = 0\<close> for f
       proof-
         assume \<open>f \<in> M\<close>
         hence  \<open>\<forall> c. c *\<^sub>R f \<in> M\<close>
           by (simp add: assms is_linear_manifold.smult_closed is_subspace.subspace scaleR_scaleC)
-        have \<open>f \<in> M \<Longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close> for f
+        have \<open>f \<in> M \<Longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close> for f
         proof-
           assume \<open>f \<in>  M\<close>             
           hence \<open>k + f \<in>  M\<close> 
@@ -1288,47 +1278,47 @@ proof-
             by (simp add: power_mono)
           also have \<open>... \<le> \<parallel> (h - k) - f \<parallel>^2\<close>
             by (simp add: diff_diff_add)
-          also have \<open>... \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k | f \<rangle>)\<close>
+          also have \<open>... \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
             by (simp add: polarization_identity_minus)
-          finally have \<open>\<parallel> (h - k) \<parallel>^2 \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k | f \<rangle>)\<close>
+          finally have \<open>\<parallel> (h - k) \<parallel>^2 \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
             by simp
           thus ?thesis by simp
         qed
-        hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close>
+        hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close>
           by blast
-        hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k | f \<rangle>) = 0\<close>
+        hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , f \<rangle>) = 0\<close>
         proof-
           have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real.  2 * Re (\<langle> h - k | c *\<^sub>R f \<rangle>) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
+                (\<forall> c::real.  2 * Re (\<langle> h - k , c *\<^sub>R f \<rangle>) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
             by (metis \<open>\<And>f. f \<in> M \<Longrightarrow> 2 * Re (\<langle>(h - k) , f\<rangle>) \<le> \<parallel>f\<parallel>\<^sup>2\<close> assms is_linear_manifold.smult_closed is_subspace.subspace scaleR_scaleC)
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k | f \<rangle>)) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
             by (metis Re_complex_of_real cinner_scaleC_right complex_add_cnj complex_cnj_complex_of_real complex_cnj_mult of_real_mult scaleR_scaleC semiring_normalization_rules(34))
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k | f \<rangle>)) \<le> \<bar>c\<bar>^2*\<parallel> f \<parallel>^2)\<close>
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<bar>c\<bar>^2*\<parallel> f \<parallel>^2)\<close>
             by (simp add: power_mult_distrib)
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k | f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
             by auto
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> c * (2 * Re (\<langle> h - k | f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
             by simp
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> c*(2 * Re (\<langle> h - k | f \<rangle>)) \<le> c*(c*\<parallel> f \<parallel>^2))\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> c*(2 * Re (\<langle> h - k , f \<rangle>)) \<le> c*(c*\<parallel> f \<parallel>^2))\<close>
             by (simp add: power2_eq_square)
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<le> c*\<parallel> f \<parallel>^2)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2)\<close>
             by simp 
-          have \<open>f \<in>  M \<Longrightarrow> \<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<le> 0\<close> for f
+          have \<open>f \<in>  M \<Longrightarrow> \<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0\<close> for f
           proof-
             assume \<open>f \<in>  M\<close> 
-            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k | f \<rangle>) \<le> c*\<parallel> f \<parallel>^2\<close>
-              by (simp add: \<open>\<forall>f. f \<in> M \<longrightarrow> (\<forall>c>0. 2 * Re \<langle>h - k | f\<rangle> \<le> c * \<parallel>f\<parallel>\<^sup>2)\<close>)
-            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k | f \<rangle>) \<le> c\<close>
+            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2\<close>
+              by (simp add: \<open>\<forall>f. f \<in> M \<longrightarrow> (\<forall>c>0. 2 * Re \<langle>h - k , f\<rangle> \<le> c * \<parallel>f\<parallel>\<^sup>2)\<close>)
+            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c\<close>
             proof (cases \<open>\<parallel> f \<parallel>^2 > 0\<close>)
               case True
-              hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k | f \<rangle>) \<le> (c/\<parallel> f \<parallel>^2)*\<parallel> f \<parallel>^2\<close>
-                using \<open>\<forall>c>0. 2 * Re (\<langle>h - k | f\<rangle> ) \<le> c * \<parallel>f\<parallel>\<^sup>2\<close> linordered_field_class.divide_pos_pos by blast
+              hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> (c/\<parallel> f \<parallel>^2)*\<parallel> f \<parallel>^2\<close>
+                using \<open>\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) \<le> c * \<parallel>f\<parallel>\<^sup>2\<close> linordered_field_class.divide_pos_pos by blast
               then show ?thesis 
                 using True by auto
             next
@@ -1342,41 +1332,41 @@ proof-
               by smt
           qed
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<le> 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0)\<close>
             by simp
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k | (-1) *\<^sub>R f \<rangle>)) \<le> 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , (-1) *\<^sub>R f \<rangle>)) \<le> 0)\<close>
             by (metis assms is_linear_manifold.smult_closed is_subspace.subspace scaleR_scaleC)
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c > 0 \<longrightarrow> -(2 * Re (\<langle> h - k | f \<rangle>)) \<le> 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> -(2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
             by simp
           hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) \<ge> 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<ge> 0)\<close>
             by simp
           hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) = 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
             using  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k | f \<rangle>)) \<le> 0)\<close>
+                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
             by fastforce
-          hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) = 0\<close>
+          hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0\<close>
           proof-
             have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                 ((1::real) > 0 \<longrightarrow> 2 * Re (\<langle> h - k | f \<rangle>) = 0)\<close>
-              using \<open>\<forall>f. f \<in>  M \<longrightarrow> (\<forall>c>0. 2 * Re (\<langle>h - k | f\<rangle> ) = 0)\<close> by blast
+                 ((1::real) > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
+              using \<open>\<forall>f. f \<in>  M \<longrightarrow> (\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) = 0)\<close> by blast
             thus ?thesis by auto
           qed
           thus ?thesis by simp
         qed
-        also have \<open>\<forall> f. f \<in>  M \<longrightarrow> Im (\<langle> h - k | f \<rangle>) = 0\<close>
+        also have \<open>\<forall> f. f \<in>  M \<longrightarrow> Im (\<langle> h - k , f \<rangle>) = 0\<close>
         proof-
-          have  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k | (Complex 0 (-1)) *\<^sub>C f \<rangle>) = 0\<close>
+          have  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , (Complex 0 (-1)) *\<^sub>C f \<rangle>) = 0\<close>
             using assms calculation  is_linear_manifold.smult_closed is_subspace.subspace by blast
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re ( (Complex 0 (-1))*(\<langle> h - k | f \<rangle>) ) = 0\<close>
+          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re ( (Complex 0 (-1))*(\<langle> h - k , f \<rangle>) ) = 0\<close>
             by simp
           thus ?thesis 
             using Complex_eq_neg_1 Re_i_times cinner_scaleC_right complex_of_real_def by auto
         qed
-        ultimately have \<open>\<forall> f. f \<in>  M \<longrightarrow> (\<langle> h - k | f \<rangle>) = 0\<close>
+        ultimately have \<open>\<forall> f. f \<in>  M \<longrightarrow> (\<langle> h - k , f \<rangle>) = 0\<close>
           by (simp add: complex_eq_iff)
         thus ?thesis 
           by (simp add: \<open>f \<in>  M\<close>)
@@ -1497,12 +1487,12 @@ proof-
     by (simp add: proj_intro1)
   hence \<open>\<forall> k \<in>  M.  (h - (proj M) h) \<bottom> k\<close>
     by (simp add: orthogonal_complement_def)
-  hence \<open>\<forall> k \<in> M. \<langle>  h - (proj M) h | k \<rangle> = 0\<close>
+  hence \<open>\<forall> k \<in> M. \<langle>  h - (proj M) h , k \<rangle> = 0\<close>
     using is_orthogonal_def by blast
   also have \<open>(proj M) h \<in>  M\<close>
     using  \<open>is_subspace M\<close>
     by (simp add: proj_intro2)
-  ultimately have \<open>\<langle>  h - (proj M) h | (proj M) h \<rangle> = 0\<close>
+  ultimately have \<open>\<langle>  h - (proj M) h , (proj M) h \<rangle> = 0\<close>
     by auto
   hence \<open>\<parallel> (proj M) h \<parallel>^2 + \<parallel> h - (proj M) h \<parallel>^2 = \<parallel> h \<parallel>^2\<close>
     using PythagoreanId by fastforce
@@ -1943,18 +1933,18 @@ proof-
   have \<open>\<forall> n. x n \<in> (orthogonal_complement A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x l
   proof-
     assume \<open>\<forall> n. x n \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> n. \<forall> y \<in> A. \<langle> y | x n \<rangle> = 0\<close>
+    hence \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close>
       by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
     assume \<open>x \<longlonglongrightarrow> l\<close>
-    moreover have \<open>isCont (\<lambda> t. \<langle> y | t \<rangle>) l\<close> for y
+    moreover have \<open>isCont (\<lambda> t. \<langle> y , t \<rangle>) l\<close> for y
       by simp
-    ultimately have \<open>(\<lambda> n. (\<langle> y | x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close> for y 
+    ultimately have \<open>(\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close> for y 
       by (simp add: isCont_tendsto_compose)
-    hence \<open>\<forall> y \<in> A. (\<lambda> n. (\<langle> y | x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close>
+    hence \<open>\<forall> y \<in> A. (\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close>
       by simp
-    hence \<open>\<forall> y \<in> A. (\<lambda> n. 0 ) \<longlonglongrightarrow> \<langle> y | l \<rangle>\<close>
-      using  \<open>\<forall> n. \<forall> y \<in> A. \<langle> y | x n \<rangle> = 0\<close> by fastforce
-    hence \<open>\<forall> y \<in> A. \<langle> y | l \<rangle> = 0\<close> 
+    hence \<open>\<forall> y \<in> A. (\<lambda> n. 0 ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close>
+      using  \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close> by fastforce
+    hence \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
       using limI by fastforce
     thus ?thesis 
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -1972,20 +1962,20 @@ proof-
   have \<open>x \<in> (orthogonal_complement A) \<Longrightarrow> x \<in> (orthogonal_complement (closure A))\<close> for x
   proof-
     assume \<open>x \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
       by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
-    hence \<open>y \<in> closure A \<Longrightarrow> \<langle> y | x \<rangle> = 0\<close> for y
+    hence \<open>y \<in> closure A \<Longrightarrow> \<langle> y , x \<rangle> = 0\<close> for y
     proof-
       assume \<open>y \<in> closure A\<close>  
       then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close> 
         by (meson closure_sequential)
-      have \<open>isCont (\<lambda> t. \<langle> t | x \<rangle>) y\<close>
+      have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
         by simp
-      hence \<open>(\<lambda> n. \<langle> yy n | x \<rangle>) \<longlonglongrightarrow>  \<langle> y | x \<rangle>\<close>
+      hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
         using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
         by fastforce
-      hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y | x \<rangle>\<close>
-        using \<open>\<forall> y \<in> A. \<langle> y | x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
+      hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
+        using \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
       thus ?thesis 
         using limI by force
     qed
@@ -2017,14 +2007,14 @@ proof-
       by (simp add: OrthoClosedEq assms(1) assms(2) closed_sum_def is_subspace.subspace is_subspace_plus)
     ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
       by smt
-    hence \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z | x \<rangle> = 0\<close> 
+    hence \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> 
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    hence \<open>\<forall> z \<in> A. \<langle> z | x \<rangle> = 0\<close> 
+    hence \<open>\<forall> z \<in> A. \<langle> z , x \<rangle> = 0\<close> 
       using assms(2) Minkoswki_sum_def is_linear_manifold.zero is_subspace.subspace by force
     hence \<open>x \<in> (orthogonal_complement A)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    from  \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z | x \<rangle> = 0\<close> 
-    have \<open>\<forall> z \<in> B. \<langle> z | x \<rangle> = 0\<close> 
+    from  \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> 
+    have \<open>\<forall> z \<in> B. \<langle> z , x \<rangle> = 0\<close> 
       by (smt Groups.add_ac(2) add.right_neutral assms(1) Minkoswki_sum_def is_linear_manifold.zero is_subspace.subspace mem_Collect_eq)
     hence \<open>x \<in> (orthogonal_complement B)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -2035,14 +2025,14 @@ proof-
   proof-
     assume \<open>x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close>
     hence \<open>x \<in> (orthogonal_complement A)\<close> by blast
-    hence \<open> \<forall> y\<in> A. \<langle> y | x \<rangle> = 0\<close>
+    hence \<open> \<forall> y\<in> A. \<langle> y , x \<rangle> = 0\<close>
       by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
     have \<open>x \<in> (orthogonal_complement B)\<close> using \<open>x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close> by blast
-    hence \<open>\<forall> y\<in> B. \<langle> y | x \<rangle> = 0\<close>
+    hence \<open>\<forall> y\<in> B. \<langle> y , x \<rangle> = 0\<close>
       by (metis (no_types, lifting) cinner_commute complex_cnj_zero_iff is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
-    have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b | x \<rangle> = 0\<close>
+    have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b , x \<rangle> = 0\<close>
       by (simp add: \<open>\<forall>y\<in>A. \<langle>y , x\<rangle> = 0\<close> \<open>\<forall>y\<in>B. \<langle>y , x\<rangle> = 0\<close> cinner_left_distrib)
-    hence \<open>\<forall> y \<in> (A +\<^sub>m B). \<langle> y | x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> (A +\<^sub>m B). \<langle> y , x \<rangle> = 0\<close>
       using sum_existential by blast
     hence \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -2137,7 +2127,25 @@ lemma is_closed_subspace_universal_inclusion_inverse:
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
   by (metis DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest is_subspace_closed_plus ortho_leq)
 
-(* NEW *)
+lemma ortho_inter_zero:
+  assumes "0\<in>M"
+  shows \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
+proof -
+  have "x=0" if "x\<in>M" and "x\<in>orthogonal_complement M" for x
+  proof -
+    from that have "x \<bottom> x"
+      unfolding orthogonal_complement_def by auto
+    then have "\<langle>x, x\<rangle> = 0"
+      using is_orthogonal_def by blast
+    then show "x=0"
+      by auto
+  qed
+  with assms show ?thesis
+    unfolding orthogonal_complement_def is_orthogonal_def by auto
+qed
+
+(* (* NEW *)
+(* TODO: does it hold with is_linear_manifold? *)
 lemma ortho_inter_zero: \<open>is_subspace M \<Longrightarrow> M \<inter> (orthogonal_complement M) = {0}\<close>
 proof(rule classical)
   assume  \<open>is_subspace M\<close>
@@ -2176,16 +2184,15 @@ proof(rule classical)
   hence \<open>x = 0\<close>
     by auto
   thus ?thesis using \<open>x \<noteq> 0\<close> by blast
-qed
+qed *)
 
-(* NEW *)            
 lemma ortho_decomp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>is_subspace M\<close>
   shows \<open>x = (proj M) x + (proj (orthogonal_complement M)) x\<close>
   by (metis ProjOntoOrtho assms diff_add_cancel id_apply is_subspace_orthog minus_apply orthogonal_complement_twice)
 
-(* NEW *)
+(*
 lemma ortho_decomp_linear:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>is_subspace M\<close> and \<open>bounded_clinear f\<close>
@@ -2196,9 +2203,8 @@ proof-
   thus ?thesis 
     using  \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
     by (metis additive.add clinear.axioms(1))
-qed
+qed *)
 
-(* NEW *)
 lemma proj_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes \<open>bounded_clinear f\<close>
@@ -2213,12 +2219,12 @@ proof-
     by (simp add: ker_op_def)
 qed
 
-(* NEW *)
 lemma inner_product_proj:
   fixes x t :: \<open>'a::chilbert_space\<close>
+(* TODO: replace assumptions by: "fixes y defines "M = complex_vector.span y" *)
   assumes \<open>is_subspace M\<close> and \<open>t \<noteq> 0\<close> and \<open>t \<in> M\<close>
     and \<open>\<forall> m \<in> M. \<exists> k. m = k *\<^sub>C t\<close>
-  shows \<open>proj M x = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
+  shows \<open>proj M x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close>
 proof-
   have \<open>(\<langle>t , t\<rangle>) \<noteq> 0\<close>
     using \<open>t \<noteq> 0\<close>

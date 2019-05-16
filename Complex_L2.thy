@@ -1787,7 +1787,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-
+(* TODO: replace by more "'a ell2 more_general_subspace" *)
 typedef 'a subspace = "{A::'a ell2 set. is_subspace A}"
   morphisms subspace_to_set Abs_subspace
   apply (rule exI[of _ "{0}"]) by simp
