@@ -587,7 +587,7 @@ lift_definition scaleC_Bounded :: "complex \<Rightarrow> ('a,'b) Bounded \<Right
   by (fact bounded_clinear_const_scaleC)
 lift_definition scaleR_Bounded :: "real \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
     \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
-  sorry
+  by (cheat scaleR_Bounded)
 
 (* definition
   \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_Bounded x) t ))\<close>
@@ -711,7 +711,6 @@ typedef ('a,'b) bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_bounded
-  (* derive universe bounded *)
 
 (* TODO define for Bounded *)
 lift_definition idOp :: "('a,'a)bounded" is id
@@ -871,27 +870,43 @@ qed
 
 (* Note that without "closure", applyOpSpace would not in general return a subspace.
    See: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed *)
+(* TODO defined for Bounded *)
 lift_definition applyOpSpace :: \<open>('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
   "\<lambda>A S. closure {A x|x. x\<in>S}"
   using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
 
-(* TODO: instantiation of scaleC instead! *)
-lift_definition timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
+instantiation bounded :: (type,type) scaleC begin
+lift_definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>c A x. c *\<^sub>C A x"
   by (rule bounded_clinear_const_scaleC)
+lift_definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
+  "\<lambda>c A x. c *\<^sub>R A x"
+  by (cheat scaleR_bounded)
+instance
+  apply standard unfolding scaleC_bounded_def scaleR_bounded_def 
+  by (simp add: scaleR_scaleC)
+end
 
-(* TODO: is this even a meaningful operation? Do we use it anywhere? Remove? *)
-(* TODO: instantiation of scaleC instead! *)
-
-lift_definition timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
+(* TODO: same for linear_space *)
+instantiation subspace :: (type) scaleC begin
+lift_definition scaleC_subspace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
   "\<lambda>c S. scaleC c ` S"
   apply (rule is_subspace.intro)
   using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
   by (simp add: closed_scaleC is_subspace.closed)
+lift_definition scaleR_subspace :: "real \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
+  "\<lambda>c S. scaleR c ` S"
+  apply (rule is_subspace.intro)
+  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
+  by (simp add: closed_scaling is_subspace.closed)
+instance 
+  apply standard
+  by (simp add: scaleR_scaleC scaleC_subspace_def scaleR_subspace_def)
+end
 
-
-consts
-  adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
+lift_definition
+  adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) is Adj
+  by (fact Adj_bounded_clinear)
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
   apply transfer
@@ -900,7 +915,7 @@ lemma applyOp_0[simp]: "applyOpSpace U 0 = 0"
 lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" 
   apply transfer by simp
 
-lemma timesScalarSpace_0[simp]: "timesScalarSpace 0 S = 0"
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "'a subspace"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
   (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
@@ -933,13 +948,13 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> timesScalarSpace a S = S"
+lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ subspace"
   apply transfer using PREtimesScalarSpace_not0 by blast
 
-lemma one_times_op[simp]: "timesScalarOp (1::complex) B = B" 
+lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) bounded"
   apply transfer by simp
 
-lemma scalar_times_adj[simp]: "(timesScalarOp a A)* = timesScalarOp (cnj a) (A*)" for A::"('a,'b)bounded"
+lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"('a,'b)bounded"
   apply transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
@@ -1026,10 +1041,10 @@ end
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_subspace[symmetric] add.assoc[where ?'a="('a,'b) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_subspace add.assoc[where ?'a="('a,'b) bounded"]
 
-lemma scalar_times_op_add[simp]: "timesScalarOp a (A+B) = timesScalarOp a A + timesScalarOp a B"
+lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) bounded"
   apply transfer
   by (simp add: scaleC_add_right) 
-lemma scalar_times_op_minus[simp]: "timesScalarOp a (A-B) = timesScalarOp a A - timesScalarOp a B"
+lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) bounded"
   apply transfer
   by (simp add: complex_vector.scale_right_diff_distrib)
 
@@ -1045,7 +1060,7 @@ lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a,'b) bounded"
 (* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhoc_overloading
-  cdot timesOp applyOp applyOpSpace timesScalarOp timesScalarSpace
+  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)bounded\<Rightarrow>_" 
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   for A B :: "'a subspace" and U :: "('a,'b) bounded"
@@ -1437,13 +1452,16 @@ class topological_complex_vector = complex_vector + topological_ab_group_add +
   assumes "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
 
 subclass (in topological_complex_vector) topological_real_vector
-  apply standard unfolding scaleR_scaleC sorry
+  apply standard unfolding scaleR_scaleC 
+  by (cheat "subclass (in topological_complex_vector) topological_real_vector")
 
 subclass (in cbanach) topological_complex_vector
-  apply standard sorry
+  apply standard 
+  by (cheat "subclass (in cbanach) topological_complex_vector")
 
 subclass (in banach) topological_real_vector
-  apply standard sorry
+  apply standard 
+  by (cheat "subclass (in banach) topological_real_vector")
 
 lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
   unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
@@ -1452,7 +1470,8 @@ typedef (overloaded) 'a dual = \<open>{f::'a::topological_complex_vector\<Righta
   apply (rule exI[where x="\<lambda>f. 0"]) by auto
 
 instantiation dual :: (complex_normed_vector) chilbert_space begin
-instance sorry
+instance 
+  by (cheat "dual :: (complex_normed_vector) chilbert_space")
 end
 
 subsection \<open>Dimension\<close>
@@ -1495,7 +1514,7 @@ subsection \<open>Tensor product\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
 (* TODO: is that compatible (isomorphic) with tensorVec? *)
 = \<open>{ A :: ('a dual, 'b) Bounded. finite_dim (Abs_linear_space ((Rep_Bounded A) ` UNIV)) }\<close>
-  sorry *)
+   *)
 
 (* TODO: universal property of tensor products *)
 
@@ -1506,7 +1525,7 @@ typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
 
 (* The tensor product of two Hilbert spaces is a Hilbert space *)
 (* instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
-instance sorry
+instance 
 end *)
 
 
