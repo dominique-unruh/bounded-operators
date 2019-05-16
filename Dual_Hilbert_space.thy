@@ -620,7 +620,99 @@ end
 
 (* NEW *)
 instantiation dual :: (chilbert_space) "complex_vector" begin
-instance by (cheat "dual complex_vector")
+definition
+  \<open>(*\<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_dual ( \<lambda> t::'a. r *\<^sub>C (Rep_dual x) t ))\<close>
+definition
+  \<open>(*\<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_dual ( \<lambda> t::'a. r *\<^sub>R (Rep_dual x) t ))\<close>
+
+instance
+  apply intro_classes
+proof
+  fix r and x::\<open>'a::chilbert_space dual\<close>
+  show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
+    apply (simp add: dual_eq_iff)
+    by (simp add: scaleC_dual_def scaleR_dual_def scaleR_scaleC)
+
+  fix a and x y::\<open>'a::chilbert_space dual\<close>
+  show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (a *\<^sub>C (x + y)) t = Rep_dual (a *\<^sub>C x + a *\<^sub>C y) t\<close>
+      for t
+    proof-
+      have \<open>a *\<^sub>C ( Rep_dual x t + Rep_dual y t ) = a *\<^sub>C Rep_dual x t + a *\<^sub>C Rep_dual y t\<close>
+        using scaleC_add_right by blast
+      hence \<open>a *\<^sub>C Rep_dual (x + y) t = a *\<^sub>C Rep_dual x t + a *\<^sub>C Rep_dual y t\<close>
+        using Abs_dual_inverse
+        by (metis (full_types) Rep_dual bounded_clinear_add mem_Collect_eq plus_dual_def)
+      hence \<open>Rep_dual (a *\<^sub>C (x + y)) t = Rep_dual (a *\<^sub>C x) t + Rep_dual (a *\<^sub>C y) t\<close>
+        by (metis (no_types) Abs_dual_inverse Rep_dual \<open>a *\<^sub>C Rep_dual (x + y) t = a *\<^sub>C Rep_dual x t + a *\<^sub>C Rep_dual y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_dual_def)
+      hence \<open>Rep_dual (a *\<^sub>C (x + y)) t = Rep_dual (a *\<^sub>C x + a *\<^sub>C y) t\<close>
+        by (metis (no_types) Abs_dual_inverse Rep_dual \<open>Rep_dual (a *\<^sub>C (x + y)) t = Rep_dual (a *\<^sub>C x) t + Rep_dual (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_dual_def)
+      thus ?thesis by blast
+    qed
+    thus \<open>Rep_dual (a *\<^sub>C (x + y)) = Rep_dual (a *\<^sub>C x + a *\<^sub>C y)\<close>
+      by auto
+  qed
+
+  fix a b and x::\<open>'a::chilbert_space dual\<close>
+  show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual ((a + b) *\<^sub>C x) t = Rep_dual (a *\<^sub>C x + b *\<^sub>C x) t\<close>
+      for t
+    proof-
+      have \<open>Rep_dual ((a + b) *\<^sub>C x) t = Rep_dual (a *\<^sub>C x + b *\<^sub>C x) t\<close>
+      proof- (* sledgehammer *)
+        have f1: "\<forall>d c. Rep_dual (Abs_dual (\<lambda>a. c *\<^sub>C Rep_dual d (a::'a))) = (\<lambda>a. c *\<^sub>C Rep_dual d a)"
+          by (metis (no_types) Abs_dual_inverse Rep_dual bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq)
+        then have "\<forall>c d da. Rep_dual (Abs_dual (\<lambda>a. Rep_dual da (a::'a) + c *\<^sub>C Rep_dual d a)) = (\<lambda>a. Rep_dual da a + c *\<^sub>C Rep_dual d a)"
+          by (metis (no_types) Abs_dual_inverse Rep_dual bounded_clinear_add mem_Collect_eq)
+        hence "Rep_dual (Abs_dual (\<lambda>aa. a *\<^sub>C Rep_dual x aa + b *\<^sub>C Rep_dual x aa)) t = a *\<^sub>C Rep_dual x t + b *\<^sub>C Rep_dual x t"
+          using f1 by (metis (no_types))
+        then have "Rep_dual (Abs_dual (\<lambda>aa. a *\<^sub>C Rep_dual x aa + b *\<^sub>C Rep_dual x aa)) t = (a + b) *\<^sub>C Rep_dual x t"
+          by (metis (no_types) scaleC_left.add)
+        then show ?thesis
+          using f1 by (simp add: plus_dual_def scaleC_dual_def)
+      qed
+      thus ?thesis by blast
+    qed
+    thus \<open>Rep_dual ((a + b) *\<^sub>C x) = Rep_dual (a *\<^sub>C x + b *\<^sub>C x)\<close> by blast
+  qed
+
+  fix a b::complex and x :: \<open>'a::chilbert_space dual\<close>
+  show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (a *\<^sub>C b *\<^sub>C x) t = Rep_dual ((a * b) *\<^sub>C x) t\<close>
+      for t
+    proof-
+      have \<open>Rep_dual (a *\<^sub>C b *\<^sub>C x) t = Rep_dual ((a * b) *\<^sub>C x) t\<close>
+      proof- (* sledgehammer *)
+        have "Rep_dual (Abs_dual (\<lambda>aa. a *\<^sub>C Rep_dual (Abs_dual (\<lambda>aa. b *\<^sub>C Rep_dual x aa)) aa)) t = Rep_dual (Abs_dual (\<lambda>aa. (a *\<^sub>C b) *\<^sub>C Rep_dual x aa)) t"
+          by (metis (no_types) Abs_dual_inverse Rep_dual bounded_clinear_compose bounded_clinear_mult_right complex_scaleC_def mem_Collect_eq scaleC_scaleC)
+        then show ?thesis
+          by (simp add: scaleC_dual_def)
+      qed
+
+      thus ?thesis by blast
+    qed
+    thus \<open>Rep_dual (a *\<^sub>C b *\<^sub>C x) = Rep_dual ((a * b) *\<^sub>C x)\<close>
+      by blast
+  qed
+
+  fix x::\<open>'a::chilbert_space dual\<close>
+  show \<open>1 *\<^sub>C x = x\<close>
+    apply (simp add: dual_eq_iff)
+  proof-
+    have \<open>Rep_dual (1 *\<^sub>C x) t = Rep_dual x t\<close>
+      for t
+      using Abs_dual_inverse
+      by (metis (full_types) Rep_dual bounded_clinear_const_scaleC mem_Collect_eq scaleC_dual_def scaleC_one)
+    thus \<open>Rep_dual (1 *\<^sub>C x) = Rep_dual x\<close> by blast
+  qed
+qed
+
 end
 
 (* NEW *)
@@ -629,8 +721,12 @@ instance by (cheat "dual complex_normed_vector")
 end
 
 instantiation dual :: (chilbert_space) "chilbert_space" begin
-(* The inner product is defined using Riesz representation theorem *)
-(* TODO: is that the same as the Hilbert-Schmidt inner product? *)
+  (* The inner product is defined using Riesz representation theorem *)
+  (* TODO: is that the same as the Hilbert-Schmidt inner product? *)
+  (* answer: In order to define the Hilbert-Schmidt inner product we need
+to define the tensor product of Hilbert spaces. 
+https://en.wikipedia.org/wiki/Tensor_product_of_Hilbert_spaces *)
+
 instance by (cheat "dual chilbert_space")
 end
 
