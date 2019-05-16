@@ -16,7 +16,7 @@ References:
 
 
 theory Dual_Hilbert_space
-  imports Complex_L2 "HOL-Library.Adhoc_Overloading" 
+  imports Complex_L2 Hilbert_space_dim "HOL-Library.Adhoc_Overloading" 
     "HOL-Analysis.Abstract_Topology" Extended_Sorry
 begin
 
@@ -723,12 +723,39 @@ end
 instantiation dual :: (chilbert_space) "chilbert_space" begin
   (* The inner product is defined using Riesz representation theorem *)
   (* TODO: is that the same as the Hilbert-Schmidt inner product? *)
-  (* answer: In order to define the Hilbert-Schmidt inner product we need
+
+  (* In order to define the Hilbert-Schmidt inner product we need
 to define the tensor product of Hilbert spaces. 
 https://en.wikipedia.org/wiki/Tensor_product_of_Hilbert_spaces *)
 
 instance by (cheat "dual chilbert_space")
 end
 
+(* NEW *)
+section \<open>Tensor product\<close>
+
+typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) bounded 
+= \<open>{A :: 'a \<Rightarrow> 'b. bounded_clinear A}\<close>
+  using bounded_clinear_zero by blast
+
+setup_lifting type_definition_bounded
+
+(* Tensor product *)
+typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
+= \<open>{ A :: ('a dual, 'b) bounded. finite_dim (Abs_linear_space ((Rep_bounded A) ` UNIV)) }\<close>
+  sorry
+
+(* Embedding of (x,y) into the tensor product as x\<otimes>y *)
+definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
+\<open>HS_embedding x = Abs_tensor ( Abs_bounded (\<lambda> w::'a dual. ( (Rep_dual w) (fst x) ) *\<^sub>C (snd x) ) )\<close>
+
+(* NEW *)
+(* The tensor product of two Hilbert spaces is a Hilbert space *)
+instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
+instance sorry
+end
+
 
 end
+
+
