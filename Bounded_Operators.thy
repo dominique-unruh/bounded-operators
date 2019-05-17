@@ -1447,14 +1447,31 @@ the brac-ket notation *)
 
 
 class topological_real_vector = real_vector + topological_ab_group_add +
-  assumes "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>R snd x :> nhds (a *\<^sub>R b)" 
+  assumes tendsto_scaleR_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>R snd x :> nhds (a *\<^sub>R b)" 
 class topological_complex_vector = complex_vector + topological_ab_group_add +
-  assumes "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
+  assumes tendsto_scaleC_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
 
-subclass (in topological_complex_vector) topological_real_vector
-  apply standard unfolding scaleR_scaleC 
-  by (cheat "subclass (in topological_complex_vector) topological_real_vector")
+instance topological_complex_vector \<subseteq> topological_real_vector
+proof standard
+(* TODO clean up proof *)
+  fix a and b :: 'a
+  have "(((\<lambda>x. fst x *\<^sub>C snd x)o (apfst complex_of_real)) \<longlongrightarrow> complex_of_real a *\<^sub>C b) (nhds a \<times>\<^sub>F nhds b)"
+    apply (rule tendsto_compose_at[where y="(complex_of_real a, b)"])
+    unfolding nhds_prod
+    unfolding apfst_def map_prod_def case_prod_beta apply auto
+     apply (rule filterlim_Pair)
+    unfolding o_def[symmetric]
+      apply (rule tendsto_compose_at[where y="a"])
+        apply auto
+    apply (simp add: filterlim_def filtermap_fst_prod_filter)
+    using continuous_on_def continuous_on_of_real_id apply blast
+     apply (smt eventually_True eventually_prod_filter filterlim_iff prod.sel(2))
+    by (smt Lim_cong_at filterlim_compose nhds_prod tendsto_ident_at tendsto_scaleC_Pair)
+  then show "((\<lambda>x. fst x *\<^sub>R snd x) \<longlongrightarrow> a *\<^sub>R b) (nhds a \<times>\<^sub>F nhds b)"
+    unfolding o_def apfst_def map_prod_def case_prod_beta scaleR_scaleC by auto
+qed
 
+(* See topological_complex_vector \<subseteq> topological_real_vector above for ideas *)
 subclass (in cbanach) topological_complex_vector
   apply standard 
   by (cheat "subclass (in cbanach) topological_complex_vector")
