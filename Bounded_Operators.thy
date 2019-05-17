@@ -1438,7 +1438,6 @@ lemma tensor_unitary[simp]:
   shows "unitary (U\<otimes>V)"
   using assms unfolding unitary_def by simp
 
-
 subsection \<open>Dual\<close>
 
 (* The interpretation of Riesz representation theorem as an anti-isomorphism
@@ -1447,60 +1446,75 @@ the brac-ket notation *)
 
 (* TODO: the things related to topological_real_vector should be in earlier theory *)
 
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close>)\<close>
+
 class topological_real_vector = real_vector + topological_ab_group_add +
-  assumes tendsto_scaleR_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>R snd x :> nhds (a *\<^sub>R b)" 
+  assumes scaleR_continuous: "continuous_on UNIV (case_prod scaleR)"
 
 class topological_complex_vector = complex_vector + topological_ab_group_add +
-  assumes tendsto_scaleC_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
-(* TODO: possible alternative (equivalent by (simp add: nhds_prod continuous_on_def tendsto_at_iff_tendsto_nhds)) is "continuous_on UNIV (\<lambda>(a,b::'a). scaleC a b)" *)
+  assumes scaleC_continuous: "continuous_on UNIV (case_prod scaleC)"
 
-(* TODO: the same for scaleR in topological_real_vector *)
-lemma continuous_on_scaleC[continuous_intros]: (* TODO: there are two of these now. This one is better. *)
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a::topological_space \<Rightarrow> 'b::topological_space) \<Rightarrow> bool\<close>)\<close>
+
+thm tendsto_scaleR
+(* This overwrites Limits.tendsto_scaleR by a stronger fact *)
+lemma tendsto_scaleR[tendsto_intros]:
+  fixes b :: "'a::topological_real_vector"
+  assumes "(f \<longlongrightarrow> a) F" and "(g \<longlongrightarrow> b) F"
+  shows "((\<lambda>x. f x *\<^sub>R g x) \<longlongrightarrow> a *\<^sub>R b) F"
+proof -
+  have "(((\<lambda>x. case_prod scaleR (f x, g x))) \<longlongrightarrow> case_prod scaleR (a, b)) F"
+    apply (rule tendsto_compose[where g="case_prod scaleR"])
+    using continuous_on_def scaleR_continuous apply blast
+    by (simp add: assms(1) assms(2) tendsto_Pair)
+  then show ?thesis
+    by (simp add: case_prod_beta o_def)
+qed
+
+(* This overwrites Limits.tendsto_scaleR by a stronger fact *)
+lemma tendsto_scaleC[tendsto_intros]:
+  fixes b :: "'a::topological_complex_vector"
+  assumes "(f \<longlongrightarrow> a) F" and "(g \<longlongrightarrow> b) F"
+  shows "((\<lambda>x. f x *\<^sub>C g x) \<longlongrightarrow> a *\<^sub>C b) F"
+proof -
+  have "(((\<lambda>x. case_prod scaleC (f x, g x))) \<longlongrightarrow> case_prod scaleC (a, b)) F"
+    apply (rule tendsto_compose[where g="case_prod scaleC"])
+    using continuous_on_def scaleC_continuous apply blast
+    by (simp add: assms(1) assms(2) tendsto_Pair)
+  then show ?thesis
+    by (simp add: case_prod_beta o_def)
+qed
+
+(* lemma continuous_on_scaleC[continuous_intros]:
   fixes g :: "_\<Rightarrow>'a::topological_complex_vector"
   assumes "continuous_on s f" and "continuous_on s g"
   shows "continuous_on s (\<lambda>x. f x *\<^sub>C g x)" 
-proof -
-  have cont_scaleC: "continuous_on UNIV (\<lambda>(a,b::'a). a *\<^sub>C b)"
-    using tendsto_scaleC_Pair
-    apply (simp add: nhds_prod[symmetric] continuous_on_def case_prod_beta tendsto_at_iff_tendsto_nhds)
-    using filterlim_compose by fastforce
-  from assms have "continuous_on s (\<lambda>x. (f x, g x))"
-    by (rule continuous_on_Pair)
-  then have "continuous_on s ((\<lambda>(x,y). scaleC x y) o (\<lambda>x. (f x, g x)))"
-    apply (rule continuous_on_compose)
-    using cont_scaleC by (smt UNIV_I continuous_on_topological)
-  then show ?thesis
-    by auto
-qed
+  using assms unfolding continuous_on_def by (auto intro!: tendsto_intros) *)
 
 instance topological_complex_vector \<subseteq> topological_real_vector
-proof standard
-(* TODO clean up proof *)
-  fix a and b :: 'a
-  have "(((\<lambda>x. fst x *\<^sub>C snd x)o (apfst complex_of_real)) \<longlongrightarrow> complex_of_real a *\<^sub>C b) (nhds a \<times>\<^sub>F nhds b)"
-    apply (rule tendsto_compose_at[where y="(complex_of_real a, b)"])
-    unfolding nhds_prod
-    unfolding apfst_def map_prod_def case_prod_beta apply auto
-     apply (rule filterlim_Pair)
-    unfolding o_def[symmetric]
-      apply (rule tendsto_compose_at[where y="a"])
-        apply auto
-    apply (simp add: filterlim_def filtermap_fst_prod_filter)
-    using continuous_on_def continuous_on_of_real_id apply blast
-     apply (smt eventually_True eventually_prod_filter filterlim_iff prod.sel(2))
-    by (smt Lim_cong_at filterlim_compose nhds_prod tendsto_ident_at tendsto_scaleC_Pair)
-  then show "((\<lambda>x. fst x *\<^sub>R snd x) \<longlongrightarrow> a *\<^sub>R b) (nhds a \<times>\<^sub>F nhds b)"
-    unfolding o_def apfst_def map_prod_def case_prod_beta scaleR_scaleC by auto
-qed
+  apply standard
+  apply (rewrite at "case_prod scaleR" DEADID.rel_mono_strong[of _ "\<lambda>x. (complex_of_real (fst x)) *\<^sub>C (snd x)"])
+   apply (auto simp: scaleR_scaleC case_prod_beta)[1]
+  unfolding continuous_on_def
+  apply (auto intro!: tendsto_intros)
+  using tendsto_fst tendsto_snd by fastforce+
 
-(* See topological_complex_vector \<subseteq> topological_real_vector above for ideas. Use instance. *)
-subclass (in complex_normed_vector) topological_complex_vector
+instance real_normed_vector \<subseteq> topological_real_vector
   apply standard 
-  by (cheat "subclass (in complex_normed_vector) topological_complex_vector")
+  unfolding continuous_on_def 
+  thm Limits.tendsto_scaleR
+(* TODO: should be easy using Limits.tendsto_scaleR *)
+  sorry
 
-subclass (in real_normed_vector) topological_real_vector
+
+instance complex_normed_vector \<subseteq> topological_complex_vector
   apply standard 
-  by (cheat "subclass (in real_normed_vector) topological_real_vector")
+  unfolding continuous_on_def 
+(* TODO should be easy using the following fact: *)
+  thm bounded_bilinear.tendsto [OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
+  sorry
 
 lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
   unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
