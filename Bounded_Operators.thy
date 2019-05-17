@@ -1445,11 +1445,33 @@ subsection \<open>Dual\<close>
 between a Hilbert space and its dual of a Hilbert space is the justification of 
 the brac-ket notation *)
 
+(* TODO: the things related to topological_real_vector should be in earlier theory *)
 
 class topological_real_vector = real_vector + topological_ab_group_add +
   assumes tendsto_scaleR_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>R snd x :> nhds (a *\<^sub>R b)" 
+
 class topological_complex_vector = complex_vector + topological_ab_group_add +
   assumes tendsto_scaleC_Pair: "LIM x (nhds a \<times>\<^sub>F nhds b). fst x *\<^sub>C snd x :> nhds (a *\<^sub>C b)"
+(* TODO: possible alternative (equivalent by (simp add: nhds_prod continuous_on_def tendsto_at_iff_tendsto_nhds)) is "continuous_on UNIV (\<lambda>(a,b::'a). scaleC a b)" *)
+
+(* TODO: the same for scaleR in topological_real_vector *)
+lemma continuous_on_scaleC[continuous_intros]: (* TODO: there are two of these now. This one is better. *)
+  fixes g :: "_\<Rightarrow>'a::topological_complex_vector"
+  assumes "continuous_on s f" and "continuous_on s g"
+  shows "continuous_on s (\<lambda>x. f x *\<^sub>C g x)" 
+proof -
+  have cont_scaleC: "continuous_on UNIV (\<lambda>(a,b::'a). a *\<^sub>C b)"
+    using tendsto_scaleC_Pair
+    apply (simp add: nhds_prod[symmetric] continuous_on_def case_prod_beta tendsto_at_iff_tendsto_nhds)
+    using filterlim_compose by fastforce
+  from assms have "continuous_on s (\<lambda>x. (f x, g x))"
+    by (rule continuous_on_Pair)
+  then have "continuous_on s ((\<lambda>(x,y). scaleC x y) o (\<lambda>x. (f x, g x)))"
+    apply (rule continuous_on_compose)
+    using cont_scaleC by (smt UNIV_I continuous_on_topological)
+  then show ?thesis
+    by auto
+qed
 
 instance topological_complex_vector \<subseteq> topological_real_vector
 proof standard
@@ -1471,14 +1493,14 @@ proof standard
     unfolding o_def apfst_def map_prod_def case_prod_beta scaleR_scaleC by auto
 qed
 
-(* See topological_complex_vector \<subseteq> topological_real_vector above for ideas *)
-subclass (in cbanach) topological_complex_vector
+(* See topological_complex_vector \<subseteq> topological_real_vector above for ideas. Use instance. *)
+subclass (in complex_normed_vector) topological_complex_vector
   apply standard 
-  by (cheat "subclass (in cbanach) topological_complex_vector")
+  by (cheat "subclass (in complex_normed_vector) topological_complex_vector")
 
-subclass (in banach) topological_real_vector
+subclass (in real_normed_vector) topological_real_vector
   apply standard 
-  by (cheat "subclass (in banach) topological_real_vector")
+  by (cheat "subclass (in real_normed_vector) topological_real_vector")
 
 lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
   unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
