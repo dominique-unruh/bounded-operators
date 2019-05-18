@@ -2257,5 +2257,11 @@ proof-
     by auto
 qed
 
+section "Unsorted"
+
+typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_subspace S}\<close>
+  using is_subspace_UNIV by blast
+
+setup_lifting type_definition_linear_space
 
 end

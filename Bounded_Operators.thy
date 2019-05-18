@@ -707,22 +707,26 @@ end
 
 
 (* TODO: move to Legacy *)
-typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
+type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) Bounded"
+abbreviation "applyOp == Rep_Bounded"
+(* typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_l2bounded
   using bounded_clinear_zero by blast
-setup_lifting type_definition_l2bounded
+setup_lifting type_definition_l2bounded *)
 
-(* TODO define for Bounded *)
-lift_definition idOp :: "('a,'a) l2bounded" is id
+lift_definition idOp :: "('a::complex_normed_vector,'a) Bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
 
-instantiation l2bounded :: (type,type) zero begin
+(* instantiation l2bounded :: (type,type) zero begin
 lift_definition zero_l2bounded :: "('a,'b) l2bounded" is "\<lambda>_. 0" by simp
 instance ..
-end
+end *)
 
 (* TODO define for Bounded *)
-lift_definition timesOp :: "('b,'c) l2bounded \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'c) l2bounded" is "(o)"
+lift_definition timesOp :: 
+    "('b::complex_normed_vector,'c::complex_normed_vector) Bounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) Bounded \<Rightarrow> ('a,'c) Bounded" 
+    is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
@@ -870,12 +874,12 @@ qed
 
 (* Note that without "closure", applyOpSpace would not in general return a subspace.
    See: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed *)
-(* TODO defined for Bounded *)
-lift_definition applyOpSpace :: \<open>('a,'b) l2bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace\<close> is
+(* TODO define for Bounded *)
+lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is
   "\<lambda>A S. closure {A x|x. x\<in>S}"
   using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
 
-instantiation l2bounded :: (type,type) scaleC begin
+(* instantiation Bounded :: (chilbert_space,chilbert_space) scaleC begin
 lift_definition scaleC_l2bounded :: "complex \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
   "\<lambda>c A x. c *\<^sub>C A x"
   by (rule bounded_clinear_const_scaleC)
@@ -885,27 +889,27 @@ lift_definition scaleR_l2bounded :: "real \<Rightarrow> ('a,'b) l2bounded \<Righ
 instance
   apply standard unfolding scaleC_l2bounded_def scaleR_l2bounded_def
   by (simp add: scaleR_scaleC)
-end
+end *)
 
 (* TODO: same for linear_space *)
-instantiation subspace :: (type) scaleC begin
-lift_definition scaleC_subspace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
+instantiation linear_space :: (chilbert_space) scaleC begin
+lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleC c ` S"
   apply (rule is_subspace.intro)
   using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
   by (simp add: closed_scaleC is_subspace.closed)
-lift_definition scaleR_subspace :: "real \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is
+lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleR c ` S"
   apply (rule is_subspace.intro)
   apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
   by (simp add: closed_scaling is_subspace.closed)
 instance 
   apply standard
-  by (simp add: scaleR_scaleC scaleC_subspace_def scaleR_subspace_def)
+  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
 end
 
 lift_definition
-  adjoint :: "('a,'b) l2bounded \<Rightarrow> ('b,'a) l2bounded" ("_*" [99] 100) is Adj
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> ('b,'a) Bounded" ("_*" [99] 100) is Adj
   by (fact Adj_bounded_clinear)
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
@@ -915,7 +919,7 @@ lemma applyOp_0[simp]: "applyOpSpace U 0 = 0"
 lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" 
   apply transfer by simp
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "'a subspace"
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
   (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
@@ -948,13 +952,13 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ subspace"
+lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using PREtimesScalarSpace_not0 by blast
 
-lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) l2bounded"
+lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) Bounded"
   apply transfer by simp
 
-lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"('a,'b)l2bounded"
+lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"(_,_)Bounded"
   apply transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
@@ -963,7 +967,7 @@ lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)"
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
   by (cheat times_adjoint)
 
-lemma PREtimesOp_assoc_subspace:
+lemma PREtimesOp_assoc_linear_space:
   fixes A B S
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
     and \<open>is_subspace S\<close>
@@ -1018,119 +1022,117 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma timesOp_assoc_subspace: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
+lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
   apply transfer
-  using PREtimesOp_assoc_subspace by blast
+  using PREtimesOp_assoc_linear_space by blast
 
-instantiation l2bounded :: (type,type) ab_group_add begin
-lift_definition plus_l2bounded :: "('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
+(* instantiation Bounded :: (chilbert_space,chilbert_space) ab_group_add begin
+lift_definition plus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
   "\<lambda>a b x. a x + b x"
   by (rule bounded_clinear_add)
-lift_definition minus_l2bounded :: "('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
+lift_definition minus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
   "\<lambda>a b x. a x - b x"
   by (rule bounded_clinear_sub)
-lift_definition uminus_l2bounded :: "('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
+lift_definition uminus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
   "\<lambda>a x. - a x"
   by (rule bounded_clinear_minus)
 instance 
   apply intro_classes
   by (transfer; auto)+
-end
+end *)
 
 (* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_subspace[symmetric] add.assoc[where ?'a="('a,'b) l2bounded", symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_subspace add.assoc[where ?'a="('a,'b) l2bounded"]
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) Bounded", symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) Bounded"]
 
-lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) l2bounded"
+lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) Bounded"
   apply transfer
   by (simp add: scaleC_add_right) 
-lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) l2bounded"
+lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) Bounded"
   apply transfer
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
-  by (simp add: subspace_zero_bot[symmetric])
+  by (simp add: linear_space_zero_bot[symmetric])
 
 lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
   by (cheat equal_basis)
 
-lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a,'b) l2bounded"
+lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) Bounded"
   by (cheat adjoint_twice)
 
 (* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhoc_overloading
-  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)l2bounded\<Rightarrow>_" 
+  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)Bounded\<Rightarrow>_" 
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
-  for A B :: "'a subspace" and U :: "('a,'b) l2bounded"
+  for A B :: "_ linear_space" and U :: "(_,_) Bounded"
   apply transfer 
   by (cheat cdot_plus_distrib)
 
 
-lemma scalar_op_subspace_assoc [simp]: 
-  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"('a,'b)l2bounded" and S::"'a subspace"
+lemma scalar_op_linear_space_assoc [simp]: 
+  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"(_,_)Bounded" and S::"_ linear_space"
 proof transfer
-  fix \<alpha> and A::"'a ell2 \<Rightarrow> 'b ell2" and S
+  fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
   have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
     by (simp add: closure_scaleC setcompr_eq_image)
   also have "\<dots> = closure {\<alpha> *\<^sub>C A x |x. x \<in> S}" (is "_ = ?nonnested")
     by (simp add: Setcompr_eq_image image_image)
-(*   have "closed {\<alpha> *\<^sub>C x| x. x\<in>S}" if "closed S"
-    using that
-    by auto *)
   finally show "?nonnested = ?nested" by simp
 qed
 
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
 
-lemma scalar_mult_0_op[simp]: "(0::complex) \<cdot> A = 0" for A::"('a,'b)l2bounded"
+lemma scalar_mult_0_op[simp]: "(0::complex) \<cdot> A = 0" for A::"(_,_) Bounded"
   apply transfer by auto
 
 lemma scalar_op_op[simp]: "(a \<cdot> A) \<cdot> B = a \<cdot> (A \<cdot> B)"
-  for a :: complex and A :: "('a,'b) l2bounded" and B :: "('c,'a) l2bounded"
+  for a :: complex and A :: "(_,_) Bounded" and B :: "(_,_) Bounded"
   apply transfer by auto
 
-lemma op_scalar_op[simp]: "A \<cdot> (a \<cdot> B) = a \<cdot> (A \<cdot> B)" 
-  for a :: complex and A :: "('a,'b) l2bounded" and B :: "('c,'a) l2bounded"
+lemma op_scalar_op[simp]: "timesOp A (a \<cdot> B) = a \<cdot> (timesOp A B)" 
+  for a :: complex and A :: "(_,_) Bounded" and B :: "(_,_) Bounded"
   apply transfer
   by (simp add: bounded_clinear.clinear clinear.scaleC o_def)
 
 lemma scalar_scalar_op[simp]: "a \<cdot> (b \<cdot> A) = (a*b) \<cdot> A"
-  for a b :: complex and A  :: "('a,'b) l2bounded"
+  for a b :: complex and A  :: "(_,_) Bounded"
   apply transfer by auto
 
 lemma scalar_op_vec[simp]: "(a \<cdot> A) \<cdot> \<psi> = a *\<^sub>C (A \<cdot> \<psi>)" 
-  for a :: complex and A :: "('a,'b) l2bounded" and \<psi> :: "'a ell2"
+  for a :: complex and A :: "(_,_) Bounded" and \<psi> :: "'a ell2"
   apply transfer by auto
 
+
 lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a \<cdot> A = a \<cdot> B \<Longrightarrow> A=B" for A B :: "('a,'b)l2bounded" and a::complex 
-  apply transfer apply (rule ext)
-  by (meson complex_vector.scale_cancel_left)
+  by (rule scaleC_left_imp_eq)
 
 lemma apply_idOp_space[simp]: "applyOpSpace idOp S = S"
   apply transfer by (simp add: is_subspace.closed)
 
 lemma apply_0[simp]: "applyOp U 0 = 0"
-  using additive.zero applyOp bounded_clinear.clinear clinear.axioms(1) by blast
+  apply transfer 
+  using additive.zero bounded_clinear.clinear clinear.axioms(1) by blast
 
 lemma times_idOp1[simp]: "U \<cdot> idOp = U"
   apply transfer by auto
 
-lemma times_idOp2[simp]: "idOp \<cdot> V = V" for V :: "('b,'a) l2bounded"
+lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) Bounded"
   apply transfer by auto
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   by (cheat idOp_adjoint)
 
 lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
-  for V :: "'a \<Rightarrow> 'b subspace" and U :: "('b,'c) l2bounded"
+  for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) Bounded"
   apply transfer apply auto
   by (cheat mult_INF)
 
 lemma mult_inf_distrib[simp]: "U \<cdot> (B \<sqinter> C) = (U \<cdot> B) \<sqinter> (U \<cdot> C)" 
-  for U :: "('a,'b) l2bounded" and B C :: "'a subspace"
+  for U :: "(_,_) Bounded" and B C :: "_ linear_space"
   using mult_INF[where V="\<lambda>x. if x then B else C" and U=U]
   unfolding INF_UNIV_bool_expand
   by simp
@@ -1172,7 +1174,7 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
-consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a,'b) l2bounded"
+consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) Bounded"
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
     applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
   by (cheat TODO5)
@@ -1203,7 +1205,7 @@ lemma UadjU[simp]: "unitary U \<Longrightarrow> U \<cdot> U* = idOp" unfolding u
 lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
   unfolding unitary_def isometry_def by simp
 
-lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"('a,'b)l2bounded"
+lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)Bounded"
   unfolding unitary_def by auto
 
 lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A\<cdot>B)"
@@ -1307,30 +1309,28 @@ lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
   apply (rule bounded_clinear_intro[where K=1])
   by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
 
-lift_definition ell2_to_l2bounded :: "'a ell2 \<Rightarrow> (unit,'a) l2bounded" is
-  "\<lambda>(\<psi>::'a ell2) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
+lift_definition ell2_to_Bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) Bounded" is
+  "\<lambda>(\<psi>::'a) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
   by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
 
-lemma ell2_to_bounded_applyOp: "ell2_to_l2bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_l2bounded \<psi>" for A :: "(_,_)l2bounded"
+lemma ell2_to_bounded_applyOp: "ell2_to_Bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_Bounded \<psi>" for A :: "(_,_)Bounded"
   apply transfer
   by (simp add: bounded_clinear_def clinear.scaleC o_def)
 
-lemma ell2_to_bounded_scalar_times: "ell2_to_l2bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_l2bounded \<psi>" for a::complex
+lemma ell2_to_bounded_scalar_times: "ell2_to_Bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_Bounded \<psi>" for a::complex
   apply (rewrite at "a *\<^sub>C \<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp) \<cdot> \<psi>"])
-  apply simp
+  apply transfer apply simp
   apply (subst ell2_to_bounded_applyOp)
   by simp
 
-(* TODO: To legacy *)
-lift_definition kernel :: "('a,'b) l2bounded \<Rightarrow> 'a subspace" is ker_op
+lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> 'a linear_space" is ker_op
   by (metis ker_op_lin)
 
-(* TODO: define for Bounded, to legacy *)
-definition eigenspace :: "complex \<Rightarrow> ('a,'a) l2bounded \<Rightarrow> 'a subspace" where
+definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) Bounded \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A-a\<cdot>idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a\<cdot>A) = kernel A"
-  for a :: complex and A :: "('a,'b) l2bounded"
+  for a :: complex and A :: "(_,_) Bounded"
   apply transfer
   by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def)
 
@@ -1351,7 +1351,7 @@ section \<open>Projectors\<close>
 (* TODO: link with definition from Complex_Inner (needs definition of adjoint, first) *)
 definition "isProjector P = (P=P* \<and> P=P\<cdot>P)"
 
-consts Proj :: "'a subspace \<Rightarrow> ('a,'a) l2bounded"
+consts Proj :: "'a linear_space \<Rightarrow> ('a,'a) Bounded"
 lemma isProjector_Proj[simp]: "isProjector (Proj S)"
   by (cheat TODO5)
 
@@ -1362,10 +1362,10 @@ lemma Proj_leq: "Proj S \<cdot> A \<le> S"
   by (metis imageOp_Proj inf.orderE inf.orderI mult_inf_distrib top_greatest)
 
 
-lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"('a,'b)l2bounded"
+lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"(_,_)Bounded"
   by (cheat TODO2)
 
-abbreviation proj :: "'a ell2 \<Rightarrow> ('a,'a) l2bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) Bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
 
 lemma proj_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a ell2"
@@ -1374,14 +1374,14 @@ lemma proj_scalar_mult[simp]:
 
 lemma move_plus:
   "Proj (ortho C) \<cdot> A \<le> B \<Longrightarrow> A \<le> B + C"
-  for A B C::"'a subspace"
+  for A B C::"_ linear_space"
   by (cheat TODO2)
 
 
 section \<open>Tensor products\<close>
 
 consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
-consts "tensorSpace" :: "'a subspace \<Rightarrow> 'c subspace \<Rightarrow> ('a*'c) subspace"
+consts "tensorSpace" :: "'a ell2 linear_space \<Rightarrow> 'c ell2 linear_space \<Rightarrow> ('a*'c) ell2 linear_space"
 consts "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2"
 consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infix "\<otimes>" 71)
 adhoc_overloading tensor tensorOp tensorSpace tensorVec
@@ -1427,7 +1427,7 @@ consts remove_qvar_unit_op :: "('a*unit,'a) l2bounded"
 
 
 definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" where
-  "addState \<psi> = idOp \<otimes> (ell2_to_l2bounded \<psi>) \<cdot> remove_qvar_unit_op*"
+  "addState \<psi> = idOp \<otimes> (ell2_to_Bounded \<psi>) \<cdot> remove_qvar_unit_op*"
 
 lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a \<cdot> addState \<psi>" for a::complex and psi::"'a ell2"
   unfolding addState_def by (simp add: ell2_to_bounded_scalar_times)
@@ -1536,10 +1536,6 @@ end
 
 subsection \<open>Dimension\<close>
 
-typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_subspace S}\<close>
-  using is_subspace_UNIV by blast
-
-setup_lifting type_definition_linear_space
 
 lift_definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> is
   \<open>\<lambda>S. \<exists>G. finite G \<and> complex_vector.span G = S\<close> .

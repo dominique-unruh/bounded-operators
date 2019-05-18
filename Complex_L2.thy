@@ -14,6 +14,7 @@ References:
 
 *)
 
+(* TODO there are a lot of things related to the class linear_space here that belong to Complex_Inner_Product *)
 
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
@@ -1788,70 +1789,81 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-(* TODO: replace by more "'a ell2 more_general_subspace" *)
-typedef 'a subspace = "{A::'a ell2 set. is_subspace A}"
-  morphisms subspace_to_set Abs_subspace
+type_synonym 'a subspace = "'a ell2 linear_space"
+(* typedef 'a linear_space = "{A::'a ell2 set. is_linear_space A}"
+  morphisms Rep_linear_space Abs_linear_space
   apply (rule exI[of _ "{0}"]) by simp
-setup_lifting type_definition_subspace
-  (* derive universe subspace *)
+setup_lifting type_definition_linear_space *)
 
-instantiation subspace :: (type)zero begin (* The subspace {0} *)
-lift_definition zero_subspace :: "'a subspace" is "{0::'a ell2}" by simp
+(* TODO move *)
+instantiation linear_space :: (chilbert_space)zero begin (* The linear_space {0} *)
+lift_definition zero_linear_space :: "'a linear_space" is "{0::'a}" by simp
 instance .. end
 
-instantiation subspace :: (type)top begin  (* The full space *)
-lift_definition top_subspace :: "'a subspace" is "UNIV::'a ell2 set" by simp
+(* TODO move *)
+instantiation linear_space :: (chilbert_space)top begin  (* The full space *)
+lift_definition top_linear_space :: "'a linear_space" is "UNIV::'a set" by simp
 instance .. end
 
-instantiation subspace :: (type)inf begin  (* Intersection *)
-lift_definition inf_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "(\<inter>)" by simp
+instantiation linear_space :: (chilbert_space)inf begin  (* Intersection *)
+lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
 instance .. end
 
-instantiation subspace :: (type)sup begin  (* Sum of spaces *)
-lift_definition sup_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}" 
-  using is_subspace_closed_plus
-  unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
-  by auto
-
-instance .. end
-instantiation subspace :: (type)plus begin  (* Sum of spaces *)
-lift_definition plus_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace" is "\<lambda>A B::'a ell2 set. closure {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}"
-  using is_subspace_closed_plus
-  unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
-  by auto
-
+instantiation linear_space :: (chilbert_space)sup begin  (* Sum of spaces *)
+lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
+  is "\<lambda>A B::'a set. A +\<^sub>M B" 
+  by (fact is_subspace_closed_plus)
 instance .. end
 
-lemma subspace_sup_plus: "(sup :: 'a subspace \<Rightarrow> _ \<Rightarrow> _) = (+)" 
-  unfolding sup_subspace_def plus_subspace_def by simp
-
-instantiation subspace :: (type)Inf begin  (* Intersection *)
-lift_definition Inf_subspace :: "'a subspace set \<Rightarrow> 'a subspace" is "Inf :: 'a ell2 set set \<Rightarrow> 'a ell2 set" by simp
+instantiation linear_space :: (chilbert_space)plus begin  (* Sum of spaces *)
+lift_definition plus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
+  is "\<lambda>A B::'a set. A +\<^sub>M B"
+  by (fact is_subspace_closed_plus)
 instance .. end
 
-instantiation subspace :: (type)ord begin  
-lift_definition less_eq_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> bool" is "(\<subseteq>)". (* \<le> means inclusion *)
-lift_definition less_subspace :: "'a subspace \<Rightarrow> 'a subspace \<Rightarrow> bool" is "(\<subset>)". (* \<le> means inclusion *)
+lemma linear_space_sup_plus: "(sup :: 'a::chilbert_space linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
+  unfolding sup_linear_space_def plus_linear_space_def by simp
+
+instantiation linear_space :: (chilbert_space)Inf begin  (* Intersection *)
+lift_definition Inf_linear_space :: "'a linear_space set \<Rightarrow> 'a linear_space" 
+  is "Inf :: 'a set set \<Rightarrow> 'a set" by simp
 instance .. end
 
-instantiation subspace :: (type)Sup begin (* Sum of spaces *)
-definition "Sup_subspace AA = (Inf {B::'a subspace. \<forall>A\<in>AA. B \<ge> A})"
-  (* lift_definition Sup_subspace :: "'a subspace set \<Rightarrow> 'a subspace" is "\<lambda>AA. Inf (A" by simp *)
-  (* lift_definition Sup_subspace :: "\<Sqinter>A\<in>{A."  *)
+instantiation linear_space :: (chilbert_space)ord begin  
+lift_definition less_eq_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool" is "(\<subseteq>)". (* \<le> means inclusion *)
+lift_definition less_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool" is "(\<subset>)". (* \<le> means inclusion *)
 instance .. end
 
-lemma subspace_zero_not_top[simp]: "(0::'a subspace) \<noteq> top"
-proof transfer 
+instantiation linear_space :: (chilbert_space)Sup begin (* Sum of spaces *)
+definition "Sup_linear_space AA = (Inf {B::'a linear_space. \<forall>A\<in>AA. B \<ge> A})"
+  (* lift_definition Sup_linear_space :: "'a linear_space set \<Rightarrow> 'a linear_space" is "\<lambda>AA. Inf (A" by simp *)
+  (* lift_definition Sup_linear_space :: "\<Sqinter>A\<in>{A."  *)
+instance .. end
+
+class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
+
+subclass (in card2) not_singleton
+  sorry
+
+instance ell2 :: (type) not_singleton
+proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
     apply transfer
+    thm one_neq_zero
     by (meson one_neq_zero)
-  thus "{0::'a ell2} \<noteq> UNIV" by auto
+  thus "CARD('a ell2) \<noteq> 1"
+    sorry
 qed
 
+lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
+proof transfer 
+  have "card {0} \<noteq> CARD('a)"
+    using not_singleton_card by auto
+  then show "{0::'a} \<noteq> UNIV"
+    by metis
+qed
 
-instantiation subspace :: (type)order begin
+instantiation linear_space :: (chilbert_space)order begin
 instance apply intro_classes
      apply transfer apply (simp add: subset_not_subset_eq)
     apply transfer apply simp
@@ -1859,22 +1871,23 @@ instance apply intro_classes
   apply transfer by simp
 end
 
-instantiation subspace :: (type)order_top begin
+instantiation linear_space :: (chilbert_space)order_top begin
 instance apply intro_classes
   apply transfer by simp
 end
 
-instantiation subspace :: (type)order_bot begin
-lift_definition bot_subspace :: "'a subspace" is "{0::'a ell2}" by (fact is_subspace_0)
+instantiation linear_space :: (chilbert_space)order_bot begin
+lift_definition bot_linear_space :: "'a linear_space" is "{0::'a}" 
+  by (fact is_subspace_0)
 instance apply intro_classes
   apply transfer 
   using is_subspace_0 ortho_bot ortho_leq by blast
-
 end
-lemma subspace_zero_bot: "(0::_ subspace) = bot" 
-  unfolding zero_subspace_def bot_subspace_def by simp
 
-instantiation subspace :: (type)ab_semigroup_add begin
+lemma linear_space_zero_bot: "(0::_ linear_space) = bot" 
+  unfolding zero_linear_space_def bot_linear_space_def by simp
+
+instantiation linear_space :: (chilbert_space)ab_semigroup_add begin
 instance
   apply intro_classes
    apply transfer
@@ -1891,14 +1904,14 @@ instance
   done
 end
 
-instantiation subspace :: (type)ordered_ab_semigroup_add begin
+instantiation linear_space :: (chilbert_space)ordered_ab_semigroup_add begin
 instance apply intro_classes apply transfer
   using is_closed_subspace_ord 
   by (smt Collect_mono_iff closure_mono subset_iff)
 
 end
 
-instantiation subspace :: (type)comm_monoid_add begin
+instantiation linear_space :: (chilbert_space)comm_monoid_add begin
 instance apply intro_classes
   apply transfer
   using is_closed_subspace_zero
@@ -1907,9 +1920,9 @@ instance apply intro_classes
   by fastforce
 end
 
-instantiation subspace :: (type)semilattice_sup begin
+instantiation linear_space :: (chilbert_space)semilattice_sup begin
 instance proof intro_classes
-  fix x y z :: "'a subspace"
+  fix x y z :: "'a linear_space"
   show "x \<le> x \<squnion> y"
     apply transfer
     using is_closed_subspace_universal_inclusion_left
@@ -1932,114 +1945,112 @@ instance proof intro_classes
 qed
 end
 
-instantiation subspace :: (type)canonically_ordered_monoid_add begin
+instantiation linear_space :: (chilbert_space)canonically_ordered_monoid_add begin
 instance apply intro_classes
-  unfolding subspace_sup_plus[symmetric]
+  unfolding linear_space_sup_plus[symmetric]
   apply auto apply (rule_tac x=b in exI)
   by (simp add: sup.absorb2) 
 end
 
-instantiation subspace :: (type)semilattice_inf begin
+instantiation linear_space :: (chilbert_space)semilattice_inf begin
 instance apply intro_classes
     apply transfer apply simp
    apply transfer apply simp
   apply transfer by simp
 end
 
-instantiation subspace :: (type)lattice begin
+instantiation linear_space :: (chilbert_space)lattice begin
 instance ..
 end
 
-lemma  subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" for x y z :: "'a subspace"
-  unfolding subspace_sup_plus[symmetric] by auto
+lemma  linear_space_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" for x y z :: "'a::chilbert_space linear_space"
+  unfolding linear_space_sup_plus[symmetric] by auto
 
-instantiation subspace :: (type)complete_lattice begin
+instantiation linear_space :: (chilbert_space)complete_lattice begin
 instance proof intro_classes
-  fix x z :: "'a subspace" and A
-  show Inf_le: "x \<in> A \<Longrightarrow> Inf A \<le> x" for A and x::"'a subspace"
+  fix x z :: "'a linear_space" and A
+  show Inf_le: "x \<in> A \<Longrightarrow> Inf A \<le> x" for A and x::"'a linear_space"
     apply transfer by auto
-  show le_Inf: "(\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A" for A and z::"'a subspace"
+  show le_Inf: "(\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A" for A and z::"'a linear_space"
     apply transfer by auto
-  show "Inf {} = (top::'a subspace)"
+  show "Inf {} = (top::'a linear_space)"
     apply transfer by auto
   show "x \<le> Sup A" if "x \<in> A"
-    unfolding Sup_subspace_def 
+    unfolding Sup_linear_space_def 
     apply (rule le_Inf)
     using that by auto
   show "(\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z" 
-    unfolding Sup_subspace_def
+    unfolding Sup_linear_space_def
     apply (rule Inf_le)
     by auto
-  have "Inf UNIV = (bot::'a subspace)"    
+  have "Inf UNIV = (bot::'a linear_space)"    
     apply (rule antisym)
      apply (rule Inf_le) apply simp
     apply (rule le_Inf) by simp
-  thus "Sup {} = (bot::'a subspace)"
-    unfolding Sup_subspace_def by auto
+  thus "Sup {} = (bot::'a linear_space)"
+    unfolding Sup_linear_space_def by auto
 qed
 end
 
-lemma subspace_empty_Sup: "Sup {} = (0::'a subspace)"
-  unfolding subspace_zero_bot by auto
+lemma linear_space_empty_Sup: "Sup {} = (0::'a::chilbert_space linear_space)"
+  unfolding linear_space_zero_bot by auto
 
-lemma top_not_bot[simp]: "(top::'a subspace) \<noteq> bot"
-  by (metis subspace_zero_bot subspace_zero_not_top) 
-lemma bot_not_top[simp]: "(bot::'a subspace) \<noteq> top"
-  by (metis top_not_bot)
+lemma top_not_bot[simp]: "(top::'a::{chilbert_space,not_singleton} linear_space) \<noteq> bot"
+  by (metis linear_space_zero_bot linear_space_zero_not_top) 
+lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
-lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" for A B C :: "_ subspace"
+lemma inf_assoc_linear_space[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" for A B C :: "_ linear_space"
   unfolding inf.assoc by simp
-lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ subspace"
+lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ linear_space"
   using inf.left_commute by auto
 
-lemma bot_plus[simp]: "bot + x = x" for x :: "'a subspace"
+lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
   apply transfer
-  unfolding sup_subspace_def[symmetric] 
+  unfolding sup_linear_space_def[symmetric] 
   using is_closed_subspace_zero
   unfolding closed_sum_def
   unfolding Minkoswki_sum_def
   by blast
 
-lemma plus_bot[simp]: "x + bot = x" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
-lemma top_plus[simp]: "top + x = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
-lemma plus_top[simp]: "x + top = top" for x :: "'a subspace" unfolding subspace_sup_plus[symmetric] by simp
+lemma plus_bot[simp]: "x + bot = x" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
+lemma top_plus[simp]: "top + x = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
+lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 
 
-definition [code del]: "span A = Inf {S. A \<subseteq> subspace_to_set S}"
-  (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> subspace_to_set S}" *)
-  (* consts span :: "'a set \<Rightarrow> 'b subspace"
+definition [code del]: "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
+  (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> Rep_linear_space S}" *)
+  (* consts span :: "'a set \<Rightarrow> 'b linear_space"
 adhoc_overloading span (* spanState *) spanVector *)
 
 (* lemma span_ell2_state: "spanState A = spanVector (state_to_ell2 ` A)"
   by (simp add: spanState_def spanVector_def)  *)
 
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
-  for \<psi>::"'a ell2"
-
+  for \<psi>::"'a::chilbert_space"
 proof-
   assume \<open>a \<noteq> 0\<close>
-  have \<open>span {\<psi>} = Inf {S | S::'a subspace. {\<psi>} \<subseteq> subspace_to_set S }\<close>
+  have \<open>span {\<psi>} = Inf {S | S::'a linear_space. {\<psi>} \<subseteq> Rep_linear_space S }\<close>
     by (metis Complex_L2.span_def)
-  also have \<open>... = Inf {S | S::'a subspace. \<psi> \<in> subspace_to_set S }\<close>
+  also have \<open>... = Inf {S | S::'a linear_space. \<psi> \<in> Rep_linear_space S }\<close>
     by simp
-  also have \<open>... = Inf {S | S::'a subspace. a *\<^sub>C \<psi> \<in> subspace_to_set S }\<close>
+  also have \<open>... = Inf {S | S::'a linear_space. a *\<^sub>C \<psi> \<in> Rep_linear_space S }\<close>
   proof-
-    have \<open>\<psi> \<in> subspace_to_set S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
+    have \<open>\<psi> \<in> Rep_linear_space S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
     proof-
-      have \<open>is_subspace (subspace_to_set S)  \<close>
-        using subspace_to_set by auto
-      hence \<open>\<psi> \<in> subspace_to_set S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> for S
-        by (metis Abs_subspace_cases Abs_subspace_inverse is_linear_manifold.smult_closed is_subspace.subspace mem_Collect_eq)
-      moreover have  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S \<Longrightarrow> \<psi> \<in> subspace_to_set S\<close> for S
+      have \<open>is_subspace (Rep_linear_space S)  \<close>
+        using Rep_linear_space by auto
+      hence \<open>\<psi> \<in> Rep_linear_space S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
+        by (metis Abs_linear_space_cases Abs_linear_space_inverse is_linear_manifold.smult_closed is_subspace.subspace mem_Collect_eq)
+      moreover have  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S \<Longrightarrow> \<psi> \<in> Rep_linear_space S\<close> for S
       proof-
-        assume \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close>
+        assume \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close>
         obtain b where \<open>b * a = 1\<close> using \<open>a \<noteq> 0\<close> 
           by (metis divide_complex_def divide_self_if mult.commute)
-        have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> subspace_to_set S\<close> 
-          using  \<open>a *\<^sub>C \<psi> \<in> subspace_to_set S\<close> is_linear_manifold.smult_closed
-            is_subspace.subspace subspace_to_set
+        have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> Rep_linear_space S\<close> 
+          using  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> is_linear_manifold.smult_closed
+            is_subspace.subspace Rep_linear_space
           by fastforce
-        hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> subspace_to_set S\<close> 
+        hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> 
           by simp
         thus ?thesis using  \<open>b * a = 1\<close> by simp
       qed                       
@@ -2047,7 +2058,7 @@ proof-
     qed
     thus ?thesis by simp
   qed
-  also have \<open>... = Inf {S | S::'a subspace. {a *\<^sub>C \<psi>} \<subseteq> subspace_to_set S }\<close>
+  also have \<open>... = Inf {S | S::'a linear_space. {a *\<^sub>C \<psi>} \<subseteq> Rep_linear_space S }\<close>
     by auto
   also have \<open>... = span {a *\<^sub>C \<psi>}\<close> 
     by (metis Complex_L2.span_def)
@@ -2057,27 +2068,27 @@ proof-
 qed
 
 lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b subspace"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
   by (simp add: le_Inf_iff)
 
-lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a subspace"
+lemma leq_plus_linear_space[simp]: "a \<le> a + c" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing2)
-lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a subspace"
+lemma leq_plus_linear_space2[simp]: "a \<le> c + a" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing)
 
-lift_definition ortho :: "'a subspace \<Rightarrow> 'a subspace" is orthogonal_complement 
+lift_definition ortho :: "'a::chilbert_space linear_space \<Rightarrow> 'a linear_space" is orthogonal_complement 
   by (fact is_subspace_orthog)
 
 lemma span_superset:
-  \<open>A \<subseteq> subspace_to_set (span A)\<close> for A :: \<open>('a ell2) set\<close>
+  \<open>A \<subseteq> Rep_linear_space (span A)\<close> for A :: \<open>('a ell2) set\<close>
 proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> subspace_to_set S} \<longrightarrow> A \<subseteq> subspace_to_set S\<close>
+  have \<open>\<forall> S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>
     by simp
-  hence \<open>A \<subseteq> \<Inter> {subspace_to_set S| S. A \<subseteq> subspace_to_set S}\<close>
+  hence \<open>A \<subseteq> \<Inter> {Rep_linear_space S| S. A \<subseteq> Rep_linear_space S}\<close>
     by blast
-  hence \<open>A \<subseteq> subspace_to_set( Inf {S| S. A \<subseteq> subspace_to_set S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_subspace.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> subspace_to_set S} \<longrightarrow> A \<subseteq> subspace_to_set S\<close>)
+  hence \<open>A \<subseteq> Rep_linear_space( Inf {S| S. A \<subseteq> Rep_linear_space S})\<close>
+    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>)
   thus ?thesis using span_def by metis
 qed
 
