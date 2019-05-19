@@ -1843,7 +1843,7 @@ instance .. end
 class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
 
 subclass (in card2) not_singleton
-  sorry
+  apply standard using two_le_card by auto
 
 instance ell2 :: (type) not_singleton
 proof standard
@@ -1852,7 +1852,7 @@ proof standard
     thm one_neq_zero
     by (meson one_neq_zero)
   thus "CARD('a ell2) \<noteq> 1"
-    sorry
+    by (metis (full_types) UNIV_I card_1_singletonE singletonD the_elem_eq)
 qed
 
 lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
@@ -2018,13 +2018,8 @@ lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space"
 
 (* TODO move *)
 definition [code del]: "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
-  (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> Rep_linear_space S}" *)
-  (* consts span :: "'a set \<Rightarrow> 'b linear_space"
-adhoc_overloading span (* spanState *) spanVector *)
 
-(* lemma span_ell2_state: "spanState A = spanVector (state_to_ell2 ` A)"
-  by (simp add: spanState_def spanVector_def)  *)
-
+(* TODO move *)
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>::"'a::chilbert_space"
 proof-
@@ -2067,13 +2062,16 @@ proof-
   thus ?thesis by auto
 qed
 
+(* TODO move *)
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
   by (simp add: le_Inf_iff)
 
+(* TODO move *)
 lemma leq_plus_linear_space[simp]: "a \<le> a + c" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing2)
+(* TODO move *)
 lemma leq_plus_linear_space2[simp]: "a \<le> c + a" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing)
 
@@ -2110,7 +2108,8 @@ lemma ortho_twice[simp]: "ortho (ortho S) = S"
 instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
 definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
-instance sorry
+instance
+  by (cheat "instantiation ell2 :: (enum) basis_enum")
 end
 
 end
