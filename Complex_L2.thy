@@ -339,8 +339,8 @@ instantiation ell2 :: (type)complex_normed_vector begin
 lift_definition norm_ell2 :: "'a ell2 \<Rightarrow> real" is ell2_norm .
 definition "dist x y = norm (x - y)" for x y::"'a ell2"
 definition "sgn x = x /\<^sub>R norm x" for x::"'a ell2"
-definition "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
-definition "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
+definition [code del]: "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
+definition [code del]: "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
 instance apply intro_classes
   unfolding dist_ell2_def sgn_ell2_def uniformity_ell2_def open_ell2_def apply simp_all
      apply transfer apply (fact ell2_norm_0)
