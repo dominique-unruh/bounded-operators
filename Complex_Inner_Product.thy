@@ -2264,4 +2264,19 @@ typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_s
 
 setup_lifting type_definition_linear_space
 
+definition is_onb :: "'a::chilbert_space set \<Rightarrow> bool" where "is_onb = undefined"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+class basis_enum = chilbert_space +
+  fixes canonical_basis :: "'a list"
+  fixes canonical_basis_length :: "'a itself \<Rightarrow> nat"
+  assumes "distinct canonical_basis"
+  assumes "is_onb (set canonical_basis)"
+  assumes "canonical_basis_length TYPE('a) = length canonical_basis"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::chilbert_space set \<Rightarrow> bool\<close>)\<close>
+
 end

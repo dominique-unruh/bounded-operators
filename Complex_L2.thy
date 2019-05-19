@@ -2016,7 +2016,7 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a::chilbert_space linear_space" u
 lemma top_plus[simp]: "top + x = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 
-
+(* TODO move *)
 definition [code del]: "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
   (* definition [code del]: "spanState A = Inf {S. state_to_ell2 ` A \<subseteq> Rep_linear_space S}" *)
   (* consts span :: "'a set \<Rightarrow> 'b linear_space"
@@ -2077,9 +2077,11 @@ lemma leq_plus_linear_space[simp]: "a \<le> a + c" for a::"'a::chilbert_space li
 lemma leq_plus_linear_space2[simp]: "a \<le> c + a" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing)
 
+(* TODO move *)
 lift_definition ortho :: "'a::chilbert_space linear_space \<Rightarrow> 'a linear_space" is orthogonal_complement 
   by (fact is_subspace_orthog)
 
+(* TODO move, TODO remove "ell2" *)
 lemma span_superset:
   \<open>A \<subseteq> Rep_linear_space (span A)\<close> for A :: \<open>('a ell2) set\<close>
 proof-
@@ -2092,14 +2094,23 @@ proof-
   thus ?thesis using span_def by metis
 qed
 
+(* TODO move *)
 lemma ortho_bot[simp]: "ortho bot = top"
   apply transfer by simp
 
+(* TODO move *)
 lemma ortho_top[simp]: "ortho top = bot"
   apply transfer by simp
 
+(* TODO move *)
 lemma ortho_twice[simp]: "ortho (ortho S) = S"
   apply transfer
   using orthogonal_complement_twice by blast 
+
+instantiation ell2 :: (enum) basis_enum begin
+definition "canonical_basis_ell2 = map ket Enum.enum"
+definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
+instance sorry
+end
 
 end
