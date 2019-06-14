@@ -1383,7 +1383,7 @@ section \<open>Tensor products\<close>
 consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
 consts "tensorSpace" :: "'a ell2 linear_space \<Rightarrow> 'c ell2 linear_space \<Rightarrow> ('a*'c) ell2 linear_space"
 consts "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2"
-consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infix "\<otimes>" 71)
+consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
 adhoc_overloading tensor tensorOp tensorSpace tensorVec
 
 lemma idOp_tensor_idOp[simp]: "idOp\<otimes>idOp = idOp"

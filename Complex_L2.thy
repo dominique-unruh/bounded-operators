@@ -2017,7 +2017,14 @@ lemma top_plus[simp]: "top + x = top" for x :: "'a::chilbert_space linear_space"
 lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 
 (* TODO move *)
-definition [code del]: "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
+lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
+  is "\<lambda>G. closure (complex_vector.span G)"
+  apply (rule is_subspace.intro)
+  apply (rule is_subspace_cl)
+  by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold.intro)
+
+lemma span_def': "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
+  by (cheat span_def')
 
 (* TODO move *)
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
@@ -2025,7 +2032,7 @@ lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub
 proof-
   assume \<open>a \<noteq> 0\<close>
   have \<open>span {\<psi>} = Inf {S | S::'a linear_space. {\<psi>} \<subseteq> Rep_linear_space S }\<close>
-    by (metis Complex_L2.span_def)
+    by (metis Complex_L2.span_def')
   also have \<open>... = Inf {S | S::'a linear_space. \<psi> \<in> Rep_linear_space S }\<close>
     by simp
   also have \<open>... = Inf {S | S::'a linear_space. a *\<^sub>C \<psi> \<in> Rep_linear_space S }\<close>
@@ -2056,7 +2063,7 @@ proof-
   also have \<open>... = Inf {S | S::'a linear_space. {a *\<^sub>C \<psi>} \<subseteq> Rep_linear_space S }\<close>
     by auto
   also have \<open>... = span {a *\<^sub>C \<psi>}\<close> 
-    by (metis Complex_L2.span_def)
+    by (metis Complex_L2.span_def')
   finally have  \<open>span {\<psi>} = span {a *\<^sub>C \<psi>}\<close>
     by blast
   thus ?thesis by auto
@@ -2089,7 +2096,7 @@ proof-
     by blast
   hence \<open>A \<subseteq> Rep_linear_space( Inf {S| S. A \<subseteq> Rep_linear_space S})\<close>
     by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>)
-  thus ?thesis using span_def by metis
+  thus ?thesis using span_def' by metis
 qed
 
 (* TODO move *)

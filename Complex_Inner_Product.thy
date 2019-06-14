@@ -601,7 +601,7 @@ locale is_subspace =
   assumes closed: "closed A"
 
 lemma is_subspace_cl:
-  fixes A::"('a::complex_inner) set"
+  fixes A::"('a::complex_normed_vector) set"
   assumes \<open>is_linear_manifold A\<close>
   shows \<open>is_linear_manifold (closure A)\<close>
 proof-
@@ -1773,7 +1773,7 @@ qed
 
 lemma pre_ortho_twice: "is_linear_manifold M \<Longrightarrow> M \<subseteq> (orthogonal_complement (orthogonal_complement M)) " 
 proof-
-  assume \<open>is_linear_manifold M\<close>
+  (* assume \<open>is_linear_manifold M\<close> *)
   have \<open>x \<in> M \<Longrightarrow> x \<in> (orthogonal_complement (orthogonal_complement M))\<close> for x 
   proof-
     assume \<open>x \<in> M\<close>
@@ -1927,7 +1927,7 @@ lemma is_closed_subspace_comm:
 
 lemma OrthoClosed:
   fixes A ::"('a::chilbert_space) set"
-  assumes \<open>is_linear_manifold A\<close>
+  (* assumes \<open>is_linear_manifold A\<close> *)
   shows \<open>closed (orthogonal_complement A)\<close>                                                
 proof-
   have \<open>\<forall> n. x n \<in> (orthogonal_complement A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x l
@@ -1956,7 +1956,7 @@ qed
 
 lemma OrthoClosedEq:
   fixes A ::"('a::chilbert_space) set"
-  assumes \<open>is_linear_manifold A\<close>
+  (* assumes \<open>is_linear_manifold A\<close> *)
   shows \<open>(orthogonal_complement A) = (orthogonal_complement (closure A)) \<close>                                                
 proof-
   have \<open>x \<in> (orthogonal_complement A) \<Longrightarrow> x \<in> (orthogonal_complement (closure A))\<close> for x
@@ -2004,7 +2004,7 @@ proof-
   proof-
     assume \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
     moreover have \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement (A +\<^sub>m B))\<close>
-      by (simp add: OrthoClosedEq assms(1) assms(2) closed_sum_def is_subspace.subspace is_subspace_plus)
+      unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
     ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
       by smt
     hence \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> 
@@ -2037,7 +2037,7 @@ proof-
     hence \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
     moreover have \<open>(orthogonal_complement (A +\<^sub>m B)) = (orthogonal_complement (A +\<^sub>M B))\<close>
-      by (simp add: OrthoClosedEq assms(1) assms(2) closed_sum_def is_subspace.subspace is_subspace_plus)
+      unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
     ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
       by blast
     thus ?thesis
@@ -2259,7 +2259,7 @@ qed
 
 section "Unsorted"
 
-typedef (overloaded) ('a::chilbert_space) linear_space = \<open>{S::'a set. is_subspace S}\<close>
+typedef (overloaded) ('a::"{complex_vector,topological_space}") linear_space = \<open>{S::'a set. is_subspace S}\<close>
   using is_subspace_UNIV by blast
 
 setup_lifting type_definition_linear_space
