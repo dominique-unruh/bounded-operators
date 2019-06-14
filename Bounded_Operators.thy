@@ -581,13 +581,24 @@ proof
 qed
 end
 
+lemma PREscaleR_Bounded:
+  fixes c :: real
+  assumes \<open>bounded_clinear f\<close>
+  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
+proof-
+  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
+    by (simp add: assms bounded_clinear_const_scaleC)
+  thus ?thesis
+    by (simp add: scaleR_scaleC) 
+qed
+
 instantiation Bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
 lift_definition scaleC_Bounded :: "complex \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
     \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
   by (fact bounded_clinear_const_scaleC)
 lift_definition scaleR_Bounded :: "real \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
     \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
-  by (cheat scaleR_Bounded)
+  using PREscaleR_Bounded by blast
 
 (* definition
   \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_Bounded x) t ))\<close>
