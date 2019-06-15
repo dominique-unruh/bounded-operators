@@ -653,7 +653,167 @@ proof
 qed
 end
 
-instantiation bounded :: (chilbert_space, chilbert_space) "cbanach" begin
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "dist_norm" begin
+lift_definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
+  is \<open>\<lambda> f. operator_norm (Rep_bounded f)\<close>.
+lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
+  is \<open>\<lambda> f g. operator_norm (Rep_bounded f - Rep_bounded g) \<close>.
+
+instance
+  apply intro_classes
+  apply transfer
+  proof transfer
+    fix x y :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
+    have \<open>operator_norm (x - y) =
+           operator_norm ( ( (\<lambda>t. x t - y t)))\<close>
+      by (meson minus_apply) 
+    thus \<open>operator_norm (x - y) =
+           operator_norm (Rep_bounded (Abs_bounded (\<lambda>t. x t - y t)))\<close>
+      using Abs_bounded_inverse
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> bounded_clinear_sub)
+  qed
+end
+
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "sgn_div_norm" begin
+lift_definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+  is \<open>\<lambda> f::('a, 'b) bounded. f /\<^sub>R norm f\<close>.
+
+instance
+  apply intro_classes
+  by (metis (mono_tags, lifting) Bounded_Operators.sgn_bounded.transfer)
+end
+
+
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uniformity_dist" begin
+lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
+  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) bounded), g). dist f g < e})\<close> .
+
+instance
+  apply intro_classes
+  by (simp add: uniformity_bounded.transfer)
+end
+
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "open_uniformity" begin
+lift_definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool\<close>
+  is \<open>\<lambda> U::(('a, 'b) bounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity)\<close>.
+instance
+  apply intro_classes
+  apply auto
+  apply (metis (mono_tags, lifting) open_bounded.transfer)
+  by (smt case_prod_beta eventually_mono open_bounded.transfer)
+end
+
+(* NEW *)
+lemma operator_norm_zero: \<open>operator_norm f = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_of_zero: \<open>operator_norm (\<lambda> _. 0) = 0\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_triangular: \<open>operator_norm (\<lambda>t. x t + y t)
+           \<le> operator_norm x + operator_norm y\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_prod_real: \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_prod_complex: \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) = (cmod a) * operator_norm x\<close>
+  sorry
+
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector" begin
+instance
+  apply intro_classes
+     apply auto
+proof transfer
+  show \<open>\<And>x::('a, 'b) bounded. operator_norm (Rep_bounded x) = 0 \<Longrightarrow>
+         x = Abs_bounded (\<lambda>x. 0)\<close>
+  proof-
+    fix x::\<open>('a, 'b) bounded\<close>
+    assume \<open>operator_norm (Rep_bounded x) = 0\<close>
+    hence \<open>Rep_bounded x = (\<lambda>x. 0)\<close>
+      using operator_norm_zero
+      by (simp add: operator_norm_zero)
+    hence \<open>Abs_bounded (Rep_bounded x) = Abs_bounded (\<lambda>x. 0)\<close>
+      by simp
+    thus \<open>x = Abs_bounded (\<lambda>x. 0)\<close>
+      by (simp add: Rep_bounded_inverse)      
+  qed
+next 
+  show \<open>norm (0::('a,'b) bounded) = 0\<close>
+    apply transfer
+  proof-
+    have \<open>Rep_bounded (Abs_bounded (\<lambda>x. 0)) = (\<lambda>x. 0)\<close>
+      by (simp add: Abs_bounded_inverse)
+    moreover have \<open>U = V \<Longrightarrow> operator_norm U = operator_norm V\<close>
+      for U V:: \<open>'a \<Rightarrow> 'b\<close>
+      by simp
+    ultimately have \<open>operator_norm ( Rep_bounded (Abs_bounded (\<lambda>x::'a. 0::'b)) ) = operator_norm (\<lambda>x::'a. 0::'b)\<close>
+      by blast
+    thus \<open>operator_norm (Rep_bounded (Abs_bounded (\<lambda>x::'a. 0::'b))) = 0\<close>
+      using operator_norm_of_zero
+      by simp
+  qed
+next
+  fix x y :: \<open>('a, 'b) bounded\<close>
+  show \<open>norm (x + y) \<le> norm x + norm y\<close>
+    apply transfer
+  proof transfer
+    fix x y :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close> and  \<open>bounded_clinear y\<close>
+    have \<open>operator_norm (\<lambda>t. x t + y t)
+           \<le> operator_norm x + operator_norm y\<close>
+      using operator_norm_triangular by blast
+    show \<open>operator_norm (Rep_bounded (Abs_bounded (\<lambda>t. x t + y t)))
+           \<le> operator_norm x + operator_norm y\<close>
+      using Abs_bounded_inverse
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> \<open>operator_norm (\<lambda>t. x t + y t) \<le> operator_norm x + operator_norm y\<close> bounded_clinear_add)
+  qed
+next
+  fix a :: real  and x :: \<open>('a, 'b) bounded\<close>
+  show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
+    apply transfer
+  proof transfer
+    fix a :: real and x :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close>
+    have \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
+      using operator_norm_prod_real by blast
+    thus \<open>operator_norm
+            (Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>R x t))) =
+           \<bar>a\<bar> * operator_norm x\<close>
+      using Abs_bounded_inverse
+    proof -
+      show ?thesis
+        by (simp add: Abs_bounded_inverse PREscaleR_bounded \<open>bounded_clinear x\<close> \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>)
+    qed
+  qed
+next
+  fix a :: complex  and x :: \<open>('a, 'b) bounded\<close>
+  show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
+    apply transfer
+  proof transfer
+    fix a :: complex and x :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close>
+    have \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) =  (cmod a) * operator_norm x\<close>
+      using operator_norm_prod_complex 
+      by (simp add: operator_norm_prod_complex)
+    thus \<open>operator_norm
+            (Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C x t))) =
+           (cmod a) * operator_norm x\<close>
+      using Abs_bounded_inverse
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> bounded_clinear_compose bounded_clinear_scaleC_right)
+  qed
+qed
+
+end
+
+
+(*
+instantiation bounded :: (complex_normed_vector, chilbert_space) "cbanach" begin
 
 lift_definition sign_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
   is \<open>\<lambda> f::('a,'b) bounded. 
@@ -672,14 +832,14 @@ proof
   fix x y :: \<open>('a, 'b) bounded\<close>   
   show \<open>dist x y = norm (x - y)\<close>
     apply transfer
-
+    
 
   qed
 
 (* by (cheat bounded_cbanach) *)
 end
 
-
+*)
 
 (* TODO: move to Legacy *)
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
