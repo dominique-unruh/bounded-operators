@@ -515,68 +515,40 @@ proof
 qed
 end
 
-instantiation bounded :: (chilbert_space, chilbert_space) "ab_group_add" begin
-lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  \<open>\<lambda>x y t. x t - y t\<close>
-  by (fact bounded_clinear_sub)
-    (* definition
-  \<open>x - y = Abs_bounded (\<lambda> t::'a. Rep_bounded x t - Rep_bounded y t)\<close> *)
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "ab_group_add" begin
+lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
+ is \<open>\<lambda> f g. Abs_bounded (\<lambda>t. (Rep_bounded f) t - (Rep_bounded g) t)\<close>.
+
 instance
 proof
-  fix a::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>- a + a = 0\<close>
-    apply transfer by auto
-      (*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>- Rep_bounded a x + Rep_bounded a x = 0\<close>
-      for x
+    apply transfer
+  proof transfer
+    fix a :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear a\<close>
+    have \<open>(\<lambda>t.  ( (\<lambda>t. - a t)) t +  a t) = (\<lambda>x. 0)\<close>
+      by simp 
+    hence \<open>(\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. - a t)) t + a t) = (\<lambda>x. 0)\<close> 
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear a\<close> bounded_clinear_minus)
+    thus \<open>Abs_bounded
+          (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. - a t)) t + a t) = Abs_bounded (\<lambda>x. 0)\<close> 
       by simp
-    moreover have \<open>0 = Rep_bounded (0::('a, 'b) bounded ) x\<close>
-      for x
-      using  Abs_bounded_inverse
-      by (simp add: Abs_bounded_inverse zero_bounded_def)
-    ultimately have \<open>- Rep_bounded a x + Rep_bounded a x = Rep_bounded 0 x\<close>
-      for x
-      by simp       
-    moreover have \<open>Rep_bounded (- a) x = - Rep_bounded a x\<close>
-      for x
-      using  Abs_bounded_inverse
-      by (metis Rep_bounded bounded_clinear_minus mem_Collect_eq uminus_bounded_def)     
-    ultimately have \<open>Rep_bounded (- a) x + Rep_bounded a x = Rep_bounded 0 x\<close>
-      for x
-      by simp
-    hence \<open>Rep_bounded (- a + a) x = Rep_bounded 0 x\<close>
-      for x
-      using  Abs_bounded_inverse
-      by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def) 
-    thus \<open>Rep_bounded (- a + a) = Rep_bounded 0\<close> by blast
-  qed *)
+  qed
 
-  fix a b::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a b::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply transfer by auto
-      (*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>Rep_bounded (a - b) x = Rep_bounded a x - Rep_bounded b x\<close>
-      for x
-    proof -
-      have "\<forall>d. bounded_clinear (Rep_bounded (d::('a, 'b) bounded))"
-        using Rep_bounded by blast
-      then show ?thesis
-        by (simp add: Abs_bounded_inverse bounded_clinear_sub minus_bounded_def)
-    qed
-    moreover have \<open>Rep_bounded (a + (- b)) x = Rep_bounded a x + Rep_bounded (- b) x\<close>
-      for x
-      by (metis (no_types) Abs_bounded_inverse Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)
-    moreover have \<open> - Rep_bounded b x = Rep_bounded (- b) x\<close> 
-      for x  
-      using  Abs_bounded_inverse
-      by (metis Rep_bounded bounded_clinear_minus mem_Collect_eq uminus_bounded_def)     
-    ultimately have  \<open>Rep_bounded (a - b) x = Rep_bounded (a + (- b)) x\<close> 
-      for x  
+    apply transfer
+  proof transfer
+    fix a b :: \<open>'a \<Rightarrow> 'b\<close> 
+    assume \<open>bounded_clinear a\<close> and \<open>bounded_clinear b\<close>
+    have \<open>(\<lambda>t. a t - b t) = (\<lambda>t. a t +  (\<lambda>t. - b t) t)\<close>
       by simp
-    thus \<open>Rep_bounded (a - b) = Rep_bounded (a + - b)\<close> by blast
-  qed *)
+    hence \<open>(\<lambda>t. a t - b t) = (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. - b t)) t)\<close>
+      by (metis Abs_bounded_inverse \<open>bounded_clinear b\<close> bounded_clinear_minus mem_Collect_eq)      
+    thus \<open>Abs_bounded (\<lambda>t. a t - b t) = Abs_bounded (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. - b t)) t)\<close>
+      by simp
+  qed
 qed
 end
 
