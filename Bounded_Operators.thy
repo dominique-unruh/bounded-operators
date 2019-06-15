@@ -434,98 +434,99 @@ end
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uminus"
 begin
 lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
-is "\<lambda> f. Abs_bounded (\<lambda> t::'a. - (Rep_bounded f) t)".
+  is "\<lambda> f. Abs_bounded (\<lambda> t::'a. - (Rep_bounded f) t)".
 instance ..
 end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "semigroup_add"
 begin
 lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-      \<open>\<lambda> f g. Abs_bounded (\<lambda> t. (Rep_bounded f) t + (Rep_bounded g) t)\<close>.
+  \<open>\<lambda> f g. Abs_bounded (\<lambda> t. (Rep_bounded f) t + (Rep_bounded g) t)\<close>.
 instance
 proof      
   fix a b c :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
     apply transfer
-    proof transfer 
-      fix a b c::\<open>'a \<Rightarrow> 'b\<close>
-      assume \<open>bounded_clinear a\<close>
-         and \<open>bounded_clinear b\<close>
-         and \<open>bounded_clinear c\<close>
-      have  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
+  proof transfer 
+    fix a b c::\<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear a\<close>
+      and \<open>bounded_clinear b\<close>
+      and \<open>bounded_clinear c\<close>
+    have  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
           = (\<lambda>t. a t +  ( (\<lambda>t. b t + c t)) t)\<close>
-        by (simp add: ordered_field_class.sign_simps(1))
-      hence  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
+      by (simp add: ordered_field_class.sign_simps(1))
+    hence  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
           = (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
-        by (simp add: Abs_bounded_inverse \<open>bounded_clinear b\<close> \<open>bounded_clinear c\<close> bounded_clinear_add)
-      hence  \<open>(\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a t + b t)) t + c t) 
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear b\<close> \<open>bounded_clinear c\<close> bounded_clinear_add)
+    hence  \<open>(\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a t + b t)) t + c t) 
           = (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
-        using Abs_bounded_inverse
-        by (simp add: Abs_bounded_inverse \<open>bounded_clinear a\<close> \<open>bounded_clinear b\<close> bounded_clinear_add)
-      thus \<open>Abs_bounded
+      using Abs_bounded_inverse
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear a\<close> \<open>bounded_clinear b\<close> bounded_clinear_add)
+    thus \<open>Abs_bounded
         (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a t + b t)) t + c t) =
        Abs_bounded
         (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
-        by simp
-    qed
-
+      by simp
+  qed
+qed
 end
 
-instantiation bounded :: (chilbert_space, chilbert_space) "comm_monoid_add" begin
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "comm_monoid_add" begin
 instance
 proof
-  fix a b :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a + b = b + a\<close>
-    apply transfer by auto
-(*   proof-
-    have \<open>Rep_bounded (a + b) x = Rep_bounded (b + a) x\<close>
-      for x
-    proof-
-      have  \<open>Rep_bounded a x + Rep_bounded b x  = Rep_bounded b x + Rep_bounded a x\<close>
-        by simp
-      hence  \<open>Rep_bounded (a + b) x = Rep_bounded (b + a) x\<close>
-      proof -
-        have "\<forall>d. bounded_clinear (Rep_bounded (d::('a, 'b) bounded))"
-          by (metis Rep_bounded mem_Collect_eq)
-        then show ?thesis
-          by (simp add: Abs_bounded_inverse bounded_clinear_add plus_bounded_def)
-      qed 
-      thus ?thesis by blast
-    qed
-    thus \<open>Rep_bounded (a + b) = Rep_bounded (b + a)\<close> by blast
-  qed *)
+    apply transfer
+  proof transfer
+    fix a b :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear a\<close> and \<open>bounded_clinear b\<close>
+    have \<open> (\<lambda>t. a t + b t) =
+            (\<lambda>t. b t + a t)\<close>
+      by (simp add: ordered_field_class.sign_simps(2))
+    thus \<open>Abs_bounded (\<lambda>t. a t + b t) =
+           Abs_bounded (\<lambda>t. b t + a t)\<close> by simp
+  qed
 
-  fix a :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>0 + a = a\<close>
-    apply transfer by auto
-
-(*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>(Rep_bounded 0) x + Rep_bounded a x = Rep_bounded a x\<close>
-      for x
-      by (simp add: Abs_bounded_inverse zero_bounded_def)
-    hence \<open>Rep_bounded (0 + a) x = Rep_bounded a x\<close>
-      for x
-      using  Abs_bounded_inverse
-      by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)  
-    thus \<open>Rep_bounded (0 + a) = Rep_bounded a\<close> by blast
-  qed *)
+  proof transfer
+    have  \<open>\<And> a::('a::complex_normed_vector)\<Rightarrow>('b::complex_normed_vector). bounded_clinear a \<Longrightarrow> (Abs_bounded (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + a t)) = Abs_bounded a\<close>
+    proof-
+      fix a :: \<open>('a::complex_normed_vector) \<Rightarrow> ('b::complex_normed_vector)\<close>
+      assume \<open>bounded_clinear a\<close>
+      have \<open>Rep_bounded (Abs_bounded (\<lambda>x. 0))  =  (\<lambda>x. 0)\<close>
+        by (simp add: Abs_bounded_inverse)
+      have \<open>(\<lambda> t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + a t)  = (\<lambda> t. (\<lambda>x. 0) t + a t)\<close>
+        by (simp add: \<open>Rep_bounded (Abs_bounded (\<lambda>x. 0)) = (\<lambda>x. 0)\<close>)
+      moreover have  \<open>(\<lambda>x. 0) t + a t = a t\<close>
+        for t
+        by simp 
+      ultimately have \<open>(\<lambda> t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + a t)  = (\<lambda> t. a t)\<close>
+        by auto
+      hence \<open>(\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + a t) = a\<close>
+        by simp
+      thus \<open>(Abs_bounded
+            (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + a t)) = Abs_bounded a\<close> 
+        by simp
+    qed
+    thus \<open>\<And>a:: ('a, 'b) bounded. Abs_bounded (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>x. 0)) t + Rep_bounded a t) = a\<close> 
+      by (metis Abs_bounded_cases Rep_bounded_cases Rep_bounded_inverse mem_Collect_eq)
+  qed
 qed
-
 end
 
 instantiation bounded :: (chilbert_space, chilbert_space) "ab_group_add" begin
 lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-      \<open>\<lambda>x y t. x t - y t\<close>
+  \<open>\<lambda>x y t. x t - y t\<close>
   by (fact bounded_clinear_sub)
-(* definition
+    (* definition
   \<open>x - y = Abs_bounded (\<lambda> t::'a. Rep_bounded x t - Rep_bounded y t)\<close> *)
 instance
 proof
   fix a::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>- a + a = 0\<close>
     apply transfer by auto
-(*     apply (simp add: bounded_eq_iff)
+      (*     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>- Rep_bounded a x + Rep_bounded a x = 0\<close>
       for x
@@ -554,7 +555,7 @@ proof
   fix a b::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer by auto
-(*     apply (simp add: bounded_eq_iff)
+      (*     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>Rep_bounded (a - b) x = Rep_bounded a x - Rep_bounded b x\<close>
       for x
@@ -592,10 +593,10 @@ qed
 
 instantiation bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
 lift_definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-    \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
+  \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
   by (fact bounded_clinear_const_scaleC)
 lift_definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-    \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
+  \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
   using PREscaleR_bounded by blast
 
 (* definition
@@ -610,7 +611,7 @@ proof
   show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
     apply transfer
     by (simp add: scaleR_scaleC) 
-    (* by auto
+      (* by auto
     apply (simp add: bounded_eq_iff)
     by (simp add: scaleC_bounded_def scaleR_bounded_def scaleR_scaleC) *)
 
@@ -618,7 +619,7 @@ proof
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     apply transfer
     by (simp add: scaleC_add_right) 
-(*     apply (simp add: bounded_eq_iff)
+      (*     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
       for t
@@ -642,7 +643,7 @@ proof
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     apply transfer
     by (simp add: scaleC_left.add)
-(*     apply (simp add: bounded_eq_iff)
+      (*     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>Rep_bounded ((a + b) *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
       for t
@@ -672,7 +673,7 @@ proof
   fix a b::complex and x :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
     apply transfer by auto
-(*     apply (simp add: bounded_eq_iff)
+      (*     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>Rep_bounded (a *\<^sub>C b *\<^sub>C x) t = Rep_bounded ((a * b) *\<^sub>C x) t\<close>
       for t
@@ -694,7 +695,7 @@ proof
   fix x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>1 *\<^sub>C x = x\<close>
     apply transfer by auto
-(* 
+      (* 
     apply (simp add: bounded_eq_iff)
   proof-
     have \<open>Rep_bounded (1 *\<^sub>C x) t = Rep_bounded x t\<close>
@@ -713,7 +714,7 @@ lift_definition sign_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
   is \<open>\<lambda> f::('a,'b) bounded. 
     Abs_bounded (\<lambda> t::'a. ( (Rep_bounded f) t ) /\<^sub>R operator_norm (Rep_bounded f))\<close> .
 lift_definition norm_bounded :: "('a,'b) bounded \<Rightarrow> real"
- is \<open>\<lambda> f::('a, 'b) bounded. operator_norm (Rep_bounded f)\<close> .
+  is \<open>\<lambda> f::('a, 'b) bounded. operator_norm (Rep_bounded f)\<close> .
 lift_definition dist_bounded :: "('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real"
   is \<open>\<lambda> f. \<lambda> g. operator_norm (Rep_bounded f - Rep_bounded g )\<close> .
 lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
@@ -728,9 +729,9 @@ proof
     apply transfer
 
 
-qed
-  
-  (* by (cheat bounded_cbanach) *)
+  qed
+
+(* by (cheat bounded_cbanach) *)
 end
 
 
@@ -738,7 +739,7 @@ end
 (* TODO: move to Legacy *)
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
 abbreviation "applyOp == Rep_bounded"
-(* typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
+  (* typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_l2bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_l2bounded *)
@@ -753,9 +754,9 @@ end *)
 
 (* TODO define for bounded *)
 lift_definition timesOp :: 
-    "('b::complex_normed_vector,'c::complex_normed_vector) bounded
+  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" 
-    is "(o)"
+  is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
@@ -861,7 +862,7 @@ lemma is_linear_manifold_image:
 lemma PREapplyOpSpace:
   fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
     and S::\<open>'a set\<close>
-  (* assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close> *)
+    (* assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close> *)
   assumes "clinear f" and "is_linear_manifold S"
   shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close> (* TODO: use f ` S *)
 proof -
@@ -951,8 +952,8 @@ lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
-  (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
-(*   using  is_linear_manifold.zero is_subspace.subspace
+    (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
+    (*   using  is_linear_manifold.zero is_subspace.subspace
   by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
 
 
@@ -1015,11 +1016,11 @@ proof-
     proof-
       assume \<open>t \<in> {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
       then obtain u where 
-         \<open>t = A u\<close> and \<open>u \<in> closure {B x |x. x \<in> S}\<close>
+        \<open>t = A u\<close> and \<open>u \<in> closure {B x |x. x \<in> S}\<close>
         by auto
       from  \<open>u \<in> closure {B x |x. x \<in> S}\<close> 
       obtain v where \<open>v \<longlonglongrightarrow> u\<close>
-          and \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
+        and \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
         using closure_sequential by blast
       from  \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
       have \<open>\<forall> n. \<exists> x \<in> S.  v n = B x\<close>
@@ -1036,7 +1037,7 @@ proof-
         by (simp add: bounded_linear_continuous)
       ultimately have \<open>(\<lambda> n. A (B (w n)) ) \<longlonglongrightarrow> t\<close>
         using  \<open>t = A u\<close>
-         isCont_tendsto_compose by blast
+          isCont_tendsto_compose by blast
       hence  \<open>(\<lambda> n. (A \<circ> B) (w n) ) \<longlonglongrightarrow> t\<close>
         by simp                               
       thus ?thesis using \<open>\<And> n. w n \<in> S\<close>
@@ -1491,7 +1492,7 @@ setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a::topological_space \<Rightarrow> 'b::topological_space) \<Rightarrow> bool\<close>)\<close>
 
 thm tendsto_scaleR
-(* This overwrites Limits.tendsto_scaleR by a stronger fact *)
+  (* This overwrites Limits.tendsto_scaleR by a stronger fact *)
 lemma tendsto_scaleR[tendsto_intros]:
   fixes b :: "'a::topological_real_vector"
   assumes "(f \<longlongrightarrow> a) F" and "(g \<longlongrightarrow> b) F"
@@ -1528,7 +1529,7 @@ qed
 instance topological_complex_vector \<subseteq> topological_real_vector
   apply standard
   apply (rewrite at "case_prod scaleR" DEADID.rel_mono_strong[of _ "\<lambda>x. (complex_of_real (fst x)) *\<^sub>C (snd x)"])
-   apply (auto simp: scaleR_scaleC case_prod_beta)[1]
+  apply (auto simp: scaleR_scaleC case_prod_beta)[1]
   unfolding continuous_on_def
   apply (auto intro!: tendsto_intros)
   using tendsto_fst tendsto_snd by fastforce+
@@ -1537,7 +1538,7 @@ instance real_normed_vector \<subseteq> topological_real_vector
 proof standard 
   have "(\<lambda>(x, y). x *\<^sub>R y) \<midarrow>(a, b)\<rightarrow> a *\<^sub>R b" for a and b :: 'a
     unfolding case_prod_beta apply (rule Limits.tendsto_scaleR)
-  using tendsto_fst tendsto_snd by fastforce+
+    using tendsto_fst tendsto_snd by fastforce+
   then show "continuous_on UNIV (\<lambda>(x, y::'a). x *\<^sub>R y)"
     unfolding continuous_on_def by simp
 qed
@@ -1547,14 +1548,14 @@ proof standard
   note tendsto_scaleC = bounded_bilinear.tendsto[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
   have "(\<lambda>(x, y). x *\<^sub>C y) \<midarrow>(a, b)\<rightarrow> a *\<^sub>C b" for a and b :: 'a
     unfolding case_prod_beta apply (rule tendsto_scaleC)
-  using tendsto_fst tendsto_snd by fastforce+
+    using tendsto_fst tendsto_snd by fastforce+
   then show "continuous_on UNIV (\<lambda>(x, y::'a). x *\<^sub>C y)"
     unfolding continuous_on_def by simp
 qed
 
 lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
   unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
- 
+
 typedef (overloaded) 'a dual = \<open>{f::'a::topological_complex_vector\<Rightarrow>complex. continuous_on UNIV f \<and> clinear f}\<close>
   apply (rule exI[where x="\<lambda>f. 0"]) by auto
 
