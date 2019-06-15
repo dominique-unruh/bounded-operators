@@ -425,32 +425,50 @@ typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) boun
 
 setup_lifting type_definition_bounded
 
-instantiation bounded :: (chilbert_space, chilbert_space) "zero"
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "zero"
 begin
-lift_definition zero_bounded :: "('a,'b) bounded" is "Abs_bounded (\<lambda>x. 0)".
+lift_definition zero_bounded :: "('a,'b) bounded" is "Abs_bounded (\<lambda>x::'a. (0::'b))".
 instance ..
 end
 
-instantiation bounded :: (chilbert_space, chilbert_space) "uminus"
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uminus"
 begin
-lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-is "\<lambda> f. Abs_bounded (\<lambda> t. - (Rep_bounded f) t)".
+lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
+is "\<lambda> f. Abs_bounded (\<lambda> t::'a. - (Rep_bounded f) t)".
 instance ..
 end
 
-instantiation bounded :: (chilbert_space, chilbert_space) "semigroup_add"
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "semigroup_add"
 begin
 lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-      \<open>\<lambda>x y t. x t + y t\<close>
-  by (fact bounded_clinear_add)
-  (* \<open>x + y = Abs_bounded (\<lambda> t::'a. Rep_bounded x t + Rep_bounded y t)\<close> *)
-
+      \<open>\<lambda> f g. Abs_bounded (\<lambda> t. (Rep_bounded f) t + (Rep_bounded g) t)\<close>.
 instance
 proof      
-  fix a b c :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a b c :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by auto
-qed
+    apply transfer
+    proof transfer 
+      fix a b c::\<open>'a \<Rightarrow> 'b\<close>
+      assume \<open>bounded_clinear a\<close>
+         and \<open>bounded_clinear b\<close>
+         and \<open>bounded_clinear c\<close>
+      have  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
+          = (\<lambda>t. a t +  ( (\<lambda>t. b t + c t)) t)\<close>
+        by (simp add: ordered_field_class.sign_simps(1))
+      hence  \<open>(\<lambda>t.  ( (\<lambda>t. a t + b t)) t + c t) 
+          = (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
+        by (simp add: Abs_bounded_inverse \<open>bounded_clinear b\<close> \<open>bounded_clinear c\<close> bounded_clinear_add)
+      hence  \<open>(\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a t + b t)) t + c t) 
+          = (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
+        using Abs_bounded_inverse
+        by (simp add: Abs_bounded_inverse \<open>bounded_clinear a\<close> \<open>bounded_clinear b\<close> bounded_clinear_add)
+      thus \<open>Abs_bounded
+        (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a t + b t)) t + c t) =
+       Abs_bounded
+        (\<lambda>t. a t + Rep_bounded (Abs_bounded (\<lambda>t. b t + c t)) t)\<close>
+        by simp
+    qed
+
 end
 
 instantiation bounded :: (chilbert_space, chilbert_space) "comm_monoid_add" begin
