@@ -1,4 +1,4 @@
-(*  Title:      Bounded-Operators/Bounded_Operators.thy
+(*  Title:      bounded-Operators/bounded_Operators.thy
     Author:     Dominique Unruh, University of Tartu
     Author:     Jose Manuel Rodriguez Caballero, University of Tartu
 
@@ -29,9 +29,8 @@ subsection \<open>Preliminaries\<close>
 
 (* The complex numbers are a Hilbert space *)
 instantiation complex :: "chilbert_space" begin
-instance by (cheat "dual chilbert_space")
+instance ..
 end
-
 
 subsection \<open>Riesz Representation\<close>
 
@@ -418,170 +417,151 @@ proof-
 qed
 
 
-subsection \<open>Bounded operators\<close>
+subsection \<open>bounded operators\<close>
 
-(* TODO: rename to bounded (that name is free now) *)
-typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) Bounded
+typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   using bounded_clinear_zero by blast
 
-setup_lifting type_definition_Bounded
+setup_lifting type_definition_bounded
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "zero"
+instantiation bounded :: (chilbert_space, chilbert_space) "zero"
 begin
-lift_definition zero_Bounded :: "('a,'b) Bounded" is "\<lambda>x. 0"
-  by (fact bounded_clinear_zero)
+lift_definition zero_bounded :: "('a,'b) bounded" is "Abs_bounded (\<lambda>x. 0)".
 instance ..
 end
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "uminus"
+instantiation bounded :: (chilbert_space, chilbert_space) "uminus"
 begin
-lift_definition uminus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is "\<lambda>x t. - x t"
-  by (rule bounded_clinear_minus)
+lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+is "\<lambda> f. Abs_bounded (\<lambda> t. - (Rep_bounded f) t)".
 instance ..
 end
 
-(*
-(* TODO exists: Rep_Bounded_inject[THEN iffD1] *)
-lemma Bounded_eqI:
-  \<open>Rep_Bounded m = Rep_Bounded n \<Longrightarrow> m = n\<close>
-  by (simp add: Rep_Bounded_inject)
-
-(* TODO exists: Rep_Bounded_inject[symmetric] *)
-lemma Bounded_eq_iff:
-  "m = n \<longleftrightarrow> Rep_Bounded m = Rep_Bounded n"
-  by (simp add: Rep_Bounded_inject)
-
-(* TODO exists: Rep_Bounded_inverse *)
-(* TODO: why "code abstype"? *)
-lemma Abs_Bounded_Rep_Bounded [code abstype]:
-  \<open>Abs_Bounded (Rep_Bounded n) = n\<close>
-  by (fact Rep_Bounded_inverse) *)
-
-instantiation Bounded :: (chilbert_space, chilbert_space) "semigroup_add"
+instantiation bounded :: (chilbert_space, chilbert_space) "semigroup_add"
 begin
-lift_definition plus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
       \<open>\<lambda>x y t. x t + y t\<close>
   by (fact bounded_clinear_add)
-  (* \<open>x + y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t + Rep_Bounded y t)\<close> *)
+  (* \<open>x + y = Abs_bounded (\<lambda> t::'a. Rep_bounded x t + Rep_bounded y t)\<close> *)
 
 instance
 proof      
-  fix a b c :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a b c :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
     apply transfer by auto
 qed
 end
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "comm_monoid_add" begin
+instantiation bounded :: (chilbert_space, chilbert_space) "comm_monoid_add" begin
 instance
 proof
-  fix a b :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a b :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a + b = b + a\<close>
     apply transfer by auto
 (*   proof-
-    have \<open>Rep_Bounded (a + b) x = Rep_Bounded (b + a) x\<close>
+    have \<open>Rep_bounded (a + b) x = Rep_bounded (b + a) x\<close>
       for x
     proof-
-      have  \<open>Rep_Bounded a x + Rep_Bounded b x  = Rep_Bounded b x + Rep_Bounded a x\<close>
+      have  \<open>Rep_bounded a x + Rep_bounded b x  = Rep_bounded b x + Rep_bounded a x\<close>
         by simp
-      hence  \<open>Rep_Bounded (a + b) x = Rep_Bounded (b + a) x\<close>
+      hence  \<open>Rep_bounded (a + b) x = Rep_bounded (b + a) x\<close>
       proof -
-        have "\<forall>d. bounded_clinear (Rep_Bounded (d::('a, 'b) Bounded))"
-          by (metis Rep_Bounded mem_Collect_eq)
+        have "\<forall>d. bounded_clinear (Rep_bounded (d::('a, 'b) bounded))"
+          by (metis Rep_bounded mem_Collect_eq)
         then show ?thesis
-          by (simp add: Abs_Bounded_inverse bounded_clinear_add plus_Bounded_def)
+          by (simp add: Abs_bounded_inverse bounded_clinear_add plus_bounded_def)
       qed 
       thus ?thesis by blast
     qed
-    thus \<open>Rep_Bounded (a + b) = Rep_Bounded (b + a)\<close> by blast
+    thus \<open>Rep_bounded (a + b) = Rep_bounded (b + a)\<close> by blast
   qed *)
 
-  fix a :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>0 + a = a\<close>
     apply transfer by auto
 
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>(Rep_Bounded 0) x + Rep_Bounded a x = Rep_Bounded a x\<close>
+    have \<open>(Rep_bounded 0) x + Rep_bounded a x = Rep_bounded a x\<close>
       for x
-      by (simp add: Abs_Bounded_inverse zero_Bounded_def)
-    hence \<open>Rep_Bounded (0 + a) x = Rep_Bounded a x\<close>
+      by (simp add: Abs_bounded_inverse zero_bounded_def)
+    hence \<open>Rep_bounded (0 + a) x = Rep_bounded a x\<close>
       for x
-      using  Abs_Bounded_inverse
-      by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)  
-    thus \<open>Rep_Bounded (0 + a) = Rep_Bounded a\<close> by blast
+      using  Abs_bounded_inverse
+      by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)  
+    thus \<open>Rep_bounded (0 + a) = Rep_bounded a\<close> by blast
   qed *)
 qed
 
 end
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "ab_group_add" begin
-lift_definition minus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+instantiation bounded :: (chilbert_space, chilbert_space) "ab_group_add" begin
+lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
       \<open>\<lambda>x y t. x t - y t\<close>
   by (fact bounded_clinear_sub)
 (* definition
-  \<open>x - y = Abs_Bounded (\<lambda> t::'a. Rep_Bounded x t - Rep_Bounded y t)\<close> *)
+  \<open>x - y = Abs_bounded (\<lambda> t::'a. Rep_bounded x t - Rep_bounded y t)\<close> *)
 instance
 proof
-  fix a::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>- a + a = 0\<close>
     apply transfer by auto
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>- Rep_Bounded a x + Rep_Bounded a x = 0\<close>
+    have \<open>- Rep_bounded a x + Rep_bounded a x = 0\<close>
       for x
       by simp
-    moreover have \<open>0 = Rep_Bounded (0::('a, 'b) Bounded ) x\<close>
+    moreover have \<open>0 = Rep_bounded (0::('a, 'b) bounded ) x\<close>
       for x
-      using  Abs_Bounded_inverse
-      by (simp add: Abs_Bounded_inverse zero_Bounded_def)
-    ultimately have \<open>- Rep_Bounded a x + Rep_Bounded a x = Rep_Bounded 0 x\<close>
+      using  Abs_bounded_inverse
+      by (simp add: Abs_bounded_inverse zero_bounded_def)
+    ultimately have \<open>- Rep_bounded a x + Rep_bounded a x = Rep_bounded 0 x\<close>
       for x
       by simp       
-    moreover have \<open>Rep_Bounded (- a) x = - Rep_Bounded a x\<close>
+    moreover have \<open>Rep_bounded (- a) x = - Rep_bounded a x\<close>
       for x
-      using  Abs_Bounded_inverse
-      by (metis Rep_Bounded bounded_clinear_minus mem_Collect_eq uminus_Bounded_def)     
-    ultimately have \<open>Rep_Bounded (- a) x + Rep_Bounded a x = Rep_Bounded 0 x\<close>
+      using  Abs_bounded_inverse
+      by (metis Rep_bounded bounded_clinear_minus mem_Collect_eq uminus_bounded_def)     
+    ultimately have \<open>Rep_bounded (- a) x + Rep_bounded a x = Rep_bounded 0 x\<close>
       for x
       by simp
-    hence \<open>Rep_Bounded (- a + a) x = Rep_Bounded 0 x\<close>
+    hence \<open>Rep_bounded (- a + a) x = Rep_bounded 0 x\<close>
       for x
-      using  Abs_Bounded_inverse
-      by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def) 
-    thus \<open>Rep_Bounded (- a + a) = Rep_Bounded 0\<close> by blast
+      using  Abs_bounded_inverse
+      by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def) 
+    thus \<open>Rep_bounded (- a + a) = Rep_bounded 0\<close> by blast
   qed *)
 
-  fix a b::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a b::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer by auto
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>Rep_Bounded (a - b) x = Rep_Bounded a x - Rep_Bounded b x\<close>
+    have \<open>Rep_bounded (a - b) x = Rep_bounded a x - Rep_bounded b x\<close>
       for x
     proof -
-      have "\<forall>d. bounded_clinear (Rep_Bounded (d::('a, 'b) Bounded))"
-        using Rep_Bounded by blast
+      have "\<forall>d. bounded_clinear (Rep_bounded (d::('a, 'b) bounded))"
+        using Rep_bounded by blast
       then show ?thesis
-        by (simp add: Abs_Bounded_inverse bounded_clinear_sub minus_Bounded_def)
+        by (simp add: Abs_bounded_inverse bounded_clinear_sub minus_bounded_def)
     qed
-    moreover have \<open>Rep_Bounded (a + (- b)) x = Rep_Bounded a x + Rep_Bounded (- b) x\<close>
+    moreover have \<open>Rep_bounded (a + (- b)) x = Rep_bounded a x + Rep_bounded (- b) x\<close>
       for x
-      by (metis (no_types) Abs_Bounded_inverse Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)
-    moreover have \<open> - Rep_Bounded b x = Rep_Bounded (- b) x\<close> 
+      by (metis (no_types) Abs_bounded_inverse Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)
+    moreover have \<open> - Rep_bounded b x = Rep_bounded (- b) x\<close> 
       for x  
-      using  Abs_Bounded_inverse
-      by (metis Rep_Bounded bounded_clinear_minus mem_Collect_eq uminus_Bounded_def)     
-    ultimately have  \<open>Rep_Bounded (a - b) x = Rep_Bounded (a + (- b)) x\<close> 
+      using  Abs_bounded_inverse
+      by (metis Rep_bounded bounded_clinear_minus mem_Collect_eq uminus_bounded_def)     
+    ultimately have  \<open>Rep_bounded (a - b) x = Rep_bounded (a + (- b)) x\<close> 
       for x  
       by simp
-    thus \<open>Rep_Bounded (a - b) = Rep_Bounded (a + - b)\<close> by blast
+    thus \<open>Rep_bounded (a - b) = Rep_bounded (a + - b)\<close> by blast
   qed *)
 qed
 end
 
-lemma PREscaleR_Bounded:
+lemma PREscaleR_bounded:
   fixes c :: real
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
@@ -592,140 +572,160 @@ proof-
     by (simp add: scaleR_scaleC) 
 qed
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
-lift_definition scaleC_Bounded :: "complex \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+instantiation bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
+lift_definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
     \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
   by (fact bounded_clinear_const_scaleC)
-lift_definition scaleR_Bounded :: "real \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+lift_definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
     \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
-  using PREscaleR_Bounded by blast
+  using PREscaleR_bounded by blast
 
 (* definition
-  \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_Bounded x) t ))\<close>
+  \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_bounded x) t ))\<close>
 definition
-  \<open>( * \<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_Bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_Bounded x) t ))\<close> *)
+  \<open>( * \<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_bounded x) t ))\<close> *)
 
 instance
   apply intro_classes
 proof
-  fix r and x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix r and x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
     apply transfer
     by (simp add: scaleR_scaleC) 
     (* by auto
-    apply (simp add: Bounded_eq_iff)
-    by (simp add: scaleC_Bounded_def scaleR_Bounded_def scaleR_scaleC) *)
+    apply (simp add: bounded_eq_iff)
+    by (simp add: scaleC_bounded_def scaleR_bounded_def scaleR_scaleC) *)
 
-  fix a and x y::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a and x y::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     apply transfer
     by (simp add: scaleC_add_right) 
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
+    have \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
       for t
     proof-
-      have \<open>a *\<^sub>C ( Rep_Bounded x t + Rep_Bounded y t ) = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close>
+      have \<open>a *\<^sub>C ( Rep_bounded x t + Rep_bounded y t ) = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close>
         using scaleC_add_right by blast
-      hence \<open>a *\<^sub>C Rep_Bounded (x + y) t = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close>
-        using Abs_Bounded_inverse
-        by (mxetis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def)
-      hence \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x) t + Rep_Bounded (a *\<^sub>C y) t\<close>
-        by (mexis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>a *\<^sub>C Rep_Bounded (x + y) t = a *\<^sub>C Rep_Bounded x t + a *\<^sub>C Rep_Bounded y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
-      hence \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
-        by (metxis (no_types) Abs_Bounded_inverse Rep_Bounded \<open>Rep_Bounded (a *\<^sub>C (x + y)) t = Rep_Bounded (a *\<^sub>C x) t + Rep_Bounded (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_Bounded_def)
+      hence \<open>a *\<^sub>C Rep_bounded (x + y) t = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close>
+        using Abs_bounded_inverse
+        by (mxetis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)
+      hence \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x) t + Rep_bounded (a *\<^sub>C y) t\<close>
+        by (mexis (no_types) Abs_bounded_inverse Rep_bounded \<open>a *\<^sub>C Rep_bounded (x + y) t = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
+      hence \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
+        by (metxis (no_types) Abs_bounded_inverse Rep_bounded \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x) t + Rep_bounded (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_bounded_def)
       thus ?thesis by blast
     qed
-    thus \<open>Rep_Bounded (a *\<^sub>C (x + y)) = Rep_Bounded (a *\<^sub>C x + a *\<^sub>C y)\<close>
+    thus \<open>Rep_bounded (a *\<^sub>C (x + y)) = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y)\<close>
       by auto
   qed *)
 
-  fix a b and x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a b and x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     apply transfer
     by (simp add: scaleC_left.add)
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>Rep_Bounded ((a + b) *\<^sub>C x) t = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
+    have \<open>Rep_bounded ((a + b) *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
       for t
     proof-
-      have \<open>Rep_Bounded ((a + b) *\<^sub>C x) t = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
+      have \<open>Rep_bounded ((a + b) *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
       proof-
-        have \<open>Rep_Bounded (a *\<^sub>C x) t = a *\<^sub>C Rep_Bounded x t\<close>
-          using Abs_Bounded_inverse
-          by (metis (full_types) Rep_Bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
-        moreover have \<open>Rep_Bounded (b *\<^sub>C x) t = b *\<^sub>C Rep_Bounded x t\<close>
-          using Abs_Bounded_inverse
-          by (metis (full_types) Rep_Bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
-        moreover have \<open>Rep_Bounded ((a+b) *\<^sub>C x) t = (a+b) *\<^sub>C Rep_Bounded x t\<close>
-          using Abs_Bounded_inverse
-          by (metis (full_types) Rep_Bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def)
-        moreover have \<open>Rep_Bounded (a *\<^sub>C x) t +  Rep_Bounded (b *\<^sub>C x) t = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
-          using Abs_Bounded_inverse
-          by (metis (full_types) Rep_Bounded bounded_clinear_add mem_Collect_eq plus_Bounded_def) 
+        have \<open>Rep_bounded (a *\<^sub>C x) t = a *\<^sub>C Rep_bounded x t\<close>
+          using Abs_bounded_inverse
+          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
+        moreover have \<open>Rep_bounded (b *\<^sub>C x) t = b *\<^sub>C Rep_bounded x t\<close>
+          using Abs_bounded_inverse
+          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
+        moreover have \<open>Rep_bounded ((a+b) *\<^sub>C x) t = (a+b) *\<^sub>C Rep_bounded x t\<close>
+          using Abs_bounded_inverse
+          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
+        moreover have \<open>Rep_bounded (a *\<^sub>C x) t +  Rep_bounded (b *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
+          using Abs_bounded_inverse
+          by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def) 
         ultimately show ?thesis
           by (simp add: scaleC_left.add) 
       qed
       thus ?thesis by blast
     qed
-    thus \<open>Rep_Bounded ((a + b) *\<^sub>C x) = Rep_Bounded (a *\<^sub>C x + b *\<^sub>C x)\<close> by blast
+    thus \<open>Rep_bounded ((a + b) *\<^sub>C x) = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x)\<close> by blast
   qed *)
 
-  fix a b::complex and x :: \<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix a b::complex and x :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
     apply transfer by auto
-(*     apply (simp add: Bounded_eq_iff)
+(*     apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>Rep_Bounded (a *\<^sub>C b *\<^sub>C x) t = Rep_Bounded ((a * b) *\<^sub>C x) t\<close>
+    have \<open>Rep_bounded (a *\<^sub>C b *\<^sub>C x) t = Rep_bounded ((a * b) *\<^sub>C x) t\<close>
       for t
     proof-
-      have \<open>Rep_Bounded ((a * b) *\<^sub>C x) t = (a * b) *\<^sub>C Rep_Bounded x t\<close>
-        using Abs_Bounded_inverse
-        by (metis Rep_Bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_Bounded_def)
-      moreover have  \<open>Rep_Bounded (a *\<^sub>C (b *\<^sub>C x)) t = a *\<^sub>C  b *\<^sub>C (Rep_Bounded x t)\<close>
-        using Abs_Bounded_inverse
-        by (metis (mono_tags) Rep_Bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_Bounded_def)
-      ultimately have \<open>Rep_Bounded (a *\<^sub>C (b *\<^sub>C x)) t = Rep_Bounded ((a * b) *\<^sub>C x) t\<close>
+      have \<open>Rep_bounded ((a * b) *\<^sub>C x) t = (a * b) *\<^sub>C Rep_bounded x t\<close>
+        using Abs_bounded_inverse
+        by (metis Rep_bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_bounded_def)
+      moreover have  \<open>Rep_bounded (a *\<^sub>C (b *\<^sub>C x)) t = a *\<^sub>C  b *\<^sub>C (Rep_bounded x t)\<close>
+        using Abs_bounded_inverse
+        by (metis (mono_tags) Rep_bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_bounded_def)
+      ultimately have \<open>Rep_bounded (a *\<^sub>C (b *\<^sub>C x)) t = Rep_bounded ((a * b) *\<^sub>C x) t\<close>
         by simp
       thus ?thesis by blast
     qed
-    thus \<open>Rep_Bounded (a *\<^sub>C b *\<^sub>C x) = Rep_Bounded ((a * b) *\<^sub>C x)\<close>
+    thus \<open>Rep_bounded (a *\<^sub>C b *\<^sub>C x) = Rep_bounded ((a * b) *\<^sub>C x)\<close>
       by blast
   qed *)
 
-  fix x::\<open>('a::chilbert_space, 'b::chilbert_space) Bounded\<close>
+  fix x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
   show \<open>1 *\<^sub>C x = x\<close>
     apply transfer by auto
 (* 
-    apply (simp add: Bounded_eq_iff)
+    apply (simp add: bounded_eq_iff)
   proof-
-    have \<open>Rep_Bounded (1 *\<^sub>C x) t = Rep_Bounded x t\<close>
+    have \<open>Rep_bounded (1 *\<^sub>C x) t = Rep_bounded x t\<close>
       for t
-      using Abs_Bounded_inverse
-      by (metis (full_types) Rep_Bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_Bounded_def scaleC_one)
-    thus \<open>Rep_Bounded (1 *\<^sub>C x) = Rep_Bounded x\<close> by blast
+      using Abs_bounded_inverse
+      by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def scaleC_one)
+    thus \<open>Rep_bounded (1 *\<^sub>C x) = Rep_bounded x\<close> by blast
   qed *)
 qed
 
 end
 
-instantiation Bounded :: (chilbert_space, chilbert_space) "cbanach" begin
-lift_definition norm_Bounded :: "('a,'b) Bounded \<Rightarrow> real" is operator_norm .
-instance
-  by (cheat Bounded_cbanach)
+instantiation bounded :: (chilbert_space, chilbert_space) "cbanach" begin
+
+lift_definition sign_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
+  is \<open>\<lambda> f::('a,'b) bounded. 
+    Abs_bounded (\<lambda> t::'a. ( (Rep_bounded f) t ) /\<^sub>R operator_norm (Rep_bounded f))\<close> .
+lift_definition norm_bounded :: "('a,'b) bounded \<Rightarrow> real"
+ is \<open>\<lambda> f::('a, 'b) bounded. operator_norm (Rep_bounded f)\<close> .
+lift_definition dist_bounded :: "('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real"
+  is \<open>\<lambda> f. \<lambda> g. operator_norm (Rep_bounded f - Rep_bounded g )\<close> .
+lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
+  is \<open>(INF e:{0<..}. principal {(f, g). operator_norm (Rep_bounded f - Rep_bounded g ) < e})\<close> .
+lift_definition open_bounded :: "('a, 'b) bounded set \<Rightarrow> bool"
+  is "\<lambda> U. (\<forall>f\<in>U. \<forall>\<^sub>F (f', g) in INF e:{0<..}. principal {(f, g). operator_norm (Rep_bounded f - Rep_bounded g ) < e}. f' = f \<longrightarrow> g \<in> U)" .
+
+instance  
+proof
+  fix x y :: \<open>('a, 'b) bounded\<close>   
+  show \<open>dist x y = norm (x - y)\<close>
+    apply transfer
+
+
+qed
+  
+  (* by (cheat bounded_cbanach) *)
 end
 
 
 
 (* TODO: move to Legacy *)
-type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) Bounded"
-abbreviation "applyOp == Rep_Bounded"
+type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
+abbreviation "applyOp == Rep_bounded"
 (* typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
   morphisms applyOp Abs_l2bounded
   using bounded_clinear_zero by blast
 setup_lifting type_definition_l2bounded *)
 
-lift_definition idOp :: "('a::complex_normed_vector,'a) Bounded" is id
+lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
 
 (* instantiation l2bounded :: (type,type) zero begin
@@ -733,10 +733,10 @@ lift_definition zero_l2bounded :: "('a,'b) l2bounded" is "\<lambda>_. 0" by simp
 instance ..
 end *)
 
-(* TODO define for Bounded *)
+(* TODO define for bounded *)
 lift_definition timesOp :: 
-    "('b::complex_normed_vector,'c::complex_normed_vector) Bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) Bounded \<Rightarrow> ('a,'c) Bounded" 
+    "('b::complex_normed_vector,'c::complex_normed_vector) bounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" 
     is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
@@ -885,12 +885,12 @@ qed
 
 (* Note that without "closure", applyOpSpace would not in general return a subspace.
    See: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed *)
-(* TODO define for Bounded *)
-lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is
+(* TODO define for bounded *)
+lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is
   "\<lambda>A S. closure {A x|x. x\<in>S}"
   using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
 
-(* instantiation Bounded :: (chilbert_space,chilbert_space) scaleC begin
+(* instantiation bounded :: (chilbert_space,chilbert_space) scaleC begin
 lift_definition scaleC_l2bounded :: "complex \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
   "\<lambda>c A x. c *\<^sub>C A x"
   by (rule bounded_clinear_const_scaleC)
@@ -920,7 +920,7 @@ instance
 end
 
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> ('b,'a) Bounded" ("_*" [99] 100) is Adj
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) is Adj
   by (fact Adj_bounded_clinear)
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
@@ -966,10 +966,10 @@ qed
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using PREtimesScalarSpace_not0 by blast
 
-lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) Bounded"
+lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) bounded"
   apply transfer by simp
 
-lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"(_,_)Bounded"
+lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"(_,_)bounded"
   apply transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
@@ -1037,14 +1037,14 @@ lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A
   apply transfer
   using PREtimesOp_assoc_linear_space by blast
 
-(* instantiation Bounded :: (chilbert_space,chilbert_space) ab_group_add begin
-lift_definition plus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+(* instantiation bounded :: (chilbert_space,chilbert_space) ab_group_add begin
+lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>a b x. a x + b x"
   by (rule bounded_clinear_add)
-lift_definition minus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>a b x. a x - b x"
   by (rule bounded_clinear_sub)
-lift_definition uminus_Bounded :: "('a,'b) Bounded \<Rightarrow> ('a,'b) Bounded" is
+lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>a x. - a x"
   by (rule bounded_clinear_minus)
 instance 
@@ -1053,13 +1053,13 @@ instance
 end *)
 
 (* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) Bounded", symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) Bounded"]
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
 
-lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) Bounded"
+lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) bounded"
   apply transfer
   by (simp add: scaleC_add_right) 
-lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) Bounded"
+lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) bounded"
   apply transfer
   by (simp add: complex_vector.scale_right_diff_distrib)
 
@@ -1069,22 +1069,22 @@ lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
 lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
   by (cheat equal_basis)
 
-lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) Bounded"
+lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) bounded"
   by (cheat adjoint_twice)
 
 (* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhoc_overloading
-  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)Bounded\<Rightarrow>_" 
+  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)bounded\<Rightarrow>_" 
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
-  for A B :: "_ linear_space" and U :: "(_,_) Bounded"
+  for A B :: "_ linear_space" and U :: "(_,_) bounded"
   apply transfer 
   by (cheat cdot_plus_distrib)
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
-  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"(_,_)Bounded" and S::"_ linear_space"
+  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"(_,_)bounded" and S::"_ linear_space"
 proof transfer
   fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
   have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
@@ -1097,24 +1097,24 @@ qed
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
 
-lemma scalar_mult_0_op[simp]: "(0::complex) \<cdot> A = 0" for A::"(_,_) Bounded"
+lemma scalar_mult_0_op[simp]: "(0::complex) \<cdot> A = 0" for A::"(_,_) bounded"
   apply transfer by auto
 
 lemma scalar_op_op[simp]: "(a \<cdot> A) \<cdot> B = a \<cdot> (A \<cdot> B)"
-  for a :: complex and A :: "(_,_) Bounded" and B :: "(_,_) Bounded"
+  for a :: complex and A :: "(_,_) bounded" and B :: "(_,_) bounded"
   apply transfer by auto
 
 lemma op_scalar_op[simp]: "timesOp A (a \<cdot> B) = a \<cdot> (timesOp A B)" 
-  for a :: complex and A :: "(_,_) Bounded" and B :: "(_,_) Bounded"
+  for a :: complex and A :: "(_,_) bounded" and B :: "(_,_) bounded"
   apply transfer
   by (simp add: bounded_clinear.clinear clinear.scaleC o_def)
 
 lemma scalar_scalar_op[simp]: "a \<cdot> (b \<cdot> A) = (a*b) \<cdot> A"
-  for a b :: complex and A  :: "(_,_) Bounded"
+  for a b :: complex and A  :: "(_,_) bounded"
   apply transfer by auto
 
 lemma scalar_op_vec[simp]: "(a \<cdot> A) \<cdot> \<psi> = a *\<^sub>C (A \<cdot> \<psi>)" 
-  for a :: complex and A :: "(_,_) Bounded" and \<psi> :: "'a ell2"
+  for a :: complex and A :: "(_,_) bounded" and \<psi> :: "'a ell2"
   apply transfer by auto
 
 
@@ -1131,19 +1131,19 @@ lemma apply_0[simp]: "applyOp U 0 = 0"
 lemma times_idOp1[simp]: "U \<cdot> idOp = U"
   apply transfer by auto
 
-lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) Bounded"
+lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) bounded"
   apply transfer by auto
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   by (cheat idOp_adjoint)
 
 lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
-  for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) Bounded"
+  for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
   apply transfer apply auto
   by (cheat mult_INF)
 
 lemma mult_inf_distrib[simp]: "U \<cdot> (B \<sqinter> C) = (U \<cdot> B) \<sqinter> (U \<cdot> C)" 
-  for U :: "(_,_) Bounded" and B C :: "_ linear_space"
+  for U :: "(_,_) bounded" and B C :: "_ linear_space"
   using mult_INF[where V="\<lambda>x. if x then B else C" and U=U]
   unfolding INF_UNIV_bool_expand
   by simp
@@ -1185,7 +1185,7 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
-consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) Bounded"
+consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded"
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
     applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
   by (cheat TODO5)
@@ -1216,7 +1216,7 @@ lemma UadjU[simp]: "unitary U \<Longrightarrow> U \<cdot> U* = idOp" unfolding u
 lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
   unfolding unitary_def isometry_def by simp
 
-lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)Bounded"
+lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)bounded"
   unfolding unitary_def by auto
 
 lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A\<cdot>B)"
@@ -1320,28 +1320,28 @@ lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
   apply (rule bounded_clinear_intro[where K=1])
   by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
 
-lift_definition ell2_to_Bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) Bounded" is
+lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) bounded" is
   "\<lambda>(\<psi>::'a) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
   by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
 
-lemma ell2_to_bounded_applyOp: "ell2_to_Bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_Bounded \<psi>" for A :: "(_,_)Bounded"
+lemma ell2_to_bounded_applyOp: "ell2_to_bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_bounded \<psi>" for A :: "(_,_)bounded"
   apply transfer
   by (simp add: bounded_clinear_def clinear.scaleC o_def)
 
-lemma ell2_to_bounded_scalar_times: "ell2_to_Bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_Bounded \<psi>" for a::complex
+lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a \<cdot> ell2_to_bounded \<psi>" for a::complex
   apply (rewrite at "a *\<^sub>C \<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp) \<cdot> \<psi>"])
   apply transfer apply simp
   apply (subst ell2_to_bounded_applyOp)
   by simp
 
-lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) Bounded \<Rightarrow> 'a linear_space" is ker_op
+lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space" is ker_op
   by (metis ker_op_lin)
 
-definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) Bounded \<Rightarrow> 'a linear_space" where
+definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A-a\<cdot>idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a\<cdot>A) = kernel A"
-  for a :: complex and A :: "(_,_) Bounded"
+  for a :: complex and A :: "(_,_) bounded"
   apply transfer
   by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def)
 
@@ -1362,7 +1362,7 @@ section \<open>Projectors\<close>
 (* TODO: link with definition from Complex_Inner (needs definition of adjoint, first) *)
 definition "isProjector P = (P=P* \<and> P=P\<cdot>P)"
 
-consts Proj :: "'a linear_space \<Rightarrow> ('a,'a) Bounded"
+consts Proj :: "'a linear_space \<Rightarrow> ('a,'a) bounded"
 lemma isProjector_Proj[simp]: "isProjector (Proj S)"
   by (cheat TODO5)
 
@@ -1373,10 +1373,10 @@ lemma Proj_leq: "Proj S \<cdot> A \<le> S"
   by (metis imageOp_Proj inf.orderE inf.orderI mult_inf_distrib top_greatest)
 
 
-lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"(_,_)Bounded"
+lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"(_,_)bounded"
   by (cheat TODO2)
 
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) Bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
 
 lemma proj_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a ell2"
@@ -1438,7 +1438,7 @@ consts remove_qvar_unit_op :: "('a*unit,'a) l2bounded"
 
 
 definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" where
-  "addState \<psi> = idOp \<otimes> (ell2_to_Bounded \<psi>) \<cdot> remove_qvar_unit_op*"
+  "addState \<psi> = idOp \<otimes> (ell2_to_bounded \<psi>) \<cdot> remove_qvar_unit_op*"
 
 lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a \<cdot> addState \<psi>" for a::complex and psi::"'a ell2"
   unfolding addState_def by (simp add: ell2_to_bounded_scalar_times)
@@ -1580,7 +1580,7 @@ subsection \<open>Tensor product\<close>
 (* (* Tensor product *)
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
 (* TODO: is that compatible (isomorphic) with tensorVec? *)
-= \<open>{ A :: ('a dual, 'b) Bounded. finite_dim (Abs_linear_space ((Rep_Bounded A) ` UNIV)) }\<close>
+= \<open>{ A :: ('a dual, 'b) bounded. finite_dim (Abs_linear_space ((Rep_bounded A) ` UNIV)) }\<close>
    *)
 
 (* TODO: universal property of tensor products *)
@@ -1588,7 +1588,7 @@ typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
 (* Embedding of (x,y) into the tensor product as x\<otimes>y *)
 (* TODO: Shouldn't this be called "tensor" or similar then? *)
 (* definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
-\<open>HS_embedding x = Abs_tensor ( Abs_Bounded (\<lambda> w::'a dual. ( (Rep_Bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close> *)
+\<open>HS_embedding x = Abs_tensor ( Abs_bounded (\<lambda> w::'a dual. ( (Rep_bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close> *)
 
 (* The tensor product of two Hilbert spaces is a Hilbert space *)
 (* instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
