@@ -563,121 +563,94 @@ proof-
     by (simp add: scaleR_scaleC) 
 qed
 
-instantiation bounded :: (chilbert_space, chilbert_space) "complex_vector" begin
-lift_definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>C (x) t ))\<close>
-  by (fact bounded_clinear_const_scaleC)
-lift_definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  \<open>\<lambda> r. \<lambda> x. (( \<lambda> t::'a. r *\<^sub>R (x) t ))\<close>
-  using PREscaleR_bounded by blast
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_vector" begin
+lift_definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  is \<open>\<lambda> r. \<lambda> f. Abs_bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_bounded f) t )\<close>.
 
-(* definition
-  \<open>( * \<^sub>C) \<equiv> \<lambda> r. \<lambda> x. (Abs_bounded ( \<lambda> t::'a. r *\<^sub>C (Rep_bounded x) t ))\<close>
-definition
-  \<open>( * \<^sub>R) \<equiv> \<lambda> r. \<lambda> x. (Abs_bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_bounded x) t ))\<close> *)
+lift_definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  is \<open>\<lambda> r. \<lambda> f. Abs_bounded ( \<lambda> t::'a. r *\<^sub>R (Rep_bounded f) t )\<close>.
 
 instance
   apply intro_classes
 proof
-  fix r and x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix r::real and x::\<open>('a, 'b) bounded\<close>
   show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
     apply transfer
     by (simp add: scaleR_scaleC) 
-      (* by auto
-    apply (simp add: bounded_eq_iff)
-    by (simp add: scaleC_bounded_def scaleR_bounded_def scaleR_scaleC) *)
 
-  fix a and x y::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a::complex and x y::\<open>('a, 'b) bounded\<close>
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     apply transfer
-    by (simp add: scaleC_add_right) 
-      (*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
-      for t
-    proof-
-      have \<open>a *\<^sub>C ( Rep_bounded x t + Rep_bounded y t ) = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close>
-        using scaleC_add_right by blast
-      hence \<open>a *\<^sub>C Rep_bounded (x + y) t = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close>
-        using Abs_bounded_inverse
-        by (mxetis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def)
-      hence \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x) t + Rep_bounded (a *\<^sub>C y) t\<close>
-        by (mexis (no_types) Abs_bounded_inverse Rep_bounded \<open>a *\<^sub>C Rep_bounded (x + y) t = a *\<^sub>C Rep_bounded x t + a *\<^sub>C Rep_bounded y t\<close> bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
-      hence \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y) t\<close>
-        by (metxis (no_types) Abs_bounded_inverse Rep_bounded \<open>Rep_bounded (a *\<^sub>C (x + y)) t = Rep_bounded (a *\<^sub>C x) t + Rep_bounded (a *\<^sub>C y) t\<close> bounded_clinear_add mem_Collect_eq plus_bounded_def)
-      thus ?thesis by blast
-    qed
-    thus \<open>Rep_bounded (a *\<^sub>C (x + y)) = Rep_bounded (a *\<^sub>C x + a *\<^sub>C y)\<close>
-      by auto
-  qed *)
+  proof transfer
+    fix a :: complex
+    fix x y :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
+    have \<open>(\<lambda>t. a *\<^sub>C
+              ( (\<lambda>t. x t + y t)) t) =
+        (\<lambda>t.  ( (\<lambda>t. a *\<^sub>C x t)) t +
+              ( (\<lambda>t. a *\<^sub>C y t)) t)\<close>
+      by (simp add: scaleC_add_right)
+    hence \<open>(\<lambda>t. a *\<^sub>C
+             Rep_bounded (Abs_bounded (\<lambda>t. x t + y t)) t) =
+        (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C x t)) t +
+             Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C y t)) t)\<close>
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> bounded_clinear_add bounded_clinear_const_scaleC)
+    thus \<open>Abs_bounded
+        (\<lambda>t. a *\<^sub>C
+             Rep_bounded (Abs_bounded (\<lambda>t. x t + y t)) t) =
+       Abs_bounded
+        (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C x t)) t +
+             Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C y t)) t)\<close>
+      by simp
+  qed
 
-  fix a b and x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  fix a b and x::\<open>('a, 'b) bounded\<close>
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     apply transfer
-    by (simp add: scaleC_left.add)
-      (*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>Rep_bounded ((a + b) *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
-      for t
-    proof-
-      have \<open>Rep_bounded ((a + b) *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
-      proof-
-        have \<open>Rep_bounded (a *\<^sub>C x) t = a *\<^sub>C Rep_bounded x t\<close>
-          using Abs_bounded_inverse
-          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
-        moreover have \<open>Rep_bounded (b *\<^sub>C x) t = b *\<^sub>C Rep_bounded x t\<close>
-          using Abs_bounded_inverse
-          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
-        moreover have \<open>Rep_bounded ((a+b) *\<^sub>C x) t = (a+b) *\<^sub>C Rep_bounded x t\<close>
-          using Abs_bounded_inverse
-          by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def)
-        moreover have \<open>Rep_bounded (a *\<^sub>C x) t +  Rep_bounded (b *\<^sub>C x) t = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x) t\<close>
-          using Abs_bounded_inverse
-          by (metis (full_types) Rep_bounded bounded_clinear_add mem_Collect_eq plus_bounded_def) 
-        ultimately show ?thesis
-          by (simp add: scaleC_left.add) 
-      qed
-      thus ?thesis by blast
-    qed
-    thus \<open>Rep_bounded ((a + b) *\<^sub>C x) = Rep_bounded (a *\<^sub>C x + b *\<^sub>C x)\<close> by blast
-  qed *)
-
-  fix a b::complex and x :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
-    apply transfer by auto
-      (*     apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>Rep_bounded (a *\<^sub>C b *\<^sub>C x) t = Rep_bounded ((a * b) *\<^sub>C x) t\<close>
-      for t
-    proof-
-      have \<open>Rep_bounded ((a * b) *\<^sub>C x) t = (a * b) *\<^sub>C Rep_bounded x t\<close>
-        using Abs_bounded_inverse
-        by (metis Rep_bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_bounded_def)
-      moreover have  \<open>Rep_bounded (a *\<^sub>C (b *\<^sub>C x)) t = a *\<^sub>C  b *\<^sub>C (Rep_bounded x t)\<close>
-        using Abs_bounded_inverse
-        by (metis (mono_tags) Rep_bounded bounded_clinear_compose bounded_clinear_scaleC_right mem_Collect_eq scaleC_bounded_def)
-      ultimately have \<open>Rep_bounded (a *\<^sub>C (b *\<^sub>C x)) t = Rep_bounded ((a * b) *\<^sub>C x) t\<close>
-        by simp
-      thus ?thesis by blast
-    qed
-    thus \<open>Rep_bounded (a *\<^sub>C b *\<^sub>C x) = Rep_bounded ((a * b) *\<^sub>C x)\<close>
-      by blast
-  qed *)
-
-  fix x::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  show \<open>1 *\<^sub>C x = x\<close>
-    apply transfer by auto
-      (* 
-    apply (simp add: bounded_eq_iff)
-  proof-
-    have \<open>Rep_bounded (1 *\<^sub>C x) t = Rep_bounded x t\<close>
-      for t
+  proof transfer
+    fix a b :: complex
+    fix x :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close>
+    have \<open> (\<lambda>t. (a + b) *\<^sub>C x t) =
+        (\<lambda>t.   (\<lambda>t. a *\<^sub>C x t) t +
+               (\<lambda>t. b *\<^sub>C x t) t)\<close>
+      by (simp add: scaleC_left.add)  
+    hence \<open> (\<lambda>t. (a + b) *\<^sub>C x t) =
+        (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C x t)) t +
+             Rep_bounded (Abs_bounded (\<lambda>t. b *\<^sub>C x t)) t)\<close>
       using Abs_bounded_inverse
-      by (metis (full_types) Rep_bounded bounded_clinear_const_scaleC mem_Collect_eq scaleC_bounded_def scaleC_one)
-    thus \<open>Rep_bounded (1 *\<^sub>C x) = Rep_bounded x\<close> by blast
-  qed *)
-qed
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> bounded_clinear_compose bounded_clinear_scaleC_right)
+    thus \<open>Abs_bounded (\<lambda>t. (a + b) *\<^sub>C x t) =
+       Abs_bounded
+        (\<lambda>t. Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>C x t)) t +
+             Rep_bounded (Abs_bounded (\<lambda>t. b *\<^sub>C x t)) t)\<close>
+      by simp
+  qed
 
+  fix a b::complex and x :: \<open>('a, 'b) bounded\<close>
+  show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
+    apply transfer 
+  proof transfer
+    fix a b :: complex
+    fix x :: \<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>bounded_clinear x\<close>
+    have \<open> (\<lambda>t. a *\<^sub>C ( (\<lambda>t. b *\<^sub>C x t)) t) =
+        (\<lambda>t. (a * b) *\<^sub>C x t)\<close>
+      by simp  
+    hence \<open> (\<lambda>t. a *\<^sub>C Rep_bounded (Abs_bounded (\<lambda>t. b *\<^sub>C x t)) t) =
+        (\<lambda>t. (a * b) *\<^sub>C x t)\<close>
+      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> bounded_clinear_compose bounded_clinear_scaleC_right)
+    thus \<open>Abs_bounded  (\<lambda>t. a *\<^sub>C Rep_bounded (Abs_bounded (\<lambda>t. b *\<^sub>C x t)) t) =
+       Abs_bounded (\<lambda>t. (a * b) *\<^sub>C x t)\<close>
+      by simp
+  qed
+
+  fix x::\<open>('a, 'b) bounded\<close>
+  show \<open>1 *\<^sub>C x = x\<close>
+    apply transfer
+    apply auto
+    using Rep_bounded_inverse by auto    
+qed
 end
 
 instantiation bounded :: (chilbert_space, chilbert_space) "cbanach" begin
