@@ -32,14 +32,113 @@ instantiation complex :: "chilbert_space" begin
 instance ..
 end
 
+subsection \<open>Operator norm\<close>
+
+(* The norm of a bouded operator *)
+definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
+  \<open>operator_norm \<equiv> \<lambda> f. Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+
+(* NEW *)
+lemma operator_norm_zero:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close> and \<open>operator_norm f = 0\<close>
+  shows \<open>f = (\<lambda> _::('a::real_normed_vector). (0::('b::real_normed_vector)))\<close>
+proof-
+  have \<open>operator_norm f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (smt Collect_cong operator_norm_def)
+  hence \<open>Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} = (0::real)\<close>
+    using \<open>operator_norm f = 0\<close>
+    by linarith
+  moreover have \<open>{K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+    using \<open>bounded_linear f\<close> bounded_linear.nonneg_bounded by auto 
+  ultimately have \<open>\<forall> (\<epsilon>::real)>0. \<exists> K::real. K < \<epsilon>  \<and>  K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)\<close>
+    by (metis (no_types, lifting) cInf_lessD mem_Collect_eq)
+  hence \<open>norm (f x) \<le> 0\<close>
+    for x
+  proof(cases \<open>norm x = 0\<close>)
+    case True
+    then show ?thesis
+      using assms(1) linear_simps(3) by auto 
+  next
+    case False
+    then show ?thesis 
+    proof-
+      have \<open>norm x > 0\<close>
+        using False by auto
+      have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> K::real. K < \<epsilon>  \<and>  K \<ge> 0 \<and> (norm (f x) \<le> norm x * K)\<close>
+        for \<epsilon>::real
+        using  \<open>\<forall> (\<epsilon>::real)>0. \<exists> K::real. K < \<epsilon>  \<and>  K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)\<close>
+        by blast
+      hence \<open>\<epsilon> > 0 \<Longrightarrow> norm (f x) \<le> norm x * \<epsilon>\<close>
+        for \<epsilon>::real
+      proof-
+        assume \<open>\<epsilon> > 0\<close>
+        then obtain K where  \<open>K < \<epsilon>\<close> and \<open>K \<ge> 0\<close> and \<open>norm (f x) \<le> norm x * K\<close>
+          using \<open>\<And> \<epsilon>. \<epsilon> > 0 \<Longrightarrow> \<exists> K::real. K < \<epsilon>  \<and>  K \<ge> 0 \<and> (norm (f x) \<le> norm x * K)\<close>
+          by blast
+        from \<open>norm (f x) \<le> norm x * K\<close> \<open>K \<ge> 0\<close> \<open>K < \<epsilon>\<close>
+        show ?thesis
+          by (smt mult_left_less_imp_less norm_ge_zero)  
+      qed
+      hence \<open>\<epsilon> > 0 \<Longrightarrow> norm (f x) \<le> \<epsilon>\<close>
+        for \<epsilon>::real
+      proof-
+        assume \<open>\<epsilon> > 0\<close>
+        hence \<open>\<epsilon> / norm x > 0\<close>
+          using \<open>0 < norm x\<close> linordered_field_class.divide_pos_pos by blast
+        hence \<open>norm (f x) \<le> norm x * (\<epsilon>/norm x)\<close>
+          using \<open>\<And>\<epsilon>. 0 < \<epsilon> \<Longrightarrow> norm (f x) \<le> norm x * \<epsilon>\<close> by blast
+        thus ?thesis 
+          using False by auto 
+      qed
+      thus ?thesis
+        by (meson eucl_less_le_not_le leI nice_ordered_field_class.dense_le_bounded)
+    qed
+  qed
+  hence \<open>norm (f x) = 0\<close>
+    for x
+    by simp
+  thus ?thesis
+    by auto 
+qed
+
+
+(* NEW *)
+lemma operator_norm_of_zero: \<open>operator_norm (\<lambda> _::('a::real_normed_vector). (0::('b::real_normed_vector))) = 0\<close>
+proof-
+  have \<open>operator_norm (\<lambda> _::'a. 0::'b) = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm ((\<lambda> _::'a. 0::'b) x) \<le> norm x * K)}\<close>
+    by (smt Collect_cong operator_norm_def)
+  moreover have \<open>(\<forall>x. norm ((\<lambda> _::'a. 0::'b) x) \<le> norm x * (0::real))\<close>
+    by simp
+  ultimately show ?thesis
+  proof -
+    have "\<exists>r. 0 = r \<and> 0 \<le> r \<and> (\<forall>a. norm (0::'b) \<le> norm (a::'a) * r)"
+      by (metis (lifting) \<open>\<forall>x. norm 0 \<le> norm x * 0\<close> order_refl)
+    then have "0 \<in> {r |r. 0 \<le> r \<and> (\<forall>a. norm (0::'b) \<le> norm (a::'a) * r)}"
+      by blast
+    then show ?thesis
+      by (metis (lifting) \<open>operator_norm (\<lambda>_. 0) = Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm 0 \<le> norm x * K)}\<close> cInf_eq_minimum mem_Collect_eq)
+  qed
+qed
+
+(* NEW *)
+lemma operator_norm_triangular: \<open>operator_norm (\<lambda>t. x t + y t)
+           \<le> operator_norm x + operator_norm y\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_prod_real: \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
+  sorry
+
+(* NEW *)
+lemma operator_norm_prod_complex: \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) = (cmod a) * operator_norm x\<close>
+  sorry
+
+
 subsection \<open>Riesz Representation\<close>
 
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
   by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
-
-(* The norm of a bouded operator *)
-definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
-  \<open>operator_norm \<equiv> \<lambda> f. Sup{ K | K.  \<forall>x. norm (f x) \<le> norm x * K}\<close>
 
 (* TODO: remove and define locally in lemma *)
 definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
@@ -287,8 +386,6 @@ lemma AdjUniq:
   assumes F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
   shows \<open>F = G\<^sup>\<dagger>\<close>
 proof-
-  (* assume \<open>bounded_clinear G\<close>   *)
-  (* assume\<open>\<forall> x::'a. \<forall> y::'b. \<langle>(F x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close> *)
   note F_is_adjoint
   moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
     using  \<open>bounded_clinear G\<close> AdjI by blast
@@ -517,7 +614,7 @@ end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "ab_group_add" begin
 lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
- is \<open>\<lambda> f g. Abs_bounded (\<lambda>t. (Rep_bounded f) t - (Rep_bounded g) t)\<close>.
+  is \<open>\<lambda> f g. Abs_bounded (\<lambda>t. (Rep_bounded f) t - (Rep_bounded g) t)\<close>.
 
 instance
 proof
@@ -662,17 +759,17 @@ lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) b
 instance
   apply intro_classes
   apply transfer
-  proof transfer
-    fix x y :: \<open>'a \<Rightarrow> 'b\<close>
-    assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
-    have \<open>operator_norm (x - y) =
+proof transfer
+  fix x y :: \<open>'a \<Rightarrow> 'b\<close>
+  assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
+  have \<open>operator_norm (x - y) =
            operator_norm ( ( (\<lambda>t. x t - y t)))\<close>
-      by (meson minus_apply) 
-    thus \<open>operator_norm (x - y) =
+    by (meson minus_apply) 
+  thus \<open>operator_norm (x - y) =
            operator_norm (Rep_bounded (Abs_bounded (\<lambda>t. x t - y t)))\<close>
-      using Abs_bounded_inverse
-      by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> bounded_clinear_sub)
-  qed
+    using Abs_bounded_inverse
+    by (simp add: Abs_bounded_inverse \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> bounded_clinear_sub)
+qed
 end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "sgn_div_norm" begin
@@ -704,31 +801,10 @@ instance
   by (smt case_prod_beta eventually_mono open_bounded.transfer)
 end
 
-(* NEW *)
-lemma operator_norm_zero: \<open>operator_norm f = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
-  sorry
-
-(* NEW *)
-lemma operator_norm_of_zero: \<open>operator_norm (\<lambda> _. 0) = 0\<close>
-  sorry
-
-(* NEW *)
-lemma operator_norm_triangular: \<open>operator_norm (\<lambda>t. x t + y t)
-           \<le> operator_norm x + operator_norm y\<close>
-  sorry
-
-(* NEW *)
-lemma operator_norm_prod_real: \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
-  sorry
-
-(* NEW *)
-lemma operator_norm_prod_complex: \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) = (cmod a) * operator_norm x\<close>
-  sorry
-
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector" begin
 instance
   apply intro_classes
-     apply auto
+  apply auto
 proof transfer
   show \<open>\<And>x::('a, 'b) bounded. operator_norm (Rep_bounded x) = 0 \<Longrightarrow>
          x = Abs_bounded (\<lambda>x. 0)\<close>
