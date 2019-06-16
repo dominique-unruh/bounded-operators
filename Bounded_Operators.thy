@@ -39,6 +39,70 @@ definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_
   \<open>operator_norm \<equiv> \<lambda> f. Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
 
 (* NEW *)
+lemma operation_norm_closed:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close>
+  shows \<open>closed { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
+proof-
+  have \<open>\<forall> n. (k n) \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}
+    \<Longrightarrow> k \<longlonglongrightarrow> l 
+    \<Longrightarrow> l \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
+    for k and l
+  proof-
+    assume \<open>\<forall> n. (k n) \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
+    hence \<open>\<forall> n. norm (f x) \<le> norm x * (k n)\<close>
+      for x
+      by blast
+    assume \<open>k \<longlonglongrightarrow> l\<close>
+    have \<open>norm (f x) \<le> norm x * l\<close>
+      for x
+    proof-
+      have  \<open>\<forall> n. norm (f x) \<le> norm x * (k n)\<close>
+        by (simp add: \<open>\<And>x. \<forall>n. norm (f x) \<le> norm x * k n\<close>)
+      moreover have \<open>(\<lambda> n.  norm x * (k n) ) \<longlonglongrightarrow> norm x * l\<close>
+        using  \<open>k \<longlonglongrightarrow> l\<close>
+        by (simp add: tendsto_mult_left)
+      ultimately show ?thesis
+        using Topological_Spaces.Lim_bounded2
+        by fastforce
+    qed
+    thus ?thesis
+      by simp  
+  qed
+  thus ?thesis
+    by (meson closed_sequential_limits) 
+qed
+
+(* NEW *)
+lemma operation_norm_intro:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and x :: 'a
+  assumes \<open>bounded_linear f\<close>
+  shows \<open>norm (f x) \<le> norm x * (operator_norm f)\<close>
+proof-
+  have \<open>operator_norm f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>closed { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+  proof-
+    have \<open>closed { K | K::real. K \<ge> 0}\<close>
+      by (metis atLeast_def closed_atLeast) 
+    moreover have \<open>closed { K | K::real. (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+      using operation_norm_closed assms by auto 
+    moreover have \<open>{ K | K::real. K \<ge> 0} \<inter> { K | K::real. (\<forall>x. norm (f x) \<le> norm x * K)}
+          = { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+      by blast
+    ultimately show ?thesis
+      using closed_Int by fastforce  
+  qed
+  moreover have \<open>bdd_below { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by auto
+  moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+    using \<open>bounded_linear f\<close>  bounded_linear.nonneg_bounded by auto 
+  ultimately show ?thesis
+    by (metis (mono_tags, lifting) closed_contains_Inf mem_Collect_eq) 
+qed
+
+(* NEW *)
 lemma operator_norm_zero:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close> and \<open>operator_norm f = 0\<close>
@@ -102,7 +166,6 @@ proof-
     by auto 
 qed
 
-
 (* NEW *)
 lemma operator_norm_of_zero: \<open>operator_norm (\<lambda> _::('a::real_normed_vector). (0::('b::real_normed_vector))) = 0\<close>
 proof-
@@ -122,9 +185,78 @@ proof-
 qed
 
 (* NEW *)
-lemma operator_norm_triangular: \<open>operator_norm (\<lambda>t. x t + y t)
-           \<le> operator_norm x + operator_norm y\<close>
-  sorry
+lemma operator_norm_triangular:
+  fixes f g :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close> and \<open>bounded_linear g\<close>
+  shows \<open>operator_norm (\<lambda>t. f t + g t)
+           \<le> operator_norm f + operator_norm g\<close>
+proof-
+  have \<open>operator_norm f = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>operator_norm g = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>operator_norm (\<lambda>t. f t + g t) = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x + g x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x + g x) \<le> norm x * K)}
+              \<le> Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+               + Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)}\<close>
+  proof-
+    have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+        + Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)}
+        \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x + g x) \<le> norm x * K)}\<close>
+    proof-
+      have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+        + Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)} \<ge> 0\<close>
+      proof-
+        have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<ge> 0\<close>
+        proof-
+          have \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<Longrightarrow> K \<ge> 0\<close>
+            for K::real
+            by blast
+          moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+            using \<open>bounded_linear f\<close> bounded_linear.bounded bounded_linear.nonneg_bounded by auto 
+          ultimately show ?thesis
+            by (meson cInf_greatest)  
+        qed
+        moreover have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)} \<ge> 0\<close>
+        proof-
+          have \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)} \<Longrightarrow> K \<ge> 0\<close>
+            for K::real
+            by blast
+          moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)} \<noteq> {}\<close>
+            using \<open>bounded_linear g\<close> bounded_linear.bounded bounded_linear.nonneg_bounded by auto 
+          ultimately show ?thesis
+            by (meson cInf_greatest)  
+        qed
+        ultimately show ?thesis by simp
+      qed
+      moreover have \<open>norm (f x + g x) \<le>
+ norm x * (Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+         + Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)})\<close>
+        for x
+      proof- 
+        have \<open>norm (f x + g x) \<le> norm (f x) + norm (g x)\<close>
+          by (simp add: norm_triangle_ineq)
+        moreover have \<open>norm (f x) \<le> norm x * (Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+          using operation_norm_intro  \<open>operator_norm f = Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close> assms(1) by fastforce 
+        moreover have \<open>norm (g x) \<le> norm x * (Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (g x) \<le> norm x * K)})\<close>
+          using operation_norm_intro  \<open>operator_norm g = Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (g x) \<le> norm x * K)}\<close> assms(2) by fastforce 
+        ultimately show ?thesis
+          by (smt ring_class.ring_distribs(1)) 
+      qed 
+      ultimately show ?thesis
+        by blast 
+    qed
+    moreover have \<open>bdd_below { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x + g x) \<le> norm x * K)}\<close>
+      by auto
+    ultimately show ?thesis 
+      using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cInf_lower
+      by (simp add: cInf_lower)
+  qed
+  ultimately show ?thesis
+    by linarith 
+qed
+
 
 (* NEW *)
 lemma operator_norm_prod_real: \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
