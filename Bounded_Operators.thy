@@ -549,7 +549,6 @@ proof-
 qed
 
 
-
 subsection \<open>Riesz Representation\<close>
 
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
@@ -1305,35 +1304,36 @@ qed
 
 end
 
+(* NEW *)
+lemma Cauchy_linear_operators:
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+  assumes \<open>Cauchy f\<close>
+  shows \<open>convergent f\<close>
+proof-
+  from \<open>Cauchy f\<close>
+  have \<open>Cauchy (\<lambda> n. (Rep_bounded (f n)) x)\<close>
+    for x::'a
+    sorry
+  hence \<open>convergent (\<lambda> n. (Rep_bounded (f n)) x)\<close>
+    for x::'a
+    by (simp add: Cauchy_convergent_iff)
+  then obtain F :: \<open>'a \<Rightarrow> 'b\<close> where \<open>(\<lambda> n. (Rep_bounded (f n)) x) \<longlonglongrightarrow> F x\<close>
+    for x::'a
+    unfolding convergent_def
+    by metis
+  hence \<open>f \<longlonglongrightarrow> (Abs_bounded F)\<close>
+    sorry
+  thus ?thesis unfolding convergent_def by blast
+qed
 
-(*
+(* NEW *)
 instantiation bounded :: (complex_normed_vector, chilbert_space) "cbanach" begin
-
-lift_definition sign_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
-  is \<open>\<lambda> f::('a,'b) bounded. 
-    Abs_bounded (\<lambda> t::'a. ( (Rep_bounded f) t ) /\<^sub>R operator_norm (Rep_bounded f))\<close> .
-lift_definition norm_bounded :: "('a,'b) bounded \<Rightarrow> real"
-  is \<open>\<lambda> f::('a, 'b) bounded. operator_norm (Rep_bounded f)\<close> .
-lift_definition dist_bounded :: "('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real"
-  is \<open>\<lambda> f. \<lambda> g. operator_norm (Rep_bounded f - Rep_bounded g )\<close> .
-lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
-  is \<open>(INF e:{0<..}. principal {(f, g). operator_norm (Rep_bounded f - Rep_bounded g ) < e})\<close> .
-lift_definition open_bounded :: "('a, 'b) bounded set \<Rightarrow> bool"
-  is "\<lambda> U. (\<forall>f\<in>U. \<forall>\<^sub>F (f', g) in INF e:{0<..}. principal {(f, g). operator_norm (Rep_bounded f - Rep_bounded g ) < e}. f' = f \<longrightarrow> g \<in> U)" .
-
-instance  
-proof
-  fix x y :: \<open>('a, 'b) bounded\<close>   
-  show \<open>dist x y = norm (x - y)\<close>
-    apply transfer
-    
-
-  qed
-
-(* by (cheat bounded_cbanach) *)
+instance
+  apply intro_classes
+  apply transfer
+  using Cauchy_linear_operators by blast
 end
 
-*)
 
 (* TODO: move to Legacy *)
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
@@ -1587,7 +1587,7 @@ lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S
 lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   using Complex_Vector_Spaces.complex_vector.scale_one by auto
 
-lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"(_,_)bounded"
+lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" for A::"(_::complex_normed_vector,_::complex_normed_vector)bounded"
   apply transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
@@ -1689,8 +1689,8 @@ lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longright
 lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) bounded"
   by (cheat adjoint_twice)
 
-(* TODO: move specialized syntax into QRHL-specific file *)
 
+(* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 
 adhoc_overloading
