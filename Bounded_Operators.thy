@@ -259,12 +259,295 @@ qed
 
 
 (* NEW *)
-lemma operator_norm_prod_real: \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
-  sorry
+lemma operator_norm_prod_real: 
+  fixes a::real and f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close> 
+  shows \<open>operator_norm (\<lambda>t. a *\<^sub>R f t) = \<bar>a\<bar> * operator_norm f\<close>
+proof-
+  have \<open>operator_norm f = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>operator_norm (\<lambda>t. a *\<^sub>R f t) = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}
+               =  \<bar>a\<bar> * Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+  proof-
+    have \<open>a \<noteq> 0 \<Longrightarrow> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}
+               =  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof-
+      assume \<open>a \<noteq> 0\<close>
+      have \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}
+               \<Longrightarrow> K \<in>  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        for K
+      proof-
+        have \<open>\<bar>a\<bar> > 0\<close> using \<open>a \<noteq> 0\<close> by simp
+        assume \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}\<close>
+        then obtain \<open>K \<ge> 0\<close> and \<open>\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K\<close>
+          by blast
+        define k :: real where \<open>k = K / \<bar>a\<bar>\<close>
+        hence \<open>K = \<bar>a\<bar> * k\<close>
+          using \<open>0 < \<bar>a\<bar>\<close> by simp
+        moreover have \<open>k \<ge> 0\<close> using \<open>\<bar>a\<bar> > 0\<close> and \<open>K \<ge> 0\<close>
+          by (simp add: k_def)
+        moreover have \<open>norm (f x) \<le> norm x * k\<close>
+          for x
+        proof-
+          have \<open>norm (a *\<^sub>R f x) \<le> norm x * K\<close>
+            using \<open>\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K\<close> by blast
+          hence \<open>norm (a *\<^sub>R f x) \<le> norm x * ( \<bar>a\<bar>*k )\<close>
+            using calculation(1) by blast
+          hence \<open> \<bar>a\<bar>* norm (f x) \<le> norm x * ( \<bar>a\<bar>*k )\<close>
+            by simp
+          thus ?thesis using \<open>\<bar>a\<bar> > 0\<close>
+            by simp 
+        qed
+        ultimately show ?thesis
+          by blast 
+      qed
+      moreover have \<open>K \<in>  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+                \<Longrightarrow> K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}\<close>
+        for K
+      proof-
+        assume \<open>K \<in> {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        then obtain k :: real 
+          where \<open>K = \<bar>a\<bar> * k\<close> and \<open>k \<ge> 0\<close> and \<open>\<forall>x. norm (f x) \<le> norm x * k\<close>
+          by blast 
+        have \<open>\<bar>a\<bar> \<ge> 0\<close>
+          by simp
+        hence \<open>K \<ge> 0\<close>
+          using  \<open>k \<ge> 0\<close>  \<open>K = \<bar>a\<bar> * k\<close> by simp
+        moreover have \<open>norm (a *\<^sub>R f x) \<le> norm x * K\<close>
+          for x
+        proof-
+          have \<open>norm (f x) \<le> norm x * k\<close>
+            using  \<open>\<forall>x. norm (f x) \<le> norm x * k\<close>
+            by blast
+          hence \<open>\<bar>a\<bar> * norm (f x) \<le> \<bar>a\<bar> * (norm x * k)\<close>
+            using \<open>\<bar>a\<bar> \<ge> 0\<close> ordered_comm_semiring_class.comm_mult_left_mono by blast
+          hence \<open>\<bar>a\<bar> * norm (f x) \<le> norm x * K\<close>
+            using \<open>K = \<bar>a\<bar> * k\<close>
+            by (simp add: mult.left_commute) 
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis by blast
+      qed
+      ultimately show ?thesis
+        by blast
+    qed
+    have  \<open>Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}
+               = Inf  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof(cases \<open>a = 0\<close>)
+      case True
+      have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)} = {0..}\<close>
+      proof-
+        have \<open>K \<ge> 0 \<Longrightarrow> \<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K\<close>
+          for K::real
+          using \<open>a = 0\<close>
+          by simp
+        thus ?thesis
+          by blast 
+      qed
+      moreover have \<open>{\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} = {0}\<close>
+        by (simp add: True assms bounded_linear.nonneg_bounded)    
+      ultimately show ?thesis
+        by simp  
+    next
+      case False
+      then show ?thesis using  \<open>a \<noteq> 0 \<Longrightarrow> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>R f x) \<le> norm x * K)}
+               =  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        by simp
+    qed
+    moreover have \<open>Inf  {\<bar>a\<bar> * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+        = \<bar>a\<bar> * Inf  {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof-
+      have \<open>\<bar>a\<bar> \<ge> 0\<close>
+        by simp      
+      have \<open>mono (\<lambda> K. \<bar>a\<bar> * K)\<close>
+        by (simp add: mono_def mult_left_mono)    
+      moreover have  \<open>continuous (at_right (Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})) (\<lambda> K. \<bar>a\<bar> * K)\<close>
+        using bounded_linear_mult_right linear_continuous_within by auto       
+      moreover have \<open>{K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+        using assms bounded_linear.bounded bounded_linear.nonneg_bounded by fastforce
+      moreover have \<open>bdd_below  {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        by auto
+      ultimately have \<open>(\<lambda> t. \<bar>a\<bar> * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( (\<lambda> t. \<bar>a\<bar> * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+        using Topological_Spaces.continuous_at_Inf_mono 
+        by blast
+      have  \<open>(\<lambda> t. \<bar>a\<bar> * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( { (\<lambda> t. \<bar>a\<bar> * t) K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+      proof-
+        have \<open>(\<lambda> t. \<bar>a\<bar> * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+          = {(\<lambda> t. \<bar>a\<bar> * t) K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+          by blast
+        thus ?thesis using  \<open>(\<lambda> t. \<bar>a\<bar> * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( (\<lambda> t. \<bar>a\<bar> * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+          by simp
+      qed
+      thus ?thesis
+        by simp
+    qed
+    ultimately show ?thesis
+      by linarith 
+  qed
+  ultimately show ?thesis
+    by simp  
+qed
 
 (* NEW *)
-lemma operator_norm_prod_complex: \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) = (cmod a) * operator_norm x\<close>
-  sorry
+lemma operator_norm_prod_complex:
+  fixes a::complex and f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
+  assumes \<open>bounded_clinear f\<close> 
+  shows \<open>operator_norm (\<lambda>t. a *\<^sub>C f t) = (cmod a) * operator_norm f\<close>
+proof-
+  have \<open>operator_norm f = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>operator_norm (\<lambda>t. a *\<^sub>C f t) = Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def)
+  moreover have \<open>Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}
+               =  (cmod a) * Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+  proof-
+    have \<open>a \<noteq> 0 \<Longrightarrow> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}
+               =  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof-
+      assume \<open>a \<noteq> 0\<close>
+      have \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}
+               \<Longrightarrow> K \<in>  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        for K
+      proof-
+        have \<open>cmod a > 0\<close> using \<open>a \<noteq> 0\<close> by simp
+        assume \<open>K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}\<close>
+        then obtain \<open>K \<ge> 0\<close> and \<open>\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K\<close>
+          by blast
+        define k :: real where \<open>k = K / cmod a\<close>
+        hence \<open>K = (cmod a) * k\<close>
+          using \<open>0 < cmod a\<close> by simp
+        moreover have \<open>k \<ge> 0\<close> using \<open>cmod a > 0\<close> and \<open>K \<ge> 0\<close>
+          by (simp add: k_def)
+        moreover have \<open>norm (f x) \<le> norm x * k\<close>
+          for x
+        proof-
+          have \<open>norm (a *\<^sub>C f x) \<le> norm x * K\<close>
+            using \<open>\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K\<close> by blast
+          hence \<open>norm (a *\<^sub>C f x) \<le> norm x * ( (cmod a)*k )\<close>
+            using calculation(1) by blast
+          hence \<open> (cmod a)* norm (f x) \<le> norm x * ( (cmod a)*k )\<close>
+            by simp
+          thus ?thesis using \<open>cmod a > 0\<close>
+            by simp 
+        qed
+        ultimately show ?thesis
+          by auto
+      qed
+      moreover have \<open>K \<in>  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+                \<Longrightarrow> K \<in> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}\<close>
+        for K
+      proof-
+        assume \<open>K \<in> {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        then obtain k :: real 
+          where \<open>K = (cmod a) * k\<close> and \<open>k \<ge> 0\<close> and \<open>\<forall>x. norm (f x) \<le> norm x * k\<close>
+          by blast 
+        have \<open>cmod a \<ge> 0\<close>
+          by simp
+        hence \<open>K \<ge> 0\<close>
+          using  \<open>k \<ge> 0\<close>  \<open>K = (cmod a) * k\<close> by simp
+        moreover have \<open>norm (a *\<^sub>C f x) \<le> norm x * K\<close>
+          for x
+        proof-
+          have \<open>norm (f x) \<le> norm x * k\<close>
+            using  \<open>\<forall>x. norm (f x) \<le> norm x * k\<close>
+            by blast
+          hence \<open>(cmod a) * norm (f x) \<le> (cmod a) * (norm x * k)\<close>
+            using \<open>(cmod a) \<ge> 0\<close> ordered_comm_semiring_class.comm_mult_left_mono by blast
+          hence \<open>(cmod a) * norm (f x) \<le> norm x * K\<close>
+            using \<open>K = (cmod a) * k\<close>
+            by (simp add: mult.left_commute) 
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis by blast
+      qed
+      ultimately show ?thesis
+        by blast
+    qed
+    have  \<open>Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}
+               = Inf  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof(cases \<open>a = 0\<close>)
+      case True
+      have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)} = {0..}\<close>
+      proof-
+        have \<open>K \<ge> 0 \<Longrightarrow> \<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K\<close>
+          for K::real
+          using \<open>a = 0\<close>
+          by simp
+        thus ?thesis
+          by blast 
+      qed
+      moreover have \<open>{(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} = {0}\<close>
+      proof-
+        have \<open>{(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} 
+            = {0 * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+          using \<open>a = 0\<close> by simp
+        also have \<open>{0 * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+                = {0 | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+          by simp
+        also have \<open> {0 | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} = {0}\<close>
+        proof-
+          have \<open>\<exists> K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)\<close>
+            using \<open>bounded_clinear f\<close>
+            unfolding bounded_clinear_def
+            by (metis (no_types, hide_lams) bounded_clinear_axioms_def dual_order.antisym dual_order.trans mult.commute mult_zero_left norm_ge_zero order_refl zero_le_mult_iff)      
+          thus ?thesis
+            by simp 
+        qed
+        finally show ?thesis by blast
+      qed
+      ultimately show ?thesis
+        by simp  
+    next
+      case False
+      then show ?thesis using  \<open>a \<noteq> 0 \<Longrightarrow> { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (a *\<^sub>C f x) \<le> norm x * K)}
+               =  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        by simp
+    qed
+    moreover have \<open>Inf  {(cmod a) * K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+        = (cmod a) * Inf  {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    proof-
+      have \<open>cmod a \<ge> 0\<close>
+        by simp      
+      have \<open>mono (\<lambda> K. (cmod a) * K)\<close>
+        by (simp add: mono_def mult_left_mono)    
+      moreover have  \<open>continuous (at_right (Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})) (\<lambda> K. (cmod a) * K)\<close>
+        using bounded_linear_mult_right linear_continuous_within by auto       
+      moreover have \<open>{K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+        using bounded_linear.nonneg_bounded
+        by (smt Collect_empty_eq_bot assms bot_empty_eq bounded_clinear.bounded_linear empty_iff mult.commute) 
+      moreover have \<open>bdd_below  {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+        by auto
+      ultimately have \<open>(\<lambda> t. (cmod a) * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( (\<lambda> t. (cmod a) * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+        using Topological_Spaces.continuous_at_Inf_mono 
+        by blast
+      have  \<open>(\<lambda> t. (cmod a) * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( { (\<lambda> t. (cmod a) * t) K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+      proof-
+        have \<open>(\<lambda> t. (cmod a) * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}
+          = {(\<lambda> t. (cmod a) * t) K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+          by blast
+        thus ?thesis using  \<open>(\<lambda> t. (cmod a) * t) ( Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})
+               = Inf ( (\<lambda> t. (cmod a) * t) ` { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})\<close>
+          by simp
+      qed
+      thus ?thesis
+        by simp
+    qed
+    ultimately show ?thesis
+      by linarith 
+  qed
+  ultimately show ?thesis
+    by simp
+qed
+
 
 
 subsection \<open>Riesz Representation\<close>
