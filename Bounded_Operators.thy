@@ -1304,16 +1304,51 @@ qed
 
 end
 
+(* NEW *) 
+lemma bounded_operator_weak_contraction_dist:
+  fixes f g :: \<open>('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+    and x :: 'a 
+  shows \<open>dist ((Rep_bounded f) x) ((Rep_bounded g) x) \<le> dist f g\<close>
+  sorry
+
+(* NEW *)
+lemma bounded_clinear_limit_operator_norm:
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+    and F :: \<open>'a\<Rightarrow>'b\<close>
+  assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+  shows \<open>bounded_clinear F\<close> 
+  sorry
+
+(* NEW *)
+lemma pointwise_convergent_operator_norm:
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+    and F :: \<open>'a\<Rightarrow>'b\<close>
+  assumes \<open>bounded_clinear F\<close> 
+      and  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+  shows \<open>f \<longlonglongrightarrow> Abs_bounded F\<close>
+  sorry
+
 (* NEW *)
 lemma Cauchy_linear_operators:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>convergent f\<close>
 proof-
-  from \<open>Cauchy f\<close>
   have \<open>Cauchy (\<lambda> n. (Rep_bounded (f n)) x)\<close>
     for x::'a
-    sorry
+  proof-
+    from \<open>Cauchy f\<close>
+    have \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> m \<ge> N. \<forall> n \<ge> N. dist (f n) (f m) < \<epsilon>\<close>
+      using metric_CauchyD by blast
+    moreover have \<open>dist ( Rep_bounded (f n) x ) ( Rep_bounded (f m) x ) 
+                \<le> dist (f n) (f m)\<close>
+      for m n and x::'a
+      using bounded_operator_weak_contraction_dist by blast
+    ultimately have \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> m \<ge> N. \<forall> n \<ge> N. dist ( Rep_bounded (f n) x ) ( Rep_bounded (f m) x )  < \<epsilon>\<close>
+      by smt
+    thus ?thesis  
+      by (metis Cauchy_altdef2 order_refl) 
+  qed
   hence \<open>convergent (\<lambda> n. (Rep_bounded (f n)) x)\<close>
     for x::'a
     by (simp add: Cauchy_convergent_iff)
@@ -1322,7 +1357,13 @@ proof-
     unfolding convergent_def
     by metis
   hence \<open>f \<longlonglongrightarrow> (Abs_bounded F)\<close>
-    sorry
+  proof-
+    have \<open>bounded_clinear F\<close>
+      using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by auto 
+    thus ?thesis
+    using pointwise_convergent_operator_norm
+     \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blast 
+  qed
   thus ?thesis unfolding convergent_def by blast
 qed
 
