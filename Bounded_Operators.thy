@@ -1222,13 +1222,15 @@ instance
   apply auto
 proof transfer
   show \<open>\<And>x::('a, 'b) bounded. operator_norm (Rep_bounded x) = 0 \<Longrightarrow>
-         x = Abs_bounded (\<lambda>x. 0)\<close>
+         x = Abs_bounded (\<lambda>_::'a. 0::'b)\<close>
   proof-
     fix x::\<open>('a, 'b) bounded\<close>
-    assume \<open>operator_norm (Rep_bounded x) = 0\<close>
-    hence \<open>Rep_bounded x = (\<lambda>x. 0)\<close>
+    have \<open>bounded_clinear (Rep_bounded x)\<close>
+      using Rep_bounded by auto
+    moreover assume \<open>operator_norm (Rep_bounded x) = 0\<close>
+    ultimately have \<open>Rep_bounded x = (\<lambda>_::'a. 0::'b)\<close>
       using operator_norm_zero
-      by (simp add: operator_norm_zero)
+      by (simp add: operator_norm_zero bounded_clinear.bounded_linear)
     hence \<open>Abs_bounded (Rep_bounded x) = Abs_bounded (\<lambda>x. 0)\<close>
       by simp
     thus \<open>x = Abs_bounded (\<lambda>x. 0)\<close>
@@ -1258,7 +1260,7 @@ next
     assume \<open>bounded_clinear x\<close> and  \<open>bounded_clinear y\<close>
     have \<open>operator_norm (\<lambda>t. x t + y t)
            \<le> operator_norm x + operator_norm y\<close>
-      using operator_norm_triangular by blast
+      using operator_norm_triangular \<open>bounded_clinear x\<close> \<open>bounded_clinear y\<close> bounded_clinear.bounded_linear by auto 
     show \<open>operator_norm (Rep_bounded (Abs_bounded (\<lambda>t. x t + y t)))
            \<le> operator_norm x + operator_norm y\<close>
       using Abs_bounded_inverse
@@ -1272,7 +1274,8 @@ next
     fix a :: real and x :: \<open>'a \<Rightarrow> 'b\<close>
     assume \<open>bounded_clinear x\<close>
     have \<open>operator_norm (\<lambda>t. a *\<^sub>R x t) = \<bar>a\<bar> * operator_norm x\<close>
-      using operator_norm_prod_real by blast
+      using operator_norm_prod_real
+      by (simp add: operator_norm_prod_real \<open>bounded_clinear x\<close> bounded_clinear.bounded_linear) 
     thus \<open>operator_norm
             (Rep_bounded (Abs_bounded (\<lambda>t. a *\<^sub>R x t))) =
            \<bar>a\<bar> * operator_norm x\<close>
@@ -1289,7 +1292,7 @@ next
   proof transfer
     fix a :: complex and x :: \<open>'a \<Rightarrow> 'b\<close>
     assume \<open>bounded_clinear x\<close>
-    have \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) =  (cmod a) * operator_norm x\<close>
+    hence \<open>operator_norm (\<lambda>t. a *\<^sub>C x t) =  (cmod a) * operator_norm x\<close>
       using operator_norm_prod_complex 
       by (simp add: operator_norm_prod_complex)
     thus \<open>operator_norm
@@ -1581,8 +1584,8 @@ qed
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using PREtimesScalarSpace_not0 by blast
 
-lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_,_) bounded"
-  apply transfer by simp
+lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+  using Complex_Vector_Spaces.complex_vector.scale_one by auto
 
 lemma scalar_times_adj[simp]: "(scaleC a A)* = scaleC (cnj a) (A*)" for A::"(_,_)bounded"
   apply transfer by (cheat scalar_times_adj)
@@ -1671,11 +1674,10 @@ end *)
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
 
-lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_,_) bounded"
-  apply transfer
-  by (simp add: scaleC_add_right) 
-lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_,_) bounded"
-  apply transfer
+lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+  by (simp add: scaleC_add_right)
+
+lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
@@ -1688,9 +1690,11 @@ lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) bounded"
   by (cheat adjoint_twice)
 
 (* TODO: move specialized syntax into QRHL-specific file *)
+
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
+
 adhoc_overloading
-  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_,_)bounded\<Rightarrow>_" 
+  cdot timesOp applyOp applyOpSpace "scaleC :: _\<Rightarrow>(_::complex_normed_vector,_::complex_normed_vector)bounded\<Rightarrow>_::complex_normed_vector" 
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   for A B :: "_ linear_space" and U :: "(_,_) bounded"
@@ -1699,7 +1703,7 @@ lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
-  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"(_,_)bounded" and S::"_ linear_space"
+  "(\<alpha>\<cdot>A)\<cdot>S = \<alpha>\<cdot>(A\<cdot>S)" for \<alpha>::complex and A::"(_::complex_normed_vector,_::complex_normed_vector)bounded" and S::"(_::complex_normed_vector) linear_space"
 proof transfer
   fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
   have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
