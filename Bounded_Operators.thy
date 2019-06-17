@@ -1313,11 +1313,155 @@ lemma bounded_operator_weak_contraction_dist:
 
 (* NEW *)
 lemma bounded_clinear_limit_operator_norm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow> 'b::chilbert_space)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+  assumes  \<open>\<And> n.  bounded_clinear (f n)\<close> 
+      and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
   shows \<open>bounded_clinear F\<close> 
-  sorry
+proof-
+  have \<open>clinear F\<close>
+  proof
+    show "F (x + y) = F x + F y"
+      for x :: 'a
+        and y :: 'a
+    proof-
+      have \<open>(\<lambda> n. (f n) (x + y)) \<longlonglongrightarrow> F (x + y)\<close>
+        by (simp add: assms(2))
+      moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+        by (simp add: assms(2))
+      moreover have \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close>
+        by (simp add: assms(2))
+      moreover have \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close> 
+      proof-
+        have \<open>(f n) (x + y) = (f n) x + (f n) y\<close>
+          for n
+          using \<open>\<And> n.  bounded_clinear (f n)\<close>
+          unfolding bounded_clinear_def
+          unfolding clinear_def
+          unfolding Modules.additive_def
+          by blast
+        hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x + (f n) y)\<close>
+          by simp
+        moreover have \<open>lim (\<lambda> n. (f n) x + (f n) y) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
+        proof-
+          have \<open>convergent (\<lambda> n. (f n) x)\<close> 
+            using \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> convergentI by auto
+          moreover have \<open>convergent (\<lambda> n. (f n) y)\<close> 
+            using \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close> convergentI by auto            
+          ultimately show ?thesis
+          proof -
+            have f1: "\<forall>a. F a = lim (\<lambda>n. f n a)"
+              by (metis (full_types) assms(2) limI)
+            have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
+              by (metis (no_types) limI tendsto_add)
+            then show ?thesis
+              using f1 assms(2) by fastforce
+          qed 
+        qed
+        ultimately show ?thesis
+          by simp  
+      qed
+      ultimately show ?thesis
+        by (metis limI) 
+    qed
+    show "F (r *\<^sub>C x) = r *\<^sub>C F x"
+      for r :: complex
+        and x :: 'a
+    proof-
+      have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+        by (simp add: assms(2))
+      moreover have \<open>(\<lambda> n.  (f n) (r *\<^sub>C x)) \<longlonglongrightarrow> F (r *\<^sub>C x)\<close>
+        by (simp add: assms(2))
+      moreover have \<open>lim (\<lambda> n.  (f n) (r *\<^sub>C x)) = r *\<^sub>C lim (\<lambda> n. (f n) x)\<close>
+      proof-
+        have \<open>(f n) (r *\<^sub>C x) = r *\<^sub>C (f n) x\<close>
+          for n
+          using  \<open>\<And> n.  bounded_clinear (f n)\<close>
+          unfolding bounded_clinear_def
+          unfolding clinear_def
+          unfolding Modules.additive_def
+          unfolding clinear_axioms_def
+          by blast
+        hence \<open>lim (\<lambda> n. (f n) (r *\<^sub>C x)) = lim (\<lambda> n. r *\<^sub>C (f n) x)\<close>
+          by simp
+        show ?thesis 
+        proof-
+          have \<open>convergent (\<lambda> n. (f n) x)\<close>
+            using \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> convergentI by auto
+          moreover have \<open>isCont (\<lambda> t::'b. r *\<^sub>C t) tt\<close>
+            for tt
+            by (simp add: bounded_clinear_scaleC_right bounded_linear_continuous)
+          ultimately have \<open>lim (\<lambda> n. r *\<^sub>C ((f n) x)) =  r *\<^sub>C lim (\<lambda> n. (f n) x)\<close>
+            by (metis (mono_tags) assms(2) isCont_tendsto_compose limI)
+          thus ?thesis using  \<open>lim (\<lambda> n. (f n) (r *\<^sub>C x)) = lim (\<lambda> n. r *\<^sub>C (f n) x)\<close>
+            by simp
+        qed
+      qed
+      ultimately show ?thesis
+        by (metis limI) 
+    qed
+  qed
+  moreover have \<open>bounded_clinear_axioms F\<close>
+  proof-
+    have \<open>\<exists>K. \<forall>x. norm (F x) \<le> norm x * K\<close>
+    proof-
+      have \<open>\<forall> n. \<exists>K. \<forall> x. norm ((f n) x) \<le> norm x * K\<close>
+        using \<open>\<And> n.  bounded_clinear (f n)\<close>
+        unfolding bounded_clinear_def
+        unfolding bounded_clinear_axioms_def
+        by blast
+      hence  \<open>\<exists>k. \<forall> n. \<forall> x. norm ((f n) x) \<le> norm x * (k n)\<close>
+        by metis
+      then obtain k where \<open>\<And> n. (\<forall> x. norm ((f n) x) \<le> norm x * (k n))\<close>
+        by blast
+      have \<open>convergent (\<lambda> n. (f n) x )\<close>
+        for x
+        using \<open>(\<lambda> n. (f n) x ) \<longlonglongrightarrow> F x\<close> convergentI by blast
+      hence \<open>convergent (\<lambda> n. norm ((f n) x) )\<close>
+        for x
+        by (simp add: convergent_norm)
+      hence \<open>Cauchy (\<lambda> n. norm ((f n) x) )\<close>
+        for x
+        by (simp add: Cauchy_convergent_iff)
+      hence \<open>\<forall> \<epsilon> > 0. \<exists>N. \<forall>n\<ge>N. \<forall>m\<ge>N. dist (norm ((f n) x)) (norm ((f m) x)) < \<epsilon>\<close>
+        for x
+        by (meson Elementary_Metric_Spaces.cauchy_def)
+      hence \<open>\<exists>N. \<forall>n\<ge>N. \<forall>m\<ge>N. dist (norm ((f n) x)) (norm ((f m) x)) < 1\<close>
+        for x
+        by simp
+      hence \<open>\<exists>N. \<forall>n\<ge>N. dist (norm ((f n) x)) (norm ((f N) x)) < 1\<close>
+        for x
+        by (meson order_refl)
+      hence \<open>\<exists>N. \<forall>n\<ge>N.  norm ( (norm ((f n) x)) - (norm ((f N) x)) ) < 1\<close>
+        for x
+      proof -
+        assume "\<And>x. \<exists>N. \<forall>n\<ge>N. dist (norm (f n x)) (norm (f N x)) < 1"
+        then show ?thesis
+          by (metis dist_norm)
+      qed
+      have \<open>\<exists>N. \<forall>n\<ge>N.  (norm ((f n) x)) - (norm ((f N) x)) < 1\<close>
+        for x
+      proof-
+        have \<open>t \<le> norm t\<close>
+          for t::real
+          by simp
+        thus ?thesis using \<open>\<And> x. \<exists>N. \<forall>n\<ge>N.  norm ( (norm ((f n) x)) - (norm ((f N) x)) ) < 1\<close>
+          by (meson dual_order.strict_trans2)
+      qed
+      hence \<open>\<exists>N. \<forall>n\<ge>N. (norm ((f n) x)) < (norm ((f N) x)) + 1\<close>
+        for x
+        by (simp add: add.commute diff_less_eq)
+      hence \<open>\<exists>N. \<forall>n\<ge>N. (norm ((f n) x)) <  norm x * (k N) + 1\<close>
+        for x
+        using \<open>\<And> n. (\<forall> x. norm ((f n) x) \<le> norm x * (k n))\<close>
+        by smt
+
+      show ?thesis sorry
+    qed
+    thus ?thesis unfolding bounded_clinear_axioms_def by blast
+  qed
+  ultimately show ?thesis unfolding bounded_clinear_def by blast
+qed
 
 (* NEW *)
 lemma pointwise_convergent_operator_norm:
@@ -1358,8 +1502,12 @@ proof-
     by metis
   hence \<open>f \<longlonglongrightarrow> (Abs_bounded F)\<close>
   proof-
-    have \<open>bounded_clinear F\<close>
-      using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by auto 
+    have  \<open>bounded_clinear (Rep_bounded (f n))\<close>
+      for n
+      apply transfer apply auto done
+    hence \<open>bounded_clinear F\<close>
+      using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+      by metis
     thus ?thesis
     using pointwise_convergent_operator_norm
      \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blast 
