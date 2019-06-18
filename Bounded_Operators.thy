@@ -1211,14 +1211,14 @@ lift_definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool
 instance
   apply intro_classes
   apply auto
-  apply (metis (mono_tags, lifting) open_bounded.transfer)
+   apply (metis (mono_tags, lifting) open_bounded.transfer)
   by (smt case_prod_beta eventually_mono open_bounded.transfer)
 end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector" begin
 instance
   apply intro_classes
-  apply auto
+     apply auto
 proof transfer
   show \<open>\<And>x::('a, 'b) bounded. operator_norm (Rep_bounded x) = 0 \<Longrightarrow>
          x = Abs_bounded (\<lambda>_::'a. 0::'b)\<close>
@@ -1391,9 +1391,18 @@ proof
   qed
 qed
 
+
+(* NEW *)
+(* https://en.wikipedia.org/wiki/Uniform_boundedness_principle *)
+theorem Banach_Steinhaus:
+  fixes f :: \<open>'c \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
+  assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+  sorry
+
 (* NEW *)
 lemma bounded_clinear_limit_operator_norm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow> 'b::chilbert_space)\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_clinear (f n)\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
@@ -1404,7 +1413,31 @@ proof-
   moreover have \<open>bounded_clinear_axioms F\<close>
   proof
     have "\<exists>K. \<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * K"
-      sorry
+    proof-
+      have \<open>\<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close>
+        for x
+      proof-
+        have \<open>isCont (\<lambda> t::'b. norm t) y\<close>
+          for y::'b
+          using Limits.isCont_norm
+          by simp
+        hence \<open>(\<lambda> n. norm ((f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
+          using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+          by (simp add: tendsto_norm)
+        thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
+          by (metis UNIV_I assms(2) bounded_iff image_eqI)
+      qed
+      hence \<open>\<exists> M. \<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+        using  Banach_Steinhaus by blast
+      then obtain M where \<open>\<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+        by blast
+      have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * operator_norm (f n)\<close>
+        using \<open>\<And> n. bounded_clinear (f n)\<close>
+        unfolding bounded_clinear_def
+        by (simp add: assms(1) bounded_clinear.bounded_linear operation_norm_intro)
+      thus ?thesis using  \<open>\<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+        by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
+    qed
     thus "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
       using  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
       by (metis Lim_bounded tendsto_norm) 
@@ -1526,7 +1559,7 @@ lemma pointwise_convergent_operator_norm:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes \<open>bounded_clinear F\<close> 
-      and  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+    and  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
   shows \<open>f \<longlonglongrightarrow> Abs_bounded F\<close>
   sorry
 
@@ -1567,8 +1600,8 @@ proof-
       using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
       by metis
     thus ?thesis
-    using pointwise_convergent_operator_norm
-     \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blast 
+      using pointwise_convergent_operator_norm
+        \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blast 
   qed
   thus ?thesis unfolding convergent_def by blast
 qed
@@ -1777,7 +1810,7 @@ lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<
 lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleR c ` S"
   apply (rule is_subspace.intro)
-  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
+   apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
   by (simp add: closed_scaling is_subspace.closed)
 instance 
   apply standard
