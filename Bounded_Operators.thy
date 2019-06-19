@@ -2123,8 +2123,13 @@ lemma move_plus:
 section \<open>Tensor products\<close>
 
 consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
-consts "tensorSpace" :: "'a ell2 linear_space \<Rightarrow> 'c ell2 linear_space \<Rightarrow> ('a*'c) ell2 linear_space"
-consts "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2"
+
+lift_definition "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2" is
+  "\<lambda>\<psi> \<phi> (x,y). \<psi> x * \<phi> y"
+  by (cheat tensorVec)
+
+definition "tensorSpace A B = span {tensorVec \<psi> \<phi>| \<psi> \<phi>. \<psi> \<in> Rep_linear_space A \<and> \<phi> \<in> Rep_linear_space B}"
+
 consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
 adhoc_overloading tensor tensorOp tensorSpace tensorVec
 
