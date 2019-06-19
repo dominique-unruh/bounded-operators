@@ -1226,7 +1226,7 @@ theorem Banach_Steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
-  sorry
+  by (cheat Banach_Steinhaus)
 
 (* NEW *)
 lemma bounded_clinear_limit_operator_norm:
@@ -1279,7 +1279,7 @@ lemma bounded_operator_weak_contraction_dist:
   fixes f g :: \<open>('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
     and x :: 'a 
   shows \<open>dist ((Rep_bounded f) x) ((Rep_bounded g) x) \<le> dist f g\<close>
-  sorry
+  by (cheat bounded_operator_weak_contraction_dist)
 
 
 (*
@@ -1389,7 +1389,7 @@ lemma pointwise_convergent_operator_norm:
   assumes \<open>bounded_clinear F\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
   shows \<open>f \<longlonglongrightarrow> Abs_bounded F\<close>
-  sorry
+  by (cheat pointwise_convergent_operator_norm)
 
 (* NEW *)
 lemma Cauchy_linear_operators:
