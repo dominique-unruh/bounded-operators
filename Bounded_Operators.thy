@@ -39,6 +39,27 @@ definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_
   \<open>operator_norm \<equiv> \<lambda> f. Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
 
 (* NEW *)
+lemma bounded_clinear_refined: \<open>bounded_clinear T \<Longrightarrow> \<exists> K. K \<ge> 0 \<and> (\<forall>x. norm (T x) \<le> norm x * K)\<close>
+  by (metis (mono_tags, hide_lams) bounded_clinear.bounded eq_iff mult_zero_left norm_ge_zero order.trans zero_le_mult_iff)
+
+
+(* NEW *)
+lemma operator_norm_non_neg:
+  \<open>bounded_clinear f \<Longrightarrow>  operator_norm f \<ge> 0\<close>
+proof-
+  assume \<open>bounded_clinear f\<close>
+  have \<open>operator_norm f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by (simp add: operator_norm_def) 
+  moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
+    using  \<open>bounded_clinear f\<close> bounded_clinear_refined
+    by auto
+  moreover have \<open>bdd_below { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    by auto  
+  ultimately show ?thesis
+    by (metis (no_types, lifting) cInf_greatest mem_Collect_eq) 
+qed
+
+(* NEW *)
 lemma operation_norm_closed:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
@@ -1107,8 +1128,8 @@ proof transfer
   assume \<open>bounded_clinear x\<close>
     and \<open>operator_norm x = 0\<close>
   then show \<open>x = (\<lambda>_::'a. 0::'b)\<close>
-      using operator_norm_zero
-      by (simp add: operator_norm_zero bounded_clinear.bounded_linear)
+    using operator_norm_zero
+    by (simp add: operator_norm_zero bounded_clinear.bounded_linear)
 next 
   show \<open>norm (0::('a,'b) bounded) = 0\<close>
     apply transfer using operator_norm_of_zero by simp
@@ -1220,19 +1241,167 @@ proof
 qed
 
 (* NEW *)
+lemma norm_ball_1:
+  fixes r :: real 
+  assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
+  shows  \<open>operator_norm T = Sup {norm (T x) | x. norm x < 1 }\<close>
+  sorry
+
+(* NEW *)
 lemma norm_ball:
   fixes r :: real 
-  assumes \<open>bounded_clinear T\<close>
-  shows  \<open>(operator_norm T) * r = Sup {norm (T x) | x. norm x < r }\<close>
-  sorry
+  assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
+  shows  \<open>(operator_norm T) * r = Sup {norm (T x) | x. norm x < r}\<close>
+proof-                     
+  have  \<open>operator_norm T = Sup {norm (T x) | x. norm x < 1 }\<close>
+    using assms(2) less_numeral_extra(1) norm_ball_1 by blast
+  moreover have \<open>r * Sup {norm (T x) | x. norm x < 1 } = Sup {norm (T x) | x. norm x < r}\<close>
+  proof-
+    have \<open>r * (Sup  {norm (T x) | x. norm x < 1}) 
+          = Sup  {r * (norm (T x)) | x. norm x < 1}\<close>
+    proof-
+      define S where \<open>S \<equiv> {norm (T x) | x. norm x < 1}\<close>
+      have \<open>((*) r) (Sup S) = Sup ( ((*) r) ` S )\<close>
+      proof-
+        have \<open>mono ((*) r)\<close>
+          using \<open>r > 0\<close>
+          by (simp add: mono_def) 
+        moreover have \<open>S \<noteq> {}\<close>
+        proof-
+          have \<open>norm (0::'a) = 0\<close>
+            by auto
+          thus ?thesis unfolding S_def
+          proof -
+            have "\<exists>a. norm (a::'a) < 1"
+              by (metis \<open>norm 0 = 0\<close> zero_less_one)
+            then show "{norm (T a) |a. norm a < 1} \<noteq> {}"
+              by blast
+          qed 
+        qed
+        moreover have \<open>bdd_above S\<close>
+        proof-
+          have \<open>norm (T x) \<le> operator_norm T * norm x\<close>
+            for x
+            by (metis assms(2) bounded_clinear.bounded_linear operation_norm_intro ordered_field_class.sign_simps(24))  
+          hence \<open>norm x < 1 \<Longrightarrow>  norm (T x) \<le> operator_norm T\<close>
+            for x
+          proof-
+            assume \<open>norm x < 1\<close>
+            moreover have \<open>norm x \<ge> 0\<close>
+              by auto
+            moreover have \<open>operator_norm T  \<ge> 0\<close>
+              using assms(2) operator_norm_non_neg by auto
+            ultimately have \<open>operator_norm T * norm x \<le> operator_norm T\<close>
+              using less_eq_real_def mult_left_le by blast
+            have \<open>norm (T x) \<le> operator_norm T * norm x\<close>
+              by (simp add: \<open>\<And>x. norm (T x) \<le> operator_norm T * norm x\<close>)
+            show ?thesis 
+              using \<open>norm (T x) \<le> operator_norm T * norm x\<close>
+                \<open>operator_norm T * norm x \<le> operator_norm T\<close>
+              by simp
+          qed
+          thus ?thesis using S_def
+            using less_eq_real_def by fastforce 
+        qed
+        moreover have \<open>continuous (at_left (Sup S)) ((*) r)\<close>
+        proof-
+          have \<open>isCont ((*) r) x\<close>
+            for x
+            by auto
+          thus ?thesis
+            by (simp add: continuous_at_split)  
+        qed
+        ultimately show ?thesis
+          using Topological_Spaces.continuous_at_Sup_mono
+          by blast
+      qed
+      hence \<open>((*) r) (Sup  {norm (T x) | x. norm x < 1}) 
+          = Sup ( ((*) r) `  {norm (T x) | x. norm x < 1} )\<close>
+        using S_def by blast
+      hence \<open>r * (Sup  {norm (T x) | x. norm x < 1}) 
+          = Sup ( ((*) r) `  {norm (T x) | x. norm x < 1} )\<close>
+        by blast
+      hence \<open>r * (Sup  {norm (T x) | x. norm x < 1}) 
+          = Sup  {((*) r) (norm (T x)) | x. norm x < 1}\<close>
+        by (simp add: image_image setcompr_eq_image)
+      hence \<open>r * (Sup  {norm (T x) | x. norm x < 1}) 
+          = Sup  {r * (norm (T x)) | x. norm x < 1}\<close>
+        by blast
+      thus ?thesis by blast
+    qed
+    moreover have \<open>{r * (norm (T x)) | x. norm x < 1} 
+      = {(norm (T x)) | x. norm x < r}\<close>
+    proof-
+      have \<open>{r * (norm (T x)) | x. norm x < 1}      
+          = { norm ( r *\<^sub>R T x ) | x. norm x < 1}\<close>
+      proof-
+        have \<open>\<bar>r\<bar> * (norm (T x)) =  norm ( r *\<^sub>R T x )\<close>
+          for x
+          by simp    
+        hence \<open>r * (norm (T x)) =  norm ( r *\<^sub>R T x )\<close>
+          for x
+          using \<open>r > 0\<close>
+          by simp    
+        thus ?thesis
+          by presburger 
+      qed
+      also have \<open>...      
+          = { norm ( T (r *\<^sub>R x) ) | x. norm x < 1}\<close>
+      proof-
+        have \<open>r *\<^sub>R (T x) = T (r *\<^sub>R x)\<close>
+          for x
+          using \<open>bounded_clinear T\<close>
+          unfolding bounded_clinear_def clinear_def clinear_axioms_def
+          by (simp add: scaleR_scaleC)          
+        thus ?thesis
+          by auto 
+      qed
+      also have \<open>...      
+          = { norm ( T (r *\<^sub>R ((inverse r) *\<^sub>R  x)) ) | x. norm ((inverse r) *\<^sub>R  x) < 1}\<close>
+      proof - (* sledgehammer *)
+        { fix aa :: 'a and aaa :: "real \<Rightarrow> 'a" and aab :: 'a and rr :: real
+          have "(0::real) = 1 \<longrightarrow> (\<exists>ra a. \<not> norm aa < 1 \<or> \<not> norm (aaa ra) < 1 \<or> \<not> norm (aab /\<^sub>R r) < 1 \<and> norm (T (r *\<^sub>R aa)) \<noteq> rr \<or> norm (T (r *\<^sub>R (aab /\<^sub>R r))) \<noteq> rr \<and> norm (T (r *\<^sub>R aa)) \<noteq> rr \<or> norm (T (r *\<^sub>R (a /\<^sub>R r))) = rr \<and> norm (a /\<^sub>R r) < 1)"
+            by linarith
+          then have "\<exists>ra a. \<not> norm aa < 1 \<or> \<not> norm (aaa ra) < 1 \<or> \<not> norm (aab /\<^sub>R r) < 1 \<and> norm (T (r *\<^sub>R aa)) \<noteq> rr \<or> norm (T (r *\<^sub>R (aab /\<^sub>R r))) \<noteq> rr \<and> norm (T (r *\<^sub>R aa)) \<noteq> rr \<or> norm (T (r *\<^sub>R (a /\<^sub>R r))) = rr \<and> norm (a /\<^sub>R r) < 1"
+            by (metis (no_types) norm_one norm_zero right_inverse scaleR_one scaleR_scaleR scale_eq_0_iff zero_less_norm_iff) }
+        then have "\<forall>a aa ra. Ex ((\<lambda>rb. \<forall>ab. \<exists>ac. \<not> norm a < 1 \<or> \<not> norm (ab::'a) < 1 \<or> \<not> norm (aa /\<^sub>R r) < 1 \<and> norm (T (r *\<^sub>R a)) \<noteq> ra \<or> norm (T (r *\<^sub>R (aa /\<^sub>R r))) \<noteq> ra \<and> norm (T (r *\<^sub>R a)) \<noteq> ra \<or> norm (T (r *\<^sub>R (ac /\<^sub>R r))) = ra \<and> norm (ac /\<^sub>R r) < 1)::real \<Rightarrow> bool)"
+          by meson
+        then show ?thesis
+          by (metis (lifting))
+      qed
+      also have \<open>...      
+          = { norm ( T x ) | x. norm ((inverse r) *\<^sub>R  x) < 1}\<close>
+        using assms(1) by auto
+      also have \<open>...      
+          = { norm ( T x ) | x. \<bar>(inverse r)\<bar> * norm x < 1}\<close>
+        by simp
+      also have \<open>...      
+          = { norm ( T x ) | x. (inverse r) * norm x < 1}\<close>
+        using \<open>r > 0\<close>
+        by auto
+      also have \<open>...      
+          = { norm ( T x ) | x. norm x < r}\<close>
+      proof-
+        have \<open>\<forall> x. (inverse r) * norm x < 1 \<longleftrightarrow> norm x < r\<close>
+          by (smt assms(1) left_inverse linordered_field_class.positive_imp_inverse_positive mult_less_cancel_left)
+        thus ?thesis
+          by auto 
+      qed
+      finally show ?thesis by blast
+    qed
+    ultimately show ?thesis by simp   
+  qed
+  ultimately show ?thesis
+    by (simp add: mult.commute) 
+qed
 
 (* NEW *)
 lemma Sokal_Banach_Steinhaus:
   fixes T :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
     and r :: real and x :: 'a 
-  assumes \<open>bounded_clinear T\<close>
+  assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
   shows  \<open>(operator_norm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
-    using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
+  using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
 proof-
   have \<open>norm (T \<xi>) \<le> Max {norm (T (x + \<xi>)), norm (T (x - \<xi>))}\<close>
     for \<xi>
@@ -1243,7 +1412,7 @@ proof-
       by blast
     have \<open>Modules.additive T\<close>
       by (simp add: \<open>clinear T\<close> clinear.axioms(1))
-    have "T (r *\<^sub>C x) = r  *\<^sub>C (T x)"
+    have homogeneous: "T (r *\<^sub>C x) = r  *\<^sub>C (T x)"
       for r and x
       by (simp add: \<open>clinear T\<close> clinear.scaleC)
     have \<open>2 *\<^sub>R \<xi> = (x + \<xi>) - (x - \<xi>)\<close>
@@ -1251,7 +1420,8 @@ proof-
     hence \<open>T (2 *\<^sub>R \<xi>) = T ((x + \<xi>) - (x - \<xi>))\<close>
       by simp
     moreover have \<open>T (2 *\<^sub>R \<xi>) = 2 *\<^sub>R (T \<xi>)\<close>
-      by (metis Modules.additive_def assms bounded_clinear_def clinear_def scaleR_2)  
+      using homogeneous
+      by (simp add: \<open>Modules.additive T\<close> additive.add scaleR_2)    
     moreover have \<open>T ((x + \<xi>) - (x - \<xi>)) = T (x + \<xi>) - T (x - \<xi>)\<close>
       using \<open>Modules.additive T\<close> additive.diff by blast
     ultimately have \<open>2 *\<^sub>R (T \<xi>) = T (x + \<xi>) - T (x - \<xi>)\<close>
@@ -1291,7 +1461,6 @@ proof-
     ultimately show ?thesis
       by simp 
   qed
-
   show ?thesis sorry
 qed
 
@@ -1401,7 +1570,7 @@ proof-
       apply transfer apply auto done
     hence \<open>bounded_clinear F\<close>
       using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
-      (* by metis *) (* does not terminate *)
+        (* by metis *) (* does not terminate *)
       by (cheat metis_failed)
     thus ?thesis
       using pointwise_convergent_operator_norm
@@ -1906,7 +2075,7 @@ lemma classical_operator_mult[simp]:
   unfolding times_applyOp
   apply (subst classical_operator_basis, simp)+
   apply (case_tac "\<rho> x")
-  apply auto
+   apply auto
   apply (subst classical_operator_basis, simp)
   by auto
 
@@ -1971,7 +2140,7 @@ next
     apply (rule ext)
     unfolding inv_option_def o_def map_comp_def
     unfolding inv_def apply auto
-    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
   show "classical_operator (Some \<circ> \<pi>) \<cdot> classical_operator (Some \<circ> \<pi>)* = idOp"
