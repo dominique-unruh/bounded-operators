@@ -2099,6 +2099,7 @@ instance
   by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
 end
 
+(* TODO chilbert_space \<longrightarrow> cbanach *)
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) is Adj
   by (fact Adj_bounded_clinear)
@@ -2369,9 +2370,18 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
-consts classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded"
+lift_definition classical_operator' :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" is
+  "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
+  sorry
+
+
+lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
+  "classical_operator'"
+  sorry
+
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
     applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
+
   by (cheat TODO5)
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
