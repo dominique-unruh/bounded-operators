@@ -39,6 +39,15 @@ definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_
   \<open>operator_norm \<equiv> \<lambda> f. Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
 
 (* NEW *)
+
+(* Is this an axiom ? *)
+lemma isCont_scalarR: 
+  fixes x::\<open>'a::real_normed_vector\<close>
+  shows \<open>isCont (\<lambda> t. t *\<^sub>R x) y\<close>
+  sorry
+
+
+(* NEW *)
 lemma bounded_clinear_refined: \<open>bounded_clinear T \<Longrightarrow> \<exists> K. K \<ge> 0 \<and> (\<forall>x. norm (T x) \<le> norm x * K)\<close>
   by (metis (mono_tags, hide_lams) bounded_clinear.bounded eq_iff mult_zero_left norm_ge_zero order.trans zero_le_mult_iff)
 
@@ -1240,12 +1249,305 @@ proof
   qed
 qed
 
+
+
 (* NEW *)
 lemma norm_ball_1:
   fixes r :: real 
   assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
   shows  \<open>operator_norm T = Sup {norm (T x) | x. norm x < 1 }\<close>
-  sorry
+proof(cases \<open>operator_norm T = 0\<close>)
+  case True
+  from \<open>bounded_clinear T\<close>
+  have \<open>norm (T x) \<le> operator_norm T * norm x\<close>
+    for x :: 'a
+    by (metis bounded_clinear.bounded_linear mult.commute operation_norm_intro)
+  hence \<open>norm (T x) = 0\<close>
+    for x::'a
+    using True
+    by auto
+  hence \<open>{norm (T x) | x. norm x < 1 } = {0}\<close>
+    by (smt Collect_cong norm_zero singleton_conv)
+  hence \<open>Sup {norm (T x) | x. norm x < 1 } = 0\<close>
+    by simp
+  thus  ?thesis using True by simp 
+next
+  case False
+  hence \<open>operator_norm T \<noteq> 0\<close>
+    by blast
+  then show ?thesis 
+  proof-
+    have \<open>operator_norm T = 
+      Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+      by (simp add: operator_norm_def)
+
+    have \<open>\<forall> x. norm x \<ge> 0\<close>
+      by simp
+    have \<open>Sup {norm (T x) | x. norm x < 1 }
+         \<le> operator_norm T\<close>
+    proof-
+      have \<open>K \<in> {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}
+                  \<Longrightarrow> Sup {norm (T x) | x. norm x < 1 } \<le> K\<close>
+        for K
+      proof-
+        assume \<open>K \<in> {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        hence \<open>K \<ge> 0\<close>
+          by blast
+        from  \<open>K \<in> {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        have \<open>norm (T x) \<le> norm x * K\<close>
+          for x
+          by blast
+
+        have \<open>K \<noteq> 0\<close>
+          using \<open>operator_norm T \<noteq> 0\<close> 
+          unfolding operator_norm_def
+          by (smt Collect_cong \<open>\<And>x. norm (T x) \<le> norm x * K\<close> \<open>\<forall>x. 0 \<le> norm x\<close> mult_nonneg_nonneg mult_not_zero norm_zero operator_norm_def operator_norm_of_zero)
+
+        have \<open>x \<noteq> 0 \<Longrightarrow> (inverse (norm x)) * norm (T x) \<le>  K\<close>
+          for x
+        proof-
+          assume \<open>x \<noteq> 0\<close>
+          hence \<open>inverse (norm x) > 0\<close>
+            by simp
+          have \<open>inverse (norm x) * norm (T x) \<le> inverse (norm x) * norm x * K\<close>
+            using \<open>norm (T x) \<le> norm x * K\<close>  \<open>inverse (norm x) > 0\<close>
+            by (smt linordered_field_class.sign_simps(23) mult_left_less_imp_less)
+          thus ?thesis using  \<open>inverse (norm x) > 0\<close> by simp
+        qed
+        hence \<open>x \<noteq> 0 \<Longrightarrow> norm ((inverse (norm x)) *\<^sub>R T x ) \<le>  K\<close>
+          for x
+          by simp
+        hence \<open>x \<noteq> 0 \<Longrightarrow> norm ( T ((inverse (norm x)) *\<^sub>R x) ) \<le>  K\<close>
+          for x
+        proof-
+          assume \<open>x \<noteq> 0\<close>
+          from  \<open>bounded_clinear T\<close>
+          have  \<open>bounded_linear T\<close>
+            by (simp add: bounded_clinear.bounded_linear)
+          hence \<open>\<forall>r x. T (r *\<^sub>R x) = r *\<^sub>R T x\<close>
+            by (simp add: linear_simps(5))
+          hence \<open>T ((inverse (norm x)) *\<^sub>R x) = (inverse (norm x)) *\<^sub>R T x\<close>
+            by auto
+          thus ?thesis
+            using \<open>\<And>x. x \<noteq> 0 \<Longrightarrow> norm (T x /\<^sub>R norm x) \<le> K\<close> \<open>x \<noteq> 0\<close> by auto 
+        qed         
+        hence \<open>norm x = 1 \<Longrightarrow> norm (T x) \<le>  K\<close>
+          for x
+          by (metis \<open>\<And>x. norm (T x) \<le> norm x * K\<close> mult_cancel_right2)
+        hence \<open>norm x < 1 \<Longrightarrow> norm (T x) <  K\<close>
+          for x
+        proof(cases \<open>x = 0\<close>)
+          case True
+          thus ?thesis
+            by (smt \<open>0 \<le> K\<close> \<open>K \<noteq> 0\<close> \<open>\<And>x. norm (T x) \<le> norm x * K\<close> mult_cancel_left1 norm_zero) 
+        next          
+          assume \<open>norm x < 1\<close>
+          case False
+          hence \<open>x \<noteq> 0\<close> by blast
+          hence \<open>norm ( (inverse (norm x)) *\<^sub>R x ) = 1\<close>
+          proof-
+            have \<open>norm ( (inverse (norm x)) *\<^sub>R x )
+            = (inverse (norm x)) * norm x\<close>
+              by auto
+            also have \<open>... = 1\<close>
+              by (simp add: False)
+            finally show ?thesis by blast
+          qed
+          hence \<open>norm (T ( (inverse (norm x)) *\<^sub>R x )) \<le>  K\<close>
+            by (simp add: \<open>\<And>x. norm x = 1 \<Longrightarrow> norm (T x) \<le> K\<close>)
+          hence \<open>norm (  (inverse (norm x)) *\<^sub>R T x ) \<le>  K\<close>
+            using False \<open>\<And>x. x \<noteq> 0 \<Longrightarrow> norm (T x /\<^sub>R norm x) \<le> K\<close> by auto
+          hence \<open>\<bar>(inverse (norm x))\<bar> * norm ( T x ) \<le>  K\<close>
+            by simp
+          hence \<open>(inverse (norm x)) * norm ( T x ) \<le>  K\<close>
+            by simp
+          hence \<open>norm ( T x ) \<le> (norm x) *  K\<close>
+            by (simp add: \<open>\<And>x. norm (T x) \<le> norm x * K\<close>)
+          also have \<open>(norm x) *  K < K\<close>
+          proof-
+            have  \<open>norm x > 0\<close>
+              by (simp add: False)
+            thus ?thesis using \<open>norm x < 1\<close>  \<open>K \<noteq> 0\<close> \<open>K \<ge> 0\<close>
+              by auto 
+          qed
+          finally show ?thesis by blast
+        qed
+        hence \<open>\<forall> J \<in> {norm (T x) | x. norm x < 1 }. J < K\<close>
+          by blast
+        hence \<open>\<forall> J \<in> {norm (T x) | x. norm x < 1 }. J \<le> K\<close>
+          by auto
+        moreover have \<open>{norm (T x) | x. norm x < 1 } \<noteq> {}\<close>
+          by (smt Collect_empty_eq norm_zero) 
+        moreover have \<open>bdd_above {norm (T x) | x. norm x < 1 }\<close>
+          using calculation(1) by fastforce        
+        ultimately have \<open>Sup {norm (T x) | x. norm x < 1 } \<le> K\<close>
+          by (simp add: cSup_le_iff)
+        thus ?thesis 
+          by auto
+      qed 
+      hence \<open>\<forall> K. K \<in> {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}
+                  \<longrightarrow> Sup {norm (T x) | x. norm x < 1 } \<le> K\<close>
+        by blast
+      moreover have \<open>{K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)} \<noteq> {}\<close>
+        using \<open>bounded_clinear T\<close> bounded_clinear_refined
+        by auto
+      moreover have \<open>bdd_below {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        by auto
+      ultimately have \<open>Sup {norm (T x) | x. norm x < 1 }
+         \<le> Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        by (meson cInf_greatest)
+      thus ?thesis
+        by (simp add: \<open>operator_norm T = Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>)
+    qed
+    moreover have \<open>operator_norm T 
+        \<le> Sup {norm (T x) | x. norm x < 1 }\<close>
+    proof-
+      have \<open>\<forall> y. norm (T y) \<le>  norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
+      proof(rule classical)
+        assume \<open>\<not> (\<forall> y. norm (T y) \<le> norm y * (Sup {norm (T x) | x. norm x < 1 }))\<close>
+        hence \<open>\<exists> y. norm (T y) > norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by smt
+        then obtain y where \<open>norm (T y) > norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by blast
+        hence \<open>y \<noteq> 0\<close>
+          by (smt assms(2) bounded_clinear_refined mult_cancel_left1 norm_zero) 
+        hence \<open>norm y \<noteq> 0\<close>
+          by simp
+        hence \<open>norm y > 0\<close>
+          by simp
+        hence \<open>(inverse (norm y)) > 0\<close>
+          by simp
+        hence  \<open>(inverse (norm y)) * norm (T y) > (inverse (norm y)) * norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
+          using  \<open>norm (T y) > norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by (metis (no_types, lifting) ordered_field_class.sign_simps(23) ordered_semiring_strict_class.mult_strict_left_mono)
+        hence  \<open>(inverse (norm y)) * norm (T y) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+          using \<open>norm y \<noteq> 0\<close> by auto
+        hence  \<open>\<bar>(inverse (norm y))\<bar> * norm (T y) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by simp
+        hence  \<open>norm ((inverse (norm y)) *\<^sub>R  T y) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by simp
+        hence  \<open>norm (T ((inverse (norm y)) *\<^sub>R y)) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+        proof-
+          from \<open>bounded_clinear T\<close>
+          have \<open>bounded_linear T\<close>
+            by (simp add: bounded_clinear.bounded_linear)
+          hence \<open>(inverse (norm y)) *\<^sub>R  (T y) = T ((inverse (norm y)) *\<^sub>R y)\<close>
+            unfolding bounded_linear_def linear_def
+            by (simp add: \<open>bounded_linear T\<close> linear_simps(5))           
+          thus ?thesis
+            using \<open>Sup {norm (T x) |x. norm x < 1} < norm (T y /\<^sub>R norm y)\<close> by auto 
+        qed
+        define z where \<open>z \<equiv> (inverse (norm y)) *\<^sub>R y\<close>
+        hence  \<open>norm (T z) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by (simp add: \<open>Sup {norm (T x) |x. norm x < 1} < norm (T (y /\<^sub>R norm y))\<close>)
+
+        have \<open>norm z = 1\<close>
+          by (simp add: \<open>y \<noteq> 0\<close> z_def)
+        have \<open>isCont T z\<close>
+          using assms(2) bounded_linear_continuous by auto
+        hence \<open>x \<longlonglongrightarrow> z \<Longrightarrow> (\<lambda> n. T (x n)) \<longlonglongrightarrow> T z\<close>
+          for x :: \<open>nat \<Rightarrow> 'a\<close>
+          by (simp add: isCont_tendsto_compose)
+        hence \<open>(\<lambda> n::nat. ( 1 - inverse (real (Suc n)) ) *\<^sub>R z ) \<longlonglongrightarrow> z
+                   \<Longrightarrow> (\<lambda> n::nat. T ((1 - inverse (real (Suc n)) ) *\<^sub>R z) ) \<longlonglongrightarrow> T z\<close>
+          by blast
+        moreover have \<open>(\<lambda> n::nat. ( 1 - inverse (real (Suc n)) ) *\<^sub>R z ) \<longlonglongrightarrow> z\<close>
+        proof-
+          have \<open>(\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) )) ) \<longlonglongrightarrow> 1\<close>
+            using Limits.LIMSEQ_inverse_real_of_nat_add_minus
+            by blast
+          have \<open>isCont (\<lambda> r. r *\<^sub>R z) 1\<close>
+            using isCont_scalarR by auto
+          have  \<open>( \<lambda> m. (\<lambda> r. r *\<^sub>R z) ( (\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) ))) m) ) \<longlonglongrightarrow> (\<lambda> r. r *\<^sub>R z) 1\<close>
+            using  \<open>isCont (\<lambda> r. r *\<^sub>R z) 1\<close> \<open>(\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) )) ) \<longlonglongrightarrow> 1\<close>
+            by (rule isCont_tendsto_compose) 
+          hence  \<open>(\<lambda> n::nat. (\<lambda> r. r *\<^sub>R z) ( 1 + ( - inverse (real (Suc n)) )) ) \<longlonglongrightarrow> (\<lambda> r. r *\<^sub>R z) 1\<close>
+            by auto
+          hence  \<open>(\<lambda> n::nat. (\<lambda> r. r *\<^sub>R z) ( 1 + ( - inverse (real (Suc n)) )) ) \<longlonglongrightarrow> z\<close>
+            by simp
+          hence  \<open>(\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) )) *\<^sub>R z ) \<longlonglongrightarrow> z\<close>
+            by simp
+          thus ?thesis by simp
+        qed
+        ultimately have \<open>(\<lambda> n::nat. T ((1 - inverse (real (Suc n)) ) *\<^sub>R z) ) \<longlonglongrightarrow> T z\<close>
+          by blast
+        have \<open>norm ( ( 1 - inverse (real (Suc n)) ) *\<^sub>R z ) < 1\<close>
+          for n
+        proof-
+          have \<open>norm ( ( 1 - inverse (real (Suc n)) ) *\<^sub>R z )  = \<bar> ( 1 - inverse (real (Suc n)) )\<bar> * norm  z\<close>
+            by simp
+          moreover have \<open>1 - inverse (real (Suc n)) \<ge> 0\<close>
+            by (smt One_nat_def less_eq_Suc_le nice_ordered_field_class.one_less_inverse_iff real_of_nat_ge_one_iff zero_less_Suc)
+
+          ultimately have \<open>norm ( ( 1 - inverse (real (Suc n)) ) *\<^sub>R z )  =  ( 1 - inverse (real (Suc n)) ) * norm  z\<close>
+            by linarith
+          moreover have \<open>( 1 - inverse (real (Suc n)) ) < 1\<close>
+            by simp
+          ultimately show ?thesis
+            by (simp add: \<open>norm z = 1\<close>) 
+        qed
+        hence \<open>norm ( T ( ( 1 - inverse (real (Suc n)) ) *\<^sub>R z ) ) \<in> {norm (T x) |x. norm x < 1}\<close>
+          for n
+          by blast
+        moreover have \<open>{norm (T x) |x. norm x < 1} \<noteq> {}\<close>
+          by (metis (mono_tags, lifting) Collect_empty_eq norm_eq_zero zero_less_one)
+
+        moreover have \<open>bdd_above {norm (T x) |x. norm x < 1}\<close>
+        proof-
+          have \<open>\<forall> x. norm (T x) \<le> operator_norm T * norm x\<close>
+            by (smt assms(2) bounded_clinear.bounded_linear mult.commute operation_norm_intro)            
+          hence \<open>\<forall> x. norm x < 1 \<longrightarrow> norm (T x) \<le> operator_norm T\<close>
+            by (smt False assms(2) mult_less_cancel_left2 operator_norm_non_neg)
+          thus ?thesis by auto
+        qed
+        ultimately have \<open>\<forall> n\<ge>0. norm ( T ( ( 1 - inverse (real (Suc n)) ) *\<^sub>R z ) ) \<le> Sup {norm (T x) |x. norm x < 1}\<close>
+          by (simp add: cSup_upper)
+        moreover have  \<open>(\<lambda> n::nat. norm (T ((1 - inverse (real (Suc n)) ) *\<^sub>R z) )) \<longlonglongrightarrow> norm (T z)\<close>
+          using  \<open>(\<lambda> n::nat. T ((1 - inverse (real (Suc n)) ) *\<^sub>R z) ) \<longlonglongrightarrow> T z\<close>
+          by (simp add: tendsto_norm)
+
+        ultimately have  \<open>norm ( T  z  ) \<le> Sup {norm (T x) |x. norm x < 1}\<close>
+          by (simp add: Lim_bounded) 
+        hence \<open>norm ( T  z ) < norm ( T  z )\<close> using  \<open>norm (T z) >  (Sup {norm (T x) | x. norm x < 1 })\<close>
+          by simp
+        thus ?thesis by blast
+      qed
+      moreover have \<open>Sup {norm (T x) | x. norm x < 1 } \<ge> 0\<close>
+      proof-
+        have \<open>norm (T x) \<ge> 0\<close> 
+          for x
+          by auto
+        moreover have \<open>{norm (T x) | x. norm x < 1 } \<noteq> {}\<close>
+          by (smt Collect_empty_eq norm_zero) 
+        moreover have \<open>bdd_above {norm (T x) | x. norm x < 1 }\<close>
+        proof-
+          have \<open>\<forall> x. norm (T x) \<le> operator_norm T * norm x\<close>
+            by (smt assms(2) bounded_clinear.bounded_linear mult.commute operation_norm_intro)            
+          hence \<open>\<forall> x. norm x < 1 \<longrightarrow> norm (T x) \<le> operator_norm T\<close>
+            by (smt False assms(2) mult_less_cancel_left2 operator_norm_non_neg)
+          thus ?thesis by auto
+        qed
+        ultimately show ?thesis 
+          by (smt cSup_upper empty_Collect_eq mem_Collect_eq)
+      qed
+      ultimately have \<open>Sup {norm (T x) | x. norm x < 1 }
+         \<in> {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        by simp   
+      moreover have \<open>{K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)} \<noteq> {}\<close>
+        using \<open>bounded_clinear T\<close> bounded_clinear_refined
+        by auto
+      moreover have \<open>bdd_below {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        by auto
+      ultimately have \<open>Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)} \<le> Sup {norm (T x) | x. norm x < 1 }\<close>
+        by (simp add: cInf_lower)
+      thus ?thesis using \<open>operator_norm T =
+      Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm (T x) \<le> norm x * K)}\<close>
+        by simp        
+    qed
+    ultimately show ?thesis
+      by auto 
+  qed
+qed
 
 (* NEW *)
 lemma norm_ball:
@@ -1783,7 +2085,7 @@ lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<
 lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleR c ` S"
   apply (rule is_subspace.intro)
-   apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
+  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
   by (simp add: closed_scaling is_subspace.closed)
 instance 
   apply standard
@@ -2075,7 +2377,7 @@ lemma classical_operator_mult[simp]:
   unfolding times_applyOp
   apply (subst classical_operator_basis, simp)+
   apply (case_tac "\<rho> x")
-   apply auto
+  apply auto
   apply (subst classical_operator_basis, simp)
   by auto
 
@@ -2140,7 +2442,7 @@ next
     apply (rule ext)
     unfolding inv_option_def o_def map_comp_def
     unfolding inv_def apply auto
-     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
   show "classical_operator (Some \<circ> \<pi>) \<cdot> classical_operator (Some \<circ> \<pi>)* = idOp"
