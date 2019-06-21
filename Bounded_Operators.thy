@@ -35,24 +35,17 @@ end
 subsection \<open>Operator norm\<close>
 
 (* The norm of a bouded operator *)
+(* TODO: replace by onorm
+   TODO: check if theorems involving onorm already exist in Operator_Norm.thy (or are simple corollaries of those)
+ *)
 definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
-  \<open>operator_norm \<equiv> \<lambda> f. Inf{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+  \<open>operator_norm f = Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
 
-(* NEW *)
-
-(* Is this an axiom ? *)
-lemma isCont_scalarR: 
-  fixes x::\<open>'a::real_normed_vector\<close>
-  shows \<open>isCont (\<lambda> t. t *\<^sub>R x) y\<close>
-  sorry
-
-
-(* NEW *)
-lemma bounded_clinear_refined: \<open>bounded_clinear T \<Longrightarrow> \<exists> K. K \<ge> 0 \<and> (\<forall>x. norm (T x) \<le> norm x * K)\<close>
+lemma bounded_clinear_refined: \<open>bounded_clinear T \<Longrightarrow> \<exists> K\<ge>0. (\<forall>x. norm (T x) \<le> norm x * K)\<close>
   by (metis (mono_tags, hide_lams) bounded_clinear.bounded eq_iff mult_zero_left norm_ge_zero order.trans zero_le_mult_iff)
 
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_non_neg:
   \<open>bounded_clinear f \<Longrightarrow>  operator_norm f \<ge> 0\<close>
 proof-
@@ -68,7 +61,7 @@ proof-
     by (metis (no_types, lifting) cInf_greatest mem_Collect_eq) 
 qed
 
-(* NEW *)
+(* TODO: exists? TODO: needed? *)
 lemma operation_norm_closed:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
@@ -103,7 +96,6 @@ proof-
     by (meson closed_sequential_limits) 
 qed
 
-(* NEW *)
 lemma operation_norm_intro:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and x :: 'a
@@ -132,11 +124,11 @@ proof-
     by (metis (mono_tags, lifting) closed_contains_Inf mem_Collect_eq) 
 qed
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_zero:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close> and \<open>operator_norm f = 0\<close>
-  shows \<open>f = (\<lambda> _::('a::real_normed_vector). (0::('b::real_normed_vector)))\<close>
+  shows \<open>f = (\<lambda>_. 0)\<close>
 proof-
   have \<open>operator_norm f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
     by (smt Collect_cong operator_norm_def)
@@ -196,7 +188,7 @@ proof-
     by auto 
 qed
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_of_zero: \<open>operator_norm (\<lambda> _::('a::real_normed_vector). (0::('b::real_normed_vector))) = 0\<close>
 proof-
   have \<open>operator_norm (\<lambda> _::'a. 0::'b) = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm ((\<lambda> _::'a. 0::'b) x) \<le> norm x * K)}\<close>
@@ -214,7 +206,7 @@ proof-
   qed
 qed
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_triangular:
   fixes f g :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close> and \<open>bounded_linear g\<close>
@@ -288,7 +280,7 @@ proof-
 qed
 
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_prod_real: 
   fixes a::real and f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close> 
@@ -424,7 +416,7 @@ proof-
     by simp  
 qed
 
-(* NEW *)
+(* TODO: exists? *)
 lemma operator_norm_prod_complex:
   fixes a::complex and f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
   assumes \<open>bounded_clinear f\<close> 
@@ -1162,7 +1154,7 @@ qed
 
 end
 
-(* NEW *)
+(* TODO fix name ("operator_norm") *)
 lemma clinear_limit_operator_norm:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_vector \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
@@ -1251,7 +1243,7 @@ qed
 
 
 
-(* NEW *)
+(* TODO: trivial for onorm? TODO: reuse to show onorm = <your definition of operator_norm> *)
 lemma norm_ball_1:
   fixes r :: real 
   assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
@@ -1457,7 +1449,7 @@ next
             using Limits.LIMSEQ_inverse_real_of_nat_add_minus
             by blast
           have \<open>isCont (\<lambda> r. r *\<^sub>R z) 1\<close>
-            using isCont_scalarR by auto
+            using isCont_scaleR by auto
           have  \<open>( \<lambda> m. (\<lambda> r. r *\<^sub>R z) ( (\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) ))) m) ) \<longlonglongrightarrow> (\<lambda> r. r *\<^sub>R z) 1\<close>
             using  \<open>isCont (\<lambda> r. r *\<^sub>R z) 1\<close> \<open>(\<lambda> n::nat. ( 1 + ( - inverse (real (Suc n)) )) ) \<longlonglongrightarrow> 1\<close>
             by (rule isCont_tendsto_compose) 
@@ -1549,7 +1541,7 @@ next
   qed
 qed
 
-(* NEW *)
+(* TODO: as for norm_ball_1 *)
 lemma norm_ball:
   fixes r :: real 
   assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
@@ -1697,14 +1689,14 @@ proof-
     by (simp add: mult.commute) 
 qed
 
-(* NEW *)
 lemma Sokal_Banach_Steinhaus:
   fixes T :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
     and r :: real and x :: 'a 
   assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
-  shows  \<open>(operator_norm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
+  shows \<open>(operator_norm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
   using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
 proof-
+  (* TODO: Max \<rightarrow> max *)
   have \<open>norm (T \<xi>) \<le> Max {norm (T (x + \<xi>)), norm (T (x - \<xi>))}\<close>
     for \<xi>
   proof-
@@ -1771,10 +1763,10 @@ qed
 theorem Banach_Steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. operator_norm (f n) \<le> M\<close>
   by (cheat Banach_Steinhaus)
 
-(* NEW *)
+(* TODO fix name *)
 lemma bounded_clinear_limit_operator_norm:
   fixes f :: \<open>nat \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
@@ -1820,53 +1812,69 @@ proof-
 qed
 
 
-(* NEW *) 
-lemma bounded_operator_weak_contraction_dist:
-  fixes f g :: \<open>('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
-    and x :: 'a 
-  shows \<open>dist ((Rep_bounded f) x) ((Rep_bounded g) x) \<le> dist f g\<close>
-  by (cheat bounded_operator_weak_contraction_dist)
 
-
-(* NEW *)
+(* TODO: would mean WOT = operator-norm topology in bounded operators *)
 lemma pointwise_convergent_operator_norm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
-    and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes \<open>bounded_clinear F\<close> 
-    and  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
-  shows \<open>f \<longlonglongrightarrow> Abs_bounded F\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) bounded\<close>
+    and F :: \<open>('a,'b) bounded\<close>
+  (* assumes \<open>bounded_clinear F\<close>  *)
+  assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
+  shows \<open>f \<longlonglongrightarrow> F\<close>
   by (cheat pointwise_convergent_operator_norm)
 
-(* NEW *)
+(* TODO: fix proof, Exercise III.2.1 in Conway func analysis *)
 lemma Cauchy_linear_operators:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::chilbert_space) bounded\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) bounded\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>convergent f\<close>
 proof-
   have \<open>Cauchy (\<lambda> n. (Rep_bounded (f n)) x)\<close>
-    for x::'a
-  proof-
+    if "x\<noteq>0" for x::'a
+  proof (rule metric_CauchyI)
+    fix \<epsilon>
+    have geq0: "\<epsilon> / norm x > 0"
+      sorry
     from \<open>Cauchy f\<close>
-    have \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> m \<ge> N. \<forall> n \<ge> N. dist (f n) (f m) < \<epsilon>\<close>
-      using metric_CauchyD by blast
-    moreover have \<open>dist ( Rep_bounded (f n) x ) ( Rep_bounded (f m) x ) 
-                \<le> dist (f n) (f m)\<close>
-      for m n and x::'a
-      using bounded_operator_weak_contraction_dist by blast
-    ultimately have \<open>\<forall> \<epsilon> > 0. \<exists> N. \<forall> m \<ge> N. \<forall> n \<ge> N. dist ( Rep_bounded (f n) x ) ( Rep_bounded (f m) x )  < \<epsilon>\<close>
-      by smt
-    thus ?thesis  
-      by (metis Cauchy_altdef2 order_refl) 
+    obtain N where \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. dist (f n) (f m) < \<epsilon> / norm x\<close>
+      apply atomize_elim using geq0 metric_CauchyD by blast
+
+    have \<open>\<forall>m\<ge>N. \<forall>n\<ge>N. dist (Rep_bounded (f m) x) (Rep_bounded (f n) x) < \<epsilon>\<close>
+    proof auto
+      fix m n assume "m\<ge>N" and "n\<ge>N"
+      have "dist (Rep_bounded (f m) x) (Rep_bounded (f n) x) = norm (Rep_bounded (f m - f n) x)"
+        sorry
+      also have "\<dots> \<le> norm (f m - f n) * norm x"
+        sorry
+      also have "\<dots> = dist (f n) (f m) * norm x"
+        sorry
+      also have "\<dots> < \<epsilon>"
+        sorry
+      finally show "dist (Rep_bounded (f m) x) (Rep_bounded (f n) x) < \<epsilon>"
+        by simp
+    qed
+    thus \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (Rep_bounded (f m) x) (Rep_bounded (f n) x) < \<epsilon>\<close>
+      by blast 
   qed
+  hence \<open>Cauchy (\<lambda> n. (Rep_bounded (f n)) x)\<close>
+    for x::'a
+    apply (cases "x=0") apply auto sorry
   hence \<open>convergent (\<lambda> n. (Rep_bounded (f n)) x)\<close>
     for x::'a
     by (simp add: Cauchy_convergent_iff)
-  then obtain F :: \<open>'a \<Rightarrow> 'b\<close> where \<open>(\<lambda> n. (Rep_bounded (f n)) x) \<longlonglongrightarrow> F x\<close>
+  then obtain F :: \<open>('a,'b) bounded\<close> where \<open>(\<lambda> n. (Rep_bounded (f n)) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
     for x::'a
-    unfolding convergent_def
-    by metis
-  hence \<open>f \<longlonglongrightarrow> (Abs_bounded F)\<close>
-  proof-
+  proof (atomize_elim , transfer , simp)
+    fix fa :: "nat \<Rightarrow> 'a \<Rightarrow> 'b"
+    assume "\<forall>x. bounded_clinear (fa (x::nat)::'a \<Rightarrow> 'b)"
+      and "\<And>x. convergent (\<lambda>n. fa n (x::'a)::'b)"
+      and "\<And>x. convergent (\<lambda>n. Rep_bounded (f n) x)"
+    show "\<exists>F. bounded_clinear F \<and> (\<forall>x. (\<lambda>n. fa n (x::'a)) \<longlonglongrightarrow> (F x::'b))"
+      sorry
+  qed
+  have \<open>f \<longlonglongrightarrow> F\<close>
+    sorry
+    (* TODO *)
+(*   proof -
     have  \<open>bounded_clinear (Rep_bounded (f n))\<close>
       for n
       apply transfer apply auto done
@@ -1876,13 +1884,12 @@ proof-
       by (cheat metis_failed)
     thus ?thesis
       using pointwise_convergent_operator_norm
-        \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blast 
-  qed
+        \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blastx 
+  qed *)
   thus ?thesis unfolding convergent_def by blast
 qed
 
-(* NEW *)
-instantiation bounded :: (complex_normed_vector, chilbert_space) "cbanach" begin
+instantiation bounded :: (complex_normed_vector, cbanach) "cbanach" begin
 instance
   apply intro_classes
   apply transfer
