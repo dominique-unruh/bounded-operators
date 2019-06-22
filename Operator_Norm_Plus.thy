@@ -23,7 +23,7 @@ theory Operator_Norm_Plus
     "HOL-Analysis.Abstract_Topology" 
     Extended_Sorry
 begin
-(*
+  (*
 definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
   \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})= \<close>
 *)
@@ -37,7 +37,7 @@ lemma operator_norm_non_neg:
   \<open>bounded_clinear f \<Longrightarrow>  (\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})f \<ge> 0\<close>
 proof-
   assume \<open>bounded_clinear f\<close>
-(*  have \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+    (*  have \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
     by (simp add: operator_norm_def) *)
   moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
     using  \<open>bounded_clinear f\<close> bounded_clinear_refined
@@ -189,7 +189,7 @@ proof-
     then have "0 \<in> {r |r. 0 \<le> r \<and> (\<forall>a. norm (0::'b) \<le> norm (a::'a) * r)}"
       by blast
     then show ?thesis
-      by (metis (lifting) \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})(\<lambda>_. 0) = Inf {K |K. 0 \<le> K \<and> (\<forall>x. norm 0 \<le> norm x * K)}\<close> cInf_eq_minimum mem_Collect_eq)
+      by (metis (lifting) cInf_eq_minimum mem_Collect_eq)
   qed
 qed
 
@@ -561,8 +561,7 @@ qed
 
 (* TODO: trivial for onorm? TODO: reuse to show onorm = <your definition of operator_norm> *)
 lemma norm_ball_1:
-  fixes r :: real 
-  assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
+  assumes \<open>bounded_clinear T\<close>
   shows  \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})T = Sup {norm (T x) | x. norm x < 1 }\<close>
 proof(cases \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})T = 0\<close>)
   case True
@@ -571,7 +570,7 @@ proof(cases \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x.
     for x :: 'a
   proof -
     have "norm (T x) \<le> norm x * Inf {r |r. 0 \<le> r \<and> (\<forall>a. norm (T a) \<le> norm a * r)}"
-      using assms(2) bounded_clinear.bounded_linear operation_norm_intro by blast
+      using assms(1) bounded_clinear.bounded_linear operation_norm_intro by blast
     then show ?thesis
       by (simp add: mult.commute)
   qed
@@ -723,7 +722,7 @@ next
         then obtain y where \<open>norm (T y) > norm y * (Sup {norm (T x) | x. norm x < 1 })\<close>
           by blast
         hence \<open>y \<noteq> 0\<close>
-          by (smt assms(2) bounded_clinear_refined mult_cancel_left1 norm_zero) 
+          by (smt assms(1) bounded_clinear_refined mult_cancel_left1 norm_zero) 
         hence \<open>norm y \<noteq> 0\<close>
           by simp
         hence \<open>norm y > 0\<close>
@@ -757,7 +756,7 @@ next
         have \<open>norm z = 1\<close>
           by (simp add: \<open>y \<noteq> 0\<close> z_def)
         have \<open>isCont T z\<close>
-          using assms(2) bounded_linear_continuous by auto
+          using assms(1) bounded_linear_continuous by auto
         hence \<open>x \<longlonglongrightarrow> z \<Longrightarrow> (\<lambda> n. T (x n)) \<longlonglongrightarrow> T z\<close>
           for x :: \<open>nat \<Rightarrow> 'a\<close>
           by (simp add: isCont_tendsto_compose)
@@ -811,7 +810,7 @@ next
           proof -
             { fix aa :: 'a
               have "norm (T aa) \<le> norm aa * Inf {r |r. 0 \<le> r \<and> (\<forall>a. norm (T a) \<le> norm a * r)}"
-                using assms(2) bounded_clinear.bounded_linear operation_norm_intro by blast
+                using assms(1) bounded_clinear.bounded_linear operation_norm_intro by blast
               then have "norm (T aa) \<le> Inf {r |r. 0 \<le> r \<and> (\<forall>a. norm (T a) \<le> norm a * r)} * norm aa"
                 by (simp add: mult.commute) }
             then show ?thesis
@@ -847,7 +846,7 @@ next
           proof -
             { fix aa :: 'a
               have "norm (T aa) \<le> norm aa * Inf {r |r. 0 \<le> r \<and> (\<forall>a. norm (T a) \<le> norm a * r)}"
-                using assms(2) bounded_clinear.bounded_linear operation_norm_intro by blast
+                using assms(1) bounded_clinear.bounded_linear operation_norm_intro by blast
               then have "norm (T aa) \<le> Inf {r |r. 0 \<le> r \<and> (\<forall>a. norm (T a) \<le> norm a * r)} * norm aa"
                 by (simp add: mult.commute) }
             then show ?thesis
@@ -855,7 +854,7 @@ next
           qed
 
           hence \<open>\<forall> x. norm x < 1 \<longrightarrow> norm (T x) \<le> (\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})T\<close>
-            using False Collect_cong assms(2) mult_less_cancel_left2 operator_norm_non_neg
+            using False Collect_cong assms(1) mult_less_cancel_left2 operator_norm_non_neg
             by smt
           thus ?thesis by auto
         qed
@@ -1037,5 +1036,190 @@ proof-
     by (simp add: mult.commute) 
 qed
 
+(* NEW *)
+lemma norm_set_nonempty1: 
+  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
+  assumes \<open>bounded_linear f\<close> and \<open>f \<noteq> (\<lambda> _. 0)\<close>
+  shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+proof-
+  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+    by (metis (full_types) assms(1) assms(2) linear_simps(3))
+  hence \<open>\<exists> x::'a. norm x \<noteq> 0\<close>
+    by simp
+  hence \<open>\<exists> x::'a. norm x = 1\<close>
+    by (metis (full_types) norm_sgn)
+  thus ?thesis
+    by simp 
+qed
+
+(* NEW *)
+lemma norm_set_bdd_above1: 
+  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
+  assumes \<open>bounded_linear f\<close> 
+  shows \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+proof-
+  have \<open>\<exists> M. \<forall> x. norm x = 1 \<longrightarrow> norm (f x) \<le> M\<close>
+    by (metis assms bounded_linear.bounded)
+  thus ?thesis
+    by auto 
+qed
+
+
+(* NEW *)
+proposition Operator_Norm_characterization_1:
+  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>bounded_linear f\<close>
+  shows  \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
+proof(cases \<open>f = (\<lambda> _. 0)\<close>)
+  case True
+  have \<open>onorm f = 0\<close>
+    by (simp add: True onorm_eq_0)
+  moreover have \<open>Sup {norm (f x) | x. norm x < 1 } = 0\<close>
+  proof-
+    have \<open>norm (f x) = 0\<close>
+      for x
+      by (simp add: True)   
+    hence \<open>{norm (f x) | x. norm x < 1 } = {0}\<close>
+      by (smt Collect_cong norm_zero singleton_conv)    
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis by simp
+next
+  case False
+  have \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1 }\<close>
+    sorry
+  moreover have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
+  proof-
+    have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
+      by (simp add: full_SetCompr_eq)
+    also have \<open>... = Sup {norm (f x) | x. norm x = 1}\<close>
+    proof-
+      have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+      proof-
+        have \<open>y \<in> {norm (f x) / norm x |x. True} \<Longrightarrow> y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+          for y
+        proof-
+          assume \<open>y \<in> {norm (f x) / norm x |x. True}\<close>
+          show ?thesis
+          proof(cases \<open>y = 0\<close>)
+            case True
+            then show ?thesis
+              by simp 
+          next
+            case False
+            have \<open>\<exists> x. y = norm (f x) / norm x\<close>
+              using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
+            then obtain x where \<open>y = norm (f x) / norm x\<close>
+              by blast
+            hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
+              by simp
+            hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
+              by simp
+            hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
+              by (simp add: assms linear_simps(5))
+            moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+              using False \<open>y = norm (f x) / norm x\<close> by auto              
+            ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+              by blast
+            thus ?thesis by blast
+          qed
+
+        qed
+        moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0} \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
+          for y
+        proof(cases \<open>y = 0\<close>)
+          case True
+          then show ?thesis
+            by auto 
+        next
+          case False
+          hence \<open>y \<notin> {0}\<close>
+            by simp
+          moreover assume \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+          ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+            by simp
+          hence \<open>\<exists> x. norm x = 1 \<and> y = norm (f x)\<close>
+            by auto
+          then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
+            by auto
+          have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
+            by simp 
+          thus ?thesis
+            by auto 
+        qed
+        ultimately show ?thesis by blast
+      qed
+      
+      hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
+        by simp
+      moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+      proof-
+        have \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
+        proof-
+          have \<open>\<exists> x::'a. norm x = 1\<close>
+            by (metis (full_types) False assms linear_simps(3) norm_sgn)
+          then obtain x::'a where \<open>norm x = 1\<close>
+            by blast
+          have \<open>norm (f x) \<ge> 0\<close>
+            by simp
+          thus ?thesis using \<open>norm x = 1\<close> by blast
+        qed
+        hence \<open>\<exists> y \<in> {norm (f x) |x. norm x = 1}. y \<ge> 0\<close>
+          by blast
+        then obtain y::real where \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> 
+          and \<open>y \<ge> 0\<close>
+          by auto
+        have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+          using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
+        moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+          by (simp add: assms norm_set_bdd_above1)          
+        ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
+          using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+          by (simp add: cSup_upper) 
+        thus ?thesis using \<open>y \<ge> 0\<close> by simp
+      qed
+      moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
+      proof-
+         have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+           using False assms norm_set_nonempty1 by fastforce
+           
+        moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+          by (simp add: assms norm_set_bdd_above1)    
+        have \<open>{0::real} \<noteq> {}\<close>
+           by simp
+        moreover have \<open>bdd_above {0::real}\<close>
+          by simp
+          
+        ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
+             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
+          by (smt \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> cSup_insert_If cSup_singleton cSup_union_distrib insert_absorb2 sup.strict_order_iff sup_commute)
+                   
+        moreover have \<open>Sup {(0::real)} = (0::real)\<close>
+          by simp          
+        moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+          by (simp add: \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close>)
+        ultimately show ?thesis
+          by simp
+      qed
+      moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0})
+           = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
+        using calculation(2) calculation(3) by auto
+      ultimately show ?thesis by simp 
+    qed
+    ultimately show ?thesis
+      by linarith 
+  qed
+  ultimately have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x < 1 }\<close>
+    by simp
+  thus ?thesis using onorm_def
+    by metis 
+qed
+
+(* NEW *)
+proposition Operator_Norm_characterization_2:
+  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>bounded_linear f\<close>
+  shows  \<open>onorm f = Inf {K. (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
+  sorry
 
 end
