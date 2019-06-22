@@ -1064,10 +1064,31 @@ proof-
     by auto 
 qed
 
+(* NEW *)
+lemma norm_set_bdd_above2: 
+  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
+  assumes \<open>bounded_linear f\<close> 
+  shows \<open>bdd_above {norm (f x) |x. norm x < 1}\<close>
+proof-
+  have \<open>\<exists> M. \<forall> x. norm x < 1 \<longrightarrow> norm (f x) \<le> M\<close>
+  proof -
+    { fix aa :: "real \<Rightarrow> 'a"
+      obtain rr :: "('a \<Rightarrow> 'b) \<Rightarrow> real" where
+        "\<And>f a. 0 \<le> rr f \<and> (\<not> bounded_linear f \<or> norm (f a) \<le> norm a * rr f)"
+        using bounded_linear.nonneg_bounded by moura
+      then have "\<exists>r. \<not> norm (aa r) < 1 \<or> norm (f (aa r)) \<le> r"
+        by (metis assms dual_order.trans less_eq_real_def mult.commute mult_left_le) }
+    then show ?thesis
+      by metis
+  qed  
+  thus ?thesis
+    by auto 
+qed
+
 
 (* NEW *)
 proposition Operator_Norm_characterization_1:
-  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
   shows  \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -1086,8 +1107,155 @@ proof(cases \<open>f = (\<lambda> _. 0)\<close>)
   ultimately show ?thesis by simp
 next
   case False
-  have \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1 }\<close>
-    sorry
+  have \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1}\<close>
+  proof-
+    have \<open>Sup {norm (f x) | x. norm x = 1} \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+    proof-
+      have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
+        using False assms norm_set_nonempty1 by fastforce
+      moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
+        by (simp add: assms norm_set_bdd_above1)      
+      moreover have \<open>y \<in> {norm (f x) | x. norm x = 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+        for y
+      proof-
+        assume \<open>y \<in> {norm (f x) | x. norm x = 1}\<close>
+        hence \<open>\<exists> x. y = norm (f x) \<and> norm x = 1\<close>
+          by blast
+        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x = 1\<close>
+          by auto
+        have \<open>\<exists> yy. (\<forall> n::nat. yy n \<in> {norm (f x) | x. norm x < 1}) \<and> (yy \<longlonglongrightarrow> y)\<close>
+        proof-
+          define yy where \<open>yy n = (1 - (inverse (real (Suc n)))) *\<^sub>R y\<close>
+            for n
+          have \<open>yy n \<in> {norm (f x) | x. norm x < 1}\<close>
+            for n
+          proof-
+            have \<open>yy n = norm (f ( (1 - (inverse (real (Suc n)))) *\<^sub>R x) )\<close>
+            proof-
+              have \<open>yy n = (1 - (inverse (real (Suc n)))) *\<^sub>R norm (f x)\<close>
+                using yy_def \<open>y = norm (f x)\<close> by blast
+              also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R norm (f x)\<close>
+                by (simp add: nice_ordered_field_class.inverse_le_imp_le )
+              also have \<open>... = norm ( (1 - (inverse (real (Suc n)))) *\<^sub>R (f x))\<close>
+                by simp
+              also have \<open>... = norm (f ((1 - (inverse (real (Suc n)))) *\<^sub>R  x))\<close>
+                using \<open>bounded_linear f\<close>
+                by (simp add: linear_simps(5)) 
+              finally show ?thesis by blast
+            qed
+            moreover have \<open>norm ((1 - (inverse (real (Suc n)))) *\<^sub>R x) < 1\<close>
+            proof-
+              have \<open>norm ((1 - (inverse (real (Suc n)))) *\<^sub>R x) 
+                  = \<bar>(1 - (inverse (real (Suc n))))\<bar> * norm x\<close>
+                by simp
+              hence \<open>norm ((1 - (inverse (real (Suc n)))) *\<^sub>R x) 
+                  = (1 - (inverse (real (Suc n)))) * norm x\<close>
+                by (simp add: linordered_field_class.inverse_le_1_iff)                
+              thus ?thesis using \<open>norm x = 1\<close>
+                by simp 
+            qed
+            ultimately show ?thesis
+              by blast 
+          qed
+          moreover have \<open>yy \<longlonglongrightarrow> y\<close>
+          proof-
+            have \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
+              using Limits.LIMSEQ_inverse_real_of_nat_add_minus by simp
+            hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
+              using Limits.tendsto_scaleR by blast
+            hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
+              by simp
+            hence \<open>(\<lambda> n. yy n) \<longlonglongrightarrow> y\<close>
+              using yy_def by simp
+            thus ?thesis by simp
+          qed
+          ultimately show ?thesis by blast
+        qed
+        then obtain yy
+          where \<open>\<And> n::nat. yy n \<in> {norm (f x) | x. norm x < 1}\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+          by auto
+        have \<open>{norm (f x) | x. norm x < 1} \<noteq> {}\<close>
+          using \<open>\<And>n. yy n \<in> {norm (f x) |x. norm x < 1}\<close> by auto          
+        moreover have \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
+          by (simp add: assms norm_set_bdd_above2)          
+        ultimately have \<open>yy n \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+          for n
+          using \<open>\<And> n::nat. yy n \<in> {norm (f x) | x. norm x < 1}\<close>
+          by (simp add: cSup_upper)
+        hence \<open>y \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+          using \<open>yy \<longlonglongrightarrow> y\<close> Topological_Spaces.Sup_lim
+          by (meson LIMSEQ_le_const2) 
+        thus ?thesis by blast
+      qed
+      ultimately show ?thesis
+        by (meson cSup_least)
+    qed
+    moreover have \<open>Sup {norm (f x) | x. norm x < 1} \<le> Sup {norm (f x) | x. norm x = 1}\<close>
+    proof-
+      have \<open>{norm (f x) | x. norm x < 1} \<noteq> {}\<close>
+        by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero zero_less_one)  
+      moreover have \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
+        using \<open>bounded_linear f\<close>
+        by (simp add: norm_set_bdd_above2)        
+      moreover have \<open>y \<in> {norm (f x) | x. norm x < 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x = 1}\<close>
+        for y
+      proof(cases \<open>y = 0\<close>)
+        case True
+        then show ?thesis
+          by (smt Collect_cong False assms cSup_upper empty_Collect_eq mem_Collect_eq norm_not_less_zero norm_set_bdd_above1 norm_set_nonempty1) 
+      next
+        case False
+        hence \<open>y \<noteq> 0\<close> by blast
+        assume \<open>y \<in> {norm (f x) | x. norm x < 1}\<close>
+        hence \<open>\<exists> x. y = norm (f x) \<and> norm x < 1\<close>
+          by blast
+        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
+          by blast
+        have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
+          using False \<open>y = norm (f x)\<close> assms norm_set_nonempty1 by fastforce
+        moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
+          using assms norm_set_bdd_above1 by force
+        moreover have \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
+        proof-
+          have \<open>(1/norm x) * y  = norm (f ((1/norm x) *\<^sub>R x))\<close>
+          proof-
+            have \<open>(1/norm x) * y = (1/norm x) * norm (f x)\<close>
+              by (simp add: \<open>y = norm (f x)\<close>)
+            also have \<open>... = \<bar>1/norm x\<bar> * norm (f x)\<close>
+              by simp
+            also have \<open>... = norm ((1/norm x) *\<^sub>R (f x))\<close>
+              by simp
+            also have \<open>... = norm (f ((1/norm x) *\<^sub>R x))\<close>
+              by (simp add: assms linear_simps(5))
+            finally show ?thesis by blast
+          qed
+          moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+          proof-              
+            have \<open>x \<noteq> 0\<close>
+              using  \<open>y \<noteq> 0\<close> \<open>y = norm (f x)\<close> assms linear_simps(3) by auto
+            have \<open>norm ((1/norm x) *\<^sub>R x) = \<bar> (1/norm x) \<bar> * norm x\<close>
+              by simp
+            also have \<open>... = (1/norm x) * norm x\<close>
+              by simp
+            finally show ?thesis using \<open>x \<noteq> 0\<close>
+              by simp 
+          qed
+          ultimately show ?thesis
+            by blast 
+        qed
+        ultimately have \<open>(1/norm x) * y \<le> Sup {norm (f x) | x. norm x = 1}\<close>
+          by (simp add: cSup_upper)
+        moreover have \<open>y \<le> (1/norm x) * y\<close> 
+          using \<open>norm x < 1\<close>
+          by (metis \<open>y = norm (f x)\<close> assms less_eq_real_def linear_simps(3) mult_less_cancel_right2 nice_ordered_field_class.divide_less_eq_1_pos norm_eq_zero norm_ge_zero not_le) 
+        thus ?thesis
+          using calculation by linarith 
+      qed
+      ultimately show ?thesis
+        by (meson cSup_least) 
+    qed
+    ultimately show ?thesis by simp
+  qed
   moreover have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
   proof-
     have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
@@ -1123,7 +1291,6 @@ next
               by blast
             thus ?thesis by blast
           qed
-
         qed
         moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0} \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
           for y
@@ -1149,7 +1316,6 @@ next
         qed
         ultimately show ?thesis by blast
       qed
-      
       hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
         by simp
       moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
@@ -1180,20 +1346,17 @@ next
       qed
       moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
       proof-
-         have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-           using False assms norm_set_nonempty1 by fastforce
-           
+        have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+          using False assms norm_set_nonempty1 by fastforce
         moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
           by (simp add: assms norm_set_bdd_above1)    
         have \<open>{0::real} \<noteq> {}\<close>
-           by simp
+          by simp
         moreover have \<open>bdd_above {0::real}\<close>
           by simp
-          
         ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
              = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
           by (smt \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> cSup_insert_If cSup_singleton cSup_union_distrib insert_absorb2 sup.strict_order_iff sup_commute)
-                   
         moreover have \<open>Sup {(0::real)} = (0::real)\<close>
           by simp          
         moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
@@ -1214,6 +1377,7 @@ next
   thus ?thesis using onorm_def
     by metis 
 qed
+
 
 (* NEW *)
 proposition Operator_Norm_characterization_2:
