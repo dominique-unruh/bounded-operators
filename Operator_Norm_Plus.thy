@@ -23,39 +23,17 @@ theory Operator_Norm_Plus
     "HOL-Analysis.Abstract_Topology" 
     Extended_Sorry
 begin
-  (*
-definition operator_norm::\<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) \<Rightarrow> real\<close> where
-  \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})= \<close>
-*)
 
-lemma bounded_clinear_refined: \<open>bounded_clinear T \<Longrightarrow> \<exists> K\<ge>0. (\<forall>x. norm (T x) \<le> norm x * K)\<close>
-  by (metis (mono_tags, hide_lams) bounded_clinear.bounded eq_iff mult_zero_left norm_ge_zero order.trans zero_le_mult_iff)
-
-
-(* TODO: exists? *)
-lemma operator_norm_non_neg:
-  \<open>bounded_clinear f \<Longrightarrow>  (\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})f \<ge> 0\<close>
-proof-
-  assume \<open>bounded_clinear f\<close>
-    (*  have \<open>(\<lambda> f. Inf {K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)})f = Inf { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
-    by (simp add: operator_norm_def) *)
-  moreover have \<open>{ K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)} \<noteq> {}\<close>
-    using  \<open>bounded_clinear f\<close> bounded_clinear_refined
-    by auto
-  moreover have \<open>bdd_below { K | K::real. K \<ge> 0 \<and> (\<forall>x. norm (f x) \<le> norm x * K)}\<close>
-    by auto  
-  ultimately show ?thesis
-    by (metis (no_types, lifting) cInf_greatest mem_Collect_eq) 
-qed
+section \<open>Sets defined using the norms\<close>
 
 (* NEW *)
-lemma norm_set_nonempty1: 
-  fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
-  assumes \<open>bounded_linear f\<close> and \<open>f \<noteq> (\<lambda> _. 0)\<close>
+lemma norm_set_nonempty_eq1: 
+  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close> 
+  assumes \<open>bounded_linear f\<close> 
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
 proof-
   have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-    by (metis (full_types) assms(1) assms(2) linear_simps(3))
+    using UNIV_not_singleton by auto
   hence \<open>\<exists> x::'a. norm x \<noteq> 0\<close>
     by simp
   hence \<open>\<exists> x::'a. norm x = 1\<close>
@@ -65,7 +43,7 @@ proof-
 qed
 
 (* NEW *)
-lemma norm_set_bdd_above1: 
+lemma norm_set_bdd_above_eq1: 
   fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
   assumes \<open>bounded_linear f\<close> 
   shows \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
@@ -77,7 +55,7 @@ proof-
 qed
 
 (* NEW *)
-lemma norm_set_bdd_above2: 
+lemma norm_set_bdd_above_less1: 
   fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
   assumes \<open>bounded_linear f\<close> 
   shows \<open>bdd_above {norm (f x) |x. norm x < 1}\<close>
@@ -97,10 +75,11 @@ proof-
     by auto 
 qed
 
+section \<open>Characterization of the operator norm\<close>
 
 (* NEW *)
 proposition Operator_Norm_characterization_1:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
   shows  \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -124,9 +103,14 @@ next
     have \<open>Sup {norm (f x) | x. norm x = 1} \<le> Sup {norm (f x) | x. norm x < 1}\<close>
     proof-
       have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
-        using False assms norm_set_nonempty1 by fastforce
+      proof -
+        have "\<exists>a. norm (a::'a) = 1"
+          by (metis (full_types) False assms linear_simps(3) norm_sgn)
+        then show ?thesis
+          by blast
+      qed
       moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
-        by (simp add: assms norm_set_bdd_above1)      
+        by (simp add: assms norm_set_bdd_above_eq1)      
       moreover have \<open>y \<in> {norm (f x) | x. norm x = 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x < 1}\<close>
         for y
       proof-
@@ -189,7 +173,7 @@ next
         have \<open>{norm (f x) | x. norm x < 1} \<noteq> {}\<close>
           using \<open>\<And>n. yy n \<in> {norm (f x) |x. norm x < 1}\<close> by auto          
         moreover have \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
-          by (simp add: assms norm_set_bdd_above2)          
+          by (simp add: assms norm_set_bdd_above_less1)          
         ultimately have \<open>yy n \<le> Sup {norm (f x) | x. norm x < 1}\<close>
           for n
           using \<open>\<And> n::nat. yy n \<in> {norm (f x) | x. norm x < 1}\<close>
@@ -208,13 +192,25 @@ next
         by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero zero_less_one)  
       moreover have \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
         using \<open>bounded_linear f\<close>
-        by (simp add: norm_set_bdd_above2)        
+        by (simp add: norm_set_bdd_above_less1)        
       moreover have \<open>y \<in> {norm (f x) | x. norm x < 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x = 1}\<close>
         for y
       proof(cases \<open>y = 0\<close>)
         case True
-        then show ?thesis
-          by (smt Collect_cong False assms cSup_upper empty_Collect_eq mem_Collect_eq norm_not_less_zero norm_set_bdd_above1 norm_set_nonempty1) 
+        thus ?thesis
+        proof-
+          have \<open>norm (f x) \<ge> 0\<close>
+            for x
+            by simp            
+          moreover have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+            using assms norm_set_nonempty_eq1 by blast            
+          moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+            by (simp add: assms norm_set_bdd_above_eq1)            
+          ultimately have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+            by (smt Collect_empty_eq cSup_upper mem_Collect_eq)
+          thus ?thesis
+            by (simp add: True) 
+        qed
       next
         case False
         hence \<open>y \<noteq> 0\<close> by blast
@@ -224,9 +220,9 @@ next
         then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
           by blast
         have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
-          using False \<open>y = norm (f x)\<close> assms norm_set_nonempty1 by fastforce
+          using False \<open>y = norm (f x)\<close> assms norm_set_nonempty_eq1 by fastforce
         moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
-          using assms norm_set_bdd_above1 by force
+          using assms norm_set_bdd_above_eq1 by force
         moreover have \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
         proof-
           have \<open>(1/norm x) * y  = norm (f ((1/norm x) *\<^sub>R x))\<close>
@@ -350,7 +346,7 @@ next
         have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
           using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
         moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-          by (simp add: assms norm_set_bdd_above1)          
+          by (simp add: assms norm_set_bdd_above_eq1)          
         ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
           using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
           by (simp add: cSup_upper) 
@@ -359,9 +355,9 @@ next
       moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
       proof-
         have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-          using False assms norm_set_nonempty1 by fastforce
+          using False assms norm_set_nonempty_eq1 by fastforce
         moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-          by (simp add: assms norm_set_bdd_above1)    
+          by (simp add: assms norm_set_bdd_above_eq1)    
         have \<open>{0::real} \<noteq> {}\<close>
           by simp
         moreover have \<open>bdd_above {0::real}\<close>
@@ -399,20 +395,20 @@ proof-
   have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Inf {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
   proof-
     define A where \<open>A = {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
-      have \<open>A \<noteq> {}\<close>
-      proof-
-        have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-          using UNIV_not_singleton by auto
-        thus ?thesis using A_def
-          by simp 
-      qed
-      moreover have \<open>bdd_above A\<close>
-      proof-
-        have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
-          using \<open>bounded_linear f\<close> le_onorm by auto
-        thus ?thesis using A_def
-          by auto 
-      qed
+    have \<open>A \<noteq> {}\<close>
+    proof-
+      have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+        using UNIV_not_singleton by auto
+      thus ?thesis using A_def
+        by simp 
+    qed
+    moreover have \<open>bdd_above A\<close>
+    proof-
+      have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
+        using \<open>bounded_linear f\<close> le_onorm by auto
+      thus ?thesis using A_def
+        by auto 
+    qed
     ultimately have \<open>Sup A = Inf {b. \<forall>a\<in>A. a \<le> b}\<close>
       using Complete_Lattices.complete_lattice_class.Sup_Inf
       by (simp add: cSup_cInf)  
@@ -543,13 +539,150 @@ proof-
     by (meson closed_sequential_limits) 
 qed
 
+section \<open>Banach-Steinhaus theorem\<close>
 
 lemma norm_ball:
   fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
-   and  r :: real
+    and  r :: real
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-  shows  \<open>onorm f * r = Sup {norm (f x) | x. norm x < r}\<close>
-  sorry
+  shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
+proof-
+  have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = Sup {norm (f x) | x. norm x < 1}\<close>
+  proof-
+    have \<open>(1/r) * Sup {norm (f x) | x. norm x < r}
+        = Sup {(1/r) * norm (f x) | x. norm x < r}\<close>
+    proof-
+      define S where \<open>S = {norm (f x) | x. norm x < r}\<close>
+      have \<open>S \<noteq> {}\<close>
+        using S_def
+        by (metis (mono_tags, lifting) Collect_empty_eq assms(1) norm_eq_zero)
+      moreover have  \<open>bdd_above S\<close>
+      proof-
+        have \<open>\<exists> K. \<forall> x. norm x < r \<longrightarrow> norm (f x) < K\<close>
+        proof-
+          have \<open>norm (f x) \<le> onorm f * norm x\<close>
+            for x
+            by (simp add: assms(2) onorm)            
+          thus ?thesis
+            by (meson assms(2) bounded_linear.pos_bounded dual_order.strict_trans2 real_mult_less_iff1) 
+        qed
+        thus ?thesis
+          using S_def order.strict_implies_order by force 
+      qed
+      moreover have \<open>mono ( (*) (1/r) )\<close>
+      proof-
+        from \<open>r > 0\<close>
+        have \<open>(1/r) > 0\<close>
+          by simp
+        thus ?thesis
+          using mono_def real_mult_le_cancel_iff2 by blast 
+      qed
+      moreover have \<open>continuous (at_left (Sup S)) ( (*) (1/r) )\<close>
+      proof-
+        have \<open>isCont ( (*) (1/r) ) x\<close>
+          for x
+          by simp          
+        thus ?thesis using \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close>
+          by (simp add: continuous_at_imp_continuous_at_within)
+      qed
+      ultimately have \<open>( (*) (1/r) ) (Sup S) = Sup {( (*) (1/r) ) s | s. s \<in> S}\<close>
+      proof -
+        have "Sup ((*) (1 / r) ` S) = 1 / r * Sup S"
+          by (metis (full_types) \<open>S \<noteq> {}\<close> \<open>bdd_above S\<close> \<open>continuous (at_left (Sup S)) ((*) (1 / r))\<close> \<open>mono ((*) (1 / r))\<close> continuous_at_Sup_mono)
+        then show ?thesis
+          by (simp add: setcompr_eq_image)
+      qed        
+      hence  \<open>Sup {( (*) (1/r) ) ( norm (f x) ) | x. norm x < r}
+              = ( (*) (1/r) ) ( Sup {norm (f x) | x. norm x < r} )\<close>
+        using S_def Collect_cong mem_Collect_eq
+        by smt  
+      thus ?thesis by simp
+    qed
+    also have \<open>...
+        = Sup { norm ((1/r) *\<^sub>R (f x)) | x. norm x < r}\<close>
+    proof-
+      have \<open>(1/r) * norm (f x) = norm ((1/r) *\<^sub>R (f x))\<close>
+        for x
+      proof-
+        have \<open>1/r > 0\<close>
+          by (simp add: assms(1))
+        moreover have \<open>\<bar>(1/r)\<bar> * norm (f x) = norm ((1/r) *\<^sub>R (f x))\<close>
+          by simp          
+        ultimately show ?thesis by simp
+      qed
+      thus ?thesis
+        by presburger 
+    qed
+    also have \<open>...
+        = Sup {norm (f ((1/r) *\<^sub>R x)) | x. norm x < r}\<close>
+    proof-
+      have \<open>(1/r) *\<^sub>R (f x) = f ((1/r) *\<^sub>R x)\<close>
+        for x
+        using \<open>bounded_linear f\<close>
+        by (simp add: linear_simps(5))
+      thus ?thesis
+        by simp 
+    qed
+    also have \<open>...
+        = Sup { norm (f ((1/r) *\<^sub>R (r *\<^sub>R x))) | x. norm (r *\<^sub>R x) < r}\<close>
+    proof-
+      have \<open>{norm (f ((1/r) *\<^sub>R x)) | x. norm x < r} 
+           = (\<lambda> x. norm (f ((1/r) *\<^sub>R x))) ` {x | x. norm x < r}\<close>
+        by auto
+      also have \<open>... 
+           = (\<lambda> x. norm (f ((1/r) *\<^sub>R x))) ` {r *\<^sub>R x | x. norm ( r *\<^sub>R x) < r}\<close>
+      proof-    
+        have \<open>bij (((*\<^sub>R) r)::'a \<Rightarrow> 'a)\<close>
+        proof-
+          have \<open>r \<noteq> 0\<close>
+            using assms(1) by auto            
+          hence \<open>inj (((*\<^sub>R) r)::'a \<Rightarrow> 'a)\<close>
+            by (simp add: \<open>r \<noteq> 0\<close> inj_on_def)
+          moreover have \<open>surj (((*\<^sub>R) r)::'a \<Rightarrow> 'a)\<close>
+            using assms(1) cone_iff by auto 
+          ultimately show ?thesis
+            by (simp add: bijI) 
+        qed
+        hence \<open>{x | x::'a. norm x < r} = { (inv ( (*\<^sub>R) r)) x | x. norm ( (inv ( (*\<^sub>R) r)) x ) < r}\<close>
+          by (metis UNIV_I bij_betw_inv_into_left)
+        hence \<open>{x | x::'a. norm x < r} = {r *\<^sub>R x | x::'a. norm (r *\<^sub>R x) < r}\<close>
+          by (metis (mono_tags, lifting) UNIV_I \<open>bij ((*\<^sub>R) r)\<close> bij_betw_inv_into bij_betw_inv_into_left inv_inv_eq)          
+        thus ?thesis
+          by fastforce
+      qed
+      finally have \<open>{norm (f ((1/r) *\<^sub>R x)) | x::'a. norm x < r} = {norm (f ((1/r) *\<^sub>R (r *\<^sub>R x))) | x::'a. norm (r *\<^sub>R x) < r}\<close>
+        by blast
+      thus ?thesis
+        by simp 
+    qed
+    also have \<open>...
+        = Sup { norm (f x) | x. norm x < 1}\<close>
+    proof-
+      have \<open>{norm (f ((1 / r) *\<^sub>R r *\<^sub>R x)) |x. norm (r *\<^sub>R x) < r}
+            = {norm (f x) |x. norm (r *\<^sub>R x) < r}\<close>
+        by simp
+      hence \<open>...
+            = {norm (f x) |x. \<bar>r\<bar> *  norm x < r}\<close>
+        by simp
+      hence \<open>...
+            = {norm (f x) |x. \<bar>r\<bar> *  norm x < r}\<close>
+        by simp
+      hence \<open>...
+            = {norm (f x) |x. r * norm x < r}\<close>
+        using \<open>r > 0\<close> by simp
+      have \<open>...
+            = {norm (f x) |x. norm x < 1}\<close>
+        using \<open>r > 0\<close> by simp
+      hence \<open>{norm (f ((1 / r) *\<^sub>R r *\<^sub>R x)) |x. norm (r *\<^sub>R x) < r}
+            = {norm (f x) |x. norm x < 1}\<close>
+        using \<open>{norm (f x) |x. \<bar>r\<bar> * norm x < r} = {norm (f x) |x. r * norm x < r}\<close> by auto
+      thus ?thesis by simp
+    qed
+    finally show ?thesis by blast
+  qed
+  thus ?thesis
+    by (simp add: Operator_Norm_characterization_1 assms(2)) 
+qed
 
 
 end
