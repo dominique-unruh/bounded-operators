@@ -611,7 +611,7 @@ next
   fix a :: complex  and x :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
     apply transfer
-    sorry
+    using onorm_scalarC by blast
 qed
 
 end
