@@ -537,9 +537,9 @@ end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "dist_norm" begin
 lift_definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
-  is \<open>\<lambda> f. operator_norm (f)\<close>.
+  is \<open>\<lambda> f. onorm (f)\<close>.
 lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
-  is \<open>\<lambda> f g. operator_norm (f - g) \<close>.
+  is \<open>\<lambda> f g. onorm (f - g) \<close>.
 
 instance
   apply intro_classes
@@ -547,8 +547,8 @@ instance
 proof transfer
   fix x y :: \<open>'a \<Rightarrow> 'b\<close>
   assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
-  show \<open>operator_norm (x - y) =
-           operator_norm ( ( (\<lambda>t. x t - y t)))\<close>
+  show \<open>onorm (x - y) =
+           onorm ( ( (\<lambda>t. x t - y t)))\<close>
     by (meson minus_apply) 
 qed
 end
@@ -589,35 +589,35 @@ instance
 proof transfer
   fix x :: "'a \<Rightarrow> 'b"
   assume \<open>bounded_clinear x\<close>
-    and \<open>operator_norm x = 0\<close>
+    and \<open>onorm x = 0\<close>
   then show \<open>x = (\<lambda>_::'a. 0::'b)\<close>
-    using operator_norm_zero
-    by (simp add: operator_norm_zero bounded_clinear.bounded_linear)
+    using onorm_zero
+    by (simp add: onorm_zero bounded_clinear.bounded_linear)
 next 
   show \<open>norm (0::('a,'b) bounded) = 0\<close>
-    apply transfer using operator_norm_of_zero by simp
+    apply transfer using onorm_of_zero by simp
 next
   fix x y :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (x + y) \<le> norm x + norm y\<close>
-    apply transfer using operator_norm_triangular bounded_clinear.bounded_linear by auto
+    apply transfer using onorm_triangular bounded_clinear.bounded_linear by auto
 next
   fix a :: real  and x :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
     apply transfer
-    using operator_norm_prod_real
-    by (simp add: operator_norm_prod_real bounded_clinear.bounded_linear) 
+    using onorm_prod_real
+    by (simp add: onorm_prod_real bounded_clinear.bounded_linear) 
 next
   fix a :: complex  and x :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
     apply transfer
-    using operator_norm_prod_complex 
-    by (simp add: operator_norm_prod_complex)
+    using onorm_prod_complex 
+    by (simp add: onorm_prod_complex)
 qed
 
 end
 
-(* TODO fix name ("operator_norm") *)
-lemma clinear_limit_operator_norm:
+(* TODO fix name ("onorm") *)
+lemma clinear_limit_onorm:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_vector \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. clinear (f n)\<close> 
@@ -709,7 +709,7 @@ lemma Sokal_Banach_Steinhaus:
   fixes T :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
     and r :: real and x :: 'a 
   assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
-  shows \<open>(operator_norm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
+  shows \<open>(onorm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
   using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
 proof-
   (* TODO: Max \<rightarrow> max *)
@@ -779,11 +779,11 @@ qed
 theorem Banach_Steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. operator_norm (f n) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
   by (cheat Banach_Steinhaus)
 
 (* TODO fix name *)
-lemma bounded_clinear_limit_operator_norm:
+lemma bounded_clinear_limit_onorm:
   fixes f :: \<open>nat \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_clinear (f n)\<close> 
@@ -791,7 +791,7 @@ lemma bounded_clinear_limit_operator_norm:
   shows \<open>bounded_clinear F\<close> 
 proof-
   have \<open>clinear F\<close>
-    using assms(1) assms(2) bounded_clinear.clinear clinear_limit_operator_norm by blast
+    using assms(1) assms(2) bounded_clinear.clinear clinear_limit_onorm by blast
   moreover have \<open>bounded_clinear_axioms F\<close>
   proof
     have "\<exists>K. \<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * K"
@@ -809,15 +809,15 @@ proof-
         thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
           by (metis UNIV_I assms(2) bounded_iff image_eqI)
       qed
-      hence \<open>\<exists> M. \<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+      hence \<open>\<exists> M. \<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         using  Banach_Steinhaus by blast
-      then obtain M where \<open>\<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+      then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by blast
-      have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * operator_norm (f n)\<close>
+      have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * onorm (f n)\<close>
         using \<open>\<And> n. bounded_clinear (f n)\<close>
         unfolding bounded_clinear_def
         by (simp add: assms(1) bounded_clinear.bounded_linear operation_norm_intro)
-      thus ?thesis using  \<open>\<forall> n. \<forall> x. operator_norm (f n) \<le> M\<close>
+      thus ?thesis using  \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
     qed
     thus "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
@@ -830,13 +830,13 @@ qed
 
 
 (* TODO: would mean WOT = operator-norm topology in bounded operators *)
-lemma pointwise_convergent_operator_norm:
+lemma pointwise_convergent_onorm:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) bounded\<close>
     and F :: \<open>('a,'b) bounded\<close>
   (* assumes \<open>bounded_clinear F\<close>  *)
   assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
   shows \<open>f \<longlonglongrightarrow> F\<close>
-  by (cheat pointwise_convergent_operator_norm)
+  by (cheat pointwise_convergent_onorm)
 
 (* TODO: fix proof, Exercise III.2.1 in Conway func analysis *)
 lemma Cauchy_linear_operators:
@@ -895,11 +895,11 @@ proof-
       for n
       apply transfer apply auto done
     hence \<open>bounded_clinear F\<close>
-      using bounded_clinear_limit_operator_norm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+      using bounded_clinear_limit_onorm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
         (* by metis *) (* does not terminate *)
       by (cheat metis_failed)
     thus ?thesis
-      using pointwise_convergent_operator_norm
+      using pointwise_convergent_onorm
         \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close> by blastx 
   qed *)
   thus ?thesis unfolding convergent_def by blast
