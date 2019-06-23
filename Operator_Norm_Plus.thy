@@ -684,6 +684,85 @@ proof-
     by (simp add: Operator_Norm_characterization_1 assms(2)) 
 qed
 
+lemma Sokal_Banach_Steinhaus:
+  fixes T :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
+    and r :: real and x :: 'a 
+  assumes \<open>r > 0\<close> and \<open>bounded_clinear T\<close>
+  shows \<open>(onorm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
+  using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
+proof-
+  (* TODO: Max \<rightarrow> max *)
+  have \<open>norm (T \<xi>) \<le> Max {norm (T (x + \<xi>)), norm (T (x - \<xi>))}\<close>
+    for \<xi>
+  proof-
+    from  \<open>bounded_clinear T\<close>
+    have \<open>clinear T\<close>
+      unfolding bounded_clinear_def
+      by blast
+    have \<open>Modules.additive T\<close>
+      by (simp add: \<open>clinear T\<close> clinear.axioms(1))
+    have homogeneous: "T (r *\<^sub>C x) = r  *\<^sub>C (T x)"
+      for r and x
+      by (simp add: \<open>clinear T\<close> clinear.scaleC)
+    have \<open>2 *\<^sub>R \<xi> = (x + \<xi>) - (x - \<xi>)\<close>
+      by (simp add: scaleR_2)
+    hence \<open>T (2 *\<^sub>R \<xi>) = T ((x + \<xi>) - (x - \<xi>))\<close>
+      by simp
+    moreover have \<open>T (2 *\<^sub>R \<xi>) = 2 *\<^sub>R (T \<xi>)\<close>
+      using homogeneous
+      by (simp add: \<open>Modules.additive T\<close> additive.add scaleR_2)    
+    moreover have \<open>T ((x + \<xi>) - (x - \<xi>)) = T (x + \<xi>) - T (x - \<xi>)\<close>
+      using \<open>Modules.additive T\<close> additive.diff by blast
+    ultimately have \<open>2 *\<^sub>R (T \<xi>) = T (x + \<xi>) - T (x - \<xi>)\<close>
+      by simp
+    hence \<open>(T \<xi>) = (1/2) *\<^sub>R (T (x + \<xi>) - T (x - \<xi>))\<close>
+      by (metis scaleR_2 scaleR_half_double)
+    hence \<open>norm (T \<xi>) = norm ( (1/2) *\<^sub>R (T (x + \<xi>) - T (x - \<xi>)) )\<close>
+      by simp
+    moreover have \<open>norm ( (1/2) *\<^sub>R (T (x + \<xi>) - T (x - \<xi>)) )
+               = ((1/2)::real) * ( norm (T (x + \<xi>) - T (x - \<xi>)) )\<close>
+      by simp          
+    ultimately have \<open>norm (T \<xi>) = ((1/2)::real) * norm (T (x + \<xi>) - T (x - \<xi>))\<close>
+      by simp
+    moreover have \<open>norm (T (x + \<xi>) - T (x - \<xi>)) \<le> norm (T (x + \<xi>)) + norm (T (x - \<xi>))\<close>
+      by (simp add: norm_triangle_ineq4)
+    ultimately have \<open>norm (T \<xi>) \<le> ((1/2)::real) * (norm (T (x + \<xi>)) + norm (T (x - \<xi>)))\<close>
+      by simp
+    moreover have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) 
+        \<le> 2 *Max { norm (T (x + \<xi>)),  norm (T (x - \<xi>))}\<close>  
+    proof(cases \<open>norm (T (x + \<xi>)) \<le> norm (T (x - \<xi>))\<close>)
+      case True
+      have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) \<le> 2*norm (T (x - \<xi>))\<close>
+        using True by auto    
+      moreover have \<open>norm (T (x - \<xi>)) \<le> Max { norm (T (x + \<xi>)),  norm (T (x - \<xi>))}\<close>
+        using True by simp
+      ultimately show ?thesis
+        by linarith 
+    next
+      case False
+      have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) \<le> 2*norm (T (x + \<xi>))\<close>
+        using False by auto    
+      moreover have \<open>norm (T (x + \<xi>)) \<le> Max { norm (T (x + \<xi>)),  norm (T (x - \<xi>))}\<close>
+        using False by simp
+      ultimately show ?thesis
+        by linarith 
+    qed
+    ultimately show ?thesis
+      by simp 
+  qed
+  show ?thesis sorry
+qed
+
+(* NEW *)
+(* https://en.wikipedia.org/wiki/Uniform_boundedness_principle *)
+theorem Banach_Steinhaus:
+  fixes f :: \<open>'c \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
+  assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
+  by (cheat Banach_Steinhaus)
+
+
+
 
 end
 
