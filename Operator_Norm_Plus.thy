@@ -541,6 +541,7 @@ qed
 
 section \<open>Banach-Steinhaus theorem\<close>
 
+(* NEW *)
 lemma norm_ball:
   fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
@@ -684,6 +685,39 @@ proof-
     by (simp add: Operator_Norm_characterization_1 assms(2)) 
 qed
 
+(* NEW *)
+lemma Sup_Ineq:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  assumes \<open>\<forall> x \<in> S. f x \<le> g x\<close> and \<open>bdd_above (f ` S)\<close>
+    and \<open>bdd_above (g ` S)\<close>
+  shows \<open>Sup (f ` S) \<le> Sup (g ` S)\<close>
+proof-
+  have  \<open>y \<in> (f ` S) \<Longrightarrow> y \<le> Sup (g ` S)\<close>
+    for y
+  proof-
+    assume \<open>y \<in> (f ` S)\<close>
+    hence \<open>\<exists> x\<in>S. y = f x\<close>
+      by blast
+    then obtain x where \<open>y = f x\<close> and \<open>x \<in> S\<close>
+      by blast
+    hence \<open>y \<le> g x\<close>
+      using  \<open>\<forall> x \<in> S. f x \<le> g x\<close> \<open>x \<in> S\<close>
+      by blast
+    have \<open>g x \<in> (g ` S)\<close>
+      by (simp add: \<open>x \<in> S\<close>)
+    moreover have \<open>bdd_above (g ` S)\<close>
+      by (simp add: assms(3))      
+    ultimately have \<open>g x \<le> Sup (g ` S)\<close>
+      by (simp add: cSup_upper)
+    thus ?thesis using \<open>y \<le> g x\<close> by simp
+  qed
+  hence \<open>Sup (f ` S) \<le> Sup (g ` S)\<close>
+    by (metis assms(1) assms(3) cSUP_subset_mono image_empty order_refl)
+  thus ?thesis
+    by simp 
+qed
+
+(* NEW *)
 lemma Sokal_Banach_Steinhaus:
   fixes T :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
@@ -691,8 +725,7 @@ lemma Sokal_Banach_Steinhaus:
   shows \<open>(onorm T) * r \<le> Sup {norm (T y) | y. dist y x < r }\<close>
   using Conditionally_Complete_Lattices.conditionally_complete_lattice_class.cSUP_subset_mono
 proof-
-  (* TODO: Max \<rightarrow> max *)
-  have \<open>norm (T \<xi>) \<le> Max {norm (T (x + \<xi>)), norm (T (x - \<xi>))}\<close>
+  have \<open>norm (T \<xi>) \<le> max (norm (T (x + \<xi>))) (norm (T (x - \<xi>)))\<close>
     for \<xi>
   proof-
     from  \<open>bounded_linear T\<close>
@@ -729,7 +762,7 @@ proof-
     ultimately have \<open>norm (T \<xi>) \<le> ((1/2)::real) * (norm (T (x + \<xi>)) + norm (T (x - \<xi>)))\<close>
       by simp
     moreover have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) 
-        \<le> 2 *Max { norm (T (x + \<xi>)),  norm (T (x - \<xi>))}\<close>  
+        \<le> 2 * max (norm (T (x + \<xi>))) (norm (T (x - \<xi>)))\<close>  
     proof(cases \<open>norm (T (x + \<xi>)) \<le> norm (T (x - \<xi>))\<close>)
       case True
       have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) \<le> 2*norm (T (x - \<xi>))\<close>
@@ -742,10 +775,10 @@ proof-
       case False
       have \<open>(norm (T (x + \<xi>)) + norm (T (x - \<xi>))) \<le> 2*norm (T (x + \<xi>))\<close>
         using False by auto    
-      moreover have \<open>norm (T (x + \<xi>)) \<le> Max { norm (T (x + \<xi>)),  norm (T (x - \<xi>))}\<close>
+      moreover have \<open>norm (T (x + \<xi>)) \<le> max (norm (T (x + \<xi>)))  (norm (T (x - \<xi>)))\<close>
         using False by simp
       ultimately show ?thesis
-        by linarith 
+        by simp 
     qed
     ultimately show ?thesis
       by simp 
@@ -764,6 +797,7 @@ theorem Banach_Steinhaus:
 
 section \<open>The onorm and the complex scalar product\<close>
 
+(* NEW *)
 lemma onorm_scalarC:
   fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
   assumes \<open>bounded_clinear f\<close>
