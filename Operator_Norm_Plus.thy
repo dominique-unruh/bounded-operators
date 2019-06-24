@@ -14,6 +14,18 @@ References:
   publisher={Springer Science \& Business Media}
 }
 
+@article{sokal2011really,
+  title={A really simple elementary proof of the uniform boundedness theorem},
+  author={Sokal, Alan D},
+  journal={The American Mathematical Monthly},
+  volume={118},
+  number={5},
+  pages={450--452},
+  year={2011},
+  publisher={Taylor \& Francis}
+}
+
+
 *)
 
 theory Operator_Norm_Plus
@@ -717,6 +729,7 @@ proof-
 qed
 
 (* NEW *)
+text \<open>The proof of the following result was taken from [sokal2011really]\<close>
 lemma Sokal_Banach_Steinhaus:
   fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
@@ -940,13 +953,117 @@ qed
 
 
 (* NEW *)
-(* https://en.wikipedia.org/wiki/Uniform_boundedness_principle *)
+text \<open>The proof of the following result was taken from [sokal2011really]\<close>
 theorem Banach_Steinhaus:
-  fixes f :: \<open>'c \<Rightarrow> ('a::banach \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+  fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close>
+    and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
-  by (cheat Banach_Steinhaus)
+proof(rule classical)
+  assume \<open>\<not>(\<exists> M. \<forall> k. onorm (f k) \<le> M)\<close>
+  hence \<open>\<forall> M. \<exists> k. onorm (f k) > M\<close>
+    using leI by blast
+  hence \<open>\<forall> n. \<exists> k. onorm (f k) > 4^n\<close>
+    by simp
+  hence \<open>\<exists> k\<^sub>f. \<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close>
+    by metis
+  then obtain k\<^sub>f where \<open>\<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close> 
+    by blast
+  define g::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close> where \<open>g n = f (k\<^sub>f n)\<close>
+    for n
+  hence \<open>\<forall> n. onorm (g n) > 4^n\<close>
+    using  \<open>\<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close>  by simp
+  from \<open>\<And> n. bounded_linear (f n)\<close>
+  have \<open>\<And> n. bounded_linear (g n)\<close>
+    using g_def by simp
+  have \<open>bounded_linear h \<Longrightarrow> 0 < onorm h \<Longrightarrow> r > 0
+     \<Longrightarrow> \<exists> y. dist y x < r \<and> norm (h y) > (2/3) * r * onorm h\<close>
+    for r and x and h::\<open>'a \<Rightarrow> 'b\<close>
+  proof-
+    assume \<open>bounded_linear h\<close>
+    moreover assume \<open>r > 0\<close>
+    ultimately have \<open>(onorm h) * r \<le> Sup {norm (h y) | y. dist y x < r}\<close>
+      by (simp add: Sokal_Banach_Steinhaus)
+    assume \<open>0 < onorm h\<close>
+    have \<open>(onorm h) * r * (2/3) < Sup {norm (h y) | y. dist y x < r}\<close>
+    proof -
+      have f1: "\<forall>r ra. (ra::real) * r = r * ra"
+        by auto
+      then have f2: "r * onorm h \<le> Sup {norm (h a) |a. dist a x < r}"
+        by (metis \<open>onorm h * r \<le> Sup {norm (h y) |y. dist y x < r}\<close>)
+      have "0 < r * onorm h"
+        by (metis \<open>0 < onorm h\<close> \<open>0 < r\<close> linordered_semiring_strict_class.mult_pos_pos)
+      then have "r * onorm h * (2 / 3) < Sup {norm (h a) |a. dist a x < r}"
+        using f2 by linarith
+      then show ?thesis
+        using f1 by presburger
+    qed 
+    moreover have \<open>{norm (h y) | y. dist y x < r} \<noteq> {}\<close>
+    proof-
+      have \<open>\<exists> y::'a. dist y x < r\<close>
+        using \<open>r > 0\<close>
+        by (metis dist_self)
+      hence \<open>{y | y. dist y x < r} \<noteq> {}\<close>
+        by simp
+      hence \<open>(\<lambda> y. norm ((g n) y)) ` {y | y. dist y x < r} \<noteq> {}\<close>
+        by blast
+      thus ?thesis by blast
+    qed
+    moreover have \<open>bdd_above {norm (h y) | y. dist y x < r}\<close>
+    proof-
+      have \<open>norm (h y) \<le> onorm h * norm y\<close>
+        for y
+        using \<open>bounded_linear h\<close>
+        by (simp add: onorm)    
+      moreover have \<open>norm y \<le> norm x + norm (y - x)\<close>
+        for y
+        by (simp add: norm_triangle_sub)        
+      moreover have \<open>onorm h \<ge> 0\<close>
+        by (simp add: \<open>bounded_linear h\<close> onorm_pos_le)
+      ultimately have \<open>norm (h y) \<le> onorm h * (norm x + norm (y - x))\<close>
+        for y
+        by (smt ordered_comm_semiring_class.comm_mult_left_mono)
+      hence \<open>norm (h y) \<le> onorm h * (norm x + dist y x)\<close>
+        for y
+        by (simp add: dist_norm)
+      hence \<open>dist y x < r \<Longrightarrow> norm (h y) < onorm h * (norm x + r)\<close>
+        for y
+        by (smt \<open>0 < onorm h\<close> mult_left_le_imp_le)
+      hence \<open>t \<in> {norm (h y) | y. dist y x < r} \<Longrightarrow> t \<le> onorm h * (norm x + r)\<close>
+        for t
+        by fastforce
+      thus ?thesis by fastforce
+    qed
+    ultimately have \<open>\<exists> t \<in> {norm (h y) | y. dist y x < r}. 
+                    (onorm h) * r * (2/3) < t\<close>
+      using less_cSup_iff
+      by smt
+    hence \<open>\<exists> s \<in> {y | y. dist y x < r}. 
+                    (onorm h) * r * (2/3) < norm (h s)\<close>
+      by blast
+    hence \<open>\<exists> y. dist y x < r \<and> 
+                    (onorm h) * r * (2/3) < norm (h y)\<close>
+      by blast
+    hence \<open>\<exists> y. dist y x < r \<and> 
+                   r * (2/3) * (onorm h) < norm (h y)\<close>
+      by (metis mult.commute vector_space_over_itself.scale_scale)
+    thus ?thesis by auto
+  qed
+  hence \<open>\<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) *  (1/3)^n * onorm (g n)\<close>
+    for n and x
+  proof-
+    have \<open>((1/3)::real)^n > 0\<close>
+      by simp
+    moreover have \<open>\<And> n. onorm (g n) > 0\<close>
+      using  \<open>\<forall> n. onorm (g n) > (4::real)^n\<close>
+      by (smt zero_less_power)                             
+    ultimately show ?thesis using  \<open>\<And> n. bounded_linear (g n)\<close>
+      using \<open>\<And>x r h. \<lbrakk>bounded_linear h; 0 < onorm h; 0 < r\<rbrakk> \<Longrightarrow> \<exists>y. dist y x < r \<and> 2 / 3 * r * onorm h < norm (h y)\<close> by auto
+  qed
+    
 
+  show ?thesis sorry
+qed
 
 section \<open>The onorm and the complex scalar product\<close>
 
