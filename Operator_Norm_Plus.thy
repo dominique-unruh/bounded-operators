@@ -1299,7 +1299,47 @@ lemma convergent_series_Cauchy:
   assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
     and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
-  sorry
+proof-
+  have \<open>\<phi> (Suc n) - \<phi> 0 = sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n}\<close>
+    for n
+  proof(induction n)
+    case 0
+    then show ?case
+      by simp 
+  next
+    case (Suc n)
+    then show ?case
+      by simp 
+  qed
+  have \<open>Cauchy (\<lambda> n. sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n})\<close>
+  proof-
+    from  \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+    have  \<open>\<And> n.  \<bar>\<phi> (Suc n) - \<phi> n\<bar> \<le> a n\<close>
+      by (simp add: dist_real_def)
+    have \<open>(sum (\<lambda> k. \<bar>\<phi> (Suc k) - \<phi> k\<bar>)) {0..n} \<le> (sum a {0..n})\<close>
+      for n
+      by (simp add: \<open>\<And>n. \<bar>\<phi> (Suc n) - \<phi> n\<bar> \<le> a n\<close> ordered_comm_monoid_add_class.sum_mono)
+    hence \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> k. \<bar>\<phi> (Suc k) - \<phi> k\<bar>)) {0..n} \<le> K\<close>
+      using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+        order.trans by blast
+    hence \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>(\<lambda> k.  \<phi> (Suc k) - \<phi> k ) x\<bar>)  {0..n}) \<le> K\<close>
+      by simp
+    thus ?thesis
+      by (simp add: sum_Cauchy) 
+  qed
+  hence \<open>Cauchy (\<lambda> n. \<phi> (Suc n) - \<phi> 0)\<close>
+    using  \<open>\<And> n. \<phi> (Suc n) - \<phi> 0 = sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n}\<close>
+    by simp
+  hence \<open>convergent (\<lambda> n. \<phi> (Suc n) - \<phi> 0)\<close>
+    by (simp add: real_Cauchy_convergent)
+  hence \<open>convergent (\<lambda> n. \<phi> (Suc n))\<close>
+    using convergent_diff_const_right_iff by auto
+  hence \<open>convergent \<phi>\<close>
+    using convergent_Suc_iff by auto
+  thus ?thesis
+    using Cauchy_convergent_iff 
+    by auto 
+qed
 
 
 (* NEW *)
