@@ -1134,7 +1134,7 @@ proof-
 qed
 
 (* NEW *)
-lemma sum_Cauchy:
+lemma sum_Cauchy_positive:
   fixes a ::\<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close> 
     and \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
@@ -1197,27 +1197,110 @@ proof-
 qed
 
 (* NEW *)
+definition pos_part :: \<open>real \<Rightarrow> real\<close> where
+  \<open>pos_part x = (if x \<ge> 0 then x else 0)\<close>
+
+(* NEW *)
+definition neg_part :: \<open>real \<Rightarrow> real\<close> where
+  \<open>neg_part x = (if x \<le> 0 then -x else 0)\<close>
+
+(* NEW *)
+lemma sum_Cauchy:
+  fixes a ::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
+  shows \<open>Cauchy (\<lambda> n. (sum a {0..n}))\<close>
+proof-
+  define a_plus::\<open>nat \<Rightarrow> real\<close> where \<open>a_plus n = pos_part (a n)\<close>
+    for n
+  define a_minus::\<open>nat \<Rightarrow> real\<close> where \<open>a_minus n = neg_part (a n)\<close>
+    for n
+  have \<open>a = a_plus - a_minus\<close>
+  proof-
+    have  \<open>a x = a_plus x - a_minus x\<close>
+      for x
+    proof(cases \<open>a x \<ge> 0\<close>)
+      case True
+      thus ?thesis
+        using \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> neg_part_def pos_part_def by auto 
+    next
+      case False
+      thus ?thesis
+        using \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> neg_part_def pos_part_def by auto 
+    qed
+    thus ?thesis by auto
+  qed
+  have \<open>a_plus x \<le> \<bar>a x\<bar>\<close>
+    for x
+    unfolding a_plus_def
+    by (simp add: pos_part_def)
+  have \<open>\<And> n. a_plus n \<ge> 0\<close>
+    by (simp add: \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> pos_part_def)
+  moreover have \<open>\<exists> K. \<forall> n::nat. (sum a_plus  {0..n}) \<le> K\<close>
+    using \<open>\<And> x. a_plus x \<le> \<bar>a x\<bar>\<close> \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
+    by (metis (full_types) order.trans ordered_comm_monoid_add_class.sum_mono)      
+  ultimately have \<open>Cauchy (\<lambda> n. sum a_plus  {0..n})\<close>
+    using sum_Cauchy_positive by blast
+  have \<open>a_minus x \<le> \<bar>a x\<bar>\<close>
+    for x
+    unfolding a_minus_def
+    by (simp add: neg_part_def)
+  have \<open>\<And> n. a_minus n \<ge> 0\<close>
+    by (simp add: \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> neg_part_def)
+  moreover have \<open>\<exists> K. \<forall> n::nat. (sum a_minus  {0..n}) \<le> K\<close>
+    using \<open>\<And> x. a_minus x \<le> \<bar>a x\<bar>\<close> \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
+    by (metis (full_types) order.trans ordered_comm_monoid_add_class.sum_mono)      
+  ultimately have \<open>Cauchy (\<lambda> n. sum a_minus  {0..n})\<close>
+    using sum_Cauchy_positive by blast
+  show ?thesis
+  proof-
+    have \<open>convergent (\<lambda> n. sum a_plus  {0..n})\<close>
+      using \<open>Cauchy (\<lambda> n. sum a_plus  {0..n})\<close>
+        Cauchy_convergent_iff by blast
+    moreover have  \<open>convergent (\<lambda> n. sum a_minus  {0..n})\<close>
+      using \<open>Cauchy (\<lambda> n. sum a_minus  {0..n})\<close>
+        Cauchy_convergent_iff by blast
+    ultimately have \<open>convergent 
+      (\<lambda> m. (\<lambda> n. sum a_plus {0..n}) m - (\<lambda> n. sum a_minus {0..n}) m)\<close>
+      using convergent_diff by blast
+    hence \<open>convergent (\<lambda> n. sum a_plus {0..n} - sum a_minus {0..n})\<close>
+      by blast
+    have \<open>convergent (\<lambda> n. sum (\<lambda> x. a_plus x - a_minus x) {0..n})\<close>
+    proof-
+      have \<open>sum a_plus {0..n} - sum a_minus {0..n} = sum (\<lambda> x. a_plus x - a_minus x) {0..n}\<close>
+        for n
+        by (simp add: sum_subtractf)       
+      thus ?thesis using  \<open>convergent (\<lambda> n. sum a_plus {0..n} - sum a_minus {0..n})\<close>
+        by simp
+    qed
+    hence \<open>convergent (\<lambda> n. sum a {0..n})\<close>
+    proof-
+      have \<open>a_plus n - a_minus n = a n\<close>
+        for n::nat
+      proof(cases \<open>a n \<ge> 0\<close>)
+        case True
+        then show ?thesis
+          by (simp add: \<open>a = a_plus - a_minus\<close>) 
+      next
+        case False
+        then show ?thesis
+          by (simp add: \<open>a = a_plus - a_minus\<close>) 
+      qed
+      thus ?thesis using  \<open>convergent (\<lambda> n. sum (\<lambda> x. a_plus x - a_minus x) {0..n})\<close>
+        by auto
+    qed
+    thus ?thesis
+      using Cauchy_convergent_iff by blast       
+  qed
+qed
+
+(* NEW *)
 lemma convergent_series_Cauchy:
   fixes a \<phi>::\<open>nat \<Rightarrow> real\<close>
-  assumes \<open>\<And> n. a n \<ge> 0\<close> 
-    and \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
+  assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
     and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
-proof-
-  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (\<phi> m) (\<phi> n) < e\<close>
-    for e
-  proof-
-    assume \<open>e > 0\<close>
-    from  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
-    obtain M where  \<open>\<forall> n. (sum a ` {0..n}) \<le> M\<close>
-      by blast
+  sorry
 
-    show ?thesis sorry
-  qed
-  thus ?thesis 
-    unfolding Cauchy_def
-    by blast
-qed
 
 (* NEW *)
 lemma geometric_Cauchy:
