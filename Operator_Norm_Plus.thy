@@ -985,7 +985,6 @@ next
     using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
 qed
 
-
 (* NEW *)
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>nat \<Rightarrow> real\<close> and e::real
@@ -1011,10 +1010,115 @@ proof-
       for k::nat
     proof(induction k)
       case 0
-      then show ?case  sorry 
+      from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+      obtain m n where \<open>m \<ge> 0\<close> and \<open>n \<ge> 0\<close> and \<open>m > n\<close>
+        and \<open>sum a {Suc n..m} \<ge> e\<close>
+        by blast
+      from \<open>sum a {Suc n..m} \<ge> e\<close>
+      have \<open>sum a {Suc n..m} > 0\<close>
+        using \<open>e > 0\<close>
+        by linarith
+      moreover have \<open>sum a {0..n} \<ge> 0\<close>
+        by (simp add: assms(1) sum_nonneg)
+      moreover have \<open>sum a {0..n} + sum a {Suc n..m} = sum a {0..m}\<close>
+      proof-
+        have \<open>finite {0..n}\<close>
+          by simp
+        moreover have \<open>finite {Suc n..m}\<close>
+          by simp
+        moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+        proof-
+          have \<open>n < Suc n\<close>
+            by simp
+          thus ?thesis using Set_Interval.ivl_disj_un(7)
+            using \<open>n < m\<close> by auto
+        qed
+        moreover have \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+          by simp
+        ultimately show ?thesis
+          by (metis sum.union_disjoint) 
+      qed
+      ultimately have \<open>sum a {0..m} > 0\<close>
+        by linarith
+      moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+        unfolding S_def
+        by blast
+      ultimately have \<open>\<exists> s \<in> S. 0 \<le> s\<close>
+        using ereal_less_eq(5) by fastforce    
+      thus ?case
+        by (simp add: zero_ereal_def)  
     next
       case (Suc k)
-      then show ?case sorry
+      assume \<open>\<exists>s\<in>S. ereal (real k * e) \<le> s\<close>
+      then obtain s where \<open>s \<in> S\<close> 
+        and \<open> ereal (real k * e) \<le> s\<close>
+        by blast
+      have \<open>\<exists> N. s = ereal (sum a {0..N})\<close>
+        using \<open>s \<in> S\<close>
+        unfolding S_def by blast
+      then obtain N where \<open>s = ereal (sum a {0..N})\<close>
+        by blast
+      from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+      obtain m n where \<open>m \<ge> Suc N\<close> and \<open>n \<ge> Suc N\<close> and \<open>m > n\<close>
+        and \<open>sum a {Suc n..m} \<ge> e\<close>
+        by blast
+      have \<open>sum a {Suc N..m} \<ge> e\<close>
+      proof-
+        have \<open>sum a {Suc N..m} = sum a {Suc N..n} + sum a {Suc n..m}\<close>
+        proof-
+          have \<open>finite {Suc N..n}\<close>
+            by simp
+          moreover have \<open>finite {Suc n..m}\<close>
+            by simp
+          moreover have \<open>{Suc N..n} \<union> {Suc n..m} = {Suc N..m}\<close>
+            using Set_Interval.ivl_disj_un
+            by (smt \<open>Suc N \<le> n\<close> \<open>n < m\<close> atLeastSucAtMost_greaterThanAtMost less_imp_le_nat)
+          moreover have \<open>{} = {Suc N..n} \<inter> {Suc n..m}\<close>
+            by simp
+          ultimately show ?thesis 
+            by (metis sum.union_disjoint)
+        qed
+        moreover have \<open>sum a {Suc N..n} \<ge> 0\<close>
+          using  \<open>\<And> n. a n \<ge> 0\<close>
+          by (simp add: sum_nonneg) 
+        ultimately show ?thesis
+          using \<open>e \<le> sum a {Suc n..m}\<close> by linarith 
+      qed
+      moreover have \<open>sum a {0..N} + sum a {Suc N..m} =  sum a {0..m}\<close>
+      proof-
+        have \<open>finite {0..N}\<close>
+          by simp
+        have \<open>finite {Suc N..m}\<close>
+          by simp
+        moreover have \<open>{0..N} \<union> {Suc N..m} = {0..m}\<close>
+        proof-
+          have \<open>N < Suc N\<close>
+            by simp
+          thus ?thesis using Set_Interval.ivl_disj_un(7)
+              \<open>Suc N \<le> m\<close> by auto            
+        qed          
+        moreover have \<open>{0..N} \<inter> {Suc N..m} = {}\<close>
+          by simp
+        ultimately show ?thesis 
+          by (metis \<open>finite {0..N}\<close> sum.union_disjoint)
+      qed
+      ultimately have \<open>e + k * e \<le> sum a {0..m}\<close>
+        using \<open>ereal (real k * e) \<le> s\<close> \<open>s = ereal (sum a {0..N})\<close> by auto
+      moreover have \<open>e + k * e = (Suc k) * e\<close>
+      proof-
+        have \<open>e + k * e = (1 + k) * e\<close>
+          by (simp add: semiring_normalization_rules(3))
+        thus ?thesis by simp
+      qed
+      ultimately have \<open>(Suc k) * e \<le> sum a {0..m}\<close>
+        by linarith
+      hence \<open>ereal ((Suc k) * e) \<le> ereal (sum a {0..m})\<close>
+        by auto
+      moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+        unfolding S_def
+        by blast
+      ultimately show ?case
+        by blast
     qed
     hence  \<open>\<exists> s \<in> S.  (real n) \<le> s\<close>
       for n::nat
