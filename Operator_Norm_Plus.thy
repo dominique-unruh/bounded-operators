@@ -29,11 +29,10 @@ References:
 *)
 
 theory Operator_Norm_Plus
-  imports Complex_L2
+  imports 
+    "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
-    "HOL-Library.Adhoc_Overloading"
-    "HOL-Analysis.Abstract_Topology" 
-    Extended_Sorry
+    "HOL-ex.Sketch_and_Explore"
 begin
 
 section \<open>Sets defined using the norms\<close>
@@ -143,7 +142,7 @@ next
               have \<open>yy n = (1 - (inverse (real (Suc n)))) *\<^sub>R norm (f x)\<close>
                 using yy_def \<open>y = norm (f x)\<close> by blast
               also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R norm (f x)\<close>
-                by (simp add: nice_ordered_field_class.inverse_le_imp_le )
+                by (metis (mono_tags, hide_lams) \<open>y = norm (f x)\<close> abs_1 abs_le_self_iff abs_of_nat abs_of_nonneg add_diff_cancel_left' add_eq_if cancel_comm_monoid_add_class.diff_cancel diff_ge_0_iff_ge eq_iff_diff_eq_0 inverse_1 inverse_le_iff_le nat.distinct(1) of_nat_0  of_nat_Suc of_nat_le_0_iff zero_less_abs_iff zero_neq_one)
               also have \<open>... = norm ( (1 - (inverse (real (Suc n)))) *\<^sub>R (f x))\<close>
                 by simp
               also have \<open>... = norm (f ((1 - (inverse (real (Suc n)))) *\<^sub>R  x))\<close>
@@ -267,7 +266,7 @@ next
           by (simp add: cSup_upper)
         moreover have \<open>y \<le> (1/norm x) * y\<close> 
           using \<open>norm x < 1\<close>
-          by (metis \<open>y = norm (f x)\<close> assms less_eq_real_def linear_simps(3) mult_less_cancel_right2 nice_ordered_field_class.divide_less_eq_1_pos norm_eq_zero norm_ge_zero not_le) 
+          by (smt \<open>y = norm (f x)\<close> assms divide_less_eq_1_pos linear_simps(3) mult_less_cancel_right2 norm_ge_zero norm_le_zero_iff)
         thus ?thesis
           using calculation by linarith 
       qed
@@ -443,7 +442,7 @@ proof-
   proof
     show "\<forall>x\<noteq>0. norm (f x) / norm x \<le> K"
       if "\<forall>x\<noteq>0. norm (f x) \<le> norm x * K"
-      by (smt nice_ordered_field_class.mult_imp_div_pos_le nice_ordered_field_class.mult_imp_less_div_pos nonzero_mult_div_cancel_left norm_le_zero_iff that)       
+      by (smt divide_le_eq nonzero_mult_div_cancel_left norm_le_zero_iff that)
     show "\<forall>x\<noteq>0. norm (f x) \<le> norm x * K"
       if "\<forall>x\<noteq>0. norm (f x) / norm x \<le> K"
       by (smt divide_le_cancel nonzero_mult_div_cancel_left norm_le_zero_iff that)
@@ -951,6 +950,177 @@ proof-
     using calculation(1) calculation(2) by auto 
 qed
 
+(* NEW *)
+fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
+  "rec x0 \<Phi> 0 = x0" 
+|  "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
+
+(* NEW *)
+lemma sum_mono:
+  fixes a :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. a n \<ge> 0\<close>
+  shows  \<open>p \<ge> 0 \<Longrightarrow> \<forall> n. sum a {0..n + p} \<ge> sum a {0..n}\<close>
+proof(induction p)
+  case 0
+  then show ?case
+    by simp 
+next
+  case (Suc p)
+  then show ?case
+    by (smt Suc_neq_Zero add_Suc_right assms le_SucE sum.atLeast0_atMost_Suc) 
+qed
+
+(* NEW *)
+lemma sum_comp:
+  fixes a :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>p \<ge> 0\<close>
+  shows  \<open>\<forall> n. sum a {Suc n..n + p} = sum a {0.. n + p} - sum a {0..n}\<close>
+proof(induction p)
+  case 0
+  then show ?case 
+    by simp
+next
+  case (Suc p)
+  then show ?case 
+    using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
+qed
+
+
+(* NEW *)
+lemma non_Cauchy_unbounded:
+  fixes a ::\<open>nat \<Rightarrow> real\<close> and e::real
+  assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> and
+    \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+  shows \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+proof-
+  have \<open>incseq (\<lambda> n. (sum a  {..<n}))\<close>
+    using \<open>\<And> n. a n \<ge> 0\<close> using Extended_Real.incseq_sumI 
+    by auto
+  hence \<open>incseq (\<lambda> n. (sum a  {..< Suc n}))\<close>
+    by (meson incseq_Suc_iff)
+  hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>
+    by (metis (mono_tags, lifting) Operator_Norm_Plus.sum_mono assms(1) incseq_def le_add_same_cancel1 le_iff_add)
+  hence \<open>incseq (\<lambda> n. (sum a  {0..n})::ereal)\<close>
+    using incseq_ereal by blast
+  hence \<open>(\<lambda> n. (sum a  {0..n})::ereal) \<longlonglongrightarrow> Sup (range (\<lambda> n. (sum a  {0..n})::ereal))\<close>
+    using LIMSEQ_SUP by auto
+  moreover have \<open>Sup ((range (\<lambda> n. (sum a  {0..n})))::ereal set) = \<infinity>\<close>
+  proof-
+    define S where \<open>S = ((range (\<lambda> n. (sum a  {0..n})))::ereal set)\<close>
+    have \<open>\<exists> s \<in> S.  k*e \<le> s\<close>
+      for k::nat
+    proof(induction k)
+      case 0
+      then show ?case  sorry 
+    next
+      case (Suc k)
+      then show ?case sorry
+    qed
+    hence  \<open>\<exists> s \<in> S.  (real n) \<le> s\<close>
+      for n::nat
+      by (meson assms(2) ereal_le_le ex_less_of_nat_mult less_le_not_le)
+    hence  \<open>Sup S = \<infinity>\<close>
+      using Sup_le_iff Sup_subset_mono dual_order.strict_trans1 leD less_PInf_Ex_of_nat subsetI 
+      by metis
+    thus ?thesis using S_def 
+      by blast
+  qed
+  ultimately show ?thesis 
+    using PInfty_neq_ereal by auto 
+qed
+
+(* NEW *)
+lemma sum_Cauchy:
+  fixes a ::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. a n \<ge> 0\<close> 
+    and \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+  shows \<open>Cauchy (\<lambda> n. (sum a  {0..n}))\<close>
+proof-
+  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    for e
+  proof-
+    assume \<open>e>0\<close>       
+    have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+    proof(rule classical)
+      assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
+      hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
+        by blast
+      hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+        by fastforce
+      hence \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+        using non_Cauchy_unbounded \<open>0 < e\<close> assms(1) by blast
+      from  \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+      obtain K where  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+        by blast
+      from  \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+      have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> ereal B\<close>
+        using Lim_PInfty by simp
+      hence  \<open>\<exists> n::nat. (sum a  {0..n}) \<ge> K+1\<close>
+        using ereal_less_eq(3) by blast        
+      thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
+    qed
+    have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+    proof-        
+      have \<open>m > n \<Longrightarrow> sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
+        for m n
+        using sum_comp 
+        by (metis less_imp_add_positive less_imp_le_nat)
+      thus ?thesis using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> 
+        by smt 
+    qed
+    have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    proof-
+      from \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+      obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+        by blast
+      moreover have \<open>m > n \<Longrightarrow> sum a {0..m} \<ge> sum a {0..n}\<close>
+        for m n
+        using \<open>\<And> n. a n \<ge> 0\<close> sum_mono 
+        by (metis less_imp_add_positive less_imp_le_nat)
+      ultimately show ?thesis 
+        by auto
+    qed
+    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m \<ge> n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+      by (metis \<open>0 < e\<close> abs_zero cancel_comm_monoid_add_class.diff_cancel diff_is_0_eq' less_irrefl_nat linorder_neqE_nat zero_less_diff)      
+    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+      by (metis abs_minus_commute nat_le_linear)
+    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+      by (simp add: dist_real_def)      
+    thus ?thesis by blast
+  qed
+  thus ?thesis
+    using Cauchy_altdef2 le_refl by fastforce 
+qed
+
+(* NEW *)
+lemma convergent_series_Cauchy:
+  fixes a \<phi>::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. a n \<ge> 0\<close> 
+    and \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
+    and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+  shows \<open>Cauchy \<phi>\<close>
+proof-
+  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (\<phi> m) (\<phi> n) < e\<close>
+    for e
+  proof-
+    assume \<open>e > 0\<close>
+    from  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
+    obtain M where  \<open>\<forall> n. (sum a ` {0..n}) \<le> M\<close>
+      by blast
+
+    show ?thesis sorry
+  qed
+  thus ?thesis 
+    unfolding Cauchy_def
+    by blast
+qed
+
+(* NEW *)
+lemma geometric_Cauchy:
+  fixes x::real and \<phi>::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<bar>x\<bar> < 1\<close> and \<open>dist (\<phi> (Suc n)) (\<phi> n) \<le> x^(Suc n)\<close>
+  shows \<open>Cauchy \<phi>\<close>
+  sorry
 
 (* NEW *)
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
@@ -1049,7 +1219,7 @@ proof(rule classical)
       by (metis mult.commute vector_space_over_itself.scale_scale)
     thus ?thesis by auto
   qed
-  hence \<open>\<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) *  (1/3)^n * onorm (g n)\<close>
+  hence \<open>\<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) * (1/3)^n * onorm (g n)\<close>
     for n and x
   proof-
     have \<open>((1/3)::real)^n > 0\<close>
@@ -1060,67 +1230,44 @@ proof(rule classical)
     ultimately show ?thesis using  \<open>\<And> n. bounded_linear (g n)\<close>
       using \<open>\<And>x r h. \<lbrakk>bounded_linear h; 0 < onorm h; 0 < r\<rbrakk> \<Longrightarrow> \<exists>y. dist y x < r \<and> 2 / 3 * r * onorm h < norm (h y)\<close> by auto
   qed
-    
-
-  show ?thesis sorry
+  hence \<open>\<forall> n. \<forall> x. \<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) * (1/3)^n * onorm (g n)\<close>
+    by blast
+  hence \<open>\<exists> \<Phi>. \<forall> n. \<forall> x. dist (\<Phi> n x) x < (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+    by metis
+  then obtain \<Phi>
+    where \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
+       (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+    by blast
+  define \<phi>::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<phi> n = rec 0 \<Phi> n\<close>
+    for n
+  have \<open>\<phi> 0 = 0\<close>
+    using \<phi>_def by simp
+  have \<open>\<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>
+    for n
+    using \<phi>_def by simp
+  have \<open>Cauchy \<phi>\<close>
+    sorry
+  hence \<open>\<exists> l. \<phi> \<longlonglongrightarrow> l\<close>
+    by (simp add: convergent_eq_Cauchy)
+  then obtain l where \<open>\<phi> \<longlonglongrightarrow> l\<close>
+    by blast
+  obtain M where \<open>\<forall> n.  norm ((f n) l) \<le> M\<close>
+    using \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+    by blast
+  have \<open>(\<lambda> n. norm ((g n) l)) \<longlonglongrightarrow> \<infinity>\<close>    
+    sorry
+  hence \<open>(\<lambda> n. norm ((f (k\<^sub>f n)) l)) \<longlonglongrightarrow> \<infinity>\<close>    
+    using g_def by simp
+  hence \<open>\<exists> N. norm ((f (k\<^sub>f N)) l) > M\<close>
+    using Lim_bounded_PInfty2 \<open>\<forall>n. norm (f n l) \<le> M\<close> ereal_less_eq(3) by blast 
+  then obtain N where \<open>norm ((f (k\<^sub>f N)) l) > M\<close>
+    by blast
+  have \<open>norm ((f (k\<^sub>f N)) l) \<le> M\<close>
+    by (simp add: \<open>\<forall>n. norm (f n l) \<le> M\<close>)
+  show ?thesis using  \<open>norm ((f (k\<^sub>f N)) l) > M\<close>  \<open>norm ((f (k\<^sub>f N)) l) \<le> M\<close>
+    by linarith
 qed
 
-section \<open>The onorm and the complex scalar product\<close>
-
-(* NEW *)
-lemma onorm_scalarC:
-  fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
-  assumes \<open>bounded_clinear f\<close>
-  shows  \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (cmod r) * onorm f\<close>
-proof-
-  have \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. norm ( (\<lambda> t. r *\<^sub>C (f t)) x) / norm x)\<close>
-    by (simp add: onorm_def)
-  hence \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. (cmod r) * (norm (f x)) / norm x)\<close>
-    by simp
-  also have \<open>... = (cmod r) * (SUP x. (norm (f x)) / norm x)\<close>
-  proof-
-    have \<open>{(norm (f x)) / norm x | x. True} \<noteq> {}\<close>
-      by blast      
-    moreover have \<open>bdd_above {(norm (f x)) / norm x | x. True}\<close>
-    proof-
-      have \<open>(norm (f x)) / norm x \<le> onorm f\<close>
-        for x
-        using \<open>bounded_clinear f\<close>
-        by (simp add: bounded_clinear.bounded_linear le_onorm)        
-      thus ?thesis
-        by fastforce 
-    qed
-    moreover have \<open>mono ((*) (cmod r))\<close>
-      by (simp add: monoI ordered_comm_semiring_class.comm_mult_left_mono)      
-    moreover have \<open>continuous (at_left (Sup {(norm (f x)) / norm x | x. True})) ((*) (cmod r))\<close>
-    proof-
-      have \<open>continuous_on UNIV ( (*) w ) \<close>
-        for w::real
-        by simp
-      hence \<open>isCont ( ((*) (cmod r)) ) x\<close>
-        for x
-        by simp    
-      thus ?thesis using Elementary_Topology.continuous_at_imp_continuous_within
-        by blast  
-    qed
-    ultimately have \<open>Sup {((*) (cmod r)) ((norm (f x)) / norm x) | x. True}
-         = ((*) (cmod r)) (Sup {(norm (f x)) / norm x | x. True})\<close>
-      by (simp add: continuous_at_Sup_mono full_SetCompr_eq image_image)      
-    hence  \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
-         = (cmod r) * (Sup {(norm (f x)) / norm x | x. True})\<close>
-      by blast
-    moreover have \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
-                = (SUP x. cmod r * norm (f x) / norm x)\<close>
-      by (simp add: full_SetCompr_eq)            
-    moreover have \<open>(Sup {(norm (f x)) / norm x | x. True})
-                = (SUP x. norm (f x) / norm x)\<close>
-      by (simp add: full_SetCompr_eq)      
-    ultimately show ?thesis
-      by simp 
-  qed
-  finally show ?thesis
-    by (simp add: onorm_def) 
-qed
 
 end
 

@@ -32,6 +32,63 @@ instantiation complex :: "chilbert_space" begin
 instance ..
 end
 
+section \<open>The onorm and the complex scalar product\<close>
+
+(* NEW *)
+lemma onorm_scalarC:
+  fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
+  assumes \<open>bounded_clinear f\<close>
+  shows  \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (cmod r) * onorm f\<close>
+proof-
+  have \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. norm ( (\<lambda> t. r *\<^sub>C (f t)) x) / norm x)\<close>
+    by (simp add: onorm_def)
+  hence \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. (cmod r) * (norm (f x)) / norm x)\<close>
+    by simp
+  also have \<open>... = (cmod r) * (SUP x. (norm (f x)) / norm x)\<close>
+  proof-
+    have \<open>{(norm (f x)) / norm x | x. True} \<noteq> {}\<close>
+      by blast      
+    moreover have \<open>bdd_above {(norm (f x)) / norm x | x. True}\<close>
+    proof-
+      have \<open>(norm (f x)) / norm x \<le> onorm f\<close>
+        for x
+        using \<open>bounded_clinear f\<close>
+        by (simp add: bounded_clinear.bounded_linear le_onorm)        
+      thus ?thesis
+        by fastforce 
+    qed
+    moreover have \<open>mono ((*) (cmod r))\<close>
+      by (simp add: monoI ordered_comm_semiring_class.comm_mult_left_mono)      
+    moreover have \<open>continuous (at_left (Sup {(norm (f x)) / norm x | x. True})) ((*) (cmod r))\<close>
+    proof-
+      have \<open>continuous_on UNIV ( (*) w ) \<close>
+        for w::real
+        by simp
+      hence \<open>isCont ( ((*) (cmod r)) ) x\<close>
+        for x
+        by simp    
+      thus ?thesis using Elementary_Topology.continuous_at_imp_continuous_within
+        by blast  
+    qed
+    ultimately have \<open>Sup {((*) (cmod r)) ((norm (f x)) / norm x) | x. True}
+         = ((*) (cmod r)) (Sup {(norm (f x)) / norm x | x. True})\<close>
+      by (simp add: continuous_at_Sup_mono full_SetCompr_eq image_image)      
+    hence  \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
+         = (cmod r) * (Sup {(norm (f x)) / norm x | x. True})\<close>
+      by blast
+    moreover have \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
+                = (SUP x. cmod r * norm (f x) / norm x)\<close>
+      by (simp add: full_SetCompr_eq)            
+    moreover have \<open>(Sup {(norm (f x)) / norm x | x. True})
+                = (SUP x. norm (f x) / norm x)\<close>
+      by (simp add: full_SetCompr_eq)      
+    ultimately show ?thesis
+      by simp 
+  qed
+  finally show ?thesis
+    by (simp add: onorm_def) 
+qed
+
 
 subsection \<open>Riesz Representation\<close>
 
