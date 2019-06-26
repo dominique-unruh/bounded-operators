@@ -1293,61 +1293,100 @@ proof-
   qed
 qed
 
+
 (* NEW *)
 lemma convergent_series_Cauchy:
-  fixes a \<phi>::\<open>nat \<Rightarrow> real\<close>
+  fixes a :: \<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
     and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
 proof-
-  have \<open>\<phi> (Suc n) - \<phi> 0 = sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n}\<close>
-    for n
-  proof(induction n)
-    case 0
-    then show ?case
-      by simp 
-  next
-    case (Suc n)
-    then show ?case
-      by simp 
-  qed
-  have \<open>Cauchy (\<lambda> n. sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n})\<close>
+  have \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (\<phi> m) (\<phi> n) < e\<close>
+    for e
   proof-
-    from  \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
-    have  \<open>\<And> n.  \<bar>\<phi> (Suc n) - \<phi> n\<bar> \<le> a n\<close>
-      by (simp add: dist_real_def)
-    have \<open>(sum (\<lambda> k. \<bar>\<phi> (Suc k) - \<phi> k\<bar>)) {0..n} \<le> (sum a {0..n})\<close>
-      for n
-      by (simp add: \<open>\<And>n. \<bar>\<phi> (Suc n) - \<phi> n\<bar> \<le> a n\<close> ordered_comm_monoid_add_class.sum_mono)
-    hence \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> k. \<bar>\<phi> (Suc k) - \<phi> k\<bar>)) {0..n} \<le> K\<close>
-      using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
-        order.trans by blast
-    hence \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>(\<lambda> k.  \<phi> (Suc k) - \<phi> k ) x\<bar>)  {0..n}) \<le> K\<close>
-      by simp
-    thus ?thesis
-      by (simp add: sum_Cauchy) 
+    assume \<open>e > 0\<close>
+    have \<open>dist (\<phi> (n+p+1)) (\<phi> n) \<le> sum a {n..n+p}\<close>
+      for p n :: nat
+    proof(induction p)
+      case 0
+      then show ?case
+        by (simp add: assms(2))
+    next
+      case (Suc p)
+      then show ?case
+        by (smt Suc_eq_plus1 add_Suc_right assms(2) dist_self dist_triangle2 le_add1 sum.nat_ivl_Suc') 
+    qed
+    hence \<open>m > n \<Longrightarrow> dist (\<phi> m) (\<phi> n) \<le> sum a {n..m-1}\<close>
+      for m n :: nat
+      by (metis Suc_eq_plus1 Suc_le_D diff_Suc_1  gr0_implies_Suc less_eq_Suc_le less_imp_Suc_add zero_less_Suc)
+    moreover have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {n..m-1} < e\<close>
+    proof-
+      have  \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+      proof-
+      have \<open>\<And> k. a k \<ge> 0\<close>
+        using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+          dual_order.trans zero_le_dist by blast
+      hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
+        using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
+          sum_Cauchy_positive by blast
+      hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+        unfolding Cauchy_def
+        using \<open>e > 0\<close>
+        by blast
+      hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+        by blast
+      have \<open>m > n \<Longrightarrow> dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close>
+        for m n
+      proof-
+        assume \<open>m > n\<close>
+        have \<open>dist (sum a {0..m}) (sum a {0..n}) 
+            = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
+          using dist_real_def by blast
+        moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
+        proof-
+          have  \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
+          proof-
+            have \<open>finite {0..n}\<close>
+              by simp
+            moreover have \<open>finite {Suc n..m}\<close>
+              by simp
+            moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+            proof-
+              have \<open>n < Suc n\<close>
+                by simp
+              thus ?thesis using  \<open>n < m\<close> by auto
+            qed
+            moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+              by simp
+            ultimately show ?thesis
+              by (metis sum.union_disjoint)
+          qed
+          thus ?thesis
+            by linarith 
+        qed
+        ultimately show ?thesis
+          by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg) 
+      qed
+      thus ?thesis
+        by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
+      qed  
+      show ?thesis 
+      proof-
+        obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+          using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. n < m \<longrightarrow> sum a {Suc n..m} < e\<close> by blast
+        hence  \<open>\<forall>m. \<forall>n. Suc m \<ge> Suc M \<and> Suc n \<ge> Suc M \<and> Suc m > Suc n \<longrightarrow> sum a {Suc n..Suc m - 1} < e\<close>
+          by simp
+        hence  \<open>\<forall>m\<ge>1. \<forall>n\<ge>1. m \<ge> Suc M \<and> n \<ge> Suc M \<and> m > n \<longrightarrow> sum a {n..m - 1} < e\<close>
+          by (metis Suc_le_D)
+        thus ?thesis 
+          by (meson add_leE)
+      qed
+    qed
+    ultimately show ?thesis using \<open>e > 0\<close> by smt
   qed
-  hence \<open>Cauchy (\<lambda> n. \<phi> (Suc n) - \<phi> 0)\<close>
-    using  \<open>\<And> n. \<phi> (Suc n) - \<phi> 0 = sum (\<lambda> k.  \<phi> (Suc k) - \<phi> k ) {0..n}\<close>
-    by simp
-  hence \<open>convergent (\<lambda> n. \<phi> (Suc n) - \<phi> 0)\<close>
-    by (simp add: real_Cauchy_convergent)
-  hence \<open>convergent (\<lambda> n. \<phi> (Suc n))\<close>
-    using convergent_diff_const_right_iff by auto
-  hence \<open>convergent \<phi>\<close>
-    using convergent_Suc_iff by auto
   thus ?thesis
-    using Cauchy_convergent_iff 
-    by auto 
+    using Cauchy_altdef2 by fastforce 
 qed
-
-
-(* NEW *)
-lemma geometric_Cauchy:
-  fixes x::real and \<phi>::\<open>nat \<Rightarrow> real\<close>
-  assumes \<open>\<bar>x\<bar> < 1\<close> and \<open>dist (\<phi> (Suc n)) (\<phi> n) \<le> x^(Suc n)\<close>
-  shows \<open>Cauchy \<phi>\<close>
-  sorry
 
 (* NEW *)
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
@@ -1403,6 +1442,7 @@ proof(rule classical)
       hence \<open>{y | y. dist y x < r} \<noteq> {}\<close>
         by simp
       hence \<open>(\<lambda> y. norm ((g n) y)) ` {y | y. dist y x < r} \<noteq> {}\<close>
+        for n
         by blast
       thus ?thesis by blast
     qed
@@ -1472,8 +1512,19 @@ proof(rule classical)
   have \<open>\<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>
     for n
     using \<phi>_def by simp
+  from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
+       (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+  have \<open>dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
+    for n
+    using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close> by auto
   have \<open>Cauchy \<phi>\<close>
-    sorry
+  proof-
+    have \<open>\<exists> M. \<forall> n. (sum (\<lambda> k.(1/3)^k) {0..n}) \<le> M\<close>
+      sorry
+    thus ?thesis
+      using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
+      by smt
+  qed
   hence \<open>\<exists> l. \<phi> \<longlonglongrightarrow> l\<close>
     by (simp add: convergent_eq_Cauchy)
   then obtain l where \<open>\<phi> \<longlonglongrightarrow> l\<close>
