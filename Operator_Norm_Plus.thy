@@ -1293,7 +1293,6 @@ proof-
   qed
 qed
 
-
 (* NEW *)
 lemma convergent_series_Cauchy:
   fixes a :: \<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
@@ -1323,52 +1322,52 @@ proof-
     proof-
       have  \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
       proof-
-      have \<open>\<And> k. a k \<ge> 0\<close>
-        using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
-          dual_order.trans zero_le_dist by blast
-      hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
-        using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
-          sum_Cauchy_positive by blast
-      hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
-        unfolding Cauchy_def
-        using \<open>e > 0\<close>
-        by blast
-      hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
-        by blast
-      have \<open>m > n \<Longrightarrow> dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close>
-        for m n
-      proof-
-        assume \<open>m > n\<close>
-        have \<open>dist (sum a {0..m}) (sum a {0..n}) 
-            = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
-          using dist_real_def by blast
-        moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
+        have \<open>\<And> k. a k \<ge> 0\<close>
+          using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+            dual_order.trans zero_le_dist by blast
+        hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
+          using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
+            sum_Cauchy_positive by blast
+        hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+          unfolding Cauchy_def
+          using \<open>e > 0\<close>
+          by blast
+        hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+          by blast
+        have \<open>m > n \<Longrightarrow> dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close>
+          for m n
         proof-
-          have  \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
+          assume \<open>m > n\<close>
+          have \<open>dist (sum a {0..m}) (sum a {0..n}) 
+            = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
+            using dist_real_def by blast
+          moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
           proof-
-            have \<open>finite {0..n}\<close>
-              by simp
-            moreover have \<open>finite {Suc n..m}\<close>
-              by simp
-            moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+            have  \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
             proof-
-              have \<open>n < Suc n\<close>
+              have \<open>finite {0..n}\<close>
                 by simp
-              thus ?thesis using  \<open>n < m\<close> by auto
+              moreover have \<open>finite {Suc n..m}\<close>
+                by simp
+              moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+              proof-
+                have \<open>n < Suc n\<close>
+                  by simp
+                thus ?thesis using  \<open>n < m\<close> by auto
+              qed
+              moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+                by simp
+              ultimately show ?thesis
+                by (metis sum.union_disjoint)
             qed
-            moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
-              by simp
-            ultimately show ?thesis
-              by (metis sum.union_disjoint)
+            thus ?thesis
+              by linarith 
           qed
-          thus ?thesis
-            by linarith 
+          ultimately show ?thesis
+            by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg) 
         qed
-        ultimately show ?thesis
-          by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg) 
-      qed
-      thus ?thesis
-        by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
+        thus ?thesis
+          by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
       qed  
       show ?thesis 
       proof-
@@ -1387,6 +1386,7 @@ proof-
   thus ?thesis
     using Cauchy_altdef2 by fastforce 
 qed
+
 
 (* NEW *)
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
@@ -1519,9 +1519,81 @@ proof(rule classical)
     using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close> by auto
   have \<open>Cauchy \<phi>\<close>
   proof-
-    have \<open>\<exists> M. \<forall> n. (sum (\<lambda> k.(1/3)^k) {0..n}) \<le> M\<close>
-      sorry
+    have \<open>norm ((1/3)::real) < 1\<close>
+      by simp      
+    hence \<open>summable (\<lambda> k. ((1/3)::real)^k)\<close>
+    using Series.summable_geometric_iff 
+    by fastforce
+  hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
+    unfolding summable_def sums_def by blast
+  hence \<open>\<exists>s. (\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
+  proof-
+    obtain s where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
+      using  \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close> by blast
+    hence  \<open>(\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
+      by (rule LIMSEQ_Suc) 
+    thus ?thesis by blast 
+  qed
+  hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..n}) \<longlonglongrightarrow> s\<close>
+    using \<open>summable (\<lambda> k::nat. ((1/3)::real)^k)\<close> summable_LIMSEQ' by blast 
+  hence \<open>\<exists>s::real. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+    unfolding atLeastAtMost_def 
+    by auto
+  then obtain s::real where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+    by blast
+  from  \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+  have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < e\<close>
+    for e::real
+    by (meson LIMSEQ_iff_nz)
+  moreover have \<open>(1::real) > 0\<close>
+    by auto
+  ultimately have \<open>\<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
+    by auto
+  then obtain N where \<open>\<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
+    by blast
+  hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) - s \<bar> < (1::real)\<close>
+    by (simp add: dist_real_def)
+  hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) \<bar> < \<bar>s\<bar> + (1::real)\<close>
+    by auto
+  hence \<open>\<forall> m \<ge> N. ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) < \<bar>s\<bar> + (1::real)\<close>
+    by auto
+  hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) < \<bar>s\<bar> + (1::real)\<close>
+    by auto
+  hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> \<bar>s\<bar> + (1::real)\<close>
+    by auto
+  moreover have \<open>\<forall> n < N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
+  proof-
+    have  \<open>\<forall> n. f n \<ge> 0 \<Longrightarrow> \<forall> n < N. sum f {0..n} \<le> sum f {0..N}\<close>
+      for f :: \<open>nat \<Rightarrow> real\<close> and N::nat
+    proof(induction N)
+      case 0
+      then show ?case
+        by simp 
+    next
+      case (Suc N)
+      assume \<open>\<forall> n. f n \<ge> 0\<close>
+      moreover assume \<open>\<forall>n. 0 \<le> f n \<Longrightarrow> \<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
+      ultimately have \<open>\<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
+        by blast
+      moreover have  \<open>sum f {0..N} \<le> sum f {0..Suc N}\<close>
+      proof-
+        have \<open>sum f {0..Suc N} = sum f {0..N} + f (Suc N)\<close>
+          using sum.atLeast0_atMost_Suc by blast          
+        thus ?thesis
+          by (simp add: Suc.prems) 
+      qed
+      ultimately show ?case
+        by (smt less_antisym)  
+    qed
     thus ?thesis
+      by auto
+  qed
+  ultimately have \<open>\<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n})
+         \<le> max (\<bar>s\<bar> + (1::real)) (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
+    by (smt diff_is_0_eq gr_zeroI zero_less_diff)
+  hence \<open>\<exists> M. \<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> M\<close>
+    by blast
+  thus ?thesis
       using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
       by smt
   qed
