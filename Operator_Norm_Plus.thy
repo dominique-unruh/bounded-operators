@@ -1387,6 +1387,65 @@ proof-
     using Cauchy_altdef2 by fastforce 
 qed
 
+lemma LIMSEQ_realpow_inf: 
+  fixes x :: real
+  assumes \<open>x > 1\<close>
+  shows  \<open>( \<lambda> n::nat. x^n) \<longlonglongrightarrow> \<infinity>\<close>
+  using Limits.LIMSEQ_inverse_realpow_zero
+  by (metis (mono_tags, lifting) Elementary_Topology.real_arch_pow Lim_PInfty assms le_ereal_le less_eq_ereal_def less_ereal.simps(1) power_increasing_iff) 
+
+lemma LIMSEQ_scalarR: 
+  fixes x :: \<open>nat \<Rightarrow> real\<close> and c :: real
+  assumes \<open>x \<longlonglongrightarrow> \<infinity>\<close> and \<open>c > 0\<close>
+  shows  \<open>( \<lambda> n::nat. c * (x n)) \<longlonglongrightarrow> \<infinity>\<close>
+proof-
+  have \<open>M \<ge> 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. c * x n \<ge> ereal M\<close>
+    for M
+  proof-
+    assume \<open>M \<ge> 0\<close>
+    hence \<open>(1/c) * M \<ge> 0\<close>
+      using \<open>c > 0\<close>
+      by auto
+    from \<open>x \<longlonglongrightarrow> \<infinity>\<close>
+    have \<open>\<exists> N. \<forall> n\<ge>N. x n \<ge> ereal ((1/c) * M)\<close>
+      by (simp add: Lim_PInfty)
+    hence \<open>\<exists> N. \<forall> n\<ge>N. c*(x n) \<ge> ereal M\<close>
+      using \<open>c > 0\<close>
+      by (simp add: mult.commute pos_divide_le_eq)
+    thus ?thesis
+      by blast 
+  qed
+  hence \<open>\<exists> N. \<forall> n\<ge>N. c * x n \<ge> ereal M\<close>
+    for M
+  proof(cases \<open>M \<ge> 0\<close>)
+    case True
+    then show ?thesis
+      using \<open>\<And>M. 0 \<le> M \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. ereal M \<le> ereal (c * x n)\<close> by auto 
+  next
+    case False
+    then show ?thesis
+    proof -
+      have "(0::real) \<le> 0"
+        by auto
+      then obtain nn :: "real \<Rightarrow> nat" where
+        f1: "\<forall>n. \<not> nn 0 \<le> n \<or> ereal 0 \<le> ereal (c * x n)"
+        by (meson \<open>\<And>M. 0 \<le> M \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. ereal M \<le> ereal (c * x n)\<close>)
+      obtain nna :: "nat \<Rightarrow> nat" where
+        "\<forall>x0. (\<exists>v1\<ge>x0. \<not> ereal M \<le> ereal (c * x v1)) = (x0 \<le> nna x0 \<and> \<not> ereal M \<le> ereal (c * x (nna x0)))"
+        by moura
+      moreover
+      { assume "0 \<le> c * x (nna (nn 0))"
+        then have "M + - 1 * (c * x (nna (nn 0))) \<le> 0"
+          using False by linarith
+        then have "\<exists>n. \<not> n \<le> nna n \<or> ereal M \<le> ereal (c * x (nna n))"
+          by auto }
+      ultimately show ?thesis
+        using f1 ereal_less_eq(3) by blast
+    qed 
+  qed
+  thus ?thesis 
+    by (simp add: Lim_PInfty)
+qed
 
 (* NEW *)
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
@@ -1522,78 +1581,78 @@ proof(rule classical)
     have \<open>norm ((1/3)::real) < 1\<close>
       by simp      
     hence \<open>summable (\<lambda> k. ((1/3)::real)^k)\<close>
-    using Series.summable_geometric_iff 
-    by fastforce
-  hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
-    unfolding summable_def sums_def by blast
-  hence \<open>\<exists>s. (\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
-  proof-
-    obtain s where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
-      using  \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close> by blast
-    hence  \<open>(\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
-      by (rule LIMSEQ_Suc) 
-    thus ?thesis by blast 
-  qed
-  hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..n}) \<longlonglongrightarrow> s\<close>
-    using \<open>summable (\<lambda> k::nat. ((1/3)::real)^k)\<close> summable_LIMSEQ' by blast 
-  hence \<open>\<exists>s::real. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-    unfolding atLeastAtMost_def 
-    by auto
-  then obtain s::real where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-    by blast
-  from  \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-  have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < e\<close>
-    for e::real
-    by (meson LIMSEQ_iff_nz)
-  moreover have \<open>(1::real) > 0\<close>
-    by auto
-  ultimately have \<open>\<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
-    by auto
-  then obtain N where \<open>\<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
-    by blast
-  hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) - s \<bar> < (1::real)\<close>
-    by (simp add: dist_real_def)
-  hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) \<bar> < \<bar>s\<bar> + (1::real)\<close>
-    by auto
-  hence \<open>\<forall> m \<ge> N. ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) < \<bar>s\<bar> + (1::real)\<close>
-    by auto
-  hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) < \<bar>s\<bar> + (1::real)\<close>
-    by auto
-  hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> \<bar>s\<bar> + (1::real)\<close>
-    by auto
-  moreover have \<open>\<forall> n < N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
-  proof-
-    have  \<open>\<forall> n. f n \<ge> 0 \<Longrightarrow> \<forall> n < N. sum f {0..n} \<le> sum f {0..N}\<close>
-      for f :: \<open>nat \<Rightarrow> real\<close> and N::nat
-    proof(induction N)
-      case 0
-      then show ?case
-        by simp 
-    next
-      case (Suc N)
-      assume \<open>\<forall> n. f n \<ge> 0\<close>
-      moreover assume \<open>\<forall>n. 0 \<le> f n \<Longrightarrow> \<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
-      ultimately have \<open>\<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
-        by blast
-      moreover have  \<open>sum f {0..N} \<le> sum f {0..Suc N}\<close>
-      proof-
-        have \<open>sum f {0..Suc N} = sum f {0..N} + f (Suc N)\<close>
-          using sum.atLeast0_atMost_Suc by blast          
-        thus ?thesis
-          by (simp add: Suc.prems) 
-      qed
-      ultimately show ?case
-        by (smt less_antisym)  
+      using Series.summable_geometric_iff 
+      by fastforce
+    hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
+      unfolding summable_def sums_def by blast
+    hence \<open>\<exists>s. (\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
+    proof-
+      obtain s where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
+        using  \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close> by blast
+      hence  \<open>(\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
+        by (rule LIMSEQ_Suc) 
+      thus ?thesis by blast 
     qed
-    thus ?thesis
+    hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..n}) \<longlonglongrightarrow> s\<close>
+      using \<open>summable (\<lambda> k::nat. ((1/3)::real)^k)\<close> summable_LIMSEQ' by blast 
+    hence \<open>\<exists>s::real. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+      unfolding atLeastAtMost_def 
       by auto
-  qed
-  ultimately have \<open>\<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n})
+    then obtain s::real where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+      by blast
+    from  \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
+    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < e\<close>
+      for e::real
+      by (meson LIMSEQ_iff_nz)
+    moreover have \<open>(1::real) > 0\<close>
+      by auto
+    ultimately have \<open>\<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
+      by auto
+    then obtain N where \<open>\<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
+      by blast
+    hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) - s \<bar> < (1::real)\<close>
+      by (simp add: dist_real_def)
+    hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) \<bar> < \<bar>s\<bar> + (1::real)\<close>
+      by auto
+    hence \<open>\<forall> m \<ge> N. ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) < \<bar>s\<bar> + (1::real)\<close>
+      by auto
+    hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) < \<bar>s\<bar> + (1::real)\<close>
+      by auto
+    hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> \<bar>s\<bar> + (1::real)\<close>
+      by auto
+    moreover have \<open>\<forall> n < N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
+    proof-
+      have  \<open>\<forall> n. f n \<ge> 0 \<Longrightarrow> \<forall> n < N. sum f {0..n} \<le> sum f {0..N}\<close>
+        for f :: \<open>nat \<Rightarrow> real\<close> and N::nat
+      proof(induction N)
+        case 0
+        then show ?case
+          by simp 
+      next
+        case (Suc N)
+        assume \<open>\<forall> n. f n \<ge> 0\<close>
+        moreover assume \<open>\<forall>n. 0 \<le> f n \<Longrightarrow> \<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
+        ultimately have \<open>\<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
+          by blast
+        moreover have  \<open>sum f {0..N} \<le> sum f {0..Suc N}\<close>
+        proof-
+          have \<open>sum f {0..Suc N} = sum f {0..N} + f (Suc N)\<close>
+            using sum.atLeast0_atMost_Suc by blast          
+          thus ?thesis
+            by (simp add: Suc.prems) 
+        qed
+        ultimately show ?case
+          by (smt less_antisym)  
+      qed
+      thus ?thesis
+        by auto
+    qed
+    ultimately have \<open>\<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n})
          \<le> max (\<bar>s\<bar> + (1::real)) (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
-    by (smt diff_is_0_eq gr_zeroI zero_less_diff)
-  hence \<open>\<exists> M. \<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> M\<close>
-    by blast
-  thus ?thesis
+      by (smt diff_is_0_eq gr_zeroI zero_less_diff)
+    hence \<open>\<exists> M. \<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> M\<close>
+      by blast
+    thus ?thesis
       using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
       by smt
   qed
@@ -1605,7 +1664,103 @@ proof(rule classical)
     using \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
     by blast
   have \<open>(\<lambda> n. norm ((g n) l)) \<longlonglongrightarrow> \<infinity>\<close>    
-    sorry
+  proof-
+    have  \<open>norm ((\<phi> (Suc n)) - l) \<le> (1/2)*(1/3::real)^n\<close>
+      for n
+      sorry
+    have \<open>norm ((g n) l) \<ge> (1/6) * (1/3::real)^n * onorm (g n)\<close>
+      for n
+    proof-
+      have \<open>norm ((g n) (\<phi> (Suc n))) = norm ( ((g n) l) + (g n) ((\<phi> (Suc n)) - l) )\<close>
+      proof-
+        have \<open>(g n) (\<phi> (Suc n)) = ((g n) l) + (g n) ((\<phi> (Suc n)) - l)\<close>
+          using \<open>bounded_linear (g n)\<close>
+          by (simp add: linear_simps(2)) 
+        thus ?thesis by simp
+      qed
+      also have \<open>... \<le>  norm ((g n) l) + norm ((g n) ((\<phi> (Suc n)) - l))\<close>
+        by (simp add: norm_triangle_ineq) 
+      finally have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + norm ((g n) ((\<phi> (Suc n)) - l))\<close>
+        by blast
+      moreover have \<open>norm ((g n) ((\<phi> (Suc n)) - l)) \<le> onorm (g n) * norm ((\<phi> (Suc n)) - l)\<close>
+      proof-
+        have \<open>bounded_linear (g n)\<close>
+          by (simp add: \<open>\<And>n. bounded_linear (g n)\<close>)          
+        thus ?thesis using onorm by blast
+      qed
+      ultimately have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + onorm (g n) * norm ((\<phi> (Suc n)) - l)\<close>
+        by simp
+      also have \<open>... \<le>  norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n) \<close>
+      proof-
+        have \<open>onorm (g n)  \<ge> 0\<close>
+          by (simp add: \<open>\<And>n. bounded_linear (g n)\<close> onorm_pos_le)          
+        hence \<open>onorm (g n) * norm ((\<phi> (Suc n)) - l) \<le> onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
+          using \<open>norm ((\<phi> (Suc n)) - l) \<le> (1/2)*(1/3::real)^n\<close>
+          using mult_left_mono by blast
+        thus ?thesis by simp
+      qed
+      finally have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
+        by blast
+      moreover have \<open>norm ((g n) (\<phi> (Suc n))) > (2/3) * (1/3)^n * onorm (g n)\<close>
+      proof-
+        from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
+         (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+        have \<open>norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+          for x     
+          by blast
+        hence \<open>norm ((g n) (\<Phi> n (\<phi> n))) > (2/3) * (1/3)^n * onorm (g n)\<close>
+          by blast
+        thus ?thesis by (simp add: \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>)
+      qed
+      ultimately have \<open>(2/3) * (1/3)^n * onorm (g n) < norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
+        by simp
+      hence \<open>(2/3) * (1/3)^n * onorm (g n) - onorm (g n) * ((1/2) * (1/3::real)^n)  < norm ((g n) l)\<close>
+        by smt
+      hence \<open>(2/3) * ((1/3)^n * onorm (g n)) - (1/2) * ((1/3::real)^n * onorm (g n))  < norm ((g n) l)\<close>
+        by simp
+      moreover have \<open>(2/3) * ((1/3)^n * onorm (g n)) - (1/2) * ((1/3::real)^n * onorm (g n))
+          = (1/6) * (1/3)^n * onorm (g n)\<close>
+        by simp
+      ultimately have \<open>(1/6) * (1/3)^n * onorm (g n) < norm ((g n) l)\<close>
+        by linarith
+      thus ?thesis by simp
+    qed
+    moreover have \<open>(1/6) * (1/3::real)^n * onorm (g n) > (1/6) * (1/3::real)^n * 4^n\<close>
+      for n
+      using \<open>\<forall> n. onorm (g n) > 4^n\<close>
+      by auto
+    ultimately have \<open>norm ((g n) l) > (1/6) * (1/3::real)^n * 4^n\<close>
+      for n
+      by smt
+    hence \<open>norm ((g n) l) > ereal((1/6) * (4/3::real)^n)\<close>
+      for n
+      by (simp add: power_divide) 
+    moreover have \<open>(\<lambda> n::nat. ereal((1/6) * (4/3::real)^n) ) \<longlonglongrightarrow> \<infinity>\<close>
+    proof-
+      have \<open>norm (4/3::real) > 1\<close>
+        by simp
+      hence  \<open>(\<lambda> n::nat. ((4/3::real)^n)) \<longlonglongrightarrow> \<infinity>\<close>
+        using LIMSEQ_realpow_inf by auto
+      moreover have \<open>(1/6::real) > 0\<close>
+        by simp
+      ultimately have \<open>(\<lambda> n::nat. (1/6::real) * (4/3::real)^n ) \<longlonglongrightarrow> \<infinity>\<close>
+        using LIMSEQ_scalarR
+        by blast       
+      thus ?thesis by blast
+    qed
+    ultimately show ?thesis using Lim_PInfty
+    proof -
+      obtain rr :: real where
+        "\<forall>n. norm (g n l) \<le> rr"
+        by (metis (no_types) \<open>\<And>thesis. (\<And>M. \<forall>n. norm (f n l) \<le> M \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>g \<equiv> \<lambda>n. f (k\<^sub>f n)\<close>)
+      then have "\<forall>e. e \<le> ereal rr \<or> \<not> (\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> e"
+        by (meson Lim_bounded \<open>\<And>n. ereal (1 / 6 * (4 / 3) ^ n) < ereal (norm (g n l))\<close> less_eq_ereal_def less_ereal_le)
+      then have "\<infinity> \<le> ereal rr"
+        using \<open>(\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> \<infinity>\<close> by blast
+      then show ?thesis
+        by simp
+    qed 
+  qed
   hence \<open>(\<lambda> n. norm ((f (k\<^sub>f n)) l)) \<longlonglongrightarrow> \<infinity>\<close>    
     using g_def by simp
   hence \<open>\<exists> N. norm ((f (k\<^sub>f N)) l) > M\<close>
@@ -1617,6 +1772,7 @@ proof(rule classical)
   show ?thesis using  \<open>norm ((f (k\<^sub>f N)) l) > M\<close>  \<open>norm ((f (k\<^sub>f N)) l) \<le> M\<close>
     by linarith
 qed
+
 
 
 end
