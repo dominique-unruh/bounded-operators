@@ -22,9 +22,11 @@ the properties of Cstar_algebras
 
 theory Bounded_Operators
   imports Complex_L2 "HOL-Library.Adhoc_Overloading" 
-    "HOL-Analysis.Abstract_Topology" Operator_Norm_Plus  Extended_Sorry
-begin
+    "HOL-Analysis.Abstract_Topology" 
+Extended_Sorry
+SEQ_bounded_operators (* NEW *)
 
+begin
 subsection \<open>Preliminaries\<close>
 
 (* The complex numbers are a Hilbert space *)
@@ -762,8 +764,8 @@ qed
 
 
 (* TODO fix name *)
-lemma bounded_clinear_limit_onorm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::cbanach \<Rightarrow> 'b::complex_normed_vector)\<close>
+lemma bounded_clinear_limit_bounded_clinear:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{cbanach, perfect_space} \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_clinear (f n)\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
@@ -788,8 +790,15 @@ proof-
         thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
           by (metis UNIV_I assms(2) bounded_iff image_eqI)
       qed
-      hence \<open>\<exists> M. \<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
-        using  Banach_Steinhaus by blast
+      hence \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
+      proof-
+        have \<open>\<And> n. bounded_linear (f n)\<close>
+          by (simp add: assms(1) bounded_clinear.bounded_linear)           
+        moreover have  \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>
+          by (simp add: \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>)          
+        ultimately show ?thesis 
+          by (rule Banach_Steinhaus)
+      qed
       then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by blast
       have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * onorm (f n)\<close>
@@ -874,7 +883,7 @@ proof-
       for n
       apply transfer apply auto done
     hence \<open>bounded_clinear F\<close>
-      using bounded_clinear_limit_onorm \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
+      using bounded_clinear_limit_bounded_clinear \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
         (* by metis *) (* does not terminate *)
       by (cheat metis_failed)
     thus ?thesis
