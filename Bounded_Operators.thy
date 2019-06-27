@@ -682,50 +682,24 @@ lemma clinear_limit_onorm:
   assumes  \<open>\<And> n. clinear (f n)\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
   shows \<open>clinear F\<close> 
-proof
-  show "F (x + y) = F x + F y"
-    for x :: 'a
-      and y :: 'a
+proof-
+  have \<open>linear F\<close>
   proof-
-    have \<open>(\<lambda> n. (f n) (x + y)) \<longlonglongrightarrow> F (x + y)\<close>
-      by (simp add: assms(2))
-    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (simp add: assms(2))
-    moreover have \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close>
-      by (simp add: assms(2))
-    moreover have \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close> 
+    have \<open>linear (f n)\<close>
+      for n
     proof-
-      have \<open>(f n) (x + y) = (f n) x + (f n) y\<close>
-        for n
-        using \<open>\<And> n.  clinear (f n)\<close>
-        unfolding clinear_def
-        unfolding Modules.additive_def
+      have \<open>clinear (f n)\<close>
+        using  \<open>\<And> n. clinear (f n)\<close> 
         by blast
-      hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x + (f n) y)\<close>
-        by simp
-      moreover have \<open>lim (\<lambda> n. (f n) x + (f n) y) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
-      proof-
-        have \<open>convergent (\<lambda> n. (f n) x)\<close> 
-          using \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> convergentI by auto
-        moreover have \<open>convergent (\<lambda> n. (f n) y)\<close> 
-          using \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close> convergentI by auto            
-        ultimately show ?thesis
-        proof -
-          have f1: "\<forall>a. F a = lim (\<lambda>n. f n a)"
-            by (metis (full_types) assms(2) limI)
-          have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
-            by (metis (no_types) limI tendsto_add)
-          then show ?thesis
-            using f1 assms(2) by fastforce
-        qed 
-      qed
-      ultimately show ?thesis
-        by simp  
-    qed
-    ultimately show ?thesis
-      by (metis limI) 
+      hence \<open>linear (f n)\<close>
+        unfolding clinear_def
+        unfolding linear_def
+        unfolding Vector_Spaces.linear_def
+        unfolding Modules.additive_def
+        
   qed
-  show "F (r *\<^sub>C x) = r *\<^sub>C F x"
+
+  have "F (r *\<^sub>C x) = r *\<^sub>C F x"
     for r :: complex
       and x :: 'a
   proof-

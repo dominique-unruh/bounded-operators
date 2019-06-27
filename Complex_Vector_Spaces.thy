@@ -26,6 +26,8 @@ section \<open>Vector Spaces and Algebras over the Complex Numbers\<close>
 
 theory Complex_Vector_Spaces
   imports Ordered_Complex HOL.Topological_Spaces Extended_Sorry "HOL-Analysis.Elementary_Topology"
+     "HOL-ex.Sketch_and_Explore"
+
 begin
 
 
@@ -1291,5 +1293,22 @@ lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[T
 lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 
+(* NEW *)
+lemma clinear_linear:
+  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
+  assumes \<open>clinear f\<close>
+  shows \<open>linear f\<close>
+proof
+  show "f (b1 + b2) = f b1 + f b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by (simp add: additive.add assms clinear.axioms(1))   
+  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
+    for r :: real
+      and b :: 'a
+    using  \<open>clinear f\<close> scaleR_scaleC
+    unfolding clinear_def clinear_axioms_def 
+    by smt
+qed
 
 end

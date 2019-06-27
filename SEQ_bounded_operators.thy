@@ -1180,7 +1180,6 @@ proof-
         using \<open>\<And> n. bounded_linear (f n)\<close>
         unfolding bounded_linear_def
         by (metis assms(1) mult.commute onorm)
-
       thus ?thesis using  \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
     qed
