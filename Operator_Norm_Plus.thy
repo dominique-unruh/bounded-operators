@@ -1452,7 +1452,7 @@ lemma PRElim_shift:
   fixes n::nat
   shows  \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
 proof(induction n)
-case 0
+  case 0
   then show ?case by simp
 next
   case (Suc n)
@@ -1479,7 +1479,7 @@ lemma lim_shift:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
   assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
   shows \<open>x \<longlonglongrightarrow> l\<close>
-    using assms  PRElim_shift by auto
+  using assms  PRElim_shift by auto
 
 (* NEW *)
 lemma identity_telescopic:
@@ -1529,10 +1529,38 @@ qed
 
 (* NEW *)
 lemma bound_telescopic:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>x \<longlonglongrightarrow> l\<close>
-  shows \<open>norm (l - x n) \<le> ( SUP N::nat. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}) )\<close>
-  sorry  
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat and K::real
+  assumes \<open>x \<longlonglongrightarrow> l\<close> and \<open>\<And> k. (sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> K\<close>
+  shows \<open>norm (l - x n) \<le> K\<close>
+proof-
+  have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+    by (simp add: assms identity_telescopic)
+  hence \<open>(\<lambda> N. norm (sum (\<lambda> k. x (Suc k) - x k) {n..N})) \<longlonglongrightarrow> norm (l - x n)\<close>
+    using tendsto_norm by blast
+  moreover have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> K\<close>
+    for N
+  proof-
+    have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}\<close>
+      by (simp add: sum_norm_le)      
+    also have \<open>... \<le> K \<close>
+    proof-
+      have \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}
+               \<in> { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
+        by blast
+      moreover have \<open>bdd_above { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
+        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
+        by fastforce        
+      ultimately have  \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N} \<le> K\<close>
+        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
+        by blast
+      thus ?thesis
+        by (simp add: full_SetCompr_eq) 
+    qed
+    finally show ?thesis by blast
+  qed
+  ultimately show ?thesis
+    using Lim_bounded by blast 
+qed
 
 
 (* NEW *)
@@ -1755,9 +1783,95 @@ proof(rule classical)
   proof-
     have  \<open>norm ((\<phi> (Suc n)) - l) \<le> (1/2)*(1/3::real)^n\<close>
       for n
-    proof-
-
-      show ?thesis sorry
+    proof-             
+      define x where \<open>x = (\<lambda> n.  \<phi> (Suc n))\<close>
+      have \<open>x \<longlonglongrightarrow> l\<close> 
+        using x_def
+        by (meson \<open>\<phi> \<longlonglongrightarrow> l\<close> le_imp_less_Suc pinf(8) tendsto_explicit)
+      moreover have \<open>(sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> (1/2)*(1/3::real)^n\<close>
+        for k
+      proof-
+        have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..k}) \<le> (1/2)*(1/3::real)^n\<close>
+        proof-
+          from  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
+          have  \<open>norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (1/3::real)^(Suc t)\<close>
+            for t
+            by (metis dist_norm)            
+          hence \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..n+p}) 
+              \<le> (sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p})\<close> 
+            for p::nat
+          proof(induction p)
+            case 0
+            have \<open>norm (\<phi> (Suc (Suc n)) - \<phi> (Suc n)) < (1/3::real)^(Suc n)\<close>
+              using \<open>\<And> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (1/3::real)^(Suc t)\<close>
+              by blast
+            hence \<open>(\<Sum>t = n..n. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) \<le> (\<Sum>t = n..n. (1 / 3) ^ Suc t)\<close>
+              by simp
+            thus ?case 
+              by simp
+          next
+            case (Suc p)
+            then show ?case
+              by (smt add_Suc_right le_add1 sum.nat_ivl_Suc') 
+          qed
+          moreover have  \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) \<le> (1/2)*(1/3::real)^n\<close> 
+            for p::nat
+          proof-
+            have \<open>n \<le> n + p\<close>
+              by auto
+            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
+                = (sum ((\<lambda> t. (1/3::real)^(Suc t))\<circ>((+) n)) {0..(n + p) - n})\<close> 
+              by (rule Set_Interval.comm_monoid_add_class.sum.atLeastAtMost_shift_0)
+            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
+                = (sum (\<lambda> t. (1/3::real)^(Suc n+t)) {0..p})\<close> 
+              by simp
+            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
+                = (sum (\<lambda> t. (1/3::real)^(Suc n)*(1/3::real)^t) {0..p})\<close>
+              by (simp add: power_add) 
+            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
+                = (1/3::real)^(Suc n)*(sum (\<lambda> t. (1/3::real)^t) {0..p})\<close>
+              by (simp add: sum_distrib_left)
+            moreover have  \<open>(sum (\<lambda> t. (1/3::real)^t) {0..p}) \<le> (3/2::real)\<close>
+            proof-
+              have \<open>norm (1/3::real) < 1\<close>
+                by simp
+              hence \<open>(sum (\<lambda> t. (1/3::real)^t) {0..p}) = (1 - (1/3::real)^(Suc p))/(1 -  (1/3::real))\<close>
+                using sum_gp0
+                by (smt atMost_atLeast0 right_inverse_eq)
+              also have \<open>... \<le> 1/(1 -  (1/3::real))\<close>
+                by simp
+              finally show ?thesis by simp
+            qed
+            ultimately have \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) 
+                  \<le> (1/3::real)^(Suc n)*(3/2)\<close>
+              by (smt ordered_comm_semiring_class.comm_mult_left_mono zero_le_divide_1_iff zero_le_power)               
+            thus ?thesis
+              by simp 
+          qed
+          ultimately have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..n+p})
+                           \<le> (1/2)*(1/3::real)^n\<close>
+            for p::nat
+            by smt
+          hence \<open>m \<ge> n \<Longrightarrow> (sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
+                           \<le> (1/2)*(1/3::real)^n\<close>
+            for m::nat
+            using nat_le_iff_add by auto
+          moreover have \<open>m < n \<Longrightarrow> (sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
+                           \<le> (1/2)*(1/3::real)^n\<close>
+            for m::nat
+            by simp
+          ultimately have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
+                           \<le> (1/2)*(1/3::real)^n\<close>
+            for m::nat
+            by (metis (full_types) le_eq_less_or_eq less_or_eq_imp_le linorder_neqE_nat) 
+          thus ?thesis by blast           
+        qed
+        thus ?thesis unfolding x_def by blast
+      qed
+      ultimately have \<open>norm (l - x n) \<le> (1/2)*(1/3::real)^n\<close>
+        by (rule bound_telescopic )
+      show ?thesis using x_def
+        by (metis \<open>norm (l - x n) \<le> 1 / 2 * (1 / 3) ^ n\<close> norm_minus_commute) 
     qed
     have \<open>norm ((g n) l) \<ge> (1/6) * (1/3::real)^n * onorm (g n)\<close>
       for n
