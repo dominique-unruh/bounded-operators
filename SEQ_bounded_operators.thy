@@ -1053,7 +1053,7 @@ proof(rule classical)
     by linarith
 qed
 
-lemma linear_limit_onorm:
+lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. linear (f n)\<close> 
@@ -1147,7 +1147,7 @@ lemma bounded_linear_limit_bounded_linear:
   shows \<open>bounded_linear F\<close> 
 proof-
   have \<open>linear F\<close>
-    using assms(1) assms(2) bounded_linear.linear linear_limit_onorm by blast
+    using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
   proof
     have "\<exists>K. \<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * K"
@@ -1190,5 +1190,24 @@ proof-
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
 
+(* NEW *)
+definition strong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+  where \<open>strong_convergence f l = ( ( \<lambda> n. onorm (l - f n) ) \<longlonglongrightarrow> 0 )\<close>
+
+(* NEW *)
+abbreviation
+  strong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>strong\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
+
+
+(* NEW *)
+lemma bounded_linear_convergence:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
+    and F :: \<open>'a\<Rightarrow>'b\<close>
+  assumes  \<open>\<And> n. bounded_linear (f n)\<close> 
+    and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+  shows \<open>f \<midarrow>strong\<rightarrow> F\<close>
+  sorry  
+  
 
 end

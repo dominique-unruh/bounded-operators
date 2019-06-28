@@ -675,8 +675,7 @@ qed
 
 end
 
-(* TODO fix name ("onorm") *)
-lemma clinear_limit_onorm:
+lemma clinear_limit_clinear:
   fixes f :: \<open>nat \<Rightarrow> ('a::complex_vector \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. clinear (f n)\<close> 
@@ -687,19 +686,11 @@ proof-
   proof-
     have \<open>linear (f n)\<close>
       for n
-    proof-
-      have \<open>clinear (f n)\<close>
-        using  \<open>\<And> n. clinear (f n)\<close> 
-        by blast
-      hence \<open>linear (f n)\<close>
-        unfolding clinear_def
-        unfolding linear_def
-        unfolding Vector_Spaces.linear_def
-        unfolding Modules.additive_def
-        
-  qed
-
-  have "F (r *\<^sub>C x) = r *\<^sub>C F x"
+      using clinear_linear \<open>\<And> n. clinear (f n)\<close>
+      by auto
+    thus ?thesis using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> by (rule linear_limit_linear) 
+    qed
+  moreover have "F (r *\<^sub>C x) = r *\<^sub>C F x"
     for r :: complex
       and x :: 'a
   proof-
@@ -734,62 +725,32 @@ proof-
     ultimately show ?thesis
       by (metis limI) 
   qed
+  ultimately show ?thesis  
+    by (metis clinearI linear_add)  
 qed
 
-
-(* TODO fix name *)
 lemma bounded_clinear_limit_bounded_clinear:
   fixes f :: \<open>nat \<Rightarrow> ('a::{cbanach, perfect_space} \<Rightarrow> 'b::complex_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_clinear (f n)\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-  shows \<open>bounded_clinear F\<close> 
+  shows \<open>bounded_clinear F\<close>
 proof-
   have \<open>clinear F\<close>
-    using assms(1) assms(2) bounded_clinear.clinear clinear_limit_onorm by blast
+    using assms(1) assms(2) bounded_clinear.clinear clinear_limit_clinear by blast
   moreover have \<open>bounded_clinear_axioms F\<close>
-  proof
-    have "\<exists>K. \<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * K"
-    proof-
-      have \<open>\<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close>
-        for x
-      proof-
-        have \<open>isCont (\<lambda> t::'b. norm t) y\<close>
-          for y::'b
-          using Limits.isCont_norm
-          by simp
-        hence \<open>(\<lambda> n. norm ((f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
-          using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-          by (simp add: tendsto_norm)
-        thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
-          by (metis UNIV_I assms(2) bounded_iff image_eqI)
-      qed
-      hence \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
-      proof-
-        have \<open>\<And> n. bounded_linear (f n)\<close>
-          by (simp add: assms(1) bounded_clinear.bounded_linear)           
-        moreover have  \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>
-          by (simp add: \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>)          
-        ultimately show ?thesis 
-          by (rule Banach_Steinhaus)
-      qed
-      then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
-        by blast
-      have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * onorm (f n)\<close>
-        using \<open>\<And> n. bounded_clinear (f n)\<close>
-        unfolding bounded_clinear_def
-        by (metis assms(1) bounded_clinear.bounded_linear mult.commute onorm)
-
-      thus ?thesis using  \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
-        by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
-    qed
-    thus "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
-      using  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (metis Lim_bounded tendsto_norm) 
+  proof-
+    from \<open>\<And> n. bounded_clinear (f n)\<close> 
+    have \<open>\<And> n. bounded_linear (f n)\<close>
+      by (simp add: bounded_clinear.bounded_linear)
+    hence \<open>bounded_linear F\<close>
+      using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+      by (rule bounded_linear_limit_bounded_linear)
+    thus ?thesis unfolding bounded_linear_def bounded_linear_axioms_def bounded_clinear_axioms_def
+      by blast
   qed
   ultimately show ?thesis unfolding bounded_clinear_def by blast
 qed
-
 
 (* TODO: would mean WOT = operator-norm topology in bounded operators *)
 lemma pointwise_convergent_onorm:
@@ -798,7 +759,7 @@ lemma pointwise_convergent_onorm:
   (* assumes \<open>bounded_clinear F\<close>  *)
   assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
   shows \<open>f \<longlonglongrightarrow> F\<close>
-  by (cheat pointwise_convergent_onorm)
+  by (cheat bounded_linear_convergence)
 
 (* TODO: fix proof, Exercise III.2.1 in Conway func analysis *)
 lemma Cauchy_linear_operators:
