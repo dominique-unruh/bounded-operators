@@ -1192,7 +1192,7 @@ qed
 
 (* NEW *)
 definition strong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
-  where \<open>strong_convergence f l = ( ( \<lambda> n. onorm (l - f n) ) \<longlonglongrightarrow> 0 )\<close>
+  where \<open>strong_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. l x - f n x) ) \<longlonglongrightarrow> 0 )\<close>
 
 (* NEW *)
 abbreviation
@@ -1207,7 +1207,39 @@ lemma bounded_linear_convergence:
   assumes  \<open>\<And> n. bounded_linear (f n)\<close> 
     and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
   shows \<open>f \<midarrow>strong\<rightarrow> F\<close>
-  sorry  
+proof-
+  have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. onorm (\<lambda> x. F x - f n x) < e\<close>
+    for e::real
+  proof-
+    assume \<open>e > 0\<close>
+    show ?thesis sorry
+  qed
+  have \<open>( \<lambda> n. onorm (\<lambda> x. F x - f n x) ) \<longlonglongrightarrow> 0\<close>
+  proof-
+    have \<open>bounded_linear F\<close>
+      using \<open>\<And> n. bounded_linear (f n)\<close> 
+            \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+      by (rule bounded_linear_limit_bounded_linear)
+    hence \<open>bounded_linear (\<lambda> x. F x - (f n) x)\<close>
+      for n
+      using \<open>\<And> n. bounded_linear (f n)\<close>
+      by (simp add: bounded_linear_sub)
+    hence \<open>bounded_linear (\<lambda> x. F x - f n x)\<close>
+      for n
+      by simp      
+    hence \<open>onorm (\<lambda> x. F x - f n x) \<ge> 0\<close>
+      for n
+      by (rule onorm_pos_le)
+    hence \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. \<bar>(onorm (\<lambda> x. F x - f n x)) - 0\<bar> < e\<close>
+      using \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. onorm (\<lambda> x. F x - f n x) < e\<close>
+      by auto
+    hence \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. dist (onorm (\<lambda> x. F x - f n x)) 0 < e\<close>
+      by simp
+    thus ?thesis
+      by (simp add: metric_LIMSEQ_I) 
+  qed
+  thus ?thesis unfolding strong_convergence_def by blast
+qed
   
 
 end
