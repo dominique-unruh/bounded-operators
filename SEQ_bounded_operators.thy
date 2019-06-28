@@ -26,6 +26,25 @@ theory SEQ_bounded_operators
 begin
 
 (* NEW *)
+definition strong_convergence:: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+  where \<open>strong_convergence f l = (\<forall> x. ( \<lambda> n. norm (l x - f n x) ) \<longlonglongrightarrow> 0 )\<close>
+
+(* NEW *)
+abbreviation
+  strong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>strong\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
+
+(* NEW *)
+definition onorm_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+  where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. l x - f n x) ) \<longlonglongrightarrow> 0 )\<close>
+
+(* NEW *)
+abbreviation
+  onorm_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>onorm\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l ) "
+
+
+(* NEW *)
 fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
   "rec x0 \<Phi> 0 = x0" 
 |  "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
@@ -73,7 +92,7 @@ proof-
   hence \<open>incseq (\<lambda> n. (sum a  {..< Suc n}))\<close>
     by (meson incseq_Suc_iff)
   hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>
-    by (metis (mono_tags, lifting) Operator_Norm_Plus.sum_mono assms(1) incseq_def le_add_same_cancel1 le_iff_add)
+    by (metis (mono_tags, lifting) sum_mono assms(1) incseq_def le_add_same_cancel1 le_iff_add)
   hence \<open>incseq (\<lambda> n. (sum a  {0..n})::ereal)\<close>
     using incseq_ereal by blast
   hence \<open>(\<lambda> n. (sum a  {0..n})::ereal) \<longlonglongrightarrow> Sup (range (\<lambda> n. (sum a  {0..n})::ereal))\<close>
@@ -269,103 +288,6 @@ proof-
   qed
   thus ?thesis
     using Cauchy_altdef2 le_refl by fastforce 
-qed
-
-(* NEW *)
-definition pos_part :: \<open>real \<Rightarrow> real\<close> where
-  \<open>pos_part x = (if x \<ge> 0 then x else 0)\<close>
-
-(* NEW *)
-definition neg_part :: \<open>real \<Rightarrow> real\<close> where
-  \<open>neg_part x = (if x \<le> 0 then -x else 0)\<close>
-
-(* NEW *)
-lemma sum_Cauchy:
-  fixes a ::\<open>nat \<Rightarrow> real\<close>
-  assumes \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
-  shows \<open>Cauchy (\<lambda> n. (sum a {0..n}))\<close>
-proof-
-  define a_plus::\<open>nat \<Rightarrow> real\<close> where \<open>a_plus n = pos_part (a n)\<close>
-    for n
-  define a_minus::\<open>nat \<Rightarrow> real\<close> where \<open>a_minus n = neg_part (a n)\<close>
-    for n
-  have \<open>a = a_plus - a_minus\<close>
-  proof-
-    have  \<open>a x = a_plus x - a_minus x\<close>
-      for x
-    proof(cases \<open>a x \<ge> 0\<close>)
-      case True
-      thus ?thesis
-        using \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> neg_part_def pos_part_def by auto 
-    next
-      case False
-      thus ?thesis
-        using \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> neg_part_def pos_part_def by auto 
-    qed
-    thus ?thesis by auto
-  qed
-  have \<open>a_plus x \<le> \<bar>a x\<bar>\<close>
-    for x
-    unfolding a_plus_def
-    by (simp add: pos_part_def)
-  have \<open>\<And> n. a_plus n \<ge> 0\<close>
-    by (simp add: \<open>a_plus \<equiv> \<lambda>n. pos_part (a n)\<close> pos_part_def)
-  moreover have \<open>\<exists> K. \<forall> n::nat. (sum a_plus  {0..n}) \<le> K\<close>
-    using \<open>\<And> x. a_plus x \<le> \<bar>a x\<bar>\<close> \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
-    by (metis (full_types) order.trans ordered_comm_monoid_add_class.sum_mono)      
-  ultimately have \<open>Cauchy (\<lambda> n. sum a_plus  {0..n})\<close>
-    using sum_Cauchy_positive by blast
-  have \<open>a_minus x \<le> \<bar>a x\<bar>\<close>
-    for x
-    unfolding a_minus_def
-    by (simp add: neg_part_def)
-  have \<open>\<And> n. a_minus n \<ge> 0\<close>
-    by (simp add: \<open>a_minus \<equiv> \<lambda>n. neg_part (a n)\<close> neg_part_def)
-  moreover have \<open>\<exists> K. \<forall> n::nat. (sum a_minus  {0..n}) \<le> K\<close>
-    using \<open>\<And> x. a_minus x \<le> \<bar>a x\<bar>\<close> \<open>\<exists> K. \<forall> n::nat. (sum (\<lambda> x. \<bar>a x\<bar>)  {0..n}) \<le> K\<close>
-    by (metis (full_types) order.trans ordered_comm_monoid_add_class.sum_mono)      
-  ultimately have \<open>Cauchy (\<lambda> n. sum a_minus  {0..n})\<close>
-    using sum_Cauchy_positive by blast
-  show ?thesis
-  proof-
-    have \<open>convergent (\<lambda> n. sum a_plus  {0..n})\<close>
-      using \<open>Cauchy (\<lambda> n. sum a_plus  {0..n})\<close>
-        Cauchy_convergent_iff by blast
-    moreover have  \<open>convergent (\<lambda> n. sum a_minus  {0..n})\<close>
-      using \<open>Cauchy (\<lambda> n. sum a_minus  {0..n})\<close>
-        Cauchy_convergent_iff by blast
-    ultimately have \<open>convergent 
-      (\<lambda> m. (\<lambda> n. sum a_plus {0..n}) m - (\<lambda> n. sum a_minus {0..n}) m)\<close>
-      using convergent_diff by blast
-    hence \<open>convergent (\<lambda> n. sum a_plus {0..n} - sum a_minus {0..n})\<close>
-      by blast
-    have \<open>convergent (\<lambda> n. sum (\<lambda> x. a_plus x - a_minus x) {0..n})\<close>
-    proof-
-      have \<open>sum a_plus {0..n} - sum a_minus {0..n} = sum (\<lambda> x. a_plus x - a_minus x) {0..n}\<close>
-        for n
-        by (simp add: sum_subtractf)       
-      thus ?thesis using  \<open>convergent (\<lambda> n. sum a_plus {0..n} - sum a_minus {0..n})\<close>
-        by simp
-    qed
-    hence \<open>convergent (\<lambda> n. sum a {0..n})\<close>
-    proof-
-      have \<open>a_plus n - a_minus n = a n\<close>
-        for n::nat
-      proof(cases \<open>a n \<ge> 0\<close>)
-        case True
-        then show ?thesis
-          by (simp add: \<open>a = a_plus - a_minus\<close>) 
-      next
-        case False
-        then show ?thesis
-          by (simp add: \<open>a = a_plus - a_minus\<close>) 
-      qed
-      thus ?thesis using  \<open>convergent (\<lambda> n. sum (\<lambda> x. a_plus x - a_minus x) {0..n})\<close>
-        by auto
-    qed
-    thus ?thesis
-      using Cauchy_convergent_iff by blast       
-  qed
 qed
 
 (* NEW *)
@@ -1053,23 +975,45 @@ proof(rule classical)
     by linarith
 qed
 
+(* NEW *)
+lemma strong_convergence_pointwise: 
+  \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+  for x
+proof-
+  assume  \<open>f \<midarrow>strong\<rightarrow> F\<close>
+  hence  \<open>( \<lambda> n. norm (F x - (f n) x) )  \<longlonglongrightarrow> 0\<close>
+    unfolding strong_convergence_def
+    by blast
+  have \<open>( \<lambda> n. (F x) )  \<longlonglongrightarrow> F x\<close>
+    by simp
+  moreover have  \<open>( \<lambda> n. (F x - (f n) x))  \<longlonglongrightarrow> 0\<close>
+    using  \<open>( \<lambda> n. norm (F x - (f n) x) )  \<longlonglongrightarrow> 0\<close>
+    by (simp add:  tendsto_norm_zero_iff)
+  ultimately have  \<open>( \<lambda> n. (f n) x)  \<longlonglongrightarrow> F x\<close>
+    by (rule Limits.Lim_transform2)
+  thus ?thesis by blast
+qed
+
+
 lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. linear (f n)\<close> 
-    and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+    and  \<open>f \<midarrow>strong\<rightarrow> F\<close>
   shows \<open>linear F\<close> 
 proof
+  have \<open>\<And> x. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+    using  \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule strong_convergence_pointwise)
   show "F (x + y) = F x + F y"
     for x :: 'a
       and y :: 'a
   proof-
     have \<open>(\<lambda> n. (f n) (x + y)) \<longlonglongrightarrow> F (x + y)\<close>
-      by (simp add: assms(2))
+      by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close>)
     moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (simp add: assms(2))
+      by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close>)
     moreover have \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close>
-      by (simp add: assms(2))
+      by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close>)
     moreover have \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close> 
     proof-
       have \<open>(f n) (x + y) = (f n) x + (f n) y\<close>
@@ -1088,11 +1032,11 @@ proof
         ultimately show ?thesis
         proof -
           have f1: "\<forall>a. F a = lim (\<lambda>n. f n a)"
-            by (metis (full_types) assms(2) limI)
+            by (metis (full_types)  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close> limI)
           have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
             by (metis (no_types) limI tendsto_add)
           then show ?thesis
-            using f1 assms(2) by fastforce
+            using f1  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close> by fastforce
         qed 
       qed
       ultimately show ?thesis
@@ -1106,9 +1050,9 @@ proof
       and x :: 'a
   proof-
     have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (simp add: assms(2))
+      by (simp add:  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close>)
     moreover have \<open>(\<lambda> n.  (f n) (r *\<^sub>R x)) \<longlonglongrightarrow> F (r *\<^sub>R x)\<close>
-      by (simp add: assms(2))
+      by (simp add:  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close>)
     moreover have \<open>lim (\<lambda> n.  (f n) (r *\<^sub>R x)) = r *\<^sub>R lim (\<lambda> n. (f n) x)\<close>
     proof-
       have \<open>(f n) (r *\<^sub>R x) = r *\<^sub>R (f n) x\<close>
@@ -1128,7 +1072,7 @@ proof
           for tt
           by (simp add: bounded_linear_scaleR_right)
         ultimately have \<open>lim (\<lambda> n. r *\<^sub>R ((f n) x)) =  r *\<^sub>R lim (\<lambda> n. (f n) x)\<close>
-          by (metis (mono_tags) assms(2) isCont_tendsto_compose limI)
+          by (metis (mono_tags)  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close> isCont_tendsto_compose limI)
         thus ?thesis using  \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close>
           by simp
       qed
@@ -1143,9 +1087,11 @@ lemma bounded_linear_limit_bounded_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_linear (f n)\<close> 
-    and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+    and   \<open>f \<midarrow>strong\<rightarrow> F\<close> 
   shows \<open>bounded_linear F\<close> 
 proof-
+  have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+    using \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule strong_convergence_pointwise)
   have \<open>linear F\<close>
     using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
@@ -1163,7 +1109,7 @@ proof-
           using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
           by (simp add: tendsto_norm)
         thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
-          by (metis UNIV_I assms(2) bounded_iff image_eqI)
+          by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
       qed
       hence \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
       proof-
@@ -1190,56 +1136,7 @@ proof-
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
 
-(* NEW *)
-definition strong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
-  where \<open>strong_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. l x - f n x) ) \<longlonglongrightarrow> 0 )\<close>
-
-(* NEW *)
-abbreviation
-  strong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>strong\<rightarrow> (_))" [60, 60] 60)
-  where "f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
 
 
-(* NEW *)
-lemma bounded_linear_convergence:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-    and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes  \<open>\<And> n. bounded_linear (f n)\<close> 
-    and  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-  shows \<open>f \<midarrow>strong\<rightarrow> F\<close>
-proof-
-  have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. onorm (\<lambda> x. F x - f n x) < e\<close>
-    for e::real
-  proof-
-    assume \<open>e > 0\<close>
-    show ?thesis sorry
-  qed
-  have \<open>( \<lambda> n. onorm (\<lambda> x. F x - f n x) ) \<longlonglongrightarrow> 0\<close>
-  proof-
-    have \<open>bounded_linear F\<close>
-      using \<open>\<And> n. bounded_linear (f n)\<close> 
-            \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (rule bounded_linear_limit_bounded_linear)
-    hence \<open>bounded_linear (\<lambda> x. F x - (f n) x)\<close>
-      for n
-      using \<open>\<And> n. bounded_linear (f n)\<close>
-      by (simp add: bounded_linear_sub)
-    hence \<open>bounded_linear (\<lambda> x. F x - f n x)\<close>
-      for n
-      by simp      
-    hence \<open>onorm (\<lambda> x. F x - f n x) \<ge> 0\<close>
-      for n
-      by (rule onorm_pos_le)
-    hence \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. \<bar>(onorm (\<lambda> x. F x - f n x)) - 0\<bar> < e\<close>
-      using \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. onorm (\<lambda> x. F x - f n x) < e\<close>
-      by auto
-    hence \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. dist (onorm (\<lambda> x. F x - f n x)) 0 < e\<close>
-      by simp
-    thus ?thesis
-      by (simp add: metric_LIMSEQ_I) 
-  qed
-  thus ?thesis unfolding strong_convergence_def by blast
-qed
-  
 
 end
