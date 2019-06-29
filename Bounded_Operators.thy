@@ -194,7 +194,7 @@ qed
 lemma Riesz_Frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space functional\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>\<exists>t.  \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
+  shows \<open>\<exists>t. \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
   then show ?thesis
@@ -752,9 +752,9 @@ proof-
   ultimately show ?thesis unfolding bounded_clinear_def by blast
 qed
 
-(* TODO: would mean WOT = operator-norm topology in bounded operators *)
+(* NEW *)
 lemma pointwise_convergent_onorm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) bounded\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::cbanach, 'b::cbanach) bounded\<close>
     and F :: \<open>('a,'b) bounded\<close>
   (* assumes \<open>bounded_clinear F\<close>  *)
   assumes  \<open>\<And> x::'a. (\<lambda> n. Rep_bounded (f n) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
@@ -836,13 +836,6 @@ instance
 end
 
 
-(* TODO: move to Legacy *)
-type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
-abbreviation "applyOp == Rep_bounded"
-  (* typedef ('a,'b) l2bounded = "{A::'a ell2\<Rightarrow>'b ell2. bounded_clinear A}"
-  morphisms applyOp Abs_l2bounded
-  using bounded_clinear_zero by blast
-setup_lifting type_definition_l2bounded *)
 
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
