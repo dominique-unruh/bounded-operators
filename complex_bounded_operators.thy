@@ -27,26 +27,82 @@ begin
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded
 = \<open>{f :: ('a, 'b) real_bounded. \<forall> c. \<forall> x. ev_real_bounded f (c *\<^sub>C x) = c *\<^sub>C (ev_real_bounded f x) }\<close>
   apply transfer
-proof -
-  obtain rr :: "('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_operator" where
-    f1: "\<forall>r. rr r \<in> Collect bounded_real_operator \<and> Abs_real_bounded (rr r) = r"
-by (metis (no_types) Abs_real_bounded_cases)
-obtain cc :: "('a, 'b) real_operator \<Rightarrow> complex" and aa :: "('a, 'b) real_operator \<Rightarrow> 'a" where
-  f2: "\<forall>r. ((\<forall>c a. ev_real_operator r (c *\<^sub>C a) = c *\<^sub>C ev_real_operator r a) \<and> bounded_real_operator r \<or> \<not> bounded_real_operator r \<or> ev_real_operator r (cc r *\<^sub>C aa r) \<noteq> cc r *\<^sub>C ev_real_operator r (aa r)) \<and> (bounded_real_operator r \<and> (\<forall>c a. ev_real_operator r (c *\<^sub>C a) = c *\<^sub>C ev_real_operator r a) \<or> (\<exists>c a. ev_real_operator r (c *\<^sub>C a) \<noteq> c *\<^sub>C ev_real_operator r a) \<or> \<not> bounded_real_operator r)"
-  by moura
-  obtain bb :: "('a, 'b) real_operator \<Rightarrow> 'a \<Rightarrow> 'b" where
-    f3: "\<forall>r. ev_real_operator r = bb r"
-    by metis
-  have "0 = rr 0"
-    using f1 by (metis (no_types) Abs_real_bounded_inverse cr_real_bounded_def zero_real_bounded.transfer)
-  then have "\<exists>r. bb r (cc r *\<^sub>C aa r) = cc r *\<^sub>C bb r (aa r) \<and> bounded_real_operator r"
-    using f3 f1 by (metis complex_vector.scale_eq_0_iff ev_real_operator.rep_eq mem_Collect_eq zero_real_operator.rep_eq)
-  then show "\<exists>r\<in>{r. bounded_real_operator r}. r \<in> {r. (\<forall>c a. ev_real_operator r (c *\<^sub>C (a::'a)) = c *\<^sub>C (ev_real_operator r a::'b)) \<and> bounded_real_operator r}"
-    using f3 f2 by auto
+  apply auto
+proof
+  have "bounded_linear (\<lambda> _::'a. 0::'b)"
+    by simp    
+  moreover have "(\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
+    by simp   
+  ultimately show "bounded_linear (\<lambda> _::'a. 0::'b) \<and> (\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
+    by blast
 qed
 
-lift_definition ev_complex_bounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) real_bounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
+setup_lifting type_definition_complex_bounded
+
+lift_definition ev_complex_bounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
 is \<open>\<lambda> f. \<lambda> x. ev_real_bounded f x\<close>.
+
+
+instantiation complex_bounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
+begin
+lift_definition uminus_complex_bounded :: "('a,'b) complex_bounded \<Rightarrow> ('a,'b) complex_bounded"
+  is "\<lambda> f. - f"
+  by (simp add: ev_real_bounded.rep_eq uminus_real_bounded.rep_eq)
+
+lift_definition zero_complex_bounded :: "('a,'b) complex_bounded" is "0"
+  by (simp add: ev_real_bounded.rep_eq zero_real_bounded.rep_eq)
+
+lift_definition plus_complex_bounded :: "('a,'b) complex_bounded \<Rightarrow> ('a,'b) complex_bounded \<Rightarrow> ('a,'b) complex_bounded" is
+  \<open>\<lambda> f g. f + g\<close>
+  by (simp add: ev_real_bounded.rep_eq plus_real_bounded.rep_eq scaleC_add_right)
+
+lift_definition minus_complex_bounded :: "('a,'b) complex_bounded \<Rightarrow> ('a,'b) complex_bounded \<Rightarrow> ('a,'b) complex_bounded" is
+  \<open>\<lambda> f g. f - g\<close>
+  by (simp add: complex_vector.scale_right_diff_distrib ev_real_bounded.rep_eq minus_real_bounded.rep_eq)
+
+lift_definition scaleR_complex_bounded :: \<open>real \<Rightarrow> ('a, 'b) complex_bounded \<Rightarrow> ('a, 'b) complex_bounded\<close>
+is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
+  by (simp add: ev_real_bounded.rep_eq scaleR_real_bounded.rep_eq scaleR_scaleC)
+
+instance
+proof      
+  fix a b c :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>a + b + c = a + (b + c)\<close>
+    apply transfer by simp
+  fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded\<close>
+  show \<open>a + b = b + a\<close>
+    apply transfer by simp
+  fix a :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>0 + a = a\<close>
+    apply transfer by simp
+  fix a :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>-a + a = 0\<close>
+    apply transfer
+    by simp
+  fix a b :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>a - b = a + - b\<close>
+    apply transfer by simp
+  fix a::real and x y :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
+    apply transfer
+    by (simp add: scaleR_add_right)
+
+  fix a b :: real and x :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
+    apply transfer
+    by (simp add: scaleR_add_left)
+
+  fix a b :: real and x :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
+    apply transfer
+    by simp
+
+  fix x :: \<open>('a, 'b) complex_bounded\<close>
+  show \<open>1 *\<^sub>R x = x\<close>
+    apply transfer
+    by simp
+qed
+end
 
 
 end
