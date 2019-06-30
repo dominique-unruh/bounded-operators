@@ -24,8 +24,226 @@ theory complex_bounded_operators
     Complex_Vector_Spaces
 begin
 
+section \<open>Real bounded operators with complex scalar product\<close>
+
+instantiation real_bounded :: (real_normed_vector, complex_normed_vector) "complex_vector"
+begin
+lift_definition scaleC_real_bounded :: \<open>complex \<Rightarrow>
+ ('a::real_normed_vector, 'b::complex_normed_vector) real_bounded \<Rightarrow>
+ ('a, 'b) real_bounded\<close>
+  is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>'b. (\<lambda> x. c *\<^sub>C (f x) )\<close> 
+proof
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b1::'a and b2::'a
+  assume \<open>bounded_linear f\<close>
+  show \<open>c *\<^sub>C f (b1 + b2) = c *\<^sub>C f b1 + c *\<^sub>C f b2\<close>
+    by (simp add: \<open>bounded_linear f\<close> linear_simps(1) scaleC_add_right)
+
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b::'a and r::real
+  assume \<open>bounded_linear f\<close>
+  show \<open>c *\<^sub>C f (r *\<^sub>R b) = r *\<^sub>R (c *\<^sub>C f b)\<close>
+    by (simp add: \<open>bounded_linear f\<close> linear_simps(5) scaleR_scaleC)
+
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> 
+  assume \<open>bounded_linear f\<close>
+  show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
+  proof-
+    have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
+      using \<open>bounded_linear f\<close>
+      by (simp add: bounded_linear.bounded)
+    then obtain K where \<open>\<forall> x. norm (f x) \<le> norm x * K\<close>
+      by blast
+    have \<open>cmod c \<ge> 0\<close>
+      by simp
+    hence \<open>\<forall> x. (cmod c) * norm (f x) \<le> (cmod c) * norm x * K\<close>
+      using  \<open>\<forall> x. norm (f x) \<le> norm x * K\<close> 
+      by (metis ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale)
+    moreover have \<open>norm (c *\<^sub>C f x) = (cmod c) * norm (f x)\<close>
+      for x
+      by simp
+    ultimately show ?thesis
+      by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute) 
+  qed
+qed
+
+instance
+proof
+  show "((*\<^sub>R) r::('a, 'b) real_bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+  proof
+    show "r *\<^sub>R (x::('a, 'b) real_bounded) = complex_of_real r *\<^sub>C x"
+      for x :: "('a, 'b) real_bounded"
+      apply transfer
+      by (simp add: scaleR_scaleC)
+  qed
+
+  show "a *\<^sub>C ((x::('a, 'b) real_bounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "('a, 'b) real_bounded"
+      and y :: "('a, 'b) real_bounded"
+    apply transfer
+    by (simp add: scaleC_add_right)
+
+  show "(a + b) *\<^sub>C (x::('a, 'b) real_bounded) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) real_bounded"
+    apply transfer
+    by (simp add: scaleC_add_left)
+
+  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) real_bounded) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) real_bounded"
+    apply transfer
+    by simp
+
+  show "1 *\<^sub>C (x::('a, 'b) real_bounded) = x"
+    for x :: "('a, 'b) real_bounded"
+    apply transfer
+  proof
+    fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
+    show \<open>1 *\<^sub>C f x = f x\<close>
+      by auto
+  qed
+qed  
+end
+
+instantiation real_bounded :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
+begin
+instance
+  apply intro_classes
+  apply transfer
+proof-
+  fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
+  assume \<open>bounded_linear f\<close>
+  hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
+    by (simp add: onorm_def)
+  also have \<open>... = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
+    by simp
+  also have \<open>... =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
+    by simp
+  also have \<open>... = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
+  proof-
+    have \<open>(UNIV::('a set)) \<noteq> {}\<close>
+      by simp
+    moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
+      by simp
+    moreover have \<open>cmod a \<ge> 0\<close>
+      by simp
+    ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
+        = ((cmod a)::ereal) * ( SUP i\<in>(UNIV::('a set)). (\<lambda> x. (norm (f x)) / norm x :: ereal) i )\<close>
+      by (simp add: Sup_ereal_mult_left')
+    hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+        = ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+      by simp
+    hence \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
+        = real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )\<close>
+      by simp
+    moreover have \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+                  = (SUP x. cmod a * (norm (f x) / norm x))\<close>
+    proof-
+      have \<open>cmod a \<ge> 0\<close>
+        by simp
+      have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+      proof-
+        have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+          using \<open>bounded_linear f\<close> le_onorm by fastforce
+        then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+          by blast
+        hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+          using \<open>cmod a \<ge> 0\<close> 
+          by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
+        hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+          by simp
+
+        hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+          by simp
+        moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+          by auto
+        ultimately have \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+          using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
+            Sup_least mem_Collect_eq
+          by (simp add: SUP_le_iff) 
+        hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>
+        proof-
+          have  \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
+            by simp              
+          thus ?thesis
+            using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+              \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+            by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+        qed
+        hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
+          using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+          by simp
+        thus ?thesis
+          by auto 
+      qed
+      hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. cmod a * (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+        by (simp add: ereal_SUP) 
+      thus ?thesis
+        by simp
+    qed
+    moreover have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                = cmod a * (SUP x. norm (f x) / norm x)\<close>
+    proof-
+      have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                =  (cmod a) * real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+        by simp
+      moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
+                  = ( SUP x. ((norm (f x)) / norm x) )\<close>
+      proof-
+        have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+        proof-
+          have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+            using \<open>bounded_linear f\<close> le_onorm by fastforce
+          then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+            by blast
+          hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+            by simp
+          moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+            by auto
+          ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+            using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
+              Sup_least mem_Collect_eq
+            by (simp add: SUP_le_iff) 
+          hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>)\<close>
+            using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+              \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+            by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+          hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
+            using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+            by simp
+          thus ?thesis
+            by auto 
+        qed
+        hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+          by (simp add: ereal_SUP) 
+        thus ?thesis
+          by simp         
+      qed
+      show ?thesis
+        by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+    qed
+    ultimately have \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
+  cmod a * (SUP x. norm (f x) / norm x)\<close>
+      by simp     
+    thus ?thesis
+      by simp 
+  qed
+  thus \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+    by (simp add: onorm_def) 
+qed
+end
+
+section \<open>Complex bounded operators\<close>
+
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded
-= \<open>{f :: ('a, 'b) real_bounded. \<forall> c. \<forall> x. ev_real_bounded f (c *\<^sub>C x) = c *\<^sub>C (ev_real_bounded f x) }\<close>
+  = \<open>{f :: ('a, 'b) real_bounded. \<forall> c. \<forall> x. ev_real_bounded f (c *\<^sub>C x) = c *\<^sub>C (ev_real_bounded f x) }\<close>
   apply transfer
   apply auto
 proof
@@ -40,7 +258,7 @@ qed
 setup_lifting type_definition_complex_bounded
 
 lift_definition ev_complex_bounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
-is \<open>\<lambda> f. \<lambda> x. ev_real_bounded f x\<close>.
+  is \<open>\<lambda> f. \<lambda> x. ev_real_bounded f x\<close>.
 
 
 instantiation complex_bounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
@@ -61,8 +279,9 @@ lift_definition minus_complex_bounded :: "('a,'b) complex_bounded \<Rightarrow> 
   by (simp add: complex_vector.scale_right_diff_distrib ev_real_bounded.rep_eq minus_real_bounded.rep_eq)
 
 lift_definition scaleR_complex_bounded :: \<open>real \<Rightarrow> ('a, 'b) complex_bounded \<Rightarrow> ('a, 'b) complex_bounded\<close>
-is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
-  by (simp add: ev_real_bounded.rep_eq scaleR_real_bounded.rep_eq scaleR_scaleC)
+  is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
+  by (simp add: ev_real_bounded.rep_eq scaleC_real_bounded.rep_eq scaleR_scaleC)
+
 
 instance
 proof      
@@ -125,18 +344,18 @@ lift_definition open_complex_bounded :: \<open>(('a, 'b) complex_bounded) set \<
 
 instance
   apply intro_classes
-        apply transfer 
-        apply auto
-        apply transfer 
-        apply auto
-        apply transfer 
-         apply (simp add: sgn_div_norm)
-        apply (simp add: uniformity_complex_bounded.transfer)
-       apply (metis (mono_tags, lifting)  open_complex_bounded.transfer)
+  apply transfer 
+  apply auto
+  apply transfer 
+  apply auto
+  apply transfer 
+  apply (simp add: sgn_div_norm)
+  apply (simp add: uniformity_complex_bounded.transfer)
+  apply (metis (mono_tags, lifting)  open_complex_bounded.transfer)
   apply (smt eventually_mono open_complex_bounded.transfer split_cong)
-     apply transfer
+  apply transfer
   apply simp
-    apply transfer
+  apply transfer
   apply simp
   apply (smt add_diff_cancel_left' minus_complex_bounded.rep_eq norm_complex_bounded.rep_eq norm_triangle_ineq2)
   apply transfer
@@ -144,98 +363,14 @@ instance
 end
 
 
-instantiation real_bounded :: (real_normed_vector, complex_normed_vector) "complex_vector"
-begin
-
-lift_definition scaleC_real_bounded :: \<open>complex \<Rightarrow>
- ('a::real_normed_vector, 'b::complex_normed_vector) real_bounded \<Rightarrow>
- ('a, 'b) real_bounded\<close>
-is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>'b. (\<lambda> x. c *\<^sub>C (f x) )\<close> 
-proof
-  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b1::'a and b2::'a
-  assume \<open>bounded_linear f\<close>
-  show \<open>c *\<^sub>C f (b1 + b2) = c *\<^sub>C f b1 + c *\<^sub>C f b2\<close>
-    by (simp add: \<open>bounded_linear f\<close> linear_simps(1) scaleC_add_right)
-
-  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b::'a and r::real
-  assume \<open>bounded_linear f\<close>
-  show \<open>c *\<^sub>C f (r *\<^sub>R b) = r *\<^sub>R (c *\<^sub>C f b)\<close>
-    by (simp add: \<open>bounded_linear f\<close> linear_simps(5) scaleR_scaleC)
-
-  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> 
-  assume \<open>bounded_linear f\<close>
-  show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
-  proof-
-have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
-      using \<open>bounded_linear f\<close>
-      by (simp add: bounded_linear.bounded)
-    then obtain K where \<open>\<forall> x. norm (f x) \<le> norm x * K\<close>
-      by blast
-    have \<open>cmod c \<ge> 0\<close>
-      by simp
-    hence \<open>\<forall> x. (cmod c) * norm (f x) \<le> (cmod c) * norm x * K\<close>
-      using  \<open>\<forall> x. norm (f x) \<le> norm x * K\<close> 
-      by (metis ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale)
-    moreover have \<open>norm (c *\<^sub>C f x) = (cmod c) * norm (f x)\<close>
-      for x
-      by simp
-    ultimately show ?thesis
-      by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute) 
-  qed
-qed
-
-instance
-  proof
-  show "((*\<^sub>R) r::('a, 'b) real_bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
-    for r :: real
-  proof
-    show "r *\<^sub>R (x::('a, 'b) real_bounded) = complex_of_real r *\<^sub>C x"
-    for x :: "('a, 'b) real_bounded"
-      apply transfer
-      by (simp add: scaleR_scaleC)
-qed
-
-  show "a *\<^sub>C ((x::('a, 'b) real_bounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
-    for a :: complex
-      and x :: "('a, 'b) real_bounded"
-      and y :: "('a, 'b) real_bounded"
-    apply transfer
-    by (simp add: scaleC_add_right)
-
-  show "(a + b) *\<^sub>C (x::('a, 'b) real_bounded) = a *\<^sub>C x + b *\<^sub>C x"
-    for a :: complex
-      and b :: complex
-      and x :: "('a, 'b) real_bounded"
-    apply transfer
-    by (simp add: scaleC_add_left)
-
-  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) real_bounded) = (a * b) *\<^sub>C x"
-    for a :: complex
-      and b :: complex
-      and x :: "('a, 'b) real_bounded"
-    apply transfer
-    by simp
-
-  show "1 *\<^sub>C (x::('a, 'b) real_bounded) = x"
-    for x :: "('a, 'b) real_bounded"
-    apply transfer
-  proof
-    fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
-    show \<open>1 *\<^sub>C f x = f x\<close>
-      by auto
-  qed
-qed  
-
-end
-
 instantiation complex_bounded :: (complex_normed_vector, complex_normed_vector) "complex_vector"
 begin 
 lift_definition scaleC_complex_bounded :: \<open>complex \<Rightarrow> ('a, 'b) complex_bounded \<Rightarrow> ('a, 'b) complex_bounded\<close>
-is \<open>\<lambda> c::complex. \<lambda> f::('a, 'b) real_bounded. c *\<^sub>C f\<close> 
+  is \<open>\<lambda> c::complex. \<lambda> f::('a, 'b) real_bounded. c *\<^sub>C f\<close> 
   by (simp add: ev_real_bounded.rep_eq scaleC_real_bounded.rep_eq)
 
 instance
-  proof
+proof
   show "((*\<^sub>R) r::('a, 'b) complex_bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
   proof
@@ -270,9 +405,14 @@ instance
     apply transfer
     using scaleC_one by blast
 qed  
+end
 
+instantiation complex_bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
+begin
+instance
+  apply intro_classes
+  apply transfer
+  by simp
 
 end
 
-
-end

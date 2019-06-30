@@ -23,7 +23,7 @@ theory real_bounded_operators
 begin
 
 
-section "Bounded operators"
+section "Real bounded operators"
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded
   = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
