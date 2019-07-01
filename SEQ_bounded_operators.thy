@@ -1191,6 +1191,12 @@ qed
 
 
 
+lemma completeness_real_bounded:
+  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::banach)\<close>
+  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+  shows \<open>\<exists>L. bounded_linear L \<and>
+        (\<forall>S. (\<forall>x\<in>S. bounded_linear x) \<longrightarrow> open S \<longrightarrow> L \<in> S \<longrightarrow> (\<forall>\<^sub>F x in sequentially. f x \<in> S))\<close>
+  sorry
 
 
 end

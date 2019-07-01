@@ -260,15 +260,19 @@ lemma tendsto_ONORM_real_bounded:
   apply transfer
   sorry
 
+
+
 instantiation real_bounded :: (real_normed_vector, banach) "banach"
 begin
 instance
   proof
-  show "convergent (X::nat \<Rightarrow> ('a, 'b) real_bounded)"
-    if "Cauchy (X::nat \<Rightarrow> ('a, 'b) real_bounded)"
-    for X :: "nat \<Rightarrow> ('a, 'b) real_bounded"
-    sorry
-    qed
+  show "Cauchy f \<Longrightarrow> convergent f"
+    for f :: "nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) real_bounded"
+    sorry     
+qed
+
+  
+  
 end
 
 
