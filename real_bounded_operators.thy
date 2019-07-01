@@ -140,6 +140,8 @@ end
 
 subsection \<open>Sequence of operators, bounded in norm\<close>
 
+(* This subsection was just an exercise in order to practive typedef and lift_definition *)
+
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise
 = \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. \<forall> x::'a. bdd_above { norm ( ev_real_bounded (f n) x ) | n. True } }\<close>
   apply transfer
@@ -159,7 +161,6 @@ lift_definition index_real_bounded ::
 lift_definition norm_SEQ_real_bounded :: 
 \<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow> (nat 
 \<Rightarrow> real)\<close> is \<open>\<lambda> f::nat \<Rightarrow> ('a, 'b) real_bounded. \<lambda> n::nat. norm (f n)\<close>.
-
 
 typedef (overloaded) ('a::metric_space) bounded_SEQ
 = \<open>{f :: nat \<Rightarrow> 'a.  bounded { f n | n. True } }\<close>
@@ -215,19 +216,14 @@ proof-
     by blast
 qed
 
-(* non-boolean reformulation of Banach-Steinhaus theorem *)
-(* The Banach-Steinhaus theorem is interpreted as the fact that a type is inhabited *)
 lift_definition Banach_Steinhaus_real_bounded::
 \<open>('a::{banach,perfect_space}, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow>
 real bounded_SEQ\<close> 
-(* proof *)
 is \<open>\<lambda> f. (\<lambda> n::nat. norm (f n))\<close>
   apply transfer   
   apply auto
   using Banach_Steinhaus_coro
   by auto
-(* qed *)
-
 
 subsection \<open>Convergence\<close>
 
@@ -245,42 +241,39 @@ abbreviation
   onorm_convergence_real_bounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> (('a, 'b) real_bounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>ONORM\<rightarrow> (_))" [60, 60] 60)
   where "f \<midarrow>ONORM\<rightarrow> l \<equiv> (onorm_convergence_real_bounded f l ) "
 
-typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_Cauchy
-= \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. Cauchy f }\<close>
-proof-
-  have \<open>Cauchy (\<lambda> n. 0::('a,'b) real_bounded)\<close>
-    unfolding Cauchy_def
-    by auto
-  hence \<open>(\<lambda> n. 0::('a,'b) real_bounded) \<in> {f. Cauchy f}\<close>
-    by blast
-  thus ?thesis by blast
+lemma ONORM_tendsto_real_bounded:
+ \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
+  apply transfer
+proof
+  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) real_bounded) \<Longrightarrow> e > 0 \<Longrightarrow> \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) real_bounded) < e"   
+    for f :: "nat \<Rightarrow> ('a, 'b) real_bounded"
+      and l :: "('a, 'b) real_bounded"
+      and e :: real
+    apply transfer
+    apply auto
+    by (rule onorm_tendsto)    
 qed
 
-setup_lifting type_definition_real_bounded_SEQ_Cauchy
 
-typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_Convergent
-= \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. convergent f }\<close>
-proof-
-  have \<open>convergent (\<lambda> n. 0::('a,'b) real_bounded)\<close>
-    unfolding convergent_def
-    by auto
-  hence \<open>(\<lambda> n. 0::('a,'b) real_bounded) \<in> {f. convergent f}\<close>
-    by blast
-  thus ?thesis by blast
-qed
-
-setup_lifting type_definition_real_bounded_SEQ_Convergent
-  
-lift_definition real_bounded_completeness_lift ::
- \<open>('a::real_normed_vector, 'b::banach) real_bounded_SEQ_Cauchy \<Rightarrow>
-('a, 'b) real_bounded_SEQ_Convergent\<close>
-is \<open>\<lambda> f::nat \<Rightarrow> ('a,'b) real_bounded. f\<close>
+lemma tendsto_ONORM_real_bounded:
+ \<open>f \<longlonglongrightarrow> l \<Longrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
+  apply transfer
   sorry
 
 instantiation real_bounded :: (real_normed_vector, banach) "banach"
 begin
 instance
-  apply intro_classes
-  by (metis Quotient_real_bounded_SEQ_Convergent Quotient_to_Domainp eq_onp_to_Domainp real_bounded_completeness_lift.rsp rel_fun_eq_onp_rel)
+  proof
+  show "convergent (X::nat \<Rightarrow> ('a, 'b) real_bounded)"
+    if "Cauchy (X::nat \<Rightarrow> ('a, 'b) real_bounded)"
+    for X :: "nat \<Rightarrow> ('a, 'b) real_bounded"
+    sorry
+    qed
+end
+
+
+
+
+
 
 end
