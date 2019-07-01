@@ -138,7 +138,7 @@ instance
 end
 
 
-subsection \<open>Lifting Banach-Steinhaus\<close>
+subsection \<open>Sequence of operators, bounded in norm\<close>
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise
 = \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. \<forall> x::'a. bdd_above { norm ( ev_real_bounded (f n) x ) | n. True } }\<close>
@@ -229,19 +229,6 @@ is \<open>\<lambda> f. (\<lambda> n::nat. norm (f n))\<close>
 (* qed *)
 
 
-(*
-
-(* NEW *)
-text \<open>The proof of the following result was taken from [sokal2011really]\<close>
-theorem Banach_Steinhaus:
-  fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close>
-    and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
-
-
-*)
-
 subsection \<open>Convergence\<close>
 
 lift_definition strong_convergence_real_bounded:: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> (('a, 'b) real_bounded) \<Rightarrow> bool"
@@ -258,5 +245,42 @@ abbreviation
   onorm_convergence_real_bounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> (('a, 'b) real_bounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>ONORM\<rightarrow> (_))" [60, 60] 60)
   where "f \<midarrow>ONORM\<rightarrow> l \<equiv> (onorm_convergence_real_bounded f l ) "
 
+typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_Cauchy
+= \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. Cauchy f }\<close>
+proof-
+  have \<open>Cauchy (\<lambda> n. 0::('a,'b) real_bounded)\<close>
+    unfolding Cauchy_def
+    by auto
+  hence \<open>(\<lambda> n. 0::('a,'b) real_bounded) \<in> {f. Cauchy f}\<close>
+    by blast
+  thus ?thesis by blast
+qed
+
+setup_lifting type_definition_real_bounded_SEQ_Cauchy
+
+typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_Convergent
+= \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. convergent f }\<close>
+proof-
+  have \<open>convergent (\<lambda> n. 0::('a,'b) real_bounded)\<close>
+    unfolding convergent_def
+    by auto
+  hence \<open>(\<lambda> n. 0::('a,'b) real_bounded) \<in> {f. convergent f}\<close>
+    by blast
+  thus ?thesis by blast
+qed
+
+setup_lifting type_definition_real_bounded_SEQ_Convergent
+  
+lift_definition real_bounded_completeness_lift ::
+ \<open>('a::real_normed_vector, 'b::banach) real_bounded_SEQ_Cauchy \<Rightarrow>
+('a, 'b) real_bounded_SEQ_Convergent\<close>
+is \<open>\<lambda> f::nat \<Rightarrow> ('a,'b) real_bounded. f\<close>
+  sorry
+
+instantiation real_bounded :: (real_normed_vector, banach) "banach"
+begin
+instance
+  apply intro_classes
+  by (metis Quotient_real_bounded_SEQ_Convergent Quotient_to_Domainp eq_onp_to_Domainp real_bounded_completeness_lift.rsp rel_fun_eq_onp_rel)
 
 end
