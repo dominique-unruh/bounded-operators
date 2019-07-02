@@ -35,6 +35,16 @@ abbreviation
   where "f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
 
 (* NEW *)
+(* Strong convergence uniformly on the unit sphere *)
+definition ustrong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+  where \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
+
+(* NEW *)
+abbreviation
+  ustrong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>ustrong\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>ustrong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
+
+(* NEW *)
 definition onorm_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
   where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
 
@@ -1239,6 +1249,16 @@ proof-
   qed
   thus ?thesis unfolding strong_convergence_def by blast
 qed
+
+
+
+lemma uniform_strong_onorm:
+  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+    and l :: \<open>'a \<Rightarrow> 'b\<close>
+  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
+    and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+  shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
+  sorry
 
 lemma completeness_real_bounded:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::banach)\<close>
