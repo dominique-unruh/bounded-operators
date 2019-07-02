@@ -112,11 +112,11 @@ lift_definition sgn_real_bounded :: \<open>('a, 'b) real_bounded \<Rightarrow> (
   is \<open>\<lambda> f. (\<lambda> x. (f x) /\<^sub>R (onorm f) )\<close>
   by (rule Bounded_Linear_Function.bounded_linear_intros(6))
 
-lift_definition uniformity_real_bounded :: \<open>( ('a, 'b) real_bounded \<times> ('a, 'b) real_bounded ) filter\<close>
-  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) real_bounded), g). dist f g < e})\<close>.
+definition uniformity_real_bounded :: \<open>( ('a, 'b) real_bounded \<times> ('a, 'b) real_bounded ) filter\<close>
+  where  \<open>uniformity_real_bounded = (INF e:{0<..}. principal {((f::('a, 'b) real_bounded), g). dist f g < e})\<close>
 
-lift_definition open_real_bounded :: \<open>(('a, 'b) real_bounded) set \<Rightarrow> bool\<close>
-  is \<open>\<lambda> U::(('a, 'b) real_bounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity)\<close>.
+definition open_real_bounded :: \<open>(('a, 'b) real_bounded) set \<Rightarrow> bool\<close>
+  where \<open>open_real_bounded = (\<lambda> U::(('a, 'b) real_bounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
 
 instance
   apply intro_classes
@@ -124,9 +124,9 @@ instance
         apply auto
          apply transfer
          apply auto
-        apply (simp add: uniformity_real_bounded.transfer)
-       apply (metis (mono_tags, lifting) open_real_bounded.transfer)
-      apply (smt eventually_mono open_real_bounded.transfer split_cong)
+  apply (simp add: real_bounded_operators.uniformity_real_bounded_def)
+  apply (simp add: open_real_bounded_def)
+  apply (simp add: open_real_bounded_def)
      apply transfer
   using onorm_pos_lt apply fastforce
     apply transfer
@@ -134,9 +134,8 @@ instance
    apply transfer
    apply (simp add: onorm_triangle)
   apply transfer
-  using onorm_scaleR by blast
+  using onorm_scaleR by blast 
 end
-
 
 subsection \<open>Sequence of operators, bounded in norm\<close>
 
@@ -254,13 +253,22 @@ proof
     by (rule onorm_tendsto)    
 qed
 
-
 lemma tendsto_ONORM_real_bounded:
- \<open>f \<longlonglongrightarrow> l \<Longrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
-  apply transfer
-  sorry
-
-
+  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded\<close>
+    and l :: \<open>('a, 'b) real_bounded\<close>
+  shows \<open>f \<longlonglongrightarrow> l \<Longrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
+proof-
+  assume \<open>f \<longlonglongrightarrow> l\<close>
+  hence \<open>(\<lambda> n. dist (f n) l) \<longlonglongrightarrow> 0\<close>
+    using  Real_Vector_Spaces.tendsto_dist_iff
+    by blast
+  hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
+    apply transfer
+    apply auto
+      unfolding onorm_convergence_def
+      by simp
+  thus ?thesis by blast
+qed
 
 instantiation real_bounded :: (real_normed_vector, banach) "banach"
 begin

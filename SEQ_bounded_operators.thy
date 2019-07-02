@@ -36,7 +36,7 @@ abbreviation
 
 (* NEW *)
 definition onorm_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
-  where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. l x - f n x) ) \<longlonglongrightarrow> 0 )\<close>
+  where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
 
 (* NEW *)
 abbreviation
@@ -1145,34 +1145,9 @@ lemma onorm_tendsto:
   shows \<open>\<forall>\<^sub>F n in sequentially. onorm (\<lambda>x. f n x - l x) < e\<close>
 proof-
   from  \<open>f \<midarrow>onorm\<rightarrow> l\<close>
-  have \<open>(\<lambda> n. onorm (\<lambda> x. l x - f n x)) \<longlonglongrightarrow> 0\<close>
+  have \<open>(\<lambda> n. onorm (\<lambda> x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
     unfolding onorm_convergence_def
     by blast
-  hence \<open>(\<lambda> n. onorm (\<lambda> x.  f n x - l x)) \<longlonglongrightarrow> 0\<close>
-  proof-
-    have \<open> (\<lambda> x. l x - f n x) = - (\<lambda> x. f n x - l x)\<close>
-      for n
-      by auto
-    hence \<open>onorm (\<lambda> x. l x - f n x) = onorm (- (\<lambda> x. f n x - l x))\<close>
-      for n
-      by simp
-    moreover have \<open>onorm (\<lambda> x. p x - q x) = onorm (\<lambda> x. q x - p x )\<close>
-      for p q::\<open>'a \<Rightarrow> 'b\<close>
-    proof-
-      have \<open>onorm (\<lambda> x. p x - q x) = (SUP t. norm ((\<lambda> x. p x - q x) t)/ norm t)\<close>
-        using onorm_def by blast
-      also have \<open>... = (SUP t. norm ((\<lambda> x. q x - p x) t)/ norm t)\<close>
-        by (simp add: norm_minus_commute)
-      also have \<open>... =  onorm (\<lambda> x. q x - p x )\<close>
-        by (simp add: onorm_def) 
-      finally show ?thesis by blast 
-    qed
-     ultimately have \<open>onorm (\<lambda> x. l x - f n x) = onorm (\<lambda> x. f n x - l x)\<close>
-      for n
-       by simp
-    thus ?thesis
-      using \<open>(\<lambda>n. onorm (\<lambda>x. l x - f n x)) \<longlonglongrightarrow> 0\<close> by auto 
-  qed
   hence \<open>\<exists> N. \<forall> n \<ge> N. dist ((\<lambda> n. onorm (\<lambda>x. f n x - l x)) n) 0 < e\<close>
     using \<open>e > 0\<close>
     by (simp add: lim_sequentially) 
@@ -1188,8 +1163,6 @@ proof-
   thus ?thesis
     by (simp add: eventually_at_top_linorder)
 qed
-
-
 
 lemma completeness_real_bounded:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::banach)\<close>
