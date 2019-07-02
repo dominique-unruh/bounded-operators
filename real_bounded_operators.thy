@@ -270,6 +270,12 @@ proof-
   thus ?thesis by blast
 qed
 
+lemma ONORM_STRONG:
+  \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<midarrow>STRONG\<rightarrow> l\<close>
+  apply transfer
+  apply auto
+  by (rule onorm_strong)
+
 instantiation real_bounded :: (real_normed_vector, banach) "banach"
 begin
 instance
