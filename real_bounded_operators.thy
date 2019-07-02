@@ -124,9 +124,9 @@ instance
         apply auto
          apply transfer
          apply auto
-  apply (simp add: real_bounded_operators.uniformity_real_bounded_def)
-  apply (simp add: open_real_bounded_def)
-  apply (simp add: open_real_bounded_def)
+        apply (simp add: real_bounded_operators.uniformity_real_bounded_def)
+       apply (simp add: open_real_bounded_def)
+      apply (simp add: open_real_bounded_def)
      apply transfer
   using onorm_pos_lt apply fastforce
     apply transfer
@@ -142,7 +142,7 @@ subsection \<open>Sequence of operators, bounded in norm\<close>
 (* This subsection was just an exercise in order to practive typedef and lift_definition *)
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise
-= \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. \<forall> x::'a. bdd_above { norm ( ev_real_bounded (f n) x ) | n. True } }\<close>
+  = \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. \<forall> x::'a. bdd_above { norm ( ev_real_bounded (f n) x ) | n. True } }\<close>
   apply transfer
 proof
   show \<open>(\<lambda> n::nat. (\<lambda> _::'a. 0::'b)) \<in> {f. (\<forall>x. bdd_above {norm (f n x) |n. True}) \<and> pred_fun top bounded_linear f}\<close>
@@ -154,15 +154,15 @@ qed
 setup_lifting type_definition_real_bounded_SEQ_bounded_pointwise
 
 lift_definition index_real_bounded :: 
-\<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow> nat 
+  \<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow> nat 
 \<Rightarrow> ('a, 'b) real_bounded\<close> is \<open>\<lambda> f::nat \<Rightarrow> ('a, 'b) real_bounded. \<lambda> n::nat. f n\<close>.
 
 lift_definition norm_SEQ_real_bounded :: 
-\<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow> (nat 
+  \<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow> (nat 
 \<Rightarrow> real)\<close> is \<open>\<lambda> f::nat \<Rightarrow> ('a, 'b) real_bounded. \<lambda> n::nat. norm (f n)\<close>.
 
 typedef (overloaded) ('a::metric_space) bounded_SEQ
-= \<open>{f :: nat \<Rightarrow> 'a.  bounded { f n | n. True } }\<close>
+  = \<open>{f :: nat \<Rightarrow> 'a.  bounded { f n | n. True } }\<close>
 proof-
   have \<open>\<exists> x. x \<in> (UNIV :: 'a set)\<close>
     by simp
@@ -216,9 +216,9 @@ proof-
 qed
 
 lift_definition Banach_Steinhaus_real_bounded::
-\<open>('a::{banach,perfect_space}, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow>
+  \<open>('a::{banach,perfect_space}, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow>
 real bounded_SEQ\<close> 
-is \<open>\<lambda> f. (\<lambda> n::nat. norm (f n))\<close>
+  is \<open>\<lambda> f. (\<lambda> n::nat. norm (f n))\<close>
   apply transfer   
   apply auto
   using Banach_Steinhaus_coro
@@ -241,7 +241,7 @@ abbreviation
   where "f \<midarrow>ONORM\<rightarrow> l \<equiv> (onorm_convergence_real_bounded f l ) "
 
 lemma ONORM_tendsto_real_bounded:
- \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
+  \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
   apply transfer
 proof
   show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) real_bounded) \<Longrightarrow> e > 0 \<Longrightarrow> \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) real_bounded) < e"   
@@ -265,26 +265,60 @@ proof-
   hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
     apply transfer
     apply auto
-      unfolding onorm_convergence_def
-      by simp
+    unfolding onorm_convergence_def
+    by simp
   thus ?thesis by blast
 qed
 
 instantiation real_bounded :: (real_normed_vector, banach) "banach"
 begin
 instance
-  proof
+proof
   show "Cauchy f \<Longrightarrow> convergent f"
-    for f :: "nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) real_bounded"
-    sorry     
-qed
-
-  
-  
+    for f :: "nat \<Rightarrow> ('a, 'b) real_bounded"
+    unfolding Cauchy_def convergent_def 
+  proof-
+    show \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e \<Longrightarrow> \<exists>L. f \<longlonglongrightarrow> L\<close>
+    proof-
+      assume \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
+      hence \<open>\<exists>l. bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close>
+        apply transfer
+        apply auto
+        using completeness_real_bounded 
+        apply smt.
+      then obtain l
+        where \<open> bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close>
+        by blast
+      have \<open>bounded_linear l\<close>
+        using \<open> bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close> 
+        by blast
+      hence \<open>\<exists> L. Rep_real_bounded L = l\<close>
+        apply transfer
+        by auto
+      then obtain L::\<open>('a, 'b) real_bounded\<close> where \<open>Rep_real_bounded L = l\<close> by blast
+      have \<open>(\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close>
+        using \<open> bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close> 
+        by blast
+      hence \<open>(\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - (Rep_real_bounded L) x)) \<longlonglongrightarrow> 0\<close>
+        using  \<open>Rep_real_bounded L = l\<close> by blast
+      hence \<open>(\<lambda>n. Rep_real_bounded (f n)) \<midarrow>onorm\<rightarrow> (Rep_real_bounded L)\<close>
+        using onorm_convergence_def
+        by blast
+      hence \<open>f \<midarrow>ONORM\<rightarrow> L\<close>
+        unfolding onorm_convergence_real_bounded_def
+        apply auto
+        unfolding map_fun_def
+        apply simp
+        unfolding comp_def
+        by auto
+      hence \<open>f \<longlonglongrightarrow> L\<close>
+        using ONORM_tendsto_real_bounded
+        by auto
+      thus ?thesis by blast
+    qed
+  qed
+qed  
 end
-
-
-
 
 
 
