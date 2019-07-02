@@ -41,8 +41,8 @@ definition ustrong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<R
 
 (* NEW *)
 abbreviation
-  ustrong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>ustrong\<rightarrow> (_))" [60, 60] 60)
-  where "f \<midarrow>ustrong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
+  ustrong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>ustrong\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l ) "
 
 (* NEW *)
 definition onorm_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
@@ -1251,14 +1251,154 @@ proof-
 qed
 
 
-
 lemma uniform_strong_onorm:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
     and l :: \<open>'a \<Rightarrow> 'b\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
     and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
   shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
-  sorry
+proof-
+  have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+  proof-
+    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N.  onorm (\<lambda>x. f n x - l x) \<le> e\<close>
+      for e
+    proof-
+      assume \<open>e > 0\<close>
+      hence \<open>\<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+        using \<open>f \<midarrow>ustrong\<rightarrow> l\<close> unfolding ustrong_convergence_def
+        by blast
+      then obtain N where \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+        by blast
+      have \<open>bounded_linear g \<Longrightarrow> \<exists> x. norm x = 1 \<and> onorm g \<le> norm (g x) + inverse (real (Suc m))\<close>
+        for x::'a and g::\<open>'a \<Rightarrow> 'b\<close> and m :: nat
+      proof-
+        assume \<open>bounded_linear g\<close>
+        have \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
+          sorry
+        have \<open>\<exists> t \<in> {norm (g x) | x. norm x = 1}. onorm g \<le>  t + inverse (real (Suc m))\<close>
+        proof-
+          have \<open>ereal (inverse (real (Suc m))) > 0\<close>
+            by simp
+          moreover have \<open>\<bar>Sup {ereal (norm (g x)) | x. norm x = 1}\<bar> \<noteq> \<infinity>\<close>
+          proof-
+            have \<open>\<exists> M::real. \<forall> x. norm x = 1 \<longrightarrow> \<bar> ereal (norm (g x)) \<bar> \<le> M\<close>
+              sorry
+            thus ?thesis  sorry
+          qed
+          moreover have \<open>{ereal(norm (g x)) | x. norm x = 1} \<noteq> {}\<close>
+            by (metis Sup_empty bot.extremum_strict calculation(2) less_ereal.simps(1) lt_ex not_infty_ereal)
+            
+          ultimately have \<open>\<exists> t \<in> {ereal(norm (g x)) | x. norm x = 1}. Sup {ereal(norm (g x)) | x. norm x = 1}
+               - ereal (inverse (real (Suc m))) < t\<close>
+            by (rule Sup_ereal_close)
+          hence \<open>\<exists> t \<in> {(norm (g x)) | x. norm x = 1}. Sup {ereal(norm (g x)) | x. norm x = 1}
+               - (inverse (real (Suc m))) < t\<close>
+            by auto
+          then obtain t where \<open>t \<in> {(norm (g x)) | x. norm x = 1}\<close> 
+            and \<open>Sup {ereal(norm (g x)) | x. norm x = 1}
+               - (inverse (real (Suc m))) < t\<close>
+            by blast
+          have \<open>onorm g = Sup {ereal(norm (g x)) | x. norm x = 1}\<close>
+            sorry
+          hence  \<open>onorm g - (inverse (real (Suc m))) < t\<close>
+            using  \<open>Sup {ereal(norm (g x)) | x. norm x = 1}
+               - (inverse (real (Suc m))) < t\<close>
+            sorry
+          show ?thesis 
+            sorry
+        qed
+        thus ?thesis by auto
+      qed
+      hence \<open>\<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
+        for n and m::nat
+        using \<open>\<forall>n. bounded_linear (f n)\<close>
+        by (simp add: assms(2) bounded_linear_sub)
+      hence \<open>n \<ge> N \<Longrightarrow>  onorm (\<lambda> x. f n x - l x) \<le> e\<close>
+        for n
+      proof-
+        assume \<open>n \<ge> N\<close>
+        hence  \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+          using \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+          by blast
+        have  \<open>\<forall> m. \<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
+          using \<open>\<And> m. \<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
+          by blast
+        hence  \<open>\<exists> x. \<forall> m. norm (x m) = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m))\<close>
+          using choice by simp  
+        then obtain x where \<open>norm (x m) = 1\<close> 
+          and \<open>onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m))\<close>
+        for m::nat
+          by blast
+          
+        have \<open>\<forall> m. onorm (\<lambda> x. f n x - l x) < e + inverse (real (Suc m))\<close>
+          using \<open>\<And> m. norm (x m) = 1\<close>  \<open>\<And> m. onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m)) \<close>
+                \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+          by smt
+        have \<open>onorm (\<lambda> x. f n x - l x) \<le> e\<close>
+        proof(rule classical)
+          assume \<open>\<not>(onorm (\<lambda> x. f n x - l x) \<le> e)\<close>
+          hence \<open>e < onorm (\<lambda> x. f n x - l x)\<close>
+            by simp
+          hence \<open>0 < onorm (\<lambda> x. f n x - l x) - e\<close>
+            by simp
+          hence \<open>\<exists> n0. inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close>
+            by (rule Archimedean_Field.reals_Archimedean)
+          then obtain n0 where \<open>inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close>
+            by blast
+          have \<open>\<forall> m. onorm (\<lambda> x. f n x - l x) - e < inverse (real (Suc m))\<close>
+            by (smt \<open>\<forall>m. onorm (\<lambda>x. f n x - l x) < e + inverse (real (Suc m))\<close>)
+          hence \<open>\<forall> m. inverse (real (Suc n0)) < inverse (real (Suc m))\<close>
+            using  \<open>inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close> by smt
+          hence \<open>inverse (real (Suc n0)) < inverse (real (Suc n0))\<close>
+            by blast
+          thus ?thesis by blast
+        qed
+        thus ?thesis by blast 
+      qed
+      thus ?thesis by blast
+    qed
+    hence \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N. norm ( onorm (\<lambda>x. f n x - l x) ) \<le> e\<close>
+      for e
+    proof-
+      assume \<open>e > 0\<close>
+      hence \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close>
+        using  \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N.  onorm (\<lambda>x. f n x - l x) \<le> e\<close>
+        by blast
+      then obtain N where \<open>\<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close>
+        by blast
+      have  \<open>\<forall> n \<ge> N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close>
+      proof-
+        have \<open>n \<ge> N \<Longrightarrow> norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close>
+          for n
+        proof-
+          assume \<open>n \<ge> N\<close>
+          hence \<open>onorm (\<lambda>x. f n x - l x) \<le> e\<close>
+            using \<open>\<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close> by blast
+          moreover have \<open>onorm (\<lambda>x. f n x - l x) \<ge> 0\<close>
+            by (simp add: assms(1) assms(2) bounded_linear_sub onorm_pos_le)            
+          ultimately show ?thesis by simp
+        qed
+        thus ?thesis by blast
+      qed
+      thus ?thesis by blast 
+    qed
+    have \<open>0 < e \<Longrightarrow>
+      \<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) < e\<close>
+      for e::real
+    proof-
+      assume \<open>0 < e\<close>
+      hence \<open>e/2 < e\<close>
+        by simp
+      have \<open>0 < e/2\<close>
+        using \<open>0 < e\<close> by simp
+      hence \<open>\<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e/2\<close>
+        using \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close> by blast
+      thus ?thesis using \<open>e/2 < e\<close> by fastforce
+    qed
+    thus ?thesis by (simp add: LIMSEQ_I) 
+  qed
+  thus ?thesis unfolding onorm_convergence_def by blast
+qed
 
 lemma completeness_real_bounded:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::banach)\<close>
