@@ -1511,6 +1511,39 @@ lemma completeness_real_bounded:
   assumes \<open>\<forall>n. bounded_linear (f n)\<close>
     and \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
   shows \<open>\<exists> l. bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
-  sorry
+proof-
+  have  \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+    for e::real
+  proof-
+    assume \<open>e > 0\<close>
+    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+      using \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+      by blast
+    then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+      by blast
+    have \<open>m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+      for m n::nat
+    proof-
+      assume \<open>m \<ge> M\<close>
+      moreover assume \<open>n \<ge> M\<close>
+      ultimately have \<open>onorm (\<lambda>x. f m x - f n x) < e\<close>
+        by (simp add: \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>)
+      moreover have \<open>norm x = 1 \<Longrightarrow>  norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x)\<close>
+        for x
+      proof-
+        assume \<open>norm x = 1\<close>
+        moreover have \<open>norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x) * norm x\<close>
+          using assms(1) bounded_linear_sub onorm by blast          
+        ultimately show ?thesis by simp
+      qed
+      ultimately show ?thesis by smt
+    qed
+    thus ?thesis by blast
+  qed
+
+
+
+  show ?thesis sorry
+qed
 
 end
