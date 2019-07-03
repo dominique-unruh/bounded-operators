@@ -1071,7 +1071,7 @@ proof
         unfolding linear_def
         unfolding Modules.additive_def
         by (simp add: Real_Vector_Spaces.linear_def linear_scale)
-        
+
       hence \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close>
         by simp
       show ?thesis 
@@ -1273,8 +1273,8 @@ proof-
         for x::'a and g::\<open>'a \<Rightarrow> 'b\<close> and m :: nat
       proof-
         assume \<open>bounded_linear g\<close>
-        have \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
-          sorry
+        hence \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
+          using onorm_sphere by blast
         have \<open>\<exists> t \<in> {norm (g x) | x. norm x = 1}. onorm g \<le>  t + inverse (real (Suc m))\<close>
         proof-
           have \<open>ereal (inverse (real (Suc m))) > 0\<close>
@@ -1380,19 +1380,34 @@ proof-
                 using \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>
                 by (meson cSup_least)
 
-              from  \<open>\<And> y. y \<in> { (norm (g x)) |x. norm x = 1}  
-                  \<Longrightarrow> y \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-              have \<open>(Sup { (norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                sorry
-               
+              have \<open>(Sup { (norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close> 
+              proof-
+                define X::\<open>ereal set\<close> where \<open>X = {norm (g x) |x. norm x = 1}\<close>
+                define z::ereal where \<open>z = Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
+                have \<open>X \<noteq> {}\<close>
+                  unfolding X_def
+                  using \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close> by blast 
+                moreover have \<open>\<And>x. x \<in> X \<Longrightarrow> x \<le> z\<close>
+                  unfolding X_def z_def
+                  by (simp add: Sup_upper)
+                ultimately have \<open>Sup X \<le> z\<close>
+                  by (rule cSup_least)
+                hence \<open>Sup X \<le>  Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
+                  unfolding z_def 
+                  by auto
+                hence \<open>real_of_ereal (Sup {norm (g x) |x. norm x = 1}) \<le>  Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
+                  unfolding X_def 
+                  by auto
+                thus ?thesis
+                  by (smt \<open>\<And>y. y \<in> {norm (g x) |x. norm x = 1} \<Longrightarrow> ereal y \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close> \<open>\<bar>Sup {ereal (norm (g x)) |x. norm x = 1}\<bar> \<noteq> \<infinity>\<close> \<open>{norm (g x) |x. norm x = 1} \<noteq> {}\<close> cSup_least ereal_le_real_iff) 
+              qed
               show ?thesis 
                 using \<open>(Sup {(norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                 \<open>Sup {ereal (norm (g x)) |x. norm x = 1} \<le>  Sup {(norm (g x)) |x. norm x = 1}\<close>
+                  \<open>Sup {ereal (norm (g x)) |x. norm x = 1} \<le>  Sup {(norm (g x)) |x. norm x = 1}\<close>
                 by auto
             qed
             ultimately show \<open>Sup {norm (g x) |x. norm x = 1} < t + inverse (1 + real m)\<close>
               by simp
-              
           qed
           finally have \<open>(onorm g) <  t + (inverse (real (Suc m)))\<close>
             by blast
@@ -1423,7 +1438,7 @@ proof-
           by blast          
         have \<open>\<forall> m. onorm (\<lambda> x. f n x - l x) < e + inverse (real (Suc m))\<close>
           using \<open>\<And> m. norm (x m) = 1\<close>  \<open>\<And> m. onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m)) \<close>
-                \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
+            \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
           by smt
         have \<open>onorm (\<lambda> x. f n x - l x) \<le> e\<close>
         proof(rule classical)

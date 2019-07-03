@@ -91,6 +91,150 @@ qed
 section \<open>Characterization of the operator norm\<close>
 
 (* NEW *)
+lemma onorm_sphere:
+  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close>
+  shows \<open>onorm f = Sup {norm (f x) | x. norm x = 1}\<close>
+proof(cases \<open>f = (\<lambda> _. 0)\<close>)
+  case True
+  have \<open>onorm f = 0\<close>
+    by (simp add: True onorm_eq_0)  
+  moreover have \<open>Sup {norm (f x) | x. norm x = 1} = 0\<close>
+  proof-
+    have \<open>norm (f x) = 0\<close>
+      for x
+      by (simp add: True)      
+    hence \<open>{norm (f x) | x. norm x = 1} = {0}\<close>
+      using assms norm_set_nonempty_eq1 by fastforce
+    thus ?thesis
+      by simp 
+  qed
+  ultimately show ?thesis by simp
+next
+  case False
+  thus ?thesis 
+  proof-
+    have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
+    proof-
+      have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
+        by (simp add: full_SetCompr_eq)
+      also have \<open>... = Sup {norm (f x) | x. norm x = 1}\<close>
+      proof-
+        have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+        proof-
+          have \<open>y \<in> {norm (f x) / norm x |x. True} \<Longrightarrow> y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+            for y
+          proof-
+            assume \<open>y \<in> {norm (f x) / norm x |x. True}\<close>
+            show ?thesis
+            proof(cases \<open>y = 0\<close>)
+              case True
+              then show ?thesis
+                by simp 
+            next
+              case False
+              have \<open>\<exists> x. y = norm (f x) / norm x\<close>
+                using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
+              then obtain x where \<open>y = norm (f x) / norm x\<close>
+                by blast
+              hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
+                by simp
+              hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
+                by simp
+              hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
+                by (simp add: assms linear_simps(5))
+              moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+                using False \<open>y = norm (f x) / norm x\<close> by auto              
+              ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+                by blast
+              thus ?thesis by blast
+            qed
+          qed
+          moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0} \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
+            for y
+          proof(cases \<open>y = 0\<close>)
+            case True
+            then show ?thesis
+              by auto 
+          next
+            case False
+            hence \<open>y \<notin> {0}\<close>
+              by simp
+            moreover assume \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+            ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+              by simp
+            hence \<open>\<exists> x. norm x = 1 \<and> y = norm (f x)\<close>
+              by auto
+            then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
+              by auto
+            have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
+              by simp 
+            thus ?thesis
+              by auto 
+          qed
+          ultimately show ?thesis by blast
+        qed
+        hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
+          by simp
+        moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+        proof-
+          have \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
+          proof-
+            have \<open>\<exists> x::'a. norm x = 1\<close>
+              by (metis (full_types) False assms linear_simps(3) norm_sgn)
+            then obtain x::'a where \<open>norm x = 1\<close>
+              by blast
+            have \<open>norm (f x) \<ge> 0\<close>
+              by simp
+            thus ?thesis using \<open>norm x = 1\<close> by blast
+          qed
+          hence \<open>\<exists> y \<in> {norm (f x) |x. norm x = 1}. y \<ge> 0\<close>
+            by blast
+          then obtain y::real where \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> 
+            and \<open>y \<ge> 0\<close>
+            by auto
+          have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+            using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
+          moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+            by (simp add: assms norm_set_bdd_above_eq1)          
+          ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
+            using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+            by (simp add: cSup_upper) 
+          thus ?thesis using \<open>y \<ge> 0\<close> by simp
+        qed
+        moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
+        proof-
+          have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+            using False assms norm_set_nonempty_eq1 by fastforce
+          moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+            by (simp add: assms norm_set_bdd_above_eq1)    
+          have \<open>{0::real} \<noteq> {}\<close>
+            by simp
+          moreover have \<open>bdd_above {0::real}\<close>
+            by simp
+          ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
+             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
+            by (smt \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> cSup_insert_If cSup_singleton cSup_union_distrib insert_absorb2 sup.strict_order_iff sup_commute)
+          moreover have \<open>Sup {(0::real)} = (0::real)\<close>
+            by simp          
+          moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+            by (simp add: \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close>)
+          ultimately show ?thesis
+            by simp
+        qed
+        moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0})
+           = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
+          using calculation(2) calculation(3) by auto
+        ultimately show ?thesis by simp 
+      qed
+      ultimately show ?thesis
+        by linarith 
+    qed
+    thus ?thesis unfolding onorm_def by blast
+  qed
+qed
+
+(* NEW *)
 proposition Operator_Norm_characterization_1:
   fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
@@ -951,7 +1095,6 @@ proof-
   thus ?thesis
     using calculation(1) calculation(2) by auto 
 qed
-
 
 
 end
