@@ -1720,7 +1720,111 @@ proof-
       qed
     qed
     moreover have \<open>bounded_linear_axioms l\<close>
-      sorry
+    proof-
+      have \<open>\<exists>K. \<forall>x. norm (l x) \<le> norm x * K\<close>
+      proof(rule classical)
+        assume \<open>\<not> (\<exists>K. \<forall>x. norm (l x) \<le> norm x * K)\<close>
+        hence \<open>\<forall> K. \<exists> x. norm (l x) > norm x * K\<close>
+          by smt
+        hence \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+          using calculation linear_0 by force
+        have \<open>\<forall> K. \<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+        proof-
+          have \<open>\<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+            for K
+          proof-
+            have \<open>\<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+              using  \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close> by blast
+            then obtain x where \<open>x \<noteq> 0\<close> and \<open>norm (l x) > norm x * K\<close>
+              by blast
+            have \<open>norm x > 0\<close> using \<open>x \<noteq> 0\<close> by simp
+            hence  \<open>inverse (norm x) * norm (l x) > inverse (norm x) * (norm x) * K\<close>
+              using  \<open>norm (l x) > norm x * K\<close>
+              by (smt linordered_field_class.sign_simps(23) mult_left_le_imp_le positive_imp_inverse_positive) 
+            moreover have \<open>(inverse (norm x)) * (norm x) = 1\<close>
+              using \<open>norm x > 0\<close> by simp
+            ultimately have \<open>(inverse (norm x)) * norm (l x) >  K\<close>
+              by simp
+            moreover have \<open>(inverse (norm x)) * norm (l x) = norm ((inverse (norm x)) *\<^sub>R (l x))\<close>
+            proof-
+              have \<open>(inverse (norm x)) > 0\<close>
+                using \<open>norm x > 0\<close> 
+                by simp
+              thus ?thesis using norm_scaleR
+                by simp 
+            qed
+            hence \<open> norm ((inverse (norm x)) *\<^sub>R (l x)) >  K\<close>
+              using calculation by linarith
+            hence \<open> norm (l ((inverse (norm x)) *\<^sub>R  x)) >  K\<close>
+            proof-
+              have \<open>(inverse (norm x)) *\<^sub>R (l x) = l ((inverse (norm x)) *\<^sub>R  x)\<close>
+                by (simp add: \<open>linear l\<close> linear_scale)
+              thus ?thesis
+                using \<open>K < norm (l x /\<^sub>R norm x)\<close> by simp                 
+            qed
+            have \<open>norm ( (inverse (norm x)) *\<^sub>R  x ) = 1\<close>
+              using \<open>norm x > 0\<close> by simp
+            show ?thesis
+              using \<open>K < norm (l (x /\<^sub>R norm x))\<close> \<open>norm (x /\<^sub>R norm x) = 1\<close> by blast 
+          qed
+          thus ?thesis by blast
+        qed
+        have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm (f m x - f n x) < e\<close>
+          using \<open>uCauchy f\<close>
+          unfolding uCauchy_def
+          by blast
+        hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm (f m x - f n x) < 1\<close>
+          by auto
+        then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm (f m x - f n x) < 1\<close>
+          by blast
+        hence \<open>\<forall>m\<ge>M. \<forall>x. 
+            norm x = 1 \<longrightarrow> norm (f m x - f M x) < 1\<close>
+          by blast
+        have \<open>norm (f m x) \<le> norm (f M x) + norm (f m x - f M x)\<close>
+          for m and x
+          by (simp add: norm_triangle_sub) 
+        hence \<open>norm (f m x) \<le> onorm (f M) * norm x + norm (f m x - f M x)\<close>
+          for m and x
+          using onorm
+          by (smt assms(2)) 
+        hence \<open>norm x = 1 \<Longrightarrow> norm (f m x) \<le> onorm (f M) + norm (f m x - f M x)\<close>
+          for m and x
+          by (metis mult_cancel_left2)
+        hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm (f m x) < onorm (f M) + 1\<close>
+          for m and x
+          using  \<open>\<forall>m\<ge>M. \<forall>x. 
+            norm x = 1 \<longrightarrow> norm (f m x - f M x) < 1\<close> 
+          by smt
+
+        have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. f m x) \<longlonglongrightarrow> l x\<close>
+          for x
+          by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> l x\<close>)
+        hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
+          for x
+          by (simp add: tendsto_norm)
+        hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (f M) + 1\<close>
+          for x
+        proof-
+          assume \<open>norm x = 1\<close>
+          hence \<open>(\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
+            using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
+            by blast
+          moreover have \<open>\<forall>  m \<ge> M. norm (f m x) \<le> onorm (f M) + 1\<close>
+            using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm (f m x) < onorm (f M) + 1\<close>
+              \<open>norm x = 1\<close> by smt
+          ultimately show ?thesis 
+            by (rule Topological_Spaces.Lim_bounded)
+        qed
+        moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (f M) + 1 < norm (l x)\<close>
+          by (simp add: \<open>\<forall>K. \<exists>x. norm x = 1 \<and> K < norm (l x)\<close>)
+        ultimately show ?thesis
+          by fastforce 
+      qed
+      thus ?thesis unfolding bounded_linear_axioms_def by blast
+    qed
     ultimately show ?thesis unfolding bounded_linear_def by blast
   qed
   ultimately show ?thesis by blast
