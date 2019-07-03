@@ -1512,15 +1512,10 @@ qed
 
 lemma uCauchy_ustrong:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
-  assumes  \<open>uCauchy f\<close>
-  shows \<open>\<exists> l. f \<midarrow>ustrong\<rightarrow> l\<close>
+  assumes  \<open>uCauchy f\<close> and \<open>\<And> n. bounded_linear (f n)\<close>
+  shows \<open>\<exists> l::'a\<Rightarrow>'b. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
   sorry
 
-lemma uStrong_bounded_linear:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>f \<midarrow>ustrong\<rightarrow> l\<close> 
-  shows \<open>bounded_linear l\<close>
-  sorry 
 
 lemma completeness_real_bounded:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
@@ -1561,15 +1556,17 @@ proof-
     thus ?thesis
       by (simp add: uCauchy_def) 
   qed
-  hence \<open>\<exists> l. f \<midarrow>ustrong\<rightarrow> l\<close>
-    using uCauchy_ustrong by blast
-  then obtain l where \<open>f \<midarrow>ustrong\<rightarrow> l\<close> by blast
-  have \<open>bounded_linear l\<close>
-    using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close> uStrong_bounded_linear by blast
-  moreover have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+  hence \<open>\<exists> l. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
+    using \<open>\<forall>n. bounded_linear (f n)\<close>
+     uCauchy_ustrong
+    by auto
+  then obtain l where  \<open>bounded_linear l\<close> and \<open>f \<midarrow>ustrong\<rightarrow> l\<close> 
+    by blast
+  have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
     using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-      assms(1) calculation onorm_convergence_def uniform_strong_onorm by blast
-  ultimately show ?thesis by blast
+     \<open>bounded_linear l\<close> assms(1) onorm_convergence_def uniform_strong_onorm by blast
+  thus ?thesis
+    using \<open>bounded_linear l\<close> by auto  
 qed
 
 end
