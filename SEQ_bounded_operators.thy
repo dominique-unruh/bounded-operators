@@ -39,6 +39,9 @@ abbreviation
 definition ustrong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
   where \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
 
+definition uCauchy :: \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
+
 (* NEW *)
 abbreviation
   ustrong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>ustrong\<rightarrow> (_))" [60, 60] 60)
@@ -1506,44 +1509,67 @@ proof-
   thus ?thesis unfolding onorm_convergence_def by blast
 qed
 
+
+lemma uCauchy_ustrong:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  assumes  \<open>uCauchy f\<close>
+  shows \<open>\<exists> l. f \<midarrow>ustrong\<rightarrow> l\<close>
+  sorry
+
+lemma uStrong_bounded_linear:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  assumes \<open>f \<midarrow>ustrong\<rightarrow> l\<close> 
+  shows \<open>bounded_linear l\<close>
+  sorry 
+
 lemma completeness_real_bounded:
-  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::banach)\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close>
     and \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
   shows \<open>\<exists> l. bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
 proof-
-  have  \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-    for e::real
+  have \<open>uCauchy f\<close>
   proof-
-    assume \<open>e > 0\<close>
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      using \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      by blast
-    then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      by blast
-    have \<open>m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-      for m n::nat
+    have  \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+      for e::real
     proof-
-      assume \<open>m \<ge> M\<close>
-      moreover assume \<open>n \<ge> M\<close>
-      ultimately have \<open>onorm (\<lambda>x. f m x - f n x) < e\<close>
-        by (simp add: \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>)
-      moreover have \<open>norm x = 1 \<Longrightarrow>  norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x)\<close>
-        for x
+      assume \<open>e > 0\<close>
+      hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+        using \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+        by blast
+      then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+        by blast
+      have \<open>m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+        for m n::nat
       proof-
-        assume \<open>norm x = 1\<close>
-        moreover have \<open>norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x) * norm x\<close>
-          using assms(1) bounded_linear_sub onorm by blast          
-        ultimately show ?thesis by simp
+        assume \<open>m \<ge> M\<close>
+        moreover assume \<open>n \<ge> M\<close>
+        ultimately have \<open>onorm (\<lambda>x. f m x - f n x) < e\<close>
+          by (simp add: \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>)
+        moreover have \<open>norm x = 1 \<Longrightarrow>  norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x)\<close>
+          for x
+        proof-
+          assume \<open>norm x = 1\<close>
+          moreover have \<open>norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x) * norm x\<close>
+            using assms(1) bounded_linear_sub onorm by blast          
+          ultimately show ?thesis by simp
+        qed
+        ultimately show ?thesis by smt
       qed
-      ultimately show ?thesis by smt
+      thus ?thesis by blast
     qed
-    thus ?thesis by blast
+    thus ?thesis
+      by (simp add: uCauchy_def) 
   qed
-
-
-
-  show ?thesis sorry
+  hence \<open>\<exists> l. f \<midarrow>ustrong\<rightarrow> l\<close>
+    using uCauchy_ustrong by blast
+  then obtain l where \<open>f \<midarrow>ustrong\<rightarrow> l\<close> by blast
+  have \<open>bounded_linear l\<close>
+    using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close> uStrong_bounded_linear by blast
+  moreover have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+    using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+      assms(1) calculation onorm_convergence_def uniform_strong_onorm by blast
+  ultimately show ?thesis by blast
 qed
 
 end
