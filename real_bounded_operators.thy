@@ -276,7 +276,7 @@ lemma ONORM_STRONG:
   apply auto
   by (rule onorm_strong)
 
-instantiation real_bounded :: (real_normed_vector, banach) "banach"
+instantiation real_bounded :: ("{real_normed_vector, perfect_space}", banach) "banach"
 begin
 instance
 proof
