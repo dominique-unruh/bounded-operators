@@ -240,6 +240,13 @@ proof-
 qed
 end
 
+
+instantiation real_bounded :: ("{real_normed_vector, perfect_space}", cbanach) "cbanach"
+begin
+instance..
+end
+
+
 section \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded
@@ -413,6 +420,21 @@ instance
   apply intro_classes
   apply transfer
   by simp
+end
+
+
+instantiation complex_bounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach"
+begin
+instance
+proof
+  show "Cauchy f \<Longrightarrow> convergent f"
+    for f :: "nat \<Rightarrow> ('a, 'b) complex_bounded"
+    unfolding Cauchy_def convergent_def tendsto_def
+    sorry
+qed    
+
+end
+
 
 end
 
