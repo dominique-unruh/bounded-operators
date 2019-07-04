@@ -351,20 +351,20 @@ lift_definition open_complex_bounded :: \<open>(('a, 'b) complex_bounded) set \<
 
 instance
   apply intro_classes
-  apply transfer 
-  apply auto
-  apply transfer 
-  apply auto
-  apply transfer 
-  apply (simp add: sgn_div_norm)
-  apply (simp add: uniformity_complex_bounded.transfer)
-  apply (metis (mono_tags, lifting)  open_complex_bounded.transfer)
-  apply (smt eventually_mono open_complex_bounded.transfer split_cong)
-  apply transfer
-  apply simp
-  apply transfer
-  apply simp
-  apply (smt add_diff_cancel_left' minus_complex_bounded.rep_eq norm_complex_bounded.rep_eq norm_triangle_ineq2)
+        apply transfer 
+        apply auto
+          apply transfer 
+          apply auto
+         apply transfer 
+         apply (simp add: sgn_div_norm)
+        apply (simp add: uniformity_complex_bounded.transfer)
+       apply (metis (mono_tags, lifting)  open_complex_bounded.transfer)
+      apply (smt eventually_mono open_complex_bounded.transfer split_cong)
+     apply transfer
+     apply simp
+    apply transfer
+    apply simp
+   apply (smt add_diff_cancel_left' minus_complex_bounded.rep_eq norm_complex_bounded.rep_eq norm_triangle_ineq2)
   apply transfer
   by simp
 end
@@ -423,17 +423,163 @@ instance
 end
 
 
+lemma scaleC_continuous:
+  fixes c :: complex
+  shows \<open>continuous_on UNIV (((*\<^sub>C) c)::('a::complex_normed_vector \<Rightarrow> 'a))\<close>
+proof-
+  have \<open>0 < r \<Longrightarrow>
+           \<exists>s>0. \<forall>xa. xa \<noteq> x \<and> dist xa x < s \<longrightarrow> dist (c *\<^sub>C xa) (c *\<^sub>C x) < r\<close>
+    for x::'a and r::real
+  proof-
+    assume \<open>0 < r\<close>
+    show ?thesis 
+    proof(cases \<open>c = 0\<close>)
+      case True
+      thus ?thesis
+        using \<open>0 < r\<close> by auto 
+    next
+      case False
+      hence \<open>c \<noteq> 0\<close>
+        by blast
+      hence \<open>cmod c > 0\<close>
+        by simp
+      hence  \<open>inverse (cmod c) > 0\<close>
+        by simp
+      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm (y - x) < r/(cmod c)\<close>
+      proof-
+        have \<open> r/(cmod c) > 0\<close>
+          using \<open>r > 0\<close> and \<open>cmod c > 0\<close>
+          by simp
+        moreover have \<open>y \<noteq> x \<Longrightarrow> norm (y - x) < r/(cmod c) \<Longrightarrow> norm (y - x) < r/(cmod c)\<close>
+          for y
+          by blast
+        ultimately show ?thesis
+          by blast 
+      qed
+      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> (cmod c) * norm (y - x) < r\<close>
+        using  \<open>cmod c > 0\<close>
+        by (simp add: linordered_field_class.pos_less_divide_eq ordered_field_class.sign_simps(24))        
+      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm (c *\<^sub>C (y - x)) < r\<close>
+        by simp       
+      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm ((c *\<^sub>C y) - (c *\<^sub>C x)) < r\<close>
+        by (simp add: complex_vector.scale_right_diff_distrib)        
+      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> dist y x < s \<longrightarrow> dist (c *\<^sub>C y) (c *\<^sub>C x) < r\<close>
+        by (simp add: dist_norm)        
+      thus ?thesis by blast
+    qed
+  qed
+  thus ?thesis unfolding continuous_on LIM_def by blast
+qed
+lemma tendsto_scaleC:
+  fixes f :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> 
+    and l :: 'a and c :: complex
+  assumes \<open>f \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda> n. c *\<^sub>C (f n)) \<longlonglongrightarrow>  c *\<^sub>C l\<close>
+proof-
+  have \<open>continuous_on UNIV (((*\<^sub>C) c)::('a\<Rightarrow>'a))\<close>
+    using scaleC_continuous by blast
+  thus ?thesis using  \<open>f \<longlonglongrightarrow> l\<close>
+    by (metis (full_types) UNIV_I continuous_on_def filterlim_compose tendsto_at_iff_tendsto_nhds) 
+qed
+
+lemma real_bounded_SEQ_scaleC:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{complex_normed_vector, perfect_space}, 'b::cbanach) real_bounded\<close> 
+    and l :: \<open>('a, 'b) real_bounded\<close>
+  assumes \<open>\<And> n. \<forall> c. \<forall> x. ev_real_bounded (f n) (c *\<^sub>C x) = c *\<^sub>C ev_real_bounded (f n) x\<close>
+    and \<open>f \<longlonglongrightarrow> l\<close> 
+  shows \<open>\<forall> c. \<forall> x. ev_real_bounded l (c *\<^sub>C x) = c *\<^sub>C ev_real_bounded l x\<close>
+proof-
+  have \<open>ev_real_bounded l (c *\<^sub>C x) = c *\<^sub>C ev_real_bounded l x\<close>
+    for c::complex and x::'a
+  proof-
+    have  \<open>(\<lambda> n. ev_real_bounded (f n) p)  \<longlonglongrightarrow> ev_real_bounded l p\<close>
+      for p
+    proof-
+      from  \<open>f \<longlonglongrightarrow> l\<close>
+      have \<open>f\<midarrow>STRONG\<rightarrow>l\<close>
+        by (simp add: ONORM_STRONG tendsto_ONORM_real_bounded)
+      thus ?thesis 
+        apply transfer
+        unfolding strong_convergence_def
+        apply auto
+        by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
+    qed
+    hence \<open>(\<lambda> n. ev_real_bounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> ev_real_bounded l (c *\<^sub>C x)\<close>
+      by blast
+    moreover have \<open>(\<lambda> n. ev_real_bounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow>  c *\<^sub>C ev_real_bounded l x\<close>
+    proof-
+      have \<open>(\<lambda> n. ev_real_bounded (f n) (c *\<^sub>C x))
+        = (\<lambda> n. c *\<^sub>C ev_real_bounded (f n) x)\<close>
+        using  \<open>\<And> n. \<forall> c. \<forall> x. ev_real_bounded (f n) (c *\<^sub>C x) = c *\<^sub>C ev_real_bounded (f n) x\<close>
+        by auto
+      moreover have \<open>(\<lambda> n. c *\<^sub>C ev_real_bounded (f n) x)  \<longlonglongrightarrow>  c *\<^sub>C ev_real_bounded l x\<close>
+        using  \<open>\<And> p. (\<lambda> n. ev_real_bounded (f n) p)  \<longlonglongrightarrow> ev_real_bounded l p\<close>
+        by (simp add: tendsto_scaleC)
+      ultimately show ?thesis using LIMSEQ_unique by simp
+    qed
+    ultimately show ?thesis
+      using LIMSEQ_unique by blast 
+  qed
+  thus ?thesis by blast
+qed
+
 instantiation complex_bounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach"
 begin
 instance
-proof
-  show "Cauchy f \<Longrightarrow> convergent f"
-    for f :: "nat \<Rightarrow> ('a, 'b) complex_bounded"
-    unfolding Cauchy_def convergent_def tendsto_def
-    sorry
-qed    
+  apply intro_classes
+proof-
+  fix f :: \<open>nat \<Rightarrow> ('a, 'b) complex_bounded\<close>
+  assume \<open>Cauchy f\<close>
+  hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
+    unfolding Cauchy_def
+    by blast
+  hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. 
+    dist (Rep_complex_bounded (f m)) (Rep_complex_bounded (f n)) < e\<close>
+    apply transfer
+    by blast
+  hence \<open>Cauchy (\<lambda> n. (Rep_complex_bounded (f n)))\<close>
+    using Cauchy_altdef by force
+  hence \<open>convergent (\<lambda> n. (Rep_complex_bounded (f n)))\<close>
+    by (simp add: Cauchy_convergent_iff)
+  hence \<open>\<exists> l::('a, 'b) real_bounded. 
+         (\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> l\<close>
+    using convergentD by blast
+  then obtain l::\<open>('a, 'b) real_bounded\<close>
+    where \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> l\<close>
+    by blast
+  have \<open>\<forall> c. \<forall> x. ev_real_bounded l (c *\<^sub>C x) =
+                c *\<^sub>C ev_real_bounded l x \<close>
+  proof-
+    have \<open>\<And> n. \<forall> c. \<forall> x. ev_real_bounded (Rep_complex_bounded (f n)) (c *\<^sub>C x)
+         = c *\<^sub>C ev_real_bounded (Rep_complex_bounded (f n)) x\<close>
+      apply transfer
+      by simp
+    thus ?thesis
+      using \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> l\<close>
+      by (rule real_bounded_SEQ_scaleC)
+  qed
+  hence \<open>\<exists> L. Rep_complex_bounded L = l\<close>
+    apply transfer by blast
+  then obtain L::\<open>('a, 'b) complex_bounded\<close>
+    where \<open>Rep_complex_bounded L = l\<close> by blast
+  have \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> (Rep_complex_bounded L)\<close>
+    using \<open>Rep_complex_bounded L = l\<close>
+      \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> l\<close>
+    by blast
+  hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. 
+    dist (Rep_complex_bounded (f n)) (Rep_complex_bounded L) < e\<close>
+    by (simp add: metric_LIMSEQ_D)
+  hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e\<close>
+    apply transfer by blast
+  hence \<open>f \<longlonglongrightarrow> L\<close>
+    by (simp add: metric_LIMSEQ_I)
+  thus \<open>convergent f\<close> 
+    unfolding convergent_def by blast
+qed
 
 end
+
+
 
 
 end

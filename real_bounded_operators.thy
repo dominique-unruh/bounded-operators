@@ -244,7 +244,8 @@ lemma ONORM_tendsto_real_bounded:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
   apply transfer
 proof
-  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) real_bounded) \<Longrightarrow> e > 0 \<Longrightarrow> \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) real_bounded) < e"   
+  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) real_bounded) \<Longrightarrow> e > 0 \<Longrightarrow>
+ \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) real_bounded) < e"   
     for f :: "nat \<Rightarrow> ('a, 'b) real_bounded"
       and l :: "('a, 'b) real_bounded"
       and e :: real
