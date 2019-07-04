@@ -59,13 +59,14 @@ proof auto
     using has_ell2_norm_infsetsum by auto
 qed
 
-text \<open>Embedding of a function (defined on an n-dimensional space) into ell2.\<close>
-definition fun_to_ell2 :: \<open>nat \<Rightarrow> (complex vec \<Rightarrow> 'a) \<Rightarrow> (nat ell2 \<Rightarrow> 'a::zero)\<close> where
-  \<open>fun_to_ell2 n f = (\<lambda> x::nat ell2. f (vec n (Rep_ell2 x))  )\<close>
+text \<open>Embedding of a function (defined on an n-dimensional space) into functions defined on ell2.\<close>
+definition fun_to_ell2 :: \<open>nat \<Rightarrow> (complex vec \<Rightarrow> 'a) \<Rightarrow> (nat ell2 \<Rightarrow> 'a)\<close> where
+  \<open>fun_to_ell2 n f = (\<lambda> x::nat ell2. f (vec n (Rep_ell2 x)))\<close>
 
-section \<open>Properties of the embedding\<close>
-text\<open>The embedding vec_index is injective for a fixed dimension.\<close>
-lemma vec_to_ell2_inj:
+section \<open>Set-theoretic properties of the embedding\<close>
+
+text\<open>The embedding for vectors is injective.\<close>
+proposition vec_to_ell2_inj:
   fixes x y :: \<open>complex vec\<close>
   assumes \<open>vec_to_ell2 x = vec_to_ell2 y\<close> and \<open>dim_vec x = dim_vec y\<close>
   shows \<open>vec_index x = vec_index y\<close>
@@ -98,23 +99,46 @@ proof-
   thus ?thesis by blast
 qed
 
+text \<open>The embedding for functions is well-defined\<close>
+proposition fun_to_ell2_well_defined:
+  fixes f :: \<open>complex vec \<Rightarrow> 'a\<close> and x :: \<open>nat ell2\<close> and v :: \<open>complex vec\<close> and n :: nat
+  assumes \<open>dim_vec v = n\<close>
+  shows \<open>fun_to_ell2 n f (vec_to_ell2 v) = f v\<close>
+  unfolding fun_to_ell2_def
+  using assms
+  by (metis dim_vec eq_vecI index_vec vec_to_ell2.rep_eq)
 
-text \<open>vec_to_ell2 is additive\<close>
+
+text \<open>The embdedding for functions is injective.\<close>
+proposition fun_to_ell2_inject:
+  fixes f g :: \<open>complex vec \<Rightarrow> 'a\<close> and n :: nat
+  assumes \<open>dim_vec v = n\<close> and \<open>fun_to_ell2 n f = fun_to_ell2 n g\<close>
+  shows \<open>f v = g v\<close>
+  unfolding fun_to_ell2_def
+  by (metis assms(1) assms(2) fun_to_ell2_well_defined)
+
+
+section \<open>Linear-algebraic properties of the embedding\<close>
+
+text \<open>The embedding for vectors is additive\<close>
 lemma vec_to_ell2_add:
   fixes x y :: \<open>complex vec\<close> 
   shows \<open>dim_vec x = dim_vec y \<Longrightarrow> vec_to_ell2 (x + y) = vec_to_ell2 x + vec_to_ell2 y\<close>
   apply transfer
   by auto
 
-text \<open>vec_to_ell2 is complex-homogeneous\<close>
+text \<open>The embedding for vectors is complex-homogeneous\<close>
 lemma vec_to_ell2_smult:
   fixes x :: \<open>complex vec\<close> and r :: complex 
   shows \<open>vec_to_ell2 (r \<cdot>\<^sub>v x) = r *\<^sub>C (vec_to_ell2 x)\<close>
   apply transfer
   by auto
 
+
+
 text\<open>The embedding of a complex-linear function (defined on an n-dimensional space) 
-is complex-linear in ell2\<close>
+is complex-linear\<close>
+
 lemma clinear_ell2_map_left:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
   assumes \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close> 
@@ -132,25 +156,6 @@ proof
     unfolding fun_to_ell2_def vec_def Abs_vec_inverse
     by (smt Matrix.vec_def assms(2) dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec scaleC_ell2.rep_eq)
 qed
-
-text\<open>The embedding of a complex-linear function (defined on an n-dimensional space) 
-is also bounded in ell2\<close>
-lemma bounded_clinear_ell2_map_left:
-  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
-  assumes \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close> 
-    and  \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close> and 
-      \<open>\<And> x. dim_vec x \<noteq> n \<Longrightarrow> f x = 0\<close> 
-  shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
-proof-
-  have \<open>clinear (fun_to_ell2 n f)\<close>
-  using clinear_ell2_map_left assms by blast
-  moreover have \<open>\<exists>K. \<forall>x. norm (fun_to_ell2 n f x) \<le> norm x * K\<close>
-    sorry
-  ultimately show ?thesis 
-    unfolding bounded_clinear_def bounded_clinear_axioms_def
-    by blast
-qed
-
 
 
 end
