@@ -1097,5 +1097,59 @@ proof-
 qed
 
 
+lemma bounded_linear_ball:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and K :: real
+  assumes \<open>linear f\<close> and \<open>\<And> x. norm x = 1 \<Longrightarrow> norm (f x) \<le> K\<close>
+  shows \<open>bounded_linear f\<close>
+proof-
+  have \<open>norm (f x) \<le> norm x * K\<close>
+    for x
+  proof(cases \<open>x = 0\<close>)
+    case True
+    then show ?thesis
+      by (simp add: assms(1) linear_0) 
+  next
+    case False
+    hence \<open>norm x > 0\<close>
+      by simp
+    hence \<open>norm (inverse (norm x) *\<^sub>R x) = 1\<close>
+      by auto
+    hence \<open>norm (f (inverse (norm x) *\<^sub>R x)) \<le> K\<close>
+      using \<open>\<And> x. norm x = 1 \<Longrightarrow> norm (f x) \<le> K\<close>
+      by blast
+    hence \<open>norm (inverse (norm x) *\<^sub>R  (f x)) \<le> K\<close>
+      by (simp add: assms(1) linear_scale)
+    hence \<open>\<bar>inverse (norm x)\<bar> * norm (f x) \<le> K\<close>
+      by simp
+    hence \<open>inverse (norm x) * norm (f x) \<le> K\<close>
+      using \<open>norm x > 0\<close>
+      by simp
+    show ?thesis 
+    proof-
+      have \<open>inverse (norm x) \<ge> 0\<close>
+        using \<open>norm x > 0\<close>
+        by simp
+      moreover have \<open>norm (f x) \<ge> 0\<close>
+        by simp
+      moreover have \<open>K \<ge> 0\<close>
+        using \<open>inverse (norm x) * norm (f x) \<le> K\<close> \<open>inverse (norm x) \<ge> 0\<close> \<open>norm x > 0\<close>
+        by (smt calculation(2) mult_nonneg_nonneg)
+      ultimately show ?thesis  using \<open>inverse (norm x) * norm (f x) \<le> K\<close>
+      proof -
+        have "\<forall>r. norm x * (inverse (norm x) * r) = r"
+          by (metis \<open>norm (x /\<^sub>R norm x) = 1\<close> ab_semigroup_mult_class.mult_ac(1) abs_inverse abs_norm_cancel mult.commute mult.left_neutral norm_scaleR)
+        then have "norm (f x) \<le> K * norm x"
+          by (metis (no_types) \<open>inverse (norm x) * norm (f x) \<le> K\<close> mult.commute norm_ge_zero real_scaleR_def scaleR_left_mono)
+        then show ?thesis
+          by (metis mult.commute)
+      qed  
+    qed
+  qed
+  thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
+qed
+
+
+
 end
 
