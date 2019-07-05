@@ -2119,4 +2119,52 @@ instance
   by (cheat "instantiation ell2 :: (enum) basis_enum")
 end
 
+definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Rightarrow> 'a)\<close> where
+  \<open>left_shift x = (\<lambda> n. x (Suc n))\<close>
+
+lift_definition left_shift_ell2 :: \<open>nat ell2 \<Rightarrow> nat ell2\<close> is left_shift
+proof-
+  fix x :: \<open>nat \<Rightarrow> complex\<close>
+  show \<open>has_ell2_norm x \<Longrightarrow> has_ell2_norm (left_shift x)\<close>
+  proof-
+    define f where \<open>f n = (cmod (x n))^2\<close> for n :: nat
+    define g :: \<open>nat \<Rightarrow> real\<close>  where \<open>g \<equiv> (\<lambda> n. (cmod (x (Suc n)))^2)\<close>
+    assume \<open>has_ell2_norm x\<close>
+    hence \<open>(\<lambda> n. (cmod (x n))^2) abs_summable_on UNIV\<close>
+      using has_ell2_norm_infsetsum by fastforce
+    hence \<open>summable (\<lambda> m. (cmod (x m))^2)\<close>
+      using abs_summable_on_nat_iff' summable_norm_cancel by blast
+    hence \<open>summable f\<close>
+      unfolding f_def by blast
+    hence \<open>summable (\<lambda> n::nat. f (Suc n))\<close>
+      using Series.summable_Suc_iff by blast
+    hence \<open>summable (\<lambda> n. (\<lambda> m. (cmod (x m))^2) (Suc n))\<close>
+      unfolding f_def by blast     
+    hence \<open>summable (\<lambda> n. (cmod (x (Suc n)))^2)\<close>
+      by blast
+    hence \<open>summable (\<lambda> n. g n)\<close>
+      using g_def by blast
+    have \<open>summable (\<lambda> n. norm (g n))\<close>
+    proof-
+      have \<open>norm (g n) = g n\<close>
+        for n
+      proof-
+        have \<open>g n \<ge> 0\<close>
+          unfolding g_def
+          by simp 
+        thus ?thesis by auto
+      qed
+      thus ?thesis
+        by (simp add: \<open>summable g\<close>) 
+    qed
+    hence \<open>g abs_summable_on UNIV\<close>
+      by (simp add: abs_summable_on_nat_iff')
+    hence \<open> (\<lambda> n. (cmod (x (Suc n)))^2) abs_summable_on UNIV\<close>
+      using g_def by blast      
+    hence \<open>has_ell2_norm (left_shift x)\<close>
+      by (simp add: \<open>(\<lambda>n. (cmod (x (Suc n)))\<^sup>2) abs_summable_on UNIV\<close> has_ell2_norm_infsetsum left_shift_def)
+    thus ?thesis
+      by simp 
+  qed
+qed
 end
