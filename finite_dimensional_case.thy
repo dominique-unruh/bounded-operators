@@ -266,11 +266,11 @@ next
 qed
 
 lemma finite_complex_rank_ell2_map_left_vec:
-  fixes n :: nat
-  shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
-             clinear_vec n f \<longrightarrow> finite_complex_rank (fun_to_ell2 n f)\<close>
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>clinear_vec n f\<close>
+  shows \<open>finite_complex_rank (fun_to_ell2 n f)\<close>
   unfolding finite_complex_rank_def
-  using finite_complex_rank_ell2_map_left_vec_exact by blast
+  using assms finite_complex_rank_ell2_map_left_vec_exact by blast
 
 lemma clinear_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
