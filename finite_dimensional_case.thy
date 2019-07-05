@@ -66,6 +66,12 @@ text \<open>Embedding of a function (defined on an n-dimensional space) into fun
 definition fun_to_ell2 :: \<open>nat \<Rightarrow> (complex vec \<Rightarrow> 'a) \<Rightarrow> (nat ell2 \<Rightarrow> 'a)\<close> where
   \<open>fun_to_ell2 n f = (\<lambda> x::nat ell2. f (vec n (Rep_ell2 x)))\<close>
 
+text \<open>Transformation of of a vector in ell2 into an n dimensional vector space (some
+information may be lost)\<close>
+definition ell2_to_vec :: \<open>nat \<Rightarrow> nat ell2 \<Rightarrow> complex vec\<close> where
+  \<open>ell2_to_vec n x = ( fun_to_ell2 n (id::complex vec \<Rightarrow> complex vec) ) x\<close>
+for x :: \<open>nat ell2\<close>
+
 subsection \<open>Set-theoretic properties of the embedding\<close>
 
 text\<open>The embedding for vectors is injective.\<close>
@@ -102,6 +108,28 @@ proof-
   thus ?thesis by blast
 qed
 
+lemma ell2_to_vec_well_defined_dim:
+  fixes x :: \<open>nat ell2\<close> and n :: nat
+  shows \<open>dim_vec (ell2_to_vec n x) = n\<close>
+  unfolding dim_vec_def 
+  apply auto
+  unfolding ell2_to_vec_def id_def fun_to_ell2_def
+  apply transfer
+  apply auto
+  done
+
+lemma ell2_to_vec_well_defined_index:
+  fixes x :: \<open>nat ell2\<close> and n :: nat and i :: nat
+  shows \<open>i < n \<Longrightarrow> vec_index (ell2_to_vec n x) i = (Rep_ell2 x) i\<close>
+  unfolding vec_index_def 
+  apply auto
+  unfolding ell2_to_vec_def id_def fun_to_ell2_def
+  apply transfer
+  apply auto
+  unfolding mk_vec_def
+  apply auto
+  done
+
 text \<open>The embedding for functions is well-defined\<close>
 lemma fun_to_ell2_well_defined:
   fixes f :: \<open>complex vec \<Rightarrow> 'a\<close> and x :: \<open>nat ell2\<close> and v :: \<open>complex vec\<close> and n :: nat
@@ -129,6 +157,7 @@ lemma vec_to_ell2_add:
   shows \<open>dim_vec x = dim_vec y \<Longrightarrow> vec_to_ell2 (x + y) = vec_to_ell2 x + vec_to_ell2 y\<close>
   apply transfer
   by auto
+
 
 text \<open>The embedding for vectors is complex-homogeneous\<close>
 lemma vec_to_ell2_smult:
@@ -169,7 +198,7 @@ lemma clinear_ell2_map_left_converse:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
   assumes \<open>clinear (fun_to_ell2 n f)\<close>    
   shows \<open>clinear_vec n f\<close>
-  proof
+proof
   show "f (x + y) = f x + f y"
     if "dim_vec (x::complex Matrix.vec) = n"
       and "dim_vec (y::complex Matrix.vec) = n"
@@ -202,6 +231,119 @@ lemma clinear_ell2_map_left_converse:
     by (metis (no_types, lifting) assms clinear.axioms(2) clinear_axioms_def fun_to_ell2_well_defined index_smult_vec(2) that vec_to_ell2_smult)   
 qed
 
+
+
+lemma ell2_to_vec_add:
+  fixes x y :: \<open>nat ell2\<close> and n :: nat 
+  shows \<open>ell2_to_vec n (x + y) = ell2_to_vec n x + ell2_to_vec n y\<close>
+proof-
+  have \<open>ell2_to_vec n x + ell2_to_vec n y = 
+    vec (dim_vec (ell2_to_vec n y)) 
+        (\<lambda>i. vec_index (ell2_to_vec n x) i + vec_index (ell2_to_vec n y) i)\<close>
+    using plus_vec_def
+    by auto
+  have \<open>dim_vec (ell2_to_vec n x) = n\<close>
+    by (simp add: ell2_to_vec_well_defined_dim)
+  have \<open>dim_vec (ell2_to_vec n y) = n\<close>
+    by (simp add: ell2_to_vec_well_defined_dim)
+  have \<open>dim_vec (ell2_to_vec n (x + y)) = n\<close>
+    by (simp add: ell2_to_vec_well_defined_dim)
+  have \<open>i < n \<Longrightarrow> vec_index (ell2_to_vec n x) i = (Rep_ell2 x) i\<close>
+    for i::nat
+    using ell2_to_vec_well_defined_index by auto
+  have \<open>i < n \<Longrightarrow> vec_index (ell2_to_vec n y) i = (Rep_ell2 y) i\<close>
+    for i::nat
+    using ell2_to_vec_well_defined_index by auto
+  have \<open>i < n \<Longrightarrow> vec_index (ell2_to_vec n (x + y)) i = (Rep_ell2 (x + y)) i\<close>
+    for i::nat
+    using ell2_to_vec_well_defined_index by auto
+  have \<open>i \<ge> n \<Longrightarrow> vec_index (ell2_to_vec n x) i = undef_vec (i - n)\<close>
+    for i::nat
+    using \<open>dim_vec (ell2_to_vec n x) = n\<close>
+    unfolding vec_index_def
+    apply auto
+    unfolding ell2_to_vec_def fun_to_ell2_def
+    apply auto
+    unfolding vec_def
+    apply auto
+    unfolding mk_vec_def
+  proof-
+    assume \<open>n \<le> i\<close>
+    hence \<open> snd  (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)) i =
+     undef_vec (i - n) \<close>
+      by auto
+    moreover have \<open>(Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n))))
+        = (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n))\<close>
+    proof-
+      have \<open> (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)) \<in> {(n, mk_vec n f) |n f. True} \<close>
+        unfolding mk_vec_def
+        by auto
+      thus ?thesis using Abs_vec_inverse
+        by blast
+    qed
+    ultimately show \<open>snd (Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)))) i =
+    undef_vec (i - n)\<close> by simp 
+  qed
+  have \<open>i \<ge> n \<Longrightarrow> vec_index (ell2_to_vec n y) i = undef_vec (i - n)\<close>
+    for i::nat
+    using \<open>dim_vec (ell2_to_vec n y) = n\<close>
+    unfolding vec_index_def
+    apply auto
+    unfolding ell2_to_vec_def fun_to_ell2_def
+    apply auto
+    unfolding vec_def
+    apply auto
+    unfolding mk_vec_def
+  proof-
+    assume \<open>n \<le> i\<close>
+    hence \<open> snd  (n, \<lambda>i. if i < n then Rep_ell2 y i else undef_vec (i - n)) i =
+     undef_vec (i - n) \<close>
+      by auto
+    moreover have \<open>(Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 y i else undef_vec (i - n))))
+        = (n, \<lambda>i. if i < n then Rep_ell2 y i else undef_vec (i - n))\<close>
+    proof-
+      have \<open> (n, \<lambda>i. if i < n then Rep_ell2 y i else undef_vec (i - n)) \<in> {(n, mk_vec n f) |n f. True} \<close>
+        unfolding mk_vec_def
+        by auto
+      thus ?thesis using Abs_vec_inverse
+        by blast
+    qed
+    ultimately show \<open>snd (Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 y i else undef_vec (i - n)))) i =
+    undef_vec (i - n)\<close> by simp 
+  qed
+  have \<open>i \<ge> n \<Longrightarrow> vec_index (ell2_to_vec n (x + y)) i = undef_vec (i - n)\<close>
+    for i::nat
+    using \<open>dim_vec (ell2_to_vec n (x+y)) = n\<close>
+    unfolding vec_index_def
+    apply auto
+    unfolding ell2_to_vec_def fun_to_ell2_def
+    apply auto
+    unfolding vec_def
+    apply auto
+    unfolding mk_vec_def
+  proof-
+    assume \<open>n \<le> i\<close>
+    hence \<open> snd  (n, \<lambda>i. if i < n then Rep_ell2 (x+y) i else undef_vec (i - n)) i =
+     undef_vec (i - n) \<close>
+      by auto
+    moreover have \<open>(Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 (x+y) i else undef_vec (i - n))))
+        = (n, \<lambda>i. if i < n then Rep_ell2 (x + y) i else undef_vec (i - n))\<close>
+    proof-
+      have \<open> (n, \<lambda>i. if i < n then Rep_ell2 (x+y) i else undef_vec (i - n)) \<in> {(n, mk_vec n f) |n f. True} \<close>
+        unfolding mk_vec_def
+        by auto
+      thus ?thesis using Abs_vec_inverse
+        by blast
+    qed
+    ultimately show \<open>snd (Rep_vec (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 (x+y) i else undef_vec (i - n)))) i =
+    undef_vec (i - n)\<close> by simp 
+  qed
+  show ?thesis
+    by (smt \<open>dim_vec (ell2_to_vec n (x + y)) = n\<close> \<open>dim_vec (ell2_to_vec n y) = n\<close> ell2_to_vec_well_defined_index eq_vecI index_add_vec(1) index_add_vec(2) plus_ell2.rep_eq)
+qed
+
+
+
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
 
 lemma finite_complex_rank_ell2_map_left_vec_exact:
@@ -222,19 +364,19 @@ proof(induction n)
         using Abs_vec_inject
         by (simp add: mk_vec_def)        
       hence \<open>dim_vec ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
-       unfolding mk_vec_def
-       by simp
-     hence \<open>f (( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )) 
+        unfolding mk_vec_def
+        by simp
+      hence \<open>f (( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )) 
         = f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
-       using \<open>clinear_vec 0 f\<close>
-        clinear_vec.add by blast 
-     moreover have \<open>( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x))) 
+        using \<open>clinear_vec 0 f\<close>
+          clinear_vec.add by blast 
+      moreover have \<open>( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x))) 
                 = ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
-       using \<open>dim_vec (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close> by auto
-     ultimately have \<open>f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
-       by simp
-     thus ?thesis
-       by simp 
+        using \<open>dim_vec (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close> by auto
+      ultimately have \<open>f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
+        by simp
+      thus ?thesis
+        by simp 
     qed
     hence \<open>fun_to_ell2 0 f x = 0\<close>
       for x
@@ -249,17 +391,18 @@ proof(induction n)
   thus ?case by blast 
 next
   case (Suc n)
-  assume \<open>\<forall>f. clinear_vec n f \<longrightarrow> complex_gen n (fun_to_ell2 n f)\<close>
   have \<open>clinear_vec (Suc n) f \<Longrightarrow> complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
     for f :: \<open>complex vec \<Rightarrow> 'a\<close>
   proof-
     assume \<open>clinear_vec (Suc n) f\<close>
-    define g :: \<open>nat ell2 \<Rightarrow> 'a\<close> where 
-      \<open>g x = (fun_to_ell2 (Suc n) f) (left_shift_ell2 x)\<close> for x
-    have \<open>complex_gen n g\<close>
-      using g_def
+    define \<phi> :: \<open>nat \<Rightarrow> complex vec \<Rightarrow> 'a\<close> where 
+      \<open>\<phi> n v =  f (ell2_to_vec n (left_shift_ell2 (vec_to_ell2 v)))\<close> 
+    for n::nat and  v::\<open>complex vec\<close>
+    have \<open>clinear_vec n (\<phi> n)\<close>
       sorry
-    moreover have \<open>\<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + g x\<close>
+    hence \<open>complex_gen n (fun_to_ell2 n (\<phi> n))\<close>
+      by (simp add: Suc.IH)
+    moreover have \<open>\<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + (fun_to_ell2 n (\<phi> n)) x\<close>
       sorry
     ultimately have \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
       by auto
@@ -281,6 +424,8 @@ lemma clinear_ell2_map_left_vec:
   shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
   using assms finite_complex_rank_ell2_map_left_vec finite_rank_and_linear  clinear_ell2_map_left
   by blast 
-  
+
+
+
 
 end
