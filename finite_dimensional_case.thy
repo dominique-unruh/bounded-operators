@@ -139,22 +139,30 @@ lemma vec_to_ell2_smult:
 text\<open>The embedding of a complex-linear function (defined on an n-dimensional space) 
 is complex-linear\<close>
 
+locale clinear_vec =
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
+  assumes add:  \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close>
+    and mults:   \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close>
+
+
 lemma clinear_ell2_map_left:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
-  assumes \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close> 
-    and  \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close>
+  assumes \<open>clinear_vec n f\<close>   
   shows \<open>clinear (fun_to_ell2 n f)\<close>
 proof
   show "fun_to_ell2 n f (x + y) = fun_to_ell2 n f x + fun_to_ell2 n f y"
     for x :: "nat ell2"
       and y :: "nat ell2"
-    unfolding fun_to_ell2_def vec_def Abs_vec_inverse
-    by (smt Matrix.plus_vec_def Matrix.vec_def assms(1) dim_vec eq_vecI index_vec plus_ell2.rep_eq)
+    using  \<open>clinear_vec n f\<close>   
+    unfolding fun_to_ell2_def vec_def Abs_vec_inverse clinear_vec_def
+    by (smt Matrix.vec_def dim_vec eq_vecI index_add_vec(1) index_add_vec(2) index_vec plus_ell2.rep_eq)
+
   show "fun_to_ell2 n f (r *\<^sub>C x) = r *\<^sub>C fun_to_ell2 n f x"
     for r :: complex
       and x :: "nat ell2"
-    unfolding fun_to_ell2_def vec_def Abs_vec_inverse
-    by (smt Matrix.vec_def assms(2) dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec scaleC_ell2.rep_eq)
+    using  \<open>clinear_vec n f\<close>   
+    unfolding fun_to_ell2_def vec_def Abs_vec_inverse clinear_vec_def
+    by (smt Matrix.vec_def dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec scaleC_ell2.rep_eq)
 qed
 
 
