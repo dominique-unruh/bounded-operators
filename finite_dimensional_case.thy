@@ -20,6 +20,7 @@ References:
 theory finite_dimensional_case
   imports 
     "HOL-ex.Sketch_and_Explore"
+    finite_rank_operators
     complex_bounded_operators
     Jordan_Normal_Form.Matrix
     Complex_L2
@@ -203,24 +204,26 @@ qed
 
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
 
+lemma finite_complex_rank_ell2_map_left_vec:
+  fixes n :: nat
+  shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
+             clinear_vec n f \<longrightarrow> finite_complex_rank (fun_to_ell2 n f)\<close>
+proof(induction n)
+  case 0
+  then show ?case sorry
+next
+  case (Suc n)
+  then show ?case sorry
+qed
+
+
 
 lemma clinear_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes \<open>clinear_vec n f\<close>   
   shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
-proof-
-  have \<open>clinear (fun_to_ell2 n f)\<close>
-    by (simp add: assms clinear_ell2_map_left)
-  hence \<open>linear (fun_to_ell2 n f)\<close>
-    by (simp add: clinear_linear)
-  moreover have \<open>\<exists> K. \<forall> x. norm x = 1 \<longrightarrow> norm (fun_to_ell2 n f x) \<le> K\<close>
-    sorry
-  ultimately have \<open>bounded_linear (fun_to_ell2 n f)\<close>
-    using bounded_linear_ball by auto 
-  thus ?thesis 
-    using \<open>clinear (fun_to_ell2 n f)\<close>
-    by (simp add: \<open>clinear (fun_to_ell2 n f)\<close> bounded_clinear.intro bounded_clinear_axioms_def bounded_linear.bounded)    
-qed
-
+  using assms finite_complex_rank_ell2_map_left_vec finite_rank_and_linear  clinear_ell2_map_left
+  by blast 
+  
 
 end
