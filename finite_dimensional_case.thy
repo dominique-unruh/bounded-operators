@@ -352,7 +352,6 @@ lemma ell2_to_vec_smult:
   unfolding mk_vec_def
   by auto
 
-
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
 
 lemma finite_complex_rank_ell2_map_left_vec_exact:
@@ -405,14 +404,84 @@ next
   proof-
     assume \<open>clinear_vec (Suc n) f\<close>
     define \<phi> :: \<open>nat \<Rightarrow> complex vec \<Rightarrow> 'a\<close> where 
-      \<open>\<phi> n v =  f (ell2_to_vec n (left_shift_ell2 (vec_to_ell2 v)))\<close> 
+      \<open>\<phi> n v =  f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 v)))\<close> 
     for n::nat and  v::\<open>complex vec\<close>
     have \<open>clinear_vec n (\<phi> n)\<close>
-      sorry
+    proof-
+      have \<open>clinear left_shift_ell2\<close>
+        by (simp add: left_shift_ell2_clinear)
+      show ?thesis 
+      proof
+        show "\<phi> n (x + y) = \<phi> n x + \<phi> n y"
+          if "dim_vec (x::complex Matrix.vec) = n"
+            and "dim_vec (y::complex Matrix.vec) = n"
+          for x :: "complex Matrix.vec"
+            and y :: "complex Matrix.vec"
+        proof-
+          have \<open>\<phi> n (x + y) = f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 (x + y))))\<close>
+            unfolding \<phi>_def by blast
+          also have \<open>... = f (ell2_to_vec (Suc n) (left_shift_ell2 ( vec_to_ell2 x + vec_to_ell2 y )))\<close>
+            by (simp add: that(1) that(2) vec_to_ell2_add)
+          also have \<open>... = f (ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x) + left_shift_ell2 (vec_to_ell2 y) ))\<close>
+            using left_shift_ell2_clinear
+            unfolding clinear_def  Modules.additive_def
+            by simp
+          also have \<open>... = f ( ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 x))
+                             + ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 y)) )\<close>
+            by (simp add: ell2_to_vec_add)
+          also have \<open>... = f ( ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 x)) )
+                          + f( ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 y)) )\<close>
+            using \<open>clinear_vec (Suc n) f\<close> clinear_vec.add ell2_to_vec_well_defined_dim by blast
+          also have \<open>... = \<phi> n x + \<phi> n y\<close>
+            unfolding \<phi>_def
+            by blast
+          finally show ?thesis by blast
+        qed
+        show "\<phi> n (c \<cdot>\<^sub>v x) = c *\<^sub>C \<phi> n x"
+          if "dim_vec (x::complex Matrix.vec) = n"
+          for c :: complex
+            and x :: "complex Matrix.vec"
+        proof-
+           have \<open>\<phi> n (c \<cdot>\<^sub>v x) = f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 (c \<cdot>\<^sub>v x))))\<close>
+            unfolding \<phi>_def 
+            by blast
+           also have \<open>... = f (ell2_to_vec (Suc n) (left_shift_ell2 (c *\<^sub>C vec_to_ell2 x)))\<close>
+             by (simp add: vec_to_ell2_smult)
+           also have \<open>... = f (ell2_to_vec (Suc n) (c *\<^sub>C left_shift_ell2 (vec_to_ell2 x)))\<close>
+             by (simp add: clinear.scaleC left_shift_ell2_clinear)
+           also have \<open>... = f (c \<cdot>\<^sub>v ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
+             by (simp add: ell2_to_vec_smult)
+           also have \<open>... = c *\<^sub>C f ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
+           proof-
+             have \<open>dim_vec ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x))) = Suc n\<close>
+               unfolding dim_vec_def
+               apply auto
+               by (metis dim_vec.rep_eq ell2_to_vec_well_defined_dim)
+             thus ?thesis using  \<open>clinear_vec (Suc n) f\<close>
+               using clinear_vec.mults by blast 
+           qed
+           also have \<open>c *\<^sub>C f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 x))) = c *\<^sub>C \<phi> n x\<close>
+            unfolding \<phi>_def 
+            by blast
+           finally have \<open>\<phi> n (c \<cdot>\<^sub>v x) = c *\<^sub>C \<phi> n x\<close>
+             by blast
+            thus ?thesis by blast
+        qed
+      qed
+    qed
     hence \<open>complex_gen n (fun_to_ell2 n (\<phi> n))\<close>
       by (simp add: Suc.IH)
     moreover have \<open>\<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + (fun_to_ell2 n (\<phi> n)) x\<close>
-      sorry
+    proof-
+      have \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
+        for x
+      proof-
+        have \<open>(fun_to_ell2 (Suc n) f) x = ( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
+          sorry
+        thus ?thesis by blast
+      qed
+      thus ?thesis by blast
+    qed
     ultimately have \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
       by auto
     thus ?thesis by blast

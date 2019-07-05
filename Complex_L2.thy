@@ -2167,4 +2167,23 @@ proof-
       by simp 
   qed
 qed
+
+lemma left_shift_ell2_clinear:
+\<open>clinear left_shift_ell2\<close>
+  proof
+  show "left_shift_ell2 (x + y) = left_shift_ell2 x + left_shift_ell2 y"
+    for x :: "nat ell2"
+      and y :: "nat ell2"
+    apply transfer
+    unfolding left_shift_def
+    by auto
+  show "left_shift_ell2 (r *\<^sub>C y) = r *\<^sub>C left_shift_ell2 y"
+    for r :: complex
+      and y :: "nat ell2"
+    apply transfer
+    unfolding left_shift_def
+    by auto
+qed
+
+
 end
