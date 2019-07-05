@@ -255,13 +255,14 @@ next
   proof-
     assume \<open>clinear_vec (Suc n) f\<close>
     define g :: \<open>nat ell2 \<Rightarrow> 'a\<close> where 
-      \<open>g x = (fun_to_ell2 (Suc n) f) (left_shift_ell2 x)\<close>
-    for x
-    have \<open>(\<exists> g. complex_gen n g \<and>
-      ( \<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + g x ) )\<close>
+      \<open>g x = (fun_to_ell2 (Suc n) f) (left_shift_ell2 x)\<close> for x
+    have \<open>complex_gen n g\<close>
+      using g_def
       sorry
-    hence \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
-      by simp
+    moreover have \<open>\<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + g x\<close>
+      sorry
+    ultimately have \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
+      by auto
     thus ?thesis by blast
   qed
   thus ?case by blast 
