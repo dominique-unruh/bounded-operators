@@ -204,19 +204,73 @@ qed
 
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
 
+lemma finite_complex_rank_ell2_map_left_vec_exact:
+  fixes n :: nat
+  shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
+             clinear_vec n f \<longrightarrow> complex_gen n (fun_to_ell2 n f)\<close>
+proof(induction n)
+  case 0
+  have \<open>clinear_vec 0 f \<Longrightarrow> (complex_gen 0 (fun_to_ell2 0 f))\<close>
+    for f :: \<open>complex vec \<Rightarrow> 'a\<close>
+  proof-
+    assume \<open>clinear_vec 0 f\<close>
+    have \<open>f (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close>
+      for x
+    proof-
+      have \<open>Abs_vec (0, undef_vec) = vNil\<close>
+        unfolding vec_def
+        using Abs_vec_inject
+        by (simp add: mk_vec_def)        
+      hence \<open>dim_vec ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
+       unfolding mk_vec_def
+       by simp
+     hence \<open>f (( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )) 
+        = f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
+       using \<open>clinear_vec 0 f\<close>
+        clinear_vec.add by blast 
+     moreover have \<open>( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x))) 
+                = ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
+       using \<open>dim_vec (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close> by auto
+     ultimately have \<open>f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
+       by simp
+     thus ?thesis
+       by simp 
+    qed
+    hence \<open>fun_to_ell2 0 f x = 0\<close>
+      for x
+      unfolding fun_to_ell2_def
+      unfolding vec_def
+      by simp
+    hence \<open>complex_gen 0 (fun_to_ell2 0 f)\<close>
+      by simp
+    thus ?thesis
+      by blast 
+  qed
+  thus ?case by blast 
+next
+  case (Suc n)
+  assume \<open>\<forall>f. clinear_vec n f \<longrightarrow> complex_gen n (fun_to_ell2 n f)\<close>
+  have \<open>clinear_vec (Suc n) f \<Longrightarrow> complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
+    for f :: \<open>complex vec \<Rightarrow> 'a\<close>
+  proof-
+    assume \<open>clinear_vec (Suc n) f\<close>
+
+    have \<open>(\<exists> g. complex_gen n g \<and>
+      ( \<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C t + g x ) )\<close>
+      sorry
+    hence \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
+      by simp
+    thus ?thesis by blast
+  qed
+  thus ?case by blast 
+qed
+
 lemma finite_complex_rank_ell2_map_left_vec:
   fixes n :: nat
   shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
              clinear_vec n f \<longrightarrow> finite_complex_rank (fun_to_ell2 n f)\<close>
-proof(induction n)
-  case 0
-  then show ?case sorry
-next
-  case (Suc n)
-  then show ?case sorry
-qed
-
-
+  unfolding finite_complex_rank_def
+  using finite_complex_rank_ell2_map_left_vec_exact by blast
 
 lemma clinear_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
