@@ -207,4 +207,30 @@ text \<open>Functions defined on a finite dimensional vector space\<close>
 definition finite_dim :: \<open>(nat ell2 \<Rightarrow> 'a::complex_vector) \<Rightarrow> bool\<close> where
 \<open>finite_dim f = (\<exists> g. \<exists> n. f = fun_to_ell2 n g)\<close>
 
+lemma clinear_ell2_map_left_vec:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>clinear_vec n f\<close>   
+  shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
+proof-
+  have \<open>clinear (fun_to_ell2 n f)\<close>
+    by (simp add: assms clinear_ell2_map_left)
+  hence \<open>linear (fun_to_ell2 n f)\<close>
+    by (simp add: clinear_linear)
+  moreover have \<open>\<exists> K. \<forall> x. norm x = 1 \<longrightarrow> norm (fun_to_ell2 n f x) \<le> K\<close>
+    sorry
+  ultimately have \<open>bounded_linear (fun_to_ell2 n f)\<close>
+    using bounded_linear_ball by auto 
+  thus ?thesis 
+    using \<open>clinear (fun_to_ell2 n f)\<close>
+    by (simp add: \<open>clinear (fun_to_ell2 n f)\<close> bounded_clinear.intro bounded_clinear_axioms_def bounded_linear.bounded)    
+qed
+
+lemma finite_dim_clinear_ell2:
+  fixes f :: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>finite_dim f\<close> and \<open>clinear f\<close>
+  shows \<open>bounded_clinear f\<close>
+  using clinear_ell2_map_left_vec assms
+  unfolding finite_dim_def
+  using clinear_ell2_map_left_converse by blast
+
 end
