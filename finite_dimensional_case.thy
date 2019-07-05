@@ -342,6 +342,15 @@ proof-
     by (smt \<open>dim_vec (ell2_to_vec n (x + y)) = n\<close> \<open>dim_vec (ell2_to_vec n y) = n\<close> ell2_to_vec_well_defined_index eq_vecI index_add_vec(1) index_add_vec(2) plus_ell2.rep_eq)
 qed
 
+lemma ell2_to_vec_smult:
+  fixes x :: \<open>nat ell2\<close> and c :: complex and n :: nat 
+  shows \<open>ell2_to_vec n (c *\<^sub>C x) = c \<cdot>\<^sub>v (ell2_to_vec n x)\<close>
+  unfolding ell2_to_vec_def fun_to_ell2_def smult_vec_def
+  apply auto
+  apply transfer
+  apply auto
+  unfolding mk_vec_def
+  by auto
 
 
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
