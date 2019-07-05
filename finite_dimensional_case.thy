@@ -29,6 +29,8 @@ begin
 section \<open>Embedding of an n-dimensional complex vector space into the complex
 vector space of square-summable sequences\<close>
 
+subsection \<open>Definitions\<close>
+
 text \<open>Embedding of vec into ell2.\<close>
 lift_definition vec_to_ell2 :: \<open>complex vec \<Rightarrow> nat ell2\<close> is
   \<open>\<lambda> v::complex vec. (\<lambda> i::nat. 
@@ -63,10 +65,10 @@ text \<open>Embedding of a function (defined on an n-dimensional space) into fun
 definition fun_to_ell2 :: \<open>nat \<Rightarrow> (complex vec \<Rightarrow> 'a) \<Rightarrow> (nat ell2 \<Rightarrow> 'a)\<close> where
   \<open>fun_to_ell2 n f = (\<lambda> x::nat ell2. f (vec n (Rep_ell2 x)))\<close>
 
-section \<open>Set-theoretic properties of the embedding\<close>
+subsection \<open>Set-theoretic properties of the embedding\<close>
 
 text\<open>The embedding for vectors is injective.\<close>
-proposition vec_to_ell2_inj:
+lemma vec_to_ell2_inj:
   fixes x y :: \<open>complex vec\<close>
   assumes \<open>vec_to_ell2 x = vec_to_ell2 y\<close> and \<open>dim_vec x = dim_vec y\<close>
   shows \<open>vec_index x = vec_index y\<close>
@@ -100,7 +102,7 @@ proof-
 qed
 
 text \<open>The embedding for functions is well-defined\<close>
-proposition fun_to_ell2_well_defined:
+lemma fun_to_ell2_well_defined:
   fixes f :: \<open>complex vec \<Rightarrow> 'a\<close> and x :: \<open>nat ell2\<close> and v :: \<open>complex vec\<close> and n :: nat
   assumes \<open>dim_vec v = n\<close>
   shows \<open>fun_to_ell2 n f (vec_to_ell2 v) = f v\<close>
@@ -110,7 +112,7 @@ proposition fun_to_ell2_well_defined:
 
 
 text \<open>The embdedding for functions is injective.\<close>
-proposition fun_to_ell2_inject:
+lemma fun_to_ell2_inject:
   fixes f g :: \<open>complex vec \<Rightarrow> 'a\<close> and n :: nat
   assumes \<open>dim_vec v = n\<close> and \<open>fun_to_ell2 n f = fun_to_ell2 n g\<close>
   shows \<open>f v = g v\<close>
@@ -118,7 +120,7 @@ proposition fun_to_ell2_inject:
   by (metis assms(1) assms(2) fun_to_ell2_well_defined)
 
 
-section \<open>Linear-algebraic properties of the embedding\<close>
+subsection \<open>Linear-algebraic properties of the embedding\<close>
 
 text \<open>The embedding for vectors is additive\<close>
 lemma vec_to_ell2_add:
@@ -134,16 +136,13 @@ lemma vec_to_ell2_smult:
   apply transfer
   by auto
 
-
-
 text\<open>The embedding of a complex-linear function (defined on an n-dimensional space) 
 is complex-linear\<close>
 
 locale clinear_vec =
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
   assumes add:  \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close>
-    and mults:   \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close>
-
+    and mults:  \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close>
 
 lemma clinear_ell2_map_left:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
@@ -165,5 +164,47 @@ proof
     by (smt Matrix.vec_def dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec scaleC_ell2.rep_eq)
 qed
 
+lemma clinear_ell2_map_left_converse:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
+  assumes \<open>clinear (fun_to_ell2 n f)\<close>    
+  shows \<open>clinear_vec n f\<close>
+  proof
+  show "f (x + y) = f x + f y"
+    if "dim_vec (x::complex Matrix.vec) = n"
+      and "dim_vec (y::complex Matrix.vec) = n"
+    for x :: "complex Matrix.vec"
+      and y :: "complex Matrix.vec"
+  proof-
+    have \<open>(fun_to_ell2 n f) (vec_to_ell2 x + vec_to_ell2 y) = 
+        (fun_to_ell2 n f) (vec_to_ell2 x) +  (fun_to_ell2 n f) (vec_to_ell2 y)\<close>
+      using \<open>clinear (fun_to_ell2 n f)\<close>
+      unfolding clinear_def Modules.additive_def
+      by blast
+    moreover have \<open>vec_to_ell2 (x + y) = vec_to_ell2 x + vec_to_ell2 y\<close>
+      by (simp add: that(1) that(2) vec_to_ell2_add)
+    ultimately have  \<open>(fun_to_ell2 n f) (vec_to_ell2 (x + y)) = 
+        (fun_to_ell2 n f) (vec_to_ell2 x) +  (fun_to_ell2 n f) (vec_to_ell2 y)\<close>
+      by auto
+    moreover have \<open>(fun_to_ell2 n f) (vec_to_ell2 (x + y)) = f (x + y)\<close>
+      by (simp add: fun_to_ell2_well_defined that(2))
+    moreover have \<open>(fun_to_ell2 n f) (vec_to_ell2 x) = f x\<close>
+      by (simp add: fun_to_ell2_well_defined that(1))
+    moreover have \<open>(fun_to_ell2 n f) (vec_to_ell2 y) = f y\<close>
+      by (simp add: fun_to_ell2_well_defined that(2))
+    ultimately show ?thesis
+      by simp
+  qed
+  show "f (c \<cdot>\<^sub>v x) = c *\<^sub>C f x"
+    if "dim_vec (x::complex Matrix.vec) = n"
+    for c :: complex
+      and x :: "complex Matrix.vec"
+    by (metis (no_types, lifting) assms clinear.axioms(2) clinear_axioms_def fun_to_ell2_well_defined index_smult_vec(2) that vec_to_ell2_smult)   
+qed
+
+section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
+
+text \<open>Functions defined on a finite dimensional vector space\<close>
+definition finite_dim :: \<open>(nat ell2 \<Rightarrow> 'a::complex_vector) \<Rightarrow> bool\<close> where
+\<open>finite_dim f = (\<exists> g. \<exists> n. f = fun_to_ell2 n g)\<close>
 
 end
