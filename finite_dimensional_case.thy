@@ -442,30 +442,30 @@ next
           for c :: complex
             and x :: "complex Matrix.vec"
         proof-
-           have \<open>\<phi> n (c \<cdot>\<^sub>v x) = f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 (c \<cdot>\<^sub>v x))))\<close>
+          have \<open>\<phi> n (c \<cdot>\<^sub>v x) = f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 (c \<cdot>\<^sub>v x))))\<close>
             unfolding \<phi>_def 
             by blast
-           also have \<open>... = f (ell2_to_vec (Suc n) (left_shift_ell2 (c *\<^sub>C vec_to_ell2 x)))\<close>
-             by (simp add: vec_to_ell2_smult)
-           also have \<open>... = f (ell2_to_vec (Suc n) (c *\<^sub>C left_shift_ell2 (vec_to_ell2 x)))\<close>
-             by (simp add: clinear.scaleC left_shift_ell2_clinear)
-           also have \<open>... = f (c \<cdot>\<^sub>v ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
-             by (simp add: ell2_to_vec_smult)
-           also have \<open>... = c *\<^sub>C f ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
-           proof-
-             have \<open>dim_vec ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x))) = Suc n\<close>
-               unfolding dim_vec_def
-               apply auto
-               by (metis dim_vec.rep_eq ell2_to_vec_well_defined_dim)
-             thus ?thesis using  \<open>clinear_vec (Suc n) f\<close>
-               using clinear_vec.mults by blast 
-           qed
-           also have \<open>c *\<^sub>C f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 x))) = c *\<^sub>C \<phi> n x\<close>
+          also have \<open>... = f (ell2_to_vec (Suc n) (left_shift_ell2 (c *\<^sub>C vec_to_ell2 x)))\<close>
+            by (simp add: vec_to_ell2_smult)
+          also have \<open>... = f (ell2_to_vec (Suc n) (c *\<^sub>C left_shift_ell2 (vec_to_ell2 x)))\<close>
+            by (simp add: clinear.scaleC left_shift_ell2_clinear)
+          also have \<open>... = f (c \<cdot>\<^sub>v ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
+            by (simp add: ell2_to_vec_smult)
+          also have \<open>... = c *\<^sub>C f ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x)))\<close>
+          proof-
+            have \<open>dim_vec ( ell2_to_vec (Suc n) ( left_shift_ell2 (vec_to_ell2 x))) = Suc n\<close>
+              unfolding dim_vec_def
+              apply auto
+              by (metis dim_vec.rep_eq ell2_to_vec_well_defined_dim)
+            thus ?thesis using  \<open>clinear_vec (Suc n) f\<close>
+              using clinear_vec.mults by blast 
+          qed
+          also have \<open>c *\<^sub>C f (ell2_to_vec (Suc n) (left_shift_ell2 (vec_to_ell2 x))) = c *\<^sub>C \<phi> n x\<close>
             unfolding \<phi>_def 
             by blast
-           finally have \<open>\<phi> n (c \<cdot>\<^sub>v x) = c *\<^sub>C \<phi> n x\<close>
-             by blast
-            thus ?thesis by blast
+          finally have \<open>\<phi> n (c \<cdot>\<^sub>v x) = c *\<^sub>C \<phi> n x\<close>
+            by blast
+          thus ?thesis by blast
         qed
       qed
     qed
@@ -476,8 +476,46 @@ next
       have \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
         for x
       proof-
-        have \<open>(fun_to_ell2 (Suc n) f) x = ( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
-          sorry
+        have \<open>( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x - (fun_to_ell2 (Suc n) f) x = 0\<close>
+        proof-
+          define F where
+            \<open>F x = ( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0))
+       + (fun_to_ell2 n (\<phi> n)) x - (fun_to_ell2 (Suc n) f) x\<close>
+          for x
+          have \<open>F (ket k) = 0\<close>
+            for k
+          proof(cases \<open>k = 0\<close>)
+            case True
+            have \<open>Rep_ell2 (ket k) 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) = fun_to_ell2 (Suc n) f (ket 0)\<close>
+              using \<open>k = 0\<close>
+              by (simp add: ket.rep_eq) 
+            moreover have \<open>fun_to_ell2 n (\<phi> n) (ket k) = 0\<close>
+              sorry
+            moreover have \<open>fun_to_ell2 (Suc n) f (ket k) = fun_to_ell2 (Suc n) f (ket 0)\<close>
+              using \<open>k = 0\<close> by simp
+            ultimately show ?thesis unfolding F_def using \<open>k = 0\<close> by simp
+          next
+            case False
+            then show ?thesis sorry
+          qed
+          moreover have \<open>clinear F\<close>
+            unfolding F_def
+          proof
+            show "Rep_ell2 (x + y) 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) + fun_to_ell2 n (\<phi> n) (x + y) - fun_to_ell2 (Suc n) f (x + y) = Rep_ell2 x 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) + fun_to_ell2 n (\<phi> n) x - fun_to_ell2 (Suc n) f x + (Rep_ell2 y 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) + fun_to_ell2 n (\<phi> n) y - fun_to_ell2 (Suc n) f y)"
+              for x :: "nat ell2"
+                and y :: "nat ell2"
+              sorry
+            show "Rep_ell2 (r *\<^sub>C x) 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) + fun_to_ell2 n (\<phi> n) (r *\<^sub>C x) - fun_to_ell2 (Suc n) f (r *\<^sub>C x) = r *\<^sub>C (Rep_ell2 x 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) + fun_to_ell2 n (\<phi> n) x - fun_to_ell2 (Suc n) f x)"
+              for r :: complex
+                and x :: "nat ell2"
+              sorry
+          qed
+          ultimately have \<open>\<forall> x. F x = 0\<close>
+            by (rule ell2_superposition)
+          thus ?thesis unfolding F_def by blast
+        qed
+        hence \<open>(fun_to_ell2 (Suc n) f) x = ( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
+          by simp
         thus ?thesis by blast
       qed
       thus ?thesis by blast

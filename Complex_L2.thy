@@ -2185,5 +2185,26 @@ lemma left_shift_ell2_clinear:
     by auto
 qed
 
+lemma shift_ket:
+  fixes n :: nat
+  shows \<open>left_shift_ell2 (ket (Suc n)) = ket n\<close>
+  apply transfer
+  unfolding left_shift_def ket_def
+  apply auto
+  done
+
+lemma shift_ket0:
+ \<open>left_shift_ell2 (ket (0::nat)) = 0\<close>
+  apply transfer
+  unfolding left_shift_def ket_def
+  apply auto
+  done
+
+
+lemma ell2_superposition:
+  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>\<And> n::nat. f (ket n) = 0\<close> and \<open>clinear f\<close>
+  shows \<open>\<forall> x. f x = 0\<close>
+  sorry
 
 end
