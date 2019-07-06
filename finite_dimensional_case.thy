@@ -540,7 +540,111 @@ proof-
   thus ?thesis using Rep_ell2_inject by blast 
 qed
 
+text \<open>final_trunc x0 x1 x2 ... x(n-1) = x0 x1 x2 ... x(n-2)\<close>
+definition final_trunc :: \<open>complex vec \<Rightarrow> complex vec\<close> where
+  \<open>final_trunc v = vec (dim_vec v - 1) (vec_index v)\<close>
 
+lemma trunc_clinear_vec:
+  fixes n :: nat
+  assumes \<open>clinear_vec (Suc n) f\<close>
+  shows \<open>\<exists> g. clinear_vec n g \<and> 
+        (\<exists> t. \<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v))\<close>
+  sorry
+
+lemma fun_to_ell2_ell2_to_vec:
+  \<open>(fun_to_ell2 n f) x = f (ell2_to_vec n x)\<close>
+  unfolding fun_to_ell2_def ell2_to_vec_def vec_def mk_vec_def
+  by auto
+
+lemma finite_complex_rank_ell2_map_left_vec_exact:
+  fixes n :: nat
+  shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
+             clinear_vec n f \<longrightarrow> complex_gen n (fun_to_ell2 n f)\<close>
+proof(induction n)
+  case 0
+  have \<open>clinear_vec 0 f \<Longrightarrow> (complex_gen 0 (fun_to_ell2 0 f))\<close>
+    for f :: \<open>complex vec \<Rightarrow> 'a\<close>
+  proof-
+    assume \<open>clinear_vec 0 f\<close>
+    have \<open>f (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close>
+      for x
+    proof-
+      have \<open>Abs_vec (0, undef_vec) = vNil\<close>
+        unfolding vec_def
+        using Abs_vec_inject
+        by (simp add: mk_vec_def)        
+      hence \<open>dim_vec ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
+        unfolding mk_vec_def
+        by simp
+      hence \<open>f (( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )) 
+        = f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
+        using \<open>clinear_vec 0 f\<close>
+          clinear_vec.add by blast 
+      moreover have \<open>( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) + ( Abs_vec (0, mk_vec 0 (Rep_ell2 x))) 
+                = ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) )\<close>
+        using \<open>dim_vec (Abs_vec (0, mk_vec 0 (Rep_ell2 x))) = 0\<close> by auto
+      ultimately have \<open>f ( Abs_vec (0, mk_vec 0 (Rep_ell2 x)) ) = 0\<close>
+        by simp
+      thus ?thesis
+        by simp 
+    qed
+    hence \<open>fun_to_ell2 0 f x = 0\<close>
+      for x
+      unfolding fun_to_ell2_def
+      unfolding vec_def
+      by simp
+    hence \<open>complex_gen 0 (fun_to_ell2 0 f)\<close>
+      by simp
+    thus ?thesis
+      by blast 
+  qed
+  thus ?case by blast 
+next
+  case (Suc n)
+  have \<open>clinear_vec (Suc n) f \<Longrightarrow> complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
+    for f :: \<open>complex vec \<Rightarrow> 'a\<close>
+  proof-
+    assume \<open>clinear_vec (Suc n) f\<close>
+    hence \<open>\<exists> g. clinear_vec n g \<and> 
+        (\<exists> t. \<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v))\<close>
+      using trunc_clinear_vec by blast
+    then obtain g where \<open>clinear_vec n g\<close>
+      and \<open>\<exists> t. \<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v)\<close>
+      by blast
+    hence \<open>complex_gen n (fun_to_ell2 n g)\<close>
+      using \<open>clinear_vec n g\<close>
+      by (simp add: Suc.IH)
+    moreover have \<open>\<exists> t. \<forall> x. \<exists> c. (fun_to_ell2 (Suc n) f) x =  c *\<^sub>C t + (\<lambda> t. g (final_trunc (ell2_to_vec (Suc n) t)) ) x\<close>
+    proof-
+      from \<open>\<exists> t. \<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v)\<close>
+      obtain t where \<open>\<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v)\<close>
+        by blast
+      have \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x =  c *\<^sub>C t + (\<lambda> t. g (final_trunc (ell2_to_vec (Suc n) t)) ) x\<close>
+        for x::\<open>nat ell2\<close>
+      proof-
+        have \<open>(fun_to_ell2 (Suc n) f) x = f (ell2_to_vec (Suc n) x)\<close>
+          using fun_to_ell2_ell2_to_vec
+          by blast
+        hence \<open>(fun_to_ell2 (Suc n) f) x = f (ell2_to_vec (Suc n) x)\<close>
+          by simp
+        hence \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x =  c *\<^sub>C t + g (final_trunc (ell2_to_vec (Suc n) x))\<close>
+          using  \<open>\<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v)\<close>
+          by (simp add: ell2_to_vec_well_defined_dim)
+        hence \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x =  c *\<^sub>C t + (\<lambda> t. g (final_trunc (ell2_to_vec (Suc n) t)) ) x\<close>
+          by auto
+        thus ?thesis by blast
+      qed
+      thus ?thesis by blast
+    qed
+    have \<open>complex_gen (Suc n) (fun_to_ell2 (Suc n) f)\<close>
+      sorry
+    thus ?thesis by blast
+  qed
+  thus ?case by blast
+qed
+
+
+(*
 lemma finite_complex_rank_ell2_map_left_vec_exact:
   fixes n :: nat
   shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
@@ -663,7 +767,8 @@ next
       have \<open>\<exists> c. (fun_to_ell2 (Suc n) f) x = c *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x\<close>
         for x
       proof-
-        have \<open>( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x - (fun_to_ell2 (Suc n) f) x = 0\<close>
+        have \<open>( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0)) + (fun_to_ell2 n (\<phi> n)) x 
+                - (fun_to_ell2 (Suc n) f) x = 0\<close>
         proof-
           define F where
             \<open>F x = ( (Rep_ell2 x) 0 ) *\<^sub>C ((fun_to_ell2 (Suc n) f) (ket 0))
@@ -671,12 +776,11 @@ next
           for x
           have \<open>F (ket k) = 0\<close>
             for k
-          proof(cases \<open>k = 0\<close>)
-            case True
-            have \<open>Rep_ell2 (ket k) 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) = fun_to_ell2 (Suc n) f (ket 0)\<close>
-              using \<open>k = 0\<close>
+          proof(induction k)
+            case 0
+            have \<open>Rep_ell2 (ket 0) 0 *\<^sub>C fun_to_ell2 (Suc n) f (ket 0) = fun_to_ell2 (Suc n) f (ket 0)\<close>
               by (simp add: ket.rep_eq) 
-            moreover have \<open>fun_to_ell2 n (\<phi> n) (ket k) = 0\<close>
+            moreover have \<open>fun_to_ell2 n (\<phi> n) (ket 0) = 0\<close>
             proof(cases \<open>n = 0\<close>)
               case True
               then show ?thesis
@@ -692,15 +796,17 @@ next
               hence \<open>fun_to_ell2 n (\<phi> n) (ket 0) = 0\<close>
                 unfolding \<phi>_def fun_to_ell2_def
                 by (metis \<open>clinear_vec (Suc n) f\<close> clinear.scaleC clinear_ell2_map_left complex_vector.scale_eq_0_iff ell2_to_vec_smult ell2_to_vec_well_defined_dim fun_to_ell2_well_defined vec_to_ell2_smult)          
-              thus ?thesis using \<open>k = 0\<close> by blast
+              thus ?thesis  by blast
             qed
-            moreover have \<open>fun_to_ell2 (Suc n) f (ket k) = fun_to_ell2 (Suc n) f (ket 0)\<close>
-              using \<open>k = 0\<close> by simp
-            ultimately show ?thesis unfolding F_def using \<open>k = 0\<close> by simp
+            moreover have \<open>fun_to_ell2 (Suc n) f (ket 0) = fun_to_ell2 (Suc n) f (ket 0)\<close>
+              by simp
+            ultimately have \<open>F (ket 0) = 0\<close> unfolding F_def by simp
+            thus ?case by blast
           next
-            case False
-            then show ?thesis sorry
+            case (Suc k)
+            then show ?case sorry
           qed
+
           moreover have \<open>clinear F\<close>
             unfolding F_def
           proof
@@ -729,6 +835,10 @@ next
   qed
   thus ?case by blast 
 qed
+
+*)
+
+
 
 lemma finite_complex_rank_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
