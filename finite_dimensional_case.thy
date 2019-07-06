@@ -404,11 +404,64 @@ proof-
        (if j = i then 1 else 0)\<close>
     proof(cases \<open>i < n\<close>)
       case True
-      thus ?thesis 
+      show ?thesis
       proof(cases \<open>j = i\<close>)
         case True
-        thus ?thesis 
-          sorry          
+        have \<open>(if i < n
+     then vec_index (Abs_vec
+           (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) ) i
+     else 0) = 1\<close>
+        proof-
+          have \<open>id (\<lambda>y. if j = y then 1 else 0) i  = 1\<close>
+            using \<open>j = i\<close> by simp
+          hence \<open>(\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i  = 1\<close>
+            using \<open>i < n\<close>
+            by simp
+          hence \<open>(n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i) = (n, 1)\<close>
+            by simp
+          have \<open>vec_index (Abs_vec (n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)))) i = 1\<close>
+            unfolding vec_index_def
+            apply auto
+          proof-
+            have \<open>Rep_vec
+          (Abs_vec
+            (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)))
+            = (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n))\<close>
+            proof-
+              have \<open>(n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)) \<in> {(n, mk_vec n f) |n f. True}\<close>
+                unfolding mk_vec_def 
+                apply auto
+                by (metis id_apply)                
+              thus ?thesis
+                using Abs_vec_inverse by blast
+            qed
+            moreover have \<open>snd (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)) = (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n))\<close>
+              by simp
+            ultimately show  \<open>snd (Rep_vec
+          (Abs_vec
+            (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)))) i = 1\<close>
+              using  \<open>(n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i) = (n, 1)\<close>
+              by (simp add: \<open>Rep_vec (Abs_vec (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i else undef_vec (i - id n))) = (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i else undef_vec (i - id n))\<close> True)
+          qed
+          thus ?thesis
+            using True \<open>j < n\<close> by auto 
+        qed
+        moreover have \<open>(if j = i then 1 else 0)  = 1\<close>
+          using \<open>j = i\<close>
+          by simp
+        ultimately show ?thesis 
+          by auto    
       next
         case False
         have \<open>(if i < n
@@ -469,7 +522,6 @@ proof-
       then show ?thesis
         using \<open>j < n\<close> by auto 
     qed
-
     ultimately show \<open>(if i < dim_vec
                 (Abs_vec
                   (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
