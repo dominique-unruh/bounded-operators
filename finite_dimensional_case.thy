@@ -557,8 +557,232 @@ lemma fun_to_ell2_ell2_to_vec:
   by auto
 
 lemma fun_to_ell2_final_trunc_suc:
-\<open>fun_to_ell2 n f = (\<lambda> t. f (final_trunc (ell2_to_vec (Suc n) t)))\<close>
-  sorry
+  fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  shows \<open>fun_to_ell2 n f = (\<lambda> t. f (final_trunc (ell2_to_vec (Suc n) t)))\<close>
+proof-
+  have \<open>(Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)))
+= Abs_vec
+             (fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0,
+              \<lambda>i. if i < fst (Rep_vec
+                               (Abs_vec
+                                 (Suc n,
+                                  \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                      else undef_vec (i - Suc n)))) -
+                         Suc 0
+                  then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n))))
+                        i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))\<close>
+    for x
+  proof-
+    have \<open>( (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)))
+=  (fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0,
+              \<lambda>i. if i < fst (Rep_vec
+                               (Abs_vec
+                                 (Suc n,
+                                  \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                      else undef_vec (i - Suc n)))) -
+                         Suc 0
+                  then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n))))
+                        i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))\<close>
+    proof-
+      have \<open>n = fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0\<close>
+      proof-
+        have \<open>(Suc n, \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)) \<in>
+             {(n, mk_vec n f) |n f. True}\<close>
+          unfolding mk_vec_def
+          by auto
+        hence \<open>Rep_vec ( Abs_vec ( (Suc n, \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)) ))
+ = (Suc n, \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n))\<close>
+          using Abs_vec_inverse
+          by blast
+        hence \<open>fst ( Rep_vec ( Abs_vec ( (Suc n, \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)) )) )
+ = fst (Suc n, \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n))\<close>
+          by simp
+        also have \<open>... = Suc n\<close>
+          by simp
+        finally show ?thesis by simp
+      qed
+      moreover have \<open> (if i < n then Rep_ell2 x i else undef_vec (i - n)) 
+              = ( if i < fst (Rep_vec
+                               (Abs_vec
+                                 (Suc n,
+                                  \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                      else undef_vec (i - Suc n)))) -
+                         Suc 0
+                  then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n))))
+                        i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))\<close>
+        for i
+      proof-
+        have \<open> (if i < n then Rep_ell2 x i else undef_vec (i - n)) 
+            = ( if i < n then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n)))) i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))\<close>
+        proof-
+          have \<open>i < n \<Longrightarrow> Rep_ell2 x i 
+              =  snd (Rep_vec (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n)))) i\<close>
+            apply transfer
+          proof-
+            fix x::\<open>nat \<Rightarrow> complex\<close> and i n::nat
+            assume \<open>i < n\<close> and \<open>has_ell2_norm x\<close>
+            from \<open>i < n\<close>
+            have \<open>x i = snd (Suc n, \<lambda>i. if i < Suc n then x i else undef_vec (i - Suc n)) i\<close>
+              by auto
+            moreover have \<open>(Suc n, \<lambda>i. if i < Suc n then x i else undef_vec (i - Suc n)) 
+                \<in> {(n, mk_vec n f) |n f. True}\<close>
+              unfolding mk_vec_def
+              by auto
+            ultimately show \<open>x i = snd (Rep_vec
+             (Abs_vec (Suc n, \<lambda>i. if i < Suc n then x i else undef_vec (i - Suc n)))) i\<close>
+              using Abs_vec_inverse by fastforce
+          qed
+          moreover have \<open>i \<ge> n \<Longrightarrow> undef_vec (i - n) = 
+                undef_vec (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) - Suc 0))\<close>
+            using \<open>n = fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0\<close> by simp
+          ultimately show ?thesis by auto
+        qed
+        thus ?thesis using \<open>n = fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0\<close>
+          by simp
+      qed
+      ultimately show ?thesis 
+        by auto
+    qed
+    hence \<open>(Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)))
+= Abs_vec
+             (fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 x i else undef_vec (i - Suc n)))) -
+              Suc 0,
+              \<lambda>i. if i < fst (Rep_vec
+                               (Abs_vec
+                                 (Suc n,
+                                  \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                      else undef_vec (i - Suc n)))) -
+                         Suc 0
+                  then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                    else undef_vec (i - Suc n))))
+                        i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 x i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))\<close>
+      by simp
+    thus ?thesis by blast
+  qed
+  hence \<open>(\<lambda>x. f (Abs_vec (n, \<lambda>i. if i < n then Rep_ell2 x i else undef_vec (i - n)))) =
+    (\<lambda>t. f (Abs_vec
+             (fst (Rep_vec
+                    (Abs_vec
+                      (Suc n,
+                       \<lambda>i. if i < Suc n then Rep_ell2 t i else undef_vec (i - Suc n)))) -
+              Suc 0,
+              \<lambda>i. if i < fst (Rep_vec
+                               (Abs_vec
+                                 (Suc n,
+                                  \<lambda>i. if i < Suc n then Rep_ell2 t i
+                                      else undef_vec (i - Suc n)))) -
+                         Suc 0
+                  then snd (Rep_vec
+                             (Abs_vec
+                               (Suc n,
+                                \<lambda>i. if i < Suc n then Rep_ell2 t i
+                                    else undef_vec (i - Suc n))))
+                        i
+                  else undef_vec
+                        (i -
+                         (fst (Rep_vec
+                                (Abs_vec
+                                  (Suc n,
+                                   \<lambda>i. if i < Suc n then Rep_ell2 t i
+                                       else undef_vec (i - Suc n)))) -
+                          Suc 0)))))\<close>
+    by simp    
+  thus ?thesis 
+  unfolding  fun_to_ell2_def final_trunc_def vec_def mk_vec_def id_def vec_index_def
+    dim_vec_def ell2_to_vec_def
+  by auto
+qed
+
 
 lemma finite_complex_rank_ell2_map_left_vec_exact:
   fixes n :: nat
