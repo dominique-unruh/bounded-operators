@@ -354,6 +354,141 @@ lemma ell2_to_vec_smult:
 
 section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
 
+lemma vec_to_ell2_id:
+  \<open>j < n \<Longrightarrow> (vec_to_ell2 (vec n (Rep_ell2 (ket j)))) = (ket j)\<close>
+proof-
+  assume \<open>j < n\<close>
+  hence  \<open>Rep_ell2 ( (vec_to_ell2 (vec n (Rep_ell2 (ket j)))) ) i
+     = (Rep_ell2 (ket j)) i\<close>
+    for i::nat
+    unfolding vec_def mk_vec_def
+    apply auto
+    apply transfer
+  proof-
+    fix j n i :: nat
+    assume \<open>j < n\<close>
+    have \<open>dim_vec
+                (Abs_vec
+                  (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n))) = n\<close>
+    proof-
+      have \<open>(n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n)) \<in> {(n, mk_vec n f) |n f. True}\<close>
+        unfolding mk_vec_def
+        apply auto
+        by (metis id_apply)          
+      hence \<open>Rep_vec
+          (Abs_vec
+                  (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n)))
+    = (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n))\<close>
+        using Abs_vec_inverse 
+        by blast
+      moreover have \<open>fst (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n)) = n\<close>
+        by simp
+      ultimately have \<open>fst ( Rep_vec
+          (Abs_vec
+                  (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n))) ) = n\<close>
+        by smt
+      thus ?thesis 
+        by (simp add: dim_vec.rep_eq) 
+    qed
+    moreover have \<open>(if i < n
+        then vec_index (Abs_vec
+              (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                      else undef_vec (i - id n)) ) i
+        else 0) =
+       (if j = i then 1 else 0)\<close>
+    proof(cases \<open>i < n\<close>)
+      case True
+      thus ?thesis 
+      proof(cases \<open>j = i\<close>)
+        case True
+        thus ?thesis 
+          sorry          
+      next
+        case False
+        have \<open>(if i < n
+     then vec_index (Abs_vec
+           (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) ) i
+     else 0) = 0\<close>
+        proof-
+          have \<open>id (\<lambda>y. if j = y then 1 else 0) i  = 0\<close>
+            using \<open>j \<noteq> i\<close> by simp
+          hence \<open>(\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i  = 0\<close>
+            using \<open>i < n\<close>
+            by simp
+          hence \<open>(n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i) = (n, 0)\<close>
+            by simp
+          have \<open>vec_index (Abs_vec (n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)))) i = 0\<close>
+            unfolding vec_index_def
+            apply auto
+          proof-
+            have \<open>Rep_vec
+          (Abs_vec
+            (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)))
+            = (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n))\<close>
+            proof-
+              have \<open>(n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)) \<in> {(n, mk_vec n f) |n f. True}\<close>
+                unfolding mk_vec_def 
+                apply auto
+                by (metis id_apply)                
+              thus ?thesis
+                using Abs_vec_inverse by blast
+            qed
+            moreover have \<open>snd (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)) = (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n))\<close>
+              by simp
+            ultimately show  \<open>snd (Rep_vec
+          (Abs_vec
+            (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                    else undef_vec (i - id n)))) i = 0\<close>
+              using  \<open>(n , (\<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                   else undef_vec (i - id n)) i) = (n, 0)\<close>
+              by (simp add: \<open>Rep_vec (Abs_vec (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i else undef_vec (i - id n))) = (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i else undef_vec (i - id n))\<close> True)
+          qed
+          thus ?thesis
+            by (simp add: \<open>vec_index (Abs_vec (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i else undef_vec (i - id n))) i = 0\<close>)            
+        qed
+        thus ?thesis
+          by (simp add: False) 
+      qed
+    next
+      case False
+      then show ?thesis
+        using \<open>j < n\<close> by auto 
+    qed
+
+    ultimately show \<open>(if i < dim_vec
+                (Abs_vec
+                  (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                          else undef_vec (i - id n)))
+        then vec_index (Abs_vec
+              (n, \<lambda>i. if i < n then id (\<lambda>y. if j = y then 1 else 0) i
+                      else undef_vec (i - id n)) ) 
+             i
+        else 0) =
+       (if j = i then 1 else 0)\<close>
+      by smt
+  qed
+  hence \<open>Rep_ell2 ( (vec_to_ell2 (vec n (Rep_ell2 (ket j)))) )
+     = (Rep_ell2 (ket j))\<close>
+    by blast
+  thus ?thesis using Rep_ell2_inject by blast 
+qed
+
+
 lemma finite_complex_rank_ell2_map_left_vec_exact:
   fixes n :: nat
   shows \<open>\<forall> f :: complex vec \<Rightarrow> 'a::complex_normed_vector.
@@ -490,7 +625,23 @@ next
               using \<open>k = 0\<close>
               by (simp add: ket.rep_eq) 
             moreover have \<open>fun_to_ell2 n (\<phi> n) (ket k) = 0\<close>
-              sorry
+            proof(cases \<open>n = 0\<close>)
+              case True
+              then show ?thesis
+                using \<open>complex_gen n (fun_to_ell2 n (\<phi> n))\<close> by auto 
+            next
+              case False
+              hence \<open>n > 0\<close>
+                by auto
+              hence \<open>(vec_to_ell2 (vec n (Rep_ell2 (ket 0)))) = ket 0\<close>
+                using vec_to_ell2_id by simp
+              hence \<open>left_shift_ell2 (vec_to_ell2 (vec n (Rep_ell2 (ket 0)))) = 0\<close>
+                by (simp add: shift_ket0)                
+              hence \<open>fun_to_ell2 n (\<phi> n) (ket 0) = 0\<close>
+                unfolding \<phi>_def fun_to_ell2_def
+                by (metis \<open>clinear_vec (Suc n) f\<close> clinear.scaleC clinear_ell2_map_left complex_vector.scale_eq_0_iff ell2_to_vec_smult ell2_to_vec_well_defined_dim fun_to_ell2_well_defined vec_to_ell2_smult)          
+              thus ?thesis using \<open>k = 0\<close> by blast
+            qed
             moreover have \<open>fun_to_ell2 (Suc n) f (ket k) = fun_to_ell2 (Suc n) f (ket 0)\<close>
               using \<open>k = 0\<close> by simp
             ultimately show ?thesis unfolding F_def using \<open>k = 0\<close> by simp
