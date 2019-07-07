@@ -555,12 +555,63 @@ lemma final_trunc_add:
   unfolding final_trunc_def final_add_def
   by auto
 
+lemma final_add_dim:
+\<open>(dim_vec (final_add x)) = Suc (dim_vec x)\<close>
+  unfolding final_add_def by auto  
+
+lemma final_add_clinear_add:
+  fixes x y :: \<open>complex vec\<close>
+  assumes \<open>dim_vec x = dim_vec y\<close>
+  shows  \<open>final_add (x + y) = final_add x + final_add y\<close>
+  sorry
+
+lemma final_add_clinear_smult:
+  fixes x :: \<open>complex vec\<close> and c :: complex
+  shows  \<open>final_add (c \<cdot>\<^sub>v x) = c \<cdot>\<^sub>v final_add x\<close>
+  sorry
+
+
 lemma final_add_clinear:
   fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
     and n :: nat
   assumes \<open>clinear_vec (Suc n) f\<close>
   shows  \<open>clinear_vec n (f \<circ> final_add)\<close>
-  sorry
+  proof
+  show "(f \<circ> final_add) (x + y) = (f \<circ> final_add) x + (f \<circ> final_add) y"
+    if "dim_vec (x::complex Matrix.vec) = n"
+      and "dim_vec (y::complex Matrix.vec) = n"
+    for x :: "complex Matrix.vec"
+      and y :: "complex Matrix.vec"
+  proof-
+    have \<open>dim_vec x = dim_vec y\<close>
+      by (simp add: that(1) that(2))
+    hence \<open>final_add (x + y) = final_add x + final_add y\<close>
+      by (simp add: final_add_clinear_add)
+    hence \<open>f (final_add (x + y)) = f (final_add x + final_add y)\<close>
+      by simp
+    also have \<open>f (final_add x + final_add y) = f (final_add x) +  f (final_add y)\<close>
+      using \<open>clinear_vec (Suc n) f\<close>
+      by (simp add: clinear_vec_def final_add_dim that(1) that(2))
+    finally show ?thesis by simp
+  qed
+
+  show "(f \<circ> final_add) (c \<cdot>\<^sub>v x) = c *\<^sub>C (f \<circ> final_add) x"
+    if "dim_vec (x::complex Matrix.vec) = n"
+    for c :: complex
+      and x :: "complex Matrix.vec"
+  proof-
+    have \<open>dim_vec (final_add x) = Suc n\<close>
+      using \<open>dim_vec x = n\<close>
+      by (simp add: final_add_dim)      
+    have \<open>final_add (c \<cdot>\<^sub>v x) = c \<cdot>\<^sub>v (final_add x)\<close>
+      by (simp add: final_add_clinear_smult)
+    hence \<open>f (final_add (c \<cdot>\<^sub>v x)) = f (c \<cdot>\<^sub>v (final_add x))\<close>
+      by simp
+    also have \<open>... = c *\<^sub>C f (final_add x)\<close>
+      using \<open>clinear_vec (Suc n) f\<close>  \<open>dim_vec (final_add x) = Suc n\<close> clinear_vec.mults by blast
+    finally show ?thesis by simp
+  qed
+qed
 
 lemma trunc_clinear_vec:
   fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
