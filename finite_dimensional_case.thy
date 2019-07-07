@@ -550,33 +550,39 @@ definition final_add :: \<open>complex vec \<Rightarrow> complex vec\<close> whe
 (\<lambda> i. if i < dim_vec v then vec_index v i else 0)\<close>
 
 lemma final_trunc_add:
-\<open>dim_vec v \<ge> 1 \<Longrightarrow> (final_add \<circ> final_trunc) v = vec (dim_vec v) 
+  \<open>dim_vec v \<ge> 1 \<Longrightarrow> (final_add \<circ> final_trunc) v = vec (dim_vec v) 
 (\<lambda> i. if i < (dim_vec v)-1 then vec_index v i else 0)\<close>
   unfolding final_trunc_def final_add_def
   by auto
 
 lemma final_add_dim:
-\<open>(dim_vec (final_add x)) = Suc (dim_vec x)\<close>
+  \<open>(dim_vec (final_add x)) = Suc (dim_vec x)\<close>
   unfolding final_add_def by auto  
 
 lemma final_add_clinear_add:
   fixes x y :: \<open>complex vec\<close>
   assumes \<open>dim_vec x = dim_vec y\<close>
-  shows  \<open>final_add (x + y) = final_add x + final_add y\<close>
-  sorry
+  shows \<open>final_add (x + y) = final_add x + final_add y\<close>
+  unfolding final_add_def
+  using plus_vec_def
+  apply auto
+  by (simp add: Matrix.vec_eq_iff assms)
+
+
 
 lemma final_add_clinear_smult:
   fixes x :: \<open>complex vec\<close> and c :: complex
-  shows  \<open>final_add (c \<cdot>\<^sub>v x) = c \<cdot>\<^sub>v final_add x\<close>
-  sorry
-
+  shows \<open>final_add (c \<cdot>\<^sub>v x) = c \<cdot>\<^sub>v final_add x\<close>
+  unfolding final_add_def
+  using smult_vec_def
+  by auto
 
 lemma final_add_clinear:
   fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
     and n :: nat
   assumes \<open>clinear_vec (Suc n) f\<close>
   shows  \<open>clinear_vec n (f \<circ> final_add)\<close>
-  proof
+proof
   show "(f \<circ> final_add) (x + y) = (f \<circ> final_add) x + (f \<circ> final_add) y"
     if "dim_vec (x::complex Matrix.vec) = n"
       and "dim_vec (y::complex Matrix.vec) = n"
@@ -835,11 +841,11 @@ proof
                 ultimately show ?thesis by simp
               qed
             qed
-           ultimately show \<open>Abs_vec (Suc n,
+            ultimately show \<open>Abs_vec (Suc n,
       \<lambda>i. if i < Suc n then if i < n then  0 + vec_index v i 
           else vec_index v n + 0
           else undef_vec (i - Suc n)) = v\<close>
-             by (simp add: eq_vecI)              
+              by (simp add: eq_vecI)              
           qed
           ultimately show ?thesis by simp
         qed
@@ -1082,9 +1088,9 @@ proof-
                           Suc 0)))))\<close>
     by simp    
   thus ?thesis 
-  unfolding  fun_to_ell2_def final_trunc_def vec_def mk_vec_def id_def vec_index_def
-    dim_vec_def ell2_to_vec_def
-  by auto
+    unfolding  fun_to_ell2_def final_trunc_def vec_def mk_vec_def id_def vec_index_def
+      dim_vec_def ell2_to_vec_def
+    by auto
 qed
 
 
@@ -1181,21 +1187,12 @@ next
   thus ?case by blast
 qed
 
-lemma finite_complex_rank_ell2_map_left_vec:
+theorem finite_complex_rank_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes \<open>clinear_vec n f\<close>
   shows \<open>finite_complex_rank (fun_to_ell2 n f)\<close>
   unfolding finite_complex_rank_def
   using assms finite_complex_rank_ell2_map_left_vec_exact by blast
-
-lemma clinear_ell2_map_left_vec:
-  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
-  assumes \<open>clinear_vec n f\<close>   
-  shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
-  using assms finite_complex_rank_ell2_map_left_vec finite_rank_and_linear  clinear_ell2_map_left
-  by blast 
-
-
 
 
 end
