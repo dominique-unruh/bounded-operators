@@ -264,6 +264,9 @@ qed
 
 setup_lifting type_definition_complex_bounded
 
+type_synonym 'a bounded = "('a, 'a ) complex_bounded"
+
+
 lift_definition ev_complex_bounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
   is \<open>\<lambda> f. \<lambda> x. ev_real_bounded f x\<close>.
 
