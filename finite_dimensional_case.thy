@@ -544,12 +544,265 @@ text \<open>final_trunc x0 x1 x2 ... x(n-1) = x0 x1 x2 ... x(n-2)\<close>
 definition final_trunc :: \<open>complex vec \<Rightarrow> complex vec\<close> where
   \<open>final_trunc v = vec (dim_vec v - 1) (vec_index v)\<close>
 
+text \<open>final_add x0 x1 x2 ... x(n-1) = x0 x1 x2 ... x(n-1) 0\<close>
+definition final_add :: \<open>complex vec \<Rightarrow> complex vec\<close> where
+  \<open>final_add v = vec (dim_vec v + 1) 
+(\<lambda> i. if i < dim_vec v then vec_index v i else 0)\<close>
+
+lemma final_trunc_add:
+\<open>dim_vec v \<ge> 1 \<Longrightarrow> (final_add \<circ> final_trunc) v = vec (dim_vec v) 
+(\<lambda> i. if i < (dim_vec v)-1 then vec_index v i else 0)\<close>
+  unfolding final_trunc_def final_add_def
+  by auto
+
+lemma final_add_clinear:
+  fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+    and n :: nat
+  assumes \<open>clinear_vec (Suc n) f\<close>
+  shows  \<open>clinear_vec n (f \<circ> final_add)\<close>
+  sorry
+
 lemma trunc_clinear_vec:
-  fixes n :: nat
+  fixes f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+    and n :: nat
   assumes \<open>clinear_vec (Suc n) f\<close>
   shows \<open>\<exists> g. clinear_vec n g \<and> 
         (\<exists> t. \<forall> v. \<exists> c. dim_vec v = Suc n \<longrightarrow> f v =  c *\<^sub>C t + g (final_trunc v))\<close>
-  sorry
+proof
+  define g where \<open>g = f \<circ> final_add\<close>
+  have \<open>clinear_vec n g\<close>
+    using  \<open>clinear_vec (Suc n) f\<close> \<open>g = f \<circ> final_add\<close> final_add_clinear
+    unfolding g_def
+    by blast
+  moreover have \<open>\<exists>t. \<forall>v. \<exists>c. dim_vec v = Suc n \<longrightarrow> f v = c *\<^sub>C t + g (final_trunc v)\<close>
+  proof-
+    have \<open>\<exists>c. dim_vec v = Suc n \<longrightarrow> f v = c *\<^sub>C f ( unit_vec (Suc n) n ) + g (final_trunc v)\<close>
+      for v
+    proof-
+      have \<open>dim_vec v = Suc n \<Longrightarrow> f v = (vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n ) + g (final_trunc v)\<close>
+      proof-
+        assume \<open>dim_vec v = Suc n\<close>
+        have \<open>f v = (vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+                   + f ( final_add (final_trunc v) )\<close>
+        proof-
+          have \<open>(vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+                  = f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 else (vec_index v n) ) ) )\<close>
+          proof-
+            have \<open>(vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+              = f ( (vec_index v n) \<cdot>\<^sub>v (unit_vec (Suc n) n) )\<close>
+              using \<open>clinear_vec (Suc n) f\<close>
+              unfolding clinear_vec_def
+              by simp
+            moreover have \<open>(vec_index v n) \<cdot>\<^sub>v (unit_vec (Suc n) n)
+      = vec (Suc n) ( \<lambda> i. (if i < n then 0 else (vec_index v n) ) )\<close>
+            proof-
+              have \<open>(unit_vec (Suc n) n)
+         =  vec (Suc n) ( \<lambda> i. (if i < n then 0 else 1 ) )\<close>
+                unfolding unit_vec_def
+                by auto
+              hence \<open>(vec_index v n) \<cdot>\<^sub>v (unit_vec (Suc n) n)
+      = (vec_index v n) \<cdot>\<^sub>v vec (Suc n) ( \<lambda> i. (if i < n then 0 else 1 ) )\<close>
+                by auto
+              thus ?thesis unfolding smult_vec_def by auto
+            qed
+            ultimately show ?thesis by simp
+          qed
+          moreover have \<open>f ( final_add (final_trunc v) )
+                = f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then vec_index v i else 0 ) ) )\<close>
+          proof-
+            have \<open>final_add (final_trunc v) 
+          =  vec (Suc n) ( \<lambda> i. ( if i < n then vec_index v i else 0 ) )\<close>
+              using final_trunc_add
+              by (simp add: \<open>dim_vec v = Suc n\<close>) 
+            thus ?thesis by simp
+          qed
+          ultimately have \<open>(vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+                   + f ( final_add (final_trunc v) )
+            = f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 else (vec_index v n) ) ) )
+            + f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then vec_index v i else 0 ) ) )\<close>
+            by simp
+          hence \<open>(vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+                   + f ( final_add (final_trunc v) )
+            = f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 else (vec_index v n) ) ) 
+            +  vec (Suc n) ( \<lambda> i. (
+                if i < n then vec_index v i else 0 ) ) )\<close>
+            using \<open>clinear_vec (Suc n) f\<close>
+            unfolding clinear_vec_def
+            by auto
+          moreover have \<open>vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 else (vec_index v n) ) ) 
+            +  vec (Suc n) ( \<lambda> i. (
+                if i < n then vec_index v i else 0 ) )
+            =  vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 + vec_index v i
+                   else (vec_index v n) + 0 ) )\<close>
+            using plus_vec_def
+            by auto
+          ultimately have \<open>(vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n )
+                   + f ( final_add (final_trunc v) )
+            = f ( vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 + vec_index v i
+                   else (vec_index v n) + 0 ) ) )\<close>
+            by simp
+          moreover have \<open>vec (Suc n) ( \<lambda> i. (
+                if i < n then 0 + vec_index v i
+                   else (vec_index v n) + 0 ) ) = v\<close>
+            unfolding vec_def mk_vec_def id_def
+            apply auto
+          proof-
+            have \<open>dim_vec (Abs_vec (Suc n,
+      \<lambda>i. if i < Suc n then if i < n then  0 + vec_index v i 
+          else vec_index v n + 0
+          else undef_vec (i - Suc n))) = dim_vec v\<close>
+              using \<open>dim_vec v = Suc n\<close>
+              apply auto
+              apply transfer
+              unfolding dim_vec_def
+              apply auto
+            proof-
+              show \<open>fst (Rep_vec (Abs_vec (Suc n,
+                    \<lambda>i. if i < Suc n
+                        then if i < n
+                             then 0 +
+               snd (Suc n, mk_vec (Suc n) f) i
+                             else snd (Suc n, mk_vec (Suc n) f)
+             n + 0 else undef_vec (i - Suc n)))) = Suc n\<close>
+                for n::nat and f::\<open>nat \<Rightarrow> complex\<close>
+              proof-
+                have \<open>fst (Suc n,
+                    \<lambda>i. if i < Suc n
+                        then if i < n
+                             then 0 +
+               snd (Suc n, mk_vec (Suc n) f) i
+                             else snd (Suc n, mk_vec (Suc n) f)
+             n + 0 else undef_vec (i - Suc n)) = Suc n\<close>
+                  by simp
+                moreover have \<open>(Rep_vec (Abs_vec (Suc n,
+                    \<lambda>i. if i < Suc n
+                        then if i < n
+                             then 0 +
+               snd (Suc n, mk_vec (Suc n) f) i
+                             else snd (Suc n, mk_vec (Suc n) f)
+             n + 0 else undef_vec (i - Suc n))))
+          = (Suc n, \<lambda>i. if i < Suc n
+                        then if i < n
+                             then 0 +
+               snd (Suc n, mk_vec (Suc n) f) i
+                             else snd (Suc n, mk_vec (Suc n) f)
+             n + 0 else undef_vec (i - Suc n))\<close>
+                proof-
+                  have \<open>(Suc n, \<lambda>i. if i < Suc n
+                        then if i < n
+                             then 0 +
+               snd (Suc n, mk_vec (Suc n) f) i
+                             else snd (Suc n, mk_vec (Suc n) f)
+             n + 0 else undef_vec (i - Suc n))
+                    \<in> {(n, mk_vec n f) |n f. True}\<close>
+                    unfolding mk_vec_def by auto
+                  thus ?thesis using Abs_vec_inverse by blast
+                qed
+                ultimately show ?thesis 
+                  by simp
+              qed
+            qed
+            moreover have \<open>vec_index (Abs_vec (Suc n,
+      \<lambda>i. if i < Suc n then if i < n then  0 + vec_index v i 
+          else vec_index v n + 0
+          else undef_vec (i - Suc n))) = vec_index v\<close>
+              using \<open>dim_vec v = Suc n\<close>
+              unfolding vec_index_def
+              apply auto
+              apply transfer
+              unfolding dim_vec_def id_def map_fun_def mk_vec_def
+              apply auto
+            proof-
+              show \<open>snd (Rep_vec (Abs_vec (Suc n,\<lambda>i. if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n)))) =
+           (\<lambda>i. if i < Suc n then f i else undef_vec (i - Suc n))\<close>
+                for n :: nat and f :: \<open>nat \<Rightarrow> complex\<close>
+              proof-
+                have \<open>snd (Suc n, \<lambda>i. if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n)) =
+           (\<lambda>i. if i < Suc n then f i else undef_vec (i - Suc n))\<close>
+                proof-
+                  have \<open>(if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n))
+= (if i < Suc n then f i else undef_vec (i - Suc n))\<close>
+                    for i :: nat
+                    apply auto
+                  proof-
+                    assume \<open> \<not> i < n\<close> and \<open>i < Suc n\<close>
+                    from \<open> \<not> i < n\<close>
+                    have \<open>i \<ge> n\<close> by simp
+                    hence \<open>n = i\<close>  using \<open>i < Suc n\<close>
+                      by simp
+                    thus \<open>f n = f i\<close> by simp
+                  qed
+                  thus ?thesis by simp
+                qed
+                moreover have \<open> (Rep_vec (Abs_vec (Suc n,\<lambda>i. if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n))))
+=  (Suc n,\<lambda>i. if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n))\<close>
+                proof-
+                  have \<open>(Suc n,\<lambda>i. if i < Suc n
+                        then if i < n then 0 +((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) i
+                             else ((\<lambda>x. x) \<circ> snd \<circ> (\<lambda>x. x)) (Suc n, \<lambda>i.
+    if i < Suc n then f i else undef_vec (i - Suc n)) n + 0
+                        else undef_vec (i - Suc n))
+           \<in> {(n, mk_vec n f) |n f. True}\<close>
+                    unfolding mk_vec_def by auto
+                  thus ?thesis using Abs_vec_inverse
+                    by blast
+                qed
+                ultimately show ?thesis by simp
+              qed
+            qed
+           ultimately show \<open>Abs_vec (Suc n,
+      \<lambda>i. if i < Suc n then if i < n then  0 + vec_index v i 
+          else vec_index v n + 0
+          else undef_vec (i - Suc n)) = v\<close>
+             by (simp add: eq_vecI)              
+          qed
+          ultimately show ?thesis by simp
+        qed
+        hence \<open>f v = (vec_index v n) *\<^sub>C f ( unit_vec (Suc n) n ) + g (final_trunc v)\<close>
+          unfolding g_def by simp
+        thus ?thesis by blast
+      qed
+      thus ?thesis by blast
+    qed
+    thus ?thesis by blast
+  qed
+  ultimately show "clinear_vec n g \<and> (\<exists>t. \<forall>v. \<exists>c. dim_vec v = Suc n \<longrightarrow> f v = c *\<^sub>C t + g (final_trunc v))"
+    by blast
+qed
 
 lemma fun_to_ell2_ell2_to_vec:
   \<open>(fun_to_ell2 n f) x = f (ell2_to_vec n x)\<close>
