@@ -2199,6 +2199,17 @@ lemma shift_ket0:
   unfolding left_shift_def ket_def
   by auto
 
+lemma clinear_minus:
+\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
+  sorry
+
+lemma ket_Kronecker_delta_eq:
+\<open>i = j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 1\<close>
+  sorry
+
+lemma ket_Kronecker_delta_neq:
+\<open>i \<noteq>  j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 0\<close>
+  sorry
 
 lemma ell2_superposition:
   fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
@@ -2238,14 +2249,90 @@ next
         by simp
       hence \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
         by blast        
-      have \<open>\<forall>n\<ge>k. g (ket n) = 0\<close>
-        sorry
+      have \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
+      proof
+        show "\<langle>ket k, x + y\<rangle> *\<^sub>C f (ket k) = \<langle>ket k, x\<rangle> *\<^sub>C f (ket k) + \<langle>ket k, y\<rangle> *\<^sub>C f (ket k)"
+          for x :: "nat ell2"
+            and y :: "nat ell2"
+          by (simp add: cinner_right_distrib scaleC_add_left)          
+        show "\<langle>ket k, r *\<^sub>C x\<rangle> *\<^sub>C f (ket k) = r *\<^sub>C \<langle>ket k, x\<rangle> *\<^sub>C f (ket k)"
+          for r :: complex
+            and x :: "nat ell2"
+          by simp          
+        show "\<exists>K. \<forall>x. norm (\<langle>ket k, x\<rangle> *\<^sub>C f (ket k)) \<le> norm x * K"
+        proof-
+          have \<open>norm (\<langle>ket k, x\<rangle> *\<^sub>C f (ket k)) \<le> norm x * (norm (ket k)  * norm (f (ket k)))\<close>
+            for x
+          proof-
+            have \<open>norm (\<langle>ket k, x\<rangle> *\<^sub>C f (ket k)) = cmod (\<langle>ket k, x\<rangle>) * norm (f (ket k))\<close>
+              by simp
+            also have \<open>... \<le> norm (ket k) * norm x  * norm (f (ket k))\<close>
+            proof-
+              have \<open>cmod (\<langle>ket k, x\<rangle>) \<le> norm (ket k) * norm x\<close>
+                using complex_inner_class.Cauchy_Schwarz_ineq2 by blast
+              thus ?thesis
+                by (simp add: mult_mono')                 
+            qed
+            also have \<open>... =  (norm x) * (norm (ket k)  * norm (f (ket k)))\<close>
+              by simp
+            finally have \<open>norm (\<langle>ket k, x\<rangle> *\<^sub>C f (ket k)) \<le>  (norm x) * (norm (ket k)  * norm (f (ket k)))\<close>
+              by blast
+            thus ?thesis by blast
+          qed
+          thus ?thesis by blast
+        qed
+      qed
+      have \<open>n \<ge> k \<Longrightarrow> g (ket n) = 0\<close>
+        for n
+      proof-
+        assume \<open>n \<ge> k\<close>
+        moreover have \<open>n > k \<Longrightarrow> g (ket n) = 0\<close>
+        proof-
+          assume \<open>n > k\<close>
+          hence \<open>n \<ge> Suc k\<close>
+            by simp
+          have\<open>\<langle>ket k, ket n\<rangle> = 0\<close>
+            using ket_Kronecker_delta_neq  \<open>n > k\<close>
+            by (metis antisym_conv2 calculation)             
+          hence \<open>\<langle>ket k, ket n\<rangle> *\<^sub>C f (ket k) = 0\<close>
+            by simp
+          hence \<open>g (ket n) = f (ket n)\<close>
+            unfolding g_def
+            by simp 
+          moreover have \<open>f (ket n) = 0\<close>
+            using \<open>n \<ge> Suc k\<close>
+            by (simp add: \<open>\<forall>n\<ge>Suc k. f (ket n) = 0\<close>) 
+          ultimately show ?thesis by simp
+        qed
+        moreover have \<open>n = k \<Longrightarrow> g (ket n) = 0\<close>
+        proof-
+          assume \<open>n = k\<close>
+          hence \<open>\<langle>ket k, ket n\<rangle> = 1\<close>
+            by (simp add: ket_Kronecker_delta_eq)
+          hence \<open>g (ket n) = 0\<close>
+            unfolding g_def
+            using \<open>n = k\<close> by auto 
+          thus ?thesis by blast
+        qed
+        ultimately show ?thesis
+          using nat_less_le by blast  
+      qed
       moreover have \<open>clinear g\<close>
-        sorry
+      proof-
+        have \<open>clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
+          using \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
+          unfolding bounded_clinear_def by simp
+        moreover have  \<open>g = (\<lambda> x. f x - (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
+          by (simp add: \<open>g \<equiv> \<lambda>x. f x - \<langle>ket k, x\<rangle> *\<^sub>C f (ket k)\<close>)
+        ultimately show ?thesis 
+          using \<open>clinear f\<close> clinear_minus
+          by blast
+      qed
       ultimately have \<open>bounded_clinear g\<close>
         by (simp add: Suc.IH)
       moreover have \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
-        sorry
+        using  \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
+        by blast
       ultimately show \<open>bounded_clinear f\<close>
         using Complex_Vector_Spaces.bounded_clinear_add
             \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
