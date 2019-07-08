@@ -1214,7 +1214,7 @@ qed
 
 
 theorem finite_rank_operator_ell2_map_left_vec:
-  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_inner\<close>
   assumes \<open>clinear_vec n f\<close>
   shows \<open>finite_rank_operator (fun_to_ell2 n f)\<close>
 proof-

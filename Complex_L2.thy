@@ -2190,21 +2190,14 @@ lemma shift_ket:
   shows \<open>left_shift_ell2 (ket (Suc n)) = ket n\<close>
   apply transfer
   unfolding left_shift_def ket_def
-  apply auto
-  done
+  by auto
+  
 
 lemma shift_ket0:
  \<open>left_shift_ell2 (ket (0::nat)) = 0\<close>
   apply transfer
   unfolding left_shift_def ket_def
-  apply auto
-  done
-
-lemma ell2_bounded:
-  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
-  assumes \<open>\<exists> N. \<forall> n \<ge> N. f (ket n) = 0\<close> and \<open>clinear f\<close>
-  shows \<open>bounded_clinear f\<close>
-  sorry
+  by auto
 
 
 lemma ell2_superposition:
@@ -2212,5 +2205,66 @@ lemma ell2_superposition:
   assumes \<open>\<And> n::nat. f (ket n) = 0\<close> and \<open>clinear f\<close>
   shows \<open>\<forall> x. f x = 0\<close>
   sorry
+
+lemma ell2_bounded_auxiliary:
+\<open>\<forall> f:: nat ell2 \<Rightarrow> 'a::complex_inner.
+(\<forall> n \<ge> k. f (ket n) = 0) \<and> clinear f \<longrightarrow> bounded_clinear f\<close>
+proof(induction k)
+  case 0
+  have \<open>\<forall> n \<ge> 0. f (ket n) = 0 \<Longrightarrow> clinear f \<Longrightarrow> bounded_clinear f\<close>
+    for f:: \<open>nat ell2 \<Rightarrow> 'a::complex_inner\<close>
+  proof-
+    assume \<open>\<forall> n \<ge> 0. f (ket n) = 0\<close> and \<open>clinear f\<close>
+    from \<open>\<forall> n \<ge> 0. f (ket n) = 0\<close>  \<open>clinear f\<close>
+    have \<open>f = (\<lambda> _. 0)\<close> 
+      using ell2_superposition by blast
+    thus ?thesis  using  \<open>clinear f\<close> unfolding bounded_clinear_def bounded_clinear_axioms_def
+      by (metis eq_iff mult_zero_left norm_zero ordered_field_class.sign_simps(24))      
+  qed
+  thus ?case by blast 
+next
+  case (Suc k)
+  have \<open>\<forall>n\<ge>Suc k. f (ket n) = 0 \<Longrightarrow> clinear f \<Longrightarrow> bounded_clinear f\<close>
+    for f:: \<open>nat ell2 \<Rightarrow> 'a::complex_inner\<close>
+  proof-
+    assume \<open>\<forall>n\<ge>Suc k. f (ket n) = 0\<close>
+    assume \<open>clinear f\<close>
+    have \<open>\<exists> K. \<forall> x. norm (f x) \<le> (norm x) * K\<close>
+    proof-
+      define g where \<open>g x = f x - (cinner (ket k) x) *\<^sub>C f (ket k)\<close>
+        for x
+      hence \<open>f x = g x + (cinner (ket k) x) *\<^sub>C f (ket k)\<close>
+        for x
+        by simp
+      hence \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
+        by blast        
+      have \<open>\<forall>n\<ge>k. g (ket n) = 0\<close>
+        sorry
+      moreover have \<open>clinear g\<close>
+        sorry
+      ultimately have \<open>bounded_clinear g\<close>
+        by (simp add: Suc.IH)
+      moreover have \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
+        sorry
+      ultimately have \<open>bounded_clinear f\<close>
+        using Complex_Vector_Spaces.bounded_clinear_add
+            \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
+        by fastforce
+      show ?thesis sorry
+    qed
+    thus ?thesis using  \<open>clinear f\<close> unfolding bounded_clinear_def bounded_clinear_axioms_def
+      by blast
+  qed
+  thus ?case by blast
+qed
+
+
+lemma ell2_bounded:
+  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_inner\<close>
+  assumes \<open>\<exists> N. \<forall> n \<ge> N. f (ket n) = 0\<close> and \<open>clinear f\<close>
+  shows \<open>bounded_clinear f\<close>
+  using assms ell2_bounded_auxiliary by blast
+
+
 
 end
