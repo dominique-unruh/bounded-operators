@@ -1363,4 +1363,22 @@ proof-
     by blast
 qed
 
+theorem fun_l2_inj:
+  fixes n :: nat and f g :: \<open>complex vec \<Rightarrow> complex vec\<close>
+  assumes  \<open>fun_l2 n f = fun_l2 n g\<close> and \<open>dim_vec v = n\<close> 
+    and \<open>dim_vec (f v) = dim_vec (g v)\<close>
+  shows \<open>f v = g v\<close>
+proof-
+  from \<open>fun_l2 n f = fun_l2 n g\<close>
+  have \<open>(\<lambda>v. vec_to_ell2 (f v)) v = (\<lambda>v. vec_to_ell2 (g v)) v\<close>
+    unfolding fun_l2_def using fun_to_ell2_inject  \<open>dim_vec v = n\<close>
+    by blast
+  hence \<open>vec_to_ell2 (f v) = vec_to_ell2 (g v)\<close>
+    by blast
+  thus ?thesis using vec_to_ell2_inj
+    using \<open>dim_vec (f v) = dim_vec (g v)\<close>
+    by (metis eq_vecI)    
+qed
+
+
 end
