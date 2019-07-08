@@ -1212,14 +1212,8 @@ proof-
   thus ?thesis by simp
 qed
 
-lemma clinear_vec_substitution:
-  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
-  assumes \<open>clinear_vec n f\<close> and \<open>dim_vec x = n\<close> and \<open>dim_vec y = n\<close>
-    and \<open>\<And> i. i < n \<Longrightarrow> vec_index x i = vec_index y i\<close>
-  shows \<open>f x = f y\<close>
-  sorry
 
-lemma finite_rank_operator_ell2_map_left_vec:
+theorem finite_rank_operator_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes \<open>clinear_vec n f\<close>
   shows \<open>finite_rank_operator (fun_to_ell2 n f)\<close>
@@ -1312,8 +1306,8 @@ proof-
         qed
         moreover have \<open>dim_vec (0\<^sub>v n) = n\<close>
           by simp          
-        ultimately show  ?thesis using clinear_vec_substitution
-          using assms by blast
+        ultimately show  ?thesis using eq_vecI
+          by smt  
       qed
       moreover have \<open>f (0\<^sub>v n) = 0\<close>
         by (simp add: assms clinear_vec_zero)        
