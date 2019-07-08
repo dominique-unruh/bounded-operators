@@ -1244,14 +1244,12 @@ qed
 theorem finite_rank_operator_fun_l2:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> complex vec\<close>
   assumes \<open>clinear_v n f\<close>
-  shows \<open>finite_rank_operator (fun_l2 n f)\<close>
+  shows \<open>complex_gen n (fun_l2 n f)\<close>
 proof-
   have \<open>clinear_vec n ( \<lambda> v::complex vec. vec_to_ell2 (f v) )\<close>
     using assms clinear_v_clinear_vec by blast
-  hence \<open>finite_rank_operator (fun_to_ell2 n ( \<lambda> v::complex vec. vec_to_ell2 (f v) ))\<close>
-    using finite_rank_operator_ell2_map_left_vec by blast
-  thus ?thesis unfolding fun_l2_def
-    by blast
+ thus ?thesis unfolding fun_l2_def
+   by (simp add: finite_complex_rank_ell2_map_left_vec_exact)
 qed
 
 theorem fun_l2_inj:
