@@ -35,5 +35,14 @@ definition finite_complex_rank :: \<open>('a::complex_vector \<Rightarrow> 'b::c
 definition complex_rank :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> ereal\<close> where
   \<open>complex_rank f = Inf { n |n. complex_gen n f}\<close> 
 
+(* There are unbounded operators whose rank is fintie,
+but we use the name "finite rank operators" just for bounded
+operators. Reference:
+
+https://math.stackexchange.com/questions/1492097/unbounded-operator-of-finite-rank
+ *)
+
+definition finite_rank_operator :: \<open>('a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) \<Rightarrow> bool\<close> where
+  \<open>finite_rank_operator f = (finite_complex_rank f \<and> bounded_clinear f)\<close> 
 
 end

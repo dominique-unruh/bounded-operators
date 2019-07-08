@@ -1187,12 +1187,22 @@ next
   thus ?case by blast
 qed
 
-theorem finite_complex_rank_ell2_map_left_vec:
+lemma finite_complex_rank_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes \<open>clinear_vec n f\<close>
-  shows \<open>finite_complex_rank (fun_to_ell2 n f)\<close>
+  shows \<open>\<exists> n. complex_gen n (fun_to_ell2 n f)\<close>
   unfolding finite_complex_rank_def
   using assms finite_complex_rank_ell2_map_left_vec_exact by blast
 
+lemma bounded_ell2_map_left_vec:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>clinear_vec n f\<close>
+  shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
+  sorry
+  shows \<open>finite_rank_operator (fun_to_ell2 n f)\<close>
+  unfolding finite_rank_operator_def
+  using assms finite_complex_rank_ell2_map_left_vec bounded_ell2_map_left_vec
+   finite_complex_rank_def finite_complex_rank_ell2_map_left_vec_exact 
+  by blast 
 
 end
