@@ -1199,6 +1199,10 @@ lemma bounded_ell2_map_left_vec:
   assumes \<open>clinear_vec n f\<close>
   shows \<open>bounded_clinear (fun_to_ell2 n f)\<close>
   sorry
+
+lemma finite_rank_operator_ell2_map_left_vec:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>clinear_vec n f\<close>
   shows \<open>finite_rank_operator (fun_to_ell2 n f)\<close>
   unfolding finite_rank_operator_def
   using assms finite_complex_rank_ell2_map_left_vec bounded_ell2_map_left_vec
