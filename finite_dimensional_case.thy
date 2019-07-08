@@ -1212,8 +1212,7 @@ proof-
   thus ?thesis by simp
 qed
 
-
-theorem finite_rank_operator_ell2_map_left_vec:
+lemma finite_rank_operator_ell2_map_left_vec:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_inner\<close>
   assumes \<open>clinear_vec n f\<close>
   shows \<open>finite_rank_operator (fun_to_ell2 n f)\<close>
@@ -1323,6 +1322,45 @@ proof-
     by blast 
 qed
 
+definition fun_l2 :: \<open>nat \<Rightarrow> (complex vec \<Rightarrow> complex vec) \<Rightarrow> ((nat ell2) \<Rightarrow> (nat ell2))\<close> where
+\<open>fun_l2 n f = fun_to_ell2 n ( \<lambda> v::complex vec. vec_to_ell2 (f v) )\<close>
 
+locale clinear_v =
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> complex vec\<close>
+  assumes add:  \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close>
+    and mults:  \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c \<cdot>\<^sub>v (f x)\<close>
+
+lemma clinear_v_clinear_vec:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> complex vec\<close>
+  assumes \<open>clinear_v n f\<close>
+  shows \<open>clinear_vec n ( \<lambda> v::complex vec. vec_to_ell2 (f v) )\<close>
+  proof
+  show "vec_to_ell2 (f (x + y)) = vec_to_ell2 (f x) + vec_to_ell2 (f y)"
+    if "dim_vec (x::complex Matrix.vec) = n"
+      and "dim_vec (y::complex Matrix.vec) = n"
+    for x :: "complex Matrix.vec"
+      and y :: "complex Matrix.vec"
+    using that
+    by (metis Matrix.vec_eq_iff assms clinear_v.add index_add_vec(2) ordered_field_class.sign_simps(2) vec_to_ell2_add vec_to_ell2_inj) 
+
+  show "vec_to_ell2 (f (c \<cdot>\<^sub>v x)) = c *\<^sub>C vec_to_ell2 (f x)"
+    if "dim_vec (x::complex Matrix.vec) = n"
+    for c :: complex
+      and x :: "complex Matrix.vec"
+    using that assms clinear_v.mults vec_to_ell2_smult by fastforce 
+qed
+
+theorem finite_rank_operator_fun_l2:
+  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> complex vec\<close>
+  assumes \<open>clinear_v n f\<close>
+  shows \<open>finite_rank_operator (fun_l2 n f)\<close>
+proof-
+  have \<open>clinear_vec n ( \<lambda> v::complex vec. vec_to_ell2 (f v) )\<close>
+    using assms clinear_v_clinear_vec by blast
+  hence \<open>finite_rank_operator (fun_to_ell2 n ( \<lambda> v::complex vec. vec_to_ell2 (f v) ))\<close>
+    using finite_rank_operator_ell2_map_left_vec by blast
+  thus ?thesis unfolding fun_l2_def
+    by blast
+qed
 
 end

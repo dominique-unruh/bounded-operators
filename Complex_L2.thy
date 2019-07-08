@@ -2229,7 +2229,7 @@ next
   proof-
     assume \<open>\<forall>n\<ge>Suc k. f (ket n) = 0\<close>
     assume \<open>clinear f\<close>
-    have \<open>\<exists> K. \<forall> x. norm (f x) \<le> (norm x) * K\<close>
+    have \<open>bounded_clinear f\<close>
     proof-
       define g where \<open>g x = f x - (cinner (ket k) x) *\<^sub>C f (ket k)\<close>
         for x
@@ -2246,14 +2246,12 @@ next
         by (simp add: Suc.IH)
       moreover have \<open>bounded_clinear (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k) )\<close>
         sorry
-      ultimately have \<open>bounded_clinear f\<close>
+      ultimately show \<open>bounded_clinear f\<close>
         using Complex_Vector_Spaces.bounded_clinear_add
             \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
         by fastforce
-      show ?thesis sorry
     qed
-    thus ?thesis using  \<open>clinear f\<close> unfolding bounded_clinear_def bounded_clinear_axioms_def
-      by blast
+    thus ?thesis by blast
   qed
   thus ?case by blast
 qed
