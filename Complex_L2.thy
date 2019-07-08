@@ -635,7 +635,7 @@ proof (cases \<open>finite S\<close>)
     by auto
 next
   case True
-  (* Reduction from the complex case to the real case, which was already proved
+    (* Reduction from the complex case to the real case, which was already proved
      in L2_set_triangle_ineq *)
   define SB :: \<open>('a\<times>bool) set\<close> where
     \<open>SB = {(x, True) | x. x \<in> S} \<union> {(x, False) | x. x \<in> S}\<close>
@@ -1790,7 +1790,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
   by (rule ell2_1)
 
 type_synonym 'a subspace = "'a ell2 linear_space"
-(* typedef 'a linear_space = "{A::'a ell2 set. is_linear_space A}"
+  (* typedef 'a linear_space = "{A::'a ell2 set. is_linear_space A}"
   morphisms Rep_linear_space Abs_linear_space
   apply (rule exI[of _ "{0}"]) by simp
 setup_lifting type_definition_linear_space *)
@@ -2020,7 +2020,7 @@ lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space"
 lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
-  apply (rule is_subspace_cl)
+   apply (rule is_subspace_cl)
   by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold.intro)
 
 lemma span_def': "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
@@ -2078,7 +2078,7 @@ lemma leq_INF[simp]:
 (* TODO move *)
 lemma leq_plus_linear_space[simp]: "a \<le> a + c" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing2)
-(* TODO move *)
+    (* TODO move *)
 lemma leq_plus_linear_space2[simp]: "a \<le> c + a" for a::"'a::chilbert_space linear_space"
   by (simp add: add_increasing)
 
@@ -2169,8 +2169,8 @@ proof-
 qed
 
 lemma left_shift_ell2_clinear:
-\<open>clinear left_shift_ell2\<close>
-  proof
+  \<open>clinear left_shift_ell2\<close>
+proof
   show "left_shift_ell2 (x + y) = left_shift_ell2 x + left_shift_ell2 y"
     for x :: "nat ell2"
       and y :: "nat ell2"
@@ -2191,24 +2191,47 @@ lemma shift_ket:
   apply transfer
   unfolding left_shift_def ket_def
   by auto
-  
+
 
 lemma shift_ket0:
- \<open>left_shift_ell2 (ket (0::nat)) = 0\<close>
+  \<open>left_shift_ell2 (ket (0::nat)) = 0\<close>
   apply transfer
   unfolding left_shift_def ket_def
   by auto
 
 
-
 lemma ket_Kronecker_delta_eq:
-\<open>i = j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 1\<close>
-  apply transfer
-  apply auto
+  \<open>\<langle>ket i, ket i\<rangle> = 1\<close>
+proof-
+  have \<open>norm (ket i) = 1\<close>
+    by simp
+  hence \<open>sqrt (cmod \<langle>ket i, ket i\<rangle>) = 1\<close>
+    by (metis norm_eq_sqrt_cinner)
+  hence \<open>cmod \<langle>ket i, ket i\<rangle> = 1\<close>
+    using real_sqrt_eq_1_iff by blast
+  moreover have \<open>\<langle>ket i, ket i\<rangle> = cmod \<langle>ket i, ket i\<rangle>\<close>
+  proof-
+    have \<open>\<langle>ket i, ket i\<rangle> \<in> \<real>\<close>
+      by (simp add: cinner_real)      
+    thus ?thesis 
+      by (metis cinner_ge_zero complex_of_real_cmod) 
+  qed
+  ultimately show ?thesis by simp
+qed
 
 lemma ket_Kronecker_delta_neq:
-\<open>i \<noteq>  j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 0\<close>
-  sorry
+  \<open>i \<noteq> j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 0\<close>
+proof-
+  assume \<open>i \<noteq> j\<close>
+  have \<open>\<langle>ket i, ket j\<rangle> = (\<Sum>\<^sub>ak. cnj (if i = k then 1 else 0) * (if j = k then 1 else 0))\<close>
+    apply transfer
+    by blast
+  moreover have \<open>cnj (if i = k then 1 else 0) * (if j = k then 1 else 0) = 0\<close>
+    for k
+    using \<open>i \<noteq> j\<close> by auto    
+  ultimately show ?thesis
+    by simp 
+qed
 
 lemma ell2_superposition:
   fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
@@ -2217,7 +2240,7 @@ lemma ell2_superposition:
   sorry
 
 lemma ell2_bounded_auxiliary:
-\<open>\<forall> f:: nat ell2 \<Rightarrow> 'a::complex_inner.
+  \<open>\<forall> f:: nat ell2 \<Rightarrow> 'a::complex_inner.
 (\<forall> n \<ge> k. f (ket n) = 0) \<and> clinear f \<longrightarrow> bounded_clinear f\<close>
 proof(induction k)
   case 0
@@ -2334,7 +2357,7 @@ next
         by blast
       ultimately show \<open>bounded_clinear f\<close>
         using Complex_Vector_Spaces.bounded_clinear_add
-            \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
+          \<open>f = (\<lambda> x. g x + (\<lambda> x. (cinner (ket k) x) *\<^sub>C f (ket k)) x)\<close>
         by fastforce
     qed
     thus ?thesis by blast
