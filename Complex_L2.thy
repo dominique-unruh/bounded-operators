@@ -2199,13 +2199,12 @@ lemma shift_ket0:
   unfolding left_shift_def ket_def
   by auto
 
-lemma clinear_minus:
-\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
-  sorry
+
 
 lemma ket_Kronecker_delta_eq:
 \<open>i = j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 1\<close>
-  sorry
+  apply transfer
+  apply auto
 
 lemma ket_Kronecker_delta_neq:
 \<open>i \<noteq>  j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 0\<close>

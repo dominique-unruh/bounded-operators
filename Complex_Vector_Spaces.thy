@@ -1312,5 +1312,25 @@ proof
 qed
 
 
+lemma clinear_add:
+\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
+  by (smt ab_semigroup_add_class.add_ac(1) add.commute additive_def clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def scaleC_add_right)
+
+lemma clinear_minus:
+\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
+  proof
+  show "f (x + y) - g (x + y) = f x - g x + (f y - g y)"
+    if "clinear f"
+      and "clinear g"
+    for x :: 'a
+      and y :: 'a
+    by (simp add: additive.add clinear.axioms(1) that(1) that(2)) 
+    show "f (r *\<^sub>C x) - g (r *\<^sub>C x) = r *\<^sub>C (f x - g x)"
+    if "clinear f"
+      and "clinear g"
+    for r :: complex
+      and x :: 'a
+      by (simp add: clinear.scaleC complex_vector.scale_right_diff_distrib that(1) that(2))
+qed
 
 end
