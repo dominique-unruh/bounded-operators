@@ -2233,11 +2233,61 @@ proof-
     by simp 
 qed
 
-lemma ell2_superposition:
-  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
-  assumes \<open>\<And> n::nat. f (ket n) = 0\<close> and \<open>clinear f\<close>
-  shows \<open>\<forall> x. f x = 0\<close>
+fun ket_approx :: \<open>nat \<Rightarrow> nat ell2 \<Rightarrow> nat ell2\<close> where
+\<open>ket_approx 0 x = 0\<close> | 
+\<open>ket_approx (Suc n) x = ket_approx n x + \<langle>x, ket n\<rangle> *\<^sub>C (ket n)\<close>
+
+lemma ket_approx_tendsto:
+\<open>(\<lambda> n. ket_approx n x) \<longlonglongrightarrow> x\<close>
   sorry
+
+lemma ket_approx_tendsto_fun:
+  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>clinear f\<close>
+  shows \<open>(\<lambda> n. f (ket_approx n x)) \<longlonglongrightarrow> f x\<close>
+  sorry
+
+lemma ell2_superposition:
+  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close> and x :: \<open>nat ell2\<close>
+  assumes \<open>\<And> n::nat. f (ket n) = 0\<close> and \<open>clinear f\<close>
+  shows \<open>f x = 0\<close>
+proof-
+  have \<open>(\<lambda> n. f (ket_approx n x)) \<longlonglongrightarrow> f x\<close>
+    using ket_approx_tendsto_fun \<open>clinear f\<close> by blast
+  moreover have \<open>f (ket_approx n x) = 0\<close>
+    for n
+  proof(induction n)
+  case 0
+  have \<open>ket_approx 0 x = 0\<close>
+    by simp    
+  hence \<open>f (ket_approx 0 x) = f 0\<close>
+    by simp
+  also have  \<open>... = 0\<close>
+    using \<open>clinear f\<close> clinear_zero by blast
+  finally show ?case by blast  
+next
+  case (Suc n)
+  have \<open>f (ket_approx (Suc n) x) = f (ket_approx n x + \<langle> x, ket n \<rangle> *\<^sub>C (ket n) )\<close>
+    by simp
+  also have \<open>... = f (ket_approx n x) + f ( \<langle> x, ket n \<rangle> *\<^sub>C (ket n) )\<close>
+    using \<open>clinear f\<close> Modules.additive_def clinear.axioms(1) by auto
+  also have \<open>... = f (ket_approx n x) +  \<langle> x, ket n \<rangle> *\<^sub>C f (ket n)\<close>
+    using \<open>clinear f\<close>
+    by (simp add: clinear.scaleC)
+  also have \<open>... = f (ket_approx n x) +  \<langle> x, ket n \<rangle> *\<^sub>C 0\<close>
+    by (simp add: assms(1))
+  also have \<open>... = f (ket_approx n x)\<close>
+    by simp
+  also have \<open>... = 0\<close>
+    by (simp add: Suc.IH)
+  finally show ?case
+    by blast 
+qed
+  ultimately have \<open>(\<lambda> n. 0) \<longlonglongrightarrow> f x\<close>
+    by simp  
+  thus ?thesis
+    by (simp add: LIMSEQ_const_iff) 
+qed
 
 lemma ell2_bounded_auxiliary:
   \<open>\<forall> f:: nat ell2 \<Rightarrow> 'a::complex_inner.

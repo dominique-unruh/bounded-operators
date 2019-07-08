@@ -1311,11 +1311,12 @@ proof
     by smt
 qed
 
-
+(* NEW *)
 lemma clinear_add:
 \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
   by (smt ab_semigroup_add_class.add_ac(1) add.commute additive_def clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def scaleC_add_right)
 
+(* NEW *)
 lemma clinear_minus:
 \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
   proof
@@ -1331,6 +1332,24 @@ lemma clinear_minus:
     for r :: complex
       and x :: 'a
       by (simp add: clinear.scaleC complex_vector.scale_right_diff_distrib that(1) that(2))
+qed
+
+(* NEW *)
+lemma clinear_zero:
+  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
+  shows \<open>clinear f \<Longrightarrow> f 0 = 0\<close>
+proof-
+  assume \<open>clinear f\<close>
+  have \<open>(0::'a) + 0 = 0\<close>
+    by simp
+  hence \<open>f (0 + 0) = f 0\<close>
+    by simp
+  moreover have \<open>f 0 = f 0 + f 0\<close>
+    using \<open>clinear f\<close> unfolding clinear_def
+    by (metis additive.add calculation) 
+  ultimately have \<open>f 0 + f 0 = f 0\<close>
+    by simp
+  thus ?thesis by simp
 qed
 
 end
