@@ -2200,6 +2200,12 @@ lemma shift_ket0:
   apply auto
   done
 
+lemma ell2_bounded:
+  fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
+  assumes \<open>\<exists> N. \<forall> n \<ge> N. f (ket n) = 0\<close> and \<open>clinear f\<close>
+  shows \<open>bounded_clinear f\<close>
+  sorry
+
 
 lemma ell2_superposition:
   fixes f:: \<open>nat ell2 \<Rightarrow> 'a::complex_normed_vector\<close>
