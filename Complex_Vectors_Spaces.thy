@@ -11,7 +11,7 @@ theory Complex_Vectors_Spaces
     "HOL-ex.Sketch_and_Explore"
     "HOL-Analysis.Elementary_Topology"
     Ordered_Complex 
-
+    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
 begin
 
 bundle notation_norm begin
@@ -1293,9 +1293,89 @@ proof-
   thus ?thesis by simp
 qed
 
+
+definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
+  where [transfer_unfold]: "scaleHC = starfun2 scaleC"
+
+instantiation star :: (scaleC) scaleC
+begin
+definition star_scaleC_def [transfer_unfold]: "scaleC r \<equiv> *f* (scaleC r)"
+instance 
+  apply intro_classes
+  by (simp add: scaleR_scaleC star_scaleC_def star_scaleR_def)  
+end
+
+lemma hnorm_scaleC: "\<And>x::'a::complex_normed_vector star. 
+hnorm (a *\<^sub>C x) = (hcmod (star_of a)) * hnorm x"
+  by transfer (rule norm_scaleC)
+
+lemma Standard_scaleC [simp]: "x \<in> Standard \<Longrightarrow> scaleC r x \<in> Standard"
+  by (simp add: star_scaleC_def)
+
+lemma star_of_scaleC [simp]: "star_of (scaleC r x) = scaleC r (star_of x)"
+  by transfer (rule refl)
+
+instance star :: (complex_vector) complex_vector
+proof
+  fix a b :: complex
+  show "\<And>x y::'a star. scaleC a (x + y) = scaleC a x + scaleC a y"
+    apply transfer
+    by (simp add: scaleC_add_right)
+  show "\<And>x::'a star. scaleC (a + b) x = scaleC a x + scaleC b x"
+    apply transfer
+    by (simp add: scaleC_add_left)
+  show "\<And>x::'a star. scaleC a (scaleC b x) = scaleC (a * b) x"
+    by transfer (rule scaleC_scaleC)
+  show "\<And>x::'a star. scaleC 1 x = x"
+    by transfer (rule scaleC_one)
+qed
+
+instance star :: (complex_algebra) complex_algebra
+proof
+  fix a :: complex
+  show "\<And>x y::'a star. scaleC a x * y = scaleC a (x * y)"
+    by transfer (rule mult_scaleC_left)
+  show "\<And>x y::'a star. x * scaleC a y = scaleC a (x * y)"
+    by transfer (rule mult_scaleC_right)
+qed
+
+instance star :: (complex_algebra_1) complex_algebra_1 ..
+
+instance star :: (complex_div_algebra) complex_div_algebra ..
+
+instance star :: (complex_field) complex_field ..
+
 lemma isCont_scaleC:
   fixes l :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
+proof- (* Nonstandard proof *)
+  have \<open>y \<approx> star_of l \<Longrightarrow> (*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
+    for y         
+  proof-
+    assume \<open>y \<approx> star_of l\<close> 
+    hence \<open>hnorm (y - star_of l) \<in> Infinitesimal\<close>
+      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast
+    hence \<open>(star_of (cmod a)) * hnorm (y - star_of l) \<in> Infinitesimal\<close>
+      using Infinitesimal_star_of_mult2 by blast      
+    hence \<open>hnorm ( a *\<^sub>C (y - star_of l)) \<in> Infinitesimal\<close>
+      by (simp add: hnorm_scaleC)
+    moreover have \<open>a *\<^sub>C (y - star_of l) = a *\<^sub>C y -  a *\<^sub>C (star_of l)\<close>
+      by (simp add: complex_vector.scale_right_diff_distrib)
+    ultimately have \<open>hnorm ( a *\<^sub>C y -  a *\<^sub>C (star_of l)) \<in> Infinitesimal\<close>
+      by auto
+    hence \<open>(*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
+      by (metis Infinitesimal_hnorm_iff bex_Infinitesimal_iff star_of_scaleC star_scaleC_def)      
+    thus ?thesis by blast
+  qed
+  hence \<open>isNSCont (\<lambda> v. scaleC a v) l\<close>
+    unfolding isNSCont_def
+    by auto
+  thus ?thesis
+    by (simp add: isNSCont_isCont_iff) 
+qed
+
+(* Classical proof
+
 proof-
   have \<open>x \<longlonglongrightarrow> l \<Longrightarrow> (\<lambda> n. (scaleC a) (x n))  \<longlonglongrightarrow> (scaleC a) l\<close>
     for x::\<open>nat \<Rightarrow> 'a\<close>
@@ -1335,11 +1415,13 @@ proof-
 qed
 
 
+*)
+
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
   assumes \<open>closed S\<close>
   shows \<open>closed (scaleC a ` S)\<close>
-proof(cases \<open>S = {}\<close>)
+proof (cases \<open>S = {}\<close>)
   case True
   thus ?thesis
     by simp 
@@ -1398,7 +1480,9 @@ next
     thus ?thesis using Elementary_Topology.closed_sequential_limits
       by blast
   qed
+
 qed
+
 
 lemma closure_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close>
