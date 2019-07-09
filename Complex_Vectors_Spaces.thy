@@ -7,10 +7,8 @@ Authors:
 
 
 theory Complex_Vectors_Spaces
-imports 
-  VectorSpace.VectorSpace
+imports "HOL-ex.Sketch_and_Explore"
 begin
-
 
 
 end
