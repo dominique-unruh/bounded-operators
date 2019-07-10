@@ -1295,11 +1295,11 @@ qed
 
 
 definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
-  where [transfer_unfold]: "scaleHC = starfun2 scaleC"
+  where [Transfer.transfer_unfold]: "scaleHC = starfun2 scaleC"
 
 instantiation star :: (scaleC) scaleC
 begin
-definition star_scaleC_def [transfer_unfold]: "scaleC r \<equiv> *f* (scaleC r)"
+definition star_scaleC_def [Transfer.transfer_unfold]: "scaleC r \<equiv> *f* (scaleC r)"
 instance 
   apply intro_classes
   by (simp add: scaleR_scaleC star_scaleC_def star_scaleR_def)  
@@ -1307,36 +1307,36 @@ end
 
 lemma hnorm_scaleC: "\<And>x::'a::complex_normed_vector star. 
 hnorm (a *\<^sub>C x) = (hcmod (star_of a)) * hnorm x"
-  by transfer (rule norm_scaleC)
+  by Transfer.transfer (rule norm_scaleC)
 
 lemma Standard_scaleC [simp]: "x \<in> Standard \<Longrightarrow> scaleC r x \<in> Standard"
   by (simp add: star_scaleC_def)
 
 lemma star_of_scaleC [simp]: "star_of (scaleC r x) = scaleC r (star_of x)"
-  by transfer (rule refl)
+  by Transfer.transfer (rule refl)
 
 instance star :: (complex_vector) complex_vector
 proof
   fix a b :: complex
   show "\<And>x y::'a star. scaleC a (x + y) = scaleC a x + scaleC a y"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_right)
   show "\<And>x::'a star. scaleC (a + b) x = scaleC a x + scaleC b x"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_left)
   show "\<And>x::'a star. scaleC a (scaleC b x) = scaleC (a * b) x"
-    by transfer (rule scaleC_scaleC)
+    by Transfer.transfer (rule scaleC_scaleC)
   show "\<And>x::'a star. scaleC 1 x = x"
-    by transfer (rule scaleC_one)
+    by Transfer.transfer (rule scaleC_one)
 qed
 
 instance star :: (complex_algebra) complex_algebra
 proof
   fix a :: complex
   show "\<And>x y::'a star. scaleC a x * y = scaleC a (x * y)"
-    by transfer (rule mult_scaleC_left)
+    by Transfer.transfer (rule mult_scaleC_left)
   show "\<And>x y::'a star. x * scaleC a y = scaleC a (x * y)"
-    by transfer (rule mult_scaleC_right)
+    by Transfer.transfer (rule mult_scaleC_right)
 qed
 
 instance star :: (complex_algebra_1) complex_algebra_1 ..

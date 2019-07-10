@@ -17,10 +17,10 @@ References:
 
 *)
 
-theory finite_rank_operators
+theory Finite_Rank_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
-    complex_bounded_operators
+    Complex_Bounded_Operators
     Complex_L2
 begin
 

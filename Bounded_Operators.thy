@@ -24,7 +24,7 @@ theory Bounded_Operators
   imports Complex_L2 "HOL-Library.Adhoc_Overloading" 
     "HOL-Analysis.Abstract_Topology" 
 Extended_Sorry
-SEQ_bounded_operators (* NEW *)
+SEQ_Bounded_Operators (* NEW *)
 
 begin
 subsection \<open>Preliminaries\<close>
@@ -504,7 +504,7 @@ instance
 proof      
   fix a b c :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by auto
+    apply Transfer.transfer by auto
 qed
 end
 
@@ -513,8 +513,8 @@ instance
 proof
   fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a + b = b + a\<close>
-    apply transfer
-  proof transfer
+    apply Transfer.transfer
+  proof Transfer.transfer
     fix a b :: \<open>'a \<Rightarrow> 'b\<close>
     assume \<open>bounded_clinear a\<close> and \<open>bounded_clinear b\<close>
     thus \<open> (\<lambda>t. a t + b t) =
@@ -524,7 +524,7 @@ proof
 
   fix a :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>0 + a = a\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
 qed
 end
 
@@ -537,12 +537,12 @@ instance
 proof
   fix a::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>- a + a = 0\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   fix a b::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
 qed
 end
 
@@ -571,26 +571,26 @@ instance
 proof
   fix r::real and x::\<open>('a, 'b) bounded\<close>
   show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleR_scaleC) 
 
   fix a::complex and x y::\<open>('a, 'b) bounded\<close>
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_right) 
 
   fix a b and x::\<open>('a, 'b) bounded\<close>
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_left)
 
   fix a b::complex and x :: \<open>('a, 'b) bounded\<close>
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
 
   fix x::\<open>('a, 'b) bounded\<close>
   show \<open>1 *\<^sub>C x = x\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
 qed
 end
 
@@ -602,8 +602,8 @@ lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) b
 
 instance
   apply intro_classes
-  apply transfer
-proof transfer
+  apply Transfer.transfer
+proof Transfer.transfer
   fix x y :: \<open>'a \<Rightarrow> 'b\<close>
   assume \<open>bounded_clinear x\<close> and \<open>bounded_clinear y\<close>
   show \<open>onorm (x - y) =
@@ -618,7 +618,7 @@ lift_definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bo
 
 instance
   apply intro_classes
-  by (metis (mono_tags, lifting) Bounded_Operators.sgn_bounded.transfer)
+  by (metis (mono_tags, lifting) Bounded_Operators.sgn_bounded.Transfer.transfer)
 end
 
 
@@ -628,7 +628,7 @@ lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b)
 
 instance
   apply intro_classes
-  by (simp add: uniformity_bounded.transfer)
+  by (simp add: uniformity_bounded.Transfer.transfer)
 end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "open_uniformity" begin
@@ -637,15 +637,15 @@ lift_definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool
 instance
   apply intro_classes
   apply auto
-   apply (metis (mono_tags, lifting) open_bounded.transfer)
-  by (smt case_prod_beta eventually_mono open_bounded.transfer)
+   apply (metis (mono_tags, lifting) open_bounded.Transfer.transfer)
+  by (smt case_prod_beta eventually_mono open_bounded.Transfer.transfer)
 end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector" begin
 instance
   apply intro_classes
      apply auto
-proof transfer
+proof Transfer.transfer
   fix x :: "'a \<Rightarrow> 'b"
   assume \<open>bounded_clinear x\<close>
     and \<open>onorm x = 0\<close>
@@ -653,23 +653,23 @@ proof transfer
     using onorm_zero bounded_clinear.bounded_linear onorm_pos_lt by fastforce
 next 
   show \<open>norm (0::('a,'b) bounded) = 0\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: onorm_zero) 
 next
   fix x y :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (x + y) \<le> norm x + norm y\<close>
-    apply transfer using  bounded_clinear.bounded_linear
+    apply Transfer.transfer using  bounded_clinear.bounded_linear
     by (simp add: bounded_clinear.bounded_linear onorm_triangle) 
 
 next
   fix a :: real  and x :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
-    apply transfer
+    apply Transfer.transfer
     using bounded_clinear.bounded_linear onorm_scaleR by auto
 next
   fix a :: complex  and x :: \<open>('a, 'b) bounded\<close>
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
-    apply transfer
+    apply Transfer.transfer
     using onorm_scalarC by blast
 qed
 
@@ -802,7 +802,7 @@ proof-
     by (simp add: Cauchy_convergent_iff)
   then obtain F :: \<open>('a,'b) bounded\<close> where \<open>(\<lambda> n. (Rep_bounded (f n)) x) \<longlonglongrightarrow> Rep_bounded F x\<close>
     for x::'a
-  proof (atomize_elim , transfer , simp)
+  proof (atomize_elim , Transfer.transfer , simp)
     fix fa :: "nat \<Rightarrow> 'a \<Rightarrow> 'b"
     assume "\<forall>x. bounded_clinear (fa (x::nat)::'a \<Rightarrow> 'b)"
       and "\<And>x. convergent (\<lambda>n. fa n (x::'a)::'b)"
@@ -816,7 +816,7 @@ proof-
 (*   proof -
     have  \<open>bounded_clinear (Rep_bounded (f n))\<close>
       for n
-      apply transfer apply auto done
+      apply Transfer.transfer apply auto done
     hence \<open>bounded_clinear F\<close>
       using bounded_clinear_limit_bounded_clinear \<open>\<And>x. (\<lambda>n. Rep_bounded (f n) x) \<longlonglongrightarrow> F x\<close>
         (* by metis *) (* does not terminate *)
@@ -831,7 +831,7 @@ qed
 instantiation bounded :: (complex_normed_vector, cbanach) "cbanach" begin
 instance
   apply intro_classes
-  apply transfer
+  apply Transfer.transfer
   using Cauchy_linear_operators by blast
 end
 
@@ -1037,14 +1037,14 @@ lift_definition
   by (fact Adj_bounded_clinear)
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
-  apply transfer
+  apply Transfer.transfer
   by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
 
 lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" 
-  apply transfer by simp
+  apply Transfer.transfer by simp
 
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
-  apply transfer apply (auto intro!: exI[of _ 0])
+  apply Transfer.transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
     (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
     (*   using  is_linear_manifold.zero is_subspace.subspace
@@ -1077,16 +1077,16 @@ proof-
 qed
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
-  apply transfer using PREtimesScalarSpace_not0 by blast
+  apply Transfer.transfer using PREtimesScalarSpace_not0 by blast
 
 lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   using Complex_Vector_Spaces.complex_vector.scale_one by auto
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" for A::"(_::complex_normed_vector,_::complex_normed_vector)bounded"
-  apply transfer by (cheat scalar_times_adj)
+  apply Transfer.transfer by (cheat scalar_times_adj)
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
   by (cheat times_adjoint)
@@ -1147,7 +1147,7 @@ proof-
 qed
 
 lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
-  apply transfer
+  apply Transfer.transfer
   using PREtimesOp_assoc_linear_space by blast
 
 (* instantiation bounded :: (chilbert_space,chilbert_space) ab_group_add begin
@@ -1162,7 +1162,7 @@ lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded
   by (rule bounded_clinear_minus)
 instance 
   apply intro_classes
-  by (transfer; auto)+
+  by (Transfer.transfer; auto)+
 end *)
 
 (* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
@@ -1194,14 +1194,14 @@ adhoc_overloading
 
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   for A B :: "_ linear_space" and U :: "(_,_) bounded"
-  apply transfer 
+  apply Transfer.transfer 
   by (cheat cdot_plus_distrib)
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
   "(\<alpha> *\<^sub>C A) \<cdot> S = \<alpha> *\<^sub>C (A \<cdot> S)" for \<alpha>::complex and A::"(_::complex_normed_vector,_::complex_normed_vector)bounded" and S::"(_::complex_normed_vector) linear_space"
-  (* using transfer_raw *)
-proof transfer
+  (* using Transfer.transfer_raw *)
+proof Transfer.transfer
   fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
   have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
     by (simp add: closure_scaleC setcompr_eq_image)
@@ -1214,49 +1214,49 @@ lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
 
 lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" for A::"(_,_) bounded"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma scalar_op_op[simp]: "(a *\<^sub>C A) \<cdot> B = a *\<^sub>C (A \<cdot> B)"
   for A :: "('b::complex_normed_vector,_) bounded" and B :: "(_,'b) bounded"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma op_scalar_op[simp]: "timesOp A (a *\<^sub>C B) = a *\<^sub>C (timesOp A B)" 
   for a :: complex and A :: "(_,_) bounded" and B :: "(_,_) bounded"
-  apply transfer
+  apply Transfer.transfer
   by (simp add: bounded_clinear.clinear clinear.scaleC o_def)
 
 (* REMOVE (subsumed by scale_scale) *)
 lemma scalar_scalar_op[simp]: "a *\<^sub>C (b *\<^sub>C A) = (a*b) *\<^sub>C A"
   for a b :: complex and A  :: "(_,_) bounded"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma scalar_op_vec[simp]: "(a *\<^sub>C A) \<cdot> \<psi> = a *\<^sub>C (A \<cdot> \<psi>)" 
   for a :: complex and A :: "(_,_) bounded" and \<psi> :: "'a ell2"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 (* REMOVE (subsumed by scaleC_left_imp_eq) *)
 lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C B \<Longrightarrow> A=B" for A B :: "('a,'b)l2bounded" and a::complex 
   by (rule scaleC_left_imp_eq)
 
 lemma apply_idOp_space[simp]: "applyOpSpace idOp S = S"
-  apply transfer by (simp add: is_subspace.closed)
+  apply Transfer.transfer by (simp add: is_subspace.closed)
 
 lemma apply_0[simp]: "applyOp U 0 = 0"
-  apply transfer 
+  apply Transfer.transfer 
   using additive.zero bounded_clinear.clinear clinear.axioms(1) by blast
 
 lemma times_idOp1[simp]: "U \<cdot> idOp = U"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) bounded"
-  apply transfer by auto
+  apply Transfer.transfer by auto
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   by (cheat idOp_adjoint)
 
 lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
   for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
-  apply transfer apply auto
+  apply Transfer.transfer apply auto
   by (cheat mult_INF)
 
 lemma mult_inf_distrib[simp]: "U \<cdot> (B \<sqinter> C) = (U \<cdot> B) \<sqinter> (U \<cdot> C)" 
@@ -1433,30 +1433,30 @@ lift_definition complex_to_C1 :: "complex \<Rightarrow> 'a::singleton ell2" is
   by simp
 
 lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  apply transfer apply (rule singleton_ext) by auto
+  apply Transfer.transfer apply (rule singleton_ext) by auto
 
 lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
-  apply transfer by simp
+  apply Transfer.transfer by simp
 
 lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
   apply (rule bounded_clinear_intro[where K=1])
-  by (transfer; auto simp: ell2_norm_finite_def)+
+  by (Transfer.transfer; auto simp: ell2_norm_finite_def)+
 
 lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
   apply (rule bounded_clinear_intro[where K=1])
-  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
+  by (Transfer.transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
 
 lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) bounded" is
   "\<lambda>(\<psi>::'a) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
   by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
 
 lemma ell2_to_bounded_applyOp: "ell2_to_bounded (A\<cdot>\<psi>) = A \<cdot> ell2_to_bounded \<psi>" for A :: "(_,_)bounded"
-  apply transfer
+  apply Transfer.transfer
   by (simp add: bounded_clinear_def clinear.scaleC o_def)
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" for a::complex
   apply (rewrite at "a *\<^sub>C \<psi>" DEADID.rel_mono_strong[of _ "(a *\<^sub>C idOp) \<cdot> \<psi>"])
-  apply transfer apply simp
+  apply Transfer.transfer apply simp
   apply (subst ell2_to_bounded_applyOp)
   by simp
 
@@ -1468,14 +1468,14 @@ definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
   for a :: complex and A :: "(_,_) bounded"
-  apply transfer
+  apply Transfer.transfer
   by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def)
 
 lemma kernel_0[simp]: "kernel 0 = top"
-  apply transfer unfolding ker_op_def by simp
+  apply Transfer.transfer unfolding ker_op_def by simp
 
 lemma kernel_id[simp]: "kernel idOp = 0"
-  apply transfer unfolding ker_op_def by simp
+  apply Transfer.transfer unfolding ker_op_def by simp
 
 lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
   unfolding eigenspace_def

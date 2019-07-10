@@ -72,7 +72,7 @@ proof
   proof
     show "r *\<^sub>R (x::('a, 'b) real_bounded) = complex_of_real r *\<^sub>C x"
       for x :: "('a, 'b) real_bounded"
-      apply transfer
+      apply Transfer.transfer
       by (simp add: scaleR_scaleC)
   qed
 
@@ -80,26 +80,26 @@ proof
     for a :: complex
       and x :: "('a, 'b) real_bounded"
       and y :: "('a, 'b) real_bounded"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_right)
 
   show "(a + b) *\<^sub>C (x::('a, 'b) real_bounded) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) real_bounded"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_left)
 
   show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) real_bounded) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) real_bounded"
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   show "1 *\<^sub>C (x::('a, 'b) real_bounded) = x"
     for x :: "('a, 'b) real_bounded"
-    apply transfer
+    apply Transfer.transfer
   proof
     fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
     show \<open>1 *\<^sub>C f x = f x\<close>
@@ -112,7 +112,7 @@ instantiation real_bounded :: (real_normed_vector, complex_normed_vector) "compl
 begin
 instance
   apply intro_classes
-  apply transfer
+  apply Transfer.transfer
 proof-
   fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
   assume \<open>bounded_linear f\<close>
@@ -251,7 +251,7 @@ section \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded
   = \<open>{f :: ('a, 'b) real_bounded. \<forall> c. \<forall> x. ev_real_bounded f (c *\<^sub>C x) = c *\<^sub>C (ev_real_bounded f x) }\<close>
-  apply transfer
+  apply Transfer.transfer
   apply auto
 proof
   have "bounded_linear (\<lambda> _::'a. 0::'b)"
@@ -297,38 +297,38 @@ instance
 proof      
   fix a b c :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
   fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) complex_bounded\<close>
   show \<open>a + b = b + a\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
   fix a :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>0 + a = a\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
   fix a :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>-a + a = 0\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
   fix a b :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
   fix a::real and x y :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleR_add_right)
 
   fix a b :: real and x :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleR_add_left)
 
   fix a b :: real and x :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   fix x :: \<open>('a, 'b) complex_bounded\<close>
   show \<open>1 *\<^sub>R x = x\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 qed
 end
@@ -343,7 +343,7 @@ lift_definition dist_complex_bounded :: \<open>('a, 'b) complex_bounded \<Righta
 
 lift_definition sgn_complex_bounded :: \<open>('a, 'b) complex_bounded \<Rightarrow> ('a, 'b) complex_bounded\<close>
   is \<open>\<lambda> f. sgn f\<close>
-  apply transfer
+  apply Transfer.transfer
   by (simp add: scaleR_scaleC)
 
 lift_definition uniformity_complex_bounded :: \<open>( ('a, 'b) complex_bounded \<times> ('a, 'b) complex_bounded ) filter\<close>
@@ -354,21 +354,21 @@ lift_definition open_complex_bounded :: \<open>(('a, 'b) complex_bounded) set \<
 
 instance
   apply intro_classes
-        apply transfer 
+        apply Transfer.transfer 
         apply auto
-          apply transfer 
+          apply Transfer.transfer 
           apply auto
-         apply transfer 
+         apply Transfer.transfer 
          apply (simp add: sgn_div_norm)
-        apply (simp add: uniformity_complex_bounded.transfer)
-       apply (metis (mono_tags, lifting)  open_complex_bounded.transfer)
-      apply (smt eventually_mono open_complex_bounded.transfer split_cong)
-     apply transfer
+        apply (simp add: uniformity_complex_bounded.Transfer.transfer)
+       apply (metis (mono_tags, lifting)  open_complex_bounded.Transfer.transfer)
+      apply (smt eventually_mono open_complex_bounded.Transfer.transfer split_cong)
+     apply Transfer.transfer
      apply simp
-    apply transfer
+    apply Transfer.transfer
     apply simp
    apply (smt add_diff_cancel_left' minus_complex_bounded.rep_eq norm_complex_bounded.rep_eq norm_triangle_ineq2)
-  apply transfer
+  apply Transfer.transfer
   by simp
 end
 
@@ -386,33 +386,33 @@ proof
   proof
     fix x::\<open>('a, 'b) complex_bounded\<close>
     show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
-      apply transfer
+      apply Transfer.transfer
       by (simp add: scaleR_scaleC)
   qed
   show "a *\<^sub>C ((x::('a, 'b) complex_bounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
       and x :: "('a, 'b) complex_bounded"
       and y :: "('a, 'b) complex_bounded"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_right)
 
   show "(a + b) *\<^sub>C (x::('a, 'b) complex_bounded) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) complex_bounded"
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleC_add_left)
 
   show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) complex_bounded) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) complex_bounded"
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   show "1 *\<^sub>C (x::('a, 'b) complex_bounded) = x"
     for x :: "('a, 'b) complex_bounded"
-    apply transfer
+    apply Transfer.transfer
     using scaleC_one by blast
 qed  
 end
@@ -421,7 +421,7 @@ instantiation complex_bounded :: (complex_normed_vector, complex_normed_vector) 
 begin
 instance
   apply intro_classes
-  apply transfer
+  apply Transfer.transfer
   by simp
 end
 
@@ -502,7 +502,7 @@ proof-
       have \<open>f\<midarrow>STRONG\<rightarrow>l\<close>
         by (simp add: ONORM_STRONG tendsto_ONORM_real_bounded)
       thus ?thesis 
-        apply transfer
+        apply Transfer.transfer
         unfolding strong_convergence_def
         apply auto
         by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
@@ -538,7 +538,7 @@ proof-
     by blast
   hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. 
     dist (Rep_complex_bounded (f m)) (Rep_complex_bounded (f n)) < e\<close>
-    apply transfer
+    apply Transfer.transfer
     by blast
   hence \<open>Cauchy (\<lambda> n. (Rep_complex_bounded (f n)))\<close>
     using Cauchy_altdef by force
@@ -555,14 +555,14 @@ proof-
   proof-
     have \<open>\<And> n. \<forall> c. \<forall> x. ev_real_bounded (Rep_complex_bounded (f n)) (c *\<^sub>C x)
          = c *\<^sub>C ev_real_bounded (Rep_complex_bounded (f n)) x\<close>
-      apply transfer
+      apply Transfer.transfer
       by simp
     thus ?thesis
       using \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> l\<close>
       by (rule real_bounded_SEQ_scaleC)
   qed
   hence \<open>\<exists> L. Rep_complex_bounded L = l\<close>
-    apply transfer by blast
+    apply Transfer.transfer by blast
   then obtain L::\<open>('a, 'b) complex_bounded\<close>
     where \<open>Rep_complex_bounded L = l\<close> by blast
   have \<open>(\<lambda> n. (Rep_complex_bounded (f n))) \<longlonglongrightarrow> (Rep_complex_bounded L)\<close>
@@ -573,7 +573,7 @@ proof-
     dist (Rep_complex_bounded (f n)) (Rep_complex_bounded L) < e\<close>
     by (simp add: metric_LIMSEQ_D)
   hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e\<close>
-    apply transfer by blast
+    apply Transfer.transfer by blast
   hence \<open>f \<longlonglongrightarrow> L\<close>
     by (simp add: metric_LIMSEQ_I)
   thus \<open>convergent f\<close> 

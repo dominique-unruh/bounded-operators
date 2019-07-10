@@ -1,4 +1,4 @@
-(*  Title:      bounded-Operators/real_bounded_operators.thy
+(*  Title:      bounded-Operators/Real_Bounded_Operators.thy
     Author:     Dominique Unruh, University of Tartu
     Author:     Jose Manuel Rodriguez Caballero, University of Tartu
 
@@ -124,7 +124,7 @@ instance
         apply auto
          apply Transfer.transfer
          apply auto
-        apply (simp add: real_bounded_operators.uniformity_real_bounded_def)
+        apply (simp add: Real_Bounded_Operators.uniformity_real_bounded_def)
        apply (simp add: open_real_bounded_def)
       apply (simp add: open_real_bounded_def)
      apply Transfer.transfer
@@ -195,7 +195,7 @@ proof-
     by (metis (mono_tags) mem_Collect_eq)
   have  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
     using  \<open>\<And> n. bounded_linear (f n)\<close> \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>  
-    by (rule Banach_Steinhaus)
+    by (rule banach_steinhaus)
   then obtain M where \<open>\<forall> n. onorm (f n) \<le> M\<close> by blast
   have \<open>y\<in>{onorm (f n) |n. True} \<Longrightarrow> \<bar>y\<bar> \<le> M\<close>
     for y
