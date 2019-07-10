@@ -16,7 +16,7 @@ References:
 
 *)
 
-theory real_bounded_operators
+theory Real_Bounded_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
     SEQ_bounded_operators
@@ -59,43 +59,43 @@ instance
 proof      
   fix a b c :: \<open>('a, 'b) real_bounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by auto
+    apply Transfer.transfer by auto
   fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) real_bounded\<close>
   show \<open>a + b = b + a\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: linordered_field_class.sign_simps(2))
 
   fix a :: \<open>('a, 'b) real_bounded\<close>
   show \<open>0 + a = a\<close>
-    apply transfer by simp
+    apply Transfer.transfer by simp
 
   fix a :: \<open>('a, 'b) real_bounded\<close>
   show \<open>-a + a = 0\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   fix a b :: \<open>('a, 'b) real_bounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply transfer
+    apply Transfer.transfer
     by auto
   fix a::real and x y :: \<open>('a, 'b) real_bounded\<close>
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: pth_6)
 
   fix a b :: real and x :: \<open>('a, 'b) real_bounded\<close>
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
-    apply transfer
+    apply Transfer.transfer
     by (simp add: scaleR_add_left)
 
   fix a b :: real and x :: \<open>('a, 'b) real_bounded\<close>
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 
   fix x :: \<open>('a, 'b) real_bounded\<close>
   show \<open>1 *\<^sub>R x = x\<close>
-    apply transfer
+    apply Transfer.transfer
     by simp
 qed
 end
@@ -120,20 +120,20 @@ definition open_real_bounded :: \<open>(('a, 'b) real_bounded) set \<Rightarrow>
 
 instance
   apply intro_classes
-        apply transfer
+        apply Transfer.transfer
         apply auto
-         apply transfer
+         apply Transfer.transfer
          apply auto
         apply (simp add: real_bounded_operators.uniformity_real_bounded_def)
        apply (simp add: open_real_bounded_def)
       apply (simp add: open_real_bounded_def)
-     apply transfer
+     apply Transfer.transfer
   using onorm_pos_lt apply fastforce
-    apply transfer
+    apply Transfer.transfer
     apply (simp add: onorm_zero)
-   apply transfer
+   apply Transfer.transfer
    apply (simp add: onorm_triangle)
-  apply transfer
+  apply Transfer.transfer
   using onorm_scaleR by blast 
 end
 
@@ -143,7 +143,7 @@ subsection \<open>Sequence of operators, bounded in norm\<close>
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise
   = \<open>{f :: nat \<Rightarrow> ('a, 'b) real_bounded. \<forall> x::'a. bdd_above { norm ( ev_real_bounded (f n) x ) | n. True } }\<close>
-  apply transfer
+  apply Transfer.transfer
 proof
   show \<open>(\<lambda> n::nat. (\<lambda> _::'a. 0::'b)) \<in> {f. (\<forall>x. bdd_above {norm (f n x) |n. True}) \<and> pred_fun top bounded_linear f}\<close>
     apply auto.
@@ -219,7 +219,7 @@ lift_definition Banach_Steinhaus_real_bounded::
   \<open>('a::{banach,perfect_space}, 'b::real_normed_vector) real_bounded_SEQ_bounded_pointwise \<Rightarrow>
 real bounded_SEQ\<close> 
   is \<open>\<lambda> f. (\<lambda> n::nat. norm (f n))\<close>
-  apply transfer   
+  apply Transfer.transfer   
   apply auto
   using Banach_Steinhaus_coro
   by auto
@@ -242,14 +242,14 @@ abbreviation
 
 lemma ONORM_tendsto_real_bounded:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
-  apply transfer
+  apply Transfer.transfer
 proof
   show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) real_bounded) \<Longrightarrow> e > 0 \<Longrightarrow>
  \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) real_bounded) < e"   
     for f :: "nat \<Rightarrow> ('a, 'b) real_bounded"
       and l :: "('a, 'b) real_bounded"
       and e :: real
-    apply transfer
+    apply Transfer.transfer
     apply auto
     by (rule onorm_tendsto)    
 qed
@@ -264,7 +264,7 @@ proof-
     using  Real_Vector_Spaces.tendsto_dist_iff
     by blast
   hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
-    apply transfer
+    apply Transfer.transfer
     apply auto
     unfolding onorm_convergence_def
     by simp
@@ -273,7 +273,7 @@ qed
 
 lemma ONORM_STRONG:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<midarrow>STRONG\<rightarrow> l\<close>
-  apply transfer
+  apply Transfer.transfer
   apply auto
   by (rule onorm_strong)
 
@@ -289,7 +289,7 @@ proof
     proof-
       assume \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
       hence \<open>\<exists>l. bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close>
-        apply transfer
+        apply Transfer.transfer
         apply auto
         using completeness_real_bounded 
         apply smt.
@@ -300,7 +300,7 @@ proof
         using \<open> bounded_linear l \<and> (\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close> 
         by blast
       hence \<open>\<exists> L. Rep_real_bounded L = l\<close>
-        apply transfer
+        apply Transfer.transfer
         by auto
       then obtain L::\<open>('a, 'b) real_bounded\<close> where \<open>Rep_real_bounded L = l\<close> by blast
       have \<open>(\<lambda>n. onorm (\<lambda>x. (Rep_real_bounded (f n)) x - l x)) \<longlonglongrightarrow> 0\<close>
