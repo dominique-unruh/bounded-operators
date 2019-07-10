@@ -1,98 +1,269 @@
-(*  Title:      bounded-Operators/SEQ_bounded_operators.thy
-    Author:     Dominique Unruh, University of Tartu
-    Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+(*
+Authors: 
 
-Propositions about sequences of bounded operators.
+  Dominique Unruh, University of Tartu, unruh@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballer@ut.ee
 
-References:             
-
- @book{conway2013course,
-  title={A course in functional analysis},
-  author={Conway, John B},
-  volume={96},
-  year={2013},
-  publisher={Springer Science \& Business Media}
-}
-
+Main results: 
+- banach_steinhaus: Banach-Steinhaus theorem.
+- completeness_real_bounded: Completeness of the metric space of (real) bounded operators.
 
 *)
 
-theory SEQ_bounded_operators
+theory SEQ_Bounded_Operators
   imports 
-    "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-Analysis.Operator_Norm"
     "HOL-ex.Sketch_and_Explore"
+    "HOL-Analysis.Infinite_Set_Sum"
     Operator_Norm_Plus
+    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
+
 begin
 
-(* NEW *)
-definition strong_convergence:: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+section \<open>Several kinds of Convergence\<close>
+
+definition strong_convergence:: 
+  \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   where \<open>strong_convergence f l = (\<forall> x. ( \<lambda> n. norm (f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
 
-(* NEW *)
-abbreviation
-  strong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>strong\<rightarrow> (_))" [60, 60] 60)
-  where "f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l ) "
+abbreviation strong_convergence_abbr:: 
+  \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
+  (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
+  where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l )\<close>
 
-(* NEW *)
-(* Strong convergence uniformly on the unit sphere *)
-definition ustrong_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
-  where \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
-
-definition uCauchy :: \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
-
-(* NEW *)
-abbreviation
-  ustrong_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>ustrong\<rightarrow> (_))" [60, 60] 60)
-  where "f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l ) "
-
-(* NEW *)
-definition onorm_convergence:: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"
+definition onorm_convergence::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
 
-(* NEW *)
-abbreviation
-  onorm_convergence_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool"  ("((_)/ \<midarrow>onorm\<rightarrow> (_))" [60, 60] 60)
-  where "f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l ) "
+abbreviation onorm_convergence_abbr::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>onorm\<rightarrow> (_))\<close> [60, 60] 60)
+  where \<open>f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l )\<close>
+
+definition ustrong_convergence:: 
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
+  \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
+
+abbreviation ustrong_convergence_abbr::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>ustrong\<rightarrow> (_))\<close> [60, 60] 60)
+  where \<open>f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l )\<close>
+
+definition uCauchy::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
+
+section \<open>External analogs\<close>
+
+subsection \<open>nsustrong_convergence\<close>
+
+definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
+   \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
+  ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
+  \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
+  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
+( \<forall>N\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> ((*f* (\<lambda> k. f k x)) N) \<approx> (star_of (l x)) )"
+
+lemma nsustrong_convergence_I: 
+  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> norm x = 1 \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x) )
+   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_D: 
+  \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> norm x = 1 
+  \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x)\<close>
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_const: "(\<lambda>n. k) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S k"
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t))\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
+  by (auto intro: approx_add simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
+  by (simp only: nsustrong_convergence_add nsustrong_convergence_const)
+
+lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
+\<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t * b t)"
+  for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_algebra"
+  by (auto intro!: approx_mult_HFinite simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
+  by (auto simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)
+ \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a"
+  by (drule nsustrong_convergence_minus) simp
+
+lemma nsustrong_convergence_diff: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t - Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b t)"
+  using nsustrong_convergence_add [of X a "- Y" "- b"]
+  by (simp add: nsustrong_convergence_minus fun_Compl_def)
+
+lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b)"
+  by (simp add: nsustrong_convergence_diff nsustrong_convergence_const)
+
+lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t \<noteq> 0
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. inverse (X n t) )) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. inverse (a t))"
+  for a :: "'a::real_normed_vector \<Rightarrow>'b::real_normed_div_algebra"
+  by (simp add: nsustrong_convergence_def star_of_approx_inverse)
+
+lemma nsustrong_convergence_inverse_mult_inverse: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
+\<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> b t \<noteq> 0
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. (X n t) / (Y n t))) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. (a t) / (b t))"
+  for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_field"
+  by (simp add: nsustrong_convergence_mult nsustrong_convergence_inverse divide_inverse)
+
+lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)) )
+ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
+  by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
 
 
-(* NEW *)
+
+(* TODO: move to real_normed_vector? *)
+lemma linear_ball_zero:
+\<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
+  proof
+  show "f u = 0"
+    if "linear f"
+      and "\<forall>x. norm x = 1 \<longrightarrow> f x = 0"
+    for u :: 'a
+  proof(cases \<open>u = 0\<close>)
+case True
+  thus ?thesis
+    by (simp add: linear_0 that(1))
+next
+  case False
+  have \<open>norm ( (inverse (norm u)) *\<^sub>R u ) = 1\<close>
+    by (simp add: False)
+  hence \<open>f ( (inverse (norm u)) *\<^sub>R u ) = 0\<close>
+    by (simp add: that(2))
+  moreover have \<open>f ( (inverse (norm u)) *\<^sub>R u ) = (inverse (norm u)) *\<^sub>R (f  u)\<close>
+    using \<open>linear f\<close> unfolding linear_def
+    by (simp add: Real_Vector_Spaces.linear_def linear_scale) 
+  ultimately have \<open>(inverse (norm u)) *\<^sub>R (f  u) = 0\<close>
+    by simp
+  moreover have \<open>(inverse (norm u)) \<noteq> 0\<close>
+    using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
+  ultimately show ?thesis by simp
+qed
+
+qed
+
+(* TODO: move to real_normed_vector? *)
+lemma linear_ball_uniq:
+\<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
+  proof
+  show "f x = g x"
+    if "linear f"
+      and "linear g"
+      and "\<forall>x. norm x = 1 \<longrightarrow> f x = g x"
+    for x :: 'a
+  proof-
+    have "\<forall>x. norm x = 1 \<longrightarrow> (\<lambda> t. f t - g t) x = 0"
+      by (simp add: that(3))
+    moreover have \<open>linear (\<lambda> t. f t - g t)\<close>
+      using \<open>linear f\<close> \<open>linear g\<close>
+      by (simp add: linear_compose_sub) 
+    ultimately have \<open>(\<lambda> t. f t - g t) = (\<lambda> _. 0)\<close>
+      using linear_ball_zero by smt
+    thus ?thesis
+      by (meson eq_iff_diff_eq_0) 
+  qed
+qed
+
+
+lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> linear a  \<Longrightarrow> linear b \<Longrightarrow> a = b"
+proof-
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
+  have "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t = b t"
+  unfolding nsustrong_convergence_def
+  using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
+  hence \<open>\<forall> t. norm t = 1 \<longrightarrow> a t = b t\<close> using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> 
+  by blast
+  thus ?thesis using linear_ball_uniq  \<open>linear a\<close>  \<open>linear b\<close>
+    by blast
+qed
+
+
+lemma nsustrong_convergence_iff: "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
+proof
+  assume *: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  show "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  proof (rule nsustrong_convergence_I)
+    fix N
+    assume "N \<in> HNatInfinite"
+    then have "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda> n. f n t)) (N + 1) \<approx> star_of (l t)"
+      by (simp add: HNatInfinite_add nsustrong_convergence_D *)
+    moreover have "\<And>N. ( *f* (\<lambda>n. (\<lambda> t. f n t ) (Suc n))) N = ( *f* f) (N + (1::hypnat))"
+    hence "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda>n. f (Suc n) t)) N \<approx> star_of (l t)"
+      using starfun_shift_one
+    thus ?thesis sorry
+  qed
+next
+  assume *: "(\<lambda>n. f(Suc n)) \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
+  show "f \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
+  proof (rule NSLIMSEQ_I)
+    fix N
+    assume "N \<in> HNatInfinite"
+    then have "(*f* (\<lambda>n. f (Suc n))) (N - 1) \<approx> star_of l"
+      using * by (simp add: HNatInfinite_diff NSLIMSEQ_D)
+    then show "(*f* f) N \<approx> star_of l"
+      by (simp add: \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite starfun_shift_one)
+  qed
+qed
+
+
+subsection \<open>nsuCauchy\<close>
+
+definition nsuCauchy::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>nsuCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow>
+ (*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M )\<close>                                                                 
+
+
+
+section \<open>Properties of sequences of bounded operators\<close>
+
+(* TODO: move? *)
 fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
   "rec x0 \<Phi> 0 = x0" 
 |  "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
 
-(* NEW *)
+(* TODO: move? *)
 lemma sum_mono:
   fixes a :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close>
   shows  \<open>p \<ge> 0 \<Longrightarrow> \<forall> n. sum a {0..n + p} \<ge> sum a {0..n}\<close>
 proof(induction p)
   case 0
-  then show ?case
+  thus ?case
     by simp 
 next
   case (Suc p)
-  then show ?case
+  thus ?case
     by (smt Suc_neq_Zero add_Suc_right assms le_SucE sum.atLeast0_atMost_Suc) 
 qed
 
-(* NEW *)
+(* TODO: move? *)
 lemma sum_comp:
   fixes a :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>p \<ge> 0\<close>
   shows  \<open>\<forall> n. sum a {Suc n..n + p} = sum a {0.. n + p} - sum a {0..n}\<close>
 proof(induction p)
   case 0
-  then show ?case 
+  thus ?case 
     by simp
 next
   case (Suc p)
-  then show ?case 
+  thus ?case 
     using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
 qed
 
-(* NEW *)
+(* TODO: nonstandard *)
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>nat \<Rightarrow> real\<close> and e::real
   assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> and
@@ -240,7 +411,7 @@ proof-
     using PInfty_neq_ereal by auto 
 qed
 
-(* NEW *)
+(* TODO: nonstandard *)
 lemma sum_Cauchy_positive:
   fixes a ::\<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close> 
@@ -303,7 +474,7 @@ proof-
     using Cauchy_altdef2 le_refl by fastforce 
 qed
 
-(* NEW *)
+(* TODO: nonstandard *)
 lemma convergent_series_Cauchy:
   fixes a::\<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close>
@@ -318,11 +489,11 @@ proof-
       for p n :: nat
     proof(induction p)
       case 0
-      then show ?case
+      thus ?case
         by (simp add: assms(2))
     next
       case (Suc p)
-      then show ?case
+      thus ?case
         by (smt Suc_eq_plus1 add_Suc_right assms(2) dist_self dist_triangle2 le_add1 sum.nat_ivl_Suc') 
     qed
     hence \<open>m > n \<Longrightarrow> dist (\<phi> m) (\<phi> n) \<le> sum a {n..m-1}\<close>
@@ -397,6 +568,7 @@ proof-
     using Cauchy_altdef2 by fastforce 
 qed
 
+(* TODO: delete *)
 lemma LIMSEQ_realpow_inf: 
   fixes x :: real
   assumes \<open>x > 1\<close>
@@ -404,6 +576,7 @@ lemma LIMSEQ_realpow_inf:
   using Limits.LIMSEQ_inverse_realpow_zero
   by (metis (mono_tags, lifting) Elementary_Topology.real_arch_pow Lim_PInfty assms le_ereal_le less_eq_ereal_def less_ereal.simps(1) power_increasing_iff) 
 
+(* TODO: nonstandard *)
 lemma LIMSEQ_scalarR: 
   fixes x :: \<open>nat \<Rightarrow> real\<close> and c :: real
   assumes \<open>x \<longlonglongrightarrow> \<infinity>\<close> and \<open>c > 0\<close>
@@ -429,11 +602,11 @@ proof-
     for M
   proof(cases \<open>M \<ge> 0\<close>)
     case True
-    then show ?thesis
+    thus ?thesis
       using \<open>\<And>M. 0 \<le> M \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. ereal M \<le> ereal (c * x n)\<close> by auto 
   next
     case False
-    then show ?thesis
+    thus ?thesis
     proof -
       have "(0::real) \<le> 0"
         by auto
@@ -445,9 +618,9 @@ proof-
         by moura
       moreover
       { assume "0 \<le> c * x (nna (nn 0))"
-        then have "M + - 1 * (c * x (nna (nn 0))) \<le> 0"
+        hence "M + - 1 * (c * x (nna (nn 0))) \<le> 0"
           using False by linarith
-        then have "\<exists>n. \<not> n \<le> nna n \<or> ereal M \<le> ereal (c * x (nna n))"
+        hence "\<exists>n. \<not> n \<le> nna n \<or> ereal M \<le> ereal (c * x (nna n))"
           by auto }
       ultimately show ?thesis
         using f1 ereal_less_eq(3) by blast
@@ -457,13 +630,13 @@ proof-
     by (simp add: Lim_PInfty)
 qed
 
-(* NEW *)
+(* TODO: move? *)
 lemma PRElim_shift:
   fixes n::nat
   shows  \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
 proof(induction n)
   case 0
-  then show ?case by simp
+  thus ?case by simp
 next
   case (Suc n)
   have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
@@ -484,14 +657,13 @@ next
   thus ?case by blast
 qed
 
-(* NEW *)
+(* TODO: delete *)
 lemma lim_shift:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
   assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
   shows \<open>x \<longlonglongrightarrow> l\<close>
   using assms  PRElim_shift by auto
 
-(* NEW *)
 lemma identity_telescopic:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
   assumes \<open>x \<longlonglongrightarrow> l\<close>
@@ -501,10 +673,10 @@ proof-
     for p
   proof(induction p)
     case 0
-    then show ?case by simp
+    thus ?case by simp
   next
     case (Suc p)
-    then show ?case by simp
+    thus ?case by simp
   qed
   moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t)  = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close>
     for t
@@ -537,7 +709,7 @@ proof-
   thus ?thesis by blast
 qed
 
-(* NEW *)
+
 lemma bound_telescopic:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat and K::real
   assumes \<open>x \<longlonglongrightarrow> l\<close> and \<open>\<And> k. (sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> K\<close>
@@ -572,10 +744,10 @@ proof-
     using Lim_bounded by blast 
 qed
 
-
-(* NEW *)
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
-theorem Banach_Steinhaus:
+
+(* TODO: nonstandard *)
+theorem banach_steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close>
     and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
@@ -604,19 +776,19 @@ proof(rule classical)
     assume \<open>bounded_linear h\<close>
     moreover assume \<open>r > 0\<close>
     ultimately have \<open>(onorm h) * r \<le> Sup {norm (h y) | y. dist y x < r}\<close>
-      by (simp add: Sokal_Banach_Steinhaus)
+      by (simp add: sokal_banach_steinhaus)
     assume \<open>0 < onorm h\<close>
     have \<open>(onorm h) * r * (2/3) < Sup {norm (h y) | y. dist y x < r}\<close>
     proof -
       have f1: "\<forall>r ra. (ra::real) * r = r * ra"
         by auto
-      then have f2: "r * onorm h \<le> Sup {norm (h a) |a. dist a x < r}"
+      hence f2: "r * onorm h \<le> Sup {norm (h a) |a. dist a x < r}"
         by (metis \<open>onorm h * r \<le> Sup {norm (h y) |y. dist y x < r}\<close>)
       have "0 < r * onorm h"
         by (metis \<open>0 < onorm h\<close> \<open>0 < r\<close> linordered_semiring_strict_class.mult_pos_pos)
-      then have "r * onorm h * (2 / 3) < Sup {norm (h a) |a. dist a x < r}"
+      hence "r * onorm h * (2 / 3) < Sup {norm (h a) |a. dist a x < r}"
         using f2 by linarith
-      then show ?thesis
+      thus ?thesis
         using f1 by presburger
     qed 
     moreover have \<open>{norm (h y) | y. dist y x < r} \<noteq> {}\<close>
@@ -752,7 +924,7 @@ proof(rule classical)
         for f :: \<open>nat \<Rightarrow> real\<close> and N::nat
       proof(induction N)
         case 0
-        then show ?case
+        thus ?case
           by simp 
       next
         case (Suc N)
@@ -821,7 +993,7 @@ proof(rule classical)
               by simp
           next
             case (Suc p)
-            then show ?case
+            thus ?case
               by (smt add_Suc_right le_add1 sum.nat_ivl_Suc') 
           qed
           moreover have  \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) \<le> (1/2)*(1/3::real)^n\<close> 
@@ -968,11 +1140,11 @@ proof(rule classical)
       obtain rr :: real where
         "\<forall>n. norm (g n l) \<le> rr"
         by (metis (no_types) \<open>\<And>thesis. (\<And>M. \<forall>n. norm (f n l) \<le> M \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>g \<equiv> \<lambda>n. f (k\<^sub>f n)\<close>)
-      then have "\<forall>e. e \<le> ereal rr \<or> \<not> (\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> e"
+      hence "\<forall>e. e \<le> ereal rr \<or> \<not> (\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> e"
         by (meson Lim_bounded \<open>\<And>n. ereal (1 / 6 * (4 / 3) ^ n) < ereal (norm (g n l))\<close> less_eq_ereal_def less_ereal_le)
-      then have "\<infinity> \<le> ereal rr"
+      hence "\<infinity> \<le> ereal rr"
         using \<open>(\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> \<infinity>\<close> by blast
-      then show ?thesis
+      thus ?thesis
         by simp
     qed 
   qed
@@ -988,7 +1160,6 @@ proof(rule classical)
     by linarith
 qed
 
-(* NEW *)
 lemma strong_convergence_pointwise: 
   \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
   for x
@@ -1006,7 +1177,6 @@ proof-
     by (rule Limits.Lim_transform)
   thus ?thesis by blast
 qed
-
 
 lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
@@ -1048,7 +1218,7 @@ proof
             by (metis (full_types)  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close> limI)
           have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
             by (metis (no_types) limI tendsto_add)
-          then show ?thesis
+          thus ?thesis
             using f1  \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> F x\<close> by fastforce
         qed 
       qed
@@ -1095,12 +1265,10 @@ proof
   qed
 qed
 
-(* NEW *)
 lemma bounded_linear_limit_bounded_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes  \<open>\<And> n. bounded_linear (f n)\<close> 
-    and   \<open>f \<midarrow>strong\<rightarrow> F\<close> 
+  assumes  \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>f \<midarrow>strong\<rightarrow> F\<close> 
   shows \<open>bounded_linear F\<close> 
 proof-
   have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
@@ -1131,7 +1299,7 @@ proof-
         moreover have  \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>
           by (simp add: \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>)          
         ultimately show ?thesis 
-          by (rule Banach_Steinhaus)
+          by (rule banach_steinhaus)
       qed
       then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by blast
@@ -1149,7 +1317,7 @@ proof-
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
 
-
+(* TODO: nonstandard *)
 lemma onorm_tendsto:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
     and e :: real
@@ -1177,11 +1345,10 @@ proof-
     by (simp add: eventually_at_top_linorder)
 qed
 
+(* TODO: nonstandard *)
 lemma onorm_strong:
-  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-    and l :: \<open>'a \<Rightarrow> 'b\<close>
-  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
-    and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
+  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
   shows \<open>f \<midarrow>strong\<rightarrow> l\<close>
 proof-
   have \<open>(\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0\<close>
@@ -1236,9 +1403,9 @@ proof-
                 by auto
               have "\<forall>r ra rb. (((rb::real) = 0 \<or> rb * ra < r) \<or> \<not> ra < r / rb) \<or> \<not> 0 < rb"
                 by (metis (no_types) linordered_comm_semiring_strict_class.comm_mult_strict_left_mono nonzero_mult_div_cancel_left times_divide_eq_right)
-              then have "\<exists>n. \<not> n \<le> nn n \<or> onorm (\<lambda>a. f (nn n) a - l a) * norm x < e"
+              hence "\<exists>n. \<not> n \<le> nn n \<or> onorm (\<lambda>a. f (nn n) a - l a) * norm x < e"
                 using ff1 by (metis (no_types) False \<open>0 < norm x\<close> \<open>\<exists>N. \<forall>n\<ge>N. onorm (\<lambda>t. f n t - l t) < e / norm x\<close>) }
-            then show ?thesis
+            thus ?thesis
               by (metis (no_types))
           qed  
         qed
@@ -1253,10 +1420,9 @@ proof-
   thus ?thesis unfolding strong_convergence_def by blast
 qed
 
-
+(* TODO: nonstandard *)
 lemma uniform_strong_onorm:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-    and l :: \<open>'a \<Rightarrow> 'b\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
     and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
   shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
@@ -1376,13 +1542,11 @@ proof-
                   \<Longrightarrow> y \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
                 for y
                 by (simp add: Sup_upper)
-
               from  \<open>\<And> y. y \<in> {ereal (norm (g x)) |x. norm x = 1}  
                   \<Longrightarrow> y \<le> Sup {(norm (g x)) |x. norm x = 1}\<close>
               have \<open>Sup {ereal (norm (g x)) |x. norm x = 1} \<le>  Sup {(norm (g x)) |x. norm x = 1}\<close>
                 using \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>
                 by (meson cSup_least)
-
               have \<open>(Sup { (norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close> 
               proof-
                 define X::\<open>ereal set\<close> where \<open>X = {norm (g x) |x. norm x = 1}\<close>
@@ -1412,7 +1576,7 @@ proof-
             ultimately show \<open>Sup {norm (g x) |x. norm x = 1} < t + inverse (1 + real m)\<close>
               by simp
           qed
-          finally have \<open>(onorm g) <  t + (inverse (real (Suc m)))\<close>
+          finally have \<open>(onorm g) < t + (inverse (real (Suc m)))\<close>
             by blast
           thus ?thesis
             using \<open>t \<in> {norm (g x) |x. norm x = 1}\<close> by auto             
@@ -1509,7 +1673,7 @@ proof-
   thus ?thesis unfolding onorm_convergence_def by blast
 qed
 
-
+(* TODO: nonstandard *)
 lemma PREuCauchy_ustrong:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>uCauchy f\<close>
@@ -1584,6 +1748,7 @@ proof-
   thus ?thesis unfolding ustrong_convergence_def by blast
 qed
 
+(* TODO: nonstandard *)
 lemma uCauchy_ustrong:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
   assumes  \<open>uCauchy f\<close> and \<open>\<And> n. bounded_linear (f n)\<close>
@@ -1625,7 +1790,7 @@ proof-
     next
       case False
       hence  \<open>norm x \<noteq> 0\<close> by simp
-      then show ?thesis
+      thus ?thesis
       proof-
         have  \<open>(\<lambda> n. f n (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
         proof-
@@ -1678,7 +1843,7 @@ proof-
             by (simp add: tendsto_add) 
           moreover have \<open>(\<lambda> n. f n (b1 + b2)) = (\<lambda> n. f n b1 + f n b2)\<close>
           proof-
-            have \<open>f n (b1 + b2) =  f n b1 + f n b2\<close>
+            have \<open>f n (b1 + b2) = f n b1 + f n b2\<close>
               for n
               using \<open>\<And> n. bounded_linear (f n)\<close>
               unfolding bounded_linear_def
@@ -1798,7 +1963,6 @@ proof-
           using  \<open>\<forall>m\<ge>M. \<forall>x. 
             norm x = 1 \<longrightarrow> norm (f m x - f M x) < 1\<close> 
           by smt
-
         have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. f m x) \<longlonglongrightarrow> l x\<close>
           for x
           by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> l x\<close>)
@@ -1831,6 +1995,7 @@ proof-
 qed
 
 
+(* TODO: nonstandard *)
 lemma completeness_real_bounded:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close>
@@ -1882,5 +2047,7 @@ proof-
   thus ?thesis
     using \<open>bounded_linear l\<close> by auto  
 qed
+
+
 
 end
