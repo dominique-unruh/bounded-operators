@@ -119,6 +119,11 @@ lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^s
  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
   by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
 
+lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t = b t"
+  unfolding nsustrong_convergence_def
+  using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
+
 
 subsection \<open>nsuCauchy\<close>
 
