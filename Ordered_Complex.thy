@@ -52,11 +52,6 @@ lemma less_eq_complexI: "Re x \<le> Re y \<Longrightarrow> Im x = Im y \<Longrig
 lemma less_complexI: "Re x < Re y \<Longrightarrow> Im x = Im y \<Longrightarrow> x<y" unfolding less_complex_def by simp
 
 
-
-
-
-
-
 lemma complex_of_real_mono:
   "x \<le> y \<Longrightarrow> complex_of_real x \<le> complex_of_real y"
   unfolding less_eq_complex_def by auto
