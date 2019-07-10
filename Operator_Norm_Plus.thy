@@ -10,7 +10,6 @@ theory Operator_Norm_Plus
     "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
     "HOL-ex.Sketch_and_Explore"
-    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
 begin
 
 section \<open>Sets defined using the norms\<close>
