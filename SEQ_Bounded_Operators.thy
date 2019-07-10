@@ -123,38 +123,38 @@ lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^s
 
 (* TODO: move to real_normed_vector? *)
 lemma linear_ball_zero:
-\<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
-  proof
+  \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
+proof
   show "f u = 0"
     if "linear f"
       and "\<forall>x. norm x = 1 \<longrightarrow> f x = 0"
     for u :: 'a
   proof(cases \<open>u = 0\<close>)
-case True
-  thus ?thesis
-    by (simp add: linear_0 that(1))
-next
-  case False
-  have \<open>norm ( (inverse (norm u)) *\<^sub>R u ) = 1\<close>
-    by (simp add: False)
-  hence \<open>f ( (inverse (norm u)) *\<^sub>R u ) = 0\<close>
-    by (simp add: that(2))
-  moreover have \<open>f ( (inverse (norm u)) *\<^sub>R u ) = (inverse (norm u)) *\<^sub>R (f  u)\<close>
-    using \<open>linear f\<close> unfolding linear_def
-    by (simp add: Real_Vector_Spaces.linear_def linear_scale) 
-  ultimately have \<open>(inverse (norm u)) *\<^sub>R (f  u) = 0\<close>
-    by simp
-  moreover have \<open>(inverse (norm u)) \<noteq> 0\<close>
-    using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
-  ultimately show ?thesis by simp
-qed
+    case True
+    thus ?thesis
+      by (simp add: linear_0 that(1))
+  next
+    case False
+    have \<open>norm ( (inverse (norm u)) *\<^sub>R u ) = 1\<close>
+      by (simp add: False)
+    hence \<open>f ( (inverse (norm u)) *\<^sub>R u ) = 0\<close>
+      by (simp add: that(2))
+    moreover have \<open>f ( (inverse (norm u)) *\<^sub>R u ) = (inverse (norm u)) *\<^sub>R (f  u)\<close>
+      using \<open>linear f\<close> unfolding linear_def
+      by (simp add: Real_Vector_Spaces.linear_def linear_scale) 
+    ultimately have \<open>(inverse (norm u)) *\<^sub>R (f  u) = 0\<close>
+      by simp
+    moreover have \<open>(inverse (norm u)) \<noteq> 0\<close>
+      using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
+    ultimately show ?thesis by simp
+  qed
 
 qed
 
 (* TODO: move to real_normed_vector? *)
 lemma linear_ball_uniq:
-\<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
-  proof
+  \<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
+proof
   show "f x = g x"
     if "linear f"
       and "linear g"
@@ -180,39 +180,61 @@ proof-
   assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
   have "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
  \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t = b t"
-  unfolding nsustrong_convergence_def
-  using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
+    unfolding nsustrong_convergence_def
+    using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
   hence \<open>\<forall> t. norm t = 1 \<longrightarrow> a t = b t\<close> using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> 
-  by blast
+    by blast
   thus ?thesis using linear_ball_uniq  \<open>linear a\<close>  \<open>linear b\<close>
     by blast
 qed
 
-
-lemma nsustrong_convergence_iff: "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
+lemma nsustrong_convergence_iff:
+  fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+  shows "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
 proof
   assume *: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
   show "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
   proof (rule nsustrong_convergence_I)
-    fix N
-    assume "N \<in> HNatInfinite"
-    then have "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda> n. f n t)) (N + 1) \<approx> star_of (l t)"
+    fix N and x::'a
+    assume "N \<in> HNatInfinite" and \<open>norm x = 1\<close>
+    hence "(*f* (\<lambda> n. f n x)) (N + 1) \<approx> star_of (l x)"
       by (simp add: HNatInfinite_add nsustrong_convergence_D *)
-    moreover have "\<And>N. ( *f* (\<lambda>n. (\<lambda> t. f n t ) (Suc n))) N = ( *f* f) (N + (1::hypnat))"
-    hence "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda>n. f (Suc n) t)) N \<approx> star_of (l t)"
-      using starfun_shift_one
-    thus ?thesis sorry
+    moreover have \<open>(*f* (\<lambda>k. f (Suc k) x)) N = (*f* (\<lambda> n. f n x)) (N + 1)\<close>
+    proof-   
+      define g where \<open>g n = f n x\<close> for n
+      have \<open>( *f* (\<lambda>n. g (Suc n))) N = ( *f* g) (N + (1::hypnat))\<close>
+        using starfun_shift_one
+        by (simp add: starfun_shift_one)
+      thus ?thesis unfolding g_def
+        by simp  
+    qed
+    ultimately show \<open>(*f* (\<lambda>k. f (Suc k) x)) N \<approx> star_of (l x)\<close> by simp
   qed
 next
-  assume *: "(\<lambda>n. f(Suc n)) \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
-  show "f \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
-  proof (rule NSLIMSEQ_I)
-    fix N
-    assume "N \<in> HNatInfinite"
-    then have "(*f* (\<lambda>n. f (Suc n))) (N - 1) \<approx> star_of l"
-      using * by (simp add: HNatInfinite_diff NSLIMSEQ_D)
-    then show "(*f* f) N \<approx> star_of l"
-      by (simp add: \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite starfun_shift_one)
+  assume *: "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  show  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  proof (rule nsustrong_convergence_I)
+    fix N and x::'a
+    assume "N \<in> HNatInfinite" and \<open>norm x = 1\<close>
+    hence "(*f* (\<lambda>n. (f (Suc n) x))) (N - 1) \<approx> star_of (l x)"
+      using * HNatInfinite_diff nsustrong_convergence_D by fastforce
+    moreover have \<open>(*f* (\<lambda>n. (f (Suc n) x))) (N - 1) = (*f* (\<lambda>k. f k x)) N\<close>
+    proof-
+      define g where \<open>g n = f n x\<close> for n
+      have \<open>( *f* (\<lambda>n. g (Suc n))) (N-1) = ( *f* g) ((N-1) + (1::hypnat))\<close>
+        using starfun_shift_one
+        by (simp add: starfun_shift_one)
+      moreover have \<open>( *f* (\<lambda>n. g (Suc n))) (N-1) = (*f* (\<lambda>n. (f (Suc n) x))) (N - 1)\<close>
+        unfolding g_def
+        by simp 
+      moreover have \<open>( *f* g) ((N-1) + (1::hypnat)) =  (*f* (\<lambda>k. f k x)) N\<close>
+        unfolding g_def
+        by (simp add: \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite) 
+      ultimately show ?thesis
+        by simp   
+    qed
+    ultimately show "(*f* (\<lambda>k. f k x)) N \<approx> star_of (l x)"
+      by simp
   qed
 qed
 
