@@ -189,6 +189,34 @@ proof-
 qed
 
 
+lemma nsustrong_convergence_iff: "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
+proof
+  assume *: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  show "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  proof (rule nsustrong_convergence_I)
+    fix N
+    assume "N \<in> HNatInfinite"
+    then have "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda> n. f n t)) (N + 1) \<approx> star_of (l t)"
+      by (simp add: HNatInfinite_add nsustrong_convergence_D *)
+    moreover have "\<And>N. ( *f* (\<lambda>n. (\<lambda> t. f n t ) (Suc n))) N = ( *f* f) (N + (1::hypnat))"
+    hence "\<forall> t. norm t = 1 \<longrightarrow> (*f* (\<lambda>n. f (Suc n) t)) N \<approx> star_of (l t)"
+      using starfun_shift_one
+    thus ?thesis sorry
+  qed
+next
+  assume *: "(\<lambda>n. f(Suc n)) \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
+  show "f \<longlonglongrightarrow>\<^sub>N\<^sub>S l"
+  proof (rule NSLIMSEQ_I)
+    fix N
+    assume "N \<in> HNatInfinite"
+    then have "(*f* (\<lambda>n. f (Suc n))) (N - 1) \<approx> star_of l"
+      using * by (simp add: HNatInfinite_diff NSLIMSEQ_D)
+    then show "(*f* f) N \<approx> star_of l"
+      by (simp add: \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite starfun_shift_one)
+  qed
+qed
+
+
 subsection \<open>nsuCauchy\<close>
 
 definition nsuCauchy::
