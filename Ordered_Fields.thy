@@ -1,6 +1,15 @@
+(*
+Authors: 
+
+  Dominique Unruh, University of Tartu, unruh@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballer@ut.ee
+*)
+
+
 theory Ordered_Fields
-  imports Main
+  imports Complex_Main
 begin
+
 
 subsection \<open>Missing from Orderings.thy\<close>
 
