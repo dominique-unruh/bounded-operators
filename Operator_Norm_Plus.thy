@@ -842,7 +842,7 @@ proof-
 qed
 
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
-lemma Sokal_Banach_Steinhaus:
+lemma sokal_banach_steinhaus:
   fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
