@@ -119,10 +119,74 @@ lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^s
  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
   by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
 
+
+
+(* TODO: move to real_normed_vector? *)
+lemma linear_ball_zero:
+\<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
+  proof
+  show "f u = 0"
+    if "linear f"
+      and "\<forall>x. norm x = 1 \<longrightarrow> f x = 0"
+    for u :: 'a
+  proof(cases \<open>u = 0\<close>)
+case True
+  thus ?thesis
+    by (simp add: linear_0 that(1))
+next
+  case False
+  have \<open>norm ( (inverse (norm u)) *\<^sub>R u ) = 1\<close>
+    by (simp add: False)
+  hence \<open>f ( (inverse (norm u)) *\<^sub>R u ) = 0\<close>
+    by (simp add: that(2))
+  moreover have \<open>f ( (inverse (norm u)) *\<^sub>R u ) = (inverse (norm u)) *\<^sub>R (f  u)\<close>
+    using \<open>linear f\<close> unfolding linear_def
+    by (simp add: Real_Vector_Spaces.linear_def linear_scale) 
+  ultimately have \<open>(inverse (norm u)) *\<^sub>R (f  u) = 0\<close>
+    by simp
+  moreover have \<open>(inverse (norm u)) \<noteq> 0\<close>
+    using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
+  ultimately show ?thesis by simp
+qed
+
+qed
+
+(* TODO: move to real_normed_vector? *)
+lemma linear_ball_uniq:
+\<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
+  proof
+  show "f x = g x"
+    if "linear f"
+      and "linear g"
+      and "\<forall>x. norm x = 1 \<longrightarrow> f x = g x"
+    for x :: 'a
+  proof-
+    have "\<forall>x. norm x = 1 \<longrightarrow> (\<lambda> t. f t - g t) x = 0"
+      by (simp add: that(3))
+    moreover have \<open>linear (\<lambda> t. f t - g t)\<close>
+      using \<open>linear f\<close> \<open>linear g\<close>
+      by (simp add: linear_compose_sub) 
+    ultimately have \<open>(\<lambda> t. f t - g t) = (\<lambda> _. 0)\<close>
+      using linear_ball_zero by smt
+    thus ?thesis
+      by (meson eq_iff_diff_eq_0) 
+  qed
+qed
+
+
 lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> linear a  \<Longrightarrow> linear b \<Longrightarrow> a = b"
+proof-
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
+  have "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
  \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t = b t"
   unfolding nsustrong_convergence_def
   using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
+  hence \<open>\<forall> t. norm t = 1 \<longrightarrow> a t = b t\<close> using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> 
+  by blast
+  thus ?thesis using linear_ball_uniq  \<open>linear a\<close>  \<open>linear b\<close>
+    by blast
+qed
 
 
 subsection \<open>nsuCauchy\<close>
