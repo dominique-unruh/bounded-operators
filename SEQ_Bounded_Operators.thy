@@ -52,19 +52,43 @@ definition uCauchy::
 
 section \<open>External analogs\<close>
 
+subsection \<open>nsustrong_convergence\<close>
+
 definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
    \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
-    ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
-    \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
+  ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
+  \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
   "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
 ( \<forall>N\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> ((*f* (\<lambda> k. f k x)) N) \<approx> (star_of (l x)) )"
 
+lemma nsustrong_convergence_I: 
+  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> norm x = 1 \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x) )
+   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_D: 
+  \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> norm x = 1 
+  \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x)\<close>
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_const: "(\<lambda>n. k) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S k"
+  by (simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t))\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
+  by (auto intro: approx_add simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
+  by (simp only: nsustrong_convergence_add nsustrong_convergence_const)
+
+
+subsection \<open>nsuCauchy\<close>
+
 definition nsuCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>nsuCauchy f \<longleftrightarrow> (
-\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> 
-(*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M
-)\<close>                                                                 
+  where \<open>nsuCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow>
+ (*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M )\<close>                                                                 
 
 
 
