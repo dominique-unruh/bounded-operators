@@ -82,6 +82,43 @@ lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow>\<^sub>
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
   by (simp only: nsustrong_convergence_add nsustrong_convergence_const)
 
+lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
+\<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t * b t)"
+  for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_algebra"
+  by (auto intro!: approx_mult_HFinite simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
+  by (auto simp add: nsustrong_convergence_def)
+
+lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)
+ \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a"
+  by (drule nsustrong_convergence_minus) simp
+
+lemma nsustrong_convergence_diff: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t - Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b t)"
+  using nsustrong_convergence_add [of X a "- Y" "- b"]
+  by (simp add: nsustrong_convergence_minus fun_Compl_def)
+
+lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b)"
+  by (simp add: nsustrong_convergence_diff nsustrong_convergence_const)
+
+lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t \<noteq> 0
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. inverse (X n t) )) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. inverse (a t))"
+  for a :: "'a::real_normed_vector \<Rightarrow>'b::real_normed_div_algebra"
+  by (simp add: nsustrong_convergence_def star_of_approx_inverse)
+
+lemma nsustrong_convergence_inverse_mult_inverse: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
+\<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> b t \<noteq> 0
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. (X n t) / (Y n t))) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. (a t) / (b t))"
+  for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_field"
+  by (simp add: nsustrong_convergence_mult nsustrong_convergence_inverse divide_inverse)
+
+lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)) )
+ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
+  by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
+
 
 subsection \<open>nsuCauchy\<close>
 
