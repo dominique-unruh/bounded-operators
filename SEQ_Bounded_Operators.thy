@@ -4,10 +4,11 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballer@ut.ee
 
-Important results: Banach-Steinhaus theorem
+Main results: 
+- banach_steinhaus: Banach-Steinhaus theorem.
+- completeness_real_bounded: Completeness of the metric space of (real) bounded operators.
 
 *)
-
 
 theory SEQ_Bounded_Operators
   imports 
@@ -29,20 +30,6 @@ abbreviation strong_convergence_abbr::
   (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l )\<close>
 
-(* TODO: nonstandard *)
-definition ustrong_convergence:: 
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
-  \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
-
-(* TODO: nonstandard *)
-definition uCauchy::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
-
-abbreviation ustrong_convergence_abbr::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>ustrong\<rightarrow> (_))\<close> [60, 60] 60)
-  where \<open>f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l )\<close>
-
 definition onorm_convergence::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
@@ -50,6 +37,36 @@ definition onorm_convergence::
 abbreviation onorm_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>onorm\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l )\<close>
+
+definition ustrong_convergence:: 
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
+  \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
+
+abbreviation ustrong_convergence_abbr::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>ustrong\<rightarrow> (_))\<close> [60, 60] 60)
+  where \<open>f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l )\<close>
+
+definition uCauchy::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
+
+section \<open>External analogs\<close>
+
+definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
+   \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
+    ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
+    \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
+  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
+( \<forall>N\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> ((*f* (\<lambda> k. f k x)) N) \<approx> (star_of (l x)) )"
+
+definition nsuCauchy::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>nsuCauchy f \<longleftrightarrow> (
+\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> 
+(*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M
+)\<close>                                                                 
+
+
 
 section \<open>Properties of sequences of bounded operators\<close>
 
