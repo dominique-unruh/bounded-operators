@@ -54,12 +54,13 @@ section \<open>External analogs\<close>
 
 subsection \<open>nsustrong_convergence\<close>
 
-definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
+text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
+definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::{real_normed_vector,perfect_space} \<Rightarrow> 'b::real_normed_vector))
    \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
   ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
   \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
   "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
-( \<forall>N\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow> ((*f* (\<lambda> k. f k x)) N) \<approx> (star_of (l x)) )"
+( \<forall>N\<in>HNatInfinite. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )"
 
 lemma nsustrong_convergence_I: 
   \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> norm x = 1 \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x) )
@@ -118,7 +119,6 @@ lemma nsustrong_convergence_inverse_mult_inverse: "X \<midarrow>ustrong\<rightar
 lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)) )
  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
   by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
-
 
 (* TODO: move to real_normed_vector? *)
 lemma linear_ball_zero:
@@ -278,7 +278,42 @@ lemma nsustrong_convergence_ustrong_convergence:
   fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
   assumes \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
   shows \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-  sorry
+  apply (rule ustrong_convergence_I)
+proof
+  fix r :: real
+  assume \<open>r > (0::real)\<close>
+  from \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
+  have \<open>\<forall>n\<in>HNatInfinite. \<forall>x. norm x = 1 \<longrightarrow> (*f* (\<lambda>k. f k x)) n \<approx> star_of (l x)\<close>
+    unfolding nsustrong_convergence_def by blast
+  hence \<open>\<forall>n\<in>HNatInfinite.
+       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+    by (simp add: InfinitesimalD2 Infinitesimal_approx_minus \<open>0 < r\<close>)
+  have \<open>\<exists> no. \<forall>n \<ge> no.
+       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+  proof-
+    have \<open>n \<ge> whn \<Longrightarrow>
+       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+      for n
+    proof-
+      assume \<open>n \<ge> whn\<close>
+      hence \<open>n \<in> HNatInfinite\<close>
+        using HNatInfinite_upward_closed HNatInfinite_whn by blast
+      hence \<open>\<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+        using  \<open>\<forall>n\<in>HNatInfinite.
+       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close> by blast
+      thus ?thesis by blast
+    qed
+    thus ?thesis by blast
+  qed
+  hence \<open>\<exists> no. \<forall>n \<ge> no.
+       \<forall>x. norm x = 1 \<longrightarrow> norm ( (\<lambda>k. f k x) n - (l x) ) < r\<close>
+        
+
+  show \<open>\<forall>n\<ge>no r. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
+    sorry
+qed
+
+
 
 subsection \<open>nsuCauchy\<close>
 
@@ -286,7 +321,6 @@ definition nsuCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>nsuCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow>
  (*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M )\<close>                                                                 
-
 
 
 section \<open>Properties of sequences of bounded operators\<close>
