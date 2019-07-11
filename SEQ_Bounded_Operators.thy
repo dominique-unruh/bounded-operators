@@ -112,15 +112,64 @@ proof(rule nsustrong_convergence_I)
     by smt
 qed
 
-
 lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
   by (simp only: nsustrong_convergence_add nsustrong_convergence_const)
 
-lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
-\<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t * b t)"
+lemma bounded_linear_HFinite:
+  \<open>bounded_linear a \<Longrightarrow> hnorm x = 1 \<Longrightarrow> ((*f* a) x) \<in> HFinite\<close>
+  unfolding HFinite_def
+  apply auto
+proof-
+  assume \<open>bounded_linear a\<close> and \<open>hnorm x = 1\<close>
+  have \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) \<le> onorm a\<close>
+    using \<open>bounded_linear a\<close> by (metis mult_cancel_left2 onorm)      
+  hence  \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) < onorm a + 1\<close>
+    by fastforce      
+  hence  \<open>\<And> t. hnorm t = 1 \<Longrightarrow> hnorm ((*f* a) t) < star_of (onorm a + 1)\<close>
+    by transfer
+  hence  \<open>hnorm ((*f* a) x) < star_of (onorm a + 1)\<close>
+    using \<open>hnorm x = 1\<close>
+    by auto
+  thus \<open>\<exists>xa\<in>\<real>. hnorm ((*f* a) x) < xa\<close> by auto
+qed
+
+lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+ \<Longrightarrow> bounded_linear a \<Longrightarrow> bounded_linear b 
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t * b t)"
   for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_algebra"
-  by (auto intro!: approx_mult_HFinite simp add: nsustrong_convergence_def)
+proof(rule nsustrong_convergence_I)
+  fix N and x::\<open>'a star\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+    and \<open>bounded_linear a\<close> and \<open>bounded_linear b\<close>
+  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
+    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+  moreover have \<open>(*f2* Y) N x \<approx> (*f* b) x\<close>
+    using \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+  moreover have \<open>((*f* a) x) \<in> HFinite\<close>
+    using \<open>bounded_linear a\<close> \<open>hnorm x = 1\<close>
+    by (simp add: bounded_linear_HFinite) 
+  moreover have \<open>((*f* b) x) \<in> HFinite\<close>
+    using \<open>bounded_linear b\<close> \<open>hnorm x = 1\<close>
+    by (simp add: bounded_linear_HFinite)
+  ultimately have \<open>(*f2* X) N x * (*f2* Y) N x \<approx> (*f* a) x * (*f* b) x\<close>
+    using approx_mult_HFinite by auto
+  moreover have \<open>(*f2* X) N x * (*f2* Y) N x = (*f2* (\<lambda>n t. X n t * Y n t)) N x\<close>
+  proof-
+    have \<open>\<forall> NN. \<forall> xx. X NN xx * Y NN xx = (\<lambda>n t. X n t * Y n t) NN xx\<close>
+      by auto
+    hence \<open>\<forall> NNN. \<forall> xxx. (*f2* X) NNN xxx * (*f2* Y) NNN xxx = (*f2* (\<lambda>n t. X n t * Y n t)) NNN xxx\<close>
+      apply transfer
+      by auto
+    thus ?thesis
+      by simp  
+  qed
+  moreover have \<open>(*f* a) x * (*f* b) x = (*f* (\<lambda>t. a t * b t)) x\<close>
+    by simp
+  ultimately show \<open>(*f2* (\<lambda>n t. X n t * Y n t)) N x \<approx> (*f* (\<lambda>t. a t * b t)) x\<close>
+    by smt
+qed
+
 
 lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
