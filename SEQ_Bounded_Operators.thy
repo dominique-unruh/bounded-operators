@@ -2,7 +2,7 @@
 Authors: 
 
   Dominique Unruh, University of Tartu, unruh@ut.ee
-  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballer@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
 Main results: 
 - banach_steinhaus: Banach-Steinhaus theorem.
