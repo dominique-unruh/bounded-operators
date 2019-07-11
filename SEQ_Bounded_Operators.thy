@@ -55,25 +55,35 @@ section \<open>External analogs\<close>
 subsection \<open>nsustrong_convergence\<close>
 
 text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
-definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::{real_normed_vector,perfect_space} \<Rightarrow> 'b::real_normed_vector))
+definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
    \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
   ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
   \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
   "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
-( \<forall>N\<in>HNatInfinite. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )"
+( \<forall>N\<in>HNatInfinite. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x )"
 
-lemma nsustrong_convergence_I: 
-  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> norm x = 1 \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x) )
-   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
-  by (simp add: nsustrong_convergence_def)
+ lemma nsustrong_convergence_I: 
+  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
+   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close> 
+  by (simp add: nsustrong_convergence_def) 
 
 lemma nsustrong_convergence_D: 
-  \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> norm x = 1 
-  \<Longrightarrow> starfun (\<lambda> k. f k x) N \<approx> star_of (l x)\<close>
+  \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
+  \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x\<close>
   by (simp add: nsustrong_convergence_def)
 
-lemma nsustrong_convergence_const: "(\<lambda>n. k) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S k"
-  by (simp add: nsustrong_convergence_def)
+lemma nsustrong_convergence_const:
+  fixes k :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+  assumes \<open>\<And> n::nat. f n = k\<close>
+  shows \<open>f\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S k\<close>
+proof-
+  have \<open>\<forall> n. \<forall> x::'a. norm x = 1 \<longrightarrow> f n x = k x\<close>
+    using  \<open>\<And> n::nat. f n = k\<close> by auto
+  hence \<open>\<forall> n. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) n x = (*f* k) x\<close>
+    by transfer
+  thus ?thesis using nsustrong_convergence_def
+    by (simp add: nsustrong_convergence_def) 
+qed
 
 lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t))\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
