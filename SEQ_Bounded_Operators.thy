@@ -120,7 +120,6 @@ lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^s
   by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
 
 
-
 (* TODO: move to real_normed_vector? *)
 lemma linear_ball_zero:
   \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
@@ -238,6 +237,48 @@ next
   qed
 qed
 
+lemma ustrong_convergence_nsustrong_convergence:
+  fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+  assumes \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+  shows \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
+proof (rule nsustrong_convergence_I)
+  fix N and x::'a
+  assume \<open>N \<in> HNatInfinite\<close> and \<open>norm x = 1\<close>
+  have \<open>(*f* (\<lambda>k. f k x)) N - star_of (l x) \<in> Infinitesimal\<close>
+  proof (rule InfinitesimalI2)
+    fix r :: real
+    assume \<open>0 < r\<close>
+    have \<open>\<exists> no. \<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
+      using \<open>f \<midarrow>ustrong\<rightarrow> l\<close>  \<open>0 < r\<close> ustrong_convergence_def by auto 
+    then obtain no where \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
+      by blast
+    hence \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1
+       \<longrightarrow> norm ( (\<lambda> k. f k x) n - (l x)) <  r\<close>
+      by blast
+    hence \<open>\<forall> n \<ge> no. norm ( (\<lambda> k. f k x) n - (l x)) <  r\<close>
+      using \<open>norm x = 1\<close> by blast
+    hence \<open>\<forall> n \<ge> star_of no. hnorm ((*f* (\<lambda>k. f k x)) n - star_of (l x))
+         < hypreal_of_real r\<close>
+      by transfer
+    thus \<open>hnorm ((*f* (\<lambda>k. f k x)) N - star_of (l x))
+         < hypreal_of_real r\<close>
+      using star_of_le_HNatInfinite
+      by (simp add: \<open>N \<in> HNatInfinite\<close>) 
+  qed
+  thus \<open>(*f* (\<lambda>k. f k x)) N \<approx> star_of (l x)\<close>
+    by (simp only: approx_def)
+qed
+
+lemma ustrong_convergence_I: \<open>(\<And>r. 0 < r \<Longrightarrow>
+\<exists> no. \<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r) \<Longrightarrow> f \<midarrow>ustrong\<rightarrow> l\<close>
+  for l :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector"
+  by (simp add: ustrong_convergence_def)
+
+lemma nsustrong_convergence_ustrong_convergence:
+  fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+  assumes \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
+  shows \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+  sorry
 
 subsection \<open>nsuCauchy\<close>
 
