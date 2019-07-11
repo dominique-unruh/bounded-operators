@@ -173,7 +173,29 @@ qed
 
 lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
-  by (auto simp add: nsustrong_convergence_def)
+proof(rule nsustrong_convergence_I)
+  fix N and x::\<open>'a star\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  from \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>hnorm x = 1\<close>
+  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
+    by (simp add: \<open>N \<in> HNatInfinite\<close> nsustrong_convergence_D)
+  hence \<open>-(*f2* X) N x \<approx> -(*f* a) x\<close>
+    by simp
+  moreover have \<open>-(*f2* X) N x \<approx> (*f2* (\<lambda>n t. - X n t)) N x\<close>
+  proof-
+    have \<open>\<forall> NN. \<forall> xx. -( X) NN xx = ( (\<lambda>n t. - X n t)) NN xx\<close>
+      by blast
+    hence \<open>\<forall> NN. \<forall> xx. -(*f2* X) NN xx = (*f2* (\<lambda>n t. - X n t)) NN xx\<close>
+      by transfer
+    thus ?thesis by simp
+  qed
+  moreover have \<open>-(*f* a) x \<approx> (*f* (\<lambda>t. - a t)) x\<close>
+    by simp
+  ultimately show \<open>(*f2* (\<lambda>n t. - X n t)) N x \<approx> (*f* (\<lambda>t. - a t)) x\<close>
+    using approx_trans3 by blast 
+qed
+
+
 
 lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)
  \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a"
