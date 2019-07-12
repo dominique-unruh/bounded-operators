@@ -380,47 +380,41 @@ lemma nsustrong_convergence_iff:
   shows "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
 proof
   assume *: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
-  show "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
+  show "(\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
   proof (rule nsustrong_convergence_I)
-    fix N and x::'a
-    assume "N \<in> HNatInfinite" and \<open>norm x = 1\<close>
-    hence "(*f* (\<lambda> n. f n x)) (N + 1) \<approx> star_of (l x)"
+    fix N and x::\<open>'a star\<close>
+    assume "N \<in> HNatInfinite" and \<open>hnorm x = 1\<close>
+    hence "(*f2* f) (N + 1) x \<approx> (*f* l) x"
       by (simp add: HNatInfinite_add nsustrong_convergence_D *)
-    moreover have \<open>(*f* (\<lambda>k. f (Suc k) x)) N = (*f* (\<lambda> n. f n x)) (N + 1)\<close>
-    proof-   
-      define g where \<open>g n = f n x\<close> for n
-      have \<open>( *f* (\<lambda>n. g (Suc n))) N = ( *f* g) (N + (1::hypnat))\<close>
-        using starfun_shift_one
-        by (simp add: starfun_shift_one)
-      thus ?thesis unfolding g_def
-        by simp  
-    qed
-    ultimately show \<open>(*f* (\<lambda>k. f (Suc k) x)) N \<approx> star_of (l x)\<close> by simp
+    moreover have \<open>(*f2* (\<lambda> n. f (Suc n))) N x = (*f2* f) (N + 1) x\<close>
+    proof-
+      have \<open>\<forall> NN. \<forall> xx. (\<lambda> n. f (Suc n)) NN xx =  f (NN + 1) xx\<close>
+        by simp
+      hence \<open>\<forall> NN. \<forall> xx. (*f2* (\<lambda> n. f (Suc n))) NN xx =  (*f2* f) (NN + 1) xx\<close>
+        by transfer
+      thus ?thesis
+        by simp 
+    qed 
+    ultimately show \<open>(*f2* (\<lambda>k. f (Suc k))) N x \<approx> (*f* l) x\<close> by simp
   qed
 next
   assume *: "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
   show  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
   proof (rule nsustrong_convergence_I)
-    fix N and x::'a
-    assume "N \<in> HNatInfinite" and \<open>norm x = 1\<close>
-    hence "(*f* (\<lambda>n. (f (Suc n) x))) (N - 1) \<approx> star_of (l x)"
+    fix N and x::\<open>'a star\<close>
+    assume "N \<in> HNatInfinite" and \<open>hnorm x = 1\<close>
+    hence "(*f2* (\<lambda>n. f (Suc n))) (N - 1) x \<approx> (*f* l) x"
       using * HNatInfinite_diff nsustrong_convergence_D by fastforce
-    moreover have \<open>(*f* (\<lambda>n. (f (Suc n) x))) (N - 1) = (*f* (\<lambda>k. f k x)) N\<close>
+    moreover have \<open>(*f2* (\<lambda>n. (f (Suc n) ))) (N - 1) x = (*f2* f) N x\<close>
     proof-
-      define g where \<open>g n = f n x\<close> for n
-      have \<open>( *f* (\<lambda>n. g (Suc n))) (N-1) = ( *f* g) ((N-1) + (1::hypnat))\<close>
-        using starfun_shift_one
-        by (simp add: starfun_shift_one)
-      moreover have \<open>( *f* (\<lambda>n. g (Suc n))) (N-1) = (*f* (\<lambda>n. (f (Suc n) x))) (N - 1)\<close>
-        unfolding g_def
-        by simp 
-      moreover have \<open>( *f* g) ((N-1) + (1::hypnat)) =  (*f* (\<lambda>k. f k x)) N\<close>
-        unfolding g_def
-        by (simp add: \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite) 
-      ultimately show ?thesis
-        by simp   
+      have \<open>\<forall> NN. \<forall> xx.  NN \<ge> 1 \<longrightarrow> (\<lambda>n. (f (Suc n) )) (NN - 1) xx =  f NN xx\<close>
+        by simp
+      hence \<open>\<forall> NN. \<forall> xx.  NN \<ge> 1 \<longrightarrow> (*f2* (\<lambda>n. (f (Suc n)))) (NN - 1) xx =  (*f2* f) NN xx\<close>
+        by transfer
+      thus ?thesis
+        using \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite by auto 
     qed
-    ultimately show "(*f* (\<lambda>k. f k x)) N \<approx> star_of (l x)"
+    ultimately show "(*f2* f) N x \<approx> (*f* l) x"
       by simp
   qed
 qed
