@@ -62,7 +62,7 @@ definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector 
   "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
 ( \<forall>N\<in>HNatInfinite. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x )"
 
- lemma nsustrong_convergence_I: 
+lemma nsustrong_convergence_I: 
   \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
    \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close> 
   by (simp add: nsustrong_convergence_def) 
@@ -274,7 +274,7 @@ proof(rule nsustrong_convergence_I)
   assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
   have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
     using  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
-     nsustrong_convergence_D by blast
+      nsustrong_convergence_D by blast
   moreover have  \<open>hnorm ((*f2* X) N x) \<approx> (*f2* (\<lambda>n t. norm (X n t))) N x\<close>
   proof-
     have \<open>\<forall> NN. \<forall> xx. norm ( X NN xx) = ( (\<lambda>n t. norm (X n t))) NN xx\<close>
@@ -455,41 +455,32 @@ lemma nsustrong_convergence_ustrong_convergence:
   fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
   assumes \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
   shows \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-  apply (rule ustrong_convergence_I)
-proof
+proof (rule ustrong_convergence_I)
   fix r :: real
   assume \<open>r > (0::real)\<close>
   from \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
-  have \<open>\<forall>n\<in>HNatInfinite. \<forall>x. norm x = 1 \<longrightarrow> (*f* (\<lambda>k. f k x)) n \<approx> star_of (l x)\<close>
+  have \<open>\<forall>n\<in>HNatInfinite. 
+  \<forall>x. hnorm x = 1 \<longrightarrow> (*f2* f) n x \<approx> (*f* l) x\<close>
     unfolding nsustrong_convergence_def by blast
   hence \<open>\<forall>n\<in>HNatInfinite.
-       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
     by (simp add: InfinitesimalD2 Infinitesimal_approx_minus \<open>0 < r\<close>)
   have \<open>\<exists> no. \<forall>n \<ge> no.
-       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
   proof-
     have \<open>n \<ge> whn \<Longrightarrow>
-       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
+       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
       for n
-    proof-
-      assume \<open>n \<ge> whn\<close>
-      hence \<open>n \<in> HNatInfinite\<close>
-        using HNatInfinite_upward_closed HNatInfinite_whn by blast
-      hence \<open>\<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close>
-        using  \<open>\<forall>n\<in>HNatInfinite.
-       \<forall>x. norm x = 1 \<longrightarrow> hnorm ( (*f* (\<lambda>k. f k x)) n - star_of (l x) ) < star_of r\<close> by blast
-      thus ?thesis by blast
-    qed
+      using HNatInfinite_upward_closed HNatInfinite_whn \<open>\<forall>n\<in>HNatInfinite. \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close> by blast     
     thus ?thesis by blast
   qed
-  hence \<open>\<exists> no. \<forall>n \<ge> no.
-       \<forall>x. norm x = 1 \<longrightarrow> norm ( (\<lambda>k. f k x) n - (l x) ) < r\<close>
-        
-
-  show \<open>\<forall>n\<ge>no r. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
-    sorry
+  thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall>x. norm x = 1 \<longrightarrow> norm ( f n x - l x ) < r\<close>
+    by transfer
 qed
 
+theorem nsustrong_convergence_ustrong_convergence_iff:
+ \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
+  using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
 
 subsection \<open>nsuCauchy\<close>
