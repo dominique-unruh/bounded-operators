@@ -23,7 +23,7 @@ section \<open>Several kinds of Convergence\<close>
 
 definition strong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  where \<open>strong_convergence f l = (\<forall> x. ( \<lambda> n. norm (f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
+  where \<open>strong_convergence f l = ( \<forall> x. ( \<lambda> n. norm (f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
 
 abbreviation strong_convergence_abbr:: 
   \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
@@ -42,7 +42,6 @@ definition oCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>oCauchy f = ( \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e )\<close>
 
-
 definition ustrong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
   \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
@@ -53,7 +52,7 @@ abbreviation ustrong_convergence_abbr::
 
 definition uCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>uCauchy f = (\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e)\<close>
+  where \<open>uCauchy f = ( \<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e )\<close>
 
 section \<open>External analogs\<close>
 
@@ -483,7 +482,7 @@ proof (rule ustrong_convergence_I)
     by transfer
 qed
 
-theorem nsustrong_convergence_ustrong_convergence_iff:
+theorem ustrong_convergence_ustrong_convergence_iff:
  \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
   using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
@@ -492,15 +491,71 @@ subsection \<open>nsuCauchy\<close>
 definition uNSCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>uNSCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
-\<forall> x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x )\<close> 
+    \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x )\<close> 
 
+lemma Cauchy_uNSCauchy:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>uCauchy f\<close>
+  shows \<open>uNSCauchy f\<close>
+proof-
+  from \<open>uCauchy f\<close>
+  have \<open>\<forall>e>0. \<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K.
+     \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+    unfolding uCauchy_def
+    by blast
+  hence \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x\<close>
+    for N M x
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+    have \<open>e \<in> \<real> \<Longrightarrow>  e > 0 \<Longrightarrow> hnorm ((*f2* f) N x - (*f2* f) M x) < e\<close>
+      for e
+    proof-
+      assume \<open>e \<in> \<real>\<close> and \<open>e > 0\<close>
+      have \<open>\<exists> d. e = hypreal_of_real d\<close>
+        using  \<open>e \<in> \<real>\<close>
+        by (simp add: SReal_iff)
+      then obtain d where \<open>e = hypreal_of_real d\<close>
+        by blast
+      have \<open>d > 0\<close> using \<open>e = hypreal_of_real d\<close> \<open>e > 0\<close>
+        by simp
+      have \<open>\<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < d\<close>
+        by (simp add: \<open>0 < d\<close> \<open>\<forall>e>0. \<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>)
+      then obtain K::nat where \<open>\<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < d\<close>
+        by blast
+      hence \<open>\<forall>m \<ge> hypnat_of_nat K. \<forall>n \<ge> hypnat_of_nat K. 
+          \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) m x - (*f2* f) n x) < hypreal_of_real d\<close>
+        by transfer
+      hence \<open>\<forall>m \<ge> hypnat_of_nat K. \<forall>n \<ge> hypnat_of_nat K. 
+          \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) m x - (*f2* f) n x) < e\<close>
+        using  \<open>e = hypreal_of_real d\<close> by blast
+      hence \<open>\<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) N x - (*f2* f) M x) < e\<close>
+        using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close>
+        by (simp add: star_of_le_HNatInfinite) 
+      thus ?thesis using \<open>hnorm x = 1\<close> by blast
+    qed
+    thus ?thesis
+      using InfinitesimalI bex_Infinitesimal_iff by auto 
+  qed
+  thus ?thesis
+    by (simp add: uNSCauchy_def) 
+qed
+
+lemma uNSCauchy_Cauchy:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>uNSCauchy f\<close>
+  shows \<open>uCauchy f\<close>
+  sorry
+
+theorem Cauchy_uNSCauchy_iff:
+ \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
+  using Cauchy_uNSCauchy uNSCauchy_Cauchy by auto
 
 section \<open>Banach-Steinhaus theorem\<close>
 
 theorem banach_steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close>
-    and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+    and  \<open>\<And> x. \<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
   sorry
 
