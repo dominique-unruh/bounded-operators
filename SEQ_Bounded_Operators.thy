@@ -322,7 +322,6 @@ proof
       using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
     ultimately show ?thesis by simp
   qed
-
 qed
 
 (* TODO: move to real_normed_vector? *)
@@ -347,17 +346,31 @@ proof
   qed
 qed
 
-
 lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
  \<Longrightarrow> linear a  \<Longrightarrow> linear b \<Longrightarrow> a = b"
 proof-
   assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
-  have "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
- \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t = b t"
-    unfolding nsustrong_convergence_def
-    using HNatInfinite_whn approx_trans3 star_of_approx_iff by blast
-  hence \<open>\<forall> t. norm t = 1 \<longrightarrow> a t = b t\<close> using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> 
-    by blast
+  have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow>(*f2* X) N x \<approx> (*f* a) x\<close>
+    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>
+    by (simp add: nsustrong_convergence_D)
+  moreover have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* X) N x \<approx> (*f* b) x\<close>
+    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close>
+    by (simp add: nsustrong_convergence_D)
+  ultimately have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>
+    by (simp add: approx_monad_iff)
+  hence \<open>\<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>
+    by (meson NSLIMSEQ_def NSLIMSEQ_unique zero_neq_one)
+  have \<open>norm t = 1 \<Longrightarrow> a t = b t\<close>
+    for t
+  proof-
+    assume \<open>norm t = 1\<close>
+    hence \<open>hnorm (star_of t) = 1\<close>
+      by (metis star_of_norm star_one_def)
+    hence \<open>(*f* a) (star_of t) \<approx> (*f* b) (star_of t)\<close>
+      using \<open>\<forall>x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close> by blast
+    thus ?thesis
+      by simp 
+  qed
   thus ?thesis using linear_ball_uniq  \<open>linear a\<close>  \<open>linear b\<close>
     by blast
 qed
