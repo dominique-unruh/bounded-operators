@@ -69,7 +69,7 @@ definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector 
 
 lemma nsustrong_convergence_D: 
   \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
-  \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x\<close>
+  \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
   by (simp add: nsustrong_convergence_def)
 
 lemma nsustrong_convergence_const:
@@ -86,7 +86,7 @@ proof-
 qed
 
 lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t))\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
 proof(rule nsustrong_convergence_I)
   fix N and x::\<open>'a star\<close>
   assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close>
@@ -170,7 +170,6 @@ proof(rule nsustrong_convergence_I)
     by smt
 qed
 
-
 lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
 proof(rule nsustrong_convergence_I)
@@ -195,8 +194,6 @@ proof(rule nsustrong_convergence_I)
     using approx_trans3 by blast 
 qed
 
-
-
 lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)
  \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a"
   by (drule nsustrong_convergence_minus) simp
@@ -210,10 +207,67 @@ lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow>\<^su
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b)"
   by (simp add: nsustrong_convergence_diff nsustrong_convergence_const)
 
-lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> a t \<noteq> 0
+
+lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> 
+ bounded_linear a \<Longrightarrow> \<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. inverse (X n t) )) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. inverse (a t))"
   for a :: "'a::real_normed_vector \<Rightarrow>'b::real_normed_div_algebra"
-  by (simp add: nsustrong_convergence_def star_of_approx_inverse)
+proof(rule nsustrong_convergence_I)
+  fix N and x::\<open>'a star\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>N \<in> HNatInfinite\<close>
+    and \<open>hnorm x = 1\<close> and \<open>\<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close> and \<open>bounded_linear a\<close>
+  from \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>
+  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
+    using \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_def by blast
+  moreover have \<open>inverse ((*f2* X) N x) \<approx> (*f2* (\<lambda>n t. inverse (X n t))) N x\<close>
+  proof-                            
+    have \<open>\<forall> NN. \<forall> xx. inverse ( X NN xx) = ( (\<lambda>n t. inverse (X n t))) NN xx\<close>
+      by blast
+    hence \<open>\<forall> NN. \<forall> xx. inverse ((*f2* X) NN xx) = (*f2* (\<lambda>n t. inverse (X n t))) NN xx\<close>
+      by transfer
+    thus ?thesis
+      by simp 
+  qed
+  moreover have \<open>inverse ((*f* a) x) \<approx> (*f* (\<lambda>t. inverse (a t))) x\<close>
+  proof-
+    have \<open>\<forall> xx. inverse (a xx) = (\<lambda>t. inverse (a t)) xx\<close>
+      by simp
+    hence \<open>\<forall> xx. inverse ((*f* a) xx) = (*f* (\<lambda>t. inverse (a t))) xx\<close>
+      by transfer
+    thus ?thesis by simp
+  qed
+  moreover have \<open>(*f* a) x \<in> HFinite - Infinitesimal\<close>
+  proof
+    show "(*f* a) x \<in> HFinite"
+      using \<open>bounded_linear a\<close> \<open>hnorm x = 1\<close> bounded_linear_HFinite by auto
+    show "(*f* a) x \<notin> Infinitesimal"
+    proof
+      show False
+        if "(*f* a) x \<in> Infinitesimal"
+      proof-
+        from \<open>\<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close>
+        obtain e::real where \<open>e > 0\<close> and \<open>\<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close>
+          by blast
+        from \<open>\<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close>
+        have \<open>\<forall> t. hnorm t = 1 \<longrightarrow> hnorm ((*f* a) t) > star_of e\<close>
+          by transfer
+        hence  \<open>hnorm ((*f* a) x) > star_of e\<close>
+          using \<open>hnorm x = 1\<close> by blast       
+        thus ?thesis using \<open>e > 0\<close>
+        proof -
+          have "\<not> e \<le> 0"
+            using \<open>0 < e\<close> by linarith
+          thus ?thesis
+            by (meson Infinitesimal_hnorm_iff \<open>hypreal_of_real e < hnorm ((*f* a) x)\<close> hypreal_of_real_less_Infinitesimal_le_zero star_of_le_0 that)
+        qed 
+      qed
+    qed
+  qed
+  ultimately show \<open>(*f2* (\<lambda>n t. inverse (X n t))) N x \<approx> (*f* (\<lambda>t. inverse (a t))) x\<close>
+    by (meson approx_inverse approx_sym approx_trans2)    
+qed
+
+
 
 lemma nsustrong_convergence_inverse_mult_inverse: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
 \<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> b t \<noteq> 0
