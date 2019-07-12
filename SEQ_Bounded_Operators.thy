@@ -482,7 +482,7 @@ proof (rule ustrong_convergence_I)
     by transfer
 qed
 
-theorem ustrong_convergence_ustrong_convergence_iff:
+proposition ustrong_convergence_ustrong_convergence_iff:
  \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
   using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
@@ -571,18 +571,80 @@ proof-
   thus ?thesis unfolding uCauchy_def by blast
 qed
 
-theorem Cauchy_uNSCauchy_iff:
+proposition Cauchy_uNSCauchy_iff:
  \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
   using Cauchy_uNSCauchy uNSCauchy_Cauchy by auto
 
+subsection \<open>Boundeness\<close>
+definition (in metric_space) nsbounded :: "'a set \<Rightarrow> bool"
+  where \<open>nsbounded S \<longleftrightarrow> (\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
+
+lemma nsbounded_I:
+  \<open>nsbounded S \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
+  using nsbounded_def by blast
+
+lemma nsbounded_D:
+  \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> nsbounded S\<close>
+  using nsbounded_def by blast
+
+lemma bounded_nsbounded:
+  fixes S :: \<open>('a::metric_space) set\<close>
+  assumes \<open>bounded S\<close>
+  shows \<open>nsbounded S\<close>
+proof-
+  from  \<open>bounded S\<close>
+  have \<open>\<exists> M. \<exists> u. \<forall> v \<in> S. dist u v < M\<close>
+    by (meson bounded_def gt_ex le_less_trans)
+  then obtain M where \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close>
+    by blast
+  have \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
+    using \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close> by transfer
+  have \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v \<in> HFinite\<close>
+  proof-
+    obtain u where \<open>\<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
+      using  \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
+      by blast
+    have \<open>v \<in> *s* S \<Longrightarrow> (*f2* dist) u v \<in> HFinite\<close>
+      for v
+    proof-
+      assume \<open>v \<in> *s* S\<close>
+      hence \<open>(*f2* dist) u v < hypreal_of_real M\<close>
+        using  \<open>\<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
+        by blast
+      moreover have \<open>hnorm ((*f2* dist) u v) = (*f2* dist) u v\<close>
+      proof-
+        have \<open>\<forall> uu vv. norm (dist uu vv) =  dist uu vv\<close>
+          by simp         
+        hence \<open>\<forall> uu vv. hnorm ((*f2* dist) uu vv) =  (*f2* dist) uu vv\<close>
+          by transfer
+        thus ?thesis by blast
+      qed
+      ultimately show \<open>(*f2* dist) u v \<in> HFinite\<close>
+        by (metis HInfiniteD HInfinite_HFinite_disj SReal_hypreal_of_real order.asym) 
+    qed
+    thus ?thesis
+      by blast 
+  qed    
+  thus ?thesis using nsbounded_def
+    by blast
+qed
+
 section \<open>Banach-Steinhaus theorem\<close>
 
+definition pointwise_bounded_family::
+ \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
+\<open>pointwise_bounded_family \<F> = (\<forall> x. bounded ((norm \<circ> (\<lambda> f. f x)) ` \<F>))\<close>
+
+definition uniformly_bounded_family::
+ \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
+\<open>uniformly_bounded_family \<F> = bounded (onorm ` \<F>)\<close>
+
 theorem banach_steinhaus:
-  fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close>
-    and  \<open>\<And> x. \<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
+  fixes \<F> :: \<open>('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector) set\<close>
+  assumes \<open>\<forall> f \<in> \<F>. bounded_linear f\<close> and \<open>pointwise_bounded_family \<F>\<close>
+  shows  \<open>uniformly_bounded_family \<F>\<close>
   sorry
+
 
 section \<open>Completeness of the metric space of (real) bounded operators\<close>
 
