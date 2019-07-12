@@ -38,6 +38,11 @@ abbreviation onorm_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>onorm\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l )\<close>
 
+definition oCauchy::
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>oCauchy f = ( \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e )\<close>
+
+
 definition ustrong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
   \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
@@ -490,6 +495,25 @@ definition uNSCauchy::
 \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x )\<close> 
 
 
+section \<open>Banach-Steinhaus theorem\<close>
+
+theorem banach_steinhaus:
+  fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close>
+    and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
+  sorry
+
+section \<open>Completeness of the metric space of (real) bounded operators\<close>
+
+theorem completeness_real_bounded:
+  fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>oCauchy f\<close>
+  shows \<open>\<exists> l. bounded_linear l \<and> f \<midarrow>onorm\<rightarrow> l\<close>
+  sorry
+
+
+(* Old version
 section \<open>Properties of sequences of bounded operators\<close>
 
 (* TODO: move? *)
@@ -2312,6 +2336,6 @@ proof-
     using \<open>bounded_linear l\<close> by auto  
 qed
 
-
+*)
 
 end
