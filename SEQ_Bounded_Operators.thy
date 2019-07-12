@@ -267,17 +267,33 @@ proof(rule nsustrong_convergence_I)
     by (meson approx_inverse approx_sym approx_trans2)    
 qed
 
-
-
-lemma nsustrong_convergence_inverse_mult_inverse: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b 
-\<Longrightarrow> \<forall> t. norm t = 1 \<longrightarrow> b t \<noteq> 0
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. (X n t) / (Y n t))) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. (a t) / (b t))"
-  for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_field"
-  by (simp add: nsustrong_convergence_mult nsustrong_convergence_inverse divide_inverse)
-
-lemma nsustrong_convergence_norm: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)) )
- \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))"
-  by (simp add: nsustrong_convergence_def starfun_hnorm [symmetric] approx_hnorm)
+lemma nsustrong_convergence_norm: \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)))
+ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))\<close>
+proof(rule nsustrong_convergence_I)
+  fix N and x::\<open>'a star\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
+    using  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+     nsustrong_convergence_D by blast
+  moreover have  \<open>hnorm ((*f2* X) N x) \<approx> (*f2* (\<lambda>n t. norm (X n t))) N x\<close>
+  proof-
+    have \<open>\<forall> NN. \<forall> xx. norm ( X NN xx) = ( (\<lambda>n t. norm (X n t))) NN xx\<close>
+      by blast
+    hence \<open>\<forall> NN. \<forall> xx. hnorm ( (*f2* X) NN xx) = (*f2* (\<lambda>n t. norm (X n t))) NN xx\<close>
+      by transfer
+    thus ?thesis by simp
+  qed
+  moreover have \<open>hnorm ((*f* a) x) \<approx> (*f* (\<lambda>t. norm (a t))) x\<close>
+  proof-
+    have \<open>\<forall> xx. norm (a xx) = (\<lambda>t. norm (a t)) xx\<close>
+      by blast
+    hence \<open>\<forall> xx. hnorm ((*f* a) xx) = (*f* (\<lambda>t. norm (a t))) xx\<close>
+      by transfer
+    thus ?thesis by simp
+  qed
+  ultimately show \<open>(*f2* (\<lambda>n t. norm (X n t))) N x \<approx> (*f* (\<lambda>t. norm (a t))) x\<close>
+    by (meson approx_hnorm approx_sym approx_trans2)    
+qed
 
 (* TODO: move to real_normed_vector? *)
 lemma linear_ball_zero:
