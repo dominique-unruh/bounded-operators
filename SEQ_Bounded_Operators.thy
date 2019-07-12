@@ -424,9 +424,9 @@ lemma ustrong_convergence_nsustrong_convergence:
   assumes \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
   shows \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
 proof (rule nsustrong_convergence_I)
-  fix N and x::'a
-  assume \<open>N \<in> HNatInfinite\<close> and \<open>norm x = 1\<close>
-  have \<open>(*f* (\<lambda>k. f k x)) N - star_of (l x) \<in> Infinitesimal\<close>
+  fix N and x::\<open>'a star\<close>
+  assume \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  have \<open>(*f2* f) N x - (*f* l) x \<in> Infinitesimal\<close>
   proof (rule InfinitesimalI2)
     fix r :: real
     assume \<open>0 < r\<close>
@@ -434,20 +434,15 @@ proof (rule nsustrong_convergence_I)
       using \<open>f \<midarrow>ustrong\<rightarrow> l\<close>  \<open>0 < r\<close> ustrong_convergence_def by auto 
     then obtain no where \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
       by blast
-    hence \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1
-       \<longrightarrow> norm ( (\<lambda> k. f k x) n - (l x)) <  r\<close>
+    hence \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm ( f n x - l x) < r\<close>
       by blast
-    hence \<open>\<forall> n \<ge> no. norm ( (\<lambda> k. f k x) n - (l x)) <  r\<close>
-      using \<open>norm x = 1\<close> by blast
-    hence \<open>\<forall> n \<ge> star_of no. hnorm ((*f* (\<lambda>k. f k x)) n - star_of (l x))
-         < hypreal_of_real r\<close>
+    hence \<open>\<forall> n \<ge> hypnat_of_nat no. \<forall> x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close>
       by transfer
-    thus \<open>hnorm ((*f* (\<lambda>k. f k x)) N - star_of (l x))
-         < hypreal_of_real r\<close>
-      using star_of_le_HNatInfinite
-      by (simp add: \<open>N \<in> HNatInfinite\<close>) 
+    thus \<open>hnorm ((*f2* f) N x- (*f* l) x) < hypreal_of_real r\<close>
+      using star_of_le_HNatInfinite \<open>N \<in> HNatInfinite\<close>
+      by (simp add: \<open>hnorm x = 1\<close>)
   qed
-  thus \<open>(*f* (\<lambda>k. f k x)) N \<approx> star_of (l x)\<close>
+  thus \<open>(*f2* f) N x \<approx>  (*f* l) x\<close>
     by (simp only: approx_def)
 qed
 
