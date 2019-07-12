@@ -158,7 +158,7 @@ proof(rule nsustrong_convergence_I)
   proof-
     have \<open>\<forall> NN. \<forall> xx. X NN xx * Y NN xx = (\<lambda>n t. X n t * Y n t) NN xx\<close>
       by auto
-    hence \<open>\<forall> NNN. \<forall> xxx. (*f2* X) NNN xxx * (*f2* Y) NNN xxx = (*f2* (\<lambda>n t. X n t * Y n t)) NNN xxx\<close>
+    hence \<open>\<forall> NN. \<forall> xx. (*f2* X) NN xx * (*f2* Y) NN xx = (*f2* (\<lambda>n t. X n t * Y n t)) NN xx\<close>
       apply transfer
       by auto
     thus ?thesis
@@ -267,8 +267,8 @@ proof(rule nsustrong_convergence_I)
     by (meson approx_inverse approx_sym approx_trans2)    
 qed
 
-lemma nsustrong_convergence_norm: \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow> (\<lambda>n. (\<lambda> t. norm (X n t)))
- \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  (\<lambda> t. norm (a t))\<close>
+lemma nsustrong_convergence_norm: \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow>
+ (\<lambda>n. (\<lambda> t. norm (X n t))) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. norm (a t))\<close>
 proof(rule nsustrong_convergence_I)
   fix N and x::\<open>'a star\<close>
   assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
@@ -482,13 +482,12 @@ theorem nsustrong_convergence_ustrong_convergence_iff:
  \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
   using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
-
 subsection \<open>nsuCauchy\<close>
 
-definition nsuCauchy::
+definition uNSCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>nsuCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall> x::'a. norm x = 1 \<longrightarrow>
- (*f* (\<lambda> k. f k x)) N \<approx> (*f* (\<lambda> k. f k x)) M )\<close>                                                                 
+  where \<open>uNSCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
+\<forall> x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x )\<close> 
 
 
 section \<open>Properties of sequences of bounded operators\<close>
