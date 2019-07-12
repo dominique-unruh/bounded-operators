@@ -544,7 +544,32 @@ lemma uNSCauchy_Cauchy:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>uNSCauchy f\<close>
   shows \<open>uCauchy f\<close>
-  sorry
+proof-
+  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+    for e
+  proof-
+    assume \<open>e>0\<close>
+    have \<open>\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
+      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) \<in> Infinitesimal\<close>
+      using Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms uNSCauchy_def by blast
+    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
+      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
+      by (simp add: Infinitesimal_less_SReal2)
+    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<forall>N \<ge> whn. \<forall> M \<ge> whn. 
+      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
+      using HNatInfinite_upward_closed HNatInfinite_whn by blast
+    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
+      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
+      by blast
+    hence \<open>\<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
+      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < hypreal_of_real e\<close>
+      by (simp add: \<open>0 < e\<close>)
+    thus \<open>\<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
+      \<forall>x. norm x = 1 \<longrightarrow> norm ( f N x - f M x ) < e\<close>
+      by transfer
+  qed
+  thus ?thesis unfolding uCauchy_def by blast
+qed
 
 theorem Cauchy_uNSCauchy_iff:
  \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
