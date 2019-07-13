@@ -79,7 +79,7 @@ lemma convergence_topo_ustrong:
   sorry
 
 proposition ustrong_convergence_topo_iff:
-\<open>( f \<midarrow>ustrong\<rightarrow> l ) \<longleftrightarrow> ( filterlim f (nhds_ustrong l) sequentially )\<close>
+  \<open>( f \<midarrow>ustrong\<rightarrow> l ) \<longleftrightarrow> ( filterlim f (nhds_ustrong l) sequentially )\<close>
   using convergence_topo_ustrong ustrong_convergence_topo by auto  
 
 section \<open>External analogs\<close>
@@ -238,7 +238,6 @@ lemma nsustrong_convergence_diff: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^s
 lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
  \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b)"
   by (simp add: nsustrong_convergence_diff nsustrong_convergence_const)
-
 
 lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> 
  bounded_linear a \<Longrightarrow> \<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e
@@ -605,7 +604,69 @@ proposition Cauchy_uNSCauchy_iff:
 
 subsection \<open>Boundeness\<close>
 definition (in metric_space) nsbounded :: "'a set \<Rightarrow> bool"
-  where \<open>nsbounded S \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
+  where \<open>nsbounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
+
+lemma nsbounded_existencial:
+  \<open>nsbounded (S::('a::metric_space) set) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
+proof
+  show "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
+    if "nsbounded S"
+    using that image_subset_iff nsbounded_def by fastforce
+  show "nsbounded S"
+    if "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
+  proof-
+    obtain z where \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close>
+      using \<open>\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite\<close> by blast
+    have \<open>x\<in>*s* S \<Longrightarrow> y\<in>*s* S \<Longrightarrow> (*f2* dist) x y \<in> HFinite\<close>
+      for x y
+    proof-
+      assume \<open>x\<in>*s* S\<close> and \<open>y\<in>*s* S\<close>
+      have \<open>(*f2* dist) x y \<le> (*f2* dist) x z + (*f2* dist) z y\<close>
+      proof-
+        have \<open>\<forall> xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close>
+          by (simp add: dist_triangle)
+        hence \<open>\<forall> xx yy zz. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
+          by transfer
+        thus ?thesis by blast 
+      qed
+      moreover have \<open>(*f2* dist) x z + (*f2* dist) z y \<in> HFinite\<close>
+      proof-
+        have  \<open>(*f2* dist) x z \<in> HFinite\<close>
+        proof-
+          have  \<open>(*f2* dist) z x \<in> HFinite\<close>
+            using \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close> \<open>x\<in>*s* S \<close> 
+            by blast
+          moreover have \<open>(*f2* dist) z x = (*f2* dist) x z\<close>
+          proof-
+            have \<open>\<forall> zz xx. dist zz xx = dist xx zz\<close>
+              using dist_commute by blast
+            hence \<open>\<forall> zz xx. (*f2* dist) zz xx = (*f2* dist) xx zz\<close>
+              by transfer
+            thus ?thesis by blast
+          qed
+          ultimately show ?thesis by simp
+        qed
+        moreover have  \<open>(*f2* dist) z y \<in> HFinite\<close>
+          using \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close> \<open>y\<in>*s* S \<close> 
+          by blast
+        ultimately show ?thesis
+          by (simp add: HFinite_add) 
+      qed
+      moreover have \<open>0 \<le> (*f2* dist) x y\<close>
+      proof-
+        have \<open>\<forall> xx yy. 0 \<le> dist xx yy\<close>
+          by simp
+        hence \<open>\<forall> xx yy. 0 \<le> (*f2* dist) xx yy\<close>
+          by transfer
+        show ?thesis
+          by (simp add: \<open>\<forall>xx yy. 0 \<le> (*f2* dist) xx yy\<close>) 
+      qed
+      ultimately show ?thesis
+        using HFinite_bounded by blast  
+    qed
+    thus ?thesis unfolding nsbounded_def by blast
+  qed
+qed
 
 lemma nsbounded_I:
   \<open>nsbounded S \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
@@ -613,7 +674,8 @@ lemma nsbounded_I:
 
 lemma nsbounded_D:
   \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> nsbounded S\<close>
-  using nsbounded_def by blast
+  by (meson image_subsetI nsbounded_existencial)
+  
 
 lemma bounded_nsbounded:
   fixes S :: \<open>('a::metric_space) set\<close>
@@ -653,8 +715,8 @@ proof-
     thus ?thesis
       by blast 
   qed    
-  thus ?thesis using nsbounded_def
-    by blast
+  thus ?thesis
+    by (simp add: nsbounded_D) 
 qed
 
 (* TODO: move? *)
