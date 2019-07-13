@@ -577,7 +577,7 @@ proposition Cauchy_uNSCauchy_iff:
 
 subsection \<open>Boundeness\<close>
 definition (in metric_space) nsbounded :: "'a set \<Rightarrow> bool"
-  where \<open>nsbounded S \<longleftrightarrow> (\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
+  where \<open>nsbounded S \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
 
 lemma nsbounded_I:
   \<open>nsbounded S \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
