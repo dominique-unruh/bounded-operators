@@ -483,7 +483,7 @@ proof (rule ustrong_convergence_I)
 qed
 
 proposition ustrong_convergence_ustrong_convergence_iff:
- \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
+  \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
   using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
 subsection \<open>nsuCauchy\<close>
@@ -572,7 +572,7 @@ proof-
 qed
 
 proposition Cauchy_uNSCauchy_iff:
- \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
+  \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
   using Cauchy_uNSCauchy uNSCauchy_Cauchy by auto
 
 subsection \<open>Boundeness\<close>
@@ -629,15 +629,129 @@ proof-
     by blast
 qed
 
+(* TODO: move? *)
+lemma hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat:
+  \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
+proof-
+  have \<open>(*f* of_nat) (star_of n) = (plus 1 ^^ n) (0::hypreal)\<close>
+  proof(induction n)
+    case 0
+    then show ?case
+      by (metis funpow_0 of_nat_0 star_zero_def starfun_eq) 
+  next
+    case (Suc n)
+    then show ?case
+      by (metis of_nat_def star_of_nat_def starfun_star_of) 
+  qed
+  thus ?thesis
+    by (simp add: of_hypnat_def)  
+qed
+
+
+lemma nsbounded_bounded:
+  fixes S :: \<open>('a::metric_space) set\<close>
+  assumes \<open>nsbounded S\<close>
+  shows \<open>bounded S\<close>
+proof-
+  have \<open>\<exists>x e. \<forall>y\<in>S. dist x y \<le> e\<close> 
+  proof-
+    have \<open>\<exists> x. \<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
+      using \<open>nsbounded S\<close> unfolding nsbounded_def by blast
+    then obtain x where \<open>\<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
+      by blast
+    have \<open>\<exists> M. \<forall> y \<in> *s* S. (*f2* dist) x y < M\<close>
+    proof(rule classical)
+      assume \<open>\<not>(\<exists> M. \<forall> y \<in> *s* S. (*f2* dist) x y < M)\<close>
+      hence \<open>\<forall> M. \<exists> y \<in> *s* S. (*f2* dist) x y \<ge> M\<close>
+        using leI by blast
+      hence \<open>\<exists> y \<in> *s* S. (*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+        by blast
+      then obtain y where \<open>y \<in> *s* S\<close> and \<open>(*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+        by blast
+      have \<open>(*f2* dist) x y \<notin> HFinite\<close>
+      proof(rule classical)
+        assume \<open>\<not>((*f2* dist) x y \<notin> HFinite)\<close>
+        hence \<open>(*f2* dist) x y \<in> HFinite\<close>
+          by blast
+        hence \<open>\<exists> r \<in> \<real>. hnorm ((*f2* dist) x y) < r\<close>
+          using HFinite_def by blast
+        moreover have \<open>hnorm ((*f2* dist) x y) = (*f2* dist) x y\<close>
+        proof-
+          have \<open>\<forall> xx. \<forall> yy. norm ( dist xx yy) = dist xx yy\<close>
+            by simp
+          hence \<open>\<forall> xx. \<forall> yy. hnorm ((*f2* dist) xx yy) = (*f2* dist) xx yy\<close>
+            by transfer
+          thus ?thesis
+            by blast 
+        qed
+        ultimately have \<open>\<exists> r \<in> \<real>. (*f2* dist) x y < r\<close>
+          by simp
+        hence \<open>\<exists> r \<in> \<real>. hypreal_of_hypnat whn < r\<close>
+          using \<open>(*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+            order.not_eq_order_implies_strict by fastforce
+        then obtain r where \<open>r \<in> \<real>\<close> and \<open>hypreal_of_hypnat whn < r\<close>
+          by blast
+        have \<open>\<exists> n::nat. r < hypreal_of_nat n\<close>
+        proof-
+          from \<open>r \<in> \<real>\<close>
+          have \<open>\<exists> s. r = hypreal_of_real s\<close>
+            by (simp add: SReal_iff)
+          then obtain s where \<open>r = hypreal_of_real s\<close>
+            by blast
+          have \<open>\<exists> n::nat. s < n\<close>
+            by (simp add: reals_Archimedean2)
+          then obtain n::nat where \<open>s < n\<close>
+            by blast
+          from \<open>s < n\<close>
+          have \<open>hypreal_of_real s < hypreal_of_nat n\<close>
+            by transfer
+          thus ?thesis using \<open>r = hypreal_of_real s\<close> by blast
+        qed
+        then obtain n where \<open>r < hypreal_of_nat n\<close>
+          by blast
+        from \<open>hypreal_of_hypnat whn < r\<close>  \<open>r < hypreal_of_nat n\<close>
+        have \<open>hypreal_of_hypnat whn < hypreal_of_nat n\<close>
+          by simp
+        moreover have \<open>hypreal_of_nat n < hypreal_of_hypnat whn\<close>
+        proof-
+          have  \<open>hypnat_of_nat n < whn\<close>
+            by simp
+          hence  \<open>hypreal_of_hypnat (hypnat_of_nat n) < hypreal_of_hypnat whn\<close>
+            by simp
+          moreover have \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
+            using hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat by blast
+          ultimately show ?thesis by simp
+        qed
+        ultimately have \<open>hypreal_of_hypnat whn < hypreal_of_hypnat whn\<close>
+          by simp
+        thus ?thesis by blast
+      qed
+      thus ?thesis
+        using \<open>\<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close> \<open>y \<in> *s* S\<close> by auto 
+    qed
+    hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. (*f2* dist) x y < M\<close>
+      by blast
+    hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. (*f2* dist) x y \<le> M\<close>
+      using le_less by blast
+    thus ?thesis by transfer 
+  qed
+  thus ?thesis using bounded_def by blast
+qed
+
+proposition bounded_nsbounded_iff:
+  \<open>bounded S \<longleftrightarrow> nsbounded S\<close>
+  using bounded_nsbounded nsbounded_bounded by blast
+
+
 section \<open>Banach-Steinhaus theorem\<close>
 
 definition pointwise_bounded_family::
- \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
-\<open>pointwise_bounded_family \<F> = (\<forall> x. bounded ((norm \<circ> (\<lambda> f. f x)) ` \<F>))\<close>
+  \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
+  \<open>pointwise_bounded_family \<F> = (\<forall> x. bounded ((norm \<circ> (\<lambda> f. f x)) ` \<F>))\<close>
 
 definition uniformly_bounded_family::
- \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
-\<open>uniformly_bounded_family \<F> = bounded (onorm ` \<F>)\<close>
+  \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector) set \<Rightarrow> bool\<close> where
+  \<open>uniformly_bounded_family \<F> = bounded (onorm ` \<F>)\<close>
 
 theorem banach_steinhaus:
   fixes \<F> :: \<open>('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector) set\<close>
