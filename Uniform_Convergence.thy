@@ -22,8 +22,90 @@ theory Uniform_Convergence
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Operator_Norm"
     "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
-
 begin
+
+chapter \<open>General case\<close>
+section \<open>Standard definitions\<close>
+
+definition uniform_convergence::
+  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
+  \<open>uniform_convergence S f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x\<in>S. norm (f n x - l x) < e )\<close>
+
+abbreviation uniform_convergence_abbr::
+  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
+  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_convergence S f l )\<close>
+
+definition uniformCauchy::
+  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
+  where \<open>uniformCauchy S f = ( \<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x\<in>S. norm (f m x - f n x) < e )\<close>
+
+subsection \<open>Nonstandard analog of uniform convergence\<close>
+
+text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
+definition nsuniform_convergence::
+"'a set \<Rightarrow> (nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
+  ("(_): ((_)/ \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60, 60] 60) where
+  \<comment> \<open>Nonstandard definition of uniform convergence of sequence\<close>
+  "(S: f \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> 
+( \<forall>N\<in>HNatInfinite. \<forall> x\<in>*s* S.  (*f2* f) N x \<approx> (*f* l) x )"
+
+lemma nsuniform_convergence_I: 
+  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow>  x\<in>*s* S \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
+   \<Longrightarrow> (S: f \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S l)\<close> 
+  by (simp add: nsuniform_convergence_def) 
+
+lemma nsuniform_convergence_D: 
+  \<open>(S: f \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S l) \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> x\<in>*s* S 
+  \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
+  by (simp add: nsuniform_convergence_def)
+
+
+lemma nsuniform_convergence_const:
+  fixes k :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+  assumes \<open>\<And> n::nat. f n = k\<close>
+  shows \<open>S: f\<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S k\<close>
+proof-
+  have \<open>\<forall> n. \<forall> x\<in>S. f n x = k x\<close>
+    using  \<open>\<And> n::nat. f n = k\<close> by auto
+  hence \<open>\<forall> n. \<forall> x\<in>*s* S. (*f2* f) n x = (*f* k) x\<close>
+    by StarDef.transfer
+  thus ?thesis
+    by (simp add: nsuniform_convergence_I)  
+qed
+
+lemma nsuniformly_convergence_add: "(S: X \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S a) \<Longrightarrow> (S: Y \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S b)
+ \<Longrightarrow> (S: (\<lambda>n. (\<lambda> t. X n t + Y n t)) \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t))"
+proof(rule nsuniform_convergence_I)
+  fix N and x::\<open>'a star\<close>
+  assume \<open>S: X \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>S: Y \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>N \<in> HNatInfinite\<close> \<open>x \<in> *s* S\<close>
+  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
+    using \<open>S: X \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S a\<close> \<open>N \<in> HNatInfinite\<close> \<open>x \<in> *s* S\<close> nsuniform_convergence_D by blast 
+  moreover have \<open>(*f2* Y) N x \<approx> (*f* b) x\<close>
+    using \<open>S: Y \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S b\<close> \<open>N \<in> HNatInfinite\<close> \<open>x \<in> *s* S\<close> nsuniform_convergence_D by blast 
+  ultimately have \<open>(*f2* X) N x + (*f2* Y) N x \<approx> (*f* a) x + (*f* b) x\<close>
+    by (simp add: approx_add)
+  moreover have \<open>(*f2* X) N x + (*f2* Y) N x = (*f2* (\<lambda>n t. X n t + Y n t)) N x\<close>
+  proof-
+    have \<open>\<forall> NN. \<forall> xx. X NN xx + Y NN xx = (\<lambda>n t. X n t + Y n t) NN xx\<close>
+      by auto
+    hence \<open>\<forall> NNN. \<forall> xxx. (*f2* X) NNN xxx + (*f2* Y) NNN xxx = (*f2* (\<lambda>n t. X n t + Y n t)) NNN xxx\<close>
+      apply transfer
+      by auto
+    thus ?thesis
+      by simp  
+  qed
+  moreover have \<open>(*f* a) x + (*f* b) x = (*f* (\<lambda>t. a t + b t)) x\<close>
+    by simp
+  ultimately show \<open>(*f2* (\<lambda>n t. X n t + Y n t)) N x \<approx> (*f* (\<lambda>t. a t + b t)) x\<close>
+    by smt
+qed
+
+lemma nsuniform_convergence_add_const: "S: f \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S a
+ \<Longrightarrow> S: (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>uniformly\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
+  by (simp only: nsuniformly_convergence_add nsuniform_convergence_const)
+
+
+chapter \<open>Linear case\<close>
 
 section \<open>Standard definitions\<close>
 
