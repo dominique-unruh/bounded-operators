@@ -773,34 +773,7 @@ qed
 
 section \<open>Instantiation of rbounded as a Banach space\<close>
 
-lemma onorm_tendsto:
-  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
-    and e :: real
-  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>e > 0\<close>
-    and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
-  shows \<open>\<forall>\<^sub>F n in sequentially. onorm (\<lambda>x. f n x - l x) < e\<close>
-proof-
-  from  \<open>f \<midarrow>onorm\<rightarrow> l\<close>
-  have \<open>(\<lambda> n. onorm (\<lambda> x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
-    unfolding onorm_convergence_def
-    by blast
-  hence \<open>\<exists> N. \<forall> n \<ge> N. dist ((\<lambda> n. onorm (\<lambda>x. f n x - l x)) n) 0 < e\<close>
-    using \<open>e > 0\<close>
-    by (simp add: lim_sequentially) 
-  hence \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close>
-    by simp
-  have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) < e\<close>
-  proof-
-    have \<open>bounded_linear t \<Longrightarrow> onorm t \<ge> 0\<close>
-      for t::\<open>'a \<Rightarrow> 'b\<close>
-      using onorm_pos_le by blast 
-    thus ?thesis using  \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close> by fastforce
-  qed
-  thus ?thesis
-    by (simp add: eventually_at_top_linorder)
-qed
-
-lemma ONORM_tendsto_rbounded:
+lemma ONORM_tendsto:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
   apply Transfer.transfer
 proof
@@ -811,10 +784,33 @@ proof
       and e :: real
     apply Transfer.transfer
     apply auto
-    by (rule onorm_tendsto)    
+  proof-
+    fix f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
+      and e :: real
+    assume \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>e > 0\<close>
+      and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+    from  \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+    have \<open>(\<lambda> n. onorm (\<lambda> x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+      unfolding onorm_convergence_def
+      by blast
+    hence \<open>\<exists> N. \<forall> n \<ge> N. dist ((\<lambda> n. onorm (\<lambda>x. f n x - l x)) n) 0 < e\<close>
+      using \<open>e > 0\<close>
+      by (simp add: lim_sequentially) 
+    hence \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close>
+      by simp
+    have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) < e\<close>
+    proof-
+      have \<open>bounded_linear t \<Longrightarrow> onorm t \<ge> 0\<close>
+        for t::\<open>'a \<Rightarrow> 'b\<close>
+        using onorm_pos_le by blast 
+      thus ?thesis using  \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close> by fastforce
+    qed
+    thus \<open>\<forall>\<^sub>F x in sequentially. onorm (\<lambda>xa. f x xa - l xa) < e\<close>
+      by (simp add: eventually_at_top_linorder)
+  qed
 qed
 
-lemma tendsto_ONORM_rbounded:
+lemma tendsto_ONORM:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
     and l :: \<open>('a, 'b) rbounded\<close>
   shows \<open>f \<longlonglongrightarrow> l \<Longrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
@@ -830,6 +826,10 @@ proof-
     by simp
   thus ?thesis by blast
 qed
+
+proposition tendsto_ONORM_iff:
+  \<open>f \<longlonglongrightarrow> l \<longleftrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
+  using ONORM_tendsto tendsto_ONORM by auto
 
 instantiation rbounded :: ("{real_normed_vector, perfect_space}", banach) "banach"
 begin
@@ -872,7 +872,7 @@ proof
         unfolding comp_def
         by auto
       hence \<open>f \<longlonglongrightarrow> L\<close>
-        using ONORM_tendsto_rbounded
+        using ONORM_tendsto
         by auto
       thus ?thesis by blast
     qed
