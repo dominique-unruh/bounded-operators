@@ -15,9 +15,10 @@ theory Completeness_Bounded_Operators
     Operator_Norm_Plus
     Convergence_Operators
 begin
-
-lemma uniform_strong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
+                  
+lemma ustrong_onorm:
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
+    and l::\<open>'a \<Rightarrow> 'b\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
     and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
   shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
@@ -270,10 +271,10 @@ qed
 
 
 
-lemma PREuCauchy_ustrong:
+lemma uCauchy_uconvergent:
   fixes f :: \<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>uCauchy f\<close>
-  shows \<open>\<exists> l::'a\<Rightarrow>'b. f \<midarrow>ustrong\<rightarrow> l\<close>
+  shows \<open>uconvergent f\<close>
 proof-
   have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
     using \<open>uCauchy f\<close> unfolding uCauchy_def by blast
@@ -306,7 +307,6 @@ proof-
     hence \<open>\<forall> x. norm x = 1 \<longrightarrow> (\<exists>N. \<forall>n\<ge>N. dist (f n x) (l x) < e/2)\<close>
       using  \<open>\<forall> x. norm x = 1 \<longrightarrow> (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
       by (meson LIMSEQ_iff_nz)
-
     have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> dist (f m x)  (f n x) < e/2\<close>
       using  \<open>e/2 > 0\<close> \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
       by (metis dist_norm)
@@ -341,7 +341,7 @@ proof-
     thus ?thesis
       by (metis dist_norm) 
   qed
-  thus ?thesis unfolding ustrong_convergence_def by blast
+  thus ?thesis unfolding ustrong_convergence_def uconvergent_def by blast
 qed
 
 
@@ -350,8 +350,10 @@ lemma uCauchy_ustrong:
   assumes  \<open>uCauchy f\<close> and \<open>\<And> n. bounded_linear (f n)\<close>
   shows \<open>\<exists> l::'a\<Rightarrow>'b. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
 proof-
-  have \<open>\<exists> s::'a\<Rightarrow>'b. f \<midarrow>ustrong\<rightarrow> s\<close>
-    by (simp add: PREuCauchy_ustrong assms(1))
+  have \<open>uconvergent f\<close>
+    by (simp add:  uCauchy_uconvergent assms(1))
+  hence \<open>\<exists> s::'a\<Rightarrow>'b. f \<midarrow>ustrong\<rightarrow> s\<close>
+    unfolding uconvergent_def by blast
   then obtain s where \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
   define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
     for x::'a
@@ -640,7 +642,7 @@ proof-
     by blast
   have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
     using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-      \<open>bounded_linear l\<close> assms(1) onorm_convergence_def uniform_strong_onorm by blast
+      \<open>bounded_linear l\<close> assms(1) onorm_convergence_def ustrong_onorm by blast
   thus ?thesis
     unfolding onorm_convergence_def using \<open>bounded_linear l\<close> by blast
 qed

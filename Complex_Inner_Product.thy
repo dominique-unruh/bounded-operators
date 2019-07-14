@@ -1,7 +1,10 @@
-(* Title:      Bounded-Operators/Complex_Inner_Product.thy
-   Author:     Dominique Unruh, University of Tartu
-   Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+(*
+Authors: 
 
+  Dominique Unruh, University of Tartu, unruh@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
+
+Properties of the complex inner product spaces.
 *)
 
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
