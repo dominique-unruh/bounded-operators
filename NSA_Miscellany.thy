@@ -83,7 +83,6 @@ lemma nsbounded_I:
   \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
    by blast
 
-
 lemma nsbounded_D:
   \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
   by (meson image_subsetI nsbounded_existencial)
@@ -147,7 +146,6 @@ proof-
   thus ?thesis
     by (simp add: of_hypnat_def)  
 qed
-
 
 lemma nsbounded_bounded:
   fixes S :: \<open>('a::metric_space) set\<close>
