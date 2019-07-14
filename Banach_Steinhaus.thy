@@ -4,7 +4,7 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-Banach-Steinhaus theorem.
+Banach-Steinhaus theorem. The proof of the following result was taken from [sokal2011really]
 
 *)
 
@@ -526,8 +526,6 @@ proof-
   ultimately show ?thesis
     using Lim_bounded by blast 
 qed
-
-text \<open>The proof of the following result was taken from [sokal2011really]\<close>
 
 theorem banach_steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
