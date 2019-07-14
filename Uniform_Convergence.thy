@@ -5,6 +5,15 @@ Authors:
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
 Uniform convergence.
+
+Main results.
+- ustrong_convergence: Definition of the strong convergence on the unit sphere.
+- uCauchy: Definition of the Cauchy property on the unit sphere.
+- ustrong_convergence_ustrong_convergence_iff: Equivalent between the standard and nonstandard
+version of ustrong_convergence.
+- Cauchy_uNSCauchy_iff: Equivalent between the standard and nonstandard
+version of uCauchy.
+
 *)
 
 theory Uniform_Convergence
@@ -16,7 +25,7 @@ theory Uniform_Convergence
 
 begin
 
-section \<open>Uniform convergence on the unit sphere\<close>
+section \<open>Standard definitions\<close>
 
 definition ustrong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
@@ -30,8 +39,9 @@ definition uCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>uCauchy f = ( \<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e )\<close>
 
-subsection \<open>Nonstandard analogs\<close>
-subsubsection \<open>Nonstandard analog of uniform convergence on the unit sphere \<close>
+section \<open>Nonstandard analogs\<close>
+
+subsection \<open>Nonstandard analog of uniform convergence on the unit sphere \<close>
 
 text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
 definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
@@ -460,7 +470,7 @@ proposition ustrong_convergence_ustrong_convergence_iff:
   \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
   using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
 
-subsubsection \<open>Nonstandard analog of Cauchy property on the unit sphere \<close>
+subsection \<open>Nonstandard analog of Cauchy property on the unit sphere \<close>
 
 definition uNSCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>

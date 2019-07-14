@@ -6,7 +6,7 @@ Authors:
 
 Several definitions of convergence of families of operators.
 
-Important results:
+Main results:
 - completeness_real_bounded: A sufficient condition for the completeness of a sequence of
  bounded operators.
 - oCauchy_uCauchy_iff: A sufficient condition in order to guarantee the equivalence between 
