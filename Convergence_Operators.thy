@@ -1207,6 +1207,70 @@ proof-
     unfolding onorm_convergence_def using \<open>bounded_linear l\<close> by blast
 qed
 
+lemma onorm_oCauchy:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a\<Rightarrow>'b\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close> and \<open>bounded_linear l\<close>
+  shows \<open>oCauchy f\<close>
+proof-
+  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+    for e
+  proof-
+    assume \<open>e > 0\<close>
+    from \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
+    have  \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close> 
+      unfolding onorm_convergence_def by blast
+    hence  \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. norm ((\<lambda>n. onorm (\<lambda>x. f n x - l x)) m) < e\<close>
+      using LIMSEQ_D by fastforce
+    moreover have \<open>bounded_linear F \<Longrightarrow> onorm F \<ge> 0\<close>
+      for F::\<open>'a\<Rightarrow>'b\<close>
+      by (simp add: onorm_pos_le)
+    moreover have \<open>bounded_linear (\<lambda>x. f n x - l x)\<close>
+      for n
+      by (simp add: assms(1) assms(3) bounded_linear_sub)    
+    ultimately have  \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. ((\<lambda>n. onorm (\<lambda>x. f n x - l x)) m) < e\<close>
+      by simp
+    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. onorm (\<lambda>x. f m x - l x)  < e\<close>
+      by blast
+    moreover have \<open>e/2 > 0\<close>
+      using \<open>e > 0\<close> by simp
+    ultimately obtain M where \<open>\<forall>m\<ge>M. onorm (\<lambda>x. f m x - l x)  < e/2\<close>
+      by blast
+    have \<open>onorm (\<lambda>x. (f m x - l x) + (l x - f n x)) \<le> onorm (\<lambda>x. f m x - l x) + onorm (\<lambda>x. l x - f n x)\<close>
+      for m n
+      by (metis (full_types) assms(1) assms(3) bounded_linear_sub onorm_triangle_le order_refl)    
+    hence \<open>m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> onorm (\<lambda>x. f m x - f n x) < e\<close>
+      for m n
+    proof-
+      assume \<open>m \<ge> M\<close> and \<open>n \<ge> M\<close>
+      have \<open>onorm (\<lambda>x. f m x - l x)  < e/2\<close>
+        using  \<open>m \<ge> M\<close>  \<open>\<forall>m\<ge>M. onorm (\<lambda>x. f m x - l x)  < e/2\<close> 
+        by blast
+      moreover have \<open>onorm (\<lambda>x. l x - f n x)  < e/2\<close>
+      proof-
+        have \<open>onorm (\<lambda>x. f n x - l x)  < e/2\<close>
+          using  \<open>n \<ge> M\<close>  \<open>\<forall>m\<ge>M. onorm (\<lambda>x. f m x - l x)  < e/2\<close> 
+          by blast
+        moreover have \<open>onorm (\<lambda>x. f n x - l x)  = onorm (\<lambda>x.  l x - f n x)\<close>
+        proof-
+          have \<open>(\<lambda>x.  l x - f n x) = (\<lambda> y. - (\<lambda>x. f n x - l x) y)\<close>
+            by auto
+          thus ?thesis using onorm_neg by metis
+        qed
+        ultimately show ?thesis
+          by simp 
+      qed
+      ultimately have \<open>onorm (\<lambda>x. f m x - l x) + onorm (\<lambda>x. l x - f n x) < e/2 + e/2\<close>
+        by simp
+      hence \<open>onorm (\<lambda>x. f m x - l x) + onorm (\<lambda>x. l x - f n x) < e\<close>
+        by simp
+      thus ?thesis using \<open>onorm (\<lambda>x. (f m x - l x) + (l x - f n x)) \<le> onorm (\<lambda>x. f m x - l x) + onorm (\<lambda>x. l x - f n x)\<close>
+        by simp
+    qed
+    thus ?thesis by blast
+  qed
+  thus ?thesis unfolding oCauchy_def by blast
+qed
+
 
 
 end
