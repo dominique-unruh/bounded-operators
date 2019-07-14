@@ -15,17 +15,15 @@ theory NSA_Miscellany
     "HOL-Analysis.Operator_Norm"
 begin
 
-section \<open>Boundeness\<close>
-definition (in metric_space) nsbounded :: "'a set \<Rightarrow> bool"
-  where \<open>nsbounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
 
 lemma nsbounded_existencial:
-  \<open>nsbounded (S::('a::metric_space) set) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
+  \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
+  for S::\<open>('a::metric_space) set\<close>
 proof
   show "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
-    if "nsbounded S"
-    using that image_subset_iff nsbounded_def by fastforce
-  show "nsbounded S"
+    if "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite"
+    using that image_subset_iff  by fastforce
+  show "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite"
     if "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
   proof-
     obtain z where \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close>
@@ -77,72 +75,23 @@ proof
       ultimately show ?thesis
         using HFinite_bounded by blast  
     qed
-    thus ?thesis unfolding nsbounded_def by blast
+    thus ?thesis by blast
   qed
 qed
 
 lemma nsbounded_I:
-  \<open>nsbounded S \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
-  using nsbounded_def by blast
-
-lemma nsbounded_I2:
-  \<open>nsbounded S \<Longrightarrow> \<forall> x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
-proof-
-  assume \<open>nsbounded S\<close>
-  have \<open>\<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
-    for x
-  proof-
-    have \<open>\<exists>z. \<forall>y\<in>*s* S. (*f2* dist) z y \<in> HFinite\<close>
-      by (simp add: \<open>nsbounded S\<close> nsbounded_I)
-    then obtain z where \<open>\<forall>y\<in>*s* S. (*f2* dist) z y \<in> HFinite\<close>
-      by blast
-    have  \<open>y\<in>*s* S \<Longrightarrow> (*f2* dist) x y \<in> HFinite\<close>
-      for y
-    proof-
-      assume \<open>y\<in>*s* S\<close>
-      have \<open>(*f2* dist) x y \<le> (*f2* dist) x z + (*f2* dist) z y\<close>
-      proof-
-        have \<open>\<forall> xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close>
-          by (simp add: dist_triangle)          
-        hence \<open>\<forall> xx yy zz. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
-          by transfer
-        thus ?thesis by blast
-      qed
-      have \<open>(*f2* dist) x z + (*f2* dist) z y \<in> HFinite\<close>
-      proof-
-        have \<open>(*f2* dist) x z \<in> HFinite\<close>
-          sorry
-        moreover have \<open>(*f2* dist) z y \<in> HFinite\<close>
-          using \<open>\<forall>y\<in>*s* S. (*f2* dist) z y \<in> HFinite\<close> \<open>y \<in> *s* S\<close> by blast
-        ultimately show ?thesis
-          by (simp add: HFinite_add) 
-      qed
-      moreover have  \<open>0 \<le> (*f2* dist) x y\<close>
-      proof-
-        have \<open>\<forall> xx yy. 0 \<le> dist xx yy\<close>
-          by simp
-        hence \<open>\<forall> xx yy. 0 \<le> (*f2* dist) xx yy\<close>
-          by transfer
-        thus ?thesis by blast
-      qed
-      ultimately show ?thesis
-        using HFinite_bounded \<open>(*f2* dist) x y \<le> (*f2* dist) x z + (*f2* dist) z y\<close> by blast 
-    qed
-    thus ?thesis by blast
-  qed
-  thus ?thesis by blast
-qed
+  \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
+   by blast
 
 
 lemma nsbounded_D:
-  \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> nsbounded S\<close>
+  \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
   by (meson image_subsetI nsbounded_existencial)
   
-
 lemma bounded_nsbounded:
   fixes S :: \<open>('a::metric_space) set\<close>
   assumes \<open>bounded S\<close>
-  shows \<open>nsbounded S\<close>
+  shows \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
 proof-
   from  \<open>bounded S\<close>
   have \<open>\<exists> M. \<exists> u. \<forall> v \<in> S. dist u v < M\<close>
@@ -202,14 +151,13 @@ qed
 
 lemma nsbounded_bounded:
   fixes S :: \<open>('a::metric_space) set\<close>
-  assumes \<open>nsbounded S\<close>
+  assumes \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
   shows \<open>bounded S\<close>
 proof-
   have \<open>\<exists>x e. \<forall>y\<in>S. dist x y \<le> e\<close> 
   proof-
-    have \<open>\<exists> x. \<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
-      using \<open>nsbounded S\<close> unfolding nsbounded_def by blast
-    then obtain x where \<open>\<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
+    from \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
+    obtain x where \<open>\<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
       by blast
     have \<open>\<exists> M. \<forall> y \<in> *s* S. (*f2* dist) x y < M\<close>
     proof(rule classical)
@@ -291,67 +239,8 @@ proof-
 qed
 
 proposition bounded_nsbounded_iff:
-  \<open>bounded S \<longleftrightarrow> nsbounded S\<close>
+  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
   using bounded_nsbounded nsbounded_bounded by blast
-
-lemma nsbounded_hnorm_I:
- \<open>(\<And> t. t\<in>*s* S \<Longrightarrow> hnorm t \<in> HFinite) \<Longrightarrow> nsbounded S\<close>
-proof(rule nsbounded_D)
-  assume \<open>\<And>t. t \<in> *s* S \<Longrightarrow> hnorm t \<in> HFinite\<close>
-  moreover have \<open>\<forall> y. (*f2* dist) 0 y = hnorm y\<close>
-  proof-
-    have \<open>\<forall> y. dist 0 y = norm y\<close>
-      by simp
-    thus ?thesis by transfer
-  qed
-  ultimately have \<open>\<forall>y\<in>*s* S. (*f2* dist) 0 y \<in> HFinite\<close>
-    by (simp add: \<open>\<forall>y. (*f2* dist) 0 y = hnorm y\<close>)  
-  thus \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
-    by blast
-qed
-
-lemma nsbounded_hnorm_D:
- \<open>nsbounded S \<Longrightarrow> t\<in>*s* S \<Longrightarrow> hnorm t \<in> HFinite\<close>
-proof-
-  assume \<open>nsbounded S\<close> \<open>t \<in> *s* S\<close>
-  have \<open>\<forall> y. (*f2* dist) 0 y = hnorm y\<close>
-  proof-
-    have \<open>\<forall> y. dist 0 y = norm y\<close>
-      by simp
-    thus ?thesis by transfer
-  qed
-
-  thus ?thesis
-    using \<open>nsbounded S\<close> \<open>t \<in> *s* S\<close> unfolding nsbounded_def
-    sorry
-qed
-
-section \<open>Linear bounded operator\<close>
-
-lemma bounded_linear_HFinite:
-  \<open>bounded_linear f \<Longrightarrow> bounded S \<Longrightarrow> bounded (f ` S) \<close>
-  unfolding HFinite_def
-  apply auto
-proof-
-  assume \<open>bounded_linear f\<close> and \<open>bounded S\<close>
-  from \<open>bounded S\<close>
-  have \<open>nsbounded S\<close>
-    by (simp add: bounded_nsbounded)
-  hence \<open>t\<in>*s* S \<Longrightarrow> hnorm t \<in> HFinite\<close>
-    for t
-    sorry
-  have \<open>\<And> t. t \<in> S \<Longrightarrow> norm (f t) \<le> onorm f\<close>
-    using \<open>bounded_linear f\<close> bjy (metis mult_cancel_left2 onorm)      
-  hence  \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) < onorm a + 1\<close>
-    by fastforce      
-  hence  \<open>\<And> t. hnorm t = 1 \<Longrightarrow> hnorm ((*f* a) t) < star_of (onorm a + 1)\<close>
-    by transfer
-  hence  \<open>hnorm ((*f* a) x) < star_of (onorm a + 1)\<close>
-    using \<open>hnorm x = 1\<close>
-    by auto
-  thus \<open>\<exists>xa\<in>\<real>. hnorm ((*f* a) x) < xa\<close> by auto
-qed
-
 
 
 end
