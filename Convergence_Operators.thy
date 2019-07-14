@@ -12,6 +12,7 @@ Main results:
 - oCauchy_uCauchy_iff: A sufficient condition in order to guarantee the equivalence between 
 being a Cauchy sequence with respect to the operator norm and being a Cauchy sequence 
 uniformly on the unit sphere. 
+- Instantiation of rbounded as a Banach space
 
 *)
 
@@ -21,6 +22,8 @@ theory Convergence_Operators
     "HOL.Real_Vector_Spaces"
     Operator_Norm_Plus
     Uniform_Convergence
+    Real_Bounded_Operators
+
 begin
 
 section \<open>Pointwise convergence\<close>
@@ -34,6 +37,14 @@ abbreviation strong_convergence_abbr::
   (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l )\<close>
 
+lift_definition strong_convergence_rbounded:: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded) \<Rightarrow> bool"
+  is \<open>\<lambda> f. \<lambda> l. f \<midarrow>strong\<rightarrow> l\<close>.
+
+abbreviation
+  strong_convergence_rbounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>STRONG\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>STRONG\<rightarrow> l \<equiv> (strong_convergence_rbounded f l ) "
+
+
 section \<open>Convergence with respect to the operator norm\<close>
 
 definition onorm_convergence::
@@ -44,9 +55,17 @@ abbreviation onorm_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>onorm\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l )\<close>
 
+lift_definition onorm_convergence_rbounded:: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded) \<Rightarrow> bool"
+  is \<open>\<lambda> f. \<lambda> l. f \<midarrow>onorm\<rightarrow> l\<close>.
+
+abbreviation
+  onorm_convergence_rbounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>ONORM\<rightarrow> (_))" [60, 60] 60)
+  where "f \<midarrow>ONORM\<rightarrow> l \<equiv> (onorm_convergence_rbounded f l ) "
+
 definition oCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>oCauchy f = ( \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e )\<close>
+
 
 section \<open>Relationships among the different kind of convergence\<close>
 
@@ -751,5 +770,116 @@ proof
     if "uCauchy f"
     by (meson assms onorm_oCauchy that uCauchy_ustrong ustrong_onorm)
 qed
+
+section \<open>Instantiation of rbounded as a Banach space\<close>
+
+lemma onorm_tendsto:
+  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
+    and e :: real
+  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>e > 0\<close>
+    and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+  shows \<open>\<forall>\<^sub>F n in sequentially. onorm (\<lambda>x. f n x - l x) < e\<close>
+proof-
+  from  \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+  have \<open>(\<lambda> n. onorm (\<lambda> x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+    unfolding onorm_convergence_def
+    by blast
+  hence \<open>\<exists> N. \<forall> n \<ge> N. dist ((\<lambda> n. onorm (\<lambda>x. f n x - l x)) n) 0 < e\<close>
+    using \<open>e > 0\<close>
+    by (simp add: lim_sequentially) 
+  hence \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close>
+    by simp
+  have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) < e\<close>
+  proof-
+    have \<open>bounded_linear t \<Longrightarrow> onorm t \<ge> 0\<close>
+      for t::\<open>'a \<Rightarrow> 'b\<close>
+      using onorm_pos_le by blast 
+    thus ?thesis using  \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close> by fastforce
+  qed
+  thus ?thesis
+    by (simp add: eventually_at_top_linorder)
+qed
+
+lemma ONORM_tendsto_rbounded:
+  \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
+  apply Transfer.transfer
+proof
+  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) rbounded) \<Longrightarrow> e > 0 \<Longrightarrow>
+ \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) rbounded) < e"   
+    for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
+      and l :: "('a, 'b) rbounded"
+      and e :: real
+    apply Transfer.transfer
+    apply auto
+    by (rule onorm_tendsto)    
+qed
+
+lemma tendsto_ONORM_rbounded:
+  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l :: \<open>('a, 'b) rbounded\<close>
+  shows \<open>f \<longlonglongrightarrow> l \<Longrightarrow> f \<midarrow>ONORM\<rightarrow> l\<close>
+proof-
+  assume \<open>f \<longlonglongrightarrow> l\<close>
+  hence \<open>(\<lambda> n. dist (f n) l) \<longlonglongrightarrow> 0\<close>
+    using  Real_Vector_Spaces.tendsto_dist_iff
+    by blast
+  hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
+    apply Transfer.transfer
+    apply auto
+    unfolding onorm_convergence_def
+    by simp
+  thus ?thesis by blast
+qed
+
+instantiation rbounded :: ("{real_normed_vector, perfect_space}", banach) "banach"
+begin
+instance
+proof
+  show "Cauchy f \<Longrightarrow> convergent f"
+    for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
+    unfolding Cauchy_def convergent_def 
+  proof-
+    show \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e \<Longrightarrow> \<exists>L. f \<longlonglongrightarrow> L\<close>
+    proof-
+      assume \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
+      hence \<open>\<exists>l. bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
+        apply Transfer.transfer
+        apply auto
+        using completeness_real_bounded oCauchy_def onorm_convergence_def
+        by blast 
+      then obtain l
+        where \<open>bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
+        by blast
+      have \<open>bounded_linear l\<close>
+        using \<open>bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close> 
+        by blast
+      hence \<open>\<exists> L. Rep_rbounded L = l\<close>
+        apply Transfer.transfer
+        by auto
+      then obtain L::\<open>('a, 'b) rbounded\<close> where \<open>Rep_rbounded L = l\<close> by blast
+      have \<open>(\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
+        using  \<open>bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>  
+        by blast
+      hence \<open>(\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
+        using  \<open>Rep_rbounded L = l\<close> by blast
+      hence \<open>(\<lambda>n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> (Rep_rbounded L)\<close>
+        using  \<open>Rep_rbounded L = l\<close> by blast
+      hence \<open>f \<midarrow>ONORM\<rightarrow> L\<close>
+        unfolding onorm_convergence_rbounded_def
+        apply auto
+        unfolding map_fun_def
+        apply simp
+        unfolding comp_def
+        by auto
+      hence \<open>f \<longlonglongrightarrow> L\<close>
+        using ONORM_tendsto_rbounded
+        by auto
+      thus ?thesis by blast
+    qed
+  qed
+qed  
+
+end
+
 
 end
