@@ -645,7 +645,7 @@ instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex
 instance
   apply intro_classes
      apply auto
-proof Transfer.transfer
+proof transfer
   fix x :: "'a \<Rightarrow> 'b"
   assume \<open>bounded_clinear x\<close>
     and \<open>onorm x = 0\<close>
@@ -1214,15 +1214,15 @@ lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
 
 lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" for A::"(_,_) bounded"
-  apply Transfer.transfer by auto
+  apply transfer by auto
 
 lemma scalar_op_op[simp]: "(a *\<^sub>C A) \<cdot> B = a *\<^sub>C (A \<cdot> B)"
   for A :: "('b::complex_normed_vector,_) bounded" and B :: "(_,'b) bounded"
-  apply Transfer.transfer by auto
+  apply transfer by auto
 
 lemma op_scalar_op[simp]: "timesOp A (a *\<^sub>C B) = a *\<^sub>C (timesOp A B)" 
   for a :: complex and A :: "(_,_) bounded" and B :: "(_,_) bounded"
-  apply Transfer.transfer
+  apply transfer
   by (simp add: bounded_clinear.clinear clinear.scaleC o_def)
 
 (* REMOVE (subsumed by scale_scale) *)

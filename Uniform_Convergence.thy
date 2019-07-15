@@ -69,7 +69,7 @@ proof-
     hence \<open>\<forall> n \<ge> no. \<forall> x\<in>S. norm ( f n x - l x) < r\<close>
       by blast
     hence \<open>\<forall> n \<ge> hypnat_of_nat no. \<forall> x\<in>*s* S. hnorm ( (*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close>
-      by transfer
+      by StarDef.transfer
     thus \<open>hnorm ((*f2* f) N x- (*f* l) x) < hypreal_of_real r\<close>
       using star_of_le_HNatInfinite \<open>N \<in> HNatInfinite\<close>
       by (simp add: \<open>x\<in>*s* S\<close>)
@@ -104,7 +104,7 @@ proof-
       thus ?thesis by blast
     qed
     thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall>x\<in>S. norm ( f n x - l x ) < r\<close>
-      by transfer
+      by StarDef.transfer
   qed
   thus ?thesis
     by (simp add: uniform_convergence_norm_I)
@@ -162,7 +162,7 @@ proof-
       by blast
     hence \<open>\<forall> n \<ge> hypnat_of_nat no. \<forall> m \<ge> hypnat_of_nat no. 
       \<forall> x\<in>*s* S. hnorm ( (*f2* f) n x - (*f2* f) m x) < hypreal_of_real r\<close>
-      by transfer
+      by StarDef.transfer
     thus \<open>hnorm ((*f2* f) N x- (*f2* f) M x) < hypreal_of_real r\<close>
       using star_of_le_HNatInfinite \<open>N \<in> HNatInfinite\<close> \<open>M \<in> HNatInfinite\<close>
       by (simp add: \<open>x\<in>*s* S\<close>)
@@ -196,7 +196,7 @@ proof-
       thus ?thesis by blast
     qed
     thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall> m \<ge> no. \<forall>x\<in>S. norm ( f n x - f m x ) < r\<close>
-      by transfer
+      by StarDef.transfer
   qed
   thus ?thesis
     by (simp add: uniformly_Cauchy_on_norm_I)
@@ -250,7 +250,7 @@ proof-
   have \<open>\<forall> xx.  xx\<in>sphere \<longleftrightarrow> norm xx = 1\<close>
     by (simp add: Uniform_Convergence.sphere_def)
   hence \<open>\<forall> xx.  xx\<in>hsphere \<longleftrightarrow> hnorm xx = 1\<close>
-    by transfer
+    by StarDef.transfer
   thus ?thesis by blast
 qed
 
@@ -292,7 +292,7 @@ proof-
   have \<open>\<forall> n. \<forall> x::'a. norm x = 1 \<longrightarrow> f n x = k x\<close>
     using  \<open>\<And> n::nat. f n = k\<close> by auto
   hence \<open>\<forall> n. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) n x = (*f* k) x\<close>
-    by transfer
+    by StarDef.transfer
   thus ?thesis
     by (simp add: nsustrong_convergence_I)  
 qed
@@ -317,7 +317,7 @@ proof-
   hence  \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) < onorm a + 1\<close>
     by fastforce      
   hence  \<open>\<And> t. hnorm t = 1 \<Longrightarrow> hnorm ((*f* a) t) < star_of (onorm a + 1)\<close>
-    by transfer
+    by StarDef.transfer
   hence  \<open>hnorm ((*f* a) x) < star_of (onorm a + 1)\<close>
     using \<open>hnorm x = 1\<close>
     by auto
@@ -349,7 +349,7 @@ proof(rule nsustrong_convergence_I)
     have \<open>\<forall> NN. \<forall> xx. X NN xx * Y NN xx = (\<lambda>n t. X n t * Y n t) NN xx\<close>
       by auto
     hence \<open>\<forall> NN. \<forall> xx. (*f2* X) NN xx * (*f2* Y) NN xx = (*f2* (\<lambda>n t. X n t * Y n t)) NN xx\<close>
-      apply transfer
+      apply StarDef.transfer
       by auto
     thus ?thesis
       by simp  
@@ -395,7 +395,7 @@ proof(rule nsustrong_convergence_I)
     have \<open>\<forall> NN. \<forall> xx. inverse ( X NN xx) = ( (\<lambda>n t. inverse (X n t))) NN xx\<close>
       by blast
     hence \<open>\<forall> NN. \<forall> xx. inverse ((*f2* X) NN xx) = (*f2* (\<lambda>n t. inverse (X n t))) NN xx\<close>
-      by transfer
+      by StarDef.transfer
     thus ?thesis
       by simp 
   qed
@@ -404,7 +404,7 @@ proof(rule nsustrong_convergence_I)
     have \<open>\<forall> xx. inverse (a xx) = (\<lambda>t. inverse (a t)) xx\<close>
       by simp
     hence \<open>\<forall> xx. inverse ((*f* a) xx) = (*f* (\<lambda>t. inverse (a t))) xx\<close>
-      by transfer
+      by StarDef.transfer
     thus ?thesis by simp
   qed
   moreover have \<open>(*f* a) x \<in> HFinite - Infinitesimal\<close>
@@ -421,7 +421,7 @@ proof(rule nsustrong_convergence_I)
           by blast
         from \<open>\<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close>
         have \<open>\<forall> t. hnorm t = 1 \<longrightarrow> hnorm ((*f* a) t) > star_of e\<close>
-          by transfer
+          by StarDef.transfer
         hence  \<open>hnorm ((*f* a) x) > star_of e\<close>
           using \<open>hnorm x = 1\<close> by blast       
         thus ?thesis using \<open>e > 0\<close>
@@ -451,7 +451,7 @@ proof(rule nsustrong_convergence_I)
     have \<open>\<forall> NN. \<forall> xx. norm ( X NN xx) = ( (\<lambda>n t. norm (X n t))) NN xx\<close>
       by blast
     hence \<open>\<forall> NN. \<forall> xx. hnorm ( (*f2* X) NN xx) = (*f2* (\<lambda>n t. norm (X n t))) NN xx\<close>
-      by transfer
+      by StarDef.transfer
     thus ?thesis by simp
   qed
   moreover have \<open>hnorm ((*f* a) x) \<approx> (*f* (\<lambda>t. norm (a t))) x\<close>
@@ -459,7 +459,7 @@ proof(rule nsustrong_convergence_I)
     have \<open>\<forall> xx. norm (a xx) = (\<lambda>t. norm (a t)) xx\<close>
       by blast
     hence \<open>\<forall> xx. hnorm ((*f* a) xx) = (*f* (\<lambda>t. norm (a t))) xx\<close>
-      by transfer
+      by StarDef.transfer
     thus ?thesis by simp
   qed
   ultimately show \<open>(*f2* (\<lambda>n t. norm (X n t))) N x \<approx> (*f* (\<lambda>t. norm (a t))) x\<close>

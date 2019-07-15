@@ -24,4 +24,18 @@ end
 
 unbundle no_nsa_notation
 
+\<comment> \<open>This restores the method Transfer.transfer under the name transfer. 
+    Use StarDef.transfer for the transfer method for nonstandard analysis.\<close>
+method_setup transfer = \<open>
+  let val free = Args.context -- Args.term >> (fn (_, Free v) => v | (ctxt, t) =>
+        error ("Bad free variable: " ^ Syntax.string_of_term ctxt t))
+      val fixing = Scan.optional (Scan.lift (Args.$$$ "fixing" -- Args.colon)
+        |-- Scan.repeat free) []
+      fun transfer_method equiv : (Proof.context -> Proof.method) context_parser =
+        fixing >> (fn vs => fn ctxt =>
+          SIMPLE_METHOD' (Transfer.gen_frees_tac vs ctxt THEN' Transfer.transfer_tac equiv ctxt))
+  in
+    transfer_method true
+  end\<close>
+
 end

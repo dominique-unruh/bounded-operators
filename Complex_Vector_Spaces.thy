@@ -1307,13 +1307,13 @@ end
 
 lemma hnorm_scaleC: "\<And>x::'a::complex_normed_vector star. 
 hnorm (a *\<^sub>C x) = (hcmod (star_of a)) * hnorm x"
-  by transfer (rule norm_scaleC)
+  by StarDef.transfer (rule norm_scaleC)
 
 lemma Standard_scaleC [simp]: "x \<in> Standard \<Longrightarrow> scaleC r x \<in> Standard"
   by (simp add: star_scaleC_def)
 
 lemma star_of_scaleC [simp]: "star_of (scaleC r x) = scaleC r (star_of x)"
-  by transfer (rule refl)
+  by StarDef.transfer (rule refl)
 
 instance star :: (complex_vector) complex_vector
 proof

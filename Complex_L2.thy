@@ -19,6 +19,7 @@ References:
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
+    Extended_Sorry
     "HOL-ex.Sketch_and_Explore"
     (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
 Or "sketch bla" for a proof outline starting with "proof bla" *)
