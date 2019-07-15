@@ -135,7 +135,6 @@ lemma uniformly_Cauchy_on_norm_I:
   unfolding uniformly_Cauchy_on_def
   by metis
 
-
 lemma uniformly_Cauchy_on_norm_D:
   fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close> 
   assumes \<open>uniformly_Cauchy_on S f\<close>
@@ -172,7 +171,6 @@ proof-
     by (simp only: approx_def)
 qed
 
-
 lemma nsuniformly_Cauchy_on_I:
   fixes  f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close>
   assumes \<open>\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x\<close>
@@ -205,14 +203,34 @@ proof-
 qed
 
 
+proposition nsuniformly_Cauchy_on_iff:
+  fixes  f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close>
+  shows \<open>(uniformly_Cauchy_on S f) \<longleftrightarrow> (\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x)\<close>
+  proof
+  show "\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x"
+    if "uniformly_Cauchy_on S f"
+    using that
+    using nsuniformly_Cauchy_on_D by blast 
+  show "uniformly_Cauchy_on S f"
+    if "\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x"
+    using that
+    using nsuniformly_Cauchy_on_I by smt 
+qed
+
 
 chapter \<open>Linear case\<close>
 
 section \<open>Standard definitions\<close>
 
+definition sphere:: \<open>'a::real_normed_vector set\<close> where
+\<open>sphere = {x. norm x = 1}\<close>
+
+definition hsphere :: "('a::real_normed_vector star) set"
+  where [transfer_unfold]: "hsphere = *s* sphere"
+
 definition ustrong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
-  \<open>ustrong_convergence f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e )\<close>
+  \<open>ustrong_convergence f l = (sphere: f \<midarrow>uniformly\<rightarrow> l)\<close>
 
 abbreviation ustrong_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>ustrong\<rightarrow> (_))\<close> [60, 60] 60)
@@ -220,72 +238,72 @@ abbreviation ustrong_convergence_abbr::
 
 definition uCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>uCauchy f = ( \<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e )\<close>
+  where \<open>uCauchy f = (uniformly_Cauchy_on sphere f)\<close>
 
 section \<open>Nonstandard analogs\<close>
 
 subsection \<open>Nonstandard analog of uniform convergence on the unit sphere \<close>
 
-text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
-definition nsustrong_convergence :: "(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector))
-   \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool"
-  ("((_)/ \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (_))" [60, 60] 60) where
-  \<comment> \<open>Nonstandard definition of uniform convergence of sequence on the unit sphere\<close>
-  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<longleftrightarrow> 
-( \<forall>N\<in>HNatInfinite. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x )"
+lemma sphere_iff:
+  \<open>x\<in>hsphere \<longleftrightarrow> hnorm x = 1\<close>
+proof-
+  have \<open>\<forall> xx.  xx\<in>sphere \<longleftrightarrow> norm xx = 1\<close>
+    by (simp add: Uniform_Convergence.sphere_def)
+  hence \<open>\<forall> xx.  xx\<in>hsphere \<longleftrightarrow> hnorm xx = 1\<close>
+    by transfer
+  thus ?thesis by blast
+qed
 
 lemma nsustrong_convergence_I: 
   \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
-   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close> 
-  by (simp add: nsustrong_convergence_def) 
+   \<Longrightarrow> f \<midarrow>ustrong\<rightarrow> l\<close> 
+proof-
+  assume \<open>\<And>N x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
+  hence \<open>\<forall>N\<in>HNatInfinite. \<forall>x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
+    by blast                
+  hence \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>hsphere.  (*f2* f) N x \<approx> (*f* l) x\<close>
+    using sphere_iff by auto
+  hence \<open>sphere: f \<midarrow>uniformly\<rightarrow> l\<close>
+    unfolding hsphere_def
+    by (simp add: nsuniform_convergence_I)
+  thus \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+    unfolding ustrong_convergence_def by blast
+qed
 
-lemma nsustrong_convergence_D: 
-  \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
+lemma nsustrong_convergence_D:
+  \<open>f \<midarrow>ustrong\<rightarrow> l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
   \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
-  by (simp add: nsustrong_convergence_def)
+proof-
+  assume \<open>f \<midarrow>ustrong\<rightarrow> l\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  from  \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+  have  \<open>sphere: f \<midarrow>uniformly\<rightarrow> l\<close>
+    by (simp add: ustrong_convergence_def)
+  hence \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>hsphere. (*f2* f) N x \<approx> (*f* l) x\<close>
+    using hsphere_def nsuniform_convergence_D by blast                    
+  thus \<open>(*f2* f) N x \<approx> (*f* l) x\<close>
+    by (simp add: \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> sphere_iff)
+qed
 
 lemma nsustrong_convergence_const:
   fixes k :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
   assumes \<open>\<And> n::nat. f n = k\<close>
-  shows \<open>f\<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S k\<close>
+  shows \<open>f\<midarrow>ustrong\<rightarrow> k\<close>
 proof-
   have \<open>\<forall> n. \<forall> x::'a. norm x = 1 \<longrightarrow> f n x = k x\<close>
     using  \<open>\<And> n::nat. f n = k\<close> by auto
   hence \<open>\<forall> n. \<forall> x::'a star. hnorm x = 1 \<longrightarrow> (*f2* f) n x = (*f* k) x\<close>
     by transfer
-  thus ?thesis using nsustrong_convergence_def
-    by (simp add: nsustrong_convergence_def) 
+  thus ?thesis
+    by (simp add: nsustrong_convergence_I)  
 qed
 
-lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b t)"
-proof(rule nsustrong_convergence_I)
-  fix N and x::\<open>'a star\<close>
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close>
-  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
-  moreover have \<open>(*f2* Y) N x \<approx> (*f* b) x\<close>
-    using \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
-  ultimately have \<open>(*f2* X) N x + (*f2* Y) N x \<approx> (*f* a) x + (*f* b) x\<close>
-    by (simp add: approx_add)
-  moreover have \<open>(*f2* X) N x + (*f2* Y) N x = (*f2* (\<lambda>n t. X n t + Y n t)) N x\<close>
-  proof-
-    have \<open>\<forall> NN. \<forall> xx. X NN xx + Y NN xx = (\<lambda>n t. X n t + Y n t) NN xx\<close>
-      by auto
-    hence \<open>\<forall> NNN. \<forall> xxx. (*f2* X) NNN xxx + (*f2* Y) NNN xxx = (*f2* (\<lambda>n t. X n t + Y n t)) NNN xxx\<close>
-      apply transfer
-      by auto
-    thus ?thesis
-      by simp  
-  qed
-  moreover have \<open>(*f* a) x + (*f* b) x = (*f* (\<lambda>t. a t + b t)) x\<close>
-    by simp
-  ultimately show \<open>(*f2* (\<lambda>n t. X n t + Y n t)) N x \<approx> (*f* (\<lambda>t. a t + b t)) x\<close>
-    by smt
-qed
+lemma nsustrong_convergence_add: "X \<midarrow>ustrong\<rightarrow> a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow> b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t + Y n t)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. a t + b t)"
+  unfolding ustrong_convergence_def
+  using uniform_limit_add by blast
 
-lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t + b)"
+lemma nsustrong_convergence_add_const: "f \<midarrow>ustrong\<rightarrow> a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t + b)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. a t + b)"
   by (simp only: nsustrong_convergence_add nsustrong_convergence_const)
 
 lemma bounded_linear_HFinite:
@@ -306,18 +324,18 @@ proof-
   thus \<open>\<exists>xa\<in>\<real>. hnorm ((*f* a) x) < xa\<close> by auto
 qed
 
-lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+lemma nsustrong_convergence_mult: "X \<midarrow>ustrong\<rightarrow> a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow> b
  \<Longrightarrow> bounded_linear a \<Longrightarrow> bounded_linear b 
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t * b t)"
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. a t * b t)"
   for a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_algebra"
 proof(rule nsustrong_convergence_I)
   fix N and x::\<open>'a star\<close>
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow> a\<close> and \<open>Y \<midarrow>ustrong\<rightarrow> b\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
     and \<open>bounded_linear a\<close> and \<open>bounded_linear b\<close>
   have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+    using \<open>X \<midarrow>ustrong\<rightarrow> a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
   moreover have \<open>(*f2* Y) N x \<approx> (*f* b) x\<close>
-    using \<open>Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+    using \<open>Y \<midarrow>ustrong\<rightarrow> b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
   moreover have \<open>((*f* a) x) \<in> HFinite\<close>
     using \<open>bounded_linear a\<close> \<open>hnorm x = 1\<close>
     by (simp add: bounded_linear_HFinite) 
@@ -342,54 +360,36 @@ proof(rule nsustrong_convergence_I)
     by smt
 qed
 
-lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)"
-proof(rule nsustrong_convergence_I)
-  fix N and x::\<open>'a star\<close>
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
-  from \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>hnorm x = 1\<close>
-  have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    by (simp add: \<open>N \<in> HNatInfinite\<close> nsustrong_convergence_D)
-  hence \<open>-(*f2* X) N x \<approx> -(*f* a) x\<close>
-    by simp
-  moreover have \<open>-(*f2* X) N x \<approx> (*f2* (\<lambda>n t. - X n t)) N x\<close>
-  proof-
-    have \<open>\<forall> NN. \<forall> xx. -( X) NN xx = ( (\<lambda>n t. - X n t)) NN xx\<close>
-      by blast
-    hence \<open>\<forall> NN. \<forall> xx. -(*f2* X) NN xx = (*f2* (\<lambda>n t. - X n t)) NN xx\<close>
-      by transfer
-    thus ?thesis by simp
-  qed
-  moreover have \<open>-(*f* a) x \<approx> (*f* (\<lambda>t. - a t)) x\<close>
-    by simp
-  ultimately show \<open>(*f2* (\<lambda>n t. - X n t)) N x \<approx> (*f* (\<lambda>t. - a t)) x\<close>
-    using approx_trans3 by blast 
-qed
+lemma nsustrong_convergence_minus: "X \<midarrow>ustrong\<rightarrow> a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. - a t)"
+  unfolding ustrong_convergence_def
+  using uniform_limit_uminus by fastforce
 
-lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. - a t)
- \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a"
+lemma nsustrong_convergence_minus_cancel: "(\<lambda>n. (\<lambda> t. - X n t)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. - a t)
+ \<Longrightarrow> X \<midarrow>ustrong\<rightarrow> a"
   by (drule nsustrong_convergence_minus) simp
 
-lemma nsustrong_convergence_diff: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t - Y n t)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b t)"
+lemma nsustrong_convergence_diff: "X \<midarrow>ustrong\<rightarrow> a \<Longrightarrow> Y \<midarrow>ustrong\<rightarrow> b
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. X n t - Y n t)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. a t - b t)"
   using nsustrong_convergence_add [of X a "- Y" "- b"]
   by (simp add: nsustrong_convergence_minus fun_Compl_def)
 
-lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. a t - b)"
+lemma nsustrong_convergence_diff_const: "f  \<midarrow>ustrong\<rightarrow> a
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. f n t - b)) \<midarrow>ustrong\<rightarrow> (\<lambda> t. a t - b)"
   by (simp add: nsustrong_convergence_diff nsustrong_convergence_const)
 
-lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> 
+lemma nsustrong_convergence_inverse: "X  \<midarrow>ustrong\<rightarrow> a \<Longrightarrow> 
  bounded_linear a \<Longrightarrow> \<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e
- \<Longrightarrow> (\<lambda>n. (\<lambda> t. inverse (X n t) )) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. inverse (a t))"
+ \<Longrightarrow> (\<lambda>n. (\<lambda> t. inverse (X n t) )) \<midarrow>ustrong\<rightarrow> (\<lambda> t. inverse (a t))"
   for a :: "'a::real_normed_vector \<Rightarrow>'b::real_normed_div_algebra"
 proof(rule nsustrong_convergence_I)
   fix N and x::\<open>'a star\<close>
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>N \<in> HNatInfinite\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow> a\<close> and \<open>N \<in> HNatInfinite\<close>
     and \<open>hnorm x = 1\<close> and \<open>\<exists> e > 0. \<forall> t. norm t = 1 \<longrightarrow> norm (a t) > e\<close> and \<open>bounded_linear a\<close>
-  from \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>
+  from \<open>X \<midarrow>ustrong\<rightarrow> a\<close>
   have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_def by blast
+    using \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close>
+    by (simp add: nsustrong_convergence_D) 
   moreover have \<open>inverse ((*f2* X) N x) \<approx> (*f2* (\<lambda>n t. inverse (X n t))) N x\<close>
   proof-                            
     have \<open>\<forall> NN. \<forall> xx. inverse ( X NN xx) = ( (\<lambda>n t. inverse (X n t))) NN xx\<close>
@@ -438,13 +438,13 @@ proof(rule nsustrong_convergence_I)
     by (meson approx_inverse approx_sym approx_trans2)    
 qed
 
-lemma nsustrong_convergence_norm: \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a \<Longrightarrow>
- (\<lambda>n. (\<lambda> t. norm (X n t))) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S (\<lambda> t. norm (a t))\<close>
+lemma nsustrong_convergence_norm: \<open>X \<midarrow>ustrong\<rightarrow>  a \<Longrightarrow>
+ (\<lambda>n. (\<lambda> t. norm (X n t))) \<midarrow>ustrong\<rightarrow> (\<lambda> t. norm (a t))\<close>
 proof(rule nsustrong_convergence_I)
   fix N and x::\<open>'a star\<close>
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow>  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
   have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using  \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+    using  \<open>X \<midarrow>ustrong\<rightarrow>  a\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
       nsustrong_convergence_D by blast
   moreover have  \<open>hnorm ((*f2* X) N x) \<approx> (*f2* (\<lambda>n t. norm (X n t))) N x\<close>
   proof-
@@ -517,15 +517,15 @@ proof
   qed
 qed
 
-lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b
+lemma nsustrong_convergence_unique: "X \<midarrow>ustrong\<rightarrow> a \<Longrightarrow> X \<midarrow>ustrong\<rightarrow> b
  \<Longrightarrow> linear a  \<Longrightarrow> linear b \<Longrightarrow> a = b"
 proof-
-  assume \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close> and \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
+  assume \<open>X \<midarrow>ustrong\<rightarrow> a\<close> and \<open>X \<midarrow>ustrong\<rightarrow> b\<close> and \<open>linear a\<close> and \<open>linear b\<close>
   have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S a\<close>
+    using \<open>X \<midarrow>ustrong\<rightarrow> a\<close>
     by (simp add: nsustrong_convergence_D)
   moreover have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* X) N x \<approx> (*f* b) x\<close>
-    using \<open>X \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S b\<close>
+    using \<open>X \<midarrow>ustrong\<rightarrow> b\<close>
     by (simp add: nsustrong_convergence_D)
   ultimately have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>
     by (simp add: approx_monad_iff)
@@ -548,200 +548,9 @@ qed
 
 lemma nsustrong_convergence_iff:
   fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
-  shows "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l)"
-proof
-  assume *: "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
-  show "(\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
-  proof (rule nsustrong_convergence_I)
-    fix N and x::\<open>'a star\<close>
-    assume "N \<in> HNatInfinite" and \<open>hnorm x = 1\<close>
-    hence "(*f2* f) (N + 1) x \<approx> (*f* l) x"
-      by (simp add: HNatInfinite_add nsustrong_convergence_D *)
-    moreover have \<open>(*f2* (\<lambda> n. f (Suc n))) N x = (*f2* f) (N + 1) x\<close>
-    proof-
-      have \<open>\<forall> NN. \<forall> xx. (\<lambda> n. f (Suc n)) NN xx =  f (NN + 1) xx\<close>
-        by simp
-      hence \<open>\<forall> NN. \<forall> xx. (*f2* (\<lambda> n. f (Suc n))) NN xx =  (*f2* f) (NN + 1) xx\<close>
-        by transfer
-      thus ?thesis
-        by simp 
-    qed 
-    ultimately show \<open>(*f2* (\<lambda>k. f (Suc k))) N x \<approx> (*f* l) x\<close> by simp
-  qed
-next
-  assume *: "(\<lambda>n. f(Suc n)) \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
-  show  "f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l"
-  proof (rule nsustrong_convergence_I)
-    fix N and x::\<open>'a star\<close>
-    assume "N \<in> HNatInfinite" and \<open>hnorm x = 1\<close>
-    hence "(*f2* (\<lambda>n. f (Suc n))) (N - 1) x \<approx> (*f* l) x"
-      using * HNatInfinite_diff nsustrong_convergence_D by fastforce
-    moreover have \<open>(*f2* (\<lambda>n. (f (Suc n) ))) (N - 1) x = (*f2* f) N x\<close>
-    proof-
-      have \<open>\<forall> NN. \<forall> xx.  NN \<ge> 1 \<longrightarrow> (\<lambda>n. (f (Suc n) )) (NN - 1) xx =  f NN xx\<close>
-        by simp
-      hence \<open>\<forall> NN. \<forall> xx.  NN \<ge> 1 \<longrightarrow> (*f2* (\<lambda>n. (f (Suc n)))) (NN - 1) xx =  (*f2* f) NN xx\<close>
-        by transfer
-      thus ?thesis
-        using \<open>N \<in> HNatInfinite\<close> one_le_HNatInfinite by auto 
-    qed
-    ultimately show "(*f2* f) N x \<approx> (*f* l) x"
-      by simp
-  qed
-qed
-
-lemma ustrong_convergence_nsustrong_convergence:
-  fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
-  assumes \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-  shows \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
-proof (rule nsustrong_convergence_I)
-  fix N and x::\<open>'a star\<close>
-  assume \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
-  have \<open>(*f2* f) N x - (*f* l) x \<in> Infinitesimal\<close>
-  proof (rule InfinitesimalI2)
-    fix r :: real
-    assume \<open>0 < r\<close>
-    have \<open>\<exists> no. \<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
-      using \<open>f \<midarrow>ustrong\<rightarrow> l\<close>  \<open>0 < r\<close> ustrong_convergence_def by auto 
-    then obtain no where \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r\<close>
-      by blast
-    hence \<open>\<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm ( f n x - l x) < r\<close>
-      by blast
-    hence \<open>\<forall> n \<ge> hypnat_of_nat no. \<forall> x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close>
-      by transfer
-    thus \<open>hnorm ((*f2* f) N x- (*f* l) x) < hypreal_of_real r\<close>
-      using star_of_le_HNatInfinite \<open>N \<in> HNatInfinite\<close>
-      by (simp add: \<open>hnorm x = 1\<close>)
-  qed
-  thus \<open>(*f2* f) N x \<approx>  (*f* l) x\<close>
-    by (simp only: approx_def)
-qed
-
-lemma ustrong_convergence_I: \<open>(\<And>r. 0 < r \<Longrightarrow>
-\<exists> no. \<forall> n \<ge> no. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < r) \<Longrightarrow> f \<midarrow>ustrong\<rightarrow> l\<close>
-  for l :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector"
-  by (simp add: ustrong_convergence_def)
-
-lemma nsustrong_convergence_ustrong_convergence:
-  fixes l::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
-  assumes \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
-  shows \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-proof (rule ustrong_convergence_I)
-  fix r :: real
-  assume \<open>r > (0::real)\<close>
-  from \<open>f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S l\<close>
-  have \<open>\<forall>n\<in>HNatInfinite. 
-  \<forall>x. hnorm x = 1 \<longrightarrow> (*f2* f) n x \<approx> (*f* l) x\<close>
-    unfolding nsustrong_convergence_def by blast
-  hence \<open>\<forall>n\<in>HNatInfinite.
-       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
-    by (simp add: InfinitesimalD2 Infinitesimal_approx_minus \<open>0 < r\<close>)
-  have \<open>\<exists> no. \<forall>n \<ge> no.
-       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
-  proof-
-    have \<open>n \<ge> whn \<Longrightarrow>
-       \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
-      for n
-      using HNatInfinite_upward_closed HNatInfinite_whn \<open>\<forall>n\<in>HNatInfinite. \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close> by blast     
-    thus ?thesis by blast
-  qed
-  thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall>x. norm x = 1 \<longrightarrow> norm ( f n x - l x ) < r\<close>
-    by transfer
-qed
-
-proposition ustrong_convergence_ustrong_convergence_iff:
-  \<open>f \<midarrow>ustrong\<rightarrow> L \<longleftrightarrow> f \<midarrow>ustrong\<rightarrow>\<^sub>N\<^sub>S L\<close>
-  using nsustrong_convergence_ustrong_convergence ustrong_convergence_nsustrong_convergence by blast
-
-subsection \<open>Nonstandard analog of Cauchy property on the unit sphere \<close>
-
-definition uNSCauchy::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>uNSCauchy f \<longleftrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
-    \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x )\<close> 
-
-lemma Cauchy_uNSCauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>uCauchy f\<close>
-  shows \<open>uNSCauchy f\<close>
-proof-
-  from \<open>uCauchy f\<close>
-  have \<open>\<forall>e>0. \<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K.
-     \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-    unfolding uCauchy_def
-    by blast
-  hence \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x \<approx> (*f2* f) M x\<close>
-    for N M x
-  proof-
-    assume \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>hnorm x = 1\<close>
-    have \<open>e \<in> \<real> \<Longrightarrow>  e > 0 \<Longrightarrow> hnorm ((*f2* f) N x - (*f2* f) M x) < e\<close>
-      for e
-    proof-
-      assume \<open>e \<in> \<real>\<close> and \<open>e > 0\<close>
-      have \<open>\<exists> d. e = hypreal_of_real d\<close>
-        using  \<open>e \<in> \<real>\<close>
-        by (simp add: SReal_iff)
-      then obtain d where \<open>e = hypreal_of_real d\<close>
-        by blast
-      have \<open>d > 0\<close> using \<open>e = hypreal_of_real d\<close> \<open>e > 0\<close>
-        by simp
-      have \<open>\<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < d\<close>
-        by (simp add: \<open>0 < d\<close> \<open>\<forall>e>0. \<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>)
-      then obtain K::nat where \<open>\<forall>m\<ge>K. \<forall>n\<ge>K. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < d\<close>
-        by blast
-      hence \<open>\<forall>m \<ge> hypnat_of_nat K. \<forall>n \<ge> hypnat_of_nat K. 
-          \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) m x - (*f2* f) n x) < hypreal_of_real d\<close>
-        by transfer
-      hence \<open>\<forall>m \<ge> hypnat_of_nat K. \<forall>n \<ge> hypnat_of_nat K. 
-          \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) m x - (*f2* f) n x) < e\<close>
-        using  \<open>e = hypreal_of_real d\<close> by blast
-      hence \<open>\<forall>x. hnorm x = 1 \<longrightarrow> hnorm ((*f2* f) N x - (*f2* f) M x) < e\<close>
-        using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close>
-        by (simp add: star_of_le_HNatInfinite) 
-      thus ?thesis using \<open>hnorm x = 1\<close> by blast
-    qed
-    thus ?thesis
-      using InfinitesimalI bex_Infinitesimal_iff by auto 
-  qed
-  thus ?thesis
-    by (simp add: uNSCauchy_def) 
-qed
-
-lemma uNSCauchy_Cauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>uNSCauchy f\<close>
-  shows \<open>uCauchy f\<close>
-proof-
-  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-    for e
-  proof-
-    assume \<open>e>0\<close>
-    have \<open>\<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
-      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) \<in> Infinitesimal\<close>
-      using Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms uNSCauchy_def by blast
-    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<forall>N\<in>HNatInfinite. \<forall>M\<in>HNatInfinite. 
-      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
-      by (simp add: Infinitesimal_less_SReal2)
-    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<forall>N \<ge> whn. \<forall> M \<ge> whn. 
-      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
-      using HNatInfinite_upward_closed HNatInfinite_whn by blast
-    hence \<open>\<forall>e\<in>\<real>. e > 0 \<longrightarrow> ( \<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
-      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < e )\<close>
-      by blast
-    hence \<open>\<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
-      \<forall>x. hnorm x = 1 \<longrightarrow> hnorm ( (*f2* f) N x - (*f2* f) M x ) < hypreal_of_real e\<close>
-      by (simp add: \<open>0 < e\<close>)
-    thus \<open>\<exists> K. \<forall>N \<ge> K. \<forall> M \<ge> K. 
-      \<forall>x. norm x = 1 \<longrightarrow> norm ( f N x - f M x ) < e\<close>
-      by transfer
-  qed
-  thus ?thesis unfolding uCauchy_def by blast
-qed
-
-proposition Cauchy_uNSCauchy_iff:
-  \<open>uCauchy f \<longleftrightarrow> uNSCauchy f\<close>
-  using Cauchy_uNSCauchy uNSCauchy_Cauchy by auto
-
+  shows "((\<lambda>n. f (Suc n)) \<midarrow>ustrong\<rightarrow> l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow> l)"
+  unfolding ustrong_convergence_def
+  using filterlim_sequentially_Suc by auto
 
 
 end
