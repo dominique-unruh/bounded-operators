@@ -22,6 +22,7 @@ theory Uniform_Convergence
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Operator_Norm"
     "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
+    "HOL-Analysis.Uniform_Limit"
 begin
 
 chapter \<open>General case\<close>
@@ -35,10 +36,6 @@ abbreviation uniform_convergence_abbr::
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
   where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_convergence S f l )\<close>
-
-definition uniformCauchy::
-  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow> 'b::metric_space)) \<Rightarrow> bool\<close>
-  where \<open>uniformCauchy S f = ( \<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x\<in>S. dist (f m x) (f n x) < e )\<close>
 
 subsection \<open>Nonstandard analog of uniform convergence\<close>
 
@@ -136,24 +133,27 @@ qed
 
 subsection \<open>Nonstandard analog of Cauchy property uniformly\<close>
 
-lemma uniformCauchy_norm_I:
+lemma uniformly_Cauchy_on_norm_I:
   fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S :: \<open>'a set\<close> 
   assumes \<open>\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x\<in>S. norm (f m x - f n x) < e\<close>
-  shows \<open>uniformCauchy S f\<close>
-  by (simp add: assms dist_norm uniformCauchy_def)
-  
-lemma uniformCauchy_norm_D:
-  fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close> 
-  assumes \<open>uniformCauchy S f\<close>
-  shows \<open>\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x\<in>S. norm (f m x - f n x) < e\<close>
-  using assms dist_norm
-  unfolding uniformCauchy_def
+  shows \<open>uniformly_Cauchy_on S f\<close>
+  using assms dist_norm 
+  unfolding uniformly_Cauchy_on_def
   by metis
 
-lemma nsuniformCauchy_D:
+
+lemma uniformly_Cauchy_on_norm_D:
+  fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close> 
+  assumes \<open>uniformly_Cauchy_on S f\<close>
+  shows \<open>\<forall> e > 0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x\<in>S. norm (f m x - f n x) < e\<close>
+  using assms dist_norm
+  unfolding uniformly_Cauchy_on_def
+  by metis
+
+lemma nsuniformly_Cauchy_on_D:
   fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close> 
     and N::hypnat and x::\<open>'a star\<close>
-  assumes  \<open>uniformCauchy S f\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* S\<close>
+  assumes  \<open>uniformly_Cauchy_on S f\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* S\<close>
   shows \<open>(*f2* f) N x \<approx> (*f2* f) M x\<close>
 proof-
   have \<open>(*f2* f) N x - (*f2* f) M x \<in> Infinitesimal\<close>
@@ -161,8 +161,8 @@ proof-
     fix r :: real
     assume \<open>0 < r\<close>
     have \<open>\<exists> no. \<forall> n \<ge> no. \<forall> m \<ge> no. \<forall> x\<in>S. norm (f n x - f m x) < r\<close>
-      using \<open>uniformCauchy S f\<close> \<open>0 < r\<close>
-      by (simp add: uniformCauchy_norm_D)      
+      using \<open>uniformly_Cauchy_on S f\<close> \<open>0 < r\<close>
+      by (simp add: uniformly_Cauchy_on_norm_D)      
     then obtain no where \<open>\<forall> n \<ge> no. \<forall> m \<ge> no. \<forall> x\<in>S. norm (f n x - f m x) < r\<close>
       by blast
     hence \<open>\<forall> n \<ge> no. \<forall> m \<ge> no. \<forall> x\<in>S. norm (f n x - f m x) < r\<close>
@@ -179,10 +179,10 @@ proof-
 qed
 
 
-lemma nsuniformCauchy_I:
+lemma nsuniformly_Cauchy_on_I:
   fixes  f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close>
   assumes \<open>\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x\<close>
-  shows \<open>uniformCauchy S f\<close>
+  shows \<open>uniformly_Cauchy_on S f\<close>
 proof-
   have \<open>r > 0 \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. \<forall> m\<ge>N. \<forall>x\<in>S. norm (f n x - f m x) < r\<close>
     for r::real
@@ -207,7 +207,7 @@ proof-
       by transfer
   qed
   thus ?thesis
-    by (simp add: uniformCauchy_norm_I)
+    by (simp add: uniformly_Cauchy_on_norm_I)
 qed
 
 
