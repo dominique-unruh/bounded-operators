@@ -15,7 +15,6 @@ theory NSA_Miscellany
     "HOL-Analysis.Operator_Norm"
 begin
 
-
 lemma nsbounded_existencial:
   \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
   for S::\<open>('a::metric_space) set\<close>
