@@ -11,7 +11,7 @@ Reactivate the notation locally via "includes nsa_notation" in a lemma statement
 (Or sandwich a declaration using that notation between "unbundle nsa_notation ... unbundle no_nsa_notation".)
 \<close>
 
-(* TODO: restore Transfer.transfer method via short name *)
+(* TODO: restore transfer method via short name *)
 
 (* TODO: add any syntax introduced by HOL-Nonstandard_Analysis both here and in the bundle below *)
 bundle no_nsa_notation begin
@@ -24,7 +24,7 @@ end
 
 unbundle no_nsa_notation
 
-\<comment> \<open>This restores the method Transfer.transfer under the name transfer. 
+\<comment> \<open>This restores the method transfer under the name transfer. 
     Use StarDef.transfer for the transfer method for nonstandard analysis.\<close>
 method_setup transfer = \<open>
   let val free = Args.context -- Args.term >> (fn (_, Free v) => v | (ctxt, t) =>

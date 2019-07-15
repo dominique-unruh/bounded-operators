@@ -53,27 +53,27 @@ lift_definition scaleR_complexification :: "real \<Rightarrow> 'a complexificati
   by blast
 
 instance apply intro_classes
-          apply Transfer.transfer 
+          apply transfer 
           apply simp
-         apply Transfer.transfer 
+         apply transfer 
          apply simp
-        apply Transfer.transfer 
+        apply transfer 
         apply simp
-       apply Transfer.transfer 
+       apply transfer 
        apply simp
-      apply Transfer.transfer 
+      apply transfer 
       apply simp
-     apply Transfer.transfer 
+     apply transfer 
      apply simp
-     apply Transfer.transfer 
+     apply transfer 
      apply (simp add: scaleR_add_right)
-    apply Transfer.transfer 
+    apply transfer 
     apply simp
-    apply Transfer.transfer 
+    apply transfer 
     apply (simp add: scaleR_add_left)
-   apply Transfer.transfer 
+   apply transfer 
    apply simp
-  apply Transfer.transfer
+  apply transfer
   apply simp
   done
 end
@@ -84,22 +84,22 @@ lift_definition prodC::\<open>complex \<Rightarrow> ('a::real_vector) complexifi
 
 lemma prodC_one:
 \<open>(1::complex) \<cdot>\<^sub>C z = z\<close>
-  apply Transfer.transfer
+  apply transfer
   by simp
 
 lemma prodC_add_right:
 \<open>a \<cdot>\<^sub>C (x + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y\<close>
-  apply Transfer.transfer
+  apply transfer
   by (simp add: scaleR_add_right)
 
 lemma prodC_add_left:
 \<open>(a + b) \<cdot>\<^sub>C x = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x\<close>
-  apply Transfer.transfer
+  apply transfer
   by (simp add: add.commute add.left_commute add_diff_eq scaleR_add_left)
 
 lemma prodC_prodC:
 \<open>a \<cdot>\<^sub>C b \<cdot>\<^sub>C x = (a * b) \<cdot>\<^sub>C x\<close>
-  apply Transfer.transfer
+  apply transfer
   apply auto
 proof-
   fix a b :: complex and  aa ba :: 'a 
@@ -122,7 +122,7 @@ qed
 lemma complex_of_real_prod:
   fixes a::real 
   shows \<open> a *\<^sub>R x = (complex_of_real a) \<cdot>\<^sub>C x\<close>
-  apply Transfer.transfer
+  apply transfer
   by simp
 
 (* NEW *)
@@ -136,33 +136,33 @@ instance
   show "r *\<^sub>R (x::'a complexification) = complex_of_real r *\<^sub>C x"
     for r :: real
       and x :: "'a complexification"
-    apply Transfer.transfer
+    apply transfer
     by (rule complex_of_real_prod)
 
   show "a *\<^sub>C ((x::'a complexification) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
       and x :: "'a complexification"
       and y :: "'a complexification"
-    apply Transfer.transfer
+    apply transfer
     by (rule prodC_add_right)
 
   show "(a + b) *\<^sub>C (x::'a complexification) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "'a complexification"
-    apply Transfer.transfer
+    apply transfer
     by (rule prodC_add_left)
 
   show "a *\<^sub>C b *\<^sub>C (x::'a complexification) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "'a complexification"
-    apply Transfer.transfer
+    apply transfer
     by (rule prodC_prodC)
 
   show "1 *\<^sub>C (x::'a complexification) = x"
     for x :: "'a complexification"
-    apply Transfer.transfer
+    apply transfer
     by (rule prodC_one)
 qed
 end

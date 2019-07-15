@@ -55,43 +55,43 @@ instance
 proof      
   fix a b c :: \<open>('a, 'b) rbounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
-    apply Transfer.transfer by auto
+    apply transfer by auto
   fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
   show \<open>a + b = b + a\<close>
-    apply Transfer.transfer
+    apply transfer
     by (simp add: linordered_field_class.sign_simps(2))
 
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>0 + a = a\<close>
-    apply Transfer.transfer by simp
+    apply transfer by simp
 
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>-a + a = 0\<close>
-    apply Transfer.transfer
+    apply transfer
     by simp
 
   fix a b :: \<open>('a, 'b) rbounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply Transfer.transfer
+    apply transfer
     by auto
   fix a::real and x y :: \<open>('a, 'b) rbounded\<close>
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
-    apply Transfer.transfer
+    apply transfer
     by (simp add: scaleR_add_right)
     
   fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
-    apply Transfer.transfer
+    apply transfer
     by (simp add: scaleR_add_left)
 
   fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
-    apply Transfer.transfer
+    apply transfer
     by simp
 
   fix x :: \<open>('a, 'b) rbounded\<close>
   show \<open>1 *\<^sub>R x = x\<close>
-    apply Transfer.transfer
+    apply transfer
     by simp
 qed
 end
@@ -116,20 +116,20 @@ definition open_rbounded :: \<open>(('a, 'b) rbounded) set \<Rightarrow> bool\<c
 
 instance
   apply intro_classes
-        apply Transfer.transfer
+        apply transfer
         apply auto
-         apply Transfer.transfer
+         apply transfer
          apply auto
         apply (simp add: Real_Bounded_Operators.uniformity_rbounded_def)
        apply (simp add: open_rbounded_def)
       apply (simp add: open_rbounded_def)
-     apply Transfer.transfer
+     apply transfer
   using onorm_pos_lt apply fastforce
-    apply Transfer.transfer
+    apply transfer
     apply (simp add: onorm_zero)
-   apply Transfer.transfer
+   apply transfer
    apply (simp add: onorm_triangle)
-  apply Transfer.transfer
+  apply transfer
   using onorm_scaleR by blast 
 end
 

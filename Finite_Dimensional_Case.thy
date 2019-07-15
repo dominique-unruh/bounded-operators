@@ -39,7 +39,7 @@ lift_definition vec_to_ell2 :: \<open>complex vec \<Rightarrow> nat ell2\<close>
 then (vec_index v) i
 else 0)
 )\<close>
-  apply Transfer.transfer
+  apply transfer
 proof auto
   fix n :: nat and f :: \<open>nat \<Rightarrow> complex\<close>
   define F where \<open>F i = (if i < n then f i else 0)\<close> 
@@ -114,7 +114,7 @@ lemma ell2_to_vec_well_defined_dim:
   unfolding dim_vec_def 
   apply auto
   unfolding ell2_to_vec_def id_def fun_to_ell2_def
-  apply Transfer.transfer
+  apply transfer
   apply auto
   done
 
@@ -124,7 +124,7 @@ lemma ell2_to_vec_well_defined_index:
   unfolding vec_index_def 
   apply auto
   unfolding ell2_to_vec_def id_def fun_to_ell2_def
-  apply Transfer.transfer
+  apply transfer
   apply auto
   unfolding mk_vec_def
   apply auto
@@ -155,7 +155,7 @@ text \<open>The embedding for vectors is additive\<close>
 lemma vec_to_ell2_add:
   fixes x y :: \<open>complex vec\<close> 
   shows \<open>dim_vec x = dim_vec y \<Longrightarrow> vec_to_ell2 (x + y) = vec_to_ell2 x + vec_to_ell2 y\<close>
-  apply Transfer.transfer
+  apply transfer
   by auto
 
 
@@ -163,7 +163,7 @@ text \<open>The embedding for vectors is complex-homogeneous\<close>
 lemma vec_to_ell2_smult:
   fixes x :: \<open>complex vec\<close> and r :: complex 
   shows \<open>vec_to_ell2 (r \<cdot>\<^sub>v x) = r *\<^sub>C (vec_to_ell2 x)\<close>
-  apply Transfer.transfer
+  apply transfer
   by auto
 
 text\<open>The embedding of a complex-linear function (defined on an n-dimensional space) 
@@ -347,7 +347,7 @@ lemma ell2_to_vec_smult:
   shows \<open>ell2_to_vec n (c *\<^sub>C x) = c \<cdot>\<^sub>v (ell2_to_vec n x)\<close>
   unfolding ell2_to_vec_def fun_to_ell2_def smult_vec_def
   apply auto
-  apply Transfer.transfer
+  apply transfer
   apply auto
   unfolding mk_vec_def
   by auto
@@ -363,7 +363,7 @@ proof-
     for i::nat
     unfolding vec_def mk_vec_def
     apply auto
-    apply Transfer.transfer
+    apply transfer
   proof-
     fix j n i :: nat
     assume \<open>j < n\<close>
@@ -718,7 +718,7 @@ proof
           else undef_vec (i - Suc n))) = dim_vec v\<close>
               using \<open>dim_vec v = Suc n\<close>
               apply auto
-              apply Transfer.transfer
+              apply transfer
               unfolding dim_vec_def
               apply auto
             proof-
@@ -774,7 +774,7 @@ proof
               using \<open>dim_vec v = Suc n\<close>
               unfolding vec_index_def
               apply auto
-              apply Transfer.transfer
+              apply transfer
               unfolding dim_vec_def id_def map_fun_def mk_vec_def
               apply auto
             proof-
@@ -990,7 +990,7 @@ proof-
                                (Suc n,
                                 \<lambda>i. if i < Suc n then Rep_ell2 x i
                                     else undef_vec (i - Suc n)))) i\<close>
-            apply Transfer.transfer
+            apply transfer
           proof-
             fix x::\<open>nat \<Rightarrow> complex\<close> and i n::nat
             assume \<open>i < n\<close> and \<open>has_ell2_norm x\<close>

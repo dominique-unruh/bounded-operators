@@ -785,14 +785,14 @@ section \<open>Instantiation of rbounded as a Banach space\<close>
 
 lemma ONORM_tendsto:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
-  apply Transfer.transfer
+  apply transfer
 proof
   show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) rbounded) \<Longrightarrow> e > 0 \<Longrightarrow>
  \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) rbounded) < e"   
     for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
       and l :: "('a, 'b) rbounded"
       and e :: real
-    apply Transfer.transfer
+    apply transfer
     apply auto
   proof-
     fix f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
@@ -830,7 +830,7 @@ proof-
     using  Real_Vector_Spaces.tendsto_dist_iff
     by blast
   hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
-    apply Transfer.transfer
+    apply transfer
     apply auto
     unfolding onorm_convergence_def
     by simp
@@ -853,7 +853,7 @@ proof
     proof-
       assume \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
       hence \<open>\<exists>l. bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
-        apply Transfer.transfer
+        apply transfer
         apply auto
         using completeness_real_bounded oCauchy_def onorm_convergence_def
         by blast 
@@ -864,7 +864,7 @@ proof
         using \<open>bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close> 
         by blast
       hence \<open>\<exists> L. Rep_rbounded L = l\<close>
-        apply Transfer.transfer
+        apply transfer
         by auto
       then obtain L::\<open>('a, 'b) rbounded\<close> where \<open>Rep_rbounded L = l\<close> by blast
       have \<open>(\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>

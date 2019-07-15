@@ -322,17 +322,17 @@ lift_definition scaleC_ell2 :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a e
   by (rule ell2_norm_smult)
 
 instance apply intro_classes
-           apply (Transfer.transfer; rule ext; simp)
-           apply (Transfer.transfer; rule ext; simp)
-          apply (Transfer.transfer; rule ext; simp)
-         apply (Transfer.transfer; rule ext; simp)
-        apply (Transfer.transfer; rule ext; simp)
-       apply (Transfer.transfer; rule ext; simp)
-      apply (Transfer.transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
-     apply (Transfer.transfer; rule ext; simp add: distrib_left)
-    apply (Transfer.transfer; rule ext; simp add: distrib_right)
-   apply (Transfer.transfer; rule ext; simp)
-  by (Transfer.transfer; rule ext; simp)
+           apply (transfer; rule ext; simp)
+           apply (transfer; rule ext; simp)
+          apply (transfer; rule ext; simp)
+         apply (transfer; rule ext; simp)
+        apply (transfer; rule ext; simp)
+       apply (transfer; rule ext; simp)
+      apply (transfer; subst ab_group_add_class.ab_diff_conv_add_uminus; simp)
+     apply (transfer; rule ext; simp add: distrib_left)
+    apply (transfer; rule ext; simp add: distrib_right)
+   apply (transfer; rule ext; simp)
+  by (transfer; rule ext; simp)
 end
 
 
@@ -344,10 +344,10 @@ definition [code del]: "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). 
 definition [code del]: "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
 instance apply intro_classes
   unfolding dist_ell2_def sgn_ell2_def uniformity_ell2_def open_ell2_def apply simp_all
-     apply Transfer.transfer apply (fact ell2_norm_0)
-    apply Transfer.transfer apply (fact ell2_norm_triangle)
-   apply Transfer.transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
-  apply Transfer.transfer by (simp add: ell2_norm_smult(2)) 
+     apply transfer apply (fact ell2_norm_0)
+    apply transfer apply (fact ell2_norm_triangle)
+   apply transfer apply (subst ell2_norm_smult) apply (simp_all add: abs_complex_def)[2]
+  apply transfer by (simp add: ell2_norm_smult(2)) 
 end
 
 
@@ -358,7 +358,7 @@ instance
 proof standard
   fix x y z :: "'a ell2" fix c :: complex
   show "cinner x y = cnj (cinner y x)"
-  proof Transfer.transfer
+  proof transfer
     fix x y :: "'a\<Rightarrow>complex" assume "has_ell2_norm x" and "has_ell2_norm y"
     have "(\<Sum>\<^sub>ai. cnj (x i) * y i) = (\<Sum>\<^sub>ai. cnj (cnj (y i) * x i))"
       by (metis complex_cnj_cnj complex_cnj_mult mult.commute)
@@ -368,7 +368,7 @@ proof standard
   qed
 
   show "cinner (x + y) z = cinner x z + cinner y z"
-  proof Transfer.transfer
+  proof transfer
     fix x y z :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
     then have cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
@@ -391,7 +391,7 @@ proof standard
   qed
 
   show "cinner (c *\<^sub>C x) y = cnj c * cinner x y"
-  proof Transfer.transfer
+  proof transfer
     fix x y :: "'a \<Rightarrow> complex" and c :: complex
     assume "has_ell2_norm x"
     then have cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
@@ -407,7 +407,7 @@ proof standard
   qed
 
   show "0 \<le> cinner x x"
-  proof Transfer.transfer
+  proof transfer
     fix x :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
     then have sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
@@ -425,7 +425,7 @@ proof standard
   qed
 
   show "(cinner x x = 0) = (x = 0)"
-  proof (Transfer.transfer, auto)
+  proof (transfer, auto)
     fix x :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
     then have cmod_x2: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
@@ -453,7 +453,7 @@ proof standard
   qed
 
   show "norm x = sqrt (cmod (cinner x x))"
-  proof Transfer.transfer 
+  proof transfer 
     fix x :: "'a \<Rightarrow> complex" 
     assume x: "has_ell2_norm x"
     then have sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
@@ -477,7 +477,7 @@ qed
 end
 
 lemma norm_ell2_component: "norm (Rep_ell2 x i) \<le> norm x"
-proof Transfer.transfer
+proof transfer
   fix x :: "'a \<Rightarrow> complex" and i
   assume has: "has_ell2_norm x"
   have "cmod (x i) = L2_set (cmod \<circ> x) {i}" by auto
@@ -1056,7 +1056,7 @@ proof-
           by (meson sum_strict_mono)
         hence  \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
              (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < (1/(card S))^2*(card S)\<close>
-          by (simp add: ordered_field_class.sign_simps(24))
+          by (simp add: ordered_field_class.sign_simps)
         hence \<open>\<forall> S::'a set. finite S \<and> S \<noteq> {} \<longrightarrow>
             (\<Sum> x \<in> S. (cmod (l x - (a (NS S)) x))^2) < 1/(card S)\<close>
           by (metis (no_types, lifting) mult_of_nat_commute power_one_over real_divide_square_eq semiring_normalization_rules(29) times_divide_eq_right)            
@@ -1775,7 +1775,7 @@ proof
   assume cauchy: "Cauchy (X::nat \<Rightarrow> 'a ell2)"
   then have "\<exists>l. X \<longlonglongrightarrow> l"
     unfolding LIMSEQ_def Cauchy_def dist_norm
-    apply Transfer.transfer apply simp
+    apply transfer apply simp
     apply (rule completeness_ell2)
     by auto
   thus "convergent (X::nat \<Rightarrow> 'a ell2)"
@@ -1784,7 +1784,7 @@ qed
 end
 
 lemma ell2_ket[simp]: "norm (ket i) = 1"
-  apply Transfer.transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
+  apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
   apply (rule cSUP_eq_maximum)
    apply (rule_tac x="{i}" in bexI)
     apply auto
@@ -1849,7 +1849,7 @@ subclass (in card2) not_singleton
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
-    apply Transfer.transfer
+    apply transfer
     thm one_neq_zero
     by (meson one_neq_zero)
   thus "CARD('a ell2) \<noteq> 1"
@@ -1857,7 +1857,7 @@ proof standard
 qed
 
 lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
-proof Transfer.transfer 
+proof transfer 
   have "card {0} \<noteq> CARD('a)"
     using not_singleton_card by auto
   then show "{0::'a} \<noteq> UNIV"
@@ -1866,22 +1866,22 @@ qed
 
 instantiation linear_space :: (chilbert_space)order begin
 instance apply intro_classes
-     apply Transfer.transfer apply (simp add: subset_not_subset_eq)
-    apply Transfer.transfer apply simp
-   apply Transfer.transfer apply simp
-  apply Transfer.transfer by simp
+     apply transfer apply (simp add: subset_not_subset_eq)
+    apply transfer apply simp
+   apply transfer apply simp
+  apply transfer by simp
 end
 
 instantiation linear_space :: (chilbert_space)order_top begin
 instance apply intro_classes
-  apply Transfer.transfer by simp
+  apply transfer by simp
 end
 
 instantiation linear_space :: (chilbert_space)order_bot begin
 lift_definition bot_linear_space :: "'a linear_space" is "{0::'a}" 
   by (fact is_subspace_0)
 instance apply intro_classes
-  apply Transfer.transfer 
+  apply transfer 
   using is_subspace_0 ortho_bot ortho_leq by blast
 end
 
@@ -1891,13 +1891,13 @@ lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
 instantiation linear_space :: (chilbert_space)ab_semigroup_add begin
 instance
   apply intro_classes
-   apply Transfer.transfer
+   apply transfer
   using is_closed_subspace_asso
   unfolding closed_sum_def 
   unfolding Minkoswki_sum_def
    apply blast
 
-  apply Transfer.transfer
+  apply transfer
   using is_closed_subspace_comm
   unfolding closed_sum_def 
   unfolding Minkoswki_sum_def
@@ -1906,7 +1906,7 @@ instance
 end
 
 instantiation linear_space :: (chilbert_space)ordered_ab_semigroup_add begin
-instance apply intro_classes apply Transfer.transfer
+instance apply intro_classes apply transfer
   using is_closed_subspace_ord 
   by (smt Collect_mono_iff closure_mono subset_iff)
 
@@ -1914,7 +1914,7 @@ end
 
 instantiation linear_space :: (chilbert_space)comm_monoid_add begin
 instance apply intro_classes
-  apply Transfer.transfer
+  apply transfer
   using is_closed_subspace_zero
   unfolding closed_sum_def
   unfolding Minkoswki_sum_def
@@ -1925,20 +1925,20 @@ instantiation linear_space :: (chilbert_space)semilattice_sup begin
 instance proof intro_classes
   fix x y z :: "'a linear_space"
   show "x \<le> x \<squnion> y"
-    apply Transfer.transfer
+    apply transfer
     using is_closed_subspace_universal_inclusion_left
     unfolding closed_sum_def
     unfolding Minkoswki_sum_def
     by blast
   show "y \<le> x \<squnion> y"
-    apply Transfer.transfer
+    apply transfer
     using is_closed_subspace_universal_inclusion_right
     unfolding closed_sum_def
     unfolding Minkoswki_sum_def
     by blast
 
   show "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y \<squnion> z \<le> x"
-    apply Transfer.transfer
+    apply transfer
     using is_closed_subspace_universal_inclusion_inverse
     unfolding closed_sum_def
     unfolding Minkoswki_sum_def
@@ -1955,9 +1955,9 @@ end
 
 instantiation linear_space :: (chilbert_space)semilattice_inf begin
 instance apply intro_classes
-    apply Transfer.transfer apply simp
-   apply Transfer.transfer apply simp
-  apply Transfer.transfer by simp
+    apply transfer apply simp
+   apply transfer apply simp
+  apply transfer by simp
 end
 
 instantiation linear_space :: (chilbert_space)lattice begin
@@ -1971,11 +1971,11 @@ instantiation linear_space :: (chilbert_space)complete_lattice begin
 instance proof intro_classes
   fix x z :: "'a linear_space" and A
   show Inf_le: "x \<in> A \<Longrightarrow> Inf A \<le> x" for A and x::"'a linear_space"
-    apply Transfer.transfer by auto
+    apply transfer by auto
   show le_Inf: "(\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A" for A and z::"'a linear_space"
-    apply Transfer.transfer by auto
+    apply transfer by auto
   show "Inf {} = (top::'a linear_space)"
-    apply Transfer.transfer by auto
+    apply transfer by auto
   show "x \<le> Sup A" if "x \<in> A"
     unfolding Sup_linear_space_def 
     apply (rule le_Inf)
@@ -2006,7 +2006,7 @@ lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \
   using inf.left_commute by auto
 
 lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
-  apply Transfer.transfer
+  apply transfer
   unfolding sup_linear_space_def[symmetric] 
   using is_closed_subspace_zero
   unfolding closed_sum_def
@@ -2102,15 +2102,15 @@ qed
 
 (* TODO move *)
 lemma ortho_bot[simp]: "ortho bot = top"
-  apply Transfer.transfer by simp
+  apply transfer by simp
 
 (* TODO move *)
 lemma ortho_top[simp]: "ortho top = bot"
-  apply Transfer.transfer by simp
+  apply transfer by simp
 
 (* TODO move *)
 lemma ortho_twice[simp]: "ortho (ortho S) = S"
-  apply Transfer.transfer
+  apply transfer
   using orthogonal_complement_twice by blast 
 
 instantiation ell2 :: (enum) basis_enum begin
@@ -2175,13 +2175,13 @@ proof
   show "left_shift_ell2 (x + y) = left_shift_ell2 x + left_shift_ell2 y"
     for x :: "nat ell2"
       and y :: "nat ell2"
-    apply Transfer.transfer
+    apply transfer
     unfolding left_shift_def
     by auto
   show "left_shift_ell2 (r *\<^sub>C y) = r *\<^sub>C left_shift_ell2 y"
     for r :: complex
       and y :: "nat ell2"
-    apply Transfer.transfer
+    apply transfer
     unfolding left_shift_def
     by auto
 qed
@@ -2189,14 +2189,14 @@ qed
 lemma shift_ket:
   fixes n :: nat
   shows \<open>left_shift_ell2 (ket (Suc n)) = ket n\<close>
-  apply Transfer.transfer
+  apply transfer
   unfolding left_shift_def ket_def
   by auto
 
 
 lemma shift_ket0:
   \<open>left_shift_ell2 (ket (0::nat)) = 0\<close>
-  apply Transfer.transfer
+  apply transfer
   unfolding left_shift_def ket_def
   by auto
 
@@ -2225,7 +2225,7 @@ lemma ket_Kronecker_delta_neq:
 proof-
   assume \<open>i \<noteq> j\<close>
   have \<open>\<langle>ket i, ket j\<rangle> = (\<Sum>\<^sub>ak. cnj (if i = k then 1 else 0) * (if j = k then 1 else 0))\<close>
-    apply Transfer.transfer
+    apply transfer
     by blast
   moreover have \<open>cnj (if i = k then 1 else 0) * (if j = k then 1 else 0) = 0\<close>
     for k
