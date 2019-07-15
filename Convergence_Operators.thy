@@ -485,7 +485,9 @@ proof-
             by (simp add: False)
           have \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - s x) < e\<close>
             using \<open>f \<midarrow>ustrong\<rightarrow> s\<close>
-            unfolding ustrong_convergence_def by blast
+            unfolding ustrong_convergence_def sphere_def
+            using uniform_convergence_norm_D by fastforce
+
           hence \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. norm (f n (x  /\<^sub>R norm x) - s (x  /\<^sub>R norm x)) < e\<close>
             using  \<open>norm (x  /\<^sub>R norm x) = 1\<close> by fastforce
           thus ?thesis
@@ -621,11 +623,11 @@ proof-
           qed
           thus ?thesis by blast
         qed
-        have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm (f m x - f n x) < e\<close>
-          using \<open>uCauchy f\<close>
-          unfolding uCauchy_def
-          by blast
+        have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
+          using \<open>uCauchy f\<close> dist_norm
+          unfolding uCauchy_def uniformly_Cauchy_on_def sphere_def
+          using  mem_Collect_eq
+          by (metis (mono_tags))
         hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
                              norm (f m x - f n x) < 1\<close>
           by auto
