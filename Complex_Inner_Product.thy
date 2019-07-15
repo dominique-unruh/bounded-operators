@@ -1,5 +1,5 @@
 (*
-Authors: 
+Authors:
 
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
@@ -11,7 +11,7 @@ section \<open>Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
-    "HOL-Analysis.Inner_Product" (* "HOL-Library.LaTeXsugar" *) 
+    "HOL-Analysis.Inner_Product"  
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -33,16 +33,16 @@ setup \<open>Sign.add_const_constraint
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
-class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
+class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + 
+open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  ("\<langle>_, _\<rangle>") 
-  assumes cinner_commute: "cinner x y = cnj (cinner y x)"
-    and cinner_add_left: "cinner (x + y) z = (cinner x z) +  (cinner y z)"
-    and cinner_scaleC_left [simp]: "cinner (r *\<^sub>C x) y = (cnj r) * (cinner x y)"
-    and cinner_ge_zero [simp]: "0 \<le> cinner x x"
-    and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
-    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
+  assumes cinner_commute: "\<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    and cinner_add_left: "\<langle>x + y, z\<rangle> = \<langle>x, z\<rangle> +  \<langle>y, z\<rangle>"
+    and cinner_scaleC_left [simp]: "\<langle>r *\<^sub>C x, y\<rangle> = (cnj r) * \<langle>x, y\<rangle>"
+    and cinner_ge_zero [simp]: "0 \<le> \<langle>x, x\<rangle>"
+    and cinner_eq_zero_iff [simp]: "\<langle>x, x\<rangle> = 0 \<longleftrightarrow> x = 0"
+    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (\<langle>x, x\<rangle>))"
 begin
-
 
 lemma cinner_real: "\<langle>x, x\<rangle> \<in> \<real>"
   by (simp add: reals_zero_comparable_iff)
@@ -178,7 +178,7 @@ proof -
     unfolding r using rpos by auto
 qed
 
-lemma Cauchy_Schwarz_ineq2:
+lemma norm_cauchy_schwarz:
 includes notation_norm 
   shows "cmod \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
@@ -197,10 +197,10 @@ proof (rule power2_le_imp_le)
     by (simp add: local.norm_eq_sqrt_cinner)
 qed
 
-lemma norm_cauchy_schwarz:
+lemma norm_cauchy_schwarz2:
 includes notation_norm 
   shows "\<bar>\<langle>x , y\<rangle>\<bar> \<le> complex_of_real \<parallel>x\<parallel> * complex_of_real \<parallel>y\<parallel>"
-  using Cauchy_Schwarz_ineq2 [of x y, THEN complex_of_real_mono]
+  using norm_cauchy_schwarz [of x y, THEN complex_of_real_mono]
   unfolding abs_complex_def
   by auto
 
@@ -220,7 +220,7 @@ proof
     also have "\<dots> = 2 * abs (cinner x y)"
       unfolding abs_complex_def by simp
     also have "\<dots> \<le> 2 * complex_of_real (norm x) * complex_of_real (norm y)"
-      using norm_cauchy_schwarz
+      using norm_cauchy_schwarz2
       by (metis add_mono_thms_linordered_semiring(1) mult.assoc mult_2) 
     finally have xyyx: "cinner x y + cinner y x \<le> complex_of_real (2 * norm x * norm y)" by auto
 
@@ -247,9 +247,6 @@ proof
 qed
 
 end
-
-(* abbreviation cinner_Dirac::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex" ( "\<langle> /_/ | /_/ \<rangle> " )
-  where \<open>\<langle> x | y \<rangle> \<equiv> cinner x y\<close> *)
 
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
@@ -293,13 +290,10 @@ proof
   show "\<exists>K. \<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * K"
   proof
     show "\<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * 1"
-      by (simp add: Cauchy_Schwarz_ineq2)
+      by (simp add: norm_cauchy_schwarz)
   qed
 qed
 
-(* term bounded_bilinear
-thm bounded_bilinear.tendsto
- *)
 
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
@@ -339,7 +333,7 @@ subsection \<open>Class instances\<close>
 instantiation complex :: complex_inner
 begin
 
-definition cinner_complex_def [simp]: "cinner x y = (cnj x) * y"
+definition cinner_complex_def [simp]: "\<langle>x, y\<rangle> = (cnj x) * y"
 
 instance
 proof
@@ -411,7 +405,6 @@ next
     by (rule summable_of_complex)
 qed
 
-
 subsection \<open>Gradient derivative\<close>
 
 definition
@@ -482,17 +475,6 @@ lemma cGDERIV_inverse:
   apply (erule cGDERIV_DERIV_compose, simp)
   by (erule DERIV_inverse [folded numeral_2_eq_2])
 
-(* TODO: 
-
-lemma cGDERIV_norm:
-assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
-
-lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
-*)
-
-(* class hilbert_space = real_inner + complete_space begin
-subclass banach by standard
-end *)
 
 class chilbert_space = complex_inner + complete_space begin
 subclass cbanach by standard
@@ -533,7 +515,7 @@ proposition ParallelogramLaw:
 includes notation_norm
   fixes x y :: "'a::complex_inner"
   shows \<open>\<parallel>x+y\<parallel>^2 + \<parallel>x-y\<parallel>^2 = 2*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
-    (* Reference: Theorem 2.3 in conway2013course *)
+    \<comment> \<open>Shown in the proof of Theorem 2.3 in @{cite conway2013course}\<close> 
   by (simp add: polarization_identity_minus polarization_identity_plus)
 
 corollary ParallelogramLawVersion1:
@@ -541,7 +523,7 @@ corollary ParallelogramLawVersion1:
   fixes x :: "'a::complex_inner"
   shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
     = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
-    (* Reference: In the proof of  Theorem 2.5 in conway2013course *) 
+    \<comment> \<open>Shown in the proof of Theorem 2.5 in @{cite conway2013course}\<close> 
 proof -
   have \<open>\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2 + \<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2 
   = 2*( \<parallel>(1/2) *\<^sub>C x\<parallel>^2 +  \<parallel>(1/2) *\<^sub>C y\<parallel>^2)\<close>
@@ -568,8 +550,8 @@ qed
 
 theorem PythagoreanId:
 includes notation_norm
-  shows \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
-  (* Reference: In the proof of  Theorem 2.2 in conway2013course *)
+shows \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
+    \<comment> \<open>Shown in the proof of Theorem 2.2 in @{cite conway2013course}\<close> 
   by (simp add: polarization_identity_plus)
 
 
@@ -577,21 +559,15 @@ subsection \<open>Orthogonality\<close>
 
 definition "is_orthogonal x y = (\<langle> x, y \<rangle> = 0)"
 
-(* TODO use notation command instead of abbreviation! *)
 abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool" (infix "\<bottom>" 50)
   where \<open>x \<bottom> y \<equiv> is_orthogonal x y\<close>
 
 definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. x \<bottom> y}" 
 
-(*
-abbreviation orthogonal_complement_abbr::"('a::complex_inner) set \<Rightarrow> ('a::complex_inner) set" ("/_/\<^sub>\<bottom>")
-  where \<open>M\<^sub>\<bottom> \<equiv> (orthogonal_complement M)\<close>
-*)
-
 lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
   unfolding is_orthogonal_def apply (subst cinner_commute) by blast
 
-(* TODO reference textbook *)
+    \<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
 locale is_linear_manifold =
   fixes A::"('a::complex_vector) set"
   assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
@@ -643,7 +619,8 @@ proof-
     by (simp add: is_linear_manifold_def)
 qed
 
-(* TODO reference definition? *)
+    \<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close> 
+
 definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
@@ -845,9 +822,7 @@ qed
 
 subsection \<open>Minimum distance\<close>
 
-find_consts "'a set \<Rightarrow> ('a \<Rightarrow> bool)"
-
-(* TODO I wouldn't introduce a new constant just for notational variant *)
+(* TODO: move? *)
 definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
@@ -1133,12 +1108,11 @@ proof-
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
 
-
+    \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
 theorem ExistenceUniquenessMinDist:
   fixes M :: \<open>('a::chilbert_space) set\<close> and h :: 'a 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
-    (* Reference: Theorem 2.5 in conway2013course *)
 proof-
   include notation_norm 
   have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
@@ -1240,11 +1214,12 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+
+    \<comment> \<open>Theorem 2.6 in @{cite conway2013course}\<close> 
 theorem DistMinOrtho:
   fixes M :: \<open>('a::chilbert_space) set\<close> and h k::\<open>'a\<close> 
   assumes "is_subspace M"
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
-    (* Reference: Theorem 2.6 in conway2013course *)
 proof-
   include notation_norm
   have \<open>is_arg_min_on (\<lambda> x. dist x h) M k
@@ -1448,9 +1423,7 @@ proof-
     by (smt Collect_cong Collect_empty_eq_bot ExistenceUniquenessMinDist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
 qed
 
-(* Definition of projection onto the subspace M *)
-(* TODO reference definition *)
-definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where (* using 'a::something set, 'a\<Rightarrow>'a *)
+definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where
   \<open>proj \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> (orthogonal_complement M) \<and> k \<in>  M)\<close>
 
 lemma proj_intro1:
@@ -1479,11 +1452,11 @@ lemma bounded_linear_continuous:
   shows \<open>isCont f x\<close>
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
+   \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projPropertiesB:
 includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>
   shows \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
-    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   hence \<open>h - (proj M) h \<in> orthogonal_complement M\<close> 
@@ -1505,10 +1478,10 @@ proof-
     using norm_ge_zero power2_le_imp_le by blast
 qed
 
+    \<comment> \<open>Theorem 2.7 (version) in @{cite conway2013course}\<close> 
 theorem projPropertiesA:
   \<open>is_subspace M \<Longrightarrow> bounded_clinear (proj M)\<close> 
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Theorem 2.7 (version) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   hence \<open>is_subspace (orthogonal_complement M)\<close>
@@ -1591,19 +1564,13 @@ proof-
     by auto 
 qed
 
-
+    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projPropertiesC:
   \<open>is_subspace M \<Longrightarrow> (proj M) \<circ> (proj M) = proj M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Theorem 2.7 in conway2013course *)
   using proj_fixed_points proj_intro2 by fastforce
 
-(* TODO: complex_vector can be generalized *)
-(* TODO: move to different theory *)
-(* TODO: Does it exist already? *)
 definition ker_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'a set\<close> where
-  (* TODO shorter (preimage notation): f -` {0} *)
-  (* TODO: better for definitions: Use = instead of \<equiv>. And use \<lambda>-free notation. (E.g., ker_op f = \<dots>) *)
   \<open>ker_op \<equiv> \<lambda> f. {x. f x = 0}\<close>
 
 lemma ker_op_lin:
@@ -1673,11 +1640,10 @@ proof-
     by (smt Collect_cong is_linear_manifold.intro mem_Collect_eq)
 qed
 
-
+    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projPropertiesD:
   \<open>is_subspace M  \<Longrightarrow> ker_op  (proj M) = (orthogonal_complement M)\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close> 
   have \<open>x \<in> orthogonal_complement M \<Longrightarrow> x \<in>  (ker_op  (proj M))\<close> for x
@@ -1761,10 +1727,10 @@ proof-
     using \<open>A = ran_op f\<close> \<open>\<And>x c. x \<in> A \<Longrightarrow> c *\<^sub>C x \<in> A\<close> \<open>\<And>y x. \<lbrakk>x \<in> A; y \<in> A\<rbrakk> \<Longrightarrow> x + y \<in> A\<close> is_linear_manifold.intro by blast
 qed
 
+    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projPropertiesE:
   \<open>is_subspace M \<Longrightarrow> ran_op  (proj M) = M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Theorem 2.7 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   have \<open>x \<in> ran_op  (proj M) \<Longrightarrow> x \<in> M\<close> for x
@@ -1776,7 +1742,6 @@ qed
 
 lemma pre_ortho_twice: "is_linear_manifold M \<Longrightarrow> M \<subseteq> (orthogonal_complement (orthogonal_complement M)) " 
 proof-
-  (* assume \<open>is_linear_manifold M\<close> *)
   have \<open>x \<in> M \<Longrightarrow> x \<in> (orthogonal_complement (orthogonal_complement M))\<close> for x 
   proof-
     assume \<open>x \<in> M\<close>
@@ -1790,11 +1755,10 @@ proof-
     by (simp add: subsetI)
 qed
 
-
+    \<comment> \<open> Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
 lemma ProjOntoOrtho:
   \<open>is_subspace M  \<Longrightarrow> id - proj M = proj (orthogonal_complement M) \<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Exercice 2 (section 2, chapter I) in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   have   \<open> (id -  proj M) x = (proj ((orthogonal_complement M))) x \<close> for x
@@ -1817,9 +1781,9 @@ proof-
   thus ?thesis by blast
 qed
 
+    \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close> 
 corollary orthogonal_complement_twice: "is_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
   for M :: \<open>('a::chilbert_space) set\<close>
-    (* Reference: Corollary 2.8 in conway2013course *)
 proof-
   assume \<open>is_subspace M\<close>
   have \<open>(orthogonal_complement (orthogonal_complement M)) = ker_op (proj (orthogonal_complement M))\<close>
@@ -1905,7 +1869,6 @@ lemma ortho_bot[simp]:
 
 subsection \<open>Closed sum\<close>
 
-(* TODO: is there a textbook reference? *)
 definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>closed_sum A B = closure (A +\<^sub>m B)\<close>
 
@@ -1921,16 +1884,13 @@ proof -
     by (metis (lifting))
 qed
 
-
 lemma is_closed_subspace_comm:                                                                 
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>(A +\<^sub>M B) = (B +\<^sub>M A)\<close>
   by (smt Collect_cong add.commute closed_sum_def Minkoswki_sum_def)
 
-
 lemma OrthoClosed:
   fixes A ::"('a::chilbert_space) set"
-  (* assumes \<open>is_linear_manifold A\<close> *)
   shows \<open>closed (orthogonal_complement A)\<close>                                                
 proof-
   have \<open>\<forall> n. x n \<in> (orthogonal_complement A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x l
@@ -1959,7 +1919,6 @@ qed
 
 lemma OrthoClosedEq:
   fixes A ::"('a::chilbert_space) set"
-  (* assumes \<open>is_linear_manifold A\<close> *)
   shows \<open>(orthogonal_complement A) = (orthogonal_complement (closure A)) \<close>                                                
 proof-
   have \<open>x \<in> (orthogonal_complement A) \<Longrightarrow> x \<in> (orthogonal_complement (closure A))\<close> for x
@@ -1989,7 +1948,6 @@ proof-
     by (smt closure_subset mem_Collect_eq orthogonal_complement_def subset_eq)
   ultimately show ?thesis by blast
 qed
-
 
 lemma is_subspace_closed_plus:
   fixes A B::"('a::chilbert_space) set"
@@ -2147,66 +2105,11 @@ proof -
     unfolding orthogonal_complement_def is_orthogonal_def by auto
 qed
 
-(* (* NEW *)
-(* TODO: does it hold with is_linear_manifold? *)
-lemma ortho_inter_zero: \<open>is_subspace M \<Longrightarrow> M \<inter> (orthogonal_complement M) = {0}\<close>
-proof(rule classical)
-  assume  \<open>is_subspace M\<close>
-  assume \<open>\<not>(M \<inter> (orthogonal_complement M) = {0})\<close>
-  moreover have \<open>{0} \<subseteq> M \<inter> (orthogonal_complement M)\<close>
-  proof-
-    have \<open>0 \<in> M\<close> using \<open>is_subspace M\<close>
-      by (simp add: is_linear_manifold.zero is_subspace.subspace)
-    moreover have \<open>0 \<in> orthogonal_complement M\<close>
-    proof-
-      have \<open>is_subspace (orthogonal_complement M)\<close>
-        using \<open>is_subspace M\<close>
-        by simp  
-      thus ?thesis 
-        by (simp add: is_linear_manifold.zero is_subspace.subspace)
-    qed
-    ultimately show ?thesis by blast
-  qed
-  ultimately have \<open>\<exists> x. x \<noteq> 0 \<and> x \<in>  M \<inter> (orthogonal_complement M)\<close>
-    by (smt dual_order.antisym singleton_iff subsetI)
-  then obtain x where \<open>x \<noteq> 0\<close> and \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
-    by blast
-  from  \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
-  have \<open>x \<in> M\<close> by blast
-  from \<open>x \<in> M \<inter> (orthogonal_complement M)\<close>
-  have \<open>x \<in> orthogonal_complement M\<close>              
-    by blast
-  hence \<open>y \<in> M \<Longrightarrow> \<langle>x , y\<rangle> = 0\<close>
-    for y
-    unfolding orthogonal_complement_def
-    unfolding is_orthogonal_def
-    by simp
-  hence \<open>\<langle>x , x\<rangle> = 0\<close>
-    using \<open>x \<in> M\<close>
-    by simp
-  hence \<open>x = 0\<close>
-    by auto
-  thus ?thesis using \<open>x \<noteq> 0\<close> by blast
-qed *)
-
 lemma ortho_decomp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>is_subspace M\<close>
   shows \<open>x = (proj M) x + (proj (orthogonal_complement M)) x\<close>
   by (metis ProjOntoOrtho assms diff_add_cancel id_apply is_subspace_orthog minus_apply orthogonal_complement_twice)
-
-(*
-lemma ortho_decomp_linear:
-  fixes x :: \<open>'a::chilbert_space\<close>
-  assumes  \<open>is_subspace M\<close> and \<open>bounded_clinear f\<close>
-  shows \<open>f x = f ( (proj M) x ) + f ( (proj (orthogonal_complement M)) x )\<close>
-proof-
-  have \<open>x =  (proj M) x +  (proj (orthogonal_complement M)) x\<close>
-    using  \<open>is_subspace M\<close> ortho_decomp by blast
-  thus ?thesis 
-    using  \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
-    by (metis additive.add clinear.axioms(1))
-qed *)
 
 lemma proj_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
@@ -2224,7 +2127,6 @@ qed
 
 lemma inner_product_proj:
   fixes x t :: \<open>'a::chilbert_space\<close>
-(* TODO: replace assumptions by: "fixes y defines "M = complex_vector.span y" *)
   assumes \<open>is_subspace M\<close> and \<open>t \<noteq> 0\<close> and \<open>t \<in> M\<close>
     and \<open>\<forall> m \<in> M. \<exists> k. m = k *\<^sub>C t\<close>
   shows \<open>proj M x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close>
