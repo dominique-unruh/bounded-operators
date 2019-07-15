@@ -781,6 +781,154 @@ proof
     by (meson assms onorm_oCauchy that uCauchy_ustrong ustrong_onorm)
 qed
 
+lemma onorm_strong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
+  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+  shows \<open>f \<midarrow>strong\<rightarrow> l\<close>
+proof-
+  have \<open>(\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0\<close>
+    for x
+  proof-
+    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N. dist (norm (f n x - l x)) 0 < e\<close>
+      for e::real
+    proof-
+      assume \<open>e > 0\<close>
+      have \<open>\<exists> N. \<forall> n \<ge> N. norm (f n x - l x) < e\<close>
+      proof-
+        have \<open>norm (f n x - l x) \<le> onorm (\<lambda> t. f n t - l t) * norm x\<close>
+          for n::nat
+          using assms(1) assms(2) bounded_linear_sub onorm by blast                          
+        moreover have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda> t. f n t - l t) * norm x < e\<close>
+        proof(cases \<open>norm x = 0\<close>)
+          case True
+          thus ?thesis
+            by (simp add: \<open>0 < e\<close>) 
+        next
+          case False
+          hence \<open>norm x > 0\<close>
+            by simp
+          have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda> t. f n t - l t) < e/norm x\<close>
+          proof-
+            from \<open>f \<midarrow>onorm\<rightarrow> l\<close>
+            have \<open>(\<lambda> n. onorm (\<lambda> t. f n t - l t)) \<longlonglongrightarrow> 0\<close>
+              unfolding onorm_convergence_def
+              by blast
+            moreover have \<open>e / norm x > 0\<close>
+              using \<open>e > 0\<close> \<open>norm x > 0\<close> by simp
+            ultimately have \<open>\<exists> N. \<forall> n\<ge>N. norm ((\<lambda> n. onorm (\<lambda> t. f n t - l t)) n ) < e / norm x\<close>
+              by (simp add: LIMSEQ_iff) 
+            then obtain N where \<open>\<forall> n\<ge>N. norm ((\<lambda> n. onorm (\<lambda> t. f n t - l t)) n ) < e / norm x\<close>
+              by blast
+            hence \<open>\<forall> n\<ge>N. norm ( onorm (\<lambda> t. f n t - l t ) ) < e / norm x\<close>
+              by blast
+            have \<open>\<forall> n\<ge>N.  onorm (\<lambda> t. f n t - l t ) < e / norm x\<close>
+            proof-
+              have \<open>onorm (\<lambda> t. f n t - l t ) \<ge> 0\<close>
+                for n
+                by (simp add: assms(1) assms(2) bounded_linear_sub onorm_pos_le)                
+              thus ?thesis using  \<open>\<forall> n\<ge>N. norm ( onorm (\<lambda> t. f n t - l t ) ) < e / norm x\<close>
+                by simp
+            qed
+            thus ?thesis by blast
+          qed
+          thus ?thesis using \<open>norm x > 0\<close>
+          proof -
+            { fix nn :: "nat \<Rightarrow> nat"
+              have ff1: "\<forall>r ra. (ra::real) * r = r * ra \<or> ra = 0"
+                by auto
+              have "\<forall>r ra rb. (((rb::real) = 0 \<or> rb * ra < r) \<or> \<not> ra < r / rb) \<or> \<not> 0 < rb"
+                by (metis (no_types) linordered_comm_semiring_strict_class.comm_mult_strict_left_mono nonzero_mult_div_cancel_left times_divide_eq_right)
+              hence "\<exists>n. \<not> n \<le> nn n \<or> onorm (\<lambda>a. f (nn n) a - l a) * norm x < e"
+                using ff1 by (metis (no_types) False \<open>0 < norm x\<close> \<open>\<exists>N. \<forall>n\<ge>N. onorm (\<lambda>t. f n t - l t) < e / norm x\<close>) }
+            thus ?thesis
+              by (metis (no_types))
+          qed  
+        qed
+        ultimately show ?thesis by smt
+      qed
+      thus ?thesis
+        by auto 
+    qed
+    thus ?thesis
+      by (simp add: LIMSEQ_I) 
+  qed
+  thus ?thesis unfolding strong_convergence_def by blast
+qed
+
+lemma strong_convergence_pointwise: 
+  \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+  for x
+proof-
+  assume  \<open>f \<midarrow>strong\<rightarrow> F\<close>
+  hence  \<open>( \<lambda> n. norm ((f n) x - F x))  \<longlonglongrightarrow> 0\<close>
+    unfolding strong_convergence_def
+    by blast
+  have \<open>( \<lambda> n. (F x) )  \<longlonglongrightarrow> F x\<close>
+    by simp
+  moreover have  \<open>( \<lambda> n. ( (f n) x - F x))  \<longlonglongrightarrow> 0\<close>
+    using  \<open>( \<lambda> n. norm ((f n) x - F x) )  \<longlonglongrightarrow> 0\<close>
+    by (simp add:  tendsto_norm_zero_iff)
+  ultimately have  \<open>( \<lambda> n. (f n) x)  \<longlonglongrightarrow> F x\<close>
+    by (rule Limits.Lim_transform)
+  thus ?thesis by blast
+qed
+
+
+lemma onorm_uniq:
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>bounded_linear s\<close> 
+    and \<open>f \<midarrow>onorm\<rightarrow>l\<close> and \<open>f \<midarrow>onorm\<rightarrow>s\<close>
+  shows \<open>l = s\<close>
+proof-
+  have \<open>l x = s x\<close>
+    for x
+  proof-
+    have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> l x\<close>
+    proof-
+      have \<open>f \<midarrow>strong\<rightarrow>l\<close>
+        by (simp add: assms(1) assms(2) assms(4) onorm_strong)
+      thus ?thesis  by (simp add: strong_convergence_pointwise)
+    qed
+    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> s x\<close>
+    proof-
+      have \<open>f \<midarrow>strong\<rightarrow>s\<close>
+        by (simp add: assms(1) assms(3) assms(5) onorm_strong)
+      thus ?thesis by (simp add: strong_convergence_pointwise)
+    qed
+    ultimately show ?thesis
+      using LIMSEQ_unique by blast 
+  qed
+  thus ?thesis by blast
+qed
+
+proposition onorm_ustrong_iff:
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> 
+  shows \<open>(f \<midarrow>onorm\<rightarrow>l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>l)\<close>
+proof
+  show "f \<midarrow>ustrong\<rightarrow> l"
+    if "f \<midarrow>onorm\<rightarrow> l"
+  proof-
+    have \<open>oCauchy f\<close>
+      using assms(1) assms(2) onorm_oCauchy that by auto      
+    hence \<open>uCauchy f\<close>
+      by (simp add: assms(1) oCauchy_uCauchy)
+    hence \<open>\<exists> s. bounded_linear s \<and> f \<midarrow>ustrong\<rightarrow> s\<close>
+      by (simp add: assms(1) uCauchy_ustrong)
+    then obtain s where  \<open>bounded_linear s\<close> and \<open>f \<midarrow>ustrong\<rightarrow> s\<close>
+      by blast
+    have \<open>f \<midarrow>onorm\<rightarrow> s\<close>
+      using  \<open>bounded_linear s\<close>  \<open>\<And> n. bounded_linear (f n)\<close>
+      by (simp add: ustrong_onorm \<open>f \<midarrow>ustrong\<rightarrow> s\<close>)
+    hence \<open>l = s\<close> 
+      using onorm_uniq  \<open>f \<midarrow>onorm\<rightarrow> l\<close> \<open>bounded_linear s\<close> assms(1) assms(2) by blast 
+    thus ?thesis using \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
+  qed
+  show "f \<midarrow>onorm\<rightarrow> l"
+    if "f \<midarrow>ustrong\<rightarrow> l"
+    using ustrong_onorm \<open>\<And> n. bounded_linear (f n)\<close> \<open>bounded_linear l\<close> that by auto
+qed
+
 section \<open>Instantiation of rbounded as a Banach space\<close>
 
 lemma ONORM_tendsto:
