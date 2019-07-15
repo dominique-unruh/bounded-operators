@@ -10,9 +10,9 @@ Miscellany results on Nonstandard Analysis.
 
 theory NSA_Miscellany
   imports 
-    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
     "HOL-Analysis.Elementary_Metric_Spaces"
     "HOL-Analysis.Operator_Norm"
+    Unobtrusive_NSA
 begin
 
 lemma nsbounded_existencial:

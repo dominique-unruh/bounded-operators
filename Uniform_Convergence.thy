@@ -21,8 +21,8 @@ theory Uniform_Convergence
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Operator_Norm"
-    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
     "HOL-Analysis.Uniform_Limit"
+    Unobtrusive_NSA
 begin
 
 chapter \<open>General case\<close>

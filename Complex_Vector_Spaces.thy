@@ -11,7 +11,7 @@ theory Complex_Vector_Spaces
     "HOL-ex.Sketch_and_Explore"
     "HOL-Analysis.Elementary_Topology"
     Ordered_Complex 
-    "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
+    Unobtrusive_NSA
 begin
 
 bundle notation_norm begin
