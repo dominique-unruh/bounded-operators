@@ -36,7 +36,7 @@ proof
         have \<open>\<forall> xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close>
           by (simp add: dist_triangle)
         hence \<open>\<forall> xx yy zz. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
-          by transfer
+          by StarDef.transfer
         thus ?thesis by blast 
       qed
       moreover have \<open>(*f2* dist) x z + (*f2* dist) z y \<in> HFinite\<close>
@@ -51,7 +51,7 @@ proof
             have \<open>\<forall> zz xx. dist zz xx = dist xx zz\<close>
               using dist_commute by blast
             hence \<open>\<forall> zz xx. (*f2* dist) zz xx = (*f2* dist) xx zz\<close>
-              by transfer
+              by StarDef.transfer
             thus ?thesis by blast
           qed
           ultimately show ?thesis by simp
@@ -67,7 +67,7 @@ proof
         have \<open>\<forall> xx yy. 0 \<le> dist xx yy\<close>
           by simp
         hence \<open>\<forall> xx yy. 0 \<le> (*f2* dist) xx yy\<close>
-          by transfer
+          by StarDef.transfer
         show ?thesis
           by (simp add: \<open>\<forall>xx yy. 0 \<le> (*f2* dist) xx yy\<close>) 
       qed
@@ -97,7 +97,7 @@ proof-
   then obtain M where \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close>
     by blast
   have \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
-    using \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close> by transfer
+    using \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close> by StarDef.transfer
   have \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v \<in> HFinite\<close>
   proof-
     obtain u where \<open>\<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
@@ -115,7 +115,7 @@ proof-
         have \<open>\<forall> uu vv. norm (dist uu vv) =  dist uu vv\<close>
           by simp         
         hence \<open>\<forall> uu vv. hnorm ((*f2* dist) uu vv) =  (*f2* dist) uu vv\<close>
-          by transfer
+          by StarDef.transfer
         thus ?thesis by blast
       qed
       ultimately show \<open>(*f2* dist) u v \<in> HFinite\<close>
@@ -177,7 +177,7 @@ proof-
           have \<open>\<forall> xx. \<forall> yy. norm ( dist xx yy) = dist xx yy\<close>
             by simp
           hence \<open>\<forall> xx. \<forall> yy. hnorm ((*f2* dist) xx yy) = (*f2* dist) xx yy\<close>
-            by transfer
+            by StarDef.transfer
           thus ?thesis
             by blast 
         qed
@@ -201,7 +201,7 @@ proof-
             by blast
           from \<open>s < n\<close>
           have \<open>hypreal_of_real s < hypreal_of_nat n\<close>
-            by transfer
+            by StarDef.transfer
           thus ?thesis using \<open>r = hypreal_of_real s\<close> by blast
         qed
         then obtain n where \<open>r < hypreal_of_nat n\<close>
@@ -230,7 +230,7 @@ proof-
       by blast
     hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. (*f2* dist) x y \<le> M\<close>
       using le_less by blast
-    thus ?thesis by transfer 
+    thus ?thesis by StarDef.transfer 
   qed
   thus ?thesis using bounded_def by blast
 qed
