@@ -12,7 +12,9 @@ Main results:
 - oCauchy_uCauchy_iff: A sufficient condition in order to guarantee the equivalence between 
 being a Cauchy sequence with respect to the operator norm and being a Cauchy sequence 
 uniformly on the unit sphere. 
-- Instantiation of rbounded as a Banach space
+- onorm_ustrong_iff: Equivalence between convergence with respect to the norm and convergence
+uniformly on the unit sphere.
+- Instantiation of rbounded as a Banach space.
 
 *)
 
