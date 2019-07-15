@@ -28,14 +28,10 @@ begin
 chapter \<open>General case\<close>
 section \<open>Standard definitions\<close>
 
-definition uniform_convergence::
-  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
-  \<open>uniform_convergence S f l = ( \<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x\<in>S. dist (f n x) (l x) < e )\<close>
-
 abbreviation uniform_convergence_abbr::
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
-  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_convergence S f l )\<close>
+  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> (  uniform_limit S f l sequentially )\<close>
 
 subsection \<open>Nonstandard analog of uniform convergence\<close>
 
@@ -47,15 +43,13 @@ lemma uniform_convergence_norm_I:
   fixes l::\<open>'a \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close> and S :: \<open>'a set\<close> 
   assumes \<open>\<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x\<in>S. norm (f n x - l x) < e\<close>
   shows \<open>(S: f \<midarrow>uniformly\<rightarrow> l)\<close>
-  by (simp add: assms dist_norm uniform_convergence_def)
+  using assms dist_norm uniform_limit_sequentially_iff by metis
   
 lemma uniform_convergence_norm_D:
   fixes l::\<open>'a \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close> and S :: \<open>'a set\<close> 
   assumes  \<open>S: f \<midarrow>uniformly\<rightarrow> l\<close>
   shows \<open>\<forall> e > 0. \<exists> N. \<forall> n \<ge> N. \<forall> x\<in>S. norm (f n x - l x) < e\<close>
-  using assms dist_norm
-  unfolding uniform_convergence_def
-  by smt  
+  using assms dist_norm uniform_limit_sequentially_iff by metis
   
 lemma nsuniform_convergence_D:
   fixes l::\<open>'a \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
