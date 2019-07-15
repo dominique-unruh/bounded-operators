@@ -83,8 +83,8 @@ proof-
     proof-
       assume \<open>e > 0\<close>
       hence \<open>\<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-        using \<open>f \<midarrow>ustrong\<rightarrow> l\<close> unfolding ustrong_convergence_def
-        by blast
+        using \<open>f \<midarrow>ustrong\<rightarrow> l\<close> unfolding ustrong_convergence_def sphere_def
+        using uniform_convergence_norm_D by fastforce        
       then obtain N where \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
         by blast
       have \<open>bounded_linear g \<Longrightarrow> \<exists> x. norm x = 1 \<and> onorm g \<le> norm (g x) + inverse (real (Suc m))\<close>
@@ -358,7 +358,8 @@ proof-
     thus ?thesis by blast
   qed
   thus ?thesis
-    by (simp add: uCauchy_def) 
+    unfolding uCauchy_def sphere_def uniformly_Cauchy_on_def dist_norm
+    by blast
 qed
 
 lemma uCauchy_ustrong:
@@ -369,7 +370,8 @@ proof-
   have \<open>\<exists> l::'a\<Rightarrow>'b. f \<midarrow>ustrong\<rightarrow> l\<close>
   proof-
     have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-      using \<open>uCauchy f\<close> unfolding uCauchy_def by blast
+      using \<open>uCauchy f\<close> unfolding uCauchy_def sphere_def uniformly_Cauchy_on_def dist_norm
+      by blast
     hence \<open>norm x = 1 \<Longrightarrow> (\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f m x - f n x) < e)\<close>
       for x
       by blast
@@ -433,16 +435,22 @@ proof-
       thus ?thesis
         by (metis dist_norm) 
     qed
-    thus ?thesis unfolding ustrong_convergence_def by blast
+    hence \<open>\<forall> e > 0. \<exists>N. \<forall>n\<ge>N. \<forall>x\<in>sphere. norm (f n x - l x) < e\<close>
+      unfolding sphere_def mem_Collect_eq by blast
+    thus ?thesis unfolding ustrong_convergence_def using uniform_convergence_norm_I
+      by metis
   qed
   then obtain s where \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
   define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
-    for x::'a
-  have \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-    using l_def \<open>f \<midarrow>ustrong\<rightarrow> s\<close> 
-    unfolding l_def
-    unfolding ustrong_convergence_def
+    for x::'a       
+  have \<open>t \<in> sphere \<Longrightarrow> (\<lambda>x. norm x *\<^sub>R s (x /\<^sub>R norm x)) t = s t\<close>
+    for t
+    unfolding sphere_def
     by simp
+  hence \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
+    using \<open>f \<midarrow>ustrong\<rightarrow> s\<close> 
+    unfolding l_def ustrong_convergence_def
+    by (metis (no_types, lifting) uniform_limit_cong') 
   moreover have \<open>bounded_linear l\<close>
   proof-
     have \<open>(\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
