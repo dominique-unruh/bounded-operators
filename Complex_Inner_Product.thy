@@ -2566,6 +2566,9 @@ proof-
     by (simp add: bounded_clinear_axioms_def clinear_axioms.intro)
 qed
 
+instantiation complex :: "chilbert_space" begin
+instance ..
+end
 
 
 end

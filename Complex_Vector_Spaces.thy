@@ -1579,5 +1579,16 @@ qed
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
   by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
 
+lemma scalarR_bounded_clinear:
+  fixes c :: real
+  assumes \<open>bounded_clinear f\<close>
+  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
+proof-
+  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
+    by (simp add: assms bounded_clinear_const_scaleC)
+  thus ?thesis
+    by (simp add: scaleR_scaleC) 
+qed
+
 
 end
