@@ -21,6 +21,8 @@ theory Bounded_Operators
 
 begin
 
+chapter \<open>Definition and instantiation of bounded operators\<close>
+
 section \<open>Real bounded operators\<close>
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
@@ -62,16 +64,13 @@ proof
   show \<open>a + b = b + a\<close>
     apply transfer
     by (simp add: linordered_field_class.sign_simps(2))
-
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>0 + a = a\<close>
     apply transfer by simp
-
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>-a + a = 0\<close>
     apply transfer
     by simp
-
   fix a b :: \<open>('a, 'b) rbounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer
@@ -80,17 +79,14 @@ proof
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
     apply transfer
     by (simp add: scaleR_add_right)
-    
   fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
     apply transfer
     by (simp add: scaleR_add_left)
-
   fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
     apply transfer
     by simp
-
   fix x :: \<open>('a, 'b) rbounded\<close>
   show \<open>1 *\<^sub>R x = x\<close>
     apply transfer
@@ -136,8 +132,6 @@ instance
 end
 
 
-subsection \<open>Instantiation of rbounded as a Banach space\<close>
-
 lift_definition strong_convergence_rbounded:: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded) \<Rightarrow> bool"
   is \<open>\<lambda> f. \<lambda> l. f \<midarrow>strong\<rightarrow> l\<close>.
 
@@ -145,14 +139,12 @@ abbreviation
   strong_convergence_rbounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>STRONG\<rightarrow> (_))" [60, 60] 60)
   where "f \<midarrow>STRONG\<rightarrow> l \<equiv> (strong_convergence_rbounded f l ) "
 
-
 lift_definition onorm_convergence_rbounded:: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded) \<Rightarrow> bool"
   is \<open>\<lambda> f. \<lambda> l. f \<midarrow>onorm\<rightarrow> l\<close>.
 
 abbreviation
   onorm_convergence_rbounded_abbr :: "(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded) \<Rightarrow> (('a, 'b) rbounded ) \<Rightarrow> bool"  ("((_)/ \<midarrow>ONORM\<rightarrow> (_))" [60, 60] 60)
   where "f \<midarrow>ONORM\<rightarrow> l \<equiv> (onorm_convergence_rbounded f l ) "
-
 
 lemma ONORM_tendsto:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
@@ -261,7 +253,6 @@ proof
 qed  
 
 end
-
 
 
 section \<open>Real bounded operators with complex scalar product\<close>
@@ -472,7 +463,6 @@ proof-
 qed
 end
 
-
 instantiation rbounded :: ("{real_normed_vector, perfect_space}", cbanach) "cbanach"
 begin
 instance..
@@ -498,7 +488,6 @@ setup_lifting type_definition_cbounded
 lift_definition ev_cbounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
   is \<open>\<lambda> f. \<lambda> x. ev_rbounded f x\<close>.
 
-
 instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
 begin
 lift_definition uminus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded"
@@ -519,7 +508,6 @@ lift_definition minus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbound
 lift_definition scaleR_cbounded :: \<open>real \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
   is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
   by (simp add: ev_rbounded.rep_eq scaleC_rbounded.rep_eq scaleR_scaleC)
-
 
 instance
 proof      
@@ -620,21 +608,18 @@ proof
       and y :: "('a, 'b) cbounded"
     apply transfer
     by (simp add: scaleC_add_right)
-
   show "(a + b) *\<^sub>C (x::('a, 'b) cbounded) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) cbounded"
     apply transfer
     by (simp add: scaleC_add_left)
-
   show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) cbounded) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) cbounded"
     apply transfer
     by simp
-
   show "1 *\<^sub>C (x::('a, 'b) cbounded) = x"
     for x :: "('a, 'b) cbounded"
     apply transfer
@@ -649,7 +634,6 @@ instance
   apply transfer
   by simp
 end
-
 
 lemma scaleC_continuous:
   fixes c :: complex
@@ -911,7 +895,6 @@ instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex
 definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where \<open>scaleC_bounded r f = flatten (r *\<^sub>C unflatten f)\<close>
 
-
 definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where \<open>scaleR_bounded r f = flatten (r *\<^sub>R unflatten f)\<close>
 instance
@@ -1076,6 +1059,7 @@ proof
 qed
 end
 
+chapter \<open>Miscellany\<close>
 
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
