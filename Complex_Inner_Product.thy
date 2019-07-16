@@ -4,7 +4,18 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-Properties of the complex inner product spaces.
+Main results
+- complex_inner: Class of complex vector spaces with inner product.
+- cgderiv: Gradient derivative.
+- chilbert_space: Class of complex Hilbert spaces
+- existence_uniqueness_min_dist: Existence and uniqueness of a point in a convex body whose
+distance to a given point reach its minimum in the convex body.
+- dist_min_ortho: Equivalence between point at minimum distance and orthogonal projection.
+- proj: Definition of orthogonal projection.
+- projPropertiesA: The orthogonal projection is a bounded operator.
+- orthogonal_complement_twice: The orthogonal complement is an involution.
+- ortho_decomp: Decomposition of a Hilbert space into a sum of a subspace and its orthogonal 
+complement.
 *)
 
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
@@ -990,7 +1001,6 @@ proof-
         using is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
         by smt
     qed
-
     thus ?thesis 
       unfolding is_arg_min_on_def
       by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
@@ -1109,8 +1119,8 @@ proof-
 qed
 
     \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
-theorem ExistenceUniquenessMinDist:
-  fixes M :: \<open>('a::chilbert_space) set\<close> and h :: 'a 
+theorem existence_uniqueness_min_dist:
+  fixes M::\<open>('a::chilbert_space) set\<close> and h::'a 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
 proof-
@@ -1216,7 +1226,7 @@ qed
 
 
     \<comment> \<open>Theorem 2.6 in @{cite conway2013course}\<close> 
-theorem DistMinOrtho:
+theorem dist_min_ortho:
   fixes M :: \<open>('a::chilbert_space) set\<close> and h k::\<open>'a\<close> 
   assumes "is_subspace M"
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
@@ -1417,10 +1427,10 @@ proof-
     using  \<open>is_subspace M\<close>
     by (simp add: SubspaceConvex)
   have \<open>\<forall> h. \<exists>! k.  is_arg_min_on (\<lambda> x. dist x h) M k\<close>
-    by (simp add: ExistenceUniquenessMinDist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
+    by (simp add: existence_uniqueness_min_dist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
-    using DistMinOrtho 
-    by (smt Collect_cong Collect_empty_eq_bot ExistenceUniquenessMinDist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
+    using dist_min_ortho 
+    by (smt Collect_cong Collect_empty_eq_bot existence_uniqueness_min_dist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
 qed
 
 definition proj :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where
@@ -1453,7 +1463,7 @@ lemma bounded_linear_continuous:
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
-theorem projPropertiesB:
+proposition projPropertiesB:
 includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>
   shows \<open>is_subspace M  \<Longrightarrow> \<parallel> (proj M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
@@ -1565,7 +1575,7 @@ proof-
 qed
 
     \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
-theorem projPropertiesC:
+proposition projPropertiesC:
   \<open>is_subspace M \<Longrightarrow> (proj M) \<circ> (proj M) = proj M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
   using proj_fixed_points proj_intro2 by fastforce
@@ -1641,7 +1651,7 @@ proof-
 qed
 
     \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
-theorem projPropertiesD:
+proposition projPropertiesD:
   \<open>is_subspace M  \<Longrightarrow> ker_op  (proj M) = (orthogonal_complement M)\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
@@ -1755,7 +1765,7 @@ proof-
     by (simp add: subsetI)
 qed
 
-    \<comment> \<open> Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
+    \<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
 lemma ProjOntoOrtho:
   \<open>is_subspace M  \<Longrightarrow> id - proj M = proj (orthogonal_complement M) \<close>
   for M :: \<open>('a::chilbert_space) set\<close>
@@ -1782,7 +1792,7 @@ proof-
 qed
 
     \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close> 
-corollary orthogonal_complement_twice: "is_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
+theorem orthogonal_complement_twice: "is_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>is_subspace M\<close>
@@ -2105,7 +2115,7 @@ proof -
     unfolding orthogonal_complement_def is_orthogonal_def by auto
 qed
 
-lemma ortho_decomp:
+theorem ortho_decomp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>is_subspace M\<close>
   shows \<open>x = (proj M) x + (proj (orthogonal_complement M)) x\<close>
