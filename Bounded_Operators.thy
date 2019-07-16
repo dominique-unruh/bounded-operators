@@ -31,6 +31,7 @@ typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
 
 setup_lifting type_definition_rbounded
 
+(* TODO: this exists and is called Rep_rbounded *)
 lift_definition ev_rbounded :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded
  \<Rightarrow> 'a \<Rightarrow> 'b\<close> is \<open>\<lambda> f. \<lambda> x. f x\<close>.
 

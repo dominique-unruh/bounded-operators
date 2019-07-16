@@ -11,8 +11,6 @@ Reactivate the notation locally via "includes nsa_notation" in a lemma statement
 (Or sandwich a declaration using that notation between "unbundle nsa_notation ... unbundle no_nsa_notation".)
 \<close>
 
-(* TODO: restore transfer method via short name *)
-
 (* TODO: add any syntax introduced by HOL-Nonstandard_Analysis both here and in the bundle below *)
 bundle no_nsa_notation begin
 no_notation epsilon ("\<epsilon>")
