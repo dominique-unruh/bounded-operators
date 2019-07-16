@@ -2606,4 +2606,31 @@ proposition dagger_dagger_id:
   qed
 qed
 
+lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
+  proof
+  show "id ((x::'a) + y) = id x + id y"
+    for x :: 'a
+      and y :: 'a
+    unfolding id_def by blast
+  show "id (r *\<^sub>C (x::'a)) = r *\<^sub>C id x"
+    for r :: complex
+      and x :: 'a
+    unfolding id_def by blast
+  show "\<exists>K. \<forall>x. norm (id (x::'a)) \<le> norm x * K"
+     unfolding id_def
+     using less_eq_real_def by auto 
+qed
+
+lemma id_dagger: \<open>(id::'a::chilbert_space\<Rightarrow>'a)\<^sup>\<dagger> = id\<close>
+proof-
+  have \<open>bounded_clinear id\<close>
+    by (simp add: id_bounded_clinear)
+  moreover have \<open>\<langle> id x, y \<rangle> = \<langle> x, id y \<rangle>\<close>
+    for x y::'a
+    unfolding id_def by blast
+  ultimately show ?thesis
+    by (smt AdjUniq)  
+qed
+
+
 end

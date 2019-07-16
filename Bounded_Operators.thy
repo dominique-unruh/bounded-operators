@@ -1069,9 +1069,12 @@ lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a
   apply transfer
   using dagger_dagger_id by blast
 
+lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
+  by (metis bounded_clinear_ident comp_id fun.map_ident)
 
-
-
+lemma idOp_adjoint[simp]: "idOp\<^sub>\<dagger> = idOp"
+  apply transfer
+  using id_dagger by blast
 
 
 
@@ -1080,8 +1083,7 @@ lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a
 
 chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)
-lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
-  by (metis bounded_clinear_ident comp_id fun.map_ident)
+
 
 lift_definition timesOp :: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
@@ -1090,7 +1092,8 @@ lift_definition timesOp ::
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
-lemma clinear_D: 
+
+lemma clinear_D:
   \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
   by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans zero_le_mult_iff)
 
@@ -1432,8 +1435,7 @@ lemma times_idOp1[simp]: "U \<cdot> idOp = U"
 lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) bounded"
   apply transfer by auto
 
-lemma idOp_adjoint[simp]: "idOp* = idOp"
-  by (cheat idOp_adjoint)
+
 
 lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
   for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
