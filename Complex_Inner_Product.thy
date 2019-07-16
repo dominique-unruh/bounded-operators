@@ -1227,8 +1227,8 @@ qed
 
     \<comment> \<open>Theorem 2.6 in @{cite conway2013course}\<close> 
 theorem dist_min_ortho:
-  fixes M :: \<open>('a::chilbert_space) set\<close> and h k::\<open>'a\<close> 
-  assumes "is_subspace M"
+  fixes M::\<open>('a::chilbert_space) set\<close> and h k::'a 
+  assumes \<open>is_subspace M\<close>
   shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
 proof-
   include notation_norm
