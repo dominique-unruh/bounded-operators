@@ -11,6 +11,7 @@ theory Complex_Vector_Spaces
     "HOL-ex.Sketch_and_Explore"
     "HOL-Analysis.Elementary_Topology"
     Ordered_Complex 
+    "HOL-Analysis.Operator_Norm"
     Unobtrusive_NSA
 begin
 
@@ -1319,24 +1320,24 @@ instance star :: (complex_vector) complex_vector
 proof
   fix a b :: complex
   show "\<And>x y::'a star. scaleC a (x + y) = scaleC a x + scaleC a y"
-    apply transfer
+    apply StarDef.transfer
     by (simp add: scaleC_add_right)
   show "\<And>x::'a star. scaleC (a + b) x = scaleC a x + scaleC b x"
-    apply transfer
+    apply StarDef.transfer
     by (simp add: scaleC_add_left)
   show "\<And>x::'a star. scaleC a (scaleC b x) = scaleC (a * b) x"
-    by transfer (rule scaleC_scaleC)
+    by StarDef.transfer (rule scaleC_scaleC)
   show "\<And>x::'a star. scaleC 1 x = x"
-    by transfer (rule scaleC_one)
+    by StarDef.transfer (rule scaleC_one)
 qed
 
 instance star :: (complex_algebra) complex_algebra
 proof
   fix a :: complex
   show "\<And>x y::'a star. scaleC a x * y = scaleC a (x * y)"
-    by transfer (rule mult_scaleC_left)
+    by StarDef.transfer (rule mult_scaleC_left)
   show "\<And>x y::'a star. x * scaleC a y = scaleC a (x * y)"
-    by transfer (rule mult_scaleC_right)
+    by StarDef.transfer (rule mult_scaleC_right)
 qed
 
 instance star :: (complex_algebra_1) complex_algebra_1 ..
@@ -1520,5 +1521,61 @@ proof
     qed
   qed
 qed
+
+lemma onorm_scalarC:
+  fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
+  assumes \<open>bounded_clinear f\<close>
+  shows  \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (cmod r) * onorm f\<close>
+proof-
+  have \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. norm ( (\<lambda> t. r *\<^sub>C (f t)) x) / norm x)\<close>
+    by (simp add: onorm_def)
+  hence \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. (cmod r) * (norm (f x)) / norm x)\<close>
+    by simp
+  also have \<open>... = (cmod r) * (SUP x. (norm (f x)) / norm x)\<close>
+  proof-
+    have \<open>{(norm (f x)) / norm x | x. True} \<noteq> {}\<close>
+      by blast      
+    moreover have \<open>bdd_above {(norm (f x)) / norm x | x. True}\<close>
+    proof-
+      have \<open>(norm (f x)) / norm x \<le> onorm f\<close>
+        for x
+        using \<open>bounded_clinear f\<close>
+        by (simp add: bounded_clinear.bounded_linear le_onorm)        
+      thus ?thesis
+        by fastforce 
+    qed
+    moreover have \<open>mono ((*) (cmod r))\<close>
+      by (simp add: monoI ordered_comm_semiring_class.comm_mult_left_mono)      
+    moreover have \<open>continuous (at_left (Sup {(norm (f x)) / norm x | x. True})) ((*) (cmod r))\<close>
+    proof-
+      have \<open>continuous_on UNIV ( (*) w ) \<close>
+        for w::real
+        by simp
+      hence \<open>isCont ( ((*) (cmod r)) ) x\<close>
+        for x
+        by simp    
+      thus ?thesis using Elementary_Topology.continuous_at_imp_continuous_within
+        by blast  
+    qed
+    ultimately have \<open>Sup {((*) (cmod r)) ((norm (f x)) / norm x) | x. True}
+         = ((*) (cmod r)) (Sup {(norm (f x)) / norm x | x. True})\<close>
+      by (simp add: continuous_at_Sup_mono full_SetCompr_eq image_image)      
+    hence  \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
+         = (cmod r) * (Sup {(norm (f x)) / norm x | x. True})\<close>
+      by blast
+    moreover have \<open>Sup {(cmod r) * ((norm (f x)) / norm x) | x. True}
+                = (SUP x. cmod r * norm (f x) / norm x)\<close>
+      by (simp add: full_SetCompr_eq)            
+    moreover have \<open>(Sup {(norm (f x)) / norm x | x. True})
+                = (SUP x. norm (f x) / norm x)\<close>
+      by (simp add: full_SetCompr_eq)      
+    ultimately show ?thesis
+      by simp 
+  qed
+  finally show ?thesis
+    by (simp add: onorm_def) 
+qed
+
+
 
 end
