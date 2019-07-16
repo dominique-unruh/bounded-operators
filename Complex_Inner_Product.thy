@@ -2632,5 +2632,10 @@ proof-
     by (smt AdjUniq)  
 qed
 
+lemma scalar_times_adjc_flatten:
+fixes A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+assumes \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
+shows \<open>(\<lambda> t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
+  sorry
 
 end

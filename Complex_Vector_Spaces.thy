@@ -1590,5 +1590,23 @@ proof-
     by (simp add: scaleR_scaleC) 
 qed
 
+lemma bounded_linear_bounded_clinear:
+  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
+  proof
+  show "A (x + y) = A x + A y"
+    if "bounded_linear A"
+    for x :: 'a
+      and y :: 'a
+    using that unfolding bounded_linear_def linear_def Vector_Spaces.linear_def 
+      module_hom_def module_hom_axioms_def by blast
+  show "A (r *\<^sub>C x) = r *\<^sub>C A x"
+    if  "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    for r :: complex
+      and x :: 'a
+    using that by blast
+  show "\<exists>K. \<forall>x. norm (A x) \<le> norm x * K"
+    if "bounded_linear A"
+    using that unfolding bounded_linear_def bounded_linear_axioms_def by blast
+qed
 
 end

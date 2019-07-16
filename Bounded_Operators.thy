@@ -1065,9 +1065,54 @@ lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_\<^sub>\<dagger>" [99] 100) 
 is Adj by (fact Adj_bounded_clinear)
 
+definition adjoint_cbounded :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded" 
+  where \<open>adjoint_cbounded f = unflatten ( (flatten f)\<^sub>\<dagger> )\<close>
+
 lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
+
+lemma scalar_times_adjc: "adjoint_cbounded (a *\<^sub>C A) = (cnj a) *\<^sub>C (adjoint_cbounded A)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
+  and a :: complex 
+  unfolding adjoint_cbounded_def 
+  apply transfer
+  apply transfer
+  unfolding ev_rbounded_def
+  apply auto
+  apply transfer
+  unfolding scaleC_rbounded_def
+  apply auto
+proof-
+  fix a::complex and A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
+  hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
+    using scalar_times_adjc_flatten
+    by blast 
+  have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+  proof-
+    from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
+    have  \<open>bounded_clinear A\<close>
+      using bounded_linear_bounded_clinear by blast
+    hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
+      by (simp add: Adj_bounded_clinear)
+    hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
+      apply auto
+      by (simp add: bounded_clinear.bounded_linear)      
+    hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
+      using Abs_rbounded_inverse
+      by blast
+    thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
+  qed
+  thus \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+    using Abs_rbounded_inject by simp
+qed
+
+lemma scalar_times_adj[simp]: "(a *\<^sub>C A)\<^sub>\<dagger> = (cnj a) *\<^sub>C (A\<^sub>\<dagger>)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
+  and a :: complex 
+  unfolding scaleC_bounded_def
+  by (metis (no_types, lifting) adjoint_cbounded_def scalar_times_adjc unflatten_inv)  
 
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
@@ -1075,6 +1120,75 @@ lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
 lemma idOp_adjoint[simp]: "idOp\<^sub>\<dagger> = idOp"
   apply transfer
   using id_dagger by blast
+
+lift_definition timesOp :: 
+  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
+  (infixl "\<cdot>" 55) is "(o)"
+  unfolding o_def 
+  by (rule bounded_clinear_compose, simp_all)
+
+lemma is_linear_manifold_image:
+  assumes "clinear f" and "is_linear_manifold S"
+  shows "is_linear_manifold (f ` S)"
+  apply (rule is_linear_manifold.intro)
+  subgoal proof - (* sledgehammer proof *)
+    fix x :: 'b and y :: 'b
+    assume a1: "x \<in> f ` S"
+    assume a2: "y \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
+      by blast
+    then have "aa S f x + aa S f y \<in> S"
+      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
+    then show "x + y \<in> f ` S"
+      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
+  qed
+  subgoal proof -
+    fix x :: 'b and c :: complex
+    assume a1: "x \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
+      using a1 by (simp add: Bex_def_raw image_iff)
+    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
+      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
+    then show "c *\<^sub>C x \<in> f ` S"
+      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
+  qed
+  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
+
+
+lemma PREapplyOpSpace:
+  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
+    and S::\<open>'a set\<close>
+  assumes "clinear f" and "is_linear_manifold S"
+  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+proof -
+  have "is_linear_manifold {f x |x. x \<in> S}"
+    using assms is_linear_manifold_image
+    by (simp add: is_linear_manifold_image Setcompr_eq_image)
+  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+    apply (rule_tac is_subspace.intro)
+    using is_subspace_cl apply blast
+    by blast
+qed
+
+lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded
+\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
+  (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
+  using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
+
+
+
+
+
+
+
+
 
 
 
@@ -1085,12 +1199,6 @@ chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)
 
 
-lift_definition timesOp :: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" 
-  is "(o)"
-  unfolding o_def 
-  by (rule bounded_clinear_compose, simp_all)
 
 
 lemma clinear_D:
@@ -1158,57 +1266,7 @@ proof-
     using bounded_clinear_def bounded_clinear_axioms_def by blast
 qed
 
-lemma is_linear_manifold_image:
-  assumes "clinear f" and "is_linear_manifold S"
-  shows "is_linear_manifold (f ` S)"
-  apply (rule is_linear_manifold.intro)
-  subgoal proof - (* sledgehammer proof *)
-    fix x :: 'b and y :: 'b
-    assume a1: "x \<in> f ` S"
-    assume a2: "y \<in> f ` S"
-    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
-      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
-      by moura
-    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
-      by blast
-    then have "aa S f x + aa S f y \<in> S"
-      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
-    then show "x + y \<in> f ` S"
-      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
-  qed
-  subgoal proof -
-    fix x :: 'b and c :: complex
-    assume a1: "x \<in> f ` S"
-    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
-      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
-      by moura
-    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
-      using a1 by (simp add: Bex_def_raw image_iff)
-    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
-      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
-    then show "c *\<^sub>C x \<in> f ` S"
-      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
-  qed
-  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
 
-lemma PREapplyOpSpace:
-  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
-    and S::\<open>'a set\<close>
-  assumes "clinear f" and "is_linear_manifold S"
-  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close> (* TODO: use f ` S *)
-proof -
-  have "is_linear_manifold {f x |x. x \<in> S}"
-    using assms is_linear_manifold_image
-    by (simp add: is_linear_manifold_image Setcompr_eq_image)
-  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
-    apply (rule_tac is_subspace.intro)
-    using is_subspace_cl apply blast
-    by blast
-qed
-
-lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded 
-\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is "\<lambda>A S. closure {A x|x. x\<in>S}"
-  using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
 
 (* TODO: same for linear_space *)
 instantiation linear_space :: (complex_normed_vector) scaleC begin
@@ -1272,12 +1330,6 @@ qed
 
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using PREtimesScalarSpace_not0 by blast
-
-lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
-  using Complex_Vector_Spaces.complex_vector.scale_one by auto
-
-lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" for A::"(_::complex_normed_vector,_::complex_normed_vector)bounded"
-  apply transfer sorry
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
   apply transfer by auto
