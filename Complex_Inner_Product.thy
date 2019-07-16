@@ -18,6 +18,7 @@ distance to a given point reach its minimum in the convex body.
 complement.
 - riesz_frechet_representation_existence: Riesz-Frechet representation theorem
 - Adj: Definition of adjoint.
+- dagger_dagger_id: The adjoint is an involution.
 *)
 
 section \<open>Inner Product Spaces and the Gradient Derivative\<close>
@@ -2570,5 +2571,39 @@ instantiation complex :: "chilbert_space" begin
 instance ..
 end
 
+proposition dagger_dagger_id:
+  \<open>bounded_clinear U \<Longrightarrow> U\<^sup>\<dagger>\<^sup>\<dagger> = U\<close>
+  for U :: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  proof
+  show "(U\<^sup>\<dagger>\<^sup>\<dagger>) x = U x"
+    if "bounded_clinear U"
+    for x :: 'a
+    using that 
+  proof-
+    have \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = \<langle> r, U s \<rangle>\<close>
+      for r s
+      using that
+      by (simp add: AdjI)
+    have \<open>\<langle> U s, r \<rangle> = \<langle> s, (U\<^sup>\<dagger>) r \<rangle>\<close>
+      for r s
+    proof-
+      have \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = cnj \<langle> s, (U\<^sup>\<dagger>) r \<rangle>\<close>
+        by simp
+      moreover have \<open>\<langle> r, U s \<rangle> = cnj \<langle>  U s, r\<rangle>\<close>
+        by simp
+      ultimately have \<open>cnj \<langle> s, (U\<^sup>\<dagger>) r \<rangle> = cnj \<langle> U s, r \<rangle>\<close>
+        using \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = \<langle> r, U s \<rangle>\<close> by smt
+      hence \<open>cnj (cnj \<langle> s, (U\<^sup>\<dagger>) r \<rangle>) = cnj (cnj \<langle> U s, r \<rangle>)\<close>
+        by simp
+      hence \<open>\<langle> s, (U\<^sup>\<dagger>) r \<rangle> = \<langle> U s, r \<rangle>\<close>
+        by simp
+      thus ?thesis by simp
+    qed
+    moreover have \<open>bounded_clinear (U\<^sup>\<dagger>)\<close>
+      by (simp add: Adj_bounded_clinear that)
+    ultimately show ?thesis
+      using AdjUniq by fastforce 
+  qed
+qed
 
 end

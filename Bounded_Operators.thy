@@ -1059,17 +1059,30 @@ proof
 qed
 end
 
-chapter \<open>Miscellany\<close>
+section \<open>Adjoint\<close>
 
+lift_definition
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_\<^sub>\<dagger>" [99] 100) 
+is Adj by (fact Adj_bounded_clinear)
+
+lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
+  apply transfer
+  using dagger_dagger_id by blast
+
+
+
+
+
+
+
+
+
+
+chapter \<open>Chaos\<close>
+(* These are the results that I have not assimilated yet *)
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
 
-(* instantiation l2bounded :: (type,type) zero begin
-lift_definition zero_l2bounded :: "('a,'b) l2bounded" is "\<lambda>_. 0" by simp
-instance ..
-end *)
-
-(* TODO define for bounded *)
 lift_definition timesOp :: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" 
@@ -1077,10 +1090,9 @@ lift_definition timesOp ::
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
-(* TODO: rename bounded_clinearE' *)
-lemma bound_op_characterization: 
+lemma clinear_D: 
   \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
-  by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans ordered_field_class.sign_simps(24) zero_le_mult_iff)
+  by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans zero_le_mult_iff)
 
 lemma bounded_clinear_comp:
   \<open>bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (f \<circ> g)\<close>
@@ -1115,7 +1127,7 @@ proof-
   moreover have \<open>\<exists>K. \<forall>x. \<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>x\<parallel> * K\<close>
   proof-
     have \<open>\<exists> K\<^sub>f. \<forall>x. K\<^sub>f \<ge> 0 \<and> \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
-      using \<open>bounded_clinear f\<close> bound_op_characterization 
+      using \<open>bounded_clinear f\<close> clinear_D 
       by blast
     then obtain K\<^sub>f where \<open> K\<^sub>f \<ge> 0\<close> and \<open>\<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
       by metis
@@ -1179,7 +1191,6 @@ lemma is_linear_manifold_image:
 lemma PREapplyOpSpace:
   fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
     and S::\<open>'a set\<close>
-    (* assumes \<open>bounded_clinear f\<close> and \<open>is_subspace S\<close> *)
   assumes "clinear f" and "is_linear_manifold S"
   shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close> (* TODO: use f ` S *)
 proof -
@@ -1192,51 +1203,9 @@ proof -
     by blast
 qed
 
-(* 
-proof-
-  have \<open>bounded_clinear (proj S)\<close>
-    using \<open>is_subspace S\<close> projPropertiesA by blast
-  hence \<open>bounded_clinear (f \<circ> (proj S))\<close>
-    using  \<open>bounded_clinear f\<close> bounded_clinear_comp by blast
-  hence \<open>clinear (f \<circ> (proj S))\<close>
-    unfolding bounded_clinear_def
-    by blast
-  hence \<open>is_linear_manifold (ran_op (f \<circ> (proj S)))\<close>
-    using ran_op_lin
-    by blast
-  hence \<open>is_linear_manifold {x. \<exists> y. (f \<circ> (proj S)) y = x}\<close>
-    unfolding ran_op_def by blast
-  moreover have \<open>{f x |x. x \<in> S} = {x. \<exists> y. (f \<circ> (proj S)) y = x}\<close>
-    by (metis assms(2) comp_apply proj_fixed_points proj_intro2)
-  ultimately have  \<open>is_linear_manifold {f x |x. x \<in> S}\<close>
-    by simp
-  hence  \<open>is_linear_manifold (closure {f x |x. x \<in> S})\<close>
-    by (simp add: is_subspace_cl)
-  moreover have \<open>closed (closure {f x |x. x \<in> S})\<close>
-    by auto
-  ultimately show ?thesis
-    using is_subspace_def by blast
-qed
- *)
-
-(* Note that without "closure", applyOpSpace would not in general return a subspace.
-   See: https://math.stackexchange.com/questions/801806/is-the-image-of-a-closed-subspace-under-a-bounded-linear-operator-closed *)
-(* TODO: use cbanach or complex_normed_vector *)
-lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is
-  "\<lambda>A S. closure {A x|x. x\<in>S}"
+lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded 
+\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> is "\<lambda>A S. closure {A x|x. x\<in>S}"
   using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
-
-(* instantiation bounded :: (chilbert_space,chilbert_space) scaleC begin
-lift_definition scaleC_l2bounded :: "complex \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
-  "\<lambda>c A x. c *\<^sub>C A x"
-  by (rule bounded_clinear_const_scaleC)
-lift_definition scaleR_l2bounded :: "real \<Rightarrow> ('a,'b) l2bounded \<Rightarrow> ('a,'b) l2bounded" is
-  "\<lambda>c A x. c *\<^sub>R A x"
-  by (cheat scaleR_bounded)
-instance
-  apply standard unfolding scaleC_l2bounded_def scaleR_l2bounded_def
-  by (simp add: scaleR_scaleC)
-end *)
 
 (* TODO: same for linear_space *)
 instantiation linear_space :: (complex_normed_vector) scaleC begin
@@ -1255,26 +1224,24 @@ instance
   by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
 end
 
-(* TODO chilbert_space \<longrightarrow> cbanach *)
-lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) is Adj
-  by (fact Adj_bounded_clinear)
-
-lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
+(*
+lemma applyOp_0[simp]: "applyOpSpace U (0::) = 0" 
   apply transfer
   by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
+*)
 
+(*
 lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" 
   apply transfer by simp
-
+*)
+(*
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
     (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
     (*   using  is_linear_manifold.zero is_subspace.subspace
   by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
-
-
+*)
 
 (* TODO rename, e.g., subspace_scale_invariant *)
 lemma PREtimesScalarSpace_not0: 
@@ -1307,13 +1274,13 @@ lemma one_times_op[simp]: "scaleC (1::complex) B = B" for B :: "(_::complex_norm
   using Complex_Vector_Spaces.complex_vector.scale_one by auto
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" for A::"(_::complex_normed_vector,_::complex_normed_vector)bounded"
-  apply transfer by (cheat scalar_times_adj)
+  apply transfer sorry
 
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
   apply transfer by auto
 
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
-  by (cheat times_adjoint)
+  sorry
 
 lemma PREtimesOp_assoc_linear_space:
   fixes A B S
@@ -1374,21 +1341,6 @@ lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A
   apply transfer
   using PREtimesOp_assoc_linear_space by blast
 
-(* instantiation bounded :: (chilbert_space,chilbert_space) ab_group_add begin
-lift_definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  "\<lambda>a b x. a x + b x"
-  by (rule bounded_clinear_add)
-lift_definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  "\<lambda>a b x. a x - b x"
-  by (rule bounded_clinear_sub)
-lift_definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
-  "\<lambda>a x. - a x"
-  by (rule bounded_clinear_minus)
-instance 
-  apply intro_classes
-  by (transfer; auto)+
-end *)
-
 (* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
@@ -1399,32 +1351,34 @@ lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for 
 lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
+(*
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
   by (simp add: linear_space_zero_bot[symmetric])
+*)
 
 lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
-  by (cheat equal_basis)
+  sorry
 
-lemma adjoint_twice[simp]: "(U*)* = U" for U :: "(_,_) bounded"
-  by (cheat adjoint_twice)
-
-
+(*
 (* TODO: move specialized syntax into QRHL-specific file *)
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 
-adhoc_overloading
+adhocoverloading
 cdot timesOp applyOp applyOpSpace
 (* Removed scaleC here: the overloading cannot be restricted to a specific type, so all occurrences of scaleC become \<cdot> *)
+*)
 
+(*
 lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
   for A B :: "_ linear_space" and U :: "(_,_) bounded"
   apply transfer 
   by (cheat cdot_plus_distrib)
+*)
 
 
+(*
 lemma scalar_op_linear_space_assoc [simp]: 
   "(\<alpha> *\<^sub>C A) \<cdot> S = \<alpha> *\<^sub>C (A \<cdot> S)" for \<alpha>::complex and A::"(_::complex_normed_vector,_::complex_normed_vector)bounded" and S::"(_::complex_normed_vector) linear_space"
-  (* using transfer_raw *)
 proof transfer
   fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
   have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
@@ -1433,9 +1387,12 @@ proof transfer
     by (simp add: Setcompr_eq_image image_image)
   finally show "?nonnested = ?nested" by simp
 qed
+*) *)
 
+(*
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
   by (simp add: idOp.rep_eq)
+*)
 
 lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" for A::"(_,_) bounded"
   apply transfer by auto
