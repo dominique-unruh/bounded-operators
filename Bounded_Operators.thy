@@ -1059,15 +1059,24 @@ end
 
 section \<open>Adjoint\<close>
 
-
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
 is Adj by (fact Adj_bounded_clinear)
+
+definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
+  where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
 
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
   shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
   apply transfer using Adj_I by blast
+
+lemma cadjoint_I:
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cbounded"
+  shows \<open>\<forall>x. \<forall>y. \<langle> Rep_rbounded(Rep_cbounded (cadjoint G)) x, y\<rangle>
+         = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
+  unfolding cadjoint_def using adjoint_I
+  by (metis flatten.rep_eq unflatten_inv) 
 
 lemma adjoint_D:
   fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
@@ -1076,17 +1085,20 @@ lemma adjoint_D:
   shows \<open>F = G*\<close>
   using assms apply transfer using Adj_D by auto
 
-definition adjoint_c :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
-  where \<open>adjoint_c f = unflatten ( (flatten f)* )\<close>
-
 lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
 
-lemma scalar_times_adjc: "adjoint_c (a *\<^sub>C A) = (cnj a) *\<^sub>C (adjoint_c A)" 
+lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
+  using id_bounded_clinear by blast
+
+lemma idOp_adjoint[simp]: "idOp* = idOp"
+  apply transfer using id_dagger by blast
+
+lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
   for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
   and a :: complex 
-  unfolding adjoint_c_def 
+  unfolding cadjoint_def 
   apply transfer
   apply transfer
   apply transfer
@@ -1121,14 +1133,10 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
   and a :: complex 
   unfolding scaleC_bounded_def
-  by (metis (no_types, lifting) adjoint_c_def scalar_times_adjc unflatten_inv)  
+  by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
 
-lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
-  by (metis bounded_clinear_ident comp_id fun.map_ident)
 
-lemma idOp_adjoint[simp]: "idOp* = idOp"
-  apply transfer
-  using id_dagger by blast
+section \<open>Composition\<close>
 
 lift_definition timesOp :: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
