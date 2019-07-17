@@ -1161,7 +1161,6 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
   unfolding scaleC_bounded_def
   by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
 
-
 section \<open>Composition\<close>
 
 lift_definition rtimesOp:: 
@@ -1189,6 +1188,24 @@ lemma timesOp_Rep_bounded:
   unfolding timesOp_def ctimesOp_def rtimesOp_def unflatten_def flatten_def
   apply auto
   by (metis (no_types, lifting) Rep_cbounded_inverse ctimesOp.rep_eq flatten.abs_eq flatten.rep_eq rtimesOp.rep_eq unflatten.rep_eq unflatten_inv) 
+
+lemma rtimesOp_assoc: "rtimesOp (rtimesOp A B) C = rtimesOp A (rtimesOp B C)" 
+  apply transfer
+  by (simp add: comp_assoc) 
+
+lemma ctimesOp_assoc: "ctimesOp (ctimesOp A B) C = ctimesOp A (ctimesOp B C)" 
+  apply transfer
+  using rtimesOp_assoc by smt
+
+lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
+  unfolding timesOp_def using ctimesOp_assoc
+  by (simp add: ctimesOp_assoc flatten_inv) 
+
+lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)"
+  sorry
+
+
+
 
 
 chapter \<open>Chaos\<close>
@@ -1333,11 +1350,6 @@ qed
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using PREtimesScalarSpace_not0 by blast
 
-lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
-  apply transfer by auto
-
-lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)" 
-  sorry
 
 lemma PREtimesOp_assoc_linear_space:
   fixes A B S
