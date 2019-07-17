@@ -190,10 +190,14 @@ proof-
     using  Real_Vector_Spaces.tendsto_dist_iff
     by blast
   hence \<open>f \<midarrow>ONORM\<rightarrow> l\<close>
-    apply transfer
-    apply auto
-    unfolding onorm_convergence_def
-    by simp
+  proof transfer
+    have \<open>\<And>f l. \<forall>x. bounded_linear (f x) \<Longrightarrow>
+           bounded_linear l \<Longrightarrow> (\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0 \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l\<close>
+      unfolding onorm_convergence_def by simp
+    thus \<open>\<And>f l. pred_fun top bounded_linear f \<Longrightarrow>
+           bounded_linear l \<Longrightarrow> (\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0 \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l\<close>
+      by auto
+  qed
   thus ?thesis by blast
 qed
 
@@ -212,11 +216,16 @@ proof
     show \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e \<Longrightarrow> \<exists>L. f \<longlonglongrightarrow> L\<close>
     proof-
       assume \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
-      hence \<open>\<exists>l. bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
+      moreover have \<open> \<forall>n. bounded_linear (f n) \<Longrightarrow>
+         oCauchy f \<Longrightarrow>
+         \<exists>l. bounded_linear l \<and> f \<midarrow>onorm\<rightarrow> l\<close>
+        for f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>
+        using completeness_real_bounded  
+        by blast
+      ultimately have \<open>\<exists>l. bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
         apply transfer
-        apply auto
-        using completeness_real_bounded oCauchy_def onorm_convergence_def
-        by blast 
+        unfolding oCauchy_def
+        by auto
       then obtain l
         where \<open>bounded_linear l \<and> (\<lambda> n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> l\<close>
         by blast
