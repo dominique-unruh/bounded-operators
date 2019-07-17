@@ -2678,4 +2678,53 @@ proof-
   qed  
 qed
 
+lemma is_linear_manifold_image:
+  assumes "clinear f" and "is_linear_manifold S"
+  shows "is_linear_manifold (f ` S)"
+  apply (rule is_linear_manifold.intro)
+  subgoal proof - (* sledgehammer proof *)
+    fix x :: 'b and y :: 'b
+    assume a1: "x \<in> f ` S"
+    assume a2: "y \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
+      by blast
+    then have "aa S f x + aa S f y \<in> S"
+      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
+    then show "x + y \<in> f ` S"
+      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
+  qed
+  subgoal proof -
+    fix x :: 'b and c :: complex
+    assume a1: "x \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
+      using a1 by (simp add: Bex_def_raw image_iff)
+    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
+      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
+    then show "c *\<^sub>C x \<in> f ` S"
+      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
+  qed
+  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
+
+lemma clinear_is_linear_manifoldis_subspace_closure:
+  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
+    and S::\<open>'a set\<close>
+  assumes "clinear f" and "is_linear_manifold S"
+  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+proof -
+  have "is_linear_manifold {f x |x. x \<in> S}"
+    using assms is_linear_manifold_image
+    by (simp add: is_linear_manifold_image Setcompr_eq_image)
+  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+    apply (rule_tac is_subspace.intro)
+    using is_subspace_cl apply blast
+    by blast
+qed
+
+
 end

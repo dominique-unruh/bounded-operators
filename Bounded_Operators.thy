@@ -1066,6 +1066,12 @@ is Adj by (fact Adj_bounded_clinear)
 definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
   where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
 
+(* This lemma plays the role of lift_definition *)
+lemma cadjoint_Rep_Rep:
+\<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
+  unfolding cadjoint_def unflatten_def flatten_def apply auto
+  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse adjoint.rep_eq flatten.rep_eq unflatten.rep_eq unflatten_inv)
+
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
   shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
@@ -1158,82 +1164,42 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
 
 section \<open>Composition\<close>
 
-lift_definition timesOp :: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
-  (infixl "\<cdot>" 55) is "(o)"
+lift_definition rtimesOp:: 
+  "('b::real_normed_vector,'c::real_normed_vector) rbounded
+     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
+   is "(o)"
   unfolding o_def 
-  by (rule bounded_clinear_compose, simp_all)
+  by (rule bounded_linear_compose, simp_all)
 
-lemma is_linear_manifold_image:
-  assumes "clinear f" and "is_linear_manifold S"
-  shows "is_linear_manifold (f ` S)"
-  apply (rule is_linear_manifold.intro)
-  subgoal proof - (* sledgehammer proof *)
-    fix x :: 'b and y :: 'b
-    assume a1: "x \<in> f ` S"
-    assume a2: "y \<in> f ` S"
-    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
-      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
-      by moura
-    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
-      by blast
-    then have "aa S f x + aa S f y \<in> S"
-      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
-    then show "x + y \<in> f ` S"
-      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
-  qed
-  subgoal proof -
-    fix x :: 'b and c :: complex
-    assume a1: "x \<in> f ` S"
-    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
-      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
-      by moura
-    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
-      using a1 by (simp add: Bex_def_raw image_iff)
-    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
-      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
-    then show "c *\<^sub>C x \<in> f ` S"
-      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
-  qed
-  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
+lift_definition ctimesOp:: 
+  "('b::complex_normed_vector,'c::complex_normed_vector) cbounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) cbounded \<Rightarrow> ('a,'c) cbounded"
+   is "rtimesOp"
+  apply transfer
+  by auto
 
-lemma PREapplyOpSpace:
-  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
-    and S::\<open>'a set\<close>
-  assumes "clinear f" and "is_linear_manifold S"
-  shows  \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
-proof -
-  have "is_linear_manifold {f x |x. x \<in> S}"
-    using assms is_linear_manifold_image
-    by (simp add: is_linear_manifold_image Setcompr_eq_image)
-  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
-    apply (rule_tac is_subspace.intro)
-    using is_subspace_cl apply blast
-    by blast
-qed
+definition timesOp:: 
+  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" where
+\<open>timesOp f g = flatten (ctimesOp (unflatten f) (unflatten g))\<close>
 
-lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded
-\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
-  (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
-  using PREapplyOpSpace bounded_clinear_def is_subspace.subspace by blast
-
-
-
-
-
-
-
-
-
-
-
-
+(* This lemma plays the role of lift_definition *)
+lemma timesOp_Rep_bounded:
+\<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
+  unfolding timesOp_def ctimesOp_def rtimesOp_def unflatten_def flatten_def
+  apply auto
+  by (metis (no_types, lifting) Rep_cbounded_inverse ctimesOp.rep_eq flatten.abs_eq flatten.rep_eq rtimesOp.rep_eq unflatten.rep_eq unflatten_inv) 
 
 
 chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)
 
+section \<open>Image of a subspace by an operator\<close>
+
+lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded
+\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
+  (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
+  using clinear_is_linear_manifoldis_subspace_closure bounded_clinear_def is_subspace.subspace by blast
 
 
 
