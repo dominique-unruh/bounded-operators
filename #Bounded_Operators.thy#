@@ -1199,7 +1199,6 @@ proof-
 qed
 
 
-
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
   and a :: complex 
@@ -1219,8 +1218,7 @@ lift_definition ctimesOp::
   "('b::complex_normed_vector,'c::complex_normed_vector) cbounded
      \<Rightarrow> ('a::complex_normed_vector,'b) cbounded \<Rightarrow> ('a,'c) cbounded"
    is "rtimesOp"
-  apply transfer
-  by auto
+  by transfer auto
 
 definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
@@ -1260,7 +1258,6 @@ lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) b
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
   (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
   using clinear_is_linear_manifoldis_subspace_closure bounded_clinear_def is_subspace.subspace by blast
-
 
 
 chapter \<open>Chaos\<close>
