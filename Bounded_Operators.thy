@@ -1202,13 +1202,12 @@ lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)"
   by (simp add: ctimesOp_assoc flatten_inv) 
 
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)"
-  using timesOp_Rep_bounded times_adjoint_flatten
-  by (metis (no_types, lifting) Rep_bounded_inverse adjoint.rep_eq) 
+  using timesOp_Rep_bounded 
+  by (smt adjoint_D adjoint_I comp_apply)
 
 lemma ctimes_adjoint[simp]: "cadjoint (ctimesOp A B) = ctimesOp (cadjoint B) (cadjoint A)"
   unfolding cadjoint_def using times_adjoint
   by (metis flatten_inv timesOp_def) 
-
 
 
 chapter \<open>Chaos\<close>
