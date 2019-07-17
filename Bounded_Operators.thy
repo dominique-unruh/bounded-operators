@@ -729,14 +729,25 @@ proof-
       have \<open>f\<midarrow>ONORM\<rightarrow>l\<close>
         by (simp add: tendsto_ONORM)        
       hence \<open>f\<midarrow>STRONG\<rightarrow>l\<close>
-        apply transfer
-        apply auto
-        by (simp add: onorm_strong)
+      proof transfer
+        have \<open>\<And>f l. \<forall>x. bounded_linear (f x) \<Longrightarrow> bounded_linear l \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l
+             \<Longrightarrow> f \<midarrow>strong\<rightarrow> l\<close>
+          by (simp add: onorm_strong)
+        thus \<open>\<And>f l. pred_fun top bounded_linear f \<Longrightarrow>
+           bounded_linear l \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l \<Longrightarrow> f \<midarrow>strong\<rightarrow> l\<close> by auto          
+      qed
       thus ?thesis 
-        apply transfer
-        unfolding strong_convergence_def
-        apply auto
+      proof transfer
+        have \<open>\<And>f l p.
+       \<forall>x. bounded_linear (f x) \<Longrightarrow>
+       bounded_linear l \<Longrightarrow> \<forall>x. (\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0 \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
         by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
+      thus \<open>\<And>f l p.
+       pred_fun top bounded_linear f \<Longrightarrow>
+       bounded_linear l \<Longrightarrow> f \<midarrow>strong\<rightarrow> l \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
+        unfolding strong_convergence_def
+        by auto
+      qed
     qed
     hence \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close>
       by blast
@@ -760,9 +771,8 @@ qed
 instantiation cbounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach"
 begin
 instance
-  apply intro_classes
-proof-
-  fix f :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
+proof intro_classes
+  {  fix f :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
   assume \<open>Cauchy f\<close>
   hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
     unfolding Cauchy_def
@@ -807,8 +817,13 @@ proof-
     apply transfer by blast
   hence \<open>f \<longlonglongrightarrow> L\<close>
     by (simp add: metric_LIMSEQ_I)
-  thus \<open>convergent f\<close> 
-    unfolding convergent_def by blast
+  hence \<open>convergent f\<close> 
+    unfolding convergent_def by blast } note 1 = this
+
+  fix X :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
+  assume \<open>Cauchy X\<close>
+  thus \<open>convergent X\<close>
+    using 1 by blast  
 qed
 
 end
