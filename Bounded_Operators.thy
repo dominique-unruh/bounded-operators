@@ -347,7 +347,6 @@ instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_n
 begin
 instance
 proof intro_classes 
-
  {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
   assume \<open>bounded_linear f\<close>
   hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
@@ -489,15 +488,17 @@ section \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) cbounded
   = \<open>{f :: ('a, 'b) rbounded. \<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) }\<close>
-  apply transfer
-  apply auto
-proof
-  have "bounded_linear (\<lambda> _::'a. 0::'b)"
-    by simp    
-  moreover have "(\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
-    by simp   
-  ultimately show "bounded_linear (\<lambda> _::'a. 0::'b) \<and> (\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
-    by blast
+proof -
+  { have "bounded_linear (\<lambda> _::'a. 0::'b)"
+      by simp    
+    moreover have "(\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
+      by simp   
+    ultimately have "bounded_linear (\<lambda> _::'a. 0::'b) \<and> (\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
+      by blast } note 1 = this 
+  show ?thesis
+    apply transfer
+    apply auto
+    by (metis 1)
 qed
 
 setup_lifting type_definition_cbounded
