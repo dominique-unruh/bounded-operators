@@ -2370,7 +2370,7 @@ section \<open>Adjointness\<close>
 definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>)\<close>
   for G :: "'b::complex_inner \<Rightarrow> 'a::complex_inner"
 
-lemma Adj_is_adjoint:
+lemma Adj_I:
   fixes G :: "'b::chilbert_space \<Rightarrow> 'a::chilbert_space"
   assumes \<open>bounded_clinear G\<close>
   shows \<open>\<forall>x. \<forall>y. \<langle>Adj G x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
@@ -2420,29 +2420,16 @@ qed
 
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
-lemma AdjI: \<open>bounded_clinear G \<Longrightarrow> 
- \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> \<close>
-  for G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
-proof-
-  assume \<open>bounded_clinear G\<close> 
-  moreover have \<open>\<forall> G:: 'b::chilbert_space \<Rightarrow> 'a::chilbert_space. 
- bounded_clinear G \<longrightarrow> ( 
-   \<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle> )\<close>
-    using Adj_is_adjoint 
-    by (smt tfl_some)
-  ultimately show ?thesis by blast  
-qed
-
-lemma AdjUniq:
+lemma Adj_D:
   fixes G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
     and F:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  assumes "bounded_clinear G"
-  assumes F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
+  assumes "bounded_clinear G" and
+    F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
   shows \<open>F = G\<^sup>\<dagger>\<close>
 proof-
   note F_is_adjoint
   moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
-    using  \<open>bounded_clinear G\<close> AdjI by blast
+    using  \<open>bounded_clinear G\<close> Adj_I by blast
   ultimately have  \<open>\<forall> x::'a. \<forall> y::'b. 
     (\<langle>(F x) , y\<rangle> )-(\<langle>((G\<^sup>\<dagger>) x) , y\<rangle>) = 0\<close>
     by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , G y \<rangle>\<close> F_is_adjoint)
@@ -2466,7 +2453,8 @@ proof-
   assume \<open>bounded_clinear A\<close>
   have \<open>\<langle>((A\<^sup>\<dagger>) x), y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y
-    by (auto intro: AdjI \<open>bounded_clinear A\<close>)
+    using Adj_I \<open>bounded_clinear A\<close>
+    by auto
   have \<open>Modules.additive (A\<^sup>\<dagger>)\<close>
   proof-
     have \<open>\<langle>((A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2)) , y\<rangle> = 0\<close>
@@ -2583,7 +2571,7 @@ proposition dagger_dagger_id:
     have \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = \<langle> r, U s \<rangle>\<close>
       for r s
       using that
-      by (simp add: AdjI)
+      by (simp add: Adj_I)
     have \<open>\<langle> U s, r \<rangle> = \<langle> s, (U\<^sup>\<dagger>) r \<rangle>\<close>
       for r s
     proof-
@@ -2602,7 +2590,7 @@ proposition dagger_dagger_id:
     moreover have \<open>bounded_clinear (U\<^sup>\<dagger>)\<close>
       by (simp add: Adj_bounded_clinear that)
     ultimately show ?thesis
-      using AdjUniq by fastforce 
+      using Adj_D by fastforce 
   qed
 qed
 
@@ -2629,7 +2617,7 @@ proof-
     for x y::'a
     unfolding id_def by blast
   ultimately show ?thesis
-    by (smt AdjUniq)  
+    by (smt Adj_D)  
 qed
 
 lemma scalar_times_adjc_flatten:
@@ -2658,13 +2646,13 @@ proof-
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>y, (A\<^sup>\<dagger>) x\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>((A\<^sup>\<dagger>)\<^sup>\<dagger>) y, x\<rangle>\<close>
-      by (simp add: AdjI Adj_bounded_clinear assms(1) assms(2) bounded_linear_bounded_clinear)
+      by (simp add: Adj_I Adj_bounded_clinear assms(1) assms(2) bounded_linear_bounded_clinear)
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj (cnj \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>)\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, A y\<rangle>\<close>
-      using AdjI  assms(1) assms(2) bounded_linear_bounded_clinear by fastforce
+      using Adj_I  assms(1) assms(2) bounded_linear_bounded_clinear by fastforce
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, a *\<^sub>C A y\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
@@ -2682,7 +2670,7 @@ proof-
       then have "\<And>b aa. a *\<^sub>C \<langle>(A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
         by (metis (no_types) cinner_commute' cinner_scaleC_left cinner_scaleC_right complex_scaleC_def)
       then have "(\<lambda>b. cnj a *\<^sub>C (A\<^sup>\<dagger>) b) = (\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>"
-        by (simp add: AdjUniq \<open>bounded_linear (\<lambda>t. a *\<^sub>C A t)\<close> assms(2) bounded_linear_bounded_clinear)
+        by (simp add: Adj_D \<open>bounded_linear (\<lambda>t. a *\<^sub>C A t)\<close> assms(2) bounded_linear_bounded_clinear)
       then have "cnj a *\<^sub>C (A\<^sup>\<dagger>) bb = ((\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>) bb"
         by metis }
     then show ?thesis

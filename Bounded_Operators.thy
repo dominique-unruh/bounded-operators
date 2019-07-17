@@ -1059,11 +1059,24 @@ end
 
 section \<open>Adjoint\<close>
 
+
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_\<^sub>\<dagger>" [99] 100) 
 is Adj by (fact Adj_bounded_clinear)
 
-definition adjoint_c :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded" 
+lemma adjoint_I:
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
+  shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
+  apply transfer using Adj_I by blast
+
+lemma adjoint_D:
+  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
+    and F:: \<open>('a, 'b) bounded\<close>
+  assumes \<open>\<And>x y. \<langle>(Rep_bounded F) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
+  shows \<open>F = G\<^sub>\<dagger>\<close>
+  using assms apply transfer using Adj_D by auto
+
+definition adjoint_c :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
   where \<open>adjoint_c f = unflatten ( (flatten f)\<^sub>\<dagger> )\<close>
 
 lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
