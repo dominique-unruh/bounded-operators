@@ -2727,5 +2727,7 @@ proof -
     by blast
 qed
 
+lemma times_adjoint_flatten: "(A \<circ> B)\<^sup>\<dagger> = (B\<^sup>\<dagger>) \<circ> (A\<^sup>\<dagger>)"
+  sorry
 
 end
