@@ -1209,16 +1209,18 @@ lemma ctimes_adjoint[simp]: "cadjoint (ctimesOp A B) = ctimesOp (cadjoint B) (ca
   unfolding cadjoint_def using times_adjoint
   by (metis flatten_inv timesOp_def) 
 
-
-chapter \<open>Chaos\<close>
-(* These are the results that I have not assimilated yet *)
-
 section \<open>Image of a subspace by an operator\<close>
 
 lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
   (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
   using clinear_is_linear_manifoldis_subspace_closure bounded_clinear_def is_subspace.subspace by blast
+
+
+
+chapter \<open>Chaos\<close>
+(* These are the results that I have not assimilated yet *)
+
 
 
 
