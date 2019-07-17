@@ -1061,7 +1061,7 @@ section \<open>Adjoint\<close>
 
 
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_\<^sub>\<dagger>" [99] 100) 
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
 is Adj by (fact Adj_bounded_clinear)
 
 lemma adjoint_I:
@@ -1073,13 +1073,13 @@ lemma adjoint_D:
   fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
     and F:: \<open>('a, 'b) bounded\<close>
   assumes \<open>\<And>x y. \<langle>(Rep_bounded F) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
-  shows \<open>F = G\<^sub>\<dagger>\<close>
+  shows \<open>F = G*\<close>
   using assms apply transfer using Adj_D by auto
 
 definition adjoint_c :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
-  where \<open>adjoint_c f = unflatten ( (flatten f)\<^sub>\<dagger> )\<close>
+  where \<open>adjoint_c f = unflatten ( (flatten f)* )\<close>
 
-lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
+lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
 
@@ -1117,7 +1117,7 @@ proof-
     using Abs_rbounded_inject by simp
 qed
 
-lemma scalar_times_adj[simp]: "(a *\<^sub>C A)\<^sub>\<dagger> = (cnj a) *\<^sub>C (A\<^sub>\<dagger>)" 
+lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
   and a :: complex 
   unfolding scaleC_bounded_def
@@ -1126,7 +1126,7 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)\<^sub>\<dagger> = (cnj a) *\<^sub
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
 
-lemma idOp_adjoint[simp]: "idOp\<^sub>\<dagger> = idOp"
+lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer
   using id_dagger by blast
 
