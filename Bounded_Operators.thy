@@ -1060,106 +1060,13 @@ end
 section \<open>Adjoint\<close>
 
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) rbounded" 
 is Adj by (fact Adj_bounded_clinear)
 
-definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
-  where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
 
-(* This lemma plays the role of lift_definition *)
-lemma cadjoint_Rep_Rep:
-\<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
-  unfolding cadjoint_def unflatten_def flatten_def apply auto
-  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse adjoint.rep_eq flatten.rep_eq unflatten.rep_eq unflatten_inv)
 
-lemma adjoint_I:
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
-  shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
-  apply transfer using Adj_I by blast
 
-lemma cadjoint_I:
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cbounded"
-  shows \<open>\<forall>x. \<forall>y. \<langle> Rep_rbounded(Rep_cbounded (cadjoint G)) x, y\<rangle>
-         = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
-  unfolding cadjoint_def using adjoint_I
-  by (metis flatten.rep_eq unflatten_inv) 
 
-lemma adjoint_D:
-  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
-    and F:: \<open>('a, 'b) bounded\<close>
-  assumes \<open>\<And>x y. \<langle>(Rep_bounded F) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
-  shows \<open>F = G*\<close>
-  using assms apply transfer using Adj_D by auto
-
-lemma cadjoint_D:
-  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cbounded\<close>
-    and F:: \<open>('a, 'b) cbounded\<close>
-  assumes \<open>\<And>x y. \<langle>(Rep_rbounded (Rep_cbounded F)) x, y\<rangle> 
-          = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
-  shows \<open>F = cadjoint G\<close>
-  unfolding cadjoint_def using adjoint_D
-  by (metis assms cadjoint_I cadjoint_def flatten.rep_eq flatten_inj)
-
-lemma adjoint_twice[simp]: "(U*)* = U" 
-  for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  apply transfer
-  using dagger_dagger_id by blast
-
-lemma cadjoint_twice[simp]: "cadjoint (cadjoint U) = U" 
-  for U :: "('a::chilbert_space,'b::chilbert_space) cbounded"
-  by (simp add: cadjoint_def flatten_inv unflatten_inv)
-
-lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
-  using id_bounded_clinear by blast
-
-definition cidOp::\<open>('a::complex_normed_vector, 'a) cbounded\<close> where
-\<open>cidOp = unflatten (idOp)\<close>
-
-lemma idOp_adjoint[simp]: "idOp* = idOp"
-  apply transfer using id_dagger by blast
-
-lemma cidOp_adjoint[simp]: "cadjoint cidOp = cidOp"
-  by (simp add: cadjoint_def cidOp_def unflatten_inv) 
-
-lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
-  and a :: complex 
-  unfolding cadjoint_def 
-  apply transfer
-  apply transfer
-  apply transfer
-  unfolding scaleC_rbounded_def
-  apply auto
-proof-
-  fix a::complex and A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
-  hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
-    using scalar_times_adjc_flatten
-    by blast 
-  have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-  proof-
-    from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
-    have  \<open>bounded_clinear A\<close>
-      using bounded_linear_bounded_clinear by blast
-    hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
-      by (simp add: Adj_bounded_clinear)
-    hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
-      apply auto
-      by (simp add: bounded_clinear.bounded_linear)      
-    hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
-      using Abs_rbounded_inverse
-      by blast
-    thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
-  qed
-  thus \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-    using Abs_rbounded_inject by simp
-qed
-
-lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
-  and a :: complex 
-  unfolding scaleC_bounded_def
-  by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
 
 section \<open>Composition\<close>
 
@@ -1978,3 +1885,108 @@ end *)
 
 
 end
+
+
+
+lift_definition
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
+is Adj by (fact Adj_bounded_clinear)
+
+definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
+  where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
+
+(* This lemma plays the role of lift_definition *)
+lemma cadjoint_Rep_Rep:
+\<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
+  unfolding cadjoint_def unflatten_def flatten_def apply auto
+  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse adjoint.rep_eq flatten.rep_eq unflatten.rep_eq unflatten_inv)
+
+lemma adjoint_I:
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
+  shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
+  apply transfer using Adj_I by blast
+
+lemma cadjoint_I:
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cbounded"
+  shows \<open>\<forall>x. \<forall>y. \<langle> Rep_rbounded(Rep_cbounded (cadjoint G)) x, y\<rangle>
+         = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
+  unfolding cadjoint_def using adjoint_I
+  by (metis flatten.rep_eq unflatten_inv) 
+
+lemma adjoint_D:
+  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
+    and F:: \<open>('a, 'b) bounded\<close>
+  assumes \<open>\<And>x y. \<langle>(Rep_bounded F) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
+  shows \<open>F = G*\<close>
+  using assms apply transfer using Adj_D by auto
+
+lemma cadjoint_D:
+  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cbounded\<close>
+    and F:: \<open>('a, 'b) cbounded\<close>
+  assumes \<open>\<And>x y. \<langle>(Rep_rbounded (Rep_cbounded F)) x, y\<rangle> 
+          = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
+  shows \<open>F = cadjoint G\<close>
+  unfolding cadjoint_def using adjoint_D
+  by (metis assms cadjoint_I cadjoint_def flatten.rep_eq flatten_inj)
+
+lemma adjoint_twice[simp]: "(U*)* = U" 
+  for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
+  apply transfer
+  using dagger_dagger_id by blast
+
+lemma cadjoint_twice[simp]: "cadjoint (cadjoint U) = U" 
+  for U :: "('a::chilbert_space,'b::chilbert_space) cbounded"
+  by (simp add: cadjoint_def flatten_inv unflatten_inv)
+
+lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
+  using id_bounded_clinear by blast
+
+definition cidOp::\<open>('a::complex_normed_vector, 'a) cbounded\<close> where
+\<open>cidOp = unflatten (idOp)\<close>
+
+lemma idOp_adjoint[simp]: "idOp* = idOp"
+  apply transfer using id_dagger by blast
+
+lemma cidOp_adjoint[simp]: "cadjoint cidOp = cidOp"
+  by (simp add: cadjoint_def cidOp_def unflatten_inv) 
+
+lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
+  and a :: complex 
+  unfolding cadjoint_def 
+  apply transfer
+  apply transfer
+  apply transfer
+  unfolding scaleC_rbounded_def
+  apply auto
+proof-
+  fix a::complex and A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
+  hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
+    using scalar_times_adjc_flatten
+    by blast 
+  have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+  proof-
+    from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
+    have  \<open>bounded_clinear A\<close>
+      using bounded_linear_bounded_clinear by blast
+    hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
+      by (simp add: Adj_bounded_clinear)
+    hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
+      apply auto
+      by (simp add: bounded_clinear.bounded_linear)      
+    hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
+      using Abs_rbounded_inverse
+      by blast
+    thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
+  qed
+  thus \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+    using Abs_rbounded_inject by simp
+qed
+
+lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
+  and a :: complex 
+  unfolding scaleC_bounded_def
+  by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
+
