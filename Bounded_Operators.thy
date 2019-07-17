@@ -1063,17 +1063,17 @@ lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_\<^sub>\<dagger>" [99] 100) 
 is Adj by (fact Adj_bounded_clinear)
 
-definition adjoint_cbounded :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded" 
-  where \<open>adjoint_cbounded f = unflatten ( (flatten f)\<^sub>\<dagger> )\<close>
+definition adjoint_c :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded" 
+  where \<open>adjoint_c f = unflatten ( (flatten f)\<^sub>\<dagger> )\<close>
 
 lemma adjoint_twice[simp]: "U\<^sub>\<dagger>\<^sub>\<dagger> = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
 
-lemma scalar_times_adjc: "adjoint_cbounded (a *\<^sub>C A) = (cnj a) *\<^sub>C (adjoint_cbounded A)" 
+lemma scalar_times_adjc: "adjoint_c (a *\<^sub>C A) = (cnj a) *\<^sub>C (adjoint_c A)" 
   for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
   and a :: complex 
-  unfolding adjoint_cbounded_def 
+  unfolding adjoint_c_def 
   apply transfer
   apply transfer
   apply transfer
@@ -1108,7 +1108,7 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)\<^sub>\<dagger> = (cnj a) *\<^sub
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
   and a :: complex 
   unfolding scaleC_bounded_def
-  by (metis (no_types, lifting) adjoint_cbounded_def scalar_times_adjc unflatten_inv)  
+  by (metis (no_types, lifting) adjoint_c_def scalar_times_adjc unflatten_inv)  
 
 lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
   by (metis bounded_clinear_ident comp_id fun.map_ident)
@@ -1156,7 +1156,6 @@ lemma is_linear_manifold_image:
       using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
   qed
   by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
-
 
 lemma PREapplyOpSpace:
   fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
