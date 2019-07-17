@@ -346,10 +346,9 @@ end
 instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
 instance
-  apply intro_classes
-  apply transfer
-proof-
-  fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
+proof intro_classes 
+
+ {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
   assume \<open>bounded_linear f\<close>
   hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
     by (simp add: onorm_def)
@@ -469,8 +468,15 @@ proof-
     thus ?thesis
       by simp 
   qed
-  thus \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+  hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
     by (simp add: onorm_def) 
+ } note 1 = this 
+
+  show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
+    for a::complex and x::\<open>('a, 'b) rbounded\<close>
+    apply transfer
+    apply (rule 1)
+    by blast
 qed
 end
 
