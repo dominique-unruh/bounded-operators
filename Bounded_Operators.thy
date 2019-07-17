@@ -18,7 +18,6 @@ between complex normed spaces.
 theory Bounded_Operators
   imports Complex_Inner_Product Convergence_Operators  HOL.Real_Vector_Spaces
 
-
 begin
 
 chapter \<open>Definition and instantiation of bounded operators\<close>
@@ -31,9 +30,6 @@ typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
 
 setup_lifting type_definition_rbounded
 
-(* TODO: this exists and is called Rep_rbounded *)
-lift_definition ev_rbounded :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded
- \<Rightarrow> 'a \<Rightarrow> 'b\<close> is \<open>\<lambda> f. \<lambda> x. f x\<close>.
 
 instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_vector"
 begin
@@ -252,9 +248,7 @@ proof
     qed
   qed
 qed  
-
 end
-
 
 section \<open>Real bounded operators with complex scalar product\<close>
 
@@ -472,7 +466,7 @@ end
 section \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) cbounded
-  = \<open>{f :: ('a, 'b) rbounded. \<forall> c. \<forall> x. ev_rbounded f (c *\<^sub>C x) = c *\<^sub>C (ev_rbounded f x) }\<close>
+  = \<open>{f :: ('a, 'b) rbounded. \<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) }\<close>
   apply transfer
   apply auto
 proof
@@ -487,28 +481,28 @@ qed
 setup_lifting type_definition_cbounded
 
 lift_definition ev_cbounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
-  is \<open>\<lambda> f. \<lambda> x. ev_rbounded f x\<close>.
+  is \<open>\<lambda> f. \<lambda> x. Rep_rbounded f x\<close>.
 
 instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
 begin
 lift_definition uminus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded"
   is "\<lambda> f. - f"
-  by (simp add: ev_rbounded.rep_eq uminus_rbounded.rep_eq)
+  by (simp add:  uminus_rbounded.rep_eq)
 
 lift_definition zero_cbounded :: "('a,'b) cbounded" is "0"
-  by (simp add: ev_rbounded.rep_eq zero_rbounded.rep_eq)
+  by (simp add:  zero_rbounded.rep_eq)
 
 lift_definition plus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded" is
   \<open>\<lambda> f g. f + g\<close>
-  by (simp add: ev_rbounded.rep_eq plus_rbounded.rep_eq scaleC_add_right)
+  by (simp add:  plus_rbounded.rep_eq scaleC_add_right)
 
 lift_definition minus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded" is
   \<open>\<lambda> f g. f - g\<close>
-  by (simp add: complex_vector.scale_right_diff_distrib ev_rbounded.rep_eq minus_rbounded.rep_eq)
+  by (simp add: complex_vector.scale_right_diff_distrib minus_rbounded.rep_eq)
 
 lift_definition scaleR_cbounded :: \<open>real \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
   is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
-  by (simp add: ev_rbounded.rep_eq scaleC_rbounded.rep_eq scaleR_scaleC)
+  by (simp add:  scaleC_rbounded.rep_eq scaleR_scaleC)
 
 instance
 proof      
@@ -591,7 +585,7 @@ instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "comple
 begin 
 lift_definition scaleC_cbounded :: \<open>complex \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
   is \<open>\<lambda> c::complex. \<lambda> f::('a, 'b) rbounded. c *\<^sub>C f\<close> 
-  by (simp add: ev_rbounded.rep_eq scaleC_rbounded.rep_eq)
+  by (simp add: scaleC_rbounded.rep_eq)
 
 instance
 proof
@@ -698,14 +692,14 @@ qed
 lemma rbounded_SEQ_scaleC:
   fixes f :: \<open>nat \<Rightarrow> ('a::{complex_normed_vector, perfect_space}, 'b::cbanach) rbounded\<close> 
     and l :: \<open>('a, 'b) rbounded\<close>
-  assumes \<open>\<And> n. \<forall> c. \<forall> x. ev_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C ev_rbounded (f n) x\<close>
+  assumes \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded (f n) x\<close>
     and \<open>f \<longlonglongrightarrow> l\<close> 
-  shows \<open>\<forall> c. \<forall> x. ev_rbounded l (c *\<^sub>C x) = c *\<^sub>C ev_rbounded l x\<close>
+  shows \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded l x\<close>
 proof-
-  have \<open>ev_rbounded l (c *\<^sub>C x) = c *\<^sub>C ev_rbounded l x\<close>
+  have \<open>Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded l x\<close>
     for c::complex and x::'a
   proof-
-    have  \<open>(\<lambda> n. ev_rbounded (f n) p)  \<longlonglongrightarrow> ev_rbounded l p\<close>
+    have  \<open>(\<lambda> n. Rep_rbounded (f n) p)  \<longlonglongrightarrow> Rep_rbounded l p\<close>
       for p
     proof-
       from  \<open>f \<longlonglongrightarrow> l\<close>
@@ -721,16 +715,16 @@ proof-
         apply auto
         by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
     qed
-    hence \<open>(\<lambda> n. ev_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> ev_rbounded l (c *\<^sub>C x)\<close>
+    hence \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close>
       by blast
-    moreover have \<open>(\<lambda> n. ev_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow>  c *\<^sub>C ev_rbounded l x\<close>
+    moreover have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow>  c *\<^sub>C Rep_rbounded l x\<close>
     proof-
-      have \<open>(\<lambda> n. ev_rbounded (f n) (c *\<^sub>C x))
-        = (\<lambda> n. c *\<^sub>C ev_rbounded (f n) x)\<close>
-        using  \<open>\<And> n. \<forall> c. \<forall> x. ev_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C ev_rbounded (f n) x\<close>
+      have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x))
+        = (\<lambda> n. c *\<^sub>C Rep_rbounded (f n) x)\<close>
+        using  \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded (f n) x\<close>
         by auto
-      moreover have \<open>(\<lambda> n. c *\<^sub>C ev_rbounded (f n) x)  \<longlonglongrightarrow>  c *\<^sub>C ev_rbounded l x\<close>
-        using  \<open>\<And> p. (\<lambda> n. ev_rbounded (f n) p)  \<longlonglongrightarrow> ev_rbounded l p\<close>
+      moreover have \<open>(\<lambda> n. c *\<^sub>C Rep_rbounded (f n) x)  \<longlonglongrightarrow>  c *\<^sub>C Rep_rbounded l x\<close>
+        using  \<open>\<And> p. (\<lambda> n. Rep_rbounded (f n) p)  \<longlonglongrightarrow> Rep_rbounded l p\<close>
         by (simp add: tendsto_scaleC)
       ultimately show ?thesis using LIMSEQ_unique by simp
     qed
@@ -764,11 +758,11 @@ proof-
   then obtain l::\<open>('a, 'b) rbounded\<close>
     where \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
     by blast
-  have \<open>\<forall> c. \<forall> x. ev_rbounded l (c *\<^sub>C x) =
-                c *\<^sub>C ev_rbounded l x \<close>
+  have \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) =
+                c *\<^sub>C Rep_rbounded l x \<close>
   proof-
-    have \<open>\<And> n. \<forall> c. \<forall> x. ev_rbounded (Rep_cbounded (f n)) (c *\<^sub>C x)
-         = c *\<^sub>C ev_rbounded (Rep_cbounded (f n)) x\<close>
+    have \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (Rep_cbounded (f n)) (c *\<^sub>C x)
+         = c *\<^sub>C Rep_rbounded (Rep_cbounded (f n)) x\<close>
       apply transfer
       by simp
     thus ?thesis
@@ -820,7 +814,7 @@ lift_definition unflatten:: \<open>('a::complex_normed_vector, 'b::complex_norme
   \<Rightarrow> ('a, 'b) cbounded\<close>
   is \<open>\<lambda> f.  (Abs_rbounded f)\<close>
   apply transfer
-  unfolding bounded_clinear_def clinear_def clinear_axioms_def ev_rbounded_def
+  unfolding bounded_clinear_def clinear_def clinear_axioms_def 
   apply auto
   using Abs_bounded_inverse apply auto
   by (simp add: Abs_rbounded_inverse bounded_clinear.bounded_linear bounded_clinear.intro clinear.intro clinear_axioms.intro)
@@ -1079,8 +1073,6 @@ lemma scalar_times_adjc: "adjoint_cbounded (a *\<^sub>C A) = (cnj a) *\<^sub>C (
   unfolding adjoint_cbounded_def 
   apply transfer
   apply transfer
-  unfolding ev_rbounded_def
-  apply auto
   apply transfer
   unfolding scaleC_rbounded_def
   apply auto
