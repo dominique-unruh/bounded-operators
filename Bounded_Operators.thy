@@ -30,7 +30,6 @@ typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
 
 setup_lifting type_definition_rbounded
 
-
 instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_vector"
 begin
 lift_definition uminus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded"
@@ -145,18 +144,9 @@ abbreviation
 
 lemma ONORM_tendsto:
   \<open>f \<midarrow>ONORM\<rightarrow> l \<Longrightarrow> f \<longlonglongrightarrow> l\<close>
-  apply transfer
-proof
-  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) rbounded) \<Longrightarrow> e > 0 \<Longrightarrow>
- \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) rbounded) < e"   
-    for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
-      and l :: "('a, 'b) rbounded"
-      and e :: real
-    apply transfer
-    apply auto
-  proof-
-    fix f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l :: \<open>'a \<Rightarrow> 'b\<close> 
-      and e :: real
+proof 
+  { fix f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+      and l :: \<open>'a \<Rightarrow> 'b\<close> and e :: real
     assume \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>e > 0\<close>
       and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
     from  \<open>f \<midarrow>onorm\<rightarrow> l\<close>
@@ -175,9 +165,19 @@ proof
         using onorm_pos_le by blast 
       thus ?thesis using  \<open>\<exists> N. \<forall> n \<ge> N. \<bar> onorm (\<lambda>x. f n x - l x) \<bar> < e\<close> by fastforce
     qed
-    thus \<open>\<forall>\<^sub>F x in sequentially. onorm (\<lambda>xa. f x xa - l xa) < e\<close>
+    hence \<open>\<forall>\<^sub>F x in sequentially. onorm (\<lambda>xa. f x xa - l xa) < e\<close>
       by (simp add: eventually_at_top_linorder)
-  qed
+  } note 1 = this
+
+  show "f \<midarrow>ONORM\<rightarrow> (l::('a, 'b) rbounded) \<Longrightarrow> e > 0 \<Longrightarrow>
+ \<forall>\<^sub>F x in sequentially. dist (f x) (l::('a, 'b) rbounded) < e"   
+    for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
+      and l :: "('a, 'b) rbounded"
+      and e :: real
+    apply transfer
+    apply auto
+    apply (rule 1)
+    by auto
 qed
 
 lemma tendsto_ONORM:
