@@ -1085,15 +1085,35 @@ lemma adjoint_D:
   shows \<open>F = G*\<close>
   using assms apply transfer using Adj_D by auto
 
-lemma adjoint_twice[simp]: "(U*)* = U" for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
+lemma cadjoint_D:
+  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cbounded\<close>
+    and F:: \<open>('a, 'b) cbounded\<close>
+  assumes \<open>\<And>x y. \<langle>(Rep_rbounded (Rep_cbounded F)) x, y\<rangle> 
+          = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
+  shows \<open>F = cadjoint G\<close>
+  unfolding cadjoint_def using adjoint_D
+  by (metis assms cadjoint_I cadjoint_def flatten.rep_eq flatten_inj)
+
+lemma adjoint_twice[simp]: "(U*)* = U" 
+  for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
 
-lift_definition idOp :: "('a::complex_normed_vector,'a) bounded" is id
+lemma cadjoint_twice[simp]: "cadjoint (cadjoint U) = U" 
+  for U :: "('a::chilbert_space,'b::chilbert_space) cbounded"
+  by (simp add: cadjoint_def flatten_inv unflatten_inv)
+
+lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
   using id_bounded_clinear by blast
+
+definition cidOp::\<open>('a::complex_normed_vector, 'a) cbounded\<close> where
+\<open>cidOp = unflatten (idOp)\<close>
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
+
+lemma cidOp_adjoint[simp]: "cadjoint cidOp = cidOp"
+  by (simp add: cadjoint_def cidOp_def unflatten_inv) 
 
 lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
   for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
