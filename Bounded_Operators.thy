@@ -1411,6 +1411,7 @@ proof-
 qed
 
 lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
+  (* TODO: This should work again if bounded and timesOp are defined directly and not via rbounded *)
   apply transfer
   using PREtimesOp_assoc_linear_space by blast
 
@@ -1429,6 +1430,7 @@ lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
   by (simp add: linear_space_zero_bot[symmetric])
 *)
 
+(* TODO: Fix! applyOp does not exist as a name! *)
 lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
   sorry
 

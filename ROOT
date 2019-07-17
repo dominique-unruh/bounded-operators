@@ -7,4 +7,4 @@ session "Bounded_Operators-Prerequisites" = "HOL-Analysis" +
 
 session Bounded_Operators = "Bounded_Operators-Prerequisites" +
   options [(* quick_and_dirty=true, *) record_proofs=1]
-  theories Bounded_Operators Legacy
+  theories Bounded_Operators Legacy Complex_L2
