@@ -243,16 +243,23 @@ proof
         using  \<open>Rep_rbounded L = l\<close> by blast
       hence \<open>(\<lambda>n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> (Rep_rbounded L)\<close>
         using  \<open>Rep_rbounded L = l\<close> by blast
-      hence \<open>f \<midarrow>ONORM\<rightarrow> L\<close>
-        unfolding onorm_convergence_rbounded_def
-        apply auto
-        unfolding map_fun_def
-        apply simp
-        unfolding comp_def
-        by auto
+      have \<open>f \<midarrow>ONORM\<rightarrow> L\<close>       
+      proof-
+        have \<open>(\<lambda>n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> Rep_rbounded L \<Longrightarrow>
+    (Rep_rbounded \<circ> f) \<midarrow>onorm\<rightarrow> Rep_rbounded L\<close>
+          unfolding comp_def
+          by auto
+        hence \<open>(\<lambda>n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> Rep_rbounded L \<Longrightarrow>
+    map_fun id Rep_rbounded f \<midarrow>onorm\<rightarrow> Rep_rbounded L\<close>
+          unfolding map_fun_def
+          by auto
+        thus ?thesis 
+          using \<open>(\<lambda>n. Rep_rbounded (f n)) \<midarrow>onorm\<rightarrow> (Rep_rbounded L)\<close>
+          unfolding onorm_convergence_rbounded_def
+          by auto
+      qed
       hence \<open>f \<longlonglongrightarrow> L\<close>
-        using ONORM_tendsto
-        by auto
+        by (simp add: ONORM_tendsto)        
       thus ?thesis by blast
     qed
   qed
