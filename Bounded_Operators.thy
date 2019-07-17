@@ -939,7 +939,7 @@ end
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uniformity_dist" begin
 lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
-  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) bounded), g). dist f g < e})\<close> .
+  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) bounded), g). dist f g < e})\<close>.
 instance
   apply intro_classes
   by (simp add: uniformity_bounded.transfer)
@@ -994,19 +994,15 @@ proof
   qed
 qed
 
-lemma flatten_convergent:
+lemma flatten_convergent_lim:
   fixes X :: \<open>nat \<Rightarrow> (('a::complex_normed_vector, 'b::complex_normed_vector) cbounded)\<close>
-  assumes \<open>convergent X\<close>
-  shows \<open>convergent (\<lambda> n. flatten (X n))\<close>
+    and L::\<open>('a,'b) cbounded\<close>
+  assumes \<open>X \<longlonglongrightarrow> L\<close>
+  shows \<open>(\<lambda> n. flatten (X n)) \<longlonglongrightarrow> flatten L\<close>
 proof-
-  have \<open>\<exists>L. \<forall>S. open S \<longrightarrow>
-            L \<in> S \<longrightarrow> (\<forall>\<^sub>F x in sequentially. X x \<in> S)\<close>
-    using \<open>convergent X\<close>
+  have \<open>\<forall>S. open S \<longrightarrow> L \<in> S \<longrightarrow> (\<forall>\<^sub>F x in sequentially. X x \<in> S)\<close>
+    using \<open>X \<longlonglongrightarrow> L\<close>
     unfolding convergent_def tendsto_def by blast
-  then obtain L::\<open>('a,'b) cbounded\<close> where
-    \<open>\<forall>S. open S \<longrightarrow>
-            L \<in> S \<longrightarrow> (\<forall>\<^sub>F n in sequentially. X n \<in> S)\<close>
-    by blast
   have \<open>open S \<Longrightarrow> flatten L \<in> S
      \<Longrightarrow> \<forall>\<^sub>F n in sequentially. flatten (X n) \<in> S\<close>
     for S
@@ -1023,10 +1019,17 @@ proof-
     thus \<open>\<forall>\<^sub>F n in sequentially. flatten (X n) \<in> S\<close>
       by (smt eventually_mono image_iff unflatten_inv) 
   qed
-  thus \<open>convergent (\<lambda> n. flatten (X n) )\<close>
-    unfolding convergent_def tendsto_def 
+  thus \<open>(\<lambda> n. flatten (X n)) \<longlonglongrightarrow> flatten L\<close>
+    unfolding tendsto_def 
     by blast    
 qed
+
+lemma flatten_convergent:
+  fixes X :: \<open>nat \<Rightarrow> (('a::complex_normed_vector, 'b::complex_normed_vector) cbounded)\<close>
+  assumes \<open>convergent X\<close>
+  shows \<open>convergent (\<lambda> n. flatten (X n))\<close>
+  using flatten_convergent_lim assms
+  unfolding convergent_def by blast
 
 instantiation bounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach" begin
 instance
