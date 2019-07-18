@@ -1199,7 +1199,6 @@ proof-
 qed
 
 
-
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
   and a :: complex 
@@ -1219,8 +1218,7 @@ lift_definition ctimesOp::
   "('b::complex_normed_vector,'c::complex_normed_vector) cbounded
      \<Rightarrow> ('a::complex_normed_vector,'b) cbounded \<Rightarrow> ('a,'c) cbounded"
    is "rtimesOp"
-  apply transfer
-  by auto
+  by transfer auto
 
 definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
@@ -1256,11 +1254,53 @@ lemma ctimes_adjoint[simp]: "cadjoint (ctimesOp A B) = ctimesOp (cadjoint B) (ca
 
 section \<open>Image of a subspace by an operator\<close>
 
-lift_definition applyOpSpace :: \<open>('a::chilbert_space,'b::chilbert_space) bounded
+lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
-  (infixl "on" 55)  is "\<lambda>A S. closure {A x|x. x\<in>S}"
-  using clinear_is_linear_manifoldis_subspace_closure bounded_clinear_def is_subspace.subspace by blast
+   is "\<lambda>A S. closure (A ` S)"
+  using  bounded_clinear_def is_subspace.subspace
+  by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
+  
 
+instantiation linear_space :: (complex_normed_vector) scaleC begin
+lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+  "\<lambda>c S. scaleC c ` S"
+  apply (rule is_subspace.intro)
+  using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
+  by (simp add: closed_scaleC is_subspace.closed)
+lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+  "\<lambda>c S. scaleR c ` S"
+  apply (rule is_subspace.intro)
+  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
+  by (simp add: closed_scaling is_subspace.closed)
+instance 
+  apply standard
+  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
+end
+
+instantiation linear_space :: (complex_normed_vector) zero begin
+lift_definition zero_linear_space :: \<open>'a linear_space\<close> is \<open>0\<close>
+  by simp
+instance..
+end
+
+lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
+  apply transfer
+  by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
+
+lemma times_apply_op_A:
+  assumes \<open>closed S\<close> and \<open>continuous_on S f\<close> and \<open>continuous_on S g\<close> 
+    and \<open>z \<in> closure ((f \<circ> g) ` S)\<close>
+  shows \<open>z \<in> closure (A ` (closure (B ` S)))\<close>
+  sorry
+
+lemma times_apply_op_B:
+  assumes \<open>closed S\<close> and \<open>continuous_on S f\<close> and \<open>continuous_on S g\<close> 
+    and \<open>z \<in> closure (A ` (closure (B ` S)))\<close>
+  shows \<open>z \<in> closure ((f \<circ> g) ` S)\<close>
+  sorry
+
+lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+  sorry
 
 
 chapter \<open>Chaos\<close>
@@ -1336,33 +1376,7 @@ qed
 
 
 
-(* TODO: same for linear_space *)
-instantiation linear_space :: (complex_normed_vector) scaleC begin
-lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
-  "\<lambda>c S. scaleC c ` S"
-  apply (rule is_subspace.intro)
-  using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
-  by (simp add: closed_scaleC is_subspace.closed)
-lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
-  "\<lambda>c S. scaleR c ` S"
-  apply (rule is_subspace.intro)
-  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
-  by (simp add: closed_scaling is_subspace.closed)
-instance 
-  apply standard
-  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
-end
 
-(*
-lemma applyOp_0[simp]: "applyOpSpace U (0::) = 0" 
-  apply transfer
-  by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
-*)
-
-(*
-lemma times_applyOp: "applyOp (timesOp A B) \<psi> = applyOp A (applyOp B \<psi>)" 
-  apply transfer by simp
-*)
 (*
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
