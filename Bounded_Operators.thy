@@ -1353,7 +1353,7 @@ lemma times_comp: \<open>\<And>A B \<psi>.
 qed
 
 
-lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+lemma timesOp_assoc_linear_space: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by auto
@@ -1402,96 +1402,14 @@ proof-
 qed
 
 
-
-
-
-
-chapter \<open>Chaos\<close>
-(* These are the results that I have not assimilated yet *)
-
-
-lemma clinear_D:
-  \<open>bounded_clinear f \<Longrightarrow> \<exists>K. \<forall>x. K \<ge> 0 \<and> norm (f x) \<le> norm x * K\<close>
-  by (metis (mono_tags) bounded_clinear.bounded mult_zero_left  norm_eq_zero  norm_le_zero_iff order.trans zero_le_mult_iff)
-
-lemma bounded_clinear_comp:
-  \<open>bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (f \<circ> g)\<close>
-proof-
-  include notation_norm 
-  assume \<open>bounded_clinear f\<close>
-  assume \<open>bounded_clinear g\<close>
-  have \<open>clinear (f \<circ> g)\<close>
-  proof-
-    have \<open>clinear f\<close>
-      by (simp add: \<open>bounded_clinear f\<close> bounded_clinear.clinear)
-    moreover have \<open>clinear g\<close>
-      by (simp add: \<open>bounded_clinear g\<close> bounded_clinear.clinear)
-    ultimately show ?thesis
-    proof - (* automatically generated *)
-      obtain cc :: "('c \<Rightarrow> 'b) \<Rightarrow> complex" and cca :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" where
-        f1: "\<forall>x0. (\<exists>v1 v2. x0 (v1 *\<^sub>C v2) \<noteq> v1 *\<^sub>C x0 v2) = (x0 (cc x0 *\<^sub>C cca x0) \<noteq> cc x0 *\<^sub>C x0 (cca x0))"
-        by moura
-      obtain ccb :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" and ccc :: "('c \<Rightarrow> 'b) \<Rightarrow> 'c" where
-        f2: "\<forall>x0. (\<exists>v1 v2. x0 (v1 + v2) \<noteq> x0 v1 + x0 v2) = (x0 (ccb x0 + ccc x0) \<noteq> x0 (ccb x0) + x0 (ccc x0))"
-        by moura
-      have "\<forall>c ca. g (c + ca) = g c + g ca"
-        by (meson Modules.additive_def \<open>clinear g\<close> clinear.axioms(1))
-      then have f3: "(f \<circ> g) (ccb (f \<circ> g) + ccc (f \<circ> g)) = (f \<circ> g) (ccb (f \<circ> g)) + (f \<circ> g) (ccc (f \<circ> g))"
-        by (simp add: \<open>clinear f\<close> additive.add clinear.axioms(1))
-      have "(f \<circ> g) (cc (f \<circ> g) *\<^sub>C cca (f \<circ> g)) = cc (f \<circ> g) *\<^sub>C (f \<circ> g) (cca (f \<circ> g))"
-        by (simp add: \<open>clinear f\<close> \<open>clinear g\<close> clinear.scaleC)
-      then show ?thesis
-        using f3 f2 f1 by (meson clinearI)
-    qed
-  qed
-  moreover have \<open>\<exists>K. \<forall>x. \<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>x\<parallel> * K\<close>
-  proof-
-    have \<open>\<exists> K\<^sub>f. \<forall>x. K\<^sub>f \<ge> 0 \<and> \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
-      using \<open>bounded_clinear f\<close> clinear_D 
-      by blast
-    then obtain K\<^sub>f where \<open> K\<^sub>f \<ge> 0\<close> and \<open>\<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>
-      by metis
-    have \<open>\<exists> K\<^sub>g. \<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close>
-      using \<open>bounded_clinear g\<close> bounded_clinear.bounded by blast 
-    then obtain K\<^sub>g where \<open>\<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close>
-      by metis
-    have \<open>\<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g * K\<^sub>f\<close>
-      for x
-    proof-                             
-      have \<open>\<parallel>(f \<circ> g) x\<parallel> \<le> \<parallel>f (g x)\<parallel>\<close>
-        by simp
-      also have \<open>... \<le> \<parallel>g x\<parallel> * K\<^sub>f\<close>
-        by (simp add: \<open>\<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>f\<close>)
-      also have \<open>... \<le> (\<parallel>x\<parallel> * K\<^sub>g) * K\<^sub>f\<close>
-        using \<open>K\<^sub>f \<ge> 0\<close>
-        by (metis \<open>\<forall>x. \<parallel>g x\<parallel> \<le> \<parallel>x\<parallel> * K\<^sub>g\<close> mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
-      finally show ?thesis
-        by simp
-    qed
-    thus ?thesis 
-      by (metis  comp_eq_dest_lhs linordered_field_class.sign_simps(23) )
-  qed
-  ultimately show ?thesis 
-    using bounded_clinear_def bounded_clinear_axioms_def by blast
-qed
-
-
-
-
-(*
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
-    (* apply (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident closure_eq is_subspace.closed ker_op_def ker_op_lin mem_Collect_eq) *)
-    (*   using  is_linear_manifold.zero is_subspace.subspace
-  by (metis (mono_tags, lifting) Collect_cong bounded_clinear_ident is_subspace_cl ker_op_def ker_op_lin) *)
-*)
 
-(* TODO rename, e.g., subspace_scale_invariant *)
-lemma PREtimesScalarSpace_not0: 
+
+lemma subspace_scale_invariant: 
   fixes a S
   assumes \<open>a \<noteq> 0\<close> and \<open>is_subspace S\<close>
-    (* TODO: is_linear_manifold instead? *)
   shows \<open>(*\<^sub>C) a ` S = S\<close>
 proof-
   have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
@@ -1511,73 +1429,13 @@ proof-
   ultimately show ?thesis by blast
 qed
 
+
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
-  apply transfer using PREtimesScalarSpace_not0 by blast
+  apply transfer using subspace_scale_invariant by blast
 
-
-lemma PREtimesOp_assoc_linear_space:
-  fixes A B S
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-    and \<open>is_subspace S\<close>
-  shows \<open>closure {(A \<circ> B) x |x. x \<in> S} =
-       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
-proof-
-  have  \<open>closure {(A \<circ> B) x |x. x \<in> S} \<subseteq>
-       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
-    by (smt closure_mono closure_subset comp_apply mem_Collect_eq subset_iff)
-  moreover have  \<open>closure {(A \<circ> B) x |x. x \<in> S} \<supseteq>
-       closure {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
-  proof-
-    have \<open>t \<in> {A x |x. x \<in> closure {B x |x. x \<in> S}}
-        \<Longrightarrow> t \<in> closure {(A \<circ> B) x |x. x \<in> S}\<close>
-      for t
-    proof-
-      assume \<open>t \<in> {A x |x. x \<in> closure {B x |x. x \<in> S}}\<close>
-      then obtain u where 
-        \<open>t = A u\<close> and \<open>u \<in> closure {B x |x. x \<in> S}\<close>
-        by auto
-      from  \<open>u \<in> closure {B x |x. x \<in> S}\<close> 
-      obtain v where \<open>v \<longlonglongrightarrow> u\<close>
-        and \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
-        using closure_sequential by blast
-      from  \<open>\<forall> n. v n \<in>  {B x |x. x \<in> S}\<close>
-      have \<open>\<forall> n. \<exists> x \<in> S.  v n = B x\<close>
-        by auto
-      then obtain w where \<open>w n \<in> S\<close> and \<open>v n = B (w n)\<close>
-        for n
-        by metis
-      have \<open>(\<lambda> n. B (w n) ) \<longlonglongrightarrow> u\<close>
-        using  \<open>\<And> n. v n = B (w n)\<close> \<open>v \<longlonglongrightarrow> u\<close>
-        by presburger
-      moreover have \<open>isCont A x\<close>
-        for x
-        using \<open>bounded_clinear A\<close>
-        by (simp add: bounded_linear_continuous)
-      ultimately have \<open>(\<lambda> n. A (B (w n)) ) \<longlonglongrightarrow> t\<close>
-        using  \<open>t = A u\<close>
-          isCont_tendsto_compose by blast
-      hence  \<open>(\<lambda> n. (A \<circ> B) (w n) ) \<longlonglongrightarrow> t\<close>
-        by simp                               
-      thus ?thesis using \<open>\<And> n. w n \<in> S\<close>
-        using closure_sequential by fastforce
-    qed
-    hence \<open> {A x |x. x \<in> closure {B x |x. x \<in> S}}
-        \<subseteq> closure {(A \<circ> B) x |x. x \<in> S}\<close>
-      by blast
-    thus ?thesis
-      by (metis (no_types, lifting) closure_closure closure_mono) 
-  qed
-  ultimately show ?thesis by blast
-qed
-
-lemma timesOp_assoc_linear_space: "applyOpSpace (timesOp A B) S = applyOpSpace A (applyOpSpace B S)" 
-  (* TODO: This should work again if bounded and timesOp are defined directly and not via rbounded *)
-  apply transfer
-  using PREtimesOp_assoc_linear_space by blast
-
-(* TODO: where are these definitions needed? Should they be in qrhl-tool instead? *)
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
+
 
 lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: scaleC_add_right)
@@ -1585,10 +1443,45 @@ lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for 
 lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
-(*
+instantiation linear_space :: (complex_inner) "bot"
+begin
+lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
+  by (rule Complex_Inner_Product.is_subspace_0)
+instance ..
+end
+
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
-  by (simp add: linear_space_zero_bot[symmetric])
-*)
+  for U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
+proof-
+  have \<open>closed {0::'a}\<close>
+    using Topological_Spaces.t1_space_class.closed_singleton by blast
+  hence \<open>closure {0::'a} = {0}\<close>
+    by (simp add: closure_eq)    
+  moreover have \<open>Rep_bounded U ` {0::'a} = {0}\<close>
+  proof-
+    have \<open>bounded_clinear (Rep_bounded U)\<close>
+      using Rep_bounded by auto
+    hence  \<open>Rep_bounded U 0 = 0\<close>
+      by (simp add: bounded_clinear.clinear clinear_zero)
+    thus ?thesis
+      by simp 
+  qed
+  ultimately have \<open>closure (Rep_bounded U ` {0}) = {0}\<close>
+    by simp
+  hence \<open>(closure (Rep_bounded U ` Rep_linear_space (Abs_linear_space {0}))) = {0}\<close>
+    by (metis bot_linear_space.abs_eq bot_linear_space.rep_eq) 
+  thus ?thesis
+  unfolding applyOpSpace_def bot_linear_space_def by simp
+qed
+
+
+
+chapter \<open>Chaos\<close>
+(* These are the results that I have not assimilated yet *)
+
+
+
+
 
 (* TODO: Fix! applyOp does not exist as a name! *)
 lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
@@ -1738,7 +1631,7 @@ lemma classical_operator_adjoint[simp]:
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot> classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   apply (rule equal_basis)
-  unfolding times_applyOp
+  unfolding timesOp_assoc_linear_space
   apply (subst classical_operator_basis, simp)+
   apply (case_tac "\<rho> x")
   apply auto
