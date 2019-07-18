@@ -1287,17 +1287,6 @@ lemma applyOp_0[simp]: "applyOpSpace U 0 = 0"
   apply transfer
   by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
 
-lemma times_apply_op_A:
-  assumes \<open>closed S\<close> and \<open>continuous_on S f\<close> and \<open>continuous_on S g\<close> 
-    and \<open>z \<in> closure ((f \<circ> g) ` S)\<close>
-  shows \<open>z \<in> closure (A ` (closure (B ` S)))\<close>
-  sorry
-
-lemma times_apply_op_B:
-  assumes \<open>closed S\<close> and \<open>continuous_on S f\<close> and \<open>continuous_on S g\<close> 
-    and \<open>z \<in> closure (A ` (closure (B ` S)))\<close>
-  shows \<open>z \<in> closure ((f \<circ> g) ` S)\<close>
-  sorry
 
 lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
   sorry
