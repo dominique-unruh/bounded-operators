@@ -341,6 +341,21 @@ lemma differentiable_cinner [simp]:
       (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
+(* NEW *)
+interpretation real_inner : complex_inner 
+"scaleR"
+"scaleC" 
+"(+)"
+"0"
+"(-)"
+"uminus"
+"dist"
+"norm"
+"sgn"
+"uniformity"
+"open"
+"cinner"
+..
 
 subsection \<open>Class instances\<close>
 
