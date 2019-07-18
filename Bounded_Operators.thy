@@ -1291,7 +1291,66 @@ lemma times_comp: \<open>\<And>A B \<psi>.
        bounded_clinear B \<Longrightarrow>
        is_subspace \<psi> \<Longrightarrow>
        closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
-  sorry
+  proof
+  show "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
+    if "bounded_clinear (A::'a \<Rightarrow> 'b)"
+      and "bounded_clinear (B::'c \<Rightarrow> 'a)"
+      and "is_subspace (\<psi>::'c set)"
+    for A :: "'a \<Rightarrow> 'b"
+      and B :: "'c \<Rightarrow> 'a"
+      and \<psi> :: "'c set"
+    using that
+    by (metis closure_mono closure_subset image_comp image_mono) 
+  show "closure (A ` closure (B ` (\<psi>::'c set)::'a set)) \<subseteq> closure ((A \<circ> B) ` \<psi>::'b set)"
+    if "bounded_clinear (A::'a \<Rightarrow> 'b)"
+      and "bounded_clinear (B::'c \<Rightarrow> 'a)"
+      and "is_subspace (\<psi>::'c set)"
+    for A :: "'a \<Rightarrow> 'b"
+      and B :: "'c \<Rightarrow> 'a"
+      and \<psi> :: "'c set"
+    using that 
+  proof-
+    have \<open>A ` closure (B ` \<psi>) \<subseteq> closure ((A \<circ> B) ` \<psi>)\<close>
+    proof
+      show "x \<in> closure ((A \<circ> B) ` \<psi>)"
+        if "x \<in> A ` closure (B ` \<psi>)"
+        for x :: 'b
+        using that
+      proof-
+        have \<open>\<exists> t::nat \<Rightarrow> 'b. (\<forall> n. t n \<in> (A \<circ> B) ` \<psi>) \<and> (t \<longlonglongrightarrow> x)\<close>
+        proof-
+          have \<open>\<exists> y\<in>closure (B ` \<psi>). x = A y\<close>
+            using that by blast
+          then obtain y where \<open>y\<in>closure (B ` \<psi>)\<close> and \<open>x = A y\<close>
+            by blast
+          from \<open>y\<in>closure (B ` \<psi>)\<close>
+          have \<open>\<exists> s::nat \<Rightarrow> 'a. (\<forall>n. s n \<in> B ` \<psi>) \<and> s \<longlonglongrightarrow> y\<close>
+            using closure_sequential by blast
+          then obtain s::\<open>nat\<Rightarrow>'a\<close> where \<open>\<forall>n. s n \<in> B ` \<psi>\<close> and \<open>s \<longlonglongrightarrow> y\<close>
+            by blast
+          define t::"nat \<Rightarrow> 'b" where \<open>t n = A (s n)\<close> for n::nat
+          have \<open>\<forall>n. t n \<in> (A \<circ> B) ` \<psi>\<close>
+            by (metis \<open>\<forall>n. s n \<in> B ` \<psi>\<close> imageI image_comp t_def)
+          moreover have \<open>t \<longlonglongrightarrow> x\<close>
+          proof-
+            have \<open>isCont A y\<close>
+              using \<open>bounded_clinear A\<close>
+              by (simp add: bounded_linear_continuous) 
+            thus ?thesis unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
+              by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
+          qed
+          ultimately have "(\<forall>n. t n \<in> (A \<circ> B) ` \<psi>) \<and> t \<longlonglongrightarrow> x"
+            by blast
+          thus ?thesis by blast
+        qed
+        thus ?thesis
+          using closure_sequential by blast 
+      qed
+    qed
+    thus ?thesis
+      by (metis closure_closure closure_mono) 
+  qed
+qed
 
 
 lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
@@ -1342,10 +1401,13 @@ proof-
     by auto
 qed
 
+
+
+
+
+
 chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)
-
-
 
 
 lemma clinear_D:
