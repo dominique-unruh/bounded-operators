@@ -1260,7 +1260,6 @@ lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bou
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
   
-
 instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleC c ` S"
@@ -1287,10 +1286,61 @@ lemma applyOp_0[simp]: "applyOpSpace U 0 = 0"
   apply transfer
   by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
 
-
-lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+lemma times_comp: \<open>\<And>A B \<psi>.
+       bounded_clinear A \<Longrightarrow>
+       bounded_clinear B \<Longrightarrow>
+       is_subspace \<psi> \<Longrightarrow>
+       closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
   sorry
 
+
+lemma times_applyOp: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+proof-
+  have \<open>bounded_clinear (Rep_bounded A)\<close>
+    using Rep_bounded by auto
+  moreover have \<open>bounded_clinear (Rep_bounded B)\<close>
+    using Rep_bounded by auto
+  moreover have \<open>is_subspace (Rep_linear_space \<psi>)\<close>
+    using Rep_linear_space by auto
+  ultimately have  \<open>
+     (closure
+       ( (Rep_bounded A \<circ> Rep_bounded B) ` Rep_linear_space \<psi>)) =
+     (closure
+       (Rep_bounded A `
+      closure (Rep_bounded B ` Rep_linear_space \<psi>)))\<close>
+    using times_comp by blast
+  hence  \<open>
+     (closure
+       ( (Rep_bounded A \<circ> Rep_bounded B) ` Rep_linear_space \<psi>)) =
+     (closure
+       (Rep_bounded A `
+        Rep_linear_space
+         (Abs_linear_space
+           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
+    by (metis Rep_linear_space_inverse applyOpSpace.rep_eq)    
+  hence  \<open>
+     (closure
+       (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
+     (closure
+       (Rep_bounded A `
+        Rep_linear_space
+         (Abs_linear_space
+           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
+    using timesOp_Rep_bounded by metis
+  hence \<open> Abs_linear_space
+     (closure
+       (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
+    Abs_linear_space
+     (closure
+       (Rep_bounded A `
+        Rep_linear_space
+         (Abs_linear_space
+           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
+    using Abs_linear_space_inject by auto
+  thus ?thesis
+    unfolding applyOpSpace_def
+    by auto
+qed
 
 chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)

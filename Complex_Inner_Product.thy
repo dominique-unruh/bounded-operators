@@ -341,21 +341,6 @@ lemma differentiable_cinner [simp]:
       (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
-(* NEW *)
-interpretation real_inner : complex_inner 
-"scaleR"
-"scaleC" 
-"(+)"
-"0"
-"(-)"
-"uminus"
-"dist"
-"norm"
-"sgn"
-"uniformity"
-"open"
-"cinner"
-..
 
 subsection \<open>Class instances\<close>
 
@@ -504,11 +489,34 @@ lemma cGDERIV_inverse:
   apply (erule cGDERIV_DERIV_compose, simp)
   by (erule DERIV_inverse [folded numeral_2_eq_2])
 
+(* NEW *)
+interpretation real_inner : complex_inner 
+"scaleR"
+"scaleC" 
+"(+)"
+"0"
+"(-)"
+"uminus"
+"dist"
+"norm"
+"sgn"
+"uniformity"
+"open"
+"cinner"
+..
+
 
 class chilbert_space =  complex_inner + complete_space
 begin
 subclass cbanach by standard
 end
+
+
+class hilbert_space =  real_inner + complete_space
+begin
+subclass banach by standard
+end
+
 
 subsection \<open>Some identities and inequalities\<close>
 
