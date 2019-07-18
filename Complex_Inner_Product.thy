@@ -1819,7 +1819,8 @@ proof-
 qed
 
 \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close> 
-theorem orthogonal_complement_twice: "is_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
+theorem orthogonal_complement_twice:
+ "is_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>is_subspace M\<close>
@@ -2750,6 +2751,7 @@ proof -
     using is_subspace_cl apply blast
     by blast
 qed
+
 
 
 end

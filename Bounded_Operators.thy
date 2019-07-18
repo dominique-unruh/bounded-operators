@@ -1443,12 +1443,20 @@ lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for 
 lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
-instantiation linear_space :: (complex_inner) "bot"
+instantiation linear_space :: (cbanach) "bot"
 begin
 lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
   by (rule Complex_Inner_Product.is_subspace_0)
 instance ..
 end
+
+instantiation linear_space :: (cbanach) "top"
+begin
+lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNIV\<close>
+  by (rule Complex_Inner_Product.is_subspace_UNIV)
+instance ..
+end
+
 
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
   for U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
@@ -1474,18 +1482,217 @@ proof-
   unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
 
+section \<open>Complex Span\<close>
+
+lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
+  is "\<lambda>G. closure (complex_vector.span G)"
+  apply (rule is_subspace.intro)
+   apply (rule is_subspace_cl)
+  by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold.intro)
+
+instantiation linear_space :: (cbanach) "Inf"
+begin
+lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+is \<open>\<lambda> S. \<Inter> S\<close>
+  proof
+  show "(x::'a) + y \<in> \<Inter> set"
+    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> set"
+      and "(y::'a) \<in> \<Inter> set"
+    for set :: "'a set set"
+      and x :: 'a
+      and y :: 'a
+    using that
+    by (simp add: is_linear_manifold.additive_closed is_subspace.subspace) 
+  show "c *\<^sub>C (x::'a) \<in> \<Inter> set"
+    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> set"
+    for set :: "'a set set"
+      and x :: 'a
+      and c :: complex
+    using that
+    by (simp add: is_linear_manifold.smult_closed is_subspace.subspace) 
+  show "(0::'a) \<in> \<Inter> set"
+    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
+    for set :: "'a set set"
+    using that
+    by (simp add: is_linear_manifold.zero is_subspace.subspace) 
+  show "closed (\<Inter> set::'a set)"
+    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
+    for set :: "'a set set"
+    using that
+    by (simp add: is_subspace.closed) 
+qed
+
+instance ..
+end
+
+instantiation linear_space :: (cbanach) "order"
+begin
+lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+  is \<open>(\<subseteq>)\<close>.
+lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+  is \<open>(\<subset>)\<close>.
+instance
+  proof
+  show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    by (simp add: less_eq_linear_space.rep_eq less_le_not_le less_linear_space.rep_eq)    
+  show "(x::'a linear_space) \<le> x"
+    for x :: "'a linear_space"
+    by (simp add: Bounded_Operators.less_eq_linear_space.rep_eq)    
+  show "(x::'a linear_space) \<le> z"
+    if "(x::'a linear_space) \<le> y"
+      and "(y::'a linear_space) \<le> z"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+      and z :: "'a linear_space"
+    using that
+    using less_eq_linear_space.rep_eq by auto 
+  show "(x::'a linear_space) = y"
+    if "(x::'a linear_space) \<le> y"
+      and "(y::'a linear_space) \<le> x"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    using that
+    by (simp add: Rep_linear_space_inject less_eq_linear_space.rep_eq) 
+qed
+end
+
+lemma is_subspace_span_A:
+  assumes \<open>is_subspace S\<close> and \<open>A \<subseteq> S\<close>
+  shows \<open>complex_vector.span A \<subseteq> S\<close>
+  using assms
+  unfolding complex_vector.span_def complex_vector.subspace_def
+    hull_def is_subspace_def is_linear_manifold_def
+  by auto
+
+lemma is_subspace_span_B:
+  assumes \<open>is_subspace S\<close> and \<open>complex_vector.span A \<subseteq> S\<close>
+  shows \<open>A \<subseteq> S\<close>
+  using assms(2) complex_vector.span_superset by blast
+  
+lemma span_def': \<open>span A = Inf {S. A \<subseteq> Rep_linear_space S}\<close>
+  for A::\<open>('a::cbanach) set\<close>
+proof-
+  have \<open>x \<in> Rep_linear_space (span A) 
+    \<Longrightarrow> x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> Rep_linear_space (span A)\<close>
+    hence \<open>x \<in> closure (complex_vector.span A)\<close>
+      unfolding span_def
+      apply auto
+      using Abs_linear_space_inverse \<open>x \<in> Rep_linear_space (Bounded_Operators.span A)\<close> span.rep_eq 
+      by blast
+    hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
+      by (simp add: closure_sequential)
+    then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      for n
+      using  \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close>
+      by auto
+    have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close> 
+    proof-
+      have \<open>is_subspace S \<Longrightarrow> closed S\<close>
+        for S::\<open>'a set\<close>
+        by (simp add: is_subspace.closed)
+      hence \<open>closed ( \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S})\<close>
+        by simp
+      thus ?thesis using \<open>y \<longlonglongrightarrow> x\<close>
+        using \<open>\<And>n. y n \<in> \<Inter> {S. complex_vector.span A \<subseteq> S \<and> is_subspace S}\<close> closed_sequentially 
+        by blast  
+    qed
+    moreover have \<open>{S. A \<subseteq> S \<and> is_subspace S} \<subseteq> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      by (simp add: Collect_mono_iff is_subspace_span_A)    
+    ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      by blast     
+    thus \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close> 
+      apply transfer
+      by blast
+  qed
+  moreover have \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})
+             \<Longrightarrow> x \<in> Rep_linear_space (span A)\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      apply transfer
+      by blast
+    moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S} \<subseteq> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      by (simp add: Collect_mono_iff is_subspace_span_B)    
+    ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      by blast 
+    thus \<open>x \<in> Rep_linear_space (span A)\<close>
+      by (metis (no_types, lifting) Inter_iff Rep_linear_space closure_subset mem_Collect_eq span.rep_eq)      
+  qed
+  ultimately have \<open>Rep_linear_space (span A) = Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    by blast
+  thus ?thesis
+    using Rep_linear_space_inject by auto 
+qed
+
+lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
+  for \<psi>::"'a::chilbert_space"
+proof-
+  assume \<open>a \<noteq> 0\<close>
+  have \<open>span {\<psi>} = Inf {S | S::'a linear_space. {\<psi>} \<subseteq> Rep_linear_space S }\<close>
+    by (metis span_def')
+  also have \<open>... = Inf {S | S::'a linear_space. \<psi> \<in> Rep_linear_space S }\<close>
+    by simp
+  also have \<open>... = Inf {S | S::'a linear_space. a *\<^sub>C \<psi> \<in> Rep_linear_space S }\<close>
+  proof-
+    have \<open>\<psi> \<in> Rep_linear_space S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
+    proof-
+      have \<open>is_subspace (Rep_linear_space S)  \<close>
+        using Rep_linear_space by auto
+      hence \<open>\<psi> \<in> Rep_linear_space S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
+        by (metis Abs_linear_space_cases Abs_linear_space_inverse is_linear_manifold.smult_closed is_subspace.subspace mem_Collect_eq)
+      moreover have  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S \<Longrightarrow> \<psi> \<in> Rep_linear_space S\<close> for S
+      proof-
+        assume \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close>
+        obtain b where \<open>b * a = 1\<close> using \<open>a \<noteq> 0\<close> 
+          by (metis divide_complex_def divide_self_if mult.commute)
+        have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> Rep_linear_space S\<close> 
+          using  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> is_linear_manifold.smult_closed
+            is_subspace.subspace Rep_linear_space
+          by fastforce
+        hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> 
+          by simp
+        thus ?thesis using  \<open>b * a = 1\<close> by simp
+      qed                       
+      ultimately show ?thesis by blast
+    qed
+    thus ?thesis by simp
+  qed
+  also have \<open>... = Inf {S | S::'a linear_space. {a *\<^sub>C \<psi>} \<subseteq> Rep_linear_space S }\<close>
+    by auto
+  also have \<open>... = span {a *\<^sub>C \<psi>}\<close> 
+    by (metis span_def')
+  finally have  \<open>span {\<psi>} = span {a *\<^sub>C \<psi>}\<close>
+    by blast
+  thus ?thesis by auto
+qed
+
+definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
+\<open>cgenerator S = (span S = top)\<close>
+
+lemma equal_generator:
+  fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+    and S::\<open>'a set\<close> 
+  assumes \<open>cgenerator S\<close> 
+    and \<open>\<And>x. x \<in>  S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
+  shows  \<open>A = B\<close>
+  sorry
+
 
 
 chapter \<open>Chaos\<close>
 (* These are the results that I have not assimilated yet *)
 
 
-
-
-
-(* TODO: Fix! applyOp does not exist as a name! *)
-lemma equal_basis: "(\<And>x. applyOp A (ket x) = applyOp B (ket x)) \<Longrightarrow> A = B"
-  sorry
 
 (*
 (* TODO: move specialized syntax into QRHL-specific file *)

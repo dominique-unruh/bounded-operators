@@ -2017,58 +2017,6 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a::chilbert_space linear_space" u
 lemma top_plus[simp]: "top + x = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
 
-(* TODO move *)
-lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
-  is "\<lambda>G. closure (complex_vector.span G)"
-  apply (rule is_subspace.intro)
-   apply (rule is_subspace_cl)
-  by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold.intro)
-
-lemma span_def': "span A = Inf {S. A \<subseteq> Rep_linear_space S}"
-  by (cheat span_def')
-
-(* TODO move *)
-lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
-  for \<psi>::"'a::chilbert_space"
-proof-
-  assume \<open>a \<noteq> 0\<close>
-  have \<open>span {\<psi>} = Inf {S | S::'a linear_space. {\<psi>} \<subseteq> Rep_linear_space S }\<close>
-    by (metis Complex_L2.span_def')
-  also have \<open>... = Inf {S | S::'a linear_space. \<psi> \<in> Rep_linear_space S }\<close>
-    by simp
-  also have \<open>... = Inf {S | S::'a linear_space. a *\<^sub>C \<psi> \<in> Rep_linear_space S }\<close>
-  proof-
-    have \<open>\<psi> \<in> Rep_linear_space S \<longleftrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
-    proof-
-      have \<open>is_subspace (Rep_linear_space S)  \<close>
-        using Rep_linear_space by auto
-      hence \<open>\<psi> \<in> Rep_linear_space S \<Longrightarrow>  a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> for S
-        by (metis Abs_linear_space_cases Abs_linear_space_inverse is_linear_manifold.smult_closed is_subspace.subspace mem_Collect_eq)
-      moreover have  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S \<Longrightarrow> \<psi> \<in> Rep_linear_space S\<close> for S
-      proof-
-        assume \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close>
-        obtain b where \<open>b * a = 1\<close> using \<open>a \<noteq> 0\<close> 
-          by (metis divide_complex_def divide_self_if mult.commute)
-        have \<open>b *\<^sub>C (a *\<^sub>C \<psi>) \<in> Rep_linear_space S\<close> 
-          using  \<open>a *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> is_linear_manifold.smult_closed
-            is_subspace.subspace Rep_linear_space
-          by fastforce
-        hence  \<open>(b *\<^sub>C a) *\<^sub>C \<psi> \<in> Rep_linear_space S\<close> 
-          by simp
-        thus ?thesis using  \<open>b * a = 1\<close> by simp
-      qed                       
-      ultimately show ?thesis by blast
-    qed
-    thus ?thesis by simp
-  qed
-  also have \<open>... = Inf {S | S::'a linear_space. {a *\<^sub>C \<psi>} \<subseteq> Rep_linear_space S }\<close>
-    by auto
-  also have \<open>... = span {a *\<^sub>C \<psi>}\<close> 
-    by (metis Complex_L2.span_def')
-  finally have  \<open>span {\<psi>} = span {a *\<^sub>C \<psi>}\<close>
-    by blast
-  thus ?thesis by auto
-qed
 
 (* TODO move *)
 lemma leq_INF[simp]:
