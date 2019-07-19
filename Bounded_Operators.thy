@@ -1779,12 +1779,30 @@ qed
 
 lemma partial_span_subspace:
   fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
-  shows \<open>is_subspace (\<Union>n. partial_span n S)\<close>
-  sorry
+  shows \<open>is_subspace (closure ( \<Union>n. partial_span n S) )\<close>
+  proof
+  show "x + y \<in> closure (\<Union>n. partial_span n S)"
+    if "x \<in> closure (\<Union>n. partial_span n S)"
+      and "y \<in> closure (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and y :: 'a
+    using that sorry
+  show "c *\<^sub>C x \<in> closure (\<Union>n. partial_span n S)"
+    if "x \<in> closure (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and c :: complex
+    using that sorry
+  show "0 \<in> closure (\<Union>n. partial_span n S)"
+    sorry
+  show "closed (closure (\<Union>n. partial_span n S))"
+    by auto
+qed
 
 proposition partial_span_lim:
   fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
-  shows \<open>complex_vector.span S = (\<Union> n::nat. partial_span n S)\<close>
+  shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
+  sorry
+(*
 proof
   show "complex_vector.span S \<subseteq> (\<Union>n. partial_span n S)"
   proof-
@@ -1817,6 +1835,7 @@ proof
     qed
   qed
 qed
+*)
 
 lemma equal_span_0_n:
 fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
@@ -1873,14 +1892,33 @@ lemma equal_span_0:
   assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
   shows \<open>f x = 0\<close>
 proof -
-  have \<open>x \<in>  (\<Union> n::nat. partial_span n S)\<close>
-    using  \<open>x \<in> complex_vector.span S\<close> partial_span_lim by fastforce 
-  hence \<open>\<exists> n. x \<in> partial_span n S\<close>
+  have \<open>x \<in> closure (complex_vector.span S)\<close>
+    using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
+  hence \<open>x \<in> closure (\<Union> n::nat. partial_span n S)\<close>
+    using partial_span_lim by blast
+  hence \<open>\<exists> y::nat \<Rightarrow> _. (\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)) \<and> y \<longlonglongrightarrow> x\<close>
+    using closure_sequential by blast
+  then obtain y 
+    where \<open>\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
     by blast
-  then obtain n where \<open>x \<in> partial_span n S\<close>
+  hence \<open>\<forall> k. \<exists> n. y k \<in> partial_span n S\<close>
     by blast
-  thus ?thesis using \<open>bounded_clinear f\<close> \<open>\<forall> t \<in> S. f t = 0\<close> equal_span_0_n
-    by blast  
+  then obtain n where \<open>\<forall> k. y k \<in> partial_span (n k) S\<close>
+    by metis
+  hence \<open>\<forall> k. f (y k) = 0\<close>
+    using assms(1) assms(2) equal_span_0_n by blast
+   have \<open>isCont f x\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: bounded_linear_continuous)
+  hence  \<open>(\<lambda> k. f (y k)) \<longlonglongrightarrow> f x\<close>
+    using \<open>y \<longlonglongrightarrow> x\<close> isCont_tendsto_compose by auto 
+  hence \<open>(\<lambda> k. 0) \<longlonglongrightarrow> f x\<close>
+    using  \<open>\<forall> k. f (y k) = 0\<close> 
+    by simp
+  moreover have  \<open>(\<lambda> k. 0) \<longlonglongrightarrow> (0::'b)\<close>
+    by simp
+  ultimately show ?thesis
+    using LIMSEQ_unique by blast
 qed
 
 lemma equal_generator_0:
