@@ -1777,11 +1777,39 @@ next
     by blast 
 qed
 
+lemma sum_partial_span_eq:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span n S\<close>
+  shows \<open>r + s \<in> partial_span n S\<close>
+  sorry
+
+lemma sum_partial_span_leq_ind:
+  fixes S::\<open>'a::complex_vector set\<close> and n p :: nat
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>r \<in> partial_span (n + p) S\<close>
+proof(induction p)
+  case 0
+  thus ?case
+    by (simp add: assms) 
+next
+  case (Suc p)
+  thus ?case 
+    sorry
+qed
+
+lemma sum_partial_span_leq:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>n \<le> m\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>r \<in> partial_span m S\<close>
+  using sum_partial_span_leq_ind assms le_Suc_ex by blast 
+
 lemma sum_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
-  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close> and \<open>S \<noteq> {}\<close>
   shows \<open>r + s \<in> partial_span (max n m) S\<close>
-  sorry
+  using assms sum_partial_span_eq sum_partial_span_leq
+  by (metis max.cobounded1 max.cobounded2)
+
 
 lemma scaleC_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
@@ -1820,6 +1848,7 @@ qed
 
 lemma partial_linear_manifold:
   fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>S \<noteq> {}\<close>
   shows \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
   proof
   show "x + y \<in> (\<Union>n. partial_span n S)"
@@ -1837,7 +1866,7 @@ lemma partial_linear_manifold:
     then obtain m where \<open>y \<in> partial_span m S\<close>
       by blast                    
     have \<open>x + y \<in> partial_span (max n m) S\<close>
-      by (simp add: \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> sum_partial_span)
+      by (simp add:  \<open>S \<noteq> {}\<close> \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> sum_partial_span)
     thus ?thesis
       by blast 
   qed
@@ -1916,16 +1945,18 @@ qed
 
 lemma partial_span_subspace:
   fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes  \<open>S \<noteq> {}\<close>
   shows \<open>is_subspace (closure ( \<Union>n. partial_span n S) )\<close>
 proof-
   have \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
-    by (simp add: partial_linear_manifold)    
+    by (simp add:  \<open>S \<noteq> {}\<close> partial_linear_manifold)    
   thus ?thesis using is_subspace_I by blast
 qed
 
 proposition partial_span_lim:
   fixes S::\<open>'a::complex_normed_vector set\<close>
-  shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
+  assumes  \<open>S \<noteq> {}\<close>
+shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
 proof
   show "closure (complex_vector.span S) \<subseteq> closure (\<Union>n. partial_span n S)"
   proof-
@@ -1940,7 +1971,7 @@ proof
     hence \<open>S \<subseteq> closure (\<Union>n. partial_span n S)\<close>
       by (meson closure_subset order.trans)
     moreover have \<open>is_subspace (closure (\<Union>n. partial_span n S))\<close>
-      using partial_span_subspace by auto      
+      using  \<open>S \<noteq> {}\<close> partial_span_subspace by auto      
     ultimately show ?thesis
       using closure_closure closure_mono is_subspace_span_A by blast      
   qed
@@ -2006,13 +2037,13 @@ qed
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
     and S::\<open>'a set\<close> and x::'a
-  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>f x = 0\<close>
 proof -
   have \<open>x \<in> closure (complex_vector.span S)\<close>
     using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
   hence \<open>x \<in> closure (\<Union> n::nat. partial_span n S)\<close>
-    using partial_span_lim by blast
+    using  \<open>S \<noteq> {}\<close> partial_span_lim by blast
   hence \<open>\<exists> y::nat \<Rightarrow> _. (\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)) \<and> y \<longlonglongrightarrow> x\<close>
     using closure_sequential by blast
   then obtain y 
@@ -2040,7 +2071,7 @@ qed
 
 lemma equal_generator_0:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = 0\<close>
+  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = 0\<close> and  \<open>S \<noteq> {}\<close>
   shows  \<open>A = 0\<close>
 proof-
   have \<open>Rep_bounded A = Rep_bounded (0::('a,'b) bounded)\<close>
@@ -2081,7 +2112,7 @@ proof-
             by blast
           thus ?thesis using equal_span_0
             using assms(2)
-            using \<open>bounded_clinear (Rep_bounded A)\<close> by auto  
+            using \<open>bounded_clinear (Rep_bounded A)\<close>  \<open>S \<noteq> {}\<close> by auto  
         qed
         ultimately have \<open>(\<lambda> n.  0) \<longlonglongrightarrow> Rep_bounded A x\<close>
           by simp
@@ -2096,7 +2127,7 @@ qed
 
 lemma equal_generator:
   fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
+  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>A = B\<close>
 proof-
   have \<open>A - B = 0\<close>
@@ -2119,7 +2150,7 @@ proof-
       thus ?thesis by simp 
     qed
     thus ?thesis
-      using assms(1) equal_generator_0 by blast 
+      using assms(1) equal_generator_0  \<open>S \<noteq> {}\<close> by blast 
   qed
   thus ?thesis by simp
 qed
