@@ -1801,10 +1801,8 @@ qed
 proposition partial_span_lim:
   fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
   shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
-  sorry
-(*
 proof
-  show "complex_vector.span S \<subseteq> (\<Union>n. partial_span n S)"
+  show "closure (complex_vector.span S) \<subseteq> closure (\<Union>n. partial_span n S)"
   proof-
     have \<open>S \<subseteq> (\<Union>n. partial_span n S)\<close>
     proof-
@@ -1814,28 +1812,22 @@ proof
         using partial_span_1 by blast
       ultimately show ?thesis by blast
     qed
-    moreover have \<open>is_subspace (\<Union>n. partial_span n S)\<close>
-      by (simp add: partial_span_subspace)      
+    hence \<open>S \<subseteq> closure (\<Union>n. partial_span n S)\<close>
+      by (meson closure_subset order.trans)
+    moreover have \<open>is_subspace (closure (\<Union>n. partial_span n S))\<close>
+      using partial_span_subspace by auto      
     ultimately show ?thesis
-      by (simp add: is_subspace_span_A) 
+      using closure_closure closure_mono is_subspace_span_A by blast      
   qed
-  show "(\<Union>n. partial_span n S) \<subseteq> complex_vector.span S"
-  proof
-    show "x \<in> complex_vector.span S"
-      if "x \<in> (\<Union>n. partial_span n S)"
-      for x :: 'a
-      using that 
-    proof-
-      have \<open>\<exists> n. x \<in> partial_span n S\<close>
-        using that by blast
-      then obtain n where \<open>x \<in> partial_span n S\<close>
-        by blast
-      thus ?thesis using partial_span_lim_n
-        by auto
-    qed
+  show "closure (\<Union>n. partial_span n S) \<subseteq> closure (complex_vector.span S)"
+  proof-
+    have \<open>(\<Union>n. partial_span n S) \<subseteq> (complex_vector.span S)\<close>
+      by (simp add: UN_least partial_span_lim_n) 
+    thus ?thesis
+      by (simp add: closure_mono) 
   qed
 qed
-*)
+
 
 lemma equal_span_0_n:
 fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
