@@ -57,11 +57,12 @@ definition oCauchy::
 section \<open>Relationships among the different kind of convergence\<close>
 
 lemma ustrong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector)\<close>
     and l::\<open>'a \<Rightarrow> 'b\<close>
   assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
     and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
   shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
+(* TODO: case distinction over UNIV \<noteq> 0 *)
 proof-
   have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
   proof-
@@ -79,7 +80,7 @@ proof-
       proof-
         assume \<open>bounded_linear g\<close>
         hence \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
-          using onorm_sphere by blast
+          sorry (* TODO: need UNIV \<noteq> 0, but we can do case distinction *)
         have \<open>\<exists> t \<in> {norm (g x) | x. norm x = 1}. onorm g \<le>  t + inverse (real (Suc m))\<close>
         proof-
           have \<open>ereal (inverse (real (Suc m))) > 0\<close>
@@ -105,7 +106,7 @@ proof-
               moreover have \<open>{ ereal (norm (g x))  | x. norm x = 1} \<noteq> {}\<close>
               proof-
                 have \<open>\<exists> x::'a.  norm x = 1\<close>
-                  using le_numeral_extra(1) vector_choose_size by blast
+                  using le_numeral_extra(1) vector_choose_size sorry
                 thus ?thesis by blast
               qed
               ultimately show ?thesis
@@ -350,7 +351,7 @@ proof-
 qed
 
 lemma uCauchy_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>uCauchy f\<close> 
   shows \<open>\<exists> l::'a\<Rightarrow>'b. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
 proof-
@@ -671,7 +672,7 @@ proof-
 qed
 
 theorem completeness_real_bounded:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And>n. bounded_linear (f n)\<close> and \<open>oCauchy f\<close>
   shows \<open>\<exists> l. bounded_linear l \<and> f \<midarrow>onorm\<rightarrow> l\<close>
 proof-
@@ -755,7 +756,7 @@ proof-
 qed
 
 proposition oCauchy_uCauchy_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> 
   shows \<open>oCauchy f \<longleftrightarrow> uCauchy f\<close>
 proof
@@ -862,7 +863,7 @@ qed
 
 
 lemma onorm_uniq:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>bounded_linear s\<close> 
     and \<open>f \<midarrow>onorm\<rightarrow>l\<close> and \<open>f \<midarrow>onorm\<rightarrow>s\<close>
   shows \<open>l = s\<close>
@@ -889,9 +890,10 @@ proof-
 qed
 
 proposition onorm_ustrong_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::banach)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> 
   shows \<open>(f \<midarrow>onorm\<rightarrow>l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>l)\<close>
+(* TODO: use simpler proof from whiteboard, gets rid of banach *)
 proof
   show "f \<midarrow>ustrong\<rightarrow> l"
     if "f \<midarrow>onorm\<rightarrow> l"

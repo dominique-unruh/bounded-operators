@@ -15,12 +15,13 @@ begin
 section \<open>Sets defined using the norms\<close>
 
 lemma norm_set_nonempty_eq1:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close> 
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
+  assumes "UNIV \<noteq> 0"
   assumes \<open>bounded_linear f\<close>
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
 proof-
   have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-    using UNIV_not_singleton by auto
+    using assms sorry
   hence \<open>\<exists> x::'a. norm x \<noteq> 0\<close>
     by simp
   hence \<open>\<exists> x::'a. norm x = 1\<close>
@@ -63,7 +64,8 @@ qed
 section \<open>Characterization of the operator norm\<close>
 
 lemma onorm_sphere:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes "UNIV \<noteq> 0"
   assumes \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x = 1}\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -206,7 +208,8 @@ next
 qed
 
 proposition operator_norm_characterization_1:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes "UNIV \<noteq> 0"
   assumes \<open>bounded_linear f\<close>
   shows  \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -513,8 +516,10 @@ next
     by metis 
 qed
 
+
 proposition operator_norm_characterization_2:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes "UNIV \<noteq> 0"
   assumes \<open>bounded_linear f\<close>
   shows  \<open>onorm f = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
 proof-
@@ -524,7 +529,7 @@ proof-
     have \<open>A \<noteq> {}\<close>
     proof-
       have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-        using UNIV_not_singleton by auto
+        using \<open>UNIV \<noteq> 0\<close> sorry
       thus ?thesis using A_def
         by simp 
     qed
@@ -576,7 +581,7 @@ proof-
       have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
       proof-
         have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-          using UNIV_not_singleton by auto
+          using \<open>UNIV\<noteq>0\<close> sorry
         thus ?thesis
           by simp 
       qed
@@ -610,7 +615,7 @@ proof-
       hence \<open>\<forall> y\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. y \<ge> 0\<close>
         by blast
       moreover have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
-        by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq  empty_iff le_numeral_extra(1) norm_zero vector_choose_size zero_neq_one)
+        sorry
       moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
       proof-
         have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
@@ -668,11 +673,16 @@ qed
 section \<open>Banach-Steinhaus theorem\<close>
 
 lemma norm_ball:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
   shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
-proof-
+proof (cases "UNIV = 0")
+  case True
+  then show ?thesis
+    sorry
+next
+  case False
   have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = Sup {norm (f x) | x. norm x < 1}\<close>
   proof-
     have \<open>(1/r) * Sup {norm (f x) | x. norm x < r}
@@ -807,7 +817,7 @@ proof-
     finally show ?thesis by blast
   qed
   thus ?thesis
-    by (simp add: operator_norm_characterization_1 assms(2)) 
+    using False by (simp add: operator_norm_characterization_1 assms(2)) 
 qed
 
 (* TODO: replace in a better place *)
@@ -843,7 +853,7 @@ qed
 
 text \<open>The proof of the following result was taken from [sokal2011really]\<close>
 lemma sokal_banach_steinhaus:
-  fixes f :: \<open>'a::{real_normed_vector, perfect_space} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
   shows \<open>(onorm f) * r \<le> Sup {norm (f y) | y. dist y x < r}\<close>

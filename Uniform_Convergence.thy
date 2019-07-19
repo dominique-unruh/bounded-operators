@@ -9,9 +9,9 @@ Uniform convergence.
 Main results.
 - ustrong_convergence: Definition of the strong convergence on the unit sphere.
 - uCauchy: Definition of the Cauchy property on the unit sphere.
-- ustrong_convergence_ustrong_convergence_iff: Equivalent between the standard and nonstandard
+- nsuniform_convergence_iff: Equivalent between the standard and nonstandard
 version of ustrong_convergence.
-- Cauchy_uNSCauchy_iff: Equivalent between the standard and nonstandard
+- nsuniformly_Cauchy_on_iff: Equivalent between the standard and nonstandard
 version of uCauchy.
 
 *)
@@ -35,7 +35,7 @@ abbreviation uniform_convergence_abbr::
 
 subsection \<open>Nonstandard analog of uniform convergence\<close>
 
-text \<open>We will restrict ourselves to the case of vector spaces for the nontandard models.\<close>
+text \<open>We will restrict ourselves to the case of vector spaces for the nonstandard models.\<close>
 
 text \<open>See theorem 7.12.2 of [goldblatt2012lectures]\<close>
 
@@ -223,19 +223,23 @@ chapter \<open>Linear case\<close>
 section \<open>Standard definitions\<close>
 
 definition sphere:: \<open>'a::real_normed_vector set\<close> where
-\<open>sphere = {x. norm x = 1}\<close>
+\<open>sphere = {x. norm x = 1}\<close> (* TODO rename: unit_sphere (to avoid name conflict) *)
+(* TODO: same as sphere 0 1 from Elementary_Metric_Spaces *)
 
 definition hsphere :: "('a::real_normed_vector star) set"
   where [transfer_unfold]: "hsphere = *s* sphere"
 
+(* TODO: remove (just write unit_sphere: f \<midarrow>uniformly\<rightarrow> l) *)
 definition ustrong_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close> where 
   \<open>ustrong_convergence f l = (sphere: f \<midarrow>uniformly\<rightarrow> l)\<close>
 
+(* TODO remove *)
 abbreviation ustrong_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>ustrong\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>ustrong\<rightarrow> l \<equiv> ( ustrong_convergence f l )\<close>
 
+(* TODO remove *)
 definition uCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>uCauchy f = (uniformly_Cauchy_on sphere f)\<close>
