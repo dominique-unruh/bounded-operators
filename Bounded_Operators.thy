@@ -211,6 +211,13 @@ instance
 proof
   show "Cauchy f \<Longrightarrow> convergent f"
     for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
+    unfolding Cauchy_def convergent_def dist_norm norm_rbounded.rep_eq
+      tendsto_iff
+    apply transfer apply simp
+    sorry
+
+(*   show "Cauchy f \<Longrightarrow> convergent f"
+    for f :: "nat \<Rightarrow> ('a, 'b) rbounded"
     unfolding Cauchy_def convergent_def 
   proof-
     show \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e \<Longrightarrow> \<exists>L. f \<longlonglongrightarrow> L\<close>
@@ -262,7 +269,7 @@ proof
         by (simp add: ONORM_tendsto)        
       thus ?thesis by blast
     qed
-  qed
+  qed *)
 qed  
 end
 
@@ -479,6 +486,7 @@ proof intro_classes
 qed
 end
 
+(* TODO perfect_space probably not needed *)
 instantiation rbounded :: ("{real_normed_vector, perfect_space}", cbanach) "cbanach"
 begin
 instance..
@@ -1277,6 +1285,23 @@ lemma ctimesOp_assoc: "ctimesOp (ctimesOp A B) C = ctimesOp A (ctimesOp B C)"
   apply transfer
   using rtimesOp_assoc by smt
 
+lift_definition timesOpX:: 
+  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
+   is "(o)"
+  unfolding o_def 
+  by (rule bounded_clinear_compose, simp_all)
+
+lemma rtimesOp_assoc_plain: "bounded_linear Aa \<Longrightarrow>
+  bounded_linear Ba \<Longrightarrow> bounded_linear Ca \<Longrightarrow> Aa \<circ> Ba \<circ> Ca = Aa \<circ> (Ba \<circ> Ca)"
+  sorry (* from rtimesOp_assoc by automation *)
+
+lemma tmp: "timesOpX (timesOpX A B) C = timesOpX A (timesOpX B C)"
+  apply transfer
+(* using rtimesOp_assoc_plain *)
+  by auto
+
+
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
   unfolding timesOp_def using ctimesOp_assoc
   by (simp add: ctimesOp_assoc flatten_inv) 
@@ -1517,6 +1542,7 @@ qed
 
 section \<open>Complex Span\<close>
 
+(* TODO Complex_Vector_Spaces *)
 lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
@@ -1722,6 +1748,8 @@ definition finite_dimensional::\<open>('a::{complex_vector,topological_space}) l
 
 definition dim::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> nat\<close> where
 \<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
+
+term \<open>dim S = (if S=0 then 0 else 1)\<close>
 
 lemma partial_span_1:
   \<open>S \<subseteq> partial_span 1 S\<close>
@@ -2058,7 +2086,6 @@ proof
   qed
 qed
 
-
 lemma equal_span_0_n:
 fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
 shows \<open>\<forall> x::'a.
@@ -2107,12 +2134,15 @@ next
   thus ?case by blast
 qed
 
-
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
     and S::\<open>'a set\<close> and x::'a
   assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>f x = 0\<close>
+(* 
+Proof in general case: Modules.thy \<rightarrow> eq_0_on_span
+*)
+  thm complex_vector.span_induct
 proof -
   have \<open>x \<in> closure (complex_vector.span S)\<close>
     using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
@@ -2198,6 +2228,14 @@ proof-
   qed
   thus ?thesis using Rep_bounded_inject by blast 
 qed
+
+(* 
+TODO: show this and then equal_generator as corollary?
+lemma equal_span:
+  fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
+  assumes \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> 
+  shows \<open>\<And>x. x \<in> closure (complex_vector.span S) \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
+*)
 
 lemma equal_generator:
   fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>

@@ -6,6 +6,12 @@ Authors:
 *)
 
 
+(* TODO: update to contain all improvements of Real_Vector_Spaces w.r.t. old version.
+
+Current version was probably based on Real_Vector_Spaces from Isabelle 2017 (or earlier?).
+Using a diff from Isabelle 2017 to 2019 we can get all the changes that need to be carried over.
+ *)
+
 theory Complex_Vector_Spaces
   imports 
     "HOL-ex.Sketch_and_Explore"
