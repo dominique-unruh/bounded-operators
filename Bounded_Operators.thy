@@ -1779,14 +1779,70 @@ qed
 
 lemma sum_partial_span_eq:
   fixes S::\<open>'a::complex_vector set\<close>
-  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span n S\<close>
-  shows \<open>r + s \<in> partial_span (Suc n) S\<close>
+  assumes  \<open>S \<noteq> {}\<close>
+  shows \<open>\<forall> r s. \<exists> p::nat. r \<in> partial_span n S \<longrightarrow> s \<in> partial_span n S
+ \<longrightarrow> r + s \<in> partial_span (n+p) S\<close>
 proof(induction n)
   case 0
-  thus ?case sorry
+  have  \<open>r \<in> partial_span 0 S \<Longrightarrow> s \<in> partial_span 0 S \<Longrightarrow> r + s \<in> partial_span (Suc 0) S\<close>
+    for r s
+  proof-
+    assume \<open>r \<in> partial_span 0 S\<close> and \<open>s \<in> partial_span 0 S\<close>
+    from  \<open>r \<in> partial_span 0 S\<close>
+    have \<open>r = 0\<close>
+      by simp
+    from  \<open>s \<in> partial_span 0 S\<close>
+    have \<open>s = 0\<close>
+      by simp
+    have \<open>r + s = 0\<close>
+      by (simp add: \<open>r = 0\<close> \<open>s = 0\<close>)
+    have \<open>partial_span (Suc 0) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      by simp
+    have \<open>\<exists> w. w \<in> S\<close>
+      using \<open>S \<noteq> {}\<close>
+      by blast
+    then obtain w where \<open>w \<in> S\<close>
+      by blast
+    have \<open>r + 0 *\<^sub>C w \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      using \<open>r \<in>  partial_span 0 S\<close> \<open>w \<in> S\<close> by blast
+    hence \<open>0 \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      by (simp add: \<open>r = 0\<close>)
+    thus ?thesis using \<open>r + s = 0\<close> by simp
+  qed
+  thus ?case
+    by (metis add.left_neutral) 
 next
   case (Suc n)
-  then show ?case sorry
+  have \<open>r \<in> partial_span (Suc n) S \<Longrightarrow> s \<in> partial_span (Suc n) S \<Longrightarrow> \<exists> p. r + s \<in> partial_span (Suc n + p) S\<close>
+    for r s
+  proof-
+    assume \<open>r \<in> partial_span (Suc n) S\<close> and \<open>s \<in> partial_span (Suc n) S\<close>
+    from \<open>r \<in> partial_span (Suc n) S\<close>
+    have \<open>r \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by auto
+    then obtain a u uu where \<open>r = u + a *\<^sub>C uu\<close> and \<open>u \<in>  partial_span n S\<close> and \<open>uu \<in> S\<close>
+      by blast
+    from \<open>s \<in> partial_span (Suc n) S\<close>
+    have \<open>s \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by auto
+    then obtain b v vv where \<open>s = v + b *\<^sub>C vv\<close> and \<open>v \<in>  partial_span n S\<close> and \<open>vv \<in> S\<close>
+      by blast
+    have \<open>r + s = (u + v) + a *\<^sub>C uu +  b *\<^sub>C vv\<close>
+      by (simp add: \<open>r = u + a *\<^sub>C uu\<close> \<open>s = v + b *\<^sub>C vv\<close>)
+    have \<open>\<exists> p. u + v \<in>  partial_span (n+p) S\<close>
+      using Suc.IH  \<open>u \<in>  partial_span n S\<close> \<open>v \<in>  partial_span n S\<close>
+      by auto
+    then obtain p where  \<open> u + v \<in>  partial_span (n+p) S\<close>
+      by blast
+    hence \<open>(u + v) + a *\<^sub>C uu \<in> partial_span (Suc (n + p)) S\<close>
+      using \<open>uu \<in> S\<close>
+      by auto 
+    hence \<open>((u + v) + a *\<^sub>C uu) + b *\<^sub>C vv \<in> partial_span (Suc (Suc (n + p))) S\<close>
+      using \<open>vv \<in> S\<close> by force
+    thus ?thesis
+      by (metis \<open>r + s = u + v + a *\<^sub>C uu + b *\<^sub>C vv\<close> add_Suc add_Suc_right) 
+  qed
+  thus ?case by blast 
 qed
 
 lemma sum_partial_span_leq_ind:
@@ -1825,10 +1881,9 @@ lemma sum_partial_span_leq:
 lemma sum_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close> and \<open>S \<noteq> {}\<close>
-  shows \<open>r + s \<in> partial_span (Suc (max n m)) S\<close>
+  shows \<open>\<exists> p. r + s \<in> partial_span p S\<close>
   using assms sum_partial_span_eq sum_partial_span_leq
   by (metis max.cobounded1 max.cobounded2)
-
 
 lemma scaleC_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
@@ -1884,7 +1939,7 @@ lemma partial_linear_manifold:
       using that by auto
     then obtain m where \<open>y \<in> partial_span m S\<close>
       by blast                    
-    have \<open>x + y \<in> partial_span (Suc (max n m)) S\<close>
+    have \<open>\<exists> p. x + y \<in> partial_span p S\<close>
       using \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> assms sum_partial_span by blast
     thus ?thesis
       by blast 
