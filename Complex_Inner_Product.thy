@@ -489,23 +489,6 @@ lemma cGDERIV_inverse:
   apply (erule cGDERIV_DERIV_compose, simp)
   by (erule DERIV_inverse [folded numeral_2_eq_2])
 
-(* NEW *)
-interpretation real_inner : complex_inner 
-"scaleR"
-"scaleC" 
-"(+)"
-"0"
-"(-)"
-"uminus"
-"dist"
-"norm"
-"sgn"
-"uniformity"
-"open"
-"cinner"
-..
-
-
 class chilbert_space =  complex_inner + complete_space
 begin
 subclass cbanach by standard
