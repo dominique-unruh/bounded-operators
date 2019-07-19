@@ -1793,8 +1793,21 @@ proof(induction p)
     by (simp add: assms) 
 next
   case (Suc p)
-  thus ?case 
-    sorry
+  have \<open>\<exists> s. s \<in> S\<close>
+    using \<open>S \<noteq> {}\<close>
+    by blast
+  then obtain s where \<open>s \<in> S\<close>
+    by blast
+  have  \<open>r \<in> partial_span (n + p) S\<close>
+    by (simp add: Suc.IH)
+  hence  \<open>r + 0 *\<^sub>C s \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span (n + p) S \<and> y \<in> S}\<close>
+    using  \<open>s \<in> S\<close>
+    by blast
+  hence  \<open>r + 0 *\<^sub>C s \<in> partial_span (Suc (n + p)) S\<close>
+    by simp
+  moreover have \<open>r = r + 0 *\<^sub>C s\<close>
+    by simp
+  ultimately show ?case by simp
 qed
 
 lemma sum_partial_span_leq:
