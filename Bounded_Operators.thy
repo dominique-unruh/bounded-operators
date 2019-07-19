@@ -1723,9 +1723,70 @@ definition finite_dimensional::\<open>('a::{complex_vector,topological_space}) l
 definition dim::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> nat\<close> where
 \<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
 
-proposition partial_span_lim:
-\<open>complex_vector.span S = (\<Union> n::nat. partial_span n S)\<close>
+lemma partial_span_1:
+  \<open>S \<subseteq> partial_span 1 S\<close>
+proof-
+  have \<open>partial_span 0 S = {0}\<close>
+    by auto
+  moreover have \<open>partial_span (Suc 0) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+    by auto
+  ultimately have \<open>partial_span (Suc 0) S = {a *\<^sub>C y | a y. y \<in> S}\<close>
+    by auto 
+  also have \<open>{a *\<^sub>C y | a y. y \<in> S} \<supseteq> {1 *\<^sub>C y | y. y \<in> S}\<close>
+    by blast
+  also have \<open>{1 *\<^sub>C y | y. y \<in> S} = S\<close>
+    by simp
+  finally have \<open>partial_span (Suc 0) S \<supseteq> S\<close>
+    by blast
+  thus ?thesis
+    by simp 
+qed
+
+lemma partial_span_lim_n:
+  fixes S::\<open>'a::complex_vector set\<close>
+  shows \<open>partial_span n S \<subseteq> complex_vector.span S\<close>
   sorry
+
+lemma partial_span_subspace:
+  fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
+  shows \<open>is_subspace (\<Union>n. partial_span n S)\<close>
+  sorry
+
+proposition partial_span_lim:
+  fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
+  shows \<open>complex_vector.span S = (\<Union> n::nat. partial_span n S)\<close>
+proof
+  show "complex_vector.span S \<subseteq> (\<Union>n. partial_span n S)"
+  proof-
+    have \<open>S \<subseteq> (\<Union>n. partial_span n S)\<close>
+    proof-
+      have \<open>partial_span 1 S \<subseteq> (\<Union>n. partial_span n S)\<close>
+        by blast
+      moreover have \<open>S \<subseteq> partial_span 1 S\<close>
+        using partial_span_1 by blast
+      ultimately show ?thesis by blast
+    qed
+    moreover have \<open>is_subspace (\<Union>n. partial_span n S)\<close>
+      by (simp add: partial_span_subspace)      
+    ultimately show ?thesis
+      by (simp add: is_subspace_span_A) 
+  qed
+  show "(\<Union>n. partial_span n S) \<subseteq> complex_vector.span S"
+  proof
+    show "x \<in> complex_vector.span S"
+      if "x \<in> (\<Union>n. partial_span n S)"
+      for x :: 'a
+      using that 
+    proof-
+      have \<open>\<exists> n. x \<in> partial_span n S\<close>
+        using that by blast
+      then obtain n where \<open>x \<in> partial_span n S\<close>
+        by blast
+      thus ?thesis using partial_span_lim_n
+        by auto
+    qed
+  qed
+qed
 
 lemma equal_span_0_n:
 fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
