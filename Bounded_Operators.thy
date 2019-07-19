@@ -1780,8 +1780,14 @@ qed
 lemma sum_partial_span_eq:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span n S\<close>
-  shows \<open>r + s \<in> partial_span n S\<close>
-  sorry
+  shows \<open>r + s \<in> partial_span (Suc n) S\<close>
+proof(induction n)
+  case 0
+  thus ?case sorry
+next
+  case (Suc n)
+  then show ?case sorry
+qed
 
 lemma sum_partial_span_leq_ind:
   fixes S::\<open>'a::complex_vector set\<close> and n p :: nat
@@ -1819,7 +1825,7 @@ lemma sum_partial_span_leq:
 lemma sum_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close> and \<open>S \<noteq> {}\<close>
-  shows \<open>r + s \<in> partial_span (max n m) S\<close>
+  shows \<open>r + s \<in> partial_span (Suc (max n m)) S\<close>
   using assms sum_partial_span_eq sum_partial_span_leq
   by (metis max.cobounded1 max.cobounded2)
 
@@ -1878,8 +1884,8 @@ lemma partial_linear_manifold:
       using that by auto
     then obtain m where \<open>y \<in> partial_span m S\<close>
       by blast                    
-    have \<open>x + y \<in> partial_span (max n m) S\<close>
-      by (simp add:  \<open>S \<noteq> {}\<close> \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> sum_partial_span)
+    have \<open>x + y \<in> partial_span (Suc (max n m)) S\<close>
+      using \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> assms sum_partial_span by blast
     thus ?thesis
       by blast 
   qed
