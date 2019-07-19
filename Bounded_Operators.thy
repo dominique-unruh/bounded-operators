@@ -1777,10 +1777,91 @@ next
     by blast 
 qed
 
+lemma sum_partial_span:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close>
+  shows \<open>r + s \<in> partial_span (max n m) S\<close>
+  sorry
+
+lemma scaleC_partial_span:
+  fixes S::\<open>'a::complex_vector set\<close>
+  shows \<open>\<forall> t. t \<in> partial_span n S \<longrightarrow> c *\<^sub>C t \<in> partial_span n S\<close>
+proof(induction n)
+case 0
+  thus ?case
+    by simp 
+next
+  case (Suc n)
+  have \<open>t \<in> partial_span (Suc n) S \<Longrightarrow> c *\<^sub>C t \<in> partial_span (Suc n) S\<close>
+    for t
+  proof-
+    assume \<open>t \<in> partial_span (Suc n) S\<close>
+    hence \<open>t \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    hence \<open>\<exists> a x y. x \<in> partial_span n S \<and> y \<in> S \<and> t = x + a *\<^sub>C y\<close>
+      by blast
+    then obtain a x y where \<open>x \<in> partial_span n S\<close> and \<open>y \<in> S\<close> 
+              and \<open>t = x + a *\<^sub>C y\<close> by blast
+    from \<open>t = x + a *\<^sub>C y\<close>
+    have \<open>c *\<^sub>C t = c *\<^sub>C (x + a *\<^sub>C y)\<close>
+      by blast
+    hence \<open>c *\<^sub>C t = c *\<^sub>C x +  c *\<^sub>C (a *\<^sub>C y)\<close>
+      by (simp add: scaleC_add_right)
+    hence \<open>c *\<^sub>C t = c *\<^sub>C x +  (c * a) *\<^sub>C y\<close>
+      by simp
+    moreover have \<open>c *\<^sub>C x \<in> partial_span n S\<close>
+      by (simp add: Suc.IH \<open>x \<in> partial_span n S\<close>)
+    ultimately have  \<open>c *\<^sub>C t \<in> partial_span(Suc n) S\<close>
+      using \<open>y \<in> S\<close> by auto
+    thus ?thesis by blast
+  qed
+  thus ?case by blast 
+qed
+
 lemma partial_linear_manifold:
   fixes S::\<open>'a::complex_vector set\<close>
   shows \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
-  sorry
+  proof
+  show "x + y \<in> (\<Union>n. partial_span n S)"
+    if "x \<in> (\<Union>n. partial_span n S)"
+      and "y \<in> (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and y :: 'a
+  proof-
+    have \<open>\<exists> n. x \<in> partial_span n S\<close>
+      using that by auto
+    then obtain n where \<open>x \<in> partial_span n S\<close>
+      by blast                    
+   have \<open>\<exists> n. y \<in> partial_span n S\<close>
+      using that by auto
+    then obtain m where \<open>y \<in> partial_span m S\<close>
+      by blast                    
+    have \<open>x + y \<in> partial_span (max n m) S\<close>
+      by (simp add: \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> sum_partial_span)
+    thus ?thesis
+      by blast 
+  qed
+  show "c *\<^sub>C x \<in> (\<Union>n. partial_span n S)"
+    if "x \<in> (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and c :: complex
+  proof-
+    have \<open>\<exists> n. x \<in> partial_span n S\<close>
+      using that by auto
+    then obtain n where \<open>x \<in> partial_span n S\<close>
+      by blast                    
+    thus ?thesis using scaleC_partial_span
+      by blast 
+  qed
+  show "0 \<in> (\<Union>n. partial_span n S)"
+  proof-
+    have \<open>0 \<in> partial_span 0 S\<close>
+      by simp
+    moreover have \<open>partial_span 0 S \<subseteq> (\<Union>n. partial_span n S)\<close>
+      by blast
+    ultimately show ?thesis by blast
+  qed
+qed
 
 lemma is_subspace_I:
   fixes S::\<open>'a::complex_normed_vector set\<close>
