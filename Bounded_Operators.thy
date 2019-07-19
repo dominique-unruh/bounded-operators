@@ -1709,13 +1709,27 @@ proof-
   thus ?thesis by auto
 qed
 
+(* NEW *)
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
 \<open>cgenerator S = (span S = top)\<close>
 
+fun partial_span::\<open>nat \<Rightarrow> ('a::complex_vector) set \<Rightarrow> ('a::complex_vector) set\<close> where
+\<open>partial_span 0 S = {0}\<close>|
+\<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+
+definition finite_dimensional::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> bool\<close> where
+\<open>finite_dimensional S = (\<exists> n. Rep_linear_space S = partial_span n (Rep_linear_space S))\<close>
+
+definition dim::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> nat\<close> where
+\<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
+
+proposition partial_span_lim:
+\<open>complex_vector.span S = (\<Union> n::nat. partial_span n S)\<close>
+  sorry
+
 lemma equal_span_0_n:
 \<open>\<forall> f::'a::chilbert_space \<Rightarrow> 'b::chilbert_space. \<forall> S::'a set.
-card S = n \<longrightarrow> 
-x \<in> complex_vector.span S \<longrightarrow> 
+x \<in> partial_span n S \<longrightarrow> 
 (\<forall> S. t \<in> S \<longrightarrow> f t = 0) \<longrightarrow> 
 f x = 0\<close>
 proof(induction n)
@@ -1726,17 +1740,6 @@ next
   then show ?case sorry
 qed
 
-lemma equal_span_0_finite:
-  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
-    and S::\<open>'a set\<close> and x::'a
-  assumes \<open>finite S\<close> and \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
-  shows \<open>f x = 0\<close>
-  using assms equal_span_0_n add.left_neutral complex_vector.span_base complex_vector.span_zero
-  by (metis (mono_tags, lifting) add.commute)
-
-lemma span_infinite_to_finite:
- \<open>x \<in> complex_vector.span S \<Longrightarrow> \<exists> R. finite R \<and> R \<subseteq> S \<and> x \<in> complex_vector.span R\<close>
-  sorry
 
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
@@ -1744,8 +1747,14 @@ lemma equal_span_0:
   assumes  \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
   shows \<open>f x = 0\<close>
 proof -
-  show ?thesis
-    using equal_span_0_finite by force
+  have \<open>x \<in>  (\<Union> n::nat. partial_span n S)\<close>
+    using  \<open>x \<in> complex_vector.span S\<close> partial_span_lim by fastforce 
+  hence \<open>\<exists> n. x \<in> partial_span n S\<close>
+    by blast
+  then obtain n where \<open>x \<in> partial_span n S\<close>
+    by blast
+  thus ?thesis using \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> equal_span_0_n
+    by (metis (mono_tags, lifting) cancel_comm_monoid_add_class.diff_cancel complex_vector.span_empty complex_vector.span_zero diff_zero partial_span.simps(1)) 
 qed
 
 lemma equal_generator_0:
