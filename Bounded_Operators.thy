@@ -1728,17 +1728,51 @@ proposition partial_span_lim:
   sorry
 
 lemma equal_span_0_n:
-\<open>\<forall> f::'a::chilbert_space \<Rightarrow> 'b::chilbert_space. \<forall> S::'a set.
+fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
+shows \<open>\<forall> x::'a.
 x \<in> partial_span n S \<longrightarrow>
  bounded_clinear f \<longrightarrow>
 (\<forall> t \<in> S. f t = 0) \<longrightarrow> 
 f x = 0\<close>
 proof(induction n)
   case 0
-  then show ?case sorry
+  have \<open>x \<in> partial_span 0 S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> partial_span 0 S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
+    from \<open>x \<in> partial_span 0 S\<close>
+    have \<open>x = 0\<close>
+      by simp
+    thus ?thesis using \<open>bounded_clinear f\<close>
+      by (simp add: bounded_clinear.clinear clinear_zero) 
+  qed
+  thus ?case by blast
 next
-  case (Suc n)
-  then show ?case sorry
+  case (Suc n) 
+  have \<open>x \<in> partial_span (Suc n) S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
+    for x
+  proof-
+    assume \<open>x \<in> partial_span (Suc n) S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
+    from \<open>x \<in> partial_span (Suc n) S\<close>
+    have \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    hence \<open>\<exists> a t y. t \<in> partial_span n S \<and> y \<in> S \<and> x = t + a *\<^sub>C y\<close>
+      by blast
+    then obtain a t y where \<open>t \<in> partial_span n S\<close> and \<open>y \<in> S\<close> and \<open>x = t + a *\<^sub>C y\<close>
+      by blast
+    have \<open>f t = 0\<close>
+      using  \<open>t \<in> partial_span n S\<close> \<open>bounded_clinear f\<close> \<open>\<forall> t \<in> S. f t = 0\<close> Suc.IH by blast
+    moreover have \<open>f y = 0\<close>
+      using \<open>y \<in> S\<close>  \<open>\<forall> t \<in> S. f t = 0\<close>  by blast
+    moreover have  \<open>f x = f t + f (a *\<^sub>C y)\<close>
+       using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
+       unfolding bounded_clinear_def clinear_def Modules.additive_def by simp    
+    hence  \<open>f x = f t + a *\<^sub>C f y\<close>
+      using \<open>bounded_clinear f\<close>  
+       unfolding bounded_clinear_def clinear_def clinear_axioms_def by simp
+    ultimately show ?thesis by simp
+  qed
+  thus ?case by blast
 qed
 
 
