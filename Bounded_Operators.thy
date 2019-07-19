@@ -869,13 +869,18 @@ lemma flatten_inv: \<open>unflatten (flatten x) = x\<close>
 lemma unflatten_inj: \<open>unflatten x = unflatten y \<Longrightarrow> x = y\<close>
   by (metis unflatten_inv)
 
-
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "zero"
 begin
 definition zero_bounded::"('a,'b) bounded" 
   where "zero_bounded = flatten (0::('a,'b) cbounded)"
 instance ..
 end
+
+lemma zero_bounded_lift:
+\<open>Rep_bounded (0::('a, 'b) bounded) = (\<lambda> _::('a::complex_normed_vector). 0::('b::complex_normed_vector))\<close>
+  unfolding zero_bounded_def zero_cbounded_def zero_rbounded_def flatten_def
+  apply auto
+  by (metis Abs_rbounded_inverse bounded_linear_zero flatten.abs_eq flatten.rep_eq mem_Collect_eq zero_cbounded.abs_eq zero_cbounded.rep_eq zero_rbounded.abs_eq)
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uminus"
 begin
@@ -884,6 +889,12 @@ definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
 instance ..
 end
 
+lemma uminus_bounded_lift:
+\<open>Rep_bounded (- f) = (\<lambda> x. - (Rep_bounded f) x)\<close>
+  unfolding uminus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
+  apply auto
+  by (metis Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq uminus_cbounded.rep_eq uminus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
+  
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "semigroup_add"
 begin
 definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
@@ -893,6 +904,12 @@ instance
   unfolding plus_bounded_def
   by (simp add: ab_semigroup_add_class.add_ac(1) flatten_inv)
 end
+
+lemma plus_bounded_lift:
+\<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
+  unfolding plus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
+  apply auto
+  by (metis (no_types, hide_lams) Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq plus_cbounded.rep_eq plus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "comm_monoid_add" begin
 instance
@@ -924,9 +941,23 @@ proof
 qed
 end
 
+lemma minus_bounded_lift:
+\<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
+  unfolding minus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
+  apply auto
+  by (metis (no_types, lifting) Abs_bounded_cases Abs_bounded_inverse Rep_cbounded_inverse flatten.rep_eq minus_cbounded.rep_eq minus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
+
+
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_vector" begin
 definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where \<open>scaleC_bounded r f = flatten (r *\<^sub>C unflatten f)\<close>
+
+lemma scaleC_bounded_lift:
+\<open>Rep_bounded (c *\<^sub>C f) = (\<lambda> x. c *\<^sub>C (Rep_bounded f) x)\<close>
+  unfolding scaleC_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
+  apply auto
+  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse flatten.rep_eq scaleC_cbounded.rep_eq scaleC_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
+
 
 definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where \<open>scaleR_bounded r f = flatten (r *\<^sub>R unflatten f)\<close>
@@ -955,6 +986,12 @@ proof
     by (simp add: unflatten_inv)
 qed
 end
+
+lemma scaleR_bounded_lift:
+\<open>Rep_bounded (c *\<^sub>R f) = (\<lambda> x. c *\<^sub>R (Rep_bounded f) x)\<close>
+  unfolding scaleR_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
+  apply auto
+  by (metis (no_types, hide_lams) flatten.abs_eq flatten.rep_eq map_fun_apply scaleR_cbounded.rep_eq scaleR_rbounded.rep_eq unflatten_def unflatten_inv)
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "dist_norm" begin
 definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
@@ -1353,7 +1390,8 @@ lemma times_comp: \<open>\<And>A B \<psi>.
 qed
 
 
-lemma timesOp_assoc_linear_space: \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+lemma timesOp_assoc_linear_space: 
+\<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by auto
@@ -1401,11 +1439,9 @@ proof-
     by auto
 qed
 
-
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   using  is_linear_manifold.zero is_subspace.subspace  by auto
-
 
 lemma subspace_scale_invariant: 
   fixes a S
@@ -1429,13 +1465,11 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using subspace_scale_invariant by blast
 
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
-
 
 lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: scaleC_add_right)
@@ -1456,7 +1490,6 @@ lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNI
   by (rule Complex_Inner_Product.is_subspace_UNIV)
 instance ..
 end
-
 
 lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
   for U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
@@ -1679,13 +1712,128 @@ qed
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
 \<open>cgenerator S = (span S = top)\<close>
 
-lemma equal_generator:
-  fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-    and S::\<open>'a set\<close> 
-  assumes \<open>cgenerator S\<close> 
-    and \<open>\<And>x. x \<in>  S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
-  shows  \<open>A = B\<close>
+lemma equal_span_0_n:
+\<open>\<forall> f::'a::chilbert_space \<Rightarrow> 'b::chilbert_space. \<forall> S::'a set.
+card S = n \<longrightarrow> 
+x \<in> complex_vector.span S \<longrightarrow> 
+(\<forall> S. t \<in> S \<longrightarrow> f t = 0) \<longrightarrow> 
+f x = 0\<close>
+proof(induction n)
+  case 0
+  then show ?case sorry
+next
+  case (Suc n)
+  then show ?case sorry
+qed
+
+lemma equal_span_0_finite:
+  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
+    and S::\<open>'a set\<close> and x::'a
+  assumes \<open>finite S\<close> and \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
+  shows \<open>f x = 0\<close>
+  using assms equal_span_0_n add.left_neutral complex_vector.span_base complex_vector.span_zero
+  by (metis (mono_tags, lifting) add.commute)
+
+lemma span_infinite_to_finite:
+ \<open>x \<in> complex_vector.span S \<Longrightarrow> \<exists> R. finite R \<and> R \<subseteq> S \<and> x \<in> complex_vector.span R\<close>
   sorry
+
+lemma equal_span_0:
+  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
+    and S::\<open>'a set\<close> and x::'a
+  assumes  \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
+  shows \<open>f x = 0\<close>
+proof -
+  show ?thesis
+    using equal_span_0_finite by force
+qed
+
+lemma equal_generator_0:
+  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
+  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = 0\<close>
+  shows  \<open>A = 0\<close>
+proof-
+  have \<open>Rep_bounded A = Rep_bounded (0::('a,'b) bounded)\<close>
+  proof
+    show "Rep_bounded A x = Rep_bounded 0 x"
+      for x :: 'a
+    proof-
+      have \<open>Rep_bounded (0::('a, 'b) bounded) x = 0\<close>
+        by (simp add: zero_bounded_lift) 
+      moreover have \<open>Rep_bounded A x = 0\<close>
+      proof-
+        have \<open>bounded_clinear (Rep_bounded A)\<close>
+          using Rep_bounded by auto          
+        have \<open>Abs_linear_space (closure (complex_vector.span S)) =
+                Abs_linear_space UNIV\<close>
+          using  \<open>cgenerator S\<close>  
+          unfolding cgenerator_def top_linear_space_def Bounded_Operators.span_def
+          by auto          
+        hence \<open>closure (complex_vector.span S) = UNIV\<close>
+          by (metis assms(1) cgenerator_def span.rep_eq top_linear_space.rep_eq)          
+        hence  \<open>x \<in> closure (complex_vector.span S)\<close>
+          by blast
+        hence \<open>\<exists> y. (\<forall> n::nat. y n \<in> complex_vector.span S) \<and> y \<longlonglongrightarrow> x\<close>
+          using closure_sequential by auto
+        then obtain y where \<open>\<forall> n::nat. y n \<in> complex_vector.span S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+          by blast
+        have \<open>isCont (Rep_bounded A) x\<close>
+          using \<open>bounded_clinear (Rep_bounded A)\<close>
+          by (simp add: bounded_linear_continuous) 
+        hence \<open>(\<lambda> n.  Rep_bounded A (y n)) \<longlonglongrightarrow> Rep_bounded A x\<close>
+          using \<open>y \<longlonglongrightarrow> x\<close>
+          by (simp add: isCont_tendsto_compose)
+        moreover have \<open>Rep_bounded A (y n) = 0\<close>
+          for n
+        proof-
+          from \<open>\<forall> n::nat. y n \<in> complex_vector.span S\<close>
+          have \<open>y n \<in> complex_vector.span S\<close>
+            by blast
+          thus ?thesis using equal_span_0
+            using assms(2) by blast 
+        qed
+        ultimately have \<open>(\<lambda> n.  0) \<longlonglongrightarrow> Rep_bounded A x\<close>
+          by simp
+        thus \<open>Rep_bounded A x = 0\<close>
+          by (simp add: LIMSEQ_const_iff)
+      qed
+      ultimately show ?thesis by simp
+    qed
+  qed
+  thus ?thesis using Rep_bounded_inject by blast 
+qed
+
+lemma equal_generator:
+  fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
+  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
+  shows \<open>A = B\<close>
+proof-
+  have \<open>A - B = 0\<close>
+  proof-
+    have \<open>x \<in> S \<Longrightarrow> Rep_bounded (A - B) x = 0\<close>
+      for x
+    proof-
+      assume \<open>x \<in> S\<close>
+      hence \<open>Rep_bounded A x = Rep_bounded B x\<close>
+        using \<open>x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close>
+        by blast
+      hence \<open>Rep_bounded A x - Rep_bounded B x = 0\<close>
+        by simp
+      hence \<open>(Rep_bounded A - Rep_bounded B) x = 0\<close>
+        by simp
+      moreover have \<open>Rep_bounded (A - B) = (\<lambda> t. Rep_bounded A t - Rep_bounded B t)\<close>
+        using minus_bounded_lift by blast
+      ultimately have \<open>Rep_bounded (A - B) x = 0\<close>
+        by simp
+      thus ?thesis by simp 
+    qed
+    thus ?thesis
+      using assms(1) equal_generator_0 by blast 
+  qed
+  thus ?thesis by simp
+qed
+
+
 
 
 
