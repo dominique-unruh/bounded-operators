@@ -1745,7 +1745,37 @@ qed
 lemma partial_span_lim_n:
   fixes S::\<open>'a::complex_vector set\<close>
   shows \<open>partial_span n S \<subseteq> complex_vector.span S\<close>
-  sorry
+proof(induction n)
+  case 0
+  thus ?case
+    using complex_vector.span_mono by force 
+next
+  case (Suc n)
+  have \<open>x \<in> partial_span (Suc n) S \<Longrightarrow> x \<in> complex_vector.span S\<close>
+    for x
+  proof-
+    assume \<open>x \<in> partial_span (Suc n) S\<close>
+    hence \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    then obtain a t y where \<open>x = t + a *\<^sub>C y\<close> and \<open>t \<in> partial_span n S\<close>
+          and \<open>y \<in> S\<close>
+      by blast
+    have \<open>t \<in> complex_vector.span S\<close>
+      using Suc.IH \<open>t \<in> partial_span n S\<close> by auto
+    moreover have \<open>a *\<^sub>C y \<in> complex_vector.span S\<close>
+    proof-
+      have \<open>y \<in> complex_vector.span S\<close>
+        using \<open>y \<in> S\<close>
+        by (simp add: complex_vector.span_base) 
+      thus ?thesis
+        by (simp add: complex_vector.span_scale) 
+    qed
+    ultimately show ?thesis
+      by (simp add: \<open>x = t + a *\<^sub>C y\<close> complex_vector.span_add) 
+  qed
+  thus ?case
+    by blast 
+qed
 
 lemma partial_span_subspace:
   fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
