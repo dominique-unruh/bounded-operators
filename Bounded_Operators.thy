@@ -1777,29 +1777,73 @@ next
     by blast 
 qed
 
-lemma partial_span_subspace:
-  fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
-  shows \<open>is_subspace (closure ( \<Union>n. partial_span n S) )\<close>
+lemma partial_linear_manifold:
+  fixes S::\<open>'a::complex_vector set\<close>
+  shows \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
+  sorry
+
+lemma is_subspace_I:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes \<open>is_linear_manifold S\<close>
+  shows \<open>is_subspace (closure S )\<close>
   proof
-  show "x + y \<in> closure (\<Union>n. partial_span n S)"
-    if "x \<in> closure (\<Union>n. partial_span n S)"
-      and "y \<in> closure (\<Union>n. partial_span n S)"
+  show "x + y \<in> closure S"
+    if "x \<in> closure S"
+      and "y \<in> closure S"
     for x :: 'a
       and y :: 'a
-    using that sorry
-  show "c *\<^sub>C x \<in> closure (\<Union>n. partial_span n S)"
-    if "x \<in> closure (\<Union>n. partial_span n S)"
+  proof-
+    have \<open>\<exists> r. (\<forall> n::nat. r n \<in> S) \<and> r \<longlonglongrightarrow> x\<close>
+      using closure_sequential that(1) by auto
+    then obtain r where \<open>\<forall> n::nat. r n \<in> S\<close> and \<open>r \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>\<exists> s. (\<forall> n::nat. s n \<in> S) \<and> s \<longlonglongrightarrow> y\<close>
+      using closure_sequential that(2) by auto
+    then obtain s where \<open>\<forall> n::nat. s n \<in> S\<close> and \<open>s \<longlonglongrightarrow> y\<close>
+      by blast
+    have \<open>\<forall> n::nat. r n + s n \<in> S\<close>
+      by (simp add: \<open>\<forall>n. r n \<in> S\<close> \<open>\<forall>n. s n \<in> S\<close> assms is_linear_manifold.additive_closed)
+    moreover have \<open>(\<lambda> n. r n + s n) \<longlonglongrightarrow> x + y\<close>
+      by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
+    ultimately show ?thesis
+      using assms is_linear_manifold.additive_closed is_subspace_cl that(1) that(2) by blast 
+  qed
+  show "c *\<^sub>C x \<in> closure S"
+    if "x \<in> closure S"
     for x :: 'a
       and c :: complex
-    using that sorry
-  show "0 \<in> closure (\<Union>n. partial_span n S)"
-    sorry
-  show "closed (closure (\<Union>n. partial_span n S))"
+  proof-
+    have \<open>\<exists> y. (\<forall> n::nat. y n \<in> S) \<and> y \<longlonglongrightarrow> x\<close>
+      using Elementary_Topology.closure_sequential that by auto
+    then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>isCont (scaleC c) x\<close>
+      using continuous_at continuous_on_def scaleC_continuous by blast
+    hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
+      by (simp add: \<open>y \<longlonglongrightarrow> x\<close> tendsto_scaleC)
+    from  \<open>\<forall> n::nat. y n \<in> S\<close>
+    have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
+      by (simp add: assms is_linear_manifold.smult_closed)
+    thus ?thesis
+      by (simp add: assms is_linear_manifold.smult_closed is_subspace_cl that) 
+  qed
+  show "0 \<in> closure S"
+    by (metis \<open>\<And>x c. x \<in> closure S \<Longrightarrow> c *\<^sub>C x \<in> closure S\<close> all_not_in_conv assms closure_eq_empty complex_vector.scale_zero_left is_linear_manifold_def)    
+  show "closed (closure S)"
     by auto
 qed
 
+lemma partial_span_subspace:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  shows \<open>is_subspace (closure ( \<Union>n. partial_span n S) )\<close>
+proof-
+  have \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
+    by (simp add: partial_linear_manifold)    
+  thus ?thesis using is_subspace_I by blast
+qed
+
 proposition partial_span_lim:
-  fixes S::\<open>'a::{complex_vector,topological_space} set\<close>
+  fixes S::\<open>'a::complex_normed_vector set\<close>
   shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
 proof
   show "closure (complex_vector.span S) \<subseteq> closure (\<Union>n. partial_span n S)"
