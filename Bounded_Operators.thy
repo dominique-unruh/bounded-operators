@@ -1729,8 +1729,9 @@ proposition partial_span_lim:
 
 lemma equal_span_0_n:
 \<open>\<forall> f::'a::chilbert_space \<Rightarrow> 'b::chilbert_space. \<forall> S::'a set.
-x \<in> partial_span n S \<longrightarrow> 
-(\<forall> S. t \<in> S \<longrightarrow> f t = 0) \<longrightarrow> 
+x \<in> partial_span n S \<longrightarrow>
+ bounded_clinear f \<longrightarrow>
+(\<forall> t \<in> S. f t = 0) \<longrightarrow> 
 f x = 0\<close>
 proof(induction n)
   case 0
@@ -1744,7 +1745,7 @@ qed
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
     and S::\<open>'a set\<close> and x::'a
-  assumes  \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close>
   shows \<open>f x = 0\<close>
 proof -
   have \<open>x \<in>  (\<Union> n::nat. partial_span n S)\<close>
@@ -1753,8 +1754,8 @@ proof -
     by blast
   then obtain n where \<open>x \<in> partial_span n S\<close>
     by blast
-  thus ?thesis using \<open>\<And>t. t \<in> S \<Longrightarrow> f t = 0\<close> equal_span_0_n
-    by (metis (mono_tags, lifting) cancel_comm_monoid_add_class.diff_cancel complex_vector.span_empty complex_vector.span_zero diff_zero partial_span.simps(1)) 
+  thus ?thesis using \<open>bounded_clinear f\<close> \<open>\<forall> t \<in> S. f t = 0\<close> equal_span_0_n
+    by blast  
 qed
 
 lemma equal_generator_0:
@@ -1799,7 +1800,8 @@ proof-
           have \<open>y n \<in> complex_vector.span S\<close>
             by blast
           thus ?thesis using equal_span_0
-            using assms(2) by blast 
+            using assms(2)
+            using \<open>bounded_clinear (Rep_bounded A)\<close> by auto  
         qed
         ultimately have \<open>(\<lambda> n.  0) \<longlonglongrightarrow> Rep_bounded A x\<close>
           by simp
