@@ -9,11 +9,6 @@ Several definitions of convergence of families of operators.
 Main results:
 - completeness_real_bounded: A sufficient condition for the completeness of a sequence of
  bounded operators.
-- oCauchy_uCauchy_iff: A sufficient condition in order to guarantee the equivalence between 
-being a Cauchy sequence with respect to the operator norm and being a Cauchy sequence 
-uniformly on the unit sphere. 
-- onorm_ustrong_iff: Equivalence between convergence with respect to the norm and convergence
-uniformly on the unit sphere.
 
 *)
 
@@ -21,9 +16,8 @@ theory Convergence_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
-    Operator_Norm_Plus
-    Uniform_Convergence
-    
+    Operator_Norm_Missing
+    Uniform_Limit_Missing
 
 begin
 
@@ -38,9 +32,9 @@ abbreviation strong_convergence_abbr::
   (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l )\<close>
 
-
 section \<open>Convergence with respect to the operator norm\<close>
 
+(*
 definition onorm_convergence::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
@@ -53,17 +47,38 @@ definition oCauchy::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
   where \<open>oCauchy f = ( \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e )\<close>
 
+*)
 
 section \<open>Relationships among the different kind of convergence\<close>
 
 lemma ustrong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector)\<close>
-    and l::\<open>'a \<Rightarrow> 'b\<close>
-  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close>
-    and \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-  shows \<open>f \<midarrow>onorm\<rightarrow> l\<close> 
-(* TODO: case distinction over UNIV \<noteq> 0 *)
-proof-
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>sphere 0 1: f \<midarrow>uniformly\<rightarrow> l\<close>
+  shows \<open>( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0\<close> 
+proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  case True
+  hence \<open>x = 0\<close>
+    for x::'a
+    by auto
+  hence \<open>f n x = 0\<close>
+    for n::nat and x::'a
+    using \<open>bounded_linear (f n)\<close>
+    by (metis (full_types) linear_simps(3))
+  moreover have \<open>l x = 0\<close>
+    for x::'a
+    by (metis (full_types) \<open>\<And>x. x = 0\<close> assms(2) linear_simps(3))
+  ultimately have \<open>(\<lambda> x. f n x - l x) = (\<lambda> _. 0)\<close>
+    for n
+    by simp
+  moreover have \<open>onorm (\<lambda> _. 0::'a) = 0\<close>
+    using onorm_zero by auto
+  ultimately have \<open>onorm (\<lambda> x. f n x - l x) = 0\<close>
+    for n
+    by (simp add: onorm_eq_0)   
+  thus ?thesis
+    by simp     
+next
+  case False
   have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
   proof-
     have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N.  onorm (\<lambda>x. f n x - l x) \<le> e\<close>
@@ -71,8 +86,9 @@ proof-
     proof-
       assume \<open>e > 0\<close>
       hence \<open>\<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-        using \<open>f \<midarrow>ustrong\<rightarrow> l\<close> unfolding ustrong_convergence_def sphere_def
-        using uniform_convergence_norm_D by fastforce        
+        using  \<open>sphere 0 1: f \<midarrow>uniformly\<rightarrow> l\<close> 
+        unfolding sphere_def
+        by (simp add: dist_norm uniform_limit_sequentially_iff)               
       then obtain N where \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
         by blast
       have \<open>bounded_linear g \<Longrightarrow> \<exists> x. norm x = 1 \<and> onorm g \<le> norm (g x) + inverse (real (Suc m))\<close>
@@ -80,7 +96,8 @@ proof-
       proof-
         assume \<open>bounded_linear g\<close>
         hence \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
-          sorry (* TODO: need UNIV \<noteq> 0, but we can do case distinction *)
+          using False onorm_sphere \<open>bounded_linear g\<close>
+          by auto
         have \<open>\<exists> t \<in> {norm (g x) | x. norm x = 1}. onorm g \<le>  t + inverse (real (Suc m))\<close>
         proof-
           have \<open>ereal (inverse (real (Suc m))) > 0\<close>
@@ -106,7 +123,8 @@ proof-
               moreover have \<open>{ ereal (norm (g x))  | x. norm x = 1} \<noteq> {}\<close>
               proof-
                 have \<open>\<exists> x::'a.  norm x = 1\<close>
-                  using le_numeral_extra(1) vector_choose_size sorry
+                  using \<open>(UNIV::'a set) \<noteq> 0\<close> ex_norm_1
+                  by blast
                 thus ?thesis by blast
               qed
               ultimately show ?thesis
@@ -220,7 +238,7 @@ proof-
       qed
       hence \<open>\<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
         for n and m::nat
-        using \<open>\<forall>n. bounded_linear (f n)\<close>
+        using \<open>bounded_linear (f n)\<close>
         by (simp add: assms(2) bounded_linear_sub)
       hence \<open>n \<ge> N \<Longrightarrow>  onorm (\<lambda> x. f n x - l x) \<le> e\<close>
         for n
@@ -305,7 +323,7 @@ proof-
     qed
     thus ?thesis by (simp add: LIMSEQ_I) 
   qed
-  thus ?thesis unfolding onorm_convergence_def by blast
+  thus ?thesis  by blast
 qed
 
 

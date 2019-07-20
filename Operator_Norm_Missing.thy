@@ -17,6 +17,23 @@ begin
 
 section \<open>Sets defined using the norms\<close>
 
+lemma ex_norm_1:
+  \<open>(UNIV::('a::real_normed_vector) set) \<noteq> 0 \<Longrightarrow> \<exists> x::'a. norm x = 1\<close>
+proof-
+  assume \<open>(UNIV::('a::real_normed_vector) set) \<noteq> 0\<close>
+  hence \<open>\<exists> x::'a.  x \<noteq> 0\<close>
+    by auto
+  then obtain t::'a where \<open>t \<noteq> 0\<close>
+    by blast
+  define x::'a where \<open>x = (inverse (norm t)) *\<^sub>R t\<close>
+  have \<open>norm x = 1\<close>
+    using x_def
+    by (simp add: \<open>t \<noteq> 0\<close>)
+  thus ?thesis
+    by auto
+qed
+
+
 lemma norm_set_nonempty_eq1:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>bounded_linear f\<close>
@@ -66,7 +83,7 @@ qed
 section \<open>Characterization of the operator norm\<close>
 
 lemma onorm_sphere:
-  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and  \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x = 1}\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -604,7 +621,7 @@ proof-
       have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
       proof-
         have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-          using \<open>UNIV\<noteq>0\<close> sorry
+          using \<open>(UNIV::'a set)\<noteq>0\<close> by auto
         thus ?thesis
           by simp 
       qed
@@ -638,7 +655,12 @@ proof-
       hence \<open>\<forall> y\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. y \<ge> 0\<close>
         by blast
       moreover have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
-        sorry
+      proof-
+        have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+          using \<open>(UNIV::'a set)\<noteq>0\<close> by auto
+        thus ?thesis 
+         by auto
+      qed
       moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
       proof-
         have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
@@ -1299,8 +1321,6 @@ proof-
   qed
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
-
-
 
 
 end
