@@ -954,7 +954,7 @@ lemma linear_limit_linear:
   shows \<open>linear F\<close> 
 proof
   have \<open>\<And> x. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-    using  \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule strong_convergence_pointwise)
+    using  \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule pointwise_convergence_pointwise)
   show "F (x + y) = F x + F y"
     for x :: 'a
       and y :: 'a
@@ -1040,7 +1040,7 @@ proposition bounded_linear_limit_bounded_linear:
   shows \<open>bounded_linear F\<close> 
 proof-
   have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-    using \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule strong_convergence_pointwise)
+    using \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule pointwise_convergence_pointwise)
   have \<open>linear F\<close>
     using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>

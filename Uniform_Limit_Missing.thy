@@ -11,7 +11,7 @@ Main results:
 - nsuniform_convergence_iff: Equivalence between  \<open>S: f \<midarrow>uniformly\<rightarrow> l\<close> and its nonstandard
  equivalent.
 
-- nsustrong_convergence_unique: Uniqueness of the limit of a sequence of linear operators 
+- nsupointwise_convergence_unique: Uniqueness of the limit of a sequence of linear operators 
 (the limit may not be unique in general if we ignore linearity).
 
 *)
@@ -199,7 +199,7 @@ proof-
   thus ?thesis by blast
 qed
 
-lemma nsustrong_convergence_I: 
+lemma nsupointwise_convergence_I: 
   \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
    \<Longrightarrow> (sphere 0 1): f \<midarrow>uniformly\<rightarrow> l\<close> 
 proof-
@@ -214,7 +214,7 @@ proof-
     by blast
 qed
 
-lemma nsustrong_convergence_D:
+lemma nsupointwise_convergence_D:
   \<open>(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
   \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
 proof-
@@ -249,18 +249,18 @@ proof-
     by auto
 qed
 
-lemma nsustrong_convergence_mult: 
+lemma nsupointwise_convergence_mult: 
   fixes a b :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_algebra"
   assumes \<open>sphere 0 1: X \<midarrow>uniformly\<rightarrow> a\<close> and \<open>sphere 0 1: Y \<midarrow>uniformly\<rightarrow> b\<close>
     and \<open>bounded_linear a\<close> and \<open>bounded_linear b\<close>
   shows \<open>sphere 0 1: (\<lambda>n. (\<lambda> t. X n t * Y n t)) \<midarrow>uniformly\<rightarrow> (\<lambda> t. a t * b t)\<close>
-proof(rule nsustrong_convergence_I)
+proof(rule nsupointwise_convergence_I)
   fix N and x::\<open>'a star\<close>
   assume \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
   have \<open>(*f2* X) N x \<approx> (*f* a) x\<close>
-    using  \<open>sphere 0 1: X \<midarrow>uniformly\<rightarrow> a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+    using  \<open>sphere 0 1: X \<midarrow>uniformly\<rightarrow> a\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsupointwise_convergence_D by blast 
   moreover have \<open>(*f2* Y) N x \<approx> (*f* b) x\<close>
-    using \<open>sphere 0 1: Y \<midarrow>uniformly\<rightarrow> b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsustrong_convergence_D by blast 
+    using \<open>sphere 0 1: Y \<midarrow>uniformly\<rightarrow> b\<close> \<open>N \<in> HNatInfinite\<close> \<open>hnorm x = 1\<close> nsupointwise_convergence_D by blast 
   moreover have \<open>((*f* a) x) \<in> HFinite\<close>
     using \<open>bounded_linear a\<close> \<open>hnorm x = 1\<close>
     by (simp add: bounded_linear_HFinite) 
@@ -337,7 +337,7 @@ proof
   qed
 qed
 
-lemma nsustrong_convergence_unique: 
+lemma nsupointwise_convergence_unique: 
   fixes a b :: \<open>'a::real_normed_vector\<Rightarrow>'b::real_normed_vector\<close>
   assumes \<open>sphere 0 1:X \<midarrow>uniformly\<rightarrow> a\<close> and \<open>sphere 0 1:X \<midarrow>uniformly\<rightarrow> b\<close>
     and \<open>linear a\<close> and \<open>linear b\<close>
@@ -345,10 +345,10 @@ lemma nsustrong_convergence_unique:
 proof-
   have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow>(*f2* X) N x \<approx> (*f* a) x\<close>
     using  \<open>sphere 0 1:X \<midarrow>uniformly\<rightarrow> a\<close>
-    by (simp add: nsustrong_convergence_D)
+    by (simp add: nsupointwise_convergence_D)
   moreover have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f2* X) N x \<approx> (*f* b) x\<close>
     using  \<open>sphere 0 1:X \<midarrow>uniformly\<rightarrow> b\<close>
-    by (simp add: nsustrong_convergence_D)
+    by (simp add: nsupointwise_convergence_D)
   ultimately have \<open>\<forall> N\<in>HNatInfinite. \<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>
     by (simp add: approx_monad_iff)
   hence \<open>\<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>

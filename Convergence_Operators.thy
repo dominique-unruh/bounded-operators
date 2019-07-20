@@ -21,16 +21,125 @@ theory Convergence_Operators
 
 begin
 
+section \<open>rbounded\<close>
+
+section \<open>Real bounded operators\<close>
+
+typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
+  = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
+  using bounded_linear_zero by blast
+
+setup_lifting type_definition_rbounded
+
+instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_vector"
+begin
+lift_definition uminus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded"
+  is "\<lambda> f. (\<lambda> t::'a. - f t)"
+  by (fact bounded_linear_minus)
+
+lift_definition zero_rbounded :: "('a,'b) rbounded" is "\<lambda>x::'a. (0::'b)"
+  by (fact bounded_linear_zero)
+
+lift_definition plus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
+  \<open>\<lambda> f g. (\<lambda> t. f t + g t)\<close>
+  by (fact bounded_linear_add)
+
+lift_definition minus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
+  \<open>\<lambda> f g. (\<lambda> t. f t - g t)\<close>
+  by (simp add: bounded_linear_sub)
+
+lift_definition scaleR_rbounded :: \<open>real \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
+  is \<open>\<lambda> c. \<lambda> f. (\<lambda> x. c *\<^sub>R (f x))\<close>
+  by (rule Real_Vector_Spaces.bounded_linear_const_scaleR)
+
+instance
+proof      
+  fix a b c :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a + b + c = a + (b + c)\<close>
+    apply transfer by auto
+  fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  show \<open>a + b = b + a\<close>
+    apply transfer
+    by (simp add: linordered_field_class.sign_simps(2))
+  fix a :: \<open>('a, 'b) rbounded\<close>
+  show \<open>0 + a = a\<close>
+    apply transfer by simp
+  fix a :: \<open>('a, 'b) rbounded\<close>
+  show \<open>-a + a = 0\<close>
+    apply transfer
+    by simp
+  fix a b :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a - b = a + - b\<close>
+    apply transfer
+    by auto
+  fix a::real and x y :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
+    apply transfer
+    by (simp add: scaleR_add_right)
+  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
+    apply transfer
+    by (simp add: scaleR_add_left)
+  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
+    apply transfer
+    by simp
+  fix x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>1 *\<^sub>R x = x\<close>
+    apply transfer
+    by simp
+qed
+end
+
+instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_normed_vector"
+begin
+lift_definition norm_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> real\<close>
+  is \<open>onorm\<close>.
+
+lift_definition dist_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> real\<close>
+  is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x )\<close>.
+
+lift_definition sgn_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
+  is \<open>\<lambda> f. (\<lambda> x. (f x) /\<^sub>R (onorm f) )\<close>
+  by (simp add: bounded_linear_const_scaleR)
+
+definition uniformity_rbounded :: \<open>( ('a, 'b) rbounded \<times> ('a, 'b) rbounded ) filter\<close>
+  where  \<open>uniformity_rbounded = (INF e:{0<..}. principal {((f::('a, 'b) rbounded), g). dist f g < e})\<close>
+
+definition open_rbounded :: \<open>(('a, 'b) rbounded) set \<Rightarrow> bool\<close>
+  where \<open>open_rbounded = (\<lambda> U::(('a, 'b) rbounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
+
+instance
+  apply intro_classes
+        apply transfer
+        apply auto
+         apply transfer
+         apply auto
+        apply (simp add: uniformity_rbounded_def)
+       apply (simp add: open_rbounded_def)
+      apply (simp add: open_rbounded_def)
+     apply transfer
+  using onorm_pos_lt apply fastforce
+    apply transfer
+    apply (simp add: onorm_zero)
+   apply transfer
+   apply (simp add: onorm_triangle)
+  apply transfer
+  using onorm_scaleR by blast 
+end
+
+
+
 section \<open>Pointwise convergence\<close>
 
-definition strong_convergence:: 
+definition pointwise_convergence:: 
   \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  where \<open>strong_convergence f l = ( \<forall> x. ( \<lambda> n. norm (f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
+  where \<open>pointwise_convergence f l = ( \<forall> x. ( \<lambda> n. f n x ) \<longlonglongrightarrow> l x )\<close>
 
-abbreviation strong_convergence_abbr:: 
+abbreviation pointwise_convergence_abbr:: 
   \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
-  where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( strong_convergence f l )\<close>
+  where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( pointwise_convergence f l )\<close>
 
 section \<open>Convergence with respect to the operator norm\<close>
 
@@ -326,47 +435,92 @@ next
   thus ?thesis  by blast
 qed
 
-
 lemma oCauchy_uCauchy:
-  fixes f :: \<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<forall>n. bounded_linear (f n)\<close>
-    and \<open>oCauchy f\<close>
-  shows \<open>uCauchy f\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  assumes \<open>Cauchy f\<close>
+  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
 proof-
-  have  \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-    for e::real
+  have  \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> x\<in>*s* (sphere 0 1) \<Longrightarrow> 
+    (*f2* (\<lambda> n. Rep_rbounded (f n))) N x \<approx> (*f2* (\<lambda> n. Rep_rbounded (f n))) M x\<close>
+    for N M x
   proof-
-    assume \<open>e > 0\<close>
-    moreover have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      using \<open>oCauchy f\<close> unfolding oCauchy_def by blast
-    ultimately have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      using \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
+    assume \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* (sphere 0 1)\<close> 
+    from \<open>Cauchy f\<close>
+    have \<open>NSCauchy f\<close>
+      by (simp add: NSCauchy_Cauchy_iff)
+    hence \<open>(*f* f) N \<approx> (*f* f) M\<close>
+      unfolding NSCauchy_def
+      using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close>
       by blast
-    then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>
-      by blast
-    have \<open>m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-      for m n::nat
+    hence \<open>(*f* f) N - (*f* f) M \<in> Infinitesimal\<close>
+      using bex_Infinitesimal_iff by blast
+    hence \<open>hnorm ((*f* f) N - (*f* f) M) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_hnorm_iff)
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x
+                                 - (*f2* (\<lambda> n. Rep_rbounded (f n))) M x )
+        \<le> hnorm ((*f* f) N - (*f* f) M)\<close>
     proof-
-      assume \<open>m \<ge> M\<close>
-      moreover assume \<open>n \<ge> M\<close>
-      ultimately have \<open>onorm (\<lambda>x. f m x - f n x) < e\<close>
-        by (simp add: \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e\<close>)
-      moreover have \<open>norm x = 1 \<Longrightarrow>  norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x)\<close>
-        for x
+      have \<open>bounded_linear (Rep_rbounded (f n))\<close>
+        for n
+        using Rep_rbounded by blast
+      hence \<open>bounded_linear (\<lambda> x. Rep_rbounded (f n) x - Rep_rbounded (f m) x )\<close>
+        for n m
+        by (simp add: bounded_linear_sub)    
+      moreover have \<open>\<And>NN MM xx.
+       (\<And>n m. bounded_linear (\<lambda>x. Rep_rbounded (f n) x - Rep_rbounded (f m) x)) \<Longrightarrow>
+       norm xx = 1 \<Longrightarrow>
+       norm (Rep_rbounded (f NN) xx - Rep_rbounded (f MM) xx) \<le> onorm (Rep_rbounded (f NN - f MM))\<close>
+        using onorm
+        by (metis (no_types, hide_lams) Rep_rbounded mem_Collect_eq minus_rbounded.rep_eq mult.commute mult.left_neutral)        
+      ultimately have \<open>\<forall> NN MM xx. norm xx = 1 \<longrightarrow> norm ( ( (\<lambda> n. Rep_rbounded (f n))) NN xx
+                                 - ( (\<lambda> n. Rep_rbounded (f n))) MM xx )
+        \<le> norm (( f) NN - ( f) MM)\<close>
+        unfolding norm_rbounded_def
+        by auto
+      hence \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) NN xx
+                                 - (*f2* (\<lambda> n. Rep_rbounded (f n))) MM xx )
+        \<le> hnorm ((*f* f) NN - (*f* f) MM)\<close>
+        by StarDef.transfer
+      moreover have \<open>hnorm x = 1\<close>
       proof-
-        assume \<open>norm x = 1\<close>
-        moreover have \<open>norm (f m x - f n x) \<le> onorm (\<lambda>x. f m x - f n x) * norm x\<close>
-          using assms(1) bounded_linear_sub onorm by blast          
-        ultimately show ?thesis by simp
+        have \<open>\<forall> xx::'a. xx \<in> (sphere 0 1) \<longrightarrow> norm xx = 1\<close>
+          by auto
+        hence \<open>\<forall> xx::'a star. xx \<in> *s* (sphere 0 1) \<longrightarrow> hnorm xx = 1\<close>
+          by StarDef.transfer
+        thus ?thesis
+          using \<open>x \<in> *s* (sphere 0 1)\<close>
+          by blast
       qed
-      ultimately show ?thesis by smt
+      ultimately show ?thesis by blast 
     qed
-    thus ?thesis by blast
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f2* (\<lambda> n. Rep_rbounded (f n))) M x ) \<ge> 0\<close>
+    proof-
+      have  \<open>norm ( ( (\<lambda> n. Rep_rbounded (f n))) NN xx - ( (\<lambda> n. Rep_rbounded (f n))) MM xx ) \<ge> 0\<close>
+        for NN MM xx
+        by auto
+      thus ?thesis by auto 
+    qed
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f2* (\<lambda> n. Rep_rbounded (f n))) M x ) \<in> Infinitesimal\<close>
+      using Infinitesimal_interval2 by blast
+    thus ?thesis
+      using bex_Infinitesimal_iff hnorm_le_Infinitesimal by blast 
   qed
-  thus ?thesis
-    unfolding uCauchy_def sphere_def uniformly_Cauchy_on_def dist_norm
-    by blast
+  thus ?thesis using nsuniformly_Cauchy_on_I by metis
 qed
+
+
+
+
+
+
+
+
+
+
+
+
+
+chapter \<open>Chaos\<close>
 
 lemma uCauchy_ustrong:
   fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
@@ -443,7 +597,7 @@ proof-
     qed
     hence \<open>\<forall> e > 0. \<exists>N. \<forall>n\<ge>N. \<forall>x\<in>sphere. norm (f n x - l x) < e\<close>
       unfolding sphere_def mem_Collect_eq by blast
-    thus ?thesis unfolding ustrong_convergence_def using uniform_convergence_norm_I
+    thus ?thesis unfolding upointwise_convergence_def using uniform_convergence_norm_I
       by metis
   qed
   then obtain s where \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
@@ -455,7 +609,7 @@ proof-
     by simp
   hence \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
     using \<open>f \<midarrow>ustrong\<rightarrow> s\<close> 
-    unfolding l_def ustrong_convergence_def
+    unfolding l_def upointwise_convergence_def
     by (metis (no_types, lifting) uniform_limit_cong') 
   moreover have \<open>bounded_linear l\<close>
   proof-
@@ -491,7 +645,7 @@ proof-
             by (simp add: False)
           have \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - s x) < e\<close>
             using \<open>f \<midarrow>ustrong\<rightarrow> s\<close>
-            unfolding ustrong_convergence_def sphere_def
+            unfolding upointwise_convergence_def sphere_def
             using uniform_convergence_norm_D by fastforce
 
           hence \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. norm (f n (x  /\<^sub>R norm x) - s (x  /\<^sub>R norm x)) < e\<close>
@@ -858,16 +1012,16 @@ proof-
     thus ?thesis
       by (simp add: LIMSEQ_I) 
   qed
-  thus ?thesis unfolding strong_convergence_def by blast
+  thus ?thesis unfolding pointwise_convergence_def by blast
 qed
 
-lemma strong_convergence_pointwise: 
+lemma pointwise_convergence_pointwise: 
   \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
   for x
 proof-
   assume  \<open>f \<midarrow>strong\<rightarrow> F\<close>
   hence  \<open>( \<lambda> n. norm ((f n) x - F x))  \<longlonglongrightarrow> 0\<close>
-    unfolding strong_convergence_def
+    unfolding pointwise_convergence_def
     by blast
   have \<open>( \<lambda> n. (F x) )  \<longlonglongrightarrow> F x\<close>
     by simp
@@ -893,13 +1047,13 @@ proof-
     proof-
       have \<open>f \<midarrow>strong\<rightarrow>l\<close>
         by (simp add: assms(1) assms(2) assms(4) onorm_strong)
-      thus ?thesis  by (simp add: strong_convergence_pointwise)
+      thus ?thesis  by (simp add: pointwise_convergence_pointwise)
     qed
     moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> s x\<close>
     proof-
       have \<open>f \<midarrow>strong\<rightarrow>s\<close>
         by (simp add: assms(1) assms(3) assms(5) onorm_strong)
-      thus ?thesis by (simp add: strong_convergence_pointwise)
+      thus ?thesis by (simp add: pointwise_convergence_pointwise)
     qed
     ultimately show ?thesis
       using LIMSEQ_unique by blast 
