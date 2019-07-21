@@ -18,7 +18,7 @@ theory Convergence_Operators
     "HOL.Real_Vector_Spaces"
     Operator_Norm_Missing
     Uniform_Limit_Missing
-
+    NSA_Miscellany
 begin
 
 section \<open>rbounded\<close>
@@ -158,282 +158,163 @@ definition oCauchy::
 
 *)
 
+
 section \<open>Relationships among the different kind of convergence\<close>
 
-lemma ustrong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>sphere 0 1: f \<midarrow>uniformly\<rightarrow> l\<close>
-  shows \<open>( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0\<close> 
-proof(cases \<open>(UNIV::'a set) = 0\<close>)
-  case True
-  hence \<open>x = 0\<close>
-    for x::'a
+lemma hnorm_unit_sphere:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+    and N::hypnat
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
+  shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
+    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x )\<close>
+proof-
+  have \<open>bounded_linear (Rep_rbounded (f n))\<close>
+    for n
+    using Rep_rbounded by blast
+  hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+      norm (norm((Rep_rbounded (f n)) x) - (onorm (Rep_rbounded (f n)))) < e\<close>
+    for n
+    using norm_unit_sphere  \<open>(UNIV::'a set) \<noteq> 0\<close> 
     by auto
-  hence \<open>f n x = 0\<close>
-    for n::nat and x::'a
-    using \<open>bounded_linear (f n)\<close>
-    by (metis (full_types) linear_simps(3))
-  moreover have \<open>l x = 0\<close>
-    for x::'a
-    by (metis (full_types) \<open>\<And>x. x = 0\<close> assms(2) linear_simps(3))
-  ultimately have \<open>(\<lambda> x. f n x - l x) = (\<lambda> _. 0)\<close>
+  moreover have \<open>norm (f n) = onorm (Rep_rbounded (f n))\<close> 
+    for n
+    apply transfer
+    by blast
+  ultimately have \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((Rep_rbounded (f n)) x) - norm (f n) ) < e\<close>
     for n
     by simp
-  moreover have \<open>onorm (\<lambda> _. 0::'a) = 0\<close>
-    using onorm_zero by auto
-  ultimately have \<open>onorm (\<lambda> x. f n x - l x) = 0\<close>
-    for n
-    by (simp add: onorm_eq_0)   
+  hence \<open>\<forall> n. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((\<lambda> m. Rep_rbounded (f m)) n x) - norm (f n) ) < inverse (real (Suc n))\<close>
+    by auto
+  hence \<open>\<forall> n. \<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f2* (\<lambda> m. Rep_rbounded (f m))) n x) - hnorm ((*f* f) n) ) 
+            < inverse (hypreal_of_hypnat (hSuc n))\<close>
+    by StarDef.transfer
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f2* (\<lambda> m. Rep_rbounded (f m))) N x) - hnorm ((*f* f) N) ) 
+            < inverse (hypreal_of_hypnat (hSuc N))\<close>
+    by blast
+  moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
+    using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
+    by blast
+  ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f2* (\<lambda> m. Rep_rbounded (f m))) N x) - hnorm ((*f* f) N) \<in> Infinitesimal\<close>
+    using hnorm_less_Infinitesimal by blast
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f2* (\<lambda> m. Rep_rbounded (f m))) N x) \<approx> hnorm ((*f* f) N)\<close>
+    using bex_Infinitesimal_iff by blast
   thus ?thesis
-    by simp     
+    using approx_sym by blast    
+qed
+
+lemma trivia_UNIV_rbounded:
+  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+  assumes \<open>(UNIV::'a set) = 0\<close>
+  shows \<open>f = 0\<close>
+proof-
+  have \<open>x = 0\<close>
+    for x::'a
+    using \<open>(UNIV::'a set) = 0\<close> by auto
+  moreover have \<open>bounded_linear (Rep_rbounded f)\<close>
+    using Rep_rbounded by auto
+  ultimately have \<open>Rep_rbounded f x = 0\<close>
+    for x::'a
+    by (metis (full_types) linear_simps(3))
+  hence \<open>Rep_rbounded f = (\<lambda> _. 0)\<close>
+    by blast
+  moreover have \<open>Rep_rbounded (Abs_rbounded (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
+    by (simp add: Abs_rbounded_inverse)
+  moreover have \<open>0 \<equiv> Abs_rbounded (\<lambda> _::'a. 0::'b)\<close>
+    using zero_rbounded_def by auto
+  ultimately have \<open>Rep_rbounded f = Rep_rbounded 0\<close>
+    by simp
+  thus ?thesis using  Rep_rbounded_inject 
+    by auto
+qed
+
+lemma ustrong_onorm:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+    and l::\<open>('a, 'b) rbounded\<close>
+  assumes \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> (Rep_rbounded l)\<close>
+  shows \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow> 0\<close> 
+proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  case True
+  hence \<open>f n = 0\<close>
+    for n
+    by (rule trivia_UNIV_rbounded) 
+  moreover have \<open>l = 0\<close>
+    using True by (rule trivia_UNIV_rbounded)
+  ultimately show ?thesis by auto
 next
   case False
-  have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (star_of l)\<close>
+    for N::hypnat
   proof-
-    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N.  onorm (\<lambda>x. f n x - l x) \<le> e\<close>
-      for e
+    assume \<open>N\<in>HNatInfinite\<close>
+    from \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> (Rep_rbounded l)\<close>
+    have \<open>NN\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. Rep_rbounded (f n))) NN x \<approx> (*f* (Rep_rbounded l)) x\<close>
+      for x::\<open>'a star\<close> and NN::hypnat
+      by (simp add: nsupointwise_convergence_D sphere_iff)
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. Rep_rbounded (f n))) N x \<approx> (*f* (Rep_rbounded l)) x\<close>
+      for x::\<open>'a star\<close>
+      by (simp add: \<open>N \<in> HNatInfinite\<close>)
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x \<in> Infinitesimal\<close>
+      for x::\<open>'a star\<close>
+      using Infinitesimal_approx_minus by blast
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+             hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x ) \<in> Infinitesimal\<close>
+      for x::\<open>'a star\<close>
+      by (simp add: Infinitesimal_hnorm_iff)
+    moreover have \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
+        hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )\<close>
     proof-
-      assume \<open>e > 0\<close>
-      hence \<open>\<exists> N. \<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-        using  \<open>sphere 0 1: f \<midarrow>uniformly\<rightarrow> l\<close> 
-        unfolding sphere_def
-        by (simp add: dist_norm uniform_limit_sequentially_iff)               
-      then obtain N where \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-        by blast
-      have \<open>bounded_linear g \<Longrightarrow> \<exists> x. norm x = 1 \<and> onorm g \<le> norm (g x) + inverse (real (Suc m))\<close>
-        for x::'a and g::\<open>'a \<Rightarrow> 'b\<close> and m :: nat
+      define g where \<open>g n = f n - l\<close> for n
+      have \<open>\<exists> x \<in> *s* (sphere 0 1). 
+        hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. Rep_rbounded (g n))) N x )\<close>
+        using False \<open>N\<in>HNatInfinite\<close>
+        by (simp add: hnorm_unit_sphere)
+      moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
       proof-
-        assume \<open>bounded_linear g\<close>
-        hence \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
-          using False onorm_sphere \<open>bounded_linear g\<close>
-          by auto
-        have \<open>\<exists> t \<in> {norm (g x) | x. norm x = 1}. onorm g \<le>  t + inverse (real (Suc m))\<close>
-        proof-
-          have \<open>ereal (inverse (real (Suc m))) > 0\<close>
-            by simp
-          moreover have \<open>\<bar>Sup {ereal (norm (g x)) | x. norm x = 1}\<bar> \<noteq> \<infinity>\<close>
-          proof-
-            have \<open>\<exists> M::real. \<forall> x. norm x = 1 \<longrightarrow>  (norm (g x))  \<le> M\<close>
-              by (metis \<open>bounded_linear g\<close>  bounded_linear.bounded)
-            then obtain M::real where \<open>\<forall> x. norm x = 1 \<longrightarrow>  (norm (g x))  \<le> M\<close>
-              by blast
-            hence \<open>\<forall> x. norm x = 1 \<longrightarrow> ereal (norm (g x)) \<le> M\<close>
-              by simp
-            hence \<open>t \<in> {ereal (norm (g x)) | x. norm x = 1} \<Longrightarrow> t \<le> M\<close>
-              for t
-              by blast
-            hence \<open>Sup {ereal (norm (g x)) | x. norm x = 1} \<le> M\<close>
-              using Sup_least by blast
-            moreover have \<open>Sup { ereal (norm (g x))  | x. norm x = 1} \<ge> 0\<close>
-            proof-
-              have \<open>t \<in> { ereal (norm (g x))  | x. norm x = 1} \<Longrightarrow> t \<ge> 0\<close>
-                for t
-                by auto                
-              moreover have \<open>{ ereal (norm (g x))  | x. norm x = 1} \<noteq> {}\<close>
-              proof-
-                have \<open>\<exists> x::'a.  norm x = 1\<close>
-                  using \<open>(UNIV::'a set) \<noteq> 0\<close> ex_norm_1
-                  by blast
-                thus ?thesis by blast
-              qed
-              ultimately show ?thesis
-                by (meson less_eq_Sup) 
-            qed
-            ultimately have \<open>\<bar> Sup { ereal (norm (g x))  | x. norm x = 1} \<bar> \<le> M\<close>
-              by simp
-            thus ?thesis by auto
-          qed
-          moreover have \<open>{ereal(norm (g x)) | x. norm x = 1} \<noteq> {}\<close>
-            by (metis Sup_empty bot.extremum_strict calculation(2) less_ereal.simps(1) lt_ex not_infty_ereal)
-          ultimately have \<open>\<exists> t \<in> {ereal(norm (g x)) | x. norm x = 1}. Sup {ereal(norm (g x)) | x. norm x = 1}
-               - ereal (inverse (real (Suc m))) < t\<close>
-            by (rule Sup_ereal_close)
-          hence \<open>\<exists> t \<in> {(norm (g x)) | x. norm x = 1}. Sup {ereal(norm (g x)) | x. norm x = 1}
-               - (inverse (real (Suc m))) < t\<close>
-            by auto
-          then obtain t::real where \<open>t \<in> {(norm (g x)) | x. norm x = 1}\<close> 
-            and \<open>Sup {ereal(norm (g x)) | x. norm x = 1}
-               - (inverse (real (Suc m))) < t\<close>
-            by blast
-          have \<open>onorm g = Sup {ereal(norm (g x)) | x. norm x = 1}\<close>
-            using \<open>onorm g = Sup {norm (g x) | x. norm x = 1}\<close>
-            by simp
-          also have \<open>... < t + (inverse (real (Suc m)))\<close>
-            apply auto
-            using \<open>Sup {ereal(norm (g x)) | x. norm x = 1} - (inverse (real (Suc m))) < t\<close>
-          proof auto
-            assume \<open>Sup {ereal (norm (g x)) |x. norm x = 1} - ereal (inverse (1 + real m))
-                  < ereal t\<close>
-            moreover have \<open>\<bar> ereal (inverse (1 + real m)) \<bar> \<noteq> \<infinity>\<close>
-              by auto
-            ultimately have \<open>Sup {ereal (norm (g x)) |x. norm x = 1}
-                  < ereal t + ereal (inverse (1 + real m))\<close>
-              using ereal_minus_less by simp               
-            hence \<open>Sup {ereal (norm (g x)) |x. norm x = 1}
-                  < t + (inverse (1 + real m))\<close>
-              by simp
-            moreover have \<open>Sup {ereal (norm (g x)) |x. norm x = 1} = 
-                    Sup {(norm (g x)) |x. norm x = 1}\<close>
-            proof-
-              have \<open>{ereal (norm (g x)) |x. norm x = 1} = 
-                    {(norm (g x)) |x. norm x = 1}\<close>
-                by simp
-              hence \<open>y \<in> {ereal (norm (g x)) |x. norm x = 1}  
-                  \<Longrightarrow> y \<in> {(norm (g x)) |x. norm x = 1}\<close>
-                for y
-                by simp
-              moreover have \<open>{ (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>
-                by (metis \<open>t \<in> {norm (g x) |x. norm x = 1}\<close> empty_iff)                
-              moreover have \<open>bdd_above { (norm (g x)) |x. norm x = 1}\<close>
-                by (metis (mono_tags, lifting)  \<open>bounded_linear g\<close> norm_set_bdd_above_eq1) 
-              ultimately have \<open>y \<in> {ereal (norm (g x)) |x. norm x = 1}  
-                  \<Longrightarrow> y \<le> Sup {(norm (g x)) |x. norm x = 1}\<close>
-                for y
-                by (smt cSup_upper ereal_less_eq(3) mem_Collect_eq)
-              from \<open>{ereal (norm (g x)) |x. norm x = 1} = 
-                    {(norm (g x)) |x. norm x = 1}\<close>
-              have \<open>y \<in> {(norm (g x)) |x. norm x = 1} \<Longrightarrow>
-                   y \<in> {ereal (norm (g x)) |x. norm x = 1}\<close>
-                for y
-                by simp
-              moreover have \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>
-                by (metis \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>)                
-              moreover have \<open>bdd_above {ereal (norm (g x)) |x. norm x = 1}\<close>
-                by (metis (no_types, lifting) bdd_above_top) 
-              ultimately have \<open>y \<in> {(norm (g x)) |x. norm x = 1}  
-                  \<Longrightarrow> y \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                for y
-                by (simp add: Sup_upper)
-              from  \<open>\<And> y. y \<in> {ereal (norm (g x)) |x. norm x = 1}  
-                  \<Longrightarrow> y \<le> Sup {(norm (g x)) |x. norm x = 1}\<close>
-              have \<open>Sup {ereal (norm (g x)) |x. norm x = 1} \<le>  Sup {(norm (g x)) |x. norm x = 1}\<close>
-                using \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close>
-                by (meson cSup_least)
-              have \<open>(Sup { (norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close> 
-              proof-
-                define X::\<open>ereal set\<close> where \<open>X = {norm (g x) |x. norm x = 1}\<close>
-                define z::ereal where \<open>z = Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                have \<open>X \<noteq> {}\<close>
-                  unfolding X_def
-                  using \<open>{ereal (norm (g x)) |x. norm x = 1} \<noteq> {}\<close> by blast 
-                moreover have \<open>\<And>x. x \<in> X \<Longrightarrow> x \<le> z\<close>
-                  unfolding X_def z_def
-                  by (simp add: Sup_upper)
-                ultimately have \<open>Sup X \<le> z\<close>
-                  by (rule cSup_least)
-                hence \<open>Sup X \<le>  Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                  unfolding z_def 
-                  by auto
-                hence \<open>real_of_ereal (Sup {norm (g x) |x. norm x = 1}) \<le>  Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                  unfolding X_def 
-                  by auto
-                thus ?thesis
-                  by (smt \<open>\<And>y. y \<in> {norm (g x) |x. norm x = 1} \<Longrightarrow> ereal y \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close> \<open>\<bar>Sup {ereal (norm (g x)) |x. norm x = 1}\<bar> \<noteq> \<infinity>\<close> \<open>{norm (g x) |x. norm x = 1} \<noteq> {}\<close> cSup_least ereal_le_real_iff) 
-              qed
-              show ?thesis 
-                using \<open>(Sup {(norm (g x)) |x. norm x = 1}) \<le> Sup {ereal (norm (g x)) |x. norm x = 1}\<close>
-                  \<open>Sup {ereal (norm (g x)) |x. norm x = 1} \<le>  Sup {(norm (g x)) |x. norm x = 1}\<close>
-                by auto
-            qed
-            ultimately show \<open>Sup {norm (g x) |x. norm x = 1} < t + inverse (1 + real m)\<close>
-              by simp
-          qed
-          finally have \<open>(onorm g) < t + (inverse (real (Suc m)))\<close>
-            by blast
-          thus ?thesis
-            using \<open>t \<in> {norm (g x) |x. norm x = 1}\<close> by auto             
-        qed
+        have  \<open>\<forall> NN. ( g) NN = ( f) NN - ( l)\<close>
+          unfolding g_def by auto
+        hence  \<open>\<forall> NN. (*f* g) NN = (*f* f) NN - (star_of l)\<close>
+          by StarDef.transfer
         thus ?thesis by auto
       qed
-      hence \<open>\<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
-        for n and m::nat
-        using \<open>bounded_linear (f n)\<close>
-        by (simp add: assms(2) bounded_linear_sub)
-      hence \<open>n \<ge> N \<Longrightarrow>  onorm (\<lambda> x. f n x - l x) \<le> e\<close>
-        for n
+      moreover have \<open>(*f2* (\<lambda> n. Rep_rbounded (g n))) N x
+         = (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x\<close>
+        for x
       proof-
-        assume \<open>n \<ge> N\<close>
-        hence  \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-          using \<open>\<forall> n \<ge> N. \<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-          by blast
-        have  \<open>\<forall> m. \<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
-          using \<open>\<And> m. \<exists> x. norm x = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) x) + inverse (real (Suc m))\<close>
-          by blast
-        hence  \<open>\<exists> x. \<forall> m. norm (x m) = 1 \<and> onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m))\<close>
-          using choice by simp  
-        then obtain x where \<open>norm (x m) = 1\<close> 
-          and \<open>onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m))\<close>
-        for m::nat
-          by blast          
-        have \<open>\<forall> m. onorm (\<lambda> x. f n x - l x) < e + inverse (real (Suc m))\<close>
-          using \<open>\<And> m. norm (x m) = 1\<close>  \<open>\<And> m. onorm (\<lambda> x. f n x - l x) \<le> norm ((\<lambda> x. f n x - l x) (x m)) + inverse (real (Suc m)) \<close>
-            \<open>\<forall> x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-          by smt
-        have \<open>onorm (\<lambda> x. f n x - l x) \<le> e\<close>
-        proof(rule classical)
-          assume \<open>\<not>(onorm (\<lambda> x. f n x - l x) \<le> e)\<close>
-          hence \<open>e < onorm (\<lambda> x. f n x - l x)\<close>
-            by simp
-          hence \<open>0 < onorm (\<lambda> x. f n x - l x) - e\<close>
-            by simp
-          hence \<open>\<exists> n0. inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close>
-            by (rule Archimedean_Field.reals_Archimedean)
-          then obtain n0 where \<open>inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close>
-            by blast
-          have \<open>\<forall> m. onorm (\<lambda> x. f n x - l x) - e < inverse (real (Suc m))\<close>
-            by (smt \<open>\<forall>m. onorm (\<lambda>x. f n x - l x) < e + inverse (real (Suc m))\<close>)
-          hence \<open>\<forall> m. inverse (real (Suc n0)) < inverse (real (Suc m))\<close>
-            using  \<open>inverse (real (Suc n0)) < onorm (\<lambda> x. f n x - l x) - e\<close> by smt
-          hence \<open>inverse (real (Suc n0)) < inverse (real (Suc n0))\<close>
-            by blast
-          thus ?thesis by blast
-        qed
-        thus ?thesis by blast 
+        have  \<open>\<forall> NN xx. ( (\<lambda> n. Rep_rbounded (g n))) NN xx
+         = ( (\<lambda> n. Rep_rbounded (f n))) NN xx - ( (Rep_rbounded l)) xx\<close>
+          unfolding g_def
+          by (simp add: minus_rbounded.rep_eq) 
+        hence  \<open>\<forall> NN xx. (*f2* (\<lambda> n. Rep_rbounded (g n))) NN xx
+         = (*f2* (\<lambda> n. Rep_rbounded (f n))) NN xx - (*f* (Rep_rbounded l)) xx\<close>
+          by StarDef.transfer
+        thus ?thesis by auto
       qed
-      thus ?thesis by blast
+      ultimately show \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
+        hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )\<close>
+        by (metis (no_types, lifting) approx_hnorm approx_trans3)
     qed
-    hence \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N. norm ( onorm (\<lambda>x. f n x - l x) ) \<le> e\<close>
-      for e
-    proof-
-      assume \<open>e > 0\<close>
-      hence \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close>
-        using  \<open>\<And> e. e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N.  onorm (\<lambda>x. f n x - l x) \<le> e\<close>
-        by blast
-      then obtain N where \<open>\<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close>
-        by blast
-      have  \<open>\<forall> n \<ge> N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close>
-      proof-
-        have \<open>n \<ge> N \<Longrightarrow> norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close>
-          for n
-        proof-
-          assume \<open>n \<ge> N\<close>
-          hence \<open>onorm (\<lambda>x. f n x - l x) \<le> e\<close>
-            using \<open>\<forall> n \<ge> N. onorm (\<lambda>x. f n x - l x) \<le> e\<close> by blast
-          moreover have \<open>onorm (\<lambda>x. f n x - l x) \<ge> 0\<close>
-            by (simp add: assms(1) assms(2) bounded_linear_sub onorm_pos_le)            
-          ultimately show ?thesis by simp
-        qed
-        thus ?thesis by blast
-      qed
-      thus ?thesis by blast 
-    qed
-    have \<open>0 < e \<Longrightarrow>
-      \<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) < e\<close>
-      for e::real
-    proof-
-      assume \<open>0 < e\<close>
-      hence \<open>e/2 < e\<close>
-        by simp
-      have \<open>0 < e/2\<close>
-        using \<open>0 < e\<close> by simp
-      hence \<open>\<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e/2\<close>
-        using \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. norm (onorm (\<lambda>x. f n x - l x)) \<le> e\<close> by blast
-      thus ?thesis using \<open>e/2 < e\<close> by fastforce
-    qed
-    thus ?thesis by (simp add: LIMSEQ_I) 
+    ultimately have \<open>hnorm ((*f* f) N - (star_of l)) \<in> Infinitesimal\<close>
+      using approx_trans mem_infmal_iff by blast      
+    hence \<open>(*f* f) N - (star_of l) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_hnorm_iff)      
+    thus ?thesis
+      using bex_Infinitesimal_iff by auto 
   qed
-  thus ?thesis  by blast
-qed
+  hence \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow>\<^sub>N\<^sub>S 0\<close>
+    by (metis (full_types) NSLIMSEQ_I NSLIMSEQ_diff_const NSLIMSEQ_norm_zero cancel_comm_monoid_add_class.diff_cancel)     
+  thus ?thesis
+    by (simp add: LIMSEQ_NSLIMSEQ_iff) 
+qed 
+
 
 lemma oCauchy_uCauchy:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
@@ -1065,7 +946,7 @@ proposition onorm_ustrong_iff:
   fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> 
   shows \<open>(f \<midarrow>onorm\<rightarrow>l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>l)\<close>
-(* TODO: use simpler proof from whiteboard, gets rid of banach *)
+    (* TODO: use simpler proof from whiteboard, gets rid of banach *)
 proof
   show "f \<midarrow>ustrong\<rightarrow> l"
     if "f \<midarrow>onorm\<rightarrow> l"

@@ -240,4 +240,48 @@ proposition bounded_nsbounded_iff:
   using bounded_nsbounded nsbounded_bounded by blast
 
 
+lemma ex_approx:
+  fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and S::\<open>'a set\<close> and l::'b
+  assumes \<open>\<forall>e>0. \<exists> x\<in>S. norm (f x - l) < e\<close>
+  shows \<open>\<exists> x\<in>*s* S. (*f* f) x \<approx> star_of l\<close>
+proof-
+  have \<open>\<forall>e>0. \<exists> x. x\<in>S \<and> norm (f x - l) < e\<close>
+    using \<open>\<forall>e>0. \<exists> x\<in>S. norm (f x - l) < e\<close>
+    by blast
+  hence \<open>\<exists> x. \<forall>e>0. x e \<in> S \<and> norm (f (x e) - l) < e\<close>
+    by metis
+  then obtain x where \<open>\<forall>e>0. x e \<in> S\<close> and \<open>\<forall>e>0. norm (f (x e) - l) < e\<close>
+    by blast
+  from \<open>\<forall>e>0. x e \<in> S\<close> 
+  have \<open>\<forall>e>0. (*f* x) e \<in> *s* S\<close>
+    by StarDef.transfer
+  hence \<open>(*f* x) epsilon \<in> *s* S\<close>
+    by (simp add: hypreal_epsilon_gt_zero)
+  from  \<open>\<forall>e>0. norm (f (x e) - l) < e\<close>
+  have  \<open>\<forall>e>0. hnorm ((*f* f) ((*f* x) e) - (star_of l)) < e\<close>
+    by StarDef.transfer
+  hence  \<open>hnorm ((*f* f) ((*f* x) epsilon) - (star_of l)) < epsilon\<close>
+    by (simp add: hypreal_epsilon_gt_zero)
+  hence  \<open>(*f* f) ((*f* x) epsilon) \<approx> (star_of l)\<close>
+    by (metis Infinitesimal_epsilon add_diff_cancel_left' bex_Infinitesimal_iff2 diff_add_cancel hnorm_less_Infinitesimal)
+  thus ?thesis using \<open>(*f* x) epsilon \<in> *s* S\<close> by blast
+qed
+
+
+lemma inv_hSuc_Infinite_Infinitesimal:
+ \<open>N\<in>HNatInfinite \<Longrightarrow> inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
+proof-
+  assume \<open>N\<in>HNatInfinite\<close>
+    have \<open>\<forall> n. n < Suc n\<close>
+      by auto
+    hence \<open>\<forall> n. n < hSuc n\<close>
+      by StarDef.transfer
+    hence \<open>N < hSuc N\<close>
+      by blast
+    hence \<open>hSuc N \<in> HNatInfinite\<close>
+      using \<open>N\<in>HNatInfinite\<close> HNatInfinite_upward_closed dual_order.strict_implies_order by blast
+    thus ?thesis
+      by simp
+  qed
 end

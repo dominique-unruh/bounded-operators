@@ -1322,5 +1322,89 @@ proof-
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
 
+lemma norm_unit_sphere:
+  fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>bounded_linear f\<close> 
+  shows \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1). norm (norm(f x) - (onorm f)) < e\<close>
+proof-
+  define S::\<open>real set\<close> where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+  have \<open>S\<noteq>{}\<close>
+    unfolding S_def
+    using assms(1) assms(2) norm_set_nonempty_eq1 by auto
+  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
+    for e
+    by (simp add: less_cSupD)
+  moreover have \<open>Sup S = onorm f\<close>
+  proof-
+    have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
+      using  \<open>(UNIV::'a set) \<noteq> 0\<close> \<open>bounded_linear f\<close> onorm_sphere
+      by blast
+    hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+      unfolding sphere_def
+      by simp
+    thus ?thesis unfolding S_def by auto
+  qed
+  ultimately have \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. (onorm f) - e < y\<close>
+    for e
+    by simp
+  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. (onorm f) - y  < e\<close>
+    for e
+    by force
+  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. norm ((onorm f) - y)  < e\<close>
+    for e
+  proof-
+    assume \<open>e > 0\<close>
+    have \<open>\<exists> y \<in> S. (onorm f) - y  < e\<close>
+      using \<open>0 < e\<close> \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. onorm f - y < e\<close> by auto
+    then obtain y where \<open>y \<in> S\<close> and \<open>(onorm f) - y  < e\<close>
+      by blast
+    have  \<open>bdd_above S\<close>
+    proof-
+      have \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1} \<Longrightarrow> y \<le> onorm f\<close>
+      proof-
+        assume \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1}\<close>
+        hence \<open>\<exists> x \<in> sphere 0 1. y = norm (f x)\<close>
+          by blast
+        then obtain x where \<open>x \<in> sphere 0 1\<close> and \<open>y = norm (f x)\<close>
+          by blast
+        from \<open>y = norm (f x)\<close>
+        have \<open>y \<le> onorm f * norm x\<close>
+          using assms(2) onorm by auto
+        moreover have \<open>norm x = 1\<close>
+          using  \<open>x \<in> sphere 0 1\<close> unfolding sphere_def by auto
+        ultimately show ?thesis by simp
+      qed
+      hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
+        using assms(2) norm_set_bdd_above_eq1 by force
+      thus ?thesis unfolding S_def by blast 
+    qed
+    hence \<open>y \<le> Sup S\<close>
+      using \<open>y \<in> S\<close> \<open>S \<noteq> {}\<close> cSup_upper
+      by blast
+    hence \<open>0 \<le> Sup S - y\<close>
+      by simp
+    hence \<open>0 \<le> onorm f - y\<close>
+      using \<open>Sup S = onorm f\<close>
+      by simp
+    hence \<open>\<bar> (onorm f - y) \<bar> = onorm f - y\<close>
+      by simp
+    hence \<open>norm (onorm f - y)  = onorm f - y\<close>
+      by auto
+    thus ?thesis
+      using \<open>onorm f - y < e\<close> \<open>y \<in> S\<close> by force 
+  qed
+  hence \<open> 0 < e \<Longrightarrow> \<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e\<close>
+    for e
+    unfolding S_def by blast
+  thus ?thesis 
+  proof -
+    assume a1: "\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e"
+    have "\<forall>r. r \<notin> S \<or> (\<exists>a. r = norm (f a) \<and> a \<in> sphere 0 1)"
+      using S_def by blast
+    then show ?thesis
+      using a1 by (metis (lifting) S_def norm_minus_commute)
+  qed 
+qed
+
 
 end
