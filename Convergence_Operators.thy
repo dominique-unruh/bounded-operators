@@ -128,6 +128,30 @@ instance
   using onorm_scaleR by blast 
 end
 
+lemma trivia_UNIV_rbounded:
+  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+  assumes \<open>(UNIV::'a set) = 0\<close>
+  shows \<open>f = 0\<close>
+proof-
+  have \<open>x = 0\<close>
+    for x::'a
+    using \<open>(UNIV::'a set) = 0\<close> by auto
+  moreover have \<open>bounded_linear (Rep_rbounded f)\<close>
+    using Rep_rbounded by auto
+  ultimately have \<open>Rep_rbounded f x = 0\<close>
+    for x::'a
+    by (metis (full_types) linear_simps(3))
+  hence \<open>Rep_rbounded f = (\<lambda> _. 0)\<close>
+    by blast
+  moreover have \<open>Rep_rbounded (Abs_rbounded (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
+    by (simp add: Abs_rbounded_inverse)
+  moreover have \<open>0 \<equiv> Abs_rbounded (\<lambda> _::'a. 0::'b)\<close>
+    using zero_rbounded_def by auto
+  ultimately have \<open>Rep_rbounded f = Rep_rbounded 0\<close>
+    by simp
+  thus ?thesis using  Rep_rbounded_inject 
+    by auto
+qed
 
 
 section \<open>Pointwise convergence\<close>
@@ -141,7 +165,8 @@ abbreviation pointwise_convergence_abbr::
   (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
   where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( pointwise_convergence f l )\<close>
 
-section \<open>Convergence with respect to the operator norm\<close>
+
+section \<open>Relationships among the different kind of convergence\<close>
 
 (*
 definition onorm_convergence::
@@ -159,8 +184,7 @@ definition oCauchy::
 *)
 
 
-section \<open>Relationships among the different kind of convergence\<close>
-
+text \<open>This lemma is hidden after lemma ustrong_onorm. \<close>
 lemma hnorm_unit_sphere:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
     and N::hypnat
@@ -206,31 +230,6 @@ proof-
     using bex_Infinitesimal_iff by blast
   thus ?thesis
     using approx_sym by blast    
-qed
-
-lemma trivia_UNIV_rbounded:
-  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
-  assumes \<open>(UNIV::'a set) = 0\<close>
-  shows \<open>f = 0\<close>
-proof-
-  have \<open>x = 0\<close>
-    for x::'a
-    using \<open>(UNIV::'a set) = 0\<close> by auto
-  moreover have \<open>bounded_linear (Rep_rbounded f)\<close>
-    using Rep_rbounded by auto
-  ultimately have \<open>Rep_rbounded f x = 0\<close>
-    for x::'a
-    by (metis (full_types) linear_simps(3))
-  hence \<open>Rep_rbounded f = (\<lambda> _. 0)\<close>
-    by blast
-  moreover have \<open>Rep_rbounded (Abs_rbounded (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
-    by (simp add: Abs_rbounded_inverse)
-  moreover have \<open>0 \<equiv> Abs_rbounded (\<lambda> _::'a. 0::'b)\<close>
-    using zero_rbounded_def by auto
-  ultimately have \<open>Rep_rbounded f = Rep_rbounded 0\<close>
-    by simp
-  thus ?thesis using  Rep_rbounded_inject 
-    by auto
 qed
 
 lemma ustrong_onorm:
@@ -315,6 +314,7 @@ next
     by (simp add: LIMSEQ_NSLIMSEQ_iff) 
 qed 
 
+hide_fact hnorm_unit_sphere
 
 lemma oCauchy_uCauchy:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
@@ -376,7 +376,7 @@ proof-
     qed
     moreover have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f2* (\<lambda> n. Rep_rbounded (f n))) M x ) \<ge> 0\<close>
     proof-
-      have  \<open>norm ( ( (\<lambda> n. Rep_rbounded (f n))) NN xx - ( (\<lambda> n. Rep_rbounded (f n))) MM xx ) \<ge> 0\<close>
+      have \<open>norm ( ( (\<lambda> n. Rep_rbounded (f n))) NN xx - ( (\<lambda> n. Rep_rbounded (f n))) MM xx ) \<ge> 0\<close>
         for NN MM xx
         by auto
       thus ?thesis by auto 
@@ -389,13 +389,311 @@ proof-
   thus ?thesis using nsuniformly_Cauchy_on_I by metis
 qed
 
-
-
-
-
-
-
-
+lemma uCauchy_ustrong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
+  shows  \<open>\<exists> l::('a,'b) rbounded. 
+    (sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l\<close>
+proof-
+  from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
+  have \<open>\<exists> s::'a\<Rightarrow>'b.
+ (sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    using uniformly_convergent_eq_Cauchy uniformly_convergent_on_def by blast
+  then obtain s::\<open>'a\<Rightarrow>'b\<close> where
+    \<open>(sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    by blast
+  have \<open>\<exists> L. \<forall> x\<in>(sphere 0 1). Rep_rbounded L x = s x\<close>
+  proof-
+    define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
+      for x::'a       
+    have \<open>t \<in> sphere 0 1 \<Longrightarrow> (\<lambda>x. norm x *\<^sub>R s (x /\<^sub>R norm x)) t = s t\<close>
+      for t
+      unfolding sphere_def
+      by simp
+    hence \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> l\<close>
+      using  \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+      unfolding l_def 
+      by (metis (no_types, lifting) uniform_limit_cong') 
+    hence \<open>x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close>
+      for x
+      using  \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+      by (meson LIMSEQ_unique tendsto_uniform_limitI)
+    have \<open>bounded_linear l\<close>
+    proof-
+      have \<open>\<And> n. bounded_linear (Rep_rbounded (f n))\<close>
+        using Rep_rbounded by blast
+      have \<open>(\<lambda> n. Rep_rbounded (f n) x) \<longlonglongrightarrow> l x\<close>
+        for x
+      proof(cases \<open>x = 0\<close>)
+        case True
+        have \<open>(\<lambda> n. Rep_rbounded (f n) x) \<longlonglongrightarrow> 0\<close>
+        proof-
+          have \<open>Rep_rbounded (f n) x = (0::'b)\<close>
+            for n
+          proof-
+            have \<open>\<And> n. bounded_linear (Rep_rbounded (f n))\<close>
+              using Rep_rbounded by blast 
+            thus ?thesis
+              by (simp add: True linear_simps(3)) 
+          qed
+          moreover  have \<open>(\<lambda> n. (0::'b)) \<longlonglongrightarrow> 0\<close>
+            by simp            
+          ultimately show ?thesis by simp
+        qed
+        moreover have \<open>l x = 0\<close>
+        proof-
+          have \<open>norm x = 0\<close>
+            using \<open>x = 0\<close> by simp
+          thus ?thesis using l_def by simp
+        qed
+        ultimately show ?thesis by simp 
+      next
+        case False
+        hence  \<open>norm x \<noteq> 0\<close> by simp
+        thus ?thesis
+        proof-
+          have  \<open>(\<lambda> n. (Rep_rbounded (f n)) (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
+          proof-
+            have \<open>\<forall> N\<in>HNatInfinite. \<forall>x\<in>*s* (sphere 0 1).
+                     (*f2* (\<lambda> n. Rep_rbounded (f n))) N x \<approx> (*f* s) x\<close>
+              using \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close> nsuniform_convergence_D 
+              by blast
+            moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s* (sphere 0 1)\<close>
+            proof-
+              have \<open>norm (x  /\<^sub>R norm x) = 1\<close>
+                by (simp add: False)
+              hence \<open>(x  /\<^sub>R norm x) \<in> (sphere 0 1)\<close>
+                unfolding sphere_def by auto
+              thus ?thesis
+                by (meson starset_mem)                
+            qed
+            ultimately have \<open>\<forall> N\<in>HNatInfinite.
+               (*f2* (\<lambda> n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+              by blast 
+            moreover have \<open>\<forall> N. (*f2* (\<lambda> n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x))
+                        \<approx> (*f* (\<lambda> n. Rep_rbounded (f n) (x /\<^sub>R norm x) )) N\<close>
+            proof-
+              have  \<open>\<forall> N. ( (\<lambda> n. Rep_rbounded (f n))) N ( (x /\<^sub>R norm x))
+                        = ( (\<lambda> n. Rep_rbounded (f n) (x /\<^sub>R norm x) )) N\<close>
+                by blast
+              hence \<open>\<forall> N. (*f2* (\<lambda> n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x))
+                        = (*f* (\<lambda> n. Rep_rbounded (f n) (x /\<^sub>R norm x) )) N\<close>
+                by StarDef.transfer
+              thus ?thesis
+                by simp 
+            qed
+            ultimately have  \<open>\<forall> N\<in>HNatInfinite.
+               (*f* (\<lambda> n. Rep_rbounded (f n) (x /\<^sub>R norm x) )) N \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+              using approx_trans3 by blast                 
+            hence \<open> (\<lambda>n. Rep_rbounded (f n)  (x /\<^sub>R norm x)) \<longlonglongrightarrow>\<^sub>N\<^sub>S s  (x /\<^sub>R norm x)\<close>
+              using NSLIMSEQ_def
+              by (metis starfun_eq)              
+            thus ?thesis
+              by (simp add: NSLIMSEQ_LIMSEQ)              
+          qed
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (Rep_rbounded (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow>  (norm x) *\<^sub>R  s (x /\<^sub>R norm x)\<close>
+            using bounded_linear.tendsto bounded_linear_scaleR_right by blast
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (Rep_rbounded (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+            using l_def
+            by simp
+          have  \<open>(\<lambda> n. (Rep_rbounded(f n)) x) \<longlonglongrightarrow> l x\<close>
+          proof-
+            have \<open>(norm x) *\<^sub>R (Rep_rbounded (f n)) (x /\<^sub>R norm x) = (Rep_rbounded (f n)) x\<close>
+              for n
+              using \<open>norm x \<noteq> 0\<close> \<open>\<And> n. bounded_linear (Rep_rbounded (f n))\<close>
+              unfolding bounded_linear_def linear_def
+              by (simp add: \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5))               
+            thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (Rep_rbounded (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close> 
+              by simp
+          qed
+          thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (Rep_rbounded (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+            by auto
+        qed
+      qed
+      have \<open>linear l\<close>
+      proof
+        show "l (b1 + b2) = l b1 + l b2"
+          for b1 :: 'a
+            and b2 :: 'a
+        proof-
+          have \<open>(\<lambda> n. (Rep_rbounded (f n)) (b1 + b2)) \<longlonglongrightarrow> l (b1 + b2)\<close>
+            using  \<open>\<And> x. (\<lambda> n. (Rep_rbounded (f n)) x) \<longlonglongrightarrow> l x\<close>
+            by blast
+          moreover have \<open>(\<lambda> n. (Rep_rbounded (f n)) (b1 + b2)) \<longlonglongrightarrow> l b1 + l b2\<close>
+          proof-
+            have \<open>(\<lambda> n. (Rep_rbounded (f n))  b1) \<longlonglongrightarrow> l b1\<close>
+              using  \<open>\<And> x. (\<lambda> n. (Rep_rbounded (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            moreover have \<open>(\<lambda> n. (Rep_rbounded (f n))  b2) \<longlonglongrightarrow> l b2\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (Rep_rbounded (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            ultimately have \<open>(\<lambda> n. (Rep_rbounded (f n))  b1 +  (Rep_rbounded (f n))  b2) \<longlonglongrightarrow> l b1 + l b2\<close>
+              by (simp add: tendsto_add) 
+            moreover have \<open>(\<lambda> n.  (Rep_rbounded (f n))  (b1 + b2)) = (\<lambda> n.  (Rep_rbounded (f n))  b1 +  (Rep_rbounded (f n))  b2)\<close>
+            proof-
+              have \<open> (Rep_rbounded (f n))  (b1 + b2) =  (Rep_rbounded (f n))  b1 +  (Rep_rbounded (f n))  b2\<close>
+                for n
+                using \<open>\<And> n. bounded_linear  (Rep_rbounded (f n))\<close>
+                unfolding bounded_linear_def
+                by (simp add: linear_add)
+              thus ?thesis by blast
+            qed
+            ultimately show ?thesis by simp 
+          qed
+          ultimately show ?thesis
+            using LIMSEQ_unique by blast            
+        qed
+        show "l (r *\<^sub>R b) = r *\<^sub>R l b"
+          for r :: real
+            and b :: 'a
+        proof-
+          have \<open>(\<lambda> n.  (Rep_rbounded (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow> l (r *\<^sub>R b)\<close>
+            using  \<open>\<And> x. (\<lambda> n.  (Rep_rbounded (f n))  x) \<longlonglongrightarrow> l x\<close>
+            by blast
+          moreover have \<open>(\<lambda> n.  (Rep_rbounded (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow>  r *\<^sub>R (l b)\<close>
+          proof-
+            have \<open>(\<lambda> n.  (Rep_rbounded (f n))  b) \<longlonglongrightarrow> l b\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (Rep_rbounded (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            hence \<open>(\<lambda> n. r *\<^sub>R ( (Rep_rbounded (f n))  b)) \<longlonglongrightarrow> r *\<^sub>R (l b)\<close>
+              using bounded_linear.tendsto bounded_linear_scaleR_right by blast
+            moreover have \<open>(\<lambda> n. ( (Rep_rbounded (f n))  (r *\<^sub>R b))) = (\<lambda> n. r *\<^sub>R ( (Rep_rbounded (f n))  b))\<close>
+            proof-
+              have \<open> (Rep_rbounded (f n))  (r *\<^sub>R b) = r *\<^sub>R ( (Rep_rbounded (f n))  b)\<close>
+                for n
+                using \<open>\<And> n. bounded_linear ( (Rep_rbounded (f n)) )\<close>
+                unfolding bounded_linear_def
+                by (simp add: linear_scale)
+              thus ?thesis by blast
+            qed
+            ultimately show ?thesis by simp 
+          qed
+          ultimately show ?thesis
+            using LIMSEQ_unique by blast            
+        qed
+      qed
+      moreover have \<open>bounded_linear_axioms l\<close>
+      proof-
+        have \<open>\<exists>K. \<forall>x. norm (l x) \<le> norm x * K\<close>
+        proof(rule classical)
+          assume \<open>\<not> (\<exists>K. \<forall>x. norm (l x) \<le> norm x * K)\<close>
+          hence \<open>\<forall> K. \<exists> x. norm (l x) > norm x * K\<close>
+            by smt
+          hence \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+            using calculation linear_0 by force
+          have \<open>\<forall> K. \<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+          proof-
+            have \<open>\<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+              for K
+            proof-
+              have \<open>\<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+                using  \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close> by blast
+              then obtain x where \<open>x \<noteq> 0\<close> and \<open>norm (l x) > norm x * K\<close>
+                by blast
+              have \<open>norm x > 0\<close> using \<open>x \<noteq> 0\<close> by simp
+              hence  \<open>inverse (norm x) * norm (l x) > inverse (norm x) * (norm x) * K\<close>
+                using  \<open>norm (l x) > norm x * K\<close>
+                by (smt linordered_field_class.sign_simps(23) mult_left_le_imp_le positive_imp_inverse_positive) 
+              moreover have \<open>(inverse (norm x)) * (norm x) = 1\<close>
+                using \<open>norm x > 0\<close> by simp
+              ultimately have \<open>(inverse (norm x)) * norm (l x) >  K\<close>
+                by simp
+              moreover have \<open>(inverse (norm x)) * norm (l x) = norm ((inverse (norm x)) *\<^sub>R (l x))\<close>
+              proof-
+                have \<open>(inverse (norm x)) > 0\<close>
+                  using \<open>norm x > 0\<close> 
+                  by simp
+                thus ?thesis using norm_scaleR
+                  by simp 
+              qed
+              hence \<open> norm ((inverse (norm x)) *\<^sub>R (l x)) >  K\<close>
+                using calculation by linarith
+              hence \<open> norm (l ((inverse (norm x)) *\<^sub>R  x)) >  K\<close>
+              proof-
+                have \<open>(inverse (norm x)) *\<^sub>R (l x) = l ((inverse (norm x)) *\<^sub>R  x)\<close>
+                  by (simp add: \<open>linear l\<close> linear_scale)
+                thus ?thesis
+                  using \<open>K < norm (l x /\<^sub>R norm x)\<close> by simp                 
+              qed
+              have \<open>norm ( (inverse (norm x)) *\<^sub>R  x ) = 1\<close>
+                using \<open>norm x > 0\<close> by simp
+              show ?thesis
+                using \<open>K < norm (l (x /\<^sub>R norm x))\<close> \<open>norm (x /\<^sub>R norm x) = 1\<close> by blast 
+            qed
+            thus ?thesis by blast
+          qed
+          from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
+          have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). dist ((Rep_rbounded (f m)) x) (Rep_rbounded (f n) x) < e\<close>
+            by (meson uniformly_Cauchy_on_def)
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). norm (((Rep_rbounded (f m)) x) - (Rep_rbounded (f n) x)) < e\<close>
+            by (simp add: dist_norm) 
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (((Rep_rbounded (f m)) x) - (Rep_rbounded (f n) x)) < e\<close>
+            unfolding sphere_def by auto
+          hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f n)) x) < 1\<close>
+            by auto
+          then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f n)) x) < 1\<close>
+            by blast
+          hence  \<open>\<forall>m\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f M)) x) < 1\<close>
+            by blast
+          have \<open>norm ((Rep_rbounded (f m)) x) \<le> norm ((Rep_rbounded (f M)) x) + norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f M)) x)\<close>
+            for m and x
+            by (simp add: norm_triangle_sub) 
+          hence \<open>norm ((Rep_rbounded (f m)) x) \<le> onorm (Rep_rbounded (f M)) * norm x + norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f M)) x)\<close>
+            for m and x
+            using onorm  \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close>
+            by smt                    
+          hence \<open>norm x = 1 \<Longrightarrow> norm ((Rep_rbounded (f m)) x) \<le> onorm (Rep_rbounded (f M)) + norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f M)) x)\<close>
+            for m and x
+            by (metis mult_cancel_left2)
+          hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((Rep_rbounded (f m)) x) < onorm (Rep_rbounded (f M)) + 1\<close>
+            for m and x
+            using  \<open>\<forall>m\<ge>M. \<forall>x. 
+            norm x = 1 \<longrightarrow> norm ((Rep_rbounded (f m)) x - (Rep_rbounded (f M)) x) < 1\<close> 
+            by smt
+          have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. (Rep_rbounded (f m)) x) \<longlonglongrightarrow> l x\<close>
+            for x
+            by (simp add: \<open>\<And>x. (\<lambda>n. (Rep_rbounded (f n)) x) \<longlonglongrightarrow> l x\<close>)
+          hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((Rep_rbounded (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+            for x
+            by (simp add: tendsto_norm)
+          hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (Rep_rbounded (f M)) + 1\<close>
+            for x
+          proof-
+            assume \<open>norm x = 1\<close>
+            hence \<open>(\<lambda> m. norm ((Rep_rbounded (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+              using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((Rep_rbounded (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+              by blast
+            moreover have \<open>\<forall>  m \<ge> M. norm ((Rep_rbounded (f m)) x) \<le> onorm (Rep_rbounded (f M)) + 1\<close>
+              using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((Rep_rbounded (f m)) x) < onorm (Rep_rbounded (f M)) + 1\<close>
+                \<open>norm x = 1\<close> by smt
+            ultimately show ?thesis 
+              by (rule Topological_Spaces.Lim_bounded)
+          qed
+          moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (Rep_rbounded (f M)) + 1 < norm (l x)\<close>
+            by (simp add: \<open>\<forall>K. \<exists>x. norm x = 1 \<and> K < norm (l x)\<close>)
+          ultimately show ?thesis
+            by fastforce 
+        qed
+        thus ?thesis unfolding bounded_linear_axioms_def by blast 
+      qed
+      ultimately show ?thesis unfolding bounded_linear_def by blast
+    qed
+    hence \<open>\<exists> L. Rep_rbounded L = l\<close>
+      using Rep_rbounded_cases by auto
+    thus ?thesis
+      using \<open>\<And>x. x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close> 
+      by blast        
+  qed
+  then obtain L::\<open>('a,'b) rbounded\<close> where \<open>\<forall> x\<in>(sphere 0 1). (Rep_rbounded L) x = s x\<close>
+    by blast
+  have "sphere 0 1: (\<lambda>n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded L"
+    using  \<open>\<forall> x\<in>(sphere 0 1). (Rep_rbounded L) x = s x\<close>  \<open>(sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    by (metis (no_types, lifting) uniform_limit_cong')
+  thus ?thesis by blast
+qed  
 
 
 
@@ -403,326 +701,6 @@ qed
 
 chapter \<open>Chaos\<close>
 
-lemma uCauchy_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>uCauchy f\<close> 
-  shows \<open>\<exists> l::'a\<Rightarrow>'b. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
-proof-
-  have \<open>\<exists> l::'a\<Rightarrow>'b. f \<midarrow>ustrong\<rightarrow> l\<close>
-  proof-
-    have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-      using \<open>uCauchy f\<close> unfolding uCauchy_def sphere_def uniformly_Cauchy_on_def dist_norm
-      by blast
-    hence \<open>norm x = 1 \<Longrightarrow> (\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f m x - f n x) < e)\<close>
-      for x
-      by blast
-    hence \<open>norm x = 1 \<Longrightarrow> (\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m x) (f n x) < e)\<close>
-      for x
-      by (simp add: dist_norm)    
-    hence \<open>norm x = 1 \<Longrightarrow> Cauchy (\<lambda> n. f n x)\<close>
-      for x
-      using Cauchy_def by blast
-    hence \<open>norm x = 1 \<Longrightarrow> convergent (\<lambda> n. f n x)\<close>
-      for x
-      by (simp add: Cauchy_convergent_iff)
-    hence \<open>norm x = 1 \<Longrightarrow> \<exists> l. (\<lambda> n. f n x) \<longlonglongrightarrow> l\<close>
-      for x
-      by (simp add: convergentD)
-    hence \<open>\<forall> x. \<exists> l. norm x = 1 \<longrightarrow> (\<lambda> n. f n x) \<longlonglongrightarrow> l\<close>
-      by blast
-    hence \<open>\<exists> l. \<forall> x. norm x = 1 \<longrightarrow> (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-      by metis
-    then obtain l where \<open>\<forall> x. norm x = 1 \<longrightarrow> (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close> by blast
-    have \<open>e > 0 \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - l x) < e\<close>
-      for e::real
-    proof-
-      assume \<open>e > 0\<close>
-      hence \<open>e/2 > 0\<close>
-        by simp
-      hence \<open>\<forall> x. norm x = 1 \<longrightarrow> (\<exists>N. \<forall>n\<ge>N. dist (f n x) (l x) < e/2)\<close>
-        using  \<open>\<forall> x. norm x = 1 \<longrightarrow> (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-        by (meson LIMSEQ_iff_nz)
-      have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> dist (f m x)  (f n x) < e/2\<close>
-        using  \<open>e/2 > 0\<close> \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-        by (metis dist_norm)
-      then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> dist (f m x) (f n x) < e/2\<close>
-        by blast
-      have \<open>m \<ge> M \<Longrightarrow> \<forall>x. norm x = 1 \<longrightarrow> dist (f m x) (l x) < e\<close>
-        for m
-      proof-
-        assume \<open>m \<ge> M\<close>
-        have \<open>norm x = 1 \<Longrightarrow> dist (f m x) (l x) < e\<close>
-          for x
-        proof-
-          assume \<open>norm x = 1\<close>
-          have \<open>dist (f m x) (l x) \<le> dist (f m x) (f n x) + dist (l x) (f n x)\<close>
-            for n
-            by (simp add: dist_triangle2)
-          moreover have \<open>n \<ge> M \<Longrightarrow> dist (f m x) (f n x) < e/2\<close>
-            for n
-            using \<open>M \<le> m\<close> \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> dist (f m x) (f n x) < e / 2\<close> \<open>norm x = 1\<close> by blast
-          moreover have \<open>\<exists> N. \<forall> n \<ge> N. dist (l x) (f n x) < e/2\<close>
-          proof-
-            have \<open>\<exists> N. \<forall> n \<ge> N. dist (f n x) (l x) < e/2\<close>
-              using \<open>e/2 > 0\<close> \<open>\<forall>x. norm x = 1 \<longrightarrow> (\<exists>N. \<forall>n\<ge>N. dist (f n x) (l x) < e / 2)\<close> \<open>norm x = 1\<close> by auto 
-            thus ?thesis
-              by (simp add: dist_commute) 
-          qed
-          ultimately show ?thesis
-            by (meson dist_triangle_half_l le_add1 le_add2) 
-        qed
-        thus ?thesis by blast
-      qed
-      thus ?thesis
-        by (metis dist_norm) 
-    qed
-    hence \<open>\<forall> e > 0. \<exists>N. \<forall>n\<ge>N. \<forall>x\<in>sphere. norm (f n x - l x) < e\<close>
-      unfolding sphere_def mem_Collect_eq by blast
-    thus ?thesis unfolding upointwise_convergence_def using uniform_convergence_norm_I
-      by metis
-  qed
-  then obtain s where \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
-  define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
-    for x::'a       
-  have \<open>t \<in> sphere \<Longrightarrow> (\<lambda>x. norm x *\<^sub>R s (x /\<^sub>R norm x)) t = s t\<close>
-    for t
-    unfolding sphere_def
-    by simp
-  hence \<open>f \<midarrow>ustrong\<rightarrow> l\<close>
-    using \<open>f \<midarrow>ustrong\<rightarrow> s\<close> 
-    unfolding l_def upointwise_convergence_def
-    by (metis (no_types, lifting) uniform_limit_cong') 
-  moreover have \<open>bounded_linear l\<close>
-  proof-
-    have \<open>(\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-      for x
-    proof(cases \<open> x = 0\<close>)
-      case True
-      have \<open>(\<lambda> n. f n x) \<longlonglongrightarrow> 0\<close>
-      proof-
-        have \<open>f n x = (0::'b)\<close>
-          for n
-          using \<open>\<And> n. bounded_linear (f n)\<close>
-          by (simp add: True linear_simps(3))
-        moreover  have \<open>(\<lambda> n. (0::'b)) \<longlonglongrightarrow> 0\<close>
-          by simp            
-        ultimately show ?thesis by simp
-      qed
-      moreover have \<open>l x = 0\<close>
-      proof-
-        have \<open>norm x = 0\<close>
-          using \<open>x = 0\<close> by simp
-        thus ?thesis using l_def by simp
-      qed
-      ultimately show ?thesis by simp 
-    next
-      case False
-      hence  \<open>norm x \<noteq> 0\<close> by simp
-      thus ?thesis
-      proof-
-        have  \<open>(\<lambda> n. f n (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
-        proof-
-          have \<open>norm (x  /\<^sub>R norm x) = 1\<close>
-            by (simp add: False)
-          have \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. \<forall>x. norm x = 1 \<longrightarrow> norm (f n x - s x) < e\<close>
-            using \<open>f \<midarrow>ustrong\<rightarrow> s\<close>
-            unfolding upointwise_convergence_def sphere_def
-            using uniform_convergence_norm_D by fastforce
-
-          hence \<open> \<forall>e>0. \<exists>N. \<forall>n\<ge>N. norm (f n (x  /\<^sub>R norm x) - s (x  /\<^sub>R norm x)) < e\<close>
-            using  \<open>norm (x  /\<^sub>R norm x) = 1\<close> by fastforce
-          thus ?thesis
-            by (simp add: LIMSEQ_iff) 
-        qed
-        hence  \<open>(\<lambda> n. (norm x) *\<^sub>R f n (x /\<^sub>R norm x)) \<longlonglongrightarrow>  (norm x) *\<^sub>R  s (x /\<^sub>R norm x)\<close>
-          using bounded_linear.tendsto bounded_linear_scaleR_right by blast
-        hence  \<open>(\<lambda> n. (norm x) *\<^sub>R f n (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
-          using l_def
-          by simp
-        have  \<open>(\<lambda> n.  f n x) \<longlonglongrightarrow> l x\<close>
-        proof-
-          have \<open>(norm x) *\<^sub>R f n (x /\<^sub>R norm x) = f n x\<close>
-            for n
-            using \<open>norm x \<noteq> 0\<close> \<open>\<And> n. bounded_linear (f n)\<close>
-            unfolding bounded_linear_def linear_def
-            by (simp add: assms(1) linear_simps(5)) 
-          thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R f n (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close> by simp
-        qed
-        thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R f n (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
-          by auto
-      qed
-    qed
-    have \<open>linear l\<close>
-    proof
-      show "l (b1 + b2) = l b1 + l b2"
-        for b1 :: 'a
-          and b2 :: 'a
-      proof-
-        have \<open>(\<lambda> n. f n (b1 + b2)) \<longlonglongrightarrow> l (b1 + b2)\<close>
-          using  \<open>\<And> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-          by blast
-        moreover have \<open>(\<lambda> n. f n (b1 + b2)) \<longlonglongrightarrow> l b1 + l b2\<close>
-        proof-
-          have \<open>(\<lambda> n. f n b1) \<longlonglongrightarrow> l b1\<close>
-            using  \<open>\<And> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-            by blast
-          moreover have \<open>(\<lambda> n. f n b2) \<longlonglongrightarrow> l b2\<close>
-            using  \<open>\<And> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-            by blast
-          ultimately have \<open>(\<lambda> n. f n b1 + f n b2) \<longlonglongrightarrow> l b1 + l b2\<close>
-            by (simp add: tendsto_add) 
-          moreover have \<open>(\<lambda> n. f n (b1 + b2)) = (\<lambda> n. f n b1 + f n b2)\<close>
-          proof-
-            have \<open>f n (b1 + b2) = f n b1 + f n b2\<close>
-              for n
-              using \<open>\<And> n. bounded_linear (f n)\<close>
-              unfolding bounded_linear_def
-              by (simp add: linear_add)
-            thus ?thesis by blast
-          qed
-          ultimately show ?thesis by simp 
-        qed
-        ultimately show ?thesis
-          using LIMSEQ_unique by blast            
-      qed
-      show "l (r *\<^sub>R b) = r *\<^sub>R l b"
-        for r :: real
-          and b :: 'a
-      proof-
-        have \<open>(\<lambda> n. f n (r *\<^sub>R b)) \<longlonglongrightarrow> l (r *\<^sub>R b)\<close>
-          using  \<open>\<And> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-          by blast
-        moreover have \<open>(\<lambda> n. f n (r *\<^sub>R b)) \<longlonglongrightarrow>  r *\<^sub>R (l b)\<close>
-        proof-
-          have \<open>(\<lambda> n. f n b) \<longlonglongrightarrow> l b\<close>
-            using  \<open>\<And> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x\<close>
-            by blast
-          hence \<open>(\<lambda> n. r *\<^sub>R (f n b)) \<longlonglongrightarrow> r *\<^sub>R (l b)\<close>
-            using bounded_linear.tendsto bounded_linear_scaleR_right by blast
-          moreover have \<open>(\<lambda> n. (f n (r *\<^sub>R b))) = (\<lambda> n. r *\<^sub>R (f n b))\<close>
-          proof-
-            have \<open>f n (r *\<^sub>R b) = r *\<^sub>R (f n b)\<close>
-              for n
-              using \<open>\<And> n. bounded_linear (f n)\<close>
-              unfolding bounded_linear_def
-              by (simp add: linear_scale)
-            thus ?thesis by blast
-          qed
-          ultimately show ?thesis by simp 
-        qed
-        ultimately show ?thesis
-          using LIMSEQ_unique by blast            
-      qed
-    qed
-    moreover have \<open>bounded_linear_axioms l\<close>
-    proof-
-      have \<open>\<exists>K. \<forall>x. norm (l x) \<le> norm x * K\<close>
-      proof(rule classical)
-        assume \<open>\<not> (\<exists>K. \<forall>x. norm (l x) \<le> norm x * K)\<close>
-        hence \<open>\<forall> K. \<exists> x. norm (l x) > norm x * K\<close>
-          by smt
-        hence \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
-          using calculation linear_0 by force
-        have \<open>\<forall> K. \<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
-        proof-
-          have \<open>\<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
-            for K
-          proof-
-            have \<open>\<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
-              using  \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close> by blast
-            then obtain x where \<open>x \<noteq> 0\<close> and \<open>norm (l x) > norm x * K\<close>
-              by blast
-            have \<open>norm x > 0\<close> using \<open>x \<noteq> 0\<close> by simp
-            hence  \<open>inverse (norm x) * norm (l x) > inverse (norm x) * (norm x) * K\<close>
-              using  \<open>norm (l x) > norm x * K\<close>
-              by (smt linordered_field_class.sign_simps(23) mult_left_le_imp_le positive_imp_inverse_positive) 
-            moreover have \<open>(inverse (norm x)) * (norm x) = 1\<close>
-              using \<open>norm x > 0\<close> by simp
-            ultimately have \<open>(inverse (norm x)) * norm (l x) >  K\<close>
-              by simp
-            moreover have \<open>(inverse (norm x)) * norm (l x) = norm ((inverse (norm x)) *\<^sub>R (l x))\<close>
-            proof-
-              have \<open>(inverse (norm x)) > 0\<close>
-                using \<open>norm x > 0\<close> 
-                by simp
-              thus ?thesis using norm_scaleR
-                by simp 
-            qed
-            hence \<open> norm ((inverse (norm x)) *\<^sub>R (l x)) >  K\<close>
-              using calculation by linarith
-            hence \<open> norm (l ((inverse (norm x)) *\<^sub>R  x)) >  K\<close>
-            proof-
-              have \<open>(inverse (norm x)) *\<^sub>R (l x) = l ((inverse (norm x)) *\<^sub>R  x)\<close>
-                by (simp add: \<open>linear l\<close> linear_scale)
-              thus ?thesis
-                using \<open>K < norm (l x /\<^sub>R norm x)\<close> by simp                 
-            qed
-            have \<open>norm ( (inverse (norm x)) *\<^sub>R  x ) = 1\<close>
-              using \<open>norm x > 0\<close> by simp
-            show ?thesis
-              using \<open>K < norm (l (x /\<^sub>R norm x))\<close> \<open>norm (x /\<^sub>R norm x) = 1\<close> by blast 
-          qed
-          thus ?thesis by blast
-        qed
-        have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f m x - f n x) < e\<close>
-          using \<open>uCauchy f\<close> dist_norm
-          unfolding uCauchy_def uniformly_Cauchy_on_def sphere_def
-          using  mem_Collect_eq
-          by (metis (mono_tags))
-        hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm (f m x - f n x) < 1\<close>
-          by auto
-        then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm (f m x - f n x) < 1\<close>
-          by blast
-        hence \<open>\<forall>m\<ge>M. \<forall>x. 
-            norm x = 1 \<longrightarrow> norm (f m x - f M x) < 1\<close>
-          by blast
-        have \<open>norm (f m x) \<le> norm (f M x) + norm (f m x - f M x)\<close>
-          for m and x
-          by (simp add: norm_triangle_sub) 
-        hence \<open>norm (f m x) \<le> onorm (f M) * norm x + norm (f m x - f M x)\<close>
-          for m and x
-          using onorm
-          by (smt assms(1)) 
-        hence \<open>norm x = 1 \<Longrightarrow> norm (f m x) \<le> onorm (f M) + norm (f m x - f M x)\<close>
-          for m and x
-          by (metis mult_cancel_left2)
-        hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm (f m x) < onorm (f M) + 1\<close>
-          for m and x
-          using  \<open>\<forall>m\<ge>M. \<forall>x. 
-            norm x = 1 \<longrightarrow> norm (f m x - f M x) < 1\<close> 
-          by smt
-        have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. f m x) \<longlonglongrightarrow> l x\<close>
-          for x
-          by (simp add: \<open>\<And>x. (\<lambda>n. f n x) \<longlonglongrightarrow> l x\<close>)
-        hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
-          for x
-          by (simp add: tendsto_norm)
-        hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (f M) + 1\<close>
-          for x
-        proof-
-          assume \<open>norm x = 1\<close>
-          hence \<open>(\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
-            using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm (f m x)) \<longlonglongrightarrow> norm (l x)\<close>
-            by blast
-          moreover have \<open>\<forall>  m \<ge> M. norm (f m x) \<le> onorm (f M) + 1\<close>
-            using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm (f m x) < onorm (f M) + 1\<close>
-              \<open>norm x = 1\<close> by smt
-          ultimately show ?thesis 
-            by (rule Topological_Spaces.Lim_bounded)
-        qed
-        moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (f M) + 1 < norm (l x)\<close>
-          by (simp add: \<open>\<forall>K. \<exists>x. norm x = 1 \<and> K < norm (l x)\<close>)
-        ultimately show ?thesis
-          by fastforce 
-      qed
-      thus ?thesis unfolding bounded_linear_axioms_def by blast
-    qed
-    ultimately show ?thesis unfolding bounded_linear_def by blast
-  qed
-  ultimately show ?thesis by blast
-qed
 
 theorem completeness_real_bounded:
   fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
