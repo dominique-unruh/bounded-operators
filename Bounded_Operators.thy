@@ -5,21 +5,15 @@ Authors:
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
 Main results:
-- Definition of the type rbounded for bounded operators between real normed spaces.
-- Instantiation of rbounded as a Banach space.
-- Definition of the (essentially equivalent) types cbounded and bounded for bounded operators 
-between complex normed spaces.
-- Instantiation of cbounded and bouned as Banach spaces.
-
+- bounded: Definition of complex bounded operators. Instantiation as a complex Banach space.
 
 *)
 
 
 theory Bounded_Operators
-  imports Complex_Inner_Product Convergence_Operators  HOL.Real_Vector_Spaces
+  imports Complex_Inner_Product Real_Bounded_Operators HOL.Real_Vector_Spaces
 
 begin
-
 
 section \<open>Real bounded operators with complex scalar product\<close>
 
@@ -34,11 +28,13 @@ proof
   assume \<open>bounded_linear f\<close>
   show \<open>c *\<^sub>C f (b1 + b2) = c *\<^sub>C f b1 + c *\<^sub>C f b2\<close>
     by (simp add: \<open>bounded_linear f\<close> linear_simps scaleC_add_right)
+
   fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b::'a and r::real
   assume \<open>bounded_linear f\<close>
   show \<open>c *\<^sub>C f (r *\<^sub>R b) = r *\<^sub>R (c *\<^sub>C f b)\<close>
     by (simp add: \<open>bounded_linear f\<close> linear_simps(5) scaleR_scaleC)
-  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> 
+ 
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close>
   assume \<open>bounded_linear f\<close>
   show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
   proof-
@@ -59,6 +55,7 @@ proof
       by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute) 
   qed
 qed
+
 instance
 proof
   show "((*\<^sub>R) r::('a, 'b) rbounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
@@ -69,24 +66,28 @@ proof
       apply transfer
       by (simp add: scaleR_scaleC)
   qed
+
   show "a *\<^sub>C ((x::('a, 'b) rbounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
       and x :: "('a, 'b) rbounded"
       and y :: "('a, 'b) rbounded"
     apply transfer
     by (simp add: scaleC_add_right)
+
   show "(a + b) *\<^sub>C (x::('a, 'b) rbounded) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) rbounded"
     apply transfer
     by (simp add: scaleC_add_left)
+
   show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) rbounded) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) rbounded"
     apply transfer
     by simp
+
   show "1 *\<^sub>C (x::('a, 'b) rbounded) = x"
     for x :: "('a, 'b) rbounded"
     apply transfer
@@ -102,129 +103,129 @@ instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_n
 begin
 instance
 proof intro_classes 
- {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
-  assume \<open>bounded_linear f\<close>
-  hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
-    by (simp add: onorm_def)
-  also have \<open>... = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
-    by simp
-  also have \<open>... =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
-    by simp
-  also have \<open>... = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
-  proof-
-    have \<open>(UNIV::('a set)) \<noteq> {}\<close>
+  {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
+    assume \<open>bounded_linear f\<close>
+    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
+      by (simp add: onorm_def)
+    also have \<open>... = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
       by simp
-    moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
+    also have \<open>... =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
       by simp
-    moreover have \<open>cmod a \<ge> 0\<close>
-      by simp
-    ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
+    also have \<open>... = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
+    proof-
+      have \<open>(UNIV::('a set)) \<noteq> {}\<close>
+        by simp
+      moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
+        by simp
+      moreover have \<open>cmod a \<ge> 0\<close>
+        by simp
+      ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
         = ((cmod a)::ereal) * ( SUP i\<in>(UNIV::('a set)). (\<lambda> x. (norm (f x)) / norm x :: ereal) i )\<close>
-      by (simp add: Sup_ereal_mult_left')
-    hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+        by (simp add: Sup_ereal_mult_left')
+      hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
         = ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
-      by simp
-    hence \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
+        by simp
+      hence \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
         = real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )\<close>
-      by simp
-    moreover have \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+        by simp
+      moreover have \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
                   = (SUP x. cmod a * (norm (f x) / norm x))\<close>
-    proof-
-      have \<open>cmod a \<ge> 0\<close>
-        by simp
-      have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
       proof-
-        have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-          using \<open>bounded_linear f\<close> le_onorm by fastforce
-        then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-          by blast
-        hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
-          using \<open>cmod a \<ge> 0\<close> 
-          by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
-        hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+        have \<open>cmod a \<ge> 0\<close>
           by simp
-        hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
-          by simp
-        moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-          by auto
-        ultimately have \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
-          using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
-            Sup_least mem_Collect_eq
-          by (simp add: SUP_le_iff) 
-        hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
-              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>
-        proof-
-          have  \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
-            by simp              
-          thus ?thesis
-            using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
-              \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-            by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
-        qed
-        hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
-          using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
-          by simp
-        thus ?thesis
-          by auto 
-      qed
-      hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
-             = ereal ( Sup ((\<lambda> x. cmod a * (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
-        by (simp add: ereal_SUP) 
-      thus ?thesis
-        by simp
-    qed
-    moreover have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
-                = cmod a * (SUP x. norm (f x) / norm x)\<close>
-    proof-
-      have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
-                =  (cmod a) * real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
-        by simp
-      moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
-                  = ( SUP x. ((norm (f x)) / norm x) )\<close>
-      proof-
-        have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+        have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
         proof-
           have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
             using \<open>bounded_linear f\<close> le_onorm by fastforce
           then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
             by blast
-          hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+          hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+            using \<open>cmod a \<ge> 0\<close> 
+            by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
+          hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
             by simp
-          moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+          hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+            by simp
+          moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
             by auto
-          ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
-            using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
+          ultimately have \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+            using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
               Sup_least mem_Collect_eq
             by (simp add: SUP_le_iff) 
-          hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
-              \<le> (SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>)\<close>
-            using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
-              \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-            by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
-          hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
-            using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>
+          proof-
+            have  \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
+              by simp              
+            thus ?thesis
+              using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+                \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+          qed
+          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
+            using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
             by simp
           thus ?thesis
             by auto 
         qed
-        hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
-             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+        hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. cmod a * (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
           by (simp add: ereal_SUP) 
         thus ?thesis
-          by simp         
+          by simp
       qed
-      show ?thesis
-        by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+      moreover have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                = cmod a * (SUP x. norm (f x) / norm x)\<close>
+      proof-
+        have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                =  (cmod a) * real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+          by simp
+        moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
+                  = ( SUP x. ((norm (f x)) / norm x) )\<close>
+        proof-
+          have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+          proof-
+            have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+              using \<open>bounded_linear f\<close> le_onorm by fastforce
+            then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+              by blast
+            hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+              by simp
+            moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by auto
+            ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+              using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
+                Sup_least mem_Collect_eq
+              by (simp add: SUP_le_iff) 
+            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>)\<close>
+              using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+                \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
+              using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+              by simp
+            thus ?thesis
+              by auto 
+          qed
+          hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+            by (simp add: ereal_SUP) 
+          thus ?thesis
+            by simp         
+        qed
+        show ?thesis
+          by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+      qed
+      ultimately have \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
+          cmod a * (SUP x. norm (f x) / norm x)\<close>
+        by simp     
+      thus ?thesis
+        by simp 
     qed
-    ultimately have \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
-  cmod a * (SUP x. norm (f x) / norm x)\<close>
-      by simp     
-    thus ?thesis
-      by simp 
-  qed
-  hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
-    by (simp add: onorm_def) 
- } note 1 = this 
+    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+      by (simp add: onorm_def) 
+  } note 1 = this 
 
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
     for a::complex and x::\<open>('a, 'b) rbounded\<close>
@@ -341,20 +342,20 @@ lift_definition open_cbounded :: \<open>(('a, 'b) cbounded) set \<Rightarrow> bo
 
 instance
   apply intro_classes
-        apply transfer 
-        apply auto
-          apply transfer 
-          apply auto
-         apply transfer 
-         apply (simp add: sgn_div_norm)
-        apply (simp add: uniformity_cbounded.transfer)
-       apply (metis (mono_tags, lifting)  open_cbounded.transfer)
-      apply (smt eventually_mono open_cbounded.transfer split_cong)
-     apply transfer
-     apply simp
-    apply transfer
-    apply simp
-   apply (smt add_diff_cancel_left' minus_cbounded.rep_eq norm_cbounded.rep_eq norm_triangle_ineq2)
+  apply transfer 
+  apply auto
+  apply transfer 
+  apply auto
+  apply transfer 
+  apply (simp add: sgn_div_norm)
+  apply (simp add: uniformity_cbounded.transfer)
+  apply (metis (mono_tags, lifting)  open_cbounded.transfer)
+  apply (smt eventually_mono open_cbounded.transfer split_cong)
+  apply transfer
+  apply simp
+  apply transfer
+  apply simp
+  apply (smt add_diff_cancel_left' minus_cbounded.rep_eq norm_cbounded.rep_eq norm_triangle_ineq2)
   apply transfer
   by simp
 end
@@ -497,12 +498,12 @@ proof-
         have \<open>\<And>f l p.
        \<forall>x. bounded_linear (f x) \<Longrightarrow>
        bounded_linear l \<Longrightarrow> \<forall>x. (\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0 \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
-        by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
-      thus \<open>\<And>f l p.
+          by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
+        thus \<open>\<And>f l p.
        pred_fun top bounded_linear f \<Longrightarrow>
        bounded_linear l \<Longrightarrow> f \<midarrow>strong\<rightarrow> l \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
-        unfolding pointwise_convergence_def
-        by auto
+          unfolding pointwise_convergence_def
+          by auto
       qed
     qed
     hence \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close>
@@ -529,52 +530,52 @@ begin
 instance
 proof intro_classes
   {  fix f :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
-  assume \<open>Cauchy f\<close>
-  hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
-    unfolding Cauchy_def
-    by blast
-  hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. 
+    assume \<open>Cauchy f\<close>
+    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
+      unfolding Cauchy_def
+      by blast
+    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. 
     dist (Rep_cbounded (f m)) (Rep_cbounded (f n)) < e\<close>
-    apply transfer
-    by blast
-  hence \<open>Cauchy (\<lambda> n. (Rep_cbounded (f n)))\<close>
-    using Cauchy_altdef by force
-  hence \<open>convergent (\<lambda> n. (Rep_cbounded (f n)))\<close>
-    by (simp add: Cauchy_convergent_iff)
-  hence \<open>\<exists> l::('a, 'b) rbounded. 
-         (\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-    using convergentD by blast
-  then obtain l::\<open>('a, 'b) rbounded\<close>
-    where \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-    by blast
-  have \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) =
-                c *\<^sub>C Rep_rbounded l x \<close>
-  proof-
-    have \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (Rep_cbounded (f n)) (c *\<^sub>C x)
-         = c *\<^sub>C Rep_rbounded (Rep_cbounded (f n)) x\<close>
       apply transfer
-      by simp
-    thus ?thesis
-      using \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-      by (rule rbounded_SEQ_scaleC)
-  qed
-  hence \<open>\<exists> L. Rep_cbounded L = l\<close>
-    apply transfer by blast
-  then obtain L::\<open>('a, 'b) cbounded\<close>
-    where \<open>Rep_cbounded L = l\<close> by blast
-  have \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> (Rep_cbounded L)\<close>
-    using \<open>Rep_cbounded L = l\<close>
-      \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-    by blast
-  hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. 
+      by blast
+    hence \<open>Cauchy (\<lambda> n. (Rep_cbounded (f n)))\<close>
+      using Cauchy_altdef by force
+    hence \<open>convergent (\<lambda> n. (Rep_cbounded (f n)))\<close>
+      by (simp add: Cauchy_convergent_iff)
+    hence \<open>\<exists> l::('a, 'b) rbounded. 
+         (\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
+      using convergentD by blast
+    then obtain l::\<open>('a, 'b) rbounded\<close>
+      where \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
+      by blast
+    have \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) =
+                c *\<^sub>C Rep_rbounded l x \<close>
+    proof-
+      have \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (Rep_cbounded (f n)) (c *\<^sub>C x)
+         = c *\<^sub>C Rep_rbounded (Rep_cbounded (f n)) x\<close>
+        apply transfer
+        by simp
+      thus ?thesis
+        using \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
+        by (rule rbounded_SEQ_scaleC)
+    qed
+    hence \<open>\<exists> L. Rep_cbounded L = l\<close>
+      apply transfer by blast
+    then obtain L::\<open>('a, 'b) cbounded\<close>
+      where \<open>Rep_cbounded L = l\<close> by blast
+    have \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> (Rep_cbounded L)\<close>
+      using \<open>Rep_cbounded L = l\<close>
+        \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
+      by blast
+    hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. 
     dist (Rep_cbounded (f n)) (Rep_cbounded L) < e\<close>
-    by (simp add: metric_LIMSEQ_D)
-  hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e\<close>
-    apply transfer by blast
-  hence \<open>f \<longlonglongrightarrow> L\<close>
-    by (simp add: metric_LIMSEQ_I)
-  hence \<open>convergent f\<close> 
-    unfolding convergent_def by blast } note 1 = this
+      by (simp add: metric_LIMSEQ_D)
+    hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e\<close>
+      apply transfer by blast
+    hence \<open>f \<longlonglongrightarrow> L\<close>
+      by (simp add: metric_LIMSEQ_I)
+    hence \<open>convergent f\<close> 
+      unfolding convergent_def by blast } note 1 = this
 
   fix X :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
   assume \<open>Cauchy X\<close>
@@ -633,7 +634,7 @@ instance ..
 end
 
 lemma zero_bounded_lift:
-\<open>Rep_bounded (0::('a, 'b) bounded) = (\<lambda> _::('a::complex_normed_vector). 0::('b::complex_normed_vector))\<close>
+  \<open>Rep_bounded (0::('a, 'b) bounded) = (\<lambda> _::('a::complex_normed_vector). 0::('b::complex_normed_vector))\<close>
   unfolding zero_bounded_def zero_cbounded_def zero_rbounded_def flatten_def
   apply auto
   by (metis Abs_rbounded_inverse bounded_linear_zero flatten.abs_eq flatten.rep_eq mem_Collect_eq zero_cbounded.abs_eq zero_cbounded.rep_eq zero_rbounded.abs_eq)
@@ -646,11 +647,11 @@ instance ..
 end
 
 lemma uminus_bounded_lift:
-\<open>Rep_bounded (- f) = (\<lambda> x. - (Rep_bounded f) x)\<close>
+  \<open>Rep_bounded (- f) = (\<lambda> x. - (Rep_bounded f) x)\<close>
   unfolding uminus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
   apply auto
   by (metis Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq uminus_cbounded.rep_eq uminus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
-  
+
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "semigroup_add"
 begin
 definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
@@ -662,7 +663,7 @@ instance
 end
 
 lemma plus_bounded_lift:
-\<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
+  \<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
   unfolding plus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
   apply auto
   by (metis (no_types, hide_lams) Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq plus_cbounded.rep_eq plus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
@@ -698,7 +699,7 @@ qed
 end
 
 lemma minus_bounded_lift:
-\<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
+  \<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
   unfolding minus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
   apply auto
   by (metis (no_types, lifting) Abs_bounded_cases Abs_bounded_inverse Rep_cbounded_inverse flatten.rep_eq minus_cbounded.rep_eq minus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
@@ -709,7 +710,7 @@ definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow
   where \<open>scaleC_bounded r f = flatten (r *\<^sub>C unflatten f)\<close>
 
 lemma scaleC_bounded_lift:
-\<open>Rep_bounded (c *\<^sub>C f) = (\<lambda> x. c *\<^sub>C (Rep_bounded f) x)\<close>
+  \<open>Rep_bounded (c *\<^sub>C f) = (\<lambda> x. c *\<^sub>C (Rep_bounded f) x)\<close>
   unfolding scaleC_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
   apply auto
   by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse flatten.rep_eq scaleC_cbounded.rep_eq scaleC_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
@@ -744,7 +745,7 @@ qed
 end
 
 lemma scaleR_bounded_lift:
-\<open>Rep_bounded (c *\<^sub>R f) = (\<lambda> x. c *\<^sub>R (Rep_bounded f) x)\<close>
+  \<open>Rep_bounded (c *\<^sub>R f) = (\<lambda> x. c *\<^sub>R (Rep_bounded f) x)\<close>
   unfolding scaleR_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
   apply auto
   by (metis (no_types, hide_lams) flatten.abs_eq flatten.rep_eq map_fun_apply scaleR_cbounded.rep_eq scaleR_rbounded.rep_eq unflatten_def unflatten_inv)
@@ -782,7 +783,7 @@ lift_definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool
 instance
   apply intro_classes
   apply auto
-   apply (metis (mono_tags, lifting) open_bounded.transfer)
+  apply (metis (mono_tags, lifting) open_bounded.transfer)
   by (smt case_prod_beta eventually_mono open_bounded.transfer)
 end
 
@@ -790,9 +791,9 @@ instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex
 instance
   apply intro_classes
   unfolding zero_bounded_def norm_bounded_def
-     apply (metis flatten_inv norm_zero unflatten_inv zero_less_norm_iff)
-    apply (simp add: flatten_inv norm_triangle_ineq plus_bounded_def)
-   apply (simp add: flatten_inv scaleR_bounded_def)
+  apply (metis flatten_inv norm_zero unflatten_inv zero_less_norm_iff)
+  apply (simp add: flatten_inv norm_triangle_ineq plus_bounded_def)
+  apply (simp add: flatten_inv scaleR_bounded_def)
   by (simp add: flatten_inv scaleC_bounded_def)
 end
 
@@ -892,14 +893,14 @@ section \<open>Adjoint\<close>
 
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
-is Adj by (fact Adj_bounded_clinear)
+  is Adj by (fact Adj_bounded_clinear)
 
 definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
   where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
 
 (* This lemma plays the role of lift_definition *)
 lemma cadjoint_Rep_Rep:
-\<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
+  \<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
   unfolding cadjoint_def unflatten_def flatten_def apply auto
   by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse adjoint.rep_eq flatten.rep_eq unflatten.rep_eq unflatten_inv)
 
@@ -944,7 +945,7 @@ lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is i
   using id_bounded_clinear by blast
 
 definition cidOp::\<open>('a::complex_normed_vector, 'a) cbounded\<close> where
-\<open>cidOp = unflatten (idOp)\<close>
+  \<open>cidOp = unflatten (idOp)\<close>
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
@@ -954,47 +955,47 @@ lemma cidOp_adjoint[simp]: "cadjoint cidOp = cidOp"
 
 lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
   for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
-  and a :: complex 
+    and a :: complex 
 proof-
   {  fix a::complex and A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
-  hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
-    using scalar_times_adjc_flatten
-    by blast 
-  have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-  proof-
-    from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
-    have  \<open>bounded_clinear A\<close>
-      using bounded_linear_bounded_clinear by blast
-    hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
-      by (simp add: Adj_bounded_clinear)
-    hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
-      apply auto
-      by (simp add: bounded_clinear.bounded_linear)      
-    hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
-      using Abs_rbounded_inverse
-      by blast
-    thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
-  qed
-  hence \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-    using Abs_rbounded_inject by simp
-} note 1 = this
+    assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
+    hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
+      using scalar_times_adjc_flatten
+      by blast 
+    have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+    proof-
+      from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
+      have  \<open>bounded_clinear A\<close>
+        using bounded_linear_bounded_clinear by blast
+      hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
+        by (simp add: Adj_bounded_clinear)
+      hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
+        apply auto
+        by (simp add: bounded_clinear.bounded_linear)      
+      hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
+        using Abs_rbounded_inverse
+        by blast
+      thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
+    qed
+    hence \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
+      using Abs_rbounded_inject by simp
+  } note 1 = this
 
   show ?thesis 
-  unfolding cadjoint_def 
-  apply transfer
-  apply transfer
-  apply transfer
-  unfolding scaleC_rbounded_def
-  apply auto
-  apply (rule 1) 
-  by blast
+    unfolding cadjoint_def 
+    apply transfer
+    apply transfer
+    apply transfer
+    unfolding scaleC_rbounded_def
+    apply auto
+    apply (rule 1) 
+    by blast
 qed
 
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
-  and a :: complex 
+    and a :: complex 
   unfolding scaleC_bounded_def
   by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
 
@@ -1003,24 +1004,24 @@ section \<open>Composition\<close>
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
      \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
-   is "(o)"
+  is "(o)"
   unfolding o_def 
   by (rule bounded_linear_compose, simp_all)
 
 lift_definition ctimesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) cbounded
      \<Rightarrow> ('a::complex_normed_vector,'b) cbounded \<Rightarrow> ('a,'c) cbounded"
-   is "rtimesOp"
+  is "rtimesOp"
   by transfer auto
 
 definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" where
-\<open>timesOp f g = flatten (ctimesOp (unflatten f) (unflatten g))\<close>
+  \<open>timesOp f g = flatten (ctimesOp (unflatten f) (unflatten g))\<close>
 
 (* This lemma plays the role of lift_definition *)
 lemma timesOp_Rep_bounded:
-\<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
+  \<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
   unfolding timesOp_def ctimesOp_def rtimesOp_def unflatten_def flatten_def
   apply auto
   by (metis (no_types, lifting) Rep_cbounded_inverse ctimesOp.rep_eq flatten.abs_eq flatten.rep_eq rtimesOp.rep_eq unflatten.rep_eq unflatten_inv) 
@@ -1036,7 +1037,7 @@ lemma ctimesOp_assoc: "ctimesOp (ctimesOp A B) C = ctimesOp A (ctimesOp B C)"
 lift_definition timesOpX:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
-   is "(o)"
+  is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
@@ -1046,7 +1047,7 @@ lemma rtimesOp_assoc_plain: "bounded_linear Aa \<Longrightarrow>
 
 lemma tmp: "timesOpX (timesOpX A B) C = timesOpX A (timesOpX B C)"
   apply transfer
-(* using rtimesOp_assoc_plain *)
+    (* using rtimesOp_assoc_plain *)
   by auto
 
 
@@ -1066,10 +1067,10 @@ section \<open>Image of a subspace by an operator\<close>
 
 lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
-   is "\<lambda>A S. closure (A ` S)"
+  is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
-  
+
 instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleC c ` S"
@@ -1101,7 +1102,7 @@ lemma times_comp: \<open>\<And>A B \<psi>.
        bounded_clinear B \<Longrightarrow>
        is_subspace \<psi> \<Longrightarrow>
        closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
-  proof
+proof
   show "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
     if "bounded_clinear (A::'a \<Rightarrow> 'b)"
       and "bounded_clinear (B::'c \<Rightarrow> 'a)"
@@ -1164,7 +1165,7 @@ qed
 
 
 lemma timesOp_assoc_linear_space: 
-\<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+  \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by auto
@@ -1285,7 +1286,7 @@ proof-
   hence \<open>(closure (Rep_bounded U ` Rep_linear_space (Abs_linear_space {0}))) = {0}\<close>
     by (metis bot_linear_space.abs_eq bot_linear_space.rep_eq) 
   thus ?thesis
-  unfolding applyOpSpace_def bot_linear_space_def by simp
+    unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
 
 section \<open>Complex Span\<close>
@@ -1294,14 +1295,14 @@ section \<open>Complex Span\<close>
 lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
-   apply (rule is_subspace_cl)
+  apply (rule is_subspace_cl)
   by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold.intro)
 
 instantiation linear_space :: (cbanach) "Inf"
 begin
 lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
-is \<open>\<lambda> S. \<Inter> S\<close>
-  proof
+  is \<open>\<lambda> S. \<Inter> S\<close>
+proof
   show "(x::'a) + y \<in> \<Inter> set"
     if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
       and "(x::'a) \<in> \<Inter> set"
@@ -1341,7 +1342,7 @@ lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a 
 lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.
 instance
-  proof
+proof
   show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
     for x :: "'a linear_space"
       and y :: "'a linear_space"
@@ -1379,7 +1380,7 @@ lemma is_subspace_span_B:
   assumes \<open>is_subspace S\<close> and \<open>complex_vector.span A \<subseteq> S\<close>
   shows \<open>A \<subseteq> S\<close>
   using assms(2) complex_vector.span_superset by blast
-  
+
 lemma span_def': \<open>span A = Inf {S. A \<subseteq> Rep_linear_space S}\<close>
   for A::\<open>('a::cbanach) set\<close>
 proof-
@@ -1485,17 +1486,17 @@ qed
 
 (* NEW *)
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
-\<open>cgenerator S = (span S = top)\<close>
+  \<open>cgenerator S = (span S = top)\<close>
 
 fun partial_span::\<open>nat \<Rightarrow> ('a::complex_vector) set \<Rightarrow> ('a::complex_vector) set\<close> where
-\<open>partial_span 0 S = {0}\<close>|
-\<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+  \<open>partial_span 0 S = {0}\<close>|
+  \<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
 
 definition finite_dimensional::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> bool\<close> where
-\<open>finite_dimensional S = (\<exists> n. Rep_linear_space S = partial_span n (Rep_linear_space S))\<close>
+  \<open>finite_dimensional S = (\<exists> n. Rep_linear_space S = partial_span n (Rep_linear_space S))\<close>
 
 definition dim::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> nat\<close> where
-\<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
+  \<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
 
 term \<open>dim S = (if S=0 then 0 else 1)\<close>
 
@@ -1534,7 +1535,7 @@ next
     hence \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
       by simp
     then obtain a t y where \<open>x = t + a *\<^sub>C y\<close> and \<open>t \<in> partial_span n S\<close>
-          and \<open>y \<in> S\<close>
+      and \<open>y \<in> S\<close>
       by blast
     have \<open>t \<in> complex_vector.span S\<close>
       using Suc.IH \<open>t \<in> partial_span n S\<close> by auto
@@ -1665,7 +1666,7 @@ lemma scaleC_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
   shows \<open>\<forall> t. t \<in> partial_span n S \<longrightarrow> c *\<^sub>C t \<in> partial_span n S\<close>
 proof(induction n)
-case 0
+  case 0
   thus ?case
     by simp 
 next
@@ -1679,7 +1680,7 @@ next
     hence \<open>\<exists> a x y. x \<in> partial_span n S \<and> y \<in> S \<and> t = x + a *\<^sub>C y\<close>
       by blast
     then obtain a x y where \<open>x \<in> partial_span n S\<close> and \<open>y \<in> S\<close> 
-              and \<open>t = x + a *\<^sub>C y\<close> by blast
+      and \<open>t = x + a *\<^sub>C y\<close> by blast
     from \<open>t = x + a *\<^sub>C y\<close>
     have \<open>c *\<^sub>C t = c *\<^sub>C (x + a *\<^sub>C y)\<close>
       by blast
@@ -1700,7 +1701,7 @@ lemma partial_linear_manifold:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>S \<noteq> {}\<close>
   shows \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
-  proof
+proof
   show "x + y \<in> (\<Union>n. partial_span n S)"
     if "x \<in> (\<Union>n. partial_span n S)"
       and "y \<in> (\<Union>n. partial_span n S)"
@@ -1711,7 +1712,7 @@ lemma partial_linear_manifold:
       using that by auto
     then obtain n where \<open>x \<in> partial_span n S\<close>
       by blast                    
-   have \<open>\<exists> n. y \<in> partial_span n S\<close>
+    have \<open>\<exists> n. y \<in> partial_span n S\<close>
       using that by auto
     then obtain m where \<open>y \<in> partial_span m S\<close>
       by blast                    
@@ -1746,7 +1747,7 @@ lemma is_subspace_I:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes \<open>is_linear_manifold S\<close>
   shows \<open>is_subspace (closure S )\<close>
-  proof
+proof
   show "x + y \<in> closure S"
     if "x \<in> closure S"
       and "y \<in> closure S"
@@ -1806,7 +1807,7 @@ qed
 proposition partial_span_lim:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes  \<open>S \<noteq> {}\<close>
-shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
+  shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
 proof
   show "closure (complex_vector.span S) \<subseteq> closure (\<Union>n. partial_span n S)"
   proof-
@@ -1835,8 +1836,8 @@ proof
 qed
 
 lemma equal_span_0_n:
-fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
-shows \<open>\<forall> x::'a.
+  fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
+  shows \<open>\<forall> x::'a.
 x \<in> partial_span n S \<longrightarrow>
  bounded_clinear f \<longrightarrow>
 (\<forall> t \<in> S. f t = 0) \<longrightarrow> 
@@ -1872,11 +1873,11 @@ next
     moreover have \<open>f y = 0\<close>
       using \<open>y \<in> S\<close>  \<open>\<forall> t \<in> S. f t = 0\<close>  by blast
     moreover have  \<open>f x = f t + f (a *\<^sub>C y)\<close>
-       using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
-       unfolding bounded_clinear_def clinear_def Modules.additive_def by simp    
+      using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
+      unfolding bounded_clinear_def clinear_def Modules.additive_def by simp    
     hence  \<open>f x = f t + a *\<^sub>C f y\<close>
       using \<open>bounded_clinear f\<close>  
-       unfolding bounded_clinear_def clinear_def clinear_axioms_def by simp
+      unfolding bounded_clinear_def clinear_def clinear_axioms_def by simp
     ultimately show ?thesis by simp
   qed
   thus ?case by blast
@@ -1887,7 +1888,7 @@ lemma equal_span_0:
     and S::\<open>'a set\<close> and x::'a
   assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>f x = 0\<close>
-(* 
+    (* 
 Proof in general case: Modules.thy \<rightarrow> eq_0_on_span
 *)
   thm complex_vector.span_induct
@@ -1907,7 +1908,7 @@ proof -
     by metis
   hence \<open>\<forall> k. f (y k) = 0\<close>
     using assms(1) assms(2) equal_span_0_n by blast
-   have \<open>isCont f x\<close>
+  have \<open>isCont f x\<close>
     using \<open>bounded_clinear f\<close>
     by (simp add: bounded_linear_continuous)
   hence  \<open>(\<lambda> k. f (y k)) \<longlonglongrightarrow> f x\<close>
@@ -2020,7 +2021,7 @@ qed
 
 
 chapter \<open>Chaos\<close>
-(* These are the results that I have not assimilated yet *)
+  (* These are the results that I have not assimilated yet *)
 
 
 

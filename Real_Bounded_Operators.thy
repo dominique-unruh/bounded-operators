@@ -7,7 +7,7 @@ Authors:
 Several definitions of convergence of families of operators.
 
 Main results:
-- rbounded: Definition of real bounded operators. Instantiation as a Banach space.
+- rbounded: Definition of real bounded operators. Instantiation as a real Banach space.
 
 - completeness_real_bounded: A Cauchy sequence of real bounded operators converges.
 
@@ -70,12 +70,12 @@ proof
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>0 + a = a\<close>
     apply transfer by simp
- 
+
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>-a + a = 0\<close>
     apply transfer
     by simp
- 
+
   fix a b :: \<open>('a, 'b) rbounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer
@@ -926,7 +926,7 @@ proof-
 qed
 
 
-instantiation rbounded :: ("{real_normed_vector, perfect_space}", banach) "banach"
+instantiation rbounded :: (real_normed_vector, banach) "banach"
 begin
 instance
   apply intro_classes
