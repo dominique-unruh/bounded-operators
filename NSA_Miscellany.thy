@@ -270,18 +270,27 @@ qed
 
 
 lemma inv_hSuc_Infinite_Infinitesimal:
- \<open>N\<in>HNatInfinite \<Longrightarrow> inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
+  \<open>N\<in>HNatInfinite \<Longrightarrow> inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
 proof-
   assume \<open>N\<in>HNatInfinite\<close>
-    have \<open>\<forall> n. n < Suc n\<close>
-      by auto
-    hence \<open>\<forall> n. n < hSuc n\<close>
-      by StarDef.transfer
-    hence \<open>N < hSuc N\<close>
-      by blast
-    hence \<open>hSuc N \<in> HNatInfinite\<close>
-      using \<open>N\<in>HNatInfinite\<close> HNatInfinite_upward_closed dual_order.strict_implies_order by blast
-    thus ?thesis
-      by simp
-  qed
+  have \<open>\<forall> n. n < Suc n\<close>
+    by auto
+  hence \<open>\<forall> n. n < hSuc n\<close>
+    by StarDef.transfer
+  hence \<open>N < hSuc N\<close>
+    by blast
+  hence \<open>hSuc N \<in> HNatInfinite\<close>
+    using \<open>N\<in>HNatInfinite\<close> HNatInfinite_upward_closed dual_order.strict_implies_order by blast
+  thus ?thesis
+    by simp
+qed
+
+
+
+definition starfun3 :: "('a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'd) \<Rightarrow> 'a star \<Rightarrow> 'b star \<Rightarrow> 'c star \<Rightarrow> 'd star"  (\<open>*f3* _\<close> [80] 80)
+  where "starfun3 f \<equiv> \<lambda>x y z. star_of f \<star> x \<star> y \<star> z"
+declare starfun3_def [StarDef.transfer_unfold]
+
+
+
 end
