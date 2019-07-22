@@ -7,8 +7,15 @@ Authors:
 Several definitions of convergence of families of operators.
 
 Main results:
-- completeness_real_bounded: A sufficient condition for the completeness of a sequence of
- bounded operators.
+- rbounded: Definition of real bounded operators. Instantiation as a Banach space.
+
+- completeness_real_bounded: A Cauchy sequence of real bounded operators converges.
+
+- oCauchy_uCauchy_iff: A sequence of bounded operators is Cauchy iff it is Cauchy uniformly on the
+ unit spehere.
+
+- onorm_ustrong_iff: A sequence of real bounded operators converges to L iff it converges to L
+ uniformly on the unit sphere.
 
 *)
 
@@ -21,9 +28,7 @@ theory Real_Bounded_Operators
     NSA_Miscellany
 begin
 
-section \<open>rbounded\<close>
-
-section \<open>Real bounded operators\<close>
+section \<open>Algebraic properties of real bounded operators\<close>
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
   = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
@@ -51,27 +56,31 @@ lift_definition minus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbound
 lift_definition scaleR_rbounded :: \<open>real \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
   is \<open>\<lambda> c. \<lambda> f. (\<lambda> x. c *\<^sub>R (f x))\<close>
   by (rule Real_Vector_Spaces.bounded_linear_const_scaleR)
-
 instance
 proof      
   fix a b c :: \<open>('a, 'b) rbounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
     apply transfer by auto
+
   fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
   show \<open>a + b = b + a\<close>
     apply transfer
     by (simp add: linordered_field_class.sign_simps(2))
+
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>0 + a = a\<close>
     apply transfer by simp
+ 
   fix a :: \<open>('a, 'b) rbounded\<close>
   show \<open>-a + a = 0\<close>
     apply transfer
     by simp
+ 
   fix a b :: \<open>('a, 'b) rbounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer
     by auto
+
   fix a::real and x y :: \<open>('a, 'b) rbounded\<close>
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
     apply transfer
@@ -153,21 +162,7 @@ proof-
     by auto
 qed
 
-
-section \<open>Pointwise convergence\<close>
-
-definition pointwise_convergence:: 
-  \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  where \<open>pointwise_convergence f l = ( \<forall> x. ( \<lambda> n. f n x ) \<longlonglongrightarrow> l x )\<close>
-
-abbreviation pointwise_convergence_abbr:: 
-  \<open>(nat \<Rightarrow> ('a::real_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  (\<open>((_)/ \<midarrow>strong\<rightarrow> (_))\<close> [60, 60] 60)
-  where \<open>f \<midarrow>strong\<rightarrow> l \<equiv> ( pointwise_convergence f l )\<close>
-
-
-section \<open>Relationships among the different kind of convergence\<close>
-
+section \<open>Topological properties of real bounded operators\<close>
 
 lemma hnorm_unit_sphere:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
