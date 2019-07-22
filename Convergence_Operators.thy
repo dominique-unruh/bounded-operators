@@ -945,84 +945,195 @@ proof-
     using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
 qed
 
+lemma onorm_strong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> and x::'a
+  assumes \<open>f \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda>n. (Rep_rbounded (f n)) x) \<longlonglongrightarrow> (Rep_rbounded l) x\<close>
+proof-
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda>n. (Rep_rbounded (f n)) x)) N \<approx> star_of ((Rep_rbounded l) x)\<close>
+    for N
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close>
+    show ?thesis 
+    proof(cases \<open>x = 0\<close>)
+      case True
+      have \<open>(Rep_rbounded (f n)) x = 0\<close>
+        for n
+      proof-
+        have \<open>bounded_linear (Rep_rbounded (f n))\<close>
+          using Rep_rbounded by blast
+        thus ?thesis
+          using \<open>x = 0\<close>
+          by (simp add: linear_simps(3))          
+      qed
+      moreover have \<open>(Rep_rbounded l) x = 0\<close>
+      proof-
+        have \<open>bounded_linear (Rep_rbounded l)\<close>
+          using Rep_rbounded by blast
+        thus ?thesis 
+          using \<open>x = 0\<close>
+          by (simp add: linear_simps(3))          
+      qed
+      ultimately have \<open>(Rep_rbounded (f n)) x = (Rep_rbounded l) x\<close>
+        for n
+        by simp
+      hence \<open>star_of ((Rep_rbounded (f n)) x) = star_of ((Rep_rbounded l) x)\<close>
+        for n
+        by StarDef.transfer
+      hence \<open>(*f* (\<lambda> n. (Rep_rbounded (f n)) x)) N = star_of ((Rep_rbounded l) x)\<close>
+        by auto
+      thus ?thesis by auto 
+    next
+      case False
+      from \<open>f \<longlonglongrightarrow> l\<close>
+      have \<open>sphere 0 1: (\<lambda>n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> (Rep_rbounded l)\<close>
+        using onorm_ustrong by blast
+      hence \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> (*f2* (\<lambda>n. Rep_rbounded (f n))) N t \<approx> (*f* (Rep_rbounded l)) t\<close>
+        for t
+        using \<open>N \<in> HNatInfinite\<close> nsupointwise_convergence_D sphere_iff by blast
+      moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s*(sphere 0 1)\<close>
+      proof-
+        have \<open>(x /\<^sub>R norm x) \<in> (sphere 0 1)\<close>
+          using False unfolding sphere_def by auto
+        thus ?thesis by StarDef.transfer
+      qed
+      ultimately have \<open>(*f2* (\<lambda>n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x)) 
+          \<approx> (*f* (Rep_rbounded l)) (star_of (x /\<^sub>R norm x))\<close>
+        by blast
+      hence \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x)) ) 
+          \<approx> (*f2* scaleR) (star_of (norm x)) ( (*f* (Rep_rbounded l)) (star_of (x /\<^sub>R norm x)) )\<close>
+        using approx_scaleR2 star_scaleR_def starfun2_star_of
+        by metis
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. Rep_rbounded (f n) x)) N\<close>
+      proof-
+        have \<open>bounded_linear (Rep_rbounded (f n))\<close>
+          for n
+          using Rep_rbounded by auto          
+        hence \<open>\<forall> N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. Rep_rbounded (f n))) N ( (x /\<^sub>R norm x)) )
+          = ( (\<lambda>n. Rep_rbounded (f n) x)) N\<close>
+        proof -
+          have f1: "Rep_rbounded (f v0_0) (x /\<^sub>R norm x) = Rep_rbounded (f v0_0) x /\<^sub>R norm x"
+            using \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5) by blast
+          obtain nn :: nat where
+            "(\<exists>v0. norm x *\<^sub>R Rep_rbounded (f v0) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f v0) x) = (norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f nn) x)"
+            by meson
+          moreover
+          { assume "norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f nn) x"
+            then have "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+              by (metis \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5))
+            moreover
+            { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
+              moreover
+              { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                moreover
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                  moreover
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                    moreover
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                      moreover
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                        moreover
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x))"
+                            then have "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x)"
+                              using vector_fraction_eq_iff by blast
+                            then have "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                              using f1
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded (f nn) x /\<^sub>R norm x) = Rep_rbounded (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> scaleR_cong_right by blast  }
+                          then have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                            by fastforce }
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                          by fastforce }
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                        by auto }
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                      by auto }
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                    by auto }
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                  by fastforce }
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+                by (simp add: inverse_eq_divide) }
+            ultimately have "norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) = Rep_rbounded (f nn) x"
+              using f1
+              by (simp add: \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5))  }
+          ultimately show ?thesis
+            by meson
+        qed       
+        hence  \<open>\<forall> N. (*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. Rep_rbounded (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. Rep_rbounded (f n) x)) N\<close>
+          by StarDef.transfer
+        thus ?thesis by blast
+      qed
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f* (Rep_rbounded l)) (star_of (x /\<^sub>R norm x)) )
+            = star_of (Rep_rbounded l x)\<close> 
+      proof-
+        have \<open>bounded_linear (Rep_rbounded l)\<close>
+          using Rep_rbounded by auto          
+        hence \<open>( scaleR) ( (norm x)) ( ( (Rep_rbounded l)) ( (x /\<^sub>R norm x)) )
+            =  (Rep_rbounded l x)\<close>
+        proof -
+          have f1: "Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x"
+            by (meson \<open>bounded_linear (Rep_rbounded l)\<close> linear_simps(5))
+          { assume "norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) \<noteq> Rep_rbounded l x"
+            then have "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+              by (metis \<open>bounded_linear (Rep_rbounded l)\<close> linear_simps(5))
+            moreover
+            { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
+              moreover
+              { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                moreover
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                  moreover
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                    moreover
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                      moreover
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                        moreover
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x))"
+                            then have "(1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (Rep_rbounded l x /\<^sub>R norm x) = norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x)"
+                              using vector_fraction_eq_iff by blast
+                            then have "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                              using f1 by fastforce }
+                          then have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                            by fastforce }
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                          by force }
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                        by simp }
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                      by simp }
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                    by simp }
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                  by fastforce }
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x"
+                by auto }
+            ultimately have ?thesis
+              using f1 by auto }
+          then show ?thesis
+            by metis
+        qed          
+        thus ?thesis by StarDef.transfer
+      qed
+      ultimately show ?thesis by simp
+    qed
+  qed
+  hence  \<open>(\<lambda>n. (Rep_rbounded (f n)) x) \<longlonglongrightarrow>\<^sub>N\<^sub>S (Rep_rbounded l) x\<close>
+    by (simp add: NSLIMSEQ_I)
+  thus ?thesis
+    by (simp add: NSLIMSEQ_LIMSEQ)
+qed
 
 
 chapter \<open>Chaos\<close>
 
 
-lemma onorm_strong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
-  assumes \<open>\<forall>n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>f \<midarrow>onorm\<rightarrow> l\<close>
-  shows \<open>f \<midarrow>strong\<rightarrow> l\<close>
-proof-
-  have \<open>(\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0\<close>
-    for x
-  proof-
-    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N. dist (norm (f n x - l x)) 0 < e\<close>
-      for e::real
-    proof-
-      assume \<open>e > 0\<close>
-      have \<open>\<exists> N. \<forall> n \<ge> N. norm (f n x - l x) < e\<close>
-      proof-
-        have \<open>norm (f n x - l x) \<le> onorm (\<lambda> t. f n t - l t) * norm x\<close>
-          for n::nat
-          using assms(1) assms(2) bounded_linear_sub onorm by blast                          
-        moreover have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda> t. f n t - l t) * norm x < e\<close>
-        proof(cases \<open>norm x = 0\<close>)
-          case True
-          thus ?thesis
-            by (simp add: \<open>0 < e\<close>) 
-        next
-          case False
-          hence \<open>norm x > 0\<close>
-            by simp
-          have \<open>\<exists> N. \<forall> n \<ge> N. onorm (\<lambda> t. f n t - l t) < e/norm x\<close>
-          proof-
-            from \<open>f \<midarrow>onorm\<rightarrow> l\<close>
-            have \<open>(\<lambda> n. onorm (\<lambda> t. f n t - l t)) \<longlonglongrightarrow> 0\<close>
-              unfolding onorm_convergence_def
-              by blast
-            moreover have \<open>e / norm x > 0\<close>
-              using \<open>e > 0\<close> \<open>norm x > 0\<close> by simp
-            ultimately have \<open>\<exists> N. \<forall> n\<ge>N. norm ((\<lambda> n. onorm (\<lambda> t. f n t - l t)) n ) < e / norm x\<close>
-              by (simp add: LIMSEQ_iff) 
-            then obtain N where \<open>\<forall> n\<ge>N. norm ((\<lambda> n. onorm (\<lambda> t. f n t - l t)) n ) < e / norm x\<close>
-              by blast
-            hence \<open>\<forall> n\<ge>N. norm ( onorm (\<lambda> t. f n t - l t ) ) < e / norm x\<close>
-              by blast
-            have \<open>\<forall> n\<ge>N.  onorm (\<lambda> t. f n t - l t ) < e / norm x\<close>
-            proof-
-              have \<open>onorm (\<lambda> t. f n t - l t ) \<ge> 0\<close>
-                for n
-                by (simp add: assms(1) assms(2) bounded_linear_sub onorm_pos_le)                
-              thus ?thesis using  \<open>\<forall> n\<ge>N. norm ( onorm (\<lambda> t. f n t - l t ) ) < e / norm x\<close>
-                by simp
-            qed
-            thus ?thesis by blast
-          qed
-          thus ?thesis using \<open>norm x > 0\<close>
-          proof -
-            { fix nn :: "nat \<Rightarrow> nat"
-              have ff1: "\<forall>r ra. (ra::real) * r = r * ra \<or> ra = 0"
-                by auto
-              have "\<forall>r ra rb. (((rb::real) = 0 \<or> rb * ra < r) \<or> \<not> ra < r / rb) \<or> \<not> 0 < rb"
-                by (metis (no_types) linordered_comm_semiring_strict_class.comm_mult_strict_left_mono nonzero_mult_div_cancel_left times_divide_eq_right)
-              hence "\<exists>n. \<not> n \<le> nn n \<or> onorm (\<lambda>a. f (nn n) a - l a) * norm x < e"
-                using ff1 by (metis (no_types) False \<open>0 < norm x\<close> \<open>\<exists>N. \<forall>n\<ge>N. onorm (\<lambda>t. f n t - l t) < e / norm x\<close>) }
-            thus ?thesis
-              by (metis (no_types))
-          qed  
-        qed
-        ultimately show ?thesis by smt
-      qed
-      thus ?thesis
-        by auto 
-    qed
-    thus ?thesis
-      by (simp add: LIMSEQ_I) 
-  qed
-  thus ?thesis unfolding pointwise_convergence_def by blast
-qed
 
 lemma pointwise_convergence_pointwise: 
   \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
