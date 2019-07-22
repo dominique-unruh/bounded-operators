@@ -11,7 +11,7 @@ Main results:
 
 
 theory Bounded_Operators
-  imports Complex_Inner_Product Real_Bounded_Operators HOL.Real_Vector_Spaces
+  imports Complex_Inner_Product Real_Bounded_Operators
 
 begin
 
@@ -235,13 +235,125 @@ proof intro_classes
 qed
 end
 
-(* TODO perfect_space probably not needed *)
-instantiation rbounded :: ("{real_normed_vector, perfect_space}", cbanach) "cbanach"
+instantiation rbounded :: (real_normed_vector, cbanach) "cbanach"
 begin
 instance..
 end
 
+
 section \<open>Complex bounded operators\<close>
+
+typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
+  = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
+  using bounded_clinear_zero by blast
+
+setup_lifting type_definition_bounded
+
+lift_definition rbounded_of_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
+\<Rightarrow> ('a,'b) rbounded\<close> is "id"
+  apply transfer apply auto
+  by (simp add: bounded_clinear.bounded_linear)
+
+lemma rbounded_of_bounded_inj:
+\<open>rbounded_of_bounded f = rbounded_of_bounded g \<Longrightarrow> f = g\<close>
+  by (metis Rep_bounded_inject rbounded_of_bounded.rep_eq)
+
+lemma rbounded_of_bounded_inv:
+\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists> g. rbounded_of_bounded g = f\<close>
+  apply transfer apply auto
+  by (simp add: bounded_linear_bounded_clinear)
+
+lemma rbounded_of_bounded_inv_uniq:
+\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists>! g. rbounded_of_bounded g = f\<close>
+  using rbounded_of_bounded_inv rbounded_of_bounded_inj
+  by blast
+
+lemma rbounded_of_bounded_prelim:
+\<open>\<forall> c. \<forall> x. Rep_rbounded (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rbounded_of_bounded g) x)\<close>
+  apply transfer
+  apply auto
+  by (simp add: bounded_clinear_def clinear.scaleC)
+
+
+definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
+('a, 'b) bounded\<close> where
+\<open>bounded_of_rbounded f = (THE g. rbounded_of_bounded g = f)\<close>
+
+lemma bounded_rbounded:
+\<open>bounded_of_rbounded (rbounded_of_bounded f) = f\<close>
+  by (simp add: bounded_of_rbounded_def rbounded_of_bounded_inj the_equality)
+
+lemma rbounded_bounded:
+\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x)
+ = c *\<^sub>C (Rep_rbounded f x)
+ \<Longrightarrow> rbounded_of_bounded (bounded_of_rbounded f) = f\<close> 
+  by (metis Abs_bounded_inverse Rep_rbounded Rep_rbounded_inject bounded_linear_bounded_clinear bounded_rbounded mem_Collect_eq rbounded_of_bounded.rep_eq)
+
+
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "group_add"
+begin
+definition zero_bounded::"('a,'b) bounded" 
+  where "zero_bounded = bounded_of_rbounded (0::('a,'b) rbounded)"
+
+definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  where "uminus_bounded f =  bounded_of_rbounded (- (rbounded_of_bounded f))"
+
+definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  where "plus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)+(rbounded_of_bounded g) )"
+
+definition minus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  where "minus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)-(rbounded_of_bounded g) )"
+
+lemma bounded_of_rbounded_plus:
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+    and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
+  shows \<open>bounded_of_rbounded (f + g) = bounded_of_rbounded f + bounded_of_rbounded g\<close>
+  using assms
+  by (simp add: plus_bounded_def rbounded_bounded) 
+
+instance
+  proof
+  show "(a::('a, 'b) bounded) + b + c = a + (b + c)"
+    for a :: "('a, 'b) bounded"
+      and b :: "('a, 'b) bounded"
+      and c :: "('a, 'b) bounded"
+  proof -
+    have f1: "\<forall>r ra. ((\<exists>c a. Rep_rbounded r (c *\<^sub>C (a::'a)) \<noteq> c *\<^sub>C (Rep_rbounded r a::'b)) \<or> (\<exists>c a. Rep_rbounded ra (c *\<^sub>C a) \<noteq> c *\<^sub>C Rep_rbounded ra a)) \<or> bounded_of_rbounded (r + ra) = bounded_of_rbounded r + bounded_of_rbounded ra"
+      using bounded_of_rbounded_plus by blast
+    obtain cc :: "('a, 'b) rbounded \<Rightarrow> complex" and aa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
+      "\<forall>x0. (\<exists>v2 v3. Rep_rbounded x0 (v2 *\<^sub>C v3) \<noteq> v2 *\<^sub>C Rep_rbounded x0 v3) = (Rep_rbounded x0 (cc x0 *\<^sub>C aa x0) \<noteq> cc x0 *\<^sub>C Rep_rbounded x0 (aa x0))"
+      by moura
+    then obtain cca :: "('a, 'b) rbounded \<Rightarrow> complex" and aaa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
+      f2: "\<forall>r ra. (Rep_rbounded r (cca r *\<^sub>C aaa r) \<noteq> cca r *\<^sub>C Rep_rbounded r (aaa r) \<or> Rep_rbounded ra (cc ra *\<^sub>C aa ra) \<noteq> cc ra *\<^sub>C Rep_rbounded ra (aa ra)) \<or> bounded_of_rbounded (r + ra) = bounded_of_rbounded r + bounded_of_rbounded ra"
+      using f1 by simp
+    then have "bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b + rbounded_of_bounded c) = bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b) + bounded_of_rbounded (rbounded_of_bounded c)"
+      by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
+    then have f3: "bounded_of_rbounded (rbounded_of_bounded a + (rbounded_of_bounded b + rbounded_of_bounded c)) = a + b + c"
+      by (simp add: Bounded_Operators.plus_bounded_def bounded_rbounded ordered_field_class.sign_simps(1))
+    have "bounded_of_rbounded (rbounded_of_bounded a) + bounded_of_rbounded (rbounded_of_bounded b + rbounded_of_bounded c) = a + (b + c)"
+      by (simp add: Bounded_Operators.plus_bounded_def bounded_rbounded)
+    then show ?thesis
+      using f3 f2 by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
+  qed
+        
+  show "(0::('a, 'b) bounded) + a = a"
+    for a :: "('a, 'b) bounded"
+    sorry
+  show "(a::('a, 'b) bounded) + 0 = a"
+    for a :: "('a, 'b) bounded"
+    sorry
+  show "- (a::('a, 'b) bounded) + a = 0"
+    for a :: "('a, 'b) bounded"
+    sorry
+  show "(a::('a, 'b) bounded) + - b = a - b"
+    for a :: "('a, 'b) bounded"
+      and b :: "('a, 'b) bounded"
+    sorry
+qed
+
+end
+
+chapter \<open>Chaos\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) cbounded
   = \<open>{f :: ('a, 'b) rbounded. \<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) }\<close>
@@ -259,9 +371,6 @@ proof -
 qed
 
 setup_lifting type_definition_cbounded
-
-lift_definition ev_cbounded :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded \<Rightarrow> 'a \<Rightarrow> 'b\<close> 
-  is \<open>\<lambda> f. \<lambda> x. Rep_rbounded f x\<close>.
 
 instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
 begin
@@ -289,31 +398,39 @@ proof
   fix a b c :: \<open>('a, 'b) cbounded\<close>
   show \<open>a + b + c = a + (b + c)\<close>
     apply transfer by simp
+
   fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded\<close>
   show \<open>a + b = b + a\<close>
     apply transfer by simp
+
   fix a :: \<open>('a, 'b) cbounded\<close>
   show \<open>0 + a = a\<close>
     apply transfer by simp
+ 
   fix a :: \<open>('a, 'b) cbounded\<close>
   show \<open>-a + a = 0\<close>
     apply transfer
     by simp
+ 
   fix a b :: \<open>('a, 'b) cbounded\<close>
   show \<open>a - b = a + - b\<close>
     apply transfer by simp
+ 
   fix a::real and x y :: \<open>('a, 'b) cbounded\<close>
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
     apply transfer
     by (simp add: scaleR_add_right)
+
   fix a b :: real and x :: \<open>('a, 'b) cbounded\<close>
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
     apply transfer
     by (simp add: scaleR_add_left)
+ 
   fix a b :: real and x :: \<open>('a, 'b) cbounded\<close>
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
     apply transfer
     by simp
+ 
   fix x :: \<open>('a, 'b) cbounded\<close>
   show \<open>1 *\<^sub>R x = x\<close>
     apply transfer
@@ -470,7 +587,7 @@ proof-
 qed
 
 lemma rbounded_SEQ_scaleC:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{complex_normed_vector, perfect_space}, 'b::cbanach) rbounded\<close> 
+  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
     and l :: \<open>('a, 'b) rbounded\<close>
   assumes \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded (f n) x\<close>
     and \<open>f \<longlonglongrightarrow> l\<close> 
