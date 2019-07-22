@@ -12,7 +12,7 @@ Main results:
 
 *)
 
-theory Convergence_Operators
+theory Real_Bounded_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
@@ -168,21 +168,6 @@ abbreviation pointwise_convergence_abbr::
 
 section \<open>Relationships among the different kind of convergence\<close>
 
-(*
-definition onorm_convergence::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  where \<open>onorm_convergence f l = ( ( \<lambda> n. onorm (\<lambda> x. f n x - l x) ) \<longlonglongrightarrow> 0 )\<close>
-
-abbreviation onorm_convergence_abbr::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>'b::real_normed_vector)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>  (\<open>((_)/ \<midarrow>onorm\<rightarrow> (_))\<close> [60, 60] 60)
-  where \<open>f \<midarrow>onorm\<rightarrow> l \<equiv> ( onorm_convergence f l )\<close>
-
-definition oCauchy::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)) \<Rightarrow> bool\<close>
-  where \<open>oCauchy f = ( \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. onorm (\<lambda>x. f m x - f n x) < e )\<close>
-
-*)
-
 
 lemma hnorm_unit_sphere:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
@@ -291,7 +276,7 @@ proof-
     hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. Rep_rbounded (g n m))) N M x )\<close>
     using assms by (rule hnorm_unit_sphere_double)
   then obtain x where \<open>x \<in> *s* (sphere 0 1)\<close> and
-        \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. Rep_rbounded (g n m))) N M x )\<close>
+    \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. Rep_rbounded (g n m))) N M x )\<close>
     by blast
   have \<open>\<forall> N M. hnorm ((*f2* g) N M) = hnorm ( (*f* f) N - (*f* f) M )\<close>
   proof-
@@ -321,7 +306,7 @@ proof-
     thus ?thesis unfolding g_def by blast
   qed
   ultimately show ?thesis using \<open>x \<in> *s* (sphere 0 1)\<close> 
-        \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. Rep_rbounded (g n m))) N M x )\<close>
+      \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. Rep_rbounded (g n m))) N M x )\<close>
     by auto
 qed
 
@@ -534,7 +519,7 @@ qed
 proposition oCauchy_uCauchy_iff:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
   shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
-  proof
+proof
   show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. Rep_rbounded (f n))"
     if "Cauchy f"
     using that
@@ -878,7 +863,7 @@ proof-
            norm (Rep_rbounded (f N) x - Rep_rbounded l x)
            \<le> onorm (\<lambda> t. Rep_rbounded (f N) t - Rep_rbounded l t)\<close>
         for N x
-      by (metis (no_types) mult.commute mult.left_neutral onorm)
+        by (metis (no_types) mult.commute mult.left_neutral onorm)
       moreover have \<open> (\<lambda> t. Rep_rbounded (f N) t - Rep_rbounded l t) = Rep_rbounded (f N - l)\<close>
         for N
         apply transfer
@@ -916,7 +901,7 @@ proposition onorm_ustrong_iff:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
     and l::\<open>('a, 'b) rbounded\<close> 
   shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l\<close>
-  proof
+proof
   show "sphere 0 1: (\<lambda>n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l"
     if "f \<longlonglongrightarrow> l"
     using that
@@ -944,6 +929,14 @@ proof-
   thus ?thesis 
     using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
 qed
+
+
+instantiation rbounded :: ("{real_normed_vector, perfect_space}", banach) "banach"
+begin
+instance
+  apply intro_classes
+  using completeness_real_bounded convergentI by auto
+end
 
 lemma onorm_strong:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
@@ -1128,57 +1121,6 @@ proof-
     by (simp add: NSLIMSEQ_I)
   thus ?thesis
     by (simp add: NSLIMSEQ_LIMSEQ)
-qed
-
-
-chapter \<open>Chaos\<close>
-
-
-
-lemma pointwise_convergence_pointwise: 
-  \<open>f \<midarrow>strong\<rightarrow> F \<Longrightarrow> (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-  for x
-proof-
-  assume  \<open>f \<midarrow>strong\<rightarrow> F\<close>
-  hence  \<open>( \<lambda> n. norm ((f n) x - F x))  \<longlonglongrightarrow> 0\<close>
-    unfolding pointwise_convergence_def
-    by blast
-  have \<open>( \<lambda> n. (F x) )  \<longlonglongrightarrow> F x\<close>
-    by simp
-  moreover have  \<open>( \<lambda> n. ( (f n) x - F x))  \<longlonglongrightarrow> 0\<close>
-    using  \<open>( \<lambda> n. norm ((f n) x - F x) )  \<longlonglongrightarrow> 0\<close>
-    by (simp add:  tendsto_norm_zero_iff)
-  ultimately have  \<open>( \<lambda> n. (f n) x)  \<longlonglongrightarrow> F x\<close>
-    by (rule Limits.Lim_transform)
-  thus ?thesis by blast
-qed
-
-
-lemma onorm_uniq:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> and \<open>bounded_linear s\<close> 
-    and \<open>f \<midarrow>onorm\<rightarrow>l\<close> and \<open>f \<midarrow>onorm\<rightarrow>s\<close>
-  shows \<open>l = s\<close>
-proof-
-  have \<open>l x = s x\<close>
-    for x
-  proof-
-    have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> l x\<close>
-    proof-
-      have \<open>f \<midarrow>strong\<rightarrow>l\<close>
-        by (simp add: assms(1) assms(2) assms(4) onorm_strong)
-      thus ?thesis  by (simp add: pointwise_convergence_pointwise)
-    qed
-    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> s x\<close>
-    proof-
-      have \<open>f \<midarrow>strong\<rightarrow>s\<close>
-        by (simp add: assms(1) assms(3) assms(5) onorm_strong)
-      thus ?thesis by (simp add: pointwise_convergence_pointwise)
-    qed
-    ultimately show ?thesis
-      using LIMSEQ_unique by blast 
-  qed
-  thus ?thesis by blast
 qed
 
 
