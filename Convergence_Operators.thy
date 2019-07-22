@@ -530,6 +530,22 @@ next
     by (simp add: NSCauchy_Cauchy_iff) 
 qed
 
+
+proposition oCauchy_uCauchy_iff:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
+  proof
+  show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. Rep_rbounded (f n))"
+    if "Cauchy f"
+    using that
+    by (simp add: oCauchy_uCauchy) 
+  show "Cauchy f"
+    if "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. Rep_rbounded (f n))"
+    using that
+    by (simp add: uCauchy_oCauchy) 
+qed
+
+
 lemma uCauchy_ustrong:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
   assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
@@ -836,6 +852,80 @@ proof-
   thus ?thesis by blast
 qed  
 
+lemma onorm_ustrong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> 
+  assumes \<open>f \<longlonglongrightarrow> l\<close>
+  shows \<open>(sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l\<close>
+proof-
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow>
+       (*f2* (\<lambda> n. Rep_rbounded (f n))) N x \<approx> (*f* (Rep_rbounded l)) x\<close>
+    for N and x
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close> and \<open>x \<in> *s* (sphere 0 1)\<close>
+    have \<open>(*f* f) N \<approx> (star_of l)\<close>
+      using \<open>f \<longlonglongrightarrow> l\<close> \<open>N\<in>HNatInfinite\<close>
+      by (simp add: LIMSEQ_NSLIMSEQ_iff NSLIMSEQ_D)
+    hence \<open>hnorm ( (*f* f) N - (star_of l) ) \<in> Infinitesimal\<close>
+      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )
+                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+    proof-
+      have \<open>bounded_linear (\<lambda> t. Rep_rbounded (f N) t - Rep_rbounded l t)\<close>
+        for N
+        using Rep_rbounded bounded_linear_sub by auto        
+      hence \<open>norm x = 1 \<Longrightarrow>
+           norm (Rep_rbounded (f N) x - Rep_rbounded l x)
+           \<le> onorm (\<lambda> t. Rep_rbounded (f N) t - Rep_rbounded l t)\<close>
+        for N x
+      by (metis (no_types) mult.commute mult.left_neutral onorm)
+      moreover have \<open> (\<lambda> t. Rep_rbounded (f N) t - Rep_rbounded l t) = Rep_rbounded (f N - l)\<close>
+        for N
+        apply transfer
+        by auto
+      ultimately have \<open>norm x = 1 \<Longrightarrow>
+           norm (Rep_rbounded (f N) x - Rep_rbounded l x)
+           \<le> onorm (Rep_rbounded (f N - l))\<close>
+        for N x
+        by simp
+      hence \<open>\<forall> N. \<forall> x. x \<in>  (sphere 0 1) \<longrightarrow> 
+         norm ( ( (\<lambda> n. Rep_rbounded (f n))) N x - ( (Rep_rbounded l)) x )
+                \<le> norm ( ( f) N - ( l) )\<close>
+        unfolding norm_rbounded_def
+        by auto
+      hence \<open>\<forall> N. \<forall> x. x \<in> *s* (sphere 0 1) \<longrightarrow> 
+         hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )
+                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+        by StarDef.transfer
+      thus ?thesis using \<open>x\<in>*s* (sphere 0 1)\<close> by blast
+    qed
+    moreover have \<open>0 \<le> hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )\<close>
+      by simp      
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. Rep_rbounded (f n))) N x - (*f* (Rep_rbounded l)) x )
+            \<in> Infinitesimal\<close>
+      using Infinitesimal_interval2 by blast
+    thus ?thesis
+      by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff) 
+  qed
+  hence \<open>(sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l\<close>
+    by (simp add: nsupointwise_convergence_I sphere_iff)    
+  thus ?thesis by blast
+qed
+
+proposition onorm_ustrong_iff:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> 
+  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l\<close>
+  proof
+  show "sphere 0 1: (\<lambda>n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l"
+    if "f \<longlonglongrightarrow> l"
+    using that
+    using onorm_ustrong by blast 
+  show "f \<longlonglongrightarrow> l"
+    if "sphere 0 1: (\<lambda>n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded l"
+    using that
+    by (simp add: that ustrong_onorm) 
+qed
 
 theorem completeness_real_bounded:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
@@ -848,7 +938,7 @@ proof-
     using oCauchy_uCauchy  \<open>Cauchy f\<close> by blast
   hence \<open>\<exists> L. sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded L\<close>
     using uCauchy_ustrong
-    by blast 
+    by blast
   then obtain L where \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded L\<close>
     by blast
   thus ?thesis 
@@ -859,20 +949,6 @@ qed
 
 chapter \<open>Chaos\<close>
 
-
-proposition oCauchy_uCauchy_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> 
-  shows \<open>oCauchy f \<longleftrightarrow> uCauchy f\<close>
-proof
-  show "uCauchy f"
-    if "oCauchy f"
-    using that
-    by (simp add: assms oCauchy_uCauchy) 
-  show "oCauchy f"
-    if "uCauchy f"
-    by (meson assms onorm_oCauchy that uCauchy_ustrong ustrong_onorm)
-qed
 
 lemma onorm_strong:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a \<Rightarrow> 'b\<close>
@@ -992,35 +1068,6 @@ proof-
       using LIMSEQ_unique by blast 
   qed
   thus ?thesis by blast
-qed
-
-proposition onorm_ustrong_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> and \<open>bounded_linear l\<close> 
-  shows \<open>(f \<midarrow>onorm\<rightarrow>l) \<longleftrightarrow> (f \<midarrow>ustrong\<rightarrow>l)\<close>
-    (* TODO: use simpler proof from whiteboard, gets rid of banach *)
-proof
-  show "f \<midarrow>ustrong\<rightarrow> l"
-    if "f \<midarrow>onorm\<rightarrow> l"
-  proof-
-    have \<open>oCauchy f\<close>
-      using assms(1) assms(2) onorm_oCauchy that by auto      
-    hence \<open>uCauchy f\<close>
-      by (simp add: assms(1) oCauchy_uCauchy)
-    hence \<open>\<exists> s. bounded_linear s \<and> f \<midarrow>ustrong\<rightarrow> s\<close>
-      by (simp add: assms(1) uCauchy_ustrong)
-    then obtain s where  \<open>bounded_linear s\<close> and \<open>f \<midarrow>ustrong\<rightarrow> s\<close>
-      by blast
-    have \<open>f \<midarrow>onorm\<rightarrow> s\<close>
-      using  \<open>bounded_linear s\<close>  \<open>\<And> n. bounded_linear (f n)\<close>
-      by (simp add: ustrong_onorm \<open>f \<midarrow>ustrong\<rightarrow> s\<close>)
-    hence \<open>l = s\<close> 
-      using onorm_uniq  \<open>f \<midarrow>onorm\<rightarrow> l\<close> \<open>bounded_linear s\<close> assms(1) assms(2) by blast 
-    thus ?thesis using \<open>f \<midarrow>ustrong\<rightarrow> s\<close> by blast
-  qed
-  show "f \<midarrow>onorm\<rightarrow> l"
-    if "f \<midarrow>ustrong\<rightarrow> l"
-    using ustrong_onorm \<open>\<And> n. bounded_linear (f n)\<close> \<open>bounded_linear l\<close> that by auto
 qed
 
 
