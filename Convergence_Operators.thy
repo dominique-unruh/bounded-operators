@@ -696,31 +696,28 @@ proof-
 qed  
 
 
+theorem completeness_real_bounded:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
+  assumes \<open>Cauchy f\<close>
+  shows \<open>\<exists> L. f \<longlonglongrightarrow> L\<close>
+proof-
+  have  \<open>\<And> n. bounded_linear (Rep_rbounded (f n))\<close>
+    using Rep_rbounded by auto
+  hence \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. Rep_rbounded (f n))\<close>
+    using oCauchy_uCauchy  \<open>Cauchy f\<close> by blast
+  hence \<open>\<exists> L. sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded L\<close>
+    using uCauchy_ustrong
+    by blast 
+  then obtain L where \<open>sphere 0 1: (\<lambda> n. Rep_rbounded (f n)) \<midarrow>uniformly\<rightarrow> Rep_rbounded L\<close>
+    by blast
+  thus ?thesis 
+    using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
+qed
 
 
 
 chapter \<open>Chaos\<close>
 
-
-theorem completeness_real_bounded:
-  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector} \<Rightarrow> 'b::banach)\<close>
-  assumes \<open>\<And>n. bounded_linear (f n)\<close> and \<open>oCauchy f\<close>
-  shows \<open>\<exists> l. bounded_linear l \<and> f \<midarrow>onorm\<rightarrow> l\<close>
-proof-
-  have \<open>uCauchy f\<close>
-    using oCauchy_uCauchy \<open>oCauchy f\<close> \<open>\<And> n. bounded_linear (f n)\<close> by blast
-  hence \<open>\<exists> l. bounded_linear l \<and> f \<midarrow>ustrong\<rightarrow> l\<close>
-    using \<open>\<And> n. bounded_linear (f n)\<close>
-      uCauchy_ustrong
-    by auto
-  then obtain l where \<open>bounded_linear l\<close> and \<open>f \<midarrow>ustrong\<rightarrow> l\<close> 
-    by blast
-  have \<open>(\<lambda>n. onorm (\<lambda>x. f n x - l x)) \<longlonglongrightarrow> 0\<close>
-    using  \<open>f \<midarrow>ustrong\<rightarrow> l\<close> \<open>bounded_linear l\<close> assms(1) onorm_convergence_def ustrong_onorm 
-    by blast
-  thus ?thesis
-    unfolding onorm_convergence_def using \<open>bounded_linear l\<close> by blast
-qed
 
 lemma onorm_oCauchy:
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> and l::\<open>'a\<Rightarrow>'b\<close>
