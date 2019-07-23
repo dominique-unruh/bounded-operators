@@ -33,7 +33,7 @@ proof
   assume \<open>bounded_linear f\<close>
   show \<open>c *\<^sub>C f (r *\<^sub>R b) = r *\<^sub>R (c *\<^sub>C f b)\<close>
     by (simp add: \<open>bounded_linear f\<close> linear_simps(5) scaleR_scaleC)
- 
+
   fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close>
   assume \<open>bounded_linear f\<close>
   show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
@@ -255,21 +255,21 @@ lift_definition rbounded_of_bounded::\<open>('a::complex_normed_vector, 'b::comp
   by (simp add: bounded_clinear.bounded_linear)
 
 lemma rbounded_of_bounded_inj:
-\<open>rbounded_of_bounded f = rbounded_of_bounded g \<Longrightarrow> f = g\<close>
+  \<open>rbounded_of_bounded f = rbounded_of_bounded g \<Longrightarrow> f = g\<close>
   by (metis Rep_bounded_inject rbounded_of_bounded.rep_eq)
 
 lemma rbounded_of_bounded_inv:
-\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists> g. rbounded_of_bounded g = f\<close>
+  \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists> g. rbounded_of_bounded g = f\<close>
   apply transfer apply auto
   by (simp add: bounded_linear_bounded_clinear)
 
 lemma rbounded_of_bounded_inv_uniq:
-\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists>! g. rbounded_of_bounded g = f\<close>
+  \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) \<Longrightarrow> \<exists>! g. rbounded_of_bounded g = f\<close>
   using rbounded_of_bounded_inv rbounded_of_bounded_inj
   by blast
 
 lemma rbounded_of_bounded_prelim:
-\<open>\<forall> c. \<forall> x. Rep_rbounded (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rbounded_of_bounded g) x)\<close>
+  \<open>\<forall> c. \<forall> x. Rep_rbounded (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rbounded_of_bounded g) x)\<close>
   apply transfer
   apply auto
   by (simp add: bounded_clinear_def clinear.scaleC)
@@ -277,32 +277,34 @@ lemma rbounded_of_bounded_prelim:
 
 definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
 ('a, 'b) bounded\<close> where
-\<open>bounded_of_rbounded f = (THE g. rbounded_of_bounded g = f)\<close>
+  \<open>bounded_of_rbounded f = (THE g. rbounded_of_bounded g = f)\<close>
 
 lemma bounded_rbounded:
-\<open>bounded_of_rbounded (rbounded_of_bounded f) = f\<close>
+  \<open>bounded_of_rbounded (rbounded_of_bounded f) = f\<close>
   by (simp add: bounded_of_rbounded_def rbounded_of_bounded_inj the_equality)
 
 lemma rbounded_bounded:
-\<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x)
+  \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x)
  = c *\<^sub>C (Rep_rbounded f x)
  \<Longrightarrow> rbounded_of_bounded (bounded_of_rbounded f) = f\<close> 
   by (metis Abs_bounded_inverse Rep_rbounded Rep_rbounded_inject bounded_linear_bounded_clinear bounded_rbounded mem_Collect_eq rbounded_of_bounded.rep_eq)
 
 
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "group_add"
+instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
 definition zero_bounded::"('a,'b) bounded" 
   where "zero_bounded = bounded_of_rbounded (0::('a,'b) rbounded)"
 
-definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  where "uminus_bounded f =  bounded_of_rbounded (- (rbounded_of_bounded f))"
+lemma rbounded_of_bounded_zero:
+  \<open>rbounded_of_bounded 0 = 0\<close>
+  by (simp add: Bounded_Operators.zero_bounded_def rbounded_bounded zero_rbounded.rep_eq)
+
+lemma bounded_of_rbounded_zero:
+  \<open>bounded_of_rbounded 0 = 0\<close>
+  by (simp add: zero_bounded_def)
 
 definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where "plus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)+(rbounded_of_bounded g) )"
-
-definition minus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  where "minus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)-(rbounded_of_bounded g) )"
 
 lemma bounded_of_rbounded_plus:
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
@@ -311,9 +313,92 @@ lemma bounded_of_rbounded_plus:
   using assms
   by (simp add: plus_bounded_def rbounded_bounded) 
 
+lemma rbounded_of_bounded_plus:
+  \<open>rbounded_of_bounded (f + g) = rbounded_of_bounded f + rbounded_of_bounded g\<close>
+  by (simp add: plus_bounded_def plus_rbounded.rep_eq rbounded_bounded rbounded_of_bounded_prelim scaleC_add_right)
+
+definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  where "uminus_bounded f =  bounded_of_rbounded (- (rbounded_of_bounded f))"
+
+lemma rbounded_of_bounded_uminus:
+  \<open>rbounded_of_bounded (- f) = - (rbounded_of_bounded f) \<close>
+  by (simp add: rbounded_bounded rbounded_of_bounded_prelim uminus_bounded_def uminus_rbounded.rep_eq)
+
+lemma bounded_of_rbounded_uminus:
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+  shows  \<open>bounded_of_rbounded (- f) = - (bounded_of_rbounded f)\<close>
+  using assms
+  by (simp add: rbounded_bounded uminus_bounded_def)
+
+definition minus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  where "minus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)-(rbounded_of_bounded g) )"
+
+lemma bounded_of_rbounded_minus:
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+    and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
+  shows \<open>bounded_of_rbounded (f - g) = bounded_of_rbounded f - bounded_of_rbounded g\<close>
+  using assms
+  by (simp add: minus_bounded_def rbounded_bounded) 
+
+lemma rbounded_of_bounded_minus:
+  \<open>rbounded_of_bounded (f - g) = rbounded_of_bounded f - rbounded_of_bounded g\<close>
+  by (metis (mono_tags, lifting) bounded_rbounded minus_bounded_def pth_2 rbounded_of_bounded_plus rbounded_of_bounded_uminus)
+
+definition scaleC_bounded :: \<open>complex \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+  where "scaleC_bounded c f =  bounded_of_rbounded ( c *\<^sub>C (rbounded_of_bounded f) )"
+
+lemma bounded_of_rbounded_scaleC:
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+  shows \<open>bounded_of_rbounded ( c *\<^sub>C f ) = c *\<^sub>C (bounded_of_rbounded f)\<close>
+  using assms
+  by (simp add: rbounded_bounded scaleC_bounded_def)
+
+lemma rbounded_of_bounded_scaleC:
+  \<open>rbounded_of_bounded ( c *\<^sub>C f ) = c *\<^sub>C (rbounded_of_bounded f)\<close>
+proof -
+  obtain cc :: "('a, 'b) rbounded \<Rightarrow> complex" and aa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
+    "\<forall>r. Rep_rbounded r (cc r *\<^sub>C aa r) \<noteq> cc r *\<^sub>C Rep_rbounded r (aa r) \<or> rbounded_of_bounded (bounded_of_rbounded r) = r"
+    using rbounded_bounded by moura
+  then show ?thesis
+    by (simp add: rbounded_of_bounded_prelim scaleC_bounded_def scaleC_rbounded.rep_eq)
+qed
+
+definition scaleR_bounded :: \<open>real \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+  where "scaleR_bounded c f =  bounded_of_rbounded ( c *\<^sub>R (rbounded_of_bounded f) )"
+
+lemma bounded_of_rbounded_scaleR:
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+  shows \<open>bounded_of_rbounded ( c *\<^sub>R f ) = c *\<^sub>R (bounded_of_rbounded f)\<close>
+  using assms
+  by (simp add: rbounded_bounded scaleR_bounded_def)
+
+lemma rbounded_of_bounded_scaleR:
+  \<open>rbounded_of_bounded ( c *\<^sub>R f ) = c *\<^sub>R (rbounded_of_bounded f)\<close>
+  using Rep_rbounded Rep_rbounded_inverse linear_simps(5) mem_Collect_eq rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scaleC_rbounded.rep_eq scaleR_bounded_def scaleR_rbounded.rep_eq
+  by smt 
+
+lemma bounded_of_rbounded_Abs_rbounded:
+  \<open>bounded_of_rbounded ( Abs_rbounded (Rep_bounded f) ) = f\<close>
+  by (metis Quotient_bounded Quotient_rel_rep Rep_bounded_inverse bounded_rbounded rbounded_of_bounded.abs_eq)
+
+definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
+  where \<open>norm_bounded f = norm (rbounded_of_bounded f)\<close>
+
+definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
+  where \<open>dist_bounded f g = dist (rbounded_of_bounded f) (rbounded_of_bounded g)\<close>
+
+definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+  where \<open>sgn_bounded f =  bounded_of_rbounded ( sgn (rbounded_of_bounded f))\<close>
+
+definition uniformity_bounded :: \<open>( ('a, 'b) bounded \<times> ('a, 'b) bounded ) filter\<close>
+  where \<open>uniformity_bounded = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) bounded) y < e})\<close>
+
+definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool\<close>
+  where \<open>open_bounded U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) bounded) = x \<longrightarrow> y \<in> U)\<close>
+
 instance
-  proof
-  show "(a::('a, 'b) bounded) + b + c = a + (b + c)"
+proof
+  show \<open>a + b + c = a + (b + c)\<close>
     for a :: "('a, 'b) bounded"
       and b :: "('a, 'b) bounded"
       and c :: "('a, 'b) bounded"
@@ -335,703 +420,305 @@ instance
     then show ?thesis
       using f3 f2 by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
   qed
-        
-  show "(0::('a, 'b) bounded) + a = a"
+
+  show \<open>(0::('a, 'b) bounded) + a = a\<close>
     for a :: "('a, 'b) bounded"
-    sorry
-  show "(a::('a, 'b) bounded) + 0 = a"
-    for a :: "('a, 'b) bounded"
-    sorry
-  show "- (a::('a, 'b) bounded) + a = 0"
-    for a :: "('a, 'b) bounded"
-    sorry
-  show "(a::('a, 'b) bounded) + - b = a - b"
+    unfolding plus_bounded_def
+    by (simp add: bounded_rbounded rbounded_of_bounded_zero) 
+
+  show \<open>a + b = b + a\<close>
     for a :: "('a, 'b) bounded"
       and b :: "('a, 'b) bounded"
-    sorry
-qed
+    by (simp add: add.commute plus_bounded_def)
 
-end
+  show \<open>- a + a = 0\<close>
+    for a :: "('a, 'b) bounded"
+    by (simp add: Bounded_Operators.plus_bounded_def Bounded_Operators.rbounded_of_bounded_uminus zero_bounded_def)
 
-chapter \<open>Chaos\<close>
-
-typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) cbounded
-  = \<open>{f :: ('a, 'b) rbounded. \<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x) }\<close>
-proof -
-  { have "bounded_linear (\<lambda> _::'a. 0::'b)"
-      by simp    
-    moreover have "(\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
-      by simp   
-    ultimately have "bounded_linear (\<lambda> _::'a. 0::'b) \<and> (\<forall>c x.  (\<lambda> _::'a. 0::'b) (c *\<^sub>C (x::'a)) = c *\<^sub>C ( (\<lambda> _::'a. 0::'b) x::'b))"
-      by blast } note 1 = this 
-  show ?thesis
-    apply transfer
-    apply auto
-    by (metis 1)
-qed
-
-setup_lifting type_definition_cbounded
-
-instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "real_vector"
-begin
-lift_definition uminus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded"
-  is "\<lambda> f. - f"
-  by (simp add:  uminus_rbounded.rep_eq)
-
-lift_definition zero_cbounded :: "('a,'b) cbounded" is "0"
-  by (simp add:  zero_rbounded.rep_eq)
-
-lift_definition plus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded" is
-  \<open>\<lambda> f g. f + g\<close>
-  by (simp add:  plus_rbounded.rep_eq scaleC_add_right)
-
-lift_definition minus_cbounded :: "('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded \<Rightarrow> ('a,'b) cbounded" is
-  \<open>\<lambda> f g. f - g\<close>
-  by (simp add: complex_vector.scale_right_diff_distrib minus_rbounded.rep_eq)
-
-lift_definition scaleR_cbounded :: \<open>real \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
-  is \<open>\<lambda> c. \<lambda> f. c *\<^sub>R f\<close>
-  by (simp add:  scaleC_rbounded.rep_eq scaleR_scaleC)
-
-instance
-proof      
-  fix a b c :: \<open>('a, 'b) cbounded\<close>
-  show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by simp
-
-  fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded\<close>
-  show \<open>a + b = b + a\<close>
-    apply transfer by simp
-
-  fix a :: \<open>('a, 'b) cbounded\<close>
-  show \<open>0 + a = a\<close>
-    apply transfer by simp
- 
-  fix a :: \<open>('a, 'b) cbounded\<close>
-  show \<open>-a + a = 0\<close>
-    apply transfer
-    by simp
- 
-  fix a b :: \<open>('a, 'b) cbounded\<close>
   show \<open>a - b = a + - b\<close>
-    apply transfer by simp
- 
-  fix a::real and x y :: \<open>('a, 'b) cbounded\<close>
-  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
-    apply transfer
-    by (simp add: scaleR_add_right)
+    for a :: "('a, 'b) bounded"
+      and b :: "('a, 'b) bounded"
+    using minus_bounded_def plus_bounded_def rbounded_of_bounded_uminus by auto
 
-  fix a b :: real and x :: \<open>('a, 'b) cbounded\<close>
-  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
-    apply transfer
-    by (simp add: scaleR_add_left)
- 
-  fix a b :: real and x :: \<open>('a, 'b) cbounded\<close>
-  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
-    apply transfer
-    by simp
- 
-  fix x :: \<open>('a, 'b) cbounded\<close>
-  show \<open>1 *\<^sub>R x = x\<close>
-    apply transfer
-    by simp
-qed
-end
-
-instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "real_normed_vector"
-begin
-lift_definition norm_cbounded :: \<open>('a, 'b) cbounded \<Rightarrow> real\<close>
-  is \<open>\<lambda> f. norm f\<close>.
-
-lift_definition dist_cbounded :: \<open>('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> real\<close>
-  is \<open>\<lambda> f g. dist f g\<close>.
-
-lift_definition sgn_cbounded :: \<open>('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
-  is \<open>\<lambda> f. sgn f\<close>
-  apply transfer
-  by (simp add: scaleR_scaleC)
-
-lift_definition uniformity_cbounded :: \<open>( ('a, 'b) cbounded \<times> ('a, 'b) cbounded ) filter\<close>
-  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) cbounded), g). dist f g < e})\<close>.
-
-lift_definition open_cbounded :: \<open>(('a, 'b) cbounded) set \<Rightarrow> bool\<close>
-  is \<open>\<lambda> U::(('a, 'b) cbounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity)\<close>.
-
-instance
-  apply intro_classes
-  apply transfer 
-  apply auto
-  apply transfer 
-  apply auto
-  apply transfer 
-  apply (simp add: sgn_div_norm)
-  apply (simp add: uniformity_cbounded.transfer)
-  apply (metis (mono_tags, lifting)  open_cbounded.transfer)
-  apply (smt eventually_mono open_cbounded.transfer split_cong)
-  apply transfer
-  apply simp
-  apply transfer
-  apply simp
-  apply (smt add_diff_cancel_left' minus_cbounded.rep_eq norm_cbounded.rep_eq norm_triangle_ineq2)
-  apply transfer
-  by simp
-end
-
-
-instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "complex_vector"
-begin 
-lift_definition scaleC_cbounded :: \<open>complex \<Rightarrow> ('a, 'b) cbounded \<Rightarrow> ('a, 'b) cbounded\<close>
-  is \<open>\<lambda> c::complex. \<lambda> f::('a, 'b) rbounded. c *\<^sub>C f\<close> 
-  by (simp add: scaleC_rbounded.rep_eq)
-
-instance
-proof
-  show "((*\<^sub>R) r::('a, 'b) cbounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  show \<open>((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
     for r :: real
+    apply transfer
+    unfolding scaleR_bounded_def  rbounded_of_bounded_def
+    apply auto
   proof
-    fix x::\<open>('a, 'b) cbounded\<close>
-    show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
-      apply transfer
-      by (simp add: scaleR_scaleC)
+    show "bounded_of_rbounded (r *\<^sub>R Abs_rbounded (Rep_bounded (f::('a, 'b) bounded))) = complex_of_real r *\<^sub>C f"
+      for r :: real
+        and f :: "('a, 'b) bounded"
+    proof-
+      have \<open>bounded_of_rbounded (r *\<^sub>R Abs_rbounded (Rep_bounded f))
+        = r *\<^sub>R bounded_of_rbounded (Abs_rbounded (Rep_bounded f))\<close>
+        by (metis Bounded_Operators.scaleR_bounded_def Rep_rbounded_inverse bounded_of_rbounded_Abs_rbounded rbounded_of_bounded.rep_eq)
+      moreover have \<open>bounded_of_rbounded (Abs_rbounded (Rep_bounded f)) = f\<close>
+        by (simp add: bounded_of_rbounded_Abs_rbounded)
+      ultimately show ?thesis
+        by (simp add: Bounded_Operators.scaleC_bounded_def Bounded_Operators.scaleR_bounded_def scaleR_scaleC)
+    qed
   qed
-  show "a *\<^sub>C ((x::('a, 'b) cbounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
+
+  show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     for a :: complex
-      and x :: "('a, 'b) cbounded"
-      and y :: "('a, 'b) cbounded"
-    apply transfer
-    by (simp add: scaleC_add_right)
-  show "(a + b) *\<^sub>C (x::('a, 'b) cbounded) = a *\<^sub>C x + b *\<^sub>C x"
-    for a :: complex
-      and b :: complex
-      and x :: "('a, 'b) cbounded"
-    apply transfer
-    by (simp add: scaleC_add_left)
-  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) cbounded) = (a * b) *\<^sub>C x"
+      and x :: "('a, 'b) bounded"
+      and y :: "('a, 'b) bounded"
+    by (metis (mono_tags) plus_bounded_def rbounded_of_bounded_plus rbounded_of_bounded_scaleC scaleC_add_right scaleC_bounded_def)
+
+  show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) cbounded"
-    apply transfer
+      and x :: "('a, 'b) bounded"
+    by (metis (mono_tags) plus_bounded_def rbounded_of_bounded_scaleC scaleC_bounded_def scaleC_left.add)
+
+  show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) bounded"
+    using rbounded_of_bounded_scaleC scaleC_bounded_def by auto
+
+  show \<open>1 *\<^sub>C x = x\<close>
+    for x :: "('a, 'b) bounded"
+    by (simp add: Bounded_Operators.scaleC_bounded_def bounded_rbounded)
+
+  show \<open>dist x y = norm (x - y)\<close>
+    for x :: "('a, 'b) bounded"
+      and y :: "('a, 'b) bounded"
+    by (simp add: dist_bounded_def dist_norm norm_bounded_def rbounded_of_bounded_minus)
+
+  show \<open>sgn x = (inverse (norm x)) *\<^sub>R x\<close>
+    for x :: "('a, 'b) bounded"
+    by (simp add: norm_bounded_def scaleR_bounded_def sgn_bounded_def sgn_div_norm)
+
+  show \<open>uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) bounded) y < e})\<close>
+    by (simp add: Bounded_Operators.uniformity_bounded_def)
+
+  show \<open>open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) bounded) = x \<longrightarrow> y \<in> U)\<close>
+    for U :: "('a, 'b) bounded set"
+    by (simp add: Bounded_Operators.open_bounded_def)
+
+  show \<open>(norm x = 0) = (x = 0)\<close>
+    for x :: "('a, 'b) bounded"
+  proof -
+    have f1: "bounded_of_rbounded (0::('a, 'b) rbounded) = 0"
+      by (simp add: zero_bounded_def)
+    { assume "x \<noteq> 0"
+      then have "x \<noteq> 0 \<and> bounded_of_rbounded 0 \<noteq> x"
+        using f1 by meson
+      then have ?thesis
+        by (metis bounded_rbounded norm_bounded_def norm_zero zero_less_norm_iff) }
+    then show ?thesis
+      using Bounded_Operators.rbounded_of_bounded_zero norm_bounded_def by auto
+  qed
+
+  show \<open>norm (x + y) \<le> norm x + norm y\<close>
+    for x :: "('a, 'b) bounded"
+      and y :: "('a, 'b) bounded"
+    by (simp add: norm_bounded_def norm_triangle_ineq rbounded_of_bounded_plus)
+
+  show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
+    for a :: complex
+      and x :: "('a, 'b) bounded"
+    using norm_bounded_def rbounded_of_bounded_scaleC by auto    
+
+  show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
+    for a :: real
+      and x :: "('a, 'b) bounded"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x a. norm (a *\<^sub>C x) = cmod a * norm (x::('a, 'b) bounded)\<close>
+      of_real_mult
     by simp
-  show "1 *\<^sub>C (x::('a, 'b) cbounded) = x"
-    for x :: "('a, 'b) cbounded"
-    apply transfer
-    using scaleC_one by blast
-qed  
-end
 
-instantiation cbounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
-begin
-instance
-  apply intro_classes
-  apply transfer
-  by simp
-end
+  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x +  a *\<^sub>R y\<close>
+    for a :: real
+      and x y :: "('a, 'b) bounded"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x y a. a *\<^sub>C (x + y) = a *\<^sub>C x +  a *\<^sub>C (y::('a, 'b) bounded)\<close>
+      of_real_mult
+    by simp
 
-lemma scaleC_continuous:
-  fixes c :: complex
-  shows \<open>continuous_on UNIV (((*\<^sub>C) c)::('a::complex_normed_vector \<Rightarrow> 'a))\<close>
-proof-
-  have \<open>0 < r \<Longrightarrow>
-           \<exists>s>0. \<forall>xa. xa \<noteq> x \<and> dist xa x < s \<longrightarrow> dist (c *\<^sub>C xa) (c *\<^sub>C x) < r\<close>
-    for x::'a and r::real
-  proof-
-    assume \<open>0 < r\<close>
-    show ?thesis 
-    proof(cases \<open>c = 0\<close>)
-      case True
-      thus ?thesis
-        using \<open>0 < r\<close> by auto 
-    next
-      case False
-      hence \<open>c \<noteq> 0\<close>
-        by blast
-      hence \<open>cmod c > 0\<close>
-        by simp
-      hence  \<open>inverse (cmod c) > 0\<close>
-        by simp
-      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm (y - x) < r/(cmod c)\<close>
-      proof-
-        have \<open> r/(cmod c) > 0\<close>
-          using \<open>r > 0\<close> and \<open>cmod c > 0\<close>
-          by simp
-        moreover have \<open>y \<noteq> x \<Longrightarrow> norm (y - x) < r/(cmod c) \<Longrightarrow> norm (y - x) < r/(cmod c)\<close>
-          for y
-          by blast
-        ultimately show ?thesis
-          by blast 
-      qed
-      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> (cmod c) * norm (y - x) < r\<close>
-        using  \<open>cmod c > 0\<close>
-        by (simp add: linordered_field_class.pos_less_divide_eq ordered_field_class.sign_simps)        
-      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm (c *\<^sub>C (y - x)) < r\<close>
-        by simp       
-      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> norm (y - x) < s \<longrightarrow> norm ((c *\<^sub>C y) - (c *\<^sub>C x)) < r\<close>
-        by (simp add: complex_vector.scale_right_diff_distrib)        
-      hence \<open>\<exists>s>0. \<forall>y. y \<noteq> x \<and> dist y x < s \<longrightarrow> dist (c *\<^sub>C y) (c *\<^sub>C x) < r\<close>
-        by (simp add: dist_norm)        
-      thus ?thesis by blast
-    qed
-  qed
-  thus ?thesis unfolding continuous_on LIM_def by blast
+  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x +  b *\<^sub>R x\<close>
+    for a b :: real
+      and x :: "('a, 'b) bounded"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. (a + b) *\<^sub>C (x::('a,'b) bounded) = a *\<^sub>C x +  b *\<^sub>C x\<close>
+      of_real_mult
+    by simp
+
+  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
+    for a b :: real
+      and x :: "('a, 'b) bounded"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. a *\<^sub>C b *\<^sub>C (x::('a, 'b) bounded) = (a * b) *\<^sub>C x\<close>
+      of_real_mult
+    by simp
+
+  show \<open>1 *\<^sub>R x = x\<close>
+    for x :: "('a, 'b) bounded"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x. 1 *\<^sub>C (x::('a, 'b) bounded) = x\<close> of_real_1
+    by simp
+
 qed
-lemma tendsto_scaleC:
-  fixes f :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> 
-    and l :: 'a and c :: complex
+
+end
+
+
+instantiation bounded :: (complex_normed_vector, cbanach) "cbanach"
+begin
+lemma rbounded_of_bounded_Cauchy:
+  assumes \<open>Cauchy f\<close>
+  shows \<open>Cauchy (\<lambda> n. rbounded_of_bounded (f n))\<close>
+  using assms unfolding Cauchy_def dist_bounded_def by auto
+
+lemma bounded_of_rbounded_Cauchy:
+  assumes \<open>Cauchy f\<close> and
+      \<open>\<And> n::nat. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f n) x)\<close>
+  shows \<open>Cauchy (\<lambda> n. bounded_of_rbounded (f n))\<close>
+  using assms  unfolding Cauchy_def dist_bounded_def
+  by (simp add: rbounded_bounded)
+
+lemma rbounded_of_bounded_lim:
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(\<lambda> n. c *\<^sub>C (f n)) \<longlonglongrightarrow>  c *\<^sub>C l\<close>
-proof-
-  have \<open>continuous_on UNIV (((*\<^sub>C) c)::('a\<Rightarrow>'a))\<close>
-    using scaleC_continuous by blast
-  thus ?thesis using  \<open>f \<longlonglongrightarrow> l\<close>
-    by (metis (full_types) UNIV_I continuous_on_def filterlim_compose tendsto_at_iff_tendsto_nhds) 
-qed
-
-lemma rbounded_SEQ_scaleC:
-  fixes f :: \<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
-    and l :: \<open>('a, 'b) rbounded\<close>
-  assumes \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded (f n) x\<close>
-    and \<open>f \<longlonglongrightarrow> l\<close> 
-  shows \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded l x\<close>
-proof-
-  have \<open>Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded l x\<close>
-    for c::complex and x::'a
+  shows \<open>(\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
+  proof
+  show "\<forall>\<^sub>F x in sequentially. dist (rbounded_of_bounded (f x)) (rbounded_of_bounded l) < e"
+    if "(0::real) < e"
+    for e :: real
   proof-
-    have  \<open>(\<lambda> n. Rep_rbounded (f n) p)  \<longlonglongrightarrow> Rep_rbounded l p\<close>
-      for p
-    proof-
-      from  \<open>f \<longlonglongrightarrow> l\<close>
-      have \<open>f\<midarrow>ONORM\<rightarrow>l\<close>
-        by (simp add: tendsto_ONORM)        
-      hence \<open>f\<midarrow>STRONG\<rightarrow>l\<close>
-      proof transfer
-        have \<open>\<And>f l. \<forall>x. bounded_linear (f x) \<Longrightarrow> bounded_linear l \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l
-             \<Longrightarrow> f \<midarrow>strong\<rightarrow> l\<close>
-          by (simp add: onorm_strong)
-        thus \<open>\<And>f l. pred_fun top bounded_linear f \<Longrightarrow>
-           bounded_linear l \<Longrightarrow> f \<midarrow>onorm\<rightarrow> l \<Longrightarrow> f \<midarrow>strong\<rightarrow> l\<close> by auto          
-      qed
-      thus ?thesis 
-      proof transfer
-        have \<open>\<And>f l p.
-       \<forall>x. bounded_linear (f x) \<Longrightarrow>
-       bounded_linear l \<Longrightarrow> \<forall>x. (\<lambda>n. norm (f n x - l x)) \<longlonglongrightarrow> 0 \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
-          by (simp add: LIM_zero_cancel tendsto_norm_zero_iff)
-        thus \<open>\<And>f l p.
-       pred_fun top bounded_linear f \<Longrightarrow>
-       bounded_linear l \<Longrightarrow> f \<midarrow>strong\<rightarrow> l \<Longrightarrow> (\<lambda>n. f n p) \<longlonglongrightarrow> l p\<close>
-          unfolding pointwise_convergence_def
-          by auto
-      qed
-    qed
-    hence \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close>
-      by blast
-    moreover have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x)) \<longlonglongrightarrow>  c *\<^sub>C Rep_rbounded l x\<close>
-    proof-
-      have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x))
-        = (\<lambda> n. c *\<^sub>C Rep_rbounded (f n) x)\<close>
-        using  \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded (f n) x\<close>
-        by auto
-      moreover have \<open>(\<lambda> n. c *\<^sub>C Rep_rbounded (f n) x)  \<longlonglongrightarrow>  c *\<^sub>C Rep_rbounded l x\<close>
-        using  \<open>\<And> p. (\<lambda> n. Rep_rbounded (f n) p)  \<longlonglongrightarrow> Rep_rbounded l p\<close>
-        by (simp add: tendsto_scaleC)
-      ultimately show ?thesis using LIMSEQ_unique by simp
-    qed
-    ultimately show ?thesis
-      using LIMSEQ_unique by blast 
+    from \<open>f \<longlonglongrightarrow> l\<close>
+    have \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
+      by (simp add: tendstoD that)
+    thus ?thesis 
+      unfolding dist_bounded_def by blast
   qed
-  thus ?thesis by blast
 qed
 
-instantiation cbounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach"
-begin
-instance
-proof intro_classes
-  {  fix f :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
-    assume \<open>Cauchy f\<close>
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (f m) (f n) < e\<close>
-      unfolding Cauchy_def
-      by blast
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. 
-    dist (Rep_cbounded (f m)) (Rep_cbounded (f n)) < e\<close>
-      apply transfer
-      by blast
-    hence \<open>Cauchy (\<lambda> n. (Rep_cbounded (f n)))\<close>
-      using Cauchy_altdef by force
-    hence \<open>convergent (\<lambda> n. (Rep_cbounded (f n)))\<close>
-      by (simp add: Cauchy_convergent_iff)
-    hence \<open>\<exists> l::('a, 'b) rbounded. 
-         (\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-      using convergentD by blast
-    then obtain l::\<open>('a, 'b) rbounded\<close>
-      where \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-      by blast
-    have \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) =
-                c *\<^sub>C Rep_rbounded l x \<close>
+lemma bounded_of_rbounded_complex_lim:
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close>
+  assumes  \<open>f \<longlonglongrightarrow> l\<close> and
+    \<open>\<And> n::nat. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f n) x)\<close> 
+  shows \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded l x)\<close>
+  proof-
+    have \<open>Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C Rep_rbounded l x\<close>
+    for c::complex and x
     proof-
-      have \<open>\<And> n. \<forall> c. \<forall> x. Rep_rbounded (Rep_cbounded (f n)) (c *\<^sub>C x)
-         = c *\<^sub>C Rep_rbounded (Rep_cbounded (f n)) x\<close>
-        apply transfer
+      have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close>
+        by (simp add: assms(1) onorm_strong)        
+      moreover have \<open>(\<lambda> n. c *\<^sub>C (Rep_rbounded (f n) x) ) \<longlonglongrightarrow> c *\<^sub>C (Rep_rbounded l x)\<close>
+      proof-
+        have \<open>isCont ((*\<^sub>C) c) y\<close>
+          for y::'b
+          using isCont_scaleC by auto
+        hence \<open>isCont ((*\<^sub>C) c) (Rep_rbounded l x)\<close>
+          by simp
+        thus ?thesis
+          using assms(1) isCont_tendsto_compose onorm_strong by blast 
+      qed
+      moreover have \<open>Rep_rbounded (f n) (c *\<^sub>C x) =  c *\<^sub>C (Rep_rbounded (f n) x)\<close>
+        for n
+        by (simp add: assms(2))
+      ultimately have \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> c *\<^sub>C (Rep_rbounded l x)\<close>
         by simp
       thus ?thesis
-        using \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-        by (rule rbounded_SEQ_scaleC)
+        using  \<open>(\<lambda> n. Rep_rbounded (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> Rep_rbounded l (c *\<^sub>C x)\<close> LIMSEQ_unique 
+        by blast
     qed
-    hence \<open>\<exists> L. Rep_cbounded L = l\<close>
-      apply transfer by blast
-    then obtain L::\<open>('a, 'b) cbounded\<close>
-      where \<open>Rep_cbounded L = l\<close> by blast
-    have \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> (Rep_cbounded L)\<close>
-      using \<open>Rep_cbounded L = l\<close>
-        \<open>(\<lambda> n. (Rep_cbounded (f n))) \<longlonglongrightarrow> l\<close>
-      by blast
-    hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. 
-    dist (Rep_cbounded (f n)) (Rep_cbounded L) < e\<close>
-      by (simp add: metric_LIMSEQ_D)
-    hence \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e\<close>
-      apply transfer by blast
-    hence \<open>f \<longlonglongrightarrow> L\<close>
-      by (simp add: metric_LIMSEQ_I)
-    hence \<open>convergent f\<close> 
-      unfolding convergent_def by blast } note 1 = this
+    thus ?thesis by blast
+qed  
 
-  fix X :: \<open>nat \<Rightarrow> ('a, 'b) cbounded\<close>
-  assume \<open>Cauchy X\<close>
-  thus \<open>convergent X\<close>
-    using 1 by blast  
+lemma bounded_of_rbounded_lim:
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close>
+  assumes  \<open>f \<longlonglongrightarrow> l\<close> and
+      \<open>\<And> n::nat. \<forall> c. \<forall> x. Rep_rbounded (f n) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f n) x)\<close>
+  shows \<open>(\<lambda> n. bounded_of_rbounded (f n)) \<longlonglongrightarrow> bounded_of_rbounded l\<close>
+proof
+  show "\<forall>\<^sub>F x in sequentially. dist (bounded_of_rbounded (f x)) (bounded_of_rbounded l) < e"
+    if "(0::real) < e"
+    for e :: real
+  proof-
+    from \<open>f \<longlonglongrightarrow> l\<close>
+    have \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
+      by (simp add: tendstoD that)
+    moreover have \<open>rbounded_of_bounded (bounded_of_rbounded (f n)) = f n\<close>
+      for n
+      by (simp add: assms(2) rbounded_bounded)
+    moreover have \<open>rbounded_of_bounded (bounded_of_rbounded l) = l\<close>
+    proof-
+      have \<open>\<forall> c. \<forall> x. Rep_rbounded l (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded l x)\<close>
+        using assms(1) assms(2) bounded_of_rbounded_complex_lim by blast        
+      thus ?thesis
+        by (simp add: rbounded_bounded) 
+    qed
+    ultimately show ?thesis 
+      unfolding dist_bounded_def
+      by simp  
+  qed    
 qed
 
-end
-
-
-section \<open>Flatten bounded operators\<close>
-
-typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
-  = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
-  using bounded_clinear_zero by blast
-
-setup_lifting type_definition_bounded
-
-lift_definition flatten:: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cbounded
- \<Rightarrow> ('a, 'b) bounded\<close>
-  is \<open>\<lambda> f.  (Rep_rbounded (Rep_cbounded f))\<close>
-  apply transfer
-  apply transfer
-  unfolding bounded_clinear_def bounded_clinear_axioms_def
-  apply auto
-  apply (simp add: clinearI linear_simps(1))
-  unfolding bounded_linear_def bounded_linear_axioms_def
-  by auto
-
-lift_definition unflatten:: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
-  \<Rightarrow> ('a, 'b) cbounded\<close>
-  is \<open>\<lambda> f.  (Abs_rbounded f)\<close>
-  apply transfer
-  unfolding bounded_clinear_def clinear_def clinear_axioms_def 
-  apply auto
-  using Abs_bounded_inverse apply auto
-  by (simp add: Abs_rbounded_inverse bounded_clinear.bounded_linear bounded_clinear.intro clinear.intro clinear_axioms.intro)
-
-lemma flatten_inj: \<open>flatten x = flatten y \<Longrightarrow> x = y\<close>
-  by (metis Rep_cbounded_inject Rep_rbounded_inject flatten.rep_eq)
-
-lemma unflatten_inv: \<open>flatten (unflatten x) = x\<close>
-  by (metis Abs_rbounded_inverse Rep_bounded Rep_bounded_inject bounded_clinear.bounded_linear flatten.rep_eq mem_Collect_eq unflatten.rep_eq)
-
-lemma flatten_inv: \<open>unflatten (flatten x) = x\<close>
-  by (simp add: flatten_inj unflatten_inv)
-
-lemma unflatten_inj: \<open>unflatten x = unflatten y \<Longrightarrow> x = y\<close>
-  by (metis unflatten_inv)
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "zero"
-begin
-definition zero_bounded::"('a,'b) bounded" 
-  where "zero_bounded = flatten (0::('a,'b) cbounded)"
-instance ..
+instance 
+proof
+  show "convergent f"
+    if "Cauchy f"
+    for f :: "nat \<Rightarrow> ('a, 'b) bounded"
+  proof-
+    have \<open>Cauchy (\<lambda> n. rbounded_of_bounded (f n))\<close>
+      by (simp add: rbounded_of_bounded_Cauchy that)
+    hence \<open>convergent (\<lambda> n. rbounded_of_bounded (f n))\<close>
+      by (simp add: Cauchy_convergent_iff)
+    hence \<open>\<exists> l. (\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
+      by (metis (no_types, lifting) Bounded_Operators.bounded_of_rbounded_complex_lim convergent_LIMSEQ_iff rbounded_bounded rbounded_of_bounded_prelim)
+    then obtain l where \<open>(\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
+      by blast
+    hence \<open>(\<lambda> n. bounded_of_rbounded (rbounded_of_bounded (f n))) \<longlonglongrightarrow> bounded_of_rbounded (rbounded_of_bounded l)\<close>
+      by (simp add: Bounded_Operators.bounded_of_rbounded_lim rbounded_of_bounded_prelim)
+    hence \<open>f \<longlonglongrightarrow> l\<close>
+      by (simp add: bounded_rbounded)
+    thus ?thesis
+      using convergent_def by blast 
+  qed
+qed
 end
 
 lemma zero_bounded_lift:
   \<open>Rep_bounded (0::('a, 'b) bounded) = (\<lambda> _::('a::complex_normed_vector). 0::('b::complex_normed_vector))\<close>
-  unfolding zero_bounded_def zero_cbounded_def zero_rbounded_def flatten_def
-  apply auto
-  by (metis Abs_rbounded_inverse bounded_linear_zero flatten.abs_eq flatten.rep_eq mem_Collect_eq zero_cbounded.abs_eq zero_cbounded.rep_eq zero_rbounded.abs_eq)
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uminus"
-begin
-definition uminus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
-  where "uminus_bounded f = flatten(-(unflatten f))"
-instance ..
-end
+  by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_zero zero_rbounded.rep_eq)
 
 lemma uminus_bounded_lift:
   \<open>Rep_bounded (- f) = (\<lambda> x. - (Rep_bounded f) x)\<close>
-  unfolding uminus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
-  apply auto
-  by (metis Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq uminus_cbounded.rep_eq uminus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "semigroup_add"
-begin
-definition plus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  where  \<open>plus_bounded f g = flatten ( unflatten f + unflatten g )\<close>
-instance
-  apply intro_classes
-  unfolding plus_bounded_def
-  by (simp add: ab_semigroup_add_class.add_ac(1) flatten_inv)
-end
+  by (metis (no_types, hide_lams) rbounded_of_bounded.rep_eq rbounded_of_bounded_uminus scaleC_minus1_left scaleC_rbounded.rep_eq)
 
 lemma plus_bounded_lift:
   \<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
-  unfolding plus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
-  apply auto
-  by (metis (no_types, hide_lams) Rep_cbounded_inverse flatten.abs_eq flatten.rep_eq plus_cbounded.rep_eq plus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "comm_monoid_add" begin
-instance
-proof
-  fix a b :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  show \<open>a + b = b + a\<close>
-    unfolding plus_bounded_def
-    by (simp add: add.commute)
-  fix a :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  show \<open>0 + a = a\<close>
-    unfolding plus_bounded_def
-    by (simp add: flatten_inv unflatten_inj zero_bounded_def)
-qed
-end
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "ab_group_add" begin
-definition minus_bounded :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
-  where \<open>minus_bounded f g = flatten (unflatten f - unflatten g)\<close>
-instance
-proof
-  fix a::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  show \<open>- a + a = 0\<close>
-    unfolding plus_bounded_def uminus_bounded_def
-    by (simp add: flatten_inv zero_bounded_def)    
-  fix a b::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  show \<open>a - b = a + - b\<close>
-    unfolding plus_bounded_def uminus_bounded_def minus_bounded_def
-    by (simp add: flatten_inv)
-qed
-end
+  unfolding plus_bounded_def
+  by (metis (no_types, hide_lams) plus_bounded_def plus_rbounded.rep_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_plus) 
 
 lemma minus_bounded_lift:
   \<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
-  unfolding minus_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
-  apply auto
-  by (metis (no_types, lifting) Abs_bounded_cases Abs_bounded_inverse Rep_cbounded_inverse flatten.rep_eq minus_cbounded.rep_eq minus_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
-
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_vector" begin
-definition scaleC_bounded :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  where \<open>scaleC_bounded r f = flatten (r *\<^sub>C unflatten f)\<close>
+  unfolding minus_bounded_def
+  by (metis (no_types, hide_lams) minus_bounded_def minus_rbounded.rep_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_minus)
 
 lemma scaleC_bounded_lift:
   \<open>Rep_bounded (c *\<^sub>C f) = (\<lambda> x. c *\<^sub>C (Rep_bounded f) x)\<close>
-  unfolding scaleC_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
-  apply auto
-  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse flatten.rep_eq scaleC_cbounded.rep_eq scaleC_rbounded.rep_eq unflatten.rep_eq unflatten_inv)
-
-
-definition scaleR_bounded :: "real \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  where \<open>scaleR_bounded r f = flatten (r *\<^sub>R unflatten f)\<close>
-instance
-  apply intro_classes
-proof 
-  fix r::real and x::\<open>('a, 'b) bounded\<close>
-  show \<open>r *\<^sub>R x = complex_of_real r *\<^sub>C x\<close>
-    unfolding scaleR_bounded_def
-    by (simp add: Bounded_Operators.scaleC_bounded_def scaleR_scaleC) 
-  fix a::complex and x y::\<open>('a, 'b) bounded\<close>
-  show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
-    unfolding scaleR_bounded_def plus_bounded_def
-    by (simp add: flatten_inv scaleC_add_right scaleC_bounded_def)
-  fix a b and x::\<open>('a, 'b) bounded\<close>
-  show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
-    unfolding scaleC_bounded_def plus_bounded_def
-    by (simp add: flatten_inv scaleC_add_left)
-  fix a b::complex and x :: \<open>('a, 'b) bounded\<close>
-  show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
-    unfolding scaleC_bounded_def plus_bounded_def
-    by (simp add: flatten_inv)
-  fix x::\<open>('a, 'b) bounded\<close>
-  show \<open>1 *\<^sub>C x = x\<close>
-    unfolding scaleC_bounded_def plus_bounded_def
-    by (simp add: unflatten_inv)
-qed
-end
+  unfolding scaleC_bounded_def
+  by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_scaleC scaleC_bounded_def scaleC_rbounded.rep_eq)
 
 lemma scaleR_bounded_lift:
   \<open>Rep_bounded (c *\<^sub>R f) = (\<lambda> x. c *\<^sub>R (Rep_bounded f) x)\<close>
-  unfolding scaleR_bounded_def zero_cbounded_def zero_rbounded_def flatten_def unflatten_def
-  apply auto
-  by (metis (no_types, hide_lams) flatten.abs_eq flatten.rep_eq map_fun_apply scaleR_cbounded.rep_eq scaleR_rbounded.rep_eq unflatten_def unflatten_inv)
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "dist_norm" begin
-definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
-  where \<open>norm_bounded f = norm (unflatten f)\<close>
-definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
-  where \<open>dist_bounded f g = (dist (unflatten f) (unflatten g))\<close>
-instance
-  apply intro_classes
-  unfolding norm_bounded_def dist_bounded_def
-  by (simp add: dist_norm flatten_inv minus_bounded_def) 
-end
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "sgn_div_norm" begin
-definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
-  where \<open>sgn_bounded f = flatten (sgn (unflatten f))\<close>
-instance
-  apply intro_classes
-  by (simp add: Bounded_Operators.sgn_bounded_def norm_bounded_def scaleR_bounded_def sgn_div_norm)
-end
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "uniformity_dist" begin
-lift_definition uniformity_bounded :: \<open>(('a, 'b) bounded \<times> ('a, 'b) bounded) filter\<close>
-  is \<open>(INF e:{0<..}. principal {((f::('a, 'b) bounded), g). dist f g < e})\<close>.
-instance
-  apply intro_classes
-  by (simp add: uniformity_bounded.transfer)
-end
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "open_uniformity" begin
-lift_definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool\<close>
-  is \<open>\<lambda> U::(('a, 'b) bounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity)\<close>.
-instance
-  apply intro_classes
-  apply auto
-  apply (metis (mono_tags, lifting) open_bounded.transfer)
-  by (smt case_prod_beta eventually_mono open_bounded.transfer)
-end
-
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector" begin
-instance
-  apply intro_classes
-  unfolding zero_bounded_def norm_bounded_def
-  apply (metis flatten_inv norm_zero unflatten_inv zero_less_norm_iff)
-  apply (simp add: flatten_inv norm_triangle_ineq plus_bounded_def)
-  apply (simp add: flatten_inv scaleR_bounded_def)
-  by (simp add: flatten_inv scaleC_bounded_def)
-end
-
-lemma unflatten_open:
-  \<open>open S \<Longrightarrow> open (unflatten ` S)\<close>
-  for S :: \<open>(('a::complex_normed_vector,'b::complex_normed_vector) bounded) set\<close>
-proof
-  show "\<exists>e>0. ball x e \<subseteq> unflatten ` S"
-    if "open S"
-      and "x \<in> unflatten ` S"
-    for x :: "('a, 'b) cbounded"
-  proof-
-    have \<open>flatten x \<in> S\<close>
-      by (metis image_iff that(2) unflatten_inv)
-    hence \<open>\<exists> e. e > 0 \<and> ball (flatten x) e \<subseteq>  S\<close>
-      using openE that(1) by blast
-    then obtain e::real where \<open>e > 0\<close> and \<open>ball (flatten x) e \<subseteq> S\<close>
-      by blast
-    have \<open>ball x e \<subseteq> unflatten ` S\<close>
-    proof-
-      have \<open>dist x y < e \<Longrightarrow> y \<in> unflatten ` S\<close>
-        for y
-        by (metis \<open>ball (flatten x) e \<subseteq> S\<close> dist_bounded_def flatten_inv image_iff mem_ball subset_eq)        
-      thus ?thesis
-        unfolding ball_def
-        by auto
-    qed
-    thus \<open>\<exists>e>0. ball x e \<subseteq> unflatten ` S\<close>
-      using \<open>0 < e\<close> by auto 
-  qed
-qed
-
-lemma flatten_convergent_lim:
-  fixes X :: \<open>nat \<Rightarrow> (('a::complex_normed_vector, 'b::complex_normed_vector) cbounded)\<close>
-    and L::\<open>('a,'b) cbounded\<close>
-  assumes \<open>X \<longlonglongrightarrow> L\<close>
-  shows \<open>(\<lambda> n. flatten (X n)) \<longlonglongrightarrow> flatten L\<close>
-proof-
-  have \<open>\<forall>S. open S \<longrightarrow> L \<in> S \<longrightarrow> (\<forall>\<^sub>F x in sequentially. X x \<in> S)\<close>
-    using \<open>X \<longlonglongrightarrow> L\<close>
-    unfolding convergent_def tendsto_def by blast
-  have \<open>open S \<Longrightarrow> flatten L \<in> S
-     \<Longrightarrow> \<forall>\<^sub>F n in sequentially. flatten (X n) \<in> S\<close>
-    for S
-  proof-
-    assume \<open>open S\<close> and \<open>flatten L \<in> S\<close>
-    have \<open>open (unflatten ` S)\<close>
-      using \<open>open S\<close> unflatten_open
-      by auto
-    moreover have \<open>unflatten (flatten L) \<in> (unflatten ` S)\<close>
-      using \<open>flatten L \<in> S\<close>
-      by simp
-    ultimately have \<open> \<forall>\<^sub>F n in sequentially. unflatten (flatten (X n)) \<in> (unflatten ` S)\<close>
-      by (simp add: \<open>\<forall>S. open S \<longrightarrow> L \<in> S \<longrightarrow> (\<forall>\<^sub>F n in sequentially. X n \<in> S)\<close> flatten_inv)
-    thus \<open>\<forall>\<^sub>F n in sequentially. flatten (X n) \<in> S\<close>
-      by (smt eventually_mono image_iff unflatten_inv) 
-  qed
-  thus \<open>(\<lambda> n. flatten (X n)) \<longlonglongrightarrow> flatten L\<close>
-    unfolding tendsto_def 
-    by blast    
-qed
-
-lemma flatten_convergent:
-  fixes X :: \<open>nat \<Rightarrow> (('a::complex_normed_vector, 'b::complex_normed_vector) cbounded)\<close>
-  assumes \<open>convergent X\<close>
-  shows \<open>convergent (\<lambda> n. flatten (X n))\<close>
-  using flatten_convergent_lim assms
-  unfolding convergent_def by blast
-
-instantiation bounded :: ("{complex_normed_vector, perfect_space}", cbanach) "cbanach" begin
-instance
-proof
-  fix X :: \<open>nat \<Rightarrow> ('a, 'b) bounded\<close>
-  assume \<open>Cauchy X\<close>
-  hence \<open> \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (X m) (X n) < e\<close>
-    unfolding Cauchy_def by blast
-  hence \<open> \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (unflatten (X m)) (unflatten (X n)) < e\<close>
-    unfolding dist_bounded_def
-    by blast
-  hence \<open>Cauchy (\<lambda> n. (unflatten (X n)))\<close>
-    using Cauchy_altdef2 by fastforce
-  hence \<open>convergent (\<lambda> n. (unflatten (X n)))\<close>
-    by (simp add: Cauchy_convergent_iff)
-  hence \<open>convergent (\<lambda> n. flatten (unflatten (X n)))\<close>
-    using flatten_convergent by blast
-  moreover have \<open>flatten (unflatten (X n)) = X n\<close>
-    for n
-    using unflatten_inv by auto    
-  ultimately have \<open>convergent (\<lambda> n. X n)\<close>
-    by simp
-  thus \<open>convergent X\<close>
-    by blast
-qed
-end
-
-section \<open>Adjoint\<close>
+  unfolding scaleR_bounded_def
+  by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_scaleR scaleR_bounded_def scaleR_rbounded.rep_eq)
 
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
   is Adj by (fact Adj_bounded_clinear)
 
-definition cadjoint :: "('a::chilbert_space,'b::chilbert_space) cbounded \<Rightarrow> ('b,'a) cbounded"
-  where \<open>cadjoint f = unflatten ( (flatten f)* )\<close>
-
-(* This lemma plays the role of lift_definition *)
-lemma cadjoint_Rep_Rep:
-  \<open>Rep_rbounded (Rep_cbounded (cadjoint f)) = Adj (Rep_rbounded (Rep_cbounded f))\<close>
-  unfolding cadjoint_def unflatten_def flatten_def apply auto
-  by (metis Abs_bounded_inverse Rep_bounded Rep_cbounded_inverse adjoint.rep_eq flatten.rep_eq unflatten.rep_eq unflatten_inv)
-
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
   shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
   apply transfer using Adj_I by blast
-
-lemma cadjoint_I:
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cbounded"
-  shows \<open>\<forall>x. \<forall>y. \<langle> Rep_rbounded(Rep_cbounded (cadjoint G)) x, y\<rangle>
-         = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
-  unfolding cadjoint_def using adjoint_I
-  by (metis flatten.rep_eq unflatten_inv) 
 
 lemma adjoint_D:
   fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
@@ -1040,81 +727,42 @@ lemma adjoint_D:
   shows \<open>F = G*\<close>
   using assms apply transfer using Adj_D by auto
 
-lemma cadjoint_D:
-  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cbounded\<close>
-    and F:: \<open>('a, 'b) cbounded\<close>
-  assumes \<open>\<And>x y. \<langle>(Rep_rbounded (Rep_cbounded F)) x, y\<rangle> 
-          = \<langle>x, (Rep_rbounded (Rep_cbounded G)) y\<rangle>\<close>
-  shows \<open>F = cadjoint G\<close>
-  unfolding cadjoint_def using adjoint_D
-  by (metis assms cadjoint_I cadjoint_def flatten.rep_eq flatten_inj)
-
 lemma adjoint_twice[simp]: "(U*)* = U" 
   for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
   apply transfer
   using dagger_dagger_id by blast
 
-lemma cadjoint_twice[simp]: "cadjoint (cadjoint U) = U" 
-  for U :: "('a::chilbert_space,'b::chilbert_space) cbounded"
-  by (simp add: cadjoint_def flatten_inv unflatten_inv)
-
 lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
   using id_bounded_clinear by blast
-
-definition cidOp::\<open>('a::complex_normed_vector, 'a) cbounded\<close> where
-  \<open>cidOp = unflatten (idOp)\<close>
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
 
-lemma cidOp_adjoint[simp]: "cadjoint cidOp = cidOp"
-  by (simp add: cadjoint_def cidOp_def unflatten_inv) 
-
-lemma scalar_times_adjc: "cadjoint (a *\<^sub>C A) = (cnj a) *\<^sub>C (cadjoint A)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) cbounded"
-    and a :: complex 
-proof-
-  {  fix a::complex and A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-    assume \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
-    hence \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close>
-      using scalar_times_adjc_flatten
-      by blast 
-    have \<open>((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) =  (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-    proof-
-      from \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close>
-      have  \<open>bounded_clinear A\<close>
-        using bounded_linear_bounded_clinear by blast
-      hence \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
-        by (simp add: Adj_bounded_clinear)
-      hence \<open>A\<^sup>\<dagger> \<in> {f. bounded_linear f}\<close>
-        apply auto
-        by (simp add: bounded_clinear.bounded_linear)      
-      hence \<open>Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) = A\<^sup>\<dagger>\<close>
-        using Abs_rbounded_inverse
-        by blast
-      thus ?thesis using \<open>(\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger> =  (\<lambda>x. cnj a *\<^sub>C  (A\<^sup>\<dagger>) x)\<close> by simp
-    qed
-    hence \<open>Abs_rbounded ((\<lambda>x. a *\<^sub>C A x)\<^sup>\<dagger>) = Abs_rbounded (\<lambda>x. cnj a *\<^sub>C Rep_rbounded (Abs_rbounded (A\<^sup>\<dagger>)) x)\<close>
-      using Abs_rbounded_inject by simp
-  } note 1 = this
-
-  show ?thesis 
-    unfolding cadjoint_def 
-    apply transfer
-    apply transfer
-    apply transfer
-    unfolding scaleC_rbounded_def
-    apply auto
-    apply (rule 1) 
-    by blast
-qed
-
-
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
     and a :: complex 
-  unfolding scaleC_bounded_def
-  by (metis (no_types, lifting) cadjoint_def scalar_times_adjc unflatten_inv)  
+proof-
+  have \<open>bounded_clinear ((Rep_bounded A))\<close>
+    using Rep_bounded by blast
+  hence \<open>(\<lambda> t. a *\<^sub>C ((Rep_bounded A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((Rep_bounded A)\<^sup>\<dagger>) s))\<close>
+    using scalar_times_adjc_flatten
+    unfolding bounded_clinear_def clinear_def clinear_axioms_def Modules.additive_def
+    by (simp add: scalar_times_adjc_flatten \<open>bounded_clinear (Rep_bounded A)\<close> bounded_clinear.bounded_linear)
+  moreover have \<open>Rep_bounded ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((Rep_bounded A) t))\<^sup>\<dagger>\<close>
+    unfolding Adj_def
+    apply auto
+    by (smt Adj_def Eps_cong adjoint.rep_eq cinner_scaleC_right scaleC_bounded_lift)
+  moreover have \<open>Rep_bounded (cnj a *\<^sub>C (A*)) = (\<lambda> s. (cnj a) *\<^sub>C (((Rep_bounded A)\<^sup>\<dagger>) s))\<close>
+    unfolding Adj_def
+    by (simp add: Adj_def adjoint.rep_eq scaleC_bounded_lift)
+  ultimately show ?thesis
+    using Rep_bounded_inject
+    by fastforce 
+qed
+  
+
+chapter \<open>Chaos\<close>
+
 
 section \<open>Composition\<close>
 
