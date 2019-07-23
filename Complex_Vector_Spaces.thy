@@ -25,7 +25,7 @@ bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
 
-subsection \<open>Complex vector spaces\<close>
+section \<open>Complex vector spaces\<close>
 
 class scaleC = scaleR +
   fixes scaleC :: "complex \<Rightarrow> 'a \<Rightarrow> 'a" (infixr "*\<^sub>C" 75)
@@ -220,7 +220,7 @@ lemma scaleC_collapse [simp]: "(1 - u) *\<^sub>C a + u *\<^sub>C a = a"
   by (simp add: algebra_simps)
 
 
-subsection \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
+section \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
 
 definition of_complex :: "complex \<Rightarrow> 'a::complex_algebra_1"
   where "of_complex c = scaleC c 1"
@@ -320,7 +320,7 @@ lemma scaleC_times [simp]:
 
 instance complex_field < field_char_0 ..
 
-subsection \<open>The Set of Complex Numbers\<close>
+section \<open>The Set of Complex Numbers\<close>
 
 definition Complexs :: "'a::complex_algebra_1 set"  ("\<complex>")
   where "\<complex> = range of_complex"
@@ -445,7 +445,7 @@ lemma Complexs_induct [case_names of_complex, induct set: Complexs]:
   by (rule Complexs_cases) auto
 
 
-subsection \<open>Ordered complex vector spaces\<close>
+section \<open>Ordered complex vector spaces\<close>
 
 class ordered_complex_vector = complex_vector + ordered_ab_group_add +
   assumes scaleC_left_mono: "x \<le> y \<Longrightarrow> 0 \<le> a \<Longrightarrow> a *\<^sub>C x \<le> a *\<^sub>C y"
@@ -621,7 +621,7 @@ lemma scaleC_left_le_one_le: "0 \<le> x \<Longrightarrow> a \<le> 1 \<Longrighta
   for x :: "'a::ordered_complex_vector" and a :: complex
   using scaleC_right_mono[of a 1 x] by simp
 
-subsection \<open>Complex normed vector spaces\<close>
+section \<open>Complex normed vector spaces\<close>
 
 class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   real_normed_vector + 
@@ -659,7 +659,7 @@ lemma norm_of_complex_diff [simp]:
   by (metis norm_of_complex of_complex_diff order_refl)
 
 
-subsection \<open>Class instances for complex numbers\<close>
+section \<open>Class instances for complex numbers\<close>
 
 instantiation complex :: complex_normed_field
 begin
@@ -676,7 +676,7 @@ lemma dist_of_complex [simp]: "dist (of_complex x :: 'a) (of_complex y) = dist x
 
 declare [[code abort: "open :: complex set \<Rightarrow> bool"]]
 
-subsection \<open>Sign function\<close>
+section \<open>Sign function\<close>
 
 lemma sgn_scaleC: "sgn (scaleC r x) = scaleC (sgn r) (sgn x)"
   for x :: "'a::complex_normed_vector"
@@ -689,7 +689,7 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   for x :: complex
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
 
-subsection \<open>Bounded Linear and Bilinear Operators\<close>
+section \<open>Bounded Linear and Bilinear Operators\<close>
 locale clinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
   assumes scaleC: "f (r *\<^sub>C x) = r  *\<^sub>C (f x)"
 
@@ -1213,16 +1213,16 @@ end
 
 instance complex_normed_algebra_1 \<subseteq> perfect_space ..
 
-subsection \<open>Complete metric spaces\<close>
+section \<open>Complete metric spaces\<close>
 
-subsection \<open>Cauchy sequences\<close>
+section \<open>Cauchy sequences\<close>
 
 lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
   by (simp only: metric_Cauchy_iff2 dist_complex_def)
 
-subsubsection \<open>Cauchy Sequences are Convergent\<close>
+subsection \<open>Cauchy Sequences are Convergent\<close>
 
-subsection \<open>The set of complex numbers is a complete metric space\<close>
+section \<open>The set of complex numbers is a complete metric space\<close>
 
 class cbanach = complex_normed_vector + complete_space
 
@@ -1355,7 +1355,7 @@ instance star :: (complex_field) complex_field ..
 lemma isCont_scaleC:
   fixes l :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
-proof- (* Nonstandard proof *)
+proof-
   have \<open>y \<approx> star_of l \<Longrightarrow> (*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
     for y         
   proof-
@@ -1381,48 +1381,6 @@ proof- (* Nonstandard proof *)
     by (simp add: isNSCont_isCont_iff) 
 qed
 
-(* Classical proof
-
-proof-
-  have \<open>x \<longlonglongrightarrow> l \<Longrightarrow> (\<lambda> n. (scaleC a) (x n))  \<longlonglongrightarrow> (scaleC a) l\<close>
-    for x::\<open>nat \<Rightarrow> 'a\<close>
-  proof(cases \<open>a = 0\<close>)
-    case True
-    assume \<open>x \<longlonglongrightarrow> l\<close>
-    have \<open>(scaleC a) = (\<lambda> _::'a. (0::'a))\<close>
-      using \<open>a = 0\<close> by auto
-    thus ?thesis
-      by simp 
-  next
-    case False
-    hence \<open>a \<noteq> 0\<close>
-      by blast
-    assume \<open>x \<longlonglongrightarrow> l\<close>
-    hence \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N. norm (x n - l) < e\<close>
-      using LIMSEQ_iff by blast
-    hence \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N. (cmod a) * norm (x n - l) < (cmod a) * e\<close>
-      using \<open>a \<noteq> 0\<close> by auto
-    hence \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N.  norm ((scaleC a) (x n - l) ) < (cmod a) * e\<close>
-      by simp
-    hence \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N.  norm ((scaleC a) (x n) - (scaleC a) l ) < (cmod a) * e\<close>
-      by (simp add: complex_vector.scale_right_diff_distrib)
-    hence \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N.  norm ((scaleC a) (x n) - (scaleC a) l ) < (cmod a) * ((cmod (inverse a)) * e)\<close>
-      using \<open>a \<noteq> 0\<close>
-      by auto 
-    moreover have \<open>(cmod a) * (cmod (inverse a)) = 1\<close>
-      using \<open>a \<noteq> 0\<close>
-      by (metis norm_mult norm_one right_inverse)      
-    ultimately have \<open>\<forall>e>0.\<exists>N.\<forall>n\<ge>N.  norm ((scaleC a) (x n) - (scaleC a) l ) <  e\<close>
-      by (simp add: ordered_field_class.sign_simps(5) ordered_field_class.sign_simps(6))
-    thus ?thesis
-      using LIMSEQ_iff by auto 
-  qed
-  thus ?thesis
-    by (simp add: continuous_at_sequentiallyI) 
-qed
-
-
-*)
 
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex

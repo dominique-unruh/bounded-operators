@@ -759,12 +759,7 @@ proof-
     using Rep_bounded_inject
     by fastforce 
 qed
-  
 
-chapter \<open>Chaos\<close>
-
-
-section \<open>Composition\<close>
 
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
@@ -773,68 +768,34 @@ lift_definition rtimesOp::
   unfolding o_def 
   by (rule bounded_linear_compose, simp_all)
 
-lift_definition ctimesOp:: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) cbounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) cbounded \<Rightarrow> ('a,'c) cbounded"
-  is "rtimesOp"
-  by transfer auto
-
 definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" where
-  \<open>timesOp f g = flatten (ctimesOp (unflatten f) (unflatten g))\<close>
+  \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f) (rbounded_of_bounded g))\<close>
 
-(* This lemma plays the role of lift_definition *)
 lemma timesOp_Rep_bounded:
   \<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
-  unfolding timesOp_def ctimesOp_def rtimesOp_def unflatten_def flatten_def
-  apply auto
-  by (metis (no_types, lifting) Rep_cbounded_inverse ctimesOp.rep_eq flatten.abs_eq flatten.rep_eq rtimesOp.rep_eq unflatten.rep_eq unflatten_inv) 
+  unfolding timesOp_def
+  by (metis (no_types, lifting) comp_apply rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim rtimesOp.rep_eq)
 
 lemma rtimesOp_assoc: "rtimesOp (rtimesOp A B) C = rtimesOp A (rtimesOp B C)" 
   apply transfer
   by (simp add: comp_assoc) 
 
-lemma ctimesOp_assoc: "ctimesOp (ctimesOp A B) C = ctimesOp A (ctimesOp B C)" 
-  apply transfer
-  using rtimesOp_assoc by smt
-
-lift_definition timesOpX:: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
-  is "(o)"
-  unfolding o_def 
-  by (rule bounded_clinear_compose, simp_all)
-
-lemma rtimesOp_assoc_plain: "bounded_linear Aa \<Longrightarrow>
-  bounded_linear Ba \<Longrightarrow> bounded_linear Ca \<Longrightarrow> Aa \<circ> Ba \<circ> Ca = Aa \<circ> (Ba \<circ> Ca)"
-  sorry (* from rtimesOp_assoc by automation *)
-
-lemma tmp: "timesOpX (timesOpX A B) C = timesOpX A (timesOpX B C)"
-  apply transfer
-    (* using rtimesOp_assoc_plain *)
-  by auto
-
-
 lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
-  unfolding timesOp_def using ctimesOp_assoc
-  by (simp add: ctimesOp_assoc flatten_inv) 
+  by (metis (no_types, lifting) Rep_bounded_inverse fun.map_comp timesOp_Rep_bounded) 
 
 lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)"
   using timesOp_Rep_bounded 
   by (smt adjoint_D adjoint_I comp_apply)
-
-lemma ctimes_adjoint[simp]: "cadjoint (ctimesOp A B) = ctimesOp (cadjoint B) (cadjoint A)"
-  unfolding cadjoint_def using times_adjoint
-  by (metis flatten_inv timesOp_def) 
-
-section \<open>Image of a subspace by an operator\<close>
 
 lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
+
+
 
 instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
@@ -927,7 +888,6 @@ proof
       by (metis closure_closure closure_mono) 
   qed
 qed
-
 
 lemma timesOp_assoc_linear_space: 
   \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
@@ -1054,9 +1014,8 @@ proof-
     unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
 
-section \<open>Complex Span\<close>
 
-(* TODO Complex_Vector_Spaces *)
+
 lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
@@ -1249,7 +1208,6 @@ proof-
   thus ?thesis by auto
 qed
 
-(* NEW *)
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
   \<open>cgenerator S = (span S = top)\<close>
 
@@ -1508,6 +1466,7 @@ proof
   qed
 qed
 
+
 lemma is_subspace_I:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes \<open>is_linear_manifold S\<close>
@@ -1544,9 +1503,10 @@ proof
     then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
       by blast
     have \<open>isCont (scaleC c) x\<close>
-      using continuous_at continuous_on_def scaleC_continuous by blast
+      using continuous_at continuous_on_def isCont_scaleC by blast
     hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
-      by (simp add: \<open>y \<longlonglongrightarrow> x\<close> tendsto_scaleC)
+      using  \<open>y \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose) 
     from  \<open>\<forall> n::nat. y n \<in> S\<close>
     have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
       by (simp add: assms is_linear_manifold.smult_closed)
@@ -1558,6 +1518,7 @@ proof
   show "closed (closure S)"
     by auto
 qed
+
 
 lemma partial_span_subspace:
   fixes S::\<open>'a::complex_normed_vector set\<close>
@@ -1743,8 +1704,7 @@ proof-
   thus ?thesis using Rep_bounded_inject by blast 
 qed
 
-(* 
-TODO: show this and then equal_generator as corollary?
+(*
 lemma equal_span:
   fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
   assumes \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> 
@@ -1780,8 +1740,6 @@ proof-
   qed
   thus ?thesis by simp
 qed
-
-
 
 
 
