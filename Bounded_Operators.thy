@@ -1767,12 +1767,66 @@ instance
 qed
 end
 
-
+lemma cdot_plus_distrib_transfer:
+  \<open>bounded_clinear U \<Longrightarrow>
+       is_subspace A \<Longrightarrow>
+       is_subspace B \<Longrightarrow>
+        (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+        (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
+ for U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
+proof-
+  assume \<open>bounded_clinear U\<close> and \<open>is_subspace A\<close> and \<open>is_subspace B\<close> 
+  have \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) \<subseteq>
+        (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
+    sorry  
+  moreover have \<open>(closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})
+      \<subseteq> (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}))\<close>
+    sorry
+  ultimately show ?thesis by blast
+qed
 
 lemma cdot_plus_distrib[simp]: 
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
   shows \<open>applyOpSpace U (A + B) = applyOpSpace U A + applyOpSpace U B\<close>
-  sorry
+proof-
+  {  have   \<open>
+       bounded_clinear U \<Longrightarrow>
+       is_subspace A \<Longrightarrow>
+       is_subspace B \<Longrightarrow>
+       Abs_linear_space
+        (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+       Abs_linear_space
+        (closure
+          {\<psi> + \<phi> |\<psi> \<phi>.
+           \<psi> \<in> Rep_linear_space (Abs_linear_space (closure (U ` A))) \<and>
+           \<phi> \<in> Rep_linear_space (Abs_linear_space (closure (U ` B)))})\<close>
+      for U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
+    proof-
+      assume \<open>bounded_clinear U\<close> and \<open>is_subspace A\<close> and \<open>is_subspace B\<close> 
+      hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+        (closure {\<psi> + \<phi> |\<psi> \<phi>.
+           \<psi> \<in> closure (U ` A) \<and>
+           \<phi> \<in> closure (U ` B)})\<close>
+        using cdot_plus_distrib_transfer by blast
+      hence \<open>Abs_linear_space (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+        Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>.
+           \<psi> \<in> closure (U ` A) \<and>
+           \<phi> \<in> closure (U ` B)})\<close>
+        by simp
+      thus ?thesis using Abs_linear_space_inverse
+        by (smt Collect_cong Rep_bounded_cases Rep_linear_space \<open>bounded_clinear U\<close> \<open>is_subspace A\<close> \<open>is_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
+    qed    
+    } note 1 = this
+
+  show ?thesis 
+  unfolding plus_bounded_def applyOpSpace_def apply auto apply transfer 
+  unfolding closed_sum_def Minkoswki_sum_def
+  apply auto
+    unfolding plus_linear_space_def closed_sum_def Minkoswki_sum_def
+  apply auto
+    apply (rule 1) 
+  by blast
+qed
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
