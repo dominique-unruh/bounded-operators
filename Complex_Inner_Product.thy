@@ -1907,7 +1907,7 @@ qed
 
 lemma is_closed_subspace_comm:                                                                 
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
-  shows \<open>(A +\<^sub>M B) = (B +\<^sub>M A)\<close>
+  shows \<open>A +\<^sub>M B = B +\<^sub>M A\<close>
   by (smt Collect_cong add.commute closed_sum_def Minkoswki_sum_def)
 
 lemma OrthoClosed:
@@ -2047,7 +2047,7 @@ qed
 lemma is_closed_subspace_asso:
   fixes A B C::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
-  shows \<open>(A +\<^sub>M (B +\<^sub>M C)) = ((A +\<^sub>M B) +\<^sub>M C)\<close>
+  shows \<open>A +\<^sub>M (B +\<^sub>M C) = (A +\<^sub>M B) +\<^sub>M C\<close>
 proof-
   have \<open>is_linear_manifold (B +\<^sub>M C)\<close>
     by (simp add: assms(2) assms(3) is_subspace.subspace is_subspace_closed_plus)
