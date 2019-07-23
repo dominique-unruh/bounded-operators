@@ -795,8 +795,6 @@ lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bou
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
 
-
-
 instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleC c ` S"
@@ -1562,7 +1560,7 @@ proof
 qed
 
 lemma equal_span_0_n:
-  fixes  f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
+  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
   shows \<open>\<forall> x::'a.
 x \<in> partial_span n S \<longrightarrow>
  bounded_clinear f \<longrightarrow>
@@ -1741,7 +1739,40 @@ proof-
   thus ?thesis by simp
 qed
 
+instantiation linear_space::(chilbert_space) "comm_monoid_add"
+begin
+lift_definition plus_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
+  is "closed_sum"
+  by (simp add: is_subspace_closed_plus)
 
+instance
+  proof
+  show \<open>a + b + c = a + (b + c)\<close>
+    for a :: "'a linear_space"
+      and b :: "'a linear_space"
+      and c :: "'a linear_space"
+    apply transfer
+    using is_closed_subspace_asso by auto
+
+  show \<open>a + b = b + a\<close>
+    for a :: "'a linear_space"
+      and b :: "'a linear_space"
+    apply transfer
+    by (simp add: is_closed_subspace_comm)
+
+  show \<open>(0::'a linear_space) + a = a\<close>
+    for a :: "'a linear_space"
+    apply transfer
+    by (simp add: is_closed_subspace_zero)
+qed
+end
+
+
+
+lemma cdot_plus_distrib[simp]: 
+  fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
+  shows \<open>applyOpSpace U (A + B) = applyOpSpace U A + applyOpSpace U B\<close>
+  sorry
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
@@ -1755,13 +1786,6 @@ consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhocoverloading
 cdot timesOp applyOp applyOpSpace
 (* Removed scaleC here: the overloading cannot be restricted to a specific type, so all occurrences of scaleC become \<cdot> *)
-*)
-
-(*
-lemma cdot_plus_distrib[simp]: "U \<cdot> (A + B) = U \<cdot> A + U \<cdot> B"
-  for A B :: "_ linear_space" and U :: "(_,_) bounded"
-  apply transfer 
-  by (cheat cdot_plus_distrib)
 *)
 
 
