@@ -1956,26 +1956,32 @@ proof-
     by blast
 qed
 
+lemma applyOpSpace_id[simp]: "(applyOpSpace idOp) \<psi> = \<psi>"
+proof-
+  have \<open>is_subspace ( Rep_linear_space \<psi>)\<close>
+    using Rep_linear_space by blast    
+  hence \<open>closed ( Rep_linear_space \<psi>)\<close>
+    unfolding is_subspace_def by blast
+  hence \<open>closure ( Rep_linear_space \<psi>) = Rep_linear_space \<psi>\<close>
+    by simp    
+  hence \<open>(closure ( id ` Rep_linear_space \<psi>)) = Rep_linear_space \<psi>\<close>
+    by simp    
+  hence \<open>(closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = Rep_linear_space \<psi>\<close>
+    by (metis idOp.abs_eq idOp.rep_eq)    
+  hence \<open>Abs_linear_space
+     (closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = \<psi>\<close>
+    by (simp add: Rep_linear_space_inverse)    
+  show ?thesis
+  unfolding applyOpSpace_def idOp_def
+  apply auto
+  using  \<open>Abs_linear_space
+     (closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = \<psi>\<close>
+  by blast
+qed
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
 
-
-
-(*
-(* TODO: move specialized syntax into QRHL-specific file *)
-consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
-
-adhocoverloading
-cdot timesOp applyOp applyOpSpace
-(* Removed scaleC here: the overloading cannot be restricted to a specific type, so all occurrences of scaleC become \<cdot> *)
-*)
-
-
-(*
-lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
-  by (simp add: idOp.rep_eq)
-*)
 
 lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" for A::"(_,_) bounded"
   apply transfer by auto
