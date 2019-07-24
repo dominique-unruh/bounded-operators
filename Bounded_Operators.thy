@@ -1979,16 +1979,87 @@ proof-
   by blast
 qed
 
+lemma rtimesOp_scaleC:
+  fixes f::"('b::chilbert_space,'c::chilbert_space) rbounded" 
+    and g::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+ and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
+shows \<open>\<forall> c. \<forall> x. Rep_rbounded (rtimesOp f g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rtimesOp f g) x)\<close>
+  by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
+  
+lemma rscalar_op_op[simp]: 
+  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
+    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  shows \<open>rtimesOp (a *\<^sub>C A) B = a *\<^sub>C (rtimesOp A B)\<close>
+proof-
+  have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
+    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
+    for x
+  proof-
+    have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x
+       = a *\<^sub>C (Rep_rbounded A ((Rep_rbounded B) x))\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x
+        = a *\<^sub>C (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>(Rep_rbounded A ((Rep_rbounded B) x))
+        = (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
+    proof-
+      have \<open>Rep_rbounded A ((Rep_rbounded B) x) = ((Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
+        by simp        
+      thus ?thesis
+        using Abs_rbounded_inverse
+        by (metis Rep_rbounded rtimesOp.rep_eq)
+    qed
+    ultimately show ?thesis by simp
+  qed
+  hence \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
+    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B))\<close>
+    by blast
+  hence \<open>Abs_rbounded (Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
+    a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)\<close>
+    by (simp add: Rep_rbounded_inverse)    
+  thus ?thesis
+  unfolding  rtimesOp_def
+  by auto
+qed
+
+lemma scalar_op_op[simp]:
+  fixes A::"('b::chilbert_space,'c::chilbert_space) bounded" 
+    and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
+  shows \<open>timesOp (a *\<^sub>C A) B = a *\<^sub>C (timesOp A B)\<close>
+proof-
+  have \<open>(rtimesOp (a *\<^sub>C (rbounded_of_bounded A))
+       (rbounded_of_bounded B)) =
+   ( a *\<^sub>C  (rtimesOp (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
+    by simp
+  hence \<open>(rtimesOp (rbounded_of_bounded (a *\<^sub>C A))
+       (rbounded_of_bounded B)) =
+   ( a *\<^sub>C  (rtimesOp (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
+    by (simp add: rbounded_of_bounded_scaleC)    
+  hence \<open>bounded_of_rbounded
+     (rtimesOp (rbounded_of_bounded (a *\<^sub>C A))
+       (rbounded_of_bounded B)) =
+    bounded_of_rbounded
+   ( a *\<^sub>C  (rtimesOp (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
+    by simp    
+  hence \<open>bounded_of_rbounded
+     (rtimesOp (rbounded_of_bounded (a *\<^sub>C A))
+       (rbounded_of_bounded B)) =
+    a *\<^sub>C bounded_of_rbounded
+     (rtimesOp (rbounded_of_bounded A) (rbounded_of_bounded B))\<close>
+    by (simp add: bounded_of_rbounded_scaleC rbounded_of_bounded_prelim rtimesOp_scaleC)  
+  thus ?thesis
+    unfolding timesOp_def 
+    by blast
+qed
+
+
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
 
 
-lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" for A::"(_,_) bounded"
-  apply transfer by auto
 
-lemma scalar_op_op[simp]: "(a *\<^sub>C A) \<cdot> B = a *\<^sub>C (A \<cdot> B)"
-  for A :: "('b::complex_normed_vector,_) bounded" and B :: "(_,'b) bounded"
-  apply transfer by auto
 
 lemma op_scalar_op[simp]: "timesOp A (a *\<^sub>C B) = a *\<^sub>C (timesOp A B)" 
   for a :: complex and A :: "(_,_) bounded" and B :: "(_,_) bounded"
