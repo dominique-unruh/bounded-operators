@@ -1891,7 +1891,7 @@ qed
 
 lemma cdot_plus_distrib[simp]: 
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
-  shows \<open>applyOpSpace U (A + B) = applyOpSpace U A + applyOpSpace U B\<close>
+  shows \<open>(applyOpSpace U) (A + B) = (applyOpSpace U) A + (applyOpSpace U) B\<close>
 proof-
   {  have   \<open>
        bounded_clinear U \<Longrightarrow>
@@ -1932,6 +1932,31 @@ proof-
   by blast
 qed
 
+lemma scalar_op_linear_space_assoc [simp]: 
+  fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+    and S::\<open>'a linear_space\<close> and \<alpha>::complex
+  shows \<open>(applyOpSpace (\<alpha> *\<^sub>C A)) S  = \<alpha> *\<^sub>C ((applyOpSpace A) S)\<close>
+proof-
+  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (Rep_bounded A) ) ` Rep_linear_space S) =
+   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+    by (metis closure_scaleC image_comp)    
+  hence \<open>(closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
+   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+    by (metis (no_types, lifting) comp_apply image_cong scaleC_bounded_lift)    
+  hence \<open>Abs_linear_space
+     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
+    \<alpha> *\<^sub>C
+    Abs_linear_space (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+    by (metis Rep_linear_space_inverse applyOpSpace.rep_eq scaleC_linear_space.rep_eq)    
+  show ?thesis 
+    unfolding applyOpSpace_def apply auto
+    using \<open>Abs_linear_space
+     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
+    \<alpha> *\<^sub>C Abs_linear_space (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+    by blast
+qed
+
+
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
 
@@ -1946,19 +1971,6 @@ cdot timesOp applyOp applyOpSpace
 (* Removed scaleC here: the overloading cannot be restricted to a specific type, so all occurrences of scaleC become \<cdot> *)
 *)
 
-
-(*
-lemma scalar_op_linear_space_assoc [simp]: 
-  "(\<alpha> *\<^sub>C A) \<cdot> S = \<alpha> *\<^sub>C (A \<cdot> S)" for \<alpha>::complex and A::"(_::complex_normed_vector,_::complex_normed_vector)bounded" and S::"(_::complex_normed_vector) linear_space"
-proof transfer
-  fix \<alpha> and A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S
-  have "(*\<^sub>C) \<alpha> ` closure {A x |x. x \<in> S} = closure {\<alpha> *\<^sub>C x |x. x \<in> {A x |x. x \<in> S}}" (is "?nested = _")
-    by (simp add: closure_scaleC setcompr_eq_image)
-  also have "\<dots> = closure {\<alpha> *\<^sub>C A x |x. x \<in> S}" (is "_ = ?nonnested")
-    by (simp add: Setcompr_eq_image image_image)
-  finally show "?nonnested = ?nested" by simp
-qed
-*) *)
 
 (*
 lemma apply_idOp[simp]: "applyOp idOp \<psi> = \<psi>"
