@@ -950,7 +950,7 @@ proof-
     using assms(2) is_linear_manifold.smult_closed is_subspace.subspace by fastforce
   moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
     for x
-  proof - (* automatically generated *)
+  proof -
     assume "x \<in> S"
     then have "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
       using assms(2) is_linear_manifold_def is_subspace.subspace scaleC_one by blast
@@ -2011,31 +2011,56 @@ shows " (x::'a linear_space) + (y * z) \<le> (x + y) * (x + z)"
     qed
     show ?thesis
     apply transfer
-    unfolding closed_sum_def Minkoswki_sum_def 
-\<open>\<And>x y z.
+      unfolding closed_sum_def Minkoswki_sum_def
+      using \<open>\<And>x y z.
        is_subspace x \<Longrightarrow>
        is_subspace y \<Longrightarrow>
        is_subspace z \<Longrightarrow>
        closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
        closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
        closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-    
-    sorry
-
+      by blast
   qed
 
-  show "inf (x::'a linear_space) (- x) = bot"
-    for x :: "'a linear_space"
-    sorry
-  show "sup (x::'a linear_space) (- x) = top"
-    for x :: "'a linear_space"
-    sorry
-  show "(x::'a linear_space) - y = inf x (- y)"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
-    sorry
+lemma infxminusxbot:
+  fixes x :: "'a::chilbert_space linear_space"
+  shows " (x::'a linear_space)* (- x) = bot"
+  apply transfer
+  by (metis (full_types) ExistenceUniquenessProj diff_self inf_commute ortho_inter_zero orthogonal_complement_twice proj_fixed_points proj_intro1)
+
+lemma supxminusxtop:
+  fixes x :: "'a::chilbert_space linear_space"
+  shows "(x::'a linear_space) + (- x) = top"
+proof-
+  have \<open>is_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
+    for x::\<open>'a set\<close>
+  proof-
+    assume \<open>is_subspace x\<close>
+    have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
+      for t
+    proof-
+      have \<open>t = (proj x) t + (proj (orthogonal_complement x)) t\<close>
+        using \<open>is_subspace x\<close> ortho_decomp by blast
+      moreover have \<open>(proj x) t \<in> x\<close>
+        by (simp add: \<open>is_subspace x\<close> proj_intro2)        
+      moreover have \<open>(proj (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
+        by (simp add: \<open>is_subspace x\<close> proj_intro2)        
+      ultimately show ?thesis
+      proof -
+        have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
+          by (metis \<open>is_subspace x\<close> is_closed_subspace_universal_inclusion_right is_subspace_orthog)
+        then show ?thesis
+          by (metis (no_types) \<open>is_subspace x\<close> \<open>proj (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>proj x t \<in> x\<close> \<open>t = proj x t + proj (orthogonal_complement x) t\<close> in_mono is_closed_subspace_universal_inclusion_left is_linear_manifold.additive_closed is_subspace.subspace is_subspace_closed_plus is_subspace_orthog)
+      qed 
+    qed
+    thus ?thesis
+      by auto 
+  qed
+  thus ?thesis
+  apply transfer
+  using ortho_decomp
+  by blast
 qed
-end
 
 
 lemma cdot_plus_distrib_transfer:
@@ -2370,45 +2395,68 @@ lemma times_idOp1[simp]: "timesOp U idOp = U"
 lemma times_idOp2[simp]: "timesOp idOp U  = U"
   by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp_Rep_bounded)
 
+instantiation linear_space :: (chilbert_space) "Sup"
+begin
+definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+  where \<open>Sup_linear_space S = - Inf (- S) \<close>
+instance..
+end
 
 
-lemma mult_SUP:
+lemma mult_INF1[simp]:
   fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
     and V :: "'a \<Rightarrow> 'b linear_space" 
-  shows \<open>(applyOpSpace U) (SUP i. V i) = (SUP i. (applyOpSpace U) (V i))\<close>
-  sorry
-
-lemma mult_INF[simp]:
-  fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
-    and V :: "'a \<Rightarrow> 'b linear_space" 
-  shows \<open>(applyOpSpace U) (INF i. V i) = (INF i. (applyOpSpace U) (V i))\<close>
+  shows \<open>(applyOpSpace U) (INF i. V i) \<le> (INF i. (applyOpSpace U) (V i))\<close>
 proof-
-  have \<open>(applyOpSpace U) (INF i. V i) \<le> (INF i. (applyOpSpace U) (V i))\<close>
-  proof-
-    have \<open>bounded_clinear U \<Longrightarrow>
+  have \<open>bounded_clinear U \<Longrightarrow>
        \<forall>j. is_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
-      for U::\<open>'b\<Rightarrow>'c\<close> and V::\<open>'a \<Rightarrow> 'b set\<close> and x::'c and i::'a
-    proof-
-      assume \<open>bounded_clinear U\<close> and \<open>\<forall>j. is_subspace (V j)\<close> 
-      have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V i)\<close>
-        by (simp add: Inter_lower image_mono)    
-      thus ?thesis
-        by (simp add: closure_mono) 
-    qed
+    for U::\<open>'b\<Rightarrow>'c\<close> and V::\<open>'a \<Rightarrow> 'b set\<close> and x::'c and i::'a
+  proof-
+    assume \<open>bounded_clinear U\<close> and \<open>\<forall>j. is_subspace (V j)\<close> 
+    have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V i)\<close>
+      by (simp add: Inter_lower image_mono)    
     thus ?thesis
-      apply transfer
-      by auto
+      by (simp add: closure_mono) 
   qed
-  moreover have \<open>(INF i. (applyOpSpace U) (V i)) \<le> (applyOpSpace U) (INF i. V i)\<close>
+  thus ?thesis
     apply transfer
-    apply auto
-    sorry
-  ultimately show ?thesis by simp
+    by auto
 qed
 
+(*
+
+lemma mult_INF2:
+  fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
+    and V :: "'a \<Rightarrow> 'b linear_space" 
+  shows  \<open>(INF i. (applyOpSpace U) (V i)) \<le> (applyOpSpace U) (INF i. V i)\<close>
+  sorry
+
+Counterexample of mult_INF2:
+Let 'a = nat and 'b = 'c = nat ell2.
+Define U (ket i) := ket 0 for each i::nat.
+Define V i := span (ket i).
+
+On the one hand:
+  (INF i. (applyOpSpace U) (V i))
+  (INF i. (applyOpSpace U) (span (ket i)))
+= (INF i. span (ket 0)) 
+= span (ket 0) \<noteq> 0.
+
+On the other hand:
+  (applyOpSpace U) (INF i. V i)
+= (applyOpSpace U) (INF i. span (ket i)) 
+= (applyOpSpace U) 0
+= 0 
 
 
 
+lemma mult_INF:
+  fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
+    and V :: "'a \<Rightarrow> 'b linear_space" 
+  shows  \<open>(INF i. (applyOpSpace U) (V i)) = (applyOpSpace U) (INF i. V i)\<close>
+  sorry
+
+*)
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)

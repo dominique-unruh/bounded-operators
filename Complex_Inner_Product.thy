@@ -1067,7 +1067,8 @@ proof-
 qed
 
 lemma TransClosed:
-  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set) \<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
+  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set) 
+\<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
 proof-
   assume \<open>closed S\<close>
   hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
