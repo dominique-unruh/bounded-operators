@@ -2092,43 +2092,47 @@ lemma op_scalar_op[simp]:
   shows \<open>timesOp A (a *\<^sub>C B) = a *\<^sub>C (timesOp A B)\<close>
   using op_rscalar_op
   by (metis (no_types, lifting) rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rscalar_op_op scalar_op_op timesOp_def)
-  
+
+lemma times_idOp1[simp]: "timesOp U idOp = U"
+  by (metis Rep_bounded_inverse comp_id idOp.rep_eq timesOp_Rep_bounded)
+
+lemma times_idOp2[simp]: "timesOp idOp U  = U"
+  by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp_Rep_bounded)
+
+lemma mult_INF_transfer1:
+  fixes U::\<open>'b::chilbert_space \<Rightarrow> 'c::chilbert_space\<close> and
+    V::\<open>'a \<Rightarrow> 'b set\<close> and  x::'c and j::'a
+  assumes \<open>bounded_clinear U\<close> and \<open>\<forall>i. is_subspace (V i)\<close>
+  shows \<open>closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` (V j))\<close>
+proof-
+  have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V j)\<close>
+    by (simp add: Inter_lower image_mono)    
+  thus ?thesis
+    by (simp add: closure_mono) 
+qed
+
+
+lemma mult_INF[simp]:
+  fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
+    and V :: "'a \<Rightarrow> 'b linear_space" 
+  shows \<open>(applyOpSpace U) (INF x. V x) = (INF x. (applyOpSpace U) (V x))\<close>
+proof-
+  have \<open>(applyOpSpace U) (INF x. V x) \<le> (INF x. (applyOpSpace U) (V x))\<close>
+    apply transfer
+    apply auto
+    using mult_INF_transfer1  subsetD
+    by (metis (no_types, lifting))
+  moreover have \<open>(INF x. (applyOpSpace U) (V x)) \<le> (applyOpSpace U) (INF x. V x)\<close>
+    sorry
+  ultimately show ?thesis by simp
+qed
+
+hide_fact mult_INF_transfer1
+
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
 
-(* REMOVE (subsumed by scale_scale) *)
-lemma scalar_scalar_op[simp]: "a *\<^sub>C (b *\<^sub>C A) = (a*b) *\<^sub>C A"
-  for a b :: complex and A  :: "(_,_) bounded"
-  apply transfer by auto
-
-lemma scalar_op_vec[simp]: "(a *\<^sub>C A) \<cdot> \<psi> = a *\<^sub>C (A \<cdot> \<psi>)" 
-  for a :: complex and A :: "(_,_) bounded" and \<psi> :: "'a ell2"
-  apply transfer by auto
-
-(* REMOVE (subsumed by scaleC_left_imp_eq) *)
-lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C B \<Longrightarrow> A=B" for A B :: "('a,'b)l2bounded" and a::complex 
-  by (rule scaleC_left_imp_eq)
-
-lemma apply_idOp_space[simp]: "applyOpSpace idOp S = S"
-  apply transfer by (simp add: is_subspace.closed)
-
-lemma apply_0[simp]: "applyOp U 0 = 0"
-  apply transfer 
-  using additive.zero bounded_clinear.clinear clinear.axioms(1) by blast
-
-lemma times_idOp1[simp]: "U \<cdot> idOp = U"
-  apply transfer by auto
-
-lemma times_idOp2[simp]: "timesOp idOp V = V" for V :: "(_,_) bounded"
-  apply transfer by auto
-
-
-
-lemma mult_INF[simp]: "U \<cdot> (INF x. V x) = (INF x. U \<cdot> V x)" 
-  for V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
-  apply transfer apply auto
-  by (cheat mult_INF)
 
 lemma mult_inf_distrib[simp]: "U \<cdot> (B \<sqinter> C) = (U \<cdot> B) \<sqinter> (U \<cdot> C)" 
   for U :: "(_,_) bounded" and B C :: "_ linear_space"
