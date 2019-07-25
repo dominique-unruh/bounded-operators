@@ -63,10 +63,6 @@ lift_definition classical_operator'::
 is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
 
 
-chapter \<open>Chaos\<close>
-  (* These are the results that I have not assimilated yet *)
-
-
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
   "classical_operator'"
@@ -345,12 +341,6 @@ lemma tensor_unitary[simp]:
   using assms unfolding unitary_def by simp
 
 subsection \<open>Dual\<close>
-
-(* The interpretation of Riesz representation theorem as an anti-isomorphism
-between a Hilbert space and its dual of a Hilbert space is the justification of 
-the brac-ket notation *)
-
-(* TODO: the things related to topological_real_vector should be in earlier theory *)
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close>)\<close>
