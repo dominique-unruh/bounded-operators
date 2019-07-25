@@ -2433,8 +2433,13 @@ lemma mult_INF2:
 
 Counterexample of mult_INF2:
 Let 'a = nat and 'b = 'c = nat ell2.
-Define U (ket i) := ket 0 for each i::nat.
-Define V i := span (ket i).
+Define U (ket i) := ket 0 for each i\<in>{0,1}
+   and U (ket i) := 0 for each i\<ge>2.
+
+Define 
+
+V i := span (ket i) for each i\<in>{0,1} and
+V i := UNIV for each i \<ge> 2.
 
 On the one hand:
   (INF i. (applyOpSpace U) (V i))
