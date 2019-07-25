@@ -2088,6 +2088,14 @@ lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigen
   apply auto[1]
   by (subst kernel_scalar_times, auto)
 
+lemma applyOpSpace_eq:
+  fixes S :: "_ linear_space" and A B :: "(_,_) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot> x = B \<cdot> x"
+  assumes "span G \<ge> S"
+  shows "A \<cdot> S = B \<cdot> S"
+  using assms
+  by (cheat applyOpSpace_eq)
+
 section \<open>Projectors\<close>
 
 (* TODO: link with definition from Complex_Inner (needs definition of adjoint, first) *)
@@ -2122,11 +2130,12 @@ lemma move_plus:
 
 section \<open>Tensor products\<close>
 
-consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
-
 lift_definition "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2" is
   "\<lambda>\<psi> \<phi> (x,y). \<psi> x * \<phi> y"
   by (cheat tensorVec)
+
+axiomatization "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
+  (* "\<lambda>(A::'a ell2\<Rightarrow>'b ell2) (B::'c ell2\<Rightarrow>'d ell2) (\<psi>::('a*'c) ell2). (\<Sum>\<^sub>a(i,j). (Rep_ell2 \<psi> (i,j) *\<^sub>C tensorVec (A\<cdot>ket i) (B\<cdot>ket j)))" *)
 
 definition "tensorSpace A B = span {tensorVec \<psi> \<phi>| \<psi> \<phi>. \<psi> \<in> Rep_linear_space A \<and> \<phi> \<in> Rep_linear_space B}"
 
