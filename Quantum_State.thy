@@ -4,8 +4,6 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-Main results:
-- bounded: Definition of complex bounded operators. Instantiation as a complex Banach space.
 
 *)
 
