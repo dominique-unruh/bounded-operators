@@ -11,7 +11,7 @@ Main results:
 
 
 theory Bounded_Operators
-  imports Complex_Inner_Product Real_Bounded_Operators
+  imports Complex_Inner_Product Real_Bounded_Operators Extended_Sorry
 
 begin
 
@@ -1505,6 +1505,13 @@ proof-
     by blast
 qed
 
+lemma applyOpSpace_eq:
+  fixes S :: "_ linear_space" and A B :: "(_,_) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> Rep_bounded A x = Rep_bounded B x"
+  assumes "span G \<ge> S"
+  shows "applyOpSpace A S = applyOpSpace B S"
+  using assms
+  by (cheat applyOpSpace_eq)
 
 end
 
