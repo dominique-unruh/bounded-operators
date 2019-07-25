@@ -1,20 +1,10 @@
-(*  Title:      Bounded-Operators/Complex_L2.thy
-    Author:     Dominique Unruh, University of Tartu
-    Author:     Jose Manuel Rodriguez Caballero, University of Tartu
+(*
+Authors:
 
-References:
-
- @book{conway2013course,
-  title={A course in functional analysis},
-  author={Conway, John B},
-  volume={96},
-  year={2013},
-  publisher={Springer Science \& Business Media}
-}
+  Dominique Unruh, University of Tartu, unruh@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
 *)
-
-(* TODO there are a lot of things related to the class linear_space here that belong to Complex_Inner_Product *)
 
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
@@ -1638,7 +1628,6 @@ proof-
 qed
 
 
-
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
@@ -1791,60 +1780,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
   by (rule ell2_1)
 
 type_synonym 'a subspace = "'a ell2 linear_space"
-  (* typedef 'a linear_space = "{A::'a ell2 set. is_linear_space A}"
-  morphisms Rep_linear_space Abs_linear_space
-  apply (rule exI[of _ "{0}"]) by simp
-setup_lifting type_definition_linear_space *)
 
-(* TODO move *)
-instantiation linear_space :: (chilbert_space)zero begin (* The linear_space {0} *)
-lift_definition zero_linear_space :: "'a linear_space" is "{0::'a}" by simp
-instance .. end
-
-(* TODO move *)
-instantiation linear_space :: (chilbert_space)top begin  (* The full space *)
-lift_definition top_linear_space :: "'a linear_space" is "UNIV::'a set" by simp
-instance .. end
-
-instantiation linear_space :: (chilbert_space)inf begin  (* Intersection *)
-lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
-instance .. end
-
-instantiation linear_space :: (chilbert_space)sup begin  (* Sum of spaces *)
-lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
-  is "\<lambda>A B::'a set. A +\<^sub>M B" 
-  by (fact is_subspace_closed_plus)
-instance .. end
-
-instantiation linear_space :: (chilbert_space)plus begin  (* Sum of spaces *)
-lift_definition plus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
-  is "\<lambda>A B::'a set. A +\<^sub>M B"
-  by (fact is_subspace_closed_plus)
-instance .. end
-
-lemma linear_space_sup_plus: "(sup :: 'a::chilbert_space linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
-  unfolding sup_linear_space_def plus_linear_space_def by simp
-
-instantiation linear_space :: (chilbert_space)Inf begin  (* Intersection *)
-lift_definition Inf_linear_space :: "'a linear_space set \<Rightarrow> 'a linear_space" 
-  is "Inf :: 'a set set \<Rightarrow> 'a set" by simp
-instance .. end
-
-instantiation linear_space :: (chilbert_space)ord begin  
-lift_definition less_eq_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool" is "(\<subseteq>)". (* \<le> means inclusion *)
-lift_definition less_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool" is "(\<subset>)". (* \<le> means inclusion *)
-instance .. end
-
-instantiation linear_space :: (chilbert_space)Sup begin (* Sum of spaces *)
-definition "Sup_linear_space AA = (Inf {B::'a linear_space. \<forall>A\<in>AA. B \<ge> A})"
-  (* lift_definition Sup_linear_space :: "'a linear_space set \<Rightarrow> 'a linear_space" is "\<lambda>AA. Inf (A" by simp *)
-  (* lift_definition Sup_linear_space :: "\<Sqinter>A\<in>{A."  *)
-instance .. end
-
-class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
-
-subclass (in card2) not_singleton
-  apply standard using two_le_card by auto
 
 instance ell2 :: (type) not_singleton
 proof standard
@@ -1856,210 +1792,6 @@ proof standard
     by (metis (full_types) UNIV_I card_1_singletonE singletonD the_elem_eq)
 qed
 
-lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
-proof transfer 
-  have "card {0} \<noteq> CARD('a)"
-    using not_singleton_card by auto
-  then show "{0::'a} \<noteq> UNIV"
-    by metis
-qed
-
-instantiation linear_space :: (chilbert_space)order begin
-instance apply intro_classes
-     apply transfer apply (simp add: subset_not_subset_eq)
-    apply transfer apply simp
-   apply transfer apply simp
-  apply transfer by simp
-end
-
-instantiation linear_space :: (chilbert_space)order_top begin
-instance apply intro_classes
-  apply transfer by simp
-end
-
-instantiation linear_space :: (chilbert_space)order_bot begin
-lift_definition bot_linear_space :: "'a linear_space" is "{0::'a}" 
-  by (fact is_subspace_0)
-instance apply intro_classes
-  apply transfer 
-  using is_subspace_0 ortho_bot ortho_leq by blast
-end
-
-lemma linear_space_zero_bot: "(0::_ linear_space) = bot" 
-  unfolding zero_linear_space_def bot_linear_space_def by simp
-
-instantiation linear_space :: (chilbert_space)ab_semigroup_add begin
-instance
-  apply intro_classes
-   apply transfer
-  using is_closed_subspace_asso
-  unfolding closed_sum_def 
-  unfolding Minkoswki_sum_def
-   apply blast
-
-  apply transfer
-  using is_closed_subspace_comm
-  unfolding closed_sum_def 
-  unfolding Minkoswki_sum_def
-  apply blast
-  done
-end
-
-instantiation linear_space :: (chilbert_space)ordered_ab_semigroup_add begin
-instance apply intro_classes apply transfer
-  using is_closed_subspace_ord 
-  by (smt Collect_mono_iff closure_mono subset_iff)
-
-end
-
-instantiation linear_space :: (chilbert_space)comm_monoid_add begin
-instance apply intro_classes
-  apply transfer
-  using is_closed_subspace_zero
-  unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
-  by fastforce
-end
-
-instantiation linear_space :: (chilbert_space)semilattice_sup begin
-instance proof intro_classes
-  fix x y z :: "'a linear_space"
-  show "x \<le> x \<squnion> y"
-    apply transfer
-    using is_closed_subspace_universal_inclusion_left
-    unfolding closed_sum_def
-    unfolding Minkoswki_sum_def
-    by blast
-  show "y \<le> x \<squnion> y"
-    apply transfer
-    using is_closed_subspace_universal_inclusion_right
-    unfolding closed_sum_def
-    unfolding Minkoswki_sum_def
-    by blast
-
-  show "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y \<squnion> z \<le> x"
-    apply transfer
-    using is_closed_subspace_universal_inclusion_inverse
-    unfolding closed_sum_def
-    unfolding Minkoswki_sum_def
-    by blast
-qed
-end
-
-instantiation linear_space :: (chilbert_space)canonically_ordered_monoid_add begin
-instance apply intro_classes
-  unfolding linear_space_sup_plus[symmetric]
-  apply auto apply (rule_tac x=b in exI)
-  by (simp add: sup.absorb2) 
-end
-
-instantiation linear_space :: (chilbert_space)semilattice_inf begin
-instance apply intro_classes
-    apply transfer apply simp
-   apply transfer apply simp
-  apply transfer by simp
-end
-
-instantiation linear_space :: (chilbert_space)lattice begin
-instance ..
-end
-
-lemma  linear_space_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" for x y z :: "'a::chilbert_space linear_space"
-  unfolding linear_space_sup_plus[symmetric] by auto
-
-instantiation linear_space :: (chilbert_space)complete_lattice begin
-instance proof intro_classes
-  fix x z :: "'a linear_space" and A
-  show Inf_le: "x \<in> A \<Longrightarrow> Inf A \<le> x" for A and x::"'a linear_space"
-    apply transfer by auto
-  show le_Inf: "(\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A" for A and z::"'a linear_space"
-    apply transfer by auto
-  show "Inf {} = (top::'a linear_space)"
-    apply transfer by auto
-  show "x \<le> Sup A" if "x \<in> A"
-    unfolding Sup_linear_space_def 
-    apply (rule le_Inf)
-    using that by auto
-  show "(\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z" 
-    unfolding Sup_linear_space_def
-    apply (rule Inf_le)
-    by auto
-  have "Inf UNIV = (bot::'a linear_space)"    
-    apply (rule antisym)
-     apply (rule Inf_le) apply simp
-    apply (rule le_Inf) by simp
-  thus "Sup {} = (bot::'a linear_space)"
-    unfolding Sup_linear_space_def by auto
-qed
-end
-
-lemma linear_space_empty_Sup: "Sup {} = (0::'a::chilbert_space linear_space)"
-  unfolding linear_space_zero_bot by auto
-
-lemma top_not_bot[simp]: "(top::'a::{chilbert_space,not_singleton} linear_space) \<noteq> bot"
-  by (metis linear_space_zero_bot linear_space_zero_not_top) 
-lemmas bot_not_top[simp] = top_not_bot[symmetric]
-
-lemma inf_assoc_linear_space[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" for A B C :: "_ linear_space"
-  unfolding inf.assoc by simp
-lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ linear_space"
-  using inf.left_commute by auto
-
-lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
-  apply transfer
-  unfolding sup_linear_space_def[symmetric] 
-  using is_closed_subspace_zero
-  unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
-  by blast
-
-lemma plus_bot[simp]: "x + bot = x" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
-lemma top_plus[simp]: "top + x = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
-lemma plus_top[simp]: "x + top = top" for x :: "'a::chilbert_space linear_space" unfolding linear_space_sup_plus[symmetric] by simp
-
-
-(* TODO move *)
-lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
-  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
-  by (simp add: le_Inf_iff)
-
-(* TODO move *)
-lemma leq_plus_linear_space[simp]: "a \<le> a + c" for a::"'a::chilbert_space linear_space"
-  by (simp add: add_increasing2)
-    (* TODO move *)
-lemma leq_plus_linear_space2[simp]: "a \<le> c + a" for a::"'a::chilbert_space linear_space"
-  by (simp add: add_increasing)
-
-(* TODO move *)
-lift_definition ortho :: "'a::chilbert_space linear_space \<Rightarrow> 'a linear_space" is orthogonal_complement 
-  by (fact is_subspace_orthog)
-
-(* TODO move, TODO remove "ell2" *)
-lemma span_superset:
-  \<open>A \<subseteq> Rep_linear_space (span A)\<close> for A :: \<open>('a ell2) set\<close>
-proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>
-    by simp
-  hence \<open>A \<subseteq> \<Inter> {Rep_linear_space S| S. A \<subseteq> Rep_linear_space S}\<close>
-    by blast
-  hence \<open>A \<subseteq> Rep_linear_space( Inf {S| S. A \<subseteq> Rep_linear_space S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>)
-  thus ?thesis using span_def' by metis
-qed
-
-(* TODO move *)
-lemma ortho_bot[simp]: "ortho bot = top"
-  apply transfer by simp
-
-(* TODO move *)
-lemma ortho_top[simp]: "ortho top = bot"
-  apply transfer by simp
-
-(* TODO move *)
-lemma ortho_twice[simp]: "ortho (ortho S) = S"
-  apply transfer
-  using orthogonal_complement_twice by blast 
 
 instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"

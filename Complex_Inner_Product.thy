@@ -3691,5 +3691,120 @@ proof
   qed
 qed
 
-    
+class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
+
+subclass (in card2) not_singleton
+  apply standard using two_le_card by auto
+
+
+instantiation linear_space :: (chilbert_space)inf begin  (* Intersection *)
+lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
+instance .. end
+
+instantiation linear_space :: (chilbert_space)sup begin  (* Sum of spaces *)
+lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
+  is "\<lambda>A B::'a set. A +\<^sub>M B" 
+  by (fact is_subspace_closed_plus)
+instance .. end
+
+lemma linear_space_sup_plus: "(sup :: 'a::chilbert_space linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
+  unfolding sup_linear_space_def plus_linear_space_def by simp
+
+lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
+proof transfer 
+  have "card {0} \<noteq> CARD('a)"
+    using not_singleton_card by auto
+  thus "(0::'a set) \<noteq> (UNIV::'a set)"
+      by (metis \<open>card {0} \<noteq> CARD('a)\<close> set_zero)    
+qed
+
+
+instantiation linear_space :: (chilbert_space)order_top begin
+instance apply intro_classes
+  apply transfer by simp
+end
+
+instantiation linear_space :: (chilbert_space)order_bot begin
+instance apply intro_classes
+  apply transfer 
+  using is_subspace_0 ortho_bot ortho_leq by blast
+end
+
+lemma linear_space_zero_bot: "(0::_ linear_space) = bot" 
+  unfolding zero_linear_space_def bot_linear_space_def 
+  by (simp add: Complex_Inner_Product.bot_linear_space.abs_eq)
+
+instantiation linear_space :: (chilbert_space)ordered_ab_semigroup_add begin
+instance apply intro_classes apply transfer
+  using is_closed_subspace_ord 
+  by (smt Collect_mono_iff closure_mono subset_iff)
+
+end
+
+
+instantiation linear_space :: (chilbert_space)canonically_ordered_monoid_add begin
+instance apply intro_classes
+  unfolding linear_space_sup_plus[symmetric]
+  apply auto apply (rule_tac x=b in exI)
+   apply (simp add: dual_order.antisym linear_space_sup_plus supyzx_linear_space ysupxy_linear_space)
+  by (simp add: linear_space_sup_plus xsupxy_linear_space) 
+end
+
+instantiation linear_space :: (chilbert_space)semilattice_inf begin
+instance apply intro_classes
+    apply transfer apply simp
+   apply transfer apply simp
+  apply transfer by simp
+end
+
+instantiation linear_space :: (chilbert_space) lattice begin
+instance 
+  proof
+  show "(x::'a linear_space) \<le> (sup x y)"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    by (simp add: linear_space_sup_plus xsupxy_linear_space)    
+  show "(y::'a linear_space) \<le> (sup x y)"
+    for y :: "'a linear_space"
+      and x :: "'a linear_space"
+    by (simp add: linear_space_sup_plus ysupxy_linear_space)    
+  show "(sup (y::'a linear_space) z) \<le> x"
+    if "(y::'a linear_space) \<le> x"
+      and "(z::'a linear_space) \<le> x"
+    for y :: "'a linear_space"
+      and x :: "'a linear_space"
+      and z :: "'a linear_space"
+    using that
+    by (simp add: linear_space_sup_plus supyzx_linear_space) 
+qed
+end
+
+
+lemma top_not_bot[simp]: "(top::'a::{chilbert_space,not_singleton} linear_space) \<noteq> bot"
+  by (metis linear_space_zero_bot linear_space_zero_not_top) 
+lemmas bot_not_top[simp] = top_not_bot[symmetric]
+
+
+lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
+  apply transfer
+  unfolding sup_linear_space_def[symmetric] 
+  using is_closed_subspace_zero
+  unfolding closed_sum_def
+  unfolding Minkoswki_sum_def
+  by blast
+
+
+lemma span_superset:
+  \<open>A \<subseteq> Rep_linear_space (Complex_Inner_Product.span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
+proof-
+  have \<open>\<forall> S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>
+    by simp
+  hence \<open>A \<subseteq> \<Inter> {Rep_linear_space S| S. A \<subseteq> Rep_linear_space S}\<close>
+    by blast
+  hence \<open>A \<subseteq> Rep_linear_space( Inf {S| S. A \<subseteq> Rep_linear_space S})\<close>
+    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>)
+  thus ?thesis using span_def' by metis
+qed
+
+
 end
