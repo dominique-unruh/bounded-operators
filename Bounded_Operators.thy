@@ -1961,16 +1961,41 @@ proof-
     by auto
 qed
 
+lemma mult_inf_distrib[simp]: 
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
+  shows "(applyOpSpace U) (B * C) \<le> ((applyOpSpace U) B) *  ((applyOpSpace U) C)"
+proof-
+  have \<open>bounded_clinear U \<Longrightarrow>
+       is_subspace B \<Longrightarrow>
+       is_subspace C \<Longrightarrow>
+       closure (U ` (B \<inter> C))
+       \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
+    for U::\<open>'a\<Rightarrow>'b\<close> and B C::\<open>'a set\<close>
+  proof-
+    assume \<open>bounded_clinear U\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
+    have \<open>(U ` (B \<inter> C))
+       \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
+      using closure_subset by force      
+    moreover have \<open>closed ( closure (U ` B) \<inter> closure (U ` C) )\<close>
+      by blast      
+    ultimately show ?thesis
+      by (simp add: closure_minimal) 
+  qed
+  show ?thesis 
+  apply transfer
+    using \<open>\<And>U B C.
+       bounded_clinear U \<Longrightarrow>
+       is_subspace B \<Longrightarrow>
+       is_subspace C \<Longrightarrow>
+       closure (U ` (B \<inter> C))
+       \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
+    by blast
+qed
 
 chapter \<open>Chaos\<close>
   (* These are the results that I have not assimilated yet *)
 
 
-lemma mult_inf_distrib[simp]: "U \<cdot> (B \<sqinter> C) = (U \<cdot> B) \<sqinter> (U \<cdot> C)" 
-  for U :: "(_,_) bounded" and B C :: "_ linear_space"
-  using mult_INF[where V="\<lambda>x. if x then B else C" and U=U]
-  unfolding INF_UNIV_bool_expand
-  by simp
 
 definition "inj_option \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
 definition "inv_option \<pi> = (\<lambda>y. if Some y \<in> range \<pi> then Some (Hilbert_Choice.inv \<pi> (Some y)) else None)"
