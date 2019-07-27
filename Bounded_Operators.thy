@@ -711,13 +711,16 @@ lemma scaleR_bounded_lift:
   unfolding scaleR_bounded_def
   by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_scaleR scaleR_bounded_def scaleR_rbounded.rep_eq)
 
+
+section \<open>Adjoint\<close>
+
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
   is Adj by (fact Adj_bounded_clinear)
 
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
-  shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (adjoint G) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
+  shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (G*) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
   apply transfer using Adj_I by blast
 
 lemma adjoint_D:
@@ -732,8 +735,10 @@ lemma adjoint_twice[simp]: "(U*)* = U"
   apply transfer
   using dagger_dagger_id by blast
 
+
 lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
   using id_bounded_clinear by blast
+
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
@@ -764,38 +769,123 @@ qed
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
      \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
-  is "(o)"
+ (infixl "\<circ>\<^sub>R" 55) is "(o)"
   unfolding o_def 
   by (rule bounded_linear_compose, simp_all)
 
 definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" where
-  \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f) (rbounded_of_bounded g))\<close>
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"   
+ (infixl "\<circ>\<^sub>C" 55)
+where \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f) (rbounded_of_bounded g))\<close>
 
 lemma timesOp_Rep_bounded:
-  \<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
+  \<open>Rep_bounded (f \<circ>\<^sub>C g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
   unfolding timesOp_def
   by (metis (no_types, lifting) comp_apply rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim rtimesOp.rep_eq)
 
-lemma rtimesOp_assoc: "rtimesOp (rtimesOp A B) C = rtimesOp A (rtimesOp B C)" 
+lemma rtimesOp_assoc: "(A \<circ>\<^sub>R B) \<circ>\<^sub>R C = A \<circ>\<^sub>R (B \<circ>\<^sub>R C)" 
   apply transfer
   by (simp add: comp_assoc) 
 
-lemma timesOp_assoc: "timesOp (timesOp A B) C = timesOp A (timesOp B C)" 
+lemma timesOp_assoc: "(A \<circ>\<^sub>C B)  \<circ>\<^sub>C C = A  \<circ>\<^sub>C (B  \<circ>\<^sub>C C)" 
   by (metis (no_types, lifting) Rep_bounded_inverse fun.map_comp timesOp_Rep_bounded) 
 
-lemma times_adjoint[simp]: "adjoint (timesOp A B) = timesOp (adjoint B) (adjoint A)"
+
+lemma rtimesOp_dist1:
+  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
+    and c :: "('a::real_normed_vector, 'b) rbounded"
+  shows "(a + b) \<circ>\<^sub>R c = (a \<circ>\<^sub>R c) + (b \<circ>\<^sub>R c)"
+proof -
+ (* sledgehammer *)
+  {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
+  assume a1: "bounded_linear ca"
+  assume a2: "bounded_linear ba"
+  assume a3: "bounded_linear aa"
+  { fix aaa :: 'a
+    have ff1: "\<forall>r. Rep_rbounded (r::('b, 'c) rbounded) \<circ> ca = Rep_rbounded (r \<circ>\<^sub>R Abs_rbounded ca)"
+      using a1 by (simp add: Abs_rbounded_inverse rtimesOp.rep_eq)
+    have ff2: "Rep_rbounded (Abs_rbounded ba) = ba"
+      using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
+    have "Rep_rbounded (Abs_rbounded aa) = aa"
+      using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
+    then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = Rep_rbounded (Abs_rbounded (aa \<circ> ca)) aaa + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) aaa"
+      using ff2 ff1 by (metis (no_types) Rep_rbounded_inverse comp_apply) }
+  then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a)"
+    by meson
+} note 1 = this
+
+  show ?thesis
+  unfolding rtimesOp_def 
+  apply auto
+  apply transfer
+  unfolding plus_rbounded_def
+  apply auto
+  apply (rule 1)
+  by blast
+qed
+
+
+lemma rtimesOp_dist2:
+  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
+    and c :: "('b, 'c::real_normed_vector) rbounded"
+  shows "c \<circ>\<^sub>R (a + b) = (c \<circ>\<^sub>R a) + (c \<circ>\<^sub>R b)"
+proof-
+  have \<open>Rep_rbounded (c \<circ>\<^sub>R (a + b)) x = Rep_rbounded ( (c \<circ>\<^sub>R a) +  (c \<circ>\<^sub>R b) ) x\<close>
+    for x
+  proof-
+    have \<open>bounded_linear (Rep_rbounded c)\<close>
+      using Rep_rbounded by auto
+    have \<open>Rep_rbounded (c \<circ>\<^sub>R (a + b)) x = (Rep_rbounded c) ( (Rep_rbounded (a + b)) x )\<close>
+      by (simp add: rtimesOp.rep_eq)
+    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x + Rep_rbounded b x )\<close>
+      by (simp add: plus_rbounded.rep_eq)
+    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x ) + (Rep_rbounded c) ( Rep_rbounded b x )\<close>
+      using  \<open>bounded_linear (Rep_rbounded c)\<close>
+      unfolding bounded_linear_def linear_def
+      by (simp add: \<open>bounded_linear (Rep_rbounded c)\<close> linear_simps(1))
+    also have \<open>\<dots> = ( (Rep_rbounded c) \<circ> (Rep_rbounded a) ) x
+                  + ( (Rep_rbounded c) \<circ> (Rep_rbounded b) ) x\<close>
+      by simp
+    finally have \<open>Rep_rbounded (c \<circ>\<^sub>R (a + b)) x = Rep_rbounded ( (c \<circ>\<^sub>R a) +  (c \<circ>\<^sub>R b) ) x\<close>
+      by (simp add: plus_rbounded.rep_eq rtimesOp.rep_eq)
+    thus ?thesis
+      by simp 
+  qed
+  hence \<open>Rep_rbounded (c \<circ>\<^sub>R (a + b)) = Rep_rbounded ( (c \<circ>\<^sub>R a) +  (c \<circ>\<^sub>R b) )\<close>
+    by blast
+  thus ?thesis 
+    using Rep_rbounded_inject
+    by blast  
+qed
+
+
+lemma timesOp_dist1:
+  fixes a b :: "('b::complex_normed_vector, 'c::complex_normed_vector) bounded"
+      and c :: "('a::complex_normed_vector, 'b) bounded"
+shows "(a + b) \<circ>\<^sub>C c = (a \<circ>\<^sub>C c) + (b \<circ>\<^sub>C c)"
+  using rtimesOp_dist1
+  by (metis (no_types, lifting) bounded_of_rbounded_plus rbounded_of_bounded.rep_eq rbounded_of_bounded_plus rbounded_of_bounded_prelim rtimesOp.rep_eq timesOp_Rep_bounded timesOp_def) 
+
+lemma timesOp_dist2:
+  fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) bounded"
+    and c :: "('b, 'c::complex_normed_vector) bounded"
+  shows "c \<circ>\<^sub>C (a + b) = (c \<circ>\<^sub>C a) + (c \<circ>\<^sub>C b)"
+  using rtimesOp_dist2
+  by (metis (no_types, lifting) bounded_of_rbounded_plus rbounded_of_bounded.rep_eq rbounded_of_bounded_plus rbounded_of_bounded_prelim rtimesOp.rep_eq timesOp_Rep_bounded timesOp_def) 
+
+lemma times_adjoint[simp]: "(A \<circ>\<^sub>C B)* =  (B*) \<circ>\<^sub>C (A*)"
   using timesOp_Rep_bounded 
   by (smt adjoint_D adjoint_I comp_apply)
 
 lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
+ (infixl "\<down>" 55)
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
 
-lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
+lemma applyOp_0[simp]: "U \<down> 0 = 0" 
   apply transfer
   by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
 
@@ -866,7 +956,7 @@ proof
 qed
 
 lemma timesOp_assoc_linear_space: 
-  \<open>applyOpSpace (timesOp A B) \<psi> = applyOpSpace A (applyOpSpace B \<psi>)\<close>
+  \<open>(A \<circ>\<^sub>C B) \<down> \<psi> =  A  \<down>  (B  \<down>  \<psi>)\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by auto
@@ -918,14 +1008,14 @@ qed
 lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
 lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
 
-lemma scalar_times_op_add[simp]: "scaleC a (A+B) = scaleC a A + scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: scaleC_add_right)
 
-lemma scalar_times_op_minus[simp]: "scaleC a (A-B) = scaleC a A - scaleC a B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 
-lemma applyOp_bot[simp]: "applyOpSpace U bot = bot"
+lemma applyOp_bot[simp]: "U \<down> bot = bot"
   for U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
 proof-
   have \<open>closed {0::'a}\<close>
@@ -1244,7 +1334,7 @@ qed
 
 lemma cdot_plus_distrib[simp]: 
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
-  shows \<open>(applyOpSpace U) (A + B) = (applyOpSpace U) A + (applyOpSpace U) B\<close>
+  shows \<open> U \<down> (A + B) = (U \<down> A) + (U \<down> B)\<close>
 proof-
   {  have   \<open>
        bounded_clinear U \<Longrightarrow>
@@ -1288,7 +1378,7 @@ qed
 lemma scalar_op_linear_space_assoc [simp]: 
   fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
     and S::\<open>'a linear_space\<close> and \<alpha>::complex
-  shows \<open>(applyOpSpace (\<alpha> *\<^sub>C A)) S  = \<alpha> *\<^sub>C ((applyOpSpace A) S)\<close>
+  shows \<open>(\<alpha> *\<^sub>C A) \<down> S  = \<alpha> *\<^sub>C (A \<down> S)\<close>
 proof-
   have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (Rep_bounded A) ) ` Rep_linear_space S) =
    ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` Rep_linear_space S))\<close>
@@ -1309,7 +1399,7 @@ proof-
     by blast
 qed
 
-lemma applyOpSpace_id[simp]: "(applyOpSpace idOp) \<psi> = \<psi>"
+lemma applyOpSpace_id[simp]: "idOp \<down> \<psi> = \<psi>"
 proof-
   have \<open>is_subspace ( Rep_linear_space \<psi>)\<close>
     using Rep_linear_space by blast    
@@ -1337,13 +1427,13 @@ lemma rtimesOp_scaleC:
     and g::"('a::chilbert_space, 'b::chilbert_space) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
     and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
-  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (rtimesOp f g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rtimesOp f g) x)\<close>
+  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<circ>\<^sub>R g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<circ>\<^sub>R g) x)\<close>
   by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
 
 lemma rscalar_op_op: 
   fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
     and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
-  shows \<open>rtimesOp (a *\<^sub>C A) B = a *\<^sub>C (rtimesOp A B)\<close>
+  shows \<open>(a *\<^sub>C A) \<circ>\<^sub>R B = a *\<^sub>C (A \<circ>\<^sub>R B)\<close>
 proof-
   have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
     Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
@@ -1380,7 +1470,7 @@ qed
 lemma scalar_op_op[simp]:
   fixes A::"('b::chilbert_space,'c::chilbert_space) bounded" 
     and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
-  shows \<open>timesOp (a *\<^sub>C A) B = a *\<^sub>C (timesOp A B)\<close>
+  shows \<open>(a *\<^sub>C A) \<circ>\<^sub>C B = a *\<^sub>C (A \<circ>\<^sub>C B)\<close>
 proof-
   have \<open>(rtimesOp (a *\<^sub>C (rbounded_of_bounded A))
        (rbounded_of_bounded B)) =
@@ -1411,7 +1501,7 @@ lemma op_rscalar_op:
   fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
     and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded A (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded A x)\<close>
-  shows \<open>rtimesOp A (a *\<^sub>C B) = a *\<^sub>C (rtimesOp A B)\<close>
+  shows \<open>A \<circ>\<^sub>R (a *\<^sub>C B) = a *\<^sub>C (A \<circ>\<^sub>R B)\<close>
 proof-
   have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B) x\<close>
     for x
@@ -1442,22 +1532,20 @@ qed
 lemma op_scalar_op[simp]:
   fixes A::"('b::chilbert_space,'c::chilbert_space) bounded" 
     and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
-  shows \<open>timesOp A (a *\<^sub>C B) = a *\<^sub>C (timesOp A B)\<close>
+  shows \<open>A \<circ>\<^sub>C (a *\<^sub>C B) = a *\<^sub>C (A \<circ>\<^sub>C B)\<close>
   using op_rscalar_op
   by (metis (no_types, lifting) rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rscalar_op_op scalar_op_op timesOp_def)
 
-lemma times_idOp1[simp]: "timesOp U idOp = U"
+lemma times_idOp1[simp]: "U  \<circ>\<^sub>C idOp = U"
   by (metis Rep_bounded_inverse comp_id idOp.rep_eq timesOp_Rep_bounded)
 
-lemma times_idOp2[simp]: "timesOp idOp U  = U"
+lemma times_idOp2[simp]: "idOp \<circ>\<^sub>C U  = U"
   by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp_Rep_bounded)
-
-
 
 lemma mult_INF1[simp]:
   fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
     and V :: "'a \<Rightarrow> 'b linear_space" 
-  shows \<open>(applyOpSpace U) (INF i. V i) \<le> (INF i. (applyOpSpace U) (V i))\<close>
+  shows \<open>U \<down> (INF i. V i) \<le> (INF i. U \<down> (V i))\<close>
 proof-
   have \<open>bounded_clinear U \<Longrightarrow>
        \<forall>j. is_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
@@ -1509,7 +1597,7 @@ lemma applyOpSpace_eq:
   fixes S :: "_ linear_space" and A B :: "(_,_) bounded"
   assumes "\<And>x. x \<in> G \<Longrightarrow> Rep_bounded A x = Rep_bounded B x"
   assumes "span G \<ge> S"
-  shows "applyOpSpace A S = applyOpSpace B S"
+  shows "A \<down> S = B \<down> S"
   using assms
   by (cheat applyOpSpace_eq)
 
@@ -1517,72 +1605,72 @@ lemma applyOpSpace_eq:
 section \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
-is \<open>proj\<close>
-  by (rule Complex_Inner_Product.projPropertiesA)
+is \<open>projection\<close>
+  by (rule Complex_Inner_Product.projectionPropertiesA)
 
 lemma imageOp_Proj[simp]: "applyOpSpace (Proj S) top = S"
   apply transfer
   proof
-  show "closure (range (proj (S::'a set))) \<subseteq> S"
+  show "closure (range (projection (S::'a set))) \<subseteq> S"
     if "is_subspace (S::'a set)"
     for S :: "'a set"
     using that
-    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI is_subspace.subspace is_subspace_I orthogonal_complement_twice proj_intro2) 
-  show "(S::'a set) \<subseteq> closure (range (proj S))"
+    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI is_subspace.subspace is_subspace_I orthogonal_complement_twice projection_intro2) 
+  show "(S::'a set) \<subseteq> closure (range (projection S))"
     if "is_subspace (S::'a set)"
     for S :: "'a set"
     using that
-    by (metis (no_types, lifting) closure_subset image_subset_iff in_mono proj_fixed_points subsetI subset_UNIV) 
+    by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points subsetI subset_UNIV) 
 qed
 
-lemma proj_D1:
+lemma projection_D1:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>is_subspace M\<close>
-  shows \<open>proj M = (proj M)\<^sup>\<dagger>\<close>
+  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
 proof-
-  have \<open>(proj M) x = ((proj M)\<^sup>\<dagger>) x\<close>
+  have \<open>(projection M) x = ((projection M)\<^sup>\<dagger>) x\<close>
     for x
-  proof (rule proj_uniq)
+  proof (rule projection_uniq)
     show \<open>is_subspace M\<close>
       by (simp add: assms)
-    show \<open>((proj M)\<^sup>\<dagger>) x \<in> M\<close>
+    show \<open>((projection M)\<^sup>\<dagger>) x \<in> M\<close>
     proof-
-      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((proj M)\<^sup>\<dagger>) x, y \<rangle> = 0"
+      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((projection M)\<^sup>\<dagger>) x, y \<rangle> = 0"
         for y
       proof-
         assume \<open>y \<in> orthogonal_complement M\<close>
-        hence \<open>(proj M) y = 0\<close>
-          by (metis add_cancel_right_right assms is_subspace_orthog ortho_decomp orthogonal_complement_twice proj_fixed_points)          
-        hence \<open>\<langle> x, (proj M) y \<rangle> = 0\<close>
+        hence \<open>(projection M) y = 0\<close>
+          by (metis add_cancel_right_right assms is_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
+        hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
           by simp          
         thus ?thesis
-          by (simp add: Adj_I assms projPropertiesA) 
+          by (simp add: Adj_I assms projectionPropertiesA) 
       qed
-      hence "((proj M)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
+      hence "((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
         unfolding orthogonal_complement_def is_orthogonal_def
         by blast
       thus ?thesis
         by (simp add: assms orthogonal_complement_twice) 
     qed
-    show \<open>x - ((proj M)\<^sup>\<dagger>) x \<in> orthogonal_complement M\<close>
+    show \<open>x - ((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement M\<close>
     proof (rule orthogonal_complement_I2)
-      show "\<langle>x - (proj M\<^sup>\<dagger>) x, y\<rangle> = 0"
+      show "\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = 0"
         if "y \<in> M"
         for y :: 'a
       proof-
-        have \<open>y = proj M y\<close>
+        have \<open>y = projection M y\<close>
           using that(1)
-          by (simp add: assms proj_fixed_points)
-        hence \<open>y - proj M y = 0\<close>
+          by (simp add: assms projection_fixed_points)
+        hence \<open>y - projection M y = 0\<close>
           by simp
-        have \<open>\<langle>x - (proj M\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>(proj M\<^sup>\<dagger>) x, y\<rangle>\<close>
+        have \<open>\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>(projection M\<^sup>\<dagger>) x, y\<rangle>\<close>
           by (simp add: cinner_diff_left)
-        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, (proj M) y\<rangle>\<close>
-          by (simp add: Adj_I assms projPropertiesA)
-        also have \<open>... = \<langle>x, y - (proj M) y\<rangle>\<close>
+        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, (projection M) y\<rangle>\<close>
+          by (simp add: Adj_I assms projectionPropertiesA)
+        also have \<open>... = \<langle>x, y - (projection M) y\<rangle>\<close>
           by (simp add: cinner_diff_right)
         also have \<open>... = \<langle>x, 0\<rangle>\<close>
-          using  \<open>y - proj M y = 0\<close>
+          using  \<open>y - projection M y = 0\<close>
           by simp
         also have \<open>... = 0\<close>
           by simp          
@@ -1597,35 +1685,375 @@ qed
 lemma Proj_D1:
 \<open>(Proj M) = (Proj M)*\<close>
   apply transfer
-  by (rule proj_D1)
+  by (rule projection_D1)
+
 
 lemma Proj_D2:
-\<open>timesOp (Proj M) (Proj M) = idOp\<close>
+\<open>(Proj M) \<circ>\<^sub>C (Proj M) = idOp\<close>
   sorry
 
 lemma Proj_I:
-\<open>timesOp P P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
+\<open>P \<circ>\<^sub>C P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
   sorry
 
+lemma Proj_leq: "(Proj S) \<down> A \<le> S"
+  sorry
 
-lemma Proj_leq: "Proj S \<cdot> A \<le> S"
-  by (metis imageOp_Proj inf.orderE inf.orderI mult_inf_distrib top_greatest)
-
-
-lemma Proj_times: "A \<cdot> Proj S \<cdot> A* = Proj (A\<cdot>S)" for A::"(_,_)bounded"
+lemma Proj_times: "A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C A* = Proj (A \<down> S)" for A::"(_,_)bounded"
   by (cheat TODO2)
 
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
 
-lemma proj_scalar_mult[simp]: 
-  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a ell2"
-  by (cheat TODO2)
+lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
+is \<open>orthogonal_complement\<close>
+  by (rule Complex_Inner_Product.is_subspace_orthog)
 
+lemma projection_scalar_mult[simp]: 
+  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
+  by (cheat TODO2)
 
 lemma move_plus:
-  "Proj (ortho C) \<cdot> A \<le> B \<Longrightarrow> A \<le> B + C"
+  "Proj (ortho C) \<down> A \<le> B \<Longrightarrow> A \<le> B + C"
   for A B C::"_ linear_space"
   by (cheat TODO2)
+
+
+(* NEW *)
+section \<open>Endomorphism algebra\<close>
+
+(* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
+typedef (overloaded) ('a::complex_normed_vector) endo 
+= \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
+  using bounded_clinear_ident by blast
+
+definition bounded_of_endo:: \<open>'a::chilbert_space endo \<Rightarrow> ('a, 'a) bounded\<close>  where 
+\<open>bounded_of_endo f = Abs_bounded (Rep_endo f)\<close>
+
+definition endo_of_bounded:: \<open>('a::chilbert_space, 'a) bounded \<Rightarrow> 'a endo\<close>  where 
+\<open>endo_of_bounded f = Abs_endo (Rep_bounded f)\<close>
+
+lemma endo_of_bounded_inj:
+\<open>endo_of_bounded f = endo_of_bounded g \<Longrightarrow> f = g\<close>
+  by (metis Abs_endo_inject endo_of_bounded_def Rep_bounded Rep_bounded_inject)
+
+lemma bounded_of_endo_inj:
+\<open>bounded_of_endo f = bounded_of_endo g \<Longrightarrow> f = g\<close>
+  by (metis Abs_bounded_inject Rep_endo Rep_endo_inject bounded_of_endo_def)
+
+lemma endo_of_bounded_inv:
+\<open>bounded_of_endo (endo_of_bounded f) = f\<close>
+  by (metis Abs_endo_inverse endo_of_bounded_def Rep_bounded Rep_bounded_inverse bounded_of_endo_def)
+
+lemma bounded_of_endo_inv:
+\<open>endo_of_bounded (bounded_of_endo f) = f\<close>
+  using endo_of_bounded_inv bounded_of_endo_inj by auto
+
+instantiation endo :: (chilbert_space) \<open>complex_normed_vector\<close>
+begin
+
+definition zero_endo::"'a endo" 
+  where "zero_endo = endo_of_bounded (0::('a,'a) bounded)"
+
+definition plus_endo::"'a endo \<Rightarrow> 'a endo \<Rightarrow> 'a endo" 
+  where "plus_endo f g =  endo_of_bounded ( (bounded_of_endo f)+(bounded_of_endo g) )"
+
+definition uminus_endo::"'a endo \<Rightarrow> 'a endo" 
+  where "uminus_endo f =  endo_of_bounded (- (bounded_of_endo f))"
+
+definition minus_endo::"'a endo \<Rightarrow> 'a endo \<Rightarrow> 'a endo" 
+  where "minus_endo f g =  endo_of_bounded ( (bounded_of_endo f)-(bounded_of_endo g) )"
+
+definition scaleC_endo :: \<open>complex \<Rightarrow> 'a endo \<Rightarrow> 'a endo\<close>
+  where "scaleC_endo c f =  endo_of_bounded ( c *\<^sub>C (bounded_of_endo f) )"
+
+definition scaleR_endo :: \<open>real \<Rightarrow> 'a endo \<Rightarrow> 'a endo\<close>
+  where "scaleR_endo c f =  endo_of_bounded ( c *\<^sub>R (bounded_of_endo f) )"
+
+definition norm_endo :: \<open>'a endo \<Rightarrow> real\<close>
+  where \<open>norm_endo f = norm (bounded_of_endo f)\<close>
+
+definition dist_endo :: \<open>'a endo \<Rightarrow> 'a endo \<Rightarrow> real\<close>
+  where \<open>dist_endo f g = dist (bounded_of_endo f) (bounded_of_endo g)\<close>
+
+definition sgn_endo :: \<open>'a endo \<Rightarrow> 'a endo\<close>
+  where \<open>sgn_endo f =  endo_of_bounded ( sgn (bounded_of_endo f))\<close>
+
+definition uniformity_endo :: \<open>( 'a  endo \<times> 'a endo ) filter\<close>
+  where \<open>uniformity_endo = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a endo) y < e})\<close>
+
+definition open_endo :: \<open>('a endo) set \<Rightarrow> bool\<close>
+  where \<open>open_endo U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a endo) = x \<longrightarrow> y \<in> U)\<close>
+
+instance
+  proof
+  show \<open>((*\<^sub>R) r::'a endo \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+    for r :: real
+    unfolding scaleR_endo_def scaleC_endo_def
+    by (simp add: scaleR_scaleC)
+    
+  show "(a::'a endo) + b + c = a + (b + c)"
+    for a :: "'a endo"
+      and b :: "'a endo"
+      and c :: "'a endo"
+    by (simp add: endo_of_bounded_inv ab_semigroup_add_class.add_ac(1) plus_endo_def)
+
+
+  show "(a::'a endo) + b = b + a"
+    for a :: "'a endo"
+      and b :: "'a endo"
+    by (simp add: add.commute plus_endo_def)
+    
+  show "(0::'a endo) + a = a"
+    for a :: "'a endo"
+    by (simp add: endo_of_bounded_inv Bounded_Operators.plus_endo_def Bounded_Operators.zero_endo_def bounded_of_endo_inv)
+    
+  show "- (a::'a endo) + a = 0"
+    for a :: "'a endo"
+    by (simp add: endo_of_bounded_inv plus_endo_def uminus_endo_def zero_endo_def)
+
+  show "(a::'a endo) - b = a + - b"
+    for a :: "'a endo"
+      and b :: "'a endo"
+    by (metis (full_types) endo_of_bounded_inv ab_group_add_class.ab_diff_conv_add_uminus minus_endo_def plus_endo_def uminus_endo_def)
+    
+  show \<open>a *\<^sub>C ((x::'a endo) + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
+    for a :: complex
+      and x :: "'a endo"
+      and y :: "'a endo"
+    by (simp add: endo_of_bounded_inv plus_endo_def scaleC_endo_def scaleC_add_right)
+
+  show "(a + b) *\<^sub>C (x::'a endo) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a endo"
+    by (simp add: endo_of_bounded_inv Bounded_Operators.plus_endo_def Bounded_Operators.scaleC_endo_def scaleC_add_left)
+
+  show "a *\<^sub>C b *\<^sub>C (x::'a endo) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a endo"
+    by (simp add: endo_of_bounded_inv scaleC_endo_def)
+
+  show "1 *\<^sub>C (x::'a endo) = x"
+    for x :: "'a endo"
+    by (simp add: bounded_of_endo_inv scaleC_endo_def)    
+
+  show "dist (x::'a endo) y = norm (x - y)"
+    for x :: "'a endo"
+      and y :: "'a endo"
+    by (simp add: endo_of_bounded_inv Bounded_Operators.minus_endo_def Bounded_Operators.norm_endo_def dist_endo_def dist_norm)
+
+  show "a *\<^sub>R ((x::'a endo) + y) = a *\<^sub>R x + a *\<^sub>R y"
+    for a :: real
+      and x :: "'a endo"
+      and y :: "'a endo"
+    using \<open>\<And>r. ((*\<^sub>R) r::'a endo \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+      \<open>\<And> y x a. a *\<^sub>C ((x::'a endo) + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
+    by fastforce
+
+  show "(a + b) *\<^sub>R (x::'a endo) = a *\<^sub>R x + b *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "'a endo"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a endo \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+      \<open>\<And> a b x. (a + b) *\<^sub>C (x::'a endo) = a *\<^sub>C x + b *\<^sub>C x\<close>
+    by fastforce
+
+  show "a *\<^sub>R b *\<^sub>R (x::'a endo) = (a * b) *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "'a endo"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a endo \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+      \<open>\<And> a b x. a *\<^sub>C b *\<^sub>C (x::'a endo) = (a * b) *\<^sub>C x\<close>
+    by fastforce
+
+  show "1 *\<^sub>R (x::'a endo) = x"
+    for x :: "'a endo"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a endo \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+        \<open>1 *\<^sub>C (x::'a endo) = x\<close>
+    by fastforce
+
+  show "sgn (x::'a endo) = inverse (norm x) *\<^sub>R x"
+    for x :: "'a endo"
+    by (simp add: Bounded_Operators.norm_endo_def Bounded_Operators.scaleR_endo_def Bounded_Operators.sgn_endo_def sgn_div_norm)
+    
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a endo) y < e})"
+    using Bounded_Operators.uniformity_endo_def by auto    
+
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a endo) = x \<longrightarrow> y \<in> U)"
+    for U :: "'a endo set"
+    using Bounded_Operators.open_endo_def by auto    
+
+  show "(norm (x::'a endo) = 0) = (x = 0)"
+    for x :: "'a endo"
+  proof -
+    have f1: "\<not> (0::real) < 0"
+      by (metis norm_zero zero_less_norm_iff)
+    have "bounded_of_endo x = 0 \<longrightarrow> norm (bounded_of_endo x) = 0"
+      by auto
+    then show ?thesis
+      using f1 by (metis (mono_tags) endo_of_bounded_inv Bounded_Operators.zero_endo_def bounded_of_endo_inv norm_endo_def zero_less_norm_iff)
+  qed
+
+  show "norm ((x::'a endo) + y) \<le> norm x + norm y"
+    for x :: "'a endo"
+      and y :: "'a endo"
+    by (simp add: endo_of_bounded_inv norm_endo_def norm_triangle_ineq plus_endo_def)
+    
+  show "norm (a *\<^sub>R (x::'a endo)) = \<bar>a\<bar> * norm x"
+    for a :: real
+      and x :: "'a endo"
+    by (simp add: endo_of_bounded_inv norm_endo_def scaleR_endo_def)
+    
+  show "norm (a *\<^sub>C (x::'a endo)) = cmod a * norm x"
+    for a :: complex
+      and x :: "'a endo"
+    by (simp add: endo_of_bounded_inv norm_endo_def scaleC_endo_def)
+    
+qed
+
+end
+
+instantiation endo :: (chilbert_space) \<open>cbanach\<close>
+begin
+
+lemma bounded_of_endo_Cauchy:
+  \<open>Cauchy f \<Longrightarrow> Cauchy (\<lambda> n. bounded_of_endo (f n))\<close>
+  unfolding Cauchy_def dist_endo_def by blast
+
+lemma endo_of_bounded_tendsto:
+  \<open>f \<longlonglongrightarrow> l \<Longrightarrow> (\<lambda> n. endo_of_bounded (f n)) \<longlonglongrightarrow> endo_of_bounded l\<close>
+proof-
+  assume \<open>f \<longlonglongrightarrow> l\<close>
+  hence \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* f) N \<approx> star_of l\<close>
+    for N
+    by (simp add: LIMSEQ_NSLIMSEQ NSLIMSEQ_D)
+  hence \<open>N\<in>HNatInfinite \<Longrightarrow> hnorm ((*f* f) N - star_of l) \<in> Infinitesimal\<close>
+    for N
+    using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
+  moreover have \<open>hnorm ((*f* f) N - star_of l) =
+     hnorm ( (*f* (\<lambda> n. endo_of_bounded (f n))) N - star_of (endo_of_bounded l) ) \<close>
+    for N
+  proof-
+    have \<open>\<forall> N. norm (f N -  l) =
+     norm (  (\<lambda> n. endo_of_bounded (f n)) N -  (endo_of_bounded l) )\<close>
+      unfolding norm_endo_def
+      by (simp add: endo_of_bounded_inv minus_endo_def)
+    hence \<open>\<forall> N. hnorm ((*f* f) N - star_of l) =
+     hnorm ( (*f* (\<lambda> n. endo_of_bounded (f n))) N - star_of (endo_of_bounded l) )\<close>
+      by StarDef.transfer
+    thus ?thesis by blast
+  qed
+  ultimately have  \<open>N\<in>HNatInfinite \<Longrightarrow>
+   hnorm ( (*f* (\<lambda> n. endo_of_bounded (f n))) N - star_of (endo_of_bounded l) ) \<in> Infinitesimal\<close>
+    for N
+    by simp    
+  hence \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda> n. endo_of_bounded (f n))) N \<approx> star_of  (endo_of_bounded l)\<close>
+    for N
+    by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff)    
+  hence \<open>(\<lambda> n. endo_of_bounded (f n)) \<longlonglongrightarrow>\<^sub>N\<^sub>S endo_of_bounded l\<close>
+    by (simp add: NSLIMSEQ_I)    
+  thus ?thesis
+    by (simp add: NSLIMSEQ_LIMSEQ)
+qed
+
+instance
+  proof
+  show "convergent (X::nat \<Rightarrow> 'a endo)"
+    if "Cauchy (X::nat \<Rightarrow> 'a endo)"
+    for X :: "nat \<Rightarrow> 'a endo"
+  proof-
+    have \<open>Cauchy (\<lambda> n. bounded_of_endo (X n))\<close>
+      using that
+      by (simp add: bounded_of_endo_Cauchy) 
+    hence \<open>convergent (\<lambda> n. bounded_of_endo (X n))\<close>
+      by (simp add: Cauchy_convergent)
+    then obtain l where \<open>(\<lambda> n. bounded_of_endo (X n)) \<longlonglongrightarrow> l\<close>
+      unfolding convergent_def by blast
+    hence \<open>(\<lambda> n. endo_of_bounded ( (\<lambda> m. bounded_of_endo (X m)) n) )
+             \<longlonglongrightarrow> endo_of_bounded l\<close>
+      using endo_of_bounded_tendsto
+      by (simp add: endo_of_bounded_tendsto)
+    moreover have \<open>endo_of_bounded ( (\<lambda> m. bounded_of_endo (X m)) n) = X n\<close>
+      for n
+      by (simp add: bounded_of_endo_inv)      
+    ultimately show ?thesis
+      by (simp add: convergentI) 
+  qed
+qed
+end
+
+instantiation endo::(chilbert_space) \<open>ring\<close>
+begin
+definition times_endo::\<open>'a endo \<Rightarrow> 'a endo \<Rightarrow> 'a endo\<close> where
+\<open>times_endo A B = endo_of_bounded ((bounded_of_endo A) \<circ>\<^sub>C (bounded_of_endo B))\<close>
+instance
+  proof
+  show "(a::'a endo) * b * c = a * (b * c)"
+    for a :: "'a endo"
+      and b :: "'a endo"
+      and c :: "'a endo"
+    by (simp add: endo_of_bounded_inv Bounded_Operators.times_endo_def timesOp_assoc)
+    
+  show "((a::'a endo) + b) * c = a * c + b * c"
+    for a :: "'a endo"
+      and b :: "'a endo"
+      and c :: "'a endo"
+    by (simp add: endo_of_bounded_inv plus_endo_def timesOp_dist1 times_endo_def)
+    
+  show "(a::'a endo) * (b + c) = a * b + a * c"
+    for a :: "'a endo"
+      and b :: "'a endo"
+      and c :: "'a endo"
+        by (simp add: endo_of_bounded_inv plus_endo_def timesOp_dist2 times_endo_def)
+qed
+end
+
+
+instantiation endo::("{chilbert_space, perfect_space}") \<open>ring_1\<close>
+begin
+definition one_endo::\<open>'a endo\<close> where
+  \<open>one_endo = endo_of_bounded idOp\<close>
+
+instance
+  proof
+  show "(1::'a endo) * a = a"
+    for a :: "'a endo"
+    unfolding one_endo_def times_endo_def
+    by (simp add: endo_of_bounded_inv bounded_of_endo_inj)
+    
+  show "(a::'a endo) * 1 = a"
+    for a :: "'a endo"
+    unfolding one_endo_def times_endo_def
+    by (simp add: endo_of_bounded_inv bounded_of_endo_inj)
+
+  show "(0::'a::{chilbert_space, perfect_space} endo) \<noteq> 1"
+  proof-
+    have \<open>(0::('a,'a) bounded) \<noteq> idOp\<close>
+    proof-
+      have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+        using UNIV_not_singleton
+        by auto
+      then obtain x::'a where \<open>x \<noteq> 0\<close>
+        by blast
+      moreover have \<open>Rep_bounded ((0::('a,'a) bounded)) x = 0\<close>
+        by (simp add: zero_bounded_lift)        
+      moreover have \<open>Rep_bounded (idOp) x = x\<close>
+        by (simp add: idOp.rep_eq)       
+      ultimately have \<open>Rep_bounded ((0::('a,'a) bounded)) \<noteq> Rep_bounded (idOp)\<close>
+        by auto        
+      thus ?thesis using Rep_bounded_inject
+        by (simp add: Rep_bounded_inject)
+    qed
+    thus ?thesis
+      unfolding one_endo_def zero_endo_def
+      using endo_of_bounded_inj by blast
+  qed
+qed
+
+end
+
+
 
 
 
