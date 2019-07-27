@@ -2142,8 +2142,153 @@ lemma Proj_endo_D2[simp]:
 
 
 lemma Proj_I:
-\<open>P \<circ>\<^sub>C P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
-  sorry
+\<open>P \<circ>\<^sub>C P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
+for P :: \<open>('a::chilbert_space,'a) bounded\<close>
+proof-
+  assume \<open>P \<circ>\<^sub>C P = P\<close> and \<open>P = P*\<close>
+  have \<open>closed (range (Rep_bounded P))\<close>
+  proof-
+    have \<open>range (Rep_bounded P) = (\<lambda> x. x - Rep_bounded P x) -` {0}\<close>
+    proof
+      show "range (Rep_bounded P) \<subseteq> (\<lambda>x. x - Rep_bounded P x) -` {0}"
+      proof
+        show "x \<in> (\<lambda>x. x - Rep_bounded P x) -` {0}"
+          if "x \<in> range (Rep_bounded P)"
+          for x :: 'a
+        proof-
+          have \<open>\<exists> t. Rep_bounded P t = x\<close>
+            using that by blast
+          then obtain t where \<open>Rep_bounded P t = x\<close>
+            by blast 
+          hence \<open>x - Rep_bounded P x = x - Rep_bounded P (Rep_bounded P t)\<close>
+            by simp
+          also have \<open>\<dots> = x - (Rep_bounded P t)\<close>
+          proof-
+            have \<open>Rep_bounded P \<circ> Rep_bounded P = Rep_bounded P\<close>
+              by (metis \<open>P \<circ>\<^sub>C P = P\<close> timesOp_Rep_bounded)
+            thus ?thesis
+              by (metis comp_apply) 
+          qed
+          also have \<open>\<dots> = 0\<close>
+            by (simp add: \<open>Rep_bounded P t = x\<close>)
+          finally have \<open>x - Rep_bounded P x = 0\<close>
+            by blast
+          thus ?thesis
+            by simp 
+        qed
+      qed
+      show "(\<lambda>x. x - Rep_bounded P x) -` {0} \<subseteq> range (Rep_bounded P)"
+      proof
+        show "x \<in> range (Rep_bounded P)"
+          if "x \<in> (\<lambda>x. x - Rep_bounded P x) -` {0}"
+          for x :: 'a
+        proof-
+          have \<open>x - Rep_bounded P x = 0\<close>
+            using that by blast
+          hence \<open>x = Rep_bounded P x\<close>
+            by (simp add: \<open>x - Rep_bounded P x = 0\<close> eq_iff_diff_eq_0)
+          thus ?thesis
+            by blast 
+        qed
+      qed
+    qed
+    moreover have \<open>closed ( (\<lambda> x. x - Rep_bounded P x) -` {0} )\<close>
+    proof-
+      have \<open>closed {(0::'a)}\<close>
+        by simp        
+      moreover have \<open>continuous (at x) (\<lambda> x. x - Rep_bounded P x)\<close>
+        for x
+      proof-
+        have \<open>Rep_bounded (idOp - P) = (\<lambda> x. x - Rep_bounded P x)\<close>
+          by (simp add: idOp.rep_eq minus_bounded_lift)          
+        hence \<open>bounded_clinear (Rep_bounded (idOp - P))\<close>
+          using Rep_bounded
+          by blast 
+        hence \<open>continuous (at x) (Rep_bounded (idOp - P))\<close>
+          by (simp add: bounded_linear_continuous)          
+        thus ?thesis
+          using \<open>Rep_bounded (idOp - P) = (\<lambda> x. x - Rep_bounded P x)\<close>
+          by simp
+      qed
+      ultimately show ?thesis  
+        by (rule Abstract_Topology.continuous_closed_vimage)               
+    qed
+    ultimately show ?thesis
+      by simp  
+  qed
+  have \<open>bounded_clinear (Rep_bounded P)\<close>
+    using Rep_bounded by auto
+  hence \<open>is_subspace ( range (Rep_bounded P) )\<close>
+    using \<open>closed (range (Rep_bounded P))\<close>
+     bounded_clinear.clinear is_linear_manifold_image is_subspace.intro 
+      is_subspace.subspace is_subspace_UNIV by blast
+  hence \<open>\<exists> M. Rep_linear_space M = (range (Rep_bounded P))\<close>
+    using  \<open>closed (range (Rep_bounded P))\<close>
+    by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
+  then obtain M where \<open>Rep_linear_space M = (range (Rep_bounded P))\<close>
+    by blast
+  have \<open>Rep_bounded P x \<in> Rep_linear_space M\<close>
+    for x
+    by (simp add: \<open>Rep_linear_space M = range (Rep_bounded P)\<close>)
+  moreover have \<open>x - Rep_bounded P x \<in> orthogonal_complement ( Rep_linear_space M)\<close>
+    for x
+  proof-
+    have \<open>y \<in> Rep_linear_space M \<Longrightarrow> \<langle> x - Rep_bounded P x, y \<rangle> = 0\<close>
+      for y
+    proof-
+      assume \<open>y \<in> Rep_linear_space M\<close>
+      hence \<open>\<exists> t. y = Rep_bounded P t\<close>
+        by (simp add: \<open>Rep_linear_space M = range (Rep_bounded P)\<close> image_iff)
+      then obtain t where \<open>y = Rep_bounded P t\<close>
+        by blast
+      have \<open>\<langle> x - Rep_bounded P x, y \<rangle> = \<langle> x - Rep_bounded P x, Rep_bounded P t \<rangle>\<close>
+        by (simp add: \<open>y = Rep_bounded P t\<close>)
+      also have \<open>\<dots> = \<langle> Rep_bounded P (x - Rep_bounded P x), t \<rangle>\<close>
+        by (metis \<open>P = P*\<close> adjoint_I)
+      also have \<open>\<dots> = \<langle> Rep_bounded P x - Rep_bounded P (Rep_bounded P x), t \<rangle>\<close>
+        by (metis \<open>P = P*\<close> adjoint_I cinner_diff_left)
+      also have \<open>\<dots> = \<langle> Rep_bounded P x - Rep_bounded P x, t \<rangle>\<close>
+      proof-
+        have \<open>(Rep_bounded P) \<circ> (Rep_bounded P) = (Rep_bounded P)\<close>
+          using  \<open>P \<circ>\<^sub>C P = P\<close>
+          by (metis timesOp_Rep_bounded)          
+        thus ?thesis
+          using comp_eq_dest_lhs by fastforce 
+      qed
+      also have \<open>\<dots> = \<langle> 0, t \<rangle>\<close>
+        by simp
+      also have \<open>\<dots> = 0\<close>
+        by simp
+      finally show ?thesis by blast
+    qed
+    thus ?thesis
+      by (simp add: orthogonal_complement_I2) 
+  qed
+  ultimately have \<open>P = Proj M\<close>
+  proof - (* sledgehammer *)
+    have "is_subspace (Rep_linear_space M)"
+      by (metis \<open>Rep_linear_space M = range (Rep_bounded P)\<close> \<open>is_subspace (range (Rep_bounded P))\<close>)
+    then have f1: "\<forall>a. Rep_bounded (Proj M) a = Rep_bounded P a"
+      by (simp add: Proj.rep_eq \<open>\<And>x. Rep_bounded P x \<in> Rep_linear_space M\<close> \<open>\<And>x. x - Rep_bounded P x \<in> orthogonal_complement (Rep_linear_space M)\<close> projection_uniq)
+    have "\<forall>a. (+) ((a::'a) - a) = id"
+      by force
+    then have "\<forall>a. (+) (Rep_bounded (P - Proj M) a) = id"
+      using f1 by (simp add: minus_bounded_lift)
+    then have "\<forall>a aa. aa - aa = Rep_bounded (P - Proj M) a"
+      by (metis (no_types) add_diff_cancel_right' id_apply)
+    then have "\<forall>a. Rep_bounded (idOp - (P - Proj M)) a = a"
+      by (simp add: idOp.rep_eq minus_bounded_lift)
+    then show ?thesis
+      by (metis (no_types) Rep_bounded_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
+  qed
+  thus ?thesis by blast
+qed
+
+lemma Proj_endo_I:
+\<open>P * P = P \<Longrightarrow> P = P\<^sup>a\<^sup>d\<^sup>j \<Longrightarrow> \<exists> M. P = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<close>
+  using Proj_I
+  unfolding Adj_endo_def times_endo_def
+  by (metis Proj_endo_def endo_of_bounded_inv)
 
 lemma Proj_leq: "(Proj S) \<down> A \<le> S"
   sorry
