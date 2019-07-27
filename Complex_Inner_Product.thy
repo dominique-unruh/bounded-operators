@@ -585,6 +585,47 @@ abbreviation is_orthogonal_abbr::"'a::complex_inner \<Rightarrow> 'a \<Rightarro
 
 definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. x \<bottom> y}" 
 
+lemma orthogonal_complement_D1:
+\<open>x \<in> orthogonal_complement M \<Longrightarrow> y \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+  unfolding orthogonal_complement_def is_orthogonal_def by auto
+
+lemma orthogonal_complement_D2:
+\<open>x \<in> M \<Longrightarrow> y \<in> orthogonal_complement M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+proof-
+  assume \<open>x \<in> M\<close> and \<open>y \<in> orthogonal_complement M\<close>
+  hence \<open>\<langle> y, x \<rangle> = 0\<close>
+    using orthogonal_complement_D1
+    by blast
+  moreover have \<open>\<langle> x, y \<rangle> = cnj \<langle> y, x \<rangle>\<close>
+    by simp    
+  moreover have \<open>0 = cnj (0::complex)\<close>
+    by simp
+  ultimately show ?thesis by simp
+qed
+
+lemma orthogonal_complement_I1:
+\<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
+  unfolding orthogonal_complement_def is_orthogonal_def
+  by (smt is_orthogonal_def mem_Collect_eq orthogonal_complement_D2 orthogonal_complement_def)
+
+lemma orthogonal_complement_I2:
+\<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
+  proof (rule orthogonal_complement_I1)
+  show "\<langle>x, y\<rangle> = 0"
+    if "\<And>x. x \<in> M \<Longrightarrow> \<langle>y, x\<rangle> = 0"
+      and "x \<in> M"
+    for x :: 'a
+  proof-
+    have \<open>\<langle>y, x\<rangle> = 0\<close>
+      by (simp add: that(1) that(2))      
+    moreover have \<open>0 = cnj 0\<close>
+      by simp
+    ultimately show ?thesis
+      by (metis cinner_commute')
+  qed
+qed
+
+
 lemma orthogonal_comm: "(\<psi> \<bottom> \<phi>) = (\<phi> \<bottom> \<psi>)"
   unfolding is_orthogonal_def apply (subst cinner_commute) by blast
 
@@ -3342,12 +3383,6 @@ definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
 fun partial_span::\<open>nat \<Rightarrow> ('a::complex_vector) set \<Rightarrow> ('a::complex_vector) set\<close> where
   \<open>partial_span 0 S = {0}\<close>|
   \<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
-
-definition finite_dimensional::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> bool\<close> where
-  \<open>finite_dimensional S = (\<exists> n. Rep_linear_space S = partial_span n (Rep_linear_space S))\<close>
-
-definition dim::\<open>('a::{complex_vector,topological_space}) linear_space \<Rightarrow> nat\<close> where
-  \<open>dim S = Inf {n | n. Rep_linear_space S = partial_span n (Rep_linear_space S)}\<close>
 
 term \<open>dim S = (if S=0 then 0 else 1)\<close>
 
