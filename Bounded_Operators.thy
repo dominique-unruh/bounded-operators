@@ -766,6 +766,50 @@ proof-
 qed
 
 
+lemma Adj_bounded_plus:
+\<open>(A + B)* = (A*) + (B*)\<close>
+proof -
+  { have f1: "\<forall>b ba. (\<exists>a bb. \<langle>Rep_bounded b (a::'a), bb::'b\<rangle> \<noteq> \<langle>a, Rep_bounded ba bb\<rangle>) \<or> b = ba*"
+  using adjoint_D by blast
+  obtain aa :: "('b, 'a) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> 'a" and bb :: "('b, 'a) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> 'b" where
+    f2: "\<forall>x0 x1. (\<exists>v2 v3. \<langle>Rep_bounded x1 v2, v3\<rangle> \<noteq> \<langle>v2, Rep_bounded x0 v3\<rangle>) = (\<langle>Rep_bounded x1 (aa x0 x1), bb x0 x1\<rangle> \<noteq> \<langle>aa x0 x1, Rep_bounded x0 (bb x0 x1)\<rangle>)"
+by moura
+have f3: "bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)* = Abs_bounded (Rep_bounded (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B))\<^sup>\<dagger>)"
+  by (metis (no_types) Rep_bounded_inverse adjoint.rep_eq)
+have "A* = Abs_bounded (Rep_bounded A\<^sup>\<dagger>)"
+by (metis Rep_bounded_inverse adjoint.rep_eq)
+then have f4: "\<langle>aa (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)), Rep_bounded A (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))\<rangle> = \<langle>Rep_bounded (Abs_bounded (Rep_bounded A\<^sup>\<dagger>)) (aa (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))), bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))\<rangle>"
+  by (metis adjoint_I)
+  have f5: "\<langle>aa (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)), Rep_bounded B (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))\<rangle> = \<langle>Rep_bounded (Abs_bounded (Rep_bounded B\<^sup>\<dagger>)) (aa (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))), bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))\<rangle>"
+    by (metis (no_types) Rep_bounded_inverse adjoint.rep_eq adjoint_I)
+have "Rep_bounded (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))) = Rep_bounded A (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))) + Rep_bounded B (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))"
+  by (metis plus_bounded_def plus_bounded_lift)
+  then have "Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>) = bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)*"
+using f5 f4 f2 f1 by (simp add: cinner_left_distrib cinner_right_distrib plus_bounded_lift)
+  hence "Abs_bounded (Rep_bounded (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B))\<^sup>\<dagger>) = bounded_of_rbounded (rbounded_of_bounded (Abs_bounded (Rep_bounded A\<^sup>\<dagger>)) + rbounded_of_bounded (Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))"
+    using f3 by (simp add: plus_bounded_def) } note 1 = this
+
+  show ?thesis 
+  unfolding plus_bounded_def adjoint_def 
+  apply auto
+  by (rule 1)
+qed
+
+lemma Adj_bounded_uminus[simp]:
+\<open>(- A)* = - (A*)\<close>
+  by (metis (no_types, lifting) Adj_bounded_plus  add_cancel_left_right diff_0 ordered_field_class.sign_simps(9))
+
+lemma Adj_bounded_minus[simp]:
+\<open>(A - B)* = (A*) - (B*)\<close>
+  by (metis Adj_bounded_plus add_right_cancel diff_add_cancel)
+
+
+lemma Adj_bounded_zero[simp]:
+\<open>0* = 0\<close>
+  by (metis Adj_bounded_plus add_cancel_right_right)
+
+section \<open>Composition\<close>
+
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
      \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
@@ -1937,12 +1981,54 @@ qed
 
 end
 
+definition Adj_endo :: "'a::chilbert_space endo \<Rightarrow> 'a endo"  ("_\<^sup>a\<^sup>d\<^sup>j" [99] 100)  where
+\<open>Adj_endo A = endo_of_bounded ( (bounded_of_endo A)* )\<close>
+
+lemma Adj_endo_times[simp]:
+\<open>(A * B)\<^sup>a\<^sup>d\<^sup>j = (B\<^sup>a\<^sup>d\<^sup>j) * (A\<^sup>a\<^sup>d\<^sup>j)\<close>
+  unfolding Adj_endo_def times_endo_def
+  by (simp add: endo_of_bounded_inv)
+
+lemma Adj_endo_twices[simp]:
+\<open>(A\<^sup>a\<^sup>d\<^sup>j)\<^sup>a\<^sup>d\<^sup>j = A\<close>
+  unfolding Adj_endo_def
+  by (simp add: bounded_of_endo_inj endo_of_bounded_inv)
+
+lemma Adj_endo_scaleC[simp]:
+\<open>(c *\<^sub>C A)\<^sup>a\<^sup>d\<^sup>j = (cnj c) *\<^sub>C (A\<^sup>a\<^sup>d\<^sup>j)\<close>
+  by (simp add: Adj_endo_def endo_of_bounded_inv scaleC_endo_def)
+
+lemma Adj_endo_plus[simp]:
+\<open>(A + B)\<^sup>a\<^sup>d\<^sup>j = (A\<^sup>a\<^sup>d\<^sup>j) + (B\<^sup>a\<^sup>d\<^sup>j)\<close>
+  unfolding Adj_endo_def plus_endo_def
+  using Adj_bounded_plus
+  by (simp add: Adj_bounded_plus endo_of_bounded_inv)
+
+lemma Adj_endo_uminus[simp]:
+\<open>(- A)\<^sup>a\<^sup>d\<^sup>j = - (A\<^sup>a\<^sup>d\<^sup>j)\<close>
+  by (metis Adj_endo_plus add.group_axioms add.left_inverse add_cancel_right_left group.right_cancel)
+
+lemma Adj_endo_minus[simp]:
+\<open>(A - B)\<^sup>a\<^sup>d\<^sup>j = (A\<^sup>a\<^sup>d\<^sup>j) - (B\<^sup>a\<^sup>d\<^sup>j)\<close>
+  by (simp add: additive.diff additive.intro)
+
+lemma Adj_endo_zero[simp]:
+\<open>0\<^sup>a\<^sup>d\<^sup>j = 0\<close>
+  by (metis Adj_endo_plus Adj_endo_uminus add.right_inverse)
+
+lemma Adj_endo_unit[simp]:
+\<open>1\<^sup>a\<^sup>d\<^sup>j = 1\<close>
+  by (metis (no_types, lifting) Adj_endo_times Adj_endo_twices Adj_endo_uminus add.inverse_inverse mult_minus1_right)
 
 section \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
 is \<open>projection\<close>
   by (rule Complex_Inner_Product.projectionPropertiesA)
+
+definition Proj_endo :: "('a::chilbert_space) linear_space \<Rightarrow> 'a endo" 
+ ("\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o_" [99] 100)  where
+\<open>Proj_endo S = endo_of_bounded (Proj S)\<close>
 
 lemma imageOp_Proj[simp]: "(Proj S) \<down> top = S"
   apply transfer
@@ -2023,9 +2109,37 @@ lemma Proj_D1:
   apply transfer
   by (rule projection_D1)
 
-lemma Proj_D2:
-\<open>(Proj M) \<circ>\<^sub>C (Proj M) = idOp\<close>
-  sorry
+lemma Proj_endo_D1[simp]:
+\<open>(\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<^sup>a\<^sup>d\<^sup>j\<close>
+  by (metis Adj_endo_def Proj_D1 Proj_endo_def endo_of_bounded_inv)
+
+lemma Proj_D2[simp]:
+\<open>(Proj M) \<circ>\<^sub>C (Proj M) = (Proj M)\<close>
+proof-
+  have \<open>(Rep_bounded (Proj M)) = projection (Rep_linear_space M)\<close>
+    apply transfer
+    by blast
+  moreover have \<open>(projection (Rep_linear_space M))\<circ>(projection (Rep_linear_space M))
+                = (projection (Rep_linear_space M)) \<close>
+  proof-
+    have \<open>is_subspace (Rep_linear_space M)\<close>
+      using Rep_linear_space by auto
+    thus ?thesis
+      by (simp add: projectionPropertiesC) 
+  qed
+  ultimately have \<open>(Rep_bounded (Proj M)) \<circ> (Rep_bounded (Proj M)) = Rep_bounded (Proj M)\<close>
+    by simp    
+  hence \<open>Rep_bounded ((Proj M) \<circ>\<^sub>C (Proj M)) = Rep_bounded (Proj M)\<close>
+    by (simp add: timesOp_Rep_bounded)    
+  thus ?thesis using Rep_bounded_inject
+    by auto 
+qed
+
+lemma Proj_endo_D2[simp]:
+\<open>(\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) * (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<close>
+  unfolding Proj_endo_def times_endo_def
+  by (simp add: endo_of_bounded_inv)
+
 
 lemma Proj_I:
 \<open>P \<circ>\<^sub>C P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
