@@ -1602,122 +1602,6 @@ lemma applyOpSpace_eq:
   by (cheat applyOpSpace_eq)
 
 
-section \<open>Projectors\<close>
-
-lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
-is \<open>projection\<close>
-  by (rule Complex_Inner_Product.projectionPropertiesA)
-
-lemma imageOp_Proj[simp]: "applyOpSpace (Proj S) top = S"
-  apply transfer
-  proof
-  show "closure (range (projection (S::'a set))) \<subseteq> S"
-    if "is_subspace (S::'a set)"
-    for S :: "'a set"
-    using that
-    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI is_subspace.subspace is_subspace_I orthogonal_complement_twice projection_intro2) 
-  show "(S::'a set) \<subseteq> closure (range (projection S))"
-    if "is_subspace (S::'a set)"
-    for S :: "'a set"
-    using that
-    by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points subsetI subset_UNIV) 
-qed
-
-lemma projection_D1:
-  fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes \<open>is_subspace M\<close>
-  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
-proof-
-  have \<open>(projection M) x = ((projection M)\<^sup>\<dagger>) x\<close>
-    for x
-  proof (rule projection_uniq)
-    show \<open>is_subspace M\<close>
-      by (simp add: assms)
-    show \<open>((projection M)\<^sup>\<dagger>) x \<in> M\<close>
-    proof-
-      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((projection M)\<^sup>\<dagger>) x, y \<rangle> = 0"
-        for y
-      proof-
-        assume \<open>y \<in> orthogonal_complement M\<close>
-        hence \<open>(projection M) y = 0\<close>
-          by (metis add_cancel_right_right assms is_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
-        hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
-          by simp          
-        thus ?thesis
-          by (simp add: Adj_I assms projectionPropertiesA) 
-      qed
-      hence "((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
-        unfolding orthogonal_complement_def is_orthogonal_def
-        by blast
-      thus ?thesis
-        by (simp add: assms orthogonal_complement_twice) 
-    qed
-    show \<open>x - ((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement M\<close>
-    proof (rule orthogonal_complement_I2)
-      show "\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = 0"
-        if "y \<in> M"
-        for y :: 'a
-      proof-
-        have \<open>y = projection M y\<close>
-          using that(1)
-          by (simp add: assms projection_fixed_points)
-        hence \<open>y - projection M y = 0\<close>
-          by simp
-        have \<open>\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>(projection M\<^sup>\<dagger>) x, y\<rangle>\<close>
-          by (simp add: cinner_diff_left)
-        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, (projection M) y\<rangle>\<close>
-          by (simp add: Adj_I assms projectionPropertiesA)
-        also have \<open>... = \<langle>x, y - (projection M) y\<rangle>\<close>
-          by (simp add: cinner_diff_right)
-        also have \<open>... = \<langle>x, 0\<rangle>\<close>
-          using  \<open>y - projection M y = 0\<close>
-          by simp
-        also have \<open>... = 0\<close>
-          by simp          
-        finally show ?thesis
-          by simp 
-      qed
-    qed
-  qed
-  thus ?thesis by blast 
-qed
-
-lemma Proj_D1:
-\<open>(Proj M) = (Proj M)*\<close>
-  apply transfer
-  by (rule projection_D1)
-
-
-lemma Proj_D2:
-\<open>(Proj M) \<circ>\<^sub>C (Proj M) = idOp\<close>
-  sorry
-
-lemma Proj_I:
-\<open>P \<circ>\<^sub>C P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
-  sorry
-
-lemma Proj_leq: "(Proj S) \<down> A \<le> S"
-  sorry
-
-lemma Proj_times: "A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C A* = Proj (A \<down> S)" for A::"(_,_)bounded"
-  by (cheat TODO2)
-
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
-
-lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
-is \<open>orthogonal_complement\<close>
-  by (rule Complex_Inner_Product.is_subspace_orthog)
-
-lemma projection_scalar_mult[simp]: 
-  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
-  by (cheat TODO2)
-
-lemma move_plus:
-  "Proj (ortho C) \<down> A \<le> B \<Longrightarrow> A \<le> B + C"
-  for A B C::"_ linear_space"
-  by (cheat TODO2)
-
-
 (* NEW *)
 section \<open>Endomorphism algebra\<close>
 
@@ -2053,6 +1937,120 @@ qed
 
 end
 
+
+section \<open>Projectors\<close>
+
+lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
+is \<open>projection\<close>
+  by (rule Complex_Inner_Product.projectionPropertiesA)
+
+lemma imageOp_Proj[simp]: "(Proj S) \<down> top = S"
+  apply transfer
+  proof
+  show "closure (range (projection (S::'a set))) \<subseteq> S"
+    if "is_subspace (S::'a set)"
+    for S :: "'a set"
+    using that
+    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI is_subspace.subspace is_subspace_I orthogonal_complement_twice projection_intro2) 
+  show "(S::'a set) \<subseteq> closure (range (projection S))"
+    if "is_subspace (S::'a set)"
+    for S :: "'a set"
+    using that
+    by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points subsetI subset_UNIV) 
+qed
+
+lemma projection_D1:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>is_subspace M\<close>
+  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
+proof-
+  have \<open>(projection M) x = ((projection M)\<^sup>\<dagger>) x\<close>
+    for x
+  proof (rule projection_uniq)
+    show \<open>is_subspace M\<close>
+      by (simp add: assms)
+    show \<open>((projection M)\<^sup>\<dagger>) x \<in> M\<close>
+    proof-
+      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((projection M)\<^sup>\<dagger>) x, y \<rangle> = 0"
+        for y
+      proof-
+        assume \<open>y \<in> orthogonal_complement M\<close>
+        hence \<open>(projection M) y = 0\<close>
+          by (metis add_cancel_right_right assms is_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
+        hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
+          by simp          
+        thus ?thesis
+          by (simp add: Adj_I assms projectionPropertiesA) 
+      qed
+      hence "((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
+        unfolding orthogonal_complement_def is_orthogonal_def
+        by blast
+      thus ?thesis
+        by (simp add: assms orthogonal_complement_twice) 
+    qed
+    show \<open>x - ((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement M\<close>
+    proof (rule orthogonal_complement_I2)
+      show "\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = 0"
+        if "y \<in> M"
+        for y :: 'a
+      proof-
+        have \<open>y = projection M y\<close>
+          using that(1)
+          by (simp add: assms projection_fixed_points)
+        hence \<open>y - projection M y = 0\<close>
+          by simp
+        have \<open>\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>(projection M\<^sup>\<dagger>) x, y\<rangle>\<close>
+          by (simp add: cinner_diff_left)
+        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, (projection M) y\<rangle>\<close>
+          by (simp add: Adj_I assms projectionPropertiesA)
+        also have \<open>... = \<langle>x, y - (projection M) y\<rangle>\<close>
+          by (simp add: cinner_diff_right)
+        also have \<open>... = \<langle>x, 0\<rangle>\<close>
+          using  \<open>y - projection M y = 0\<close>
+          by simp
+        also have \<open>... = 0\<close>
+          by simp          
+        finally show ?thesis
+          by simp 
+      qed
+    qed
+  qed
+  thus ?thesis by blast 
+qed
+
+lemma Proj_D1:
+\<open>(Proj M) = (Proj M)*\<close>
+  apply transfer
+  by (rule projection_D1)
+
+lemma Proj_D2:
+\<open>(Proj M) \<circ>\<^sub>C (Proj M) = idOp\<close>
+  sorry
+
+lemma Proj_I:
+\<open>P \<circ>\<^sub>C P = idOp \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
+  sorry
+
+lemma Proj_leq: "(Proj S) \<down> A \<le> S"
+  sorry
+
+lemma Proj_times: "A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C A* = Proj (A \<down> S)" for A::"(_,_)bounded"
+  by (cheat TODO2)
+
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
+
+lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
+is \<open>orthogonal_complement\<close>
+  by (rule Complex_Inner_Product.is_subspace_orthog)
+
+lemma projection_scalar_mult[simp]: 
+  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
+  by (cheat TODO2)
+
+lemma move_plus:
+  "Proj (ortho C) \<down> A \<le> B \<Longrightarrow> A \<le> B + C"
+  for A B C::"_ linear_space"
+  by (cheat TODO2)
 
 
 
