@@ -1637,14 +1637,18 @@ proof-
     by blast
 qed
 
+(* 
+
 lemma applyOpSpace_eq:
-  fixes S :: "_ linear_space" and A B :: "(_,_) bounded"
+  fixes S :: "'a::chilbert_space linear_space" 
+    and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
   assumes "\<And>x. x \<in> G \<Longrightarrow> Rep_bounded A x = Rep_bounded B x"
   assumes "span G \<ge> S"
   shows "A \<down> S = B \<down> S"
   using assms
-  by (cheat applyOpSpace_eq)
+  sorry
 
+*)
 
 (* NEW *)
 section \<open>Endomorphism algebra\<close>
@@ -2303,7 +2307,6 @@ lemma Proj_endo_I:
 lemma Proj_leq: "(Proj S) \<down> A \<le> S"
   by (metis cdot_plus_distrib imageOp_Proj le_iff_add top_greatest xsupxy_linear_space)
 
-
 lemma Proj_times: "isometry A \<Longrightarrow> A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C (A*) = Proj (A \<down> S)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
 proof-
@@ -2351,17 +2354,81 @@ is \<open>orthogonal_complement\<close>
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
-  by (cheat TODO2)
+  by simp  
 
 lemma move_plus:
-  "Proj (ortho C) \<down> A \<le> B \<Longrightarrow> A \<le> B + C"
-  for A B C::"_ linear_space"
-  by (cheat TODO2)
+  "(Proj (ortho C)) \<down> A \<le> B \<Longrightarrow> A \<le> B + C"
+  for A B C::"'a::chilbert_space linear_space"
+proof-
+  assume \<open>(Proj (ortho C)) \<down> A \<le> B\<close>
+  hence \<open>Abs_bounded
+     (projection
+       (Rep_linear_space
+         (Abs_linear_space (orthogonal_complement (Rep_linear_space C))))) \<down> A \<le> B\<close>
+    unfolding Proj_def ortho_def less_eq_linear_space_def
+    by auto
+  hence \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<down> A \<le> B\<close>
+    by (metis Proj_def \<open>Proj (ortho C) \<down> A \<le> B\<close> map_fun_apply ortho.rep_eq)
+  hence \<open>x \<in> Rep_linear_space
+              (Abs_linear_space
+                (closure
+                  (Rep_bounded
+                    (Abs_bounded
+                      (projection (orthogonal_complement (Rep_linear_space C)))) `
+                   Rep_linear_space A))) \<Longrightarrow>
+         x \<in> Rep_linear_space B\<close>
+    for x
+    unfolding applyOpSpace_def less_eq_linear_space_def
+    by auto
+  hence \<open>x \<in>  closure (Rep_bounded (Abs_bounded
+                      (projection (orthogonal_complement (Rep_linear_space C)))) `
+                   Rep_linear_space A) \<Longrightarrow>
+         x \<in> Rep_linear_space B\<close>
+  for x
+    using \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<down> A \<le> B\<close>
+          applyOpSpace.rep_eq less_eq_linear_space.rep_eq by blast
+  hence \<open>x \<in>  closure ( (projection (orthogonal_complement (Rep_linear_space C))) `
+                   Rep_linear_space A) \<Longrightarrow>
+         x \<in> Rep_linear_space B\<close>
+  for x
+    by (metis (full_types) Proj.rep_eq Proj_def map_fun_apply ortho.rep_eq)
 
-
+  hence \<open>x \<in> Rep_linear_space A \<Longrightarrow>
+    x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space B \<and> \<phi> \<in> Rep_linear_space C}\<close>
+    for x
+  proof-
+    assume \<open>x \<in> Rep_linear_space A\<close>
+    have \<open>is_subspace (Rep_linear_space C)\<close>
+      using Rep_linear_space by auto
+    hence \<open>x = (projection (Rep_linear_space C)) x
+       + (projection (orthogonal_complement (Rep_linear_space C))) x\<close>
+      by (simp add: ortho_decomp)
+    hence \<open>x = (projection (orthogonal_complement (Rep_linear_space C))) x
+              + (projection (Rep_linear_space C)) x\<close>
+      by (metis ordered_field_class.sign_simps(2))
+    moreover have \<open>(projection (orthogonal_complement (Rep_linear_space C))) x \<in> Rep_linear_space B\<close>
+      using \<open>x \<in>  closure ( (projection (orthogonal_complement (Rep_linear_space C))) `
+                   Rep_linear_space A) \<Longrightarrow> x \<in> Rep_linear_space B\<close>
+      by (meson \<open>\<And>x. x \<in> closure (projection (orthogonal_complement (Rep_linear_space C)) ` Rep_linear_space A) \<Longrightarrow> x \<in> Rep_linear_space B\<close> \<open>x \<in> Rep_linear_space A\<close> closure_subset image_subset_iff)
+    moreover have \<open>(projection (Rep_linear_space C)) x \<in> Rep_linear_space C\<close>
+      by (simp add: \<open>is_subspace (Rep_linear_space C)\<close> projection_intro2)
+    ultimately show ?thesis
+      using closure_subset by fastforce 
+  qed
+  hence \<open>x \<in> Rep_linear_space A \<Longrightarrow>
+        x \<in> (Rep_linear_space B +\<^sub>M Rep_linear_space C)\<close>
+    for x
+    unfolding closed_sum_def Minkoswki_sum_def
+    by blast
+  hence \<open> x \<in> Rep_linear_space A \<Longrightarrow>
+         x \<in> Rep_linear_space
+               (Abs_linear_space (Rep_linear_space B +\<^sub>M Rep_linear_space C))\<close>
+    for x
+    by (metis Rep_linear_space_inverse plus_linear_space.rep_eq)    
+  thus ?thesis 
+  unfolding Proj_def ortho_def less_eq_linear_space_def plus_linear_space_def
+  by auto
+qed
 
 
 end
-
-
-
