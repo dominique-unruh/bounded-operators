@@ -2500,4 +2500,49 @@ proof-
 qed
 
 
+section \<open>Kernel\<close>
+
+lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space" 
+  is ker_op
+  by (metis ker_op_lin)
+
+definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
+  "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
+
+lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
+  for a :: complex and A :: "(_,_) bounded"
+  unfolding kernel_def ker_op_def
+  apply auto
+  by (metis complex_vector.scale_eq_0_iff scaleC_bounded_lift)
+
+lemma kernel_0[simp]: "kernel 0 = top"
+proof-
+  have \<open>ker_op (\<lambda> _. 0) = UNIV\<close>
+    by (metis (mono_tags, lifting) Collect_cong UNIV_def ker_op_def)
+  hence \<open>ker_op (Rep_bounded (bounded_of_rbounded 0)) = UNIV\<close>
+    by (metis bounded_of_rbounded_zero cr_rbounded_def rbounded.pcr_cr_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_zero zero_rbounded.transfer)
+  hence \<open>Abs_linear_space (ker_op (Rep_bounded (bounded_of_rbounded 0))) = Abs_linear_space UNIV\<close>
+    using Abs_linear_space_inject
+    by (simp add: \<open>ker_op (Rep_bounded (bounded_of_rbounded 0)) = UNIV\<close>)
+  thus ?thesis
+    unfolding kernel_def zero_bounded_def top_linear_space_def
+    by simp
+qed
+
+lemma kernel_id[simp]: "kernel idOp = 0"
+  apply transfer unfolding ker_op_def by simp
+
+lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
+proof -
+  assume a1: "a \<noteq> 0"
+  hence "b *\<^sub>C (idOp::('a, _) bounded) = a *\<^sub>C (b / a) *\<^sub>C idOp"
+    by (metis Complex_Vector_Spaces.eq_vector_fraction_iff)
+  hence "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
+    using a1 by (metis (no_types) complex_vector.scale_right_diff_distrib kernel_scalar_times)
+  thus ?thesis 
+    unfolding eigenspace_def 
+    by blast
+qed
+
+
 end

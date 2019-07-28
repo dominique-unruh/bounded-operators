@@ -135,30 +135,6 @@ qed
 
 
 
-lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space" is ker_op
-  by (metis ker_op_lin)
-
-definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
-  "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
-
-lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
-  for a :: complex and A :: "(_,_) bounded"
-  apply transfer
-  by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def)
-
-lemma kernel_0[simp]: "kernel 0 = top"
-  apply transfer unfolding ker_op_def by simp
-
-lemma kernel_id[simp]: "kernel idOp = 0"
-  apply transfer unfolding ker_op_def by simp
-
-lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
-  unfolding eigenspace_def
-  apply (rewrite at "kernel \<hole>" DEADID.rel_mono_strong[where y="a *\<^sub>C (A - (b / a) *\<^sub>C idOp)"])
-  apply auto[1]
-  by (subst kernel_scalar_times, auto)
-
-
 section \<open>Tensor products\<close>
 
 consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
