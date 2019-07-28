@@ -2033,6 +2033,77 @@ definition unitary::\<open>('a::chilbert_space,'a) bounded \<Rightarrow> bool\<c
 \<open>unitary U = ( isometry U \<and> isometry (U*))\<close>
 
 
+lemma adjUU[simp]: "isometry U \<Longrightarrow> U* \<circ>\<^sub>C U = idOp" 
+  unfolding isometry_def 
+  by simp
+
+lemma UadjU[simp]: "unitary U \<Longrightarrow> U \<circ>\<^sub>C U* = idOp"
+  unfolding unitary_def isometry_def by simp
+
+
+lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
+  unfolding unitary_def isometry_def by simp
+
+lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)bounded"
+  unfolding unitary_def by auto
+
+lemma isometry_times[simp]: "isometry A \<Longrightarrow> isometry B \<Longrightarrow> isometry (A \<circ>\<^sub>C B)"
+  unfolding isometry_def apply simp
+  apply (subst timesOp_assoc[symmetric])  
+  apply (subst timesOp_assoc)  
+  by simp
+
+lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A \<circ>\<^sub>C B)"
+  unfolding unitary_def by simp
+
+lemma unitary_surj: "unitary U \<Longrightarrow> surj (Rep_bounded U)"
+proof-
+  assume \<open>unitary U\<close>
+  have \<open>\<exists> t. (Rep_bounded U) t = x\<close>
+    for x
+  proof-
+    have \<open>(Rep_bounded U) ((Rep_bounded (U*)) x) = x\<close>
+    proof-
+      have \<open>(Rep_bounded U) ((Rep_bounded (U*)) x)
+          = ((Rep_bounded U) \<circ> (Rep_bounded (U*))) x\<close>
+        by simp        
+      also have \<open>\<dots>
+          = (Rep_bounded ( U \<circ>\<^sub>C (U*) )) x\<close>
+        by (simp add: timesOp_Rep_bounded)
+      also have \<open>\<dots>
+          = (Rep_bounded ( idOp )) x\<close>
+        by (simp add: \<open>unitary U\<close>)
+      also have \<open>\<dots> =  x\<close>
+        by (simp add: idOp.rep_eq)        
+      finally show ?thesis
+        by simp 
+    qed
+    thus ?thesis
+      by blast 
+  qed
+  thus ?thesis
+    by (metis surj_def) 
+qed
+
+lemma unitary_image[simp]: "unitary U \<Longrightarrow> U \<down> top = top"
+proof-
+  assume \<open>unitary U\<close>
+  hence \<open>surj (Rep_bounded U)\<close>
+    using unitary_surj by blast
+  hence \<open>range (Rep_bounded U)  = UNIV\<close>
+    by simp
+  hence \<open>closure (range (Rep_bounded U))  = UNIV\<close>
+    by simp
+  thus ?thesis
+    apply transfer
+    by blast
+qed
+
+lemma unitary_id[simp]: "unitary idOp"
+  unfolding unitary_def
+  by (simp add: isometry_def) 
+
+
 section \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"

@@ -90,29 +90,7 @@ lemma classical_operator_mult[simp]:
 lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
   apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
 
-lemma adjUU[simp]: "isometry U \<Longrightarrow> U* \<cdot> U = idOp" unfolding isometry_def by simp
-lemma UadjU[simp]: "unitary U \<Longrightarrow> U \<cdot> U* = idOp" unfolding unitary_def by simp
 
-lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
-  unfolding unitary_def isometry_def by simp
-
-lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)bounded"
-  unfolding unitary_def by auto
-
-lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A\<cdot>B)"
-  unfolding unitary_def apply simp
-  apply (subst timesOp_assoc[symmetric])  
-  apply (subst timesOp_assoc)  
-  apply simp
-  apply (subst timesOp_assoc[symmetric])  
-  apply (subst timesOp_assoc)  
-  by simp
-
-lemma isometry_times[simp]: "isometry A \<Longrightarrow> isometry B \<Longrightarrow> isometry (A\<cdot>B)"
-  unfolding isometry_def apply simp
-  apply (subst timesOp_assoc[symmetric])  
-  apply (subst timesOp_assoc)  
-  by simp
 
 lemma isometry_classical_operator[simp]:
   assumes "inj \<pi>"
@@ -152,11 +130,6 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
-lemma unitary_image[simp]: "unitary U \<Longrightarrow> applyOpSpace U top = top"
-  by (cheat TODO1)
-
-lemma unitary_id[simp]: "unitary idOp"
-  unfolding unitary_def by simp
 
 (* TODO: Replace by existing class CARD_1 *)
 class singleton = fixes the_single :: "'a" assumes everything_the_single: "x=the_single" begin
