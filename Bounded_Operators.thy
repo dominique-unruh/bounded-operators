@@ -1637,8 +1637,7 @@ proof-
     by blast
 qed
 
-(* 
-
+(*
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
@@ -1647,7 +1646,6 @@ lemma applyOpSpace_eq:
   shows "A \<down> S = B \<down> S"
   using assms
   sorry
-
 *)
 
 (* NEW *)
