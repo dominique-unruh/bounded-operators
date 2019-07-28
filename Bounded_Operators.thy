@@ -2020,6 +2020,15 @@ lemma Adj_endo_unit[simp]:
 \<open>1\<^sup>a\<^sup>d\<^sup>j = 1\<close>
   by (metis (no_types, lifting) Adj_endo_times Adj_endo_twices Adj_endo_uminus add.inverse_inverse mult_minus1_right)
 
+section \<open>Unitary\<close>
+
+definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> bool\<close> where
+\<open>isometry U = ( (U*) \<circ>\<^sub>C  U  = idOp )\<close>
+
+definition unitary::\<open>('a::chilbert_space,'a) bounded \<Rightarrow> bool\<close> where
+\<open>unitary U = ( isometry U \<and> isometry (U*))\<close>
+
+
 section \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
@@ -2142,8 +2151,8 @@ lemma Proj_endo_D2[simp]:
 
 
 lemma Proj_I:
-\<open>P \<circ>\<^sub>C P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M\<close>
-for P :: \<open>('a::chilbert_space,'a) bounded\<close>
+\<open>P \<circ>\<^sub>C P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> Rep_linear_space M = range (Rep_bounded P)\<close>
+  for P :: \<open>('a::chilbert_space,'a) bounded\<close>
 proof-
   assume \<open>P \<circ>\<^sub>C P = P\<close> and \<open>P = P*\<close>
   have \<open>closed (range (Rep_bounded P))\<close>
@@ -2281,7 +2290,8 @@ proof-
     then show ?thesis
       by (metis (no_types) Rep_bounded_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
   qed
-  thus ?thesis by blast
+  thus ?thesis
+    using \<open>Rep_linear_space M = range (Rep_bounded P)\<close> by blast 
 qed
 
 lemma Proj_endo_I:
@@ -2291,10 +2301,47 @@ lemma Proj_endo_I:
   by (metis Proj_endo_def endo_of_bounded_inv)
 
 lemma Proj_leq: "(Proj S) \<down> A \<le> S"
-  sorry
+  by (metis cdot_plus_distrib imageOp_Proj le_iff_add top_greatest xsupxy_linear_space)
 
-lemma Proj_times: "A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C A* = Proj (A \<down> S)" for A::"(_,_)bounded"
-  by (cheat TODO2)
+
+lemma Proj_times: "isometry A \<Longrightarrow> A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C (A*) = Proj (A \<down> S)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
+proof-
+  assume \<open>isometry A\<close>
+  define P where \<open>P = A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C (A*)\<close>
+  have \<open>P \<circ>\<^sub>C P = P\<close>
+    using  \<open>isometry A\<close>
+    unfolding P_def isometry_def
+    by (metis (no_types, lifting) Proj_D2 timesOp_assoc times_idOp2)
+  moreover have \<open>P = P*\<close>
+    unfolding P_def
+    by (metis Proj_D1 adjoint_twice timesOp_assoc times_adjoint)
+  ultimately have 
+    \<open>\<exists> M. P = Proj M \<and> Rep_linear_space M = range (Rep_bounded (A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C (A*)))\<close>
+    using P_def Proj_I by blast
+  then obtain M where \<open>P = Proj M\<close>
+    and \<open>Rep_linear_space M = range (Rep_bounded (A \<circ>\<^sub>C (Proj S) \<circ>\<^sub>C (A*)))\<close>
+    by blast
+  have \<open>M = A \<down> S\<close>
+  proof - (* sledgehammer *)
+    have f1: "\<forall>l. A \<down> (Proj S \<down> (A* \<down> l)) = P \<down> l"
+      by (simp add: P_def timesOp_assoc_linear_space)
+    have f2: "\<forall>l b. b* \<down> (b \<down> (l::'a linear_space)::'b linear_space) = idOp \<down> l \<or> \<not> isometry b"
+      by (metis (no_types) isometry_def timesOp_assoc_linear_space)
+    have f3: "\<forall>l b. b \<down> (idOp \<down> (l::'a linear_space)) = (b \<down> l::'a linear_space)"
+      by auto
+    have f4: "\<forall>l. (0::'b linear_space) \<le> l"
+      by (metis add.left_neutral le_iff_add)
+    have "\<forall>l. (top::'a linear_space) + l = top"
+      by (simp add: top_add)
+    then show ?thesis
+      using f4 f3 f2 f1 by (metis \<open>P = Proj M\<close> \<open>isometry A\<close> add.commute cdot_plus_distrib imageOp_Proj top_add)
+  qed  
+  thus ?thesis
+    using \<open>P = Proj M\<close>
+    unfolding P_def
+    by blast
+qed
 
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
 
