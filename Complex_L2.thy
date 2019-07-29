@@ -15,6 +15,8 @@ theory Complex_L2
 Or "sketch bla" for a proof outline starting with "proof bla" *)
 begin
 
+unbundle bounded_notation
+
 section \<open>Preliminaries\<close>
 
 hide_const (open) span
@@ -2024,7 +2026,7 @@ lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,
 
 lemma ell2_to_bounded_applyOp:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A \<circ>\<^sub>C ell2_to_bounded \<psi>\<close>
+  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A \<cdot>\<^sub>o ell2_to_bounded \<psi>\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by blast
@@ -2059,5 +2061,6 @@ lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\
   for a::complex
   by (metis (no_types, hide_lams) ell2_to_bounded_applyOp rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scalar_op_op scaleC_bounded_lift times_idOp2)
 
+unbundle no_bounded_notation
 
 end
