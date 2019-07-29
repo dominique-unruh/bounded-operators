@@ -8,7 +8,7 @@ Authors:
 
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
-    Complex_Inner_Product Infinite_Set_Sum_Missing Complex_Main
+    Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
     Extended_Sorry
     "HOL-ex.Sketch_and_Explore"
     (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
@@ -1913,6 +1913,151 @@ proof-
   ultimately show ?thesis
     by simp 
 qed
+
+
+
+section \<open>CARD_1\<close>
+
+class CARD_1 = 
+  fixes the_single :: "'a" 
+  assumes everything_the_single: "x=the_single" 
+begin
+lemma singleton_UNIV: "UNIV = {the_single}"
+  using everything_the_single by auto
+
+lemma everything_the_same: "(x::'a)=y"
+  apply (subst everything_the_single, subst (2) everything_the_single) by simp
+
+lemma singleton_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
+  apply (rule ext) 
+  apply (subst (asm) everything_the_same[where x=a])
+  apply (subst (asm) everything_the_same[where x=b])
+  by simp
+
+lemma CARD_singleton[simp]: "CARD('a) = 1"
+  by (simp add: singleton_UNIV)
+
+subclass finite apply standard unfolding singleton_UNIV by simp
+end
+
+
+instantiation unit :: CARD_1
+begin
+  definition "singleton = ()"
+instance 
+  apply standard 
+  by auto
+end
+
+
+instantiation ell2 :: (CARD_1) complex_algebra_1 
+begin
+lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
+lift_definition times_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a b _. a the_single * b the_single" by simp
+instance 
+proof
+  show "(a::'a ell2) * b * c = a * (b * c)"
+    for a :: "'a ell2"
+      and b :: "'a ell2"
+      and c :: "'a ell2"
+    by (transfer, auto)
+  show "((a::'a ell2) + b) * c = a * c + b * c"
+    for a :: "'a ell2"
+      and b :: "'a ell2"
+      and c :: "'a ell2"
+    apply (transfer, rule ext, auto)
+    by (simp add: distrib_left mult.commute)
+  show "(a::'a ell2) * (b + c) = a * b + a * c"
+    for a :: "'a ell2"
+      and b :: "'a ell2"
+      and c :: "'a ell2"
+    apply transfer apply (rule ext) apply auto
+    using distrib_left by blast
+  show "a *\<^sub>C (x::'a ell2) * y = a *\<^sub>C (x * y)"
+    for a :: complex
+      and x :: "'a ell2"
+      and y :: "'a ell2"
+    by (transfer, auto)
+  show "(x::'a ell2) * a *\<^sub>C y = a *\<^sub>C (x * y)"
+    for x :: "'a ell2"
+      and a :: complex
+      and y :: "'a ell2"
+    by (transfer, auto)
+  show "(1::'a ell2) * a = a"
+    for a :: "'a ell2"
+    apply (transfer, rule ext, auto simp: everything_the_single)
+    by (metis (full_types) everything_the_single)
+  show "(a::'a ell2) * 1 = a"
+    for a :: "'a ell2"
+    apply (transfer, rule ext, auto simp: everything_the_single)
+    by (metis (full_types) everything_the_single)
+  show "(0::'a ell2) \<noteq> 1"
+    apply transfer
+    by (meson zero_neq_one)
+qed
+end
+
+lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
+  "\<lambda>\<psi>. \<psi> the_single" .
+
+abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::CARD_1 ell2 == of_complex"
+
+lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
+  apply transfer by simp
+
+lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
+  unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto
+
+lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
+  unfolding of_complex_def apply transfer by simp
+
+lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
+  by (rule Complex_Vector_Spaces.bounded_clinear_of_complex)
+
+lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
+  apply (rule bounded_clinear_intro[where K=1])
+  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
+
+lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) bounded" is
+  "\<lambda>(\<psi>::'a) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
+  by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
+
+lemma ell2_to_bounded_applyOp:
+  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A \<circ>\<^sub>C ell2_to_bounded \<psi>\<close>
+proof-
+  have \<open>bounded_clinear (Rep_bounded A)\<close>
+    using Rep_bounded by blast
+  hence \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))
+     =  (\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
+    by (simp add: bounded_clinear_def clinear.scaleC)   
+  also have \<open>(\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )
+    = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+    unfolding comp_def
+    by blast
+  finally have \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))
+     = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+    by blast
+  moreover have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
+       = (\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))\<close>
+    using Complex_L2.ell2_to_bounded.rep_eq
+    by blast
+  ultimately have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
+     = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+    by simp
+  moreover have \<open>Rep_bounded (ell2_to_bounded \<psi>) = (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+    using Complex_L2.ell2_to_bounded.rep_eq
+    by blast
+  ultimately have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
+     = (Rep_bounded A) \<circ> (Rep_bounded (ell2_to_bounded \<psi>))\<close>
+    by simp
+  thus ?thesis
+    by (metis Rep_bounded_inject timesOp_Rep_bounded) 
+qed
+
+lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
+  for a::complex
+  by (metis (no_types, hide_lams) ell2_to_bounded_applyOp rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scalar_op_op scaleC_bounded_lift times_idOp2)
 
 
 end

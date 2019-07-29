@@ -78,7 +78,6 @@ lemma classical_operator_adjoint[simp]:
   for \<pi> :: "'a \<Rightarrow> 'b option"
   by (cheat TODO1)
 
-
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   apply (rule equal_basis)
