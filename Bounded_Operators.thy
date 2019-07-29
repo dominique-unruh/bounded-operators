@@ -17,6 +17,7 @@ begin
 
 section \<open>Real bounded operators with complex scalar product\<close>
 
+(* TODO to Real_Bounded_Operators *)
 instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_vector"
 begin
 lift_definition scaleC_rbounded :: \<open>complex \<Rightarrow>
@@ -760,7 +761,7 @@ proof-
     by fastforce 
 qed
 
-
+(* TODO to Real_Bounded_Operators *)
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
      \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
@@ -774,7 +775,7 @@ definition timesOp::
   \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f) (rbounded_of_bounded g))\<close>
 
 lemma timesOp_Rep_bounded:
-  \<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
+  shows \<open>Rep_bounded (timesOp f g) = (Rep_bounded f)\<circ>(Rep_bounded g)\<close>
   unfolding timesOp_def
   by (metis (no_types, lifting) comp_apply rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim rtimesOp.rep_eq)
 
@@ -794,6 +795,18 @@ lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bou
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
+
+bundle bounded_notation begin
+notation timesOp (infixl "\<cdot>\<^sub>o" 69)
+notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
+notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
+end
+
+bundle no_bounded_notation begin
+no_notation timesOp (infixl "\<cdot>\<^sub>o" 69)
+no_notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
+no_notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
+end
 
 lemma applyOp_0[simp]: "applyOpSpace U 0 = 0" 
   apply transfer

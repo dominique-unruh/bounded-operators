@@ -9,9 +9,11 @@ Authors:
 
 
 theory Quantum_State
-  imports Bounded_Operators Complex_L2
+  imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading"
 
 begin
+
+unbundle bounded_notation
 
 section \<open>Option\<close>
 
@@ -59,14 +61,13 @@ qed
 section \<open>Classical operators\<close>
 
 lift_definition classical_operator':: 
-"(('a::chilbert_space \<Rightarrow> 'b::chilbert_space) option) \<Rightarrow> ('a \<Rightarrow> 'b)" 
-is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
-
-
+  "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
+  is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
+  by (cheat classical_operator')
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
   "classical_operator'"
-  sorry
+  by (cheat classical_operator)
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
     applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
@@ -77,8 +78,9 @@ lemma classical_operator_adjoint[simp]:
   for \<pi> :: "'a \<Rightarrow> 'b option"
   by (cheat TODO1)
 
+
 lemma classical_operator_mult[simp]:
-  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot> classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
+  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   apply (rule equal_basis)
   unfolding timesOp_assoc_linear_space
   apply (subst classical_operator_basis, simp)+
@@ -90,8 +92,8 @@ lemma classical_operator_mult[simp]:
 lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
   apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
 
-definition "unitary U = (U \<cdot> (U*) = idOp \<and> U* \<cdot> U = idOp)"  
-definition "isometry U = (U* \<cdot> U = idOp)"  
+definition "unitary U = (U \<cdot>\<^sub>o (U*) = idOp \<and> U* \<cdot>\<^sub>o U = idOp)"
+definition "isometry U = (U* \<cdot>\<^sub>o U = idOp)"  
 
 lemma adjUU[simp]: "isometry U \<Longrightarrow> U* \<cdot> U = idOp" unfolding isometry_def by simp
 lemma UadjU[simp]: "unitary U \<Longrightarrow> U \<cdot> U* = idOp" unfolding unitary_def by simp
@@ -280,7 +282,7 @@ definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
   for a :: complex and A :: "(_,_) bounded"
   apply transfer
-  by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def)
+  by (smt Collect_cong complex_vector.scale_eq_0_iff ker_op_def XXXX)
 
 lemma kernel_0[simp]: "kernel 0 = top"
   apply transfer unfolding ker_op_def by simp
@@ -297,7 +299,7 @@ lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigen
 section \<open>Projectors\<close>
 
 (* TODO: link with definition from Complex_Inner (needs definition of adjoint, first) *)
-definition "isProjector P = (P=P* \<and> P=P\<cdot>P)"
+definition "isProjector P = (P=P* \<and> P=P\<cdot>\<^sub>oP)"
 
 consts Proj :: "'a linear_space \<Rightarrow> ('a,'a) bounded"
 lemma isProjector_Proj[simp]: "isProjector (Proj S)"
@@ -321,14 +323,14 @@ lemma proj_scalar_mult[simp]:
 
 
 lemma move_plus:
-  "Proj (ortho C) \<cdot> A \<le> B \<Longrightarrow> A \<le> B + C"
+  "Proj (ortho C) \<cdot>\<^sub>s A \<le> B \<Longrightarrow> A \<le> B + C"
   for A B C::"_ linear_space"
   by (cheat TODO2)
 
 
 section \<open>Tensor products\<close>
 
-consts "tensorOp" :: "('a,'b) l2bounded \<Rightarrow> ('c,'d) l2bounded \<Rightarrow> ('a*'c,'b*'d) l2bounded"
+consts "tensorOp" :: "('a ell2,'b ell2) bounded \<Rightarrow> ('c ell2,'d ell2) bounded \<Rightarrow> (('a*'c) ell2,('b*'d) ell2) bounded"
 
 lift_definition "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2" is
   "\<lambda>\<psi> \<phi> (x,y). \<psi> x * \<phi> y"
@@ -342,14 +344,14 @@ consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
 lemma idOp_tensor_idOp[simp]: "idOp\<otimes>idOp = idOp"
   by (cheat TODO2)
 
-consts "comm_op" :: "('a*'b, 'b*'a) l2bounded"
+consts "comm_op" :: "(('a*'b) ell2, ('b*'a) ell2) bounded"
 
 lemma adj_comm_op[simp]: "adjoint comm_op = comm_op"
   by (cheat TODO2)
 
 lemma
   comm_op_swap[simp]: "comm_op \<cdot> (A\<otimes>B) \<cdot> comm_op = B\<otimes>A"
-  for A::"('a,'b) l2bounded" and B::"('c,'d) l2bounded"
+  for A::"('a ell2,'b ell2) bounded" and B::"('c ell2,'d ell2) bounded"
   by (cheat TODO3)
 
 lemma comm_op_times_comm_op[simp]: "comm_op \<cdot> comm_op = idOp"
@@ -362,7 +364,7 @@ qed
 lemma unitary_comm_op[simp]: "unitary comm_op"
   unfolding unitary_def by simp
 
-consts "assoc_op" :: "('a*'b*'c, ('a*'b)*'c) l2bounded"
+consts "assoc_op" :: "(('a*'b*'c) ell2, (('a*'b)*'c) ell2) bounded"
 lemma unitary_assoc_op[simp]: "unitary assoc_op"
   by (cheat TODO5)
 
@@ -386,7 +388,7 @@ lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot> (V1 \<otimes> V2) = (U1 \<c
     and V2 :: "('a2,'b2) l2bounded" and U2 :: "('b2,'c2) l2bounded"
   by (cheat TODO3)
 
-lift_definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" is
+lift_definition addState :: "'a ell2 \<Rightarrow> ('b ell2,('b*'a) ell2) bounded" is
   \<open>\<lambda>\<psi> \<phi>. tensorVec \<phi> \<psi>\<close>
   apply (rule_tac K="norm ell2" in bounded_clinear_intro)
   by (auto simp: tensor_norm_ell2 tensor_plus_ell2)
@@ -394,7 +396,7 @@ lift_definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" is
 
 (* TODO: this is simply the adjoint of addState (1::unit ell2), and addState y is best defined as x \<rightarrow> x \<otimes> y (lifted).
    Do we even use remove_qvar_unit_op then? *)
-consts remove_qvar_unit_op :: "('a*unit,'a) l2bounded"
+consts remove_qvar_unit_op :: "(('a*unit) ell2,'a ell2) bounded"
 
 
 (* definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" where
@@ -412,109 +414,12 @@ lemma tensor_unitary[simp]:
   shows "unitary (U\<otimes>V)"
   using assms unfolding unitary_def by simp
 
-subsection \<open>Dual\<close>
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close>)\<close>
-
-class topological_real_vector = real_vector + topological_ab_group_add +
-  assumes scaleR_continuous: "continuous_on UNIV (case_prod scaleR)"
-
-class topological_complex_vector = complex_vector + topological_ab_group_add +
-  assumes scaleC_continuous: "continuous_on UNIV (case_prod scaleC)"
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>continuous_on\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> ('a::topological_space \<Rightarrow> 'b::topological_space) \<Rightarrow> bool\<close>)\<close>
-
-
-instance topological_complex_vector \<subseteq> topological_real_vector
-  apply standard
-  apply (rewrite at "case_prod scaleR" DEADID.rel_mono_strong[of _ "\<lambda>x. (complex_of_real (fst x)) *\<^sub>C (snd x)"])
-  apply (auto simp: scaleR_scaleC case_prod_beta)[1]
-  unfolding continuous_on_def
-  apply (auto intro!: tendsto_intros)
-  using tendsto_fst tendsto_snd by fastforce+
-
-instance real_normed_vector \<subseteq> topological_real_vector
-proof standard 
-  have "(\<lambda>(x, y). x *\<^sub>R y) \<midarrow>(a, b)\<rightarrow> a *\<^sub>R b" for a and b :: 'a
-    unfolding case_prod_beta apply (rule Limits.tendsto_scaleR)
-    using tendsto_fst tendsto_snd by fastforce+
-  then show "continuous_on UNIV (\<lambda>(x, y::'a). x *\<^sub>R y)"
-    unfolding continuous_on_def by simp
-qed
-
-instance complex_normed_vector \<subseteq> topological_complex_vector
-proof standard 
-  note tendsto_scaleC = bounded_bilinear.tendsto[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
-  have "(\<lambda>(x, y). x *\<^sub>C y) \<midarrow>(a, b)\<rightarrow> a *\<^sub>C b" for a and b :: 'a
-    unfolding case_prod_beta apply (rule tendsto_scaleC)
-    using tendsto_fst tendsto_snd by fastforce+
-  then show "continuous_on UNIV (\<lambda>(x, y::'a). x *\<^sub>C y)"
-    unfolding continuous_on_def by simp
-qed
 
 lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
   unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
 
-typedef (overloaded) 'a dual = \<open>{f::'a::topological_complex_vector\<Rightarrow>complex. continuous_on UNIV f \<and> clinear f}\<close>
-  apply (rule exI[where x="\<lambda>f. 0"]) by auto
 
-instantiation dual :: (complex_normed_vector) chilbert_space begin
-instance 
-  by (cheat "dual :: (complex_normed_vector) chilbert_space")
-end
-
-subsection \<open>Dimension\<close>
-
-
-lift_definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> is
-  \<open>\<lambda>S. \<exists>G. finite G \<and> complex_vector.span G = S\<close> .
-
-(* lift_definition infinite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> is
-\<open>\<lambda>S. (
-\<exists> f::nat \<Rightarrow> 'a set.
-(\<forall>n. is_subspace (f n)) \<and>
-(\<forall> n. f n \<subset> f (Suc n)) \<and>
-(\<forall> n. f n \<subseteq> S)
-)\<close> *)
-
-
-(* (* TODO: define on sets first and lift? *)
-(* TODO: I would define only finite_dim and just negate it for infinite_dim (avoid too many definitions) *)
-definition infinite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
-\<open>infinite_dim S = (
-\<exists> f::nat \<Rightarrow> 'a linear_space.
-(\<forall> n::nat. Rep_linear_space (f n) \<subset> Rep_linear_space (f (Suc n))) \<and>
-(\<forall> n::nat. Rep_linear_space (f n) \<subseteq> Rep_linear_space S)
-)\<close> *)
-
-(* definition finite_dim :: \<open>(('a::chilbert_space) linear_space) \<Rightarrow> bool\<close> where
-\<open>finite_dim S = ( \<not> (infinite_dim S) )\<close> *)
-
-
-subsection \<open>Tensor product\<close>
-
-(* TODO: define Tensor later as "('a dual, 'b) hilbert_schmidt" *)
-
-(* (* Tensor product *)
-typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) tensor
-(* TODO: is that compatible (isomorphic) with tensorVec? *)
-= \<open>{ A :: ('a dual, 'b) bounded. finite_dim (Abs_linear_space ((Rep_bounded A) ` UNIV)) }\<close>
-   *)
-
-(* TODO: universal property of tensor products *)
-
-(* Embedding of (x,y) into the tensor product as x\<otimes>y *)
-(* TODO: Shouldn't this be called "tensor" or similar then? *)
-(* definition HS_embedding :: \<open>('a::chilbert_space)*('b::chilbert_space) \<Rightarrow> ('a, 'b) tensor\<close> where
-\<open>HS_embedding x = Abs_tensor ( Abs_bounded (\<lambda> w::'a dual. ( (Rep_bounded w) (fst x) ) *\<^sub>C (snd x) ) )\<close> *)
-
-(* The tensor product of two Hilbert spaces is a Hilbert space *)
-(* instantiation tensor :: (chilbert_space,chilbert_space) "chilbert_space" begin
-instance 
-end *)
-
+unbundle no_bounded_notation
 
 
 end
