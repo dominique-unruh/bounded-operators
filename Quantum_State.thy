@@ -8,129 +8,14 @@ Authors:
 *)
 
 
-theory Quantum_State
+theory Tensor_Product
   imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading"
 
 begin
 
 unbundle bounded_notation
 
-section \<open>Option\<close>
-
-definition "inj_option \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
-
-definition 
-"inv_option \<pi> = (\<lambda>y. if Some y \<in> range \<pi> then Some (Hilbert_Choice.inv \<pi> (Some y)) else None)"
-
-lemma inj_option_Some_pi[simp]: "inj_option (Some o \<pi>) = inj \<pi>"
-  unfolding inj_option_def inj_def by simp
-
-lemma inj_option_Some[simp]: "inj_option Some"
-  using[[show_consts,show_types,show_sorts]]
-  by (simp add: inj_option_def)
-
-lemma inv_option_Some: "surj \<pi> \<Longrightarrow> inv_option (Some o \<pi>) = Some o (Hilbert_Choice.inv \<pi>)"
-  unfolding inv_option_def o_def inv_def apply (rule ext) by auto
-
-lemma inj_option_map_comp[simp]: "inj_option f \<Longrightarrow> inj_option g \<Longrightarrow> inj_option (f \<circ>\<^sub>m g)"
-  unfolding inj_option_def apply auto
-  using map_comp_Some_iff by smt
-
-lemma inj_option_inv_option[simp]: "inj_option (inv_option \<pi>)"
-proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
-  fix x y
-  assume same: "inv_option \<pi> x = inv_option \<pi> y"
-    and pix_not_None: "inv_option \<pi> x \<noteq> None"
-  have x_pi: "Some x \<in> range \<pi>" 
-    using pix_not_None unfolding inv_option_def apply auto
-    by (meson option.distinct(1))
-  have y_pi: "Some y \<in> range \<pi>" 
-    using pix_not_None unfolding same unfolding inv_option_def apply auto
-    by (meson option.distinct(1))
-  have "inv_option \<pi> x = Some (Hilbert_Choice.inv \<pi> (Some x))"
-    unfolding inv_option_def using x_pi by simp
-  moreover have "inv_option \<pi> y = Some (Hilbert_Choice.inv \<pi> (Some y))"
-    unfolding inv_option_def using y_pi by simp
-  ultimately have "Hilbert_Choice.inv \<pi> (Some x) = Hilbert_Choice.inv \<pi> (Some y)"
-    using same by simp
-  then show "x = y"
-    by (meson inv_into_injective option.inject x_pi y_pi)
-qed
-
-
-section \<open>Classical operators\<close>
-
-lift_definition classical_operator':: 
-  "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
-  is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
-  by (cheat classical_operator')
-
-lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
-  "classical_operator'"
-  by (cheat classical_operator)
-
-lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
-    applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
-
-  by (cheat TODO5)
-lemma classical_operator_adjoint[simp]: 
-  "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
-  for \<pi> :: "'a \<Rightarrow> 'b option"
-  by (cheat TODO1)
-
-lemma classical_operator_mult[simp]:
-  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
-  apply (rule equal_basis)
-  unfolding timesOp_assoc_linear_space
-  apply (subst classical_operator_basis, simp)+
-  apply (case_tac "\<rho> x")
-  apply auto
-  apply (subst classical_operator_basis, simp)
-  by auto
-
-lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
-  apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
-
-
-lemma isometry_classical_operator[simp]:
-  assumes "inj \<pi>"
-  shows "isometry (classical_operator (Some o \<pi>))"
-proof -
-  have comp: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
-    apply (rule ext) unfolding inv_option_def o_def 
-    using assms unfolding inj_def inv_def by auto
-
-  show ?thesis
-    unfolding isometry_def
-    apply (subst classical_operator_adjoint) using assms apply simp
-    apply (subst classical_operator_mult) using assms apply auto[2]
-    apply (subst comp)
-    by simp
-qed
-
-lemma unitary_classical_operator[simp]:
-  assumes "bij \<pi>"
-  shows "unitary (classical_operator (Some o \<pi>))"
-proof (unfold unitary_def, rule conjI)
-  have "isometry (classical_operator (Some o \<pi>))"
-    by (simp add: assms bij_is_inj)
-  then show "classical_operator (Some \<circ> \<pi>)* \<cdot> classical_operator (Some \<circ> \<pi>) = idOp"
-    unfolding isometry_def by simp
-next
-  have "inj \<pi>"
-    by (simp add: assms bij_is_inj)
-  have comp: "Some \<circ> \<pi> \<circ>\<^sub>m inv_option (Some \<circ> \<pi>) = Some"
-    apply (rule ext)
-    unfolding inv_option_def o_def map_comp_def
-    unfolding inv_def apply auto
-    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
-    by (metis assms bij_def image_iff range_eqI)
-
-  show "classical_operator (Some \<circ> \<pi>) \<cdot> classical_operator (Some \<circ> \<pi>)* = idOp"
-    by (simp add: comp \<open>inj \<pi>\<close>)
-qed
-
-section \<open>Tensor products\<close>
+section \<open>\<close>
 
 consts "tensorOp" :: "('a ell2,'b ell2) bounded \<Rightarrow> ('c ell2,'d ell2) bounded \<Rightarrow> (('a*'c) ell2,('b*'d) ell2) bounded"
 
