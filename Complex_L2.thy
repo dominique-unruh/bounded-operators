@@ -1783,7 +1783,6 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
 
 type_synonym 'a subspace = "'a ell2 linear_space"
 
-
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
@@ -1799,7 +1798,18 @@ instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
 definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
 instance
-  by (cheat "instantiation ell2 :: (enum) basis_enum")
+  proof
+  show "distinct (canonical_basis::'a ell2 list)"
+    unfolding distinct_def canonical_basis_ell2_def 
+    apply transfer
+    apply (induction enum_class.enum)    
+    sorry
+    
+  show "is_onb (set (canonical_basis::'a ell2 list))"
+    sorry
+  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
+    sorry
+qed
 end
 
 definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Rightarrow> 'a)\<close> where
