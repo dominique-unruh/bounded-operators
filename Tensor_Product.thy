@@ -15,9 +15,9 @@ begin
 
 unbundle bounded_notation
 
-section \<open>\<close>
-
 consts "tensorOp" :: "('a ell2,'b ell2) bounded \<Rightarrow> ('c ell2,'d ell2) bounded \<Rightarrow> (('a*'c) ell2,('b*'d) ell2) bounded"
+
+type_synonym ('a, 'b) l2bounded = "('a ell2,'b ell2) bounded"
 
 lift_definition "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*'c) ell2" is
   "\<lambda>\<psi> \<phi> (x,y). \<psi> x * \<phi> y"
@@ -37,23 +37,26 @@ lemma adj_comm_op[simp]: "adjoint comm_op = comm_op"
   by (cheat TODO2)
 
 lemma
-  comm_op_swap[simp]: "comm_op \<cdot> (A\<otimes>B) \<cdot> comm_op = B\<otimes>A"
+  comm_op_swap[simp]: "comm_op \<cdot>\<^sub>o (A\<otimes>B) \<cdot>\<^sub>o comm_op = B\<otimes>A"
   for A::"('a ell2,'b ell2) bounded" and B::"('c ell2,'d ell2) bounded"
   by (cheat TODO3)
 
-lemma comm_op_times_comm_op[simp]: "comm_op \<cdot> comm_op = idOp"
+lemma comm_op_times_comm_op[simp]: "comm_op  \<cdot>\<^sub>o comm_op = idOp"
 proof -
   find_theorems "idOp \<otimes> idOp"
-  have "comm_op \<cdot> (idOp \<otimes> idOp) \<cdot> comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
+  have "comm_op  \<cdot>\<^sub>o (idOp \<otimes> idOp)  \<cdot>\<^sub>o comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
   then show ?thesis by simp
 qed
 
 lemma unitary_comm_op[simp]: "unitary comm_op"
-  unfolding unitary_def by simp
+  unfolding unitary_def sorry
 
+(* TODO: Does it make sense?
 consts "assoc_op" :: "(('a*'b*'c) ell2, (('a*'b)*'c) ell2) bounded"
+
 lemma unitary_assoc_op[simp]: "unitary assoc_op"
   by (cheat TODO5)
+*)
 
 lemma tensor_scalar_mult1[simp]: "(a *\<^sub>C A) \<otimes> B = a *\<^sub>C (A \<otimes> B)" for a::complex and A::"('a,'b)l2bounded" and B::"('c,'d)l2bounded"
   by (cheat TODO3)
@@ -70,7 +73,7 @@ lemma tensor_plus_ell2: "(A+B) \<otimes> C = A \<otimes> C + B \<otimes> C" for 
 lemma tensor_norm_ell2: "norm (\<psi> \<otimes> \<phi>) = norm \<psi> * norm \<phi>" for \<psi> \<phi> :: "_ ell2"
   by (cheat tensor_norm_ell2)
 
-lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot> (V1 \<otimes> V2) = (U1 \<cdot> V1) \<otimes> (U2 \<cdot> V2)"
+lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot>\<^sub>o (V1 \<otimes> V2) = (U1 \<cdot>\<^sub>o V1) \<otimes> (U2 \<cdot>\<^sub>o V2)"
   for V1 :: "('a1,'b1) l2bounded" and U1 :: "('b1,'c1) l2bounded"
     and V2 :: "('a2,'b2) l2bounded" and U2 :: "('b2,'c2) l2bounded"
   by (cheat TODO3)
@@ -89,8 +92,9 @@ consts remove_qvar_unit_op :: "(('a*unit) ell2,'a ell2) bounded"
 (* definition addState :: "'a ell2 \<Rightarrow> ('b,'b*'a) l2bounded" where
   "addState \<psi> = idOp \<otimes> (ell2_to_bounded \<psi>) \<cdot> remove_qvar_unit_op*" *)
 
-lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a *\<^sub>C addState \<psi>" for a::complex and psi::"'a ell2"
-  apply transfer by auto
+lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a *\<^sub>C addState \<psi>"
+  for a::complex and \<psi>::"'a ell2"
+  sorry
 
 lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjoint V)"
   for U :: "('a,'b) l2bounded" and V :: "('c,'d) l2bounded"
@@ -99,11 +103,7 @@ lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjo
 lemma tensor_unitary[simp]: 
   assumes "unitary U" and "unitary V"
   shows "unitary (U\<otimes>V)"
-  using assms unfolding unitary_def by simp
-
-
-lemma clinear_0[simp]: "clinear (\<lambda>f. 0)"
-  unfolding clinear_def Modules.additive_def clinear_axioms_def by simp
+  sorry
 
 
 unbundle no_bounded_notation

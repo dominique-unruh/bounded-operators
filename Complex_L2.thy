@@ -2061,6 +2061,87 @@ lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\
   for a::complex
   by (metis (no_types, hide_lams) ell2_to_bounded_applyOp rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scalar_op_op scaleC_bounded_lift times_idOp2)
 
+section \<open>Classical operators\<close>
+
+lift_definition classical_operator':: 
+  "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
+  is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
+  by (cheat classical_operator')
+
+lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
+  "classical_operator'"
+  by (cheat classical_operator)
+
+lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
+    applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
+
+  by (cheat TODO5)
+lemma classical_operator_adjoint[simp]: 
+  "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
+  for \<pi> :: "'a \<Rightarrow> 'b option"
+  by (cheat TODO1)
+
+lemma classical_operator_mult[simp]:
+  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
+  sorry
+(*
+  apply (rule equal_basis)
+  unfolding timesOp_assoc_linear_space
+  apply (subst classical_operator_basis, simp)+
+  apply (case_tac "\<rho> x")
+  apply auto
+  apply (subst classical_operator_basis, simp)
+  by auto
+*)
+
+lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
+  sorry
+(*
+  apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
+*)
+
+lemma isometry_classical_operator[simp]:
+  assumes "inj \<pi>"
+  shows "isometry (classical_operator (Some o \<pi>))"
+proof -
+  have comp: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
+    apply (rule ext) unfolding inv_option_def o_def 
+    using assms unfolding inj_def inv_def by auto
+
+  show ?thesis
+    unfolding isometry_def
+    apply (subst classical_operator_adjoint) using assms apply simp
+    apply (subst classical_operator_mult) using assms apply auto[2]
+    apply (subst comp)
+    by simp
+qed
+
+lemma unitary_classical_operator[simp]:
+  assumes "bij \<pi>"
+  shows "unitary (classical_operator (Some o \<pi>))"
+  sorry
+(*
+proof (unfold unitary_def, rule conjI)
+  have "isometry (classical_operator (Some o \<pi>))"
+    by (simp add: assms bij_is_inj)
+  hence "classical_operator (Some \<circ> \<pi>)* \<cdot>\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp"
+    unfolding isometry_def by simp
+  thus ?thesis sorry
+next
+  have "inj \<pi>"
+    by (simp add: assms bij_is_inj)
+  have comp: "Some \<circ> \<pi> \<circ>\<^sub>m inv_option (Some \<circ> \<pi>) = Some"
+    apply (rule ext)
+    unfolding inv_option_def o_def map_comp_def
+    unfolding inv_def apply auto
+    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+    by (metis assms bij_def image_iff range_eqI)
+
+  show "classical_operator (Some \<circ> \<pi>) \<cdot> classical_operator (Some \<circ> \<pi>)* = idOp"
+    by (simp add: comp \<open>inj \<pi>\<close>)
+qed
+*)
+
 unbundle no_bounded_notation
 
 end
