@@ -1620,6 +1620,40 @@ proof-
     by auto
 qed
 
+(* For mult_INF2:
+
+I have a proof sketch for a slightly more restricted version of mult_INF2:
+
+Assume that V_i is orthogonal to ker U for all i.
+
+Let W be the pseudoinverse of U (exists according to https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse#Generalizations).
+
+
+Then (1) UW is the projector onto the range of U, and (2) WU the projector onto the orthogonal complement of ker U.
+
+
+Then
+
+
+INF (U*Vi)
+
+= (1)
+
+UW INF (U*Vi)
+
+<= (INF_mult1)
+
+U INF (WU*Vi)
+
+= (2)
+
+U INF Vi.
+
+
+Of course, I don't know how difficult it is to show the existence of the pseudoinverse. An easy special case would be U=isometry, in which case W=U*.
+
+ *)
+
 lemma mult_inf_distrib[simp]: 
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   shows "(applyOpSpace U) (B * C) \<le> ((applyOpSpace U) B) *  ((applyOpSpace U) C)"
