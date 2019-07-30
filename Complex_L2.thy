@@ -2076,7 +2076,108 @@ section \<open>Classical operators\<close>
 lift_definition classical_operator':: 
   "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
   is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
-  by (cheat classical_operator')
+proof-
+  show \<open>has_ell2_norm \<psi> \<Longrightarrow>
+        has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close>
+    for \<pi>::\<open>'a \<Rightarrow> 'b option\<close> and \<psi>::\<open>'a \<Rightarrow> complex\<close>
+  proof-
+    assume \<open>has_ell2_norm \<psi>\<close>
+    hence \<open>bdd_above (sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) ` Collect finite)\<close>
+      unfolding has_ell2_norm_def
+      by blast
+    hence \<open>\<exists> M. \<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+      by (simp add: bdd_above_def)
+    then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+      by blast
+    define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
+      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+    have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+        unfolding \<phi>_def
+        by (metis option.case_eq_if option.collapse)
+      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+        by metis
+      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+        by blast
+      define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
+      have \<open>finite S\<close>
+        using \<open>finite R\<close>
+        by (simp add: S_def)
+      moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
+      proof-
+        have \<open>inj_on f R\<close>
+        proof(rule inj_onI)
+          fix x y :: 'b
+          assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
+          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+          have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
+            by (metis inv_option_def option.distinct(1))
+          hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
+            by blast
+          hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+          have \<open>\<pi> (f x) = Some x\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
+          moreover have \<open>\<pi> (f y) = Some y\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
+          ultimately have \<open>Some x = Some y\<close>
+            using \<open>f x = f y\<close> by metis
+          thus \<open>x = y\<close> by simp
+        qed
+        moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
+          for i
+        proof-
+          assume \<open>i \<in> R\<close>
+          hence \<open>\<phi> i = \<psi> (f i)\<close>
+            unfolding \<phi>_def
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis unfolding S_def
+          by (metis (mono_tags, lifting) sum.reindex_cong)
+      qed
+      ultimately show ?thesis
+        by (simp add: \<open>\<And>S. finite S \<Longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> M\<close>) 
+    qed     
+    have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> M\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close>
+      define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
+      define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
+      have \<open>U \<inter> V = {}\<close>
+        unfolding U_def V_def by blast
+      moreover have \<open>U \<union> V = R\<close>
+        unfolding U_def V_def by blast
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
+            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
+        using \<open>finite R\<close> sum.union_disjoint by auto
+      moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
+        unfolding V_def by auto
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+      moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
+        by (simp add: U_def)
+      moreover have \<open>finite U\<close>
+        unfolding U_def using \<open>finite R\<close>
+        by simp
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le> M\<close>
+        using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close> by blast        
+      thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+    qed
+    hence  \<open>bdd_above (sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) ` Collect finite)\<close>
+      unfolding bdd_above_def
+      by blast
+    thus ?thesis
+      using \<open>\<phi> \<equiv> \<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x\<close> has_ell2_norm_def by blast 
+  qed
+qed
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
   "classical_operator'"
