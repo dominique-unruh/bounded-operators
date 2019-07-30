@@ -23,5 +23,3 @@ Miscellany
 - NSA_Miscellany: Miscellany in nonstandard analysis.
 
 
-To learn more about the project please visit the stream "Functional Analysis for Isabelle/HOL" on the Isabelle Zulip chat
-https://isabelle.zulipchat.com/.
