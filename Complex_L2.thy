@@ -2417,8 +2417,8 @@ proof
 qed
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
-    applyOp (classical_operator \<pi>) (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
-  by (cheat TODO5)
+      (classical_operator \<pi>) \<cdot>\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
+  sorry
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
