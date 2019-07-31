@@ -2732,24 +2732,78 @@ qed
 section \<open>New/restored things\<close>
 
 (* TODO probably needs only {complex_vector,topological_space} *)
-(* TODO: move to appropriate theory *)
+(* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: (chilbert_space) complete_lattice begin
 instance 
   by (cheat linear_space_complete_lattice)
 end
 
+(* TODO: move to Missing or similar *)
+(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties 
+   and using the conventions from the definition of @{class boolean_algebra} *)
+class complemented_lattice = bounded_lattice + uminus + minus + 
+  assumes inf_compl_bot: "inf x (-x) = bot"
+    and sup_compl_top: "sup x (-x) = top"
+  assumes diff_eq: "x - y = inf x (-y)"
+
+(* TODO: move to Missing or similar *)
+class complete_complemented_lattice = complemented_lattice + complete_lattice 
+
+(* TODO: move to Missing or similar *)
+(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
+class orthocomplemented_lattice = complemented_lattice +
+  assumes ortho_involution: "- (- x) = x"
+  assumes ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
+
+(* TODO: move to Missing or similar *)
+class complete_orthocomplemented_lattice = orthocomplemented_lattice + complete_lattice
+
+(* TODO: move to Missing or similar *)
+instance complete_orthocomplemented_lattice \<subseteq> complete_complemented_lattice
+  by intro_classes
+
+(* TODO: move to Missing or similar *)
+(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthomodular_lattices *)
+class orthomodular_lattice = orthocomplemented_lattice +
+  assumes orthomodular: "x \<le> y \<Longrightarrow> sup x (inf (-x) y) = y"
+
+(* TODO: move to Missing or similar *)
+class complete_orthomodular_lattice = orthomodular_lattice + complete_lattice
+
+(* TODO: move to Missing or similar *)
+instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_lattice
+  by intro_classes
+
+(* TODO: move to Missing or similar *)
+instance boolean_algebra \<subseteq> orthomodular_lattice
+  apply intro_classes
+       apply auto
+   apply (simp add: boolean_algebra_class.diff_eq)
+  by (simp add: sup.absorb_iff2 sup_inf_distrib1)
+
+(* TODO: move to Missing or similar *)
+instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
+  by intro_classes
+
+(* TODO: move to Complex_Inner_Product *)
+instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
+  apply intro_classes by (cheat linear_space_complete_orthomodular_lattice)
+
+(* TODO: Remove constant ortho, subsumed by uminus *)
+
+(* TODO: move to Complex_Vector_Spaces *)
 lemma ortho_bot[simp]: "ortho bot = top"
   by (metis comm_monoid_add_class.add_0 linear_space_zero_bot ortho_def supxminusxtop uminus_linear_space_def)
 lemma ortho_top[simp]: "ortho top = bot"
   by (metis Bounded_Operators.ortho_bot linear_space_ortho_ortho ortho_def uminus_linear_space_def)
+(* TODO: move to Complex_Vector_Spaces *)
 lemma top_plus[simp]: "top + x = top" for x :: "_ linear_space"
   by (simp add: top.extremum_uniqueI xsupxy_linear_space)
+(* TODO: move to Complex_Vector_Spaces *)
 lemma plus_top[simp]: "x + top = top" for x :: "_ linear_space"
   by (simp add: add.commute)
 lemma ortho_ortho[simp]: "ortho (ortho S) = S"
   by (metis linear_space_ortho_ortho ortho_def uminus_linear_space_def)
-
-(* TODO: Remove constant ortho, subsumed by uminus *)
 
 (* TODO: I don't know if this was deleted or renamed *)
 definition "isProjector P \<longleftrightarrow> P \<cdot>\<^sub>o P = P \<and> P* = P"
@@ -2768,7 +2822,6 @@ lemma applyOp0[simp]: "Rep_bounded 0 \<psi> = 0"
 lemma apply_idOp[simp]: "Rep_bounded idOp \<psi> = \<psi>"
   apply transfer by simp
 
-
 (* In this form, the lemma seems sufficient for all its applications in QRHL *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
@@ -2780,7 +2833,6 @@ lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
     by (simp add: le_Inf_iff)
-
 
 unbundle no_bounded_notation 
 unbundle no_rbounded_notation
