@@ -385,7 +385,7 @@ lemma bounded_of_rbounded_scaleR:
   by (simp add: rbounded_bounded scaleR_bounded_def)
 
 lemma rbounded_of_bounded_scaleR:
-  \<open>rbounded_of_bounded ( c *\<^sub>R f ) = c *\<^sub>R (rbounded_of_bounded f)\<close>
+  \<open>rbounded_of_bounded (c *\<^sub>R f) = c *\<^sub>R (rbounded_of_bounded f)\<close>
   using Rep_rbounded Rep_rbounded_inverse linear_simps(5) mem_Collect_eq rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scaleC_rbounded.rep_eq scaleR_bounded_def scaleR_rbounded.rep_eq
   by smt 
 
@@ -393,14 +393,17 @@ lemma bounded_of_rbounded_Abs_rbounded:
   \<open>bounded_of_rbounded ( Abs_rbounded (Rep_bounded f) ) = f\<close>
   by (metis Quotient_bounded Quotient_rel_rep Rep_bounded_inverse bounded_rbounded rbounded_of_bounded.abs_eq)
 
+(* TODO use a lift_definition instead *)
 definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
   where \<open>norm_bounded f = norm (rbounded_of_bounded f)\<close>
 
+(* TODO use a lift_definition instead *)
 definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
   where \<open>dist_bounded f g = dist (rbounded_of_bounded f) (rbounded_of_bounded g)\<close>
 
+(* TODO use a lift_definition instead *)
 definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
-  where \<open>sgn_bounded f =  bounded_of_rbounded ( sgn (rbounded_of_bounded f))\<close>
+  where \<open>sgn_bounded f =  bounded_of_rbounded (sgn (rbounded_of_bounded f))\<close>
 
 definition uniformity_bounded :: \<open>( ('a, 'b) bounded \<times> ('a, 'b) bounded ) filter\<close>
   where \<open>uniformity_bounded = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) bounded) y < e})\<close>
