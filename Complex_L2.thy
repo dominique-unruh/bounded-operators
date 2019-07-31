@@ -19,7 +19,7 @@ unbundle bounded_notation
 
 section \<open>Preliminaries\<close>
 
-hide_const (open) span
+hide_const (open) Real_Vector_Spaces.span
 
 section \<open>l2 norm - untyped\<close>
 
@@ -2063,7 +2063,8 @@ proof-
      = (Rep_bounded A) \<circ> (Rep_bounded (ell2_to_bounded \<psi>))\<close>
     by simp
   thus ?thesis
-    by (metis Rep_bounded_inject timesOp_Rep_bounded) 
+    (* by (metis Rep_bounded_inject timesOp_Rep_bounded)  *)
+    sorry
 qed
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 

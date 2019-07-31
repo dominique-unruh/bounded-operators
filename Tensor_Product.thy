@@ -51,12 +51,11 @@ qed
 lemma unitary_comm_op[simp]: "unitary comm_op"
   unfolding unitary_def sorry
 
-(* TODO: Does it make sense?
-consts "assoc_op" :: "(('a*'b*'c) ell2, (('a*'b)*'c) ell2) bounded"
+(* The natural isomorphism between (a*(b*c)) ell2 and ((a*b)*c) ell2 given by ket (x,(y,z)) \<rightarrow> ket ((x,y),z) *)
+consts "assoc_op" :: "(('a*('b*'c)) ell2, (('a*'b)*'c) ell2) bounded"
 
 lemma unitary_assoc_op[simp]: "unitary assoc_op"
   by (cheat TODO5)
-*)
 
 lemma tensor_scalar_mult1[simp]: "(a *\<^sub>C A) \<otimes> B = a *\<^sub>C (A \<otimes> B)" for a::complex and A::"('a,'b)l2bounded" and B::"('c,'d)l2bounded"
   by (cheat TODO3)
