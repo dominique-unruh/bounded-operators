@@ -100,6 +100,7 @@ proof
 qed  
 end
 
+(* TODO to Real_Bounded_Operators *)
 instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
 instance
@@ -236,6 +237,7 @@ proof intro_classes
 qed
 end
 
+(* TODO to Real_Bounded_Operators *)
 instantiation rbounded :: (real_normed_vector, cbanach) "cbanach"
 begin
 instance..
@@ -275,7 +277,7 @@ lemma rbounded_of_bounded_prelim:
   apply auto
   by (simp add: bounded_clinear_def clinear.scaleC)
 
-
+(* TODO: write inv rbounded_of_bounded instead of THE... *)
 definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
 ('a, 'b) bounded\<close> where
   \<open>bounded_of_rbounded f = (THE g. rbounded_of_bounded g = f)\<close>
@@ -715,10 +717,12 @@ lemma scaleR_bounded_lift:
 
 section \<open>Adjoint\<close>
 
+(* TODO notation should be part of the bundle *)
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
   is Adj by (fact Adj_bounded_clinear)
 
+(* TODO Can use notation \<cdot>\<^sub>v here *)
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
   shows \<open>\<forall>x. \<forall>y. \<langle>Rep_bounded (G*) x, y\<rangle> = \<langle>x, (Rep_bounded G) y\<rangle>\<close>
@@ -831,11 +835,14 @@ lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bou
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
 
-
+(* TODO move to Real_Bounded_Operators *)
+(* TODO Add \<cdot>\<^sub>v *)
 bundle rbounded_notation begin
+(* TODO should be \<cdot>\<^sub>o *)
 notation rtimesOp (infixl "\<cdot>\<^sub>r" 69)
 end
 
+(* TODO move to Real_Bounded_Operators *)
 bundle no_rbounded_notation begin
 no_notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
 end
@@ -852,6 +859,7 @@ no_notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
 no_notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
 end
 
+(* TODO remove *)
 unbundle rbounded_notation
 
 unbundle bounded_notation
