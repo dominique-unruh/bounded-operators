@@ -517,7 +517,6 @@ lemma scaleR_bounded_lift:
 
 section \<open>Adjoint\<close>
 
-(* TODO notation should be part of the bundle *)
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
   is Adj by (fact Adj_bounded_clinear)
@@ -633,7 +632,7 @@ lift_definition timesOp::
 where \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f) (rbounded_of_bounded g))\<close> *)
 
 
-lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
+lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
@@ -1227,10 +1226,9 @@ proof-
     by blast
 qed
 
-(* TODO does this need chilbert_space? *)
 lemma scalar_op_op[simp]:
-  fixes A::"('b::chilbert_space,'c::chilbert_space) bounded"
-    and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) bounded"
+    and B::"('a::complex_normed_vector, 'b) bounded"
   shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
 proof-
   have \<open>(rtimesOp (a *\<^sub>C (rbounded_of_bounded A))
@@ -1261,8 +1259,8 @@ qed
 
 
 lemma op_scalar_op[simp]:
-  fixes A::"('b::chilbert_space,'c::chilbert_space) bounded" 
-    and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) bounded" 
+    and B::"('a::complex_normed_vector, 'b) bounded"
   shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
   using op_rscalar_op
   (* by (metis (no_types, lifting) rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rscalar_op_op scalar_op_op timesOp_def) *)
@@ -1279,8 +1277,7 @@ lemma times_idOp2[simp]:
   by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma mult_INF1[simp]:
-
-  fixes U :: "('b::chilbert_space,'c::chilbert_space) bounded"
+  fixes U :: "('b::complex_normed_vector,'c::cbanach) bounded"
     and V :: "'a \<Rightarrow> 'b linear_space" 
   shows \<open>U \<cdot>\<^sub>s (INF i. V i) \<le> (INF i. U \<cdot>\<^sub>s (V i))\<close>
 proof-
@@ -1334,7 +1331,6 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
                              
 lemma mult_inf_distrib[simp]:
-
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   shows "U \<cdot>\<^sub>s (B * C) \<le> (U \<cdot>\<^sub>s B) *  (U \<cdot>\<^sub>s C)"
 proof-
@@ -1382,14 +1378,15 @@ lemma applyOpSpace_eq:
 section \<open>Endomorphism algebra\<close>
 
 (* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
+(* TODO: with this type, actually a definition in terms of bounded might be useful because it's a wrapper around bounded *)
 typedef (overloaded) ('a::complex_normed_vector) endo 
 = \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
   using bounded_clinear_ident by blast
 
-definition bounded_of_endo:: \<open>'a::chilbert_space endo \<Rightarrow> ('a, 'a) bounded\<close>  where 
+definition bounded_of_endo:: \<open>'a::complex_normed_vector endo \<Rightarrow> ('a, 'a) bounded\<close>  where 
 \<open>bounded_of_endo f = Abs_bounded (Rep_endo f)\<close>
 
-definition endo_of_bounded:: \<open>('a::chilbert_space, 'a) bounded \<Rightarrow> 'a endo\<close>  where 
+definition endo_of_bounded:: \<open>('a::complex_normed_vector, 'a) bounded \<Rightarrow> 'a endo\<close>  where 
 \<open>endo_of_bounded f = Abs_endo (Rep_bounded f)\<close>
 
 lemma endo_of_bounded_inj:
@@ -1408,7 +1405,7 @@ lemma bounded_of_endo_inv:
 \<open>endo_of_bounded (bounded_of_endo f) = f\<close>
   using endo_of_bounded_inv bounded_of_endo_inj by auto
 
-instantiation endo :: (chilbert_space) \<open>complex_normed_vector\<close>
+instantiation endo :: (complex_normed_vector) \<open>complex_normed_vector\<close>
 begin
 
 definition zero_endo::"'a endo" 
@@ -1574,7 +1571,7 @@ qed
 
 end
 
-instantiation endo :: (chilbert_space) \<open>cbanach\<close>
+instantiation endo :: (cbanach) \<open>cbanach\<close>
 begin
 
 lemma bounded_of_endo_Cauchy:
@@ -1643,7 +1640,7 @@ instance
 qed
 end
 
-instantiation endo::(chilbert_space) \<open>ring\<close>
+instantiation endo::(complex_normed_vector) \<open>ring\<close>
 begin 
 
 definition times_endo::\<open>'a endo \<Rightarrow> 'a endo \<Rightarrow> 'a endo\<close> where
@@ -1671,8 +1668,8 @@ instance
 qed
 end
 
-
-instantiation endo::("{chilbert_space, perfect_space}") \<open>ring_1\<close>
+(* TODO replace perfect_space by the simpler not_singleton *)
+instantiation endo::("{complex_normed_vector, perfect_space}") \<open>ring_1\<close>
 begin
 definition one_endo::\<open>'a endo\<close> where
   \<open>one_endo = endo_of_bounded idOp\<close>
@@ -1689,7 +1686,7 @@ instance
     unfolding one_endo_def times_endo_def
     by (simp add: endo_of_bounded_inv bounded_of_endo_inj)
 
-  show "(0::'a::{chilbert_space, perfect_space} endo) \<noteq> 1"
+  show "(0::'a endo) \<noteq> 1"
   proof-
     have \<open>(0::('a,'a) bounded) \<noteq> idOp\<close>
     proof-
@@ -1715,6 +1712,7 @@ qed
 
 end
 
+(* TODO: use same notation ( _* ) as for bounded, and use bundles to disambiguate *)
 definition Adj_endo :: "'a::chilbert_space endo \<Rightarrow> 'a endo"  ("_\<^sup>a\<^sup>d\<^sup>j" [99] 100)  where
 \<open>Adj_endo A = endo_of_bounded ( (bounded_of_endo A)* )\<close>
 
@@ -2327,7 +2325,7 @@ qed
 
 section \<open>New/restored things\<close>
 
-(* TODO probably needs only {complex_vector,topological_space} *)
+(* TODO probably needs less than chilbert_space *)
 (* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: (chilbert_space) complete_lattice begin
 instance 

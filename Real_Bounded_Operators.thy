@@ -24,7 +24,6 @@ theory Real_Bounded_Operators
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     Complex_Vector_Spaces
-    Complex_Inner_Product
     Operator_Norm_Missing
     Uniform_Limit_Missing
     NSA_Miscellany
@@ -1426,17 +1425,16 @@ proof-
 qed
 
 lemma rtimesOp_scaleC:
-  fixes f::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and g::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  fixes f::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
+    and g::"('a::complex_normed_vector, 'b) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
     and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
   shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<cdot>\<^sub>o g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<cdot>\<^sub>o g) x)\<close>
   by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
 
-(* TODO does this need chilbert_space? *)
 lemma rscalar_op_op: 
-  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  fixes A::"('b::real_normed_vector,'c::complex_normed_vector) rbounded" 
+    and B::"('a::real_normed_vector, 'b) rbounded"
   shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
 proof-
   have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
@@ -1472,10 +1470,9 @@ proof-
 qed
 
 
-(* TODO does this need chilbert_space? *)
 lemma op_rscalar_op: 
-  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
+    and B::"('a::real_normed_vector, 'b) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded A (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded A x)\<close>
   shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
 proof-

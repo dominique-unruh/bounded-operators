@@ -737,7 +737,7 @@ lemma is_subspace_0[simp]:
 proof-
   have \<open>is_linear_manifold {0}\<close>
     using add.right_neutral is_linear_manifold_def scaleC_right.zero by blast
-  moreover have "closed ({0} :: ('a::{complex_vector,t1_space}) set)"
+  moreover have "closed ({0} :: 'a set)"
     by simp 
   ultimately show ?thesis 
     by (simp add: is_subspace_def)
@@ -1914,19 +1914,19 @@ proof-
 qed
 
 lemma ortho_top[simp]: 
-  " (orthogonal_complement (top::('a::chilbert_space) set)) 
-= ({0}::('a::chilbert_space) set)"
+  " (orthogonal_complement (top::('a::chilbert_space) set)) = ({0}::'a set)"
 proof-
-  have \<open>({0}::('a::chilbert_space) set) \<subseteq>  (orthogonal_complement (top::('a::chilbert_space) set))\<close>
+  have \<open>({0}::'a set) \<subseteq>  (orthogonal_complement (top::'a set))\<close>
     by (simp add: is_linear_manifold.zero is_subspace.subspace)
-  moreover have  \<open>({0}::('a::chilbert_space) set) \<supseteq>  (orthogonal_complement (top::('a::chilbert_space) set))\<close>
+  moreover have  \<open>({0}::('a) set) \<supseteq>  (orthogonal_complement (top::('a) set))\<close>
+    using [[show_sorts]]
+    thm is_subspace_0 is_subspace_UNIV is_subspace_orthog ortho_leq orthogonal_complement_twice top_greatest
     by (metis is_subspace_0 is_subspace_UNIV is_subspace_orthog ortho_leq orthogonal_complement_twice top_greatest)
   ultimately show ?thesis by blast
 qed
 
 lemma ortho_bot[simp]:
-  " (orthogonal_complement ({0}::('a::chilbert_space) set)) 
-= (top::('a::chilbert_space) set)"
+  " (orthogonal_complement ({0}::'a::chilbert_space set))  = (top::'a set)"
   using is_subspace_UNIV orthogonal_complement_twice by fastforce
 
 
@@ -1981,7 +1981,7 @@ qed
 
 
 lemma OrthoClosedEq:
-  fixes A ::"('a::chilbert_space) set"
+  fixes A ::"('a::complex_inner) set"
   shows \<open>(orthogonal_complement A) = (orthogonal_complement (closure A)) \<close>                                                
 proof-
   have \<open>x \<in> (orthogonal_complement A) \<Longrightarrow> x \<in> (orthogonal_complement (closure A))\<close> for x
@@ -2013,14 +2013,14 @@ proof-
 qed
 
 lemma is_subspace_closed_plus:
-  fixes A B::"('a::chilbert_space) set"
+  fixes A B::"('a::complex_normed_vector) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>is_subspace (A +\<^sub>M B)\<close>
   by (simp add: assms(1) assms(2) closed_sum_def is_subspace.intro is_subspace.subspace is_subspace_cl is_subspace_plus)
 
 
 lemma DeMorganOrtho:        
-  fixes A B::"('a::chilbert_space) set"
+  fixes A B::"('a::complex_inner) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
   shows \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close>
 proof-
@@ -2824,7 +2824,7 @@ instance
   by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
 end
 
-instantiation linear_space :: (complex_normed_vector) zero begin
+instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
 lift_definition zero_linear_space :: \<open>'a linear_space\<close> is \<open>0\<close>
   by simp
 instance..
@@ -2838,21 +2838,21 @@ lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer using subspace_scale_invariant by blast
 
-instantiation linear_space :: (cbanach) "bot"
+instantiation linear_space :: ("{complex_vector,t1_space}") "bot"
 begin
 lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
   by (rule Complex_Inner_Product.is_subspace_0)
 instance ..
 end
 
-instantiation linear_space :: (cbanach) "top"
+instantiation linear_space :: ("{complex_vector,topological_space}") "top"
 begin
 lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNIV\<close>
   by (rule Complex_Inner_Product.is_subspace_UNIV)
 instance ..
 end
 
-instantiation linear_space :: (cbanach) "Inf"
+instantiation linear_space :: ("{complex_vector,topological_space}") "Inf"
 begin
 lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
   is \<open>\<lambda> S. \<Inter> S\<close>
@@ -2889,7 +2889,7 @@ qed
 instance ..
 end
 
-instantiation linear_space :: (chilbert_space) "uminus"
+instantiation linear_space :: (complex_inner) "uminus"
 begin
 lift_definition uminus_linear_space::\<open>'a linear_space  \<Rightarrow> 'a linear_space\<close>
   is \<open>orthogonal_complement\<close>
@@ -2905,7 +2905,7 @@ lemma linear_space_ortho_ortho:
   by (simp add: orthogonal_complement_twice)
 
 
-instantiation linear_space :: (cbanach) "order"
+instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subseteq>)\<close>.
@@ -2938,8 +2938,8 @@ proof
 qed
 end
 
-
-instantiation linear_space::(chilbert_space) "comm_monoid_add"
+(* TODO: I think this holds with something weaker than chilbert_space *)
+instantiation linear_space :: (chilbert_space) "comm_monoid_add"
 begin
 lift_definition plus_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
   is "closed_sum"
@@ -2967,7 +2967,7 @@ instance
 qed
 end
 
-
+(* TODO remove *)
 instantiation linear_space::(chilbert_space) "comm_monoid_mult"
 begin
 lift_definition times_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
@@ -3243,7 +3243,7 @@ proof-
   by blast
 qed
 
-instantiation linear_space :: (chilbert_space) "Sup"
+instantiation linear_space :: (complex_inner) "Sup"
 begin
 definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
   where \<open>Sup_linear_space S = - Inf (- S) \<close>
@@ -3253,7 +3253,7 @@ end
 
 section \<open>Complex Span\<close>
 
-lift_definition span :: "'a::cbanach set \<Rightarrow> 'a linear_space"
+lift_definition span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
    apply (rule is_subspace_cl)
@@ -3732,20 +3732,20 @@ subclass (in card2) not_singleton
   apply standard using two_le_card by auto
 
 
-instantiation linear_space :: (chilbert_space)inf begin  (* Intersection *)
+instantiation linear_space :: ("{complex_vector,topological_space}") inf begin  (* Intersection *)
 lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
 instance .. end
 
-instantiation linear_space :: (chilbert_space)sup begin  (* Sum of spaces *)
+instantiation linear_space :: (complex_normed_vector) sup begin  (* Sum of spaces *)
 lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
   is "\<lambda>A B::'a set. A +\<^sub>M B" 
   by (fact is_subspace_closed_plus)
 instance .. end
 
-lemma linear_space_sup_plus: "(sup :: 'a::chilbert_space linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
+lemma linear_space_sup_plus: "(sup :: _ linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
   unfolding sup_linear_space_def plus_linear_space_def by simp
 
-lemma linear_space_zero_not_top[simp]: "(0::'a::{chilbert_space,not_singleton} linear_space) \<noteq> top"
+lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
 proof transfer 
   have "card {0} \<noteq> CARD('a)"
     using not_singleton_card by auto
@@ -3754,14 +3754,15 @@ proof transfer
 qed
 
 
-instantiation linear_space :: (chilbert_space)order_top begin
+instantiation linear_space :: ("{complex_vector,topological_space}") order_top begin
 instance apply intro_classes
   apply transfer by simp
 end
 
-instantiation linear_space :: (chilbert_space)order_bot begin
+instantiation linear_space :: (chilbert_space) order_bot begin
 instance apply intro_classes
   apply transfer 
+  using [[show_sorts]]
   using is_subspace_0 ortho_bot ortho_leq by blast
 end
 
@@ -3769,13 +3770,11 @@ lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
   unfolding zero_linear_space_def bot_linear_space_def 
   by (simp add: Complex_Inner_Product.bot_linear_space.abs_eq)
 
-instantiation linear_space :: (chilbert_space)ordered_ab_semigroup_add begin
+instantiation linear_space :: (chilbert_space) ordered_ab_semigroup_add begin
 instance apply intro_classes apply transfer
   using is_closed_subspace_ord 
   by (smt Collect_mono_iff closure_mono subset_iff)
-
 end
-
 
 instantiation linear_space :: (chilbert_space)canonically_ordered_monoid_add begin
 instance apply intro_classes
@@ -3785,13 +3784,14 @@ instance apply intro_classes
   by (simp add: linear_space_sup_plus xsupxy_linear_space) 
 end
 
-instantiation linear_space :: (chilbert_space)semilattice_inf begin
+instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
 instance apply intro_classes
     apply transfer apply simp
    apply transfer apply simp
   apply transfer by simp
 end
 
+(* TODO probably holds with something weaker than chilbert_space *)
 instantiation linear_space :: (chilbert_space) lattice begin
 instance 
   proof
@@ -3815,7 +3815,7 @@ qed
 end
 
 
-lemma top_not_bot[simp]: "(top::'a::{chilbert_space,not_singleton} linear_space) \<noteq> bot"
+lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
   by (metis linear_space_zero_bot linear_space_zero_not_top) 
 lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
