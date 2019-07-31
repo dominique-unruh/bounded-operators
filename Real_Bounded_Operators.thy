@@ -24,6 +24,7 @@ theory Real_Bounded_Operators
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     Complex_Vector_Spaces
+    Complex_Inner_Product
     Operator_Norm_Missing
     Uniform_Limit_Missing
     NSA_Miscellany
@@ -1347,6 +1348,175 @@ proof-
     by (simp add: NSLIMSEQ_LIMSEQ)
 qed
 
+lift_definition rtimesOp:: 
+  "('b::real_normed_vector,'c::real_normed_vector) rbounded
+     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded" (infixl "\<cdot>\<^sub>o" 69)
+ is "(o)"
+  unfolding o_def 
+  by (rule bounded_linear_compose, simp_all)
 
+lemma rtimesOp_assoc: "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>o C = A \<cdot>\<^sub>o (B \<cdot>\<^sub>o C)" 
+  apply transfer
+  by (simp add: comp_assoc) 
+
+lemma rtimesOp_dist1:
+  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
+    and c :: "('a::real_normed_vector, 'b) rbounded"
+  shows "(a + b) \<cdot>\<^sub>o c = (a \<cdot>\<^sub>o c) + (b \<cdot>\<^sub>o c)"
+proof -
+ (* sledgehammer *)
+  {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
+  assume a1: "bounded_linear ca"
+  assume a2: "bounded_linear ba"
+  assume a3: "bounded_linear aa"
+  { fix aaa :: 'a
+    have ff1: "\<forall>r. Rep_rbounded (r::('b, 'c) rbounded) \<circ> ca = Rep_rbounded (r \<cdot>\<^sub>o Abs_rbounded ca)"
+      using a1 by (simp add: Abs_rbounded_inverse rtimesOp.rep_eq)
+    have ff2: "Rep_rbounded (Abs_rbounded ba) = ba"
+      using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
+    have "Rep_rbounded (Abs_rbounded aa) = aa"
+      using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
+    then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = Rep_rbounded (Abs_rbounded (aa \<circ> ca)) aaa + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) aaa"
+      using ff2 ff1 by (metis (no_types) Rep_rbounded_inverse comp_apply) }
+  then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a)"
+    by meson
+} note 1 = this
+
+  show ?thesis
+  unfolding rtimesOp_def 
+  apply auto
+  apply transfer
+  unfolding plus_rbounded_def
+  apply auto
+  apply (rule 1)
+  by blast
+qed
+
+lemma rtimesOp_dist2:
+  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
+    and c :: "('b, 'c::real_normed_vector) rbounded"
+  shows "c \<cdot>\<^sub>o (a + b) = (c \<cdot>\<^sub>o a) + (c \<cdot>\<^sub>o b)"
+proof-
+  have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) ) x\<close>
+    for x
+  proof-
+    have \<open>bounded_linear (Rep_rbounded c)\<close>
+      using Rep_rbounded by auto
+    have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = (Rep_rbounded c) ( (Rep_rbounded (a + b)) x )\<close>
+      by (simp add: rtimesOp.rep_eq)
+    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x + Rep_rbounded b x )\<close>
+      by (simp add: plus_rbounded.rep_eq)
+    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x ) + (Rep_rbounded c) ( Rep_rbounded b x )\<close>
+      using  \<open>bounded_linear (Rep_rbounded c)\<close>
+      unfolding bounded_linear_def linear_def
+      by (simp add: \<open>bounded_linear (Rep_rbounded c)\<close> linear_simps(1))
+    also have \<open>\<dots> = ( (Rep_rbounded c) \<circ> (Rep_rbounded a) ) x
+                  + ( (Rep_rbounded c) \<circ> (Rep_rbounded b) ) x\<close>
+      by simp
+    finally have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) ) x\<close>
+      by (simp add: plus_rbounded.rep_eq rtimesOp.rep_eq)
+    thus ?thesis
+      by simp 
+  qed
+  hence \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) )\<close>
+    by blast
+  thus ?thesis 
+    using Rep_rbounded_inject
+    by blast  
+qed
+
+lemma rtimesOp_scaleC:
+  fixes f::"('b::chilbert_space,'c::chilbert_space) rbounded" 
+    and g::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
+    and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
+  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<cdot>\<^sub>o g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<cdot>\<^sub>o g) x)\<close>
+  by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
+
+(* TODO does this need chilbert_space? *)
+lemma rscalar_op_op: 
+  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
+    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
+proof-
+  have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
+    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
+    for x
+  proof-
+    have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x
+       = a *\<^sub>C (Rep_rbounded A ((Rep_rbounded B) x))\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x
+        = a *\<^sub>C (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>(Rep_rbounded A ((Rep_rbounded B) x))
+        = (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
+    proof-
+      have \<open>Rep_rbounded A ((Rep_rbounded B) x) = ((Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
+        by simp        
+      thus ?thesis
+        using Abs_rbounded_inverse
+        by (metis Rep_rbounded rtimesOp.rep_eq)
+    qed
+    ultimately show ?thesis by simp
+  qed
+  hence \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
+    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B))\<close>
+    by blast
+  hence \<open>Abs_rbounded (Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
+    a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)\<close>
+    by (simp add: Rep_rbounded_inverse)    
+  thus ?thesis
+    unfolding  rtimesOp_def
+    by auto
+qed
+
+
+(* TODO does this need chilbert_space? *)
+lemma op_rscalar_op: 
+  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
+    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
+  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded A (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded A x)\<close>
+  shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
+proof-
+  have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B) x\<close>
+    for x
+  proof-
+    have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x
+        = ( (Rep_rbounded A) \<circ> (Rep_rbounded (a *\<^sub>C B)) ) x\<close>
+      by (simp add: rtimesOp.rep_eq)
+    also have \<open>... = 
+        (Rep_rbounded A) ( (Rep_rbounded (a *\<^sub>C B))  x )\<close>
+      by simp
+    also have \<open>... = 
+        (Rep_rbounded A) (a *\<^sub>C ( (Rep_rbounded  B) x ))\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    also have \<open>... = 
+       a *\<^sub>C ( (Rep_rbounded A) ( (Rep_rbounded  B) x ) )\<close>
+      using assms by auto      
+    finally show ?thesis
+      by (simp add: rtimesOp.rep_eq scaleC_rbounded.rep_eq) 
+  qed
+  hence \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B))  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B)\<close>
+    by blast     
+  hence \<open>rtimesOp A (a *\<^sub>C B) = rtimesOp (a *\<^sub>C A) B\<close>
+    using Rep_rbounded_inject by auto    
+  thus ?thesis
+    by (simp add: rscalar_op_op)  
+qed
+
+section \<open>On-demand syntax\<close>
+
+(* TODO Add \<cdot>\<^sub>v *)
+bundle rbounded_notation begin
+notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
+end
+
+bundle no_rbounded_notation begin
+no_notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
+end
+
+(* Deactivating notation until explicitly activated *)
+unbundle no_rbounded_notation
 
 end

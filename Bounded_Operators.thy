@@ -127,8 +127,9 @@ lemma rbounded_of_bounded_minus:
   \<open>rbounded_of_bounded (f - g) = rbounded_of_bounded f - rbounded_of_bounded g\<close>
   by (metis (mono_tags, lifting) bounded_rbounded minus_bounded_def pth_2 rbounded_of_bounded_plus rbounded_of_bounded_uminus)
 
+(* TODO use a lift_definition instead *)
 definition scaleC_bounded :: \<open>complex \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
-  where "scaleC_bounded c f =  bounded_of_rbounded ( c *\<^sub>C (rbounded_of_bounded f) )"
+  where "scaleC_bounded c f =  bounded_of_rbounded (c *\<^sub>C (rbounded_of_bounded f))"
 
 lemma bounded_of_rbounded_scaleC:
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
@@ -146,6 +147,7 @@ proof -
     by (simp add: rbounded_of_bounded_prelim scaleC_bounded_def scaleC_rbounded.rep_eq)
 qed
 
+(* TODO use a lift_definition instead *)
 definition scaleR_bounded :: \<open>real \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
   where "scaleR_bounded c f =  bounded_of_rbounded ( c *\<^sub>R (rbounded_of_bounded f) )"
 
@@ -477,30 +479,36 @@ proof
 qed
 end
 
+(* TODO: not needed with proper lift_definitions *)
 lemma zero_bounded_lift:
   \<open>Rep_bounded (0::('a, 'b) bounded) = (\<lambda> _::('a::complex_normed_vector). 0::('b::complex_normed_vector))\<close>
   by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_zero zero_rbounded.rep_eq)
 
+(* TODO: not needed with proper lift_definitions *)
 lemma uminus_bounded_lift:
   \<open>Rep_bounded (- f) = (\<lambda> x. - (Rep_bounded f) x)\<close>
   by (metis (no_types, hide_lams) rbounded_of_bounded.rep_eq rbounded_of_bounded_uminus scaleC_minus1_left scaleC_rbounded.rep_eq)
 
+(* TODO: not needed with proper lift_definitions *)
 lemma plus_bounded_lift:
   \<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
   unfolding plus_bounded_def
   (* by (metis (no_types, hide_lams) plus_bounded_def plus_rbounded.rep_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_plus)  *)
   by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
+(* TODO: not needed with proper lift_definitions *)
 lemma minus_bounded_lift:
   \<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
   unfolding minus_bounded_def
   by (metis (no_types, hide_lams) minus_bounded_def minus_rbounded.rep_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_minus)
 
+(* TODO: not needed with proper lift_definitions *)
 lemma scaleC_bounded_lift:
   \<open>Rep_bounded (c *\<^sub>C f) = (\<lambda> x. c *\<^sub>C (Rep_bounded f) x)\<close>
   unfolding scaleC_bounded_def
   by (metis rbounded_of_bounded.rep_eq rbounded_of_bounded_scaleC scaleC_bounded_def scaleC_rbounded.rep_eq)
 
+(* TODO: not needed with proper lift_definitions *)
 lemma scaleR_bounded_lift:
   \<open>Rep_bounded (c *\<^sub>R f) = (\<lambda> x. c *\<^sub>R (Rep_bounded f) x)\<close>
   unfolding scaleR_bounded_def
@@ -609,19 +617,11 @@ lemma Adj_bounded_zero[simp]:
 
 section \<open>Composition\<close>
 
-(* TODO to Real_Bounded_Operators *)
-lift_definition rtimesOp:: 
-  "('b::real_normed_vector,'c::real_normed_vector) rbounded
-     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
- is "(o)"
-  unfolding o_def 
-  by (rule bounded_linear_compose, simp_all)
-
 
 lift_definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
- is "(o)"
+     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" (infixl "\<cdot>\<^sub>o" 69)
+  is "(o)"
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
@@ -640,16 +640,6 @@ lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bou
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
 
 (* TODO move to Real_Bounded_Operators *)
-(* TODO Add \<cdot>\<^sub>v *)
-bundle rbounded_notation begin
-(* TODO should be \<cdot>\<^sub>o *)
-notation rtimesOp (infixl "\<cdot>\<^sub>r" 69)
-end
-
-(* TODO move to Real_Bounded_Operators *)
-bundle no_rbounded_notation begin
-no_notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
-end
 
 bundle bounded_notation begin
 notation timesOp (infixl "\<cdot>\<^sub>o" 69)
@@ -663,8 +653,6 @@ no_notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
 no_notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
 end
 
-(* TODO remove *)
-unbundle rbounded_notation
 
 unbundle bounded_notation
 
@@ -677,82 +665,12 @@ Not needed since timesOp now defined via lift_definition
   unfolding timesOp_def
   by (metis (no_types, lifting) comp_apply rbounded_bounded rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim rtimesOp.rep_eq) *)
 
-(* TODO: move to timesOp_assoc *)
-lemma rtimesOp_assoc: "(A \<cdot>\<^sub>r B) \<cdot>\<^sub>r C = A \<cdot>\<^sub>r (B \<cdot>\<^sub>r C)" 
-  apply transfer
-  by (simp add: comp_assoc) 
-
 lemma timesOp_assoc: 
   shows "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>o C = A  \<cdot>\<^sub>o (B  \<cdot>\<^sub>o C)"
   (* by (metis (no_types, lifting) Rep_bounded_inverse fun.map_comp timesOp_Rep_bounded)  *)
   by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
-lemma rtimesOp_dist1:
-  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
-    and c :: "('a::real_normed_vector, 'b) rbounded"
-  shows "(a + b) \<cdot>\<^sub>r c = (a \<cdot>\<^sub>r c) + (b \<cdot>\<^sub>r c)"
-proof -
- (* sledgehammer *)
-  {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
-  assume a1: "bounded_linear ca"
-  assume a2: "bounded_linear ba"
-  assume a3: "bounded_linear aa"
-  { fix aaa :: 'a
-    have ff1: "\<forall>r. Rep_rbounded (r::('b, 'c) rbounded) \<circ> ca = Rep_rbounded (r \<cdot>\<^sub>r Abs_rbounded ca)"
-      using a1 by (simp add: Abs_rbounded_inverse rtimesOp.rep_eq)
-    have ff2: "Rep_rbounded (Abs_rbounded ba) = ba"
-      using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
-    have "Rep_rbounded (Abs_rbounded aa) = aa"
-      using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
-    then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = Rep_rbounded (Abs_rbounded (aa \<circ> ca)) aaa + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) aaa"
-      using ff2 ff1 by (metis (no_types) Rep_rbounded_inverse comp_apply) }
-  then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. Rep_rbounded (Abs_rbounded (aa \<circ> ca)) a + Rep_rbounded (Abs_rbounded (ba \<circ> ca)) a)"
-    by meson
-} note 1 = this
 
-  show ?thesis
-  unfolding rtimesOp_def 
-  apply auto
-  apply transfer
-  unfolding plus_rbounded_def
-  apply auto
-  apply (rule 1)
-  by blast
-qed
-
-
-lemma rtimesOp_dist2:
-  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
-    and c :: "('b, 'c::real_normed_vector) rbounded"
-  shows "c \<cdot>\<^sub>r (a + b) = (c \<cdot>\<^sub>r a) + (c \<cdot>\<^sub>r b)"
-proof-
-  have \<open>Rep_rbounded (c \<cdot>\<^sub>r (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>r a) +  (c \<cdot>\<^sub>r b) ) x\<close>
-    for x
-  proof-
-    have \<open>bounded_linear (Rep_rbounded c)\<close>
-      using Rep_rbounded by auto
-    have \<open>Rep_rbounded (c \<cdot>\<^sub>r (a + b)) x = (Rep_rbounded c) ( (Rep_rbounded (a + b)) x )\<close>
-      by (simp add: rtimesOp.rep_eq)
-    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x + Rep_rbounded b x )\<close>
-      by (simp add: plus_rbounded.rep_eq)
-    also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x ) + (Rep_rbounded c) ( Rep_rbounded b x )\<close>
-      using  \<open>bounded_linear (Rep_rbounded c)\<close>
-      unfolding bounded_linear_def linear_def
-      by (simp add: \<open>bounded_linear (Rep_rbounded c)\<close> linear_simps(1))
-    also have \<open>\<dots> = ( (Rep_rbounded c) \<circ> (Rep_rbounded a) ) x
-                  + ( (Rep_rbounded c) \<circ> (Rep_rbounded b) ) x\<close>
-      by simp
-    finally have \<open>Rep_rbounded (c \<cdot>\<^sub>r (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>r a) +  (c \<cdot>\<^sub>r b) ) x\<close>
-      by (simp add: plus_rbounded.rep_eq rtimesOp.rep_eq)
-    thus ?thesis
-      by simp 
-  qed
-  hence \<open>Rep_rbounded (c \<cdot>\<^sub>r (a + b)) = Rep_rbounded ( (c \<cdot>\<^sub>r a) +  (c \<cdot>\<^sub>r b) )\<close>
-    by blast
-  thus ?thesis 
-    using Rep_rbounded_inject
-    by blast  
-qed
 
 
 lemma timesOp_dist1:
@@ -1325,54 +1243,9 @@ proof-
     by blast
 qed
 
-lemma rtimesOp_scaleC:
-  fixes f::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and g::"('a::chilbert_space, 'b::chilbert_space) rbounded"
-  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
-    and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
-  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<cdot>\<^sub>r g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<cdot>\<^sub>r g) x)\<close>
-  by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
-
-lemma rscalar_op_op: 
-  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
-  shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>r B = a *\<^sub>C (A \<cdot>\<^sub>r B)\<close>
-proof-
-  have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
-    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
-    for x
-  proof-
-    have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x
-       = a *\<^sub>C (Rep_rbounded A ((Rep_rbounded B) x))\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
-    moreover have \<open>Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x
-        = a *\<^sub>C (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
-    moreover have \<open>(Rep_rbounded A ((Rep_rbounded B) x))
-        = (Rep_rbounded ( Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x)\<close>
-    proof-
-      have \<open>Rep_rbounded A ((Rep_rbounded B) x) = ((Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
-        by simp        
-      thus ?thesis
-        using Abs_rbounded_inverse
-        by (metis Rep_rbounded rtimesOp.rep_eq)
-    qed
-    ultimately show ?thesis by simp
-  qed
-  hence \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
-    Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B))\<close>
-    by blast
-  hence \<open>Abs_rbounded (Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) =
-    a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)\<close>
-    by (simp add: Rep_rbounded_inverse)    
-  thus ?thesis
-    unfolding  rtimesOp_def
-    by auto
-qed
-
+(* TODO does this need chilbert_space? *)
 lemma scalar_op_op[simp]:
-
-fixes A::"('b::chilbert_space,'c::chilbert_space) bounded"
+  fixes A::"('b::chilbert_space,'c::chilbert_space) bounded"
     and B::"('a::chilbert_space, 'b::chilbert_space) bounded"
   shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
 proof-
@@ -1402,37 +1275,6 @@ proof-
     by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 qed
 
-lemma op_rscalar_op: 
-  fixes A::"('b::chilbert_space,'c::chilbert_space) rbounded" 
-    and B::"('a::chilbert_space, 'b::chilbert_space) rbounded"
-  assumes \<open>\<forall> c. \<forall> x. Rep_rbounded A (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded A x)\<close>
-  shows \<open>A \<cdot>\<^sub>r (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>r B)\<close>
-proof-
-  have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B) x\<close>
-    for x
-  proof-
-    have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x
-        = ( (Rep_rbounded A) \<circ> (Rep_rbounded (a *\<^sub>C B)) ) x\<close>
-      by (simp add: rtimesOp.rep_eq)
-    also have \<open>... = 
-        (Rep_rbounded A) ( (Rep_rbounded (a *\<^sub>C B))  x )\<close>
-      by simp
-    also have \<open>... = 
-        (Rep_rbounded A) (a *\<^sub>C ( (Rep_rbounded  B) x ))\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
-    also have \<open>... = 
-       a *\<^sub>C ( (Rep_rbounded A) ( (Rep_rbounded  B) x ) )\<close>
-      using assms by auto      
-    finally show ?thesis
-      by (simp add: rtimesOp.rep_eq scaleC_rbounded.rep_eq) 
-  qed
-  hence \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B))  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B)\<close>
-    by blast     
-  hence \<open>rtimesOp A (a *\<^sub>C B) = rtimesOp (a *\<^sub>C A) B\<close>
-    using Rep_rbounded_inject by auto    
-  thus ?thesis
-    by (simp add: rscalar_op_op)  
-qed
 
 lemma op_scalar_op[simp]:
   fixes A::"('b::chilbert_space,'c::chilbert_space) bounded" 
@@ -1443,8 +1285,7 @@ lemma op_scalar_op[simp]:
   by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma times_idOp1[simp]: 
-
-shows "U \<cdot>\<^sub>o idOp = U"
+  shows "U \<cdot>\<^sub>o idOp = U"
   (* by (metis Rep_bounded_inverse comp_id idOp.rep_eq timesOp_Rep_bounded) *)
   by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
@@ -2606,6 +2447,5 @@ lemma leq_INF[simp]:
     by (simp add: le_Inf_iff)
 
 unbundle no_bounded_notation 
-unbundle no_rbounded_notation
 
 end
