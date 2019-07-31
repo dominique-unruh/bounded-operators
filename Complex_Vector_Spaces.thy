@@ -1573,5 +1573,40 @@ lemma bounded_linear_bounded_clinear:
     using that unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
 
+lemma comp_bounded_clinear:
+  fixes  A :: \<open>'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector\<close> 
+    and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+  shows \<open>bounded_clinear (A \<circ> B)\<close>
+  proof
+  show "(A \<circ> B) (x + y) = (A \<circ> B) x + (A \<circ> B) y"
+    for x :: 'a
+      and y :: 'a
+    using \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+    unfolding bounded_clinear_def clinear_def Modules.additive_def
+    by simp
+  show "(A \<circ> B) (r *\<^sub>C x) = r *\<^sub>C (A \<circ> B) x"
+    for r :: complex
+      and x :: 'a
+    using \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+    unfolding bounded_clinear_def clinear_def clinear_axioms_def
+    by simp
+  show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
+  proof-
+    obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
+      using assms(2) bounded_clinear.bounded
+      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
+    obtain KA where \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close> and \<open>KA \<ge> 0\<close>
+      using assms(1) bounded_clinear.bounded
+      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
+    have \<open>\<forall>x. norm (A (B x)) \<le> norm x * KB * KA\<close>
+      using  \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close>  \<open>KA \<ge> 0\<close> 
+             \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close>  \<open>KB \<ge> 0\<close>
+      by (metis order.trans ordered_comm_semiring_class.comm_mult_left_mono semiring_normalization_rules(7))
+    thus ?thesis
+      by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)     
+  qed
+qed
+
 
 end

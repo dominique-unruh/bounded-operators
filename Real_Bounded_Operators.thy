@@ -1349,19 +1349,19 @@ qed
 
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
-     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded" (infixl "\<cdot>\<^sub>o" 69)
+     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded" (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
  is "(o)"
   unfolding o_def 
   by (rule bounded_linear_compose, simp_all)
 
-lemma rtimesOp_assoc: "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>o C = A \<cdot>\<^sub>o (B \<cdot>\<^sub>o C)" 
+lemma rtimesOp_assoc: "(A \<cdot>\<^sub>r\<^sub>o B) \<cdot>\<^sub>r\<^sub>o C = A \<cdot>\<^sub>r\<^sub>o (B \<cdot>\<^sub>r\<^sub>o C)" 
   apply transfer
   by (simp add: comp_assoc) 
 
 lemma rtimesOp_dist1:
   fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
     and c :: "('a::real_normed_vector, 'b) rbounded"
-  shows "(a + b) \<cdot>\<^sub>o c = (a \<cdot>\<^sub>o c) + (b \<cdot>\<^sub>o c)"
+  shows "(a + b) \<cdot>\<^sub>r\<^sub>o c = (a \<cdot>\<^sub>r\<^sub>o c) + (b \<cdot>\<^sub>r\<^sub>o c)"
 proof -
  (* sledgehammer *)
   {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
@@ -1369,7 +1369,7 @@ proof -
   assume a2: "bounded_linear ba"
   assume a3: "bounded_linear aa"
   { fix aaa :: 'a
-    have ff1: "\<forall>r. Rep_rbounded (r::('b, 'c) rbounded) \<circ> ca = Rep_rbounded (r \<cdot>\<^sub>o Abs_rbounded ca)"
+    have ff1: "\<forall>r. Rep_rbounded (r::('b, 'c) rbounded) \<circ> ca = Rep_rbounded (r \<cdot>\<^sub>r\<^sub>o Abs_rbounded ca)"
       using a1 by (simp add: Abs_rbounded_inverse rtimesOp.rep_eq)
     have ff2: "Rep_rbounded (Abs_rbounded ba) = ba"
       using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
@@ -1394,14 +1394,14 @@ qed
 lemma rtimesOp_dist2:
   fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
     and c :: "('b, 'c::real_normed_vector) rbounded"
-  shows "c \<cdot>\<^sub>o (a + b) = (c \<cdot>\<^sub>o a) + (c \<cdot>\<^sub>o b)"
+  shows "c \<cdot>\<^sub>r\<^sub>o (a + b) = (c \<cdot>\<^sub>r\<^sub>o a) + (c \<cdot>\<^sub>r\<^sub>o b)"
 proof-
-  have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) ) x\<close>
+  have \<open>Rep_rbounded (c \<cdot>\<^sub>r\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>r\<^sub>o a) +  (c \<cdot>\<^sub>r\<^sub>o b) ) x\<close>
     for x
   proof-
     have \<open>bounded_linear (Rep_rbounded c)\<close>
       using Rep_rbounded by auto
-    have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = (Rep_rbounded c) ( (Rep_rbounded (a + b)) x )\<close>
+    have \<open>Rep_rbounded (c \<cdot>\<^sub>r\<^sub>o (a + b)) x = (Rep_rbounded c) ( (Rep_rbounded (a + b)) x )\<close>
       by (simp add: rtimesOp.rep_eq)
     also have \<open>\<dots> = (Rep_rbounded c) ( Rep_rbounded a x + Rep_rbounded b x )\<close>
       by (simp add: plus_rbounded.rep_eq)
@@ -1412,12 +1412,12 @@ proof-
     also have \<open>\<dots> = ( (Rep_rbounded c) \<circ> (Rep_rbounded a) ) x
                   + ( (Rep_rbounded c) \<circ> (Rep_rbounded b) ) x\<close>
       by simp
-    finally have \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) ) x\<close>
+    finally have \<open>Rep_rbounded (c \<cdot>\<^sub>r\<^sub>o (a + b)) x = Rep_rbounded ( (c \<cdot>\<^sub>r\<^sub>o a) +  (c \<cdot>\<^sub>r\<^sub>o b) ) x\<close>
       by (simp add: plus_rbounded.rep_eq rtimesOp.rep_eq)
     thus ?thesis
       by simp 
   qed
-  hence \<open>Rep_rbounded (c \<cdot>\<^sub>o (a + b)) = Rep_rbounded ( (c \<cdot>\<^sub>o a) +  (c \<cdot>\<^sub>o b) )\<close>
+  hence \<open>Rep_rbounded (c \<cdot>\<^sub>r\<^sub>o (a + b)) = Rep_rbounded ( (c \<cdot>\<^sub>r\<^sub>o a) +  (c \<cdot>\<^sub>r\<^sub>o b) )\<close>
     by blast
   thus ?thesis 
     using Rep_rbounded_inject
@@ -1429,13 +1429,13 @@ lemma rtimesOp_scaleC:
     and g::"('a::complex_normed_vector, 'b) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded f (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded f x)\<close>
     and \<open>\<forall> c. \<forall> x. Rep_rbounded g (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded g x)\<close>
-  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<cdot>\<^sub>o g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<cdot>\<^sub>o g) x)\<close>
+  shows \<open>\<forall> c. \<forall> x. Rep_rbounded (f \<cdot>\<^sub>r\<^sub>o g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (f  \<cdot>\<^sub>r\<^sub>o g) x)\<close>
   by (simp add: assms(1) assms(2) rtimesOp.rep_eq)
 
 lemma rscalar_op_op: 
   fixes A::"('b::real_normed_vector,'c::complex_normed_vector) rbounded" 
     and B::"('a::real_normed_vector, 'b) rbounded"
-  shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
+  shows \<open>(a *\<^sub>C A) \<cdot>\<^sub>r\<^sub>o B = a *\<^sub>C (A \<cdot>\<^sub>r\<^sub>o B)\<close>
 proof-
   have \<open>(Rep_rbounded (a *\<^sub>C A) \<circ> Rep_rbounded B) x =
     Rep_rbounded (a *\<^sub>C Abs_rbounded (Rep_rbounded A \<circ> Rep_rbounded B)) x\<close>
@@ -1474,7 +1474,7 @@ lemma op_rscalar_op:
   fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
     and B::"('a::real_normed_vector, 'b) rbounded"
   assumes \<open>\<forall> c. \<forall> x. Rep_rbounded A (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded A x)\<close>
-  shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
+  shows \<open>A \<cdot>\<^sub>r\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>r\<^sub>o B)\<close>
 proof-
   have \<open>Rep_rbounded (rtimesOp A (a *\<^sub>C B)) x  = Rep_rbounded (rtimesOp (a *\<^sub>C A) B) x\<close>
     for x
@@ -1506,11 +1506,11 @@ section \<open>On-demand syntax\<close>
 
 (* TODO Add \<cdot>\<^sub>v *)
 bundle rbounded_notation begin
-notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
+notation rtimesOp (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
 end
 
 bundle no_rbounded_notation begin
-no_notation rtimesOp (infixl "\<cdot>\<^sub>o" 69)
+no_notation rtimesOp (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
 end
 
 (* Deactivating notation until explicitly activated *)
