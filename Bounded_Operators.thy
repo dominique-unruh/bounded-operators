@@ -2769,6 +2769,17 @@ lemma apply_idOp[simp]: "Rep_bounded idOp \<psi> = \<psi>"
   apply transfer by simp
 
 
+(* In this form, the lemma seems sufficient for all its applications in QRHL *)
+lemma mult_INF[simp]: 
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
+  assumes "isometry U"
+  shows "U \<cdot>\<^sub>s (INF x. V x) = (INF x. U \<cdot>\<^sub>s V x)"
+  by (cheat mult_INF)
+
+lemma leq_INF[simp]:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
+    by (simp add: le_Inf_iff)
 
 
 unbundle no_bounded_notation 
