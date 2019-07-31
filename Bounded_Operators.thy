@@ -12,7 +12,6 @@ Main results:
 
 theory Bounded_Operators
   imports Complex_Inner_Product Real_Bounded_Operators Extended_Sorry
-
 begin
 
 section \<open>Complex bounded operators\<close>
@@ -20,6 +19,7 @@ section \<open>Complex bounded operators\<close>
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   using bounded_clinear_zero by blast
+notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
 
 setup_lifting type_definition_bounded
 
@@ -519,7 +519,7 @@ section \<open>Adjoint\<close>
 
 (* TODO notation should be part of the bundle *)
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100) 
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
   is Adj by (fact Adj_bounded_clinear)
 
 (* TODO Can use notation \<cdot>\<^sub>v here *)
@@ -634,27 +634,11 @@ where \<open>timesOp f g = bounded_of_rbounded (rtimesOp (rbounded_of_bounded f)
 
 
 lift_definition applyOpSpace::\<open>('a::chilbert_space,'b::chilbert_space) bounded
-\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
+\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def is_subspace.subspace
   by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
 
-(* TODO move to Real_Bounded_Operators *)
-
-bundle bounded_notation begin
-notation timesOp (infixl "\<cdot>\<^sub>o" 69)
-notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70) (* TODO: Why does Rep_bounded need a notation?  *)
-notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
-end
-
-bundle no_bounded_notation begin
-no_notation timesOp (infixl "\<cdot>\<^sub>o" 69)
-no_notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
-no_notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
-end
-
-
-unbundle bounded_notation
 
 (*
 Not needed since timesOp now defined via lift_definition
@@ -2446,6 +2430,24 @@ lemma leq_INF[simp]:
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
     by (simp add: le_Inf_iff)
 
-unbundle no_bounded_notation 
+
+
+section \<open>On-demand syntax\<close>
+
+bundle bounded_notation begin
+notation timesOp (infixl "\<cdot>\<^sub>o" 69)
+notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70) (* TODO: Why does Rep_bounded need a notation?  *)
+notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
+notation adjoint ("_*" [99] 100)
+end
+
+bundle no_bounded_notation begin
+no_notation timesOp (infixl "\<cdot>\<^sub>o" 69)
+no_notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
+no_notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
+no_notation adjoint ("_*" [99] 100)
+end
+
+unbundle no_bounded_notation
 
 end
