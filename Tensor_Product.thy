@@ -31,7 +31,8 @@ consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
 lemma idOp_tensor_idOp[simp]: "idOp\<otimes>idOp = idOp"
   by (cheat TODO2)
 
-consts "comm_op" :: "(('a*'b) ell2, ('b*'a) ell2) bounded"
+definition "comm_op" :: "(('a*'b) ell2, ('b*'a) ell2) bounded" where
+  "comm_op = classical_operator (\<lambda>(a,b). Some (b,a))"
 
 lemma adj_comm_op[simp]: "adjoint comm_op = comm_op"
   by (cheat TODO2)
@@ -43,16 +44,15 @@ lemma
 
 lemma comm_op_times_comm_op[simp]: "comm_op  \<cdot>\<^sub>o comm_op = idOp"
 proof -
-  find_theorems "idOp \<otimes> idOp"
   have "comm_op  \<cdot>\<^sub>o (idOp \<otimes> idOp)  \<cdot>\<^sub>o comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
   then show ?thesis by simp
 qed
 
 lemma unitary_comm_op[simp]: "unitary comm_op"
-  unfolding unitary_def sorry
+  unfolding unitary_def by (cheat TODO)
 
-(* The natural isomorphism between (a*(b*c)) ell2 and ((a*b)*c) ell2 given by ket (x,(y,z)) \<rightarrow> ket ((x,y),z) *)
-consts "assoc_op" :: "(('a*('b*'c)) ell2, (('a*'b)*'c) ell2) bounded"
+definition "assoc_op" :: "(('a*('b*'c)) ell2, (('a*'b)*'c) ell2) bounded" where
+  "assoc_op = classical_operator (\<lambda>(a,(b,c)). Some ((a,b),c))"
 
 lemma unitary_assoc_op[simp]: "unitary assoc_op"
   by (cheat TODO5)
@@ -93,7 +93,7 @@ consts remove_qvar_unit_op :: "(('a*unit) ell2,'a ell2) bounded"
 
 lemma addState_times_scalar[simp]: "addState (a *\<^sub>C \<psi>) = a *\<^sub>C addState \<psi>"
   for a::complex and \<psi>::"'a ell2"
-  sorry
+  by (cheat TODO)
 
 lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjoint V)"
   for U :: "('a,'b) l2bounded" and V :: "('c,'d) l2bounded"
@@ -102,7 +102,7 @@ lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjo
 lemma tensor_unitary[simp]: 
   assumes "unitary U" and "unitary V"
   shows "unitary (U\<otimes>V)"
-  sorry
+  by (cheat TODO)
 
 
 unbundle no_bounded_notation

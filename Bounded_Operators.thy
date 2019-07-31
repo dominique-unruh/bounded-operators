@@ -302,12 +302,12 @@ lift_definition zero_bounded::"('a,'b) bounded" is "\<lambda>_. 0" by simp
 lemma rbounded_of_bounded_zero:
   \<open>rbounded_of_bounded 0 = 0\<close>
   (* by (simp add: Bounded_Operators.zero_bounded_def rbounded_bounded zero_rbounded.rep_eq) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma bounded_of_rbounded_zero:
   \<open>bounded_of_rbounded 0 = 0\<close>
   (* by (simp add: zero_bounded_def) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 (* definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where "plus_bounded f g =  bounded_of_rbounded ( (rbounded_of_bounded f)+(rbounded_of_bounded g) )" *)
@@ -322,12 +322,12 @@ lemma bounded_of_rbounded_plus:
   shows \<open>bounded_of_rbounded (f + g) = bounded_of_rbounded f + bounded_of_rbounded g\<close>
   using assms
   (* by (simp add: plus_bounded_def rbounded_bounded)  *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma rbounded_of_bounded_plus:
   \<open>rbounded_of_bounded (f + g) = rbounded_of_bounded f + rbounded_of_bounded g\<close>
   (* by (simp add: plus_bounded_def plus_rbounded.rep_eq rbounded_bounded rbounded_of_bounded_prelim scaleC_add_right) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   where "uminus_bounded f =  bounded_of_rbounded (- (rbounded_of_bounded f))"
@@ -427,10 +427,10 @@ proof
       by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
     then have f3: "bounded_of_rbounded (rbounded_of_bounded a + (rbounded_of_bounded b + rbounded_of_bounded c)) = a + b + c"
       (* by (simp add: Bounded_Operators.plus_bounded_def bounded_rbounded ordered_field_class.sign_simps(1)) *)
-      sorry
+      by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
     have "bounded_of_rbounded (rbounded_of_bounded a) + bounded_of_rbounded (rbounded_of_bounded b + rbounded_of_bounded c) = a + (b + c)"
       (* by (simp add: Bounded_Operators.plus_bounded_def bounded_rbounded) *)
-      sorry
+      by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
     then show ?thesis
       using f3 f2 by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
   qed
@@ -439,7 +439,7 @@ proof
     for a :: "('a, 'b) bounded"
     unfolding plus_bounded_def
     (* by (simp add: bounded_rbounded rbounded_of_bounded_zero)  *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
   show \<open>a + b = b + a\<close>
     for a :: "('a, 'b) bounded"
@@ -449,13 +449,13 @@ proof
   show \<open>- a + a = 0\<close>
     for a :: "('a, 'b) bounded"
     (* by (simp add: Bounded_Operators.plus_bounded_def Bounded_Operators.rbounded_of_bounded_uminus zero_bounded_def) *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
   show \<open>a - b = a + - b\<close>
     for a :: "('a, 'b) bounded"
       and b :: "('a, 'b) bounded"
     (* using minus_bounded_def plus_bounded_def rbounded_of_bounded_uminus by auto *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
   show \<open>((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
     for r :: real
@@ -482,14 +482,14 @@ proof
       and x :: "('a, 'b) bounded"
       and y :: "('a, 'b) bounded"
     (* by (metis (mono_tags) plus_bounded_def rbounded_of_bounded_plus rbounded_of_bounded_scaleC scaleC_add_right scaleC_bounded_def) *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     for a :: complex
       and b :: complex
       and x :: "('a, 'b) bounded"
     (* by (metis (mono_tags) plus_bounded_def rbounded_of_bounded_scaleC scaleC_bounded_def scaleC_left.add) *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
     for a :: complex
@@ -522,7 +522,7 @@ proof
   proof -
     have f1: "bounded_of_rbounded (0::('a, 'b) rbounded) = 0"
       (* by (simp add: zero_bounded_def) *)
-      sorry
+      by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
     { assume "x \<noteq> 0"
       then have "x \<noteq> 0 \<and> bounded_of_rbounded 0 \<noteq> x"
         using f1 by meson
@@ -715,7 +715,7 @@ lemma plus_bounded_lift:
   \<open>Rep_bounded (f + g) = (\<lambda> x. (Rep_bounded f) x + (Rep_bounded g) x)\<close>
   unfolding plus_bounded_def
   (* by (metis (no_types, hide_lams) plus_bounded_def plus_rbounded.rep_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_plus)  *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma minus_bounded_lift:
   \<open>Rep_bounded (f - g) = (\<lambda> x. (Rep_bounded f) x - (Rep_bounded g) x)\<close>
@@ -807,17 +807,17 @@ then have f4: "\<langle>aa (bounded_of_rbounded (rbounded_of_bounded A + rbounde
     by (metis (no_types) Rep_bounded_inverse adjoint.rep_eq adjoint_I)
 have "Rep_bounded (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))) = Rep_bounded A (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>))) + Rep_bounded B (bb (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)) (Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))"
   (* by (metis plus_bounded_def plus_bounded_lift) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
   then have "Abs_bounded (Rep_bounded A\<^sup>\<dagger>) + Abs_bounded (Rep_bounded B\<^sup>\<dagger>) = bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B)*"
 using f5 f4 f2 f1 by (simp add: cinner_left_distrib cinner_right_distrib plus_bounded_lift)
   hence "Abs_bounded (Rep_bounded (bounded_of_rbounded (rbounded_of_bounded A + rbounded_of_bounded B))\<^sup>\<dagger>) = bounded_of_rbounded (rbounded_of_bounded (Abs_bounded (Rep_bounded A\<^sup>\<dagger>)) + rbounded_of_bounded (Abs_bounded (Rep_bounded B\<^sup>\<dagger>)))"
-    using f3 (* by (simp add: plus_bounded_def) *) sorry } note 1 = this
+    using f3 (* by (simp add: plus_bounded_def) *) by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>) } note 1 = this
 
   show ?thesis 
   unfolding plus_bounded_def adjoint_def 
   apply auto
   (* by (rule 1) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 qed
 
 lemma Adj_bounded_uminus[simp]:
@@ -911,7 +911,7 @@ lemma rtimesOp_assoc: "(A \<cdot>\<^sub>r B) \<cdot>\<^sub>r C = A \<cdot>\<^sub
 lemma timesOp_assoc: 
   shows "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>o C = A  \<cdot>\<^sub>o (B  \<cdot>\<^sub>o C)"
   (* by (metis (no_types, lifting) Rep_bounded_inverse fun.map_comp timesOp_Rep_bounded)  *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma rtimesOp_dist1:
   fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
@@ -987,7 +987,7 @@ lemma timesOp_dist1:
       and c :: "('a::complex_normed_vector, 'b) bounded"
 shows "(a + b) \<cdot>\<^sub>o c = (a \<cdot>\<^sub>o c) + (b \<cdot>\<^sub>o c)"
   using rtimesOp_dist1
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
   (* by (metis (no_types, lifting) bounded_of_rbounded_plus rbounded_of_bounded.rep_eq rbounded_of_bounded_plus rbounded_of_bounded_prelim rtimesOp.rep_eq timesOp_Rep_bounded timesOp_def)  *)
 
 lemma timesOp_dist2:  
@@ -996,13 +996,13 @@ lemma timesOp_dist2:
   shows "c \<cdot>\<^sub>o (a + b) = (c \<cdot>\<^sub>o a) + (c \<cdot>\<^sub>o b)"
   using rtimesOp_dist2
   (* by (metis (no_types, lifting) bounded_of_rbounded_plus rbounded_of_bounded.rep_eq rbounded_of_bounded_plus rbounded_of_bounded_prelim rtimesOp.rep_eq timesOp_Rep_bounded timesOp_def)  *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma times_adjoint[simp]:   
   shows "(A \<cdot>\<^sub>o B)* =  (B*) \<cdot>\<^sub>o (A*)"
 (*   using timesOp_Rep_bounded 
   by (smt adjoint_D adjoint_I comp_apply) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma applyOp_0[simp]:
   
@@ -1111,7 +1111,7 @@ proof-
          (Abs_linear_space
            (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
     (* using timesOp_Rep_bounded by metis *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
   hence \<open> Abs_linear_space
      (closure
        (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
@@ -1625,7 +1625,7 @@ proof-
   thus ?thesis
     unfolding timesOp_def
     (* by blast *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 qed
 
 lemma op_rscalar_op: 
@@ -1666,18 +1666,18 @@ lemma op_scalar_op[simp]:
   shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
   using op_rscalar_op
   (* by (metis (no_types, lifting) rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rscalar_op_op scalar_op_op timesOp_def) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma times_idOp1[simp]: 
 
 shows "U \<cdot>\<^sub>o idOp = U"
   (* by (metis Rep_bounded_inverse comp_id idOp.rep_eq timesOp_Rep_bounded) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma times_idOp2[simp]: 
   shows "idOp \<cdot>\<^sub>o U  = U"
   (* by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp_Rep_bounded) *)
-  sorry
+  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 
 lemma mult_INF1[simp]:
 
@@ -2203,7 +2203,7 @@ proof-
       also have \<open>\<dots>
           = (Rep_bounded ( U \<cdot>\<^sub>o (U*) )) x\<close>
         (* by (simp add: timesOp_Rep_bounded) *)
-        sorry
+        by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
       also have \<open>\<dots>
           = (Rep_bounded ( idOp )) x\<close>
         by (simp add: \<open>unitary U\<close>)
@@ -2349,7 +2349,7 @@ proof-
     by simp    
   hence \<open>Rep_bounded ((Proj M) \<cdot>\<^sub>o (Proj M)) = Rep_bounded (Proj M)\<close>
     (* by (simp add: timesOp_Rep_bounded)     *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
   thus ?thesis using Rep_bounded_inject
     by auto 
 qed
@@ -2385,7 +2385,7 @@ proof-
           proof-
             have \<open>Rep_bounded P \<circ> Rep_bounded P = Rep_bounded P\<close>
               (* by (metis \<open>P \<cdot>\<^sub>o P = P\<close> timesOp_Rep_bounded) *)
-              sorry
+              by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
             thus ?thesis
               by (metis comp_apply) 
           qed
@@ -2472,7 +2472,7 @@ proof-
         have \<open>(Rep_bounded P) \<circ> (Rep_bounded P) = (Rep_bounded P)\<close>
           using  \<open>P \<cdot>\<^sub>o P = P\<close>
           (* by (metis timesOp_Rep_bounded)           *)
-          sorry
+          by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
         thus ?thesis
           using comp_eq_dest_lhs by fastforce 
       qed
@@ -2666,7 +2666,7 @@ proof-
   thus ?thesis
     unfolding kernel_def zero_bounded_def top_linear_space_def
     (* by simp *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
@@ -2746,7 +2746,7 @@ lemma plus_top[simp]: "x + top = top" for x :: "_ linear_space"
 lemma ortho_ortho[simp]: "ortho (ortho S) = S"
   by (metis linear_space_ortho_ortho ortho_def uminus_linear_space_def)
 
-(* TODO: there seem to be two constants for ortho: ortho and uminus *)
+(* TODO: Remove constant ortho, subsumed by uminus *)
 
 (* TODO: I don't know if this was deleted or renamed *)
 definition "isProjector P \<longleftrightarrow> P \<cdot>\<^sub>o P = P \<and> P* = P"
@@ -2764,6 +2764,9 @@ lemma applyOp0[simp]: "Rep_bounded 0 \<psi> = 0"
 
 lemma apply_idOp[simp]: "Rep_bounded idOp \<psi> = \<psi>"
   apply transfer by simp
+
+
+
 
 unbundle no_bounded_notation 
 unbundle no_rbounded_notation

@@ -1802,12 +1802,12 @@ proof
     unfolding distinct_def canonical_basis_ell2_def 
     apply transfer
     apply (induction enum_class.enum)    
-    sorry
+    by (cheat ell2_basis_enum)
 
   show "is_onb (set (canonical_basis::'a ell2 list))"
-    sorry
+    by (cheat ell2_basis_enum)
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
-    sorry
+    by (cheat ell2_basis_enum)
 qed
 end
 
@@ -2064,7 +2064,7 @@ proof-
     by simp
   thus ?thesis
     (* by (metis Rep_bounded_inject timesOp_Rep_bounded)  *)
-    sorry
+    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
 qed
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
@@ -2419,7 +2419,7 @@ qed
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
       (classical_operator \<pi>) \<cdot>\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
-  sorry
+  by (cheat TODO)
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
@@ -2428,7 +2428,7 @@ lemma classical_operator_adjoint[simp]:
 
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
-  sorry
+  by (cheat TODO)
     (*
   apply (rule equal_basis)
   unfolding timesOp_assoc_linear_space
@@ -2440,7 +2440,7 @@ lemma classical_operator_mult[simp]:
 *)
 
 lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
-  sorry
+  by (cheat TODO)
     (*
   apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
 *)
@@ -2464,14 +2464,14 @@ qed
 lemma unitary_classical_operator[simp]:
   assumes "bij \<pi>"
   shows "unitary (classical_operator (Some o \<pi>))"
-  sorry
+  by (cheat TODO)
     (*
 proof (unfold unitary_def, rule conjI)
   have "isometry (classical_operator (Some o \<pi>))"
     by (simp add: assms bij_is_inj)
   hence "classical_operator (Some \<circ> \<pi>)* \<cdot>\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp"
     unfolding isometry_def by simp
-  thus ?thesis sorry
+  thus ?thesis by (cheat TODO)
 next
   have "inj \<pi>"
     by (simp add: assms bij_is_inj)
