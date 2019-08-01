@@ -2331,7 +2331,32 @@ section \<open>New/restored things\<close>
 (* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: (chilbert_space) complete_lattice begin
 instance 
-  by (cheat linear_space_complete_lattice)
+  proof
+  show "Inf A \<le> (x::'a linear_space)"
+    if "(x::'a linear_space) \<in> A"
+    for x :: "'a linear_space"
+      and A :: "'a linear_space set"
+    using that sorry
+  show "(z::'a linear_space) \<le> Inf A"
+    if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> z \<le> x"
+    for A :: "'a linear_space set"
+      and z :: "'a linear_space"
+    using that sorry
+  show "(x::'a linear_space) \<le> Sup A"
+    if "(x::'a linear_space) \<in> A"
+    for x :: "'a linear_space"
+      and A :: "'a linear_space set"
+    using that sorry
+  show "Sup A \<le> (z::'a linear_space)"
+    if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> x \<le> z"
+    for A :: "'a linear_space set"
+      and z :: "'a linear_space"
+    using that sorry
+  show "Inf {} = (top::'a linear_space)"
+    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
+  show "Sup {} = (bot::'a linear_space)"
+    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto    
+qed
 end
 
 (* TODO: move to Missing or similar *)
