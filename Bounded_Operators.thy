@@ -2351,16 +2351,9 @@ instance
     if "(x::'a linear_space) \<in> A"
     for x :: "'a linear_space"
       and A :: "'a linear_space set"
-  proof-
-    have \<open>A \<noteq> {}\<close>
-      using that by auto
-    have \<open>(x::'a linear_space) \<le> Sup A\<close>
-      using that 
-      unfolding less_eq_linear_space_def
-      apply auto
-      sorry
-    show ?thesis sorry
-  qed
+    using that 
+    apply transfer
+    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)
 
   show "Sup A \<le> (z::'a linear_space)"
     if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> x \<le> z"
@@ -2368,7 +2361,8 @@ instance
       and z :: "'a linear_space"
     using that 
     apply transfer
-    sorry
+    apply auto
+    by (metis OrthoClosedEq Sup_le_iff closure_mono is_subspace.subspace is_subspace_I is_subspace_span_A orthogonal_complement_twice subset_iff)
 
   show "Inf {} = (top::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
