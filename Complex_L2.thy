@@ -1929,6 +1929,7 @@ qed
 
 section \<open>CARD_1\<close>
 
+(* TODO: Remove this definition. CARD_1 already exists. Instead of the_single, we can use undefined *)
 class CARD_1 = 
   fixes the_single :: "'a" 
   assumes everything_the_single: "x=the_single" 

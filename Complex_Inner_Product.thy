@@ -3285,6 +3285,7 @@ end
 
 section \<open>Complex Span\<close>
 
+(* TODO: move to Complex_Vector_Spaces *)
 lift_definition span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule is_subspace.intro)
