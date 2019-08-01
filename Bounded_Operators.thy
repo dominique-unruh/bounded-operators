@@ -1366,18 +1366,144 @@ proof-
     by blast
 qed
 
-(*
-TODO: why was "chilbert_space" added here? Is it needed?
+
+(* TODO: why was "chilbert_space" added here? Is it needed? *)
+
+lemma applyOpSpace_span_transfer0:
+  fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  assumes \<open>bounded_clinear A\<close> and
+       \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
+     shows \<open>A t = 0\<close>
+proof(cases \<open>G = {}\<close>)
+  case True
+  hence \<open>(complex_vector.span G) = {0}\<close>
+    by simp
+  hence \<open>t = 0\<close>
+    using assms(3) by blast
+  moreover have \<open>A 0 = 0\<close>
+    by (metis True assms(1) assms(3) calculation complex_vector.span_empty empty_iff equal_span_0_n partial_span.simps(1))
+  ultimately show ?thesis
+    by simp 
+next
+case False
+  thus ?thesis
+    using assms(1) assms(2) assms(3) equal_span_0 by blast 
+qed
+
+
+lemma applyOpSpace_span_transfer:
+  fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
+       \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
+  shows \<open>A t = B t\<close>
+proof-
+  define F where \<open>F = (\<lambda> x. A x - B x)\<close>
+  hence \<open>bounded_clinear F\<close>
+    using  \<open>bounded_clinear A\<close>  \<open>bounded_clinear B\<close>  Complex_Vector_Spaces.bounded_clinear_sub
+    by auto
+  moreover have \<open>\<And>x. x \<in> G \<Longrightarrow> F x = 0\<close>
+    by (simp add: F_def assms(3))
+  ultimately have \<open>F t = 0\<close>
+    using \<open>t \<in> (complex_vector.span G)\<close>
+    using applyOpSpace_span_transfer0 by blast
+  thus ?thesis
+    using F_def by auto 
+qed
+
+lemma applyOpSpace_closure_span_transfer:
+  fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
+       \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (complex_vector.span G)\<close>
+  shows \<open>A t = B t\<close>
+proof-
+  define F where \<open>F x = A x - B x\<close> for x
+  hence \<open>F = (\<lambda>x. A x - B x)\<close>
+    by blast
+  hence \<open>bounded_clinear F\<close>
+    using \<open>bounded_clinear A\<close>  \<open>bounded_clinear B\<close> Complex_Vector_Spaces.bounded_clinear_sub
+    by blast
+  hence \<open>isCont F x\<close>
+    for x
+    by (simp add: bounded_linear_continuous)    
+  hence \<open>continuous_on UNIV F\<close>
+    by (simp add: continuous_at_imp_continuous_on)    
+  hence \<open>continuous_on (closure (complex_vector.span G)) F\<close>
+    using continuous_on_subset by blast    
+  moreover have \<open>\<And> s. s \<in> (complex_vector.span G) \<Longrightarrow> F s = 0\<close>
+    using \<open>F \<equiv> \<lambda>x. A x - B x\<close> applyOpSpace_span_transfer assms(1) assms(2) assms(3) by auto    
+  ultimately have \<open>F t = 0\<close>
+    using \<open>t \<in> closure (complex_vector.span G)\<close> 
+      by (rule Abstract_Topology_2.continuous_constant_on_closure)
+    thus ?thesis
+      using F_def by auto 
+qed
+
+lemma applyOpSpace_span:
+  fixes A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (span G)\<close>
+  shows "A \<cdot>\<^sub>v t = B \<cdot>\<^sub>v t"
+  using assms
+  apply transfer
+  using applyOpSpace_closure_span_transfer by blast
+
+lemma applyOpSpace_less_eq:
+  fixes S :: "'a::chilbert_space linear_space" 
+    and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "span G \<ge> S"
+  shows "A \<cdot>\<^sub>s S \<le> B \<cdot>\<^sub>s S"
+proof-
+  have \<open>t \<in> ((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<Longrightarrow> t \<in> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+    for t
+  proof-
+    assume \<open>t \<in> ((\<cdot>\<^sub>v) A ` Rep_linear_space S)\<close>
+    hence \<open>\<exists> x\<in>Rep_linear_space S. t = A \<cdot>\<^sub>v x\<close>
+      by blast
+    then obtain x where \<open>x\<in>Rep_linear_space S\<close> and \<open>t = A \<cdot>\<^sub>v x\<close>
+      by blast
+    have \<open>x \<in> Rep_linear_space (span G)\<close>
+      using  \<open>x\<in>Rep_linear_space S\<close> assms(2) less_eq_linear_space.rep_eq by blast
+    hence \<open>A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x\<close>
+      using applyOpSpace_span assms(1) by blast
+    thus ?thesis
+      by (simp add: \<open>t = A \<cdot>\<^sub>v x\<close> \<open>x \<in> Rep_linear_space S\<close>)      
+  qed
+  hence \<open>((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+    by blast
+  have \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S) \<Longrightarrow> t \<in> Rep_linear_space (B \<cdot>\<^sub>s S)\<close>
+    for t
+  proof-
+    assume \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S)\<close>
+    hence  \<open>t \<in> Rep_linear_space
+          (Abs_linear_space (closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S)))\<close>
+      unfolding applyOpSpace_def
+      by  auto
+    hence  \<open>t \<in> closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S)\<close>
+      using Abs_linear_space_inverse \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S)\<close> applyOpSpace.rep_eq by blast
+    moreover have \<open>closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq>  closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+      using  \<open>((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+        by (simp add: closure_mono) 
+    ultimately have  \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+      by blast      
+    hence  \<open>t \<in> Rep_linear_space
+          (Abs_linear_space (closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)))\<close>
+      by (metis Rep_linear_space_inverse applyOpSpace.rep_eq)      
+    thus ?thesis
+      by (simp add: \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close> applyOpSpace.rep_eq) 
+  qed
+  hence \<open>Rep_linear_space (A \<cdot>\<^sub>s S) \<subseteq> Rep_linear_space (B \<cdot>\<^sub>s S)\<close>
+    by blast
+  thus ?thesis
+    by (simp add: less_eq_linear_space.rep_eq) 
+qed
 
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> Rep_bounded A x = Rep_bounded B x"
-  assumes "span G \<ge> S"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "span G \<ge> S"
   shows "A \<cdot>\<^sub>s S = B \<cdot>\<^sub>s S"
-  using assms
-  by (cheat applyOpSpace_eq)
-*)
+  using applyOpSpace_less_eq
+  by (metis assms(1) assms(2) order_class.order.antisym)
+
 
 (* NEW *)
 section \<open>Endomorphism algebra\<close>
