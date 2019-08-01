@@ -212,7 +212,6 @@ is \<open>\<lambda> f x. (inverse (onorm f)) *\<^sub>R (f x)\<close>
   apply transfer
   by (simp add: scalarR_bounded_clinear)
 
-
 lemma rbounded_of_bounded_sgn:
   \<open>rbounded_of_bounded (sgn f) =   (sgn (rbounded_of_bounded f))\<close>
   apply transfer
@@ -670,6 +669,11 @@ lemma timesOp_dist2:
   by (simp add: rtimesOp_dist2 rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_timesOp)
 
 
+lemma timesOp_minus:
+  \<open>A \<cdot>\<^sub>o (B - C) = A \<cdot>\<^sub>o B - A \<cdot>\<^sub>o C\<close>
+  apply transfer
+  using additive.diff bounded_clinear_def clinear.axioms(1) by fastforce
+
 lemma times_adjoint[simp]:
   fixes B::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
     and A::\<open>('b,'c::chilbert_space) bounded\<close> 
@@ -793,8 +797,7 @@ proof-
         Rep_linear_space
          (Abs_linear_space
            (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
-    (* using timesOp_Rep_bounded by metis *)
-    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+    by (simp add: timesOp.rep_eq)    
   hence \<open> Abs_linear_space
      (closure
        (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
@@ -1260,9 +1263,7 @@ proof-
      (rtimesOp (rbounded_of_bounded A) (rbounded_of_bounded B))\<close>
     by (simp add: bounded_of_rbounded_scaleC rbounded_of_bounded_prelim rtimesOp_scaleC)  
   thus ?thesis
-    unfolding timesOp_def
-    (* by blast *)
-    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+    by (metis bounded_rbounded rbounded_of_bounded_timesOp)   
 qed
 
 
@@ -1271,18 +1272,15 @@ lemma op_scalar_op[simp]:
     and B::"('a::complex_normed_vector, 'b) bounded"
   shows \<open>A \<cdot>\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A \<cdot>\<^sub>o B)\<close>
   using op_rscalar_op
-  (* by (metis (no_types, lifting) rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rscalar_op_op scalar_op_op timesOp_def) *)
-  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+  by (simp add: op_rscalar_op rbounded_of_bounded_inj rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rbounded_of_bounded_timesOp)
 
 lemma times_idOp1[simp]: 
   shows "U \<cdot>\<^sub>o idOp = U"
-  (* by (metis Rep_bounded_inverse comp_id idOp.rep_eq timesOp_Rep_bounded) *)
-  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+  by (metis Rep_bounded_inject comp_id idOp.rep_eq timesOp.rep_eq)
 
 lemma times_idOp2[simp]: 
   shows "idOp \<cdot>\<^sub>o U  = U"
-  (* by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp_Rep_bounded) *)
-  by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+  by (metis Rep_bounded_inject idOp.rep_eq id_comp timesOp.rep_eq)
 
 lemma mult_INF1[simp]:
   fixes U :: "('b::complex_normed_vector,'c::cbanach) bounded"
@@ -1807,8 +1805,7 @@ proof-
         by simp        
       also have \<open>\<dots>
           = (Rep_bounded ( U \<cdot>\<^sub>o (U*) )) x\<close>
-        (* by (simp add: timesOp_Rep_bounded) *)
-        by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+        by (simp add: timesOp.rep_eq)
       also have \<open>\<dots>
           = (Rep_bounded ( idOp )) x\<close>
         by (simp add: \<open>unitary U\<close>)
@@ -1953,8 +1950,7 @@ proof-
   ultimately have \<open>(Rep_bounded (Proj M)) \<circ> (Rep_bounded (Proj M)) = Rep_bounded (Proj M)\<close>
     by simp    
   hence \<open>Rep_bounded ((Proj M) \<cdot>\<^sub>o (Proj M)) = Rep_bounded (Proj M)\<close>
-    (* by (simp add: timesOp_Rep_bounded)     *)
-    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+    by (simp add: timesOp.rep_eq)
   thus ?thesis using Rep_bounded_inject
     by auto 
 qed
@@ -1989,8 +1985,7 @@ proof-
           also have \<open>\<dots> = x - (Rep_bounded P t)\<close>
           proof-
             have \<open>Rep_bounded P \<circ> Rep_bounded P = Rep_bounded P\<close>
-              (* by (metis \<open>P \<cdot>\<^sub>o P = P\<close> timesOp_Rep_bounded) *)
-              by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+              by (metis \<open>P \<cdot>\<^sub>o P = P\<close> timesOp.rep_eq)
             thus ?thesis
               by (metis comp_apply) 
           qed
@@ -2076,8 +2071,7 @@ proof-
       proof-
         have \<open>(Rep_bounded P) \<circ> (Rep_bounded P) = (Rep_bounded P)\<close>
           using  \<open>P \<cdot>\<^sub>o P = P\<close>
-          (* by (metis timesOp_Rep_bounded)           *)
-          by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+          by (metis timesOp.rep_eq)
         thus ?thesis
           using comp_eq_dest_lhs by fastforce 
       qed
@@ -2271,8 +2265,7 @@ proof-
     by (simp add: \<open>ker_op (Rep_bounded (bounded_of_rbounded 0)) = UNIV\<close>)
   thus ?thesis
     unfolding kernel_def zero_bounded_def top_linear_space_def
-    (* by simp *)
-    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+    by (simp add: Abs_bounded_inverse \<open>ker_op (\<lambda>_. 0) = UNIV\<close>)   
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
@@ -2408,16 +2401,40 @@ lemma plus_top[simp]: "x + top = top" for x :: "_ linear_space"
 lemma ortho_ortho[simp]: "ortho (ortho S) = S"
   by (metis linear_space_ortho_ortho ortho_def uminus_linear_space_def)
 
-(* TODO: I don't know if this was deleted or renamed *)
 definition "isProjector P \<longleftrightarrow> P \<cdot>\<^sub>o P = P \<and> P* = P"
 
+lemma isProjector_D1: \<open>isProjector P \<Longrightarrow> P \<cdot>\<^sub>o P = P\<close>
+  unfolding isProjector_def by blast 
+
+lemma isProjector_D2: \<open>isProjector P \<Longrightarrow> P* = P\<close>
+  unfolding isProjector_def by blast
+
+lemma isProjector_I: \<open>P \<cdot>\<^sub>o P = P \<Longrightarrow> P* = P \<Longrightarrow> isProjector P\<close>
+  unfolding isProjector_def by blast 
+
+
 lemma isProjector0[simp]: "isProjector 0"
-  unfolding isProjector_def 
-  by (cheat isProjector0)
+  unfolding isProjector_def
+  by (metis Adj_bounded_zero endo_of_bounded_inv mult_zero_left times_endo_def zero_endo_def) 
+
 
 lemma isProjectoridMinus[simp]: "isProjector P \<Longrightarrow> isProjector (idOp-P)"
-  unfolding isProjector_def apply auto
-  by (cheat isProjectoridMinus)
+  proof (rule isProjector_I)
+  show "(idOp - P) \<cdot>\<^sub>o (idOp - P) = idOp - P"
+    if "isProjector P"
+  proof -
+    have f1: "P \<cdot>\<^sub>o P = P \<and> P* = P"
+      by (metis isProjector_def that)
+    then have "(idOp - P) \<cdot>\<^sub>o (idOp - P) = ((idOp - P) \<cdot>\<^sub>o (idOp - P))*"
+      by auto
+    then show ?thesis
+      using f1 by (simp add: timesOp_minus)
+  qed    
+  show "(idOp - P)* = idOp - P"
+    if "isProjector P"
+    using that
+    by (simp add: isProjector_def) 
+qed
 
 lemma applyOp0[simp]: "Rep_bounded 0 \<psi> = 0"
   apply transfer by simp
