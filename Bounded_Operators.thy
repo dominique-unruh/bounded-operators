@@ -18,6 +18,7 @@ unbundle rbounded_notation
 
 section \<open>Complex bounded operators\<close>
 
+(* TODO: Discuss: Renaming of Rep_bounded, notation Rep_bounded ( *\<^sub>v) *)
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   using bounded_clinear_zero by blast
@@ -1334,7 +1335,11 @@ U INF Vi.
 Of course, I don't know how difficult it is to show the existence of the pseudoinverse. An easy special case would be U=isometry, in which case W=U*.
 
  *)
-                             
+
+(* TODO: in this form, this doesn't work well as a simp-rule (there was an = before).
+   TODO: remove the simp
+   TODO: state using \<sqinter>/inf, not *
+*)
 lemma mult_inf_distrib[simp]:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   shows "U \<cdot>\<^sub>s (B * C) \<le> (U \<cdot>\<^sub>s B) *  (U \<cdot>\<^sub>s C)"
@@ -1367,13 +1372,14 @@ proof-
 qed
 
 
-(* TODO: why was "chilbert_space" added here? Is it needed? *)
-
+(* TODO: does not need chilbert_space *)
+(* TODO: why is there "transfer" in the name? *)
 lemma applyOpSpace_span_transfer0:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+(* TODO needs only clinear *)
   assumes \<open>bounded_clinear A\<close> and
-       \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
-     shows \<open>A t = 0\<close>
+    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
+  shows \<open>A t = 0\<close>
 proof(cases \<open>G = {}\<close>)
   case True
   hence \<open>(complex_vector.span G) = {0}\<close>
@@ -1438,6 +1444,8 @@ proof-
       using F_def by auto 
 qed
 
+(* TODO: I don't think this one is necessary. It's the same as applyOpSpace_closure_span_transfer,
+   except that the span is written differently *)
 lemma applyOpSpace_span:
   fixes A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (span G)\<close>
@@ -1446,6 +1454,7 @@ lemma applyOpSpace_span:
   apply transfer
   using applyOpSpace_closure_span_transfer by blast
 
+(* TODO: remove (it's implied directly by applyOpSpace_eq below) and include it inside the proof of applyOpSpace_eq instead *)
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
@@ -1510,6 +1519,7 @@ section \<open>Endomorphism algebra\<close>
 
 (* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
 (* TODO: with this type, actually a definition in terms of bounded might be useful because it's a wrapper around bounded *)
+(* TODO Discuss name *)
 typedef (overloaded) ('a::complex_normed_vector) endo 
 = \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
   using bounded_clinear_ident by blast
@@ -2617,6 +2627,24 @@ lemma leq_INF[simp]:
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
     by (simp add: le_Inf_iff)
 
+lemma times_applyOp: "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>v \<psi> = A \<cdot>\<^sub>v (B \<cdot>\<^sub>v \<psi>)"
+  apply transfer by simp
+
+(* TODO: this one should probably be called mult_inf_distribut, and the above one renamed *)
+lemma mult_inf_distrib'[simp]:
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
+  assumes "isometry U"
+  shows "U \<cdot>\<^sub>s (inf B C) = inf (U \<cdot>\<^sub>s B) (U \<cdot>\<^sub>s C)"
+  using mult_INF[where V="\<lambda>b. if b then B else C" and U=U]
+  unfolding INF_UNIV_bool_expand
+  using assms by auto
+
+lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) \<cdot>\<^sub>v \<psi> = c *\<^sub>C (A \<cdot>\<^sub>v \<psi>)"
+  apply transfer by simp
+
+lemma applyOp_scaleC2[simp]: "A \<cdot>\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A \<cdot>\<^sub>v \<psi>)"
+  apply transfer 
+  by (simp add: clinear.scaleC bounded_clinear.clinear)
 
 
 section \<open>On-demand syntax\<close>

@@ -2070,7 +2070,7 @@ qed
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
   for a::complex
-  by (metis (no_types, hide_lams) ell2_to_bounded_applyOp rbounded_of_bounded.rep_eq rbounded_of_bounded_prelim scalar_op_op scaleC_bounded_lift times_idOp2)
+  apply (transfer fixing: a) by auto
 
 section \<open>Classical operators\<close>
 
