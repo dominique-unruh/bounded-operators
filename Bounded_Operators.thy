@@ -2568,21 +2568,27 @@ instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
 
 (* TODO: move to Complex_Inner_Product *)
 instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
-  apply intro_classes by (cheat linear_space_complete_orthomodular_lattice)
+  apply intro_classes
+  apply (metis bot.extremum_uniqueI inf_sup_ord(1) inf_sup_ord(2) infxminusxbot xinfyz_linear_space) 
+  sorry
 
 (* TODO: Remove constant ortho, subsumed by uminus *)
 
 (* TODO: move to Complex_Vector_Spaces *)
 lemma ortho_bot[simp]: "ortho bot = top"
   by (metis comm_monoid_add_class.add_0 linear_space_zero_bot ortho_def supxminusxtop uminus_linear_space_def)
+
 lemma ortho_top[simp]: "ortho top = bot"
   by (metis Bounded_Operators.ortho_bot linear_space_ortho_ortho ortho_def uminus_linear_space_def)
 (* TODO: move to Complex_Vector_Spaces *)
+
 lemma top_plus[simp]: "top + x = top" for x :: "_ linear_space"
   by (simp add: top.extremum_uniqueI xsupxy_linear_space)
 (* TODO: move to Complex_Vector_Spaces *)
+
 lemma plus_top[simp]: "x + top = top" for x :: "_ linear_space"
   by (simp add: add.commute)
+
 lemma ortho_ortho[simp]: "ortho (ortho S) = S"
   by (metis linear_space_ortho_ortho ortho_def uminus_linear_space_def)
 
@@ -2627,12 +2633,43 @@ lemma applyOp0[simp]: "Rep_bounded 0 \<psi> = 0"
 lemma apply_idOp[simp]: "Rep_bounded idOp \<psi> = \<psi>"
   apply transfer by simp
 
+lemma mult_INF_less_eq_transfer:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
+    and U :: "'b \<Rightarrow>'c::chilbert_space"
+  assumes \<open>bounded_clinear U\<close> 
+       and \<open>\<forall>x. is_subspace (V x)\<close> 
+       and \<open>\<forall>i. x \<in> closure (U ` V i)\<close>
+       and \<open>(U\<^sup>\<dagger>) \<circ> U = id\<close>
+  shows \<open>x \<in> closure (U ` \<Inter> (range V))\<close>
+proof-
+  
+  show ?thesis sorry
+qed
+
 (* In this form, the lemma seems sufficient for all its applications in QRHL *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
-  assumes "isometry U"
+  assumes \<open>isometry U\<close>
   shows "U \<cdot>\<^sub>s (INF x. V x) = (INF x. U \<cdot>\<^sub>s V x)"
-  by (cheat mult_INF)
+proof-
+  have \<open>U \<cdot>\<^sub>s (INF x. V x) \<le> (INF x. U \<cdot>\<^sub>s V x)\<close>
+    by simp
+  moreover have \<open>(INF x. U \<cdot>\<^sub>s V x) \<le> U \<cdot>\<^sub>s (INF x. V x)\<close> 
+  proof-
+    from  \<open>isometry U\<close>
+    have  \<open>((Rep_bounded U)\<^sup>\<dagger>) \<circ> (Rep_bounded U) = id\<close>
+      unfolding isometry_def adjoint_def idOp_def timesOp_def
+      apply auto 
+      by (metis adjoint.rep_eq assms idOp.rep_eq isometry_def timesOp.rep_eq)      
+    thus ?thesis 
+    apply transfer
+    apply auto
+      using mult_INF_less_eq_transfer
+      by blast
+  qed
+  ultimately show ?thesis
+    using dual_order.antisym by blast 
+qed
 
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"

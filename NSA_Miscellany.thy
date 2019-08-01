@@ -12,6 +12,7 @@ theory NSA_Miscellany
   imports 
     "HOL-Analysis.Elementary_Metric_Spaces"
     "HOL-Analysis.Operator_Norm"
+    Ordered_Fields
     Unobtrusive_NSA
 begin
 
@@ -285,12 +286,100 @@ proof-
     by simp
 qed
 
-
-
 definition starfun3 :: "('a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'd) \<Rightarrow> 'a star \<Rightarrow> 'b star \<Rightarrow> 'c star \<Rightarrow> 'd star"  (\<open>*f3* _\<close> [80] 80)
   where "starfun3 f \<equiv> \<lambda>x y z. star_of f \<star> x \<star> y \<star> z"
 declare starfun3_def [StarDef.transfer_unfold]
 
+section \<open>Closure\<close>
+
+lemma nsclosure_I:
+\<open>r \<in> closure A \<Longrightarrow> \<exists> a \<in> *s* A. star_of r \<approx> a\<close>
+proof-
+  assume \<open>r \<in> closure A\<close>
+  hence \<open>\<exists> s::nat\<Rightarrow>_. (\<forall> n. s n \<in> A) \<and> s \<longlonglongrightarrow> r\<close>
+    by (simp add: closure_sequential)
+  then obtain s::\<open>nat\<Rightarrow>_\<close> where \<open>\<forall> n. s n \<in> A\<close> and \<open>s \<longlonglongrightarrow> r\<close>     
+    by blast
+  from  \<open>\<forall> n. s n \<in> A\<close>
+  have \<open>\<forall> n. (*f* s) n \<in> *s* A\<close>
+    by StarDef.transfer
+  obtain N where \<open>N \<in> HNatInfinite\<close>
+    using HNatInfinite_whn by blast
+  have \<open>(*f* s) N \<in> *s* A\<close>    
+    using \<open>\<forall> n. (*f* s) n \<in> *s* A\<close> by blast
+  moreover have \<open>(*f* s) N \<approx> star_of r\<close>    
+    using \<open>s \<longlonglongrightarrow> r\<close>
+    by (simp add: LIMSEQ_NSLIMSEQ NSLIMSEQ_D \<open>N \<in> HNatInfinite\<close>)   
+  ultimately show ?thesis
+    using approx_reorient by blast 
+qed
+
+lemma nsclosure_D:
+\<open>\<exists> a \<in> *s* A. star_of r \<approx> a \<Longrightarrow> r \<in> closure A\<close>
+proof-
+  assume \<open>\<exists> a \<in> *s* A. star_of r \<approx> a\<close>
+  hence \<open>\<exists> a \<in> *s* A. hnorm (star_of r - a) \<in> Infinitesimal\<close>
+    using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
+  hence \<open>\<exists> a \<in> *s* A. \<forall> e\<in>Reals. e > 0 \<longrightarrow> hnorm (star_of r - a) <  e\<close>
+    using Infinitesimal_less_SReal2 by blast
+  hence \<open>\<forall> e\<in>Reals. e > 0 \<longrightarrow> (\<exists> a \<in> *s* A. hnorm (star_of r - a) <  e)\<close>
+    by blast
+  hence \<open>hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n ) > 0
+   \<longrightarrow> (\<exists> a \<in> *s* A. hnorm (star_of r - a)
+           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n ) )\<close>
+    for n::nat    
+    by auto
+  hence \<open>\<exists> a \<in> *s* A. hnorm (star_of r - a)
+           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
+    for n::nat
+    by (meson InfinitesimalD2 \<open>\<exists>a\<in>*s* A. star_of r \<approx> a\<close> bex_Infinitesimal_iff nice_ordered_field_class.inverse_positive_iff_positive of_nat_0_less_iff zero_less_Suc)    
+   hence \<open>\<exists> a \<in>  A. norm (r - a)
+           <  ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
+    for n::nat
+   proof-
+     have \<open>\<exists> a \<in> *s* A. hnorm (star_of r - a)
+           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
+       using \<open>\<And>n. \<exists>a\<in>*s* A. hnorm (star_of r - a) < hypreal_of_real (inverse (real (Suc n)))\<close> by auto
+     thus ?thesis
+       by StarDef.transfer
+   qed
+   hence \<open>\<forall> n. \<exists> a \<in>  A. norm (r - a)
+           <  ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
+     by blast
+   hence \<open>\<exists> s. \<forall> n. s n \<in> A \<and> norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close>
+     by metis
+   then obtain s where \<open>\<forall> n. s n \<in> A\<close> 
+     and \<open>\<forall> n. norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close> 
+     by blast
+   from \<open>\<forall> n. norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close>
+   have \<open>\<forall> n. hnorm (star_of r - (*f* s) n)  <  (*f* (\<lambda>n. inverse (real (Suc n)))) n\<close>
+     by StarDef.transfer
+   have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* s) N \<approx> star_of r\<close>
+     for N
+   proof-
+     assume  \<open>N \<in> HNatInfinite\<close>
+     have \<open>hnorm (star_of r - (*f* s) N)  <  (*f* (\<lambda>n. inverse (real (Suc n)))) N\<close>
+       using \<open>\<forall> n. hnorm (star_of r - (*f* s) n)  <  (*f* (\<lambda>n. inverse (real (Suc n)))) n\<close>
+         \<open>N \<in> HNatInfinite\<close>
+       by blast
+     moreover have \<open> (*f* (\<lambda>n. inverse (real (Suc n)))) N \<in> Infinitesimal\<close>
+       using  \<open>N \<in> HNatInfinite\<close>
+       by (metis (full_types) hSuc_def inv_hSuc_Infinite_Infinitesimal of_hypnat_def starfun_inverse2 starfun_o2)
+     ultimately have \<open>hnorm (star_of r - (*f* s) N) \<in> Infinitesimal\<close>
+       using Infinitesimal_hnorm_iff hnorm_less_Infinitesimal by blast
+     thus \<open>(*f* s) N \<approx> star_of r\<close>
+       by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff)
+   qed
+   hence \<open>s \<longlonglongrightarrow> r\<close>
+     using NSLIMSEQ_I NSLIMSEQ_LIMSEQ by metis     
+   thus ?thesis
+     using \<open>\<forall> n. s n \<in> A\<close> closure_sequential by blast     
+qed
+
+text \<open>Theorem 10.1.1 (3) of [goldblatt2012lectures]\<close>
+lemma nsclosure_iff:
+\<open>r \<in> closure A \<longleftrightarrow> (\<exists> a \<in> *s* A. star_of r \<approx> a)\<close>
+  using nsclosure_D nsclosure_I by blast
 
 
 end
