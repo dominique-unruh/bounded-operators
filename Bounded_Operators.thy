@@ -850,7 +850,8 @@ proof-
     unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
 
-
+(* TODO: remove chilbert_space *)
+(* TODO: remove (equal_span can be proven more elegantly using induction over the span) *)
 lemma equal_span_0_n:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
   shows \<open>\<forall> x::'a.
@@ -899,12 +900,15 @@ next
   thus ?case by blast
 qed
 
+(* TODO: remove chilbert_space *)
+(* TODO: clinear f is sufficient *)
+(* TODO: much simpler proof using rule complex_vector.span_induct *)
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
     and S::\<open>'a set\<close> and x::'a
-  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
+(* TODO: clinear f sufficient *) 
+  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>f x = 0\<close>
-  thm complex_vector.span_induct
 proof -
   have \<open>x \<in> closure (complex_vector.span S)\<close>
     using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
@@ -935,9 +939,10 @@ proof -
     using LIMSEQ_unique by blast
 qed
 
+(* TODO: remove chilbert_space *)
 lemma equal_generator_0:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = 0\<close> and  \<open>S \<noteq> {}\<close>
+  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> A \<cdot>\<^sub>v x = 0\<close> and  \<open>S \<noteq> {}\<close>
   shows  \<open>A = 0\<close>
 proof-
   have \<open>Rep_bounded A = Rep_bounded (0::('a,'b) bounded)\<close>
@@ -1374,12 +1379,14 @@ qed
 
 (* TODO: does not need chilbert_space *)
 (* TODO: why is there "transfer" in the name? *)
+(* TODO: remove (this is the same as equal_span_0) and simply remove the "S\<noteq>{}" assumption from equal_span_0 *)
 lemma applyOpSpace_span_transfer0:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
 (* TODO needs only clinear *)
   assumes \<open>bounded_clinear A\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
   shows \<open>A t = 0\<close>
+  thm equal_span_0
 proof(cases \<open>G = {}\<close>)
   case True
   hence \<open>(complex_vector.span G) = {0}\<close>
@@ -1396,9 +1403,11 @@ case False
     using assms(1) assms(2) assms(3) equal_span_0 by blast 
 qed
 
-
+(* TODO: why is there "transfer" in the name? *)
+(* TODO: Use a name analogous to equal_span... *)
 lemma applyOpSpace_span_transfer:
   fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+(* TODO: clinear is sufficient *)
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
        \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
@@ -1416,6 +1425,7 @@ proof-
     using F_def by auto 
 qed
 
+(* TODO: Remove chilbert_space *)
 lemma applyOpSpace_closure_span_transfer:
   fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
@@ -1446,6 +1456,7 @@ qed
 
 (* TODO: I don't think this one is necessary. It's the same as applyOpSpace_closure_span_transfer,
    except that the span is written differently *)
+(* TODO: Remove chilbert_space *)
 lemma applyOpSpace_span:
   fixes A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (span G)\<close>
@@ -1455,6 +1466,7 @@ lemma applyOpSpace_span:
   using applyOpSpace_closure_span_transfer by blast
 
 (* TODO: remove (it's implied directly by applyOpSpace_eq below) and include it inside the proof of applyOpSpace_eq instead *)
+(* TODO: Remove chilbert_space *)
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
