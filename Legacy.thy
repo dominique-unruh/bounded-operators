@@ -11,6 +11,8 @@ begin
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
 abbreviation "applyOp == Rep_bounded"
 
+unbundle bounded_notation
+
 consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 
 adhoc_overloading
