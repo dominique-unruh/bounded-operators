@@ -764,7 +764,6 @@ proof
 qed
 
 lemma timesOp_assoc_linear_space: 
- 
 shows  \<open>(A \<cdot>\<^sub>o B) \<cdot>\<^sub>s \<psi> =  A \<cdot>\<^sub>s (B \<cdot>\<^sub>s \<psi>)\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
@@ -2336,22 +2335,41 @@ instance
     if "(x::'a linear_space) \<in> A"
     for x :: "'a linear_space"
       and A :: "'a linear_space set"
-    using that sorry
+    using that 
+    apply transfer
+    by auto
+
   show "(z::'a linear_space) \<le> Inf A"
     if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> z \<le> x"
     for A :: "'a linear_space set"
       and z :: "'a linear_space"
-    using that sorry
+    using that 
+    apply transfer
+    by auto
+
   show "(x::'a linear_space) \<le> Sup A"
     if "(x::'a linear_space) \<in> A"
     for x :: "'a linear_space"
       and A :: "'a linear_space set"
-    using that sorry
+  proof-
+    have \<open>A \<noteq> {}\<close>
+      using that by auto
+    have \<open>(x::'a linear_space) \<le> Sup A\<close>
+      using that 
+      unfolding less_eq_linear_space_def
+      apply auto
+      sorry
+    show ?thesis sorry
+  qed
+
   show "Sup A \<le> (z::'a linear_space)"
     if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> x \<le> z"
     for A :: "'a linear_space set"
       and z :: "'a linear_space"
-    using that sorry
+    using that 
+    apply transfer
+    sorry
+
   show "Inf {} = (top::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
   show "Sup {} = (bot::'a linear_space)"

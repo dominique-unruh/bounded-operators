@@ -2857,31 +2857,31 @@ begin
 lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
   is \<open>\<lambda> S. \<Inter> S\<close>
 proof
-  show "(x::'a) + y \<in> \<Inter> set"
-    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
-      and "(x::'a) \<in> \<Inter> set"
-      and "(y::'a) \<in> \<Inter> set"
-    for set :: "'a set set"
+  show "(x::'a) + y \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> S"
+      and "(y::'a) \<in> \<Inter> S"
+    for S :: "'a set set"
       and x :: 'a
       and y :: 'a
     using that
     by (simp add: is_linear_manifold.additive_closed is_subspace.subspace) 
-  show "c *\<^sub>C (x::'a) \<in> \<Inter> set"
-    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
-      and "(x::'a) \<in> \<Inter> set"
-    for set :: "'a set set"
+  show "c *\<^sub>C (x::'a) \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> S"
+    for S :: "'a set set"
       and x :: 'a
       and c :: complex
     using that
     by (simp add: is_linear_manifold.smult_closed is_subspace.subspace) 
-  show "(0::'a) \<in> \<Inter> set"
-    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
-    for set :: "'a set set"
+  show "(0::'a) \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
     using that
     by (simp add: is_linear_manifold.zero is_subspace.subspace) 
-  show "closed (\<Inter> set::'a set)"
-    if "\<And>x. (x::'a set) \<in> set \<Longrightarrow> is_subspace x"
-    for set :: "'a set set"
+  show "closed (\<Inter> S::'a set)"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
     using that
     by (simp add: is_subspace.closed) 
 qed
@@ -3245,8 +3245,40 @@ qed
 
 instantiation linear_space :: (complex_inner) "Sup"
 begin
-definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
-  where \<open>Sup_linear_space S = - Inf (- S) \<close>
+lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+  is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
+  proof
+  show "(x::'a) + y \<in> closure (complex_vector.span (\<Union> S))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> closure (complex_vector.span (\<Union> S))"
+      and "(y::'a) \<in> closure (complex_vector.span (\<Union> S))"
+    for S :: "'a set set"
+      and x :: 'a
+      and y :: 'a
+    using that
+    by (metis complex_vector.span_add complex_vector.span_scale complex_vector.span_zero is_linear_manifold_def is_subspace_cl) 
+  show "c *\<^sub>C (x::'a) \<in> closure (complex_vector.span (\<Union> S))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> closure (complex_vector.span (\<Union> S))"
+    for S :: "'a set set"
+      and x :: 'a
+      and c :: complex
+    using that
+    by (metis complex_vector.span_add_eq2 complex_vector.span_scale complex_vector.span_zero is_linear_manifold.smult_closed is_linear_manifold_def is_subspace_cl) 
+
+  show "(0::'a) \<in> closure (complex_vector.span (\<Union> S))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
+    using that
+    by (metis closure_insert complex_vector.span_zero insertI1 insert_absorb) 
+
+  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
+    using that
+    by simp 
+qed
+
 instance..
 end
 
