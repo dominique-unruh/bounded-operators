@@ -2919,7 +2919,7 @@ lemma linear_space_ortho_ortho:
   apply transfer
   by (simp add: orthogonal_complement_twice)
 
-
+(* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
