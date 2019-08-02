@@ -1450,18 +1450,24 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma SubspaceConvex:
-  \<open>is_subspace M \<Longrightarrow> convex M\<close> 
+lemma linear_manifold_Convex:
+  \<open>is_linear_manifold M \<Longrightarrow> convex M\<close> 
 proof-
-  assume \<open>is_subspace M\<close>
+  assume \<open>is_linear_manifold M\<close>
   hence \<open>\<forall>x\<in>M. \<forall>y\<in> M. \<forall>u. \<forall>v. u *\<^sub>C x + v *\<^sub>C y \<in>  M\<close>
-    by (simp add: is_linear_manifold.additive_closed is_linear_manifold.smult_closed is_subspace.subspace)
+    by (simp add: is_linear_manifold.additive_closed is_linear_manifold.smult_closed)
   hence \<open>\<forall>x\<in>M. \<forall>y\<in>M. \<forall>u::real. \<forall>v::real. u *\<^sub>R x + v *\<^sub>R y \<in> M\<close>
     by (simp add: scaleR_scaleC)
   hence \<open>\<forall>x\<in>M. \<forall>y\<in>M. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in>M\<close>
     by blast
   thus ?thesis using convex_def by blast
 qed
+
+lemma SubspaceConvex:
+  \<open>is_subspace M \<Longrightarrow> convex M\<close> 
+  unfolding is_subspace_def
+  using linear_manifold_Convex
+  by blast
 
 corollary ExistenceUniquenessProj:
   fixes M :: \<open>('a::chilbert_space) set\<close> 

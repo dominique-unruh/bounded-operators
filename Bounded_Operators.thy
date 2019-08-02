@@ -2633,40 +2633,146 @@ lemma applyOp0[simp]: "Rep_bounded 0 \<psi> = 0"
 lemma apply_idOp[simp]: "Rep_bounded idOp \<psi> = \<psi>"
   apply transfer by simp
 
-lemma mult_INF_less_eq_transfer:
+(* NEW *)
+lemma rel_interior_sing_generalized:
+  fixes a :: "'n::chilbert_space"
+  shows "rel_interior {a} = {a}"
+  apply (auto simp: rel_interior_ball)
+  by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff)
+
+
+(* NEW *)
+(* Generalization of convex_closure_inter *)
+lemma convex_closure_inter_generalized:
+  assumes "\<forall>S\<in>I. convex (S :: 'n::chilbert_space set)"
+    and "\<Inter>{rel_interior S |S. S \<in> I} \<noteq> {}"
+  shows "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
+  sorry
+
+lemma is_linear_manifold_rel_interior:
+  fixes S::\<open>'a::chilbert_space set\<close>
+  assumes \<open>is_linear_manifold S\<close>
+  shows \<open>0 \<in> rel_interior S\<close>
+proof-
+  {  assume a1: "affine hull S \<subseteq> S"
+    have f2: "\<not> (1::real) \<le> 0"
+      by auto
+    have "\<forall>x0. ((0::real) < x0) = (\<not> x0 \<le> 0)"
+      by auto
+    hence "\<exists>r>0. ball 0 r \<inter> affine hull S \<subseteq> S"
+      using f2 a1 by (metis inf.coboundedI2)
+  } note 1 = this
+
+  have \<open>affine S\<close>
+  proof-
+    have \<open>x\<in>S \<Longrightarrow> y\<in>S \<Longrightarrow>  u + v = 1 \<Longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
+      for x y u v
+    proof-
+      assume \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
+      have \<open>(u::complex) *\<^sub>C x \<in> S\<close>
+        using \<open>is_linear_manifold S\<close>
+        unfolding is_linear_manifold_def
+        by (simp add: \<open>x \<in> S\<close>)
+      hence \<open>u *\<^sub>R x \<in> S\<close>
+        by (simp add: scaleR_scaleC)
+      have \<open>(v::complex) *\<^sub>C y \<in> S\<close>
+        using \<open>is_linear_manifold S\<close>
+        unfolding is_linear_manifold_def
+        by (simp add: \<open>y \<in> S\<close>)
+      hence \<open>v *\<^sub>R y \<in> S\<close>
+        by (simp add: scaleR_scaleC)
+      show \<open> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> 
+        using \<open>is_linear_manifold S\<close>
+        unfolding is_linear_manifold_def
+        by (simp add:  \<open>u *\<^sub>R x \<in> S\<close>  \<open>v *\<^sub>R y \<in> S\<close>)
+    qed
+    thus ?thesis 
+      unfolding affine_def by blast
+  qed
+  hence \<open>affine hull S \<subseteq> S\<close>
+    unfolding  hull_def by auto
+  thus ?thesis 
+    apply (auto simp: rel_interior_ball)
+     apply (simp add: assms is_linear_manifold.zero)
+    apply (rule 1)
+    by blast
+qed
+
+
+(* NEW *)
+lemma mult_INF_less_eq_transfer_bij:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
     and U :: "'b \<Rightarrow>'c::chilbert_space"
   assumes \<open>bounded_clinear U\<close> 
-       and \<open>\<forall>x. is_subspace (V x)\<close> 
-       and \<open>\<forall>i. x \<in> closure (U ` V i)\<close>
-       and \<open>(U\<^sup>\<dagger>) \<circ> U = id\<close>
-  shows \<open>x \<in> closure (U ` \<Inter> (range V))\<close>
+       and \<open>\<forall>i. is_subspace (V i)\<close>  
+       and \<open>bij U\<close>
+  shows \<open>\<Inter> (range (\<lambda> i. closure (U ` V i))) = closure (U ` \<Inter> (range V))\<close>
 proof-
-  
-  show ?thesis sorry
+  define I where \<open>I = range (\<lambda> i. U ` (V i))\<close>
+  have \<open>S\<in>I \<Longrightarrow> is_linear_manifold S\<close>
+    for S
+  proof-
+    assume \<open>S\<in>I\<close>
+    hence \<open>\<exists> i. S = U ` (V i)\<close>
+      unfolding I_def by auto
+    then obtain i where \<open>S = U ` (V i)\<close>
+      by blast
+    have \<open>is_subspace (V i)\<close>
+      by (simp add: assms(2))
+    thus \<open>is_linear_manifold S\<close>
+      using  \<open>S = U ` (V i)\<close> \<open>bounded_clinear U\<close>
+      by (simp add: bounded_clinear.clinear is_linear_manifold_image is_subspace.subspace)
+  qed
+  hence \<open>\<forall>S\<in>I. convex S\<close>
+    using linear_manifold_Convex by blast
+  moreover have \<open>\<Inter>{rel_interior S |S. S \<in> I} \<noteq> {}\<close>
+  proof-
+    have \<open>S \<in> I \<Longrightarrow> 0 \<in> rel_interior S\<close>
+      for S
+    proof-
+      assume \<open>S \<in> I\<close>
+      hence \<open>is_linear_manifold S\<close>
+        by (simp add: \<open>\<And>S. S \<in> I \<Longrightarrow> is_linear_manifold S\<close>)
+      thus ?thesis using is_linear_manifold_rel_interior
+        by (simp add: is_linear_manifold_rel_interior) 
+    qed
+    thus ?thesis by blast
+  qed
+  ultimately have "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
+    by (rule convex_closure_inter_generalized)
+  moreover have \<open>closure (\<Inter>I) = closure (U ` \<Inter> (range V))\<close>
+  proof-
+    have \<open>U ` \<Inter> (range V) = (\<Inter>i. U ` V i)\<close>
+      using \<open>bij U\<close>  Complete_Lattices.bij_image_INT
+      by metis      
+    hence \<open>(\<Inter>I) = (U ` \<Inter> (range V))\<close>
+      unfolding I_def
+      by auto
+    thus ?thesis
+      by simp 
+  qed
+  moreover have \<open>\<Inter>{closure S |S. S \<in> I} = \<Inter> (range (\<lambda> i. closure (U ` V i)))\<close>
+    unfolding I_def
+    by (simp add: Setcompr_eq_image)
+  ultimately show ?thesis by simp
 qed
 
-(* In this form, the lemma seems sufficient for all its applications in QRHL *)
+lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> 
+is bij.
+
+(* NEW *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
-  assumes \<open>isometry U\<close>
+  assumes \<open>BIJ U\<close>
   shows "U \<cdot>\<^sub>s (INF x. V x) = (INF x. U \<cdot>\<^sub>s V x)"
 proof-
   have \<open>U \<cdot>\<^sub>s (INF x. V x) \<le> (INF x. U \<cdot>\<^sub>s V x)\<close>
     by simp
   moreover have \<open>(INF x. U \<cdot>\<^sub>s V x) \<le> U \<cdot>\<^sub>s (INF x. V x)\<close> 
-  proof-
-    from  \<open>isometry U\<close>
-    have  \<open>((Rep_bounded U)\<^sup>\<dagger>) \<circ> (Rep_bounded U) = id\<close>
-      unfolding isometry_def adjoint_def idOp_def timesOp_def
-      apply auto 
-      by (metis adjoint.rep_eq assms idOp.rep_eq isometry_def timesOp.rep_eq)      
-    thus ?thesis 
+    using assms
     apply transfer
     apply auto
-      using mult_INF_less_eq_transfer
-      by blast
-  qed
+    by (metis INT_I mult_INF_less_eq_transfer_bij)   
   ultimately show ?thesis
     using dual_order.antisym by blast 
 qed
