@@ -18,10 +18,13 @@ unbundle rbounded_notation
 
 section \<open>Complex bounded operators\<close>
 
-(* TODO: Discuss: Renaming of Rep_bounded, notation Rep_bounded ( *\<^sub>v) *)
+(* TODO: Rename Rep_bounded \<rightarrow> times_bounded_vec *)
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
+  morphisms Rep_bounded Abs_bounded
   using bounded_clinear_zero by blast
+
+(* TODO: Replace \<cdot>\<^sub>v by *\<^sub>v    *)
 notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
 
 setup_lifting type_definition_bounded
@@ -629,6 +632,7 @@ lemma Adj_bounded_zero[simp]:
 
 section \<open>Composition\<close>
 
+(* TODO: Replace \<cdot>\<^sub>o \<rightarrow> *\<^sub>o    *)
 lift_definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded" (infixl "\<cdot>\<^sub>o" 69)
@@ -636,6 +640,7 @@ lift_definition timesOp::
   unfolding o_def 
   by (rule bounded_clinear_compose, simp_all)
 
+(* TODO: Replace \<cdot>\<^sub>s \<rightarrow> *\<^sub>s    *)
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
@@ -900,15 +905,19 @@ next
   thus ?case by blast
 qed
 
-(* TODO: remove chilbert_space *)
-(* TODO: clinear f is sufficient *)
+(* TODO: remove chilbert_space (instead: complex_vector) *)
 (* TODO: much simpler proof using rule complex_vector.span_induct *)
+(* TODO: move to Complex_Vector_Spaces *)
+(* TODO: After updating Complex_Vector_Spaces, possibly this theorem will already exist *)
 lemma equal_span_0:
   fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
     and S::\<open>'a set\<close> and x::'a
 (* TODO: clinear f sufficient *) 
-  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> and  \<open>S \<noteq> {}\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> 
+(* TODO: remove S\<noteq>{} *)
+    and \<open>S \<noteq> {}\<close>
   shows \<open>f x = 0\<close>
+  (* TODO: use proof (rule complex_vector.span_induct[where S=S]) *)
 proof -
   have \<open>x \<in> closure (complex_vector.span S)\<close>
     using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
@@ -1342,12 +1351,12 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
 
 (* TODO: in this form, this doesn't work well as a simp-rule (there was an = before).
-   TODO: remove the simp
+        (see mult_inf_distrib' at end of file)
    TODO: state using \<sqinter>/inf, not *
 *)
-lemma mult_inf_distrib[simp]:
+lemma mult_inf_distrib:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
-  shows "U \<cdot>\<^sub>s (B * C) \<le> (U \<cdot>\<^sub>s B) *  (U \<cdot>\<^sub>s C)"
+  shows "U \<cdot>\<^sub>s (B * C) \<le> (U \<cdot>\<^sub>s B) * (U \<cdot>\<^sub>s C)"
 proof-
   have \<open>bounded_clinear U \<Longrightarrow>
        is_subspace B \<Longrightarrow>
@@ -1377,9 +1386,7 @@ proof-
 qed
 
 
-(* TODO: does not need chilbert_space *)
-(* TODO: why is there "transfer" in the name? *)
-(* TODO: remove (this is the same as equal_span_0) and simply remove the "S\<noteq>{}" assumption from equal_span_0 *)
+(* TODO: remove (this is the same as equal_span_0) *)
 lemma applyOpSpace_span_transfer0:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
 (* TODO needs only clinear *)
@@ -1403,8 +1410,7 @@ case False
     using assms(1) assms(2) assms(3) equal_span_0 by blast 
 qed
 
-(* TODO: why is there "transfer" in the name? *)
-(* TODO: Use a name analogous to equal_span... *)
+(* TODO: Rename to equal_span *)
 lemma applyOpSpace_span_transfer:
   fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
 (* TODO: clinear is sufficient *)
@@ -1426,6 +1432,7 @@ proof-
 qed
 
 (* TODO: Remove chilbert_space *)
+(* TODO: Rename to equal_span-something *)
 lemma applyOpSpace_closure_span_transfer:
   fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
@@ -1454,8 +1461,6 @@ proof-
       using F_def by auto 
 qed
 
-(* TODO: I don't think this one is necessary. It's the same as applyOpSpace_closure_span_transfer,
-   except that the span is written differently *)
 (* TODO: Remove chilbert_space *)
 lemma applyOpSpace_span:
   fixes A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
@@ -1465,8 +1470,7 @@ lemma applyOpSpace_span:
   apply transfer
   using applyOpSpace_closure_span_transfer by blast
 
-(* TODO: remove (it's implied directly by applyOpSpace_eq below) and include it inside the proof of applyOpSpace_eq instead *)
-(* TODO: Remove chilbert_space *)
+(* TODO: Remove chilbert_space? *)
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
@@ -1517,6 +1521,7 @@ proof-
     by (simp add: less_eq_linear_space.rep_eq) 
 qed
 
+(* TODO: Remove chilbert_space? *)
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
@@ -1530,11 +1535,24 @@ lemma applyOpSpace_eq:
 section \<open>Endomorphism algebra\<close>
 
 (* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
-(* TODO: with this type, actually a definition in terms of bounded might be useful because it's a wrapper around bounded *)
-(* TODO Discuss name *)
+(* TODO Rename: endo \<rightarrow> Bounded *)
 typedef (overloaded) ('a::complex_normed_vector) endo 
-= \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
+  = \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
+  (* = \<open>UNIV::('a,'a) bounded set\<close> *)
   using bounded_clinear_ident by blast
+
+(* Example:
+setup_lifting type_definition_endo
+
+lift_definition times_endo :: "'a::complex_normed_vector endo \<Rightarrow> 'a endo \<Rightarrow> 'a endo"
+  is "timesOp".
+
+lemma
+  fixes a b :: "_ endo"
+  shows "times_endo a b = times_endo b a"
+  apply transfer
+  using [[show_sorts]]
+*)
 
 definition bounded_of_endo:: \<open>'a::complex_normed_vector endo \<Rightarrow> ('a, 'a) bounded\<close>  where 
 \<open>bounded_of_endo f = Abs_bounded (Rep_endo f)\<close>
@@ -2071,8 +2089,7 @@ proof-
   thus ?thesis by blast 
 qed
 
-lemma Proj_D1:
-\<open>(Proj M) = (Proj M)*\<close>
+lemma Proj_D1: \<open>(Proj M) = (Proj M)*\<close>
   apply transfer
   by (rule projection_D1)
 
@@ -2080,8 +2097,7 @@ lemma Proj_endo_D1[simp]:
 \<open>(\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<^sup>a\<^sup>d\<^sup>j\<close>
   by (metis Adj_endo_def Proj_D1 Proj_endo_def endo_of_bounded_inv)
 
-lemma Proj_D2[simp]:
-\<open>(Proj M) \<cdot>\<^sub>o (Proj M) = (Proj M)\<close>
+lemma Proj_D2[simp]: \<open>(Proj M) \<cdot>\<^sub>o (Proj M) = (Proj M)\<close>
 proof-
   have \<open>(Rep_bounded (Proj M)) = projection (Rep_linear_space M)\<close>
     apply transfer
@@ -2107,6 +2123,11 @@ lemma Proj_endo_D2[simp]:
   unfolding Proj_endo_def times_endo_def
   by (simp add: endo_of_bounded_inv)
 
+(* TODO: Define isProjector as 
+    isProjector P \<longleftrightarrow> \<exists> M. is_projection_on P M
+
+    then prove isProjector P \<longleftrightarrow> P \<cdot>\<^sub>o P = P \<and> P = P*
+*)
 
 lemma Proj_I:
 \<open>P \<cdot>\<^sub>o P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> Rep_linear_space M = range (Rep_bounded P)\<close>
@@ -2322,7 +2343,7 @@ proof-
          (Abs_linear_space (orthogonal_complement (Rep_linear_space C))))) \<cdot>\<^sub>s A \<le> B\<close>
     unfolding Proj_def ortho_def less_eq_linear_space_def
     by auto
-  hence \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<cdot>\<^sub>s A \<le> B\<close>
+  hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<cdot>\<^sub>s A \<le> B\<close>
     by (metis Proj_def \<open>Proj (ortho C) \<cdot>\<^sub>s A \<le> B\<close> map_fun_apply ortho.rep_eq)
   hence \<open>x \<in> Rep_linear_space
               (Abs_linear_space
@@ -2340,7 +2361,7 @@ proof-
                    Rep_linear_space A) \<Longrightarrow>
          x \<in> Rep_linear_space B\<close>
   for x
-    using \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<cdot>\<^sub>s A \<le> B\<close>
+    using proj_ortho_CAB
           applyOpSpace.rep_eq less_eq_linear_space.rep_eq by blast
   hence \<open>x \<in>  closure ( (projection (orthogonal_complement (Rep_linear_space C))) `
                    Rep_linear_space A) \<Longrightarrow>
@@ -2699,7 +2720,7 @@ proof-
 qed
 
 
-(* NEW *)
+(*
 lemma mult_INF_less_eq_transfer_bij:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
     and U :: "'b \<Rightarrow>'c::chilbert_space"
@@ -2759,13 +2780,14 @@ qed
 
 lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> 
 is bij.
+*)
 
-(* NEW *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
-  assumes \<open>BIJ U\<close>
+  assumes \<open>isometry U\<close>
   shows "U \<cdot>\<^sub>s (INF x. V x) = (INF x. U \<cdot>\<^sub>s V x)"
-proof-
+  by (cheat mult_INF)
+(* proof-
   have \<open>U \<cdot>\<^sub>s (INF x. V x) \<le> (INF x. U \<cdot>\<^sub>s V x)\<close>
     by simp
   moreover have \<open>(INF x. U \<cdot>\<^sub>s V x) \<le> U \<cdot>\<^sub>s (INF x. V x)\<close> 
@@ -2775,7 +2797,7 @@ proof-
     by (metis INT_I mult_INF_less_eq_transfer_bij)   
   ultimately show ?thesis
     using dual_order.antisym by blast 
-qed
+qed *)
 
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
@@ -2785,7 +2807,7 @@ lemma leq_INF[simp]:
 lemma times_applyOp: "(A \<cdot>\<^sub>o B) \<cdot>\<^sub>v \<psi> = A \<cdot>\<^sub>v (B \<cdot>\<^sub>v \<psi>)"
   apply transfer by simp
 
-(* TODO: this one should probably be called mult_inf_distribut, and the above one renamed *)
+(* TODO: this one should probably be called mult_inf_distrib, and the above one renamed *)
 lemma mult_inf_distrib'[simp]:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   assumes "isometry U"
@@ -2806,7 +2828,7 @@ section \<open>On-demand syntax\<close>
 
 bundle bounded_notation begin
 notation timesOp (infixl "\<cdot>\<^sub>o" 69)
-notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70) (* TODO: Why does Rep_bounded need a notation?  *)
+notation Rep_bounded (infixr "\<cdot>\<^sub>v" 70)
 notation applyOpSpace (infixr "\<cdot>\<^sub>s" 70)
 notation adjoint ("_*" [99] 100)
 end

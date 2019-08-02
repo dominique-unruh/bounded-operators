@@ -884,7 +884,7 @@ qed
 
 subsection \<open>Minimum distance\<close>
 
-(* TODO: move? *)
+(* TODO: remove *)
 definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
   \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
@@ -1491,8 +1491,14 @@ proof-
     by (smt Collect_cong Collect_empty_eq_bot existence_uniqueness_min_dist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
 qed
 
+(* TODO: define is_projection
+
+  is_projection_on \<pi> M \<longleftrightarrow> \<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M
+ *)
+
 definition projection :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where
   \<open>projection \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> (orthogonal_complement M) \<and> k \<in>  M)\<close>
+(* TODO: projection M = (SOME \<pi>. is_projection_on M \<pi>) *)
 
 lemma projection_intro1:
   \<open>is_subspace M  \<Longrightarrow> h - (projection M) h \<in> orthogonal_complement M\<close>
@@ -1747,6 +1753,7 @@ proof-
 qed
 
 (* TODO: already exists: "range" *)
+(* TODO remove *)
 definition ran_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'b set\<close> where
   \<open>ran_op \<equiv> \<lambda> f. {x. \<exists> y. f y = x}\<close>
 
@@ -2808,8 +2815,10 @@ qed
 (* NEW *)
 section \<open>Linear space\<close>
 
+(* TODO: rename Rep_linear_space \<rightarrow> space_as_set *)
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
 linear_space = \<open>{S::'a set. is_subspace S}\<close>
+  morphisms Rep_linear_space Abs_linear_space
   using is_subspace_UNIV by blast
 
 setup_lifting type_definition_linear_space
@@ -3419,12 +3428,12 @@ qed
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
   \<open>cgenerator S = (span S = top)\<close>
 
+(* TODO remove *)
 fun partial_span::\<open>nat \<Rightarrow> ('a::complex_vector) set \<Rightarrow> ('a::complex_vector) set\<close> where
   \<open>partial_span 0 S = {0}\<close>|
   \<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
 
-term \<open>dim S = (if S=0 then 0 else 1)\<close>
-
+(* TODO remove *)
 lemma partial_span_1:
   \<open>S \<subseteq> partial_span 1 S\<close>
 proof-
@@ -3444,6 +3453,7 @@ proof-
     by simp 
 qed
 
+(* TODO remove *)
 lemma partial_span_lim_n:
   fixes S::\<open>'a::complex_vector set\<close>
   shows \<open>partial_span n S \<subseteq> complex_vector.span S\<close>
@@ -3479,6 +3489,7 @@ next
     by blast 
 qed
 
+(* TODO remove *)
 lemma sum_partial_span_eq:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes  \<open>S \<noteq> {}\<close>
@@ -3547,7 +3558,7 @@ next
   thus ?case by blast 
 qed
 
-
+(* TODO remove *)
 lemma sum_partial_span_leq_ind:
   fixes S::\<open>'a::complex_vector set\<close> and n p :: nat
   assumes \<open>r \<in> partial_span n S\<close> and \<open>S \<noteq> {}\<close>
@@ -3575,12 +3586,14 @@ next
   ultimately show ?case by simp
 qed
 
+(* TODO remove *)
 lemma sum_partial_span_leq:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>r \<in> partial_span n S\<close> and \<open>n \<le> m\<close> and \<open>S \<noteq> {}\<close>
   shows \<open>r \<in> partial_span m S\<close>
   using sum_partial_span_leq_ind assms le_Suc_ex by blast 
 
+(* TODO remove *)
 lemma sum_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close> and \<open>S \<noteq> {}\<close>
@@ -3588,6 +3601,7 @@ lemma sum_partial_span:
   using assms sum_partial_span_eq sum_partial_span_leq
   by (metis max.cobounded1 max.cobounded2)
 
+(* TODO remove *)
 lemma scaleC_partial_span:
   fixes S::\<open>'a::complex_vector set\<close>
   shows \<open>\<forall> t. t \<in> partial_span n S \<longrightarrow> c *\<^sub>C t \<in> partial_span n S\<close>
@@ -3623,6 +3637,7 @@ next
   thus ?case by blast 
 qed
 
+(* TODO remove *)
 lemma partial_linear_manifold:
   fixes S::\<open>'a::complex_vector set\<close>
   assumes \<open>S \<noteq> {}\<close>
@@ -3723,7 +3738,7 @@ proof
 qed
 
 
-
+(* TODO remove *)
 lemma partial_span_subspace:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes  \<open>S \<noteq> {}\<close>

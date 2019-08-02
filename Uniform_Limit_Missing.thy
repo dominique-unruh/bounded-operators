@@ -286,7 +286,7 @@ proof(rule nsupointwise_convergence_I)
 qed
 
 
-(* TODO: move to real_normed_vector? *)
+(* TODO: move to real_normed_vector *)
 lemma linear_ball_zero:
   \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
 proof

@@ -31,8 +31,10 @@ begin
 
 section \<open>Algebraic properties of real bounded operators\<close>
 
+(* TODO: rename Rep_rbounded \<rightarrow> times_rbounded_vec *)
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
   = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
+  morphisms Rep_rbounded Abs_rbounded
   using bounded_linear_zero by blast
 
 setup_lifting type_definition_rbounded
@@ -1227,14 +1229,13 @@ proof-
           using Rep_rbounded by auto          
         hence \<open>\<forall> N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. Rep_rbounded (f n))) N ( (x /\<^sub>R norm x)) )
           = ( (\<lambda>n. Rep_rbounded (f n) x)) N\<close>
-        proof -
+        proof - \<comment> \<open>Sledgehammer proof\<close>
           have f1: "Rep_rbounded (f v0_0) (x /\<^sub>R norm x) = Rep_rbounded (f v0_0) x /\<^sub>R norm x"
             using \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5) by blast
           obtain nn :: nat where
             "(\<exists>v0. norm x *\<^sub>R Rep_rbounded (f v0) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f v0) x) = (norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f nn) x)"
             by meson
           moreover
-(* TODO the following proof is incomprehensible *)
           { assume "norm x *\<^sub>R Rep_rbounded (f nn) (x /\<^sub>R norm x) \<noteq> Rep_rbounded (f nn) x"
             then have "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
               by (metis \<open>\<And>n. bounded_linear (Rep_rbounded (f n))\<close> linear_simps(5))
@@ -1291,7 +1292,7 @@ proof-
           using Rep_rbounded by auto          
         hence \<open>( scaleR) ( (norm x)) ( ( (Rep_rbounded l)) ( (x /\<^sub>R norm x)) )
             =  (Rep_rbounded l x)\<close>
-        proof -
+        proof - \<comment> \<open>Sledgehammer proof\<close>
           have f1: "Rep_rbounded l (x /\<^sub>R norm x) = Rep_rbounded l x /\<^sub>R norm x"
             by (meson \<open>bounded_linear (Rep_rbounded l)\<close> linear_simps(5))
           { assume "norm x *\<^sub>R Rep_rbounded l (x /\<^sub>R norm x) \<noteq> Rep_rbounded l x"
@@ -1347,6 +1348,8 @@ proof-
     by (simp add: NSLIMSEQ_LIMSEQ)
 qed
 
+(* TODO: rename \<cdot>\<^sub>r\<^sub>o to *\<^sub>o *)
+(* TODO: rename rtimesOp \<rightarrow> times_rbounded *)
 lift_definition rtimesOp:: 
   "('b::real_normed_vector,'c::real_normed_vector) rbounded
      \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded" (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
@@ -1504,11 +1507,12 @@ qed
 
 section \<open>On-demand syntax\<close>
 
-(* TODO Add \<cdot>\<^sub>v *)
+(* TODO Add *\<^sub>v *)
 bundle rbounded_notation begin
 notation rtimesOp (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
 end
 
+(* TODO Add *\<^sub>v *)
 bundle no_rbounded_notation begin
 no_notation rtimesOp (infixl "\<cdot>\<^sub>r\<^sub>o" 69)
 end
