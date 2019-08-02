@@ -6,12 +6,6 @@ Authors:
 *)
 
 
-(* TODO: update to contain all improvements of Real_Vector_Spaces w.r.t. old version.
-
-Current version was probably based on Real_Vector_Spaces from Isabelle 2017 (or earlier?).
-Using a diff from Isabelle 2017 to 2019 we can get all the changes that need to be carried over.
- *)
-
 theory Complex_Vector_Spaces
   imports 
     "HOL-ex.Sketch_and_Explore"
@@ -162,8 +156,6 @@ lemma [vector_add_divide_simps]:
   "(a / z) *\<^sub>C v - b *\<^sub>C w = (if z = 0 then -b *\<^sub>C w else (a *\<^sub>C v - (b * z) *\<^sub>C w) /\<^sub>C z)"
   for v :: "'a :: complex_vector"
   by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
-
-
 
 lemma eq_vector_fraction_iff [vector_add_divide_simps]:
   fixes x :: "'a :: complex_vector"
@@ -690,48 +682,163 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
 
 section \<open>Bounded Linear and Bilinear Operators\<close>
+
+definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
+ "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+
+(* previous definition
 locale clinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
   assumes scaleC: "f (r *\<^sub>C x) = r  *\<^sub>C (f x)"
+*)
 
+(* NEW *)
+lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
+  unfolding clinear_def  linear_def
+  proof
+  show "f (b1 + b2) = f b1 + f b2"
+    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    for b1 :: 'a
+      and b2 :: 'a
+    using that unfolding Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
+    by auto
+  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
+    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    for r :: real
+      and b :: 'a
+    using that unfolding Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
+    by (simp add: scaleR_scaleC)
+    
+qed
+
+(* previous formulation 
 sublocale clinear \<subseteq> linear
   apply (rule linearI)
    apply (rule add)
   unfolding scaleR_scaleC by (rule scaleC)
+*)
+
+global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
+  rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+  defines dependent_raw_def: dependent = complex_vector.dependent
+    and representation_raw_def: representation = complex_vector.representation
+    and subspace_raw_def: subspace = complex_vector.subspace
+    and span_raw_def: span = complex_vector.span
+    and extend_basis_raw_def: extend_basis = complex_vector.extend_basis
+    and dim_raw_def: dim = complex_vector.dim
+    apply (simp add: complex_vector.vector_space_axioms)
+  unfolding clinear_def
+  by auto
+
+hide_const (open)\<comment> \<open>locale constants\<close>
+  complex_vector.dependent
+  complex_vector.independent
+  complex_vector.representation
+  complex_vector.subspace
+  complex_vector.span
+  complex_vector.extend_basis
+  complex_vector.dim
+
+abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+
+(* NEW *)
+global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+  rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+  defines construct_raw_def: construct = complex_vector.construct
+  apply unfold_locales
+  unfolding clinear_def
+  by auto
+
+hide_const (open)\<comment> \<open>locale constants\<close>
+  complex_vector.construct
+
+(* NEW *)
+(* new proof *)
+lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
+  unfolding clinear_def
+  using Vector_Spaces.linear_compose
+  by blast
+
+lemma clinear_additive_D:
+\<open>clinear f \<Longrightarrow> additive f\<close>
+  by (simp add: additive.intro complex_vector.linear_add)
 
 lemma clinear_imp_scaleC:
   assumes "clinear D"
   obtains d where "D = (\<lambda>x. x *\<^sub>C d)"
-  by (metis assms clinear.scaleC mult.commute mult.left_neutral complex_scaleC_def)
+  by (metis assms complex_scaleC_def complex_vector.linear_scale mult.commute mult.left_neutral)
 
 corollary complex_clinearD:
   fixes f :: "complex \<Rightarrow> complex"
   assumes "clinear f" obtains c where "f = (*) c"
   by (rule clinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
 
-lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
-  apply (simp add: clinear_def additive_def clinear_axioms_def)
-  by (metis distrib_left mult_scaleC_right scaleC_conv_of_complex)
-
 lemma clinearI:
   assumes "\<And>x y. f (x + y) = f x + f y"
     and "\<And>c x. f (c *\<^sub>C x) = c *\<^sub>C f x"
   shows "clinear f"
-  by standard (rule assms)+
+  unfolding clinear_def
+  proof
+  show "f (b1 + b2) = f b1 + f b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by (simp add: assms(1))    
+  show "f (r *\<^sub>C b) = r *\<^sub>C f b"
+    for r :: complex
+      and b :: 'a
+    by (simp add: assms(2))    
+qed
 
-locale bounded_clinear = clinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
-  assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
+  proof (rule clinearI)
+  show "a * of_complex (x + y) = a * of_complex x + a * of_complex y"
+    for x :: complex
+      and y :: complex
+    by (simp add: ring_class.ring_distribs(1))    
+  show "a * of_complex (c *\<^sub>C x) = c *\<^sub>C (a * of_complex x)"
+    for c :: complex
+      and x :: complex
+    by (metis complex_scaleC_def mult_scaleC_right of_complex_mult scaleC_conv_of_complex)
+qed
+
+
+locale bounded_clinear = 
+  fixes f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+assumes 
+is_clinear: "clinear f" and
+bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
 begin
 
 sublocale bounded_linear
-  apply standard by (fact bounded) 
+proof
+  have \<open>linear f\<close>
+    by (simp add: clinear_is_linear is_clinear)
+
+  show "f (b1 + b2) = f b1 + f b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    using  \<open>linear f\<close>
+    by (simp add: real_vector.linear_add)
+  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
+    for r :: real
+      and b :: 'a
+    using \<open>linear f\<close>
+    by (simp add: real_vector.linear_scale)
+  show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+    by (simp add: bounded)    
+qed
+
 
 lemma bounded_linear: "bounded_linear f"
   by (fact bounded_linear)
 
 lemma clinear: "clinear f"
-  by (fact local.clinear_axioms)
-
+  by (simp add: is_clinear)
+  
 end
+
+(* Vallum Aelium *)
 
 lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
@@ -739,10 +846,10 @@ lemma clinear_times: "clinear (\<lambda>x. c * x)"
 
 lemma bounded_clinear_intro:
   assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>r x. f (scaleC r x) = scaleC r (f x)"
+    and "\<And>r x. f (r *\<^sub>C x) = r *\<^sub>C (f x)"
     and "\<And>x. norm (f x) \<le> norm x * K"
   shows "bounded_clinear f"
-  by standard (blast intro: assms)+
+  using assms(1) assms(2) assms(3) bounded_clinear_def clinearI by blast
 
 locale csemilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
   assumes scaleC: "f (scaleC r x) = scaleC (cnj r) (f x)"
@@ -811,25 +918,39 @@ proof -
   interpret f: bounded_csemilinear f by fact
   interpret g: bounded_csemilinear g by fact
   show ?thesis
-  proof unfold_locales
-    show "f (g (x + y)) = f (g x) + f (g y)" for x y
-      by (simp only: f.add g.add)
-    show "f (g (scaleC r x)) = scaleC r (f (g x))" for r x
-      by (simp only: f.scaleC g.scaleC complex_cnj_cnj)
-    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-      by blast
-    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-      by blast
+  proof 
+    show "clinear (\<lambda>x. f (g x))"
+      unfolding clinear_def
+    proof
+      show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
+        for b1 :: 'c
+          and b2 :: 'c
+        by (simp add: f.add g.add)
+
+      show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
+        for r :: complex
+          and b :: 'c
+        by (simp add: f.scaleC g.scaleC)  
+    qed
     show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof (intro exI allI)
-      fix x
-      have "norm (f (g x)) \<le> norm (g x) * Kf"
-        using f .
-      also have "\<dots> \<le> (norm x * Kg) * Kf"
-        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-        by (rule mult.assoc)
-      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
+    proof-
+      have "\<exists> Kf. \<forall>x. norm (f (g x)) \<le> norm (g x) * Kf"
+        using f.pos_bounded by auto
+      then obtain Kf where \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close>
+        by blast        
+      have "\<exists> Kg. \<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf"
+        by (metis g.pos_bounded mult.commute mult_eq_0_iff mult_le_cancel_left norm_ge_zero real_mult_le_cancel_iff2)        
+      then obtain Kg where \<open>\<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf\<close>
+        by blast
+      have \<open>\<forall>x. (norm x * Kg) * Kf = norm x * (Kg * Kf)\<close>
+        using mult.assoc
+        by simp 
+      define  K where \<open>K = Kg * Kf\<close>
+      have  \<open>\<forall>x. norm (f (g x)) \<le> norm x * K\<close>
+        unfolding K_def
+        by (metis K_def \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close> \<open>\<forall>x. norm (g x) * Kf \<le> norm x * Kg * Kf\<close> \<open>\<forall>x. norm x * Kg * Kf = norm x * (Kg * Kf)\<close> dual_order.trans) 
+      thus ?thesis 
+        by blast
     qed
   qed
 qed
@@ -846,7 +967,8 @@ proof -
     show "f (g (x + y)) = f (g x) + f (g y)" for x y
       by (simp only: f.add g.add)
     show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-      by (simp only: f.scaleC g.scaleC)
+      by (simp add: complex_vector.linear_scale f.scaleC g.is_clinear)
+      
     from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
       by blast
     from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
@@ -877,7 +999,7 @@ proof -
     show "f (g (x + y)) = f (g x) + f (g y)" for x y
       by (simp only: f.add g.add)
     show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-      by (simp only: f.scaleC g.scaleC)
+      using complex_vector.linear_scale f.is_clinear g.scaleC by auto
     from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
       by blast
     from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
@@ -957,7 +1079,11 @@ proof unfold_locales
     "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
     "\<And>r a b. g (r *\<^sub>C a) ** b = r *\<^sub>C (g a ** b)"
     "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
-    by (auto simp: g.add add_left add_right g.scaleC scaleC_left scaleC_right)
+    apply (simp add: add_left g.add)
+    apply (simp add: add_right)
+    apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_left)
+    by (simp add: scaleC_right)
+
   from g.nonneg_bounded nonneg_bounded obtain K L
     where nn: "0 \<le> K" "0 \<le> L"
       and K: "\<And>x. norm (g x) \<le> norm x * K"
@@ -974,11 +1100,17 @@ lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightar
 
 end
 
-lemma bounded_clinear_ident[simp]: "bounded_clinear (\<lambda>x. x)"
-  by standard (auto intro!: exI[of _ 1])
+lemma bounded_clinear_ident[simp]: "bounded_clinear id"
+  unfolding bounded_clinear_def
+  apply auto
+   apply (simp add: clinearI)
+  using less_eq_real_def by auto
+
 
 lemma bounded_clinear_zero[simp]: "bounded_clinear (\<lambda>x. 0)"
-  by standard (auto intro!: exI[of _ 1])
+  unfolding bounded_clinear_def
+  by (metis complex_vector.module_hom_zero mult.commute mult_zero_left norm_zero order_refl)
+
 
 lemma bounded_clinear_add:
   assumes "bounded_clinear f"
@@ -987,16 +1119,19 @@ lemma bounded_clinear_add:
 proof -
   interpret f: bounded_clinear f by fact
   interpret g: bounded_clinear g by fact
+  from f.bounded obtain Kf where Kf: "norm (f x) \<le> norm x * Kf" for x
+    by blast
+  from g.bounded obtain Kg where Kg: "norm (g x) \<le> norm x * Kg" for x
+    by blast
   show ?thesis
   proof
-    from f.bounded obtain Kf where Kf: "norm (f x) \<le> norm x * Kf" for x
-      by blast
-    from g.bounded obtain Kg where Kg: "norm (g x) \<le> norm x * Kg" for x
-      by blast
+    show "clinear (\<lambda>x. f x + g x)"
+      by (simp add: clinearI complex_vector.linear_scale f.add f.is_clinear g.add g.is_clinear scaleC_add_right)
+
     show "\<exists>K. \<forall>x. norm (f x + g x) \<le> norm x * K"
       using add_mono[OF Kf Kg]
       by (intro exI[of _ "Kf + Kg"]) (auto simp: field_simps intro: norm_triangle_ineq order_trans)
-  qed (simp_all add: f.add g.add f.scaleC g.scaleC scaleC_add_right)
+  qed
 qed
 
 lemma bounded_clinear_minus:
@@ -1005,10 +1140,12 @@ lemma bounded_clinear_minus:
 proof -
   interpret f: bounded_clinear f by fact
   show ?thesis
-    apply unfold_locales
-      apply (simp add: f.add)
-     apply (simp add: f.scaleC)
-    by (simp add: f.bounded)
+  proof
+    show "clinear (\<lambda>x. - f x)"
+      by (simp add: complex_vector.linear_compose_neg f.is_clinear)
+    show "\<exists>K. \<forall>x. norm (- f x) \<le> norm x * K"
+      using f.pos_bounded by auto    
+  qed
 qed
 
 lemma bounded_clinear_sub: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (\<lambda>x. f x - g x)"
@@ -1028,11 +1165,21 @@ proof -
   interpret f: bounded_clinear f by fact
   interpret g: bounded_clinear g by fact
   show ?thesis
-  proof unfold_locales
-    show "f (g (x + y)) = f (g x) + f (g y)" for x y
-      by (simp only: f.add g.add)
-    show "f (g (scaleC r x)) = scaleC r (f (g x))" for r x
-      by (simp only: f.scaleC g.scaleC)
+  proof
+    show "clinear (\<lambda>x. f (g x))"
+      unfolding clinear_def
+    proof
+      show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
+        for b1 :: 'c
+          and b2 :: 'c
+        by (simp add: f.add g.add)
+
+      show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
+        for r :: complex
+          and b :: 'c
+        by (simp add: complex_vector.linear_scale f.is_clinear g.is_clinear)
+
+    qed
     from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
       by blast
     from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
@@ -1050,6 +1197,7 @@ proof -
     qed
   qed
 qed
+
 
 lemma bounded_cbilinear_mult: "bounded_cbilinear ((*) :: 'a \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_algebra)"
   apply (rule bounded_cbilinear.intro)
@@ -1113,16 +1261,37 @@ proof -
     fix x
     assume "bounded_clinear f"
     then interpret bounded_clinear f .
-    from scaleC[of x 1] have "f x = x * f 1"
-      by simp
+    have "f x = x * f 1"
+      by (metis complex_scaleC_def complex_vector.linear_scale is_clinear mult.comm_neutral)      
   }
   thus ?thesis
     by (auto intro: exI[of _ "f 1"] bounded_clinear_mult_left)
 qed
 
 lemma bij_clinear_imp_inv_clinear: "clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear (inv f)"
-  by (auto simp: clinear_def clinear_axioms_def additive_def bij_is_surj bij_is_inj surj_f_inv_f
-      intro!:  Hilbert_Choice.inv_f_eq)
+  unfolding clinear_def
+  proof
+  show "inv f (b1 + b2) = inv f b1 + inv f b2"
+    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+      and "bij f"
+    for b1 :: 'b
+      and b2 :: 'b
+    using that  bij_inv_eq_iff complex_vector.vector_space_pair_axioms vector_space_pair.linear_add
+  proof -
+    have "\<And>a b. f a + f b = f (a + b)"
+      by (metis (no_types) complex_vector.vector_space_pair_axioms that(1) vector_space_pair.linear_add)
+    then show ?thesis
+      by (metis (no_types) bij_inv_eq_iff that(2))
+  qed
+
+  show "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
+    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+      and "bij f"
+    for r :: complex
+      and b :: 'b
+    using that
+    by (smt bij_inv_eq_iff clinear_def complex_vector.linear_scale) 
+qed
 
 locale bounded_sesquilinear =
   fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
@@ -1171,7 +1340,11 @@ proof unfold_locales
     "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
     "\<And>r a b. g (r *\<^sub>C a) ** b = cnj r *\<^sub>C (g a ** b)"
     "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
-    by (auto simp: g.add add_left add_right g.scaleC scaleC_left scaleC_right)
+    apply (simp add: add_left g.add)
+    apply (simp add: add_right)
+    apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_left)
+    by (simp add: scaleC_right)
+
   from g.nonneg_bounded nonneg_bounded obtain K L
     where nn: "0 \<le> K" "0 \<le> L"
       and K: "\<And>x. norm (g x) \<le> norm x * K"
@@ -1193,7 +1366,11 @@ proof unfold_locales
     "\<And>a b b'. (b + b') ** g a = b ** g a + b' ** g a"
     "\<And>r a b. b ** g (r *\<^sub>C a) = r *\<^sub>C (b ** g a)"
     "\<And>a r b. (r *\<^sub>C b) ** g a = cnj r *\<^sub>C (b ** g a)"
-    by (auto simp: g.add add_left add_right g.scaleC scaleC_left scaleC_right)
+    apply (simp add: add_right g.add)
+    apply (simp add: add_left)
+    apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_right)
+    by (simp add: scaleC_left)
+
   from g.nonneg_bounded nonneg_bounded obtain K L
     where nn: "0 \<le> K" "0 \<le> L"
       and K: "\<And>x. norm (g x) \<le> norm x * K"
@@ -1251,37 +1428,23 @@ proof
   show "f (b1 + b2) = f b1 + f b2"
     for b1 :: 'a
       and b2 :: 'a
-    by (simp add: additive.add assms clinear.axioms(1))   
+    by (simp add: assms complex_vector.linear_add)
+   
   show "f (r *\<^sub>R b) = r *\<^sub>R f b"
     for r :: real
       and b :: 'a
     using  \<open>clinear f\<close> scaleR_scaleC
-    unfolding clinear_def clinear_axioms_def 
-    by smt
+    by (simp add: scaleR_scaleC complex_vector.linear_scale)
 qed
 
 
 lemma clinear_add:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
-  by (smt ab_semigroup_add_class.add_ac(1) add.commute additive_def clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def scaleC_add_right)
+  by (simp add: complex_vector.linear_compose_add)
 
 lemma clinear_minus:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
-proof
-  show "f (x + y) - g (x + y) = f x - g x + (f y - g y)"
-    if "clinear f"
-      and "clinear g"
-    for x :: 'a
-      and y :: 'a
-    by (simp add: additive.add clinear.axioms(1) that(1) that(2)) 
-  show "f (r *\<^sub>C x) - g (r *\<^sub>C x) = r *\<^sub>C (f x - g x)"
-    if "clinear f"
-      and "clinear g"
-    for r :: complex
-      and x :: 'a
-    by (simp add: clinear.scaleC complex_vector.scale_right_diff_distrib that(1) that(2))
-qed
-
+  by (simp add: complex_vector.linear_compose_sub)
 
 lemma clinear_zero:
   fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
@@ -1294,7 +1457,7 @@ proof-
     by simp
   moreover have \<open>f 0 = f 0 + f 0\<close>
     using \<open>clinear f\<close> unfolding clinear_def
-    by (metis additive.add calculation) 
+    by (simp add: \<open>clinear f\<close> complex_vector.linear_0) 
   ultimately have \<open>f 0 + f 0 = f 0\<close>
     by simp
   thus ?thesis by simp
@@ -1541,8 +1704,8 @@ proof-
 qed
 
 lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
-  by (smt add_diff_add additive.add clinear.axioms(1) clinear.axioms(2) clinearI clinear_axioms_def complex_vector.scale_right_diff_distrib minus_apply)
-
+  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
+  
 lemma scalarR_bounded_clinear:
   fixes c :: real
   assumes \<open>bounded_clinear f\<close>
@@ -1557,20 +1720,16 @@ qed
 lemma bounded_linear_bounded_clinear:
   \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
   proof
-  show "A (x + y) = A x + A y"
+  show "clinear A"
     if "bounded_linear A"
-    for x :: 'a
-      and y :: 'a
-    using that unfolding bounded_linear_def linear_def Vector_Spaces.linear_def 
-      module_hom_def module_hom_axioms_def by blast
-  show "A (r *\<^sub>C x) = r *\<^sub>C A x"
-    if  "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
-    for r :: complex
-      and x :: 'a
-    using that by blast
+      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    using that
+    by (simp add: bounded_linear.linear clinearI real_vector.linear_add) 
   show "\<exists>K. \<forall>x. norm (A x) \<le> norm x * K"
     if "bounded_linear A"
-    using that unfolding bounded_linear_def bounded_linear_axioms_def by blast
+      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    using that
+    by (simp add: bounded_linear.bounded) 
 qed
 
 lemma comp_bounded_clinear:
@@ -1579,18 +1738,9 @@ lemma comp_bounded_clinear:
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
   shows \<open>bounded_clinear (A \<circ> B)\<close>
   proof
-  show "(A \<circ> B) (x + y) = (A \<circ> B) x + (A \<circ> B) y"
-    for x :: 'a
-      and y :: 'a
-    using \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-    unfolding bounded_clinear_def clinear_def Modules.additive_def
-    by simp
-  show "(A \<circ> B) (r *\<^sub>C x) = r *\<^sub>C (A \<circ> B) x"
-    for r :: complex
-      and x :: 'a
-    using \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-    unfolding bounded_clinear_def clinear_def clinear_axioms_def
-    by simp
+  show "clinear (A \<circ> B)"
+    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) bounded_clinear.is_clinear)
+    
   show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
   proof-
     obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
@@ -1607,6 +1757,5 @@ lemma comp_bounded_clinear:
       by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)     
   qed
 qed
-
 
 end
