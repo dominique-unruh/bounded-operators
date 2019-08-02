@@ -641,6 +641,7 @@ lift_definition timesOp::
   by (rule bounded_clinear_compose, simp_all)
 
 (* TODO: Replace \<cdot>\<^sub>s \<rightarrow> *\<^sub>s    *)
+(* TODO: Is "closure" necessary? If not, remove. If yes, mention counterexample. *)
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
@@ -2782,6 +2783,89 @@ lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector
 is bij.
 *)
 
+lemma applyOpSpace_mono:
+  "S \<le> T \<Longrightarrow> A \<cdot>\<^sub>s S \<le> A \<cdot>\<^sub>s T"
+  by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_linear_space.rep_eq)
+
+(* TODO proof incomplete (contains sorry/cheat) *)
+lemma mult_INF_general[simp]: 
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
+    and Uinv :: "('c,'b) bounded" 
+  assumes UinvUUinv: "Uinv \<cdot>\<^sub>o U \<cdot>\<^sub>o Uinv = Uinv"
+  assumes UUinvU: "U \<cdot>\<^sub>o Uinv \<cdot>\<^sub>o U = U"
+  assumes V: "\<And>i. V i \<le> Uinv \<cdot>\<^sub>s top"
+  shows "U \<cdot>\<^sub>s (INF i. V i) = (INF i. U \<cdot>\<^sub>s V i)"
+proof (rule antisym)
+  show "U \<cdot>\<^sub>s (INF i. V i) \<le> (INF i. U \<cdot>\<^sub>s V i)"
+    by (rule mult_INF1)
+next
+  define rangeU rangeUinv where "rangeU = U \<cdot>\<^sub>s top" and "rangeUinv = Uinv \<cdot>\<^sub>s top"
+  define INFUV INFV where "INFUV = (INF i. U \<cdot>\<^sub>s V i)" and "INFV = (INF i. V i)"
+  have "INFUV = U \<cdot>\<^sub>s Uinv \<cdot>\<^sub>s INFUV"
+  proof -
+    have "U \<cdot>\<^sub>s V i \<le> rangeU" for i
+      unfolding rangeU_def apply transfer apply auto
+      by (meson closure_mono image_mono subsetD top_greatest)
+    then have "INFUV \<le> rangeU"
+      unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
+    moreover have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeU" for \<psi>
+    proof -
+      from that obtain \<phi> where \<phi>: "\<psi> = U \<cdot>\<^sub>v \<phi>"
+        apply atomize_elim unfolding rangeU_def apply transfer sorry
+      then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = (U \<cdot>\<^sub>o Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<phi>"
+        by (simp add: timesOp.rep_eq)
+      also have "\<dots> = U \<cdot>\<^sub>v \<phi>"
+        by (simp add: UUinvU)
+      also have "\<dots> = \<psi>"
+        by (simp add: \<phi>)
+      finally show ?thesis
+        by -
+    qed
+    ultimately have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space INFUV" for \<psi>
+      by (simp add: in_mono less_eq_linear_space.rep_eq that)
+    then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>s INFUV = INFUV"
+      apply transfer apply auto
+       apply (metis OrthoClosedEq is_subspace.subspace is_subspace_I orthogonal_complement_twice)
+      using closure_subset by blast
+    then show ?thesis
+      by (simp add: timesOp_assoc_linear_space)
+  qed
+  also have "\<dots> \<le> U \<cdot>\<^sub>s (INF i. Uinv \<cdot>\<^sub>s U \<cdot>\<^sub>s V i)"
+    unfolding INFUV_def
+    apply (rule applyOpSpace_mono)
+    by (rule mult_INF1)
+  also have "\<dots> = U \<cdot>\<^sub>s INFV"
+  proof -
+    from assms have "V i \<le> rangeUinv" for i
+      unfolding rangeUinv_def by simp
+    moreover have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeUinv" for \<psi>
+    proof -
+      from that obtain \<phi> where \<phi>: "\<psi> = Uinv \<cdot>\<^sub>v \<phi>"
+        apply atomize_elim unfolding rangeU_def apply transfer sorry
+      then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = (Uinv \<cdot>\<^sub>o U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<phi>"
+        by (simp add: timesOp.rep_eq)
+      also have "\<dots> = Uinv \<cdot>\<^sub>v \<phi>"
+        by (simp add: UinvUUinv)
+      also have "\<dots> = \<psi>"
+        by (simp add: \<phi>)
+      finally show ?thesis
+        by -
+    qed
+    ultimately have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space (V i)" for \<psi> i
+      using less_eq_linear_space.rep_eq that by blast
+    then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>s (V i) = (V i)" for i
+      apply transfer apply auto
+       apply (metis OrthoClosedEq is_subspace.subspace is_subspace_I orthogonal_complement_twice)
+      using closure_subset by blast
+    then show ?thesis
+      unfolding INFV_def
+      by (simp add: timesOp_assoc_linear_space)
+  qed
+  finally show "INFUV \<le> U \<cdot>\<^sub>s INFV"
+    by -
+qed
+
+(* TODO: by reduction to mult_INF_general *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
   assumes \<open>isometry U\<close>
