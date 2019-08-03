@@ -838,8 +838,6 @@ lemma clinear: "clinear f"
   
 end
 
-(* Vallum Aelium *)
-
 lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
   by (auto simp: clinearI distrib_left)
@@ -1390,54 +1388,13 @@ end
 
 instance complex_normed_algebra_1 \<subseteq> perfect_space ..
 
-section \<open>Complete metric spaces\<close>
-
-section \<open>Cauchy sequences\<close>
-
-lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
-  by (simp only: metric_Cauchy_iff2 dist_complex_def)
-
-subsection \<open>Cauchy Sequences are Convergent\<close>
-
-section \<open>The set of complex numbers is a complete metric space\<close>
-
-class cbanach = complex_normed_vector + complete_space
-
-subclass (in cbanach) banach ..
-
-instance complex :: cbanach ..
-
-lemmas sums_of_complex = bounded_linear.sums [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas summable_of_complex = bounded_linear.summable [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_of_complex = bounded_linear.suminf [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-
-lemmas sums_scaleC_left = bounded_linear.sums[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_left = bounded_linear.summable[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_left = bounded_linear.suminf[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-
-lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-
-
 lemma clinear_linear:
   fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
   assumes \<open>clinear f\<close>
   shows \<open>linear f\<close>
-proof
-  show "f (b1 + b2) = f b1 + f b2"
-    for b1 :: 'a
-      and b2 :: 'a
-    by (simp add: assms complex_vector.linear_add)
+   using Complex_Vector_Spaces.clinear_is_linear
+   by (simp add: clinear_is_linear assms)
    
-  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
-    for r :: real
-      and b :: 'a
-    using  \<open>clinear f\<close> scaleR_scaleC
-    by (simp add: scaleR_scaleC complex_vector.linear_scale)
-qed
-
-
 lemma clinear_add:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
   by (simp add: complex_vector.linear_compose_add)
@@ -1449,20 +1406,66 @@ lemma clinear_minus:
 lemma clinear_zero:
   fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
   shows \<open>clinear f \<Longrightarrow> f 0 = 0\<close>
+  by (rule  Complex_Vector_Spaces.complex_vector.linear_0)
+
+lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
+  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
+
+lemma scalarR_bounded_clinear:
+  fixes c :: real
+  assumes \<open>bounded_clinear f\<close>
+  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
 proof-
-  assume \<open>clinear f\<close>
-  have \<open>(0::'a) + 0 = 0\<close>
-    by simp
-  hence \<open>f (0 + 0) = f 0\<close>
-    by simp
-  moreover have \<open>f 0 = f 0 + f 0\<close>
-    using \<open>clinear f\<close> unfolding clinear_def
-    by (simp add: \<open>clinear f\<close> complex_vector.linear_0) 
-  ultimately have \<open>f 0 + f 0 = f 0\<close>
-    by simp
-  thus ?thesis by simp
+  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
+    by (simp add: assms bounded_clinear_const_scaleC)
+  thus ?thesis
+    by (simp add: scaleR_scaleC) 
 qed
 
+lemma bounded_linear_bounded_clinear:
+  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
+  proof
+  show "clinear A"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    using that
+    by (simp add: bounded_linear.linear clinearI real_vector.linear_add) 
+  show "\<exists>K. \<forall>x. norm (A x) \<le> norm x * K"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    using that
+    by (simp add: bounded_linear.bounded) 
+qed
+
+lemma comp_bounded_clinear:
+  fixes  A :: \<open>'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector\<close> 
+    and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+  shows \<open>bounded_clinear (A \<circ> B)\<close>
+  proof
+  show "clinear (A \<circ> B)"
+    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) bounded_clinear.is_clinear)
+    
+  show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
+  proof-
+    obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
+      using assms(2) bounded_clinear.bounded
+      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
+    obtain KA where \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close> and \<open>KA \<ge> 0\<close>
+      using assms(1) bounded_clinear.bounded
+      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
+    have \<open>\<forall>x. norm (A (B x)) \<le> norm x * KB * KA\<close>
+      using  \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close>  \<open>KA \<ge> 0\<close> 
+             \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close>  \<open>KB \<ge> 0\<close>
+      by (metis order.trans ordered_comm_semiring_class.comm_mult_left_mono semiring_normalization_rules(7))
+    thus ?thesis
+      by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)     
+  qed
+qed
+
+
+
+section \<open>Nonstandard analysis\<close>
 
 definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
   where [transfer_unfold]: "scaleHC = starfun2 scaleC"
@@ -1482,7 +1485,7 @@ hnorm (a *\<^sub>C x) = (hcmod (star_of a)) * hnorm x"
 lemma Standard_scaleC [simp]: "x \<in> Standard \<Longrightarrow> scaleC r x \<in> Standard"
   by (simp add: star_scaleC_def)
 
-lemma star_of_scaleC [simp]: "star_of (scaleC r x) = scaleC r (star_of x)"
+lemma star_of_scaleC [simp]: "star_of (r *\<^sub>C x) = r *\<^sub>C (star_of x)"
   by StarDef.transfer (rule refl)
 
 instance star :: (complex_vector) complex_vector
@@ -1544,6 +1547,34 @@ proof-
     by (simp add: isNSCont_isCont_iff) 
 qed
 
+section \<open>Cauchy sequences\<close>
+
+lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
+  by (simp only: metric_Cauchy_iff2 dist_complex_def)
+
+subsection \<open>Cauchy Sequences are Convergent\<close>
+
+section \<open>The set of complex numbers is a complete metric space\<close>
+
+class cbanach = complex_normed_vector + complete_space
+
+subclass (in cbanach) banach ..
+
+instance complex :: cbanach ..
+
+lemmas sums_of_complex = bounded_linear.sums [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
+lemmas summable_of_complex = bounded_linear.summable [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
+lemmas suminf_of_complex = bounded_linear.suminf [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
+
+lemmas sums_scaleC_left = bounded_linear.sums[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
+lemmas summable_scaleC_left = bounded_linear.summable[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
+lemmas suminf_scaleC_left = bounded_linear.suminf[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
+
+lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
+lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
+lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
+
+section \<open>Miscellany\<close>
 
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
@@ -1611,10 +1642,9 @@ next
 
 qed
 
-
 lemma closure_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close>
-  shows \<open>closure (scaleC a ` S) = scaleC a ` closure S\<close>
+  shows \<open>closure ((*\<^sub>C) a ` S) = (*\<^sub>C) a ` closure S\<close>
 proof
   have \<open>closed (closure S)\<close>
     by simp
@@ -1703,59 +1733,5 @@ proof-
     by (simp add: onorm_def) 
 qed
 
-lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
-  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
-  
-lemma scalarR_bounded_clinear:
-  fixes c :: real
-  assumes \<open>bounded_clinear f\<close>
-  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
-proof-
-  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
-    by (simp add: assms bounded_clinear_const_scaleC)
-  thus ?thesis
-    by (simp add: scaleR_scaleC) 
-qed
-
-lemma bounded_linear_bounded_clinear:
-  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
-  proof
-  show "clinear A"
-    if "bounded_linear A"
-      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
-    using that
-    by (simp add: bounded_linear.linear clinearI real_vector.linear_add) 
-  show "\<exists>K. \<forall>x. norm (A x) \<le> norm x * K"
-    if "bounded_linear A"
-      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
-    using that
-    by (simp add: bounded_linear.bounded) 
-qed
-
-lemma comp_bounded_clinear:
-  fixes  A :: \<open>'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector\<close> 
-    and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-  shows \<open>bounded_clinear (A \<circ> B)\<close>
-  proof
-  show "clinear (A \<circ> B)"
-    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) bounded_clinear.is_clinear)
-    
-  show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
-  proof-
-    obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
-      using assms(2) bounded_clinear.bounded
-      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
-    obtain KA where \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close> and \<open>KA \<ge> 0\<close>
-      using assms(1) bounded_clinear.bounded
-      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
-    have \<open>\<forall>x. norm (A (B x)) \<le> norm x * KB * KA\<close>
-      using  \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close>  \<open>KA \<ge> 0\<close> 
-             \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close>  \<open>KB \<ge> 0\<close>
-      by (metis order.trans ordered_comm_semiring_class.comm_mult_left_mono semiring_normalization_rules(7))
-    thus ?thesis
-      by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)     
-  qed
-qed
 
 end
