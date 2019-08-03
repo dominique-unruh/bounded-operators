@@ -895,7 +895,7 @@ proof-
                 for n
                 using \<open>\<And> n. bounded_linear  (Rep_rbounded (f n))\<close>
                 unfolding bounded_linear_def
-                by (simp add: linear_add)
+                by (simp add: real_vector.linear_add)                
               thus ?thesis by blast
             qed
             ultimately show ?thesis by simp 
@@ -923,7 +923,7 @@ proof-
                 for n
                 using \<open>\<And> n. bounded_linear ( (Rep_rbounded (f n)) )\<close>
                 unfolding bounded_linear_def
-                by (simp add: linear_scale)
+                by (simp add: real_vector.linear_scale)
               thus ?thesis by blast
             qed
             ultimately show ?thesis by simp 
@@ -940,7 +940,8 @@ proof-
           hence \<open>\<forall> K. \<exists> x. norm (l x) > norm x * K\<close>
             by smt
           hence \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
-            using calculation linear_0 by force
+            using calculation linear_0
+            by (smt norm_eq_zero real_vector.linear_0 vector_space_over_itself.scale_eq_0_iff)
           have \<open>\<forall> K. \<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
           proof-
             have \<open>\<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
@@ -971,7 +972,8 @@ proof-
               hence \<open> norm (l ((inverse (norm x)) *\<^sub>R  x)) >  K\<close>
               proof-
                 have \<open>(inverse (norm x)) *\<^sub>R (l x) = l ((inverse (norm x)) *\<^sub>R  x)\<close>
-                  by (simp add: \<open>linear l\<close> linear_scale)
+                  using \<open>linear l\<close> linear_scale
+                  by (simp add: real_vector.linear_scale)
                 thus ?thesis
                   using \<open>K < norm (l x /\<^sub>R norm x)\<close> by simp                 
               qed

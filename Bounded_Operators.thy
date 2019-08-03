@@ -581,8 +581,10 @@ proof-
     using Rep_bounded by blast
   hence \<open>(\<lambda> t. a *\<^sub>C ((Rep_bounded A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((Rep_bounded A)\<^sup>\<dagger>) s))\<close>
     using scalar_times_adjc_flatten
-    unfolding bounded_clinear_def clinear_def clinear_axioms_def Modules.additive_def
-    by (simp add: scalar_times_adjc_flatten \<open>bounded_clinear (Rep_bounded A)\<close> bounded_clinear.bounded_linear)
+    unfolding bounded_clinear_def 
+      scalar_times_adjc_flatten \<open>bounded_clinear (Rep_bounded A)\<close> bounded_clinear.bounded_linear
+    by (simp add: scalar_times_adjc_flatten \<open>bounded_clinear ((\<cdot>\<^sub>v) A)\<close> bounded_clinear.bounded_linear complex_vector.linear_scale)
+
   moreover have \<open>Rep_bounded ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((Rep_bounded A) t))\<^sup>\<dagger>\<close>
     unfolding Adj_def
     apply auto
@@ -679,7 +681,9 @@ lemma timesOp_dist2:
 lemma timesOp_minus:
   \<open>A \<cdot>\<^sub>o (B - C) = A \<cdot>\<^sub>o B - A \<cdot>\<^sub>o C\<close>
   apply transfer
-  using additive.diff bounded_clinear_def clinear.axioms(1) by fastforce
+  using additive.diff bounded_clinear_def
+  sorry
+
 
 lemma times_adjoint[simp]:
   fixes B::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
@@ -900,7 +904,8 @@ next
       unfolding bounded_clinear_def clinear_def Modules.additive_def by simp    
     hence  \<open>f x = f t + a *\<^sub>C f y\<close>
       using \<open>bounded_clinear f\<close>  
-      unfolding bounded_clinear_def clinear_def clinear_axioms_def by simp
+      unfolding bounded_clinear_def clinear_def 
+      by simp
     ultimately show ?thesis by simp
   qed
   thus ?case by blast
@@ -2962,5 +2967,6 @@ end
 unbundle no_rbounded_notation
 
 unbundle no_bounded_notation
+
 
 end
