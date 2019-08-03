@@ -415,7 +415,7 @@ proof
   from summable [OF *] show "summable f" by simp
 next
   assume sum: "summable f"
-  then show "summable (\<lambda>x. of_complex (f x) :: 'a)"
+  thus "summable (\<lambda>x. of_complex (f x) :: 'a)"
     by (rule summable_of_complex)
 qed
 
@@ -789,24 +789,24 @@ proof-
     obtain aaa :: "'a set \<Rightarrow> 'a" and aab :: "'a set \<Rightarrow> 'a" where
       "\<forall>x0. (\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0) = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)"
       by moura
-    then have f2: "\<forall>A. (\<not> is_linear_manifold A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (is_linear_manifold A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
+    hence f2: "\<forall>A. (\<not> is_linear_manifold A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (is_linear_manifold A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
       using f1 by (metis (no_types) is_linear_manifold_def)
     obtain AA :: "'a set set \<Rightarrow> 'a \<Rightarrow> 'a set" where
       "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 \<notin> v2) = (AA x0 x1 \<in> x0 \<and> x1 \<notin> AA x0 x1)"
       by moura
-    then have f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
+    hence f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
       by auto
     have f4: "\<forall>A. \<not> is_subspace (A::'a set) \<or> is_linear_manifold A"
       by (metis is_subspace.subspace)
     have f5: "\<forall>A. A \<notin> \<A> \<or> is_subspace A"
       by (metis \<open>\<forall>A\<in>\<A>. is_subspace A\<close>)
-    then have f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
+    hence f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
       using f4 f3 f2 by meson
     have f7: "0 \<in> \<Inter> \<A>"
       using f5 f4 f3 f2 by meson
     have "aaa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aab (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aaa (\<Inter> \<A>) + aab (\<Inter> \<A>) \<in> \<Inter> \<A>"
       using f5 f4 f3 f2 by meson
-    then show ?thesis
+    thus ?thesis
       using f7 f6 f2 by (metis (no_types))
   qed
   moreover have \<open>closed (\<Inter>\<A>)\<close>
@@ -911,9 +911,9 @@ proof-
         assume a1: "x \<in> M"
         have "\<forall>v. (\<exists>va. Re (\<langle>v , v\<rangle> ) = \<parallel>va\<parallel>\<^sup>2 \<and> va \<in> M) \<or> v \<notin> M"
           by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
-        then have "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
+        hence "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
           using a1 by blast
-        then show ?thesis
+        thus ?thesis
           by (metis (lifting) Re_complex_of_real \<open>bdd_below {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> \<open>d = Inf {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> cInf_lower power2_norm_eq_cinner')
       qed
       have  \<open>\<forall> n::nat. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + 1/(n+1)\<close>
@@ -1307,9 +1307,9 @@ proof-
           proof -
             have "\<forall>f A a aa. \<not> is_arg_min_on f A (a::'a) \<or> (f a::real) \<le> f aa \<or> aa \<notin> A"
               by (metis (no_types) is_arg_min_linorder is_arg_min_on_def)
-            then have "dist k h \<le> dist (f + k) h"
+            hence "dist k h \<le> dist (f + k) h"
               by (metis \<open>is_arg_min_on (\<lambda>x. dist x h) M k\<close> \<open>k + f \<in> M\<close> add.commute)
-            then show ?thesis
+            thus ?thesis
               by (simp add: add.commute dist_commute)
           qed
           hence \<open>\<parallel> h - k \<parallel> \<le> \<parallel> h - (k + f) \<parallel>\<close>
@@ -1359,13 +1359,13 @@ proof-
               case True
               hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> (c/\<parallel> f \<parallel>^2)*\<parallel> f \<parallel>^2\<close>
                 using \<open>\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) \<le> c * \<parallel>f\<parallel>\<^sup>2\<close> linordered_field_class.divide_pos_pos by blast
-              then show ?thesis 
+              thus ?thesis 
                 using True by auto
             next
               case False
               hence \<open>\<parallel> f \<parallel>^2 = 0\<close> 
                 by simp
-              then show ?thesis 
+              thus ?thesis 
                 by auto
             qed
             thus ?thesis 
@@ -1629,9 +1629,8 @@ proof-
   qed
   ultimately have \<open>clinear (projection M)\<close> 
     by (simp add: Modules.additive_def clinearI)
-  moreover have \<open>bounded_clinear_axioms (projection M)\<close>
+  moreover have \<open>\<exists> K. \<forall> x. norm ((projection M) x) \<le> norm x * K\<close>
     using projectionPropertiesB  \<open>is_subspace M\<close> 
-    unfolding bounded_clinear_axioms_def
     by (metis mult.commute mult.left_neutral)
   ultimately show ?thesis
     using  bounded_clinear_def
@@ -1657,7 +1656,8 @@ proof-
     hence \<open>f x = 0\<close>
       by blast
     hence  \<open>f  (t *\<^sub>C x) = 0\<close>
-      by (simp add: \<open>bounded_clinear f\<close> bounded_clinear.clinear clinear.scaleC)
+      using \<open>bounded_clinear f\<close> bounded_clinear.clinear
+      by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale) 
     hence \<open> t *\<^sub>C x \<in> {x. f x = 0}\<close>
       by simp
     show ?thesis 
@@ -1672,9 +1672,8 @@ proof-
       using \<open>y \<in> {x. f x = 0}\<close> by auto
     have  \<open>f (x + y) = f x + f y\<close>
       using \<open>bounded_clinear f\<close>
-      unfolding bounded_clinear_def clinear_def
-      using Modules.additive_def
-      by blast
+      unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
+      by auto
     hence  \<open>f (x + y) = 0\<close>
       by (simp add: \<open>f x = 0\<close> \<open>f y = 0\<close>)
     hence \<open>x + y \<in>  {x. f x = 0}\<close>
@@ -1709,9 +1708,10 @@ proof-
       using closed_sequential_limits by blast
   qed
   ultimately show ?thesis
-    using  \<open>bounded_clinear f\<close> bounded_clinear_def clinear.scaleC complex_vector.scale_eq_0_iff is_subspace.intro ker_op_def
-      bounded_clinear.clinear 
-    by (smt Collect_cong is_linear_manifold.intro mem_Collect_eq)
+    using  \<open>bounded_clinear f\<close> bounded_clinear_def  complex_vector.scale_eq_0_iff is_subspace.intro ker_op_def
+      bounded_clinear.clinear Collect_cong is_linear_manifold.intro mem_Collect_eq
+     complex_vector.linear_0 
+    by smt (* > 1.0 s *)
 qed
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
@@ -1772,7 +1772,8 @@ proof-
     then obtain yy where \<open>y = f yy\<close> using  \<open>A = (ran_op f)\<close> 
       by (smt mem_Collect_eq ran_op_def)
     have \<open>x + y = f (xx + yy)\<close> 
-      by (metis Modules.additive_def \<open>clinear f\<close> \<open>x = f xx\<close> \<open>y = f yy\<close>  clinear_def)
+      using Modules.additive_def \<open>clinear f\<close> \<open>x = f xx\<close> \<open>y = f yy\<close>  clinear_def
+      by (simp add: complex_vector.linear_add)
     thus ?thesis 
       by (metis (mono_tags, lifting) \<open>A = ran_op f\<close> mem_Collect_eq ran_op_def)
   qed
@@ -1783,8 +1784,8 @@ proof-
       using  \<open>A = (ran_op f)\<close> 
       by (smt mem_Collect_eq ran_op_def)
     have \<open>c *\<^sub>C x = f (c *\<^sub>C y)\<close>
-      using  \<open>x = f y\<close>
-      by (simp add: \<open>clinear f\<close>  clinear.scaleC)
+      using  \<open>x = f y\<close> \<open>clinear f\<close>
+      by (simp add: complex_vector.linear_scale)
     thus ?thesis
       using  \<open>x = f y\<close>
       by (metis (mono_tags, lifting) \<open>A = ran_op f\<close> mem_Collect_eq ran_op_def)
@@ -1792,7 +1793,8 @@ proof-
   have  "0 \<in> A"
   proof-
     have \<open>0 = f 0\<close> 
-      using \<open>clinear f\<close> additive.zero clinear_def by auto    
+      using \<open>clinear f\<close> additive.zero clinear_def
+      by (simp add: complex_vector.linear_0)     
     hence \<open>0 \<in> ran_op f\<close>
       by (metis (mono_tags, lifting) mem_Collect_eq ran_op_def)
     thus ?thesis 
@@ -1877,9 +1879,9 @@ proof-
         by simp
       hence \<open>x \<in> {v. (id - (projection M)) v = 0}\<close>
         by simp
-      hence \<open>x \<in>  (span {v. (id - (projection M)) v = 0})\<close>
+      hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
         using span_superset 
-        by fastforce
+        by fastforce 
       hence \<open>x \<in> ( ker_op ( id - (projection M) ) )\<close> 
         by (metis ProjOntoOrtho \<open>(id - projection M) x = 0\<close> \<open>is_subspace M\<close> calculation diff_zero is_subspace_orthog projection_intro1)
       thus ?thesis 
@@ -1954,9 +1956,9 @@ lemma sum_existential:
   \<open>x \<in> (A +\<^sub>m B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
 proof -
   assume "x \<in> (A +\<^sub>m B)"
-  then have "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
+  hence "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
     using Minkoswki_sum_def by blast
-  then show ?thesis
+  thus ?thesis
     by (metis (lifting))
 qed
 
@@ -2052,7 +2054,14 @@ proof-
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
     from  \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> 
     have \<open>\<forall> z \<in> B. \<langle> z , x \<rangle> = 0\<close> 
-      by (smt Groups.add_ac(2) add.right_neutral assms(1) Minkoswki_sum_def is_linear_manifold.zero is_subspace.subspace mem_Collect_eq)
+    proof - (* sledgehammer *)
+      { fix aa :: 'a
+        have "aa \<notin> B \<or> \<langle>aa, x\<rangle> = 0"
+          using Minkoswki_sum_def \<open>\<forall>z\<in>A +\<^sub>m B. \<langle>z, x\<rangle> = 0\<close> \<open>is_subspace A\<close> is_linear_manifold.zero is_subspace.subspace by force }
+      then show ?thesis
+        by (metis (lifting))
+    qed
+
     hence \<open>x \<in> (orthogonal_complement B)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
     show ?thesis 
@@ -2172,9 +2181,9 @@ proof -
   proof -
     from that have "x \<bottom> x"
       unfolding orthogonal_complement_def by auto
-    then have "\<langle>x, x\<rangle> = 0"
+    hence "\<langle>x, x\<rangle> = 0"
       using is_orthogonal_def by blast
-    then show "x=0"
+    thus "x=0"
       by auto
   qed
   with assms show ?thesis
@@ -2237,9 +2246,6 @@ proof-
   finally show ?thesis using \<open>(projection M) x = k *\<^sub>C t\<close> 
     by auto
 qed
-
-
-
 
 
 section "Unsorted"
@@ -2320,13 +2326,15 @@ proof-
     hence  \<open>(f x) = (f (k *\<^sub>C y))\<close>
       using  \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
-      by (simp add: clinear.scaleC)
+      by (simp add: complex_vector.linear_scale)
+
     hence  \<open>(f x) - (f (k *\<^sub>C y)) = 0\<close>
       by simp
     hence  \<open>f (x - (k *\<^sub>C y)) = 0\<close>
-      using  \<open>bounded_clinear f\<close>
+      using additive.diff  \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
-      by (simp add: additive.diff clinear.axioms(1))
+      by (simp add: complex_vector.linear_diff)
+        
     hence  \<open>(x - (k *\<^sub>C y)) \<in> ker_op f\<close>
       using ker_op_def
       by (simp add: ker_op_def)
@@ -2358,11 +2366,11 @@ lemma riesz_frechet_representation_existence:
   shows \<open>\<exists>t. \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
-  then show ?thesis
+  thus ?thesis
     by (metis cinner_zero_left) 
 next
   case False
-  then show ?thesis 
+  thus ?thesis 
   proof-
     from \<open>bounded_clinear f\<close>
     have \<open>proportion (orthogonal_complement (ker_op f))\<close>
@@ -2406,7 +2414,8 @@ next
       for x
       using \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
-      by (simp add: clinear.scaleC)
+      by (simp add: complex_vector.linear_scale)
+
     hence \<open>f (projection (orthogonal_complement (ker_op f)) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
     proof-
@@ -2422,7 +2431,15 @@ next
       by (simp add: projection_ker_simp assms) 
     ultimately have \<open>f x = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
-      by (smt \<open>t \<in> orthogonal_complement (ker_op f)\<close> additive.add assms bounded_clinear_def cinner_simps(1) cinner_simps(5) cinner_simps(6) cinner_zero_left clinear.axioms(1) ker_op_lin ortho_decomp projectionPropertiesA projectionPropertiesD projection_fixed_points projection_ker_simp projection_ker_simp)
+    proof -
+      assume "\<And>x. f (projection (ker_op f) x) = 0"
+      hence "\<And>a aa. f (projection (ker_op f) a + aa) = 0 + f aa"
+        by (metis (no_types) additive.add assms bounded_clinear_def clinear_additive_D)
+      hence "\<And>a. 0 + f (projection (orthogonal_complement (ker_op f)) a) = f a"
+        by (metis (no_types) assms ker_op_lin ortho_decomp)
+      thus ?thesis
+        by (simp add: \<open>\<And>x. f (projection (orthogonal_complement (ker_op f)) x) = \<langle>(cnj (f t) / \<langle>t, t\<rangle>) *\<^sub>C t, x\<rangle>\<close>)
+    qed
     thus ?thesis
       by blast  
   qed
@@ -2444,7 +2461,8 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
   have  \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
     using  \<open>bounded_clinear G\<close>
     unfolding bounded_clinear_def
-    by (simp add: bounded_clinear_axioms_def) 
+    by simp
+    
   define g :: \<open>'a \<Rightarrow> ('b \<Rightarrow> complex)\<close> where
     \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
   have \<open>bounded_clinear (g x)\<close>
@@ -2455,13 +2473,15 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
       have \<open>(g x) (a + b) = (g x) a + (g x) b\<close>
         for a b
         unfolding  \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
-        using  \<open>clinear G\<close>
-        by (simp add: additive.add cinner_right_distrib clinear_def)
+        using  \<open>clinear G\<close> additive.add cinner_right_distrib clinear_def
+        by (simp add: cinner_right_distrib complex_vector.linear_add)
+
       moreover have  \<open>(g x) (k *\<^sub>C a) = k *\<^sub>C ((g x) a)\<close>
         for a k
         unfolding g_def
         using  \<open>clinear G\<close>
-        by (simp add: clinear.scaleC)
+        by (simp add: complex_vector.linear_scale)
+
       ultimately show ?thesis
         by (simp add: clinearI) 
     qed
@@ -2469,7 +2489,9 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
       using \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close> g_def
       by (simp add: \<open>bounded_clinear G\<close> bounded_clinear.bounded bounded_clinear_cinner_right_comp)
     ultimately show ?thesis unfolding bounded_linear_def
-      using bounded_clinear.intro bounded_clinear_axioms_def by auto 
+      using bounded_clinear.intro
+      by blast 
+
   qed
   hence  \<open>\<forall> x. \<exists> t::'b. ( \<forall> y :: 'b.  (g x) y = (\<langle>t , y\<rangle>) )\<close>
     using  riesz_frechet_representation_existence by blast
@@ -2613,9 +2635,8 @@ proof-
     thus ?thesis by blast
   qed
   ultimately show ?thesis
-    unfolding bounded_clinear_def
-    unfolding clinear_def
-    by (simp add: bounded_clinear_axioms_def clinear_axioms.intro)
+    unfolding bounded_clinear_def  Modules.additive_def
+    using clinearI by blast    
 qed
 
 instantiation complex :: "chilbert_space" begin
@@ -2657,20 +2678,9 @@ proposition dagger_dagger_id:
   qed
 qed
 
+(* TODO: move Complex_Vector_space *)
 lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
-  proof
-  show "id ((x::'a) + y) = id x + id y"
-    for x :: 'a
-      and y :: 'a
-    unfolding id_def by blast
-  show "id (r *\<^sub>C (x::'a)) = r *\<^sub>C id x"
-    for r :: complex
-      and x :: 'a
-    unfolding id_def by blast
-  show "\<exists>K. \<forall>x. norm (id (x::'a)) \<le> norm x * K"
-     unfolding id_def
-     using less_eq_real_def by auto 
-qed
+  by (rule Complex_Vector_Spaces.bounded_clinear_ident)
 
 lemma id_dagger: \<open>(id::'a::chilbert_space\<Rightarrow>'a)\<^sup>\<dagger> = id\<close>
 proof-
@@ -2723,20 +2733,20 @@ proof-
     thus ?thesis by blast
   qed
   ultimately show ?thesis
-  proof - (* automatic proof *)
+  proof - (* sledgehammer *)
     assume a1: "\<And>x y. \<langle>cnj a *\<^sub>C (A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, a *\<^sub>C A y\<rangle>"
     { fix bb :: 'b
       have "\<And>b aa. \<langle>cnj a *\<^sub>C (A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
         using a1 by (metis (lifting) assms(2))
-      then have "\<And>aa b. \<langle>aa, cnj a *\<^sub>C (A\<^sup>\<dagger>) b\<rangle> = cnj \<langle>b, A (a *\<^sub>C aa)\<rangle>"
+      hence "\<And>aa b. \<langle>aa, cnj a *\<^sub>C (A\<^sup>\<dagger>) b\<rangle> = cnj \<langle>b, A (a *\<^sub>C aa)\<rangle>"
         by (metis (lifting) cinner_commute')
-      then have "\<And>b aa. a *\<^sub>C \<langle>(A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
+      hence "\<And>b aa. a *\<^sub>C \<langle>(A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
         by (metis (no_types) cinner_commute' cinner_scaleC_left cinner_scaleC_right complex_scaleC_def)
-      then have "(\<lambda>b. cnj a *\<^sub>C (A\<^sup>\<dagger>) b) = (\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>"
+      hence "(\<lambda>b. cnj a *\<^sub>C (A\<^sup>\<dagger>) b) = (\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>"
         by (simp add: Adj_D \<open>bounded_linear (\<lambda>t. a *\<^sub>C A t)\<close> assms(2) bounded_linear_bounded_clinear)
-      then have "cnj a *\<^sub>C (A\<^sup>\<dagger>) bb = ((\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>) bb"
+      hence "cnj a *\<^sub>C (A\<^sup>\<dagger>) bb = ((\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>) bb"
         by metis }
-    then show ?thesis
+    thus ?thesis
       by presburger
   qed  
 qed
@@ -2752,12 +2762,19 @@ lemma is_linear_manifold_image:
     obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
       "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
       by moura
-    then have f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
+    hence f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
       by blast
-    then have "aa S f x + aa S f y \<in> S"
+    hence "aa S f x + aa S f y \<in> S"
       using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
-    then show "x + y \<in> f ` S"
-      using f3 a2 a1 by (metis (no_types) additive.add assms(1) clinear.axioms(1))
+    thus "x + y \<in> f ` S"
+      using f3 a2 a1 additive.add assms(1)
+    proof - (* sledgehammer *)
+      have "x + y = f (aa S f x + aa S f y)"
+        by (metis (full_types) \<open>clinear f\<close> a1 a2 complex_vector.linear_add f3)
+      thus ?thesis
+        using \<open>aa S f x + aa S f y \<in> S\<close> by blast
+    qed
+
   qed
   subgoal proof -
     fix x :: 'b and c :: complex
@@ -2765,11 +2782,11 @@ lemma is_linear_manifold_image:
     obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
       "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
       by moura
-    then have f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
+    hence f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
       using a1 by (simp add: Bex_def_raw image_iff)
-    then have "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
-      by (metis (no_types) assms(1) clinear_axioms_def clinear_def)
-    then show "c *\<^sub>C x \<in> f ` S"
+    hence "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
+      using  assms(1) clinear_def complex_vector.linear_scale by fastforce
+    thus "c *\<^sub>C x \<in> f ` S"
       using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
   qed
   by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
@@ -2783,7 +2800,7 @@ proof -
   have "is_linear_manifold {f x |x. x \<in> S}"
     using assms is_linear_manifold_image
     by (simp add: is_linear_manifold_image Setcompr_eq_image)
-  then show \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
+  thus \<open>is_subspace (closure {f x |x. x \<in> S})\<close>
     apply (rule_tac is_subspace.intro)
     using is_subspace_cl apply blast
     by blast
@@ -2801,11 +2818,11 @@ proof-
     for x
   proof -
     assume "x \<in> S"
-    then have "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
+    hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
       using assms(2) is_linear_manifold_def is_subspace.subspace scaleC_one by blast
-    then have "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
+    hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
       using assms(1) by auto
-    then show ?thesis
+    thus ?thesis
       by (meson image_iff)
   qed 
   ultimately show ?thesis by blast
@@ -3064,9 +3081,9 @@ lemma xsupxy_linear_space:
       proof -
         have f1: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> Rep_linear_space l \<and> ab \<in> Rep_linear_space la} = Rep_linear_space (l + la)"
           by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-        then have "t \<in> Rep_linear_space (x + y)"
+        hence "t \<in> Rep_linear_space (x + y)"
           using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space x \<and> \<phi> \<in> Rep_linear_space y}\<close> by blast
-        then show ?thesis
+        thus ?thesis
           using f1 by (simp add: Rep_linear_space_inverse)
       qed
     qed
@@ -3142,9 +3159,9 @@ shows "(y::'a linear_space) + z \<le> x"
       assume a2: "Rep_linear_space z \<subseteq> Rep_linear_space x"
       have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> Rep_linear_space l \<and> ab \<in> Rep_linear_space la} = Rep_linear_space (l + la)"
         by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-      then have "Rep_linear_space (y + z) \<subseteq> Rep_linear_space x"
+      hence "Rep_linear_space (y + z) \<subseteq> Rep_linear_space x"
         using a2 a1 \<open>\<lbrakk>Rep_linear_space y \<subseteq> Rep_linear_space x; Rep_linear_space z \<subseteq> Rep_linear_space x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z} \<subseteq> Rep_linear_space x\<close> by blast
-      then show ?thesis
+      thus ?thesis
         using f3 by (simp add: Rep_linear_space_inverse)
     qed
     thus ?thesis
@@ -3245,7 +3262,7 @@ proof-
       proof -
         have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
           by (metis \<open>is_subspace x\<close> is_closed_subspace_universal_inclusion_right is_subspace_orthog)
-        then show ?thesis
+        thus ?thesis
           by (metis (no_types) \<open>is_subspace x\<close> \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close> \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono is_closed_subspace_universal_inclusion_left is_linear_manifold.additive_closed is_subspace.subspace is_subspace_closed_plus is_subspace_orthog)
       qed 
     qed
