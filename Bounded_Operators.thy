@@ -641,7 +641,7 @@ lift_definition timesOp::
   by (rule bounded_clinear_compose, simp_all)
 
 (* TODO: Replace \<cdot>\<^sub>s \<rightarrow> *\<^sub>s    *)
-(* TODO: Is "closure" necessary? If not, remove. If yes, mention counterexample. *)
+(* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
@@ -2783,11 +2783,57 @@ lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector
 is bij.
 *)
 
+lemma isCont_applyOp[simp]: "isCont ((\<cdot>\<^sub>v) A) \<psi>"
+  sorry
+
 lemma applyOpSpace_mono:
   "S \<le> T \<Longrightarrow> A \<cdot>\<^sub>s S \<le> A \<cdot>\<^sub>s T"
   by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_linear_space.rep_eq)
 
-(* TODO proof incomplete (contains sorry/cheat) *)
+lemma apply_left_neutral:
+  assumes "A \<cdot>\<^sub>o B = B"
+  assumes "\<psi> \<in> Rep_linear_space (B \<cdot>\<^sub>s top)"
+  shows "A \<cdot>\<^sub>v \<psi> = \<psi>" 
+proof -
+  define rangeB rangeB' where "rangeB = Rep_linear_space (B \<cdot>\<^sub>s top)" and "rangeB' = range (Rep_bounded B)"
+  from assms have "\<psi> \<in> closure rangeB'"
+    unfolding rangeB'_def apply (transfer fixing: \<psi>) by simp
+  then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
+        apply atomize_elim using closure_sequential by blast
+  have A_invariant: "A \<cdot>\<^sub>v \<psi>i i = \<psi>i i" for i
+  proof -
+    from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B \<cdot>\<^sub>v \<phi>"
+      apply atomize_elim unfolding rangeB'_def apply transfer by auto
+    then have "A \<cdot>\<^sub>v \<psi>i i = (A \<cdot>\<^sub>o B) \<cdot>\<^sub>v \<phi>"
+      by (simp add: timesOp.rep_eq)
+    also have "\<dots> = B \<cdot>\<^sub>v \<phi>"
+      by (simp add: assms)
+    also have "\<dots> = \<psi>i i"
+      by (simp add: \<phi>)
+    finally show ?thesis
+      by -
+  qed
+  from \<psi>i_lim have "(\<lambda>i. A \<cdot>\<^sub>v (\<psi>i i)) \<longlonglongrightarrow> A \<cdot>\<^sub>v \<psi>"
+    by (rule isCont_tendsto_compose[rotated], simp)
+  with A_invariant have "(\<lambda>i. \<psi>i i) \<longlonglongrightarrow> A \<cdot>\<^sub>v \<psi>"
+    by auto
+  with \<psi>i_lim show "A \<cdot>\<^sub>v \<psi> = \<psi>"
+    using LIMSEQ_unique by blast
+qed
+
+lemma range_adjoint_isometry:
+  assumes "isometry U"
+  shows "U* \<cdot>\<^sub>s top = top"
+proof -
+  from assms have "top = U* \<cdot>\<^sub>s U \<cdot>\<^sub>s top"
+    by (metis adjUU applyOpSpace_id timesOp_assoc_linear_space)
+  also have "\<dots> \<le> U* \<cdot>\<^sub>s top"
+    by (simp add: applyOpSpace_mono)
+  finally show ?thesis
+    using top.extremum_unique by blast
+qed
+
+
 lemma mult_INF_general[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
     and Uinv :: "('c,'b) bounded" 
@@ -2809,18 +2855,8 @@ next
     then have "INFUV \<le> rangeU"
       unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
     moreover have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeU" for \<psi>
-    proof -
-      from that obtain \<phi> where \<phi>: "\<psi> = U \<cdot>\<^sub>v \<phi>"
-        apply atomize_elim unfolding rangeU_def apply transfer sorry
-      then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = (U \<cdot>\<^sub>o Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<phi>"
-        by (simp add: timesOp.rep_eq)
-      also have "\<dots> = U \<cdot>\<^sub>v \<phi>"
-        by (simp add: UUinvU)
-      also have "\<dots> = \<psi>"
-        by (simp add: \<phi>)
-      finally show ?thesis
-        by -
-    qed
+      apply (rule apply_left_neutral[where B=U])
+      using assms that rangeU_def by auto
     ultimately have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space INFUV" for \<psi>
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>s INFUV = INFUV"
@@ -2839,18 +2875,8 @@ next
     from assms have "V i \<le> rangeUinv" for i
       unfolding rangeUinv_def by simp
     moreover have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeUinv" for \<psi>
-    proof -
-      from that obtain \<phi> where \<phi>: "\<psi> = Uinv \<cdot>\<^sub>v \<phi>"
-        apply atomize_elim unfolding rangeU_def apply transfer sorry
-      then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = (Uinv \<cdot>\<^sub>o U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<phi>"
-        by (simp add: timesOp.rep_eq)
-      also have "\<dots> = Uinv \<cdot>\<^sub>v \<phi>"
-        by (simp add: UinvUUinv)
-      also have "\<dots> = \<psi>"
-        by (simp add: \<phi>)
-      finally show ?thesis
-        by -
-    qed
+      apply (rule apply_left_neutral[where B=Uinv])
+      using assms that rangeUinv_def by auto
     ultimately have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space (V i)" for \<psi> i
       using less_eq_linear_space.rep_eq that by blast
     then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>s (V i) = (V i)" for i
@@ -2865,12 +2891,21 @@ next
     by -
 qed
 
-(* TODO: by reduction to mult_INF_general *)
 lemma mult_INF[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
   assumes \<open>isometry U\<close>
-  shows "U \<cdot>\<^sub>s (INF x. V x) = (INF x. U \<cdot>\<^sub>s V x)"
-  by (cheat mult_INF)
+  shows "U \<cdot>\<^sub>s (INF i. V i) = (INF i. U \<cdot>\<^sub>s V i)"
+proof -
+  from \<open>isometry U\<close> have "U* \<cdot>\<^sub>o U \<cdot>\<^sub>o U* = U*"
+    unfolding isometry_def by simp
+  moreover from \<open>isometry U\<close> have "U \<cdot>\<^sub>o U* \<cdot>\<^sub>o U = U"
+    unfolding isometry_def
+    by (simp add: timesOp_assoc)
+  moreover have "V i \<le> U* \<cdot>\<^sub>s top" for i
+    by (simp add: range_adjoint_isometry assms)
+  ultimately show ?thesis
+    by (rule mult_INF_general)
+qed
 (* proof-
   have \<open>U \<cdot>\<^sub>s (INF x. V x) \<le> (INF x. U \<cdot>\<^sub>s V x)\<close>
     by simp
