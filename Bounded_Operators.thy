@@ -745,7 +745,7 @@ proof-
     by presburger
   hence \<open>bounded_clinear U \<Longrightarrow>
          Abs_linear_space
-          (closure (U ` Rep_linear_space (Abs_linear_space {0}))) =
+          (closure (U ` space_as_set (Abs_linear_space {0}))) =
          Abs_linear_space {0}\<close>
     for U::\<open>'a\<Rightarrow>'b\<close>
   by (simp add: Abs_linear_space_inverse)  } note 1 = this
@@ -829,42 +829,42 @@ proof-
     using Rep_bounded by auto
   moreover have \<open>bounded_clinear (Rep_bounded B)\<close>
     using Rep_bounded by auto
-  moreover have \<open>is_subspace (Rep_linear_space \<psi>)\<close>
-    using Rep_linear_space by auto
+  moreover have \<open>is_subspace (space_as_set \<psi>)\<close>
+    using space_as_set by auto
   ultimately have  \<open>
      (closure
-       ( (Rep_bounded A \<circ> Rep_bounded B) ` Rep_linear_space \<psi>)) =
+       ( (Rep_bounded A \<circ> Rep_bounded B) ` space_as_set \<psi>)) =
      (closure
        (Rep_bounded A `
-      closure (Rep_bounded B ` Rep_linear_space \<psi>)))\<close>
+      closure (Rep_bounded B ` space_as_set \<psi>)))\<close>
     using times_comp by blast
   hence  \<open>
      (closure
-       ( (Rep_bounded A \<circ> Rep_bounded B) ` Rep_linear_space \<psi>)) =
+       ( (Rep_bounded A \<circ> Rep_bounded B) ` space_as_set \<psi>)) =
      (closure
        (Rep_bounded A `
-        Rep_linear_space
+        space_as_set
          (Abs_linear_space
-           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
-    by (metis Rep_linear_space_inverse applyOpSpace.rep_eq)    
+           (closure (Rep_bounded B ` space_as_set \<psi>)))))\<close>
+    by (metis space_as_set_inverse applyOpSpace.rep_eq)    
   hence  \<open>
      (closure
-       (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
+       (Rep_bounded (timesOp A B) ` space_as_set \<psi>)) =
      (closure
        (Rep_bounded A `
-        Rep_linear_space
+        space_as_set
          (Abs_linear_space
-           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
+           (closure (Rep_bounded B ` space_as_set \<psi>)))))\<close>
     by (simp add: timesOp.rep_eq)    
   hence \<open> Abs_linear_space
      (closure
-       (Rep_bounded (timesOp A B) ` Rep_linear_space \<psi>)) =
+       (Rep_bounded (timesOp A B) ` space_as_set \<psi>)) =
     Abs_linear_space
      (closure
        (Rep_bounded A `
-        Rep_linear_space
+        space_as_set
          (Abs_linear_space
-           (closure (Rep_bounded B ` Rep_linear_space \<psi>)))))\<close>
+           (closure (Rep_bounded B ` space_as_set \<psi>)))))\<close>
     using Abs_linear_space_inject by auto
   thus ?thesis
     unfolding applyOpSpace_def
@@ -902,7 +902,7 @@ proof-
   qed
   ultimately have \<open>closure (Rep_bounded U ` {0}) = {0}\<close>
     by simp
-  hence \<open>(closure (Rep_bounded U ` Rep_linear_space (Abs_linear_space {0}))) = {0}\<close>
+  hence \<open>(closure (Rep_bounded U ` space_as_set (Abs_linear_space {0}))) = {0}\<close>
     by (metis bot_linear_space.abs_eq bot_linear_space.rep_eq) 
   thus ?thesis
     unfolding applyOpSpace_def bot_linear_space_def by simp
@@ -1139,8 +1139,8 @@ proof-
        Abs_linear_space
         (closure
           {\<psi> + \<phi> |\<psi> \<phi>.
-           \<psi> \<in> Rep_linear_space (Abs_linear_space (closure (U ` A))) \<and>
-           \<phi> \<in> Rep_linear_space (Abs_linear_space (closure (U ` B)))})\<close>
+           \<psi> \<in> space_as_set (Abs_linear_space (closure (U ` A))) \<and>
+           \<phi> \<in> space_as_set (Abs_linear_space (closure (U ` B)))})\<close>
       for U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
     proof-
       assume \<open>bounded_clinear U\<close> and \<open>is_subspace A\<close> and \<open>is_subspace B\<close> 
@@ -1155,7 +1155,7 @@ proof-
            \<phi> \<in> closure (U ` B)})\<close>
         by simp
       thus ?thesis using Abs_linear_space_inverse
-        by (smt Collect_cong Rep_bounded_cases Rep_linear_space \<open>bounded_clinear U\<close> \<open>is_subspace A\<close> \<open>is_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
+        by (smt Collect_cong Rep_bounded_cases space_as_set \<open>bounded_clinear U\<close> \<open>is_subspace A\<close> \<open>is_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
     qed    
   } note 1 = this
 
@@ -1175,22 +1175,22 @@ lemma scalar_op_linear_space_assoc [simp]:
     and S::\<open>'a linear_space\<close> and \<alpha>::complex
   shows \<open>(\<alpha> *\<^sub>C A) \<cdot>\<^sub>s S  = \<alpha> *\<^sub>C (A \<cdot>\<^sub>s S)\<close>
 proof-
-  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (Rep_bounded A) ) ` Rep_linear_space S) =
-   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (Rep_bounded A) ) ` space_as_set S) =
+   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` space_as_set S))\<close>
     by (metis closure_scaleC image_comp)    
-  hence \<open>(closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
-   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+  hence \<open>(closure (Rep_bounded (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+   ((*\<^sub>C) \<alpha>) ` (closure (Rep_bounded A ` space_as_set S))\<close>
     by (metis (mono_tags, lifting) comp_apply image_cong scaleC_bounded.rep_eq)
   hence \<open>Abs_linear_space
-     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
+     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C
-    Abs_linear_space (closure (Rep_bounded A ` Rep_linear_space S))\<close>
-    by (metis Rep_linear_space_inverse applyOpSpace.rep_eq scaleC_linear_space.rep_eq)    
+    Abs_linear_space (closure (Rep_bounded A ` space_as_set S))\<close>
+    by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_linear_space.rep_eq)    
   show ?thesis 
     unfolding applyOpSpace_def apply auto
     using \<open>Abs_linear_space
-     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` Rep_linear_space S)) =
-    \<alpha> *\<^sub>C Abs_linear_space (closure (Rep_bounded A ` Rep_linear_space S))\<close>
+     (closure (Rep_bounded (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+    \<alpha> *\<^sub>C Abs_linear_space (closure (Rep_bounded A ` space_as_set S))\<close>
     by blast
 qed
 
@@ -1198,24 +1198,24 @@ lemma applyOpSpace_id[simp]:
 
 shows "idOp \<cdot>\<^sub>s \<psi> = \<psi>"
 proof-
-  have \<open>is_subspace ( Rep_linear_space \<psi>)\<close>
-    using Rep_linear_space by blast    
-  hence \<open>closed ( Rep_linear_space \<psi>)\<close>
+  have \<open>is_subspace ( space_as_set \<psi>)\<close>
+    using space_as_set by blast    
+  hence \<open>closed ( space_as_set \<psi>)\<close>
     unfolding is_subspace_def by blast
-  hence \<open>closure ( Rep_linear_space \<psi>) = Rep_linear_space \<psi>\<close>
+  hence \<open>closure ( space_as_set \<psi>) = space_as_set \<psi>\<close>
     by simp    
-  hence \<open>(closure ( id ` Rep_linear_space \<psi>)) = Rep_linear_space \<psi>\<close>
+  hence \<open>(closure ( id ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
     by simp    
-  hence \<open>(closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = Rep_linear_space \<psi>\<close>
+  hence \<open>(closure (Rep_bounded (Abs_bounded id) ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
     by (metis idOp.abs_eq idOp.rep_eq)    
   hence \<open>Abs_linear_space
-     (closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = \<psi>\<close>
-    by (simp add: Rep_linear_space_inverse)    
+     (closure (Rep_bounded (Abs_bounded id) ` space_as_set \<psi>)) = \<psi>\<close>
+    by (simp add: space_as_set_inverse)    
   show ?thesis
     unfolding applyOpSpace_def idOp_def
     apply auto
     using  \<open>Abs_linear_space
-     (closure (Rep_bounded (Abs_bounded id) ` Rep_linear_space \<psi>)) = \<psi>\<close>
+     (closure (Rep_bounded (Abs_bounded id) ` space_as_set \<psi>)) = \<psi>\<close>
     by blast
 qed
 
@@ -1369,7 +1369,7 @@ proof(cases \<open>G = {}\<close>)
   hence \<open>t = 0\<close>
     using assms(3) by blast
   moreover have \<open>A 0 = 0\<close>
-    by (metis True assms(1) assms(3) calculation complex_vector.span_empty empty_iff equal_span_0_n partial_span.simps(1))
+    by (metis True assms(1) assms(3) calculation complex_vector.span_empty empty_iff equal_span partial_span.simps(1))
   ultimately show ?thesis
     by simp 
 next
@@ -1431,7 +1431,7 @@ qed
 
 lemma applyOpSpace_span:
   fixes A B :: "('a::cbanach,'b::cbanach) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (Span G)\<close>
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> space_as_set (Span G)\<close>
   shows "A \<cdot>\<^sub>v t = B \<cdot>\<^sub>v t"
   using assms
   apply transfer
@@ -1443,45 +1443,45 @@ lemma applyOpSpace_less_eq:
   assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "Span G \<ge> S"
   shows "A \<cdot>\<^sub>s S \<le> B \<cdot>\<^sub>s S"
 proof-
-  have \<open>t \<in> ((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<Longrightarrow> t \<in> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+  have \<open>t \<in> ((\<cdot>\<^sub>v) A ` space_as_set S) \<Longrightarrow> t \<in> ((\<cdot>\<^sub>v) B ` space_as_set S)\<close>
     for t
   proof-
-    assume \<open>t \<in> ((\<cdot>\<^sub>v) A ` Rep_linear_space S)\<close>
-    hence \<open>\<exists> x\<in>Rep_linear_space S. t = A \<cdot>\<^sub>v x\<close>
+    assume \<open>t \<in> ((\<cdot>\<^sub>v) A ` space_as_set S)\<close>
+    hence \<open>\<exists> x\<in>space_as_set S. t = A \<cdot>\<^sub>v x\<close>
       by blast
-    then obtain x where \<open>x\<in>Rep_linear_space S\<close> and \<open>t = A \<cdot>\<^sub>v x\<close>
+    then obtain x where \<open>x\<in>space_as_set S\<close> and \<open>t = A \<cdot>\<^sub>v x\<close>
       by blast
-    have \<open>x \<in> Rep_linear_space (Span G)\<close>
-      using  \<open>x\<in>Rep_linear_space S\<close> assms(2) less_eq_linear_space.rep_eq by blast
+    have \<open>x \<in> space_as_set (Span G)\<close>
+      using  \<open>x\<in>space_as_set S\<close> assms(2) less_eq_linear_space.rep_eq by blast
     hence \<open>A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x\<close>
       using applyOpSpace_span assms(1) by blast
     thus ?thesis
-      by (simp add: \<open>t = A \<cdot>\<^sub>v x\<close> \<open>x \<in> Rep_linear_space S\<close>)      
+      by (simp add: \<open>t = A \<cdot>\<^sub>v x\<close> \<open>x \<in> space_as_set S\<close>)      
   qed
-  hence \<open>((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+  hence \<open>((\<cdot>\<^sub>v) A ` space_as_set S) \<subseteq> ((\<cdot>\<^sub>v) B ` space_as_set S)\<close>
     by blast
-  have \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S) \<Longrightarrow> t \<in> Rep_linear_space (B \<cdot>\<^sub>s S)\<close>
+  have \<open>t \<in> space_as_set (A \<cdot>\<^sub>s S) \<Longrightarrow> t \<in> space_as_set (B \<cdot>\<^sub>s S)\<close>
     for t
   proof-
-    assume \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S)\<close>
-    hence  \<open>t \<in> Rep_linear_space
-          (Abs_linear_space (closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S)))\<close>
+    assume \<open>t \<in> space_as_set (A \<cdot>\<^sub>s S)\<close>
+    hence  \<open>t \<in> space_as_set
+          (Abs_linear_space (closure ((\<cdot>\<^sub>v) A ` space_as_set S)))\<close>
       unfolding applyOpSpace_def
       by  auto
-    hence  \<open>t \<in> closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S)\<close>
-      using Abs_linear_space_inverse \<open>t \<in> Rep_linear_space (A \<cdot>\<^sub>s S)\<close> applyOpSpace.rep_eq by blast
-    moreover have \<open>closure ((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq>  closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
-      using  \<open>((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<subseteq> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+    hence  \<open>t \<in> closure ((\<cdot>\<^sub>v) A ` space_as_set S)\<close>
+      using Abs_linear_space_inverse \<open>t \<in> space_as_set (A \<cdot>\<^sub>s S)\<close> applyOpSpace.rep_eq by blast
+    moreover have \<open>closure ((\<cdot>\<^sub>v) A ` space_as_set S) \<subseteq>  closure ((\<cdot>\<^sub>v) B ` space_as_set S)\<close>
+      using  \<open>((\<cdot>\<^sub>v) A ` space_as_set S) \<subseteq> ((\<cdot>\<^sub>v) B ` space_as_set S)\<close>
         by (simp add: closure_mono) 
-    ultimately have  \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
+    ultimately have  \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` space_as_set S)\<close>
       by blast      
-    hence  \<open>t \<in> Rep_linear_space
-          (Abs_linear_space (closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)))\<close>
-      by (metis Rep_linear_space_inverse applyOpSpace.rep_eq)      
+    hence  \<open>t \<in> space_as_set
+          (Abs_linear_space (closure ((\<cdot>\<^sub>v) B ` space_as_set S)))\<close>
+      by (metis space_as_set_inverse applyOpSpace.rep_eq)      
     thus ?thesis
-      by (simp add: \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close> applyOpSpace.rep_eq) 
+      by (simp add: \<open>t \<in> closure ((\<cdot>\<^sub>v) B ` space_as_set S)\<close> applyOpSpace.rep_eq) 
   qed
-  hence \<open>Rep_linear_space (A \<cdot>\<^sub>s S) \<subseteq> Rep_linear_space (B \<cdot>\<^sub>s S)\<close>
+  hence \<open>space_as_set (A \<cdot>\<^sub>s S) \<subseteq> space_as_set (B \<cdot>\<^sub>s S)\<close>
     by blast
   thus ?thesis
     by (simp add: less_eq_linear_space.rep_eq) 
@@ -2065,14 +2065,14 @@ lemma Proj_endo_D1[simp]:
 
 lemma Proj_D2[simp]: \<open>(Proj M) \<cdot>\<^sub>o (Proj M) = (Proj M)\<close>
 proof-
-  have \<open>(Rep_bounded (Proj M)) = projection (Rep_linear_space M)\<close>
+  have \<open>(Rep_bounded (Proj M)) = projection (space_as_set M)\<close>
     apply transfer
     by blast
-  moreover have \<open>(projection (Rep_linear_space M))\<circ>(projection (Rep_linear_space M))
-                = (projection (Rep_linear_space M)) \<close>
+  moreover have \<open>(projection (space_as_set M))\<circ>(projection (space_as_set M))
+                = (projection (space_as_set M)) \<close>
   proof-
-    have \<open>is_subspace (Rep_linear_space M)\<close>
-      using Rep_linear_space by auto
+    have \<open>is_subspace (space_as_set M)\<close>
+      using space_as_set by auto
     thus ?thesis
       by (simp add: projectionPropertiesC) 
   qed
@@ -2096,7 +2096,7 @@ lemma Proj_endo_D2[simp]:
 *)
 
 lemma Proj_I:
-\<open>P \<cdot>\<^sub>o P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> Rep_linear_space M = range (Rep_bounded P)\<close>
+\<open>P \<cdot>\<^sub>o P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (Rep_bounded P)\<close>
   for P :: \<open>('a::chilbert_space,'a) bounded\<close>
 proof-
   assume \<open>P \<cdot>\<^sub>o P = P\<close> and \<open>P = P*\<close>
@@ -2176,23 +2176,23 @@ proof-
     using \<open>closed (range (Rep_bounded P))\<close>
      bounded_clinear.clinear is_linear_manifold_image is_subspace.intro 
       is_subspace.subspace is_subspace_UNIV by blast
-  hence \<open>\<exists> M. Rep_linear_space M = (range (Rep_bounded P))\<close>
+  hence \<open>\<exists> M. space_as_set M = (range (Rep_bounded P))\<close>
     using  \<open>closed (range (Rep_bounded P))\<close>
     by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
-  then obtain M where \<open>Rep_linear_space M = (range (Rep_bounded P))\<close>
+  then obtain M where \<open>space_as_set M = (range (Rep_bounded P))\<close>
     by blast
-  have \<open>Rep_bounded P x \<in> Rep_linear_space M\<close>
+  have \<open>Rep_bounded P x \<in> space_as_set M\<close>
     for x
-    by (simp add: \<open>Rep_linear_space M = range (Rep_bounded P)\<close>)
-  moreover have \<open>x - Rep_bounded P x \<in> orthogonal_complement ( Rep_linear_space M)\<close>
+    by (simp add: \<open>space_as_set M = range (Rep_bounded P)\<close>)
+  moreover have \<open>x - Rep_bounded P x \<in> orthogonal_complement ( space_as_set M)\<close>
     for x
   proof-
-    have \<open>y \<in> Rep_linear_space M \<Longrightarrow> \<langle> x - Rep_bounded P x, y \<rangle> = 0\<close>
+    have \<open>y \<in> space_as_set M \<Longrightarrow> \<langle> x - Rep_bounded P x, y \<rangle> = 0\<close>
       for y
     proof-
-      assume \<open>y \<in> Rep_linear_space M\<close>
+      assume \<open>y \<in> space_as_set M\<close>
       hence \<open>\<exists> t. y = Rep_bounded P t\<close>
-        by (simp add: \<open>Rep_linear_space M = range (Rep_bounded P)\<close> image_iff)
+        by (simp add: \<open>space_as_set M = range (Rep_bounded P)\<close> image_iff)
       then obtain t where \<open>y = Rep_bounded P t\<close>
         by blast
       have \<open>\<langle> x - Rep_bounded P x, y \<rangle> = \<langle> x - Rep_bounded P x, Rep_bounded P t \<rangle>\<close>
@@ -2220,10 +2220,10 @@ proof-
   qed
   ultimately have \<open>P = Proj M\<close>
   proof - (* sledgehammer *)
-    have "is_subspace (Rep_linear_space M)"
-      by (metis \<open>Rep_linear_space M = range (Rep_bounded P)\<close> \<open>is_subspace (range (Rep_bounded P))\<close>)
+    have "is_subspace (space_as_set M)"
+      by (metis \<open>space_as_set M = range (Rep_bounded P)\<close> \<open>is_subspace (range (Rep_bounded P))\<close>)
     then have f1: "\<forall>a. Rep_bounded (Proj M) a = Rep_bounded P a"
-      by (simp add: Proj.rep_eq \<open>\<And>x. Rep_bounded P x \<in> Rep_linear_space M\<close> \<open>\<And>x. x - Rep_bounded P x \<in> orthogonal_complement (Rep_linear_space M)\<close> projection_uniq)
+      by (simp add: Proj.rep_eq \<open>\<And>x. Rep_bounded P x \<in> space_as_set M\<close> \<open>\<And>x. x - Rep_bounded P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
     have "\<forall>a. (+) ((a::'a) - a) = id"
       by force
     then have "\<forall>a. (+) (Rep_bounded (P - Proj M) a) = id"
@@ -2237,7 +2237,7 @@ proof-
       by (metis (no_types) Rep_bounded_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
   qed
   thus ?thesis
-    using \<open>Rep_linear_space M = range (Rep_bounded P)\<close> by blast 
+    using \<open>space_as_set M = range (Rep_bounded P)\<close> by blast 
 qed
 
 lemma Proj_endo_I:
@@ -2262,10 +2262,10 @@ proof-
     unfolding P_def
     by (metis Proj_D1 adjoint_twice timesOp_assoc times_adjoint)
   ultimately have 
-    \<open>\<exists> M. P = Proj M \<and> Rep_linear_space M = range (Rep_bounded (A \<cdot>\<^sub>o (Proj S) \<cdot>\<^sub>o (A*)))\<close>
+    \<open>\<exists> M. P = Proj M \<and> space_as_set M = range (Rep_bounded (A \<cdot>\<^sub>o (Proj S) \<cdot>\<^sub>o (A*)))\<close>
     using P_def Proj_I by blast
   then obtain M where \<open>P = Proj M\<close>
-    and \<open>Rep_linear_space M = range (Rep_bounded (A \<cdot>\<^sub>o (Proj S) \<cdot>\<^sub>o (A*)))\<close>
+    and \<open>space_as_set M = range (Rep_bounded (A \<cdot>\<^sub>o (Proj S) \<cdot>\<^sub>o (A*)))\<close>
     by blast
   have \<open>M = A \<cdot>\<^sub>s S\<close>
   proof - (* sledgehammer *)
@@ -2306,68 +2306,68 @@ proof-
   assume \<open>(Proj (ortho C)) \<cdot>\<^sub>s A \<le> B\<close>
   hence \<open>Abs_bounded
      (projection
-       (Rep_linear_space
-         (Abs_linear_space (orthogonal_complement (Rep_linear_space C))))) \<cdot>\<^sub>s A \<le> B\<close>
+       (space_as_set
+         (Abs_linear_space (orthogonal_complement (space_as_set C))))) \<cdot>\<^sub>s A \<le> B\<close>
     unfolding Proj_def ortho_def less_eq_linear_space_def
     by auto
-  hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (Rep_linear_space C))) \<cdot>\<^sub>s A \<le> B\<close>
+  hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (space_as_set C))) \<cdot>\<^sub>s A \<le> B\<close>
     by (metis Proj_def \<open>Proj (ortho C) \<cdot>\<^sub>s A \<le> B\<close> map_fun_apply ortho.rep_eq)
-  hence \<open>x \<in> Rep_linear_space
+  hence \<open>x \<in> space_as_set
               (Abs_linear_space
                 (closure
                   (Rep_bounded
                     (Abs_bounded
-                      (projection (orthogonal_complement (Rep_linear_space C)))) `
-                   Rep_linear_space A))) \<Longrightarrow>
-         x \<in> Rep_linear_space B\<close>
+                      (projection (orthogonal_complement (space_as_set C)))) `
+                   space_as_set A))) \<Longrightarrow>
+         x \<in> space_as_set B\<close>
     for x
     unfolding applyOpSpace_def less_eq_linear_space_def
     by auto
   hence \<open>x \<in>  closure (Rep_bounded (Abs_bounded
-                      (projection (orthogonal_complement (Rep_linear_space C)))) `
-                   Rep_linear_space A) \<Longrightarrow>
-         x \<in> Rep_linear_space B\<close>
+                      (projection (orthogonal_complement (space_as_set C)))) `
+                   space_as_set A) \<Longrightarrow>
+         x \<in> space_as_set B\<close>
   for x
     using proj_ortho_CAB
           applyOpSpace.rep_eq less_eq_linear_space.rep_eq by blast
-  hence \<open>x \<in>  closure ( (projection (orthogonal_complement (Rep_linear_space C))) `
-                   Rep_linear_space A) \<Longrightarrow>
-         x \<in> Rep_linear_space B\<close>
+  hence \<open>x \<in>  closure ( (projection (orthogonal_complement (space_as_set C))) `
+                   space_as_set A) \<Longrightarrow>
+         x \<in> space_as_set B\<close>
   for x
     by (metis (full_types) Proj.rep_eq Proj_def map_fun_apply ortho.rep_eq)
 
-  hence \<open>x \<in> Rep_linear_space A \<Longrightarrow>
-    x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space B \<and> \<phi> \<in> Rep_linear_space C}\<close>
+  hence \<open>x \<in> space_as_set A \<Longrightarrow>
+    x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set B \<and> \<phi> \<in> space_as_set C}\<close>
     for x
   proof-
-    assume \<open>x \<in> Rep_linear_space A\<close>
-    have \<open>is_subspace (Rep_linear_space C)\<close>
-      using Rep_linear_space by auto
-    hence \<open>x = (projection (Rep_linear_space C)) x
-       + (projection (orthogonal_complement (Rep_linear_space C))) x\<close>
+    assume \<open>x \<in> space_as_set A\<close>
+    have \<open>is_subspace (space_as_set C)\<close>
+      using space_as_set by auto
+    hence \<open>x = (projection (space_as_set C)) x
+       + (projection (orthogonal_complement (space_as_set C))) x\<close>
       by (simp add: ortho_decomp)
-    hence \<open>x = (projection (orthogonal_complement (Rep_linear_space C))) x
-              + (projection (Rep_linear_space C)) x\<close>
+    hence \<open>x = (projection (orthogonal_complement (space_as_set C))) x
+              + (projection (space_as_set C)) x\<close>
       by (metis ordered_field_class.sign_simps(2))
-    moreover have \<open>(projection (orthogonal_complement (Rep_linear_space C))) x \<in> Rep_linear_space B\<close>
-      using \<open>x \<in>  closure ( (projection (orthogonal_complement (Rep_linear_space C))) `
-                   Rep_linear_space A) \<Longrightarrow> x \<in> Rep_linear_space B\<close>
-      by (meson \<open>\<And>x. x \<in> closure (projection (orthogonal_complement (Rep_linear_space C)) ` Rep_linear_space A) \<Longrightarrow> x \<in> Rep_linear_space B\<close> \<open>x \<in> Rep_linear_space A\<close> closure_subset image_subset_iff)
-    moreover have \<open>(projection (Rep_linear_space C)) x \<in> Rep_linear_space C\<close>
-      by (simp add: \<open>is_subspace (Rep_linear_space C)\<close> projection_intro2)
+    moreover have \<open>(projection (orthogonal_complement (space_as_set C))) x \<in> space_as_set B\<close>
+      using \<open>x \<in>  closure ( (projection (orthogonal_complement (space_as_set C))) `
+                   space_as_set A) \<Longrightarrow> x \<in> space_as_set B\<close>
+      by (meson \<open>\<And>x. x \<in> closure (projection (orthogonal_complement (space_as_set C)) ` space_as_set A) \<Longrightarrow> x \<in> space_as_set B\<close> \<open>x \<in> space_as_set A\<close> closure_subset image_subset_iff)
+    moreover have \<open>(projection (space_as_set C)) x \<in> space_as_set C\<close>
+      by (simp add: \<open>is_subspace (space_as_set C)\<close> projection_intro2)
     ultimately show ?thesis
       using closure_subset by fastforce 
   qed
-  hence \<open>x \<in> Rep_linear_space A \<Longrightarrow>
-        x \<in> (Rep_linear_space B +\<^sub>M Rep_linear_space C)\<close>
+  hence \<open>x \<in> space_as_set A \<Longrightarrow>
+        x \<in> (space_as_set B +\<^sub>M space_as_set C)\<close>
     for x
     unfolding closed_sum_def Minkoswki_sum_def
     by blast
-  hence \<open> x \<in> Rep_linear_space A \<Longrightarrow>
-         x \<in> Rep_linear_space
-               (Abs_linear_space (Rep_linear_space B +\<^sub>M Rep_linear_space C))\<close>
+  hence \<open> x \<in> space_as_set A \<Longrightarrow>
+         x \<in> space_as_set
+               (Abs_linear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
     for x
-    by (metis Rep_linear_space_inverse plus_linear_space.rep_eq)    
+    by (metis space_as_set_inverse plus_linear_space.rep_eq)    
   thus ?thesis 
   unfolding Proj_def ortho_def less_eq_linear_space_def plus_linear_space_def
   by auto
@@ -2759,10 +2759,10 @@ lemma applyOpSpace_mono:
 
 lemma apply_left_neutral:
   assumes "A \<cdot>\<^sub>o B = B"
-  assumes "\<psi> \<in> Rep_linear_space (B \<cdot>\<^sub>s top)"
+  assumes "\<psi> \<in> space_as_set (B \<cdot>\<^sub>s top)"
   shows "A \<cdot>\<^sub>v \<psi> = \<psi>" 
 proof -
-  define rangeB rangeB' where "rangeB = Rep_linear_space (B \<cdot>\<^sub>s top)" and "rangeB' = range (Rep_bounded B)"
+  define rangeB rangeB' where "rangeB = space_as_set (B \<cdot>\<^sub>s top)" and "rangeB' = range (Rep_bounded B)"
   from assms have "\<psi> \<in> closure rangeB'"
     unfolding rangeB'_def apply (transfer fixing: \<psi>) by simp
   then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
@@ -2821,10 +2821,10 @@ next
       by (meson closure_mono image_mono subsetD top_greatest)
     then have "INFUV \<le> rangeU"
       unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
-    moreover have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeU" for \<psi>
+    moreover have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
       apply (rule apply_left_neutral[where B=U])
       using assms that rangeU_def by auto
-    ultimately have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space INFUV" for \<psi>
+    ultimately have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>s INFUV = INFUV"
       apply transfer apply auto
@@ -2841,10 +2841,10 @@ next
   proof -
     from assms have "V i \<le> rangeUinv" for i
       unfolding rangeUinv_def by simp
-    moreover have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space rangeUinv" for \<psi>
+    moreover have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" for \<psi>
       apply (rule apply_left_neutral[where B=Uinv])
       using assms that rangeUinv_def by auto
-    ultimately have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> Rep_linear_space (V i)" for \<psi> i
+    ultimately have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
       using less_eq_linear_space.rep_eq that by blast
     then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto

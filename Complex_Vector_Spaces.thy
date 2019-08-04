@@ -687,12 +687,6 @@ section \<open>Bounded Linear and Bilinear Operators\<close>
 definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
  "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
 
-(* previous definition
-locale clinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
-  assumes scaleC: "f (r *\<^sub>C x) = r  *\<^sub>C (f x)"
-*)
-
-(* NEW *)
 lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
   unfolding clinear_def  linear_def
   proof
@@ -711,12 +705,6 @@ lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
     
 qed
 
-(* previous formulation 
-sublocale clinear \<subseteq> linear
-  apply (rule linearI)
-   apply (rule add)
-  unfolding scaleR_scaleC by (rule scaleC)
-*)
 
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
@@ -742,7 +730,6 @@ hide_const (open)\<comment> \<open>locale constants\<close>
 
 abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
 
-(* NEW *)
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
@@ -754,8 +741,6 @@ global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>
 hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.construct
 
-(* NEW *)
-(* new proof *)
 lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
   unfolding clinear_def
   using Vector_Spaces.linear_compose
@@ -1925,12 +1910,9 @@ qed
 
 section \<open>Linear space\<close>
 
-section \<open>Linear space\<close>
-
-(* TODO: rename Rep_linear_space \<rightarrow> space_as_set *)
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
 linear_space = \<open>{S::'a set. is_subspace S}\<close>
-  morphisms Rep_linear_space Abs_linear_space
+  morphisms space_as_set Abs_linear_space
   using is_subspace_UNIV by blast
 
 setup_lifting type_definition_linear_space
@@ -2105,18 +2087,18 @@ lemma is_subspace_span_B:
   shows \<open>A \<subseteq> S\<close>
   using assms(2) complex_vector.span_superset by blast
 
-lemma span_def': \<open>Span A = Inf {S. A \<subseteq> Rep_linear_space S}\<close>
+lemma span_def': \<open>Span A = Inf {S. A \<subseteq> space_as_set S}\<close>
   for A::\<open>('a::cbanach) set\<close>
 proof-
-  have \<open>x \<in> Rep_linear_space (Span A) 
-    \<Longrightarrow> x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+  have \<open>x \<in> space_as_set (Span A) 
+    \<Longrightarrow> x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     for x::'a
   proof-
-    assume \<open>x \<in> Rep_linear_space (Span A)\<close>
+    assume \<open>x \<in> space_as_set (Span A)\<close>
     hence \<open>x \<in> closure (complex_vector.span A)\<close>
       unfolding Span_def
       apply auto
-      using Abs_linear_space_inverse \<open>x \<in> Rep_linear_space (Span A)\<close> 
+      using Abs_linear_space_inverse \<open>x \<in> space_as_set (Span A)\<close> 
         Span.rep_eq 
       by blast
     hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
@@ -2142,15 +2124,15 @@ proof-
       by (simp add: Collect_mono_iff is_subspace_span_A)    
     ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
       by blast     
-    thus \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close> 
+    thus \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close> 
       apply transfer
       by blast
   qed
-  moreover have \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})
-             \<Longrightarrow> x \<in> Rep_linear_space (Span A)\<close>
+  moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})
+             \<Longrightarrow> x \<in> space_as_set (Span A)\<close>
     for x::'a
   proof-
-    assume \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    assume \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
       apply transfer
       by blast
@@ -2158,16 +2140,14 @@ proof-
       by (simp add: Collect_mono_iff is_subspace_span_B)    
     ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
       by blast 
-    thus \<open>x \<in> Rep_linear_space (Span A)\<close>
-      by (metis (no_types, lifting) Inter_iff Rep_linear_space closure_subset mem_Collect_eq Span.rep_eq)      
+    thus \<open>x \<in> space_as_set (Span A)\<close>
+      by (metis (no_types, lifting) Inter_iff space_as_set closure_subset mem_Collect_eq Span.rep_eq)      
   qed
-  ultimately have \<open>Rep_linear_space (Span A) = Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+  ultimately have \<open>space_as_set (Span A) = space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     by blast
   thus ?thesis
-    using Rep_linear_space_inject by auto 
+    using space_as_set_inject by auto 
 qed
-
-
 
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>::"'a::complex_vector"
@@ -2515,9 +2495,7 @@ proof
   qed
 qed
 
-(* TODO: remove chilbert_space *)
-(* TODO: remove (equal_span can be proven more elegantly using induction over the span) *)
-lemma equal_span_0_n:
+lemma equal_span:
   fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> and S::\<open>'a set\<close>
   shows \<open>\<forall> x::'a.
 x \<in> partial_span n S \<longrightarrow>
@@ -2573,7 +2551,6 @@ lemma bounded_linear_continuous:
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
 
-(* TODO: remove chilbert_space (instead: complex_vector) *)
 (* TODO: much simpler proof using rule complex_vector.span_induct *)
 (* TODO: After updating Complex_Vector_Spaces, possibly this theorem will already exist *)
 lemma equal_span_0:
@@ -2600,7 +2577,7 @@ proof -
   then obtain n where \<open>\<forall> k. y k \<in> partial_span (n k) S\<close>
     by metis
   hence \<open>\<forall> k. f (y k) = 0\<close>
-    using assms(1) assms(2) equal_span_0_n by blast
+    using assms(1) assms(2) equal_span by blast
   have \<open>isCont f x\<close>
     using \<open>bounded_clinear f\<close>
     by (simp add: bounded_linear_continuous)
@@ -2615,7 +2592,6 @@ proof -
     using LIMSEQ_unique by blast
 qed
 
-(* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
@@ -2645,7 +2621,7 @@ proof
     for x :: "'a linear_space"
       and y :: "'a linear_space"
     using that
-    by (simp add: Rep_linear_space_inject less_eq_linear_space.rep_eq) 
+    by (simp add: space_as_set_inject less_eq_linear_space.rep_eq) 
 qed
 end
 

@@ -2669,7 +2669,7 @@ lemma xinfyz_linear_space:
     shows  "(x::'a linear_space) \<le> y * z"
     unfolding  times_linear_space_def less_eq_linear_space_def
     apply auto
-    by (metis IntI Rep_linear_space_inverse assms(1) assms(2) less_eq_linear_space.rep_eq subsetD times_linear_space.rep_eq)
+    by (metis IntI space_as_set_inverse assms(1) assms(2) less_eq_linear_space.rep_eq subsetD times_linear_space.rep_eq)
 
 
 lemma xsupxy_linear_space:
@@ -2677,35 +2677,35 @@ lemma xsupxy_linear_space:
       and y :: "'a linear_space"
   shows "(x::'a linear_space) \<le> x + y"
   proof-
-    have \<open>t \<in> Rep_linear_space x \<Longrightarrow>
-          t \<in> Rep_linear_space
+    have \<open>t \<in> space_as_set x \<Longrightarrow>
+          t \<in> space_as_set
                  (Abs_linear_space
                    (closure
-                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space x \<and> \<phi> \<in> Rep_linear_space y}))\<close>
+                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}))\<close>
       for t
     proof-
-      assume \<open>t \<in> Rep_linear_space x\<close>
-      moreover have \<open>0 \<in> Rep_linear_space y\<close>
+      assume \<open>t \<in> space_as_set x\<close>
+      moreover have \<open>0 \<in> space_as_set y\<close>
       proof-
-        have \<open>is_subspace (Rep_linear_space y)\<close>
-          using Rep_linear_space by blast
+        have \<open>is_subspace (space_as_set y)\<close>
+          using space_as_set by blast
         thus ?thesis
           by (metis insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero is_subspace_0) 
       qed
       moreover have \<open>t = t + 0\<close>
         by simp
-      ultimately have \<open>t \<in>  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space x \<and> \<phi> \<in> Rep_linear_space y}\<close>
+      ultimately have \<open>t \<in>  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
         by force
-      hence \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space x \<and> \<phi> \<in> Rep_linear_space y}\<close>
+      hence \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
         by (meson closure_subset subset_eq)        
       thus ?thesis using Abs_linear_space_inverse
       proof -
-        have f1: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> Rep_linear_space l \<and> ab \<in> Rep_linear_space la} = Rep_linear_space (l + la)"
+        have f1: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (l + la)"
           by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-        hence "t \<in> Rep_linear_space (x + y)"
-          using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space x \<and> \<phi> \<in> Rep_linear_space y}\<close> by blast
+        hence "t \<in> space_as_set (x + y)"
+          using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close> by blast
         thus ?thesis
-          using f1 by (simp add: Rep_linear_space_inverse)
+          using f1 by (simp add: space_as_set_inverse)
       qed
     qed
     thus ?thesis
@@ -2729,38 +2729,38 @@ lemma supyzx_linear_space:
       and "(z::'a linear_space) \<le> x"
 shows "(y::'a linear_space) + z \<le> x"
   proof-
-    have \<open>Rep_linear_space y \<subseteq> Rep_linear_space x \<Longrightarrow>
-          Rep_linear_space z \<subseteq> Rep_linear_space x \<Longrightarrow>
-          (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z})
-          \<subseteq> Rep_linear_space x\<close>
+    have \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
+          space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
+          (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})
+          \<subseteq> space_as_set x\<close>
     proof-
-      assume \<open>Rep_linear_space y \<subseteq> Rep_linear_space x\<close>
-          and \<open>Rep_linear_space z \<subseteq> Rep_linear_space x\<close>
-      have \<open>closed (Rep_linear_space x)\<close>
+      assume \<open>space_as_set y \<subseteq> space_as_set x\<close>
+          and \<open>space_as_set z \<subseteq> space_as_set x\<close>
+      have \<open>closed (space_as_set x)\<close>
       proof-
-        have \<open>is_subspace (Rep_linear_space x)\<close>
-          using Rep_linear_space by simp
+        have \<open>is_subspace (space_as_set x)\<close>
+          using space_as_set by simp
         thus ?thesis
           by (simp add: is_subspace.closed) 
       qed
-      moreover have \<open>({\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z})
-          \<subseteq> Rep_linear_space x\<close>
+      moreover have \<open>({\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})
+          \<subseteq> space_as_set x\<close>
         proof
-          show "t \<in> Rep_linear_space x"
-            if "t \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z}"
+          show "t \<in> space_as_set x"
+            if "t \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z}"
             for t :: 'a
           proof-
-            have \<open>\<exists> \<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z \<and> t = \<psi> + \<phi>\<close>
+            have \<open>\<exists> \<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z \<and> t = \<psi> + \<phi>\<close>
               using that by blast
-            then obtain  \<psi> \<phi> where \<open>\<psi> \<in> Rep_linear_space y\<close> and \<open>\<phi> \<in> Rep_linear_space z\<close> 
+            then obtain  \<psi> \<phi> where \<open>\<psi> \<in> space_as_set y\<close> and \<open>\<phi> \<in> space_as_set z\<close> 
                 and \<open>t = \<psi> + \<phi>\<close>
               by blast
-            have \<open>\<psi> \<in> Rep_linear_space x\<close>
-              using \<open>Rep_linear_space y \<subseteq> Rep_linear_space x\<close> \<open>\<psi> \<in> Rep_linear_space y\<close> by auto
-            moreover have \<open>\<phi> \<in> Rep_linear_space x\<close>
-              using \<open>Rep_linear_space z \<subseteq> Rep_linear_space x\<close> \<open>\<phi> \<in> Rep_linear_space z\<close> by auto
-            moreover have \<open>is_subspace (Rep_linear_space x)\<close>
-              using Rep_linear_space by simp
+            have \<open>\<psi> \<in> space_as_set x\<close>
+              using \<open>space_as_set y \<subseteq> space_as_set x\<close> \<open>\<psi> \<in> space_as_set y\<close> by auto
+            moreover have \<open>\<phi> \<in> space_as_set x\<close>
+              using \<open>space_as_set z \<subseteq> space_as_set x\<close> \<open>\<phi> \<in> space_as_set z\<close> by auto
+            moreover have \<open>is_subspace (space_as_set x)\<close>
+              using space_as_set by simp
             ultimately show ?thesis
               by (simp add: \<open>t = \<psi> + \<phi>\<close> is_linear_manifold.additive_closed is_subspace.subspace) 
           qed
@@ -2768,22 +2768,22 @@ shows "(y::'a linear_space) + z \<le> x"
       ultimately show ?thesis
         by (simp add: closure_minimal)  
     qed
-    hence \<open>Rep_linear_space y \<subseteq> Rep_linear_space x \<Longrightarrow>
-          Rep_linear_space z \<subseteq> Rep_linear_space x \<Longrightarrow>
-           Rep_linear_space
+    hence \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
+          space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
+           space_as_set
                  (Abs_linear_space
                    (closure
-                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z})) 
-          \<subseteq> Rep_linear_space x\<close>
+                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) 
+          \<subseteq> space_as_set x\<close>
     proof -
-      assume a1: "Rep_linear_space y \<subseteq> Rep_linear_space x"
-      assume a2: "Rep_linear_space z \<subseteq> Rep_linear_space x"
-      have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> Rep_linear_space l \<and> ab \<in> Rep_linear_space la} = Rep_linear_space (l + la)"
+      assume a1: "space_as_set y \<subseteq> space_as_set x"
+      assume a2: "space_as_set z \<subseteq> space_as_set x"
+      have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (l + la)"
         by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-      hence "Rep_linear_space (y + z) \<subseteq> Rep_linear_space x"
-        using a2 a1 \<open>\<lbrakk>Rep_linear_space y \<subseteq> Rep_linear_space x; Rep_linear_space z \<subseteq> Rep_linear_space x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> Rep_linear_space y \<and> \<phi> \<in> Rep_linear_space z} \<subseteq> Rep_linear_space x\<close> by blast
+      hence "space_as_set (y + z) \<subseteq> space_as_set x"
+        using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
       thus ?thesis
-        using f3 by (simp add: Rep_linear_space_inverse)
+        using f3 by (simp add: space_as_set_inverse)
     qed
     thus ?thesis
       unfolding plus_linear_space_def less_eq_linear_space_def 
@@ -3041,14 +3041,14 @@ lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
 
 
 lemma span_superset:
-  \<open>A \<subseteq> Rep_linear_space (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
+  \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
 proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>
+  have \<open>\<forall> S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>
     by simp
-  hence \<open>A \<subseteq> \<Inter> {Rep_linear_space S| S. A \<subseteq> Rep_linear_space S}\<close>
+  hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
     by blast
-  hence \<open>A \<subseteq> Rep_linear_space( Inf {S| S. A \<subseteq> Rep_linear_space S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> Rep_linear_space S} \<longrightarrow> A \<subseteq> Rep_linear_space S\<close>)
+  hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
+    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
   thus ?thesis using span_def' by metis
 qed
 
