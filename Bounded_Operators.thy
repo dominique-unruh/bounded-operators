@@ -2377,7 +2377,7 @@ qed
 section \<open>Kernel\<close>
 
 lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space" 
-  is ker_op
+  is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
 definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
@@ -2385,26 +2385,27 @@ definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
   for a :: complex and A :: "(_,_) bounded"
-  unfolding kernel_def ker_op_def
-  apply auto
-  by (metis complex_vector.scale_eq_0_iff scaleC_bounded.rep_eq)
+  apply transfer
+  using complex_vector.scale_eq_0_iff by blast
+
 
 lemma kernel_0[simp]: "kernel 0 = top"
 proof-
-  have \<open>ker_op (\<lambda> _. 0) = UNIV\<close>
-    by (metis (mono_tags, lifting) Collect_cong UNIV_def ker_op_def)
-  hence \<open>ker_op (Rep_bounded (bounded_of_rbounded 0)) = UNIV\<close>
+  have \<open>(\<lambda> _. 0) -` {0} = UNIV\<close>
+    using Collect_cong UNIV_def
+    by blast
+  hence \<open>(Rep_bounded (bounded_of_rbounded 0)) -` {0} = UNIV\<close>
     by (metis bounded_of_rbounded_zero cr_rbounded_def rbounded.pcr_cr_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_zero zero_rbounded.transfer)
-  hence \<open>Abs_linear_space (ker_op (Rep_bounded (bounded_of_rbounded 0))) = Abs_linear_space UNIV\<close>
+  hence \<open>Abs_linear_space ( (Rep_bounded (bounded_of_rbounded 0)) -` {0} ) = Abs_linear_space UNIV\<close>
     using Abs_linear_space_inject
-    by (simp add: \<open>ker_op (Rep_bounded (bounded_of_rbounded 0)) = UNIV\<close>)
+    by (simp add: \<open>(Rep_bounded (bounded_of_rbounded 0)) -` {0} = UNIV\<close>)
   thus ?thesis
     unfolding kernel_def zero_bounded_def top_linear_space_def
-    by (simp add: Abs_bounded_inverse \<open>ker_op (\<lambda>_. 0) = UNIV\<close>)   
+    by (simp add: Abs_bounded_inverse \<open>(\<lambda>_. 0) -` {0} = UNIV\<close>)   
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
-  apply transfer unfolding ker_op_def by simp
+  apply transfer  by simp
 
 lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
 proof -
@@ -2873,17 +2874,6 @@ proof -
   ultimately show ?thesis
     by (rule mult_INF_general)
 qed
-(* proof-
-  have \<open>U \<cdot>\<^sub>s (INF x. V x) \<le> (INF x. U \<cdot>\<^sub>s V x)\<close>
-    by simp
-  moreover have \<open>(INF x. U \<cdot>\<^sub>s V x) \<le> U \<cdot>\<^sub>s (INF x. V x)\<close> 
-    using assms
-    apply transfer
-    apply auto
-    by (metis INT_I mult_INF_less_eq_transfer_bij)   
-  ultimately show ?thesis
-    using dual_order.antisym by blast 
-qed *)
 
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"

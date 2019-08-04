@@ -699,19 +699,16 @@ qed
 
 subsection \<open>Minimum distance\<close>
 
-(* TODO: remove *)
-definition is_arg_min_on :: \<open>('a \<Rightarrow> 'b :: ord) \<Rightarrow> 'a set \<Rightarrow> 'a \<Rightarrow> bool\<close> where
-  \<open>is_arg_min_on f M x = (is_arg_min f (\<lambda> t. t \<in> M) x)\<close>
 
 lemma ExistenceUniquenessMinNorm:
   includes notation_norm
   fixes M :: \<open>('a::chilbert_space) set\<close>  
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
+  shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
 proof-
-  have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) M k\<close>
+  have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
   proof-
-    have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>^2) M k\<close>
+    have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>^2) (\<lambda> t. t \<in> M) k\<close>
     proof-
       obtain d where \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
         by blast
@@ -845,7 +842,8 @@ proof-
       moreover  have  \<open>(\<lambda> n.  \<parallel> r n \<parallel>^2) \<longlonglongrightarrow>  d\<close>
       proof-
         have \<open>\<bar>\<parallel> r n \<parallel>^2 - d\<bar> < 1/(n+1)\<close> for n :: nat
-          by (smt \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close> of_nat_1 of_nat_add)
+          using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close> of_nat_1 of_nat_add
+          by smt
         moreover have \<open>(\<lambda>n. 1 / real (n + 1)) \<longlonglongrightarrow> 0\<close> 
           using  LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1] by blast        
         ultimately have \<open>(\<lambda> n. \<bar>\<parallel> r n \<parallel>^2 - d\<bar> ) \<longlonglongrightarrow> 0\<close> 
@@ -863,18 +861,16 @@ proof-
       hence \<open>t \<in> M \<Longrightarrow> \<parallel> k \<parallel>^2 \<le> \<parallel> t \<parallel>^2\<close> for t
         using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> by auto
       thus ?thesis using \<open>k \<in> M\<close>
-        unfolding is_arg_min_on_def
-        using is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
+         is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
         by smt
     qed
     thus ?thesis 
-      unfolding is_arg_min_on_def
       by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
   qed
-  moreover have \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r \<Longrightarrow> is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s \<Longrightarrow> r = s\<close> for r s
+  moreover have \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r \<Longrightarrow> is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s \<Longrightarrow> r = s\<close> for r s
   proof-
-    assume \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close>
-    assume \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>
+    assume \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
+    assume \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
     have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
       = (1/2)*( \<parallel>r\<parallel>^2 + \<parallel>s\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close> 
       using  ParallelogramLawVersion1 
@@ -882,16 +878,15 @@ proof-
     moreover have \<open>\<parallel>r\<parallel>^2 \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close>
     proof-
       have \<open>r \<in> M\<close> 
-        using \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close>
-        by (simp add: is_arg_min_def is_arg_min_on_def)
+        using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
+        by (simp add: is_arg_min_def)
       moreover have \<open>s \<in> M\<close> 
-        using \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>
-        by (simp add: is_arg_min_def is_arg_min_on_def)
+        using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
+        by (simp add: is_arg_min_def)
       ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
         by (simp add: convexD)
       hence \<open> \<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
-        using  \<open>is_arg_min_on norm M r\<close>
-        unfolding is_arg_min_on_def
+        using  \<open>is_arg_min norm (\<lambda> t. t \<in> M) r\<close>
         by (smt is_arg_min_def)
       thus ?thesis
         using norm_ge_zero power_mono by blast
@@ -899,12 +894,10 @@ proof-
     moreover have \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close>
     proof-
       have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
-        using  \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close> \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>  is_arg_min_def 
-        unfolding is_arg_min_on_def
+        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
         by smt
       moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
-        using  \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M r\<close> \<open>is_arg_min_on (\<lambda>x. \<parallel>x\<parallel>) M s\<close>  is_arg_min_def 
-        unfolding is_arg_min_on_def
+        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
         by smt
       ultimately show ?thesis by simp
     qed
@@ -989,7 +982,7 @@ qed
 theorem existence_uniqueness_min_dist:
   fixes M::\<open>('a::chilbert_space) set\<close> and h::'a 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. dist x h) M k\<close>
+  shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
 proof-
   include notation_norm 
   have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
@@ -1009,17 +1002,16 @@ proof-
       by auto
     ultimately show ?thesis by simp
   qed
-  ultimately have \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
-    by (simp add: ExistenceUniquenessMinNorm)
-  have \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
+  ultimately have \<open>\<exists>! k. is_arg_min norm (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
+      using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> by blast
+  have \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
   proof-
-    have \<open>\<exists> k. is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
+    have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
     proof-
-      obtain k where \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
-        using  \<open>\<exists>! k. is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close> by blast
+      obtain k where \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
+        using  \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x  \<in> {m - h| m. m \<in> M}) k\<close> by blast
       have \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>) \<and> k \<in> {m - h |m. m \<in> M}\<close>
-        using is_arg_min_def  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h| m. m \<in> M} k\<close>
-        unfolding is_arg_min_on_def
+        using is_arg_min_def  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
         by smt
       hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>\<close>
         by blast
@@ -1034,61 +1026,59 @@ proof-
         by blast
       hence  \<open>k + h \<in> M\<close>
         by auto
-      have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) {m| m. m \<in> M} (k + h)\<close>
+      have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> {m| m. m \<in> M}) (k + h)\<close>
       proof-
         have \<open>\<nexists>y. y \<in> {m |m. m \<in> M} \<and> \<parallel>y - h\<parallel> < \<parallel>(k + h) - h\<parallel>\<close>
           using \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>(k+h)-h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>  
           by auto
         thus ?thesis
           using \<open>k + h \<in> M\<close>
-          unfolding is_arg_min_on_def
           by (simp add: is_arg_min_def)
       qed
       thus ?thesis 
         by auto
     qed 
-    moreover have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<Longrightarrow> is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  t
+    moreover have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) t
                     \<Longrightarrow> k = t\<close> for k t
     proof-
-      have \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<Longrightarrow> is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h |m. m \<in> M} (k - h)\<close> for k
+      have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> for k
       proof-
-        assume \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k\<close>
+        assume \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
         hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
-          unfolding is_arg_min_on_def
           by (meson is_arg_min_linorder)
         hence \<open>\<forall>t. t - h \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
           by auto
         hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t\<parallel>\<close>
           by blast
         have \<open>k \<in> M\<close>
-          using  \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M  k \<close>
-          unfolding is_arg_min_on_def
+          using  \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<close>
           using is_arg_min_def
           by (simp add: is_arg_min_linorder)
         hence \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
           by auto
-        have  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>) {m - h |m. m \<in> M} (k - h)\<close>
+        have  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
           using  \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t\<parallel>\<close>
             \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
             is_arg_min_def
-          unfolding is_arg_min_on_def
           by smt
         thus ?thesis by blast
       qed
-      assume \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M k\<close>
-      hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (k - h)\<close>
-        by (simp add: \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close>)
-      assume  \<open>is_arg_min_on (\<lambda> x. \<parallel>x - h\<parallel>) M t\<close> 
-      hence  \<open>is_arg_min_on (\<lambda> x. \<parallel>x\<parallel>)  {m - h |m. m \<in> M} (t - h)\<close>
-        using \<open>\<And>k. is_arg_min_on (\<lambda>x. \<parallel>x - h\<parallel>) M k \<Longrightarrow> is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close> by auto
+      assume \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
+      hence  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
+        using  \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
+        by blast
+      assume  \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) t\<close> 
+      hence  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (t - h)\<close>
+        using \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> by auto
       show ?thesis 
-        by (metis (no_types, lifting) \<open>\<exists>!k. is_arg_min_on norm {m - h |m. m \<in> M} k\<close> \<open>is_arg_min_on norm {m - h |m. m \<in> M} (k - h)\<close> \<open>is_arg_min_on norm {m - h |m. m \<in> M} (t - h)\<close> diff_add_cancel)
+        using \<open>\<exists>!k. is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) k\<close> \<open>is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> \<open>is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (t - h)\<close> diff_add_cancel
+        by (metis (no_types, lifting))
     qed
     ultimately show ?thesis by blast
   qed
   moreover have \<open>(\<lambda> x. dist x h) = (\<lambda> x. \<parallel>x - h\<parallel>)\<close>
     by (simp add: dist_norm)
-  ultimately show ?thesis by simp
+  ultimately show ?thesis by auto
 qed
 
 
@@ -1096,15 +1086,14 @@ qed
 theorem dist_min_ortho:
   fixes M::\<open>('a::chilbert_space) set\<close> and h k::'a 
   assumes \<open>is_subspace M\<close>
-  shows  \<open>(is_arg_min_on (\<lambda> x. dist x h) M k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
+  shows  \<open>(is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
 proof-
   include notation_norm
-  have \<open>is_arg_min_on (\<lambda> x. dist x h) M k
+  have \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k
      \<Longrightarrow>  h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
   proof-
-    assume \<open>is_arg_min_on (\<lambda> x. dist x h) M k\<close>
+    assume \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
     hence  \<open>k \<in> M\<close>
-      unfolding is_arg_min_on_def
       by (simp add: is_arg_min_def)
     moreover have \<open>h - k \<in> orthogonal_complement M\<close>
     proof-
@@ -1120,10 +1109,10 @@ proof-
             by (simp add: assms calculation is_linear_manifold.additive_closed is_subspace.subspace)
           hence \<open>dist h k \<le> dist  h (k + f)\<close>
           proof -
-            have "\<forall>f A a aa. \<not> is_arg_min_on f A (a::'a) \<or> (f a::real) \<le> f aa \<or> aa \<notin> A"
-              by (metis (no_types) is_arg_min_linorder is_arg_min_on_def)
+            have "\<forall>f A a aa. \<not> is_arg_min f (\<lambda> x. x \<in> A) (a::'a) \<or> (f a::real) \<le> f aa \<or> aa \<notin> A"
+              by (metis (no_types) is_arg_min_linorder)
             hence "dist k h \<le> dist (f + k) h"
-              by (metis \<open>is_arg_min_on (\<lambda>x. dist x h) M k\<close> \<open>k + f \<in> M\<close> add.commute)
+              by (metis \<open>is_arg_min (\<lambda>x. dist x h) (\<lambda> x. x \<in> M) k\<close> \<open>k + f \<in> M\<close> add.commute)
             thus ?thesis
               by (simp add: add.commute dist_commute)
           qed
@@ -1233,7 +1222,7 @@ proof-
       by simp
   qed
   also have  \<open>h - k \<in> orthogonal_complement M \<and> k \<in>  M 
-     \<Longrightarrow> ( is_arg_min_on (\<lambda> x. dist x h) M k )\<close>
+     \<Longrightarrow> ( is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k )\<close>
   proof-
     assume \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
     hence \<open>h - k \<in> orthogonal_complement M\<close>
@@ -1260,7 +1249,7 @@ proof-
         by (simp add: dist_norm)
     qed
     thus ?thesis 
-      by (simp add: \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> dist_commute is_arg_min_linorder is_arg_min_on_def)
+      by (simp add: \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> dist_commute is_arg_min_linorder)
   qed
   ultimately show ?thesis by blast
 qed
@@ -1299,7 +1288,7 @@ proof-
   have \<open>convex  M\<close>
     using  \<open>is_subspace M\<close>
     by (simp add: SubspaceConvex)
-  have \<open>\<forall> h. \<exists>! k.  is_arg_min_on (\<lambda> x. dist x h) M k\<close>
+  have \<open>\<forall> h. \<exists>! k.  is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
     by (simp add: existence_uniqueness_min_dist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
     using dist_min_ortho 
@@ -1455,11 +1444,9 @@ proposition projectionPropertiesC:
   for M :: \<open>('a::chilbert_space) set\<close>
   using projection_fixed_points projection_intro2 by fastforce
 
-definition ker_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'a set\<close> where
-  \<open>ker_op \<equiv> \<lambda> f. {x. f x = 0}\<close>
 
 lemma ker_op_lin:
-  \<open>bounded_clinear f \<Longrightarrow> is_subspace  (ker_op f)\<close>
+  \<open>bounded_clinear f \<Longrightarrow> is_subspace  (f -` {0})\<close>
 proof-
   assume \<open>bounded_clinear f\<close>
   have \<open>x \<in>  {x. f x = 0} \<Longrightarrow> t *\<^sub>C x \<in> {x. f x = 0}\<close> for x t
@@ -1520,36 +1507,37 @@ proof-
       using closed_sequential_limits by blast
   qed
   ultimately show ?thesis
-    using  \<open>bounded_clinear f\<close> bounded_clinear_def  complex_vector.scale_eq_0_iff is_subspace.intro ker_op_def
+    using  \<open>bounded_clinear f\<close> bounded_clinear_def  complex_vector.scale_eq_0_iff is_subspace.intro 
       bounded_clinear.clinear Collect_cong is_linear_manifold.intro mem_Collect_eq
-     complex_vector.linear_0 
-    by smt (* > 1.0 s *)
+     complex_vector.linear_0
+    by (smt insert_compr singletonD vimage_Collect) 
+    (* > 1.0 s *)
 qed
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 proposition projectionPropertiesD:
-  \<open>is_subspace M  \<Longrightarrow> ker_op  (projection M) = (orthogonal_complement M)\<close>
+  \<open>is_subspace M  \<Longrightarrow> (projection M) -` {0} = (orthogonal_complement M)\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>is_subspace M\<close> 
-  have \<open>x \<in> orthogonal_complement M \<Longrightarrow> x \<in>  (ker_op  (projection M))\<close> for x
+  have \<open>x \<in> orthogonal_complement M \<Longrightarrow> x \<in> ((projection M) -` {0})\<close> for x
   proof-
     assume \<open>x \<in> orthogonal_complement M\<close>
     hence \<open>(projection M) x = 0\<close>
       using  \<open>is_subspace M\<close>
       by (simp add: is_linear_manifold.zero is_subspace.subspace projection_uniq)
-    hence \<open>x \<in> (ker_op  (projection M))\<close>
+    hence \<open>x \<in> ((projection M) -` {0})\<close>
       using ker_op_lin projectionPropertiesA
-      by (simp add: ker_op_def)
+      by simp
     thus ?thesis
       by simp
   qed
-  moreover have \<open>x \<in> ker_op  (projection M) \<Longrightarrow> x \<in> orthogonal_complement M\<close> for x
+  moreover have \<open>x \<in> (projection M) -` {0} \<Longrightarrow> x \<in> orthogonal_complement M\<close> for x
   proof-
-    assume \<open>x \<in> ker_op  (projection M)\<close>
+    assume \<open>x \<in> (projection M) -` {0}\<close>
     hence  \<open>x \<in> {y.  (projection M) x = 0}\<close>
       using ker_op_lin  projectionPropertiesA \<open>is_subspace M\<close>
-      by (simp add: ker_op_def)
+      by simp
     hence \<open>(projection M) x = 0\<close>
       by (metis (mono_tags, lifting) mem_Collect_eq)
     hence  \<open>x \<in> orthogonal_complement M\<close>
@@ -1558,74 +1546,75 @@ proof-
     thus ?thesis
       by simp
   qed
-  ultimately have \<open>orthogonal_complement M = ker_op  (projection M)\<close>         
+  ultimately have \<open>orthogonal_complement M = (projection M) -` {0}\<close>         
     by blast
   thus ?thesis 
     by blast
 qed
 
-(* TODO: already exists: "range" *)
-(* TODO remove *)
-definition ran_op :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 'b set\<close> where
-  \<open>ran_op \<equiv> \<lambda> f. {x. \<exists> y. f y = x}\<close>
-
-lemma ran_op_lin:
-  \<open>clinear f \<Longrightarrow>  is_linear_manifold (ran_op f)\<close>
+lemma range_lin:
+  \<open>clinear f \<Longrightarrow>  is_linear_manifold (range f)\<close>
 proof-
   assume \<open>clinear f\<close>
-  obtain A where \<open>A = (ran_op f)\<close>
+  obtain A where \<open>A = (range f)\<close>
     by simp
   have "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A" for x y
   proof-
     assume \<open>x \<in> A\<close>
-    then obtain xx where \<open>x = f xx\<close> using  \<open>A = (ran_op f)\<close> 
-      by (smt mem_Collect_eq ran_op_def)
+    then obtain xx where \<open>x = f xx\<close> using  \<open>A = (range f)\<close> 
+      using mem_Collect_eq
+      by blast
     assume \<open>y \<in> A\<close>
-    then obtain yy where \<open>y = f yy\<close> using  \<open>A = (ran_op f)\<close> 
-      by (smt mem_Collect_eq ran_op_def)
+    then obtain yy where \<open>y = f yy\<close> using  \<open>A = (range f)\<close> 
+      using mem_Collect_eq
+      by blast
     have \<open>x + y = f (xx + yy)\<close> 
       using Modules.additive_def \<open>clinear f\<close> \<open>x = f xx\<close> \<open>y = f yy\<close>  clinear_def
       by (simp add: complex_vector.linear_add)
     thus ?thesis 
-      by (metis (mono_tags, lifting) \<open>A = ran_op f\<close> mem_Collect_eq ran_op_def)
+      using \<open>A = range f\<close> mem_Collect_eq
+      by blast 
   qed
   have  "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A" for x c
   proof-
     assume \<open>x \<in> A\<close>
     then obtain y where \<open>x = f y\<close>
-      using  \<open>A = (ran_op f)\<close> 
-      by (smt mem_Collect_eq ran_op_def)
+      using  \<open>A = (range f)\<close> mem_Collect_eq
+      by blast
     have \<open>c *\<^sub>C x = f (c *\<^sub>C y)\<close>
       using  \<open>x = f y\<close> \<open>clinear f\<close>
       by (simp add: complex_vector.linear_scale)
     thus ?thesis
-      using  \<open>x = f y\<close>
-      by (metis (mono_tags, lifting) \<open>A = ran_op f\<close> mem_Collect_eq ran_op_def)
+      using  \<open>x = f y\<close> \<open>A = range f\<close> mem_Collect_eq
+      by blast
   qed
   have  "0 \<in> A"
   proof-
     have \<open>0 = f 0\<close> 
       using \<open>clinear f\<close> additive.zero clinear_def
       by (simp add: complex_vector.linear_0)     
-    hence \<open>0 \<in> ran_op f\<close>
-      by (metis (mono_tags, lifting) mem_Collect_eq ran_op_def)
+    hence \<open>0 \<in> range f\<close>
+      using  mem_Collect_eq
+      by auto 
     thus ?thesis 
-      by (simp add: \<open>A = ran_op f\<close>)
+      by (simp add: \<open>A = range f\<close>)
   qed
   thus ?thesis 
-    using \<open>A = ran_op f\<close> \<open>\<And>x c. x \<in> A \<Longrightarrow> c *\<^sub>C x \<in> A\<close> \<open>\<And>y x. \<lbrakk>x \<in> A; y \<in> A\<rbrakk> \<Longrightarrow> x + y \<in> A\<close> is_linear_manifold.intro by blast
+    using \<open>A = range f\<close> \<open>\<And>x c. x \<in> A \<Longrightarrow> c *\<^sub>C x \<in> A\<close> \<open>\<And>y x. \<lbrakk>x \<in> A; y \<in> A\<rbrakk> \<Longrightarrow> x + y \<in> A\<close> is_linear_manifold.intro by blast
 qed
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projectionPropertiesE:
-  \<open>is_subspace M \<Longrightarrow> ran_op  (projection M) = M\<close>
+  \<open>is_subspace M \<Longrightarrow> range  (projection M) = M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>is_subspace M\<close>
-  have \<open>x \<in> ran_op  (projection M) \<Longrightarrow> x \<in> M\<close> for x
-    by (smt \<open>is_subspace M\<close> mem_Collect_eq projection_intro2 ran_op_def)
-  moreover have \<open>x \<in> M \<Longrightarrow> x \<in> ran_op  (projection M)\<close> for x
-    by (metis (mono_tags, lifting) \<open>is_subspace M\<close> mem_Collect_eq projection_fixed_points ran_op_def)
+  have \<open>x \<in> range  (projection M) \<Longrightarrow> x \<in> M\<close> for x
+    using \<open>is_subspace M\<close> mem_Collect_eq projection_intro2
+    by auto
+  moreover have \<open>x \<in> M \<Longrightarrow> x \<in> range  (projection M)\<close> for x
+    using \<open>is_subspace M\<close>  projection_fixed_points
+    by (metis UNIV_I image_iff) 
   ultimately show ?thesis by blast
 qed
 
@@ -1676,13 +1665,13 @@ theorem orthogonal_complement_twice:
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>is_subspace M\<close>
-  have \<open>(orthogonal_complement (orthogonal_complement M)) = ker_op (projection (orthogonal_complement M))\<close>
+  have \<open>(orthogonal_complement (orthogonal_complement M)) =  (projection (orthogonal_complement M)) -` {0}\<close>
     by (simp add: \<open>is_subspace M\<close> projectionPropertiesD)
-  also have \<open>... = ker_op ( id - (projection M) )\<close>
+  also have \<open>... = ( id - (projection M) ) -` {0}\<close>
     by (simp add: ProjOntoOrtho \<open>is_subspace M\<close>)
   also have \<open>... = M\<close>
   proof-
-    have \<open>x \<in>  M \<Longrightarrow> x \<in>  ( ker_op ( id - (projection M) ) )\<close> for x
+    have \<open>x \<in>  M \<Longrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
     proof-
       assume \<open>x \<in> M\<close>
       hence \<open>(projection M) x = x\<close>
@@ -1694,16 +1683,16 @@ proof-
       hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
         using span_superset 
         by fastforce 
-      hence \<open>x \<in> ( ker_op ( id - (projection M) ) )\<close> 
+      hence \<open>x \<in> ( ( id - (projection M) ) -` {0} )\<close> 
         by (metis ProjOntoOrtho \<open>(id - projection M) x = 0\<close> \<open>is_subspace M\<close> calculation diff_zero is_subspace_orthog projection_intro1)
       thus ?thesis 
         by simp                  
     qed
-    moreover have \<open>x \<in>  ( ker_op ( id - (projection M) ) ) \<Longrightarrow> x \<in>  M\<close> for x
+    moreover have \<open>x \<in>  ( ( id - (projection M) ) -` {0} ) \<Longrightarrow> x \<in>  M\<close> for x
     proof-
-      assume \<open>x \<in>  ( ker_op ( id - (projection M) ) )\<close>
+      assume \<open>x \<in>  ( ( id - (projection M) ) -` {0} )\<close>
       hence \<open>(id - (projection M)) x = 0\<close>
-        by (simp add: ker_op_def)
+        by simp
       hence \<open>(projection M) x = x\<close>
         by auto
       hence \<open>(projection M) x \<in>  M\<close>
@@ -1713,11 +1702,11 @@ proof-
         by simp
       thus ?thesis by blast
     qed
-    ultimately have \<open>x \<in>  M \<longleftrightarrow> x \<in>  ( ker_op ( id - (projection M) ) )\<close> for x
+    ultimately have \<open>x \<in>  M \<longleftrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
       by blast
-    hence \<open> ( ker_op ( id - (projection M) ) ) =  M\<close>
+    hence \<open> (  ( id - (projection M) ) -` {0} ) =  M\<close>
       by blast
-    thus ?thesis 
+    thus ?thesis
       by simp
   qed     
   finally show ?thesis by blast
@@ -2011,15 +2000,16 @@ theorem ortho_decomp:
 lemma projection_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>f (projection (ker_op f) x) = 0\<close>
+  shows \<open>f (projection (f -` {0}) x) = 0\<close>
 proof-
   from \<open>bounded_clinear f\<close>
-  have \<open>is_subspace (ker_op f)\<close>
+  have \<open>is_subspace (f -` {0})\<close>
     by (simp add: ker_op_lin)
-  hence \<open>projection (ker_op f) x \<in> ker_op f\<close>
-    by (simp add: projection_intro2)
-  thus ?thesis using ker_op_def
-    by (simp add: ker_op_def)
+  hence \<open>projection (f -` {0}) x \<in> f -` {0}\<close>
+    using projection_intro2
+    by blast
+  thus ?thesis
+    by simp
 qed
 
 lemma inner_product_projection:
@@ -2095,41 +2085,41 @@ type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
 
 lemma ker_ortho_nonzero:
   fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
-  assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> (orthogonal_complement (ker_op f))\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> (orthogonal_complement (f -` {0}))\<close> 
   shows \<open>f x \<noteq> 0\<close>
 proof(rule classical)
-  have \<open>is_subspace (ker_op f)\<close> using \<open>bounded_clinear f\<close>
+  have \<open>is_subspace (f -` {0})\<close> using \<open>bounded_clinear f\<close>
     by (simp add: ker_op_lin) 
   assume \<open>\<not>(f x \<noteq> 0)\<close>
-  hence \<open>x \<in> ker_op f\<close>
-    by (simp add: ker_op_def) 
-  moreover have \<open>(ker_op f)\<inter>(orthogonal_complement (ker_op f)) = {0}\<close>
-    using \<open>is_subspace (ker_op f)\<close> is_linear_manifold.zero is_subspace.subspace ortho_inter_zero by auto
-  ultimately have  \<open>x \<notin> orthogonal_complement (ker_op f)\<close> using \<open>x \<noteq> 0\<close>
+  hence \<open>x \<in> f -` {0}\<close>
+    by simp  
+  moreover have \<open>(f -` {0})\<inter>(orthogonal_complement (f -` {0})) = {0}\<close>
+    using \<open>is_subspace (f -` {0})\<close> is_linear_manifold.zero is_subspace.subspace ortho_inter_zero
+    by blast    
+  ultimately have  \<open>x \<notin> orthogonal_complement (f -` {0})\<close> using \<open>x \<noteq> 0\<close>
     by (smt Int_iff empty_iff insert_iff) 
-  thus ?thesis using \<open>x \<in> orthogonal_complement (ker_op f)\<close> by blast
+  thus ?thesis using \<open>x \<in> orthogonal_complement (f -` {0})\<close> by blast
 qed
 
 lemma ker_unidim:
   fixes f :: \<open>('a::chilbert_space) functional\<close>
   assumes \<open>bounded_clinear f\<close>
-  shows \<open>proportion (orthogonal_complement (ker_op f))\<close>
+  shows \<open>proportion (orthogonal_complement (f -` {0}))\<close>
 proof-
-  have \<open>x \<in> (orthogonal_complement (ker_op f)) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in> orthogonal_complement (ker_op f)
+  have \<open>x \<in> (orthogonal_complement (f -` {0})) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in> orthogonal_complement (f -` {0})
  \<Longrightarrow> y \<noteq> 0  \<Longrightarrow> \<exists> k. x = k *\<^sub>C y\<close>
     for x y
   proof-
-    assume \<open>x \<in> (orthogonal_complement (ker_op f))\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>(orthogonal_complement (ker_op f))\<close> and \<open>y \<noteq> 0\<close>
+    assume \<open>x \<in> (orthogonal_complement (f -` {0}))\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>(orthogonal_complement (f -` {0}))\<close> and \<open>y \<noteq> 0\<close>
     from \<open>bounded_clinear f\<close> 
-    have \<open>is_subspace (ker_op f)\<close>
+    have \<open>is_subspace (f -` {0})\<close>
       by (simp add: ker_op_lin)
-    hence \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
+    hence \<open>is_subspace (orthogonal_complement (f -` {0}))\<close>
       by simp
     hence \<open>f x \<noteq> 0\<close>
-      using ker_ortho_nonzero \<open>x \<in> (orthogonal_complement (ker_op f))\<close> \<open>x \<noteq> 0\<close> assms by auto 
-    from \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
+      using \<open>is_subspace (f -` {0})\<close> \<open>x \<in> orthogonal_complement (f -` {0})\<close> \<open>x \<noteq> 0\<close> projectionPropertiesD projection_fixed_points by force
     have \<open>f y \<noteq> 0\<close>
-      using ker_ortho_nonzero \<open>y \<in> (orthogonal_complement (ker_op f))\<close> \<open>y \<noteq> 0\<close> assms by auto 
+      by (metis \<open>y \<in> orthogonal_complement (f -` {0})\<close> \<open>y \<noteq> 0\<close> cinner_eq_zero_iff orthogonal_complement_D2 vimage_singleton_eq)
     from  \<open>f x \<noteq> 0\<close>  \<open>f y \<noteq> 0\<close>
     have \<open>\<exists> k. (f x) = k*(f y)\<close>
       by (metis add.inverse_inverse minus_divide_eq_eq)
@@ -2139,32 +2129,29 @@ proof-
       using  \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_scale)
-
     hence  \<open>(f x) - (f (k *\<^sub>C y)) = 0\<close>
       by simp
     hence  \<open>f (x - (k *\<^sub>C y)) = 0\<close>
       using additive.diff  \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_diff)
-        
-    hence  \<open>(x - (k *\<^sub>C y)) \<in> ker_op f\<close>
-      using ker_op_def
-      by (simp add: ker_op_def)
-    moreover have \<open>(ker_op f) \<inter> (orthogonal_complement (ker_op f)) = {0}\<close>
-      by (simp add: \<open>is_subspace (ker_op f)\<close> is_linear_manifold.zero is_subspace.subspace ortho_inter_zero)
-    moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (ker_op f)\<close>
+      by (simp add: complex_vector.linear_diff)        
+    hence  \<open>(x - (k *\<^sub>C y)) \<in> f -` {0}\<close>
+      by simp
+    moreover have \<open>(f -` {0}) \<inter> (orthogonal_complement (f -` {0})) = {0}\<close>
+      by (metis \<open>is_subspace (f -` {0})\<close> \<open>x \<in> orthogonal_complement (f -` {0})\<close> ortho_inter_zero projectionPropertiesD projection_intro2 vimage_singleton_eq)
+    moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (f -` {0})\<close>
     proof-
-      from  \<open>y \<in> (orthogonal_complement (ker_op f))\<close>
-      have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (ker_op f))\<close>
-        using \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
+      from  \<open>y \<in> (orthogonal_complement (f -` {0}))\<close>
+      have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (f -` {0}))\<close>
+        using \<open>is_subspace (orthogonal_complement (f -` {0}))\<close>
         unfolding is_subspace_def
         by (simp add: is_linear_manifold.smult_closed)
-      thus ?thesis using  \<open>x \<in> (orthogonal_complement (ker_op f))\<close>  \<open>is_subspace (orthogonal_complement (ker_op f))\<close>
+      thus ?thesis using  \<open>x \<in> (orthogonal_complement (f -` {0}))\<close>  \<open>is_subspace (orthogonal_complement (f -` {0}))\<close>
         unfolding is_subspace_def
-        by (metis \<open>is_subspace (ker_op f)\<close> add_diff_cancel_left' calculation(1) diff_add_cancel diff_zero is_linear_manifold.zero is_subspace.subspace projection_uniq)
+        by (metis \<open>is_subspace (f -` {0})\<close> add_diff_cancel_left' calculation(1) diff_add_cancel diff_zero is_linear_manifold.zero is_subspace.subspace projection_uniq)
     qed
     ultimately have \<open>x - (k *\<^sub>C y) = 0\<close>
-      using \<open>f (x - k *\<^sub>C y) = 0\<close> \<open>x - k *\<^sub>C y \<in> orthogonal_complement (ker_op f)\<close> 
+      using \<open>f (x - k *\<^sub>C y) = 0\<close> \<open>x - k *\<^sub>C y \<in> orthogonal_complement (f -` {0})\<close> 
         assms ker_ortho_nonzero by blast
     thus ?thesis by simp
   qed 
@@ -2185,24 +2172,29 @@ next
   thus ?thesis 
   proof-
     from \<open>bounded_clinear f\<close>
-    have \<open>proportion (orthogonal_complement (ker_op f))\<close>
+    have \<open>proportion (orthogonal_complement (f -` {0}))\<close>
       by (simp add: ker_unidim)
-    moreover have \<open>\<exists> h \<in> (orthogonal_complement (ker_op f)). h \<noteq> 0\<close>
-      by (metis ExistenceUniquenessProj False assms diff_0_right ker_op_lin orthogonal_complement_twice projectionPropertiesA projectionPropertiesD projection_fixed_points projection_ker_simp)
-    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (ker_op f)). \<exists> k. x = k *\<^sub>C t)\<close>
+    moreover have \<open>\<exists> h \<in> (orthogonal_complement (f -` {0})). h \<noteq> 0\<close>
+    proof -
+      have "(\<exists>a\<in>orthogonal_complement (f -` {0}). a \<noteq> 0) \<or> orthogonal_complement (f -` {0}) \<noteq> {} \<and> f -` {0} \<noteq> UNIV"
+        by (metis (no_types) False UNIV_I assms insert_absorb ker_op_lin ortho_bot orthogonal_complement_twice projection_intro1 vimage_singleton_eq)
+      then show ?thesis
+        by (metis (no_types) assms insertI1 is_singletonE is_singletonI' ker_op_lin ortho_bot orthogonal_complement_twice)
+    qed
+    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t)\<close>
       by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
-    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>(orthogonal_complement (ker_op f)). \<exists> k. x = k *\<^sub>C t\<close>
+    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t\<close>
       by blast
-    have  \<open>is_subspace ( orthogonal_complement (ker_op f))\<close>
+    have  \<open>is_subspace ( orthogonal_complement (f -` {0}))\<close>
       by (simp add: assms ker_op_lin)
-    hence  \<open>t \<in> (orthogonal_complement (ker_op f))\<close>
+    hence  \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
     proof-
-      have \<open>\<exists> s \<in> (orthogonal_complement (ker_op f)). s \<noteq> 0\<close>
-        by (simp add: \<open>\<exists>h\<in>orthogonal_complement (ker_op f). h \<noteq> 0\<close>)
-      then obtain s where \<open>s \<in> (orthogonal_complement (ker_op f))\<close> and \<open>s \<noteq> 0\<close>
+      have \<open>\<exists> s \<in> (orthogonal_complement (f -` {0})). s \<noteq> 0\<close>
+        by (simp add: \<open>\<exists>h\<in>orthogonal_complement (f -` {0}). h \<noteq> 0\<close>)
+      then obtain s where \<open>s \<in> (orthogonal_complement (f -` {0}))\<close> and \<open>s \<noteq> 0\<close>
         by blast
       have \<open>\<exists> k. s = k *\<^sub>C t\<close>
-        by (simp add: \<open>\<forall>x\<in>orthogonal_complement (ker_op f). \<exists>k. x = k *\<^sub>C t\<close> \<open>s \<in> orthogonal_complement (ker_op f)\<close>)
+        by (simp add: \<open>\<forall>x\<in>orthogonal_complement (f -` {0}). \<exists>k. x = k *\<^sub>C t\<close> \<open>s \<in> orthogonal_complement (f -` {0})\<close>)
       then obtain k where \<open>s = k *\<^sub>C t\<close>
         by blast
       have  \<open>k \<noteq> 0\<close>
@@ -2210,47 +2202,45 @@ next
         by (simp add: \<open>s = k *\<^sub>C t\<close>) 
       hence  \<open>(1/k) *\<^sub>C s = t\<close>
         using  \<open>s = k *\<^sub>C t\<close> by simp
-      moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (ker_op f))\<close>
-        using \<open>is_subspace  (orthogonal_complement (ker_op f))\<close>
+      moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (f -` {0}))\<close>
         unfolding is_subspace_def
-        by (simp add: \<open>s \<in> orthogonal_complement (ker_op f)\<close> is_linear_manifold.smult_closed)
+        by (simp add: \<open>s \<in> orthogonal_complement (f -` {0})\<close> orthogonal_complement_D2 orthogonal_complement_I1)
       ultimately show ?thesis
         by simp 
     qed
-    have \<open>projection (orthogonal_complement (ker_op f)) x = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
+    have \<open>projection (orthogonal_complement (f -` {0})) x = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
       for x
-      using inner_product_projection \<open>is_subspace  (orthogonal_complement (ker_op f))\<close>
-        \<open>\<forall> m \<in>  (orthogonal_complement (ker_op f)). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> (orthogonal_complement (ker_op f))\<close>
+      using inner_product_projection \<open>is_subspace  (orthogonal_complement (f -` {0}))\<close>
+        \<open>\<forall> m \<in>  (orthogonal_complement (f -` {0})). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
       by (simp add: inner_product_projection \<open>t \<noteq> 0\<close>)
-    hence \<open>f (projection (orthogonal_complement (ker_op f)) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
+    hence \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
       for x
       using \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_scale)
 
-    hence \<open>f (projection (orthogonal_complement (ker_op f)) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
+    hence \<open>f (projection (orthogonal_complement (f -` {0})) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
     proof-
-      from \<open>f (projection (orthogonal_complement (ker_op f)) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
-      have \<open>f (projection (orthogonal_complement (ker_op f)) x) = ((f t)/(\<langle>t , t\<rangle>)) * (\<langle>t , x\<rangle>)\<close>
+      from \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
+      have \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((f t)/(\<langle>t , t\<rangle>)) * (\<langle>t , x\<rangle>)\<close>
         by simp
       thus ?thesis
         by auto 
     qed
-    moreover have \<open>f (projection ((ker_op f)) x) = 0\<close>
+    moreover have \<open>f (projection (f -` {0}) x) = 0\<close>
       for x
-      using projection_ker_simp
-      by (simp add: projection_ker_simp assms) 
+      using  assms ker_op_lin projection_intro2 by blast
     ultimately have \<open>f x = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
     proof -
-      assume "\<And>x. f (projection (ker_op f) x) = 0"
-      hence "\<And>a aa. f (projection (ker_op f) a + aa) = 0 + f aa"
+      assume "\<And>x. f (projection (f -` {0}) x) = 0"
+      hence "\<And>a b. f (projection (f -` {0}) a + b) = 0 + f b"
         by (metis (no_types) additive.add assms bounded_clinear_def clinear_additive_D)
-      hence "\<And>a. 0 + f (projection (orthogonal_complement (ker_op f)) a) = f a"
+      hence "\<And>a. 0 + f (projection (orthogonal_complement (f -` {0})) a) = f a"
         by (metis (no_types) assms ker_op_lin ortho_decomp)
       thus ?thesis
-        by (simp add: \<open>\<And>x. f (projection (orthogonal_complement (ker_op f)) x) = \<langle>(cnj (f t) / \<langle>t, t\<rangle>) *\<^sub>C t, x\<rangle>\<close>)
+        by (simp add: \<open>\<And>x. f (projection (orthogonal_complement (f -` {0})) x) = \<langle>(cnj (f t) / \<langle>t, t\<rangle>) *\<^sub>C t, x\<rangle>\<close>)
     qed
     thus ?thesis
       by blast  
