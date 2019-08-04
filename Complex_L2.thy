@@ -1862,19 +1862,20 @@ qed
 
 lemma left_shift_ell2_clinear:
   \<open>clinear left_shift_ell2\<close>
+  unfolding clinear_def
 proof
-  show "left_shift_ell2 (x + y) = left_shift_ell2 x + left_shift_ell2 y"
-    for x :: "nat ell2"
-      and y :: "nat ell2"
+  show "left_shift_ell2 (b1 + b2) = left_shift_ell2 b1 + left_shift_ell2 b2"
+    for b1 :: "nat ell2"
+      and b2 :: "nat ell2"
     apply transfer
     unfolding left_shift_def
-    by auto
-  show "left_shift_ell2 (r *\<^sub>C y) = r *\<^sub>C left_shift_ell2 y"
+    by simp
+  show "left_shift_ell2 (r *\<^sub>C b) = r *\<^sub>C left_shift_ell2 b"
     for r :: complex
-      and y :: "nat ell2"
+      and b :: "nat ell2"
     apply transfer
     unfolding left_shift_def
-    by auto
+    by simp
 qed
 
 lemma shift_ket:
@@ -2042,7 +2043,8 @@ proof-
     using Rep_bounded by blast
   hence \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))
      =  (\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
-    by (simp add: bounded_clinear_def clinear.scaleC)   
+    using bounded_clinear_def
+    by simp 
   also have \<open>(\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )
     = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     unfolding comp_def
@@ -2064,8 +2066,8 @@ proof-
      = (Rep_bounded A) \<circ> (Rep_bounded (ell2_to_bounded \<psi>))\<close>
     by simp
   thus ?thesis
-    (* by (metis Rep_bounded_inject timesOp_Rep_bounded)  *)
-    by (cheat \<open>proof broke because of use of lift_definition, use transfer\<close>)
+    apply transfer
+    by simp
 qed
 
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
@@ -2182,38 +2184,72 @@ qed
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
   "classical_operator'"
+  unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
+  apply auto
+     apply (simp add: complex_vector.vector_space_axioms)
+    apply (simp add: complex_vector.vector_space_axioms)
+  unfolding module_hom_def module_hom_axioms_def module_def
+   apply auto
+        apply (simp add: scaleC_add_right)
+  using scaleC_left.add apply auto[1]
+      apply (simp add: scaleC_add_right)
+     apply (simp add: scaleC_left.add)
+    apply transfer
 proof
-  show "classical_operator' \<pi> ((x::'a ell2) + y) = (classical_operator' \<pi> x::'b ell2) + classical_operator' \<pi> y"
-    for \<pi> :: "'a \<Rightarrow> 'b option"
-      and x :: "'a ell2"
-      and y :: "'a ell2"
-  proof transfer
-    fix  \<pi> :: "'a \<Rightarrow> 'b option"
-      and x :: "'a \<Rightarrow> complex"
-      and y :: "'a \<Rightarrow> complex"
-    assume \<open>has_ell2_norm x\<close> and \<open>has_ell2_norm y\<close>
-    have \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some a \<Rightarrow> x a + y a) b =
+
+  show "(case inv_option S (b::'b) of None \<Rightarrow> 0::complex | Some (a::'a) \<Rightarrow> b1 a + b2 a) = (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b1 x) + (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b2 x)"
+    if "has_ell2_norm (b1::'a \<Rightarrow> complex)"
+      and "has_ell2_norm (b2::'a \<Rightarrow> complex)"
+    for S :: "'a \<Rightarrow> 'b option"
+      and b1 :: "'a \<Rightarrow> complex"
+      and b2 :: "'a \<Rightarrow> complex"
+      and b :: 'b
+  proof-
+    have "classical_operator' \<pi> ((x::'a ell2) + y) = (classical_operator' \<pi> x::'b ell2) + classical_operator' \<pi> y"
+      for \<pi> :: "'a \<Rightarrow> 'b option"
+        and x :: "'a ell2"
+        and y :: "'a ell2"
+    proof transfer
+      fix  \<pi> :: "'a \<Rightarrow> 'b option"
+        and x :: "'a \<Rightarrow> complex"
+        and y :: "'a \<Rightarrow> complex"
+      assume \<open>has_ell2_norm x\<close> and \<open>has_ell2_norm y\<close>
+      have \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some a \<Rightarrow> x a + y a) b =
        (\<lambda>b. (case inv_option \<pi> b of None \<Rightarrow> 0 | Some c \<Rightarrow> x c) +
              (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> y x)) b\<close>
-      for b
-    proof(induction \<open>inv_option \<pi> b\<close>)
-      case None
-      thus ?case
-        by auto 
-    next
-      case (Some x)
-      thus ?case
-        by (metis option.simps(5)) 
-    qed
-    thus \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some a \<Rightarrow> x a + y a) =
+        for b
+      proof(induction \<open>inv_option \<pi> b\<close>)
+        case None
+        thus ?case
+          by auto 
+      next
+        case (Some x)
+        thus ?case
+          by (metis option.simps(5)) 
+      qed
+      thus \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some a \<Rightarrow> x a + y a) =
        (\<lambda>b. (case inv_option \<pi> b of None \<Rightarrow> 0 | Some c \<Rightarrow> x c) +
              (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> y x))\<close>
-      by blast
+        by blast
+    qed
+    thus ?thesis
+    proof - (* sledgehammer *)
+      have f1: "\<forall>b f fa. (case inv_option f (b::'b) of None \<Rightarrow> 0 | Some (x::'a) \<Rightarrow> fa x) = Rep_ell2 (classical_operator' f (Abs_ell2 fa)) b \<or> \<not> has_ell2_norm fa"
+        by (metis (no_types) Abs_ell2_inverse classical_operator'.rep_eq mem_Collect_eq)
+      have "\<forall>f fa. (Abs_ell2 (\<lambda>a. fa (a::'a) + f a) = Abs_ell2 fa + Abs_ell2 f \<or> \<not> has_ell2_norm f) \<or> \<not> has_ell2_norm fa"
+        by (metis (no_types) eq_onp_same_args plus_ell2.abs_eq)
+      then have "(case inv_option S b of None \<Rightarrow> 0 | Some a \<Rightarrow> b1 a + b2 a) = Rep_ell2 (classical_operator' S (Abs_ell2 b1 + Abs_ell2 b2)) b"
+        using f1 by (metis (no_types) ell2_norm_triangle(1) that(1) that(2))
+      then show ?thesis
+        using f1 by (metis (full_types) \<open>\<And>y x \<pi>. classical_operator' \<pi> (x + y) = classical_operator' \<pi> x + classical_operator' \<pi> y\<close> plus_ell2.rep_eq that(1) that(2))
+    qed
+
   qed
-  show "classical_operator' \<pi> (r *\<^sub>C (x::'a ell2)) = r *\<^sub>C (classical_operator' \<pi> x::'b ell2)"
-    for \<pi> :: "'a \<Rightarrow> 'b option"
+
+  show "classical_operator' S (r *\<^sub>C (b::'a ell2)) = r *\<^sub>C (classical_operator' S b::'b ell2)"
+    for S :: "'a \<Rightarrow> 'b option"
       and r :: complex
-      and x :: "'a ell2"
+      and b :: "'a ell2"
   proof transfer
     fix  \<pi> :: "'a \<Rightarrow> 'b option"
       and r :: complex
@@ -2235,8 +2271,9 @@ proof
        (\<lambda>b. r * (case inv_option \<pi> b of None \<Rightarrow> 0 | Some b \<Rightarrow> x b))\<close>
       by blast
   qed
-  show "\<exists>K. \<forall>x. norm (classical_operator' \<pi> (x::'a ell2)::'b ell2) \<le> norm x * K"
-    for \<pi> :: "'a \<Rightarrow> 'b option"
+
+  show "\<exists>K. \<forall>x. norm (classical_operator' S (x::'a ell2)::'b ell2) \<le> norm x * K"
+    for S :: "'a \<Rightarrow> 'b option"
   proof transfer
     fix  \<pi> :: "'a \<Rightarrow> 'b option"
     show \<open>\<exists>K. \<forall>x\<in>Collect has_ell2_norm.
@@ -2417,6 +2454,7 @@ proof
     qed
   qed
 qed
+
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
       (classical_operator \<pi>) \<cdot>\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
