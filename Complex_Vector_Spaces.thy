@@ -12,6 +12,7 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Elementary_Topology"
     Ordered_Complex 
     "HOL-Analysis.Operator_Norm"
+    "HOL-Analysis.Elementary_Normed_Spaces"
     Unobtrusive_NSA
 begin
 
@@ -1732,6 +1733,924 @@ proof-
   finally show ?thesis
     by (simp add: onorm_def) 
 qed
+
+section \<open>Subspace\<close>
+
+\<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
+locale is_linear_manifold =
+  fixes A::"('a::complex_vector) set"
+  assumes additive_closed: "x\<in>A \<Longrightarrow> y\<in>A \<Longrightarrow> x+y\<in>A"
+  assumes smult_closed: "x\<in>A \<Longrightarrow> c *\<^sub>C x \<in> A"
+  assumes zero: "0 \<in> A"
+
+locale is_subspace =
+  fixes A::"('a::{complex_vector,topological_space}) set"
+  assumes subspace: "is_linear_manifold A"
+  assumes closed: "closed A"
+
+lemma is_subspace_cl:
+  fixes A::"('a::complex_normed_vector) set"
+  assumes \<open>is_linear_manifold A\<close>
+  shows \<open>is_linear_manifold (closure A)\<close>
+proof-
+  have "x \<in> closure A \<Longrightarrow> y \<in> closure A \<Longrightarrow> x+y \<in> closure A" for x y
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    assume \<open>y\<in>(closure A)\<close>
+    then obtain yy where \<open>\<forall> n::nat. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
+      by (simp add: \<open>\<forall>n. xx n \<in> A\<close> \<open>\<forall>n. yy n \<in> A\<close> assms is_linear_manifold.additive_closed)
+    hence  \<open>(\<lambda> n. (xx n) + (yy n)) \<longlonglongrightarrow> x + y\<close> using  \<open>xx \<longlonglongrightarrow> x\<close> \<open>yy \<longlonglongrightarrow> y\<close> 
+      by (simp add: tendsto_add)
+    thus ?thesis using  \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close>
+      by (meson closure_sequential)
+  qed
+  moreover have "x\<in>(closure A) \<Longrightarrow> c *\<^sub>C x \<in> (closure A)" for x c
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      by (simp add: \<open>\<forall>n. xx n \<in> A\<close> assms is_linear_manifold.smult_closed)
+    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
+      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
+    hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose)
+    thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      by (meson closure_sequential)
+  qed
+  moreover have "0 \<in> (closure A)"
+    using assms closure_subset is_linear_manifold.zero by fastforce
+  ultimately show ?thesis 
+    by (simp add: is_linear_manifold_def)
+qed
+
+\<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close> 
+
+definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+  \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+
+notation Minkoswki_sum (infixl "+\<^sub>m" 65)
+
+lemma is_subspace_plus:
+  assumes \<open>is_linear_manifold A\<close> and \<open>is_linear_manifold B\<close>
+  shows \<open>is_linear_manifold (A +\<^sub>m B)\<close>
+proof-
+  obtain C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+    by blast
+  have  "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
+  proof-
+    assume \<open>x \<in> C\<close>
+    then obtain xA xB where \<open>x = xA + xB\<close> and \<open>xA \<in> A\<close> and \<open>xB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    assume \<open>y \<in> C\<close>
+    then obtain yA yB where \<open>y = yA + yB\<close> and \<open>yA \<in> A\<close> and \<open>yB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    have \<open>x + y = (xA + yA) +  (xB + yB)\<close>
+      by (simp add: \<open>x = xA + xB\<close> \<open>y = yA + yB\<close>)
+    moreover have \<open>xA + yA \<in> A\<close> 
+      by (simp add: \<open>xA \<in> A\<close> \<open>yA \<in> A\<close> assms(1) is_linear_manifold.additive_closed)
+    moreover have \<open>xB + yB \<in> B\<close>
+      by (simp add: \<open>xB \<in> B\<close> \<open>yB \<in> B\<close> assms(2) is_linear_manifold.additive_closed)
+    ultimately show ?thesis
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+  qed
+  moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
+  proof-
+    assume \<open>x \<in> C\<close>
+    then obtain xA xB where \<open>x = xA + xB\<close> and \<open>xA \<in> A\<close> and \<open>xB \<in> B\<close>
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+    have \<open>c *\<^sub>C x = (c *\<^sub>C xA) + (c *\<^sub>C xB)\<close>
+      by (simp add: \<open>x = xA + xB\<close> scaleC_add_right)
+    moreover have \<open>c *\<^sub>C xA \<in> A\<close>
+      by (simp add: \<open>xA \<in> A\<close> assms(1) is_linear_manifold.smult_closed)
+    moreover have \<open>c *\<^sub>C xB \<in> B\<close>
+      by (simp add: \<open>xB \<in> B\<close> assms(2) is_linear_manifold.smult_closed)
+    ultimately show ?thesis
+      using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
+  qed
+  moreover have  "0 \<in> C"
+    by (metis (mono_tags, lifting) \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0 is_linear_manifold.zero mem_Collect_eq)
+  ultimately show ?thesis
+    by (metis (no_types, lifting) assms(1) assms(2) complex_vector.subspace_def complex_vector.subspace_sums Minkoswki_sum_def is_linear_manifold_def)
+qed
+
+
+lemma is_subspace_0[simp]: 
+  "is_subspace ({0} :: ('a::{complex_vector,t1_space}) set)"
+proof-
+  have \<open>is_linear_manifold {0}\<close>
+    using add.right_neutral is_linear_manifold_def scaleC_right.zero by blast
+  moreover have "closed ({0} :: 'a set)"
+    by simp 
+  ultimately show ?thesis 
+    by (simp add: is_subspace_def)
+qed
+
+lemma is_subspace_UNIV[simp]: "is_subspace (UNIV::('a::{complex_vector,topological_space}) set)"
+proof-
+  have \<open>is_linear_manifold UNIV\<close>
+    by (simp add: is_linear_manifold_def)
+  moreover have \<open>closed UNIV\<close>
+    by simp
+  ultimately show ?thesis by (simp add: is_subspace_def)
+qed
+
+lemma is_subspace_inter[simp]:
+  assumes "is_subspace A" and "is_subspace B"
+  shows "is_subspace (A\<inter>B)"
+proof-
+  obtain C where \<open>C = A \<inter> B\<close> by blast
+  have \<open>is_linear_manifold C\<close>
+  proof-
+    have "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
+      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) is_linear_manifold_def is_subspace_def)
+    moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
+      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) is_linear_manifold_def is_subspace_def)
+    moreover have "0 \<in> C" 
+      using  \<open>C = A \<inter> B\<close> assms(1) assms(2) is_linear_manifold_def is_subspace_def by fastforce
+    ultimately show ?thesis 
+      by (simp add: is_linear_manifold_def)
+  qed
+  moreover have \<open>closed C\<close>
+    using  \<open>C = A \<inter> B\<close>
+    by (simp add: assms(1) assms(2) closed_Int is_subspace.closed)
+  ultimately show ?thesis
+    using  \<open>C = A \<inter> B\<close>
+    by (simp add: is_subspace_def)
+qed
+
+
+lemma is_subspace_INF[simp]:
+  "\<forall> A \<in> \<A>. (is_subspace A) \<Longrightarrow> is_subspace (\<Inter>\<A>)"
+proof-
+  assume \<open>\<forall> A \<in> \<A>. (is_subspace A)\<close>
+  have \<open>is_linear_manifold (\<Inter>\<A>)\<close>
+  proof -
+    obtain aa :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
+      f1: "\<forall>x0. (\<exists>v1 v2. v1 \<in> x0 \<and> v2 *\<^sub>C v1 \<notin> x0) = (aa x0 \<in> x0 \<and> cc x0 *\<^sub>C aa x0 \<notin> x0)"
+      by moura
+    obtain aaa :: "'a set \<Rightarrow> 'a" and aab :: "'a set \<Rightarrow> 'a" where
+      "\<forall>x0. (\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0) = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)"
+      by moura
+    hence f2: "\<forall>A. (\<not> is_linear_manifold A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (is_linear_manifold A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
+      using f1 by (metis (no_types) is_linear_manifold_def)
+    obtain AA :: "'a set set \<Rightarrow> 'a \<Rightarrow> 'a set" where
+      "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 \<notin> v2) = (AA x0 x1 \<in> x0 \<and> x1 \<notin> AA x0 x1)"
+      by moura
+    hence f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
+      by auto
+    have f4: "\<forall>A. \<not> is_subspace (A::'a set) \<or> is_linear_manifold A"
+      by (metis is_subspace.subspace)
+    have f5: "\<forall>A. A \<notin> \<A> \<or> is_subspace A"
+      by (metis \<open>\<forall>A\<in>\<A>. is_subspace A\<close>)
+    hence f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
+      using f4 f3 f2 by meson
+    have f7: "0 \<in> \<Inter> \<A>"
+      using f5 f4 f3 f2 by meson
+    have "aaa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aab (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> aaa (\<Inter> \<A>) + aab (\<Inter> \<A>) \<in> \<Inter> \<A>"
+      using f5 f4 f3 f2 by meson
+    thus ?thesis
+      using f7 f6 f2 by (metis (no_types))
+  qed
+  moreover have \<open>closed (\<Inter>\<A>)\<close>
+    by (simp add: \<open>\<forall>A\<in>\<A>. is_subspace A\<close> closed_Inter is_subspace.closed)
+  ultimately show ?thesis 
+    by (simp add: is_subspace.intro)
+qed
+
+
+section \<open>Linear space\<close>
+
+section \<open>Linear space\<close>
+
+(* TODO: rename Rep_linear_space \<rightarrow> space_as_set *)
+typedef (overloaded) ('a::"{complex_vector,topological_space}") 
+linear_space = \<open>{S::'a set. is_subspace S}\<close>
+  morphisms Rep_linear_space Abs_linear_space
+  using is_subspace_UNIV by blast
+
+setup_lifting type_definition_linear_space
+
+lemma is_linear_manifold_image:
+  assumes "clinear f" and "is_linear_manifold S"
+  shows "is_linear_manifold (f ` S)"
+  apply (rule is_linear_manifold.intro)
+  subgoal proof -
+    fix x :: 'b and y :: 'b
+    assume a1: "x \<in> f ` S"
+    assume a2: "y \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    hence f3: "\<forall>b f A. (b \<notin> f ` A \<or> aa A f b \<in> A \<and> b = f (aa A f b)) \<and> (b \<in> f ` A \<or> (\<forall>a. a \<notin> A \<or> b \<noteq> f a))"
+      by blast
+    hence "aa S f x + aa S f y \<in> S"
+      using a2 a1 by (metis (no_types) assms(2) is_linear_manifold_def)
+    thus "x + y \<in> f ` S"
+      using f3 a2 a1 additive.add assms(1)
+    proof - (* sledgehammer *)
+      have "x + y = f (aa S f x + aa S f y)"
+        by (metis (full_types) \<open>clinear f\<close> a1 a2 complex_vector.linear_add f3)
+      thus ?thesis
+        using \<open>aa S f x + aa S f y \<in> S\<close> by blast
+    qed
+
+  qed
+  subgoal proof -
+    fix x :: 'b and c :: complex
+    assume a1: "x \<in> f ` S"
+    obtain aa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a" where
+      "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x0 \<and> x2 = x1 v3) = (aa x0 x1 x2 \<in> x0 \<and> x2 = x1 (aa x0 x1 x2))"
+      by moura
+    hence f2: "aa S f x \<in> S \<and> x = f (aa S f x)"
+      using a1 by (simp add: Bex_def_raw image_iff)
+    hence "c *\<^sub>C x = f (c *\<^sub>C aa S f x)"
+      using  assms(1) clinear_def complex_vector.linear_scale by fastforce
+    thus "c *\<^sub>C x \<in> f ` S"
+      using f2 by (metis (no_types) assms(2) image_iff is_linear_manifold_def)
+  qed
+  by (metis Complex_Vector_Spaces.eq_vector_fraction_iff \<open>\<And>x c. x \<in> f ` S \<Longrightarrow> c *\<^sub>C x \<in> f ` S\<close> assms(2) imageI is_linear_manifold_def)
+
+
+instantiation linear_space :: (complex_normed_vector) scaleC begin
+lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+  "\<lambda>c S. scaleC c ` S"
+  apply (rule is_subspace.intro)
+  using bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace apply blast
+  by (simp add: closed_scaleC is_subspace.closed)
+lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+  "\<lambda>c S. scaleR c ` S"
+  apply (rule is_subspace.intro)
+  apply (metis bounded_clinear_def bounded_clinear_scaleC_right is_linear_manifold_image is_subspace.subspace scaleR_scaleC)
+  by (simp add: closed_scaling is_subspace.closed)
+instance 
+  apply standard
+  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
+end
+
+instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
+lift_definition zero_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
+  by simp
+instance..
+end
+
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
+  apply transfer apply (auto intro!: exI[of _ 0])
+  using  is_linear_manifold.zero is_subspace.subspace  by auto
+
+lemma subspace_scale_invariant: 
+  fixes a S
+  assumes \<open>a \<noteq> 0\<close> and \<open>is_subspace S\<close>
+  shows \<open>(*\<^sub>C) a ` S = S\<close>
+proof-
+  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
+    for x
+    using assms(2) is_linear_manifold.smult_closed is_subspace.subspace by fastforce
+  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
+    for x
+  proof -
+    assume "x \<in> S"
+    hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
+      using assms(2) is_linear_manifold_def is_subspace.subspace scaleC_one by blast
+    hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
+      using assms(1) by auto
+    thus ?thesis
+      by (meson image_iff)
+  qed 
+  ultimately show ?thesis by blast
+qed
+
+
+lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
+  apply transfer using subspace_scale_invariant by blast
+
+instantiation linear_space :: ("{complex_vector,t1_space}") "bot"
+begin
+lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
+  by (rule is_subspace_0)
+instance ..
+end
+
+instantiation linear_space :: ("{complex_vector,topological_space}") "top"
+begin
+lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNIV\<close>
+  by (rule is_subspace_UNIV)
+instance ..
+end
+
+instantiation linear_space :: ("{complex_vector,topological_space}") "Inf"
+begin
+lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+  is \<open>\<lambda> S. \<Inter> S\<close>
+proof
+  show "(x::'a) + y \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> S"
+      and "(y::'a) \<in> \<Inter> S"
+    for S :: "'a set set"
+      and x :: 'a
+      and y :: 'a
+    using that
+    by (simp add: is_linear_manifold.additive_closed is_subspace.subspace) 
+  show "c *\<^sub>C (x::'a) \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+      and "(x::'a) \<in> \<Inter> S"
+    for S :: "'a set set"
+      and x :: 'a
+      and c :: complex
+    using that
+    by (simp add: is_linear_manifold.smult_closed is_subspace.subspace) 
+  show "(0::'a) \<in> \<Inter> S"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
+    using that
+    by (simp add: is_linear_manifold.zero is_subspace.subspace) 
+  show "closed (\<Inter> S::'a set)"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> is_subspace x"
+    for S :: "'a set set"
+    using that
+    by (simp add: is_subspace.closed) 
+qed
+
+instance ..
+end
+
+
+section \<open>Span\<close>
+
+definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
+  \<open>cgenerator S = (span S = top)\<close>
+
+lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
+  is "\<lambda>G. closure (complex_vector.span G)"
+  apply (rule is_subspace.intro)
+   apply (rule is_subspace_cl)
+  by (simp_all add: complex_vector.span_add complex_vector.span_scale complex_vector.span_zero 
+is_linear_manifold.intro)
+
+lemma is_subspace_span_A:
+  assumes \<open>is_subspace S\<close> and \<open>A \<subseteq> S\<close>
+  shows \<open>complex_vector.span A \<subseteq> S\<close>
+  using assms
+  unfolding complex_vector.span_def complex_vector.subspace_def
+    hull_def is_subspace_def is_linear_manifold_def
+  by auto
+
+lemma is_subspace_span_B:
+  assumes \<open>is_subspace S\<close> and \<open>complex_vector.span A \<subseteq> S\<close>
+  shows \<open>A \<subseteq> S\<close>
+  using assms(2) complex_vector.span_superset by blast
+
+lemma span_def': \<open>Span A = Inf {S. A \<subseteq> Rep_linear_space S}\<close>
+  for A::\<open>('a::cbanach) set\<close>
+proof-
+  have \<open>x \<in> Rep_linear_space (Span A) 
+    \<Longrightarrow> x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> Rep_linear_space (Span A)\<close>
+    hence \<open>x \<in> closure (complex_vector.span A)\<close>
+      unfolding Span_def
+      apply auto
+      using Abs_linear_space_inverse \<open>x \<in> Rep_linear_space (Span A)\<close> 
+        Span.rep_eq 
+      by blast
+    hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
+      by (simp add: closure_sequential)
+    then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      for n
+      using  \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close>
+      by auto
+    have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close> 
+    proof-
+      have \<open>is_subspace S \<Longrightarrow> closed S\<close>
+        for S::\<open>'a set\<close>
+        by (simp add: is_subspace.closed)
+      hence \<open>closed ( \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S})\<close>
+        by simp
+      thus ?thesis using \<open>y \<longlonglongrightarrow> x\<close>
+        using \<open>\<And>n. y n \<in> \<Inter> {S. complex_vector.span A \<subseteq> S \<and> is_subspace S}\<close> closed_sequentially 
+        by blast  
+    qed
+    moreover have \<open>{S. A \<subseteq> S \<and> is_subspace S} \<subseteq> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      by (simp add: Collect_mono_iff is_subspace_span_A)    
+    ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      by blast     
+    thus \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close> 
+      apply transfer
+      by blast
+  qed
+  moreover have \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})
+             \<Longrightarrow> x \<in> Rep_linear_space (Span A)\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      apply transfer
+      by blast
+    moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S} \<subseteq> {S. A \<subseteq> S \<and> is_subspace S}\<close>
+      by (simp add: Collect_mono_iff is_subspace_span_B)    
+    ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> is_subspace S}\<close>
+      by blast 
+    thus \<open>x \<in> Rep_linear_space (Span A)\<close>
+      by (metis (no_types, lifting) Inter_iff Rep_linear_space closure_subset mem_Collect_eq Span.rep_eq)      
+  qed
+  ultimately have \<open>Rep_linear_space (Span A) = Rep_linear_space (Inf {S. A \<subseteq> Rep_linear_space S})\<close>
+    by blast
+  thus ?thesis
+    using Rep_linear_space_inject by auto 
+qed
+
+
+
+lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
+  for \<psi>::"'a::complex_vector"
+  by (smt Complex_Vector_Spaces.span_raw_def Diff_insert_absorb complex_vector.dependent_single complex_vector.in_span_delete complex_vector.independent_insert complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant complex_vector.span_scale insert_absorb insert_commute insert_not_empty singletonI)
+
+fun partial_span::\<open>nat \<Rightarrow> ('a::complex_vector) set \<Rightarrow> ('a::complex_vector) set\<close> where
+  \<open>partial_span 0 S = {0}\<close>|
+  \<open>partial_span (Suc n) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+
+lemma partial_span_1:
+  \<open>S \<subseteq> partial_span 1 S\<close>
+proof-
+  have \<open>partial_span 0 S = {0}\<close>
+    by auto
+  moreover have \<open>partial_span (Suc 0) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+    by auto
+  ultimately have \<open>partial_span (Suc 0) S = {a *\<^sub>C y | a y. y \<in> S}\<close>
+    by auto 
+  also have \<open>{a *\<^sub>C y | a y. y \<in> S} \<supseteq> {1 *\<^sub>C y | y. y \<in> S}\<close>
+    by blast
+  also have \<open>{1 *\<^sub>C y | y. y \<in> S} = S\<close>
+    by simp
+  finally have \<open>partial_span (Suc 0) S \<supseteq> S\<close>
+    by blast
+  thus ?thesis
+    by simp 
+qed
+
+
+lemma partial_span_lim_n:
+  fixes S::\<open>'a::complex_vector set\<close>
+  shows \<open>partial_span n S \<subseteq> complex_vector.span S\<close>
+proof(induction n)
+  case 0
+  thus ?case
+    using complex_vector.span_mono by force 
+next
+  case (Suc n)
+  have \<open>x \<in> partial_span (Suc n) S \<Longrightarrow> x \<in> complex_vector.span S\<close>
+    for x
+  proof-
+    assume \<open>x \<in> partial_span (Suc n) S\<close>
+    hence \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    then obtain a t y where \<open>x = t + a *\<^sub>C y\<close> and \<open>t \<in> partial_span n S\<close>
+      and \<open>y \<in> S\<close>
+      by blast
+    have \<open>t \<in> complex_vector.span S\<close>
+      using Suc.IH \<open>t \<in> partial_span n S\<close> by auto
+    moreover have \<open>a *\<^sub>C y \<in> complex_vector.span S\<close>
+    proof-
+      have \<open>y \<in> complex_vector.span S\<close>
+        using \<open>y \<in> S\<close>
+        by (simp add: complex_vector.span_base) 
+      thus ?thesis
+        by (simp add: complex_vector.span_scale) 
+    qed
+    ultimately show ?thesis
+      by (simp add: \<open>x = t + a *\<^sub>C y\<close> complex_vector.span_add) 
+  qed
+  thus ?case
+    by blast 
+qed
+
+lemma sum_partial_span_eq:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes  \<open>S \<noteq> {}\<close>
+  shows \<open>\<forall> r s. \<exists> p::nat. r \<in> partial_span n S \<longrightarrow> s \<in> partial_span n S
+ \<longrightarrow> r + s \<in> partial_span (n+p) S\<close>
+proof(induction n)
+  case 0
+  have  \<open>r \<in> partial_span 0 S \<Longrightarrow> s \<in> partial_span 0 S \<Longrightarrow> r + s \<in> partial_span (Suc 0) S\<close>
+    for r s
+  proof-
+    assume \<open>r \<in> partial_span 0 S\<close> and \<open>s \<in> partial_span 0 S\<close>
+    from  \<open>r \<in> partial_span 0 S\<close>
+    have \<open>r = 0\<close>
+      by simp
+    from  \<open>s \<in> partial_span 0 S\<close>
+    have \<open>s = 0\<close>
+      by simp
+    have \<open>r + s = 0\<close>
+      by (simp add: \<open>r = 0\<close> \<open>s = 0\<close>)
+    have \<open>partial_span (Suc 0) S = {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      by simp
+    have \<open>\<exists> w. w \<in> S\<close>
+      using \<open>S \<noteq> {}\<close>
+      by blast
+    then obtain w where \<open>w \<in> S\<close>
+      by blast
+    have \<open>r + 0 *\<^sub>C w \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      using \<open>r \<in>  partial_span 0 S\<close> \<open>w \<in> S\<close> by blast
+    hence \<open>0 \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span 0 S \<and> y \<in> S}\<close>
+      by (simp add: \<open>r = 0\<close>)
+    thus ?thesis using \<open>r + s = 0\<close> by simp
+  qed
+  thus ?case
+    by (metis add.left_neutral) 
+next
+  case (Suc n)
+  have \<open>r \<in> partial_span (Suc n) S \<Longrightarrow> s \<in> partial_span (Suc n) S \<Longrightarrow> \<exists> p. r + s \<in> partial_span (Suc n + p) S\<close>
+    for r s
+  proof-
+    assume \<open>r \<in> partial_span (Suc n) S\<close> and \<open>s \<in> partial_span (Suc n) S\<close>
+    from \<open>r \<in> partial_span (Suc n) S\<close>
+    have \<open>r \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by auto
+    then obtain a u uu where \<open>r = u + a *\<^sub>C uu\<close> and \<open>u \<in>  partial_span n S\<close> and \<open>uu \<in> S\<close>
+      by blast
+    from \<open>s \<in> partial_span (Suc n) S\<close>
+    have \<open>s \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by auto
+    then obtain b v vv where \<open>s = v + b *\<^sub>C vv\<close> and \<open>v \<in>  partial_span n S\<close> and \<open>vv \<in> S\<close>
+      by blast
+    have \<open>r + s = (u + v) + a *\<^sub>C uu +  b *\<^sub>C vv\<close>
+      by (simp add: \<open>r = u + a *\<^sub>C uu\<close> \<open>s = v + b *\<^sub>C vv\<close>)
+    have \<open>\<exists> p. u + v \<in>  partial_span (n+p) S\<close>
+      using Suc.IH  \<open>u \<in>  partial_span n S\<close> \<open>v \<in>  partial_span n S\<close>
+      by auto
+    then obtain p where  \<open> u + v \<in>  partial_span (n+p) S\<close>
+      by blast
+    hence \<open>(u + v) + a *\<^sub>C uu \<in> partial_span (Suc (n + p)) S\<close>
+      using \<open>uu \<in> S\<close>
+      by auto 
+    hence \<open>((u + v) + a *\<^sub>C uu) + b *\<^sub>C vv \<in> partial_span (Suc (Suc (n + p))) S\<close>
+      using \<open>vv \<in> S\<close> by force
+    thus ?thesis
+      by (metis \<open>r + s = u + v + a *\<^sub>C uu + b *\<^sub>C vv\<close> add_Suc add_Suc_right) 
+  qed
+  thus ?case by blast 
+qed
+
+lemma sum_partial_span_leq_ind:
+  fixes S::\<open>'a::complex_vector set\<close> and n p :: nat
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>r \<in> partial_span (n + p) S\<close>
+proof(induction p)
+  case 0
+  thus ?case
+    by (simp add: assms) 
+next
+  case (Suc p)
+  have \<open>\<exists> s. s \<in> S\<close>
+    using \<open>S \<noteq> {}\<close>
+    by blast
+  then obtain s where \<open>s \<in> S\<close>
+    by blast
+  have  \<open>r \<in> partial_span (n + p) S\<close>
+    by (simp add: Suc.IH)
+  hence  \<open>r + 0 *\<^sub>C s \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span (n + p) S \<and> y \<in> S}\<close>
+    using  \<open>s \<in> S\<close>
+    by blast
+  hence  \<open>r + 0 *\<^sub>C s \<in> partial_span (Suc (n + p)) S\<close>
+    by simp
+  moreover have \<open>r = r + 0 *\<^sub>C s\<close>
+    by simp
+  ultimately show ?case by simp
+qed
+
+lemma sum_partial_span_leq:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>n \<le> m\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>r \<in> partial_span m S\<close>
+  using sum_partial_span_leq_ind assms le_Suc_ex by blast 
+
+lemma sum_partial_span:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>r \<in> partial_span n S\<close> and \<open>s \<in> partial_span m S\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>\<exists> p. r + s \<in> partial_span p S\<close>
+  using assms sum_partial_span_eq sum_partial_span_leq
+  by (metis max.cobounded1 max.cobounded2)
+
+lemma scaleC_partial_span:
+  fixes S::\<open>'a::complex_vector set\<close>
+  shows \<open>\<forall> t. t \<in> partial_span n S \<longrightarrow> c *\<^sub>C t \<in> partial_span n S\<close>
+proof(induction n)
+  case 0
+  thus ?case
+    by simp 
+next
+  case (Suc n)
+  have \<open>t \<in> partial_span (Suc n) S \<Longrightarrow> c *\<^sub>C t \<in> partial_span (Suc n) S\<close>
+    for t
+  proof-
+    assume \<open>t \<in> partial_span (Suc n) S\<close>
+    hence \<open>t \<in> {x + a *\<^sub>C y | a x y. x \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    hence \<open>\<exists> a x y. x \<in> partial_span n S \<and> y \<in> S \<and> t = x + a *\<^sub>C y\<close>
+      by blast
+    then obtain a x y where \<open>x \<in> partial_span n S\<close> and \<open>y \<in> S\<close> 
+      and \<open>t = x + a *\<^sub>C y\<close> by blast
+    from \<open>t = x + a *\<^sub>C y\<close>
+    have \<open>c *\<^sub>C t = c *\<^sub>C (x + a *\<^sub>C y)\<close>
+      by blast
+    hence \<open>c *\<^sub>C t = c *\<^sub>C x +  c *\<^sub>C (a *\<^sub>C y)\<close>
+      by (simp add: scaleC_add_right)
+    hence \<open>c *\<^sub>C t = c *\<^sub>C x +  (c * a) *\<^sub>C y\<close>
+      by simp
+    moreover have \<open>c *\<^sub>C x \<in> partial_span n S\<close>
+      by (simp add: Suc.IH \<open>x \<in> partial_span n S\<close>)
+    ultimately have  \<open>c *\<^sub>C t \<in> partial_span(Suc n) S\<close>
+      using \<open>y \<in> S\<close> by auto
+    thus ?thesis by blast
+  qed
+  thus ?case by blast 
+qed
+
+lemma partial_linear_manifold:
+  fixes S::\<open>'a::complex_vector set\<close>
+  assumes \<open>S \<noteq> {}\<close>
+  shows \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
+proof
+  show "x + y \<in> (\<Union>n. partial_span n S)"
+    if "x \<in> (\<Union>n. partial_span n S)"
+      and "y \<in> (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and y :: 'a
+  proof-
+    have \<open>\<exists> n. x \<in> partial_span n S\<close>
+      using that by auto
+    then obtain n where \<open>x \<in> partial_span n S\<close>
+      by blast                    
+    have \<open>\<exists> n. y \<in> partial_span n S\<close>
+      using that by auto
+    then obtain m where \<open>y \<in> partial_span m S\<close>
+      by blast                    
+    have \<open>\<exists> p. x + y \<in> partial_span p S\<close>
+      using \<open>x \<in> partial_span n S\<close> \<open>y \<in> partial_span m S\<close> assms sum_partial_span by blast
+    thus ?thesis
+      by blast 
+  qed
+  show "c *\<^sub>C x \<in> (\<Union>n. partial_span n S)"
+    if "x \<in> (\<Union>n. partial_span n S)"
+    for x :: 'a
+      and c :: complex
+  proof-
+    have \<open>\<exists> n. x \<in> partial_span n S\<close>
+      using that by auto
+    then obtain n where \<open>x \<in> partial_span n S\<close>
+      by blast                    
+    thus ?thesis using scaleC_partial_span
+      by blast 
+  qed
+  show "0 \<in> (\<Union>n. partial_span n S)"
+  proof-
+    have \<open>0 \<in> partial_span 0 S\<close>
+      by simp
+    moreover have \<open>partial_span 0 S \<subseteq> (\<Union>n. partial_span n S)\<close>
+      by blast
+    ultimately show ?thesis by blast
+  qed
+qed
+
+
+lemma is_subspace_I:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes \<open>is_linear_manifold S\<close>
+  shows \<open>is_subspace (closure S )\<close>
+proof
+  show "x + y \<in> closure S"
+    if "x \<in> closure S"
+      and "y \<in> closure S"
+    for x :: 'a
+      and y :: 'a
+  proof-
+    have \<open>\<exists> r. (\<forall> n::nat. r n \<in> S) \<and> r \<longlonglongrightarrow> x\<close>
+      using closure_sequential that(1) by auto
+    then obtain r where \<open>\<forall> n::nat. r n \<in> S\<close> and \<open>r \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>\<exists> s. (\<forall> n::nat. s n \<in> S) \<and> s \<longlonglongrightarrow> y\<close>
+      using closure_sequential that(2) by auto
+    then obtain s where \<open>\<forall> n::nat. s n \<in> S\<close> and \<open>s \<longlonglongrightarrow> y\<close>
+      by blast
+    have \<open>\<forall> n::nat. r n + s n \<in> S\<close>
+      by (simp add: \<open>\<forall>n. r n \<in> S\<close> \<open>\<forall>n. s n \<in> S\<close> assms is_linear_manifold.additive_closed)
+    moreover have \<open>(\<lambda> n. r n + s n) \<longlonglongrightarrow> x + y\<close>
+      by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
+    ultimately show ?thesis
+      using assms is_linear_manifold.additive_closed is_subspace_cl that(1) that(2) by blast 
+  qed
+  show "c *\<^sub>C x \<in> closure S"
+    if "x \<in> closure S"
+    for x :: 'a
+      and c :: complex
+  proof-
+    have \<open>\<exists> y. (\<forall> n::nat. y n \<in> S) \<and> y \<longlonglongrightarrow> x\<close>
+      using Elementary_Topology.closure_sequential that by auto
+    then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>isCont (scaleC c) x\<close>
+      using continuous_at continuous_on_def isCont_scaleC by blast
+    hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
+      using  \<open>y \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose) 
+    from  \<open>\<forall> n::nat. y n \<in> S\<close>
+    have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
+      by (simp add: assms is_linear_manifold.smult_closed)
+    thus ?thesis
+      by (simp add: assms is_linear_manifold.smult_closed is_subspace_cl that) 
+  qed
+  show "0 \<in> closure S"
+    by (metis \<open>\<And>x c. x \<in> closure S \<Longrightarrow> c *\<^sub>C x \<in> closure S\<close> all_not_in_conv assms closure_eq_empty complex_vector.scale_zero_left is_linear_manifold_def)    
+  show "closed (closure S)"
+    by auto
+qed
+
+lemma partial_span_subspace:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes  \<open>S \<noteq> {}\<close>
+  shows \<open>is_subspace (closure ( \<Union>n. partial_span n S) )\<close>
+proof-
+  have \<open>is_linear_manifold ( \<Union>n. partial_span n S)\<close>
+    by (simp add:  \<open>S \<noteq> {}\<close> partial_linear_manifold)    
+  thus ?thesis using is_subspace_I by blast
+qed
+
+proposition partial_span_lim:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes  \<open>S \<noteq> {}\<close>
+  shows \<open>closure (complex_vector.span S) = closure (\<Union> n::nat. partial_span n S)\<close>
+proof
+  show "closure (complex_vector.span S) \<subseteq> closure (\<Union>n. partial_span n S)"
+  proof-
+    have \<open>S \<subseteq> (\<Union>n. partial_span n S)\<close>
+    proof-
+      have \<open>partial_span 1 S \<subseteq> (\<Union>n. partial_span n S)\<close>
+        by blast
+      moreover have \<open>S \<subseteq> partial_span 1 S\<close>
+        using partial_span_1 by blast
+      ultimately show ?thesis by blast
+    qed
+    hence \<open>S \<subseteq> closure (\<Union>n. partial_span n S)\<close>
+      by (meson closure_subset order.trans)
+    moreover have \<open>is_subspace (closure (\<Union>n. partial_span n S))\<close>
+      using  \<open>S \<noteq> {}\<close> partial_span_subspace by auto      
+    ultimately show ?thesis
+      using closure_closure closure_mono is_subspace_span_A by blast      
+  qed
+  show "closure (\<Union>n. partial_span n S) \<subseteq> closure (complex_vector.span S)"
+  proof-
+    have \<open>(\<Union>n. partial_span n S) \<subseteq> (complex_vector.span S)\<close>
+      by (simp add: UN_least partial_span_lim_n) 
+    thus ?thesis
+      by (simp add: closure_mono) 
+  qed
+qed
+
+(* TODO: remove chilbert_space *)
+(* TODO: remove (equal_span can be proven more elegantly using induction over the span) *)
+lemma equal_span_0_n:
+  fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> and S::\<open>'a set\<close>
+  shows \<open>\<forall> x::'a.
+x \<in> partial_span n S \<longrightarrow>
+ bounded_clinear f \<longrightarrow>
+(\<forall> t \<in> S. f t = 0) \<longrightarrow> 
+f x = 0\<close>
+proof(induction n)
+  case 0
+  have \<open>x \<in> partial_span 0 S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> partial_span 0 S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
+    from \<open>x \<in> partial_span 0 S\<close>
+    have \<open>x = 0\<close>
+      by simp
+    thus ?thesis using \<open>bounded_clinear f\<close>
+      by (simp add: bounded_clinear.clinear clinear_zero) 
+  qed
+  thus ?case by blast
+next
+  case (Suc n) 
+  have \<open>x \<in> partial_span (Suc n) S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
+    for x
+  proof-
+    assume \<open>x \<in> partial_span (Suc n) S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
+    from \<open>x \<in> partial_span (Suc n) S\<close>
+    have \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
+      by simp
+    hence \<open>\<exists> a t y. t \<in> partial_span n S \<and> y \<in> S \<and> x = t + a *\<^sub>C y\<close>
+      by blast
+    then obtain a t y where \<open>t \<in> partial_span n S\<close> and \<open>y \<in> S\<close> and \<open>x = t + a *\<^sub>C y\<close>
+      by blast
+    have \<open>f t = 0\<close>
+      using  \<open>t \<in> partial_span n S\<close> \<open>bounded_clinear f\<close> \<open>\<forall> t \<in> S. f t = 0\<close> Suc.IH by blast
+    moreover have \<open>f y = 0\<close>
+      using \<open>y \<in> S\<close>  \<open>\<forall> t \<in> S. f t = 0\<close>  by blast
+    moreover have  \<open>f x = f t + f (a *\<^sub>C y)\<close>
+      using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
+      unfolding bounded_clinear_def
+      using complex_vector.linear_add by blast 
+    hence  \<open>f x = f t + a *\<^sub>C f y\<close>
+      using \<open>bounded_clinear f\<close>  
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_scale) 
+    ultimately show ?thesis by simp
+  qed
+  thus ?case by blast
+qed
+
+lemma bounded_linear_continuous:
+  assumes \<open>bounded_clinear f\<close> 
+  shows \<open>isCont f x\<close>
+  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
+
+
+(* TODO: remove chilbert_space (instead: complex_vector) *)
+(* TODO: much simpler proof using rule complex_vector.span_induct *)
+(* TODO: After updating Complex_Vector_Spaces, possibly this theorem will already exist *)
+lemma equal_span_0:
+  fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> 
+    and S::\<open>'a set\<close> and x::'a
+(* TODO: clinear f sufficient *) 
+  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> 
+(* TODO: remove S\<noteq>{} *)
+    and \<open>S \<noteq> {}\<close>
+  shows \<open>f x = 0\<close>
+  (* TODO: use proof (rule complex_vector.span_induct[where S=S]) *)
+proof -
+  have \<open>x \<in> closure (complex_vector.span S)\<close>
+    using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
+  hence \<open>x \<in> closure (\<Union> n::nat. partial_span n S)\<close>
+    using  \<open>S \<noteq> {}\<close> partial_span_lim by blast
+  hence \<open>\<exists> y::nat \<Rightarrow> _. (\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)) \<and> y \<longlonglongrightarrow> x\<close>
+    using closure_sequential by blast
+  then obtain y 
+    where \<open>\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+    by blast
+  hence \<open>\<forall> k. \<exists> n. y k \<in> partial_span n S\<close>
+    by blast
+  then obtain n where \<open>\<forall> k. y k \<in> partial_span (n k) S\<close>
+    by metis
+  hence \<open>\<forall> k. f (y k) = 0\<close>
+    using assms(1) assms(2) equal_span_0_n by blast
+  have \<open>isCont f x\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: bounded_linear_continuous)
+  hence  \<open>(\<lambda> k. f (y k)) \<longlonglongrightarrow> f x\<close>
+    using \<open>y \<longlonglongrightarrow> x\<close> isCont_tendsto_compose by auto 
+  hence \<open>(\<lambda> k. 0) \<longlonglongrightarrow> f x\<close>
+    using  \<open>\<forall> k. f (y k) = 0\<close> 
+    by simp
+  moreover have  \<open>(\<lambda> k. 0) \<longlonglongrightarrow> (0::'b)\<close>
+    by simp
+  ultimately show ?thesis
+    using LIMSEQ_unique by blast
+qed
+
+(* TODO: move to Complex_Vector_Spaces *)
+instantiation linear_space :: ("{complex_vector,topological_space}") "order"
+begin
+lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+  is \<open>(\<subseteq>)\<close>.
+lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+  is \<open>(\<subset>)\<close>.
+instance
+proof
+  show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    by (simp add: less_eq_linear_space.rep_eq less_le_not_le less_linear_space.rep_eq)    
+  show "(x::'a linear_space) \<le> x"
+    for x :: "'a linear_space"
+    by (simp add: less_eq_linear_space.rep_eq)    
+  show "(x::'a linear_space) \<le> z"
+    if "(x::'a linear_space) \<le> y"
+      and "(y::'a linear_space) \<le> z"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+      and z :: "'a linear_space"
+    using that
+    using less_eq_linear_space.rep_eq by auto 
+  show "(x::'a linear_space) = y"
+    if "(x::'a linear_space) \<le> y"
+      and "(y::'a linear_space) \<le> x"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    using that
+    by (simp add: Rep_linear_space_inject less_eq_linear_space.rep_eq) 
+qed
+end
+
+lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
+  by (rule Complex_Vector_Spaces.bounded_clinear_ident)
 
 
 end

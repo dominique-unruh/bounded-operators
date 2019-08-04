@@ -908,104 +908,9 @@ proof-
     unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
 
-(* TODO: remove chilbert_space *)
-(* TODO: remove (equal_span can be proven more elegantly using induction over the span) *)
-lemma equal_span_0_n:
-  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and S::\<open>'a set\<close>
-  shows \<open>\<forall> x::'a.
-x \<in> partial_span n S \<longrightarrow>
- bounded_clinear f \<longrightarrow>
-(\<forall> t \<in> S. f t = 0) \<longrightarrow> 
-f x = 0\<close>
-proof(induction n)
-  case 0
-  have \<open>x \<in> partial_span 0 S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
-    for x::'a
-  proof-
-    assume \<open>x \<in> partial_span 0 S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
-    from \<open>x \<in> partial_span 0 S\<close>
-    have \<open>x = 0\<close>
-      by simp
-    thus ?thesis using \<open>bounded_clinear f\<close>
-      by (simp add: bounded_clinear.clinear clinear_zero) 
-  qed
-  thus ?case by blast
-next
-  case (Suc n) 
-  have \<open>x \<in> partial_span (Suc n) S \<Longrightarrow> bounded_clinear f \<Longrightarrow> \<forall> t \<in> S. f t = 0 \<Longrightarrow> f x = 0\<close>
-    for x
-  proof-
-    assume \<open>x \<in> partial_span (Suc n) S\<close> and \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close>
-    from \<open>x \<in> partial_span (Suc n) S\<close>
-    have \<open>x \<in> {t + a *\<^sub>C y | a t y. t \<in> partial_span n S \<and> y \<in> S}\<close>
-      by simp
-    hence \<open>\<exists> a t y. t \<in> partial_span n S \<and> y \<in> S \<and> x = t + a *\<^sub>C y\<close>
-      by blast
-    then obtain a t y where \<open>t \<in> partial_span n S\<close> and \<open>y \<in> S\<close> and \<open>x = t + a *\<^sub>C y\<close>
-      by blast
-    have \<open>f t = 0\<close>
-      using  \<open>t \<in> partial_span n S\<close> \<open>bounded_clinear f\<close> \<open>\<forall> t \<in> S. f t = 0\<close> Suc.IH by blast
-    moreover have \<open>f y = 0\<close>
-      using \<open>y \<in> S\<close>  \<open>\<forall> t \<in> S. f t = 0\<close>  by blast
-    moreover have  \<open>f x = f t + f (a *\<^sub>C y)\<close>
-      using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
-      unfolding bounded_clinear_def
-      using complex_vector.linear_add by blast 
-    hence  \<open>f x = f t + a *\<^sub>C f y\<close>
-      using \<open>bounded_clinear f\<close>  
-      unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_scale) 
-    ultimately show ?thesis by simp
-  qed
-  thus ?case by blast
-qed
 
-(* TODO: remove chilbert_space (instead: complex_vector) *)
-(* TODO: much simpler proof using rule complex_vector.span_induct *)
-(* TODO: move to Complex_Vector_Spaces *)
-(* TODO: After updating Complex_Vector_Spaces, possibly this theorem will already exist *)
-lemma equal_span_0:
-  fixes f::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> 
-    and S::\<open>'a set\<close> and x::'a
-(* TODO: clinear f sufficient *) 
-  assumes \<open>bounded_clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> 
-(* TODO: remove S\<noteq>{} *)
-    and \<open>S \<noteq> {}\<close>
-  shows \<open>f x = 0\<close>
-  (* TODO: use proof (rule complex_vector.span_induct[where S=S]) *)
-proof -
-  have \<open>x \<in> closure (complex_vector.span S)\<close>
-    using  \<open>x \<in> complex_vector.span S\<close> closure_subset by auto
-  hence \<open>x \<in> closure (\<Union> n::nat. partial_span n S)\<close>
-    using  \<open>S \<noteq> {}\<close> partial_span_lim by blast
-  hence \<open>\<exists> y::nat \<Rightarrow> _. (\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)) \<and> y \<longlonglongrightarrow> x\<close>
-    using closure_sequential by blast
-  then obtain y 
-    where \<open>\<forall> k. y k \<in> (\<Union> n::nat. partial_span n S)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
-    by blast
-  hence \<open>\<forall> k. \<exists> n. y k \<in> partial_span n S\<close>
-    by blast
-  then obtain n where \<open>\<forall> k. y k \<in> partial_span (n k) S\<close>
-    by metis
-  hence \<open>\<forall> k. f (y k) = 0\<close>
-    using assms(1) assms(2) equal_span_0_n by blast
-  have \<open>isCont f x\<close>
-    using \<open>bounded_clinear f\<close>
-    by (simp add: bounded_linear_continuous)
-  hence  \<open>(\<lambda> k. f (y k)) \<longlonglongrightarrow> f x\<close>
-    using \<open>y \<longlonglongrightarrow> x\<close> isCont_tendsto_compose by auto 
-  hence \<open>(\<lambda> k. 0) \<longlonglongrightarrow> f x\<close>
-    using  \<open>\<forall> k. f (y k) = 0\<close> 
-    by simp
-  moreover have  \<open>(\<lambda> k. 0) \<longlonglongrightarrow> (0::'b)\<close>
-    by simp
-  ultimately show ?thesis
-    using LIMSEQ_unique by blast
-qed
-
-(* TODO: remove chilbert_space *)
 lemma equal_generator_0:
-  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
+  fixes A::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
   assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> A \<cdot>\<^sub>v x = 0\<close> and  \<open>S \<noteq> {}\<close>
   shows  \<open>A = 0\<close>
 proof-
@@ -1023,10 +928,10 @@ proof-
         have \<open>Abs_linear_space (closure (complex_vector.span S)) =
                 Abs_linear_space UNIV\<close>
           using  \<open>cgenerator S\<close>  
-          unfolding cgenerator_def top_linear_space_def Complex_Inner_Product.span_def
-          by auto          
+          unfolding cgenerator_def top_linear_space_def span_def
+          by (simp add: Complex_Vector_Spaces.span_raw_def)                    
         hence \<open>closure (complex_vector.span S) = UNIV\<close>
-          by (metis assms(1) cgenerator_def span.rep_eq top_linear_space.rep_eq)          
+          by (metis Complex_Vector_Spaces.span_raw_def assms(1) cgenerator_def closure_UNIV)                    
         hence  \<open>x \<in> closure (complex_vector.span S)\<close>
           by blast
         hence \<open>\<exists> y. (\<forall> n::nat. y n \<in> complex_vector.span S) \<and> y \<longlonglongrightarrow> x\<close>
@@ -1061,7 +966,7 @@ proof-
 qed
 
 lemma equal_generator:
-  fixes A B::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and S::\<open>'a set\<close>
+  fixes A B::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
   assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>A = B\<close>
 proof-
@@ -1221,10 +1126,9 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma cdot_plus_distrib[simp]: 
-  
+lemma cdot_plus_distrib[simp]:   
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
-  shows \<open> U \<cdot>\<^sub>s (A + B) = (U \<cdot>\<^sub>s A) + (U \<cdot>\<^sub>s B)\<close>
+  shows \<open>U \<cdot>\<^sub>s (A + B) = (U \<cdot>\<^sub>s A) + (U \<cdot>\<^sub>s B)\<close>
 proof-
   {  have   \<open>
        bounded_clinear U \<Longrightarrow>
@@ -1452,7 +1356,7 @@ qed
 
 (* TODO: remove (this is the same as equal_span_0) *)
 lemma applyOpSpace_span_transfer0:
-  fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  fixes A :: "'a::cbanach \<Rightarrow> 'b::cbanach"
 (* TODO needs only clinear *)
   assumes \<open>bounded_clinear A\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
@@ -1476,7 +1380,7 @@ qed
 
 (* TODO: Rename to equal_span *)
 lemma applyOpSpace_span_transfer:
-  fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
 (* TODO: clinear is sufficient *)
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
        \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
@@ -1498,7 +1402,7 @@ qed
 (* TODO: Remove chilbert_space *)
 (* TODO: Rename to equal_span-something *)
 lemma applyOpSpace_closure_span_transfer:
-  fixes A B :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
        \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
@@ -1525,20 +1429,18 @@ proof-
       using F_def by auto 
 qed
 
-(* TODO: Remove chilbert_space *)
 lemma applyOpSpace_span:
-  fixes A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (span G)\<close>
+  fixes A B :: "('a::cbanach,'b::cbanach) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and \<open>t \<in> Rep_linear_space (Span G)\<close>
   shows "A \<cdot>\<^sub>v t = B \<cdot>\<^sub>v t"
   using assms
   apply transfer
   using applyOpSpace_closure_span_transfer by blast
 
-(* TODO: Remove chilbert_space? *)
 lemma applyOpSpace_less_eq:
-  fixes S :: "'a::chilbert_space linear_space" 
-    and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "span G \<ge> S"
+  fixes S :: "'a::cbanach linear_space" 
+    and A B :: "('a::cbanach,'b::cbanach) bounded"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "Span G \<ge> S"
   shows "A \<cdot>\<^sub>s S \<le> B \<cdot>\<^sub>s S"
 proof-
   have \<open>t \<in> ((\<cdot>\<^sub>v) A ` Rep_linear_space S) \<Longrightarrow> t \<in> ((\<cdot>\<^sub>v) B ` Rep_linear_space S)\<close>
@@ -1549,7 +1451,7 @@ proof-
       by blast
     then obtain x where \<open>x\<in>Rep_linear_space S\<close> and \<open>t = A \<cdot>\<^sub>v x\<close>
       by blast
-    have \<open>x \<in> Rep_linear_space (span G)\<close>
+    have \<open>x \<in> Rep_linear_space (Span G)\<close>
       using  \<open>x\<in>Rep_linear_space S\<close> assms(2) less_eq_linear_space.rep_eq by blast
     hence \<open>A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x\<close>
       using applyOpSpace_span assms(1) by blast
@@ -1585,15 +1487,15 @@ proof-
     by (simp add: less_eq_linear_space.rep_eq) 
 qed
 
-(* TODO: Remove chilbert_space? *)
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space linear_space" 
     and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "span G \<ge> S"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A \<cdot>\<^sub>v x = B \<cdot>\<^sub>v x" and "Span G \<ge> S"
   shows "A \<cdot>\<^sub>s S = B \<cdot>\<^sub>s S"
-  using applyOpSpace_less_eq
-  by (metis assms(1) assms(2) order_class.order.antisym)
-
+  using assms
+  apply transfer
+  by (smt applyOpSpace_closure_span_transfer image_cong subset_iff)
+(* > 1.0 s *)
 
 (* NEW *)
 section \<open>Endomorphism algebra\<close>
@@ -2386,7 +2288,7 @@ proof-
     by blast
 qed
 
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
 lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
 is \<open>orthogonal_complement\<close>
@@ -2394,7 +2296,8 @@ is \<open>orthogonal_complement\<close>
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
-  by simp  
+  by (metis Complex_Vector_Spaces.span_raw_def Span.abs_eq span_mult)
+    
 
 lemma move_plus:
   "(Proj (ortho C)) \<cdot>\<^sub>s A \<le> B \<Longrightarrow> A \<le> B + C"
@@ -2654,7 +2557,8 @@ instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
 (* TODO: move to Complex_Inner_Product *)
 instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
   apply intro_classes
-  apply (metis bot.extremum_uniqueI inf_sup_ord(1) inf_sup_ord(2) infxminusxbot xinfyz_linear_space) 
+  apply (metis bot.extremum_uniqueI inf_sup_ord(1) inf_sup_ord(2) infxminusxbot xinfyz_linear_space)
+  apply (simp add: linear_space_sup_plus supxminusxtop) 
   sorry
 
 (* TODO: Remove constant ortho, subsumed by uminus *)
