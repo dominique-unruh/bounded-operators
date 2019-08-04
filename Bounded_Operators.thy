@@ -52,7 +52,9 @@ lemma rbounded_of_bounded_prelim:
   \<open>\<forall> c. \<forall> x. Rep_rbounded (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (Rep_rbounded (rbounded_of_bounded g) x)\<close>
   apply transfer
   apply auto
-  by (simp add: bounded_clinear_def clinear.scaleC)
+  using bounded_clinear_def
+  by (simp add: bounded_clinear_def complex_vector.linear_scale)
+
 
 definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
 ('a, 'b) bounded\<close> where
@@ -681,8 +683,9 @@ lemma timesOp_dist2:
 lemma timesOp_minus:
   \<open>A \<cdot>\<^sub>o (B - C) = A \<cdot>\<^sub>o B - A \<cdot>\<^sub>o C\<close>
   apply transfer
-  using additive.diff bounded_clinear_def
-  sorry
+  using  bounded_clinear_def
+  by (metis comp_apply complex_vector.linear_diff)
+  
 
 
 lemma times_adjoint[simp]:
@@ -702,11 +705,56 @@ proof transfer
     by (metis Adj_D cinner_commute')
 qed
 
+lemma Rep_bounded_0[simp]:  
+  fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
+  shows  "U \<cdot>\<^sub>v 0 = 0"
+  apply transfer
+  unfolding bounded_clinear_def
+  by (simp add: complex_vector.linear_0)
+
 
 lemma applyOp_0[simp]:  
-   "U \<cdot>\<^sub>s 0 = 0"
-  apply transfer
-  by (simp add: additive.zero bounded_clinear_def clinear.axioms(1))
+  fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
+  shows   "U \<cdot>\<^sub>s (0::'a linear_space) = (0::'b linear_space)"
+proof-
+  {
+    have \<open>bounded_clinear U \<Longrightarrow>
+          (closure
+            (U ` {0})) = {0}\<close>
+    for U::\<open>'a\<Rightarrow>'b\<close>
+    proof-
+      assume \<open>bounded_clinear U\<close>
+      have \<open>U ` {0} = {U 0}\<close>
+        by auto
+      moreover have \<open>U 0 = 0\<close>
+        using \<open>bounded_clinear U\<close>
+        unfolding bounded_clinear_def
+        by (simp add: complex_vector.linear_0)
+      ultimately have \<open>U ` {0} = {0}\<close>
+        by simp
+      thus ?thesis
+        by simp 
+    qed
+  hence \<open>bounded_clinear U \<Longrightarrow>
+         Abs_linear_space
+          (closure
+            (U ` {0})) =
+         Abs_linear_space {0}\<close>
+    for U::\<open>'a\<Rightarrow>'b\<close>
+    using Abs_linear_space_inject
+    by presburger
+  hence \<open>bounded_clinear U \<Longrightarrow>
+         Abs_linear_space
+          (closure (U ` Rep_linear_space (Abs_linear_space {0}))) =
+         Abs_linear_space {0}\<close>
+    for U::\<open>'a\<Rightarrow>'b\<close>
+  by (simp add: Abs_linear_space_inverse)  } note 1 = this
+  thus ?thesis
+  unfolding zero_linear_space_def applyOpSpace_def
+  apply auto
+  using 1
+  by (metis Rep_bounded_0 bot_linear_space.abs_eq bot_linear_space.rep_eq closure_empty closure_insert image_empty image_insert)  
+qed
 
 lemma times_comp: \<open>\<And>A B \<psi>.
        bounded_clinear A \<Longrightarrow>
@@ -901,11 +949,12 @@ next
       using \<open>y \<in> S\<close>  \<open>\<forall> t \<in> S. f t = 0\<close>  by blast
     moreover have  \<open>f x = f t + f (a *\<^sub>C y)\<close>
       using \<open>bounded_clinear f\<close>  \<open>x = t + a *\<^sub>C y\<close>
-      unfolding bounded_clinear_def clinear_def Modules.additive_def by simp    
+      unfolding bounded_clinear_def
+      using complex_vector.linear_add by blast 
     hence  \<open>f x = f t + a *\<^sub>C f y\<close>
       using \<open>bounded_clinear f\<close>  
-      unfolding bounded_clinear_def clinear_def 
-      by simp
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_scale) 
     ultimately show ?thesis by simp
   qed
   thus ?case by blast
@@ -1063,8 +1112,9 @@ proof-
       proof-
         have \<open>{U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
           using \<open>bounded_clinear U\<close>
-          unfolding bounded_clinear_def clinear_def Modules.additive_def
-          by auto
+          unfolding bounded_clinear_def
+          by (metis (no_types, lifting) complex_vector.linear_add) 
+
         also have \<open>{U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} 
             = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}\<close>
           by blast
@@ -1144,9 +1194,17 @@ proof-
       have \<open>(\<lambda> n. U (psi n) +  U (phi n) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
         by (simp add: tendsto_add)
       hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
+      proof-
+        have \<open>U (psi n) +  U (phi n) =  U ( (psi n) +  (phi n))\<close>
+          for n
         using \<open>bounded_clinear U\<close>
-        unfolding bounded_clinear_def clinear_def Modules.additive_def
+        unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
+          module_hom_def module_hom_axioms_def
         by auto
+        thus ?thesis 
+          using  \<open>(\<lambda> n. U (psi n) +  U (phi n) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
+          by auto
+      qed
       hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> x\<close>
         by (simp add: \<open>x = \<psi> + \<phi>\<close>)
       hence \<open>x \<in> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
@@ -2945,7 +3003,8 @@ lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) \<cdot>\<^sub>v \<psi> = c *\<^sub
 
 lemma applyOp_scaleC2[simp]: "A \<cdot>\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A \<cdot>\<^sub>v \<psi>)"
   apply transfer 
-  by (simp add: clinear.scaleC bounded_clinear.clinear)
+  using bounded_clinear.clinear
+  by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale)
 
 
 section \<open>On-demand syntax\<close>
