@@ -352,7 +352,7 @@ lemma ell2_to_vec_smult:
   unfolding mk_vec_def
   by auto
 
-section \<open>Topological properties of finite dimensional subspaces of nat ell2\<close>
+section \<open>Topological properties of finite dimensional complex_vector.subspaces of nat ell2\<close>
 
 lemma vec_to_ell2_id:
   \<open>j < n \<Longrightarrow> (vec_to_ell2 (vec n (Rep_ell2 (ket j)))) = (ket j)\<close>

@@ -649,8 +649,8 @@ lift_definition timesOp::
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
-  using  bounded_clinear_def is_subspace.subspace
-  by (metis closed_closure is_linear_manifold_image is_subspace.intro is_subspace_cl) 
+  using  bounded_clinear_def closed_subspace.complex_vector.subspace
+  by (metis closed_closure complex_vector.subspace_image closed_subspace.intro closed_subspace_cl) 
 
 
 lemma rbounded_of_bounded_timesOp:
@@ -759,13 +759,13 @@ qed
 lemma times_comp: \<open>\<And>A B \<psi>.
        bounded_clinear A \<Longrightarrow>
        bounded_clinear B \<Longrightarrow>
-       is_subspace \<psi> \<Longrightarrow>
+       closed_subspace \<psi> \<Longrightarrow>
        closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
 proof
   show "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
     if "bounded_clinear (A::'a \<Rightarrow> 'b)"
       and "bounded_clinear (B::'c \<Rightarrow> 'a)"
-      and "is_subspace (\<psi>::'c set)"
+      and "closed_subspace (\<psi>::'c set)"
     for A :: "'a \<Rightarrow> 'b"
       and B :: "'c \<Rightarrow> 'a"
       and \<psi> :: "'c set"
@@ -774,7 +774,7 @@ proof
   show "closure (A ` closure (B ` (\<psi>::'c set)::'a set)) \<subseteq> closure ((A \<circ> B) ` \<psi>::'b set)"
     if "bounded_clinear (A::'a \<Rightarrow> 'b)"
       and "bounded_clinear (B::'c \<Rightarrow> 'a)"
-      and "is_subspace (\<psi>::'c set)"
+      and "closed_subspace (\<psi>::'c set)"
     for A :: "'a \<Rightarrow> 'b"
       and B :: "'c \<Rightarrow> 'a"
       and \<psi> :: "'c set"
@@ -829,7 +829,7 @@ proof-
     using Rep_bounded by auto
   moreover have \<open>bounded_clinear (Rep_bounded B)\<close>
     using Rep_bounded by auto
-  moreover have \<open>is_subspace (space_as_set \<psi>)\<close>
+  moreover have \<open>closed_subspace (space_as_set \<psi>)\<close>
     using space_as_set by auto
   ultimately have  \<open>
      (closure
@@ -997,13 +997,13 @@ qed
 
 lemma cdot_plus_distrib_transfer:
   \<open>bounded_clinear U \<Longrightarrow>
-       is_subspace A \<Longrightarrow>
-       is_subspace B \<Longrightarrow>
+       closed_subspace A \<Longrightarrow>
+       closed_subspace B \<Longrightarrow>
         (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
   for U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
 proof-
-  assume \<open>bounded_clinear U\<close> and \<open>is_subspace A\<close> and \<open>is_subspace B\<close> 
+  assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
   have \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) \<subseteq>
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
   proof-
@@ -1132,8 +1132,8 @@ lemma cdot_plus_distrib[simp]:
 proof-
   {  have   \<open>
        bounded_clinear U \<Longrightarrow>
-       is_subspace A \<Longrightarrow>
-       is_subspace B \<Longrightarrow>
+       closed_subspace A \<Longrightarrow>
+       closed_subspace B \<Longrightarrow>
        Abs_linear_space
         (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
        Abs_linear_space
@@ -1143,7 +1143,7 @@ proof-
            \<phi> \<in> space_as_set (Abs_linear_space (closure (U ` B)))})\<close>
       for U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
     proof-
-      assume \<open>bounded_clinear U\<close> and \<open>is_subspace A\<close> and \<open>is_subspace B\<close> 
+      assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
       hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
@@ -1155,7 +1155,7 @@ proof-
            \<phi> \<in> closure (U ` B)})\<close>
         by simp
       thus ?thesis using Abs_linear_space_inverse
-        by (smt Collect_cong Rep_bounded_cases space_as_set \<open>bounded_clinear U\<close> \<open>is_subspace A\<close> \<open>is_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
+        by (smt Collect_cong Rep_bounded_cases space_as_set \<open>bounded_clinear U\<close> \<open>closed_subspace A\<close> \<open>closed_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
     qed    
   } note 1 = this
 
@@ -1198,10 +1198,10 @@ lemma applyOpSpace_id[simp]:
 
 shows "idOp \<cdot>\<^sub>s \<psi> = \<psi>"
 proof-
-  have \<open>is_subspace ( space_as_set \<psi>)\<close>
+  have \<open>closed_subspace ( space_as_set \<psi>)\<close>
     using space_as_set by blast    
   hence \<open>closed ( space_as_set \<psi>)\<close>
-    unfolding is_subspace_def by blast
+    unfolding closed_subspace_def by blast
   hence \<open>closure ( space_as_set \<psi>) = space_as_set \<psi>\<close>
     by simp    
   hence \<open>(closure ( id ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
@@ -1270,10 +1270,10 @@ lemma mult_INF1[simp]:
   shows \<open>U \<cdot>\<^sub>s (INF i. V i) \<le> (INF i. U \<cdot>\<^sub>s (V i))\<close>
 proof-
   have \<open>bounded_clinear U \<Longrightarrow>
-       \<forall>j. is_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
+       \<forall>j. closed_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
     for U::\<open>'b\<Rightarrow>'c\<close> and V::\<open>'a \<Rightarrow> 'b set\<close> and x::'c and i::'a
   proof-
-    assume \<open>bounded_clinear U\<close> and \<open>\<forall>j. is_subspace (V j)\<close> 
+    assume \<open>bounded_clinear U\<close> and \<open>\<forall>j. closed_subspace (V j)\<close> 
     have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V i)\<close>
       by (simp add: Inter_lower image_mono)    
     thus ?thesis
@@ -1327,13 +1327,13 @@ lemma mult_inf_distrib:
   shows "U \<cdot>\<^sub>s (B * C) \<le> (U \<cdot>\<^sub>s B) * (U \<cdot>\<^sub>s C)"
 proof-
   have \<open>bounded_clinear U \<Longrightarrow>
-       is_subspace B \<Longrightarrow>
-       is_subspace C \<Longrightarrow>
+       closed_subspace B \<Longrightarrow>
+       closed_subspace C \<Longrightarrow>
        closure (U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
     for U::\<open>'a\<Rightarrow>'b\<close> and B C::\<open>'a set\<close>
   proof-
-    assume \<open>bounded_clinear U\<close> and \<open>is_subspace B\<close> and \<open>is_subspace C\<close>
+    assume \<open>bounded_clinear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     have \<open>(U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
       using closure_subset by force      
@@ -1346,8 +1346,8 @@ proof-
     apply transfer
     using \<open>\<And>U B C.
        bounded_clinear U \<Longrightarrow>
-       is_subspace B \<Longrightarrow>
-       is_subspace C \<Longrightarrow>
+       closed_subspace B \<Longrightarrow>
+       closed_subspace C \<Longrightarrow>
        closure (U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
     by blast
@@ -1985,12 +1985,12 @@ lemma imageOp_Proj[simp]: "(Proj S) \<cdot>\<^sub>s top = S"
   apply transfer
   proof
   show "closure (range (projection (S::'a set))) \<subseteq> S"
-    if "is_subspace (S::'a set)"
+    if "closed_subspace (S::'a set)"
     for S :: "'a set"
     using that
-    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI is_subspace.subspace is_subspace_I orthogonal_complement_twice projection_intro2) 
+    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice projection_intro2) 
   show "(S::'a set) \<subseteq> closure (range (projection S))"
-    if "is_subspace (S::'a set)"
+    if "closed_subspace (S::'a set)"
     for S :: "'a set"
     using that
     by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points subsetI subset_UNIV) 
@@ -1998,13 +1998,13 @@ qed
 
 lemma projection_D1:
   fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes \<open>is_subspace M\<close>
+  assumes \<open>closed_subspace M\<close>
   shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
 proof-
   have \<open>(projection M) x = ((projection M)\<^sup>\<dagger>) x\<close>
     for x
   proof (rule projection_uniq)
-    show \<open>is_subspace M\<close>
+    show \<open>closed_subspace M\<close>
       by (simp add: assms)
     show \<open>((projection M)\<^sup>\<dagger>) x \<in> M\<close>
     proof-
@@ -2013,7 +2013,7 @@ proof-
       proof-
         assume \<open>y \<in> orthogonal_complement M\<close>
         hence \<open>(projection M) y = 0\<close>
-          by (metis add_cancel_right_right assms is_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
+          by (metis add_cancel_right_right assms closed_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
         hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
           by simp          
         thus ?thesis
@@ -2071,7 +2071,7 @@ proof-
   moreover have \<open>(projection (space_as_set M))\<circ>(projection (space_as_set M))
                 = (projection (space_as_set M)) \<close>
   proof-
-    have \<open>is_subspace (space_as_set M)\<close>
+    have \<open>closed_subspace (space_as_set M)\<close>
       using space_as_set by auto
     thus ?thesis
       by (simp add: projectionPropertiesC) 
@@ -2172,10 +2172,10 @@ proof-
   qed
   have \<open>bounded_clinear (Rep_bounded P)\<close>
     using Rep_bounded by auto
-  hence \<open>is_subspace ( range (Rep_bounded P) )\<close>
+  hence \<open>closed_subspace ( range (Rep_bounded P) )\<close>
     using \<open>closed (range (Rep_bounded P))\<close>
-     bounded_clinear.clinear is_linear_manifold_image is_subspace.intro 
-      is_subspace.subspace is_subspace_UNIV by blast
+     bounded_clinear.clinear complex_vector.subspace_image closed_subspace.intro 
+      closed_subspace.complex_vector.subspace closed_subspace_UNIV by blast
   hence \<open>\<exists> M. space_as_set M = (range (Rep_bounded P))\<close>
     using  \<open>closed (range (Rep_bounded P))\<close>
     by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
@@ -2220,8 +2220,8 @@ proof-
   qed
   ultimately have \<open>P = Proj M\<close>
   proof - (* sledgehammer *)
-    have "is_subspace (space_as_set M)"
-      by (metis \<open>space_as_set M = range (Rep_bounded P)\<close> \<open>is_subspace (range (Rep_bounded P))\<close>)
+    have "closed_subspace (space_as_set M)"
+      by (metis \<open>space_as_set M = range (Rep_bounded P)\<close> \<open>closed_subspace (range (Rep_bounded P))\<close>)
     then have f1: "\<forall>a. Rep_bounded (Proj M) a = Rep_bounded P a"
       by (simp add: Proj.rep_eq \<open>\<And>x. Rep_bounded P x \<in> space_as_set M\<close> \<open>\<And>x. x - Rep_bounded P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
     have "\<forall>a. (+) ((a::'a) - a) = id"
@@ -2292,7 +2292,7 @@ abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "p
 
 lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
 is \<open>orthogonal_complement\<close>
-  by (rule Complex_Inner_Product.is_subspace_orthog)
+  by (rule Complex_Inner_Product.closed_subspace_orthog)
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
@@ -2341,7 +2341,7 @@ proof-
     for x
   proof-
     assume \<open>x \<in> space_as_set A\<close>
-    have \<open>is_subspace (space_as_set C)\<close>
+    have \<open>closed_subspace (space_as_set C)\<close>
       using space_as_set by auto
     hence \<open>x = (projection (space_as_set C)) x
        + (projection (orthogonal_complement (space_as_set C))) x\<close>
@@ -2354,7 +2354,7 @@ proof-
                    space_as_set A) \<Longrightarrow> x \<in> space_as_set B\<close>
       by (meson \<open>\<And>x. x \<in> closure (projection (orthogonal_complement (space_as_set C)) ` space_as_set A) \<Longrightarrow> x \<in> space_as_set B\<close> \<open>x \<in> space_as_set A\<close> closure_subset image_subset_iff)
     moreover have \<open>(projection (space_as_set C)) x \<in> space_as_set C\<close>
-      by (simp add: \<open>is_subspace (space_as_set C)\<close> projection_intro2)
+      by (simp add: \<open>closed_subspace (space_as_set C)\<close> projection_intro2)
     ultimately show ?thesis
       using closure_subset by fastforce 
   qed
@@ -2499,7 +2499,7 @@ instance
     using that 
     apply transfer
     apply auto
-    by (metis OrthoClosedEq Sup_le_iff closure_mono is_subspace.subspace is_subspace_I is_subspace_span_A orthogonal_complement_twice subset_iff)
+    by (metis OrthoClosedEq Sup_le_iff closure_mono closed_subspace.complex_vector.subspace closed_subspace_I closed_subspace_span_A orthogonal_complement_twice subset_iff)
 
   show "Inf {} = (top::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
@@ -2639,9 +2639,9 @@ lemma convex_closure_inter_generalized:
   shows "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
   sorry
 
-lemma is_linear_manifold_rel_interior:
+lemma subspace_rel_interior:
   fixes S::\<open>'a::chilbert_space set\<close>
-  assumes \<open>is_linear_manifold S\<close>
+  assumes \<open>complex_vector.subspace S\<close>
   shows \<open>0 \<in> rel_interior S\<close>
 proof-
   {  assume a1: "affine hull S \<subseteq> S"
@@ -2660,20 +2660,20 @@ proof-
     proof-
       assume \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
       have \<open>(u::complex) *\<^sub>C x \<in> S\<close>
-        using \<open>is_linear_manifold S\<close>
-        unfolding is_linear_manifold_def
+        using \<open>complex_vector.subspace S\<close>
+        unfolding complex_vector.subspace_def
         by (simp add: \<open>x \<in> S\<close>)
       hence \<open>u *\<^sub>R x \<in> S\<close>
         by (simp add: scaleR_scaleC)
       have \<open>(v::complex) *\<^sub>C y \<in> S\<close>
-        using \<open>is_linear_manifold S\<close>
-        unfolding is_linear_manifold_def
+        using \<open>complex_vector.subspace S\<close>
+        unfolding complex_vector.subspace_def
         by (simp add: \<open>y \<in> S\<close>)
       hence \<open>v *\<^sub>R y \<in> S\<close>
         by (simp add: scaleR_scaleC)
       show \<open> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> 
-        using \<open>is_linear_manifold S\<close>
-        unfolding is_linear_manifold_def
+        using \<open>complex_vector.subspace S\<close>
+        unfolding complex_vector.subspace_def
         by (simp add:  \<open>u *\<^sub>R x \<in> S\<close>  \<open>v *\<^sub>R y \<in> S\<close>)
     qed
     thus ?thesis 
@@ -2683,7 +2683,7 @@ proof-
     unfolding  hull_def by auto
   thus ?thesis 
     apply (auto simp: rel_interior_ball)
-     apply (simp add: assms is_linear_manifold.zero)
+     apply (simp add: assms complex_vector.subspace.zero)
     apply (rule 1)
     by blast
 qed
@@ -2694,12 +2694,12 @@ lemma mult_INF_less_eq_transfer_bij:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
     and U :: "'b \<Rightarrow>'c::chilbert_space"
   assumes \<open>bounded_clinear U\<close> 
-       and \<open>\<forall>i. is_subspace (V i)\<close>  
+       and \<open>\<forall>i. closed_subspace (V i)\<close>  
        and \<open>bij U\<close>
   shows \<open>\<Inter> (range (\<lambda> i. closure (U ` V i))) = closure (U ` \<Inter> (range V))\<close>
 proof-
   define I where \<open>I = range (\<lambda> i. U ` (V i))\<close>
-  have \<open>S\<in>I \<Longrightarrow> is_linear_manifold S\<close>
+  have \<open>S\<in>I \<Longrightarrow> complex_vector.subspace S\<close>
     for S
   proof-
     assume \<open>S\<in>I\<close>
@@ -2707,11 +2707,11 @@ proof-
       unfolding I_def by auto
     then obtain i where \<open>S = U ` (V i)\<close>
       by blast
-    have \<open>is_subspace (V i)\<close>
+    have \<open>closed_subspace (V i)\<close>
       by (simp add: assms(2))
-    thus \<open>is_linear_manifold S\<close>
+    thus \<open>complex_vector.subspace S\<close>
       using  \<open>S = U ` (V i)\<close> \<open>bounded_clinear U\<close>
-      by (simp add: bounded_clinear.clinear is_linear_manifold_image is_subspace.subspace)
+      by (simp add: bounded_clinear.clinear complex_vector.subspace_image closed_subspace.complex_vector.subspace)
   qed
   hence \<open>\<forall>S\<in>I. convex S\<close>
     using linear_manifold_Convex by blast
@@ -2721,10 +2721,10 @@ proof-
       for S
     proof-
       assume \<open>S \<in> I\<close>
-      hence \<open>is_linear_manifold S\<close>
-        by (simp add: \<open>\<And>S. S \<in> I \<Longrightarrow> is_linear_manifold S\<close>)
-      thus ?thesis using is_linear_manifold_rel_interior
-        by (simp add: is_linear_manifold_rel_interior) 
+      hence \<open>complex_vector.subspace S\<close>
+        by (simp add: \<open>\<And>S. S \<in> I \<Longrightarrow> complex_vector.subspace S\<close>)
+      thus ?thesis using complex_vector.subspace_rel_interior
+        by (simp add: complex_vector.subspace_rel_interior) 
     qed
     thus ?thesis by blast
   qed
@@ -2829,7 +2829,7 @@ next
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>s INFUV = INFUV"
       apply transfer apply auto
-       apply (metis OrthoClosedEq is_subspace.subspace is_subspace_I orthogonal_complement_twice)
+       apply (metis OrthoClosedEq closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice)
       using closure_subset by blast
     then show ?thesis
       by (simp add: timesOp_assoc_linear_space)
@@ -2849,7 +2849,7 @@ next
       using less_eq_linear_space.rep_eq that by blast
     then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
-       apply (metis OrthoClosedEq is_subspace.subspace is_subspace_I orthogonal_complement_twice)
+       apply (metis OrthoClosedEq closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice)
       using closure_subset by blast
     then show ?thesis
       unfolding INFV_def
