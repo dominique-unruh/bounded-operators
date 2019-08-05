@@ -1780,7 +1780,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-type_synonym 'a complex_vector.subspace = "'a ell2 linear_space"
+type_synonym 'a subspace = "'a ell2 linear_space"
 
 instance ell2 :: (type) not_singleton
 proof standard
