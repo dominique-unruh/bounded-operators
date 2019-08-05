@@ -23,7 +23,8 @@ lift_definition "tensorVec" :: "'a ell2 \<Rightarrow> 'c ell2 \<Rightarrow> ('a*
   "\<lambda>\<psi> \<phi> (x,y). \<psi> x * \<phi> y"
   by (cheat tensorVec)
 
-definition "tensorSpace A B = span {tensorVec \<psi> \<phi>| \<psi> \<phi>. \<psi> \<in> space_as_set A \<and> \<phi> \<in> space_as_set B}"
+definition tensorSpace :: "'a ell2 linear_space \<Rightarrow> 'b ell2 linear_space \<Rightarrow> ('a*'b) ell2 linear_space" where
+  "tensorSpace A B = Span {tensorVec \<psi> \<phi>| \<psi> \<phi>. \<psi> \<in> space_as_set A \<and> \<phi> \<in> space_as_set B}"
 
 consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
   adhoc_overloading tensor tensorOp tensorSpace tensorVec
@@ -102,8 +103,12 @@ lemma tensor_adjoint[simp]: "adjoint (U\<otimes>V) = (adjoint U) \<otimes> (adjo
 lemma tensor_unitary[simp]: 
   assumes "unitary U" and "unitary V"
   shows "unitary (U\<otimes>V)"
-  by (cheat TODO)
+  using assms unfolding unitary_def by simp
 
+lemma tensor_isometry[simp]: 
+  assumes "isometry U" and "isometry V"
+  shows "isometry (U\<otimes>V)"
+  using assms unfolding isometry_def by simp
 
 unbundle no_bounded_notation
 
