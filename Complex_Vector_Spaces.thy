@@ -1773,7 +1773,28 @@ proof-
     by (simp add: is_linear_manifold_def)
 qed
 
-\<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close> 
+lemma is_linear_manifold_diff:
+\<open>is_linear_manifold M \<Longrightarrow> x \<in> M \<Longrightarrow> y \<in> M \<Longrightarrow> x - y \<in> M\<close>
+proof -
+  assume a1: "x \<in> M"
+  assume a2: "is_linear_manifold M"
+  assume "y \<in> M"
+  then have "\<forall>c. x + c *\<^sub>C y \<in> M"
+    using a2 a1 by (meson is_linear_manifold_def)
+  then have "\<exists>c. x - (1 - (c - c)) *\<^sub>C y \<in> M"
+    by (metis (no_types) add_diff_cancel_right add_diff_eq complex_vector.scale_left_diff_distrib scaleC_left.add)
+  then show ?thesis
+    by simp
+qed 
+
+lemma is_subspace_diff:
+\<open>is_subspace M \<Longrightarrow> x \<in> M \<Longrightarrow> y \<in> M \<Longrightarrow> x - y \<in> M\<close>
+  using is_linear_manifold_diff
+  unfolding is_subspace_def
+  by (simp add: is_linear_manifold_diff)
+
+\<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close>
+  
 
 definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>

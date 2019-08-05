@@ -697,6 +697,25 @@ proof-
     by (simp add: is_linear_manifold.intro is_subspace_def)
 qed
 
+lemma ortho_inter_zero:
+  assumes "0\<in>M"
+  shows \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
+proof -
+  have "x=0" if "x\<in>M" and "x\<in>orthogonal_complement M" for x
+  proof -
+    from that have "x \<bottom> x"
+      unfolding orthogonal_complement_def by auto
+    hence "\<langle>x, x\<rangle> = 0"
+      using is_orthogonal_def by blast
+    thus "x=0"
+      by auto
+  qed
+  with assms show ?thesis
+    unfolding orthogonal_complement_def is_orthogonal_def by auto
+qed
+
+
+
 subsection \<open>Minimum distance\<close>
 
 
@@ -1295,24 +1314,75 @@ proof-
     by (smt Collect_cong Collect_empty_eq_bot existence_uniqueness_min_dist \<open>M \<noteq> {}\<close> \<open>closed M\<close> \<open>convex M\<close> assms bot_set_def empty_Collect_eq empty_Diff insert_Diff1 insert_compr  is_subspace_orthog orthogonal_complement_def set_diff_eq singleton_conv2 someI_ex)
 qed
 
-(* TODO: define is_projection
 
-  is_projection_on \<pi> M \<longleftrightarrow> \<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M
- *)
+definition is_projection_on::\<open>('a \<Rightarrow> 'a) \<Rightarrow> ('a::complex_inner) set \<Rightarrow> bool\<close> where
+ \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M))\<close>
 
-definition projection :: \<open>('a::complex_inner) set \<Rightarrow> (('a::complex_inner) \<Rightarrow> ('a::complex_inner))\<close> where
-  \<open>projection \<equiv> \<lambda> M. \<lambda> h. THE k. ((h - k) \<in> (orthogonal_complement M) \<and> k \<in>  M)\<close>
-(* TODO: projection M = (SOME \<pi>. is_projection_on M \<pi>) *)
+lemma is_projection_on_existence:
+\<open>is_subspace (M::('a::chilbert_space) set) \<Longrightarrow> \<exists> \<pi>. is_projection_on \<pi> M\<close>
+  unfolding is_projection_on_def
+  using ExistenceUniquenessProj
+  by metis
+
+definition projection :: \<open>('a::complex_inner) set \<Rightarrow> ('a::complex_inner \<Rightarrow> 'a)\<close> where
+  \<open>projection M \<equiv> (SOME \<pi>. is_projection_on \<pi> M)\<close>
+
+lemma projection_intro1':
+  \<open>is_projection_on \<pi> M  \<Longrightarrow> h - (\<pi> h) \<in> orthogonal_complement M\<close>
+  for M :: \<open>('a::complex_inner) set\<close>
+  by (metis is_projection_on_def)
 
 lemma projection_intro1:
   \<open>is_subspace M  \<Longrightarrow> h - (projection M) h \<in> orthogonal_complement M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-  by (metis (no_types, lifting) Complex_Inner_Product.projection_def ExistenceUniquenessProj theI)
+  using is_projection_on_existence  projection_intro1'
+  by (metis projection_def someI_ex) 
+  
+lemma projection_intro2':
+  \<open>is_projection_on \<pi> M \<Longrightarrow> \<pi> h \<in> M\<close>
+  by (simp add: is_projection_on_def)
 
 lemma projection_intro2:
   \<open>is_subspace M  \<Longrightarrow> (projection M) h \<in> M\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-  by (metis (no_types, lifting) Complex_Inner_Product.projection_def ExistenceUniquenessProj theI)
+  using is_projection_on_existence  projection_intro2'
+  by (metis projection_def someI_ex) 
+
+lemma projection_uniq':
+  fixes  M :: \<open>('a::complex_inner) set\<close>
+  assumes  \<open>is_subspace M\<close> and \<open>h - x \<in> orthogonal_complement M\<close> and \<open>x \<in> M\<close>
+    and \<open>is_projection_on \<pi> M\<close>
+  shows \<open>\<pi> h = x\<close>
+proof-
+  from \<open>is_projection_on \<pi> M\<close>
+  have \<open>h - \<pi> h \<in> orthogonal_complement M \<and> \<pi> h \<in> M\<close>
+    unfolding is_projection_on_def
+    by blast
+  hence \<open>\<pi> h \<in> M\<close> by blast
+  have \<open>h - \<pi> h \<in> orthogonal_complement M\<close>
+    using \<open>h - \<pi> h \<in> orthogonal_complement M \<and> \<pi> h \<in> M\<close> by blast
+  have \<open>x - \<pi> h \<in> M\<close>
+    using \<open>is_subspace M\<close> \<open>\<pi> h \<in> M\<close>  \<open>x \<in> M\<close>
+    by (simp add: is_subspace_diff)
+  moreover have \<open>x - \<pi> h \<in> orthogonal_complement M\<close>
+  proof-
+    have \<open>is_subspace (orthogonal_complement M)\<close>
+      by (simp add: assms(1))
+    from \<open>h - x \<in> orthogonal_complement M\<close>  \<open>h - \<pi> h \<in> orthogonal_complement M\<close>
+    have  \<open>(h - \<pi> h) - (h - x) \<in> orthogonal_complement M\<close>
+      using \<open>is_subspace (orthogonal_complement M)\<close> is_subspace_diff by blast
+    thus ?thesis by simp
+  qed
+  ultimately have \<open>x - \<pi> h \<in> M \<inter> (orthogonal_complement M)\<close>
+    by auto
+  moreover have \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
+    using \<open>is_subspace M\<close>
+    by (metis assms(3) cancel_comm_monoid_add_class.diff_cancel is_subspace_diff ortho_inter_zero)
+  ultimately have \<open>x - \<pi> h = 0\<close>
+    by auto
+  thus ?thesis
+    by simp
+qed
 
 lemma projection_uniq:
   fixes  M :: \<open>('a::chilbert_space) set\<close>
@@ -1437,6 +1507,7 @@ proof-
     using  bounded_clinear_def
     by auto 
 qed
+
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 proposition projectionPropertiesC:
@@ -1632,6 +1703,7 @@ proof-
   thus ?thesis 
     by (simp add: subsetI)
 qed
+
 
 \<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
 lemma ProjOntoOrtho:
@@ -1894,6 +1966,13 @@ proof-
 qed
 
 
+theorem ortho_decomp:
+  fixes x :: \<open>'a::chilbert_space\<close>
+  assumes  \<open>is_subspace M\<close>
+  shows \<open>x = (projection M) x + (projection (orthogonal_complement M)) x\<close>
+  by (metis ProjOntoOrtho assms diff_add_cancel id_apply is_subspace_orthog minus_apply orthogonal_complement_twice)
+
+
 lemma DeMorganOrthoDual:
   fixes A B::"('a::chilbert_space) set"
   assumes \<open>is_subspace A\<close> and \<open>is_subspace B\<close>
@@ -1974,28 +2053,6 @@ lemma is_closed_subspace_universal_inclusion_inverse:
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
   by (metis DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest is_subspace_closed_plus ortho_leq)
 
-lemma ortho_inter_zero:
-  assumes "0\<in>M"
-  shows \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
-proof -
-  have "x=0" if "x\<in>M" and "x\<in>orthogonal_complement M" for x
-  proof -
-    from that have "x \<bottom> x"
-      unfolding orthogonal_complement_def by auto
-    hence "\<langle>x, x\<rangle> = 0"
-      using is_orthogonal_def by blast
-    thus "x=0"
-      by auto
-  qed
-  with assms show ?thesis
-    unfolding orthogonal_complement_def is_orthogonal_def by auto
-qed
-
-theorem ortho_decomp:
-  fixes x :: \<open>'a::chilbert_space\<close>
-  assumes  \<open>is_subspace M\<close>
-  shows \<open>x = (projection M) x + (projection (orthogonal_complement M)) x\<close>
-  by (metis ProjOntoOrtho assms diff_add_cancel id_apply is_subspace_orthog minus_apply orthogonal_complement_twice)
 
 lemma projection_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
