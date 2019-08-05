@@ -1367,6 +1367,7 @@ qed
 definition is_projection_on::\<open>('a \<Rightarrow> 'a) \<Rightarrow> ('a::complex_inner) set \<Rightarrow> bool\<close> where
  \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M))\<close>
 
+
 lemma is_projection_on_existence:
 \<open>closed_subspace (M::('a::chilbert_space) set) \<Longrightarrow> \<exists> \<pi>. is_projection_on \<pi> M\<close>
   unfolding is_projection_on_def
@@ -1442,137 +1443,157 @@ lemma projection_uniq:
   shows \<open>(projection M) h = x\<close>
   by (smt ExistenceUniquenessProj add.commute assms(1) assms(2) assms(3) orthogonal_complement_def projection_intro1 projection_intro2 uminus_add_conv_diff)
 
+
+lemma projection_fixed_points':
+  \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M  \<Longrightarrow> x \<in> M \<Longrightarrow> \<pi> x = x\<close>
+  for M :: \<open>('a::complex_inner) set\<close>
+  using closed_subspace.subspace complex_vector.subspace_0
+  unfolding is_projection_on_def
+  by (metis (mono_tags, lifting) diff_self is_projection_on_def projection_uniq' subspace_orthog)
+
+
 lemma projection_fixed_points:                         
   \<open>closed_subspace M  \<Longrightarrow> x \<in> M \<Longrightarrow> (projection M) x = x\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
-  using projection_uniq complex_vector.subspace_def
-  by (simp add: projection_uniq closed_subspace.subspace complex_vector.subspace_0)
-
-
+  using projection_fixed_points'
+  by (metis is_projection_on_existence projection_intro1 projection_intro2 projection_uniq')
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
  
-proposition projectionPropertiesB:
+proposition projectionPropertiesB':
   includes notation_norm
-  fixes M :: \<open>('a::chilbert_space) set\<close>
-  shows \<open>closed_subspace M  \<Longrightarrow> \<parallel> (projection M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
+  fixes M :: \<open>('a::complex_inner) set\<close>
+  assumes \<open>is_projection_on \<pi> M\<close>
+  shows \<open>\<parallel> \<pi>  h \<parallel> \<le> \<parallel> h \<parallel>\<close>
 proof-
-  assume \<open>closed_subspace M\<close>
-  hence \<open>h - (projection M) h \<in> orthogonal_complement M\<close> 
-    by (simp add: projection_intro1)
-  hence \<open>\<forall> k \<in>  M.  (h - (projection M) h) \<bottom> k\<close>
+  have \<open>h - \<pi> h \<in> orthogonal_complement M\<close> 
+    using \<open>is_projection_on \<pi> M\<close>
+    by (simp add: projection_intro1')    
+  hence \<open>\<forall> k \<in>  M.  (h - \<pi> h) \<bottom> k\<close>
     by (simp add: orthogonal_complement_def)
-  hence \<open>\<forall> k \<in> M. \<langle>  h - (projection M) h , k \<rangle> = 0\<close>
+  hence \<open>\<forall> k \<in> M. \<langle>  h - \<pi> h , k \<rangle> = 0\<close>
     using is_orthogonal_def by blast
-  also have \<open>(projection M) h \<in>  M\<close>
-    using  \<open>closed_subspace M\<close>
-    by (simp add: projection_intro2)
-  ultimately have \<open>\<langle>  h - (projection M) h , (projection M) h \<rangle> = 0\<close>
+  also have \<open>\<pi> h \<in>  M\<close>
+    using \<open>is_projection_on \<pi> M\<close>
+    by (simp add: projection_intro2')
+  ultimately have \<open>\<langle>  h - \<pi> h , \<pi> h \<rangle> = 0\<close>
     by auto
-  hence \<open>\<parallel> (projection M) h \<parallel>^2 + \<parallel> h - (projection M) h \<parallel>^2 = \<parallel> h \<parallel>^2\<close>
+  hence \<open>\<parallel> \<pi> h \<parallel>^2 + \<parallel> h - \<pi> h \<parallel>^2 = \<parallel> h \<parallel>^2\<close>
     using PythagoreanId by fastforce
-  hence \<open>\<parallel> (projection M) h \<parallel>^2 \<le> \<parallel> h \<parallel>^2\<close>
+  hence \<open>\<parallel>\<pi> h \<parallel>^2 \<le> \<parallel> h \<parallel>^2\<close>
     by (smt zero_le_power2)    
   thus ?thesis 
     using norm_ge_zero power2_le_imp_le by blast
 qed
 
-\<comment> \<open>Theorem 2.7 (version) in @{cite conway2013course}\<close> 
-theorem projectionPropertiesA:
-  \<open>closed_subspace M \<Longrightarrow> bounded_clinear (projection M)\<close> 
-  for M :: \<open>('a::chilbert_space) set\<close>
+proposition projectionPropertiesB:
+  includes notation_norm
+  fixes M :: \<open>('a::chilbert_space) set\<close>
+  shows \<open>closed_subspace M  \<Longrightarrow> \<parallel> (projection M) h \<parallel> \<le> \<parallel> h \<parallel>\<close>
+  using projectionPropertiesB' 
+  by (metis is_projection_on_existence projection_intro1 projection_intro2 projection_uniq')
+
+\<comment> \<open>Theorem 2.7 (version) in @{cite conway2013course}\<close>
+theorem projectionPropertiesA':
+  \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M \<Longrightarrow> bounded_clinear \<pi>\<close> 
+  for M :: \<open>('a::complex_inner) set\<close>
 proof-
+  assume \<open>is_projection_on \<pi> M\<close>
   assume \<open>closed_subspace M\<close>
-  hence \<open>closed_subspace (orthogonal_complement M)\<close>
-    by simp
-  have \<open>(projection M) (c *\<^sub>C x) = c *\<^sub>C ((projection M) x)\<close> for x c
+  hence \<open>complex_vector.subspace (orthogonal_complement M)\<close>
+    by (simp add: closed_subspace.subspace)    
+  have \<open>\<pi> (c *\<^sub>C x) = c *\<^sub>C (( \<pi>) x)\<close> for x c
   proof-                   
-    have  \<open>\<forall> x.  ((projection M) x) \<in> M\<close>
-      using  \<open>closed_subspace M\<close>
-      by (simp add: projection_intro2)
-    hence  \<open>\<forall> x. \<forall> t.  t *\<^sub>C ((projection M) x) \<in> M\<close>
+    have  \<open>\<forall> x.  \<pi> x \<in> M\<close>
+      using  \<open>is_projection_on \<pi> M\<close>
+      unfolding is_projection_on_def
+      by simp
+    hence  \<open>\<forall> x. \<forall> t.  t *\<^sub>C (( \<pi>) x) \<in> M\<close>
       using \<open>closed_subspace  M \<close> complex_vector.subspace_def
       by (metis closed_subspace.subspace)
-    have  \<open>\<forall> x. \<forall> t. ((projection M) (t *\<^sub>C x)) \<in>  M\<close>
+    have  \<open>\<forall> x. \<forall> t. (( \<pi>) (t *\<^sub>C x)) \<in>  M\<close>
       using  \<open>closed_subspace M\<close>
-      by (simp add: projection_intro2)
-    have \<open>\<forall> x. \<forall> t. (t *\<^sub>C x) - (projection M) (t *\<^sub>C x) \<in> orthogonal_complement M\<close>
-      using  \<open>closed_subspace M\<close>
-      by (simp add: projection_intro1)
-    have \<open>\<forall> x. x - (projection M) x \<in> orthogonal_complement M\<close>
-      using  \<open>closed_subspace M\<close>
-      by (simp add: projection_intro1)
-    hence \<open>\<forall> x. \<forall> t. t *\<^sub>C (x - (projection M) x) \<in> orthogonal_complement M\<close>
-      using \<open>closed_subspace (orthogonal_complement M)\<close>
-      by (simp add: closed_subspace.subspace complex_vector.subspace_scale)
-    hence \<open>\<forall> x. \<forall> t.  t *\<^sub>C x - t *\<^sub>C ((projection M) x) \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>\<forall>x. \<pi> x \<in> M\<close>)      
+    have \<open>\<forall> x. \<forall> t. (t *\<^sub>C x) - ( \<pi>) (t *\<^sub>C x) \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro1')      
+    have \<open>\<forall> x. x - ( \<pi>) x \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro1')
+    hence \<open>\<forall> x. \<forall> t. t *\<^sub>C (x - ( \<pi>) x) \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>complex_vector.subspace (orthogonal_complement M)\<close> complex_vector.subspace_scale)
+    hence \<open>\<forall> x. \<forall> t.  t *\<^sub>C x - t *\<^sub>C (( \<pi>) x) \<in> orthogonal_complement M\<close>
       by (simp add: complex_vector.scale_right_diff_distrib)
-    from  \<open>\<forall> x. \<forall> t. t *\<^sub>C x - (projection M) (t *\<^sub>C x) \<in> orthogonal_complement M\<close>
-      \<open>\<forall> x. \<forall> t.  t *\<^sub>C x - t *\<^sub>C ((projection M) x) \<in> orthogonal_complement M\<close>
-    have \<open>\<forall> x. \<forall> t. (t *\<^sub>C x - t *\<^sub>C ((projection M) x)) - (t *\<^sub>C x - (projection M) (t *\<^sub>C x)) \<in> orthogonal_complement M\<close>
-      using \<open>\<forall>x t. t *\<^sub>C projection M x \<in> M\<close> \<open>closed_subspace (orthogonal_complement M)\<close> \<open>closed_subspace M\<close> diff_self  projection_uniq complex_vector.subspace_def
-      by (metis closed_subspace.subspace) 
-    hence \<open>\<forall> x. \<forall> t. (projection M) (t *\<^sub>C x) - t *\<^sub>C ((projection M) x) \<in> orthogonal_complement M\<close>
+    from  \<open>\<forall> x. \<forall> t. t *\<^sub>C x - ( \<pi>) (t *\<^sub>C x) \<in> orthogonal_complement M\<close>
+      \<open>\<forall> x. \<forall> t.  t *\<^sub>C x - t *\<^sub>C (( \<pi>) x) \<in> orthogonal_complement M\<close>
+    have \<open>\<forall> x. \<forall> t. (t *\<^sub>C x - t *\<^sub>C (( \<pi>) x)) - (t *\<^sub>C x - ( \<pi>) (t *\<^sub>C x)) \<in> orthogonal_complement M\<close>
+      using \<open>\<forall>x t. t *\<^sub>C  \<pi> x \<in> M\<close>
+      by (meson \<open>complex_vector.subspace (orthogonal_complement M)\<close> complex_vector.subspace_diff) 
+    hence \<open>\<forall> x. \<forall> t. ( \<pi>) (t *\<^sub>C x) - t *\<^sub>C (( \<pi>) x) \<in> orthogonal_complement M\<close>
       by simp
-    moreover have \<open>\<forall> x. \<forall> t. (projection M) (t *\<^sub>C x) - t *\<^sub>C ((projection M) x) \<in>  M\<close>         
-      using  \<open>\<forall> x. \<forall> t.  t *\<^sub>C ((projection M) x) \<in>  M\<close>  \<open>\<forall> x. \<forall> t. ((projection M) (t *\<^sub>C x)) \<in>  M\<close>
-       \<open>closed_subspace M\<close> \<open>\<forall>x t. t *\<^sub>C x - t *\<^sub>C projection M x \<in> (orthogonal_complement M)\<close> cancel_comm_monoid_add_class.diff_cancel  projection_uniq
-       complex_vector.subspace_def
-      by (metis closed_subspace.subspace) 
-    ultimately have  \<open>\<forall> x. \<forall> t. (projection M) (t *\<^sub>C x) = t *\<^sub>C ((projection M) x)\<close>
-      by (simp add: \<open>\<forall>x t. t *\<^sub>C projection M x \<in> M\<close> \<open>\<forall>x t. t *\<^sub>C x - t *\<^sub>C projection M x \<in> orthogonal_complement M\<close> \<open>closed_subspace M\<close> projection_uniq)
+    moreover have \<open>\<forall> x. \<forall> t. ( \<pi>) (t *\<^sub>C x) - t *\<^sub>C (( \<pi>) x) \<in>  M\<close>         
+      using  \<open>\<forall> x. \<forall> t.  t *\<^sub>C (( \<pi>) x) \<in>  M\<close>  \<open>\<forall> x. \<forall> t. (( \<pi>) (t *\<^sub>C x)) \<in>  M\<close>
+       \<open>closed_subspace M\<close> \<open>\<forall>x t. t *\<^sub>C x - t *\<^sub>C  \<pi> x \<in> (orthogonal_complement M)\<close>  
+      by (metis closed_subspace.subspace complex_vector.subspace_diff)
+    ultimately have  \<open>\<forall> x. \<forall> t. ( \<pi>) (t *\<^sub>C x) = t *\<^sub>C (( \<pi>) x)\<close>
+      using \<open>\<forall>x t. t *\<^sub>C  \<pi> x \<in> M\<close> \<open>\<forall>x t. t *\<^sub>C x - t *\<^sub>C  \<pi> x \<in> orthogonal_complement M\<close> 
+      by (metis \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> projection_uniq')
     thus ?thesis
       by simp
   qed
-  moreover have \<open>Modules.additive (projection M)\<close>
+  moreover have \<open>Modules.additive ( \<pi>)\<close>
   proof-                   
-    have  \<open>\<forall> x.  ((projection M) x) \<in>  M\<close>
-      using \<open>closed_subspace M\<close>
-      by (simp add: projection_intro2) 
-    hence  \<open>\<forall> x. \<forall> y. ((projection M) x) + ((projection M) y) \<in>  M\<close>
+    have  \<open>\<forall> x.  (( \<pi>) x) \<in>  M\<close>
+      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro2')
+    hence  \<open>\<forall> x. \<forall> y. (( \<pi>) x) + (( \<pi>) y) \<in>  M\<close>
       using  \<open>closed_subspace M\<close> 
       unfolding closed_subspace_def
       using complex_vector.subspace_def
       by (simp add: complex_vector.subspace_def)
-
-    have  \<open>\<forall> x. \<forall> y. ((projection M) (x + y)) \<in> M\<close>
+    have  \<open>\<forall> x. \<forall> y. (( \<pi>) (x + y)) \<in> M\<close>
       using \<open>closed_subspace M\<close>
-      by (simp add: projection_intro2)
-    have  \<open>\<forall> x. \<forall> y. (x + y) - (projection M) (x + y) \<in> orthogonal_complement M\<close>
-      using \<open>closed_subspace M\<close>
-      by (simp add: projection_intro1)
-    have \<open>\<forall> x. x - (projection M) x \<in> orthogonal_complement M\<close>
-      using \<open>closed_subspace M\<close>
-      by (simp add: projection_intro1)
-    hence \<open>\<forall> x. \<forall> y. (x + y) - ((projection M) x + (projection M) y) \<in> orthogonal_complement M\<close>
-      using \<open>closed_subspace (orthogonal_complement M)\<close> add_diff_add complex_vector.subspace_def
-      by (metis closed_subspace.subspace)
-    from  \<open>\<forall> x. \<forall> y. (x + y) - ((projection M) x + (projection M) y) \<in>  orthogonal_complement M\<close>
-      \<open>\<forall> x. \<forall> y. (x + y) - ((projection M) (x + y)) \<in>  orthogonal_complement M\<close>
-    have  \<open>\<forall> x. \<forall> y. ( (x + y) - ((projection M) x + (projection M) y) ) - ( (x + y) - ((projection M) (x + y)) ) \<in>  orthogonal_complement M\<close>
-      by (metis \<open>\<forall>x y. projection M x + projection M y \<in> M\<close> \<open>closed_subspace M\<close> cancel_comm_monoid_add_class.diff_cancel projection_fixed_points projection_uniq)
-    hence \<open>\<forall> x. \<forall> y. (projection M) (x + y) -  ((projection M) x + (projection M) y) \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>\<forall>x. \<pi> x \<in> M\<close>)      
+    have  \<open>\<forall> x. \<forall> y. (x + y) - ( \<pi>) (x + y) \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro1')      
+    have \<open>\<forall> x. x - ( \<pi>) x \<in> orthogonal_complement M\<close>
+      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro1')      
+    hence \<open>\<forall> x. \<forall> y. (x + y) - (( \<pi>) x + ( \<pi>) y) \<in> orthogonal_complement M\<close>
+      using add_diff_add complex_vector.subspace_def
+      by (metis \<open>complex_vector.subspace (orthogonal_complement M)\<close>)
+    from  \<open>\<forall> x. \<forall> y. (x + y) - (( \<pi>) x + ( \<pi>) y) \<in>  orthogonal_complement M\<close>
+      \<open>\<forall> x. \<forall> y. (x + y) - (( \<pi>) (x + y)) \<in>  orthogonal_complement M\<close>
+    have  \<open>\<forall> x. \<forall> y. ( (x + y) - (( \<pi>) x + ( \<pi>) y) ) - ( (x + y) - (( \<pi>) (x + y)) ) \<in>  orthogonal_complement M\<close>
+      using \<open>complex_vector.subspace (orthogonal_complement M)\<close> complex_vector.subspace_diff by blast
+    hence \<open>\<forall> x. \<forall> y. ( \<pi>) (x + y) -  (( \<pi>) x + ( \<pi>) y) \<in> orthogonal_complement M\<close>
       by (metis (no_types, lifting) add_diff_cancel_left diff_minus_eq_add uminus_add_conv_diff)
-    moreover have \<open>\<forall> x. \<forall> y. (projection M) (x + y) -  ((projection M) x + (projection M) y) \<in> M\<close>       
-      using \<open>closed_subspace M\<close> \<open>\<forall>x y. projection M x + projection M y \<in> M\<close> \<open>\<forall>x y. x + y - (projection M x + projection M y) \<in> (orthogonal_complement M)\<close> cancel_comm_monoid_add_class.diff_cancel projection_uniq
-        complex_vector.subspace_def
-      by (metis closed_subspace.subspace) 
-    ultimately have \<open>\<forall> x. \<forall> y. (projection M) (x + y) - ( ((projection M) x) + ((projection M) y) ) = 0\<close>
-      using \<open>\<forall>x y. projection M x + projection M y \<in> M\<close> \<open>\<forall>x y. x + y - (projection M x + projection M y) \<in> orthogonal_complement M\<close> \<open>closed_subspace M\<close> projection_uniq by fastforce
-    hence  \<open>\<forall> x. \<forall> y. (projection M) (x + y) =  ((projection M) x) + ((projection M) y)\<close>
+    moreover have \<open>\<forall> x. \<forall> y. ( \<pi>) (x + y) -  (( \<pi>) x + ( \<pi>) y) \<in> M\<close>       
+      using \<open>closed_subspace M\<close> \<open>\<forall>x y.  \<pi> x +  \<pi> y \<in> M\<close> \<open>\<forall>x y. x + y - ( \<pi> x +  \<pi> y) \<in> (orthogonal_complement M)\<close>  
+      by (metis \<open>\<forall>x y. \<pi> (x + y) \<in> M\<close> closed_subspace.subspace complex_vector.subspace_diff)
+    ultimately have \<open>\<forall> x. \<forall> y. ( \<pi>) (x + y) - ( (( \<pi>) x) + (( \<pi>) y) ) = 0\<close>
+      using \<open>\<forall>x y.  \<pi> x +  \<pi> y \<in> M\<close> \<open>\<forall>x y. x + y - ( \<pi> x +  \<pi> y) \<in> orthogonal_complement M\<close> \<open>closed_subspace M\<close> projection_uniq by fastforce
+    hence  \<open>\<forall> x. \<forall> y. ( \<pi>) (x + y) =  (( \<pi>) x) + (( \<pi>) y)\<close>
       by auto
     thus ?thesis
       by (simp add: Modules.additive_def)
   qed
-  ultimately have \<open>clinear (projection M)\<close> 
+  ultimately have \<open>clinear ( \<pi>)\<close> 
     by (simp add: Modules.additive_def clinearI)
-  moreover have \<open>\<exists> K. \<forall> x. norm ((projection M) x) \<le> norm x * K\<close>
+  moreover have \<open>\<exists> K. \<forall> x. norm (( \<pi>) x) \<le> norm x * K\<close>
     using projectionPropertiesB  \<open>closed_subspace M\<close> 
     by (metis mult.commute mult.left_neutral)
   ultimately show ?thesis
     using  bounded_clinear_def
     by auto 
 qed
+
+theorem projectionPropertiesA:
+  \<open>closed_subspace M \<Longrightarrow> bounded_clinear (projection M)\<close> 
+  for M :: \<open>('a::chilbert_space) set\<close>
+  using projectionPropertiesA'
+sorry
+(*
+  by (metis is_projection_on_existence projectionPropertiesA projection_intro2 projection_uniq') 
+*)
+
+
 
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
