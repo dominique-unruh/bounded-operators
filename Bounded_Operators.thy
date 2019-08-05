@@ -649,8 +649,8 @@ lift_definition timesOp::
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close>  (infixr "\<cdot>\<^sub>s" 70)
   is "\<lambda>A S. closure (A ` S)"
-  using  bounded_clinear_def closed_subspace.complex_vector.subspace
-  by (metis closed_closure complex_vector.subspace_image closed_subspace.intro closed_subspace_cl) 
+  using  bounded_clinear_def closed_closure  closed_subspace.intro
+  by (simp add: bounded_clinear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
 
 
 lemma rbounded_of_bounded_timesOp:
@@ -1987,8 +1987,9 @@ lemma imageOp_Proj[simp]: "(Proj S) \<cdot>\<^sub>s top = S"
   show "closure (range (projection (S::'a set))) \<subseteq> S"
     if "closed_subspace (S::'a set)"
     for S :: "'a set"
-    using that
-    by (metis (full_types) OrthoClosedEq closure_mono image_subsetI closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice projection_intro2) 
+    using that OrthoClosedEq orthogonal_complement_twice 
+    by (metis closed_subspace.subspace pre_ortho_twice projectionPropertiesE subspace_cl)
+
   show "(S::'a set) \<subseteq> closure (range (projection S))"
     if "closed_subspace (S::'a set)"
     for S :: "'a set"
@@ -2013,7 +2014,9 @@ proof-
       proof-
         assume \<open>y \<in> orthogonal_complement M\<close>
         hence \<open>(projection M) y = 0\<close>
-          by (metis add_cancel_right_right assms closed_subspace_orthog ortho_decomp orthogonal_complement_twice projection_fixed_points)          
+          using  add_cancel_right_right assms  ortho_decomp
+            orthogonal_complement_twice projection_fixed_points
+          by (metis subspace_orthog)
         hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
           by simp          
         thus ?thesis
@@ -2174,8 +2177,8 @@ proof-
     using Rep_bounded by auto
   hence \<open>closed_subspace ( range (Rep_bounded P) )\<close>
     using \<open>closed (range (Rep_bounded P))\<close>
-     bounded_clinear.clinear complex_vector.subspace_image closed_subspace.intro 
-      closed_subspace.complex_vector.subspace closed_subspace_UNIV by blast
+     bounded_clinear.clinear  closed_subspace.intro
+    using complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast        
   hence \<open>\<exists> M. space_as_set M = (range (Rep_bounded P))\<close>
     using  \<open>closed (range (Rep_bounded P))\<close>
     by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
@@ -2292,7 +2295,7 @@ abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "p
 
 lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
 is \<open>orthogonal_complement\<close>
-  by (rule Complex_Inner_Product.closed_subspace_orthog)
+  by simp
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
@@ -2499,7 +2502,7 @@ instance
     using that 
     apply transfer
     apply auto
-    by (metis OrthoClosedEq Sup_le_iff closure_mono closed_subspace.complex_vector.subspace closed_subspace_I closed_subspace_span_A orthogonal_complement_twice subset_iff)
+    by (metis (no_types, hide_lams) Sup_least closed_subspace.closed closure_minimal subsetD subspace_span_A)
 
   show "Inf {} = (top::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
@@ -2683,7 +2686,8 @@ proof-
     unfolding  hull_def by auto
   thus ?thesis 
     apply (auto simp: rel_interior_ball)
-     apply (simp add: assms complex_vector.subspace.zero)
+    using assms
+     apply (simp add: complex_vector.subspace_0)
     apply (rule 1)
     by blast
 qed
@@ -2829,7 +2833,7 @@ next
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     then have "(U \<cdot>\<^sub>o Uinv) \<cdot>\<^sub>s INFUV = INFUV"
       apply transfer apply auto
-       apply (metis OrthoClosedEq closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice)
+      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     then show ?thesis
       by (simp add: timesOp_assoc_linear_space)
@@ -2849,9 +2853,9 @@ next
       using less_eq_linear_space.rep_eq that by blast
     then have "(Uinv \<cdot>\<^sub>o U) \<cdot>\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
-       apply (metis OrthoClosedEq closed_subspace.complex_vector.subspace closed_subspace_I orthogonal_complement_twice)
+      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
-    then show ?thesis
+    thus ?thesis
       unfolding INFV_def
       by (simp add: timesOp_assoc_linear_space)
   qed
