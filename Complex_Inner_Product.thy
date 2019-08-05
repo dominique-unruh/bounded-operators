@@ -2095,9 +2095,12 @@ proof-
   have \<open>orthogonal_complement (A \<inter> B) = (orthogonal_complement ((orthogonal_complement (orthogonal_complement A)) \<inter> (orthogonal_complement (orthogonal_complement B) )))\<close>
     by (metis assms(1) assms(2) orthogonal_complement_twice)
   also have \<open>... = (orthogonal_complement ( orthogonal_complement ((orthogonal_complement A) +\<^sub>M (orthogonal_complement B)) ))\<close>
-    using DeMorganOrtho assms(1) assms(2) closed_subspace_orthog by force
+    using DeMorganOrtho assms(1) assms(2) complex_vector.subspace_def
+    by (simp add: DeMorganOrtho)
   also have \<open>... = ((orthogonal_complement A) +\<^sub>M (orthogonal_complement B))\<close>
-    by (simp add: assms(1) assms(2) closed_subspace_closed_plus orthogonal_complement_twice)
+    using assms(1) assms(2) orthogonal_complement_twice
+      complex_vector.subspace_def
+    by (simp add: orthogonal_complement_twice subspace_closed_plus)
   finally show ?thesis by blast
 qed
 
@@ -2108,13 +2111,17 @@ lemma is_closed_subspace_asso:
   shows \<open>A +\<^sub>M (B +\<^sub>M C) = (A +\<^sub>M B) +\<^sub>M C\<close>
 proof-
   have \<open>complex_vector.subspace (B +\<^sub>M C)\<close>
-    by (simp add: assms(2) assms(3) closed_subspace.complex_vector.subspace closed_subspace_closed_plus)
+    using assms(2) assms(3)  complex_vector.subspace_def
+    by (meson closed_subspace.subspace subspace_closed_plus)
+
   moreover have \<open>closed (B +\<^sub>M C)\<close>
     by (simp add: closed_sum_def)
   ultimately have \<open>closed_subspace (B +\<^sub>M C)\<close>
     by (simp add: closed_subspace_def)
   hence \<open>closed_subspace (A +\<^sub>M (B +\<^sub>M C))\<close>
-    by (metis DeMorganOrthoDual assms(1) closed_subspace_inter closed_subspace_orthog orthogonal_complement_twice)
+    using DeMorganOrthoDual assms(1)  orthogonal_complement_twice
+      complex_vector.subspace_def
+    by (simp add: subspace_closed_plus)
   have \<open>(A +\<^sub>M (B +\<^sub>M C)) = (orthogonal_complement (orthogonal_complement (A +\<^sub>M (B +\<^sub>M C))))\<close>
     by (smt \<open>closed_subspace (A +\<^sub>M (B +\<^sub>M C))\<close> orthogonal_complement_twice)
   also have  \<open>... = (orthogonal_complement (  (orthogonal_complement A) \<inter> (orthogonal_complement (B +\<^sub>M C))  ))\<close>
@@ -2124,11 +2131,15 @@ proof-
   also have  \<open>... = (orthogonal_complement (  ((orthogonal_complement A) \<inter> (orthogonal_complement B)) \<inter> (orthogonal_complement C)  ))\<close>
     by (simp add: inf_assoc)
   also have  \<open>... = (orthogonal_complement (orthogonal_complement  ((orthogonal_complement((orthogonal_complement A) \<inter> (orthogonal_complement B))))  \<inter> (orthogonal_complement C)  ))\<close>
-    by (metis assms(1) assms(2) closed_subspace_inter closed_subspace_orthog orthogonal_complement_twice)
+    using assms(1) assms(2)  
+    by (simp add: orthogonal_complement_twice)
   also have  \<open>... = (orthogonal_complement ( orthogonal_complement ( (A +\<^sub>M B) +\<^sub>M C )  ))\<close>
-    by (simp add: DeMorganOrtho \<open>orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B \<inter> orthogonal_complement C) = orthogonal_complement (orthogonal_complement (orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B)) \<inter> orthogonal_complement C)\<close> assms(1) assms(2) assms(3) closed_subspace_closed_plus)
+    using DeMorganOrtho \<open>orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B \<inter> orthogonal_complement C) = orthogonal_complement (orthogonal_complement (orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B)) \<inter> orthogonal_complement C)\<close> assms(1) assms(2) assms(3) 
+      complex_vector.subspace_def
+    by (simp add: DeMorganOrtho subspace_closed_plus)
   finally show ?thesis
-    by (metis DeMorganOrthoDual assms(1) assms(2) assms(3) closed_subspace_inter closed_subspace_orthog orthogonal_complement_twice)
+    using DeMorganOrthoDual assms(1) assms(2) assms(3) 
+    by (simp add: orthogonal_complement_twice subspace_closed_plus)
 qed
 
 
@@ -2136,22 +2147,68 @@ lemma is_closed_subspace_zero:
   fixes A :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close>
   shows \<open>(({0}::('a::chilbert_space) set)+\<^sub>MA) = A\<close>
-  by (smt Collect_cong DeMorganOrthoDual IntE IntI UNIV_I assms closed_subspace_UNIV closed_subspace_orthog ortho_top orthogonal_complement_twice orthogonal_complement_def)
-
+  using  DeMorganOrthoDual  assms  
+    ortho_top orthogonal_complement_twice orthogonal_complement_def
+  by (metis (no_types, lifting) Complex_Vector_Spaces.subspace_UNIV Int_UNIV_left subspace_orthog)
 
 lemma is_closed_subspace_ord:
   fixes A B C:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     and \<open>A \<subseteq> B\<close>
-  shows \<open>(C+\<^sub>MA) \<subseteq> (C+\<^sub>MB)\<close>
-  by (smt DeMorganOrthoDual Int_Collect_mono assms(1) assms(2) assms(3) assms(4) is_closed_subspace_comm closed_subspace_inter closed_subspace_orthog ortho_leq orthogonal_complement_twice orthogonal_complement_def)
+  shows \<open>C+\<^sub>MA \<subseteq> C+\<^sub>MB\<close>
+proof - (* sledgehammer *)
+have f1: "\<forall>A. \<not> closed_subspace (A::'a set) \<or> orthogonal_complement (orthogonal_complement A) = A"
+  by (metis orthogonal_complement_twice)
+  then have f2: "orthogonal_complement (orthogonal_complement A) = A"
+    by (meson assms(1))
+  have f3: "orthogonal_complement (orthogonal_complement B) = B"
+    using f1 by (metis assms(2))
+have f4: "\<forall>A Aa. \<not> closed_subspace (A::'a set) \<or> \<not> closed_subspace Aa \<or> (orthogonal_complement A \<subseteq> orthogonal_complement Aa) = (Aa \<subseteq> A)"
+  by (metis ortho_leq)
+  have f5: "\<forall>A. \<not> closed_subspace (A::'a set) \<or> closed_subspace (orthogonal_complement A)"
+    by (metis subspace_orthog)
+  then have f6: "closed_subspace (orthogonal_complement A)"
+    by (meson assms(1))
+have f7: "closed_subspace (orthogonal_complement B)"
+using f5 by (metis assms(2))
+  then have f8: "orthogonal_complement B \<subseteq> orthogonal_complement A"
+    using f6 f4 f3 f2 assms(4) by blast
+  have f9: "\<forall>A. orthogonal_complement A = {a. \<exists>aa. (a::'a) = aa \<and> (\<forall>a. a \<in> A \<longrightarrow> aa \<bottom> a)}"
+    using orthogonal_complement_def by auto
+  then have f10: "{a |a. \<forall>aa. aa \<in> B \<longrightarrow> a \<bottom> aa} \<inter> {a |a. \<forall>aa. aa \<in> C \<longrightarrow> a \<bottom> aa} \<subseteq> {a |a. \<forall>aa. aa \<in> A \<longrightarrow> a \<bottom> aa} \<inter> {a |a. \<forall>aa. aa \<in> C \<longrightarrow> a \<bottom> aa}"
+    using f8 by auto
+have f11: "\<forall>A Aa. \<not> closed_subspace (A::'a set) \<or> \<not> closed_subspace Aa \<or> closed_subspace (A \<inter> Aa)"
+by (metis Complex_Vector_Spaces.subspace_inter)
+  have f12: "closed_subspace (orthogonal_complement C)"
+    using f5 by (metis assms(3))
+  then have f13: "closed_subspace {a |a. \<forall>aa. aa \<in> C \<longrightarrow> a \<bottom> aa}"
+    using f9 by metis
+  have f14: "\<forall>A Aa. \<not> closed_subspace (A::'a set) \<or> \<not> closed_subspace Aa \<or> orthogonal_complement (A \<inter> Aa) = orthogonal_complement A +\<^sub>M orthogonal_complement Aa"
+    by (meson DeMorganOrthoDual)
+  have f15: "orthogonal_complement (orthogonal_complement C) = C"
+    using f1 by (metis assms(3))
+  then have f16: "orthogonal_complement (orthogonal_complement C \<inter> orthogonal_complement A) = C +\<^sub>M A"
+    using f14 f12 f6 f2 by presburger
+  have f17: "orthogonal_complement (orthogonal_complement C \<inter> orthogonal_complement B) = C +\<^sub>M B"
+    using f15 f14 f12 f7 f3 by presburger
+  have f18: "{a |a. \<forall>aa. aa \<in> B \<longrightarrow> a \<bottom> aa} \<inter> {a |a. \<forall>aa. aa \<in> C \<longrightarrow> a \<bottom> aa} = orthogonal_complement C \<inter> orthogonal_complement B"
+    using f9 by auto
+have "{a |a. \<forall>aa. aa \<in> A \<longrightarrow> a \<bottom> aa} \<inter> {a |a. \<forall>aa. aa \<in> C \<longrightarrow> a \<bottom> aa} = orthogonal_complement C \<inter> orthogonal_complement A"
+  using f9 by auto
+  then have "orthogonal_complement C \<inter> orthogonal_complement B \<subseteq> orthogonal_complement C \<inter> orthogonal_complement A"
+    using f18 f10 by auto
+  then show ?thesis
+    using f17 f16 f13 f11 f9 f7 f6 f4 by (metis (full_types))
+qed
 
 
 lemma is_closed_subspace_universal_inclusion_left:
   fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
-  shows \<open>A \<subseteq> (A +\<^sub>M B)\<close>
-  by (metis DeMorganOrtho Int_lower1 assms(1) assms(2) closed_subspace_closed_plus ortho_leq)
+  shows \<open>A \<subseteq> A +\<^sub>M B\<close>
+  using DeMorganOrtho Int_lower1 assms(1) assms(2)  ortho_leq
+  by (metis subspace_closed_plus)
+
 
 lemma is_closed_subspace_universal_inclusion_right:
   fixes A B:: \<open>('a::chilbert_space) set\<close>
@@ -2165,7 +2222,8 @@ lemma is_closed_subspace_universal_inclusion_inverse:
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     and \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
-  by (metis DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest closed_subspace_closed_plus ortho_leq)
+  using DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest  ortho_leq
+  by (metis subspace_closed_plus)
 
 
 lemma projection_ker_simp:
@@ -2265,8 +2323,8 @@ proof(rule classical)
   hence \<open>x \<in> f -` {0}\<close>
     by simp  
   moreover have \<open>(f -` {0})\<inter>(orthogonal_complement (f -` {0})) = {0}\<close>
-    using \<open>closed_subspace (f -` {0})\<close> complex_vector.subspace.zero closed_subspace.complex_vector.subspace ortho_inter_zero
-    by blast    
+    using \<open>closed_subspace (f -` {0})\<close>  ortho_inter_zero
+    by (metis assms(3) projectionPropertiesD projection_intro2 vimage_singleton_eq)    
   ultimately have  \<open>x \<notin> orthogonal_complement (f -` {0})\<close> using \<open>x \<noteq> 0\<close>
     by (smt Int_iff empty_iff insert_iff) 
   thus ?thesis using \<open>x \<in> orthogonal_complement (f -` {0})\<close> by blast
@@ -2316,10 +2374,12 @@ proof-
       have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (f -` {0}))\<close>
         using \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
         unfolding closed_subspace_def
-        by (simp add: complex_vector.subspace.smult_closed)
+        by (simp add: complex_vector.subspace_scale)        
       thus ?thesis using  \<open>x \<in> (orthogonal_complement (f -` {0}))\<close>  \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
         unfolding closed_subspace_def
-        by (metis \<open>closed_subspace (f -` {0})\<close> add_diff_cancel_left' calculation(1) diff_add_cancel diff_zero complex_vector.subspace.zero closed_subspace.complex_vector.subspace projection_uniq)
+        using \<open>closed_subspace (f -` {0})\<close> add_diff_cancel_left' calculation(1) 
+          diff_add_cancel diff_zero  projection_uniq
+        by (simp add: complex_vector.subspace_diff)
     qed
     ultimately have \<open>x - (k *\<^sub>C y) = 0\<close>
       using \<open>f (x - k *\<^sub>C y) = 0\<close> \<open>x - k *\<^sub>C y \<in> orthogonal_complement (f -` {0})\<close> 
@@ -2389,7 +2449,6 @@ next
       using \<open>bounded_clinear f\<close>
       unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_scale)
-
     hence \<open>f (projection (orthogonal_complement (f -` {0})) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
       for x
     proof-
@@ -2720,19 +2779,19 @@ proof-
 qed
 
 
-lemma clinear_complex_vector.subspaceclosed_subspace_closure:
+lemma closed_subspace_closure:
   fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
     and S::\<open>'a set\<close>
   assumes "clinear f" and "complex_vector.subspace S"
   shows  \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
 proof -
   have "complex_vector.subspace {f x |x. x \<in> S}"
-    using assms complex_vector.subspace_image
-    by (simp add: complex_vector.subspace_image Setcompr_eq_image)
+    using assms Setcompr_eq_image
+    by (simp add: Setcompr_eq_image complex_vector.linear_subspace_image)
   thus \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
     apply (rule_tac closed_subspace.intro)
-    using closed_subspace_cl apply blast
-    by blast
+    apply (simp add: subspace_cl)
+    by simp
 qed
 
 
@@ -2740,7 +2799,7 @@ instantiation linear_space :: (complex_inner) "uminus"
 begin
 lift_definition uminus_linear_space::\<open>'a linear_space  \<Rightarrow> 'a linear_space\<close>
   is \<open>orthogonal_complement\<close>
-  by (rule Complex_Inner_Product.closed_subspace_orthog)
+  by simp
 
 instance ..
 end
@@ -2757,8 +2816,8 @@ instantiation linear_space :: (chilbert_space) "comm_monoid_add"
 begin
 lift_definition plus_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
   is "closed_sum"
-  by (simp add: closed_subspace_closed_plus)
-
+  by (simp add: subspace_closed_plus)
+  
 instance
   proof
   show \<open>a + b + c = a + (b + c)\<close>
@@ -2851,7 +2910,8 @@ lemma xsupxy_linear_space:
         have \<open>closed_subspace (space_as_set y)\<close>
           using space_as_set by blast
         thus ?thesis
-          by (metis insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero closed_subspace_0) 
+          using insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero
+          by (metis Complex_Vector_Spaces.subspace_0) 
       qed
       moreover have \<open>t = t + 0\<close>
         by simp
@@ -2923,7 +2983,8 @@ shows "(y::'a linear_space) + z \<le> x"
             moreover have \<open>closed_subspace (space_as_set x)\<close>
               using space_as_set by simp
             ultimately show ?thesis
-              by (simp add: \<open>t = \<psi> + \<phi>\<close> complex_vector.subspace.additive_closed closed_subspace.complex_vector.subspace) 
+              using \<open>t = \<psi> + \<phi>\<close>  complex_vector.subspace_def
+              using closed_subspace.subspace by blast
           qed
         qed
       ultimately show ?thesis
@@ -2957,7 +3018,7 @@ lemma bot_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
   shows  "(bot::'a linear_space) \<le> a"
     apply transfer
-    using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero closed_subspace_0 by blast 
+  using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
 
 lemma top_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
@@ -3043,9 +3104,14 @@ proof-
       ultimately show ?thesis
       proof -
         have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
-          by (metis \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right closed_subspace_orthog)
+          using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
+          subspace_orthog by blast 
         thus ?thesis
-          by (metis (no_types) \<open>closed_subspace x\<close> \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close> \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono is_closed_subspace_universal_inclusion_left complex_vector.subspace.additive_closed closed_subspace.complex_vector.subspace closed_subspace_closed_plus closed_subspace_orthog)
+          using \<open>closed_subspace x\<close> 
+            \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
+            \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
+            is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
+          by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
       qed 
     qed
     thus ?thesis
@@ -3062,30 +3128,11 @@ begin
 lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
   is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
   proof
-  show "(x::'a) + y \<in> closure (complex_vector.span (\<Union> S))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
-      and "(x::'a) \<in> closure (complex_vector.span (\<Union> S))"
-      and "(y::'a) \<in> closure (complex_vector.span (\<Union> S))"
-    for S :: "'a set set"
-      and x :: 'a
-      and y :: 'a
-    using that
-    by (metis complex_vector.span_add complex_vector.span_scale complex_vector.span_zero complex_vector.subspace_def closed_subspace_cl) 
-  show "c *\<^sub>C (x::'a) \<in> closure (complex_vector.span (\<Union> S))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
-      and "(x::'a) \<in> closure (complex_vector.span (\<Union> S))"
-    for S :: "'a set set"
-      and x :: 'a
-      and c :: complex
-    using that
-    by (metis complex_vector.span_add_eq2 complex_vector.span_scale complex_vector.span_zero complex_vector.subspace.smult_closed complex_vector.subspace_def closed_subspace_cl) 
-
-  show "(0::'a) \<in> closure (complex_vector.span (\<Union> S))"
+  show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
     using that
-    by (metis closure_insert complex_vector.span_zero insertI1 insert_absorb) 
-
+    by (simp add: closed_subspace.subspace subspace_I) 
   show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
@@ -3109,8 +3156,9 @@ instance .. end
 
 instantiation linear_space :: (complex_normed_vector) sup begin  (* Sum of spaces *)
 lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
-  is "\<lambda>A B::'a set. A +\<^sub>M B" 
-  by (fact closed_subspace_closed_plus)
+  is "\<lambda>A B::'a set. A +\<^sub>M B"
+  by (simp add: subspace_closed_plus) 
+  
 instance .. end
 
 lemma linear_space_sup_plus: "(sup :: _ linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
@@ -3133,11 +3181,10 @@ end
 instantiation linear_space :: (chilbert_space) order_bot begin
 instance apply intro_classes
   apply transfer 
-  using [[show_sorts]]
-  using closed_subspace_0 ortho_bot ortho_leq by blast
+  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 by blast 
 end
 
-lemma linear_space_zero_bot: "(0::_ linear_space) = bot" 
+lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
   unfolding zero_linear_space_def bot_linear_space_def 
   by (simp add: bot_linear_space.abs_eq)
 
