@@ -922,7 +922,7 @@ qed
 
 lemma equal_generator_0:
   fixes A::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = 0\<close> and  \<open>S \<noteq> {}\<close>
+  assumes \<open>span S = UNIV\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = 0\<close> and  \<open>S \<noteq> {}\<close>
   shows  \<open>A = 0\<close>
 proof-
   have \<open>Rep_bounded A = Rep_bounded (0::('a,'b) bounded)\<close>
@@ -938,11 +938,11 @@ proof-
           using Rep_bounded by auto          
         have \<open>Abs_linear_space (closure (complex_vector.span S)) =
                 Abs_linear_space UNIV\<close>
-          using  \<open>cgenerator S\<close>  
-          unfolding cgenerator_def top_linear_space_def span_def
+          using  \<open>span S = UNIV\<close>  
+          unfolding top_linear_space_def span_def
           by (simp add: Complex_Vector_Spaces.span_raw_def)                    
         hence \<open>closure (complex_vector.span S) = UNIV\<close>
-          by (metis Complex_Vector_Spaces.span_raw_def assms(1) cgenerator_def closure_UNIV)                    
+          by (metis Complex_Vector_Spaces.span_raw_def assms(1) \<open>span S = UNIV\<close> closure_UNIV)                    
         hence  \<open>x \<in> closure (complex_vector.span S)\<close>
           by blast
         hence \<open>\<exists> y. (\<forall> n::nat. y n \<in> complex_vector.span S) \<and> y \<longlonglongrightarrow> x\<close>
@@ -978,7 +978,7 @@ qed
 
 lemma equal_generator:
   fixes A B::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>cgenerator S\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> and  \<open>S \<noteq> {}\<close>
+  assumes \<open>span S = UNIV\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> Rep_bounded A x = Rep_bounded B x\<close> and  \<open>S \<noteq> {}\<close>
   shows \<open>A = B\<close>
 proof-
   have \<open>A - B = 0\<close>

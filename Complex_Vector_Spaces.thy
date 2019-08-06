@@ -2033,10 +2033,10 @@ end
 
 
 section \<open>Span\<close>
-
-(* TODO: Is Span meant instead of span? Or is UNIV meant instead of top? (These leads to two different definitions, one with and one without closure.) *)
+(* TODO: delete
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
   \<open>cgenerator S = (span S = top)\<close>
+*)
 
 lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
