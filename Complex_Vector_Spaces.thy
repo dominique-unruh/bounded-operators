@@ -2034,6 +2034,7 @@ end
 
 section \<open>Span\<close>
 
+(* TODO: Is Span meant instead of span? Or is UNIV meant instead of top? (These leads to two different definitions, one with and one without closure.) *)
 definition cgenerator :: \<open>'a::cbanach set \<Rightarrow> bool\<close> where
   \<open>cgenerator S = (span S = top)\<close>
 
