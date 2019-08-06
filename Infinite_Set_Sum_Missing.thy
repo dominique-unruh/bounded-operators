@@ -853,7 +853,7 @@ qed
 (* lemma infsetsum'_diff:
   assumes "infsetsum'_converges f A" and "infsetsum'_converges g A" 
   shows "infsetsum' (\<lambda>x. f x - g x) A = infsetsum' f A - infsetsum' g A"
-  sorry *)
+   *)
 
 (* lemma infsetsum'_converges_subset:
   assumes "infsetsum'_converges f B" and AB: "A \<subseteq> B"
@@ -1190,7 +1190,7 @@ proof -
       let ?sum = "infsetsum' (\<lambda>x. norm (f x))"
       have "(sum (\<lambda>x. norm (f x)) \<longlongrightarrow> ?sum A) (finite_subsets_at_top A)"
         thm infsetsum'_approx_sum[where f=f and A=A]
-        sorry
+        by (cheat TODO)
       then have "\<forall>\<^sub>F F in (finite_subsets_at_top A). dist (sum (\<lambda>x. norm (f x)) F) (?sum A) < \<delta>"
         apply (rule tendstoD) by simp
       then obtain F2 where finF2[simp]: "finite F2" and F2A[simp]: "F2\<subseteq>A" and "dist (sum (\<lambda>x. norm (f x)) F2) (?sum A) < \<delta>"

@@ -2574,7 +2574,7 @@ instance linear_space :: (chilbert_space) complete_orthomodular_lattice
   apply intro_classes
   apply (metis bot.extremum_uniqueI inf_sup_ord(1) inf_sup_ord(2) infxminusxbot xinfyz_linear_space)
   apply (simp add: linear_space_sup_plus supxminusxtop) 
-  sorry
+  by (cheat \<open>linear_space :: (chilbert_space) complete_orthomodular_lattice\<close>)
 
 (* TODO: Remove constant ortho, subsumed by uminus *)
 
@@ -2647,11 +2647,12 @@ lemma rel_interior_sing_generalized:
 
 (* NEW *)
 (* Generalization of convex_closure_inter *)
+(* TODO: I think this one is not used any more *)
 lemma convex_closure_inter_generalized:
   assumes "\<forall>S\<in>I. convex (S :: 'n::chilbert_space set)"
     and "\<Inter>{rel_interior S |S. S \<in> I} \<noteq> {}"
   shows "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
-  sorry
+  by (cheat convex_closure_inter_generalized)
 
 lemma subspace_rel_interior:
   fixes S::\<open>'a::chilbert_space set\<close>
@@ -2767,7 +2768,7 @@ is bij.
 *)
 
 lemma isCont_applyOp[simp]: "isCont ((*\<^sub>v) A) \<psi>"
-  sorry
+  by (cheat isCont_applyOp)
 
 lemma applyOpSpace_mono:
   "S \<le> T \<Longrightarrow> A *\<^sub>s S \<le> A *\<^sub>s T"
