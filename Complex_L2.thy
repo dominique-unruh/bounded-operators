@@ -2037,33 +2037,33 @@ lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,
 
 lemma ell2_to_bounded_applyOp:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A *\<^sub>o ell2_to_bounded \<psi>\<close>
+  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o ell2_to_bounded \<psi>\<close>
 proof-
-  have \<open>bounded_clinear (Rep_bounded A)\<close>
-    using Rep_bounded by blast
-  hence \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))
-     =  (\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
+  have \<open>bounded_clinear (times_bounded_vec A)\<close>
+    using times_bounded_vec by blast
+  hence \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))
+     =  (\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
     using bounded_clinear_def
     by simp 
-  also have \<open>(\<lambda> x. (Rep_bounded A) ( C1_to_complex x *\<^sub>C \<psi>) )
-    = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+  also have \<open>(\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )
+    = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     unfolding comp_def
     by blast
-  finally have \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))
-     = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+  finally have \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by blast
-  moreover have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
-       = (\<lambda> x. C1_to_complex x *\<^sub>C (Rep_bounded A \<psi>))\<close>
+  moreover have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+       = (\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))\<close>
     using Complex_L2.ell2_to_bounded.rep_eq
     by blast
-  ultimately have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
-     = (Rep_bounded A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by simp
-  moreover have \<open>Rep_bounded (ell2_to_bounded \<psi>) = (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     using Complex_L2.ell2_to_bounded.rep_eq
     by blast
-  ultimately have \<open>Rep_bounded (ell2_to_bounded (Rep_bounded A \<psi>))
-     = (Rep_bounded A) \<circ> (Rep_bounded (ell2_to_bounded \<psi>))\<close>
+  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (times_bounded_vec (ell2_to_bounded \<psi>))\<close>
     by simp
   thus ?thesis
     apply transfer

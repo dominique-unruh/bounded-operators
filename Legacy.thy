@@ -9,7 +9,7 @@ imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading" Tensor_Prod
 begin
 
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"
-abbreviation "applyOp == Rep_bounded"
+abbreviation "applyOp == times_bounded_vec"
 
 unbundle bounded_notation
 
