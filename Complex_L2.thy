@@ -2037,7 +2037,7 @@ lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,
 
 lemma ell2_to_bounded_applyOp:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A \<cdot>\<^sub>o ell2_to_bounded \<psi>\<close>
+  shows \<open>ell2_to_bounded (Rep_bounded A \<psi>) = A *\<^sub>o ell2_to_bounded \<psi>\<close>
 proof-
   have \<open>bounded_clinear (Rep_bounded A)\<close>
     using Rep_bounded by blast
@@ -2243,7 +2243,6 @@ proof
       then show ?thesis
         using f1 by (metis (full_types) \<open>\<And>y x \<pi>. classical_operator' \<pi> (x + y) = classical_operator' \<pi> x + classical_operator' \<pi> y\<close> plus_ell2.rep_eq that(1) that(2))
     qed
-
   qed
 
   show "classical_operator' S (r *\<^sub>C (b::'a ell2)) = r *\<^sub>C (classical_operator' S b::'b ell2)"
@@ -2457,7 +2456,7 @@ qed
 
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
-      (classical_operator \<pi>) \<cdot>\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
+      (classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
   by (cheat TODO)
 
 lemma classical_operator_adjoint[simp]: 
@@ -2466,7 +2465,7 @@ lemma classical_operator_adjoint[simp]:
   by (cheat TODO1)
 
 lemma classical_operator_mult[simp]:
-  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> \<cdot>\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
+  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   by (cheat TODO)
     (*
   apply (rule equal_basis)
