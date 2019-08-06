@@ -39,13 +39,13 @@ lemma adj_comm_op[simp]: "adjoint comm_op = comm_op"
   by (cheat TODO2)
 
 lemma
-  comm_op_swap[simp]: "comm_op \<cdot>\<^sub>o (A\<otimes>B) \<cdot>\<^sub>o comm_op = B\<otimes>A"
+  comm_op_swap[simp]: "comm_op *\<^sub>o (A\<otimes>B) *\<^sub>o comm_op = B\<otimes>A"
   for A::"('a ell2,'b ell2) bounded" and B::"('c ell2,'d ell2) bounded"
   by (cheat TODO3)
 
-lemma comm_op_times_comm_op[simp]: "comm_op  \<cdot>\<^sub>o comm_op = idOp"
+lemma comm_op_times_comm_op[simp]: "comm_op  *\<^sub>o comm_op = idOp"
 proof -
-  have "comm_op  \<cdot>\<^sub>o (idOp \<otimes> idOp)  \<cdot>\<^sub>o comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
+  have "comm_op  *\<^sub>o (idOp \<otimes> idOp)  *\<^sub>o comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
   then show ?thesis by simp
 qed
 
@@ -73,7 +73,7 @@ lemma tensor_plus_ell2: "(A+B) \<otimes> C = A \<otimes> C + B \<otimes> C" for 
 lemma tensor_norm_ell2: "norm (\<psi> \<otimes> \<phi>) = norm \<psi> * norm \<phi>" for \<psi> \<phi> :: "_ ell2"
   by (cheat tensor_norm_ell2)
 
-lemma tensor_times[simp]: "(U1 \<otimes> U2) \<cdot>\<^sub>o (V1 \<otimes> V2) = (U1 \<cdot>\<^sub>o V1) \<otimes> (U2 \<cdot>\<^sub>o V2)"
+lemma tensor_times[simp]: "(U1 \<otimes> U2) *\<^sub>o (V1 \<otimes> V2) = (U1 *\<^sub>o V1) \<otimes> (U2 *\<^sub>o V2)"
   for V1 :: "('a1,'b1) l2bounded" and U1 :: "('b1,'c1) l2bounded"
     and V2 :: "('a2,'b2) l2bounded" and U2 :: "('b2,'c2) l2bounded"
   by (cheat TODO3)
