@@ -3130,44 +3130,4 @@ lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space linear_space"
   by smt
 
 
-lemma supxminusxtop:
-  fixes x :: "'a::chilbert_space linear_space"
-  shows "sup x (- x) = top"
-proof-
-  have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
-    for x::\<open>'a set\<close>
-  proof-
-    assume \<open>closed_subspace x\<close>
-    have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
-      for t
-    proof-
-      have \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
-        using \<open>closed_subspace x\<close> ortho_decomp by blast
-      moreover have \<open>(projection x) t \<in> x\<close>
-        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-      moreover have \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
-        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-      ultimately show ?thesis
-      proof -
-        have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
-          using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
-          subspace_orthog by blast 
-        thus ?thesis
-          using \<open>closed_subspace x\<close> 
-            \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
-            \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
-            is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
-          by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
-      qed 
-    qed
-    thus ?thesis
-      by auto 
-  qed
-  thus ?thesis
-  apply transfer
-  using ortho_decomp
-  by blast
-qed
-
-
 end

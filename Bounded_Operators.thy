@@ -17,13 +17,11 @@ begin
 
 section \<open>Complex bounded operators\<close>
 
-(* TODO: Rename times_bounded_vec \<rightarrow> times_bounded_vec *)
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   morphisms times_bounded_vec Abs_bounded
   using bounded_clinear_zero by blast
 
-(* TODO: Replace *\<^sub>v by *\<^sub>v    *)
 notation times_bounded_vec (infixr "*\<^sub>v" 70)
 
 setup_lifting type_definition_bounded
@@ -1138,7 +1136,7 @@ qed
 
 lemma cdot_plus_distrib[simp]:   
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
-  shows \<open>U *\<^sub>s (A + B) = (U *\<^sub>s A) + (U *\<^sub>s B)\<close>
+  shows \<open>U *\<^sub>s (sup A B) = sup (U *\<^sub>s A) (U *\<^sub>s B)\<close>
 proof-
   {  have   \<open>
        bounded_clinear U \<Longrightarrow>
@@ -1173,10 +1171,17 @@ proof-
     unfolding plus_bounded_def applyOpSpace_def apply auto apply transfer 
     unfolding closed_sum_def Minkoswki_sum_def
     apply auto
-    unfolding plus_linear_space_def closed_sum_def Minkoswki_sum_def
+    unfolding  closed_sum_def Minkoswki_sum_def
+    using 1 
     apply auto
-    apply (rule 1) 
-    by blast
+proof - (* sledgehammer *)
+  fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
+have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
+  by (simp add: Minkoswki_sum_def closed_sum_def)
+then show "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
+  by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
+qed
+
 qed
 
 lemma scalar_op_linear_space_assoc [simp]: 
@@ -1328,13 +1333,9 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
 
  *)
 
-(* TODO: in this form, this doesn't work well as a simp-rule (there was an = before).
-        (see mult_inf_distrib' at end of file)
-   TODO: state using \<sqinter>/inf, not *
-*)
 lemma mult_inf_distrib:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
-  shows "U *\<^sub>s (B * C) \<le> (U *\<^sub>s B) * (U *\<^sub>s C)"
+  shows "U *\<^sub>s (inf B  C) \<le> inf (U *\<^sub>s B) (U *\<^sub>s C)"
 proof-
   have \<open>bounded_clinear U \<Longrightarrow>
        closed_subspace B \<Longrightarrow>
@@ -1996,6 +1997,7 @@ proof-
           using  add_cancel_right_right assms  ortho_decomp
             orthogonal_complement_twice projection_fixed_points
           by (metis subspace_orthog)
+           
         hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
           by simp          
         thus ?thesis
@@ -2229,7 +2231,15 @@ lemma Proj_Bounded_I:
   by (metis Proj_Bounded_def Bounded_of_bounded_inv)
 
 lemma Proj_leq: "(Proj S) *\<^sub>s A \<le> S"
-  by (metis cdot_plus_distrib imageOp_Proj le_iff_add top_greatest xsupxy_linear_space)
+proof -
+have "top = sup top A"
+by (meson sup.orderE top_a_linear_space)
+  then have "sup S (Proj S *\<^sub>s A) = S"
+    by (metis (full_types) cdot_plus_distrib imageOp_Proj)
+  then show ?thesis
+    by (meson sup.absorb_iff1)
+qed
+  
 
 lemma Proj_times: "isometry A \<Longrightarrow> A *\<^sub>o (Proj S) *\<^sub>o (A*) = Proj (A *\<^sub>s S)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
@@ -2251,19 +2261,17 @@ proof-
     by blast
   have \<open>M = A *\<^sub>s S\<close>
   proof - (* sledgehammer *)
-    have f1: "\<forall>l. A *\<^sub>s (Proj S *\<^sub>s (A* *\<^sub>s l)) = P *\<^sub>s l"
+    have f1: "\<forall>l. A *\<^sub>s Proj S *\<^sub>s A* *\<^sub>s l = P *\<^sub>s l"
       by (simp add: P_def timesOp_assoc_linear_space)
     have f2: "\<forall>l b. b* *\<^sub>s (b *\<^sub>s (l::'a linear_space)::'b linear_space) = idOp *\<^sub>s l \<or> \<not> isometry b"
-      by (metis (no_types) isometry_def timesOp_assoc_linear_space)
-    have f3: "\<forall>l b. b *\<^sub>s (idOp *\<^sub>s (l::'a linear_space)) = (b *\<^sub>s l::'a linear_space)"
-      by auto
-    have f4: "\<forall>l. (0::'b linear_space) \<le> l"
-      by (metis add.left_neutral le_iff_add)
-    have "\<forall>l. (top::'a linear_space) + l = top"
-      by (simp add: top_add)
+      by (metis (no_types) adjUU timesOp_assoc_linear_space)
+    have f3: "\<forall>l b. b *\<^sub>s idOp *\<^sub>s (l::'a linear_space) = (b *\<^sub>s l::'a linear_space)"
+      by (metis timesOp_assoc_linear_space times_idOp1)
+    have "\<forall>l la. sup (Proj (la::'a linear_space) *\<^sub>s l) la = la"
+      by (metis Proj_leq sup.absorb_iff2)
     then show ?thesis
-      using f4 f3 f2 f1 by (metis \<open>P = Proj M\<close> \<open>isometry A\<close> add.commute cdot_plus_distrib imageOp_Proj top_add)
-  qed  
+      using f3 f2 f1 by (metis Proj_leq \<open>P = Proj M\<close> \<open>isometry A\<close> cdot_plus_distrib imageOp_Proj sup.order_iff)
+  qed 
   thus ?thesis
     using \<open>P = Proj M\<close>
     unfolding P_def
@@ -2272,9 +2280,7 @@ qed
 
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
-lift_definition ortho :: \<open>'a::chilbert_space linear_space \<Rightarrow> 'a linear_space\<close>
-  is \<open>orthogonal_complement\<close>
-  by simp
+
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
@@ -2282,18 +2288,21 @@ lemma projection_scalar_mult[simp]:
 
 
 lemma move_plus:
-  "(Proj (ortho C)) *\<^sub>s A \<le> B \<Longrightarrow> A \<le> B + C"
+  "(Proj (- C)) *\<^sub>s A \<le> B \<Longrightarrow> A \<le> sup B C"
   for A B C::"'a::chilbert_space linear_space"
 proof-
-  assume \<open>(Proj (ortho C)) *\<^sub>s A \<le> B\<close>
+  assume \<open>(Proj (- C)) *\<^sub>s A \<le> B\<close>
   hence \<open>Abs_bounded
      (projection
        (space_as_set
          (Abs_linear_space (orthogonal_complement (space_as_set C))))) *\<^sub>s A \<le> B\<close>
-    unfolding Proj_def ortho_def less_eq_linear_space_def
-    by auto
+    unfolding Proj_def  less_eq_linear_space_def
+    by (simp add: uminus_linear_space_def)
+    
   hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (space_as_set C))) *\<^sub>s A \<le> B\<close>
-    by (metis Proj_def \<open>Proj (ortho C) *\<^sub>s A \<le> B\<close> map_fun_apply ortho.rep_eq)
+    using Proj_def \<open>Proj (- C) *\<^sub>s A \<le> B\<close> map_fun_apply
+    by (simp add: Proj_def uminus_linear_space.rep_eq) 
+
   hence \<open>x \<in> space_as_set
               (Abs_linear_space
                 (closure
@@ -2316,7 +2325,8 @@ proof-
                    space_as_set A) \<Longrightarrow>
          x \<in> space_as_set B\<close>
     for x
-    by (metis (full_types) Proj.rep_eq Proj_def map_fun_apply ortho.rep_eq)
+    using Proj.rep_eq Proj_def map_fun_apply
+    by (metis (full_types) uminus_linear_space.rep_eq)
 
   hence \<open>x \<in> space_as_set A \<Longrightarrow>
     x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set B \<and> \<phi> \<in> space_as_set C}\<close>
@@ -2349,10 +2359,9 @@ proof-
          x \<in> space_as_set
                (Abs_linear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
     for x
-    by (metis space_as_set_inverse plus_linear_space.rep_eq)    
+    by (metis space_as_set_inverse sup_linear_space.rep_eq)
   thus ?thesis 
-    unfolding Proj_def ortho_def less_eq_linear_space_def plus_linear_space_def
-    by auto
+    by (simp add: \<open>\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B +\<^sub>M space_as_set C\<close> less_eq_linear_space.rep_eq subset_eq sup_linear_space.rep_eq)    
 qed
 
 
@@ -2445,8 +2454,6 @@ qed
 
 section \<open>New/restored things\<close>
 
-(* TODO probably needs less than chilbert_space *)
-(* TODO: move to Complex_Vector_Spaces *)
 instantiation linear_space :: (chilbert_space) complete_lattice begin
 instance 
 proof
@@ -2485,6 +2492,7 @@ proof
 
   show "Inf {} = (top::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
+
   show "Sup {} = (bot::'a linear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto    
 qed
@@ -2496,7 +2504,6 @@ end
 class complemented_lattice = bounded_lattice + uminus + minus + 
   assumes inf_compl_bot: "inf x (-x) = bot"
     and sup_compl_top: "sup x (-x) = top"
-  assumes diff_eq: "x - y = inf x (-y)"
 
 (* TODO: move to Missing or similar *)
 class complete_complemented_lattice = complemented_lattice + complete_lattice 
@@ -2505,7 +2512,7 @@ class complete_complemented_lattice = complemented_lattice + complete_lattice
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
 class orthocomplemented_lattice = complemented_lattice +
   assumes ortho_involution: "- (- x) = x"
-  assumes ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
+  and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
 
 (* TODO: move to Missing or similar *)
 class complete_orthocomplemented_lattice = orthocomplemented_lattice + complete_lattice
@@ -2528,10 +2535,30 @@ instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_la
 
 (* TODO: move to Missing or similar *)
 instance boolean_algebra \<subseteq> orthomodular_lattice
-  apply intro_classes
-       apply auto
-   apply (simp add: boolean_algebra_class.diff_eq)
-  by (simp add: sup.absorb_iff2 sup_inf_distrib1)
+  proof
+  show "inf (x::'a) (- x) = bot"
+    for x :: 'a
+    by simp    
+  show "sup (x::'a) (- x) = top"
+    for x :: 'a
+    by simp
+  show "- (- (x::'a)) = x"
+    for x :: 'a
+    by simp
+  show "- (y::'a) \<le> - x"
+    if "(x::'a) \<le> y"
+    for x :: 'a
+      and y :: 'a
+    using that
+    by simp 
+  show "sup (x::'a) (inf (- x) y) = y"
+    if "(x::'a) \<le> y"
+    for x :: 'a
+      and y :: 'a
+    using that
+    by (simp add: sup.absorb_iff2 sup_inf_distrib1) 
+qed
+
 
 (* TODO: move to Missing or similar *)
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
@@ -2539,30 +2566,147 @@ instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
 
 (* TODO: move to Complex_Inner_Product *)
 instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
-  apply intro_classes
-       apply (metis bot.extremum_uniqueI inf_sup_ord(1) inf_sup_ord(2) infxminusxbot xinfyz_linear_space)
-      apply (simp add: linear_space_sup_plus supxminusxtop) 
-  by (cheat \<open>linear_space :: (chilbert_space) complete_orthomodular_lattice\<close>)
+  proof
+  show "inf (x::'a linear_space) (- x) = bot"
+    for x :: "'a linear_space"
+    apply transfer
+    by (metis Complex_Vector_Spaces.subspace_0 insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero ortho_inter_zero)
 
-(* TODO: Remove constant ortho, subsumed by uminus *)
+  show "sup (x::'a linear_space) (- x) = top"
+    for x :: "'a linear_space"
+proof-
+  have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
+    for x::\<open>'a set\<close>
+  proof-
+    assume \<open>closed_subspace x\<close>
+    have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
+      for t
+    proof-
+      have \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
+        using \<open>closed_subspace x\<close> ortho_decomp by blast
+      moreover have \<open>(projection x) t \<in> x\<close>
+        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+      moreover have \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
+        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+      ultimately show ?thesis
+      proof -
+        have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
+          using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
+          subspace_orthog by blast 
+        thus ?thesis
+          using \<open>closed_subspace x\<close> 
+            \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
+            \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
+            is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
+          by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
+      qed 
+    qed
+    thus ?thesis
+      by auto 
+  qed
+  thus ?thesis
+  apply transfer
+  using ortho_decomp
+  by blast
+qed
+
+
+  show "- (- (x::'a linear_space)) = x"
+    for x :: "'a linear_space"
+    by (simp add: linear_space_ortho_ortho)
+
+  show "- (y::'a linear_space) \<le> - x"
+    if "(x::'a linear_space) \<le> y"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    using that apply transfer
+    by simp 
+
+  show "sup (x::'a linear_space) (inf (- x) y) = y"
+    if "(x::'a linear_space) \<le> y"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    using that apply transfer
+    proof
+  show "(x::'a set) +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
+    if "closed_subspace (x::'a set)"
+      and "closed_subspace (y::'a set)"
+      and "(x::'a set) \<subseteq> y"
+    for x :: "'a set"
+      and y :: "'a set"
+    using that
+    by (simp add: is_closed_subspace_universal_inclusion_inverse) 
+
+  show "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
+    if "closed_subspace (x::'a set)"
+      and "closed_subspace (y::'a set)"
+      and "(x::'a set) \<subseteq> y"
+    for x :: "'a set"
+      and y :: "'a set"   
+  proof-
+    have \<open>u \<in> y \<Longrightarrow> u \<in> x +\<^sub>M ((orthogonal_complement x) \<inter> y)\<close>
+      for u
+    proof-
+      assume \<open>u \<in> y\<close>
+      have \<open>(projection x) u \<in> x\<close>
+        by (simp add: projection_intro2 that(1))
+      hence \<open>(projection x) u \<in> y\<close>
+        using that(3) by auto        
+      have \<open>subspace y\<close>
+        by (simp add: Complex_Vector_Spaces.subspace_raw_def closed_subspace.subspace that(2))
+      have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
+        by (simp add: projection_intro1 that(1))
+      moreover have  \<open>u - (projection x) u \<in> y\<close>
+        using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>subspace y\<close>
+        by (simp add: Complex_Vector_Spaces.subspace_raw_def complex_vector.subspace_diff)
+      ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
+        by simp
+      hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
+        by (metis \<open>u - projection x u \<in> orthogonal_complement x \<inter> y\<close> diff_add_cancel ordered_field_class.sign_simps(2))
+      then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
+        by blast
+      hence \<open>u \<in> x +\<^sub>m ((orthogonal_complement x) \<inter> y)\<close>
+        using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
+        unfolding Minkoswki_sum_def
+        by blast
+         
+      thus ?thesis
+        unfolding closed_sum_def
+        using closure_subset by blast 
+    qed
+    thus ?thesis by blast
+  qed
+qed
+qed
+
+
+(* TODO: 
+Dominique: move to Complex_Vector_Spaces
+Jose: Do you meant Complex_Inner_Product? The function "-"
+is defined using the inner product.
+*)
+lemma ortho_bot[simp]: "- (bot::'a::chilbert_space linear_space) = top"
+proof -
+  have "(top::'a linear_space) \<le> - bot"
+    by (metis (full_types) Proj_leq monoid.right_neutral move_plus sup_bot.monoid_axioms)
+  then show ?thesis
+    by (meson top.extremum_uniqueI)
+qed
 
 (* TODO: move to Complex_Vector_Spaces *)
-lemma ortho_bot[simp]: "ortho bot = top"
-  by (metis comm_monoid_add_class.add_0 linear_space_zero_bot ortho_def supxminusxtop uminus_linear_space_def)
+lemma ortho_top[simp]: "- (top::'a::chilbert_space linear_space) = bot"
+  by (metis Bounded_Operators.ortho_bot linear_space_ortho_ortho)
 
-lemma ortho_top[simp]: "ortho top = bot"
-  by (metis Bounded_Operators.ortho_bot linear_space_ortho_ortho ortho_def uminus_linear_space_def)
-    (* TODO: move to Complex_Vector_Spaces *)
 
-lemma top_plus[simp]: "top + x = top" for x :: "_ linear_space"
-  by (simp add: top.extremum_uniqueI xsupxy_linear_space)
-    (* TODO: move to Complex_Vector_Spaces *)
+(* TODO: move to Complex_Vector_Spaces *)  
+lemma top_plus[simp]: "sup top  x = top" for x :: "'a::chilbert_space linear_space"
+  by simp
 
-lemma plus_top[simp]: "x + top = top" for x :: "_ linear_space"
-  by (simp add: add.commute)
+lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_space"
+  by simp
 
-lemma ortho_ortho[simp]: "ortho (ortho S) = S"
-  by (metis linear_space_ortho_ortho ortho_def uminus_linear_space_def)
+lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
+  by (simp add: linear_space_ortho_ortho)
 
 definition "isProjector P \<longleftrightarrow> P *\<^sub>o P = P \<and> P* = P"
 
@@ -2736,7 +2880,8 @@ is bij.
 *)
 
 lemma isCont_applyOp[simp]: "isCont ((*\<^sub>v) A) \<psi>"
-  by (cheat isCont_applyOp)
+  apply transfer
+  by (simp add: bounded_linear_continuous) 
 
 lemma applyOpSpace_mono:
   "S \<le> T \<Longrightarrow> A *\<^sub>s S \<le> A *\<^sub>s T"
@@ -2839,8 +2984,7 @@ next
       unfolding INFV_def
       by (simp add: timesOp_assoc_linear_space)
   qed
-  finally show "INFUV \<le> U *\<^sub>s INFV"
-    by -
+  finally show "INFUV \<le> U *\<^sub>s INFV".
 qed
 
 lemma mult_INF[simp]: 
