@@ -2757,15 +2757,7 @@ lemma rel_interior_sing_generalized:
   by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff)
 
 
-(* NEW *)
-(* Generalization of convex_closure_inter *)
-(* TODO: I think this one is not used any more *)
-lemma convex_closure_inter_generalized:
-  assumes "\<forall>S\<in>I. convex (S :: 'n::chilbert_space set)"
-    and "\<Inter>{rel_interior S |S. S \<in> I} \<noteq> {}"
-  shows "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
-  by (cheat convex_closure_inter_generalized)
-
+(* Move to Missing *)
 lemma subspace_rel_interior:
   fixes S::\<open>'a::chilbert_space set\<close>
   assumes \<open>complex_vector.subspace S\<close>
