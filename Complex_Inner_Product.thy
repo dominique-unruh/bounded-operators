@@ -2871,92 +2871,108 @@ lemma linear_space_ortho_ortho:
   apply transfer
   by (simp add: orthogonal_complement_twice)
 
+lemma bot_a_linear_space:
+  fixes a :: "'a::chilbert_space linear_space"
+  shows  "(bot::'a linear_space) \<le> a"
+    apply transfer
+  using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
 
-(* TODO: I think this holds with something weaker than chilbert_space *)
-instantiation linear_space :: (chilbert_space) "comm_monoid_add"
+lemma top_a_linear_space:
+  fixes a :: "'a::chilbert_space linear_space"
+  shows  "(a::'a linear_space) \<le> top"
+    apply transfer
+    by simp 
+
+
+instantiation linear_space :: (complex_inner) "Sup"
 begin
-lift_definition plus_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
-  is "closed_sum"
-  by (simp add: subspace_closed_plus)
+lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+  is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
+  proof
+  show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
+    for S :: "'a set set"
+    using that
+    by (simp add: closed_subspace.subspace subspace_I) 
+  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
+    for S :: "'a set set"
+    using that
+    by simp 
+qed
+
+instance..
+end
+
+
+class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
+
+subclass (in card2) not_singleton
+  apply standard using two_le_card by auto
+
+
+instantiation linear_space :: ("{complex_vector,topological_space}") inf begin 
+lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
+instance .. end
+
+instantiation linear_space :: (complex_normed_vector) sup begin
+lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
+  is "\<lambda>A B::'a set. A +\<^sub>M B"
+  by (simp add: subspace_closed_plus) 
   
-instance
-  proof
-  show \<open>a + b + c = a + (b + c)\<close>
-    for a :: "'a linear_space"
-      and b :: "'a linear_space"
-      and c :: "'a linear_space"
-    apply transfer
-    using is_closed_subspace_asso by auto
+instance .. end
 
-  show \<open>a + b = b + a\<close>
-    for a :: "'a linear_space"
-      and b :: "'a linear_space"
-    apply transfer
-    by (simp add: is_closed_subspace_comm)
 
-  show \<open>(0::'a linear_space) + a = a\<close>
-    for a :: "'a linear_space"
-    apply transfer
-    by (simp add: is_closed_subspace_zero)
+lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+proof transfer 
+  have "card {0} \<noteq> CARD('a)"
+    using not_singleton_card by auto
+  thus "{(0::'a)} \<noteq> (UNIV::'a set)"
+      by (metis \<open>card {0} \<noteq> CARD('a)\<close> )    
 qed
+
+
+instantiation linear_space :: ("{complex_vector,topological_space}") order_top begin
+instance apply intro_classes
+  apply transfer by simp
 end
 
-(* TODO remove *)
-instantiation linear_space::(chilbert_space) "comm_monoid_mult"
-begin
-lift_definition times_linear_space::\<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space\<close>
-  is "(\<inter>)"
-  by simp
-lift_definition one_linear_space::\<open>'a linear_space\<close> is \<open>UNIV\<close>
-  by simp
-instance
-  proof
-  show "(a::'a linear_space) * b * c = a * (b * c)"
-    for a :: "'a linear_space"
-      and b :: "'a linear_space"
-      and c :: "'a linear_space"
-    apply transfer
-    by (simp add: inf.semigroup_axioms semigroup.assoc)    
-  show "(a::'a linear_space) * b = b * a"
-    for a :: "'a linear_space"
-      and b :: "'a linear_space"
-    apply transfer
-    by (simp add: abel_semigroup.commute inf.abel_semigroup_axioms)        
-  show "(1::'a linear_space) * a = a"
-    for a :: "'a linear_space"
-    apply transfer
-    by simp
-qed
+instantiation linear_space :: (chilbert_space) order_bot begin
+instance apply intro_classes
+  apply transfer 
+  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 by blast 
 end
 
-lemma infxyleqx_linear_space:
-  fixes  x :: "'a::chilbert_space linear_space"
-      and y :: "'a linear_space"
-    shows "(x::'a linear_space) * y \<le> x"
-    by (simp add:  less_eq_linear_space.rep_eq times_linear_space.rep_eq)
-    
-lemma infxyleqy_linear_space:
-   "(x::'a linear_space) * y \<le> y"
-    for x :: "'a::chilbert_space linear_space"
-      and y :: "'a linear_space"
-    by (simp add:  less_eq_linear_space.rep_eq times_linear_space.rep_eq)
-
-lemma xinfyz_linear_space:
-  fixes x :: "'a::chilbert_space linear_space"
-      and y :: "'a linear_space"
-      and z :: "'a linear_space"
-    assumes "(x::'a linear_space) \<le> y"
-      and "(x::'a linear_space) \<le> z"
-    shows  "(x::'a linear_space) \<le> y * z"
-    unfolding  times_linear_space_def less_eq_linear_space_def
-    apply auto
-    by (metis IntI space_as_set_inverse assms(1) assms(2) less_eq_linear_space.rep_eq subsetD times_linear_space.rep_eq)
+lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
+  unfolding zero_linear_space_def bot_linear_space_def 
+  by (simp add: bot_linear_space.abs_eq)
 
 
-lemma xsupxy_linear_space:
-  fixes  x :: "'a::chilbert_space linear_space"
+instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
+instance apply intro_classes
+    apply transfer apply simp
+   apply transfer apply simp
+  apply transfer by simp
+end
+
+lemma sup_comm_linear_space:
+  \<open>sup y x = sup x y\<close>
+      for x :: "'a::chilbert_space linear_space"
+        and y :: "'a linear_space"
+  apply transfer
+  by (simp add: is_closed_subspace_comm)
+
+(* TODO 
+Dominique: probably holds with something weaker than chilbert_space
+Jose: The type "chilbert_space" is involved in the proof of the existence of projection, 
+which is used in the proof that the orthogonal complement is an involution on the set of
+closed subspaces *)
+instantiation linear_space :: (chilbert_space) lattice begin
+instance 
+proof
+  show \<open>(x::'a linear_space) \<le> (sup x y)\<close>
+    for x :: "'a linear_space"
       and y :: "'a linear_space"
-  shows "(x::'a linear_space) \<le> x + y"
   proof-
     have \<open>t \<in> space_as_set x \<Longrightarrow>
           t \<in> space_as_set
@@ -2982,34 +2998,40 @@ lemma xsupxy_linear_space:
         by (meson closure_subset subset_eq)        
       thus ?thesis using Abs_linear_space_inverse
       proof -
-        have f1: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (l + la)"
-          by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-        hence "t \<in> space_as_set (x + y)"
-          using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close> by blast
-        thus ?thesis
-          using f1 by (simp add: space_as_set_inverse)
+        have "t \<in> closure (space_as_set x +\<^sub>m space_as_set y)"
+          by (simp add: Minkoswki_sum_def \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>)
+        then have "t \<in> space_as_set (Abs_linear_space (closure (space_as_set x +\<^sub>m space_as_set y)))"
+          by (metis (no_types) Abs_linear_space_inverse closed_sum_def mem_Collect_eq space_as_set subspace_closed_plus)
+        then show ?thesis
+          by (simp add: Minkoswki_sum_def)
       qed
     qed
     thus ?thesis
-    unfolding plus_linear_space_def less_eq_linear_space_def 
-      closed_sum_def Minkoswki_sum_def
-    by auto
+      unfolding  less_eq_linear_space_def 
+        closed_sum_def Minkoswki_sum_def
+      apply auto
+      using is_closed_subspace_universal_inclusion_left space_as_set sup_linear_space.rep_eq
+      by fastforce
   qed
 
-lemma ysupxy_linear_space:
-  fixes y :: "'a::chilbert_space linear_space"
+  show "(y::'a linear_space) \<le> (sup x y)"
+    for y :: "'a linear_space"
       and x :: "'a linear_space"
-    shows "(y::'a linear_space) \<le> x + y"
-using xsupxy_linear_space ordered_field_class.sign_simps(2) 
-    by smt
-
-lemma supyzx_linear_space:
-  fixes  y :: "'a::chilbert_space linear_space"
+  proof-
+    have \<open>y \<le> (sup y x)\<close>
+      by (simp add: \<open>\<And>y x. x \<le> sup x y\<close>)
+    moreover have \<open>sup y x = sup x y\<close>
+      by (simp add: sup_comm_linear_space)
+    ultimately show ?thesis
+      by simp     
+  qed
+  show "(sup (y::'a linear_space) z) \<le> x"
+    if "(y::'a linear_space) \<le> x"
+      and "(z::'a linear_space) \<le> x"
+    for y :: "'a linear_space"
       and x :: "'a linear_space"
       and z :: "'a linear_space"
-    assumes  "(y::'a linear_space) \<le> x"
-      and "(z::'a linear_space) \<le> x"
-shows "(y::'a linear_space) + z \<le> x"
+    using that
   proof-
     have \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
           space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
@@ -3017,7 +3039,7 @@ shows "(y::'a linear_space) + z \<le> x"
           \<subseteq> space_as_set x\<close>
     proof-
       assume \<open>space_as_set y \<subseteq> space_as_set x\<close>
-          and \<open>space_as_set z \<subseteq> space_as_set x\<close>
+        and \<open>space_as_set z \<subseteq> space_as_set x\<close>
       have \<open>closed (space_as_set x)\<close>
       proof-
         have \<open>closed_subspace (space_as_set x)\<close>
@@ -3027,27 +3049,27 @@ shows "(y::'a linear_space) + z \<le> x"
       qed
       moreover have \<open>({\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})
           \<subseteq> space_as_set x\<close>
-        proof
-          show "t \<in> space_as_set x"
-            if "t \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z}"
-            for t :: 'a
-          proof-
-            have \<open>\<exists> \<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z \<and> t = \<psi> + \<phi>\<close>
-              using that by blast
-            then obtain  \<psi> \<phi> where \<open>\<psi> \<in> space_as_set y\<close> and \<open>\<phi> \<in> space_as_set z\<close> 
-                and \<open>t = \<psi> + \<phi>\<close>
-              by blast
-            have \<open>\<psi> \<in> space_as_set x\<close>
-              using \<open>space_as_set y \<subseteq> space_as_set x\<close> \<open>\<psi> \<in> space_as_set y\<close> by auto
-            moreover have \<open>\<phi> \<in> space_as_set x\<close>
-              using \<open>space_as_set z \<subseteq> space_as_set x\<close> \<open>\<phi> \<in> space_as_set z\<close> by auto
-            moreover have \<open>closed_subspace (space_as_set x)\<close>
-              using space_as_set by simp
-            ultimately show ?thesis
-              using \<open>t = \<psi> + \<phi>\<close>  complex_vector.subspace_def
-              using closed_subspace.subspace by blast
-          qed
+      proof
+        show "t \<in> space_as_set x"
+          if "t \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z}"
+          for t :: 'a
+        proof-
+          have \<open>\<exists> \<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z \<and> t = \<psi> + \<phi>\<close>
+            using that by blast
+          then obtain  \<psi> \<phi> where \<open>\<psi> \<in> space_as_set y\<close> and \<open>\<phi> \<in> space_as_set z\<close> 
+            and \<open>t = \<psi> + \<phi>\<close>
+            by blast
+          have \<open>\<psi> \<in> space_as_set x\<close>
+            using \<open>space_as_set y \<subseteq> space_as_set x\<close> \<open>\<psi> \<in> space_as_set y\<close> by auto
+          moreover have \<open>\<phi> \<in> space_as_set x\<close>
+            using \<open>space_as_set z \<subseteq> space_as_set x\<close> \<open>\<phi> \<in> space_as_set z\<close> by auto
+          moreover have \<open>closed_subspace (space_as_set x)\<close>
+            using space_as_set by simp
+          ultimately show ?thesis
+            using \<open>t = \<psi> + \<phi>\<close>  complex_vector.subspace_def
+            using closed_subspace.subspace by blast
         qed
+      qed
       ultimately show ?thesis
         by (simp add: closure_minimal)  
     qed
@@ -3061,93 +3083,56 @@ shows "(y::'a linear_space) + z \<le> x"
     proof -
       assume a1: "space_as_set y \<subseteq> space_as_set x"
       assume a2: "space_as_set z \<subseteq> space_as_set x"
-      have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (l + la)"
-        by (simp add: Minkoswki_sum_def closed_sum_def plus_linear_space.rep_eq)
-      hence "space_as_set (y + z) \<subseteq> space_as_set x"
+      have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (sup l la)"
+        by (simp add: Minkoswki_sum_def closed_sum_def sup_linear_space.rep_eq)
+      then have "space_as_set (sup y z) \<subseteq> space_as_set x"
         using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
-      thus ?thesis
+      then show ?thesis
         using f3 by (simp add: space_as_set_inverse)
     qed
     thus ?thesis
-      unfolding plus_linear_space_def less_eq_linear_space_def 
+      unfolding less_eq_linear_space_def 
         closed_sum_def Minkoswki_sum_def
-      using less_eq_linear_space.rep_eq
-      using assms(1) assms(2) by auto 
+    proof -
+      have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
+        by (metis less_eq_linear_space.rep_eq that(1) that(2))
+      then show "map_fun space_as_set (map_fun space_as_set id) (\<subseteq>) (sup y z) x"
+        by (simp add: Minkoswki_sum_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def)
+    qed  
   qed
+qed
+end
 
-lemma bot_a_linear_space:
-  fixes a :: "'a::chilbert_space linear_space"
-  shows  "(bot::'a linear_space) \<le> a"
-    apply transfer
-  using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
 
-lemma top_a_linear_space:
-  fixes a :: "'a::chilbert_space linear_space"
-  shows  "(a::'a linear_space) \<le> top"
-    apply transfer
-    by simp 
+lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+  by (metis linear_space_zero_bot linear_space_zero_not_top) 
 
-lemma partial_distr_linear_space:
-  fixes x :: "'a::chilbert_space linear_space"
-      and y :: "'a linear_space"
-      and z :: "'a linear_space"
-shows " (x::'a linear_space) + (y * z) \<le> (x + y) * (x + z)"
-  proof-
-    have \<open>closed_subspace x \<Longrightarrow>
-       closed_subspace y \<Longrightarrow>
-       closed_subspace z \<Longrightarrow>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-      for x y z::\<open>'a set\<close>
-    proof-
-      assume \<open>closed_subspace x\<close> and  \<open>closed_subspace y\<close> 
-        and  \<open>closed_subspace z\<close>
-      have \<open> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-      proof-
-        have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
-        {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
-        {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-          by blast
-        moreover have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y}
-               \<subseteq> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y}\<close>
-          by (simp add: closure_subset)
-        moreover have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}
-               \<subseteq> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-          by (simp add: closure_subset)
-        ultimately have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-          by blast          
-        thus ?thesis
-          by (metis (no_types, lifting) Int_subset_iff closure_closure closure_mono) 
-      qed
-      thus ?thesis by blast
-    qed
-    show ?thesis
-    apply transfer
-      unfolding closed_sum_def Minkoswki_sum_def
-      using \<open>\<And>x y z.
-       closed_subspace x \<Longrightarrow>
-       closed_subspace y \<Longrightarrow>
-       closed_subspace z \<Longrightarrow>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y \<inter> z} \<subseteq>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> y} \<inter>
-       closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> x \<and> \<phi> \<in> z}\<close>
-      by blast
-  qed
+lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
-lemma infxminusxbot:
-  fixes x :: "'a::chilbert_space linear_space"
-  shows " (x::'a linear_space)* (- x) = bot"
+lemma span_superset:
+  \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
+proof-
+  have \<open>\<forall> S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>
+    by simp
+  hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
+    by blast
+  hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
+    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
+  thus ?thesis using span_def' by metis
+qed
+
+lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space linear_space"
   apply transfer
-  by (metis (full_types) ExistenceUniquenessProj diff_self inf_commute ortho_inter_zero orthogonal_complement_twice projection_fixed_points projection_intro1)
+  unfolding sup_linear_space_def[symmetric] 
+  using is_closed_subspace_zero
+  unfolding closed_sum_def
+  unfolding Minkoswki_sum_def
+  by smt
+
 
 lemma supxminusxtop:
   fixes x :: "'a::chilbert_space linear_space"
-  shows "(x::'a linear_space) + (- x) = top"
+  shows "sup x (- x) = top"
 proof-
   have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
     for x::\<open>'a set\<close>
@@ -3182,143 +3167,6 @@ proof-
   apply transfer
   using ortho_decomp
   by blast
-qed
-
-instantiation linear_space :: (complex_inner) "Sup"
-begin
-lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
-  is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
-  proof
-  show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
-    for S :: "'a set set"
-    using that
-    by (simp add: closed_subspace.subspace subspace_I) 
-  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
-    for S :: "'a set set"
-    using that
-    by simp 
-qed
-
-instance..
-end
-
-
-class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
-
-subclass (in card2) not_singleton
-  apply standard using two_le_card by auto
-
-
-instantiation linear_space :: ("{complex_vector,topological_space}") inf begin  (* Intersection *)
-lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
-instance .. end
-
-instantiation linear_space :: (complex_normed_vector) sup begin  (* Sum of spaces *)
-lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
-  is "\<lambda>A B::'a set. A +\<^sub>M B"
-  by (simp add: subspace_closed_plus) 
-  
-instance .. end
-
-lemma linear_space_sup_plus: "(sup :: _ linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)" 
-  unfolding sup_linear_space_def plus_linear_space_def by simp
-
-lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-proof transfer 
-  have "card {0} \<noteq> CARD('a)"
-    using not_singleton_card by auto
-  thus "{(0::'a)} \<noteq> (UNIV::'a set)"
-      by (metis \<open>card {0} \<noteq> CARD('a)\<close> )    
-qed
-
-
-instantiation linear_space :: ("{complex_vector,topological_space}") order_top begin
-instance apply intro_classes
-  apply transfer by simp
-end
-
-instantiation linear_space :: (chilbert_space) order_bot begin
-instance apply intro_classes
-  apply transfer 
-  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 by blast 
-end
-
-lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
-  unfolding zero_linear_space_def bot_linear_space_def 
-  by (simp add: bot_linear_space.abs_eq)
-
-instantiation linear_space :: (chilbert_space) ordered_ab_semigroup_add begin
-instance apply intro_classes apply transfer
-  using is_closed_subspace_ord 
-  by (smt Collect_mono_iff closure_mono subset_iff)
-end
-
-instantiation linear_space :: (chilbert_space)canonically_ordered_monoid_add begin
-instance apply intro_classes
-  unfolding linear_space_sup_plus[symmetric]
-  apply auto apply (rule_tac x=b in exI)
-   apply (simp add: dual_order.antisym linear_space_sup_plus supyzx_linear_space ysupxy_linear_space)
-  by (simp add: linear_space_sup_plus xsupxy_linear_space) 
-end
-
-instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
-instance apply intro_classes
-    apply transfer apply simp
-   apply transfer apply simp
-  apply transfer by simp
-end
-
-(* TODO probably holds with something weaker than chilbert_space *)
-instantiation linear_space :: (chilbert_space) lattice begin
-instance 
-  proof
-  show "(x::'a linear_space) \<le> (sup x y)"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
-    by (simp add: linear_space_sup_plus xsupxy_linear_space)    
-  show "(y::'a linear_space) \<le> (sup x y)"
-    for y :: "'a linear_space"
-      and x :: "'a linear_space"
-    by (simp add: linear_space_sup_plus ysupxy_linear_space)    
-  show "(sup (y::'a linear_space) z) \<le> x"
-    if "(y::'a linear_space) \<le> x"
-      and "(z::'a linear_space) \<le> x"
-    for y :: "'a linear_space"
-      and x :: "'a linear_space"
-      and z :: "'a linear_space"
-    using that
-    by (simp add: linear_space_sup_plus supyzx_linear_space) 
-qed
-end
-
-
-lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
-  by (metis linear_space_zero_bot linear_space_zero_not_top) 
-
-lemmas bot_not_top[simp] = top_not_bot[symmetric]
-
-
-lemma bot_plus[simp]: "bot + x = x" for x :: "'a::chilbert_space linear_space"
-  apply transfer
-  unfolding sup_linear_space_def[symmetric] 
-  using is_closed_subspace_zero
-  unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
-  by blast
-
-
-lemma span_superset:
-  \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
-proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>
-    by simp
-  hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
-    by blast
-  hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
-  thus ?thesis using span_def' by metis
 qed
 
 
