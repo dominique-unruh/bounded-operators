@@ -1174,13 +1174,13 @@ proof-
     unfolding  closed_sum_def Minkoswki_sum_def
     using 1 
     apply auto
-proof - (* sledgehammer *)
-  fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
-have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
-  by (simp add: Minkoswki_sum_def closed_sum_def)
-then show "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
-  by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
-qed
+  proof - (* sledgehammer *)
+    fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
+    have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
+      by (simp add: Minkoswki_sum_def closed_sum_def)
+    then show "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
+      by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
+  qed
 
 qed
 
@@ -1471,395 +1471,6 @@ lemma applyOpSpace_eq:
   shows "A *\<^sub>s S = B *\<^sub>s S"
   by (metis applyOpSpace_less_eq assms(1) assms(2) dual_order.antisym)
 
-(* NEW *)
-section \<open>Endomorphism algebra\<close>
-
-(* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
-typedef (overloaded) ('a::complex_normed_vector) Bounded 
-  = \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
-  (* = \<open>UNIV::('a,'a) bounded set\<close> *)
-  using bounded_clinear_ident by blast
-
-(* Example:
-setup_lifting type_definition_Bounded
-
-lift_definition times_Bounded :: "'a::complex_normed_vector Bounded \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded"
-  is "timesOp".
-
-lemma
-  fixes a b :: "_ Bounded"
-  shows "times_Bounded a b = times_Bounded b a"
-  apply transfer
-  using [[show_sorts]]
-*)
-
-definition bounded_of_Bounded:: \<open>'a::complex_normed_vector Bounded \<Rightarrow> ('a, 'a) bounded\<close>  where 
-  \<open>bounded_of_Bounded f = Abs_bounded (Rep_Bounded f)\<close>
-
-definition Bounded_of_bounded:: \<open>('a::complex_normed_vector, 'a) bounded \<Rightarrow> 'a Bounded\<close>  where 
-  \<open>Bounded_of_bounded f = Abs_Bounded (times_bounded_vec f)\<close>
-
-lemma Bounded_of_bounded_inj:
-  \<open>Bounded_of_bounded f = Bounded_of_bounded g \<Longrightarrow> f = g\<close>
-  by (metis Abs_Bounded_inject Bounded_of_bounded_def times_bounded_vec times_bounded_vec_inject)
-
-lemma bounded_of_Bounded_inj:
-  \<open>bounded_of_Bounded f = bounded_of_Bounded g \<Longrightarrow> f = g\<close>
-  by (metis Abs_bounded_inject Rep_Bounded Rep_Bounded_inject bounded_of_Bounded_def)
-
-lemma Bounded_of_bounded_inv:
-  \<open>bounded_of_Bounded (Bounded_of_bounded f) = f\<close>
-  by (metis Abs_Bounded_inverse Bounded_of_bounded_def times_bounded_vec times_bounded_vec_inverse bounded_of_Bounded_def)
-
-lemma bounded_of_Bounded_inv:
-  \<open>Bounded_of_bounded (bounded_of_Bounded f) = f\<close>
-  using Bounded_of_bounded_inv bounded_of_Bounded_inj by auto
-
-instantiation Bounded :: (complex_normed_vector) \<open>complex_normed_vector\<close>
-begin
-
-definition zero_Bounded::"'a Bounded" 
-  where "zero_Bounded = Bounded_of_bounded (0::('a,'a) bounded)"
-
-definition plus_Bounded::"'a Bounded \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded" 
-  where "plus_Bounded f g =  Bounded_of_bounded ( (bounded_of_Bounded f)+(bounded_of_Bounded g) )"
-
-definition uminus_Bounded::"'a Bounded \<Rightarrow> 'a Bounded" 
-  where "uminus_Bounded f =  Bounded_of_bounded (- (bounded_of_Bounded f))"
-
-definition minus_Bounded::"'a Bounded \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded" 
-  where "minus_Bounded f g =  Bounded_of_bounded ( (bounded_of_Bounded f)-(bounded_of_Bounded g) )"
-
-definition scaleC_Bounded :: \<open>complex \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded\<close>
-  where "scaleC_Bounded c f =  Bounded_of_bounded ( c *\<^sub>C (bounded_of_Bounded f) )"
-
-definition scaleR_Bounded :: \<open>real \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded\<close>
-  where "scaleR_Bounded c f =  Bounded_of_bounded ( c *\<^sub>R (bounded_of_Bounded f) )"
-
-definition norm_Bounded :: \<open>'a Bounded \<Rightarrow> real\<close>
-  where \<open>norm_Bounded f = norm (bounded_of_Bounded f)\<close>
-
-definition dist_Bounded :: \<open>'a Bounded \<Rightarrow> 'a Bounded \<Rightarrow> real\<close>
-  where \<open>dist_Bounded f g = dist (bounded_of_Bounded f) (bounded_of_Bounded g)\<close>
-
-definition sgn_Bounded :: \<open>'a Bounded \<Rightarrow> 'a Bounded\<close>
-  where \<open>sgn_Bounded f =  Bounded_of_bounded ( sgn (bounded_of_Bounded f))\<close>
-
-definition uniformity_Bounded :: \<open>( 'a  Bounded \<times> 'a Bounded ) filter\<close>
-  where \<open>uniformity_Bounded = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a Bounded) y < e})\<close>
-
-definition open_Bounded :: \<open>('a Bounded) set \<Rightarrow> bool\<close>
-  where \<open>open_Bounded U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a Bounded) = x \<longrightarrow> y \<in> U)\<close>
-
-instance
-proof
-  show \<open>((*\<^sub>R) r::'a Bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
-    for r :: real
-    unfolding scaleR_Bounded_def scaleC_Bounded_def
-    by (simp add: scaleR_scaleC)
-
-  show "(a::'a Bounded) + b + c = a + (b + c)"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-      and c :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv ab_semigroup_add_class.add_ac(1) plus_Bounded_def)
-
-
-  show "(a::'a Bounded) + b = b + a"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-    by (simp add: add.commute plus_Bounded_def)
-
-  show "(0::'a Bounded) + a = a"
-    for a :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv Bounded_Operators.plus_Bounded_def Bounded_Operators.zero_Bounded_def bounded_of_Bounded_inv)
-
-  show "- (a::'a Bounded) + a = 0"
-    for a :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv plus_Bounded_def uminus_Bounded_def zero_Bounded_def)
-
-  show "(a::'a Bounded) - b = a + - b"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-    by (metis (full_types) Bounded_of_bounded_inv ab_group_add_class.ab_diff_conv_add_uminus minus_Bounded_def plus_Bounded_def uminus_Bounded_def)
-
-  show \<open>a *\<^sub>C ((x::'a Bounded) + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
-    for a :: complex
-      and x :: "'a Bounded"
-      and y :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv plus_Bounded_def scaleC_Bounded_def scaleC_add_right)
-
-  show "(a + b) *\<^sub>C (x::'a Bounded) = a *\<^sub>C x + b *\<^sub>C x"
-    for a :: complex
-      and b :: complex
-      and x :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv Bounded_Operators.plus_Bounded_def Bounded_Operators.scaleC_Bounded_def scaleC_add_left)
-
-  show "a *\<^sub>C b *\<^sub>C (x::'a Bounded) = (a * b) *\<^sub>C x"
-    for a :: complex
-      and b :: complex
-      and x :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv scaleC_Bounded_def)
-
-  show "1 *\<^sub>C (x::'a Bounded) = x"
-    for x :: "'a Bounded"
-    by (simp add: bounded_of_Bounded_inv scaleC_Bounded_def)    
-
-  show "dist (x::'a Bounded) y = norm (x - y)"
-    for x :: "'a Bounded"
-      and y :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv Bounded_Operators.minus_Bounded_def Bounded_Operators.norm_Bounded_def dist_Bounded_def dist_norm)
-
-  show "a *\<^sub>R ((x::'a Bounded) + y) = a *\<^sub>R x + a *\<^sub>R y"
-    for a :: real
-      and x :: "'a Bounded"
-      and y :: "'a Bounded"
-    using \<open>\<And>r. ((*\<^sub>R) r::'a Bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
-      \<open>\<And> y x a. a *\<^sub>C ((x::'a Bounded) + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
-    by fastforce
-
-  show "(a + b) *\<^sub>R (x::'a Bounded) = a *\<^sub>R x + b *\<^sub>R x"
-    for a :: real
-      and b :: real
-      and x :: "'a Bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::'a Bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
-      \<open>\<And> a b x. (a + b) *\<^sub>C (x::'a Bounded) = a *\<^sub>C x + b *\<^sub>C x\<close>
-    by fastforce
-
-  show "a *\<^sub>R b *\<^sub>R (x::'a Bounded) = (a * b) *\<^sub>R x"
-    for a :: real
-      and b :: real
-      and x :: "'a Bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::'a Bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
-      \<open>\<And> a b x. a *\<^sub>C b *\<^sub>C (x::'a Bounded) = (a * b) *\<^sub>C x\<close>
-    by fastforce
-
-  show "1 *\<^sub>R (x::'a Bounded) = x"
-    for x :: "'a Bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::'a Bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
-      \<open>1 *\<^sub>C (x::'a Bounded) = x\<close>
-    by fastforce
-
-  show "sgn (x::'a Bounded) = inverse (norm x) *\<^sub>R x"
-    for x :: "'a Bounded"
-    by (simp add: Bounded_Operators.norm_Bounded_def Bounded_Operators.scaleR_Bounded_def Bounded_Operators.sgn_Bounded_def sgn_div_norm)
-
-  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a Bounded) y < e})"
-    using Bounded_Operators.uniformity_Bounded_def by auto    
-
-  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a Bounded) = x \<longrightarrow> y \<in> U)"
-    for U :: "'a Bounded set"
-    using Bounded_Operators.open_Bounded_def by auto    
-
-  show "(norm (x::'a Bounded) = 0) = (x = 0)"
-    for x :: "'a Bounded"
-  proof -
-    have f1: "\<not> (0::real) < 0"
-      by (metis norm_zero zero_less_norm_iff)
-    have "bounded_of_Bounded x = 0 \<longrightarrow> norm (bounded_of_Bounded x) = 0"
-      by auto
-    then show ?thesis
-      using f1 by (metis (mono_tags) Bounded_of_bounded_inv Bounded_Operators.zero_Bounded_def bounded_of_Bounded_inv norm_Bounded_def zero_less_norm_iff)
-  qed
-
-  show "norm ((x::'a Bounded) + y) \<le> norm x + norm y"
-    for x :: "'a Bounded"
-      and y :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv norm_Bounded_def norm_triangle_ineq plus_Bounded_def)
-
-  show "norm (a *\<^sub>R (x::'a Bounded)) = \<bar>a\<bar> * norm x"
-    for a :: real
-      and x :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv norm_Bounded_def scaleR_Bounded_def)
-
-  show "norm (a *\<^sub>C (x::'a Bounded)) = cmod a * norm x"
-    for a :: complex
-      and x :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv norm_Bounded_def scaleC_Bounded_def)
-
-qed
-
-end
-
-instantiation Bounded :: (cbanach) \<open>cbanach\<close>
-begin
-
-lemma bounded_of_Bounded_Cauchy:
-  \<open>Cauchy f \<Longrightarrow> Cauchy (\<lambda> n. bounded_of_Bounded (f n))\<close>
-  unfolding Cauchy_def dist_Bounded_def by blast
-
-lemma Bounded_of_bounded_tendsto:
-  \<open>f \<longlonglongrightarrow> l \<Longrightarrow> (\<lambda> n. Bounded_of_bounded (f n)) \<longlonglongrightarrow> Bounded_of_bounded l\<close>
-proof-
-  assume \<open>f \<longlonglongrightarrow> l\<close>
-  hence \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* f) N \<approx> star_of l\<close>
-    for N
-    by (simp add: LIMSEQ_NSLIMSEQ NSLIMSEQ_D)
-  hence \<open>N\<in>HNatInfinite \<Longrightarrow> hnorm ((*f* f) N - star_of l) \<in> Infinitesimal\<close>
-    for N
-    using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
-  moreover have \<open>hnorm ((*f* f) N - star_of l) =
-     hnorm ( (*f* (\<lambda> n. Bounded_of_bounded (f n))) N - star_of (Bounded_of_bounded l) ) \<close>
-    for N
-  proof-
-    have \<open>\<forall> N. norm (f N -  l) =
-     norm (  (\<lambda> n. Bounded_of_bounded (f n)) N -  (Bounded_of_bounded l) )\<close>
-      unfolding norm_Bounded_def
-      by (simp add: Bounded_of_bounded_inv minus_Bounded_def)
-    hence \<open>\<forall> N. hnorm ((*f* f) N - star_of l) =
-     hnorm ( (*f* (\<lambda> n. Bounded_of_bounded (f n))) N - star_of (Bounded_of_bounded l) )\<close>
-      by StarDef.transfer
-    thus ?thesis by blast
-  qed
-  ultimately have  \<open>N\<in>HNatInfinite \<Longrightarrow>
-   hnorm ( (*f* (\<lambda> n. Bounded_of_bounded (f n))) N - star_of (Bounded_of_bounded l) ) \<in> Infinitesimal\<close>
-    for N
-    by simp    
-  hence \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda> n. Bounded_of_bounded (f n))) N \<approx> star_of  (Bounded_of_bounded l)\<close>
-    for N
-    by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff)    
-  hence \<open>(\<lambda> n. Bounded_of_bounded (f n)) \<longlonglongrightarrow>\<^sub>N\<^sub>S Bounded_of_bounded l\<close>
-    by (simp add: NSLIMSEQ_I)    
-  thus ?thesis
-    by (simp add: NSLIMSEQ_LIMSEQ)
-qed
-
-instance
-proof
-  show "convergent (X::nat \<Rightarrow> 'a Bounded)"
-    if "Cauchy (X::nat \<Rightarrow> 'a Bounded)"
-    for X :: "nat \<Rightarrow> 'a Bounded"
-  proof-
-    have \<open>Cauchy (\<lambda> n. bounded_of_Bounded (X n))\<close>
-      using that
-      by (simp add: bounded_of_Bounded_Cauchy) 
-    hence \<open>convergent (\<lambda> n. bounded_of_Bounded (X n))\<close>
-      by (simp add: Cauchy_convergent)
-    then obtain l where \<open>(\<lambda> n. bounded_of_Bounded (X n)) \<longlonglongrightarrow> l\<close>
-      unfolding convergent_def by blast
-    hence \<open>(\<lambda> n. Bounded_of_bounded ( (\<lambda> m. bounded_of_Bounded (X m)) n) )
-             \<longlonglongrightarrow> Bounded_of_bounded l\<close>
-      using Bounded_of_bounded_tendsto
-      by (simp add: Bounded_of_bounded_tendsto)
-    moreover have \<open>Bounded_of_bounded ( (\<lambda> m. bounded_of_Bounded (X m)) n) = X n\<close>
-      for n
-      by (simp add: bounded_of_Bounded_inv)      
-    ultimately show ?thesis
-      by (simp add: convergentI) 
-  qed
-qed
-end
-
-instantiation Bounded::(complex_normed_vector) \<open>ring\<close>
-begin 
-
-definition times_Bounded::\<open>'a Bounded \<Rightarrow> 'a Bounded \<Rightarrow> 'a Bounded\<close> where
-  \<open>times_Bounded A B = Bounded_of_bounded ((bounded_of_Bounded A) *\<^sub>o (bounded_of_Bounded B))\<close>
-
-instance
-proof
-  show "(a::'a Bounded) * b * c = a * (b * c)"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-      and c :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv Bounded_Operators.times_Bounded_def timesOp_assoc)
-
-  show "((a::'a Bounded) + b) * c = a * c + b * c"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-      and c :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv plus_Bounded_def timesOp_dist1 times_Bounded_def)
-
-  show "(a::'a Bounded) * (b + c) = a * b + a * c"
-    for a :: "'a Bounded"
-      and b :: "'a Bounded"
-      and c :: "'a Bounded"
-    by (simp add: Bounded_of_bounded_inv plus_Bounded_def timesOp_dist2 times_Bounded_def)
-qed
-end
-
-instantiation Bounded::("{complex_normed_vector, not_singleton}") \<open>ring_1\<close>
-begin
-definition one_Bounded::\<open>'a Bounded\<close> where
-  \<open>one_Bounded = Bounded_of_bounded idOp\<close>
-
-instance
-proof
-  show "(1::'a Bounded) * a = a"
-    for a :: "'a Bounded"
-    unfolding one_Bounded_def times_Bounded_def
-    by (simp add: Bounded_of_bounded_inv bounded_of_Bounded_inj)
-
-  show "(a::'a Bounded) * 1 = a"
-    for a :: "'a Bounded"
-    unfolding one_Bounded_def times_Bounded_def
-    by (simp add: Bounded_of_bounded_inv bounded_of_Bounded_inj)
-
-  show "(0::'a Bounded) \<noteq> 1"
-  proof-
-    have \<open>(0::('a,'a) bounded) \<noteq> idOp\<close>
-    proof-
-      have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-        by simp
-      then obtain x::'a where \<open>x \<noteq> 0\<close>
-        by blast
-      moreover have \<open>times_bounded_vec ((0::('a,'a) bounded)) x = 0\<close>
-        by (simp add: zero_bounded.rep_eq)            
-      moreover have \<open>times_bounded_vec (idOp) x = x\<close>
-        by (simp add: idOp.rep_eq)       
-      ultimately have \<open>times_bounded_vec ((0::('a,'a) bounded)) \<noteq> times_bounded_vec (idOp)\<close>
-        by auto        
-      thus ?thesis using times_bounded_vec_inject
-        by (simp add: times_bounded_vec_inject)
-    qed
-    thus ?thesis
-      unfolding one_Bounded_def zero_Bounded_def
-      using Bounded_of_bounded_inj by blast
-  qed
-qed
-
-end
-
-(* TODO: use same notation ( _* ) as for bounded, and use bundles to disambiguate *)
-definition Adj_Bounded :: "'a::chilbert_space Bounded \<Rightarrow> 'a Bounded"  ("_\<^sup>a\<^sup>d\<^sup>j" [99] 100)  where
-  \<open>Adj_Bounded A = Bounded_of_bounded ( (bounded_of_Bounded A)* )\<close>
-
-lemma Adj_Bounded_times[simp]:
-  \<open>(A * B)\<^sup>a\<^sup>d\<^sup>j = (B\<^sup>a\<^sup>d\<^sup>j) * (A\<^sup>a\<^sup>d\<^sup>j)\<close>
-  unfolding Adj_Bounded_def times_Bounded_def
-  by (simp add: Bounded_of_bounded_inv)
-
-lemma Adj_Bounded_twices[simp]:
-  \<open>(A\<^sup>a\<^sup>d\<^sup>j)\<^sup>a\<^sup>d\<^sup>j = A\<close>
-  unfolding Adj_Bounded_def
-  by (simp add: bounded_of_Bounded_inj Bounded_of_bounded_inv)
-
-lemma Adj_Bounded_scaleC[simp]:
-  \<open>(c *\<^sub>C A)\<^sup>a\<^sup>d\<^sup>j = (cnj c) *\<^sub>C (A\<^sup>a\<^sup>d\<^sup>j)\<close>
-  by (simp add: Adj_Bounded_def Bounded_of_bounded_inv scaleC_Bounded_def)
-
-lemma Adj_Bounded_plus[simp]:
-  \<open>(A + B)\<^sup>a\<^sup>d\<^sup>j = (A\<^sup>a\<^sup>d\<^sup>j) + (B\<^sup>a\<^sup>d\<^sup>j)\<close>
-  unfolding Adj_Bounded_def plus_Bounded_def
-  using Adj_bounded_plus
-  by (simp add: Adj_bounded_plus Bounded_of_bounded_inv)
-
-lemma Adj_Bounded_uminus[simp]:
-  \<open>(- A)\<^sup>a\<^sup>d\<^sup>j = - (A\<^sup>a\<^sup>d\<^sup>j)\<close>
-  by (metis Adj_Bounded_plus add.group_axioms add.left_inverse add_cancel_right_left group.right_cancel)
-
-lemma Adj_Bounded_minus[simp]:
-  \<open>(A - B)\<^sup>a\<^sup>d\<^sup>j = (A\<^sup>a\<^sup>d\<^sup>j) - (B\<^sup>a\<^sup>d\<^sup>j)\<close>
-  by (simp add: additive.diff additive.intro)
-
-lemma Adj_Bounded_zero[simp]:
-  \<open>0\<^sup>a\<^sup>d\<^sup>j = 0\<close>
-  by (metis Adj_Bounded_plus Adj_Bounded_uminus add.right_inverse)
-
-lemma Adj_Bounded_unit[simp]:
-  \<open>1\<^sup>a\<^sup>d\<^sup>j = 1\<close>
-  by (metis (no_types, lifting) Adj_Bounded_times Adj_Bounded_twices Adj_Bounded_uminus add.inverse_inverse mult_minus1_right)
-
 section \<open>Unitary\<close>
 
 definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> bool\<close> where
@@ -1948,9 +1559,6 @@ lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a)
   is \<open>projection\<close>
   by (rule Complex_Inner_Product.projectionPropertiesA)
 
-definition Proj_Bounded :: "('a::chilbert_space) linear_space \<Rightarrow> 'a Bounded" 
-  ("\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o_" [99] 100)  where
-  \<open>Proj_Bounded S = Bounded_of_bounded (Proj S)\<close>
 
 lemma imageOp_Proj[simp]: "(Proj S) *\<^sub>s top = S"
   apply transfer
@@ -1968,75 +1576,11 @@ proof
     by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points subsetI subset_UNIV) 
 qed
 
-lemma projection_D1:
-  fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes \<open>closed_subspace M\<close>
-  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
-proof-
-  have \<open>(projection M) x = ((projection M)\<^sup>\<dagger>) x\<close>
-    for x
-  proof (rule projection_uniq)
-    show \<open>closed_subspace M\<close>
-      by (simp add: assms)
-    show \<open>((projection M)\<^sup>\<dagger>) x \<in> M\<close>
-    proof-
-      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((projection M)\<^sup>\<dagger>) x, y \<rangle> = 0"
-        for y
-      proof-
-        assume \<open>y \<in> orthogonal_complement M\<close>
-        hence \<open>(projection M) y = 0\<close>
-          using  add_cancel_right_right assms  ortho_decomp
-            orthogonal_complement_twice projection_fixed_points
-          by (metis subspace_orthog)
-           
-        hence \<open>\<langle> x, (projection M) y \<rangle> = 0\<close>
-          by simp          
-        thus ?thesis
-          by (simp add: Adj_I assms projectionPropertiesA) 
-      qed
-      hence "((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
-        unfolding orthogonal_complement_def is_orthogonal_def
-        by blast
-      thus ?thesis
-        by (simp add: assms orthogonal_complement_twice) 
-    qed
-    show \<open>x - ((projection M)\<^sup>\<dagger>) x \<in> orthogonal_complement M\<close>
-    proof (rule orthogonal_complement_I2)
-      show "\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = 0"
-        if "y \<in> M"
-        for y :: 'a
-      proof-
-        have \<open>y = projection M y\<close>
-          using that(1)
-          by (simp add: assms projection_fixed_points)
-        hence \<open>y - projection M y = 0\<close>
-          by simp
-        have \<open>\<langle>x - (projection M\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>(projection M\<^sup>\<dagger>) x, y\<rangle>\<close>
-          by (simp add: cinner_diff_left)
-        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, (projection M) y\<rangle>\<close>
-          by (simp add: Adj_I assms projectionPropertiesA)
-        also have \<open>... = \<langle>x, y - (projection M) y\<rangle>\<close>
-          by (simp add: cinner_diff_right)
-        also have \<open>... = \<langle>x, 0\<rangle>\<close>
-          using  \<open>y - projection M y = 0\<close>
-          by simp
-        also have \<open>... = 0\<close>
-          by simp          
-        finally show ?thesis
-          by simp 
-      qed
-    qed
-  qed
-  thus ?thesis by blast 
-qed
 
 lemma Proj_D1: \<open>(Proj M) = (Proj M)*\<close>
   apply transfer
   by (rule projection_D1)
 
-lemma Proj_Bounded_D1[simp]:
-  \<open>(\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<^sup>a\<^sup>d\<^sup>j\<close>
-  by (metis Adj_Bounded_def Proj_D1 Proj_Bounded_def Bounded_of_bounded_inv)
 
 lemma Proj_D2[simp]: \<open>(Proj M) *\<^sub>o (Proj M) = (Proj M)\<close>
 proof-
@@ -2059,16 +1603,8 @@ proof-
     by auto 
 qed
 
-lemma Proj_Bounded_D2[simp]:
-  \<open>(\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) * (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M) = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<close>
-  unfolding Proj_Bounded_def times_Bounded_def
-  by (simp add: Bounded_of_bounded_inv)
-
-(* TODO: Define isProjector as 
-    isProjector P \<longleftrightarrow> \<exists> M. is_projection_on P M
-
-    then prove isProjector P \<longleftrightarrow> P *\<^sub>o P = P \<and> P = P*
-*)
+lift_definition isProjector::\<open>('a::chilbert_space, 'a) bounded \<Rightarrow> bool\<close> is
+  \<open>\<lambda> P. \<exists> M. closed_subspace M \<and> is_projection_on P M\<close>.
 
 lemma Proj_I:
   \<open>P *\<^sub>o P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (times_bounded_vec P)\<close>
@@ -2215,22 +1751,57 @@ proof-
     using \<open>space_as_set M = range (times_bounded_vec P)\<close> by blast 
 qed
 
-lemma Proj_Bounded_I:
-  \<open>P * P = P \<Longrightarrow> P = P\<^sup>a\<^sup>d\<^sup>j \<Longrightarrow> \<exists> M. P = (\<Pi>\<^sub>e\<^sub>n\<^sub>d\<^sub>o M)\<close>
-  using Proj_I
-  unfolding Adj_Bounded_def times_Bounded_def
-  by (metis Proj_Bounded_def Bounded_of_bounded_inv)
+lemma Pro_isProjector:
+  fixes M::\<open>'a::chilbert_space linear_space\<close>
+  shows \<open>isProjector (Proj M)\<close>
+  unfolding isProjector_def
+  apply auto
+proof
+  show "closed_subspace (space_as_set M) \<and> is_projection_on ((*\<^sub>v) (Proj M)) (space_as_set M)"
+  proof
+    show "closed_subspace (space_as_set M)"
+      using space_as_set by blast
+    show "is_projection_on ((*\<^sub>v) (Proj M)) (space_as_set M)"
+      unfolding is_projection_on_def
+      apply auto
+       apply (simp add: Proj.rep_eq \<open>closed_subspace (space_as_set M)\<close> projection_intro1)
+      by (metis Proj.rep_eq \<open>closed_subspace (space_as_set M)\<close> projectionPropertiesE range_eqI)
+  qed
+qed
+
+lemma isProjector_algebraic: 
+  fixes P::\<open>('a::chilbert_space, 'a) bounded\<close>
+  shows \<open>isProjector P \<longleftrightarrow> P *\<^sub>o P = P \<and> P = P*\<close>
+proof
+  show "P *\<^sub>o P = P \<and> P = P*"
+    if "isProjector P"
+  proof
+    show "P *\<^sub>o P = P"
+      using that apply transfer
+      using  projectionPropertiesC'
+      by auto
+    show "P = P*"
+      using that apply transfer
+      using projection_D1'
+      by blast
+  qed
+  show "isProjector P"
+    if "P *\<^sub>o P = P \<and> P = P*"
+    using that Proj_I Pro_isProjector
+    by auto
+qed
+
 
 lemma Proj_leq: "(Proj S) *\<^sub>s A \<le> S"
 proof -
-have "top = sup top A"
-by (meson sup.orderE top_a_linear_space)
+  have "top = sup top A"
+    by (meson sup.orderE top_a_linear_space)
   then have "sup S (Proj S *\<^sub>s A) = S"
     by (metis (full_types) cdot_plus_distrib imageOp_Proj)
   then show ?thesis
     by (meson sup.absorb_iff1)
 qed
-  
+
 
 lemma Proj_times: "isometry A \<Longrightarrow> A *\<^sub>o (Proj S) *\<^sub>o (A*) = Proj (A *\<^sub>s S)" 
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
@@ -2271,8 +1842,6 @@ qed
 
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
-
-
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
   by (metis Complex_Vector_Spaces.span_raw_def Span.abs_eq span_mult)
@@ -2289,7 +1858,7 @@ proof-
          (Abs_linear_space (orthogonal_complement (space_as_set C))))) *\<^sub>s A \<le> B\<close>
     unfolding Proj_def  less_eq_linear_space_def
     by (simp add: uminus_linear_space_def)
-    
+
   hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (space_as_set C))) *\<^sub>s A \<le> B\<close>
     using Proj_def \<open>Proj (- C) *\<^sub>s A \<le> B\<close> map_fun_apply
     by (simp add: Proj_def uminus_linear_space.rep_eq) 
@@ -2503,7 +2072,7 @@ class complete_complemented_lattice = complemented_lattice + complete_lattice
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
 class orthocomplemented_lattice = complemented_lattice +
   assumes ortho_involution: "- (- x) = x"
-  and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
+    and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
 
 (* TODO: move to Missing or similar *)
 class complete_orthocomplemented_lattice = orthocomplemented_lattice + complete_lattice
@@ -2526,7 +2095,7 @@ instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_la
 
 (* TODO: move to Missing or similar *)
 instance boolean_algebra \<subseteq> orthomodular_lattice
-  proof
+proof
   show "inf (x::'a) (- x) = bot"
     for x :: 'a
     by simp    
@@ -2557,7 +2126,7 @@ instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
 
 (* TODO: move to Complex_Inner_Product *)
 instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
-  proof
+proof
   show "inf (x::'a linear_space) (- x) = bot"
     for x :: "'a linear_space"
     apply transfer
@@ -2565,41 +2134,41 @@ instance linear_space :: (chilbert_space) complete_orthomodular_lattice
 
   show "sup (x::'a linear_space) (- x) = top"
     for x :: "'a linear_space"
-proof-
-  have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
-    for x::\<open>'a set\<close>
   proof-
-    assume \<open>closed_subspace x\<close>
-    have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
-      for t
+    have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
+      for x::\<open>'a set\<close>
     proof-
-      have \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
-        using \<open>closed_subspace x\<close> ortho_decomp by blast
-      moreover have \<open>(projection x) t \<in> x\<close>
-        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-      moreover have \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
-        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-      ultimately show ?thesis
-      proof -
-        have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
-          using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
-          subspace_orthog by blast 
-        thus ?thesis
-          using \<open>closed_subspace x\<close> 
-            \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
-            \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
-            is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
-          by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
-      qed 
+      assume \<open>closed_subspace x\<close>
+      have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
+        for t
+      proof-
+        have \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
+          using \<open>closed_subspace x\<close> ortho_decomp by blast
+        moreover have \<open>(projection x) t \<in> x\<close>
+          by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+        moreover have \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
+          by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+        ultimately show ?thesis
+        proof -
+          have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
+            using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
+              subspace_orthog by blast 
+          thus ?thesis
+            using \<open>closed_subspace x\<close> 
+              \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
+              \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
+              is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
+            by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
+        qed 
+      qed
+      thus ?thesis
+        by auto 
     qed
     thus ?thesis
-      by auto 
+      apply transfer
+      using ortho_decomp
+      by blast
   qed
-  thus ?thesis
-  apply transfer
-  using ortho_decomp
-  by blast
-qed
 
 
   show "- (- (x::'a linear_space)) = x"
@@ -2618,56 +2187,56 @@ qed
     for x :: "'a linear_space"
       and y :: "'a linear_space"
     using that apply transfer
-    proof
-  show "(x::'a set) +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
-    if "closed_subspace (x::'a set)"
-      and "closed_subspace (y::'a set)"
-      and "(x::'a set) \<subseteq> y"
-    for x :: "'a set"
-      and y :: "'a set"
-    using that
-    by (simp add: is_closed_subspace_universal_inclusion_inverse) 
+  proof
+    show "(x::'a set) +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
+      if "closed_subspace (x::'a set)"
+        and "closed_subspace (y::'a set)"
+        and "(x::'a set) \<subseteq> y"
+      for x :: "'a set"
+        and y :: "'a set"
+      using that
+      by (simp add: is_closed_subspace_universal_inclusion_inverse) 
 
-  show "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
-    if "closed_subspace (x::'a set)"
-      and "closed_subspace (y::'a set)"
-      and "(x::'a set) \<subseteq> y"
-    for x :: "'a set"
-      and y :: "'a set"   
-  proof-
-    have \<open>u \<in> y \<Longrightarrow> u \<in> x +\<^sub>M ((orthogonal_complement x) \<inter> y)\<close>
-      for u
+    show "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
+      if "closed_subspace (x::'a set)"
+        and "closed_subspace (y::'a set)"
+        and "(x::'a set) \<subseteq> y"
+      for x :: "'a set"
+        and y :: "'a set"   
     proof-
-      assume \<open>u \<in> y\<close>
-      have \<open>(projection x) u \<in> x\<close>
-        by (simp add: projection_intro2 that(1))
-      hence \<open>(projection x) u \<in> y\<close>
-        using that(3) by auto        
-      have \<open>subspace y\<close>
-        by (simp add: Complex_Vector_Spaces.subspace_raw_def closed_subspace.subspace that(2))
-      have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
-        by (simp add: projection_intro1 that(1))
-      moreover have  \<open>u - (projection x) u \<in> y\<close>
-        using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>subspace y\<close>
-        by (simp add: Complex_Vector_Spaces.subspace_raw_def complex_vector.subspace_diff)
-      ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
-        by simp
-      hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
-        by (metis \<open>u - projection x u \<in> orthogonal_complement x \<inter> y\<close> diff_add_cancel ordered_field_class.sign_simps(2))
-      then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
-        by blast
-      hence \<open>u \<in> x +\<^sub>m ((orthogonal_complement x) \<inter> y)\<close>
-        using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
-        unfolding Minkoswki_sum_def
-        by blast
-         
-      thus ?thesis
-        unfolding closed_sum_def
-        using closure_subset by blast 
+      have \<open>u \<in> y \<Longrightarrow> u \<in> x +\<^sub>M ((orthogonal_complement x) \<inter> y)\<close>
+        for u
+      proof-
+        assume \<open>u \<in> y\<close>
+        have \<open>(projection x) u \<in> x\<close>
+          by (simp add: projection_intro2 that(1))
+        hence \<open>(projection x) u \<in> y\<close>
+          using that(3) by auto        
+        have \<open>subspace y\<close>
+          by (simp add: Complex_Vector_Spaces.subspace_raw_def closed_subspace.subspace that(2))
+        have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
+          by (simp add: projection_intro1 that(1))
+        moreover have  \<open>u - (projection x) u \<in> y\<close>
+          using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>subspace y\<close>
+          by (simp add: Complex_Vector_Spaces.subspace_raw_def complex_vector.subspace_diff)
+        ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
+          by simp
+        hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
+          by (metis \<open>u - projection x u \<in> orthogonal_complement x \<inter> y\<close> diff_add_cancel ordered_field_class.sign_simps(2))
+        then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
+          by blast
+        hence \<open>u \<in> x +\<^sub>m ((orthogonal_complement x) \<inter> y)\<close>
+          using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
+          unfolding Minkoswki_sum_def
+          by blast
+
+        thus ?thesis
+          unfolding closed_sum_def
+          using closure_subset by blast 
+      qed
+      thus ?thesis by blast
     qed
-    thus ?thesis by blast
   qed
-qed
 qed
 
 
@@ -2699,22 +2268,36 @@ lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_spac
 lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
   by (simp add: linear_space_ortho_ortho)
 
-definition "isProjector P \<longleftrightarrow> P *\<^sub>o P = P \<and> P* = P"
 
 lemma isProjector_D1: \<open>isProjector P \<Longrightarrow> P *\<^sub>o P = P\<close>
-  unfolding isProjector_def by blast 
+  unfolding isProjector_def
+  apply auto
+  by (metis projectionPropertiesC' timesOp.rep_eq times_bounded_vec_inject)
 
 lemma isProjector_D2: \<open>isProjector P \<Longrightarrow> P* = P\<close>
-  unfolding isProjector_def by blast
+  unfolding isProjector_def
+  by (metis isProjector_algebraic isProjector_def) 
+
 
 lemma isProjector_I: \<open>P *\<^sub>o P = P \<Longrightarrow> P* = P \<Longrightarrow> isProjector P\<close>
-  unfolding isProjector_def by blast 
-
-
-lemma isProjector0[simp]: "isProjector 0"
   unfolding isProjector_def
-  by (metis Adj_bounded_zero Bounded_of_bounded_inv mult_zero_left times_Bounded_def zero_Bounded_def) 
+  by (metis (mono_tags, lifting) isProjector_algebraic isProjector_def) 
 
+lemma isProjector0[simp]: "isProjector ( 0::('a::chilbert_space, 'a) bounded )"
+  unfolding isProjector_def is_projection_on_def
+  apply auto
+proof
+  define M where \<open>M = {(0::'a::chilbert_space)}\<close>
+  show "closed_subspace M \<and> (\<forall>h. (h::'a) - 0 *\<^sub>v h \<in> orthogonal_complement M \<and> 0 *\<^sub>v h \<in> M)"
+    unfolding M_def
+  proof
+    show "closed_subspace {0::'a}"
+      by simp
+
+    show "\<forall>h. (h::'a) - 0 *\<^sub>v h \<in> orthogonal_complement {0} \<and> 0 *\<^sub>v h \<in> {0::'a}"
+      by (simp add: zero_bounded.rep_eq)    
+  qed
+qed
 
 lemma isProjectoridMinus[simp]: "isProjector P \<Longrightarrow> isProjector (idOp-P)"
 proof (rule isProjector_I)
@@ -2722,7 +2305,8 @@ proof (rule isProjector_I)
     if "isProjector P"
   proof -
     have f1: "P *\<^sub>o P = P \<and> P* = P"
-      by (metis isProjector_def that)
+      using isProjector_algebraic that by auto
+
     then have "(idOp - P) *\<^sub>o (idOp - P) = ((idOp - P) *\<^sub>o (idOp - P))*"
       by auto
     then show ?thesis
@@ -2731,7 +2315,7 @@ proof (rule isProjector_I)
   show "(idOp - P)* = idOp - P"
     if "isProjector P"
     using that
-    by (simp add: isProjector_def) 
+    by (simp add: isProjector_algebraic)
 qed
 
 lemma applyOp0[simp]: "times_bounded_vec 0 \<psi> = 0"
@@ -2794,7 +2378,7 @@ proof-
   thus ?thesis 
     apply (auto simp: rel_interior_ball)
     using assms
-     apply (simp add: complex_vector.subspace_0)
+    apply (simp add: complex_vector.subspace_0)
     apply (rule 1)
     by blast
 qed
@@ -2919,8 +2503,8 @@ lemma mult_INF_general[simp]:
     and U :: "('b,'c::chilbert_space) bounded"
     and Uinv :: "('c,'b) bounded" 
   assumes UinvUUinv: "Uinv *\<^sub>o U *\<^sub>o Uinv = Uinv"
-  and UUinvU: "U *\<^sub>o Uinv *\<^sub>o U = U"
-  and V: "\<And>i. V i \<le> Uinv *\<^sub>s top"
+    and UUinvU: "U *\<^sub>o Uinv *\<^sub>o U = U"
+    and V: "\<And>i. V i \<le> Uinv *\<^sub>s top"
   shows "U *\<^sub>s (INF i. V i) = (INF i. U *\<^sub>s V i)"
 proof (rule antisym)
   show "U *\<^sub>s (INF i. V i) \<le> (INF i. U *\<^sub>s V i)"
@@ -2942,7 +2526,7 @@ next
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     then have "(U *\<^sub>o Uinv) *\<^sub>s INFUV = INFUV"
       apply transfer apply auto
-       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
+      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     then show ?thesis
       by (simp add: timesOp_assoc_linear_space)
@@ -2962,7 +2546,7 @@ next
       using less_eq_linear_space.rep_eq that by blast
     then have "(Uinv *\<^sub>o U) *\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
-       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
+      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     thus ?thesis
       unfolding INFV_def
@@ -3014,5 +2598,6 @@ lemma applyOp_scaleC2[simp]: "A *\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A 
 
 
 unbundle no_bounded_notation
+
 
 end

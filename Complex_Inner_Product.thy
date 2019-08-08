@@ -2839,6 +2839,94 @@ proof-
   qed  
 qed
 
+lemma projection_D1':
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_subspace M\<close>
+  shows \<open>\<pi> = (\<pi>)\<^sup>\<dagger>\<close>
+proof-
+  have \<open>\<pi> x = ((\<pi>)\<^sup>\<dagger>) x\<close>
+    for x
+  proof-
+    have "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
+    proof-
+      have "\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = 0"
+        if "y \<in> M"
+        for y :: 'a
+      proof-
+        have \<open>y = \<pi> y\<close>
+          using that(1) assms(1) assms(2) projection_fixed_points' by fastforce          
+        hence \<open>y - \<pi> y = 0\<close>
+          by simp
+        have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
+          by (simp add: cinner_diff_left)
+        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
+          using Adj_I assms(1) assms(2) projectionPropertiesA' by auto          
+        also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
+          by (simp add: cinner_diff_right)
+        also have \<open>... = \<langle>x, 0\<rangle>\<close>
+          using  \<open>y - \<pi> y = 0\<close>
+          by simp
+        also have \<open>... = 0\<close>
+          by simp          
+        finally show ?thesis
+          by simp 
+      qed
+      thus ?thesis
+      proof - (* sledgehammer *)
+        obtain aa :: "'a \<Rightarrow> 'a set \<Rightarrow> 'a" where
+          "\<forall>x0 x1. (\<exists>v2. v2 \<in> x1 \<and> \<langle>x0, v2\<rangle> \<noteq> 0) = (aa x0 x1 \<in> x1 \<and> \<langle>x0, aa x0 x1\<rangle> \<noteq> 0)"
+          by moura
+        then have f1: "\<forall>A a. aa a A \<in> A \<and> \<langle>a, aa a A\<rangle> \<noteq> 0 \<or> a \<in> orthogonal_complement A"
+          by (meson orthogonal_complement_I2)
+        have f2: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
+          by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
+        then have f3: "\<pi> (\<pi> x) = \<pi> x"
+          by (metis \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> projection_fixed_points')
+        { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> 0"
+          { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> \<langle>x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
+            then have "(+) \<langle>\<pi> x - \<pi> (\<pi> x), aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> (+) \<langle>x - \<pi> x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
+              using f3 by (metis (no_types) cinner_diff_left diff_add_cancel)
+            then have "aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M \<notin> M \<or> \<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> = 0"
+              using f2 by (metis \<open>closed_subspace M\<close> orthogonal_complement_D2 orthogonal_complement_twice) }
+          then have ?thesis
+            using f1 by (metis (no_types) \<open>\<And>y. y \<in> M \<Longrightarrow> \<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0\<close>) }
+        then show ?thesis
+          using f1 by metis
+      qed        
+    qed
+    moreover have "(\<pi>\<^sup>\<dagger>) x \<in> M"
+    proof-
+      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((\<pi>)\<^sup>\<dagger>) x, y \<rangle> = 0"
+        for y
+      proof-
+        assume \<open>y \<in> orthogonal_complement M\<close>
+        hence \<open>\<pi> y = 0\<close>
+          by (metis assms(1) assms(2) cinner_zero_left diff_zero orthogonal_complement_I2 orthogonal_complement_twice projection_uniq')           
+        hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
+          by simp
+        thus ?thesis
+          using Adj_I assms projectionPropertiesA'
+          by fastforce 
+      qed
+      hence "((\<pi>)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
+        unfolding orthogonal_complement_def is_orthogonal_def
+        by simp        
+      thus ?thesis
+        by (simp add: assms orthogonal_complement_twice) 
+    qed
+    ultimately show ?thesis
+      by (metis assms(1) assms(2) is_projection_on_def projection_fixed_points projection_uniq) 
+  qed
+  thus ?thesis by blast
+qed
+
+
+lemma projection_D1:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>closed_subspace M\<close>
+  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
+  using projection_D1' assms is_projection_on_def projection_intro1 projection_intro2 by fastforce
+
 
 lemma closed_subspace_closure:
   fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
