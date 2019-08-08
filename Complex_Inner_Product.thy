@@ -2904,11 +2904,36 @@ qed
 instance..
 end
 
-
-class not_singleton = assumes not_singleton_card: "CARD('a) \<noteq> 1"
+class not_singleton =
+  assumes not_singleton_card: "\<exists> x::'a. \<exists> y::'a. x \<noteq> y"
 
 subclass (in card2) not_singleton
-  apply standard using two_le_card by auto
+  apply standard using two_le_card
+  by (meson card_2_exists ex_card) 
+
+lemma not_singleton_existence[simp]:
+\<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
+  proof (rule classical)
+  show "\<exists>x. (x::'a) \<noteq> t"
+    if "\<nexists>x. (x::'a) \<noteq> t"
+  proof-
+    have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+      using not_singleton_card
+      by blast
+    then obtain x y::'a where \<open>x \<noteq> y\<close>
+      by blast
+    have \<open>\<forall> x::'a. x = t\<close>
+      using that by simp
+    hence \<open>x = t\<close>
+      by blast
+    moreover have \<open>y = t\<close>
+      using \<open>\<forall> x::'a. x = t\<close>
+      by blast
+    ultimately have \<open>x = y\<close>
+      by simp
+    thus ?thesis using \<open>x \<noteq> y\<close> by blast
+  qed
+qed
 
 
 instantiation linear_space :: ("{complex_vector,topological_space}") inf begin 
@@ -2924,13 +2949,15 @@ instance .. end
 
 
 lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-proof transfer 
-  have "card {0} \<noteq> CARD('a)"
-    using not_singleton_card by auto
-  thus "{(0::'a)} \<noteq> (UNIV::'a set)"
-      by (metis \<open>card {0} \<noteq> CARD('a)\<close> )    
+proof-
+  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+    using not_singleton_existence
+    by auto
+  thus ?thesis 
+  apply transfer
+    unfolding UNIV_def
+    by blast
 qed
-
 
 instantiation linear_space :: ("{complex_vector,topological_space}") order_top begin
 instance apply intro_classes

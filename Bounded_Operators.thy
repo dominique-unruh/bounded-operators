@@ -1365,12 +1365,6 @@ proof-
 qed
 
 
-(* TODO: remove (this is the same as equal_span_0) *)
-lemma equal_span0:
-  fixes A :: "'a::cbanach \<Rightarrow> 'b::cbanach"
-  assumes \<open>clinear A\<close> and \<open>\<And>x. x \<in> G \<Longrightarrow> A x = 0\<close> and \<open>t \<in> (complex_vector.span G)\<close>
-  shows \<open>A t = 0\<close>
-  using assms(1) assms(2) assms(3) complex_vector.linear_eq_0_on_span by auto
 
 lemma equal_span:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
@@ -1481,7 +1475,6 @@ lemma applyOpSpace_eq:
 section \<open>Endomorphism algebra\<close>
 
 (* https://en.wikipedia.org/wiki/Endomorphism_ring  *)
-(* TODO Rename: Bounded \<rightarrow> Bounded *)
 typedef (overloaded) ('a::complex_normed_vector) Bounded 
   = \<open>{f :: 'a\<Rightarrow>'a. bounded_clinear f}\<close>
   (* = \<open>UNIV::('a,'a) bounded set\<close> *)
@@ -1785,8 +1778,7 @@ proof
 qed
 end
 
-(* TODO replace perfect_space by the simpler not_singleton *)
-instantiation Bounded::("{complex_normed_vector, perfect_space}") \<open>ring_1\<close>
+instantiation Bounded::("{complex_normed_vector, not_singleton}") \<open>ring_1\<close>
 begin
 definition one_Bounded::\<open>'a Bounded\<close> where
   \<open>one_Bounded = Bounded_of_bounded idOp\<close>
@@ -1808,8 +1800,7 @@ proof
     have \<open>(0::('a,'a) bounded) \<noteq> idOp\<close>
     proof-
       have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-        using UNIV_not_singleton
-        by auto
+        by simp
       then obtain x::'a where \<open>x \<noteq> 0\<close>
         by blast
       moreover have \<open>times_bounded_vec ((0::('a,'a) bounded)) x = 0\<close>
