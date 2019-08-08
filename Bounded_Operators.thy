@@ -1333,7 +1333,7 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
 
  *)
 
-lemma mult_inf_distrib:
+lemma mult_inf_distrib':
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   shows "U *\<^sub>s (inf B  C) \<le> inf (U *\<^sub>s B) (U *\<^sub>s C)"
 proof-
@@ -2924,11 +2924,12 @@ qed
 
 
 lemma mult_INF_general[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+    and U :: "('b,'c::chilbert_space) bounded"
     and Uinv :: "('c,'b) bounded" 
   assumes UinvUUinv: "Uinv *\<^sub>o U *\<^sub>o Uinv = Uinv"
-  assumes UUinvU: "U *\<^sub>o Uinv *\<^sub>o U = U"
-  assumes V: "\<And>i. V i \<le> Uinv *\<^sub>s top"
+  and UUinvU: "U *\<^sub>o Uinv *\<^sub>o U = U"
+  and V: "\<And>i. V i \<le> Uinv *\<^sub>s top"
   shows "U *\<^sub>s (INF i. V i) = (INF i. U *\<^sub>s V i)"
 proof (rule antisym)
   show "U *\<^sub>s (INF i. V i) \<le> (INF i. U *\<^sub>s V i)"
@@ -3003,9 +3004,9 @@ lemma leq_INF[simp]:
 lemma times_applyOp: "(A *\<^sub>o B) *\<^sub>v \<psi> = A *\<^sub>v (B *\<^sub>v \<psi>)"
   apply transfer by simp
 
-(* TODO: this one should probably be called mult_inf_distrib, and the above one renamed *)
-lemma mult_inf_distrib'[simp]:
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
+lemma mult_inf_distrib[simp]:
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+    and B C::"'a linear_space"
   assumes "isometry U"
   shows "U *\<^sub>s (inf B C) = inf (U *\<^sub>s B) (U *\<^sub>s C)"
   using mult_INF[where V="\<lambda>b. if b then B else C" and U=U]
