@@ -1788,8 +1788,8 @@ proof standard
     apply transfer
     thm one_neq_zero
     by (meson one_neq_zero)
-  thus "CARD('a ell2) \<noteq> 1"
-    by (metis (full_types) UNIV_I card_1_singletonE singletonD the_elem_eq)
+  thus \<open>\<exists>x y::'a ell2. x \<noteq> y\<close>
+    by blast    
 qed
 
 
