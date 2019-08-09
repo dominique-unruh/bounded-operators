@@ -2974,9 +2974,15 @@ instantiation linear_space :: (complex_normed_vector) sup begin
 lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
   is "\<lambda>A B::'a set. A +\<^sub>M B"
   by (simp add: subspace_closed_plus) 
-  
-instance .. end
+instance .. 
+end
 
+instantiation linear_space :: (chilbert_space) minus begin
+lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space"
+  is "\<lambda> A B. ( A \<inter> (orthogonal_complement B) )"
+  by simp
+instance..
+end
 
 lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
 proof-
@@ -3344,8 +3350,13 @@ proof
       thus ?thesis by blast
     qed
   qed
-qed
 
+  show "(x - y) = (inf x (- y))"
+    for x :: "'a linear_space"
+      and y :: "'a linear_space"
+    apply transfer
+    by simp
+qed
 (* TODO: 
 Dominique: move to Complex_Vector_Spaces
 Jose: Do you meant Complex_Inner_Product? The function "-"
@@ -3361,7 +3372,6 @@ lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_spac
 
 lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
   by (simp add: linear_space_ortho_ortho)
-
 
 
 end

@@ -1,5 +1,5 @@
 theory Lattice_Missing
-  imports HOL.Lattices HOL.Complete_Lattices
+  imports Complex_Main  HOL.Lattices HOL.Complete_Lattices
 
 begin
 
@@ -7,7 +7,8 @@ begin
    and using the conventions from the definition of @{class boolean_algebra} *)
 class complemented_lattice = bounded_lattice + uminus + minus + 
   assumes inf_compl_bot: "inf x (-x) = bot"
-    and sup_compl_top: "sup x (-x) = top"
+    and sup_compl_top: "sup x  (-x) = top"
+    and diff_eq:  "x - y = inf x (- y)"
 
 class complete_complemented_lattice = complemented_lattice + complete_lattice 
 
@@ -29,6 +30,7 @@ class complete_orthomodular_lattice = orthomodular_lattice + complete_lattice
 
 instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_lattice
   by intro_classes
+
 
 instance boolean_algebra \<subseteq> orthomodular_lattice
 proof
@@ -53,6 +55,11 @@ proof
       and y :: 'a
     using that
     by (simp add: sup.absorb_iff2 sup_inf_distrib1) 
+
+  show "x - y = inf x (- y)"
+    for x :: 'a
+      and y :: 'a
+    by (simp add: boolean_algebra_class.diff_eq)
 qed
 
 

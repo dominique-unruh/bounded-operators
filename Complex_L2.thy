@@ -2457,7 +2457,7 @@ qed
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
       (classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
-  by (cheat TODO)
+  by (cheat classical_operator_basis)
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
