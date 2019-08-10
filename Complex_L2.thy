@@ -2467,6 +2467,7 @@ proof
       for b1 :: "'a ell2"
         and b2 :: "'a ell2"
       sorry
+
     show "Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (r *\<^sub>C b) x) = r *\<^sub>C Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b x)"
       for r :: complex
         and b :: "'a ell2"
@@ -2479,9 +2480,88 @@ qed
 lemma classical_operator_identity_1:
 \<open>Abs_bounded (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
-= Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
-  sorry
+proof-
+  have \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+         | Some i \<Rightarrow>
+             Rep_ell2 ((Abs_ell2 \<circ> (\<lambda>x y. if x = y then 1 else 0)) x) i) j =
+    (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0)\<close>
+    for j
+  proof-
+    have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+         | Some i \<Rightarrow>
+             Rep_ell2 ((Abs_ell2 \<circ> (\<lambda>x y. if x = y then 1 else 0)) x) i) =
+    (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0)\<close>
+    proof(induction \<open>inv_option \<pi> j\<close>)
+      case None
+      thus ?case
+        by auto 
+    next
+      case (Some p)
+      thus ?case
+        by (metis comp_apply ket.abs_eq ket.rep_eq) 
+    qed
+
+    thus ?thesis
+      by simp 
+  qed
+  hence \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+         | Some i \<Rightarrow>
+             Rep_ell2 ((Abs_ell2 \<circ> (\<lambda>x y. if x = y then 1 else 0)) x) i) =
+    (\<lambda>j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0)\<close>
+    by simp    
+  hence \<open>(\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 (ket x)) i) = 
+       (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+    unfolding ket_def map_fun_def id_def
+    by (metis comp_apply)    
+  hence \<open>Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 (ket x)) i) = 
+      Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+    using Abs_ell2_inject
+    by simp
+  moreover have \<open>(*\<^sub>v)  (Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))) = 
+              (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
+      proof-
+        have \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
+          using bounded_clinear_Abs_ell2_option by blast
+        thus ?thesis
+          using Abs_bounded_inverse
+          by blast
+      qed        
+   ultimately have \<open>(Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i)) *\<^sub>v ket x)
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+     by simp     
+    moreover have \<open>Abs_ell2 \<circ> (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
+      Rep_ell2 = (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
+      proof-
+        have \<open>(\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
+      Rep_ell2 = (\<lambda>\<phi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i)\<close>
+          by auto
+        thus ?thesis
+          by auto
+      qed
+  ultimately have \<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
+      Rep_ell2) *\<^sub>v ket x
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+    by simp
+  hence \<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+    by simp  
+  thus ?thesis by blast
+qed
 
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
       (classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
