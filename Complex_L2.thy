@@ -2196,7 +2196,6 @@ lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 
      apply (simp add: scaleC_left.add)
     apply transfer
 proof
-
   show "(case inv_option S (b::'b) of None \<Rightarrow> 0::complex | Some (a::'a) \<Rightarrow> b1 a + b2 a) = (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b1 x) + (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b2 x)"
     if "has_ell2_norm (b1::'a \<Rightarrow> complex)"
       and "has_ell2_norm (b2::'a \<Rightarrow> complex)"
@@ -2455,9 +2454,213 @@ proof
 qed
 
 
+lemma bounded_clinear_Abs_ell2_option:
+  \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
+proof
+  show "clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 \<phi> i))"
+    unfolding clinear_def
+  proof
+    show "Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (b1 + b2) x) 
+  =  Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b1 x)
+   + Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b2 x)"
+      for b1 :: "'a ell2"
+        and b2 :: "'a ell2"
+      sorry
+    show "Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (r *\<^sub>C b) x) = r *\<^sub>C Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b x)"
+      for r :: complex
+        and b :: "'a ell2"
+      sorry
+  qed
+  show "\<exists>K. \<forall>x. norm (Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 x i)) \<le> norm x * K"
+    sorry
+qed
+
+lemma classical_operator_identity_1:
+\<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
+= Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+  sorry
+
 lemma classical_operator_basis: "inj_option \<pi> \<Longrightarrow>
-      (classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some y \<Rightarrow> ket y | None \<Rightarrow> 0)"
-  by (cheat classical_operator_basis)
+      (classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+proof-
+  assume \<open>inj_option \<pi>\<close>
+  show \<open>(classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)\<close>
+  proof(induction \<open>\<pi> x\<close>)
+    case None
+      have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) = 0\<close>
+        for j
+      proof(induction \<open>inv_option \<pi> j\<close>)
+        case None
+        thus ?case
+          by simp 
+      next
+        case (Some y)
+        hence \<open>\<pi> y = Some j\<close>
+          unfolding inv_option_def inv_def
+          apply auto
+          by (metis Some.hyps f_inv_into_f inv_option_def option.discI option.sel)
+        hence \<open>x \<noteq> y\<close>
+          using \<open>inj_option \<pi>\<close> None.hyps by auto
+        thus ?case
+          by (metis (mono_tags, lifting) Some.hyps option.simps(5)) 
+      qed
+      hence \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> Rep_ell2 ((Abs_ell2  (\<lambda>y. if x = y then 1 else 0) )) i) = 0\<close>
+        for j
+      proof-
+        have \<open>has_ell2_norm (\<lambda>y. if x = y then 1 else 0)\<close>
+        proof-
+          have \<open>Rep_ell2 (ket x) = (\<lambda>y. if x = y then 1 else 0)\<close>
+            apply transfer by blast
+          moreover have \<open>has_ell2_norm (Rep_ell2 (ket x))\<close>
+            using Rep_ell2
+            by auto
+          ultimately show ?thesis by simp
+        qed
+        thus ?thesis 
+          using Abs_ell2_inverse
+          by (metis \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close> mem_Collect_eq)          
+      qed
+    hence \<open>(\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) j = 0\<close>
+      for j
+      by (simp add: \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close>)
+    hence \<open>Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) = Abs_ell2 (\<lambda> _. 0)\<close>
+      by (simp add: \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close>)
+    hence \<open>Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) = 0\<close>
+      by (simp add: zero_ell2.abs_eq)      
+    moreover have \<open>(classical_operator \<pi>) *\<^sub>v (ket x) = 0\<close>
+    proof-
+      have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) = 0\<close>
+        for j
+      proof(induction \<open>inv_option \<pi> j\<close>)
+        case None
+        thus ?case
+          by simp 
+      next
+        case (Some y)
+        hence \<open>\<pi> y = Some j\<close>
+          unfolding inv_option_def inv_def
+          apply auto
+          by (metis Some.hyps f_inv_into_f inv_option_def option.discI option.sel)
+        hence \<open>x \<noteq> y\<close>
+          using \<open>inj_option \<pi>\<close> None.hyps by auto
+        thus ?case
+          by (metis (mono_tags, lifting) Some.hyps option.simps(5)) 
+      qed
+      moreover have \<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
+    = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+        by (simp add: classical_operator_identity_1)        
+      ultimately have \<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
+        = 0\<close>
+        using \<open>Abs_ell2 (\<lambda>j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close> by auto      
+      thus ?thesis unfolding map_fun_def classical_operator_def classical_operator'_def
+        by auto
+    qed
+    ultimately show ?case
+      using None.hyps by auto 
+  next
+    case (Some t)
+    have \<open>\<pi> x = Some t\<close>
+      by (simp add: Some.hyps)
+    hence \<open>(case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0) = ket t\<close>
+      by (metis option.simps(5))
+    moreover have \<open>(classical_operator \<pi>) *\<^sub>v (ket x) = ket t\<close>
+    proof-
+      have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (if x = i then 1 else 0))
+    = (if t = j then 1 else 0)\<close>
+        for j
+      proof(induction \<open>inv_option \<pi> j\<close>)
+        case None
+        hence \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (if x = i then 1 else 0)) = 0\<close>
+          by simp
+        moreover have \<open>(if t = j then 1 else 0) = 0\<close>
+        proof-
+          have \<open>inv_option \<pi> j = None\<close>
+            using None.hyps by auto
+          have \<open>t \<noteq> j\<close>
+          proof (rule classical)
+            show "t \<noteq> j"
+              if "\<not> t \<noteq> j"
+            proof-
+              have \<open>t = j\<close>
+                using that by blast
+              hence \<open>\<pi> x = Some j\<close>
+                using \<open>\<pi> x = Some t\<close>
+                by blast
+              hence \<open>inv_option \<pi> j = Some x\<close>
+                by (metis None.hyps UNIV_I image_iff inv_option_def is_none_code(2) is_none_simps(1))                
+             hence \<open>None = Some x\<close>
+               using \<open>inv_option \<pi> j = None\<close>
+               by simp
+             thus ?thesis by blast
+            qed
+          qed
+          thus ?thesis by simp
+        qed
+        ultimately show ?case by auto
+      next
+        case (Some p)
+        hence \<open>\<pi> p = Some j\<close>
+          unfolding inv_option_def
+          by (metis f_inv_into_f option.discI option.inject)
+        thus ?case
+        proof(cases \<open>t = j\<close>)
+          case True
+          have \<open>x = p\<close>
+            using \<open>\<pi> x = Some t\<close>  \<open>\<pi> p = Some j\<close> \<open>inj_option \<pi>\<close>
+            by (simp add: True inj_option_def)            
+          thus ?thesis
+            by (metis (mono_tags, lifting) Some.hyps True option.simps(5)) 
+        next
+          case False
+          thus ?thesis
+            by (metis (mono_tags, lifting) Some.hyps \<open>\<pi> p = Some j\<close> \<open>\<pi> x = Some t\<close> option.inject option.simps(5)) 
+        qed
+      qed
+      hence \<open>(\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) j
+    = (\<lambda>y. if t = y then 1 else 0) j\<close>
+        for j
+        by (simp add: \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = (if t = j then 1 else 0)\<close>)        
+      hence \<open>(\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)
+    = (\<lambda>y. if t = y then 1 else 0)\<close>
+        by blast
+      hence \<open>Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)
+    = Abs_ell2 (\<lambda>y. if t = y then 1 else 0)\<close>
+        using Abs_ell2_inject
+        by (simp add: \<open>(\<lambda>j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = (\<lambda>y. if t = y then 1 else 0)\<close>)        
+      moreover have \<open>Abs_bounded (Abs_ell2 \<circ>
+      (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
+     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+        by (simp add: classical_operator_identity_1)        
+      ultimately have \<open>Abs_bounded 
+    (Abs_ell2 \<circ> (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v
+    Abs_ell2 (\<lambda>y. if x = y then 1 else 0) =
+    Abs_ell2 (\<lambda>y. if t = y then 1 else 0)\<close>
+        by (simp add: ket.abs_eq)        
+      thus ?thesis 
+        unfolding classical_operator_def classical_operator'_def ket_def map_fun_def id_def
+        by auto
+    qed
+    ultimately show ?case by simp
+  qed
+qed
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
