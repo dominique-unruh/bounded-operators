@@ -2461,14 +2461,14 @@ proof
   show "clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 \<phi> i))"
     unfolding clinear_def
   proof
-    show "Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (b1 + b2) x) 
-  =  Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b1 x)
-   + Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b2 x)"
+    show "Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (b1 + b2) x)
+     = Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b1 x)
+     + Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b2 x)"
       for b1 :: "'a ell2"
         and b2 :: "'a ell2"
       sorry
-
-    show "Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (r *\<^sub>C b) x) = r *\<^sub>C Abs_ell2 (\<lambda>ba. case inv_option \<pi> ba of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b x)"
+    show "Abs_ell2 (\<lambda>c. case inv_option \<pi> c of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (r *\<^sub>C b) x) 
+      = r *\<^sub>C Abs_ell2 (\<lambda>c. case inv_option \<pi> c of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b x)"
       for r :: complex
         and b :: "'a ell2"
       sorry
@@ -2476,6 +2476,7 @@ proof
   show "\<exists>K. \<forall>x. norm (Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 x i)) \<le> norm x * K"
     sorry
 qed
+
 
 lemma classical_operator_identity_1:
 \<open>Abs_bounded (Abs_ell2 \<circ>
