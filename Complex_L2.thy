@@ -2182,8 +2182,8 @@ proof-
   qed
 qed
 
-lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" is
-  "classical_operator'"
+lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" 
+is "classical_operator'"
   unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
   apply auto
      apply (simp add: complex_vector.vector_space_axioms)
@@ -2196,7 +2196,9 @@ lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 
      apply (simp add: scaleC_left.add)
     apply transfer
 proof
-  show "(case inv_option S (b::'b) of None \<Rightarrow> 0::complex | Some (a::'a) \<Rightarrow> b1 a + b2 a) = (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b1 x) + (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b2 x)"
+  show "(case inv_option S (b::'b) of None \<Rightarrow> 0::complex | Some (a::'a) \<Rightarrow> b1 a + b2 a)
+   = (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b1 x)
+   + (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b2 x)"
     if "has_ell2_norm (b1::'a \<Rightarrow> complex)"
       and "has_ell2_norm (b2::'a \<Rightarrow> complex)"
     for S :: "'a \<Rightarrow> 'b option"
@@ -2453,36 +2455,24 @@ proof
   qed
 qed
 
-
 lemma bounded_clinear_Abs_ell2_option:
-  \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+  \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
-proof
-  show "clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 \<phi> i))"
-    unfolding clinear_def
-  proof
-    show "Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (b1 + b2) x)
-     = Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b1 x)
-     + Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b2 x)"
-      for b1 :: "'a ell2"
-        and b2 :: "'a ell2"
-      sorry
-    show "Abs_ell2 (\<lambda>c. case inv_option \<pi> c of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 (r *\<^sub>C b) x) 
-      = r *\<^sub>C Abs_ell2 (\<lambda>c. case inv_option \<pi> c of None \<Rightarrow> 0 | Some x \<Rightarrow> Rep_ell2 b x)"
-      for r :: complex
-        and b :: "'a ell2"
-      sorry
-  qed
-  show "\<exists>K. \<forall>x. norm (Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> Rep_ell2 x i)) \<le> norm x * K"
-    sorry
+proof-
+  have \<open>classical_operator' \<pi> = 
+      (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b
+              of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
+    unfolding classical_operator'_def map_fun_def
+    by auto
+  moreover have \<open>bounded_clinear (classical_operator' \<pi>)\<close>
+    by (metis classical_operator.rep_eq mem_Collect_eq times_bounded_vec)
+  ultimately show ?thesis by auto
 qed
-
 
 lemma classical_operator_identity_1:
 \<open>Abs_bounded (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
-  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
-     | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
+  = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
 proof-
   have \<open>(\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
          | Some i \<Rightarrow>
@@ -2746,7 +2736,7 @@ qed
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
   for \<pi> :: "'a \<Rightarrow> 'b option"
-  by (cheat TODO1)
+  by (cheat TODO)
 
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
