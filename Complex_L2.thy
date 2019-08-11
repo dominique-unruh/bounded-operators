@@ -2076,114 +2076,120 @@ lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\
 
 section \<open>Classical operators\<close>
 
+lemma has_ell2_norm_classical_operator':
+  \<open>has_ell2_norm \<psi> \<Longrightarrow>
+        has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close>
+proof-
+  assume \<open>has_ell2_norm \<psi>\<close>
+  hence \<open>bdd_above (sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) ` Collect finite)\<close>
+    unfolding has_ell2_norm_def
+    by blast
+  hence \<open>\<exists> M. \<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+    by (simp add: bdd_above_def)
+  then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+    by blast
+  define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
+    \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+  have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
+    for R::\<open>'b set\<close>
+  proof-
+    assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+    from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+    have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+      unfolding \<phi>_def
+      by (metis option.case_eq_if option.collapse)
+    hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+      by metis
+    then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+      by blast
+    define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
+    have \<open>finite S\<close>
+      using \<open>finite R\<close>
+      by (simp add: S_def)
+    moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
+    proof-
+      have \<open>inj_on f R\<close>
+      proof(rule inj_onI)
+        fix x y :: 'b
+        assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
+        from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+        have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
+          by (metis inv_option_def option.distinct(1))
+        hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
+          by blast
+        hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
+          by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+        have \<open>\<pi> (f x) = Some x\<close>
+          using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
+        moreover have \<open>\<pi> (f y) = Some y\<close>
+          using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
+        ultimately have \<open>Some x = Some y\<close>
+          using \<open>f x = f y\<close> by metis
+        thus \<open>x = y\<close> by simp
+      qed
+      moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
+        for i
+      proof-
+        assume \<open>i \<in> R\<close>
+        hence \<open>\<phi> i = \<psi> (f i)\<close>
+          unfolding \<phi>_def
+          by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+        thus ?thesis
+          by simp 
+      qed
+      ultimately show ?thesis unfolding S_def
+        by (metis (mono_tags, lifting) sum.reindex_cong)
+    qed
+    ultimately show ?thesis
+      by (simp add: \<open>\<And>S. finite S \<Longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> M\<close>) 
+  qed     
+  have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> M\<close>
+    for R::\<open>'b set\<close>
+  proof-
+    assume \<open>finite R\<close>
+    define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
+    define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
+    have \<open>U \<inter> V = {}\<close>
+      unfolding U_def V_def by blast
+    moreover have \<open>U \<union> V = R\<close>
+      unfolding U_def V_def by blast
+    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
+            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
+      using \<open>finite R\<close> sum.union_disjoint by auto
+    moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
+      unfolding V_def by auto
+    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+      by simp
+    moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
+      by (simp add: U_def)
+    moreover have \<open>finite U\<close>
+      unfolding U_def using \<open>finite R\<close>
+      by simp
+    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le> M\<close>
+      using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close> by blast        
+    thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+      by simp
+  qed
+  hence  \<open>bdd_above (sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) ` Collect finite)\<close>
+    unfolding bdd_above_def
+    by blast
+  thus ?thesis
+    using \<open>\<phi> \<equiv> \<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x\<close> has_ell2_norm_def by blast 
+qed
+
+lemma has_ell2_norm_classical_operator:
+  \<open>has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u)\<close>
+  using has_ell2_norm_classical_operator'
+  using Rep_ell2 by blast
+
 lift_definition classical_operator':: 
   "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
   is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
-proof-
-  show \<open>has_ell2_norm \<psi> \<Longrightarrow>
-        has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close>
-    for \<pi>::\<open>'a \<Rightarrow> 'b option\<close> and \<psi>::\<open>'a \<Rightarrow> complex\<close>
-  proof-
-    assume \<open>has_ell2_norm \<psi>\<close>
-    hence \<open>bdd_above (sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) ` Collect finite)\<close>
-      unfolding has_ell2_norm_def
-      by blast
-    hence \<open>\<exists> M. \<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
-      by (simp add: bdd_above_def)
-    then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
-      by blast
-    define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
-      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
-    have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
-      for R::\<open>'b set\<close>
-    proof-
-      assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-      from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
-        unfolding \<phi>_def
-        by (metis option.case_eq_if option.collapse)
-      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
-        by metis
-      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
-        by blast
-      define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
-      have \<open>finite S\<close>
-        using \<open>finite R\<close>
-        by (simp add: S_def)
-      moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
-      proof-
-        have \<open>inj_on f R\<close>
-        proof(rule inj_onI)
-          fix x y :: 'b
-          assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
-          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
-          have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
-            by (metis inv_option_def option.distinct(1))
-          hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
-            by blast
-          hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
-          have \<open>\<pi> (f x) = Some x\<close>
-            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
-          moreover have \<open>\<pi> (f y) = Some y\<close>
-            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
-          ultimately have \<open>Some x = Some y\<close>
-            using \<open>f x = f y\<close> by metis
-          thus \<open>x = y\<close> by simp
-        qed
-        moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
-          for i
-        proof-
-          assume \<open>i \<in> R\<close>
-          hence \<open>\<phi> i = \<psi> (f i)\<close>
-            unfolding \<phi>_def
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
-          thus ?thesis
-            by simp 
-        qed
-        ultimately show ?thesis unfolding S_def
-          by (metis (mono_tags, lifting) sum.reindex_cong)
-      qed
-      ultimately show ?thesis
-        by (simp add: \<open>\<And>S. finite S \<Longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> M\<close>) 
-    qed     
-    have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> M\<close>
-      for R::\<open>'b set\<close>
-    proof-
-      assume \<open>finite R\<close>
-      define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
-      define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
-      have \<open>U \<inter> V = {}\<close>
-        unfolding U_def V_def by blast
-      moreover have \<open>U \<union> V = R\<close>
-        unfolding U_def V_def by blast
-      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
-            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
-        using \<open>finite R\<close> sum.union_disjoint by auto
-      moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
-        unfolding V_def by auto
-      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
-        by simp
-      moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
-        by (simp add: U_def)
-      moreover have \<open>finite U\<close>
-        unfolding U_def using \<open>finite R\<close>
-        by simp
-      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le> M\<close>
-        using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close> by blast        
-      thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
-        by simp
-    qed
-    hence  \<open>bdd_above (sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) ` Collect finite)\<close>
-      unfolding bdd_above_def
-      by blast
-    thus ?thesis
-      using \<open>\<phi> \<equiv> \<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x\<close> has_ell2_norm_def by blast 
-  qed
-qed
+  by (simp add: has_ell2_norm_classical_operator')
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" 
-is "classical_operator'"
+  is "classical_operator'"
   unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
   apply auto
      apply (simp add: complex_vector.vector_space_axioms)
@@ -2470,7 +2476,7 @@ proof-
 qed
 
 lemma classical_operator_identity_1:
-\<open>Abs_bounded (Abs_ell2 \<circ>
+  \<open>Abs_bounded (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
 proof-
@@ -2518,28 +2524,28 @@ proof-
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))) = 
               (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
-      proof-
-        have \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+  proof-
+    have \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
-          using bounded_clinear_Abs_ell2_option by blast
-        thus ?thesis
-          using Abs_bounded_inverse
-          by blast
-      qed        
-   ultimately have \<open>(Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+      using bounded_clinear_Abs_ell2_option by blast
+    thus ?thesis
+      using Abs_bounded_inverse
+      by blast
+  qed        
+  ultimately have \<open>(Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i)) *\<^sub>v ket x)
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
-     by simp     
-    moreover have \<open>Abs_ell2 \<circ> (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
+    by simp     
+  moreover have \<open>Abs_ell2 \<circ> (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
       Rep_ell2 = (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
-      proof-
-        have \<open>(\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
+  proof-
+    have \<open>(\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
       Rep_ell2 = (\<lambda>\<phi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i)\<close>
-          by auto
-        thus ?thesis
-          by auto
-      qed
+      by auto
+    thus ?thesis
+      by auto
+  qed
   ultimately have \<open>Abs_bounded (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
       Rep_ell2) *\<^sub>v ket x
@@ -2561,41 +2567,41 @@ proof-
   show \<open>(classical_operator \<pi>) *\<^sub>v (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)\<close>
   proof(induction \<open>\<pi> x\<close>)
     case None
-      have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+    have \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) = 0\<close>
-        for j
-      proof(induction \<open>inv_option \<pi> j\<close>)
-        case None
-        thus ?case
-          by simp 
-      next
-        case (Some y)
-        hence \<open>\<pi> y = Some j\<close>
-          unfolding inv_option_def inv_def
-          apply auto
-          by (metis Some.hyps f_inv_into_f inv_option_def option.discI option.sel)
-        hence \<open>x \<noteq> y\<close>
-          using \<open>inj_option \<pi>\<close> None.hyps by auto
-        thus ?case
-          by (metis (mono_tags, lifting) Some.hyps option.simps(5)) 
-      qed
-      hence \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
+      for j
+    proof(induction \<open>inv_option \<pi> j\<close>)
+      case None
+      thus ?case
+        by simp 
+    next
+      case (Some y)
+      hence \<open>\<pi> y = Some j\<close>
+        unfolding inv_option_def inv_def
+        apply auto
+        by (metis Some.hyps f_inv_into_f inv_option_def option.discI option.sel)
+      hence \<open>x \<noteq> y\<close>
+        using \<open>inj_option \<pi>\<close> None.hyps by auto
+      thus ?case
+        by (metis (mono_tags, lifting) Some.hyps option.simps(5)) 
+    qed
+    hence \<open>(case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> Rep_ell2 ((Abs_ell2  (\<lambda>y. if x = y then 1 else 0) )) i) = 0\<close>
-        for j
+      for j
+    proof-
+      have \<open>has_ell2_norm (\<lambda>y. if x = y then 1 else 0)\<close>
       proof-
-        have \<open>has_ell2_norm (\<lambda>y. if x = y then 1 else 0)\<close>
-        proof-
-          have \<open>Rep_ell2 (ket x) = (\<lambda>y. if x = y then 1 else 0)\<close>
-            apply transfer by blast
-          moreover have \<open>has_ell2_norm (Rep_ell2 (ket x))\<close>
-            using Rep_ell2
-            by auto
-          ultimately show ?thesis by simp
-        qed
-        thus ?thesis 
-          using Abs_ell2_inverse
-          by (metis \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close> mem_Collect_eq)          
+        have \<open>Rep_ell2 (ket x) = (\<lambda>y. if x = y then 1 else 0)\<close>
+          apply transfer by blast
+        moreover have \<open>has_ell2_norm (Rep_ell2 (ket x))\<close>
+          using Rep_ell2
+          by auto
+        ultimately show ?thesis by simp
       qed
+      thus ?thesis 
+        using Abs_ell2_inverse
+        by (metis \<open>\<And>j. (case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close> mem_Collect_eq)          
+    qed
     hence \<open>(\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i) j = 0\<close>
       for j
@@ -2673,10 +2679,10 @@ proof-
                 by blast
               hence \<open>inv_option \<pi> j = Some x\<close>
                 by (metis None.hyps UNIV_I image_iff inv_option_def is_none_code(2) is_none_simps(1))                
-             hence \<open>None = Some x\<close>
-               using \<open>inv_option \<pi> j = None\<close>
-               by simp
-             thus ?thesis by blast
+              hence \<open>None = Some x\<close>
+                using \<open>inv_option \<pi> j = None\<close>
+                by simp
+              thus ?thesis by blast
             qed
           qed
           thus ?thesis by simp
@@ -2733,10 +2739,140 @@ proof-
   qed
 qed
 
+
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
   for \<pi> :: "'a \<Rightarrow> 'b option"
-  by (cheat TODO)
+proof-
+  assume \<open>inj_option \<pi>\<close>
+  have \<open>\<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle> = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close>
+    for x y
+  proof-
+    have \<open>(\<Sum>\<^sub>ai. cnj (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i)
+         = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
+        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v) i)\<close>
+    proof-
+      have \<open>(\<Sum>\<^sub>ai. (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i)))
+          = (\<Sum>\<^sub>ai. cnj (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i)\<close>
+      proof-
+        have \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
+    = ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u)) i) * Rep_ell2 y i\<close>
+          for i
+          by (metis complex_cnj_zero option.case_distrib)        
+        hence \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
+    = (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u)) * Rep_ell2 y i\<close>
+          for i
+          by auto
+        hence \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
+    = (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * Rep_ell2 y i)\<close>
+          for i
+        proof(induction \<open>inv_option \<pi> i\<close>)
+          case None
+          thus ?case
+            by auto 
+        next
+          case (Some p)
+          thus ?case
+            by (metis option.simps(5)) 
+        qed 
+        thus ?thesis
+          using \<open>\<And>i. cnj (case inv_option \<pi> i of None \<Rightarrow> 0 | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i = (case inv_option \<pi> i of None \<Rightarrow> 0 | Some u \<Rightarrow> cnj (Rep_ell2 x u)) * Rep_ell2 y i\<close> by auto 
+      qed
+      moreover have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
+        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v) i)
+      = (\<Sum>\<^sub>ai. (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v)))\<close>
+      proof-
+        have \<open>cnj (Rep_ell2 x i) *
+        (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v)
+      = (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v))\<close>
+          for i
+        proof(induction \<open>inv_option (inv_option \<pi>) i\<close>)
+          case None
+          thus ?case
+            by auto 
+        next
+          case (Some p)
+          thus ?case
+            by (metis (no_types) Some.hyps option.simps(5))
+        qed
+        hence \<open>cnj (Rep_ell2 x i) *
+        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v) i
+    = (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v))\<close>
+          for i
+          by blast
+        thus ?thesis by auto
+      qed
+      moreover have \<open>(\<Sum>\<^sub>ai. (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i)))
+      = (\<Sum>\<^sub>ai. (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v)))\<close>
+      proof-
+        have \<open>\<pi> j = Some i \<Longrightarrow> (case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
+        = (case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))\<close>
+          for i j
+          sorry
+        thus ?thesis sorry
+      qed
+      ultimately show ?thesis
+        by simp  
+    qed
+    moreover have \<open>has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u)\<close>
+      using has_ell2_norm_classical_operator by auto
+    ultimately have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 (Abs_ell2
+               (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u)) i) * Rep_ell2 y i)
+         = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
+        ( (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v)) i)\<close>
+      using Abs_ell2_inverse
+      by fastforce      
+    moreover have \<open>has_ell2_norm (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some x \<Rightarrow> Rep_ell2 y x)\<close>
+      using has_ell2_norm_classical_operator by auto
+    ultimately have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 (Abs_ell2
+               (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> Rep_ell2 x u)) i) *
+       Rep_ell2 y i) = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
+       Rep_ell2 (Abs_ell2
+          (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+               | Some v \<Rightarrow> Rep_ell2 y v)) i)\<close>
+      using Abs_ell2_inverse
+      by fastforce
+    hence \<open>\<langle>Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
+              | Some t \<Rightarrow> Rep_ell2 x t), y\<rangle> =
+     \<langle>x, Abs_ell2 (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
+                 | Some x \<Rightarrow> Rep_ell2 y x)\<rangle>\<close>
+      unfolding cinner_ell2_def map_fun_def id_def comp_def
+      by auto
+    thus ?thesis
+      apply transfer
+      unfolding classical_operator'_def map_fun_def id_def
+      by auto
+  qed
+  thus ?thesis
+    apply transfer
+    by (metis (no_types, lifting) adjoint.rep_eq adjoint_D cinner_commute' classical_operator.rep_eq)
+qed
+
 
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
