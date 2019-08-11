@@ -2828,8 +2828,38 @@ proof-
         = (case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
                | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))\<close>
           for i j
+        proof-
+          assume \<open>\<pi> j = Some i\<close>
+          hence \<open>inv_option \<pi> i = Some j\<close>
+            by (metis (no_types, lifting) \<open>inj_option \<pi>\<close> f_inv_into_f inj_option_def inv_option_def option.distinct(1) rangeI)
+          hence \<open>(case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
+            = cnj (Rep_ell2 x j) * (Rep_ell2 y i)\<close>
+            using \<open>inj_option \<pi>\<close>
+            by simp
+          moreover have \<open>(case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))
+          =  cnj (Rep_ell2 x j) * (Rep_ell2 y i)\<close>
+          proof-
+            have \<open>inv_option (inv_option \<pi>) j = Some i\<close>
+              using \<open>inv_option \<pi> i = Some j\<close> \<open>inj_option \<pi>\<close>
+              unfolding inv_option_def inj_option_def
+              apply auto
+              using \<open>\<pi> j = Some i\<close> \<open>inj_option \<pi>\<close> f_inv_into_f image_iff inj_option_def inv_into_injective inv_option_def option.collapse option.distinct(1) option.exhaust option.inject rangeE rangeI
+               apply smt
+              by (metis (no_types, lifting) image_iff mem_Collect_eq) (* > 1 s*)
+            thus ?thesis
+              by simp 
+          qed
+          ultimately show \<open>(case inv_option \<pi> i of None \<Rightarrow> 0
+                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
+        = (case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
+               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))\<close>
+            by simp
+        qed
+
+        show ?thesis 
           sorry
-        thus ?thesis sorry
       qed
       ultimately show ?thesis
         by simp  
