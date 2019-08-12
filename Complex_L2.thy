@@ -2740,16 +2740,6 @@ proof-
 qed
 
 
-(* TODO: move *)
-lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
-\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
-  sorry
-
-(* TODO: move *)
-lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
-\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
-  sorry
-
 lemma superposition_principle_linear_ket:
 \<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
   sorry

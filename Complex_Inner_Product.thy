@@ -3374,4 +3374,12 @@ lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
   by (simp add: linear_space_ortho_ortho)
 
 
+lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
+\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+  by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
+
+lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
+\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+
+
 end
