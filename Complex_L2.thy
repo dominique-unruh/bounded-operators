@@ -2739,10 +2739,50 @@ proof-
   qed
 qed
 
+lemma ket_ell2_span:
+  \<open>closure (span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
+proof
+  show "closure (span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
+    by simp    
+  show "(UNIV::'a ell2 set) \<subseteq> closure (span (range ket))"
+  proof
+    show "(x::'a ell2) \<in> closure (span (range ket))"
+      if "(x::'a ell2) \<in> UNIV"
+      for x :: "'a ell2"
+    proof-
+      have \<open>\<exists> a \<in> *s* (span (range ket)). star_of x \<approx> a\<close>
+        sorry
+      thus ?thesis using nsclosure_iff
+        by blast
+    qed
+  qed
+qed
 
 lemma superposition_principle_linear_ket:
-\<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
-  sorry
+  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) bounded\<close>
+  shows \<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
+proof-
+  assume \<open>\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)\<close>
+  define S::\<open>('a ell2) set\<close> where \<open>S = range ket\<close>
+  have \<open>\<And>x. x \<in> S \<Longrightarrow> times_bounded_vec A x = times_bounded_vec B x\<close>
+    using S_def \<open>\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x\<close> by blast
+  have \<open>A *\<^sub>v t = B *\<^sub>v t\<close>
+    for t
+  proof-
+    have \<open>t \<in> closure (span S)\<close>
+    proof-
+      have \<open>closure (span S) = UNIV\<close>
+        by (simp add: S_def ket_ell2_span)
+      thus ?thesis by blast
+    qed
+    thus ?thesis
+      by (metis Complex_Vector_Spaces.span_raw_def Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x\<close> applyOpSpace_span) 
+  qed
+  hence \<open>times_bounded_vec A = times_bounded_vec B\<close>
+    by blast
+  thus ?thesis using times_bounded_vec_inject by auto
+qed
+
 
 lemma superposition_principle_bounded_sesquilinear_ket:
 \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
@@ -2919,6 +2959,8 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 *)
+
+
 
 unbundle no_bounded_notation
 

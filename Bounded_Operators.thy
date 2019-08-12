@@ -892,7 +892,6 @@ lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^s
 
 
 lemma applyOp_bot[simp]:
-
 fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
 shows "U *\<^sub>s bot = bot"
 proof-
@@ -918,90 +917,6 @@ proof-
 qed
 
 
-lemma equal_generator_0:
-  fixes A::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>span S = UNIV\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = 0\<close> and  \<open>S \<noteq> {}\<close>
-  shows  \<open>A = 0\<close>
-proof-
-  have \<open>times_bounded_vec A = times_bounded_vec (0::('a,'b) bounded)\<close>
-  proof
-    show "times_bounded_vec A x = times_bounded_vec 0 x"
-      for x :: 'a
-    proof-
-      have \<open>times_bounded_vec (0::('a, 'b) bounded) x = 0\<close>
-        by (simp add: zero_bounded.rep_eq)        
-      moreover have \<open>times_bounded_vec A x = 0\<close>
-      proof-
-        have \<open>bounded_clinear (times_bounded_vec A)\<close>
-          using times_bounded_vec by auto          
-        have \<open>Abs_linear_space (closure (complex_vector.span S)) =
-                Abs_linear_space UNIV\<close>
-          using  \<open>span S = UNIV\<close>  
-          unfolding top_linear_space_def span_def
-          by (simp add: Complex_Vector_Spaces.span_raw_def)                    
-        hence \<open>closure (complex_vector.span S) = UNIV\<close>
-          by (metis Complex_Vector_Spaces.span_raw_def assms(1) \<open>span S = UNIV\<close> closure_UNIV)                    
-        hence  \<open>x \<in> closure (complex_vector.span S)\<close>
-          by blast
-        hence \<open>\<exists> y. (\<forall> n::nat. y n \<in> complex_vector.span S) \<and> y \<longlonglongrightarrow> x\<close>
-          using closure_sequential by auto
-        then obtain y where \<open>\<forall> n::nat. y n \<in> complex_vector.span S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
-          by blast
-        have \<open>isCont (times_bounded_vec A) x\<close>
-          using \<open>bounded_clinear (times_bounded_vec A)\<close>
-          by (simp add: bounded_linear_continuous) 
-        hence \<open>(\<lambda> n.  times_bounded_vec A (y n)) \<longlonglongrightarrow> times_bounded_vec A x\<close>
-          using \<open>y \<longlonglongrightarrow> x\<close>
-          by (simp add: isCont_tendsto_compose)
-        moreover have \<open>times_bounded_vec A (y n) = 0\<close>
-          for n
-        proof-
-          from \<open>\<forall> n::nat. y n \<in> complex_vector.span S\<close>
-          have \<open>y n \<in> complex_vector.span S\<close>
-            by blast
-          thus ?thesis using equal_span_0
-            using assms(2) \<open>bounded_clinear (times_bounded_vec A)\<close> bounded_clinear.is_clinear by blast 
-        qed
-        ultimately have \<open>(\<lambda> n.  0) \<longlonglongrightarrow> times_bounded_vec A x\<close>
-          by simp
-        thus \<open>times_bounded_vec A x = 0\<close>
-          by (simp add: LIMSEQ_const_iff)
-      qed
-      ultimately show ?thesis by simp
-    qed
-  qed
-  thus ?thesis using times_bounded_vec_inject by blast 
-qed
-
-lemma equal_generator:
-  fixes A B::\<open>('a::cbanach, 'b::cbanach) bounded\<close> and S::\<open>'a set\<close>
-  assumes \<open>span S = UNIV\<close> and \<open>\<And>x. x \<in> S \<Longrightarrow> times_bounded_vec A x = times_bounded_vec B x\<close> and  \<open>S \<noteq> {}\<close>
-  shows \<open>A = B\<close>
-proof-
-  have \<open>A - B = 0\<close>
-  proof-
-    have \<open>x \<in> S \<Longrightarrow> times_bounded_vec (A - B) x = 0\<close>
-      for x
-    proof-
-      assume \<open>x \<in> S\<close>
-      hence \<open>times_bounded_vec A x = times_bounded_vec B x\<close>
-        using \<open>x \<in> S \<Longrightarrow> times_bounded_vec A x = times_bounded_vec B x\<close>
-        by blast
-      hence \<open>times_bounded_vec A x - times_bounded_vec B x = 0\<close>
-        by simp
-      hence \<open>(times_bounded_vec A - times_bounded_vec B) x = 0\<close>
-        by simp
-      moreover have \<open>times_bounded_vec (A - B) = (\<lambda> t. times_bounded_vec A t - times_bounded_vec B t)\<close>
-        by (simp add: minus_bounded.rep_eq)        
-      ultimately have \<open>times_bounded_vec (A - B) x = 0\<close>
-        by simp
-      thus ?thesis by simp 
-    qed
-    thus ?thesis
-      using assms(1) equal_generator_0  \<open>S \<noteq> {}\<close> by blast 
-  qed
-  thus ?thesis by simp
-qed
 
 lemma cdot_plus_distrib_transfer:
   \<open>bounded_clinear U \<Longrightarrow>
@@ -1210,8 +1125,7 @@ proof-
 qed
 
 lemma applyOpSpace_id[simp]: 
-
-shows "idOp *\<^sub>s \<psi> = \<psi>"
+ "idOp *\<^sub>s \<psi> = \<psi>"
 proof-
   have \<open>closed_subspace ( space_as_set \<psi>)\<close>
     using space_as_set by blast    
