@@ -3380,6 +3380,7 @@ lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
 \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+  by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
 
 
 end
