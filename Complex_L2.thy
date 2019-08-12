@@ -2739,10 +2739,6 @@ proof-
   qed
 qed
 
-(* TODO: move *)
-lemma bounded_sesquilinear_diff:
-\<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
-  sorry
 
 (* TODO: move *)
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:

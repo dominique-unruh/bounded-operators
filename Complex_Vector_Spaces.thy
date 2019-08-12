@@ -2225,5 +2225,70 @@ end
 lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
   by (rule Complex_Vector_Spaces.bounded_clinear_ident)
 
+lemma bounded_sesquilinear_diff:
+\<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
+  proof
+  show "A (a + a') b - B (a + a') b = A a b - B a b + (A a' b - B a' b)"
+    if "bounded_sesquilinear A"
+      and "bounded_sesquilinear B"
+    for a :: 'a
+      and a' :: 'a
+      and b :: 'b
+    using that
+    by (simp add: bounded_sesquilinear.add_left) 
+  show "A a (b + b') - B a (b + b') = A a b - B a b + (A a b' - B a b')"
+    if "bounded_sesquilinear A"
+      and "bounded_sesquilinear B"
+    for a :: 'a
+      and b :: 'b
+      and b' :: 'b
+    using that
+    by (simp add: bounded_sesquilinear.add_right) 
+  show "A (r *\<^sub>C a) b - B (r *\<^sub>C a) b = cnj r *\<^sub>C (A a b - B a b)"
+    if "bounded_sesquilinear A"
+      and "bounded_sesquilinear B"
+    for r :: complex
+      and a :: 'a
+      and b :: 'b
+    using that
+    by (simp add: bounded_sesquilinear.scaleC_left complex_vector.scale_right_diff_distrib) 
+  show "A a (r *\<^sub>C b) - B a (r *\<^sub>C b) = r *\<^sub>C (A a b - B a b)"
+    if "bounded_sesquilinear A"
+      and "bounded_sesquilinear B"
+    for a :: 'a
+      and r :: complex
+      and b :: 'b
+    using that
+    by (simp add: bounded_sesquilinear.scaleC_right complex_vector.scale_right_diff_distrib) 
+  show "\<exists>K. \<forall>a b. norm (A a b - B a b) \<le> norm a * norm b * K"
+    if "bounded_sesquilinear A"
+      and "bounded_sesquilinear B"
+  proof-
+    have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by (simp add: bounded_sesquilinear.bounded that(1))
+    then obtain KA where \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by blast
+    have \<open>\<exists> KB. \<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+      by (simp add: bounded_sesquilinear.bounded that(2))
+    then obtain KB where \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+      by blast
+    have \<open>norm (A a b - B a b) \<le> norm a * norm b * (KA + KB)\<close>
+      for a b
+    proof-
+      have \<open>norm (A a b - B a b) \<le> norm (A a b) +  norm (B a b)\<close>
+        by (simp add: norm_triangle_ineq4)
+      also have \<open>\<dots> \<le> norm a * norm b * KA + norm a * norm b * KB\<close>
+        using  \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+               \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+        using add_mono by blast
+      also have \<open>\<dots>=  norm a * norm b * (KA + KB)\<close>
+        by (simp add: mult.commute ring_class.ring_distribs(2))
+      finally show ?thesis 
+        by blast
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
 
 end
