@@ -1282,8 +1282,8 @@ locale bounded_sesquilinear =
   fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
-    and scaleC_left: "prod (scaleC r a) b = scaleC (cnj r) (prod a b)"
-    and scaleC_right: "prod a (scaleC r b) = scaleC r (prod a b)"
+    and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
+    and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 

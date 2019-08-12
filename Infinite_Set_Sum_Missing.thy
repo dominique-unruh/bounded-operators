@@ -130,17 +130,6 @@ next
     qed
     then have sumB': "sum B' gS \<le> B"
       using ennreal_le_epsilon ennreal_less_zero_iff by blast
-(*     hence "B' r < \<infinity>" if "r \<in> gS" for r
-    proof -
-      have "sum B' gS = sum B' (gS - {r}) + B' r"
-        by (simp add: \<open>finite gS\<close> add.commute sum.remove that)
-      moreover have "0 \<le> sum B' (gS - {r})" by auto
-      ultimately have "B' r \<le> B" 
-        using sumB'
-        by (metis add.commute add.right_neutral add_mono_thms_linordered_semiring(1) dual_order.antisym le_cases)
-      then show ?thesis
-        using le_less_trans by fastforce
-    qed *)
     obtain B'' where B'': "B' r = ennreal (B'' r)" if "r \<in> gS" for r
       apply atomize_elim apply (rule_tac choice) 
       using B'fin apply auto using less_top_ennreal by blast
@@ -340,19 +329,13 @@ proof -
     using assms by (simp add: abs_summable_on_def)
   also have "Im (infsetsum f A) = infsetsum (\<lambda>x. Im (f x)) A"
     using f_sum by (rule infsetsum_Im[symmetric])
-    (* unfolding infsetsum_def apply (rule integral_Im[symmetric]) *)
-    (* using assms by (simp add: abs_summable_on_def) *)
   finally have fsplit: "infsetsum f A = Complex (\<Sum>\<^sub>ax\<in>A. Re (f x)) (\<Sum>\<^sub>ax\<in>A. Im (f x))" by assumption
 
   have "infsetsum g A = Complex (Re (infsetsum g A)) (Im (infsetsum g A))" by auto
   also have "Re (infsetsum g A) = infsetsum (\<lambda>x. Re (g x)) A"
     using g_sum by (rule infsetsum_Re[symmetric])
-    (* unfolding infsetsum_def apply (rule integral_Re[symmetric]) *)
-    (* using assms by (simp add: abs_summable_on_def) *)
   also have "Im (infsetsum g A) = infsetsum (\<lambda>x. Im (g x)) A "
     using g_sum by (rule infsetsum_Im[symmetric])
-    (* unfolding infsetsum_def apply (rule integral_Im[symmetric]) *)
-    (* using assms by (simp add: abs_summable_on_def) *)
   finally have gsplit: "infsetsum g A = Complex (\<Sum>\<^sub>ax\<in>A. Re (g x)) (\<Sum>\<^sub>ax\<in>A. Im (g x))" by assumption
 
   have Re_leq: "Re (f x) \<le> Re (g x)" if "x\<in>A" for x
@@ -467,7 +450,6 @@ proof -
   have sum_F_A: "sum f F \<le> infsetsum f A" if "F : {F. finite F \<and> F \<subseteq> A}" for F
   proof -
     from that have "finite F" and "F \<subseteq> A" by auto
-    (* then have summableA: "f abs_summable_on F" by auto *)
     from \<open>finite F\<close> have "sum f F = infsetsum f F" by auto
     also have "\<dots> \<le> infsetsum f A"
       apply (rule infsetsum_mono_neutral_left)
@@ -561,28 +543,6 @@ proof -
   from leq geq show ?thesis by simp
 qed
 
-(* lemma ennreal_ereal_Sup:
-  assumes "\<And>a. a\<in>A \<Longrightarrow> a\<ge>0"
-  shows "enn2ereal (Sup (ennreal ` A)) = Sup (ereal ` A)"
-proof (rule SUP_eqI[symmetric])
-  fix a
-  assume a: "a:A"
-  then have "ennreal a \<le> Sup (ennreal ` A)"
-    by (simp add: SUP_upper)
-  then have "enn2ereal (ennreal a) \<le> enn2ereal (Sup (ennreal ` A))"
-    using less_eq_ennreal.rep_eq by blast
-  then show "ereal a \<le> enn2ereal (Sup (ennreal ` A))"
-    apply (subst (asm) enn2ereal_ennreal)
-    using assms a by auto
-next
-  fix y
-  assume "i \<in> A \<Longrightarrow> ereal i \<le> y" for i
-  then have "i \<in> A \<Longrightarrow> ennreal i \<le> enn2ereal y" for i
-    apply auto
-  show "enn2ereal (Sup (ennreal ` A)) \<le> y"
-
-qed
- *)
 
 lemma infsetsum_nonneg_is_SUPREMUM_ereal:
   fixes f :: "'a \<Rightarrow> real"
@@ -598,7 +558,8 @@ proof -
   also have "\<dots> = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ereal (sum f F))"
     apply (simp add: image_def Sup_ennreal.rep_eq)
     apply (subst max_absorb2)
-     apply (metis (mono_tags, lifting) Sup_upper empty_subsetI ennreal_0 finite.emptyI mem_Collect_eq sum.empty zero_ennreal.rep_eq)
+     apply (metis (mono_tags, lifting) Sup_upper empty_subsetI ennreal_0 finite.emptyI
+        mem_Collect_eq sum.empty zero_ennreal.rep_eq)
     by (metis (mono_tags, lifting) Collect_cong enn2ereal_ennreal fnn in_mono sum_nonneg)
   finally show ?thesis
     by simp
@@ -654,9 +615,6 @@ theorem infsetsum_Sigma:
 proof -
   from summable have countable_Sigma: "countable {x \<in> Sigma A B. 0 \<noteq> f x}"
     by (rule abs_summable_countable)
-(*   define A' where "A' = {a\<in>A. \<exists>b\<in>B a. 0 \<noteq> f (a,b)}"
-  have "countable A"
-    using countable_Sigma apply auto *)
   define A' where "A' = fst ` {x \<in> Sigma A B. 0 \<noteq> f x}"
   have countA': "countable A'"
     using countable_Sigma unfolding A'_def by auto
@@ -774,16 +732,6 @@ proof (rule cauchy_filter_metricI)
     by auto
 qed
 
-(* (* TODO move *)
-lemma cauchy_filter_metric_netI:
-  fixes f :: "'a\<Rightarrow>'b::metric_space"
-  assumes "\<And>e. \<exists>n. \<forall>x\<in>A. \<forall>y\<in>A. x\<ge>n \<and> y\<ge>n \<longrightarrow> dist (f x) (f y) < e"
-  shows "cauchy_filter (filtermap f )"
-proof (rule cauchy_filter_metricI)
-  
-qed *)
-
-
 
 lemma abs_summable_infsetsum'_converges:
   fixes f :: "'a\<Rightarrow>'b::{second_countable_topology,banach}" and A :: "'a set"
@@ -849,15 +797,6 @@ proof -
   then show ?thesis
     unfolding infsetsum'_converges_def by auto
 qed
-
-(* lemma infsetsum'_diff:
-  assumes "infsetsum'_converges f A" and "infsetsum'_converges g A" 
-  shows "infsetsum' (\<lambda>x. f x - g x) A = infsetsum' f A - infsetsum' g A"
-   *)
-
-(* lemma infsetsum'_converges_subset:
-  assumes "infsetsum'_converges f B" and AB: "A \<subseteq> B"
-  shows "infsetsum'_converges f A" *)
 
 (* Limits.tendsto_add_const_iff is the same but with a more restrictive sort *)
 lemma tendsto_add_const_iff:
@@ -1002,7 +941,6 @@ lemma
   shows infsetsum'_Diff: "infsetsum' f (B - A) = infsetsum' f B - infsetsum' f A"
     and infsetsum'_converges_Diff: "infsetsum'_converges f (B-A)"
 proof -
-(* TODO: can probably be simplified using infsetsum'_[_converges]_subset_zero *)
   define limA limB where "limA = infsetsum' f A" and "limB = infsetsum' f B"
   from assms(1) have limB: "(sum f \<longlongrightarrow> limB) (finite_subsets_at_top B)"
     unfolding infsetsum'_converges_def infsetsum'_def limB_def
@@ -1107,7 +1045,6 @@ proof -
     using Lim_trivial_limit tendsto_Lim by blast
   then have "\<forall>\<^sub>F F in (finite_subsets_at_top A). dist (sum f F) (infsetsum' f A) < \<epsilon>"
     using assms(2) by (rule tendstoD)
-  (* then obtain F where finF2[simp]: "finite F" and F2A[simp]: "F\<subseteq>A" and "dist (sum f F) (infsetsum' f A) < \<epsilon>" *)
   then show ?thesis
     apply (simp add: eventually_finite_subsets_at_top) apply meson
     apply (rule_tac x=X in exI) by auto
@@ -1183,26 +1120,6 @@ proof -
     have  leq_eps': "infsetsum' (\<lambda>x. norm (f x)) (A-F2) \<le> \<delta>"
       apply (subst infsetsum'_Diff) using F2A dist finF2
       by (auto simp: dist_norm)
-(*     obtain F2 where F2A: "F2 \<subseteq> A" and finF2: "finite F2"
-      and leq_eps': "infsetsum' (\<lambda>x. norm (f x)) (A-F2) \<le> \<delta>"
-    proof -
-(* TODO: use infsetsum'_approx *)
-      let ?sum = "infsetsum' (\<lambda>x. norm (f x))"
-      have "(sum (\<lambda>x. norm (f x)) \<longlongrightarrow> ?sum A) (finite_subsets_at_top A)"
-        thm infsetsum'_approx_sum[where f=f and A=A]
-        by (cheat TODO)
-      then have "\<forall>\<^sub>F F in (finite_subsets_at_top A). dist (sum (\<lambda>x. norm (f x)) F) (?sum A) < \<delta>"
-        apply (rule tendstoD) by simp
-      then obtain F2 where finF2[simp]: "finite F2" and F2A[simp]: "F2\<subseteq>A" and "dist (sum (\<lambda>x. norm (f x)) F2) (?sum A) < \<delta>"
-        apply atomize_elim apply (simp add: eventually_finite_subsets_at_top) apply meson
-        apply (rule_tac x=X in exI) by auto
-      then have "sum (\<lambda>x. norm (f x)) F2 \<ge> ?sum A - \<delta>"
-        by (simp add: dist_real_def)
-      then have "?sum (A-F2) \<le> \<delta>"
-        by (subst infsetsum'_Diff, auto)
-      then show ?thesis 
-        using that finF2 F2A by metis
-    qed *)
 
     define F where "F = F1 \<union> F2"
 

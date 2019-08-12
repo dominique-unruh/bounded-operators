@@ -2739,168 +2739,137 @@ proof-
   qed
 qed
 
+(* TODO: move *)
+lemma bounded_sesquilinear_diff:
+\<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
+  sorry
+
+(* TODO: move *)
+lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
+\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+  sorry
+
+(* TODO: move *)
+lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
+\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+  sorry
+
+lemma superposition_principle_linear_ket:
+\<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
+  sorry
+
+lemma superposition_principle_bounded_sesquilinear_ket:
+\<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
+  sorry
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
   for \<pi> :: "'a \<Rightarrow> 'b option"
 proof-
   assume \<open>inj_option \<pi>\<close>
-  have \<open>\<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle> = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close>
-    for x y
+  define B where
+    \<open>B x y = \<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle> - \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close> 
+  for x y
+  have \<open>B (ket i) (ket j) = 0\<close>
+    for i j
   proof-
-    have \<open>(\<Sum>\<^sub>ai. cnj (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i)
-         = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
-        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v) i)\<close>
+    have \<open>\<langle>(classical_operator \<pi>) *\<^sub>v (ket i), (ket j)\<rangle> = 
+          (if \<pi> i = Some j then 1 else 0)\<close>
     proof-
-      have \<open>(\<Sum>\<^sub>ai. (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i)))
-          = (\<Sum>\<^sub>ai. cnj (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i)\<close>
-      proof-
-        have \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
-    = ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u)) i) * Rep_ell2 y i\<close>
-          for i
-          by (metis complex_cnj_zero option.case_distrib)        
-        hence \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
-    = (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u)) * Rep_ell2 y i\<close>
-          for i
-          by auto
-        hence \<open>(cnj ((\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u) i) * Rep_ell2 y i)
-    = (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * Rep_ell2 y i)\<close>
-          for i
-        proof(induction \<open>inv_option \<pi> i\<close>)
-          case None
-          thus ?case
-            by auto 
-        next
-          case (Some p)
-          thus ?case
-            by (metis option.simps(5)) 
-        qed 
-        thus ?thesis
-          using \<open>\<And>i. cnj (case inv_option \<pi> i of None \<Rightarrow> 0 | Some u \<Rightarrow> Rep_ell2 x u) * Rep_ell2 y i = (case inv_option \<pi> i of None \<Rightarrow> 0 | Some u \<Rightarrow> cnj (Rep_ell2 x u)) * Rep_ell2 y i\<close> by auto 
+      have \<open>\<langle>(classical_operator \<pi>) *\<^sub>v (ket i), (ket j)\<rangle> = 
+          \<langle>(case \<pi> i of Some r \<Rightarrow> ket r | None \<Rightarrow> 0), (ket j)\<rangle>\<close>
+        using \<open>inj_option \<pi>\<close>
+        by (simp add: classical_operator_basis)
+      also have \<open>\<dots> = (if \<pi> i = Some j then 1 else 0)\<close>
+      proof(induction \<open>\<pi> i\<close>)
+        case None
+        thus ?case
+          by auto 
+      next
+        case (Some p)
+        thus ?case
+          by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq option.simps(5)) 
       qed
-      moreover have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
-        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v) i)
-      = (\<Sum>\<^sub>ai. (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v)))\<close>
-      proof-
-        have \<open>cnj (Rep_ell2 x i) *
-        (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v)
-      = (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v))\<close>
-          for i
-        proof(induction \<open>inv_option (inv_option \<pi>) i\<close>)
-          case None
-          thus ?case
-            by auto 
-        next
-          case (Some p)
-          thus ?case
-            by (metis (no_types) Some.hyps option.simps(5))
-        qed
-        hence \<open>cnj (Rep_ell2 x i) *
-        (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v) i
-    = (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v))\<close>
-          for i
-          by blast
-        thus ?thesis by auto
-      qed
-      moreover have \<open>(\<Sum>\<^sub>ai. (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i)))
-      = (\<Sum>\<^sub>ai. (case inv_option (inv_option \<pi>) i of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x i) * (Rep_ell2 y v)))\<close>
-      proof-
-        have \<open>\<pi> j = Some i \<Longrightarrow> (case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
-        = (case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))\<close>
-          for i j
-        proof-
-          assume \<open>\<pi> j = Some i\<close>
-          hence \<open>inv_option \<pi> i = Some j\<close>
-            by (metis (no_types, lifting) \<open>inj_option \<pi>\<close> f_inv_into_f inj_option_def inv_option_def option.distinct(1) rangeI)
-          hence \<open>(case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
-            = cnj (Rep_ell2 x j) * (Rep_ell2 y i)\<close>
-            using \<open>inj_option \<pi>\<close>
-            by simp
-          moreover have \<open>(case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))
-          =  cnj (Rep_ell2 x j) * (Rep_ell2 y i)\<close>
-          proof-
-            have \<open>inv_option (inv_option \<pi>) j = Some i\<close>
-              using \<open>inv_option \<pi> i = Some j\<close> \<open>inj_option \<pi>\<close>
-              unfolding inv_option_def inj_option_def
-              apply auto
-              using \<open>\<pi> j = Some i\<close> \<open>inj_option \<pi>\<close> f_inv_into_f image_iff inj_option_def inv_into_injective inv_option_def option.collapse option.distinct(1) option.exhaust option.inject rangeE rangeI
-               apply smt
-              by (metis (no_types, lifting) image_iff mem_Collect_eq) (* > 1 s*)
-            thus ?thesis
-              by simp 
-          qed
-          ultimately show \<open>(case inv_option \<pi> i of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> cnj (Rep_ell2 x u) * (Rep_ell2 y i))
-        = (case inv_option (inv_option \<pi>) j of None \<Rightarrow> 0
-               | Some v \<Rightarrow> cnj (Rep_ell2 x j) * (Rep_ell2 y v))\<close>
-            by simp
-        qed
-
-        show ?thesis 
-          sorry
-      qed
-      ultimately show ?thesis
-        by simp  
+      finally show ?thesis by blast
     qed
-    moreover have \<open>has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u)\<close>
-      using has_ell2_norm_classical_operator by auto
-    ultimately have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 (Abs_ell2
-               (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u)) i) * Rep_ell2 y i)
-         = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
-        ( (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v)) i)\<close>
-      using Abs_ell2_inverse
-      by fastforce      
-    moreover have \<open>has_ell2_norm (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some x \<Rightarrow> Rep_ell2 y x)\<close>
-      using has_ell2_norm_classical_operator by auto
-    ultimately have \<open>(\<Sum>\<^sub>ai. cnj (Rep_ell2 (Abs_ell2
-               (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-                    | Some u \<Rightarrow> Rep_ell2 x u)) i) *
-       Rep_ell2 y i) = (\<Sum>\<^sub>ai. cnj (Rep_ell2 x i) *
-       Rep_ell2 (Abs_ell2
-          (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-               | Some v \<Rightarrow> Rep_ell2 y v)) i)\<close>
-      using Abs_ell2_inverse
-      by fastforce
-    hence \<open>\<langle>Abs_ell2 (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
-              | Some t \<Rightarrow> Rep_ell2 x t), y\<rangle> =
-     \<langle>x, Abs_ell2 (\<lambda>b. case inv_option (inv_option \<pi>) b of None \<Rightarrow> 0
-                 | Some x \<Rightarrow> Rep_ell2 y x)\<rangle>\<close>
-      unfolding cinner_ell2_def map_fun_def id_def comp_def
-      by auto
+    moreover have \<open>\<langle>(ket i), (classical_operator (inv_option \<pi>)) *\<^sub>v (ket j)\<rangle>
+        = (if Some i = inv_option \<pi> j then 1 else 0)\<close>
+    proof-
+      have \<open>(classical_operator (inv_option \<pi>)) *\<^sub>v (ket j)
+        = (case inv_option \<pi> j of Some r \<Rightarrow> ket r | None \<Rightarrow> 0)\<close>
+        using \<open>inj_option \<pi>\<close>
+        by (simp add: classical_operator_basis)
+      hence \<open>\<langle>(ket i), (classical_operator (inv_option \<pi>)) *\<^sub>v (ket j)\<rangle>
+        = \<langle>(ket i), (case inv_option \<pi> j of Some r \<Rightarrow> ket r | None \<Rightarrow> 0)\<rangle>\<close>
+        by simp
+      hence \<open>\<langle>(ket i), (classical_operator (inv_option \<pi>)) *\<^sub>v (ket j)\<rangle>
+        = \<langle>(ket i), (case inv_option \<pi> j of Some r \<Rightarrow> ket r | None \<Rightarrow> 0)\<rangle>\<close>
+        by simp
+      also have \<open>\<dots> = (if Some i = inv_option \<pi> j then 1 else 0)\<close>
+      proof(induction \<open>inv_option \<pi> j\<close>)
+        case None
+        thus ?case
+          by auto 
+      next
+        case (Some p)
+        thus ?case
+          by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq option.simps(5)) 
+      qed
+      finally show ?thesis by blast
+    qed
+    moreover have \<open>(if \<pi> i = Some j then 1 else 0) =  (if Some i = inv_option \<pi> j then 1 else 0)\<close>
+    proof(cases \<open>\<pi> i = Some j\<close>)
+      case True
+      hence \<open>Some i = inv_option \<pi> j\<close>
+        unfolding inv_option_def
+        by (metis \<open>inj_option \<pi>\<close> f_inv_into_f inj_option_def option.discI range_eqI)
+      thus ?thesis
+        using True by auto
+    next
+      case False
+      hence \<open>\<not>(Some i = inv_option \<pi> j)\<close>
+        unfolding inv_option_def
+        by (metis f_inv_into_f option.discI option.inject)
+      thus ?thesis
+        by (simp add: False) 
+    qed
+    ultimately have \<open>\<langle>(classical_operator \<pi>) *\<^sub>v (ket i), (ket j)\<rangle> - \<langle>(ket i), (classical_operator (inv_option \<pi>)) *\<^sub>v (ket j)\<rangle> = 0\<close>
+      by simp
     thus ?thesis
-      apply transfer
-      unfolding classical_operator'_def map_fun_def id_def
-      by auto
+      unfolding B_def by blast
   qed
+  moreover have \<open>bounded_sesquilinear B\<close>
+  proof-
+  define U where
+    \<open>U x y = \<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle>\<close> 
+      for x y 
+  define V where
+    \<open>V x y = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close> 
+  for x y 
+  have \<open>bounded_sesquilinear U\<close>
+    unfolding U_def
+    using bounded_sesquilinear_bounded_clinnear_cinner_left times_bounded_vec
+    by auto
+  moreover have \<open>bounded_sesquilinear V\<close>
+    unfolding V_def
+    using bounded_sesquilinear_bounded_clinnear_cinner_right times_bounded_vec
+    by auto
+  ultimately have \<open>bounded_sesquilinear (\<lambda> x y. U x y - V x y)\<close>
+    by (rule bounded_sesquilinear_diff)  
+  moreover have \<open>B = (\<lambda> x y. U x y - V x y)\<close>
+    unfolding U_def V_def B_def
+    by blast
+  ultimately show ?thesis
+    by simp
+  qed
+  ultimately have \<open>B x y = 0\<close>
+    for x y
+    by (simp add: \<open>\<And>j i. B (ket i) (ket j) = 0\<close> superposition_principle_bounded_sesquilinear_ket)    
+  hence \<open>\<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle> = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close>
+    for x y
+    unfolding B_def by simp
   thus ?thesis
-    apply transfer
-    by (metis (no_types, lifting) adjoint.rep_eq adjoint_D cinner_commute' classical_operator.rep_eq)
+    using adjoint_D by fastforce
 qed
 
 
