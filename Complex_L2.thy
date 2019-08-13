@@ -2740,17 +2740,17 @@ proof-
 qed
 
 lemma ket_ell2_span:
-  \<open>closure (span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
+  \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
 proof
-  show "closure (span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
+  show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
     by simp    
-  show "(UNIV::'a ell2 set) \<subseteq> closure (span (range ket))"
+  show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
   proof
-    show "(x::'a ell2) \<in> closure (span (range ket))"
+    show "(x::'a ell2) \<in> closure (complex_vector.span (range ket))"
       if "(x::'a ell2) \<in> UNIV"
       for x :: "'a ell2"
     proof-
-      have \<open>\<exists> a \<in> *s* (span (range ket)). star_of x \<approx> a\<close>
+      have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
         sorry
       thus ?thesis using nsclosure_iff
         by blast
@@ -2769,14 +2769,14 @@ proof-
   have \<open>A *\<^sub>v t = B *\<^sub>v t\<close>
     for t
   proof-
-    have \<open>t \<in> closure (span S)\<close>
+    have \<open>t \<in> closure (complex_vector.span S)\<close>
     proof-
-      have \<open>closure (span S) = UNIV\<close>
-        by (simp add: S_def ket_ell2_span)
+      have \<open>closure (complex_vector.span S) = UNIV\<close>
+        by (simp add: S_def ket_ell2_span)        
       thus ?thesis by blast
     qed
     thus ?thesis
-      by (metis Complex_Vector_Spaces.span_raw_def Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x\<close> applyOpSpace_span) 
+      by (metis Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x\<close> applyOpSpace_span) 
   qed
   hence \<open>times_bounded_vec A = times_bounded_vec B\<close>
     by blast
@@ -2784,9 +2784,74 @@ proof-
 qed
 
 
-lemma superposition_principle_bounded_sesquilinear_ket:
-\<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
+lemma sesquilinear_superposition:
+assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
+and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
+shows \<open>B x y = 0\<close>
   sorry
+
+lemma bounded_sesquilinear_continuous:
+  assumes \<open>bounded_sesquilinear B\<close> and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
+  shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+  sorry
+
+lemma superposition_principle_bounded_sesquilinear_ket:
+  \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
+proof-
+  assume \<open>bounded_sesquilinear B\<close>
+    and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
+  show \<open>B x y = 0\<close>
+    for x y
+  proof-
+    have \<open>x \<in> closure (complex_vector.span (range ket))\<close>
+      by (metis iso_tuple_UNIV_I ket_ell2_span)      
+    hence \<open>\<exists> u\<in>*s* (complex_vector.span (range ket)). star_of x \<approx> u\<close>
+      using nsclosure_I by blast
+    then obtain u where \<open>u\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of x \<approx> u\<close>
+      by blast
+    have \<open>y \<in> closure (complex_vector.span (range ket))\<close>
+      by (simp add: ket_ell2_span)      
+    hence \<open>\<exists> v\<in>*s* (complex_vector.span (range ket)). star_of y \<approx> v\<close>
+      using nsclosure_I by blast
+    then obtain v where \<open>v\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of y \<approx> v\<close>
+      by blast
+    have \<open>(*f2* B) u v = 0\<close>
+    proof-
+      have  \<open>p \<in> (complex_vector.span (range ket)) \<Longrightarrow> q \<in> (complex_vector.span (range ket))
+        \<Longrightarrow> B p q = 0\<close>
+        for p q
+      proof-
+        assume \<open>p \<in> (complex_vector.span (range ket))\<close>
+           and \<open>q \<in> (complex_vector.span (range ket))\<close>
+        define S_left::\<open>('a ell2) set\<close> where \<open>S_left = range (ket)\<close>
+        define S_right::\<open>('b ell2) set\<close> where \<open>S_right = range (ket)\<close>
+        from \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
+        have \<open>\<And>p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
+          using S_left_def S_right_def by blast          
+        thus \<open>B p q = 0\<close>
+          using  \<open>bounded_sesquilinear B\<close> sesquilinear_superposition
+           S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
+              \<open>q \<in> complex_vector.span (range ket)\<close>
+          by smt (* > 1s *)
+      qed
+      hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
+        by blast
+      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). (*f2* B) p q = 0\<close>
+        by StarDef.transfer
+      thus ?thesis
+        using \<open>u \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> \<open>v \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> by blast 
+    qed
+    moreover have \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+      using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
+        \<open>star_of x \<approx> u\<close> \<open>star_of y \<approx> v\<close> by blast
+    ultimately have \<open>(*f2* B) (star_of x) (star_of y) \<approx> 0\<close>
+      by simp
+    hence \<open>(*f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
+      by simp
+    thus \<open>B x y = 0\<close>
+      by simp
+  qed
+qed
 
 lemma classical_operator_adjoint[simp]: 
   "inj_option \<pi> \<Longrightarrow> adjoint (classical_operator \<pi>) = classical_operator (inv_option \<pi>)"
