@@ -2783,12 +2783,203 @@ proof-
   thus ?thesis using times_bounded_vec_inject by auto
 qed
 
+lemma bounded_sesquilinear_0_left: 
+  assumes \<open>bounded_sesquilinear B\<close>
+  shows \<open>B 0 y = 0\<close>
+proof-
+  have \<open>B 0 y = B (0 + 0) y\<close>
+    by simp
+  also have \<open>\<dots> = B 0 y + B 0 y\<close>
+    using assms bounded_sesquilinear.add_left by blast
+  finally have \<open>B 0 y = B 0 y + B 0 y\<close>
+    by blast
+  thus ?thesis by simp
+qed
+
+lemma sesquilinear_finite_sum_induction:
+  assumes \<open>bounded_sesquilinear B\<close>
+  shows \<open>\<forall> t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+proof (induction n)
+  show "\<forall>t. finite t \<and> card t = 0 \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+  proof
+    show "finite t \<and> card t = 0 \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+      for t :: "'a set"
+    proof
+      show "B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+        if "finite t \<and> card t = 0"
+        using that proof
+        show "B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+          if "finite t"
+            and "card t = 0"
+        proof-
+          have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = 0\<close>
+            using card_0_eq sum_clauses(1) that(1) that(2) by blast
+          hence \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B 0 y\<close>
+            by simp
+          also have \<open>B 0 y = 0\<close>
+            using bounded_sesquilinear_0_left \<open>bounded_sesquilinear B\<close> by blast
+          finally have \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = 0\<close>
+            by blast
+          moreover have \<open>(\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y) = 0\<close>
+            using card_0_eq sum_clauses(1) that(1) that(2) by blast
+          ultimately show ?thesis by simp
+        qed
+      qed
+    qed
+  qed
+  show "\<forall>t. finite t \<and> card t = Suc n \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+    if "\<forall>t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+    for n :: nat
+  proof-
+    have \<open>finite t \<Longrightarrow> card t = Suc n \<Longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+      for t
+    proof-
+      assume \<open>finite t\<close> and \<open>card t = Suc n\<close>
+      hence \<open>\<exists> k s. finite s \<and> card s = n \<and> insert k s = t\<close>
+        by (metis card_Suc_eq finite_insert)
+      then obtain k s where \<open>finite s\<close> and \<open>card s = n\<close> and \<open>insert k s = t\<close>
+        by blast
+      have \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B (\<Sum>a\<in>s. r a *\<^sub>C a) y +  cnj (r k) *\<^sub>C B k y\<close>
+      proof-
+        have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>s. r a *\<^sub>C a) +  r k *\<^sub>C k\<close>
+        proof -
+          have "card (insert k s) = Suc n"
+            by (metis \<open>card t = Suc n\<close> \<open>insert k s = t\<close>)
+          then have "k \<notin> s"
+            by (metis \<open>card s = n\<close> \<open>finite s\<close> card_insert_if n_not_Suc_n)
+          then show ?thesis
+            using \<open>finite s\<close> \<open>insert k s = t\<close> by auto
+        qed
+        hence \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B (\<Sum>a\<in>s. r a *\<^sub>C a) y + B (r k *\<^sub>C k) y\<close>
+          by (simp add: assms bounded_sesquilinear.add_left)
+        thus ?thesis
+          by (simp add: assms bounded_sesquilinear.scaleC_left) 
+      qed
+      moreover have \<open>(\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y) = (\<Sum>a\<in>s. cnj (r a) *\<^sub>C B a y) +  cnj (r k) *\<^sub>C B k y\<close>
+        by (metis (no_types, lifting) \<open>card s = n\<close> \<open>card t = Suc n\<close> \<open>finite s\<close> \<open>insert k s = t\<close> add.commute card_insert_if n_not_Suc_n sum.insert)
+      moreover have \<open>B (\<Sum>a\<in>s. r a *\<^sub>C a) y = (\<Sum>a\<in>s. cnj (r a) *\<^sub>C B a y)\<close>
+        using \<open>card s = n\<close> \<open>finite s\<close> that by auto        
+      ultimately show ?thesis by simp
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+lemma sesquilinear_finite_sum:
+  assumes \<open>bounded_sesquilinear B\<close> and \<open>finite t\<close>
+  shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+  by (simp add: sesquilinear_finite_sum_induction assms(1) assms(2))
+
 
 lemma sesquilinear_superposition:
-assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
-and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
-shows \<open>B x y = 0\<close>
-  sorry
+  assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
+    and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
+  shows \<open>B x y = 0\<close>
+proof-
+  have \<open>y \<in> complex_vector.span S_right \<Longrightarrow> \<forall> p \<in> S_left. B p y = 0\<close>
+    for y
+  proof (rule complex_vector.span_induct)
+    show "(0::'c) \<in> complex_vector.span {0}"
+      if "y \<in> complex_vector.span S_right"
+      by auto
+    show "complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}"
+      if "y \<in> complex_vector.span S_right"
+      unfolding complex_vector.subspace_def
+    proof
+      show "0 \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+      proof-
+        have \<open>p\<in>S_left \<Longrightarrow> B p y = 0\<close>
+          for p
+        proof-
+          assume \<open>p\<in>S_left\<close>
+          moreover have \<open>t \<in> complex_vector.span S_right \<Longrightarrow> B p t = 0\<close>
+            for t
+          proof (rule complex_vector.span_induct)
+            show "(0::'c) \<in> complex_vector.span {0}"
+              if "t \<in> complex_vector.span S_right"
+              by auto
+            show "complex_vector.subspace {a. B p t = a}"
+              if "t \<in> complex_vector.span S_right"
+              unfolding complex_vector.subspace_def
+            proof
+              show "0 \<in> Collect ((=) (B p t))"
+              proof -
+                have "clinear (B p)"
+                  by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
+                then have "B p t = 0"
+                  using assms(2) calculation complex_vector.linear_eq_0_on_span that by fastforce
+                then show ?thesis
+                  by (metis (full_types) mem_Collect_eq)
+              qed
+              show "(\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t)))
+           \<and> (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t)))"
+              proof
+                show "\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))"
+                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+                show "\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t))"
+                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+              qed
+            qed
+            show "B p t = x"
+              if "t \<in> complex_vector.span S_right"
+                and "(x::'c) \<in> {0}"
+              for x :: 'c
+              using that
+              using \<open>t \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. B p t = a}\<close> complex_vector.subspace_0 by blast 
+          qed
+          ultimately show ?thesis
+            by (simp add: that) 
+        qed
+        thus ?thesis
+          by simp
+      qed
+      show "(\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a})
+   \<and> (\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a})"
+      proof
+        show "\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+          using \<open>0 \<in> {a. \<forall>p\<in>S_left. B p y = a}\<close> by auto      
+        show "\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+          using \<open>0 \<in> {a. \<forall>p\<in>S_left. B p y = a}\<close> by auto      
+      qed
+    qed
+    show "\<forall>p\<in>S_left. B p y = x"
+      if "y \<in> complex_vector.span S_right"
+        and "(x::'c) \<in> {0}"
+      for x :: 'c
+      using that \<open>y \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}\<close> complex_vector.subspace_0 by blast 
+  qed
+  hence \<open>\<forall> y \<in> complex_vector.span S_right. \<forall> p \<in> S_left. B p y = 0\<close>
+    by blast
+  hence \<open>\<forall> p \<in> S_left. \<forall> y \<in> complex_vector.span S_right. B p y = 0\<close>
+    by blast
+  have "B p y = 0"
+    if "p \<in> complex_vector.span S_left"
+      and "y \<in> complex_vector.span S_right"
+    for y and p
+  proof-
+    have \<open>\<exists> t r. finite t \<and> t \<subseteq> S_left \<and> p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
+      using complex_vector.span_explicit
+      by (smt mem_Collect_eq that(1)) 
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> S_left\<close> and \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
+      by blast
+    have \<open>B p y = B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y\<close>
+      using \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+      using sesquilinear_finite_sum \<open>bounded_sesquilinear B\<close> \<open>finite t\<close>
+      by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C 0)\<close>
+      using  \<open>t \<subseteq> S_left\<close> \<open>\<And>y. y \<in> complex_vector.span S_right \<Longrightarrow> \<forall>p\<in>S_left. B p y = 0\<close>
+        in_mono that(2) by fastforce
+    also have \<open>\<dots> = (\<Sum>a\<in>t. 0)\<close>
+      by simp
+    also have \<open>\<dots> = 0\<close>
+      by simp
+    finally show ?thesis
+      by blast
+  qed
+  thus ?thesis
+    by (simp add: assms(3) assms(4))        
+qed
 
 lemma bounded_sesquilinear_continuous:
   assumes \<open>bounded_sesquilinear B\<close>
@@ -2953,7 +3144,7 @@ proof-
         for p q
       proof-
         assume \<open>p \<in> (complex_vector.span (range ket))\<close>
-           and \<open>q \<in> (complex_vector.span (range ket))\<close>
+          and \<open>q \<in> (complex_vector.span (range ket))\<close>
         define S_left::\<open>('a ell2) set\<close> where \<open>S_left = range (ket)\<close>
         define S_right::\<open>('b ell2) set\<close> where \<open>S_right = range (ket)\<close>
         from \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
@@ -2961,8 +3152,8 @@ proof-
           using S_left_def S_right_def by blast          
         thus \<open>B p q = 0\<close>
           using  \<open>bounded_sesquilinear B\<close> sesquilinear_superposition
-           S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
-              \<open>q \<in> complex_vector.span (range ket)\<close>
+            S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
+            \<open>q \<in> complex_vector.span (range ket)\<close>
           by smt (* > 1s *)
       qed
       hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
@@ -3062,27 +3253,27 @@ proof-
   qed
   moreover have \<open>bounded_sesquilinear B\<close>
   proof-
-  define U where
-    \<open>U x y = \<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle>\<close> 
-      for x y 
-  define V where
-    \<open>V x y = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close> 
-  for x y 
-  have \<open>bounded_sesquilinear U\<close>
-    unfolding U_def
-    using bounded_sesquilinear_bounded_clinnear_cinner_left times_bounded_vec
-    by auto
-  moreover have \<open>bounded_sesquilinear V\<close>
-    unfolding V_def
-    using bounded_sesquilinear_bounded_clinnear_cinner_right times_bounded_vec
-    by auto
-  ultimately have \<open>bounded_sesquilinear (\<lambda> x y. U x y - V x y)\<close>
-    by (rule bounded_sesquilinear_diff)  
-  moreover have \<open>B = (\<lambda> x y. U x y - V x y)\<close>
-    unfolding U_def V_def B_def
-    by blast
-  ultimately show ?thesis
-    by simp
+    define U where
+      \<open>U x y = \<langle>(classical_operator \<pi>) *\<^sub>v x, y\<rangle>\<close> 
+    for x y 
+    define V where
+      \<open>V x y = \<langle>x, (classical_operator (inv_option \<pi>)) *\<^sub>v y\<rangle>\<close> 
+    for x y 
+    have \<open>bounded_sesquilinear U\<close>
+      unfolding U_def
+      using bounded_sesquilinear_bounded_clinnear_cinner_left times_bounded_vec
+      by auto
+    moreover have \<open>bounded_sesquilinear V\<close>
+      unfolding V_def
+      using bounded_sesquilinear_bounded_clinnear_cinner_right times_bounded_vec
+      by auto
+    ultimately have \<open>bounded_sesquilinear (\<lambda> x y. U x y - V x y)\<close>
+      by (rule bounded_sesquilinear_diff)  
+    moreover have \<open>B = (\<lambda> x y. U x y - V x y)\<close>
+      unfolding U_def V_def B_def
+      by blast
+    ultimately show ?thesis
+      by simp
   qed
   ultimately have \<open>B x y = 0\<close>
     for x y
