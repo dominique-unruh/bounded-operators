@@ -2791,9 +2791,140 @@ shows \<open>B x y = 0\<close>
   sorry
 
 lemma bounded_sesquilinear_continuous:
-  assumes \<open>bounded_sesquilinear B\<close> and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
+  assumes \<open>bounded_sesquilinear B\<close>
+    and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
   shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
-  sorry
+proof-
+  have \<open>B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
+    for p q
+  proof-
+    have \<open>B (x - p) (y - q) = B x y - B x q - B p y + B p q\<close>
+      using \<open>bounded_sesquilinear B\<close>
+      by (smt add.assoc add.commute add_left_imp_eq bounded_sesquilinear.add_left bounded_sesquilinear.add_right diff_add_cancel)
+    thus ?thesis by auto
+  qed
+  hence \<open>\<forall> p q. B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
+    by blast
+  hence \<open>\<forall> p q. (*f2* B) (star_of x) (star_of y) = (*f2* B) (star_of x - p) (star_of y - q)
+     + ((*f2* B) (star_of x) q - (*f2* B) p q)
+     + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+    by StarDef.transfer
+  hence \<open>(*f2* B) (star_of x) (star_of y) \<approx>
+     (*f2* B) (star_of x - p) (star_of y - q)
+   + ((*f2* B) (star_of x) q - (*f2* B) p q)
+   + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+    for p q
+    by auto
+  moreover have \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close>
+  proof-
+    have \<open>\<exists> K. \<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
+      using assms(1) bounded_sesquilinear.bounded by blast
+    then obtain K where \<open>\<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
+      by blast
+    hence  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) (star_of y - q))
+         \<le> hnorm (star_of x - p) * hnorm (star_of y - q) * (star_of K)\<close>
+      by StarDef.transfer
+    hence \<open>hnorm ((*f2* B) (star_of x - u) (star_of y - v)) 
+      \<le> hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K)\<close>
+      by blast
+    moreover have \<open>hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff Infinitesimal_mult Infinitesimal_star_of_mult assms(2) assms(3))
+    ultimately show ?thesis
+      using hnorm_le_Infinitesimal mem_infmal_iff by blast 
+  qed
+  moreover have \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close>
+  proof-
+    have \<open>(*f2* B) (star_of x) v - (*f2* B) u v
+        = (*f2* B) (star_of x - u) v\<close>
+    proof-
+      have \<open>\<forall> p q. B x q - B p q = B (x - p) q\<close>
+        by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_left eq_diff_eq)
+      hence \<open>\<forall> p q. (*f2* B) (star_of x) q - (*f2* B) p q = (*f2* B) (star_of x - p) q\<close>
+        by StarDef.transfer
+      thus ?thesis by blast
+    qed
+    moreover have \<open>(*f2* B) (star_of x - u) v \<approx> 0\<close>
+    proof-
+      have \<open>\<exists> K. \<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+        using assms(1) bounded_sesquilinear.bounded by blast
+      then obtain K where \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+        by blast
+      from  \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+      have  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) q)
+           \<le> hnorm (star_of x - p) * hnorm q * (star_of K)\<close>
+        by StarDef.transfer
+      hence \<open>hnorm ((*f2* B) (star_of x - u) v)
+           \<le> hnorm (star_of x - u) * hnorm v * (star_of K)\<close>
+        by blast
+      moreover have \<open>hnorm (star_of x - u) * hnorm v * (star_of K) \<in> Infinitesimal\<close>
+      proof-
+        have \<open>hnorm (star_of x - u) \<in> Infinitesimal\<close>
+          by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms(2))
+        moreover have \<open>hnorm v \<in> HFinite\<close>
+          using \<open>star_of y \<approx> v\<close>
+          by (metis HFinite_star_of approx_HFinite approx_hnorm star_of_norm)
+        moreover have \<open>star_of K \<in> HFinite\<close>
+          by auto
+        ultimately show ?thesis
+          using Infinitesimal_HFinite_mult by blast 
+      qed
+      ultimately show ?thesis
+        using hnorm_le_Infinitesimal mem_infmal_iff by blast 
+    qed
+    ultimately show ?thesis by simp
+  qed
+  moreover have \<open>((*f2* B) u (star_of y) - (*f2* B) u v) \<approx> 0\<close>
+  proof-
+    have \<open>\<exists> K. \<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+      using assms(1) bounded_sesquilinear.bounded by blast
+    then obtain K where \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+      by blast
+    from  \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+    have  \<open>\<forall> p q. hnorm ((*f2* B) p (star_of y - q))
+           \<le> hnorm p * hnorm (star_of y - q) * (star_of K)\<close>
+      by StarDef.transfer
+    hence \<open>hnorm ((*f2* B) u (star_of y - v))
+           \<le> hnorm u * hnorm (star_of y - v) * (star_of K)\<close>
+      by blast
+    moreover have \<open>hnorm u * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
+    proof-
+      have \<open>hnorm (star_of y - v) \<in> Infinitesimal\<close>
+        by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms(3))
+      moreover have \<open>hnorm u \<in> HFinite\<close>
+        using \<open>star_of x \<approx> u\<close>
+        by (metis HFinite_star_of approx_HFinite approx_hnorm star_of_norm)
+      moreover have \<open>star_of K \<in> HFinite\<close>
+        by auto
+      ultimately show ?thesis
+        by (meson Infinitesimal_HFinite_mult Infinitesimal_HFinite_mult2 \<open>hnorm (star_of y - v) \<in> Infinitesimal\<close> \<open>hnorm u \<in> HFinite\<close> \<open>hypreal_of_real K \<in> HFinite\<close>)
+    qed
+    ultimately have \<open>(*f2* B) u (star_of y - v) \<in> Infinitesimal\<close>
+      using hnorm_le_Infinitesimal   
+      by blast
+    moreover have \<open>(*f2* B) u (star_of y) - (*f2* B) u v
+        = (*f2* B) u (star_of y - v)\<close>
+    proof-
+      have \<open>\<forall> p q. B p y - B p q = B p (y - q)\<close>
+        by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_right eq_diff_eq)
+      hence \<open>\<forall> p q. (*f2* B) p (star_of y) - (*f2* B) p q = (*f2* B) p (star_of y - q)\<close>
+        by StarDef.transfer
+      thus ?thesis by blast
+    qed
+    ultimately show ?thesis
+      by (simp add: mem_infmal_iff) 
+  qed
+  ultimately show \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+  proof -
+    have f1: "monad ((*f2* B) (star_of x) (star_of y)) = monad ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v) + ((*f2* B) u (star_of y) - (*f2* B) u v) + (*f2* B) u v)"
+      by (meson \<open>\<And>q p. (*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) (star_of x - p) (star_of y - q) + ((*f2* B) (star_of x) q - (*f2* B) p q) + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close> approx_monad_iff)
+    have "(0::'c star) \<in> monad 0"
+      by (meson Infinitesimal_monad_zero_iff Infinitesimal_zero)
+    then have "monad ((*f2* B) u v + ((*f2* B) u (star_of y) - (*f2* B) u v + ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v)))) = monad ((*f2* B) u v)"
+      by (meson Infinitesimal_add Infinitesimal_monad_eq Infinitesimal_monad_zero_iff \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close> \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close> \<open>(*f2* B) u (star_of y) - (*f2* B) u v \<approx> 0\<close> approx_mem_monad_zero approx_sym)
+    then show ?thesis
+      using f1 by (simp add: approx_monad_iff ordered_field_class.sign_simps(2))
+  qed
+qed
 
 lemma superposition_principle_bounded_sesquilinear_ket:
   \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
