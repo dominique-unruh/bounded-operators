@@ -2777,7 +2777,7 @@ is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0)
           \<le> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R)\<close>
         by (simp add: sum_mono)        
       thus ?thesis
-        using \<open>\<forall>R. finite R \<longrightarrow> (\<Sum>i\<in>R. (cmod (x i))\<^sup>2) \<le> K\<close> \<open>finite R\<close> by fastforce         
+        using \<open>\<forall>R. finite R \<longrightarrow> (\<Sum>i\<in>R. (cmod (x i))\<^sup>2) \<le> K\<close> \<open>finite R\<close> by fastforce
     qed
     hence \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
       by blast
@@ -2795,7 +2795,15 @@ is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0)
       unfolding has_ell2_norm_def by blast
   qed
 qed
-  
+
+lemma trunc_ell2_complex_span:
+\<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+  sorry
+
+lemma trunc_ell2_lim:
+\<open>\<exists> S.  hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  sorry
+
 
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
@@ -2808,9 +2816,25 @@ proof
       if "(x::'a ell2) \<in> UNIV"
       for x :: "'a ell2"
     proof-
-      
       have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
-        sorry
+      proof-
+        have \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          using trunc_ell2_lim by auto
+        then obtain S where \<open>hypfinite S\<close> and \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          by blast
+        have \<open>(*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
+        proof-
+          have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+            by (simp add: trunc_ell2_complex_span)
+          hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+            unfolding hypfinite_def
+            by StarDef.transfer
+          thus ?thesis
+            by (simp add: \<open>hypfinite S\<close>) 
+        qed
+        thus ?thesis using \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          using approx_sym by blast          
+      qed
       thus ?thesis using nsclosure_iff
         by blast
     qed

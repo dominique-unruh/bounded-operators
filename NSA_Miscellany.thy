@@ -383,5 +383,8 @@ lemma nsclosure_iff:
 \<open>r \<in> closure A \<longleftrightarrow> (\<exists> a \<in> *s* A. star_of r \<approx> a)\<close>
   using nsclosure_D nsclosure_I by blast
 
+text \<open>Hyperfinite set\<close>
+definition hypfinite where \<open>hypfinite = (*p* finite)\<close> 
+
 
 end
