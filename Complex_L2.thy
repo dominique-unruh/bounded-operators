@@ -2739,6 +2739,64 @@ proof-
   qed
 qed
 
+
+lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
+is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
+  proof transfer
+  show "has_ell2_norm (\<lambda>i. if (i::'a) \<in> S then x i else 0)"
+    if "has_ell2_norm (x::'a \<Rightarrow> complex)"
+    for S :: "'a set"
+      and x :: "'a \<Rightarrow> complex"
+  proof-
+    from \<open>has_ell2_norm (x::'a \<Rightarrow> complex)\<close>
+    have \<open>bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)\<close>
+      unfolding has_ell2_norm_def
+      by blast
+    hence \<open>\<exists> K. \<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
+      unfolding bdd_above_def
+      by blast
+    then obtain K where \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
+      by blast
+    have \<open>finite R \<Longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
+      for R
+    proof-
+      assume \<open>finite R\<close>
+      have \<open>(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2\<close>
+        for i                                 
+      proof (cases \<open>i \<in> S\<close>)
+        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
+          if "i \<in> S"
+          using that
+          by simp 
+        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
+          if "i \<notin> S"
+          using that
+          by auto 
+      qed    
+      hence \<open>(sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R)
+          \<le> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R)\<close>
+        by (simp add: sum_mono)        
+      thus ?thesis
+        using \<open>\<forall>R. finite R \<longrightarrow> (\<Sum>i\<in>R. (cmod (x i))\<^sup>2) \<le> K\<close> \<open>finite R\<close> by fastforce         
+    qed
+    hence \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
+      by blast
+    hence \<open>\<forall> t \<in> {sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R}. t \<le> K\<close>
+      by blast      
+    moreover have \<open>{sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R }
+          = (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>  
+      by blast
+    ultimately have \<open>\<forall> t \<in> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite). t \<le> K\<close>
+      by auto     
+    hence \<open>bdd_above (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>
+      unfolding bdd_above_def 
+      by auto
+    thus ?thesis 
+      unfolding has_ell2_norm_def by blast
+  qed
+qed
+  
+
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
 proof
@@ -2750,6 +2808,7 @@ proof
       if "(x::'a ell2) \<in> UNIV"
       for x :: "'a ell2"
     proof-
+      
       have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
         sorry
       thus ?thesis using nsclosure_iff
