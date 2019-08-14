@@ -2796,14 +2796,121 @@ is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0)
   qed
 qed
 
+lemma truc_ell2_insert:
+\<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+proof-
+  assume \<open>k \<notin> R\<close>  
+  have \<open>(if i \<in> insert k R then Rep_ell2 w i else 0) =
+        (if i \<in> R then Rep_ell2 w i else 0)
+      + (if i = k then Rep_ell2 w i else 0)\<close>
+    for i
+  proof (cases \<open>i \<in> insert k R\<close>)
+    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+      if "i \<in> insert k R"
+      using that proof (cases \<open>i \<in> R\<close>)
+      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+        if "i \<in> insert k R"
+          and "i \<in> R"
+        using that \<open>k \<notin> R\<close> by auto 
+      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+        if "i \<in> insert k R"
+          and "i \<notin> R"
+        using that
+        by auto 
+    qed
+    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+      if "i \<notin> insert k R"
+      using that
+      by simp 
+  qed
+  moreover have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) = (\<lambda> i. if i \<in> insert k R then Rep_ell2 w i else 0)\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  moreover have \<open>Rep_ell2 (trunc_ell2 R w) = (\<lambda> i. if i \<in> R then Rep_ell2 w i else 0)\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  moreover have \<open>Rep_ell2 ( (Rep_ell2 w k) *\<^sub>C (ket k) ) = (\<lambda> i. if i = k then Rep_ell2 w i else 0)\<close>
+  proof -
+    have "\<forall>a aa. a = k \<and> aa \<noteq> k \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> aa \<noteq> k \<or> a = k \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa"
+      by (simp add: ket.rep_eq scaleC_ell2.rep_eq)
+    then show ?thesis
+      by meson
+  qed
+  ultimately have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i = Rep_ell2 (trunc_ell2 R w) i + Rep_ell2 ((Rep_ell2 w k) *\<^sub>C (ket k)) i\<close>
+    for i
+    by (simp add: \<open>\<And>i. (if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)\<close> \<open>k \<notin> R\<close>)
+  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i =
+        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) ) i\<close>
+    for i
+    by (simp add: plus_ell2.rep_eq)
+  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) =
+        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) )\<close>
+    by blast
+  thus \<open>trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+    using Rep_ell2_inject
+    by blast
+qed
+
+lemma trunc_ell2_complex_span_induct:
+  \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+proof (induction n)
+  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+  proof
+    show "finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+      for S :: "'a set"
+    proof
+      show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+        if "finite S \<and> card S = 0"
+        using that proof
+        show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+          if "finite S"
+            and "card S = 0"
+        proof-
+          have \<open>S = {}\<close>
+            using card_0_eq that(1) that(2) by blast
+          hence \<open>trunc_ell2 S x = 0\<close>
+            apply transfer
+            by simp
+          thus ?thesis
+            by (simp add: complex_vector.span_zero) 
+        qed
+      qed
+    qed
+  qed
+  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    for n :: nat
+  proof-
+    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+      for S
+    proof-
+      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
+      hence \<open>\<exists> R k. S = insert k R \<and> card R = n\<close>
+        by (meson card_Suc_eq)
+      then obtain R k where \<open>S = insert k R\<close> and \<open>card R = n\<close>
+        by blast
+      hence \<open>finite R\<close>
+        using \<open>finite S\<close>
+        by simp
+      have \<open>k \<notin> R\<close>
+        using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
+      hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
+        using \<open>S = insert k R\<close> truc_ell2_insert
+        by (simp add: truc_ell2_insert) 
+      moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
+      ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: complex_vector.span_add complex_vector.span_base complex_vector.span_scale)        
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
 lemma trunc_ell2_complex_span:
 \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-  sorry
+  using trunc_ell2_complex_span_induct by auto
 
 lemma trunc_ell2_lim:
 \<open>\<exists> S.  hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
   sorry
-
 
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
