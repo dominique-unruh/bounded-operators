@@ -3693,12 +3693,12 @@ proof-
       have  \<open>A *\<^sub>v x = (\<Sum>a\<in>t. r a *\<^sub>C (A *\<^sub>v a))\<close>
         unfolding bounded_clinear_def
         using times_bounded_vec \<open>finite t\<close>
-        Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
-        complex_vector.linear_sum
+          Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
+          complex_vector.linear_sum
         by (smt \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.is_clinear)
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (A *\<^sub>v a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
-         complex_vector.scale_eq_0_iff by blast
+          complex_vector.scale_eq_0_iff by blast
       ultimately show \<open>A *\<^sub>v x = 0\<close>
         by simp
     qed
@@ -3760,12 +3760,12 @@ proof-
     moreover have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
          = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
     proof-
-    have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+      have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
           = (classical_operator \<pi>) *\<^sub>v ( (classical_operator \<rho>) *\<^sub>v (ket j) )\<close>
-      by (simp add: times_applyOp)
-    moreover have \<open>(classical_operator \<rho>) *\<^sub>v (ket j) = 
+        by (simp add: times_applyOp)
+      moreover have \<open>(classical_operator \<rho>) *\<^sub>v (ket j) = 
           (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
-      using \<open>inj_option \<rho>\<close>
+        using \<open>inj_option \<rho>\<close>
         by (simp add: classical_operator_basis)
       ultimately have  \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
           = (classical_operator \<pi>) *\<^sub>v ( (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i) )\<close>
@@ -3827,7 +3827,7 @@ next
     apply (rule ext)
     unfolding inv_option_def o_def map_comp_def
     unfolding inv_def apply auto
-    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
   show "classical_operator (Some \<circ> \<pi>) *\<^sub>o classical_operator (Some \<circ> \<pi>)* = idOp"
