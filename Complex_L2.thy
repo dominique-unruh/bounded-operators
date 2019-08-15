@@ -2986,10 +2986,33 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+lemma ell2_ortho:
+  assumes \<open>\<And> i. Rep_ell2 x i = 0 \<or> Rep_ell2 y i = 0\<close>
+  shows \<open>\<langle>x, y\<rangle> = 0\<close>
+  using assms apply transfer
+  by (simp add: infsetsum_all_0)
 
 lemma trunc_ell2_norm_diff:
   \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
-  sorry
+proof-
+  have \<open>Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0\<close>
+    for i
+  proof (cases \<open>i \<in> S\<close>)
+    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
+      if "i \<in> S"
+      using that
+      by (simp add: minus_ell2.rep_eq trunc_ell2.rep_eq) 
+    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
+      if "i \<notin> S"
+      using that
+      by (simp add: trunc_ell2.rep_eq) 
+  qed
+  hence \<open>\<langle> (trunc_ell2 S x), (x - trunc_ell2 S x) \<rangle> = 0\<close>
+    using ell2_ortho by blast
+  hence \<open>(norm x)^2 = (norm (trunc_ell2 S x))^2 + (norm (x - trunc_ell2 S x))^2\<close>
+    using PythagoreanId by fastforce    
+  thus ?thesis by simp
+qed
 
 (* move to NSA_miscellany *)
 lemma infinitesimal_square:
