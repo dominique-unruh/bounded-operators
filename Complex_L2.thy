@@ -2741,8 +2741,8 @@ qed
 
 
 lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
-is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
-  proof transfer
+  is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
+proof transfer
   show "has_ell2_norm (\<lambda>i. if (i::'a) \<in> S then x i else 0)"
     if "has_ell2_norm (x::'a \<Rightarrow> complex)"
     for S :: "'a set"
@@ -2797,7 +2797,7 @@ is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0)
 qed
 
 lemma truc_ell2_insert:
-\<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+  \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
 proof-
   assume \<open>k \<notin> R\<close>  
   have \<open>(if i \<in> insert k R then Rep_ell2 w i else 0) =
@@ -2904,12 +2904,91 @@ proof (induction n)
   qed
 qed
 
-lemma trunc_ell2_norm_diff:
-\<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
-  sorry
+lemma ell2_norm_explicit_finite_support:
+  assumes  \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
+  shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+proof-
+  have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<le> (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
+  proof-
+    have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<in>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using \<open>finite S\<close>
+      by simp
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using Rep_ell2 unfolding has_ell2_norm_def
+      by auto
+    ultimately show ?thesis using cSup_upper by simp
+  qed
+  moreover have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+  proof-
+    have \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<Longrightarrow> t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      for t
+    proof-
+      assume \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      hence \<open>\<exists> R \<in> (Collect finite). t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> 
+        by blast
+      then obtain R where \<open>R \<in> (Collect finite)\<close> and \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close>
+        by blast
+      from \<open>R \<in> (Collect finite)\<close>
+      have \<open>finite R\<close>
+        by blast
+      have \<open>R = (R - S) \<union> (R \<inter> S)\<close>
+        by (simp add: Un_Diff_Int)
+      moreover have \<open>(R - S) \<inter> (R \<inter> S) = {}\<close>
+        by auto
+      ultimately have  \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S)
+         + (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        using \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> and \<open>finite R\<close>
+        by (smt sum.Int_Diff)
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S) = 0\<close>
+      proof-
+        have \<open>r \<in> R - S \<Longrightarrow> (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) r = 0\<close>
+          for r
+          by (simp add: assms(2))        
+        thus ?thesis
+          by simp 
+      qed
+      ultimately have \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        by simp
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      proof-
+        have \<open>R \<inter> S \<subseteq> S\<close>
+          by simp        
+        moreover have \<open>(\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) i \<ge> 0\<close>
+          for i
+          by auto        
+        ultimately show ?thesis
+          by (simp add: assms(1) sum_mono2) 
+      qed
+      ultimately show \<open>t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close> by simp
+    qed
+    moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<noteq> {}\<close>
+      by auto      
+    ultimately show ?thesis
+      by (simp add: cSup_least) 
+  qed
+  ultimately have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+    by simp
+  thus ?thesis
+    by (metis ell2_norm_def norm_ell2.rep_eq) 
+qed
 
 lemma trunc_ell2_norm_explicit:
-\<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+  \<open>finite S \<Longrightarrow> (norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+proof-
+  assume \<open>finite S\<close>
+  moreover have \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = 0\<close>
+    by (simp add: trunc_ell2.rep_eq)    
+  ultimately have \<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 ((trunc_ell2 S x)) i))\<^sup>2)) S)\<close>
+    using ell2_norm_explicit_finite_support
+    by blast 
+  moreover have \<open>\<And> i. i \<in> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = Rep_ell2 x i\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  ultimately show ?thesis by simp
+qed
+
+
+lemma trunc_ell2_norm_diff:
+  \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
   sorry
 
 (* move to NSA_miscellany *)
@@ -2919,7 +2998,7 @@ lemma infinitesimal_square:
   by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
 
 lemma trunc_ell2_complex_span:
-\<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+  \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
   using trunc_ell2_complex_span_induct by auto
 
 lemma trunc_ell2_lim:
@@ -2981,15 +3060,17 @@ proof-
         by blast
       moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
       proof-
-        have \<open>\<forall> S. sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
+        have \<open>\<forall> S. finite S \<longrightarrow> sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
           using trunc_ell2_norm_explicit
           by metis          
-        hence \<open>\<forall> S. (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
-          using real_sqrt_eq_iff by fastforce          
-        hence \<open>\<forall> S. (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+        hence \<open>\<forall> S. finite S \<longrightarrow> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
+          using real_sqrt_eq_iff
+          by (smt norm_le_zero_iff norm_zero real_sqrt_unique)           
+        hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+          unfolding hypfinite_def
           by StarDef.transfer
         hence \<open>(*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
-          by blast
+          using \<open>hypfinite S\<close> by blast
         hence \<open>(*f* f) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
           unfolding f_def by blast
         thus ?thesis using \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
