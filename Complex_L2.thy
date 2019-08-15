@@ -3791,11 +3791,9 @@ proof-
 qed
 
 
-lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
-  by (cheat TODO)
-    (*
+lemma classical_operator_Some[simp]: "classical_operator Some = idOp"  
   apply (rule equal_basis) apply (subst classical_operator_basis) apply simp by auto
-*)
+
 
 lemma isometry_classical_operator[simp]:
   assumes "inj \<pi>"
@@ -3804,7 +3802,6 @@ proof -
   have comp: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
     apply (rule ext) unfolding inv_option_def o_def 
     using assms unfolding inj_def inv_def by auto
-
   show ?thesis
     unfolding isometry_def
     apply (subst classical_operator_adjoint) using assms apply simp
@@ -3816,14 +3813,13 @@ qed
 lemma unitary_classical_operator[simp]:
   assumes "bij \<pi>"
   shows "unitary (classical_operator (Some o \<pi>))"
-  by (cheat TODO)
-    (*
 proof (unfold unitary_def, rule conjI)
   have "isometry (classical_operator (Some o \<pi>))"
     by (simp add: assms bij_is_inj)
-  hence "classical_operator (Some \<circ> \<pi>)* \<cdot>\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp"
+  hence "classical_operator (Some \<circ> \<pi>)* *\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp"
     unfolding isometry_def by simp
-  thus ?thesis by (cheat TODO)
+  thus \<open>classical_operator (Some \<circ> \<pi>)* *\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp\<close>
+    by simp 
 next
   have "inj \<pi>"
     by (simp add: assms bij_is_inj)
@@ -3834,10 +3830,10 @@ next
     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
-  show "classical_operator (Some \<circ> \<pi>) \<cdot> classical_operator (Some \<circ> \<pi>)* = idOp"
+  show "classical_operator (Some \<circ> \<pi>) *\<^sub>o classical_operator (Some \<circ> \<pi>)* = idOp"
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
-*)
+
 
 instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
