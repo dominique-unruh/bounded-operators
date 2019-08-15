@@ -2904,13 +2904,112 @@ proof (induction n)
   qed
 qed
 
+lemma trunc_ell2_norm_diff:
+\<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
+  sorry
+
+lemma trunc_ell2_norm_explicit:
+\<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+  sorry
+
+(* move to NSA_miscellany *)
+lemma infinitesimal_square:
+  fixes x::hypreal
+  shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
+  by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
+
 lemma trunc_ell2_complex_span:
 \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
   using trunc_ell2_complex_span_induct by auto
 
 lemma trunc_ell2_lim:
-\<open>\<exists> S.  hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-  sorry
+  \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+proof-
+  define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
+  have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
+    apply transfer unfolding ell2_norm_def by blast
+  hence \<open>(norm x)^2 = Sup (f ` Collect finite)\<close>
+    unfolding f_def
+    by (smt norm_not_less_zero real_sqrt_ge_0_iff real_sqrt_pow2) 
+  have \<open>Sup (f ` Collect finite) \<in> closure (f ` Collect finite)\<close>
+  proof (rule Borel_Space.closure_contains_Sup)
+    show "f ` Collect finite \<noteq> {}"
+      by blast      
+    show "bdd_above (f ` Collect finite)"
+    proof-
+      have \<open>has_ell2_norm (Rep_ell2 x)\<close>
+        using Rep_ell2 by blast
+      thus ?thesis unfolding has_ell2_norm_def f_def
+        by simp
+    qed
+  qed
+  hence \<open>(norm x)^2 \<in> closure (f ` Collect finite)\<close>
+    by (simp add: \<open>(norm x)\<^sup>2 = Sup (f ` Collect finite)\<close>)
+  hence \<open>\<exists> t\<in>*s* (f ` Collect finite). t \<approx> star_of ((norm x)^2)\<close>
+    using approx_sym nsclosure_I by blast
+  then obtain t where \<open>t\<in>*s* (f ` Collect finite)\<close> and \<open>t \<approx> star_of ((norm x)^2)\<close>
+    by blast
+  from \<open>t\<in>*s* (f ` Collect finite)\<close>
+  have \<open>\<exists> S \<in> (*s* (Collect finite)). t = (*f* f) S\<close>
+    by (simp add: image_iff)
+  then obtain S where \<open>S \<in> (*s* (Collect finite))\<close> and \<open>t = (*f* f) S\<close>
+    by blast
+  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = (*f* f) S\<close>
+  have \<open>(*f* f) S \<approx> star_of ((norm x)^2)\<close>
+    by simp
+  hence \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+    by simp    
+  have \<open>hypfinite S\<close>
+  proof-
+    have \<open>\<forall> S. S \<in> Collect finite \<longleftrightarrow> finite S\<close>
+      by blast
+    hence \<open>\<forall> S. S \<in>*s* (Collect finite) \<longleftrightarrow> hypfinite S\<close>
+      unfolding hypfinite_def
+      by StarDef.transfer
+    thus ?thesis
+      using \<open>S \<in> *s* Collect finite\<close> by blast 
+  qed
+  moreover have \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  proof-
+    have \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+    proof-
+      have \<open>\<forall> S. (norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
+        by (simp add: trunc_ell2_norm_diff)        
+      hence \<open>\<forall> S. (hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+        by StarDef.transfer
+      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+        by blast
+      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+      proof-
+        have \<open>\<forall> S. sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
+          using trunc_ell2_norm_explicit
+          by metis          
+        hence \<open>\<forall> S. (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
+          using real_sqrt_eq_iff by fastforce          
+        hence \<open>\<forall> S. (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+          by StarDef.transfer
+        hence \<open>(*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+          by blast
+        hence \<open>(*f* f) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+          unfolding f_def by blast
+        thus ?thesis using \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+          by (simp add: approx_reorient)          
+      qed
+      ultimately have \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
+        using approx_minus_iff by auto
+      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
+        by (simp add: mem_infmal_iff)       
+      hence \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+        using infinitesimal_square by blast        
+      thus ?thesis
+        by simp 
+    qed
+    thus ?thesis
+      by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff) 
+  qed
+  ultimately show ?thesis
+    by blast
+qed
 
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
