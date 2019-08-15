@@ -1793,23 +1793,6 @@ proof standard
 qed
 
 
-instantiation ell2 :: (enum) basis_enum begin
-definition "canonical_basis_ell2 = map ket Enum.enum"
-definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
-instance
-proof
-  show "distinct (canonical_basis::'a ell2 list)"
-    unfolding distinct_def canonical_basis_ell2_def 
-    apply transfer
-    apply (induction enum_class.enum)    
-    by (cheat ell2_basis_enum)
-
-  show "is_onb (set (canonical_basis::'a ell2 list))"
-    by (cheat ell2_basis_enum)
-  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
-    by (cheat ell2_basis_enum)
-qed
-end
 
 definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Rightarrow> 'a)\<close> where
   \<open>left_shift x = (\<lambda> n. x (Suc n))\<close>
@@ -3679,18 +3662,134 @@ proof-
 qed
 
 
+lemma equal_basis_0:
+  assumes \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
+  shows \<open>A = 0\<close>
+proof-
+  have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> A *\<^sub>v x = 0\<close>
+    for x
+  proof-
+    assume \<open>x \<in> closure (complex_vector.span (range ket))\<close>
+    hence \<open>\<exists> r \<in> *s* (complex_vector.span (range ket)). r \<approx> star_of x\<close>
+      using approx_sym nsclosure_I by blast
+    then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
+      by blast
+    have \<open>bounded_clinear ((*\<^sub>v) A)\<close>
+      using times_bounded_vec by blast
+    hence \<open>isCont ((*\<^sub>v) A) x\<close>
+      by simp
+    hence \<open>isNSCont ((*\<^sub>v) A) x\<close>
+      by (simp add: isCont_isNSCont)
+    have \<open>x \<in> complex_vector.span (range ket) \<Longrightarrow> A *\<^sub>v x = 0\<close>
+      for x
+    proof-
+      assume \<open>x \<in> complex_vector.span (range ket)\<close>
+      have \<open>\<exists> t r. finite t \<and> t \<subseteq> (range ket) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        using complex_vector.span_explicit
+        by (smt \<open>x \<in> complex_vector.span (range ket)\<close> mem_Collect_eq)
+      then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> (range ket)\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by blast
+      from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      have  \<open>A *\<^sub>v x = (\<Sum>a\<in>t. r a *\<^sub>C (A *\<^sub>v a))\<close>
+        unfolding bounded_clinear_def
+        using times_bounded_vec \<open>finite t\<close>
+        Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
+        complex_vector.linear_sum
+        by (smt \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.is_clinear)
+      moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (A *\<^sub>v a) = 0\<close>
+        using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
+         complex_vector.scale_eq_0_iff by blast
+      ultimately show \<open>A *\<^sub>v x = 0\<close>
+        by simp
+    qed
+    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (times_bounded_vec A) x = 0\<close>
+      by blast
+    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (times_bounded_vec A)) x = 0\<close>
+      by StarDef.transfer
+    hence \<open>(*f* (times_bounded_vec A)) r = 0\<close>
+      using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
+      by blast
+    moreover have \<open>(*f* (times_bounded_vec A)) r \<approx> (*f* (times_bounded_vec A)) (star_of x)\<close>
+      using \<open>r \<approx> star_of x\<close> \<open>isNSCont ((*\<^sub>v) A) x\<close>
+      by (simp add: isNSContD)
+    ultimately have \<open>(*f* (times_bounded_vec A)) (star_of x) \<approx> 0\<close>
+      by simp
+    hence \<open>norm ( (times_bounded_vec A) x ) = 0\<close>
+      by auto
+    thus \<open>A *\<^sub>v x = 0\<close>
+      by auto
+  qed
+  moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
+    by (simp add: Complex_Vector_Spaces.span_raw_def ket_ell2_span)    
+  ultimately have \<open>A *\<^sub>v x = 0\<close>
+    for x
+    by blast
+  hence \<open>(*\<^sub>v) A = (\<lambda> _. 0)\<close>
+    by blast
+  thus ?thesis using times_bounded_vec_inject
+    by fastforce 
+qed
+
+lemma equal_basis:
+  assumes \<open>\<And> j. A *\<^sub>v (ket j) = B *\<^sub>v  (ket j)\<close>
+  shows \<open>A = B\<close>
+proof-
+  have \<open>\<And> j. A *\<^sub>v (ket j) - B *\<^sub>v  (ket j) = 0\<close>
+    using \<open>\<And> j. A *\<^sub>v (ket j) = B *\<^sub>v  (ket j)\<close> by simp
+  hence \<open>\<And> j. (A - B) *\<^sub>v  (ket j) = 0\<close>
+    by (simp add: minus_bounded.rep_eq)
+  hence \<open>A - B = 0\<close>
+    using equal_basis_0 by blast
+  thus ?thesis by simp
+qed
+
 lemma classical_operator_mult[simp]:
   "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
-  by (cheat TODO)
-    (*
-  apply (rule equal_basis)
-  unfolding timesOp_assoc_linear_space
-  apply (subst classical_operator_basis, simp)+
-  apply (case_tac "\<rho> x")
-  apply auto
-  apply (subst classical_operator_basis, simp)
-  by auto
-*)
+proof-
+  assume \<open>inj_option \<pi>\<close> and \<open>inj_option \<rho>\<close>
+  have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+         = (classical_operator (map_comp \<pi> \<rho>)) *\<^sub>v (ket j)\<close>
+    for j
+  proof-
+    have \<open>inj_option (map_comp \<pi> \<rho>)\<close>
+      using  \<open>inj_option \<pi>\<close> \<open>inj_option \<rho>\<close>
+      by simp
+    hence \<open>classical_operator (map_comp \<pi> \<rho>) *\<^sub>v ket j
+         = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
+      by (simp add: classical_operator_basis)
+    moreover have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+         = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
+    proof-
+    have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+          = (classical_operator \<pi>) *\<^sub>v ( (classical_operator \<rho>) *\<^sub>v (ket j) )\<close>
+      by (simp add: times_applyOp)
+    moreover have \<open>(classical_operator \<rho>) *\<^sub>v (ket j) = 
+          (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
+      using \<open>inj_option \<rho>\<close>
+        by (simp add: classical_operator_basis)
+      ultimately have  \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+          = (classical_operator \<pi>) *\<^sub>v ( (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i) )\<close>
+        by simp
+      also have \<open>\<dots> = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
+      proof (induction \<open>\<rho> j\<close>)
+        show "classical_operator \<pi> *\<^sub>v (case \<rho> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a) = (case (\<pi> \<circ>\<^sub>m \<rho>) j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a)"
+          if "None = \<rho> j"
+          using that
+          by (simp add: option.case_eq_if) 
+        show "classical_operator \<pi> *\<^sub>v (case \<rho> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a) = (case (\<pi> \<circ>\<^sub>m \<rho>) j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a)"
+          if "Some p = \<rho> j"
+          for p :: 'a
+          using that
+          by (metis \<open>inj_option \<pi>\<close> classical_operator_basis map_comp_def option.simps(5)) 
+      qed
+      finally show ?thesis by blast
+    qed
+    ultimately show ?thesis by simp
+  qed
+  thus \<open>classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)\<close>
+    using equal_basis by blast
+qed
+
 
 lemma classical_operator_Some[simp]: "classical_operator Some = idOp"
   by (cheat TODO)
@@ -3740,7 +3839,23 @@ next
 qed
 *)
 
+instantiation ell2 :: (enum) basis_enum begin
+definition "canonical_basis_ell2 = map ket Enum.enum"
+definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
+instance
+proof
+  show "distinct (canonical_basis::'a ell2 list)"
+    unfolding distinct_def canonical_basis_ell2_def 
+    apply transfer
+    apply (induction enum_class.enum)    
+    by (cheat ell2_basis_enum)
 
+  show "is_onb (set (canonical_basis::'a ell2 list))"
+    by (cheat ell2_basis_enum)
+  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
+    by (cheat ell2_basis_enum)
+qed
+end
 
 unbundle no_bounded_notation
 
