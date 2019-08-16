@@ -3834,6 +3834,9 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
+lemma ket_distinct:
+\<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
+  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
 
 instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
@@ -3841,9 +3844,27 @@ definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
 instance
 proof
   show "distinct (canonical_basis::'a ell2 list)"
-    apply transfer
-    apply (induction enum_class.enum)    
-    sorry
+    unfolding distinct_def 
+  proof (rule list.induct)
+    show "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) []"
+      by simp
+
+    show "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) (x1 # x2)"
+      if "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) x2"
+      for x1 :: "'a ell2"
+        and x2 :: "'a ell2 list"
+    proof-
+      have \<open>rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) (x1 # x2)
+        = (x1 \<notin> set x2) \<and> (rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) x2)\<close>
+        by (simp add: that)
+      moreover have \<open>x1 \<notin> set x2\<close>
+        using ket_distinct
+        sorry
+      ultimately show ?thesis 
+        using that
+        by auto
+    qed
+  qed
 
   show "is_onb (set (canonical_basis::'a ell2 list))"
     by (cheat ell2_basis_enum)
