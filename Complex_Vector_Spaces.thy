@@ -1954,13 +1954,14 @@ instance
   by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
 end
 
-instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
-lift_definition zero_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
+instantiation linear_space :: ("{complex_vector,t1_space}") bot begin
+lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
   by simp
 instance..
 end
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = 0" for S :: "_ linear_space"
+
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = bot" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   unfolding closed_subspace_def
   by (simp add: complex_vector.linear_subspace_image complex_vector.module_hom_zero complex_vector.subspace_0)
@@ -1993,15 +1994,6 @@ qed
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
   apply transfer
   by (simp add: subspace_scale_invariant) 
-
-
-instantiation linear_space :: ("{complex_vector,t1_space}") "bot"
-begin
-lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
-  by simp
-
-instance ..
-end
 
 instantiation linear_space :: ("{complex_vector,topological_space}") "top"
 begin
