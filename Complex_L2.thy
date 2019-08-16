@@ -3841,13 +3841,13 @@ definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
 instance
 proof
   show "distinct (canonical_basis::'a ell2 list)"
-    unfolding distinct_def canonical_basis_ell2_def 
     apply transfer
     apply (induction enum_class.enum)    
-    by (cheat ell2_basis_enum)
+    sorry
 
   show "is_onb (set (canonical_basis::'a ell2 list))"
     by (cheat ell2_basis_enum)
+
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     by (cheat ell2_basis_enum)
 qed

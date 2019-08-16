@@ -2984,7 +2984,7 @@ lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_s
 instance..
 end
 
-lemma linear_space_zero_not_top[simp]: "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+lemma linear_space_zero_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
 proof-
   have \<open>\<exists> x::'a. x \<noteq> 0\<close>
     using not_singleton_existence
@@ -3005,11 +3005,6 @@ instance apply intro_classes
   apply transfer 
   using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 by blast 
 end
-
-lemma linear_space_zero_bot: "(0::_ linear_space) = bot"
-  unfolding zero_linear_space_def bot_linear_space_def 
-  by (simp add: bot_linear_space.abs_eq)
-
 
 instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
 instance apply intro_classes
@@ -3168,8 +3163,8 @@ end
 
 
 lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
-  by (metis linear_space_zero_bot linear_space_zero_not_top) 
-
+  by (metis linear_space_zero_not_top)
+  
 lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
 lemma span_superset:
