@@ -3859,10 +3859,13 @@ setup \<open>Sign.add_const_constraint
 
 class basis_enum = complex_inner +
   fixes canonical_basis :: "'a list"
-  fixes canonical_basis_length :: "'a itself \<Rightarrow> nat"
-  assumes "distinct canonical_basis"
-  assumes "is_onb (set canonical_basis)"
-  assumes "canonical_basis_length TYPE('a) = length canonical_basis"
+    and canonical_basis_length :: "'a itself \<Rightarrow> nat"
+  assumes distinct_canonical_basis:
+     "distinct canonical_basis"
+  and is_onb_set:
+    "is_onb (set canonical_basis)"
+  and canonical_basis_length_eq:
+    "canonical_basis_length TYPE('a) = length canonical_basis"
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::chilbert_space set \<Rightarrow> bool\<close>)\<close>
@@ -3875,37 +3878,27 @@ instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
 definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
 instance
-proof
-  show "distinct (canonical_basis::'a ell2 list)"
-    unfolding distinct_def 
-  proof (rule list.induct)
-    show "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) []"
-      by simp
-
-    show "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) (x1 # x2)"
-      if "rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) x2"
-      for x1 :: "'a ell2"
-        and x2 :: "'a ell2 list"
+  proof
+    show "distinct (canonical_basis::'a ell2 list)"
     proof-
-      have \<open>rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) (x1 # x2)
-        = (x1 \<notin> set x2) \<and> (rec_list True (\<lambda>x xs. (\<and>) ((x::'a ell2) \<notin> set xs)) x2)\<close>
-        by (simp add: that)
-      moreover have \<open>x1 \<notin> set x2\<close>
-        using ket_distinct
-        sorry
-      ultimately show ?thesis 
-        using that
-        by auto
+      have \<open>finite (UNIV::'a set)\<close>
+        by simp
+      have \<open>distinct (enum_class.enum::'a list)\<close>
+        using enum_distinct by blast
+      moreover have \<open>inj_on ket (set enum_class.enum)\<close>
+        by (meson inj_onI ket_distinct)        
+      ultimately show ?thesis
+        unfolding canonical_basis_ell2_def
+        using distinct_map
+        by blast
     qed
-  qed
-
   show "is_onb (set (canonical_basis::'a ell2 list))"
-    by (cheat ell2_basis_enum)
-
+    sorry
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
-     = length (canonical_basis::'a ell2 list)"
-    by (cheat ell2_basis_enum)
+       = length (canonical_basis::'a ell2 list)"
+     sorry
 qed
+
 end
 
 unbundle no_bounded_notation
