@@ -2751,7 +2751,7 @@ proof
       for x :: "'a ell2"
     proof-
       have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
-        sorry
+        by (cheat ket_ell2_span)
       thus ?thesis using nsclosure_iff
         by blast
     qed
@@ -2788,7 +2788,7 @@ lemma sesquilinear_superposition:
 assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
 and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
 shows \<open>B x y = 0\<close>
-  sorry
+  by (cheat ket_ell2_span)
 
 lemma bounded_sesquilinear_continuous:
   assumes \<open>bounded_sesquilinear B\<close>

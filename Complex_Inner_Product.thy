@@ -3018,6 +3018,8 @@ instance apply intro_classes
   apply transfer by simp
 end
 
+(* TODO: this is a duplicate. We have it as "sup_commute" after the instantiation below *)
+thm sup_commute
 lemma sup_comm_linear_space:
   \<open>sup y x = sup x y\<close>
       for x :: "'a::chilbert_space linear_space"
