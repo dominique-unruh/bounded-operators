@@ -2282,6 +2282,13 @@ lemma bounded_sesquilinear_diff:
   qed
 qed
 
+section \<open>Unsorted\<close>
+
+definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
+  where \<open>is_basis S = (
+  \<not>(complex_vector.dependent S) \<and>
+  closure (complex_vector.span S) = UNIV
+)\<close>
 
 
 end

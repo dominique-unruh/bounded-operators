@@ -582,11 +582,11 @@ subsection \<open>Orthogonality\<close>
 definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. \<langle> x, y \<rangle> = 0}" 
 
 lemma orthogonal_complement_D1:
-\<open>x \<in> orthogonal_complement M \<Longrightarrow> y \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+  \<open>x \<in> orthogonal_complement M \<Longrightarrow> y \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
   unfolding orthogonal_complement_def by auto
 
 lemma orthogonal_complement_D2:
-\<open>x \<in> M \<Longrightarrow> y \<in> orthogonal_complement M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+  \<open>x \<in> M \<Longrightarrow> y \<in> orthogonal_complement M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
 proof-
   assume \<open>x \<in> M\<close> and \<open>y \<in> orthogonal_complement M\<close>
   hence \<open>\<langle> y, x \<rangle> = 0\<close>
@@ -600,12 +600,12 @@ proof-
 qed
 
 lemma orthogonal_complement_I2:
-\<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
+  \<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
   unfolding orthogonal_complement_def
   by simp
 
 lemma orthogonal_complement_I1:
-\<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
+  \<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
 proof-
   assume \<open>\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
   have  \<open>x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0\<close>
@@ -621,12 +621,12 @@ proof-
     ultimately show ?thesis by simp 
   qed
   thus \<open>y \<in> orthogonal_complement M\<close> 
-  unfolding orthogonal_complement_def 
-  by auto
+    unfolding orthogonal_complement_def 
+    by auto
 qed
 
 definition is_orthogonal::\<open>'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool\<close>  where
-\<open>is_orthogonal x y \<equiv> ( \<langle> x, y \<rangle> = 0 )\<close>
+  \<open>is_orthogonal x y \<equiv> ( \<langle> x, y \<rangle> = 0 )\<close>
 
 bundle orthogonal_notation begin
 notation is_orthogonal (infixl "\<bottom>" 69)
@@ -890,7 +890,7 @@ proof-
       hence \<open>t \<in> M \<Longrightarrow> \<parallel> k \<parallel>^2 \<le> \<parallel> t \<parallel>^2\<close> for t
         using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> by auto
       thus ?thesis using \<open>k \<in> M\<close>
-         is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
+          is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
         by smt
     qed
     thus ?thesis 
@@ -1032,7 +1032,7 @@ proof-
     ultimately show ?thesis by simp
   qed
   ultimately have \<open>\<exists>! k. is_arg_min norm (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
-      using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> by blast
+    using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> by blast
   have \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
   proof-
     have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
@@ -1334,33 +1334,33 @@ proof-
   have \<open>\<forall> h. \<exists>! k.  is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
     by (simp add: existence_uniqueness_min_dist \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
-proof - (* sledgehammer *)
-{ fix aa :: 'a and aaa :: "'a \<Rightarrow> 'a"
-  obtain aab :: "'a \<Rightarrow> 'a" where
-ff1: "\<And>a aa. is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) (aab a) \<and> (\<not> is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) aa \<or> aa = aab a)"
-using \<open>\<forall>h. \<exists>!k. is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x \<in> M) k\<close> by moura
-  then have ff2: "\<And>a aa. a \<notin> M \<or> aa - a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<or> a = aab aa"
-    by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
-{ assume "aab aa \<in> M \<and> aaa (aab aa) \<in> M \<and> aaa (aab aa) \<noteq> aab aa"
-then have "\<exists>a. a \<in> M \<and> aa - a \<in> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<and> aa - aaa a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0}"
-  using ff2 ff1 by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
-  then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
-    using orthogonal_complement_def by auto }
-  then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
-    using ff1 assms dist_min_ortho by blast }
-then show ?thesis
-  by (metis (no_types))
-qed
+  proof - (* sledgehammer *)
+    { fix aa :: 'a and aaa :: "'a \<Rightarrow> 'a"
+      obtain aab :: "'a \<Rightarrow> 'a" where
+        ff1: "\<And>a aa. is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) (aab a) \<and> (\<not> is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) aa \<or> aa = aab a)"
+        using \<open>\<forall>h. \<exists>!k. is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x \<in> M) k\<close> by moura
+      then have ff2: "\<And>a aa. a \<notin> M \<or> aa - a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<or> a = aab aa"
+        by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
+      { assume "aab aa \<in> M \<and> aaa (aab aa) \<in> M \<and> aaa (aab aa) \<noteq> aab aa"
+        then have "\<exists>a. a \<in> M \<and> aa - a \<in> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<and> aa - aaa a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0}"
+          using ff2 ff1 by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
+        then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
+          using orthogonal_complement_def by auto }
+      then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
+        using ff1 assms dist_min_ortho by blast }
+    then show ?thesis
+      by (metis (no_types))
+  qed
 
 qed
 
 
 definition is_projection_on::\<open>('a \<Rightarrow> 'a) \<Rightarrow> ('a::complex_inner) set \<Rightarrow> bool\<close> where
- \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M))\<close>
+  \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. ((h - \<pi> h) \<in> (orthogonal_complement M) \<and> \<pi> h \<in> M))\<close>
 
 
 lemma is_projection_on_existence:
-\<open>closed_subspace (M::('a::chilbert_space) set) \<Longrightarrow> \<exists> \<pi>. is_projection_on \<pi> M\<close>
+  \<open>closed_subspace (M::('a::chilbert_space) set) \<Longrightarrow> \<exists> \<pi>. is_projection_on \<pi> M\<close>
   unfolding is_projection_on_def
   using ExistenceUniquenessProj
   by metis
@@ -1378,7 +1378,7 @@ lemma projection_intro1:
   for M :: \<open>('a::chilbert_space) set\<close>
   using is_projection_on_existence  projection_intro1'
   by (metis projection_def someI_ex) 
-  
+
 lemma projection_intro2':
   \<open>is_projection_on \<pi> M \<Longrightarrow> \<pi> h \<in> M\<close>
   by (simp add: is_projection_on_def)
@@ -1414,7 +1414,7 @@ proof-
     from \<open>h - x \<in> orthogonal_complement M\<close>  \<open>h - \<pi> h \<in> orthogonal_complement M\<close>
     have  \<open>(h - \<pi> h) - (h - x) \<in> orthogonal_complement M\<close>
       using \<open>closed_subspace (orthogonal_complement M)\<close>
-     complex_vector.subspace_diff closed_subspace_def by blast
+        complex_vector.subspace_diff closed_subspace_def by blast
     thus ?thesis by simp
   qed
   ultimately have \<open>x - \<pi> h \<in> M \<inter> (orthogonal_complement M)\<close>
@@ -1450,7 +1450,7 @@ lemma projection_fixed_points:
   by (metis is_projection_on_existence projection_intro1 projection_intro2 projection_uniq')
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
- 
+
 proposition projectionPropertiesB':
   includes notation_norm
   fixes M :: \<open>('a::complex_inner) set\<close>
@@ -1494,14 +1494,14 @@ proof-
   hence \<open>complex_vector.subspace (orthogonal_complement M)\<close>
     by (simp add: closed_subspace.subspace)    
   have \<open>\<pi> (c *\<^sub>C x) = c *\<^sub>C (\<pi> x)\<close> for x c
-proof - (* sledgehammer *)
-have f1: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
-  by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
-  then have "c *\<^sub>C x - c *\<^sub>C \<pi> x \<in> orthogonal_complement M"
-    by (metis (no_types) \<open>complex_vector.subspace (orthogonal_complement M)\<close> add_diff_cancel_right' complex_vector.subspace_def diff_add_cancel scaleC_add_right)
-  then show ?thesis
-    using f1 by (meson \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> closed_subspace.subspace complex_vector.subspace_def projection_uniq')
-qed    
+  proof - (* sledgehammer *)
+    have f1: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
+      by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
+    then have "c *\<^sub>C x - c *\<^sub>C \<pi> x \<in> orthogonal_complement M"
+      by (metis (no_types) \<open>complex_vector.subspace (orthogonal_complement M)\<close> add_diff_cancel_right' complex_vector.subspace_def diff_add_cancel scaleC_add_right)
+    then show ?thesis
+      using f1 by (meson \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> closed_subspace.subspace complex_vector.subspace_def projection_uniq')
+  qed    
   moreover have \<open>\<pi> (x + y) =  (\<pi> x) + (\<pi> y)\<close>
     for x y
   proof-
@@ -1572,7 +1572,7 @@ theorem projectionPropertiesA:
 
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
-   
+
 
 proposition projectionPropertiesC':
   \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M \<Longrightarrow> \<pi> \<circ> \<pi> = \<pi>\<close>
@@ -1668,25 +1668,25 @@ proof-
     thus ?thesis by blast
   qed
   ultimately show ?thesis
-proof - (* sledgehammer *)
-obtain aa :: "'a set \<Rightarrow> 'a" where
-  "\<forall>x0. (\<exists>v1. v1 \<in> x0 \<and> (\<exists>v2. v2 \<in> x0 \<and> v1 + v2 \<notin> x0)) = (aa x0 \<in> x0 \<and> (\<exists>v2. v2 \<in> x0 \<and> aa x0 + v2 \<notin> x0))"
-  by moura
-then obtain aaa :: "'a set \<Rightarrow> 'a" where
-  f1: "\<forall>A. (\<exists>a. a \<in> A \<and> (\<exists>aa. aa \<in> A \<and> a + aa \<notin> A)) = (aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A)"
-  by (metis (full_types))
-  obtain aab :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
-    "\<forall>x0. (\<exists>v1 v2. v2 \<in> x0 \<and> v1 *\<^sub>C v2 \<notin> x0) = (aab x0 \<in> x0 \<and> cc x0 *\<^sub>C aab x0 \<notin> x0)"
-    by moura
-  then have f2: "\<forall>A. (\<not> complex_vector.subspace A \<or> 0 \<in> A \<and> (\<forall>a. a \<notin> A \<or> (\<forall>aa. aa \<notin> A \<or> a + aa \<in> A)) \<and> (\<forall>c a. a \<notin> A \<or> c *\<^sub>C a \<in> A)) \<and> (complex_vector.subspace A \<or> 0 \<notin> A \<or> aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A \<or> aab A \<in> A \<and> cc A *\<^sub>C aab A \<notin> A)"
-    using f1 by (metis (no_types) complex_vector.subspace_def)
-  have f3: "f -` {b. b = 0 \<or> b \<in> {}} = {a. f a = 0}"
-    by blast
-  have "closed_subspace {a. f a = 0}"
-    using f2 by (metis \<open>0 \<in> {x. f x = 0}\<close> \<open>\<And>t c. t \<in> {x. f x = 0} \<Longrightarrow> c *\<^sub>C t \<in> {x. f x = 0}\<close> \<open>\<And>v u. \<lbrakk>u \<in> {x. f x = 0}; v \<in> {x. f x = 0}\<rbrakk> \<Longrightarrow> u + v \<in> {x. f x = 0}\<close> \<open>closed {x. f x = 0}\<close> closed_subspace.intro)
-  then show ?thesis
-    using f3 by auto
-qed
+  proof - (* sledgehammer *)
+    obtain aa :: "'a set \<Rightarrow> 'a" where
+      "\<forall>x0. (\<exists>v1. v1 \<in> x0 \<and> (\<exists>v2. v2 \<in> x0 \<and> v1 + v2 \<notin> x0)) = (aa x0 \<in> x0 \<and> (\<exists>v2. v2 \<in> x0 \<and> aa x0 + v2 \<notin> x0))"
+      by moura
+    then obtain aaa :: "'a set \<Rightarrow> 'a" where
+      f1: "\<forall>A. (\<exists>a. a \<in> A \<and> (\<exists>aa. aa \<in> A \<and> a + aa \<notin> A)) = (aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A)"
+      by (metis (full_types))
+    obtain aab :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
+      "\<forall>x0. (\<exists>v1 v2. v2 \<in> x0 \<and> v1 *\<^sub>C v2 \<notin> x0) = (aab x0 \<in> x0 \<and> cc x0 *\<^sub>C aab x0 \<notin> x0)"
+      by moura
+    then have f2: "\<forall>A. (\<not> complex_vector.subspace A \<or> 0 \<in> A \<and> (\<forall>a. a \<notin> A \<or> (\<forall>aa. aa \<notin> A \<or> a + aa \<in> A)) \<and> (\<forall>c a. a \<notin> A \<or> c *\<^sub>C a \<in> A)) \<and> (complex_vector.subspace A \<or> 0 \<notin> A \<or> aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A \<or> aab A \<in> A \<and> cc A *\<^sub>C aab A \<notin> A)"
+      using f1 by (metis (no_types) complex_vector.subspace_def)
+    have f3: "f -` {b. b = 0 \<or> b \<in> {}} = {a. f a = 0}"
+      by blast
+    have "closed_subspace {a. f a = 0}"
+      using f2 by (metis \<open>0 \<in> {x. f x = 0}\<close> \<open>\<And>t c. t \<in> {x. f x = 0} \<Longrightarrow> c *\<^sub>C t \<in> {x. f x = 0}\<close> \<open>\<And>v u. \<lbrakk>u \<in> {x. f x = 0}; v \<in> {x. f x = 0}\<rbrakk> \<Longrightarrow> u + v \<in> {x. f x = 0}\<close> \<open>closed {x. f x = 0}\<close> closed_subspace.intro)
+    then show ?thesis
+      using f3 by auto
+  qed
 
 qed
 
@@ -1713,7 +1713,7 @@ proof-
     qed      
     hence \<open>x \<in> (\<pi> -` {0})\<close>
       by simp
-      
+
     thus ?thesis
       by simp
   qed
@@ -1874,13 +1874,13 @@ qed
 \<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
 lemma ProjOntoOrtho:
   \<open>closed_subspace M  \<Longrightarrow> id - projection M = projection (orthogonal_complement M)\<close>
-    for M :: \<open>('a::chilbert_space) set\<close>
+  for M :: \<open>('a::chilbert_space) set\<close>
   using ProjOntoOrtho'
   by (metis is_projection_on_def projection_intro1 projection_intro2 subspace_orthog)
 
 \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close>
 theorem orthogonal_complement_twice:
- "closed_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
+  "closed_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
   for M :: \<open>('a::chilbert_space) set\<close>
 proof-
   assume \<open>closed_subspace M\<close>
@@ -2481,7 +2481,7 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
     using  \<open>bounded_clinear G\<close>
     unfolding bounded_clinear_def
     by simp
-    
+
   define g :: \<open>'a \<Rightarrow> ('b \<Rightarrow> complex)\<close> where
     \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
   have \<open>bounded_clinear (g x)\<close>
@@ -2662,7 +2662,7 @@ end
 proposition dagger_dagger_id:
   \<open>bounded_clinear U \<Longrightarrow> U\<^sup>\<dagger>\<^sup>\<dagger> = U\<close>
   for U :: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  proof
+proof
   show "(U\<^sup>\<dagger>\<^sup>\<dagger>) x = U x"
     if "bounded_clinear U"
     for x :: 'a
@@ -2705,9 +2705,9 @@ proof-
 qed
 
 lemma scalar_times_adjc_flatten:
-fixes A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-assumes \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
-shows \<open>(\<lambda> t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
+  fixes A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  assumes \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
+  shows \<open>(\<lambda> t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
 proof-
   from \<open>bounded_linear A\<close>
   have \<open>bounded_linear (\<lambda> t. a *\<^sub>C (A t))\<close>
@@ -2862,7 +2862,7 @@ proof -
     by (simp add: Setcompr_eq_image complex_vector.linear_subspace_image)
   thus \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
     apply (rule_tac closed_subspace.intro)
-    apply (simp add: subspace_cl)
+     apply (simp add: subspace_cl)
     by simp
 qed
 
@@ -2885,21 +2885,21 @@ lemma linear_space_ortho_ortho:
 lemma bot_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
   shows  "(bot::'a linear_space) \<le> a"
-    apply transfer
+  apply transfer
   using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
 
 lemma top_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
   shows  "(a::'a linear_space) \<le> top"
-    apply transfer
-    by simp 
+  apply transfer
+  by simp 
 
 
 instantiation linear_space :: (complex_inner) "Sup"
 begin
 lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
   is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
-  proof
+proof
   show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
@@ -2923,8 +2923,8 @@ subclass (in card2) not_singleton
   by (meson card_2_exists ex_card) 
 
 lemma not_singleton_existence[simp]:
-\<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
-  proof (rule classical)
+  \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
+proof (rule classical)
   show "\<exists>x. (x::'a) \<noteq> t"
     if "\<nexists>x. (x::'a) \<noteq> t"
   proof-
@@ -2971,7 +2971,7 @@ proof-
     using not_singleton_existence
     by auto
   thus ?thesis 
-  apply transfer
+    apply transfer
     unfolding UNIV_def
     by blast
 qed
@@ -2996,8 +2996,8 @@ end
 
 lemma sup_comm_linear_space:
   \<open>sup y x = sup x y\<close>
-      for x :: "'a::chilbert_space linear_space"
-        and y :: "'a linear_space"
+  for x :: "'a::chilbert_space linear_space"
+    and y :: "'a linear_space"
   apply transfer
   by (simp add: is_closed_subspace_comm)
 
@@ -3145,7 +3145,7 @@ end
 
 lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
   by (metis linear_space_zero_not_top)
-  
+
 lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
 lemma span_superset:
@@ -3333,7 +3333,7 @@ proof
     apply transfer
     by simp
 qed
-(* TODO: 
+  (* TODO: 
 Dominique: move to Complex_Vector_Spaces
 Jose: Do you meant Complex_Inner_Product? The function "-"
 is defined using the inner product.
@@ -3342,7 +3342,7 @@ is defined using the inner product.
 
 lemma top_plus[simp]: "sup top  x = top" for x :: "'a::chilbert_space linear_space"
   by simp
-  
+
 lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_space"
   by simp
 
@@ -3351,12 +3351,453 @@ lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
 
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
-\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+  \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
   by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
-\<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+  \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
   by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
+
+section \<open>Unsorted\<close>
+
+text \<open>Orthogonal set\<close>
+definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
+  \<open>is_ortho_set S = (\<forall> x \<in> S. \<forall> y \<in> S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
+
+
+text \<open>Orthonormal basis\<close>
+definition is_onb :: "'a::complex_inner set \<Rightarrow> bool" 
+  where "is_onb S  = (
+  is_ortho_set S \<and> 
+  is_basis S \<and>
+  S \<subseteq> sphere 0 1
+)"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+class basis_enum = complex_inner +
+  fixes canonical_basis :: "'a list"
+    and canonical_basis_length :: "'a itself \<Rightarrow> nat"
+  assumes distinct_canonical_basis:
+    "distinct canonical_basis"
+    and is_onb_set:
+    "is_onb (set canonical_basis)"
+    and canonical_basis_length_eq:
+    "canonical_basis_length TYPE('a) = length canonical_basis"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
+
+
+lemma bounded_sesquilinear_0_left: 
+  assumes \<open>bounded_sesquilinear B\<close>
+  shows \<open>B 0 y = 0\<close>
+proof-
+  have \<open>B 0 y = B (0 + 0) y\<close>
+    by simp
+  also have \<open>\<dots> = B 0 y + B 0 y\<close>
+    using assms bounded_sesquilinear.add_left by blast
+  finally have \<open>B 0 y = B 0 y + B 0 y\<close>
+    by blast
+  thus ?thesis by simp
+qed
+
+lemma sesquilinear_finite_sum_induction:
+  assumes \<open>bounded_sesquilinear B\<close>
+  shows \<open>\<forall> t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+proof (induction n)
+  show "\<forall>t. finite t \<and> card t = 0 \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+  proof
+    show "finite t \<and> card t = 0 \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+      for t :: "'a set"
+    proof
+      show "B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+        if "finite t \<and> card t = 0"
+        using that proof
+        show "B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+          if "finite t"
+            and "card t = 0"
+        proof-
+          have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = 0\<close>
+            using card_0_eq sum_clauses(1) that(1) that(2) by blast
+          hence \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B 0 y\<close>
+            by simp
+          also have \<open>B 0 y = 0\<close>
+            using bounded_sesquilinear_0_left \<open>bounded_sesquilinear B\<close> by blast
+          finally have \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = 0\<close>
+            by blast
+          moreover have \<open>(\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y) = 0\<close>
+            using card_0_eq sum_clauses(1) that(1) that(2) by blast
+          ultimately show ?thesis by simp
+        qed
+      qed
+    qed
+  qed
+  show "\<forall>t. finite t \<and> card t = Suc n \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+    if "\<forall>t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)"
+    for n :: nat
+  proof-
+    have \<open>finite t \<Longrightarrow> card t = Suc n \<Longrightarrow> B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+      for t
+    proof-
+      assume \<open>finite t\<close> and \<open>card t = Suc n\<close>
+      hence \<open>\<exists> k s. finite s \<and> card s = n \<and> insert k s = t\<close>
+        by (metis card_Suc_eq finite_insert)
+      then obtain k s where \<open>finite s\<close> and \<open>card s = n\<close> and \<open>insert k s = t\<close>
+        by blast
+      have \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B (\<Sum>a\<in>s. r a *\<^sub>C a) y +  cnj (r k) *\<^sub>C B k y\<close>
+      proof-
+        have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>s. r a *\<^sub>C a) +  r k *\<^sub>C k\<close>
+        proof -
+          have "card (insert k s) = Suc n"
+            by (metis \<open>card t = Suc n\<close> \<open>insert k s = t\<close>)
+          then have "k \<notin> s"
+            by (metis \<open>card s = n\<close> \<open>finite s\<close> card_insert_if n_not_Suc_n)
+          then show ?thesis
+            using \<open>finite s\<close> \<open>insert k s = t\<close> by auto
+        qed
+        hence \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B (\<Sum>a\<in>s. r a *\<^sub>C a) y + B (r k *\<^sub>C k) y\<close>
+          by (simp add: assms bounded_sesquilinear.add_left)
+        thus ?thesis
+          by (simp add: assms bounded_sesquilinear.scaleC_left) 
+      qed
+      moreover have \<open>(\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y) = (\<Sum>a\<in>s. cnj (r a) *\<^sub>C B a y) +  cnj (r k) *\<^sub>C B k y\<close>
+        by (metis (no_types, lifting) \<open>card s = n\<close> \<open>card t = Suc n\<close> \<open>finite s\<close> \<open>insert k s = t\<close> add.commute card_insert_if n_not_Suc_n sum.insert)
+      moreover have \<open>B (\<Sum>a\<in>s. r a *\<^sub>C a) y = (\<Sum>a\<in>s. cnj (r a) *\<^sub>C B a y)\<close>
+        using \<open>card s = n\<close> \<open>finite s\<close> that by auto        
+      ultimately show ?thesis by simp
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+lemma sesquilinear_finite_sum:                     
+  assumes \<open>bounded_sesquilinear B\<close> and \<open>finite t\<close>
+  shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+  by (simp add: sesquilinear_finite_sum_induction assms(1) assms(2))
+
+lemma sesquilinear_superposition:
+  assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
+    and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
+  shows \<open>B x y = 0\<close>
+proof-
+  have \<open>y \<in> complex_vector.span S_right \<Longrightarrow> \<forall> p \<in> S_left. B p y = 0\<close>
+    for y
+  proof (rule complex_vector.span_induct)
+    show "(0::'c) \<in> complex_vector.span {0}"
+      if "y \<in> complex_vector.span S_right"
+      by auto
+    show "complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}"
+      if "y \<in> complex_vector.span S_right"
+      unfolding complex_vector.subspace_def
+    proof
+      show "0 \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+      proof-
+        have \<open>p\<in>S_left \<Longrightarrow> B p y = 0\<close>
+          for p
+        proof-
+          assume \<open>p\<in>S_left\<close>
+          moreover have \<open>t \<in> complex_vector.span S_right \<Longrightarrow> B p t = 0\<close>
+            for t
+          proof (rule complex_vector.span_induct)
+            show "(0::'c) \<in> complex_vector.span {0}"
+              if "t \<in> complex_vector.span S_right"
+              by auto
+            show "complex_vector.subspace {a. B p t = a}"
+              if "t \<in> complex_vector.span S_right"
+              unfolding complex_vector.subspace_def
+            proof
+              show "0 \<in> Collect ((=) (B p t))"
+              proof -
+                have "clinear (B p)"
+                  by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
+                then have "B p t = 0"
+                  using assms(2) calculation complex_vector.linear_eq_0_on_span that by fastforce
+                then show ?thesis
+                  by (metis (full_types) mem_Collect_eq)
+              qed
+              show "(\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t)))
+           \<and> (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t)))"
+              proof
+                show "\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))"
+                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+                show "\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t))"
+                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+              qed
+            qed
+            show "B p t = x"
+              if "t \<in> complex_vector.span S_right"
+                and "(x::'c) \<in> {0}"
+              for x :: 'c
+              using that
+              using \<open>t \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. B p t = a}\<close> complex_vector.subspace_0 by blast 
+          qed
+          ultimately show ?thesis
+            by (simp add: that) 
+        qed
+        thus ?thesis
+          by simp
+      qed
+      show "(\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a})
+   \<and> (\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a})"
+      proof
+        show "\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+          using \<open>0 \<in> {a. \<forall>p\<in>S_left. B p y = a}\<close> by auto      
+        show "\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+          using \<open>0 \<in> {a. \<forall>p\<in>S_left. B p y = a}\<close> by auto      
+      qed
+    qed
+    show "\<forall>p\<in>S_left. B p y = x"
+      if "y \<in> complex_vector.span S_right"
+        and "(x::'c) \<in> {0}"
+      for x :: 'c
+      using that \<open>y \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}\<close> complex_vector.subspace_0 by blast 
+  qed
+  hence \<open>\<forall> y \<in> complex_vector.span S_right. \<forall> p \<in> S_left. B p y = 0\<close>
+    by blast
+  hence \<open>\<forall> p \<in> S_left. \<forall> y \<in> complex_vector.span S_right. B p y = 0\<close>
+    by blast
+  have "B p y = 0"
+    if "p \<in> complex_vector.span S_left"
+      and "y \<in> complex_vector.span S_right"
+    for y and p
+  proof-
+    have \<open>\<exists> t r. finite t \<and> t \<subseteq> S_left \<and> p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
+      using complex_vector.span_explicit
+      by (smt mem_Collect_eq that(1)) 
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> S_left\<close> and \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
+      by blast
+    have \<open>B p y = B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y\<close>
+      using \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
+      using sesquilinear_finite_sum \<open>bounded_sesquilinear B\<close> \<open>finite t\<close>
+      by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C 0)\<close>
+      using  \<open>t \<subseteq> S_left\<close> \<open>\<And>y. y \<in> complex_vector.span S_right \<Longrightarrow> \<forall>p\<in>S_left. B p y = 0\<close>
+        in_mono that(2) by fastforce
+    also have \<open>\<dots> = (\<Sum>a\<in>t. 0)\<close>
+      by simp
+    also have \<open>\<dots> = 0\<close>
+      by simp
+    finally show ?thesis
+      by blast
+  qed
+  thus ?thesis
+    by (simp add: assms(3) assms(4))        
+qed
+
+lemma bounded_sesquilinear_continuous:
+  assumes \<open>bounded_sesquilinear B\<close>
+    and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
+  shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+proof-
+  have \<open>B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
+    for p q
+  proof-
+    have \<open>B (x - p) (y - q) = B x y - B x q - B p y + B p q\<close>
+      using \<open>bounded_sesquilinear B\<close>
+      by (smt add.assoc add.commute add_left_imp_eq bounded_sesquilinear.add_left bounded_sesquilinear.add_right diff_add_cancel)
+    thus ?thesis by auto
+  qed
+  hence \<open>\<forall> p q. B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
+    by blast
+  hence \<open>\<forall> p q. (*f2* B) (star_of x) (star_of y) = (*f2* B) (star_of x - p) (star_of y - q)
+     + ((*f2* B) (star_of x) q - (*f2* B) p q)
+     + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+    by StarDef.transfer
+  hence \<open>(*f2* B) (star_of x) (star_of y) \<approx>
+     (*f2* B) (star_of x - p) (star_of y - q)
+   + ((*f2* B) (star_of x) q - (*f2* B) p q)
+   + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+    for p q
+    by auto
+  moreover have \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close>
+  proof-
+    have \<open>\<exists> K. \<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
+      using assms(1) bounded_sesquilinear.bounded by blast
+    then obtain K where \<open>\<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
+      by blast
+    hence  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) (star_of y - q))
+         \<le> hnorm (star_of x - p) * hnorm (star_of y - q) * (star_of K)\<close>
+      by StarDef.transfer
+    hence \<open>hnorm ((*f2* B) (star_of x - u) (star_of y - v)) 
+      \<le> hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K)\<close>
+      by blast
+    moreover have \<open>hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff Infinitesimal_mult Infinitesimal_star_of_mult assms(2) assms(3))
+    ultimately show ?thesis
+      using hnorm_le_Infinitesimal mem_infmal_iff by blast 
+  qed
+  moreover have \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close>
+  proof-
+    have \<open>(*f2* B) (star_of x) v - (*f2* B) u v
+        = (*f2* B) (star_of x - u) v\<close>
+    proof-
+      have \<open>\<forall> p q. B x q - B p q = B (x - p) q\<close>
+        by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_left eq_diff_eq)
+      hence \<open>\<forall> p q. (*f2* B) (star_of x) q - (*f2* B) p q = (*f2* B) (star_of x - p) q\<close>
+        by StarDef.transfer
+      thus ?thesis by blast
+    qed
+    moreover have \<open>(*f2* B) (star_of x - u) v \<approx> 0\<close>
+    proof-
+      have \<open>\<exists> K. \<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+        using assms(1) bounded_sesquilinear.bounded by blast
+      then obtain K where \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+        by blast
+      from  \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
+      have  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) q)
+           \<le> hnorm (star_of x - p) * hnorm q * (star_of K)\<close>
+        by StarDef.transfer
+      hence \<open>hnorm ((*f2* B) (star_of x - u) v)
+           \<le> hnorm (star_of x - u) * hnorm v * (star_of K)\<close>
+        by blast
+      moreover have \<open>hnorm (star_of x - u) * hnorm v * (star_of K) \<in> Infinitesimal\<close>
+      proof-
+        have \<open>hnorm (star_of x - u) \<in> Infinitesimal\<close>
+          by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms(2))
+        moreover have \<open>hnorm v \<in> HFinite\<close>
+          using \<open>star_of y \<approx> v\<close>
+          by (metis HFinite_star_of approx_HFinite approx_hnorm star_of_norm)
+        moreover have \<open>star_of K \<in> HFinite\<close>
+          by auto
+        ultimately show ?thesis
+          using Infinitesimal_HFinite_mult by blast 
+      qed
+      ultimately show ?thesis
+        using hnorm_le_Infinitesimal mem_infmal_iff by blast 
+    qed
+    ultimately show ?thesis by simp
+  qed
+  moreover have \<open>((*f2* B) u (star_of y) - (*f2* B) u v) \<approx> 0\<close>
+  proof-
+    have \<open>\<exists> K. \<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+      using assms(1) bounded_sesquilinear.bounded by blast
+    then obtain K where \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+      by blast
+    from  \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
+    have  \<open>\<forall> p q. hnorm ((*f2* B) p (star_of y - q))
+           \<le> hnorm p * hnorm (star_of y - q) * (star_of K)\<close>
+      by StarDef.transfer
+    hence \<open>hnorm ((*f2* B) u (star_of y - v))
+           \<le> hnorm u * hnorm (star_of y - v) * (star_of K)\<close>
+      by blast
+    moreover have \<open>hnorm u * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
+    proof-
+      have \<open>hnorm (star_of y - v) \<in> Infinitesimal\<close>
+        by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff assms(3))
+      moreover have \<open>hnorm u \<in> HFinite\<close>
+        using \<open>star_of x \<approx> u\<close>
+        by (metis HFinite_star_of approx_HFinite approx_hnorm star_of_norm)
+      moreover have \<open>star_of K \<in> HFinite\<close>
+        by auto
+      ultimately show ?thesis
+        by (meson Infinitesimal_HFinite_mult Infinitesimal_HFinite_mult2 \<open>hnorm (star_of y - v) \<in> Infinitesimal\<close> \<open>hnorm u \<in> HFinite\<close> \<open>hypreal_of_real K \<in> HFinite\<close>)
+    qed
+    ultimately have \<open>(*f2* B) u (star_of y - v) \<in> Infinitesimal\<close>
+      using hnorm_le_Infinitesimal   
+      by blast
+    moreover have \<open>(*f2* B) u (star_of y) - (*f2* B) u v
+        = (*f2* B) u (star_of y - v)\<close>
+    proof-
+      have \<open>\<forall> p q. B p y - B p q = B p (y - q)\<close>
+        by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_right eq_diff_eq)
+      hence \<open>\<forall> p q. (*f2* B) p (star_of y) - (*f2* B) p q = (*f2* B) p (star_of y - q)\<close>
+        by StarDef.transfer
+      thus ?thesis by blast
+    qed
+    ultimately show ?thesis
+      by (simp add: mem_infmal_iff) 
+  qed
+  ultimately show \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+  proof -
+    have f1: "monad ((*f2* B) (star_of x) (star_of y)) = monad ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v) + ((*f2* B) u (star_of y) - (*f2* B) u v) + (*f2* B) u v)"
+      by (meson \<open>\<And>q p. (*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) (star_of x - p) (star_of y - q) + ((*f2* B) (star_of x) q - (*f2* B) p q) + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close> approx_monad_iff)
+    have "(0::'c star) \<in> monad 0"
+      by (meson Infinitesimal_monad_zero_iff Infinitesimal_zero)
+    then have "monad ((*f2* B) u v + ((*f2* B) u (star_of y) - (*f2* B) u v + ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v)))) = monad ((*f2* B) u v)"
+      by (meson Infinitesimal_add Infinitesimal_monad_eq Infinitesimal_monad_zero_iff \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close> \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close> \<open>(*f2* B) u (star_of y) - (*f2* B) u v \<approx> 0\<close> approx_mem_monad_zero approx_sym)
+    then show ?thesis
+      using f1 by (simp add: approx_monad_iff ordered_field_class.sign_simps(2))
+  qed
+qed
+
+
+lemma is_ortho_set_independent:
+  \<open>0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S\<close>
+proof
+  show False
+    if "is_ortho_set S" 
+      and "complex_vector.dependent S"
+      and "0 \<notin> S"
+  proof-
+    have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
+      using complex_vector.dependent_explicit that(2)
+      by blast
+    then obtain t u where \<open>finite t\<close> and \<open>t \<subseteq> S\<close> and \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close> 
+      and \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
+      by blast
+    from \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
+    obtain k where \<open>u k \<noteq> 0\<close> and \<open>k\<in>t\<close>
+      by blast
+    have \<open>\<langle>(\<Sum>i\<in>t. u i *\<^sub>C i), k\<rangle> = (\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
+    proof-
+      have \<open>bounded_sesquilinear cinner\<close>
+        by (simp add: bounded_sesquilinear_cinner)
+      thus ?thesis
+        using \<open>finite t\<close> sesquilinear_finite_sum
+        by blast
+    qed
+    hence \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
+      by (simp add: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close>)
+    moreover have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle> + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
+    proof-
+      have \<open>t = {k} \<union> (t-{k})\<close>
+        using  \<open>k \<in> t\<close>
+        by auto
+      moreover have \<open>{k} \<inter> (t-{k}) = {}\<close>
+        by simp
+      ultimately have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)
+         = (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
+        by (metis (no_types, lifting) Un_upper1 \<open>finite t\<close> add.commute sum.subset_diff)
+      moreover have \<open> (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle>\<close>
+        by simp
+      ultimately show ?thesis by simp
+    qed
+    moreover have \<open>(\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
+    proof-
+      have \<open>i \<in> t-{k} \<Longrightarrow> cnj (u i) *\<^sub>C \<langle>i,k\<rangle> = 0\<close>
+        for i
+      proof-
+        assume \<open>i \<in> t-{k}\<close>
+        hence \<open>\<langle>i,k\<rangle> = 0\<close>
+          by (metis DiffD1 DiffD2 \<open>k \<in> t\<close> \<open>t \<subseteq> S\<close> in_mono is_ortho_set_def singletonI that(1))
+        thus ?thesis
+          by simp 
+      qed
+      thus ?thesis
+        by (meson sum.not_neutral_contains_not_neutral) 
+    qed
+    ultimately have \<open>cnj (u k) *\<^sub>C \<langle>k,k\<rangle> = 0\<close>
+      by simp
+    moreover have \<open>\<langle>k,k\<rangle> \<noteq> 0\<close>
+    proof-
+      have \<open>0 \<notin> t\<close>
+        using \<open>0 \<notin> S\<close> \<open>t \<subseteq> S\<close> by auto
+      hence \<open>k \<noteq> 0\<close>
+        using \<open>k \<in> t\<close>
+        by blast
+      thus ?thesis
+        by simp 
+    qed
+    ultimately have \<open>cnj (u k) = 0\<close>
+      by auto
+    hence \<open>u k = 0\<close>
+      by auto
+    thus ?thesis using \<open>u k \<noteq> 0\<close> by blast
+  qed
+qed
 
 
 end
