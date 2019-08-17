@@ -19,8 +19,22 @@ val all_oracles_of =
             in (x', seen') end)
     and collect (PBody {oracles, thms, ...}) seen = case collect_inner thms seen of (x,seen) => 
             (if null oracles then x else oracles :: x, seen)
-  in fn body => unions_oracles (#1 (collect body ([], Inttab.empty))) end;
+    and collect_many [] seen = seen
+      | collect_many (body::bodies) seen = collect_many bodies (collect body seen)
+  in fn bodies => unions_oracles (#1 (collect_many bodies ([], Inttab.empty))) end;
 (* END reimplementation *)
+
+fun all_axclass_oracles ctxt =
+  let val sort_algebra = Proof_Context.tsig_of ctxt |> Type.rep_tsig |> #classes |> snd |> Sorts.dest_algebra []
+      val thy = Proof_Context.theory_of ctxt
+      val classrels = sort_algebra |> #classrel |> map (fn (cl1,cls2) => map (fn cl2 => (cl1,cl2)) cls2) |> List.concat
+      val classrel_proofs = classrels |> map (Proofterm.classrel_proof thy)
+      val arity_proofs = sort_algebra |> #arities |> map (fn arity => Proofterm.arity_proof thy arity handle ERROR _ => MinProof)
+      val proofs = classrel_proofs @ arity_proofs |> map Proofterm.approximate_proof_body
+  in
+    all_oracles_of proofs
+  end
+
 
 val _ = if !Proofterm.proofs < 1 then 
   (Proofterm.proofs := 1; tracing "Need Proofterm.proofs >= 1 for Extended_Sorry.thy") else () 
@@ -65,13 +79,12 @@ fun marked_sorry_tac ctxt loc = SUBGOAL (fn (goal,i) => let
   end) 
  *)
 
-fun show_oracles_lines thm = let
-  val known_oracles = thm |> Thm.theory_of_thm |> Proof_Context.init_global
+fun show_oracles_lines_generic inwhere ctxt oracles = let
+  val known_oracles = ctxt
                           |> Thm.extern_oracles false |> map (fn (m as (_,props),name) => 
                               (Properties.get props "name" |> the,
                                Markup.markup m name))
                           |> Symtab.make
-  val oracles = thm |> Thm.proof_body_of |> all_oracles_of
   fun show ("Extended_Sorry.sorry_marker_oracle",t) = let
         val (ser,t) = case t of \<^const>\<open>sorry_marker\<close> $ n $ t => (HOLogic.dest_number n |> snd, t)
                           | t => raise (TERM ("show_oracles", [t]))
@@ -82,9 +95,39 @@ fun show_oracles_lines thm = let
       in "  cheat method: " ^ comment ^ Position.here pos ^ " (" ^ goal ^ ")" end
     | show (name,_) = "  " ^ (Symtab.lookup known_oracles name |> the)
   in
-    "Oracles used in theorem:" :: (map show oracles)
+    "Oracles used in " ^ inwhere ^ ":" :: (map show oracles)
   end
 
-val show_oracles = Output.writelns o map (fn s => s^"\n") o show_oracles_lines
+fun show_oracles_lines ctxt thms = let
+  (* val ctxt = thm |> Thm.theory_of_thm |> Proof_Context.init_global *)
+  val oracles = thms |> map Thm.proof_body_of |> all_oracles_of
+  val inwhere = if length thms = 1 then "theorem" else "theorems"
+in show_oracles_lines_generic inwhere ctxt oracles end
+
+fun show_axclass_oracles_lines ctxt = let
+  val oracles = all_axclass_oracles ctxt
+in show_oracles_lines_generic "type classes" ctxt oracles end
+
+
+fun show_oracles ctxt thms = show_oracles_lines ctxt thms |> map (fn s => s^"\n") |> Output.writelns
+val show_axclass_oracles = Output.writelns o map (fn s => s^"\n") o show_axclass_oracles_lines
+
+fun show_oracles_cmd thms = Toplevel.keep (fn state => 
+  let val ctxt = Toplevel.context_of state 
+      val thms = Attrib.eval_thms ctxt thms
+  in show_oracles ctxt thms end)
+
+val show_axclass_oracles_cmd = Toplevel.keep (fn state => 
+  let val ctxt = Toplevel.context_of state 
+  in show_axclass_oracles ctxt end)
+
+val _ =
+  Outer_Syntax.command \<^command_keyword>\<open>print_oracles\<close> "print oracles using in proving the theorem"
+    (Parse.thms1 >> show_oracles_cmd)
+
+val _ =
+  Outer_Syntax.command \<^command_keyword>\<open>print_instance_oracles\<close> "print oracles using in proving type class instantiations etc."
+    (Scan.succeed show_axclass_oracles_cmd)
+
 
 end

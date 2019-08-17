@@ -1,5 +1,5 @@
 theory Unobtrusive_NSA
-  imports "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
+  imports "HOL-Nonstandard_Analysis.Nonstandard_Analysis" Extended_Sorry
 begin
 
 text \<open>

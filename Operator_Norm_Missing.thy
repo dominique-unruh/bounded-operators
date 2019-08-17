@@ -13,6 +13,7 @@ theory Operator_Norm_Missing
     "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
     "HOL-ex.Sketch_and_Explore"
+    Extended_Sorry
 begin
 
 section \<open>Sets defined using the norms\<close>

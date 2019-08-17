@@ -7,7 +7,7 @@ Authors:
 
 
 theory Ordered_Fields
-  imports Complex_Main
+  imports Complex_Main Extended_Sorry
 begin
 
 subsection \<open>Missing from Orderings.thy\<close>

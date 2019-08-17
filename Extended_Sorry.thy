@@ -1,5 +1,6 @@
 theory Extended_Sorry
   imports Main
+  keywords "print_oracles" "print_instance_oracles" :: diag
 begin
 
 definition sorry_marker :: "int \<Rightarrow> prop \<Rightarrow> prop" where "sorry_marker n P == P"
