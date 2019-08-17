@@ -3834,6 +3834,39 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
+section \<open>Enum\<close>
+
+text \<open>Orthogonal set\<close>
+definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
+ \<open>is_ortho_set S = (\<forall> x \<in> S. \<forall> y \<in> S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
+
+definition is_basis :: "'a::complex_inner set \<Rightarrow> bool" 
+  where \<open>is_basis S = (
+  \<not>(complex_vector.dependent S) \<and>
+  closure (complex_vector.span S) = UNIV
+)\<close>
+
+text \<open>Orthonormal basis\<close>
+definition is_onb :: "'a::complex_inner set \<Rightarrow> bool" 
+  where "is_onb S  = (
+  is_ortho_set S \<and> 
+  is_basis S \<and>
+  S \<subseteq> sphere 0 1
+)"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+class basis_enum = complex_inner +
+  fixes canonical_basis :: "'a list"
+  fixes canonical_basis_length :: "'a itself \<Rightarrow> nat"
+  assumes "distinct canonical_basis"
+  assumes "is_onb (set canonical_basis)"
+  assumes "canonical_basis_length TYPE('a) = length canonical_basis"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::chilbert_space set \<Rightarrow> bool\<close>)\<close>
+
 lemma ket_distinct:
 \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
@@ -3869,7 +3902,8 @@ proof
   show "is_onb (set (canonical_basis::'a ell2 list))"
     by (cheat ell2_basis_enum)
 
-  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
+  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
+     = length (canonical_basis::'a ell2 list)"
     by (cheat ell2_basis_enum)
 qed
 end
