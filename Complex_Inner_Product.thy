@@ -3820,6 +3820,103 @@ proof-
     by (metis (full_types) NSCauchyI NSCauchy_Cauchy_iff starfun_hnorm)
 qed
 
+lemma CauchySEQ_add:
+  fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
+  assumes \<open>Cauchy f\<close> and \<open>Cauchy g\<close>
+  shows \<open>Cauchy (\<lambda> n. f n + g n)\<close>
+proof-
+  from \<open>Cauchy f\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy g\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy f\<close>
+
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+         (*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
+    for N M::hypnat
+  proof-
+    assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
+    have \<open>(*f* f) N + (*f* g) N \<approx> (*f* f) M + (*f* g) M\<close>
+      using \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+        \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+      using \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> approx_add by auto      
+    moreover have \<open>(*f* (\<lambda> n. f n + g n)) N = (*f* f) N + (*f* g) N\<close>
+      by auto
+    moreover have \<open>(*f* (\<lambda> n. f n + g n)) M = (*f* f) M + (*f* g) M\<close>
+      by auto
+    ultimately show \<open>(*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
+      by simp
+  qed
+  thus \<open>Cauchy (\<lambda> n. f n + g n)\<close>
+    by (simp add: NSCauchyI NSCauchy_Cauchy)
+qed
+
+(* TODO: move *)
+lemma lim_leq:
+  fixes x y :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. x n \<le> y n\<close> and \<open>convergent x\<close> and \<open>convergent y\<close>
+  shows \<open>lim x \<le> lim y\<close>
+  by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI)
+
+(* TODO: move *)
+lemma lim_add:
+  fixes x y :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>convergent x\<close> and \<open>convergent y\<close>
+  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
+proof-
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
+    for N
+    using \<open>convergent x\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  moreover have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* y) N \<approx> star_of (lim y)\<close>
+    for N
+    using \<open>convergent y\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* x) N + (*f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
+    for N
+    by (simp add: approx_add)
+  moreover have \<open>(*f* (\<lambda> n. x n + y n)) N = (*f* x) N + (*f* y) N\<close>
+    for N
+    by auto
+  moreover have \<open>star_of (lim x + lim y) = star_of (lim x) + star_of (lim y)\<close>
+    by auto
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
+    for N
+    by simp
+  thus ?thesis
+    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
+qed
+
+(* TODO: move *)
+lemma lim_scaleR:
+  fixes x :: \<open>nat \<Rightarrow> real\<close> and r::real
+  assumes \<open>convergent x\<close> 
+  shows \<open>lim (\<lambda> n. r * x n ) = r * lim x\<close>
+proof-
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
+    for N
+    using \<open>convergent x\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow>  star_of r * (*f* x) N \<approx> (star_of r) * star_of (lim x) \<close>
+    for N
+    by (simp add: approx_mult2)
+  moreover have \<open> (*f* (\<lambda> n. r * x n)) N = (star_of r) * (*f* x) N\<close>
+    for N
+    by auto
+  moreover have \<open>star_of (r * lim x) = star_of r * star_of (lim x)\<close>
+    by auto
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. r * x n)) N \<approx> star_of (r * lim x)\<close>
+    for N
+    by auto
+  thus ?thesis
+    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
+qed
+
+
 typedef (overloaded) 'a::real_normed_vector completion
 = \<open>{x::nat\<Rightarrow>'a. Cauchy x}\<close>
   proof
@@ -3882,38 +3979,7 @@ qed
 lift_definition  plus_completion ::
   \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> x y. (\<lambda> n. x n + y n)\<close>
-proof-
-  fix f g::\<open>nat \<Rightarrow> 'a\<close>
-  assume \<open>Cauchy f\<close> and \<open>Cauchy g\<close>
-  from \<open>Cauchy f\<close>
-  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
-    for N M::hypnat
-    using NSCauchy_Cauchy_iff NSCauchy_def by blast
-  from \<open>Cauchy g\<close>
-  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
-    for N M::hypnat
-    using NSCauchy_Cauchy_iff NSCauchy_def by blast
-  from \<open>Cauchy f\<close>
-
-  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
-         (*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
-    for N M::hypnat
-  proof-
-    assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
-    have \<open>(*f* f) N + (*f* g) N \<approx> (*f* f) M + (*f* g) M\<close>
-      using \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
-        \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
-      using \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> approx_add by auto      
-    moreover have \<open>(*f* (\<lambda> n. f n + g n)) N = (*f* f) N + (*f* g) N\<close>
-      by auto
-    moreover have \<open>(*f* (\<lambda> n. f n + g n)) M = (*f* f) M + (*f* g) M\<close>
-      by auto
-    ultimately show \<open>(*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
-      by simp
-  qed
-  thus \<open>Cauchy (\<lambda> n. f n + g n)\<close>
-    by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed
+  by (rule Complex_Inner_Product.CauchySEQ_add)
 
 lift_definition norm_completion :: \<open>'a completion \<Rightarrow> real\<close>
   is \<open>\<lambda> x. lim (\<lambda> n. norm (x n))\<close>.
@@ -4109,18 +4175,59 @@ qed
   proof transfer
     fix x y :: \<open>nat \<Rightarrow> 'a\<close>
     assume \<open>Cauchy x\<close> and \<open>Cauchy y\<close>
+    from \<open>Cauchy x\<close>
+    have \<open>Cauchy (\<lambda> n. norm (x n))\<close>
+      by (simp add: Cauchy_convergent_norm)
+    hence \<open>convergent (\<lambda> n. norm (x n))\<close>
+      by (simp add: real_Cauchy_convergent)
+    from \<open>Cauchy y\<close>
+    have \<open>Cauchy (\<lambda> n. norm (y n))\<close>
+      by (simp add: Cauchy_convergent_norm)
+    hence \<open>convergent (\<lambda> n. norm (y n))\<close>
+      by (simp add: real_Cauchy_convergent)
+    have \<open>convergent (\<lambda> n. norm (x n) + norm (y n))\<close>
+      by (simp add: \<open>convergent (\<lambda>n. norm (x n))\<close> \<open>convergent (\<lambda>n. norm (y n))\<close> convergent_add)
+    have \<open>Cauchy (\<lambda> n. (x n + y n))\<close>
+      using \<open>Cauchy x\<close> \<open>Cauchy y\<close>  Complex_Inner_Product.CauchySEQ_add
+      by (simp add: CauchySEQ_add)
+    hence \<open>Cauchy (\<lambda> n. norm (x n + y n))\<close>
+      by (simp add: Cauchy_convergent_norm)
+    hence \<open>convergent (\<lambda> n. norm (x n + y n))\<close>
+      by (simp add: Cauchy_convergent)
     have \<open>norm (x n + y n) \<le> norm (x n) + norm (y n)\<close>
       for n
       by (simp add: norm_triangle_ineq)
-    show \<open>lim (\<lambda>n. norm (x n + y n))
+    hence \<open>lim (\<lambda> n. norm (x n + y n)) \<le> lim (\<lambda> n. norm (x n) + norm (y n))\<close>
+      using \<open>convergent (\<lambda> n. norm (x n + y n))\<close> \<open>convergent (\<lambda> n. norm (x n) + norm (y n))\<close> lim_leq
+      by auto
+    moreover have \<open>lim (\<lambda> n. norm (x n) + norm (y n)) = lim (\<lambda> n. norm (x n)) + lim (\<lambda> n. norm (y n))\<close>
+      using \<open>convergent (\<lambda> n. norm (x n))\<close>  \<open>convergent (\<lambda> n. norm (y n))\<close> lim_add
+      by blast
+    ultimately show  \<open>lim (\<lambda>n. norm (x n + y n))
            \<le> lim (\<lambda>n. norm (x n)) + lim (\<lambda>n. norm (y n))\<close>
-      sorry  
+      by simp
   qed
 
   show "norm (a *\<^sub>R (x::'a completion)) = \<bar>a\<bar> * norm x"
     for a :: real
       and x :: "'a completion"
-    sorry
+    apply transfer
+  proof-
+    fix a::real and x::\<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy x\<close>
+    hence \<open>convergent (\<lambda> n. norm (x n))\<close>
+      using Cauchy_convergent_iff Cauchy_convergent_norm by blast
+    moreover have \<open>norm (a *\<^sub>R x n) = \<bar>a\<bar> * norm (x n)\<close>
+      for n
+      by simp
+    ultimately have \<open>lim (\<lambda>n. norm (a *\<^sub>R x n)) =  lim (\<lambda>n. \<bar>a\<bar> * norm (x n))\<close>
+      by simp
+    also have \<open>lim (\<lambda>n. \<bar>a\<bar> * norm (x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
+      using  \<open>convergent (\<lambda> n. norm (x n))\<close> 
+      sorry
+    finally show  \<open>lim (\<lambda>n. norm (a *\<^sub>R x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
+      by blast
+  qed
 qed
 
 end
