@@ -7,14 +7,94 @@ Authors:
 
 theory Completion
   imports 
-    "HOL-ex.Sketch_and_Explore"
-    "HOL.Real_Vector_Spaces"
-    NSA_Miscellany
+    Complex_Inner_Product
 
 begin
 
+section \<open>Pseudometric space\<close>
 
-section \<open>Hilbert space pre_completion\<close>
+class pseudo_dist =
+  fixes pseudo_dist :: "'a \<Rightarrow> 'a \<Rightarrow> real"
+
+class pseudo_norm =
+  fixes pseudo_norm :: "'a \<Rightarrow> real"
+
+
+class pseudo_metric_space = pseudo_dist +
+  assumes pseudo_dist_eq_0_iff[simp]: "x = y \<longrightarrow> pseudo_dist x y = 0"
+    and pseudo_dist_triangle2: "pseudo_dist x y \<le> pseudo_dist x z + pseudo_dist y z"
+begin
+
+lemma pseudo_dist_self [simp]: "pseudo_dist x x = 0"
+  by simp
+
+lemma zero_le_pseudo_dist [simp]: "0 \<le> pseudo_dist x y"
+  using pseudo_dist_triangle2 [of x x y] by simp
+
+lemma pseudo_dist_not_less_zero [simp]: "\<not> pseudo_dist x y < 0"
+  by (simp add: not_less)
+
+lemma pseudo_dist_commute: "pseudo_dist x y = pseudo_dist y x"
+proof (rule order_antisym)
+  show "pseudo_dist x y \<le> pseudo_dist y x"
+    using pseudo_dist_triangle2 [of x y x] by simp
+  show "pseudo_dist y x \<le> pseudo_dist x y"
+    using pseudo_dist_triangle2 [of y x y] by simp
+qed
+
+lemma pseudo_dist_commute_lessI: "pseudo_dist y x < e \<Longrightarrow> pseudo_dist x y < e"
+  by (simp add: pseudo_dist_commute)
+
+lemma pseudo_dist_triangle: "pseudo_dist x z \<le> pseudo_dist x y + pseudo_dist y z"
+  using pseudo_dist_triangle2 [of x z y] by (simp add: pseudo_dist_commute)
+
+lemma pseudo_dist_triangle3: "pseudo_dist x y \<le> pseudo_dist a x + pseudo_dist a y"
+  using pseudo_dist_triangle2 [of x y a] by (simp add: pseudo_dist_commute)
+
+lemma abs_pseudo_dist_diff_le: "\<bar>pseudo_dist a b - pseudo_dist b c\<bar> \<le> pseudo_dist a c"
+  using pseudo_dist_triangle3[of b c a] pseudo_dist_triangle2[of a b c] by simp
+
+lemma pseudo_dist_triangle_le: "pseudo_dist x z + pseudo_dist y z \<le> e \<Longrightarrow> pseudo_dist x y \<le> e"
+  by (rule order_trans [OF pseudo_dist_triangle2])
+
+lemma pseudo_dist_triangle_lt: "pseudo_dist x z + pseudo_dist y z < e \<Longrightarrow> pseudo_dist x y < e"
+  by (rule le_less_trans [OF pseudo_dist_triangle2])
+
+lemma pseudo_dist_triangle_less_add: "pseudo_dist x1 y < e1 \<Longrightarrow> pseudo_dist x2 y < e2 \<Longrightarrow> pseudo_dist x1 x2 < e1 + e2"
+  by (rule pseudo_dist_triangle_lt [where z=y]) simp
+
+lemma pseudo_dist_triangle_half_l: "pseudo_dist x1 y < e / 2 \<Longrightarrow> pseudo_dist x2 y < e / 2 \<Longrightarrow> pseudo_dist x1 x2 < e"
+  by (rule pseudo_dist_triangle_lt [where z=y]) simp
+
+lemma pseudo_dist_triangle_half_r: "pseudo_dist y x1 < e / 2 \<Longrightarrow> pseudo_dist y x2 < e / 2 \<Longrightarrow> pseudo_dist x1 x2 < e"
+  by (rule pseudo_dist_triangle_half_l) (simp_all add: pseudo_dist_commute)
+
+lemma pseudo_dist_triangle_third:
+  assumes "pseudo_dist x1 x2 < e/3" "pseudo_dist x2 x3 < e/3" "pseudo_dist x3 x4 < e/3"
+  shows "pseudo_dist x1 x4 < e"
+proof -
+  have "pseudo_dist x1 x3 < e/3 + e/3"
+    by (metis assms(1) assms(2) pseudo_dist_commute pseudo_dist_triangle_less_add)
+  then have "pseudo_dist x1 x4 < (e/3 + e/3) + e/3"
+    by (metis assms(3) pseudo_dist_commute pseudo_dist_triangle_less_add)
+  then show ?thesis
+    by simp
+qed
+
+
+end
+
+class pseudo_real_normed_vector = real_vector + pseudo_norm +
+  assumes pseudo_norm_eq_zero [simp]: "x = 0 \<longrightarrow> pseudo_norm x = 0"
+    and pseudo_norm_triangle_ineq: "pseudo_norm (x + y) \<le> pseudo_norm x + pseudo_norm y"
+    and pseudo_norm_scaleR [simp]: "pseudo_norm (scaleR a x) = \<bar>a\<bar> * pseudo_norm x"
+begin 
+
+end
+
+
+
+section \<open>Hilbert space pseudo_completion\<close>
 
 lemma Cauchy_convergent_norm:
   \<open>Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector) \<Longrightarrow> Cauchy (\<lambda> n. norm (x n))\<close>
@@ -129,7 +209,7 @@ proof-
 qed
 
 
-typedef (overloaded) 'a::real_normed_vector pre_completion
+typedef (overloaded) 'a::real_normed_vector pseudo_completion
 = \<open>{x::nat\<Rightarrow>'a. Cauchy x}\<close>
   proof
   show "(\<lambda>_. 0) \<in> {x. Cauchy x}"
@@ -137,103 +217,24 @@ typedef (overloaded) 'a::real_normed_vector pre_completion
     by (simp add: convergent_Cauchy convergent_const)
 qed
 
-setup_lifting type_definition_pre_completion
-
-class pre_dist =
-  fixes pre_dist :: "'a \<Rightarrow> 'a \<Rightarrow> real"
-
-class pre_norm =
-  fixes pre_norm :: "'a \<Rightarrow> real"
+setup_lifting type_definition_pseudo_completion
 
 
-class pre_metric_space = pre_dist +
-  assumes pre_dist_eq_0_iff[simp]: "x = y \<longrightarrow> pre_dist x y = 0"
-    and pre_dist_triangle2: "pre_dist x y \<le> pre_dist x z + pre_dist y z"
+instantiation pseudo_completion :: (real_normed_vector) pseudo_real_normed_vector
 begin
 
-lemma pre_dist_self [simp]: "pre_dist x x = 0"
-  by simp
-
-lemma zero_le_pre_dist [simp]: "0 \<le> pre_dist x y"
-  using pre_dist_triangle2 [of x x y] by simp
-
-lemma pre_dist_not_less_zero [simp]: "\<not> pre_dist x y < 0"
-  by (simp add: not_less)
-
-lemma pre_dist_commute: "pre_dist x y = pre_dist y x"
-proof (rule order_antisym)
-  show "pre_dist x y \<le> pre_dist y x"
-    using pre_dist_triangle2 [of x y x] by simp
-  show "pre_dist y x \<le> pre_dist x y"
-    using pre_dist_triangle2 [of y x y] by simp
-qed
-
-lemma pre_dist_commute_lessI: "pre_dist y x < e \<Longrightarrow> pre_dist x y < e"
-  by (simp add: pre_dist_commute)
-
-lemma pre_dist_triangle: "pre_dist x z \<le> pre_dist x y + pre_dist y z"
-  using pre_dist_triangle2 [of x z y] by (simp add: pre_dist_commute)
-
-lemma pre_dist_triangle3: "pre_dist x y \<le> pre_dist a x + pre_dist a y"
-  using pre_dist_triangle2 [of x y a] by (simp add: pre_dist_commute)
-
-lemma abs_pre_dist_diff_le: "\<bar>pre_dist a b - pre_dist b c\<bar> \<le> pre_dist a c"
-  using pre_dist_triangle3[of b c a] pre_dist_triangle2[of a b c] by simp
-
-lemma pre_dist_triangle_le: "pre_dist x z + pre_dist y z \<le> e \<Longrightarrow> pre_dist x y \<le> e"
-  by (rule order_trans [OF pre_dist_triangle2])
-
-lemma pre_dist_triangle_lt: "pre_dist x z + pre_dist y z < e \<Longrightarrow> pre_dist x y < e"
-  by (rule le_less_trans [OF pre_dist_triangle2])
-
-lemma pre_dist_triangle_less_add: "pre_dist x1 y < e1 \<Longrightarrow> pre_dist x2 y < e2 \<Longrightarrow> pre_dist x1 x2 < e1 + e2"
-  by (rule pre_dist_triangle_lt [where z=y]) simp
-
-lemma pre_dist_triangle_half_l: "pre_dist x1 y < e / 2 \<Longrightarrow> pre_dist x2 y < e / 2 \<Longrightarrow> pre_dist x1 x2 < e"
-  by (rule pre_dist_triangle_lt [where z=y]) simp
-
-lemma pre_dist_triangle_half_r: "pre_dist y x1 < e / 2 \<Longrightarrow> pre_dist y x2 < e / 2 \<Longrightarrow> pre_dist x1 x2 < e"
-  by (rule pre_dist_triangle_half_l) (simp_all add: pre_dist_commute)
-
-lemma pre_dist_triangle_third:
-  assumes "pre_dist x1 x2 < e/3" "pre_dist x2 x3 < e/3" "pre_dist x3 x4 < e/3"
-  shows "pre_dist x1 x4 < e"
-proof -
-  have "pre_dist x1 x3 < e/3 + e/3"
-    by (metis assms(1) assms(2) pre_dist_commute pre_dist_triangle_less_add)
-  then have "pre_dist x1 x4 < (e/3 + e/3) + e/3"
-    by (metis assms(3) pre_dist_commute pre_dist_triangle_less_add)
-  then show ?thesis
-    by simp
-qed
-
-
-end
-
-class pre_real_normed_vector = real_vector + pre_norm +
-  assumes pre_norm_eq_zero [simp]: "x = 0 \<longrightarrow> pre_norm x = 0"
-    and pre_norm_triangle_ineq: "pre_norm (x + y) \<le> pre_norm x + pre_norm y"
-    and pre_norm_scaleR [simp]: "pre_norm (scaleR a x) = \<bar>a\<bar> * pre_norm x"
-begin 
-
-end
-
-
-instantiation pre_completion :: (real_normed_vector) pre_real_normed_vector
-begin
-
-lift_definition uminus_pre_completion :: \<open>'a pre_completion \<Rightarrow> 'a pre_completion\<close>
+lift_definition uminus_pseudo_completion :: \<open>'a pseudo_completion \<Rightarrow> 'a pseudo_completion\<close>
 is \<open>\<lambda> x. (\<lambda> n. - (x n))\<close>
   unfolding Cauchy_def
   by (simp add: dist_minus) 
 
-lift_definition zero_pre_completion :: \<open>'a pre_completion\<close>
+lift_definition zero_pseudo_completion :: \<open>'a pseudo_completion\<close>
 is \<open>\<lambda> _::nat. 0::'a\<close>
   unfolding Cauchy_def
   by auto
 
-lift_definition  minus_pre_completion ::
-  \<open>'a pre_completion \<Rightarrow> 'a pre_completion \<Rightarrow> 'a pre_completion\<close>
+lift_definition  minus_pseudo_completion ::
+  \<open>'a pseudo_completion \<Rightarrow> 'a pseudo_completion \<Rightarrow> 'a pseudo_completion\<close>
   is \<open>\<lambda> x y. (\<lambda> n. x n - y n)\<close>
 proof-
   fix f g::\<open>nat \<Rightarrow> 'a\<close>
@@ -268,15 +269,15 @@ proof-
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
 
-lift_definition  plus_pre_completion ::
-  \<open>'a pre_completion \<Rightarrow> 'a pre_completion \<Rightarrow> 'a pre_completion\<close>
+lift_definition  plus_pseudo_completion ::
+  \<open>'a pseudo_completion \<Rightarrow> 'a pseudo_completion \<Rightarrow> 'a pseudo_completion\<close>
   is \<open>\<lambda> x y. (\<lambda> n. x n + y n)\<close>
   by (rule Complex_Inner_Product.CauchySEQ_add)
 
-lift_definition norm_pre_completion :: \<open>'a pre_completion \<Rightarrow> real\<close>
+lift_definition norm_pseudo_completion :: \<open>'a pseudo_completion \<Rightarrow> real\<close>
   is \<open>\<lambda> x. lim (\<lambda> n. norm (x n))\<close>.
 
-lift_definition sgn_pre_completion :: \<open>'a pre_completion \<Rightarrow> 'a pre_completion\<close>
+lift_definition sgn_pseudo_completion :: \<open>'a pseudo_completion \<Rightarrow> 'a pseudo_completion\<close>
   is \<open>\<lambda> x. (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)) )\<close>
 proof-
   fix x::\<open>nat \<Rightarrow> 'a\<close>
@@ -344,17 +345,17 @@ proof-
   qed
 qed
 
-lift_definition dist_pre_completion :: \<open>'a pre_completion \<Rightarrow> 'a pre_completion \<Rightarrow> real\<close>
+lift_definition dist_pseudo_completion :: \<open>'a pseudo_completion \<Rightarrow> 'a pseudo_completion \<Rightarrow> real\<close>
   is \<open>\<lambda> f g. lim (\<lambda> n. norm (f n - g n))\<close>.
 
-definition uniformity_pre_completion :: \<open>( 'a pre_completion \<times> 'a pre_completion ) filter\<close>
-  where  \<open>uniformity_pre_completion = (INF e:{0<..}. principal {((f:: 'a pre_completion), g). dist f g < e})\<close>
+definition uniformity_pseudo_completion :: \<open>( 'a pseudo_completion \<times> 'a pseudo_completion ) filter\<close>
+  where  \<open>uniformity_pseudo_completion = (INF e:{0<..}. principal {((f:: 'a pseudo_completion), g). dist f g < e})\<close>
 
-definition open_pre_completion :: \<open>('a pre_completion) set \<Rightarrow> bool\<close>
-  where \<open>open_pre_completion 
-  = (\<lambda> U::('a pre_completion) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
+definition open_pseudo_completion :: \<open>('a pseudo_completion) set \<Rightarrow> bool\<close>
+  where \<open>open_pseudo_completion 
+  = (\<lambda> U::('a pseudo_completion) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
 
-lift_definition scaleR_pre_completion :: \<open>real \<Rightarrow> 'a pre_completion \<Rightarrow> 'a pre_completion\<close>
+lift_definition scaleR_pseudo_completion :: \<open>real \<Rightarrow> 'a pseudo_completion \<Rightarrow> 'a pseudo_completion\<close>
 is \<open>\<lambda> r x. (\<lambda> n. r *\<^sub>R (x n))\<close>
 proof-
   fix r::real and x::\<open>nat \<Rightarrow> 'a\<close>
@@ -380,72 +381,72 @@ qed
 
 instance
   proof
-  show "dist (x::'a pre_completion) y = norm (x - y)"
-    for x :: "'a pre_completion"
-      and y :: "'a pre_completion"
+  show "dist (x::'a pseudo_completion) y = norm (x - y)"
+    for x :: "'a pseudo_completion"
+      and y :: "'a pseudo_completion"
     apply transfer by blast
 
-  show "(a::'a pre_completion) + b + c = a + (b + c)"
-    for a :: "'a pre_completion"
-      and b :: "'a pre_completion"
-      and c :: "'a pre_completion"
+  show "(a::'a pseudo_completion) + b + c = a + (b + c)"
+    for a :: "'a pseudo_completion"
+      and b :: "'a pseudo_completion"
+      and c :: "'a pseudo_completion"
     apply transfer by auto
 
-  show "(a::'a pre_completion) + b = b + a"
-    for a :: "'a pre_completion"
-      and b :: "'a pre_completion"
+  show "(a::'a pseudo_completion) + b = b + a"
+    for a :: "'a pseudo_completion"
+      and b :: "'a pseudo_completion"
     apply transfer by auto
 
-  show "(0::'a pre_completion) + a = a"
-    for a :: "'a pre_completion"
+  show "(0::'a pseudo_completion) + a = a"
+    for a :: "'a pseudo_completion"
     apply transfer by auto
   
-  show "- (a::'a pre_completion) + a = 0"
-    for a :: "'a pre_completion"
+  show "- (a::'a pseudo_completion) + a = 0"
+    for a :: "'a pseudo_completion"
     apply transfer by auto
 
-  show "(a::'a pre_completion) - b = a + - b"
-    for a :: "'a pre_completion"
-      and b :: "'a pre_completion"
+  show "(a::'a pseudo_completion) - b = a + - b"
+    for a :: "'a pseudo_completion"
+      and b :: "'a pseudo_completion"
     apply transfer by auto
 
-  show "a *\<^sub>R ((x::'a pre_completion) + y) = a *\<^sub>R x + a *\<^sub>R y"
+  show "a *\<^sub>R ((x::'a pseudo_completion) + y) = a *\<^sub>R x + a *\<^sub>R y"
     for a :: real
-      and x :: "'a pre_completion"
-      and y :: "'a pre_completion"
+      and x :: "'a pseudo_completion"
+      and y :: "'a pseudo_completion"
     apply transfer
     by (simp add: pth_6) 
 
-  show "(a + b) *\<^sub>R (x::'a pre_completion) = a *\<^sub>R x + b *\<^sub>R x"
+  show "(a + b) *\<^sub>R (x::'a pseudo_completion) = a *\<^sub>R x + b *\<^sub>R x"
     for a :: real
       and b :: real
-      and x :: "'a pre_completion"
+      and x :: "'a pseudo_completion"
     apply transfer
     by (simp add: ordered_field_class.sign_simps(24)) 
 
-  show "a *\<^sub>R b *\<^sub>R (x::'a pre_completion) = (a * b) *\<^sub>R x"
+  show "a *\<^sub>R b *\<^sub>R (x::'a pseudo_completion) = (a * b) *\<^sub>R x"
     for a :: real
       and b :: real
-      and x :: "'a pre_completion"
+      and x :: "'a pseudo_completion"
     apply transfer by simp
 
-  show "1 *\<^sub>R (x::'a pre_completion) = x"
-    for x :: "'a pre_completion"
+  show "1 *\<^sub>R (x::'a pseudo_completion) = x"
+    for x :: "'a pseudo_completion"
     apply transfer by simp
 
-  show "sgn (x::'a pre_completion) = inverse (norm x) *\<^sub>R x"
-    for x :: "'a pre_completion"
+  show "sgn (x::'a pseudo_completion) = inverse (norm x) *\<^sub>R x"
+    for x :: "'a pseudo_completion"
     apply transfer by auto
 
-  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a pre_completion) y < e})"
-    by (simp add: uniformity_pre_completion_def)    
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a pseudo_completion) y < e})"
+    by (simp add: uniformity_pseudo_completion_def)    
 
-  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a pre_completion) = x \<longrightarrow> y \<in> U)"
-    for U :: "'a pre_completion set"
-    by (simp add: Complex_Inner_Product.open_pre_completion_def)
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a pseudo_completion) = x \<longrightarrow> y \<in> U)"
+    for U :: "'a pseudo_completion set"
+    by (simp add: Complex_Inner_Product.open_pseudo_completion_def)
     
-  show "(norm (x::'a pre_completion) = 0) = (x = 0)"
-    for x :: "'a pre_completion"
+  show "(norm (x::'a pseudo_completion) = 0) = (x = 0)"
+    for x :: "'a pseudo_completion"
     apply transfer proof
   show "(x::nat \<Rightarrow> 'a) = (\<lambda>_. 0)"
     if "Cauchy (x::nat \<Rightarrow> 'a)"
@@ -461,9 +462,9 @@ instance
     using that by auto
 qed
 
-  show "norm ((x::'a pre_completion) + y) \<le> norm x + norm y"
-    for x :: "'a pre_completion"
-      and y :: "'a pre_completion"
+  show "norm ((x::'a pseudo_completion) + y) \<le> norm x + norm y"
+    for x :: "'a pseudo_completion"
+      and y :: "'a pseudo_completion"
   proof transfer
     fix x y :: \<open>nat \<Rightarrow> 'a\<close>
     assume \<open>Cauchy x\<close> and \<open>Cauchy y\<close>
@@ -500,9 +501,9 @@ qed
       by simp
   qed
 
-  show "norm (a *\<^sub>R (x::'a pre_completion)) = \<bar>a\<bar> * norm x"
+  show "norm (a *\<^sub>R (x::'a pseudo_completion)) = \<bar>a\<bar> * norm x"
     for a :: real
-      and x :: "'a pre_completion"
+      and x :: "'a pseudo_completion"
     apply transfer
   proof-
     fix a::real and x::\<open>nat \<Rightarrow> 'a\<close>
