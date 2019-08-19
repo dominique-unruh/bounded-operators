@@ -62,9 +62,15 @@ proof
     by (simp add: boolean_algebra_class.diff_eq)
 qed
 
-
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
 
+(* TODO: verify whether or not it is true
+lemma demorgan_inf: "- (inf (A::_::orthocomplemented_lattice) B) = sup (- A) (- B)"
+*)
+
+(* TODO: verify whether or not it is true
+lemma demorgan_sup: "- (sup (A::_::orthocomplemented_lattice)  B) = inf (- A)  (- B)"
+*)
 
 end

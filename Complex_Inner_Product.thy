@@ -47,6 +47,7 @@ setup \<open>Sign.add_const_constraint
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
+text \<open>Near-Hilbert space according to Definition 3, page 67, @Helemskii\<close>
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + 
   open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  ("\<langle>_, _\<rangle>") 
@@ -3800,6 +3801,342 @@ proof
     thus ?thesis using \<open>u k \<noteq> 0\<close> by blast
   qed
 qed
+
+section \<open>Hilbert space completion\<close>
+
+lemma Cauchy_convergent_norm:
+  \<open>Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector) \<Longrightarrow> Cauchy (\<lambda> n. norm (x n))\<close>
+proof-
+  assume \<open>Cauchy x\<close>
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+    (*f* x) N \<approx> (*f* x) M\<close>
+    for N M
+    by (simp add: Cauchy_NSCauchy NSCauchyD)
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+    hnorm ((*f* x) N) \<approx> hnorm ((*f* x) M)\<close>
+    for N M
+    by (simp add: approx_hnorm)
+  thus \<open>Cauchy (\<lambda> n. norm (x n))\<close>
+    by (metis (full_types) NSCauchyI NSCauchy_Cauchy_iff starfun_hnorm)
+qed
+
+typedef (overloaded) 'a::real_normed_vector completion
+= \<open>{x::nat\<Rightarrow>'a. Cauchy x}\<close>
+  proof
+  show "(\<lambda>_. 0) \<in> {x. Cauchy x}"
+    apply auto
+    by (simp add: convergent_Cauchy convergent_const)
+qed
+
+setup_lifting type_definition_completion
+
+instantiation completion :: (real_normed_vector) real_normed_vector
+begin
+
+lift_definition uminus_completion :: \<open>'a completion \<Rightarrow> 'a completion\<close>
+is \<open>\<lambda> x. (\<lambda> n. - (x n))\<close>
+  unfolding Cauchy_def
+  by (simp add: dist_minus) 
+
+lift_definition zero_completion :: \<open>'a completion\<close>
+is \<open>\<lambda> _::nat. 0::'a\<close>
+  unfolding Cauchy_def
+  by auto
+
+lift_definition  minus_completion ::
+  \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
+  is \<open>\<lambda> x y. (\<lambda> n. x n - y n)\<close>
+proof-
+  fix f g::\<open>nat \<Rightarrow> 'a\<close>
+  assume \<open>Cauchy f\<close> and \<open>Cauchy g\<close>
+  from \<open>Cauchy f\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy g\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy f\<close>
+
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+         (*f* (\<lambda> n. f n -g n)) N \<approx> (*f*  (\<lambda> n. f n -g n)) M\<close>
+    for N M::hypnat
+  proof-
+    assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
+    have \<open>(*f* f) N - (*f* g) N \<approx> (*f* f) M - (*f* g) M\<close>
+      using \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+        \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+      by (simp add: \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> approx_diff)
+    moreover have \<open>(*f* (\<lambda> n. f n -g n)) N = (*f* f) N - (*f* g) N\<close>
+      by auto
+    moreover have \<open>(*f* (\<lambda> n. f n -g n)) M = (*f* f) M - (*f* g) M\<close>
+      by auto
+    ultimately show \<open>(*f* (\<lambda> n. f n -g n)) N \<approx> (*f*  (\<lambda> n. f n -g n)) M\<close>
+      by simp
+  qed
+  thus \<open>Cauchy (\<lambda> n. f n - g n)\<close>
+    by (simp add: NSCauchyI NSCauchy_Cauchy)
+qed
+
+lift_definition  plus_completion ::
+  \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
+  is \<open>\<lambda> x y. (\<lambda> n. x n + y n)\<close>
+proof-
+  fix f g::\<open>nat \<Rightarrow> 'a\<close>
+  assume \<open>Cauchy f\<close> and \<open>Cauchy g\<close>
+  from \<open>Cauchy f\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy g\<close>
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+    for N M::hypnat
+    using NSCauchy_Cauchy_iff NSCauchy_def by blast
+  from \<open>Cauchy f\<close>
+
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+         (*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
+    for N M::hypnat
+  proof-
+    assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
+    have \<open>(*f* f) N + (*f* g) N \<approx> (*f* f) M + (*f* g) M\<close>
+      using \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+        \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* g) N \<approx> (*f* g) M\<close>
+      using \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> approx_add by auto      
+    moreover have \<open>(*f* (\<lambda> n. f n + g n)) N = (*f* f) N + (*f* g) N\<close>
+      by auto
+    moreover have \<open>(*f* (\<lambda> n. f n + g n)) M = (*f* f) M + (*f* g) M\<close>
+      by auto
+    ultimately show \<open>(*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
+      by simp
+  qed
+  thus \<open>Cauchy (\<lambda> n. f n + g n)\<close>
+    by (simp add: NSCauchyI NSCauchy_Cauchy)
+qed
+
+lift_definition norm_completion :: \<open>'a completion \<Rightarrow> real\<close>
+  is \<open>\<lambda> x. lim (\<lambda> n. norm (x n))\<close>.
+
+lift_definition sgn_completion :: \<open>'a completion \<Rightarrow> 'a completion\<close>
+  is \<open>\<lambda> x. (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)) )\<close>
+proof-
+  fix x::\<open>nat \<Rightarrow> 'a\<close>
+  assume \<open>Cauchy x\<close>
+  hence \<open>\<exists> L::real. lim (\<lambda>n. norm (x n)) = L\<close>
+    by auto
+  then obtain L where \<open>lim (\<lambda>n. norm (x n)) = L\<close>
+    by blast
+  show \<open>Cauchy (\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n)))\<close>
+  proof (cases \<open>L = 0\<close>)
+    show "Cauchy (\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n)))"
+      if "L = 0"
+    proof-
+      have \<open>(x n) /\<^sub>R L = 0\<close>
+        for n
+        using that by simp
+      hence \<open>(\<lambda>n. (x n) /\<^sub>R L) = (\<lambda> _. 0)\<close>
+        by blast
+      moreover have \<open>lim (\<lambda> _. 0) = 0\<close>
+        by auto
+      ultimately have \<open>(\<lambda>n. (x n) /\<^sub>R L) \<longlonglongrightarrow> 0\<close>
+        by simp
+      hence \<open>convergent (\<lambda>n. (x n) /\<^sub>R L)\<close>
+        unfolding convergent_def
+        by blast
+      thus ?thesis
+        using  \<open>lim (\<lambda>n. norm (x n)) = L\<close> LIMSEQ_imp_Cauchy \<open>(\<lambda>n. x n /\<^sub>R L) \<longlonglongrightarrow> 0\<close> by blast
+    qed
+    show "Cauchy (\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n)))"
+      if "L \<noteq> 0"
+    proof-
+      have \<open>(\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n))) = (\<lambda>n. x n /\<^sub>R L)\<close>
+        using \<open>lim (\<lambda>n. norm (x n)) = L\<close> by simp
+      have \<open>Cauchy (\<lambda>n. x n /\<^sub>R L)\<close>
+      proof-
+        from \<open>Cauchy x\<close>
+        have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+            (*f* x) N \<approx> (*f* x) M\<close>
+          for N M
+          by (simp add: Cauchy_NSCauchy NSCauchyD)
+        hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+         (*f2* scaleR) (inverse (star_of L)) ((*f* x) N) \<approx> (*f2* scaleR) (inverse (star_of L)) ((*f* x) M)\<close>
+          for N M
+        proof -
+          assume a1: "N \<in> HNatInfinite"
+          assume "M \<in> HNatInfinite"
+          then have "(*f* x) N \<approx> (*f* x) M"
+            using a1 by (metis \<open>\<And>N M. \<lbrakk>N \<in> HNatInfinite; M \<in> HNatInfinite\<rbrakk> \<Longrightarrow> (*f* x) N \<approx> (*f* x) M\<close>)
+          then show ?thesis
+            by (metis (no_types) approx_scaleR2 star_of_inverse star_scaleR_def starfun2_star_of)
+        qed
+        moreover have \<open>(*f2* scaleR) (inverse (star_of L)) ((*f* x) N) =  (*f* (\<lambda>n. x n /\<^sub>R L)) N\<close>
+          for N
+          by (metis star_of_inverse starfun2_star_of starfun_o2)
+        ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+               (*f* (\<lambda>n. x n /\<^sub>R L)) N \<approx> (*f* (\<lambda>n. x n /\<^sub>R L)) M\<close>
+          for N M
+          by simp
+        thus ?thesis
+          using NSCauchyI NSCauchy_Cauchy by blast 
+      qed
+      thus ?thesis
+        by (simp add: \<open>lim (\<lambda>n. norm (x n)) = L\<close>)  
+    qed
+  qed
+qed
+
+lift_definition dist_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> real\<close>
+  is \<open>\<lambda> f g. lim (\<lambda> n. norm (f n - g n))\<close>.
+
+definition uniformity_completion :: \<open>( 'a completion \<times> 'a completion ) filter\<close>
+  where  \<open>uniformity_completion = (INF e:{0<..}. principal {((f:: 'a completion), g). dist f g < e})\<close>
+
+definition open_completion :: \<open>('a completion) set \<Rightarrow> bool\<close>
+  where \<open>open_completion 
+  = (\<lambda> U::('a completion) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
+
+lift_definition scaleR_completion :: \<open>real \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
+is \<open>\<lambda> r x. (\<lambda> n. r *\<^sub>R (x n))\<close>
+proof-
+  fix r::real and x::\<open>nat \<Rightarrow> 'a\<close>
+  assume \<open>Cauchy x\<close>
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+    (*f* x) N \<approx>  (*f* x) M\<close>
+    for N M
+    by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+     (*f2* scaleR) (star_of r) ((*f* x) N) \<approx> (*f2* scaleR) (star_of r) ((*f* x) M)\<close>
+    for N M
+    by (metis approx_scaleR2 star_scaleR_def starfun2_star_of)
+  moreover have \<open>(*f2* scaleR) (star_of r) ((*f* x) N) = (*f* (\<lambda>n. r *\<^sub>R x n)) N\<close>
+    for N
+    by auto
+  ultimately have  \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+      (*f* (\<lambda>n. r *\<^sub>R x n)) N \<approx>  (*f* (\<lambda>n. r *\<^sub>R x n)) M\<close>
+    for N M
+    by simp
+  thus \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
+    by (simp add: NSCauchyI NSCauchy_Cauchy)
+qed
+
+instance
+  proof
+  show "dist (x::'a completion) y = norm (x - y)"
+    for x :: "'a completion"
+      and y :: "'a completion"
+    apply transfer by blast
+
+  show "(a::'a completion) + b + c = a + (b + c)"
+    for a :: "'a completion"
+      and b :: "'a completion"
+      and c :: "'a completion"
+    apply transfer by auto
+
+  show "(a::'a completion) + b = b + a"
+    for a :: "'a completion"
+      and b :: "'a completion"
+    apply transfer by auto
+
+  show "(0::'a completion) + a = a"
+    for a :: "'a completion"
+    apply transfer by auto
+  
+  show "- (a::'a completion) + a = 0"
+    for a :: "'a completion"
+    apply transfer by auto
+
+  show "(a::'a completion) - b = a + - b"
+    for a :: "'a completion"
+      and b :: "'a completion"
+    apply transfer by auto
+
+  show "a *\<^sub>R ((x::'a completion) + y) = a *\<^sub>R x + a *\<^sub>R y"
+    for a :: real
+      and x :: "'a completion"
+      and y :: "'a completion"
+    apply transfer
+    by (simp add: pth_6) 
+
+  show "(a + b) *\<^sub>R (x::'a completion) = a *\<^sub>R x + b *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "'a completion"
+    apply transfer
+    by (simp add: ordered_field_class.sign_simps(24)) 
+
+  show "a *\<^sub>R b *\<^sub>R (x::'a completion) = (a * b) *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "'a completion"
+    apply transfer by simp
+
+  show "1 *\<^sub>R (x::'a completion) = x"
+    for x :: "'a completion"
+    apply transfer by simp
+
+  show "sgn (x::'a completion) = inverse (norm x) *\<^sub>R x"
+    for x :: "'a completion"
+    apply transfer by auto
+
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a completion) y < e})"
+    by (simp add: uniformity_completion_def)    
+
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a completion) = x \<longrightarrow> y \<in> U)"
+    for U :: "'a completion set"
+    by (simp add: Complex_Inner_Product.open_completion_def)
+    
+  show "(norm (x::'a completion) = 0) = (x = 0)"
+    for x :: "'a completion"
+    apply transfer proof
+  show "(x::nat \<Rightarrow> 'a) = (\<lambda>_. 0)"
+    if "Cauchy (x::nat \<Rightarrow> 'a)"
+      and "lim (\<lambda>n. norm (x n::'a)) = 0"
+    for x :: "nat \<Rightarrow> 'a"
+    using that sorry
+      (* false *)
+
+  show "lim (\<lambda>n. norm (x n::'a)) = 0"
+    if "Cauchy (x::nat \<Rightarrow> 'a)"
+      and "(x::nat \<Rightarrow> 'a) = (\<lambda>_. 0)"
+    for x :: "nat \<Rightarrow> 'a"
+    using that by auto
+qed
+
+  show "norm ((x::'a completion) + y) \<le> norm x + norm y"
+    for x :: "'a completion"
+      and y :: "'a completion"
+  proof transfer
+    fix x y :: \<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy x\<close> and \<open>Cauchy y\<close>
+    have \<open>norm (x n + y n) \<le> norm (x n) + norm (y n)\<close>
+      for n
+      by (simp add: norm_triangle_ineq)
+    show \<open>lim (\<lambda>n. norm (x n + y n))
+           \<le> lim (\<lambda>n. norm (x n)) + lim (\<lambda>n. norm (y n))\<close>
+      sorry  
+  qed
+
+  show "norm (a *\<^sub>R (x::'a completion)) = \<bar>a\<bar> * norm x"
+    for a :: real
+      and x :: "'a completion"
+    sorry
+qed
+
+end
+
+section \<open>Commutative monoid of subspaces\<close>
+
+instantiation linear_space :: (chilbert_space) comm_monoid_add begin
+definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
+definition plus_linear_space :: "'a linear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_linear_space = sup"
+instance 
+  apply standard 
+    apply (simp add: sup_assoc)
+   apply (simp add: sup_commute)
+  by simp
+end
+
 
 
 end

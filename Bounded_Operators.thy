@@ -714,6 +714,8 @@ proof transfer
     by (metis Adj_D cinner_commute')
 qed
 
+
+
 lemma times_bounded_vec_0[simp]:  
   fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
   shows  "U *\<^sub>v 0 = 0"
@@ -723,7 +725,7 @@ lemma times_bounded_vec_0[simp]:
 
 
 lemma applyOp_0[simp]:  
-  fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
   shows   "U *\<^sub>s (0::'a linear_space) = (0::'b linear_space)"
 proof-
   {
@@ -1870,7 +1872,11 @@ proof-
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
-  apply transfer  by simp
+  unfolding kernel_def
+  apply transfer
+  apply auto
+  unfolding bot_linear_space_def
+  by blast
 
 lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
 proof -

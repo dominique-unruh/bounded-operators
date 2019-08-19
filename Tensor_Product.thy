@@ -13,6 +13,8 @@ theory Tensor_Product
 
 begin
 
+section \<open>Tensor product ell2\<close>
+
 unbundle bounded_notation
 
 consts "tensorOp" :: "('a ell2,'b ell2) bounded \<Rightarrow> ('c ell2,'d ell2) bounded \<Rightarrow> (('a*'c) ell2,('b*'d) ell2) bounded"
