@@ -3804,4 +3804,18 @@ qed
 
 
 
+section \<open>Commutative monoid of subspaces\<close>
+
+instantiation linear_space :: (chilbert_space) comm_monoid_add begin
+definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
+definition plus_linear_space :: "'a linear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_linear_space = sup"
+instance 
+  apply standard 
+    apply (simp add: sup_assoc)
+   apply (simp add: sup_commute)
+  by simp
+end
+
+
+
 end

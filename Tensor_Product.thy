@@ -9,9 +9,69 @@ Authors:
 
 
 theory Tensor_Product
-  imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading"
+  imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading" Completion
 
 begin
+
+section \<open>Tensor product\<close>
+
+definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
+  \<open>bifunctional x = (\<lambda> f. f x)\<close>
+
+lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded \<Rightarrow> complex)\<close> 
+  is bifunctional.
+
+lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded, complex) bounded\<close> 
+  is Bifunctional'
+proof
+  show "clinear (Bifunctional' (a::'a))"
+    for a :: 'a
+    unfolding clinear_def proof
+    show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
+      for b1 :: "('a, complex) bounded"
+        and b2 :: "('a, complex) bounded"
+      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_bounded.rep_eq)
+    show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
+      for r :: complex
+        and b :: "('a, complex) bounded"
+      by (simp add: Bifunctional'.rep_eq bifunctional_def)    
+  qed
+  show "\<exists>K. \<forall>x. cmod (Bifunctional' (a::'a) x) \<le> norm x * K"
+    for a :: 'a
+    apply transfer
+    apply auto unfolding bifunctional_def
+    using bounded_clinear.bounded_linear onorm by blast 
+qed
+
+
+definition
+  cbilinear :: "('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool" where
+  "cbilinear f \<longleftrightarrow> (\<forall>x. clinear (\<lambda>y. f x y)) \<and> (\<forall>y. clinear (\<lambda>x. f x y))"
+
+typedef (overloaded) ('a::complex_normed_vector, 'b::complex_vector) pre_hilbert_tensor
+  = \<open>{f::('a, complex) bounded \<Rightarrow>'b\<Rightarrow>complex. cbilinear f}\<close>
+  apply auto
+proof
+  show "cbilinear (\<lambda> _ _. 0)"
+    unfolding cbilinear_def proof
+    show "All ((\<lambda>x. clinear ((\<lambda>_. 0)::'d \<Rightarrow> 'e))::'c \<Rightarrow> bool)"
+      by (simp add: complex_vector.module_hom_zero)
+    show "All ((\<lambda>y. clinear ((\<lambda>x. 0)::'c \<Rightarrow> 'e))::'d \<Rightarrow> bool)"
+      by (simp add: complex_vector.module_hom_zero)
+  qed
+qed
+
+
+typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) hilbert_tensor 
+  = \<open>(UNIV::((('a, 'b) pre_hilbert_tensor) completion) set)\<close>
+  by (rule Set.UNIV_witness)
+
+instantiation hilbert_tensor :: (chilbert_space, chilbert_space) chilbert_space
+begin
+instance 
+  sorry
+end
+
 
 section \<open>Tensor product ell2\<close>
 
@@ -29,7 +89,7 @@ definition tensorSpace :: "'a ell2 linear_space \<Rightarrow> 'b ell2 linear_spa
   "tensorSpace A B = Span {tensorVec \<psi> \<phi>| \<psi> \<phi>. \<psi> \<in> space_as_set A \<and> \<phi> \<in> space_as_set B}"
 
 consts tensor :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixr "\<otimes>" 71)
-  adhoc_overloading tensor tensorOp tensorSpace tensorVec
+adhoc_overloading tensor tensorOp tensorSpace tensorVec
 
 lemma idOp_tensor_idOp[simp]: "idOp\<otimes>idOp = idOp"
   by (cheat TODO2)
@@ -84,7 +144,7 @@ lift_definition addState :: "'a ell2 \<Rightarrow> ('b ell2,('b*'a) ell2) bounde
   \<open>\<lambda>\<psi> \<phi>. tensorVec \<phi> \<psi>\<close>
   apply (rule_tac K="norm ell2" in bounded_clinear_intro)
   by (auto simp: tensor_norm_ell2 tensor_plus_ell2)
-  
+
 
 (* TODO: this is simply the adjoint of addState (1::unit ell2), and addState y is best defined as x \<rightarrow> x \<otimes> y (lifted).
    Do we even use remove_qvar_unit_op then? *)
