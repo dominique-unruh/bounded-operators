@@ -2263,6 +2263,36 @@ lemma applyOp_scaleC2[simp]: "A *\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A 
   by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale)
 
 
+definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
+  \<open>bifunctional x = (\<lambda> f. f x)\<close>
+
+lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded \<Rightarrow> complex)\<close> 
+  is bifunctional.
+
+lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded, complex) bounded\<close> 
+  is Bifunctional'
+proof
+  show "clinear (Bifunctional' (a::'a))"
+    for a :: 'a
+    unfolding clinear_def proof
+    show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
+      for b1 :: "('a, complex) bounded"
+        and b2 :: "('a, complex) bounded"
+      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_bounded.rep_eq)
+    show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
+      for r :: complex
+        and b :: "('a, complex) bounded"
+      by (simp add: Bifunctional'.rep_eq bifunctional_def)    
+  qed
+  show "\<exists>K. \<forall>x. cmod (Bifunctional' (a::'a) x) \<le> norm x * K"
+    for a :: 'a
+    apply transfer
+    apply auto unfolding bifunctional_def
+    using bounded_clinear.bounded_linear onorm by blast 
+qed
+
+
+
 unbundle no_bounded_notation
 
 

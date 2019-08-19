@@ -13,57 +13,47 @@ theory Tensor_Product
 
 begin
 
-section \<open>Tensor product\<close>
+section \<open>Algebraic tensor product\<close>
 
-definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
-  \<open>bifunctional x = (\<lambda> f. f x)\<close>
+typedef (overloaded) ('a::complex_vector, 'b::complex_vector) pair_vector
+  = \<open>UNIV::(('a*'b) set)\<close>
+  by auto
 
-lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded \<Rightarrow> complex)\<close> 
-  is bifunctional.
+setup_lifting type_definition_pair_vector
 
-lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded, complex) bounded\<close> 
-  is Bifunctional'
-proof
-  show "clinear (Bifunctional' (a::'a))"
-    for a :: 'a
-    unfolding clinear_def proof
-    show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
-      for b1 :: "('a, complex) bounded"
-        and b2 :: "('a, complex) bounded"
-      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_bounded.rep_eq)
-    show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
-      for r :: complex
-        and b :: "('a, complex) bounded"
-      by (simp add: Bifunctional'.rep_eq bifunctional_def)    
-  qed
-  show "\<exists>K. \<forall>x. cmod (Bifunctional' (a::'a) x) \<le> norm x * K"
-    for a :: 'a
-    apply transfer
-    apply auto unfolding bifunctional_def
-    using bounded_clinear.bounded_linear onorm by blast 
+instantiation pair_vector :: (complex_vector, complex_vector) complex_vector
+begin
+instance
+  sorry
+end
+
+definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) pair_vector) set\<close> where
+\<open>alg_tensor_kernel = complex_vector.span 
+{ Abs_pair_vector (x, y+z) - Abs_pair_vector (x, y) - Abs_pair_vector (x, z) |  x y z. True}\<union>
+{ Abs_pair_vector (y+z, x) - Abs_pair_vector (y, x) - Abs_pair_vector (z, x) |  x y z. True}\<union>
+{ Abs_pair_vector (x, c *\<^sub>C y) -  c *\<^sub>C Abs_pair_vector (x, y) |  x y c. True}\<union>
+{ Abs_pair_vector (c *\<^sub>C x, y) -  c *\<^sub>C Abs_pair_vector (x, y) |  x y c. True}\<close>
+
+definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) pair_vector \<Rightarrow> ('a,'b) pair_vector \<Rightarrow> bool"
+  where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
+
+quotient_type (overloaded) ('a, 'b) alg_tensor = "('a::complex_vector,'b::complex_vector) pair_vector" / partial: alg_tensor_rel
+  unfolding part_equivp_def
+  proof
+  show "\<exists>x. alg_tensor_rel (x::('a, 'b) pair_vector) x"
+    sorry
+  show "\<forall>x y. alg_tensor_rel (x::('a, 'b) pair_vector) y = (alg_tensor_rel x x \<and> alg_tensor_rel y y \<and> alg_tensor_rel x = alg_tensor_rel y)"
+    sorry
 qed
 
-
-definition
-  cbilinear :: "('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool" where
-  "cbilinear f \<longleftrightarrow> (\<forall>x. clinear (\<lambda>y. f x y)) \<and> (\<forall>y. clinear (\<lambda>x. f x y))"
-
-typedef (overloaded) ('a::complex_normed_vector, 'b::complex_vector) pre_hilbert_tensor
-  = \<open>{f::('a, complex) bounded \<Rightarrow>'b\<Rightarrow>complex. cbilinear f}\<close>
-  apply auto
-proof
-  show "cbilinear (\<lambda> _ _. 0)"
-    unfolding cbilinear_def proof
-    show "All ((\<lambda>x. clinear ((\<lambda>_. 0)::'d \<Rightarrow> 'e))::'c \<Rightarrow> bool)"
-      by (simp add: complex_vector.module_hom_zero)
-    show "All ((\<lambda>y. clinear ((\<lambda>x. 0)::'c \<Rightarrow> 'e))::'d \<Rightarrow> bool)"
-      by (simp add: complex_vector.module_hom_zero)
-  qed
-qed
-
+instantiation alg_tensor :: (complex_inner,complex_inner) complex_inner
+begin 
+instance
+  sorry
+end
 
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) hilbert_tensor 
-  = \<open>(UNIV::((('a, 'b) pre_hilbert_tensor) completion) set)\<close>
+  = \<open>(UNIV::((('a, 'b) alg_tensor) completion) set)\<close>
   by (rule Set.UNIV_witness)
 
 instantiation hilbert_tensor :: (chilbert_space, chilbert_space) chilbert_space
