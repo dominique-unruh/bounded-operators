@@ -27,6 +27,13 @@ instance
   sorry
 end
 
+instantiation pair_vector :: (complex_inner, complex_inner) complex_inner
+begin
+instance
+  sorry
+end
+
+
 definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) pair_vector) set\<close> where
 \<open>alg_tensor_kernel = complex_vector.span 
 { Abs_pair_vector (x, y+z) - Abs_pair_vector (x, y) - Abs_pair_vector (x, z) |  x y z. True}\<union>
@@ -37,7 +44,8 @@ definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) p
 definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) pair_vector \<Rightarrow> ('a,'b) pair_vector \<Rightarrow> bool"
   where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
 
-quotient_type (overloaded) ('a, 'b) alg_tensor = "('a::complex_vector,'b::complex_vector) pair_vector" / partial: alg_tensor_rel
+quotient_type (overloaded) ('a, 'b) alg_tensor 
+= "('a::complex_vector,'b::complex_vector) pair_vector" / partial: alg_tensor_rel
   unfolding part_equivp_def
   proof
   show "\<exists>x. alg_tensor_rel (x::('a, 'b) pair_vector) x"
