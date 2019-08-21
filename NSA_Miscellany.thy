@@ -446,6 +446,13 @@ lemma lim_leq:
   shows \<open>lim x \<le> lim y\<close>
   by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI)
 
+lemma lim_ge:
+  fixes x ::real and y :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. x \<le> y n\<close> and \<open>convergent y\<close>
+  shows \<open>x \<le> lim y\<close>
+  using lim_leq
+  by (metis (full_types) NSLIMSEQ_le_const NSconvergent_NSLIMSEQ_iff assms(1) assms(2) convergent_NSconvergent_iff lim_nslim_iff) 
+
 lemma lim_add:
   fixes x y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>convergent x\<close> and \<open>convergent y\<close>
@@ -472,6 +479,33 @@ proof-
     by simp
   thus ?thesis
     by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
+qed
+
+lemma lim_add_const_left:
+  fixes x :: \<open>nat \<Rightarrow> real\<close>
+  assumes  \<open>convergent x\<close>
+  shows \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
+proof-
+  have \<open>lim (\<lambda> n. c) = c\<close>
+    by simp
+  moreover have \<open>convergent (\<lambda> n. c)\<close>
+    by (simp add: convergent_const)    
+  ultimately show ?thesis using \<open>convergent x\<close> lim_add
+    by auto
+qed
+
+lemma lim_add_const_right:
+  fixes x :: \<open>nat \<Rightarrow> real\<close>
+  assumes  \<open>convergent x\<close>
+  shows \<open>lim (\<lambda> n. x n + c) = lim x + c\<close>
+proof-
+  have \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
+    using assms lim_add_const_left by blast
+  moreover have \<open>(\<lambda> n. c + x n) = (\<lambda> n. x n + c)\<close>
+    by auto
+  moreover have \<open>c + lim x = lim x + c\<close>
+    by simp
+  ultimately show ?thesis by simp
 qed
 
 lemma lim_scaleR:
@@ -627,5 +661,66 @@ proof-
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
 
+lemma limit_point_Cauchy:
+  assumes \<open>Cauchy x\<close>
+  shows \<open>\<exists> L\<in>HFinite. \<forall> N \<in> HNatInfinite. (*f* x) N \<approx> L\<close>
+proof-
+  have \<open>\<exists> L. \<forall> N. N \<in> HNatInfinite \<longrightarrow> (*f* x) N \<approx> L\<close>
+    using Cauchy_NSCauchy NSCauchyD assms by blast
+  then obtain L where \<open>\<forall> N. N \<in> HNatInfinite \<longrightarrow> (*f* x) N \<approx> L\<close>
+    by blast
+  moreover have \<open>\<forall> N. N \<in> HNatInfinite \<longrightarrow> (*f* x) N \<in> HFinite\<close>
+    by (simp add: Cauchy_NSCauchy NSBseqD2 NSCauchy_NSBseq assms)
+  ultimately show ?thesis
+    using HFinite_star_of approx_HFinite by blast 
+qed
+
+lemma lim_initial_segment:
+  assumes \<open>convergent x\<close>
+  shows \<open>lim x = lim (\<lambda> n. x (n + k))\<close>
+proof-
+  have \<open>\<exists> L. x \<longlonglongrightarrow> L\<close>
+    using \<open>convergent x\<close>
+    unfolding convergent_def
+    by blast
+  then obtain L where \<open>x \<longlonglongrightarrow> L\<close>
+    by blast
+  hence \<open>(\<lambda> n. x (n + k)) \<longlonglongrightarrow> L\<close>
+    using Topological_Spaces.LIMSEQ_ignore_initial_segment
+    by auto
+  thus ?thesis 
+    unfolding lim_def
+    by (metis LIMSEQ_unique \<open>x \<longlonglongrightarrow> L\<close>) 
+qed
+
+lemma lim_initial_segment':
+  assumes \<open>convergent x\<close>
+  shows \<open>lim x = lim (\<lambda> n. x (k + n))\<close>
+proof-
+  have \<open>lim x = lim (\<lambda> n. x (n + k))\<close>
+    using \<open>convergent x\<close> lim_initial_segment by blast
+  moreover have \<open>n + k = k + n\<close>
+    for n
+    by simp
+  ultimately show ?thesis by auto
+qed
+
+lemma Lim_bounded_lim:
+  fixes x :: \<open>nat \<Rightarrow> 'a::linorder_topology\<close>
+  assumes \<open>convergent x\<close> and \<open>\<forall>n\<ge>M. x n \<le> C\<close>
+  shows \<open>lim x \<le> C\<close>
+proof-
+  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
+    using \<open>convergent x\<close>
+    unfolding convergent_def
+    by blast
+  then obtain l where \<open>x \<longlonglongrightarrow> l\<close>
+    by blast
+  hence \<open>l \<le> C\<close> using \<open>\<forall>n\<ge>M. x n \<le> C\<close>
+    using Topological_Spaces.Lim_bounded
+    by blast
+  thus ?thesis unfolding lim_def using \<open>x \<longlonglongrightarrow> l\<close>
+    by (metis limI t2_space_class.Lim_def) 
+qed
 
 end

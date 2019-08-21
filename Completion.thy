@@ -50,7 +50,7 @@ proof
         unfolding Vanishes_def
         by simp
     qed
-    show \<open> Cauchy x \<Longrightarrow>
+    show  \<open>Cauchy x \<Longrightarrow>
            Cauchy y \<Longrightarrow>
            Vanishes (\<lambda>n. x n - y n) \<Longrightarrow>
            (\<lambda>Y. Cauchy Y \<and> Vanishes (\<lambda>n. x n - Y n)) =
@@ -762,6 +762,7 @@ proof
 qed
 end
 
+
 instantiation completion :: (real_normed_vector) banach
 begin
 instance
@@ -769,7 +770,427 @@ proof
   show "convergent (X::nat \<Rightarrow> 'a completion)"
     if "Cauchy (X::nat \<Rightarrow> 'a completion)"
     for X :: "nat \<Rightarrow> 'a completion"
-    using that sorry
+  proof-
+    have \<open>(\<lambda> i. inverse (real (Suc i))) \<longlonglongrightarrow> 0\<close>
+      using LIMSEQ_inverse_real_of_nat by auto
+    hence \<open>\<forall> e > 0. \<exists> H. \<forall> i \<ge> H. dist (inverse (real (Suc i))) 0 < e\<close>
+      using Real_Vector_Spaces.metric_LIMSEQ_D by blast
+    hence \<open>\<forall> e > 0. \<exists> H. \<forall> i \<ge> H. norm (inverse (real (Suc i))) < e\<close>
+      by (simp add: dist_norm)
+    hence \<open>\<forall> e > 0. \<exists> H. \<forall> i \<ge> H. inverse (real (Suc i)) < e\<close>
+      by auto
+    hence \<open>\<exists> H. \<forall> e > 0. \<forall> i \<ge> H e. inverse (real (Suc i)) < e\<close>
+      by metis
+    then obtain H where \<open>\<forall> e > 0. \<forall> i \<ge> H e. inverse (real (Suc i)) < e\<close>
+      by blast
+
+    have \<open>\<forall> e > 0. \<exists> R. \<forall> i \<ge> R. \<forall> j \<ge> R. lim (\<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m)) < e\<close>
+      using \<open>Cauchy X\<close>
+      unfolding Cauchy_def dist_completion_def
+      by auto
+    hence \<open>\<exists> R. \<forall> e > 0. \<forall> i \<ge> R e. \<forall> j \<ge> R e. lim (\<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m)) < e\<close>
+      by metis
+    then obtain R where \<open>\<forall> e > 0. \<forall> i \<ge> R e. \<forall> j \<ge> R e. lim (\<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m)) < e\<close>
+      by blast
+
+    have \<open>Cauchy (rep_completion (X i))\<close>
+      for i
+      by (metis Quotient3_completion Quotient3_rel_rep normed_space_rel_def)      
+    hence \<open>\<exists> T. \<forall> m \<ge> T. \<forall> n \<ge> T. norm (rep_completion (X i) m - rep_completion (X i) n) < inverse (of_nat (Suc i))\<close>
+      for i
+      unfolding Cauchy_def
+      by (simp add: dist_norm)
+    hence \<open>\<forall> i. \<exists> T. \<forall> m \<ge> T. norm (rep_completion (X i) m - rep_completion (X i) T) < inverse (of_nat (Suc i))\<close>
+      by blast
+    hence \<open>\<exists> T. \<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - rep_completion (X i) (T i)) < inverse (of_nat (Suc i))\<close>
+      by metis
+    then obtain T where \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - rep_completion (X i) (T i)) < inverse (of_nat (Suc i))\<close>
+      by blast
+    define l where \<open>l i = rep_completion (X i) (T i)\<close> for i
+    from \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - rep_completion (X i) (T i)) < inverse (of_nat (Suc i))\<close>
+    have \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - l i) < inverse (of_nat (Suc i))\<close>
+      unfolding l_def by blast
+    have \<open>convergent (\<lambda> m. norm ( rep_completion (X i) m - rep_completion (X j) m ))\<close>
+      for i j
+    proof-
+      have \<open>Cauchy (rep_completion (X i))\<close>
+        by (simp add: \<open>\<And>i. Cauchy (rep_completion (X i))\<close>)
+      moreover have \<open>Cauchy (rep_completion (X j))\<close>
+        by (simp add: \<open>\<And>i. Cauchy (rep_completion (X i))\<close>)
+      ultimately have \<open>Cauchy (\<lambda> m. rep_completion (X i) m - rep_completion (X j) m)\<close>
+        using Cauchy_minus by blast
+      hence \<open>Cauchy (\<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) )\<close>
+        by (simp add: Cauchy_convergent_norm)
+      thus ?thesis
+        by (simp add: real_Cauchy_convergent) 
+    qed
+
+    have \<open>convergent (\<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close>
+      for i j
+    proof-
+      define a where \<open>a m = norm ( rep_completion (X i) m - rep_completion (X j) m )\<close> for m
+      have \<open>convergent a\<close>
+        using \<open>\<And> i j. convergent (\<lambda> m. norm ( rep_completion (X i) m - rep_completion (X j) m ))\<close>
+        unfolding a_def by auto
+      hence \<open>convergent (\<lambda> m.  a (m + (T i + T j)))\<close>
+        using Limits.convergent_ignore_initial_segment
+        by blast
+      moreover have \<open>m + (T i + T j) = m + T i + T j\<close>
+        for m
+        by simp
+      ultimately have \<open>convergent (\<lambda> m.  a (m + T i + T j))\<close>
+        by simp
+      thus \<open>convergent (\<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close>
+        unfolding a_def by simp
+    qed
+
+    have \<open>Cauchy l\<close>
+    proof-
+      have \<open>(l i - l j) =
+              (l i - rep_completion (X i) m)
+           +  (rep_completion (X i) m - rep_completion (X j) m)
+           +  (rep_completion (X j) m - l j)\<close>
+        for i j m
+        by simp
+      have \<open>norm (l i - l j) =
+         norm ( (l i - rep_completion (X i) m)
+           +  (rep_completion (X i) m - rep_completion (X j) m)
+           +  (rep_completion (X j) m - l j) )\<close>
+        for i j m
+        by simp
+      hence \<open>norm (l i - l j) \<le>
+             norm (l i - rep_completion (X i) m)
+           + norm (rep_completion (X i) m - rep_completion (X j) m)
+           + norm (rep_completion (X j) m - l j)\<close>
+        for i j m
+        by (smt norm_triangle_ineq)
+      moreover have \<open>m \<ge> T i \<Longrightarrow> norm (l i - rep_completion (X i) m) \<le> inverse (of_nat (Suc i))\<close>
+        for i m
+        using \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - l i) < inverse (of_nat (Suc i))\<close>
+        by (smt norm_minus_commute)
+      moreover have \<open>m \<ge> T j \<Longrightarrow> norm (rep_completion (X j) m - l j) \<le> inverse (of_nat (Suc j))\<close>
+        for j m
+        using \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - l i) < inverse (of_nat (Suc i))\<close>
+        by fastforce
+      ultimately have \<open>m \<ge> T i \<Longrightarrow> m \<ge> T j \<Longrightarrow> norm (l i - l j) \<le>
+             inverse (of_nat (Suc i))
+           + norm (rep_completion (X i) m - rep_completion (X j) m)
+           + inverse (of_nat (Suc j))\<close>
+        for i j m
+        by smt
+      hence \<open>norm (l i - l j) \<le>
+             inverse (of_nat (Suc i))
+           + norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j))\<close>
+        for i j m
+        by fastforce
+      moreover have \<open>convergent ( \<lambda> m.
+             inverse (of_nat (Suc i))
+           + norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )\<close>
+        for i j
+        by (simp add: convergent_add_const_right_iff \<open>\<And>j i. convergent (\<lambda>m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close> convergent_add_const_iff)  
+      ultimately have \<open>norm (l i - l j) \<le> lim ( \<lambda> m.
+             inverse (of_nat (Suc i))
+           + norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )\<close>
+        for i j
+        using NSA_Miscellany.lim_ge
+        by simp
+      moreover have \<open>lim ( \<lambda> m.
+             inverse (of_nat (Suc i))
+           + norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )
+          = inverse (of_nat (Suc i)) 
+        + lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) )
+        + inverse (of_nat (Suc j))\<close>
+        for i j
+      proof-
+        have \<open>lim ( \<lambda> m.
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )
+          = lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) 
+            + inverse (of_nat (Suc j))\<close>
+          using lim_add_const_right
+          by (simp add: \<open>\<And>j i. convergent (\<lambda>m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close>) 
+        have \<open>convergent ( \<lambda> m.
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )\<close>
+          using \<open>\<And>j i. convergent (\<lambda>m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close>
+          by (simp add: convergent_add_const_right_iff)
+        hence \<open>lim ( \<lambda> m. inverse (of_nat (Suc i)) + (
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) ) ) =  inverse (of_nat (Suc i)) + lim ( \<lambda> m.
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )\<close>
+          using lim_add_const_left by auto
+        also have \<open>\<dots> = inverse (of_nat (Suc i)) + lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) 
+            + inverse (of_nat (Suc j))\<close>
+          using \<open>lim ( \<lambda> m.
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) )
+          = lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) 
+            + inverse (of_nat (Suc j))\<close>
+          by simp
+        finally have \<open>lim ( \<lambda> m. inverse (of_nat (Suc i)) + (
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) ) ) = inverse (of_nat (Suc i)) + lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) 
+            + inverse (of_nat (Suc j))\<close>
+          by blast
+        moreover have \<open>( \<lambda> m. inverse (of_nat (Suc i)) + (
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+           + inverse (of_nat (Suc j)) ) )
+          = ( \<lambda> m. inverse (of_nat (Suc i)) 
+             + norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
+             + inverse (of_nat (Suc j)) )\<close>
+          by auto
+        ultimately show ?thesis by simp
+      qed
+      ultimately have \<open>norm (l i - l j) \<le> inverse (of_nat (Suc i)) 
+        + lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) )
+        + inverse (of_nat (Suc j))\<close>
+        for i j
+        by simp
+      moreover have \<open>e > 0 \<Longrightarrow> i \<ge> R e \<Longrightarrow> j \<ge> R e \<Longrightarrow>
+             lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) < e\<close>
+        for i j e
+      proof-
+        assume \<open>e > 0\<close> and \<open>i \<ge> R e\<close> and \<open>j \<ge> R e\<close>
+        have \<open>e > 0 \<Longrightarrow> i \<ge> R e \<Longrightarrow> j \<ge> R e \<Longrightarrow>
+             lim ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) ) < e\<close>
+          using \<open>\<forall>e>0. \<forall>i\<ge>R e. \<forall>j\<ge>R e. lim (\<lambda>m. norm (rep_completion (X i) m - rep_completion (X j) m)) < e\<close> by auto
+        moreover have \<open>lim ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) )
+              = lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) )\<close>
+        proof-
+          have \<open>lim ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) )
+              = lim (\<lambda> n. ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) ) (n + (T i + T j)) )\<close>
+            using lim_initial_segment \<open>convergent ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) )\<close>
+            by auto
+          moreover have \<open>n + (T i + T j) = n + T i + T j\<close>
+            for n
+            by auto
+          ultimately show ?thesis by auto
+        qed
+        ultimately have \<open>e > 0 \<Longrightarrow> i \<ge> R e \<Longrightarrow> j \<ge> R e \<Longrightarrow>
+             lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) < e\<close>
+        proof-
+          assume \<open>e > 0\<close> and \<open>i \<ge> R e\<close> and \<open>j \<ge> R e\<close>
+          hence \<open>lim ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) ) < e\<close>
+            by (simp add: \<open>\<lbrakk>0 < e; R e \<le> i; R e \<le> j\<rbrakk> \<Longrightarrow> lim (\<lambda>m. norm (rep_completion (X i) m - rep_completion (X j) m)) < e\<close>)
+          thus ?thesis 
+            using \<open>lim ( \<lambda> m. norm (rep_completion (X i) m - rep_completion (X j) m) )
+              = lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) )\<close>
+            by simp
+        qed
+        thus ?thesis using \<open>e > 0\<close> \<open>i \<ge> R e\<close> \<open>j \<ge> R e\<close> by blast
+      qed
+      ultimately have \<open>e > 0 \<Longrightarrow> i \<ge> R e \<Longrightarrow> j \<ge> R e \<Longrightarrow>
+          norm (l i - l j) \<le> inverse (real (Suc i)) + e + inverse (real (Suc j))\<close>
+        for i j e
+        by smt
+      moreover have \<open>e > 0 \<Longrightarrow> i \<ge> H e \<Longrightarrow> inverse (real (Suc i)) < e\<close>
+        for e i
+        using \<open>\<forall>e>0. \<forall>i\<ge>H e. inverse (real (Suc i)) < e\<close> by blast
+      ultimately have \<open>e > 0 \<Longrightarrow> i \<ge> R e \<Longrightarrow> j \<ge> R e \<Longrightarrow> i \<ge> H e \<Longrightarrow> j \<ge> H e \<Longrightarrow>
+          norm (l i - l j) <  e + e + e\<close>
+        for i j e
+        by smt
+      hence \<open>e > 0 \<Longrightarrow> \<exists> M. \<forall> i \<ge> M. \<forall> j \<ge> M. norm (l i - l j) < e + e + e\<close>
+        for e
+        by (metis (no_types, hide_lams) add.assoc le_add_same_cancel2 le_iff_add zero_le)
+      hence \<open>e > 0 \<Longrightarrow> \<exists> M. \<forall> i \<ge> M. \<forall> j \<ge> M. norm (l i - l j) < 3*e\<close>
+        for e
+        by simp
+      hence \<open>e > 0 \<Longrightarrow> \<exists> M. \<forall> i \<ge> M. \<forall> j \<ge> M. norm (l i - l j) < e\<close>
+        for e
+      proof-
+        assume \<open>e > 0\<close>
+        hence \<open>e/3 > 0\<close>
+          by simp
+        hence \<open>\<exists> M. \<forall> i \<ge> M. \<forall> j \<ge> M. norm (l i - l j) < 3*(e/3)\<close>
+          using \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>M. \<forall>i\<ge>M. \<forall>j\<ge>M. norm (l i - l j) < 3 * e\<close> by blast
+        thus ?thesis by simp            
+      qed
+      thus ?thesis
+        unfolding Cauchy_def 
+        by (simp add: dist_norm) 
+    qed
+    hence \<open>normed_space_rel l l\<close>
+      unfolding normed_space_rel_def
+      apply auto
+      unfolding Vanishes_def
+      by simp
+    hence \<open>\<exists> L. L = abs_completion l\<close>
+      using Abs_completion_inverse by blast
+    then obtain L where \<open>L = abs_completion l\<close>
+      by blast
+    have \<open>X \<longlonglongrightarrow> L\<close>
+    proof-
+      have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> i \<ge> N. dist (X i) L \<le> e\<close>
+        for e
+      proof-
+        assume \<open>e > 0\<close>
+        hence \<open>e/2 > 0\<close>
+          by simp
+        have \<open>normed_space_rel l l\<close>
+          unfolding normed_space_rel_def
+          apply auto
+          using \<open>Cauchy l\<close>
+           apply auto
+          unfolding Vanishes_def
+          by auto
+        hence \<open>normed_space_rel (rep_completion (abs_completion l))  l\<close>
+          by (simp add: Quotient3_completion rep_abs_rsp_left)
+        hence \<open>(\<lambda> n. (rep_completion (abs_completion l)) n - l n ) \<longlonglongrightarrow> 0\<close>
+          unfolding normed_space_rel_def Vanishes_def by blast
+
+        have \<open>\<exists>N. \<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n -
+             rep_completion (abs_completion l) n)) \<le> e\<close>
+        proof-
+          have \<open>\<exists>N. \<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
+          proof-
+            have \<open>\<exists> N. \<forall> n \<ge> N.  inverse (of_nat (Suc n)) < e/2\<close>
+              using \<open>0 < e / 2\<close> \<open>\<forall>e>0. \<exists>H. \<forall>i\<ge>H. inverse (real (Suc i)) < e\<close> by blast
+            then obtain N where \<open>\<forall> n \<ge> N.  inverse (of_nat (Suc n)) < e/2\<close>
+              by blast
+            hence \<open>i\<ge>N \<Longrightarrow> \<forall> n \<ge> T i. norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+              for i
+              sorry
+            thus ?thesis 
+              sorry
+          qed
+          then obtain N where \<open>\<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
+            by blast
+
+          have \<open>\<exists> M. \<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
+            using \<open>(\<lambda> n. (rep_completion (abs_completion l)) n - l n ) \<longlonglongrightarrow> 0\<close>
+            unfolding LIMSEQ_def 
+            using \<open>e/2 > 0\<close> 
+            by (metis dist_0_norm dist_commute) 
+          then obtain M where \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
+            by blast
+
+          have \<open>i\<ge>N  \<Longrightarrow> lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n)) \<le> e\<close>
+            for i
+          proof-
+            assume \<open>i\<ge>N\<close>
+            hence \<open>lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
+              using \<open>\<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
+              by blast
+
+            have \<open>lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))
+              = lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ))\<close>
+              by simp
+            also have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ))
+              \<le> lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) ))\<close>
+            proof-
+              have  \<open> norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) )
+              \<le>  norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) )\<close>
+                for n
+                using norm_triangle_ineq by blast
+              moreover have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ) )\<close>
+              proof-
+                have \<open>(\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))
+                  = (\<lambda> n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ) )\<close>
+                  by simp
+                moreover have \<open>convergent (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))\<close>
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>\<And>i. Cauchy (rep_completion (X i))\<close> \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                ultimately show ?thesis by simp
+              qed
+              moreover have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
+              proof-
+                have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) )\<close>
+                  by (simp add: Cauchy_convergent_norm Cauchy_minus \<open>Cauchy l\<close> \<open>\<And>i. Cauchy (rep_completion (X i))\<close> real_Cauchy_convergent)
+                moreover have \<open>convergent (\<lambda> n. norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                ultimately show ?thesis
+                  by (simp add: convergent_add) 
+              qed
+              ultimately show ?thesis
+                by (simp add: lim_leq) 
+            qed
+            finally have \<open>lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))
+              \<le> lim (\<lambda>n. norm (rep_completion (X i) n - l n) +
+              norm (l n - rep_completion (abs_completion l) n))\<close>
+              by blast
+            moreover have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) )) \<le> e\<close>
+            proof-
+              have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) )\<close>
+                by (simp add: Cauchy_convergent_norm Cauchy_minus \<open>Cauchy l\<close> \<open>\<And>i. Cauchy (rep_completion (X i))\<close> real_Cauchy_convergent)
+              moreover have \<open>convergent (\<lambda> n. norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
+                by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+              ultimately have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) ))
+            = lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) )
+              + lim (\<lambda>n. norm ( (l n - rep_completion (abs_completion l) n) ))\<close>
+                by (simp add: lim_add)
+              moreover have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) ) \<le> e/2\<close>
+                using \<open>lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e / 2\<close> by auto
+              moreover have \<open>lim (\<lambda>n. norm ( (l n - rep_completion (abs_completion l) n) )) \<le> e/2\<close>
+              proof-
+                have \<open>convergent (\<lambda>n. norm (rep_completion (abs_completion l) n - l n))\<close>
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                moreover have \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) \<le> e/2\<close>
+                  using \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
+                  by auto
+                ultimately have \<open>lim (\<lambda>n. norm ( (rep_completion (abs_completion l) n - l n) )) \<le> e/2\<close>
+                  using Lim_bounded_lim
+                  by blast
+                moreover have \<open>lim (\<lambda>n. norm ( (rep_completion (abs_completion l) n - l n) ))
+                    = lim (\<lambda>n. norm ( l n - (rep_completion (abs_completion l) n) ))\<close>
+                proof-
+                  have \<open>(\<lambda>n. norm ( (rep_completion (abs_completion l) n - l n) ))
+                    = (\<lambda>n. norm ( l n - (rep_completion (abs_completion l) n) ))\<close>
+                  proof-
+                    have \<open>norm ( (rep_completion (abs_completion l) n - l n) )
+                    = norm ( l n - (rep_completion (abs_completion l) n) )\<close>
+                      for n
+                    proof-
+                      have \<open> ( (rep_completion (abs_completion l) n - l n) )
+                    = - ( l n - (rep_completion (abs_completion l) n) )\<close>
+                        by simp
+                      thus ?thesis
+                        using norm_minus_commute by blast 
+                    qed
+                    thus ?thesis by blast
+                  qed
+                  thus ?thesis by simp
+                qed
+                ultimately show ?thesis by simp
+              qed
+              ultimately have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) )) \<le> e/2 + e/2\<close>
+                by auto
+              thus \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) )) \<le> e\<close>
+                by simp
+            qed
+            ultimately show \<open>lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n)) \<le> e\<close>
+              by simp
+          qed
+          thus ?thesis
+            by (meson dual_order.trans le_cases) 
+        qed
+        thus \<open>\<exists> N. \<forall> i \<ge> N. dist (X i) L \<le> e\<close>
+          unfolding dist_completion_def
+          using \<open>L = abs_completion l\<close>
+          by auto
+      qed
+      hence \<open>0 < e \<Longrightarrow> \<exists>N. \<forall>i\<ge>N. dist (X i) L < e\<close>
+        for e
+      proof-
+        assume \<open>e > 0\<close>
+        hence \<open>e/2 > 0\<close>
+          by simp
+        hence \<open>\<exists>N. \<forall>i\<ge>N. dist (X i) L \<le> e/2\<close>
+          using \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>N. \<forall>i\<ge>N. dist (X i) L \<le> e\<close> by blast
+        moreover have \<open>e/2 < e\<close>
+          using \<open>e/2 > 0\<close> by auto
+        ultimately show ?thesis
+          by fastforce 
+      qed
+      thus ?thesis
+        by (simp add: metric_LIMSEQ_I)
+    qed
+    thus ?thesis unfolding convergent_def by blast
+  qed
 qed
 end
 
