@@ -16,6 +16,8 @@ theory NSA_Miscellany
     Unobtrusive_NSA
 begin
 
+unbundle nsa_notation
+
 section \<open>Boundeness\<close>
 
 lemma nsbounded_existencial:
@@ -627,5 +629,6 @@ proof-
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
 
+unbundle no_nsa_notation
 
 end

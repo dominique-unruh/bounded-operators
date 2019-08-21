@@ -3008,7 +3008,8 @@ lemma trunc_ell2_complex_span:
   using trunc_ell2_complex_span_induct by auto
 
 lemma trunc_ell2_lim:
-  \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  includes nsa_notation
+  shows \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
 proof-
   define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
   have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
@@ -3101,6 +3102,7 @@ qed
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
 proof
+  include nsa_notation
   show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
     by simp    
   show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
@@ -3164,6 +3166,7 @@ qed
 lemma superposition_principle_bounded_sesquilinear_ket:
   \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
 proof-
+  include nsa_notation
   assume \<open>bounded_sesquilinear B\<close>
     and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
   show \<open>B x y = 0\<close>
@@ -3334,6 +3337,7 @@ lemma equal_basis_0:
   assumes \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
   shows \<open>A = 0\<close>
 proof-
+  include nsa_notation
   have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> A *\<^sub>v x = 0\<close>
     for x
   proof-

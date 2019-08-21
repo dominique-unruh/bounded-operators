@@ -15,6 +15,7 @@ begin
 
 section \<open>Algebraic tensor product\<close>
 
+(* TODO Why not just use prod? This seems to be the same as the type ('a,'b) prod. *)
 typedef (overloaded) ('a::complex_vector, 'b::complex_vector) pair_vector
   = \<open>UNIV::(('a*'b) set)\<close>
   by auto
@@ -44,6 +45,7 @@ definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) p
 definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) pair_vector \<Rightarrow> ('a,'b) pair_vector \<Rightarrow> bool"
   where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
 
+(* TODO:  Remove "partial:" since alg_tensor_rel is total *)
 quotient_type (overloaded) ('a, 'b) alg_tensor 
 = "('a::complex_vector,'b::complex_vector) pair_vector" / partial: alg_tensor_rel
   unfolding part_equivp_def
