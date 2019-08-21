@@ -663,7 +663,6 @@ proof-
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
 
-<<<<<<< HEAD
 lemma limit_point_Cauchy:
   assumes \<open>Cauchy x\<close>
   shows \<open>\<exists> L\<in>HFinite. \<forall> N \<in> HNatInfinite. (*f* x) N \<approx> L\<close>
@@ -725,8 +724,7 @@ proof-
   thus ?thesis unfolding lim_def using \<open>x \<longlonglongrightarrow> l\<close>
     by (metis limI t2_space_class.Lim_def) 
 qed
-=======
+
 unbundle no_nsa_notation
->>>>>>> e49143647b7cc6a9dd5684744efb3729273a8400
 
 end
