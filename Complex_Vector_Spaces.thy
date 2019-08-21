@@ -1506,6 +1506,7 @@ instance star :: (complex_div_algebra) complex_div_algebra ..
 instance star :: (complex_field) complex_field ..
 
 lemma isCont_scaleC:
+  includes nsa_notation
   fixes l :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
 proof-

@@ -16,6 +16,8 @@ theory NSA_Miscellany
     Unobtrusive_NSA
 begin
 
+unbundle nsa_notation
+
 section \<open>Boundeness\<close>
 
 lemma nsbounded_existencial:
@@ -383,5 +385,6 @@ lemma nsclosure_iff:
 \<open>r \<in> closure A \<longleftrightarrow> (\<exists> a \<in> *s* A. star_of r \<approx> a)\<close>
   using nsclosure_D nsclosure_I by blast
 
+unbundle no_nsa_notation
 
 end

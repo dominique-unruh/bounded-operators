@@ -1295,6 +1295,7 @@ lemma equal_span_applyOpSpace:
   shows \<open>A t = B t\<close>
   using assms 
 proof transfer
+  include nsa_notation
   fix A B::\<open>'a \<Rightarrow> 'b\<close> and G::\<open>'a set\<close> and t::'a
   assume \<open>bounded_clinear A\<close> and
     \<open>bounded_clinear B\<close> and
@@ -1665,6 +1666,7 @@ proof-
     using \<open>space_as_set M = range (times_bounded_vec P)\<close> by blast 
 qed
 
+(* TODO: Should get [simp] attribute *)
 lemma Pro_isProjector:
   fixes M::\<open>'a::chilbert_space linear_space\<close>
   shows \<open>isProjector (Proj M)\<close>

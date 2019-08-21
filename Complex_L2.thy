@@ -2743,6 +2743,7 @@ qed
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
 proof
+  include nsa_notation
   show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
     by simp    
   show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
@@ -2792,6 +2793,7 @@ shows \<open>B x y = 0\<close>
   by (cheat ket_ell2_span)
 
 lemma bounded_sesquilinear_continuous:
+  includes nsa_notation
   assumes \<open>bounded_sesquilinear B\<close>
     and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
   shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
@@ -2930,6 +2932,7 @@ qed
 lemma superposition_principle_bounded_sesquilinear_ket:
   \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
 proof-
+  include nsa_notation
   assume \<open>bounded_sesquilinear B\<close>
     and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
   show \<open>B x y = 0\<close>
