@@ -18,4 +18,7 @@ consts cdot :: "'a \<Rightarrow> 'b \<Rightarrow> 'c" (infixl "\<cdot>" 70)
 adhoc_overloading
   cdot timesOp applyOp applyOpSpace
 
+lemma [simp]: "isProjector (Proj S)"
+  by (rule Pro_isProjector)
+
 end

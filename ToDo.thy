@@ -180,4 +180,48 @@ lemma ket_is_orthogonal[simp]:
   unfolding is_orthogonal_def 
   by (auto simp: ket_Kronecker_delta_neq)
 
+
+
+
+unbundle bounded_notation
+
+definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) bounded. A = B* *\<^sub>o B)"
+
+lemma timesOp0[simp]: "0 *\<^sub>o A = 0"
+  apply transfer by simp
+lemma timesOp0'[simp]: "A *\<^sub>o 0 = 0"
+  apply transfer apply auto
+  by (metis bounded_clinear_def mult_zero_left norm_le_zero_iff norm_zero)
+
+lemma positive_idOp[simp]: "positive_op idOp"
+  unfolding positive_op_def apply (rule exI[of _ idOp]) by simp
+lemma positive_0[simp]: "positive_op 0"
+  unfolding positive_op_def apply (rule exI[of _ 0]) by auto
+
+abbreviation "loewner_leq A B == (positive_op (B-A))"
+
+lemma Span_range_ket[simp]: "Span (range ket) = top"
+  by (cheat Span_range_ket)
+
+lemma norm_mult_ineq_bounded:
+  fixes A B :: "(_,_) bounded"
+  shows "norm (A *\<^sub>o B) \<le> norm A * norm B"
+  by (cheat norm_mult_ineq_bounded)
+
+lemma equal_span':
+  assumes "bounded_clinear f"
+    and "bounded_clinear g"
+  assumes "\<And>x. x\<in>G \<Longrightarrow> f x = g x"
+  assumes "x\<in>closure (span G)"
+  shows "f x = g x"
+  by (cheat equal_span')
+
+lemma span_tensors:
+  "closure (span {C1 \<otimes> C2| (C1::(_,_) l2bounded) (C2::(_,_) l2bounded). True}) = UNIV"
+  by (cheat span_tensors)
+
+unbundle no_bounded_notation
+
+
+
 end
