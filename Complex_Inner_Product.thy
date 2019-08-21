@@ -2926,6 +2926,7 @@ subclass (in card2) not_singleton
 lemma not_singleton_existence[simp]:
   \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
 proof (rule classical)
+(* TODO: proof has an unnecessary level of nesting. *)
   show "\<exists>x. (x::'a) \<noteq> t"
     if "\<nexists>x. (x::'a) \<noteq> t"
   proof-
