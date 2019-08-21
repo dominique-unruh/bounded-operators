@@ -13,11 +13,13 @@ Reactivate the notation locally via "includes nsa_notation" in a lemma statement
 
 (* TODO: add any syntax introduced by HOL-Nonstandard_Analysis both here and in the bundle below *)
 bundle no_nsa_notation begin
-no_notation epsilon ("\<epsilon>")
+no_notation HyperDef.epsilon ("\<epsilon>")
+no_notation NSA.approx (infixl "\<approx>" 50)
 end
 
 bundle nsa_notation begin
-notation epsilon ("\<epsilon>")
+notation HyperDef.epsilon ("\<epsilon>")
+notation NSA.approx (infixl "\<approx>" 50)
 end
 
 unbundle no_nsa_notation

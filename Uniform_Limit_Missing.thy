@@ -25,6 +25,7 @@ theory Uniform_Limit_Missing
     Unobtrusive_NSA
 begin
 
+unbundle nsa_notation
 
 abbreviation uniform_convergence_abbr::
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
@@ -368,6 +369,6 @@ proof-
     by blast
 qed
 
-
+unbundle no_nsa_notation
 
 end

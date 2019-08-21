@@ -2926,6 +2926,7 @@ subclass (in card2) not_singleton
 lemma not_singleton_existence[simp]:
   \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
 proof (rule classical)
+(* TODO: proof has an unnecessary level of nesting. *)
   show "\<exists>x. (x::'a) \<noteq> t"
     if "\<nexists>x. (x::'a) \<noteq> t"
   proof-
@@ -3591,6 +3592,7 @@ proof-
 qed
 
 lemma bounded_sesquilinear_continuous:
+  includes nsa_notation
   assumes \<open>bounded_sesquilinear B\<close>
     and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
   shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>

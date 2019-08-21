@@ -258,6 +258,7 @@ lift_definition  norm_completion :: \<open>'a completion \<Rightarrow> real\<clo
   is \<open>\<lambda> x. lim (\<lambda> n. norm (x n))\<close>
   unfolding normed_space_rel_def
 proof-
+  include nsa_notation
   fix f1 f2 :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assume \<open>Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. f1 n - f2 n)\<close>
   have \<open>Cauchy f1\<close> and \<open>Cauchy f2\<close> and \<open>Vanishes (\<lambda>n. f1 n - f2 n)\<close>
@@ -448,6 +449,7 @@ lift_definition dist_completion :: \<open>'a completion \<Rightarrow> 'a complet
   is \<open>\<lambda> f g. lim (\<lambda> n. norm (f n - g n))\<close>
   unfolding normed_space_rel_def
 proof-
+  include nsa_notation
   fix f1 f2 f3 f4 :: \<open>nat \<Rightarrow> 'a\<close>
   assume \<open>Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. f1 n - f2 n)\<close> and
     \<open>Cauchy f3 \<and> Cauchy f4 \<and> Vanishes (\<lambda>n. f3 n - f4 n)\<close> 

@@ -387,6 +387,7 @@ qed
 section \<open>Topological properties of real bounded operators\<close>
 
 lemma hnorm_unit_sphere:
+  includes nsa_notation
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
     and N::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
@@ -434,6 +435,7 @@ proof-
 qed
 
 lemma hnorm_unit_sphere_double:
+  includes nsa_notation
   fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
     and N M::hypnat 
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
@@ -481,6 +483,7 @@ proof-
 qed
 
 lemma uCauchy_unit_sphere:
+  includes nsa_notation
   fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
     and N M::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
@@ -545,6 +548,7 @@ proof(cases \<open>(UNIV::'a set) = 0\<close>)
     using LIM_zero_cancel tendsto_norm_zero_iff by blast 
 next
   case False
+  include nsa_notation
   have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (star_of l)\<close>
     for N::hypnat
   proof-
@@ -620,6 +624,7 @@ lemma oCauchy_uCauchy:
   assumes \<open>Cauchy f\<close>
   shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
 proof-
+  include nsa_notation
   have  \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> x\<in>*s* (sphere 0 1) \<Longrightarrow> 
     (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x\<close>
     for N M x
@@ -704,6 +709,7 @@ proof(cases \<open>(UNIV::('a set)) = 0\<close>)
     by presburger 
 next
   case False
+  include nsa_notation
   have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
     for N M
   proof-
@@ -754,6 +760,7 @@ lemma uCauchy_ustrong:
   shows  \<open>\<exists> l::('a,'b) rbounded. 
     (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
 proof-
+  include nsa_notation
   from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
   have \<open>\<exists> s::'a\<Rightarrow>'b.
  (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
@@ -1062,6 +1069,7 @@ lemma onorm_ustrong:
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
 proof-
+  include nsa_notation
   have \<open>N\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow>
        (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* (times_rbounded_vec l)) x\<close>
     for N and x
@@ -1168,6 +1176,7 @@ lemma onorm_strong:
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> (times_rbounded_vec l) x\<close>
 proof-
+  include nsa_notation
   have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda>n. (times_rbounded_vec (f n)) x)) N \<approx> star_of ((times_rbounded_vec l) x)\<close>
     for N
   proof-
