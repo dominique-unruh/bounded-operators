@@ -1,5 +1,5 @@
 (*
-Authors:
+Author s:
 
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
@@ -1034,6 +1034,8 @@ proof
         assume \<open>e > 0\<close>
         hence \<open>e/2 > 0\<close>
           by simp
+        hence \<open>e/4 > 0\<close>
+          by simp
         have \<open>normed_space_rel l l\<close>
           unfolding normed_space_rel_def
           apply auto
@@ -1045,25 +1047,72 @@ proof
           by (simp add: Quotient3_completion rep_abs_rsp_left)
         hence \<open>(\<lambda> n. (rep_completion (abs_completion l)) n - l n ) \<longlonglongrightarrow> 0\<close>
           unfolding normed_space_rel_def Vanishes_def by blast
-
         have \<open>\<exists>N. \<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n -
              rep_completion (abs_completion l) n)) \<le> e\<close>
         proof-
           have \<open>\<exists>N. \<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
           proof-
-            have \<open>\<exists> N. \<forall> n \<ge> N.  inverse (of_nat (Suc n)) < e/2\<close>
-              using \<open>0 < e / 2\<close> \<open>\<forall>e>0. \<exists>H. \<forall>i\<ge>H. inverse (real (Suc i)) < e\<close> by blast
-            then obtain N where \<open>\<forall> n \<ge> N.  inverse (of_nat (Suc n)) < e/2\<close>
+            have \<open>\<exists> W. \<forall> i \<ge> W. \<forall> n \<ge> W. norm (l i - l n) < e/4\<close>
+              using \<open>Cauchy l\<close> Cauchy_iff \<open>0 < e\<close> linordered_field_class.divide_pos_pos zero_less_numeral by blast
+            then obtain W where \<open>\<forall> i \<ge> W. \<forall> n \<ge> W. norm (l i - l n) < e/4\<close>
               by blast
-            hence \<open>i\<ge>N \<Longrightarrow> \<forall> n \<ge> T i. norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+            have \<open>\<exists> N. \<forall> n \<ge> N.  inverse (of_nat (Suc n)) < e/4\<close>
+              using \<open>0 < e / 4\<close> \<open>\<forall>e>0. \<exists>H. \<forall>i\<ge>H. inverse (real (Suc i)) < e\<close> 
+              by blast
+            then obtain N where \<open>\<forall> n \<ge> N. inverse (of_nat (Suc n)) < e/4\<close>
+              by blast
+            hence \<open>i\<ge>N \<Longrightarrow> i \<ge> W \<Longrightarrow> n \<ge> T i \<Longrightarrow> n \<ge> W \<Longrightarrow>  norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+              for i n
+            proof-
+              assume \<open>i\<ge>N\<close> and \<open>i\<ge>W\<close> and \<open>n \<ge> T i\<close> and \<open>n \<ge> W\<close>
+              have \<open>norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+              proof-
+                have \<open>norm (rep_completion (X i) n - l n) \<le> norm (rep_completion (X i) n - l i) + norm (l i - l n)\<close>
+                proof-
+                  have \<open>(rep_completion (X i) n - l n) = (rep_completion (X i) n - l i) + (l i - l n)\<close>
+                    by simp
+                  thus ?thesis
+                    by (metis norm_triangle_ineq)
+                qed
+                moreover have \<open>norm (rep_completion (X i) n - l i) \<le> e/4\<close>
+                proof-
+                  have \<open>norm (rep_completion (X i) n - l i) < inverse (of_nat (Suc i))\<close>
+                    using \<open>\<forall> i. \<forall> m \<ge> T i. norm (rep_completion (X i) m - l i) < inverse (of_nat (Suc i))\<close> 
+                      \<open>n \<ge> T i\<close>
+                    by blast
+                  moreover have \<open>inverse (of_nat (Suc i)) \<le> e/4\<close>
+                    using \<open>N \<le> i\<close> \<open>\<forall>n\<ge>N. inverse (real (Suc n)) < e / 4\<close> by auto
+                  ultimately show ?thesis by auto
+                qed
+                moreover have \<open>norm (l i - l n) \<le> e/4\<close>
+                  using \<open>\<forall> i \<ge> W. \<forall> n \<ge> W. norm (l i - l n) < e/4\<close>
+                    \<open>i \<ge> W\<close> \<open>n \<ge> W\<close>
+                  by fastforce                  
+                ultimately have \<open>norm (rep_completion (X i) n - l n) \<le> e/4 + e/4\<close>
+                  by simp
+                thus ?thesis
+                  by simp
+              qed
+              thus ?thesis by blast
+            qed
+            have \<open>i\<ge>N \<Longrightarrow> i\<ge>W \<Longrightarrow> lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
               for i
-              sorry
-            thus ?thesis 
-              sorry
+            proof-
+              assume \<open>i\<ge>N\<close> and \<open>i \<ge> W\<close>
+              hence \<open>\<forall> n. n \<ge> T i \<and> n \<ge> W \<longrightarrow> norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+                using \<open>\<And>n i. \<lbrakk>N \<le> i; W \<le> i; T i \<le> n; W \<le> n\<rbrakk> \<Longrightarrow> norm (rep_completion (X i) n - l n) \<le> e / 2\<close> by auto
+              hence \<open>\<forall> n \<ge> (max (T i) W).  norm (rep_completion (X i) n - l n) \<le> e/2\<close>
+                by simp                
+              moreover have \<open>convergent (\<lambda> n. norm (rep_completion (X i) n - l n))\<close>
+                by (simp add: Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>Cauchy l\<close> \<open>\<And>i. Cauchy (rep_completion (X i))\<close>)
+              ultimately show \<open>lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
+                using Lim_bounded_lim by blast
+            qed
+            thus ?thesis
+              by (meson add_leE)  
           qed
           then obtain N where \<open>\<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
             by blast
-
           have \<open>\<exists> M. \<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
             using \<open>(\<lambda> n. (rep_completion (abs_completion l)) n - l n ) \<longlonglongrightarrow> 0\<close>
             unfolding LIMSEQ_def 
@@ -1071,7 +1120,6 @@ proof
             by (metis dist_0_norm dist_commute) 
           then obtain M where \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
             by blast
-
           have \<open>i\<ge>N  \<Longrightarrow> lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n)) \<le> e\<close>
             for i
           proof-
@@ -1079,7 +1127,6 @@ proof
             hence \<open>lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
               using \<open>\<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n - l n)) \<le> e/2\<close>
               by blast
-
             have \<open>lim (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))
               = lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ))\<close>
               by simp
@@ -1198,14 +1245,191 @@ end
 
 instantiation completion :: (complex_normed_vector) cbanach
 begin
+lift_definition scaleC_completion :: \<open>complex \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
+  is \<open>\<lambda> r x. (\<lambda> n. r *\<^sub>C (x n))\<close>
+  unfolding normed_space_rel_def proof
+  show "Cauchy (\<lambda>n. r *\<^sub>C (f1 n::'a))"
+    if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
+    for r :: complex
+      and f1 :: "nat \<Rightarrow> 'a"
+      and f2 :: "nat \<Rightarrow> 'a"
+  proof-
+    have \<open>Cauchy f1\<close>
+      using that by blast
+    thus ?thesis using Cauchy_scaleC by blast
+  qed
+  show "Cauchy (\<lambda>n. r *\<^sub>C (f2 n::'a)) \<and> Vanishes (\<lambda>n. r *\<^sub>C f1 n - r *\<^sub>C f2 n)"
+    if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
+    for r :: complex
+      and f1 :: "nat \<Rightarrow> 'a"
+      and f2 :: "nat \<Rightarrow> 'a"
+  proof-
+    have \<open>Cauchy (\<lambda>n. r *\<^sub>C (f2 n))\<close>
+    proof-
+      have \<open>Cauchy f2\<close>
+        using that by blast
+      thus ?thesis using Cauchy_scaleC by blast
+    qed
+    moreover have \<open>Vanishes (\<lambda>n. r *\<^sub>C f1 n - r *\<^sub>C f2 n)\<close>
+    proof-
+      have \<open>Vanishes (\<lambda>n. (f1 n) - (f2 n))\<close>
+        using that by blast
+      hence \<open>(\<lambda>n. (f1 n) - (f2 n)) \<longlonglongrightarrow> 0\<close>
+        unfolding Vanishes_def by blast
+      moreover have \<open>(\<lambda>n. r) \<longlonglongrightarrow> r\<close>
+        by simp
+      ultimately have \<open>(\<lambda>n. r *\<^sub>C (f1 n - f2 n)) \<longlonglongrightarrow> r *\<^sub>C 0\<close>
+        using isCont_scaleC isCont_tendsto_compose by blast
+      moreover have \<open>r *\<^sub>C (f1 n - f2 n) = r *\<^sub>C f1 n - r *\<^sub>C f2 n\<close>
+        for n
+        by (simp add: complex_vector.scale_right_diff_distrib)
+      ultimately show ?thesis unfolding Vanishes_def
+        by auto 
+    qed
+    ultimately show ?thesis by blast
+  qed
+qed     
+
+
 instance 
-  sorry
+proof
+  show "((*\<^sub>R) r::'a completion \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+    unfolding scaleC_completion_def scaleR_completion_def
+    apply auto
+    by (simp add: scaleR_scaleC)
+  show "a *\<^sub>C ((x::'a completion) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "'a completion"
+      and y :: "'a completion"
+    apply transfer unfolding normed_space_rel_def apply auto
+      apply (simp add: Cauchy_add Cauchy_scaleC)
+     apply (simp add: Cauchy_add Cauchy_scaleC)
+    unfolding Vanishes_def apply auto proof
+    show "\<forall>\<^sub>F n in sequentially. dist (a *\<^sub>C (x n + y n) - (a *\<^sub>C x n + a *\<^sub>C y n)) (0::'a) < e"
+      if "Cauchy (y::nat \<Rightarrow> 'a)"
+        and "Cauchy (x::nat \<Rightarrow> 'a)"
+        and "(0::real) < e"
+      for a :: complex
+        and x :: "nat \<Rightarrow> 'a"
+        and y :: "nat \<Rightarrow> 'a"
+        and e :: real
+    proof-
+      have \<open>a *\<^sub>C (x n + y n) = (a *\<^sub>C x n + a *\<^sub>C y n)\<close>
+        for n
+        by (simp add: scaleC_add_right)        
+      have \<open>a *\<^sub>C (x n + y n) - (a *\<^sub>C x n + a *\<^sub>C y n) = 0\<close>
+        for n
+        by (simp add: \<open>\<And>n. a *\<^sub>C (x n + y n) = a *\<^sub>C x n + a *\<^sub>C y n\<close>)
+      hence \<open>dist (a *\<^sub>C (x n + y n) - (a *\<^sub>C x n + a *\<^sub>C y n)) (0::'a) = 0\<close>
+        for n
+        by simp
+      thus ?thesis
+        by (simp add: that(3)) 
+    qed
+  qed
+
+
+  show "(a + b) *\<^sub>C (x::'a completion) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a completion"
+    apply transfer unfolding normed_space_rel_def apply auto
+      apply (simp add: Cauchy_scaleC)
+     apply (simp add: Cauchy_add Cauchy_scaleC)
+    unfolding Vanishes_def proof
+    show "\<forall>\<^sub>F n in sequentially. dist ((a + b) *\<^sub>C x n - (a *\<^sub>C x n + b *\<^sub>C x n)) (0::'a) < e"
+      if "Cauchy (x::nat \<Rightarrow> 'a)"
+        and "(\<lambda>n. 0::'a) \<longlonglongrightarrow> 0"
+        and "(0::real) < e"
+      for a :: complex
+        and b :: complex
+        and x :: "nat \<Rightarrow> 'a"
+        and e :: real
+    proof-
+      have \<open>(a + b) *\<^sub>C x n = (a *\<^sub>C x n + b *\<^sub>C x n)\<close>
+        for n
+        by (simp add: scaleC_add_left)
+      hence \<open>(a + b) *\<^sub>C x n - (a *\<^sub>C x n + b *\<^sub>C x n) = 0\<close>
+        for n
+        by simp
+      hence \<open>dist ((a + b) *\<^sub>C x n - (a *\<^sub>C x n + b *\<^sub>C x n)) (0::'a) = 0\<close>
+        for n
+        by simp
+      thus ?thesis
+        by (simp add: that(3)) 
+    qed
+  qed
+
+  show "a *\<^sub>C b *\<^sub>C (x::'a completion) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a completion"
+    apply transfer apply auto unfolding normed_space_rel_def apply auto
+    by (simp add: Cauchy_scaleC)
+
+  show "1 *\<^sub>C (x::'a completion) = x"
+    for x :: "'a completion"
+    apply transfer by auto 
+
+  show "norm (a *\<^sub>C (x::'a completion)) = cmod a * norm x"
+    for a :: complex
+      and x :: "'a completion"
+    apply transfer unfolding normed_space_rel_def apply auto
+  proof-
+    fix a::complex and x::\<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy x\<close> and \<open>Vanishes (\<lambda>n. 0)\<close>
+    hence \<open>convergent (\<lambda> n. norm (x n))\<close>
+      using Cauchy_convergent_iff Cauchy_convergent_norm by blast
+    moreover have \<open>norm (a *\<^sub>C x n) = (cmod a) * norm (x n)\<close>
+      for n
+      by simp
+    ultimately have \<open>lim (\<lambda>n. norm (a *\<^sub>C x n)) =  lim (\<lambda>n. (cmod a) * norm (x n))\<close>
+      by simp
+    also have \<open>lim (\<lambda>n. (cmod a) * norm (x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
+      using  \<open>convergent (\<lambda> n. norm (x n))\<close>
+      by (simp add: lim_scaleR)       
+    finally have  \<open>lim (\<lambda>n. norm (a *\<^sub>C x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
+      by blast
+    thus \<open>lim (\<lambda>n. (cmod a) * norm (x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
+      by simp
+  qed
+qed
+
 end
 
 instantiation completion :: (complex_inner) chilbert_space
 begin
-instance 
+lift_definition cinner_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> complex\<close>
+is \<open>\<lambda> x y. lim (\<lambda> n. \<langle>x n, y n\<rangle>)\<close>
   sorry
+
+instance 
+  proof
+  show "\<langle>x::'a completion, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    for x :: "'a completion"
+      and y :: "'a completion"
+    sorry
+  show "\<langle>(x::'a completion) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
+    for x :: "'a completion"
+      and y :: "'a completion"
+      and z :: "'a completion"
+    sorry
+  show "\<langle>r *\<^sub>C (x::'a completion), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
+    for r :: complex
+      and x :: "'a completion"
+      and y :: "'a completion"
+    sorry
+  show "0 \<le> \<langle>x::'a completion, x\<rangle>"
+    for x :: "'a completion"
+    sorry
+  show "(\<langle>x::'a completion, x\<rangle> = 0) = (x = 0)"
+    for x :: "'a completion"
+    sorry
+  show "norm (x::'a completion) = sqrt (cmod \<langle>x, x\<rangle>)"
+    for x :: "'a completion"
+    sorry
+qed
 end
 
 

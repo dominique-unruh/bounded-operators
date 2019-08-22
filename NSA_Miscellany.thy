@@ -14,6 +14,7 @@ theory NSA_Miscellany
     "HOL-Analysis.Operator_Norm"
     Ordered_Fields
     Unobtrusive_NSA
+    Complex_Inner_Product
 begin
 
 unbundle nsa_notation
@@ -662,6 +663,70 @@ proof-
   thus \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
+
+lemma Infinitesimal_scaleC2: 
+  fixes x :: \<open>('a::complex_normed_vector) star\<close>
+  assumes "x \<in> Infinitesimal" 
+  shows "a *\<^sub>C x \<in> Infinitesimal"
+proof-
+  have \<open>hnorm x \<in> Infinitesimal\<close>
+    using \<open>x \<in> Infinitesimal\<close>
+    by (simp add: Infinitesimal_hnorm_iff)
+  hence \<open>(star_of (cmod a)) * hnorm x \<in> Infinitesimal\<close>
+    using Infinitesimal_star_of_mult2 by blast
+  moreover have \<open>(star_of (cmod a)) * hnorm x = hnorm (a *\<^sub>C x)\<close>
+    by (simp add: hnorm_scaleC)
+  ultimately have \<open>hnorm (a *\<^sub>C x) \<in> Infinitesimal\<close>
+    by simp
+  thus ?thesis by (simp add: Infinitesimal_hnorm_iff)
+qed
+
+lemma approx_scaleC2: 
+  fixes a b :: \<open>('a::complex_normed_vector) star\<close>
+  shows "a \<approx> b \<Longrightarrow> c *\<^sub>C a \<approx> c *\<^sub>C b"
+proof-
+  assume \<open>a \<approx> b\<close>
+  hence \<open>a - b \<in> Infinitesimal\<close>
+    by (simp add: Infinitesimal_approx_minus)
+  hence \<open>c *\<^sub>C (a - b) \<in> Infinitesimal\<close>
+    by (simp add: Infinitesimal_scaleC2)
+  moreover have \<open>c *\<^sub>C (a - b) = c *\<^sub>C a - c *\<^sub>C b\<close>
+    by (simp add: complex_vector.scale_right_diff_distrib)
+  ultimately have \<open>c *\<^sub>C a - c *\<^sub>C b \<in> Infinitesimal\<close> 
+    by simp
+  thus ?thesis by (simp add: Infinitesimal_approx_minus)
+qed
+
+lemma Cauchy_scaleC:
+  fixes r::complex and x::\<open>nat \<Rightarrow> 'a::complex_normed_vector\<close>
+  shows \<open>Cauchy x \<Longrightarrow> Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
+proof-
+  assume \<open>Cauchy x\<close>
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+    (*f* x) N \<approx> (*f* x) M\<close>
+    for N M
+    by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+     (*f2* scaleC) (star_of r) ((*f* x) N) \<approx> (*f2* scaleC) (star_of r) ((*f* x) M)\<close>
+    for N M
+    by (metis approx_scaleC2 star_scaleC_def starfun2_star_of)
+  moreover have \<open>(*f2* scaleC) (star_of r) ((*f* x) N) = (*f* (\<lambda>n. r *\<^sub>C x n)) N\<close>
+    for N
+  proof-
+    have \<open>\<forall> n. ( scaleC) ( r) (( x) n) = ( (\<lambda>n. r *\<^sub>C x n)) n\<close>
+      by auto
+    hence \<open>\<forall> n. (*f2* scaleC) (star_of r) ((*f* x) n) = (*f* (\<lambda>n. r *\<^sub>C x n)) n\<close>
+      by StarDef.transfer
+    thus ?thesis by blast
+  qed
+  ultimately have  \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
+      (*f* (\<lambda>n. r *\<^sub>C x n)) N \<approx> (*f* (\<lambda>n. r *\<^sub>C x n)) M\<close>
+    for N M
+    by simp
+  thus \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
+    by (simp add: NSCauchyI NSCauchy_Cauchy)
+qed
+
 
 lemma limit_point_Cauchy:
   assumes \<open>Cauchy x\<close>
