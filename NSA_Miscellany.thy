@@ -456,6 +456,35 @@ lemma lim_ge:
   using lim_leq
   by (metis (full_types) NSLIMSEQ_le_const NSconvergent_NSLIMSEQ_iff assms(1) assms(2) convergent_NSconvergent_iff lim_nslim_iff) 
 
+
+lemma Lim_add:
+  fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
+  assumes \<open>convergent x\<close> and \<open>convergent y\<close>
+  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
+proof-
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
+    for N
+    using \<open>convergent x\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  moreover have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* y) N \<approx> star_of (lim y)\<close>
+    for N
+    using \<open>convergent y\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* x) N + (*f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
+    for N
+    by (simp add: approx_add)
+  moreover have \<open>(*f* (\<lambda> n. x n + y n)) N = (*f* x) N + (*f* y) N\<close>
+    for N
+    by auto
+  moreover have \<open>star_of (lim x + lim y) = star_of (lim x) + star_of (lim y)\<close>
+    by auto
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
+    for N
+    by simp
+  thus ?thesis
+    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
+qed
+
 lemma lim_add:
   fixes x y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>convergent x\<close> and \<open>convergent y\<close>
@@ -788,6 +817,150 @@ proof-
     by blast
   thus ?thesis unfolding lim_def using \<open>x \<longlonglongrightarrow> l\<close>
     by (metis limI t2_space_class.Lim_def) 
+qed
+
+lemma Cauchy_cinner_Cauchy:
+  fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
+  assumes \<open>Cauchy x\<close> and \<open>Cauchy y\<close>
+  shows \<open>Cauchy (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
+proof-
+  have \<open>\<exists> M. \<forall> n. norm (x n) < M \<and> norm (y n) < M\<close>
+  proof-
+    have \<open>\<exists> M. \<forall> n. norm (x n) < M\<close>
+    proof-
+      have \<open>bounded (range x)\<close>
+        using \<open>Cauchy x\<close>
+        by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+      thus ?thesis
+        by (meson bounded_pos_less rangeI)  
+    qed
+    moreover have \<open>\<exists> M. \<forall> n. norm (y n) < M\<close>
+    proof-
+      have \<open>bounded (range y)\<close>
+        using \<open>Cauchy y\<close>
+        by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+      thus ?thesis
+        by (meson bounded_pos_less rangeI)  
+    qed
+    ultimately show ?thesis
+      by (metis dual_order.strict_trans linorder_neqE_linordered_idom) 
+  qed
+  then obtain M where \<open>\<forall> n. norm (x n) < M\<close> and \<open>\<forall> n. norm (y n) < M\<close>
+    by blast
+  have \<open>M > 0\<close>
+    using \<open>\<forall> n. norm (x n) < M\<close>
+    by (smt norm_not_less_zero) 
+  have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> n \<ge> N. \<forall> m \<ge> N. norm ( (\<lambda> i. \<langle> x i, y i \<rangle>) n -  (\<lambda> i. \<langle> x i, y i \<rangle>) m ) < e\<close>
+    for e
+  proof-
+    assume \<open>e > 0\<close>
+    hence \<open>e / (2*M) > 0\<close>
+      using \<open>M > 0\<close> by auto
+    hence \<open>\<exists> N. \<forall> n\<ge>N. \<forall> m\<ge>N. norm (x n - x m) < e / (2*M)\<close>
+      using \<open>Cauchy x\<close>
+      by (simp add: Cauchy_iff) 
+    then obtain N1 where \<open>\<forall> n\<ge>N1. \<forall> m\<ge>N1. norm (x n - x m) < e / (2*M)\<close>
+      by blast
+    have \<open>\<exists> N. \<forall> n\<ge>N. \<forall> m\<ge>N. norm (y n - y m) < e / (2*M)\<close>
+      using \<open>Cauchy y\<close> \<open>e / (2*M) > 0\<close>
+      by (simp add: Cauchy_iff) 
+    obtain N2 where \<open>\<forall> n\<ge>N2. \<forall> m\<ge>N2. norm (y n - y m) < e / (2*M)\<close>
+      using \<open>\<exists> N. \<forall> n\<ge>N. \<forall> m\<ge>N. norm (y n - y m) < e / (2*M)\<close>
+      by blast
+    define N where \<open>N = N1 + N2\<close>
+    hence \<open>N \<ge> N1\<close>
+      by auto
+    have \<open>N \<ge> N2\<close>
+      using \<open>N = N1 + N2\<close>
+      by auto
+    have \<open>n \<ge> N \<Longrightarrow> m \<ge> N \<Longrightarrow> norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
+      for n m
+    proof-
+      assume \<open>n \<ge> N\<close> and \<open>m \<ge> N\<close>
+      have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> = (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) + (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
+        by simp
+      hence \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle>) \<le> norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>)
+           + norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
+        by (metis norm_triangle_ineq)
+      moreover have \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
+      proof-
+        have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle> = \<langle> x n - x m, y n \<rangle>\<close>
+          by (simp add: cinner_diff_left)
+        hence \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) = norm \<langle> x n - x m, y n \<rangle>\<close>
+          by simp
+        moreover have \<open>norm \<langle> x n - x m, y n \<rangle> \<le> norm (x n - x m) * norm (y n)\<close>
+          using complex_inner_class.norm_cauchy_schwarz by auto
+        moreover have \<open>norm (y n) < M\<close>
+          using \<open>\<forall> n. norm (y n) < M\<close> by blast
+        moreover have \<open>norm (x n - x m) < e/(2*M)\<close>
+          using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N1 \<le> N\<close> \<open>\<forall>n\<ge>N1. \<forall>m\<ge>N1. norm (x n - x m) < e / (2 * M)\<close> by auto          
+        ultimately have \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < (e/(2*M)) * M\<close>
+          by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
+        moreover have \<open> (e/(2*M)) * M = e/2\<close>
+          using \<open>M > 0\<close> by simp
+        ultimately have  \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
+          by simp
+        thus ?thesis by blast
+      qed
+      moreover have \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
+      proof-
+        have \<open>\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle> = \<langle> x m, y n - y m \<rangle>\<close>
+          by (simp add: cinner_diff_right)
+        hence \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) = norm \<langle> x m, y n - y m \<rangle>\<close>
+          by simp
+        moreover have \<open>norm \<langle> x m, y n - y m \<rangle> \<le> norm (x m) * norm (y n - y m)\<close>
+          using complex_inner_class.norm_cauchy_schwarz by auto
+        moreover have \<open>norm (x m) < M\<close>
+          using \<open>\<forall> n. norm (x n) < M\<close> by blast
+        moreover have \<open>norm (y n - y m) < e/(2*M)\<close>
+          using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N2 \<le> N\<close> \<open>\<forall>n\<ge>N2. \<forall>m\<ge>N2. norm (y n - y m) < e / (2 * M)\<close> by auto          
+        ultimately have \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < M * (e/(2*M))\<close>
+          by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
+        moreover have \<open>M * (e/(2*M)) = e/2\<close>
+          using \<open>M > 0\<close> by simp
+        ultimately have  \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
+          by simp
+        thus ?thesis by blast
+      qed
+      ultimately show \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close> by simp
+    qed
+    thus ?thesis by blast
+  qed
+  thus ?thesis
+    by (simp add: CauchyI)
+qed
+
+lemma Cauchy_cinner_convergent:
+  fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
+  assumes \<open>Cauchy x\<close> and \<open>Cauchy y\<close>
+  shows \<open>convergent (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
+proof-
+  have \<open>Cauchy (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
+    using \<open>Cauchy x\<close> \<open>Cauchy y\<close> Cauchy_cinner_Cauchy
+    by blast
+  hence \<open>Cauchy (\<lambda> n. norm \<langle> x n, y n \<rangle>)\<close>
+    by (simp add: Cauchy_convergent_norm)
+  hence \<open>convergent (\<lambda> n. norm \<langle> x n, y n \<rangle>)\<close>
+    using Cauchy_convergent_iff by auto
+  thus ?thesis
+    using Cauchy_convergent_iff \<open>Cauchy (\<lambda>n. \<langle>x n, y n\<rangle>)\<close> by auto
+qed
+
+lemma lim_minus:
+  fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
+  assumes \<open>convergent x\<close> and \<open>convergent y\<close>
+  shows \<open>lim (\<lambda> n. x n - y n) = lim x - lim y\<close>
+proof-
+  have \<open>convergent (\<lambda> i. x i - y i)\<close>
+    using \<open>convergent x\<close>  \<open>convergent y\<close>
+    by (simp add: convergent_diff)
+  hence \<open>lim (\<lambda> n. (\<lambda> i. x i - y i) n + y n) = lim (\<lambda> i. x i - y i) + lim y\<close>
+    using \<open>convergent y\<close> Lim_add by blast
+  moreover have \<open>(\<lambda> n. (\<lambda> i. x i - y i) n + y n) = x\<close>
+    by auto
+  ultimately have \<open>lim x = lim (\<lambda> i. x i - y i) + lim y\<close>
+    by simp
+  thus ?thesis by simp
 qed
 
 unbundle no_nsa_notation

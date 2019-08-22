@@ -1,5 +1,5 @@
 (*
-Author s:
+Authors:
 
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
@@ -1401,20 +1401,193 @@ end
 instantiation completion :: (complex_inner) chilbert_space
 begin
 lift_definition cinner_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> complex\<close>
-is \<open>\<lambda> x y. lim (\<lambda> n. \<langle>x n, y n\<rangle>)\<close>
-  sorry
+  is \<open>\<lambda> x y. lim (\<lambda> n. \<langle>x n, y n\<rangle>)\<close>
+proof-
+  fix f1 f2 f3 f4::\<open>nat \<Rightarrow> 'a::complex_inner\<close>
+  assume \<open>normed_space_rel f1 f2\<close> and \<open>normed_space_rel f3 f4\<close>
+  have \<open>Cauchy f1\<close>
+    using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+  have \<open>Cauchy f2\<close>
+    using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+  have \<open>Cauchy f3\<close>
+    using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+  have \<open>Cauchy f4\<close>
+    using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+  have \<open>lim (\<lambda>n. \<langle>f1 n, f3 n\<rangle>) = lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle>)\<close>
+  proof-
+    have \<open>Cauchy f3\<close>
+      using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+    hence \<open>bounded (range f3)\<close>
+      by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+    hence \<open>\<exists> M. \<forall> n. norm (f3 n) \<le> M\<close>
+      by (simp add: bounded_iff)
+    then obtain M where \<open>\<forall> n. norm (f3 n) \<le> M\<close>
+      by blast
+    hence \<open>M \<ge> 0\<close>
+      using dual_order.trans norm_imp_pos_and_ge by blast        
+    have \<open>norm \<langle>f1 n - f2 n, f3 n\<rangle> \<le> norm (f1 n - f2 n) * norm (f3 n)\<close>
+      for n
+      by (simp add: complex_inner_class.norm_cauchy_schwarz)
+    hence \<open>norm \<langle>f1 n - f2 n, f3 n\<rangle> \<le> norm (f1 n - f2 n) * M\<close>
+      for n
+      using \<open>\<forall> n. norm (f3 n) \<le> M\<close>
+      by (metis complex_inner_class.norm_cauchy_schwarz dual_order.trans mult.commute mult_right_mono norm_ge_zero)
+    moreover have \<open>(\<lambda> n. norm (f1 n - f2 n) * M) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n. f1 n - f2 n) \<longlonglongrightarrow> 0\<close>
+        using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def Vanishes_def by blast
+      hence \<open>(\<lambda> n. norm (f1 n - f2 n)) \<longlonglongrightarrow> 0\<close>
+        by (simp add: tendsto_norm_zero)
+      thus ?thesis
+        by (simp add: tendsto_mult_left_zero) 
+    qed
+    ultimately have \<open>(\<lambda> n. \<langle>f1 n - f2 n, f3 n\<rangle>) \<longlonglongrightarrow> 0\<close>
+      by (metis (no_types, lifting) Lim_null_comparison eventually_sequentiallyI) 
+    hence \<open>lim (\<lambda> n. \<langle>f1 n - f2 n, f3 n\<rangle>) = 0\<close>
+      by (simp add: limI)
+    have \<open>lim (\<lambda> n. \<langle>f1 n, f3 n\<rangle> - \<langle>f2 n, f3 n\<rangle>) = 0\<close>
+    proof-
+      have \<open>\<langle>f1 n - f2 n, f3 n\<rangle> = \<langle>f1 n, f3 n\<rangle> - \<langle>f2 n, f3 n\<rangle>\<close>
+        for n
+        by (simp add: cinner_diff_left)
+      thus ?thesis 
+        using \<open>lim (\<lambda> n. \<langle>f1 n - f2 n, f3 n\<rangle>) = 0\<close> by simp
+    qed
+    moreover have \<open>convergent (\<lambda> n. \<langle>f1 n, f3 n\<rangle>)\<close>
+      using Cauchy_cinner_convergent \<open>Cauchy f1\<close> \<open>Cauchy f3\<close> by blast
+    moreover have \<open>convergent (\<lambda> n. \<langle>f2 n, f3 n\<rangle>)\<close>
+      using Cauchy_cinner_convergent \<open>Cauchy f2\<close> \<open>Cauchy f3\<close> by blast
+    ultimately have \<open>lim (\<lambda> n. \<langle>f1 n, f3 n\<rangle>) - lim (\<lambda> n. \<langle>f2 n, f3 n\<rangle>) = 0\<close>
+    proof -
+      have "\<And>c. \<not> (\<lambda>n. \<langle>f1 n, f3 n\<rangle>) \<longlonglongrightarrow> c \<or> (\<lambda>n. \<langle>f1 n, f3 n\<rangle> - \<langle>f2 n, f3 n\<rangle>) \<longlonglongrightarrow> c - lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle>)"
+        using \<open>convergent (\<lambda>n. \<langle>f2 n, f3 n\<rangle>)\<close> convergent_LIMSEQ_iff tendsto_diff by blast
+      thus ?thesis
+        by (metis (no_types) LIMSEQ_unique \<open>convergent (\<lambda>n. \<langle>f1 n, f3 n\<rangle>)\<close> \<open>lim (\<lambda>n. \<langle>f1 n, f3 n\<rangle> - \<langle>f2 n, f3 n\<rangle>) = 0\<close> convergentI convergent_LIMSEQ_iff)
+    qed
+    thus ?thesis by simp
+  qed
+  also have \<open>\<dots>= lim (\<lambda>n. \<langle>f2 n, f4 n\<rangle>)\<close>
+  proof-
+    have \<open>Cauchy f2\<close>
+      using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+    hence \<open>bounded (range f2)\<close>
+      by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+    hence \<open>\<exists> M. \<forall> n. norm (f2 n) \<le> M\<close>
+      by (simp add: bounded_iff)
+    then obtain M where \<open>\<forall> n. norm (f2 n) \<le> M\<close>
+      by blast
+    hence \<open>M \<ge> 0\<close>
+      using dual_order.trans norm_imp_pos_and_ge by blast        
+    have \<open>norm \<langle>f1 n - f2 n, f3 n\<rangle> \<le> norm (f1 n - f2 n) * norm (f3 n)\<close>
+      for n
+      by (simp add: complex_inner_class.norm_cauchy_schwarz)
+    hence \<open>norm \<langle>f2 n, f3 n - f4 n\<rangle> \<le> M * norm (f3 n - f4 n)\<close>
+      for n
+      using \<open>\<forall> n. norm (f2 n) \<le> M\<close>
+      by (metis complex_inner_class.norm_cauchy_schwarz dual_order.trans mult.commute mult_right_mono norm_ge_zero)
+    moreover have \<open>(\<lambda> n. M * norm (f3 n - f4 n)) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n. f3 n - f4 n) \<longlonglongrightarrow> 0\<close>
+        using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def Vanishes_def by blast
+      hence \<open>(\<lambda> n. norm (f3 n - f4 n)) \<longlonglongrightarrow> 0\<close>
+        by (simp add: tendsto_norm_zero)
+      thus ?thesis
+        by (simp add: tendsto_mult_right_zero) 
+    qed
+    ultimately have \<open>(\<lambda> n. \<langle>f2 n, f3 n - f4 n\<rangle>) \<longlonglongrightarrow> 0\<close>
+      by (metis (no_types, lifting) Lim_null_comparison eventually_sequentiallyI) 
+    hence \<open>lim (\<lambda> n. \<langle>f2 n, f3 n - f4 n\<rangle>) = 0\<close>
+      by (simp add: limI)
+    have \<open>lim (\<lambda> n. \<langle>f2 n, f3 n\<rangle> - \<langle>f2 n, f4 n\<rangle>) = 0\<close>
+    proof-
+      have \<open>\<langle>f2 n, f3 n - f4 n\<rangle> = \<langle>f2 n, f3 n\<rangle> - \<langle>f2 n, f4 n\<rangle>\<close>
+        for n
+        by (simp add: cinner_diff_right)
+      thus ?thesis 
+        using \<open>lim (\<lambda> n. \<langle>f2 n, f3 n - f4 n\<rangle>) = 0\<close> by simp
+    qed
+    have \<open>convergent (\<lambda> n. \<langle>f2 n, f3 n\<rangle>)\<close>
+      using Cauchy_cinner_convergent \<open>Cauchy f2\<close> \<open>Cauchy f3\<close> by blast
+    moreover have \<open>convergent (\<lambda> n. \<langle>f2 n, f4 n\<rangle>)\<close>
+      using Cauchy_cinner_convergent \<open>Cauchy f2\<close> \<open>Cauchy f4\<close> by blast
+    ultimately have \<open>lim ( \<lambda> m. (\<lambda> n. \<langle>f2 n, f3 n\<rangle>) m - (\<lambda> n. \<langle>f2 n, f4 n\<rangle>) m)
+      = lim (\<lambda> n. \<langle>f2 n, f3 n\<rangle>) - lim (\<lambda> n. \<langle>f2 n, f4 n\<rangle>)\<close>
+    proof -
+      have "(\<lambda>n. \<langle>f2 n, f3 n\<rangle>) \<longlonglongrightarrow> lim (\<lambda>n. \<langle>f2 n, f4 n\<rangle>)"
+        by (metis (no_types) Lim_transform \<open>convergent (\<lambda>n. \<langle>f2 n, f3 n\<rangle>)\<close> \<open>convergent (\<lambda>n. \<langle>f2 n, f4 n\<rangle>)\<close> \<open>lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle> - \<langle>f2 n, f4 n\<rangle>) = 0\<close> convergent_LIMSEQ_iff convergent_diff)
+      thus ?thesis
+        using \<open>lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle> - \<langle>f2 n, f4 n\<rangle>) = 0\<close> limI by auto
+    qed
+    hence \<open>lim (\<lambda> n. \<langle>f2 n, f3 n\<rangle>) - lim (\<lambda> n. \<langle>f2 n, f4 n\<rangle>) = 0\<close>
+      using \<open>lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle> - \<langle>f2 n, f4 n\<rangle>) = 0\<close> by auto      
+    thus ?thesis by simp
+  qed
 
-instance 
-  proof
+  finally show \<open>lim (\<lambda>n. \<langle>f1 n, f3 n\<rangle>) = lim (\<lambda>n. \<langle>f2 n, f4 n\<rangle>)\<close>
+    by blast
+qed
+
+instance
+proof
   show "\<langle>x::'a completion, y\<rangle> = cnj \<langle>y, x\<rangle>"
     for x :: "'a completion"
       and y :: "'a completion"
-    sorry
+     apply transfer
+    unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+  proof-
+    fix x y :: \<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy y\<close> and \<open>Cauchy x\<close>
+    have \<open>\<langle>x n, y n\<rangle> = cnj \<langle>y n, x n\<rangle>\<close>
+      for n
+      by simp
+    hence \<open>(\<lambda> n. \<langle>x n, y n\<rangle>) = (\<lambda> n. cnj \<langle>y n, x n\<rangle>)\<close>
+      by blast
+    hence \<open>lim (\<lambda> n. \<langle>x n, y n\<rangle>) = lim (\<lambda> n. cnj \<langle>y n, x n\<rangle>)\<close>
+      by simp
+    moreover have \<open>lim (\<lambda> n. cnj \<langle>y n, x n\<rangle>) = cnj (lim (\<lambda> n. \<langle>y n, x n\<rangle>))\<close>
+    proof-
+      have \<open>convergent (\<lambda> n. \<langle>y n, x n\<rangle>)\<close>
+        using \<open>Cauchy y\<close> and \<open>Cauchy x\<close>
+        by (simp add: Cauchy_cinner_convergent)
+      hence \<open>\<exists> l. (\<lambda> n. \<langle>y n, x n\<rangle>) \<longlonglongrightarrow> l\<close>
+        by (simp add: convergentD)
+      then obtain l where \<open>(\<lambda> n. \<langle>y n, x n\<rangle>) \<longlonglongrightarrow> l\<close> by blast
+      hence  \<open>(\<lambda> n. cnj \<langle>y n, x n\<rangle>) \<longlonglongrightarrow> cnj l\<close>
+        using lim_cnj by force
+      thus ?thesis
+        using \<open>(\<lambda>n. \<langle>y n, x n\<rangle>) \<longlonglongrightarrow> l\<close> limI by blast 
+    qed
+    ultimately show \<open>lim (\<lambda>n. \<langle>x n, y n\<rangle>) = cnj (lim (\<lambda>n. \<langle>y n, x n\<rangle>))\<close>
+      by simp
+  qed
   show "\<langle>(x::'a completion) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
     for x :: "'a completion"
       and y :: "'a completion"
       and z :: "'a completion"
-    sorry
+     apply transfer
+    unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+  proof-
+    fix x y z :: \<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy y\<close> and \<open>Cauchy z\<close> and \<open>Cauchy x\<close> 
+    have \<open>\<langle>x n + y n, z n\<rangle> = \<langle>x n, z n\<rangle> + \<langle>y n, z n\<rangle>\<close>
+      for n
+      by (simp add: cinner_left_distrib)
+    have \<open>convergent (\<lambda>n. \<langle>x n, z n\<rangle>)\<close>
+      using \<open>Cauchy x\<close> \<open>Cauchy z\<close>
+      by (simp add: Cauchy_cinner_convergent)
+    moreover have \<open>convergent  (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
+            using \<open>Cauchy y\<close> \<open>Cauchy z\<close>
+      by (simp add: Cauchy_cinner_convergent)
+    ultimately have \<open>lim (\<lambda>n. (\<lambda>i. \<langle>x i, z i\<rangle>) n + (\<lambda>i. \<langle>y i, z i\<rangle>) n) = lim (\<lambda>n. \<langle>x n, z n\<rangle>) + lim (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
+      using Lim_add by auto
+    moreover have \<open>(\<lambda>i. \<langle>x i, z i\<rangle>) n + (\<lambda>i. \<langle>y i, z i\<rangle>) n = \<langle>x n + y n, z n\<rangle>\<close>
+      for n
+      using \<open>\<langle>x n + y n, z n\<rangle> = \<langle>x n, z n\<rangle> + \<langle>y n, z n\<rangle>\<close> by simp
+    ultimately show \<open>lim (\<lambda>n. \<langle>x n + y n, z n\<rangle>) = lim (\<lambda>n. \<langle>x n, z n\<rangle>) + lim (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
+      by auto
+  qed
   show "\<langle>r *\<^sub>C (x::'a completion), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
     for r :: complex
       and x :: "'a completion"
