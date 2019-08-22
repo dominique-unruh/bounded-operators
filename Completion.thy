@@ -755,7 +755,8 @@ proof
       by simp
     also have \<open>lim (\<lambda>n. \<bar>a\<bar> * norm (x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
       using  \<open>convergent (\<lambda> n. norm (x n))\<close>
-      by (simp add: lim_scaleR)       
+      lim_scaleR[where r = "\<bar>a\<bar>" and x = "\<lambda> n. norm (x n)"] 
+      by auto
     finally have  \<open>lim (\<lambda>n. norm (a *\<^sub>R x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
       by blast
     thus \<open>lim (\<lambda>n. \<bar>a\<bar> * norm (x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
@@ -913,7 +914,8 @@ proof
            + inverse (of_nat (Suc j)) )
           = lim ( \<lambda> m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)) ) 
             + inverse (of_nat (Suc j))\<close>
-          using lim_add_const_right
+          using lim_add_const_right[where c = "inverse (of_nat (Suc j))" and x = "(\<lambda> m.
+           norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))"]
           by (simp add: \<open>\<And>j i. convergent (\<lambda>m. norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j)))\<close>) 
         have \<open>convergent ( \<lambda> m.
            norm (rep_completion (X i) (m + T i + T j) - rep_completion (X j) (m + T i + T j))
@@ -1388,7 +1390,8 @@ proof
       by simp
     also have \<open>lim (\<lambda>n. (cmod a) * norm (x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
       using  \<open>convergent (\<lambda> n. norm (x n))\<close>
-      by (simp add: lim_scaleR)       
+      using lim_scaleR[where r = "(cmod a)" and x = "(\<lambda>n. norm (x n))"]
+      by simp
     finally have  \<open>lim (\<lambda>n. norm (a *\<^sub>C x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
       by blast
     thus \<open>lim (\<lambda>n. (cmod a) * norm (x n)) = (cmod a) * lim (\<lambda>n. norm (x n))\<close>
@@ -1581,7 +1584,7 @@ proof
             using \<open>Cauchy y\<close> \<open>Cauchy z\<close>
       by (simp add: Cauchy_cinner_convergent)
     ultimately have \<open>lim (\<lambda>n. (\<lambda>i. \<langle>x i, z i\<rangle>) n + (\<lambda>i. \<langle>y i, z i\<rangle>) n) = lim (\<lambda>n. \<langle>x n, z n\<rangle>) + lim (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
-      using Lim_add by auto
+      using lim_add by auto
     moreover have \<open>(\<lambda>i. \<langle>x i, z i\<rangle>) n + (\<lambda>i. \<langle>y i, z i\<rangle>) n = \<langle>x n + y n, z n\<rangle>\<close>
       for n
       using \<open>\<langle>x n + y n, z n\<rangle> = \<langle>x n, z n\<rangle> + \<langle>y n, z n\<rangle>\<close> by simp
@@ -1592,13 +1595,63 @@ proof
     for r :: complex
       and x :: "'a completion"
       and y :: "'a completion"
-    sorry
+     apply transfer
+    unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+  proof-
+    fix x y :: \<open>nat \<Rightarrow> 'a\<close> and r::complex
+    assume \<open>Cauchy y\<close> and \<open>Cauchy x\<close>
+    hence \<open>convergent (\<lambda>n. \<langle>x n, y n\<rangle>)\<close>
+      by (simp add: Cauchy_cinner_convergent)
+    thus \<open>lim (\<lambda>n. cnj r * \<langle>x n, y n\<rangle>) = cnj r * lim (\<lambda>n. \<langle>x n, y n\<rangle>)\<close>
+      using lim_scaleC[where r = "cnj r" and x = "(\<lambda>n. \<langle>x n, y n\<rangle>)"]
+      by simp
+  qed
+
   show "0 \<le> \<langle>x::'a completion, x\<rangle>"
     for x :: "'a completion"
-    sorry
+     apply transfer
+    unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+  proof-
+    fix x::\<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy x\<close>
+    have \<open>0 \<le> \<langle>x n, x n\<rangle>\<close>
+      for n
+      by simp
+    have \<open>\<langle>x n, x n\<rangle> \<in> \<real>\<close>
+      for n
+      by (simp add: cinner_real)
+    hence \<open>\<langle>x n, x n\<rangle> = Re \<langle>x n, x n\<rangle>\<close>
+      for n by simp
+    have  \<open>convergent (\<lambda>n. \<langle>x n, x n\<rangle>)\<close>
+      using \<open>Cauchy x\<close>
+      by (simp add: Cauchy_cinner_convergent)
+          
+    have \<open>\<forall> n \<ge> 0. 0 \<le> Re \<langle>x n, x n\<rangle>\<close>
+      by (metis \<open>\<And>n. \<langle>x n, x n\<rangle> = complex_of_real (Re \<langle>x n, x n\<rangle>)\<close> cinner_ge_zero complex_of_real_nn_iff)      
+    moreover have \<open>convergent (\<lambda>n. Re \<langle>x n, x n\<rangle>)\<close>
+      by (simp add: Cauchy_Re \<open>convergent (\<lambda>n. \<langle>x n, x n\<rangle>)\<close> convergent_Cauchy real_Cauchy_convergent)
+    ultimately have \<open>0 \<le> lim (\<lambda>n. Re \<langle>x n, x n\<rangle>)\<close>
+      using lim_Lim_bounded2[where N = "0" and x = "(\<lambda>n. Re (\<langle>x n, x n\<rangle>))" and C = "0"]
+      by simp
+    have \<open>lim (\<lambda>n. \<langle>x n, x n\<rangle>) = complex_of_real (lim (\<lambda>n. Re \<langle>x n, x n\<rangle>))\<close>
+    proof-
+      have \<open>(\<lambda>n. \<langle>x n, x n\<rangle>) = (\<lambda>n. complex_of_real (Re \<langle>x n, x n\<rangle>))\<close>
+        using \<open>\<And>n. \<langle>x n, x n\<rangle> = complex_of_real (Re \<langle>x n, x n\<rangle>)\<close> by auto        
+      moreover have \<open>(lim (\<lambda>n. complex_of_real (Re \<langle>x n, x n\<rangle>))) = complex_of_real (lim (\<lambda>n. Re \<langle>x n, x n\<rangle>))\<close>
+        using lim_complex_of_real[where x = "(\<lambda> n. Re \<langle>x n, x n\<rangle>)"]
+        by (simp add: \<open>convergent (\<lambda>n. Re \<langle>x n, x n\<rangle>)\<close>)
+      ultimately show ?thesis by simp
+    qed
+    thus  \<open>0 \<le> lim (\<lambda>n. \<langle>x n, x n\<rangle>)\<close>
+      by (simp add: \<open>0 \<le> lim (\<lambda>n. Re \<langle>x n, x n\<rangle>)\<close>)
+  qed
+
   show "(\<langle>x::'a completion, x\<rangle> = 0) = (x = 0)"
     for x :: "'a completion"
     sorry
+
   show "norm (x::'a completion) = sqrt (cmod \<langle>x, x\<rangle>)"
     for x :: "'a completion"
     sorry

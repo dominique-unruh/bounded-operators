@@ -456,8 +456,7 @@ lemma lim_ge:
   using lim_leq
   by (metis (full_types) NSLIMSEQ_le_const NSconvergent_NSLIMSEQ_iff assms(1) assms(2) convergent_NSconvergent_iff lim_nslim_iff) 
 
-
-lemma Lim_add:
+lemma lim_add:
   fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>convergent x\<close> and \<open>convergent y\<close>
   shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
@@ -485,49 +484,24 @@ proof-
     by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
 qed
 
-lemma lim_add:
-  fixes x y :: \<open>nat \<Rightarrow> real\<close>
-  assumes \<open>convergent x\<close> and \<open>convergent y\<close>
-  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
-proof-
-  have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
-    for N
-    using \<open>convergent x\<close>
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  moreover have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* y) N \<approx> star_of (lim y)\<close>
-    for N
-    using \<open>convergent y\<close>
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* x) N + (*f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
-    for N
-    by (simp add: approx_add)
-  moreover have \<open>(*f* (\<lambda> n. x n + y n)) N = (*f* x) N + (*f* y) N\<close>
-    for N
-    by auto
-  moreover have \<open>star_of (lim x + lim y) = star_of (lim x) + star_of (lim y)\<close>
-    by auto
-  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
-    for N
-    by simp
-  thus ?thesis
-    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed
 
 lemma lim_add_const_left:
-  fixes x :: \<open>nat \<Rightarrow> real\<close>
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and c::'a
   assumes  \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
 proof-
-  have \<open>lim (\<lambda> n. c) = c\<close>
-    by simp
-  moreover have \<open>convergent (\<lambda> n. c)\<close>
+  have \<open>convergent (\<lambda> i. c)\<close>
     by (simp add: convergent_const)    
-  ultimately show ?thesis using \<open>convergent x\<close> lim_add
-    by auto
+  hence \<open>lim (\<lambda> n. (\<lambda> i. c) n + x n) = lim (\<lambda> n. c) + lim x\<close>
+    using \<open>convergent x\<close> lim_add[where x = "(\<lambda> i. c)" and y = "x"]
+    by blast
+  moreover have \<open>lim (\<lambda> i. c) = c\<close>
+    by simp
+  ultimately show ?thesis by auto
 qed
 
 lemma lim_add_const_right:
-  fixes x :: \<open>nat \<Rightarrow> real\<close>
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes  \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. x n + c) = lim x + c\<close>
 proof-
@@ -541,23 +515,23 @@ proof-
 qed
 
 lemma lim_scaleR:
-  fixes x :: \<open>nat \<Rightarrow> real\<close> and r::real
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and r::real
   assumes \<open>convergent x\<close> 
-  shows \<open>lim (\<lambda> n. r * x n ) = r * lim x\<close>
+  shows \<open>lim (\<lambda> n. r *\<^sub>R x n ) = r *\<^sub>R lim x\<close>
 proof-
   have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
     for N
     using \<open>convergent x\<close>
     by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  hence \<open>N \<in> HNatInfinite \<Longrightarrow>  star_of r * (*f* x) N \<approx> (star_of r) * star_of (lim x) \<close>
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow>  r *\<^sub>R (*f* x) N \<approx> r *\<^sub>R (star_of (lim x)) \<close>
     for N
-    by (simp add: approx_mult2)
-  moreover have \<open> (*f* (\<lambda> n. r * x n)) N = (star_of r) * (*f* x) N\<close>
+    by (simp add: approx_scaleR2)
+  moreover have \<open> (*f* (\<lambda> n. r *\<^sub>R x n)) N = r *\<^sub>R (*f* x) N\<close>
     for N
+    by (simp add: star_scaleR_def)    
+  moreover have \<open>star_of (r *\<^sub>R lim x) = r *\<^sub>R star_of (lim x)\<close>
     by auto
-  moreover have \<open>star_of (r * lim x) = star_of r * star_of (lim x)\<close>
-    by auto
-  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. r * x n)) N \<approx> star_of (r * lim x)\<close>
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. r *\<^sub>R x n)) N \<approx> star_of (r *\<^sub>R lim x)\<close>
     for N
     by auto
   thus ?thesis
@@ -955,13 +929,84 @@ proof-
     using \<open>convergent x\<close>  \<open>convergent y\<close>
     by (simp add: convergent_diff)
   hence \<open>lim (\<lambda> n. (\<lambda> i. x i - y i) n + y n) = lim (\<lambda> i. x i - y i) + lim y\<close>
-    using \<open>convergent y\<close> Lim_add by blast
+    using \<open>convergent y\<close> lim_add by blast
   moreover have \<open>(\<lambda> n. (\<lambda> i. x i - y i) n + y n) = x\<close>
     by auto
   ultimately have \<open>lim x = lim (\<lambda> i. x i - y i) + lim y\<close>
     by simp
   thus ?thesis by simp
 qed
+
+lemma lim_scaleC:
+  fixes x :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> and r::complex
+  assumes \<open>convergent x\<close> 
+  shows \<open>lim (\<lambda> n. r *\<^sub>C x n ) = r *\<^sub>C lim x\<close>
+proof-
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> star_of (lim x)\<close>
+    for N
+    using \<open>convergent x\<close>
+    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
+  hence \<open>N \<in> HNatInfinite \<Longrightarrow>  r *\<^sub>C (*f* x) N \<approx> r *\<^sub>C (star_of (lim x)) \<close>
+    for N
+    by (simp add: approx_scaleC2)
+  moreover have \<open>(*f* (\<lambda> n. r *\<^sub>C x n)) N = r *\<^sub>C (*f* x) N\<close>
+    for N
+    using star_scaleC_def
+    by (metis starfun_o2) 
+  moreover have \<open>star_of (r *\<^sub>C lim x) = r *\<^sub>C star_of (lim x)\<close>
+    by auto
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. r *\<^sub>C x n)) N \<approx> star_of (r *\<^sub>C lim x)\<close>
+    for N
+    by auto
+  thus ?thesis
+    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
+qed
+
+lemma lim_Lim_bounded2:
+  fixes x::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<forall> n \<ge> N. C \<le> x n\<close> and \<open>convergent x\<close>
+  shows \<open>C \<le> lim x\<close>
+proof-
+  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
+    using \<open>convergent x\<close>
+    unfolding convergent_def by blast
+  then obtain l where \<open>x \<longlonglongrightarrow> l\<close>
+    by blast
+  hence \<open>C \<le> l\<close>
+    using \<open>\<forall> n \<ge> N. C \<le> x n\<close> Topological_Spaces.Lim_bounded2[where f = "x" and l="l" and N = "N"]
+    by blast
+  thus \<open>C \<le> lim x\<close>
+    using \<open>x \<longlonglongrightarrow> l\<close> limI by auto    
+qed
+
+lemma lim_complex_of_real:
+  fixes x::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>convergent x\<close>
+  shows \<open>lim (\<lambda> n. complex_of_real (x n)) = complex_of_real (lim x)\<close>
+proof-
+  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
+    using \<open>convergent x\<close> unfolding convergent_def
+    by blast
+  then obtain l where
+   \<open>x \<longlonglongrightarrow> l\<close>
+    by blast
+  moreover have \<open>(\<lambda>n. (0::real)) \<longlonglongrightarrow> 0\<close>
+    by auto
+  ultimately have \<open>(\<lambda>n. Complex (x n) ((\<lambda>n. (0::real)) n)) \<longlonglongrightarrow> Complex l 0\<close>
+    using Complex.tendsto_Complex[where f = "x" and g = "(\<lambda>n. (0::real))"]
+    by auto
+  hence \<open>(\<lambda>n. Complex (x n) 0) \<longlonglongrightarrow> Complex l 0\<close>
+    by simp
+  moreover  have \<open>lim x = l\<close>
+    using \<open>x \<longlonglongrightarrow> l\<close> limI by auto 
+  ultimately have \<open>(\<lambda>n. Complex (x n) 0) \<longlonglongrightarrow> Complex (lim x) 0\<close>
+    by simp
+  hence \<open>lim (\<lambda>n. Complex (x n) 0) = Complex (lim x) 0\<close>
+    using limI by auto
+  thus ?thesis
+    unfolding complex_of_real_def
+    by blast
+qed     
 
 unbundle no_nsa_notation
 
