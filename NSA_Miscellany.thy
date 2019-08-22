@@ -1008,6 +1008,44 @@ proof-
     by blast
 qed     
 
+lemma lim_norm:
+  fixes x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
+  assumes \<open>convergent x\<close>
+  shows \<open>lim (\<lambda> n. norm (x n)) = norm (lim x)\<close>
+proof-
+  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
+    using \<open>convergent x\<close> unfolding convergent_def by blast
+  then obtain l where \<open>x \<longlonglongrightarrow> l\<close>
+    by blast
+  hence \<open>(\<lambda> n. norm (x n) ) \<longlonglongrightarrow> norm l\<close>
+    by (simp add: tendsto_norm)
+  moreover have \<open>lim x = l\<close>
+    using  \<open>x \<longlonglongrightarrow> l\<close>
+    by (simp add: limI) 
+  ultimately show ?thesis
+    by (simp add: limI) 
+qed
+
+lemma lim_sqrt:
+  fixes x::\<open>nat \<Rightarrow> real\<close>
+  assumes \<open>convergent x\<close>
+  shows \<open>lim (\<lambda> n. sqrt (x n)) = sqrt (lim x)\<close>
+proof-
+  from \<open>convergent x\<close>
+  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
+    by (simp add: convergent_def)
+  then obtain l where \<open>x \<longlonglongrightarrow> l\<close>
+    by blast
+  hence \<open>lim x = l\<close>
+    by (simp add: limI)
+  from \<open>x \<longlonglongrightarrow> l\<close>
+  have \<open>(\<lambda> n.  sqrt (x n)) \<longlonglongrightarrow> sqrt l\<close>
+    by (simp add: tendsto_real_sqrt)
+  thus ?thesis using \<open>lim x = l\<close>
+    by (simp add: limI) 
+qed
+
+
 unbundle no_nsa_notation
 
 end

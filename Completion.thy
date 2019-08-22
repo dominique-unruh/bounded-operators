@@ -755,7 +755,7 @@ proof
       by simp
     also have \<open>lim (\<lambda>n. \<bar>a\<bar> * norm (x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
       using  \<open>convergent (\<lambda> n. norm (x n))\<close>
-      lim_scaleR[where r = "\<bar>a\<bar>" and x = "\<lambda> n. norm (x n)"] 
+        lim_scaleR[where r = "\<bar>a\<bar>" and x = "\<lambda> n. norm (x n)"] 
       by auto
     finally have  \<open>lim (\<lambda>n. norm (a *\<^sub>R x n)) = \<bar>a\<bar> * lim (\<lambda>n. norm (x n))\<close>
       by blast
@@ -1535,7 +1535,7 @@ proof
   show "\<langle>x::'a completion, y\<rangle> = cnj \<langle>y, x\<rangle>"
     for x :: "'a completion"
       and y :: "'a completion"
-     apply transfer
+    apply transfer
     unfolding normed_space_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
@@ -1568,7 +1568,7 @@ proof
     for x :: "'a completion"
       and y :: "'a completion"
       and z :: "'a completion"
-     apply transfer
+    apply transfer
     unfolding normed_space_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
@@ -1581,7 +1581,7 @@ proof
       using \<open>Cauchy x\<close> \<open>Cauchy z\<close>
       by (simp add: Cauchy_cinner_convergent)
     moreover have \<open>convergent  (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
-            using \<open>Cauchy y\<close> \<open>Cauchy z\<close>
+      using \<open>Cauchy y\<close> \<open>Cauchy z\<close>
       by (simp add: Cauchy_cinner_convergent)
     ultimately have \<open>lim (\<lambda>n. (\<lambda>i. \<langle>x i, z i\<rangle>) n + (\<lambda>i. \<langle>y i, z i\<rangle>) n) = lim (\<lambda>n. \<langle>x n, z n\<rangle>) + lim (\<lambda>n. \<langle>y n, z n\<rangle>)\<close>
       using lim_add by auto
@@ -1595,7 +1595,7 @@ proof
     for r :: complex
       and x :: "'a completion"
       and y :: "'a completion"
-     apply transfer
+    apply transfer
     unfolding normed_space_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
@@ -1610,7 +1610,7 @@ proof
 
   show "0 \<le> \<langle>x::'a completion, x\<rangle>"
     for x :: "'a completion"
-     apply transfer
+    apply transfer
     unfolding normed_space_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
@@ -1627,7 +1627,7 @@ proof
     have  \<open>convergent (\<lambda>n. \<langle>x n, x n\<rangle>)\<close>
       using \<open>Cauchy x\<close>
       by (simp add: Cauchy_cinner_convergent)
-          
+
     have \<open>\<forall> n \<ge> 0. 0 \<le> Re \<langle>x n, x n\<rangle>\<close>
       by (metis \<open>\<And>n. \<langle>x n, x n\<rangle> = complex_of_real (Re \<langle>x n, x n\<rangle>)\<close> cinner_ge_zero complex_of_real_nn_iff)      
     moreover have \<open>convergent (\<lambda>n. Re \<langle>x n, x n\<rangle>)\<close>
@@ -1650,13 +1650,113 @@ proof
 
   show "(\<langle>x::'a completion, x\<rangle> = 0) = (x = 0)"
     for x :: "'a completion"
-    sorry
+    apply transfer unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+    using convergent_Cauchy convergent_const apply auto[1]
+  proof
+    show "\<forall>\<^sub>F n in sequentially. dist (x n) (0::'a) < e"
+      if "Cauchy (x::nat \<Rightarrow> 'a)"
+        and "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
+        and "(0::real) < e"
+      for x :: "nat \<Rightarrow> 'a"
+        and e :: real
+    proof-
+      have \<open>(\<lambda>n. \<langle>x n, x n\<rangle>) \<longlonglongrightarrow> 0\<close>
+        using that(2)
+        by (metis Cauchy_cinner_Cauchy convergent_eq_Cauchy limI that(1))
+      hence \<open>\<forall>\<^sub>F n in sequentially. dist (\<langle> x n,  x n \<rangle>) 0 < e^2\<close>
+        using tendstoD that(3) by fastforce      
+      hence \<open>\<forall>\<^sub>F n in sequentially. (norm (\<langle> x n,  x n \<rangle> - 0)) < e^2\<close>
+        using dist_norm
+        by auto 
+      hence \<open>\<forall>\<^sub>F n in sequentially. (norm \<langle> x n,  x n \<rangle>) < e^2\<close>
+        by simp
+      hence \<open>\<forall>\<^sub>F n in sequentially. sqrt (norm \<langle> x n,  x n \<rangle>) < e\<close>
+        by (smt eventually_elim2 norm_eq_sqrt_cinner power2_norm_eq_cinner power_less_imp_less_base that(3))      
+      hence \<open>\<forall>\<^sub>F n in sequentially. norm (x n)  < e\<close>
+        by (metis (mono_tags, lifting) eventually_mono norm_eq_sqrt_cinner)      
+      thus ?thesis using dist_norm
+        by (simp add: \<open>\<forall>\<^sub>F n in sequentially. norm (x n) < e\<close>) 
+    qed
+    show "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
+      if "Cauchy (x::nat \<Rightarrow> 'a)"
+        and "Cauchy (\<lambda>n. 0::'a)"
+        and "x \<longlonglongrightarrow> (0::'a)"
+      for x :: "nat \<Rightarrow> 'a"
+      using that
+      by (metis (no_types) cinner_zero_right limI tendsto_cinner that(3)) 
+  qed
 
   show "norm (x::'a completion) = sqrt (cmod \<langle>x, x\<rangle>)"
     for x :: "'a completion"
-    sorry
+    apply transfer unfolding normed_space_rel_def
+    apply auto unfolding Vanishes_def apply auto
+  proof-
+    fix x :: \<open>nat \<Rightarrow> 'a\<close>
+    assume \<open>Cauchy x\<close>
+    have \<open>lim (\<lambda>n. sqrt ( norm \<langle>x n, x n\<rangle> )) = sqrt ( lim (\<lambda>n.  norm \<langle>x n, x n\<rangle> ) )\<close>
+      using lim_sqrt[where x = \<open>(\<lambda>n.  norm \<langle>x n, x n\<rangle> )\<close>]
+      by (simp add: Cauchy_cinner_convergent \<open>Cauchy x\<close> convergent_norm)
+    moreover have \<open>lim (\<lambda>n.  norm \<langle>x n, x n\<rangle> ) = norm (lim (\<lambda>n. \<langle>x n, x n\<rangle> ))\<close>
+      using lim_norm[where x = "(\<lambda>n. \<langle>x n, x n\<rangle> )"]
+      by (simp add: Cauchy_cinner_convergent \<open>Cauchy x\<close>)      
+    ultimately have \<open>lim (\<lambda>n. sqrt ( norm \<langle>x n, x n\<rangle> )) = sqrt (norm (lim (\<lambda>n. \<langle>x n, x n\<rangle>)))\<close>
+      by simp
+    moreover have \<open>norm (x n) =  sqrt ( norm \<langle>x n, x n\<rangle> )\<close>
+      for n
+      using norm_eq_sqrt_cinner by auto     
+    ultimately show \<open>lim (\<lambda>n. norm (x n)) = sqrt (norm (lim (\<lambda>n. \<langle>x n, x n\<rangle>)))\<close>
+      by simp
+  qed
 qed
 end
 
+lift_definition embed_completion :: \<open>'a::real_normed_vector \<Rightarrow> 'a completion\<close>
+ is "\<lambda> x. (\<lambda> n. x)"
+  unfolding normed_space_rel_def
+  apply auto unfolding Cauchy_def apply auto
+  unfolding Vanishes_def by auto
+
+lemma embed_completion_inj:
+  assumes \<open>embed_completion x = embed_completion y\<close>
+  shows \<open>x = y\<close>
+  using assms apply transfer unfolding normed_space_rel_def
+  apply auto 
+proof-
+  fix x y :: \<open>'a::real_normed_vector\<close>
+  assume \<open>Cauchy (\<lambda>n. x)\<close> and \<open>Cauchy (\<lambda>n. y)\<close> 
+    and \<open>Vanishes (\<lambda>n. x - y)\<close> 
+  from  \<open>Vanishes (\<lambda>n. x - y)\<close>
+  have \<open>(\<lambda>n. x - y) \<longlonglongrightarrow> 0\<close>
+    unfolding Vanishes_def
+    by blast
+  hence \<open>\<forall> e > 0. dist (x - y) 0 < e\<close>
+    by (simp add: LIMSEQ_const_iff)
+  hence \<open>\<forall> e > 0. norm ((x - y) - 0) < e\<close>
+    using dist_norm
+    by simp
+  hence \<open>\<forall> e > 0. norm (x - y) < e\<close>
+    by simp
+  hence \<open>x - y = 0\<close>
+    using zero_less_norm_iff by blast
+  show \<open>x = y\<close>
+    by (simp add: \<open>x - y = 0\<close> eq_iff_diff_eq_0)
+qed
+
+definition proj_completion :: \<open>('a::real_normed_vector) completion \<Rightarrow> 'a option\<close>
+  where "proj_completion f = (if (\<exists> x. f = embed_completion x) 
+    then Some (SOME x. f = embed_completion x) 
+    else None )"
+
+lemma proj_embed_completion:
+  \<open>proj_completion (embed_completion x) = Some x\<close>
+  unfolding proj_completion_def
+  apply auto using embed_completion_inj
+  by blast 
+
+lemma proj_embed_completion_none:
+  \<open>x \<notin> range embed_completion \<Longrightarrow> proj_completion x = None\<close>
+  unfolding proj_completion_def
+  by auto
 
 end
