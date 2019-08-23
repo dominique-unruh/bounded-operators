@@ -344,25 +344,25 @@ end
 
 
 lemma atensor_distr_right:
-\<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
+  \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (simp add: complex_vector.span_base) 
 
 lemma atensor_distr_left:
-\<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
+  \<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (simp add: complex_vector.span_base) 
 
 lemma atensor_mult_right:
-\<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
+  \<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
 
 lemma atensor_mult_left:
-\<open>(c *\<^sub>C x) \<otimes>\<^sub>a y   = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
+  \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y   = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
@@ -370,28 +370,27 @@ lemma atensor_mult_left:
 
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
-begin 
+begin
 lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
-is \<open>\<lambda> u v. \<langle>fst u, fst v\<rangle> * \<langle>snd u, snd v\<rangle>\<close>
+  is \<open>\<lambda> u v. \<langle>fst u, fst v\<rangle> * \<langle>snd u, snd v\<rangle>\<close>
 proof-
   fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
   assume \<open>atensor_rel p1 p2\<close> and \<open>atensor_rel p3 p4\<close>
   hence \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
     unfolding atensor_rel_def by auto
-
   show \<open>\<langle>fst p1, fst p3\<rangle> * \<langle>snd p1, snd p3\<rangle> =
        \<langle>fst p2, fst p4\<rangle> * \<langle>snd p2, snd p4\<rangle>\<close>
     sorry
 qed
 
 definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
-\<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
+  \<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
 
 definition sgn_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
-\<open>sgn_atensor x = x /\<^sub>R norm x\<close> for x
+  \<open>sgn_atensor x = x /\<^sub>R norm x\<close> for x
 
 definition dist_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
-\<open>dist_atensor x y = norm (x - y)\<close> for x y
+  \<open>dist_atensor x y = norm (x - y)\<close> for x y
 
 definition uniformity_atensor :: \<open>(('a \<otimes>\<^sub>a 'b) \<times> ('a \<otimes>\<^sub>a 'b)) filter\<close>
   where  \<open>uniformity_atensor = (INF e:{0<..}. principal {((f::'a \<otimes>\<^sub>a 'b), (g::'a \<otimes>\<^sub>a 'b)). dist f g < e})\<close>
@@ -400,7 +399,7 @@ definition open_atensor :: \<open>('a \<otimes>\<^sub>a 'b) set \<Rightarrow> bo
   where \<open>open_atensor = (\<lambda> U::('a \<otimes>\<^sub>a 'b) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
 
 instance
-  proof
+proof
   show "dist (x::'a \<otimes>\<^sub>a 'b) y = norm (x - y)"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
