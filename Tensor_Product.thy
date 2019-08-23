@@ -24,7 +24,6 @@ setup_lifting type_definition_free
 
 instantiation free :: (type) complex_vector
 begin
-<<<<<<< HEAD
 
 lift_definition zero_free :: "'a free"
 is \<open>\<lambda> _. 0\<close>
@@ -73,11 +72,7 @@ proof-
   ultimately show \<open>finite {x |x. f1 x - f2 x \<noteq> 0}\<close>
     by (simp add: finite_subset)
 qed
-=======
-(* TODO this is not a lifted definition, use "definition" instead. *)
-lift_definition scaleC_prod :: \<open>complex \<Rightarrow>  'a \<times> 'b \<Rightarrow>  'a \<times> 'b\<close>
-  is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
->>>>>>> 79740575fa3f681b11939049e81f2ae4fd6323d0
+
 
 instance
   proof
@@ -151,12 +146,8 @@ definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) 
 (* TODO: Syntax for bibtex entries is @{cite Helemskii}. *)
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
-<<<<<<< HEAD
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
-=======
-  = "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
 (* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
->>>>>>> 79740575fa3f681b11939049e81f2ae4fd6323d0
   unfolding equivp_def proof
   show "\<forall>y. atensor_rel (x::('a \<times> 'b) free) y = (atensor_rel x = atensor_rel y)"
     for x :: "('a \<times> 'b) free"
