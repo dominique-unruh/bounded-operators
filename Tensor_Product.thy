@@ -157,19 +157,20 @@ quotient_type (overloaded) ('a, 'b) atensor
   qed
 qed
 
+
+(* "a" is for algebraic *)
 type_notation (xsymbols)
-  atensor  ("(_ \<otimes>/ _)" [21, 20] 20)
+  atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
 type_notation (HTML output)
-  atensor  ("(_ \<otimes>/ _)" [21, 20] 20)
+  atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
 
-lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes> 'b\<close>  (infixl "\<otimes>" 70)
+lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. Pair x y\<close>.
-
 
 instantiation atensor :: (complex_vector,complex_vector) complex_vector
 begin
 
-lift_definition plus_atensor :: \<open>'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b\<close>
+lift_definition plus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>
   is \<open>\<lambda> x y. x + y\<close>
   unfolding atensor_rel_def
 proof-
@@ -185,7 +186,7 @@ proof-
     by simp
 qed
 
-lift_definition minus_atensor :: \<open>'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b\<close>
+lift_definition minus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>
   is \<open>\<lambda> x y. x - y\<close>
   unfolding atensor_rel_def
 proof-
@@ -201,11 +202,10 @@ proof-
     by simp
 qed
 
-
-lift_definition zero_atensor :: \<open>'a \<otimes> 'b\<close>
+lift_definition zero_atensor :: \<open>'a \<otimes>\<^sub>a 'b\<close>
   is \<open>0\<close>.
 
-lift_definition scaleR_atensor :: \<open>real \<Rightarrow> 'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b\<close>
+lift_definition scaleR_atensor :: \<open>real \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>
   is \<open>\<lambda> c x. c *\<^sub>R x\<close>
   unfolding atensor_rel_def
 proof-
@@ -220,7 +220,7 @@ proof-
     by (metis \<open>c *\<^sub>R (p1 - p2) \<in> atensor_kernel\<close> ordered_field_class.sign_simps(26))
 qed
 
-lift_definition scaleC_atensor :: \<open>complex \<Rightarrow> 'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b\<close>
+lift_definition scaleC_atensor :: \<open>complex \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>
   is \<open>\<lambda> c x. c *\<^sub>C x\<close>
   unfolding atensor_rel_def
 proof-
@@ -235,7 +235,7 @@ proof-
     by (metis (no_types) \<open>c *\<^sub>C (p1 - p2) \<in> atensor_kernel\<close> complex_vector.scale_right_diff_distrib)
 qed
 
-lift_definition uminus_atensor :: \<open>'a \<otimes> 'b \<Rightarrow> 'a \<otimes> 'b\<close>
+lift_definition uminus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>
   is \<open>\<lambda> x. -x\<close>
   unfolding atensor_rel_def
 proof-
@@ -252,7 +252,7 @@ qed
 
 instance
 proof
-  show "((*\<^sub>R) r::'a \<otimes> 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  show "((*\<^sub>R) r::'a \<otimes>\<^sub>a 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     unfolding scaleC_atensor_def scaleR_atensor_def 
     apply auto
@@ -265,76 +265,76 @@ proof
       by (simp add: \<open>(*\<^sub>R) r = (*\<^sub>C) (complex_of_real r)\<close>)
   qed
 
-  show "(a::'a \<otimes> 'b) + b + c = a + (b + c)"
-    for a :: "'a \<otimes> 'b"
-      and b :: "'a \<otimes> 'b"
-      and c :: "'a \<otimes> 'b"
+  show "(a::'a \<otimes>\<^sub>a 'b) + b + c = a + (b + c)"
+    for a :: "'a \<otimes>\<^sub>a 'b"
+      and b :: "'a \<otimes>\<^sub>a 'b"
+      and c :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     apply auto 
     using subspace_atensor_kernel 
     unfolding complex_vector.subspace_def
     by blast
 
-  show "(a::'a \<otimes> 'b) + b = b + a"
-    for a :: "'a \<otimes> 'b"
-      and b :: "'a \<otimes> 'b"
+  show "(a::'a \<otimes>\<^sub>a 'b) + b = b + a"
+    for a :: "'a \<otimes>\<^sub>a 'b"
+      and b :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     apply auto 
     using subspace_atensor_kernel 
     unfolding complex_vector.subspace_def
     by blast
 
-  show "(0::'a \<otimes> 'b) + a = a"
-    for a :: "'a \<otimes> 'b"
+  show "(0::'a \<otimes>\<^sub>a 'b) + a = a"
+    for a :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     apply auto 
     using subspace_atensor_kernel 
     unfolding complex_vector.subspace_def
     by blast
 
-  show "- (a::'a \<otimes> 'b) + a = 0"
-    for a :: "'a \<otimes> 'b"
+  show "- (a::'a \<otimes>\<^sub>a 'b) + a = 0"
+    for a :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     apply auto 
     using subspace_atensor_kernel 
     unfolding complex_vector.subspace_def
     by blast
 
-  show "(a::'a \<otimes> 'b) - b = a + - b"
-    for a :: "'a \<otimes> 'b"
-      and b :: "'a \<otimes> 'b"
+  show "(a::'a \<otimes>\<^sub>a 'b) - b = a + - b"
+    for a :: "'a \<otimes>\<^sub>a 'b"
+      and b :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     apply auto 
     using subspace_atensor_kernel 
     unfolding complex_vector.subspace_def
     by blast
 
-  show "a *\<^sub>C ((x::'a \<otimes> 'b) + y) = a *\<^sub>C x + a *\<^sub>C y"
+  show "a *\<^sub>C ((x::'a \<otimes>\<^sub>a 'b) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
-      and x :: "'a \<otimes> 'b"
-      and y :: "'a \<otimes> 'b"
+      and x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     using subspace_atensor_kernel
     by (simp add: subspace_atensor_kernel complex_vector.subspace_0 scaleC_add_right) 
 
-  show "(a + b) *\<^sub>C (x::'a \<otimes> 'b) = a *\<^sub>C x + b *\<^sub>C x"
+  show "(a + b) *\<^sub>C (x::'a \<otimes>\<^sub>a 'b) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "'a \<otimes> 'b"
+      and x :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     using subspace_atensor_kernel
     by (simp add: subspace_atensor_kernel complex_vector.subspace_0 scaleC_add_left)
 
-  show "a *\<^sub>C b *\<^sub>C (x::'a \<otimes> 'b) = (a * b) *\<^sub>C x"
+  show "a *\<^sub>C b *\<^sub>C (x::'a \<otimes>\<^sub>a 'b) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "'a \<otimes> 'b"
+      and x :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     using subspace_atensor_kernel
     by (simp add: subspace_atensor_kernel complex_vector.subspace_0)
 
-  show "1 *\<^sub>C (x::'a \<otimes> 'b) = x"
-    for x :: "'a \<otimes> 'b"
+  show "1 *\<^sub>C (x::'a \<otimes>\<^sub>a 'b) = x"
+    for x :: "'a \<otimes>\<^sub>a 'b"
     apply transfer unfolding atensor_rel_def
     using subspace_atensor_kernel
     by (simp add: subspace_atensor_kernel complex_vector.subspace_0)
@@ -344,25 +344,25 @@ end
 
 
 lemma atensor_distr_right:
-\<open>x \<otimes> (y+z) =  x \<otimes> y  +  x \<otimes> z\<close>
+\<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (simp add: complex_vector.span_base) 
 
 lemma atensor_distr_left:
-\<open>(y+z) \<otimes> x =  y \<otimes> x  +  z \<otimes> x\<close>
+\<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (simp add: complex_vector.span_base) 
 
 lemma atensor_mult_right:
-\<open>x \<otimes> (c *\<^sub>C y) = c *\<^sub>C (x \<otimes> y)\<close>
+\<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
 
 lemma atensor_mult_left:
-\<open>(c *\<^sub>C x) \<otimes> y   = c *\<^sub>C (x \<otimes> y)\<close>
+\<open>(c *\<^sub>C x) \<otimes>\<^sub>a y   = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
@@ -371,17 +371,88 @@ lemma atensor_mult_left:
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin 
+lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+is \<open>\<lambda> u v. \<langle>fst u, fst v\<rangle> * \<langle>snd u, snd v\<rangle>\<close>
+proof-
+  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
+  assume \<open>atensor_rel p1 p2\<close> and \<open>atensor_rel p3 p4\<close>
+  hence \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
+    unfolding atensor_rel_def by auto
+
+  show \<open>\<langle>fst p1, fst p3\<rangle> * \<langle>snd p1, snd p3\<rangle> =
+       \<langle>fst p2, fst p4\<rangle> * \<langle>snd p2, snd p4\<rangle>\<close>
+    sorry
+qed
+
+definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
+\<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
+
+definition sgn_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
+\<open>sgn_atensor x = x /\<^sub>R norm x\<close> for x
+
+definition dist_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
+\<open>dist_atensor x y = norm (x - y)\<close> for x y
+
+definition uniformity_atensor :: \<open>(('a \<otimes>\<^sub>a 'b) \<times> ('a \<otimes>\<^sub>a 'b)) filter\<close>
+  where  \<open>uniformity_atensor = (INF e:{0<..}. principal {((f::'a \<otimes>\<^sub>a 'b), (g::'a \<otimes>\<^sub>a 'b)). dist f g < e})\<close>
+
+definition open_atensor :: \<open>('a \<otimes>\<^sub>a 'b) set \<Rightarrow> bool\<close>
+  where \<open>open_atensor = (\<lambda> U::('a \<otimes>\<^sub>a 'b) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
 
 instance
-  sorry
+  proof
+  show "dist (x::'a \<otimes>\<^sub>a 'b) y = norm (x - y)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    unfolding dist_atensor_def by blast
+  show "sgn (x::'a \<otimes>\<^sub>a 'b) = x /\<^sub>R norm x"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    unfolding sgn_atensor_def by blast
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>a 'b) y < e})"
+    unfolding uniformity_atensor_def by blast
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>a 'b) = x \<longrightarrow> y \<in> U)"
+    for U :: "('a \<otimes>\<^sub>a 'b) set"
+    unfolding open_atensor_def by blast
+  show "\<langle>x::'a \<otimes>\<^sub>a 'b, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>(x::'a \<otimes>\<^sub>a 'b) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+      and z :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>r *\<^sub>C (x::'a \<otimes>\<^sub>a 'b), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
+    for r :: complex
+      and x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "0 \<le> \<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "(\<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle> = 0) = (x = 0)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "norm (x::'a \<otimes>\<^sub>a 'b) = sqrt (cmod \<langle>x, x\<rangle>)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    unfolding norm_atensor_def by blast
+qed
+
+
 end
 
 section \<open>Hilbert tensor product\<close>
 
 text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
-  = \<open>(UNIV::(('a \<otimes> 'b) completion) set)\<close>
+  = \<open>(UNIV::(('a \<otimes>\<^sub>a 'b) completion) set)\<close>
   by (rule Set.UNIV_witness)
+
+(* "h" is for Hilbert *)
+type_notation (xsymbols)
+  htensor  ("(_ \<otimes>\<^sub>h/ _)" [21, 20] 20)
+type_notation (HTML output)
+  htensor  ("(_ \<otimes>\<^sub>h\<^sub>/ _)" [21, 20] 20)
 
 
 instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
