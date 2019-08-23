@@ -5,6 +5,7 @@ begin
 
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties 
    and using the conventions from the definition of @{class boolean_algebra} *)
+(* TODO: inf_compl_bot, sup_compl_bot should be [simp] *)
 class complemented_lattice = bounded_lattice + uminus + minus + 
   assumes inf_compl_bot: "inf x (-x) = bot"
     and sup_compl_top: "sup x  (-x) = top"
@@ -13,6 +14,7 @@ class complemented_lattice = bounded_lattice + uminus + minus +
 class complete_complemented_lattice = complemented_lattice + complete_lattice 
 
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
+(* TODO: ortho_involution should be [simp] *)
 class orthocomplemented_lattice = complemented_lattice +
   assumes ortho_involution: "- (- x) = x"
     and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y"
