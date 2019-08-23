@@ -55,33 +55,34 @@ instance
 qed
 end
 
-definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
-\<open>alg_tensor_kernel = complex_vector.span 
+definition atensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
+\<open>atensor_kernel = complex_vector.span 
 { Pair x (y+z) - Pair x y - Pair x z |  x y z. True}\<union>
 { Pair (y+z) x - Pair y x - Pair z x |  x y z. True}\<union>
 { Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
 { Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True}\<close>
 
-definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
-  where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
+definition atensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
+  where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
-quotient_type (overloaded) ('a, 'b) alg_tensor 
-= "('a::complex_vector,'b::complex_vector) prod" /  alg_tensor_rel
+quotient_type (overloaded) ('a, 'b) atensor 
+= "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
   sorry
 
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
-instantiation alg_tensor :: (complex_inner,complex_inner) complex_inner
+instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin 
 
 instance
   sorry
 end
 
+section \<open>Hilbert tensor product\<close>
 
 text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
-  = \<open>(UNIV::((('a, 'b) alg_tensor) completion) set)\<close>
+  = \<open>(UNIV::((('a, 'b) atensor) completion) set)\<close>
   by (rule Set.UNIV_witness)
 
 instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
