@@ -15,74 +15,142 @@ begin
 
 section \<open>Algebraic tensor product\<close>
 
-instantiation prod :: (complex_vector, complex_vector) complex_vector
+typedef 'a free = \<open>{f::'a \<Rightarrow> complex. finite {x | x. f x \<noteq> 0}}\<close>
+  apply auto
+  using not_finite_existsD by fastforce
+
+setup_lifting type_definition_free
+
+
+instantiation free :: (type) complex_vector
 begin
-lift_definition scaleC_prod :: \<open>complex \<Rightarrow>  'a \<times> 'b \<Rightarrow>  'a \<times> 'b\<close>
-  is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
+
+lift_definition zero_free :: "'a free"
+is \<open>\<lambda> _. 0\<close>
+  by auto
+
+lift_definition scaleC_free :: "complex \<Rightarrow> 'a free \<Rightarrow> 'a free"
+is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
+  by auto
+
+lift_definition scaleR_free :: "real \<Rightarrow> 'a free \<Rightarrow> 'a free"
+is \<open>\<lambda> c::real. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
+  by auto
+
+lift_definition uminus_free :: "'a free \<Rightarrow> 'a free"
+is \<open>\<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. - (f x))\<close>
+  by auto
+
+lift_definition plus_free :: "'a free \<Rightarrow> 'a free \<Rightarrow> 'a free"
+is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x + g x)\<close>
+proof-
+  fix f1 f2 :: \<open>'a \<Rightarrow> complex\<close>
+  assume \<open>finite {x |x. f1 x \<noteq> 0}\<close> and \<open>finite {x |x. f2 x \<noteq> 0}\<close> 
+  moreover have \<open>{x |x. f1 x + f2 x \<noteq> 0} \<subseteq> {x |x. f1 x \<noteq> 0} \<union> {x |x. f2 x \<noteq> 0}\<close>
+  proof-
+    have \<open>{x |x. f1 x = 0} \<inter> {x |x. f2 x = 0} \<subseteq> {x |x. f1 x + f2 x = 0}\<close>
+      by (simp add: Collect_mono_iff Int_def)
+    thus ?thesis
+      by auto 
+  qed
+  ultimately show \<open>finite {x |x. f1 x + f2 x \<noteq> 0}\<close>
+    by (simp add: finite_subset)
+qed
+
+lift_definition minus_free :: "'a free \<Rightarrow> 'a free \<Rightarrow> 'a free"
+is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x - g x)\<close>
+proof-
+  fix f1 f2 :: \<open>'a \<Rightarrow> complex\<close>
+  assume \<open>finite {x |x. f1 x \<noteq> 0}\<close> and \<open>finite {x |x. f2 x \<noteq> 0}\<close> 
+  moreover have \<open>{x |x. f1 x - f2 x \<noteq> 0} \<subseteq> {x |x. f1 x \<noteq> 0} \<union> {x |x. f2 x \<noteq> 0}\<close>
+  proof-
+    have \<open>{x |x. f1 x = 0} \<inter> {x |x. f2 x = 0} \<subseteq> {x |x. f1 x - f2 x = 0}\<close>
+      by (simp add: Collect_mono_iff Int_def)
+    thus ?thesis
+      by auto 
+  qed
+  ultimately show \<open>finite {x |x. f1 x - f2 x \<noteq> 0}\<close>
+    by (simp add: finite_subset)
+qed
 
 instance
-proof
-  show "((*\<^sub>R) r::'a \<times> 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  proof
+  show "((*\<^sub>R) r::'a free \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
+    unfolding scaleR_free_def scaleC_free_def by auto
+  show "(a::'a free) + b + c = a + (b + c)"
+    for a :: "'a free"
+      and b :: "'a free"
+      and c :: "'a free"
     apply transfer
-    by (metis scaleR_prod_def scaleR_scaleC)
-
-  show "a *\<^sub>C ((x::'a \<times> 'b) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    by (simp add: add.commute add.left_commute)
+  show "(a::'a free) + b = b + a"
+    for a :: "'a free"
+      and b :: "'a free"
+    apply transfer
+    by (simp add: add.commute) 
+  show "(0::'a free) + a = a"
+    for a :: "'a free"
+    apply transfer by auto
+  show "- (a::'a free) + a = 0"
+    for a :: "'a free"
+    apply transfer by auto
+  show "(a::'a free) - b = a + - b"
+    for a :: "'a free"
+      and b :: "'a free"
+    apply transfer by auto
+  show "a *\<^sub>C ((x::'a free) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
-      and x :: "'a \<times> 'b"
-      and y :: "'a \<times> 'b"
-    apply transfer
-    by (simp add: scaleC_add_right)
-
-  show "(a + b) *\<^sub>C (x::'a \<times> 'b) = a *\<^sub>C x + b *\<^sub>C x"
+      and x :: "'a free"
+      and y :: "'a free"
+        apply transfer
+    using scaleC_add_right by blast 
+  show "(a + b) *\<^sub>C (x::'a free) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "'a \<times> 'b"
+      and x :: "'a free"
     apply transfer
-    by (simp add: scaleC_add_left) 
-
-  show "a *\<^sub>C b *\<^sub>C (x::'a \<times> 'b) = (a * b) *\<^sub>C x"
+    using scaleC_add_left by blast 
+  show "a *\<^sub>C b *\<^sub>C (x::'a free) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "'a \<times> 'b"
-    apply transfer
-    by simp
-
-  show "1 *\<^sub>C (x::'a \<times> 'b) = x"
-    for x :: "'a \<times> 'b"
-    apply transfer
-    by simp 
+      and x :: "'a free"
+    apply transfer by auto
+  show "1 *\<^sub>C (x::'a free) = x"
+    for x :: "'a free"
+    apply transfer by auto
 qed
 end
 
-definition atensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
-  \<open>atensor_kernel = complex_vector.span 
-({ Pair x (y+z) - Pair x y - Pair x z |  x y z. True}\<union>
- { Pair (y+z) x - Pair y x - Pair z x |  x y z. True}\<union>
- { Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
- { Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True})\<close>
+lift_definition embed_free:: \<open>'a \<Rightarrow> 'a free\<close>
+is \<open>\<lambda> a::'a. (\<lambda> x. if x = a then 1 else 0)\<close>
+  by simp
+
+definition atensor_kernel::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
+  \<open>atensor_kernel = complex_vector.span ( 
+  {embed_free (x, (y+z)) - embed_free (x, y) - embed_free (x, z) |  x y z. True}
+\<union> { embed_free ((y+z), x) - embed_free (y, x) - embed_free (z, x) |  x y z. True}
+\<union> { embed_free (x, (c *\<^sub>C y)) -  c *\<^sub>C embed_free (x, y) |  x y c. True} 
+\<union> { embed_free ((c *\<^sub>C x), y) -  c *\<^sub>C embed_free (x, y) |  x y c. True} )\<close>
 
 lemma subspace_atensor_kernel:
   \<open>complex_vector.subspace atensor_kernel\<close>
   unfolding atensor_kernel_def
-  using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
-      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
-      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
-      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+  using Complex_Vector_Spaces.complex_vector.subspace_span
   by blast
 
-definition atensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
+definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) free \<Rightarrow> ('a \<times> 'b) free \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
-  = "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
+  = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
   unfolding equivp_def proof
-  show "\<forall>y. atensor_rel (x::'a \<times> 'b) y = (atensor_rel x = atensor_rel y)"
-    for x :: "'a \<times> 'b"
+  show "\<forall>y. atensor_rel (x::('a \<times> 'b) free) y = (atensor_rel x = atensor_rel y)"
+    for x :: "('a \<times> 'b) free"
   proof
     show "atensor_rel x y = (atensor_rel x = atensor_rel y)"
-      for y :: "'a \<times> 'b"
+      for y :: "('a \<times> 'b) free"
     proof
       show "atensor_rel x = atensor_rel y"
         if "atensor_rel x y"
@@ -158,12 +226,12 @@ quotient_type (overloaded) ('a, 'b) atensor
 qed
 
 
+  
 type_notation
    atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
 
-
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
-  is \<open>\<lambda> x::'a. \<lambda> y::'b. Pair x y\<close>.
+  is \<open>\<lambda> x::'a. \<lambda> y::'b. embed_free (x, y)\<close>.
 
 instantiation atensor :: (complex_vector,complex_vector) complex_vector
 begin
@@ -172,7 +240,7 @@ lift_definition plus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a 
   is \<open>\<lambda> x y. x + y\<close>
   unfolding atensor_rel_def
 proof-
-  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
+  fix p1 p2 p3 p4 :: \<open>('a \<times> 'b) free\<close>
   assume \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
   moreover have \<open>complex_vector.subspace atensor_kernel\<close>
     using subspace_atensor_kernel by blast
@@ -188,7 +256,7 @@ lift_definition minus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a
   is \<open>\<lambda> x y. x - y\<close>
   unfolding atensor_rel_def
 proof-
-  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
+  fix p1 p2 p3 p4 :: \<open>('a \<times> 'b) free\<close>
   assume \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
   moreover have \<open>complex_vector.subspace atensor_kernel\<close>
     using subspace_atensor_kernel by blast
@@ -207,7 +275,7 @@ lift_definition scaleR_atensor :: \<open>real \<Rightarrow> 'a \<otimes>\<^sub>a
   is \<open>\<lambda> c x. c *\<^sub>R x\<close>
   unfolding atensor_rel_def
 proof-
-  fix p1 p2::\<open>('a, 'b) prod\<close> and c::real
+  fix p1 p2::\<open>('a \<times> 'b) free\<close> and c::real
   assume \<open>p1 - p2 \<in> atensor_kernel\<close> 
   moreover have \<open>complex_vector.subspace atensor_kernel\<close>
     using subspace_atensor_kernel
@@ -222,7 +290,7 @@ lift_definition scaleC_atensor :: \<open>complex \<Rightarrow> 'a \<otimes>\<^su
   is \<open>\<lambda> c x. c *\<^sub>C x\<close>
   unfolding atensor_rel_def
 proof-
-  fix p1 p2::\<open>('a, 'b) prod\<close> and c::complex
+  fix p1 p2::\<open>('a \<times> 'b) free\<close> and c::complex
   assume \<open>p1 - p2 \<in> atensor_kernel\<close> 
   moreover have \<open>complex_vector.subspace atensor_kernel\<close>
     using subspace_atensor_kernel
@@ -237,7 +305,7 @@ lift_definition uminus_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> '
   is \<open>\<lambda> x. -x\<close>
   unfolding atensor_rel_def
 proof-
-  fix p1 p2 :: \<open>('a, 'b) prod\<close>
+  fix p1 p2 :: \<open>('a \<times> 'b) free\<close>
   assume \<open>p1 - p2 \<in> atensor_kernel\<close>
   moreover have \<open>complex_vector.subspace atensor_kernel\<close>
     using subspace_atensor_kernel
@@ -345,40 +413,33 @@ lemma atensor_distr_right:
   \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
-  by (simp add: complex_vector.span_base) 
+  sorry
 
 lemma atensor_distr_left:
   \<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
-  by (simp add: complex_vector.span_base) 
+  sorry
 
 lemma atensor_mult_right:
   \<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
-  by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
+  sorry
 
 lemma atensor_mult_left:
-  \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y   = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
+  \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
+
 
 text \<open>Proposition 1 on page 186 in @Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin
 lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
-  is \<open>\<lambda> u v. \<langle>fst u, fst v\<rangle> * \<langle>snd u, snd v\<rangle>\<close>
-proof-
-  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
-  assume \<open>atensor_rel p1 p2\<close> and \<open>atensor_rel p3 p4\<close>
-  hence \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
-    unfolding atensor_rel_def by auto
-  show \<open>\<langle>fst p1, fst p3\<rangle> * \<langle>snd p1, snd p3\<rangle> =
-       \<langle>fst p2, fst p4\<rangle> * \<langle>snd p2, snd p4\<rangle>\<close>
-    sorry
-qed
+  is \<open>undefined\<close>
+  sorry
 
 definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
   \<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
