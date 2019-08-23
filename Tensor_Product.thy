@@ -15,46 +15,39 @@ begin
 
 section \<open>Algebraic tensor product\<close>
 
-(* TODO Why not just use prod? This seems to be the same as the type ('a,'b) prod. *)
-typedef (overloaded) ('a::complex_vector, 'b::complex_vector) pair_vector
-  = \<open>UNIV::(('a*'b) set)\<close>
-  by auto
+lemma fdssf:
+fixes f :: \<open>('a,'b) prod\<close>
+shows \<open>f = f\<close>
+  sorry
 
-setup_lifting type_definition_pair_vector
-
-instantiation pair_vector :: (complex_vector, complex_vector) complex_vector
+instantiation prod :: (complex_vector, complex_vector) complex_vector
 begin
 instance
   sorry
 end
 
-instantiation pair_vector :: (complex_inner, complex_inner) complex_inner
+instantiation prod :: (complex_inner, complex_inner) complex_inner
 begin
 instance
   sorry
 end
 
 
-definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) pair_vector) set\<close> where
+definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
 \<open>alg_tensor_kernel = complex_vector.span 
-{ Abs_pair_vector (x, y+z) - Abs_pair_vector (x, y) - Abs_pair_vector (x, z) |  x y z. True}\<union>
-{ Abs_pair_vector (y+z, x) - Abs_pair_vector (y, x) - Abs_pair_vector (z, x) |  x y z. True}\<union>
-{ Abs_pair_vector (x, c *\<^sub>C y) -  c *\<^sub>C Abs_pair_vector (x, y) |  x y c. True}\<union>
-{ Abs_pair_vector (c *\<^sub>C x, y) -  c *\<^sub>C Abs_pair_vector (x, y) |  x y c. True}\<close>
+{ Pair x (y+z) - Pair x y - Pair x z |  x y z. True}\<union>
+{ Pair (y+z) x - Pair y x - Pair z x |  x y z. True}\<union>
+{ Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
+{ Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True}\<close>
 
-definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) pair_vector \<Rightarrow> ('a,'b) pair_vector \<Rightarrow> bool"
+definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
   where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
 
-(* TODO:  Remove "partial:" since alg_tensor_rel is total *)
+
+text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) alg_tensor 
-= "('a::complex_vector,'b::complex_vector) pair_vector" / partial: alg_tensor_rel
-  unfolding part_equivp_def
-  proof
-  show "\<exists>x. alg_tensor_rel (x::('a, 'b) pair_vector) x"
-    sorry
-  show "\<forall>x y. alg_tensor_rel (x::('a, 'b) pair_vector) y = (alg_tensor_rel x x \<and> alg_tensor_rel y y \<and> alg_tensor_rel x = alg_tensor_rel y)"
-    sorry
-qed
+= "('a::complex_vector,'b::complex_vector) prod" /  alg_tensor_rel
+  sorry
 
 instantiation alg_tensor :: (complex_inner,complex_inner) complex_inner
 begin 
@@ -62,11 +55,12 @@ instance
   sorry
 end
 
-typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) hilbert_tensor 
+text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\<close>
+typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
   = \<open>(UNIV::((('a, 'b) alg_tensor) completion) set)\<close>
   by (rule Set.UNIV_witness)
 
-instantiation hilbert_tensor :: (chilbert_space, chilbert_space) chilbert_space
+instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
 begin
 instance 
   sorry
