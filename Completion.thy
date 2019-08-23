@@ -15,14 +15,14 @@ begin
 definition Vanishes:: \<open>(nat \<Rightarrow> 'a::real_normed_vector) \<Rightarrow> bool\<close> where
   \<open>Vanishes x = (x \<longlonglongrightarrow> 0)\<close>
 
-definition normed_space_rel :: "(nat \<Rightarrow> 'a::real_normed_vector) \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> bool"
-  where "normed_space_rel = (\<lambda>X Y. Cauchy X \<and> Cauchy Y \<and> Vanishes (\<lambda>n. X n - Y n))"
+definition completion_rel :: "(nat \<Rightarrow> 'a::real_normed_vector) \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> bool"
+  where "completion_rel = (\<lambda>X Y. Cauchy X \<and> Cauchy Y \<and> Vanishes (\<lambda>n. X n - Y n))"
 
-quotient_type  (overloaded) 'a completion = "nat \<Rightarrow> 'a::real_normed_vector" / partial: normed_space_rel
+quotient_type  (overloaded) 'a completion = "nat \<Rightarrow> 'a::real_normed_vector" / partial: completion_rel
   unfolding part_equivp_def
 proof
-  show "\<exists>x. normed_space_rel (x::nat \<Rightarrow> 'a) x"
-    unfolding normed_space_rel_def proof
+  show "\<exists>x. completion_rel (x::nat \<Rightarrow> 'a) x"
+    unfolding completion_rel_def proof
     show "Cauchy (\<lambda> _. 0::'a) \<and> Cauchy (\<lambda> _. 0::'a) \<and> Vanishes (\<lambda>n. (\<lambda> _. 0::'a) n - (\<lambda> _. 0::'a) n)"
       apply auto
       unfolding Cauchy_def
@@ -30,9 +30,9 @@ proof
       unfolding Vanishes_def
       by auto
   qed
-  show "\<forall>x y. normed_space_rel (x::nat \<Rightarrow> 'a) y = (normed_space_rel x x \<and> normed_space_rel y y \<and> normed_space_rel x = normed_space_rel y)"
+  show "\<forall>x y. completion_rel (x::nat \<Rightarrow> 'a) y = (completion_rel x x \<and> completion_rel y y \<and> completion_rel x = completion_rel y)"
     apply auto
-    unfolding normed_space_rel_def
+    unfolding completion_rel_def
   proof auto
     show \<open>Cauchy x \<Longrightarrow> Cauchy y \<Longrightarrow> Vanishes (\<lambda>n. x n - y n) \<Longrightarrow> Vanishes (\<lambda>n. 0)\<close>
       for x y :: \<open>nat \<Rightarrow> 'a\<close>
@@ -106,7 +106,7 @@ instantiation completion :: (real_normed_vector) real_normed_vector
 begin
 lift_definition uminus_completion :: \<open>'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> x. (\<lambda> n. - (x n))\<close>
-  unfolding normed_space_rel_def proof
+  unfolding completion_rel_def proof
   show "Cauchy (\<lambda>n. - (f n::'a))"
     if "Cauchy f \<and> Cauchy g \<and> Vanishes (\<lambda>n. (f n::'a) - g n)"
     for f :: "nat \<Rightarrow> 'a"
@@ -144,14 +144,14 @@ qed
 
 lift_definition zero_completion :: \<open>'a completion\<close>
   is \<open>\<lambda> n. 0\<close>
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
   apply auto
    apply (simp add: convergent_Cauchy convergent_const)
   unfolding Vanishes_def by simp
 
 lift_definition minus_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> x y. (\<lambda> n. x n - y n)\<close>
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
 proof
   show "Cauchy (\<lambda>n. (f1 n::'a) - f3 n)"
     if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
@@ -204,7 +204,7 @@ qed
 
 lift_definition plus_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> x y. (\<lambda> n. x n + y n)\<close>
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
 proof
   show "Cauchy (\<lambda>n. (f1 n::'a) + f3 n)"
     if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
@@ -256,7 +256,7 @@ qed
 
 lift_definition  norm_completion :: \<open>'a completion \<Rightarrow> real\<close>
   is \<open>\<lambda> x. lim (\<lambda> n. norm (x n))\<close>
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
 proof-
   include nsa_notation
   fix f1 f2 :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
@@ -340,7 +340,7 @@ qed
 
 lift_definition sgn_completion :: \<open>'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> x. (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)) )\<close>
-  unfolding normed_space_rel_def proof
+  unfolding completion_rel_def proof
   show "Cauchy (\<lambda>n. (f1 n::'a) /\<^sub>R lim (\<lambda>n. norm (f1 n)))"
     if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
     for f1 :: "nat \<Rightarrow> 'a"
@@ -374,7 +374,7 @@ lift_definition sgn_completion :: \<open>'a completion \<Rightarrow> 'a completi
         by (simp add: that)
       hence \<open>lim (\<lambda>n. norm (f1 n)) = lim (\<lambda>n. norm (f2 n))\<close>
         using \<open>Cauchy f1\<close> \<open>Cauchy f2\<close> norm_completion_def
-        by (metis (full_types) Quotient3_completion Quotient3_def norm_completion.abs_eq normed_space_rel_def)
+        by (metis (full_types) Quotient3_completion Quotient3_def norm_completion.abs_eq completion_rel_def)
       define L where \<open>L = lim (\<lambda>n. norm (f1 n))\<close>
       have \<open>Vanishes (\<lambda>n. (f1 n - f2 n) /\<^sub>R L)\<close>
       proof-
@@ -402,7 +402,7 @@ qed
 
 lift_definition scaleR_completion :: \<open>real \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> r x. (\<lambda> n. r *\<^sub>R (x n))\<close>
-  unfolding normed_space_rel_def proof
+  unfolding completion_rel_def proof
   show "Cauchy (\<lambda>n. r *\<^sub>R (f1 n::'a))"
     if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
     for r :: real
@@ -447,7 +447,7 @@ qed
 
 lift_definition dist_completion :: \<open>'a completion \<Rightarrow> 'a completion \<Rightarrow> real\<close>
   is \<open>\<lambda> f g. lim (\<lambda> n. norm (f n - g n))\<close>
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
 proof-
   include nsa_notation
   fix f1 f2 f3 f4 :: \<open>nat \<Rightarrow> 'a\<close>
@@ -547,7 +547,7 @@ proof
       and b :: "'a completion"
       and c :: "'a completion"
     apply transfer
-    unfolding normed_space_rel_def proof
+    unfolding completion_rel_def proof
     show "Cauchy (\<lambda>n. (a n::'a) + b n + c n)"
       if "Cauchy a \<and> Cauchy a \<and> Vanishes (\<lambda>n. (a n::'a) - a n)"
         and "Cauchy b \<and> Cauchy b \<and> Vanishes (\<lambda>n. (b n::'a) - b n)"
@@ -569,7 +569,7 @@ proof
   show "(a::'a completion) + b = b + a"
     for a :: "'a completion"
       and b :: "'a completion"
-    apply transfer unfolding normed_space_rel_def proof
+    apply transfer unfolding completion_rel_def proof
     show "Cauchy (\<lambda>n. (a n::'a) + b n)"
       if "Cauchy a \<and> Cauchy a \<and> Vanishes (\<lambda>n. (a n::'a) - a n)"
         and "Cauchy b \<and> Cauchy b \<and> Vanishes (\<lambda>n. (b n::'a) - b n)"
@@ -587,7 +587,7 @@ proof
   qed
   show "(0::'a completion) + a = a"
     for a :: "'a completion"
-    apply transfer unfolding normed_space_rel_def proof
+    apply transfer unfolding completion_rel_def proof
     show "Cauchy (\<lambda>n. (0::'a) + a n)"
       if "Cauchy a \<and> Cauchy a \<and> Vanishes (\<lambda>n. (a n::'a) - a n)"
       for a :: "nat \<Rightarrow> 'a"
@@ -604,14 +604,14 @@ proof
   show "(a::'a completion) - b = a + - b"
     for a :: "'a completion"
       and b :: "'a completion"
-    apply transfer apply auto unfolding normed_space_rel_def apply auto
+    apply transfer apply auto unfolding completion_rel_def apply auto
     by (simp add: Cauchy_minus)
 
   show "a *\<^sub>R ((x::'a completion) + y) = a *\<^sub>R x + a *\<^sub>R y"
     for a :: real
       and x :: "'a completion"
       and y :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
       apply (simp add: Cauchy_add Cauchy_scaleR)
      apply (simp add: Cauchy_add Cauchy_scaleR)
     unfolding Vanishes_def apply auto proof
@@ -642,7 +642,7 @@ proof
     for a :: real
       and b :: real
       and x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
       apply (simp add: Cauchy_scaleR)
      apply (simp add: Cauchy_add Cauchy_scaleR)
     unfolding Vanishes_def proof
@@ -673,7 +673,7 @@ proof
     for a :: real
       and b :: real
       and x :: "'a completion"
-    apply transfer apply auto unfolding normed_space_rel_def apply auto
+    apply transfer apply auto unfolding completion_rel_def apply auto
     by (simp add: Cauchy_scaleR)
 
   show "1 *\<^sub>R (x::'a completion) = x"
@@ -682,7 +682,7 @@ proof
 
   show "sgn (x::'a completion) = inverse (norm x) *\<^sub>R x"
     for x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
     by (simp add: Cauchy_scaleR)
 
   show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a completion) y < e})"
@@ -694,15 +694,15 @@ proof
 
   show "(norm (x::'a completion) = 0) = (x = 0)"
     for x :: "'a completion"
-    apply transfer apply auto unfolding normed_space_rel_def Vanishes_def apply auto
-      apply (metis normed_space_rel_def zero_completion.rsp)
+    apply transfer apply auto unfolding completion_rel_def Vanishes_def apply auto
+      apply (metis completion_rel_def zero_completion.rsp)
      apply (metis Cauchy_convergent_norm convergent_eq_Cauchy limI tendsto_norm_zero_iff)
     by (simp add: limI tendsto_norm_zero)
 
   show "norm ((x::'a completion) + y) \<le> norm x + norm y"
     for x :: "'a completion"
       and y :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
   proof-
     fix x y :: \<open>nat \<Rightarrow> 'a\<close>
     assume \<open>Cauchy x\<close> and \<open>Cauchy y\<close> and \<open>Vanishes (\<lambda>n. 0)\<close>
@@ -742,7 +742,7 @@ proof
   show "norm (a *\<^sub>R (x::'a completion)) = \<bar>a\<bar> * norm x"
     for a :: real
       and x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
   proof-
     fix a::real and x::\<open>nat \<Rightarrow> 'a\<close>
     assume \<open>Cauchy x\<close> and \<open>Vanishes (\<lambda>n. 0)\<close>
@@ -798,7 +798,7 @@ proof
 
     have \<open>Cauchy (rep_completion (X i))\<close>
       for i
-      by (metis Quotient3_completion Quotient3_rel_rep normed_space_rel_def)      
+      by (metis Quotient3_completion Quotient3_rel_rep completion_rel_def)      
     hence \<open>\<exists> T. \<forall> m \<ge> T. \<forall> n \<ge> T. norm (rep_completion (X i) m - rep_completion (X i) n) < inverse (of_nat (Suc i))\<close>
       for i
       unfolding Cauchy_def
@@ -1019,8 +1019,8 @@ proof
         unfolding Cauchy_def 
         by (simp add: dist_norm) 
     qed
-    hence \<open>normed_space_rel l l\<close>
-      unfolding normed_space_rel_def
+    hence \<open>completion_rel l l\<close>
+      unfolding completion_rel_def
       apply auto
       unfolding Vanishes_def
       by simp
@@ -1038,17 +1038,17 @@ proof
           by simp
         hence \<open>e/4 > 0\<close>
           by simp
-        have \<open>normed_space_rel l l\<close>
-          unfolding normed_space_rel_def
+        have \<open>completion_rel l l\<close>
+          unfolding completion_rel_def
           apply auto
           using \<open>Cauchy l\<close>
            apply auto
           unfolding Vanishes_def
           by auto
-        hence \<open>normed_space_rel (rep_completion (abs_completion l))  l\<close>
+        hence \<open>completion_rel (rep_completion (abs_completion l))  l\<close>
           by (simp add: Quotient3_completion rep_abs_rsp_left)
         hence \<open>(\<lambda> n. (rep_completion (abs_completion l)) n - l n ) \<longlonglongrightarrow> 0\<close>
-          unfolding normed_space_rel_def Vanishes_def by blast
+          unfolding completion_rel_def Vanishes_def by blast
         have \<open>\<exists>N. \<forall>i\<ge>N. lim (\<lambda>n. norm (rep_completion (X i) n -
              rep_completion (abs_completion l) n)) \<le> e\<close>
         proof-
@@ -1145,7 +1145,7 @@ proof
                   = (\<lambda> n. norm ( (rep_completion (X i) n - l n) + (l n - rep_completion (abs_completion l) n) ) )\<close>
                   by simp
                 moreover have \<open>convergent (\<lambda>n. norm (rep_completion (X i) n - rep_completion (abs_completion l) n))\<close>
-                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>\<And>i. Cauchy (rep_completion (X i))\<close> \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>\<And>i. Cauchy (rep_completion (X i))\<close> \<open>completion_rel (rep_completion (abs_completion l)) l\<close> completion_rel_def)                  
                 ultimately show ?thesis by simp
               qed
               moreover have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
@@ -1153,7 +1153,7 @@ proof
                 have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) )\<close>
                   by (simp add: Cauchy_convergent_norm Cauchy_minus \<open>Cauchy l\<close> \<open>\<And>i. Cauchy (rep_completion (X i))\<close> real_Cauchy_convergent)
                 moreover have \<open>convergent (\<lambda> n. norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
-                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>completion_rel (rep_completion (abs_completion l)) l\<close> completion_rel_def)                  
                 ultimately show ?thesis
                   by (simp add: convergent_add) 
               qed
@@ -1169,7 +1169,7 @@ proof
               have \<open>convergent (\<lambda> n. norm ( (rep_completion (X i) n - l n) ) )\<close>
                 by (simp add: Cauchy_convergent_norm Cauchy_minus \<open>Cauchy l\<close> \<open>\<And>i. Cauchy (rep_completion (X i))\<close> real_Cauchy_convergent)
               moreover have \<open>convergent (\<lambda> n. norm ( (l n - rep_completion (abs_completion l) n) ) )\<close>
-                by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>completion_rel (rep_completion (abs_completion l)) l\<close> completion_rel_def)                  
               ultimately have \<open>lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) + norm ( (l n - rep_completion (abs_completion l) n) ))
             = lim (\<lambda>n. norm ( (rep_completion (X i) n - l n) ) )
               + lim (\<lambda>n. norm ( (l n - rep_completion (abs_completion l) n) ))\<close>
@@ -1179,7 +1179,7 @@ proof
               moreover have \<open>lim (\<lambda>n. norm ( (l n - rep_completion (abs_completion l) n) )) \<le> e/2\<close>
               proof-
                 have \<open>convergent (\<lambda>n. norm (rep_completion (abs_completion l) n - l n))\<close>
-                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>normed_space_rel (rep_completion (abs_completion l)) l\<close> normed_space_rel_def)                  
+                  by (metis Cauchy_convergent Cauchy_convergent_norm Cauchy_minus \<open>completion_rel (rep_completion (abs_completion l)) l\<close> completion_rel_def)                  
                 moreover have \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) \<le> e/2\<close>
                   using \<open>\<forall> n\<ge>M. norm ((\<lambda> n. (rep_completion (abs_completion l)) n - l n ) n) < e/2\<close>
                   by auto
@@ -1249,7 +1249,7 @@ instantiation completion :: (complex_normed_vector) cbanach
 begin
 lift_definition scaleC_completion :: \<open>complex \<Rightarrow> 'a completion \<Rightarrow> 'a completion\<close>
   is \<open>\<lambda> r x. (\<lambda> n. r *\<^sub>C (x n))\<close>
-  unfolding normed_space_rel_def proof
+  unfolding completion_rel_def proof
   show "Cauchy (\<lambda>n. r *\<^sub>C (f1 n::'a))"
     if "Cauchy f1 \<and> Cauchy f2 \<and> Vanishes (\<lambda>n. (f1 n::'a) - f2 n)"
     for r :: complex
@@ -1304,7 +1304,7 @@ proof
     for a :: complex
       and x :: "'a completion"
       and y :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
       apply (simp add: Cauchy_add Cauchy_scaleC)
      apply (simp add: Cauchy_add Cauchy_scaleC)
     unfolding Vanishes_def apply auto proof
@@ -1336,7 +1336,7 @@ proof
     for a :: complex
       and b :: complex
       and x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
       apply (simp add: Cauchy_scaleC)
      apply (simp add: Cauchy_add Cauchy_scaleC)
     unfolding Vanishes_def proof
@@ -1367,7 +1367,7 @@ proof
     for a :: complex
       and b :: complex
       and x :: "'a completion"
-    apply transfer apply auto unfolding normed_space_rel_def apply auto
+    apply transfer apply auto unfolding completion_rel_def apply auto
     by (simp add: Cauchy_scaleC)
 
   show "1 *\<^sub>C (x::'a completion) = x"
@@ -1377,7 +1377,7 @@ proof
   show "norm (a *\<^sub>C (x::'a completion)) = cmod a * norm x"
     for a :: complex
       and x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def apply auto
+    apply transfer unfolding completion_rel_def apply auto
   proof-
     fix a::complex and x::\<open>nat \<Rightarrow> 'a\<close>
     assume \<open>Cauchy x\<close> and \<open>Vanishes (\<lambda>n. 0)\<close>
@@ -1407,19 +1407,19 @@ lift_definition cinner_completion :: \<open>'a completion \<Rightarrow> 'a compl
   is \<open>\<lambda> x y. lim (\<lambda> n. \<langle>x n, y n\<rangle>)\<close>
 proof-
   fix f1 f2 f3 f4::\<open>nat \<Rightarrow> 'a::complex_inner\<close>
-  assume \<open>normed_space_rel f1 f2\<close> and \<open>normed_space_rel f3 f4\<close>
+  assume \<open>completion_rel f1 f2\<close> and \<open>completion_rel f3 f4\<close>
   have \<open>Cauchy f1\<close>
-    using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+    using \<open>completion_rel f1 f2\<close> unfolding completion_rel_def by blast
   have \<open>Cauchy f2\<close>
-    using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+    using \<open>completion_rel f1 f2\<close> unfolding completion_rel_def by blast
   have \<open>Cauchy f3\<close>
-    using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+    using \<open>completion_rel f3 f4\<close> unfolding completion_rel_def by blast
   have \<open>Cauchy f4\<close>
-    using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+    using \<open>completion_rel f3 f4\<close> unfolding completion_rel_def by blast
   have \<open>lim (\<lambda>n. \<langle>f1 n, f3 n\<rangle>) = lim (\<lambda>n. \<langle>f2 n, f3 n\<rangle>)\<close>
   proof-
     have \<open>Cauchy f3\<close>
-      using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def by blast
+      using \<open>completion_rel f3 f4\<close> unfolding completion_rel_def by blast
     hence \<open>bounded (range f3)\<close>
       by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
     hence \<open>\<exists> M. \<forall> n. norm (f3 n) \<le> M\<close>
@@ -1438,7 +1438,7 @@ proof-
     moreover have \<open>(\<lambda> n. norm (f1 n - f2 n) * M) \<longlonglongrightarrow> 0\<close>
     proof-
       have \<open>(\<lambda> n. f1 n - f2 n) \<longlonglongrightarrow> 0\<close>
-        using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def Vanishes_def by blast
+        using \<open>completion_rel f1 f2\<close> unfolding completion_rel_def Vanishes_def by blast
       hence \<open>(\<lambda> n. norm (f1 n - f2 n)) \<longlonglongrightarrow> 0\<close>
         by (simp add: tendsto_norm_zero)
       thus ?thesis
@@ -1472,7 +1472,7 @@ proof-
   also have \<open>\<dots>= lim (\<lambda>n. \<langle>f2 n, f4 n\<rangle>)\<close>
   proof-
     have \<open>Cauchy f2\<close>
-      using \<open>normed_space_rel f1 f2\<close> unfolding normed_space_rel_def by blast
+      using \<open>completion_rel f1 f2\<close> unfolding completion_rel_def by blast
     hence \<open>bounded (range f2)\<close>
       by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
     hence \<open>\<exists> M. \<forall> n. norm (f2 n) \<le> M\<close>
@@ -1491,7 +1491,7 @@ proof-
     moreover have \<open>(\<lambda> n. M * norm (f3 n - f4 n)) \<longlonglongrightarrow> 0\<close>
     proof-
       have \<open>(\<lambda> n. f3 n - f4 n) \<longlonglongrightarrow> 0\<close>
-        using \<open>normed_space_rel f3 f4\<close> unfolding normed_space_rel_def Vanishes_def by blast
+        using \<open>completion_rel f3 f4\<close> unfolding completion_rel_def Vanishes_def by blast
       hence \<open>(\<lambda> n. norm (f3 n - f4 n)) \<longlonglongrightarrow> 0\<close>
         by (simp add: tendsto_norm_zero)
       thus ?thesis
@@ -1536,7 +1536,7 @@ proof
     for x :: "'a completion"
       and y :: "'a completion"
     apply transfer
-    unfolding normed_space_rel_def
+    unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
     fix x y :: \<open>nat \<Rightarrow> 'a\<close>
@@ -1569,7 +1569,7 @@ proof
       and y :: "'a completion"
       and z :: "'a completion"
     apply transfer
-    unfolding normed_space_rel_def
+    unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
     fix x y z :: \<open>nat \<Rightarrow> 'a\<close>
@@ -1596,7 +1596,7 @@ proof
       and x :: "'a completion"
       and y :: "'a completion"
     apply transfer
-    unfolding normed_space_rel_def
+    unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
     fix x y :: \<open>nat \<Rightarrow> 'a\<close> and r::complex
@@ -1611,7 +1611,7 @@ proof
   show "0 \<le> \<langle>x::'a completion, x\<rangle>"
     for x :: "'a completion"
     apply transfer
-    unfolding normed_space_rel_def
+    unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
     fix x::\<open>nat \<Rightarrow> 'a\<close>
@@ -1650,7 +1650,7 @@ proof
 
   show "(\<langle>x::'a completion, x\<rangle> = 0) = (x = 0)"
     for x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def
+    apply transfer unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
     using convergent_Cauchy convergent_const apply auto[1]
   proof
@@ -1689,7 +1689,7 @@ proof
 
   show "norm (x::'a completion) = sqrt (cmod \<langle>x, x\<rangle>)"
     for x :: "'a completion"
-    apply transfer unfolding normed_space_rel_def
+    apply transfer unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto
   proof-
     fix x :: \<open>nat \<Rightarrow> 'a\<close>
@@ -1713,14 +1713,14 @@ end
 
 lift_definition embed_completion :: \<open>'a::real_normed_vector \<Rightarrow> 'a completion\<close>
  is "\<lambda> x. (\<lambda> n. x)"
-  unfolding normed_space_rel_def
+  unfolding completion_rel_def
   apply auto unfolding Cauchy_def apply auto
   unfolding Vanishes_def by auto
 
 lemma embed_completion_inj:
   assumes \<open>embed_completion x = embed_completion y\<close>
   shows \<open>x = y\<close>
-  using assms apply transfer unfolding normed_space_rel_def
+  using assms apply transfer unfolding completion_rel_def
   apply auto 
 proof-
   fix x y :: \<open>'a::real_normed_vector\<close>

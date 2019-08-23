@@ -15,23 +15,45 @@ begin
 
 section \<open>Algebraic tensor product\<close>
 
-lemma fdssf:
-fixes f :: \<open>('a,'b) prod\<close>
-shows \<open>f = f\<close>
-  sorry
-
 instantiation prod :: (complex_vector, complex_vector) complex_vector
 begin
-instance
-  sorry
-end
+lift_definition scaleC_prod :: \<open>complex \<Rightarrow>  'a \<times> 'b \<Rightarrow>  'a \<times> 'b\<close>
+is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
 
-instantiation prod :: (complex_inner, complex_inner) complex_inner
-begin
 instance
-  sorry
-end
+  proof
+  show "((*\<^sub>R) r::'a \<times> 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+    apply transfer
+    by (metis scaleR_prod_def scaleR_scaleC)
 
+  show "a *\<^sub>C ((x::'a \<times> 'b) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "'a \<times> 'b"
+      and y :: "'a \<times> 'b"
+    apply transfer
+    by (simp add: scaleC_add_right)
+
+  show "(a + b) *\<^sub>C (x::'a \<times> 'b) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a \<times> 'b"
+    apply transfer
+    by (simp add: scaleC_add_left) 
+
+  show "a *\<^sub>C b *\<^sub>C (x::'a \<times> 'b) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a \<times> 'b"
+    apply transfer
+    by simp
+
+  show "1 *\<^sub>C (x::'a \<times> 'b) = x"
+    for x :: "'a \<times> 'b"
+    apply transfer
+    by simp 
+qed
+end
 
 definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
 \<open>alg_tensor_kernel = complex_vector.span 
@@ -43,17 +65,19 @@ definition alg_tensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) p
 definition alg_tensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
   where "alg_tensor_rel = (\<lambda>x y. x - y \<in> alg_tensor_kernel)"
 
-
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) alg_tensor 
 = "('a::complex_vector,'b::complex_vector) prod" /  alg_tensor_rel
   sorry
 
+text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation alg_tensor :: (complex_inner,complex_inner) complex_inner
 begin 
+
 instance
   sorry
 end
+
 
 text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
