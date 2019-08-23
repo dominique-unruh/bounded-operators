@@ -427,25 +427,81 @@ end
 
 
 lemma atensor_distr_right:
-  \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
+  fixes x y z :: "'a::complex_vector"
+  shows  \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
-  apply auto
-  sorry
+proof-
+  fix x y z::'a
+  have \<open>embed_free (x, y + z) - (embed_free (x, y) + embed_free (x, z))
+  \<in> {embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True}\<close>
+    by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)    
+  hence \<open>embed_free (x, y + z) - (embed_free (x, y) + embed_free (x, z))
+  \<in> ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+    by simp
+  thus \<open>embed_free (x, y + z) - (embed_free (x, y) + embed_free (x, z))
+       \<in> complex_vector.span
+           ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+     by (simp add: complex_vector.span_base)
+qed
 
 lemma atensor_distr_left:
-  \<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
+  fixes x y z :: "'a::complex_vector"
+  shows  \<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
-  apply auto
-  sorry
+proof-
+  fix x y z::'a
+  have \<open>embed_free (y + z, x) - (embed_free (y, x) + embed_free (z, x))
+       \<in> {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True}\<close>
+    by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)
+  hence \<open>embed_free (y + z, x) - (embed_free (y, x) + embed_free (z, x))
+       \<in> ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+    by simp
+  thus \<open> embed_free (y + z, x) - (embed_free (y, x) + embed_free (z, x))
+       \<in> complex_vector.span
+           ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+    by (simp add: complex_vector.span_base)
+qed
 
 lemma atensor_mult_right:
-  \<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
+  fixes x y :: "'a::complex_vector" and c :: complex
+  shows \<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
-  apply auto
-  sorry
+proof-
+  fix x y :: 'a and c :: complex
+  have \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
+       \<in> {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True}\<close>
+        by (metis (mono_tags, lifting) mem_Collect_eq)
+  hence \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
+       \<in> ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+    by simp
+  thus \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
+       \<in> complex_vector.span
+           ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
+            {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
+            {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
+            {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
+    by (simp add: complex_vector.span_base)
+qed
+  
 
 lemma atensor_mult_left:
-  \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
+  fixes x y :: "'a::complex_vector" and c :: complex
+  shows \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
