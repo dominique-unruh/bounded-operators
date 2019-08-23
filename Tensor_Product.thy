@@ -158,6 +158,10 @@ quotient_type (overloaded) ('a, 'b) atensor
 qed
 
 
+lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> ('a, 'b) atensor\<close>  (infixl "\<otimes>" 70)
+  is \<open>\<lambda> x::'a. \<lambda> y::'b. Pair x y\<close>.
+
+
 instantiation atensor :: (complex_vector,complex_vector) complex_vector
 begin
 
@@ -335,6 +339,31 @@ qed
 end
 
 
+lemma atensor_distr_right:
+\<open>x \<otimes> (y+z) =  x \<otimes> y  +  x \<otimes> z\<close>
+  apply transfer unfolding atensor_rel_def atensor_kernel_def
+  apply auto
+  by (simp add: complex_vector.span_base) 
+
+lemma atensor_distr_left:
+\<open>(y+z) \<otimes> x =  y \<otimes> x  +  z \<otimes> x\<close>
+  apply transfer unfolding atensor_rel_def atensor_kernel_def
+  apply auto
+  by (simp add: complex_vector.span_base) 
+
+lemma atensor_mult_right:
+\<open>x \<otimes> (c *\<^sub>C y) = c *\<^sub>C (x \<otimes> y)\<close>
+  apply transfer unfolding atensor_rel_def atensor_kernel_def
+  apply auto
+  by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
+
+lemma atensor_mult_left:
+\<open>(c *\<^sub>C x) \<otimes> y   = c *\<^sub>C (x \<otimes> y)\<close>
+  apply transfer unfolding atensor_rel_def atensor_kernel_def
+  apply auto
+  by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
+
+
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin 
@@ -349,6 +378,7 @@ text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
   = \<open>(UNIV::((('a, 'b) atensor) completion) set)\<close>
   by (rule Set.UNIV_witness)
+
 
 instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
 begin
