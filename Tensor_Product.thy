@@ -17,6 +17,7 @@ section \<open>Algebraic tensor product\<close>
 
 instantiation prod :: (complex_vector, complex_vector) complex_vector
 begin
+(* TODO this is not a lifted definition, use "definition" instead. *)
 lift_definition scaleC_prod :: \<open>complex \<Rightarrow>  'a \<times> 'b \<Rightarrow>  'a \<times> 'b\<close>
   is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
 
@@ -74,9 +75,11 @@ lemma subspace_atensor_kernel:
 definition atensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
+(* TODO: Syntax for bibtex entries is @{cite Helemskii}. *)
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
   = "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
+(* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
   unfolding equivp_def proof
   show "\<forall>y. atensor_rel (x::'a \<times> 'b) y = (atensor_rel x = atensor_rel y)"
     for x :: "'a \<times> 'b"
@@ -252,6 +255,20 @@ qed
 
 instance
 proof
+(* TODO: In many cases, directly using the result from the sketch command leads to proofs that are 
+   unnecessarily repetitive. For example, below, one could add the lines
+
+   fix a b c :: "'a \<otimes>\<^sub>a 'b"
+   fix r :: real
+   fix c :: complex
+
+   in the beginning of the proof and then omit all the "for ..." parts in the show-commands.
+
+   Also, sketch adds too much type information (e.g., "- (a::'a \<otimes>\<^sub>a 'b)" instead of "- a", even though the type
+   of a is already declared.
+
+   Generally, it is a good idea to clean up the result of sketch.
+ *)
   show "((*\<^sub>R) r::'a \<otimes>\<^sub>a 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     unfolding scaleC_atensor_def scaleR_atensor_def 
