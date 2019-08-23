@@ -47,7 +47,7 @@ setup \<open>Sign.add_const_constraint
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
-text \<open>Near-Hilbert space according to Definition 3, page 67, @Helemskii\<close>
+text \<open>Near-Hilbert space according to Definition 3, page 67, @{cite Helemskii}\<close>
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + 
   open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  ("\<langle>_, _\<rangle>") 

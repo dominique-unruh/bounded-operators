@@ -127,6 +127,7 @@ lift_definition embed_free:: \<open>'a \<Rightarrow> 'a free\<close>
 is \<open>\<lambda> a::'a. (\<lambda> x. if x = a then 1 else 0)\<close>
   by simp
 
+
 definition atensor_kernel::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
   \<open>atensor_kernel = complex_vector.span ( 
   {embed_free (x, (y+z)) - embed_free (x, y) - embed_free (x, z) |  x y z. True}
@@ -143,8 +144,7 @@ lemma subspace_atensor_kernel:
 definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) free \<Rightarrow> ('a \<times> 'b) free \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
-(* TODO: Syntax for bibtex entries is @{cite Helemskii}. *)
-text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
+text\<open>Tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
 (* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
@@ -321,20 +321,6 @@ qed
 
 instance
 proof
-(* TODO: In many cases, directly using the result from the sketch command leads to proofs that are 
-   unnecessarily repetitive. For example, below, one could add the lines
-
-   fix a b c :: "'a \<otimes>\<^sub>a 'b"
-   fix r :: real
-   fix c :: complex
-
-   in the beginning of the proof and then omit all the "for ..." parts in the show-commands.
-
-   Also, sketch adds too much type information (e.g., "- (a::'a \<otimes>\<^sub>a 'b)" instead of "- a", even though the type
-   of a is already declared.
-
-   Generally, it is a good idea to clean up the result of sketch.
- *)
   show "((*\<^sub>R) r::'a \<otimes>\<^sub>a 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     unfolding scaleC_atensor_def scaleR_atensor_def 
@@ -507,12 +493,74 @@ lemma atensor_mult_left:
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
 
 
-text \<open>Proposition 1 on page 186 in @Helemskii\<close>
+lemma atensor_onto_explicit:
+  fixes x :: \<open>'a::complex_vector \<otimes>\<^sub>a 'b::complex_vector\<close>
+    and X :: \<open>('a \<times> 'b) free\<close>
+  assumes \<open>X \<in> Rep_atensor x\<close>
+    and \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
+  shows \<open>x = (\<Sum>z\<in>{(fst u) \<otimes>\<^sub>a (snd u) | u. (Rep_free X) u \<noteq> 0}. f z *\<^sub>C z)
+   \<and> (\<forall> z. f ((fst u) \<otimes>\<^sub>a (snd u)) = (Rep_free X) z)\<close>
+  sorry
+
+lemma atensor_onto:
+  \<open>complex_vector.span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )
+ = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
+proof
+  show "complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b))) \<subseteq> UNIV"
+    by simp    
+  show "UNIV \<subseteq> complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b)))"
+  proof
+    show "x \<in> complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b)))"
+      for x :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      define f :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where \<open>f = undefined\<close>
+      define t :: \<open>('a \<otimes>\<^sub>a 'b) set\<close> where \<open>t = undefined\<close>
+      have \<open>finite t\<close>
+        sorry
+      moreover have \<open>t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)\<close>
+        sorry
+      ultimately have \<open>finite t \<and> t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)\<close>
+        by blast
+      moreover have \<open>x = (\<Sum>z\<in>t. f z *\<^sub>C z)\<close>
+        sorry
+      ultimately have \<open>x \<in> {\<Sum>z\<in>t. f z *\<^sub>C z |t f. finite t \<and> 
+            t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)}\<close>
+        by blast
+      moreover have \<open>complex_vector.span (range (\<lambda>z. fst z \<otimes>\<^sub>a snd z))
+        = {\<Sum>z\<in>t. f z *\<^sub>C z |t f. finite t \<and> 
+            t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)}\<close>
+        using complex_vector.span_explicit
+        by blast
+      ultimately show ?thesis
+        by blast
+    qed
+  qed
+qed
+
+definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close> 
+  where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
+
+lemma cbilinear_clinear:
+  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector\<close>
+  assumes \<open>cbilinear f\<close>
+  shows \<open>\<exists> g::'a \<otimes>\<^sub>a 'b \<Rightarrow> 'c. clinear g \<and> ( \<forall> x::'a. \<forall> y::'b. g (x \<otimes>\<^sub>a y) = f x y )\<close>
+proof
+  define g::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'c\<close> where \<open>g = undefined\<close> 
+  show "clinear g \<and> (\<forall>x y. g (x \<otimes>\<^sub>a y) = f x y)"
+    sorry
+qed
+
+text \<open>Proposition 1 on page 186 in @{cite Helemskii}\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin
 lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
   is \<open>undefined\<close>
-  sorry
+proof-
+  fix f1 f2 f3 f4::\<open>('a \<times> 'b) free\<close>
+  assume \<open>atensor_rel f1 f2\<close> and \<open>atensor_rel f3 f4\<close>
+  show \<open>undefined f1 f3 = undefined f2 f4\<close>
+    sorry
+qed
 
 definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
   \<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
@@ -573,7 +621,7 @@ end
 
 section \<open>Hilbert tensor product\<close>
 
-text\<open>Hilbert tensor product as defined in @Helemskii chapter 2, section 8\<close>
+text\<open>Hilbert tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
   = \<open>(UNIV::(('a \<otimes>\<^sub>a 'b) completion) set)\<close>
   by (rule Set.UNIV_witness)
