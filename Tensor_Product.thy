@@ -62,6 +62,15 @@ definition atensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod
  { Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
  { Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True})\<close>
 
+lemma subspace_atensor_kernel:
+  \<open>complex_vector.subspace atensor_kernel\<close>
+  unfolding atensor_kernel_def
+  using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
+      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
+      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
+      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+  by blast
+
 definition atensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
@@ -88,18 +97,13 @@ quotient_type (overloaded) ('a, 'b) atensor
               and "x - z \<in> atensor_kernel"
           proof-
             have \<open>complex_vector.subspace atensor_kernel\<close>
-              unfolding atensor_kernel_def
-              using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
-      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
-      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
-      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+              using subspace_atensor_kernel
               by blast
             hence \<open>(x - z) - (y - z) \<in> atensor_kernel\<close>
               using that 
               by auto 
             thus ?thesis
               by (metis (no_types, lifting) atensor_kernel_def complex_vector.span_add_eq diff_add_cancel)
-
           qed
           show "(x - z \<in> atensor_kernel) = (y - z \<in> atensor_kernel)"
             if "x - y \<in> atensor_kernel"
@@ -113,11 +117,7 @@ quotient_type (overloaded) ('a, 'b) atensor
               moreover have \<open>x - z = (x - y) + (y - z)\<close>
                 by simp
               moreover have \<open>complex_vector.subspace atensor_kernel\<close>
-                unfolding atensor_kernel_def
-                using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
-      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
-      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
-      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+                using subspace_atensor_kernel
                 by blast
               ultimately have \<open>x - z \<in> atensor_kernel\<close>
                 by (smt complex_vector.subspace_add that(1))                
@@ -156,6 +156,184 @@ quotient_type (overloaded) ('a, 'b) atensor
     qed
   qed
 qed
+
+
+instantiation atensor :: (complex_vector,complex_vector) complex_vector
+begin
+
+lift_definition plus_atensor :: \<open>('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor\<close>
+  is \<open>\<lambda> x y. x + y\<close>
+  unfolding atensor_rel_def
+proof-
+  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
+  assume \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
+  moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+    using subspace_atensor_kernel by blast
+  ultimately have \<open>(p1 - p2) + (p3 - p4) \<in> atensor_kernel\<close>
+    using complex_vector.subspace_add by blast
+  moreover have \<open>(p1 - p2) + (p3 - p4) = (p1 + p3) - (p2 + p4)\<close>
+    by simp
+  ultimately show \<open>(p1 + p3) - (p2 + p4) \<in> atensor_kernel\<close>
+    by simp
+qed
+
+lift_definition minus_atensor :: \<open>('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor\<close>
+  is \<open>\<lambda> x y. x - y\<close>
+  unfolding atensor_rel_def
+proof-
+  fix p1 p2 p3 p4 :: \<open>('a, 'b) prod\<close>
+  assume \<open>p1 - p2 \<in> atensor_kernel\<close> and \<open>p3 - p4 \<in> atensor_kernel\<close>
+  moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+    using subspace_atensor_kernel by blast
+  ultimately have \<open>(p1 - p2) - (p3 - p4) \<in> atensor_kernel\<close>
+    using complex_vector.subspace_diff by blast
+  moreover have \<open>(p1 - p2) - (p3 - p4) = (p1 - p3) - (p2 - p4)\<close>
+    by simp
+  ultimately show \<open>(p1 - p3) - (p2 - p4) \<in> atensor_kernel\<close>
+    by simp
+qed
+
+
+lift_definition zero_atensor :: \<open>('a, 'b) atensor\<close>
+  is \<open>0\<close>.
+
+lift_definition scaleR_atensor :: \<open>real \<Rightarrow> ('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor\<close>
+  is \<open>\<lambda> c x. c *\<^sub>R x\<close>
+  unfolding atensor_rel_def
+proof-
+  fix p1 p2::\<open>('a, 'b) prod\<close> and c::real
+  assume \<open>p1 - p2 \<in> atensor_kernel\<close> 
+  moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+    using subspace_atensor_kernel
+    by blast
+  ultimately have \<open>c *\<^sub>R (p1 - p2) \<in> atensor_kernel\<close>
+    by (simp add: \<open>complex_vector.subspace atensor_kernel\<close> complex_vector.subspace_scale scaleR_scaleC)
+  show \<open>c *\<^sub>R p1 - c *\<^sub>R p2 \<in> atensor_kernel\<close>
+    by (metis \<open>c *\<^sub>R (p1 - p2) \<in> atensor_kernel\<close> ordered_field_class.sign_simps(26))
+qed
+
+lift_definition scaleC_atensor :: \<open>complex \<Rightarrow> ('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor\<close>
+  is \<open>\<lambda> c x. c *\<^sub>C x\<close>
+  unfolding atensor_rel_def
+proof-
+  fix p1 p2::\<open>('a, 'b) prod\<close> and c::complex
+  assume \<open>p1 - p2 \<in> atensor_kernel\<close> 
+  moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+    using subspace_atensor_kernel
+    by blast
+  ultimately have \<open>c *\<^sub>C (p1 - p2) \<in> atensor_kernel\<close>
+    by (simp add: \<open>complex_vector.subspace atensor_kernel\<close> complex_vector.subspace_scale)
+  show \<open>c *\<^sub>C p1 - c *\<^sub>C p2 \<in> atensor_kernel\<close>
+    by (metis (no_types) \<open>c *\<^sub>C (p1 - p2) \<in> atensor_kernel\<close> complex_vector.scale_right_diff_distrib)
+qed
+
+lift_definition uminus_atensor :: \<open>('a, 'b) atensor \<Rightarrow> ('a, 'b) atensor\<close>
+  is \<open>\<lambda> x. -x\<close>
+  unfolding atensor_rel_def
+proof-
+  fix p1 p2 :: \<open>('a, 'b) prod\<close>
+  assume \<open>p1 - p2 \<in> atensor_kernel\<close>
+  moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+    using subspace_atensor_kernel
+    by blast
+  ultimately have \<open>-(p1 - p2) \<in> atensor_kernel\<close>
+    using complex_vector.subspace_neg by blast    
+  thus \<open>- p1 - - p2 \<in> atensor_kernel\<close>
+    by simp
+qed
+
+instance
+proof
+  show "((*\<^sub>R) r::('a, 'b) atensor \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+    unfolding scaleC_atensor_def scaleR_atensor_def 
+    apply auto
+  proof-
+    have \<open>((*\<^sub>R) r) = ((*\<^sub>C) (complex_of_real r))\<close>
+      by (simp add: scaleR_scaleC)      
+    show \<open>map_fun rep_atensor abs_atensor ((*\<^sub>R) r) =
+    map_fun rep_atensor abs_atensor
+     ((*\<^sub>C) (complex_of_real r))\<close>
+      by (simp add: \<open>(*\<^sub>R) r = (*\<^sub>C) (complex_of_real r)\<close>)
+  qed
+
+  show "(a::('a, 'b) atensor) + b + c = a + (b + c)"
+    for a :: "('a, 'b) atensor"
+      and b :: "('a, 'b) atensor"
+      and c :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    apply auto 
+    using subspace_atensor_kernel 
+    unfolding complex_vector.subspace_def
+    by blast
+
+  show "(a::('a, 'b) atensor) + b = b + a"
+    for a :: "('a, 'b) atensor"
+      and b :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    apply auto 
+    using subspace_atensor_kernel 
+    unfolding complex_vector.subspace_def
+    by blast
+
+  show "(0::('a, 'b) atensor) + a = a"
+    for a :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    apply auto 
+    using subspace_atensor_kernel 
+    unfolding complex_vector.subspace_def
+    by blast
+
+  show "- (a::('a, 'b) atensor) + a = 0"
+    for a :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    apply auto 
+    using subspace_atensor_kernel 
+    unfolding complex_vector.subspace_def
+    by blast
+
+  show "(a::('a, 'b) atensor) - b = a + - b"
+    for a :: "('a, 'b) atensor"
+      and b :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    apply auto 
+    using subspace_atensor_kernel 
+    unfolding complex_vector.subspace_def
+    by blast
+
+  show "a *\<^sub>C ((x::('a, 'b) atensor) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "('a, 'b) atensor"
+      and y :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    using subspace_atensor_kernel
+    by (simp add: subspace_atensor_kernel complex_vector.subspace_0 scaleC_add_right) 
+
+  show "(a + b) *\<^sub>C (x::('a, 'b) atensor) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    using subspace_atensor_kernel
+    by (simp add: subspace_atensor_kernel complex_vector.subspace_0 scaleC_add_left)
+
+  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) atensor) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    using subspace_atensor_kernel
+    by (simp add: subspace_atensor_kernel complex_vector.subspace_0)
+
+  show "1 *\<^sub>C (x::('a, 'b) atensor) = x"
+    for x :: "('a, 'b) atensor"
+    apply transfer unfolding atensor_rel_def
+    using subspace_atensor_kernel
+    by (simp add: subspace_atensor_kernel complex_vector.subspace_0)
+
+qed
+end
+
 
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
