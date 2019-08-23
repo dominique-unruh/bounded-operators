@@ -161,11 +161,9 @@ quotient_type (overloaded) ('a, 'b) atensor
 qed
 
 
-(* "a" is for algebraic *)
-type_notation (xsymbols)
-  atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
-type_notation (HTML output)
-  atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
+type_notation
+   atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
+
 
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. Pair x y\<close>.
@@ -384,8 +382,7 @@ lemma atensor_mult_left:
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
 
-
-text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
+text \<open>Proposition 1 on page 186 in @Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin
 lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
