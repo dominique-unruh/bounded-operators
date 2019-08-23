@@ -18,10 +18,10 @@ section \<open>Algebraic tensor product\<close>
 instantiation prod :: (complex_vector, complex_vector) complex_vector
 begin
 lift_definition scaleC_prod :: \<open>complex \<Rightarrow>  'a \<times> 'b \<Rightarrow>  'a \<times> 'b\<close>
-is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
+  is \<open>\<lambda> c x. (c *\<^sub>C (fst x), c *\<^sub>C (snd x))\<close>.
 
 instance
-  proof
+proof
   show "((*\<^sub>R) r::'a \<times> 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     apply transfer
@@ -56,19 +56,106 @@ qed
 end
 
 definition atensor_kernel::\<open>(('a::complex_vector, 'b::complex_vector) prod) set\<close> where
-\<open>atensor_kernel = complex_vector.span 
-{ Pair x (y+z) - Pair x y - Pair x z |  x y z. True}\<union>
-{ Pair (y+z) x - Pair y x - Pair z x |  x y z. True}\<union>
-{ Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
-{ Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True}\<close>
+  \<open>atensor_kernel = complex_vector.span 
+({ Pair x (y+z) - Pair x y - Pair x z |  x y z. True}\<union>
+ { Pair (y+z) x - Pair y x - Pair z x |  x y z. True}\<union>
+ { Pair x (c *\<^sub>C y) -  c *\<^sub>C Pair x y |  x y c. True}\<union>
+ { Pair (c *\<^sub>C x) y -  c *\<^sub>C Pair x y |  x y c. True})\<close>
 
 definition atensor_rel :: "('a::complex_vector,'b::complex_vector) prod \<Rightarrow> ('a,'b) prod \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
 text\<open>Tensor product as defined in @Helemskii chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
-= "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
-  sorry
+  = "('a::complex_vector,'b::complex_vector) prod" /  atensor_rel
+  unfolding equivp_def proof
+  show "\<forall>y. atensor_rel (x::'a \<times> 'b) y = (atensor_rel x = atensor_rel y)"
+    for x :: "'a \<times> 'b"
+  proof
+    show "atensor_rel x y = (atensor_rel x = atensor_rel y)"
+      for y :: "'a \<times> 'b"
+    proof
+      show "atensor_rel x = atensor_rel y"
+        if "atensor_rel x y"
+        using that unfolding atensor_rel_def
+      proof-
+        assume \<open>x - y \<in> atensor_kernel\<close>
+        hence \<open>x - z \<in> atensor_kernel \<longleftrightarrow> y - z \<in> atensor_kernel\<close> 
+          for z
+        proof (cases \<open>x - z \<in> atensor_kernel\<close>)
+          show "(x - z \<in> atensor_kernel) = (y - z \<in> atensor_kernel)"
+            if "x - y \<in> atensor_kernel"
+              and "x - z \<in> atensor_kernel"
+          proof-
+            have \<open>complex_vector.subspace atensor_kernel\<close>
+              unfolding atensor_kernel_def
+              using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
+      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
+      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
+      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+              by blast
+            hence \<open>(x - z) - (y - z) \<in> atensor_kernel\<close>
+              using that 
+              by auto 
+            thus ?thesis
+              by (metis (no_types, lifting) atensor_kernel_def complex_vector.span_add_eq diff_add_cancel)
+
+          qed
+          show "(x - z \<in> atensor_kernel) = (y - z \<in> atensor_kernel)"
+            if "x - y \<in> atensor_kernel"
+              and "x - z \<notin> atensor_kernel"
+          proof-
+            have \<open>y - z \<notin> atensor_kernel\<close>
+            proof(rule classical)
+              assume \<open>\<not>(y - z \<notin> atensor_kernel)\<close>
+              hence  \<open>y - z \<in> atensor_kernel\<close>
+                by blast
+              moreover have \<open>x - z = (x - y) + (y - z)\<close>
+                by simp
+              moreover have \<open>complex_vector.subspace atensor_kernel\<close>
+                unfolding atensor_kernel_def
+                using Complex_Vector_Spaces.complex_vector.subspace_span[where S = "{(x, y + z) - (x, y) - (x, z) |x y z. True} \<union>
+      {(y + z, x) - (y, x) - (z, x) |x y z. True} \<union>
+      {(x, c *\<^sub>C y) - c *\<^sub>C (x, y) |x y c. True} \<union>
+      {(c *\<^sub>C x, y) - c *\<^sub>C (x, y) |x y c. True}"]
+                by blast
+              ultimately have \<open>x - z \<in> atensor_kernel\<close>
+                by (smt complex_vector.subspace_add that(1))                
+              thus ?thesis
+                using that(2) by blast 
+            qed
+            thus ?thesis
+              using that(2) by auto 
+          qed
+        qed
+        thus \<open>(\<lambda>p. x - p \<in> atensor_kernel) = (\<lambda>q. y - q \<in> atensor_kernel)\<close>
+          by simp          
+      qed
+      show "atensor_rel x y"
+        if "atensor_rel x = atensor_rel y"
+        using that unfolding atensor_rel_def 
+      proof-
+        assume \<open>(\<lambda>p. x - p \<in> atensor_kernel) = (\<lambda>q. y - q \<in> atensor_kernel)\<close>
+        hence \<open>x - z \<in> atensor_kernel \<longleftrightarrow> y - z \<in> atensor_kernel\<close> 
+          for z
+          by meson
+        hence \<open>x - y \<in> atensor_kernel \<longleftrightarrow> y - y \<in> atensor_kernel\<close> 
+          by blast
+        moreover have \<open>y - y \<in> atensor_kernel\<close>
+        proof-
+          have \<open>0 \<in> atensor_kernel\<close>
+            unfolding atensor_kernel_def
+            by (simp add: complex_vector.span_zero)
+          moreover have \<open>y - y = 0\<close>
+            by simp
+          ultimately show ?thesis by simp
+        qed
+        ultimately show \<open>x - y \<in> atensor_kernel\<close>
+          by blast
+      qed
+    qed
+  qed
+qed
 
 text \<open>Proposition 1 on page 186 in @@Helemskii\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
