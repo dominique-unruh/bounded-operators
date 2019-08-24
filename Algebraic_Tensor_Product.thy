@@ -4,7 +4,6 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-
 *)
 
 
@@ -713,103 +712,24 @@ proof
   qed
 qed
 
-lemma atensor_onto_explicit_nonzero':
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> S f. finite S \<and> (\<forall> z \<in> S.  f z \<noteq> 0) \<and> 
-        x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+lemma basis_subspace_atensor:
+  \<open>\<exists> R. R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> 
+  complex_independent R \<and> span R = UNIV\<close>
 proof-
-  have \<open>\<exists> R f. finite R \<and> x = (\<Sum>z\<in>R. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    using atensor_onto_explicit by auto
-  then obtain R f where \<open>finite R\<close>
-    and \<open>x = (\<Sum>z\<in>R. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by blast
-  define S where \<open>S = {z | z. f z \<noteq> 0} \<inter> R\<close>
-  define L where \<open>L = {z | z. f z = 0} \<inter> R\<close>
-  have \<open>S \<union> L = R\<close>
-  proof-
-    have \<open>{z | z. f z \<noteq> 0} \<union> {z |z. f z = 0} = UNIV\<close>
-      by blast
-    thus ?thesis
-      unfolding S_def L_def
-      by auto      
-  qed
-  moreover have \<open>S \<inter> L = {}\<close>
-  proof-
-    have \<open>{z | z. f z \<noteq> 0} \<inter> {z |z. f z = 0} = {}\<close>
-      by blast
-    thus ?thesis
-      unfolding S_def L_def
-      by auto     
-  qed
-  ultimately have \<open>( \<Sum>z\<in>R. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) ) =
-    ( \<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) ) + ( \<Sum>z\<in>L. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    using \<open>finite R\<close> sum.union_disjoint by auto
-  moreover have \<open>( \<Sum>z\<in>L. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) ) = 0\<close>
-    unfolding L_def
-    by simp 
-  ultimately have \<open>( \<Sum>z\<in>R. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) ) =
-              ( \<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by simp
-  thus ?thesis
-    by (smt Int_Collect Int_def S_def Un_def \<open>S \<union> L = R\<close> \<open>finite R\<close> \<open>x = (\<Sum>z\<in>R. f z *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close> finite_Un inf_commute sum.cong sup_commute)   
-qed
-
-lemma atensor_onto_explicit_nonzero'':
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> S f. finite S \<and> (\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0) \<and> 
-        x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-proof-
-  have \<open>\<exists> S g. finite S \<and> (\<forall> z \<in> S.  g z \<noteq> 0) \<and> 
-        x = (\<Sum>z\<in>S. (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    using atensor_onto_explicit_nonzero' by auto
-  then obtain S g where  \<open>finite S\<close> and \<open>\<forall> z \<in> S.  g z \<noteq> 0\<close> and
-        \<open>x = (\<Sum>z\<in>S. (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by blast
-  define f where \<open>f x = (if x \<in> S then g x else 0)\<close> for x
-  have  \<open>\<forall> z \<in> S.  f z \<noteq> 0\<close>
-    unfolding f_def
-    using \<open>\<forall>z\<in>S. g z \<noteq> 0\<close> by auto 
-  moreover have  \<open>\<forall> z.  f z \<noteq> 0 \<longrightarrow>  z \<in> S\<close>
-    unfolding f_def
-    by simp
-  ultimately have \<open>(\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0)\<close>
-    by blast
-  moreover have \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    unfolding f_def
-    using \<open>x = (\<Sum>z\<in>S. g z *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close> by auto
-  ultimately show ?thesis using \<open>finite S\<close>
-    by blast
-qed
-
-lemma atensor_onto_explicit_nonzero:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> f. finite {z| z. f z \<noteq> 0} \<and> 
-      x = (\<Sum>z\<in>{z| z. f z \<noteq> 0}. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-proof-
-  have \<open>\<exists> S f. finite S \<and> (\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0) \<and> 
-       x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    using atensor_onto_explicit_nonzero''
-    by blast
-  then obtain S f where \<open>finite S\<close> and \<open>\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0\<close>
-    and \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by blast
-  from  \<open>\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0\<close>
-  have \<open>S = {z| z. f z \<noteq> 0}\<close>
-    by blast
-  thus ?thesis
-    using \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by blast
+  have \<open>\<exists> R. R \<subseteq> ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ) 
+   \<and> complex_independent R \<and> span R = span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    by (metis (no_types, lifting) Complex_Vector_Spaces.span_raw_def complex_vector.independent_empty complex_vector.maximal_independent_subset_extend complex_vector.span_mono complex_vector.span_subspace complex_vector.subspace_span empty_subsetI)
+  moreover have \<open>complex_vector.span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )
+ = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
+    using atensor_onto by blast
+  ultimately show ?thesis
+    by (smt Complex_Vector_Spaces.span_raw_def) 
 qed
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close> 
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
-lemma cbilinear_clinear:
-  fixes \<phi> :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector\<close>
-  assumes \<open>cbilinear \<phi>\<close>
-  shows \<open>\<exists> g::'a \<otimes>\<^sub>a 'b \<Rightarrow> 'c. clinear g
-     \<and> ( \<forall> x::'a. \<forall> y::'b. g (x \<otimes>\<^sub>a y) = \<phi> x y )\<close>
-  sorry
+thm Complex_Vector_Spaces.complex_vector.linear_independent_extend
 
 text \<open>Proposition 1 on page 186 in @{cite Helemskii}\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
