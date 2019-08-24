@@ -11,14 +11,16 @@ theory Completion
 
 begin
 
-
+(* TODO: I don't think this definition is necessary. Vanishes X is no shorter/clearer than X \<longlonglongrightarrow> 0 *)
 definition Vanishes:: \<open>(nat \<Rightarrow> 'a::real_normed_vector) \<Rightarrow> bool\<close> where
   \<open>Vanishes x = (x \<longlonglongrightarrow> 0)\<close>
 
+(* TODO: does not need real_normed_vector. Metric space should do (replace X n - Y n by dist (X n - Y n) then). *)
 definition completion_rel :: "(nat \<Rightarrow> 'a::real_normed_vector) \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> bool"
   where "completion_rel = (\<lambda>X Y. Cauchy X \<and> Cauchy Y \<and> Vanishes (\<lambda>n. X n - Y n))"
 
 quotient_type  (overloaded) 'a completion = "nat \<Rightarrow> 'a::real_normed_vector" / partial: completion_rel
+(* TODO: using (rule part_equivpI) would lead to a clearer proof, I think *)
   unfolding part_equivp_def
 proof
   show "\<exists>x. completion_rel (x::nat \<Rightarrow> 'a) x"

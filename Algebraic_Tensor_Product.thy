@@ -412,6 +412,9 @@ end
 lemma atensor_distr_right:
   fixes x y z :: "'a::complex_vector"
   shows  \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
+(* TODO: without unfolding atensor_kernel_def, the proof will be more readable (because atensor_kernel
+can be used instead of writing out its definition twice in the proof *)
+(* TODO: you can write "proof (transfer, unfold ...)" *)
   apply transfer unfolding atensor_rel_def atensor_kernel_def
 proof-
   fix x y z::'a
