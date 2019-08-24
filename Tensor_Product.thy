@@ -498,6 +498,7 @@ lemma free_regular_for_sum:
   apply transfer
   by auto
 
+
 lemma free_regular_for_sum_general_induction:
   fixes x :: \<open>'a free\<close>
   shows \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> Rep_free ( \<Sum> u \<in> S. ((Rep_free x) u) *\<^sub>C (embed_free u) ) t
@@ -540,6 +541,7 @@ proof (induction n)
     thus ?thesis by blast
   qed
 qed
+
 
 lemma free_regular_for_sum_general:
   fixes x :: \<open>'a free\<close>
@@ -602,7 +604,6 @@ proof-
       ultimately show \<open>(Rep_free X) t = (Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))) t\<close>
         by simp      
     qed
-
     show "Rep_free X t = Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C embed_free z) t"
       if "t \<notin> {u |u. Rep_free X u \<noteq> 0}"
     proof-
@@ -637,14 +638,61 @@ proof-
 qed
 
 
-lemma atensor_onto_explicit:
-  fixes x :: \<open>'a::complex_vector \<otimes>\<^sub>a 'b::complex_vector\<close>
-    and X :: \<open>('a \<times> 'b) free\<close>
-  assumes \<open>X \<in> Rep_atensor x\<close>
-    and \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
-  shows \<open>x = (\<Sum>z\<in>{(fst u) \<otimes>\<^sub>a (snd u) | u. (Rep_free X) u \<noteq> 0}. f z *\<^sub>C z)
-   \<and> (\<forall> z. f ((fst u) \<otimes>\<^sub>a (snd u)) = (Rep_free X) z)\<close>
-  sorry
+lemma abs_atensor_embed_free:
+  \<open>abs_atensor (embed_free u) = (fst u) \<otimes>\<^sub>a (snd u)\<close>
+proof-
+  have \<open>complex_vector.subspace atensor_kernel\<close>
+    by (simp add: subspace_atensor_kernel)
+  hence \<open>atensor_rel (Abs_free (\<lambda>x. if x = u then 1 else 0))
+          (embed_free (fst u, snd u))\<close>
+    unfolding atensor_rel_def embed_free_def apply auto
+    by (simp add: \<open>complex_vector.subspace atensor_kernel\<close> complex_vector.subspace_0) 
+  thus ?thesis
+    by (simp add: atensor_op.abs_eq) 
+qed
+
+lemma abs_atensor_sum:
+  \<open>abs_atensor (x + y) = abs_atensor x + abs_atensor y\<close>
+  by (simp add: plus_atensor.abs_eq)
+
+lemma abs_atensor_sum_general:
+  assumes \<open>finite S\<close>
+  shows \<open>(\<Sum> x\<in>S. abs_atensor (f x)) = abs_atensor (\<Sum> x\<in>S. f x)\<close>
+  using abs_atensor_sum
+  by (smt Finite_Cartesian_Product.sum_cong_aux Modules.additive_def additive.sum assms)
+
+lemma free_explicit:
+  fixes  X :: \<open>('a::complex_vector \<times> 'b::complex_vector) free\<close>
+  shows \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+proof-                                        
+  have \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
+    using free_pair_explicit by auto
+  hence  \<open>abs_atensor X = abs_atensor (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
+    by simp
+  also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. abs_atensor (((Rep_free X) z) *\<^sub>C (embed_free z)))\<close>
+    by (metis (mono_tags, lifting) abs_atensor_sum_general sum.cong sum.infinite zero_atensor.abs_eq)
+  also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C (abs_atensor (embed_free z)))\<close>
+    by (metis scaleC_atensor.abs_eq)
+  also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    by (simp add: abs_atensor_embed_free)
+  finally show ?thesis by blast
+qed
+
+lemma atensor_onto_explicit':
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  shows \<open>\<exists> S f. finite S \<and> x = (\<Sum>z\<in>S.  (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+proof-
+  have \<open>\<exists> X. x = abs_atensor X\<close>
+    apply transfer using Rep_atensor apply auto
+    using atensor.abs_eq_iff by blast
+  then obtain X where \<open>x = abs_atensor X\<close> by blast
+  moreover have \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    using free_explicit by blast
+  moreover have \<open>finite {u | u. (Rep_free X) u \<noteq> 0}\<close>
+    using Rep_free by blast
+  ultimately show ?thesis
+    by blast    
+qed
 
 lemma atensor_onto:
   \<open>complex_vector.span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )
@@ -657,26 +705,12 @@ proof
     show "x \<in> complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b)))"
       for x :: "'a \<otimes>\<^sub>a 'b"
     proof-
-      define f :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where \<open>f = undefined\<close>
-      define t :: \<open>('a \<otimes>\<^sub>a 'b) set\<close> where \<open>t = undefined\<close>
-      have \<open>finite t\<close>
-        sorry
-      moreover have \<open>t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)\<close>
-        sorry
-      ultimately have \<open>finite t \<and> t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)\<close>
+      have \<open>\<exists> R g. finite R \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ))\<close>
+        using atensor_onto_explicit' by blast
+      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ))\<close>
         by blast
-      moreover have \<open>x = (\<Sum>z\<in>t. f z *\<^sub>C z)\<close>
-        sorry
-      ultimately have \<open>x \<in> {\<Sum>z\<in>t. f z *\<^sub>C z |t f. finite t \<and> 
-            t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)}\<close>
-        by blast
-      moreover have \<open>complex_vector.span (range (\<lambda>z. fst z \<otimes>\<^sub>a snd z))
-        = {\<Sum>z\<in>t. f z *\<^sub>C z |t f. finite t \<and> 
-            t \<subseteq> range (\<lambda>z. fst z \<otimes>\<^sub>a snd z)}\<close>
-        using complex_vector.span_explicit
-        by blast
-      ultimately show ?thesis
-        by blast
+      thus ?thesis
+        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
     qed
   qed
 qed
