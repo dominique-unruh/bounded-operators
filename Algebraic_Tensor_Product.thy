@@ -726,6 +726,19 @@ proof-
     by (smt Complex_Vector_Spaces.span_raw_def) 
 qed
 
+definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
+\<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
+
+definition entangled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
+\<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
+
+definition separable_set :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set \<Rightarrow> bool\<close> where
+\<open>separable_set S = (\<exists> A B. S = { x \<otimes>\<^sub>a y| x y. x \<in> A \<and> y \<in> B })\<close>
+
+
+(* for separable states *)
+thm Groups_Big.comm_monoid_add_class.sum.cartesian_product     
+
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
@@ -734,7 +747,6 @@ theorem atensor_universal_property:
   assumes \<open>cbilinear h\<close>
   shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
 proof-
-  define H :: \<open>'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z\<close> where \<open>H = undefined\<close>
   have \<open>\<exists> R. R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> 
   complex_independent R \<and> span R = UNIV\<close>
     by (simp add: basis_subspace_atensor)
@@ -755,9 +767,33 @@ proof-
       for x y
     proof-
       have \<open>\<exists> t r. finite t \<and> t \<subseteq> R \<and> x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        using complex_vector.span_explicit[where b = "R"]
+      proof -
+        have "{\<Sum>a\<in>A. f a *\<^sub>C a |A f. finite A \<and> A \<subseteq> R} = UNIV"
+          using Complex_Vector_Spaces.span_raw_def \<open>Complex_Vector_Spaces.span R = UNIV\<close>
+          by (simp add: Complex_Vector_Spaces.span_raw_def complex_vector.span_explicit)
+        then have "\<forall>a. \<exists>A f. a = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> R"
+          by blast
+        then show ?thesis
+          by (metis (no_types))
+      qed
+      then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> R\<close> 
+        and \<open>x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by blast
+      from \<open>x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      have \<open>H (x \<otimes>\<^sub>a y) = H (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by simp
+      also have \<open>\<dots> = ( \<Sum>a\<in>t. H (r a *\<^sub>C a) )\<close>
+        using \<open>clinear H\<close> complex_vector.linear_sum by fastforce
+      also have \<open>\<dots> = ( \<Sum>a\<in>t. r a *\<^sub>C (H a) )\<close>
+        using \<open>clinear H\<close>
+        by (meson complex_vector.linear_scale)
+      also have \<open>\<dots> = ( \<Sum>a\<in>t. r a *\<^sub>C (h (fst (\<psi> a)) (snd (\<psi> a))) )\<close>
+        using \<open>\<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x))\<close> \<open>t \<subseteq> R\<close> subsetD by fastforce
+      also have \<open>\<dots> = h x y\<close>
         sorry
-      show ?thesis sorry
+      finally have \<open>H (x \<otimes>\<^sub>a y) = h x y\<close>
+        by blast
+      thus ?thesis by simp
     qed
     thus ?thesis using \<open>clinear H\<close> by blast
   qed
