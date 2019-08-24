@@ -26,23 +26,23 @@ instantiation free :: (type) complex_vector
 begin
 
 lift_definition zero_free :: "'a free"
-is \<open>\<lambda> _. 0\<close>
+  is \<open>\<lambda> _. 0\<close>
   by auto
 
 lift_definition scaleC_free :: "complex \<Rightarrow> 'a free \<Rightarrow> 'a free"
-is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
+  is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
   by auto
 
 lift_definition scaleR_free :: "real \<Rightarrow> 'a free \<Rightarrow> 'a free"
-is \<open>\<lambda> c::real. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
+  is \<open>\<lambda> c::real. \<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. c *\<^sub>C (f x))\<close>
   by auto
 
 lift_definition uminus_free :: "'a free \<Rightarrow> 'a free"
-is \<open>\<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. - (f x))\<close>
+  is \<open>\<lambda> f::'a\<Rightarrow>complex. (\<lambda> x. - (f x))\<close>
   by auto
 
 lift_definition plus_free :: "'a free \<Rightarrow> 'a free \<Rightarrow> 'a free"
-is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x + g x)\<close>
+  is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x + g x)\<close>
 proof-
   fix f1 f2 :: \<open>'a \<Rightarrow> complex\<close>
   assume \<open>finite {x |x. f1 x \<noteq> 0}\<close> and \<open>finite {x |x. f2 x \<noteq> 0}\<close> 
@@ -58,7 +58,7 @@ proof-
 qed
 
 lift_definition minus_free :: "'a free \<Rightarrow> 'a free \<Rightarrow> 'a free"
-is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x - g x)\<close>
+  is \<open>\<lambda> f g ::'a\<Rightarrow>complex. (\<lambda> x. f x - g x)\<close>
 proof-
   fix f1 f2 :: \<open>'a \<Rightarrow> complex\<close>
   assume \<open>finite {x |x. f1 x \<noteq> 0}\<close> and \<open>finite {x |x. f2 x \<noteq> 0}\<close> 
@@ -75,7 +75,7 @@ qed
 
 
 instance
-  proof
+proof
   show "((*\<^sub>R) r::'a free \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     unfolding scaleR_free_def scaleC_free_def by auto
@@ -104,7 +104,7 @@ instance
     for a :: complex
       and x :: "'a free"
       and y :: "'a free"
-        apply transfer
+    apply transfer
     using scaleC_add_right by blast 
   show "(a + b) *\<^sub>C (x::'a free) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
@@ -124,7 +124,7 @@ qed
 end
 
 lift_definition embed_free:: \<open>'a \<Rightarrow> 'a free\<close>
-is \<open>\<lambda> a::'a. (\<lambda> x. if x = a then 1 else 0)\<close>
+  is \<open>\<lambda> a::'a. (\<lambda> x. if x = a then 1 else 0)\<close>
   by simp
 
 
@@ -147,7 +147,7 @@ definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) 
 text\<open>Tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor 
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
-(* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
+  (* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
   unfolding equivp_def proof
   show "\<forall>y. atensor_rel (x::('a \<times> 'b) free) y = (atensor_rel x = atensor_rel y)"
     for x :: "('a \<times> 'b) free"
@@ -229,9 +229,9 @@ quotient_type (overloaded) ('a, 'b) atensor
 qed
 
 
-  
+
 type_notation
-   atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
+  atensor  ("(_ \<otimes>\<^sub>a/ _)" [21, 20] 20)
 
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. embed_free (x, y)\<close>.
@@ -433,7 +433,7 @@ proof-
             {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
             {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True} \<union>
             {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
-     by (simp add: complex_vector.span_base)
+    by (simp add: complex_vector.span_base)
 qed
 
 lemma atensor_distr_left:
@@ -468,7 +468,7 @@ proof-
   fix x y :: 'a and c :: complex
   have \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
        \<in> {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True}\<close>
-        by (metis (mono_tags, lifting) mem_Collect_eq)
+    by (metis (mono_tags, lifting) mem_Collect_eq)
   hence \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
        \<in> ({embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True} \<union>
             {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True} \<union>
@@ -483,7 +483,7 @@ proof-
             {embed_free (c *\<^sub>C x, y) - c *\<^sub>C embed_free (x, y) |x y c. True})\<close>
     by (simp add: complex_vector.span_base)
 qed
-  
+
 
 lemma atensor_mult_left:
   fixes x y :: "'a::complex_vector" and c :: complex
@@ -491,6 +491,150 @@ lemma atensor_mult_left:
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
+
+lemma free_regular_for_sum:
+  fixes x y :: \<open>'a free\<close>
+  shows \<open>Rep_free (x + y) t = Rep_free x t + Rep_free y t\<close>
+  apply transfer
+  by auto
+
+lemma free_regular_for_sum_general_induction:
+  fixes x :: \<open>'a free\<close>
+  shows \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> Rep_free ( \<Sum> u \<in> S. ((Rep_free x) u) *\<^sub>C (embed_free u) ) t
+  = (\<Sum> u \<in> S. Rep_free ( ((Rep_free x) u) *\<^sub>C (embed_free u) ) t )\<close>
+proof (induction n)
+  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)"
+    by (metis (no_types, lifting) card_0_eq sum_clauses(1) zero_free.rep_eq)
+  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)"
+    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)"
+    for n :: nat
+  proof-
+    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)\<close>
+      for S
+    proof-
+      fix S::\<open>'a set\<close>
+      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
+      hence \<open>\<exists> R r. S = insert r R \<and> r \<notin> R\<close>
+        by (meson card_Suc_eq)
+      then obtain R r where \<open>S = insert r R\<close> and \<open>r \<notin> R\<close>
+        by blast
+      have \<open>finite R\<close>
+        using \<open>finite S\<close> \<open>S = insert r R\<close>
+        by simp
+      moreover have \<open>card R = n\<close>
+        using \<open>card S = Suc n\<close> \<open>S = insert r R\<close>  \<open>r \<notin> R\<close> \<open>finite R\<close> by auto
+      ultimately have \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)\<close>
+        by (simp add: that)
+      hence \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C embed_free u) t + Rep_free (Rep_free x r *\<^sub>C embed_free r) t
+         = (\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C embed_free u) t) + Rep_free (Rep_free x r *\<^sub>C embed_free r) t\<close>
+        by simp
+      moreover have \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C embed_free u) t + Rep_free (Rep_free x r *\<^sub>C embed_free r) t
+          = Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t\<close>
+        by (simp add: \<open>S = insert r R\<close> \<open>finite R\<close> \<open>r \<notin> R\<close> plus_free.rep_eq)        
+      moreover have \<open>(\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C embed_free u) t) + Rep_free (Rep_free x r *\<^sub>C embed_free r) t
+          =  (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)\<close>
+        by (simp add: \<open>S = insert r R\<close> \<open>finite R\<close> \<open>r \<notin> R\<close>)        
+      ultimately show \<open>Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C embed_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C embed_free u) t)\<close>
+        by simp
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+lemma free_regular_for_sum_general:
+  fixes x :: \<open>'a free\<close>
+  assumes \<open>finite S\<close>
+  shows \<open>Rep_free ( \<Sum> u \<in> S. ((Rep_free x) u) *\<^sub>C (embed_free u) ) t
+  = (\<Sum> u \<in> S. Rep_free ( ((Rep_free x) u) *\<^sub>C (embed_free u) ) t )\<close>
+  using free_regular_for_sum_general_induction assms
+  by (simp add: free_regular_for_sum_general_induction) 
+
+lemma free_pair_explicit:
+  fixes X :: \<open>('a::complex_vector \<times> 'b::complex_vector) free\<close>
+  shows \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
+proof-
+  have \<open>(Rep_free X) t = (Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))) t\<close>
+    for t
+  proof (cases \<open>t \<in> {u | u. (Rep_free X) u \<noteq> 0}\<close>)
+    show "Rep_free X t = Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C embed_free z) t"
+      if "t \<in> {u |u. Rep_free X u \<noteq> 0}"
+    proof-
+      have \<open>finite {u | u. (Rep_free X) u \<noteq> 0}\<close>
+        using Rep_free by force
+      hence \<open>(Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))) t
+        = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t ) \<close>
+        using free_regular_for_sum_general[where S = "{u | u. (Rep_free X) u \<noteq> 0}" and x = "X" and t = "t"]
+        by blast
+      moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t ) = Rep_free X t\<close>
+      proof-
+        have \<open>(\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t ) = Rep_free X t\<close>
+        proof-
+          have \<open>(\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t )
+            = Rep_free ( ((Rep_free X) t) *\<^sub>C (embed_free t) ) t \<close>
+            by simp
+          also have \<open>\<dots> = (Rep_free X) t\<close>
+            apply transfer
+            by auto
+          finally show ?thesis by blast
+        qed
+        moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t ) = 0\<close>
+        proof-
+          have \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t} \<Longrightarrow> 
+                Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t  = 0\<close>
+            for z
+          proof-
+            assume \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}\<close>
+            hence \<open>z \<noteq> t\<close>
+              by simp
+            hence \<open>Rep_free (embed_free z) t = 0\<close>
+              apply transfer by auto
+            thus \<open>Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t  = 0\<close>
+              by (simp add: scaleC_free.rep_eq)
+          qed
+          thus ?thesis by simp
+        qed
+        moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t )
+      = (\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t )
+      + (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t )\<close>
+          using \<open>finite {u |u. Rep_free X u \<noteq> 0}\<close> empty_iff sum.remove that by fastforce        
+        ultimately show ?thesis by simp
+      qed
+      ultimately show \<open>(Rep_free X) t = (Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))) t\<close>
+        by simp      
+    qed
+
+    show "Rep_free X t = Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C embed_free z) t"
+      if "t \<notin> {u |u. Rep_free X u \<noteq> 0}"
+    proof-
+      have \<open>Rep_free X t = 0\<close>
+        using that by simp
+      moreover have \<open>Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C embed_free z) t = 0\<close>
+      proof-
+        have \<open>(Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))) t
+        = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t ) \<close>
+          using free_regular_for_sum_general[where S = "{u | u. (Rep_free X) u \<noteq> 0}" and x = "X" and t = "t"]
+          by (metis (no_types, lifting) sum.infinite zero_free.rep_eq)
+        also have \<open>\<dots> = 0\<close>
+        proof-
+          have \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} \<Longrightarrow> Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t = 0\<close>
+            for z
+          proof-
+            assume \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0}\<close>
+            hence \<open>Rep_free (embed_free z) t = 0\<close>
+              by (metis embed_free.rep_eq that)          
+            thus \<open>Rep_free ( ((Rep_free X) z) *\<^sub>C (embed_free z) ) t = 0\<close>
+              by (simp add: scaleC_free.rep_eq) 
+          qed
+          thus ?thesis by simp
+        qed
+        finally show ?thesis by blast
+      qed
+      ultimately show ?thesis by simp
+    qed
+  qed
+  thus \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (embed_free z))\<close>
+    using Rep_free_inject by blast
+qed
 
 
 lemma atensor_onto_explicit:
