@@ -726,10 +726,47 @@ proof-
     by (smt Complex_Vector_Spaces.span_raw_def) 
 qed
 
-definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close> 
+definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
-thm Complex_Vector_Spaces.complex_vector.linear_independent_extend
+theorem atensor_universal_property:
+  fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
+  assumes \<open>cbilinear h\<close>
+  shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+proof-
+  define H :: \<open>'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z\<close> where \<open>H = undefined\<close>
+  have \<open>\<exists> R. R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> 
+  complex_independent R \<and> span R = UNIV\<close>
+    by (simp add: basis_subspace_atensor)
+  then obtain R::\<open>('v \<otimes>\<^sub>a 'w) set\<close> where \<open>R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) )\<close>
+    and \<open>complex_independent R\<close> and \<open>span R = UNIV\<close>
+    by blast
+  define \<psi>::\<open>'v \<otimes>\<^sub>a 'w \<Rightarrow> 'v \<times> 'w\<close>
+    where \<open>\<psi> x = ( SOME z. x = (fst z) \<otimes>\<^sub>a (snd z) )\<close> for x
+  have \<open>\<exists>H. clinear H \<and> ( \<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x)) )\<close>
+    using \<open>complex_independent R\<close> 
+      Complex_Vector_Spaces.complex_vector.linear_independent_extend[where B = "R" and f = "(\<lambda> x. h (fst (\<psi> x)) (snd (\<psi> x)) )"]
+    by simp
+  then obtain H where \<open>clinear H\<close> and \<open>\<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x))\<close>
+    by blast
+  have \<open>clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+  proof-
+    have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+      for x y
+    proof-
+      have \<open>\<exists> t r. finite t \<and> t \<subseteq> R \<and> x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        using complex_vector.span_explicit[where b = "R"]
+        sorry
+      show ?thesis sorry
+    qed
+    thus ?thesis using \<open>clinear H\<close> by blast
+  qed
+  moreover have \<open>HH = H\<close>
+    if "clinear HH" and "\<forall>x y. h x y = HH (x \<otimes>\<^sub>a y)"
+    for HH :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
+    using that sorry
+  ultimately show ?thesis by blast
+qed
 
 text \<open>Proposition 1 on page 186 in @{cite Helemskii}\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
