@@ -25,11 +25,8 @@ typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
   by (rule Set.UNIV_witness)
 
 (* "h" is for Hilbert *)
-type_notation (xsymbols)
+type_notation 
   htensor  ("(_ \<otimes>\<^sub>h/ _)" [21, 20] 20)
-type_notation (HTML output)
-  htensor  ("(_ \<otimes>\<^sub>h\<^sub>/ _)" [21, 20] 20)
-
 
 instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
 begin

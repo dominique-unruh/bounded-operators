@@ -4,6 +4,7 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
+
 *)
 
 
@@ -712,9 +713,10 @@ proof
   qed
 qed
 
-lemma atensor_onto_explicit_nonzero:
+lemma atensor_onto_explicit_nonzero':
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> S f. finite S \<and> (\<forall> z \<in> S.  f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+  shows \<open>\<exists> S f. finite S \<and> (\<forall> z \<in> S.  f z \<noteq> 0) \<and> 
+        x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
 proof-
   have \<open>\<exists> R f. finite R \<and> x = (\<Sum>z\<in>R. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
     using atensor_onto_explicit by auto
@@ -750,6 +752,53 @@ proof-
     by simp
   thus ?thesis
     by (smt Int_Collect Int_def S_def Un_def \<open>S \<union> L = R\<close> \<open>finite R\<close> \<open>x = (\<Sum>z\<in>R. f z *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close> finite_Un inf_commute sum.cong sup_commute)   
+qed
+
+lemma atensor_onto_explicit_nonzero'':
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  shows \<open>\<exists> S f. finite S \<and> (\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0) \<and> 
+        x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+proof-
+  have \<open>\<exists> S g. finite S \<and> (\<forall> z \<in> S.  g z \<noteq> 0) \<and> 
+        x = (\<Sum>z\<in>S. (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    using atensor_onto_explicit_nonzero' by auto
+  then obtain S g where  \<open>finite S\<close> and \<open>\<forall> z \<in> S.  g z \<noteq> 0\<close> and
+        \<open>x = (\<Sum>z\<in>S. (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    by blast
+  define f where \<open>f x = (if x \<in> S then g x else 0)\<close> for x
+  have  \<open>\<forall> z \<in> S.  f z \<noteq> 0\<close>
+    unfolding f_def
+    using \<open>\<forall>z\<in>S. g z \<noteq> 0\<close> by auto 
+  moreover have  \<open>\<forall> z.  f z \<noteq> 0 \<longrightarrow>  z \<in> S\<close>
+    unfolding f_def
+    by simp
+  ultimately have \<open>(\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0)\<close>
+    by blast
+  moreover have \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    unfolding f_def
+    using \<open>x = (\<Sum>z\<in>S. g z *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close> by auto
+  ultimately show ?thesis using \<open>finite S\<close>
+    by blast
+qed
+
+lemma atensor_onto_explicit_nonzero:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  shows \<open>\<exists> f. finite {z| z. f z \<noteq> 0} \<and> 
+      x = (\<Sum>z\<in>{z| z. f z \<noteq> 0}. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+proof-
+  have \<open>\<exists> S f. finite S \<and> (\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0) \<and> 
+       x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    using atensor_onto_explicit_nonzero''
+    by blast
+  then obtain S f where \<open>finite S\<close> and \<open>\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0\<close>
+    and \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    by blast
+  from  \<open>\<forall> z. z \<in> S \<longleftrightarrow>  f z \<noteq> 0\<close>
+  have \<open>S = {z| z. f z \<noteq> 0}\<close>
+    by blast
+  thus ?thesis
+    using \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+    by blast
 qed
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close> 
