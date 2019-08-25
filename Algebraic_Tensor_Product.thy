@@ -120,10 +120,17 @@ proof
 qed
 end
 
+definition clinear_iso::\<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> bool\<close> where
+  \<open>clinear_iso f = ( clinear f \<and> (\<exists> g::'b\<Rightarrow>'a. clinear g \<and> f \<circ> g = id \<and> g \<circ> f = id )  ) \<close>
+
+text\<open>A type TYPE('a) is a free vector space over the type TYPE('b) if and only if ...\<close>
+definition is_free_over::\<open>('a::complex_vector) itself \<Rightarrow> 'b itself \<Rightarrow> bool\<close> where
+  \<open>is_free_over (TYPE('a)) (TYPE('b)) = (\<exists> f :: 'a \<Rightarrow> 'b free. clinear_iso f)\<close>
+
+
 lift_definition embed_free:: \<open>'a \<Rightarrow> 'a free\<close>
   is \<open>\<lambda> a::'a. (\<lambda> x. if x = a then 1 else 0)\<close>
   by simp
-
 
 definition atensor_kernel::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
   \<open>atensor_kernel = complex_vector.span ( 
@@ -224,7 +231,6 @@ quotient_type (overloaded) ('a, 'b) atensor
     qed
   qed
 qed
-
 
 
 type_notation
@@ -410,14 +416,14 @@ end
 
 
 lemma atensor_distr_right:
-  fixes x y z :: "'a::complex_vector"
+  fixes x :: "'a::complex_vector" and y z :: "'b::complex_vector"
   shows  \<open>x \<otimes>\<^sub>a (y+z) =  x \<otimes>\<^sub>a y  +  x \<otimes>\<^sub>a z\<close>
-(* TODO: without unfolding atensor_kernel_def, the proof will be more readable (because atensor_kernel
+    (* TODO: without unfolding atensor_kernel_def, the proof will be more readable (because atensor_kernel
 can be used instead of writing out its definition twice in the proof *)
-(* TODO: you can write "proof (transfer, unfold ...)" *)
+    (* TODO: you can write "proof (transfer, unfold ...)" *)
   apply transfer unfolding atensor_rel_def atensor_kernel_def
 proof-
-  fix x y z::'a
+  fix x::'a and y z::'b
   have \<open>embed_free (x, y + z) - (embed_free (x, y) + embed_free (x, z))
   \<in> {embed_free (x, y + z) - embed_free (x, y) - embed_free (x, z) |x y z. True}\<close>
     by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)    
@@ -436,12 +442,19 @@ proof-
     by (simp add: complex_vector.span_base)
 qed
 
+lemma atensor_distr_right_sum:
+  fixes x :: "'a::complex_vector" and y :: "'c \<Rightarrow> 'b::complex_vector"
+    and I :: \<open>'c set\<close>
+  shows  \<open>x \<otimes>\<^sub>a (\<Sum> i \<in> I. y i) =  (\<Sum> i \<in> I. x \<otimes>\<^sub>a (y i))\<close>
+  using atensor_distr_right
+  by (metis Modules.additive_def additive.sum) 
+
 lemma atensor_distr_left:
-  fixes x y z :: "'a::complex_vector"
+  fixes y z :: "'a::complex_vector" and x :: "'b::complex_vector"
   shows  \<open>(y+z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  +  z \<otimes>\<^sub>a x\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
 proof-
-  fix x y z::'a
+  fix y z::'a and x::'b
   have \<open>embed_free (y + z, x) - (embed_free (y, x) + embed_free (z, x))
        \<in> {embed_free (y + z, x) - embed_free (y, x) - embed_free (z, x) |x y z. True}\<close>
     by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)
@@ -460,12 +473,26 @@ proof-
     by (simp add: complex_vector.span_base)
 qed
 
+lemma atensor_distr_left_sum:
+  fixes  x :: "'c \<Rightarrow> 'a::complex_vector" and y :: "'b::complex_vector"
+    and I :: \<open>'c set\<close>
+  shows  \<open>(\<Sum> i \<in> I. x i) \<otimes>\<^sub>a y =  (\<Sum> i \<in> I. (x i) \<otimes>\<^sub>a y)\<close>
+proof-
+  define f::\<open>'a \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where \<open>f t = t \<otimes>\<^sub>a y\<close> for t
+  have \<open>Modules.additive f\<close>
+    unfolding f_def
+    using atensor_distr_left
+    by (simp add: atensor_distr_left Modules.additive_def)    
+  show ?thesis 
+    using additive.sum \<open>Modules.additive f\<close> \<open>f \<equiv> \<lambda>t. t \<otimes>\<^sub>a y\<close> by auto
+qed
+
 lemma atensor_mult_right:
-  fixes x y :: "'a::complex_vector" and c :: complex
+  fixes x :: "'a::complex_vector" and y :: "'b::complex_vector" and c :: complex
   shows \<open>x \<otimes>\<^sub>a (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
 proof-
-  fix x y :: 'a and c :: complex
+  fix x::'a and y::'b and c::complex
   have \<open>embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y)
        \<in> {embed_free (x, c *\<^sub>C y) - c *\<^sub>C embed_free (x, y) |x y c. True}\<close>
     by (metis (mono_tags, lifting) mem_Collect_eq)
@@ -486,7 +513,7 @@ qed
 
 
 lemma atensor_mult_left:
-  fixes x y :: "'a::complex_vector" and c :: complex
+  fixes x :: "'a::complex_vector" and y :: "'b::complex_vector" and c :: complex
   shows \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
   apply transfer unfolding atensor_rel_def atensor_kernel_def
   apply auto
@@ -715,97 +742,150 @@ proof
   qed
 qed
 
-lemma basis_subspace_atensor:
-  \<open>\<exists> R. R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> 
-  complex_independent R \<and> span R = UNIV\<close>
+lemma tensor_product_cartesian_product:
+  assumes \<open>finite t\<close> and \<open>finite t'\<close>
+  shows \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j)
+ = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>a (snd z)))\<close>
 proof-
-  have \<open>\<exists> R. R \<subseteq> ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ) 
-   \<and> complex_independent R \<and> span R = span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by (metis (no_types, lifting) Complex_Vector_Spaces.span_raw_def complex_vector.independent_empty complex_vector.maximal_independent_subset_extend complex_vector.span_mono complex_vector.span_subspace complex_vector.subspace_span empty_subsetI)
-  moreover have \<open>complex_vector.span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )
- = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
-    using atensor_onto by blast
-  ultimately show ?thesis
-    by (smt Complex_Vector_Spaces.span_raw_def) 
+  have \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j) = (\<Sum>i\<in>t. (r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j) )\<close>
+    using atensor_distr_left_sum by force    
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. (r i *\<^sub>C i) \<otimes>\<^sub>a (r' j *\<^sub>C j)) )\<close>
+    by (metis (mono_tags, lifting) Finite_Cartesian_Product.sum_cong_aux atensor_distr_right_sum)    
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. r i *\<^sub>C ( i \<otimes>\<^sub>a (r' j *\<^sub>C j) ) ) )\<close>
+    by (meson atensor_mult_left sum.cong)
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. r i *\<^sub>C ( r' j *\<^sub>C (i \<otimes>\<^sub>a j) ) ) )\<close>
+    by (metis (no_types, lifting) atensor_mult_right sum.cong)
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. (r i * r' j) *\<^sub>C (i \<otimes>\<^sub>a j) ) )\<close>
+    by auto
+  also have \<open>\<dots> = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>a (snd z)))\<close>
+    using Groups_Big.comm_monoid_add_class.sum.cartesian_product [where A = "t" 
+        and B = "t'" and g = "\<lambda> i j. (r i * r' j) *\<^sub>C (i \<otimes>\<^sub>a j)"]
+    by (metis (no_types, lifting) case_prod_beta' sum.cong)
+  finally show ?thesis by blast
 qed
 
+lemma span_tensor_span:
+  fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
+  assumes \<open>u \<in> complex_vector.span A\<close> and \<open>v \<in> complex_vector.span B\<close>
+  shows \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B))\<close>
+proof-
+  have \<open>\<exists> t r. finite t \<and> t \<subseteq> A \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close>
+  proof -
+    have "\<forall>A. {a. \<exists>C f. (a::'a) = (\<Sum>a\<in>C. f a *\<^sub>C a) \<and> finite C \<and> C \<subseteq> A} = Complex_Vector_Spaces.span A"
+      by (simp add: Complex_Vector_Spaces.span_raw_def complex_vector.span_explicit)
+    then have "\<forall>A a. (\<exists>C f. (a::'a) = (\<Sum>a\<in>C. f a *\<^sub>C a) \<and> finite C \<and> C \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
+      by blast
+    then show ?thesis
+      by (metis (no_types) Complex_Vector_Spaces.span_raw_def assms(1))
+  qed
+  then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> A\<close> and \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close>
+    by blast
+  have \<open>\<exists> t' r'. finite t' \<and> t' \<subseteq> B \<and> (\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close>
+    using  \<open>v \<in> complex_vector.span B\<close> complex_vector.span_explicit
+  proof -
+    have "\<exists>C f. v = (\<Sum>b\<in>C. f b *\<^sub>C b) \<and> finite C \<and> C \<subseteq> B"
+      using assms(2) complex_vector.span_explicit by blast
+    then show ?thesis
+      by (metis (full_types, lifting))
+  qed
+  then obtain t' r' where \<open>finite t'\<close> and \<open>t' \<subseteq> B\<close> and \<open>(\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close>
+    by blast
+  have \<open>u \<otimes>\<^sub>a v = (\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j)\<close>
+    by (simp add: \<open>(\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close> \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close>)
+  also have \<open>\<dots> = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>a (snd z)))\<close>
+    using tensor_product_cartesian_product \<open>finite t\<close> \<open>finite t'\<close> by blast
+  finally have \<open>u \<otimes>\<^sub>a v = (\<Sum>k\<in>t\<times>t'. (\<lambda> z. r (fst z) * r' (snd z)) k *\<^sub>C ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) k) )\<close>
+    by blast
+  moreover have \<open>k \<in> t \<times> t' \<Longrightarrow> ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) k) \<in> complex_vector.span ( (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) )\<close>
+    for k
+  proof-
+    assume \<open>k \<in> t \<times> t'\<close>
+    hence \<open>((\<lambda>z. fst z \<otimes>\<^sub>a snd z) k) \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (t \<times> t')\<close>
+      by simp
+    moreover have \<open>t \<times> t' \<subseteq> A \<times> B\<close>
+      using \<open>t \<subseteq> A\<close> \<open>t' \<subseteq> B\<close>
+      by auto
+    ultimately have \<open>((\<lambda>z. fst z \<otimes>\<^sub>a snd z) k) \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)\<close>
+      by auto
+    thus \<open>((\<lambda>z. fst z \<otimes>\<^sub>a snd z) k) \<in> complex_vector.span ( (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) )\<close>
+      by (simp add: complex_vector.span_base)      
+  qed
+  ultimately show ?thesis 
+    by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum  image_subset_iff)
+qed
+
+lemma basis_atensor_complex_generator:
+  fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_vector.span A = UNIV\<close> and  \<open>complex_vector.span B = UNIV\<close>
+  shows \<open>complex_vector.span ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) ) = UNIV\<close>
+proof-
+  have \<open>x \<in> complex_vector.span ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) )\<close>
+    for x
+  proof-
+    have \<open>x \<in> complex_vector.span (range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+      by (simp add: atensor_onto)
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ) \<and>
+         x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+    proof -
+      have "\<forall>A a. (\<exists>B f. (a::'a \<otimes>\<^sub>a 'b) = (\<Sum>a\<in>B. f a *\<^sub>C a) \<and> finite B \<and> B \<subseteq> A) \<or> a \<notin> complex_vector.span A"
+        using complex_vector.span_explicit by blast
+      thus ?thesis
+        by (metis (no_types) atensor_onto iso_tuple_UNIV_I)
+    qed 
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )\<close> and
+      \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by blast
+    have \<open>t \<subseteq> complex_vector.span ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) )\<close>
+    proof
+      show "x \<in> complex_vector.span ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B))"
+        if "x \<in> t"
+        for x :: "'a \<otimes>\<^sub>a 'b"
+      proof-
+        from \<open>t \<subseteq> (range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+        have \<open>\<exists> u v. x = u \<otimes>\<^sub>a v\<close>
+          using that by blast
+        then obtain u v where \<open>x = u \<otimes>\<^sub>a v\<close> by blast
+        have \<open>u \<in> complex_vector.span A\<close>
+          by (simp add: assms(1))
+        moreover have \<open>v \<in> complex_vector.span B\<close>
+          by (simp add: assms(2))
+        ultimately have \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B))\<close>
+          using span_tensor_span by blast
+        thus ?thesis
+          using \<open>x = u \<otimes>\<^sub>a v\<close>
+          by simp
+      qed
+    qed
+    thus ?thesis
+      by (simp add: \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> complex_vector.span_scale complex_vector.span_sum subset_iff) 
+  qed
+  thus ?thesis
+    by blast 
+qed
+
+
+lemma basis_atensor_complex_independent:
+  fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
+  shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) )\<close>
+  sorry
+
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
-\<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
+  \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
 
 definition entangled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
-\<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
+  \<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
 
-definition separable_set :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set \<Rightarrow> bool\<close> where
-\<open>separable_set S = (\<exists> A B. S = { x \<otimes>\<^sub>a y| x y. x \<in> A \<and> y \<in> B })\<close>
-
-
-(* for separable states *)
-thm Groups_Big.comm_monoid_add_class.sum.cartesian_product     
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
+text\<open>See chapter XVI in @{cite lang2004algebra}\<close>
 theorem atensor_universal_property:
   fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
   shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
-proof-
-  have \<open>\<exists> R. R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> 
-  complex_independent R \<and> span R = UNIV\<close>
-    by (simp add: basis_subspace_atensor)
-  then obtain R::\<open>('v \<otimes>\<^sub>a 'w) set\<close> where \<open>R \<subseteq> range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) )\<close>
-    and \<open>complex_independent R\<close> and \<open>span R = UNIV\<close>
-    by blast
-  define \<psi>::\<open>'v \<otimes>\<^sub>a 'w \<Rightarrow> 'v \<times> 'w\<close>
-    where \<open>\<psi> x = ( SOME z. x = (fst z) \<otimes>\<^sub>a (snd z) )\<close> for x
-  have \<open>\<exists>H. clinear H \<and> ( \<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x)) )\<close>
-    using \<open>complex_independent R\<close> 
-      Complex_Vector_Spaces.complex_vector.linear_independent_extend[where B = "R" and f = "(\<lambda> x. h (fst (\<psi> x)) (snd (\<psi> x)) )"]
-    by simp
-  then obtain H where \<open>clinear H\<close> and \<open>\<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x))\<close>
-    by blast
-  have \<open>clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
-  proof-
-    have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
-      for x y
-    proof-
-      have \<open>\<exists> t r. finite t \<and> t \<subseteq> R \<and> x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      proof -
-        have "{\<Sum>a\<in>A. f a *\<^sub>C a |A f. finite A \<and> A \<subseteq> R} = UNIV"
-          using Complex_Vector_Spaces.span_raw_def \<open>Complex_Vector_Spaces.span R = UNIV\<close>
-          by (simp add: Complex_Vector_Spaces.span_raw_def complex_vector.span_explicit)
-        then have "\<forall>a. \<exists>A f. a = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> R"
-          by blast
-        then show ?thesis
-          by (metis (no_types))
-      qed
-      then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> R\<close> 
-        and \<open>x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        by blast
-      from \<open>x \<otimes>\<^sub>a y = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      have \<open>H (x \<otimes>\<^sub>a y) = H (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        by simp
-      also have \<open>\<dots> = ( \<Sum>a\<in>t. H (r a *\<^sub>C a) )\<close>
-        using \<open>clinear H\<close> complex_vector.linear_sum by fastforce
-      also have \<open>\<dots> = ( \<Sum>a\<in>t. r a *\<^sub>C (H a) )\<close>
-        using \<open>clinear H\<close>
-        by (meson complex_vector.linear_scale)
-      also have \<open>\<dots> = ( \<Sum>a\<in>t. r a *\<^sub>C (h (fst (\<psi> a)) (snd (\<psi> a))) )\<close>
-        using \<open>\<forall>x\<in>R. H x = h (fst (\<psi> x)) (snd (\<psi> x))\<close> \<open>t \<subseteq> R\<close> subsetD by fastforce
-      also have \<open>\<dots> = h x y\<close>
-        sorry
-      finally have \<open>H (x \<otimes>\<^sub>a y) = h x y\<close>
-        by blast
-      thus ?thesis by simp
-    qed
-    thus ?thesis using \<open>clinear H\<close> by blast
-  qed
-  moreover have \<open>HH = H\<close>
-    if "clinear HH" and "\<forall>x y. h x y = HH (x \<otimes>\<^sub>a y)"
-    for HH :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
-    using that sorry
-  ultimately show ?thesis by blast
-qed
+  sorry
 
 text \<open>Proposition 1 on page 186 in @{cite Helemskii}\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
