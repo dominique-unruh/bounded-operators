@@ -863,12 +863,25 @@ proof-
     by blast 
 qed
 
-
 lemma basis_atensor_complex_independent:
-  fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
+  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
   shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) )\<close>
-  sorry
+proof-
+  have \<open>x \<in> A \<Longrightarrow> y \<in> B \<Longrightarrow>
+ x \<otimes>\<^sub>a y \<in> complex_vector.span ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) - {x \<otimes>\<^sub>a y}) 
+  \<Longrightarrow> False\<close>
+    for x y
+  proof-
+    assume \<open>x \<in> A\<close> and \<open>y \<in> B\<close> and
+      \<open>x \<otimes>\<^sub>a y \<in> complex_vector.span 
+          ((\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) - {x \<otimes>\<^sub>a y})\<close>
+
+    show ?thesis sorry
+  qed
+  thus ?thesis unfolding complex_vector.dependent_def
+    by auto
+qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
@@ -948,7 +961,7 @@ proof
   show "(\<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle> = 0) = (x = 0)"
     for x :: "'a \<otimes>\<^sub>a 'b"
     sorry
-  show "norm (x::'a \<otimes>\<^sub>a 'b) = sqrt (cmod \<langle>x, x\<rangle>)"
+  show "norm (x::'a \<otimes>\<^sub>a 'b) = sqrt (norm \<langle>x, x\<rangle>)"
     for x :: "'a \<otimes>\<^sub>a 'b"
     unfolding norm_atensor_def by blast
 qed
