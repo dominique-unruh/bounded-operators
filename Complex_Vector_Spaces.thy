@@ -877,9 +877,11 @@ begin
 sublocale bounded_linear
   apply standard by (fact bounded) 
 
+(* TODO remove *)
 lemma bounded_linear: "bounded_linear f"
   by (fact bounded_linear)
 
+(* TODO remove *)
 lemma csemilinear: "csemilinear f"
   by (fact csemilinear_axioms)
 
@@ -1022,6 +1024,7 @@ sublocale bounded_bilinear
    apply (fact scaleC_right)
   by (fact bounded)
 
+(* Should be bounded_cbilinear *)
 lemma bounded_bilinear: "bounded_bilinear prod"
   by (fact bounded_bilinear_axioms)
 
@@ -1287,7 +1290,7 @@ locale bounded_sesquilinear =
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
-sublocale bounded_bilinear
+sublocale bounded_cbilinear
   apply standard
   unfolding scaleR_scaleC
       apply (fact add_left)
