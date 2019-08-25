@@ -129,22 +129,22 @@ definition clinear_iso::\<open>('a::complex_vector \<Rightarrow> 'b::complex_vec
   \<open>clinear_iso f = ( clinear f \<and> (\<exists> g::'b\<Rightarrow>'a. clinear g \<and> f \<circ> g = id \<and> g \<circ> f = id )  ) \<close>
 
 lemma clinear_iso_bij_I:
- \<open>clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear_iso f\<close>
+  \<open>clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear_iso f\<close>
   unfolding clinear_iso_def
   by (meson bij_clinear_imp_inv_clinear bij_is_inj bij_is_surj inv_o_cancel surj_iff)
 
 lemma clinear_iso_bij_D1:
- \<open>clinear_iso f \<Longrightarrow> bij f\<close>
+  \<open>clinear_iso f \<Longrightarrow> bij f\<close>
   unfolding clinear_iso_def
   using o_bij by auto  
 
 lemma clinear_iso_bij_D2:
- \<open>clinear_iso f \<Longrightarrow> clinear f\<close>
+  \<open>clinear_iso f \<Longrightarrow> clinear f\<close>
   unfolding clinear_iso_def by blast
 
 lemma clinear_iso_bij_iff:
- \<open>clinear_iso f \<longleftrightarrow> clinear f \<and> bij f\<close>
-  proof
+  \<open>clinear_iso f \<longleftrightarrow> clinear f \<and> bij f\<close>
+proof
   show "clinear f \<and> bij f"
     if "clinear_iso f"
     using that
@@ -308,22 +308,22 @@ qed
 
 
 lemma free_span:
-\<open>complex_vector.span (range inclusion_free) = UNIV\<close>
-  proof
+  \<open>complex_vector.span (range inclusion_free) = UNIV\<close>
+proof
   show "complex_vector.span (range inclusion_free) \<subseteq> (UNIV::'a free set)"
     by simp    
   show "(UNIV::'a free set) \<subseteq> complex_vector.span (range inclusion_free)"
-    proof
-  show "(x::'a free) \<in> complex_vector.span (range inclusion_free)"
-    if "(x::'a free) \<in> UNIV"
-    for x :: "'a free"
-  proof-
-    have \<open>x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C (inclusion_free z))\<close>
-      using free_explicit by blast
-    thus ?thesis
-      by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset rangeI subset_iff) 
+  proof
+    show "(x::'a free) \<in> complex_vector.span (range inclusion_free)"
+      if "(x::'a free) \<in> UNIV"
+      for x :: "'a free"
+    proof-
+      have \<open>x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C (inclusion_free z))\<close>
+        using free_explicit by blast
+      thus ?thesis
+        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset rangeI subset_iff) 
+    qed
   qed
-qed
 qed
 
 theorem free_universal_property:
@@ -335,48 +335,71 @@ proof
   define F::\<open>'a free \<Rightarrow> 'b\<close> where \<open>F x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C ( f z ) )\<close>
     for x
   show "clinear_iso F \<and> f = F \<circ> inclusion_free"
-    proof
-  show \<open>f = F \<circ> inclusion_free\<close>
-  proof-
-    have \<open>f t = (F \<circ> inclusion_free) t\<close>
-      for t
+  proof
+    show \<open>f = F \<circ> inclusion_free\<close>
     proof-
-      have \<open>(F \<circ> inclusion_free) t = F (inclusion_free t)\<close>
-        by simp
-      also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
-        using \<open>F \<equiv> \<lambda>x. \<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z\<close> by blast
-      also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
+      have \<open>f t = (F \<circ> inclusion_free) t\<close>
+        for t
       proof-
-        have \<open>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0} = {t}\<close>
-          by (smt Collect_cong inclusion_free.rep_eq singleton_conv zero_neq_one)          
+        have \<open>(F \<circ> inclusion_free) t = F (inclusion_free t)\<close>
+          by simp
+        also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
+          using \<open>F \<equiv> \<lambda>x. \<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z\<close> by blast
+        also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
+        proof-
+          have \<open>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0} = {t}\<close>
+            by (smt Collect_cong inclusion_free.rep_eq singleton_conv zero_neq_one)          
+          thus ?thesis by simp
+        qed
+        also have  \<open>\<dots> = ((Rep_free (inclusion_free t)) t) *\<^sub>C ( f t )\<close>
+          by simp
+        also have  \<open>\<dots> =  f t \<close>
+        proof-
+          have \<open>(Rep_free (inclusion_free t)) t = 1\<close>
+            by (simp add: inclusion_free.rep_eq)
+          thus ?thesis by simp
+        qed
+        finally have \<open>(F \<circ> inclusion_free) t = f t\<close>
+          by blast
         thus ?thesis by simp
       qed
-      also have  \<open>\<dots> = ((Rep_free (inclusion_free t)) t) *\<^sub>C ( f t )\<close>
-        by simp
-      also have  \<open>\<dots> =  f t \<close>
-      proof-
-        have \<open>(Rep_free (inclusion_free t)) t = 1\<close>
-          by (simp add: inclusion_free.rep_eq)
-        thus ?thesis by simp
-      qed
-      finally have \<open>(F \<circ> inclusion_free) t = f t\<close>
-        by blast
-      thus ?thesis by simp
+      thus ?thesis by blast
     qed
-    thus ?thesis by blast
-  qed
-  show \<open>clinear_iso F\<close>
+    show \<open>clinear_iso F\<close>
     proof (rule clinear_iso_bij_I)
-  show "clinear F"
-  proof-
-    
-    show ?thesis sorry
-  qed
-  show "bij F"
-    sorry
-qed
+      show "clinear F"
+      proof-
+        have \<open>clinear (\<lambda> x. (Rep_free x) z)\<close>
+          for z::'a
+          unfolding clinear_def
+          by (meson clinearI clinear_def free_regular_for_sum scaleC_free.rep_eq)
+        have \<open>clinear (\<lambda> x. ((Rep_free x) z) *\<^sub>C ( f z ))\<close>
+          for z
+          unfolding clinear_def
+        proof
+          show "Rep_free (b1 + b2) z *\<^sub>C f z = Rep_free b1 z *\<^sub>C f z + Rep_free b2 z *\<^sub>C f z"
+            for b1 :: "'a free"
+              and b2 :: "'a free"
+            unfolding clinear_def
+            by (simp add: free_regular_for_sum scaleC_left.add)            
+          show "Rep_free (r *\<^sub>C b) z *\<^sub>C f z = r *\<^sub>C Rep_free b z *\<^sub>C f z"
+            for r :: complex
+              and b :: "'a free"
+            using \<open>clinear (\<lambda> x. ((Rep_free x) z))\<close>
+            unfolding clinear_def
+            by (simp add: scaleC_free.rep_eq) 
+        qed
+        moreover have \<open>finite {u |u. Rep_free x u \<noteq> 0}\<close>
+          for x::\<open>'a free\<close>
+          sorry
+        ultimately show ?thesis unfolding F_def
+          sorry          
+      qed                   
+      show "bij F"
+        sorry
+    qed
 
-qed
+  qed
   show "(G::'a free \<Rightarrow> 'b) = F"
     if "clinear_iso G \<and> f = G \<circ> inclusion_free"
     for G :: "'a free \<Rightarrow> 'b"
