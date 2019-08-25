@@ -120,6 +120,8 @@ proof
 qed
 end
 
+(* TODO: Can be defined more compactly as "clinear f \<and> bij f". (And then possibly does not need
+   an own definition?) *)
 definition clinear_iso::\<open>('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>clinear_iso f = ( clinear f \<and> (\<exists> g::'b\<Rightarrow>'a. clinear g \<and> f \<circ> g = id \<and> g \<circ> f = id )  ) \<close>
 
@@ -149,7 +151,9 @@ definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) 
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
 text\<open>Tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
-quotient_type (overloaded) ('a, 'b) atensor 
+(* TODO: define a map function to get rid of the following warning, if such a function
+   is possible (using commands definition free_map :: "('a\<Rightarrow>'b) \<Rightarrow> ('a free\<Rightarrow>'b free)", functor free_map) *)
+quotient_type (overloaded) ('a, 'b) atensor
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
   (* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
   unfolding equivp_def proof
@@ -886,9 +890,10 @@ qed
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
 
+(* TODO: I don't think one needs a definition for this, it's just \<not> separable (or, if it's *really* needed,
+it could be an abbreviation *)
 definition entangled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
-
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
