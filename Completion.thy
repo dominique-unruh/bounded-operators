@@ -1713,14 +1713,14 @@ proof
 qed
 end
 
-lift_definition embed_completion :: \<open>'a::real_normed_vector \<Rightarrow> 'a completion\<close>
+lift_definition inclusion_completion :: \<open>'a::real_normed_vector \<Rightarrow> 'a completion\<close>
  is "\<lambda> x. (\<lambda> n. x)"
   unfolding completion_rel_def
   apply auto unfolding Cauchy_def apply auto
   unfolding Vanishes_def by auto
 
-lemma embed_completion_inj:
-  assumes \<open>embed_completion x = embed_completion y\<close>
+lemma inclusion_completion_inj:
+  assumes \<open>inclusion_completion x = inclusion_completion y\<close>
   shows \<open>x = y\<close>
   using assms apply transfer unfolding completion_rel_def
   apply auto 
@@ -1746,18 +1746,18 @@ proof-
 qed
 
 definition proj_completion :: \<open>('a::real_normed_vector) completion \<Rightarrow> 'a option\<close>
-  where "proj_completion f = (if (\<exists> x. f = embed_completion x) 
-    then Some (SOME x. f = embed_completion x) 
+  where "proj_completion f = (if (\<exists> x. f = inclusion_completion x) 
+    then Some (SOME x. f = inclusion_completion x) 
     else None )"
 
-lemma proj_embed_completion:
-  \<open>proj_completion (embed_completion x) = Some x\<close>
+lemma proj_inclusion_completion:
+  \<open>proj_completion (inclusion_completion x) = Some x\<close>
   unfolding proj_completion_def
-  apply auto using embed_completion_inj
+  apply auto using inclusion_completion_inj
   by blast 
 
-lemma proj_embed_completion_none:
-  \<open>x \<notin> range embed_completion \<Longrightarrow> proj_completion x = None\<close>
+lemma proj_inclusion_completion_none:
+  \<open>x \<notin> range inclusion_completion \<Longrightarrow> proj_completion x = None\<close>
   unfolding proj_completion_def
   by auto
 
