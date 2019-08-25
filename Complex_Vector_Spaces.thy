@@ -1010,8 +1010,8 @@ locale bounded_cbilinear =
     (infixl "**" 70)
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
-    and scaleC_left: "prod (r *\<^sub>C a) b = scaleC r (prod a b)"
-    and scaleC_right: "prod a (r *\<^sub>C b) = scaleC r (prod a b)"
+    and scaleC_left: "prod (r *\<^sub>C a) b = r *\<^sub>C (prod a b)"
+    and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
@@ -1290,8 +1290,10 @@ locale bounded_sesquilinear =
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
+(* TODO: a sesquilinear form is not bilinear
 sublocale bounded_cbilinear
   apply standard
+  using [[show_sorts]]
   unfolding scaleR_scaleC
       apply (fact add_left)
      apply (fact add_right)
@@ -1301,6 +1303,7 @@ sublocale bounded_cbilinear
 
 lemma bounded_bilinear: "bounded_bilinear prod" 
   by (fact bounded_bilinear_axioms)
+*)
 
 lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
   apply (insert bounded)
@@ -1318,6 +1321,7 @@ lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
    apply (rule scaleC_right)
   by (simp add: ac_simps)
 
+(* TODO: a sesquilinear form is not bilinear
 lemma comp1:
   assumes "bounded_clinear g"
   shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
@@ -1343,7 +1347,9 @@ proof unfold_locales
   thus "\<exists>K. \<forall>a b. norm (g a ** b) \<le> norm a * norm b * K"
     by (auto intro!: exI[where x="K * L"] simp: ac_simps)
 qed
+*)
 
+(* TODO: a sesquilinear form is not bilinear
 lemma comp2:
   assumes "bounded_clinear g"
   shows "bounded_sesquilinear (\<lambda>x y. prod x (g y))"
@@ -1369,9 +1375,12 @@ proof unfold_locales
   thus "\<exists>K. \<forall>a b. norm (a ** g b) \<le> norm a * norm b * K"
     by (auto intro!: exI[where x="K * L"] simp: ac_simps)
 qed
+*)
 
+(* TODO: a sesquilinear form is not bilinear
 lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using bounded_sesquilinear.comp2 comp1 by auto
+*)
 
 end
 
