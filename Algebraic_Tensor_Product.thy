@@ -667,7 +667,7 @@ proof-
       by blast
     moreover have \<open>\<forall> z \<in> atensor_kernel. G z = 0\<close>
     proof-
-  (* TODO: Avoid copy and pasting long definitions. This could just be written as atensor_kernel *)
+      (* TODO: Avoid copy and pasting long definitions. This could just be written as atensor_kernel *)
       have \<open>\<forall> z \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) -
            inclusion_free (x, z) |
            x y z. True} \<union>
@@ -819,7 +819,24 @@ proof-
       show "H (r *\<^sub>C b) = r *\<^sub>C H b"
         for r :: complex
           and b :: "'v \<otimes>\<^sub>a 'w"
-        sorry
+      proof-
+        have \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = r *\<^sub>C (G \<beta>)\<close>
+          by (simp add: \<open>\<forall>S. \<forall>s\<in>Rep_atensor S. H S = G s\<close>)
+        hence \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = G (r *\<^sub>C \<beta>)\<close>
+          using \<open>clinear G\<close> unfolding clinear_def
+          by (simp add: \<open>clinear G\<close> complex_vector.linear_scale)
+        have \<open>\<forall> \<gamma> \<in> Rep_atensor (r *\<^sub>C b). r *\<^sub>C (H b) = G \<gamma>\<close>
+        proof-
+          have \<open>Rep_atensor (r *\<^sub>C b) = {r *\<^sub>C \<beta> | \<beta>. \<beta> \<in> Rep_atensor b}\<close>
+            sorry
+          thus ?thesis using \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = G (r *\<^sub>C \<beta>)\<close>
+            by auto
+        qed
+        moreover have \<open>\<forall> \<gamma> \<in> Rep_atensor (r *\<^sub>C b). H (r *\<^sub>C b) = G \<gamma>\<close>
+          using \<open>\<forall>S. \<forall>s\<in>Rep_atensor S. H S = G s\<close> by auto          
+        ultimately show ?thesis
+          using Rep_atensor by force 
+      qed
     qed
     moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
       for x y
