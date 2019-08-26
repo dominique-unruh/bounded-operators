@@ -684,7 +684,7 @@ qed
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
-text\<open>See chapter XVI in @{cite lang2004algebra}\<close>
+text\<open>Universal property of the tensor product. See chapter XVI in @{cite lang2004algebra}\<close>
 theorem atensor_universal_property:
   fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
@@ -969,8 +969,23 @@ qed
 lemma basis_atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-  shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) )\<close>
-  sorry
+    and \<open>complex_vector.span A = UNIV\<close> and \<open>complex_vector.span B = UNIV\<close> 
+  shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) )\<close>
+proof-
+  have \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
+   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
+    for S f
+  proof-
+    assume \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B)\<close> and
+      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
+    from \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B)\<close>
+
+    show \<open>\<forall>s\<in>S. f s = 0\<close>
+      sorry
+  qed
+  thus ?thesis
+    using complex_vector.independent_explicit_finite_subsets by force
+qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
