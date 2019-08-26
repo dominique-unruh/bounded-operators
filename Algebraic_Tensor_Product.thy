@@ -449,7 +449,7 @@ lemma atensor_onto_explicit:
   shows \<open>\<exists> S f. finite S \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
 proof-
   have \<open>\<exists> X. x = abs_atensor X\<close>
-    apply transfer using Rep_atensor apply auto
+    apply transfer (* TODO: the rest of the line can be removed *) using Rep_atensor apply auto
     using atensor.abs_eq_iff by blast
   then obtain X where \<open>x = abs_atensor X\<close> by blast
   moreover have \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
@@ -667,6 +667,7 @@ proof-
       by blast
     moreover have \<open>\<forall> z \<in> atensor_kernel. G z = 0\<close>
     proof-
+  (* TODO: Avoid copy and pasting long definitions. This could just be written as atensor_kernel *)
       have \<open>\<forall> z \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) -
            inclusion_free (x, z) |
            x y z. True} \<union>
@@ -729,6 +730,7 @@ proof-
           proof -
             assume "(\<forall>y. clinear (\<lambda>x. h x y)) \<and> (\<forall>x. clinear (h x))"
             then show ?thesis
+              (* TODO use a fact name instead of \<open>G w = h (y + z) x - h y x - h z x\<close> *)
               by (metis (no_types) \<open>G w = h (y + z) x - h y x - h z x\<close> add_diff_cancel_left' complex_vector.linear_diff)
           qed
           thus \<open>G w = 0\<close> by simp
