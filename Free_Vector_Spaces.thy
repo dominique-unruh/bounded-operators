@@ -540,4 +540,10 @@ proof
   qed
 qed
 
+lemma inclusion_free_inj:
+  assumes \<open>inclusion_free x = inclusion_free y\<close>
+  shows \<open>x = y\<close>
+  by (metis assms inclusion_free.rep_eq zero_neq_one)
+
+
 end

@@ -602,6 +602,48 @@ proof-
     by blast 
 qed
 
+lemma quot_atensor:
+  fixes G ::\<open>('v::complex_vector \<times> 'w::complex_vector) free \<Rightarrow> 'z\<close>
+  assumes \<open>\<And> x y. atensor_rel x y \<Longrightarrow> G x = G y\<close>
+  shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
+proof-
+  define H where \<open>H S = G (SOME s. s \<in> Rep_atensor S)\<close>
+    for S
+  have \<open>\<forall>S. \<forall>s\<in>Rep_atensor S. H S = G s\<close>
+  proof-
+    have \<open>s\<in>Rep_atensor S \<Longrightarrow> H S = G s\<close>
+      for s S
+    proof-
+      assume \<open>s\<in>Rep_atensor S\<close>
+      hence \<open>atensor_rel s (SOME s. s \<in> Rep_atensor S)\<close>
+        by (smt Rep_atensor atensor_equivp equivp_symp equivp_transp mem_Collect_eq some_eq_ex)
+      hence \<open>G s = G (SOME s. s \<in> Rep_atensor S)\<close>
+        using \<open>\<And> x y. atensor_rel x y \<Longrightarrow> G x = G y\<close>
+        by auto
+      thus \<open>H S = G s\<close> 
+        using \<open>H S = G (SOME s. s \<in> Rep_atensor S)\<close>
+        by simp
+    qed
+    thus ?thesis by blast
+  qed
+  moreover have \<open>K = H\<close>
+    if "\<forall>S. \<forall>s\<in>Rep_atensor S. K S = G s"
+    for K :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
+  proof-
+    have \<open>K S = H S\<close>
+      for S
+    proof-
+      have \<open>K S = G (SOME s. s \<in> Rep_atensor S)\<close>
+        using that Rep_atensor some_in_eq by force 
+      thus ?thesis 
+        using \<open>H S = G (SOME s. s \<in> Rep_atensor S)\<close>
+        by auto
+    qed
+    thus ?thesis by blast
+  qed
+  ultimately show ?thesis by blast
+qed
+
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
@@ -610,7 +652,27 @@ theorem atensor_universal_property:
   fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
   shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
-  sorry
+proof-
+  have "\<exists>! G ::('v \<times> 'w) free \<Rightarrow> 'z. clinear G \<and> ( (\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free )"
+    using free_universal_property by blast
+  then obtain G::\<open>('v \<times> 'w) free \<Rightarrow> 'z\<close> where \<open>clinear G\<close>
+    and \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
+    by blast
+
+  have \<open>atensor_rel x y \<Longrightarrow> G x = G y\<close>
+    for x y
+    sorry
+  hence \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>    
+    sorry
+
+  have "clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))"
+    sorry
+  moreover have "(K::'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z) = H"
+    if "clinear K \<and> (\<forall>x y. h x y = K (x \<otimes>\<^sub>a y))"
+    for K :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
+    using that sorry
+  ultimately show ?thesis by blast
+qed
 
 
 lemma basis_atensor_complex_independent:
