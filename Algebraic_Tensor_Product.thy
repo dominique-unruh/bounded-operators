@@ -644,6 +644,43 @@ proof-
   ultimately show ?thesis by blast
 qed
 
+lemma quot_atensor2:
+  fixes G ::\<open>('v::complex_vector \<times> 'w::complex_vector) free \<Rightarrow> 'z\<close>
+  assumes \<open>\<And> x y. atensor_rel x y \<Longrightarrow> G x = G y\<close>
+  shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+proof-
+  define H where \<open>H S = G (rep_atensor S)\<close> for S
+  have "atensor_rel s (rep_atensor S) \<Longrightarrow> H S = G s"
+    for S s
+  proof-
+    assume \<open>atensor_rel s (rep_atensor S)\<close>
+    hence \<open>G (rep_atensor S) = G s\<close>
+      using \<open>\<And> x y. atensor_rel x y \<Longrightarrow> G x = G y\<close>
+      by auto
+    thus \<open>H S = G s\<close>
+      unfolding H_def by blast
+  qed
+  hence "\<forall>S s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s"
+    by blast 
+  moreover have "K = H"
+    if "\<forall>S s. atensor_rel s (rep_atensor S) \<longrightarrow> K S = G s"
+    for K :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
+  proof-
+    have \<open>K S = H S\<close>
+      for S
+    proof-
+      have \<open>K S = G (rep_atensor S)\<close>
+        using Quotient3_atensor Quotient3_rel_rep that by fastforce
+      moreover have \<open>H S = G (rep_atensor S)\<close>
+        by (simp add: H_def)
+      ultimately show \<open>K S = H S\<close> by simp
+    qed
+    thus \<open>K = H\<close>
+      by blast
+  qed
+  ultimately show ?thesis by blast
+qed
+
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
@@ -803,62 +840,131 @@ proof-
     thus \<open>G x = G y\<close>
       using \<open>clinear G\<close> complex_vector.linear_diff by fastforce
   qed
-  hence \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
-    using quot_atensor[where G = "G"] by blast 
-  then obtain H where \<open>\<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
+  hence \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+    using quot_atensor2[where G = "G"] by blast
+  then obtain H where \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
     by blast
   have "clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))"
   proof-
-    have \<open>clinear H\<close>
+    have "clinear H"
       unfolding clinear_def
     proof
       show "H (b1 + b2) = H b1 + H b2"
         for b1 :: "'v \<otimes>\<^sub>a 'w"
           and b2 :: "'v \<otimes>\<^sub>a 'w"
-        sorry
+      proof-
+        have \<open>\<forall> \<beta>1. atensor_rel \<beta>1 (rep_atensor b1) \<longrightarrow> (H b1) = (G \<beta>1)\<close>
+          using \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+          by auto
+        moreover have \<open>\<forall> \<beta>2. atensor_rel \<beta>2 (rep_atensor b2) \<longrightarrow> (H b2) = (G \<beta>2)\<close>
+          using \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+          by auto
+        ultimately have  \<open>\<forall> \<beta>1 \<beta>2. atensor_rel \<beta>1 (rep_atensor b1) \<and> atensor_rel \<beta>2 (rep_atensor b2) 
+            \<longrightarrow> (H b1) + (H b2) = (G \<beta>1) + (G \<beta>2)\<close>
+          by auto
+        hence  \<open>\<forall> \<beta>1 \<beta>2. atensor_rel \<beta>1 (rep_atensor b1) \<and> atensor_rel \<beta>2 (rep_atensor b2) 
+            \<longrightarrow> (H b1) + (H b2) = G (\<beta>1 + \<beta>2)\<close>
+          using \<open>clinear G\<close> unfolding clinear_def
+          by (simp add: \<open>clinear G\<close> complex_vector.linear_add)
+        moreover have \<open>\<forall> \<beta>. atensor_rel \<beta> (rep_atensor (b1 + b2)) \<longrightarrow> (H (b1 + b2)) = G \<beta>\<close>
+          using \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+          by auto
+        moreover have \<open>atensor_rel \<beta>1 (rep_atensor b1) \<Longrightarrow> atensor_rel \<beta>2 (rep_atensor b2)
+            \<Longrightarrow> atensor_rel (\<beta>1 + \<beta>2) (rep_atensor (b1 + b2))\<close>
+          for \<beta>1 \<beta>2
+          by (metis Quotient3_abs_rep Quotient3_atensor atensor.abs_eq_iff plus_atensor.abs_eq)          
+        ultimately show \<open>H (b1 + b2) = H b1 + H b2\<close>
+          by (metis Quotient3_atensor Quotient3_rep_reflp)               
+      qed
       show "H (r *\<^sub>C b) = r *\<^sub>C H b"
         for r :: complex
           and b :: "'v \<otimes>\<^sub>a 'w"
       proof-
-        have \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = r *\<^sub>C (G \<beta>)\<close>
-          by (simp add: \<open>\<forall>S. \<forall>s\<in>Rep_atensor S. H S = G s\<close>)
-        hence \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = G (r *\<^sub>C \<beta>)\<close>
+        have \<open>\<forall> \<beta>. atensor_rel \<beta> (rep_atensor b) \<longrightarrow> r *\<^sub>C (H b) = r *\<^sub>C (G \<beta>)\<close>
+          using \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+          by auto
+        hence \<open>\<forall> \<beta>. atensor_rel \<beta> (rep_atensor b) \<longrightarrow> r *\<^sub>C (H b) = G (r *\<^sub>C \<beta>)\<close>
           using \<open>clinear G\<close> unfolding clinear_def
           by (simp add: \<open>clinear G\<close> complex_vector.linear_scale)
-        have \<open>\<forall> \<gamma> \<in> Rep_atensor (r *\<^sub>C b). r *\<^sub>C (H b) = G \<gamma>\<close>
-        proof-
-          have \<open>Rep_atensor (r *\<^sub>C b) = {r *\<^sub>C \<beta> | \<beta>. \<beta> \<in> Rep_atensor b}\<close>
-            sorry
-          thus ?thesis using \<open>\<forall> \<beta> \<in> Rep_atensor b. r *\<^sub>C (H b) = G (r *\<^sub>C \<beta>)\<close>
-            by auto
-        qed
-        moreover have \<open>\<forall> \<gamma> \<in> Rep_atensor (r *\<^sub>C b). H (r *\<^sub>C b) = G \<gamma>\<close>
-          using \<open>\<forall>S. \<forall>s\<in>Rep_atensor S. H S = G s\<close> by auto          
+        moreover have \<open>atensor_rel \<beta> (rep_atensor b) \<Longrightarrow> atensor_rel \<gamma> (rep_atensor (r *\<^sub>C b))
+           \<Longrightarrow> atensor_rel (r *\<^sub>C \<beta>)  \<gamma>\<close>                                
+          for \<beta> \<gamma>
+          by (metis Quotient3_abs_rep Quotient3_atensor atensor.abs_eq_iff scaleC_atensor.abs_eq)        
+        moreover have \<open>\<forall> \<gamma>.  atensor_rel \<gamma> (rep_atensor (r *\<^sub>C b)) \<longrightarrow> H (r *\<^sub>C b) = G \<gamma>\<close>
+          by (simp add: \<open>\<forall>S s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>)
         ultimately show ?thesis
-          using Rep_atensor by force 
+          by (metis (full_types) \<open>\<And>\<gamma> \<beta>. \<lbrakk>atensor_rel \<beta> (rep_atensor b); atensor_rel \<gamma> (rep_atensor (r *\<^sub>C b))\<rbrakk> \<Longrightarrow> atensor_rel (r *\<^sub>C \<beta>) \<gamma>\<close> \<open>\<forall>\<beta>. atensor_rel \<beta> (rep_atensor b) \<longrightarrow> r *\<^sub>C H b = G (r *\<^sub>C \<beta>)\<close> \<open>\<forall>\<gamma>. atensor_rel \<gamma> (rep_atensor (r *\<^sub>C b)) \<longrightarrow> H (r *\<^sub>C b) = G \<gamma>\<close> atensor.abs_eq_iff)          
       qed
     qed
-    moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+    moreover have "h x y = H (x \<otimes>\<^sub>a y)"
       for x y
     proof-
       from \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
       have \<open>h x y = G (inclusion_free (x, y))\<close>
         by (metis comp_apply fst_conv snd_conv)
-      moreover have \<open>inclusion_free (x, y) \<in> Rep_atensor (x \<otimes>\<^sub>a y)\<close>
-        sorry
+      moreover have \<open>atensor_rel (inclusion_free (x, y)) (rep_atensor (x \<otimes>\<^sub>a y))\<close>
+        by (metis (no_types) Quotient3_abs_rep Quotient3_atensor atensor.abs_eq_iff atensor_op.abs_eq)        
       ultimately show ?thesis
-        using \<open>\<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
-        by simp
+        using \<open>\<forall> S. \<forall>s. atensor_rel s (rep_atensor S) \<longrightarrow> H S = G s\<close>
+        by auto        
     qed
     ultimately show ?thesis by blast
   qed
   moreover have "K = H"
     if "clinear K \<and> (\<forall>x y. h x y = K (x \<otimes>\<^sub>a y))"
     for K :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
-    using that sorry
+  proof-
+    have \<open>(\<forall>x y. h x y = K (x \<otimes>\<^sub>a y))\<close>
+      using that by blast
+    moreover have \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>
+      by (simp add: \<open>clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>)
+    ultimately have \<open>K (x \<otimes>\<^sub>a y) = H (x \<otimes>\<^sub>a y)\<close>
+      for x y
+      by simp
+    have \<open>clinear K\<close>
+      by (simp add: that)
+    have \<open>clinear H\<close>
+      by (simp add: \<open>clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>)
+    have \<open>K z = H z\<close>
+      for z
+    proof-
+      have \<open>complex_vector.span (range (\<lambda> u. (fst u) \<otimes>\<^sub>a (snd u))) = UNIV\<close>
+        by (simp add: atensor_onto)
+      hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range (\<lambda> u. (fst u) \<otimes>\<^sub>a (snd u))) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      proof -
+        have "\<forall>a. \<exists>A f. a = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> range (\<lambda>p. (fst p::'v) \<otimes>\<^sub>a (snd p::'w))"
+          using \<open>complex_vector.span (range (\<lambda>u. fst u \<otimes>\<^sub>a snd u)) = UNIV\<close> complex_vector.span_explicit by blast
+        then show ?thesis
+          by meson
+      qed 
+      then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range (\<lambda> u. (fst u) \<otimes>\<^sub>a (snd u)))\<close>
+        and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by blast
+      from \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      have \<open>K z = (\<Sum>a\<in>t. r a *\<^sub>C (K a))\<close>
+        using \<open>clinear K\<close> unfolding clinear_def
+        by (smt \<open>clinear K\<close> complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+      also have \<open>\<dots> = (\<Sum>a\<in>t. r a *\<^sub>C (H a))\<close>
+      proof-
+        have  \<open>a \<in> t \<Longrightarrow> K a = H a\<close>
+          for a
+          using \<open>\<And> x y. K (x \<otimes>\<^sub>a y) = H (x \<otimes>\<^sub>a y)\<close>
+            \<open>t \<subseteq> (range (\<lambda> u. (fst u) \<otimes>\<^sub>a (snd u)))\<close>
+          by blast
+        thus ?thesis
+          by auto 
+      qed
+      also have \<open>\<dots> = H (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by (smt \<open>clinear H\<close> complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+      also have \<open>\<dots> = H z\<close>
+        using \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> by auto
+      finally show ?thesis by blast
+    qed
+    thus ?thesis
+      by blast 
+  qed
   ultimately show ?thesis by blast
 qed
-
 
 lemma basis_atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
