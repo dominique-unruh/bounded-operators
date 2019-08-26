@@ -31,7 +31,7 @@ definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) 
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
 text\<open>Tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
-(* TODO: define a map function to get rid of the following warning, if such a function
+  (* TODO: define a map function to get rid of the following warning, if such a function
    is possible (using commands definition free_map :: "('a\<Rightarrow>'b) \<Rightarrow> ('a free\<Rightarrow>'b free)", functor free_map) *)
 quotient_type (overloaded) ('a, 'b) atensor
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
@@ -658,16 +658,182 @@ proof-
   then obtain G::\<open>('v \<times> 'w) free \<Rightarrow> 'z\<close> where \<open>clinear G\<close>
     and \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
     by blast
-
   have \<open>atensor_rel x y \<Longrightarrow> G x = G y\<close>
     for x y
-    sorry
-  hence \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>    
-    sorry
-
+  proof-
+    assume \<open>atensor_rel x y\<close>
+    hence \<open>x - y \<in> atensor_kernel\<close>
+      unfolding atensor_rel_def
+      by blast
+    moreover have \<open>\<forall> z \<in> atensor_kernel. G z = 0\<close>
+    proof-
+      have \<open>\<forall> z \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) -
+           inclusion_free (x, z) |
+           x y z. True} \<union>
+          {inclusion_free (y + z, x) - inclusion_free (y, x) -
+           inclusion_free (z, x) |
+           x y z. True} \<union>
+          {inclusion_free (x, c *\<^sub>C y) -
+           c *\<^sub>C inclusion_free (x, y) |
+           x y c. True} \<union>
+          {inclusion_free (c *\<^sub>C x, y) -
+           c *\<^sub>C inclusion_free (x, y) |
+           x y c. True}). G z = 0\<close>
+      proof-
+        have \<open>w \<in> {inclusion_free (x, y + z) - inclusion_free (x, y) -
+           inclusion_free (x, z) | x y z. True} \<Longrightarrow> G w = 0\<close>
+          for w
+        proof-
+          assume \<open>w \<in> {inclusion_free (x, y + z) - inclusion_free (x, y) -
+           inclusion_free (x, z) | x y z. True}\<close>
+          hence \<open>\<exists> x y z. w = inclusion_free (x, y + z) - inclusion_free (x, y) -
+           inclusion_free (x, z)\<close>
+            by blast
+          then obtain x y z where \<open>w = inclusion_free (x, y + z) - inclusion_free (x, y) -
+           inclusion_free (x, z)\<close>
+            by blast
+          hence \<open>G w = G (inclusion_free (x, y + z)) - G (inclusion_free (x, y)) -
+           G (inclusion_free (x, z))\<close>
+            using \<open>clinear G\<close>
+            by (simp add: complex_vector.linear_diff)
+          hence \<open>G w = h x (y + z) - h x y - h x z\<close>
+            using \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
+            by (metis comp_apply fst_conv snd_conv)
+          hence \<open>G w = h x y + h x z - h x y - h x z\<close>
+            using \<open>cbilinear h\<close> unfolding cbilinear_def
+            by (simp add: complex_vector.linear_add)
+          thus \<open>G w = 0\<close>
+            by simp
+        qed
+        moreover have \<open>w \<in> {inclusion_free (y + z, x) - inclusion_free (y, x) -
+           inclusion_free (z, x) | x y z. True} \<Longrightarrow> G w = 0\<close>
+          for w
+        proof-
+          assume \<open>w \<in> {inclusion_free (y + z, x) - inclusion_free (y, x) -
+           inclusion_free (z, x) | x y z. True}\<close>
+          hence \<open>\<exists> x y z. w = inclusion_free (y + z, x) - inclusion_free (y, x) -
+           inclusion_free (z, x)\<close>
+            by blast
+          then obtain x y z where \<open>w = inclusion_free (y + z, x) - inclusion_free (y, x) -
+           inclusion_free (z, x)\<close>
+            by blast
+          hence \<open>G w = G (inclusion_free (y + z, x)) - G (inclusion_free (y, x)) -
+           G (inclusion_free (z, x))\<close>
+            using \<open>clinear G\<close>
+            by (simp add: complex_vector.linear_diff)
+          hence \<open>G w = h (y + z) x - h y x - h z x\<close>
+            using \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
+            by (metis comp_apply fst_conv snd_conv)
+          hence \<open>G w = h y x + h z x - h y x - h z x\<close>
+            using \<open>cbilinear h\<close> unfolding cbilinear_def
+          proof -
+            assume "(\<forall>y. clinear (\<lambda>x. h x y)) \<and> (\<forall>x. clinear (h x))"
+            then show ?thesis
+              by (metis (no_types) \<open>G w = h (y + z) x - h y x - h z x\<close> add_diff_cancel_left' complex_vector.linear_diff)
+          qed
+          thus \<open>G w = 0\<close> by simp
+        qed
+        moreover have \<open>w \<in> {inclusion_free (x, c *\<^sub>C y) -
+           c *\<^sub>C inclusion_free (x, y) | x y c. True} \<Longrightarrow> G w = 0\<close>
+          for w
+        proof-
+          assume \<open>w \<in> {inclusion_free (x, c *\<^sub>C y) -
+           c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>
+          have \<open>\<exists> x y c. w = inclusion_free (x, c *\<^sub>C y) -
+           c *\<^sub>C inclusion_free (x, y)\<close>
+            using \<open>w \<in> {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close> by auto
+          then obtain x y c where \<open>w = inclusion_free (x, c *\<^sub>C y) -
+           c *\<^sub>C inclusion_free (x, y)\<close>         
+            by blast
+          hence \<open>G w = G (inclusion_free (x, c *\<^sub>C y)) -
+           G(c *\<^sub>C inclusion_free (x, y))\<close>
+            by (simp add: \<open>clinear G\<close> complex_vector.linear_diff)
+          hence \<open>G w = G (inclusion_free (x, c *\<^sub>C y)) -
+           c *\<^sub>C G(inclusion_free (x, y))\<close>
+            using \<open>clinear G\<close> complex_vector.linear_scale by auto
+          hence \<open>G w = (h x (c *\<^sub>C y)) - c *\<^sub>C (h x y)\<close>
+            by (metis \<open>(\<lambda>z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close> comp_apply fst_eqD snd_eqD)
+          moreover have \<open>(h x (c *\<^sub>C y)) = c *\<^sub>C (h x y)\<close>
+            using \<open>cbilinear h\<close>
+            unfolding cbilinear_def
+            by (simp add: complex_vector.linear_scale) 
+          ultimately have \<open>G w = c *\<^sub>C (h x y) - c *\<^sub>C (h x y)\<close>
+            by simp
+          thus \<open>G w = 0\<close>
+            by simp
+        qed
+        moreover have \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) -
+           c *\<^sub>C inclusion_free (x, y) | x y c. True} \<Longrightarrow> G w = 0\<close>
+          for w
+        proof-
+          assume \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) -
+           c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>
+          hence \<open>\<exists> x y c. w = inclusion_free (c *\<^sub>C x, y) -
+           c *\<^sub>C inclusion_free (x, y)\<close>
+            by blast
+          then obtain x y c where \<open>w = inclusion_free (c *\<^sub>C x, y) -
+           c *\<^sub>C inclusion_free (x, y)\<close>
+            by blast
+          hence \<open>G w = G (inclusion_free (c *\<^sub>C x, y)) -
+           G (c *\<^sub>C inclusion_free (x, y))\<close>
+            using \<open>clinear G\<close> complex_vector.linear_diff by blast 
+          also have \<open>\<dots> = G (inclusion_free (c *\<^sub>C x, y)) -
+           c *\<^sub>C G (inclusion_free (x, y))\<close>
+            using \<open>clinear G\<close>
+            by (simp add: complex_vector.linear_scale)
+          also have \<open>\<dots> = h (c *\<^sub>C x) y - c *\<^sub>C (h x y)\<close>
+            by (metis (no_types, lifting) \<open>(\<lambda>z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close> comp_apply fst_eqD snd_eqD)
+          also have \<open>\<dots> = c *\<^sub>C (h x y) - c *\<^sub>C (h x y)\<close>
+            using \<open>cbilinear h\<close> unfolding cbilinear_def
+            using complex_vector.linear_scale by auto 
+          also have \<open>\<dots> = 0\<close>
+            by simp
+          finally show \<open>G w = 0\<close>
+            by blast
+        qed
+        ultimately show ?thesis by blast
+      qed
+      thus ?thesis unfolding atensor_kernel_def
+        using \<open>clinear G\<close> complex_vector.linear_eq_0_on_span by blast        
+    qed
+    ultimately have \<open>G (x - y) = 0\<close>
+      by blast
+    thus \<open>G x = G y\<close>
+      using \<open>clinear G\<close> complex_vector.linear_diff by fastforce
+  qed
+  hence \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. \<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
+    using quot_atensor[where G = "G"] by blast 
+  then obtain H where \<open>\<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
+    by blast
   have "clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))"
-    sorry
-  moreover have "(K::'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z) = H"
+  proof-
+    have \<open>clinear H\<close>
+      unfolding clinear_def
+    proof
+      show "H (b1 + b2) = H b1 + H b2"
+        for b1 :: "'v \<otimes>\<^sub>a 'w"
+          and b2 :: "'v \<otimes>\<^sub>a 'w"
+        sorry
+      show "H (r *\<^sub>C b) = r *\<^sub>C H b"
+        for r :: complex
+          and b :: "'v \<otimes>\<^sub>a 'w"
+        sorry
+    qed
+    moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+      for x y
+    proof-
+      from \<open>(\<lambda> z. h (fst z) (snd z)) = G \<circ> inclusion_free\<close>
+      have \<open>h x y = G (inclusion_free (x, y))\<close>
+        by (metis comp_apply fst_conv snd_conv)
+      moreover have \<open>inclusion_free (x, y) \<in> Rep_atensor (x \<otimes>\<^sub>a y)\<close>
+        sorry
+      ultimately show ?thesis
+        using \<open>\<forall> S. \<forall> s \<in> Rep_atensor S. H S = G s\<close>
+        by simp
+    qed
+    ultimately show ?thesis by blast
+  qed
+  moreover have "K = H"
     if "clinear K \<and> (\<forall>x y. h x y = K (x \<otimes>\<^sub>a y))"
     for K :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
     using that sorry
