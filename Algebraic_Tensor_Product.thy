@@ -685,7 +685,7 @@ definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vec
   where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
 text\<open>Universal property of the tensor product. See chapter XVI in @{cite lang2004algebra}\<close>
-theorem atensor_universal_property:
+lemma atensor_universal_property:
   fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
   shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
@@ -964,7 +964,7 @@ proof-
       by blast 
   qed
   ultimately show ?thesis by blast
-qed
+qed                                                     
 
 lemma basis_atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
@@ -978,7 +978,6 @@ proof-
   proof-
     assume \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B)\<close> and
       \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
-    from \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B)\<close>
 
     show \<open>\<forall>s\<in>S. f s = 0\<close>
       sorry
