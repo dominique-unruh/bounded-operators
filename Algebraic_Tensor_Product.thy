@@ -123,6 +123,41 @@ type_notation
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_free (x, y)\<close>.
 
+definition atensor_of_pair:: \<open>'a::complex_vector \<times> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
+\<open>atensor_of_pair z = (fst z) \<otimes>\<^sub>a (snd z)\<close>
+
+lemma tensor_of_sets:
+  \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+proof-
+  have "(\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) \<subseteq> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
+  proof
+    show "x \<in> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
+      if "x \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
+      for x :: "'a \<otimes>\<^sub>a 'b"
+      using that by fastforce
+  qed
+  moreover have "{a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B} \<subseteq> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
+  proof
+    show "x \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
+      if "x \<in> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
+      for x :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>\<exists>a\<in>A. \<exists>b\<in>B. x = a \<otimes>\<^sub>a b\<close>
+        using that by blast
+      then obtain a b where \<open>a \<in> A\<close> and \<open>b \<in> B\<close> and \<open>x = a \<otimes>\<^sub>a b\<close>
+        by blast
+      from \<open>x = a \<otimes>\<^sub>a b\<close>
+      have  \<open>x = (\<lambda>z. fst z \<otimes>\<^sub>a snd z) (a, b)\<close>
+        by simp
+      moreover have \<open>(a, b) \<in> A \<times> B\<close>
+        using  \<open>a \<in> A\<close>  \<open>b \<in> B\<close> by blast
+      ultimately show ?thesis by blast
+    qed
+  qed
+  ultimately show ?thesis unfolding atensor_of_pair_def by blast
+qed
+
+
 instantiation atensor :: (complex_vector,complex_vector) complex_vector
 begin
 
@@ -405,7 +440,7 @@ lemma atensor_mult_left:
 
 
 lemma abs_atensor_inclusion_free:
-  \<open>abs_atensor (inclusion_free u) = (fst u) \<otimes>\<^sub>a (snd u)\<close>
+  \<open>abs_atensor (inclusion_free u) = atensor_of_pair u\<close>
 proof-
   have \<open>complex_vector.subspace atensor_kernel\<close>
     by (simp add: subspace_atensor_kernel)
@@ -414,7 +449,7 @@ proof-
     unfolding atensor_rel_def inclusion_free_def apply auto
     by (simp add: \<open>complex_vector.subspace atensor_kernel\<close> complex_vector.subspace_0) 
   thus ?thesis
-    by (simp add: atensor_op.abs_eq) 
+    by (simp add: atensor_of_pair_def atensor_op.abs_eq)    
 qed
 
 lemma abs_atensor_sum:
@@ -429,7 +464,7 @@ lemma abs_atensor_sum_general:
 
 lemma free_explicit:
   fixes  X :: \<open>('a::complex_vector \<times> 'b::complex_vector) free\<close>
-  shows \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+  shows \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C (atensor_of_pair z) )\<close>
 proof-                                        
   have \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))\<close>
     using free_explicit by auto
@@ -440,54 +475,34 @@ proof-
   also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C (abs_atensor (inclusion_free z)))\<close>
     by (metis scaleC_atensor.abs_eq)
   also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by (simp add: abs_atensor_inclusion_free)
-  finally show ?thesis by blast
+    by (metis (mono_tags, lifting) abs_atensor_inclusion_free atensor_of_pair_def)
+  finally have \<open> abs_atensor X = (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close>
+    by blast
+  thus ?thesis
+    by (metis (no_types, lifting) atensor_of_pair_def sum.cong) 
 qed
 
 lemma atensor_onto_explicit:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-(* TODO: More readable: \<Sum>(a,b)\<in>S... *)
-(* TODO: "(f z) *\<^sub>C " part can be removed *)
-  shows \<open>\<exists> S f. finite S \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
+  shows \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ) )\<close>
 proof-
   have \<open>\<exists> X. x = abs_atensor X\<close>
-    apply transfer (* TODO: the rest of the line can be removed *) using Rep_atensor apply auto
+    apply transfer
     using atensor.abs_eq_iff by blast
   then obtain X where \<open>x = abs_atensor X\<close> by blast
   moreover have \<open>abs_atensor X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}.  ((Rep_free X) z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    using free_explicit by blast
+    using free_explicit
+    by (metis (mono_tags, lifting) atensor_of_pair_def sum.cong) 
   moreover have \<open>finite {u | u. (Rep_free X) u \<noteq> 0}\<close>
     using Rep_free by blast
   ultimately show ?thesis
-    by blast    
-qed
-
-lemma atensor_onto:
-  \<open>complex_vector.span ( range (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) )
- = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
-proof
-  show "complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b))) \<subseteq> UNIV"
-    by simp    
-  show "UNIV \<subseteq> complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b)))"
-  proof
-    show "x \<in> complex_vector.span (range (\<lambda>z. (fst z::'a) \<otimes>\<^sub>a (snd z::'b)))"
-      for x :: "'a \<otimes>\<^sub>a 'b"
-    proof-
-      have \<open>\<exists> R g. finite R \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ))\<close>
-        using atensor_onto_explicit by blast
-      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ))\<close>
-        by blast
-      thus ?thesis
-        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
-    qed
-  qed
+    using Algebraic_Tensor_Product.free_explicit by blast
 qed
 
 lemma tensor_product_cartesian_product:
   assumes \<open>finite t\<close> and \<open>finite t'\<close>
-  (* TODO: more readable with "\<Sum>(a,b)\<in>t\<times>t'..." *)
   shows \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j)
- = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>a (snd z)))\<close>
+ = (\<Sum>(a, b)\<in>t\<times>t'. (r a * r' b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
 proof-
   have \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j) = (\<Sum>i\<in>t. (r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j) )\<close>
     using atensor_distr_left_sum by force    
@@ -503,8 +518,51 @@ proof-
     using Groups_Big.comm_monoid_add_class.sum.cartesian_product [where A = "t" 
         and B = "t'" and g = "\<lambda> i j. (r i * r' j) *\<^sub>C (i \<otimes>\<^sub>a j)"]
     by (metis (no_types, lifting) case_prod_beta' sum.cong)
-  finally show ?thesis by blast
+  finally have \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j) =
+  (\<Sum>z\<in>t \<times> t'. (r (fst z) * r' (snd z)) *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close>
+    by blast
+  thus ?thesis
+    by (metis (mono_tags, lifting) case_prod_beta' sum.cong) 
 qed
+
+
+lemma atensor_onto_explicit_normalized:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  shows \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. ( atensor_of_pair z ) )\<close>
+proof-
+  have \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
+    using atensor_onto_explicit by blast
+  then obtain S f where \<open>finite S\<close> and \<open>\<forall> z\<in>S. f z \<noteq> 0\<close> and
+    \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
+    by blast
+  have \<open>(\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z )) 
+    = (\<Sum>a\<in>fst ` S. (\<Sum>b\<in>{b | b. (a,b) \<in> S}. (f (a,b)) *\<^sub>C ( atensor_of_pair (a,b) ) ) )\<close>
+    sorry
+
+  show ?thesis sorry
+qed
+
+lemma atensor_onto:
+  \<open>complex_vector.span ( range atensor_of_pair )
+ = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
+proof
+  show "complex_vector.span (range atensor_of_pair) \<subseteq> UNIV"
+    by simp    
+  show "(UNIV::('a \<otimes>\<^sub>a 'b) set) \<subseteq> complex_vector.span (range atensor_of_pair)"
+  proof
+    show "x \<in> complex_vector.span (range atensor_of_pair)"
+      for x :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>\<exists> R g. finite R \<and> (\<forall> z\<in>R. g z \<noteq> 0) \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+        using atensor_onto_explicit by blast
+      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+        by blast
+      thus ?thesis
+        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
+    qed
+  qed
+qed
+
 
 lemma span_tensor_span:
   fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
@@ -969,6 +1027,7 @@ proof-
   ultimately show ?thesis by blast
 qed                                                     
 
+
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 (* TODO: It is probably more natural to formulate this as
 
@@ -1001,7 +1060,7 @@ proof-
   then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> range ( \<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) )\<close> 
     and \<open>u = (\<Sum>z\<in>t. r z *\<^sub>C z)\<close>
     by blast
-    show ?thesis sorry
+  show ?thesis sorry
 qed
 
 
@@ -1016,8 +1075,7 @@ lemma atensor_normal_independent:
 lemma atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-(* TODO: more readable: complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B} *)
-  shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) )\<close>
+  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
 proof-
   have \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
    (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
@@ -1028,8 +1086,12 @@ proof-
     thus \<open>\<forall>s\<in>S. f s = 0\<close>
       sorry
   qed
-  thus ?thesis
+  hence \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) )\<close>
     using complex_vector.independent_explicit_finite_subsets by force
+  moreover have \<open>( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    using tensor_of_sets[where A = "A" and B = "B"] by blast
+  ultimately show ?thesis 
+    by simp
 qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
