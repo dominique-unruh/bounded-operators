@@ -967,6 +967,17 @@ proof-
 qed                                                     
 
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+(* TODO: It is probably more natural to formulate this as
+
+exists A :: ('a*'b) set,
+complex_independent (fst`A)
+complex_independent (snd`A)
+u=sum (fst a \<otimes> snd a)
+
+And similar for the other propositions from that webpage?
+
+ *)
+(* TODO: I believe this is called a Schmidt decomposition *)
 lemma atensor_normal_explicit:
   fixes u :: \<open>'a::complex_vector \<otimes>\<^sub>a 'b::complex_vector\<close>
   shows \<open>\<exists> A::'a set. \<exists> \<phi>::'a \<Rightarrow> 'b. finite A  \<and> 
@@ -1002,6 +1013,7 @@ lemma atensor_normal_independent:
 lemma atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
+(* TODO: more readable: complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B} *)
   shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) )\<close>
 proof-
   have \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
