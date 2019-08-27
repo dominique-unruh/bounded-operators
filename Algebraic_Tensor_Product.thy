@@ -9,6 +9,7 @@ Authors:
 
 theory Algebraic_Tensor_Product
   imports
+    General_Results_Missing
     Complex_Inner_Product 
     "HOL-Library.Adhoc_Overloading"
     Free_Vector_Spaces
@@ -124,7 +125,7 @@ lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_free (x, y)\<close>.
 
 definition atensor_of_pair:: \<open>'a::complex_vector \<times> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
-\<open>atensor_of_pair z = (fst z) \<otimes>\<^sub>a (snd z)\<close>
+  \<open>atensor_of_pair z = (fst z) \<otimes>\<^sub>a (snd z)\<close>
 
 lemma tensor_of_sets:
   \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
@@ -528,18 +529,34 @@ qed
 
 lemma atensor_onto_explicit_normalized:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. ( atensor_of_pair z ) )\<close>
+  shows \<open>\<exists> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
 proof-
   have \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
     using atensor_onto_explicit by blast
   then obtain S f where \<open>finite S\<close> and \<open>\<forall> z\<in>S. f z \<noteq> 0\<close> and
     \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
     by blast
-  have \<open>(\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z )) 
-    = (\<Sum>a\<in>fst ` S. (\<Sum>b\<in>{b | b. (a,b) \<in> S}. (f (a,b)) *\<^sub>C ( atensor_of_pair (a,b) ) ) )\<close>
-    sorry
-
-  show ?thesis sorry
+  define \<phi> where \<open>\<phi> v = (\<Sum>u\<in>{u|u. (u,v)\<in>S}. ((f (u,v)) *\<^sub>C u))\<close> for v
+  define B where \<open>B = snd ` S\<close>
+  have \<open>(\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))
+      = (\<Sum>(u,v)\<in>S. (f (u,v)) *\<^sub>C ( u \<otimes>\<^sub>a v ))\<close>
+    unfolding atensor_of_pair_def apply auto
+    by (metis (no_types, lifting) case_prod_beta' prod.collapse)
+  also have \<open>\<dots> = (\<Sum>(u,v)\<in>S. ((f (u,v)) *\<^sub>C u) \<otimes>\<^sub>a v)\<close>
+    by (metis atensor_mult_left)
+  also have \<open>\<dots> = (\<Sum>v\<in>snd ` S. (\<Sum>u\<in>{u|u. (u,v)\<in>S}. ((f (u,v)) *\<^sub>C u) \<otimes>\<^sub>a v))\<close>
+    using  \<open>finite S\<close> big_sum_reordering_snd[where S = "S" and f = "\<lambda> (u,v). ((f (u,v)) *\<^sub>C u) \<otimes>\<^sub>a v"]
+    by auto
+  also have \<open>\<dots> = (\<Sum>v\<in>snd ` S. (\<Sum>u\<in>{u|u. (u,v)\<in>S}. ((f (u,v)) *\<^sub>C u)) \<otimes>\<^sub>a v)\<close>
+    by (metis (mono_tags, lifting) atensor_distr_left_sum sum.cong)
+  also have \<open>\<dots> = (\<Sum>v\<in>snd ` S. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    unfolding \<phi>_def by blast
+  also have \<open>\<dots> = (\<Sum>v\<in>B. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    unfolding B_def by blast
+  finally have \<open>(\<Sum>z\<in>S. f z *\<^sub>C atensor_of_pair z) = (\<Sum>v\<in>B. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    by blast
+  thus ?thesis
+    using B_def \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. f z *\<^sub>C atensor_of_pair z)\<close> by blast 
 qed
 
 lemma atensor_onto:
