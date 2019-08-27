@@ -966,10 +966,42 @@ proof-
   ultimately show ?thesis by blast
 qed                                                     
 
-lemma basis_atensor_complex_independent:
+(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_normal_explicit:
+  fixes u :: \<open>'a::complex_vector \<otimes>\<^sub>a 'b::complex_vector\<close>
+  shows \<open>\<exists> A::'a set. \<exists> \<phi>::'a \<Rightarrow> 'b. finite A  \<and> 
+  complex_independent A \<and> complex_independent (\<phi> ` A) \<and>
+  u = (\<Sum>a\<in>A. a \<otimes>\<^sub>a (\<phi> a))\<close>
+proof-
+  have \<open>complex_vector.span (range ( \<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) )) = (UNIV:: ('a \<otimes>\<^sub>a 'b) set)\<close>
+    by (simp add: atensor_onto)
+  hence \<open>u \<in> complex_vector.span (range ( \<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ))\<close>
+    by simp
+  hence \<open>\<exists> t r. finite t \<and> t \<subseteq> range ( \<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) \<and> u = (\<Sum>z\<in>t. r z *\<^sub>C z)\<close>
+  proof -
+    have "\<exists>A f. u = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> range (\<lambda>p. fst p \<otimes>\<^sub>a snd p)"
+      using \<open>u \<in> complex_vector.span (range (\<lambda>z. fst z \<otimes>\<^sub>a snd z))\<close> complex_vector.span_explicit by blast
+    then show ?thesis
+      by blast
+  qed 
+  then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> range ( \<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) )\<close> 
+    and \<open>u = (\<Sum>z\<in>t. r z *\<^sub>C z)\<close>
+    by blast
+    show ?thesis sorry
+qed
+
+
+(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_normal_independent:
+  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
+  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. a \<otimes>\<^sub>a (\<phi> a)) = 0\<close> 
+  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
+  sorry
+
+(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-    and \<open>complex_vector.span A = UNIV\<close> and \<open>complex_vector.span B = UNIV\<close> 
   shows \<open>complex_independent ( (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z)) ` (A \<times> B) )\<close>
 proof-
   have \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
@@ -978,8 +1010,7 @@ proof-
   proof-
     assume \<open>S \<subseteq> (\<lambda> z. (fst z) \<otimes>\<^sub>a (snd z) ) ` (A \<times> B)\<close> and
       \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
-
-    show \<open>\<forall>s\<in>S. f s = 0\<close>
+    thus \<open>\<forall>s\<in>S. f s = 0\<close>
       sorry
   qed
   thus ?thesis
