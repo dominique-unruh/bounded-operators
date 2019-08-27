@@ -446,6 +446,8 @@ qed
 
 lemma atensor_onto_explicit:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+(* TODO: More readable: \<Sum>(a,b)\<in>S... *)
+(* TODO: "(f z) *\<^sub>C " part can be removed *)
   shows \<open>\<exists> S f. finite S \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
 proof-
   have \<open>\<exists> X. x = abs_atensor X\<close>
@@ -483,6 +485,7 @@ qed
 
 lemma tensor_product_cartesian_product:
   assumes \<open>finite t\<close> and \<open>finite t'\<close>
+  (* TODO: more readable with "\<Sum>(a,b)\<in>t\<times>t'..." *)
   shows \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>a (\<Sum>j\<in>t'. r' j *\<^sub>C j)
  = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>a (snd z)))\<close>
 proof-
