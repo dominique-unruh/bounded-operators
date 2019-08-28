@@ -2320,4 +2320,44 @@ definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool"
 )\<close>
 
 
+lemma complex_dependent_isolation:
+  assumes \<open>complex_vector.dependent V\<close> and \<open>finite V\<close>
+  shows \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
+proof-
+  from \<open>complex_vector.dependent V\<close>
+  have \<open>\<exists>T f. finite T \<and>
+           T \<subseteq> V \<and> (\<Sum>i\<in>T. f i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>T. f i \<noteq> 0)\<close>
+    using complex_vector.dependent_explicit
+    by blast
+  hence \<open>\<exists>f. (\<Sum>i\<in>V. f i *\<^sub>C i) = 0 \<and> (\<exists> i\<in>V. f i \<noteq> 0)\<close>
+    using \<open>complex_vector.dependent V\<close> \<open>finite V\<close> complex_vector.independent_if_scalars_zero by fastforce
+  show \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
+  proof-
+    from \<open>\<exists>f. (\<Sum>i\<in>V. f i *\<^sub>C i) = 0 \<and> (\<exists> i\<in>V. f i \<noteq> 0)\<close>
+    obtain f where  \<open>(\<Sum>i\<in>V. f i *\<^sub>C i) = 0\<close> and \<open>\<exists> i\<in>V. f i \<noteq> 0\<close>
+      by blast
+    from \<open>\<exists> i\<in>V. f i \<noteq> 0\<close>
+    obtain s where \<open>s \<in> V\<close> and \<open>f s \<noteq> 0\<close>
+      by blast
+    from  \<open>f s \<noteq> 0\<close>
+    have  \<open>- f s \<noteq> 0\<close>
+      by simp
+    have \<open>(\<Sum>i\<in>V-{s}. f i *\<^sub>C i) = (- f s) *\<^sub>C s\<close>
+      using \<open>s \<in> V\<close> \<open>(\<Sum>i\<in>V. f i *\<^sub>C i) = 0\<close>
+      by (simp add: \<open>finite V\<close> sum_diff1)
+    hence \<open>s = (\<Sum>i\<in>V-{s}. f i *\<^sub>C i) /\<^sub>C (- f s)\<close>
+      using  \<open>- f s \<noteq> 0\<close> by auto
+    also have \<open>(\<Sum>i\<in>V-{s}. f i *\<^sub>C i) /\<^sub>C (- f s) = (\<Sum>i\<in>V-{s}. ((f i) /\<^sub>C (- f s)) *\<^sub>C i)\<close>
+      using Complex_Vector_Spaces.complex_vector.scale_sum_right
+        [where f = "(\<lambda> i. f i *\<^sub>C i)" and A = "V - {s}" and a = "inverse (- f s)"]
+      by auto
+    finally have \<open>s = (\<Sum>i\<in>V-{s}. ((f i) /\<^sub>C (- f s)) *\<^sub>C i)\<close>
+      by blast
+    thus ?thesis 
+      using \<open>s \<in> V\<close> 
+      by metis
+  qed
+qed
+
+
 end
