@@ -658,6 +658,47 @@ proof(rule classical)
   thus ?thesis by blast
 qed
 
+(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+(* TODO: I believe this is called a Schmidt decomposition *)
+lemma atensor_onto_explicit_normalized_independent_both_sides:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  assumes \<open>x \<noteq> 0\<close>
+  shows \<open>\<exists> V \<phi>. finite V \<and> complex_vector.independent V
+     \<and> complex_vector.independent (\<phi> ` V)
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
+  sorry
+
+(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_normal_independent:
+  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
+  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. (\<phi> a) \<otimes>\<^sub>a a) = 0\<close> 
+  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
+  sorry
+
+(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_complex_independent:
+  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
+  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+proof-
+  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
+   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
+    for S f
+  proof-
+    assume \<open>S \<subseteq>  atensor_of_pair ` (A \<times> B)\<close> and
+      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
+    thus \<open>\<forall>s\<in>S. f s = 0\<close>
+      sorry
+  qed
+  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
+    using complex_vector.independent_explicit_finite_subsets by force
+  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    using tensor_of_sets[where A = "A" and B = "B"] by blast
+  ultimately show ?thesis 
+    by simp
+qed
+
+
 lemma atensor_onto:
   \<open>complex_vector.span ( range atensor_of_pair )
  = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
@@ -1182,67 +1223,6 @@ proof-
     by blast
 qed                                                     
 
-
-(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-(* TODO: It is probably more natural to formulate this as
-
-exists A :: ('a*'b) set,
-complex_independent (fst`A)
-complex_independent (snd`A)
-u=sum (fst a \<otimes> snd a)
-
-And similar for the other propositions from that webpage?
-
- *)
-(* TODO: I believe this is called a Schmidt decomposition *)
-lemma atensor_normal_explicit:
-  fixes u :: \<open>'a::complex_vector \<otimes>\<^sub>a 'b::complex_vector\<close>
-  shows \<open>\<exists> A::'a set. \<exists> \<phi>::'a \<Rightarrow> 'b. finite A  \<and> 
-  complex_independent A \<and> complex_independent (\<phi> ` A) \<and>
-  u = (\<Sum>a\<in>A. a \<otimes>\<^sub>a (\<phi> a))\<close>
-proof-
-  have \<open>complex_vector.span (range atensor_of_pair) = (UNIV:: ('a \<otimes>\<^sub>a 'b) set)\<close>
-    by (simp add: atensor_onto)
-  hence \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
-    by simp
-  hence \<open>\<exists> t r. finite t \<and> t \<subseteq> range atensor_of_pair \<and> u = (\<Sum>z\<in>t. r z *\<^sub>C z)\<close>
-    by (smt complex_vector.span_explicit mem_Collect_eq)
-  then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> range atensor_of_pair\<close> 
-    and \<open>u = (\<Sum>z\<in>t. r z *\<^sub>C z)\<close>
-    by blast
-  show ?thesis sorry
-qed
-
-
-(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_normal_independent:
-  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
-  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. a \<otimes>\<^sub>a (\<phi> a)) = 0\<close> 
-  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
-  sorry
-
-(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_complex_independent:
-  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
-  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-proof-
-  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
-   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
-    for S f
-  proof-
-    assume \<open>S \<subseteq>  atensor_of_pair ` (A \<times> B)\<close> and
-      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
-    thus \<open>\<forall>s\<in>S. f s = 0\<close>
-      sorry
-  qed
-  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
-    using complex_vector.independent_explicit_finite_subsets by force
-  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-    using tensor_of_sets[where A = "A" and B = "B"] by blast
-  ultimately show ?thesis 
-    by simp
-qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
