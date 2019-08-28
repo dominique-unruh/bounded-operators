@@ -659,7 +659,6 @@ proof(rule classical)
 qed
 
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-(* TODO: I believe this is called a Schmidt decomposition *)
 lemma atensor_onto_explicit_normalized_independent_both_sides:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
