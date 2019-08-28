@@ -529,7 +529,7 @@ qed
 
 lemma atensor_onto_explicit_normalized:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
+  shows \<open>\<exists> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
 proof-
   have \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
     using atensor_onto_explicit by blast
@@ -557,6 +557,28 @@ proof-
     by blast
   thus ?thesis
     using B_def \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. f z *\<^sub>C atensor_of_pair z)\<close> by blast 
+qed
+
+
+lemma atensor_onto:
+  \<open>complex_vector.span ( range atensor_of_pair )
+ = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
+proof
+  show "complex_vector.span (range atensor_of_pair) \<subseteq> UNIV"
+    by simp    
+  show "(UNIV::('a \<otimes>\<^sub>a 'b) set) \<subseteq> complex_vector.span (range atensor_of_pair)"
+  proof
+    show "x \<in> complex_vector.span (range atensor_of_pair)"
+      for x :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>\<exists> R g. finite R \<and> (\<forall> z\<in>R. g z \<noteq> 0) \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+        using atensor_onto_explicit by blast
+      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+        by blast
+      thus ?thesis
+        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
+    qed
+  qed
 qed
 
 lemma atensor_reduction_right':
@@ -722,182 +744,6 @@ proof-
   qed
   ultimately show ?thesis by blast
 qed
-
-(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_independent_both_sides:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> V \<phi>. finite V
-     \<and> complex_vector.independent V
-     \<and> complex_vector.independent (\<phi> ` V)
-     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> V \<phi>. finite V
-     \<and> complex_vector.independent V
-     \<and> complex_vector.independent (\<phi> ` V)
-     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))\<close>
-  hence \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ) 
-     \<longrightarrow> complex_vector.dependent V \<or> complex_vector.dependent (\<phi> ` V)\<close>
-    by blast
-
-  show ?thesis sorry
-qed
-
-
-(* TODO: delete. It is a (trivial) particular case 
-of lemma atensor_independent_both_sides *)
-lemma atensor_onto_explicit_normalized_independent:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> V \<phi>. finite V \<and> complex_vector.independent V
-     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> V \<phi>. finite V \<and> complex_vector.independent V
-     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ))\<close>
-  hence \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ) 
-     \<longrightarrow> complex_vector.dependent V\<close>
-    by blast
-  define n where \<open>n = Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-  have \<open>{card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))} \<noteq> {}\<close>
-    using atensor_onto_explicit_normalized by auto
-  hence \<open>n \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-    using n_def Inf_nat_def1 by presburger
-  hence \<open>\<exists> V. n = card V \<and> finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))\<close>
-    by blast
-  then obtain V where \<open>n = card V\<close> and \<open>finite V\<close> and \<open>\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-    by blast
-  from \<open>\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-  obtain \<phi> where \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-    by blast
-  have \<open>n > 0\<close>
-  proof(rule classical)
-    assume \<open>\<not>(n > 0)\<close>
-    hence \<open>n = 0\<close>
-      by simp
-    hence \<open>card V = 0\<close>
-      using \<open>n = card V\<close> by auto
-    hence \<open>V = {}\<close>
-      using \<open>finite V\<close> by auto
-    hence \<open>(\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v) = 0\<close>
-      by simp
-    hence \<open>x = 0\<close>
-      by (simp add: \<open>x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v)\<close>)
-    thus ?thesis using \<open>x \<noteq> 0\<close> by blast
-  qed
-  have \<open>\<exists> m \<in> {card V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}. m < n\<close>
-  proof-
-    have \<open>complex_vector.dependent V\<close>
-      using \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v) 
-     \<longrightarrow> complex_vector.dependent V\<close> \<open>finite V\<close> \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      by blast
-    hence \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
-      using \<open>finite V\<close> complex_dependent_isolation
-      by blast
-    then obtain s and f where \<open>s \<in> V\<close> \<open>s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
-      by blast
-    define \<psi> where \<open>\<psi> v = (f v *\<^sub>C (\<phi> s)) + (\<phi> v)\<close> for v
-    from \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close> \<open>s \<in> V\<close>
-    have \<open>x = (\<phi> s) \<otimes>\<^sub>a s + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      by (meson \<open>finite V\<close> sum.remove)
-    also have \<open>\<dots> = (\<phi> s) \<otimes>\<^sub>a (\<Sum>v\<in>V-{s}. f v *\<^sub>C v) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      using \<open>s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
-      by simp
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (\<phi> s) \<otimes>\<^sub>a (f v *\<^sub>C v)) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      using atensor_distr_right_sum by auto
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. f v *\<^sub>C ((\<phi> s) \<otimes>\<^sub>a v)) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      by (meson atensor_mult_right)
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (f v *\<^sub>C (\<phi> s)) \<otimes>\<^sub>a v) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
-      by (metis atensor_mult_left)
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (f v *\<^sub>C (\<phi> s)) \<otimes>\<^sub>a v + (\<phi> v) \<otimes>\<^sub>a v)\<close>
-    proof-
-      have \<open>(\<Sum>v\<in>V - {s}. f v *\<^sub>C \<phi> s \<otimes>\<^sub>a v + \<phi> v \<otimes>\<^sub>a v) = 
-        (\<Sum>v\<in>V - {s}. f v *\<^sub>C \<phi> s \<otimes>\<^sub>a v) + (\<Sum>v\<in>V - {s}. \<phi> v \<otimes>\<^sub>a v)\<close>
-        using Groups_Big.comm_monoid_add_class.sum.distrib
-        by simp
-      thus ?thesis by simp
-    qed
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. ((f v *\<^sub>C (\<phi> s)) + (\<phi> v)) \<otimes>\<^sub>a v  )\<close>
-      by (simp add: atensor_distr_left)
-    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (\<psi> v) \<otimes>\<^sub>a v  )\<close>
-      unfolding \<psi>_def by blast
-    finally have \<open>x = (\<Sum>v\<in>V - {s}. \<psi> v \<otimes>\<^sub>a v)\<close>
-      by blast
-    moreover have \<open>finite (V - {s})\<close>
-      using \<open>finite V\<close>
-      by simp
-    ultimately have \<open>V - {s} \<in> {V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}\<close>
-      by blast
-    hence \<open>card (V - {s}) \<in> {card V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}\<close>
-      by auto
-    moreover have \<open>card (V - {s}) < n\<close>
-      using \<open>finite V\<close> \<open>n = card V\<close> \<open>s \<in> V\<close> card_Diff1_less by fastforce      
-    ultimately show ?thesis by blast
-  qed
-  then obtain m where \<open>m \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-    and \<open>m < n\<close> by blast
-  have \<open>m \<ge> Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-    using \<open>m \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-    by (metis (no_types, lifting) \<open>{card V |V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v))} \<noteq> {}\<close> cInf_eq_minimum nonempty_set_star_has_least_lemma) 
-  hence \<open>n > Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
-    using \<open>m < n\<close> leD n_def by blast 
-  hence \<open>n > n\<close>
-    using n_def by blast
-  thus ?thesis by blast
-qed
-
-
-(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_normal_independent:
-  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
-  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. (\<phi> a) \<otimes>\<^sub>a a) = 0\<close> 
-  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
-  sorry
-
-(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_complex_independent:
-  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
-  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-proof-
-  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
-   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
-    for S f
-  proof-
-    assume \<open>S \<subseteq>  atensor_of_pair ` (A \<times> B)\<close> and
-      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
-    thus \<open>\<forall>s\<in>S. f s = 0\<close>
-      sorry
-  qed
-  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
-    using complex_vector.independent_explicit_finite_subsets by force
-  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-    using tensor_of_sets[where A = "A" and B = "B"] by blast
-  ultimately show ?thesis 
-    by simp
-qed
-
-
-lemma atensor_onto:
-  \<open>complex_vector.span ( range atensor_of_pair )
- = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
-proof
-  show "complex_vector.span (range atensor_of_pair) \<subseteq> UNIV"
-    by simp    
-  show "(UNIV::('a \<otimes>\<^sub>a 'b) set) \<subseteq> complex_vector.span (range atensor_of_pair)"
-  proof
-    show "x \<in> complex_vector.span (range atensor_of_pair)"
-      for x :: "'a \<otimes>\<^sub>a 'b"
-    proof-
-      have \<open>\<exists> R g. finite R \<and> (\<forall> z\<in>R. g z \<noteq> 0) \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
-        using atensor_onto_explicit by blast
-      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
-        by blast
-      thus ?thesis
-        by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
-    qed
-  qed
-qed
-
 
 lemma span_tensor_span:
   fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
@@ -1400,6 +1246,358 @@ proof-
   ultimately show ?thesis
     by blast
 qed                                                     
+
+lemma swap_atensor_existence_unique:
+  \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector. 
+  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close>
+proof-
+  define h::\<open>'a \<Rightarrow> 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a\<close> where
+    \<open>h x y = (atensor_of_pair \<circ> swap) (x,y)\<close> for x y
+  have \<open>cbilinear h\<close>
+    unfolding cbilinear_def proof
+    show "\<forall>y. clinear (\<lambda>x. h x y)"
+      unfolding clinear_def Vector_Spaces.linear_def apply auto
+        apply (simp add: complex_vector.vector_space_axioms)
+       apply (simp add: complex_vector.vector_space_axioms)
+      unfolding module_hom_def apply auto
+        apply (simp add: complex_vector.module_axioms)
+       apply (simp add: complex_vector.module_axioms)
+      unfolding module_hom_axioms_def apply auto unfolding h_def
+       apply auto
+       apply (simp add: General_Results_Missing.swap_def atensor_distr_right atensor_of_pair_def)
+      by (simp add: General_Results_Missing.swap_def atensor_mult_right atensor_of_pair_def)
+    show "\<forall>x. clinear (h x)"
+      unfolding clinear_def Vector_Spaces.linear_def apply auto
+        apply (simp add: complex_vector.vector_space_axioms)
+       apply (simp add: complex_vector.vector_space_axioms)
+      unfolding module_hom_def apply auto
+        apply (simp add: complex_vector.module_axioms)
+       apply (simp add: complex_vector.module_axioms)
+      unfolding module_hom_axioms_def apply auto unfolding h_def
+       apply auto
+       apply (simp add: General_Results_Missing.swap_def atensor_distr_left atensor_of_pair_def)
+      by (simp add: General_Results_Missing.swap_def atensor_mult_left atensor_of_pair_def)
+  qed
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+    using atensor_universal_property by blast
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. (atensor_of_pair \<circ> swap) (x, y) = H (x \<otimes>\<^sub>a y))\<close>
+    unfolding h_def by auto
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. atensor_of_pair (y, x) = H (x \<otimes>\<^sub>a y))\<close>
+    unfolding swap_def by auto
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. y \<otimes>\<^sub>a x = H (x \<otimes>\<^sub>a y))\<close>
+    unfolding atensor_of_pair_def by simp
+  thus ?thesis by auto
+qed
+
+lemma swap_atensor_existence:
+  \<open>\<exists>H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector. 
+  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close>
+  using swap_atensor_existence_unique by auto
+
+definition swap_atensor::\<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector) \<Rightarrow> 'b \<otimes>\<^sub>a 'a\<close>
+  where \<open>swap_atensor = (SOME H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector.
+  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x) )\<close>
+
+lemma swap_atensorI1:
+  \<open>clinear swap_atensor\<close>
+  unfolding swap_atensor_def
+  using swap_atensor_existence someI_ex
+  by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
+
+lemma swap_atensorI2:
+  \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
+  unfolding swap_atensor_def
+  using swap_atensor_existence someI_ex
+  by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
+
+
+lemma swap_atensor_commute:
+  \<open>swap_atensor \<circ> atensor_of_pair = atensor_of_pair \<circ> swap\<close>
+proof-
+  have \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
+    by (simp add: swap_atensorI2)
+  hence \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = atensor_of_pair (y, x)\<close>
+    by (simp add: atensor_of_pair_def)
+  hence \<open>\<forall>x. \<forall> y. swap_atensor (atensor_of_pair (x,y)) = atensor_of_pair (y, x)\<close>
+    by (simp add: atensor_of_pair_def)
+  hence \<open>\<forall>x. \<forall> y. swap_atensor (atensor_of_pair (x,y)) = atensor_of_pair (swap (x, y))\<close>
+    by (simp add: General_Results_Missing.swap_def)    
+  hence \<open>\<forall>x. \<forall> y. (swap_atensor \<circ> atensor_of_pair) (x,y) = (atensor_of_pair \<circ> swap) (x, y)\<close>
+    by simp
+  hence \<open>\<forall>z. (swap_atensor \<circ> atensor_of_pair) z = (atensor_of_pair \<circ> swap) z\<close>
+    by simp
+  hence \<open>(swap_atensor \<circ> atensor_of_pair) z = (atensor_of_pair \<circ> swap) z\<close>
+    for z::\<open>'a \<times> 'b\<close>
+    by blast
+  thus ?thesis 
+    by blast
+qed
+
+lemma atensor_reduction_left:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+    and S :: \<open>('a \<times> 'b) set\<close>
+  assumes \<open>finite S\<close> and \<open>complex_vector.dependent (fst ` S)\<close>
+    and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+  shows \<open>\<exists> R. card (fst ` R) < card (fst ` S) \<and>
+              card (snd ` R) \<le> card (fst ` R) \<and>
+              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+proof-
+  define S' where \<open>S' = swap ` S\<close>
+  define x' where \<open>x' = (\<Sum>z\<in>S'. atensor_of_pair z)\<close>
+  have \<open>finite S'\<close>
+    using S'_def assms(1) by auto    
+  moreover have \<open>complex_vector.dependent (snd ` S')\<close>
+    by (simp add: S'_def assms(2) swap_set_snd)    
+  ultimately have \<open>\<exists> R'. card (snd ` R') < card (snd ` S') \<and>
+              card (fst ` R') \<le> card (snd ` R') \<and>
+              x' = (\<Sum>z\<in>R'. atensor_of_pair z)\<close>
+    using \<open>x' = (\<Sum>z\<in>S'. atensor_of_pair z)\<close>
+      atensor_reduction_right[where x = "x'" and S = "S'"] by blast
+  then obtain R' where \<open>card (snd ` R') < card (snd ` S')\<close> and
+    \<open>card (fst ` R') \<le> card (snd ` R')\<close> and
+    \<open>x' = (\<Sum>z\<in>R'. atensor_of_pair z)\<close>
+    by blast
+  define R where \<open>R = swap ` R'\<close>
+  have \<open>snd ` R = fst ` R'\<close>
+    unfolding swap_def
+    by (simp add: R_def swap_set_snd) 
+  have \<open>fst ` R = snd ` R'\<close>
+    unfolding swap_def
+    by (simp add: R_def swap_set_fst)
+  have \<open>card (fst ` R) < card (fst ` S)\<close>
+    using \<open>card (snd ` R') < card (snd ` S')\<close>
+    by (simp add: S'_def \<open>fst ` R = snd ` R'\<close> swap_set_snd)
+  moreover have \<open>card (snd ` R) \<le> card (fst ` R)\<close>
+    using \<open>card (fst ` R') \<le> card (snd ` R')\<close>
+    by (simp add: \<open>fst ` R = snd ` R'\<close> \<open>snd ` R = fst ` R'\<close>)
+  moreover have \<open>x = sum atensor_of_pair R\<close>
+  proof-
+    have \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+      using \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (swap ` S). atensor_of_pair z)\<close>
+    proof-
+      have \<open>swap \<circ> swap = id\<close>
+        by (simp add: swap_involution)
+      have \<open>swap ` (swap ` S) = S\<close>
+        apply auto
+         apply (simp add: General_Results_Missing.swap_def)
+        using \<open>swap \<circ> swap = id\<close>
+      proof -
+        fix a :: 'a and b :: 'b
+        assume a1: "(a, b) \<in> S"
+        have "(a, b) = swap (snd (a, b), fst (a, b))"
+          by (simp add: General_Results_Missing.swap_def)
+        then show "(a, b) \<in> swap ` swap ` S"
+          using a1 by (metis (no_types) General_Results_Missing.swap_def rev_image_eqI)
+      qed 
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (S'). atensor_of_pair z)\<close>
+      unfolding S'_def by blast
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. (atensor_of_pair \<circ> swap) z)\<close>
+    proof-
+      have \<open>inj swap\<close>
+        by (simp add: swap_inj)
+      hence \<open>inj_on swap S'\<close>
+        by (smt injD inj_on_def)        
+      thus ?thesis
+        by (simp add: sum.reindex) 
+    qed
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. (swap_atensor \<circ> atensor_of_pair) z)\<close>
+      by (simp add: swap_atensor_commute)
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. swap_atensor (atensor_of_pair z))\<close>
+      by auto
+    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>S'. (atensor_of_pair z))\<close>
+    proof-
+      have \<open>clinear swap_atensor\<close>
+        by (simp add: swap_atensorI1)
+      thus ?thesis
+        by (smt Finite_Cartesian_Product.sum_cong_aux complex_vector.linear_sum) 
+    qed
+    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>R'. (atensor_of_pair z))\<close>
+      using \<open>x' = sum atensor_of_pair R'\<close> x'_def by presburger
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. swap_atensor (atensor_of_pair z))\<close>
+    proof-
+      have \<open>clinear swap_atensor\<close>
+        by (simp add: swap_atensorI1)
+      thus ?thesis
+        by (smt Finite_Cartesian_Product.sum_cong_aux complex_vector.linear_sum) 
+    qed
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. (swap_atensor \<circ> atensor_of_pair) z)\<close>
+      by simp
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. (atensor_of_pair \<circ> swap) z)\<close>
+      by (simp add: swap_atensor_commute)
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. atensor_of_pair (swap z))\<close>
+      by auto
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` R'. atensor_of_pair z)\<close>
+    proof-
+      have \<open>inj_on swap R'\<close>
+        by (meson inj_eq inj_onI swap_inj)
+      thus ?thesis
+        by (simp add: sum.reindex) 
+    qed
+    also have \<open>\<dots> = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+      unfolding R_def
+      by blast
+    finally show ?thesis by blast
+  qed
+  ultimately show ?thesis by blast
+qed
+
+
+(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_independent_both_sides:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  assumes \<open>x \<noteq> 0\<close>
+  shows \<open>\<exists> V \<phi>. finite V
+     \<and> complex_vector.independent V
+     \<and> complex_vector.independent (\<phi> ` V)
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+proof(rule classical)
+  assume \<open>\<not>(\<exists> V \<phi>. finite V
+     \<and> complex_vector.independent V
+     \<and> complex_vector.independent (\<phi> ` V)
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))\<close>
+  hence \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ) 
+     \<longrightarrow> complex_vector.dependent V \<or> complex_vector.dependent (\<phi> ` V)\<close>
+    by blast
+
+  show ?thesis sorry
+qed
+
+
+(* TODO: delete. It is a (trivial) particular case 
+of lemma atensor_independent_both_sides *)
+lemma atensor_onto_explicit_normalized_independent:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  assumes \<open>x \<noteq> 0\<close>
+  shows \<open>\<exists> V \<phi>. finite V \<and> complex_vector.independent V
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
+proof(rule classical)
+  assume \<open>\<not>(\<exists> V \<phi>. finite V \<and> complex_vector.independent V
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ))\<close>
+  hence \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v ) 
+     \<longrightarrow> complex_vector.dependent V\<close>
+    by blast
+  define n where \<open>n = Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+  have \<open>{card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))} \<noteq> {}\<close>
+    using atensor_onto_explicit_normalized by auto
+  hence \<open>n \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+    using n_def Inf_nat_def1 by presburger
+  hence \<open>\<exists> V. n = card V \<and> finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))\<close>
+    by blast
+  then obtain V where \<open>n = card V\<close> and \<open>finite V\<close> and \<open>\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    by blast
+  from \<open>\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+  obtain \<phi> where \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    by blast
+  have \<open>n > 0\<close>
+  proof(rule classical)
+    assume \<open>\<not>(n > 0)\<close>
+    hence \<open>n = 0\<close>
+      by simp
+    hence \<open>card V = 0\<close>
+      using \<open>n = card V\<close> by auto
+    hence \<open>V = {}\<close>
+      using \<open>finite V\<close> by auto
+    hence \<open>(\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v) = 0\<close>
+      by simp
+    hence \<open>x = 0\<close>
+      by (simp add: \<open>x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v)\<close>)
+    thus ?thesis using \<open>x \<noteq> 0\<close> by blast
+  qed
+  have \<open>\<exists> m \<in> {card V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}. m < n\<close>
+  proof-
+    have \<open>complex_vector.dependent V\<close>
+      using \<open>\<forall> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v) 
+     \<longrightarrow> complex_vector.dependent V\<close> \<open>finite V\<close> \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      by blast
+    hence \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
+      using \<open>finite V\<close> complex_dependent_isolation
+      by blast
+    then obtain s and f where \<open>s \<in> V\<close> \<open>s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
+      by blast
+    define \<psi> where \<open>\<psi> v = (f v *\<^sub>C (\<phi> s)) + (\<phi> v)\<close> for v
+    from \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close> \<open>s \<in> V\<close>
+    have \<open>x = (\<phi> s) \<otimes>\<^sub>a s + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      by (meson \<open>finite V\<close> sum.remove)
+    also have \<open>\<dots> = (\<phi> s) \<otimes>\<^sub>a (\<Sum>v\<in>V-{s}. f v *\<^sub>C v) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      using \<open>s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v)\<close>
+      by simp
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (\<phi> s) \<otimes>\<^sub>a (f v *\<^sub>C v)) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      using atensor_distr_right_sum by auto
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. f v *\<^sub>C ((\<phi> s) \<otimes>\<^sub>a v)) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      by (meson atensor_mult_right)
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (f v *\<^sub>C (\<phi> s)) \<otimes>\<^sub>a v) + (\<Sum>v\<in>V-{s}. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+      by (metis atensor_mult_left)
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (f v *\<^sub>C (\<phi> s)) \<otimes>\<^sub>a v + (\<phi> v) \<otimes>\<^sub>a v)\<close>
+    proof-
+      have \<open>(\<Sum>v\<in>V - {s}. f v *\<^sub>C \<phi> s \<otimes>\<^sub>a v + \<phi> v \<otimes>\<^sub>a v) = 
+        (\<Sum>v\<in>V - {s}. f v *\<^sub>C \<phi> s \<otimes>\<^sub>a v) + (\<Sum>v\<in>V - {s}. \<phi> v \<otimes>\<^sub>a v)\<close>
+        using Groups_Big.comm_monoid_add_class.sum.distrib
+        by simp
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. ((f v *\<^sub>C (\<phi> s)) + (\<phi> v)) \<otimes>\<^sub>a v  )\<close>
+      by (simp add: atensor_distr_left)
+    also have \<open>\<dots> = (\<Sum>v\<in>V-{s}. (\<psi> v) \<otimes>\<^sub>a v  )\<close>
+      unfolding \<psi>_def by blast
+    finally have \<open>x = (\<Sum>v\<in>V - {s}. \<psi> v \<otimes>\<^sub>a v)\<close>
+      by blast
+    moreover have \<open>finite (V - {s})\<close>
+      using \<open>finite V\<close>
+      by simp
+    ultimately have \<open>V - {s} \<in> {V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}\<close>
+      by blast
+    hence \<open>card (V - {s}) \<in> {card V|V. finite V \<and> (\<exists>\<psi>. x = (\<Sum>v\<in>V. (\<psi> v) \<otimes>\<^sub>a v))}\<close>
+      by auto
+    moreover have \<open>card (V - {s}) < n\<close>
+      using \<open>finite V\<close> \<open>n = card V\<close> \<open>s \<in> V\<close> card_Diff1_less by fastforce      
+    ultimately show ?thesis by blast
+  qed
+  then obtain m where \<open>m \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+    and \<open>m < n\<close> by blast
+  have \<open>m \<ge> Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+    using \<open>m \<in> {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+    by (metis (no_types, lifting) \<open>{card V |V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v))} \<noteq> {}\<close> cInf_eq_minimum nonempty_set_star_has_least_lemma) 
+  hence \<open>n > Inf {card V|V. finite V \<and> (\<exists>\<phi>. x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v))}\<close>
+    using \<open>m < n\<close> leD n_def by blast 
+  hence \<open>n > n\<close>
+    using n_def by blast
+  thus ?thesis by blast
+qed
+
+
+(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_normal_independent:
+  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
+  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. (\<phi> a) \<otimes>\<^sub>a a) = 0\<close> 
+  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
+  sorry
+
+(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_complex_independent:
+  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
+  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+proof-
+  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
+   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
+    for S f
+  proof-
+    assume \<open>S \<subseteq>  atensor_of_pair ` (A \<times> B)\<close> and
+      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
+    thus \<open>\<forall>s\<in>S. f s = 0\<close>
+      sorry
+  qed
+  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
+    using complex_vector.independent_explicit_finite_subsets by force
+  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    using tensor_of_sets[where A = "A" and B = "B"] by blast
+  ultimately show ?thesis 
+    by simp
+qed
+
 
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
