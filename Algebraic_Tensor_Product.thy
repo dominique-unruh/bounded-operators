@@ -664,7 +664,7 @@ lemma atensor_onto_explicit_normalized_independent_both_sides:
   assumes \<open>x \<noteq> 0\<close>
   shows \<open>\<exists> V \<phi>. finite V \<and> complex_vector.independent V
      \<and> complex_vector.independent (\<phi> ` V)
-     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
+     \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
   sorry
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
