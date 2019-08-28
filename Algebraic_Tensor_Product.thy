@@ -608,6 +608,7 @@ lemma atensor_reduction_right:
   assumes \<open>finite S\<close> and \<open>complex_vector.dependent (snd ` S)\<close>
     and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
   shows \<open>\<exists> R. card (snd ` R) < card (snd ` S) \<and>
+              card (fst ` R) \<le> card (snd ` R) \<and>
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
 proof-
   define \<phi> where \<open>\<phi> v = (\<Sum> u\<in>{u|u.(u,v)\<in>S}. u)\<close> for v
@@ -660,7 +661,7 @@ proof-
           hence \<open>\<exists>z \<in>(snd ` S - {s}). s = snd ((\<lambda>u. (\<psi> u, u)) z)\<close>
             by blast
           then obtain z where \<open>z \<in>(snd ` S - {s})\<close>
-              and \<open>s = snd ((\<lambda>u. (\<psi> u, u)) z)\<close>    
+            and \<open>s = snd ((\<lambda>u. (\<psi> u, u)) z)\<close>    
             by blast
           from \<open>\<exists>z \<in>(snd ` S - {s}). s = snd ((\<lambda>u. (\<psi> u, u)) z)\<close>
           have \<open>s = z\<close>
@@ -678,8 +679,8 @@ proof-
       using \<open>finite S\<close>
       by (simp add: psubset_card_mono) 
     thus ?thesis
-    unfolding R_def V_def
-    by auto
+      unfolding R_def V_def
+      by auto
   qed
   moreover have \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
   proof-
@@ -697,7 +698,28 @@ proof-
       by (metis (no_types, lifting) sum.reindex_cong)
     finally show ?thesis
       by blast
-  qed    
+  qed
+  moreover have \<open>card (fst ` R) \<le> card (snd ` R)\<close>
+  proof-
+    have \<open>fst ` R = \<psi> ` (V-{s})\<close>
+    proof-
+      have \<open>fst \<circ> (\<lambda>u. (\<psi> u, u)) = \<psi>\<close>
+        using comp_def by auto        
+      thus ?thesis
+        by (simp add: R_def image_comp) 
+    qed
+    moreover have \<open>snd ` R = V-{s}\<close>
+    proof-
+      have \<open>snd \<circ> (\<lambda>u. (\<psi> u, u)) = id\<close>
+        using comp_def by auto        
+      thus ?thesis
+        by (simp add: R_def image_comp) 
+    qed
+    ultimately have \<open>fst ` R = \<psi> ` (snd ` R)\<close>
+      by simp
+    thus ?thesis
+      by (simp add: \<open>finite V\<close> \<open>snd ` R = V - {s}\<close> card_image_le) 
+  qed
   ultimately show ?thesis by blast
 qed
 
