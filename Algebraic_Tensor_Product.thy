@@ -1585,9 +1585,21 @@ lemma atensor_independent_eq_card:
               complex_vector.independent (fst ` R) \<and>
               complex_vector.independent (snd ` R) \<and>
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-    (* The proof is decreasing sequence of natural numbers
-like in lemma atensor_expansion_independent *)
-  sorry
+proof(rule classical)
+  assume \<open>\<not>(\<exists> R. finite R \<and> card (fst ` R) = card (snd ` R) \<and>
+              complex_vector.independent (fst ` R) \<and>
+              complex_vector.independent (snd ` R) \<and>
+              x = (\<Sum>z\<in>R. atensor_of_pair z))\<close>
+  hence \<open>\<forall> R. finite R \<and>
+              complex_vector.independent (fst ` R) \<and>
+              complex_vector.independent (snd ` R) \<and>
+              x = (\<Sum>z\<in>R. atensor_of_pair z) \<longrightarrow>
+              card (fst ` R) \<noteq> card (snd ` R)\<close>
+    by blast
+
+
+  show ?thesis sorry
+qed
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:

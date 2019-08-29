@@ -175,4 +175,42 @@ proof-
   thus ?thesis by blast
 qed
 
+lemma pigeonhole_pair:
+  assumes \<open>card (fst ` S) < card (snd ` S)\<close>
+    and \<open>finite S\<close> and \<open>S \<noteq> {}\<close>
+  shows \<open>\<exists> u v w. (u, v) \<in> S \<and> (u, w) \<in> S \<and> v \<noteq> w\<close>
+proof-
+  have \<open>\<forall>v. \<exists>u.  v\<in>snd ` S \<longrightarrow> u\<in>fst ` S \<and> (u,v) \<in> S\<close>
+    using image_iff by fastforce
+  hence \<open>\<exists>f. \<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S \<and> (f v,v) \<in> S\<close>
+    by metis
+  then obtain f where \<open>\<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S \<and> (f v,v) \<in> S\<close>
+    by blast
+  hence \<open>\<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S\<close>
+    by blast
+  hence \<open>(f ` (snd ` S)) \<subseteq> (fst ` S)\<close>
+    by blast
+  hence \<open>card (f ` (snd ` S)) \<le> card (fst ` S)\<close>
+    by (simp add: assms(2) card_mono)
+  hence \<open>card (f ` (snd ` S)) < card (snd ` S)\<close>
+    using assms(1) dual_order.strict_trans2 by blast
+  hence \<open>\<not>(inj_on f (snd ` S))\<close>
+    using pigeonhole
+    by blast
+  hence \<open>\<exists> v \<in> (snd ` S). \<exists> w \<in> (snd ` S). f v = f w \<and> v \<noteq> w\<close>
+    unfolding inj_on_def by blast
+  then obtain v w where \<open>v \<in> (snd ` S)\<close> and \<open>w \<in> (snd ` S)\<close>
+    and \<open>f v = f w\<close> and \<open>v \<noteq> w\<close>
+    by blast
+  have \<open>f v\<in>fst ` S\<close> and \<open>(f v,v) \<in> S\<close>
+     apply (simp add: \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S\<close> \<open>v \<in> snd ` S\<close>)
+    by (simp add: \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S \<and> (f v, v) \<in> S\<close> \<open>v \<in> snd ` S\<close>)
+  have \<open>f w\<in>fst ` S\<close> and \<open>(f w,w) \<in> S\<close>
+    using \<open>f v = f w\<close> \<open>f v \<in> fst ` S\<close> apply auto[1]
+    using \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S \<and> (f v, v) \<in> S\<close> \<open>w \<in> snd ` S\<close> by blast
+  show ?thesis 
+    using \<open>(f v,v) \<in> S\<close>  \<open>(f w,w) \<in> S\<close>  \<open>f v = f w\<close> \<open>v \<noteq> w\<close>
+    by auto    
+qed
+
 end
