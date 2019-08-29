@@ -1680,25 +1680,12 @@ qed
 lemma atensor_independent_eq_card:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> R. finite R \<and> card (fst ` R) = card (snd ` R) \<and>
+  shows \<open>\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
+              card (fst ` R) = card (snd ` R) \<and>
               complex_vector.independent (fst ` R) \<and>
               complex_vector.independent (snd ` R) \<and>
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> R. finite R \<and> card (fst ` R) = card (snd ` R) \<and>
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z))\<close>
-  hence \<open>\<forall> R. finite R \<and>
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z) \<longrightarrow>
-              card (fst ` R) \<noteq> card (snd ` R)\<close>
-    by blast
-
-
-  show ?thesis sorry
-qed
+  sorry
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:
