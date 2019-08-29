@@ -1,5 +1,5 @@
 theory General_Results_Missing
-imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
+  imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
 
 begin
 
@@ -62,14 +62,14 @@ proof-
 qed
 
 definition swap::\<open>'a \<times> 'b \<Rightarrow> 'b \<times> 'a\<close> where
-\<open>swap z =  (snd z, fst z)\<close> for z
+  \<open>swap z =  (snd z, fst z)\<close> for z
 
 lemma swap_involution:
-\<open>swap \<circ> swap = id\<close>
+  \<open>swap \<circ> swap = id\<close>
   unfolding swap_def by auto
 
 lemma swap_inj:
-\<open>inj swap\<close>
+  \<open>inj swap\<close>
 proof(rule injI)
   fix x y::\<open>'a \<times> 'b\<close>
   assume \<open>swap x = swap y\<close> 
@@ -84,15 +84,15 @@ proof(rule injI)
 qed
 
 lemma swap_set_fst:
-\<open>fst ` (swap ` S) = snd ` S\<close>
+  \<open>fst ` (swap ` S) = snd ` S\<close>
   unfolding swap_def apply auto
-  apply (simp add: rev_image_eqI)
+   apply (simp add: rev_image_eqI)
   by (metis (no_types, lifting) fst_conv image_cong image_eqI pair_in_swap_image prod.swap_def)
 
 lemma swap_set_snd:
-\<open>snd ` (swap ` S) = fst ` S\<close>
+  \<open>snd ` (swap ` S) = fst ` S\<close>
   unfolding swap_def apply auto
-  apply (simp add: rev_image_eqI)
+   apply (simp add: rev_image_eqI)
   by (metis (no_types, lifting) fst_conv image_eqI snd_conv)
 
 
@@ -117,8 +117,8 @@ proof-
     have \<open>finite (swap ` S)\<close>
       using \<open>finite S\<close> by simp
     thus ?thesis
-    using big_sum_reordering_fst[where S = "swap ` S" and f = "f \<circ> swap"]
-    by blast
+      using big_sum_reordering_fst[where S = "swap ` S" and f = "f \<circ> swap"]
+      by blast
   qed
   also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(swap ` S)}. (f \<circ> swap) (u,v)))\<close>
   proof-
@@ -146,6 +146,33 @@ proof-
   finally show ?thesis by blast
 qed
 
+fun iteration::\<open>nat \<Rightarrow> 'a \<Rightarrow> ('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close> where
+  \<open>iteration 0 c f = c\<close> |
+  \<open>iteration (Suc n) c  f = f (iteration n c f)\<close>
 
+lemma decreasing_sequence_nat:
+  fixes f :: \<open>nat \<Rightarrow> nat\<close>
+  assumes \<open>\<And> n. f (Suc n) < f n\<close>
+  shows False
+proof-
+  have \<open>f n \<le> f 0 - n\<close>
+    for n
+  proof(induction n)
+    case 0
+    thus ?case
+      by simp 
+  next
+    case (Suc n)
+    thus ?case
+      by (metis (no_types, lifting) Suc_diff_le assms diff_Suc_Suc diff_is_0_eq leD le_less_trans nat_le_linear not_less_eq_eq) 
+  qed
+  hence \<open>f (f 0) \<le> 0\<close>
+    by (metis diff_self_eq_0)
+  moreover have \<open>f (Suc (f 0)) < f (f 0)\<close>
+    by (simp add: assms)
+  ultimately have \<open>f (Suc (f 0)) < 0\<close>
+    by simp
+  thus ?thesis by blast
+qed
 
 end
