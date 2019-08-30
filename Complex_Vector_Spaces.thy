@@ -1806,10 +1806,11 @@ qed
 
 \<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close>
   
-
+(* TODO: Delete. (This is already defined in theory HOL-Library.Set_Algebras as +) *)
 definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
 
+(* TODO Delete *)
 notation Minkoswki_sum (infixl "+\<^sub>m" 65)
 
 lemma subspace_plus:

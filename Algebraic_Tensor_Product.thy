@@ -124,11 +124,21 @@ type_notation
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_free (x, y)\<close>.
 
+(* TODO: I don't think we need a definition for this as it can be written concisely
+   as (\<lambda>(a,b). a \<otimes>\<^sub>a b). If we include this definition, why not include plus_of_pair,
+   minus_of_pair, and so on. (By the way, it can also be written as "case_prod (\<otimes>\<^sub>a)".)
+ *)
 definition atensor_of_pair:: \<open>'a::complex_vector \<times> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
   \<open>atensor_of_pair z = (fst z) \<otimes>\<^sub>a (snd z)\<close>
 
+(* TODO: Such an obvious fact does not deserve a special lemma.
+   (If it does, then anyway in a more generic form since it is
+   not specific to tensor, e.g., \<open>(case_prod f ` (A \<times> B) ) = {f a b| a b. a\<in>A \<and> b\<in>B}\<close>.
+   But that one if solved directly by auto.) *)
 lemma tensor_of_sets:
   \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+  (* TODO: much simpler proof:
+    unfolding atensor_of_pair_def by (auto simp: atensor_op.abs_eq) *)
 proof-
   have "(\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) \<subseteq> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
   proof
@@ -1616,6 +1626,18 @@ lemma atensor_expansion_eq_existence_implies_independence:
 lemma atensor_independent_eq_card:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
+(* TODO: The condition "card (fst ` R) = card (snd ` R)" is unexpected and does
+   not occur in the original proposition. It is an artifact of the way this is formulated
+   and probably makes things much harder (using various properties of card).
+
+   A simpler approach: use R of type list (not set).
+   Then the cardinality condition can be dropped.
+   And complex_vector.independent (fst ` R) is replaced by
+   complex_vector.independent (set (map fst R)) \<and> distinct (map fst R)
+   which is probably closer to the original statement I assume that there it talks
+   about x1...xn or something like that.
+ *)
+(* TODO: The link above needs a password! Is there a publicly available source? *)
   shows \<open>\<exists> R. finite R \<and> 
               card (fst ` R) = card (snd ` R) \<and>
               complex_vector.independent (fst ` R) \<and>
