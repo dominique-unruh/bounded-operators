@@ -176,8 +176,7 @@ proof-
 qed
 
 lemma pigeonhole_pair:
-  assumes \<open>card (fst ` S) < card (snd ` S)\<close>
-    and \<open>finite S\<close> and \<open>S \<noteq> {}\<close>
+  assumes \<open>card (fst ` S) < card (snd ` S)\<close> and \<open>finite S\<close>
   shows \<open>\<exists> u v w. (u, v) \<in> S \<and> (u, w) \<in> S \<and> v \<noteq> w\<close>
 proof-
   have \<open>\<forall>v. \<exists>u.  v\<in>snd ` S \<longrightarrow> u\<in>fst ` S \<and> (u,v) \<in> S\<close>

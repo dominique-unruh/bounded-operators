@@ -1598,12 +1598,28 @@ lemma atensor_expansion_independent_orank:
     assms by fastforce
 
 
+lemma atensor_expansion_orank_existence_eq_reduction_left:
+  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>card (fst ` S) < card (snd ` S)\<close>
+  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
+    max_complexity_pair R < max_complexity_pair S\<close>
+  sorry
+
+lemma atensor_expansion_orank_existence_eq_reduction_right:
+  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>card (fst ` S) > card (snd ` S)\<close>
+  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
+    max_complexity_pair R < max_complexity_pair S\<close>
+  sorry
+
 lemma atensor_expansion_orank_existence_eq_reduction:
   assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
     and \<open>card (fst ` S) \<noteq> card (snd ` S)\<close>
   shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
     max_complexity_pair R < max_complexity_pair S\<close>
-  sorry
+  using atensor_expansion_orank_existence_eq_reduction_left
+    atensor_expansion_orank_existence_eq_reduction_right
+    assms by fastforce
 
 lemma atensor_expansion_orank_existence_eq:
   \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> 
