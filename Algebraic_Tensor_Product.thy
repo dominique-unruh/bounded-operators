@@ -1314,6 +1314,7 @@ lemma swap_atensorI1:
   using swap_atensor_existence someI_ex
   by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
 
+(* TODO: remove "\<forall>x. \<forall> y", rules are easier to use without unnecessary quantifiers *)
 lemma swap_atensorI2:
   \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
   unfolding swap_atensor_def
@@ -1321,9 +1322,17 @@ lemma swap_atensorI2:
   by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
 
 
+(* TODO: use prod.swap instead of swap.
+   Then the proof is as simple as 
+      by (auto simp: atensor_of_pair_def o_def swap_atensorI2[rule_format] )
+ *)
 lemma swap_atensor_commute:
   \<open>swap_atensor \<circ> atensor_of_pair = atensor_of_pair \<circ> swap\<close>
 proof-
+(* TODO: This proof can be written more readably as a sequence of "also have".
+   (Avoid "\<forall>x. \<forall> y"! Use Isar constructs such as fix instead. In this case, 
+   the easiest would be to start the proof with "proof (rule ext)" instead of "proof -")
+*)
   have \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
     by (simp add: swap_atensorI2)
   hence \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = atensor_of_pair (y, x)\<close>
@@ -1343,6 +1352,12 @@ proof-
     by blast
 qed
 
+(* TODO: very confusing theorem because of the different implications of card
+   (it encodes both the fact there are no duplicates in the list S/R,
+   and the relationship between the lengths of S/R).
+
+   Can this be stated more clearly?
+ *)
 lemma atensor_reduction_left:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
     and S :: \<open>('a \<times> 'b) set\<close>

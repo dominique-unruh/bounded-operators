@@ -61,6 +61,8 @@ proof-
   finally show ?thesis by blast
 qed
 
+(* TODO: remove (prod.swap exists) *)
+term "prod.swap"
 definition swap::\<open>'a \<times> 'b \<Rightarrow> 'b \<times> 'a\<close> where
   \<open>swap z =  (snd z, fst z)\<close> for z
 
