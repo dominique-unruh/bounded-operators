@@ -1611,7 +1611,7 @@ proof -
     by blast
 qed
 
-
+(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_expansion_independent_orank:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
@@ -1622,82 +1622,24 @@ lemma atensor_expansion_independent_orank:
   using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
     assms by fastforce
 
-lemma atensor_expansion_eq_existence:
-  \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
-                      \<and> card (fst ` S) = card (snd ` S)\<close>
-  sorry
-
-lemma atensor_expansion_eq_existence_implies_independence:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close> and \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> and
-    \<open>card (fst ` R) = card (snd ` R)\<close> and 
-    \<open>card R = Inf { card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
-                      \<and> card (fst ` S) = card (snd ` S) }\<close>
-  shows \<open>complex_vector.independent (fst ` R) \<and>
-         complex_vector.independent (snd ` R)\<close>
-  sorry
-
-(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_independent_eq_card:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close>
-(* TODO: The condition "card (fst ` R) = card (snd ` R)" is unexpected and does
-   not occur in the original proposition. It is an artifact of the way this is formulated
-   and probably makes things much harder (using various properties of card).
-
-   A simpler approach: use R of type list (not set).
-   Then the cardinality condition can be dropped.
-   And complex_vector.independent (fst ` R) is replaced by
-   complex_vector.independent (set (map fst R)) \<and> distinct (map fst R)
-   which is probably closer to the original statement I assume that there it talks
-   about x1...xn or something like that.
- *)
-(* TODO: The link above needs a password! Is there a publicly available source? *)
-  shows \<open>\<exists> R. finite R \<and> 
-              card (fst ` R) = card (snd ` R) \<and>
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-proof-
-  have \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
-                      \<and> card (fst ` S) = card (snd ` S)\<close>
-    by (simp add: atensor_expansion_eq_existence)
-  hence \<open>{ card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
-                      \<and> card (fst ` S) = card (snd ` S) } \<noteq> {}\<close>
-    by blast
-  hence \<open>\<exists> R. finite R \<and> 
-              card (fst ` R) = card (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
-        card R = Inf { card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
-                      \<and> card (fst ` S) = card (snd ` S) }\<close>
-    by (smt Inf_nat_def1 mem_Collect_eq)
-  thus ?thesis 
-    using atensor_expansion_eq_existence_implies_independence assms
-    by blast
-qed
-
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:
-  fixes \<phi>::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and A::\<open>'a set\<close>
-  assumes \<open>finite A\<close> and \<open>complex_independent A\<close> and \<open>(\<Sum>a\<in>A. (\<phi> a) \<otimes>\<^sub>a a) = 0\<close> 
-  shows \<open>\<forall> a\<in>A. \<phi> a = 0\<close>
+  assumes \<open>R \<noteq> {}\<close> and \<open>finite R\<close> and \<open>complex_vector.independent (snd ` R)\<close>
+    and \<open>(\<Sum>z\<in>R. atensor_of_pair z) = 0\<close>
+  shows \<open>fst ` R = {0}\<close>
   sorry
 
 (* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
-  assumes \<open>complex_independent A\<close> and \<open>complex_independent B\<close>
-  shows \<open>complex_independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
+  shows \<open>complex_vector.independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
 proof-
   have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
    (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
     for S f
-  proof-
-    assume \<open>S \<subseteq>  atensor_of_pair ` (A \<times> B)\<close> and
-      \<open>finite S\<close> and \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close>
-    thus \<open>\<forall>s\<in>S. f s = 0\<close>
-      sorry
-  qed
+    using atensor_normal_independent
+    sorry
   hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
     using complex_vector.independent_explicit_finite_subsets by force
   moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
@@ -1705,11 +1647,6 @@ proof-
   ultimately show ?thesis 
     by simp
 qed
-
-lemma orank_def':
-  \<open>orank x = Inf { card S | S. finite S \<and>  x = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
-  sorry
-
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
