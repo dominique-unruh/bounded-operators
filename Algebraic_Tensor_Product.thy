@@ -1598,10 +1598,45 @@ lemma atensor_expansion_independent_orank:
     assms by fastforce
 
 
-lemma atensor_expansion_orank_existence_eq:
-  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) 
-\<and> card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close>
+lemma atensor_expansion_orank_existence_eq_reduction:
+  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>card (fst ` S) \<noteq> card (snd ` S)\<close>
+  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
+    max_complexity_pair R < max_complexity_pair S\<close>
   sorry
+
+lemma atensor_expansion_orank_existence_eq:
+  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> 
+  card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close>
+proof(rule classical)
+  assume \<open>\<not>(\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> 
+    card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R)\<close>
+  hence \<open>\<forall> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> orank x = max_complexity_pair R
+\<longrightarrow> card (fst ` R) \<noteq> card (snd ` R)\<close>
+    by blast
+  have \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) 
+  \<and> orank x = max_complexity_pair R\<close>
+    by (simp add: atensor_expansion_orank_existence)
+  then obtain R where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+      and \<open>orank x = max_complexity_pair R\<close>
+    by blast
+  hence \<open>card (fst ` R) \<noteq> card (snd ` R)\<close>
+    using \<open>\<nexists>R. finite R \<and> x = sum atensor_of_pair R \<and> card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close> by blast
+  from \<open>finite R\<close> \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> \<open>orank x = max_complexity_pair R\<close>
+      \<open>card (fst ` R) \<noteq> card (snd ` R)\<close>
+  have \<open>\<exists> T. finite T \<and> x = (\<Sum>z\<in>T. atensor_of_pair z) \<and>
+    max_complexity_pair T < max_complexity_pair R\<close>
+    using atensor_expansion_orank_existence_eq_reduction by blast
+  then obtain T where \<open>finite T\<close> and \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close> and
+    \<open>max_complexity_pair T < max_complexity_pair R\<close>
+    by blast
+  from \<open>finite T\<close> \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close>
+  have \<open>max_complexity_pair T \<ge> orank x\<close>
+    by (simp add: orank_zero_ineq)
+  thus ?thesis using \<open>max_complexity_pair T < max_complexity_pair R\<close>
+      \<open>orank x = max_complexity_pair R\<close>
+    by simp
+qed
 
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_independent_eq_card:
