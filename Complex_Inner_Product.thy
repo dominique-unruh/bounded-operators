@@ -309,15 +309,20 @@ proof
   qed
 qed
 
-
+(*
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+*)
 
+(*
 lemmas isCont_cinner [simp] =
   bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+*)
 
+(*
 lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+*)
 
 lemmas bounded_csemilinear_cinner_left =
   bounded_sesquilinear.bounded_csemilinear_left [OF bounded_sesquilinear_cinner]
@@ -337,11 +342,12 @@ lemmas has_derivative_cinner_right [derivative_intros] =
 lemmas has_derivative_cinner_left [derivative_intros] =
   bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
 
+(*
 lemma differentiable_cinner [simp]:
   "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
       (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
-
+*)
 
 subsection \<open>Class instances\<close>
 
@@ -687,7 +693,7 @@ proof-
         have \<open>bounded_clinear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
           by (simp add: bounded_clinear_cinner_right)
         thus ?thesis
-          by simp
+          by (simp add: bounded_linear_continuous)          
       qed
       ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
         using isCont_tendsto_compose by fastforce
@@ -1991,6 +1997,72 @@ lemma is_closed_subspace_comm:
   shows \<open>A +\<^sub>M B = B +\<^sub>M A\<close>
   by (smt Collect_cong add.commute closed_sum_def Minkoswki_sum_def)
 
+lemma cinner_isCont_left:
+ \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+proof-
+  have \<open>s \<longlonglongrightarrow> y \<Longrightarrow> ((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) \<longlonglongrightarrow> (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+    for s::\<open>nat \<Rightarrow> _\<close>
+  proof-
+    assume \<open>s \<longlonglongrightarrow> y\<close>
+    have \<open>\<exists> K. \<forall> u v. norm \<langle>u , v \<rangle> \<le> norm u * norm v * K\<close>
+      using bounded_sesquilinear.bounded bounded_sesquilinear_cinner by auto
+    then obtain K where  \<open>\<forall> u v::'a. norm \<langle>u , v\<rangle> \<le> norm u * norm v * K\<close>
+      by blast
+    hence CS: \<open>norm \<langle>u , v\<rangle> \<le> norm u * norm v * K\<close>
+      for u::'a and v::'a
+      by auto
+    have \<open>norm \<langle>s n - y , x\<rangle> \<le> norm (s n - y) * norm x * K\<close>
+      for n
+      using CS[where u1 = "s n - y" and v1 = "x"]
+      by blast
+    hence \<open>\<forall> n. cmod \<langle>s n - y, x\<rangle> \<le> norm (norm (s n - y) * norm x) * norm K\<close>
+      by (smt norm_mult real_norm_def)      
+    moreover have \<open>(\<lambda> n.  norm (s n - y) * norm x) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n.  norm (s n - y)) \<longlonglongrightarrow> 0\<close>
+        using \<open>s \<longlonglongrightarrow> y\<close>
+        by (simp add: LIM_zero_iff tendsto_norm_zero)
+      thus ?thesis
+        by (simp add: tendsto_mult_left_zero) 
+    qed
+    ultimately have \<open>(\<lambda> n. \<langle> s n - y , x \<rangle>) \<longlonglongrightarrow> 0\<close>
+      using Limits.tendsto_0_le[where g = "(\<lambda> n. \<langle> s n - y , x \<rangle>)" and f = "(\<lambda> n. norm (s n - y) * norm x)" and K = "norm K"]
+      by auto      
+    moreover have \<open>\<langle> s n - y , x \<rangle> =  \<langle> s n , x \<rangle> - \<langle> y , x \<rangle>\<close>
+      for n
+      by (simp add: cinner_diff_left)      
+    ultimately have \<open>(\<lambda> n. \<langle> s n , x \<rangle> - \<langle> y , x \<rangle>) \<longlonglongrightarrow> 0\<close>
+      by simp
+    hence \<open>(\<lambda> n. \<langle> s n , x \<rangle>) \<longlonglongrightarrow> \<langle> y , x \<rangle>\<close>
+      by (simp add: LIM_zero_iff)      
+    hence \<open>(\<lambda> n. ((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) n) \<longlonglongrightarrow> \<langle> y , x \<rangle>\<close>
+      by auto
+    hence \<open>((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) \<longlonglongrightarrow> \<langle> y , x \<rangle>\<close>
+      by blast
+    thus ?thesis by auto
+  qed
+  hence \<open>\<forall> s. (s \<longlonglongrightarrow> y) \<longrightarrow> (((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) \<longlonglongrightarrow> (\<lambda> t. \<langle> t , x \<rangle>) y)\<close>
+    by blast
+  thus ?thesis 
+    using Elementary_Topology.continuous_at_sequentially
+      [where a = "y" and f = "(\<lambda> t. \<langle> t , x \<rangle>) "]
+    by blast
+qed
+
+lemma cinner_isCont_right:
+ \<open>isCont (\<lambda> t. \<langle> x, t \<rangle>) y\<close>
+proof-
+  have \<open>(\<lambda> t. \<langle> x, t \<rangle>) = cnj \<circ> (\<lambda> t. \<langle> t, x \<rangle>)\<close>
+    by auto
+  moreover have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+    by (simp add: cinner_isCont_left)
+  moreover have \<open>isCont cnj ((\<lambda> t. \<langle> t , x \<rangle>) y)\<close>
+    using Complex.isCont_cnj[where g = "id" and a = "\<langle>y, x\<rangle>"]
+    by auto
+  ultimately show ?thesis
+    by (metis continuous_at_compose) 
+qed
+
 lemma OrthoClosed:
   fixes A ::"('a::chilbert_space) set"
   shows \<open>closed (orthogonal_complement A)\<close>                                                
@@ -2002,7 +2074,7 @@ proof-
       by (simp add: orthogonal_complement_D2)
     assume \<open>x \<longlonglongrightarrow> l\<close>
     moreover have \<open>isCont (\<lambda> t. \<langle> y , t \<rangle>) l\<close> for y
-      by simp
+      using cinner_isCont_right by blast
     ultimately have \<open>(\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close> for y 
       by (simp add: isCont_tendsto_compose)
     hence \<open>\<forall> y \<in> A. (\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close>
@@ -2034,7 +2106,7 @@ proof-
       then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close> 
         by (meson closure_sequential)
       have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
-        by simp
+        using cinner_isCont_left by blast
       hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
         using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
         by fastforce
@@ -3356,11 +3428,153 @@ lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
-  by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
+  proof
+  show "\<langle>a + a', A b\<rangle> = \<langle>a, A b\<rangle> + \<langle>a', A b\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'b
+      and a' :: 'b
+      and b :: 'a
+    using that
+    by (simp add: cinner_left_distrib) 
+  show "\<langle>a, A (b + b')\<rangle> = \<langle>a, A b\<rangle> + \<langle>a, A b'\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'b
+      and b :: 'a
+      and b' :: 'a
+  proof-
+    have \<open>A (b + b') = A b + A b'\<close>
+      using that unfolding bounded_clinear_def clinear_def
+      using bounded_clinear_def complex_vector.linear_add that by blast
+    thus ?thesis
+      by (simp add: cinner_right_distrib) 
+  qed
+  show "\<langle>r *\<^sub>C a, A b\<rangle> = cnj r *\<^sub>C \<langle>a, A b\<rangle>"
+    if "bounded_clinear A"
+    for r :: complex
+      and a :: 'b
+      and b :: 'a
+    by simp
+  show "\<langle>a, A (r *\<^sub>C b)\<rangle> = r *\<^sub>C \<langle>a, A b\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'b
+      and r :: complex
+      and b :: 'a
+  proof-
+    have \<open>A (r *\<^sub>C b) = r *\<^sub>C (A b)\<close>
+      using that unfolding bounded_clinear_def clinear_def
+      by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale that)
+    thus ?thesis
+      by simp
+  qed
+  show "\<exists>K. \<forall>a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm b * K"
+    if "bounded_clinear A"
+  proof-
+    have \<open>\<exists> K1. \<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1 \<and> K1 \<ge> 0\<close>
+    proof-
+      have \<open>\<exists> K1. \<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
+        by (metis complex_inner_class.norm_cauchy_schwarz linordered_field_class.sign_simps(24) vector_space_over_itself.scale_one)
+      then obtain K1 where \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
+        by blast
+      hence \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * (abs K1)\<close>
+        by (smt mult_nonneg_nonneg mult_nonneg_nonpos norm_ge_zero)
+      thus ?thesis
+        using abs_ge_zero by blast        
+    qed
+    then obtain K1 where \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close> and \<open>K1 \<ge> 0\<close>
+      by blast
+    have \<open>\<exists> K2. \<forall> b. norm (A b) \<le> norm b * K2 \<and> K2 \<ge> 0\<close>
+      by (metis (mono_tags, hide_lams) bounded_clinear.bounded mult_nonneg_nonpos norm_ge_zero order.trans that zero_le_mult_iff)      
+    then obtain K2 where \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> and \<open>K2 \<ge> 0\<close>
+      by blast
+    have \<open>norm \<langle>a, A b\<rangle> \<le> norm a * norm b * (K2 * K1)\<close>
+      for a b
+    proof-
+      have \<open>norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
+        by (simp add: \<open>\<forall>a b. cmod \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>)
+      also have  \<open>\<dots> \<le> norm a * norm b * K2 * K1\<close>
+        using \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> \<open>K2 \<ge> 0\<close> \<open>K1 \<ge> 0\<close>
+        by (metis mult_right_mono norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale)
+      finally show ?thesis by simp
+    qed
+    thus ?thesis
+      by blast
+  qed
+qed
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
-  by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
+  proof
+  show "\<langle>A (a + a'), b\<rangle> = \<langle>A a, b\<rangle> + \<langle>A a', b\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'a
+      and a' :: 'a
+      and b :: 'b
+  proof-
+    have \<open>A (a + a') = A a + A a'\<close>
+      using that unfolding bounded_clinear_def clinear_def
+      using bounded_clinear_def complex_vector.linear_add that by blast
+    thus ?thesis
+      using cinner_left_distrib by auto 
+  qed
+  show "\<langle>A a, b + b'\<rangle> = \<langle>A a, b\<rangle> + \<langle>A a, b'\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'a
+      and b :: 'b
+      and b' :: 'b
+    by (simp add: cinner_right_distrib)    
+  show "\<langle>A (r *\<^sub>C a), b\<rangle> = cnj r *\<^sub>C \<langle>A a, b\<rangle>"
+    if "bounded_clinear A"
+    for r :: complex
+      and a :: 'a
+      and b :: 'b
+  proof-
+    have \<open>A (r *\<^sub>C a) = r *\<^sub>C (A a)\<close>
+      using that unfolding bounded_clinear_def
+      using complex_vector.linear_scale by auto 
+    thus ?thesis
+      by simp 
+  qed
+  show "\<langle>A a, r *\<^sub>C b\<rangle> = r *\<^sub>C \<langle>A a, b\<rangle>"
+    if "bounded_clinear A"
+    for a :: 'a
+      and r :: complex
+      and b :: 'b
+    by simp    
+  show "\<exists>K. \<forall>a b. norm \<langle>A a, b\<rangle> \<le> norm a * norm b * K"
+    if "bounded_clinear A"
+  proof-
+    have \<open>\<exists> K1. \<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1 \<and> K1 \<ge> 0\<close>
+    proof-
+      have \<open>\<exists> K1. \<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm  b * K1\<close>
+        by (metis complex_inner_class.norm_cauchy_schwarz linordered_field_class.sign_simps(24) vector_space_over_itself.scale_one)
+      then obtain K1 where \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>
+        by blast
+      hence \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * (abs K1)\<close>
+        by (smt mult_nonneg_nonneg mult_nonneg_nonpos norm_ge_zero)
+      thus ?thesis
+        using abs_ge_zero by blast        
+    qed
+    then obtain K1 where \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close> and \<open>K1 \<ge> 0\<close>
+      by blast
+    have \<open>\<exists> K2. \<forall> b. norm (A b) \<le> norm b * K2 \<and> K2 \<ge> 0\<close>
+      by (metis (mono_tags, hide_lams) bounded_clinear.bounded mult_nonneg_nonpos norm_ge_zero order.trans that zero_le_mult_iff)      
+    then obtain K2 where \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> and \<open>K2 \<ge> 0\<close>
+      by blast
+    have \<open>norm \<langle>A a, b\<rangle> \<le> norm a * norm b * (K2 * K1)\<close>
+      for a b
+    proof-
+      have \<open>norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>
+        by (simp add: \<open>\<forall>a b. cmod \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>)
+      also have  \<open>\<dots> \<le> norm a * norm b * K2 * K1\<close>
+        using \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> \<open>K2 \<ge> 0\<close> \<open>K1 \<ge> 0\<close>
+        by (metis mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_left_commute)
+      finally show ?thesis by simp
+    qed
+    thus ?thesis
+      by blast
+  qed
+    
+qed
 
 section \<open>Unsorted\<close>
 
