@@ -1597,74 +1597,47 @@ lemma atensor_expansion_independent_orank:
   using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
     assms by fastforce
 
-
-lemma atensor_expansion_orank_existence_eq_reduction_left:
-  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
-    and \<open>card (fst ` S) < card (snd ` S)\<close>
-  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
-    max_complexity_pair R < max_complexity_pair S\<close>
+lemma atensor_expansion_eq_existence:
+  \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
+                      \<and> card (fst ` S) = card (snd ` S)\<close>
   sorry
 
-lemma atensor_expansion_orank_existence_eq_reduction_right:
-  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
-    and \<open>card (fst ` S) > card (snd ` S)\<close>
-  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
-    max_complexity_pair R < max_complexity_pair S\<close>
+lemma atensor_expansion_eq_existence_implies_independence:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  assumes \<open>x \<noteq> 0\<close> and \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> and
+    \<open>card (fst ` R) = card (snd ` R)\<close> and 
+    \<open>card R = Inf { card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
+                      \<and> card (fst ` S) = card (snd ` S) }\<close>
+  shows \<open>complex_vector.independent (fst ` R) \<and>
+         complex_vector.independent (snd ` R)\<close>
   sorry
-
-lemma atensor_expansion_orank_existence_eq_reduction:
-  assumes  \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
-    and \<open>card (fst ` S) \<noteq> card (snd ` S)\<close>
-  shows \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
-    max_complexity_pair R < max_complexity_pair S\<close>
-  using atensor_expansion_orank_existence_eq_reduction_left
-    atensor_expansion_orank_existence_eq_reduction_right
-    assms by fastforce
-
-lemma atensor_expansion_orank_existence_eq:
-  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> 
-  card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> 
-    card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R)\<close>
-  hence \<open>\<forall> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> orank x = max_complexity_pair R
-\<longrightarrow> card (fst ` R) \<noteq> card (snd ` R)\<close>
-    by blast
-  have \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) 
-  \<and> orank x = max_complexity_pair R\<close>
-    by (simp add: atensor_expansion_orank_existence)
-  then obtain R where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-      and \<open>orank x = max_complexity_pair R\<close>
-    by blast
-  hence \<open>card (fst ` R) \<noteq> card (snd ` R)\<close>
-    using \<open>\<nexists>R. finite R \<and> x = sum atensor_of_pair R \<and> card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close> by blast
-  from \<open>finite R\<close> \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> \<open>orank x = max_complexity_pair R\<close>
-      \<open>card (fst ` R) \<noteq> card (snd ` R)\<close>
-  have \<open>\<exists> T. finite T \<and> x = (\<Sum>z\<in>T. atensor_of_pair z) \<and>
-    max_complexity_pair T < max_complexity_pair R\<close>
-    using atensor_expansion_orank_existence_eq_reduction by blast
-  then obtain T where \<open>finite T\<close> and \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close> and
-    \<open>max_complexity_pair T < max_complexity_pair R\<close>
-    by blast
-  from \<open>finite T\<close> \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close>
-  have \<open>max_complexity_pair T \<ge> orank x\<close>
-    by (simp add: orank_zero_ineq)
-  thus ?thesis using \<open>max_complexity_pair T < max_complexity_pair R\<close>
-      \<open>orank x = max_complexity_pair R\<close>
-    by simp
-qed
 
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_independent_eq_card:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
+  shows \<open>\<exists> R. finite R \<and> 
               card (fst ` R) = card (snd ` R) \<and>
               complex_vector.independent (fst ` R) \<and>
               complex_vector.independent (snd ` R) \<and>
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-  using atensor_expansion_orank_existence_eq atensor_expansion_orank_implies_independent
-  assms by fastforce
+proof-
+  have \<open>\<exists> S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
+                      \<and> card (fst ` S) = card (snd ` S)\<close>
+    by (simp add: atensor_expansion_eq_existence)
+  hence \<open>{ card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
+                      \<and> card (fst ` S) = card (snd ` S) } \<noteq> {}\<close>
+    by blast
+  hence \<open>\<exists> R. finite R \<and> 
+              card (fst ` R) = card (snd ` R) \<and>
+              x = (\<Sum>z\<in>R. atensor_of_pair z) \<and>
+        card R = Inf { card S|S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)  
+                      \<and> card (fst ` S) = card (snd ` S) }\<close>
+    by (smt Inf_nat_def1 mem_Collect_eq)
+  thus ?thesis 
+    using atensor_expansion_eq_existence_implies_independence assms
+    by blast
+qed
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:
