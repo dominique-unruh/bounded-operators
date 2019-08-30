@@ -1543,121 +1543,17 @@ proof-
     by (metis (no_types, lifting) cInf_eq_minimum equals0D nonempty_set_star_has_least_lemma)
 qed
 
-lemma atensor_expansion_independent:
+lemma atensor_expansion_orank_implies_independent:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> R. finite R \<and>
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  assumes \<open>x \<noteq> 0\<close> and \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> and
+    \<open>orank x = max_complexity_pair R\<close>
+  shows \<open>complex_vector.independent (fst ` R) \<and>
+         complex_vector.independent (snd ` R)\<close>
 proof(rule classical)
-  assume \<open>\<not>(\<exists> R. finite R \<and> complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z))\<close>
-  hence \<open>\<forall> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<longrightarrow> 
-              complex_vector.dependent (fst ` R) \<or>
-              complex_vector.dependent (snd ` R)\<close>
-    by blast
-  have \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-    using \<open>x \<noteq> 0\<close> atensor_expansion_existence by blast 
-  then obtain R where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-    by blast
-  have \<open>finite A \<Longrightarrow> x = (\<Sum>z\<in>A. atensor_of_pair z) \<Longrightarrow>
-  \<exists> B. finite B \<and> x = (\<Sum>z\<in>B. atensor_of_pair z) \<and>
-     max_complexity_pair B < max_complexity_pair A\<close>
-    for A
-  proof-
-    assume \<open>finite A\<close> and \<open>x = (\<Sum>z\<in>A. atensor_of_pair z)\<close>
-    hence \<open>complex_vector.dependent (fst ` R) \<or>
-              complex_vector.dependent (snd ` R)\<close>
-      using \<open>\<nexists>R. finite R \<and> complex_independent (fst ` R) \<and> complex_independent (snd ` R) \<and> x = sum atensor_of_pair R\<close> \<open>finite R\<close> \<open>x = sum atensor_of_pair R\<close> by blast
-    thus ?thesis
-      by (metis \<open>\<nexists>R. finite R \<and> complex_independent (fst ` R) \<and> complex_independent (snd ` R) \<and> x = sum atensor_of_pair R\<close> \<open>x = sum atensor_of_pair A\<close> assms atensor_reduction sum.infinite)
-  qed
-  hence \<open>\<forall> A. (finite A \<and> x = (\<Sum>z\<in>A. atensor_of_pair z)) \<longrightarrow>
-  (\<exists> B. finite B \<and> x = (\<Sum>z\<in>B. atensor_of_pair z) \<and>
-     max_complexity_pair B < max_complexity_pair A)\<close>
-    by blast
-  hence \<open>\<forall> A. \<exists> B. (finite A \<and> x = (\<Sum>z\<in>A. atensor_of_pair z)) \<longrightarrow>
-  (finite B \<and> x = (\<Sum>z\<in>B. atensor_of_pair z) \<and>
-     max_complexity_pair B < max_complexity_pair A)\<close>
-    by blast
-  hence \<open>\<exists> T. \<forall> A. (finite A \<and> x = (\<Sum>z\<in>A. atensor_of_pair z)) \<longrightarrow>
-  (finite (T A)  \<and> x = (\<Sum>z\<in>T A. atensor_of_pair z) \<and>
-     max_complexity_pair (T A) < max_complexity_pair A)\<close>
-    by metis
-  then obtain T where \<open>\<forall> A. (finite A \<and> x = (\<Sum>z\<in>A. atensor_of_pair z))
-     \<longrightarrow> (finite (T A) \<and> x = (\<Sum>z\<in>T A. atensor_of_pair z) \<and>
-     max_complexity_pair (T A) < max_complexity_pair A)\<close>
-    by blast
-  define F where \<open>F n = iteration n R T\<close> for n
-  have \<open>finite (F n) \<and> x = (\<Sum>z\<in>F n. atensor_of_pair z)\<close>
-    for n
-  proof (induction n)
-    show "finite (F 0) \<and> x = sum atensor_of_pair (F 0)"
-      by (simp add: \<open>F \<equiv> \<lambda>n. iteration n R T\<close> \<open>finite R\<close> \<open>x = sum atensor_of_pair R\<close>)
-    show "finite (F (Suc n)) \<and> x = sum atensor_of_pair (F (Suc n))"
-      if "finite (F n) \<and> x = sum atensor_of_pair (F n)"
-      for n :: nat
-      using that
-      using \<open>F \<equiv> \<lambda>n. iteration n R T\<close> \<open>\<forall>A. finite A \<and> x = sum atensor_of_pair A \<longrightarrow> finite (T A) \<and> x = sum atensor_of_pair (T A) \<and> max_complexity_pair (T A) < max_complexity_pair A\<close> by auto 
-  qed
-  define f where \<open>f n = max_complexity_pair (F n)\<close> for n
-  have \<open>f (Suc n) < f n\<close>
-    for n
-  proof-
-    have \<open>finite (F n) \<and> x = (\<Sum>z\<in>F n. atensor_of_pair z)\<close>
-      by (simp add: \<open>\<And>n. finite (F n) \<and> x = sum atensor_of_pair (F n)\<close>)
-    thus ?thesis
-      using \<open>\<forall> A. (finite A \<and> x = (\<Sum>z\<in>A. atensor_of_pair z))
-     \<longrightarrow> (finite (T A)  \<and> x = (\<Sum>z\<in>T A. atensor_of_pair z) \<and>
-     max_complexity_pair (T A) < max_complexity_pair A)\<close>
-      using \<open>F \<equiv> \<lambda>n. iteration n R T\<close> \<open>f \<equiv> \<lambda>n. max_complexity_pair (F n)\<close>
-      by auto 
-  qed
-  thus ?thesis using decreasing_sequence_nat by blast
-qed
-
-lemma atensor_expansion_independent_orank:
-  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close>
-  shows \<open>\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z))\<close>
-  hence \<open>\<forall> R. finite R \<and> 
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z) \<longrightarrow> orank x \<noteq> max_complexity_pair R\<close>
-    by blast
-  hence \<open>\<forall> R. finite R \<and> 
-              complex_vector.independent (fst ` R) \<and>
-              complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z) \<longrightarrow> max_complexity_pair R > orank x\<close>
-    by (simp add: orank_zero_ineq order.not_eq_order_implies_strict)
-  have \<open>{card S | S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)} \<noteq> {}\<close>
-    using orank_existence by blast
-  hence \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> orank x = max_complexity_pair R\<close>
-  proof -
-    have "\<exists>n P. n = max_complexity_pair P \<and> finite P \<and> x = sum atensor_of_pair P"
-      using \<open>{card S |S. finite S \<and> x = sum atensor_of_pair S} \<noteq> {}\<close> by blast
-    then have "{max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<noteq> {}"
-      by blast
-    then have "Inf {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<in> {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P}"
-      using Inf_nat_def1 by presburger
-    then show ?thesis
-      unfolding orank_def
-      by blast
-  qed
-  then obtain R where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> and \<open>orank x = max_complexity_pair R\<close>
-    by blast
-  hence \<open>complex_vector.dependent (fst ` R) \<or> complex_vector.dependent (snd ` R)\<close>
-    using \<open>\<nexists>R. finite R \<and> orank x = max_complexity_pair R \<and> complex_independent (fst ` R) \<and> complex_independent (snd ` R) \<and> x = sum atensor_of_pair R\<close> 
+  assume \<open>\<not>(complex_vector.independent (fst ` R) \<and>
+         complex_vector.independent (snd ` R))\<close>
+  hence \<open>complex_vector.dependent (fst ` R) \<or> 
+         complex_vector.dependent (snd ` R)\<close>
     by blast
   hence \<open>\<exists> T. max_complexity_pair T < max_complexity_pair R \<and> x = (\<Sum>z\<in>T. atensor_of_pair z)\<close>
     using \<open>finite R\<close>  \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> 
@@ -1676,6 +1572,37 @@ proof(rule classical)
       \<open>orank x = max_complexity_pair R\<close> by simp
 qed
 
+lemma atensor_expansion_orank_existence:
+  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> orank x = max_complexity_pair R\<close>
+proof -
+  have "\<exists>n P. n = max_complexity_pair P \<and> finite P \<and> x = sum atensor_of_pair P"
+    by (simp add: atensor_expansion_existence)
+  hence "{max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<noteq> {}"
+    by blast
+  hence "Inf {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<in> {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P}"
+    using Inf_nat_def1 by presburger
+  thus ?thesis
+    unfolding orank_def
+    by blast
+qed
+
+
+lemma atensor_expansion_independent_orank:
+  fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
+  assumes \<open>x \<noteq> 0\<close>
+  shows \<open>\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
+              complex_vector.independent (fst ` R) \<and>
+              complex_vector.independent (snd ` R) \<and>
+              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
+    assms by fastforce
+
+
+lemma atensor_expansion_orank_existence_eq:
+  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) 
+\<and> card (fst ` R) = card (snd ` R) \<and> orank x = max_complexity_pair R\<close>
+  sorry
+
 (* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_independent_eq_card:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
@@ -1685,7 +1612,8 @@ lemma atensor_independent_eq_card:
               complex_vector.independent (fst ` R) \<and>
               complex_vector.independent (snd ` R) \<and>
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
-  sorry
+  using atensor_expansion_orank_existence_eq atensor_expansion_orank_implies_independent
+  assms by fastforce
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:
@@ -1716,8 +1644,6 @@ proof-
   ultimately show ?thesis 
     by simp
 qed
-
-
 
 lemma orank_def':
   \<open>orank x = Inf { card S | S. finite S \<and>  x = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
