@@ -1290,21 +1290,6 @@ locale bounded_sesquilinear =
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
-(* TODO: a sesquilinear form is not bilinear
-sublocale bounded_cbilinear
-  apply standard
-  using [[show_sorts]]
-  unfolding scaleR_scaleC
-      apply (fact add_left)
-     apply (fact add_right)
-    apply (simp add: scaleC_left)
-   apply (fact scaleC_right)
-  by (fact bounded)
-
-lemma bounded_bilinear: "bounded_bilinear prod" 
-  by (fact bounded_bilinear_axioms)
-*)
-
 lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
   apply (insert bounded)
   apply safe
@@ -1321,7 +1306,19 @@ lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
    apply (rule scaleC_right)
   by (simp add: ac_simps)
 
+
+(* TODO: This should be correct now *)
+lemma comp1:
+  assumes "bounded_csemilinear g"
+  shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
+  by (cheat comp1)
+
+(* TODO: This should be correct now *)
+lemma comp: "bounded_csemilinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
+  by (cheat comp)
+
 (* TODO: a sesquilinear form is not bilinear
+TODO: remove this comment
 lemma comp1:
   assumes "bounded_clinear g"
   shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
@@ -1350,6 +1347,7 @@ qed
 *)
 
 (* TODO: a sesquilinear form is not bilinear
+TODO: remove this comment
 lemma comp2:
   assumes "bounded_clinear g"
   shows "bounded_sesquilinear (\<lambda>x y. prod x (g y))"
@@ -1378,6 +1376,8 @@ qed
 *)
 
 (* TODO: a sesquilinear form is not bilinear
+TODO: remove this comment
+
 lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using bounded_sesquilinear.comp2 comp1 by auto
 *)
