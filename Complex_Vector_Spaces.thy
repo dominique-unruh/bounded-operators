@@ -2360,5 +2360,160 @@ proof-
   qed
 qed
 
+definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
+  where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
+
+lemma cbilinear_from_product_clinear:
+  fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g :: \<open>'b::complex_vector \<Rightarrow> complex\<close>
+  assumes \<open>\<And> x y. h x y = (g' x)*(g y)\<close> and \<open>clinear g\<close> and \<open>clinear g'\<close>
+  shows \<open>cbilinear h\<close>
+  unfolding cbilinear_def proof
+  show "\<forall>y. clinear (\<lambda>x. h x y)"
+  proof
+    show "clinear (\<lambda>x. h x y)"
+      for y :: 'b
+      unfolding clinear_def proof
+      show "h (b1 + b2) y = h b1 y + h b2 y"
+        for b1 :: 'a
+          and b2 :: 'a
+      proof-
+        have \<open>h (b1 + b2) y = g' (b1 + b2) * g y\<close>
+          using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
+          by auto
+        also have \<open>\<dots> = (g' b1 + g' b2) * g y\<close>
+          using \<open>clinear g'\<close>
+          unfolding clinear_def
+          by (simp add: assms(3) complex_vector.linear_add)
+        also have \<open>\<dots> = g' b1 * g y + g' b2 * g y\<close>
+          by (simp add: ring_class.ring_distribs(2))
+        also have \<open>\<dots> = h b1 y + h b2 y\<close>
+          using assms(1) by auto          
+        finally show ?thesis by blast
+      qed
+      show "h (r *\<^sub>C b) y = r *\<^sub>C h b y"
+        for r :: complex
+          and b :: 'a
+      proof-
+        have \<open>h (r *\<^sub>C b) y = g' (r *\<^sub>C b) * g y\<close>
+          by (simp add: assms(1))
+        also have \<open>\<dots> = r *\<^sub>C (g' b * g y)\<close>
+          by (simp add: assms(3) complex_vector.linear_scale)
+        also have \<open>\<dots> = r *\<^sub>C (h b y)\<close>
+          by (simp add: assms(1))          
+        finally show ?thesis by blast
+      qed
+    qed
+  qed
+  show "\<forall>x. clinear (h x)"
+    unfolding clinear_def proof
+    show "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) (h x)"
+      for x :: 'a
+    proof
+      show "h x (b1 + b2) = h x b1 + h x b2"
+        for b1 :: 'b
+          and b2 :: 'b
+      proof-
+        have \<open>h x (b1 + b2)  = g' x * g (b1 + b2)\<close>
+          using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
+          by auto
+        also have \<open>\<dots> = g' x * (g b1 + g b2)\<close>
+          using \<open>clinear g'\<close>
+          unfolding clinear_def
+          by (simp add: assms(2) complex_vector.linear_add)
+        also have \<open>\<dots> = g' x * g b1 + g' x * g b2\<close>
+          by (simp add: ring_class.ring_distribs(1))
+        also have \<open>\<dots> = h x b1 + h x b2\<close>
+          using assms(1) by auto          
+        finally show ?thesis by blast
+      qed
+
+      show "h x (r *\<^sub>C b) = r *\<^sub>C h x b"
+        for r :: complex
+          and b :: 'b
+      proof-
+        have \<open>h x (r *\<^sub>C b) =  g' x * g (r *\<^sub>C b)\<close>
+          by (simp add: assms(1))
+        also have \<open>\<dots> = r *\<^sub>C (g' x * g b)\<close>
+          by (simp add: assms(2) complex_vector.linear_scale)
+        also have \<open>\<dots> = r *\<^sub>C (h x b)\<close>
+          by (simp add: assms(1))          
+        finally show ?thesis by blast
+      qed
+    qed
+  qed
+qed
+
+lemma bilinear_Kronecker_delta:
+  fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
+    and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
+  shows \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0)\<close>
+proof-
+  define f where \<open>f x = (if x = v then (1::complex) else 0)\<close> for x
+  have \<open>\<exists>g. clinear g \<and> (\<forall>x\<in>B. g x = f x)\<close>
+    using \<open>complex_independent B\<close> complex_vector.linear_independent_extend by blast
+  then obtain g where \<open>clinear g\<close> and \<open>\<forall>x\<in>B. g x = f x\<close>
+    by blast
+  define f' where \<open>f' x = (if x = u then (1::complex) else 0)\<close> for x
+  hence \<open>\<exists>g'. clinear g' \<and> (\<forall>x\<in>A. g' x = f' x)\<close>
+    by (simp add: \<open>complex_independent A\<close> complex_vector.linear_independent_extend)
+  then obtain g' where \<open>clinear g'\<close> and \<open>\<forall>x\<in>A. g' x = f' x\<close>
+    by blast
+  define h where \<open>h x y = (g' x)*(g y)\<close> for x y
+  have \<open>cbilinear h\<close>
+    by (simp add: \<open>clinear g'\<close> \<open>clinear g\<close> cbilinear_from_product_clinear h_def)
+  moreover have \<open>h u v = 1\<close>
+  proof-
+    have \<open>g' u = 1\<close>
+    proof-
+      have \<open>g' u = f' u\<close>
+        using \<open>u \<in> A\<close>
+        by (simp add: \<open>\<forall>x\<in>A. g' x = f' x\<close>)
+      also have \<open>\<dots> = 1\<close>
+        by (simp add: f'_def)
+      finally show ?thesis by blast
+    qed
+    moreover have \<open>g v = 1\<close>
+    proof-
+      have \<open>g v = f v\<close>
+        using \<open>v \<in> B\<close>
+        by (simp add: \<open>\<forall>x\<in>B. g x = f x\<close>)
+      also have \<open>\<dots> = 1\<close>
+        by (simp add: f_def)
+      finally show ?thesis by blast
+    qed
+    ultimately show ?thesis unfolding h_def by auto
+  qed
+  moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> (x,y) \<noteq> (u,v) \<Longrightarrow> h x y = 0\<close>
+    for x y
+  proof-
+    assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>(x,y) \<noteq> (u,v)\<close>
+    from \<open>(x,y) \<noteq> (u,v)\<close>
+    have \<open>x \<noteq> u \<or> y \<noteq> v\<close>
+      by simp
+    moreover have \<open>x \<noteq> u \<Longrightarrow> h x y = 0\<close>
+    proof-
+      assume \<open>x \<noteq> u\<close>
+      hence \<open>g' x = 0\<close>
+        by (simp add: \<open>\<forall>x\<in>A. g' x = f' x\<close> \<open>x \<in> A\<close> f'_def)
+      thus ?thesis
+        by (simp add: \<open>h \<equiv> \<lambda>x y. g' x * g y\<close>) 
+    qed
+    moreover have \<open>y \<noteq> v \<Longrightarrow> h x y = 0\<close>
+    proof-
+      assume \<open>y \<noteq> v\<close>
+      hence \<open>g y = 0\<close>
+        using \<open>\<forall>x\<in>B. g x = f x\<close> \<open>y \<in> B\<close> f_def by auto
+      thus ?thesis
+        by (simp add: \<open>h \<equiv> \<lambda>x y. g' x * g y\<close>) 
+    qed
+    ultimately show ?thesis by blast
+  qed
+  ultimately show ?thesis 
+    by blast
+qed
+
+
 
 end

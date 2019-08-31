@@ -970,8 +970,6 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
-  where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
 text\<open>Universal property of the tensor product. See chapter XVI in @{cite lang2004algebra}\<close>
 lemma atensor_universal_property:
@@ -1329,7 +1327,7 @@ lemma swap_atensorI2:
 lemma swap_atensor_commute:
   \<open>swap_atensor \<circ> atensor_of_pair = atensor_of_pair \<circ> swap\<close>
 proof-
-(* TODO: This proof can be written more readably as a sequence of "also have".
+  (* TODO: This proof can be written more readably as a sequence of "also have".
    (Avoid "\<forall>x. \<forall> y"! Use Isar constructs such as fix instead. In this case, 
    the easiest would be to start the proof with "proof (rule ext)" instead of "proof -")
 *)
@@ -1622,11 +1620,50 @@ lemma atensor_expansion_independent_orank:
   using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
     assms by fastforce
 
+lemma tensor_Kronecker_delta:
+  fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
+    and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
+  shows \<open>\<exists> H:: 'a \<otimes>\<^sub>a 'b \<Rightarrow>complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0)\<close>
+proof-
+  have \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0)\<close>
+    using assms(1) assms(2) assms(3) assms(4) bilinear_Kronecker_delta by blast
+  then obtain h::\<open>_\<Rightarrow>_\<Rightarrow>complex\<close> where \<open>cbilinear h\<close> and \<open>h u v = 1\<close> and
+    \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0\<close>
+    by blast
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+      using  atensor_universal_property[where h = "h"]
+      by blast
+    then obtain H where \<open>clinear H\<close> and \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>
+      by blast
+    have \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
+      using \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close> \<open>h u v = 1\<close> by auto
+    moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<Longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+      for x y
+    proof-
+      assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
+      from  \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
+      have \<open>(x,y) \<noteq> (u,v)\<close>
+        by blast
+      hence \<open>h x y = 0\<close>
+        by (simp add: \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x, y) \<noteq> (u, v) \<longrightarrow> h x y = 0\<close> \<open>x \<in> A\<close> \<open>y \<in> B\<close>)
+      moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+        by (simp add: \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>)
+      ultimately show \<open>H (x \<otimes>\<^sub>a y) = 0\<close> by simp
+    qed
+    ultimately show ?thesis
+      using \<open>clinear H\<close> by blast 
+qed
+
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent:
-  assumes \<open>R \<noteq> {}\<close> and \<open>finite R\<close> and \<open>complex_vector.independent (snd ` R)\<close>
-    and \<open>(\<Sum>z\<in>R. atensor_of_pair z) = 0\<close>
+  assumes \<open>R \<noteq> {}\<close> and \<open>finite R\<close>
+    and \<open>complex_vector.independent (snd ` R)\<close>
+    and \<open>(\<Sum>z\<in>R. atensor_of_pair z) = 0\<close> 
   shows \<open>fst ` R = {0}\<close>
+  using tensor_Kronecker_delta
   sorry
 
 (* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
@@ -1638,7 +1675,6 @@ proof-
   have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
    (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
     for S f
-    using atensor_normal_independent
     sorry
   hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
     using complex_vector.independent_explicit_finite_subsets by force
