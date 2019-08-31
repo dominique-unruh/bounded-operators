@@ -1737,15 +1737,91 @@ proof-
     by simp
 qed
 
-(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_normal_independent:
-  assumes \<open>R \<noteq> {}\<close> and \<open>finite R\<close>
-    and \<open>complex_vector.independent (snd ` R)\<close>
-    and \<open>(\<Sum>z\<in>R. atensor_of_pair z) = 0\<close> 
-  shows \<open>fst ` R = {0}\<close>
-  using tensor_Kronecker_delta
+
+(* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
+lemma tensor_eq_independent1:
+  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   sorry
 
+lemma tensor_eq_independent2:
+  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  shows \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 \<Longrightarrow> v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
+  sorry
+
+lemma tensor_eq_independent_iff:
+  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  shows \<open>(v\<^sub>1 = 0 \<and> v\<^sub>2 = 0) \<longleftrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
+  using tensor_eq_independent1 tensor_eq_independent2
+    assms
+  by fastforce 
+
+(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_normal_independent_fst:
+  fixes \<phi>::\<open>'b::complex_vector \<Rightarrow> 'a::complex_vector\<close>
+    and  B::\<open>'b set\<close>
+  assumes \<open>B \<noteq> {}\<close> and \<open>finite B\<close>
+    and \<open>complex_vector.independent B\<close>
+    and \<open>(\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b) = 0\<close>
+    and \<open>v \<in> B\<close>
+  shows \<open>\<phi> v = 0\<close>
+proof(rule classical)
+  assume \<open>\<not>(\<phi> v = 0)\<close>
+  hence \<open>\<phi> v \<noteq> 0\<close>
+    by blast
+  define u where \<open>u = \<phi> v\<close>
+  have \<open>u \<noteq> 0\<close>
+    using \<open>\<phi> v \<noteq> 0\<close> unfolding u_def 
+    by blast
+  define A where \<open>A = complex_vector.extend_basis {u}\<close>
+  have \<open>u \<in> A\<close>
+    using A_def \<open>u \<noteq> 0\<close> complex_vector.dependent_single complex_vector.extend_basis_superset 
+    by blast
+  have \<open>complex_vector.independent A\<close>
+    using \<open>u \<noteq> 0\<close> unfolding A_def
+    by (simp add: complex_vector.independent_extend_basis)
+  hence \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0)\<close>
+    using \<open>complex_vector.independent B\<close> tensor_Kronecker_delta
+      \<open>u \<in> A\<close> \<open>v \<in> B\<close>
+    by blast
+  then obtain H::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where \<open>clinear H\<close> and
+    \<open>H (u \<otimes>\<^sub>a v) = 1\<close> and \<open>\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+    by blast
+  have \<open>H (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b) = (\<Sum>b\<in>B. H ((\<phi> b) \<otimes>\<^sub>a b))\<close>
+    using \<open>clinear H\<close> complex_vector.linear_sum by auto
+  also have \<open>\<dots> = H ((\<phi> v) \<otimes>\<^sub>a v) + (\<Sum>b\<in>B-{v}. H ((\<phi> b) \<otimes>\<^sub>a b))\<close>
+    using \<open>v \<in> B\<close>
+    by (meson assms(2) sum.remove)
+  also have \<open>\<dots> = H ((\<phi> v) \<otimes>\<^sub>a v)\<close>
+  proof-
+    have \<open>b\<in>B-{v} \<Longrightarrow> H ((\<phi> b) \<otimes>\<^sub>a b) = 0\<close>
+      for b
+    proof-
+      assume \<open>b\<in>B-{v}\<close>
+      hence \<open>b \<in> B\<close>
+        by blast
+      have \<open>b \<noteq> v\<close>
+        using \<open>b\<in>B-{v}\<close> by blast
+      have  \<open>complex_vector.independent {b, v}\<close>
+        by (smt \<open>b \<in> B\<close> assms(3) assms(5) complex_vector.dependent_def complex_vector.dependent_insertD complex_vector.dependent_single complex_vector.span_breakdown_eq complex_vector.span_empty complex_vector.span_zero insertE insert_Diff insert_absorb singleton_iff)
+          (* > 1 s *)
+      thus ?thesis
+        by (metis complex_vector.dependent_single insert_absorb2 tensor_eq_independent2)
+
+    qed
+    hence \<open>(\<Sum>b\<in>B-{v}. H ((\<phi> b) \<otimes>\<^sub>a b)) = 0\<close>
+      by auto      
+    thus ?thesis by simp
+  qed
+  finally have \<open>H (\<Sum>b\<in>B. \<phi> b \<otimes>\<^sub>a b) = H ((\<phi> v) \<otimes>\<^sub>a v)\<close>
+    by blast
+  hence \<open>H ((\<phi> v) \<otimes>\<^sub>a v) = 0\<close>
+    by (simp add: \<open>clinear H\<close> assms(4) complex_vector.linear_0)
+  moreover have \<open>H ((\<phi> v) \<otimes>\<^sub>a v) = 1\<close>
+    using \<open>H (u \<otimes>\<^sub>a v) = 1\<close> u_def by auto
+  ultimately show ?thesis by simp
+qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
