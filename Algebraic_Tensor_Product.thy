@@ -1624,7 +1624,7 @@ lemma tensor_Kronecker_delta:
   fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
   assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
     and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
-  shows \<open>\<exists> H:: 'a \<otimes>\<^sub>a 'b \<Rightarrow>complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
+  shows \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
     (\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0)\<close>
 proof-
   have \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and>
@@ -1634,27 +1634,107 @@ proof-
     \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0\<close>
     by blast
   hence \<open>\<exists>!H. clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
-      using  atensor_universal_property[where h = "h"]
+    using  atensor_universal_property[where h = "h"]
+    by blast
+  then obtain H where \<open>clinear H\<close> and \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>
+    by blast
+  have \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
+    using \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close> \<open>h u v = 1\<close> by auto
+  moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<Longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+    for x y
+  proof-
+    assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
+    from  \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
+    have \<open>(x,y) \<noteq> (u,v)\<close>
       by blast
-    then obtain H where \<open>clinear H\<close> and \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>
+    hence \<open>h x y = 0\<close>
+      by (simp add: \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x, y) \<noteq> (u, v) \<longrightarrow> h x y = 0\<close> \<open>x \<in> A\<close> \<open>y \<in> B\<close>)
+    moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+      by (simp add: \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>)
+    ultimately show \<open>H (x \<otimes>\<^sub>a y) = 0\<close> by simp
+  qed
+  ultimately show ?thesis
+    using \<open>clinear H\<close> by blast 
+qed
+
+
+(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
+lemma atensor_complex_independent:
+  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
+  shows \<open>complex_vector.independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+proof-
+  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
+   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> s\<in>S \<Longrightarrow> f s = 0\<close>
+    for S s f
+  proof-
+    assume \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close> and \<open>finite S\<close> and
+      \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close> and \<open>s\<in>S\<close>
+    from \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close> \<open>s\<in>S\<close>
+    have \<open>s \<in> atensor_of_pair ` (A \<times> B)\<close>
       by blast
-    have \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
-      using \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close> \<open>h u v = 1\<close> by auto
-    moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<Longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
-      for x y
+    hence \<open>\<exists> u\<in>A. \<exists> v\<in>B. s = u \<otimes>\<^sub>a v\<close>
+      by (smt Sigma_cong mem_Collect_eq tensor_of_sets)
+        (* > 1 s *)
+    then obtain u v where \<open>u\<in>A\<close> and \<open>v\<in>B\<close> and \<open>s = u \<otimes>\<^sub>a v\<close>
+      by blast
+    hence \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0)\<close>
+      by (simp add: assms(1) assms(2) tensor_Kronecker_delta)
+    then obtain H::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow>complex\<close> where \<open>clinear H\<close> and \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
+      and \<open>\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+      by blast
+    have \<open>u \<otimes>\<^sub>a v \<in> S\<close>
+      using \<open>s = u \<otimes>\<^sub>a v\<close> \<open>s \<in> S\<close> by auto
+    have \<open>H (\<Sum>s\<in>S. (f s) *\<^sub>C s) = (\<Sum>s\<in>S. (f s) *\<^sub>C H s)\<close>
+      using \<open>clinear H\<close>
+      by (smt complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    also have \<open>\<dots> = (f (u \<otimes>\<^sub>a v)) *\<^sub>C H (u \<otimes>\<^sub>a v) + (\<Sum>s\<in>S - {u \<otimes>\<^sub>a v}. (f s) *\<^sub>C H s)\<close>
+      using \<open>u \<otimes>\<^sub>a v \<in> S\<close>
+      by (meson \<open>finite S\<close> sum.remove)
+    also have \<open>\<dots> = (f (u \<otimes>\<^sub>a v)) *\<^sub>C H (u \<otimes>\<^sub>a v)\<close>
     proof-
-      assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
-      from  \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
-      have \<open>(x,y) \<noteq> (u,v)\<close>
-        by blast
-      hence \<open>h x y = 0\<close>
-        by (simp add: \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x, y) \<noteq> (u, v) \<longrightarrow> h x y = 0\<close> \<open>x \<in> A\<close> \<open>y \<in> B\<close>)
-      moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
-        by (simp add: \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>)
-      ultimately show \<open>H (x \<otimes>\<^sub>a y) = 0\<close> by simp
+      have \<open>r\<in>S - {u \<otimes>\<^sub>a v} \<Longrightarrow> H r = 0\<close>
+        for r
+      proof-
+        assume \<open>r\<in>S - {u \<otimes>\<^sub>a v}\<close>
+        hence \<open>r \<in> S\<close>
+          by blast
+        hence \<open>r \<in> atensor_of_pair ` (A \<times> B)\<close>
+          using \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+          by blast
+        hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. r = x \<otimes>\<^sub>a y\<close>
+          unfolding atensor_of_pair_def apply auto
+          by blast
+        then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>r = x \<otimes>\<^sub>a y\<close>
+          by blast
+        have \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
+          using \<open>r = x \<otimes>\<^sub>a y\<close> \<open>r \<in> S - {u \<otimes>\<^sub>a v}\<close> by blast
+        hence \<open>H(x \<otimes>\<^sub>a y) = 0\<close>
+          by (simp add: \<open>\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close> \<open>x \<in> A\<close> \<open>y \<in> B\<close>)
+        thus ?thesis
+          using \<open>r = x \<otimes>\<^sub>a y\<close> by auto          
+      qed
+      hence \<open>(\<Sum>s\<in>S - {u \<otimes>\<^sub>a v}. (f s) *\<^sub>C H s) = 0\<close>
+        using sum_not_0 by auto
+      thus ?thesis by simp
     qed
-    ultimately show ?thesis
-      using \<open>clinear H\<close> by blast 
+    also have \<open>\<dots>  = f (u \<otimes>\<^sub>a v)\<close>
+      using \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
+      by simp
+    finally have \<open>H (\<Sum>s\<in>S. f s *\<^sub>C s) = f (u \<otimes>\<^sub>a v)\<close>
+      by blast
+    hence \<open>f (u \<otimes>\<^sub>a v) = 0\<close>
+      by (simp add: \<open>(\<Sum>s\<in>S. f s *\<^sub>C s) = 0\<close> \<open>clinear H\<close> complex_vector.linear_0)
+    thus ?thesis
+      by (simp add: \<open>s = u \<otimes>\<^sub>a v\<close>) 
+  qed
+  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
+    using complex_vector.independent_explicit_finite_subsets by force
+  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    using tensor_of_sets[where A = "A" and B = "B"] by blast
+  ultimately show ?thesis 
+    by simp
 qed
 
 (* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
@@ -1666,23 +1746,6 @@ lemma atensor_normal_independent:
   using tensor_Kronecker_delta
   sorry
 
-(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
-lemma atensor_complex_independent:
-  fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
-  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
-  shows \<open>complex_vector.independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-proof-
-  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
-   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> \<forall>s\<in>S. f s = 0\<close>
-    for S f
-    sorry
-  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
-    using complex_vector.independent_explicit_finite_subsets by force
-  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-    using tensor_of_sets[where A = "A" and B = "B"] by blast
-  ultimately show ?thesis 
-    by simp
-qed
 
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
