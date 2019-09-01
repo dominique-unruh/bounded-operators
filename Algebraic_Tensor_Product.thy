@@ -1737,14 +1737,12 @@ proof-
     by simp
 qed
 
-
 lemma tensor_eq_independent1:
- \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
+  \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   by (metis atensor_mult_left complex_vector.scale_zero_left)
-  
 
 lemma tensor_no_zero_divisors:
-\<open>a \<noteq> 0 \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a \<otimes>\<^sub>a b \<noteq> 0\<close>
+  \<open>a \<noteq> 0 \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a \<otimes>\<^sub>a b \<noteq> 0\<close>
 proof-
   assume \<open>a \<noteq> 0\<close> and \<open>b \<noteq> 0\<close>
   define A where \<open>A = complex_vector.extend_basis {a}\<close>
@@ -1775,11 +1773,50 @@ proof-
 qed
 
 lemma tensor_eq_independent2:
+  fixes v\<^sub>1 v\<^sub>2 :: \<open>'a::complex_vector\<close> and w\<^sub>1 w\<^sub>2 :: \<open>'b::complex_vector\<close>
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
     and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
     and \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
-  sorry
+proof-
+  have \<open>\<exists> A. complex_vector.independent A \<and> complex_vector.span A = UNIV\<close>
+    using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis by blast
+  then obtain A::\<open>'a set\<close> where \<open>complex_vector.independent A\<close> and \<open>complex_vector.span A = UNIV\<close>
+    by blast
+  have \<open>\<exists> r S. v\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C x) \<and> finite S \<and> S \<subseteq> A\<close>
+    using complex_vector.span_explicit
+    by (smt UNIV_I \<open>complex_vector.span A = UNIV\<close> mem_Collect_eq)
+  then obtain r S where \<open>v\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C x)\<close>
+    and \<open>finite S\<close> and \<open>S \<subseteq> A\<close> by blast
+  have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close>
+    by (metis (mono_tags, lifting) \<open>v\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C x)\<close> atensor_distr_left_sum atensor_mult_left sum.cong)
+  have \<open>\<exists> r' S'. v\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C x) \<and> finite S' \<and> S' \<subseteq> A\<close>
+    using complex_vector.span_explicit
+    by (smt UNIV_I \<open>complex_vector.span A = UNIV\<close> mem_Collect_eq)
+  then obtain r' S' where \<open>v\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C x)\<close>
+    and \<open>finite S'\<close> and \<open>S' \<subseteq> A\<close> by blast
+  define K where \<open>K = {x \<otimes>\<^sub>a w\<^sub>1|x. x \<in> S}\<union>{x \<otimes>\<^sub>a w\<^sub>2|x. x \<in> S'}\<close>
+  have \<open>complex_vector.independent K\<close>
+    sorry
+
+  have \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
+    by (metis (mono_tags, lifting) \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close> atensor_distr_left_sum atensor_mult_left sum.cong)
+  have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
+    by (simp add: \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>)
+  have \<open>(\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2)) = 0\<close>
+    using \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close> assms(3) by auto
+
+  have \<open>\<forall> x\<in>S. r x = 0\<close>
+    sorry
+  hence \<open>v\<^sub>1 = 0\<close>
+    using \<open>v\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C x)\<close> by auto
+  have \<open>\<forall> x\<in>S'. r' x = 0\<close>
+    sorry
+  hence \<open>v\<^sub>2 = 0\<close>
+    by (simp add: \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close>)
+  show ?thesis
+    by (simp add: \<open>v\<^sub>1 = 0\<close> \<open>v\<^sub>2 = 0\<close>) 
+qed
 
 (* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
 
