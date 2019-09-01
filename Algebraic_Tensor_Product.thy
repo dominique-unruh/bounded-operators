@@ -1524,7 +1524,7 @@ proof-
 qed
 
 lemma orank_existence:
-  \<open>{card S | S. finite S \<and>  x = (\<Sum>z\<in>S. atensor_of_pair z)} \<noteq> {}\<close>
+  \<open>{card S | S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)} \<noteq> {}\<close>
   using atensor_expansion_existence by blast
 
 text \<open>Outer-product rank\<close>
@@ -1619,6 +1619,41 @@ lemma atensor_expansion_independent_orank:
               x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
   using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
     assms by fastforce
+
+lemma tensor_Kronecker_delta':
+  fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
+    and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
+  shows \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. (x, y) \<noteq> (u, v) \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0)\<close>
+proof-
+  have \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and>
+    (\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0)\<close>
+    using assms(1) assms(2) assms(3) assms(4) bilinear_Kronecker_delta by blast
+  then obtain h::\<open>_\<Rightarrow>_\<Rightarrow>complex\<close> where \<open>cbilinear h\<close> and \<open>h u v = 1\<close> and
+    \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0\<close>
+    by blast
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+    using  atensor_universal_property[where h = "h"]
+    by blast
+  then obtain H where \<open>clinear H\<close> and \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>
+    by blast
+  have \<open>H (u \<otimes>\<^sub>a v) = 1\<close>
+    using \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close> \<open>h u v = 1\<close> by auto
+  moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> (x, y) \<noteq> (u, v) \<Longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+    for x y
+  proof-
+    assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>(x, y) \<noteq> (u, v)\<close>
+    from  \<open>(x, y) \<noteq> (u, v)\<close>
+    have \<open>h x y = 0\<close>
+      by (simp add: \<open>\<forall>x\<in>A. \<forall>y\<in>B. (x, y) \<noteq> (u, v) \<longrightarrow> h x y = 0\<close> \<open>x \<in> A\<close> \<open>y \<in> B\<close>)
+    moreover have \<open>h x y = H (x \<otimes>\<^sub>a y)\<close>
+      by (simp add: \<open>\<forall>x y. h x y = H (x \<otimes>\<^sub>a y)\<close>)
+    ultimately show \<open>H (x \<otimes>\<^sub>a y) = 0\<close> by simp
+  qed
+  ultimately show ?thesis
+    using \<open>clinear H\<close> by blast 
+qed
 
 lemma tensor_Kronecker_delta:
   fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
@@ -1737,6 +1772,136 @@ proof-
     by simp
 qed
 
+lemma atensor_complex_independent_family:
+  fixes A::\<open>'i \<Rightarrow> 'a::complex_vector\<close> and B::\<open>'j \<Rightarrow> 'b::complex_vector\<close>
+  assumes \<open>complex_vector.independent (range A)\<close> and \<open>inj A\<close>
+    and \<open>complex_vector.independent (range B)\<close> and \<open>inj B\<close>
+  shows \<open>complex_vector.independent (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close>
+proof-
+  have \<open>S \<subseteq> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k)))) \<Longrightarrow> finite S \<Longrightarrow>
+   (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> s\<in>S \<Longrightarrow> f s = 0\<close>
+    for S s f
+  proof-
+    assume \<open>S \<subseteq> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close> and \<open>finite S\<close> and
+      \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close> and \<open>s\<in>S\<close>
+    from \<open>S \<subseteq> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close> \<open>s\<in>S\<close>
+    have \<open>s \<in> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close>
+      by blast
+    hence \<open>\<exists> u. \<exists> v. s = A u \<otimes>\<^sub>a B v\<close>
+      by blast
+    then obtain u v where \<open>s = A u \<otimes>\<^sub>a B v\<close>
+      by blast
+    hence \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (A u \<otimes>\<^sub>a B v) = 1 \<and>
+    (\<forall>x. \<forall>y. A x \<otimes>\<^sub>a B y \<noteq> A u \<otimes>\<^sub>a B v \<longrightarrow> H (A x \<otimes>\<^sub>a B y) = 0)\<close>
+      by (metis (mono_tags, lifting) assms(1) assms(3) range_eqI tensor_Kronecker_delta)
+    then obtain H::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow>complex\<close> where \<open>clinear H\<close> and \<open>H (A u \<otimes>\<^sub>a B v) = 1\<close>
+      and \<open>\<forall>x. \<forall>y. A x \<otimes>\<^sub>a B y \<noteq> A u \<otimes>\<^sub>a B v \<longrightarrow> H (A x \<otimes>\<^sub>a B y) = 0\<close>
+      by blast
+    have \<open>A u \<otimes>\<^sub>a B v \<in> S\<close>
+      using \<open>s = A u \<otimes>\<^sub>a B v\<close> \<open>s \<in> S\<close> by auto
+    have \<open>H (\<Sum>s\<in>S. (f s) *\<^sub>C s) = (\<Sum>s\<in>S. (f s) *\<^sub>C H s)\<close>
+      using \<open>clinear H\<close>
+      by (smt complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    also have \<open>\<dots> = (f (A u \<otimes>\<^sub>a B v)) *\<^sub>C H (A u \<otimes>\<^sub>a B v) + (\<Sum>s\<in>S - {A u \<otimes>\<^sub>a B v}. (f s) *\<^sub>C H s)\<close>
+      using \<open>A u \<otimes>\<^sub>a B v \<in> S\<close>
+      by (meson \<open>finite S\<close> sum.remove)
+    also have \<open>\<dots> = (f (A u \<otimes>\<^sub>a B v)) *\<^sub>C H (A u \<otimes>\<^sub>a B v)\<close>
+    proof-
+      have \<open>r\<in>S - {A u \<otimes>\<^sub>a B v} \<Longrightarrow> H r = 0\<close>
+        for r
+      proof-
+        assume \<open>r\<in>S - {A u \<otimes>\<^sub>a B v}\<close>
+        hence \<open>r \<in> S\<close>
+          by blast
+        hence \<open>r \<in> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close>
+          using \<open>S \<subseteq> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close>
+          by blast
+        hence \<open>\<exists>x. \<exists>y. r = A x \<otimes>\<^sub>a B y\<close>
+          unfolding atensor_of_pair_def by auto
+        then obtain x y where \<open>r = A x \<otimes>\<^sub>a B y\<close>
+          by blast
+        have \<open>A x \<otimes>\<^sub>a B y \<noteq> A u \<otimes>\<^sub>a B v\<close>
+          using \<open>r = A x \<otimes>\<^sub>a B y\<close> \<open>r \<in> S - {A u \<otimes>\<^sub>a B v}\<close> 
+          by blast
+        hence \<open>H(A x \<otimes>\<^sub>a B y) = 0\<close>
+          by (simp add: \<open>\<forall>x y. A x \<otimes>\<^sub>a B y \<noteq> A u \<otimes>\<^sub>a B v \<longrightarrow> H (A x \<otimes>\<^sub>a B y) = 0\<close>)
+        thus ?thesis
+          using \<open>r = A x \<otimes>\<^sub>a B y\<close> by auto          
+      qed
+      hence \<open>(\<Sum>s\<in>S - {A u \<otimes>\<^sub>a B v}. (f s) *\<^sub>C H s) = 0\<close>
+        using sum_not_0 by auto
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots>  = f (A u \<otimes>\<^sub>a B v)\<close>
+      using \<open>H (A u \<otimes>\<^sub>a B v) = 1\<close>
+      by simp
+    finally have \<open>H (\<Sum>s\<in>S. f s *\<^sub>C s) = f (A u \<otimes>\<^sub>a B v)\<close>
+      by blast
+    hence \<open>f (A u \<otimes>\<^sub>a B v) = 0\<close>
+      by (simp add: \<open>(\<Sum>s\<in>S. f s *\<^sub>C s) = 0\<close> \<open>clinear H\<close> complex_vector.linear_0)
+    thus ?thesis
+      by (simp add: \<open>s = A u \<otimes>\<^sub>a B v\<close>) 
+  qed
+  thus \<open>complex_independent ( (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k)))) )\<close>
+    using complex_vector.independent_explicit_finite_subsets 
+    by force
+qed
+
+lemma atensor_complex_inj_family:
+  fixes A::\<open>'i \<Rightarrow> 'a::complex_vector\<close> and B::\<open>'j \<Rightarrow> 'b::complex_vector\<close>
+  assumes \<open>complex_vector.independent (range A)\<close> and \<open>inj A\<close>
+    and \<open>complex_vector.independent (range B)\<close> and \<open>inj B\<close>
+  shows \<open>inj (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k)))\<close>
+  proof (rule injI)
+  show "x = y"
+    if "A (fst x) \<otimes>\<^sub>a B (snd x) = A (fst y) \<otimes>\<^sub>a B (snd y)"
+    for x :: "'i \<times> 'j"
+      and y :: "'i \<times> 'j"
+  proof(rule classical)
+    assume \<open>\<not>(x = y)\<close>
+    hence  \<open>x \<noteq> y\<close>
+      by blast
+    have \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (A (fst x) \<otimes>\<^sub>a B (snd x)) = 1 \<and>
+    (\<forall>u. \<forall>v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0)\<close>
+      using assms(1) assms(3) tensor_Kronecker_delta' by force
+    then obtain H::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where \<open>clinear H\<close>
+      and \<open>H (A (fst x) \<otimes>\<^sub>a B (snd x)) = 1\<close> and
+      \<open>\<forall>u. \<forall>v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close>
+      by blast
+    have \<open>H (A (fst x) \<otimes>\<^sub>a B (snd x)) = 1\<close>
+      by (simp add: \<open>H (A (fst x) \<otimes>\<^sub>a B (snd x)) = 1\<close>)
+    moreover have \<open>H (A (fst y) \<otimes>\<^sub>a B (snd y)) = 0\<close>
+    proof-
+      have \<open>(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))\<close>
+        proof (cases \<open>snd y = snd x\<close>)
+          case True
+          hence \<open>fst y \<noteq> fst x\<close>
+            using \<open>x \<noteq> y\<close> prod_eqI by blast            
+          thus ?thesis
+            using assms(2) range_ex1_eq by fastforce 
+        next
+          case False
+          thus ?thesis
+            using assms(4) range_ex1_eq by fastforce 
+        qed
+  show "(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))"
+    if "snd y \<noteq> snd x"
+    using that sorry
+  show "(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))"
+    if "\<not> snd y \<noteq> snd x"
+    using that sorry
+qed
+      thus ?thesis
+        using \<open>\<forall>u v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close> 
+        by blast 
+    qed
+    ultimately have \<open>A (fst x) \<otimes>\<^sub>a B (snd x) \<noteq> A (fst y) \<otimes>\<^sub>a B (snd y)\<close>
+      by auto      
+    thus ?thesis
+      by (simp add: that) 
+  qed
+qed
+
 lemma tensor_eq_independent1:
   \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   by (metis atensor_mult_left complex_vector.scale_zero_left)
@@ -1772,6 +1937,21 @@ proof-
   ultimately show ?thesis by auto
 qed
 
+lemma tensor_inj_fst:
+  fixes v\<^sub>1 v\<^sub>2 :: \<open>'a::complex_vector\<close> and w :: \<open>'b::complex_vector\<close>
+  assumes \<open>v\<^sub>1 \<otimes>\<^sub>a w = v\<^sub>2 \<otimes>\<^sub>a w\<close> and \<open>w \<noteq> 0\<close>
+  shows \<open>v\<^sub>1 = v\<^sub>2\<close>
+proof-
+  have \<open>(v\<^sub>1-v\<^sub>2) \<otimes>\<^sub>a w = v\<^sub>1 \<otimes>\<^sub>a w - v\<^sub>2 \<otimes>\<^sub>a w\<close>
+    by (metis (no_types, lifting) add_diff_cancel_right' atensor_distr_left diff_conv_add_uminus diff_minus_eq_add)
+  also have \<open>v\<^sub>1 \<otimes>\<^sub>a w - v\<^sub>2 \<otimes>\<^sub>a w = 0\<close>
+    using \<open>v\<^sub>1 \<otimes>\<^sub>a w = v\<^sub>2 \<otimes>\<^sub>a w\<close> by simp
+  finally have \<open>(v\<^sub>1-v\<^sub>2) \<otimes>\<^sub>a w = 0\<close>
+    by blast
+  thus ?thesis using \<open>w \<noteq> 0\<close>
+    using eq_iff_diff_eq_0 tensor_no_zero_divisors by blast
+qed
+
 lemma tensor_eq_independent2:
   fixes v\<^sub>1 v\<^sub>2 :: \<open>'a::complex_vector\<close> and w\<^sub>1 w\<^sub>2 :: \<open>'b::complex_vector\<close>
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
@@ -1779,6 +1959,14 @@ lemma tensor_eq_independent2:
     and \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
 proof-
+  from \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  have \<open>w\<^sub>1 \<noteq> 0\<close>
+    using complex_vector.dependent_zero insertI1 
+    by blast
+  from \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  have \<open>w\<^sub>2 \<noteq> 0\<close>
+    using complex_vector.dependent_zero insertI1 
+    by blast
   have \<open>\<exists> A. complex_vector.independent A \<and> complex_vector.span A = UNIV\<close>
     using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis by blast
   then obtain A::\<open>'a set\<close> where \<open>complex_vector.independent A\<close> and \<open>complex_vector.span A = UNIV\<close>
@@ -1796,22 +1984,71 @@ proof-
   then obtain r' S' where \<open>v\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C x)\<close>
     and \<open>finite S'\<close> and \<open>S' \<subseteq> A\<close> by blast
   define K where \<open>K = {x \<otimes>\<^sub>a w\<^sub>1|x. x \<in> S}\<union>{x \<otimes>\<^sub>a w\<^sub>2|x. x \<in> S'}\<close>
+  have \<open>finite K\<close>
+  proof-
+    have \<open>finite {x \<otimes>\<^sub>a w\<^sub>1|x. x \<in> S}\<close>
+      using \<open>finite S\<close>
+      by simp
+    moreover have \<open>finite {x \<otimes>\<^sub>a w\<^sub>2|x. x \<in> S'}\<close>
+       using \<open>finite S'\<close>
+       by simp
+    ultimately show ?thesis
+      by (simp add: K_def) 
+  qed
   have \<open>complex_vector.independent K\<close>
     sorry
-
+  define f:: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where
+    \<open>f z = (if (\<exists> x. x \<otimes>\<^sub>a w\<^sub>1 = z \<and> x \<in> S) 
+  then  r (SOME x. x \<otimes>\<^sub>a w\<^sub>1 = z \<and> x \<in> S) 
+  else - r' (SOME x. x \<otimes>\<^sub>a w\<^sub>2 = z \<and> x \<in> S'))\<close> for z
   have \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
     by (metis (mono_tags, lifting) \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close> atensor_distr_left_sum atensor_mult_left sum.cong)
   have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
     by (simp add: \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>)
   have \<open>(\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2)) = 0\<close>
     using \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close> assms(3) by auto
-
-  have \<open>\<forall> x\<in>S. r x = 0\<close>
+  moreover have \<open>(\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2)) = 
+    (\<Sum>z\<in>K. (f z) *\<^sub>C z)\<close>
     sorry
+  ultimately have \<open>(\<Sum>z\<in>K. (f z) *\<^sub>C z ) = 0\<close>
+    by simp
+  hence \<open>\<forall>z\<in>K. f z = 0\<close>
+    using \<open>complex_vector.independent K\<close> \<open>finite K\<close> complex_vector.independentD
+    by blast
+  hence \<open>x\<in>S \<Longrightarrow> r x = 0\<close>
+    for x
+  proof-
+    assume \<open>x\<in>S\<close>
+    hence \<open>x \<otimes>\<^sub>a w\<^sub>1 \<in> K\<close>
+      unfolding K_def
+      by blast
+    moreover have \<open>f (x \<otimes>\<^sub>a w\<^sub>1) = r x\<close>
+      unfolding f_def using \<open>x\<in>S\<close>
+      by (metis (mono_tags, lifting) \<open>w\<^sub>1 \<noteq> 0\<close> someI2 tensor_inj_fst)
+    ultimately show ?thesis
+      using \<open>\<forall>z\<in>K. f z = 0\<close> by auto 
+  qed
   hence \<open>v\<^sub>1 = 0\<close>
     using \<open>v\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C x)\<close> by auto
-  have \<open>\<forall> x\<in>S'. r' x = 0\<close>
-    sorry
+  have \<open>x\<in>S' \<Longrightarrow> r' x = 0\<close>
+    for x
+  proof-
+    assume \<open>x\<in>S'\<close>
+    hence \<open>x \<otimes>\<^sub>a w\<^sub>2 \<in> K\<close>
+      unfolding K_def
+      by blast
+    moreover have \<open>f (x \<otimes>\<^sub>a w\<^sub>2) = r' x\<close>
+    proof-
+      have \<open>\<not>(\<exists>x. x \<otimes>\<^sub>a w\<^sub>1 = x \<otimes>\<^sub>a w\<^sub>2)\<close>
+        sorry
+      thus ?thesis
+        unfolding f_def
+        using tensor_eq_independent1 
+        by blast 
+    qed
+    ultimately show ?thesis
+      using \<open>\<forall>z\<in>K. f z = 0\<close> by auto 
+  qed
   hence \<open>v\<^sub>2 = 0\<close>
     by (simp add: \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close>)
   show ?thesis
