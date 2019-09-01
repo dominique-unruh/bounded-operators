@@ -1738,24 +1738,50 @@ proof-
 qed
 
 
-(* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
 lemma tensor_eq_independent1:
  \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   by (metis atensor_mult_left complex_vector.scale_zero_left)
   
+
+lemma tensor_no_zero_divisors:
+\<open>a \<noteq> 0 \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a \<otimes>\<^sub>a b \<noteq> 0\<close>
+proof-
+  assume \<open>a \<noteq> 0\<close> and \<open>b \<noteq> 0\<close>
+  define A where \<open>A = complex_vector.extend_basis {a}\<close>
+  define B where \<open>B = complex_vector.extend_basis {b}\<close>
+  have \<open>complex_vector.independent A\<close>
+    by (simp add: A_def \<open>a \<noteq> 0\<close> complex_vector.independent_extend_basis)
+  moreover have \<open>complex_vector.independent B\<close>
+    using B_def \<open>b \<noteq> 0\<close> complex_vector.dependent_single complex_vector.independent_extend_basis 
+    by blast
+  ultimately have \<open>complex_vector.independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    by (simp add: atensor_complex_independent)
+  hence \<open>0 \<notin> {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+    by (meson complex_vector.dependent_zero)
+  moreover have \<open>a \<otimes>\<^sub>a b \<in> {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+  proof -
+    have "complex_independent {b}"
+      by (metis \<open>b \<noteq> 0\<close> complex_vector.dependent_single)
+    then have f1: "b \<in> B"
+      using B_def complex_vector.extend_basis_superset by blast
+    have "complex_independent {a}"
+      by (meson \<open>a \<noteq> 0\<close> complex_vector.dependent_single)
+    then have "a \<in> A"
+      using A_def complex_vector.extend_basis_superset by blast
+    then show ?thesis
+      using f1 by blast
+  qed
+  ultimately show ?thesis by auto
+qed
 
 lemma tensor_eq_independent2:
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
     and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
     and \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
-proof-
-  have \<open>v\<^sub>1 = 0\<close>
-    sorry
-  moreover have  \<open>v\<^sub>2 = 0\<close>
-    sorry
-  ultimately show ?thesis by blast
-qed
+  sorry
+
+(* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
 
 lemma tensor_eq_independent_iff:
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close> and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
