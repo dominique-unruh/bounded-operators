@@ -1852,7 +1852,7 @@ lemma atensor_complex_inj_family:
   assumes \<open>complex_vector.independent (range A)\<close> and \<open>inj A\<close>
     and \<open>complex_vector.independent (range B)\<close> and \<open>inj B\<close>
   shows \<open>inj (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k)))\<close>
-  proof (rule injI)
+proof (rule injI)
   show "x = y"
     if "A (fst x) \<otimes>\<^sub>a B (snd x) = A (fst y) \<otimes>\<^sub>a B (snd y)"
     for x :: "'i \<times> 'j"
@@ -1873,33 +1873,26 @@ lemma atensor_complex_inj_family:
     moreover have \<open>H (A (fst y) \<otimes>\<^sub>a B (snd y)) = 0\<close>
     proof-
       have \<open>(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))\<close>
-        proof (cases \<open>snd y = snd x\<close>)
-          case True
-          hence \<open>fst y \<noteq> fst x\<close>
-            using \<open>x \<noteq> y\<close> prod_eqI by blast            
-          thus ?thesis
-            using assms(2) range_ex1_eq by fastforce 
-        next
-          case False
-          thus ?thesis
-            using assms(4) range_ex1_eq by fastforce 
-        qed
-  show "(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))"
-    if "snd y \<noteq> snd x"
-    using that sorry
-  show "(A (fst y), B (snd y)) \<noteq> (A (fst x), B (snd x))"
-    if "\<not> snd y \<noteq> snd x"
-    using that sorry
-qed
-      thus ?thesis
-        using \<open>\<forall>u v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close> 
-        by blast 
-    qed
-    ultimately have \<open>A (fst x) \<otimes>\<^sub>a B (snd x) \<noteq> A (fst y) \<otimes>\<^sub>a B (snd y)\<close>
-      by auto      
+      proof (cases \<open>snd y = snd x\<close>)
+        case True
+        hence \<open>fst y \<noteq> fst x\<close>
+          using \<open>x \<noteq> y\<close> prod_eqI by blast            
+        thus ?thesis
+          using assms(2) range_ex1_eq by fastforce 
+      next
+        case False
+        thus ?thesis
+          using assms(4) range_ex1_eq by fastforce 
+      qed
     thus ?thesis
-      by (simp add: that) 
+      using \<open>\<forall>u v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close> 
+      by blast 
   qed
+  ultimately have \<open>A (fst x) \<otimes>\<^sub>a B (snd x) \<noteq> A (fst y) \<otimes>\<^sub>a B (snd y)\<close>
+    by auto      
+  thus ?thesis
+    by (simp add: that) 
+qed
 qed
 
 lemma tensor_eq_independent1:
