@@ -1740,17 +1740,25 @@ qed
 
 (* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
 lemma tensor_eq_independent1:
-  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
-  shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
-  sorry
+ \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0 \<Longrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
+  by (metis atensor_mult_left complex_vector.scale_zero_left)
+  
 
 lemma tensor_eq_independent2:
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
-  shows \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 \<Longrightarrow> v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
-  sorry
+    and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
+    and \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
+  shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
+proof-
+  have \<open>v\<^sub>1 = 0\<close>
+    sorry
+  moreover have  \<open>v\<^sub>2 = 0\<close>
+    sorry
+  ultimately show ?thesis by blast
+qed
 
 lemma tensor_eq_independent_iff:
-  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+  assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close> and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
   shows \<open>(v\<^sub>1 = 0 \<and> v\<^sub>2 = 0) \<longleftrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   using tensor_eq_independent1 tensor_eq_independent2
     assms
@@ -1806,9 +1814,37 @@ proof(rule classical)
       have  \<open>complex_vector.independent {b, v}\<close>
         by (smt \<open>b \<in> B\<close> assms(3) assms(5) complex_vector.dependent_def complex_vector.dependent_insertD complex_vector.dependent_single complex_vector.span_breakdown_eq complex_vector.span_empty complex_vector.span_zero insertE insert_Diff insert_absorb singleton_iff)
           (* > 1 s *)
+      have \<open>(\<phi> b) \<otimes>\<^sub>a b \<noteq> u \<otimes>\<^sub>a v\<close>
+        using \<open>b \<noteq> v\<close> \<open>complex_independent {b, v}\<close> \<open>u \<noteq> 0\<close> tensor_eq_independent2 by blast
+      have \<open>\<phi> b \<in> complex_vector.span A\<close>
+        unfolding A_def
+        by (simp add: \<open>u \<noteq> 0\<close>)
+      hence \<open>\<exists> f. \<exists> A'. \<phi> b = (\<Sum> a \<in> A'. f a *\<^sub>C a) \<and> finite A' \<and> A' \<subseteq> A\<close>
+        using complex_vector.span_explicit
+        by blast
+      then obtain f A' where \<open>\<phi> b = (\<Sum> a \<in> A'. f a *\<^sub>C a)\<close> 
+        and \<open>finite A'\<close> and \<open>A' \<subseteq> A\<close>
+        by blast
+      have  \<open>H ((\<phi> b) \<otimes>\<^sub>a b) = (\<Sum> a \<in> A'. (f a) *\<^sub>C H (a \<otimes>\<^sub>a b))\<close> 
+        using  \<open>clinear H\<close>
+        by (smt \<open>\<phi> b = (\<Sum>a\<in>A'. f a *\<^sub>C a)\<close> atensor_distr_left_sum atensor_mult_left complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+      have \<open>a \<in> A' \<Longrightarrow> H (a \<otimes>\<^sub>a b) = 0\<close>
+        for a
+      proof-
+        assume \<open>a \<in> A'\<close>
+        hence \<open>a \<in> A\<close>
+          using \<open>A' \<subseteq> A\<close> by blast
+        thus ?thesis
+          using \<open>\<forall>x\<in>A. \<forall>y\<in>B. x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v \<longrightarrow> H (x \<otimes>\<^sub>a y) = 0\<close>
+          using \<open>b \<in> B\<close> \<open>b \<noteq> v\<close> \<open>complex_independent {b, v}\<close> \<open>u \<noteq> 0\<close> tensor_eq_independent2 by blast
+      qed
+      hence \<open>(\<Sum> a \<in> A'. (f a) *\<^sub>C H (a \<otimes>\<^sub>a b)) = 0\<close>
+        by simp
+      hence \<open>H (\<phi> b \<otimes>\<^sub>a b) = 0\<close>
+        using   \<open>H ((\<phi> b) \<otimes>\<^sub>a b) = (\<Sum> a \<in> A'. (f a) *\<^sub>C H (a \<otimes>\<^sub>a b))\<close>
+        by simp
       thus ?thesis
-        by (metis complex_vector.dependent_single insert_absorb2 tensor_eq_independent2)
-
+        by blast
     qed
     hence \<open>(\<Sum>b\<in>B-{v}. H ((\<phi> b) \<otimes>\<^sub>a b)) = 0\<close>
       by auto      
