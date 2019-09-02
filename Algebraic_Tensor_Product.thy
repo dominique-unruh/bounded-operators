@@ -1609,7 +1609,6 @@ proof -
     by blast
 qed
 
-(* proposition 1. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_expansion_independent_orank:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   assumes \<open>x \<noteq> 0\<close>
@@ -1692,8 +1691,6 @@ proof-
     using \<open>clinear H\<close> by blast 
 qed
 
-
-(* proposition 3. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_complex_independent:
   fixes A::\<open>'a::complex_vector set\<close> and B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
@@ -1884,15 +1881,15 @@ proof (rule injI)
         thus ?thesis
           using assms(4) range_ex1_eq by fastforce 
       qed
+      thus ?thesis
+        using \<open>\<forall>u v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close> 
+        by blast 
+    qed
+    ultimately have \<open>A (fst x) \<otimes>\<^sub>a B (snd x) \<noteq> A (fst y) \<otimes>\<^sub>a B (snd y)\<close>
+      by auto      
     thus ?thesis
-      using \<open>\<forall>u v. (A u, B v) \<noteq> (A (fst x), B (snd x)) \<longrightarrow> H (A u \<otimes>\<^sub>a B v) = 0\<close> 
-      by blast 
+      by (simp add: that) 
   qed
-  ultimately have \<open>A (fst x) \<otimes>\<^sub>a B (snd x) \<noteq> A (fst y) \<otimes>\<^sub>a B (snd y)\<close>
-    by auto      
-  thus ?thesis
-    by (simp add: that) 
-qed
 qed
 
 lemma tensor_eq_independent1:
@@ -1952,103 +1949,69 @@ lemma tensor_eq_independent2:
     and \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
   shows \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
 proof-
-  from \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
-  have \<open>w\<^sub>1 \<noteq> 0\<close>
-    using complex_vector.dependent_zero insertI1 
-    by blast
-  from \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
-  have \<open>w\<^sub>2 \<noteq> 0\<close>
-    using complex_vector.dependent_zero insertI1 
-    by blast
-  have \<open>\<exists> A. complex_vector.independent A \<and> complex_vector.span A = UNIV\<close>
-    using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis by blast
-  then obtain A::\<open>'a set\<close> where \<open>complex_vector.independent A\<close> and \<open>complex_vector.span A = UNIV\<close>
-    by blast
-  have \<open>\<exists> r S. v\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C x) \<and> finite S \<and> S \<subseteq> A\<close>
-    using complex_vector.span_explicit
-    by (smt UNIV_I \<open>complex_vector.span A = UNIV\<close> mem_Collect_eq)
-  then obtain r S where \<open>v\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C x)\<close>
-    and \<open>finite S\<close> and \<open>S \<subseteq> A\<close> by blast
-  have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close>
-    by (metis (mono_tags, lifting) \<open>v\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C x)\<close> atensor_distr_left_sum atensor_mult_left sum.cong)
-  have \<open>\<exists> r' S'. v\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C x) \<and> finite S' \<and> S' \<subseteq> A\<close>
-    using complex_vector.span_explicit
-    by (smt UNIV_I \<open>complex_vector.span A = UNIV\<close> mem_Collect_eq)
-  then obtain r' S' where \<open>v\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C x)\<close>
-    and \<open>finite S'\<close> and \<open>S' \<subseteq> A\<close> by blast
-  define K where \<open>K = {x \<otimes>\<^sub>a w\<^sub>1|x. x \<in> S}\<union>{x \<otimes>\<^sub>a w\<^sub>2|x. x \<in> S'}\<close>
-  have \<open>finite K\<close>
-  proof-
-    have \<open>finite {x \<otimes>\<^sub>a w\<^sub>1|x. x \<in> S}\<close>
-      using \<open>finite S\<close>
+  have \<open>complex_vector.dependent {v\<^sub>1, v\<^sub>2}\<close>
+  proof(rule classical)
+    assume \<open>\<not>(complex_vector.dependent {v\<^sub>1, v\<^sub>2})\<close>
+    hence \<open>complex_vector.independent {v\<^sub>1, v\<^sub>2}\<close>
       by simp
-    moreover have \<open>finite {x \<otimes>\<^sub>a w\<^sub>2|x. x \<in> S'}\<close>
-       using \<open>finite S'\<close>
-       by simp
-    ultimately show ?thesis
-      by (simp add: K_def) 
+    have \<open>v\<^sub>1 \<noteq> v\<^sub>2\<close>
+      by (metis \<open>complex_independent {v\<^sub>1, v\<^sub>2}\<close> assms(2) assms(3) complex_vector.dependent_single insert_absorb singletonI swap_atensorI2 tensor_inj_fst)
+    define A::\<open>bool \<Rightarrow> 'a\<close> where \<open>A x = (if x then v\<^sub>1 else v\<^sub>2)\<close> for x
+    hence \<open>range A = {v\<^sub>1, v\<^sub>2}\<close>
+      by (simp add: UNIV_bool doubleton_eq_iff)
+    define B::\<open>bool \<Rightarrow> 'b\<close> where \<open>B x = (if x then w\<^sub>1 else w\<^sub>2)\<close> for x
+    hence \<open>range B = {w\<^sub>1, w\<^sub>2}\<close>
+      by (simp add: UNIV_bool doubleton_eq_iff)
+    have \<open>inj A\<close>
+      using \<open>v\<^sub>1 \<noteq> v\<^sub>2\<close>
+      by (smt \<open>A \<equiv> \<lambda>x. if x then v\<^sub>1 else v\<^sub>2\<close> injI)
+        (* > 1*)
+    moreover have \<open>inj B\<close>
+      using \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
+      by (smt \<open>B \<equiv> \<lambda>x. if x then w\<^sub>1 else w\<^sub>2\<close> injI)
+        (* > 1*)
+    moreover have \<open>complex_vector.independent (range A)\<close>
+      using \<open>range A = {v\<^sub>1, v\<^sub>2}\<close> \<open>complex_vector.independent {v\<^sub>1, v\<^sub>2}\<close>
+      by simp
+    moreover have \<open>complex_vector.independent (range B)\<close>
+      using \<open>range B = {w\<^sub>1, w\<^sub>2}\<close> \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close>
+      by simp
+    ultimately have \<open>inj (\<lambda> k. A (fst k) \<otimes>\<^sub>a B (snd k))\<close>
+      using atensor_complex_inj_family by blast
+    hence \<open>(\<lambda> k. A (fst k) \<otimes>\<^sub>a B (snd k)) (True, True) \<noteq> (\<lambda> k. A (fst k) \<otimes>\<^sub>a B (snd k)) (False, False)\<close>
+      by (metis (no_types, lifting) UNIV_I inj_on_def old.prod.inject)
+    thus ?thesis
+      by (simp add: \<open>A \<equiv> \<lambda>x. if x then v\<^sub>1 else v\<^sub>2\<close> \<open>B \<equiv> \<lambda>x. if x then w\<^sub>1 else w\<^sub>2\<close> assms(3)) 
   qed
-  have \<open>complex_vector.independent K\<close>
-    sorry
-  define f:: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> where
-    \<open>f z = (if (\<exists> x. x \<otimes>\<^sub>a w\<^sub>1 = z \<and> x \<in> S) 
-  then  r (SOME x. x \<otimes>\<^sub>a w\<^sub>1 = z \<and> x \<in> S) 
-  else - r' (SOME x. x \<otimes>\<^sub>a w\<^sub>2 = z \<and> x \<in> S'))\<close> for z
-  have \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
-    by (metis (mono_tags, lifting) \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close> atensor_distr_left_sum atensor_mult_left sum.cong)
-  have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>
-    by (simp add: \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close>)
-  have \<open>(\<Sum> x \<in> S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum> x \<in> S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2)) = 0\<close>
-    using \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1))\<close> \<open>v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2))\<close> assms(3) by auto
-  moreover have \<open>(\<Sum>x\<in>S. r x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>1)) - (\<Sum>x\<in>S'. r' x *\<^sub>C (x \<otimes>\<^sub>a w\<^sub>2)) = 
-    (\<Sum>z\<in>K. (f z) *\<^sub>C z)\<close>
-    sorry
-  ultimately have \<open>(\<Sum>z\<in>K. (f z) *\<^sub>C z ) = 0\<close>
-    by simp
-  hence \<open>\<forall>z\<in>K. f z = 0\<close>
-    using \<open>complex_vector.independent K\<close> \<open>finite K\<close> complex_vector.independentD
-    by blast
-  hence \<open>x\<in>S \<Longrightarrow> r x = 0\<close>
-    for x
+  show \<open>v\<^sub>1 = 0 \<and> v\<^sub>2 = 0\<close>
   proof-
-    assume \<open>x\<in>S\<close>
-    hence \<open>x \<otimes>\<^sub>a w\<^sub>1 \<in> K\<close>
-      unfolding K_def
+    from \<open>complex_vector.dependent {v\<^sub>1, v\<^sub>2}\<close>
+    have \<open>\<exists> c::complex. c *\<^sub>C v\<^sub>1 = v\<^sub>2\<close>
+      by (metis (no_types, hide_lams) Complex_Vector_Spaces.dependent_raw_def assms(1) assms(3) complex_vector.dependent_single complex_vector.independent_insert complex_vector.scale_zero_left complex_vector.span_breakdown_eq empty_iff eq_iff_diff_eq_0 insert_commute tensor_eq_independent1 tensor_inj_fst)
+    then obtain c where \<open>c *\<^sub>C v\<^sub>1 = v\<^sub>2\<close>
       by blast
-    moreover have \<open>f (x \<otimes>\<^sub>a w\<^sub>1) = r x\<close>
-      unfolding f_def using \<open>x\<in>S\<close>
-      by (metis (mono_tags, lifting) \<open>w\<^sub>1 \<noteq> 0\<close> someI2 tensor_inj_fst)
-    ultimately show ?thesis
-      using \<open>\<forall>z\<in>K. f z = 0\<close> by auto 
-  qed
-  hence \<open>v\<^sub>1 = 0\<close>
-    using \<open>v\<^sub>1 = (\<Sum>x\<in>S. r x *\<^sub>C x)\<close> by auto
-  have \<open>x\<in>S' \<Longrightarrow> r' x = 0\<close>
-    for x
-  proof-
-    assume \<open>x\<in>S'\<close>
-    hence \<open>x \<otimes>\<^sub>a w\<^sub>2 \<in> K\<close>
-      unfolding K_def
-      by blast
-    moreover have \<open>f (x \<otimes>\<^sub>a w\<^sub>2) = r' x\<close>
+    from \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
+    have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - (c *\<^sub>C v\<^sub>1) \<otimes>\<^sub>a w\<^sub>2 = 0\<close>
+      using \<open>c *\<^sub>C v\<^sub>1 = v\<^sub>2\<close>
+      by auto
+    moreover have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - (c *\<^sub>C v\<^sub>1) \<otimes>\<^sub>a w\<^sub>2 = v\<^sub>1 \<otimes>\<^sub>a (w\<^sub>1 - c *\<^sub>C w\<^sub>2)\<close>
     proof-
-      have \<open>\<not>(\<exists>x. x \<otimes>\<^sub>a w\<^sub>1 = x \<otimes>\<^sub>a w\<^sub>2)\<close>
-        sorry
-      thus ?thesis
-        unfolding f_def
-        using tensor_eq_independent1 
-        by blast 
+      have \<open>v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - (c *\<^sub>C v\<^sub>1) \<otimes>\<^sub>a w\<^sub>2 = v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 - v\<^sub>1 \<otimes>\<^sub>a (c *\<^sub>C w\<^sub>2)\<close>
+        by (simp add: atensor_mult_left atensor_mult_right)
+      also have \<open>\<dots> =  v\<^sub>1 \<otimes>\<^sub>a (w\<^sub>1 - c *\<^sub>C w\<^sub>2)\<close>
+        by (metis (no_types, lifting) \<open>c *\<^sub>C v\<^sub>1 = v\<^sub>2\<close> assms(3) atensor_mult_left calculation cancel_comm_monoid_add_class.diff_cancel diff_eq_diff_eq scaleC_left.diff swap_atensorI2 tensor_eq_independent1 tensor_inj_fst)
+      finally show ?thesis by blast
     qed
+    ultimately have \<open>v\<^sub>1 \<otimes>\<^sub>a (w\<^sub>1 - c *\<^sub>C w\<^sub>2) = 0\<close>
+      by simp
+    moreover have \<open>w\<^sub>1 - c *\<^sub>C w\<^sub>2 \<noteq> 0\<close>
+      by (metis assms(1) assms(2) complex_vector.independent_insert complex_vector.span_breakdown_eq complex_vector.span_empty insert_absorb singletonI singleton_insert_inj_eq)
     ultimately show ?thesis
-      using \<open>\<forall>z\<in>K. f z = 0\<close> by auto 
+      using \<open>c *\<^sub>C v\<^sub>1 = v\<^sub>2\<close> complex_vector.scale_eq_0_iff tensor_no_zero_divisors 
+      by blast 
   qed
-  hence \<open>v\<^sub>2 = 0\<close>
-    by (simp add: \<open>v\<^sub>2 = (\<Sum>x\<in>S'. r' x *\<^sub>C x)\<close>)
-  show ?thesis
-    by (simp add: \<open>v\<^sub>1 = 0\<close> \<open>v\<^sub>2 = 0\<close>) 
 qed
 
-(* https://math.stackexchange.com/questions/2162556/necessary-and-sufficient-condition-for-equality-of-two-tensor-products *)
 
 lemma tensor_eq_independent_iff:
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close> and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
@@ -2057,7 +2020,6 @@ lemma tensor_eq_independent_iff:
     assms
   by fastforce 
 
-(* proposition 2. https://themath.net/linear-independence-properties-of-tensor-products-of-normed-linear-spaces *)
 lemma atensor_normal_independent_fst:
   fixes \<phi>::\<open>'b::complex_vector \<Rightarrow> 'a::complex_vector\<close>
     and  B::\<open>'b set\<close>
