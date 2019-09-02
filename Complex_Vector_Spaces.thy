@@ -1307,11 +1307,33 @@ lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
   by (simp add: ac_simps)
 
 
-(* TODO: This should be correct now *)
+(* fake result, couterexample below
 lemma comp1:
   assumes "bounded_csemilinear g"
   shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
-  by (cheat comp1)
+
+lemma comp1_counterexample:
+  fixes x::'a and y::'b
+  assumes \<open>bounded_csemilinear g\<close>
+  and \<open>prod (g x) y \<noteq> 0\<close>
+  and \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close> (* fake thesis *)
+shows False
+proof-
+  have \<open>(g ((Complex 0 1) *\<^sub>C x)) = (Complex 0 (-1)) *\<^sub>C (g x)\<close>
+    by (metis assms(1) bounded_csemilinear_def complex_cnj csemilinear.scaleC)
+  hence \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y = prod ((Complex 0 (-1)) *\<^sub>C (g x)) y\<close>
+    by simp
+  also have \<open>\<dots> = (Complex 0 1) *\<^sub>C (prod (g x) y)\<close>
+    using complex_cnj scaleC_left by auto
+  finally have \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y =  (Complex 0 1) *\<^sub>C (prod (g x) y)\<close>
+    by blast
+  moreover have \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y =  (Complex 0 (-1)) *\<^sub>C (prod (g x) y)\<close>
+    using \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
+    using bounded_sesquilinear.scaleC_left complex_cnj by fastforce
+  ultimately show ?thesis
+    by (simp add: assms(2)) 
+qed
+*)
 
 (* TODO: This should be correct now *)
 lemma comp: "bounded_csemilinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
