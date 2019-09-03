@@ -2122,19 +2122,534 @@ it could be an abbreviation *)
 definition entangled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
 
+text \<open>See proof of Proposition 1 on page 186 in @{cite Helemskii}\<close>
+definition g_atensor_cbilinear:: \<open>'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> complex\<close>
+  where \<open>g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = \<langle>x, x\<^sub>1\<rangle>*\<langle>y, y\<^sub>1\<rangle>\<close>
+
+lemma g_atensor_cbilinear_cbilinear:
+  \<open>cbilinear (g_atensor_cbilinear x y)\<close>
+  unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
+    module_hom_def module_hom_axioms_def module_def g_atensor_cbilinear_def
+  apply auto
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  using ring_class.ring_distribs(2) apply auto[1]
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  using scaleC_add_right apply auto[1]
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  using ring_class.ring_distribs(2) apply auto[1]
+  by (simp add: cinner_right_distrib semiring_normalization_rules(34))
+
+lemma g_atensor_clinear_existence:
+\<open>\<exists> H::'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> x. \<forall> y.
+   clinear (H x y) \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1))\<close>
+proof-
+  have \<open>cbilinear (g_atensor_cbilinear x y)\<close>
+    for x::'a and y::'b
+    using g_atensor_cbilinear_cbilinear 
+    by blast
+  hence \<open>\<forall> x. \<forall> y. \<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex.
+   clinear H \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1))\<close>
+    using atensor_universal_property by blast
+  thus \<open>\<exists> H::'a \<Rightarrow> 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> x. \<forall> y.
+   clinear (H x y) \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1))\<close>
+    by metis
+qed
+
+definition g_atensor_clinear::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+  where \<open>g_atensor_clinear = (SOME H. \<forall> x. \<forall> y.
+   clinear (H x y) \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)))\<close>
+
+lemma g_atensor_clinear_clinear:
+\<open>clinear (g_atensor_clinear x y)\<close>
+  unfolding g_atensor_clinear_def
+  using g_atensor_clinear_existence
+  by (smt g_atensor_clinear_def verit_sko_ex')
+  
+lemma g_atensor_clinear_cbilinear:
+\<open>g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
+  unfolding g_atensor_clinear_def
+  using g_atensor_clinear_existence
+  by (smt g_atensor_cbilinear_def g_atensor_clinear_def someI_ex)
+
+lemma g_atensor_clinear_cbilinear':
+\<open>\<langle>x, x\<^sub>1\<rangle> * \<langle>y, y\<^sub>1\<rangle> = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
+  unfolding g_atensor_cbilinear_def
+  by (metis g_atensor_cbilinear_def g_atensor_clinear_cbilinear)
+
+lemma F_atensor_cbilinear_cbilinear_left_distr:
+  \<open>(g_atensor_clinear (b1 + b2) y u) =
+       (g_atensor_clinear b1 y u) +
+       (g_atensor_clinear b2 y u)\<close>
+proof-
+  define F where 
+    \<open>F z = (g_atensor_clinear (b1 + b2) y z) -
+       (g_atensor_clinear b1 y z) -
+       (g_atensor_clinear b2 y z)\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+    using g_atensor_clinear_cbilinear'
+    unfolding F_def
+  proof -
+    have "g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q) = \<langle>y, q\<rangle> * (\<langle>b2, p\<rangle> + \<langle>b1, p\<rangle>)"
+      by (metis cinner_left_distrib g_atensor_clinear_cbilinear' ordered_field_class.sign_simps(2) ordered_field_class.sign_simps(28))
+    hence " (g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q)) -   (g_atensor_clinear b1 y (p \<otimes>\<^sub>a q)) =  (g_atensor_clinear b2 y (p \<otimes>\<^sub>a q))"
+      by (metis add_diff_cancel g_atensor_clinear_cbilinear' left_diff_distrib' mult.commute)
+    thus " (g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b1 y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b2 y (p \<otimes>\<^sub>a q)) = 0"
+      by auto
+  qed
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear (b1 + b2) y (c1 + c2) = g_atensor_clinear (b1 + b2) y c1 + g_atensor_clinear (b1 + b2) y c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear b1 y (c1 + c2) = g_atensor_clinear b1 y c1 +  g_atensor_clinear b1 y c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear b2 y (c1 + c2) = g_atensor_clinear b2 y c1 +  g_atensor_clinear b2 y c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      ultimately show ?thesis
+        unfolding F_def
+        by simp
+    qed
+    show "F (r *\<^sub>C b) = r *\<^sub>C F b"
+      for r :: complex
+        and b :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear (b1 + b2) y (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear (b1 + b2) y b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear b1 y (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear b1 y b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear b2 y (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear b2 y b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      ultimately show ?thesis
+        unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib)
+    qed
+  qed
+  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F u = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by (metis diff_add_cancel eq_iff_diff_eq_0 semiring_normalization_rules(24)) 
+qed
+
+lemma F_atensor_cbilinear_cbilinear_left_scaleC:
+\<open>(g_atensor_clinear (r *\<^sub>C b) y u) =  (cnj r) * (g_atensor_clinear b y u)\<close>
+proof-
+  define F where 
+    \<open>F z = (g_atensor_clinear (r *\<^sub>C b) y z) - (cnj r) * (g_atensor_clinear b y z)\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+    using g_atensor_clinear_cbilinear'
+    unfolding F_def
+    by (metis (no_types, lifting) cinner_scaleC_left eq_iff_diff_eq_0 mult.assoc)
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear (r *\<^sub>C b) y (c1 + c2) = g_atensor_clinear (r *\<^sub>C b) y c1
+          + g_atensor_clinear (r *\<^sub>C b) y c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear b y (c1 + c2) = g_atensor_clinear b y c1
+          + g_atensor_clinear b y c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      ultimately show ?thesis unfolding F_def
+        by (simp add: semiring_normalization_rules(34)) 
+    qed
+    show "F (s *\<^sub>C c) = s *\<^sub>C F c"
+      for s :: complex
+        and c :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear (r *\<^sub>C b) y (s *\<^sub>C c) = s *\<^sub>C (g_atensor_clinear (r *\<^sub>C b) y c)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear b y (s *\<^sub>C c) = s *\<^sub>C (g_atensor_clinear b y c)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      ultimately show ?thesis unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right) 
+    qed
+  qed
+  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F u = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by auto
+qed
+
+
+lemma F_atensor_cbilinear_cbilinear_right_distr:
+ \<open>(g_atensor_clinear x (b1 + b2) u) =
+       (g_atensor_clinear x b1 u) + (g_atensor_clinear x b2 u)\<close>
+proof-
+  define F where 
+    \<open>F z = (g_atensor_clinear x (b1 + b2) z) -
+       (g_atensor_clinear x b1 z) -
+       (g_atensor_clinear x b2 z)\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+    using g_atensor_clinear_cbilinear'
+    unfolding F_def
+    by (metis (no_types, lifting) cinner_left_distrib diff_diff_add diff_self ring_class.ring_distribs(1))
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear x (b1 + b2) (c1 + c2) = g_atensor_clinear x (b1 + b2) c1 + g_atensor_clinear x (b1 + b2) c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear x b1 (c1 + c2) = g_atensor_clinear x b1 c1 +  g_atensor_clinear x b1 c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear x b2 (c1 + c2) = g_atensor_clinear x b2 c1 +  g_atensor_clinear x b2 c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      ultimately show ?thesis
+        unfolding F_def
+        by simp
+    qed
+    show "F (r *\<^sub>C b) = r *\<^sub>C F b"
+      for r :: complex
+        and b :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear x (b1 + b2) (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear x (b1 + b2) b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear x b1 (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear x b1 b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear x b2 (r *\<^sub>C b) = r *\<^sub>C (g_atensor_clinear x b2 b)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      ultimately show ?thesis
+        unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib)
+    qed
+  qed
+  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F u = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by (metis diff_add_cancel eq_iff_diff_eq_0 semiring_normalization_rules(24)) 
+qed
+
+
+lemma F_atensor_cbilinear_cbilinear_right_scaleC:
+\<open>(g_atensor_clinear x (r *\<^sub>C b) u) =
+       (cnj r) * (g_atensor_clinear x b u)\<close>
+proof-
+  define F where 
+    \<open>F z = (g_atensor_clinear x (r *\<^sub>C b) z) - (cnj r) * (g_atensor_clinear x b z)\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+    using g_atensor_clinear_cbilinear'
+    unfolding F_def
+  proof -
+    have "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) = \<langle>x, p\<rangle> * (cnj r * \<langle>b, q\<rangle>)"
+      by (metis (full_types) cinner_scaleC_left g_atensor_clinear_cbilinear')
+    then show "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) - cnj r * g_atensor_clinear x b (p \<otimes>\<^sub>a q) = 0"
+      using g_atensor_clinear_cbilinear' by auto
+  qed
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear x (r *\<^sub>C b) (c1 + c2) = g_atensor_clinear x (r *\<^sub>C b) c1
+          + g_atensor_clinear x (r *\<^sub>C b) c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      moreover have \<open>g_atensor_clinear x b (c1 + c2) = g_atensor_clinear x b c1
+          + g_atensor_clinear x b c2\<close>
+        by (simp add: g_atensor_clinear_clinear complex_vector.linear_add)
+      ultimately show ?thesis unfolding F_def
+        by (simp add: semiring_normalization_rules(34)) 
+    qed
+    show "F (s *\<^sub>C c) = s *\<^sub>C F c"
+      for s :: complex
+        and c :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>g_atensor_clinear x (r *\<^sub>C b) (s *\<^sub>C c) = s *\<^sub>C (g_atensor_clinear x (r *\<^sub>C b) c)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      moreover have \<open>g_atensor_clinear x b (s *\<^sub>C c) = s *\<^sub>C (g_atensor_clinear x b c)\<close>
+        by (simp add: complex_vector.linear_scale g_atensor_clinear_clinear)
+      ultimately show ?thesis unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right) 
+    qed
+  qed
+  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F u = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by auto
+qed
+
+text \<open>See proof of Proposition 1 on page 186 in @{cite Helemskii}\<close>
+definition F_atensor_cbilinear::\<open>'a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> complex\<close>
+  where \<open>F_atensor_cbilinear u x y = cnj (g_atensor_clinear x y u)\<close>
+
+lemma F_atensor_cbilinear_cbilinear:
+  \<open>cbilinear (F_atensor_cbilinear u)\<close>
+  unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
+    module_hom_def module_hom_axioms_def module_def F_atensor_cbilinear_def
+  apply auto
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_left.add)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
+  apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
+  apply (simp add: scaleC_add_right)
+  using scaleC_left.add apply auto[1]
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
+  by (simp add: F_atensor_cbilinear_cbilinear_right_scaleC)
+
+lemma F_atensor_clinear_existence:
+\<open>\<exists> K::'a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> u.
+   clinear (K u) \<and> (\<forall> x y. F_atensor_cbilinear u x y = K u (x \<otimes>\<^sub>a y))\<close>
+proof-
+  have \<open>cbilinear (F_atensor_cbilinear u)\<close>
+    for u::\<open>'a \<otimes>\<^sub>a 'b\<close>
+    using F_atensor_cbilinear_cbilinear 
+    by blast
+  hence \<open>\<forall> u. \<exists> K::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex.
+   clinear K \<and> (\<forall> x y. F_atensor_cbilinear u x y = K (x \<otimes>\<^sub>a y))\<close>
+    using atensor_universal_property by blast
+  thus \<open>\<exists> K:: 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> u.
+   clinear (K u) \<and> (\<forall> x y. F_atensor_cbilinear u x y = K u (x \<otimes>\<^sub>a y))\<close>
+    by metis
+qed
+
+definition F_atensor_clinear::\<open>'a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+  where \<open>F_atensor_clinear = (SOME K:: 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> u.
+   clinear (K u) \<and> (\<forall> x y. F_atensor_cbilinear u x y = K u (x \<otimes>\<^sub>a y)))\<close>
+
+lemma F_atensor_clinear_clinear:
+\<open>clinear (F_atensor_clinear u)\<close>
+  unfolding F_atensor_clinear_def
+  using F_atensor_clinear_existence
+  by (smt F_atensor_clinear_def verit_sko_ex')
+
+lemma F_atensor_clinear_cbilinear:
+\<open>F_atensor_cbilinear u x y = F_atensor_clinear u (x \<otimes>\<^sub>a y)\<close>
+  unfolding F_atensor_clinear_def
+  using F_atensor_clinear_existence
+  by (smt F_atensor_clinear_def verit_sko_ex')
+
+lemma F_atensor_clinear_distr:
+\<open>F_atensor_clinear (b1 + b2) y =
+       F_atensor_clinear b1 y + F_atensor_clinear b2 y\<close>
+proof-
+  define F where 
+    \<open>F z = F_atensor_clinear (b1 + b2) z -
+       F_atensor_clinear b1 z - F_atensor_clinear b2 z\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+  proof-
+    have \<open>g_atensor_clinear p q (b1 + b2) =
+     g_atensor_clinear p q b1 + g_atensor_clinear p q b2\<close>
+      using g_atensor_clinear_clinear[where x = "p" and y = "q"]
+      unfolding clinear_def
+      by (simp add: \<open>clinear (g_atensor_clinear p q)\<close> complex_vector.linear_add) 
+    hence \<open>g_atensor_clinear p q (b1 + b2)  - g_atensor_clinear p q b1 -
+    g_atensor_clinear p q b2 = 0\<close>
+      by simp
+    hence \<open>F_atensor_cbilinear (b1 + b2) p q - F_atensor_cbilinear b1 p q -
+    F_atensor_cbilinear b2 p q = 0\<close>
+      by (metis F_atensor_cbilinear_def complex_cnj_diff eq_iff_diff_eq_0)
+    hence \<open>F_atensor_clinear (b1 + b2) (p \<otimes>\<^sub>a q) - F_atensor_clinear b1 (p \<otimes>\<^sub>a q) -
+    F_atensor_clinear b2 (p \<otimes>\<^sub>a q) = 0\<close>
+      by (simp add: F_atensor_clinear_cbilinear)      
+    thus ?thesis
+    unfolding F_def
+    by blast
+  qed
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>F_atensor_clinear (b1 + b2) (c1 + c2) = F_atensor_clinear (b1 + b2) c1
+          + F_atensor_clinear (b1 + b2) c2\<close>
+        using F_atensor_clinear_clinear[where u = "b1 + b2"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear (b1 + b2))\<close> complex_vector.linear_add)
+      moreover have \<open>F_atensor_clinear b1 (c1 + c2) = F_atensor_clinear b1 c1
+          + F_atensor_clinear b1 c2\<close>
+        using F_atensor_clinear_clinear[where u = "b1"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear b1)\<close> complex_vector.linear_add)
+      moreover have \<open>F_atensor_clinear b2 (c1 + c2) = F_atensor_clinear b2 c1
+          + F_atensor_clinear b2 c2\<close>
+        using F_atensor_clinear_clinear[where u = "b2"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear b2)\<close> complex_vector.linear_add)
+      ultimately show ?thesis unfolding F_def
+        by (simp add: add_diff_add)
+    qed
+    show "F (r *\<^sub>C b) = r *\<^sub>C F b"
+      for r :: complex
+        and b :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>F_atensor_clinear (b1 + b2) (r *\<^sub>C b) = r *\<^sub>C (F_atensor_clinear (b1 + b2) b)\<close>
+        using F_atensor_clinear_clinear[where u = "b1 + b2"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear (b1 + b2))\<close> complex_vector.linear_scale)
+      moreover have \<open>F_atensor_clinear b1 (r *\<^sub>C b) = r *\<^sub>C (F_atensor_clinear b1 b)\<close>
+        using F_atensor_clinear_clinear[where u = "b1"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear b1)\<close> complex_vector.linear_scale)
+      moreover have \<open>F_atensor_clinear b2 (r *\<^sub>C b) = r *\<^sub>C (F_atensor_clinear b2 b)\<close>
+        using F_atensor_clinear_clinear[where u = "b2"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear b2)\<close> complex_vector.linear_scale)
+      ultimately show ?thesis 
+        unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib)        
+    qed
+  qed
+  moreover have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F y = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by (metis diff_add_cancel eq_iff_diff_eq_0 semiring_normalization_rules(24)) 
+qed
+
+lemma F_atensor_clinear_scaleC:
+\<open>F_atensor_clinear (r *\<^sub>C b) y = (cnj r) * F_atensor_clinear b y\<close>
+proof-
+  define F where 
+    \<open>F z = F_atensor_clinear (r *\<^sub>C b) z - (cnj r) * F_atensor_clinear b z\<close>
+  for z
+  have \<open>F (p \<otimes>\<^sub>a q) = 0\<close>
+    for p q
+  proof-
+    have \<open>g_atensor_clinear p q (r *\<^sub>C b) = r *\<^sub>C g_atensor_clinear p q b\<close>
+      using g_atensor_clinear_clinear[where x = "p" and y = "q"]
+      unfolding clinear_def
+      by (simp add: \<open>clinear (g_atensor_clinear p q)\<close> complex_vector.linear_scale)
+    hence \<open>g_atensor_clinear p q (r *\<^sub>C b)  - r *\<^sub>C (g_atensor_clinear p q b) = 0\<close>
+      by simp
+    hence \<open>F_atensor_cbilinear (r *\<^sub>C b) p q - (cnj r) *\<^sub>C (F_atensor_cbilinear b p q) = 0\<close>
+      using F_atensor_cbilinear_def complex_cnj_diff eq_iff_diff_eq_0
+      by (metis complex_cnj_mult complex_scaleC_def)
+    hence \<open>F_atensor_clinear (r *\<^sub>C b) (p \<otimes>\<^sub>a q) - (cnj r) *\<^sub>C (F_atensor_clinear b (p \<otimes>\<^sub>a q)) = 0\<close>
+      by (simp add: F_atensor_clinear_cbilinear)      
+    thus ?thesis
+      unfolding F_def
+      by simp
+  qed
+  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+    for z
+    unfolding atensor_of_pair_def
+    by auto
+  moreover have \<open>clinear F\<close>
+    unfolding clinear_def proof
+    show "F (c1 + c2) = F c1 + F c2"
+      for c1 :: "'a \<otimes>\<^sub>a 'b"
+        and c2 :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>F_atensor_clinear (r *\<^sub>C b) (c1 + c2) = F_atensor_clinear (r *\<^sub>C b) c1
+         + F_atensor_clinear (r *\<^sub>C b) c2\<close>
+        using F_atensor_clinear_clinear[where u = "r *\<^sub>C b"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear (r *\<^sub>C b))\<close> complex_vector.linear_add)
+      moreover have \<open>F_atensor_clinear b (c1 + c2) = F_atensor_clinear b c1
+          + F_atensor_clinear b c2\<close>
+        using F_atensor_clinear_clinear[where u = "b"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear b)\<close> complex_vector.linear_add)
+      ultimately show ?thesis unfolding F_def
+        by (simp add: semiring_normalization_rules(34))        
+    qed
+    show "F (s *\<^sub>C c) = s *\<^sub>C F c"
+      for s :: complex
+        and c :: "'a \<otimes>\<^sub>a 'b"
+    proof-
+      have \<open>F_atensor_clinear (r *\<^sub>C b) (s *\<^sub>C c) = s *\<^sub>C (F_atensor_clinear (r *\<^sub>C b) c)\<close>
+        using F_atensor_clinear_clinear[where u = "r *\<^sub>C b"]
+        unfolding clinear_def
+        by (simp add: \<open>clinear (F_atensor_clinear (r *\<^sub>C b))\<close> complex_vector.linear_scale)
+      moreover have \<open>F_atensor_clinear b (s *\<^sub>C c) = s *\<^sub>C (F_atensor_clinear b c)\<close>
+        using F_atensor_clinear_clinear[where u = "b"]
+        unfolding clinear_def
+        using \<open>clinear (F_atensor_clinear b)\<close> complex_vector.linear_scale by blast
+      ultimately show ?thesis 
+        unfolding F_def
+        by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right)
+    qed
+  qed
+  moreover have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+    by (simp add: atensor_onto) 
+  ultimately have \<open>F y = 0\<close>
+    using complex_vector.linear_eq_0_on_span by auto
+  thus ?thesis
+    unfolding F_def
+    by auto
+qed
+
 
 text \<open>Proposition 1 on page 186 in @{cite Helemskii}\<close>
 instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin
-lift_definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
-  is \<open>undefined\<close>
-proof-
-  fix f1 f2 f3 f4::\<open>('a \<times> 'b) free\<close>
-  assume \<open>atensor_rel f1 f2\<close> and \<open>atensor_rel f3 f4\<close>
-  show \<open>undefined f1 f3 = undefined f2 f4\<close>
-    sorry
-qed
-
+definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+  where  \<open>cinner_atensor = F_atensor_clinear\<close>
+  
 definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
   \<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
 
@@ -2167,17 +2682,22 @@ proof
   show "\<langle>x::'a \<otimes>\<^sub>a 'b, y\<rangle> = cnj \<langle>y, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
+    unfolding cinner_atensor_def
     sorry
   show "\<langle>(x::'a \<otimes>\<^sub>a 'b) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
       and z :: "'a \<otimes>\<^sub>a 'b"
-    sorry
+    unfolding cinner_atensor_def
+    by (simp add: F_atensor_clinear_distr)
+    
   show "\<langle>r *\<^sub>C (x::'a \<otimes>\<^sub>a 'b), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
     for r :: complex
       and x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
-    sorry
+    unfolding cinner_atensor_def
+    by (simp add: F_atensor_clinear_scaleC)
+
   show "0 \<le> \<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
     sorry
