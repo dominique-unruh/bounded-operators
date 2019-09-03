@@ -2570,6 +2570,52 @@ proof-
     by (metis diff_add_cancel eq_iff_diff_eq_0 semiring_normalization_rules(24)) 
 qed
 
+lemma F_atensor_clinear_0:
+  \<open>F_atensor_clinear 0 y = 0\<close>
+proof-
+  have \<open>F_atensor_clinear 0 y = F_atensor_clinear (0 + 0) y\<close>
+    by simp
+  also have \<open>\<dots> = F_atensor_clinear 0 y + F_atensor_clinear 0 y\<close>
+    using F_atensor_clinear_distr by blast
+  finally have \<open>F_atensor_clinear 0 y = F_atensor_clinear 0 y + F_atensor_clinear 0 y\<close>
+    by blast
+  thus ?thesis
+    by auto 
+qed
+
+lemma F_atensor_clinear_distr_gen':
+  \<open>\<forall> S. card S = n \<and> finite S \<longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y =
+       (\<Sum> x\<in>S. F_atensor_clinear (f x) y)\<close>
+proof(induction n)
+  case 0
+  hence \<open>card S = 0 \<Longrightarrow> finite S \<Longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y =
+       (\<Sum> x\<in>S. F_atensor_clinear (f x) y)\<close>
+    for S
+  proof-
+    assume \<open>card S = 0\<close> and \<open>finite S\<close>
+    hence \<open>S = {}\<close>
+      by auto
+    have \<open>(\<Sum> x\<in>S. f x) = 0\<close>
+      by (simp add: \<open>S = {}\<close>)      
+    hence \<open>F_atensor_clinear (\<Sum> x\<in>S. f x) y = 0\<close>
+      by (simp add: F_atensor_clinear_0)
+    moreover have \<open>(\<Sum> x\<in>S. F_atensor_clinear (f x) y) = 0\<close>
+      using \<open>S = {}\<close> by simp
+    ultimately show ?thesis by simp
+  qed
+  thus ?case by blast
+next
+  case (Suc n)
+  thus ?case
+    by (smt F_atensor_clinear_distr Suc_inject card.insert_remove card_eq_SucD finite_Diff finite_insert sum.insert_remove)
+qed
+
+
+lemma F_atensor_clinear_distr_gen:
+  \<open>finite S \<Longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y =
+       (\<Sum> x\<in>S. F_atensor_clinear (f x) y)\<close>
+  using F_atensor_clinear_distr_gen' by blast
+
 lemma F_atensor_clinear_scaleC:
   \<open>F_atensor_clinear (r *\<^sub>C b) y = (cnj r) * F_atensor_clinear b y\<close>
 proof-
@@ -2678,21 +2724,20 @@ proof
     unfolding norm_atensor_def 
     by blast
 
-
   show "sgn x = x /\<^sub>R norm x"
     for x :: "'a \<otimes>\<^sub>a 'b"
     unfolding sgn_atensor_def 
     by blast
-  
+
   show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>a 'b) y < e})"
     unfolding uniformity_atensor_def 
     by blast
-  
+
   show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>a 'b) = x \<longrightarrow> y \<in> U)"
     for U :: "('a \<otimes>\<^sub>a 'b) set"
     unfolding open_atensor_def 
     by blast
-  
+
   show "\<langle>x + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
@@ -2707,29 +2752,209 @@ proof
     unfolding cinner_atensor_def
     by (simp add: F_atensor_clinear_scaleC)
 
+  have expansion_id: \<open>finite t \<Longrightarrow> finite t' \<Longrightarrow> 
+        x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow> y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a') \<Longrightarrow>
+       \<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+    for x y :: "'a \<otimes>\<^sub>a 'b"
+      and t t'::"('a \<otimes>\<^sub>a 'b) set"
+      and r r':: "'a \<otimes>\<^sub>a 'b \<Rightarrow> complex"
+  proof-
+    assume \<open>finite t\<close> and \<open>finite t'\<close> and 
+      \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
+    have \<open>\<langle>x, y\<rangle> = \<langle>(\<Sum>a\<in>t. r a *\<^sub>C a), y\<rangle>\<close>
+      using \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. \<langle>r a *\<^sub>C a, y\<rangle>)\<close>
+      unfolding cinner_atensor_def
+      using F_atensor_clinear_distr_gen \<open>finite t\<close> by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (cnj (r a)) *\<^sub>C \<langle>a, y\<rangle>)\<close>
+      by (metis \<open>\<And>y:: 'a\<otimes>\<^sub>a'b. \<And> x r. \<langle>r *\<^sub>C x, y\<rangle> = cnj r * \<langle>x, y\<rangle>\<close> complex_scaleC_def)
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (cnj (r a)) *\<^sub>C \<langle>a, (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<rangle>)\<close>
+      using \<open>y = (\<Sum>a\<in>t'. r' a *\<^sub>C a)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (cnj (r a)) *\<^sub>C (\<Sum>a'\<in>t'. \<langle>a, r' a' *\<^sub>C a'\<rangle>) )\<close>
+    proof-
+      have \<open>\<langle>a, (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<rangle> = (\<Sum>a'\<in>t'. \<langle>a, r' a' *\<^sub>C a'\<rangle>)\<close>
+        for a
+      proof-
+        have \<open>clinear (F_atensor_clinear a)\<close>
+          by (simp add: F_atensor_clinear_clinear)          
+        thus ?thesis
+          using cinner_atensor_def complex_vector.linear_sum by auto 
+      qed
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (cnj (r a)) *\<^sub>C (\<Sum>a'\<in>t'. r' a' *\<^sub>C \<langle>a,  a'\<rangle>) )\<close>
+    proof-
+      have \<open>\<langle>a, r' a' *\<^sub>C  a'\<rangle>  = r' a' *\<^sub>C \<langle>a,  a'\<rangle>\<close>
+        for a a'
+        unfolding cinner_atensor_def
+        by (simp add: F_atensor_clinear_clinear complex_vector.linear_scale)
+      thus ?thesis by simp 
+    qed
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. (cnj (r a)) * r' a' *\<^sub>C \<langle>a,  a'\<rangle>) )\<close>
+    proof -
+      have "\<forall>a. cnj (r a) *\<^sub>C (\<Sum>a'\<in>t'. r' a' *\<^sub>C \<langle>a, a'\<rangle>) = (\<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)"
+        by (metis (no_types) complex_scaleC_def complex_vector.scale_sum_right)
+      then show ?thesis
+        by meson
+    qed
+    finally show \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+      by blast
+  qed
+
+  have expansion: \<open>\<exists> t t'::('a \<otimes>\<^sub>a 'b) set. \<exists> r r':: 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. 
+        finite t \<and> finite t' \<and> t \<subseteq> range atensor_of_pair \<and> t' \<subseteq> range atensor_of_pair \<and>
+       \<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>) 
+     \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+  proof-
+    have \<open>x \<in> complex_vector.span (range atensor_of_pair)\<close>
+      by (simp add: atensor_onto)
+    hence \<open>\<exists> t r. x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> range atensor_of_pair\<close>
+      using complex_vector.span_explicit
+      by fastforce
+    then obtain t::\<open>('a \<otimes>\<^sub>a 'b) set\<close> and r::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+      where \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>finite t\<close> and \<open>t \<subseteq> range atensor_of_pair\<close>
+      by blast
+    have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+      by (simp add: atensor_onto)
+    hence \<open>\<exists> t' r'. y = (\<Sum>a\<in>t'. r' a *\<^sub>C a) \<and> finite t' \<and> t' \<subseteq> range atensor_of_pair\<close>
+      using complex_vector.span_explicit
+      by fastforce
+    then obtain t'::\<open>('a \<otimes>\<^sub>a 'b) set\<close> and r'::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> 
+      where \<open>y = (\<Sum>a\<in>t'. r' a *\<^sub>C a)\<close> and \<open>finite t'\<close> and \<open>t' \<subseteq> range atensor_of_pair\<close>
+      by blast
+    have \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+      using expansion_id[where t = "t" and t' = "t'" and x = "x" and y = "y"
+          and r = "r" and r' = "r'"] \<open>finite t\<close> \<open>finite t'\<close>
+        \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close> by blast
+    thus ?thesis 
+      using \<open>finite t\<close> \<open>finite t'\<close> \<open>t \<subseteq> range atensor_of_pair\<close> \<open>t' \<subseteq> range atensor_of_pair\<close>
+        \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close> 
+      by blast
+  qed
+
   show "\<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
   proof-
-    have \<open>\<langle>x\<^sub>1\<otimes>\<^sub>ax\<^sub>2, y\<^sub>1\<otimes>\<^sub>ay\<^sub>2\<rangle> = cnj \<langle>y\<^sub>1\<otimes>\<^sub>ay\<^sub>2, x\<^sub>1\<otimes>\<^sub>ax\<^sub>2\<rangle>\<close>
-      for x\<^sub>1 x\<^sub>2 y\<^sub>1 y\<^sub>2
-    proof -
-      have f1: "\<forall>b a c. \<langle>c, (a::'a) \<otimes>\<^sub>a (b::'b)\<rangle> = cnj (g_atensor_clinear a b c)"
-        by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def)
-      have "cnj (\<langle>y\<^sub>1, x\<^sub>1\<rangle> * \<langle>y\<^sub>2, x\<^sub>2\<rangle>) = \<langle>x\<^sub>1, y\<^sub>1\<rangle> * \<langle>x\<^sub>2, y\<^sub>2\<rangle>"
-        by auto
-      then show ?thesis
-        using f1 by (simp add: g_atensor_clinear_cbilinear')
+    have swap: \<open>x \<in> range atensor_of_pair \<Longrightarrow> y \<in> range atensor_of_pair \<Longrightarrow> \<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>\<close>
+      for x y
+    proof-
+      assume \<open>x \<in> range atensor_of_pair\<close> and \<open>y \<in> range atensor_of_pair\<close>
+      from \<open>x \<in> range atensor_of_pair\<close>
+      obtain x\<^sub>1 x\<^sub>2 where \<open>x = x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2\<close>
+        unfolding atensor_of_pair_def
+        by blast
+      from \<open>y \<in> range atensor_of_pair\<close>
+      obtain y\<^sub>1 y\<^sub>2 where \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close>
+        unfolding atensor_of_pair_def
+        by blast
+
+      have \<open>\<langle>x, y\<rangle> = F_atensor_clinear x y\<close>
+        unfolding cinner_atensor_def
+        by blast
+      also have \<open>\<dots> = F_atensor_cbilinear x y\<^sub>1 y\<^sub>2\<close>
+      proof-
+        have \<open>F_atensor_cbilinear x y\<^sub>1 y\<^sub>2 = F_atensor_clinear x (y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2)\<close>
+          using  F_atensor_clinear_cbilinear[where u = "x" and x = "y\<^sub>1" and y = "y\<^sub>2"]
+          by blast
+        thus ?thesis
+          by (simp add: \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close>)          
+      qed
+      also have \<open>\<dots> = cnj (g_atensor_clinear y\<^sub>1 y\<^sub>2 x)\<close>
+        unfolding F_atensor_cbilinear_def
+        by blast
+      also have \<open>\<dots> = cnj (g_atensor_cbilinear y\<^sub>1 y\<^sub>2 x\<^sub>1 x\<^sub>2)\<close>
+      proof-
+        have \<open>g_atensor_clinear y\<^sub>1 y\<^sub>2 x = g_atensor_cbilinear y\<^sub>1 y\<^sub>2 x\<^sub>1 x\<^sub>2\<close>
+          using  \<open>x = x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2\<close>
+          by (simp add: g_atensor_clinear_cbilinear)
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots> = cnj (cnj (g_atensor_cbilinear x\<^sub>1 x\<^sub>2 y\<^sub>1 y\<^sub>2))\<close>
+        unfolding g_atensor_cbilinear_def
+        by simp
+      also have \<open>\<dots> = cnj (cnj (g_atensor_clinear x\<^sub>1 x\<^sub>2 y))\<close>
+        by (simp add: \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close> g_atensor_clinear_cbilinear)
+      also have \<open>\<dots> = cnj (F_atensor_clinear y x)\<close>
+        by (metis (full_types) F_atensor_cbilinear_def F_atensor_clinear_cbilinear \<open>x = x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2\<close>)
+      finally show \<open>\<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>\<close>
+        using cinner_atensor_def 
+        by simp 
     qed
-      
-    show ?thesis sorry
+    have \<open>\<exists> t t'::('a \<otimes>\<^sub>a 'b) set. \<exists> r r':: 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. 
+        finite t \<and> finite t' \<and> t \<subseteq> range atensor_of_pair \<and> t' \<subseteq> range atensor_of_pair \<and>
+       \<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>) 
+     \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
+      using expansion by blast
+    then obtain t t' r r' where \<open>finite t\<close> and \<open>finite t'\<close> and \<open>t \<subseteq> range atensor_of_pair\<close>
+      and \<open>t' \<subseteq> range atensor_of_pair\<close> and
+      \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close> and
+      \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
+      by blast
+    from \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+    have \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C (cnj \<langle>a', a\<rangle>))\<close>
+      using swap  \<open>t \<subseteq> range atensor_of_pair\<close>  \<open>t' \<subseteq> range atensor_of_pair\<close>
+      by (smt subset_eq sum.cong)
+    also have \<open>\<dots> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj ( r a * (cnj (r' a')) *\<^sub>C \<langle>a', a\<rangle>))\<close>
+    proof-
+      have \<open>cnj (r a) * r' a' *\<^sub>C (cnj \<langle>a', a\<rangle>) = cnj ( r a * (cnj (r' a')) *\<^sub>C \<langle>a', a\<rangle>)\<close>
+        for a a'
+        by simp        
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots> =  (\<Sum>a\<in>t. cnj (\<Sum>a'\<in>t'. ( r a * (cnj (r' a')) *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+      by auto
+    also have \<open>\<dots> = cnj (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. ( r a * (cnj (r' a')) *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+      by auto
+    also have \<open>\<dots> = cnj (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. ( (cnj (r' a')) * r a  *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+    proof-
+      have \<open>r a * (cnj (r' a')) = (cnj (r' a')) * r a\<close>
+        for a a'
+        by simp
+      thus ?thesis
+        by (metis (mono_tags, lifting) complex_scaleC_def mult_scaleC_right sum.cong) 
+    qed
+    also have \<open>\<dots> = cnj (\<langle>y, x\<rangle>)\<close>
+    proof-
+      have \<open>\<langle>y, x\<rangle> = (\<Sum>a'\<in>t'. (\<Sum>a\<in>t. ( (cnj (r' a')) * r a  *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+        using expansion_id[where t = "t'" and t' = "t" and x = "y" and y = "x"
+            and r = "r'" and r' = "r"] \<open>finite t\<close> \<open>finite t'\<close>
+          \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close> 
+        by blast
+      also have \<open>\<dots> = (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. ( (cnj (r' a')) * r a  *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+      proof-
+        define f where \<open>f a' a = ( (cnj (r' a')) * r a  *\<^sub>C \<langle>a', a\<rangle>)\<close> for a a'
+        have \<open>(\<Sum>a'\<in>t'. (\<Sum>a\<in>t. f a' a)) = (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. f a' a))\<close>
+          using \<open>finite t\<close> \<open>finite t'\<close>
+          using sum.swap by blast          
+        thus ?thesis
+          unfolding f_def
+          by blast          
+      qed
+      finally have \<open>\<langle>y, x\<rangle> = (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. ( (cnj (r' a')) * r a  *\<^sub>C \<langle>a', a\<rangle>)))\<close>
+        by blast        
+      thus ?thesis by simp
+    qed
+    finally show ?thesis by blast
   qed
 
+  have \<open>\<langle>x\<^sub>1\<otimes>\<^sub>ax\<^sub>2, y\<^sub>1\<otimes>\<^sub>ay\<^sub>2\<rangle> = cnj \<langle>y\<^sub>1\<otimes>\<^sub>ay\<^sub>2, x\<^sub>1\<otimes>\<^sub>ax\<^sub>2\<rangle>\<close>
+    for x\<^sub>1 x\<^sub>2 y\<^sub>1 y\<^sub>2
+  proof -
+    have f1: "\<forall>b a c. \<langle>c, (a::'a) \<otimes>\<^sub>a (b::'b)\<rangle> = cnj (g_atensor_clinear a b c)"
+      by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def)
+    have "cnj (\<langle>y\<^sub>1, x\<^sub>1\<rangle> * \<langle>y\<^sub>2, x\<^sub>2\<rangle>) = \<langle>x\<^sub>1, y\<^sub>1\<rangle> * \<langle>x\<^sub>2, y\<^sub>2\<rangle>"
+      by auto
+    then show ?thesis
+      using f1 by (simp add: g_atensor_clinear_cbilinear')
+  qed
 
   show "0 \<le> \<langle>x, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
     sorry
-  
+
   show "(\<langle>x, x\<rangle> = 0) = (x = 0)"
     for x :: "'a \<otimes>\<^sub>a 'b"
   proof
@@ -2748,7 +2973,7 @@ proof
       using that unfolding cinner_atensor_def
       by (metis F_atensor_clinear_scaleC cinner_complex_def cinner_zero_left complex_vector.scale_zero_left)
   qed
-  
+
 qed
 
 end
