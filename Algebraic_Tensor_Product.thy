@@ -2131,27 +2131,27 @@ lemma g_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def g_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+                   apply (simp add: scaleC_add_right)
+                  apply (simp add: scaleC_add_left)
+                 apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
+               apply (simp add: scaleC_add_right)
+              apply (simp add: scaleC_add_left)
+             apply (simp add: ring_class.ring_distribs(1))
+            apply (simp add: ring_class.ring_distribs(2))
+           apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+          apply (simp add: scaleC_add_right)
+         apply (simp add: scaleC_add_left)
+        apply (simp add: ring_class.ring_distribs(1))
+       apply (simp add: ring_class.ring_distribs(2))
   using scaleC_add_right apply auto[1]
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+     apply (simp add: scaleC_add_left)
+    apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
   by (simp add: cinner_right_distrib semiring_normalization_rules(34))
 
 lemma g_atensor_clinear_existence:
-\<open>\<exists> H::'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> x. \<forall> y.
+  \<open>\<exists> H::'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> x. \<forall> y.
    clinear (H x y) \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1))\<close>
 proof-
   have \<open>cbilinear (g_atensor_cbilinear x y)\<close>
@@ -2171,19 +2171,19 @@ definition g_atensor_clinear::\<open>'a::complex_inner \<Rightarrow> 'b::complex
    clinear (H x y) \<and> (\<forall> x\<^sub>1 y\<^sub>1. g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = H x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)))\<close>
 
 lemma g_atensor_clinear_clinear:
-\<open>clinear (g_atensor_clinear x y)\<close>
+  \<open>clinear (g_atensor_clinear x y)\<close>
   unfolding g_atensor_clinear_def
   using g_atensor_clinear_existence
   by (smt g_atensor_clinear_def verit_sko_ex')
-  
+
 lemma g_atensor_clinear_cbilinear:
-\<open>g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
+  \<open>g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
   unfolding g_atensor_clinear_def
   using g_atensor_clinear_existence
   by (smt g_atensor_cbilinear_def g_atensor_clinear_def someI_ex)
 
 lemma g_atensor_clinear_cbilinear':
-\<open>\<langle>x, x\<^sub>1\<rangle> * \<langle>y, y\<^sub>1\<rangle> = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
+  \<open>\<langle>x, x\<^sub>1\<rangle> * \<langle>y, y\<^sub>1\<rangle> = g_atensor_clinear x y (x\<^sub>1 \<otimes>\<^sub>a y\<^sub>1)\<close>
   unfolding g_atensor_cbilinear_def
   by (metis g_atensor_cbilinear_def g_atensor_clinear_cbilinear)
 
@@ -2254,7 +2254,7 @@ proof-
 qed
 
 lemma F_atensor_cbilinear_cbilinear_left_scaleC:
-\<open>(g_atensor_clinear (r *\<^sub>C b) y u) =  (cnj r) * (g_atensor_clinear b y u)\<close>
+  \<open>(g_atensor_clinear (r *\<^sub>C b) y u) =  (cnj r) * (g_atensor_clinear b y u)\<close>
 proof-
   define F where 
     \<open>F z = (g_atensor_clinear (r *\<^sub>C b) y z) - (cnj r) * (g_atensor_clinear b y z)\<close>
@@ -2306,7 +2306,7 @@ qed
 
 
 lemma F_atensor_cbilinear_cbilinear_right_distr:
- \<open>(g_atensor_clinear x (b1 + b2) u) =
+  \<open>(g_atensor_clinear x (b1 + b2) u) =
        (g_atensor_clinear x b1 u) + (g_atensor_clinear x b2 u)\<close>
 proof-
   define F where 
@@ -2365,7 +2365,7 @@ qed
 
 
 lemma F_atensor_cbilinear_cbilinear_right_scaleC:
-\<open>(g_atensor_clinear x (r *\<^sub>C b) u) =
+  \<open>(g_atensor_clinear x (r *\<^sub>C b) u) =
        (cnj r) * (g_atensor_clinear x b u)\<close>
 proof-
   define F where 
@@ -2430,29 +2430,29 @@ lemma F_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def F_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_left.add)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
-  apply (simp add: scaleC_add_right)
+                     apply (simp add: scaleC_add_right)
+                    apply (simp add: scaleC_left.add)
+                   apply (simp add: ring_class.ring_distribs(1))
+                  apply (simp add: ring_class.ring_distribs(2))
+                 apply (simp add: scaleC_add_right)
+                apply (simp add: scaleC_add_left)
+               apply (simp add: ring_class.ring_distribs(1))
+              apply (simp add: ring_class.ring_distribs(2))
+             apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
+            apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
+           apply (simp add: scaleC_add_right)
   using scaleC_left.add apply auto[1]
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
+         apply (simp add: ring_class.ring_distribs(1))
+        apply (simp add: ring_class.ring_distribs(2))
+       apply (simp add: scaleC_add_right)
+      apply (simp add: scaleC_add_left)
+     apply (simp add: ring_class.ring_distribs(1))
+    apply (simp add: ring_class.ring_distribs(2))
+   apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
   by (simp add: F_atensor_cbilinear_cbilinear_right_scaleC)
 
 lemma F_atensor_clinear_existence:
-\<open>\<exists> K::'a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> u.
+  \<open>\<exists> K::'a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> u.
    clinear (K u) \<and> (\<forall> x y. F_atensor_cbilinear u x y = K u (x \<otimes>\<^sub>a y))\<close>
 proof-
   have \<open>cbilinear (F_atensor_cbilinear u)\<close>
@@ -2472,19 +2472,19 @@ definition F_atensor_clinear::\<open>'a::complex_inner \<otimes>\<^sub>a 'b::com
    clinear (K u) \<and> (\<forall> x y. F_atensor_cbilinear u x y = K u (x \<otimes>\<^sub>a y)))\<close>
 
 lemma F_atensor_clinear_clinear:
-\<open>clinear (F_atensor_clinear u)\<close>
+  \<open>clinear (F_atensor_clinear u)\<close>
   unfolding F_atensor_clinear_def
   using F_atensor_clinear_existence
   by (smt F_atensor_clinear_def verit_sko_ex')
 
 lemma F_atensor_clinear_cbilinear:
-\<open>F_atensor_cbilinear u x y = F_atensor_clinear u (x \<otimes>\<^sub>a y)\<close>
+  \<open>F_atensor_cbilinear u x y = F_atensor_clinear u (x \<otimes>\<^sub>a y)\<close>
   unfolding F_atensor_clinear_def
   using F_atensor_clinear_existence
   by (smt F_atensor_clinear_def verit_sko_ex')
 
 lemma F_atensor_clinear_distr:
-\<open>F_atensor_clinear (b1 + b2) y =
+  \<open>F_atensor_clinear (b1 + b2) y =
        F_atensor_clinear b1 y + F_atensor_clinear b2 y\<close>
 proof-
   define F where 
@@ -2509,8 +2509,8 @@ proof-
     F_atensor_clinear b2 (p \<otimes>\<^sub>a q) = 0\<close>
       by (simp add: F_atensor_clinear_cbilinear)      
     thus ?thesis
-    unfolding F_def
-    by blast
+      unfolding F_def
+      by blast
   qed
   hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
     for z
@@ -2571,7 +2571,7 @@ proof-
 qed
 
 lemma F_atensor_clinear_scaleC:
-\<open>F_atensor_clinear (r *\<^sub>C b) y = (cnj r) * F_atensor_clinear b y\<close>
+  \<open>F_atensor_clinear (r *\<^sub>C b) y = (cnj r) * F_atensor_clinear b y\<close>
 proof-
   define F where 
     \<open>F z = F_atensor_clinear (r *\<^sub>C b) z - (cnj r) * F_atensor_clinear b z\<close>
@@ -2649,7 +2649,7 @@ instantiation atensor :: (complex_inner,complex_inner) complex_inner
 begin
 definition cinner_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
   where  \<open>cinner_atensor = F_atensor_clinear\<close>
-  
+
 definition norm_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> real\<close> where
   \<open>norm_atensor z = sqrt (norm \<langle>z, z\<rangle> )\<close> for z
 
@@ -2667,46 +2667,88 @@ definition open_atensor :: \<open>('a \<otimes>\<^sub>a 'b) set \<Rightarrow> bo
 
 instance
 proof
-  show "dist (x::'a \<otimes>\<^sub>a 'b) y = norm (x - y)"
+  show "dist x y = norm (x - y)"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
-    unfolding dist_atensor_def by blast
-  show "sgn (x::'a \<otimes>\<^sub>a 'b) = x /\<^sub>R norm x"
+    unfolding dist_atensor_def 
+    by blast
+
+  show "norm x = sqrt (norm \<langle>x, x\<rangle>)"
     for x :: "'a \<otimes>\<^sub>a 'b"
-    unfolding sgn_atensor_def by blast
+    unfolding norm_atensor_def 
+    by blast
+
+
+  show "sgn x = x /\<^sub>R norm x"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    unfolding sgn_atensor_def 
+    by blast
+  
   show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>a 'b) y < e})"
-    unfolding uniformity_atensor_def by blast
+    unfolding uniformity_atensor_def 
+    by blast
+  
   show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>a 'b) = x \<longrightarrow> y \<in> U)"
     for U :: "('a \<otimes>\<^sub>a 'b) set"
-    unfolding open_atensor_def by blast
-  show "\<langle>x::'a \<otimes>\<^sub>a 'b, y\<rangle> = cnj \<langle>y, x\<rangle>"
-    for x :: "'a \<otimes>\<^sub>a 'b"
-      and y :: "'a \<otimes>\<^sub>a 'b"
-    unfolding cinner_atensor_def
-    sorry
-  show "\<langle>(x::'a \<otimes>\<^sub>a 'b) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
+    unfolding open_atensor_def 
+    by blast
+  
+  show "\<langle>x + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
       and z :: "'a \<otimes>\<^sub>a 'b"
     unfolding cinner_atensor_def
     by (simp add: F_atensor_clinear_distr)
-    
-  show "\<langle>r *\<^sub>C (x::'a \<otimes>\<^sub>a 'b), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
+
+  show "\<langle>r *\<^sub>C x, y\<rangle> = cnj r * \<langle>x, y\<rangle>"
     for r :: complex
       and x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
     unfolding cinner_atensor_def
     by (simp add: F_atensor_clinear_scaleC)
 
-  show "0 \<le> \<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle>"
+  show "\<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+  proof-
+    have \<open>\<langle>x\<^sub>1\<otimes>\<^sub>ax\<^sub>2, y\<^sub>1\<otimes>\<^sub>ay\<^sub>2\<rangle> = cnj \<langle>y\<^sub>1\<otimes>\<^sub>ay\<^sub>2, x\<^sub>1\<otimes>\<^sub>ax\<^sub>2\<rangle>\<close>
+      for x\<^sub>1 x\<^sub>2 y\<^sub>1 y\<^sub>2
+    proof -
+      have f1: "\<forall>b a c. \<langle>c, (a::'a) \<otimes>\<^sub>a (b::'b)\<rangle> = cnj (g_atensor_clinear a b c)"
+        by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def)
+      have "cnj (\<langle>y\<^sub>1, x\<^sub>1\<rangle> * \<langle>y\<^sub>2, x\<^sub>2\<rangle>) = \<langle>x\<^sub>1, y\<^sub>1\<rangle> * \<langle>x\<^sub>2, y\<^sub>2\<rangle>"
+        by auto
+      then show ?thesis
+        using f1 by (simp add: g_atensor_clinear_cbilinear')
+    qed
+      
+    show ?thesis sorry
+  qed
+
+
+  show "0 \<le> \<langle>x, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
     sorry
-  show "(\<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle> = 0) = (x = 0)"
+  
+  show "(\<langle>x, x\<rangle> = 0) = (x = 0)"
     for x :: "'a \<otimes>\<^sub>a 'b"
-    sorry
-  show "norm (x::'a \<otimes>\<^sub>a 'b) = sqrt (norm \<langle>x, x\<rangle>)"
-    for x :: "'a \<otimes>\<^sub>a 'b"
-    unfolding norm_atensor_def by blast
+  proof
+    show "x = 0"
+      if "\<langle>x, x\<rangle> = 0"
+    proof-
+      have \<open>F_atensor_clinear x x = 0\<close>
+        sorry
+
+      thus ?thesis
+        sorry        
+    qed
+
+    show "\<langle>x, x\<rangle> = 0"
+      if "x = 0"
+      using that unfolding cinner_atensor_def
+      by (metis F_atensor_clinear_scaleC cinner_complex_def cinner_zero_left complex_vector.scale_zero_left)
+  qed
+  
 qed
 
 end
