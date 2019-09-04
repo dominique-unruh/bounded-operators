@@ -2951,9 +2951,95 @@ proof
       using f1 by (simp add: g_atensor_clinear_cbilinear')
   qed
 
+  have square: \<open>finite t \<Longrightarrow>  x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow>
+         \<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0 \<Longrightarrow>
+       \<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
+      for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
+        and t::\<open>('a \<otimes>\<^sub>a 'b) set\<close>
+          and r::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+  proof-
+    assume \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and
+          \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+    define D where \<open>D = {(a, a')| a a'. a \<in> t \<and> a' \<in> t \<and> a = a'}\<close>
+    define f where \<open>f a a' = cnj (r a) * r a' *\<^sub>C \<langle>a, a'\<rangle>\<close> for a a'
+    from  \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+    have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t. cnj (r a) * r a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+      using expansion_id
+      by blast
+    also have \<open>\<dots> = (\<Sum>(a, a')\<in>t\<times>t. cnj (r a) * r a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
+      using \<open>finite t\<close> sum.Sigma by fastforce
+    also have \<open>\<dots> = (\<Sum>(a, a')\<in>t\<times>t. f a a')\<close>
+      unfolding f_def by blast
+    also have \<open>\<dots> = (\<Sum>(a, a')\<in>D. f a a')
+        + (\<Sum>(a, a')\<in>t\<times>t-D. f a a')\<close>
+    proof-
+      have \<open>D \<subseteq> t\<times>t\<close>
+        unfolding D_def
+        by auto 
+      thus ?thesis
+        by (metis \<open>finite t\<close> finite_SigmaI ordered_field_class.sign_simps(2) sum.subset_diff) 
+    qed
+    also have \<open>\<dots> = (\<Sum>(a, a')\<in>D. f a a')\<close>
+    proof-
+      from  \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      have \<open>(a, a')\<in>t\<times>t-D \<Longrightarrow> f a a' = 0\<close>
+        for a a'
+        unfolding f_def D_def
+        by auto
+      hence \<open>(\<Sum>(a, a')\<in>t\<times>t-D. f a a') = 0\<close>
+        by (smt DiffD1 SigmaE case_prod_conv sum.not_neutral_contains_not_neutral)
+        (* > 1 s *)
+      thus ?thesis
+        using add_cancel_left_right by blast 
+    qed
+    also have \<open>\<dots> = (\<Sum>a\<in>t. f a a)\<close>
+    proof-
+      have \<open>D = (\<lambda> t. (t, t)) ` t\<close>
+        by (simp add: D_def Setcompr_eq_image)        
+      thus ?thesis
+        by (smt Pair_inject imageE imageI old.prod.case sum.eq_general)
+          (* > 1 s*)
+    qed
+    finally have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. f a a)\<close>
+      by blast
+    thus ?thesis
+      unfolding f_def
+      by (smt complex_norm_square complex_scaleC_def mult_scaleC_left semiring_normalization_rules(7) sum.cong)
+  qed
+
+  have ortho_basis: \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
+         (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
+    sorry
+
   show "0 \<le> \<langle>x, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
-    sorry
+  proof-
+    have \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
+      (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      using ortho_basis by blast
+    then obtain t r where \<open>finite t\<close> and \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by blast
+    have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
+      using square
+      using \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>finite t\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> 
+      by blast 
+    moreover have \<open>a\<in>t \<Longrightarrow> (norm (r a))^2 * \<langle>a, a\<rangle> \<ge> 0\<close>
+      for a
+    proof-
+      assume \<open>a\<in>t\<close>
+      hence \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
+        sorry
+      moreover have \<open>(norm (r a))^2 \<ge> 0\<close>
+        by simp        
+      ultimately show ?thesis
+        using complex_of_real_nn_iff mult_nonneg_nonneg 
+        by blast 
+    qed
+    ultimately show ?thesis
+      by (simp add: sum_nonneg) 
+  qed
 
   show "(\<langle>x, x\<rangle> = 0) = (x = 0)"
     for x :: "'a \<otimes>\<^sub>a 'b"
@@ -2961,11 +3047,50 @@ proof
     show "x = 0"
       if "\<langle>x, x\<rangle> = 0"
     proof-
-      have \<open>F_atensor_clinear x x = 0\<close>
-        sorry
-
+      have \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
+      (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        using ortho_basis by blast
+      then obtain t r where \<open>finite t\<close> and \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+        and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by blast
+      have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
+        using \<open>\<And>x::'a \<otimes>\<^sub>a 'b.  \<And> t r. \<lbrakk>finite t; x = (\<Sum>a\<in>t. r a *\<^sub>C a); \<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<rbrakk> \<Longrightarrow> \<langle>x, x\<rangle> = (\<Sum>a\<in>t. complex_of_real ((cmod (r a))\<^sup>2) * \<langle>a, a\<rangle>)\<close> \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>finite t\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by auto
+      hence \<open>0 = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
+        using that by auto
+      moreover have \<open>a\<in>t \<Longrightarrow> (norm (r a))^2 * \<langle>a, a\<rangle> \<ge> 0\<close>
+        for a
+      proof-
+        assume \<open>a\<in>t\<close>
+        have \<open>(norm (r a))^2 \<ge> 0\<close>
+          by simp          
+        moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
+          by (metis \<open>\<And>x::'a\<otimes>\<^sub>a'b. 0 \<le> \<langle>x, x\<rangle>\<close>) 
+        ultimately show ?thesis
+          using complex_of_real_nn_iff mult_nonneg_nonneg 
+          by blast 
+      qed
+      ultimately have zero: \<open>a\<in>t \<Longrightarrow> (norm (r a))^2 *\<^sub>C \<langle>a, a\<rangle> = 0\<close>
+        for a
+        by (metis (mono_tags, lifting) \<open>finite t\<close> complex_scaleC_def sum_nonneg_0)
+      hence \<open>a\<in>t \<Longrightarrow> r a = 0\<close>
+        for a
+      proof-
+        assume \<open>a\<in>t\<close>
+        hence \<open>(norm (r a))^2 *\<^sub>C \<langle>a, a\<rangle> = 0\<close>
+          using zero by blast
+        moreover have \<open>\<langle>a, a\<rangle> \<noteq> 0\<close>
+          using \<open>a\<in>t\<close>  \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close>
+          by blast
+        ultimately have \<open>(norm (r a))^2  = 0\<close>
+          by auto
+        hence \<open>norm (r a)  = 0\<close>
+          by auto
+        thus ?thesis
+          by auto 
+      qed
       thus ?thesis
-        sorry        
+        by (simp add: \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>)        
     qed
 
     show "\<langle>x, x\<rangle> = 0"
@@ -2973,9 +3098,9 @@ proof
       using that unfolding cinner_atensor_def
       by (metis F_atensor_clinear_scaleC cinner_complex_def cinner_zero_left complex_vector.scale_zero_left)
   qed
-
 qed
 
 end
 
 end
+
