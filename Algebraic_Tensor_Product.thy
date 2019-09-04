@@ -3005,12 +3005,12 @@ proof
       unfolding f_def
       by (smt complex_norm_square complex_scaleC_def mult_scaleC_left semiring_normalization_rules(7) sum.cong)
   qed
-
   have ortho_basis: \<open>\<exists> t r. finite t \<and> 
          (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
          (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
   proof-
+(*
     have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = (UNIV::'a set)
            \<and> 0 \<notin> A\<close>
@@ -3029,8 +3029,60 @@ proof
       using \<open>complex_vector.span A = (UNIV::'a set)\<close>
         \<open>complex_vector.span B = (UNIV::'b set)\<close>
       by (metis basis_atensor_complex_generator)
-    hence \<open>x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
+*)
+    have \<open>\<exists> U. complex_vector.independent U \<and> complex_vector.span U = (UNIV::'a set)\<close>
+      using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis 
+      by auto
+    then obtain U where \<open>complex_vector.independent U\<close> and \<open>complex_vector.span U = (UNIV::'a set)\<close>
       by blast
+    have \<open>\<exists> V. complex_vector.independent V \<and> complex_vector.span V = (UNIV::'b set)\<close>
+      using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis 
+      by auto
+    then obtain V where \<open>complex_vector.independent V\<close> and \<open>complex_vector.span V = (UNIV::'b set)\<close>
+      by blast
+    have \<open>x \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+      by (metis UNIV_I \<open>complex_vector.span U = UNIV\<close> \<open>complex_vector.span V = UNIV\<close> basis_atensor_complex_generator)
+    hence \<open>\<exists> T R. finite T \<and> T \<subseteq> atensor_of_pair ` (U \<times> V) \<and> 
+         x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close>
+      using complex_vector.span_explicit[where b = "atensor_of_pair ` (U \<times> V)"]
+      by blast
+    then obtain T R where \<open>finite T\<close> and \<open>T \<subseteq> atensor_of_pair ` (U \<times> V)\<close> and 
+      \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close>
+      by blast
+    have \<open>x \<in> complex_vector.span T\<close>
+      by (simp add: \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close> complex_vector.span_base complex_vector.span_scale complex_vector.span_sum)  
+    have \<open>\<exists> U' V'. finite U' \<and> finite V' \<and>
+         T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      sorry
+    then obtain U' V' where \<open>finite U'\<close> and \<open>finite V'\<close>
+        and \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      by blast
+    have \<open>x \<in> complex_vector.span  (atensor_of_pair ` (U' \<times> V'))\<close>
+      using \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close> \<open>x \<in> complex_vector.span T\<close> complex_vector.span_mono 
+      by auto
+    have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = complex_vector.span U'
+           \<and> 0 \<notin> A \<and> finite A\<close>
+      by (simp add: Gram_Schmidt \<open>finite U'\<close>)
+    then obtain A where \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      and \<open>complex_vector.span A = complex_vector.span U'\<close>
+      and \<open>0\<notin>A\<close> and \<open>finite A\<close>
+      by auto
+    have \<open>\<exists> B. (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span B = complex_vector.span V'
+           \<and> 0 \<notin> B \<and> finite B\<close>
+      by (simp add: Gram_Schmidt \<open>finite V'\<close>)
+    then obtain B where \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      and \<open>complex_vector.span B = complex_vector.span V'\<close>
+      and \<open>0\<notin>B\<close> and \<open>finite B\<close>
+      by auto
+    from \<open>complex_vector.span A = complex_vector.span U'\<close>
+         \<open>complex_vector.span B = complex_vector.span V'\<close>
+    have \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
+       = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>
+      sorry
+    have \<open>x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
+      by (simp add: \<open>complex_vector.span (atensor_of_pair ` (A \<times> B)) = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close> \<open>x \<in> complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>)
     hence \<open>\<exists> t r. finite t \<and> t \<subseteq> atensor_of_pair ` (A \<times> B) \<and> 
          x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       using complex_vector.span_explicit[where b = "atensor_of_pair ` (A \<times> B)"]

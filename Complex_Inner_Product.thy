@@ -1276,9 +1276,8 @@ proof-
     have \<open>f \<in> M \<Longrightarrow> dist h k \<le> dist h f \<close> for f
     proof-
       assume \<open>f \<in>  M\<close>
-      hence \<open>\<langle> h - k,  k - f \<rangle> = 0\<close> 
-        by (smt \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> cinner_diff_right eq_iff_diff_eq_0
-            is_orthogonal_def mem_Collect_eq orthogonal_complement_def)
+      hence \<open>\<langle> h - k,  k - f \<rangle> = 0\<close>
+        by (metis (no_types, lifting) \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> cinner_diff_right diff_0_right orthogonal_complement_D1)
       have \<open>\<parallel> h - f \<parallel>^2 = \<parallel> (h - k) + (k - f) \<parallel>^2\<close>
         by simp
       also have \<open>... = \<parallel> h - k \<parallel>^2 + \<parallel> k - f \<parallel>^2\<close>
@@ -4032,10 +4031,12 @@ instance
   by simp
 end
 
-lemma ortho_decomposition:
- \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = (UNIV::('a::complex_inner set))
-           \<and> 0 \<notin> A\<close>
+lemma Gram_Schmidt:
+  fixes S::\<open>'a::complex_inner set\<close>
+  assumes \<open>finite S\<close>
+  shows \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = complex_vector.span S
+           \<and> 0 \<notin> A \<and> finite A\<close>
   sorry
 
 
