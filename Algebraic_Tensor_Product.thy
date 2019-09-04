@@ -2114,6 +2114,74 @@ proof(rule classical)
   ultimately show ?thesis by simp
 qed
 
+lemma span_cartesian_product':
+  fixes A U::\<open>'a::complex_vector set\<close> and B V::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_vector.span A = complex_vector.span U\<close>
+    \<open>complex_vector.span B = complex_vector.span V\<close>
+  shows \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
+       \<subseteq> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+proof
+  show "x \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))"
+    if "x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+  proof-
+    have \<open>\<exists> r t. finite t \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+      using that complex_vector.span_explicit
+      by blast
+    then obtain r t where \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+      by blast
+    from \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+    have \<open>\<exists> s. s \<subseteq> A \<times> B \<and> t = atensor_of_pair ` s \<and> inj_on atensor_of_pair s\<close>
+      by (meson subset_image_inj)      
+    then obtain s where \<open>s \<subseteq> A \<times> B\<close> and \<open>t = atensor_of_pair ` s\<close> and \<open>inj_on atensor_of_pair s\<close>
+      by blast
+    have \<open>x = (\<Sum>a\<in>s. (r (atensor_of_pair a)) *\<^sub>C (atensor_of_pair a))\<close>
+      using \<open>inj_on atensor_of_pair s\<close> \<open>t = atensor_of_pair ` s\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> 
+        sum.reindex_cong by fastforce
+    moreover have \<open>a \<in> s \<Longrightarrow> atensor_of_pair a \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+      for a
+    proof-
+      assume \<open>a \<in> s\<close>
+      hence \<open>a \<in> A \<times> B\<close>
+        using \<open>s \<subseteq> A \<times> B\<close>
+        by auto
+      have \<open>fst a \<in> complex_vector.span U\<close>
+      proof-
+        have \<open>fst a \<in> A\<close>
+          using \<open>a \<in> A \<times> B\<close> by auto
+        hence \<open>fst a \<in> complex_vector.span A\<close>
+          by (simp add: complex_vector.span_base)
+        thus ?thesis
+          by (simp add: assms(1)) 
+      qed
+      moreover have \<open>snd a \<in> complex_vector.span V\<close>
+      proof-
+        have \<open>snd a \<in> B\<close>
+          using \<open>a \<in> A \<times> B\<close> by auto
+        hence \<open>snd a \<in> complex_vector.span B\<close>
+          by (simp add: complex_vector.span_base)
+        thus ?thesis
+          by (simp add: assms(2)) 
+      qed
+      ultimately show ?thesis
+        by (metis atensor_of_pair_def span_tensor_span) 
+    qed
+    finally show ?thesis
+      by (simp add: \<open>\<And>a. a \<in> s \<Longrightarrow> atensor_of_pair a \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close> \<open>x = (\<Sum>a\<in>s. r (atensor_of_pair a) *\<^sub>C atensor_of_pair a)\<close> complex_vector.span_scale complex_vector.span_sum) 
+  qed
+qed
+
+lemma span_cartesian_product:
+  fixes A U::\<open>'a::complex_vector set\<close> and B V::\<open>'b::complex_vector set\<close>
+  assumes \<open>complex_vector.span A = complex_vector.span U\<close>
+    \<open>complex_vector.span B = complex_vector.span V\<close>
+  shows \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
+       = complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+  apply auto
+  using  assms(1) assms(2) span_cartesian_product' apply blast
+  using assms(1) assms(2) span_cartesian_product'[where A = "U" and B = "V" and U = "A" and B = "B"]
+  by blast
+
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
 
@@ -2430,25 +2498,25 @@ lemma F_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def F_atensor_cbilinear_def
   apply auto
-                     apply (simp add: scaleC_add_right)
-                    apply (simp add: scaleC_left.add)
-                   apply (simp add: ring_class.ring_distribs(1))
-                  apply (simp add: ring_class.ring_distribs(2))
-                 apply (simp add: scaleC_add_right)
-                apply (simp add: scaleC_add_left)
-               apply (simp add: ring_class.ring_distribs(1))
-              apply (simp add: ring_class.ring_distribs(2))
-             apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
-            apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
-           apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_left.add)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
+  apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
+  apply (simp add: scaleC_add_right)
   using scaleC_left.add apply auto[1]
-         apply (simp add: ring_class.ring_distribs(1))
-        apply (simp add: ring_class.ring_distribs(2))
-       apply (simp add: scaleC_add_right)
-      apply (simp add: scaleC_add_left)
-     apply (simp add: ring_class.ring_distribs(1))
-    apply (simp add: ring_class.ring_distribs(2))
-   apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_add_left)
+  apply (simp add: ring_class.ring_distribs(1))
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
   by (simp add: F_atensor_cbilinear_cbilinear_right_scaleC)
 
 lemma F_atensor_clinear_existence:
@@ -3010,7 +3078,7 @@ proof
          (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
   proof-
-(*
+    (*
     have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = (UNIV::'a set)
            \<and> 0 \<notin> A\<close>
@@ -3053,9 +3121,32 @@ proof
       by (simp add: \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close> complex_vector.span_base complex_vector.span_scale complex_vector.span_sum)  
     have \<open>\<exists> U' V'. finite U' \<and> finite V' \<and>
          T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
-      sorry
+    proof-
+      from \<open>T \<subseteq> atensor_of_pair ` (U \<times> V)\<close> \<open>finite T\<close>
+      have \<open>\<exists>S. S \<subseteq> U \<times> V \<and> T = atensor_of_pair ` S \<and> finite S\<close>
+        by (meson finite_subset_image)
+      then obtain S where \<open>S \<subseteq> U \<times> V\<close> and \<open>T = atensor_of_pair ` S\<close> and \<open>finite S\<close>
+        by blast
+      define U' where \<open>U' = fst ` S\<close>
+      define V' where \<open>V' = snd ` S\<close>
+      have \<open>finite U'\<close>
+        by (simp add: U'_def \<open>finite S\<close>)        
+      moreover have \<open>finite V'\<close>
+        using V'_def \<open>finite S\<close> by auto        
+      moreover have \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      proof-
+        have \<open>S \<subseteq> U' \<times> V'\<close>
+          unfolding U'_def V'_def apply auto
+          apply (simp add: rev_image_eqI)
+          by (simp add: rev_image_eqI)
+        thus ?thesis 
+          using \<open>T = atensor_of_pair ` S\<close>
+          by (simp add: image_mono)
+      qed
+      ultimately show ?thesis by blast
+    qed
     then obtain U' V' where \<open>finite U'\<close> and \<open>finite V'\<close>
-        and \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      and \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
       by blast
     have \<open>x \<in> complex_vector.span  (atensor_of_pair ` (U' \<times> V'))\<close>
       using \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close> \<open>x \<in> complex_vector.span T\<close> complex_vector.span_mono 
@@ -3077,10 +3168,10 @@ proof
       and \<open>0\<notin>B\<close> and \<open>finite B\<close>
       by auto
     from \<open>complex_vector.span A = complex_vector.span U'\<close>
-         \<open>complex_vector.span B = complex_vector.span V'\<close>
+      \<open>complex_vector.span B = complex_vector.span V'\<close>
     have \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
        = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>
-      sorry
+      using span_cartesian_product by blast
     have \<open>x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
       by (simp add: \<open>complex_vector.span (atensor_of_pair ` (A \<times> B)) = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close> \<open>x \<in> complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>)
     hence \<open>\<exists> t r. finite t \<and> t \<subseteq> atensor_of_pair ` (A \<times> B) \<and> 
