@@ -4032,6 +4032,11 @@ instance
   by simp
 end
 
+lemma ortho_decomposition:
+ \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = (UNIV::('a::complex_inner set))
+           \<and> 0 \<notin> A\<close>
+  sorry
 
 
 end

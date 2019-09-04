@@ -2850,7 +2850,6 @@ proof
       obtain y\<^sub>1 y\<^sub>2 where \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close>
         unfolding atensor_of_pair_def
         by blast
-
       have \<open>\<langle>x, y\<rangle> = F_atensor_clinear x y\<close>
         unfolding cinner_atensor_def
         by blast
@@ -2954,12 +2953,12 @@ proof
   have square: \<open>finite t \<Longrightarrow>  x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow>
          \<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0 \<Longrightarrow>
        \<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
-      for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
-        and t::\<open>('a \<otimes>\<^sub>a 'b) set\<close>
-          and r::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
+    for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
+      and t::\<open>('a \<otimes>\<^sub>a 'b) set\<close>
+      and r::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
   proof-
     assume \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and
-          \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
     define D where \<open>D = {(a, a')| a a'. a \<in> t \<and> a' \<in> t \<and> a = a'}\<close>
     define f where \<open>f a a' = cnj (r a) * r a' *\<^sub>C \<langle>a, a'\<rangle>\<close> for a a'
     from  \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
@@ -2988,7 +2987,7 @@ proof
         by auto
       hence \<open>(\<Sum>(a, a')\<in>t\<times>t-D. f a a') = 0\<close>
         by (smt DiffD1 SigmaE case_prod_conv sum.not_neutral_contains_not_neutral)
-        (* > 1 s *)
+          (* > 1 s *)
       thus ?thesis
         using add_cancel_left_right by blast 
     qed
@@ -3007,19 +3006,135 @@ proof
       by (smt complex_norm_square complex_scaleC_def mult_scaleC_left semiring_normalization_rules(7) sum.cong)
   qed
 
-  have ortho_basis: \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
-         (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
-    sorry
+  have ortho_basis: \<open>\<exists> t r. finite t \<and> 
+         (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
+         (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+    for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
+  proof-
+    have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = (UNIV::'a set)
+           \<and> 0 \<notin> A\<close>
+      using ortho_decomposition by blast
+    then obtain A where \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      and \<open>complex_vector.span A = (UNIV::'a set)\<close> and \<open>0 \<notin> A\<close>
+      by auto
+    have \<open>\<exists> B. (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span B = (UNIV::'b set)
+          \<and> 0 \<notin> B\<close>
+      using ortho_decomposition by blast
+    then obtain B where \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      and \<open>complex_vector.span B = (UNIV::'b set)\<close> and \<open>0 \<notin> B\<close>
+      by auto
+    have \<open>complex_vector.span (atensor_of_pair ` (A \<times> B)) = UNIV\<close>
+      using \<open>complex_vector.span A = (UNIV::'a set)\<close>
+        \<open>complex_vector.span B = (UNIV::'b set)\<close>
+      by (metis basis_atensor_complex_generator)
+    hence \<open>x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
+      by blast
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> atensor_of_pair ` (A \<times> B) \<and> 
+         x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      using complex_vector.span_explicit[where b = "atensor_of_pair ` (A \<times> B)"]
+      by blast
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close> and 
+      \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by blast
+    have \<open>a\<in>t \<Longrightarrow> \<langle>a, a\<rangle> > 0\<close>
+      for a
+    proof-
+      assume \<open>a\<in>t\<close>
+      have \<open>a \<in> atensor_of_pair ` (A \<times> B)\<close>
+        using \<open>a\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+        by auto
+      hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. a = x\<otimes>\<^sub>ay\<close>
+        unfolding atensor_of_pair_def
+        by (simp add: image_iff)
+      then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>a = x\<otimes>\<^sub>ay\<close>
+        by blast
+      have \<open>\<langle>a, a\<rangle> = F_atensor_clinear a a\<close>
+        unfolding cinner_atensor_def 
+        by blast
+      also have \<open>\<dots> = F_atensor_cbilinear a x y\<close>
+        by (simp add: F_atensor_clinear_cbilinear \<open>a = x \<otimes>\<^sub>a y\<close>)
+      also have \<open>\<dots> = g_atensor_clinear x y a\<close>
+        by (metis Algebraic_Tensor_Product.cinner_atensor_def F_atensor_cbilinear_def \<open>F_atensor_clinear a a = F_atensor_cbilinear a x y\<close> \<open>\<And>y\<^sub>2 y\<^sub>1 x\<^sub>2 x\<^sub>1. \<langle>x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2, y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<rangle> = cnj \<langle>y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2, x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2\<rangle>\<close> \<open>a = x \<otimes>\<^sub>a y\<close> complex_cnj_cnj)
+      also have \<open>\<dots> = g_atensor_cbilinear x y x y\<close>
+        by (simp add: \<open>a = x \<otimes>\<^sub>a y\<close> g_atensor_clinear_cbilinear)
+      also have \<open>\<dots> =  \<langle>x, x\<rangle> * \<langle>y, y\<rangle>\<close>
+        unfolding g_atensor_cbilinear_def
+        by blast
+      also have \<open>\<dots> > 0\<close>
+      proof-
+        have \<open>\<langle>x, x\<rangle> > 0\<close>
+        proof-
+          have \<open>x \<noteq> 0\<close>
+            using \<open>0 \<notin> A\<close> \<open>x \<in> A\<close> by auto
+          thus ?thesis
+            by simp 
+        qed
+        moreover have \<open>\<langle>y, y\<rangle> > 0\<close>
+        proof-
+          have \<open>y \<noteq> 0\<close>
+            using \<open>0 \<notin> B\<close> \<open>y \<in> B\<close> by auto
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis by simp
+      qed
+      finally show \<open>\<langle>a, a\<rangle> > 0\<close>
+        by blast
+    qed
+    moreover have \<open>a\<in>t \<Longrightarrow> a'\<in>t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      for a a'
+    proof-
+      assume \<open>a\<in>t\<close> and \<open>a'\<in>t\<close> and \<open>a \<noteq> a'\<close>
+      have \<open>a \<in> atensor_of_pair ` (A \<times> B)\<close>
+        using \<open>a\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+        by auto
+      hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. a = x\<otimes>\<^sub>ay\<close>
+        unfolding atensor_of_pair_def
+        by (simp add: image_iff)
+      then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>a = x\<otimes>\<^sub>ay\<close>
+        by blast
+      have \<open>a' \<in> atensor_of_pair ` (A \<times> B)\<close>
+        using \<open>a'\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+        by auto
+      hence \<open>\<exists>x'\<in>A. \<exists>y'\<in>B. a' = x'\<otimes>\<^sub>ay'\<close>
+        unfolding atensor_of_pair_def
+        by (simp add: image_iff)
+      then obtain x' y' where \<open>x'\<in>A\<close> and \<open>y'\<in>B\<close> and \<open>a' = x'\<otimes>\<^sub>ay'\<close>
+        by blast
+      have \<open>\<langle>a, a'\<rangle> = F_atensor_clinear a a'\<close>
+        unfolding cinner_atensor_def 
+        by blast
+      also have \<open>\<dots> = F_atensor_cbilinear a x' y'\<close>
+        by (simp add: F_atensor_clinear_cbilinear \<open>a' = x' \<otimes>\<^sub>a y'\<close>)
+      also have \<open>\<dots> = g_atensor_clinear x' y' a\<close>
+        by (smt F_atensor_cbilinear_def \<open>\<And>thesis. (\<And>x y. \<lbrakk>x \<in> A; y \<in> B; a = x \<otimes>\<^sub>a y\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>x' \<in> A\<close> \<open>y' \<in> B\<close> cinner_commute' complex_cnj_mult g_atensor_clinear_cbilinear')
+      also have \<open>\<dots> = g_atensor_cbilinear x' y' x y\<close>
+        by (simp add: \<open>a = x \<otimes>\<^sub>a y\<close> g_atensor_clinear_cbilinear)
+      also have \<open>\<dots> =  \<langle>x', x\<rangle> * \<langle>y', y\<rangle>\<close>
+        unfolding g_atensor_cbilinear_def
+        by blast
+      also have \<open>\<dots> = 0\<close>
+        using  \<open>a \<noteq> a'\<close>
+        using \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a = x \<otimes>\<^sub>a y\<close> \<open>a' = x' \<otimes>\<^sub>a y'\<close> \<open>x \<in> A\<close> \<open>x' \<in> A\<close> \<open>y \<in> B\<close> \<open>y' \<in> B\<close> 
+        by force
+      finally show \<open>\<langle>a, a'\<rangle> = 0\<close>
+        by blast
+    qed
+    ultimately show ?thesis
+      using \<open>finite t\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> 
+      by blast 
+  qed
 
   show "0 \<le> \<langle>x, x\<rangle>"
     for x :: "'a \<otimes>\<^sub>a 'b"
   proof-
     have \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
-      (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       using ortho_basis by blast
     then obtain t r where \<open>finite t\<close> and \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-      and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> > 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       by blast
     have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
       using square
@@ -3029,13 +3144,15 @@ proof
       for a
     proof-
       assume \<open>a\<in>t\<close>
+      hence \<open>\<langle>a, a\<rangle> > 0\<close>
+        by (simp add: \<open>\<forall>a\<in>t. 0 < \<langle>a, a\<rangle>\<close>)
       hence \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
-        sorry
+        by simp
       moreover have \<open>(norm (r a))^2 \<ge> 0\<close>
         by simp        
       ultimately show ?thesis
-        using complex_of_real_nn_iff mult_nonneg_nonneg 
-        by blast 
+        using complex_of_real_nn_iff
+        by (metis mult_left_mono mult_not_zero)        
     qed
     ultimately show ?thesis
       by (simp add: sum_nonneg) 
@@ -3048,10 +3165,10 @@ proof
       if "\<langle>x, x\<rangle> = 0"
     proof-
       have \<open>\<exists> t r. finite t \<and> (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
-      (\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
         using ortho_basis by blast
       then obtain t r where \<open>finite t\<close> and \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-        and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        and \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> > 0\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
         by blast
       have \<open>\<langle>x, x\<rangle> = (\<Sum>a\<in>t. (norm (r a))^2 * \<langle>a, a\<rangle>)\<close>
         using \<open>\<And>x::'a \<otimes>\<^sub>a 'b.  \<And> t r. \<lbrakk>finite t; x = (\<Sum>a\<in>t. r a *\<^sub>C a); \<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<rbrakk> \<Longrightarrow> \<langle>x, x\<rangle> = (\<Sum>a\<in>t. complex_of_real ((cmod (r a))\<^sup>2) * \<langle>a, a\<rangle>)\<close> \<open>\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>finite t\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
@@ -3079,8 +3196,8 @@ proof
         assume \<open>a\<in>t\<close>
         hence \<open>(norm (r a))^2 *\<^sub>C \<langle>a, a\<rangle> = 0\<close>
           using zero by blast
-        moreover have \<open>\<langle>a, a\<rangle> \<noteq> 0\<close>
-          using \<open>a\<in>t\<close>  \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> \<noteq> 0\<close>
+        moreover have \<open>\<langle>a, a\<rangle> > 0\<close>
+          using \<open>a\<in>t\<close>  \<open>\<forall>a\<in>t. \<langle>a, a\<rangle> > 0\<close>
           by blast
         ultimately have \<open>(norm (r a))^2  = 0\<close>
           by auto
