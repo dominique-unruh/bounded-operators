@@ -235,7 +235,7 @@ lemma hilbert_tensor_existence_uniqueness:
   fixes S :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and 
     T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
   shows \<open>\<exists>! H :: ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded.  (\<forall> x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
-  sorry
+  by (cheat hilbert_tensor_existence_uniqueness)
 
 lemma htensorOp_existence:
   \<open>\<exists> H :: ('a::chilbert_space, 'b::chilbert_space) bounded \<Rightarrow>
