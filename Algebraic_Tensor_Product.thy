@@ -3379,7 +3379,7 @@ qed
 
 text\<open>Tensor product of bounded operators\<close>
 definition atensorOp :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector)
- \<Rightarrow> ('c::complex_vector \<Rightarrow>'d::complex_vector ) \<Rightarrow> (('a \<otimes>\<^sub>a'c) \<Rightarrow> ('b \<otimes>\<^sub>a 'd))\<close>   (infixl "\<otimes>\<^sub>A" 70)
+ \<Rightarrow> ('c::complex_vector \<Rightarrow>'d::complex_vector ) \<Rightarrow> (('a \<otimes>\<^sub>a 'c) \<Rightarrow> ('b \<otimes>\<^sub>a 'd))\<close>   (infixl "\<otimes>\<^sub>A" 70)
   where \<open>atensorOp = (SOME T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
       ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
       ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).

@@ -16,6 +16,7 @@ theory Tensor_Product
     Algebraic_Tensor_Product
 
 begin
+unbundle bounded_notation
 
 section \<open>Hilbert tensor product\<close>
 
@@ -211,6 +212,38 @@ proof
 qed
 end
 
+lift_definition htensor_op:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>  (infixl "\<otimes>\<^sub>h" 70)
+  is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_completion (x \<otimes>\<^sub>a y)\<close>.
+
+
+text \<open>Theorem 1, page 189 in @{cite Helemskii}\<close>
+lemma hilbert_tensor_existence_uniqueness:
+  fixes S :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and 
+    T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
+  shows \<open>\<exists>! H :: ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded.  (\<forall> x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
+  sorry
+
+lemma htensorOp_existence:
+  \<open>\<exists> H :: ('a::chilbert_space, 'b::chilbert_space) bounded \<Rightarrow>
+  ('c::chilbert_space, 'd::chilbert_space) bounded \<Rightarrow>
+  ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded. \<forall> S T.
+   (\<forall> x y. (H S T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
+  using hilbert_tensor_existence_uniqueness by metis
+
+definition htensorOp :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded
+ \<Rightarrow> ('c::chilbert_space, 'd::chilbert_space ) bounded
+ \<Rightarrow> (('a \<otimes>\<^sub>h 'c),  ('b \<otimes>\<^sub>h 'd)) bounded\<close> (infixl "\<otimes>\<^sub>H" 70)
+  where \<open>htensorOp = (SOME H :: ('a, 'b) bounded \<Rightarrow> ('c, 'd) bounded \<Rightarrow> 
+    ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded. (
+    \<forall> S T. \<forall> x y. (H S T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)
+))\<close> 
+
+
+lemma htensorOp_separation:
+\<open>\<forall> S T. \<forall> x y. (S \<otimes>\<^sub>H T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
+  using htensorOp_existence htensorOp_def someI_ex
+  by smt
+(* > 1 s *)  
 
 section \<open>Tensor product ell2\<close>
 
