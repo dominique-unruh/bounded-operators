@@ -22,16 +22,193 @@ section \<open>Hilbert tensor product\<close>
 text\<open>Hilbert tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
 typedef (overloaded) ('a::chilbert_space, 'b::chilbert_space) htensor
   = \<open>(UNIV::(('a \<otimes>\<^sub>a 'b) completion) set)\<close>
-  by (rule Set.UNIV_witness)
+  by auto
+
+setup_lifting type_definition_htensor
 
 (* "h" is for Hilbert *)
 type_notation 
   htensor  ("(_ \<otimes>\<^sub>h/ _)" [21, 20] 20)
 
-instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
+instantiation htensor :: (chilbert_space, chilbert_space) complex_inner
 begin
-instance 
-  sorry
+lift_definition cinner_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> complex\<close>
+  is "\<lambda> x y. \<langle> x, y \<rangle>".
+
+lift_definition scaleC_htensor :: \<open>complex \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is "\<lambda> c x. c *\<^sub>C x".
+
+lift_definition uminus_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is "\<lambda> x. -x".
+
+lift_definition zero_htensor :: \<open>'a \<otimes>\<^sub>h 'b\<close>
+  is "0".
+
+lift_definition minus_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is \<open>\<lambda> x y. x - y\<close>.
+
+lift_definition plus_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is \<open>\<lambda> x y. x + y\<close>.
+
+lift_definition sgn_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is \<open>\<lambda> x.  x /\<^sub>R (norm x)\<close>.
+
+lift_definition norm_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> real\<close>
+  is \<open>\<lambda> x. norm x\<close>.
+
+lift_definition scaleR_htensor :: \<open>real \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>
+  is "\<lambda> c x. c *\<^sub>R x".
+
+lift_definition dist_htensor :: \<open>'a \<otimes>\<^sub>h 'b \<Rightarrow> 'a \<otimes>\<^sub>h 'b \<Rightarrow> real\<close>
+  is \<open>\<lambda> x y. dist x y\<close>.
+
+definition uniformity_htensor :: \<open>(('a \<otimes>\<^sub>h 'b) \<times> 'a \<otimes>\<^sub>h 'b) filter\<close> where
+  "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>h 'b) y < e})"
+
+definition open_htensor :: \<open>('a \<otimes>\<^sub>h 'b) set \<Rightarrow> bool\<close> where
+  "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>h 'b) = x \<longrightarrow> y \<in> U)"
+
+instance
+proof
+  show "((*\<^sub>R) r::'a \<otimes>\<^sub>h 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+    apply transfer
+    by (simp add: scaleR_scaleC)
+
+  show "(a::'a \<otimes>\<^sub>h 'b) + b + c = a + (b + c)"
+    for a :: "'a \<otimes>\<^sub>h 'b"
+      and b :: "'a \<otimes>\<^sub>h 'b"
+      and c :: "'a \<otimes>\<^sub>h 'b"
+    by (metis (mono_tags, lifting) Rep_htensor_inject ab_semigroup_add_class.add_ac(1) plus_htensor.rep_eq)
+
+  show "(a::'a \<otimes>\<^sub>h 'b) + b = b + a"
+    for a :: "'a \<otimes>\<^sub>h 'b"
+      and b :: "'a \<otimes>\<^sub>h 'b"
+    by (metis (mono_tags, lifting) Rep_htensor_inject Tensor_Product.plus_htensor.rep_eq ordered_field_class.sign_simps(2))
+
+  show "(0::'a \<otimes>\<^sub>h 'b) + a = a"
+    for a :: "'a \<otimes>\<^sub>h 'b"
+    using Rep_htensor_inject plus_htensor.rep_eq zero_htensor.rep_eq by fastforce
+
+  show "- (a::'a \<otimes>\<^sub>h 'b) + a = 0"
+    for a :: "'a \<otimes>\<^sub>h 'b"
+    using Rep_htensor_inject plus_htensor.rep_eq uminus_htensor.rep_eq zero_htensor.rep_eq by fastforce
+
+  show "(a::'a \<otimes>\<^sub>h 'b) - b = a + - b"
+    for a :: "'a \<otimes>\<^sub>h 'b"
+      and b :: "'a \<otimes>\<^sub>h 'b"
+    by (metis (mono_tags, lifting) Rep_htensor_inverse Tensor_Product.minus_htensor.rep_eq Tensor_Product.plus_htensor.rep_eq Tensor_Product.uminus_htensor.rep_eq pth_2)
+
+  show "a *\<^sub>C ((x::'a \<otimes>\<^sub>h 'b) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "'a \<otimes>\<^sub>h 'b"
+      and y :: "'a \<otimes>\<^sub>h 'b"
+    by (metis (mono_tags, lifting) Rep_htensor_inject plus_htensor.rep_eq scaleC_add_right scaleC_htensor.rep_eq)
+
+  show "(a + b) *\<^sub>C (x::'a \<otimes>\<^sub>h 'b) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a \<otimes>\<^sub>h 'b"
+    by (metis (mono_tags, lifting) Rep_htensor_inverse Tensor_Product.plus_htensor.abs_eq Tensor_Product.scaleC_htensor.rep_eq scaleC_add_left)
+
+  show "a *\<^sub>C b *\<^sub>C (x::'a \<otimes>\<^sub>h 'b) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "'a \<otimes>\<^sub>h 'b"
+    using Rep_htensor_inject scaleC_htensor.rep_eq by fastforce
+
+  show "1 *\<^sub>C (x::'a \<otimes>\<^sub>h 'b) = x"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+    using Rep_htensor_inject scaleC_htensor.rep_eq by fastforce
+
+  show "dist (x::'a \<otimes>\<^sub>h 'b) y = norm (x - y)"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+      and y :: "'a \<otimes>\<^sub>h 'b"
+    by (simp add: dist_htensor.rep_eq dist_norm minus_htensor.rep_eq norm_htensor.rep_eq)
+
+  show "sgn (x::'a \<otimes>\<^sub>h 'b) = inverse (norm x) *\<^sub>R x"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+    using Rep_htensor_inject norm_htensor.rep_eq scaleR_htensor.rep_eq sgn_htensor.rep_eq 
+    by fastforce
+
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>h 'b) y < e})"
+    by (simp add: Tensor_Product.uniformity_htensor_def)
+
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>h 'b) = x \<longrightarrow> y \<in> U)"
+    for U :: "('a \<otimes>\<^sub>h 'b) set"
+    by (simp add: Tensor_Product.open_htensor_def)
+
+  show "\<langle>x::'a \<otimes>\<^sub>h 'b, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+      and y :: "'a \<otimes>\<^sub>h 'b"
+    by (simp add: cinner_htensor.rep_eq)
+
+  show "\<langle>(x::'a \<otimes>\<^sub>h 'b) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+      and y :: "'a \<otimes>\<^sub>h 'b"
+      and z :: "'a \<otimes>\<^sub>h 'b"
+    by (simp add: Tensor_Product.cinner_htensor.rep_eq Tensor_Product.plus_htensor.rep_eq cinner_left_distrib)
+
+  show "\<langle>r *\<^sub>C (x::'a \<otimes>\<^sub>h 'b), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
+    for r :: complex
+      and x :: "'a \<otimes>\<^sub>h 'b"
+      and y :: "'a \<otimes>\<^sub>h 'b"
+    by (simp add: Tensor_Product.cinner_htensor.rep_eq Tensor_Product.scaleC_htensor.rep_eq)
+
+  show "0 \<le> \<langle>x::'a \<otimes>\<^sub>h 'b, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+    by (simp add: cinner_htensor.rep_eq)
+
+  show "(\<langle>x::'a \<otimes>\<^sub>h 'b, x\<rangle> = 0) = (x = 0)"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+  proof
+    show "x = 0"
+      if "\<langle>x, x\<rangle> = 0"
+      using that
+      using Rep_htensor_inject cinner_htensor.rep_eq zero_htensor.rep_eq by fastforce 
+    show "\<langle>x, x\<rangle> = 0"
+      if "x = 0"
+      using that
+      by (simp add: cinner_htensor.abs_eq zero_htensor_def) 
+  qed
+  show "norm (x::'a \<otimes>\<^sub>h 'b) = sqrt (cmod \<langle>x, x\<rangle>)"
+    for x :: "'a \<otimes>\<^sub>h 'b"
+    using cinner_htensor.rep_eq norm_eq_sqrt_cinner norm_htensor.rep_eq by auto
+
+qed
+end
+
+instantiation htensor :: (chilbert_space, chilbert_space) chilbert_space
+begin 
+instance
+proof
+  show "convergent X"
+    if "Cauchy X"
+    for X :: "nat \<Rightarrow> 'a \<otimes>\<^sub>h 'b"
+  proof-
+    from \<open>Cauchy X\<close>
+    have \<open>Cauchy (\<lambda> n. Rep_htensor (X n))\<close>
+      unfolding Cauchy_def dist_htensor_def
+      by auto
+    hence \<open>convergent (\<lambda> n. Rep_htensor (X n))\<close>
+      using Cauchy_convergent by auto
+    hence \<open>\<exists> l. \<forall> e>0. \<exists> N. \<forall> n\<ge>N. dist (Rep_htensor (X n)) l < e\<close>
+      unfolding convergent_def
+      using metric_LIMSEQ_D by blast
+    then obtain l where \<open>\<forall> e>0. \<exists> N. \<forall> n\<ge>N. dist (Rep_htensor (X n)) l < e\<close>
+      by blast
+    have \<open>\<exists> L. Rep_htensor L = l\<close>
+      by (metis Rep_htensor_inverse dist_eq_0_iff dist_htensor.abs_eq)
+    then obtain L where \<open>Rep_htensor L = l\<close> by blast
+    have \<open>\<forall> e>0. \<exists> N. \<forall> n\<ge>N. dist (Rep_htensor (X n)) (Rep_htensor L) < e\<close>
+      by (simp add: \<open>Rep_htensor L = l\<close> \<open>\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (Rep_htensor (X n)) l < e\<close>)
+    hence \<open>\<forall> e>0. \<exists> N. \<forall> n\<ge>N. dist (X n) L < e\<close>
+      by (simp add: dist_htensor.rep_eq)
+    hence \<open>X \<longlonglongrightarrow> L\<close>
+      by (simp add: metric_LIMSEQ_I)
+    thus ?thesis unfolding convergent_def by blast
+  qed
+qed
 end
 
 

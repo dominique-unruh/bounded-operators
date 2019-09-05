@@ -3078,26 +3078,6 @@ proof
          (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
   proof-
-    (*
-    have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = (UNIV::'a set)
-           \<and> 0 \<notin> A\<close>
-      using ortho_decomposition by blast
-    then obtain A where \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-      and \<open>complex_vector.span A = (UNIV::'a set)\<close> and \<open>0 \<notin> A\<close>
-      by auto
-    have \<open>\<exists> B. (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span B = (UNIV::'b set)
-          \<and> 0 \<notin> B\<close>
-      using ortho_decomposition by blast
-    then obtain B where \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-      and \<open>complex_vector.span B = (UNIV::'b set)\<close> and \<open>0 \<notin> B\<close>
-      by auto
-    have \<open>complex_vector.span (atensor_of_pair ` (A \<times> B)) = UNIV\<close>
-      using \<open>complex_vector.span A = (UNIV::'a set)\<close>
-        \<open>complex_vector.span B = (UNIV::'b set)\<close>
-      by (metis basis_atensor_complex_generator)
-*)
     have \<open>\<exists> U. complex_vector.independent U \<and> complex_vector.span U = (UNIV::'a set)\<close>
       using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis 
       by auto
