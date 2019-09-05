@@ -1685,11 +1685,9 @@ proof
         and "Cauchy (\<lambda>n. 0::'a)"
         and "x \<longlonglongrightarrow> (0::'a)"
       for x :: "nat \<Rightarrow> 'a"
-      using that
-      by (metis (no_types) cinner_zero_right limI tendsto_cinner that(3)) 
+      using tendsto_cinner0 LIMSEQ_imp_Cauchy that(3) by blast 
   qed
-
-  show "norm (x::'a completion) = sqrt (cmod \<langle>x, x\<rangle>)"
+  show "norm (x::'a completion) = sqrt (norm \<langle>x, x\<rangle>)"
     for x :: "'a completion"
     apply transfer unfolding completion_rel_def
     apply auto unfolding Vanishes_def apply auto

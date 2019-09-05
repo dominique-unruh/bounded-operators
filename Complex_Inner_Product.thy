@@ -314,6 +314,29 @@ lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
 
+lemma tendsto_cinner0: "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
+  if "Cauchy (x::nat \<Rightarrow> 'a)"
+    and "Cauchy (\<lambda>n. 0::'a)"
+    and "x \<longlonglongrightarrow> (0::'a)"
+  for x :: "nat \<Rightarrow> 'a::complex_inner"
+proof-
+  have \<open>(\<lambda> n. norm (x n) ) \<longlonglongrightarrow> 0\<close>
+    by (simp add: tendsto_norm_zero that(3))        
+  hence \<open>(\<lambda> n. (norm (x n))^2 ) \<longlonglongrightarrow> 0\<close>
+    by (metis power_zero_numeral tendsto_power)        
+  moreover have \<open>(norm (x n))^2 = norm \<langle>x n, x n\<rangle>\<close>
+    for n
+    by (simp add: power2_norm_eq_cinner)        
+  ultimately have \<open>(\<lambda> n. norm \<langle>x n, x n\<rangle>) \<longlonglongrightarrow> 0\<close>
+    by auto
+  hence \<open>(\<lambda> n. \<langle>x n, x n\<rangle>) \<longlonglongrightarrow> 0\<close>
+    using tendsto_norm_zero_iff by auto
+  thus ?thesis
+    by (simp add: limI) 
+qed
+
+
+
 (*
 lemmas isCont_cinner [simp] =
   bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
