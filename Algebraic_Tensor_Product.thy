@@ -1828,7 +1828,9 @@ proof-
       qed
       hence \<open>(\<Sum>s\<in>S - {A u \<otimes>\<^sub>a B v}. (f s) *\<^sub>C H s) = 0\<close>
         using sum_not_0 by auto
-      thus ?thesis by simp
+      thus ?thesis
+        using  \<open>A u \<otimes>\<^sub>a B v \<in> S\<close> \<open>finite S\<close> eq_iff_diff_eq_0 sum_diff1
+        by auto
     qed
     also have \<open>\<dots>  = f (A u \<otimes>\<^sub>a B v)\<close>
       using \<open>H (A u \<otimes>\<^sub>a B v) = 1\<close>
@@ -3409,7 +3411,7 @@ proof -
     by blast
   thus ?thesis
     using \<open>clinear f\<close> \<open>clinear g\<close>
-    by blast
+    by blast    
 qed
   
 lemma atensorOp_separation:
@@ -3439,6 +3441,24 @@ proof -
     using \<open>clinear f\<close> \<open>clinear g\<close>
     by blast
 qed
+
+text \<open>A part of Proposition 1 on page 186 in @{cite Helemskii}\<close>
+lemma atensor_cinner_mult:
+  fixes f1 g1 :: \<open>'a::complex_inner\<close> and f2 g2 :: \<open>'b::complex_inner\<close>
+  shows \<open>\<langle>f1 \<otimes>\<^sub>a f2, g1 \<otimes>\<^sub>a g2\<rangle> = \<langle>f1, g1\<rangle> * \<langle>f2, g2\<rangle>\<close>
+  by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def cinner_commute' complex_cnj_cnj g_atensor_clinear_cbilinear')
+  
+lemma atensor_norm_mult:
+  fixes f :: \<open>'a::complex_inner\<close> and g :: \<open>'b::complex_inner\<close>
+  shows \<open>norm (f \<otimes>\<^sub>a g) = norm f * norm g\<close>
+  using atensor_cinner_mult
+proof -
+have "norm f * norm g = sqrt (cmod \<langle>f, f\<rangle>) * sqrt (cmod \<langle>g, g\<rangle>)"
+by (metis norm_eq_sqrt_cinner)
+  then show ?thesis
+by (metis atensor_cinner_mult norm_eq_sqrt_cinner norm_mult real_sqrt_mult)
+qed 
+
 
 
 end
