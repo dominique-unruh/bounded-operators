@@ -313,5 +313,4 @@ lemma tensor_isometry[simp]:
 
 unbundle no_bounded_notation
 
-
 end

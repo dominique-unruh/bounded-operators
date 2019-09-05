@@ -10,7 +10,8 @@ Authors:
 theory Algebraic_Tensor_Product
   imports
     General_Results_Missing
-    Complex_Inner_Product 
+    Complex_Inner_Product
+    Bounded_Operators
     "HOL-Library.Adhoc_Overloading"
     Free_Vector_Spaces
 begin
@@ -3337,10 +3338,108 @@ proof
       if "x = 0"
       using that unfolding cinner_atensor_def
       by (metis F_atensor_clinear_scaleC cinner_complex_def cinner_zero_left complex_vector.scale_zero_left)
-  qed
+  qed                                                             
 qed
 
 end
+
+lemma atensorOp_existence:
+  \<open>\<exists> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+\<forall> f g. clinear f \<and> clinear g \<longrightarrow> (clinear (T f g)) \<and> 
+(\<forall> x y. (T f g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y))\<close>
+proof-
+  have \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> \<exists> T::('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+     (clinear T) \<and> (\<forall> x y. T (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y))\<close>
+    for f::\<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close> and
+        g::\<open>'c::complex_vector \<Rightarrow> 'd::complex_vector\<close>
+  proof-
+    assume \<open>clinear f\<close> and \<open>clinear g\<close>
+    define h::\<open>'a \<Rightarrow> 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd\<close>
+      where \<open>h x y = (f x) \<otimes>\<^sub>a (g y)\<close> for x y
+    have \<open>cbilinear h\<close>
+      unfolding cbilinear_def
+      using \<open>clinear f\<close>  \<open>clinear g\<close>
+      by (simp add: \<open>clinear f\<close> atensor_distr_left atensor_distr_right atensor_mult_left atensor_mult_right clinearI complex_vector.linear_add complex_vector.linear_scale h_def)
+    hence  \<open>\<exists>! H :: 'a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+      by (simp add: atensor_universal_property)
+    thus ?thesis
+      using h_def by auto 
+  qed
+  hence \<open>\<forall> f::('a::complex_vector \<Rightarrow> 'b::complex_vector).
+        \<forall> g::('c::complex_vector \<Rightarrow> 'd::complex_vector).
+        \<exists> T::('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd). clinear f \<and> clinear g \<longrightarrow>
+     (clinear T) \<and> (\<forall> x y. T (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y))\<close>
+    by blast
+  thus ?thesis by metis
+qed
+
+text\<open>Tensor product of bounded operators\<close>
+definition atensorOp :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector)
+ \<Rightarrow> ('c::complex_vector \<Rightarrow>'d::complex_vector ) \<Rightarrow> (('a \<otimes>\<^sub>a'c) \<Rightarrow> ('b \<otimes>\<^sub>a 'd))\<close>   (infixl "\<otimes>\<^sub>A" 70)
+  where \<open>atensorOp = (SOME T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+\<forall> f g. clinear f \<and> clinear g \<longrightarrow> (clinear (T f g)) \<and> 
+(\<forall> x y. (T f g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)))\<close>
+
+lemma atensorOp_clinear:
+\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (f \<otimes>\<^sub>A g)\<close>
+proof -
+  assume \<open>clinear f\<close> and \<open>clinear g\<close>
+  define P where \<open>P = (\<lambda> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+\<forall> f g. clinear f \<and> clinear g \<longrightarrow> (clinear (T f g)) \<and> 
+(\<forall> x y. (T f g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)))\<close>
+  have \<open>\<exists> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd). P T\<close>
+    unfolding P_def
+    using atensorOp_existence by blast
+  hence \<open>P (\<lambda> f g. f \<otimes>\<^sub>A g)\<close>
+    by (smt P_def atensorOp_def someI_ex)
+      (* > 1 s*)
+  hence   \<open>\<forall> f::'a::complex_vector \<Rightarrow> 'b::complex_vector. 
+          \<forall> g::'c::complex_vector \<Rightarrow> 'd::complex_vector. 
+      clinear f \<and> clinear g \<longrightarrow> (clinear (f \<otimes>\<^sub>A g)) \<and> 
+      (\<forall> x y. (f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y))\<close>
+    unfolding P_def
+    by blast
+  thus ?thesis
+    using \<open>clinear f\<close> \<open>clinear g\<close>
+    by blast
+qed
+  
+lemma atensorOp_separation:
+\<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> \<forall> x y. (f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)\<close>
+proof -
+  assume \<open>clinear f\<close> and \<open>clinear g\<close>
+  define P where \<open>P = (\<lambda> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+\<forall> f g. clinear f \<and> clinear g \<longrightarrow> (clinear (T f g)) \<and> 
+(\<forall> x y. (T f g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)))\<close>
+  have \<open>\<exists> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
+      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
+      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd). P T\<close>
+    unfolding P_def
+    using atensorOp_existence by blast
+  hence \<open>P (\<lambda> f g. f \<otimes>\<^sub>A g)\<close>
+    by (smt P_def atensorOp_def someI_ex)
+      (* > 1 s*)
+  hence   \<open>\<forall> f::'a::complex_vector \<Rightarrow> 'b::complex_vector. 
+          \<forall> g::'c::complex_vector \<Rightarrow> 'd::complex_vector. 
+      clinear f \<and> clinear g \<longrightarrow> (clinear (f \<otimes>\<^sub>A g)) \<and> 
+      (\<forall> x y. (f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y))\<close>
+    unfolding P_def
+    by blast
+  thus ?thesis
+    using \<open>clinear f\<close> \<open>clinear g\<close>
+    by blast
+qed
+
 
 end
 
