@@ -1306,7 +1306,29 @@ lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
    apply (rule scaleC_right)
   by (simp add: ac_simps)
 
-(* fake results, couterexamples below 
+(* TODO: restored this (this is what we had in the beginning, the counterexamples below are
+   for with the assumption "bounded_csemilinear").
+
+   The proof is probably very similar to the proof of comp1 above
+ *)
+lemma comp1:
+  assumes "bounded_clinear g"
+  shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
+  by (cheat comp1)
+
+(* TODO: restored this *)
+lemma comp2:
+  assumes "bounded_clinear g"
+  shows "bounded_sesquilinear (\<lambda>x y. prod x (g y))"
+  by (cheat comp2)
+
+(* TODO: restored this (this is what we had in the beginning, the counterexamples below are
+   for with the assumption "bounded_csemilinear") *)
+lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
+  by (cheat comp)
+
+
+(* fake results, couterexamples below
 lemma comp1:
   assumes "bounded_csemilinear g"
   shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
