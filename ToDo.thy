@@ -220,8 +220,22 @@ lemma span_tensors:
   "closure (span {C1 \<otimes> C2| (C1::(_,_) l2bounded) (C2::(_,_) l2bounded). True}) = UNIV"
   by (cheat span_tensors)
 
-unbundle no_bounded_notation
 
+lemma ortho_bot[simp]: "- bot = (top::_ subspace)"
+  apply transfer by auto
+lemma ortho_top[simp]: "- top = (bot::_ subspace)"
+  apply transfer by auto
+
+lemma demorgan_inf: "- ((A::_::orthocomplemented_lattice) \<sqinter> B) = - A \<squnion> - B"
+  by (cheat demorgan_inf) 
+
+lemma demorgan_sup: "- ((A::_::orthocomplemented_lattice) \<squnion> B) = - A \<sqinter> - B"
+  by (cheat demorgan_sup) 
+
+instance basis_enum \<subseteq> chilbert_space
+  by (cheat \<open>instance basis_enum \<subseteq> chilbert_space\<close>)
+
+unbundle no_bounded_notation
 
 
 end
