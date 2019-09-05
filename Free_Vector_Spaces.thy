@@ -364,6 +364,8 @@ proof-
 qed
 
 text\<open>Universal property of the free vector space\<close>
+
+(* TODO: split into two properties, give constructive definition *)
 theorem free_universal_property:
   fixes f:: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
   shows \<open>\<exists>!F::'a free \<Rightarrow> 'b. clinear F \<and> f = F \<circ> inclusion_free\<close>

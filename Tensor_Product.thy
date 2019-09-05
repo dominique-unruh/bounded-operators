@@ -68,9 +68,10 @@ definition uniformity_htensor :: \<open>(('a \<otimes>\<^sub>h 'b) \<times> 'a \
 
 definition open_htensor :: \<open>('a \<otimes>\<^sub>h 'b) set \<Rightarrow> bool\<close> where
   "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>h 'b) = x \<longrightarrow> y \<in> U)"
-
 instance
 proof
+(* TODO: more readable to fix variable names via "fix" once and for all throught the proof, imho *)
+(* TODO: clean up superfluous type information *)
   show "((*\<^sub>R) r::'a \<otimes>\<^sub>h 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     apply transfer
@@ -217,6 +218,19 @@ lift_definition htensor_op:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilber
 
 
 text \<open>Theorem 1, page 189 in @{cite Helemskii}\<close>
+
+(* TODO: Restructure proofs
+
+ - remove hilbert_tensor_existence_uniqueness
+ - remove htensorOp_existence 
+ - show htensorOp_existence inside proof of htensorOp_separation
+   (we don't need htensorOp_existence then because htensorOp_separation implies existence)
+ - show the uniqueness without existence as
+   (H satisfies the property) \<Longrightarrow> H=htensorOp
+
+ (Alternatively, if the existence proof is constructive, define htensorOp constructively (without SOME))
+
+*)
 lemma hilbert_tensor_existence_uniqueness:
   fixes S :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and 
     T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
@@ -240,6 +254,7 @@ definition htensorOp :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded
 
 
 lemma htensorOp_separation:
+(* TODO: remove allquantifiers *)
 \<open>\<forall> S T. \<forall> x y. (S \<otimes>\<^sub>H T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
   using htensorOp_existence htensorOp_def someI_ex
   by smt

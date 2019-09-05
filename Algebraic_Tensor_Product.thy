@@ -974,6 +974,7 @@ qed
 
 text\<open>Universal property of the tensor product. See chapter XVI in @{cite lang2004algebra}\<close>
 lemma atensor_universal_property:
+(* TODO: split into existence and uniqueness, give constructive definition *)
   fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
   shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
