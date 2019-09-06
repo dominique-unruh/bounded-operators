@@ -231,18 +231,50 @@ text \<open>Theorem 1, page 189 in @{cite Helemskii}\<close>
  (Alternatively, if the existence proof is constructive, define htensorOp constructively (without SOME))
 
 *)
-lemma hilbert_tensor_existence_uniqueness:
+
+lemma hilbert_tensor_existence':
+  fixes S :: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close> and 
+        T :: \<open>'c::chilbert_space \<Rightarrow> 'd::chilbert_space\<close>
+  assumes \<open>bounded_clinear S\<close> and  \<open>bounded_clinear T\<close>
+  shows \<open>\<exists> H :: 'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'd. 
+  bounded_clinear H \<and> 
+  (\<forall> x y. H (x \<otimes>\<^sub>h y) = (S x)\<otimes>\<^sub>h(T y))\<close>
+  sorry
+
+
+lemma hilbert_tensor_existence:
   fixes S :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and 
     T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
-  shows \<open>\<exists>! H :: ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded.  (\<forall> x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
-  by (cheat hilbert_tensor_existence_uniqueness)
+  shows \<open>\<exists> H :: ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded.  (\<forall> x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
+proof-
+  have \<open>bounded_clinear (times_bounded_vec S)\<close>
+    using times_bounded_vec by blast
+  moreover have \<open>bounded_clinear (times_bounded_vec T)\<close>
+    using times_bounded_vec by blast
+  ultimately have \<open>\<exists> h :: 'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'd. 
+  bounded_clinear h \<and> 
+  (\<forall> x y. h (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
+    using hilbert_tensor_existence' by blast
+  then obtain h :: \<open>'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'd\<close> where
+    \<open>bounded_clinear h\<close> and \<open>\<forall> x y. h (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
+    by blast
+  from \<open>bounded_clinear h\<close>
+  have \<open>\<exists> H. times_bounded_vec H = h\<close>
+    using times_bounded_vec_cases by auto
+  then obtain H where \<open>times_bounded_vec H = h\<close>
+    by blast
+  have \<open>\<forall>x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x) \<otimes>\<^sub>h (T *\<^sub>v y)\<close>
+    using \<open>times_bounded_vec H = h\<close> \<open>\<forall> x y. h (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
+    by auto
+  thus ?thesis by blast
+qed
 
 lemma htensorOp_existence:
   \<open>\<exists> H :: ('a::chilbert_space, 'b::chilbert_space) bounded \<Rightarrow>
   ('c::chilbert_space, 'd::chilbert_space) bounded \<Rightarrow>
   ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded. \<forall> S T.
    (\<forall> x y. (H S T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y))\<close>
-  using hilbert_tensor_existence_uniqueness by metis
+  using hilbert_tensor_existence by metis
 
 definition htensorOp :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded
  \<Rightarrow> ('c::chilbert_space, 'd::chilbert_space ) bounded
@@ -252,13 +284,21 @@ definition htensorOp :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded
     \<forall> S T. \<forall> x y. (H S T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)
 ))\<close> 
 
-
 lemma htensorOp_separation:
-(* TODO: remove allquantifiers *)
-\<open>\<forall> S T. \<forall> x y. (S \<otimes>\<^sub>H T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
+\<open>(S \<otimes>\<^sub>H T) *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x)\<otimes>\<^sub>h(T *\<^sub>v y)\<close>
   using htensorOp_existence htensorOp_def someI_ex
   by smt
 (* > 1 s *)  
+
+(* TODO:
+- Develop htensorVec (not sure about the name) htensorOp as you proposed. (In Tensor_Product.thy.)
+- Derive all relevant laws with respect to htensorOp. (In Tensor_Product.thy.)
+- Define and prove the isomorphism i ('a ell2 \otimes 'b ell2) -> ('a*'b) ell2). (In Tensor_Product_L2.thy.)
+- Define tensorVec as "tensorVec a b = i (htensorVec a b)" and "tensorOp A B psi = i (htensorOp a b (inv i))". (In Tensor_Product_L2.thy.)
+- Define some suitable transfer rules (we can discuss that in more details when you reach that point).
+- Derive properties of tensorVec and tensorOp directly from those in Tensor_Product.thy using the transfer method.
+
+*)
 
 section \<open>Tensor product ell2\<close>
 
