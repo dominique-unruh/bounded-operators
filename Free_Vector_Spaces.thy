@@ -379,179 +379,188 @@ text\<open>Universal property of the free vector space\<close>
 definition universal_free::\<open>('a \<Rightarrow> 'b::complex_vector) \<Rightarrow> ('a free \<Rightarrow> 'b)\<close>
   where \<open>universal_free f x = (\<Sum>z\<in>{u | u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C ( f z ) )\<close>
 
-
-(* TODO: split into two properties, give constructive definition *)
-theorem free_universal_property:
-  fixes f:: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
-  shows \<open>\<exists>!F::'a free \<Rightarrow> 'b. clinear F \<and> f = F \<circ> inclusion_free\<close>
-proof
-  have \<open>\<forall> x. x = (\<Sum>z\<in>{u | u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C (inclusion_free z))\<close>
-    using free_explicit by auto
-  define F::\<open>'a free \<Rightarrow> 'b\<close> where \<open>F x = (\<Sum>z\<in>{u | u.  x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C ( f z ) )\<close>
-    for x
-  show "clinear F \<and> f = F \<circ> inclusion_free"
-  proof
-    show \<open>f = F \<circ> inclusion_free\<close>
+lemma inclusion_free_comp:
+  \<open>f = (universal_free f) \<circ> inclusion_free\<close>
+proof-
+  have \<open>f t = ((universal_free f) \<circ> inclusion_free) t\<close>
+    for t
+  proof-
+    have \<open>((universal_free f) \<circ> inclusion_free) t = (universal_free f) (inclusion_free t)\<close>
+      by simp
+    also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (inclusion_free t) \<down> u \<noteq> 0}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
+      using universal_free_def by blast
+    also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
     proof-
-      have \<open>f t = (F \<circ> inclusion_free) t\<close>
-        for t
-      proof-
-        have \<open>(F \<circ> inclusion_free) t = F (inclusion_free t)\<close>
-          by simp
-        also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (inclusion_free t) \<down> u \<noteq> 0}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
-          using \<open>F \<equiv> \<lambda>x. \<Sum>z\<in>{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z\<close> by blast
-        also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
-        proof-
-          have \<open>{u | u. (inclusion_free t) \<down> u \<noteq> 0} = {t}\<close>
-            by (smt Collect_cong inclusion_free.rep_eq singleton_conv zero_neq_one)          
-          thus ?thesis by simp
-        qed
-        also have  \<open>\<dots> = ((inclusion_free t) \<down> t) *\<^sub>C ( f t )\<close>
-          by simp
-        also have  \<open>\<dots> =  f t \<close>
-        proof-
-          have \<open>(inclusion_free t) \<down> t = 1\<close>
-            by (simp add: inclusion_free.rep_eq)
-          thus ?thesis by simp
-        qed
-        finally have \<open>(F \<circ> inclusion_free) t = f t\<close>
-          by blast
-        thus ?thesis by simp
-      qed
-      thus ?thesis by blast
+      have \<open>{u | u. (inclusion_free t) \<down> u \<noteq> 0} = {t}\<close>
+        by (smt Collect_cong inclusion_free.rep_eq singleton_conv zero_neq_one)          
+      thus ?thesis by simp
     qed
-    show "clinear F"
+    also have  \<open>\<dots> = ((inclusion_free t) \<down> t) *\<^sub>C ( f t )\<close>
+      by simp
+    also have  \<open>\<dots> =  f t \<close>
     proof-
-      have \<open>clinear (\<lambda> x. x \<down> z)\<close>
-        for z::'a
-        unfolding clinear_def
-        by (meson clinearI clinear_def free_regular_for_sum scaleC_free.rep_eq)
-      have \<open>clinear (\<lambda> x. (x \<down> z) *\<^sub>C ( f z ))\<close>
-        for z
-        unfolding clinear_def
-      proof
-        show "((b1 + b2) \<down> z) *\<^sub>C f z = (b1 \<down> z) *\<^sub>C f z + (b2 \<down> z) *\<^sub>C f z"
-          for b1 :: "'a free"
-            and b2 :: "'a free"
-          unfolding clinear_def
-          by (simp add: free_regular_for_sum scaleC_left.add)            
-        show "((r *\<^sub>C b) \<down> z) *\<^sub>C f z = r *\<^sub>C (b \<down> z) *\<^sub>C f z"
-          for r :: complex
-            and b :: "'a free"
-          using \<open>clinear (\<lambda> x. (x \<down> z))\<close>
-          unfolding clinear_def
-          by (simp add: scaleC_free.rep_eq) 
-      qed
-      show ?thesis unfolding F_def clinear_def
-      proof
-        show "(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ( (b1 + b2) \<down> z ) *\<^sub>C f z) = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0}. (b1 \<down> z) *\<^sub>C f z) + (\<Sum>z\<in>{u |u. b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)"
-          for b1 :: "'a free"
-            and b2 :: "'a free"
-        proof-
-          have \<open>{u |u. (b1 + b2) \<down> u \<noteq> 0} \<subseteq>
+      have \<open>(inclusion_free t) \<down> t = 1\<close>
+        by (simp add: inclusion_free.rep_eq)
+      thus ?thesis by simp
+    qed
+    finally have \<open>((universal_free f) \<circ> inclusion_free) t = f t\<close>
+      by blast
+    thus ?thesis by simp
+  qed
+  thus ?thesis by blast
+qed
+
+
+lemma universal_free_clinear:
+  "clinear (universal_free f)"
+proof-
+  have \<open>clinear (\<lambda> x. x \<down> z)\<close>
+    for z::'a
+    unfolding clinear_def
+    by (meson clinearI clinear_def free_regular_for_sum scaleC_free.rep_eq)
+  have \<open>clinear (\<lambda> x. (x \<down> z) *\<^sub>C ( f z ))\<close>
+    for z
+    unfolding clinear_def
+  proof
+    show "((b1 + b2) \<down> z) *\<^sub>C f z = (b1 \<down> z) *\<^sub>C f z + (b2 \<down> z) *\<^sub>C f z"
+      for b1 :: "'a free"
+        and b2 :: "'a free"
+      unfolding clinear_def
+      by (simp add: free_regular_for_sum scaleC_left.add)            
+    show "((r *\<^sub>C b) \<down> z) *\<^sub>C f z = r *\<^sub>C (b \<down> z) *\<^sub>C f z"
+      for r :: complex
+        and b :: "'a free"
+      using \<open>clinear (\<lambda> x. (x \<down> z))\<close>
+      unfolding clinear_def
+      by (simp add: scaleC_free.rep_eq) 
+  qed
+  show ?thesis unfolding universal_free_def clinear_def
+  proof
+    show "(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ( (b1 + b2) \<down> z ) *\<^sub>C f z) = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0}. (b1 \<down> z) *\<^sub>C f z) + (\<Sum>z\<in>{u |u. b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)"
+      for b1 :: "'a free"
+        and b2 :: "'a free"
+    proof-
+      have \<open>{u |u. (b1 + b2) \<down> u \<noteq> 0} \<subseteq>
               {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}\<close>
-            by (smt Collect_mono_iff Un_def add.left_neutral free_regular_for_sum sup.cobounded2)
-          moreover have \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0})\<close>
-          proof-
-            have \<open>finite {u |u. b1 \<down> u \<noteq> 0}\<close>
-              using times_free_vec by blast
-            moreover have \<open>finite {u |u. b2 \<down> u \<noteq> 0}\<close>
-              using times_free_vec by blast
-            ultimately show ?thesis by blast
-          qed
-          ultimately have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
+        by (smt Collect_mono_iff Un_def add.left_neutral free_regular_for_sum sup.cobounded2)
+      moreover have \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0})\<close>
+      proof-
+        have \<open>finite {u |u. b1 \<down> u \<noteq> 0}\<close>
+          using times_free_vec by blast
+        moreover have \<open>finite {u |u. b2 \<down> u \<noteq> 0}\<close>
+          using times_free_vec by blast
+        ultimately show ?thesis by blast
+      qed
+      ultimately have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
                     = (\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}.  ((b1 + b2) \<down> z) *\<^sub>C f z)\<close>
-            using support_superset[where S = "{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}"
-                and x = "(b1 + b2)" and f = "f" ] 
-            by blast
-          hence \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
+        using support_superset[where S = "{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}"
+            and x = "(b1 + b2)" and f = "f" ] 
+        by blast
+      hence \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
                 = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}. 
                       ((b1 + b2) \<down> z) *\<^sub>C f z)\<close>
-            by auto
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+        by auto
+      also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
                (b1 \<down> z + b2 \<down> z ) *\<^sub>C f z)\<close>
-            by (metis free_regular_for_sum)
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+        by (metis free_regular_for_sum)
+      also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
                (b1 \<down> z) *\<^sub>C f z + (b2 \<down> z) *\<^sub>C f z)\<close>
-            by (meson scaleC_add_left)
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+        by (meson scaleC_add_left)
+      also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
                (b1 \<down> z) *\<^sub>C f z)
           +  (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
                (b2 \<down> z) *\<^sub>C f z)\<close>
-            using sum.distrib by force
-          finally have \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z) 
+        using sum.distrib by force
+      finally have \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z) 
             = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
                (b1 \<down> z) *\<^sub>C f z)
           +  (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
                (b2 \<down> z) *\<^sub>C f z)\<close>
-            by blast
-          moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+        by blast
+      moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
                (b1 \<down> z) *\<^sub>C f z)
                 = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0}. (b1 \<down> z) *\<^sub>C f z)\<close>
-          proof-
-            have \<open>{u |u. b1 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}\<close>
-              by blast
-            thus ?thesis
-              by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
-          qed
-          moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)
+      proof-
+        have \<open>{u |u. b1 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}\<close>
+          by blast
+        thus ?thesis
+          by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
+      qed
+      moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)
                 = (\<Sum>z\<in>{u |u. b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)\<close>
-          proof-
-            have \<open>{u |u. b2 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}\<close>
-              by blast
-            thus ?thesis
-              by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
-          qed
-          ultimately show ?thesis by simp
-        qed
-        show "(\<Sum>z\<in>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
-          for r :: complex
-            and b :: "'a free"
-        proof (cases \<open>r = 0\<close>)
-          show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
-            if "r = 0"
-            using that
-            by (metis (no_types, lifting) add.left_neutral add_cancel_left_right complex_vector.scale_eq_0_iff free_regular_for_sum sum.not_neutral_contains_not_neutral) 
-          show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
-            if "r \<noteq> 0"
-            using that 
-          proof-
-            have \<open>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0} = {u |u.  b \<down> u \<noteq> 0}\<close>
-              by (metis complex_vector.scale_eq_0_iff scaleC_free.rep_eq that)
-            hence \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
+      proof-
+        have \<open>{u |u. b2 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}\<close>
+          by blast
+        thus ?thesis
+          by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
+      qed
+      ultimately show ?thesis by simp
+    qed
+    show "(\<Sum>z\<in>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
+      for r :: complex
+        and b :: "'a free"
+    proof (cases \<open>r = 0\<close>)
+      show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
+        if "r = 0"
+        using that
+        by (metis (no_types, lifting) add.left_neutral add_cancel_left_right complex_vector.scale_eq_0_iff free_regular_for_sum sum.not_neutral_contains_not_neutral) 
+      show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
+        if "r \<noteq> 0"
+        using that 
+      proof-
+        have \<open>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0} = {u |u.  b \<down> u \<noteq> 0}\<close>
+          by (metis complex_vector.scale_eq_0_iff scaleC_free.rep_eq that)
+        hence \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
                    = (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. ((r *\<^sub>C b) \<down> z) *\<^sub>C f z)\<close>
-              by simp
-            moreover have \<open>(r *\<^sub>C b) \<down> u = r *\<^sub>C (b \<down> u)\<close>
-              for u
-              by (simp add: scaleC_free.rep_eq)
-            ultimately have \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
+          by simp
+        moreover have \<open>(r *\<^sub>C b) \<down> u = r *\<^sub>C (b \<down> u)\<close>
+          for u
+          by (simp add: scaleC_free.rep_eq)
+        ultimately have \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
                    = (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. r *\<^sub>C (b \<down> z) *\<^sub>C f z)\<close>
-              by simp
-            thus ?thesis
-              by (metis (mono_tags, lifting) scaleC_right.sum sum.cong) 
-          qed
-        qed
+          by simp
+        thus ?thesis
+          by (metis (mono_tags, lifting) scaleC_right.sum sum.cong) 
       qed
     qed
   qed
-  show \<open>G = F\<close>
-    if "clinear G \<and> f = G \<circ> inclusion_free"
-    for G :: "'a free \<Rightarrow> 'b"
-  proof-
-    have \<open>clinear G\<close> and \<open>f = G \<circ> inclusion_free\<close>
-      using that by auto
-    have \<open>x \<in> (range inclusion_free) \<Longrightarrow> G x = F x\<close>
-      for x
-      using \<open>clinear F \<and> f = F \<circ> inclusion_free\<close> \<open>f = G \<circ> inclusion_free\<close>
-      by (metis comp_eq_elim f_inv_into_f)
-    hence \<open>x \<in> complex_vector.span (range inclusion_free) \<Longrightarrow> G x = F x\<close>
-      for x
-      by (simp add: \<open>clinear F \<and> f = F \<circ> inclusion_free\<close> \<open>clinear G\<close> complex_vector.linear_eq_on)
-    hence \<open>G x = F x\<close>
-      for x
-      by (simp add: free_span)      
-    thus ?thesis by blast
-  qed
+qed
+
+
+lemma universal_free_uniq:
+  assumes \<open>clinear G\<close> and \<open>f = G \<circ> inclusion_free\<close>
+  shows \<open>G = universal_free f\<close>
+proof-
+  have \<open>clinear (universal_free f)\<close>
+    by (simp add: universal_free_clinear)
+  moreover have \<open>f = (universal_free f) \<circ> inclusion_free\<close>
+    by (simp add: inclusion_free_comp)    
+  ultimately have \<open>x \<in> (range inclusion_free) \<Longrightarrow> G x = (universal_free f) x\<close>
+    for x
+    using \<open>f = G \<circ> inclusion_free\<close>
+    by (metis comp_eq_elim f_inv_into_f)
+  hence \<open>x \<in> complex_vector.span (range inclusion_free) \<Longrightarrow> G x = (universal_free f) x\<close>
+    for x
+    by (meson \<open>clinear (universal_free f)\<close> assms(1) complex_vector.module_hom_eq_on_span)
+  hence \<open>G x = (universal_free f) x\<close>
+    for x
+    by (simp add: free_span)      
+  thus ?thesis by blast
+qed
+
+
+theorem free_universal_property:
+  fixes f:: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
+  shows \<open>\<exists>!F::'a free \<Rightarrow> 'b. clinear F \<and> f = F \<circ> inclusion_free\<close>
+  proof
+  show "clinear (universal_free f) \<and> f = (universal_free f) \<circ> inclusion_free"
+    by (simp add: inclusion_free_comp universal_free_clinear)
+    
+  show "F = (universal_free f)"
+    if "clinear F \<and> f = F \<circ> inclusion_free"
+    for F :: "'a free \<Rightarrow> 'b"
+    using that
+    by (simp add: universal_free_uniq) 
 qed
 
 lemma inclusion_free_inj:
