@@ -1,5 +1,6 @@
 theory General_Results_Missing
   imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
+    "HOL-ex.Sketch_and_Explore" HOL.Groups
 
 begin
 
@@ -213,5 +214,65 @@ proof-
     using \<open>(f v,v) \<in> S\<close>  \<open>(f w,w) \<in> S\<close>  \<open>f v = f w\<close> \<open>v \<noteq> w\<close>
     by auto    
 qed
+
+lemma additive_imples_zero:
+\<open>(\<And> p q. f (p + q) = f p + f q) \<Longrightarrow> f  (0::'a::ab_group_add) = (0::'b::ab_group_add)\<close>
+proof-
+  assume \<open>\<And> p q. f (p + q) = f p + f q\<close>
+  hence \<open>f (0 + 0) = f 0 + f 0\<close>
+    by blast
+  moreover have \<open>f 0 = f (0 + 0)\<close>
+  proof-
+    have \<open>(0::'a::ab_group_add) = 0 + 0\<close>
+      by simp
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis
+    by (metis add_cancel_left_left) 
+qed
+
+lemma general_sum_from_addition_induction:
+  fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
+  assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
+  shows \<open>\<forall> S. card S = n \<and> finite S \<longrightarrow> f (\<Sum>a\<in>S.  a) = (\<Sum>a\<in>S. f a)\<close>
+proof (induction n)
+  show "\<forall>S. card S = 0 \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
+  proof-
+    have \<open>card S = 0 \<Longrightarrow> finite S \<Longrightarrow> f (\<Sum> S) = sum f S\<close>
+      for S
+    proof-
+      assume \<open>card S = 0\<close> and \<open>finite S\<close>
+      have \<open>S = {}\<close>
+        using \<open>card S = 0\<close> \<open>finite S\<close> by auto 
+      have \<open>sum f S = 0\<close>
+        by (simp add: \<open>S = {}\<close>)
+      moreover have \<open>f (\<Sum> S) = 0\<close>
+      proof-
+        have \<open>\<Sum> S = 0\<close>
+          by (simp add: \<open>S = {}\<close>)
+        moreover have \<open>f 0 = 0\<close>
+          using  \<open>\<And> p q. f (p + q) = f p + f q\<close> additive_imples_zero
+          by blast
+        ultimately show ?thesis by auto
+      qed
+      ultimately show \<open>f (\<Sum> S) = sum f S\<close>
+        by auto
+    qed
+    thus ?thesis by blast
+  qed
+  show "\<forall>S. card S = Suc n \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
+    if "\<forall>S. card S = n \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
+    for n :: nat
+    using that
+    by (smt assms card_eq_SucD finite_insert sum.insert) 
+qed
+
+lemma general_sum_from_addition:
+  fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
+  assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
+    and \<open>finite S\<close>
+  shows \<open>f (\<Sum>a\<in>S.  a) = (\<Sum>a\<in>S. f a)\<close>
+  using general_sum_from_addition_induction
+   assms(1) assms(2) by blast
 
 end

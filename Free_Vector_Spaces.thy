@@ -11,6 +11,7 @@ theory Free_Vector_Spaces
   imports
     Complex_Inner_Product
     "HOL-Library.Adhoc_Overloading"
+    General_Results_Missing
 
 begin
 
@@ -552,10 +553,10 @@ qed
 theorem free_universal_property:
   fixes f:: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
   shows \<open>\<exists>!F::'a free \<Rightarrow> 'b. clinear F \<and> f = F \<circ> inclusion_free\<close>
-  proof
+proof
   show "clinear (universal_free f) \<and> f = (universal_free f) \<circ> inclusion_free"
     by (simp add: inclusion_free_comp universal_free_clinear)
-    
+
   show "F = (universal_free f)"
     if "clinear F \<and> f = F \<circ> inclusion_free"
     for F :: "'a free \<Rightarrow> 'b"
