@@ -344,7 +344,7 @@ proof-
   thus ?thesis
     by (simp add: P_def) 
 qed
-  
+
 lemma htensorOp_I2:
   fixes S::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and
         T::\<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
