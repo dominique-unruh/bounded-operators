@@ -221,7 +221,26 @@ lemma hilbert_tensor_existence_left:
   assumes \<open>bounded_clinear S\<close> 
   shows \<open>\<exists> H :: 'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h ('c::chilbert_space). 
   bounded_clinear H \<and> (\<forall> x y. H (x \<otimes>\<^sub>h y) = (S x)\<otimes>\<^sub>hy) \<and> onorm H \<le> onorm S\<close>
-  sorry
+proof-
+  define k::\<open>'a \<Rightarrow> 'c \<Rightarrow> 'b\<otimes>\<^sub>h'c\<close> where \<open>k x y = (S x) \<otimes>\<^sub>h y\<close> for x y
+  have \<open>cbilinear k\<close>
+    sorry
+  hence \<open>\<exists>! K :: 'a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'c. clinear K \<and> (\<forall> x y. k x y = K (x \<otimes>\<^sub>a y))\<close>
+    by (simp add: atensor_universal_property)
+  then obtain K::\<open>'a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'c\<close> where \<open>clinear K\<close> and \<open>\<forall> x y. k x y = K (x \<otimes>\<^sub>a y)\<close>
+    by blast
+  have \<open>\<exists> H. bounded_clinear H \<and> (\<forall> x y. H (x \<otimes>\<^sub>h y) = K (x \<otimes>\<^sub>a y))\<close> 
+    sorry
+  then obtain H where \<open>bounded_clinear H\<close> and \<open>\<forall> x y. H (x \<otimes>\<^sub>h y) = K (x \<otimes>\<^sub>a y)\<close>
+    by blast
+  have \<open>bounded_clinear H\<close>
+    sorry
+  moreover have \<open>\<forall> x y. H (x \<otimes>\<^sub>h y) = (S x)\<otimes>\<^sub>hy\<close> 
+    sorry
+  moreover have \<open>onorm H \<le> onorm S\<close>
+    sorry
+  ultimately show ?thesis by blast
+qed
 
 lemma hilbert_tensor_existence_right:
   fixes T :: \<open>'c::chilbert_space \<Rightarrow> 'd::chilbert_space\<close>

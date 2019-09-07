@@ -15,10 +15,21 @@ theory Free_Vector_Spaces
 begin
 
 typedef 'a free = \<open>{f::'a \<Rightarrow> complex. finite {x | x. f x \<noteq> 0}}\<close>
+  morphisms times_free_vec Abs_free
   apply auto
   using not_finite_existsD by fastforce
 
 setup_lifting type_definition_free
+
+bundle free_notation begin
+notation times_free_vec (infixr "\<down>" 70)
+end
+
+bundle no_free_notation begin
+no_notation times_free_vec (infixr "\<down>" 70)
+end
+
+unbundle free_notation
 
 instantiation free :: (type) complex_vector
 begin
@@ -162,23 +173,23 @@ definition is_free_over::\<open>('a::complex_vector) itself \<Rightarrow> 'b its
 
 lemma free_regular_for_sum:
   fixes x y :: \<open>'a free\<close>
-  shows \<open>Rep_free (x + y) t = Rep_free x t + Rep_free y t\<close>
+  shows \<open>(x + y) \<down> t = x \<down> t + y \<down> t\<close>
   apply transfer
   by auto
 
 
 lemma free_regular_for_sum_general_induction:
   fixes x :: \<open>'a free\<close>
-  shows \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> Rep_free ( \<Sum> u \<in> S. ((Rep_free x) u) *\<^sub>C (inclusion_free u) ) t
-  = (\<Sum> u \<in> S. Rep_free ( ((Rep_free x) u) *\<^sub>C (inclusion_free u) ) t )\<close>
+  shows \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> ( \<Sum> u \<in> S. (x \<down> u) *\<^sub>C (inclusion_free u) ) \<down> t
+  = (\<Sum> u \<in> S. ( (x \<down> u) *\<^sub>C (inclusion_free u) ) \<down> t )\<close>
 proof (induction n)
-  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)"
+  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> (\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>S. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t)"
     by (metis (no_types, lifting) card_0_eq sum_clauses(1) zero_free.rep_eq)
-  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)"
-    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)"
+  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> (\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>S. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t)"
+    if "\<forall>S. finite S \<and> card S = n \<longrightarrow>  (\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>S. ( (x \<down> u) *\<^sub>C inclusion_free u) \<down> t)"
     for n :: nat
   proof-
-    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)\<close>
+    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> (\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>S. ( (x \<down> u) *\<^sub>C inclusion_free u) \<down> t)\<close>
       for S
     proof-
       fix S::\<open>'a set\<close>
@@ -192,18 +203,18 @@ proof (induction n)
         by simp
       moreover have \<open>card R = n\<close>
         using \<open>card S = Suc n\<close> \<open>S = insert r R\<close>  \<open>r \<notin> R\<close> \<open>finite R\<close> by auto
-      ultimately have \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)\<close>
+      ultimately have \<open>(\<Sum>u\<in>R. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>R. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t)\<close>
         by (simp add: that)
-      hence \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C inclusion_free u) t + Rep_free (Rep_free x r *\<^sub>C inclusion_free r) t
-         = (\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t) + Rep_free (Rep_free x r *\<^sub>C inclusion_free r) t\<close>
+      hence \<open>(\<Sum>u\<in>R. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t + ((x \<down> r) *\<^sub>C inclusion_free r) \<down> t
+         = (\<Sum>u\<in>R. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t) + ((x \<down> r) *\<^sub>C inclusion_free r) \<down> t\<close>
         by simp
-      moreover have \<open>Rep_free (\<Sum>u\<in>R. Rep_free x u *\<^sub>C inclusion_free u) t + Rep_free (Rep_free x r *\<^sub>C inclusion_free r) t
-          = Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t\<close>
+      moreover have \<open>(\<Sum>u\<in>R. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t + ((x \<down> r) *\<^sub>C inclusion_free r) \<down> t
+          = (\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t\<close>
         by (simp add: \<open>S = insert r R\<close> \<open>finite R\<close> \<open>r \<notin> R\<close> plus_free.rep_eq)        
-      moreover have \<open>(\<Sum>u\<in>R. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t) + Rep_free (Rep_free x r *\<^sub>C inclusion_free r) t
-          =  (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)\<close>
+      moreover have \<open>(\<Sum>u\<in>R.  ( (x \<down> u) *\<^sub>C inclusion_free u) \<down> t) +  ( (x \<down> r) *\<^sub>C inclusion_free r) \<down> t
+          =  (\<Sum>u\<in>S. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t)\<close>
         by (simp add: \<open>S = insert r R\<close> \<open>finite R\<close> \<open>r \<notin> R\<close>)        
-      ultimately show \<open>Rep_free (\<Sum>u\<in>S. Rep_free x u *\<^sub>C inclusion_free u) t = (\<Sum>u\<in>S. Rep_free (Rep_free x u *\<^sub>C inclusion_free u) t)\<close>
+      ultimately show \<open>(\<Sum>u\<in>S. (x \<down> u) *\<^sub>C inclusion_free u) \<down> t = (\<Sum>u\<in>S. ((x \<down> u) *\<^sub>C inclusion_free u) \<down> t)\<close>
         by simp
     qed
     thus ?thesis by blast
@@ -214,84 +225,84 @@ qed
 lemma free_regular_for_sum_general:
   fixes x :: \<open>'a free\<close>
   assumes \<open>finite S\<close>
-  shows \<open>Rep_free ( \<Sum> u \<in> S. ((Rep_free x) u) *\<^sub>C (inclusion_free u) ) t
-  = (\<Sum> u \<in> S. Rep_free ( ((Rep_free x) u) *\<^sub>C (inclusion_free u) ) t )\<close>
+  shows \<open>( \<Sum> u \<in> S. (x \<down> u) *\<^sub>C (inclusion_free u) ) \<down> t
+  = (\<Sum> u \<in> S. ((x \<down> u) *\<^sub>C (inclusion_free u) ) \<down> t )\<close>
   using free_regular_for_sum_general_induction assms
   by (simp add: free_regular_for_sum_general_induction) 
 
 lemma free_explicit:
   fixes X :: \<open>'a free\<close>
-  shows \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))\<close>
+  shows \<open>X = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z))\<close>
 proof-
-  have \<open>(Rep_free X) t = (Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))) t\<close>
+  have \<open>X \<down> t = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z)) \<down> t\<close>
     for t
-  proof (cases \<open>t \<in> {u | u. (Rep_free X) u \<noteq> 0}\<close>)
-    show "Rep_free X t = Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C inclusion_free z) t"
-      if "t \<in> {u |u. Rep_free X u \<noteq> 0}"
+  proof (cases \<open>t \<in> {u | u. X \<down> u \<noteq> 0}\<close>)
+    show "X \<down> t = (\<Sum>z\<in>{u |u. (X \<down> u) \<noteq> 0}. (X \<down> z) *\<^sub>C inclusion_free z) \<down> t"
+      if "t \<in> {u |u. X \<down> u \<noteq> 0}"
     proof-
-      have \<open>finite {u | u. (Rep_free X) u \<noteq> 0}\<close>
-        using Rep_free by force
-      hence \<open>(Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))) t
-        = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t ) \<close>
-        using free_regular_for_sum_general[where S = "{u | u. (Rep_free X) u \<noteq> 0}" and x = "X" and t = "t"]
+      have \<open>finite {u | u. X \<down> u \<noteq> 0}\<close>
+        using times_free_vec by force
+      hence \<open>(\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. ((X \<down> z) *\<^sub>C (inclusion_free z))) \<down> t
+        = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t ) \<close>
+        using free_regular_for_sum_general[where S = "{u | u. X \<down> u \<noteq> 0}" and x = "X" and t = "t"]
         by blast
-      moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t ) = Rep_free X t\<close>
+      moreover have \<open>(\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  ( ((X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t )) =  X \<down> t\<close>
       proof-
-        have \<open>(\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t ) = Rep_free X t\<close>
+        have \<open>(\<Sum>z\<in>{t}. ( ( X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t ) = X \<down> t\<close>
         proof-
-          have \<open>(\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t )
-            = Rep_free ( ((Rep_free X) t) *\<^sub>C (inclusion_free t) ) t \<close>
+          have \<open>(\<Sum>z\<in>{t}. ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t )
+            = ( ( X \<down> t) *\<^sub>C (inclusion_free t) ) \<down> t \<close>
             by simp
-          also have \<open>\<dots> = (Rep_free X) t\<close>
+          also have \<open>\<dots> = X \<down> t\<close>
             apply transfer
             by auto
           finally show ?thesis by blast
         qed
-        moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t ) = 0\<close>
+        moreover have \<open>(\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0} - {t}. ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t ) = 0\<close>
         proof-
-          have \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t} \<Longrightarrow> 
-                Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t  = 0\<close>
+          have \<open>z\<in>{u | u.  X \<down> u \<noteq> 0} - {t} \<Longrightarrow> 
+                ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t  = 0\<close>
             for z
           proof-
-            assume \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}\<close>
+            assume \<open>z\<in>{u | u. X \<down> u \<noteq> 0} - {t}\<close>
             hence \<open>z \<noteq> t\<close>
               by simp
-            hence \<open>Rep_free (inclusion_free z) t = 0\<close>
+            hence \<open>(inclusion_free z) \<down> t = 0\<close>
               apply transfer by auto
-            thus \<open>Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t  = 0\<close>
+            thus \<open>( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t  = 0\<close>
               by (simp add: scaleC_free.rep_eq)
           qed
           thus ?thesis by simp
         qed
-        moreover have \<open>(\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t )
-      = (\<Sum>z\<in>{t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t )
-      + (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0} - {t}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t )\<close>
-          using \<open>finite {u |u. Rep_free X u \<noteq> 0}\<close> empty_iff sum.remove that by fastforce        
+        moreover have \<open>(\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  ( ( X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t )
+      = (\<Sum>z\<in>{t}. ( ( X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t )
+      + (\<Sum>z\<in>{u | u.  X \<down> u \<noteq> 0} - {t}. ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t )\<close>
+          using \<open>finite {u |u. X \<down> u \<noteq> 0}\<close> empty_iff sum.remove that by fastforce
         ultimately show ?thesis by simp
       qed
-      ultimately show \<open>(Rep_free X) t = (Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))) t\<close>
+      ultimately show \<open>X \<down> t = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z)) \<down> t\<close>
         by simp      
     qed
-    show "Rep_free X t = Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C inclusion_free z) t"
-      if "t \<notin> {u |u. Rep_free X u \<noteq> 0}"
+    show "X \<down> t =  (\<Sum>z\<in>{u |u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C inclusion_free z) \<down> t"
+      if "t \<notin> {u |u. X \<down> u \<noteq> 0}"
     proof-
-      have \<open>Rep_free X t = 0\<close>
+      have \<open>X \<down> t = 0\<close>
         using that by simp
-      moreover have \<open>Rep_free (\<Sum>z\<in>{u |u. Rep_free X u \<noteq> 0}. Rep_free X z *\<^sub>C inclusion_free z) t = 0\<close>
+      moreover have \<open>(\<Sum>z\<in>{u |u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C inclusion_free z) \<down> t = 0\<close>
       proof-
-        have \<open>(Rep_free (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))) t
-        = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t ) \<close>
-          using free_regular_for_sum_general[where S = "{u | u. (Rep_free X) u \<noteq> 0}" and x = "X" and t = "t"]
+        have \<open>(\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z)) \<down> t
+        = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t ) \<close>
+          using free_regular_for_sum_general[where S = "{u | u. X \<down> u \<noteq> 0}" and x = "X" and t = "t"]
           by (metis (no_types, lifting) sum.infinite zero_free.rep_eq)
         also have \<open>\<dots> = 0\<close>
         proof-
-          have \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0} \<Longrightarrow> Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t = 0\<close>
+          have \<open>z\<in>{u | u. X \<down> u \<noteq> 0} \<Longrightarrow> ( (X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t = 0\<close>
             for z
           proof-
-            assume \<open>z\<in>{u | u. (Rep_free X) u \<noteq> 0}\<close>
-            hence \<open>Rep_free (inclusion_free z) t = 0\<close>
+            assume \<open>z\<in>{u | u. X \<down> u \<noteq> 0}\<close>
+            hence \<open>(inclusion_free z) \<down> t = 0\<close>
               by (metis inclusion_free.rep_eq that)          
-            thus \<open>Rep_free ( ((Rep_free X) z) *\<^sub>C (inclusion_free z) ) t = 0\<close>
+            thus \<open>( ( X \<down> z) *\<^sub>C (inclusion_free z) ) \<down> t = 0\<close>
               by (simp add: scaleC_free.rep_eq) 
           qed
           thus ?thesis by simp
@@ -301,8 +312,8 @@ proof-
       ultimately show ?thesis by simp
     qed
   qed
-  thus \<open>X = (\<Sum>z\<in>{u | u. (Rep_free X) u \<noteq> 0}. ((Rep_free X) z) *\<^sub>C (inclusion_free z))\<close>
-    using Rep_free_inject by blast
+  thus \<open>X = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z))\<close>
+    using times_free_vec_inject by blast
 qed
 
 
@@ -318,7 +329,7 @@ proof
       if "(x::'a free) \<in> UNIV"
       for x :: "'a free"
     proof-
-      have \<open>x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C (inclusion_free z))\<close>
+      have \<open>x = (\<Sum>z\<in>{u | u. x \<down> u \<noteq> 0}. ( x \<down> z) *\<^sub>C (inclusion_free z))\<close>
         using free_explicit by blast
       thus ?thesis
         by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset rangeI subset_iff) 
@@ -328,28 +339,28 @@ qed
 
 lemma support_superset:
   fixes f :: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
-  assumes \<open>{u |u. Rep_free x u \<noteq> 0} \<subseteq> S\<close> and \<open>finite S\<close>
-  shows \<open>(\<Sum>z\<in>S. Rep_free x z *\<^sub>C f z) =
-     (\<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z)\<close>
+  assumes \<open>{u |u. x \<down> u \<noteq> 0} \<subseteq> S\<close> and \<open>finite S\<close>
+  shows \<open>(\<Sum>z\<in>S. (x \<down> z) *\<^sub>C f z) =
+     (\<Sum>z\<in>{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z)\<close>
 proof-
-  have \<open>{u |u. Rep_free x u \<noteq> 0} \<union> (S-{u |u. Rep_free x u \<noteq> 0}) = S\<close>
+  have \<open>{u |u. x \<down> u \<noteq> 0} \<union> (S-{u |u. x \<down> u \<noteq> 0}) = S\<close>
     using assms(1) by auto    
-  moreover have \<open>{u |u. Rep_free x u \<noteq> 0} \<inter> (S-{u |u. Rep_free x u \<noteq> 0}) = {}\<close>
+  moreover have \<open>{u |u. x \<down> u \<noteq> 0} \<inter> (S-{u |u. x \<down> u \<noteq> 0}) = {}\<close>
     by simp    
-  ultimately have \<open>(\<Sum>z\<in>S. Rep_free x z *\<^sub>C f z) = 
-   (\<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z)
- + (\<Sum>z\<in>S-{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z)\<close>
+  ultimately have \<open>(\<Sum>z\<in>S. (x \<down> z) *\<^sub>C f z) = 
+   (\<Sum>z\<in>{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z)
+ + (\<Sum>z\<in>S-{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z)\<close>
     using  \<open>finite S\<close>
     by (metis (no_types, lifting) add.commute assms(1) sum.subset_diff)
-  moreover have \<open>(\<Sum>z\<in>S-{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z) = 0\<close>
+  moreover have \<open>(\<Sum>z\<in>S-{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z) = 0\<close>
   proof-
-    have \<open>z\<in>S-{u |u. Rep_free x u \<noteq> 0} \<Longrightarrow> Rep_free x z *\<^sub>C f z = 0\<close>
+    have \<open>z\<in>S-{u |u. x \<down> u \<noteq> 0} \<Longrightarrow> (x \<down> z) *\<^sub>C f z = 0\<close>
       for z
     proof-
-      assume \<open>z\<in>S-{u |u. Rep_free x u \<noteq> 0}\<close>
-      hence \<open>Rep_free x z = 0\<close>
+      assume \<open>z\<in>S-{u |u. x \<down> u \<noteq> 0}\<close>
+      hence \<open>x \<down> z = 0\<close>
         by auto
-      hence \<open>Rep_free x z *\<^sub>C f z = 0 *\<^sub>C f z\<close>
+      hence \<open>(x \<down> z) *\<^sub>C f z = 0 *\<^sub>C f z\<close>
         by simp
       also have \<open>0 *\<^sub>C (f z) = 0\<close>
         by simp
@@ -358,21 +369,25 @@ proof-
     thus ?thesis
       by simp 
   qed
-  ultimately show \<open>(\<Sum>z\<in>S. Rep_free x z *\<^sub>C f z) =
-     (\<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z)\<close>
+  ultimately show \<open>(\<Sum>z\<in>S. (x \<down> z) *\<^sub>C f z) =
+     (\<Sum>z\<in>{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z)\<close>
     by simp
 qed
 
 text\<open>Universal property of the free vector space\<close>
+
+definition universal_free::\<open>('a \<Rightarrow> 'b::complex_vector) \<Rightarrow> ('a free \<Rightarrow> 'b)\<close>
+  where \<open>universal_free f x = (\<Sum>z\<in>{u | u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C ( f z ) )\<close>
+
 
 (* TODO: split into two properties, give constructive definition *)
 theorem free_universal_property:
   fixes f:: \<open>'a \<Rightarrow> 'b::complex_vector\<close>
   shows \<open>\<exists>!F::'a free \<Rightarrow> 'b. clinear F \<and> f = F \<circ> inclusion_free\<close>
 proof
-  have \<open>\<forall> x. x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C (inclusion_free z))\<close>
+  have \<open>\<forall> x. x = (\<Sum>z\<in>{u | u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C (inclusion_free z))\<close>
     using free_explicit by auto
-  define F::\<open>'a free \<Rightarrow> 'b\<close> where \<open>F x = (\<Sum>z\<in>{u | u. (Rep_free x) u \<noteq> 0}. ((Rep_free x) z) *\<^sub>C ( f z ) )\<close>
+  define F::\<open>'a free \<Rightarrow> 'b\<close> where \<open>F x = (\<Sum>z\<in>{u | u.  x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C ( f z ) )\<close>
     for x
   show "clinear F \<and> f = F \<circ> inclusion_free"
   proof
@@ -383,19 +398,19 @@ proof
       proof-
         have \<open>(F \<circ> inclusion_free) t = F (inclusion_free t)\<close>
           by simp
-        also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
-          using \<open>F \<equiv> \<lambda>x. \<Sum>z\<in>{u |u. Rep_free x u \<noteq> 0}. Rep_free x z *\<^sub>C f z\<close> by blast
-        also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((Rep_free (inclusion_free t)) z) *\<^sub>C ( f z ) )\<close>
+        also have \<open>\<dots> = (\<Sum>z\<in>{u | u. (inclusion_free t) \<down> u \<noteq> 0}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
+          using \<open>F \<equiv> \<lambda>x. \<Sum>z\<in>{u |u. x \<down> u \<noteq> 0}. (x \<down> z) *\<^sub>C f z\<close> by blast
+        also have  \<open>\<dots> = (\<Sum>z\<in>{t}. ((inclusion_free t) \<down> z) *\<^sub>C ( f z ) )\<close>
         proof-
-          have \<open>{u | u. (Rep_free (inclusion_free t)) u \<noteq> 0} = {t}\<close>
+          have \<open>{u | u. (inclusion_free t) \<down> u \<noteq> 0} = {t}\<close>
             by (smt Collect_cong inclusion_free.rep_eq singleton_conv zero_neq_one)          
           thus ?thesis by simp
         qed
-        also have  \<open>\<dots> = ((Rep_free (inclusion_free t)) t) *\<^sub>C ( f t )\<close>
+        also have  \<open>\<dots> = ((inclusion_free t) \<down> t) *\<^sub>C ( f t )\<close>
           by simp
         also have  \<open>\<dots> =  f t \<close>
         proof-
-          have \<open>(Rep_free (inclusion_free t)) t = 1\<close>
+          have \<open>(inclusion_free t) \<down> t = 1\<close>
             by (simp add: inclusion_free.rep_eq)
           thus ?thesis by simp
         qed
@@ -407,113 +422,110 @@ proof
     qed
     show "clinear F"
     proof-
-      have \<open>clinear (\<lambda> x. (Rep_free x) z)\<close>
+      have \<open>clinear (\<lambda> x. x \<down> z)\<close>
         for z::'a
         unfolding clinear_def
         by (meson clinearI clinear_def free_regular_for_sum scaleC_free.rep_eq)
-      have \<open>clinear (\<lambda> x. ((Rep_free x) z) *\<^sub>C ( f z ))\<close>
+      have \<open>clinear (\<lambda> x. (x \<down> z) *\<^sub>C ( f z ))\<close>
         for z
         unfolding clinear_def
       proof
-        show "Rep_free (b1 + b2) z *\<^sub>C f z = Rep_free b1 z *\<^sub>C f z + Rep_free b2 z *\<^sub>C f z"
+        show "((b1 + b2) \<down> z) *\<^sub>C f z = (b1 \<down> z) *\<^sub>C f z + (b2 \<down> z) *\<^sub>C f z"
           for b1 :: "'a free"
             and b2 :: "'a free"
           unfolding clinear_def
           by (simp add: free_regular_for_sum scaleC_left.add)            
-        show "Rep_free (r *\<^sub>C b) z *\<^sub>C f z = r *\<^sub>C Rep_free b z *\<^sub>C f z"
+        show "((r *\<^sub>C b) \<down> z) *\<^sub>C f z = r *\<^sub>C (b \<down> z) *\<^sub>C f z"
           for r :: complex
             and b :: "'a free"
-          using \<open>clinear (\<lambda> x. ((Rep_free x) z))\<close>
+          using \<open>clinear (\<lambda> x. (x \<down> z))\<close>
           unfolding clinear_def
           by (simp add: scaleC_free.rep_eq) 
       qed
       show ?thesis unfolding F_def clinear_def
       proof
-        show "(\<Sum>z\<in>{u |u. Rep_free (b1 + b2) u \<noteq> 0}. Rep_free (b1 + b2) z *\<^sub>C f z) = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0}. Rep_free b1 z *\<^sub>C f z) + (\<Sum>z\<in>{u |u. Rep_free b2 u \<noteq> 0}. Rep_free b2 z *\<^sub>C f z)"
+        show "(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ( (b1 + b2) \<down> z ) *\<^sub>C f z) = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0}. (b1 \<down> z) *\<^sub>C f z) + (\<Sum>z\<in>{u |u. b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)"
           for b1 :: "'a free"
             and b2 :: "'a free"
         proof-
-          have \<open>{u |u. Rep_free (b1 + b2) u \<noteq> 0} \<subseteq>
-              {u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}\<close>
+          have \<open>{u |u. (b1 + b2) \<down> u \<noteq> 0} \<subseteq>
+              {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}\<close>
             by (smt Collect_mono_iff Un_def add.left_neutral free_regular_for_sum sup.cobounded2)
-          moreover have \<open>finite ({u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0})\<close>
+          moreover have \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0})\<close>
           proof-
-            have \<open>finite {u |u. Rep_free b1 u \<noteq> 0}\<close>
-              using Rep_free by blast
-            moreover have \<open>finite {u |u. Rep_free b2 u \<noteq> 0}\<close>
-              using Rep_free by blast
+            have \<open>finite {u |u. b1 \<down> u \<noteq> 0}\<close>
+              using times_free_vec by blast
+            moreover have \<open>finite {u |u. b2 \<down> u \<noteq> 0}\<close>
+              using times_free_vec by blast
             ultimately show ?thesis by blast
           qed
-          ultimately have \<open>(\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}. Rep_free (b1 + b2) z *\<^sub>C f z)
-                    = (\<Sum>z\<in>{u |u. Rep_free (b1 + b2) u \<noteq> 0}. Rep_free (b1 + b2) z *\<^sub>C f z)\<close>
-            using support_superset[where S = "{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}"
+          ultimately have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
+                    = (\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}.  ((b1 + b2) \<down> z) *\<^sub>C f z)\<close>
+            using support_superset[where S = "{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}"
                 and x = "(b1 + b2)" and f = "f" ] 
             by blast
-          hence \<open>(\<Sum>z\<in>{u |u. Rep_free (b1 + b2) u \<noteq> 0}. Rep_free (b1 + b2) z *\<^sub>C f z)
-                = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}. 
-                      Rep_free (b1 + b2) z *\<^sub>C f z)\<close>
+          hence \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z)
+                = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}. 
+                      ((b1 + b2) \<down> z) *\<^sub>C f z)\<close>
             by auto
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b1 z + Rep_free b2 z ) *\<^sub>C f z)\<close>
+          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+               (b1 \<down> z + b2 \<down> z ) *\<^sub>C f z)\<close>
             by (metis free_regular_for_sum)
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b1 z) *\<^sub>C f z + (Rep_free b2 z) *\<^sub>C f z)\<close>
+          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+               (b1 \<down> z) *\<^sub>C f z + (b2 \<down> z) *\<^sub>C f z)\<close>
             by (meson scaleC_add_left)
-          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b1 z) *\<^sub>C f z)
-          +  (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b2 z) *\<^sub>C f z)\<close>
+          also have \<open>\<dots> = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+               (b1 \<down> z) *\<^sub>C f z)
+          +  (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
+               (b2 \<down> z) *\<^sub>C f z)\<close>
             using sum.distrib by force
-          finally have \<open>(\<Sum>z\<in>{u |u. Rep_free (b1 + b2) u \<noteq> 0}. Rep_free (b1 + b2) z *\<^sub>C f z) 
-            = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b1 z) *\<^sub>C f z)
-          +  (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b2 z) *\<^sub>C f z)\<close>
+          finally have \<open>(\<Sum>z\<in>{u |u. (b1 + b2) \<down> u \<noteq> 0}. ((b1 + b2) \<down> z) *\<^sub>C f z) 
+            = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
+               (b1 \<down> z) *\<^sub>C f z)
+          +  (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}.
+               (b2 \<down> z) *\<^sub>C f z)\<close>
             by blast
-          moreover have \<open>(\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b1 z) *\<^sub>C f z)
-                = (\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0}.
-               (Rep_free b1 z) *\<^sub>C f z)\<close>
+          moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}.
+               (b1 \<down> z) *\<^sub>C f z)
+                = (\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0}. (b1 \<down> z) *\<^sub>C f z)\<close>
           proof-
-            have \<open>{u |u. Rep_free b1 u \<noteq> 0} \<subseteq> {u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}\<close>
+            have \<open>{u |u. b1 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0}\<close>
               by blast
             thus ?thesis
-              by (metis (mono_tags) \<open>finite ({u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0})\<close> support_superset) 
+              by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
           qed
-          moreover have \<open>(\<Sum>z\<in>{u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b2 z) *\<^sub>C f z)
-                = (\<Sum>z\<in>{u |u. Rep_free b2 u \<noteq> 0}.
-               (Rep_free b2 z) *\<^sub>C f z)\<close>
+          moreover have \<open>(\<Sum>z\<in>{u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)
+                = (\<Sum>z\<in>{u |u. b2 \<down> u \<noteq> 0}. (b2 \<down> z) *\<^sub>C f z)\<close>
           proof-
-            have \<open>{u |u. Rep_free b2 u \<noteq> 0} \<subseteq> {u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0}\<close>
+            have \<open>{u |u. b2 \<down> u \<noteq> 0} \<subseteq> {u |u. b1 \<down> u \<noteq> 0} \<union> {u |u.  b2 \<down> u \<noteq> 0}\<close>
               by blast
             thus ?thesis
-              by (metis (mono_tags) \<open>finite ({u |u. Rep_free b1 u \<noteq> 0} \<union> {u |u. Rep_free b2 u \<noteq> 0})\<close> support_superset) 
+              by (metis (mono_tags) \<open>finite ({u |u. b1 \<down> u \<noteq> 0} \<union> {u |u. b2 \<down> u \<noteq> 0})\<close> support_superset) 
           qed
           ultimately show ?thesis by simp
         qed
-        show "(\<Sum>z\<in>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. Rep_free b u \<noteq> 0}. Rep_free b z *\<^sub>C f z)"
+        show "(\<Sum>z\<in>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
           for r :: complex
             and b :: "'a free"
         proof (cases \<open>r = 0\<close>)
-          show "(\<Sum>z\<in>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. Rep_free b u \<noteq> 0}. Rep_free b z *\<^sub>C f z)"
+          show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
             if "r = 0"
             using that
             by (metis (no_types, lifting) add.left_neutral add_cancel_left_right complex_vector.scale_eq_0_iff free_regular_for_sum sum.not_neutral_contains_not_neutral) 
-          show "(\<Sum>z\<in>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. Rep_free b u \<noteq> 0}. Rep_free b z *\<^sub>C f z)"
+          show "(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}. ( (r *\<^sub>C b) \<down> z ) *\<^sub>C f z) = r *\<^sub>C (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. (b \<down> z) *\<^sub>C f z)"
             if "r \<noteq> 0"
             using that 
           proof-
-            have \<open>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0} = {u |u. Rep_free b u \<noteq> 0}\<close>
+            have \<open>{u |u.  (r *\<^sub>C b) \<down> u \<noteq> 0} = {u |u.  b \<down> u \<noteq> 0}\<close>
               by (metis complex_vector.scale_eq_0_iff scaleC_free.rep_eq that)
-            hence \<open>(\<Sum>z\<in>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z) 
-                   = (\<Sum>z\<in>{u |u. Rep_free b u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z)\<close>
+            hence \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
+                   = (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. ((r *\<^sub>C b) \<down> z) *\<^sub>C f z)\<close>
               by simp
-            moreover have \<open>Rep_free (r *\<^sub>C b) u = r *\<^sub>C (Rep_free b) u\<close>
+            moreover have \<open>(r *\<^sub>C b) \<down> u = r *\<^sub>C (b \<down> u)\<close>
               for u
               by (simp add: scaleC_free.rep_eq)
-            ultimately have \<open>(\<Sum>z\<in>{u |u. Rep_free (r *\<^sub>C b) u \<noteq> 0}. Rep_free (r *\<^sub>C b) z *\<^sub>C f z) 
-                   = (\<Sum>z\<in>{u |u. Rep_free b u \<noteq> 0}. r *\<^sub>C Rep_free b z *\<^sub>C f z)\<close>
+            ultimately have \<open>(\<Sum>z\<in>{u |u. (r *\<^sub>C b) \<down> u \<noteq> 0}.  ((r *\<^sub>C b) \<down> z) *\<^sub>C f z) 
+                   = (\<Sum>z\<in>{u |u. b \<down> u \<noteq> 0}. r *\<^sub>C (b \<down> z) *\<^sub>C f z)\<close>
               by simp
             thus ?thesis
               by (metis (mono_tags, lifting) scaleC_right.sum sum.cong) 
@@ -547,5 +559,6 @@ lemma inclusion_free_inj:
   shows \<open>x = y\<close>
   by (metis assms inclusion_free.rep_eq zero_neq_one)
 
+unbundle no_free_notation
 
 end
