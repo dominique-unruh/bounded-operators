@@ -578,44 +578,6 @@ lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_free (x, y)\<close>.
 
 
-(* TODO: Such an obvious fact does not deserve a special lemma.
-   (If it does, then anyway in a more generic form since it is
-   not specific to tensor, e.g., \<open>(case_prod f ` (A \<times> B) ) = {f a b| a b. a\<in>A \<and> b\<in>B}\<close>.
-   But that one if solved directly by auto.) *)
-lemma tensor_of_sets:
-  \<open>( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-  (* TODO: much simpler proof:
-    unfolding  by (auto simp: atensor_op.abs_eq) *)
-proof-
-  have "(\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) \<subseteq> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
-  proof
-    show "x \<in> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
-      if "x \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
-      for x :: "'a \<otimes>\<^sub>a 'b"
-      using that by fastforce
-  qed
-  moreover have "{a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B} \<subseteq> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
-  proof
-    show "x \<in> (\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B)"
-      if "x \<in> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
-      for x :: "'a \<otimes>\<^sub>a 'b"
-    proof-
-      have \<open>\<exists>a\<in>A. \<exists>b\<in>B. x = a \<otimes>\<^sub>a b\<close>
-        using that by blast
-      then obtain a b where \<open>a \<in> A\<close> and \<open>b \<in> B\<close> and \<open>x = a \<otimes>\<^sub>a b\<close>
-        by blast
-      from \<open>x = a \<otimes>\<^sub>a b\<close>
-      have  \<open>x = (\<lambda>z. fst z \<otimes>\<^sub>a snd z) (a, b)\<close>
-        by simp
-      moreover have \<open>(a, b) \<in> A \<times> B\<close>
-        using  \<open>a \<in> A\<close>  \<open>b \<in> B\<close> by blast
-      ultimately show ?thesis by blast
-    qed
-  qed
-  ultimately show ?thesis by auto
-qed
-
-
 instantiation atensor :: (complex_vector,complex_vector) complex_vector
 begin
 
@@ -2156,8 +2118,7 @@ proof-
     have \<open>s \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
       by blast
     hence \<open>\<exists> u\<in>A. \<exists> v\<in>B. s = u \<otimes>\<^sub>a v\<close>
-      by (smt Sigma_cong mem_Collect_eq tensor_of_sets)
-        (* > 1 s *)
+      by auto
     then obtain u v where \<open>u\<in>A\<close> and \<open>v\<in>B\<close> and \<open>s = u \<otimes>\<^sub>a v\<close>
       by blast
     hence \<open>\<exists> H::'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. clinear H \<and> H (u \<otimes>\<^sub>a v) = 1 \<and>
@@ -2213,7 +2174,7 @@ proof-
   hence \<open>complex_independent ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
     using complex_vector.independent_explicit_finite_subsets by force
   moreover have \<open>( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
-    using tensor_of_sets[where A = "A" and B = "B"] by blast
+    by auto
   ultimately show ?thesis 
     by simp
 qed
