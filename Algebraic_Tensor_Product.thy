@@ -488,9 +488,8 @@ qed
 text\<open>Tensor product as defined in @{cite Helemskii} chapter 2, section 8\<close>
 quotient_type (overloaded) ('a, 'b) atensor
   = "(('a::complex_vector) \<times> ('b::complex_vector)) free" /  atensor_rel
-  (* TODO proof (rule equivpI) would leads to a clearer proof, I think *)
-  unfolding equivp_def proof
-  show "\<forall>y. atensor_rel (x::('a \<times> 'b) free) y = (atensor_rel x = atensor_rel y)"
+proof-
+  have "\<forall>y. atensor_rel (x::('a \<times> 'b) free) y = (atensor_rel x = atensor_rel y)"
     for x :: "('a \<times> 'b) free"
   proof
     show "atensor_rel x y = (atensor_rel x = atensor_rel y)"
@@ -567,6 +566,8 @@ quotient_type (overloaded) ('a, 'b) atensor
       qed
     qed
   qed
+  thus ?thesis
+    unfolding equivp_def by blast
 qed
 
 
@@ -576,21 +577,15 @@ type_notation
 lift_definition atensor_op:: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close>  (infixl "\<otimes>\<^sub>a" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_free (x, y)\<close>.
 
-(* TODO: I don't think we need a definition for this as it can be written concisely
-   as (\<lambda>(a,b). a \<otimes>\<^sub>a b). If we include this definition, why not include plus_of_pair,
-   minus_of_pair, and so on. (By the way, it can also be written as "case_prod (\<otimes>\<^sub>a)".)
- *)
-definition atensor_of_pair:: \<open>'a::complex_vector \<times> 'b::complex_vector \<Rightarrow> 'a \<otimes>\<^sub>a 'b\<close> where
-  \<open>atensor_of_pair z = (fst z) \<otimes>\<^sub>a (snd z)\<close>
 
 (* TODO: Such an obvious fact does not deserve a special lemma.
    (If it does, then anyway in a more generic form since it is
    not specific to tensor, e.g., \<open>(case_prod f ` (A \<times> B) ) = {f a b| a b. a\<in>A \<and> b\<in>B}\<close>.
    But that one if solved directly by auto.) *)
 lemma tensor_of_sets:
-  \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+  \<open>( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
   (* TODO: much simpler proof:
-    unfolding atensor_of_pair_def by (auto simp: atensor_op.abs_eq) *)
+    unfolding  by (auto simp: atensor_op.abs_eq) *)
 proof-
   have "(\<lambda>z. fst z \<otimes>\<^sub>a snd z) ` (A \<times> B) \<subseteq> {a \<otimes>\<^sub>a b |a b. a \<in> A \<and> b \<in> B}"
   proof
@@ -617,7 +612,7 @@ proof-
       ultimately show ?thesis by blast
     qed
   qed
-  ultimately show ?thesis unfolding atensor_of_pair_def by blast
+  ultimately show ?thesis by auto
 qed
 
 
@@ -903,7 +898,7 @@ lemma atensor_mult_left:
 
 
 lemma abs_atensor_inclusion_free:
-  \<open>abs_atensor (inclusion_free u) = atensor_of_pair u\<close>
+  \<open>abs_atensor (inclusion_free u) = (case_prod (\<otimes>\<^sub>a)) u\<close>
 proof-
   have \<open>complex_vector.subspace atensor_kernel\<close>
     by (simp add: subspace_atensor_kernel)
@@ -912,7 +907,7 @@ proof-
     unfolding atensor_rel_def inclusion_free_def apply auto
     by (simp add: \<open>complex_vector.subspace atensor_kernel\<close> complex_vector.subspace_0) 
   thus ?thesis
-    by (simp add: atensor_of_pair_def atensor_op.abs_eq)    
+    by (simp add: atensor_op.abs_eq prod.case_eq_if) 
 qed
 
 lemma abs_atensor_sum:
@@ -927,7 +922,7 @@ lemma abs_atensor_sum_general:
 
 lemma free_explicit:
   fixes  X :: \<open>('a::complex_vector \<times> 'b::complex_vector) free\<close>
-  shows \<open>abs_atensor X = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  (X \<down> z) *\<^sub>C (atensor_of_pair z) )\<close>
+  shows \<open>abs_atensor X = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  (X \<down> z) *\<^sub>C ((case_prod (\<otimes>\<^sub>a)) z) )\<close>
 proof-                                        
   have \<open>X = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (inclusion_free z))\<close>
     using free_explicit by auto
@@ -938,16 +933,16 @@ proof-
   also have \<open>\<dots> = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  (X \<down> z) *\<^sub>C (abs_atensor (inclusion_free z)))\<close>
     by (metis scaleC_atensor.abs_eq)
   also have \<open>\<dots> = (\<Sum>z\<in>{u | u. X \<down> u \<noteq> 0}.  ( X \<down> z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
-    by (metis (mono_tags, lifting) abs_atensor_inclusion_free atensor_of_pair_def)
+    by (metis (mono_tags, lifting) case_prod_unfold abs_atensor_inclusion_free)
   finally have \<open> abs_atensor X = (\<Sum>z\<in>{u |u. X \<down> u \<noteq> 0}. (X \<down> z) *\<^sub>C (fst z \<otimes>\<^sub>a snd z))\<close>
     by blast
   thus ?thesis
-    by (metis (no_types, lifting) atensor_of_pair_def sum.cong) 
+    by (metis (no_types, lifting) case_prod_unfold sum.cong) 
 qed
 
 lemma atensor_onto_explicit:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  shows \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ) )\<close>
+  shows \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (case_prod (\<otimes>\<^sub>a)) z ) )\<close>
 proof-
   have \<open>\<exists> X. x = abs_atensor X\<close>
     apply transfer
@@ -955,7 +950,7 @@ proof-
   then obtain X where \<open>x = abs_atensor X\<close> by blast
   moreover have \<open>abs_atensor X = (\<Sum>z\<in>{u | u.  X \<down> u \<noteq> 0}.  (X \<down> z) *\<^sub>C ( (fst z) \<otimes>\<^sub>a (snd z) ) )\<close>
     using free_explicit
-    by (metis (mono_tags, lifting) atensor_of_pair_def sum.cong) 
+    by (metis (mono_tags, lifting) case_prod_unfold sum.cong) 
   moreover have \<open>finite {u | u.  X \<down> u \<noteq> 0}\<close>
     using times_free_vec by blast
   ultimately show ?thesis
@@ -993,16 +988,16 @@ lemma atensor_onto_explicit_normalized:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
   shows \<open>\<exists> V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v)\<close>
 proof-
-  have \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
+  have \<open>\<exists> S f. finite S \<and> (\<forall> z\<in>S. f z \<noteq> 0) \<and> x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (case_prod (\<otimes>\<^sub>a)) z ))\<close>
     using atensor_onto_explicit by blast
   then obtain S f where \<open>finite S\<close> and \<open>\<forall> z\<in>S. f z \<noteq> 0\<close> and
-    \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))\<close>
+    \<open>x = (\<Sum>z\<in>S. (f z) *\<^sub>C ( (case_prod (\<otimes>\<^sub>a)) z ))\<close>
     by blast
   define \<phi> where \<open>\<phi> v = (\<Sum>u\<in>{u|u. (u,v)\<in>S}. ((f (u,v)) *\<^sub>C u))\<close> for v
   define B where \<open>B = snd ` S\<close>
-  have \<open>(\<Sum>z\<in>S. (f z) *\<^sub>C ( atensor_of_pair z ))
+  have \<open>(\<Sum>z\<in>S. (f z) *\<^sub>C ( (case_prod (\<otimes>\<^sub>a)) z ))
       = (\<Sum>(u,v)\<in>S. (f (u,v)) *\<^sub>C ( u \<otimes>\<^sub>a v ))\<close>
-    unfolding atensor_of_pair_def apply auto
+     apply auto
     by (metis (no_types, lifting) case_prod_beta' prod.collapse)
   also have \<open>\<dots> = (\<Sum>(u,v)\<in>S. ((f (u,v)) *\<^sub>C u) \<otimes>\<^sub>a v)\<close>
     by (metis atensor_mult_left)
@@ -1015,27 +1010,27 @@ proof-
     unfolding \<phi>_def by blast
   also have \<open>\<dots> = (\<Sum>v\<in>B. (\<phi> v) \<otimes>\<^sub>a v)\<close>
     unfolding B_def by blast
-  finally have \<open>(\<Sum>z\<in>S. f z *\<^sub>C atensor_of_pair z) = (\<Sum>v\<in>B. (\<phi> v) \<otimes>\<^sub>a v)\<close>
+  finally have \<open>(\<Sum>z\<in>S. f z *\<^sub>C (case_prod (\<otimes>\<^sub>a)) z) = (\<Sum>v\<in>B. (\<phi> v) \<otimes>\<^sub>a v)\<close>
     by blast
   thus ?thesis
-    using B_def \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. f z *\<^sub>C atensor_of_pair z)\<close> by blast 
+    using B_def \<open>finite S\<close> \<open>x = (\<Sum>z\<in>S. f z *\<^sub>C (case_prod (\<otimes>\<^sub>a)) z)\<close> by blast 
 qed
 
 
 lemma atensor_onto:
-  \<open>complex_vector.span ( range atensor_of_pair )
+  \<open>complex_vector.span ( range (case_prod (\<otimes>\<^sub>a)) )
  = ( UNIV::(('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) set) )\<close>
 proof
-  show "complex_vector.span (range atensor_of_pair) \<subseteq> UNIV"
+  show "complex_vector.span (range (case_prod (\<otimes>\<^sub>a))) \<subseteq> UNIV"
     by simp    
-  show "(UNIV::('a \<otimes>\<^sub>a 'b) set) \<subseteq> complex_vector.span (range atensor_of_pair)"
+  show "(UNIV::('a \<otimes>\<^sub>a 'b) set) \<subseteq> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))"
   proof
-    show "x \<in> complex_vector.span (range atensor_of_pair)"
+    show "x \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))"
       for x :: "'a \<otimes>\<^sub>a 'b"
     proof-
-      have \<open>\<exists> R g. finite R \<and> (\<forall> z\<in>R. g z \<noteq> 0) \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+      have \<open>\<exists> R g. finite R \<and> (\<forall> z\<in>R. g z \<noteq> 0) \<and> x = (\<Sum>z\<in>R.  (g z) *\<^sub>C (case_prod (\<otimes>\<^sub>a)) z)\<close>
         using atensor_onto_explicit by blast
-      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C atensor_of_pair z)\<close>
+      then obtain R g where \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R.  (g z) *\<^sub>C (case_prod (\<otimes>\<^sub>a)) z)\<close>
         by blast
       thus ?thesis
         by (metis (no_types, lifting) complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset image_subset_iff iso_tuple_UNIV_I)        
@@ -1090,10 +1085,10 @@ lemma atensor_reduction_right:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
     and S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close> and \<open>complex_vector.dependent (snd ` S)\<close>
-    and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   shows \<open>\<exists> R. card (snd ` R) < card (snd ` S) \<and>
               card (fst ` R) \<le> card (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+              x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
 proof-
   define \<phi> where \<open>\<phi> v = (\<Sum> u\<in>{u|u.(u,v)\<in>S}. u)\<close> for v
   define V where \<open>V = snd ` S\<close>
@@ -1106,11 +1101,12 @@ proof-
     by blast
   moreover have \<open>x = (\<Sum>v\<in>V. (\<phi> v) \<otimes>\<^sub>a v )\<close>
   proof-
-    have \<open>x = (\<Sum>z\<in>S. atensor_of_pair z )\<close>
-      using \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close> by blast
-    also have \<open>\<dots> = (\<Sum>v\<in>V. (\<Sum>u\<in>{u|u.(u,v)\<in>S}. atensor_of_pair (u, v)) )\<close>
+    have \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z )\<close>
+      using \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>v\<in>V. (\<Sum>u\<in>{u|u.(u,v)\<in>S}. (case_prod (\<otimes>\<^sub>a)) (u, v)) )\<close>
       unfolding V_def
-      using assms(1) big_sum_reordering_snd by fastforce 
+      using case_prod_unfold assms(1) big_sum_reordering_snd
+      by blast
     also have \<open>\<dots> = (\<Sum>v\<in>V. (\<Sum>u\<in>{u|u.(u,v)\<in>S}. u \<otimes>\<^sub>a v) )\<close>
       by (metis (no_types, lifting) abs_atensor_inclusion_free atensor_op.abs_eq sum.cong)
     also have \<open>\<dots> = (\<Sum>v\<in>V. (\<Sum>u\<in>{u|u.(u,v)\<in>S}. u) \<otimes>\<^sub>a v )\<close>
@@ -1166,17 +1162,17 @@ proof-
       unfolding R_def V_def
       by auto
   qed
-  moreover have \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  moreover have \<open>x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   proof-
     have \<open>inj_on (\<lambda> u. (\<psi> u, u)) (V-{s})\<close>
       using inj_on_def by auto
     have \<open>x = (\<Sum>u\<in>V-{s}. (\<psi> u) \<otimes>\<^sub>a u)\<close>
       using \<open>x = (\<Sum>u\<in>V-{s}. (\<psi> u) \<otimes>\<^sub>a u)\<close>
       by blast
-    also have \<open>\<dots> = (\<Sum>u\<in>V-{s}. atensor_of_pair ((\<lambda> u. (\<psi> u, u)) u) )\<close>
-      unfolding atensor_of_pair_def
+    also have \<open>\<dots> = (\<Sum>u\<in>V-{s}. (case_prod (\<otimes>\<^sub>a)) ((\<lambda> u. (\<psi> u, u)) u) )\<close>
+      using case_prod_unfold 
       by auto
-    also have \<open>\<dots> = (\<Sum>z\<in>R. atensor_of_pair z )\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z )\<close>
       unfolding R_def
       using \<open>inj_on (\<lambda> u. (\<psi> u, u)) (V-{s})\<close>
       by (metis (no_types, lifting) sum.reindex_cong)
@@ -1210,7 +1206,7 @@ qed
 lemma span_tensor_span:
   fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
   assumes \<open>u \<in> complex_vector.span A\<close> and \<open>v \<in> complex_vector.span B\<close>
-  shows \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
+  shows \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
 proof-
   have \<open>\<exists> t r. finite t \<and> t \<subseteq> A \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close>
   proof -
@@ -1239,19 +1235,20 @@ proof-
     using tensor_product_cartesian_product \<open>finite t\<close> \<open>finite t'\<close> by blast
   finally have \<open>u \<otimes>\<^sub>a v = (\<Sum>(a,b)\<in>t\<times>t'. (r a * r' b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
     by blast
-  moreover have \<open>(a,b) \<in> t \<times> t' \<Longrightarrow> a \<otimes>\<^sub>a b  \<in> complex_vector.span ( atensor_of_pair ` (A \<times> B) )\<close>
+  moreover have \<open>(a,b) \<in> t \<times> t' \<Longrightarrow> a \<otimes>\<^sub>a b  \<in> complex_vector.span ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
     for a b
   proof-
     assume \<open>(a,b) \<in> t \<times> t'\<close>
-    hence \<open>(atensor_of_pair (a,b)) \<in> atensor_of_pair ` (t \<times> t')\<close>
-      by simp
+    hence \<open>((case_prod (\<otimes>\<^sub>a)) (a,b)) \<in> (case_prod (\<otimes>\<^sub>a)) ` (t \<times> t')\<close>
+      using case_prod_unfold
+      by auto
     moreover have \<open>t \<times> t' \<subseteq> A \<times> B\<close>
       using \<open>t \<subseteq> A\<close> \<open>t' \<subseteq> B\<close>
       by auto
-    ultimately have \<open>atensor_of_pair (a,b) \<in> atensor_of_pair ` (A \<times> B)\<close>
+    ultimately have \<open>(case_prod (\<otimes>\<^sub>a)) (a,b) \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
       by blast
-    thus \<open>a \<otimes>\<^sub>a b \<in> complex_vector.span ( atensor_of_pair ` (A \<times> B) )\<close>
-      by (simp add: atensor_of_pair_def complex_vector.span_base) 
+    thus \<open>a \<otimes>\<^sub>a b \<in> complex_vector.span ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
+      by (simp add:  complex_vector.span_base) 
   qed
   ultimately show ?thesis
   proof - (* sledgehammer *)
@@ -1268,26 +1265,26 @@ proof-
     then have f3: "\<forall>B f A. bb A f B \<in> B \<and> f (bb A f B) \<notin> complex_vector.span A \<or> sum f B \<in> complex_vector.span A"
       by (meson complex_vector.span_sum)
     moreover
-    { assume "bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> t'"
+    { assume "bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> t'"
       moreover
-      { assume "(aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t, bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> t \<times> t'"
-        then have "r' (bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
-          using \<open>\<And>b a. (a, b) \<in> t \<times> t' \<Longrightarrow> a \<otimes>\<^sub>a b \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close> complex_vector.span_scale by blast
-        then have "aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+      { assume "(aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t, bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> t \<times> t'"
+        then have "r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+          using \<open>\<And>b a. (a, b) \<in> t \<times> t' \<Longrightarrow> a \<otimes>\<^sub>a b \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close> complex_vector.span_scale by blast
+        then have "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           by (simp add: atensor_mult_right)
-        then have "r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+        then have "r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           using complex_vector.span_scale by blast
-        then have "bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<notin> t' \<or> r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb (atensor_of_pair ` (A \<times> B)) (\<lambda>b. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+        then have "bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<notin> t' \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           by (simp add: atensor_mult_left)
-        then have "(\<Sum>b\<in>t'. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+        then have "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           using f3 by meson }
-      ultimately have "(\<Sum>b\<in>t'. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span (atensor_of_pair ` (A \<times> B)) \<or> (\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+      ultimately have "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) \<or> (\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         using f1 by (meson SigmaI) }
     moreover
-    { assume "(\<Sum>b\<in>t'. r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
-      then have "aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<notin> t \<or> r (aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa (atensor_of_pair ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a v \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+    { assume "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+      then have "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<notin> t \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a v \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         by (metis (no_types) \<open>(\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close> atensor_distr_right_sum)
-      then have "(\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+      then have "(\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         using f1 by meson }
     ultimately show ?thesis
       using f2 by auto
@@ -1297,39 +1294,40 @@ qed
 lemma basis_atensor_complex_generator:
   fixes A::\<open>'a::complex_vector set\<close> and  B::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_vector.span A = UNIV\<close> and  \<open>complex_vector.span B = UNIV\<close>
-  shows \<open>complex_vector.span ( atensor_of_pair ` (A \<times> B) ) = UNIV\<close>
+  shows \<open>complex_vector.span ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) ) = UNIV\<close>
 proof-
-  have \<open>x \<in> complex_vector.span ( atensor_of_pair ` (A \<times> B) )\<close>
+  have \<open>x \<in> complex_vector.span ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
     for x
   proof-
-    have \<open>x \<in> complex_vector.span (range atensor_of_pair )\<close>
+    have \<open>x \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)) )\<close>
       by (simp add: atensor_onto)
-    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range atensor_of_pair) \<and>
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range (case_prod (\<otimes>\<^sub>a))) \<and>
          x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     proof -
-      have "\<exists>f. x = (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) \<and> {a. f a \<noteq> 0} \<subseteq> range atensor_of_pair \<and> finite {a. f a \<noteq> 0}"
-        using \<open>x \<in> complex_vector.span (range atensor_of_pair)\<close> complex_vector.span_alt by blast
+      have "\<exists>f. x = (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) \<and> {a. f a \<noteq> 0} \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> finite {a. f a \<noteq> 0}"
+        using \<open>x \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close> complex_vector.span_alt by blast
       then show ?thesis
         by (metis (no_types))
     qed
-    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range atensor_of_pair )\<close> and
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range (case_prod (\<otimes>\<^sub>a)) )\<close> and
       \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       by blast
-    have \<open>t \<subseteq> complex_vector.span  ( atensor_of_pair ` (A \<times> B) )\<close>
+    have \<open>t \<subseteq> complex_vector.span  ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
     proof
-      show "x \<in> complex_vector.span ( atensor_of_pair ` (A \<times> B))"
+      show "x \<in> complex_vector.span ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         if "x \<in> t"
         for x :: "'a \<otimes>\<^sub>a 'b"
       proof-
-        from \<open>t \<subseteq> (range atensor_of_pair )\<close>
+        from \<open>t \<subseteq> (range (case_prod (\<otimes>\<^sub>a)) )\<close>
         have \<open>\<exists> u v. x = u \<otimes>\<^sub>a v\<close>
-          using that unfolding atensor_of_pair_def by blast
+          using that case_prod_unfold
+          by fastforce 
         then obtain u v where \<open>x = u \<otimes>\<^sub>a v\<close> by blast
         have \<open>u \<in> complex_vector.span A\<close>
           by (simp add: assms(1))
         moreover have \<open>v \<in> complex_vector.span B\<close>
           by (simp add: assms(2))
-        ultimately have \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
+        ultimately have \<open>u \<otimes>\<^sub>a v \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
           using span_tensor_span by blast
         thus ?thesis
           using \<open>x = u \<otimes>\<^sub>a v\<close>
@@ -1668,17 +1666,17 @@ proof-
     have \<open>K z = H z\<close>
       for z
     proof-
-      have \<open>complex_vector.span (range atensor_of_pair) = UNIV\<close>
+      have \<open>complex_vector.span (range (case_prod (\<otimes>\<^sub>a))) = UNIV\<close>
         by (simp add: atensor_onto)
-      hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range atensor_of_pair) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (range (case_prod (\<otimes>\<^sub>a))) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       proof -
-        have "\<forall>a. \<exists>A f. a = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> ((range atensor_of_pair)::('v \<otimes>\<^sub>a 'w) set)"
-          using \<open>complex_vector.span (range atensor_of_pair) = UNIV\<close> complex_vector.span_explicit
+        have "\<forall>a. \<exists>A f. a = (\<Sum>a\<in>A. f a *\<^sub>C a) \<and> finite A \<and> A \<subseteq> ((range (case_prod (\<otimes>\<^sub>a)))::('v \<otimes>\<^sub>a 'w) set)"
+          using \<open>complex_vector.span (range (case_prod (\<otimes>\<^sub>a))) = UNIV\<close> complex_vector.span_explicit
           by blast
         thus ?thesis
           by meson
       qed 
-      then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range atensor_of_pair)\<close>
+      then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range (case_prod (\<otimes>\<^sub>a)))\<close>
         and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
         by blast
       from \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
@@ -1690,8 +1688,8 @@ proof-
         have  \<open>a \<in> t \<Longrightarrow> K a = H a\<close>
           for a
           using \<open>\<And> x y. K (x \<otimes>\<^sub>a y) = H (x \<otimes>\<^sub>a y)\<close>
-            \<open>t \<subseteq> ((range atensor_of_pair)::('v \<otimes>\<^sub>a 'w) set)\<close>
-          by (metis atensor_of_pair_def image_iff subsetD)          
+            \<open>t \<subseteq> ((range (case_prod (\<otimes>\<^sub>a)))::('v \<otimes>\<^sub>a 'w) set)\<close>
+          using case_prod_unfold image_iff subsetD by auto
         thus ?thesis
           by auto 
       qed
@@ -1713,40 +1711,40 @@ lemma swap_atensor_existence_unique:
   H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close>
 proof-
   define h::\<open>'a \<Rightarrow> 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a\<close> where
-    \<open>h x y = (atensor_of_pair \<circ> swap) (x,y)\<close> for x y
+    \<open>h x y = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) (x,y)\<close> for x y
   have \<open>cbilinear h\<close>
     unfolding cbilinear_def proof
     show "\<forall>y. clinear (\<lambda>x. h x y)"
       unfolding clinear_def Vector_Spaces.linear_def apply auto
-      apply (simp add: complex_vector.vector_space_axioms)
-      apply (simp add: complex_vector.vector_space_axioms)
+        apply (simp add: complex_vector.vector_space_axioms)
+       apply (simp add: complex_vector.vector_space_axioms)
       unfolding module_hom_def apply auto
-      apply (simp add: complex_vector.module_axioms)
-      apply (simp add: complex_vector.module_axioms)
+        apply (simp add: complex_vector.module_axioms)
+       apply (simp add: complex_vector.module_axioms)
       unfolding module_hom_axioms_def apply auto unfolding h_def
-      apply auto
-      apply (simp add: General_Results_Missing.swap_def atensor_distr_right atensor_of_pair_def)
-      by (simp add: General_Results_Missing.swap_def atensor_mult_right atensor_of_pair_def)
+       apply auto
+       apply (simp add: General_Results_Missing.swap_def atensor_distr_right )
+      by (simp add: General_Results_Missing.swap_def atensor_mult_right )
     show "\<forall>x. clinear (h x)"
       unfolding clinear_def Vector_Spaces.linear_def apply auto
-      apply (simp add: complex_vector.vector_space_axioms)
-      apply (simp add: complex_vector.vector_space_axioms)
+        apply (simp add: complex_vector.vector_space_axioms)
+       apply (simp add: complex_vector.vector_space_axioms)
       unfolding module_hom_def apply auto
-      apply (simp add: complex_vector.module_axioms)
-      apply (simp add: complex_vector.module_axioms)
+        apply (simp add: complex_vector.module_axioms)
+       apply (simp add: complex_vector.module_axioms)
       unfolding module_hom_axioms_def apply auto unfolding h_def
-      apply auto
-      apply (simp add: General_Results_Missing.swap_def atensor_distr_left atensor_of_pair_def)
-      by (simp add: General_Results_Missing.swap_def atensor_mult_left atensor_of_pair_def)
+       apply auto
+       apply (simp add: General_Results_Missing.swap_def atensor_distr_left )
+      by (simp add: General_Results_Missing.swap_def atensor_mult_left )
   qed
   hence \<open>\<exists>!H. clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
     using atensor_universal_property by blast
-  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. (atensor_of_pair \<circ> swap) (x, y) = H (x \<otimes>\<^sub>a y))\<close>
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) (x, y) = H (x \<otimes>\<^sub>a y))\<close>
     unfolding h_def by auto
-  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. atensor_of_pair (y, x) = H (x \<otimes>\<^sub>a y))\<close>
+  hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. (case_prod (\<otimes>\<^sub>a)) (y, x) = H (x \<otimes>\<^sub>a y))\<close>
     unfolding swap_def by auto
   hence \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a. \<forall> y::'b. y \<otimes>\<^sub>a x = H (x \<otimes>\<^sub>a y))\<close>
-    unfolding atensor_of_pair_def by simp
+      by simp
   thus ?thesis by auto
 qed
 
@@ -1775,10 +1773,10 @@ lemma swap_atensorI2:
 
 (* TODO: use prod.swap instead of swap.
    Then the proof is as simple as 
-      by (auto simp: atensor_of_pair_def o_def swap_atensorI2[rule_format] )
+      by (auto simp:  o_def swap_atensorI2[rule_format] )
  *)
 lemma swap_atensor_commute:
-  \<open>swap_atensor \<circ> atensor_of_pair = atensor_of_pair \<circ> swap\<close>
+  \<open>swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a)) = (case_prod (\<otimes>\<^sub>a)) \<circ> swap\<close>
 proof-
   (* TODO: This proof can be written more readably as a sequence of "also have".
    (Avoid "\<forall>x. \<forall> y"! Use Isar constructs such as fix instead. In this case, 
@@ -1786,17 +1784,17 @@ proof-
 *)
   have \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
     by (simp add: swap_atensorI2)
-  hence \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = atensor_of_pair (y, x)\<close>
-    by (simp add: atensor_of_pair_def)
-  hence \<open>\<forall>x. \<forall> y. swap_atensor (atensor_of_pair (x,y)) = atensor_of_pair (y, x)\<close>
-    by (simp add: atensor_of_pair_def)
-  hence \<open>\<forall>x. \<forall> y. swap_atensor (atensor_of_pair (x,y)) = atensor_of_pair (swap (x, y))\<close>
+  hence \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = (case_prod (\<otimes>\<^sub>a)) (y, x)\<close>
+    by (simp add: )
+  hence \<open>\<forall>x. \<forall> y. swap_atensor ((case_prod (\<otimes>\<^sub>a)) (x,y)) = (case_prod (\<otimes>\<^sub>a)) (y, x)\<close>
+    by (simp add: )
+  hence \<open>\<forall>x. \<forall> y. swap_atensor ((case_prod (\<otimes>\<^sub>a)) (x,y)) = (case_prod (\<otimes>\<^sub>a)) (swap (x, y))\<close>
     by (simp add: General_Results_Missing.swap_def)    
-  hence \<open>\<forall>x. \<forall> y. (swap_atensor \<circ> atensor_of_pair) (x,y) = (atensor_of_pair \<circ> swap) (x, y)\<close>
+  hence \<open>\<forall>x. \<forall> y. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) (x,y) = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) (x, y)\<close>
     by simp
-  hence \<open>\<forall>z. (swap_atensor \<circ> atensor_of_pair) z = (atensor_of_pair \<circ> swap) z\<close>
+  hence \<open>\<forall>z. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z\<close>
     by simp
-  hence \<open>(swap_atensor \<circ> atensor_of_pair) z = (atensor_of_pair \<circ> swap) z\<close>
+  hence \<open>(swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z\<close>
     for z::\<open>'a \<times> 'b\<close>
     by blast
   thus ?thesis 
@@ -1813,25 +1811,25 @@ lemma atensor_reduction_left:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
     and S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close> and \<open>complex_vector.dependent (fst ` S)\<close>
-    and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   shows \<open>\<exists> R. card (fst ` R) < card (fst ` S) \<and>
               card (snd ` R) \<le> card (fst ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+              x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
 proof-
   define S' where \<open>S' = swap ` S\<close>
-  define x' where \<open>x' = (\<Sum>z\<in>S'. atensor_of_pair z)\<close>
+  define x' where \<open>x' = (\<Sum>z\<in>S'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   have \<open>finite S'\<close>
     using S'_def assms(1) by auto    
   moreover have \<open>complex_vector.dependent (snd ` S')\<close>
     by (simp add: S'_def assms(2) swap_set_snd)    
   ultimately have \<open>\<exists> R'. card (snd ` R') < card (snd ` S') \<and>
               card (fst ` R') \<le> card (snd ` R') \<and>
-              x' = (\<Sum>z\<in>R'. atensor_of_pair z)\<close>
-    using \<open>x' = (\<Sum>z\<in>S'. atensor_of_pair z)\<close>
+              x' = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+    using \<open>x' = (\<Sum>z\<in>S'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
       atensor_reduction_right[where x = "x'" and S = "S'"] by blast
   then obtain R' where \<open>card (snd ` R') < card (snd ` S')\<close> and
     \<open>card (fst ` R') \<le> card (snd ` R')\<close> and
-    \<open>x' = (\<Sum>z\<in>R'. atensor_of_pair z)\<close>
+    \<open>x' = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
     by blast
   define R where \<open>R = swap ` R'\<close>
   have \<open>snd ` R = fst ` R'\<close>
@@ -1846,17 +1844,17 @@ proof-
   moreover have \<open>card (snd ` R) \<le> card (fst ` R)\<close>
     using \<open>card (fst ` R') \<le> card (snd ` R')\<close>
     by (simp add: \<open>fst ` R = snd ` R'\<close> \<open>snd ` R = fst ` R'\<close>)
-  moreover have \<open>x = sum atensor_of_pair R\<close>
+  moreover have \<open>x = sum (case_prod (\<otimes>\<^sub>a)) R\<close>
   proof-
-    have \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
-      using \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close> by blast
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (swap ` S). atensor_of_pair z)\<close>
+    have \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+      using \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close> by blast
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (swap ` S). (case_prod (\<otimes>\<^sub>a)) z)\<close>
     proof-
       have \<open>swap \<circ> swap = id\<close>
         by (simp add: swap_involution)
       have \<open>swap ` (swap ` S) = S\<close>
         apply auto
-        apply (simp add: General_Results_Missing.swap_def)
+         apply (simp add: General_Results_Missing.swap_def)
         using \<open>swap \<circ> swap = id\<close>
       proof -
         fix a :: 'a and b :: 'b
@@ -1868,9 +1866,9 @@ proof-
       qed 
       thus ?thesis by simp
     qed
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (S'). atensor_of_pair z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (S'). (case_prod (\<otimes>\<^sub>a)) z)\<close>
       unfolding S'_def by blast
-    also have \<open>\<dots> = (\<Sum>z\<in>S'. (atensor_of_pair \<circ> swap) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z)\<close>
     proof-
       have \<open>inj swap\<close>
         by (simp add: swap_inj)
@@ -1879,40 +1877,40 @@ proof-
       thus ?thesis
         by (simp add: sum.reindex) 
     qed
-    also have \<open>\<dots> = (\<Sum>z\<in>S'. (swap_atensor \<circ> atensor_of_pair) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z)\<close>
       by (simp add: swap_atensor_commute)
-    also have \<open>\<dots> = (\<Sum>z\<in>S'. swap_atensor (atensor_of_pair z))\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. swap_atensor ((case_prod (\<otimes>\<^sub>a)) z))\<close>
       by auto
-    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>S'. (atensor_of_pair z))\<close>
+    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>S'. ((case_prod (\<otimes>\<^sub>a)) z))\<close>
     proof-
       have \<open>clinear swap_atensor\<close>
         by (simp add: swap_atensorI1)
       thus ?thesis
         by (smt Finite_Cartesian_Product.sum_cong_aux complex_vector.linear_sum) 
     qed
-    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>R'. (atensor_of_pair z))\<close>
-      using \<open>x' = sum atensor_of_pair R'\<close> x'_def by presburger
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. swap_atensor (atensor_of_pair z))\<close>
+    also have \<open>\<dots> = swap_atensor (\<Sum>z\<in>R'. ((case_prod (\<otimes>\<^sub>a)) z))\<close>
+      using \<open>x' = sum (case_prod (\<otimes>\<^sub>a)) R'\<close> x'_def by presburger
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. swap_atensor ((case_prod (\<otimes>\<^sub>a)) z))\<close>
     proof-
       have \<open>clinear swap_atensor\<close>
         by (simp add: swap_atensorI1)
       thus ?thesis
         by (smt Finite_Cartesian_Product.sum_cong_aux complex_vector.linear_sum) 
     qed
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. (swap_atensor \<circ> atensor_of_pair) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z)\<close>
       by simp
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. (atensor_of_pair \<circ> swap) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z)\<close>
       by (simp add: swap_atensor_commute)
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. atensor_of_pair (swap z))\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) (swap z))\<close>
       by auto
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` R'. atensor_of_pair z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>swap ` R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
     proof-
       have \<open>inj_on swap R'\<close>
         by (meson inj_eq inj_onI swap_inj)
       thus ?thesis
         by (simp add: sum.reindex) 
     qed
-    also have \<open>\<dots> = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
       unfolding R_def
       by blast
     finally show ?thesis by blast
@@ -1930,16 +1928,16 @@ lemma atensor_reduction:
   assumes \<open>finite S\<close> 
     and \<open>complex_vector.dependent (fst ` S)
        \<or> complex_vector.dependent (snd ` S)\<close>
-    and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
+    and \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   shows \<open>\<exists> R. max_complexity_pair R < max_complexity_pair S \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+              x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
 proof (cases \<open>complex_vector.dependent (fst ` S)\<close>)
-  show "\<exists>R. max_complexity_pair R < max_complexity_pair S \<and> x = sum atensor_of_pair R"
+  show "\<exists>R. max_complexity_pair R < max_complexity_pair S \<and> x = sum (case_prod (\<otimes>\<^sub>a)) R"
     if "complex_vector.dependent (fst ` S)"
     using that
     by (smt assms(1) assms(3) atensor_reduction_left dual_order.strict_trans le_eq_less_or_eq max_complexity_pair_def max_def)
       (* > 1 s *)
-  show "\<exists>R. max_complexity_pair R < max_complexity_pair S \<and> x = sum atensor_of_pair R"
+  show "\<exists>R. max_complexity_pair R < max_complexity_pair S \<and> x = sum (case_prod (\<otimes>\<^sub>a)) R"
     if "complex_independent (fst ` S)"
     using that
     by (smt assms(1) assms(2) assms(3) atensor_reduction_right dual_order.strict_trans2 le_eq_less_or_eq max_complexity_pair_def max_def not_less_iff_gr_or_eq)
@@ -1948,7 +1946,7 @@ qed
 
 
 lemma atensor_expansion_existence:
-  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
 proof-
   from atensor_onto_explicit_normalized
   have \<open>\<exists>V \<phi>. finite V \<and> x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v)\<close>
@@ -1960,30 +1958,29 @@ proof-
     unfolding R_def using \<open>finite V\<close>
     by simp
   from \<open>x = (\<Sum>v\<in>V. \<phi> v \<otimes>\<^sub>a v)\<close>
-  have \<open>x = (\<Sum>v\<in>V. atensor_of_pair (\<phi> v,  v))\<close>
-    unfolding atensor_of_pair_def
+  have \<open>x = (\<Sum>v\<in>V. (case_prod (\<otimes>\<^sub>a)) (\<phi> v,  v))\<close> 
     by auto
-  also have \<open>\<dots> = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  also have \<open>\<dots> = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   proof-
     have \<open>inj_on (\<lambda> v. (\<phi> v,  v)) V\<close>
       by (meson inj_onI prod.inject)
     thus ?thesis
       by (metis (mono_tags, lifting) R_def sum.reindex_cong) 
   qed
-  finally have  \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+  finally have  \<open>x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
     by blast
   thus ?thesis 
     using \<open>finite R\<close> by blast
 qed
 
 lemma orank_existence:
-  \<open>{card S | S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)} \<noteq> {}\<close>
+  \<open>{card S | S. finite S \<and> x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)} \<noteq> {}\<close>
   using atensor_expansion_existence by blast
 
 text \<open>Outer-product rank\<close>
 text\<open>It is equivalent to Definition 2.2 in cite{ @de2008tensor } via lemma orank_def'\<close>
 definition orank::\<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector) \<Rightarrow> nat\<close>
-  where \<open>orank x = Inf { max_complexity_pair S | S. finite S \<and>  x = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
+  where \<open>orank x = Inf { max_complexity_pair S | S. finite S \<and>  x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)}\<close>
 
 lemma orank_zero:
   \<open>orank (0::('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)) = 0\<close>
@@ -1991,10 +1988,10 @@ proof-
   have \<open>finite ({}::(('a \<times> 'b) set))\<close>
     by simp    
   moreover have \<open>(0::(('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)))
-           = (\<Sum>z\<in>({}::(('a \<times> 'b) set)). atensor_of_pair z)\<close>
+           = (\<Sum>z\<in>({}::(('a \<times> 'b) set)). (case_prod (\<otimes>\<^sub>a)) z)\<close>
     by simp    
   ultimately have \<open>max_complexity_pair ({}::(('a \<times> 'b) set)) \<in> { max_complexity_pair S | S. finite S \<and> 
-    (0::(('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector))) = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
+    (0::(('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector))) = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)}\<close>
     by blast
   moreover have \<open>max_complexity_pair ({}::(('a \<times> 'b) set)) = 0\<close>
   proof-
@@ -2009,10 +2006,10 @@ proof-
 qed
 
 lemma orank_zero_ineq:
-  \<open>finite S \<Longrightarrow> x = (\<Sum>z\<in>S. atensor_of_pair z) \<Longrightarrow> max_complexity_pair S \<ge> orank x\<close>
+  \<open>finite S \<Longrightarrow> x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z) \<Longrightarrow> max_complexity_pair S \<ge> orank x\<close>
 proof-
-  assume \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. atensor_of_pair z)\<close>
-  hence \<open>max_complexity_pair S \<in> {max_complexity_pair S | S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
+  assume \<open>finite S\<close> and \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+  hence \<open>max_complexity_pair S \<in> {max_complexity_pair S | S. finite S \<and> x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)}\<close>
     by blast
   thus \<open>max_complexity_pair S \<ge> orank x\<close>
     unfolding orank_def
@@ -2021,7 +2018,7 @@ qed
 
 lemma atensor_expansion_orank_implies_independent:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
-  assumes \<open>x \<noteq> 0\<close> and \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> and
+  assumes \<open>x \<noteq> 0\<close> and \<open>finite R\<close> and \<open>x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close> and
     \<open>orank x = max_complexity_pair R\<close>
   shows \<open>complex_vector.independent (fst ` R) \<and>
          complex_vector.independent (snd ` R)\<close>
@@ -2031,31 +2028,31 @@ proof(rule classical)
   hence \<open>complex_vector.dependent (fst ` R) \<or> 
          complex_vector.dependent (snd ` R)\<close>
     by blast
-  hence \<open>\<exists> T. max_complexity_pair T < max_complexity_pair R \<and> x = (\<Sum>z\<in>T. atensor_of_pair z)\<close>
-    using \<open>finite R\<close>  \<open>x = (\<Sum>z\<in>R. atensor_of_pair z)\<close> 
+  hence \<open>\<exists> T. max_complexity_pair T < max_complexity_pair R \<and> x = (\<Sum>z\<in>T. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+    using \<open>finite R\<close>  \<open>x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close> 
       atensor_reduction[where S = "R" and x = "x"] by blast    
-  then obtain T::\<open>('a \<times> 'b) set\<close> where \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close> 
+  then obtain T::\<open>('a \<times> 'b) set\<close> where \<open>x = (\<Sum>z\<in>T. (case_prod (\<otimes>\<^sub>a)) z)\<close> 
     and \<open>max_complexity_pair T < max_complexity_pair R\<close>
     by blast
   have  \<open>finite T\<close>
-    using \<open>x = sum atensor_of_pair T\<close> assms sum.infinite by blast
-  from \<open>finite T\<close> \<open>x = (\<Sum>z\<in>T. atensor_of_pair z)\<close>
-  have \<open>max_complexity_pair T \<in> {max_complexity_pair S | S. finite S \<and> x = (\<Sum>z\<in>S. atensor_of_pair z)}\<close>
+    using \<open>x = sum (case_prod (\<otimes>\<^sub>a)) T\<close> assms sum.infinite by blast
+  from \<open>finite T\<close> \<open>x = (\<Sum>z\<in>T. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+  have \<open>max_complexity_pair T \<in> {max_complexity_pair S | S. finite S \<and> x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)}\<close>
     by auto
   hence \<open>max_complexity_pair T \<ge> orank x\<close>
-    by (simp add: \<open>finite T\<close> \<open>x = sum atensor_of_pair T\<close> orank_zero_ineq)
+    by (simp add: \<open>finite T\<close> \<open>x = sum (case_prod (\<otimes>\<^sub>a)) T\<close> orank_zero_ineq)
   thus ?thesis using \<open>max_complexity_pair T < max_complexity_pair R\<close> 
       \<open>orank x = max_complexity_pair R\<close> by simp
 qed
 
 lemma atensor_expansion_orank_existence:
-  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. atensor_of_pair z) \<and> orank x = max_complexity_pair R\<close>
+  \<open>\<exists> R. finite R \<and> x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z) \<and> orank x = max_complexity_pair R\<close>
 proof -
-  have "\<exists>n P. n = max_complexity_pair P \<and> finite P \<and> x = sum atensor_of_pair P"
+  have "\<exists>n P. n = max_complexity_pair P \<and> finite P \<and> x = sum (case_prod (\<otimes>\<^sub>a)) P"
     by (simp add: atensor_expansion_existence)
-  hence "{max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<noteq> {}"
+  hence "{max_complexity_pair P |P. finite P \<and> x = sum (case_prod (\<otimes>\<^sub>a)) P} \<noteq> {}"
     by blast
-  hence "Inf {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P} \<in> {max_complexity_pair P |P. finite P \<and> x = sum atensor_of_pair P}"
+  hence "Inf {max_complexity_pair P |P. finite P \<and> x = sum (case_prod (\<otimes>\<^sub>a)) P} \<in> {max_complexity_pair P |P. finite P \<and> x = sum (case_prod (\<otimes>\<^sub>a)) P}"
     using Inf_nat_def1 by presburger
   thus ?thesis
     unfolding orank_def
@@ -2068,7 +2065,7 @@ lemma atensor_expansion_independent_orank:
   shows \<open>\<exists> R. finite R \<and> orank x = max_complexity_pair R \<and> 
               complex_vector.independent (fst ` R) \<and>
               complex_vector.independent (snd ` R) \<and>
-              x = (\<Sum>z\<in>R. atensor_of_pair z)\<close>
+              x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   using atensor_expansion_orank_existence atensor_expansion_orank_implies_independent
     assms by fastforce
 
@@ -2149,14 +2146,14 @@ lemma atensor_complex_independent:
   assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
   shows \<open>complex_vector.independent {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
 proof-
-  have \<open>S \<subseteq> atensor_of_pair ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
+  have \<open>S \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) \<Longrightarrow> finite S \<Longrightarrow>
    (\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0 \<Longrightarrow> s\<in>S \<Longrightarrow> f s = 0\<close>
     for S s f
   proof-
-    assume \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close> and \<open>finite S\<close> and
+    assume \<open>S \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close> and \<open>finite S\<close> and
       \<open>(\<Sum>s\<in>S. (f s) *\<^sub>C s) = 0\<close> and \<open>s\<in>S\<close>
-    from \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close> \<open>s\<in>S\<close>
-    have \<open>s \<in> atensor_of_pair ` (A \<times> B)\<close>
+    from \<open>S \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close> \<open>s\<in>S\<close>
+    have \<open>s \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
       by blast
     hence \<open>\<exists> u\<in>A. \<exists> v\<in>B. s = u \<otimes>\<^sub>a v\<close>
       by (smt Sigma_cong mem_Collect_eq tensor_of_sets)
@@ -2185,12 +2182,11 @@ proof-
         assume \<open>r\<in>S - {u \<otimes>\<^sub>a v}\<close>
         hence \<open>r \<in> S\<close>
           by blast
-        hence \<open>r \<in> atensor_of_pair ` (A \<times> B)\<close>
-          using \<open>S \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+        hence \<open>r \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+          using \<open>S \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
           by blast
         hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. r = x \<otimes>\<^sub>a y\<close>
-          unfolding atensor_of_pair_def apply auto
-          by blast
+          using case_prod_unfold by auto
         then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>r = x \<otimes>\<^sub>a y\<close>
           by blast
         have \<open>x \<otimes>\<^sub>a y \<noteq> u \<otimes>\<^sub>a v\<close>
@@ -2214,9 +2210,9 @@ proof-
     thus ?thesis
       by (simp add: \<open>s = u \<otimes>\<^sub>a v\<close>) 
   qed
-  hence \<open>complex_independent ( atensor_of_pair ` (A \<times> B) )\<close>
+  hence \<open>complex_independent ( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) )\<close>
     using complex_vector.independent_explicit_finite_subsets by force
-  moreover have \<open>( atensor_of_pair ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
+  moreover have \<open>( (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) ) = {a\<otimes>\<^sub>ab| a b. a\<in>A \<and> b\<in>B}\<close>
     using tensor_of_sets[where A = "A" and B = "B"] by blast
   ultimately show ?thesis 
     by simp
@@ -2267,7 +2263,7 @@ proof-
           using \<open>S \<subseteq> (range (\<lambda> k::'i\<times>'j. (A (fst k))\<otimes>\<^sub>a(B (snd k))))\<close>
           by blast
         hence \<open>\<exists>x. \<exists>y. r = A x \<otimes>\<^sub>a B y\<close>
-          unfolding atensor_of_pair_def by auto
+           by auto
         then obtain x y where \<open>r = A x \<otimes>\<^sub>a B y\<close>
           by blast
         have \<open>A x \<otimes>\<^sub>a B y \<noteq> A u \<otimes>\<^sub>a B v\<close>
@@ -2573,27 +2569,27 @@ lemma span_cartesian_product':
   fixes A U::\<open>'a::complex_vector set\<close> and B V::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_vector.span A = complex_vector.span U\<close>
     \<open>complex_vector.span B = complex_vector.span V\<close>
-  shows \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
-       \<subseteq> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+  shows \<open>complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))
+       \<subseteq> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))\<close>
 proof
-  show "x \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))"
-    if "x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))"
+  show "x \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))"
+    if "x \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
     for x :: "'a \<otimes>\<^sub>a 'b"
   proof-
-    have \<open>\<exists> r t. finite t \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+    have \<open>\<exists> r t. finite t \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
       using that complex_vector.span_explicit
       by blast
-    then obtain r t where \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+    then obtain r t where \<open>finite t\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
       by blast
-    from \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
-    have \<open>\<exists> s. s \<subseteq> A \<times> B \<and> t = atensor_of_pair ` s \<and> inj_on atensor_of_pair s\<close>
+    from \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+    have \<open>\<exists> s. s \<subseteq> A \<times> B \<and> t = (case_prod (\<otimes>\<^sub>a)) ` s \<and> inj_on (case_prod (\<otimes>\<^sub>a)) s\<close>
       by (meson subset_image_inj)      
-    then obtain s where \<open>s \<subseteq> A \<times> B\<close> and \<open>t = atensor_of_pair ` s\<close> and \<open>inj_on atensor_of_pair s\<close>
+    then obtain s where \<open>s \<subseteq> A \<times> B\<close> and \<open>t = (case_prod (\<otimes>\<^sub>a)) ` s\<close> and \<open>inj_on (case_prod (\<otimes>\<^sub>a)) s\<close>
       by blast
-    have \<open>x = (\<Sum>a\<in>s. (r (atensor_of_pair a)) *\<^sub>C (atensor_of_pair a))\<close>
-      using \<open>inj_on atensor_of_pair s\<close> \<open>t = atensor_of_pair ` s\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> 
-        sum.reindex_cong by fastforce
-    moreover have \<open>a \<in> s \<Longrightarrow> atensor_of_pair a \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+    have \<open>x = (\<Sum>a\<in>s. (r ((case_prod (\<otimes>\<^sub>a)) a)) *\<^sub>C ((case_prod (\<otimes>\<^sub>a)) a))\<close>
+      using \<open>inj_on (case_prod (\<otimes>\<^sub>a)) s\<close> \<open>t = (case_prod (\<otimes>\<^sub>a)) ` s\<close> \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> 
+      by (simp add: sum.reindex_cong)
+    moreover have \<open>a \<in> s \<Longrightarrow> (case_prod (\<otimes>\<^sub>a)) a \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))\<close>
       for a
     proof-
       assume \<open>a \<in> s\<close>
@@ -2619,10 +2615,10 @@ proof
           by (simp add: assms(2)) 
       qed
       ultimately show ?thesis
-        by (metis atensor_of_pair_def span_tensor_span) 
+        by (metis case_prod_unfold span_tensor_span) 
     qed
     finally show ?thesis
-      by (simp add: \<open>\<And>a. a \<in> s \<Longrightarrow> atensor_of_pair a \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close> \<open>x = (\<Sum>a\<in>s. r (atensor_of_pair a) *\<^sub>C atensor_of_pair a)\<close> complex_vector.span_scale complex_vector.span_sum) 
+      by (simp add: \<open>\<And>a. a \<in> s \<Longrightarrow> (case_prod (\<otimes>\<^sub>a)) a \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))\<close> \<open>x = (\<Sum>a\<in>s. r ((case_prod (\<otimes>\<^sub>a)) a) *\<^sub>C (case_prod (\<otimes>\<^sub>a)) a)\<close> complex_vector.span_scale complex_vector.span_sum) 
   qed
 qed
 
@@ -2630,8 +2626,8 @@ lemma span_cartesian_product:
   fixes A U::\<open>'a::complex_vector set\<close> and B V::\<open>'b::complex_vector set\<close>
   assumes \<open>complex_vector.span A = complex_vector.span U\<close>
     \<open>complex_vector.span B = complex_vector.span V\<close>
-  shows \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
-       = complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+  shows \<open>complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))
+       = complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))\<close>
   apply auto
   using  assms(1) assms(2) span_cartesian_product' apply blast
   using assms(1) assms(2) span_cartesian_product'[where A = "U" and B = "V" and U = "A" and B = "B"]
@@ -2654,22 +2650,22 @@ lemma g_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def g_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+                   apply (simp add: scaleC_add_right)
+                  apply (simp add: scaleC_add_left)
+                 apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
+               apply (simp add: scaleC_add_right)
+              apply (simp add: scaleC_add_left)
+             apply (simp add: ring_class.ring_distribs(1))
+            apply (simp add: ring_class.ring_distribs(2))
+           apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+          apply (simp add: scaleC_add_right)
+         apply (simp add: scaleC_add_left)
+        apply (simp add: ring_class.ring_distribs(1))
+       apply (simp add: ring_class.ring_distribs(2))
   using scaleC_add_right apply auto[1]
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+     apply (simp add: scaleC_add_left)
+    apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
   by (simp add: cinner_right_distrib semiring_normalization_rules(34))
 
@@ -2732,9 +2728,8 @@ proof-
     thus " (g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b1 y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b2 y (p \<otimes>\<^sub>a q)) = 0"
       by auto
   qed
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -2767,7 +2762,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib)
     qed
   qed
-  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>u \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F u = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -2787,9 +2782,8 @@ proof-
     using g_atensor_clinear_cbilinear'
     unfolding F_def
     by (metis (no_types, lifting) cinner_scaleC_left eq_iff_diff_eq_0 mult.assoc)
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -2818,7 +2812,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right) 
     qed
   qed
-  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>u \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F u = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -2842,9 +2836,8 @@ proof-
     using g_atensor_clinear_cbilinear'
     unfolding F_def
     by (metis (no_types, lifting) cinner_left_distrib diff_diff_add diff_self ring_class.ring_distribs(1))
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -2877,7 +2870,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib)
     qed
   qed
-  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>u \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F u = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -2888,8 +2881,7 @@ qed
 
 
 lemma F_atensor_cbilinear_cbilinear_right_scaleC:
-  \<open>(g_atensor_clinear x (r *\<^sub>C b) u) =
-       (cnj r) * (g_atensor_clinear x b u)\<close>
+  \<open>(g_atensor_clinear x (r *\<^sub>C b) u) = (cnj r) * (g_atensor_clinear x b u)\<close>
 proof-
   define F where 
     \<open>F z = (g_atensor_clinear x (r *\<^sub>C b) z) - (cnj r) * (g_atensor_clinear x b z)\<close>
@@ -2904,9 +2896,8 @@ proof-
     then show "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) - cnj r * g_atensor_clinear x b (p \<otimes>\<^sub>a q) = 0"
       using g_atensor_clinear_cbilinear' by auto
   qed
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -2935,7 +2926,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right) 
     qed
   qed
-  moreover have \<open>u \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>u \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F u = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -2953,25 +2944,25 @@ lemma F_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def F_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_left.add)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
-  apply (simp add: scaleC_add_right)
+                     apply (simp add: scaleC_add_right)
+                    apply (simp add: scaleC_left.add)
+                   apply (simp add: ring_class.ring_distribs(1))
+                  apply (simp add: ring_class.ring_distribs(2))
+                 apply (simp add: scaleC_add_right)
+                apply (simp add: scaleC_add_left)
+               apply (simp add: ring_class.ring_distribs(1))
+              apply (simp add: ring_class.ring_distribs(2))
+             apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
+            apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
+           apply (simp add: scaleC_add_right)
   using scaleC_left.add apply auto[1]
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
+         apply (simp add: ring_class.ring_distribs(1))
+        apply (simp add: ring_class.ring_distribs(2))
+       apply (simp add: scaleC_add_right)
+      apply (simp add: scaleC_add_left)
+     apply (simp add: ring_class.ring_distribs(1))
+    apply (simp add: ring_class.ring_distribs(2))
+   apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
   by (simp add: F_atensor_cbilinear_cbilinear_right_scaleC)
 
 lemma F_atensor_clinear_existence:
@@ -3035,9 +3026,8 @@ proof-
       unfolding F_def
       by blast
   qed
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -3084,7 +3074,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib)        
     qed
   qed
-  moreover have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>y \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F y = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -3107,8 +3097,8 @@ proof-
 qed
 
 lemma F_atensor_clinear_distr_gen':
-  \<open>\<forall> S. card S = n \<and> finite S \<longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y =
-       (\<Sum> x\<in>S. F_atensor_clinear (f x) y)\<close>
+  \<open>\<forall> S. card S = n \<and> finite S \<longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y
+ = (\<Sum> x\<in>S. F_atensor_clinear (f x) y)\<close>
 proof(induction n)
   case 0
   hence \<open>card S = 0 \<Longrightarrow> finite S \<Longrightarrow> F_atensor_clinear (\<Sum> x\<in>S. f x) y =
@@ -3163,9 +3153,8 @@ proof-
       unfolding F_def
       by simp
   qed
-  hence \<open>z \<in> range atensor_of_pair \<Longrightarrow> F z = 0\<close>
+  hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
     for z
-    unfolding atensor_of_pair_def
     by auto
   moreover have \<open>clinear F\<close>
     unfolding clinear_def proof
@@ -3203,7 +3192,7 @@ proof-
         by (metis complex_vector.scale_right_diff_distrib mult_scaleC_right)
     qed
   qed
-  moreover have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+  moreover have \<open>y \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto) 
   ultimately have \<open>F y = 0\<close>
     using complex_vector.linear_eq_0_on_span by auto
@@ -3325,34 +3314,34 @@ proof
   qed
 
   have expansion: \<open>\<exists> t t'::('a \<otimes>\<^sub>a 'b) set. \<exists> r r':: 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. 
-        finite t \<and> finite t' \<and> t \<subseteq> range atensor_of_pair \<and> t' \<subseteq> range atensor_of_pair \<and>
+        finite t \<and> finite t' \<and> t \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> t' \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and>
        \<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>) 
      \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
   proof-
-    have \<open>x \<in> complex_vector.span (range atensor_of_pair)\<close>
+    have \<open>x \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
       by (simp add: atensor_onto)
-    hence \<open>\<exists> t r. x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> range atensor_of_pair\<close>
+    hence \<open>\<exists> t r. x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
       using complex_vector.span_explicit
       by fastforce
     then obtain t::\<open>('a \<otimes>\<^sub>a 'b) set\<close> and r::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close>
-      where \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>finite t\<close> and \<open>t \<subseteq> range atensor_of_pair\<close>
+      where \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>finite t\<close> and \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
       by blast
-    have \<open>y \<in> complex_vector.span (range atensor_of_pair)\<close>
+    have \<open>y \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
       by (simp add: atensor_onto)
-    hence \<open>\<exists> t' r'. y = (\<Sum>a\<in>t'. r' a *\<^sub>C a) \<and> finite t' \<and> t' \<subseteq> range atensor_of_pair\<close>
+    hence \<open>\<exists> t' r'. y = (\<Sum>a\<in>t'. r' a *\<^sub>C a) \<and> finite t' \<and> t' \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
       using complex_vector.span_explicit
       by fastforce
     then obtain t'::\<open>('a \<otimes>\<^sub>a 'b) set\<close> and r'::\<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> complex\<close> 
-      where \<open>y = (\<Sum>a\<in>t'. r' a *\<^sub>C a)\<close> and \<open>finite t'\<close> and \<open>t' \<subseteq> range atensor_of_pair\<close>
+      where \<open>y = (\<Sum>a\<in>t'. r' a *\<^sub>C a)\<close> and \<open>finite t'\<close> and \<open>t' \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
       by blast
     have \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
       using expansion_id[where t = "t" and t' = "t'" and x = "x" and y = "y"
           and r = "r" and r' = "r'"] \<open>finite t\<close> \<open>finite t'\<close>
         \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close> by blast
     thus ?thesis 
-      using \<open>finite t\<close> \<open>finite t'\<close> \<open>t \<subseteq> range atensor_of_pair\<close> \<open>t' \<subseteq> range atensor_of_pair\<close>
+      using \<open>finite t\<close> \<open>finite t'\<close> \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close> \<open>t' \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
         \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close> 
       by blast
   qed
@@ -3361,18 +3350,16 @@ proof
     for x :: "'a \<otimes>\<^sub>a 'b"
       and y :: "'a \<otimes>\<^sub>a 'b"
   proof-
-    have swap: \<open>x \<in> range atensor_of_pair \<Longrightarrow> y \<in> range atensor_of_pair \<Longrightarrow> \<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>\<close>
+    have swap: \<open>x \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> y \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> \<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>\<close>
       for x y
     proof-
-      assume \<open>x \<in> range atensor_of_pair\<close> and \<open>y \<in> range atensor_of_pair\<close>
-      from \<open>x \<in> range atensor_of_pair\<close>
+      assume \<open>x \<in> range (case_prod (\<otimes>\<^sub>a))\<close> and \<open>y \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
+      from \<open>x \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
       obtain x\<^sub>1 x\<^sub>2 where \<open>x = x\<^sub>1 \<otimes>\<^sub>a x\<^sub>2\<close>
-        unfolding atensor_of_pair_def
-        by blast
-      from \<open>y \<in> range atensor_of_pair\<close>
+        by auto
+      from \<open>y \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
       obtain y\<^sub>1 y\<^sub>2 where \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close>
-        unfolding atensor_of_pair_def
-        by blast
+        by auto
       have \<open>\<langle>x, y\<rangle> = F_atensor_clinear x y\<close>
         unfolding cinner_atensor_def
         by blast
@@ -3406,18 +3393,18 @@ proof
         by simp 
     qed
     have \<open>\<exists> t t'::('a \<otimes>\<^sub>a 'b) set. \<exists> r r':: 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. 
-        finite t \<and> finite t' \<and> t \<subseteq> range atensor_of_pair \<and> t' \<subseteq> range atensor_of_pair \<and>
+        finite t \<and> finite t' \<and> t \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> t' \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and>
        \<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>) 
      \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
       using expansion by blast
-    then obtain t t' r r' where \<open>finite t\<close> and \<open>finite t'\<close> and \<open>t \<subseteq> range atensor_of_pair\<close>
-      and \<open>t' \<subseteq> range atensor_of_pair\<close> and
+    then obtain t t' r r' where \<open>finite t\<close> and \<open>finite t'\<close> and \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
+      and \<open>t' \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close> and
       \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close> and
       \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> and \<open>y = (\<Sum>a'\<in>t'. r' a' *\<^sub>C a')\<close>
       by blast
     from \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
     have \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C (cnj \<langle>a', a\<rangle>))\<close>
-      using swap  \<open>t \<subseteq> range atensor_of_pair\<close>  \<open>t' \<subseteq> range atensor_of_pair\<close>
+      using swap  \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>  \<open>t' \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
       by (smt subset_eq sum.cong)
     also have \<open>\<dots> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj ( r a * (cnj (r' a')) *\<^sub>C \<langle>a', a\<rangle>))\<close>
     proof-
@@ -3543,24 +3530,24 @@ proof
       by auto
     then obtain V where \<open>complex_vector.independent V\<close> and \<open>complex_vector.span V = (UNIV::'b set)\<close>
       by blast
-    have \<open>x \<in> complex_vector.span (atensor_of_pair ` (U \<times> V))\<close>
+    have \<open>x \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U \<times> V))\<close>
       by (metis UNIV_I \<open>complex_vector.span U = UNIV\<close> \<open>complex_vector.span V = UNIV\<close> basis_atensor_complex_generator)
-    hence \<open>\<exists> T R. finite T \<and> T \<subseteq> atensor_of_pair ` (U \<times> V) \<and> 
+    hence \<open>\<exists> T R. finite T \<and> T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U \<times> V) \<and> 
          x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close>
-      using complex_vector.span_explicit[where b = "atensor_of_pair ` (U \<times> V)"]
+      using complex_vector.span_explicit[where b = "(case_prod (\<otimes>\<^sub>a)) ` (U \<times> V)"]
       by blast
-    then obtain T R where \<open>finite T\<close> and \<open>T \<subseteq> atensor_of_pair ` (U \<times> V)\<close> and 
+    then obtain T R where \<open>finite T\<close> and \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U \<times> V)\<close> and 
       \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close>
       by blast
     have \<open>x \<in> complex_vector.span T\<close>
       by (simp add: \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close> complex_vector.span_base complex_vector.span_scale complex_vector.span_sum)  
     have \<open>\<exists> U' V'. finite U' \<and> finite V' \<and>
-         T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+         T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close>
     proof-
-      from \<open>T \<subseteq> atensor_of_pair ` (U \<times> V)\<close> \<open>finite T\<close>
-      have \<open>\<exists>S. S \<subseteq> U \<times> V \<and> T = atensor_of_pair ` S \<and> finite S\<close>
+      from \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U \<times> V)\<close> \<open>finite T\<close>
+      have \<open>\<exists>S. S \<subseteq> U \<times> V \<and> T = (case_prod (\<otimes>\<^sub>a)) ` S \<and> finite S\<close>
         by (meson finite_subset_image)
-      then obtain S where \<open>S \<subseteq> U \<times> V\<close> and \<open>T = atensor_of_pair ` S\<close> and \<open>finite S\<close>
+      then obtain S where \<open>S \<subseteq> U \<times> V\<close> and \<open>T = (case_prod (\<otimes>\<^sub>a)) ` S\<close> and \<open>finite S\<close>
         by blast
       define U' where \<open>U' = fst ` S\<close>
       define V' where \<open>V' = snd ` S\<close>
@@ -3568,23 +3555,23 @@ proof
         by (simp add: U'_def \<open>finite S\<close>)        
       moreover have \<open>finite V'\<close>
         using V'_def \<open>finite S\<close> by auto        
-      moreover have \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      moreover have \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close>
       proof-
         have \<open>S \<subseteq> U' \<times> V'\<close>
           unfolding U'_def V'_def apply auto
-          apply (simp add: rev_image_eqI)
+           apply (simp add: rev_image_eqI)
           by (simp add: rev_image_eqI)
         thus ?thesis 
-          using \<open>T = atensor_of_pair ` S\<close>
+          using \<open>T = (case_prod (\<otimes>\<^sub>a)) ` S\<close>
           by (simp add: image_mono)
       qed
       ultimately show ?thesis by blast
     qed
     then obtain U' V' where \<open>finite U'\<close> and \<open>finite V'\<close>
-      and \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close>
+      and \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close>
       by blast
-    have \<open>x \<in> complex_vector.span  (atensor_of_pair ` (U' \<times> V'))\<close>
-      using \<open>T \<subseteq> atensor_of_pair ` (U' \<times> V')\<close> \<open>x \<in> complex_vector.span T\<close> complex_vector.span_mono 
+    have \<open>x \<in> complex_vector.span  ((case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V'))\<close>
+      using \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close> \<open>x \<in> complex_vector.span T\<close> complex_vector.span_mono 
       by auto
     have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = complex_vector.span U'
@@ -3604,27 +3591,26 @@ proof
       by auto
     from \<open>complex_vector.span A = complex_vector.span U'\<close>
       \<open>complex_vector.span B = complex_vector.span V'\<close>
-    have \<open>complex_vector.span (atensor_of_pair ` (A \<times> B))
-       = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>
+    have \<open>complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))
+       = complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V'))\<close>
       using span_cartesian_product by blast
-    have \<open>x \<in> complex_vector.span (atensor_of_pair ` (A \<times> B))\<close>
-      by (simp add: \<open>complex_vector.span (atensor_of_pair ` (A \<times> B)) = complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close> \<open>x \<in> complex_vector.span (atensor_of_pair ` (U' \<times> V'))\<close>)
-    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> atensor_of_pair ` (A \<times> B) \<and> 
+    have \<open>x \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
+      by (simp add: \<open>complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) = complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V'))\<close> \<open>x \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V'))\<close>)
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) \<and> 
          x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      using complex_vector.span_explicit[where b = "atensor_of_pair ` (A \<times> B)"]
+      using complex_vector.span_explicit[where b = "(case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)"]
       by blast
-    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close> and 
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close> and 
       \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       by blast
     have \<open>a\<in>t \<Longrightarrow> \<langle>a, a\<rangle> > 0\<close>
       for a
     proof-
       assume \<open>a\<in>t\<close>
-      have \<open>a \<in> atensor_of_pair ` (A \<times> B)\<close>
-        using \<open>a\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+      have \<open>a \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+        using \<open>a\<in>t\<close> \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
         by auto
       hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. a = x\<otimes>\<^sub>ay\<close>
-        unfolding atensor_of_pair_def
         by (simp add: image_iff)
       then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>a = x\<otimes>\<^sub>ay\<close>
         by blast
@@ -3665,19 +3651,17 @@ proof
       for a a'
     proof-
       assume \<open>a\<in>t\<close> and \<open>a'\<in>t\<close> and \<open>a \<noteq> a'\<close>
-      have \<open>a \<in> atensor_of_pair ` (A \<times> B)\<close>
-        using \<open>a\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+      have \<open>a \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+        using \<open>a\<in>t\<close> \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
         by auto
       hence \<open>\<exists>x\<in>A. \<exists>y\<in>B. a = x\<otimes>\<^sub>ay\<close>
-        unfolding atensor_of_pair_def
         by (simp add: image_iff)
       then obtain x y where \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>a = x\<otimes>\<^sub>ay\<close>
         by blast
-      have \<open>a' \<in> atensor_of_pair ` (A \<times> B)\<close>
-        using \<open>a'\<in>t\<close> \<open>t \<subseteq> atensor_of_pair ` (A \<times> B)\<close>
+      have \<open>a' \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+        using \<open>a'\<in>t\<close> \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
         by auto
       hence \<open>\<exists>x'\<in>A. \<exists>y'\<in>B. a' = x'\<otimes>\<^sub>ay'\<close>
-        unfolding atensor_of_pair_def
         by (simp add: image_iff)
       then obtain x' y' where \<open>x'\<in>A\<close> and \<open>y'\<in>B\<close> and \<open>a' = x'\<otimes>\<^sub>ay'\<close>
         by blast
