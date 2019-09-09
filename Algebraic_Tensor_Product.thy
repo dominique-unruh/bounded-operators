@@ -36,9 +36,16 @@ lemma subspace_atensor_kernel:
 definition atensor_rel :: "(('a::complex_vector) \<times> ('b::complex_vector)) free \<Rightarrow> ('a \<times> 'b) free \<Rightarrow> bool"
   where "atensor_rel = (\<lambda>x y. x - y \<in> atensor_kernel)"
 
+(* TODO: I wonder if it is easier to use when defining it as
+  lift_definition ... is
+      "\<lambda>f x b. \<Sum>a\<in>{a|a. x a \<noteq> 0 \<and> f a = b}. x a" 
+  (It should be the same in the end.)
+*)
+(* TODO move to Free_Vector_Spaces *)
 definition free_map :: \<open>('a\<Rightarrow>'b) \<Rightarrow> ('a free\<Rightarrow>'b free)\<close> 
   where \<open>free_map f x = (\<Sum>a\<in>{a|a. x\<down>a \<noteq> 0}. (x\<down>a) *\<^sub>C inclusion_free (f a))\<close>
 
+(* TODO move to Free_Vector_Spaces *)
 lemma free_map_clinear:
   \<open>clinear (free_map f)\<close>
   unfolding clinear_def
@@ -264,6 +271,7 @@ proof
   qed
 qed
 
+(* TODO move to Free_Vector_Spaces *)
 functor free_map
 proof
   show "(free_map (f::'b \<Rightarrow> 'c) \<circ> free_map g) (x::'a free) = free_map (f \<circ> g) x"
