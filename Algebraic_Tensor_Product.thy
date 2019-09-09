@@ -1717,7 +1717,8 @@ proof-
     from \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     have \<open>K z = (\<Sum>a\<in>t. r a *\<^sub>C (K a))\<close>
       using \<open>clinear K\<close> unfolding clinear_def
-      by (smt \<open>clinear K\<close> complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+      by (smt assms(2) complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+        (* > 1 sˇ*)
     also have \<open>\<dots> = (\<Sum>a\<in>t. r a *\<^sub>C (H a))\<close>
     proof-
       have  \<open>a \<in> t \<Longrightarrow> K a = H a\<close>
