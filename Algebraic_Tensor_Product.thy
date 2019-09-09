@@ -18,13 +18,14 @@ begin
 
 unbundle free_notation
 
-
-definition atensor_kernel::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
-  \<open>atensor_kernel = complex_vector.span ( 
-  {inclusion_free (x, (y+z)) - inclusion_free (x, y) - inclusion_free (x, z) |  x y z. True}
+definition atensor_kernel_generator::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
+\<open>atensor_kernel_generator = {inclusion_free (x, (y+z)) - inclusion_free (x, y) - inclusion_free (x, z) |  x y z. True}
 \<union> { inclusion_free ((y+z), x) - inclusion_free (y, x) - inclusion_free (z, x) |  x y z. True}
 \<union> { inclusion_free (x, (c *\<^sub>C y)) -  c *\<^sub>C inclusion_free (x, y) |  x y c. True} 
-\<union> { inclusion_free ((c *\<^sub>C x), y) -  c *\<^sub>C inclusion_free (x, y) |  x y c. True} )\<close>
+\<union> { inclusion_free ((c *\<^sub>C x), y) -  c *\<^sub>C inclusion_free (x, y) |  x y c. True}\<close>
+
+definition atensor_kernel::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
+  \<open>atensor_kernel = complex_vector.span atensor_kernel_generator\<close>
 
 lemma subspace_atensor_kernel:
   \<open>complex_vector.subspace atensor_kernel\<close>
@@ -763,17 +764,11 @@ proof (transfer, unfold atensor_rel_def)
   \<in> {inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True}\<close>
     by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)    
   hence \<open>inclusion_free (x, y + z) - (inclusion_free (x, y) + inclusion_free (x, z))
-  \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
-    by simp
+  \<in> atensor_kernel_generator\<close>
+    unfolding atensor_kernel_generator_def by simp
   hence \<open>inclusion_free (x, y + z) - (inclusion_free (x, y) + inclusion_free (x, z))
-       \<in> complex_vector.span
-           ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
+       \<in> atensor_kernel\<close>
+    unfolding atensor_kernel_def
     by (simp add: complex_vector.span_base)
   thus \<open>\<And>x y z. inclusion_free (x, y + z) - (inclusion_free (x, y) + inclusion_free (x, z))
        \<in> atensor_kernel\<close>
@@ -784,7 +779,7 @@ proof (transfer, unfold atensor_rel_def)
     then have "\<exists>c d da. inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) = inclusion_free (c, d + da) - (inclusion_free (c, da) + inclusion_free (c, d))"
       by meson
     then show "inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) \<in> atensor_kernel"
-      by (simp add: atensor_kernel_def complex_vector.span_base diff_add_eq_diff_diff_swap)
+      by (simp add: atensor_kernel_def atensor_kernel_generator_def complex_vector.span_base diff_add_eq_diff_diff_swap)
   qed 
 qed
 
@@ -804,18 +799,12 @@ proof(transfer, unfold atensor_rel_def atensor_kernel_def)
        \<in> {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True}\<close>
     by (metis (mono_tags, lifting) diff_diff_add mem_Collect_eq)
   hence \<open>inclusion_free (y + z, x) - (inclusion_free (y, x) + inclusion_free (z, x))
-       \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
+       \<in> atensor_kernel_generator\<close>
+    unfolding atensor_kernel_generator_def
     by simp
   thus \<open>inclusion_free (y + z, x) - (inclusion_free (y, x) + inclusion_free (z, x))
-       \<in> complex_vector.span
-           ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
-    by (simp add: complex_vector.span_base)
+       \<in> complex_vector.span atensor_kernel_generator\<close>
+    by (simp add: complex_vector.span_base atensor_kernel_generator_def)
 qed
 
 lemma atensor_distr_left_sum:
@@ -841,25 +830,19 @@ proof(transfer, unfold atensor_rel_def atensor_kernel_def)
        \<in> {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True}\<close>
     by (metis (mono_tags, lifting) mem_Collect_eq)
   hence \<open>inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y)
-       \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
+       \<in> atensor_kernel_generator\<close>
+    unfolding atensor_kernel_generator_def
     by simp
   thus \<open>inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y)
-       \<in> complex_vector.span
-           ({inclusion_free (x, y + z) - inclusion_free (x, y) - inclusion_free (x, z) |x y z. True} \<union>
-            {inclusion_free (y + z, x) - inclusion_free (y, x) - inclusion_free (z, x) |x y z. True} \<union>
-            {inclusion_free (x, c *\<^sub>C y) - c *\<^sub>C inclusion_free (x, y) |x y c. True} \<union>
-            {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) |x y c. True})\<close>
-    by (simp add: complex_vector.span_base)
+       \<in> complex_vector.span atensor_kernel_generator\<close>
+    by (simp add: complex_vector.span_base atensor_kernel_generator_def)
 qed
 
 
 lemma atensor_mult_left:
   fixes x :: "'a::complex_vector" and y :: "'b::complex_vector" and c :: complex
   shows \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
-  apply transfer unfolding atensor_rel_def atensor_kernel_def
+  apply transfer unfolding atensor_rel_def atensor_kernel_def atensor_kernel_generator_def
   apply auto
   by (metis (mono_tags, lifting) Un_iff complex_vector.span_base mem_Collect_eq)
 
@@ -1400,19 +1383,7 @@ proof-
     by (meson assms(2) atensor_rel_def)      
   moreover have \<open>\<forall> z \<in> atensor_kernel. (universal_free (\<lambda>z. h (fst z) (snd z))) z = 0\<close>
   proof-
-    (* TODO: Avoid copy and pasting long definitions. This could just be written as atensor_kernel *)
-    have \<open>\<forall> z \<in> ({inclusion_free (x, y + z) - inclusion_free (x, y) -
-           inclusion_free (x, z) |
-           x y z. True} \<union>
-          {inclusion_free (y + z, x) - inclusion_free (y, x) -
-           inclusion_free (z, x) |
-           x y z. True} \<union>
-          {inclusion_free (x, c *\<^sub>C y) -
-           c *\<^sub>C inclusion_free (x, y) |
-           x y c. True} \<union>
-          {inclusion_free (c *\<^sub>C x, y) -
-           c *\<^sub>C inclusion_free (x, y) |
-           x y c. True}). (universal_free (\<lambda>z. h (fst z) (snd z))) z = 0\<close>
+    have \<open>\<forall> z \<in> atensor_kernel_generator. (universal_free (\<lambda>z. h (fst z) (snd z))) z = 0\<close>
     proof-
       have \<open>w \<in> {inclusion_free (x, y + z) - inclusion_free (x, y) -
            inclusion_free (x, z) | x y z. True} \<Longrightarrow> (universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
@@ -1534,12 +1505,11 @@ proof-
         thus \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
           by simp
       qed
-      moreover have \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) -
-           c *\<^sub>C inclusion_free (x, y) | x y c. True} \<Longrightarrow> (universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
+      moreover have \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) | x y c. True} 
+        \<Longrightarrow> (universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
         for w
       proof-
-        assume \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) -
-           c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>
+        assume \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>
         hence \<open>\<exists> x y c. w = inclusion_free (c *\<^sub>C x, y) -
            c *\<^sub>C inclusion_free (x, y)\<close>
           by blast
@@ -1578,7 +1548,8 @@ proof-
         finally show \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
           by blast
       qed
-      ultimately show ?thesis by blast
+      ultimately show ?thesis unfolding atensor_kernel_generator_def
+        by blast
     qed
     moreover have \<open>clinear (universal_free (\<lambda>z. h (fst z) (snd z)))\<close>
       by (simp add: universal_free_clinear)        
@@ -1692,7 +1663,7 @@ qed
 
 lemma atensor_universal_property_uniq:
   fixes K :: \<open>('v::complex_vector) \<otimes>\<^sub>a ('w::complex_vector) \<Rightarrow> ('z::complex_vector)\<close>
-  assumes \<open>cbilinear h\<close> and \<open>clinear K\<close> and \<open>\<forall>x y. h x y = K (x \<otimes>\<^sub>a y)\<close>
+  assumes \<open>cbilinear h\<close> and \<open>clinear K\<close> and \<open>\<And> x y. h x y = K (x \<otimes>\<^sub>a y)\<close>
   shows \<open>K = universal_atensor h\<close>
 proof-
   define H where \<open>H = universal_atensor h\<close>
@@ -1761,23 +1732,22 @@ qed
 
 text\<open>Universal property of the tensor product. See chapter XVI in @{cite lang2004algebra}\<close>
 lemma atensor_universal_property:
-  fixes h :: \<open>'v::complex_vector \<Rightarrow> 'w::complex_vector \<Rightarrow> 'z::complex_vector\<close>
+  fixes h :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector\<close>
   assumes \<open>cbilinear h\<close>
-  shows \<open>\<exists>! H :: 'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
+  shows \<open>\<exists>! H :: 'a \<otimes>\<^sub>a 'b \<Rightarrow> 'c. clinear H \<and> (\<forall> x y. h x y = H (x \<otimes>\<^sub>a y))\<close>
 proof
   show "clinear (universal_atensor h) \<and> (\<forall>x y. h x y = universal_atensor h (x \<otimes>\<^sub>a y))"
     using assms atensor_universal_property_clinear atensor_universal_property_separation 
     by auto    
-  show "(H::'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z) = universal_atensor h"
+  show "H = universal_atensor h"
     if "clinear H \<and> (\<forall>x y. h x y = H (x \<otimes>\<^sub>a y))"
-    for H :: "'v \<otimes>\<^sub>a 'w \<Rightarrow> 'z"
+    for H :: "'a \<otimes>\<^sub>a 'b \<Rightarrow> 'c"
     using that assms atensor_universal_property_uniq 
     by auto 
 qed
 
 lemma swap_atensor_existence_unique:
-  \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector. 
-  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close>
+  \<open>\<exists>!H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector.  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close>
 proof-
   define h::\<open>'a \<Rightarrow> 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a\<close> where
     \<open>h x y = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) (x,y)\<close> for x y
@@ -1823,8 +1793,10 @@ lemma swap_atensor_existence:
   using swap_atensor_existence_unique by auto
 
 definition swap_atensor::\<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector) \<Rightarrow> 'b \<otimes>\<^sub>a 'a\<close>
-  where \<open>swap_atensor = (SOME H. clinear H \<and> (\<forall>x::'a::complex_vector. \<forall> y::'b::complex_vector.
-  H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x) )\<close>
+  where \<open>swap_atensor = (SOME H. 
+  clinear H \<and>
+  (\<forall>x. \<forall> y. H (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x) 
+)\<close>
 
 lemma swap_atensorI1:
   \<open>clinear swap_atensor\<close>
@@ -1832,43 +1804,16 @@ lemma swap_atensorI1:
   using swap_atensor_existence someI_ex
   by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
 
-(* TODO: remove "\<forall>x. \<forall> y", rules are easier to use without unnecessary quantifiers *)
+
 lemma swap_atensorI2:
-  \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
+  \<open>swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
   unfolding swap_atensor_def
   using swap_atensor_existence someI_ex
   by (simp add: \<open>\<exists>x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa) \<Longrightarrow> clinear (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) \<and> (\<forall>x y. (SOME x. clinear x \<and> (\<forall>xa y. x (xa \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a xa)) (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x)\<close> swap_atensor_existence)
 
-
-(* TODO: use prod.swap instead of swap.
-   Then the proof is as simple as 
-      by (auto simp:  o_def swap_atensorI2[rule_format] )
- *)
 lemma swap_atensor_commute:
-  \<open>swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a)) = (case_prod (\<otimes>\<^sub>a)) \<circ> swap\<close>
-proof-
-  (* TODO: This proof can be written more readably as a sequence of "also have".
-   (Avoid "\<forall>x. \<forall> y"! Use Isar constructs such as fix instead. In this case, 
-   the easiest would be to start the proof with "proof (rule ext)" instead of "proof -")
-*)
-  have \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
-    by (simp add: swap_atensorI2)
-  hence \<open>\<forall>x. \<forall> y. swap_atensor (x \<otimes>\<^sub>a y) = (case_prod (\<otimes>\<^sub>a)) (y, x)\<close>
-    by (simp add: )
-  hence \<open>\<forall>x. \<forall> y. swap_atensor ((case_prod (\<otimes>\<^sub>a)) (x,y)) = (case_prod (\<otimes>\<^sub>a)) (y, x)\<close>
-    by (simp add: )
-  hence \<open>\<forall>x. \<forall> y. swap_atensor ((case_prod (\<otimes>\<^sub>a)) (x,y)) = (case_prod (\<otimes>\<^sub>a)) (swap (x, y))\<close>
-    by (simp add: General_Results_Missing.swap_def)    
-  hence \<open>\<forall>x. \<forall> y. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) (x,y) = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) (x, y)\<close>
-    by simp
-  hence \<open>\<forall>z. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z\<close>
-    by simp
-  hence \<open>(swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z = ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z\<close>
-    for z::\<open>'a \<times> 'b\<close>
-    by blast
-  thus ?thesis 
-    by blast
-qed
+  \<open>swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a)) = (case_prod (\<otimes>\<^sub>a)) \<circ> prod.swap\<close>
+  by (auto simp:  o_def swap_atensorI2[rule_format] )
 
 (* TODO: very confusing theorem because of the different implications of card
    (it encodes both the fact there are no duplicates in the list S/R,
@@ -1885,12 +1830,12 @@ lemma atensor_reduction_left:
               card (snd ` R) \<le> card (fst ` R) \<and>
               x = (\<Sum>z\<in>R. (case_prod (\<otimes>\<^sub>a)) z)\<close>
 proof-
-  define S' where \<open>S' = swap ` S\<close>
+  define S' where \<open>S' = prod.swap ` S\<close>
   define x' where \<open>x' = (\<Sum>z\<in>S'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
   have \<open>finite S'\<close>
     using S'_def assms(1) by auto    
   moreover have \<open>complex_vector.dependent (snd ` S')\<close>
-    by (simp add: S'_def assms(2) swap_set_snd)    
+    by (metis General_Results_Missing.swap_def S'_def assms(2) image_cong prod.swap_def swap_set_snd)
   ultimately have \<open>\<exists> R'. card (snd ` R') < card (snd ` S') \<and>
               card (fst ` R') \<le> card (snd ` R') \<and>
               x' = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
@@ -1900,16 +1845,14 @@ proof-
     \<open>card (fst ` R') \<le> card (snd ` R')\<close> and
     \<open>x' = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
     by blast
-  define R where \<open>R = swap ` R'\<close>
+  define R where \<open>R = prod.swap ` R'\<close>
   have \<open>snd ` R = fst ` R'\<close>
-    unfolding swap_def
-    by (simp add: R_def swap_set_snd) 
+    by (metis General_Results_Missing.swap_def R_def image_cong prod.swap_def swap_set_snd)    
   have \<open>fst ` R = snd ` R'\<close>
-    unfolding swap_def
-    by (simp add: R_def swap_set_fst)
+    by (metis General_Results_Missing.swap_def R_def image_cong prod.swap_def swap_set_fst)
   have \<open>card (fst ` R) < card (fst ` S)\<close>
     using \<open>card (snd ` R') < card (snd ` S')\<close>
-    by (simp add: S'_def \<open>fst ` R = snd ` R'\<close> swap_set_snd)
+    by (metis General_Results_Missing.swap_def S'_def \<open>fst ` R = snd ` R'\<close> image_cong prod.swap_def swap_set_snd)
   moreover have \<open>card (snd ` R) \<le> card (fst ` R)\<close>
     using \<open>card (fst ` R') \<le> card (snd ` R')\<close>
     by (simp add: \<open>fst ` R = snd ` R'\<close> \<open>snd ` R = fst ` R'\<close>)
@@ -1917,32 +1860,23 @@ proof-
   proof-
     have \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close>
       using \<open>x = (\<Sum>z\<in>S. (case_prod (\<otimes>\<^sub>a)) z)\<close> by blast
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (swap ` S). (case_prod (\<otimes>\<^sub>a)) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>prod.swap ` (prod.swap ` S). (case_prod (\<otimes>\<^sub>a)) z)\<close>
     proof-
-      have \<open>swap \<circ> swap = id\<close>
+      have \<open>prod.swap \<circ> prod.swap = id\<close>
         by (simp add: swap_involution)
-      have \<open>swap ` (swap ` S) = S\<close>
-        apply auto
-         apply (simp add: General_Results_Missing.swap_def)
-        using \<open>swap \<circ> swap = id\<close>
-      proof -
-        fix a :: 'a and b :: 'b
-        assume a1: "(a, b) \<in> S"
-        have "(a, b) = swap (snd (a, b), fst (a, b))"
-          by (simp add: General_Results_Missing.swap_def)
-        then show "(a, b) \<in> swap ` swap ` S"
-          using a1 by (metis (no_types) General_Results_Missing.swap_def rev_image_eqI)
-      qed 
+      hence \<open>prod.swap ` (prod.swap ` S) = S\<close>
+        by (simp add: image_comp)        
       thus ?thesis by simp
     qed
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` (S'). (case_prod (\<otimes>\<^sub>a)) z)\<close>
-      unfolding S'_def by blast
-    also have \<open>\<dots> = (\<Sum>z\<in>S'. ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>prod.swap ` (S'). (case_prod (\<otimes>\<^sub>a)) z)\<close>
+      unfolding S'_def
+      by blast 
+    also have \<open>\<dots> = (\<Sum>z\<in>S'. ((case_prod (\<otimes>\<^sub>a)) \<circ> prod.swap) z)\<close>
     proof-
-      have \<open>inj swap\<close>
-        by (simp add: swap_inj)
-      hence \<open>inj_on swap S'\<close>
-        by (smt injD inj_on_def)        
+      have \<open>inj prod.swap\<close>
+        by simp
+      hence \<open>inj_on prod.swap S'\<close>
+        by (metis injD inj_on_def)        
       thus ?thesis
         by (simp add: sum.reindex) 
     qed
@@ -1968,14 +1902,14 @@ proof-
     qed
     also have \<open>\<dots> = (\<Sum>z\<in>R'. (swap_atensor \<circ> (case_prod (\<otimes>\<^sub>a))) z)\<close>
       by simp
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. ((case_prod (\<otimes>\<^sub>a)) \<circ> swap) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. ((case_prod (\<otimes>\<^sub>a)) \<circ> prod.swap) z)\<close>
       by (simp add: swap_atensor_commute)
-    also have \<open>\<dots> = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) (swap z))\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>R'. (case_prod (\<otimes>\<^sub>a)) (prod.swap z))\<close>
       by auto
-    also have \<open>\<dots> = (\<Sum>z\<in>swap ` R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
+    also have \<open>\<dots> = (\<Sum>z\<in>prod.swap ` R'. (case_prod (\<otimes>\<^sub>a)) z)\<close>
     proof-
-      have \<open>inj_on swap R'\<close>
-        by (meson inj_eq inj_onI swap_inj)
+      have \<open>inj_on prod.swap R'\<close>
+        by simp
       thus ?thesis
         by (simp add: sum.reindex) 
     qed
@@ -1989,7 +1923,6 @@ qed
 
 definition max_complexity_pair::\<open>('a \<times> 'b) set \<Rightarrow> nat\<close> where
   \<open>max_complexity_pair S = max (card (fst ` S)) (card (snd ` S))\<close>
-
 
 lemma atensor_reduction:
   fixes  x :: \<open>('a::complex_vector) \<otimes>\<^sub>a ('b::complex_vector)\<close>
@@ -2531,7 +2464,6 @@ proof-
   qed
 qed
 
-
 lemma tensor_eq_independent_iff:
   assumes \<open>complex_vector.independent {w\<^sub>1, w\<^sub>2}\<close> and \<open>w\<^sub>1 \<noteq> w\<^sub>2\<close>
   shows \<open>(v\<^sub>1 = 0 \<and> v\<^sub>2 = 0) \<longleftrightarrow> v\<^sub>1 \<otimes>\<^sub>a w\<^sub>1 = v\<^sub>2 \<otimes>\<^sub>a w\<^sub>2\<close>
@@ -2704,10 +2636,8 @@ lemma span_cartesian_product:
 definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
 
-(* TODO: I don't think one needs a definition for this, it's just \<not> separable (or, if it's *really* needed,
-it could be an abbreviation *)
-definition entangled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where
-  \<open>entangled \<psi> = ( \<not>(separable \<psi>) )\<close>
+abbreviation entagled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where 
+\<open>entagled \<equiv> (\<lambda> \<psi>. \<not>(separable \<psi>) )\<close>
 
 text \<open>See proof of Proposition 1 on page 186 in @{cite Helemskii}\<close>
 definition g_atensor_cbilinear:: \<open>'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> complex\<close>
@@ -3609,8 +3539,7 @@ proof
       by blast
     have \<open>x \<in> complex_vector.span T\<close>
       by (simp add: \<open>x = (\<Sum>a\<in>T. R a *\<^sub>C a)\<close> complex_vector.span_base complex_vector.span_scale complex_vector.span_sum)  
-    have \<open>\<exists> U' V'. finite U' \<and> finite V' \<and>
-         T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close>
+    have \<open>\<exists> U' V'. finite U' \<and> finite V' \<and> T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U' \<times> V')\<close>
     proof-
       from \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (U \<times> V)\<close> \<open>finite T\<close>
       have \<open>\<exists>S. S \<subseteq> U \<times> V \<and> T = (case_prod (\<otimes>\<^sub>a)) ` S \<and> finite S\<close>
@@ -3919,7 +3848,7 @@ proof -
 qed
 
 lemma atensorOp_separation:
-  \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> \<forall> x y. (f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)\<close>
+  \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> (f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)\<close>
 proof -
   assume \<open>clinear f\<close> and \<open>clinear g\<close>
   define P where \<open>P = (\<lambda> T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
@@ -3964,7 +3893,6 @@ proof -
 qed 
 
 unbundle no_free_notation
-
 
 end
 
