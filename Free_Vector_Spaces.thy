@@ -569,6 +569,462 @@ lemma inclusion_free_inj:
   shows \<open>x = y\<close>
   by (metis assms inclusion_free.rep_eq zero_neq_one)
 
+(* TODO: I wonder if it is easier to use when defining it as
+  lift_definition ... is
+      "\<lambda>f x b. \<Sum>a\<in>{a|a. x a \<noteq> 0 \<and> f a = b}. x a" 
+  (It should be the same in the end.)
+*)
+definition free_map :: \<open>('a\<Rightarrow>'b) \<Rightarrow> ('a free\<Rightarrow>'b free)\<close> 
+  where \<open>free_map f x = (\<Sum>a\<in>{a|a. x\<down>a \<noteq> 0}. (x\<down>a) *\<^sub>C inclusion_free (f a))\<close>
+
+lemma free_map_clinear:
+  \<open>clinear (free_map f)\<close>
+  unfolding clinear_def
+proof
+  show "free_map f (b1 + b2) = free_map f b1 + free_map f b2"
+    for b1 :: "'a free"
+      and b2 :: "'a free"
+  proof-
+    have \<open>free_map f (b1 + b2) =
+          (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}.
+       ((b1 + b2) \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+      unfolding free_map_def
+      by blast
+    also have \<open>\<dots> =
+          (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}.
+       (b1 \<down> a) *\<^sub>C inclusion_free (f a) + (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+      by (metis (no_types, lifting) plus_free.rep_eq scaleC_left.add)
+    also have \<open>\<dots> =
+          (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+        + (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+      using sum.distrib by force      
+    also have \<open>\<dots> = 
+    (\<Sum>a\<in>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) +
+    (\<Sum>a\<in>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+    proof-
+      have  \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) =
+            (\<Sum>a\<in>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) -
+            (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+           (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+      proof-
+        have \<open>finite {a |a. (b1 + b2) \<down> a \<noteq> 0}\<close>
+          using times_free_vec by fastforce          
+        hence \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+             = (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+             + (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          using sum.Int_Diff by blast
+        moreover have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+        proof-
+          have \<open>i\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b1 \<down> a \<noteq> 0} \<Longrightarrow> (b1 \<down> i) *\<^sub>C inclusion_free (f i) = 0\<close>
+            for i
+          proof-
+            assume \<open>i\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b1 \<down> a \<noteq> 0}\<close>
+            hence  \<open>(b1 \<down> i) = 0\<close>
+              by simp
+            thus ?thesis
+              by simp 
+          qed
+          thus ?thesis
+            by simp 
+        qed
+        ultimately have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+             = (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          by simp
+        also have \<open>\<dots> = (\<Sum>a\<in>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+                      - (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+        proof-
+          have \<open>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b1 \<down> a \<noteq> 0}
+              = {a |a. b1 \<down> a \<noteq> 0}-({a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b1 \<down> a \<noteq> 0})\<close>
+            by auto
+          moreover have \<open>{a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b1 \<down> a \<noteq> 0} \<subseteq> {a |a. b1 \<down> a \<noteq> 0}\<close>
+            by auto
+          moreover have \<open>finite  {a |a. b1 \<down> a \<noteq> 0}\<close>
+            using times_free_vec by auto
+          ultimately show ?thesis
+            by (simp add: sum_diff) 
+        qed
+        finally show \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) =
+  (\<Sum>a\<in>{a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a)) -
+  (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+     (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          by blast
+      qed
+      moreover have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) =
+            (\<Sum>a\<in>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) -
+            (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b2 \<down> a \<noteq> 0}.
+           (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+      proof-
+        have \<open>finite {a |a. (b1 + b2) \<down> a \<noteq> 0}\<close>
+          using times_free_vec by fastforce          
+        hence \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))
+             = (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))
+             + (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          using sum.Int_Diff by blast
+        moreover have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+        proof-
+          have \<open>i\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b2 \<down> a \<noteq> 0} \<Longrightarrow> (b2 \<down> i) *\<^sub>C inclusion_free (f i) = 0\<close>
+            for i
+          proof-
+            assume \<open>i\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}-{a |a. b2 \<down> a \<noteq> 0}\<close>
+            hence  \<open>(b2 \<down> i) = 0\<close>
+              by simp
+            thus ?thesis
+              by simp 
+          qed
+          thus ?thesis
+            by simp 
+        qed
+        ultimately have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))
+             = (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          by simp
+        also have \<open>\<dots> = (\<Sum>a\<in>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))
+                      - (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+        proof-
+          have \<open>{a |a. (b1 + b2) \<down> a \<noteq> 0}\<inter>{a |a. b2 \<down> a \<noteq> 0}
+              = {a |a. b2 \<down> a \<noteq> 0}-({a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b2 \<down> a \<noteq> 0})\<close>
+            by auto
+          moreover have \<open>{a |a. (b1 + b2) \<down> a = 0}\<inter>{a |a. b2 \<down> a \<noteq> 0} \<subseteq> {a |a. b2 \<down> a \<noteq> 0}\<close>
+            by auto
+          moreover have \<open>finite  {a |a. b2 \<down> a \<noteq> 0}\<close>
+            using times_free_vec by auto
+          ultimately show ?thesis
+            by (simp add: sum_diff) 
+        qed
+        finally show \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) =
+  (\<Sum>a\<in>{a |a. b2 \<down> a \<noteq> 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) -
+  (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b2 \<down> a \<noteq> 0}.
+     (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          by blast
+      qed
+      moreover have \<open>(\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+           (b1 \<down> a) *\<^sub>C inclusion_free (f a)) + (\<Sum>a\<in>{a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b2 \<down> a \<noteq> 0}.
+           (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+      proof-
+        have \<open>finite S \<Longrightarrow> (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+           (b1 \<down> a) *\<^sub>C inclusion_free (f a)) = 
+              (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          for S
+        proof-
+          assume \<open>finite S\<close>
+          have \<open>(\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+              = (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+              + (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} - {a |a. b1 \<down> a \<noteq> 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+            using \<open>finite S\<close> finite_Int sum.Int_Diff by blast            
+          moreover have \<open>(\<Sum>a\<in>S\<inter>{a |a. (b1 + b2) \<down> a = 0}-{a |a. b1 \<down> a \<noteq> 0}.
+                        (b1 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+          proof-
+            have \<open>i\<in>S\<inter>{a |a. (b1 + b2) \<down> a = 0}-{a |a. b1 \<down> a \<noteq> 0} \<Longrightarrow> (b1 \<down> i) = 0\<close>
+              for i
+              by auto              
+            thus ?thesis
+              by (metis (mono_tags, lifting) complex_vector.scale_eq_0_iff sum.not_neutral_contains_not_neutral) 
+          qed
+          ultimately have \<open>(\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+           (b1 \<down> a) *\<^sub>C inclusion_free (f a)) = 
+              (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+            by auto
+          thus ?thesis
+            by blast 
+        qed
+        moreover have \<open>finite S \<Longrightarrow> (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b2 \<down> a \<noteq> 0}.
+           (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 
+              (\<Sum>a\<in>S \<inter>{a |a. (b1 + b2) \<down> a = 0}.
+           (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          for S
+          by (smt complex_vector.scale_eq_0_iff finite_Int mem_Collect_eq sum.cong sum.inter_restrict)
+            (* > 1 s *)
+        moreover have \<open>finite S \<Longrightarrow> (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+           + (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+          for S
+        proof-
+          assume \<open>finite S\<close>
+          have \<open>(\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a))
+          + (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 
+            (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. (b1 \<down> a) *\<^sub>C inclusion_free (f a) 
+          + (b2 \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+            by (simp add: sum.distrib)
+          also have \<open>\<dots> = (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. 
+              ( (b1 \<down> a) + (b2 \<down> a) ) *\<^sub>C inclusion_free (f a))\<close>
+            by (metis (no_types, lifting) scaleC_add_left)
+          also have \<open>\<dots> = (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. 0 *\<^sub>C inclusion_free (f a))\<close>
+            by (simp add: free_regular_for_sum)
+          also have \<open>\<dots> = (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0}. 0)\<close>
+            by simp
+          also have \<open>\<dots> = 0\<close>
+            by simp
+          finally show ?thesis by blast
+        qed
+        ultimately have finite_thesis: \<open>finite S \<Longrightarrow> (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b1 \<down> a \<noteq> 0}.
+       (b1 \<down> a) *\<^sub>C inclusion_free (f a)) +
+    (\<Sum>a\<in>S \<inter> {a |a. (b1 + b2) \<down> a = 0} \<inter> {a |a. b2 \<down> a \<noteq> 0}.
+       (b2 \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+          for S
+          by simp
+        have \<open>finite ({a |a. b1 \<down> a \<noteq> 0} \<union> {a |a. b2 \<down> a \<noteq> 0})\<close>
+          using times_free_vec by force
+        thus ?thesis
+          using finite_thesis[where S = "{a |a. b1 \<down> a \<noteq> 0} \<union> {a |a. b2 \<down> a \<noteq> 0}"]
+          by (smt inf_sup_absorb inf_sup_aci(1) inf_sup_aci(3) inf_sup_aci(5))          
+      qed
+      ultimately show ?thesis
+        by (metis (no_types, lifting) add_diff_add diff_zero) 
+    qed
+    also have \<open>\<dots> = free_map f b1 + free_map f b2\<close>
+      unfolding free_map_def
+      by blast
+    finally show ?thesis by simp
+  qed
+
+  show "free_map f (r *\<^sub>C b) = r *\<^sub>C free_map f b"
+    for r :: complex
+      and b :: "'a free"
+  proof (cases \<open>r = 0\<close>)
+    show "free_map f (r *\<^sub>C b) = r *\<^sub>C free_map f b"
+      if "r = 0"
+      using that unfolding free_map_def
+      by (metis (no_types, lifting) complex_vector.scale_eq_0_iff scaleC_free.rep_eq sum.not_neutral_contains_not_neutral)
+
+    show "free_map f (r *\<^sub>C b) = r *\<^sub>C free_map f b"
+      if "r \<noteq> 0"
+    proof-
+      have \<open>{a |a. r *\<^sub>C b \<down> a \<noteq> 0} = {a |a. b \<down> a \<noteq> 0}\<close>
+        by (metis  complex_vector.scale_eq_0_iff scaleC_free.rep_eq that)
+      moreover have \<open>(r *\<^sub>C b) \<down> a = r *\<^sub>C (b \<down> a)\<close>
+        for a
+        by (simp add: scaleC_free.rep_eq)      
+      moreover have \<open> (\<Sum>a\<in>{a |a. b \<down> a \<noteq> 0}. r *\<^sub>C (b \<down> a) *\<^sub>C inclusion_free (f a)) =
+        r *\<^sub>C (\<Sum>a\<in>{a |a. b \<down> a \<noteq> 0}. (b \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+        by (metis (mono_tags, lifting) scaleC_right.sum sum.cong)      
+      ultimately show ?thesis 
+        using that unfolding free_map_def
+        by auto
+    qed
+  qed
+qed
+
+functor free_map
+proof
+  show "(free_map (f::'b \<Rightarrow> 'c) \<circ> free_map g) (x::'a free) = free_map (f \<circ> g) x"
+    for f :: "'b \<Rightarrow> 'c"
+      and g :: "'a \<Rightarrow> 'b"
+      and x :: "'a free"
+  proof-
+    have \<open>clinear (free_map f)\<close>
+      by (simp add: free_map_clinear)
+    have \<open>(free_map f \<circ> free_map g) x = free_map f (free_map g x)\<close>
+      by simp
+    also have \<open>\<dots> = free_map f (\<Sum>a\<in>{a|a. x\<down>a \<noteq> 0}. (x\<down>a) *\<^sub>C inclusion_free (g a))\<close>
+      using free_map_def
+      by metis 
+    also have \<open>\<dots> = (\<Sum>a\<in>{a|a. x\<down>a \<noteq> 0}. (x\<down>a) *\<^sub>C ((free_map f) (inclusion_free (g a))))\<close>
+      using  \<open>clinear (free_map f)\<close>
+      by (smt complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    also have \<open>\<dots> = (\<Sum>a\<in>{a|a. x\<down>a \<noteq> 0}. (x\<down>a) *\<^sub>C inclusion_free ((f \<circ> g) a))\<close>
+    proof-
+      have \<open>(free_map f) (inclusion_free (g i)) = inclusion_free ((f \<circ> g) i)\<close>
+        for i
+      proof-
+        have \<open>(free_map f) (inclusion_free (g i)) =
+         (\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}.
+                (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+          unfolding free_map_def
+          by blast
+        also have \<open>\<dots> = (\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}.
+                (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C (inclusion_free a))\<close>
+        proof-
+          have \<open>(\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}.
+       (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a))
+          = inclusion_free (f (g i))\<close>
+          proof-
+            have \<open>finite {a |a. inclusion_free (g i) \<down> a \<noteq> 0}\<close>
+              using times_free_vec
+              by blast
+            moreover have \<open>g i \<in> {a |a. inclusion_free (g i) \<down> a \<noteq> 0}\<close>
+              apply transfer
+              by simp
+            ultimately have \<open>(\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}.
+       (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a))
+          = ((inclusion_free (g i) \<down> (g i)) *\<^sub>C inclusion_free (f (g i)))
+          + (\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}-{g i}.
+       (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a))\<close>
+              by (simp add: sum.remove)              
+            also have \<open>\<dots> = ((inclusion_free (g i) \<down> (g i)) *\<^sub>C inclusion_free (f (g i)))\<close>
+            proof-
+              have \<open>j\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}-{g i} \<Longrightarrow>
+                     (inclusion_free (g i) \<down> j) *\<^sub>C inclusion_free (f j) = 0\<close>
+                for j
+              proof-
+                assume \<open>j\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}-{g i}\<close>
+                hence \<open>j \<noteq> g i\<close>
+                  by simp
+                hence \<open>inclusion_free (g i) \<down> j = 0\<close>
+                  by (simp add: inclusion_free.rep_eq)
+                thus ?thesis by simp
+              qed
+              hence \<open>(\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}-{g i}.
+              (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a)) = 0\<close>
+                by simp
+              thus ?thesis by simp
+            qed
+            also have \<open>\<dots> = inclusion_free (f (g i))\<close>
+            proof-
+              have \<open>inclusion_free (g i) \<down> (g i) = 1\<close>
+                by (simp add: inclusion_free.rep_eq)
+              thus ?thesis by simp
+            qed
+            finally show ?thesis by blast
+          qed
+          moreover have \<open>(\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}.
+                     (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C inclusion_free a)
+          = inclusion_free (f (g i))\<close>
+          proof-
+            have \<open>finite {a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}\<close>
+              using times_free_vec by simp
+            moreover have \<open>(f \<circ> g) i \<in> {a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}\<close>
+              by (simp add: inclusion_free.rep_eq)              
+            ultimately have \<open>(\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}.
+                     (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C inclusion_free a)
+              = (inclusion_free ((f \<circ> g) i) \<down> ((f \<circ> g) i)) *\<^sub>C inclusion_free ((f \<circ> g) i)
+                  + (\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}-{(f \<circ> g) i}.
+                     (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C inclusion_free a)\<close>
+              by (simp add: sum.remove)
+            also have \<open>\<dots> = (inclusion_free ((f \<circ> g) i) \<down> ((f \<circ> g) i)) *\<^sub>C inclusion_free ((f \<circ> g) i)\<close>
+            proof-
+              have \<open>j\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}-{(f \<circ> g) i} \<Longrightarrow> 
+                  (inclusion_free ((f \<circ> g) i) \<down> j) *\<^sub>C inclusion_free j = 0\<close>
+                for j
+              proof-
+                assume \<open>j\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}-{(f \<circ> g) i}\<close>
+                hence \<open>j \<noteq> (f \<circ> g) i\<close>
+                  by simp
+                hence \<open>inclusion_free ((f \<circ> g) i) \<down> j = 0\<close>
+                  by (simp add: inclusion_free.rep_eq)
+                thus ?thesis by simp
+              qed
+              hence \<open>(\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}-{(f \<circ> g) i}.
+                     (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C inclusion_free a) = 0\<close>
+                by simp
+              thus ?thesis by simp
+            qed
+            also have  \<open>\<dots> = inclusion_free ((f \<circ> g) i)\<close>
+            proof-
+              have \<open>(inclusion_free ((f \<circ> g) i) \<down> ((f \<circ> g) i)) = 1\<close>
+                by (simp add: inclusion_free.rep_eq)                
+              thus ?thesis by simp
+            qed
+            finally show ?thesis by simp
+          qed
+          ultimately show \<open>(\<Sum>a\<in>{a |a. inclusion_free (g i) \<down> a \<noteq> 0}.
+       (inclusion_free (g i) \<down> a) *\<^sub>C inclusion_free (f a)) =
+                (\<Sum>a\<in>{a |a. inclusion_free ((f \<circ> g) i) \<down> a \<noteq> 0}.
+       (inclusion_free ((f \<circ> g) i) \<down> a) *\<^sub>C inclusion_free a)\<close>
+            by simp
+        qed
+        also have \<open>\<dots> =  inclusion_free ((f \<circ> g) i)\<close>
+          by (metis (no_types) free_explicit)          
+        finally show ?thesis by blast
+      qed
+      thus ?thesis by simp
+    qed
+    also have \<open>\<dots> = free_map (f \<circ> g) x\<close>
+      by (metis free_map_def)      
+    finally have \<open>(free_map f \<circ> free_map g) x = free_map (f \<circ> g) x\<close>
+      by blast
+    thus ?thesis by blast
+  qed
+  show "free_map (id::'a \<Rightarrow> _) = id"
+  proof
+    show "free_map id (x::'a free) = id x"
+      for x :: "'a free"
+    proof-
+      have \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free (id a)) \<down> i = x \<down> i\<close>
+        for i
+      proof-
+        have \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free (id a)) \<down> i = 
+            (\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a) \<down> i \<close>
+          by simp
+        also have \<open>\<dots> = (\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. ((x \<down> a) *\<^sub>C inclusion_free a) \<down> i)\<close>
+        proof-
+          define f::\<open>'a free \<Rightarrow> complex\<close> where \<open>f t = t \<down> i\<close> for t
+          define \<gamma> where \<open>\<gamma> a = ((x \<down> a) *\<^sub>C inclusion_free a)\<close> for a
+          define S where \<open>S = \<gamma> ` {a |a. x \<down> a \<noteq> 0}\<close>
+          have \<open>f (p + q) = f p + f q\<close>
+            for p q
+            by (simp add: \<open>f \<equiv> \<lambda>t. t \<down> i\<close> free_regular_for_sum)          
+          moreover have \<open>finite {a |a. x \<down> a \<noteq> 0}\<close>
+            using times_free_vec by force
+          ultimately have \<open>f (\<Sum>a\<in>S. a) = (\<Sum>a\<in>S. f a)\<close>
+            using general_sum_from_addition
+            by (simp add: general_sum_from_addition S_def)
+          thus ?thesis unfolding S_def f_def \<gamma>_def
+            using \<open>finite {a |a. x \<down> a \<noteq> 0}\<close> free_regular_for_sum_general 
+            by fastforce
+        qed
+        also have \<open>\<dots> = ((x \<down> i) *\<^sub>C inclusion_free i) \<down> i\<close>
+        proof (cases \<open>i \<in> {a |a. x \<down> a \<noteq> 0}\<close>)
+          show "(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = (x \<down> i) *\<^sub>C inclusion_free i \<down> i"
+            if "i \<in> {a |a. x \<down> a \<noteq> 0}"
+          proof-
+            have \<open>finite {a |a. x \<down> a \<noteq> 0}\<close>
+              using times_free_vec by fastforce                        
+            hence \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = (x \<down> i) *\<^sub>C inclusion_free i \<down> i
+              + (\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}-{i}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i)\<close>
+              using sum.remove that by fastforce 
+            moreover have \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}-{i}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = 0\<close>
+            proof-
+              have \<open>j\<in>{a |a. x \<down> a \<noteq> 0}-{i} \<Longrightarrow> (x \<down> j) *\<^sub>C inclusion_free j \<down> i = 0\<close>
+                for j 
+              proof-
+                assume \<open>j\<in>{a |a. x \<down> a \<noteq> 0}-{i}\<close>
+                hence \<open>j \<noteq> i\<close>
+                  by auto
+                thus ?thesis
+                  by (metis complex_vector.scale_eq_0_iff inclusion_free.rep_eq scaleC_free.rep_eq)
+              qed
+              thus ?thesis
+                by simp 
+            qed
+            ultimately show ?thesis by simp
+          qed
+          show "(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = (x \<down> i) *\<^sub>C inclusion_free i \<down> i"
+            if "i \<notin> {a |a. x \<down> a \<noteq> 0}"
+          proof-
+            have \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = 0\<close>
+            proof-
+              have \<open>j\<in>{a |a. x \<down> a \<noteq> 0} \<Longrightarrow> (x \<down> j) *\<^sub>C inclusion_free j \<down> i = 0\<close>
+                for j 
+              proof-
+                assume \<open>j\<in>{a |a. x \<down> a \<noteq> 0}\<close>
+                hence \<open>j \<noteq> i\<close>
+                  using that by auto
+                thus ?thesis
+                  by (metis complex_vector.scale_eq_0_iff inclusion_free.rep_eq scaleC_free.rep_eq) 
+              qed
+              thus ?thesis
+                by simp 
+            qed
+            moreover have \<open>(x \<down> i) *\<^sub>C inclusion_free i \<down> i = 0\<close>
+              by (metis (mono_tags, lifting) complex_vector.scale_eq_0_iff mem_Collect_eq scaleC_free.rep_eq that)            
+            ultimately show ?thesis by simp
+          qed
+        qed
+        also have \<open>\<dots> = (x \<down> i)\<close>
+          by (metis \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i) = (x \<down> i) *\<^sub>C inclusion_free i \<down> i\<close> \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a) \<down> i = (\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free a \<down> i)\<close> free_explicit)        
+        finally show ?thesis by blast
+      qed
+      hence \<open>times_free_vec (\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free (id a)) 
+        = times_free_vec x\<close>
+        by blast
+      hence \<open>(\<Sum>a\<in>{a |a. x \<down> a \<noteq> 0}. (x \<down> a) *\<^sub>C inclusion_free (id a)) = x\<close>
+        using times_free_vec_inject by auto
+      thus ?thesis 
+        unfolding free_map_def
+        by auto
+    qed
+  qed
+qed
+
+
 unbundle no_free_notation
 
 end

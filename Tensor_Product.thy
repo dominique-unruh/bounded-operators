@@ -216,15 +216,137 @@ end
 lift_definition htensor_op:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close>  (infixl "\<otimes>\<^sub>h" 70)
   is \<open>\<lambda> x::'a. \<lambda> y::'b. inclusion_completion (x \<otimes>\<^sub>a y)\<close>.
 
+lemma htensor_distr_right:
+  fixes x :: "'a::chilbert_space" and y z :: "'b::chilbert_space"
+  shows  \<open>x \<otimes>\<^sub>h (y+z) =  x \<otimes>\<^sub>h y  +  x \<otimes>\<^sub>h z\<close>
+  apply transfer
+  by (simp add: atensor_distr_right inclusion_completion_add)  
+
+lemma htensor_distr_right_sum:
+  fixes x :: "'a::chilbert_space" and y :: "'c \<Rightarrow> 'b::chilbert_space"
+    and I :: \<open>'c set\<close>
+  shows  \<open>x \<otimes>\<^sub>h (\<Sum> i \<in> I. y i) = (\<Sum> i \<in> I. x \<otimes>\<^sub>h (y i))\<close>
+  using htensor_distr_right
+  by (metis Modules.additive_def additive.sum) 
+
+lemma htensor_distr_left:
+  fixes y z :: "'a::chilbert_space" and x :: "'b::chilbert_space"
+  shows  \<open>(y+z) \<otimes>\<^sub>h x =  y \<otimes>\<^sub>h x  +  z \<otimes>\<^sub>h x\<close>
+  apply transfer
+  by (simp add: atensor_distr_left inclusion_completion_add)
+
+lemma htensor_distr_left_sum:
+  fixes  x :: "'c \<Rightarrow> 'a::chilbert_space" and y :: "'b::chilbert_space"
+    and I :: \<open>'c set\<close>
+  shows  \<open>(\<Sum> i \<in> I. x i) \<otimes>\<^sub>h y = (\<Sum> i \<in> I. (x i) \<otimes>\<^sub>h y)\<close>
+proof-
+  define f::\<open>'a \<Rightarrow> 'a \<otimes>\<^sub>h 'b\<close> where \<open>f t = t \<otimes>\<^sub>h y\<close> for t
+  have \<open>Modules.additive f\<close>
+    unfolding f_def
+    using htensor_distr_left
+    by (simp add: htensor_distr_left Modules.additive_def)    
+  show ?thesis 
+    using additive.sum \<open>Modules.additive f\<close> \<open>f \<equiv> \<lambda>t. t \<otimes>\<^sub>h y\<close> by auto
+qed
+
+lemma htensor_mult_right:
+  fixes x :: "'a::chilbert_space" and y :: "'b::chilbert_space" and c :: complex
+  shows \<open>x \<otimes>\<^sub>h (c *\<^sub>C y) = c *\<^sub>C (x \<otimes>\<^sub>h y)\<close>
+  apply transfer
+  by (simp add: atensor_mult_right inclusion_completion_scaleC) 
+
+lemma htensor_mult_left:
+  fixes x :: "'a::chilbert_space" and y :: "'b::chilbert_space" and c :: complex
+  shows \<open>(c *\<^sub>C x) \<otimes>\<^sub>h y  = c *\<^sub>C (x \<otimes>\<^sub>h y)\<close>
+  apply transfer
+  by (simp add: atensor_mult_left inclusion_completion_scaleC)
+
+
+lemma htensor_product_cartesian_product:
+  assumes \<open>finite t\<close> and \<open>finite t'\<close>
+  shows \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>h (\<Sum>j\<in>t'. r' j *\<^sub>C j)
+ = (\<Sum>(a, b)\<in>t\<times>t'. (r a * r' b) *\<^sub>C (a \<otimes>\<^sub>h b))\<close>
+proof-
+  have \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>h (\<Sum>j\<in>t'. r' j *\<^sub>C j) = (\<Sum>i\<in>t. (r i *\<^sub>C i) \<otimes>\<^sub>h (\<Sum>j\<in>t'. r' j *\<^sub>C j) )\<close>
+    using htensor_distr_left_sum by force    
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. (r i *\<^sub>C i) \<otimes>\<^sub>h (r' j *\<^sub>C j)) )\<close>
+    by (metis (mono_tags, lifting) Finite_Cartesian_Product.sum_cong_aux htensor_distr_right_sum)    
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. r i *\<^sub>C ( i \<otimes>\<^sub>h (r' j *\<^sub>C j) ) ) )\<close>
+    by (meson htensor_mult_left sum.cong)
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. r i *\<^sub>C ( r' j *\<^sub>C (i \<otimes>\<^sub>h j) ) ) )\<close>
+    by (metis (no_types, lifting) htensor_mult_right sum.cong)
+  also have \<open>\<dots> = (\<Sum>i\<in>t. (\<Sum>j\<in>t'. (r i * r' j) *\<^sub>C (i \<otimes>\<^sub>h j) ) )\<close>
+    by auto
+  also have \<open>\<dots> = (\<Sum>z\<in>t\<times>t'. (r (fst z) * r' (snd z)) *\<^sub>C ((fst z) \<otimes>\<^sub>h (snd z)))\<close>
+    using Groups_Big.comm_monoid_add_class.sum.cartesian_product [where A = "t" 
+        and B = "t'" and g = "\<lambda> i j. (r i * r' j) *\<^sub>C (i \<otimes>\<^sub>h j)"]
+    by (metis (no_types, lifting) case_prod_beta' sum.cong)
+  finally have \<open>(\<Sum>i\<in>t. r i *\<^sub>C i) \<otimes>\<^sub>h (\<Sum>j\<in>t'. r' j *\<^sub>C j) =
+  (\<Sum>z\<in>t \<times> t'. (r (fst z) * r' (snd z)) *\<^sub>C (fst z \<otimes>\<^sub>h snd z))\<close>
+    by blast
+  thus ?thesis
+    by (metis (mono_tags, lifting) case_prod_beta' sum.cong) 
+qed
+
+
 lemma hilbert_tensor_existence_left:
   fixes S :: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>bounded_clinear S\<close> 
-  shows \<open>\<exists> H :: 'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h ('c::chilbert_space). 
+  shows \<open>\<exists> H :: 'a \<otimes>\<^sub>h 'c \<Rightarrow> 'b \<otimes>\<^sub>h ('c::chilbert_space).
   bounded_clinear H \<and> (\<forall> x y. H (x \<otimes>\<^sub>h y) = (S x)\<otimes>\<^sub>hy) \<and> onorm H \<le> onorm S\<close>
 proof-
   define k::\<open>'a \<Rightarrow> 'c \<Rightarrow> 'b\<otimes>\<^sub>h'c\<close> where \<open>k x y = (S x) \<otimes>\<^sub>h y\<close> for x y
   have \<open>cbilinear k\<close>
-    sorry
+    unfolding k_def cbilinear_def
+  proof
+    show "\<forall>y. clinear (\<lambda>x. S x \<otimes>\<^sub>h (y::'c))"
+    proof
+      show "clinear (\<lambda>x. S x \<otimes>\<^sub>h (y::'c))"
+        for y :: 'c
+        unfolding clinear_def proof
+        show "S (b1 + b2) \<otimes>\<^sub>h y = S b1 \<otimes>\<^sub>h y + S b2 \<otimes>\<^sub>h y"
+          for b1 :: 'a
+            and b2 :: 'a
+        proof-
+          have \<open>S (b1 + b2) = S b1 + S b2\<close>
+            using \<open>bounded_clinear S\<close>
+            unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def module_hom_def 
+               module_hom_axioms_def by auto
+          thus ?thesis
+            by (simp add: htensor_distr_left)             
+        qed
+
+        show "S (r *\<^sub>C b) \<otimes>\<^sub>h y = r *\<^sub>C (S b \<otimes>\<^sub>h y)"
+          for r :: complex
+            and b :: 'a
+        proof-
+          have \<open>S (r *\<^sub>C b) = r *\<^sub>C (S b)\<close>
+            using \<open>bounded_clinear S\<close>
+            unfolding bounded_clinear_def clinear_def
+            by (simp add: assms bounded_clinear.is_clinear complex_vector.linear_scale)
+          thus ?thesis
+            by (simp add: htensor_mult_left) 
+        qed
+      qed
+    qed
+    show "\<forall>x. clinear ((\<otimes>\<^sub>h) (S x)::'c \<Rightarrow> 'b \<otimes>\<^sub>h _)"
+      unfolding clinear_def proof
+      show "Vector_Spaces.linear ((*\<^sub>C)::complex \<Rightarrow> 'c \<Rightarrow> _) (*\<^sub>C) ((\<otimes>\<^sub>h) (S x))"
+        for x :: 'a
+      proof
+        show "S x \<otimes>\<^sub>h ((b1::'c) + b2) = S x \<otimes>\<^sub>h b1 + S x \<otimes>\<^sub>h b2"
+          for b1 :: 'c
+            and b2 :: 'c
+          by (simp add: htensor_distr_right)
+
+        show "S x \<otimes>\<^sub>h r *\<^sub>C (b::'c) = r *\<^sub>C (S x \<otimes>\<^sub>h b)"
+          for r :: complex
+            and b :: 'c
+          by (simp add: htensor_mult_right)
+      qed
+    qed
+  qed
+
   hence \<open>\<exists>! K :: 'a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'c. clinear K \<and> (\<forall> x y. k x y = K (x \<otimes>\<^sub>a y))\<close>
     by (simp add: atensor_universal_property)
   then obtain K::\<open>'a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>h 'c\<close> where \<open>clinear K\<close> and \<open>\<forall> x y. k x y = K (x \<otimes>\<^sub>a y)\<close>
