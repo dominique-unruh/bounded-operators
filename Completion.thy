@@ -1802,7 +1802,11 @@ proof-
     by (simp add: bounded_clinear_Cauchy assms)
 qed
 
+(* TODO: This could be more generally defined as mapping a continuous function
+   to a continuous function (if 'a,'b are metric spaces).
 
+   The fact that it maps a bounded linear function to a bounded linear function
+   would then be a simple corollary. *)
 lift_definition completion_map' :: \<open>('a::cbanach, 'b::cbanach) bounded
  \<Rightarrow> ('a completion \<Rightarrow> 'b completion)\<close>
   is \<open>\<lambda> f x. (\<lambda> n. f (rep_completion x n))\<close>

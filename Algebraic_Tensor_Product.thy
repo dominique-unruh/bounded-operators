@@ -1056,6 +1056,13 @@ proof-
         thus \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
           by simp
       qed
+(* TODO: 
+   By writing
+moreover have \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close> if \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>,
+you do not have to repeat the "w \<in> {\<dots>}" part in the assume command inside the subproof.
+(It is automatically assumed, refer to it via "that")
+
+ *)
       moreover have \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) | x y c. True} 
         \<Longrightarrow> (universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
         for w
