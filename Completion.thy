@@ -1820,8 +1820,8 @@ lemma compeltion_map_well_defined:
   assumes \<open>completion_rel x y\<close> and \<open>bounded_clinear f\<close>
   shows \<open>completion_rel (\<lambda> n. f (x n)) (\<lambda> n. f (y n))\<close>
   using assms unfolding completion_rel_def apply auto 
-  apply (simp add: bounded_clinear_Cauchy)
-  apply (simp add: bounded_clinear_Cauchy)
+    apply (simp add: bounded_clinear_Cauchy)
+   apply (simp add: bounded_clinear_Cauchy)
   unfolding Vanishes_def
 proof-
   assume \<open>bounded_clinear f\<close> and \<open>Cauchy x\<close> and \<open>Cauchy y\<close> and \<open>(\<lambda>n. x n - y n) \<longlonglongrightarrow> 0\<close>
@@ -1848,7 +1848,7 @@ qed
 lift_definition completion_map :: \<open>('a::cbanach, 'b::cbanach) bounded
  \<Rightarrow> ('a completion, 'b completion) bounded\<close>
   is completion_map'
-  proof
+proof
   show "clinear (completion_map' (F::('a, 'b) bounded))"
     for F :: "('a, 'b) bounded"
     unfolding clinear_def
@@ -1916,7 +1916,131 @@ lift_definition completion_map :: \<open>('a::cbanach, 'b::cbanach) bounded
   qed
   show "\<exists>K. \<forall>x. norm (completion_map' F (x::'a completion)::'b completion) \<le> norm x * K"
     for F :: "('a, 'b) bounded"
-    sorry
+  proof-
+    have \<open>bounded_clinear (times_bounded_vec F)\<close>
+      using times_bounded_vec by blast
+    hence \<open>\<exists> K. \<forall> x. norm ((times_bounded_vec F) x) \<le> norm x * K \<and> K > 0\<close>
+      unfolding bounded_clinear_def
+      by (smt norm_mult norm_not_less_zero vector_choose_size zero_less_mult_iff) 
+    then obtain K where \<open>\<forall> x. norm ((times_bounded_vec F) x) \<le> norm x * K\<close> and \<open>K > 0\<close>
+      by blast
+    have \<open>Cauchy (rep_completion x)\<close>
+      for x::\<open>'a completion\<close>
+      using Rep_completion
+      by (simp add: Cauchy_rep_completion) 
+    hence \<open>Cauchy (\<lambda>n. norm (rep_completion x n))\<close>
+      for x::\<open>'a completion\<close>
+      by (simp add: Cauchy_convergent_norm)
+    have \<open>completion_rel (\<lambda>n. times_bounded_vec F (rep_completion x n)) (\<lambda>n. times_bounded_vec F (rep_completion x n))\<close>
+      for x
+      unfolding completion_rel_def apply auto
+       apply (simp add: \<open>bounded_clinear (times_bounded_vec F)\<close> completion_map_Cauchy)
+      unfolding Vanishes_def by auto
+    hence \<open>norm (abs_completion (\<lambda>n. times_bounded_vec F (rep_completion x n)))
+          = lim (\<lambda>n. norm (times_bounded_vec F (rep_completion x n)) )\<close>
+      for x
+      unfolding norm_completion_def apply auto
+      by (metis (no_types) norm_completion.abs_eq norm_completion.rep_eq)
+    also have \<open>lim (\<lambda>n. norm (times_bounded_vec F (rep_completion x n)) )
+             \<le> lim (\<lambda>n. norm (rep_completion x n) * K )\<close>
+      for x
+    proof-
+      have \<open>norm (times_bounded_vec F (rep_completion x n))
+          \<le> norm (rep_completion x n) * K\<close>
+        for n
+        by (simp add: \<open>\<forall>x. norm (times_bounded_vec F x) \<le> norm x * K\<close>)
+      moreover have \<open>convergent (\<lambda>n. norm (rep_completion x n) * K)\<close>
+        by (metis (no_types) Cauchy_convergent \<open>0 < K\<close> \<open>\<And>x. Cauchy (\<lambda>n. norm (rep_completion x n))\<close> convergent_mult_const_right_iff less_numeral_extra(3))
+      moreover have \<open>convergent (\<lambda>n. norm (times_bounded_vec F (rep_completion x n)) )\<close>
+        using Cauchy_convergent_iff \<open>bounded_clinear (times_bounded_vec F)\<close> completion_map_Cauchy convergent_norm 
+        by blast
+      ultimately show ?thesis
+        by (simp add: lim_leq) 
+    qed
+    also have \<open>lim (\<lambda>n. norm (rep_completion x n) * K ) = lim (\<lambda>n. norm (rep_completion x n)) * K\<close>
+      for x::\<open>'a completion\<close>
+    proof-
+      have \<open>convergent (\<lambda>n. norm (rep_completion x n))\<close>
+        using \<open>\<And>x. Cauchy (\<lambda>n. norm (rep_completion x n))\<close> real_Cauchy_convergent 
+        by auto
+      hence  \<open>lim (\<lambda>n. complex_of_real K *
+              complex_of_real (norm (rep_completion x n))) =
+    complex_of_real K *
+    lim (\<lambda>y. complex_of_real (norm (rep_completion x y)))\<close>
+        using lim_scaleC[where x = "(\<lambda>n. norm (rep_completion x n))" and r = "K"]
+        by (simp add: convergent_of_real)        
+      hence  \<open>lim (\<lambda>n.  K *\<^sub>C (norm (rep_completion x n))) =
+                 K *\<^sub>C lim (\<lambda>y.  (norm (rep_completion x y)))\<close>
+        by (simp add: \<open>convergent (\<lambda>n. norm (rep_completion x n))\<close> lim_complex_of_real)
+      moreover have \<open>lim (\<lambda>n.  K *\<^sub>C (norm (rep_completion x n))) = lim (\<lambda>n. (norm (rep_completion x n)) * K)\<close>
+      proof-     
+        have \<open>K *\<^sub>C (norm (rep_completion x n)) = (norm (rep_completion x n)) * K\<close>
+          for n
+          by auto
+        hence \<open>K *\<^sub>C (norm (rep_completion x n)) - (norm (rep_completion x n)) * K  = 0\<close>
+          for n
+          by simp
+        hence \<open>(\<lambda> n. K *\<^sub>C (norm (rep_completion x n)) - (norm (rep_completion x n)) * K ) = (\<lambda> _. 0)\<close>
+          by simp
+        hence \<open>(\<lambda> n. K *\<^sub>C (norm (rep_completion x n)) - (norm (rep_completion x n)) * K ) \<longlonglongrightarrow> 0\<close>
+          by simp
+        hence \<open>lim (\<lambda> n. K *\<^sub>C (norm (rep_completion x n)) - (norm (rep_completion x n)) * K ) = 0\<close>
+          by simp
+        moreover have  \<open>lim (\<lambda> n. K *\<^sub>C (norm (rep_completion x n)) - (norm (rep_completion x n)) * K ) = 
+          lim (\<lambda> n. K *\<^sub>C (norm (rep_completion x n))) - lim (\<lambda> n. (norm (rep_completion x n)) * K )\<close>
+        proof-
+          have \<open>convergent (\<lambda> n. (norm (rep_completion x n)))\<close>
+            by (simp add: \<open>convergent (\<lambda>n. norm (rep_completion x n))\<close>)
+
+          hence \<open>convergent (\<lambda> n. K *\<^sub>C (norm (rep_completion x n)))\<close>
+            using Cauchy_convergent Cauchy_scaleC convergent_Cauchy convergent_of_real 
+            by blast
+          moreover have \<open>convergent (\<lambda> n. (norm (rep_completion x n)) * K )\<close>
+            using \<open>convergent (\<lambda> n. (norm (rep_completion x n)))\<close>
+          proof -
+            have "convergent (\<lambda>n. norm (rep_completion x n) * K) \<or> 0 = K"
+              using \<open>convergent (\<lambda>n. norm (rep_completion x n))\<close> convergent_mult_const_right_iff by fastforce
+            moreover
+            { assume "\<not> (\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlonglongrightarrow> 0"
+              then have "complex_of_real K \<noteq> 0"
+                by auto }
+            moreover
+            { assume "(\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlonglongrightarrow> 0 \<and> \<not> (\<lambda>n. norm (rep_completion x n) * K) \<longlonglongrightarrow> K"
+              moreover
+              { assume "\<exists>c f. ((\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlongrightarrow> c) f \<and> ((\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n)) - complex_of_real (norm (rep_completion x n) * K)) \<longlongrightarrow> 0) f \<and> \<not> ((\<lambda>n. complex_of_real (norm (rep_completion x n) * K)) \<longlongrightarrow> c) f"
+                then have "complex_of_real K \<noteq> 0"
+                  by fastforce }
+              ultimately have "complex_of_real K \<noteq> 0"
+                by fastforce }
+            ultimately show ?thesis
+              using convergent_def of_real_0 by blast
+          qed
+
+          ultimately show ?thesis
+            using convergent_of_real lim_complex_of_real lim_minus 
+            by fastforce 
+        qed
+        thus ?thesis
+          by auto 
+      qed
+      moreover have \<open>K *\<^sub>C lim (\<lambda>y.  (norm (rep_completion x y)))
+           = lim (\<lambda>y.  (norm (rep_completion x y))) * K\<close>
+        by auto
+      ultimately have \<open>complex_of_real (lim (\<lambda>n. norm (rep_completion x n) * K)) =
+        complex_of_real (lim (\<lambda>n. norm (rep_completion x n)) * K)\<close>
+        by simp
+      thus ?thesis
+        using of_real_eq_iff by blast 
+    qed
+    hence \<open>\<forall>x. norm (abs_completion (\<lambda>n. times_bounded_vec F (rep_completion x n))) \<le> norm x * K\<close>
+      unfolding norm_completion_def
+      apply auto
+      using \<open>\<forall> x. norm ((times_bounded_vec F) x) \<le> norm x * K\<close>
+      by (metis calculation norm_completion.rep_eq)      
+    thus ?thesis
+      unfolding completion_map'_def
+      by auto
+  qed
 qed
 
 end
