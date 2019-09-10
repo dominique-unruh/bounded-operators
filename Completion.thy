@@ -1791,6 +1791,7 @@ lemma inclusion_completion_cinner:
   apply transfer
   unfolding completion_rel_def Vanishes_def by auto
 
+
 lemma completion_map_Cauchy:
   fixes f :: \<open>'a::cbanach \<Rightarrow> 'b::cbanach\<close> and x :: \<open>'a completion\<close>
   assumes \<open>bounded_clinear f\<close>
@@ -1814,62 +1815,13 @@ lift_definition completion_map' :: \<open>('a::cbanach, 'b::cbanach) bounded
   unfolding completion_rel_def apply auto unfolding Vanishes_def 
   by auto
 
-(* TODO move *)
-lemma bounded_clinear_Cauchy:
-  assumes \<open>Cauchy x\<close> and \<open>bounded_clinear f\<close>
-  shows \<open>Cauchy (\<lambda> n. f (x n))\<close>
-proof-
-  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f (x m) - f (x n)) < e\<close>
-    for e
-  proof-
-    assume \<open>e > 0\<close>
-    have \<open>\<exists> M. \<forall> t. norm (f t) \<le> norm t * M \<and> M > 0\<close>
-      using assms(2) bounded_clinear.bounded_linear bounded_linear.pos_bounded
-      by blast
-    then obtain M where \<open>\<And> t. norm (f t) \<le> norm t * M\<close> and \<open>M > 0\<close>
-      by blast
-    have \<open>norm (f (x m - x n)) \<le> norm (x m - x n) * M\<close>
-      for m n
-      using  \<open>\<And> t. norm (f t) \<le> norm t * M\<close> by blast
-    moreover have \<open>f (x m - x n) = f (x m) - f (x n)\<close>
-      for m n
-      sorry
-    ultimately have f1: \<open>norm (f (x m) - f (x n)) \<le> norm (x m - x n) * M\<close>
-      for m n
-      by simp
-    have \<open>e/M > 0\<close>
-      by (simp add: \<open>0 < M\<close> \<open>0 < e\<close>)
-    hence \<open>\<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. norm (x m - x n) < e/M\<close>
-      using Cauchy_iff assms(1) by blast
-    then obtain K where \<open>\<And> m n. m\<ge>K \<Longrightarrow> n\<ge>K \<Longrightarrow> norm (x m - x n) < e/M\<close>
-      by blast
-    hence \<open>m \<ge> K \<Longrightarrow> n \<ge> K \<Longrightarrow> norm (f (x m) - f (x n)) < e\<close>
-      for m n
-    proof-
-      assume \<open>m \<ge> K\<close> and \<open>n \<ge> K\<close>
-      have \<open>norm (f (x m) - f (x n)) \<le> norm (x m -x n) * M\<close>
-        by (simp add: f1)
-      also have \<open>\<dots> < e/M * M\<close>
-        using \<open>0 < M\<close> \<open>K \<le> m\<close> \<open>K \<le> n\<close> \<open>\<And>n m. \<lbrakk>K \<le> m; K \<le> n\<rbrakk> \<Longrightarrow> norm (x m - x n) < e / M\<close> linordered_semiring_strict_class.mult_strict_right_mono by blast
-      also have \<open>\<dots> = e\<close>
-        using \<open>0 < M\<close> by auto        
-      finally show ?thesis by blast
-    qed
-    thus ?thesis
-      by blast 
-  qed
-  thus ?thesis 
-    unfolding Cauchy_def
-    using dist_norm
-    by smt
-qed
 
 lemma compeltion_map_well_defined:
   assumes \<open>completion_rel x y\<close> and \<open>bounded_clinear f\<close>
   shows \<open>completion_rel (\<lambda> n. f (x n)) (\<lambda> n. f (y n))\<close>
   using assms unfolding completion_rel_def apply auto 
-  apply (simp add: Completion.bounded_clinear_Cauchy)
-  apply (simp add: Completion.bounded_clinear_Cauchy)
+  apply (simp add: bounded_clinear_Cauchy)
+  apply (simp add: bounded_clinear_Cauchy)
   unfolding Vanishes_def
 proof-
   assume \<open>bounded_clinear f\<close> and \<open>Cauchy x\<close> and \<open>Cauchy y\<close> and \<open>(\<lambda>n. x n - y n) \<longlonglongrightarrow> 0\<close>
@@ -1935,7 +1887,32 @@ lift_definition completion_map :: \<open>('a::cbanach, 'b::cbanach) bounded
     show "completion_map' F (r *\<^sub>C b) = r *\<^sub>C completion_map' F b"
       for r :: complex
         and b :: "'a completion"
-      sorry
+    proof transfer
+      fix F::\<open>'a\<Rightarrow>'b\<close> and b::\<open>'a completion\<close> and r::complex
+      assume \<open>bounded_clinear F\<close>
+      have \<open>completion_rel (rep_completion b) (rep_completion b)\<close>
+        using Quotient_completion Quotient_rep_reflp by fastforce
+      hence \<open>completion_rel (\<lambda>n. r *\<^sub>C (rep_completion b) n) (\<lambda>n. r *\<^sub>C (rep_completion b) n)\<close>
+        unfolding completion_rel_def apply auto
+        by (simp add: Cauchy_scaleC)
+      hence \<open>completion_rel (\<lambda>n.  (rep_completion (r *\<^sub>C b) n))
+        (\<lambda>n. r *\<^sub>C (rep_completion b n))\<close>
+        unfolding scaleC_completion_def apply auto
+        by (simp add: Quotient3_completion rep_abs_rsp_left)
+      hence \<open>completion_rel (\<lambda>n. F (rep_completion (r *\<^sub>C b) n))
+        (\<lambda>n. F (r *\<^sub>C (rep_completion b n)))\<close>
+        using \<open>bounded_clinear F\<close> compeltion_map_well_defined 
+        by blast
+      moreover have \<open>F ( r *\<^sub>C (rep_completion b n) )
+          = r *\<^sub>C (F (rep_completion b n)) \<close>
+        for n
+        using  \<open>bounded_clinear F\<close> unfolding bounded_clinear_def clinear_def
+        by (simp add: clinear_def complex_vector.linear_scale)        
+      ultimately show \<open>completion_rel (\<lambda>n. F (rep_completion (r *\<^sub>C b) n))
+        (\<lambda>n. r *\<^sub>C F ( (rep_completion b n)))\<close>
+        by simp
+    qed
+
   qed
   show "\<exists>K. \<forall>x. norm (completion_map' F (x::'a completion)::'b completion) \<le> norm x * K"
     for F :: "('a, 'b) bounded"

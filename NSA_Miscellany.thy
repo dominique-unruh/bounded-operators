@@ -1045,6 +1045,56 @@ proof-
     by (simp add: limI) 
 qed
 
+lemma bounded_clinear_Cauchy:
+  assumes \<open>Cauchy x\<close> and \<open>bounded_clinear f\<close>
+  shows \<open>Cauchy (\<lambda> n. f (x n))\<close>
+proof-
+  have \<open>e>0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f (x m) - f (x n)) < e\<close>
+    for e
+  proof-
+    assume \<open>e > 0\<close>
+    have \<open>\<exists> M. \<forall> t. norm (f t) \<le> norm t * M \<and> M > 0\<close>
+      using assms(2) bounded_clinear.bounded_linear bounded_linear.pos_bounded
+      by blast
+    then obtain M where \<open>\<And> t. norm (f t) \<le> norm t * M\<close> and \<open>M > 0\<close>
+      by blast
+    have \<open>norm (f (x m - x n)) \<le> norm (x m - x n) * M\<close>
+      for m n
+      using  \<open>\<And> t. norm (f t) \<le> norm t * M\<close> by blast
+    moreover have \<open>f (x m - x n) = f (x m) - f (x n)\<close>
+      for m n
+      using \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_diff) 
+    ultimately have f1: \<open>norm (f (x m) - f (x n)) \<le> norm (x m - x n) * M\<close>
+      for m n
+      by simp
+    have \<open>e/M > 0\<close>
+      by (simp add: \<open>0 < M\<close> \<open>0 < e\<close>)
+    hence \<open>\<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. norm (x m - x n) < e/M\<close>
+      using Cauchy_iff assms(1) by blast
+    then obtain K where \<open>\<And> m n. m\<ge>K \<Longrightarrow> n\<ge>K \<Longrightarrow> norm (x m - x n) < e/M\<close>
+      by blast
+    hence \<open>m \<ge> K \<Longrightarrow> n \<ge> K \<Longrightarrow> norm (f (x m) - f (x n)) < e\<close>
+      for m n
+    proof-
+      assume \<open>m \<ge> K\<close> and \<open>n \<ge> K\<close>
+      have \<open>norm (f (x m) - f (x n)) \<le> norm (x m -x n) * M\<close>
+        by (simp add: f1)
+      also have \<open>\<dots> < e/M * M\<close>
+        using \<open>0 < M\<close> \<open>K \<le> m\<close> \<open>K \<le> n\<close> \<open>\<And>n m. \<lbrakk>K \<le> m; K \<le> n\<rbrakk> \<Longrightarrow> norm (x m - x n) < e / M\<close> linordered_semiring_strict_class.mult_strict_right_mono by blast
+      also have \<open>\<dots> = e\<close>
+        using \<open>0 < M\<close> by auto        
+      finally show ?thesis by blast
+    qed
+    thus ?thesis
+      by blast 
+  qed
+  thus ?thesis 
+    unfolding Cauchy_def
+    using dist_norm
+    by smt
+qed
+
 
 unbundle no_nsa_notation
 
