@@ -1793,7 +1793,7 @@ lemma inclusion_completion_cinner:
 
 
 lemma completion_map_Cauchy:
-  fixes f :: \<open>'a::cbanach \<Rightarrow> 'b::cbanach\<close> and x :: \<open>'a completion\<close>
+  fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> and x :: \<open>'a completion\<close>
   assumes \<open>bounded_clinear f\<close>
   shows \<open>Cauchy (\<lambda> n. f (rep_completion x n))\<close>
 proof-
@@ -1808,7 +1808,7 @@ qed
 
    The fact that it maps a bounded linear function to a bounded linear function
    would then be a simple corollary. *)
-lift_definition completion_map' :: \<open>('a::cbanach, 'b::cbanach) bounded
+lift_definition completion_map' :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
  \<Rightarrow> ('a completion \<Rightarrow> 'b completion)\<close>
   is \<open>\<lambda> f x. (\<lambda> n. f (rep_completion x n))\<close>
   using completion_map_Cauchy 
@@ -1845,7 +1845,7 @@ proof-
 qed
 
 
-lift_definition completion_map :: \<open>('a::cbanach, 'b::cbanach) bounded
+lift_definition completion_map :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
  \<Rightarrow> ('a completion, 'b completion) bounded\<close>
   is completion_map'
 proof
@@ -1952,8 +1952,8 @@ proof
       moreover have \<open>convergent (\<lambda>n. norm (rep_completion x n) * K)\<close>
         by (metis (no_types) Cauchy_convergent \<open>0 < K\<close> \<open>\<And>x. Cauchy (\<lambda>n. norm (rep_completion x n))\<close> convergent_mult_const_right_iff less_numeral_extra(3))
       moreover have \<open>convergent (\<lambda>n. norm (times_bounded_vec F (rep_completion x n)) )\<close>
-        using Cauchy_convergent_iff \<open>bounded_clinear (times_bounded_vec F)\<close> completion_map_Cauchy convergent_norm 
-        by blast
+        using Cauchy_convergent_iff \<open>bounded_clinear (times_bounded_vec F)\<close> completion_map_Cauchy convergent_norm
+        using Cauchy_convergent_norm by blast        
       ultimately show ?thesis
         by (simp add: lim_leq) 
     qed
