@@ -409,7 +409,8 @@ qed
     define K where \<open>K = KS * KT\<close>
     have \<open>norm ((universal_atensor \<kappa>) z) \<le> norm z * K\<close>
       for z
-      unfolding universal_atensor_def
+      unfolding \<kappa>_def universal_atensor_def atensor_of_pair_map_def
+        universal_free_def
       sorry
     thus ?thesis by blast
   qed

@@ -19,7 +19,7 @@ begin
 unbundle free_notation
 
 definition atensor_kernel_generator::\<open>( (('a::complex_vector) \<times> ('b::complex_vector)) free ) set\<close> where
-\<open>atensor_kernel_generator = {inclusion_free (x, (y+z)) - inclusion_free (x, y) - inclusion_free (x, z) |  x y z. True}
+  \<open>atensor_kernel_generator = {inclusion_free (x, (y+z)) - inclusion_free (x, y) - inclusion_free (x, z) |  x y z. True}
 \<union> { inclusion_free ((y+z), x) - inclusion_free (y, x) - inclusion_free (z, x) |  x y z. True}
 \<union> { inclusion_free (x, (c *\<^sub>C y)) -  c *\<^sub>C inclusion_free (x, y) |  x y c. True} 
 \<union> { inclusion_free ((c *\<^sub>C x), y) -  c *\<^sub>C inclusion_free (x, y) |  x y c. True}\<close>
@@ -1056,7 +1056,7 @@ proof-
         thus \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close>
           by simp
       qed
-(* TODO: 
+        (* TODO: 
    By writing
 moreover have \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close> if \<open>w \<in> {inclusion_free (c *\<^sub>C x, y) - c *\<^sub>C inclusion_free (x, y) | x y c. True}\<close>,
 you do not have to repeat the "w \<in> {\<dots>}" part in the assume command inside the subproof.
@@ -2196,7 +2196,7 @@ definition separable :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex
   \<open>separable \<psi> = (\<exists> x y. \<psi> = x \<otimes>\<^sub>a y)\<close>
 
 abbreviation entagled :: \<open>('a::complex_vector \<otimes>\<^sub>a 'b::complex_vector) \<Rightarrow> bool\<close> where 
-\<open>entagled \<equiv> (\<lambda> \<psi>. \<not>(separable \<psi>) )\<close>
+  \<open>entagled \<equiv> (\<lambda> \<psi>. \<not>(separable \<psi>) )\<close>
 
 text \<open>See proof of Proposition 1 on page 186 in @{cite Helemskii}\<close>
 definition g_atensor_cbilinear:: \<open>'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> complex\<close>
@@ -2207,22 +2207,22 @@ lemma g_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def g_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+                   apply (simp add: scaleC_add_right)
+                  apply (simp add: scaleC_add_left)
+                 apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
+               apply (simp add: scaleC_add_right)
+              apply (simp add: scaleC_add_left)
+             apply (simp add: ring_class.ring_distribs(1))
+            apply (simp add: ring_class.ring_distribs(2))
+           apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+          apply (simp add: scaleC_add_right)
+         apply (simp add: scaleC_add_left)
+        apply (simp add: ring_class.ring_distribs(1))
+       apply (simp add: ring_class.ring_distribs(2))
   using scaleC_add_right apply auto[1]
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
+     apply (simp add: scaleC_add_left)
+    apply (simp add: ring_class.ring_distribs(1))
   using ring_class.ring_distribs(2) apply auto[1]
   by (simp add: cinner_right_distrib semiring_normalization_rules(34))
 
@@ -2501,25 +2501,25 @@ lemma F_atensor_cbilinear_cbilinear:
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def F_atensor_cbilinear_def
   apply auto
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_left.add)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
-  apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
-  apply (simp add: scaleC_add_right)
+                     apply (simp add: scaleC_add_right)
+                    apply (simp add: scaleC_left.add)
+                   apply (simp add: ring_class.ring_distribs(1))
+                  apply (simp add: ring_class.ring_distribs(2))
+                 apply (simp add: scaleC_add_right)
+                apply (simp add: scaleC_add_left)
+               apply (simp add: ring_class.ring_distribs(1))
+              apply (simp add: ring_class.ring_distribs(2))
+             apply (simp add: F_atensor_cbilinear_cbilinear_left_distr) 
+            apply (simp add: F_atensor_cbilinear_cbilinear_left_scaleC)
+           apply (simp add: scaleC_add_right)
   using scaleC_left.add apply auto[1]
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
+         apply (simp add: ring_class.ring_distribs(1))
+        apply (simp add: ring_class.ring_distribs(2))
+       apply (simp add: scaleC_add_right)
+      apply (simp add: scaleC_add_left)
+     apply (simp add: ring_class.ring_distribs(1))
+    apply (simp add: ring_class.ring_distribs(2))
+   apply (simp add: F_atensor_cbilinear_cbilinear_right_distr)
   by (simp add: F_atensor_cbilinear_cbilinear_right_scaleC)
 
 lemma F_atensor_clinear_existence:
@@ -3115,7 +3115,7 @@ proof
       proof-
         have \<open>S \<subseteq> U' \<times> V'\<close>
           unfolding U'_def V'_def apply auto
-          apply (simp add: rev_image_eqI)
+           apply (simp add: rev_image_eqI)
           by (simp add: rev_image_eqI)
         thus ?thesis 
           using \<open>T = (case_prod (\<otimes>\<^sub>a)) ` S\<close>
@@ -3450,6 +3450,153 @@ proof -
   then show ?thesis
     by (metis atensor_cinner_mult norm_eq_sqrt_cinner norm_mult real_sqrt_mult)
 qed 
+
+lemma atensor_norm_ortho_left:
+  fixes a c :: \<open>'a::chilbert_space\<close> and b d :: \<open>'a::chilbert_space\<close>
+  assumes \<open>\<langle>a, c\<rangle> = 0\<close> 
+  shows \<open>\<langle> a\<otimes>\<^sub>ab, c\<otimes>\<^sub>ad \<rangle> = 0\<close>
+  by (simp add: assms atensor_cinner_mult)
+  
+lemma atensor_norm_ortho_right:
+  fixes a c :: \<open>'a::chilbert_space\<close> and b d :: \<open>'a::chilbert_space\<close>
+  assumes \<open>\<langle>b, d\<rangle> = 0\<close> 
+  shows \<open>\<langle> a\<otimes>\<^sub>ab, c\<otimes>\<^sub>ad \<rangle> = 0\<close>
+  by (simp add: assms atensor_cinner_mult)
+
+lemma atensor_norm_expansion:
+  fixes a c :: \<open>'a::chilbert_space\<close> and b d :: \<open>'a::chilbert_space\<close>
+  assumes \<open>\<langle>a, c\<rangle> = 0 \<or> \<langle>b, d\<rangle> = 0\<close>
+  shows \<open>(norm (a\<otimes>\<^sub>ab + c\<otimes>\<^sub>ad))^2 = (norm (a\<otimes>\<^sub>ab))^2 + (norm (c\<otimes>\<^sub>ad))^2\<close>
+proof-
+  have \<open>\<langle> a\<otimes>\<^sub>ab, c\<otimes>\<^sub>ad \<rangle> = 0\<close>
+    by (meson assms atensor_norm_ortho_left atensor_norm_ortho_right)
+  thus ?thesis
+    by (simp add: PythagoreanId) 
+qed
+
+lemma atensorOp_bounded_clinear:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'c::complex_inner\<close> and g::\<open>'b::complex_inner \<Rightarrow> 'c\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
+  shows  \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+proof-
+  have \<open>clinear (f \<otimes>\<^sub>A g)\<close>
+    using atensorOp_clinear \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> 
+    unfolding bounded_clinear_def
+    by blast 
+  moreover have \<open>\<exists> K. \<forall> z. norm ((f \<otimes>\<^sub>A g) z) \<le> norm z * K\<close>
+  proof-
+    have \<open>\<exists>Kf. \<forall>z. norm (f z) \<le> norm z * Kf \<and> Kf > 0\<close>
+      using \<open>bounded_clinear f\<close>
+      using bounded_clinear.bounded_linear bounded_linear.pos_bounded 
+      by blast
+    then obtain Kf where \<open>\<And>z. norm (f z) \<le> norm z * Kf\<close> and \<open>Kf > 0\<close>
+      by blast
+    have \<open>\<exists>Kg. \<forall>z. norm (g z) \<le> norm z * Kg \<and> Kg > 0\<close>
+      using \<open>bounded_clinear g\<close>
+      using bounded_clinear.bounded_linear bounded_linear.pos_bounded 
+      by blast
+    then obtain Kg where \<open>\<And>z. norm (g z) \<le> norm z * Kg\<close> and \<open>Kg > 0\<close>
+      by blast
+    define K where \<open>K = Kf * Kg\<close>
+    have separation: \<open>norm ((f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y)) \<le> norm (x \<otimes>\<^sub>a y) * K\<close>
+      for x y
+    proof-
+      have \<open>(f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)\<close>
+        by (simp add: \<open>bounded_clinear f\<close> \<open>bounded_clinear g\<close> atensorOp_separation bounded_clinear.is_clinear)
+      hence \<open>norm ((f \<otimes>\<^sub>A g) (x \<otimes>\<^sub>a y)) = norm ((f x) \<otimes>\<^sub>a (g y))\<close>
+        by simp
+      also have \<open>\<dots> = norm (f x) * norm (g y)\<close>
+        by (simp add: atensor_norm_mult)
+      also have \<open>\<dots> \<le> (norm x * Kf) * (norm y * Kg)\<close>
+        by (simp add: \<open>\<And>z. norm (f z) \<le> norm z * Kf\<close> \<open>\<And>z. norm (g z) \<le> norm z * Kg\<close> mult_mono')
+      also have \<open>\<dots> = norm x * norm y * K\<close>
+        unfolding K_def
+        by simp
+      also have \<open>\<dots> = norm (x \<otimes>\<^sub>a y) * K\<close>
+      proof-
+        have \<open>norm (x \<otimes>\<^sub>a y) = norm x * norm y\<close>
+          by (simp add: atensor_norm_mult)
+        thus ?thesis by simp
+      qed
+      finally show ?thesis by simp
+    qed
+    hence \<open>norm ((f \<otimes>\<^sub>A g) z) \<le> norm z * K\<close>
+      for z
+    proof-
+      have \<open>K > 0\<close>
+        by (simp add: K_def \<open>0 < Kf\<close> \<open>0 < Kg\<close>)
+      have \<open>(norm ((f \<otimes>\<^sub>A g) z))^2 \<le> (norm z)^2 * (K^2)\<close>
+      proof-
+        have \<open>\<exists> A::'a set. complex_vector.span A = UNIV \<and> complex_vector.independent A\<close>
+          using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis 
+          by auto
+        then obtain A::\<open>'a set\<close> where \<open>complex_vector.span A = UNIV\<close> and \<open>complex_vector.independent A\<close>
+          by blast
+        have \<open>\<exists> B::'b set. complex_vector.span B = UNIV \<and> complex_vector.independent B\<close>
+          using complex_vector.independent_empty complex_vector.independent_extend_basis complex_vector.span_extend_basis 
+          by auto
+        then obtain B::\<open>'b set\<close> where \<open>complex_vector.span B = UNIV\<close> and \<open>complex_vector.independent B\<close>
+          by blast
+
+        have \<open>z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a) ` (A \<times> B)))\<close>
+          by (metis UNIV_I \<open>complex_vector.span A = UNIV\<close> \<open>complex_vector.span B = UNIV\<close> basis_atensor_complex_generator)          
+        hence \<open>\<exists> r t. finite t \<and> t \<subseteq> (case_prod (\<otimes>\<^sub>a) ` (A \<times> B)) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+          by (smt complex_vector.span_alt mem_Collect_eq)
+        then obtain r t where \<open>finite t\<close> and \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a) ` (A \<times> B))\<close> 
+            and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close> by blast
+        (* I need to express z as an expansion in an orthogonal basis *) 
+        have \<open>\<forall> a a'. a \<in> t \<and> a' \<in> t \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+          sorry
+        hence \<open>(norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
+          using \<open>finite t\<close> \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+              Pythagorean_generalized[where t = "t"]
+          by auto
+        have \<open>(f \<otimes>\<^sub>A g) z = (\<Sum>a\<in>t. r a *\<^sub>C ((f \<otimes>\<^sub>A g) a))\<close>
+          using \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+          by (smt Finite_Cartesian_Product.sum_cong_aux calculation complex_vector.linear_scale complex_vector.linear_sum)
+        hence \<open>(norm ((f \<otimes>\<^sub>A g) z))^2 = (norm (\<Sum>a\<in>t. r a *\<^sub>C ((f \<otimes>\<^sub>A g) a)))^2\<close>
+          by simp
+        also have \<open>\<dots> = ( \<Sum>a\<in>t. ( norm (r a *\<^sub>C ((f \<otimes>\<^sub>A g) a)))^2 )\<close>
+          sorry (* Pythagorean identity *)
+        also have \<open>\<dots> = ( \<Sum>a\<in>t. (norm (r a))^2 * (norm ((f \<otimes>\<^sub>A g) a))^2 )\<close>
+          by (metis (no_types, lifting) norm_scaleC power_mult_distrib)          
+        also have \<open>\<dots> \<le> (\<Sum>a\<in>t. (norm (r a))^2 * (norm a)^2 * K^2)\<close>
+        proof-
+          have \<open>a \<in> t \<Longrightarrow> (norm (r a))^2 * (norm ((f \<otimes>\<^sub>A g) a))^2 \<le> (norm (r a))^2 * (norm a)^2 * K^2\<close>
+            for a
+          proof-
+            assume \<open>a \<in> t\<close>
+            hence \<open>a \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
+              using \<open>t \<subseteq> (case_prod (\<otimes>\<^sub>a) ` (A \<times> B))\<close>
+              by blast
+            hence \<open>norm ((f \<otimes>\<^sub>A g) a) \<le> norm a * K\<close>
+              using separation by auto
+            hence \<open>(norm ((f \<otimes>\<^sub>A g) a))^2 \<le> (norm a)^2 * K^2\<close>
+              by (metis norm_ge_zero power_mono power_mult_distrib)
+            thus ?thesis
+              by (smt mult_cancel_left power2_less_eq_zero_iff real_mult_le_cancel_iff2 semiring_normalization_rules(17) zero_eq_power2) 
+          qed
+          thus ?thesis
+            by (simp add: sum_mono) 
+        qed
+        also have \<open>\<dots> = (\<Sum>a\<in>t. (norm (r a))^2 * (norm a)^2) * K^2\<close>
+          by (metis (mono_tags, lifting) sum.cong sum_distrib_right)
+        also have \<open>\<dots> = (norm z)^2 * K^2\<close>
+          using \<open>(norm z)\<^sup>2 = (\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close> 
+          by presburger
+        finally show \<open>(norm ((f \<otimes>\<^sub>A g) z))^2 \<le> (norm z)^2 * K^2\<close>
+          by blast
+      qed
+      thus ?thesis 
+        using \<open>K > 0\<close>
+        by (smt less_eq_real_def norm_ge_zero power2_le_imp_le semiring_normalization_rules(18) semiring_normalization_rules(29) semiring_normalization_rules(7) split_mult_pos_le) 
+    qed
+    thus ?thesis by blast
+  qed
+  ultimately show ?thesis unfolding bounded_clinear_def 
+    by blast
+qed
+
 
 unbundle no_free_notation
 
