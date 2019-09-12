@@ -2295,7 +2295,45 @@ proof
     using bounded_clinear.bounded_linear onorm by blast 
 qed
 
+lemma norm_of_bounded:
+\<open>norm (L *\<^sub>v z) \<le> norm z * norm L\<close>
+  apply transfer
+  by (simp add: bounded_clinear.bounded_linear linordered_field_class.sign_simps(24) onorm)
 
+lemma norm_of_bounded1:
+\<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
+  using norm_of_bounded
+  by (metis mult_cancel_right1) 
+
+lemma norm_of_bounded2:
+\<open>norm z \<le> 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
+  proof (cases \<open>z = 0\<close>)
+  show "norm (L *\<^sub>v z) \<le> norm L"
+    if "norm z \<le> 1"
+      and "z = 0"
+    using that
+    by simp 
+  show "norm (L *\<^sub>v z) \<le> norm L"
+    if "norm z \<le> 1"
+      and "z \<noteq> 0"
+    using that
+    by (smt mult_left_le_one_le norm_ge_zero norm_of_bounded) 
+qed
+
+lemma norm_of_bounded3:
+  fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close>
+  shows \<open>norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
+  apply transfer
+proof - (* sledgehammer *)
+fix Sa :: "'a \<Rightarrow> 'b"
+  assume a1: "bounded_clinear Sa"
+have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
+using norm_ball by fastforce
+  then show "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
+using a1 by (simp add: bounded_clinear.bounded_linear)
+qed
+  
 
 unbundle no_bounded_notation
 

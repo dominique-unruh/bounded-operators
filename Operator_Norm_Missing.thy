@@ -27,7 +27,7 @@ proof-
   then obtain t::'a where \<open>t \<noteq> 0\<close>
     by blast
   define x::'a where \<open>x = (inverse (norm t)) *\<^sub>R t\<close>
-  have \<open>norm x = 1\<close>
+  have \<open>norm x = 1\<close>        
     using x_def
     by (simp add: \<open>t \<noteq> 0\<close>)
   thus ?thesis
@@ -36,7 +36,7 @@ qed
 
 
 lemma norm_set_nonempty_eq1:
-  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> 
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>bounded_linear f\<close>
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
 proof-
