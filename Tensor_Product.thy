@@ -71,8 +71,8 @@ definition open_htensor :: \<open>('a \<otimes>\<^sub>h 'b) set \<Rightarrow> bo
   "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>h 'b) = x \<longrightarrow> y \<in> U)"
 instance
 proof
-(* TODO: more readable to fix variable names via "fix" once and for all throught the proof, imho *)
-(* TODO: clean up superfluous type information *)
+  (* TODO: more readable to fix variable names via "fix" once and for all throught the proof, imho *)
+  (* TODO: clean up superfluous type information *)
   show "((*\<^sub>R) r::'a \<otimes>\<^sub>h 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
     apply transfer
@@ -301,7 +301,7 @@ qed
 *)
 
 text \<open>Theorem 1, page 189 in @{cite Helemskii}\<close>
-(* TODO: Restructure proofs
+  (* TODO: Restructure proofs
 
  - remove hilbert_tensor_existence'_uniqueness
  - remove htensorOp_existence 
@@ -315,16 +315,16 @@ text \<open>Theorem 1, page 189 in @{cite Helemskii}\<close>
 *)
 
 definition htensor_map::
- \<open>(('a::chilbert_space \<otimes>\<^sub>a 'b::chilbert_space) completion 
+  \<open>(('a::chilbert_space \<otimes>\<^sub>a 'b::chilbert_space) completion 
 \<Rightarrow> ('c::chilbert_space \<otimes>\<^sub>a 'd::chilbert_space) completion) 
 \<Rightarrow> (('a \<otimes>\<^sub>h 'b) \<Rightarrow> ('c \<otimes>\<^sub>h 'd))\<close> where
- \<open>htensor_map f z = Abs_htensor (f (Rep_htensor z))\<close>
+  \<open>htensor_map f z = Abs_htensor (f (Rep_htensor z))\<close>
 
 lift_definition htensor_bounded::
- \<open>(('a::chilbert_space \<otimes>\<^sub>a 'b::chilbert_space) completion,
+  \<open>(('a::chilbert_space \<otimes>\<^sub>a 'b::chilbert_space) completion,
    ('c::chilbert_space \<otimes>\<^sub>a 'd::chilbert_space) completion) bounded 
 \<Rightarrow> (('a \<otimes>\<^sub>h 'b), ('c \<otimes>\<^sub>h 'd)) bounded\<close> is htensor_map
-  proof
+proof
   show "clinear (htensor_map f::'a \<otimes>\<^sub>h 'b \<Rightarrow> 'c \<otimes>\<^sub>h 'd)"
     if "bounded_clinear (f::('a \<otimes>\<^sub>a 'b) completion \<Rightarrow> ('c \<otimes>\<^sub>a 'd) completion)"
     for f :: "('a \<otimes>\<^sub>a 'b) completion \<Rightarrow> ('c \<otimes>\<^sub>a 'd) completion"
@@ -349,7 +349,7 @@ qed
 
 lemma hilbert_tensor_existence:
   fixes S :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> and 
-        T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
+    T :: \<open>('c::chilbert_space, 'd::chilbert_space) bounded\<close>
   shows \<open>\<exists> H :: ('a \<otimes>\<^sub>h 'c,  'b \<otimes>\<^sub>h 'd) bounded.  
           (\<forall> x y. H *\<^sub>v (x \<otimes>\<^sub>h y) = (S *\<^sub>v x) \<otimes>\<^sub>h (T *\<^sub>v y)) \<and> 
           norm H \<le> norm S * norm T\<close>
@@ -361,37 +361,37 @@ proof-
   define \<kappa> where \<open>\<kappa> x y = (S *\<^sub>v x)\<otimes>\<^sub>a(T *\<^sub>v y)\<close> for x::'a and y::'c
   have \<open>cbilinear \<kappa>\<close>
     unfolding cbilinear_def proof
-  show "\<forall>y. clinear (\<lambda>x. \<kappa> x y)"
-  proof-
-    have \<open>\<kappa> (b1 + b2) y = \<kappa> b1 y + \<kappa> b2 y\<close>
-      for b1 b2 y
-      using \<open>bounded_clinear (times_bounded_vec S)\<close>
-      unfolding \<kappa>_def bounded_clinear_def
-      by (simp add: atensor_distr_left complex_vector.linear_add)
-    moreover have \<open>\<kappa> (r *\<^sub>C b) y = r *\<^sub>C \<kappa> b y\<close>
-      for r b y
-      using \<open>bounded_clinear (times_bounded_vec S)\<close>
-      unfolding \<kappa>_def bounded_clinear_def
-      by (simp add: atensor_mult_left)
-    ultimately show ?thesis
-      by (simp add: clinearI) 
+    show "\<forall>y. clinear (\<lambda>x. \<kappa> x y)"
+    proof-
+      have \<open>\<kappa> (b1 + b2) y = \<kappa> b1 y + \<kappa> b2 y\<close>
+        for b1 b2 y
+        using \<open>bounded_clinear (times_bounded_vec S)\<close>
+        unfolding \<kappa>_def bounded_clinear_def
+        by (simp add: atensor_distr_left complex_vector.linear_add)
+      moreover have \<open>\<kappa> (r *\<^sub>C b) y = r *\<^sub>C \<kappa> b y\<close>
+        for r b y
+        using \<open>bounded_clinear (times_bounded_vec S)\<close>
+        unfolding \<kappa>_def bounded_clinear_def
+        by (simp add: atensor_mult_left)
+      ultimately show ?thesis
+        by (simp add: clinearI) 
+    qed
+    show "\<forall>x. clinear (\<kappa> x)"
+    proof-
+      have \<open>\<kappa> x (b1 + b2) = \<kappa> x b1 + \<kappa> x b2\<close>
+        for b1 b2 x
+        using \<open>bounded_clinear (times_bounded_vec T)\<close>
+        unfolding \<kappa>_def bounded_clinear_def
+        by (simp add: atensor_distr_right complex_vector.linear_add)
+      moreover have \<open>\<kappa> x (r *\<^sub>C b) = r *\<^sub>C \<kappa> x b\<close>
+        for r b x
+        using \<open>bounded_clinear (times_bounded_vec T)\<close>
+        unfolding \<kappa>_def bounded_clinear_def
+        by (simp add: atensor_mult_right)
+      ultimately show ?thesis
+        by (simp add: clinearI) 
+    qed
   qed
-  show "\<forall>x. clinear (\<kappa> x)"
-      proof-
-    have \<open>\<kappa> x (b1 + b2) = \<kappa> x b1 + \<kappa> x b2\<close>
-      for b1 b2 x
-      using \<open>bounded_clinear (times_bounded_vec T)\<close>
-      unfolding \<kappa>_def bounded_clinear_def
-      by (simp add: atensor_distr_right complex_vector.linear_add)
-    moreover have \<open>\<kappa> x (r *\<^sub>C b) = r *\<^sub>C \<kappa> x b\<close>
-      for r b x
-      using \<open>bounded_clinear (times_bounded_vec T)\<close>
-      unfolding \<kappa>_def bounded_clinear_def
-      by (simp add: atensor_mult_right)
-    ultimately show ?thesis
-      by (simp add: clinearI) 
-  qed
-qed
   hence \<open>clinear (universal_atensor \<kappa>)\<close>
     by (simp add: atensor_universal_property_clinear)
   moreover have \<open>\<exists>K. \<forall>z. norm ((universal_atensor \<kappa>) z) \<le> norm z * K\<close>
