@@ -5,6 +5,7 @@ begin
 
 unbundle bounded_notation
 
+(* TODO: see proof on sheet of paper that José has *)
 lemma atensorOp_bounded_clinear:
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'c::complex_inner\<close> and g::\<open>'b::complex_inner \<Rightarrow> 'c\<close>
   assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>

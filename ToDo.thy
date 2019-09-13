@@ -226,9 +226,11 @@ lemma ortho_bot[simp]: "- bot = (top::_ subspace)"
 lemma ortho_top[simp]: "- top = (bot::_ subspace)"
   apply transfer by auto
 
+(* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
 lemma demorgan_inf: "- ((A::_::orthocomplemented_lattice) \<sqinter> B) = - A \<squnion> - B"
   by (cheat demorgan_inf) 
 
+(* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
 lemma demorgan_sup: "- ((A::_::orthocomplemented_lattice) \<squnion> B) = - A \<sqinter> - B"
   by (cheat demorgan_sup) 
 

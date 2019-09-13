@@ -3061,6 +3061,7 @@ lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_s
 instance..
 end
 
+(* TODO rename zero\<rightarrow>bot *)
 lemma linear_space_zero_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
 proof-
   have \<open>\<exists> x::'a. x \<noteq> 0\<close>
@@ -3099,11 +3100,10 @@ lemma sup_comm_linear_space:
   apply transfer
   by (simp add: is_closed_subspace_comm)
 
-(* TODO 
-Dominique: probably holds with something weaker than chilbert_space
-Jose: The type "chilbert_space" is involved in the proof of the existence of projection, 
-which is used in the proof that the orthogonal complement is an involution on the set of
-closed subspaces *)
+(* TODO: Try if "linear_space :: (chilbert_space) lattice"
+and "linear_space :: (chilbert_space) complete_lattice" (below)
+work with something weaker than chilbert_space
+(it does not work for "linear_space :: (chilbert_space) orthocomplemented_lattice"). *)
 instantiation linear_space :: (chilbert_space) lattice begin
 instance 
 proof
@@ -3241,9 +3241,11 @@ qed
 end
 
 
+(* TODO: rename linear_space_top_not_bot *)
 lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
   by (metis linear_space_zero_not_top)
 
+(* TODO: remove *)
 lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
 lemma span_superset:
@@ -3450,6 +3452,7 @@ lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+(* TODO: Use Complex_Vector_Spaces.bounded_sesquilinear.comp1 or .comp2 *)
 proof
   show "\<langle>a + a', A b\<rangle> = \<langle>a, A b\<rangle> + \<langle>a', A b\<rangle>"
     if "bounded_clinear A"
@@ -3525,6 +3528,7 @@ qed
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+(* TODO: Use Complex_Vector_Spaces.bounded_sesquilinear.comp1 or .comp2 *)
 proof
   show "\<langle>A (a + a'), b\<rangle> = \<langle>A a, b\<rangle> + \<langle>A a', b\<rangle>"
     if "bounded_clinear A"
