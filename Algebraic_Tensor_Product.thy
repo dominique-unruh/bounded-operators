@@ -3469,7 +3469,7 @@ lemma atensor_norm_ortho_left:
   assumes \<open>\<langle>a, c\<rangle> = 0\<close> 
   shows \<open>\<langle> a\<otimes>\<^sub>ab, c\<otimes>\<^sub>ad \<rangle> = 0\<close>
   by (simp add: assms atensor_cinner_mult)
-  
+
 lemma atensor_norm_ortho_right:
   fixes a c :: \<open>'a::chilbert_space\<close> and b d :: \<open>'a::chilbert_space\<close>
   assumes \<open>\<langle>b, d\<rangle> = 0\<close> 
@@ -3494,16 +3494,17 @@ lemma span_finite:
 proof-
   have \<open>\<exists> S r. finite S \<and> S \<subseteq> T \<and> z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
     using complex_vector.span_explicit[where b = "T"]
-     assms by auto
+      assms by auto
   then obtain S r where \<open>finite S\<close> and \<open>S \<subseteq> T\<close> and \<open>z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
     by blast
   thus ?thesis
     by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
 qed
 
-lemma span_finite_tensor':
-\<open>\<exists> S. finite S \<and> S \<subseteq> (range (case_prod (\<otimes>\<^sub>a))) \<and>
-(\<forall>a\<in>S. \<forall>a'\<in>S. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> z \<in> complex_vector.span S\<close>
+lemma span_finite_tensor:
+  \<open>\<exists> A B. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+\<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
+z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
 proof-
   have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto)
@@ -3537,55 +3538,7 @@ proof-
     \<open>0 \<notin> B\<close> and \<open>finite B\<close>
     by auto
   define S where \<open>S = (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
-  have \<open>finite S\<close>
-  proof-
-    have \<open>finite (A \<times> B)\<close> 
-      using \<open>finite A\<close>  \<open>finite B\<close>
-      by simp
-    thus ?thesis
-      by (simp add: S_def)      
-  qed
-  moreover have \<open>S \<subseteq> (range (case_prod (\<otimes>\<^sub>a)))\<close>
-    using \<open>S = (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
-    by auto
-  moreover have \<open>a\<in>S \<Longrightarrow> a'\<in>S \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-    for a a'
-  proof-
-    assume \<open>a\<in>S\<close> and \<open>a'\<in>S\<close> and \<open>a \<noteq> a'\<close>
-    from \<open>a\<in>S\<close>
-    have \<open>a \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
-      by (simp add: S_def)
-    hence \<open>\<exists> x y. a = x \<otimes>\<^sub>a y \<and> x \<in> A \<and> y \<in> B\<close>
-      using case_prod_beta
-      by auto 
-    then obtain x y where \<open>a = x \<otimes>\<^sub>a y\<close> and \<open>x \<in> A\<close> and \<open>y \<in> B\<close>
-      by blast
-    from \<open>a'\<in>S\<close>
-    have \<open>a' \<in> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
-      by (simp add: S_def)
-    hence \<open>\<exists> x' y'. a' = x' \<otimes>\<^sub>a y' \<and> x' \<in> A \<and> y' \<in> B\<close>
-      using case_prod_beta
-      by auto 
-    then obtain x' y' where \<open>a' = x' \<otimes>\<^sub>a y'\<close> and \<open>x' \<in> A\<close> and \<open>y' \<in> B\<close>
-      by blast
-    have \<open>\<langle>a, a'\<rangle> = \<langle>x \<otimes>\<^sub>a y, x' \<otimes>\<^sub>a y'\<rangle>\<close>
-      by (simp add: \<open>a = x \<otimes>\<^sub>a y\<close> \<open>a' = x' \<otimes>\<^sub>a y'\<close>)
-    also have \<open>\<dots> = \<langle>x, x'\<rangle> * \<langle>y, y'\<rangle>\<close>
-      by (simp add: atensor_cinner_mult)
-    also have \<open>\<dots> = 0\<close>
-    proof-
-      have \<open>x \<noteq> x' \<or> y \<noteq> y'\<close>
-        using \<open>a \<noteq> a'\<close> \<open>a = x \<otimes>\<^sub>a y\<close> \<open>a' = x' \<otimes>\<^sub>a y'\<close> by auto
-      moreover have \<open>x \<noteq> x' \<Longrightarrow> \<langle>x, x'\<rangle> = 0\<close>
-        by (simp add: \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>x \<in> A\<close> \<open>x' \<in> A\<close>)        
-      moreover have \<open>y \<noteq> y' \<Longrightarrow> \<langle>y, y'\<rangle> = 0\<close>
-        by (simp add: \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>y \<in> B\<close> \<open>y' \<in> B\<close>)        
-      ultimately show ?thesis
-        using mult_eq_0_iff by blast 
-    qed
-    finally show ?thesis by blast
-  qed
-  moreover have \<open>z \<in> complex_vector.span S\<close>
+  have \<open>z \<in> complex_vector.span S\<close>
   proof-
     from \<open>z \<in> complex_vector.span W\<close>
     have \<open>\<exists> L l. finite L \<and> L \<subseteq> W \<and> z = (\<Sum>a\<in>L. l a *\<^sub>C a)\<close>
@@ -3616,23 +3569,91 @@ proof-
     qed
     thus ?thesis
       by (metis (no_types, hide_lams) \<open>z \<in> complex_vector.span W\<close> complex_vector.span_mono complex_vector.span_span subset_iff) 
-  qed
-  ultimately show ?thesis 
-    by blast
+  qed   
+  show ?thesis
+    using \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+      \<open>finite A\<close> and \<open>finite B\<close> and \<open>S = (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+    using \<open>z \<in> complex_vector.span S\<close> by blast    
 qed
 
-lemma span_finite_tensor:
-\<open>\<exists> S. finite S \<and> S \<subseteq> (range (case_prod (\<otimes>\<^sub>a))) \<and>
-(\<forall>a\<in>S. \<forall>a'\<in>S. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 0 \<notin> S \<and> z \<in> complex_vector.span S\<close>
-  sorry
+lemma ortho_tensor_prod:
+  assumes \<open>a\<in>(case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close> and \<open>a'\<in>(case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+    and \<open>a \<noteq> a'\<close> and \<open>finite A\<close> and \<open>finite B\<close> and 
+    \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
+    \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+  shows \<open>\<langle>a, a'\<rangle> = 0\<close>
+proof-
+  have \<open>\<exists> x y. a = x \<otimes>\<^sub>a y \<and> x \<in> A \<and> y \<in> B\<close>
+    using case_prod_beta assms(1) by auto
+  then obtain x y where \<open>a = x \<otimes>\<^sub>a y\<close> and \<open>x \<in> A\<close> and \<open>y \<in> B\<close>
+    by blast
+  have \<open>\<exists> x' y'. a' = x' \<otimes>\<^sub>a y' \<and> x' \<in> A \<and> y' \<in> B\<close>
+    using case_prod_beta assms(2) by auto
+  then obtain x' y' where \<open>a' = x' \<otimes>\<^sub>a y'\<close> and \<open>x' \<in> A\<close> and \<open>y' \<in> B\<close>
+    by blast
+  have \<open>\<langle>a, a'\<rangle> = \<langle>x \<otimes>\<^sub>a y, x' \<otimes>\<^sub>a y'\<rangle>\<close>
+    by (simp add: \<open>a = x \<otimes>\<^sub>a y\<close> \<open>a' = x' \<otimes>\<^sub>a y'\<close>)
+  also have \<open>\<dots> = \<langle>x, x'\<rangle> * \<langle>y, y'\<rangle>\<close>
+    by (simp add: atensor_cinner_mult)
+  also have \<open>\<dots> = 0\<close>
+  proof-
+    have \<open>x \<noteq> x' \<or> y \<noteq> y'\<close>
+      using \<open>a \<noteq> a'\<close> \<open>a = x \<otimes>\<^sub>a y\<close> \<open>a' = x' \<otimes>\<^sub>a y'\<close> by auto
+    moreover have \<open>x \<noteq> x' \<Longrightarrow> \<langle>x, x'\<rangle> = 0\<close>
+      by (simp add: \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>x \<in> A\<close> \<open>x' \<in> A\<close>)        
+    moreover have \<open>y \<noteq> y' \<Longrightarrow> \<langle>y, y'\<rangle> = 0\<close>
+      by (simp add: \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>y \<in> B\<close> \<open>y' \<in> B\<close>)        
+    ultimately show ?thesis
+      using mult_eq_0_iff by blast 
+  qed
+  finally show ?thesis by blast
+qed
+
+
+lemma tensor_prod_expansion:
+  \<open>\<exists> A B S r. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+\<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> S \<subseteq> A \<times> B \<and>
+z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+proof-
+  have \<open>\<exists> A B. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+\<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
+z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
+    using span_finite_tensor by blast
+  then obtain A B where \<open>finite A\<close> and \<open>finite B\<close> and 
+    \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
+    \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
+    \<open>z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
+    by auto
+  from \<open>z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close>
+  have \<open>\<exists> T t. finite T \<and> T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B) \<and> z = (\<Sum>u\<in>T. t u *\<^sub>C u)\<close>
+    using complex_vector.span_explicit
+    by (smt mem_Collect_eq) 
+  then obtain T t where \<open>finite T\<close> and \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close> and \<open>z = (\<Sum>u\<in>T. t u *\<^sub>C u)\<close>
+    by blast
+  from  \<open>T \<subseteq> (case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)\<close>
+  have \<open>\<exists> S. T = (case_prod (\<otimes>\<^sub>a)) ` S \<and> inj_on (case_prod (\<otimes>\<^sub>a)) S \<and> S \<subseteq> A \<times> B\<close>
+    by (meson subset_image_inj)
+  then obtain S where \<open>T = (case_prod (\<otimes>\<^sub>a)) ` S\<close> and \<open>inj_on (case_prod (\<otimes>\<^sub>a)) S\<close> and \<open>S \<subseteq> A \<times> B\<close>
+    by blast
+  define r where \<open>r u = (t ((case_prod (\<otimes>\<^sub>a)) u))\<close> for u
+  from \<open>z = (\<Sum>u\<in>T. t u *\<^sub>C u)\<close>
+  have \<open>z = (\<Sum>u\<in>S. (t ((case_prod (\<otimes>\<^sub>a)) u)) *\<^sub>C ((case_prod (\<otimes>\<^sub>a)) u))\<close>
+    using \<open>inj_on (case_prod (\<otimes>\<^sub>a)) S\<close>
+    by (metis (no_types, lifting) \<open>T = (\<lambda>(x, y). x \<otimes>\<^sub>a y) ` S\<close> sum.reindex_cong)
+  hence \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+    by (smt \<open>T = (\<lambda>(x, y). x \<otimes>\<^sub>a y) ` S\<close> \<open>inj_on (\<lambda>(x, y). x \<otimes>\<^sub>a y) S\<close> \<open>r \<equiv> \<lambda>u. t (case u of (x, xa) \<Rightarrow> x \<otimes>\<^sub>a xa)\<close> \<open>z = (\<Sum>u\<in>T. t u *\<^sub>C u)\<close> prod.case_distrib split_cong sum.reindex_cong)
+  thus ?thesis 
+    using \<open>finite A\<close>  \<open>finite B\<close>  \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> 
+      \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>S \<subseteq> A \<times> B\<close> by auto
+qed
 
 lemma algebraic_tensor_product_bounded_left:
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (f \<otimes>\<^sub>A id)\<close>
-  proof
+proof
   show f_clinear: \<open>clinear (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _))\<close>
     by (simp add: assms atensorOp_clinear bounded_clinear.is_clinear)
-    
+
   show "\<exists>K. \<forall>z. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) \<le> norm z * K"
   proof-
     have id_clinear: \<open>clinear (id::'c \<Rightarrow> _)\<close>
@@ -3678,9 +3699,26 @@ lemma algebraic_tensor_product_bounded_left:
     have \<open>norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) \<le> norm z * K\<close>
       for z
     proof-
-      have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
-        by (simp add: atensor_onto)
-
+      have \<open>\<exists> A B S r. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+\<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> S \<subseteq> A \<times> B \<and>
+z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+        using tensor_prod_expansion by blast
+      then obtain A B S r where \<open>finite A\<close> and \<open>finite B\<close> and \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+        and \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and \<open>S \<subseteq> A \<times> B\<close> 
+        and \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+        by blast
+      from \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+      have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a b))\<close>
+      proof-
+        have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f \<otimes>\<^sub>A id) (a \<otimes>\<^sub>a b)))\<close>
+          by (smt \<open>z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close> complex_vector.linear_scale complex_vector.linear_sum f_clinear prod.case_distrib split_cong sum.cong)
+            (* > 1 s *)
+        also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a (id b)))\<close>
+          by (metis (no_types, lifting) assms atensorOp_separation bounded_clinear.is_clinear id_clinear)
+        also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a b))\<close>
+          by simp
+        finally show ?thesis by blast
+      qed
       show ?thesis sorry
     qed
     thus ?thesis
