@@ -3650,7 +3650,7 @@ qed
 
 lemma tensor_prod_expansion_right':
   \<open>\<exists> \<phi> B. finite B \<and> (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> finite B \<and> 0 \<notin> B
-   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner ) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
 proof-
   have \<open>\<exists> V \<psi>. finite V \<and> z = (\<Sum>b\<in>V. (\<psi> b) \<otimes>\<^sub>a b)\<close>
     using atensor_onto_explicit_normalized
@@ -3752,9 +3752,142 @@ qed
 
 lemma tensor_prod_expansion_right:
   \<open>\<exists> \<phi> B. finite B \<and> (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> (\<forall> b\<in>B. norm b = 1)
-   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner ) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
-  sorry
-
+   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+proof-
+  have  \<open>\<exists> \<phi>' B'. finite B' \<and> (\<forall>b\<in>B'. \<forall>b'\<in>B'. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> finite B' \<and> 0 \<notin> B'
+   \<and> z = (\<Sum>b\<in>B'. (\<phi>' b) \<otimes>\<^sub>a b)\<close>
+    using tensor_prod_expansion_right'
+    by blast
+  then obtain \<phi>' B' where \<open>finite B'\<close> and \<open>\<forall>b\<in>B'. \<forall>b'\<in>B'. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> and \<open>finite B'\<close>
+    and \<open>0 \<notin> B'\<close> and \<open>z = (\<Sum>b\<in>B'. (\<phi>' b) \<otimes>\<^sub>a b)\<close>
+    by blast
+  define B where \<open>B = (\<lambda> b. b/\<^sub>C(norm b)) ` B'\<close>
+  have \<open>0 \<notin> B\<close>
+    unfolding B_def
+    using \<open>0 \<notin> B'\<close>
+    by auto
+  have \<open>inj_on (\<lambda> b. b/\<^sub>C(norm b)) B'\<close>
+  proof
+    show "x = y"
+      if "x \<in> B'"
+        and "y \<in> B'"
+        and "(x::'b) /\<^sub>C complex_of_real (norm x) = y /\<^sub>C complex_of_real (norm y)"
+      for x :: 'b
+        and y :: 'b
+    proof-
+      have \<open>y \<noteq> 0\<close>
+        using that(2) \<open>0 \<notin> B'\<close>
+        by auto
+      have \<open>x \<noteq> 0\<close>
+        using that(1) \<open>0 \<notin> B'\<close>
+        by auto
+      have \<open>\<langle>x /\<^sub>C complex_of_real (norm x), y\<rangle> = \<langle> y /\<^sub>C complex_of_real (norm y), y\<rangle>\<close>
+        using that(3) by simp
+      have \<open>(cnj (inverse (complex_of_real (norm x)))) * \<langle>x , y\<rangle> 
+          = (cnj (inverse (complex_of_real (norm y)))) * \<langle>y, y\<rangle>\<close>
+        using \<open>\<langle>x /\<^sub>C complex_of_real (norm x), y\<rangle> = \<langle>y /\<^sub>C complex_of_real (norm y), y\<rangle>\<close> by auto
+      moreover have \<open>\<langle>y, y\<rangle> \<noteq> 0\<close>
+        using \<open>y \<noteq> 0\<close>
+        by simp
+      moreover have \<open>(cnj (inverse (complex_of_real (norm y)))) \<noteq> 0\<close>
+        using  \<open>y \<noteq> 0\<close>
+        by simp
+      moreover have \<open>(cnj (inverse (complex_of_real (norm x)))) \<noteq> 0\<close>
+        using  \<open>x \<noteq> 0\<close>
+        by simp
+      ultimately have \<open>\<langle>x , y\<rangle> \<noteq> 0\<close>
+        by auto
+      thus ?thesis
+        using \<open>\<forall>b\<in>B'. \<forall>b'\<in>B'. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
+          that(1) that(2) by blast
+    qed
+  qed
+  hence \<open>\<exists> f. \<forall> x \<in> B'. f (x/\<^sub>C(norm x)) = x\<close>
+    by (metis (no_types, lifting) the_inv_into_f_eq)
+  then obtain f where \<open>\<forall> x \<in> B'. f (x/\<^sub>C(norm x)) = x\<close>
+    by blast
+  hence \<open>inj_on f B\<close>
+    unfolding B_def
+    by (simp add: inj_on_def)
+  define \<phi>::\<open>'b \<Rightarrow> 'a\<close> where \<open>\<phi> b = ((norm (f b)) *\<^sub>C (\<phi>' (f b)))\<close> for b
+  have  \<open>b\<in>B' \<Longrightarrow> norm b \<noteq> 0\<close>
+    for b
+    using \<open>0 \<notin> B'\<close>
+    by auto
+  hence f1: \<open>b\<in>B' \<Longrightarrow>  b = (norm b) *\<^sub>C b/\<^sub>C(norm b)\<close>
+    for b
+    by simp
+  have \<open>finite B\<close>
+    unfolding B_def
+    by (simp add: \<open>finite B'\<close>)
+  moreover have \<open>b\<in>B \<Longrightarrow> b'\<in>B \<Longrightarrow> b \<noteq> b' \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
+    for b b'
+  proof-
+    assume \<open>b\<in>B\<close> and \<open>b'\<in>B\<close> and \<open>b \<noteq> b'\<close>
+    from \<open>b\<in>B\<close>
+    have \<open>\<exists> bb \<in> B'. b = bb/\<^sub>C(norm bb)\<close>
+      using B_def by blast
+    then obtain bb where \<open>bb \<in> B'\<close> and \<open>b = bb/\<^sub>C(norm bb)\<close>
+      by blast
+    from \<open>b'\<in>B\<close>
+    have \<open>\<exists> bb' \<in> B'. b' = bb'/\<^sub>C(norm bb')\<close>
+      using B_def by blast
+    then obtain bb' where \<open>bb' \<in> B'\<close> and \<open>b' = bb'/\<^sub>C(norm bb')\<close>
+      by blast
+    have \<open>\<langle>b, b'\<rangle> = \<langle>bb/\<^sub>C(norm bb), bb'/\<^sub>C(norm bb')\<rangle>\<close>
+      by (simp add: \<open>b = bb /\<^sub>C complex_of_real (norm bb)\<close> \<open>b' = bb' /\<^sub>C complex_of_real (norm bb')\<close>)
+    also have \<open>\<dots> = (cnj (inverse (norm bb))) * (inverse (norm bb')) * \<langle>bb, bb'\<rangle>\<close>
+      by simp
+    also have \<open>\<dots> = 0\<close>
+    proof-
+      have \<open>bb \<noteq> bb'\<close>
+        using \<open>b = bb /\<^sub>C complex_of_real (norm bb)\<close> \<open>b \<noteq> b'\<close> \<open>b' = bb' /\<^sub>C complex_of_real (norm bb')\<close> 
+        by auto
+      hence \<open>\<langle>bb, bb'\<rangle> = 0\<close>
+        using \<open>\<forall>b\<in>B'. \<forall>b'\<in>B'. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> \<open>bb \<in> B'\<close> \<open>bb' \<in> B'\<close> 
+        by auto
+      thus ?thesis by simp
+    qed
+    finally show ?thesis by blast
+  qed
+  moreover have \<open>b\<in>B \<Longrightarrow> norm b = 1\<close>
+    for b
+  proof-
+    assume \<open>b\<in>B\<close>
+    hence \<open>\<exists> bb\<in>B'. b = bb /\<^sub>C (norm bb)\<close>
+      unfolding B_def by auto
+    then obtain bb where \<open>bb\<in>B'\<close> and \<open>b = bb /\<^sub>C (norm bb)\<close>
+      by blast
+    have \<open>norm b = norm (bb /\<^sub>C (norm bb))\<close>
+      using  \<open>b = bb /\<^sub>C (norm bb)\<close> by simp
+    also have \<open>norm (bb /\<^sub>C (norm bb)) = (norm bb) /\<^sub>C (norm bb)\<close>
+      by (simp add: norm_inverse)      
+    finally have \<open>norm b = (norm bb) /\<^sub>C (norm bb)\<close>
+      by blast
+    moreover have \<open>norm bb \<noteq> 0\<close>
+      using \<open>\<And>b. b \<in> B' \<Longrightarrow> norm b \<noteq> 0\<close> \<open>bb \<in> B'\<close> by auto
+    ultimately show ?thesis by auto
+  qed
+  moreover have \<open>z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+  proof-
+    from  \<open>z = (\<Sum>b\<in>B'. (\<phi>' b) \<otimes>\<^sub>a b)\<close>
+    have  \<open>z = (\<Sum>b\<in>B'. (\<phi>' b) \<otimes>\<^sub>a ((norm b) *\<^sub>C b/\<^sub>C(norm b)))\<close>
+      using f1 by simp
+    also have  \<open>\<dots> = (\<Sum>b\<in>B'. (norm b) *\<^sub>C ((\<phi>' b) \<otimes>\<^sub>a (b/\<^sub>C(norm b))))\<close>
+      by (metis (no_types, lifting) atensor_mult_right complex_vector.scale_left_commute)
+    also have  \<open>\<dots> = (\<Sum>b\<in>B'. ((norm b) *\<^sub>C (\<phi>' b)) \<otimes>\<^sub>a (b/\<^sub>C(norm b)))\<close>
+      by (simp add: atensor_mult_left)
+    also have  \<open>\<dots> = (\<Sum>b\<in>B'. ((norm (f (b/\<^sub>C(norm b)))) *\<^sub>C (\<phi>' (f (b/\<^sub>C(norm b))))) \<otimes>\<^sub>a (b/\<^sub>C(norm b)))\<close>
+      using \<open>\<forall> x \<in> B'. f (x/\<^sub>C(norm x)) = x\<close>
+      by auto
+    also have  \<open>\<dots> = (\<Sum>b\<in>B. ((norm (f b)) *\<^sub>C (\<phi>' (f b))) \<otimes>\<^sub>a b)\<close>
+      by (metis (no_types, lifting) B_def \<open>inj_on (\<lambda>b. b /\<^sub>C complex_of_real (norm b)) B'\<close> sum.reindex_cong)
+    also have  \<open>\<dots> = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+      unfolding \<phi>_def by blast
+    finally show ?thesis by blast
+  qed
+  ultimately show ?thesis by blast
+qed
 
 lemma algebraic_tensor_product_bounded_left:
   assumes \<open>bounded_clinear f\<close>
