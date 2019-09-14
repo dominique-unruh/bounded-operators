@@ -3941,27 +3941,176 @@ proof
     have \<open>norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) \<le> norm z * K\<close>
       for z
     proof-
-      have \<open>\<exists> A B S r. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-\<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> S \<subseteq> A \<times> B \<and>
-z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-        using tensor_prod_expansion by blast
-      then obtain A B S r where \<open>finite A\<close> and \<open>finite B\<close> and \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-        and \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and \<open>S \<subseteq> A \<times> B\<close> 
-        and \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+      have  \<open>\<exists> \<phi> B. finite B \<and> (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> (\<forall>b\<in>B. norm b = 1)
+           \<and> z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+        by (simp add: tensor_prod_expansion_right)
+      then obtain \<phi> B where \<open>finite B\<close> and \<open>\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
+        and \<open>\<forall>b\<in>B. norm b = 1\<close> and \<open>z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
         by blast
-      from \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-      have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a b))\<close>
+      from \<open>z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+      have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>b\<in>B. (f \<otimes>\<^sub>A id) ((\<phi> b) \<otimes>\<^sub>a b))\<close>
+        using \<open>clinear (f \<otimes>\<^sub>A id)\<close> complex_vector.linear_sum 
+        by blast
+      also have \<open>\<dots> = (\<Sum>b\<in>B. (f (\<phi> b)) \<otimes>\<^sub>a b)\<close>
       proof-
-        have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f \<otimes>\<^sub>A id) (a \<otimes>\<^sub>a b)))\<close>
-          by (smt \<open>z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close> complex_vector.linear_scale complex_vector.linear_sum f_clinear prod.case_distrib split_cong sum.cong)
-            (* > 1 s *)
-        also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a (id b)))\<close>
-          by (metis (no_types, lifting) assms atensorOp_separation bounded_clinear.is_clinear id_clinear)
-        also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C ((f a) \<otimes>\<^sub>a b))\<close>
-          by simp
-        finally show ?thesis by blast
+        have \<open>(f \<otimes>\<^sub>A id) ((\<phi> b) \<otimes>\<^sub>a b) = (f (\<phi> b)) \<otimes>\<^sub>a b\<close>
+          for b
+          by (simp add: assms atensorOp_separation bounded_clinear.is_clinear)          
+        thus ?thesis by simp
       qed
-      show ?thesis sorry
+      finally have \<open>(f \<otimes>\<^sub>A id) z = (\<Sum>b\<in>B. (f (\<phi> b)) \<otimes>\<^sub>a b)\<close>
+        by blast
+      hence \<open>(norm ((f \<otimes>\<^sub>A id) z))^2 = (norm (\<Sum>b\<in>B. (f (\<phi> b)) \<otimes>\<^sub>a b))^2\<close>
+        by simp
+      also have \<open>\<dots>  = \<langle>(\<Sum>b\<in>B. (f (\<phi> b)) \<otimes>\<^sub>a b), (\<Sum>b'\<in>B. (f (\<phi> b')) \<otimes>\<^sub>a b')\<rangle>\<close>
+        using power2_norm_eq_cinner' by auto
+      also have \<open>\<dots>  = (\<Sum>b'\<in>B. \<langle>(\<Sum>b\<in>B. (f (\<phi> b)) \<otimes>\<^sub>a b), (f (\<phi> b')) \<otimes>\<^sub>a b'\<rangle>)\<close>
+        using cinner_sum_right by auto
+      also have \<open>\<dots>  = (\<Sum>b'\<in>B. (\<Sum>b\<in>B. \<langle>(f (\<phi> b)) \<otimes>\<^sub>a b, (f (\<phi> b')) \<otimes>\<^sub>a b'\<rangle>))\<close>
+        by (simp add: cinner_sum_left)
+      also have \<open>\<dots>  = (\<Sum>b'\<in>B. (\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b')\<rangle>* \<langle>b, b'\<rangle>))\<close>
+      proof-
+        have \<open>\<langle> (f (\<phi> b)) \<otimes>\<^sub>a b, (f (\<phi> b')) \<otimes>\<^sub>a b'\<rangle> = \<langle>f (\<phi> b), f (\<phi> b')\<rangle>* \<langle>b, b'\<rangle>\<close>
+          for b b'
+          by (simp add: atensor_cinner_mult)
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots>  = (\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b)\<rangle>)\<close>
+      proof-
+        have \<open>b' \<in> B \<Longrightarrow> (\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b')\<rangle>*\<langle>b, b'\<rangle>) = \<langle>f (\<phi> b'), f (\<phi> b')\<rangle>\<close>
+          for b'
+        proof-
+          assume \<open>b' \<in> B\<close>
+          hence \<open>(\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b')\<rangle>*\<langle>b, b'\<rangle>) = 
+             \<langle>f (\<phi> b'), f (\<phi> b')\<rangle>* \<langle>b', b'\<rangle>
+          + (\<Sum>b\<in>B-{b'}. \<langle>f (\<phi> b), f (\<phi> b')\<rangle>*\<langle>b, b'\<rangle>)\<close>
+            by (meson \<open>finite B\<close> sum.remove)
+          moreover have \<open>\<langle>b', b'\<rangle> = 1\<close>
+          proof-
+            have \<open>norm b' = 1\<close>
+              using \<open>b' \<in> B\<close> \<open>\<forall>b\<in>B. norm b = 1\<close>
+              by blast
+            hence \<open>(norm b')^2 = 1\<close>
+              by simp
+            thus ?thesis
+              by (metis of_real_1 power2_norm_eq_cinner') 
+          qed
+          moreover have \<open>(\<Sum>b\<in>B-{b'}. \<langle>f (\<phi> b), f (\<phi> b')\<rangle>*\<langle>b, b'\<rangle>) = 0\<close>
+          proof-
+            have \<open>b\<in>B-{b'} \<Longrightarrow> \<langle>f (\<phi> b), f (\<phi> b')\<rangle>*\<langle>b, b'\<rangle> = 0\<close>
+              for b
+            proof-
+              assume \<open>b\<in>B-{b'}\<close>
+              hence \<open>b \<noteq> b'\<close>
+                by simp
+              hence \<open>\<langle>b, b'\<rangle> = 0\<close>
+                using \<open>\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> \<open>b \<in> B - {b'}\<close> \<open>b' \<in> B\<close> 
+                by auto
+              thus ?thesis
+                by simp 
+            qed
+            thus ?thesis
+              by (simp add: \<open>\<And>ba. ba \<in> B - {b'} \<Longrightarrow> \<langle>f (\<phi> ba), f (\<phi> b')\<rangle> * \<langle>ba, b'\<rangle> = 0\<close>) 
+          qed
+          ultimately show ?thesis by simp
+        qed
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots>  = (\<Sum>b\<in>B. (norm (f (\<phi> b)))^2 )\<close>
+        by (metis (mono_tags, lifting) of_real_sum power2_norm_eq_cinner' sum.cong)
+      also have \<open>\<dots>  \<le> (\<Sum>b\<in>B. (norm (\<phi> b))^2 * K^2 )\<close>
+      proof-
+        have \<open>(norm (f (\<phi> b)))^2 \<le> (norm (\<phi> b))^2 * K^2\<close>
+          for b
+          by (metis \<open>\<And>z. norm (f z) \<le> norm z * K\<close> norm_ge_zero power_mono semiring_normalization_rules(30))          
+        thus ?thesis
+          by (metis (mono_tags, lifting) \<open>(\<Sum>b'\<in>B. \<Sum>b\<in>B. \<langle>f (\<phi> b) \<otimes>\<^sub>a b, f (\<phi> b') \<otimes>\<^sub>a b'\<rangle>) = (\<Sum>b'\<in>B. \<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b')\<rangle> * \<langle>b, b'\<rangle>)\<close> \<open>(\<Sum>b'\<in>B. \<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b')\<rangle> * \<langle>b, b'\<rangle>) = (\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b)\<rangle>)\<close> \<open>(\<Sum>b'\<in>B. \<langle>\<Sum>b\<in>B. f (\<phi> b) \<otimes>\<^sub>a b, f (\<phi> b') \<otimes>\<^sub>a b'\<rangle>) = (\<Sum>b'\<in>B. \<Sum>b\<in>B. \<langle>f (\<phi> b) \<otimes>\<^sub>a b, f (\<phi> b') \<otimes>\<^sub>a b'\<rangle>)\<close> \<open>(\<Sum>b\<in>B. \<langle>f (\<phi> b), f (\<phi> b)\<rangle>) = complex_of_real (\<Sum>b\<in>B. (norm (f (\<phi> b)))\<^sup>2)\<close> \<open>\<langle>\<Sum>b\<in>B. f (\<phi> b) \<otimes>\<^sub>a b, \<Sum>b'\<in>B. f (\<phi> b') \<otimes>\<^sub>a b'\<rangle> = (\<Sum>b'\<in>B. \<langle>\<Sum>b\<in>B. f (\<phi> b) \<otimes>\<^sub>a b, f (\<phi> b') \<otimes>\<^sub>a b'\<rangle>)\<close> \<open>complex_of_real ((norm (\<Sum>b\<in>B. f (\<phi> b) \<otimes>\<^sub>a b))\<^sup>2) = \<langle>\<Sum>b\<in>B. f (\<phi> b) \<otimes>\<^sub>a b, \<Sum>b'\<in>B. f (\<phi> b') \<otimes>\<^sub>a b'\<rangle>\<close> complex_of_real_mono power2_norm_eq_cinner sum_norm_le) 
+      qed
+      also have \<open>\<dots>  = (\<Sum>b\<in>B. (norm (\<phi> b))^2) * K^2\<close>
+        by (simp add: sum_distrib_right)
+      also have \<open>\<dots>  = (norm z)^2 * K^2\<close>
+      proof-
+        have \<open>(norm z)^2 = (\<Sum>b\<in>B. (norm (\<phi> b))^2)\<close>
+        proof-
+          have \<open>(norm z)^2 = (norm (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b))^2\<close>
+            using \<open>z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close> 
+            by simp
+          also have \<open>\<dots> = \<langle>(\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b), (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<rangle>\<close>
+            using power2_norm_eq_cinner' by auto
+          also have \<open>\<dots> = (\<Sum>b\<in>B. \<langle>(\<phi> b) \<otimes>\<^sub>a b, (\<Sum>b'\<in>B. (\<phi> b') \<otimes>\<^sub>a b')\<rangle>)\<close>
+            using cinner_sum_left by auto
+          also have \<open>\<dots> = (\<Sum>b\<in>B. (\<Sum>b'\<in>B. \<langle>(\<phi> b) \<otimes>\<^sub>a b,  (\<phi> b') \<otimes>\<^sub>a b'\<rangle>))\<close>
+            by (metis (mono_tags, lifting) cinner_sum_right sum.cong)
+          also have \<open>\<dots> = (\<Sum>b\<in>B. (\<Sum>b'\<in>B. \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle>))\<close>
+            by (meson atensor_cinner_mult sum.cong)
+          also have \<open>\<dots> = (\<Sum>b\<in>B. \<langle>\<phi> b, \<phi> b\<rangle>)\<close>
+          proof-
+            have \<open>b \<in> B \<Longrightarrow> (\<Sum>b'\<in>B. \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle>) = \<langle>\<phi> b, \<phi> b\<rangle>\<close>
+              for b
+            proof-
+              assume \<open>b \<in> B\<close>
+              hence \<open>(\<Sum>b'\<in>B. \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle>) = \<langle>\<phi> b, \<phi> b\<rangle>*\<langle>b, b\<rangle>
+                + (\<Sum>b'\<in>B-{b}. \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle>)\<close>
+                by (meson \<open>finite B\<close> sum.remove)
+              moreover have \<open>\<langle>b, b\<rangle> = 1\<close>
+              proof-
+                have \<open>norm b = 1\<close>
+                  by (simp add: \<open>\<forall>b\<in>B. norm b = 1\<close> \<open>b \<in> B\<close>)
+                hence \<open>(norm b)^2 = 1\<close>
+                  by simp
+                thus ?thesis
+                  by (metis of_real_1 power2_norm_eq_cinner') 
+              qed
+              moreover have \<open>(\<Sum>b'\<in>B-{b}. \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle>) = 0\<close>
+              proof-
+                have \<open>b'\<in>B-{b} \<Longrightarrow>  \<langle>\<phi> b, \<phi> b'\<rangle>*\<langle>b, b'\<rangle> = 0\<close>
+                  for b'
+                proof-
+                  assume \<open>b'\<in>B-{b}\<close>
+                  hence \<open>b' \<noteq> b\<close>
+                    by simp
+                  hence \<open>\<langle>b, b'\<rangle> = 0\<close>
+                    using \<open>\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> \<open>b \<in> B\<close> \<open>b' \<in> B - {b}\<close> 
+                    by auto
+                  thus ?thesis by simp
+                qed
+                thus ?thesis
+                  by (simp add: \<open>\<And>b'. b' \<in> B - {b} \<Longrightarrow> \<langle>\<phi> b, \<phi> b'\<rangle> * \<langle>b, b'\<rangle> = 0\<close>) 
+              qed
+              ultimately show ?thesis by simp
+            qed
+            thus ?thesis by simp
+          qed
+          also have \<open>\<dots> = (\<Sum>b\<in>B. (norm (\<phi> b))^2 )\<close>
+          proof-
+            have \<open>\<langle>\<phi> b, \<phi> b\<rangle> = (norm (\<phi> b))^2\<close>
+              for b
+              by (metis power2_norm_eq_cinner')
+            hence \<open>(\<Sum>b\<in>B. \<langle>\<phi> b, \<phi> b\<rangle>) = (\<Sum>b\<in>B. complex_of_real ((norm (\<phi> b))\<^sup>2))\<close>
+              by simp
+            also have \<open>\<dots> = complex_of_real (\<Sum>b\<in>B. ((norm (\<phi> b))\<^sup>2))\<close>
+              using \<open>finite B\<close>
+              by simp
+            finally show ?thesis by blast
+          qed
+          finally have \<open>complex_of_real ((norm z)\<^sup>2) =
+            complex_of_real (\<Sum>b\<in>B. (norm (\<phi> b))\<^sup>2)\<close>
+            by blast
+          thus ?thesis
+            using of_real_eq_iff by blast            
+        qed
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots>  = ((norm z) * K)^2\<close>
+        by (simp add: power_mult_distrib)
+      finally have \<open>(norm ((f \<otimes>\<^sub>A id) z))^2 \<le> ((norm z) * K)^2\<close>
+        using complex_of_real_mono_iff by blast
+      moreover have \<open>norm ((f \<otimes>\<^sub>A id) z) \<ge> 0\<close>
+        by simp        
+      moreover have \<open>(norm z) * K \<ge> 0\<close>
+        using \<open>0 < K\<close> by auto        
+      ultimately show ?thesis
+        by (simp add: \<open>(norm ((f \<otimes>\<^sub>A id) z))\<^sup>2 \<le> (norm z * K)\<^sup>2\<close> \<open>0 \<le> norm z * K\<close> power2_le_imp_le) 
     qed
     thus ?thesis
       by blast 
