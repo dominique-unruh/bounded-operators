@@ -3647,6 +3647,115 @@ z \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<
       \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>S \<subseteq> A \<times> B\<close> by auto
 qed
 
+
+lemma tensor_prod_expansion_right':
+  \<open>\<exists> \<phi> B. finite B \<and> (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> finite B \<and> 0 \<notin> B
+   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner ) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+proof-
+  have \<open>\<exists> V \<psi>. finite V \<and> z = (\<Sum>b\<in>V. (\<psi> b) \<otimes>\<^sub>a b)\<close>
+    using atensor_onto_explicit_normalized
+    by blast
+  then obtain V \<psi> where \<open>finite V\<close> and \<open>z = (\<Sum>b\<in>V. (\<psi> b) \<otimes>\<^sub>a b)\<close>
+    by blast
+  have \<open>\<exists> B. (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0)
+           \<and> complex_vector.span B = complex_vector.span V
+           \<and> 0 \<notin> B \<and> finite B\<close>
+    by (simp add: Gram_Schmidt \<open>finite V\<close>)
+  then obtain B where \<open>\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> and 
+    \<open>complex_vector.span B = complex_vector.span V\<close> and 
+    \<open>0 \<notin> B\<close> and \<open>finite B\<close>
+    by auto
+  have \<open>V \<subseteq> complex_vector.span B\<close>
+    using \<open>complex_vector.span B = complex_vector.span V\<close>
+    by (simp add: complex_vector.span_superset)
+  have f1: \<open>b \<in>  complex_vector.span B \<Longrightarrow> \<exists> t r. finite t \<and> t \<subseteq> B \<and> b = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+    for b
+    using complex_vector.span_explicit
+    by (smt complex_vector.span_base mem_Collect_eq) 
+  have \<open>b \<in>  complex_vector.span B \<Longrightarrow> \<exists> r. b = (\<Sum>a\<in>B. r a *\<^sub>C a)\<close>
+    for b
+  proof-
+    assume \<open>b \<in>  complex_vector.span B\<close>
+    hence \<open>\<exists> t r'. finite t \<and> t \<subseteq> B \<and> b = (\<Sum>a\<in>t. r' a *\<^sub>C a)\<close>
+      using f1 by blast
+    then obtain t r' where \<open>finite t\<close> and \<open>t \<subseteq> B\<close> and \<open>b = (\<Sum>a\<in>t. r' a *\<^sub>C a)\<close>
+      by blast
+    define r where \<open>r a = (if a \<in> t then r' a else 0)\<close> for a
+    have \<open>(\<Sum>a\<in>B-t. r a *\<^sub>C a) = 0\<close>
+    proof-
+      have \<open>a\<in>B-t \<Longrightarrow> r a *\<^sub>C a = 0\<close>
+        for a
+      proof-
+        assume \<open>a\<in>B-t\<close>
+        hence \<open>r a = 0\<close>
+          by (simp add: r_def)
+        thus ?thesis by simp
+      qed
+      thus ?thesis
+        by (simp add: \<open>\<And>a. a \<in> B - t \<Longrightarrow> r a *\<^sub>C a = 0\<close>) 
+    qed
+    moreover have \<open>(\<Sum>a\<in>t. r' a *\<^sub>C a) = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+    proof-
+      have \<open>a\<in>t \<Longrightarrow> r' a *\<^sub>C a = r a *\<^sub>C a\<close>
+        for a
+      proof-
+        assume \<open>a\<in>t\<close>
+        hence \<open>r' a = r a\<close>
+          using r_def by auto
+        thus ?thesis by simp
+      qed
+      thus ?thesis
+        by (meson sum.cong) 
+    qed
+    ultimately have \<open>b = (\<Sum>a\<in>B. r a *\<^sub>C a)\<close>
+      using  \<open>b = (\<Sum>a\<in>t. r' a *\<^sub>C a)\<close>
+      by (metis (mono_tags, lifting) \<open>finite B\<close> \<open>t \<subseteq> B\<close> eq_iff_diff_eq_0 sum_diff)
+    thus ?thesis by blast
+  qed
+  hence \<open>b \<in> V \<Longrightarrow> \<exists>r. b = (\<Sum>a\<in>B. r a *\<^sub>C a)\<close>
+    for b
+    using \<open>V \<subseteq> complex_vector.span B\<close>
+    by blast
+  hence \<open>\<forall> b. \<exists>r. b \<in> V \<longrightarrow> b = (\<Sum>a\<in>B. r a *\<^sub>C a)\<close>
+    by blast
+  hence \<open>\<exists>r. \<forall> b \<in> V. b = (\<Sum>a\<in>B. r b a *\<^sub>C a)\<close>
+    by metis
+  then obtain r where \<open>\<forall> b \<in> V. b = (\<Sum>a\<in>B. r b a *\<^sub>C a)\<close>
+    by blast
+  define \<phi> ::\<open>'b \<Rightarrow> 'a\<close> where \<open>\<phi> a = (\<Sum>b\<in>V. r b a *\<^sub>C (\<psi> b))\<close> for a
+  have \<open>z = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+  proof-
+    from  \<open>z = (\<Sum>b\<in>V. (\<psi> b) \<otimes>\<^sub>a b)\<close>
+    have  \<open>z = (\<Sum>b\<in>V. (\<psi> b) \<otimes>\<^sub>a (\<Sum>a\<in>B. r b a *\<^sub>C a))\<close>
+      using \<open>\<forall> b \<in> V. b = (\<Sum>a\<in>B. r b a *\<^sub>C a)\<close> 
+      by auto
+    also have  \<open>\<dots> = (\<Sum>b\<in>V. (\<Sum>a\<in>B. (\<psi> b) \<otimes>\<^sub>a (r b a *\<^sub>C a)))\<close>
+      by (simp add: atensor_distr_right_sum)
+    also have  \<open>\<dots> = (\<Sum>b\<in>V. (\<Sum>a\<in>B. r b a *\<^sub>C ( (\<psi> b) \<otimes>\<^sub>a a)  ))\<close>
+      by (meson atensor_mult_right sum.cong)
+    also have  \<open>\<dots> = (\<Sum>a\<in>B. (\<Sum>b\<in>V. r b a *\<^sub>C ( (\<psi> b) \<otimes>\<^sub>a a) ))\<close>
+      using sum.swap[where A = "V" and B = "B" and g = "\<lambda> b a. r b a *\<^sub>C ((\<psi> b) \<otimes>\<^sub>a a)"]
+      by auto
+    also have  \<open>\<dots> = (\<Sum>a\<in>B. (\<Sum>b\<in>V. (r b a *\<^sub>C (\<psi> b) \<otimes>\<^sub>a a) ))\<close>
+      by (metis (no_types, lifting) atensor_mult_left sum.cong)
+    also have  \<open>\<dots> = (\<Sum>a\<in>B. (\<Sum>b\<in>V. r b a *\<^sub>C (\<psi> b)) \<otimes>\<^sub>a a )\<close>
+      by (simp add: atensor_distr_left_sum)
+    also have  \<open>\<dots> = (\<Sum>a\<in>B. \<phi> a \<otimes>\<^sub>a a )\<close>
+      unfolding \<phi>_def
+      by blast
+    finally show ?thesis by blast
+  qed
+  thus ?thesis
+    using \<open>\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0\<close> \<open>0 \<notin> B\<close> \<open>finite B\<close>
+    by blast
+qed
+
+lemma tensor_prod_expansion_right:
+  \<open>\<exists> \<phi> B. finite B \<and> (\<forall>b\<in>B. \<forall>b'\<in>B. b \<noteq> b' \<longrightarrow> \<langle>b, b'\<rangle> = 0) \<and> (\<forall> b\<in>B. norm b = 1)
+   \<and> (z::'a::complex_inner\<otimes>\<^sub>a'b::complex_inner ) = (\<Sum>b\<in>B. (\<phi> b) \<otimes>\<^sub>a b)\<close>
+  sorry
+
+
 lemma algebraic_tensor_product_bounded_left:
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (f \<otimes>\<^sub>A id)\<close>
@@ -3725,6 +3834,7 @@ z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
       by blast 
   qed
 qed
+
 
 lemma algebraic_tensor_product_bounded_right:
   assumes \<open>bounded_clinear f\<close>
