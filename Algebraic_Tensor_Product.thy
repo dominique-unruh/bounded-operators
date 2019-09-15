@@ -4120,52 +4120,52 @@ proof-
       by blast 
   qed
   moreover have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) \<le> onorm f\<close>
-    proof-
-      have "\<forall>z. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z \<le>  K"
-      proof - (* sledgehammer *)
-        { fix aa :: "'a \<otimes>\<^sub>a 'c"
-          have ff1: "\<forall>r. r \<le> K \<or> \<not> r \<le> 0"
-            by (metis (full_types) K_def assms bounded_clinear.bounded_linear dual_order.trans onorm_pos_le)
-          have ff2: "\<forall>r. (0::real) / r = 0"
-            by (metis mult_zero_left times_divide_eq_right)
-          have ff3: "\<forall>a. norm (a::'a \<otimes>\<^sub>a 'c) = 0 \<or> norm ((f \<otimes>\<^sub>A id) a) / norm a \<le> K"
-            by (metis calculation(2) linordered_field_class.divide_right_mono nonzero_mult_div_cancel_left norm_ge_zero)
-          have "norm aa = 0 \<longrightarrow> norm ((f \<otimes>\<^sub>A id) aa) \<le> 0"
-            by (metis calculation(2) mult_zero_left)
-          then have "norm ((f \<otimes>\<^sub>A id) aa) / norm aa \<le> K"
-            using ff3 ff2 ff1 by (metis (no_types) linordered_field_class.divide_right_mono norm_ge_zero) }
-        then show ?thesis
-          by meson
-      qed
-      moreover have \<open>{norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} \<noteq> {}\<close>
-        by auto        
-      ultimately have "Sup {norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} \<le> K"
-      proof - (* sledgehammer *)
-        obtain rr :: "real set \<Rightarrow> real \<Rightarrow> real" where
-          f1: "\<And>R r. (Sup R \<le> r \<or> rr R r \<in> R \<or> R = {}) \<and> (\<not> rr R r \<le> r \<or> Sup R \<le> r \<or> R = {})"
-          using cSup_least by moura
-        moreover
-        { assume "\<not> rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<le> K"
-          then have "rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<notin> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<and> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<noteq> {}"
-            using \<open>\<forall>z. norm ((f \<otimes>\<^sub>A id) z) / norm z \<le> K\<close> by force
-          then have ?thesis
-            using f1 by meson }
-        ultimately show ?thesis
-          by auto
-      qed
-      moreover have \<open>Sup {norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} =  (SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x)\<close>
-        by (simp add: full_SetCompr_eq)        
-      ultimately have "(SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x) \<le> K"
-        by simp
-      moreover have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) = (SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x)\<close>
-        by (simp add: onorm_def)
-      ultimately have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) \<le> K\<close>
-        by simp
-      thus ?thesis unfolding K_def
-        by blast
+  proof-
+    have "\<forall>z. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z \<le>  K"
+    proof - (* sledgehammer *)
+      { fix aa :: "'a \<otimes>\<^sub>a 'c"
+        have ff1: "\<forall>r. r \<le> K \<or> \<not> r \<le> 0"
+          by (metis (full_types) K_def assms bounded_clinear.bounded_linear dual_order.trans onorm_pos_le)
+        have ff2: "\<forall>r. (0::real) / r = 0"
+          by (metis mult_zero_left times_divide_eq_right)
+        have ff3: "\<forall>a. norm (a::'a \<otimes>\<^sub>a 'c) = 0 \<or> norm ((f \<otimes>\<^sub>A id) a) / norm a \<le> K"
+          by (metis calculation(2) linordered_field_class.divide_right_mono nonzero_mult_div_cancel_left norm_ge_zero)
+        have "norm aa = 0 \<longrightarrow> norm ((f \<otimes>\<^sub>A id) aa) \<le> 0"
+          by (metis calculation(2) mult_zero_left)
+        then have "norm ((f \<otimes>\<^sub>A id) aa) / norm aa \<le> K"
+          using ff3 ff2 ff1 by (metis (no_types) linordered_field_class.divide_right_mono norm_ge_zero) }
+      then show ?thesis
+        by meson
     qed
-    ultimately show ?thesis
-      unfolding bounded_clinear_def by blast
+    moreover have \<open>{norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} \<noteq> {}\<close>
+      by auto        
+    ultimately have "Sup {norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} \<le> K"
+    proof - (* sledgehammer *)
+      obtain rr :: "real set \<Rightarrow> real \<Rightarrow> real" where
+        f1: "\<And>R r. (Sup R \<le> r \<or> rr R r \<in> R \<or> R = {}) \<and> (\<not> rr R r \<le> r \<or> Sup R \<le> r \<or> R = {})"
+        using cSup_least by moura
+      moreover
+      { assume "\<not> rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<le> K"
+        then have "rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<notin> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<and> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<noteq> {}"
+          using \<open>\<forall>z. norm ((f \<otimes>\<^sub>A id) z) / norm z \<le> K\<close> by force
+        then have ?thesis
+          using f1 by meson }
+      ultimately show ?thesis
+        by auto
+    qed
+    moreover have \<open>Sup {norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} =  (SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x)\<close>
+      by (simp add: full_SetCompr_eq)        
+    ultimately have "(SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x) \<le> K"
+      by simp
+    moreover have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) = (SUP x. norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) x) / norm x)\<close>
+      by (simp add: onorm_def)
+    ultimately have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) \<le> K\<close>
+      by simp
+    thus ?thesis unfolding K_def
+      by blast
+  qed
+  ultimately show ?thesis
+    unfolding bounded_clinear_def by blast
 qed
 
 lemma algebraic_tensor_product_bounded_left_bounded_clinear:
@@ -4180,248 +4180,259 @@ lemma algebraic_tensor_product_bounded_left_onorm:
   using assms algebraic_tensor_product_bounded_left
   by blast
 
-lemma swap_atensor_bounded_clinear:
-  \<open>bounded_clinear (swap_atensor::(('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner) \<Rightarrow> _))\<close>
-proof
-  show "clinear (swap_atensor::'a \<otimes>\<^sub>a 'b \<Rightarrow> _ \<otimes>\<^sub>a _)"
+lemma swap_atensor_bounded_clinear':
+  \<open>bounded_clinear (swap_atensor::(('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner) \<Rightarrow> _))
+\<and> onorm (swap_atensor::(('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner) \<Rightarrow> _)) \<le> 1\<close>
+proof-
+  have "clinear (swap_atensor::'a \<otimes>\<^sub>a 'b \<Rightarrow> _ \<otimes>\<^sub>a _)"
     by (simp add: swap_atensorI1)
-
-  show "\<exists>K. \<forall>x. norm (swap_atensor (x::'a \<otimes>\<^sub>a 'b)) \<le> norm x * K"
+  have f1: \<open>norm (swap_atensor (x \<otimes>\<^sub>a y)) = norm (x \<otimes>\<^sub>a y)\<close>
+    for x::'a and y::'b
+    by (simp add: atensor_norm_mult swap_atensorI2)      
+  have f2: \<open>norm (swap_atensor (z::'a \<otimes>\<^sub>a 'b)) \<le> norm z\<close>
+    for z
   proof-
-    have f1: \<open>norm (swap_atensor (x \<otimes>\<^sub>a y)) = norm (x \<otimes>\<^sub>a y)\<close>
-      for x::'a and y::'b
-      by (simp add: atensor_norm_mult swap_atensorI2)      
-    have \<open>norm (swap_atensor (z::'a \<otimes>\<^sub>a 'b)) \<le> norm z\<close>
-      for z
-    proof-
-      have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
-        by (simp add: atensor_onto)
-      have \<open>\<exists> A B S r. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+    have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
+      by (simp add: atensor_onto)
+    have \<open>\<exists> A B S r. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
   \<and> (\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> S \<subseteq> A \<times> B \<and>
   z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-        using tensor_prod_expansion by blast
-      then obtain A B S r where \<open>finite A\<close> and \<open>finite B\<close> and 
-        \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and 
-        \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and \<open>S \<subseteq> A \<times> B\<close> and
-        \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-        by blast
-      have \<open>finite S\<close>
-        using  \<open>finite A\<close>  \<open>finite B\<close> \<open>S \<subseteq> A \<times> B\<close>
-        by (meson finite_SigmaI rev_finite_subset)
-      have \<open>swap_atensor z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C swap_atensor (a \<otimes>\<^sub>a b))\<close>
-        using  \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-        by (smt \<open>clinear swap_atensor\<close> complex_vector.linear_scale complex_vector.linear_sum prod.case_distrib split_cong sum.cong)
-      also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
+      using tensor_prod_expansion by blast
+    then obtain A B S r where \<open>finite A\<close> and \<open>finite B\<close> and 
+      \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and 
+      \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and \<open>S \<subseteq> A \<times> B\<close> and
+      \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+      by blast
+    have \<open>finite S\<close>
+      using  \<open>finite A\<close>  \<open>finite B\<close> \<open>S \<subseteq> A \<times> B\<close>
+      by (meson finite_SigmaI rev_finite_subset)
+    have \<open>swap_atensor z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C swap_atensor (a \<otimes>\<^sub>a b))\<close>
+      using  \<open>z = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+      by (smt \<open>clinear swap_atensor\<close> complex_vector.linear_scale complex_vector.linear_sum prod.case_distrib split_cong sum.cong)
+    also have \<open>\<dots> = (\<Sum>(a,b)\<in>S. (r (a, b)) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
+    proof-
+      have \<open>swap_atensor (a \<otimes>\<^sub>a b) = b \<otimes>\<^sub>a a\<close>
+        for a::'a and b::'b
+        by (simp add: swap_atensorI2)          
+      thus ?thesis by simp
+    qed
+    finally have \<open>swap_atensor z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
+      by blast
+    have \<open>complex_of_real ((norm (swap_atensor z))\<^sup>2) =
+    (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * (r (a, b)) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
+    proof-
+      have \<open>(norm (swap_atensor z))^2 = (norm (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)))^2\<close>
+        using \<open>swap_atensor z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
+        by simp
+      also have \<open>\<dots> = \<langle> (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)), (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)) \<rangle>\<close>
+        using power2_norm_eq_cinner' by auto
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. \<langle> r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a),  (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<rangle> )\<close>
+        by (metis (mono_tags, lifting) case_prod_conv cinner_sum_left cond_case_prod_eta)
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle>))\<close>
+        by (smt cinner_sum_right prod.case_distrib split_cong sum.cong)
+          (* > 1 s *)
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>))\<close>
       proof-
-        have \<open>swap_atensor (a \<otimes>\<^sub>a b) = b \<otimes>\<^sub>a a\<close>
-          for a::'a and b::'b
-          by (simp add: swap_atensorI2)          
+        have \<open>(\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle>)
+            = (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>)\<close>
+          for a b
+        proof-
+          have \<open>\<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle> = 
+              (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>\<close>
+            for a' b'
+            by simp            
+          thus ?thesis
+            by presburger 
+        qed
         thus ?thesis by simp
       qed
-      finally have \<open>swap_atensor z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
-        by blast
-      have \<open>complex_of_real ((norm (swap_atensor z))\<^sup>2) =
-    (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * (r (a, b)) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * r (a, b) * \<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle>)\<close>
       proof-
-        have \<open>(norm (swap_atensor z))^2 = (norm (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)))^2\<close>
-          using \<open>swap_atensor z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<close>
-          by simp
-        also have \<open>\<dots> = \<langle> (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)), (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a)) \<rangle>\<close>
-          using power2_norm_eq_cinner' by auto
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. \<langle> r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a),  (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a))\<rangle> )\<close>
-          by (metis (mono_tags, lifting) case_prod_conv cinner_sum_left cond_case_prod_eta)
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle>))\<close>
-          by (smt cinner_sum_right prod.case_distrib split_cong sum.cong)
-            (* > 1 s *)
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>))\<close>
-        proof-
-          have \<open>(\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle>)
-            = (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>)\<close>
-            for a b
-          proof-
-            have \<open>\<langle>r (a, b) *\<^sub>C (b \<otimes>\<^sub>a a), r (a', b') *\<^sub>C (b' \<otimes>\<^sub>a a')\<rangle> = 
-              (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>\<close>
-              for a' b'
-              by simp            
-            thus ?thesis
-              by presburger 
-          qed
-          thus ?thesis by simp
-        qed
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * r (a, b) * \<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle>)\<close>
-        proof-
-          have \<open>(a,b) \<in> S \<Longrightarrow> (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>) = 
+        have \<open>(a,b) \<in> S \<Longrightarrow> (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>) = 
               (cnj (r (a, b))) * r (a, b) * \<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle>\<close>
-            for a b
-          proof-
-            assume \<open>(a,b) \<in> S\<close>
-            hence \<open>(a, b) \<in> A\<times>B\<close>
-              using \<open>S \<subseteq> A \<times> B\<close> by auto
-            hence \<open>a \<in> A\<close>
-              by simp
-            from \<open>(a, b) \<in> A\<times>B\<close>
-            have \<open>b \<in> B\<close>
-              by simp
-            have  \<open>(\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>)
+          for a b
+        proof-
+          assume \<open>(a,b) \<in> S\<close>
+          hence \<open>(a, b) \<in> A\<times>B\<close>
+            using \<open>S \<subseteq> A \<times> B\<close> by auto
+          hence \<open>a \<in> A\<close>
+            by simp
+          from \<open>(a, b) \<in> A\<times>B\<close>
+          have \<open>b \<in> B\<close>
+            by simp
+          have  \<open>(\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>)
   = (cnj (r (a, b))) * r (a, b) * \<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle>
   + (\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>)\<close>
-              using \<open>finite S\<close> \<open>(a,b) \<in> S\<close>
-              by (metis (no_types, lifting) case_prod_conv sum.remove)
-            moreover have \<open>(\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>) = 0\<close>
-            proof-
-              have \<open>(a', b')\<in>S-{(a, b)} \<Longrightarrow> (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
-                for a' b'
-              proof-
-                assume \<open>(a', b')\<in>S-{(a, b)}\<close>
-                hence \<open>(a', b') \<in> A\<times>B\<close>
-                  using \<open>S \<subseteq> A \<times> B\<close> by auto
-                hence \<open>a' \<in> A\<close>
-                  by simp
-                from \<open>(a', b') \<in> A\<times>B\<close>
-                have \<open>b' \<in> B\<close>
-                  by simp
-                have \<open>(a', b') \<noteq> (a, b)\<close>
-                  using \<open>(a', b')\<in>S-{(a, b)}\<close>
-                  by simp
-                hence \<open>a' \<noteq> a \<or> b' \<noteq> b\<close>
-                  by simp
-                moreover have \<open>\<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = \<langle>b, b'\<rangle> * \<langle>a, a'\<rangle>\<close>
-                  by (simp add: atensor_cinner_mult)
-                moreover have \<open>b \<noteq> b' \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
-                  using  \<open>b \<in> B\<close> \<open>b' \<in> B\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  by simp
-                moreover have \<open>a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  using  \<open>a \<in> A\<close> \<open>a' \<in> A\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  by simp
-                ultimately have \<open>\<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
-                  by auto
-                thus ?thesis
-                  by simp 
-              qed
-              hence \<open>\<forall> (a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
-                by blast
-              thus ?thesis
-                by (smt case_prodE case_prod_conv sum.not_neutral_contains_not_neutral) 
-            qed
-            ultimately show ?thesis by simp
-          qed
-          thus ?thesis
-            by (metis (no_types, lifting) split_cong sum.cong) 
-        qed
-        also have \<open>\<dots> =
-  (\<Sum>(a, b)\<in>S. cnj (r (a, b)) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
-        proof-
-          have \<open>\<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle> = \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>\<close>
-            for a::'a and b::'b
+            using \<open>finite S\<close> \<open>(a,b) \<in> S\<close>
+            by (metis (no_types, lifting) case_prod_conv sum.remove)
+          moreover have \<open>(\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle>) = 0\<close>
           proof-
-            have \<open>\<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle> = \<langle>b, b\<rangle> * \<langle>a, a\<rangle>\<close>
-              by (simp add: atensor_cinner_mult)            
-            moreover have \<open>\<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle> = \<langle>a, a\<rangle> * \<langle>b, b\<rangle>\<close>
-              by (simp add: atensor_cinner_mult)            
-            ultimately show ?thesis by simp
+            have \<open>(a', b')\<in>S-{(a, b)} \<Longrightarrow> (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
+              for a' b'
+            proof-
+              assume \<open>(a', b')\<in>S-{(a, b)}\<close>
+              hence \<open>(a', b') \<in> A\<times>B\<close>
+                using \<open>S \<subseteq> A \<times> B\<close> by auto
+              hence \<open>a' \<in> A\<close>
+                by simp
+              from \<open>(a', b') \<in> A\<times>B\<close>
+              have \<open>b' \<in> B\<close>
+                by simp
+              have \<open>(a', b') \<noteq> (a, b)\<close>
+                using \<open>(a', b')\<in>S-{(a, b)}\<close>
+                by simp
+              hence \<open>a' \<noteq> a \<or> b' \<noteq> b\<close>
+                by simp
+              moreover have \<open>\<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = \<langle>b, b'\<rangle> * \<langle>a, a'\<rangle>\<close>
+                by (simp add: atensor_cinner_mult)
+              moreover have \<open>b \<noteq> b' \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
+                using  \<open>b \<in> B\<close> \<open>b' \<in> B\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                by simp
+              moreover have \<open>a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                using  \<open>a \<in> A\<close> \<open>a' \<in> A\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                by simp
+              ultimately have \<open>\<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
+                by auto
+              thus ?thesis
+                by simp 
+            qed
+            hence \<open>\<forall> (a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>b \<otimes>\<^sub>a a, b' \<otimes>\<^sub>a a'\<rangle> = 0\<close>
+              by blast
+            thus ?thesis
+              by (smt case_prodE case_prod_conv sum.not_neutral_contains_not_neutral) 
           qed
-          thus ?thesis by simp
+          ultimately show ?thesis by simp
         qed
-        finally show ?thesis by blast
+        thus ?thesis
+          by (metis (no_types, lifting) split_cong sum.cong) 
       qed
-      moreover have \<open>complex_of_real ((norm  z)\<^sup>2) =
+      also have \<open>\<dots> =
   (\<Sum>(a, b)\<in>S. cnj (r (a, b)) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
       proof-
-        have \<open>(norm  z)^2 = (norm (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)))^2\<close>
-          using \<open>z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
-          by simp
-        also have \<open>\<dots> = \<langle> (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)), (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)) \<rangle>\<close>
-          using power2_norm_eq_cinner' by auto
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. \<langle> r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b),  (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<rangle> )\<close>
-          by (metis (mono_tags, lifting) case_prod_conv cinner_sum_left cond_case_prod_eta)
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle>))\<close>
-          by (smt cinner_sum_right prod.case_distrib split_cong sum.cong)
-            (* > 1 s *)
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>))\<close>
+        have \<open>\<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle> = \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>\<close>
+          for a::'a and b::'b
         proof-
-          have \<open>(\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle>)
-            = (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>)\<close>
-            for a b
-          proof-
-            have \<open>\<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle> = 
-              (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>\<close>
-              for a' b'
-              by simp            
-            thus ?thesis
-              by presburger 
-          qed
-          thus ?thesis by simp
+          have \<open>\<langle>b \<otimes>\<^sub>a a, b \<otimes>\<^sub>a a\<rangle> = \<langle>b, b\<rangle> * \<langle>a, a\<rangle>\<close>
+            by (simp add: atensor_cinner_mult)            
+          moreover have \<open>\<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle> = \<langle>a, a\<rangle> * \<langle>b, b\<rangle>\<close>
+            by (simp add: atensor_cinner_mult)            
+          ultimately show ?thesis by simp
         qed
-        also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
+        thus ?thesis by simp
+      qed
+      finally show ?thesis by blast
+    qed
+    moreover have \<open>complex_of_real ((norm  z)\<^sup>2) =
+  (\<Sum>(a, b)\<in>S. cnj (r (a, b)) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
+    proof-
+      have \<open>(norm  z)^2 = (norm (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)))^2\<close>
+        using \<open>z = (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<close>
+        by simp
+      also have \<open>\<dots> = \<langle> (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)), (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b)) \<rangle>\<close>
+        using power2_norm_eq_cinner' by auto
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. \<langle> r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b),  (\<Sum>(a, b)\<in>S. r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b))\<rangle> )\<close>
+        by (metis (mono_tags, lifting) case_prod_conv cinner_sum_left cond_case_prod_eta)
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle>))\<close>
+        by (smt cinner_sum_right prod.case_distrib split_cong sum.cong)
+          (* > 1 s *)
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>))\<close>
+      proof-
+        have \<open>(\<Sum>(a', b')\<in>S. \<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle>)
+            = (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>)\<close>
+          for a b
         proof-
-          have \<open>(a,b) \<in> S \<Longrightarrow> (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>) = 
+          have \<open>\<langle>r (a, b) *\<^sub>C (a \<otimes>\<^sub>a b), r (a', b') *\<^sub>C (a' \<otimes>\<^sub>a b')\<rangle> = 
+              (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>\<close>
+            for a' b'
+            by simp            
+          thus ?thesis
+            by presburger 
+        qed
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots> = (\<Sum>(a, b)\<in>S. (cnj (r (a, b))) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>)\<close>
+      proof-
+        have \<open>(a,b) \<in> S \<Longrightarrow> (\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>) = 
               (cnj (r (a, b))) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>\<close>
-            for a b
-          proof-
-            assume \<open>(a,b) \<in> S\<close>
-            hence \<open>(a, b) \<in> A\<times>B\<close>
-              using \<open>S \<subseteq> A \<times> B\<close> by auto
-            hence \<open>a \<in> A\<close>
-              by simp
-            from \<open>(a, b) \<in> A\<times>B\<close>
-            have \<open>b \<in> B\<close>
-              by simp
-            have  \<open>(\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>)
+          for a b
+        proof-
+          assume \<open>(a,b) \<in> S\<close>
+          hence \<open>(a, b) \<in> A\<times>B\<close>
+            using \<open>S \<subseteq> A \<times> B\<close> by auto
+          hence \<open>a \<in> A\<close>
+            by simp
+          from \<open>(a, b) \<in> A\<times>B\<close>
+          have \<open>b \<in> B\<close>
+            by simp
+          have  \<open>(\<Sum>(a', b')\<in>S. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>)
   = (cnj (r (a, b))) * r (a, b) * \<langle>a \<otimes>\<^sub>a b, a \<otimes>\<^sub>a b\<rangle>
   + (\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>)\<close>
-              using \<open>finite S\<close> \<open>(a,b) \<in> S\<close>
-              by (metis (no_types, lifting) case_prod_conv sum.remove)
-            moreover have \<open>(\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>) = 0\<close>
+            using \<open>finite S\<close> \<open>(a,b) \<in> S\<close>
+            by (metis (no_types, lifting) case_prod_conv sum.remove)
+          moreover have \<open>(\<Sum>(a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle>) = 0\<close>
+          proof-
+            have \<open>(a', b')\<in>S-{(a, b)} \<Longrightarrow> (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
+              for a' b'
             proof-
-              have \<open>(a', b')\<in>S-{(a, b)} \<Longrightarrow> (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
-                for a' b'
-              proof-
-                assume \<open>(a', b')\<in>S-{(a, b)}\<close>
-                hence \<open>(a', b') \<in> A\<times>B\<close>
-                  using \<open>S \<subseteq> A \<times> B\<close> by auto
-                hence \<open>a' \<in> A\<close>
-                  by simp
-                from \<open>(a', b') \<in> A\<times>B\<close>
-                have \<open>b' \<in> B\<close>
-                  by simp
-                have \<open>(a', b') \<noteq> (a, b)\<close>
-                  using \<open>(a', b')\<in>S-{(a, b)}\<close>
-                  by simp
-                hence \<open>a' \<noteq> a \<or> b' \<noteq> b\<close>
-                  by simp
-                moreover have \<open>\<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = \<langle>a, a'\<rangle> * \<langle>b, b'\<rangle>\<close>
-                  by (simp add: atensor_cinner_mult)
-                moreover have \<open>b \<noteq> b' \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
-                  using  \<open>b \<in> B\<close> \<open>b' \<in> B\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  by simp
-                moreover have \<open>a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  using  \<open>a \<in> A\<close> \<open>a' \<in> A\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  by simp
-                ultimately have \<open>\<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
-                  by auto
-                thus ?thesis
-                  by simp 
-              qed
-              hence \<open>\<forall> (a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
-                by blast
+              assume \<open>(a', b')\<in>S-{(a, b)}\<close>
+              hence \<open>(a', b') \<in> A\<times>B\<close>
+                using \<open>S \<subseteq> A \<times> B\<close> by auto
+              hence \<open>a' \<in> A\<close>
+                by simp
+              from \<open>(a', b') \<in> A\<times>B\<close>
+              have \<open>b' \<in> B\<close>
+                by simp
+              have \<open>(a', b') \<noteq> (a, b)\<close>
+                using \<open>(a', b')\<in>S-{(a, b)}\<close>
+                by simp
+              hence \<open>a' \<noteq> a \<or> b' \<noteq> b\<close>
+                by simp
+              moreover have \<open>\<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = \<langle>a, a'\<rangle> * \<langle>b, b'\<rangle>\<close>
+                by (simp add: atensor_cinner_mult)
+              moreover have \<open>b \<noteq> b' \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
+                using  \<open>b \<in> B\<close> \<open>b' \<in> B\<close> \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                by simp
+              moreover have \<open>a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                using  \<open>a \<in> A\<close> \<open>a' \<in> A\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                by simp
+              ultimately have \<open>\<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
+                by auto
               thus ?thesis
-                by (smt case_prodE case_prod_conv sum.not_neutral_contains_not_neutral) 
+                by simp 
             qed
-            ultimately show ?thesis by simp
+            hence \<open>\<forall> (a', b')\<in>S-{(a, b)}. (cnj (r (a, b))) * r (a', b') * \<langle>a \<otimes>\<^sub>a b, a' \<otimes>\<^sub>a b'\<rangle> = 0\<close>
+              by blast
+            thus ?thesis
+              by (smt case_prodE case_prod_conv sum.not_neutral_contains_not_neutral) 
           qed
-          thus ?thesis
-            by (metis (no_types, lifting) split_cong sum.cong) 
+          ultimately show ?thesis by simp
         qed
-        finally show ?thesis by simp
+        thus ?thesis
+          by (metis (no_types, lifting) split_cong sum.cong) 
       qed
-      ultimately show ?thesis
-        by (smt Complex_Inner_Product.norm_eq_square)
-          (* > 1 s *)
+      finally show ?thesis by simp
     qed
-    thus ?thesis
-      by (metis mult.comm_neutral) 
+    ultimately show ?thesis
+      by (smt Complex_Inner_Product.norm_eq_square)
+        (* > 1 s *)
   qed
+
+  have \<open>bounded_clinear (swap_atensor::(('a \<otimes>\<^sub>a 'b) \<Rightarrow> _))\<close>
+  proof
+    show "clinear (swap_atensor::'a \<otimes>\<^sub>a 'b \<Rightarrow> _ \<otimes>\<^sub>a _)"
+      by (simp add: swap_atensorI1)
+    show "\<exists>K. \<forall>x. norm (swap_atensor (x::'a \<otimes>\<^sub>a 'b)) \<le> norm x * K"
+      by (metis \<open>\<And>z. norm (swap_atensor z) \<le> norm z\<close> mult.comm_neutral)
+  qed
+  moreover have \<open>onorm (swap_atensor::(('a \<otimes>\<^sub>a 'b) \<Rightarrow> _)) \<le> 1\<close>
+    using f2
+    by (simp add: onorm_bound)
+  ultimately show ?thesis by blast
 qed
+
+lemma swap_atensor_bounded_clinear:
+  \<open>bounded_clinear (swap_atensor::(('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner) \<Rightarrow> _))\<close>
+  by (simp add: swap_atensor_bounded_clinear')
 
 lemma swap_atensor_conjugation:
   assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
@@ -4604,12 +4615,102 @@ proof-
 qed
 
 lemma onorm_swap_atensor_leq:
- \<open>onorm (swap_atensor::('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) \<le> 1\<close>
-  sorry
+  \<open>onorm (swap_atensor::('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) \<le> 1\<close>
+  using swap_atensor_bounded_clinear'
+  by blast
 
 lemma onorm_swap_atensor:
- \<open>onorm (swap_atensor::('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) = 1\<close>
-  sorry
+  assumes \<open>(UNIV::'a set)\<noteq>0\<close> and \<open>(UNIV::'b set)\<noteq>0\<close>
+  shows \<open>onorm (swap_atensor::('a::complex_inner \<otimes>\<^sub>a 'b::complex_inner \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) = 1\<close>
+proof-
+  have \<open>onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) \<le> 1\<close>
+    by (simp add: onorm_swap_atensor_leq)
+  moreover have \<open>onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) \<ge> 1\<close>
+  proof-
+    have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+      using \<open>(UNIV::'a set)\<noteq>0\<close>
+      by auto
+    then obtain x::'a where \<open>x\<noteq>0\<close>
+      by blast
+    have \<open>\<exists> y::'b. y \<noteq> 0\<close>
+      using \<open>(UNIV::'b set)\<noteq>0\<close>
+      by auto
+    then obtain y::'b where \<open>y\<noteq>0\<close>
+      by blast
+
+    have \<open>onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) = (SUP z::'a \<otimes>\<^sub>a 'b. (norm (swap_atensor z))/(norm z))\<close>
+      using onorm_def by fastforce
+    also have \<open>(SUP z::'a \<otimes>\<^sub>a 'b. (norm (swap_atensor z))/(norm z)) \<ge> (norm (swap_atensor (x \<otimes>\<^sub>a y)))/(norm (x \<otimes>\<^sub>a y))\<close>
+    proof-
+      have \<open>\<exists>K. \<forall>z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K \<and> K \<ge> 0\<close>
+      proof-
+        have \<open>bounded_clinear (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a))\<close>
+          by (simp add: swap_atensor_bounded_clinear)
+        hence \<open>\<exists>K. \<forall>z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+          unfolding bounded_clinear_def by blast
+        then obtain K where \<open>\<And> z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+          by blast
+        have \<open>norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * (abs K)\<close>
+          for z
+          using \<open>\<And> z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+          by (smt mult_less_cancel_left_disj norm_ge_zero)          
+        moreover have \<open>(abs K) \<ge> 0\<close>
+          by simp          
+        ultimately show ?thesis
+          by blast 
+      qed
+      then obtain K where \<open>\<And> z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+        and \<open>K \<ge> 0\<close>
+        by blast    
+      have \<open>(norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z))/(norm z) \<le> K\<close>
+        for z
+      proof-
+        have \<open>norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+          using \<open>\<And> z. norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z) \<le> norm z * K\<close>
+          by blast
+        thus ?thesis
+          by (smt \<open>0 \<le> K\<close> linordered_field_class.divide_nonneg_nonpos linordered_field_class.divide_right_mono nonzero_mult_div_cancel_left norm_ge_zero)          
+      qed
+      hence \<open>bdd_above {(norm ((swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) z))/(norm z) | z. True}\<close>
+        unfolding bdd_above_def
+        by blast
+      thus ?thesis
+      proof -
+        have "bdd_above (range (\<lambda>a. norm (swap_atensor (a::'a \<otimes>\<^sub>a 'b)) / norm a))"
+          by (metis \<open>bdd_above {norm (swap_atensor z) / norm z |z. True}\<close> full_SetCompr_eq)
+        then show ?thesis
+          by (meson UNIV_I cSUP_upper)
+      qed 
+    qed
+    also have \<open>(norm (swap_atensor (x \<otimes>\<^sub>a y)))/(norm (x \<otimes>\<^sub>a y)) = 1\<close>
+    proof-
+      have \<open>norm (swap_atensor (x \<otimes>\<^sub>a y)) = norm (x \<otimes>\<^sub>a y)\<close>
+      proof-
+        have \<open>swap_atensor (x \<otimes>\<^sub>a y) = y \<otimes>\<^sub>a x\<close>
+          using swap_atensorI2 by auto
+        hence \<open>norm (swap_atensor (x \<otimes>\<^sub>a y)) = norm (y \<otimes>\<^sub>a x)\<close>
+          by simp
+        also have \<open>\<dots> = norm y * norm x\<close>
+          by (simp add: atensor_norm_mult)
+        also have \<open>\<dots> = norm x * norm y\<close>
+          by simp
+        also have \<open>\<dots> = norm (x \<otimes>\<^sub>a y)\<close>
+          by (simp add: atensor_norm_mult)
+        finally show ?thesis by blast
+      qed
+      moreover have \<open>norm (x \<otimes>\<^sub>a y) \<noteq> 0\<close>
+      proof-
+        have \<open>x \<otimes>\<^sub>a y \<noteq> 0\<close>
+          by (simp add: \<open>x \<noteq> 0\<close> \<open>y \<noteq> 0\<close> tensor_no_zero_divisors)
+        thus ?thesis
+          by simp 
+      qed
+      ultimately show ?thesis by auto
+    qed
+    finally show ?thesis by blast
+  qed
+  ultimately show ?thesis by simp
+qed
 
 lemma algebraic_tensor_product_bounded_right_onorm:
   fixes f :: \<open>'b::complex_inner \<Rightarrow> 'c::complex_inner\<close>
@@ -4641,40 +4742,40 @@ proof-
       thus ?thesis
         by (meson \<open>\<lbrakk>bounded_linear swap_atensor; bounded_linear (f \<otimes>\<^sub>A id \<circ> swap_atensor)\<rbrakk> \<Longrightarrow> onorm (swap_atensor \<circ> (f \<otimes>\<^sub>A id \<circ> swap_atensor)) \<le> onorm swap_atensor * onorm (f \<otimes>\<^sub>A id \<circ> swap_atensor)\<close> \<open>bounded_clinear (f \<otimes>\<^sub>A id \<circ> swap_atensor)\<close> bounded_clinear.bounded_linear)
     qed
-  also have \<open>\<dots> \<le> (onorm (swap_atensor::'c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) * onorm (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) * (onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)))\<close>
-  proof-
-    have \<open>onorm (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) \<ge> 0\<close>
+    also have \<open>\<dots> \<le> (onorm (swap_atensor::'c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) * onorm (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) * (onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)))\<close>
     proof-
-      have \<open>bounded_clinear (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c))\<close>
-        by (simp add: swap_atensor_bounded_clinear)      
-      thus ?thesis 
-        using onorm_pos_le[where f = "swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)"]
-         by (smt bounded_clinear.bounded_linear)
-    qed
-    moreover have \<open>onorm ( (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor ) \<ge> 0\<close>
-    proof-
-      have \<open>bounded_clinear ((f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor)\<close>
+      have \<open>onorm (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) \<ge> 0\<close>
       proof-
-        have \<open>bounded_clinear (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a))\<close>
-          using \<open>bounded_clinear f\<close>
-          by (simp add: algebraic_tensor_product_bounded)
-        moreover have \<open>bounded_clinear (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a))\<close>
-          by (simp add: swap_atensor_bounded_clinear)
-        ultimately show ?thesis by (smt \<open>bounded_clinear (f \<otimes>\<^sub>A id \<circ> swap_atensor)\<close>)
+        have \<open>bounded_clinear (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c))\<close>
+          by (simp add: swap_atensor_bounded_clinear)      
+        thus ?thesis 
+          using onorm_pos_le[where f = "swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)"]
+          by (smt bounded_clinear.bounded_linear)
       qed
-      thus ?thesis 
-        using onorm_pos_le[where f = "(f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor"]
-         by (smt bounded_clinear.bounded_linear)
-     qed
-    moreover  have \<open>onorm ( (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor ) \<le> onorm (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) * (onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)))\<close>
-      using Operator_Norm.onorm_compose[where f = "(f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a))"
-          and g = "swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)"]
-      by (simp add: algebraic_tensor_product_bounded assms bounded_clinear.bounded_linear swap_atensor_bounded_clinear)     
-    ultimately show ?thesis 
-      by (smt linordered_field_class.sign_simps(23) mult_mono)
-  qed
-  finally show ?thesis
-    by (simp add: f1 fun.map_comp)           
+      moreover have \<open>onorm ( (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor ) \<ge> 0\<close>
+      proof-
+        have \<open>bounded_clinear ((f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor)\<close>
+        proof-
+          have \<open>bounded_clinear (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a))\<close>
+            using \<open>bounded_clinear f\<close>
+            by (simp add: algebraic_tensor_product_bounded)
+          moreover have \<open>bounded_clinear (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a))\<close>
+            by (simp add: swap_atensor_bounded_clinear)
+          ultimately show ?thesis by (smt \<open>bounded_clinear (f \<otimes>\<^sub>A id \<circ> swap_atensor)\<close>)
+        qed
+        thus ?thesis 
+          using onorm_pos_le[where f = "(f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor"]
+          by (smt bounded_clinear.bounded_linear)
+      qed
+      moreover  have \<open>onorm ( (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) \<circ> swap_atensor ) \<le> onorm (f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a)) * (onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)))\<close>
+        using Operator_Norm.onorm_compose[where f = "(f \<otimes>\<^sub>A (id::'a\<Rightarrow>'a))"
+            and g = "swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)"]
+        by (simp add: algebraic_tensor_product_bounded assms bounded_clinear.bounded_linear swap_atensor_bounded_clinear)     
+      ultimately show ?thesis 
+        by (smt linordered_field_class.sign_simps(23) mult_mono)
+    qed
+    finally show ?thesis
+      by (simp add: f1 fun.map_comp)           
   qed
   moreover have \<open>onorm (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) = 1\<close>
     using onorm_swap_atensor by blast
@@ -4696,7 +4797,7 @@ proof-
     using \<open>bounded_clinear g\<close>
     by (simp add: algebraic_tensor_product_bounded assms(1))
   have \<open>(((id::'b\<Rightarrow>'b) \<otimes>\<^sub>A g) \<circ> (f \<otimes>\<^sub>A (id::'c \<Rightarrow>'c))) z = (f \<otimes>\<^sub>A g) z\<close>
-      for z
+    for z
     by (simp add: assms(1) assms(2) tensor_from_id_comp)
   hence \<open>onorm (f \<otimes>\<^sub>A g) = onorm (((id::'b\<Rightarrow>'b) \<otimes>\<^sub>A g) \<circ> (f \<otimes>\<^sub>A (id::'c \<Rightarrow>'c)))\<close>
     by (simp add: assms(1) assms(2) tensor_from_id_comp)
@@ -4711,22 +4812,233 @@ proof-
         algebraic_tensor_product_bounded_right_onorm[where f = "g"]
       by blast
     moreover have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow>'c)) \<le> onorm f\<close>
-       using \<open>bounded_clinear f\<close>
+      using \<open>bounded_clinear f\<close>
         algebraic_tensor_product_bounded_left_onorm[where f = "f"]
-       by blast
+      by blast
     ultimately show ?thesis
       by (simp add: \<open>bounded_clinear (f \<otimes>\<^sub>A id)\<close> assms(2) bounded_clinear.bounded_linear mult_mono onorm_pos_le) 
   qed
   finally show ?thesis
-    by (simp add: linordered_field_class.sign_simps(24)) 
+    by (simp add: semiring_normalization_rules(7)) 
 qed
-
 
 lemma algebraic_tensor_product_bounded_norm:
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
   assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
   shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
-  sorry
+proof-
+  have \<open>onorm (f \<otimes>\<^sub>A g) \<le> onorm f * onorm g\<close>
+    by (simp add: algebraic_tensor_product_bounded_norm' assms(1) assms(2))    
+  moreover have \<open>onorm (f \<otimes>\<^sub>A g) \<ge> onorm f * onorm g\<close>
+  proof-
+    have \<open>onorm f = (SUP x. (norm (f x))/(norm x) )\<close>
+      using onorm_def by fastforce
+    also have \<open>\<dots> = Sup { (norm (f x))/(norm x) | x. True }\<close>
+      by (simp add: full_SetCompr_eq)
+    finally have \<open>onorm f = Sup { (norm (f x))/(norm x) | x. True }\<close>
+      by blast
+    moreover have \<open>{ (norm (f x))/(norm x) | x. True } \<noteq> {}\<close>
+      by auto
+    moreover have \<open>bdd_above { (norm (f x))/(norm x) | x. True }\<close>
+    proof-
+      have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
+        using \<open>bounded_clinear f\<close>
+        unfolding bounded_clinear_def
+        by blast
+      hence \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K \<and> K \<ge> 0\<close>
+      proof - (* sledgehammer *)
+        { fix aa :: "real \<Rightarrow> 'a"
+          have ff1: "\<forall>a r. r * norm (a::'a) \<le> 0 \<or> 0 \<le> r"
+            by (metis linear mult_nonneg_nonpos2 norm_ge_zero)
+          obtain rr :: real where
+            "\<forall>a. norm (f a) \<le> rr * norm a"
+            by (metis (no_types) \<open>\<exists>K. \<forall>x. norm (f x) \<le> norm x * K\<close> ordered_field_class.sign_simps(28))
+          then have "\<exists>r. norm (f (aa r)) \<le> norm (aa r) * r \<and> 0 \<le> r"
+            using ff1 by (metis (no_types) mult_zero_left order.trans ordered_field_class.sign_simps(28)) }
+        then show ?thesis
+          by (metis (full_types))
+      qed
+      then obtain K where \<open>\<And> x. norm (f x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>
+        by blast
+      have \<open>(norm (f x))/(norm x) \<le>  K\<close>
+        for x
+      proof (cases \<open>x = 0\<close>)
+        show "norm (f x) / norm x \<le> K"
+          if "x = 0"
+          using that
+          by (simp add: \<open>0 \<le> K\<close>) 
+        show "norm (f x) / norm x \<le> K"
+          if "x \<noteq> 0"
+          using that
+          by (smt \<open>\<And>x. norm (f x) \<le> norm x * K\<close> nice_ordered_field_class.pos_less_divide_eq nonzero_mult_div_cancel_left norm_le_zero_iff) 
+      qed
+      thus ?thesis
+        by fastforce 
+    qed
+    ultimately have \<open>onorm f \<in> closure { (norm (f x))/(norm x) | x. True}\<close>
+      using closure_contains_Sup by auto
+    hence \<open>\<exists> t. (\<forall> n. t n \<in> { (norm (f x))/(norm x) | x. True }) \<and> t \<longlonglongrightarrow> onorm f\<close>
+      using closure_sequential by blast
+    then obtain t::\<open>nat \<Rightarrow> _\<close> where \<open>\<forall> n. t n \<in> { (norm (f x))/(norm x) | x. True }\<close>
+      and \<open>t \<longlonglongrightarrow> onorm f\<close>
+      by blast
+    from  \<open>\<forall> n. t n \<in> { (norm (f x))/(norm x) | x. True }\<close>
+    have \<open>\<forall> n. \<exists> x.  t n = (norm (f x))/(norm x)\<close>
+      by simp
+    hence \<open>\<exists> x. \<forall> n. t n = (norm (f (x n)))/(norm (x n))\<close>
+      by metis
+    then obtain x where \<open>\<And> n. t n = (norm (f (x n)))/(norm (x n))\<close>
+      by blast
+    have \<open>onorm g = (SUP x. (norm (g x))/(norm x) )\<close>
+      using onorm_def by fastforce
+    also have \<open>\<dots> = Sup { (norm (g x))/(norm x) | x. True }\<close>
+      by (simp add: full_SetCompr_eq)
+    finally have \<open>onorm g = Sup { (norm (g x))/(norm x) | x. True }\<close>
+      by blast
+    moreover have \<open>{ (norm (g x))/(norm x) | x. True } \<noteq> {}\<close>
+      by auto
+    moreover have \<open>bdd_above { (norm (g x))/(norm x) | x. True }\<close>
+    proof-
+      have \<open>\<exists> K. \<forall> x. norm (g x) \<le> norm x * K\<close>
+        using \<open>bounded_clinear g\<close>
+        unfolding bounded_clinear_def
+        by blast
+      hence \<open>\<exists> K. \<forall> x. norm (g x) \<le> norm x * K \<and> K \<ge> 0\<close>
+      proof -
+        have "\<exists>r. \<forall>c. 0 \<le> r \<and> norm (g c) \<le> norm c * r"
+          by (metis \<open>\<exists>K. \<forall>x. norm (g x) \<le> norm x * K\<close> leI mult_zero_left norm_ge_zero order.trans ordered_field_class.sign_simps(28) real_scaleR_def scaleR_le_0_iff)
+        then show ?thesis
+          by metis
+      qed
+      then obtain K where \<open>\<And> x. norm (g x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>
+        by blast
+      have \<open>(norm (g x))/(norm x) \<le>  K\<close>
+        for x
+      proof (cases \<open>x = 0\<close>)
+        show "norm (g x) / norm x \<le> K"
+          if "x = 0"
+          using that
+          by (simp add: \<open>0 \<le> K\<close>) 
+        show "norm (g x) / norm x \<le> K"
+          if "x \<noteq> 0"
+          using that
+          by (smt \<open>\<And>x. norm (g x) \<le> norm x * K\<close> nice_ordered_field_class.pos_less_divide_eq nonzero_mult_div_cancel_left norm_le_zero_iff) 
+      qed
+      thus ?thesis
+        by fastforce 
+    qed
+    ultimately have \<open>onorm g \<in> closure { (norm (g x))/(norm x) | x. True}\<close>
+      using closure_contains_Sup by auto
+    hence \<open>\<exists> t. (\<forall> n. t n \<in> { (norm (g x))/(norm x) | x. True }) \<and> t \<longlonglongrightarrow> onorm g\<close>
+      using closure_sequential by blast
+    then obtain s::\<open>nat \<Rightarrow> _\<close> where \<open>\<forall> n. s n \<in> { (norm (g x))/(norm x) | x. True }\<close>
+      and \<open>s \<longlonglongrightarrow> onorm g\<close>
+      by blast
+    from  \<open>\<forall> n. s n \<in> { (norm (g x))/(norm x) | x. True }\<close>
+    have \<open>\<forall> n. \<exists> x.  s n = (norm (g x))/(norm x)\<close>
+      by simp
+    hence \<open>\<exists> y. \<forall> n. s n = (norm (g (y n)))/(norm (y n))\<close>
+      by metis
+    then obtain y where \<open>\<And> n. s n = (norm (g (y n)))/(norm (y n))\<close>
+      by blast
+
+    have \<open>onorm (f \<otimes>\<^sub>A g) = (SUP z. (norm ((f \<otimes>\<^sub>A g) z))/(norm z))\<close>
+      using onorm_def by fastforce
+    moreover have \<open>(SUP z. (norm ((f \<otimes>\<^sub>A g) z))/(norm z)) = Sup {(norm ((f \<otimes>\<^sub>A g) z))/(norm z) | z. True}\<close>
+      by (simp add: full_SetCompr_eq)      
+    moreover have \<open>Sup {(norm ((f \<otimes>\<^sub>A g) z))/(norm z) | z. True} \<ge> (norm ((f \<otimes>\<^sub>A g) z))/(norm z)\<close>
+      for z
+    proof-
+      have \<open>{(norm ((f \<otimes>\<^sub>A g) z))/(norm z) | z. True} \<noteq> {}\<close>
+        by auto        
+      moreover have \<open>bdd_above {(norm ((f \<otimes>\<^sub>A g) z))/(norm z) | z. True}\<close>
+      proof-
+        have \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+          by (simp add: algebraic_tensor_product_bounded assms(1) assms(2))
+        hence \<open>\<exists>K. \<forall>x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K\<close>
+          unfolding bounded_clinear_def
+          by blast
+        hence \<open>\<exists>K. \<forall>x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K \<and> K \<ge> 0\<close>
+        proof - (* sledgehammer *)
+          { fix aa :: "real \<Rightarrow> 'a \<otimes>\<^sub>a 'c"
+            have "\<exists>r. \<forall>a. norm ((f \<otimes>\<^sub>A g) a) \<le> norm a * r"
+              by (metis \<open>\<exists>K. \<forall>x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K\<close>)
+            then obtain rr :: real where
+              ff1: "\<And>a. norm ((f \<otimes>\<^sub>A g) a) \<le> rr * norm a"
+              by (metis semiring_normalization_rules(7))
+            moreover
+            { assume "rr < 0 \<and> 0 \<le> norm (aa 0)"
+              then have "\<exists>r\<ge>0. norm ((f \<otimes>\<^sub>A g) (aa r)) \<le> r * norm (aa r)"
+                using ff1 by (metis (no_types) mult_zero_left order.trans real_scaleR_def scaleR_le_0_iff) }
+            ultimately have "\<exists>r. norm ((f \<otimes>\<^sub>A g) (aa r)) \<le> norm (aa r) * r \<and> 0 \<le> r"
+              by (metis (no_types) leI norm_ge_zero semiring_normalization_rules(7)) }
+          then show ?thesis
+            by (metis (full_types))
+        qed
+        then obtain K where \<open>\<And> x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>
+          by blast
+        have \<open>(norm ((f \<otimes>\<^sub>A g) t))/(norm t) \<le> K\<close>
+          for t
+        proof (cases \<open>t = 0\<close>)
+          show "norm ((f \<otimes>\<^sub>A g) t) / norm t \<le> K"
+            if "t = 0"
+            using that
+            by (simp add: \<open>0 \<le> K\<close>) 
+          show "norm ((f \<otimes>\<^sub>A g) t) / norm t \<le> K"
+            if "t \<noteq> 0"
+            using that \<open>\<And> x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K\<close> mult_le_cancel_right nonzero_eq_divide_eq 
+              norm_le_zero_iff ordered_field_class.sign_simps(28)
+            by (simp add: ordered_field_class.sign_simps(28) linordered_field_class.pos_divide_le_eq)
+        qed
+        thus ?thesis
+          by fastforce 
+      qed
+      ultimately show ?thesis
+        by (simp add: cSup_upper full_SetCompr_eq) 
+    qed
+    ultimately have \<open>onorm (f \<otimes>\<^sub>A g) \<ge> (norm ((f \<otimes>\<^sub>A g) z))/(norm z)\<close>
+      for z::\<open>'a \<otimes>\<^sub>a 'c\<close>
+      by simp
+    hence \<open>onorm (f \<otimes>\<^sub>A g) \<ge> (norm ((f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n))))/(norm ((x n)\<otimes>\<^sub>a(y n)))\<close>
+      for n
+      by simp
+    moreover have \<open>(norm ((f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n))))/(norm ((x n)\<otimes>\<^sub>a(y n))) = (norm (f (x n)) / norm (x n)) * (norm (g (y n)) / norm (y n))\<close>
+      for n
+    proof-
+      have \<open>(f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n)) = (f (x n))\<otimes>\<^sub>a(g (y n))\<close>
+        by (simp add: assms(1) assms(2) atensorOp_separation bounded_clinear.is_clinear)
+      hence \<open>norm ((f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n))) = norm ((f (x n))\<otimes>\<^sub>a(g (y n)))\<close>
+        by simp
+      also have \<open>\<dots> = norm (f (x n)) * norm (g (y n))\<close>
+        by (simp add: atensor_norm_mult)
+      finally have \<open>norm ((f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n))) = norm (f (x n)) * norm (g (y n))\<close>
+        by blast
+      moreover have \<open>norm ((x n)\<otimes>\<^sub>a(y n)) = norm (x n) * norm (y n)\<close>
+        by (simp add: atensor_norm_mult)
+      ultimately have \<open>norm ((f \<otimes>\<^sub>A g) ((x n)\<otimes>\<^sub>a(y n))) / norm ((x n)\<otimes>\<^sub>a(y n)) 
+        = (norm (f (x n)) * norm (g (y n)))/( norm (x n) * norm (y n))\<close>
+        by simp
+      also have \<open>\<dots> 
+        = (norm (f (x n)) / norm (x n)) * (norm (g (y n)) / norm (y n))\<close>
+        by simp
+      finally show ?thesis by blast
+    qed
+    moreover have \<open>(norm (f (x n)) / norm (x n)) * (norm (g (y n)) / norm (y n))
+          = t n * s n\<close>
+      for n
+      by (simp add: \<open>\<And>n. s n = norm (g (y n)) / norm (y n)\<close> \<open>\<And>n. t n = norm (f (x n)) / norm (x n)\<close>)
+    ultimately have \<open>t n * s n \<le> onorm (f \<otimes>\<^sub>A g)\<close>
+      for n
+      by simp
+    moreover have \<open>(\<lambda> n. t n * s n) \<longlonglongrightarrow> onorm f * onorm g\<close>
+      using \<open>t \<longlonglongrightarrow> onorm f\<close> and \<open>s \<longlonglongrightarrow> onorm g\<close>
+      using tendsto_mult by blast
+    ultimately have \<open>onorm f * onorm g \<le> onorm (f \<otimes>\<^sub>A g)\<close>
+      by (metis (no_types) LIMSEQ_le_const2 \<open>(\<lambda>n. t n * s n) \<longlonglongrightarrow> onorm f * onorm g\<close> \<open>\<And>n. t n * s n \<le> onorm (f \<otimes>\<^sub>A g)\<close>)
+    thus ?thesis by blast
+  qed
+  ultimately show ?thesis by simp
+qed
 
 unbundle no_free_notation
 
