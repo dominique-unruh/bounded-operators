@@ -2043,4 +2043,23 @@ proof
   qed
 qed
 
+lemma inclusion_completion_isometry:
+\<open>dist (inclusion_completion x) (inclusion_completion y) = dist x y\<close>
+  using dist_norm[where x = "x" and y = "y"]  
+  apply transfer
+  by simp 
+
+lemma inclusion_completion_continuous:
+  \<open>isCont inclusion_completion (a::'a::complex_inner)\<close>
+proof-
+  have \<open>isCont (map_fun id abs_completion (\<lambda>x n. x)) a\<close>
+    unfolding isCont_def apply auto unfolding LIM_def
+    apply auto using inclusion_completion_isometry
+    by (metis inclusion_completion.abs_eq)        
+  thus ?thesis
+    unfolding inclusion_completion_def apply transfer 
+    by blast
+qed
+
+
 end

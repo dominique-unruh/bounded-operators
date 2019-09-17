@@ -390,6 +390,17 @@ proof(transfer, unfold atensor_rel_def atensor_kernel_def)
 qed
 
 
+lemma atensor_distr_minus_left:
+  fixes y z :: "'a::complex_vector" and x :: "'b::complex_vector"
+  shows  \<open>(y-z) \<otimes>\<^sub>a x =  y \<otimes>\<^sub>a x  -  z \<otimes>\<^sub>a x\<close>
+  by (metis add_right_cancel atensor_distr_left diff_add_cancel)
+
+lemma atensor_distr_minus_right:
+  fixes y z :: "'a::complex_vector" and x :: "'b::complex_vector"
+  shows  \<open>x \<otimes>\<^sub>a (y-z) =  x \<otimes>\<^sub>a y  -  x \<otimes>\<^sub>a z\<close>
+  by (simp add: additive.diff additive.intro atensor_distr_right)
+
+
 lemma atensor_mult_left:
   fixes x :: "'a::complex_vector" and y :: "'b::complex_vector" and c :: complex
   shows \<open>(c *\<^sub>C x) \<otimes>\<^sub>a y  = c *\<^sub>C (x \<otimes>\<^sub>a y)\<close>
@@ -3457,7 +3468,6 @@ lemma atensor_cinner_mult:
 lemma atensor_norm_mult:
   fixes f :: \<open>'a::complex_inner\<close> and g :: \<open>'b::complex_inner\<close>
   shows \<open>norm (f \<otimes>\<^sub>a g) = norm f * norm g\<close>
-  using atensor_cinner_mult
 proof -
   have "norm f * norm g = sqrt (cmod \<langle>f, f\<rangle>) * sqrt (cmod \<langle>g, g\<rangle>)"
     by (metis norm_eq_sqrt_cinner)
@@ -4714,7 +4724,8 @@ qed
 
 lemma algebraic_tensor_product_bounded_right_onorm:
   fixes f :: \<open>'b::complex_inner \<Rightarrow> 'c::complex_inner\<close>
-  assumes \<open>bounded_clinear f\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>(UNIV::'a set) \<noteq> 0\<close>
+    and \<open>(UNIV::'b set) \<noteq> 0\<close> and \<open>(UNIV::'c set) \<noteq> 0\<close>
   shows \<open>onorm ((id::('a::complex_inner \<Rightarrow> _)) \<otimes>\<^sub>A f) \<le> onorm f\<close>
 proof-
   have \<open>bounded_clinear (id::('a::complex_inner \<Rightarrow> _))\<close>
@@ -4778,16 +4789,19 @@ proof-
       by (simp add: f1 fun.map_comp)           
   qed
   moreover have \<open>onorm (swap_atensor::('c \<otimes>\<^sub>a 'a \<Rightarrow> 'a \<otimes>\<^sub>a 'c)) = 1\<close>
-    using onorm_swap_atensor by blast
+    using \<open>(UNIV::'a set) \<noteq> 0\<close>  \<open>(UNIV::'c set) \<noteq> 0\<close> onorm_swap_atensor
+    by blast
   moreover have \<open>onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) = 1\<close>
-    using onorm_swap_atensor by blast
+    using \<open>(UNIV::'a set) \<noteq> 0\<close>  \<open>(UNIV::'b set) \<noteq> 0\<close> onorm_swap_atensor
+    by blast
   ultimately show ?thesis 
     by (smt algebraic_tensor_product_bounded_left_onorm assms mult_cancel_left1 mult_cancel_right1)
 qed
 
 lemma algebraic_tensor_product_bounded_norm':
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
-  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> and \<open>(UNIV::'a set) \<noteq> 0\<close>
+    and \<open>(UNIV::'b set) \<noteq> 0\<close> and \<open>(UNIV::'c set) \<noteq> 0\<close> and \<open>(UNIV::'d set) \<noteq> 0\<close> 
   shows \<open>onorm (f \<otimes>\<^sub>A g) \<le> onorm f * onorm g\<close>
 proof-
   have \<open>bounded_clinear ((id::'b\<Rightarrow>'b) \<otimes>\<^sub>A g)\<close>
@@ -4810,7 +4824,8 @@ proof-
     have \<open>onorm ((id::'b\<Rightarrow>'b) \<otimes>\<^sub>A g) \<le> onorm g\<close>
       using \<open>bounded_clinear g\<close>
         algebraic_tensor_product_bounded_right_onorm[where f = "g"]
-      by blast
+       \<open>(UNIV::'b set) \<noteq> 0\<close>  \<open>(UNIV::'c set) \<noteq> 0\<close>  \<open>(UNIV::'d set) \<noteq> 0\<close>
+      by auto
     moreover have \<open>onorm (f \<otimes>\<^sub>A (id::'c \<Rightarrow>'c)) \<le> onorm f\<close>
       using \<open>bounded_clinear f\<close>
         algebraic_tensor_product_bounded_left_onorm[where f = "f"]
@@ -4824,10 +4839,13 @@ qed
 
 lemma algebraic_tensor_product_bounded_norm:
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
-  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> and \<open>(UNIV::'a set) \<noteq> 0\<close>
+    and \<open>(UNIV::'b set) \<noteq> 0\<close> and \<open>(UNIV::'c set) \<noteq> 0\<close> and \<open>(UNIV::'d set) \<noteq> 0\<close>
   shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
 proof-
   have \<open>onorm (f \<otimes>\<^sub>A g) \<le> onorm f * onorm g\<close>
+    using \<open>(UNIV::'a set) \<noteq> 0\<close>
+     \<open>(UNIV::'b set) \<noteq> 0\<close>  \<open>(UNIV::'c set) \<noteq> 0\<close>  \<open>(UNIV::'d set) \<noteq> 0\<close>
     by (simp add: algebraic_tensor_product_bounded_norm' assms(1) assms(2))    
   moreover have \<open>onorm (f \<otimes>\<^sub>A g) \<ge> onorm f * onorm g\<close>
   proof-
@@ -4941,7 +4959,6 @@ proof-
       by metis
     then obtain y where \<open>\<And> n. s n = (norm (g (y n)))/(norm (y n))\<close>
       by blast
-
     have \<open>onorm (f \<otimes>\<^sub>A g) = (SUP z. (norm ((f \<otimes>\<^sub>A g) z))/(norm z))\<close>
       using onorm_def by fastforce
     moreover have \<open>(SUP z. (norm ((f \<otimes>\<^sub>A g) z))/(norm z)) = Sup {(norm ((f \<otimes>\<^sub>A g) z))/(norm z) | z. True}\<close>
@@ -5039,6 +5056,84 @@ proof-
   qed
   ultimately show ?thesis by simp
 qed
+
+lemma atensor_continuous:
+  fixes x::\<open>nat \<Rightarrow> 'a::chilbert_space\<close> and y::\<open>nat \<Rightarrow> 'b::chilbert_space\<close>
+  assumes \<open>x \<longlonglongrightarrow> a\<close> and \<open>y \<longlonglongrightarrow> b\<close>
+  shows \<open>(\<lambda> n. (x n) \<otimes>\<^sub>a (y n) ) \<longlonglongrightarrow> a \<otimes>\<^sub>a b\<close>
+proof-
+  have \<open>dist ((x n) \<otimes>\<^sub>a (y n)) (a \<otimes>\<^sub>a b) = norm (((x n) \<otimes>\<^sub>a (y n)) - (a \<otimes>\<^sub>a b))\<close>
+    for n
+    by (simp add: dist_norm)    
+  also have \<open>norm (((x n) \<otimes>\<^sub>a (y n)) - (a \<otimes>\<^sub>a b)) \<le> 
+            norm ((x n - a) \<otimes>\<^sub>a b) + norm ((x n) \<otimes>\<^sub>a (y n - b))\<close>
+    for n
+  proof-
+    have \<open>((x n) \<otimes>\<^sub>a (y n)) - (a \<otimes>\<^sub>a b) = (x n) \<otimes>\<^sub>a (y n - b) +  (x n - a) \<otimes>\<^sub>a b\<close>
+    proof-
+      have \<open>((x n) \<otimes>\<^sub>a (y n)) - ((x n) \<otimes>\<^sub>a b) = (x n) \<otimes>\<^sub>a (y n - b)\<close>
+        by (simp add: atensor_distr_minus_right)
+      moreover have \<open>(x n) \<otimes>\<^sub>a b - a \<otimes>\<^sub>a b = (x n - a) \<otimes>\<^sub>a b\<close>
+        by (simp add: atensor_distr_minus_left)        
+      ultimately show ?thesis
+        by (metis add_diff_eq diff_add_cancel)         
+    qed
+    hence \<open>norm ((x n) \<otimes>\<^sub>a (y n) - a \<otimes>\<^sub>a b) = norm ((x n) \<otimes>\<^sub>a (y n - b) +  (x n - a) \<otimes>\<^sub>a b)\<close>
+      by simp
+    thus ?thesis
+      by (smt norm_triangle_ineq) 
+  qed
+  also have \<open>norm ((x n - a) \<otimes>\<^sub>a b) + norm ((x n) \<otimes>\<^sub>a (y n - b)) =  
+            norm (x n - a) * norm b + norm (x n) * norm (y n - b)\<close>
+    for n
+  proof-
+    have \<open>norm ((x n - a) \<otimes>\<^sub>a b) = norm (x n - a) * norm b\<close>
+      by (simp add: atensor_norm_mult)      
+    moreover have \<open>norm ((x n) \<otimes>\<^sub>a (y n - b)) = norm (x n) * norm (y n - b)\<close>
+      by (simp add: atensor_norm_mult)      
+    ultimately show ?thesis by auto
+  qed
+  finally have \<open>dist (x n \<otimes>\<^sub>a y n) (a \<otimes>\<^sub>a b)
+  \<le> norm (x n - a) * norm b +
+     norm (x n) * norm (y n - b)\<close>
+    for n
+    by blast
+  hence \<open>norm (dist (x n \<otimes>\<^sub>a y n) (a \<otimes>\<^sub>a b))
+  \<le> norm (norm (x n - a) * norm b +
+     norm (x n) * norm (y n - b)) \<close>
+    for n
+    by simp    
+  moreover have \<open>(\<lambda> n. norm (x n - a) * norm b +
+     norm (x n) * norm (y n - b)) \<longlonglongrightarrow> 0\<close>
+  proof-
+    have \<open>(\<lambda> n. norm (x n - a) * norm b) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n. norm (x n - a)) \<longlonglongrightarrow> 0\<close>
+        using \<open>x \<longlonglongrightarrow> a\<close>
+        by (simp add: LIM_zero_iff tendsto_norm_zero) 
+      thus ?thesis
+        by (simp add: tendsto_mult_left_zero) 
+    qed
+    moreover have \<open>(\<lambda> n. norm (x n) * norm (y n - b)) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n. norm (y n - b)) \<longlonglongrightarrow> 0\<close>
+        using \<open>y \<longlonglongrightarrow> b\<close>
+        by (simp add: LIM_zero_iff tendsto_norm_zero)
+      thus ?thesis
+        by (metis (full_types) assms(1) tendsto_mult tendsto_norm vector_space_over_itself.scale_zero_right) 
+    qed
+    ultimately show ?thesis
+      by (simp add: tendsto_add_zero) 
+  qed
+  ultimately have \<open>(\<lambda> n. dist ((x n) \<otimes>\<^sub>a (y n)) (a \<otimes>\<^sub>a b) ) \<longlonglongrightarrow> 0\<close>
+    using Limits.tendsto_0_le[where F = "sequentially" and g = "\<lambda> n. dist (x n \<otimes>\<^sub>a y n) (a \<otimes>\<^sub>a b)" and K = "1"
+        and f = "(\<lambda> n. norm (x n - a) * norm b + norm (x n) * norm (y n - b))"]
+    by auto
+  thus ?thesis
+    using tendsto_dist_iff by auto 
+qed
+
+
 
 unbundle no_free_notation
 
