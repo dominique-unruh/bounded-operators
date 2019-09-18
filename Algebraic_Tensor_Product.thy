@@ -1963,6 +1963,14 @@ proof-
   ultimately show ?thesis by auto
 qed
 
+lemma tensor_zero_divisors_left:
+  \<open>0 \<otimes>\<^sub>a b = 0\<close>
+  by (metis add_cancel_right_right atensor_distr_left)
+
+lemma tensor_zero_divisors_right:
+  \<open>a \<otimes>\<^sub>a 0 = 0\<close>
+  by (simp add: additive_imples_zero atensor_distr_right)
+
 lemma tensor_inj_fst:
   fixes v\<^sub>1 v\<^sub>2 :: \<open>'a::complex_vector\<close> and w :: \<open>'b::complex_vector\<close>
   assumes \<open>v\<^sub>1 \<otimes>\<^sub>a w = v\<^sub>2 \<otimes>\<^sub>a w\<close> and \<open>w \<noteq> 0\<close>
@@ -3498,19 +3506,6 @@ proof-
     by (simp add: PythagoreanId) 
 qed
 
-(* TODO: move to Complex_Vector_Spaces *)
-lemma span_finite:
-  assumes \<open>z \<in> complex_vector.span T\<close>
-  shows \<open>\<exists> S. finite S \<and> S \<subseteq> T \<and> z \<in> complex_vector.span S\<close>
-proof-
-  have \<open>\<exists> S r. finite S \<and> S \<subseteq> T \<and> z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
-    using complex_vector.span_explicit[where b = "T"]
-      assms by auto
-  then obtain S r where \<open>finite S\<close> and \<open>S \<subseteq> T\<close> and \<open>z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
-    by blast
-  thus ?thesis
-    by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
-qed
 
 lemma span_finite_tensor:
   \<open>\<exists> A B. finite A  \<and> finite B \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
@@ -3520,7 +3515,7 @@ proof-
   have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
     by (simp add: atensor_onto)
   hence \<open>\<exists> W. finite W \<and> W \<subseteq> (range (case_prod (\<otimes>\<^sub>a))) \<and> z \<in> complex_vector.span W\<close>
-    by (simp add: Algebraic_Tensor_Product.span_finite)
+    by (simp add: Complex_Vector_Spaces.span_finite)
   then obtain W where \<open>finite W\<close> and \<open>W \<subseteq> (range (case_prod (\<otimes>\<^sub>a)))\<close> and 
     \<open>z \<in> complex_vector.span W\<close> by blast
   from \<open>W \<subseteq> (range (case_prod (\<otimes>\<^sub>a)))\<close>
@@ -4647,7 +4642,6 @@ proof-
       by auto
     then obtain y::'b where \<open>y\<noteq>0\<close>
       by blast
-
     have \<open>onorm (swap_atensor::('a \<otimes>\<^sub>a 'b \<Rightarrow> 'b \<otimes>\<^sub>a 'a)) = (SUP z::'a \<otimes>\<^sub>a 'b. (norm (swap_atensor z))/(norm z))\<close>
       using onorm_def by fastforce
     also have \<open>(SUP z::'a \<otimes>\<^sub>a 'b. (norm (swap_atensor z))/(norm z)) \<ge> (norm (swap_atensor (x \<otimes>\<^sub>a y)))/(norm (x \<otimes>\<^sub>a y))\<close>
@@ -4721,6 +4715,7 @@ proof-
   qed
   ultimately show ?thesis by simp
 qed
+
 
 lemma algebraic_tensor_product_bounded_right_onorm:
   fixes f :: \<open>'b::complex_inner \<Rightarrow> 'c::complex_inner\<close>
@@ -4837,7 +4832,7 @@ proof-
     by (simp add: semiring_normalization_rules(7)) 
 qed
 
-lemma algebraic_tensor_product_bounded_norm:
+lemma algebraic_tensor_product_bounded_norm_simplified:
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
   assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> and \<open>(UNIV::'a set) \<noteq> 0\<close>
     and \<open>(UNIV::'b set) \<noteq> 0\<close> and \<open>(UNIV::'c set) \<noteq> 0\<close> and \<open>(UNIV::'d set) \<noteq> 0\<close>
@@ -5056,6 +5051,290 @@ proof-
   qed
   ultimately show ?thesis by simp
 qed
+
+hide_fact algebraic_tensor_product_bounded_right_onorm
+hide_fact algebraic_tensor_product_bounded_left_onorm
+hide_fact algebraic_tensor_product_bounded_norm'
+
+lemma fun_dom_zero:
+  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
+  assumes \<open>clinear f\<close> and \<open>(UNIV::'a set) = 0\<close>
+  shows \<open>f = (\<lambda>_. 0)\<close>
+proof-
+  have \<open>f z = 0\<close>
+    for z
+  proof-
+    have \<open>z = 0\<close>
+      using \<open>(UNIV::'a set) = 0\<close>
+      by auto
+    moreover have \<open>f 0 = 0\<close>
+      using \<open>clinear f\<close>
+      by (simp add: complex_vector.linear_0)
+    ultimately show ?thesis by blast
+  qed
+  thus ?thesis by blast
+qed
+
+lemma fun_img_zero:
+  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
+  assumes \<open>(UNIV::'b set) = 0\<close>
+  shows \<open>f = (\<lambda>_. 0)\<close>
+proof-
+  have \<open>f z = 0\<close>
+    for z
+  proof(rule classical)
+    assume \<open>\<not> (f z = 0)\<close>
+    hence \<open>f z \<noteq> 0\<close>
+      by blast
+    moreover have \<open>f z \<in> (UNIV::'b set)\<close>
+      by simp
+    ultimately show ?thesis 
+      using \<open>(UNIV::'b set) = 0\<close>
+      by simp
+  qed
+  thus ?thesis by blast
+qed
+
+lemma UNIV_atensor_left:
+  assumes \<open>(UNIV::('a::complex_inner) set) = 0\<close>
+  shows \<open>(UNIV::('a\<otimes>\<^sub>a('b::complex_inner)) set) = 0\<close>
+proof-
+  have \<open>z = 0\<close>
+    for z::\<open>'a\<otimes>\<^sub>a'b\<close>
+  proof-
+    have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
+      by (simp add: atensor_onto)
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      using complex_vector.span_explicit[where b = "range (case_prod (\<otimes>\<^sub>a))"]
+      by (smt mem_Collect_eq)
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close> 
+      and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by blast
+    have \<open>a\<in>t \<Longrightarrow> a = 0\<close>
+      for a
+    proof-
+      assume \<open>a\<in>t\<close>
+      hence \<open>a \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
+        using  \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
+        by blast
+      hence \<open>\<exists> x y. a = x\<otimes>\<^sub>ay\<close>
+        by auto
+      then obtain x y where \<open>a = x\<otimes>\<^sub>ay\<close>
+        by blast
+      moreover have \<open>x = 0\<close>
+        using \<open>(UNIV::('a::complex_inner) set) = 0\<close>
+        by auto
+      moreover have \<open>(0::'a)\<otimes>\<^sub>ay = 0\<close>
+        using tensor_zero_divisors_left by auto        
+      ultimately show \<open>a = 0\<close>
+        by auto
+    qed
+    thus ?thesis using \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by (metis (no_types, lifting) complex_vector.scale_zero_right sum.cong sum.neutral_const)      
+  qed
+  thus ?thesis by auto
+qed
+
+lemma UNIV_atensor_right:
+  assumes \<open>(UNIV::('b::complex_inner) set) = 0\<close>
+  shows \<open>(UNIV::(('a::complex_inner)\<otimes>\<^sub>a'b) set) = 0\<close>
+proof-
+  have \<open>z = 0\<close>
+    for z::\<open>'a\<otimes>\<^sub>a'b\<close>
+  proof-
+    have \<open>z \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close>
+      by (simp add: atensor_onto)
+    hence \<open>\<exists> t r. finite t \<and> t \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      using complex_vector.span_explicit[where b = "range (case_prod (\<otimes>\<^sub>a))"]
+      by (smt mem_Collect_eq)
+    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close> 
+      and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by blast
+    have \<open>a\<in>t \<Longrightarrow> a = 0\<close>
+      for a
+    proof-
+      assume \<open>a\<in>t\<close>
+      hence \<open>a \<in> range (case_prod (\<otimes>\<^sub>a))\<close>
+        using  \<open>t \<subseteq> range (case_prod (\<otimes>\<^sub>a))\<close>
+        by blast
+      hence \<open>\<exists> x y. a = x\<otimes>\<^sub>ay\<close>
+        by auto
+      then obtain x y where \<open>a = x\<otimes>\<^sub>ay\<close>
+        by blast
+      moreover have \<open>y = 0\<close>
+        using \<open>(UNIV::('b::complex_inner) set) = 0\<close>
+        by auto
+      moreover have \<open>x\<otimes>\<^sub>a(0::'b) = 0\<close>
+        using tensor_zero_divisors_right by auto        
+      ultimately show \<open>a = 0\<close>
+        by auto
+    qed
+    thus ?thesis using \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      by (metis (no_types, lifting) complex_vector.scale_zero_right sum.cong sum.neutral_const)      
+  qed
+  thus ?thesis by auto
+qed
+
+lemma algebraic_tensor_product_bounded_norm_simplified_a:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> 
+    and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> 
+    and \<open>(UNIV::'a set) = 0\<close> 
+  shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
+proof-
+  have \<open>clinear f\<close>
+    using \<open>bounded_clinear f\<close>
+    unfolding bounded_clinear_def
+    by blast
+  hence \<open>f = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::'a set) = 0\<close> fun_dom_zero[where f = "f"]
+    by auto
+  hence \<open>onorm f = 0\<close>
+    by (simp add: onorm_eq_0)
+  have \<open>(UNIV::('a\<otimes>\<^sub>a'c) set) = 0\<close>
+    using \<open>(UNIV::'a set) = 0\<close> UNIV_atensor_left
+    by blast
+  have \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+    using \<open>bounded_clinear f\<close>  \<open>bounded_clinear g\<close>
+    by (simp add: algebraic_tensor_product_bounded)
+  hence \<open>clinear (f \<otimes>\<^sub>A g)\<close>
+    by (simp add: bounded_clinear_def)
+  hence \<open>f \<otimes>\<^sub>A g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::('a\<otimes>\<^sub>a'c) set) = 0\<close> fun_dom_zero[where f = "f \<otimes>\<^sub>A g"]
+    by auto
+  hence \<open>onorm (f \<otimes>\<^sub>A g) = 0\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: onorm_eq_0)
+  thus ?thesis using \<open>onorm f = 0\<close> by auto
+qed
+
+lemma algebraic_tensor_product_bounded_norm_simplified_c:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> 
+    and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> 
+    and \<open>(UNIV::'c set) = 0\<close> 
+  shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
+proof-
+  have \<open>clinear g\<close>
+    using \<open>bounded_clinear g\<close>
+    unfolding bounded_clinear_def
+    by blast
+  hence \<open>g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::'c set) = 0\<close> fun_dom_zero[where f = "g"]
+    by auto
+  hence \<open>onorm g = 0\<close>
+    by (simp add: onorm_eq_0)
+  have \<open>(UNIV::('a\<otimes>\<^sub>a'c) set) = 0\<close>
+    using \<open>(UNIV::'c set) = 0\<close> UNIV_atensor_right
+    by blast
+  have \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+    using \<open>bounded_clinear f\<close>  \<open>bounded_clinear g\<close>
+    by (simp add: algebraic_tensor_product_bounded)
+  hence \<open>clinear (f \<otimes>\<^sub>A g)\<close>
+    by (simp add: bounded_clinear_def)
+  hence \<open>f \<otimes>\<^sub>A g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::('a\<otimes>\<^sub>a'c) set) = 0\<close> fun_dom_zero[where f = "f \<otimes>\<^sub>A g"]
+    by auto
+  hence \<open>onorm (f \<otimes>\<^sub>A g) = 0\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: onorm_eq_0)
+  thus ?thesis using \<open>onorm g = 0\<close> by auto
+qed
+
+
+lemma algebraic_tensor_product_bounded_norm_simplified_b:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> 
+    and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> 
+    and \<open>(UNIV::'b set) = 0\<close> 
+  shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
+proof-
+  have \<open>clinear f\<close>
+    using \<open>bounded_clinear f\<close>
+    unfolding bounded_clinear_def
+    by blast
+  hence \<open>f = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::'b set) = 0\<close> fun_img_zero[where f = "f"]
+    by auto
+  hence \<open>onorm f = 0\<close>
+    by (simp add: onorm_eq_0)
+  have \<open>(UNIV::('b\<otimes>\<^sub>a'd) set) = 0\<close>
+    using \<open>(UNIV::'b set) = 0\<close> UNIV_atensor_left
+    by blast
+  have \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+    using \<open>bounded_clinear f\<close>  \<open>bounded_clinear g\<close>
+    by (simp add: algebraic_tensor_product_bounded)
+  hence \<open>clinear (f \<otimes>\<^sub>A g)\<close>
+    by (simp add: bounded_clinear_def)
+  hence \<open>f \<otimes>\<^sub>A g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::('b\<otimes>\<^sub>a'd) set) = 0\<close> fun_dom_zero[where f = "f \<otimes>\<^sub>A g"]
+    by auto
+  hence \<open>onorm (f \<otimes>\<^sub>A g) = 0\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: onorm_eq_0)
+  thus ?thesis using \<open>onorm f = 0\<close> by auto
+qed
+
+lemma algebraic_tensor_product_bounded_norm_simplified_d:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> 
+    and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close> 
+    and \<open>(UNIV::'d set) = 0\<close> 
+  shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
+proof-
+  have \<open>clinear g\<close>
+    using \<open>bounded_clinear g\<close>
+    unfolding bounded_clinear_def
+    by blast
+  hence \<open>g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::'d set) = 0\<close> fun_img_zero[where f = "g"]
+    by auto
+  hence \<open>onorm g = 0\<close>
+    by (simp add: onorm_eq_0)
+  have \<open>(UNIV::('b\<otimes>\<^sub>a'd) set) = 0\<close>
+    using \<open>(UNIV::'d set) = 0\<close> UNIV_atensor_right
+    by blast
+  have \<open>bounded_clinear (f \<otimes>\<^sub>A g)\<close>
+    using \<open>bounded_clinear f\<close>  \<open>bounded_clinear g\<close>
+    by (simp add: algebraic_tensor_product_bounded)
+  hence \<open>clinear (f \<otimes>\<^sub>A g)\<close>
+    by (simp add: bounded_clinear_def)
+  hence \<open>f \<otimes>\<^sub>A g = (\<lambda> _. 0)\<close>
+    using  \<open>(UNIV::('b\<otimes>\<^sub>a'd) set) = 0\<close> fun_dom_zero[where f = "f \<otimes>\<^sub>A g"]
+    by auto
+  hence \<open>onorm (f \<otimes>\<^sub>A g) = 0\<close>
+    using \<open>bounded_clinear f\<close>
+    by (simp add: onorm_eq_0)
+  thus ?thesis using \<open>onorm g = 0\<close> by auto
+qed
+
+
+lemma algebraic_tensor_product_bounded_norm:
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close> and g::\<open>'c::complex_inner \<Rightarrow> 'd::complex_inner\<close> 
+  assumes \<open>bounded_clinear f\<close> and \<open>bounded_clinear g\<close>
+  shows \<open>onorm (f \<otimes>\<^sub>A g) = onorm f * onorm g\<close>
+proof(cases \<open>(UNIV::'a set) \<noteq> 0 \<and> (UNIV::'b set) \<noteq> 0 \<and> (UNIV::'c set) \<noteq> 0 \<and> (UNIV::'d set) \<noteq> 0\<close>)
+case True
+  thus ?thesis 
+    using \<open>bounded_clinear f\<close> \<open>bounded_clinear g\<close>
+      algebraic_tensor_product_bounded_norm_simplified[where f = "f" and g = "g"]
+    by blast
+next
+  case False
+  thus ?thesis 
+    using \<open>bounded_clinear f\<close> \<open>bounded_clinear g\<close>
+      algebraic_tensor_product_bounded_norm_simplified_a[where f = "f" and g = "g"]
+      algebraic_tensor_product_bounded_norm_simplified_b[where f = "f" and g = "g"]
+      algebraic_tensor_product_bounded_norm_simplified_c[where f = "f" and g = "g"]
+      algebraic_tensor_product_bounded_norm_simplified_d[where f = "f" and g = "g"]
+    by auto
+qed
+
+hide_fact algebraic_tensor_product_bounded_norm_simplified
+hide_fact algebraic_tensor_product_bounded_norm_simplified_a
+hide_fact algebraic_tensor_product_bounded_norm_simplified_b
+hide_fact algebraic_tensor_product_bounded_norm_simplified_c
+hide_fact algebraic_tensor_product_bounded_norm_simplified_d
 
 lemma atensor_continuous:
   fixes x::\<open>nat \<Rightarrow> 'a::chilbert_space\<close> and y::\<open>nat \<Rightarrow> 'b::chilbert_space\<close>

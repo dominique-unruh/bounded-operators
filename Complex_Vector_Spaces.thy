@@ -2576,6 +2576,18 @@ proof-
     by blast
 qed
 
+lemma span_finite:
+  assumes \<open>z \<in> complex_vector.span T\<close>
+  shows \<open>\<exists> S. finite S \<and> S \<subseteq> T \<and> z \<in> complex_vector.span S\<close>
+proof-
+  have \<open>\<exists> S r. finite S \<and> S \<subseteq> T \<and> z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
+    using complex_vector.span_explicit[where b = "T"]
+      assms by auto
+  then obtain S r where \<open>finite S\<close> and \<open>S \<subseteq> T\<close> and \<open>z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
+    by blast
+  thus ?thesis
+    by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
+qed
 
 
 end
