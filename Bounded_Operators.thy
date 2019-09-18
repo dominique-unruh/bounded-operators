@@ -2333,7 +2333,79 @@ using norm_ball by fastforce
   then show "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
 using a1 by (simp add: bounded_clinear.bounded_linear)
 qed
-  
+
+section \<open>Inverse\<close>
+
+lemma inverse_bounded_uniq':
+\<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> A *\<^sub>o B' = idOp \<Longrightarrow> B' *\<^sub>o A = idOp \<Longrightarrow> B = B'\<close>
+proof-
+  assume \<open>A *\<^sub>o B = idOp\<close> and \<open>B *\<^sub>o A = idOp\<close> and \<open>A *\<^sub>o B' = idOp\<close> and \<open>B' *\<^sub>o A = idOp\<close>
+  have \<open>B *\<^sub>v x = B' *\<^sub>v x\<close>
+    for x
+  proof-
+    have \<open>(A *\<^sub>o B) *\<^sub>v x = x\<close>
+      using \<open>A *\<^sub>o B = idOp\<close>
+      by simp
+    hence \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B' *\<^sub>v x\<close>
+      by simp
+    moreover have \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B *\<^sub>v x\<close>
+    proof-
+      have \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B' *\<^sub>v (A *\<^sub>v (B *\<^sub>v x))\<close>
+        by (simp add: times_applyOp)
+      also have \<open>\<dots> = (B' *\<^sub>o A) *\<^sub>v (B *\<^sub>v x)\<close>
+        by (simp add: times_applyOp)
+      also have \<open>\<dots> = idOp *\<^sub>v (B *\<^sub>v x)\<close>
+        by (simp add: \<open>B' *\<^sub>o A = idOp\<close>)
+      also have \<open>\<dots> = B *\<^sub>v x\<close>
+        by simp
+      finally show ?thesis by blast
+    qed
+    ultimately show ?thesis by auto
+  qed
+  thus ?thesis
+    by (metis \<open>A *\<^sub>o B' = idOp\<close> \<open>B *\<^sub>o A = idOp\<close> timesOp_assoc times_idOp1 times_idOp2) 
+qed
+
+definition invertible_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> where
+ \<open>invertible_bounded A = (\<exists> B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+
+definition inverse_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> ('b,'a) bounded\<close> where
+ \<open>inverse_bounded A = (THE B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+
+lemma inverse_bounded_well_defined:
+\<open>invertible_bounded A \<Longrightarrow> \<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
+  by (meson inverse_bounded_uniq' invertible_bounded_def)
+
+lemma inverse_bounded_left:
+\<open>invertible_bounded A \<Longrightarrow> (inverse_bounded A) *\<^sub>o A = idOp\<close>
+proof-
+  assume \<open>invertible_bounded A\<close>
+  hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
+    using inverse_bounded_well_defined by blast
+  hence \<open>A *\<^sub>o (inverse_bounded A) = idOp \<and> (inverse_bounded A) *\<^sub>o A = idOp\<close>
+    unfolding inverse_bounded_def
+    by (smt theI)
+  thus ?thesis by blast
+qed
+
+lemma inverse_bounded_right:
+\<open>invertible_bounded A \<Longrightarrow> A *\<^sub>o (inverse_bounded A) = idOp\<close>
+proof-
+  assume \<open>invertible_bounded A\<close>
+  hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
+    using inverse_bounded_well_defined by blast
+  hence \<open>A *\<^sub>o (inverse_bounded A) = idOp \<and> (inverse_bounded A) *\<^sub>o A = idOp\<close>
+    unfolding inverse_bounded_def
+    by (smt theI)
+  thus ?thesis by blast
+qed
+
+lemma inverse_bounded_uniq:
+\<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> inverse_bounded A = B\<close>
+  using inverse_bounded_left inverse_bounded_right inverse_bounded_uniq' invertible_bounded_def 
+  by blast
+
+hide_fact inverse_bounded_uniq'
 
 unbundle no_bounded_notation
 
