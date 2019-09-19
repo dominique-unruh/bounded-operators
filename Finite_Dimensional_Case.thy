@@ -519,7 +519,7 @@ proof-
       qed
     next
       case False
-      then show ?thesis
+      thus ?thesis
         using \<open>j < n\<close> by auto 
     qed
     ultimately show \<open>(if i < dim_vec

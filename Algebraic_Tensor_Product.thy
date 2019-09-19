@@ -327,9 +327,9 @@ proof (transfer, unfold atensor_rel_def)
     fix xb :: 'c and yb :: 'd and zb :: 'd
     have "\<And>f fa fb. (f::('c \<times> 'd) free) - (fa + fb) = f - (fb + fa)"
       by simp
-    then have "\<exists>c d da. inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) = inclusion_free (c, d + da) - (inclusion_free (c, da) + inclusion_free (c, d))"
+    hence "\<exists>c d da. inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) = inclusion_free (c, d + da) - (inclusion_free (c, da) + inclusion_free (c, d))"
       by meson
-    then show "inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) \<in> atensor_kernel"
+    thus "inclusion_free (xb, yb + zb) - (inclusion_free (xb, yb) + inclusion_free (xb, zb)) \<in> atensor_kernel"
       by (simp add: atensor_kernel_def atensor_kernel_generator_def complex_vector.span_base diff_add_eq_diff_diff_swap)
   qed 
 qed
@@ -724,9 +724,9 @@ proof-
   proof -
     have "\<forall>A. {a. \<exists>C f. (a::'a) = (\<Sum>a\<in>C. f a *\<^sub>C a) \<and> finite C \<and> C \<subseteq> A} = Complex_Vector_Spaces.span A"
       by (simp add: Complex_Vector_Spaces.span_raw_def complex_vector.span_explicit)
-    then have "\<forall>A a. (\<exists>C f. (a::'a) = (\<Sum>a\<in>C. f a *\<^sub>C a) \<and> finite C \<and> C \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
+    hence "\<forall>A a. (\<exists>C f. (a::'a) = (\<Sum>a\<in>C. f a *\<^sub>C a) \<and> finite C \<and> C \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
       by blast
-    then show ?thesis
+    thus ?thesis
       by (metis (no_types) Complex_Vector_Spaces.span_raw_def assms(1))
   qed
   then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> A\<close> and \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close>
@@ -736,7 +736,7 @@ proof-
   proof -
     have "\<exists>C f. v = (\<Sum>b\<in>C. f b *\<^sub>C b) \<and> finite C \<and> C \<subseteq> B"
       using assms(2) complex_vector.span_explicit by blast
-    then show ?thesis
+    thus ?thesis
       by (metis (full_types, lifting))
   qed
   then obtain t' r' where \<open>finite t'\<close> and \<open>t' \<subseteq> B\<close> and \<open>(\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close>
@@ -767,36 +767,36 @@ proof-
     obtain aa :: "('a \<otimes>\<^sub>a 'b) set \<Rightarrow> ('a \<Rightarrow> 'a \<otimes>\<^sub>a 'b) \<Rightarrow> 'a set \<Rightarrow> 'a" where
       "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x2 \<and> x1 v3 \<notin> complex_vector.span x0) = (aa x0 x1 x2 \<in> x2 \<and> x1 (aa x0 x1 x2) \<notin> complex_vector.span x0)"
       by moura
-    then have f1: "\<forall>A f Aa. aa Aa f A \<in> A \<and> f (aa Aa f A) \<notin> complex_vector.span Aa \<or> sum f A \<in> complex_vector.span Aa"
+    hence f1: "\<forall>A f Aa. aa Aa f A \<in> A \<and> f (aa Aa f A) \<notin> complex_vector.span Aa \<or> sum f A \<in> complex_vector.span Aa"
       by (metis (no_types) complex_vector.span_sum)
     have f2: "(\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) = u \<otimes>\<^sub>a v"
       by (metis (no_types) \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = u\<close> atensor_distr_left_sum)
     obtain bb :: "('a \<otimes>\<^sub>a 'b) set \<Rightarrow> ('b \<Rightarrow> 'a \<otimes>\<^sub>a 'b) \<Rightarrow> 'b set \<Rightarrow> 'b" where
       "\<forall>x0 x1 x2. (\<exists>v3. v3 \<in> x2 \<and> x1 v3 \<notin> complex_vector.span x0) = (bb x0 x1 x2 \<in> x2 \<and> x1 (bb x0 x1 x2) \<notin> complex_vector.span x0)"
       by moura
-    then have f3: "\<forall>B f A. bb A f B \<in> B \<and> f (bb A f B) \<notin> complex_vector.span A \<or> sum f B \<in> complex_vector.span A"
+    hence f3: "\<forall>B f A. bb A f B \<in> B \<and> f (bb A f B) \<notin> complex_vector.span A \<or> sum f B \<in> complex_vector.span A"
       by (meson complex_vector.span_sum)
     moreover
     { assume "bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> t'"
       moreover
       { assume "(aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t, bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> t \<times> t'"
-        then have "r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+        hence "r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           using \<open>\<And>b a. (a, b) \<in> t \<times> t' \<Longrightarrow> a \<otimes>\<^sub>a b \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))\<close> complex_vector.span_scale by blast
-        then have "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+        hence "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           by (simp add: atensor_mult_right)
-        then have "r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+        hence "r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           using complex_vector.span_scale by blast
-        then have "bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<notin> t' \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+        hence "bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<notin> t' \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' (bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t') *\<^sub>C bb ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>b. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) t' \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           by (simp add: atensor_mult_left)
-        then have "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+        hence "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
           using f3 by meson }
       ultimately have "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) \<or> (\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         using f1 by (meson SigmaI) }
     moreover
     { assume "(\<Sum>b\<in>t'. r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a r' b *\<^sub>C b) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
-      then have "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<notin> t \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a v \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+      hence "aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<notin> t \<or> r (aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t) *\<^sub>C aa ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B)) (\<lambda>a. r a *\<^sub>C a \<otimes>\<^sub>a v) t \<otimes>\<^sub>a v \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         by (metis (no_types) \<open>(\<Sum>a\<in>t'. r' a *\<^sub>C a) = v\<close> atensor_distr_right_sum)
-      then have "(\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
+      hence "(\<Sum>a\<in>t. r a *\<^sub>C a \<otimes>\<^sub>a v) \<in> complex_vector.span ((case_prod (\<otimes>\<^sub>a)) ` (A \<times> B))"
         using f1 by meson }
     ultimately show ?thesis
       using f2 by auto
@@ -818,7 +818,7 @@ proof-
     proof -
       have "\<exists>f. x = (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) \<and> {a. f a \<noteq> 0} \<subseteq> range (case_prod (\<otimes>\<^sub>a)) \<and> finite {a. f a \<noteq> 0}"
         using \<open>x \<in> complex_vector.span (range (case_prod (\<otimes>\<^sub>a)))\<close> complex_vector.span_alt by blast
-      then show ?thesis
+      thus ?thesis
         by (metis (no_types))
     qed
     then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> (range (case_prod (\<otimes>\<^sub>a)) )\<close> and
@@ -1016,7 +1016,7 @@ proof-
           using \<open>cbilinear h\<close> unfolding cbilinear_def
         proof -
           assume "(\<forall>y. clinear (\<lambda>x. h x y)) \<and> (\<forall>x. clinear (h x))"
-          then show ?thesis
+          thus ?thesis
             by (metis (no_types) f1 add_diff_cancel_left' complex_vector.linear_diff)
         qed
         thus \<open>(universal_free (\<lambda>z. h (fst z) (snd z))) w = 0\<close> by simp
@@ -1951,13 +1951,13 @@ proof-
   proof -
     have "complex_independent {b}"
       by (metis \<open>b \<noteq> 0\<close> complex_vector.dependent_single)
-    then have f1: "b \<in> B"
+    hence f1: "b \<in> B"
       using B_def complex_vector.extend_basis_superset by blast
     have "complex_independent {a}"
       by (meson \<open>a \<noteq> 0\<close> complex_vector.dependent_single)
-    then have "a \<in> A"
+    hence "a \<in> A"
       using A_def complex_vector.extend_basis_superset by blast
-    then show ?thesis
+    thus ?thesis
       using f1 by blast
   qed
   ultimately show ?thesis by auto
@@ -2483,7 +2483,7 @@ proof-
   proof -
     have "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) = \<langle>x, p\<rangle> * (cnj r * \<langle>b, q\<rangle>)"
       by (metis (full_types) cinner_scaleC_left g_atensor_clinear_cbilinear')
-    then show "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) - cnj r * g_atensor_clinear x b (p \<otimes>\<^sub>a q) = 0"
+    thus "g_atensor_clinear x (r *\<^sub>C b) (p \<otimes>\<^sub>a q) - cnj r * g_atensor_clinear x b (p \<otimes>\<^sub>a q) = 0"
       using g_atensor_clinear_cbilinear' by auto
   qed
   hence \<open>z \<in> range (case_prod (\<otimes>\<^sub>a)) \<Longrightarrow> F z = 0\<close>
@@ -2896,7 +2896,7 @@ proof
     proof -
       have "\<forall>a. cnj (r a) *\<^sub>C (\<Sum>a'\<in>t'. r' a' *\<^sub>C \<langle>a, a'\<rangle>) = (\<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)"
         by (metis (no_types) complex_scaleC_def complex_vector.scale_sum_right)
-      then show ?thesis
+      thus ?thesis
         by meson
     qed
     finally show \<open>\<langle>x, y\<rangle> = (\<Sum>a\<in>t. \<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)\<close>
@@ -3046,7 +3046,7 @@ proof
       by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def)
     have "cnj (\<langle>y\<^sub>1, x\<^sub>1\<rangle> * \<langle>y\<^sub>2, x\<^sub>2\<rangle>) = \<langle>x\<^sub>1, y\<^sub>1\<rangle> * \<langle>x\<^sub>2, y\<^sub>2\<rangle>"
       by auto
-    then show ?thesis
+    thus ?thesis
       using f1 by (simp add: g_atensor_clinear_cbilinear')
   qed
 
@@ -3478,7 +3478,7 @@ lemma atensor_norm_mult:
 proof -
   have "norm f * norm g = sqrt (cmod \<langle>f, f\<rangle>) * sqrt (cmod \<langle>g, g\<rangle>)"
     by (metis norm_eq_sqrt_cinner)
-  then show ?thesis
+  thus ?thesis
     by (metis atensor_cinner_mult norm_eq_sqrt_cinner norm_mult real_sqrt_mult)
 qed 
 
@@ -4136,9 +4136,9 @@ proof-
           by (metis calculation(2) linordered_field_class.divide_right_mono nonzero_mult_div_cancel_left norm_ge_zero)
         have "norm aa = 0 \<longrightarrow> norm ((f \<otimes>\<^sub>A id) aa) \<le> 0"
           by (metis calculation(2) mult_zero_left)
-        then have "norm ((f \<otimes>\<^sub>A id) aa) / norm aa \<le> K"
+        hence "norm ((f \<otimes>\<^sub>A id) aa) / norm aa \<le> K"
           using ff3 ff2 ff1 by (metis (no_types) linordered_field_class.divide_right_mono norm_ge_zero) }
-      then show ?thesis
+      thus ?thesis
         by meson
     qed
     moreover have \<open>{norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) z) / norm z| z. True} \<noteq> {}\<close>
@@ -4150,9 +4150,9 @@ proof-
         using cSup_least by moura
       moreover
       { assume "\<not> rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<le> K"
-        then have "rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<notin> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<and> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<noteq> {}"
+        hence "rr {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} K \<notin> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<and> {r. \<exists>a. r = norm ((f \<otimes>\<^sub>A (id::'c \<Rightarrow> _)) a) / norm a} \<noteq> {}"
           using \<open>\<forall>z. norm ((f \<otimes>\<^sub>A id) z) / norm z \<le> K\<close> by force
-        then have ?thesis
+        hence ?thesis
           using f1 by meson }
       ultimately show ?thesis
         by auto
@@ -4681,7 +4681,7 @@ proof-
       proof -
         have "bdd_above (range (\<lambda>a. norm (swap_atensor (a::'a \<otimes>\<^sub>a 'b)) / norm a))"
           by (metis \<open>bdd_above {norm (swap_atensor z) / norm z |z. True}\<close> full_SetCompr_eq)
-        then show ?thesis
+        thus ?thesis
           by (meson UNIV_I cSUP_upper)
       qed 
     qed
@@ -4865,9 +4865,9 @@ proof-
           obtain rr :: real where
             "\<forall>a. norm (f a) \<le> rr * norm a"
             by (metis (no_types) \<open>\<exists>K. \<forall>x. norm (f x) \<le> norm x * K\<close> ordered_field_class.sign_simps(28))
-          then have "\<exists>r. norm (f (aa r)) \<le> norm (aa r) * r \<and> 0 \<le> r"
+          hence "\<exists>r. norm (f (aa r)) \<le> norm (aa r) * r \<and> 0 \<le> r"
             using ff1 by (metis (no_types) mult_zero_left order.trans ordered_field_class.sign_simps(28)) }
-        then show ?thesis
+        thus ?thesis
           by (metis (full_types))
       qed
       then obtain K where \<open>\<And> x. norm (f x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>
@@ -4919,7 +4919,7 @@ proof-
       proof -
         have "\<exists>r. \<forall>c. 0 \<le> r \<and> norm (g c) \<le> norm c * r"
           by (metis \<open>\<exists>K. \<forall>x. norm (g x) \<le> norm x * K\<close> leI mult_zero_left norm_ge_zero order.trans ordered_field_class.sign_simps(28) real_scaleR_def scaleR_le_0_iff)
-        then show ?thesis
+        thus ?thesis
           by metis
       qed
       then obtain K where \<open>\<And> x. norm (g x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>
@@ -4979,11 +4979,11 @@ proof-
               by (metis semiring_normalization_rules(7))
             moreover
             { assume "rr < 0 \<and> 0 \<le> norm (aa 0)"
-              then have "\<exists>r\<ge>0. norm ((f \<otimes>\<^sub>A g) (aa r)) \<le> r * norm (aa r)"
+              hence "\<exists>r\<ge>0. norm ((f \<otimes>\<^sub>A g) (aa r)) \<le> r * norm (aa r)"
                 using ff1 by (metis (no_types) mult_zero_left order.trans real_scaleR_def scaleR_le_0_iff) }
             ultimately have "\<exists>r. norm ((f \<otimes>\<^sub>A g) (aa r)) \<le> norm (aa r) * r \<and> 0 \<le> r"
               by (metis (no_types) leI norm_ge_zero semiring_normalization_rules(7)) }
-          then show ?thesis
+          thus ?thesis
             by (metis (full_types))
         qed
         then obtain K where \<open>\<And> x. norm ((f \<otimes>\<^sub>A g) x) \<le> norm x * K\<close> and \<open>K \<ge> 0\<close>

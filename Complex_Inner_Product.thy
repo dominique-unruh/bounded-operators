@@ -150,7 +150,7 @@ lemma cinner_mult_right': "\<langle>a , (b * of_complex m)\<rangle> = (\<langle>
   by (simp add: of_complex_def complex_inner_class.cinner_scaleC_right)
 
 lemma Cauchy_Schwarz_ineq:
-  "(\<langle>x , y\<rangle>) * (cnj (\<langle>x , y\<rangle>) ) \<le> (\<langle>x , x\<rangle>) * (\<langle>y , y\<rangle>)"
+  "\<langle>x , y\<rangle> * (cnj \<langle>x , y\<rangle> ) \<le> \<langle>x , x\<rangle> * \<langle>y , y\<rangle>"
 proof (cases)
   assume "y = 0"
   thus ?thesis by simp
@@ -195,11 +195,11 @@ qed
 
 lemma norm_cauchy_schwarz:
   includes notation_norm 
-  shows "cmod \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
+  shows "norm \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
   have ineq: "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
     using Cauchy_Schwarz_ineq .
-  have "(cmod (cinner x y))^2 = Re (cinner x y * cnj (cinner x y))"
+  have "(norm (cinner x y))^2 = Re (cinner x y * cnj (cinner x y))"
     by (metis (mono_tags) Re_complex_of_real complex_norm_square)
   also have "\<dots> \<le> Re (cinner x x * cinner y y)"
     using ineq by (rule Re_mono)
@@ -309,7 +309,7 @@ proof
   qed
 qed
 
-(*
+(* FIXME
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
@@ -336,13 +336,12 @@ proof-
 qed
 
 
-
-(*
+(* FIXME
 lemmas isCont_cinner [simp] =
   bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
 
-(*
+(* FIXME
 lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
@@ -362,8 +361,10 @@ lemmas bounded_csemilinear_cinner_right_comp = bounded_clinear_cinner_right[THEN
 lemmas has_derivative_cinner_right [derivative_intros] =
   bounded_linear.has_derivative [OF bounded_clinear_cinner_right[THEN bounded_clinear.bounded_linear]]
 
+(* FIXME 
 lemmas has_derivative_cinner_left [derivative_intros] =
   bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
+*)
 
 (*
 lemma differentiable_cinner [simp]:
@@ -1368,16 +1369,16 @@ proof-
       obtain aab :: "'a \<Rightarrow> 'a" where
         ff1: "\<And>a aa. is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) (aab a) \<and> (\<not> is_arg_min (\<lambda>aa. dist aa a) (\<lambda>a. a \<in> M) aa \<or> aa = aab a)"
         using \<open>\<forall>h. \<exists>!k. is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x \<in> M) k\<close> by moura
-      then have ff2: "\<And>a aa. a \<notin> M \<or> aa - a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<or> a = aab aa"
+      hence ff2: "\<And>a aa. a \<notin> M \<or> aa - a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<or> a = aab aa"
         by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
       { assume "aab aa \<in> M \<and> aaa (aab aa) \<in> M \<and> aaa (aab aa) \<noteq> aab aa"
-        then have "\<exists>a. a \<in> M \<and> aa - a \<in> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<and> aa - aaa a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0}"
+        hence "\<exists>a. a \<in> M \<and> aa - a \<in> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0} \<and> aa - aaa a \<notin> {a. \<forall>aa. aa \<in> M \<longrightarrow> \<langle>a, aa\<rangle> = 0}"
           using ff2 ff1 by (metis (no_types) assms dist_min_ortho orthogonal_complement_def)
-        then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
+        hence "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
           using orthogonal_complement_def by auto }
-      then have "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
+      hence "\<exists>a. aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aaa a \<notin> M \<or> aaa a = a \<and> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<or> aa - a \<in> orthogonal_complement M \<and> a \<in> M \<and> aa - aaa a \<notin> orthogonal_complement M"
         using ff1 assms dist_min_ortho by blast }
-    then show ?thesis
+    thus ?thesis
       by (metis (no_types))
   qed
 
@@ -1526,9 +1527,9 @@ proof-
   proof - (* sledgehammer *)
     have f1: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
       by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
-    then have "c *\<^sub>C x - c *\<^sub>C \<pi> x \<in> orthogonal_complement M"
+    hence "c *\<^sub>C x - c *\<^sub>C \<pi> x \<in> orthogonal_complement M"
       by (metis (no_types) \<open>complex_vector.subspace (orthogonal_complement M)\<close> add_diff_cancel_right' complex_vector.subspace_def diff_add_cancel scaleC_add_right)
-    then show ?thesis
+    thus ?thesis
       using f1 by (meson \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> closed_subspace.subspace complex_vector.subspace_def projection_uniq')
   qed    
   moreover have \<open>\<pi> (x + y) =  (\<pi> x) + (\<pi> y)\<close>
@@ -1538,9 +1539,9 @@ proof-
     proof -
       have "\<forall>A. \<not> closed_subspace (A::'a set) \<or> complex_vector.subspace A"
         by (metis closed_subspace.subspace)
-      then have "complex_vector.subspace M"
+      hence "complex_vector.subspace M"
         by (metis \<open>closed_subspace M\<close>)
-      then show ?thesis
+      thus ?thesis
         by (meson \<open>is_projection_on \<pi> M\<close> complex_vector.subspace_add complex_vector.subspace_diff is_projection_on_def)
     qed      
     moreover have \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) \<in> orthogonal_complement M\<close>
@@ -1554,19 +1555,19 @@ proof-
           by (metis add.commute diff_add_cancel)
         have f2: "\<forall>a aa. (aa::'a) - aa = a - a"
           by auto
-        then have f3: "\<forall>a. a - a \<in> orthogonal_complement M"
+        hence f3: "\<forall>a. a - a \<in> orthogonal_complement M"
           by (metis (full_types) \<open>complex_vector.subspace (orthogonal_complement M)\<close> \<open>is_projection_on \<pi> M\<close> complex_vector.subspace_diff is_projection_on_def)
         have "\<forall>a aa. (a \<in> orthogonal_complement M \<or> a + aa \<notin> orthogonal_complement M) \<or> aa \<notin> orthogonal_complement M"
           using f2 f1 by (metis \<open>complex_vector.subspace (orthogonal_complement M)\<close> add_diff_eq complex_vector.subspace_diff)
-        then have "\<forall>a aa ab. (a \<in> orthogonal_complement M \<or> ab - (aa + a) \<notin> orthogonal_complement M) \<or> ab - aa \<notin> orthogonal_complement M"
+        hence "\<forall>a aa ab. (a \<in> orthogonal_complement M \<or> ab - (aa + a) \<notin> orthogonal_complement M) \<or> ab - aa \<notin> orthogonal_complement M"
           using f1 by (metis diff_diff_add)
-        then have f4: "\<forall>a aa f. (f a - aa \<in> orthogonal_complement M \<or> a - aa \<notin> orthogonal_complement M) \<or> \<not> is_projection_on f M"
+        hence f4: "\<forall>a aa f. (f a - aa \<in> orthogonal_complement M \<or> a - aa \<notin> orthogonal_complement M) \<or> \<not> is_projection_on f M"
           using f1 by (metis (no_types) is_projection_on_def)
         have f5: "\<forall>a aa ab ac. (ac::'a) - (ab + (aa - a)) = ac + (a - (aa + ab))"
           by auto
         have "x - \<pi> x \<in> orthogonal_complement M"
           by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
-        then show ?thesis
+        thus ?thesis
           using f5 f4 f3 by (metis \<open>complex_vector.subspace (orthogonal_complement M)\<close> \<open>is_projection_on \<pi> M\<close> add_diff_eq complex_vector.subspace_diff diff_diff_add diff_diff_eq2)
       qed 
     qed
@@ -1707,13 +1708,13 @@ proof-
     obtain aab :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
       "\<forall>x0. (\<exists>v1 v2. v2 \<in> x0 \<and> v1 *\<^sub>C v2 \<notin> x0) = (aab x0 \<in> x0 \<and> cc x0 *\<^sub>C aab x0 \<notin> x0)"
       by moura
-    then have f2: "\<forall>A. (\<not> complex_vector.subspace A \<or> 0 \<in> A \<and> (\<forall>a. a \<notin> A \<or> (\<forall>aa. aa \<notin> A \<or> a + aa \<in> A)) \<and> (\<forall>c a. a \<notin> A \<or> c *\<^sub>C a \<in> A)) \<and> (complex_vector.subspace A \<or> 0 \<notin> A \<or> aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A \<or> aab A \<in> A \<and> cc A *\<^sub>C aab A \<notin> A)"
+    hence f2: "\<forall>A. (\<not> complex_vector.subspace A \<or> 0 \<in> A \<and> (\<forall>a. a \<notin> A \<or> (\<forall>aa. aa \<notin> A \<or> a + aa \<in> A)) \<and> (\<forall>c a. a \<notin> A \<or> c *\<^sub>C a \<in> A)) \<and> (complex_vector.subspace A \<or> 0 \<notin> A \<or> aa A \<in> A \<and> aaa A \<in> A \<and> aa A + aaa A \<notin> A \<or> aab A \<in> A \<and> cc A *\<^sub>C aab A \<notin> A)"
       using f1 by (metis (no_types) complex_vector.subspace_def)
     have f3: "f -` {b. b = 0 \<or> b \<in> {}} = {a. f a = 0}"
       by blast
     have "closed_subspace {a. f a = 0}"
       using f2 by (metis \<open>0 \<in> {x. f x = 0}\<close> \<open>\<And>t c. t \<in> {x. f x = 0} \<Longrightarrow> c *\<^sub>C t \<in> {x. f x = 0}\<close> \<open>\<And>v u. \<lbrakk>u \<in> {x. f x = 0}; v \<in> {x. f x = 0}\<rbrakk> \<Longrightarrow> u + v \<in> {x. f x = 0}\<close> \<open>closed {x. f x = 0}\<close> closed_subspace.intro)
-    then show ?thesis
+    thus ?thesis
       using f3 by auto
   qed
 
@@ -1737,7 +1738,7 @@ proof-
         by (metis (no_types) calculation cinner_diff_left diff_0 orthogonal_complement_D1)
       have "\<And>a aa. a \<notin> M \<or> \<langle>aa - \<pi> aa, a\<rangle> = 0"
         by (meson \<open>is_projection_on \<pi> M\<close> is_projection_on_def orthogonal_complement_D1)
-      then show ?thesis
+      thus ?thesis
         using f1 by (metis (no_types) \<open>is_projection_on \<pi> M\<close> add.inverse_inverse cinner_eq_zero_iff diff_0 diff_self is_projection_on_def)
     qed      
     hence \<open>x \<in> (\<pi> -` {0})\<close>
@@ -1849,9 +1850,9 @@ proof - (* sledgehammer *)
   obtain aaa :: "'a set \<Rightarrow> 'a \<Rightarrow> 'a" where
     "is_projection_on (aaa M) M"
     using a1 by (meson is_projection_on_existence)
-  then have "\<forall>a. a - aaa M a \<in> orthogonal_complement M \<and> aaa M a \<in> M"
+  hence "\<forall>a. a - aaa M a \<in> orthogonal_complement M \<and> aaa M a \<in> M"
     using f2 by blast
-  then show ?thesis
+  thus ?thesis
     using f2 a1 by (metis (no_types) projectionPropertiesE' projection_uniq)
 qed 
 
@@ -2000,16 +2001,16 @@ lemma ortho_bot[simp]:
 subsection \<open>Closed sum\<close>
 
 definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-  \<open>closed_sum A B = closure (A +\<^sub>m B)\<close>
+  \<open>closed_sum A B = closure (A + B)\<close>
 
 notation closed_sum (infixl "+\<^sub>M" 65)
 
 lemma sum_existential:
-  \<open>x \<in> (A +\<^sub>m B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
+  \<open>x \<in> (A + B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
 proof -
-  assume "x \<in> (A +\<^sub>m B)"
+  assume "x \<in> (A + B)"
   hence "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
-    using Minkoswki_sum_def by blast
+    by (meson set_plus_elim)    
   thus ?thesis
     by (metis (lifting))
 qed
@@ -2017,7 +2018,7 @@ qed
 lemma is_closed_subspace_comm:                                                                 
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
   shows \<open>A +\<^sub>M B = B +\<^sub>M A\<close>
-  by (smt Collect_cong add.commute closed_sum_def Minkoswki_sum_def)
+  by (smt Collect_cong add.commute closed_sum_def)
 
 lemma cinner_isCont_left:
   \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
@@ -2160,11 +2161,11 @@ proof-
   have \<open>x \<in> (orthogonal_complement (A +\<^sub>M B)) \<Longrightarrow> x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close> for x
   proof-
     assume \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
-    moreover have \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement (A +\<^sub>m B))\<close>
+    moreover have \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement (A + B))\<close>
       unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
-    ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
+    ultimately have \<open>x \<in> (orthogonal_complement (A + B))\<close>
       by smt
-    hence \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> 
+    hence \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> 
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
     hence \<open>\<forall> z \<in> A. \<langle> z , x \<rangle> = 0\<close> 
     proof-
@@ -2172,11 +2173,11 @@ proof-
         using assms(2) complex_vector.subspace_def
         unfolding closed_subspace_def
         by auto
-      hence \<open>A \<subseteq> A +\<^sub>m B\<close>
-        unfolding Minkoswki_sum_def
-        using subset_iff by fastforce        
+      hence \<open>A \<subseteq> A + B\<close>
+        using subset_iff add.commute set_zero_plus2 
+        by fastforce
       thus ?thesis
-        using  \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> by auto
+        using  \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> by auto
     qed
     hence \<open>x \<in> (orthogonal_complement A)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -2186,11 +2187,10 @@ proof-
         using assms(1) complex_vector.subspace_def
         unfolding closed_subspace_def
         by auto
-      hence \<open>B \<subseteq> A +\<^sub>m B\<close>
-        unfolding Minkoswki_sum_def
-        using subset_iff by fastforce        
+      hence \<open>B \<subseteq> A + B\<close>
+        using subset_iff set_zero_plus2 by blast        
       thus ?thesis
-        using  \<open>\<forall> z \<in> (A +\<^sub>m B). \<langle> z , x \<rangle> = 0\<close> by auto
+        using  \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> by auto
     qed
     hence \<open>x \<in> (orthogonal_complement B)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
@@ -2208,11 +2208,11 @@ proof-
       by (simp add: orthogonal_complement_D2)
     have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b , x \<rangle> = 0\<close>
       by (simp add: \<open>\<forall>y\<in>A. \<langle>y , x\<rangle> = 0\<close> \<open>\<forall>y\<in>B. \<langle>y , x\<rangle> = 0\<close> cinner_left_distrib)
-    hence \<open>\<forall> y \<in> (A +\<^sub>m B). \<langle> y , x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> (A + B). \<langle> y , x \<rangle> = 0\<close>
       using sum_existential by blast
-    hence \<open>x \<in> (orthogonal_complement (A +\<^sub>m B))\<close>
+    hence \<open>x \<in> (orthogonal_complement (A + B))\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    moreover have \<open>(orthogonal_complement (A +\<^sub>m B)) = (orthogonal_complement (A +\<^sub>M B))\<close>
+    moreover have \<open>(orthogonal_complement (A + B)) = (orthogonal_complement (A +\<^sub>M B))\<close>
       unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
     ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
       by blast
@@ -2491,7 +2491,7 @@ next
     proof -
       have "(\<exists>a\<in>orthogonal_complement (f -` {0}). a \<noteq> 0) \<or> orthogonal_complement (f -` {0}) \<noteq> {} \<and> f -` {0} \<noteq> UNIV"
         by (metis (no_types) False UNIV_I assms insert_absorb ker_op_lin ortho_bot orthogonal_complement_twice projection_intro1 vimage_singleton_eq)
-      then show ?thesis
+      thus ?thesis
         by (metis (no_types) assms insertI1 is_singletonE is_singletonI' ker_op_lin ortho_bot orthogonal_complement_twice)
     qed
     ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t)\<close>
@@ -2894,21 +2894,21 @@ proof-
         obtain aa :: "'a \<Rightarrow> 'a set \<Rightarrow> 'a" where
           "\<forall>x0 x1. (\<exists>v2. v2 \<in> x1 \<and> \<langle>x0, v2\<rangle> \<noteq> 0) = (aa x0 x1 \<in> x1 \<and> \<langle>x0, aa x0 x1\<rangle> \<noteq> 0)"
           by moura
-        then have f1: "\<forall>A a. aa a A \<in> A \<and> \<langle>a, aa a A\<rangle> \<noteq> 0 \<or> a \<in> orthogonal_complement A"
+        hence f1: "\<forall>A a. aa a A \<in> A \<and> \<langle>a, aa a A\<rangle> \<noteq> 0 \<or> a \<in> orthogonal_complement A"
           by (meson orthogonal_complement_I2)
         have f2: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
           by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
-        then have f3: "\<pi> (\<pi> x) = \<pi> x"
+        hence f3: "\<pi> (\<pi> x) = \<pi> x"
           by (metis \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> projection_fixed_points')
         { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> 0"
           { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> \<langle>x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
-            then have "(+) \<langle>\<pi> x - \<pi> (\<pi> x), aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> (+) \<langle>x - \<pi> x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
+            hence "(+) \<langle>\<pi> x - \<pi> (\<pi> x), aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> (+) \<langle>x - \<pi> x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
               using f3 by (metis (no_types) cinner_diff_left diff_add_cancel)
-            then have "aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M \<notin> M \<or> \<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> = 0"
+            hence "aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M \<notin> M \<or> \<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> = 0"
               using f2 by (metis \<open>closed_subspace M\<close> orthogonal_complement_D2 orthogonal_complement_twice) }
-          then have ?thesis
+          hence ?thesis
             using f1 by (metis (no_types) \<open>\<And>y. y \<in> M \<Longrightarrow> \<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0\<close>) }
-        then show ?thesis
+        thus ?thesis
           using f1 by metis
       qed        
     qed
@@ -3011,7 +3011,7 @@ instance..
 end
 
 class not_singleton =
-  assumes not_singleton_card: "\<exists> x::'a. \<exists> y::'a. x \<noteq> y"
+  assumes not_singleton_card: "\<exists> x. \<exists> y. x \<noteq> y"
 
 subclass (in card2) not_singleton
   apply standard using two_le_card
@@ -3135,17 +3135,20 @@ proof
         by (meson closure_subset subset_eq)        
       thus ?thesis using Abs_linear_space_inverse
       proof -
-        have "t \<in> closure (space_as_set x +\<^sub>m space_as_set y)"
-          by (simp add: Minkoswki_sum_def \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>)
-        then have "t \<in> space_as_set (Abs_linear_space (closure (space_as_set x +\<^sub>m space_as_set y)))"
+        have "t \<in> closure (space_as_set x + space_as_set y)"
+          using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
+          by (metis (no_types, lifting) \<open>0 \<in> space_as_set y\<close> \<open>t = t + 0\<close> \<open>t \<in> space_as_set x\<close> closure_subset in_mono set_plus_intro)
+        hence "t \<in> space_as_set (Abs_linear_space (closure (space_as_set x + space_as_set y)))"
           by (metis (no_types) Abs_linear_space_inverse closed_sum_def mem_Collect_eq space_as_set subspace_closed_plus)
-        then show ?thesis
-          by (simp add: Minkoswki_sum_def)
+        thus ?thesis
+          unfolding set_plus_def
+          by (smt Collect_cong)
+          
       qed
     qed
     thus ?thesis
       unfolding  less_eq_linear_space_def 
-        closed_sum_def Minkoswki_sum_def
+        closed_sum_def 
       apply auto
       using is_closed_subspace_universal_inclusion_left space_as_set sup_linear_space.rep_eq
       by fastforce
@@ -3221,10 +3224,11 @@ proof
       assume a1: "space_as_set y \<subseteq> space_as_set x"
       assume a2: "space_as_set z \<subseteq> space_as_set x"
       have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (sup l la)"
-        by (simp add: Minkoswki_sum_def closed_sum_def sup_linear_space.rep_eq)
-      then have "space_as_set (sup y z) \<subseteq> space_as_set x"
+        using closed_sum_def sup_linear_space.rep_eq
+        sorry
+      hence "space_as_set (sup y z) \<subseteq> space_as_set x"
         using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
-      then show ?thesis
+      thus ?thesis
         using f3 by (simp add: space_as_set_inverse)
     qed
     thus ?thesis
@@ -3233,7 +3237,7 @@ proof
     proof -
       have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
         by (metis less_eq_linear_space.rep_eq that(1) that(2))
-      then show "map_fun space_as_set (map_fun space_as_set id) (\<subseteq>) (sup y z) x"
+      thus "map_fun space_as_set (map_fun space_as_set id) (\<subseteq>) (sup y z) x"
         by (simp add: Minkoswki_sum_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def)
     qed  
   qed
@@ -3415,7 +3419,7 @@ proof
           by (metis \<open>u - projection x u \<in> orthogonal_complement x \<inter> y\<close> diff_add_cancel ordered_field_class.sign_simps(2))
         then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
           by blast
-        hence \<open>u \<in> x +\<^sub>m ((orthogonal_complement x) \<inter> y)\<close>
+        hence \<open>u \<in> x + ((orthogonal_complement x) \<inter> y)\<close>
           using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
           unfolding Minkoswki_sum_def
           by blast
@@ -3696,9 +3700,9 @@ proof (induction n)
         proof -
           have "card (insert k s) = Suc n"
             by (metis \<open>card t = Suc n\<close> \<open>insert k s = t\<close>)
-          then have "k \<notin> s"
+          hence "k \<notin> s"
             by (metis \<open>card s = n\<close> \<open>finite s\<close> card_insert_if n_not_Suc_n)
-          then show ?thesis
+          thus ?thesis
             using \<open>finite s\<close> \<open>insert k s = t\<close> by auto
         qed
         hence \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = B (\<Sum>a\<in>s. r a *\<^sub>C a) y + B (r k *\<^sub>C k) y\<close>
@@ -3756,9 +3760,9 @@ proof-
               proof -
                 have "clinear (B p)"
                   by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
-                then have "B p t = 0"
+                hence "B p t = 0"
                   using assms(2) calculation complex_vector.linear_eq_0_on_span that by fastforce
-                then show ?thesis
+                thus ?thesis
                   by (metis (full_types) mem_Collect_eq)
               qed
               show "(\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t)))
@@ -3961,9 +3965,9 @@ proof-
       by (meson \<open>\<And>q p. (*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) (star_of x - p) (star_of y - q) + ((*f2* B) (star_of x) q - (*f2* B) p q) + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close> approx_monad_iff)
     have "(0::'c star) \<in> monad 0"
       by (meson Infinitesimal_monad_zero_iff Infinitesimal_zero)
-    then have "monad ((*f2* B) u v + ((*f2* B) u (star_of y) - (*f2* B) u v + ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v)))) = monad ((*f2* B) u v)"
+    hence "monad ((*f2* B) u v + ((*f2* B) u (star_of y) - (*f2* B) u v + ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v)))) = monad ((*f2* B) u v)"
       by (meson Infinitesimal_add Infinitesimal_monad_eq Infinitesimal_monad_zero_iff \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close> \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close> \<open>(*f2* B) u (star_of y) - (*f2* B) u v \<approx> 0\<close> approx_mem_monad_zero approx_sym)
-    then show ?thesis
+    thus ?thesis
       using f1 by (simp add: approx_monad_iff ordered_field_class.sign_simps(2))
   qed
 qed

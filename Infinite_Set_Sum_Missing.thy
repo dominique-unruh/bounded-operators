@@ -29,10 +29,10 @@ proof -
     apply (rule eventually_finite_subsets_at_top_weakI)
     using assms
     by (meson subset_eq sum.cong)
-  then have "Lim (finite_subsets_at_top A) (sum f) = Lim (finite_subsets_at_top A) (sum g)"
+  hence "Lim (finite_subsets_at_top A) (sum f) = Lim (finite_subsets_at_top A) (sum g)"
     unfolding Topological_Spaces.Lim_def[abs_def]
     by auto
-  then show ?thesis
+  thus ?thesis
     unfolding infsetsum'_def
     apply (subst infsetsum'_converges_cong[OF assms])
     by auto
@@ -46,7 +46,7 @@ lemma abs_summable_finiteI0:
   unfolding atomize_conj
 proof (cases "S={}")
   case True
-  then show "f abs_summable_on S \<and> infsetsum (\<lambda>x. norm (f x)) S \<le> B" 
+  thus "f abs_summable_on S \<and> infsetsum (\<lambda>x. norm (f x)) S \<le> B" 
     using assms by auto
 next
   case False
@@ -93,7 +93,7 @@ next
         apply (rename_tac r) apply (case_tac "B' r = 0") 
       proof -
         fix r assume "B' r = 0" 
-        then show "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r" by auto
+        thus "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r" by auto
       next
         fix r :: ennreal
         assume "B' r \<noteq> 0"
@@ -102,7 +102,7 @@ next
         then obtain F where "B' r - \<epsilon>N \<le> sum normf F" and "finite F" and "F \<subseteq> part r"
           apply atomize_elim apply (subst (asm) (2) B'_def)
           by (metis (no_types, lifting) leD le_cases less_SUP_iff mem_Collect_eq)
-        then show "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r"
+        thus "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r"
           by (metis add.commute ennreal_minus_le_iff)
       qed
       have "sum B' gS \<le> (\<Sum>r\<in>gS. sum normf (F r) + \<epsilon>N)"
@@ -128,7 +128,7 @@ next
       finally show ?thesis
         by auto
     qed
-    then have sumB': "sum B' gS \<le> B"
+    hence sumB': "sum B' gS \<le> B"
       using ennreal_le_epsilon ennreal_less_zero_iff by blast
     obtain B'' where B'': "B' r = ennreal (B'' r)" if "r \<in> gS" for r
       apply atomize_elim apply (rule_tac choice) 
@@ -139,7 +139,7 @@ next
     have emeasure_B': "r * emeasure M (part r) \<le> B' r" if "r : gS" for r
     proof (cases rule:cases[of r])
       case zero
-      then show ?thesis by simp
+      thus ?thesis by simp
     next
       case finite
       have "r * of_nat (card (part r)) = r * (\<Sum>x\<in>part r. 1)" by simp
@@ -157,7 +157,7 @@ next
         using \<open>g \<le> normf\<close>
         by (simp add: le_fun_def) 
       finally have "r * of_nat (card (part r)) \<le> B' r" by assumption
-      then show ?thesis
+      thus ?thesis
         unfolding M_def
         apply (subst emeasure_count_space_finite)
         using part_def finite by auto
@@ -192,7 +192,7 @@ next
       also have "(\<Sum>x\<in>F. ennreal (norm (f x))) \<le> B" 
          apply auto using assms(1)[OF \<open>finite F\<close> \<open>F \<subseteq> S\<close>] by (rule ennreal_leI)
       finally have "B < B" by auto
-      then show ?thesis by simp
+      thus ?thesis by simp
     qed
 
     have "integral\<^sup>S M g = (\<Sum>r \<in> gS. r * emeasure M (part r))"
@@ -209,7 +209,7 @@ next
     using le_less_trans by fastforce
   hence "integrable M f"
     unfolding M_def normf_def by (rule integrableI_bounded[rotated], simp)
-  then have f_sum_S: "f abs_summable_on S"
+  hence f_sum_S: "f abs_summable_on S"
     unfolding abs_summable_on_def M_def by simp
   have "infsetsum (\<lambda>x. norm (f x)) S \<le> B"
     apply (subst ennreal_le_iff[symmetric], simp add: assms)
@@ -225,8 +225,8 @@ lemma abs_summable_finiteI:
   shows "f abs_summable_on S"
 proof -
   from assms have "sum (\<lambda>x. norm (f x)) {} \<le> B" by blast
-  then have "0 \<le> B" by simp
-  then show ?thesis 
+  hence "0 \<le> B" by simp
+  thus ?thesis 
     using assms by (rule abs_summable_finiteI0[rotated])
 qed
 
@@ -269,7 +269,7 @@ proof -
   have "\<exists>i. x \<in> S i" if "0 < norm (\<mu> x)" and "x \<in> T" for x
     using that unfolding S_def apply (auto simp del: real_norm_def)
     by (metis inverse_eq_divide not0_implies_Suc of_nat_Suc real_arch_inverse that(1))
-  then have union: "{x\<in>T. 0 < norm (\<mu> x)} = (\<Union>i. S i)"
+  hence union: "{x\<in>T. 0 < norm (\<mu> x)} = (\<Union>i. S i)"
     unfolding S_def by auto
   have finiteS: "finite (S i)" for i
   proof (rule ccontr)
@@ -295,9 +295,9 @@ proof -
     apply (rule countable_UN, simp)
     apply (rule countable_finite)
     using finiteS by simp
-  then have "countable {x\<in>T. 0 < norm (\<mu> x)}"
+  hence "countable {x\<in>T. 0 < norm (\<mu> x)}"
     unfolding union by simp
-  then show ?thesis
+  thus ?thesis
     by simp
 qed
 
@@ -388,7 +388,7 @@ proof (rule abs_summable_finiteI)
   have "norm (x i * y i) \<le> norm (x i * x i) + norm (y i * y i)" for i
     unfolding norm_mult
     by (smt mult_left_mono mult_nonneg_nonneg mult_right_mono norm_ge_zero)
-  then have "(\<Sum>i\<in>F. norm (x i * y i)) \<le> (\<Sum>i\<in>F. norm (x i * x i) + norm (y i * y i))"
+  hence "(\<Sum>i\<in>F. norm (x i * y i)) \<le> (\<Sum>i\<in>F. norm (x i * x i) + norm (y i * y i))"
     by (simp add: sum_mono)
   also have "\<dots> = (\<Sum>i\<in>F. norm (x i * x i)) + (\<Sum>i\<in>F. norm (y i * y i))"
     by (simp add: sum.distrib)
@@ -423,7 +423,7 @@ lemma ennreal_Sup:
   assumes "bdd_above A" and nonempty: "A\<noteq>{}"
   shows "ennreal (Sup A) = Sup (ennreal ` A)"
 proof (rule Sup_eqI[symmetric])
-  fix y assume "y \<in> ennreal ` A" then show "y \<le> ennreal (Sup A)"
+  fix y assume "y \<in> ennreal ` A" thus "y \<le> ennreal (Sup A)"
     using assms cSup_upper ennreal_leI by auto
 next
   fix y assume asm: "\<And>z. z \<in> ennreal ` A \<Longrightarrow> z \<le> y"
@@ -437,7 +437,7 @@ next
       using ennreal_le_iff by blast
   next
     case top
-    then show ?thesis by auto
+    thus ?thesis by auto
   qed
 qed
 
@@ -456,7 +456,7 @@ proof -
       using fnn summable \<open>F\<subseteq>A\<close> \<open>finite F\<close> by auto
     finally show ?thesis by assumption
   qed
-  then have geq: "ennreal (infsetsum f A) \<ge> SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
+  hence geq: "ennreal (infsetsum f A) \<ge> SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
     by (meson SUP_least ennreal_leI)
 
   define fe where "fe x = ennreal (f x)" for x
@@ -472,12 +472,12 @@ proof -
     fix x assume "x \<in> integral\<^sup>S (count_space A) ` {g. finite (g ` A) \<and> g \<le> fe}"
     then obtain g where xg: "x = integral\<^sup>S (count_space A) g" and fin_gA: "finite (g`A)" and g_fe: "g \<le> fe" by auto
     define F where "F = {z:A. g z \<noteq> 0}"
-    then have "F \<subseteq> A" by simp
+    hence "F \<subseteq> A" by simp
 
     have fin: "finite {z:A. g z = t}" if "t \<noteq> 0" for t
     proof (rule ccontr)
       assume inf: "infinite {z:A. g z = t}"
-      then have tgA: "t \<in> g ` A"
+      hence tgA: "t \<in> g ` A"
         by (metis (mono_tags, lifting) image_eqI not_finite_existsD)
       have "x = (\<Sum>x \<in> g ` A. x * emeasure (count_space A) (g -` {x} \<inter> A))"
         unfolding xg simple_integral_def space_count_space by simp
@@ -650,7 +650,7 @@ proof -
     apply (rule infsetsum_cong_neutral)
     using that unfolding A'_def B'_def Sigma_def apply auto
     by (smt Int_Collect image_iff mem_Collect_eq snd_conv)
-  then have "?rhs = (\<Sum>\<^sub>aa\<in>A. \<Sum>\<^sub>ab\<in>B a. f (a, b))"
+  hence "?rhs = (\<Sum>\<^sub>aa\<in>A. \<Sum>\<^sub>ab\<in>B a. f (a, b))"
     by (rule infsetsum_cong, auto)
   finally show ?thesis 
     by simp
@@ -751,7 +751,7 @@ proof -
       apply atomize_elim unfolding is_SUP Bex_def[symmetric]
       apply (subst less_SUP_iff[symmetric]) using e
       by (metis diff_strict_left_mono diff_zero ereal_minus(1) is_SUP less_ereal.simps(1)) 
-    then have [simp]: "finite F0" and [simp]: "F0 \<subseteq> A" 
+    hence [simp]: "finite F0" and [simp]: "F0 \<subseteq> A" 
       and sum_diff: "sum (\<lambda>x. norm (f x)) F0 > infsetsum (\<lambda>x. norm (f x)) A - e"
       by auto
     define P where "P F \<longleftrightarrow> finite F \<and> F \<supseteq> F0 \<and> F \<subseteq> A" for F
@@ -791,10 +791,10 @@ proof -
     by auto
   then obtain x where Fx: "F \<le> nhds x"
     apply atomize_elim using cauchy F_not_bot by simp
-  then have "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A)"
+  hence "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A)"
     unfolding F_def
     by (simp add: filterlim_def)
-  then show ?thesis
+  thus ?thesis
     unfolding infsetsum'_converges_def by auto
 qed
 
@@ -821,11 +821,11 @@ proof -
     then obtain X where [simp]: "finite X" and XA: "X \<subseteq> A" and P: "\<forall>Y. finite Y \<and> X \<subseteq> Y \<and> Y \<subseteq> A \<longrightarrow> P Y"
       unfolding eventually_finite_subsets_at_top by auto
     define X' where "X' = X-F"
-    then have [simp]: "finite X'" and [simp]: "X' \<subseteq> A-F"
+    hence [simp]: "finite X'" and [simp]: "X' \<subseteq> A-F"
       using XA by auto
-    then have "finite Y \<and> X' \<subseteq> Y \<and> Y \<subseteq> A - F \<longrightarrow> P (F' \<union> Y)" for Y
+    hence "finite Y \<and> X' \<subseteq> Y \<and> Y \<subseteq> A - F \<longrightarrow> P (F' \<union> Y)" for Y
       using P XA unfolding X'_def using F'_def \<open>finite F'\<close> by blast
-    then show "eventually P (filtermap ((\<union>) F') (finite_subsets_at_top (A - F)))"
+    thus "eventually P (filtermap ((\<union>) F') (finite_subsets_at_top (A - F)))"
       unfolding eventually_filtermap eventually_finite_subsets_at_top
       by (rule_tac x=X' in exI, simp)
   qed
@@ -833,23 +833,23 @@ proof -
   with lim_f have "(sum f \<longlongrightarrow> x) (filtermap ((\<union>)F') (finite_subsets_at_top (A-F)))"
     using tendsto_mono by blast
 
-  then have "((\<lambda>G. sum f (F' \<union> G)) \<longlongrightarrow> x) (finite_subsets_at_top (A-F))"
+  hence "((\<lambda>G. sum f (F' \<union> G)) \<longlongrightarrow> x) (finite_subsets_at_top (A-F))"
     apply (subst (asm) tendsto_compose_filtermap[symmetric])
     unfolding o_def by simp
 
-  then have "((\<lambda>G. sum f F' + sum f G) \<longlongrightarrow> x) (finite_subsets_at_top (A-F))"
+  hence "((\<lambda>G. sum f F' + sum f G) \<longlongrightarrow> x) (finite_subsets_at_top (A-F))"
     apply (rule tendsto_cong[THEN iffD1, rotated])
     unfolding eventually_finite_subsets_at_top
     apply (rule exI[where x="{}"], simp)
     by (metis Diff_disjoint Int_Diff \<open>A - F = A - F'\<close> \<open>finite F'\<close> inf.orderE sum.union_disjoint)
 
-  then have "((\<lambda>G. sum f F' + sum f G) \<longlongrightarrow> sum f F' + (x-sum f F')) (finite_subsets_at_top (A-F))"
+  hence "((\<lambda>G. sum f F' + sum f G) \<longlongrightarrow> sum f F' + (x-sum f F')) (finite_subsets_at_top (A-F))"
     by simp
   
-  then have "(sum f \<longlongrightarrow> x - sum f F') (finite_subsets_at_top (A-F))"
+  hence "(sum f \<longlongrightarrow> x - sum f F') (finite_subsets_at_top (A-F))"
     apply (subst (asm) tendsto_add_const_iff) by simp
 
-  then show "infsetsum'_converges f (A - F)"
+  thus "infsetsum'_converges f (A - F)"
     unfolding infsetsum'_converges_def by auto
 qed
 
@@ -870,7 +870,7 @@ proof (rule filter_leI)
     and P: "finite Y \<and> X \<subseteq> Y \<and> Y \<subseteq> B \<longrightarrow> P (Y - A)" for Y
     unfolding eventually_filtermap eventually_finite_subsets_at_top by auto
 
-  then have "finite (X-A)" and "X-A \<subseteq> B - A"
+  hence "finite (X-A)" and "X-A \<subseteq> B - A"
     by auto
   moreover have "finite Y \<and> X-A \<subseteq> Y \<and> Y \<subseteq> B - A \<longrightarrow> P Y" for Y
     using P[where Y="Y\<union>X"] \<open>finite X\<close> \<open>X \<subseteq> B\<close>
@@ -895,42 +895,42 @@ proof -
 
     from convA obtain x where limA: "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A)"
       using infsetsum'_converges_def by blast
-    then have "((\<lambda>F. sum f (F-D)) \<longlongrightarrow> x) (finite_subsets_at_top A)"
+    hence "((\<lambda>F. sum f (F-D)) \<longlongrightarrow> x) (finite_subsets_at_top A)"
       apply (rule tendsto_cong[THEN iffD1, rotated])
       apply (rule eventually_finite_subsets_at_top_weakI)
       using f0 D_def by (simp add: subset_iff sum.mono_neutral_cong_right)
-    then have "(sum f \<longlongrightarrow> x) (filtermap (\<lambda>F. F-D) (finite_subsets_at_top A))"
+    hence "(sum f \<longlongrightarrow> x) (filtermap (\<lambda>F. F-D) (finite_subsets_at_top A))"
       apply (rewrite at "(\<lambda>F. sum f (F-D))" in asm to "sum f o (\<lambda>F. F-D)" DEADID.rel_mono_strong)
        apply (simp add: o_def inf_assoc)
       by (subst (asm) tendsto_compose_filtermap)
-    then have "(sum f \<longlongrightarrow> x) (finite_subsets_at_top (A-D))"
+    hence "(sum f \<longlongrightarrow> x) (finite_subsets_at_top (A-D))"
       apply (rule tendsto_mono[rotated])
       apply (rule finite_subsets_at_top_minus) 
       (* using finite_subsets_at_top_minus[where A=D and B=A] *)
       unfolding D_def by simp
-    then have "(sum f \<longlongrightarrow> x) (filtermap (\<lambda>F. F \<inter> (A - D)) (finite_subsets_at_top B))"
+    hence "(sum f \<longlongrightarrow> x) (filtermap (\<lambda>F. F \<inter> (A - D)) (finite_subsets_at_top B))"
       apply (rule tendsto_mono[rotated])
       apply (rule finite_subsets_at_top_inter[where B=B and A="A-D"])
       unfolding D_def by auto
-    then have "((\<lambda>F. sum f (F \<inter> (A - D))) \<longlongrightarrow> x) (finite_subsets_at_top B)"
+    hence "((\<lambda>F. sum f (F \<inter> (A - D))) \<longlongrightarrow> x) (finite_subsets_at_top B)"
       apply (subst (asm) tendsto_compose_filtermap[symmetric])
       by (simp add: o_def inf_assoc)
-    then have limB: "(sum f \<longlongrightarrow> x) (finite_subsets_at_top B)"
+    hence limB: "(sum f \<longlongrightarrow> x) (finite_subsets_at_top B)"
       apply (rule tendsto_cong[THEN iffD1, rotated])
       apply (rule eventually_finite_subsets_at_top_weakI)
       apply (rule sum.mono_neutral_cong)
       using f0 unfolding D_def by auto
 
-    then show "infsetsum'_converges f B"
+    thus "infsetsum'_converges f B"
       unfolding infsetsum'_converges_def by auto
-    then show "infsetsum' f A = infsetsum' f B"
+    thus "infsetsum' f A = infsetsum' f B"
       unfolding infsetsum'_def apply (simp add: convA)
       using limA limB
       using finite_subsets_at_top_neq_bot tendsto_Lim by blast 
   qed
   with assms show "infsetsum'_converges f A = infsetsum'_converges f B"
     by (metis Un_commute)
-  then show "infsetsum' f A = infsetsum' f B"
+  thus "infsetsum' f A = infsetsum' f B"
     using assms convB eq
     by (metis infsetsum'_def)
 qed
@@ -959,18 +959,18 @@ proof -
   with limB have "((\<lambda>F. sum f F - sum f (F\<inter>A)) \<longlongrightarrow> limB - limA) (finite_subsets_at_top B)"
     using tendsto_diff by blast
 
-  then have "((\<lambda>F. sum f (F-A)) \<longlongrightarrow> limB - limA) (finite_subsets_at_top B)"
+  hence "((\<lambda>F. sum f (F-A)) \<longlongrightarrow> limB - limA) (finite_subsets_at_top B)"
     apply (rule tendsto_cong[THEN iffD1, rotated])
     apply (rule eventually_finite_subsets_at_top_weakI)
     by (metis add_diff_cancel_left' sum.Int_Diff)
 
-  then have "(sum f \<longlongrightarrow> limB - limA) (filtermap (\<lambda>F. F-A) (finite_subsets_at_top B))"
+  hence "(sum f \<longlongrightarrow> limB - limA) (filtermap (\<lambda>F. F-A) (finite_subsets_at_top B))"
     by (subst tendsto_compose_filtermap[symmetric], simp add: o_def)
 
-  then have limBA: "(sum f \<longlongrightarrow> limB - limA) (finite_subsets_at_top (B-A))"
+  hence limBA: "(sum f \<longlongrightarrow> limB - limA) (finite_subsets_at_top (B-A))"
     using finite_subsets_at_top_minus[OF AB] by (rule tendsto_mono[rotated])
 
-  then show "infsetsum'_converges f (B-A)"
+  thus "infsetsum'_converges f (B-A)"
     unfolding infsetsum'_converges_def by auto
 
   with limBA show "infsetsum' f (B - A) = limB - limA"
@@ -1043,9 +1043,9 @@ proof -
   have "(sum f \<longlongrightarrow> infsetsum' f A) (finite_subsets_at_top A)"
     unfolding infsetsum'_def apply simp unfolding infsetsum'_converges_def
     using Lim_trivial_limit tendsto_Lim by blast
-  then have "\<forall>\<^sub>F F in (finite_subsets_at_top A). dist (sum f F) (infsetsum' f A) < \<epsilon>"
+  hence "\<forall>\<^sub>F F in (finite_subsets_at_top A). dist (sum f F) (infsetsum' f A) < \<epsilon>"
     using assms(2) by (rule tendstoD)
-  then show ?thesis
+  thus ?thesis
     apply (simp add: eventually_finite_subsets_at_top) apply meson
     apply (rule_tac x=X in exI) by auto
 qed
@@ -1065,7 +1065,7 @@ proof -
       using infsetsum'_approx_sum[where A=A and f=f and \<epsilon>="\<epsilon>"]
       using assms \<open>0 < \<epsilon>\<close> apply auto
       by (metis dist_commute dist_norm)
-    then have "norm (infsetsum' f A) \<le> norm (sum f F) + \<epsilon>"
+    hence "norm (infsetsum' f A) \<le> norm (sum f F) + \<epsilon>"
       by (smt norm_triangle_sub)
     also have "\<dots> \<le> sum (\<lambda>x. norm (f x)) F + \<epsilon>"
       using norm_sum by auto
@@ -1076,7 +1076,7 @@ proof -
     finally show ?thesis 
       by assumption
   qed
-  then show ?thesis
+  thus ?thesis
     using linordered_field_class.field_le_epsilon by blast
 qed
 
@@ -1102,13 +1102,13 @@ proof -
         apply (subst less_SUP_iff[symmetric]) 
         using \<open>\<delta>>0\<close>
         by (metis diff_strict_left_mono diff_zero ereal_less_eq(3) ereal_minus(1) not_le sum_SUP)
-      then have "sum (\<lambda>x. norm (f x)) F > infsetsum (\<lambda>x. norm (f x)) A -  (\<delta>)"
+      hence "sum (\<lambda>x. norm (f x)) F > infsetsum (\<lambda>x. norm (f x)) A -  (\<delta>)"
         unfolding sum_SUP[symmetric] by auto
-      then have "\<delta> > infsetsum (\<lambda>x. norm (f x)) (A-F)"
+      hence "\<delta> > infsetsum (\<lambda>x. norm (f x)) (A-F)"
         apply (subst infsetsum_Diff)
         using abs_summable_on_norm_iff assms 
         using \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> by auto
-      then show ?thesis using that 
+      thus ?thesis using that 
         apply atomize_elim
         using \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> less_imp_le by blast
     qed
@@ -1166,7 +1166,7 @@ proof -
 
     have "infsetsum f F = infsetsum' f F"
       using finF by simp
-    then have "norm (infsetsum f A - infsetsum' f A) \<le> norm (infsetsum f A - infsetsum f F) + norm (infsetsum' f A - infsetsum' f F)"
+    hence "norm (infsetsum f A - infsetsum' f A) \<le> norm (infsetsum f A - infsetsum f F) + norm (infsetsum' f A - infsetsum' f F)"
       apply (rule_tac norm_diff_triangle_le)
       apply auto
       by (simp_all add: norm_minus_commute)
@@ -1175,9 +1175,9 @@ proof -
     finally show ?thesis
       by assumption
   qed
-  then have "norm (infsetsum f A - infsetsum' f A) = 0"
+  hence "norm (infsetsum f A - infsetsum' f A) = 0"
     by (meson antisym_conv1 dense_ge norm_not_less_zero)
-  then show ?thesis
+  thus ?thesis
     by auto
 qed
 

@@ -14,6 +14,7 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Operator_Norm"
     "HOL-Analysis.Elementary_Normed_Spaces"
     Unobtrusive_NSA
+    "HOL-Library.Set_Algebras"
 begin
 
 bundle notation_norm begin
@@ -877,14 +878,6 @@ begin
 sublocale bounded_linear
   apply standard by (fact bounded) 
 
-(* TODO remove *)
-lemma bounded_linear: "bounded_linear f"
-  by (fact bounded_linear)
-
-(* TODO remove *)
-lemma csemilinear: "csemilinear f"
-  by (fact csemilinear_axioms)
-
 end
 
 lemma bounded_csemilinear_intro:
@@ -1268,7 +1261,7 @@ proof
   proof -
     have "\<And>a b. f a + f b = f (a + b)"
       by (metis (no_types) complex_vector.vector_space_pair_axioms that(1) vector_space_pair.linear_add)
-    then show ?thesis
+    thus ?thesis
       by (metis (no_types) bij_inv_eq_iff that(2))
   qed
 
@@ -1306,143 +1299,188 @@ lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
    apply (rule scaleC_right)
   by (simp add: ac_simps)
 
-(* TODO: restored this (this is what we had in the beginning, the counterexamples below are
-   for with the assumption "bounded_csemilinear").
-
-   The proof is probably very similar to the proof of comp1 above
- *)
 lemma comp1:
-  assumes "bounded_clinear g"
-  shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
-  by (cheat comp1)
+  assumes \<open>bounded_clinear g\<close>
+  shows \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
+proof
+  show "prod (g (a + a')) b = prod (g a) b + prod (g a') b"
+    for a :: 'd
+      and a' :: 'd
+      and b :: 'b
+  proof-
+    have \<open>g (a + a') = g a + g a'\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_add)
+    thus ?thesis
+      by (simp add: add_left) 
+  qed
+  show "prod (g a) (b + b') = prod (g a) b + prod (g a) b'"
+    for a :: 'd
+      and b :: 'b
+      and b' :: 'b
+    by (simp add: add_right)
+  show "prod (g (r *\<^sub>C a)) b = cnj r *\<^sub>C prod (g a) b"
+    for r :: complex
+      and a :: 'd
+      and b :: 'b
+  proof-
+    have \<open>g (r *\<^sub>C a) = r *\<^sub>C (g a)\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_scale)
+    thus ?thesis
+      by (simp add: scaleC_left)      
+  qed  
+  show "prod (g a) (r *\<^sub>C b) = r *\<^sub>C prod (g a) b"
+    for a :: 'd
+      and r :: complex
+      and b :: 'b
+    by (simp add: scaleC_right)    
+  show "\<exists>K. \<forall>a b. norm (prod (g a) b) \<le> norm a * norm b * K"
+  proof-
+    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by simp
+    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
+      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
+    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
+      by blast
+    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
+      using bounded
+      by blast
+    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
+    proof - (* sledgehammer *)
+      { fix aa :: "real \<Rightarrow> 'a" and bb :: "real \<Rightarrow> 'b"
+        have ff1: "\<forall>a b r. r * (norm (b::'b) * norm (a::'a)) \<le> 0 \<or> 0 \<le> r"
+          by (metis (no_types) linear mult_nonneg_nonpos2 norm_ge_zero semiring_normalization_rules(18))
+        obtain rr :: real where
+          "\<forall>a b r. norm (prod a b) \<le> r \<or> r < rr * (norm b * norm a)"
+          by (metis bounded dual_order.strict_trans1 mult.commute not_le)
+        hence "\<exists>r. norm (prod (aa r) (bb r)) \<le> norm (aa r) * norm (bb r) * r \<and> 0 \<le> r"
+          using ff1 by (metis (no_types) linear mult.commute mult_zero_left not_le) }
+      thus ?thesis
+        by metis
+    qed
+    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
+      by blast
+    define K where \<open>K = M * N\<close>
+    have \<open>K \<ge> 0\<close>
+      unfolding K_def
+      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
+    have \<open>norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close>
+      for a b
+      using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
+      by blast
+    hence \<open>norm (prod (g a) b) \<le> (norm a * M) * norm b * N\<close>
+      for a b
+    proof -
+      have "\<forall>d b. norm (b::'b) * norm (g d) \<le> norm b * (M * norm d)"
+        by (metis \<open>\<And>a. norm (g a) \<le> norm a * M\<close> mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono)
+      thus ?thesis
+        by (metis (no_types) \<open>0 \<le> N\<close> \<open>\<And>b a. norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close> dual_order.trans mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
+    qed
+    hence \<open>norm (prod (g a) b) \<le> norm a * norm b * K\<close>
+      for a b
+      unfolding K_def
+      by (simp add: mult.commute mult.left_commute)
+    thus ?thesis
+      by blast      
+  qed  
+qed
 
-(* TODO: restored this *)
 lemma comp2:
-  assumes "bounded_clinear g"
-  shows "bounded_sesquilinear (\<lambda>x y. prod x (g y))"
-  by (cheat comp2)
+  assumes \<open>bounded_clinear g\<close>
+  shows \<open>bounded_sesquilinear (\<lambda>x y. prod x (g y))\<close>
+proof
+  show "prod (a + a') (g b) = prod a (g b) + prod a' (g b)"
+    for a :: 'a
+      and a' :: 'a
+      and b :: 'd
+    by (simp add: add_left)    
+  show "prod a (g (b + b')) = prod a (g b) + prod a (g b')"
+    for a :: 'a
+      and b :: 'd
+      and b' :: 'd
+  proof-
+    have \<open>g (b + b') = g b + g b'\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_add)
+    thus ?thesis
+      by (simp add: add_right) 
+  qed
+  show "prod (r *\<^sub>C a) (g b) = cnj r *\<^sub>C prod a (g b)"
+    for r :: complex
+      and a :: 'a
+      and b :: 'd
+    by (simp add: scaleC_left)    
+  show "prod a (g (r *\<^sub>C b)) = r *\<^sub>C prod a (g b)"
+    for a :: 'a
+      and r :: complex
+      and b :: 'd
+  proof-
+    have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by (simp add: complex_vector.linear_scale)
+    thus ?thesis
+      by (simp add: scaleC_right) 
+  qed
+  show "\<exists>K. \<forall>a b. norm (prod a (g b)) \<le> norm a * norm b * K"
+  proof-
+    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
+      using \<open>bounded_clinear g\<close>
+      unfolding bounded_clinear_def
+      by simp
+    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
+      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
+    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
+      by blast
+    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
+      using bounded
+      by blast
+    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
+    proof - (* sledgehammer *)
+      { fix aa :: "real \<Rightarrow> 'a" and bb :: "real \<Rightarrow> 'b"
+        have ff1: "\<forall>a b r. r * (norm (b::'b) * norm (a::'a)) \<le> 0 \<or> 0 \<le> r"
+          by (metis (no_types) linear mult_nonneg_nonpos2 norm_ge_zero semiring_normalization_rules(18))
+        obtain rr :: real where
+          "\<forall>a b r. norm (prod a b) \<le> r \<or> r < rr * (norm b * norm a)"
+          by (metis bounded dual_order.strict_trans1 mult.commute not_le)
+        hence "\<exists>r. norm (prod (aa r) (bb r)) \<le> norm (aa r) * norm (bb r) * r \<and> 0 \<le> r"
+          using ff1 by (metis (no_types) linear mult.commute mult_zero_left not_le) }
+      thus ?thesis
+        by metis
+    qed
+    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
+      by blast
+    define K where \<open>K = M * N\<close>
+    have \<open>K \<ge> 0\<close>
+      unfolding K_def
+      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
 
-(* TODO: restored this (this is what we had in the beginning, the counterexamples below are
-   for with the assumption "bounded_csemilinear") *)
-lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
-  by (cheat comp)
-
-
-(* fake results, couterexamples below
-lemma comp1:
-  assumes "bounded_csemilinear g"
-  shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
-  sorry
-
-lemma comp: "bounded_csemilinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
-  sorry  
-*)
-
-(*
-lemma comp1_counterexample:
-  fixes x::'a and y::'b
-  assumes \<open>bounded_csemilinear g\<close>
-  and \<open>prod (g x) y \<noteq> 0\<close> (* particular case *)
-  and \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close> (* FAKE thesis *)
-shows False
-proof-
-  have \<open>(g ((Complex 0 1) *\<^sub>C x)) = (Complex 0 (-1)) *\<^sub>C (g x)\<close>
-    by (metis assms(1) bounded_csemilinear_def complex_cnj csemilinear.scaleC)
-  hence \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y = prod ((Complex 0 (-1)) *\<^sub>C (g x)) y\<close>
-    by simp
-  also have \<open>\<dots> = (Complex 0 1) *\<^sub>C (prod (g x) y)\<close>
-    using complex_cnj scaleC_left by auto
-  finally have \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y =  (Complex 0 1) *\<^sub>C (prod (g x) y)\<close>
-    by blast
-  moreover have \<open>prod (g ((Complex 0 1) *\<^sub>C x)) y =  (Complex 0 (-1)) *\<^sub>C (prod (g x) y)\<close>
-    using \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
-    using bounded_sesquilinear.scaleC_left complex_cnj by fastforce
-  ultimately show ?thesis
-    by (simp add: assms(2)) 
+    have \<open>norm (prod a (g b)) \<le> norm a * norm b * K\<close>
+      for a b
+    proof-
+      have \<open>norm (prod a (g b)) \<le> norm a * norm (g b) * N\<close>
+        using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
+        by blast
+      also have \<open>norm a * norm (g b) * N \<le> norm a * (norm b * M) * N\<close>
+        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close>
+        by (smt \<open>0 \<le> N\<close> mult_cancel_right norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono real_mult_less_iff1)
+      also have \<open>norm a * (norm b * M) * N = norm a * norm b * K\<close>
+        by (simp add: K_def)
+      finally show ?thesis by blast
+    qed
+    thus ?thesis
+      by blast      
+  qed  
 qed
-
-lemma comp_counterexample:
-  fixes f :: \<open>'a \<Rightarrow> 'a::complex_normed_vector\<close>
-    and g :: \<open>'b \<Rightarrow> 'b::complex_normed_vector\<close>
-  assumes \<open>bounded_csemilinear f\<close> and \<open>bounded_clinear g\<close>
-    and \<open>g = id\<close> (* particular case *) 
-    and \<open>prod (f x) y \<noteq> 0\<close> (* particular case *)
-    and \<open>bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))\<close> (* FAKE thesis *)
-  shows False
-proof-
-  have \<open>bounded_sesquilinear (\<lambda>x y. prod (f x)  y)\<close>
-    using \<open>bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))\<close> \<open>g = id\<close>
-    by auto
-  thus ?thesis
-    using comp1_counterexample assms(1) assms(4) by auto    
-qed
-
-*)
-
-(* TODO: a sesquilinear form is not bilinear
-TODO: remove this comment
-lemma comp1:
-  assumes "bounded_clinear g"
-  shows "bounded_sesquilinear (\<lambda>x. prod (g x))"
-proof unfold_locales
-  interpret g: bounded_clinear g by fact
-  write prod (infixl "**" 70)
-  show "\<And>a a' b. g (a + a') ** b = g a ** b + g a' ** b"
-    "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
-    "\<And>r a b. g (r *\<^sub>C a) ** b = cnj r *\<^sub>C (g a ** b)"
-    "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
-    apply (simp add: add_left g.add)
-    apply (simp add: add_right)
-    apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_left)
-    by (simp add: scaleC_right)
-
-  from g.nonneg_bounded nonneg_bounded obtain K L
-    where nn: "0 \<le> K" "0 \<le> L"
-      and K: "\<And>x. norm (g x) \<le> norm x * K"
-      and L: "\<And>a b. norm (a ** b) \<le> norm a * norm b * L"
-    by auto
-  have "norm (g a ** b) \<le> norm a * K * norm b * L" for a b
-    by (auto intro!:  order_trans[OF K] order_trans[OF L] mult_mono simp: nn)
-  thus "\<exists>K. \<forall>a b. norm (g a ** b) \<le> norm a * norm b * K"
-    by (auto intro!: exI[where x="K * L"] simp: ac_simps)
-qed
-*)
-
-(* TODO: a sesquilinear form is not bilinear
-TODO: remove this comment
-lemma comp2:
-  assumes "bounded_clinear g"
-  shows "bounded_sesquilinear (\<lambda>x y. prod x (g y))"
-proof unfold_locales
-  interpret g: bounded_clinear g by fact
-  write prod (infixl "**" 70)
-  show "\<And>a a' b. b ** g (a + a') = b ** g a + b ** g a'"
-    "\<And>a b b'. (b + b') ** g a = b ** g a + b' ** g a"
-    "\<And>r a b. b ** g (r *\<^sub>C a) = r *\<^sub>C (b ** g a)"
-    "\<And>a r b. (r *\<^sub>C b) ** g a = cnj r *\<^sub>C (b ** g a)"
-    apply (simp add: add_right g.add)
-    apply (simp add: add_left)
-    apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_right)
-    by (simp add: scaleC_left)
-
-  from g.nonneg_bounded nonneg_bounded obtain K L
-    where nn: "0 \<le> K" "0 \<le> L"
-      and K: "\<And>x. norm (g x) \<le> norm x * K"
-      and L: "\<And>a b. norm (a ** b) \<le> norm a * norm b * L"
-    by auto
-  have "norm (b ** g a) \<le> norm b * (norm a * K) * L" for a b
-    by (auto intro!:  order_trans[OF K] order_trans[OF L] mult_mono simp: nn)
-  thus "\<exists>K. \<forall>a b. norm (a ** g b) \<le> norm a * norm b * K"
-    by (auto intro!: exI[where x="K * L"] simp: ac_simps)
-qed
-*)
-
-(* TODO: a sesquilinear form is not bilinear
-TODO: remove this comment
 
 lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
-  using bounded_sesquilinear.comp2 comp1 by auto
-*)
+  using comp1 bounded_sesquilinear.comp2 by auto
 
 end
 
@@ -1866,21 +1904,11 @@ proof-
 qed
 
 
-\<comment> \<open>The name "Minkoswki_sum" can be found in @{cite conway2013course}\<close>
-
-(* TODO: Delete. (This is already defined in theory HOL-Library.Set_Algebras as +) *)
-definition Minkoswki_sum:: \<open>('a::{complex_vector}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-  \<open>Minkoswki_sum A B = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
-
-(* TODO Delete *)
-notation Minkoswki_sum (infixl "+\<^sub>m" 65)
-
 lemma subspace_plus:
   assumes \<open>complex_vector.subspace A\<close> and \<open>complex_vector.subspace B\<close>
-  shows \<open>complex_vector.subspace (A +\<^sub>m B)\<close>
+  shows \<open>complex_vector.subspace (A + B)\<close>
 proof-
-  obtain C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
-    by blast
+  define C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
   have  "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
   proof-
     assume \<open>x \<in> C\<close>
@@ -1921,8 +1949,8 @@ proof-
       subspace_raw_def add.right_inverse
     by (metis (mono_tags, lifting) complex_vector.subspace_0)
   ultimately show ?thesis
-    using assms(1) assms(2) complex_vector.subspace_sums Minkoswki_sum_def
-    by (metis (no_types, lifting) subspace_raw_def)
+    unfolding C_def complex_vector.subspace_def
+    by (smt mem_Collect_eq set_plus_elim set_plus_intro)    
 qed
 
 
@@ -2039,7 +2067,7 @@ lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rig
   "\<lambda>c S. (scaleR c) ` S"
   apply (rule closed_subspace.intro)
   using bounded_clinear_def bounded_clinear_scaleC_right scaleR_scaleC
-  apply (metis closed_subspace.subspace complex_vector.linear_subspace_image)
+   apply (metis closed_subspace.subspace complex_vector.linear_subspace_image)
   by (simp add: closed_scaling closed_subspace.closed)
 instance 
   apply standard
@@ -2121,7 +2149,7 @@ section \<open>Span\<close>
 lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule closed_subspace.intro)
-  apply (simp add: subspace_cl)
+   apply (simp add: subspace_cl)
   by simp
 
 lemma subspace_span_A:

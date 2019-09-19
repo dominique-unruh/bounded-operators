@@ -242,13 +242,13 @@ proof
     then obtain cca :: "('a, 'b) rbounded \<Rightarrow> complex" and aaa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
       f2: "\<forall>r ra. (times_rbounded_vec r (cca r *\<^sub>C aaa r) \<noteq> cca r *\<^sub>C times_rbounded_vec r (aaa r) \<or> times_rbounded_vec ra (cc ra *\<^sub>C aa ra) \<noteq> cc ra *\<^sub>C times_rbounded_vec ra (aa ra)) \<or> bounded_of_rbounded (r + ra) = bounded_of_rbounded r + bounded_of_rbounded ra"
       using f1 by simp
-    then have "bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b + rbounded_of_bounded c) = bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b) + bounded_of_rbounded (rbounded_of_bounded c)"
+    hence "bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b + rbounded_of_bounded c) = bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b) + bounded_of_rbounded (rbounded_of_bounded c)"
       by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
-    then have f3: "bounded_of_rbounded (rbounded_of_bounded a + (rbounded_of_bounded b + rbounded_of_bounded c)) = a + b + c"
+    hence f3: "bounded_of_rbounded (rbounded_of_bounded a + (rbounded_of_bounded b + rbounded_of_bounded c)) = a + b + c"
       by (metis (mono_tags, lifting) ab_semigroup_add_class.add_ac(1) bounded_rbounded rbounded_of_bounded_plus)
     have "bounded_of_rbounded (rbounded_of_bounded a) + bounded_of_rbounded (rbounded_of_bounded b + rbounded_of_bounded c) = a + (b + c)"
       by (metis bounded_rbounded rbounded_of_bounded_plus)
-    then show ?thesis
+    thus ?thesis
       using f3 f2 by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
   qed
 
@@ -356,7 +356,7 @@ proof
       by (simp add: bounded_of_rbounded_zero)
 
     { assume "x \<noteq> 0"
-      then have "x \<noteq> 0 \<and> bounded_of_rbounded 0 \<noteq> x"
+      hence "x \<noteq> 0 \<and> bounded_of_rbounded 0 \<noteq> x"
         using f1 by meson
       hence ?thesis
         by (metis bounded_rbounded norm_eq_zero rbounded_of_bounded_norm)
@@ -1095,7 +1095,7 @@ proof-
     fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
     have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
       by (simp add: Minkoswki_sum_def closed_sum_def)
-    then show "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
+    thus "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
       by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
   qed
 
@@ -1366,18 +1366,18 @@ proof - (* sledgehammer *)
   obtain aa :: "('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a set \<Rightarrow> 'a" where
     "\<forall>x0 x1 x2. (\<exists>v4. v4 \<in> x2 \<and> x1 v4 \<noteq> x0 v4) = (aa x0 x1 x2 \<in> x2 \<and> x1 (aa x0 x1 x2) \<noteq> x0 (aa x0 x1 x2))"
     by moura
-  then have f6: "aa Ba Aa Sa \<in> Sa \<and> Aa (aa Ba Aa Sa) \<noteq> Ba (aa Ba Aa Sa) \<or> Aa ` Sa = Ba ` Sa"
+  hence f6: "aa Ba Aa Sa \<in> Sa \<and> Aa (aa Ba Aa Sa) \<noteq> Ba (aa Ba Aa Sa) \<or> Aa ` Sa = Ba ` Sa"
     using f5 by presburger
   have f7: "\<forall>f fa A a. (\<not> bounded_clinear f \<or> \<not> bounded_clinear fa \<or> (\<exists>a. (a::'a) \<in> A \<and> (f a::'b) \<noteq> fa a) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
     using equal_span_applyOpSpace by blast
   obtain aaa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a" where
     "\<forall>x1 x2 x3. (\<exists>v4. v4 \<in> x1 \<and> x3 v4 \<noteq> x2 v4) = (aaa x1 x2 x3 \<in> x1 \<and> x3 (aaa x1 x2 x3) \<noteq> x2 (aaa x1 x2 x3))"
     by moura
-  then have "\<forall>f fa A a. (\<not> bounded_clinear f \<or> \<not> bounded_clinear fa \<or> aaa A fa f \<in> A \<and> f (aaa A fa f) \<noteq> fa (aaa A fa f) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
+  hence "\<forall>f fa A a. (\<not> bounded_clinear f \<or> \<not> bounded_clinear fa \<or> aaa A fa f \<in> A \<and> f (aaa A fa f) \<noteq> fa (aaa A fa f) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
     using f7 by presburger
-  then have "Aa ` Sa = Ba ` Sa"
+  hence "Aa ` Sa = Ba ` Sa"
     using f6 a4 a3 a2 a1 by blast
-  then show "closure (Aa ` Sa) \<subseteq> closure (Ba ` Sa)"
+  thus "closure (Aa ` Sa) \<subseteq> closure (Ba ` Sa)"
     by (metis equalityE)
 qed
 
@@ -1650,18 +1650,18 @@ proof-
   proof - (* sledgehammer *)
     have "closed_subspace (space_as_set M)"
       by (metis \<open>space_as_set M = range (times_bounded_vec P)\<close> \<open>closed_subspace (range (times_bounded_vec P))\<close>)
-    then have f1: "\<forall>a. times_bounded_vec (Proj M) a = times_bounded_vec P a"
+    hence f1: "\<forall>a. times_bounded_vec (Proj M) a = times_bounded_vec P a"
       by (simp add: Proj.rep_eq \<open>\<And>x. times_bounded_vec P x \<in> space_as_set M\<close> \<open>\<And>x. x - times_bounded_vec P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
     have "\<forall>a. (+) ((a::'a) - a) = id"
       by force
-    then have "\<forall>a. (+) (times_bounded_vec (P - Proj M) a) = id"
+    hence "\<forall>a. (+) (times_bounded_vec (P - Proj M) a) = id"
       using f1
       by (simp add: minus_bounded.rep_eq) 
-    then have "\<forall>a aa. aa - aa = times_bounded_vec (P - Proj M) a"
+    hence "\<forall>a aa. aa - aa = times_bounded_vec (P - Proj M) a"
       by (metis (no_types) add_diff_cancel_right' id_apply)
-    then have "\<forall>a. times_bounded_vec (idOp - (P - Proj M)) a = a"
+    hence "\<forall>a. times_bounded_vec (idOp - (P - Proj M)) a = a"
       by (simp add: idOp.rep_eq minus_bounded.rep_eq)      
-    then show ?thesis
+    thus ?thesis
       by (metis (no_types) times_bounded_vec_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
   qed
   thus ?thesis
@@ -1714,9 +1714,9 @@ lemma Proj_leq: "(Proj S) *\<^sub>s A \<le> S"
 proof -
   have "top = sup top A"
     by (meson sup.orderE top_a_linear_space)
-  then have "sup S (Proj S *\<^sub>s A) = S"
+  hence "sup S (Proj S *\<^sub>s A) = S"
     by (metis (full_types) cdot_plus_distrib imageOp_Proj)
-  then show ?thesis
+  thus ?thesis
     by (meson sup.absorb_iff1)
 qed
 
@@ -1749,7 +1749,7 @@ proof-
       by (metis timesOp_assoc_linear_space times_idOp1)
     have "\<forall>l la. sup (Proj (la::'a linear_space) *\<^sub>s l) la = la"
       by (metis Proj_leq sup.absorb_iff2)
-    then show ?thesis
+    thus ?thesis
       using f3 f2 f1 by (metis Proj_leq \<open>P = Proj M\<close> \<open>isometry A\<close> cdot_plus_distrib imageOp_Proj sup.order_iff)
   qed 
   thus ?thesis
@@ -1932,7 +1932,7 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     unfolding inv_option_def using y_pi by simp
   ultimately have "Hilbert_Choice.inv \<pi> (Some x) = Hilbert_Choice.inv \<pi> (Some y)"
     using same by simp
-  then show "x = y"
+  thus "x = y"
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
@@ -1977,9 +1977,9 @@ proof (rule isProjector_I)
     have f1: "P *\<^sub>o P = P \<and> P* = P"
       using isProjector_algebraic that by auto
 
-    then have "(idOp - P) *\<^sub>o (idOp - P) = ((idOp - P) *\<^sub>o (idOp - P))*"
+    hence "(idOp - P) *\<^sub>o (idOp - P) = ((idOp - P) *\<^sub>o (idOp - P))*"
       by auto
-    then show ?thesis
+    thus ?thesis
       using f1 by (simp add: timesOp_minus)
   qed    
   show "(idOp - P)* = idOp - P"
@@ -2138,7 +2138,7 @@ proof -
   proof -
     from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>v \<phi>"
       apply atomize_elim unfolding rangeB'_def apply transfer by auto
-    then have "A *\<^sub>v \<psi>i i = (A *\<^sub>o B) *\<^sub>v \<phi>"
+    hence "A *\<^sub>v \<psi>i i = (A *\<^sub>o B) *\<^sub>v \<phi>"
       by (simp add: timesOp.rep_eq)
     also have "\<dots> = B *\<^sub>v \<phi>"
       by (simp add: assms)
@@ -2187,18 +2187,18 @@ next
     have "U *\<^sub>s V i \<le> rangeU" for i
       unfolding rangeU_def apply transfer apply auto
       by (meson closure_mono image_mono subsetD top_greatest)
-    then have "INFUV \<le> rangeU"
+    hence "INFUV \<le> rangeU"
       unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
     moreover have "(U *\<^sub>o Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
       apply (rule apply_left_neutral[where B=U])
       using assms that rangeU_def by auto
     ultimately have "(U *\<^sub>o Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
-    then have "(U *\<^sub>o Uinv) *\<^sub>s INFUV = INFUV"
+    hence "(U *\<^sub>o Uinv) *\<^sub>s INFUV = INFUV"
       apply transfer apply auto
       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
-    then show ?thesis
+    thus ?thesis
       by (simp add: timesOp_assoc_linear_space)
   qed
   also have "\<dots> \<le> U *\<^sub>s (INF i. Uinv *\<^sub>s U *\<^sub>s V i)"
@@ -2214,7 +2214,7 @@ next
       using assms that rangeUinv_def by auto
     ultimately have "(Uinv *\<^sub>o U) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
       using less_eq_linear_space.rep_eq that by blast
-    then have "(Uinv *\<^sub>o U) *\<^sub>s (V i) = (V i)" for i
+    hence "(Uinv *\<^sub>o U) *\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
@@ -2330,7 +2330,7 @@ fix Sa :: "'a \<Rightarrow> 'b"
   assume a1: "bounded_clinear Sa"
 have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
 using norm_ball by fastforce
-  then show "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
+  thus "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
 using a1 by (simp add: bounded_clinear.bounded_linear)
 qed
 

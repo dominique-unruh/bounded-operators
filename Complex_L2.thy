@@ -40,7 +40,7 @@ proof
     finally show ?thesis 
       unfolding bound_def by assumption
   qed
-  then show "has_ell2_norm x"
+  thus "has_ell2_norm x"
     unfolding has_ell2_norm_def f_def
     by (rule bdd_aboveI2[where M=bound], simp)
 next
@@ -48,7 +48,7 @@ next
   then obtain B where "(\<Sum>xa\<in>F. norm ((cmod (x xa))\<^sup>2)) < B" if "finite F" for F
     apply atomize_elim unfolding has_ell2_norm_def unfolding bdd_above_def apply auto
     by (meson gt_ex le_less_trans)
-  then show "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
+  thus "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
     apply (rule_tac abs_summable_finiteI[where B=B]) by fastforce 
 qed
 
@@ -65,7 +65,7 @@ proof -
       using bdd_sqrt unfolding bdd_above_def by auto
     have "y*y \<ge> x" if "x:X" for x
       by (metis power2_eq_square sqrt_le_D that y)
-    then show "bdd_above X"
+    thus "bdd_above X"
       unfolding bdd_above_def by auto
   qed
   ultimately have bdd_sqrt: "bdd_above X \<longleftrightarrow> bdd_above (sqrt ` X)" for X
@@ -175,7 +175,7 @@ lemma ell2_norm_0:
   shows "(ell2_norm x = 0) = (x = (\<lambda>_. 0))"
 proof
   assume "x = (\<lambda>_. 0)"
-  then show "ell2_norm x = 0"
+  thus "ell2_norm x = 0"
     unfolding ell2_norm_def apply auto
     by (metis cSUP_const empty_Collect_eq finite.emptyI)
 next
@@ -186,7 +186,7 @@ next
     have "sum (\<lambda>i. (cmod (x i))\<^sup>2) {i} \<le> 0" 
       apply (rule cSUP_leD[where A="Collect finite"])
       using norm0 assms unfolding has_ell2_norm_def ell2_norm_def by auto
-    then show "x i = 0" by auto
+    thus "x i = 0" by auto
   qed
 qed
 
@@ -205,10 +205,10 @@ proof -
 
   from assms obtain M where M: "M \<ge> L2_set (cmod o x) F" if "finite F" for F
     unfolding has_ell2_norm_L2_set bdd_above_def by auto
-  then have "cmod c * M \<ge> L2_set (cmod o (\<lambda>i. c * x i)) F" if "finite F" for F
+  hence "cmod c * M \<ge> L2_set (cmod o (\<lambda>i. c * x i)) F" if "finite F" for F
     unfolding L2_set_mul
     by (simp add: ordered_comm_semiring_class.comm_mult_left_mono that) 
-  then show has: "has_ell2_norm (\<lambda>i. c * x i)"
+  thus has: "has_ell2_norm (\<lambda>i. c * x i)"
     unfolding has_ell2_norm_L2_set bdd_above_def using L2_set_mul[symmetric] by auto
   have "ell2_norm (\<lambda>i. c * x i) = SUPREMUM (Collect finite) (L2_set (cmod \<circ> (\<lambda>i. c * x i)))"
     apply (rule ell2_norm_L2_set) by (rule has)
@@ -244,13 +244,13 @@ proof -
   qed
   obtain Mx My where Mx: "Mx \<ge> L2_set (cmod o x) F" and My: "My \<ge> L2_set (cmod o y) F" if "finite F" for F
     using assms unfolding has_ell2_norm_L2_set bdd_above_def by auto
-  then have MxMy: "Mx + My \<ge> L2_set (cmod \<circ> x) F + L2_set (cmod \<circ> y) F" if "finite F" for F
+  hence MxMy: "Mx + My \<ge> L2_set (cmod \<circ> x) F + L2_set (cmod \<circ> y) F" if "finite F" for F
     using that by fastforce
-  then have bdd_plus: "bdd_above ((\<lambda>xa. L2_set (cmod \<circ> x) xa + L2_set (cmod \<circ> y) xa) ` Collect finite)"
+  hence bdd_plus: "bdd_above ((\<lambda>xa. L2_set (cmod \<circ> x) xa + L2_set (cmod \<circ> y) xa) ` Collect finite)"
     unfolding bdd_above_def by auto
   from MxMy have MxMy': "Mx + My \<ge> L2_set (cmod \<circ> (\<lambda>i. x i + y i)) F" if "finite F" for F 
     using triangle that by fastforce
-  then show has: "has_ell2_norm (\<lambda>i. x i + y i)"
+  thus has: "has_ell2_norm (\<lambda>i. x i + y i)"
     unfolding has_ell2_norm_L2_set bdd_above_def by auto
   have SUP_plus: "(SUP x:A. f x + g x) \<le> (SUP x:A. f x) + (SUP x:A. g x)" 
     if notempty: "A\<noteq>{}" and bddf: "bdd_above (f`A)"and bddg: "bdd_above (g`A)"
@@ -362,13 +362,13 @@ proof standard
   proof transfer
     fix x y z :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
-    then have cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
+    hence cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
       by (simp del: complex_cnj_mult add: norm_mult[symmetric] complex_cnj_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     assume "has_ell2_norm y"
-    then have cnj_y: "(\<lambda>i. cnj (y i) * cnj (y i)) abs_summable_on UNIV"
+    hence cnj_y: "(\<lambda>i. cnj (y i) * cnj (y i)) abs_summable_on UNIV"
       by (simp del: complex_cnj_mult add: norm_mult[symmetric] complex_cnj_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     assume "has_ell2_norm z"
-    then have z: "(\<lambda>i. z i * z i) abs_summable_on UNIV" 
+    hence z: "(\<lambda>i. z i * z i) abs_summable_on UNIV" 
       by (simp add: norm_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     have cnj_x_z:"(\<lambda>i. cnj (x i) * z i) abs_summable_on UNIV"
       using cnj_x z by (rule abs_summable_product) 
@@ -385,14 +385,14 @@ proof standard
   proof transfer
     fix x y :: "'a \<Rightarrow> complex" and c :: complex
     assume "has_ell2_norm x"
-    then have cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
+    hence cnj_x: "(\<lambda>i. cnj (x i) * cnj (x i)) abs_summable_on UNIV"
       by (simp del: complex_cnj_mult add: norm_mult[symmetric] complex_cnj_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     assume "has_ell2_norm y"
-    then have y: "(\<lambda>i. y i * y i) abs_summable_on UNIV" 
+    hence y: "(\<lambda>i. y i * y i) abs_summable_on UNIV" 
       by (simp add: norm_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     have cnj_x_y:"(\<lambda>i. cnj (x i) * y i) abs_summable_on UNIV"
       using cnj_x y by (rule abs_summable_product) 
-    then show "(\<Sum>\<^sub>ai. cnj (c * x i) * y i) = cnj c * (\<Sum>\<^sub>ai. cnj (x i) * y i)"
+    thus "(\<Sum>\<^sub>ai. cnj (c * x i) * y i) = cnj c * (\<Sum>\<^sub>ai. cnj (x i) * y i)"
       apply (subst infsetsum_cmult_right[symmetric])
       by (auto simp: mult.commute mult.left_commute)
   qed
@@ -401,7 +401,7 @@ proof standard
   proof transfer
     fix x :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
-    then have sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
+    hence sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
       unfolding has_ell2_norm_infsetsum power2_eq_square
       apply (subst abs_summable_on_norm_iff[symmetric])
       by (simp del: abs_summable_on_norm_iff add: norm_mult has_ell2_norm_infsetsum power2_eq_square)
@@ -419,7 +419,7 @@ proof standard
   proof (transfer, auto)
     fix x :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
-    then have cmod_x2: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
+    hence cmod_x2: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
       unfolding has_ell2_norm_infsetsum power2_eq_square 
       apply (subst abs_summable_on_norm_iff[symmetric])
       by (simp del: abs_summable_on_norm_iff add: norm_mult)
@@ -428,7 +428,7 @@ proof standard
     proof (rule ccontr)
       assume "x \<noteq> (\<lambda>_. 0)"
       then obtain i where "x i \<noteq> 0" by auto
-      then have "0 < cnj (x i) * x i"
+      hence "0 < cnj (x i) * x i"
         using le_less less_eq_complex_def by fastforce
 
       also have "\<dots> = (\<Sum>\<^sub>ai\<in>{i}. cnj (x i) * x i)" by auto
@@ -447,7 +447,7 @@ proof standard
   proof transfer 
     fix x :: "'a \<Rightarrow> complex" 
     assume x: "has_ell2_norm x"
-    then have sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
+    hence sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
       unfolding has_ell2_norm_infsetsum power2_eq_square
       apply (subst abs_summable_on_norm_iff[symmetric])
       by (simp del: abs_summable_on_norm_iff add: norm_mult has_ell2_norm_infsetsum power2_eq_square)
@@ -499,7 +499,7 @@ proof -
       unfolding dist_norm by simp
     finally show ?thesis by assumption
   qed
-  then show ?thesis
+  thus ?thesis
     unfolding Cauchy_def
     using \<open>Cauchy X\<close> unfolding Cauchy_def
     by (meson le_less_trans) 
@@ -623,7 +623,7 @@ lemma triangIneq_ell2:
    \<le> sqrt (\<Sum> x\<in>S. (cmod (f x))^2) + sqrt (\<Sum> x\<in>S. (cmod (g x))^2)\<close>
 proof (cases \<open>finite S\<close>)
   case False
-  then show ?thesis
+  thus ?thesis
     by auto
 next
   case True
@@ -686,9 +686,9 @@ next
         by (meson inj_onI)
       have "\<forall>f a aa. \<not> inj f \<or> ((f (a::'a)::'a \<times> bool) = f aa) = (a = aa)"
         by (metis inj_eq)
-      then have "inj_on (\<lambda>a. (a, True)) S"
+      hence "inj_on (\<lambda>a. (a, True)) S"
         using f2 by (metis (no_types) \<open>inj (\<lambda>x. (x, True))\<close>)
-      then show ?thesis
+      thus ?thesis
         using f1 by linarith
     qed
     moreover have  \<open>(\<Sum> x\<in>S. (F (x, False) + G (x, False))^2) 
@@ -702,9 +702,9 @@ next
         by (meson inj_onI)
       have "\<forall>f a aa. \<not> inj f \<or> ((f (a::'a)::'a \<times> bool) = f aa) = (a = aa)"
         by (metis inj_eq)
-      then have "inj_on (\<lambda>a. (a, False)) S"
+      hence "inj_on (\<lambda>a. (a, False)) S"
         using f2 by (metis (no_types) \<open>inj (\<lambda>x. (x, False))\<close>)
-      then show ?thesis
+      thus ?thesis
         using f1 by linarith
     qed
     ultimately show ?thesis
@@ -865,7 +865,7 @@ proof-
       have  \<open>\<exists> K. \<forall> m. \<forall> S::'a set. m < N \<longrightarrow> (finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a N) x) ) )^2) \<le> K)\<close>
       proof(cases \<open>N = 0\<close>)
         case True
-        then show ?thesis by blast
+        thus ?thesis by blast
       next
         case False
         from \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
@@ -1300,9 +1300,9 @@ proof-
                   by auto
                 have "0 \<le> \<epsilon>"
                   using \<open>0 < \<epsilon>\<close> by linarith
-                then have "\<epsilon> / sqrt (real (card S)) + - 1 * (\<epsilon> / 1) \<le> 0"
+                hence "\<epsilon> / sqrt (real (card S)) + - 1 * (\<epsilon> / 1) \<le> 0"
                   using f3 f2 f1 \<open>1 \<le> sqrt (real (card S))\<close> nice_ordered_field_class.frac_le by blast
-                then show ?thesis
+                thus ?thesis
                   using \<open>sqrt (\<Sum>x\<in>S. (cmod ((a n - l) x))\<^sup>2) < \<epsilon> / sqrt (real (card S))\<close> by force
               qed 
             qed
@@ -1763,7 +1763,7 @@ instance
 proof
   fix X :: "nat \<Rightarrow> 'a ell2"
   assume cauchy: "Cauchy (X::nat \<Rightarrow> 'a ell2)"
-  then have "\<exists>l. X \<longlonglongrightarrow> l"
+  hence "\<exists>l. X \<longlonglongrightarrow> l"
     unfolding LIMSEQ_def Cauchy_def dist_norm
     apply transfer apply simp
     apply (rule completeness_ell2)
@@ -2228,9 +2228,9 @@ proof
         by (metis (no_types) Abs_ell2_inverse classical_operator'.rep_eq mem_Collect_eq)
       have "\<forall>f fa. (Abs_ell2 (\<lambda>a. fa (a::'a) + f a) = Abs_ell2 fa + Abs_ell2 f \<or> \<not> has_ell2_norm f) \<or> \<not> has_ell2_norm fa"
         by (metis (no_types) eq_onp_same_args plus_ell2.abs_eq)
-      then have "(case inv_option S b of None \<Rightarrow> 0 | Some a \<Rightarrow> b1 a + b2 a) = Rep_ell2 (classical_operator' S (Abs_ell2 b1 + Abs_ell2 b2)) b"
+      hence "(case inv_option S b of None \<Rightarrow> 0 | Some a \<Rightarrow> b1 a + b2 a) = Rep_ell2 (classical_operator' S (Abs_ell2 b1 + Abs_ell2 b2)) b"
         using f1 by (metis (no_types) ell2_norm_triangle(1) that(1) that(2))
-      then show ?thesis
+      thus ?thesis
         using f1 by (metis (full_types) \<open>\<And>y x \<pi>. classical_operator' \<pi> (x + y) = classical_operator' \<pi> x + classical_operator' \<pi> y\<close> plus_ell2.rep_eq that(1) that(2))
     qed
   qed
@@ -2814,7 +2814,7 @@ proof-
   proof -
     have "\<forall>a aa. a = k \<and> aa \<noteq> k \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> aa \<noteq> k \<or> a = k \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa"
       by (simp add: ket.rep_eq scaleC_ell2.rep_eq)
-    then show ?thesis
+    thus ?thesis
       by meson
   qed
   ultimately have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i = Rep_ell2 (trunc_ell2 R w) i + Rep_ell2 ((Rep_ell2 w k) *\<^sub>C (ket k)) i\<close>

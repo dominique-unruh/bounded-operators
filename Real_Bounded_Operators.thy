@@ -1247,7 +1247,7 @@ proof-
             by meson
           moreover
           { assume "norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f nn) x"
-            then have "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+            hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
               by (metis \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))
             moreover
             { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
@@ -1264,13 +1264,13 @@ proof-
                         moreover
                         { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
                           { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x))"
-                            then have "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x)"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x)"
                               using vector_fraction_eq_iff
                               using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
-                            then have "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
                               using f1
                               using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> scaleR_cong_right by blast  }
-                          then have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
                             by fastforce }
                         ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
                           by fastforce }
@@ -1306,7 +1306,7 @@ proof-
           have f1: "times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x"
             by (meson \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
           { assume "norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) \<noteq> times_rbounded_vec l x"
-            then have "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+            hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
               by (metis \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
             moreover
             { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
@@ -1323,12 +1323,12 @@ proof-
                         moreover
                         { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
                           { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x))"
-                            then have "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x)"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x)"
                               using vector_fraction_eq_iff
                               using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
-                            then have "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
                               using f1 by fastforce }
-                          then have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
                             by fastforce }
                         ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
                           by force }
@@ -1344,7 +1344,7 @@ proof-
                 by auto }
             ultimately have ?thesis
               using f1 by auto }
-          then show ?thesis
+          thus ?thesis
             by metis
         qed          
         thus ?thesis by StarDef.transfer
@@ -1396,9 +1396,9 @@ proof -
       using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
     have "times_rbounded_vec (Abs_rbounded aa) = aa"
       using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
-    then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) aaa + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) aaa"
+    hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) aaa + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) aaa"
       using ff2 ff1 by (metis (no_types) times_rbounded_vec_inverse comp_apply) }
-  then have "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a)"
+  hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a)"
     by meson
 } note 1 = this
 

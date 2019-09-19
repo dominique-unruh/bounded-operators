@@ -409,7 +409,7 @@ lemma htensor_norm_mult:
 proof -
   have "norm x * norm y = sqrt (cmod \<langle>x, x\<rangle>) * sqrt (cmod \<langle>y, y\<rangle>)"
     by (metis norm_eq_sqrt_cinner)
-  then show ?thesis
+  thus ?thesis
     by (metis htensor_cinner_mult norm_eq_sqrt_cinner norm_mult real_sqrt_mult)
 qed 
 
@@ -455,7 +455,7 @@ lemma
 lemma comm_op_times_comm_op[simp]: "comm_op  *\<^sub>o comm_op = idOp"
 proof -
   have "comm_op  *\<^sub>o (idOp \<otimes> idOp)  *\<^sub>o comm_op = idOp \<otimes> idOp" by (simp del: idOp_tensor_idOp)
-  then show ?thesis by simp
+  thus ?thesis by simp
 qed
 
 lemma unitary_comm_op[simp]: "unitary comm_op"

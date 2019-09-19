@@ -47,7 +47,7 @@ proof -
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
   finally have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi>) = \<langle>\<psi>, \<phi>\<rangle>" by -
-  then show ?thesis
+  thus ?thesis
     by (metis C1_to_complex_inverse)
 qed
 
@@ -69,9 +69,9 @@ lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
 proof -
   have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
     by (simp add: times_applyOp)
-  then have "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
+  hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
     using C1_to_complex_inverse by metis
-  then show ?thesis
+  thus ?thesis
     by (rule bounded_ext)
 qed
 
@@ -93,9 +93,9 @@ proof -
     apply (simp add: times_applyOp cinner_adjoint'[symmetric])
     apply (transfer fixing: \<psi> \<phi> \<delta> \<gamma>)
     by (rule cinner_tensor)
-  then have "(addState \<psi>* *\<^sub>o addState \<phi>) *\<^sub>v \<delta> = (\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp) *\<^sub>v \<delta>" for \<delta> :: "'b ell2"
+  hence "(addState \<psi>* *\<^sub>o addState \<phi>) *\<^sub>v \<delta> = (\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp) *\<^sub>v \<delta>" for \<delta> :: "'b ell2"
     by (rule cinner_ext_ell2)
-  then show ?thesis
+  thus ?thesis
     by (rule bounded_ext)
 qed
 

@@ -141,11 +141,11 @@ proof-
   have \<open>(*f* of_nat) (star_of n) = (plus 1 ^^ n) (0::hypreal)\<close>
   proof(induction n)
     case 0
-    then show ?case
+    thus ?case
       by (metis funpow_0 of_nat_0 star_zero_def starfun_eq) 
   next
     case (Suc n)
-    then show ?case
+    thus ?case
       by (metis of_nat_def star_of_nat_def starfun_star_of) 
   qed
   thus ?thesis
@@ -621,9 +621,9 @@ proof-
         proof -
           assume a1: "N \<in> HNatInfinite"
           assume "M \<in> HNatInfinite"
-          then have "(*f* x) N \<approx> (*f* x) M"
+          hence "(*f* x) N \<approx> (*f* x) M"
             using a1 by (metis \<open>\<And>N M. \<lbrakk>N \<in> HNatInfinite; M \<in> HNatInfinite\<rbrakk> \<Longrightarrow> (*f* x) N \<approx> (*f* x) M\<close>)
-          then show ?thesis
+          thus ?thesis
             by (metis (no_types) approx_scaleR2 star_of_inverse star_scaleR_def starfun2_star_of)
         qed
         moreover have \<open>(*f2* scaleR) (inverse (star_of L)) ((*f* x) N) =  (*f* (\<lambda>n. x n /\<^sub>R L)) N\<close>

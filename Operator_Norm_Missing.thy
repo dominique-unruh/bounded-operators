@@ -369,7 +369,7 @@ next
               using \<open>\<And>x. 0 \<le> norm (f x)\<close> \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close> by blast
             hence "\<exists>r. r \<in> {norm (f a) |a. norm a = 1} \<and> 0 \<le> r"
               by blast
-            then show ?thesis
+            thus ?thesis
               by (metis (lifting) \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> cSup_upper2)
           qed            
           thus ?thesis
@@ -531,7 +531,7 @@ next
         proof -
           have "\<And>r s. \<not> (r::real) \<le> s \<or> sup r s = s"
             by (metis (lifting) sup.absorb_iff1 sup_commute)
-          then show ?thesis
+          thus ?thesis
             by (metis (lifting) \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close> \<open>bdd_above {0}\<close> \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> \<open>{0} \<noteq> {}\<close> \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close> cSup_singleton cSup_union_distrib max.absorb_iff1 sup_commute)
         qed
         moreover have \<open>Sup {(0::real)} = (0::real)\<close>
@@ -817,20 +817,20 @@ next
         then obtain aa :: "real \<Rightarrow> 'a" where
           f4: "rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S} \<longrightarrow> rra (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)) = norm (f (aa (rra (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r))))) \<and> \<not> r + - 1 * norm (aa (rra (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)))) \<le> 0"
           using f3 S_def by moura
-        then have "rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S} \<longrightarrow> rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) = 1 / r * norm (f (aa (rra (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)))))"
+        hence "rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S} \<longrightarrow> rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) = 1 / r * norm (f (aa (rra (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)))))"
           using f3 by presburger
-        then have f5: "rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * ra |ra. ra \<in> S} \<or> rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * norm (f a) |a. norm a < r}"
+        hence f5: "rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * ra |ra. ra \<in> S} \<or> rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * norm (f a) |a. norm a < r}"
           using f4 f2 by blast
         obtain aaa :: "real \<Rightarrow> 'a" where
           f6: "(rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * norm (f a) |a. norm a < r} \<or> rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) = 1 / r * norm (f (aaa (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)))) \<and> \<not> r + - 1 * norm (aaa (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r))) \<le> 0) \<and> (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * norm (f a) |a. norm a < r} \<or> (\<forall>a. rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<noteq> 1 / r * norm (f a) \<or> r + - 1 * norm a \<le> 0))"
           by moura
         have "(rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * norm (f a) |a. norm a < r}) = (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S}) \<longrightarrow> (\<forall>a. norm (f (aaa (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r)))) \<noteq> norm (f a) \<or> r + - 1 * norm a \<le> 0)"
           using S_def by blast
-        then have "(rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * norm (f a) |a. norm a < r}) \<noteq> (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S})"
+        hence "(rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<notin> {1 / r * norm (f a) |a. norm a < r}) \<noteq> (rr (\<lambda>ra. \<exists>rb. ra = 1 / r * rb \<and> rb \<in> S) (\<lambda>ra. \<exists>a. ra = 1 / r * norm (f a) \<and> norm a < r) \<in> {1 / r * ra |ra. ra \<in> S})"
           using f6 f5 by blast
-        then have "{1 / r * norm (f a) |a. norm a < r} = {1 / r * ra |ra. ra \<in> S}"
+        hence "{1 / r * norm (f a) |a. norm a < r} = {1 / r * ra |ra. ra \<in> S}"
           using f1 by meson
-        then show ?thesis
+        thus ?thesis
           using S_def \<open>1 / r * Sup S = Sup {1 / r * s |s. s \<in> S}\<close> by presburger
       qed          
       thus ?thesis by simp
@@ -1111,11 +1111,11 @@ proof-
             then obtain aa :: 'a where
               f1: "aa \<in> S \<and> y = (if norm (f (x + aa)) + - 1 * norm (f (x - aa)) \<le> 0 then norm (f (x - aa)) else norm (f (x + aa)))"
               using \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> by moura
-            then have f2: "aa \<in> {a. norm a < r}"
+            hence f2: "aa \<in> {a. norm a < r}"
               by (metis S_def)
             have "norm aa = dist (x + aa) x"
               by (metis (full_types) add_diff_cancel_right' dist_diff(1))
-            then show ?thesis
+            thus ?thesis
               using f2 f1 by auto
           qed            
         next
@@ -1127,13 +1127,13 @@ proof-
             obtain aa :: 'a where
               f1: "aa \<in> S \<and> y = (if norm (f (x + aa)) + - 1 * norm (f (x - aa)) \<le> 0 then norm (f (x - aa)) else norm (f (x + aa)))"
               using \<open>\<exists>t\<in>S. y = v t\<close> \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> by moura
-            then have f2: "aa \<in> {a. norm a < r}"
+            hence f2: "aa \<in> {a. norm a < r}"
               using S_def by blast
             have "norm aa = dist (x + aa) x"
               by (metis add_diff_cancel_right' dist_diff(1))
-            then have "\<exists>a. norm (f (x - t)) = norm (f a) \<and> \<not> r + - 1 * dist a x \<le> 0"
+            hence "\<exists>a. norm (f (x - t)) = norm (f a) \<and> \<not> r + - 1 * dist a x \<le> 0"
               using f2 f1 \<open>y = norm (f (x - t))\<close> by force
-            then show ?thesis
+            thus ?thesis
               using \<open>y = norm (f (x - t))\<close> by force
           qed
         qed
@@ -1259,7 +1259,7 @@ proof-
     ultimately have \<open>Sup {norm (f y) |y. dist y x < r} \<le> Sup (v ` S)\<close>
     proof -
       assume "\<And>y. y \<in> {norm (f y) |y. dist y x < r} \<Longrightarrow> y \<le> Sup (v ` S)"
-      then show ?thesis
+      thus ?thesis
         by (metis (lifting) \<open>{norm (f y) |y. dist y x < r} \<noteq> {}\<close> cSup_least)
     qed 
     thus ?thesis
@@ -1402,7 +1402,7 @@ proof-
     assume a1: "\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e"
     have "\<forall>r. r \<notin> S \<or> (\<exists>a. r = norm (f a) \<and> a \<in> sphere 0 1)"
       using S_def by blast
-    then show ?thesis
+    thus ?thesis
       using a1 by (metis (lifting) S_def norm_minus_commute)
   qed 
 qed

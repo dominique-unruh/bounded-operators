@@ -338,7 +338,7 @@ proof-
     assume a3: "\<And>N. N \<in> HNatInfinite \<Longrightarrow> hnorm ((*f* f2) N) \<approx> hypreal_of_real (lim (\<lambda>n. norm (f2 n)))"
     have "(\<exists>f r. lim f \<noteq> (r::real)) \<or> hypreal_of_real (lim (\<lambda>n. norm (f1 n))) \<approx> hypreal_of_real (lim (\<lambda>n. norm (f2 n)))"
       by fastforce
-    then show ?thesis
+    thus ?thesis
       using a3 a2 a1 by (meson NSLIMSEQ_LIMSEQ NSLIMSEQ_def approx_trans3 limI)
   qed 
   thus \<open>lim (\<lambda>n. norm (f1 n)) = lim (\<lambda>n. norm (f2 n))\<close>
@@ -2002,13 +2002,13 @@ proof
               using \<open>convergent (\<lambda>n. norm (rep_completion x n))\<close> convergent_mult_const_right_iff by fastforce
             moreover
             { assume "\<not> (\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlonglongrightarrow> 0"
-              then have "complex_of_real K \<noteq> 0"
+              hence "complex_of_real K \<noteq> 0"
                 by auto }
             moreover
             { assume "(\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlonglongrightarrow> 0 \<and> \<not> (\<lambda>n. norm (rep_completion x n) * K) \<longlonglongrightarrow> K"
               moreover
               { assume "\<exists>c f. ((\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n))) \<longlongrightarrow> c) f \<and> ((\<lambda>n. complex_of_real K *\<^sub>C complex_of_real (norm (rep_completion x n)) - complex_of_real (norm (rep_completion x n) * K)) \<longlongrightarrow> 0) f \<and> \<not> ((\<lambda>n. complex_of_real (norm (rep_completion x n) * K)) \<longlongrightarrow> c) f"
-                then have "complex_of_real K \<noteq> 0"
+                hence "complex_of_real K \<noteq> 0"
                   by fastforce }
               ultimately have "complex_of_real K \<noteq> 0"
                 by fastforce }
