@@ -1054,52 +1054,22 @@ qed
 lemma cdot_plus_distrib[simp]:   
   fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
   shows \<open>U *\<^sub>s (sup A B) = sup (U *\<^sub>s A) (U *\<^sub>s B)\<close>
+  apply transfer
 proof-
-  {  have   \<open>
-       bounded_clinear U \<Longrightarrow>
-       closed_subspace A \<Longrightarrow>
-       closed_subspace B \<Longrightarrow>
-       Abs_linear_space
-        (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
-       Abs_linear_space
-        (closure
-          {\<psi> + \<phi> |\<psi> \<phi>.
-           \<psi> \<in> space_as_set (Abs_linear_space (closure (U ` A))) \<and>
-           \<phi> \<in> space_as_set (Abs_linear_space (closure (U ` B)))})\<close>
-      for U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
-    proof-
-      assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
-      hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+  fix U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
+  assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
+  hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
            \<phi> \<in> closure (U ` B)})\<close>
-        using cdot_plus_distrib_transfer by blast
-      hence \<open>Abs_linear_space (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
-        Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>.
-           \<psi> \<in> closure (U ` A) \<and>
-           \<phi> \<in> closure (U ` B)})\<close>
-        by simp
-      thus ?thesis using Abs_linear_space_inverse
-        by (smt Collect_cong times_bounded_vec_cases space_as_set \<open>bounded_clinear U\<close> \<open>closed_subspace A\<close> \<open>closed_subspace B\<close> applyOpSpace.rep_eq mem_Collect_eq)
-    qed    
-  } note 1 = this
-
-  show ?thesis 
-    unfolding plus_bounded_def applyOpSpace_def apply auto apply transfer 
+    using cdot_plus_distrib_transfer by blast    
+  thus \<open>closure (U ` (A +\<^sub>M B)) =
+       closure (U ` A) +\<^sub>M closure (U ` B)\<close>
     unfolding closed_sum_def set_plus_def
-    apply auto
-    unfolding  closed_sum_def set_plus_def
-    using 1 
-    apply auto
-  proof - (* sledgehammer *)
-    fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
-    have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
-      by (simp add: set_plus_def closed_sum_def)
-    thus "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
-      by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
-  qed
-
+    by (smt Collect_cong)
+      (* > 1 s *)
 qed
+
 
 lemma scalar_op_linear_space_assoc [simp]: 
 
@@ -1832,7 +1802,8 @@ proof-
         x \<in> (space_as_set B +\<^sub>M space_as_set C)\<close>
     for x
     unfolding closed_sum_def set_plus_def
-    by blast
+    by (smt Collect_cong)
+      (* > 1 s *)
   hence \<open> x \<in> space_as_set A \<Longrightarrow>
          x \<in> space_as_set
                (Abs_linear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
