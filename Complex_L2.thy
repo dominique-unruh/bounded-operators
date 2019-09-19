@@ -1910,10 +1910,9 @@ qed
 
 
 
-section \<open>CARD_1\<close>
+section \<open>the_single\<close>
 
-(* TODO: Remove this definition. CARD_1 already exists. Instead of the_single, we can use undefined *)
-class CARD_1 = 
+class the_single = 
   fixes the_single :: "'a" 
   assumes everything_the_single: "x=the_single" 
 begin
@@ -1936,7 +1935,7 @@ subclass finite apply standard unfolding singleton_UNIV by simp
 end
 
 
-instantiation unit :: CARD_1
+instantiation unit :: the_single
 begin
 definition "singleton = ()"
 instance 
@@ -1945,7 +1944,7 @@ instance
 end
 
 
-instantiation ell2 :: (CARD_1) complex_algebra_1 
+instantiation ell2 :: (the_single) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
 lift_definition times_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a b _. a the_single * b the_single" by simp
@@ -1992,10 +1991,10 @@ proof
 qed
 end
 
-lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
+lift_definition C1_to_complex :: "'a::the_single ell2 \<Rightarrow> complex" is
   "\<lambda>\<psi>. \<psi> the_single" .
 
-abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::CARD_1 ell2 == of_complex"
+abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::the_single ell2 == of_complex"
 
 lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
   apply transfer by simp
@@ -2013,40 +2012,39 @@ lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
   apply (rule bounded_clinear_intro[where K=1])
   by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
 
-(* TODO: unit should be 'b::CARD_1 *)
-lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> (unit ell2,'a) bounded" is
-  "\<lambda>(\<psi>::'a) (x::unit ell2). C1_to_complex x *\<^sub>C \<psi>"
+lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::the_single ell2,'a) bounded" is
+  "\<lambda>(\<psi>::'a) (x::'b::the_single ell2). C1_to_complex x *\<^sub>C \<psi>"
   by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
 
 lemma ell2_to_bounded_applyOp:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o ell2_to_bounded \<psi>\<close>
+  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::the_single ell2, 'a) bounded)) \<psi>\<close>
 proof-
   have \<open>bounded_clinear (times_bounded_vec A)\<close>
     using times_bounded_vec by blast
-  hence \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))
+  hence \<open>(\<lambda> x. (C1_to_complex:: 'c::the_single ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
      =  (\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
     using bounded_clinear_def
     by simp 
-  also have \<open>(\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )
+  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (C1_to_complex:: 'c::the_single ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     unfolding comp_def
     by blast
-  finally have \<open>(\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))
+  finally have \<open>(\<lambda> x. (C1_to_complex:: 'c::the_single ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
      = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by blast
-  moreover have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+  moreover have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
        = (\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))\<close>
     using Complex_L2.ell2_to_bounded.rep_eq
     by blast
-  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+  ultimately have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
      = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by simp
-  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
+  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (C1_to_complex:: 'c::the_single ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
     using Complex_L2.ell2_to_bounded.rep_eq
     by blast
   ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (times_bounded_vec (ell2_to_bounded \<psi>))\<close>
+     = (times_bounded_vec A) \<circ> (times_bounded_vec ((ell2_to_bounded:: _   \<Rightarrow> ('c ell2, _) bounded) \<psi>))\<close>
     by simp
   thus ?thesis
     apply transfer

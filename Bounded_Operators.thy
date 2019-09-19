@@ -1638,8 +1638,7 @@ proof-
     using \<open>space_as_set M = range (times_bounded_vec P)\<close> by blast 
 qed
 
-(* TODO: Should get [simp] attribute *)
-lemma Pro_isProjector:
+lemma Proj_isProjector[simp]:
   fixes M::\<open>'a::chilbert_space linear_space\<close>
   shows \<open>isProjector (Proj M)\<close>
   unfolding isProjector_def
@@ -1675,8 +1674,8 @@ proof
   qed
   show "isProjector P"
     if "P *\<^sub>o P = P \<and> P = P*"
-    using that Proj_I Pro_isProjector
-    by auto
+    using that Proj_I Proj_isProjector
+    by blast    
 qed
 
 
@@ -1816,12 +1815,17 @@ qed
 
 section \<open>Kernel\<close>
 
-(* TODO: type class: complex_vector + topological_space *)
-lift_definition kernel :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> 'a linear_space" 
+(* debate 1 Bounded_Operators
+- Dominique: type class: complex_vector + topological_space
+- Jose: it is more natural, in the setting of this library, to
+take the class "complex_normed_vector" in place of "complex_vector + topological_space".
+*)
+
+lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> 'a linear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-(* TODO: type class: complex_vector + topological_space *)
+(* again, see debate 1 Bounded_Operators *)
 definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 

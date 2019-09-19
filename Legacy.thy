@@ -19,6 +19,6 @@ adhoc_overloading
   cdot timesOp applyOp applyOpSpace
 
 lemma [simp]: "isProjector (Proj S)"
-  by (rule Pro_isProjector)
+  by (rule Proj_isProjector)
 
 end

@@ -3020,26 +3020,22 @@ subclass (in card2) not_singleton
 lemma not_singleton_existence[simp]:
   \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
 proof (rule classical)
-  (* TODO: proof has an unnecessary level of nesting. *)
-  show "\<exists>x. (x::'a) \<noteq> t"
-    if "\<nexists>x. (x::'a) \<noteq> t"
-  proof-
-    have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
-      using not_singleton_card
-      by blast
-    then obtain x y::'a where \<open>x \<noteq> y\<close>
-      by blast
-    have \<open>\<forall> x::'a. x = t\<close>
-      using that by simp
-    hence \<open>x = t\<close>
-      by blast
-    moreover have \<open>y = t\<close>
-      using \<open>\<forall> x::'a. x = t\<close>
-      by blast
-    ultimately have \<open>x = y\<close>
-      by simp
-    thus ?thesis using \<open>x \<noteq> y\<close> by blast
-  qed
+  assume \<open>\<nexists>x. (x::'a) \<noteq> t\<close> 
+  have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+    using not_singleton_card
+    by blast
+  then obtain x y::'a where \<open>x \<noteq> y\<close>
+    by blast
+  have \<open>\<forall> x::'a. x = t\<close>
+    using \<open>\<nexists>x. (x::'a) \<noteq> t\<close> by simp
+  hence \<open>x = t\<close>
+    by blast
+  moreover have \<open>y = t\<close>
+    using \<open>\<forall> x::'a. x = t\<close>
+    by blast
+  ultimately have \<open>x = y\<close>
+    by simp
+  thus ?thesis using \<open>x \<noteq> y\<close> by blast
 qed
 
 
@@ -3061,8 +3057,7 @@ lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_s
 instance..
 end
 
-(* TODO rename zero\<rightarrow>bot *)
-lemma linear_space_zero_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+lemma linear_space_bot_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
 proof-
   have \<open>\<exists> x::'a. x \<noteq> 0\<close>
     using not_singleton_existence
@@ -3091,14 +3086,6 @@ instance apply intro_classes
   apply transfer by simp
 end
 
-(* TODO: this is a duplicate. We have it as "sup_commute" after the instantiation below *)
-thm sup_commute
-lemma sup_comm_linear_space:
-  \<open>sup y x = sup x y\<close>
-  for x :: "'a::chilbert_space linear_space"
-    and y :: "'a linear_space"
-  apply transfer
-  by (simp add: is_closed_subspace_comm)
 
 (* TODO: Try if "linear_space :: (chilbert_space) lattice"
 and "linear_space :: (chilbert_space) complete_lattice" (below)
@@ -3143,7 +3130,7 @@ proof
         thus ?thesis
           unfolding set_plus_def
           by (smt Collect_cong)
-          
+
       qed
     qed
     thus ?thesis
@@ -3161,7 +3148,8 @@ proof
     have \<open>y \<le> (sup y x)\<close>
       by (simp add: \<open>\<And>y x. x \<le> sup x y\<close>)
     moreover have \<open>sup y x = sup x y\<close>
-      by (simp add: sup_comm_linear_space)
+      apply transfer
+      by (simp add: is_closed_subspace_comm)
     ultimately show ?thesis
       by simp     
   qed
@@ -3227,7 +3215,7 @@ proof
         using closed_sum_def sup_linear_space.rep_eq Collect_cong
         unfolding set_plus_def
         by smt
-        (* > 1 s *)
+          (* > 1 s *)
       hence "space_as_set (sup y z) \<subseteq> space_as_set x"
         using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
       thus ?thesis
@@ -3238,8 +3226,8 @@ proof
       have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
         by (metis less_eq_linear_space.rep_eq that(1) that(2))
       thus ?thesis
-      unfolding less_eq_linear_space_def 
-        closed_sum_def set_plus_def
+        unfolding less_eq_linear_space_def 
+          closed_sum_def set_plus_def
         using set_plus_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def
         by (smt Collect_cong id_apply map_fun_apply)
           (* > 1 s *)
@@ -3250,7 +3238,7 @@ end
 
 
 lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
-  by (metis linear_space_zero_not_top)
+  by (metis linear_space_bot_not_top)
 
 lemma span_superset:
   \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
@@ -3454,155 +3442,12 @@ lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
-(* TODO: Use Complex_Vector_Spaces.bounded_sesquilinear.comp1 or .comp2 *)
-proof
-  show "\<langle>a + a', A b\<rangle> = \<langle>a, A b\<rangle> + \<langle>a', A b\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'b
-      and a' :: 'b
-      and b :: 'a
-    using that
-    by (simp add: cinner_left_distrib) 
-  show "\<langle>a, A (b + b')\<rangle> = \<langle>a, A b\<rangle> + \<langle>a, A b'\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'b
-      and b :: 'a
-      and b' :: 'a
-  proof-
-    have \<open>A (b + b') = A b + A b'\<close>
-      using that unfolding bounded_clinear_def clinear_def
-      using bounded_clinear_def complex_vector.linear_add that by blast
-    thus ?thesis
-      by (simp add: cinner_right_distrib) 
-  qed
-  show "\<langle>r *\<^sub>C a, A b\<rangle> = cnj r *\<^sub>C \<langle>a, A b\<rangle>"
-    if "bounded_clinear A"
-    for r :: complex
-      and a :: 'b
-      and b :: 'a
-    by simp
-  show "\<langle>a, A (r *\<^sub>C b)\<rangle> = r *\<^sub>C \<langle>a, A b\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'b
-      and r :: complex
-      and b :: 'a
-  proof-
-    have \<open>A (r *\<^sub>C b) = r *\<^sub>C (A b)\<close>
-      using that unfolding bounded_clinear_def clinear_def
-      by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale that)
-    thus ?thesis
-      by simp
-  qed
-  show "\<exists>K. \<forall>a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm b * K"
-    if "bounded_clinear A"
-  proof-
-    have \<open>\<exists> K1. \<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1 \<and> K1 \<ge> 0\<close>
-    proof-
-      have \<open>\<exists> K1. \<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
-        by (metis complex_inner_class.norm_cauchy_schwarz linordered_field_class.sign_simps(24) vector_space_over_itself.scale_one)
-      then obtain K1 where \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
-        by blast
-      hence \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * (abs K1)\<close>
-        by (smt mult_nonneg_nonneg mult_nonneg_nonpos norm_ge_zero)
-      thus ?thesis
-        using abs_ge_zero by blast        
-    qed
-    then obtain K1 where \<open>\<forall> a b. norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close> and \<open>K1 \<ge> 0\<close>
-      by blast
-    have \<open>\<exists> K2. \<forall> b. norm (A b) \<le> norm b * K2 \<and> K2 \<ge> 0\<close>
-      by (metis (mono_tags, hide_lams) bounded_clinear.bounded mult_nonneg_nonpos norm_ge_zero order.trans that zero_le_mult_iff)      
-    then obtain K2 where \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> and \<open>K2 \<ge> 0\<close>
-      by blast
-    have \<open>norm \<langle>a, A b\<rangle> \<le> norm a * norm b * (K2 * K1)\<close>
-      for a b
-    proof-
-      have \<open>norm \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>
-        by (simp add: \<open>\<forall>a b. cmod \<langle>a, A b\<rangle> \<le> norm a * norm (A b) * K1\<close>)
-      also have  \<open>\<dots> \<le> norm a * norm b * K2 * K1\<close>
-        using \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> \<open>K2 \<ge> 0\<close> \<open>K1 \<ge> 0\<close>
-        by (metis mult_right_mono norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale)
-      finally show ?thesis by simp
-    qed
-    thus ?thesis
-      by blast
-  qed
-qed
+  by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
   \<open>bounded_clinear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
-(* TODO: Use Complex_Vector_Spaces.bounded_sesquilinear.comp1 or .comp2 *)
-proof
-  show "\<langle>A (a + a'), b\<rangle> = \<langle>A a, b\<rangle> + \<langle>A a', b\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'b
-  proof-
-    have \<open>A (a + a') = A a + A a'\<close>
-      using that unfolding bounded_clinear_def clinear_def
-      using bounded_clinear_def complex_vector.linear_add that by blast
-    thus ?thesis
-      using cinner_left_distrib by auto 
-  qed
-  show "\<langle>A a, b + b'\<rangle> = \<langle>A a, b\<rangle> + \<langle>A a, b'\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'a
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: cinner_right_distrib)    
-  show "\<langle>A (r *\<^sub>C a), b\<rangle> = cnj r *\<^sub>C \<langle>A a, b\<rangle>"
-    if "bounded_clinear A"
-    for r :: complex
-      and a :: 'a
-      and b :: 'b
-  proof-
-    have \<open>A (r *\<^sub>C a) = r *\<^sub>C (A a)\<close>
-      using that unfolding bounded_clinear_def
-      using complex_vector.linear_scale by auto 
-    thus ?thesis
-      by simp 
-  qed
-  show "\<langle>A a, r *\<^sub>C b\<rangle> = r *\<^sub>C \<langle>A a, b\<rangle>"
-    if "bounded_clinear A"
-    for a :: 'a
-      and r :: complex
-      and b :: 'b
-    by simp    
-  show "\<exists>K. \<forall>a b. norm \<langle>A a, b\<rangle> \<le> norm a * norm b * K"
-    if "bounded_clinear A"
-  proof-
-    have \<open>\<exists> K1. \<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1 \<and> K1 \<ge> 0\<close>
-    proof-
-      have \<open>\<exists> K1. \<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm  b * K1\<close>
-        by (metis complex_inner_class.norm_cauchy_schwarz linordered_field_class.sign_simps(24) vector_space_over_itself.scale_one)
-      then obtain K1 where \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>
-        by blast
-      hence \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * (abs K1)\<close>
-        by (smt mult_nonneg_nonneg mult_nonneg_nonpos norm_ge_zero)
-      thus ?thesis
-        using abs_ge_zero by blast        
-    qed
-    then obtain K1 where \<open>\<forall> a b. norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close> and \<open>K1 \<ge> 0\<close>
-      by blast
-    have \<open>\<exists> K2. \<forall> b. norm (A b) \<le> norm b * K2 \<and> K2 \<ge> 0\<close>
-      by (metis (mono_tags, hide_lams) bounded_clinear.bounded mult_nonneg_nonpos norm_ge_zero order.trans that zero_le_mult_iff)      
-    then obtain K2 where \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> and \<open>K2 \<ge> 0\<close>
-      by blast
-    have \<open>norm \<langle>A a, b\<rangle> \<le> norm a * norm b * (K2 * K1)\<close>
-      for a b
-    proof-
-      have \<open>norm \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>
-        by (simp add: \<open>\<forall>a b. cmod \<langle>A a, b\<rangle> \<le> norm (A a) * norm b * K1\<close>)
-      also have  \<open>\<dots> \<le> norm a * norm b * K2 * K1\<close>
-        using \<open>\<forall> b. norm (A b) \<le> norm b * K2\<close> \<open>K2 \<ge> 0\<close> \<open>K1 \<ge> 0\<close>
-        by (metis mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_left_commute)
-      finally show ?thesis by simp
-    qed
-    thus ?thesis
-      by blast
-  qed
+  by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
 
-qed
 
 section \<open>Unsorted\<close>
 
@@ -4333,6 +4178,8 @@ lemma Gram_Schmidt0:
            \<and> 0 \<notin> A \<and> finite A\<close>
   using assms Gram_Schmidt0' by blast
 
+hide_fact Gram_Schmidt0'
+
 lemma Gram_Schmidt:
   fixes S::\<open>'a::complex_inner set\<close>
   assumes \<open>finite S\<close>
@@ -4354,6 +4201,8 @@ proof-
     by simp
   ultimately show ?thesis by simp
 qed
+
+hide_fact Gram_Schmidt0
 
 lemma Pythagorean_generalized':
   \<open>\<forall> t z r. card t = n \<and> finite t \<and> (\<forall> a a'. a \<in> t \<and> a' \<in> t \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
@@ -4461,5 +4310,7 @@ lemma Pythagorean_generalized:
   shows  \<open>(norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
   using assms Pythagorean_generalized'  
   by force
+
+hide_fact Pythagorean_generalized'
 
 end
