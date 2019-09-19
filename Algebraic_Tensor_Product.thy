@@ -3402,12 +3402,11 @@ proof-
   thus ?thesis by metis
 qed
 
-text\<open>Tensor product of bounded operators\<close>
+text\<open>Algebraic tensor product of bounded operators\<close>
 definition atensorOp :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector)
  \<Rightarrow> ('c::complex_vector \<Rightarrow>'d::complex_vector ) \<Rightarrow> (('a \<otimes>\<^sub>a 'c) \<Rightarrow> ('b \<otimes>\<^sub>a 'd))\<close>   (infixl "\<otimes>\<^sub>A" 70)
-  where \<open>atensorOp = (SOME T::('a::complex_vector \<Rightarrow> 'b::complex_vector) \<Rightarrow> 
-      ('c::complex_vector \<Rightarrow> 'd::complex_vector) \<Rightarrow>
-      ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
+  where \<open>atensorOp = (SOME T::('a \<Rightarrow> 'b) \<Rightarrow> 
+      ('c \<Rightarrow> 'd) \<Rightarrow> ('a \<otimes>\<^sub>a 'c \<Rightarrow> 'b \<otimes>\<^sub>a 'd).
 \<forall> f g. clinear f \<and> clinear g \<longrightarrow> (clinear (T f g)) \<and> 
 (\<forall> x y. (T f g) (x \<otimes>\<^sub>a y) = (f x) \<otimes>\<^sub>a (g y)))\<close>
 
@@ -5411,6 +5410,11 @@ proof-
   thus ?thesis
     using tendsto_dist_iff by auto 
 qed
+
+lift_definition atensorOp_bounded :: \<open>('a::complex_inner, 'b::complex_inner) bounded
+ \<Rightarrow> ('c::complex_inner, 'd::complex_inner ) bounded \<Rightarrow> ('a \<otimes>\<^sub>a 'c,  'b \<otimes>\<^sub>a 'd) bounded\<close> (infixl "\<^sub>A\<otimes>" 70)
+  is \<open>\<lambda> f g. f \<otimes>\<^sub>A g\<close>
+  using Algebraic_Tensor_Product.algebraic_tensor_product_bounded by blast
 
 
 
