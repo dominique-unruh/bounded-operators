@@ -1086,15 +1086,15 @@ proof-
 
   show ?thesis 
     unfolding plus_bounded_def applyOpSpace_def apply auto apply transfer 
-    unfolding closed_sum_def Minkoswki_sum_def
+    unfolding closed_sum_def set_plus_def
     apply auto
-    unfolding  closed_sum_def Minkoswki_sum_def
+    unfolding  closed_sum_def set_plus_def
     using 1 
     apply auto
   proof - (* sledgehammer *)
     fix Ua :: "'a \<Rightarrow> 'b" and Aa :: "'a set" and Ba :: "'a set"
     have "\<And>B Ba. B +\<^sub>M Ba = closure {b. \<exists>ba bb. (b::'b) = ba + bb \<and> ba \<in> B \<and> bb \<in> Ba}"
-      by (simp add: Minkoswki_sum_def closed_sum_def)
+      by (simp add: set_plus_def closed_sum_def)
     thus "Abs_linear_space (closure {b + ba |b ba. b \<in> space_as_set (Abs_linear_space (closure (Ua ` Aa))) \<and> ba \<in> space_as_set (Abs_linear_space (closure (Ua ` Ba)))}) = sup (Abs_linear_space (closure (Ua ` Aa))) (Abs_linear_space (closure (Ua ` Ba)))"
       by (metis (no_types) space_as_set_inverse sup_linear_space.rep_eq)
   qed
@@ -1831,7 +1831,7 @@ proof-
   hence \<open>x \<in> space_as_set A \<Longrightarrow>
         x \<in> (space_as_set B +\<^sub>M space_as_set C)\<close>
     for x
-    unfolding closed_sum_def Minkoswki_sum_def
+    unfolding closed_sum_def set_plus_def
     by blast
   hence \<open> x \<in> space_as_set A \<Longrightarrow>
          x \<in> space_as_set

@@ -3224,33 +3224,33 @@ proof
       assume a1: "space_as_set y \<subseteq> space_as_set x"
       assume a2: "space_as_set z \<subseteq> space_as_set x"
       have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (sup l la)"
-        using closed_sum_def sup_linear_space.rep_eq
-        sorry
+        using closed_sum_def sup_linear_space.rep_eq Collect_cong
+        unfolding set_plus_def
+        by smt
+        (* > 1 s *)
       hence "space_as_set (sup y z) \<subseteq> space_as_set x"
         using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
       thus ?thesis
         using f3 by (simp add: space_as_set_inverse)
     qed
     thus ?thesis
-      unfolding less_eq_linear_space_def 
-        closed_sum_def Minkoswki_sum_def
     proof -
       have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
         by (metis less_eq_linear_space.rep_eq that(1) that(2))
-      thus "map_fun space_as_set (map_fun space_as_set id) (\<subseteq>) (sup y z) x"
-        by (simp add: Minkoswki_sum_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def)
+      thus ?thesis
+      unfolding less_eq_linear_space_def 
+        closed_sum_def set_plus_def
+        using set_plus_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def
+        by (smt Collect_cong id_apply map_fun_apply)
+          (* > 1 s *)
     qed  
   qed
 qed
 end
 
 
-(* TODO: rename linear_space_top_not_bot *)
-lemma top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
   by (metis linear_space_zero_not_top)
-
-(* TODO: remove *)
-lemmas bot_not_top[simp] = top_not_bot[symmetric]
 
 lemma span_superset:
   \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
@@ -3269,10 +3269,8 @@ lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space linear_space"
   unfolding sup_linear_space_def[symmetric] 
   using is_closed_subspace_zero
   unfolding closed_sum_def
-  unfolding Minkoswki_sum_def
+  unfolding set_plus_def
   by smt
-
-
 
 instantiation linear_space :: (chilbert_space) complete_lattice begin
 instance 
@@ -3421,7 +3419,7 @@ proof
           by blast
         hence \<open>u \<in> x + ((orthogonal_complement x) \<inter> y)\<close>
           using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
-          unfolding Minkoswki_sum_def
+          unfolding set_plus_def
           by blast
         thus ?thesis
           unfolding closed_sum_def
