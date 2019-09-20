@@ -1962,11 +1962,11 @@ proof (rule isProjector_I)
     using that
     by (simp add: isProjector_algebraic)
 qed
-
-lemma applyOp0[simp]: "times_bounded_vec 0 \<psi> = 0"
+                                     
+lemma applyOp0[simp]: "0 *\<^sub>v \<psi> = 0"
   apply transfer by simp
 
-lemma apply_idOp[simp]: "times_bounded_vec idOp \<psi> = \<psi>"
+lemma apply_idOp[simp]: "idOp *\<^sub>v \<psi> = \<psi>"
   apply transfer by simp
 
 (* NEW *)
@@ -2382,7 +2382,120 @@ lemma inverse_bounded_uniq:
 
 hide_fact inverse_bounded_uniq'
 
-unbundle no_bounded_notation
 
+section \<open>Recovered theorems\<close>
+
+(*
+consts
+  adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
+ timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'c) bounded" 
+(* and applyOp :: "('a,'b) bounded \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
+ applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace"
+ timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
+ timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace"
+*)
+
+
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>s S = 0"
+  by (metis (no_types, hide_lams) bot_eq_sup_iff cancel_comm_monoid_add_class.diff_cancel cdot_plus_distrib imageOp_Proj sup_top_right timesOp_assoc_linear_space timesOp_minus zero_linear_space_def) 
+  
+lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S"
+  for S::\<open>'a::complex_normed_vector linear_space\<close>
+  using Complex_Vector_Spaces.timesScalarSpace_not0 by blast
+
+lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
+  for B::\<open>'a::complex_normed_vector linear_space\<close>
+  by simp
+
+lemma timesOp_assoc_subspace: "(A *\<^sub>o B) *\<^sub>s S =  A *\<^sub>s (B *\<^sub>s S)"
+  by (simp add: timesOp_assoc_linear_space) 
+
+(*
+(* TODO: inline into definition of + in instantiation *)
+consts plusOp :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
+  (* and uminusOp :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" *)
+  
+lemma plusOp_assoc: "plusOp (plusOp a b) c = plusOp a (plusOp b c)" by (cheat plusOp_assoc)
+lemma plusOp_comm: "plusOp a b = plusOp b a" by (cheat plusOp_comm)
+lemma plusOp_0: "plusOp 0 a = a" by (cheat plusOp_0)
+lemma plusOp_cancel: "plusOp (timesScalarOp (-1) a) a = 0" by (cheat plusOp_cancel)
+(* for a b c :: "('a,'b) bounded" *)
+*)
+
+(*
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_subspace[symmetric] plusOp_assoc[symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_subspace plusOp_assoc
+*)
+
+
+
+lemma scalar_op_subspace_assoc [simp]: 
+  "(\<alpha>*\<^sub>CA)*\<^sub>sS = \<alpha>*\<^sub>C(A*\<^sub>sS)" for \<alpha>::complex 
+  and A::"('a::chilbert_space,'b::chilbert_space) bounded" 
+  and S
+  by simp
+
+
+lemma scalar_mult_1_op[simp]: "1 *\<^sub>C A = A" 
+  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
+  by simp
+
+lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" 
+  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
+  by simp
+
+
+lemma scalar_scalar_op[simp]: "a *\<^sub>C (b  *\<^sub>C A) = (a * b)  *\<^sub>C A"
+  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
+  by simp
+
+lemma scalar_op_vec[simp]: "(a *\<^sub>C A) *\<^sub>v \<psi> = a *\<^sub>C (A *\<^sub>v \<psi>)"
+  by simp
+
+lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C B \<Longrightarrow> A=B" 
+  for A B :: "('a::complex_normed_vector,'b::complex_normed_vector)bounded" and a::complex 
+  by simp
+
+lemma apply_idOp_space[simp]: "idOp *\<^sub>s S = S"
+and apply_0[simp]: "U *\<^sub>v 0 = 0"
+for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
+  and U :: "('a,'b::complex_normed_vector) bounded" and V :: "('b,'a) bounded"
+  apply simp
+  apply simp
+  done
+
+
+(* FIXME: what is the definition corresponding to this "consts"?
+consts vector_to_bounded::\<open>'a::complex_normed_vector \<Rightarrow> (unit,'a) bounded\<close>
+
+lemma vector_to_bounded_applyOp: "vector_to_bounded (A\<cdot>\<psi>) = A \<cdot> vector_to_bounded \<psi>" for A :: "(_,_)bounded"
+  by (cheat TODO5)
+
+lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<cdot> vector_to_bounded \<psi>" for a::complex
+  apply (rewrite at "a\<cdot>\<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp)\<cdot>\<psi>"])
+   apply simp
+  apply (subst vector_to_bounded_applyOp)
+  by simp
+*)
+
+lemma scaleC_eigenspace [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a*\<^sub>CA) = eigenspace (b/a) A"
+  unfolding eigenspace_def
+  proof -
+  assume a1: "a \<noteq> 0"
+  then have "a *\<^sub>C A - b *\<^sub>C idOp = a *\<^sub>C (A - (b / a) *\<^sub>C idOp)"
+    by simp
+  then show "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
+    using a1 by (metis (full_types) kernel_scalar_times)
+qed
+
+lemma isProjector_Proj[simp]: "isProjector (Proj S)"
+  by simp
+
+lemma proj_scalar_mult[simp]: 
+  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
+    for a::complex and \<psi>::"'a::chilbert_space"
+  by simp
+  
+unbundle no_bounded_notation
 
 end
