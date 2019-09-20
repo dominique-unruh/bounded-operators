@@ -878,6 +878,14 @@ begin
 sublocale bounded_linear
   apply standard by (fact bounded) 
 
+(* Recovered Theorem *)
+lemma bounded_linear: "bounded_linear f"
+  by (fact bounded_linear)
+
+(* Recovered Theorem *)
+lemma csemilinear: "csemilinear f"
+  by (fact csemilinear_axioms)
+
 end
 
 lemma bounded_csemilinear_intro:
@@ -1282,6 +1290,19 @@ locale bounded_sesquilinear =
     and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
+
+(* Recovered theorem *)
+sublocale bounded_bilinear
+  apply standard
+  unfolding scaleR_scaleC
+      apply (fact add_left)
+     apply (fact add_right)
+    apply (simp add: scaleC_left)
+   apply (fact scaleC_right)
+  by (fact bounded)
+
+(* Recovered theorem *)
+lemma bounded_bilinear: "bounded_bilinear prod" by (fact bounded_bilinear_axioms)
 
 lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
   apply (insert bounded)
