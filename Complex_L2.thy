@@ -1780,7 +1780,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
     apply auto
   by (rule ell2_1)
 
-type_synonym 'a subspace = "'a ell2 linear_space"
+type_synonym 'a ell2_linear_space = "'a ell2 linear_space"
 
 instance ell2 :: (type) not_singleton
 proof standard
@@ -3624,6 +3624,115 @@ proof
 qed
 
 end
+
+section \<open>Recovered theorems\<close>
+
+lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
+
+lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
+
+lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
+  using norm_ell2_component
+  by (simp add: norm_ell2_component) 
+
+lemma Cauchy_vector_component: 
+  fixes X
+  defines "x i == Rep_ell2 (X i)"
+  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
+proof -
+  assume "Cauchy X"
+  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
+  proof -
+    have "dist (X i) (X i') = norm (X i - X i')"
+      unfolding dist_norm by simp
+    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
+      by (rule norm_vector_component)
+    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
+      unfolding x_def
+      by (simp add: minus_ell2.rep_eq)       
+    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
+      unfolding dist_norm by simp
+    finally show ?thesis by assumption
+  qed
+  thus ?thesis
+    unfolding Cauchy_def
+    using \<open>Cauchy X\<close> unfolding Cauchy_def
+    by (meson le_less_trans) 
+qed
+
+
+lemma subspace_0[simp]: "complex_vector.subspace {0}"
+  by simp
+
+
+lemma subspace_UNIV[simp]: "complex_vector.subspace UNIV"
+  by simp
+
+lemma subspace_inter[simp]: 
+  assumes "complex_vector.subspace A" and "complex_vector.subspace B" 
+  shows "complex_vector.subspace (A\<inter>B)"
+  by (simp add: assms(1) assms(2) complex_vector.subspace_inter)
+
+lemma subspace_contains_0: "complex_vector.subspace A \<Longrightarrow> 0 \<in> A"
+  unfolding complex_vector.subspace_def by auto
+
+lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector.subspace x) \<Longrightarrow> complex_vector.subspace (\<Inter>AA)"
+  by (simp add: complex_vector.subspace_Inter)
+
+lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
+  by simp 
+
+lemma subspace_zero_not_top[simp]: "(0::'a ell2_linear_space) \<noteq> top"
+  by simp
+
+lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
+  by simp
+
+lemma  subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
+  for x y z :: "'a ell2_linear_space"
+  unfolding subspace_sup_plus[symmetric] by auto
+
+lemma subspace_empty_Sup: "Sup {} = (0::'a ell2_linear_space)"
+  unfolding subspace_zero_bot by auto
+
+lemma top_not_bot[simp]: "(top::'a ell2_linear_space) \<noteq> bot"
+  by (metis subspace_zero_bot subspace_zero_not_top) 
+
+lemma bot_not_top[simp]: "(bot::'a ell2_linear_space) \<noteq> top"
+  by (metis top_not_bot)
+
+lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
+  for A B C :: "_ ell2_linear_space"
+  unfolding inf.assoc by simp
+
+lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ ell2_linear_space"
+  using inf.left_commute by auto
+
+lemma bot_plus[simp]: "bot + x = x" 
+  for x :: "'a ell2_linear_space"
+  by simp
+
+lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+
+lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
+  for \<psi>
+  by simp
+
+lemma leq_INF[simp]:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
+  by (simp add: le_Inf_iff)
+
+lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
+  by (simp add: add_increasing2)
+lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_linear_space"
+  by (simp add: add_increasing)
 
 unbundle no_bounded_notation
 
