@@ -3427,13 +3427,6 @@ proof
     apply transfer
     by simp
 qed
-  (* TODO: 
-Dominique: move to Complex_Vector_Spaces
-Jose: Do you meant Complex_Inner_Product? The function "-"
-is defined using the inner product.
-
-TODO: Dominique: which definition/lemma was this comment referring to?
-*)
 
 (* TODO remove (special case of bounded_lattice_top_class.sup_top_left) *)
 lemma top_plus[simp]: "sup top  x = top" for x :: "'a::chilbert_space linear_space"

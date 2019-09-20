@@ -40,13 +40,14 @@ lemma ell2_to_bounded_adj_times_vec[simp]:
   includes bounded_notation
   shows "ell2_to_bounded \<psi>* *\<^sub>v \<phi> = complex_to_C1 (cinner \<psi> \<phi>)"
 proof -
-  have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi>) = cinner 1 (ell2_to_bounded \<psi>* *\<^sub>v \<phi>)"
+  note [[show_sorts]]
+  have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2) = cinner 1 (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2)"
     by (simp add: cinner_1_C1)
-  also have "cinner 1 (ell2_to_bounded \<psi>* *\<^sub>v \<phi>) = cinner (ell2_to_bounded \<psi> *\<^sub>v 1) \<phi>"
+  also have "\<dots> = cinner (ell2_to_bounded \<psi> *\<^sub>v (1::'a ell2)) \<phi>"
     by (metis cinner_adjoint')
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
-  finally have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi>) = \<langle>\<psi>, \<phi>\<rangle>" by -
+  finally have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2) = \<langle>\<psi>, \<phi>\<rangle>" by -
   thus ?thesis
     by (metis C1_to_complex_inverse)
 qed
