@@ -261,6 +261,15 @@ proof
     unfolding scaleR_scaleC norm_scaleC by auto
 qed
 
+section \<open>Recovered theorems\<close>
+
+
+
+(* Recovered theorem *)
+lemma Cauchy_Schwarz_ineq2:
+  "cmod (cinner x y) \<le> norm x * norm y"
+  by (simp add: local.norm_cauchy_schwarz)
+
 end
 
 lemma cinner_divide_right:
@@ -4313,5 +4322,46 @@ lemma Pythagorean_generalized:
   by force
 
 hide_fact Pythagorean_generalized'
+
+section \<open>Recovered theorems\<close>
+
+
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
+
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
+
+
+lemmas tendsto_cinner [tendsto_intros] =
+  bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+
+lemmas isCont_cinner [simp] =
+  bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+
+lemmas has_derivative_cinner [derivative_intros] =
+  bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+
+
+lemmas has_derivative_cinner_left [derivative_intros] =
+  bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
+
+lemma differentiable_cinner [simp]:
+  "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
+        (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
+  unfolding differentiable_def by (blast intro: has_derivative_cinner)
+
+
+(* TODO: 
+
+lemma cGDERIV_norm:
+  assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
+
+lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
+*)
+
 
 end
