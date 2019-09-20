@@ -2971,18 +2971,22 @@ lift_definition uminus_linear_space::\<open>'a linear_space  \<Rightarrow> 'a li
 instance ..
 end
 
+(* TODO: remove (special case of Lattice_Missing.orthocomplemented_lattice_class.ortho_involution
+                  after instance proof below) *)
 lemma linear_space_ortho_ortho:
   fixes S::\<open>'a::chilbert_space linear_space\<close> 
   shows \<open>-(-S) = S\<close>
   apply transfer
   by (simp add: orthogonal_complement_twice)
 
+(* TODO remove (is a special case of the lattice-class axioms) *)
 lemma bot_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
   shows  "(bot::'a linear_space) \<le> a"
   apply transfer
   using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
 
+(* TODO remove (is a special case of the lattice-class axioms) *)
 lemma top_a_linear_space:
   fixes a :: "'a::chilbert_space linear_space"
   shows  "(a::'a linear_space) \<le> top"
@@ -3427,15 +3431,19 @@ qed
 Dominique: move to Complex_Vector_Spaces
 Jose: Do you meant Complex_Inner_Product? The function "-"
 is defined using the inner product.
+
+TODO: Dominique: which definition/lemma was this comment referring to?
 *)
 
-
+(* TODO remove (special case of bounded_lattice_top_class.sup_top_left) *)
 lemma top_plus[simp]: "sup top  x = top" for x :: "'a::chilbert_space linear_space"
   by simp
 
+(* TODO remove (special case of bounded_lattice_top_class.sup_top_right) *)
 lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_space"
   by simp
 
+(* TODO remove (special case of Lattice_Missing.orthocomplemented_lattice_class.ortho_involution) *)
 lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
   by (simp add: linear_space_ortho_ortho)
 
