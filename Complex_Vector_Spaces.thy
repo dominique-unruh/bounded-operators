@@ -2617,5 +2617,55 @@ proof-
     by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
 qed
 
+section \<open>Recovered theorems\<close>
+
+
+interpretation scaleC_left: additive "(\<lambda>a. scaleC a x :: 'a::complex_vector)"
+  by standard (rule scaleC_add_left)
+
+interpretation scaleC_right: additive "(\<lambda>x. scaleC a x :: 'a::complex_vector)"
+  by standard (rule scaleC_add_right)
+
+
+lemma [vector_add_divide_simps]:
+  "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
+  "a *\<^sub>C v + (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
+  "(a / z) *\<^sub>C v + w = (if z = 0 then w else (a *\<^sub>C v + z *\<^sub>C w) /\<^sub>C z)"
+  "(a / z) *\<^sub>C v + b *\<^sub>C w = (if z = 0 then b *\<^sub>C w else (a *\<^sub>C v + (b * z) *\<^sub>C w) /\<^sub>C z)"
+  "v - (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
+  "a *\<^sub>C v - (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
+  "(a / z) *\<^sub>C v - w = (if z = 0 then -w else (a *\<^sub>C v - z *\<^sub>C w) /\<^sub>C z)"
+  "(a / z) *\<^sub>C v - b *\<^sub>C w = (if z = 0 then -b *\<^sub>C w else (a *\<^sub>C v - (b * z) *\<^sub>C w) /\<^sub>C z)"
+  for v :: "'a :: complex_vector"
+  by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
+
+
+declare [[code abort: "open :: complex set \<Rightarrow> bool"]]
+
+(* FIXME
+corollary complex_clinearD:
+  fixes f :: "complex \<Rightarrow> complex"
+  assumes "clinear f" obtains c where "f = ( * ) c"
+  by (rule clinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
+*)
+
+
+sublocale csemilinear \<subseteq> linear
+  apply (rule linearI)
+   apply (rule add)
+  unfolding scaleR_scaleC by (subst scaleC, simp)
+
+(* FIXME
+lemma bounded_cbilinear_mult: "bounded_cbilinear (( * ) :: 'a \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_algebra)"
+  apply (rule bounded_cbilinear.intro)
+      apply (rule distrib_right)
+     apply (rule distrib_left)
+    apply (rule mult_scaleC_left)
+   apply (rule mult_scaleC_right)
+  apply (rule_tac x="1" in exI)
+  apply (simp add: norm_mult_ineq)
+  done
+*) 
+
 
 end
