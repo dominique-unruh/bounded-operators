@@ -7,7 +7,7 @@ Authors:
 Main results
 - complex_inner: Class of complex vector spaces with inner product.
 - cgderiv: Gradient derivative.
-- chilbert_space: Class of complex Hilbert spaces
+- complex_inner: Class of complex Hilbert spaces
 - existence_uniqueness_min_dist: Existence and uniqueness of a point in a convex body whose
 distance to a given point reach its minimum in the convex body.
 - dist_min_ortho: Equivalence between point at minimum distance and orthogonal projectionection.
@@ -83,7 +83,7 @@ lemma cinner_add_right: "\<langle>x, y + z\<rangle> = \<langle>x, y\<rangle> + \
   using cinner_add_left [of y z x]
   by (metis complex_cnj_add local.cinner_commute)
 
-lemma cinner_scaleC_right [simp]: "\<langle>x , (r *\<^sub>C y)\<rangle> = r * (\<langle>x , y\<rangle>)"
+lemma cinner_scaleC_right [simp]: "\<langle>x , r *\<^sub>C y\<rangle> = r * \<langle>x , y\<rangle>"
   using cinner_scaleC_left [of r y x]
   by (metis complex_cnj_cnj complex_cnj_mult local.cinner_commute)
 
@@ -808,7 +808,7 @@ proof-
           by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
         thus ?thesis by auto
       qed
-      then obtain r::\<open>nat \<Rightarrow> 'a::chilbert_space\<close> where \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
+      then obtain r::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
         by metis
       have \<open>\<forall> n. r n \<in> M\<close> 
         by (simp add: \<open>\<forall>n. r n \<in> M \<and>  \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>)
@@ -1072,7 +1072,8 @@ proof-
     ultimately show ?thesis by simp
   qed
   ultimately have \<open>\<exists>! k. is_arg_min norm (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
-    using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> by blast
+    using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> 
+    by blast
   have \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
   proof-
     have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
@@ -1153,7 +1154,7 @@ qed
 
 \<comment> \<open>Theorem 2.6 in @{cite conway2013course}\<close> 
 theorem dist_min_ortho:
-  fixes M::\<open>('a::chilbert_space) set\<close> and h k::'a 
+  fixes M::\<open>('a::complex_inner) set\<close> and h k::'a 
   assumes \<open>closed_subspace M\<close>
   shows  \<open>(is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
 proof-
@@ -1390,7 +1391,6 @@ proof-
     thus ?thesis
       by (metis (no_types))
   qed
-
 qed
 
 
@@ -1445,7 +1445,6 @@ proof-
     using \<open>closed_subspace M\<close> \<open>\<pi> h \<in> M\<close>  \<open>x \<in> M\<close>
     unfolding closed_subspace_def
     by (simp add: complex_vector.subspace_diff)
-
   moreover have \<open>x - \<pi> h \<in> orthogonal_complement M\<close>
   proof-
     have \<open>closed_subspace (orthogonal_complement M)\<close>
@@ -1472,7 +1471,6 @@ lemma projection_uniq:
   assumes  \<open>closed_subspace M\<close> and \<open>h - x \<in> orthogonal_complement M\<close> and \<open>x \<in> M\<close>
   shows \<open>(projection M) h = x\<close>
   by (smt ExistenceUniquenessProj add.commute assms(1) assms(2) assms(3) orthogonal_complement_def projection_intro1 projection_intro2 uminus_add_conv_diff)
-
 
 lemma projection_fixed_points':
   \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M  \<Longrightarrow> x \<in> M \<Longrightarrow> \<pi> x = x\<close>
@@ -1607,11 +1605,10 @@ qed
 theorem projectionPropertiesA:
   \<open>closed_subspace M \<Longrightarrow> bounded_clinear (projection M)\<close> 
   for M :: \<open>('a::chilbert_space) set\<close>
-  using projectionPropertiesA' is_projection_on_def projection_intro1 projection_intro2 by fastforce
-
+  using projectionPropertiesA' is_projection_on_def projection_intro1 projection_intro2
+  by fastforce
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
-
 
 proposition projectionPropertiesC':
   \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M \<Longrightarrow> \<pi> \<circ> \<pi> = \<pi>\<close>
@@ -1726,9 +1723,7 @@ proof-
     thus ?thesis
       using f3 by auto
   qed
-
 qed
-
 
 proposition projectionPropertiesD':
   \<open>is_projection_on \<pi> M \<Longrightarrow> closed_subspace M  \<Longrightarrow> \<pi> -` {0} = (orthogonal_complement M)\<close>
@@ -1752,7 +1747,6 @@ proof-
     qed      
     hence \<open>x \<in> (\<pi> -` {0})\<close>
       by simp
-
     thus ?thesis
       by simp
   qed
@@ -1779,7 +1773,6 @@ proposition projectionPropertiesD:
   \<open>closed_subspace M  \<Longrightarrow> (projection M) -` {0} = (orthogonal_complement M)\<close>
   for M :: \<open>('a::chilbert_space) set\<close>
   by (simp add: projectionPropertiesD' is_projection_on_def projection_intro1 projection_intro2)
-
 
 lemma range_lin:
   \<open>clinear f \<Longrightarrow>  complex_vector.subspace (range f)\<close>
@@ -1865,7 +1858,8 @@ proof - (* sledgehammer *)
     using f2 a1 by (metis (no_types) projectionPropertiesE' projection_uniq)
 qed 
 
-lemma pre_ortho_twice: "complex_vector.subspace M \<Longrightarrow> M \<subseteq> (orthogonal_complement (orthogonal_complement M))" 
+lemma pre_ortho_twice: "complex_vector.subspace M 
+\<Longrightarrow> M \<subseteq> (orthogonal_complement (orthogonal_complement M))" 
 proof-
   have \<open>x \<in> M \<Longrightarrow> x \<in> (orthogonal_complement (orthogonal_complement M))\<close> for x 
   proof-
@@ -2096,7 +2090,7 @@ proof-
 qed
 
 lemma OrthoClosed:
-  fixes A ::"('a::chilbert_space) set"
+  fixes A ::"('a::complex_inner) set"
   shows \<open>closed (orthogonal_complement A)\<close>                                                
 proof-
   have \<open>\<forall> n. x n \<in> (orthogonal_complement A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x l
@@ -2231,7 +2225,6 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-
 theorem ortho_decomp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>closed_subspace M\<close>
@@ -2239,7 +2232,6 @@ theorem ortho_decomp:
   using ProjOntoOrtho assms diff_add_cancel id_apply  minus_apply orthogonal_complement_twice
     complex_vector.subspace_def
   by (smt subspace_orthog)
-
 
 lemma DeMorganOrthoDual:
   fixes A B::"('a::chilbert_space) set"
@@ -2299,7 +2291,7 @@ qed
 lemma is_closed_subspace_zero:
   fixes A :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close>
-  shows \<open>(({0}::('a::chilbert_space) set)+\<^sub>MA) = A\<close>
+  shows \<open>(({0}::'a set) +\<^sub>M A) = A\<close>
   using  DeMorganOrthoDual  assms  
     ortho_top orthogonal_complement_twice orthogonal_complement_def
   by (metis (no_types, lifting) Complex_Vector_Spaces.subspace_UNIV Int_UNIV_left subspace_orthog)
@@ -2308,7 +2300,7 @@ lemma is_closed_subspace_ord:
   fixes A B C:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     and \<open>A \<subseteq> B\<close>
-  shows \<open>C+\<^sub>MA \<subseteq> C+\<^sub>MB\<close>
+  shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
   by (metis DeMorganOrtho Int_mono assms(1) assms(2) assms(3) assms(4) order_refl ortho_leq subspace_closed_plus)
 
 
@@ -2325,7 +2317,6 @@ lemma is_closed_subspace_universal_inclusion_right:
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
   shows \<open>B \<subseteq> (A +\<^sub>M B)\<close>
   by (metis assms(1) assms(2)  is_closed_subspace_comm is_closed_subspace_universal_inclusion_left)
-
 
 lemma is_closed_subspace_universal_inclusion_inverse:
   fixes A B C:: \<open>('a::chilbert_space) set\<close>
@@ -2574,7 +2565,7 @@ definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rang
   for G :: "'b::complex_inner \<Rightarrow> 'a::complex_inner"
 
 lemma Adj_I:
-  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::chilbert_space"
+  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
   assumes \<open>bounded_clinear G\<close>
   shows \<open>\<forall>x. \<forall>y. \<langle>Adj G x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
 proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>"])
@@ -2585,7 +2576,6 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
     using  \<open>bounded_clinear G\<close>
     unfolding bounded_clinear_def
     by simp
-
   define g :: \<open>'a \<Rightarrow> ('b \<Rightarrow> complex)\<close> where
     \<open>g \<equiv> \<lambda> x. ( \<lambda> y. (\<langle>x , (G y)\<rangle>) )\<close>
   have \<open>bounded_clinear (g x)\<close>
@@ -2626,22 +2616,22 @@ qed
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
 lemma Adj_D:
-  fixes G:: \<open>'b::chilbert_space \<Rightarrow> 'a::chilbert_space\<close>
-    and F:: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
+  fixes G:: \<open>'b::chilbert_space \<Rightarrow> 'a::complex_inner\<close>
+    and F:: \<open>'a \<Rightarrow> 'b\<close>
   assumes "bounded_clinear G" and
     F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
   shows \<open>F = G\<^sup>\<dagger>\<close>
 proof-
   note F_is_adjoint
-  moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>((G\<^sup>\<dagger>) x) , y\<rangle> = \<langle>x , (G y)\<rangle>\<close>
+  moreover have \<open>\<forall> x::'a. \<forall> y::'b. \<langle>(G\<^sup>\<dagger>) x , y\<rangle> = \<langle>x , G y\<rangle>\<close>
     using  \<open>bounded_clinear G\<close> Adj_I by blast
   ultimately have  \<open>\<forall> x::'a. \<forall> y::'b. 
-    (\<langle>(F x) , y\<rangle> )-(\<langle>((G\<^sup>\<dagger>) x) , y\<rangle>) = 0\<close>
+    \<langle>F x , y\<rangle> - \<langle>(G\<^sup>\<dagger>) x , y\<rangle> = 0\<close>
     by (simp add: \<open>\<forall>x y. \<langle> (G\<^sup>\<dagger>) x , y \<rangle> = \<langle> x , G y \<rangle>\<close> F_is_adjoint)
   hence  \<open>\<forall> x::'a. \<forall> y::'b. 
     (\<langle>((F x) - ((G\<^sup>\<dagger>) x)) , y\<rangle> ) = 0\<close>
     by (simp add: cinner_diff_left)
-  hence \<open>\<forall> x::'a. (F x) - ((G\<^sup>\<dagger>) x) = 0\<close>
+  hence \<open>\<forall> x::'a. F x - (G\<^sup>\<dagger>) x = 0\<close>
     by (metis cinner_gt_zero_iff cinner_zero_left)
   hence \<open>\<forall> x::'a. (F - (G\<^sup>\<dagger>)) x = 0\<close>
     by simp
@@ -2651,12 +2641,12 @@ proof-
 qed
 
 lemma Adj_bounded_clinear:
-  fixes A :: "'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  fixes A :: "'a::chilbert_space \<Rightarrow> 'b::complex_inner"
   shows \<open>bounded_clinear A \<Longrightarrow> bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof-
   include notation_norm 
   assume \<open>bounded_clinear A\<close>
-  have \<open>\<langle>((A\<^sup>\<dagger>) x), y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
+  have \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , (A y)\<rangle>\<close>
     for x y
     using Adj_I \<open>bounded_clinear A\<close>
     by auto
@@ -2781,7 +2771,7 @@ proof
     proof-
       have \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = cnj \<langle> s, (U\<^sup>\<dagger>) r \<rangle>\<close>
         by simp
-      moreover have \<open>\<langle> r, U s \<rangle> = cnj \<langle>  U s, r\<rangle>\<close>
+      moreover have \<open>\<langle> r, U s \<rangle> = cnj \<langle> U s, r\<rangle>\<close>
         by simp
       ultimately have \<open>cnj \<langle> s, (U\<^sup>\<dagger>) r \<rangle> = cnj \<langle> U s, r \<rangle>\<close>
         using \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = \<langle> r, U s \<rangle>\<close> by smt
@@ -2869,25 +2859,27 @@ qed
 lemma projection_D1':
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_subspace M\<close>
-  shows \<open>\<pi> = (\<pi>)\<^sup>\<dagger>\<close>
+  shows \<open>\<pi> = \<pi>\<^sup>\<dagger>\<close>
 proof-
-  have \<open>\<pi> x = ((\<pi>)\<^sup>\<dagger>) x\<close>
+  have \<open>\<pi> x = (\<pi>\<^sup>\<dagger>) x\<close>
     for x
   proof-
     have "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
     proof-
-      have "\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = 0"
+      have "\<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0"
         if "y \<in> M"
         for y :: 'a
       proof-
         have \<open>y = \<pi> y\<close>
-          using that(1) assms(1) assms(2) projection_fixed_points' by fastforce          
+          using that(1) assms(1) assms(2) projection_fixed_points' 
+          by fastforce 
         hence \<open>y - \<pi> y = 0\<close>
           by simp
         have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
           by (simp add: cinner_diff_left)
         also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
-          using Adj_I assms(1) assms(2) projectionPropertiesA' by auto          
+          using Adj_I assms(1) assms(2) projectionPropertiesA' 
+          by auto          
         also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
           by (simp add: cinner_diff_right)
         also have \<open>... = \<langle>x, 0\<rangle>\<close>
@@ -2923,7 +2915,7 @@ proof-
     qed
     moreover have "(\<pi>\<^sup>\<dagger>) x \<in> M"
     proof-
-      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> ((\<pi>)\<^sup>\<dagger>) x, y \<rangle> = 0"
+      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
         for y
       proof-
         assume \<open>y \<in> orthogonal_complement M\<close>
@@ -2935,7 +2927,7 @@ proof-
           using Adj_I assms projectionPropertiesA'
           by fastforce 
       qed
-      hence "((\<pi>)\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
+      hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
         unfolding orthogonal_complement_def is_orthogonal_def
         by simp        
       thus ?thesis
@@ -2952,11 +2944,12 @@ lemma projection_D1:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>closed_subspace M\<close>
   shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
-  using projection_D1' assms is_projection_on_def projection_intro1 projection_intro2 by fastforce
+  using projection_D1' assms is_projection_on_def projection_intro1 projection_intro2 
+  by fastforce
 
 
 lemma closed_subspace_closure:
-  fixes f::\<open>('a::chilbert_space) \<Rightarrow> ('b::chilbert_space)\<close>
+  fixes f::\<open>('a::complex_inner) \<Rightarrow> ('b::complex_inner)\<close>
     and S::\<open>'a set\<close>
   assumes "clinear f" and "complex_vector.subspace S"
   shows  \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
@@ -2980,27 +2973,6 @@ lift_definition uminus_linear_space::\<open>'a linear_space  \<Rightarrow> 'a li
 instance ..
 end
 
-(* TODO: remove (special case of Lattice_Missing.orthocomplemented_lattice_class.ortho_involution
-                  after instance proof below) *)
-lemma linear_space_ortho_ortho:
-  fixes S::\<open>'a::chilbert_space linear_space\<close> 
-  shows \<open>-(-S) = S\<close>
-  apply transfer
-  by (simp add: orthogonal_complement_twice)
-
-(* TODO remove (is a special case of the lattice-class axioms) *)
-lemma bot_a_linear_space:
-  fixes a :: "'a::chilbert_space linear_space"
-  shows  "(bot::'a linear_space) \<le> a"
-  apply transfer
-  using is_closed_subspace_universal_inclusion_left is_closed_subspace_zero Complex_Vector_Spaces.subspace_0 by blast 
-
-(* TODO remove (is a special case of the lattice-class axioms) *)
-lemma top_a_linear_space:
-  fixes a :: "'a::chilbert_space linear_space"
-  shows  "(a::'a linear_space) \<le> top"
-  apply transfer
-  by simp 
 
 
 instantiation linear_space :: (complex_inner) "Sup"
@@ -3063,7 +3035,7 @@ lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_spa
 instance .. 
 end
 
-instantiation linear_space :: (chilbert_space) minus begin
+instantiation linear_space :: (complex_inner) minus begin
 lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space"
   is "\<lambda> A B. ( A \<inter> (orthogonal_complement B) )"
   by simp
@@ -3089,7 +3061,8 @@ end
 instantiation linear_space :: (chilbert_space) order_bot begin
 instance apply intro_classes
   apply transfer 
-  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 by blast 
+  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 
+  by blast 
 end
 
 instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
@@ -3100,10 +3073,18 @@ instance apply intro_classes
 end
 
 
-(* TODO: Try if "linear_space :: (chilbert_space) lattice"
-and "linear_space :: (chilbert_space) complete_lattice" (below)
-work with something weaker than chilbert_space
-(it does not work for "linear_space :: (chilbert_space) orthocomplemented_lattice"). *)
+(* 
+Dominique: Try if "linear_space :: (complex_inner) lattice"
+and "linear_space :: (complex_inner) complete_lattice" (below)
+work with something weaker than complex_inner
+(it does not work for "linear_space :: (complex_inner) orthocomplemented_lattice"). 
+
+Jose: I substituted al the "chilbert_spaces" by "complex_inner", I corrected
+lemma by lemma and even in that case, it does not work the elimination of the hypothesis
+of completeness.
+
+*)
+
 instantiation linear_space :: (chilbert_space) lattice begin
 instance 
 proof
@@ -3143,7 +3124,6 @@ proof
         thus ?thesis
           unfolding set_plus_def
           by (smt Collect_cong)
-
       qed
     qed
     thus ?thesis
@@ -3317,16 +3297,13 @@ proof
 qed
 end
 
-
-
 instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
 proof
-  show "inf (x::'a linear_space) (- x) = bot"
+  show "inf x (- x) = bot"
     for x :: "'a linear_space"
     apply transfer
     by (metis Complex_Vector_Spaces.subspace_0 insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero ortho_inter_zero)
-
-  show "sup (x::'a linear_space) (- x) = top"
+  show "sup x (- x) = top"
     for x :: "'a linear_space"
   proof-
     have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
@@ -3363,20 +3340,20 @@ proof
       using ortho_decomp
       by blast
   qed
-
-  show "- (- (x::'a linear_space)) = x"
+  show "- (- x) = x"
     for x :: "'a linear_space"
-    by (simp add: linear_space_ortho_ortho)
+    apply transfer
+    by (simp add: orthogonal_complement_twice)
 
-  show "- (y::'a linear_space) \<le> - x"
-    if "(x::'a linear_space) \<le> y"
+  show "- y \<le> - x"
+    if "x \<le> y"
     for x :: "'a linear_space"
       and y :: "'a linear_space"
     using that apply transfer
     by simp 
 
-  show "sup (x::'a linear_space) (inf (- x) y) = y"
-    if "(x::'a linear_space) \<le> y"
+  show "sup x (inf (- x) y) = y"
+    if "x \<le> y"
     for x :: "'a linear_space"
       and y :: "'a linear_space"
     using that apply transfer
@@ -3391,9 +3368,9 @@ proof
       by (simp add: is_closed_subspace_universal_inclusion_inverse) 
 
     show "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
-      if "closed_subspace (x::'a set)"
-        and "closed_subspace (y::'a set)"
-        and "(x::'a set) \<subseteq> y"
+      if "closed_subspace x"
+        and "closed_subspace y"
+        and "x \<subseteq> y"
       for x :: "'a set"
         and y :: "'a set"   
     proof-
@@ -3430,24 +3407,12 @@ proof
     qed
   qed
 
-  show "(x - y) = (inf x (- y))"
+  show "x - y = inf x (- y)"
     for x :: "'a linear_space"
       and y :: "'a linear_space"
     apply transfer
     by simp
 qed
-
-(* TODO remove (special case of bounded_lattice_top_class.sup_top_left) *)
-lemma top_plus[simp]: "sup top  x = top" for x :: "'a::chilbert_space linear_space"
-  by simp
-
-(* TODO remove (special case of bounded_lattice_top_class.sup_top_right) *)
-lemma plus_top[simp]: "sup x top = top" for x :: "'a::chilbert_space linear_space"
-  by simp
-
-(* TODO remove (special case of Lattice_Missing.orthocomplemented_lattice_class.ortho_involution) *)
-lemma ortho_ortho[simp]: "- (- S) = (S::'a::chilbert_space linear_space)"
-  by (simp add: linear_space_ortho_ortho)
 
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
