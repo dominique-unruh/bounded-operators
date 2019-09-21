@@ -1682,7 +1682,9 @@ qed
 lemma Proj_leq: "(Proj S) *\<^sub>s A \<le> S"
 proof -
   have "top = sup top A"
-    by (meson sup.orderE top_a_linear_space)
+    apply transfer
+    using Complex_Vector_Spaces.subspace_UNIV is_closed_subspace_universal_inclusion_left 
+    by blast 
   hence "sup S (Proj S *\<^sub>s A) = S"
     by (metis (full_types) cdot_plus_distrib imageOp_Proj)
   thus ?thesis
