@@ -46,7 +46,6 @@ end
 unbundle GL_notation
 
 
-
 instantiation GL :: (complex_normed_vector) group_add
 begin
 
@@ -197,10 +196,13 @@ qed
 end
 
 
-
-
 unbundle no_U_notation
 unbundle no_GL_notation
 unbundle no_bounded_notation
 
 end
+
+
+
+
+

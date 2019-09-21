@@ -14,8 +14,9 @@ to converge to a linear bounded operator.
 theory Banach_Steinhaus
   imports 
     "HOL-ex.Sketch_and_Explore"
-    Operator_Norm_Plus
-    Convergence_Operators
+    Operator_Norm_Missing
+    Uniform_Limit_Missing    
+    NSA_Miscellany
 begin
 
 (* TODO: move? *)
@@ -945,16 +946,21 @@ proof(rule classical)
 qed
 
 
+abbreviation pointwise_convergence_abbr::
+  \<open>(nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
+  (\<open>((_)/ \<midarrow>pointwise\<rightarrow> (_))\<close> [60, 60] 60)
+  where \<open>f \<midarrow>pointwise\<rightarrow> l \<equiv> (\<forall> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x)\<close>
 
 lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. linear (f n)\<close> 
-    and  \<open>f \<midarrow>strong\<rightarrow> F\<close>
+    and  \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
   shows \<open>linear F\<close> 
 proof
   have \<open>\<And> x. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-    using  \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule pointwise_convergence_pointwise)
+    using  \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
+    by auto    
   show "F (x + y) = F x + F y"
     for x :: 'a
       and y :: 'a
@@ -1011,8 +1017,7 @@ proof
         using  \<open>\<And> n.  linear (f n)\<close>
         unfolding linear_def
         unfolding Modules.additive_def
-        by (simp add: Real_Vector_Spaces.linear_def linear_scale)
-
+        by (simp add: Real_Vector_Spaces.linear_def real_vector.linear_scale)
       hence \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close>
         by simp
       show ?thesis 
@@ -1036,11 +1041,12 @@ qed
 proposition bounded_linear_limit_bounded_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes  \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>f \<midarrow>strong\<rightarrow> F\<close> 
+  assumes  \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>f \<midarrow>pointwise\<rightarrow> F\<close> 
   shows \<open>bounded_linear F\<close> 
 proof-
   have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-    using \<open>f \<midarrow>strong\<rightarrow> F\<close> by (rule pointwise_convergence_pointwise)
+    using \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
+    by simp
   have \<open>linear F\<close>
     using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
@@ -1084,8 +1090,6 @@ proof-
   qed
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
-
-
 
 
 end
