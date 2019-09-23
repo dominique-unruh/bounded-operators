@@ -1254,7 +1254,7 @@ qed
 
 lemma equal_span:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
-  assumes \<open>clinear A\<close> and \<open>bounded_clinear B\<close> and
+  assumes \<open>clinear A\<close> and \<open>clinear B\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
   using assms(1) assms(2) assms(3) assms(4) bounded_clinear.is_clinear 

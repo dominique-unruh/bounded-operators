@@ -30,22 +30,22 @@ lemma ket_product: "ket (a,b) = ket a \<otimes> ket b"
 lemma tensorOp_applyOp_distr:
   includes bounded_notation
   shows "(A \<otimes> B) *\<^sub>v (\<psi> \<otimes> \<phi>) = (A *\<^sub>v \<psi>) \<otimes> (B *\<^sub>v \<phi>)"
-  using cinner_ext_ell2 by blast
+  using cinner_ext_ell2 sorry
 
 lemma assoc_op_apply_tensor[simp]:
   includes bounded_notation
   shows "assoc_op *\<^sub>v (\<psi>\<otimes>(\<phi>\<otimes>\<tau>)) = (\<psi>\<otimes>\<phi>)\<otimes>\<tau>"
-  using cinner_ext_ell2 by blast
+  using cinner_ext_ell2 sorry
 
 lemma comm_op_apply_tensor[simp]: 
   includes bounded_notation
   shows "comm_op *\<^sub>v (\<psi>\<otimes>\<phi>) = (\<phi>\<otimes>\<psi>)"
-  using cinner_ext_ell2 by blast
+  using cinner_ext_ell2 sorry
 
 lemma assoc_op_adj_apply_tensor[simp]:
   includes bounded_notation
   shows "assoc_op* *\<^sub>v ((\<psi>\<otimes>\<phi>)\<otimes>\<tau>) = \<psi>\<otimes>(\<phi>\<otimes>\<tau>)"
-  using cinner_ext_ell2 by blast
+  using cinner_ext_ell2 sorry
 
 lemma span_tensor: "Span G \<otimes> Span H = Span {g\<otimes>h|g h. g\<in>G \<and> h\<in>H}"
   by (cheat span_tensor)

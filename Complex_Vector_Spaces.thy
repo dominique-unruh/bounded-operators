@@ -1975,7 +1975,7 @@ proof-
 qed
 
 
-lemma subspace_0[simp]: 
+lemma subspace_0[simp]:
   "closed_subspace ({0} :: ('a::{complex_vector,t1_space}) set)"
 proof-
   have \<open>complex_vector.subspace {0}\<close>

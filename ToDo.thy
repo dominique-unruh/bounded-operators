@@ -68,32 +68,45 @@ lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
   includes bounded_notation
   shows "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
-  have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
+  have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+    for \<gamma> :: "'c::the_single ell2"
     by (simp add: times_applyOp)
-  hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
+  hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+    for \<gamma> :: "'c::the_single ell2"
     using C1_to_complex_inverse by metis
   thus ?thesis
-(* FIXME: probably the proof steps above need additional type information *)
-    (* by (rule_tac bounded_ext) *)
-    by (cheat FIXME)
+    using  bounded_ext[where A = "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>"
+        and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
+    by auto
 qed
 
+lemma cinner_ext_ell2_0: 
+  assumes "\<And>\<gamma>. cinner \<gamma> \<psi> = 0"
+  shows "\<psi> = 0"
+  using assms cinner_eq_zero_iff by blast
+  
 text \<open>This is a useful rule for establishing the equality of vectors\<close>
 lemma cinner_ext_ell2: 
-  assumes "\<And>\<gamma>. cinner \<gamma> \<psi> = cinner \<gamma> \<phi>"
-  shows "\<gamma> = \<phi>"
-  by (cheat cinner_ext_ell2)
-
+  assumes \<open>\<And>\<gamma>. cinner \<gamma> \<psi> = cinner \<gamma> \<phi>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+proof-
+  have \<open>cinner \<gamma> (\<psi> - \<phi>) = 0\<close>
+    for \<gamma>
+    using \<open>\<And>\<gamma>. cinner \<gamma> \<psi> = cinner \<gamma> \<phi>\<close>
+    by (simp add: cinner_diff_right)    
+  hence \<open>\<psi> - \<phi> = 0\<close>
+    using cinner_ext_ell2_0[where \<psi> = "\<psi> - \<phi>"] by blast
+  thus ?thesis by simp
+qed
 
 lemma [simp]: "ket i \<noteq> 0"
   using ell2_ket[of i] by force
-
 
 lemma equal_ket:
   includes bounded_notation
   assumes "\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x"
   shows "A = B"
-  by (cheat equal_ket)
+  by (simp add: assms equal_basis)
 
 lemma linear_space_leI:
   assumes "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
@@ -122,12 +135,26 @@ lemma eigenspace_memberI:
 lemma applyOpSpace_Span: 
   includes bounded_notation
   shows "A *\<^sub>s Span G = Span ((*\<^sub>v) A ` G)"
-  by (cheat applyOpSpace_Span)
+  apply transfer
+  proof
+  show "closure (A ` closure (complex_vector.span (G::'b set))) \<subseteq> closure (complex_vector.span (A ` G::'a set))"
+    if "bounded_clinear (A::'b \<Rightarrow> 'a)"
+    for A :: "'b \<Rightarrow> 'a"
+      and G :: "'b set"
+    using that sorry
+  show "closure (complex_vector.span (A ` (G::'b set)::'a set)) \<subseteq> closure (A ` closure (complex_vector.span G))"
+    if "bounded_clinear (A::'b \<Rightarrow> 'a)"
+    for A :: "'b \<Rightarrow> 'a"
+      and G :: "'b set"
+    using that sorry
+qed
+
 
 lemma span_ortho_span:
   assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
   shows "Span S \<le> - (Span T)"
-  by (cheat span_ortho_span)
+  using assms apply transfer
+  sorry
 
 lemma ket_is_orthogonal[simp]:
   "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
@@ -154,26 +181,34 @@ lemma positive_0[simp]: "positive_op 0"
 
 abbreviation "loewner_leq A B == (positive_op (B-A))"
 
-lemma Span_range_ket[simp]: "Span (range ket) = top"
-  by (cheat Span_range_ket)
+lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
+proof-
+  have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
+    using Complex_L2.ket_ell2_span by blast
+  thus ?thesis
+    by (simp add: Span.abs_eq top_linear_space.abs_eq)
+qed
 
 lemma norm_mult_ineq_bounded:
   fixes A B :: "(_,_) bounded"
   shows "norm (A *\<^sub>o B) \<le> norm A * norm B"
-  by (cheat norm_mult_ineq_bounded)
+  apply transfer
+  by (simp add: bounded_clinear.bounded_linear onorm_compose)
 
 lemma equal_span':
+  fixes f g :: "'a::cbanach \<Rightarrow> 'b::cbanach"
   assumes "bounded_clinear f"
     and "bounded_clinear g"
   assumes "\<And>x. x\<in>G \<Longrightarrow> f x = g x"
-  assumes "x\<in>closure (span G)"
+  assumes "x\<in>closure (complex_vector.span G)"
   shows "f x = g x"
-  by (cheat equal_span')
+  using assms equal_span_applyOpSpace
+  by metis 
 
-
-lemma ortho_bot[simp]: "- bot = (top::_ linear_space)"
+lemma ortho_bot[simp]: "- bot = (top::'a::chilbert_space linear_space)"
   apply transfer by auto
-lemma ortho_top[simp]: "- top = (bot::_ linear_space)"
+
+lemma ortho_top[simp]: "- top = (bot::'a::chilbert_space linear_space)"
   apply transfer by auto
 
 (* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
