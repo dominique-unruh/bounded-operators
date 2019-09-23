@@ -5,7 +5,7 @@ This theory contains the things that are still needed for qrhl-tool but should b
 *)
 
 theory Legacy
-imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading" Tensor_Product ToDo
+imports Bounded_Operators Complex_L2 "HOL-Library.Adhoc_Overloading" Tensor_Product ToDo ToDo_Tensor
 begin
 
 type_synonym ('a,'b) l2bounded = "('a ell2, 'b ell2) bounded"

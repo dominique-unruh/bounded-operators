@@ -1,5 +1,5 @@
 theory ToDo
-imports Bounded_Operators Complex_L2 Tensor_Product
+imports Bounded_Operators Complex_L2 
 begin
 
 text \<open>
@@ -73,37 +73,16 @@ proof -
   hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" for \<gamma> :: "unit ell2"
     using C1_to_complex_inverse by metis
   thus ?thesis
-    by (rule bounded_ext)
+(* FIXME: probably the proof steps above need additional type information *)
+    (* by (rule_tac bounded_ext) *)
+    by (cheat FIXME)
 qed
-
-lemma cinner_tensor: "\<langle>\<gamma> \<otimes> \<psi>, \<delta> \<otimes> \<phi>\<rangle> = \<langle>\<psi>, \<phi>\<rangle> * \<langle>\<gamma>, \<delta>\<rangle>"
-  by (cheat cinner_tensor)
 
 text \<open>This is a useful rule for establishing the equality of vectors\<close>
 lemma cinner_ext_ell2: 
   assumes "\<And>\<gamma>. cinner \<gamma> \<psi> = cinner \<gamma> \<phi>"
   shows "\<gamma> = \<phi>"
   by (cheat cinner_ext_ell2)
-
-lemma addState_adj_times_addState[simp]: 
-  includes bounded_notation
-  fixes \<psi> \<phi> :: "'a ell2"
-  shows "addState \<psi>* *\<^sub>o addState \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C (idOp::('b,'b) l2bounded)"
-proof -
-  have "\<langle>\<gamma>, (addState \<psi>* *\<^sub>o addState \<phi>) *\<^sub>v \<delta>\<rangle> = \<langle>\<gamma>, (\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp) *\<^sub>v \<delta>\<rangle>" for \<gamma> \<delta> :: "'b ell2"
-    apply (simp add: times_applyOp cinner_adjoint'[symmetric])
-    apply (transfer fixing: \<psi> \<phi> \<delta> \<gamma>)
-    by (rule cinner_tensor)
-  hence "(addState \<psi>* *\<^sub>o addState \<phi>) *\<^sub>v \<delta> = (\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp) *\<^sub>v \<delta>" for \<delta> :: "'b ell2"
-    by (rule cinner_ext_ell2)
-  thus ?thesis
-    by (rule bounded_ext)
-qed
-
-
-lemma [simp]: "norm \<psi>=1 \<Longrightarrow> isometry (addState \<psi>)"
-  unfolding isometry_def 
-  by (simp add: cinner_norm_sq)
 
 
 lemma [simp]: "ket i \<noteq> 0"
@@ -115,14 +94,6 @@ lemma equal_ket:
   assumes "\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x"
   shows "A = B"
   by (cheat equal_ket)
-
-lemma ket_product: "ket (a,b) = ket a \<otimes> ket b"
-  by (cheat ket_product)
-
-lemma tensorOp_applyOp_distr:
-  includes bounded_notation
-  shows "(A \<otimes> B) *\<^sub>v (\<psi> \<otimes> \<phi>) = (A *\<^sub>v \<psi>) \<otimes> (B *\<^sub>v \<phi>)"
-  using cinner_ext_ell2 by blast
 
 lemma linear_space_leI:
   assumes "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
@@ -147,24 +118,6 @@ lemma eigenspace_memberI:
   assumes "A *\<^sub>v x = e *\<^sub>C x"
   shows "x \<in> space_as_set (eigenspace e A)"
   using assms unfolding eigenspace_def apply transfer by auto
-
-lemma assoc_op_apply_tensor[simp]:
-  includes bounded_notation
-  shows "assoc_op *\<^sub>v (\<psi>\<otimes>(\<phi>\<otimes>\<tau>)) = (\<psi>\<otimes>\<phi>)\<otimes>\<tau>"
-  using cinner_ext_ell2 by blast
-
-lemma comm_op_apply_tensor[simp]: 
-  includes bounded_notation
-  shows "comm_op *\<^sub>v (\<psi>\<otimes>\<phi>) = (\<phi>\<otimes>\<psi>)"
-  using cinner_ext_ell2 by blast
-
-lemma assoc_op_adj_apply_tensor[simp]:
-  includes bounded_notation
-  shows "assoc_op* *\<^sub>v ((\<psi>\<otimes>\<phi>)\<otimes>\<tau>) = \<psi>\<otimes>(\<phi>\<otimes>\<tau>)"
-  using cinner_ext_ell2 by blast
-
-lemma span_tensor: "Span G \<otimes> Span H = Span {g\<otimes>h|g h. g\<in>G \<and> h\<in>H}"
-  by (cheat span_tensor)
 
 lemma applyOpSpace_Span: 
   includes bounded_notation
@@ -217,14 +170,10 @@ lemma equal_span':
   shows "f x = g x"
   by (cheat equal_span')
 
-lemma span_tensors:
-  "closure (span {C1 \<otimes> C2| (C1::(_,_) l2bounded) (C2::(_,_) l2bounded). True}) = UNIV"
-  by (cheat span_tensors)
 
-
-lemma ortho_bot[simp]: "- bot = (top::_ subspace)"
+lemma ortho_bot[simp]: "- bot = (top::_ linear_space)"
   apply transfer by auto
-lemma ortho_top[simp]: "- top = (bot::_ subspace)"
+lemma ortho_top[simp]: "- top = (bot::_ linear_space)"
   apply transfer by auto
 
 (* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
