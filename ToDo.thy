@@ -1,5 +1,5 @@
 theory ToDo
-imports Bounded_Operators Complex_L2 
+  imports Bounded_Operators Complex_L2 
 begin
 
 text \<open>
@@ -17,7 +17,7 @@ This way, QRHL will not be broken by the work on these lemmas/definitions
 
 
 lemma cinner_1_C1: "cinner 1 \<psi> = C1_to_complex \<psi>"
-    apply transfer by (simp add: singleton_UNIV)
+  apply transfer by (simp add: singleton_UNIV)
 
 lemma ell2_to_bounded_times_vec[simp]:
   includes bounded_notation
@@ -25,7 +25,7 @@ lemma ell2_to_bounded_times_vec[simp]:
   unfolding ell2_to_bounded.rep_eq by simp
 
 text \<open>This is the defining property of the adjoint\<close>
-(* TODO: There is adjoint_I, but it has unnecessary allquantifiers *)
+  (* TODO: There is adjoint_I, but it has unnecessary allquantifiers *)
 lemma cinner_adjoint:
   includes bounded_notation
   shows "cinner \<psi> (A *\<^sub>v \<phi>) = cinner (A* *\<^sub>v \<psi>) \<phi>"
@@ -84,7 +84,7 @@ lemma cinner_ext_ell2_0:
   assumes "\<And>\<gamma>. cinner \<gamma> \<psi> = 0"
   shows "\<psi> = 0"
   using assms cinner_eq_zero_iff by blast
-  
+
 text \<open>This is a useful rule for establishing the equality of vectors\<close>
 lemma cinner_ext_ell2: 
   assumes \<open>\<And>\<gamma>. cinner \<gamma> \<psi> = cinner \<gamma> \<phi>\<close>
@@ -132,29 +132,221 @@ lemma eigenspace_memberI:
   shows "x \<in> space_as_set (eigenspace e A)"
   using assms unfolding eigenspace_def apply transfer by auto
 
+
 lemma applyOpSpace_Span: 
   includes bounded_notation
   shows "A *\<^sub>s Span G = Span ((*\<^sub>v) A ` G)"
   apply transfer
-  proof
+proof
   show "closure (A ` closure (complex_vector.span (G::'b set))) \<subseteq> closure (complex_vector.span (A ` G::'a set))"
     if "bounded_clinear (A::'b \<Rightarrow> 'a)"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
-    using that sorry
+  proof-
+    have isContA: \<open>isCont A r\<close>
+      for r
+      using that
+      by (simp add: bounded_linear_continuous)
+    have \<open>A ` closure (complex_vector.span (G::'b set)) \<subseteq> closure (complex_vector.span (A ` G::'a set))\<close>
+    proof
+      show "x \<in> closure (complex_vector.span (A ` G))"
+        if "x \<in> A ` closure (complex_vector.span G)"
+        for x :: 'a
+      proof-
+        have \<open>\<exists> y. x = A y \<and> y \<in> closure (complex_vector.span G)\<close>
+          using that by auto
+        then obtain y where \<open>x = A y\<close> and \<open>y \<in> closure (complex_vector.span G)\<close>
+          by blast
+        from  \<open>y \<in> closure (complex_vector.span G)\<close>
+        have \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span G)\<close>
+          using closure_sequential by blast
+        then obtain t where \<open>t \<longlonglongrightarrow> y\<close> and \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
+          by blast
+        from \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
+        have \<open>\<forall> n. A (t n) \<in> complex_vector.span (A ` G)\<close>
+          using \<open>bounded_clinear A\<close>
+            complex_vector.linear_span_image 
+          unfolding bounded_clinear_def
+          by blast          
+        moreover have \<open>(\<lambda> n. A (t n)) \<longlonglongrightarrow> A y\<close>
+          using isContA  \<open>t \<longlonglongrightarrow> y\<close>
+          by (simp add: isCont_tendsto_compose) 
+        ultimately show ?thesis 
+          using \<open>x = A y\<close>
+          by (meson closure_sequential)
+      qed
+    qed
+    thus ?thesis
+      by (metis closure_closure closure_mono)       
+  qed
   show "closure (complex_vector.span (A ` (G::'b set)::'a set)) \<subseteq> closure (A ` closure (complex_vector.span G))"
     if "bounded_clinear (A::'b \<Rightarrow> 'a)"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
-    using that sorry
+    using that
+    by (simp add: bounded_clinear.is_clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
 qed
 
+lemma cinner_continuous_right:
+  assumes \<open>t \<longlonglongrightarrow> y\<close>
+  shows \<open>(\<lambda> n. \<langle> x, t n \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+proof-
+  have \<open>(\<lambda> n. \<langle> x, t n - y \<rangle>) \<longlonglongrightarrow> 0\<close>
+  proof-
+    have \<open>\<exists> K. \<forall> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
+      using bounded_sesquilinear.bounded bounded_sesquilinear_cinner by auto
+    then obtain K where \<open>\<And> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
+      by blast
+    have \<open>(\<lambda> n. norm x * norm (t n - y)) \<longlonglongrightarrow> 0\<close>
+    proof-
+      have \<open>(\<lambda> n. t n - y) \<longlonglongrightarrow> 0\<close>
+        using \<open>t \<longlonglongrightarrow> y\<close> LIM_zero by auto
+      thus ?thesis
+        by (simp add: tendsto_mult_right_zero tendsto_norm_zero) 
+    qed
+    moreover have \<open>norm \<langle> x, t n - y \<rangle> \<le> norm (norm x * norm (t n - y)) * K\<close>
+      for n
+      using \<open>\<And> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
+      by auto
+    ultimately show ?thesis using Limits.tendsto_0_le
+      by (metis (no_types, lifting) eventually_sequentiallyI)
+  qed
+  moreover have \<open>\<langle> x, t n - y \<rangle> =  \<langle> x, t n \<rangle> - \<langle> x, y \<rangle>\<close>
+    for n
+    by (simp add: cinner_diff_right)    
+  ultimately have \<open>(\<lambda> n. \<langle> x, t n \<rangle> - \<langle> x, y \<rangle>) \<longlonglongrightarrow> 0\<close>
+    by simp
+  thus ?thesis
+    by (simp add: LIM_zero_iff) 
+qed
+
+lemma cinner_continuous_left:
+  assumes \<open>t \<longlonglongrightarrow> x\<close>
+  shows \<open>(\<lambda> n. \<langle> t n, y \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+proof-
+  have \<open>(\<lambda> n. \<langle> y, t n \<rangle>) \<longlonglongrightarrow> \<langle> y, x \<rangle>\<close>
+    by (simp add: assms cinner_continuous_right)
+  hence \<open>(\<lambda> n. cnj \<langle> y, t n \<rangle>) \<longlonglongrightarrow> cnj \<langle> y, x \<rangle>\<close>
+    using lim_cnj by fastforce
+  moreover have \<open>cnj \<langle> y, t n \<rangle> = \<langle> t n, y \<rangle>\<close>
+    for n
+    by simp    
+  moreover have \<open>cnj \<langle> y, x \<rangle> = \<langle> x, y \<rangle>\<close>
+    by simp    
+  ultimately show ?thesis 
+    by simp
+qed
 
 lemma span_ortho_span:
   assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
   shows "Span S \<le> - (Span T)"
   using assms apply transfer
-  sorry
+proof
+  show "x \<in> orthogonal_complement (closure (complex_vector.span T))"
+    if "\<And>s t. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t"
+      and "x \<in> closure (complex_vector.span S)"
+    for S :: "'a set"
+      and T :: "'a set"
+      and x :: 'a
+  proof-
+    have discrete: \<open>x \<in> complex_vector.span S \<Longrightarrow> y \<in> complex_vector.span T \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+      for x y
+    proof-
+      assume \<open>x \<in> complex_vector.span S\<close> and \<open>y \<in> complex_vector.span T\<close>
+      have \<open>\<exists> T' r\<^sub>T. finite T' \<and>  T' \<subseteq> T \<and> y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>
+        using complex_vector.span_explicit  \<open>y \<in> complex_vector.span T\<close>
+        by (smt mem_Collect_eq)
+      then obtain T' r\<^sub>T where \<open>finite T'\<close> and \<open>T' \<subseteq> T\<close> and \<open>y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>
+        by blast
+      have \<open>\<exists> S' r\<^sub>S. finite S' \<and>  S' \<subseteq> S \<and> x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close>
+        using complex_vector.span_explicit  \<open>x \<in> complex_vector.span S\<close>
+        by (smt mem_Collect_eq)
+      then obtain S' r\<^sub>S where \<open>finite S'\<close> and \<open>S' \<subseteq> S\<close> and \<open>x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close>
+        by blast
+
+      have \<open>\<langle> x, y \<rangle> = \<langle> (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a), (\<Sum>b\<in>T'. r\<^sub>T b *\<^sub>C b) \<rangle>\<close>
+        by (simp add: \<open>x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close> \<open>y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>)
+      also have \<open>\<dots> = (\<Sum>a\<in>S'. \<langle> r\<^sub>S a *\<^sub>C a, (\<Sum>b\<in>T'. r\<^sub>T b *\<^sub>C b) \<rangle>)\<close>
+        using cinner_sum_left by blast
+      also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. \<langle> r\<^sub>S a *\<^sub>C a,  r\<^sub>T b *\<^sub>C b \<rangle>))\<close>
+        by (simp add: cinner_sum_right)
+      also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * \<langle> a,  r\<^sub>T b *\<^sub>C b \<rangle>))\<close>
+      proof -
+        have "(\<Sum>a\<in>S'. \<Sum>aa\<in>T'. \<langle>r\<^sub>S a *\<^sub>C a, r\<^sub>T aa *\<^sub>C aa\<rangle>) = (\<Sum>a\<in>S'. \<Sum>aa\<in>T'. cnj (r\<^sub>S a) * \<langle>a, r\<^sub>T aa *\<^sub>C aa\<rangle>) \<or> (\<forall>a. (\<Sum>aa\<in>T'. \<langle>r\<^sub>S a *\<^sub>C a, r\<^sub>T aa *\<^sub>C aa\<rangle>) = (\<Sum>aa\<in>T'. cnj (r\<^sub>S a) * \<langle>a, r\<^sub>T aa *\<^sub>C aa\<rangle>))"
+          by (meson cinner_scaleC_left)
+        thus ?thesis
+          by presburger
+      qed
+      also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * ((r\<^sub>T b) * \<langle> a, b \<rangle>)))\<close>
+      proof-
+        have \<open>\<langle> a, r\<^sub>T b *\<^sub>C b \<rangle> =  r\<^sub>T b * \<langle> a, b \<rangle>\<close>
+          for a b
+          by simp
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * ((r\<^sub>T b) * 0)))\<close>
+      proof-
+        have \<open>a \<in> S' \<Longrightarrow> b \<in> T' \<Longrightarrow> \<langle> a, b \<rangle> = 0\<close>
+          for a b
+        proof-
+          assume \<open>a \<in> S'\<close> and \<open>b \<in> T'\<close>
+          have \<open>a \<in> S\<close>
+            using \<open>S' \<subseteq> S\<close> \<open>a \<in> S'\<close> by blast            
+          moreover have \<open>b \<in> T\<close>
+            using \<open>T' \<subseteq> T\<close> \<open>b \<in> T'\<close> by blast
+          ultimately show ?thesis
+            using is_orthogonal_def that(1) by auto 
+        qed
+        thus ?thesis by simp
+      qed
+      finally show \<open>\<langle> x, y \<rangle> = 0\<close> by simp
+    qed
+    have \<open>y \<in> complex_vector.span T \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+      for y
+    proof-
+      assume \<open>y \<in> complex_vector.span T\<close>
+      have \<open>\<exists> t. t \<longlonglongrightarrow> x \<and> (\<forall> n. t n \<in> complex_vector.span S)\<close>
+        using closure_sequential
+        by (metis that(2))  
+      then obtain t where \<open>t \<longlonglongrightarrow> x\<close> and \<open>\<forall> n. t n \<in> complex_vector.span S\<close>
+        by blast
+      from  \<open>\<forall> n. t n \<in> complex_vector.span S\<close>
+      have \<open>\<langle> t n, y \<rangle> = 0\<close>
+        for n
+        using discrete \<open>y \<in> complex_vector.span T\<close>
+        by blast
+      moreover have \<open>(\<lambda> n. \<langle> t n, y \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+        using  \<open>t \<longlonglongrightarrow> x\<close> cinner_continuous_left
+        by (simp add: cinner_continuous_left)
+      ultimately have \<open>(\<lambda> n. 0) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+        by simp
+      thus ?thesis
+        by (simp add: LIMSEQ_const_iff) 
+    qed
+    hence \<open>y \<in> closure (complex_vector.span T) \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+      for y
+    proof-
+      assume \<open>y \<in> closure (complex_vector.span T)\<close>
+      hence \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span T)\<close>
+        using closure_sequential by blast
+      then obtain t where \<open>t \<longlonglongrightarrow> y\<close> and \<open>\<forall> n. t n \<in> complex_vector.span T\<close>
+        by blast
+      from  \<open>\<forall> n. t n \<in> complex_vector.span T\<close>
+      have \<open>\<langle> x, t n \<rangle> = 0\<close>
+        for n
+        by (simp add: \<open>\<And>y. y \<in> complex_vector.span T \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>)
+      moreover have \<open>(\<lambda> n. \<langle> x, t n \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+        using  \<open>t \<longlonglongrightarrow> y\<close>
+        by (simp add: cinner_continuous_right)        
+      ultimately have \<open>(\<lambda> n. 0) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
+        by simp
+      thus ?thesis
+        by (simp add: LIMSEQ_const_iff) 
+    qed
+    thus ?thesis
+      using orthogonal_complement_I2 by blast 
+  qed
+qed
 
 lemma ket_is_orthogonal[simp]:
   "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
@@ -220,9 +412,13 @@ lemma demorgan_sup: "- ((A::_::orthocomplemented_lattice) \<squnion> B) = - A \<
   by (cheat demorgan_sup) 
 
 instance basis_enum \<subseteq> chilbert_space
-  by (cheat \<open>instance basis_enum \<subseteq> chilbert_space\<close>)
+  proof
+  show "convergent X"
+    if "Cauchy X"
+    for X :: "nat \<Rightarrow> 'a"
+    sorry
+qed
 
 unbundle no_bounded_notation
-
 
 end
