@@ -1,1 +1,0 @@
-05b2eb4: class topological_complex_vector, typedef dual 
