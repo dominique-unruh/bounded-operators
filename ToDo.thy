@@ -416,7 +416,7 @@ instance basis_enum \<subseteq> chilbert_space
   show "convergent X"
     if "Cauchy X"
     for X :: "nat \<Rightarrow> 'a"
-    sorry
+    by (cheat TODO)
 qed
 
 unbundle no_bounded_notation
