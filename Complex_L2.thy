@@ -1912,6 +1912,7 @@ qed
 
 section \<open>the_single\<close>
 
+(* TODO remove this class and use class CARD_1 instead (with "undefined" instead of "the_single") *)
 class the_single = 
   fixes the_single :: "'a" 
   assumes everything_the_single: "x=the_single" 

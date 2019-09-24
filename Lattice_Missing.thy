@@ -16,7 +16,7 @@ class complete_complemented_lattice = complemented_lattice + complete_lattice
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
 (* TODO: ortho_involution should be [simp] *)
 class orthocomplemented_lattice = complemented_lattice +
-  assumes ortho_involution: "- (- x) = x"
+  assumes ortho_involution: "- (- x) = x" (* TODO: add [simp] *)
     and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y" begin
 
 (*
