@@ -1096,6 +1096,78 @@ proof-
 qed
 
 
+lemma tendsto_finite_sum_induction:
+  fixes X :: \<open>_ \<Rightarrow> _ \<Rightarrow> _::topological_monoid_add\<close>
+  shows \<open>\<forall> T. card T = n \<and> finite T \<and> (\<forall> t. t\<in>T \<longrightarrow> (X t \<longlonglongrightarrow> L t)) \<longrightarrow> 
+((\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t))\<close>
+  proof (induction n)
+  show "\<forall>T. card T = 0 \<and> finite T \<and> (\<forall>t. t \<in> T \<longrightarrow> X t \<longlonglongrightarrow> L t) \<longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T"
+  proof-
+    have \<open>card T = 0 \<Longrightarrow> finite T \<Longrightarrow> (\<And> t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t) \<Longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T\<close>
+      for T
+    proof-
+      assume \<open>card T = 0\<close> and \<open>finite T\<close> and \<open>\<And> t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close>
+      have \<open>T = {}\<close>
+        using \<open>card T = 0\<close> \<open>finite T\<close> by auto 
+      hence \<open>(\<Sum>t\<in>T. X t n) = 0\<close>
+        for n
+        by simp
+      hence \<open>(\<lambda>n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow> 0\<close>
+        by auto
+      moreover have \<open>sum L T = 0\<close>
+        using \<open>T = {}\<close> by simp
+      ultimately show ?thesis by simp
+    qed
+    thus ?thesis by blast
+  qed
+  show "\<forall>T. card T = Suc n \<and> finite T \<and> (\<forall>t. t \<in> T \<longrightarrow> X t \<longlonglongrightarrow> L t) \<longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T"
+    if "\<forall>T. card T = n \<and> finite T \<and> (\<forall>t. t \<in> T \<longrightarrow> X t \<longlonglongrightarrow> L t) \<longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T"
+    for n :: nat
+  proof-
+    have \<open>card T = Suc n \<Longrightarrow> finite T \<Longrightarrow> (\<And> t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t) \<Longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T\<close>
+      for T
+    proof-
+      assume \<open>card T = Suc n\<close> and \<open>finite T\<close> and \<open>\<And> t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close>
+      have \<open>\<exists> k K. k \<notin> K \<and> T = insert k K\<close>
+        by (metis \<open>card T = Suc n\<close> card_le_Suc_iff le_Suc_eq)
+      then obtain k K where \<open>k \<notin> K\<close> and \<open>T = insert k K\<close>
+        by blast
+      have \<open>finite K\<close>
+        using \<open>T = insert k K\<close> \<open>finite T\<close> by auto
+      moreover have \<open>card K = n\<close>
+        using \<open>T = insert k K\<close> \<open>card T = Suc n\<close> \<open>k \<notin> K\<close> calculation by auto
+      moreover have  \<open>\<And> t. t \<in> K \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close>
+        by (simp add: \<open>T = insert k K\<close> \<open>\<And>t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close>)
+      ultimately have \<open>(\<lambda>n. \<Sum>t\<in>K. X t n) \<longlonglongrightarrow> sum L K\<close>
+        by (simp add: that)
+      moreover have \<open>X k \<longlonglongrightarrow> L k\<close>
+        by (simp add: \<open>T = insert k K\<close> \<open>\<And>t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close>)
+      ultimately have \<open>(\<lambda> n. X k n  + (\<Sum>t\<in>K. X t n)) \<longlonglongrightarrow> L k + sum L K\<close>
+        using Limits.tendsto_add by auto
+      moreover have \<open>X k n + (\<Sum>t\<in>K. X t n) = (\<Sum>t\<in>T. X t n)\<close>
+        for n
+        using \<open>T = insert k K\<close> \<open>finite K\<close> \<open>k \<notin> K\<close> by auto
+      ultimately have \<open>(\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow> L k + sum L K\<close>
+        by simp
+      moreover have \<open> L k + sum L K = sum L T\<close>
+        by (simp add: \<open>T = insert k K\<close> \<open>finite K\<close> \<open>k \<notin> K\<close>)
+      ultimately show ?thesis
+        by simp        
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+lemma tendsto_finite_sum:
+  fixes X :: \<open>_ \<Rightarrow> _ \<Rightarrow> _::topological_monoid_add\<close>
+  assumes  \<open>\<And> t. t\<in>T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close> \<open>finite T\<close>
+  shows \<open>(\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t)\<close>
+  using assms tendsto_finite_sum_induction 
+  by blast
+
+hide_fact tendsto_finite_sum_induction
+
+
 unbundle no_nsa_notation
 
 end
