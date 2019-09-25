@@ -40,7 +40,6 @@ lemma ell2_to_bounded_adj_times_vec[simp]:
   includes bounded_notation
   shows "ell2_to_bounded \<psi>* *\<^sub>v \<phi> = complex_to_C1 (cinner \<psi> \<phi>)"
 proof -
-  note [[show_sorts]]
   have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2) = cinner 1 (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2)"
     by (simp add: cinner_1_C1)
   also have "\<dots> = cinner (ell2_to_bounded \<psi> *\<^sub>v (1::'a ell2)) \<phi>"
@@ -69,10 +68,10 @@ lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
   shows "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
   have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::the_single ell2"
+    for \<gamma> :: "'c::CARD_1 ell2"
     by (simp add: times_applyOp)
   hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::the_single ell2"
+    for \<gamma> :: "'c::CARD_1 ell2"
     using C1_to_complex_inverse by metis
   thus ?thesis
     using  bounded_ext[where A = "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>"
@@ -457,7 +456,7 @@ qed
 
 lemma closed_line:
 \<open>closed {c *\<^sub>C (k::'a::chilbert_space)| c. True}\<close>
-  sorry
+  by (cheat closed_line)
 
 
 (* TODO move *)
@@ -543,13 +542,13 @@ next
           hence \<open>f (z m) = f(r k *\<^sub>C k + (\<Sum>a\<in>K. r a *\<^sub>C a))\<close>
             by simp
           also have \<open>\<dots> = f(r k *\<^sub>C k) + f (\<Sum>a\<in>K. r a *\<^sub>C a)\<close>
-            sorry
+            by (cheat TODO)
           have \<open>z m \<in> orthogonal_complement (complex_vector.span K)\<close>
             by (simp add: \<open>closed_subspace (complex_vector.span K)\<close> f_def projection_intro1 y_def z_def)
           have \<open>(\<Sum>a\<in>K. r a *\<^sub>C a) \<in> complex_vector.span K\<close>
             by (simp add: complex_vector.span_base complex_vector.span_scale complex_vector.span_sum)
 
-          thus ?thesis sorry
+          thus ?thesis by (cheat TODO)
         qed
         moreover have \<open>closed {c *\<^sub>C k| c. True}\<close>
           using closed_line by blast
@@ -714,7 +713,7 @@ instance basis_enum \<subseteq> chilbert_space
     have \<open>Cauchy (\<lambda> n. \<langle> t, X n \<rangle>)\<close>
       for t
       using that
-      sorry
+      by (cheat TODO)
     hence \<open>convergent (\<lambda> n. \<langle> t, X n \<rangle>)\<close>
       for t
       by (simp add: Cauchy_convergent_iff)      
@@ -729,7 +728,7 @@ instance basis_enum \<subseteq> chilbert_space
       for n
  (*     using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
         \<open>is_onb (set canonical_basis)\<close>  \<open>finite (set canonical_basis)\<close> *)
-      sorry
+      by (cheat TODO)
     moreover have  \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
     proof-
       have \<open>t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 

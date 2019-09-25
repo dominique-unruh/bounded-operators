@@ -1882,7 +1882,6 @@ lemma inj_option_Some_pi[simp]: "inj_option (Some o \<pi>) = inj \<pi>"
   unfolding inj_option_def inj_def by simp
 
 lemma inj_option_Some[simp]: "inj_option Some"
-  using[[show_consts,show_types,show_sorts]]
   by (simp add: inj_option_def)
 
 lemma inv_option_Some: "surj \<pi> \<Longrightarrow> inv_option (Some o \<pi>) = Some o (Hilbert_Choice.inv \<pi>)"
