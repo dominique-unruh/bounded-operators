@@ -2324,8 +2324,10 @@ lemma equal_span_0:
 
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
+(* TODO: add [code del] *)
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subseteq>)\<close>.
+(* TODO: add [code del] *)
 lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.
 instance
