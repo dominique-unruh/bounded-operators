@@ -42,6 +42,7 @@ class complex_vector = scaleC + ab_group_add +
     and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
     and scaleC_one[simp]: "1 *\<^sub>C x = x"
 
+(* TODO remove (nothing like that in Real_Vector_Spaces) *)
 interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   apply unfold_locales
      apply (rule scaleC_add_right)
