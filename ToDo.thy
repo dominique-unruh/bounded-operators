@@ -588,6 +588,8 @@ next
     using closed_sequential_limits by blast 
 qed
 
+(* TODO: remove lemma (subsumed by closed_finite_dim' below, hide_fact does not fully remove it) *)
+(* TODO: Use \<And> and \<Longrightarrow> instead of \<forall>, \<longrightarrow> *)
 lemma closed_finite_dim'_induction:
   \<open>\<forall> A::'a::complex_inner set. card A = n \<and> finite A \<and> 0 \<notin> A \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) 
 \<longrightarrow> closed (complex_vector.span A)\<close>
@@ -740,6 +742,8 @@ next
   thus ?case by blast
 qed
 
+(* TODO: Use \<And> and \<Longrightarrow> instead of \<forall>, \<longrightarrow> *)
+(* TODO: Remove lemma (subsumed by closed_finite_dim below) *)
 lemma closed_finite_dim':
   fixes A::\<open>'a::complex_inner set\<close>
   assumes \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
@@ -749,6 +753,7 @@ lemma closed_finite_dim':
 
 hide_fact closed_finite_dim'_induction
 
+(* TODO: Holds for complex_normed_vector (with a different proof that even shows completeness). Use that proof? *)
 lemma closed_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
   assumes \<open>finite T\<close>

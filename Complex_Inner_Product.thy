@@ -3880,6 +3880,7 @@ instance
   by simp
 end
 
+(* TODO: remove lemma (subsumed by Gram_Schmidt0' below, hide_fact does not fully remove it) *)
 lemma Gram_Schmidt0':
   \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = complex_vector.span S
