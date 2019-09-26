@@ -68,10 +68,10 @@ lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
   shows "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
   have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::the_single ell2"
+    for \<gamma> :: "'c::CARD_1 ell2"
     by (simp add: times_applyOp)
   hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::the_single ell2"
+    for \<gamma> :: "'c::CARD_1 ell2"
     using C1_to_complex_inverse by metis
   thus ?thesis
     using  bounded_ext[where A = "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>"
