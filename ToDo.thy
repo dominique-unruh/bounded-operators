@@ -404,11 +404,65 @@ lemma ortho_top[simp]: "- top = (bot::'a::chilbert_space linear_space)"
 
 (* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
 lemma demorgan_inf: "- ((A::_::orthocomplemented_lattice) \<sqinter> B) = - A \<squnion> - B"
-  by (cheat demorgan_inf) 
+proof-
+  have \<open>-(- A \<squnion> - B) = A \<sqinter> B\<close>
+  proof-
+    have \<open>-(- A \<squnion> - B) \<le> A\<close>
+    proof-
+      have \<open>- A \<squnion> - B \<ge> -A\<close>
+        by simp        
+      thus ?thesis
+        by (metis ortho_antimono ortho_involution) 
+    qed
+    moreover have \<open>-(- A \<squnion> - B) \<le> B\<close>
+    proof-
+      have \<open>- A \<squnion> - B \<ge> -B\<close>
+        by simp        
+      thus ?thesis
+        by (metis ortho_antimono ortho_involution) 
+    qed
+    ultimately show ?thesis
+    proof - (* sledgehammer *)
+      have f1: "\<forall>a aa ab. (ab::'a) \<sqinter> aa \<squnion> ab \<sqinter> a \<squnion> ab \<sqinter> (aa \<squnion> a) = ab \<sqinter> (aa \<squnion> a)"
+        by (meson distrib_inf_le sup.absorb_iff2)
+      have f2: "\<forall>a aa. - (a::'a) \<squnion> - aa = - aa \<or> \<not> aa \<le> a"
+        by (metis ortho_antimono sup.absorb_iff2)
+      have "\<forall>a aa. (aa::'a) \<sqinter> a \<le> a"
+        by auto
+      then have f3: "\<forall>a aa. (aa::'a) \<le> aa \<squnion> a"
+        by (metis inf_sup_absorb)
+      have f4: "\<forall>a aa. (aa::'a) \<sqinter> a = aa \<or> \<not> aa \<le> a"
+        using f2 by (metis (no_types) inf_sup_absorb ortho_antimono ortho_involution)
+      have f5: "\<forall>a aa. (aa::'a) \<squnion> a \<squnion> aa = aa \<squnion> a"
+        using f1 by (metis (no_types) inf.cobounded1 inf_commute inf_sup_absorb sup.absorb_iff2)
+      have f6: "\<forall>a aa. - (- (aa::'a) \<squnion> a) \<squnion> aa = aa"
+        using f3 f2 by (metis (no_types) ortho_involution)
+      then have "A \<sqinter> B \<squnion> - (- A \<squnion> - B) = A \<sqinter> B"
+        using f5 f1 by (metis (no_types) \<open>- (- A \<squnion> - B) \<le> B\<close> inf_commute inf_sup_absorb sup.absorb_iff2)
+      then have f7: "- (- A \<squnion> - B) \<squnion> A \<sqinter> B = A \<sqinter> B"
+        by (metis (no_types) distrib_inf_le inf.cobounded1 inf_commute inf_sup_absorb sup.absorb_iff2)
+      then have f8: "- A \<squnion> - B \<squnion> - (A \<sqinter> B) = - A \<squnion> - B"
+        using f6 f5 by (metis (no_types))
+      have f9: "- (A \<sqinter> B) \<sqinter> (- A \<squnion> - B) = - (A \<sqinter> B)"
+        using f7 f4 by (metis (no_types) ortho_antimono ortho_involution sup.absorb_iff2)
+      have "\<forall>a aa. - (aa::'a) \<sqinter> - (aa \<sqinter> a) = - aa"
+        using f4 by (metis (full_types) inf.cobounded1 ortho_antimono)
+      then have "- A \<squnion> - B = - (A \<sqinter> B)"
+        using f9 f8 f1 by (metis (no_types) inf_commute)
+      then show ?thesis
+        by (simp add: ortho_involution)
+    qed 
+  qed
+  hence \<open>A \<sqinter> B = -(- A \<squnion> - B)\<close>
+    by simp
+  thus ?thesis
+    by (simp add: ortho_involution) 
+qed
 
 (* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
 lemma demorgan_sup: "- ((A::_::orthocomplemented_lattice) \<squnion> B) = - A \<sqinter> - B"
-  by (cheat demorgan_sup) 
+  using demorgan_inf
+  by (metis ortho_involution)
 
 lemma span_explicit_finite:
   assumes \<open>finite T\<close> and \<open>x \<in> complex_vector.span T\<close>
