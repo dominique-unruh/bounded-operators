@@ -5,18 +5,16 @@ begin
 
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties 
    and using the conventions from the definition of @{class boolean_algebra} *)
-(* TODO: inf_compl_bot, sup_compl_bot should be [simp] *)
 class complemented_lattice = bounded_lattice + uminus + minus + 
-  assumes inf_compl_bot: "inf x (-x) = bot"
-    and sup_compl_top: "sup x  (-x) = top"
+  assumes inf_compl_bot[simp]: "inf x (-x) = bot"
+    and sup_compl_top[simp]: "sup x  (-x) = top"
     and diff_eq:  "x - y = inf x (- y)"
 
 class complete_complemented_lattice = complemented_lattice + complete_lattice 
 
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
-(* TODO: ortho_involution should be [simp] *)
 class orthocomplemented_lattice = complemented_lattice +
-  assumes ortho_involution: "- (- x) = x" (* TODO: add [simp] *)
+  assumes ortho_involution[simp]: "- (- x) = x"
     and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y" begin
 
 (*
@@ -30,58 +28,67 @@ but in some cases new proofs will be needed
 
 *)
 
-(*
+lemma compl_inf_bot [simp]: "inf (- x) x = bot"
+  by (simp add: inf_commute)
 
-lemma compl_inf_bot [simp]: "- x \<sqinter> x = \<bottom>"
-  by (simp add: inf_commute inf_compl_bot)
+lemma compl_sup_top [simp]: "sup (- x) x = top"
+  by (simp add: sup_commute)
 
-lemma compl_sup_top [simp]: "- x \<squnion> x = \<top>"
-  by (simp add: sup_commute sup_compl_top)
 
+(* TODO: Dominique should check
 lemma compl_unique:
-  assumes "x \<sqinter> y = \<bottom>"
-    and "x \<squnion> y = \<top>"
+  assumes "inf x y = bot"
+    and "sup x y = top"
   shows "- x = y"
 proof -
-  have "(x \<sqinter> - x) \<squnion> (- x \<sqinter> y) = (x \<sqinter> y) \<squnion> (- x \<sqinter> y)"
+  have "sup (inf x (- x)) (inf (- x) y) = sup (inf x y) (inf (- x)  y)"
     using inf_compl_bot assms(1) by simp
-  then have "(- x \<sqinter> x) \<squnion> (- x \<sqinter> y) = (y \<sqinter> x) \<squnion> (y \<sqinter> - x)"
+  then have "sup (inf (- x) x) (inf (- x) y) = sup (inf y x) (inf y (- x))"
     by (simp add: inf_commute)
-  then have "- x \<sqinter> (x \<squnion> y) = y \<sqinter> (x \<squnion> - x)"
-    by (simp add: inf_sup_distrib1)
-  then have "- x \<sqinter> \<top> = y \<sqinter> \<top>"
+  then have "inf (- x) (sup x y) = inf y (sup x  (- x))"
+    using inf_sup_distrib1
+    sorry
+  then have "inf (- x) top = inf y t"
     using sup_compl_top assms(2) by simp
   then show "- x = y" by simp
 qed
+*)
 
 lemma double_compl [simp]: "- (- x) = x"
-  using compl_inf_bot compl_sup_top by (rule compl_unique)
-
+  by simp
+  
 lemma compl_eq_compl_iff [simp]: "- x = - y \<longleftrightarrow> x = y"
 proof
   assume "- x = - y"
-  then have "- (- x) = - (- y)" by (rule arg_cong)
-  then show "x = y" by simp
+  hence "- (- x) = - (- y)" by (rule arg_cong)
+  thus "x = y" by simp
 next
   assume "x = y"
-  then show "- x = - y" by simp
+  thus "- x = - y" by simp
 qed
 
-lemma compl_bot_eq [simp]: "- \<bottom> = \<top>"
+lemma compl_bot_eq [simp]: "- bot = top"
 proof -
-  from sup_compl_top have "\<bottom> \<squnion> - \<bottom> = \<top>" .
-  then show ?thesis by simp
+  from sup_compl_top 
+  have "sup bot (- bot) = top"
+    by simp
+  thus ?thesis
+    by (metis local.sup_bot.left_neutral) 
 qed
 
-lemma compl_top_eq [simp]: "- \<top> = \<bottom>"
+lemma compl_top_eq [simp]: "- top = bot"
 proof -
-  from inf_compl_bot have "\<top> \<sqinter> - \<top> = \<bottom>" .
-  then show ?thesis by simp
+  from inf_compl_bot 
+  have "inf top (- top) = bot"
+    by simp
+  thus ?thesis
+    by (metis local.inf_top_left)    
 qed
 
-lemma compl_inf [simp]: "- (x \<sqinter> y) = - x \<squnion> - y"
+(* TODO: Dominique should check
+lemma compl_inf [simp]: "- (inf x y) = sup (- x) (- y)"
 proof (rule compl_unique)
-  have "(x \<sqinter> y) \<sqinter> (- x \<squnion> - y) = (y \<sqinter> (x \<sqinter> - x)) \<squnion> (x \<sqinter> (y \<sqinter> - y))"
+  have "inf (inf x y) (sup (- x) (- y)) = sup (inf y (inf x (- x))) (inf x (inf y (- y)))"
     by (simp only: inf_sup_distrib inf_aci)
   then show "(x \<sqinter> y) \<sqinter> (- x \<squnion> - y) = \<bottom>"
     by (simp add: inf_compl_bot)
@@ -91,22 +98,20 @@ next
   then show "(x \<sqinter> y) \<squnion> (- x \<squnion> - y) = \<top>"
     by (simp add: sup_compl_top)
 qed
+*)
 
-lemma compl_sup [simp]: "- (x \<squnion> y) = - x \<sqinter> - y"
+
+(* Dominique should check
+lemma compl_sup [simp]: "- (sup x y) = inf (- x) (- y)"
   using dual_boolean_algebra
   by (rule boolean_algebra.compl_inf)
+*)
 
 lemma compl_mono:
   assumes "x \<le> y"
   shows "- y \<le> - x"
-proof -
-  from assms have "x \<squnion> y = y" by (simp only: le_iff_sup)
-  then have "- (x \<squnion> y) = - y" by simp
-  then have "- x \<sqinter> - y = - y" by simp
-  then have "- y \<sqinter> - x = - y" by (simp only: inf_commute)
-  then show ?thesis by (simp only: le_iff_inf)
-qed
-
+  by (simp add: assms local.ortho_antimono)
+  
 lemma compl_le_compl_iff [simp]: "- x \<le> - y \<longleftrightarrow> y \<le> x"
   by (auto dest: compl_mono)
 
@@ -114,16 +119,21 @@ lemma compl_le_swap1:
   assumes "y \<le> - x"
   shows "x \<le> -y"
 proof -
-  from assms have "- (- x) \<le> - y" by (simp only: compl_le_compl_iff)
-  then show ?thesis by simp
+  from assms 
+  have "- (- x) \<le> - y" 
+    by (simp only: compl_le_compl_iff)
+  thus ?thesis 
+    by simp
 qed
 
 lemma compl_le_swap2:
   assumes "- y \<le> x"
   shows "- x \<le> y"
 proof -
-  from assms have "- x \<le> - (- y)" by (simp only: compl_le_compl_iff)
-  then show ?thesis by simp
+  from assms 
+  have "- x \<le> - (- y)" 
+    by (simp only: compl_le_compl_iff)
+  thus ?thesis by simp
 qed
 
 lemma compl_less_compl_iff: "- x < - y \<longleftrightarrow> y < x"  (* TODO: declare [simp] ? *)
@@ -175,8 +185,6 @@ lemma inf_compl_bot_left2 [simp]: "inf x (inf (- x) y) = bot"
 
 lemma inf_compl_bot_right [simp]: "inf x (inf y (- x)) = bot"
   by (subst inf_left_commute) simp
-
-*)
 
 end
 
@@ -231,11 +239,13 @@ qed
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
 
-(* TODO: verify whether or not it is true
+
+
+(* Dominique should check
 lemma demorgan_inf: "- (inf (A::_::orthocomplemented_lattice) B) = sup (- A) (- B)"
 *)
 
-(* TODO: verify whether or not it is true
+(* Dominique should check
 lemma demorgan_sup: "- (sup (A::_::orthocomplemented_lattice)  B) = inf (- A)  (- B)"
 *)
 
