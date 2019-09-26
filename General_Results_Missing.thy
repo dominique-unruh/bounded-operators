@@ -62,41 +62,17 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* TODO: remove (prod.swap exists) *)
-term "prod.swap"
-definition swap::\<open>'a \<times> 'b \<Rightarrow> 'b \<times> 'a\<close> where
-  \<open>swap z =  (snd z, fst z)\<close> for z
-
-lemma swap_involution:
-  \<open>swap \<circ> swap = id\<close>
-  unfolding swap_def by auto
-
-lemma swap_inj:
-  \<open>inj swap\<close>
-proof(rule injI)
-  fix x y::\<open>'a \<times> 'b\<close>
-  assume \<open>swap x = swap y\<close> 
-  hence \<open>swap (swap x) = swap (swap y)\<close> 
-    by simp
-  moreover have \<open>swap (swap x) = x\<close>
-    by (simp add: pointfree_idE swap_involution) 
-  moreover have \<open>swap (swap y) = y\<close>
-    by (simp add: pointfree_idE swap_involution) 
-  ultimately show \<open>x = y\<close>
-    by simp
-qed
-
 lemma swap_set_fst:
-  \<open>fst ` (swap ` S) = snd ` S\<close>
-  unfolding swap_def apply auto
+  \<open>fst ` (prod.swap ` S) = snd ` S\<close>
+  unfolding prod.swap_def apply auto
    apply (simp add: rev_image_eqI)
   by (metis (no_types, lifting) fst_conv image_cong image_eqI pair_in_swap_image prod.swap_def)
 
 lemma swap_set_snd:
-  \<open>snd ` (swap ` S) = fst ` S\<close>
-  unfolding swap_def apply auto
+  \<open>snd ` (prod.swap ` S) = fst ` S\<close>
+  unfolding prod.swap_def apply auto
    apply (simp add: rev_image_eqI)
-  by (metis (no_types, lifting) fst_conv image_eqI snd_conv)
+  using image_iff by fastforce
 
 
 lemma big_sum_reordering_snd:
@@ -104,46 +80,46 @@ lemma big_sum_reordering_snd:
   assumes \<open>finite S\<close>
   shows \<open>(\<Sum>z\<in>S. f z) = (\<Sum>v\<in>snd ` S. (\<Sum>u\<in>{u|u. (u,v)\<in>S}. f (u, v)))\<close>
 proof-
-  have \<open>swap \<circ> (swap::('a \<times> 'b \<Rightarrow> 'b \<times> 'a)) = id\<close>
-    by (simp add: swap_involution)    
-  hence \<open>(\<Sum>z\<in>S. f z) = (\<Sum>z\<in>swap ` (swap ` S). f z)\<close>
-    by (simp add: \<open>swap \<circ> swap = id\<close> image_comp)
-  also have \<open>\<dots> = (\<Sum>z\<in>(swap ` S). (f \<circ> swap) z)\<close>
+  have \<open>prod.swap \<circ> (prod.swap::('a \<times> 'b \<Rightarrow> 'b \<times> 'a)) = id\<close>
+    by simp    
+  hence \<open>(\<Sum>z\<in>S. f z) = (\<Sum>z\<in>prod.swap ` (prod.swap ` S). f z)\<close>
+    by (simp add: \<open>prod.swap \<circ> prod.swap = id\<close> image_comp)
+  also have \<open>\<dots> = (\<Sum>z\<in>(prod.swap ` S). (f \<circ> prod.swap) z)\<close>
   proof-
-    have \<open>inj swap\<close>
-      by (simp add: swap_inj)      
+    have \<open>inj prod.swap\<close>
+      by simp      
     show ?thesis
-      by (meson \<open>inj swap\<close> inj_def inj_on_def sum.reindex)    
+      by (meson \<open>inj prod.swap\<close> inj_def inj_on_def sum.reindex)    
   qed
-  also have \<open>\<dots> = (\<Sum>u\<in>fst ` (swap ` S). (\<Sum>v\<in>{v|v. (u,v)\<in>(swap ` S)}. (f \<circ> swap) (u,v)))\<close>
+  also have \<open>\<dots> = (\<Sum>u\<in>fst ` (prod.swap ` S). (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. (f \<circ> prod.swap) (u,v)))\<close>
   proof-
-    have \<open>finite (swap ` S)\<close>
+    have \<open>finite (prod.swap ` S)\<close>
       using \<open>finite S\<close> by simp
     thus ?thesis
-      using big_sum_reordering_fst[where S = "swap ` S" and f = "f \<circ> swap"]
+      using big_sum_reordering_fst[where S = "prod.swap ` S" and f = "f \<circ> prod.swap"]
       by blast
   qed
-  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(swap ` S)}. (f \<circ> swap) (u,v)))\<close>
+  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. (f \<circ> prod.swap) (u,v)))\<close>
   proof-
-    have \<open>fst ` (swap ` S) = snd ` S\<close>
+    have \<open>fst ` (prod.swap ` S) = snd ` S\<close>
       by (simp add: swap_set_fst) 
     thus ?thesis by simp
   qed
-  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(swap ` S)}. f (v,u) ))\<close>
+  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. f (v,u) ))\<close>
   proof-
-    have \<open>swap (u, v) = (v, u)\<close>
+    have \<open>prod.swap (u, v) = (v, u)\<close>
       for u::'a and v::'b
-      unfolding swap_def by auto
-    hence \<open>(f \<circ> swap) (u, v) = f (v, u)\<close>
+      unfolding prod.swap_def by auto
+    hence \<open>(f \<circ> prod.swap) (u, v) = f (v, u)\<close>
       for v::'a and u::'b
-      by (metis \<open>swap \<circ> swap = id\<close> comp_apply swap_comp_swap swap_simp)
+      by simp
     thus ?thesis by simp      
   qed
   also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (v,u)\<in>S}. f (v,u) ))\<close>
   proof-
-    have \<open>(u,v)\<in>(swap ` S) \<longleftrightarrow> (v,u)\<in>S\<close>
+    have \<open>(u,v)\<in>(prod.swap ` S) \<longleftrightarrow> (v,u)\<in>S\<close>
       for u v
-      by (metis General_Results_Missing.swap_def image_cong pair_in_swap_image prod.swap_def)
+      by simp
     thus ?thesis by simp
   qed
   finally show ?thesis by blast
