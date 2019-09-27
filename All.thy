@@ -1,3 +1,10 @@
+(*
+Authors: 
+
+  Dominique Unruh, University of Tartu, unruh@ut.ee
+  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
+*)
+
 theory All
   imports ToDo Banach_Steinhaus Bounded_Operators
     Complex_Inner_Product Complex_L2 Complex_Vector_Spaces 

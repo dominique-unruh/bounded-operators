@@ -251,4 +251,39 @@ lemma general_sum_from_addition:
   using general_sum_from_addition_induction
    assms(1) assms(2) by blast
 
+
+fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
+  "rec x0 \<Phi> 0 = x0"
+| "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
+
+lemma sum_mono:
+  fixes a :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. a n \<ge> 0\<close>
+  shows  \<open>p \<ge> 0 \<Longrightarrow> \<forall> n. sum a {0..n + p} \<ge> sum a {0..n}\<close>
+proof(induction p)
+  case 0
+  thus ?case
+    by simp 
+next
+  case (Suc p)
+  thus ?case
+    by (smt Suc_neq_Zero add_Suc_right assms le_SucE sum.atLeast0_atMost_Suc) 
+qed
+
+lemma sum_comp:
+  fixes a :: \<open>nat \<Rightarrow> real\<close>
+  assumes \<open>p \<ge> 0\<close>
+  shows  \<open>\<forall> n. sum a {Suc n..n + p} = sum a {0.. n + p} - sum a {0..n}\<close>
+proof(induction p)
+  case 0
+  thus ?case 
+    by simp
+next
+  case (Suc p)
+  thus ?case 
+    using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
+qed
+
+
 end
+
