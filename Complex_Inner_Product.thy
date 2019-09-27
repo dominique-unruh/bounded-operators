@@ -3452,6 +3452,42 @@ class basis_enum = complex_inner +
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
+text \<open>The class one_dim applies to one-dimensional vector spaces.
+Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
+via the canonical isomorphism between a one-dimensional vector space and 
+\<^typ>\<open>complex\<close>.\<close>
+class one_dim = basis_enum + one + times +
+  assumes one_dim_canonical_basis: "canonical_basis = [1]"
+  assumes "\<psi> * \<phi> = (cinner 1 \<psi> * cinner 1 \<phi>) *\<^sub>C 1"
+begin
+
+definition "one_dim_to_complex \<psi> = cinner 1 \<psi>"
+
+end
+
+(* TODO prove *)
+instance one_dim \<subseteq> complex_algebra_1
+  by (cheat \<open>instance one_dim \<subseteq> complex_algebra_1\<close>)
+
+(* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
+(before \<open>instance one_dim \<subseteq> complex_algebra_1\<close>) if they are useful for the proof
+of that instance. *)
+context one_dim begin
+
+lemma one_dim_to_complex_one[simp]: "one_dim_to_complex 1 = 1"
+  sorry
+
+lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
+  sorry
+
+lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
+  sorry
+
+lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
+  sorry
+
+end
+
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 

@@ -2457,6 +2457,7 @@ lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C
   for A B :: "('a::complex_normed_vector,'b::complex_normed_vector)bounded" and a::complex 
   by simp
 
+(* TODO: remove both (they already exist)*)
 lemma apply_idOp_space[simp]: "idOp *\<^sub>s S = S"
 and apply_0[simp]: "U *\<^sub>v 0 = 0"
 for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
@@ -2465,13 +2466,20 @@ for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
   apply simp
   done
 
+(* TODO prove *)
+lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
+  \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
+  sorry
 
 (* FIXME: what is the definition corresponding to this "consts"?
+TODO: definition is above
 consts vector_to_bounded::\<open>'a::complex_normed_vector \<Rightarrow> (unit,'a) bounded\<close>
 
+TODO: fix syntax and prove:
 lemma vector_to_bounded_applyOp: "vector_to_bounded (A\<cdot>\<psi>) = A \<cdot> vector_to_bounded \<psi>" for A :: "(_,_)bounded"
   by (cheat TODO5)
 
+TODO: fix syntax and prove:
 lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<cdot> vector_to_bounded \<psi>" for a::complex
   apply (rewrite at "a\<cdot>\<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp)\<cdot>\<psi>"])
    apply simp

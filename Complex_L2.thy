@@ -1933,6 +1933,117 @@ lemma singleton_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
 
 end
 
+instantiation ell2 :: (enum) basis_enum begin
+definition "canonical_basis_ell2 = map ket Enum.enum"
+definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
+instance
+proof
+  show "distinct (canonical_basis::'a ell2 list)"
+  proof-
+    have \<open>finite (UNIV::'a set)\<close>
+      by simp
+    have \<open>distinct (enum_class.enum::'a list)\<close>
+      using enum_distinct by blast
+    moreover have \<open>inj_on ket (set enum_class.enum)\<close>
+      (* by (meson inj_onI ket_distinct)         *) sorry
+    ultimately show ?thesis
+      unfolding canonical_basis_ell2_def
+      using distinct_map
+      by blast
+  qed
+  show "is_onb (set (canonical_basis::'a ell2 list))"
+    unfolding is_onb_def
+  proof
+    show \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close>
+    proof-
+      have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
+      \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>
+        for x y
+      proof-
+        assume \<open>x\<in>set (canonical_basis::'a ell2 list)\<close> and \<open>y\<in>set canonical_basis\<close>
+          and \<open>x \<noteq> y\<close>
+        from \<open>x\<in>set (canonical_basis::'a ell2 list)\<close>
+        have \<open>\<exists> i. x = ket i\<close>
+          unfolding canonical_basis_ell2_def
+          by auto
+        then obtain i where \<open>x = ket i\<close>
+          by blast
+        from \<open>y\<in>set (canonical_basis::'a ell2 list)\<close>
+        have \<open>\<exists> j. y = ket j\<close>
+          unfolding canonical_basis_ell2_def
+          by auto
+        then obtain j where \<open>y = ket j\<close>
+          by blast
+        have \<open>i \<noteq> j\<close>
+          using \<open>x \<noteq> y\<close>  \<open>x = ket i\<close>  \<open>y = ket j\<close>
+          by auto
+        hence \<open>\<langle>ket i, ket j\<rangle> = 0\<close>
+          by (simp add: ket_Kronecker_delta_neq)
+        thus \<open>\<langle>x, y\<rangle> = 0\<close>
+          using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
+          by simp
+      qed
+      thus ?thesis
+        unfolding is_ortho_set_def
+        by blast
+    qed
+    show "is_basis (set (canonical_basis::'a ell2 list)) \<and> set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
+    proof
+      show "is_basis (set (canonical_basis::'a ell2 list))"
+        unfolding canonical_basis_ell2_def is_basis_def
+      proof
+        show "complex_independent (set (map ket (enum_class.enum::'a list)))"
+        proof-
+          have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
+          proof (rule classical)
+            assume \<open>\<not> (0::'a ell2) \<notin> set canonical_basis\<close>
+            hence \<open>(0::'a ell2) \<in> set canonical_basis\<close>
+              by blast
+            hence \<open>\<exists> i. (0::'a ell2) = ket i\<close>
+              unfolding canonical_basis_ell2_def
+              by auto
+            then obtain i where \<open>(0::'a ell2) = ket i\<close>
+              by blast
+            hence \<open>Rep_ell2 (0::'a ell2) i = Rep_ell2 (ket i) i\<close>
+              by simp
+            moreover have \<open>Rep_ell2 (0::'a ell2) i = 0\<close>
+              apply transfer by blast
+            moreover have \<open>Rep_ell2 (ket i) i = 1\<close>
+              apply transfer by auto
+            ultimately show ?thesis by simp
+          qed
+          thus ?thesis 
+            using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
+            unfolding canonical_basis_ell2_def
+            by blast
+        qed
+        show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
+        proof-
+          have \<open>closure
+              (complex_vector.span (ket ` UNIV)) = UNIV\<close>
+            (* by (simp add: ket_ell2_span) *) sorry
+          moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
+            using UNIV_enum
+            by blast
+          ultimately have \<open>closure
+              (complex_vector.span (ket ` set (enum_class.enum::'a list))) = UNIV\<close>
+            by simp
+          thus ?thesis
+            by auto
+        qed
+      qed
+      show "set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
+        unfolding canonical_basis_ell2_def sphere_def
+        by auto
+    qed
+  qed
+  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
+       = length (canonical_basis::'a ell2 list)"
+    unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
+    using card_UNIV_length_enum
+    by auto
+qed
+end
 
 instantiation unit :: CARD_1
 begin
@@ -1941,6 +2052,18 @@ instance
   by auto
 end
 
+
+(* TODO prove *)
+(* TODO if moved *after* \<open>instantiation ell2 :: (enum) basis_enum\<close>,
+        there will be less to prove. *)
+instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
+text \<open>Note: enum is not really needed, but without it this instantiation
+clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
+instance
+  by (cheat \<open>instantiation ell2 :: (CARD_1) one_dim\<close>)
+end
+
+(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). 
 
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
@@ -1988,47 +2111,62 @@ proof
     by (meson zero_neq_one)
 qed
 end
+*)
 
-lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
-  "\<lambda>\<psi>. \<psi> the_one" .
+(* TODO Remove (use one_dim_to_complex instead) *)
+(* lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
+  "\<lambda>\<psi>. \<psi> the_one" . *)
+abbreviation "C1_to_complex :: 'a::{CARD_1,enum} ell2 \<Rightarrow> complex == one_dim_to_complex"
 
-abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::CARD_1 ell2 == of_complex"
+(* TODO remove *)
+abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::{CARD_1,enum} ell2 == of_complex"
 
+(* TODO remove (subsumed by one_dim_to_complex_one) *)
 lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
   apply transfer by simp
 
+(* TODO remove (subsumed by one_dim_to_complex_inverse) *)
 lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto
+  sorry
+  (* unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto *)
 
+(* TODO remove (subsumed by complex_to_one_dim_inverse) *)
 lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
-  unfolding of_complex_def apply transfer by simp
+  (* unfolding of_complex_def apply transfer by simp *)
+  sorry
 
+(* TODO: remove (subsumed by bounded_clinear_of_complex) *)
 lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
   by (rule Complex_Vector_Spaces.bounded_clinear_of_complex)
 
+(* TODO: remove (subsumed by bounded_clinear_one_dim_to_complex) *)
 lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
-  apply (rule bounded_clinear_intro[where K=1])
-  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+
+(*   apply (rule bounded_clinear_intro[where K=1])
+  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+ *)
+  sorry
 
-lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::CARD_1 ell2,'a) bounded" is
-  "\<lambda>(\<psi>::'a) (x::'b::CARD_1 ell2). C1_to_complex x *\<^sub>C \<psi>"
+(* TODO: remove (use more general vector_to_bounded instead) *)
+lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is
+  "\<lambda>(\<psi>::'a) (x::'b::{CARD_1,enum} ell2). C1_to_complex x *\<^sub>C \<psi>"
   by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
 
+(* TODO: remove (subsumed by vector_to_bounded_applyOp, currently in a comment) *)
 lemma ell2_to_bounded_applyOp:
   fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::CARD_1 ell2, 'a) bounded)) \<psi>\<close>
+  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::{CARD_1,enum} ell2, 'a) bounded)) \<psi>\<close>
 proof-
   have \<open>bounded_clinear (times_bounded_vec A)\<close>
     using times_bounded_vec by blast
-  hence \<open>(\<lambda> x. (C1_to_complex:: 'c::CARD_1 ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
+  hence \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
      =  (\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
     using bounded_clinear_def
     by simp 
-  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (C1_to_complex:: 'c::CARD_1 ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
+(* TODO: add CARD_1 \<rightarrow> {CARD_1,enum} in many places *)
+  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     unfolding comp_def
     by blast
-  finally have \<open>(\<lambda> x. (C1_to_complex:: 'c::CARD_1 ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
+  finally have \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
      = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by blast
   moreover have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
@@ -2038,7 +2176,7 @@ proof-
   ultimately have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
      = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
     by simp
-  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (C1_to_complex:: 'c::CARD_1 ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
+  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
     using Complex_L2.ell2_to_bounded.rep_eq
     by blast
   ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
@@ -2049,6 +2187,7 @@ proof-
     by simp
 qed
 
+(* TODO: remove (subsumed by vector_to_bounded_scalar_times, currently in a comment) *)
 lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
   for a::complex
   apply (transfer fixing: a) by auto
@@ -3509,119 +3648,6 @@ lemma ket_distinct:
   \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
 
-
-instantiation ell2 :: (enum) basis_enum begin
-definition "canonical_basis_ell2 = map ket Enum.enum"
-definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
-instance
-proof
-  show "distinct (canonical_basis::'a ell2 list)"
-  proof-
-    have \<open>finite (UNIV::'a set)\<close>
-      by simp
-    have \<open>distinct (enum_class.enum::'a list)\<close>
-      using enum_distinct by blast
-    moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-      by (meson inj_onI ket_distinct)        
-    ultimately show ?thesis
-      unfolding canonical_basis_ell2_def
-      using distinct_map
-      by blast
-  qed
-  show "is_onb (set (canonical_basis::'a ell2 list))"
-    unfolding is_onb_def
-  proof
-    show \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close>
-    proof-
-      have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
-      \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>
-        for x y
-      proof-
-        assume \<open>x\<in>set (canonical_basis::'a ell2 list)\<close> and \<open>y\<in>set canonical_basis\<close>
-          and \<open>x \<noteq> y\<close>
-        from \<open>x\<in>set (canonical_basis::'a ell2 list)\<close>
-        have \<open>\<exists> i. x = ket i\<close>
-          unfolding canonical_basis_ell2_def
-          by auto
-        then obtain i where \<open>x = ket i\<close>
-          by blast
-        from \<open>y\<in>set (canonical_basis::'a ell2 list)\<close>
-        have \<open>\<exists> j. y = ket j\<close>
-          unfolding canonical_basis_ell2_def
-          by auto
-        then obtain j where \<open>y = ket j\<close>
-          by blast
-        have \<open>i \<noteq> j\<close>
-          using \<open>x \<noteq> y\<close>  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-          by auto
-        hence \<open>\<langle>ket i, ket j\<rangle> = 0\<close>
-          by (simp add: ket_Kronecker_delta_neq)
-        thus \<open>\<langle>x, y\<rangle> = 0\<close>
-          using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-          by simp
-      qed
-      thus ?thesis
-        unfolding is_ortho_set_def
-        by blast
-    qed
-    show "is_basis (set (canonical_basis::'a ell2 list)) \<and> set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
-    proof
-      show "is_basis (set (canonical_basis::'a ell2 list))"
-        unfolding canonical_basis_ell2_def is_basis_def
-      proof
-        show "complex_independent (set (map ket (enum_class.enum::'a list)))"
-        proof-
-          have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
-          proof (rule classical)
-            assume \<open>\<not> (0::'a ell2) \<notin> set canonical_basis\<close>
-            hence \<open>(0::'a ell2) \<in> set canonical_basis\<close>
-              by blast
-            hence \<open>\<exists> i. (0::'a ell2) = ket i\<close>
-              unfolding canonical_basis_ell2_def
-              by auto
-            then obtain i where \<open>(0::'a ell2) = ket i\<close>
-              by blast
-            hence \<open>Rep_ell2 (0::'a ell2) i = Rep_ell2 (ket i) i\<close>
-              by simp
-            moreover have \<open>Rep_ell2 (0::'a ell2) i = 0\<close>
-              apply transfer by blast
-            moreover have \<open>Rep_ell2 (ket i) i = 1\<close>
-              apply transfer by auto
-            ultimately show ?thesis by simp
-          qed
-          thus ?thesis 
-            using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
-            unfolding canonical_basis_ell2_def
-            by blast
-        qed
-        show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
-        proof-
-          have \<open>closure
-              (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-            by (simp add: ket_ell2_span)
-          moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
-            using UNIV_enum
-            by blast
-          ultimately have \<open>closure
-              (complex_vector.span (ket ` set (enum_class.enum::'a list))) = UNIV\<close>
-            by simp
-          thus ?thesis
-            by auto
-        qed
-      qed
-      show "set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
-        unfolding canonical_basis_ell2_def sphere_def
-        by auto
-    qed
-  qed
-  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
-       = length (canonical_basis::'a ell2 list)"
-    unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
-    using card_UNIV_length_enum
-    by auto
-qed
-
-end
 
 section \<open>Recovered theorems\<close>
 

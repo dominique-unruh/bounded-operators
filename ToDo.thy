@@ -15,9 +15,10 @@ José can do one of the following things:
 This way, QRHL will not be broken by the work on these lemmas/definitions
 \<close>
 
+(* TODO replace C1_to_complex \<rightarrow> one_dim_to_complex (in several places)*)
 
 lemma cinner_1_C1: "cinner 1 \<psi> = C1_to_complex \<psi>"
-  apply transfer by (simp add: singleton_UNIV)
+  (* apply transfer by (simp add: singleton_UNIV) *) sorry
 
 lemma ell2_to_bounded_times_vec[simp]:
   includes bounded_notation
@@ -58,20 +59,20 @@ lemma bounded_ext:
   using assms apply transfer by auto
 
 lemma C1_to_complex_scaleC[simp]: "C1_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C C1_to_complex \<psi>"
-  apply transfer by simp
+  (* apply transfer by simp *) sorry
 
 lemma C1_to_complex_times[simp]: "C1_to_complex (\<psi> * \<phi>) = C1_to_complex \<psi> * C1_to_complex \<phi>"
-  apply transfer by simp
+  (* apply transfer by simp *) sorry
 
 lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
   includes bounded_notation
   shows "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
   have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::CARD_1 ell2"
+    for \<gamma> :: "'c::{CARD_1,enum} ell2"
     by (simp add: times_applyOp)
   hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::CARD_1 ell2"
+    for \<gamma> :: "'c::{CARD_1,enum} ell2"
     using C1_to_complex_inverse by metis
   thus ?thesis
     using  bounded_ext[where A = "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>"
