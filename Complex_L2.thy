@@ -329,6 +329,7 @@ end
 
 instantiation ell2 :: (type)complex_normed_vector begin
 lift_definition norm_ell2 :: "'a ell2 \<Rightarrow> real" is ell2_norm .
+declare norm_ell2_def[code del]
 definition "dist x y = norm (x - y)" for x y::"'a ell2"
 definition "sgn x = x /\<^sub>R norm x" for x::"'a ell2"
 definition [code del]: "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
@@ -345,6 +346,8 @@ end
 instantiation ell2 :: (type) complex_inner begin
 lift_definition cinner_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> complex" is 
   "\<lambda>x y. infsetsum (\<lambda>i. (cnj (x i) * y i)) UNIV" .
+declare cinner_ell2_def[code del]
+
 instance
 proof standard
   fix x y z :: "'a ell2" fix c :: complex
