@@ -23,6 +23,13 @@ definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\
 )\<close>
 *)
 
+primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<Rightarrow> complex vec\<close> where
+\<open>vec_of_basis_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> | 
+\<open>vec_of_basis_enum_list (x#ys) v = vec_of_basis_enum_list (ys) v + 
+\<langle>x, v\<rangle> \<cdot>\<^sub>v (unit_vec::nat \<Rightarrow> nat \<Rightarrow> complex vec) (length (canonical_basis::'a list)) (length ys)\<close>
+
+definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
+\<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
 
 
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
