@@ -81,8 +81,35 @@ lemma basis_enum_of_vec':
   using basis_enum_of_vec_list' unfolding basis_enum_of_vec_def
   by blast
 
+lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
+\<open>basis_enum_of_vec_list L \<circ>
+    vec_of_basis_enum_list L = (projection (complex_vector.span (set L)))\<close>
+  proof (induction L)
+  show "basis_enum_of_vec_list [] \<circ> (\<lambda>a. vec_of_basis_enum_list [] (a::'a)) = projection (complex_vector.span (set []))"
+  proof-
+    have \<open>projection (complex_vector.span (set [])) = (\<lambda> _. 0::'a)\<close>
+    proof-
+      have \<open>complex_vector.span (set ([]::'a list)) = {0}\<close>
+        by auto
+      thus ?thesis using projection_zero_subspace
+        by auto
+    qed
+    moreover have \<open>basis_enum_of_vec_list [] = (\<lambda> _. 0::'a)\<close>
+      by auto      
+    ultimately show ?thesis 
+      by auto
+  qed
+  show "basis_enum_of_vec_list ((a::'a) # L) \<circ> vec_of_basis_enum_list (a # L) = projection (complex_vector.span (set (a # L)))"
+    if "basis_enum_of_vec_list L \<circ> (\<lambda>a. vec_of_basis_enum_list L (a::'a)) = projection (complex_vector.span (set L))"
+    for a :: 'a
+      and L :: "'a list"
+    using that sorry
+qed
+
+
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
   \<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
+  unfolding basis_enum_of_vec_def vec_of_basis_enum_def
   sorry
 
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:

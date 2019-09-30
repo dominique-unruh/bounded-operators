@@ -4325,6 +4325,21 @@ lemma Pythagorean_generalized:
 
 hide_fact Pythagorean_generalized'
 
+lemma projection_zero_subspace:
+\<open>projection {0::'a::chilbert_space} = (\<lambda> _. 0)\<close>
+proof-
+  have \<open>closed_subspace {0::'a::chilbert_space}\<close>
+    by simp
+  hence \<open>(projection {0::'a::chilbert_space}) -` {0} = (orthogonal_complement {0::'a::chilbert_space})\<close>
+    by (simp add: projectionPropertiesD)
+  moreover have \<open>(orthogonal_complement {0::'a::chilbert_space}) = UNIV\<close>
+    by simp
+  ultimately have \<open>(projection {0::'a::chilbert_space}) -` {0} = UNIV\<close>
+    by blast
+  thus ?thesis by auto
+qed
+
+
 section \<open>Recovered theorems\<close>
 
 
