@@ -13,7 +13,7 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::basis
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>basis_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
-(* TODO: Define (canonical isomorphism). *)
+  (* TODO: Define (canonical isomorphism). *)
 
 
 (* bad definition: No type arity Matrix.vec :: comm_monoid_add
@@ -26,29 +26,74 @@ definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\
 *)
 
 primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<Rightarrow> complex vec\<close> where
-\<open>vec_of_basis_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> | 
-\<open>vec_of_basis_enum_list (x#ys) v = vec_of_basis_enum_list (ys) v + 
+  \<open>vec_of_basis_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> | 
+  \<open>vec_of_basis_enum_list (x#ys) v = vec_of_basis_enum_list ys v + 
 \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length ys)\<close>
 
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
-\<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
+  \<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
+
+primrec basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex vec \<Rightarrow> 'a::basis_enum\<close> where 
+  \<open>basis_enum_of_vec_list [] v = 0\<close> |
+  \<open>basis_enum_of_vec_list (x#ys) v = (vec_index v (length ys)) *\<^sub>C x + 
+                                    basis_enum_of_vec_list ys v\<close>
 
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
-\<open>basis_enum_of_vec v = sum (\<lambda> i. (vec_index v i) *\<^sub>C ((canonical_basis::'a list) ! i)) {..< length (canonical_basis::'a list)}\<close>
+  \<open>basis_enum_of_vec v = basis_enum_of_vec_list (canonical_basis::'a list) v\<close>
+
+lemma basis_enum_of_vec_list':
+  \<open>basis_enum_of_vec_list L v = sum (\<lambda> i. (vec_index v (length L - 1 - i)) *\<^sub>C ((L::'a::basis_enum list) ! i)) {..< length L}\<close>
+proof(induction L)
+  case Nil
+  thus ?case by simp
+next
+  case (Cons a L)
+  have \<open>basis_enum_of_vec_list (a # L) v =
+           (\<Sum>i<length (a # L). (vec_index v (length (a # L) - 1 - i)) *\<^sub>C (a # L) ! i)\<close>
+  proof-
+    have \<open>basis_enum_of_vec_list (a # L) v = (vec_index v (length L)) *\<^sub>C a + 
+                                    basis_enum_of_vec_list L v\<close>
+      by simp
+    also have \<open>... = (vec_index v (length L)) *\<^sub>C a + 
+                                    (\<Sum>i<length L. (vec_index v (length L - 1 - i)) *\<^sub>C L ! i)\<close>
+      using Cons.IH by presburger
+    also have \<open>... = (vec_index v (length L)) *\<^sub>C ((a # L) ! 0) + 
+   (\<Sum>i<length L. (vec_index v (length (a # L) - 1 - Suc i)) *\<^sub>C (a#L) ! (Suc i))\<close>
+      by auto
+    also have \<open>... = (vec_index v (length L)) *\<^sub>C ((a # L) ! 0) + 
+   sum (\<lambda> i. vec_index v (length (a # L) - 1 - i) *\<^sub>C (a#L) ! i) {Suc 0..length L}\<close>
+      using Set_Interval.comm_monoid_add_class.sum.atLeast1_atMost_eq
+      by (metis (no_types, lifting) sum.cong)
+    also have \<open>... = (\<lambda> i. vec_index v (length (a # L) - 1 - i) *\<^sub>C (a#L) ! i) 0 + 
+   sum (\<lambda> i. vec_index v (length (a # L) - 1 - i) *\<^sub>C (a#L) ! i) {Suc 0..length L}\<close>
+      by auto    
+    also have \<open>... = 
+   sum (\<lambda> i. vec_index v (length (a # L) - 1 - i) *\<^sub>C (a#L) ! i) {..length L}\<close>
+      by (simp add: sum.atLeast1_atMost_eq sum.atMost_shift)
+    finally show ?thesis
+      by (simp add: lessThan_Suc_atMost) 
+  qed
+  thus ?case by simp
+qed
+
+lemma basis_enum_of_vec':
+  \<open>basis_enum_of_vec v = sum (\<lambda> i. (vec_index v (length (canonical_basis::'a::basis_enum list) - 1 - i)) *\<^sub>C ((canonical_basis::'a::basis_enum list) ! i)) {..< length (canonical_basis::'a list)}\<close>
+  using basis_enum_of_vec_list' unfolding basis_enum_of_vec_def
+  by blast
 
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
-\<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
+  \<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
   sorry
 
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
-\<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
+  \<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
   sorry
 
 definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Rightarrow> complex mat\<close> where
-\<open>mat_of_bounded = undefined\<close>
+  \<open>mat_of_bounded = undefined\<close>
 
 definition bounded_of_mat :: \<open>complex mat \<Rightarrow> ('a::basis_enum,'b::basis_enum) bounded\<close> where
-\<open>bounded_of_mat = undefined\<close>
+  \<open>bounded_of_mat = undefined\<close>
 
 
 lemma mat_of_bounded_inj: "inj mat_of_bounded"
@@ -118,7 +163,7 @@ definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
 lemma bounded_of_mat_adjoint[code]:
   "mat_of_bounded (adjoint A) = adjoint_mat (mat_of_bounded A)"
-for A :: "('a::basis_enum,'b::basis_enum) bounded"
+  for A :: "('a::basis_enum,'b::basis_enum) bounded"
   by (cheat 17)
 
 lemma mat_of_bounded_zero[code]:
