@@ -33,9 +33,8 @@ primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
 \<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
 
-
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
-\<open>basis_enum_of_vec v = (\<Sum>i::nat|i < length (canonical_basis::'a list). (vec_index v i) *\<^sub>C ((canonical_basis::'a list) ! i))\<close>
+\<open>basis_enum_of_vec v = sum (\<lambda> i. (vec_index v i) *\<^sub>C ((canonical_basis::'a list) ! i)) {..< length (canonical_basis::'a list)}\<close>
 
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
 \<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
@@ -44,7 +43,6 @@ lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
 \<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
   sorry
-
 
 definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Rightarrow> complex mat\<close> where
 \<open>mat_of_bounded = undefined\<close>
