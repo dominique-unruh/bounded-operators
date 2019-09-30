@@ -17,6 +17,8 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::basis
 
 
 (* bad definition: No type arity Matrix.vec :: comm_monoid_add
+The reason of the error is the fact that the zero in vec depends on the dimension.
+
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
 \<open>vec_of_basis_enum v = (\<Sum>i::nat|i<length canonical_basis. 
 (\<langle>canonical_basis ! i, v\<rangle> \<cdot>\<^sub>v unit_vec (length canonical_basis) i)
@@ -26,14 +28,22 @@ definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\
 primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<Rightarrow> complex vec\<close> where
 \<open>vec_of_basis_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> | 
 \<open>vec_of_basis_enum_list (x#ys) v = vec_of_basis_enum_list (ys) v + 
-\<langle>x, v\<rangle> \<cdot>\<^sub>v (unit_vec::nat \<Rightarrow> nat \<Rightarrow> complex vec) (length (canonical_basis::'a list)) (length ys)\<close>
+\<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length ys)\<close>
 
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
 \<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
 
 
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
-\<open>basis_enum_of_vec = undefined\<close>
+\<open>basis_enum_of_vec v = (\<Sum>i::nat|i < length (canonical_basis::'a list). (vec_index v i) *\<^sub>C ((canonical_basis::'a list) ! i))\<close>
+
+lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
+\<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
+  sorry
+
+lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
+\<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
+  sorry
 
 
 definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Rightarrow> complex mat\<close> where
@@ -41,7 +51,6 @@ definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Ri
 
 definition bounded_of_mat :: \<open>complex mat \<Rightarrow> ('a::basis_enum,'b::basis_enum) bounded\<close> where
 \<open>bounded_of_mat = undefined\<close>
-
 
 
 lemma mat_of_bounded_inj: "inj mat_of_bounded"
