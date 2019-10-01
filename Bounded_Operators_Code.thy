@@ -162,6 +162,75 @@ next
   thus ?case by blast
 qed
 
+lemma basis_enum_of_vec_list_mult:
+\<open>length L \<le> dim_vec x \<Longrightarrow>
+(basis_enum_of_vec_list L) (c \<cdot>\<^sub>v x) = c *\<^sub>C (basis_enum_of_vec_list L) x\<close>
+  using basis_enum_of_vec_list_mult' by auto
+
+hide_fact basis_enum_of_vec_list_mult'
+
+
+lemma vec_of_basis_enum_list':
+\<open>\<forall> x y. (vec_of_basis_enum_list L) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
+proof(induction L)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a L)
+  have \<open>vec_of_basis_enum_list (a # L) (x + y) =
+    vec_of_basis_enum_list (a # L) x + vec_of_basis_enum_list (a # L) y\<close>
+    for x y
+  proof-
+    have \<open>vec_of_basis_enum_list (a # L) (x + y) = 
+        vec_of_basis_enum_list L (x + y) +
+         \<langle>a, x+y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      by simp
+    also have \<open>\<dots> = 
+        (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y +
+         \<langle>a, x+y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      by (simp add: Cons.IH)
+    also have \<open>\<dots> = 
+        (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y +
+         \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+       + \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+    proof-
+      have \<open>\<langle>a, x+y\<rangle> = \<langle>a, x\<rangle> + \<langle>a, y\<rangle>\<close>
+        by (simp add: cinner_right_distrib)        
+      hence \<open>\<langle>a, x+y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+          = \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+          + \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+        by (simp add: add_smult_distrib_vec)       
+      thus ?thesis by auto
+    qed
+    finally have \<open>vec_of_basis_enum_list (a # L) (x + y) =
+  vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
+  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
+  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      by blast
+    also have \<open>vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
+  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
+  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+  = (vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
+  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)) +
+  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+    by auto
+    also have \<open>vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
+  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
+  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+  = (vec_of_basis_enum_list L x  +
+  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L))
+  + vec_of_basis_enum_list L y
+  + \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      sorry (* TODO: Why sledgehammer does not solve this? *)
+
+    show ?thesis sorry
+  qed
+  thus ?case by blast
+qed
+
+
+
+
 
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
   \<open>(basis_enum_of_vec_list L) \<circ> (vec_of_basis_enum_list L)
