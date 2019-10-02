@@ -103,7 +103,6 @@ lemma basis_enum_of_vec':
   using basis_enum_of_vec_list' unfolding basis_enum_of_vec_def
   by blast
 
-
 lemma basis_enum_of_vec_list_add':
 \<open>\<forall> x y. length L \<le> dim_vec x \<and> length L \<le> dim_vec y \<longrightarrow> 
 (basis_enum_of_vec_list L) (x + y) = (basis_enum_of_vec_list L) x + (basis_enum_of_vec_list L) y\<close>
@@ -191,14 +190,34 @@ lemma basis_enum_of_vec_list_mult:
 
 hide_fact basis_enum_of_vec_list_mult'
 
+lemma vec_of_basis_enum_list_dim:
+\<open>dim_vec (vec_of_basis_enum_list L (t::'a)) = length (canonical_basis::('a::basis_enum) list)\<close>
+proof(induction L)
+  case Nil
+  have \<open>dim_vec (vec_of_basis_enum_list [] t) = length (canonical_basis::'a list)\<close>
+    by simp
+  thus ?case by blast
+next
+  case (Cons a L)
+  have \<open>vec_of_basis_enum_list (a # L) t = vec_of_basis_enum_list L t + 
+\<langle>a, t\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+    by simp
+  hence \<open>dim_vec (vec_of_basis_enum_list (a # L) t) =
+           length (canonical_basis::('a::basis_enum) list)\<close>
+    by simp    
+  thus ?case by blast
+qed
 
 lemma vec_of_basis_enum_list':
-\<open>\<forall> x y. (vec_of_basis_enum_list L) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
+  \<open>\<forall> x y. (vec_of_basis_enum_list (L::('a::basis_enum) list)) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
 proof(induction L)
   case Nil
   thus ?case by auto
 next
   case (Cons a L)
+  have \<open>dim_vec (vec_of_basis_enum_list L t) = length (canonical_basis::'a list)\<close>
+    for t
+    by (simp add: vec_of_basis_enum_list_dim)    
   have \<open>vec_of_basis_enum_list (a # L) (x + y) =
     vec_of_basis_enum_list (a # L) x + vec_of_basis_enum_list (a # L) y\<close>
     for x y
@@ -224,34 +243,24 @@ next
         by (simp add: add_smult_distrib_vec)       
       thus ?thesis by auto
     qed
-    finally have \<open>vec_of_basis_enum_list (a # L) (x + y) =
-  vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
-  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
-  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
-      by blast
-    also have \<open>vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
-  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
-  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
-  = (vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
-  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)) +
-  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
-    by auto
-    also have \<open>vec_of_basis_enum_list L x + vec_of_basis_enum_list L y +
-  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) +
-  \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
-  = (vec_of_basis_enum_list L x  +
-  \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L))
-  + vec_of_basis_enum_list L y
-  + \<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
-      sorry (* TODO: Why sledgehammer does not solve this? *)
-
-    show ?thesis sorry
+    also have \<open>\<dots>
+  = ( (vec_of_basis_enum_list L x) + 
+  (\<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)) ) +
+  ( (vec_of_basis_enum_list L y) +
+  (\<langle>a, y\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)) )\<close>
+      using \<open>\<And>t. dim_vec (vec_of_basis_enum_list L t) = length canonical_basis\<close> carrier_vec_dim_vec comm_add_vec index_add_vec(2) index_smult_vec(2) index_unit_vec(3) 
+      by auto
+    also have \<open>\<dots>
+  = (vec_of_basis_enum_list (a # L) x) + (vec_of_basis_enum_list (a # L) y)\<close>
+      by simp
+    finally show ?thesis by blast
   qed
   thus ?case by blast
 qed
 
-
-
+lemma vec_of_basis_enum_list:
+  \<open>(vec_of_basis_enum_list (L::('a::basis_enum) list)) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
+  by (simp add: vec_of_basis_enum_list')
 
 
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
