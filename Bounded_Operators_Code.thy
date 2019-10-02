@@ -25,6 +25,11 @@ definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\
 )\<close>
 *)
 
+(* TODO:
+
+This transforms |0> into [0,...,1] and |n-1> into [1,...,0] (if canonical_basis = [|0>,|1>,...,|n>])
+which seems unnatural (backwards). I think we should map |0> to [1,...,0] instead.
+ *)
 primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_basis_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> | 
   \<open>vec_of_basis_enum_list (x#ys) v = vec_of_basis_enum_list ys v + 
@@ -33,7 +38,22 @@ primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_basis_enum v = vec_of_basis_enum_list canonical_basis v\<close> 
 
-primrec basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex vec \<Rightarrow> 'a::basis_enum\<close> where 
+
+(* TODO: I think mixing recursion over lists (the basis) and direct indexing via natural numbers
+   (vec_index ...) makes inductions harder. I think it is easier to define this like:
+
+fun basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::basis_enum\<close> where 
+  \<open>basis_enum_of_vec_list [] [] = 0\<close> |
+  \<open>basis_enum_of_vec_list (x#ys) (v#vs) =
+ v *\<^sub>C x + basis_enum_of_vec_list ys vs\<close>
+
+and then invoke it as "basis_enum_of_vec_list canonical_basis (list_of_vec v)".
+
+(This also has the natural order of the coefficients like requested in my TODO above.)
+*)
+
+
+primrec basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex vec \<Rightarrow> 'a::basis_enum\<close> where
   \<open>basis_enum_of_vec_list [] v = 0\<close> |
   \<open>basis_enum_of_vec_list (x#ys) v =
  (vec_index v (length ys)) *\<^sub>C x + basis_enum_of_vec_list ys v\<close>
@@ -76,6 +96,8 @@ next
   thus ?case by simp
 qed
 
+(* TODO: Why do we need basis_enum_of_vec_list? We can write the following lemma as the definition of basis_enum_of_vec
+   (since 'a::basis_enum is a comm_monoid_add) *)
 lemma basis_enum_of_vec':
   \<open>basis_enum_of_vec v = sum (\<lambda> i. (vec_index v (length (canonical_basis::'a::basis_enum list) - 1 - i)) *\<^sub>C ((canonical_basis::'a::basis_enum list) ! i)) {..< length (canonical_basis::'a list)}\<close>
   using basis_enum_of_vec_list' unfolding basis_enum_of_vec_def
@@ -287,11 +309,16 @@ proof (induction L)
 qed
 
 
+(* TODO: When written as \<open>basis_enum_of_vec (vec_of_basis_enum v) = v\<close>
+   such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
   \<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
   unfolding basis_enum_of_vec_def vec_of_basis_enum_def
   sorry
 
+(* TODO: When written as \<open>vec_of_basis_enum (basis_enum_of_vec v) = v\<close>
+   such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
+(* TODO: Not true. Only holds for vectors v with "dim v = canonical_basis_length" *)
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
   \<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
   sorry
