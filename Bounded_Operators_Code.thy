@@ -208,7 +208,7 @@ next
   thus ?case by blast
 qed
 
-lemma vec_of_basis_enum_list':
+lemma vec_of_basis_enum_list_add':
   \<open>\<forall> x y. (vec_of_basis_enum_list (L::('a::basis_enum) list)) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
 proof(induction L)
   case Nil
@@ -258,10 +258,56 @@ next
   thus ?case by blast
 qed
 
-lemma vec_of_basis_enum_list:
+lemma vec_of_basis_enum_list_add:
   \<open>(vec_of_basis_enum_list (L::('a::basis_enum) list)) (x + y) = (vec_of_basis_enum_list L) x + (vec_of_basis_enum_list L) y\<close>
-  by (simp add: vec_of_basis_enum_list')
+  by (simp add: vec_of_basis_enum_list_add')
 
+hide_fact vec_of_basis_enum_list_add'
+
+lemma vec_of_basis_enum_list_mult':
+  \<open>\<forall> x c. (vec_of_basis_enum_list (L::('a::basis_enum) list)) (c *\<^sub>C x) = c \<cdot>\<^sub>v (vec_of_basis_enum_list L x)\<close>
+proof(induction L)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a L)
+  have \<open>dim_vec (vec_of_basis_enum_list L t) = length (canonical_basis::'a list)\<close>
+    for t
+    by (simp add: vec_of_basis_enum_list_dim)    
+  have \<open>vec_of_basis_enum_list (a # L) (c *\<^sub>C x) =
+       c \<cdot>\<^sub>v vec_of_basis_enum_list (a # L) x\<close>
+    for x c
+  proof-
+    have \<open>vec_of_basis_enum_list (a # L) (c *\<^sub>C x) = 
+        vec_of_basis_enum_list L (c *\<^sub>C x) +
+         \<langle>a, c *\<^sub>C x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      by simp
+    also have \<open>\<dots> = 
+                c \<cdot>\<^sub>v vec_of_basis_enum_list L x +
+         \<langle>a, c *\<^sub>C x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+      by (simp add: Cons.IH)
+    also have \<open>\<dots> = 
+                c \<cdot>\<^sub>v vec_of_basis_enum_list L x +
+         c * \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)\<close>
+    proof-
+      have \<open>\<langle>a, c *\<^sub>C x\<rangle> = c * \<langle>a, x\<rangle>\<close>
+        by simp
+      thus ?thesis by auto
+    qed
+    also have \<open>\<dots> = 
+                c \<cdot>\<^sub>v (vec_of_basis_enum_list L x +
+         \<langle>a, x\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L))\<close>
+      by (metis (no_types, lifting) \<open>\<And>t. dim_vec (vec_of_basis_enum_list L t) = length canonical_basis\<close> carrier_vecI index_smult_vec(2) index_unit_vec(3) smult_add_distrib_vec smult_smult_assoc)
+    also have \<open>\<dots> = c \<cdot>\<^sub>v vec_of_basis_enum_list (a # L) x\<close>
+      by auto
+    finally show ?thesis by blast
+  qed
+  thus ?case by blast
+qed
+
+lemma vec_of_basis_enum_list_mult:
+  \<open>(vec_of_basis_enum_list (L::('a::basis_enum) list)) (c *\<^sub>C x) = c \<cdot>\<^sub>v (vec_of_basis_enum_list L x)\<close>
+  by (simp add: vec_of_basis_enum_list_mult')
 
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
   \<open>(basis_enum_of_vec_list L) \<circ> (vec_of_basis_enum_list L)
