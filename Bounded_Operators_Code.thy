@@ -309,6 +309,90 @@ lemma vec_of_basis_enum_list_mult:
   \<open>(vec_of_basis_enum_list (L::('a::basis_enum) list)) (c *\<^sub>C x) = c \<cdot>\<^sub>v (vec_of_basis_enum_list L x)\<close>
   by (simp add: vec_of_basis_enum_list_mult')
 
+lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
+  \<open>\<forall> v \<in> set (canonical_basis ::('a list)). set L \<subseteq> set (canonical_basis::'a list) \<and> 
+distinct L \<longrightarrow>
+((basis_enum_of_vec_list L)::(complex vec \<Rightarrow> 'a::basis_enum)) ( 
+((vec_of_basis_enum_list L)::('a \<Rightarrow> complex vec)) v)
+ = (if v \<in> set L then v else 0)\<close>
+proof(induction L)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a L)
+  have \<open>v\<in>set canonical_basis \<Longrightarrow>
+        set (a # L) \<subseteq> set canonical_basis \<Longrightarrow> distinct (a # L) \<Longrightarrow>
+        basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list (a # L) v) =
+        (if v \<in> set (a # L) then v else 0)\<close>
+    for v
+  proof-
+    assume \<open>v\<in>set canonical_basis\<close> and \<open>set (a # L) \<subseteq> set canonical_basis\<close>
+      and \<open>distinct (a # L)\<close> 
+    show \<open>basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list (a # L) v) =
+        (if v \<in> set (a # L) then v else 0)\<close>
+    proof(cases \<open>v \<in> set (a # L)\<close>)
+      case True
+      moreover have \<open>basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list (a # L) v) = v\<close>
+        sorry
+      ultimately show ?thesis by simp
+    next
+      case False
+      moreover have \<open>basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list (a # L) v) = 0\<close>
+      proof-
+        have \<open>a \<in> set (canonical_basis::'a list)\<close>
+          using \<open>set (a # L) \<subseteq> set canonical_basis\<close> by auto
+        have \<open>v \<noteq> a\<close>
+          using calculation by auto
+        have \<open>v \<notin> set L\<close>
+          using calculation by auto
+        have \<open>basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list (a # L) v) = 
+               basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list L v + 
+                       \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)  ) \<close>
+          by simp
+        also have \<open>\<dots> = 
+               basis_enum_of_vec_list (a # L) (vec_of_basis_enum_list L v)\<close>
+        proof-
+          have \<open>is_onb (set (canonical_basis::'a list))\<close>
+            by (simp add: is_onb_set)            
+          hence \<open>\<langle>a, v\<rangle> = 0\<close>
+            using \<open>v \<noteq> a\<close> \<open>v \<in> set (canonical_basis::'a list)\<close>
+                \<open>a \<in> set (canonical_basis::'a list)\<close>
+            unfolding is_onb_def is_ortho_set_def by auto     
+          hence \<open>\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) = 0\<^sub>v (length (canonical_basis::'a list))\<close>
+            by auto
+          moreover have \<open>dim_vec (vec_of_basis_enum_list L v) = length (canonical_basis::'a list)\<close>
+            by (simp add: vec_of_basis_enum_list_dim)            
+          ultimately have \<open>vec_of_basis_enum_list L v + 
+                       \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L)
+                      = vec_of_basis_enum_list L v\<close>
+            by auto
+          thus ?thesis by auto
+        qed
+        also have \<open>\<dots> = 
+               basis_enum_of_vec_list L (vec_of_basis_enum_list L v)
+            + (vec_index (vec_of_basis_enum_list L v) (length L)) *\<^sub>C a\<close>
+          by simp
+        also have \<open>\<dots> = 
+             (vec_index (vec_of_basis_enum_list L v) (length L)) *\<^sub>C a\<close>
+        proof-
+          have \<open>basis_enum_of_vec_list L (vec_of_basis_enum_list L v) = 0\<close>
+            using Cons.IH \<open>distinct (a # L)\<close> \<open>set (a # L) \<subseteq> set canonical_basis\<close> \<open>v \<in> set canonical_basis\<close> \<open>v \<notin> set L\<close> by auto            
+          thus ?thesis by simp
+        qed
+        also have \<open>\<dots> = 0\<close>
+        proof-
+          have \<open>vec_index (vec_of_basis_enum_list L v) (length L) = 0\<close>
+            sorry
+          thus ?thesis by simp
+        qed
+        show ?thesis sorry
+      qed
+      ultimately show ?thesis by simp
+    qed
+  qed
+  thus ?case by simp
+qed
+
 (* TODO: When written as \<open>basis_enum_of_vec (vec_of_basis_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
@@ -325,7 +409,8 @@ proof-
   hence \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
     for v
     unfolding f_def
-    sorry    
+    using basis_enum_of_vec_COMP_vec_of_basis_enum_list
+    by (metis basis_enum_of_vec_def eq_iff_diff_eq_0 order_refl vec_of_basis_enum_def)
   moreover have \<open>clinear f\<close>
   proof-
     have \<open>clinear (\<lambda> v. (basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) ( (vec_of_basis_enum::('a \<Rightarrow> complex vec)) v) )\<close>
@@ -405,7 +490,6 @@ proof-
   thus ?thesis unfolding f_def by auto
 qed
 
-hide_fact basis_enum_of_vec_COMP_vec_of_basis_enum_list_basis
 
 (* TODO: When written as \<open>vec_of_basis_enum (basis_enum_of_vec v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
