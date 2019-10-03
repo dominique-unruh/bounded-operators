@@ -104,10 +104,10 @@ lemma basis_enum_of_vec':
   by blast
 
 lemma basis_enum_of_vec_list_add':
-\<open>\<forall> x y. length L \<le> dim_vec x \<and> length L \<le> dim_vec y \<longrightarrow> 
+  \<open>\<forall> x y. length L \<le> dim_vec x \<and> length L \<le> dim_vec y \<longrightarrow> 
 (basis_enum_of_vec_list L) (x + y) = (basis_enum_of_vec_list L) x + (basis_enum_of_vec_list L) y\<close>
 proof(induction L)
-case Nil
+  case Nil
   thus ?case
     by simp 
 next
@@ -140,7 +140,7 @@ next
 qed
 
 lemma basis_enum_of_vec_list_add:
-\<open>length L \<le> dim_vec x \<Longrightarrow> length L \<le> dim_vec y \<Longrightarrow> 
+  \<open>length L \<le> dim_vec x \<Longrightarrow> length L \<le> dim_vec y \<Longrightarrow> 
 (basis_enum_of_vec_list L) (x + y) = (basis_enum_of_vec_list L) x + (basis_enum_of_vec_list L) y\<close>
   using basis_enum_of_vec_list_add'
   by blast
@@ -148,7 +148,7 @@ lemma basis_enum_of_vec_list_add:
 hide_fact basis_enum_of_vec_list_add'
 
 lemma basis_enum_of_vec_list_mult':
-\<open>\<forall> x y. length L \<le> dim_vec x \<longrightarrow> 
+  \<open>\<forall> x y. length L \<le> dim_vec x \<longrightarrow> 
 (basis_enum_of_vec_list L) (c \<cdot>\<^sub>v x) = c *\<^sub>C (basis_enum_of_vec_list L) x\<close>
 proof(induction L)
   case Nil
@@ -184,14 +184,14 @@ next
 qed
 
 lemma basis_enum_of_vec_list_mult:
-\<open>length L \<le> dim_vec x \<Longrightarrow>
+  \<open>length L \<le> dim_vec x \<Longrightarrow>
 (basis_enum_of_vec_list L) (c \<cdot>\<^sub>v x) = c *\<^sub>C (basis_enum_of_vec_list L) x\<close>
   using basis_enum_of_vec_list_mult' by auto
 
 hide_fact basis_enum_of_vec_list_mult'
 
 lemma vec_of_basis_enum_list_dim:
-\<open>dim_vec (vec_of_basis_enum_list L (t::'a)) = length (canonical_basis::('a::basis_enum) list)\<close>
+  \<open>dim_vec (vec_of_basis_enum_list L (t::'a)) = length (canonical_basis::('a::basis_enum) list)\<close>
 proof(induction L)
   case Nil
   have \<open>dim_vec (vec_of_basis_enum_list [] t) = length (canonical_basis::'a list)\<close>
@@ -309,67 +309,103 @@ lemma vec_of_basis_enum_list_mult:
   \<open>(vec_of_basis_enum_list (L::('a::basis_enum) list)) (c *\<^sub>C x) = c \<cdot>\<^sub>v (vec_of_basis_enum_list L x)\<close>
   by (simp add: vec_of_basis_enum_list_mult')
 
-lemma basis_enum_of_vec_COMP_vec_of_basis_enum_list:
-  \<open>(basis_enum_of_vec_list L) \<circ> (vec_of_basis_enum_list L)
- = projection (complex_vector.span (set L))\<close>
-proof (induction L)
-  show "basis_enum_of_vec_list [] \<circ> (\<lambda>a. vec_of_basis_enum_list [] (a::'a)) = projection (complex_vector.span (set []))"
-  proof-
-    have \<open>projection (complex_vector.span (set [])) = (\<lambda> _. 0::'a)\<close>
-    proof-
-      have \<open>complex_vector.span (set ([]::'a list)) = {0}\<close>
-        by auto
-      thus ?thesis using projection_zero_subspace
-        by auto
-    qed
-    moreover have \<open>basis_enum_of_vec_list [] = (\<lambda> _. 0::'a)\<close>
-      by auto      
-    ultimately show ?thesis 
-      by auto
-  qed
-  show "basis_enum_of_vec_list (a # L) \<circ> vec_of_basis_enum_list (a # L) = projection (complex_vector.span (set (a # L)))"
-    if "basis_enum_of_vec_list L \<circ> (\<lambda>a. vec_of_basis_enum_list L (a::'a)) = projection (complex_vector.span (set L))"
-    for a :: 'a
-      and L :: "'a list"
-  proof-
-    have \<open>basis_enum_of_vec_list (a # L) \<circ> vec_of_basis_enum_list (a # L)
-        = (\<lambda> v. (vec_index v (length L)) *\<^sub>C a + basis_enum_of_vec_list L v ) \<circ> vec_of_basis_enum_list (a # L)\<close>
-      by auto
-    also have \<open>\<dots> = (\<lambda> v. (vec_index v (length L)) *\<^sub>C a + basis_enum_of_vec_list L v ) \<circ> 
-(\<lambda> v. vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) )\<close>
-      by auto
-    also have \<open>\<dots> = (\<lambda> v. vec_index ( vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) (length L) *\<^sub>C a +
- basis_enum_of_vec_list L (vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) )\<close>
-      by (meson comp_apply)
-    also have \<open>\<dots> = (\<lambda> v. vec_index ( vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) (length L) *\<^sub>C a +
- basis_enum_of_vec_list L (vec_of_basis_enum_list L v) + 
- basis_enum_of_vec_list L (\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) )\<close>
-      sorry
-    also have \<open>\<dots> = (\<lambda> v. vec_index ( vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) (length L) *\<^sub>C a +
- projection (complex_vector.span (set L)) v + 
- basis_enum_of_vec_list L (\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) )\<close>
-      using comp_eq_dest_lhs that by fastforce
-    also have \<open>\<dots> = (\<lambda> v. vec_index ( vec_of_basis_enum_list L v + 
-\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length L) ) (length L) *\<^sub>C a +
- projection (complex_vector.span (set L)) v + 
- \<langle>a, v\<rangle> *\<^sub>C basis_enum_of_vec_list L (unit_vec (length (canonical_basis::'a list)) (length L) ) )\<close>
-      sorry
-    show ?thesis sorry
-  qed
-qed
-
-
 (* TODO: When written as \<open>basis_enum_of_vec (vec_of_basis_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
 lemma basis_enum_of_vec_COMP_vec_of_basis_enum:
-  \<open>basis_enum_of_vec \<circ> vec_of_basis_enum = id\<close>
-  unfolding basis_enum_of_vec_def vec_of_basis_enum_def
-  sorry
+  \<open>(basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) \<circ> (vec_of_basis_enum::('a \<Rightarrow> complex vec))
+ = (id::('a \<Rightarrow> 'a))\<close>
+proof-
+  have \<open>dim_vec (vec_of_basis_enum b) = length (canonical_basis::'a list)\<close>
+    for b::'a
+    by (simp add: vec_of_basis_enum_def vec_of_basis_enum_list_dim)
+  define f::\<open>'a \<Rightarrow> 'a\<close> where \<open>f v = basis_enum_of_vec ( vec_of_basis_enum v ) - v\<close>
+    for v::'a
+  have \<open>distinct (canonical_basis::('a list))\<close>
+    by (simp add: distinct_canonical_basis)    
+  hence \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
+    for v
+    unfolding f_def
+    sorry    
+  moreover have \<open>clinear f\<close>
+  proof-
+    have \<open>clinear (\<lambda> v. (basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) ( (vec_of_basis_enum::('a \<Rightarrow> complex vec)) v) )\<close>
+      unfolding clinear_def
+    proof
+      show "basis_enum_of_vec (vec_of_basis_enum (b1 + b2)) = basis_enum_of_vec (vec_of_basis_enum b1) + ((basis_enum_of_vec (vec_of_basis_enum b2))::'a)"
+        for b1 :: 'a
+          and b2 :: 'a
+      proof-
+        have \<open>basis_enum_of_vec (vec_of_basis_enum (b1 + b2)) = 
+              basis_enum_of_vec (vec_of_basis_enum b1 + vec_of_basis_enum b2)\<close>
+          by (simp add: vec_of_basis_enum_def vec_of_basis_enum_list_add)
+        also have \<open>\<dots> = 
+              basis_enum_of_vec (vec_of_basis_enum b1) + ((basis_enum_of_vec (vec_of_basis_enum b2))::'a)\<close>
+        proof-
+          have \<open>length (canonical_basis::'a list) \<le> dim_vec (vec_of_basis_enum b1)\<close>
+            by (simp add: \<open>\<And>b. dim_vec (vec_of_basis_enum b) = length canonical_basis\<close>)
+          moreover have \<open>length (canonical_basis::'a list) \<le> dim_vec (vec_of_basis_enum b2)\<close>
+            by (simp add: \<open>\<And>b. dim_vec (vec_of_basis_enum b) = length canonical_basis\<close>)
+          ultimately show ?thesis
+            unfolding basis_enum_of_vec_def
+            using basis_enum_of_vec_list_add[where L = "canonical_basis::'a list" 
+                and x = "vec_of_basis_enum b1" and y = "vec_of_basis_enum b2"]
+            by auto
+        qed
+        finally show ?thesis by auto
+      qed
+      show "basis_enum_of_vec (vec_of_basis_enum (r *\<^sub>C (b::'a))) = r *\<^sub>C (basis_enum_of_vec (vec_of_basis_enum b)::'a)"
+        for r :: complex
+          and b :: 'a
+      proof-
+        have \<open>basis_enum_of_vec (vec_of_basis_enum (r *\<^sub>C b)) = 
+              basis_enum_of_vec (r \<cdot>\<^sub>v (vec_of_basis_enum b))\<close>
+          by (simp add: vec_of_basis_enum_def vec_of_basis_enum_list_mult)          
+        also have \<open>\<dots> = 
+              r *\<^sub>C ((basis_enum_of_vec (vec_of_basis_enum b))::'a)\<close>
+        proof-
+          have \<open>length (canonical_basis::'a list) \<le> dim_vec (vec_of_basis_enum b)\<close>
+            by (simp add: \<open>\<And>b. dim_vec (vec_of_basis_enum b) = length canonical_basis\<close>)
+          thus ?thesis
+            unfolding basis_enum_of_vec_def
+            using basis_enum_of_vec_list_mult[where L = "canonical_basis::'a list" 
+                and c = "r" and x = "vec_of_basis_enum b"]
+            by auto
+        qed
+        finally show ?thesis by auto
+      qed
+    qed
+    moreover have \<open>clinear (\<lambda>v::'a. v)\<close>
+      by (simp add: clinearI)      
+    ultimately show ?thesis unfolding f_def
+      using complex_vector.linear_compose_sub by auto            
+  qed
+  ultimately have \<open>v \<in> complex_vector.span (set (canonical_basis::('a list))) \<Longrightarrow> f v = 0\<close>
+    for v
+    using Complex_Vector_Spaces.equal_span_0
+    by blast
+  moreover have \<open>complex_vector.span (set (canonical_basis::('a list))) = UNIV\<close>
+  proof-
+    have \<open>closure (complex_vector.span (set (canonical_basis::('a list)))) = UNIV\<close>
+      using is_onb_set
+      unfolding is_onb_def is_basis_def
+      by blast
+    moreover have \<open>closure (complex_vector.span (set (canonical_basis::('a list)))) = 
+                   complex_vector.span (set (canonical_basis::('a list)))\<close>
+    proof-
+      have \<open>finite (set (canonical_basis::('a list)))\<close>
+        by simp        
+      thus ?thesis
+        by (simp add: span_finite_dim) 
+    qed
+    ultimately show ?thesis by blast
+  qed
+  ultimately have \<open>f v = 0\<close>
+    for v
+    by auto
+  thus ?thesis unfolding f_def by auto
+qed
+
+hide_fact basis_enum_of_vec_COMP_vec_of_basis_enum_list_basis
 
 (* TODO: When written as \<open>vec_of_basis_enum (basis_enum_of_vec v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
