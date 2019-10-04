@@ -2466,10 +2466,10 @@ for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
   apply simp
   done
 
-(* TODO prove *)
 lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
-  sorry
+  by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
+  
 
 (* FIXME: what is the definition corresponding to this "consts"?
 TODO: definition is above

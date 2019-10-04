@@ -1,4 +1,4 @@
-(*
+CARD_1(*
 Authors:
 
   Dominique Unruh, University of Tartu, unruh@ut.ee
