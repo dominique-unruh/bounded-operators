@@ -23,29 +23,26 @@ primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::basis_enum \<
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_basis_enum v = vec_of_basis_enum_list (canonical_basis::'a list) v\<close>
 
+(* TODO remove *)
 lemma dim_vec_of_basis_enum_list':
-\<open>\<forall> v. dim_vec (vec_of_basis_enum_list (L::'a list) v) = length (canonical_basis::'a::basis_enum list)\<close>
-proof (induction L)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a L)
-  thus ?case by auto
-qed
+\<open>dim_vec (vec_of_basis_enum_list (L::'a list) v) = length (canonical_basis::'a::basis_enum list)\<close>
+  by (induction L, auto)
 
 lemma dim_vec_of_basis_enum_list:
 \<open>dim_vec (vec_of_basis_enum_list (L::'a list) v) = length (canonical_basis::'a::basis_enum list)\<close>
   using dim_vec_of_basis_enum_list' by blast
 
+(* TODO remove \<forall> *)
 lemma vec_of_basis_enum_list_add':
 \<open>\<forall> v1 v2. vec_of_basis_enum_list (L::'a::basis_enum list) (v1 + v2) = vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2\<close>
-  proof (induction L)
+proof (induction L)
+  case Nil
   show "\<forall>v1 v2. vec_of_basis_enum_list [] ((v1::'a) + v2) = vec_of_basis_enum_list [] v1 + vec_of_basis_enum_list [] v2"
     by auto
-  show "\<forall>v1 v2. vec_of_basis_enum_list ((a::'a) # L) (v1 + v2) = vec_of_basis_enum_list (a # L) v1 + vec_of_basis_enum_list (a # L) v2"
-    if "\<forall>v1 v2. vec_of_basis_enum_list L ((v1::'a) + v2) = vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2"
-    for a :: 'a
-      and L :: "'a list"
+next
+  case (Cons a L)
+  assume "\<forall>v1 v2. vec_of_basis_enum_list L ((v1::'a) + v2) = vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2"
+  show "\<forall>v1 v2. vec_of_basis_enum_list (a # L) (v1 + v2) = vec_of_basis_enum_list (a # L) v1 + vec_of_basis_enum_list (a # L) v2"
   proof-
     have \<open>vec_of_basis_enum_list (a # L) (v1 + v2) = vec_of_basis_enum_list (a # L) v1 + vec_of_basis_enum_list (a # L) v2\<close>
       for v1 v2
@@ -66,7 +63,7 @@ lemma vec_of_basis_enum_list_add':
         by auto
       moreover have \<open>vec_of_basis_enum_list L (v1 + v2) =
             vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2\<close>
-        by (simp add: that)        
+        by (simp add: Cons.IH)        
       moreover have \<open>\<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L)
 = \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L)
 + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L)\<close>
@@ -86,20 +83,56 @@ lemma vec_of_basis_enum_list_add':
   qed
 qed
 
+(* TODO: duplicate of vec_of_basis_enum_list_add' *)
 lemma vec_of_basis_enum_list_add:
-\<open>vec_of_basis_enum_list L (v1 + v2) = vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2\<close>
+  \<open>vec_of_basis_enum_list L (v1 + v2) = vec_of_basis_enum_list L v1 + vec_of_basis_enum_list L v2\<close>
   using vec_of_basis_enum_list_add' by blast
 
 hide_fact vec_of_basis_enum_list_add'
 
 lemma vec_of_basis_enum_add:
-\<open>vec_of_basis_enum (v1 + v2) = vec_of_basis_enum v1 + vec_of_basis_enum v2\<close>
+  \<open>vec_of_basis_enum (v1 + v2) = vec_of_basis_enum v1 + vec_of_basis_enum v2\<close>
   using vec_of_basis_enum_list_add
   unfolding vec_of_basis_enum_def
   by blast
 
+(*
+lemma vec_of_basis_enum_list_mult'_Dominique:
+  fixes L :: "'a::basis_enum list"
+  shows \<open>vec_of_basis_enum_list L (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_basis_enum_list L v\<close>
+proof (induction L)
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a L)
+  let ?basis = "canonical_basis :: 'a list"
+  let ?dim = "length ?basis"
+
+  have dim_L: "dim_vec (vec_of_basis_enum_list L v) = ?dim"
+    by (simp add: dim_vec_of_basis_enum_list')
+
+  have "vec_of_basis_enum_list (a # L) (c *\<^sub>C v) 
+      = vec_of_basis_enum_list L (c *\<^sub>C v) + c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L)"
+    by simp
+  also have "\<dots> = c \<cdot>\<^sub>v vec_of_basis_enum_list L v + c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L)"
+    using Cons.IH by simp
+  also have "\<dots> = c \<cdot>\<^sub>v vec_of_basis_enum_list L v + c \<cdot>\<^sub>v (\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L))"
+    by (simp add: smult_smult_assoc)
+  also have "\<dots> = c \<cdot>\<^sub>v (vec_of_basis_enum_list L v + \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L))"
+    apply (rule smult_add_distrib_vec[where n="?dim", symmetric])
+    using dim_L apply auto
+    by (metis carrier_vec_dim_vec)
+  also have "\<dots> = c \<cdot>\<^sub>v vec_of_basis_enum_list (a # L) v"
+    by auto
+  finally show ?case
+    by -
+qed
+*)
+
+
+(* TODO remove \<forall> *)
 lemma vec_of_basis_enum_list_mult':
-\<open>\<forall> v c. vec_of_basis_enum_list (L::'a::basis_enum list) (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_basis_enum_list L v\<close>
+  \<open>\<forall> v c. vec_of_basis_enum_list (L::'a::basis_enum list) (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_basis_enum_list L v\<close>
   proof (induction L)
   show "\<forall>v c. vec_of_basis_enum_list [] (c *\<^sub>C (v::'a)) = c \<cdot>\<^sub>v vec_of_basis_enum_list [] v"
     by auto
@@ -154,17 +187,52 @@ lemma vec_of_basis_enum_mult:
 fun basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::basis_enum\<close> where 
   \<open>basis_enum_of_vec_list [] v = 0\<close> |
   \<open>basis_enum_of_vec_list y [] = 0\<close> |
-  \<open>basis_enum_of_vec_list (x#ys) (v#vs) =
- v *\<^sub>C x + basis_enum_of_vec_list ys vs\<close>
+  \<open>basis_enum_of_vec_list (x#ys) (v#vs) = v *\<^sub>C x + basis_enum_of_vec_list ys vs\<close>
 
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
 \<open>basis_enum_of_vec v = basis_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
 
-lemma basis_enum_of_vec_add:
-  assumes \<open>dim_vec v1 = length (canonical_basis::'a::basis_enum list)\<close> and
-          \<open>dim_vec v2 = length (canonical_basis::'a::basis_enum list)\<close>
-  shows \<open>basis_enum_of_vec (v1 + v2) = basis_enum_of_vec v1 + basis_enum_of_vec v2\<close>
+lemma list_of_vec_plus:
+  fixes v1 v2 :: "complex vec"
+  assumes "dim_vec v1 = dim_vec v2"
+  shows "list_of_vec (v1 + v2) = map2 (+) (list_of_vec v1) (list_of_vec v2)"
+  unfolding plus_vec_def 
+  apply auto
   sorry
+
+lemma basis_enum_of_vec_add:
+  defines "basis \<equiv> canonical_basis::'a::basis_enum list"
+  assumes \<open>dim_vec v1 = length basis\<close> and
+          \<open>dim_vec v2 = length basis\<close>
+        shows \<open>(basis_enum_of_vec (v1 + v2) :: 'a) = basis_enum_of_vec v1 + basis_enum_of_vec v2\<close>
+proof -
+  define l1 l2 where "l1 = list_of_vec v1" and "l2 = list_of_vec v2"
+
+  have length: "length l1 = length l2"
+    sorry
+
+  note [[show_types,show_consts]]
+
+  have \<open>(basis_enum_of_vec::_\<Rightarrow>'a) (v1 + v2) = basis_enum_of_vec_list basis (list_of_vec (v1+v2))\<close>
+    by (simp add: basis_def basis_enum_of_vec_def)
+  also have \<open>\<dots> = basis_enum_of_vec_list basis (map2 (+) l1 l2)\<close>
+    apply (subst list_of_vec_plus)
+    using assms l1_def l2_def by auto
+  also have \<open>\<dots> = basis_enum_of_vec_list basis l1
+           + basis_enum_of_vec_list basis l2\<close>
+    using length
+  proof (induction l1 l2 rule: list_induct2)
+    case Nil
+    then show ?case sorry
+  next
+    case (Cons x xs y ys)
+    then show ?case sorry
+  qed
+  also have \<open>\<dots> = basis_enum_of_vec v1 + basis_enum_of_vec v2\<close>
+    by (simp add: basis_def basis_enum_of_vec_def l1_def l2_def)
+  finally show ?thesis
+    by auto
+qed
 
 lemma basis_enum_of_vec_mult:
   assumes \<open>dim_vec v = length (canonical_basis::'a::basis_enum list)\<close>

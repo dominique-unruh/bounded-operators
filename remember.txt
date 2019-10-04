@@ -1,0 +1,11 @@
+To generalize a variable in an induction:
+
+lemma "length l = i \<longrightarrow> length (undefined#l) = Suc i"
+proof (induction l arbitrary: i)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a l)
+  then show ?case 
+qed
+
