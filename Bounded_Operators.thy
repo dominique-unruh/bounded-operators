@@ -11,7 +11,7 @@ Main results:
 
 
 theory Bounded_Operators
-  imports Complex_Inner_Product Real_Bounded_Operators 
+  imports Banach_Steinhaus Complex_Inner_Product Real_Bounded_Operators 
     Lattice_Missing Extended_Sorry
 
 begin
@@ -2504,7 +2504,28 @@ lemma proj_scalar_mult[simp]:
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
     for a::complex and \<psi>::"'a::chilbert_space"
   by simp
+
+theorem banach_steinhaus_bounded:
+  fixes F :: \<open>'c \<Rightarrow> ('a::{cbanach,perfect_space}, 'b::complex_normed_vector) bounded\<close>
+  assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
+  shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>
+  using assms apply transfer
+proof-
+  fix F::\<open>'c \<Rightarrow> 'a \<Rightarrow> 'b\<close>
+  assume \<open>pred_fun top bounded_clinear F\<close> and
+         \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
+  have \<open>\<And>n. bounded_linear (F n)\<close>
+    using \<open>pred_fun top bounded_clinear F\<close>
+    apply auto
+    by (simp add: bounded_clinear.bounded_linear)
+  thus \<open>\<exists>M. \<forall>n. onorm (F n) \<le> M\<close>
+    using \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
+      banach_steinhaus[where f = "F"]
+    by blast
+qed
+ 
   
+
 unbundle no_bounded_notation
 
 end
