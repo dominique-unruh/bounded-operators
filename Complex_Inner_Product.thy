@@ -267,7 +267,7 @@ section \<open>Recovered theorems\<close>
 
 (* Recovered theorem *)
 lemma Cauchy_Schwarz_ineq2:
-  "cmod (cinner x y) \<le> norm x * norm y"
+  "norm (cinner x y) \<le> norm x * norm y"
   by (simp add: local.norm_cauchy_schwarz)
 
 end

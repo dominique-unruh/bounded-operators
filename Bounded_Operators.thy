@@ -894,8 +894,8 @@ lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^s
 
 
 lemma applyOp_bot[simp]:
-fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
-shows "U *\<^sub>s bot = bot"
+  fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
+  shows "U *\<^sub>s bot = bot"
 proof-
   have \<open>closed {0::'a}\<close>
     using Topological_Spaces.t1_space_class.closed_singleton by blast
@@ -1097,7 +1097,7 @@ proof-
 qed
 
 lemma applyOpSpace_id[simp]: 
- "idOp *\<^sub>s \<psi> = \<psi>"
+  "idOp *\<^sub>s \<psi> = \<psi>"
 proof-
   have \<open>closed_subspace ( space_as_set \<psi>)\<close>
     using space_as_set by blast    
@@ -1963,7 +1963,7 @@ proof (rule isProjector_I)
     using that
     by (simp add: isProjector_algebraic)
 qed
-                                     
+
 lemma applyOp0[simp]: "0 *\<^sub>v \<psi> = 0"
   apply transfer by simp
 
@@ -2024,7 +2024,7 @@ proof-
   thus ?thesis 
     apply (auto simp: rel_interior_ball)
     using assms
-    apply (simp add: complex_vector.subspace_0)
+     apply (simp add: complex_vector.subspace_0)
     apply (rule 1)
     by blast
 qed
@@ -2172,7 +2172,7 @@ next
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
     hence "(U *\<^sub>o Uinv) *\<^sub>s INFUV = INFUV"
       apply transfer apply auto
-      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
+       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     thus ?thesis
       by (simp add: timesOp_assoc_linear_space)
@@ -2192,7 +2192,7 @@ next
       using less_eq_linear_space.rep_eq that by blast
     hence "(Uinv *\<^sub>o U) *\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
-      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
+       apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     thus ?thesis
       unfolding INFV_def
@@ -2272,18 +2272,18 @@ proof
 qed
 
 lemma norm_of_bounded:
-\<open>norm (L *\<^sub>v z) \<le> norm z * norm L\<close>
+  \<open>norm (L *\<^sub>v z) \<le> norm z * norm L\<close>
   apply transfer
   by (simp add: bounded_clinear.bounded_linear linordered_field_class.sign_simps(24) onorm)
 
 lemma norm_of_bounded1:
-\<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
+  \<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
   using norm_of_bounded
   by (metis mult_cancel_right1) 
 
 lemma norm_of_bounded2:
-\<open>norm z \<le> 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
-  proof (cases \<open>z = 0\<close>)
+  \<open>norm z \<le> 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
+proof (cases \<open>z = 0\<close>)
   show "norm (L *\<^sub>v z) \<le> norm L"
     if "norm z \<le> 1"
       and "z = 0"
@@ -2302,18 +2302,18 @@ lemma norm_of_bounded3:
   shows \<open>norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
   apply transfer
 proof - (* sledgehammer *)
-fix Sa :: "'a \<Rightarrow> 'b"
+  fix Sa :: "'a \<Rightarrow> 'b"
   assume a1: "bounded_clinear Sa"
-have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
-using norm_ball by fastforce
+  have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
+    using norm_ball by fastforce
   thus "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
-using a1 by (simp add: bounded_clinear.bounded_linear)
+    using a1 by (simp add: bounded_clinear.bounded_linear)
 qed
 
 section \<open>Inverse\<close>
 
 lemma inverse_bounded_uniq':
-\<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> A *\<^sub>o B' = idOp \<Longrightarrow> B' *\<^sub>o A = idOp \<Longrightarrow> B = B'\<close>
+  \<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> A *\<^sub>o B' = idOp \<Longrightarrow> B' *\<^sub>o A = idOp \<Longrightarrow> B = B'\<close>
 proof-
   assume \<open>A *\<^sub>o B = idOp\<close> and \<open>B *\<^sub>o A = idOp\<close> and \<open>A *\<^sub>o B' = idOp\<close> and \<open>B' *\<^sub>o A = idOp\<close>
   have \<open>B *\<^sub>v x = B' *\<^sub>v x\<close>
@@ -2343,17 +2343,17 @@ proof-
 qed
 
 definition invertible_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> where
- \<open>invertible_bounded A = (\<exists> B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+  \<open>invertible_bounded A = (\<exists> B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
 
 definition inverse_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> ('b,'a) bounded\<close> where
- \<open>inverse_bounded A = (THE B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+  \<open>inverse_bounded A = (THE B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
 
 lemma inverse_bounded_well_defined:
-\<open>invertible_bounded A \<Longrightarrow> \<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
+  \<open>invertible_bounded A \<Longrightarrow> \<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
   by (meson inverse_bounded_uniq' invertible_bounded_def)
 
 lemma inverse_bounded_left:
-\<open>invertible_bounded A \<Longrightarrow> (inverse_bounded A) *\<^sub>o A = idOp\<close>
+  \<open>invertible_bounded A \<Longrightarrow> (inverse_bounded A) *\<^sub>o A = idOp\<close>
 proof-
   assume \<open>invertible_bounded A\<close>
   hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
@@ -2365,7 +2365,7 @@ proof-
 qed
 
 lemma inverse_bounded_right:
-\<open>invertible_bounded A \<Longrightarrow> A *\<^sub>o (inverse_bounded A) = idOp\<close>
+  \<open>invertible_bounded A \<Longrightarrow> A *\<^sub>o (inverse_bounded A) = idOp\<close>
 proof-
   assume \<open>invertible_bounded A\<close>
   hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
@@ -2377,7 +2377,7 @@ proof-
 qed
 
 lemma inverse_bounded_uniq:
-\<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> inverse_bounded A = B\<close>
+  \<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> inverse_bounded A = B\<close>
   using inverse_bounded_left inverse_bounded_right inverse_bounded_uniq' invertible_bounded_def 
   by blast
 
@@ -2399,7 +2399,7 @@ consts
 
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>s S = 0"
   by (metis (no_types, hide_lams) bot_eq_sup_iff cancel_comm_monoid_add_class.diff_cancel cdot_plus_distrib imageOp_Proj sup_top_right timesOp_assoc_linear_space timesOp_minus zero_linear_space_def) 
-  
+
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S"
   for S::\<open>'a::complex_normed_vector linear_space\<close>
   using Complex_Vector_Spaces.timesScalarSpace_not0 by blast
@@ -2459,17 +2459,17 @@ lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C
 
 (* TODO: remove both (they already exist)*)
 lemma apply_idOp_space[simp]: "idOp *\<^sub>s S = S"
-and apply_0[simp]: "U *\<^sub>v 0 = 0"
-for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
-  and U :: "('a,'b::complex_normed_vector) bounded" and V :: "('b,'a) bounded"
-  apply simp
+  and apply_0[simp]: "U *\<^sub>v 0 = 0"
+  for \<psi> :: "'a::complex_normed_vector" and S :: "'a linear_space"
+    and U :: "('a,'b::complex_normed_vector) bounded" and V :: "('b,'a) bounded"
+   apply simp
   apply simp
   done
 
 lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
-  
+
 
 (* FIXME: what is the definition corresponding to this "consts"?
 TODO: definition is above
@@ -2489,7 +2489,7 @@ lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<
 
 lemma scaleC_eigenspace [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a*\<^sub>CA) = eigenspace (b/a) A"
   unfolding eigenspace_def
-  proof -
+proof -
   assume a1: "a \<noteq> 0"
   then have "a *\<^sub>C A - b *\<^sub>C idOp = a *\<^sub>C (A - (b / a) *\<^sub>C idOp)"
     by simp
@@ -2502,7 +2502,7 @@ lemma isProjector_Proj[simp]: "isProjector (Proj S)"
 
 lemma proj_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
-    for a::complex and \<psi>::"'a::chilbert_space"
+  for a::complex and \<psi>::"'a::chilbert_space"
   by simp
 
 theorem banach_steinhaus_bounded:
@@ -2513,7 +2513,7 @@ theorem banach_steinhaus_bounded:
 proof-
   fix F::\<open>'c \<Rightarrow> 'a \<Rightarrow> 'b\<close>
   assume \<open>pred_fun top bounded_clinear F\<close> and
-         \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
+    \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
   have \<open>\<And>n. bounded_linear (F n)\<close>
     using \<open>pred_fun top bounded_clinear F\<close>
     apply auto
@@ -2523,8 +2523,85 @@ proof-
       banach_steinhaus[where f = "F"]
     by blast
 qed
- 
-  
+
+theorem riesz_frechet_representation_bounded_existence_uniq:
+  fixes f::\<open>('a::chilbert_space, complex) bounded\<close>
+  shows \<open>\<exists>!t. \<forall>x.  f *\<^sub>v x = \<langle>t, x\<rangle>\<close>
+  apply transfer apply auto
+   apply (simp add: riesz_frechet_representation_existence)
+proof-
+  fix y t::'a and f:: \<open>'a \<Rightarrow> complex\<close>
+  assume \<open>bounded_clinear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
+    and \<open>\<forall>x. f x = \<langle>t, x\<rangle>\<close>
+  have  \<open>\<langle>y - t, x\<rangle> = 0\<close> 
+    for x
+  proof-
+    have \<open>\<langle>y - t, x\<rangle> = \<langle>y, x\<rangle> - \<langle>t, x\<rangle>\<close>
+      by (simp add: cinner_diff_left)
+    also have \<open>\<langle>y, x\<rangle> - \<langle>t, x\<rangle> = 0\<close>
+      using  \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
+      by simp
+    finally show ?thesis 
+      by blast
+  qed
+  hence \<open>y - t = 0\<close>
+    using cinner_eq_zero_iff by blast    
+  thus \<open>t = y\<close>
+    by auto
+qed
+
+theorem riesz_frechet_representation_bounded_norm:
+  fixes f::\<open>('a::chilbert_space, complex) bounded\<close>
+  assumes \<open>\<And> x.  f *\<^sub>v x = \<langle>t, x\<rangle>\<close>
+  shows \<open>norm f = norm t\<close>
+  using assms apply transfer
+proof-
+  fix f::\<open>'a \<Rightarrow> complex\<close> and t
+  assume \<open>bounded_clinear f\<close> and \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
+  from  \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
+  have \<open>(norm (f x)) / (norm x) \<le> norm t\<close>
+    for x
+  proof(cases \<open>norm x = 0\<close>)
+    case True
+    thus ?thesis by simp
+  next
+    case False
+    have \<open>norm (f x) = norm (\<langle>t, x\<rangle>)\<close>
+      using \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> by simp
+    also have \<open>norm \<langle>t, x\<rangle> \<le> norm t * norm x\<close>
+      by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)
+    finally have \<open>norm (f x) \<le> norm t * norm x\<close>
+      by blast
+    thus ?thesis
+      by (metis False linordered_field_class.divide_right_mono nonzero_mult_div_cancel_right norm_ge_zero) 
+  qed
+  moreover have \<open>(norm (f t)) / (norm t) = norm t\<close>
+  proof(cases \<open>norm t = 0\<close>)
+    case True
+    thus ?thesis
+      by simp 
+  next
+    case False
+    have \<open>f t = \<langle>t, t\<rangle>\<close>
+      using \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> by blast
+    also have \<open>\<dots> = norm \<langle>t, t\<rangle>\<close>
+      using complex_of_real_cmod by auto
+    also have \<open>\<dots> = (norm t)^2\<close>
+      by (simp add: power2_norm_eq_cinner)
+    also have \<open>\<dots> = (norm t)*(norm t)\<close>
+      by (simp add: power2_eq_square)
+    finally have \<open>f t = (norm t)*(norm t)\<close>
+      by blast
+    thus ?thesis
+      by (metis False \<open>\<langle>t, t\<rangle> = complex_of_real (cmod \<langle>t, t\<rangle>)\<close> \<open>f t = \<langle>t, t\<rangle>\<close> nonzero_eq_divide_eq of_real_eq_iff) 
+  qed
+  ultimately have \<open>Sup {(norm (f x)) / (norm x)| x. True} = norm t\<close>
+    by (smt cSup_eq_maximum mem_Collect_eq)    
+  moreover have \<open>Sup {(norm (f x)) / (norm x)| x. True} = (SUP x. (norm (f x)) / (norm x))\<close>
+    by (simp add: full_SetCompr_eq)    
+  ultimately show \<open>onorm f = norm t\<close>
+    by (simp add: onorm_def) 
+qed
 
 unbundle no_bounded_notation
 
