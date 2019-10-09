@@ -4214,6 +4214,8 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+thm Gram_Schmidt
+
 hide_fact Gram_Schmidt0
 
 lemma Pythagorean_generalized':

@@ -2551,9 +2551,10 @@ proof-
 qed
 
 theorem riesz_frechet_representation_bounded_norm:
+  includes notation_norm
   fixes f::\<open>('a::chilbert_space, complex) bounded\<close>
   assumes \<open>\<And> x.  f *\<^sub>v x = \<langle>t, x\<rangle>\<close>
-  shows \<open>norm f = norm t\<close>
+  shows \<open>\<parallel>f\<parallel> = \<parallel>t\<parallel>\<close>
   using assms apply transfer
 proof-
   fix f::\<open>'a \<Rightarrow> complex\<close> and t
