@@ -2227,10 +2227,10 @@ lemma times_applyOp: "(A *\<^sub>o B) *\<^sub>v \<psi> = A *\<^sub>v (B *\<^sub>
 
 lemma mult_inf_distrib[simp]:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
-    and B C::"'a linear_space"
+    and X Y::"'a linear_space"
   assumes "isometry U"
-  shows "U *\<^sub>s (inf B C) = inf (U *\<^sub>s B) (U *\<^sub>s C)"
-  using mult_INF[where V="\<lambda>b. if b then B else C" and U=U]
+  shows "U *\<^sub>s (inf X Y) = inf (U *\<^sub>s X) (U *\<^sub>s Y)"
+  using mult_INF[where V="\<lambda>b. if b then X else Y" and U=U]
   unfolding INF_UNIV_bool_expand
   using assms by auto
 
