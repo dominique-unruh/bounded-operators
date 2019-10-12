@@ -21,7 +21,7 @@ theory Finite_Dimensional_Case
   imports 
     "HOL-ex.Sketch_and_Explore"
     Finite_Rank_Operators
-    Complex_Bounded_Operators
+    Bounded_Operators
     Jordan_Normal_Form.Matrix
     Complex_L2
 

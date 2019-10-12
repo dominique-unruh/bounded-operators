@@ -20,7 +20,7 @@ References:
 theory Finite_Rank_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
-    Complex_Bounded_Operators
+    Bounded_Operators
     Complex_L2
 begin
 

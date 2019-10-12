@@ -2614,6 +2614,7 @@ lemma bounded_operator_basis:
 proof-
   fix S::\<open>'a set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b\<close>
   assume \<open>complex_independent S\<close> and \<open>complex_vector.span S = UNIV\<close>
+    and \<open>finite {u. \<phi> u \<noteq> 0}\<close>
   have \<open>\<exists> T t. T \<subseteq> S \<and> finite T \<and> x = (\<Sum>a\<in>T. t a *\<^sub>C a)\<close>
     for x::'a
   proof -
@@ -2632,6 +2633,10 @@ proof-
     (* Here we use \<open>finite {x | x. \<phi> x \<noteq> 0}\<close> *)
   proof 
     define B where \<open>B = {x | x. \<phi> x \<noteq> 0}\<close>
+    have \<open>finite B\<close>
+      unfolding B_def
+      using \<open>finite {u. \<phi> u \<noteq> 0}\<close>
+      by auto
     have \<open>f x = (\<Sum>a\<in>B. (t x a) *\<^sub>C (\<phi> a))\<close>
       for x
       sorry
@@ -2643,14 +2648,62 @@ proof-
       proof-
         have \<open>a \<in> B \<Longrightarrow> t (b1 + b2) a = t b1 a + t b2 a\<close>
           for a
-          sorry         
-        thus ?thesis using \<open>\<And> x. f x = (\<Sum>a\<in>B. (t x a) *\<^sub>C (\<phi> a))\<close>
-          sorry
+        proof-
+          assume \<open>a \<in> B\<close>
+          have \<open>b1 = (\<Sum>a\<in>T b1. (t b1 a) *\<^sub>C a)\<close>
+            using \<open>\<And> x::'a. x = (\<Sum>a\<in>T x. (t x a) *\<^sub>C a)\<close>
+            by blast
+          moreover have \<open>b2 = (\<Sum>a\<in>T b2. (t b2 a) *\<^sub>C a)\<close>
+            using \<open>\<And> x::'a. x = (\<Sum>a\<in>T x. (t x a) *\<^sub>C a)\<close>
+            by blast
+          ultimately have \<open>b1 + b2 = (\<Sum>a\<in>T b1. (t b1 a) *\<^sub>C a) 
+                                   + (\<Sum>a\<in>T b2. (t b2 a) *\<^sub>C a)\<close>
+            by auto
+
+          show ?thesis sorry
+        qed
+        thus ?thesis 
+          by (simp add: \<open>\<And>a. a \<in> B \<Longrightarrow> t (b1 + b2) a = t b1 a + t b2 a\<close> \<open>\<And>x. f x = (\<Sum>a\<in>B. t x a *\<^sub>C \<phi> a)\<close> scaleC_add_left sum.distrib) 
       qed
       show "f (r *\<^sub>C b) = r *\<^sub>C f b"
         for r :: complex
           and b :: 'a
-        sorry
+      proof-
+        have \<open>f b = (\<Sum>a\<in>B. t b a *\<^sub>C \<phi> a)\<close>
+          using \<open>\<And>x. f x = (\<Sum>a\<in>B. t x a *\<^sub>C \<phi> a)\<close>
+          by blast
+        moreover have \<open>f (r *\<^sub>C b) = (\<Sum>a\<in>B. t (r *\<^sub>C b) a *\<^sub>C \<phi> a)\<close>
+          using \<open>\<And>x. f x = (\<Sum>a\<in>B. t x a *\<^sub>C \<phi> a)\<close>
+          by blast
+        moreover have \<open>(\<Sum>a\<in>B. t (r *\<^sub>C b) a *\<^sub>C \<phi> a) = r *\<^sub>C (\<Sum>a\<in>B. t b a *\<^sub>C \<phi> a)\<close>
+        proof-
+          have \<open>a\<in>B \<Longrightarrow> t (r *\<^sub>C b) a = r * t b a\<close>
+            for a
+          proof-
+            assume \<open>a\<in>B\<close>
+            have \<open>b = (\<Sum>a\<in>T b. (t b a) *\<^sub>C a)\<close>
+              using \<open>\<And> x::'a. x = (\<Sum>a\<in>T x. (t x a) *\<^sub>C a)\<close>
+              by blast
+            hence \<open>r *\<^sub>C b = r *\<^sub>C (\<Sum>a\<in>T b. (t b a) *\<^sub>C a)\<close>
+              by simp
+            also have \<open>\<dots> = (\<Sum>a\<in>T b. r *\<^sub>C ((t b a) *\<^sub>C a))\<close>
+              using scaleC_right.sum by blast
+            also have \<open>\<dots> = (\<Sum>a\<in>T b. (r * (t b a)) *\<^sub>C a)\<close>
+              by auto
+            finally have \<open>r *\<^sub>C b = (\<Sum>a\<in>T b. (r * (t b a)) *\<^sub>C a)\<close>
+              by blast
+            moreover have \<open>r *\<^sub>C b = (\<Sum>a\<in>T (r *\<^sub>C b). (t (r *\<^sub>C b) a) *\<^sub>C a)\<close>
+              using \<open>\<And>x. x = (\<Sum>a\<in>T x. t x a *\<^sub>C a)\<close> by blast
+            moreover have \<open>T b = T (r *\<^sub>C b)\<close>
+              sorry
+            ultimately show ?thesis sorry
+          qed
+          thus ?thesis
+            by (simp add: \<open>\<And>a. a \<in> B \<Longrightarrow> t (r *\<^sub>C b) a = r * t b a\<close> complex_vector.scale_sum_right)             
+        qed
+        ultimately show ?thesis 
+          by auto
+      qed
     qed
     show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
       sorry
