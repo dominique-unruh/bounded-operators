@@ -2641,6 +2641,46 @@ proof-
     by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
 qed
 
+lemma span_explicit_finite:
+  assumes \<open>complex_vector.span S = UNIV\<close> 
+    and \<open>complex_vector.independent S\<close>
+    and \<open>finite S\<close>
+  shows \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+proof-
+  have \<open>x \<in> complex_vector.span S\<close>
+    using \<open>complex_vector.span S = UNIV\<close>
+    by blast
+  hence \<open>\<exists> T t'. finite T \<and> T \<subseteq> S \<and> x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
+    using complex_vector.span_explicit[where b = S]
+    by auto
+  then obtain T t' where \<open>finite T\<close> and \<open>T \<subseteq> S\<close> and
+    \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
+    by blast
+  define t where \<open>t s = (if s\<in>T then t' s else 0)\<close> for s
+  have \<open>(\<Sum>s\<in>T. t s *\<^sub>C s) + (\<Sum>s\<in>S-T. t s *\<^sub>C s)
+    = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+    using \<open>T \<subseteq> S\<close>
+    by (metis (no_types, lifting) assms(3) ordered_field_class.sign_simps(2) sum.subset_diff)
+  moreover have \<open>(\<Sum>s\<in>S-T. t s *\<^sub>C s) = 0\<close>
+  proof-
+    have \<open>s\<in>S-T \<Longrightarrow> t s *\<^sub>C s = 0\<close>
+      for s
+    proof-
+      assume \<open>s\<in>S-T\<close>
+      hence \<open>t s = 0\<close>
+        unfolding t_def
+        by auto
+      thus ?thesis by auto
+    qed
+    thus ?thesis
+      by (simp add: sum.neutral) 
+  qed
+  ultimately have \<open>x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+    using \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close> t_def by auto
+  thus ?thesis by blast
+qed
+
+
 section \<open>Recovered theorems\<close>
 
 lemma [vector_add_divide_simps]:
