@@ -2609,8 +2609,16 @@ qed
 lemma bounded_operator_independent_finite:
   fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.independent S\<close> and \<open>finite S\<close>
-  shows \<open>\<exists> F::('a, 'b) bounded. \<forall>s\<in>S. F *\<^sub>v s = \<phi> s\<close>
-  sorry
+  shows \<open>\<exists>F. \<forall>s\<in>S. F *\<^sub>v s = \<phi> s\<close>
+proof-
+  define f where \<open>f x = (\<Sum>s\<in>S. \<langle>s, x\<rangle> *\<^sub>C \<phi> s)\<close> for x
+  have \<open>bounded_clinear f\<close>
+    sorry
+  hence \<open>\<exists> F. (*\<^sub>v) F = f\<close>
+    using times_bounded_vec_cases by auto
+
+  show ?thesis sorry
+qed
 
 unbundle no_bounded_notation
 
