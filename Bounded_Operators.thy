@@ -2604,20 +2604,141 @@ proof-
     by (simp add: onorm_def) 
 qed
 
+(* TODO: move to Complex_Vector_Spaces.thy *)
+lemma span_explicit_finite:
+  assumes \<open>complex_vector.span S = UNIV\<close> 
+    and \<open>complex_vector.independent S\<close>
+    and \<open>finite S\<close>
+  shows \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+proof-
+  have \<open>x \<in> complex_vector.span S\<close>
+    using \<open>complex_vector.span S = UNIV\<close>
+    by blast
+  hence \<open>\<exists> T t'. finite T \<and> T \<subseteq> S \<and> x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
+    using complex_vector.span_explicit[where b = S]
+    by auto
+  then obtain T t' where \<open>finite T\<close> and \<open>T \<subseteq> S\<close> and
+    \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
+    by blast
+  define t where \<open>t s = (if s\<in>T then t' s else 0)\<close> for s
+  have \<open>(\<Sum>s\<in>T. t s *\<^sub>C s) + (\<Sum>s\<in>S-T. t s *\<^sub>C s)
+    = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+    using \<open>T \<subseteq> S\<close>
+    by (metis (no_types, lifting) assms(3) ordered_field_class.sign_simps(2) sum.subset_diff)
+  moreover have \<open>(\<Sum>s\<in>S-T. t s *\<^sub>C s) = 0\<close>
+  proof-
+    have \<open>s\<in>S-T \<Longrightarrow> t s *\<^sub>C s = 0\<close>
+      for s
+    proof-
+      assume \<open>s\<in>S-T\<close>
+      hence \<open>t s = 0\<close>
+        unfolding t_def
+        by auto
+      thus ?thesis by auto
+    qed
+    thus ?thesis
+      by (simp add: sum.neutral) 
+  qed
+  ultimately have \<open>x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+    using \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close> t_def by auto
+  thus ?thesis by blast
+qed
 
 (* NEW *)
-lemma bounded_operator_independent_finite:
+lemma bounded_operator_basis_existence_uniq:
   fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
-  assumes \<open>complex_vector.independent S\<close> and \<open>finite S\<close>
-  shows \<open>\<exists>F. \<forall>s\<in>S. F *\<^sub>v s = \<phi> s\<close>
+  assumes \<open>complex_vector.span S = UNIV\<close> 
+    and \<open>complex_vector.independent S\<close>
+    and \<open>finite S\<close>
+  shows \<open>\<exists>!F. \<forall>s\<in>S. F *\<^sub>v s = \<phi> s\<close>
 proof-
-  define f where \<open>f x = (\<Sum>s\<in>S. \<langle>s, x\<rangle> *\<^sub>C \<phi> s)\<close> for x
+  have \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+    for x
+    by (simp add: span_explicit_finite assms(1) assms(2) assms(3))
+  hence \<open>\<exists> t. \<forall> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+    by metis
+  then obtain t where \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+    by blast
+  define f where \<open>f x = (\<Sum>s\<in>S. t x s *\<^sub>C \<phi> s)\<close> for x
   have \<open>bounded_clinear f\<close>
-    sorry
+  proof
+    show "clinear f"
+      unfolding clinear_def proof
+      show "f (b1 + b2) = f b1 + f b2"
+        for b1 :: 'a
+          and b2 :: 'a
+      proof-
+        have \<open>b1 = (\<Sum>s\<in>S. t b1 s *\<^sub>C s)\<close>
+          using \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+          by blast
+        moreover have \<open>b2 = (\<Sum>s\<in>S. t b2 s *\<^sub>C s)\<close>
+          using \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+          by blast
+        ultimately have \<open>b1 + b2 = (\<Sum>s\<in>S. (t b1 s *\<^sub>C s + t b2 s *\<^sub>C s))\<close>
+          by (metis (mono_tags, lifting) sum.cong sum.distrib)
+        also have \<open>\<dots> = (\<Sum>s\<in>S. (t b1 s + t b2 s) *\<^sub>C s)\<close>
+          by (metis scaleC_add_left)
+        finally have \<open>b1 + b2 = (\<Sum>s\<in>S. (t b1 s + t b2 s) *\<^sub>C s)\<close>
+          by blast
+        moreover have \<open>b1 + b2 = (\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C s)\<close>
+          by (simp add: \<open>\<And>x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>)          
+        ultimately have \<open>(\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C s) = (\<Sum>s\<in>S. (t b1 s + t b2 s) *\<^sub>C s)\<close>
+          by simp
+        hence \<open>0 = (\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C s) - (\<Sum>s\<in>S. (t b1 s + t b2 s) *\<^sub>C s)\<close>
+          by simp
+        also have \<open>\<dots> = (\<Sum>s\<in>S. ( t (b1 + b2) s ) *\<^sub>C s - (t b1 s + t b2 s) *\<^sub>C s) \<close>
+          by (simp add: sum_subtractf)
+        also have \<open>\<dots> = (\<Sum>s\<in>S. ( t (b1 + b2) s - (t b1 s + t b2 s)) *\<^sub>C s)\<close>
+          by (metis (no_types, lifting) scaleC_left.diff)
+        finally have \<open>0 = (\<Sum>s\<in>S. ( t (b1 + b2) s - (t b1 s + t b2 s)) *\<^sub>C s)\<close>
+          by blast
+        hence \<open>(\<Sum>s\<in>S. ( t (b1 + b2) s - (t b1 s + t b2 s)) *\<^sub>C s) = 0\<close>
+          by auto
+        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
+          for s
+          using \<open>complex_vector.independent S\<close>
+          by (metis (full_types) assms(3) complex_vector.dependent_finite)
+        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s = t b1 s + t b2 s\<close>
+          for s
+          by simp
+        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s *\<^sub>C (\<phi> s)  = t b1 s *\<^sub>C (\<phi> s) + t b2 s *\<^sub>C (\<phi> s)\<close>
+          for s
+          by (simp add: scaleC_add_left)
+        hence \<open>(\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C (\<phi> s)) = (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s) + t b2 s *\<^sub>C (\<phi> s))\<close>
+          by auto
+        also have \<open>\<dots> = (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s)) + (\<Sum>s\<in>S. t b2 s *\<^sub>C (\<phi> s))\<close>
+          by (simp add: sum.distrib)
+        finally have \<open>(\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C (\<phi> s)) =
+  (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s)) + (\<Sum>s\<in>S. t b2 s *\<^sub>C (\<phi> s))\<close>
+          by blast
+        thus ?thesis unfolding f_def 
+          by blast
+      qed
+      show "f (r *\<^sub>C b) = r *\<^sub>C f b"
+        for r :: complex
+          and b :: 'a
+      proof-
+
+        show ?thesis sorry
+      qed
+    qed
+    show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+      sorry
+  qed
   hence \<open>\<exists> F. (*\<^sub>v) F = f\<close>
     using times_bounded_vec_cases by auto
+  then obtain F where \<open>(*\<^sub>v) F = f\<close>
+    by blast
 
-  show ?thesis sorry
+  have "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
+    for s
+    sorry
+  moreover have "G = F"
+    if "\<forall>s\<in>S. G *\<^sub>v s = \<phi> s"
+    for G :: "('a, 'b) bounded"
+    using that sorry
+  ultimately show ?thesis
+    by blast 
 qed
 
 unbundle no_bounded_notation

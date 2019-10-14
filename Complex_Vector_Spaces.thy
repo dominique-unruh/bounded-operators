@@ -2430,7 +2430,7 @@ section \<open>Unsorted\<close>
 
 definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
   where \<open>is_basis S = (
-  \<not>(complex_vector.dependent S) \<and>
+  (complex_vector.independent S) \<and>
   closure (complex_vector.span S) = UNIV
 )\<close>
 
