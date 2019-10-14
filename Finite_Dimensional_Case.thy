@@ -174,26 +174,6 @@ locale clinear_vec =
   assumes add:  \<open>\<And> x y. dim_vec x = n \<Longrightarrow> dim_vec y = n \<Longrightarrow> f (x + y) = f x + f y\<close>
     and mults:  \<open>\<And> c. \<And> x. dim_vec x = n \<Longrightarrow> f (c \<cdot>\<^sub>v x) = c *\<^sub>C (f x)\<close>
 
-lemma clinear_ell2_map_left:
-  fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
-  assumes \<open>clinear_vec n f\<close>   
-  shows \<open>clinear (fun_to_ell2 n f)\<close>
-proof
-  show "fun_to_ell2 n f (x + y) = fun_to_ell2 n f x + fun_to_ell2 n f y"
-    for x :: "nat ell2"
-      and y :: "nat ell2"
-    using  \<open>clinear_vec n f\<close>   
-    unfolding fun_to_ell2_def vec_def Abs_vec_inverse clinear_vec_def
-    by (smt Matrix.vec_def dim_vec eq_vecI index_add_vec(1) index_add_vec(2) index_vec plus_ell2.rep_eq)
-
-  show "fun_to_ell2 n f (r *\<^sub>C x) = r *\<^sub>C fun_to_ell2 n f x"
-    for r :: complex
-      and x :: "nat ell2"
-    using  \<open>clinear_vec n f\<close>   
-    unfolding fun_to_ell2_def vec_def Abs_vec_inverse clinear_vec_def
-    by (smt Matrix.vec_def dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec scaleC_ell2.rep_eq)
-qed
-
 lemma clinear_ell2_map_left_converse:
   fixes n :: nat and f :: \<open>complex vec \<Rightarrow> 'a::complex_vector\<close>
   assumes \<open>clinear (fun_to_ell2 n f)\<close>    
@@ -209,7 +189,7 @@ proof
         (fun_to_ell2 n f) (vec_to_ell2 x) +  (fun_to_ell2 n f) (vec_to_ell2 y)\<close>
       using \<open>clinear (fun_to_ell2 n f)\<close>
       unfolding clinear_def Modules.additive_def
-      by blast
+      by (simp add: assms complex_vector.linear_add)      
     moreover have \<open>vec_to_ell2 (x + y) = vec_to_ell2 x + vec_to_ell2 y\<close>
       by (simp add: that(1) that(2) vec_to_ell2_add)
     ultimately have  \<open>(fun_to_ell2 n f) (vec_to_ell2 (x + y)) = 
@@ -228,7 +208,8 @@ proof
     if "dim_vec (x::complex Matrix.vec) = n"
     for c :: complex
       and x :: "complex Matrix.vec"
-    by (metis (no_types, lifting) assms clinear.axioms(2) clinear_axioms_def fun_to_ell2_well_defined index_smult_vec(2) that vec_to_ell2_smult)   
+    by (metis (full_types) assms complex_vector.linear_scale fun_to_ell2_well_defined index_smult_vec(2) that vec_to_ell2_smult)
+       
 qed
 
 
