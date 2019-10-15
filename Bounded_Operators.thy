@@ -2621,11 +2621,13 @@ proof-
   then obtain t where \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
     by blast
   define f where \<open>f x = (\<Sum>s\<in>S. t x s *\<^sub>C \<phi> s)\<close> for x
-  have \<open>bounded_clinear f\<close>
+  have \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. t x s)\<close>
+    for s
   proof
-    show "clinear f"
+    show "clinear (\<lambda>x. t x s)"
+      if "s \<in> S"
       unfolding clinear_def proof
-      show "f (b1 + b2) = f b1 + f b2"
+      show "t (b1 + b2) s = t b1 s + t b2 s"
         for b1 :: 'a
           and b2 :: 'a
       proof-
@@ -2655,27 +2657,15 @@ proof-
           by blast
         hence \<open>(\<Sum>s\<in>S. ( t (b1 + b2) s - (t b1 s + t b2 s)) *\<^sub>C s) = 0\<close>
           by auto
-        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
-          for s
-          using \<open>complex_vector.independent S\<close>
+        hence \<open>t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
+          using \<open>complex_vector.independent S\<close> that
           by (metis (full_types) assms(3) complex_vector.dependent_finite)
-        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s = t b1 s + t b2 s\<close>
-          for s
+        hence \<open>t (b1 + b2) s = t b1 s + t b2 s\<close>
           by simp
-        hence \<open>s \<in> S \<Longrightarrow> t (b1 + b2) s *\<^sub>C (\<phi> s)  = t b1 s *\<^sub>C (\<phi> s) + t b2 s *\<^sub>C (\<phi> s)\<close>
-          for s
-          by (simp add: scaleC_add_left)
-        hence \<open>(\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C (\<phi> s)) = (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s) + t b2 s *\<^sub>C (\<phi> s))\<close>
-          by auto
-        also have \<open>\<dots> = (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s)) + (\<Sum>s\<in>S. t b2 s *\<^sub>C (\<phi> s))\<close>
-          by (simp add: sum.distrib)
-        finally have \<open>(\<Sum>s\<in>S. t (b1 + b2) s *\<^sub>C (\<phi> s)) =
-  (\<Sum>s\<in>S. t b1 s *\<^sub>C (\<phi> s)) + (\<Sum>s\<in>S. t b2 s *\<^sub>C (\<phi> s))\<close>
-          by blast
-        thus ?thesis unfolding f_def 
-          by blast
+        thus ?thesis
+          by simp
       qed
-      show "f (r *\<^sub>C b) = r *\<^sub>C f b"
+      show "t (r *\<^sub>C b) s = r *\<^sub>C t b s"
         for r :: complex
           and b :: 'a
       proof-
@@ -2704,37 +2694,32 @@ proof-
           by blast
         hence \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s  - (r * t b s)) *\<^sub>C s) = 0\<close>
           by auto
-        hence \<open>s \<in> S \<Longrightarrow> t (r *\<^sub>C b) s  - (r * t b s) = 0\<close>
-          for s
+        hence \<open>t (r *\<^sub>C b) s  - (r * t b s) = 0\<close>
         proof -
-          assume "s \<in> S"
-          then have "\<And>f. (\<Sum>a\<in>S. f a *\<^sub>C a) \<noteq> 0 \<or> f s = 0"
-            using \<open>complex_independent S\<close> assms(3) complex_vector.dependent_finite by auto
+          have "\<And>f. (\<Sum>a\<in>S. f a *\<^sub>C a) \<noteq> 0 \<or> f s = 0"
+            using \<open>complex_independent S\<close> assms(3) complex_vector.dependent_finite 
+            that by auto
           then show ?thesis
-            using \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s - r * t b s) *\<^sub>C s) = 0\<close> by fastforce
+            using \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s - r * t b s) *\<^sub>C s) = 0\<close> 
+            by fastforce
         qed
-        hence \<open>s \<in> S \<Longrightarrow> t (r *\<^sub>C b) s  = r * t b s\<close>
-          for s
+        hence \<open>t (r *\<^sub>C b) s  = r * t b s\<close>
           by auto
-        hence \<open>s \<in> S \<Longrightarrow> t (r *\<^sub>C b) s *\<^sub>C (\<phi> s)  = (r * t b s) *\<^sub>C (\<phi> s)\<close>
-          for s
-          by (simp add: scaleC_add_left)
-        hence \<open>(\<Sum>s\<in>S. t (r *\<^sub>C b) s *\<^sub>C (\<phi> s)) = (\<Sum>s\<in>S. (r * t b s) *\<^sub>C (\<phi> s))\<close>
-          by (meson sum.cong)
-        also have \<open>\<dots> = (\<Sum>s\<in>S. r *\<^sub>C (t b s *\<^sub>C (\<phi> s)))\<close>
-          by auto
-        also have \<open>\<dots> = r *\<^sub>C (\<Sum>s\<in>S. t b s *\<^sub>C (\<phi> s))\<close>
-          by (metis (full_types) scaleC_right.sum)
-        finally have \<open>(\<Sum>s\<in>S. t (r *\<^sub>C b) s *\<^sub>C \<phi> s) =
-                        r *\<^sub>C (\<Sum>s\<in>S. t b s *\<^sub>C \<phi> s)\<close>
-          by blast
-        thus ?thesis unfolding f_def 
-          by blast
+        thus ?thesis
+          by auto 
       qed
     qed
-    show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-      sorry
+    show "\<exists>K. \<forall>x. cmod (t x s) \<le> norm x * K"
+      if "s \<in> S"
+      using that sorry
   qed
+  hence \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. (t x s) *\<^sub>C \<phi> s )\<close>
+    for s
+    by (simp add: bounded_clinear_scaleC_const)
+  hence \<open>bounded_clinear f\<close>
+    unfolding f_def
+    using Complex_Vector_Spaces.bounded_clinear_sum[where I = S and f = "\<lambda> s. \<lambda>x. t x s *\<^sub>C \<phi> s"]
+    by auto
   hence \<open>\<exists> F. (*\<^sub>v) F = f\<close>
     using times_bounded_vec_cases by auto
   then obtain F where \<open>(*\<^sub>v) F = f\<close>
