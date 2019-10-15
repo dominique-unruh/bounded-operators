@@ -2698,7 +2698,7 @@ proof-
         proof -
           have "\<And>f. (\<Sum>a\<in>S. f a *\<^sub>C a) \<noteq> 0 \<or> f s = 0"
             using \<open>complex_independent S\<close> assms(3) complex_vector.dependent_finite 
-            that by auto
+              that by auto
           then show ?thesis
             using \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s - r * t b s) *\<^sub>C s) = 0\<close> 
             by fastforce
@@ -2709,13 +2709,16 @@ proof-
           by auto 
       qed
     qed
-    show "\<exists>K. \<forall>x. cmod (t x s) \<le> norm x * K"
+
+    show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
       using that sorry
+       (* Prove it by induction on card S as a 
+  separate lemma in order to do not confuse the variables *)
   qed
   hence \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. (t x s) *\<^sub>C \<phi> s )\<close>
     for s
-    by (simp add: bounded_clinear_scaleC_const)
+    by (simp add: bounded_clinear_scaleC_const)    
   hence \<open>bounded_clinear f\<close>
     unfolding f_def
     using Complex_Vector_Spaces.bounded_clinear_sum[where I = S and f = "\<lambda> s. \<lambda>x. t x s *\<^sub>C \<phi> s"]
@@ -2735,6 +2738,7 @@ proof-
   ultimately show ?thesis
     by blast 
 qed
+
 
 unbundle no_bounded_notation
 
