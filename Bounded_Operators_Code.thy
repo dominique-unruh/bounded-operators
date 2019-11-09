@@ -281,7 +281,7 @@ proof-
   hence \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
     for v
     unfolding f_def
-    sorry
+    by (cheat TODO)
   moreover have \<open>clinear f\<close>
   proof-
     have \<open>clinear (\<lambda> v. (basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) ( (vec_of_basis_enum::('a \<Rightarrow> complex vec)) v) )\<close>
@@ -372,7 +372,7 @@ qed
 (* TODO: Not true. Only holds for vectors v with "dim v = canonical_basis_length" *)
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
   \<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
-  sorry
+  by (cheat TODO)
 
 definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Rightarrow> complex mat\<close> where
   \<open>mat_of_bounded = undefined\<close>

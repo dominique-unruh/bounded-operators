@@ -1948,7 +1948,8 @@ proof
     have \<open>distinct (enum_class.enum::'a list)\<close>
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-      (* by (meson inj_onI ket_distinct)         *) sorry
+      (* by (meson inj_onI ket_distinct)         *) 
+      by (cheat SORRY)
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
@@ -2024,7 +2025,7 @@ proof
         proof-
           have \<open>closure
               (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-            (* by (simp add: ket_ell2_span) *) sorry
+            (* by (simp add: ket_ell2_span) *) by (cheat SORRY)
           moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
             using UNIV_enum
             by blast
@@ -2130,13 +2131,13 @@ lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
 
 (* TODO remove (subsumed by one_dim_to_complex_inverse) *)
 lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  sorry
+  by (cheat "sorry")
   (* unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto *)
 
 (* TODO remove (subsumed by complex_to_one_dim_inverse) *)
 lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
   (* unfolding of_complex_def apply transfer by simp *)
-  sorry
+  by (cheat "sorry")
 
 (* TODO: remove (subsumed by bounded_clinear_of_complex) *)
 lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
@@ -2146,7 +2147,7 @@ lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
 lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
 (*   apply (rule bounded_clinear_intro[where K=1])
   by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+ *)
-  sorry
+  by (cheat SORRY)
 
 (* TODO: remove (use more general vector_to_bounded instead) *)
 lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is

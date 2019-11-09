@@ -3475,16 +3475,16 @@ of that instance. *)
 context one_dim begin
 
 lemma one_dim_to_complex_one[simp]: "one_dim_to_complex 1 = 1"
-  sorry
+  by (cheat one_dim_to_complex_one)
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
-  sorry
+  by (cheat one_dim_to_complex_inverse)
 
 lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
-  sorry
+  by (cheat complex_to_one_dim_inverse)
 
 lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
-  sorry
+  by (cheat bounded_clinear_one_dim_to_complex)
 
 end
 

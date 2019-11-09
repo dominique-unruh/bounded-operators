@@ -2712,7 +2712,7 @@ proof-
 
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
-      using that sorry
+      using that by (cheat TODO)
        (* Prove it by induction on card S as a 
   separate lemma in order to do not confuse the variables *)
   qed
@@ -2730,11 +2730,11 @@ proof-
 
   have "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
     for s
-    sorry
+    by (cheat TODO)
   moreover have "G = F"
     if "\<forall>s\<in>S. G *\<^sub>v s = \<phi> s"
     for G :: "('a, 'b) bounded"
-    using that sorry
+    using that by (cheat TODO)
   ultimately show ?thesis
     by blast 
 qed

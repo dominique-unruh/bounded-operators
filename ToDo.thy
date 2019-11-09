@@ -18,7 +18,8 @@ This way, QRHL will not be broken by the work on these lemmas/definitions
 (* TODO replace C1_to_complex \<rightarrow> one_dim_to_complex (in several places)*)
 
 lemma cinner_1_C1: "cinner 1 \<psi> = C1_to_complex \<psi>"
-  (* apply transfer by (simp add: singleton_UNIV) *) sorry
+  (* apply transfer by (simp add: singleton_UNIV) *) 
+  by (cheat cinner_1_C1)
 
 lemma ell2_to_bounded_times_vec[simp]:
   includes bounded_notation
@@ -59,10 +60,12 @@ lemma bounded_ext:
   using assms apply transfer by auto
 
 lemma C1_to_complex_scaleC[simp]: "C1_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C C1_to_complex \<psi>"
-  (* apply transfer by simp *) sorry
+  (* apply transfer by simp *) 
+  by (cheat C1_to_complex_scaleC)
 
 lemma C1_to_complex_times[simp]: "C1_to_complex (\<psi> * \<phi>) = C1_to_complex \<psi> * C1_to_complex \<phi>"
-  (* apply transfer by simp *) sorry
+  (* apply transfer by simp *) 
+  by (cheat C1_to_complex_times)
 
 lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
   includes bounded_notation
