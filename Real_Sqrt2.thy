@@ -1,3 +1,4 @@
+(* This theory is deprecated. Real_Impl.Real_Impl supercedes it. *)
 theory Real_Sqrt2
   imports Complex_Main "HOL-ex.Sqrt" "HOL-Library.Rewrite"
 begin

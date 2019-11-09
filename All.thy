@@ -12,7 +12,7 @@ theory All
     Lattice_Missing Operator_Norm_Missing
     Ordered_Complex Ordered_Fields Real_Bounded_Operators
     Uniform_Limit_Missing Unobtrusive_NSA
-    Bounded_Operators_Code Real_Sqrt2
+    Bounded_Operators_Code
 begin
 
 end
