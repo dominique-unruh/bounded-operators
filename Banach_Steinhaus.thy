@@ -910,11 +910,15 @@ proof(rule classical)
     by linarith
 qed
 
-
-abbreviation pointwise_convergence_abbr::
+(* abbreviation pointwise_convergence_abbr::
   \<open>(nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>((_)/ \<midarrow>pointwise\<rightarrow> (_))\<close> [60, 60] 60)
-  where \<open>f \<midarrow>pointwise\<rightarrow> l \<equiv> (\<forall> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x)\<close>
+  where \<open>f \<midarrow>pointwise\<rightarrow> l \<equiv> (\<forall> x. (\<lambda> n. f n x) \<longlonglongrightarrow> l x)\<close> *)
+
+definition pointwise_convergent_to :: 
+  \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> 
+  (\<open>((_)/ \<midarrow>pointwise\<rightarrow> (_))\<close> [60, 60] 60) where
+  \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t) \<longlonglongrightarrow> l t)\<close>
 
 lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
@@ -925,7 +929,7 @@ lemma linear_limit_linear:
 proof
   have \<open>\<And> x. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
     using  \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
-    by auto    
+    by (auto simp: pointwise_convergent_to_def)
   show "F (x + y) = F x + F y"
     for x :: 'a
       and y :: 'a
@@ -1011,7 +1015,7 @@ proposition bounded_linear_limit_bounded_linear:
 proof-
   have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
     using \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
-    by simp
+    by (simp add: pointwise_convergent_to_def)
   have \<open>linear F\<close>
     using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
