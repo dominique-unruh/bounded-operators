@@ -3487,7 +3487,7 @@ text \<open>The class one_dim applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
-class one_dim = basis_enum + one + times +
+class one_dim = basis_enum + one + times + (* NEW *) complex_normed_vector + complete_space +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
 begin
@@ -3496,9 +3496,10 @@ definition "one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>"
 
 end
 
+
 lemma closed_span_finite_set':
- \<open>\<forall> A::('a::{complex_vector,t1_space}) set. 
-  card A = n \<and> finite A \<longrightarrow> closed (complex_vector.span A)\<close>
+ \<open>\<forall> A::('a::{complex_normed_vector, complete_space}) set. 
+  card A = n \<and> complex_independent A \<and> finite A \<longrightarrow> closed (complex_vector.span A)\<close>
 proof(induction n)
   case 0
   have \<open>card A = 0 \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
@@ -3519,10 +3520,10 @@ proof(induction n)
     by blast
 next
   case (Suc n)
-  have \<open>card A = Suc n \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+  have \<open>card A = Suc n \<Longrightarrow> complex_independent A \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
     for A::\<open>'a set\<close>
   proof-
-    assume \<open>card A = Suc n\<close> and \<open>finite A\<close>
+    assume \<open>card A = Suc n\<close> and \<open>complex_independent A\<close> and \<open>finite A\<close>
     obtain a A' where \<open>A = insert a A'\<close> and \<open>a \<notin> A'\<close>
       by (metis \<open>card A = Suc n\<close> card_le_Suc_iff le_Suc_eq)
     have \<open>card A' = n\<close>
@@ -3530,24 +3531,33 @@ next
       by auto
     moreover have \<open>finite A'\<close>
       using \<open>A = insert a A'\<close> \<open>finite A\<close> by auto
+    moreover have \<open>complex_independent A'\<close>
+      by (metis \<open>A = insert a A'\<close> \<open>complex_independent A\<close> complex_vector.independent_insert)
     ultimately have \<open>closed (complex_vector.span A')\<close>
-      by (simp add: Suc.IH)
-    show ?thesis sorry
+      by (simp add: Suc.IH)      
+    have \<open>\<forall> n. s n \<in> complex_vector.span A \<Longrightarrow> s \<longlonglongrightarrow> l \<Longrightarrow> l \<in> complex_vector.span A\<close>
+      for s l
+      sorry
+    thus ?thesis 
+      using Elementary_Topology.closed_sequential_limits[where S = "complex_vector.span A"]
+      by auto
   qed
   thus ?case
     by blast 
 qed
 
+
 (* TODO move *)
 lemma closed_span_finite_set:
  \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
- for A::\<open>('a::{complex_vector,t1_space}) set\<close>
-  using closed_span_finite_set' by blast
+ for A::\<open>('a::{complex_normed_vector, complete_space}) set\<close>
+  using closed_span_finite_set'
+  by (metis (no_types, hide_lams) complex_vector.independent_span_bound complex_vector.maximal_independent_subset complex_vector.span_eq complex_vector.span_span) 
 
 (* TODO move *)
 lemma closure_span_finite_set:
  \<open>finite A \<Longrightarrow> closure (complex_vector.span A) = complex_vector.span A\<close>
- for A::\<open>('a::{complex_vector,t1_space}) set\<close>
+ for A::\<open>('a::{complex_normed_vector, complete_space}) set\<close>
   using closed_span_finite_set
   by (simp add: closed_span_finite_set) 
 
@@ -3574,34 +3584,32 @@ lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^s
 proof-
   have \<open>(canonical_basis::'a list) = [1]\<close>
     by (simp add: one_dim_canonical_basis)
-  hence \<open>is_onb {1::('a::one_dim)}\<close>
+  hence \<open>is_onb {1::'a}\<close>
     by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
-  hence \<open>a \<in> span ({1::('a::one_dim)})\<close>
+  hence \<open>a \<in> complex_vector.span ({1::'a})\<close>
     unfolding is_onb_def is_basis_def
     apply auto
     using closure_span_finite_set
     by (simp add: closure_span_finite_set Complex_Vector_Spaces.span_raw_def)
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
-    obtain c :: "'a set \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> complex" where
-      "a - c {} 1 a *\<^sub>C 1 \<in> complex_vector.span {}"
-      by (metis (full_types) Complex_Vector_Spaces.span_raw_def \<open>a \<in> Complex_Vector_Spaces.span {1}\<close> complex_vector.span_breakdown_eq)
+    have "(1::'a) \<notin> {}"
+      by (metis equals0D)
     then show ?thesis
-      by (metis complex_vector.span_empty eq_iff_diff_eq_0 singleton_iff)
-  qed    
+      by (metis Diff_insert_absorb \<open>a \<in> complex_vector.span {1}\<close> complex_vector.span_breakdown complex_vector.span_empty eq_iff_diff_eq_0 singleton_iff)
+  qed
   then obtain s where \<open>a = s *\<^sub>C 1\<close>
     by blast
-  have  \<open>\<langle>1::('a::one_dim), a\<rangle> = \<langle>1::('a::one_dim), s *\<^sub>C 1\<rangle>\<close>
+  have  \<open>\<langle>(1::'a), a\<rangle> = \<langle>(1::'a), s *\<^sub>C 1\<rangle>\<close>
     using \<open>a = s *\<^sub>C 1\<close>
     by simp 
-  also have \<open>\<dots> = s * \<langle>1::('a::one_dim), 1\<rangle>\<close>
+  also have \<open>\<dots> = s * \<langle>(1::'a), 1\<rangle>\<close>
     by simp
   also have \<open>\<dots> = s\<close>
     using one_dim_1_times_1 by auto
   finally show ?thesis
     by (simp add: \<open>a = s *\<^sub>C 1\<close>) 
 qed
-
 
 instance one_dim \<subseteq> complex_algebra_1
   proof
