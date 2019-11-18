@@ -43,6 +43,7 @@ class complex_vector = scaleC + ab_group_add +
     and scaleC_one[simp]: "1 *\<^sub>C x = x"
 
 (* TODO remove (nothing like that in Real_Vector_Spaces) *)
+(* Jose: I find errors when I remove it *)
 interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   apply unfold_locales
      apply (rule scaleC_add_right)
@@ -2326,8 +2327,9 @@ lemma equal_span_0:
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
 (* TODO: add [code del] *)
+(* Jose: I do not know where to put  [code del] *)
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
-  is \<open>(\<subseteq>)\<close>.
+  is  \<open>(\<subseteq>)\<close>.
 (* TODO: add [code del] *)
 lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.

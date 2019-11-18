@@ -3439,6 +3439,32 @@ definition is_onb :: "'a::complex_inner set \<Rightarrow> bool"
   S \<subseteq> sphere 0 1
 )"
 
+(* TODO: move *)
+lemma sphere_nonzero:
+  assumes \<open>S \<subseteq> sphere 0 r\<close> and \<open>r > 0\<close> and \<open>x \<in> S\<close>
+  shows \<open>x \<noteq> 0\<close>
+proof-
+  from \<open>S \<subseteq> sphere 0 r\<close> and  \<open>x \<in> S\<close>
+  have  \<open>x \<in> sphere 0 r\<close>
+    by blast
+  hence \<open>dist x 0 = r\<close>
+    by (simp add: dist_commute)     
+  thus ?thesis using \<open>r > 0\<close>
+    by auto
+qed
+
+lemma is_onb_nonzero:
+  assumes \<open>is_onb S\<close> and \<open>x \<in> S\<close>
+  shows \<open>x \<noteq> 0\<close>
+proof -
+  have f1: "(1::real) > 0"
+    by auto
+  have "\<forall>x. ((0::real) < x) = (\<not> x \<le> 0)"
+    by auto
+  then show ?thesis
+    using f1 by (metis (no_types) assms(1) assms(2) is_onb_def sphere_nonzero)
+qed 
+
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
@@ -3452,22 +3478,142 @@ class basis_enum = complex_inner +
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
+lemma canonical_basis_non_zero:
+  assumes \<open>x \<in> set (canonical_basis::('a::basis_enum list))\<close>
+  shows \<open>x \<noteq> 0\<close>
+  using assms is_onb_nonzero is_onb_set by blast
+
 text \<open>The class one_dim applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
 class one_dim = basis_enum + one + times +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
-  assumes "\<psi> * \<phi> = (cinner 1 \<psi> * cinner 1 \<phi>) *\<^sub>C 1"
+  assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
 begin
 
-definition "one_dim_to_complex \<psi> = cinner 1 \<psi>"
+definition "one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>"
 
 end
 
-(* TODO prove *)
+(* TODO move *)
+lemma closed_span_finite_set:
+ \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+  sorry
+
+(* TODO move *)
+lemma closure_span_finite_set:
+ \<open>finite A \<Longrightarrow> closure (complex_vector.span A) = complex_vector.span A\<close>
+  using closed_span_finite_set
+  by (simp add: closed_span_finite_set) 
+
+lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
+proof-
+  include notation_norm
+  have \<open>(canonical_basis::'a list) = [1::('a::one_dim)]\<close>
+    by (simp add: one_dim_canonical_basis)    
+  hence \<open>is_onb {(1::('a::one_dim))}\<close>
+    by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
+  hence \<open>\<parallel>(1::('a::one_dim))\<parallel> = 1\<close>
+    unfolding is_onb_def sphere_def
+    using dist_norm
+    by simp
+  hence \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = 1\<close>
+    by simp
+  moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
+    using power2_norm_eq_cinner' by auto
+  ultimately show ?thesis by simp
+qed
+
+
+lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^sub>C 1 = a\<close>
+proof-
+  have \<open>(canonical_basis::'a list) = [1]\<close>
+    by (simp add: one_dim_canonical_basis)
+  hence \<open>is_onb {1::('a::one_dim)}\<close>
+    by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
+  hence \<open>a \<in> span ({1::('a::one_dim)})\<close>
+    unfolding is_onb_def is_basis_def
+    apply auto
+    using closure_span_finite_set
+    by (simp add: closure_span_finite_set Complex_Vector_Spaces.span_raw_def)
+  hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
+  proof -
+    obtain c :: "'a set \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> complex" where
+      "a - c {} 1 a *\<^sub>C 1 \<in> complex_vector.span {}"
+      by (metis (full_types) Complex_Vector_Spaces.span_raw_def \<open>a \<in> Complex_Vector_Spaces.span {1}\<close> complex_vector.span_breakdown_eq)
+    then show ?thesis
+      by (metis complex_vector.span_empty eq_iff_diff_eq_0 singleton_iff)
+  qed    
+  then obtain s where \<open>a = s *\<^sub>C 1\<close>
+    by blast
+  have  \<open>\<langle>1::('a::one_dim), a\<rangle> = \<langle>1::('a::one_dim), s *\<^sub>C 1\<rangle>\<close>
+    using \<open>a = s *\<^sub>C 1\<close>
+    by simp 
+  also have \<open>\<dots> = s * \<langle>1::('a::one_dim), 1\<rangle>\<close>
+    by simp
+  also have \<open>\<dots> = s\<close>
+    using one_dim_1_times_1 by auto
+  finally show ?thesis
+    by (simp add: \<open>a = s *\<^sub>C 1\<close>) 
+qed
+
+
 instance one_dim \<subseteq> complex_algebra_1
-  by (cheat \<open>instance one_dim \<subseteq> complex_algebra_1\<close>)
+  proof
+  show "(a * b) * c = a * (b * c)"
+    for a :: 'a
+      and b :: 'a
+      and c :: 'a
+    apply (simp add: one_dim_prod).
+  show "(a + b) * c = a * c + b * c"
+    for a :: 'a
+      and b :: 'a
+      and c :: 'a
+    apply (simp add: one_dim_prod)
+    by (metis (no_types, lifting) cinner_right_distrib scaleC_add_left scaleC_scaleC)
+  show "a * (b + c) = a * b + a * c"
+    for a :: 'a
+      and b :: 'a
+      and c :: 'a
+    apply (simp add: one_dim_prod)
+    by (simp add: cinner_right_distrib scaleC_add_left vector_space_over_itself.scale_right_distrib)
+  show "(a *\<^sub>C x) * y = a *\<^sub>C (x * y)"
+    for a :: complex
+      and x :: 'a
+      and y :: 'a
+    apply (simp add: one_dim_prod).
+  show "x * (a *\<^sub>C y) = a *\<^sub>C (x * y)"
+    for x :: 'a
+      and a :: complex
+      and y :: 'a
+    apply (simp add: one_dim_prod).
+  show "(1::'a) * a = a"
+    for a :: 'a
+  proof-
+    have \<open>\<langle>(1::'a), 1\<rangle> = 1\<close>
+      by (simp add: one_dim_1_times_1)      
+    moreover have \<open>\<langle>1, a\<rangle> *\<^sub>C 1 = a\<close>
+      using one_dim_1_times_a_eq_a by blast
+    ultimately have \<open>(\<langle>(1::'a), 1\<rangle> * \<langle>1, a\<rangle>) *\<^sub>C 1 = a\<close>
+      by simp
+    thus ?thesis
+      by (simp add: one_dim_prod)
+  qed
+  show "(a::'a) * 1 = a"
+    for a :: 'a
+        apply (simp add: one_dim_prod)
+    by (simp add: one_dim_1_times_1 one_dim_1_times_a_eq_a)
+  show "(0::'a) \<noteq> 1"
+  proof-
+    have \<open>(canonical_basis::('a list)) = [1]\<close>
+      by (simp add: one_dim_canonical_basis)
+    hence \<open>1 \<in> set (canonical_basis::('a list))\<close>
+      by (metis list.set_intros(1))
+    thus ?thesis
+      using canonical_basis_non_zero by fastforce       
+  qed
+qed
 
 (* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
 (before \<open>instance one_dim \<subseteq> complex_algebra_1\<close>) if they are useful for the proof
