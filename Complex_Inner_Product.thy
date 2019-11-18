@@ -3496,14 +3496,58 @@ definition "one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>"
 
 end
 
+lemma closed_span_finite_set':
+ \<open>\<forall> A::('a::{complex_vector,t1_space}) set. 
+  card A = n \<and> finite A \<longrightarrow> closed (complex_vector.span A)\<close>
+proof(induction n)
+  case 0
+  have \<open>card A = 0 \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+    for A::\<open>'a set\<close>
+  proof-
+    assume \<open>card A = 0\<close> and \<open>finite A\<close>
+    from \<open>card A = 0\<close>
+    have \<open>A = {}\<close>
+      using \<open>finite A\<close> by auto
+    hence \<open>complex_vector.span A = {0::'a}\<close>
+      by simp
+    moreover have \<open>closed {0::'a}\<close>
+      using closed_singleton[where a = "(0::'a)"]
+      by blast
+    ultimately show ?thesis by auto
+  qed
+  thus ?case 
+    by blast
+next
+  case (Suc n)
+  have \<open>card A = Suc n \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+    for A::\<open>'a set\<close>
+  proof-
+    assume \<open>card A = Suc n\<close> and \<open>finite A\<close>
+    obtain a A' where \<open>A = insert a A'\<close> and \<open>a \<notin> A'\<close>
+      by (metis \<open>card A = Suc n\<close> card_le_Suc_iff le_Suc_eq)
+    have \<open>card A' = n\<close>
+      using \<open>A = insert a A'\<close> \<open>a \<notin> A'\<close> \<open>card A = Suc n\<close> \<open>finite A\<close> 
+      by auto
+    moreover have \<open>finite A'\<close>
+      using \<open>A = insert a A'\<close> \<open>finite A\<close> by auto
+    ultimately have \<open>closed (complex_vector.span A')\<close>
+      by (simp add: Suc.IH)
+    show ?thesis sorry
+  qed
+  thus ?case
+    by blast 
+qed
+
 (* TODO move *)
 lemma closed_span_finite_set:
  \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
-  sorry
+ for A::\<open>('a::{complex_vector,t1_space}) set\<close>
+  using closed_span_finite_set' by blast
 
 (* TODO move *)
 lemma closure_span_finite_set:
  \<open>finite A \<Longrightarrow> closure (complex_vector.span A) = complex_vector.span A\<close>
+ for A::\<open>('a::{complex_vector,t1_space}) set\<close>
   using closed_span_finite_set
   by (simp add: closed_span_finite_set) 
 
