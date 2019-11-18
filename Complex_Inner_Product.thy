@@ -3487,7 +3487,7 @@ text \<open>The class one_dim applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
-class one_dim = basis_enum + one + times + (* NEW *) complex_normed_vector + complete_space +
+class one_dim = basis_enum + one + times + cbanach +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
 begin
@@ -3498,7 +3498,7 @@ end
 
 
 lemma closed_span_finite_set':
- \<open>\<forall> A::('a::{complex_normed_vector, complete_space}) set. 
+ \<open>\<forall> A::('a::cbanach) set. 
   card A = n \<and> complex_independent A \<and> finite A \<longrightarrow> closed (complex_vector.span A)\<close>
 proof(induction n)
   case 0
@@ -3550,14 +3550,14 @@ qed
 (* TODO move *)
 lemma closed_span_finite_set:
  \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
- for A::\<open>('a::{complex_normed_vector, complete_space}) set\<close>
+ for A::\<open>('a::cbanach) set\<close>
   using closed_span_finite_set'
   by (metis (no_types, hide_lams) complex_vector.independent_span_bound complex_vector.maximal_independent_subset complex_vector.span_eq complex_vector.span_span) 
 
 (* TODO move *)
 lemma closure_span_finite_set:
  \<open>finite A \<Longrightarrow> closure (complex_vector.span A) = complex_vector.span A\<close>
- for A::\<open>('a::{complex_normed_vector, complete_space}) set\<close>
+ for A::\<open>('a::cbanach) set\<close>
   using closed_span_finite_set
   by (simp add: closed_span_finite_set) 
 
