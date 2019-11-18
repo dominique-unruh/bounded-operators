@@ -3496,63 +3496,121 @@ definition "one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>"
 
 end
 
-
-lemma closed_span_finite_set':
- \<open>\<forall> A::('a::cbanach) set. 
-  card A = n \<and> complex_independent A \<and> finite A \<longrightarrow> closed (complex_vector.span A)\<close>
-proof(induction n)
-  case 0
-  have \<open>card A = 0 \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
-    for A::\<open>'a set\<close>
-  proof-
-    assume \<open>card A = 0\<close> and \<open>finite A\<close>
-    from \<open>card A = 0\<close>
-    have \<open>A = {}\<close>
-      using \<open>finite A\<close> by auto
-    hence \<open>complex_vector.span A = {0::'a}\<close>
-      by simp
-    moreover have \<open>closed {0::'a}\<close>
-      using closed_singleton[where a = "(0::'a)"]
-      by blast
-    ultimately show ?thesis by auto
+lemma span_explicit_finite:
+\<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+for A::\<open>'a::complex_vector set\<close>
+  proof
+  show "{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} \<subseteq> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}"
+    if "finite A"
+  proof
+    show "x \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}"
+      if "x \<in> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A}"
+      for x :: 'a
+    proof-
+      obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> A\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        using \<open>x \<in> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A}\<close> by blast
+      define s where \<open>s a = (if a \<in> t then r a else 0)\<close> for a
+      have \<open>x = (\<Sum>a\<in>A. s a *\<^sub>C a)\<close>
+      proof-
+        have \<open>(\<Sum>a\<in>A. s a *\<^sub>C a) = (\<Sum>a\<in>t. s a *\<^sub>C a) + (\<Sum>a\<in>A-t. s a *\<^sub>C a)\<close>
+          by (metis (no_types, lifting) \<open>finite A\<close> \<open>t \<subseteq> A\<close> add.commute sum.subset_diff)
+        moreover have \<open>(\<Sum>a\<in>t. s a *\<^sub>C a) = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+          using \<open>s \<equiv> \<lambda>a. if a \<in> t then r a else 0\<close> by auto          
+        moreover have \<open>(\<Sum>a\<in>A-t. s a *\<^sub>C a) = 0\<close>
+        proof-
+          have \<open>a\<in>A-t \<Longrightarrow> s a *\<^sub>C a = 0\<close>
+            for a
+          proof-
+            assume \<open>a\<in>A-t\<close>
+            hence \<open>s a = 0\<close>
+              by (simp add: s_def)
+            hence \<open>s a *\<^sub>C a = 0 *\<^sub>C a\<close>
+              by simp
+            also have \<open>0 *\<^sub>C a = 0\<close>
+              by simp              
+            finally show ?thesis
+              by simp 
+          qed
+          thus ?thesis
+            by (simp add: \<open>\<And>a. a \<in> A - t \<Longrightarrow> s a *\<^sub>C a = 0\<close>)            
+        qed
+        ultimately show ?thesis
+          by (simp add: \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>) 
+      qed
+      moreover have \<open>(\<Sum>a\<in>A. s a *\<^sub>C a) \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+        by blast
+      ultimately show ?thesis 
+        by blast
+    qed
   qed
-  thus ?case 
-    by blast
-next
-  case (Suc n)
-  have \<open>card A = Suc n \<Longrightarrow> complex_independent A \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
-    for A::\<open>'a set\<close>
-  proof-
-    assume \<open>card A = Suc n\<close> and \<open>complex_independent A\<close> and \<open>finite A\<close>
-    obtain a A' where \<open>A = insert a A'\<close> and \<open>a \<notin> A'\<close>
-      by (metis \<open>card A = Suc n\<close> card_le_Suc_iff le_Suc_eq)
-    have \<open>card A' = n\<close>
-      using \<open>A = insert a A'\<close> \<open>a \<notin> A'\<close> \<open>card A = Suc n\<close> \<open>finite A\<close> 
-      by auto
-    moreover have \<open>finite A'\<close>
-      using \<open>A = insert a A'\<close> \<open>finite A\<close> by auto
-    moreover have \<open>complex_independent A'\<close>
-      by (metis \<open>A = insert a A'\<close> \<open>complex_independent A\<close> complex_vector.independent_insert)
-    ultimately have \<open>closed (complex_vector.span A')\<close>
-      by (simp add: Suc.IH)      
-    have \<open>\<forall> n. s n \<in> complex_vector.span A \<Longrightarrow> s \<longlonglongrightarrow> l \<Longrightarrow> l \<in> complex_vector.span A\<close>
-      for s l
-      sorry
-    thus ?thesis 
-      using Elementary_Topology.closed_sequential_limits[where S = "complex_vector.span A"]
-      by auto
-  qed
-  thus ?case
-    by blast 
+  show "{\<Sum>a\<in>A. r a *\<^sub>C a |r. True} \<subseteq> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A}"
+    if "finite A"
+    using that
+    by auto 
 qed
-
 
 (* TODO move *)
 lemma closed_span_finite_set:
  \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
  for A::\<open>('a::cbanach) set\<close>
-  using closed_span_finite_set'
-  by (metis (no_types, hide_lams) complex_vector.independent_span_bound complex_vector.maximal_independent_subset complex_vector.span_eq complex_vector.span_span) 
+proof-
+  assume \<open>finite A\<close>
+  have \<open>complex_vector.span A = {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A}\<close>
+    using complex_vector.span_explicit[where b = "A"] by blast
+  also have \<open>... = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+    by (metis (mono_tags, lifting)  Complex_Inner_Product.span_explicit_finite \<open>finite A\<close>)
+  finally have \<open>complex_vector.span A = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+    by blast
+  moreover have \<open>closed  {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+  proof-
+    have \<open>(\<And> n. s n \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}) \<Longrightarrow> s \<longlonglongrightarrow> l \<Longrightarrow> l \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+      for s l
+    proof-
+      assume \<open>\<And> n. s n \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close> and \<open>s \<longlonglongrightarrow> l\<close>
+      have \<open>\<exists> r. s n = (\<Sum>a\<in>A. r a *\<^sub>C a)\<close>
+        for n
+        using \<open>\<And> n. s n \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+        by simp
+      hence  \<open>\<exists> r. \<forall> n. s n = (\<Sum>a\<in>A. r n a *\<^sub>C a)\<close>
+        by metis
+      then obtain r where \<open>\<And> n. s n = (\<Sum>a\<in>A. r n a *\<^sub>C a)\<close>
+        by blast
+      from  \<open>s \<longlonglongrightarrow> l\<close>
+      have \<open>convergent s\<close>
+        using convergentI by auto
+      hence \<open>Cauchy s\<close>
+        by (simp add: Cauchy_convergent_iff)
+      hence \<open>a \<in> A \<Longrightarrow> Cauchy (\<lambda> n. r n a)\<close>
+        for a
+        sorry
+      hence \<open>a \<in> A \<Longrightarrow> convergent (\<lambda> n. r n a)\<close>
+        for a
+        using Cauchy_convergent_iff by auto
+      hence \<open>\<forall> a \<in> A. \<exists> \<phi>. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi>\<close>
+        unfolding convergent_def by blast
+      hence \<open>\<exists> \<phi>. \<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
+        by metis
+      then obtain \<phi> where \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
+        by blast
+      hence \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+        sorry
+      hence \<open>(\<lambda> n. s n) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+        using \<open>\<And> n. s n = (\<Sum>a\<in>A. r n a *\<^sub>C a)\<close>
+        by auto
+      hence \<open>s \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+        by blast
+      hence \<open>l = (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+        using \<open>s \<longlonglongrightarrow> l\<close> LIMSEQ_unique by blast
+      moreover have \<open>(\<Sum>a\<in>A. \<phi> a *\<^sub>C a) \<in> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+        by auto        
+      ultimately show ?thesis
+        by auto
+    qed
+    thus ?thesis
+      using closed_sequential_limits by blast 
+  qed
+  ultimately show ?thesis by simp
+qed
 
 (* TODO move *)
 lemma closure_span_finite_set:
