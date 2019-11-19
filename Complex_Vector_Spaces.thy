@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors: 
 
@@ -21,7 +23,7 @@ bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
 
-section \<open>Complex vector spaces\<close>
+subsection \<open>Complex vector spaces\<close>
 
 class scaleC = scaleR +
   fixes scaleC :: "complex \<Rightarrow> 'a \<Rightarrow> 'a" (infixr "*\<^sub>C" 75)
@@ -216,7 +218,7 @@ lemma scaleC_collapse [simp]: "(1 - u) *\<^sub>C a + u *\<^sub>C a = a"
   by (simp add: algebra_simps)
 
 
-section \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
+subsection \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
 
 definition of_complex :: "complex \<Rightarrow> 'a::complex_algebra_1"
   where "of_complex c = scaleC c 1"
@@ -316,7 +318,7 @@ lemma scaleC_times [simp]:
 
 instance complex_field < field_char_0 ..
 
-section \<open>The Set of Complex Numbers\<close>
+subsection \<open>The Set of Complex Numbers\<close>
 
 definition Complexs :: "'a::complex_algebra_1 set"  ("\<complex>")
   where "\<complex> = range of_complex"
@@ -441,7 +443,7 @@ lemma Complexs_induct [case_names of_complex, induct set: Complexs]:
   by (rule Complexs_cases) auto
 
 
-section \<open>Ordered complex vector spaces\<close>
+subsection \<open>Ordered complex vector spaces\<close>
 
 class ordered_complex_vector = complex_vector + ordered_ab_group_add +
   assumes scaleC_left_mono: "x \<le> y \<Longrightarrow> 0 \<le> a \<Longrightarrow> a *\<^sub>C x \<le> a *\<^sub>C y"
@@ -617,7 +619,7 @@ lemma scaleC_left_le_one_le: "0 \<le> x \<Longrightarrow> a \<le> 1 \<Longrighta
   for x :: "'a::ordered_complex_vector" and a :: complex
   using scaleC_right_mono[of a 1 x] by simp
 
-section \<open>Complex normed vector spaces\<close>
+subsection \<open>Complex normed vector spaces\<close>
 
 class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   real_normed_vector + 
@@ -655,7 +657,7 @@ lemma norm_of_complex_diff [simp]:
   by (metis norm_of_complex of_complex_diff order_refl)
 
 
-section \<open>Class instances for complex numbers\<close>
+subsection \<open>Class instances for complex numbers\<close>
 
 instantiation complex :: complex_normed_field
 begin
@@ -672,7 +674,7 @@ lemma dist_of_complex [simp]: "dist (of_complex x :: 'a) (of_complex y) = dist x
 
 declare [[code abort: "open :: complex set \<Rightarrow> bool"]]
 
-section \<open>Sign function\<close>
+subsection \<open>Sign function\<close>
 
 lemma sgn_scaleC: "sgn (scaleC r x) = scaleC (sgn r) (sgn x)"
   for x :: "'a::complex_normed_vector"
@@ -685,7 +687,7 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   for x :: complex
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
 
-section \<open>Bounded Linear and Bilinear Operators\<close>
+subsection \<open>Bounded Linear and Bilinear Operators\<close>
 
 definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
   "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
@@ -1603,7 +1605,7 @@ qed
 
 
 
-section \<open>Nonstandard analysis\<close>
+subsection \<open>Nonstandard analysis\<close>
 
 definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
   where [transfer_unfold]: "scaleHC = starfun2 scaleC"
@@ -1686,14 +1688,14 @@ proof-
     by (simp add: isNSCont_isCont_iff) 
 qed
 
-section \<open>Cauchy sequences\<close>
+subsection \<open>Cauchy sequences\<close>
 
 lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
   by (simp only: metric_Cauchy_iff2 dist_complex_def)
 
 subsection \<open>Cauchy Sequences are Convergent\<close>
 
-section \<open>The set of complex numbers is a complete metric space\<close>
+subsection \<open>The set of complex numbers is a complete metric space\<close>
 
 class cbanach = complex_normed_vector + complete_space
 
@@ -1713,7 +1715,7 @@ lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[T
 lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 
-section \<open>Miscellany\<close>
+subsection \<open>Miscellany\<close>
 
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
@@ -1872,7 +1874,7 @@ proof-
     by (simp add: onorm_def) 
 qed
 
-section \<open>Subspace\<close>
+subsection \<open>Subspace\<close>
 
 \<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
 
@@ -2063,7 +2065,7 @@ proof-
 qed
 
 
-section \<open>Linear space\<close>
+subsection \<open>Linear space\<close>
 
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
   linear_space = \<open>{S::'a set. closed_subspace S}\<close>
@@ -2167,7 +2169,7 @@ instance ..
 end
 
 
-section \<open>Span\<close>
+subsection \<open>Span\<close>
 
 lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
@@ -2428,7 +2430,7 @@ proof
   qed
 qed
 
-section \<open>Unsorted\<close>
+subsection \<open>Unsorted\<close>
 
 definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
   where \<open>is_basis S = (
@@ -2683,7 +2685,7 @@ proof-
 qed
 
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 lemma [vector_add_divide_simps]:
   "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"

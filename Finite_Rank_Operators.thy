@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*  Title:      bounded-Operators/finite_rank_operators.thy
     Author:     Dominique Unruh, University of Tartu
     Author:     Jose Manuel Rodriguez Caballero, University of Tartu

@@ -1,3 +1,5 @@
+section \<open>\<open>Bounded_Operators_Code\<close> -- Support for code generation\<close>
+
 theory Bounded_Operators_Code
   imports Bounded_Operators ToDo
     Jordan_Normal_Form_Notation
@@ -6,7 +8,7 @@ begin
 unbundle jnf_notation
 unbundle bounded_notation
 
-section \<open>Setting up code generation for type bounded\<close>
+subsection \<open>Setting up code generation for type bounded\<close>
 
 text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::basis_enum,'b::basis_enum) bounded\<close>
   and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the dimensions of 'a,'b, 
@@ -385,23 +387,27 @@ lemma mat_of_bounded_inj: "inj mat_of_bounded"
   by (cheat 16)
 
 text \<open>The following lemma registers bounded as an abstract datatype with 
-  constructor bounded_of_mat.
+  constructor \<^const>\<open>bounded_of_mat\<close>.
   That means that in generated code, all bounded operators will be represented
-  as "Bounded_of_mat X" where X is a matrix. And code equations below
-  can directly refer the matrix that represents an operator O by
-  writing \<^term>\<open>bounded_of_mat_plusOp X\<close> (see, e.g.,
-  [TODO reference plus-lemma] below).
+  as \<^term>\<open>bounded_of_mat X\<close> where X is a matrix.
+  In code equations for operations involving operators (e.g., +), we
+  can then write the equation directly in terms of matrices
+  by writing, e.g., \<^term>\<open>mat_of_bounded (A+B)\<close> in the lhs,
+  and in the rhs we define the matrix that corresponds to the sum of A,B.
+  In the rhs, we can access the matrices corresponding to A,B by
+  writing \<^term>\<open>mat_of_bounded B\<close>.
+  (See, e.g., lemma \<open>bounded_of_mat_plusOp\<close> below).
 
   See [TODO: bibtex reference to code generation tutorial] for more information on 
-  [code abstype].\<close>
+  @{theory_text \<open>[code abstype]\<close>}.\<close>
 lemma mat_of_bounded_inverse [code abstype]:
   "bounded_of_mat (mat_of_bounded B) = B" 
   for B::"('a::basis_enum,'b::basis_enum) bounded"
   by (cheat 15)
 
-section \<open>Code equations for bounded operators\<close>
+subsection \<open>Code equations for bounded operators\<close>
 
-text \<open>In this section, we define the code for all operations involving only 
+text \<open>In this subsection, we define the code for all operations involving only 
   operators (no combinations of operators/vectors/subspaces)\<close>
 
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_bounded (M + N)\<close>
@@ -443,7 +449,6 @@ instance
   using mat_of_bounded_inj injD by fastforce
 end
 
-(* TODO: check if such a definition already exists in Jordan_Normal_Form *)
 definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
 lemma bounded_of_mat_adjoint[code]:
@@ -462,7 +467,7 @@ lemma mat_of_bounded_classical_operator[code]:
   for f::"'a::enum \<Rightarrow> 'b::enum option"
   by (cheat 17)
 
-section \<open>Miscellanea\<close>
+subsection \<open>Miscellanea\<close>
 
 text \<open>This is a hack to circumvent a bug in the code generation. The automatically
   generated code for the class \<^class>\<open>uniformity\<close> has a type that is different from
@@ -471,7 +476,7 @@ text \<open>This is a hack to circumvent a bug in the code generation. The autom
   not actually used).
   
   The fragment below circumvents this by forcing Isabelle to use the right type.
-  (The logically useless fragment "let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_)" achieves this.)\<close>
+  (The logically useless fragment "\<open>let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_)\<close>" achieves this.)\<close>
 lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"

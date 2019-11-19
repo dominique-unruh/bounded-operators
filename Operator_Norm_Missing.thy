@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors: 
 
@@ -16,7 +18,7 @@ theory Operator_Norm_Missing
     Extended_Sorry
 begin
 
-section \<open>Sets defined using the norms\<close>
+subsection \<open>Sets defined using the norms\<close>
 
 lemma ex_norm_1:
   \<open>(UNIV::('a::real_normed_vector) set) \<noteq> 0 \<Longrightarrow> \<exists> x::'a. norm x = 1\<close>
@@ -81,7 +83,7 @@ proof-
     by auto 
 qed
 
-section \<open>Characterization of the operator norm\<close>
+subsection \<open>Characterization of the operator norm\<close>
 
 lemma onorm_sphere:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
@@ -716,7 +718,7 @@ proof-
     by (meson closed_sequential_limits) 
 qed
 
-section \<open>Banach-Steinhaus theorem\<close>
+subsection \<open>Banach-Steinhaus theorem\<close>
 
 lemma norm_ball:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>

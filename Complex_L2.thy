@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors:
 
@@ -17,11 +19,11 @@ begin
 
 unbundle bounded_notation
 
-section \<open>Preliminaries\<close>
+subsection \<open>Preliminaries\<close>
 
 hide_const (open) Real_Vector_Spaces.span
 
-section \<open>l2 norm - untyped\<close>
+subsection \<open>l2 norm - untyped\<close>
 
 definition "has_ell2_norm x = bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)"
 
@@ -80,7 +82,7 @@ proof -
     by (simp add: monoI)
 qed
 
-section \<open>Subspaces\<close>
+subsection \<open>Subspaces\<close>
 
 notation
   inf (infixl "\<sqinter>" 70) and
@@ -2196,7 +2198,7 @@ lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\
   for a::complex
   apply (transfer fixing: a) by auto
 
-section \<open>Classical operators\<close>
+subsection \<open>Classical operators\<close>
 
 lemma has_ell2_norm_classical_operator':
   \<open>has_ell2_norm \<psi> \<Longrightarrow>
@@ -3645,7 +3647,7 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
-section \<open>Enum\<close>
+subsection \<open>Enum\<close>
 
 
 lemma ket_distinct:
@@ -3653,7 +3655,7 @@ lemma ket_distinct:
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
 
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
   apply (cases x)

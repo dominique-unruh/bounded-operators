@@ -1,0 +1,58 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{isabelle,isabellesym}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+% This fixes section names. Otherwise the document outline in PDF viewers contain spurious numbers
+\DeclareRobustCommand{\isaspacing}{%
+  \texorpdfstring{%
+  \sfcode 42 1000 % .
+  \sfcode 63 1000 % ?
+  \sfcode 33 1000 % !
+  \sfcode 58 1000 % :
+  \sfcode 59 1000 % ;
+  \sfcode 44 1000 % ,
+  }{}%
+}
+
+% This fixes errors when using \isakeyword in section titles
+\DeclareRobustCommand{\isakeyword}[1]
+{\emph{\normalfont\bfseries\def\isachardot{.}\def\isacharunderscore{\isacharunderscorekeyword}%
+\def\isacharbraceleft{\{}\def\isacharbraceright{\}}#1}}
+
+
+
+% urls in roman style, theory text in math-similar italics
+\urlstyle{rm}
+\isabellestyle{it}
+
+% for uniform font size
+%\renewcommand{\isastyle}{\isastyleminor}
+
+
+\begin{document}
+
+\title{Bounded Operators}
+\author{Jose Manuel Rodriguez Caballero, Dominique Unruh}
+\maketitle
+
+\tableofcontents
+
+% sane default for proof documents
+\parindent 0pt\parskip 0.5ex
+
+% generated text of all theories
+\input{session}
+
+% optional bibliography
+%\bibliographystyle{abbrv}
+%\bibliography{root}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

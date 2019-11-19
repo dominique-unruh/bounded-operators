@@ -15,7 +15,7 @@ theory Bounded_Operators
     Lattice_Missing Extended_Sorry
 
 begin
-section \<open>Complex bounded operators\<close>
+subsection \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
@@ -542,7 +542,7 @@ qed
 end
 
 
-section \<open>Adjoint\<close>
+subsection \<open>Adjoint\<close>
 
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
@@ -630,7 +630,7 @@ lemma Adj_bounded_zero[simp]:
   \<open>0* = 0\<close>
   by (metis Adj_bounded_plus add_cancel_right_right)
 
-section \<open>Composition\<close>
+subsection \<open>Composition\<close>
 
 lift_definition timesOp:: 
   "('b::complex_normed_vector,'c::complex_normed_vector) bounded
@@ -1358,7 +1358,7 @@ lemma applyOpSpace_eq:
   shows "A *\<^sub>s S = B *\<^sub>s S"
   by (metis applyOpSpace_less_eq assms(1) assms(2) dual_order.antisym)
 
-section \<open>Unitary\<close>
+subsection \<open>Unitary\<close>
 
 definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> bool\<close> where
   \<open>isometry U \<longleftrightarrow> U* *\<^sub>o  U = idOp\<close>
@@ -1440,7 +1440,7 @@ lemma unitary_id[simp]: "unitary idOp"
   by (simp add: isometry_def) 
 
 
-section \<open>Projectors\<close>
+subsection \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
   is \<open>projection\<close>
@@ -1815,7 +1815,7 @@ proof-
 qed
 
 
-section \<open>Kernel\<close>
+subsection \<open>Kernel\<close>
 
 (* debate 1 Bounded_Operators
 - Dominique: type class: complex_vector + topological_space
@@ -1871,7 +1871,7 @@ proof -
     by blast
 qed
 
-section \<open>Option\<close>
+subsection \<open>Option\<close>
 
 definition "inj_option \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
 
@@ -1912,7 +1912,7 @@ proof (unfold inj_option_def, rule allI, rule allI, rule impI, erule conjE)
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
 
-section \<open>New/restored things\<close>
+subsection \<open>New/restored things\<close>
 
 
 lemma isProjector_D1: \<open>isProjector P \<Longrightarrow> P *\<^sub>o P = P\<close>
@@ -2310,7 +2310,7 @@ proof - (* sledgehammer *)
     using a1 by (simp add: bounded_clinear.bounded_linear)
 qed
 
-section \<open>Inverse\<close>
+subsection \<open>Inverse\<close>
 
 lemma inverse_bounded_uniq':
   \<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> A *\<^sub>o B' = idOp \<Longrightarrow> B' *\<^sub>o A = idOp \<Longrightarrow> B = B'\<close>
@@ -2384,7 +2384,7 @@ lemma inverse_bounded_uniq:
 hide_fact inverse_bounded_uniq'
 
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 (*
 consts
@@ -2615,7 +2615,7 @@ lemma bounded_operator_basis_existence_uniq:
 proof-
   have \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
     for x
-    by (simp add: span_explicit_finite assms(1) assms(2) assms(3))
+    by (simp add: Complex_Vector_Spaces.span_explicit_finite assms)
   hence \<open>\<exists> t. \<forall> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
     by metis
   then obtain t where \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>

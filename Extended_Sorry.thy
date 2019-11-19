@@ -1,3 +1,7 @@
+section \<open>\<open>Extended_Sorry\<close> -- An alternative to @{theory_text sorry}\<close>
+
+(* TODO: Do not include in AFP submission *)
+
 theory Extended_Sorry
   imports Main
   keywords "print_oracles" "print_instance_oracles" :: diag

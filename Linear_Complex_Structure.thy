@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (* Title:      Bounded-Operators/linear_complex_structure.thy
    Author:     Dominique Unruh, University of Tartu
    Author:     Jose Manuel Rodriguez Caballero, University of Tartu
@@ -21,7 +23,7 @@ begin
 
 
 (* NEW *)
-section \<open>A complex vector space from a real vector space\<close>
+subsection \<open>A complex vector space from a real vector space\<close>
 (*
 Linear complex structure
 

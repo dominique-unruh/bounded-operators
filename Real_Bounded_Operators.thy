@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors: 
 
@@ -29,7 +31,7 @@ theory Real_Bounded_Operators
     NSA_Miscellany
 begin
 
-section \<open>Algebraic properties of real bounded operators\<close>
+subsection \<open>Algebraic properties of real bounded operators\<close>
 
 typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
   = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
@@ -384,7 +386,7 @@ proof-
     by auto
 qed
 
-section \<open>Topological properties of real bounded operators\<close>
+subsection \<open>Topological properties of real bounded operators\<close>
 
 lemma hnorm_unit_sphere:
   includes nsa_notation
@@ -1523,7 +1525,7 @@ proof-
     by (simp add: rscalar_op_op)  
 qed
 
-section \<open>On-demand syntax\<close>
+subsection \<open>On-demand syntax\<close>
 
 
 unbundle no_rbounded_notation

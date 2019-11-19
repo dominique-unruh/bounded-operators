@@ -1,6 +1,7 @@
+section \<open>TODO: section title\<close>
+
 theory Lattice_Missing
   imports Complex_Main  HOL.Lattices HOL.Complete_Lattices
-
 begin
 
 (* Following https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties 

@@ -4,8 +4,10 @@ session "Bounded_Operators-Prerequisites" = "HOL-Analysis" +
     "HOL-Library.Adhoc_Overloading" "Jordan_Normal_Form.Conjugate"
 	   "HOL-Library.Rewrite" "HOL-ex.Sketch_and_Explore"
 	   "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
-     Real_Impl.Real_Impl
+     Real_Impl.Real_Impl Jordan_Normal_Form.Matrix
 
 session Bounded_Operators = "Bounded_Operators-Prerequisites" +
-  options [record_proofs=1]
+  options [record_proofs=1, document = pdf, document_output = "output", 
+           document_variants="document:outline=/proof,/ML"]
   theories All
+  document_files "root.tex"

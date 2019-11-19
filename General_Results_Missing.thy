@@ -1,7 +1,8 @@
+section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing facts\<close>
+
 theory General_Results_Missing
   imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
     "HOL-ex.Sketch_and_Explore" HOL.Groups
-
 begin
 
 (* TODO: remove (never used) *)

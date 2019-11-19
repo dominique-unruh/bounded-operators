@@ -1,6 +1,15 @@
+section \<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
+
 theory Jordan_Normal_Form_Notation
   imports Jordan_Normal_Form.Matrix
 begin
+
+text \<open>This theory defines bundes to activate/deactivate the notation
+  from \<^session>\<open>Jordan_Normal_Form\<close>.
+
+Reactivate the notation locally via "@{theory_text \<open>includes jnf_notation\<close>}" in a lemma statement.
+(Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle jnf_notation ... unbundle no_jnf_notation\<close>}.)
+\<close>
 
 bundle jnf_notation begin
 notation transpose_mat ("(_\<^sup>T)" [1000])
