@@ -17,42 +17,27 @@ José can do one of the following things:
 This way, QRHL will not be broken by the work on these lemmas/definitions
 \<close>
 
-(* TODO replace C1_to_complex \<rightarrow> one_dim_to_complex (in several places)*)
 
-lemma cinner_1_C1: "cinner 1 \<psi> = C1_to_complex \<psi>"
-  (* apply transfer by (simp add: singleton_UNIV) *) 
-  by (cheat cinner_1_C1)
-
-lemma ell2_to_bounded_times_vec[simp]:
+(* TODO: move to where vector_to_bounded is defined *)
+lemma vector_to_bounded_times_vec[simp]:
   includes bounded_notation
-  shows "ell2_to_bounded \<phi> *\<^sub>v \<gamma> = C1_to_complex \<gamma> *\<^sub>C \<phi>"
-  unfolding ell2_to_bounded.rep_eq by simp
+  shows "vector_to_bounded \<phi> *\<^sub>v \<gamma> = one_dim_to_complex \<gamma> *\<^sub>C \<phi>"
+  apply transfer by (rule refl)
 
-text \<open>This is the defining property of the adjoint\<close>
-  (* TODO: There is adjoint_I, but it has unnecessary allquantifiers *)
-lemma cinner_adjoint:
+(* TODO: move to where vector_to_bounded is defined *)
+lemma vector_to_bounded_adj_times_vec[simp]:
   includes bounded_notation
-  shows "cinner \<psi> (A *\<^sub>v \<phi>) = cinner (A* *\<^sub>v \<psi>) \<phi>"
-  by (simp add: adjoint_I)
-
-lemma cinner_adjoint':
-  includes bounded_notation
-  shows "cinner (A *\<^sub>v \<phi>) \<psi> = cinner \<phi> (A* *\<^sub>v \<psi>)"
-  by (simp add: cinner_adjoint)
-
-lemma ell2_to_bounded_adj_times_vec[simp]:
-  includes bounded_notation
-  shows "ell2_to_bounded \<psi>* *\<^sub>v \<phi> = complex_to_C1 (cinner \<psi> \<phi>)"
+  shows "vector_to_bounded \<psi>* *\<^sub>v \<phi> = of_complex (cinner \<psi> \<phi>)"
 proof -
-  have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2) = cinner 1 (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2)"
-    by (simp add: cinner_1_C1)
-  also have "\<dots> = cinner (ell2_to_bounded \<psi> *\<^sub>v (1::'a ell2)) \<phi>"
-    by (metis cinner_adjoint')
+  have "one_dim_to_complex (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a) = cinner 1 (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a)"
+    by (simp add: one_dim_to_complex_def)
+  also have "\<dots> = cinner (vector_to_bounded \<psi> *\<^sub>v (1::'a)) \<phi>"
+    by (metis adjoint_I adjoint_twice)
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
-  finally have "C1_to_complex (ell2_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a ell2) = \<langle>\<psi>, \<phi>\<rangle>" by -
+  finally have "one_dim_to_complex (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>" by -
   thus ?thesis
-    by (metis C1_to_complex_inverse)
+    by (metis one_dim_to_complex_inverse)
 qed
 
 lemma bounded_ext: 
@@ -61,29 +46,14 @@ lemma bounded_ext:
   shows "A = B" 
   using assms apply transfer by auto
 
-lemma C1_to_complex_scaleC[simp]: "C1_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C C1_to_complex \<psi>"
+lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
   (* apply transfer by simp *) 
-  by (cheat C1_to_complex_scaleC)
+  by (cheat one_dim_to_complex_scaleC)
 
-lemma C1_to_complex_times[simp]: "C1_to_complex (\<psi> * \<phi>) = C1_to_complex \<psi> * C1_to_complex \<phi>"
+lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
   (* apply transfer by simp *) 
-  by (cheat C1_to_complex_times)
+  by (cheat one_dim_to_complex_times)
 
-lemma ell2_to_bounded_adj_times_ell2_to_bounded[simp]:
-  includes bounded_notation
-  shows "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
-proof -
-  have "C1_to_complex ((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = C1_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::{CARD_1,enum} ell2"
-    by (simp add: times_applyOp)
-  hence "((ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
-    for \<gamma> :: "'c::{CARD_1,enum} ell2"
-    using C1_to_complex_inverse by metis
-  thus ?thesis
-    using  bounded_ext[where A = "ell2_to_bounded \<psi>* *\<^sub>o ell2_to_bounded \<phi>"
-        and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
-    by auto
-qed
 
 lemma cinner_ext_ell2_0: 
   assumes "\<And>\<gamma>. cinner \<gamma> \<psi> = 0"
@@ -123,20 +93,33 @@ lemma linear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
   apply transfer by simp
 
-(* TODO analogous lemma for kernel *)
+(* TODO: move to where eigenspace is defined *)
 lemma eigenspace_memberE:
   includes bounded_notation
   assumes "x \<in> space_as_set (eigenspace e A)"
   shows "A *\<^sub>v x = e *\<^sub>C x"
   using assms unfolding eigenspace_def apply transfer by auto
 
-(* TODO analogous lemma for kernel *)
+(* TODO: move to where kernel is defined *)
+lemma kernel_memberE:
+  includes bounded_notation
+  assumes "x \<in> space_as_set (kernel A)"
+  shows "A *\<^sub>v x = 0"
+  using assms apply transfer by auto
+
+(* TODO: move to where eigenspace is defined *)
 lemma eigenspace_memberI:
   includes bounded_notation
   assumes "A *\<^sub>v x = e *\<^sub>C x"
   shows "x \<in> space_as_set (eigenspace e A)"
   using assms unfolding eigenspace_def apply transfer by auto
 
+(* TODO: move to where kernel is defined *)
+lemma kernel_memberI:
+  includes bounded_notation
+  assumes "A *\<^sub>v x = 0"
+  shows "x \<in> space_as_set (kernel A)"
+  using assms apply transfer by auto
 
 lemma applyOpSpace_Span: 
   includes bounded_notation
@@ -363,19 +346,25 @@ lemma ket_is_orthogonal[simp]:
 
 unbundle bounded_notation
 
+(* TODO: move to Bounded_Operators *)
 definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) bounded. A = B* *\<^sub>o B)"
 
+(* TODO: move to Bounded_Operators *)
 lemma timesOp0[simp]: "0 *\<^sub>o A = 0"
   apply transfer by simp
+(* TODO: move to Bounded_Operators *)
 lemma timesOp0'[simp]: "A *\<^sub>o 0 = 0"
   apply transfer apply auto
   by (metis bounded_clinear_def mult_zero_left norm_le_zero_iff norm_zero)
 
+(* TODO: move to Bounded_Operators *)
 lemma positive_idOp[simp]: "positive_op idOp"
   unfolding positive_op_def apply (rule exI[of _ idOp]) by simp
+(* TODO: move to Bounded_Operators *)
 lemma positive_0[simp]: "positive_op 0"
   unfolding positive_op_def apply (rule exI[of _ 0]) by auto
 
+(* TODO: move to Bounded_Operators *)
 abbreviation "loewner_leq A B == (positive_op (B-A))"
 
 lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
@@ -386,89 +375,12 @@ proof-
     by (simp add: Span.abs_eq top_linear_space.abs_eq)
 qed
 
+(* TODO: move to Bounded_Operators *)
 lemma norm_mult_ineq_bounded:
   fixes A B :: "(_,_) bounded"
   shows "norm (A *\<^sub>o B) \<le> norm A * norm B"
   apply transfer
   by (simp add: bounded_clinear.bounded_linear onorm_compose)
-
-lemma equal_span':
-  fixes f g :: "'a::cbanach \<Rightarrow> 'b::cbanach"
-  assumes "bounded_clinear f"
-    and "bounded_clinear g"
-  assumes "\<And>x. x\<in>G \<Longrightarrow> f x = g x"
-  assumes "x\<in>closure (complex_vector.span G)"
-  shows "f x = g x"
-  using assms equal_span_applyOpSpace
-  by metis 
-
-lemma ortho_bot[simp]: "- bot = (top::'a::chilbert_space linear_space)"
-  apply transfer by auto
-
-lemma ortho_top[simp]: "- top = (bot::'a::chilbert_space linear_space)"
-  apply transfer by auto
-
-(* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
-lemma demorgan_inf: "- ((A::_::orthocomplemented_lattice) \<sqinter> B) = - A \<squnion> - B"
-proof-
-  have \<open>-(- A \<squnion> - B) = A \<sqinter> B\<close>
-  proof-
-    have \<open>-(- A \<squnion> - B) \<le> A\<close>
-    proof-
-      have \<open>- A \<squnion> - B \<ge> -A\<close>
-        by simp        
-      thus ?thesis
-        by (metis ortho_antimono ortho_involution) 
-    qed
-    moreover have \<open>-(- A \<squnion> - B) \<le> B\<close>
-    proof-
-      have \<open>- A \<squnion> - B \<ge> -B\<close>
-        by simp        
-      thus ?thesis
-        by (metis ortho_antimono ortho_involution) 
-    qed
-    ultimately show ?thesis
-    proof - (* sledgehammer *)
-      have f1: "\<forall>a aa ab. (ab::'a) \<sqinter> aa \<squnion> ab \<sqinter> a \<squnion> ab \<sqinter> (aa \<squnion> a) = ab \<sqinter> (aa \<squnion> a)"
-        by (meson distrib_inf_le sup.absorb_iff2)
-      have f2: "\<forall>a aa. - (a::'a) \<squnion> - aa = - aa \<or> \<not> aa \<le> a"
-        by (metis ortho_antimono sup.absorb_iff2)
-      have "\<forall>a aa. (aa::'a) \<sqinter> a \<le> a"
-        by auto
-      then have f3: "\<forall>a aa. (aa::'a) \<le> aa \<squnion> a"
-        by (metis inf_sup_absorb)
-      have f4: "\<forall>a aa. (aa::'a) \<sqinter> a = aa \<or> \<not> aa \<le> a"
-        using f2 by (metis (no_types) inf_sup_absorb ortho_antimono ortho_involution)
-      have f5: "\<forall>a aa. (aa::'a) \<squnion> a \<squnion> aa = aa \<squnion> a"
-        using f1 by (metis (no_types) inf.cobounded1 inf_commute inf_sup_absorb sup.absorb_iff2)
-      have f6: "\<forall>a aa. - (- (aa::'a) \<squnion> a) \<squnion> aa = aa"
-        using f3 f2 by (metis (no_types) ortho_involution)
-      then have "A \<sqinter> B \<squnion> - (- A \<squnion> - B) = A \<sqinter> B"
-        using f5 f1 by (metis (no_types) \<open>- (- A \<squnion> - B) \<le> B\<close> inf_commute inf_sup_absorb sup.absorb_iff2)
-      then have f7: "- (- A \<squnion> - B) \<squnion> A \<sqinter> B = A \<sqinter> B"
-        by (metis (no_types) distrib_inf_le inf.cobounded1 inf_commute inf_sup_absorb sup.absorb_iff2)
-      then have f8: "- A \<squnion> - B \<squnion> - (A \<sqinter> B) = - A \<squnion> - B"
-        using f6 f5 by (metis (no_types))
-      have f9: "- (A \<sqinter> B) \<sqinter> (- A \<squnion> - B) = - (A \<sqinter> B)"
-        using f7 f4 by (metis (no_types) ortho_antimono ortho_involution sup.absorb_iff2)
-      have "\<forall>a aa. - (aa::'a) \<sqinter> - (aa \<sqinter> a) = - aa"
-        using f4 by (metis (full_types) inf.cobounded1 ortho_antimono)
-      then have "- A \<squnion> - B = - (A \<sqinter> B)"
-        using f9 f8 f1 by (metis (no_types) inf_commute)
-      then show ?thesis
-        by (simp add: ortho_involution)
-    qed 
-  qed
-  hence \<open>A \<sqinter> B = -(- A \<squnion> - B)\<close>
-    by simp
-  thus ?thesis
-    by (simp add: ortho_involution) 
-qed
-
-(* TODO: Claimed by https://en.wikipedia.org/wiki/Complemented_lattice *)
-lemma demorgan_sup: "- ((A::_::orthocomplemented_lattice) \<squnion> B) = - A \<sqinter> - B"
-  using demorgan_inf
-  by (metis ortho_involution)
 
 lemma span_explicit_finite:
   assumes \<open>finite T\<close> and \<open>x \<in> complex_vector.span T\<close>
@@ -933,7 +845,7 @@ proof-
     by fastforce 
 qed
 
-
+(* TODO: move to where basis_enum is defined *)
 instance basis_enum \<subseteq> chilbert_space
 proof
   show "convergent X"
@@ -1010,6 +922,23 @@ proof
     thus ?thesis 
       unfolding convergent_def by blast
   qed
+qed
+
+(* TODO: move to where vector_to_bounded is defined *)
+lemma vector_to_bounded_adj_times_vector_to_bounded[simp]:
+  includes bounded_notation
+  shows "vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
+proof -
+  have "one_dim_to_complex ((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = one_dim_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+    for \<gamma> :: "'c::one_dim"
+    by (simp add: times_applyOp)
+  hence "((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+    for \<gamma> :: "'c::one_dim"
+    using one_dim_to_complex_inverse by metis
+  thus ?thesis
+    using  bounded_ext[where A = "vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>"
+        and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
+    by auto
 qed
 
 unbundle no_bounded_notation

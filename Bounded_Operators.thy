@@ -550,8 +550,20 @@ lift_definition
 
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
-  shows \<open>\<langle>(G*) *\<^sub>v x, y\<rangle> = \<langle>x, G *\<^sub>v y\<rangle>\<close>
+  shows \<open>\<langle>G* *\<^sub>v x, y\<rangle> = \<langle>x, G *\<^sub>v y\<rangle>\<close>
   apply transfer using Adj_I by blast
+
+(* TODO: move to Complex_Inner_Product (after Adj_I, perhaps) *)
+lemma Adj_I':
+  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
+  assumes \<open>bounded_clinear G\<close>
+  shows \<open>\<forall>x. \<forall>y. \<langle>x, Adj G y\<rangle> = \<langle>G x, y\<rangle>\<close>
+  by (metis Adj_I assms cinner_commute')
+
+lemma adjoint_I':
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
+  shows \<open>\<langle>x, G* *\<^sub>v y\<rangle> = \<langle>G *\<^sub>v x, y\<rangle>\<close> 
+  apply transfer using Adj_I' by blast
 
 lemma adjoint_D:
   fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
@@ -1820,14 +1832,25 @@ subsection \<open>Kernel\<close>
 (* debate 1 Bounded_Operators
 - Dominique: type class: complex_vector + topological_space
 - Jose: it is more natural, in the setting of this library, to
-take the class "complex_normed_vector" in place of "complex_vector + topological_space".
+  take the class "complex_normed_vector" in place of "complex_vector + topological_space".
+  
+Dominique: complex_vector+topological_space is strictly more general.
+  Any theorem or definition that is proven wrt. complex_vector+topological_space
+  can be directly used in a situation requiring complex_normed_vector as well.
+  Thus restricting to complex_normed_vector reduces the generality of the results without
+  good reason. In specific cases, of course, there are good reasons. For example,
+  the type bounded only makes sense for complex_normed_vector because we need the norm.
+
+  Why would complex_normed_vector be more natural in this setting?
+
+  I am not sure which specific lemma/definition this debate refers to.
 *)
 
 lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> 'a linear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-(* again, see debate 1 Bounded_Operators *)
+(* TODO: complex_normed_vector *)
 definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
@@ -1835,7 +1858,6 @@ lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub
   for a :: complex and A :: "(_,_) bounded"
   apply transfer
   using complex_vector.scale_eq_0_iff by blast
-
 
 lemma kernel_0[simp]: "kernel 0 = top"
 proof-

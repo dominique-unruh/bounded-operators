@@ -4,30 +4,42 @@ theory Lattice_Missing
   imports Complex_Main  HOL.Lattices HOL.Complete_Lattices
 begin
 
-(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties 
-   and using the conventions from the definition of @{class boolean_algebra} *)
+bundle lattice_notation begin
+notation inf (infixl "\<sqinter>" 70)
+notation sup (infixl "\<squnion>" 65)
+notation Inf ("\<Sqinter>")
+notation Sup ("\<Squnion>")
+notation bot ("\<bottom>")
+notation top ("\<top>")
+end
+
+bundle no_lattice_notation begin
+notation inf (infixl "\<sqinter>" 70)
+notation sup (infixl "\<squnion>" 65)
+notation Inf ("\<Sqinter>")
+notation Sup ("\<Squnion>")
+notation bot ("\<bottom>")
+notation top ("\<top>")
+end
+
+unbundle lattice_notation
+
+text \<open>The following class \<open>complemented_lattice\<close> describes complemented lattices (with
+  \<^const>\<open>uminus\<close> for the complement). The definition follows 
+  \<^url>\<open>https://en.wikipedia.org/wiki/Complemented_lattice#Definition_and_basic_properties\<close>.
+  Additionally, it adopts the convention from \<^class>\<open>boolean_algebra\<close> of defining 
+  \<^const>\<open>minus\<close> in terms of the complement.\<close>
+
 class complemented_lattice = bounded_lattice + uminus + minus + 
   assumes inf_compl_bot[simp]: "inf x (-x) = bot"
-    and sup_compl_top[simp]: "sup x  (-x) = top"
-    and diff_eq:  "x - y = inf x (- y)"
+    and sup_compl_top[simp]: "sup x (-x) = top"
+    and diff_eq:  "x - y = inf x (- y)" begin
 
-class complete_complemented_lattice = complemented_lattice + complete_lattice 
-
-(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation *)
-class orthocomplemented_lattice = complemented_lattice +
-  assumes ortho_involution[simp]: "- (- x) = x"
-    and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y" begin
-
-(*
-
-TODO Prove all the lemmas in the comment below unless they don't hold for orthocomplemented_lattice.
-     If they don't hold for orthocomplemented_lattice, prove them in orthomodular_lattice.
-     If they don't hold there, comment them out with "TODO: Dominique should check"
-
-In some cases, the existing proofs might work (copied from boolean_lattice) 
-but in some cases new proofs will be needed
-
-*)
+lemma dual_complemented_lattice:
+  "class.complemented_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
+  apply (rule class.complemented_lattice.intro)
+  apply (rule dual_bounded_lattice)
+  by (unfold_locales, auto simp add: diff_eq)
 
 lemma compl_inf_bot [simp]: "inf (- x) x = bot"
   by (simp add: inf_commute)
@@ -35,29 +47,22 @@ lemma compl_inf_bot [simp]: "inf (- x) x = bot"
 lemma compl_sup_top [simp]: "sup (- x) x = top"
   by (simp add: sup_commute)
 
+end
 
-(* TODO: Dominique should check
-lemma compl_unique:
-  assumes "inf x y = bot"
-    and "sup x y = top"
-  shows "- x = y"
-proof -
-  have "sup (inf x (- x)) (inf (- x) y) = sup (inf x y) (inf (- x)  y)"
-    using inf_compl_bot assms(1) by simp
-  then have "sup (inf (- x) x) (inf (- x) y) = sup (inf y x) (inf y (- x))"
-    by (simp add: inf_commute)
-  then have "inf (- x) (sup x y) = inf y (sup x  (- x))"
-    using inf_sup_distrib1
-    sorry
-  then have "inf (- x) top = inf y t"
-    using sup_compl_top assms(2) by simp
-  then show "- x = y" by simp
-qed
-*)
+class complete_complemented_lattice = complemented_lattice + complete_lattice 
 
-lemma double_compl [simp]: "- (- x) = x"
-  by simp
-  
+text \<open>The following class \<open>complemented_lattice\<close> describes orthocomplemented lattices,
+  following   \<^url>\<open>https://en.wikipedia.org/wiki/Complemented_lattice#Orthocomplementation\<close>.\<close>
+class orthocomplemented_lattice = complemented_lattice +
+  assumes ortho_involution[simp]: "- (- x) = x"
+    and ortho_antimono: "x \<le> y \<Longrightarrow> -x \<ge> -y" begin
+
+lemma dual_orthocomplemented_lattice:
+  "class.orthocomplemented_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
+  apply (rule class.orthocomplemented_lattice.intro)
+  apply (rule dual_complemented_lattice)
+  by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
+
 lemma compl_eq_compl_iff [simp]: "- x = - y \<longleftrightarrow> x = y"
 proof
   assume "- x = - y"
@@ -86,27 +91,30 @@ proof -
     by (metis local.inf_top_left)    
 qed
 
-(* TODO: Dominique should check
-lemma compl_inf [simp]: "- (inf x y) = sup (- x) (- y)"
-proof (rule compl_unique)
-  have "inf (inf x y) (sup (- x) (- y)) = sup (inf y (inf x (- x))) (inf x (inf y (- y)))"
-    by (simp only: inf_sup_distrib inf_aci)
-  then show "(x \<sqinter> y) \<sqinter> (- x \<squnion> - y) = \<bottom>"
-    by (simp add: inf_compl_bot)
-next
-  have "(x \<sqinter> y) \<squnion> (- x \<squnion> - y) = (- y \<squnion> (x \<squnion> - x)) \<sqinter> (- x \<squnion> (y \<squnion> - y))"
-    by (simp only: sup_inf_distrib sup_aci)
-  then show "(x \<sqinter> y) \<squnion> (- x \<squnion> - y) = \<top>"
-    by (simp add: sup_compl_top)
+(* Proof from: https://planetmath.org/orthocomplementedlattice *)
+lemma compl_sup [simp]: "- (x \<squnion> y) = - x \<sqinter> - y"
+proof -
+  have "- (x \<squnion> y) \<le> - x"
+    by (simp add: ortho_antimono)
+  moreover have "- (x \<squnion> y) \<le> - y"
+    by (simp add: ortho_antimono)
+  ultimately have 1: "- (x \<squnion> y) \<le> - x \<sqinter> - y"
+    by (simp add: sup.coboundedI1)
+  have \<open>x \<le> - (-x \<sqinter> -y)\<close>
+    by (metis inf.cobounded1 ortho_antimono ortho_involution)
+  moreover have \<open>y \<le> - (-x \<sqinter> -y)\<close>
+    by (metis inf.cobounded2 ortho_antimono ortho_involution)
+  ultimately have \<open>x \<squnion> y \<le> - (-x \<sqinter> -y)\<close>
+    by auto
+  then have 2: \<open>-x \<sqinter> -y \<le> - (x \<squnion> y)\<close>
+    using ortho_antimono by fastforce
+  from 1 2 show ?thesis
+    by (simp add: eq_iff)
 qed
-*)
 
-
-(* Dominique should check
-lemma compl_sup [simp]: "- (sup x y) = inf (- x) (- y)"
-  using dual_boolean_algebra
-  by (rule boolean_algebra.compl_inf)
-*)
+lemma compl_inf [simp]: "- (x \<sqinter> y) = - x \<squnion> - y"
+  using compl_sup
+  by (metis ortho_involution)
 
 lemma compl_mono:
   assumes "x \<le> y"
@@ -137,7 +145,7 @@ proof -
   thus ?thesis by simp
 qed
 
-lemma compl_less_compl_iff: "- x < - y \<longleftrightarrow> y < x"  (* TODO: declare [simp] ? *)
+lemma compl_less_compl_iff[simp]: "- x < - y \<longleftrightarrow> y < x"
   by (auto simp add: less_le)
 
 lemma compl_less_swap1:
@@ -194,9 +202,18 @@ class complete_orthocomplemented_lattice = orthocomplemented_lattice + complete_
 instance complete_orthocomplemented_lattice \<subseteq> complete_complemented_lattice
   by intro_classes
 
-(* Following https://en.wikipedia.org/wiki/Complemented_lattice#Orthomodular_lattices *)
+text \<open>The following class \<open>orthomodular_lattice\<close> describes orthomodular lattices,
+following   \<^url>\<open>https://en.wikipedia.org/wiki/Complemented_lattice#Orthomodular_lattices\<close>.\<close>
 class orthomodular_lattice = orthocomplemented_lattice +
-  assumes orthomodular: "x \<le> y \<Longrightarrow> sup x (inf (-x) y) = y"
+  assumes orthomodular: "x \<le> y \<Longrightarrow> sup x (inf (-x) y) = y" begin
+
+lemma dual_orthomodular_lattice:
+  "class.orthomodular_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
+  apply (rule class.orthomodular_lattice.intro)
+  apply (rule dual_orthocomplemented_lattice)
+  apply (unfold_locales)
+  using local.compl_eq_compl_iff local.ortho_antimono local.orthomodular by fastforce
+end
 
 class complete_orthomodular_lattice = orthomodular_lattice + complete_lattice begin
 
@@ -240,14 +257,6 @@ qed
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
 
-
-
-(* Dominique should check
-lemma demorgan_inf: "- (inf (A::_::orthocomplemented_lattice) B) = sup (- A) (- B)"
-*)
-
-(* Dominique should check
-lemma demorgan_sup: "- (sup (A::_::orthocomplemented_lattice)  B) = inf (- A)  (- B)"
-*)
+unbundle no_lattice_notation
 
 end
