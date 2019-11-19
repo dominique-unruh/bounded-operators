@@ -3549,12 +3549,89 @@ for A::\<open>'a::complex_vector set\<close>
     by auto 
 qed
 
+lemma finite_sum_tendsto':
+ \<open>\<forall> A::('a::cbanach) set. (\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a) \<and> finite A \<and> card A = n \<longrightarrow> 
+((\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a))\<close>
+proof(induction n)
+  case 0
+  thus ?case
+    by fastforce 
+next
+  case (Suc n)
+  have \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a \<Longrightarrow> finite A \<Longrightarrow> card A = Suc n \<Longrightarrow> 
+(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+    for A::\<open>'a::cbanach set\<close>
+  proof-
+    assume \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close> and \<open>card A = Suc n\<close>
+    obtain x A' where \<open>A = insert x A'\<close> and \<open>x \<notin> A'\<close>
+    proof -
+      assume a1: "\<And>x A'. \<lbrakk>A = insert x A'; x \<notin> A'\<rbrakk> \<Longrightarrow> thesis"
+      have "Suc n \<le> Suc n"
+        by (metis inf.orderI inf_idem)
+      then have "Suc n \<le> card A"
+        by (metis \<open>card A = Suc n\<close>)
+      then show ?thesis
+        using a1 by (meson card_le_Suc_iff)
+    qed
+    have \<open>\<forall> a \<in> A'. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
+      by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)      
+    moreover have  \<open>finite A'\<close>
+      using \<open>A = insert x A'\<close> \<open>finite A\<close> 
+      by auto
+    moreover have \<open>card A' = n\<close>
+      using \<open>A = insert x A'\<close> \<open>card A = Suc n\<close> \<open>x \<notin> A'\<close> calculation(2) 
+      by auto      
+    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: Suc.IH)
+    moreover have \<open>(\<lambda> n. r n x *\<^sub>C x) \<longlonglongrightarrow> \<phi> x *\<^sub>C x\<close>
+    proof-
+      have \<open>(\<lambda> n. r n x) \<longlonglongrightarrow> \<phi> x\<close>
+        by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)
+      moreover have \<open>isCont (\<lambda> t. t *\<^sub>C x)  (\<phi> x)\<close>
+        by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)        
+      ultimately have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) \<longlonglongrightarrow> (\<lambda> t. t *\<^sub>C x) (\<phi> x)\<close>
+        using Elementary_Topology.continuous_at_sequentially[where f = "(\<lambda> t. t *\<^sub>C x)" and a = "\<phi> x"]
+        by auto
+      moreover have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) =  (\<lambda> n. (\<lambda> t. t *\<^sub>C x) (r n x))\<close>
+        by auto
+      ultimately show ?thesis by auto
+    qed
+    ultimately have \<open>(\<lambda> n. r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: tendsto_add)
+    moreover have \<open>(\<Sum>a\<in>A. r n a *\<^sub>C a) = r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)\<close>
+      for n
+      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
+    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by auto
+    moreover have \<open>(\<Sum>a\<in>A. \<phi> a *\<^sub>C a) = \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
+    ultimately show ?thesis by auto
+  qed
+  thus ?case 
+    by blast
+qed
+
 (* TODO move *)
-lemma closed_span_finite_set:
- \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+lemma finite_sum_tendsto:
+  fixes A::\<open>('a::cbanach) set\<close>
+  assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
+  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+  using finite_sum_tendsto' assms by blast
+
+
+
+lemma finite_sum_Cauchy:
+  fixes A::\<open>('a::cbanach) set\<close>
+  assumes \<open>Cauchy (\<lambda> k. \<Sum>a\<in>A. r k a *\<^sub>C a)\<close> and \<open>finite A\<close> 
+    and  \<open>x \<in> A\<close> and \<open>complex_independent A\<close>
+  shows \<open>Cauchy (\<lambda> k. r k x)\<close>
+  sorry
+
+lemma closed_span_finite_set_LI:
+ \<open>complex_independent A \<Longrightarrow> finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
  for A::\<open>('a::cbanach) set\<close>
 proof-
-  assume \<open>finite A\<close>
+  assume \<open>complex_independent A\<close> and \<open>finite A\<close>
   have \<open>complex_vector.span A = {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A}\<close>
     using complex_vector.span_explicit[where b = "A"] by blast
   also have \<open>... = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
@@ -3580,9 +3657,16 @@ proof-
         using convergentI by auto
       hence \<open>Cauchy s\<close>
         by (simp add: Cauchy_convergent_iff)
+      hence \<open>Cauchy (\<lambda> k. s k)\<close>
+        by auto
+      hence \<open>Cauchy (\<lambda> k. (\<Sum>a\<in>A. r k a *\<^sub>C a))\<close>
+        using   \<open>\<And> k. s k = (\<Sum>a\<in>A. r k a *\<^sub>C a)\<close>
+        by auto
       hence \<open>a \<in> A \<Longrightarrow> Cauchy (\<lambda> n. r n a)\<close>
         for a
-        sorry
+        using finite_sum_Cauchy[where A = "A" and r = "r" and x = "a"]
+          \<open>complex_independent A\<close> \<open>finite A\<close>
+        by auto
       hence \<open>a \<in> A \<Longrightarrow> convergent (\<lambda> n. r n a)\<close>
         for a
         using Cauchy_convergent_iff by auto
@@ -3593,7 +3677,8 @@ proof-
       then obtain \<phi> where \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
         by blast
       hence \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-        sorry
+        using finite_sum_tendsto \<open>finite A\<close>
+        by blast
       hence \<open>(\<lambda> n. s n) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
         using \<open>\<And> n. s n = (\<Sum>a\<in>A. r n a *\<^sub>C a)\<close>
         by auto
@@ -3610,6 +3695,26 @@ proof-
       using closed_sequential_limits by blast 
   qed
   ultimately show ?thesis by simp
+qed
+
+
+(* TODO move *)
+lemma closed_span_finite_set:
+ \<open>finite A \<Longrightarrow> closed (complex_vector.span A)\<close>
+ for A::\<open>('a::cbanach) set\<close>
+proof - (* sledgehammer *)
+  assume a1: "finite A"
+  obtain AA :: "'a set \<Rightarrow> 'a set" where
+    f2: "AA A \<subseteq> A \<and> complex_independent (AA A) \<and> A \<subseteq> complex_vector.span (AA A)"
+    by (meson complex_vector.maximal_independent_subset)
+  then have f3: "finite (AA A)"
+    using a1 by (metis finite_subset)
+  have f4: "\<forall>A Aa. (complex_vector.span (A::'a set) = complex_vector.span Aa) = (A \<subseteq> complex_vector.span Aa \<and> Aa \<subseteq> complex_vector.span A)"
+    using complex_vector.span_eq by blast
+  then have "AA A \<subseteq> complex_vector.span A"
+    using f2 by (metis subset_trans)
+  then show ?thesis
+    using f4 f3 f2 by (metis (full_types) closed_span_finite_set_LI)
 qed
 
 (* TODO move *)
