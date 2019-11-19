@@ -725,7 +725,10 @@ lemma closed_finite_dim':
 
 hide_fact closed_finite_dim'_induction
 
-(* TODO: Holds for complex_normed_vector (with a different proof that even shows completeness). Use that proof? *)
+(* TODO: Holds for complex_normed_vector (with a different proof that even shows completeness). Use that proof? 
+
+Proof sketch given after the lemma (in a comment below)
+*)
 lemma closed_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
   assumes \<open>finite T\<close>
@@ -745,6 +748,34 @@ proof-
     using \<open>complex_vector.span A = complex_vector.span T\<close>
     by auto
 qed
+
+(* 
+Proof sketch for closed_finite_dim (with normed_vector_space):
+
+Let B be a basis for span A. (Exists by basis_exists, with dimension "dim span A", which is \<le> card A
+by dim_le_card. Hence B is finite.)
+
+Fix a Cauchy sequence \<psi>i in span A = span B. 
+
+Each \<psi>i can be expressed in terms of vectors in B. 
+
+For each b\<in>B, let \<psi>ib be the b-coefficient of \<psi>i (can be written in Isabelle as "representation B \<psi>i b")
+
+Then \<psi>ib is Cauchy for all b.
+
+Thus exists \<psi>b s.t. \<psi>ib \<longlonglongrightarrow> \<psi>b for all b.
+
+Thus \<psi>ib * b \<longlonglongrightarrow> \<psi>b * b for all b.
+
+Thus \<psi>ib = (\<Sum>b\<in>B. \<psi>ib * b) \<longlonglongrightarrow> (\<Sum>b\<in>B. \<psi>b * b) =: \<psi>. (Note \<psi> \<in> span B.)
+
+Thus the Cauchy sequence \<psi>i converges in span B = span A. Hence span A is complete.
+
+In particular, span A is closed. (complete \<Longrightarrow> closed is probably already proven somewhere. If not,
+one simply uses the fact that if \<psi>i \<longlonglongrightarrow> \<psi>, then \<psi>i is Cauchy, thus it converges to something in span A,
+thus \<psi>\<in>span A. This is implies that span A is closed.)
+
+*)
 
 hide_fact closed_finite_dim'
 
