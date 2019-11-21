@@ -3619,8 +3619,6 @@ lemma finite_sum_tendsto:
   using finite_sum_tendsto' assms by blast
 
 
-
-
 lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
 proof-
   include notation_norm
