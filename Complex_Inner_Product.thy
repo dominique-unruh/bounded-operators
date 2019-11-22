@@ -3621,6 +3621,34 @@ lemma finite_sum_tendsto:
   using finite_sum_tendsto' assms by blast
 
 
+ 
+(* TODO: José, please compare this with your proof of finite_sum_tendsto
+   to see how inductions over finite sets are easier to do than by 
+   induction over the cardinality. 
+
+   TODO: Replace finite_sum_tendsto by this.
+*)
+lemma finite_sum_tendsto_NEW:
+  fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
+  assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
+  assumes \<open>finite A\<close>
+  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
+  apply (insert assms(1)) using \<open>finite A\<close>
+proof induction
+  case empty
+  show ?case 
+    by auto
+next
+  case (insert x F)
+  then have "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
+    by auto
+  then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
+    using tendsto_add by blast
+  then show ?case 
+    using sum.insert insert by auto
+qed
+
+
 lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
 proof-
   include notation_norm
