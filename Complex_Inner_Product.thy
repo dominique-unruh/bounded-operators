@@ -21,7 +21,7 @@ complement.
 - dagger_dagger_id: The adjoint is an involution.
 *)
 
-section \<open>Inner Product Spaces and the Gradient Derivative\<close>
+subsection \<open>\<open>Complex_Inner_Product\<close> -- Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
@@ -261,7 +261,7 @@ proof
     unfolding scaleR_scaleC norm_scaleC by auto
 qed
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 
 
@@ -2380,7 +2380,7 @@ proof-
 qed
 
 
-section \<open>Riesz Representation\<close>
+subsection \<open>Riesz Representation\<close>
 
 definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
   \<open>proportion S =  (
@@ -2559,7 +2559,7 @@ next
   qed
 qed
 
-section \<open>Adjointness\<close>
+subsection \<open>Adjointness\<close>
 
 definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>)\<close>
   for G :: "'b::complex_inner \<Rightarrow> 'a::complex_inner"
@@ -3424,7 +3424,7 @@ lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
   by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
 
 
-section \<open>Unsorted\<close>
+subsection \<open>Unsorted\<close>
 
 text \<open>Orthogonal set\<close>
 definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
@@ -3483,12 +3483,14 @@ lemma canonical_basis_non_zero:
   shows \<open>x \<noteq> 0\<close>
   using assms is_onb_nonzero is_onb_set by blast
 
-text \<open>The class one_dim applies to one-dimensional vector spaces.
+text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
+(* TODO: remove "+ complex_inner" (ToDo.thy contains a proof of "instance basis_enum \<subseteq> chilbert_space") *)
 class one_dim = basis_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
+  (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
   assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
 begin
 
@@ -3624,13 +3626,13 @@ proof-
   include notation_norm
   have \<open>(canonical_basis::'a list) = [1::('a::one_dim)]\<close>
     by (simp add: one_dim_canonical_basis)    
-  hence \<open>is_onb {(1::('a::one_dim))}\<close>
+  hence \<open>is_onb {(1::('a::one_dim))}\<close> (* TODO unnecessary parentheses *)
     by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
-  hence \<open>\<parallel>(1::('a::one_dim))\<parallel> = 1\<close>
+  hence \<open>\<parallel>(1::('a::one_dim))\<parallel> = 1\<close> (* TODO unnecessary parentheses *)
     unfolding is_onb_def sphere_def
     using dist_norm
     by simp
-  hence \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = 1\<close>
+  hence \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = 1\<close> (* TODO unnecessary parentheses *)
     by simp
   moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
     using power2_norm_eq_cinner' by auto
@@ -4861,7 +4863,7 @@ qed
 
 
 
-section \<open>Commutative monoid of subspaces\<close>
+subsection \<open>Commutative monoid of subspaces\<close>
 
 instantiation linear_space :: (chilbert_space) comm_monoid_add begin
 definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
@@ -4998,7 +5000,7 @@ proof-
 qed
 
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 
 setup \<open>Sign.add_const_constraint
