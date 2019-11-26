@@ -329,34 +329,6 @@ lemma norm_mult_ineq_bounded:
   by (simp add: bounded_clinear.bounded_linear onorm_compose)
 
 
-(* 
-Proof sketch for closed_finite_dim (with normed_vector_space):
-
-Let B be a basis for span A. (Exists by basis_exists, with dimension "dim span A", which is \<le> card A
-by dim_le_card. Hence B is finite.)
-
-Fix a Cauchy sequence \<psi>i in span A = span B. 
-
-Each \<psi>i can be expressed in terms of vectors in B. 
-
-For each b\<in>B, let \<psi>ib be the b-coefficient of \<psi>i (can be written in Isabelle as "representation B \<psi>i b")
-
-Then \<psi>ib is Cauchy for all b.
-
-Thus exists \<psi>b s.t. \<psi>ib \<longlonglongrightarrow> \<psi>b for all b.
-
-Thus \<psi>ib * b \<longlonglongrightarrow> \<psi>b * b for all b.
-
-Thus \<psi>ib = (\<Sum>b\<in>B. \<psi>ib * b) \<longlonglongrightarrow> (\<Sum>b\<in>B. \<psi>b * b) =: \<psi>. (Note \<psi> \<in> span B.)
-
-Thus the Cauchy sequence \<psi>i converges in span B = span A. Hence span A is complete.
-
-In particular, span A is closed. (complete \<Longrightarrow> closed is probably already proven somewhere. If not,
-one simply uses the fact that if \<psi>i \<longlonglongrightarrow> \<psi>, then \<psi>i is Cauchy, thus it converges to something in span A,
-thus \<psi>\<in>span A. This is implies that span A is closed.)
-
-*)
-
 hide_fact closed_finite_dim'
 
 lemma span_finite_dim:
