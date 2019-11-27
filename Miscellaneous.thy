@@ -7,6 +7,13 @@ lemma finite_sum_Cauchy:
   assumes \<open>Cauchy (\<lambda> k. \<Sum>a\<in>A. r k a *\<^sub>C a)\<close> and \<open>finite A\<close> 
     and  \<open>x \<in> A\<close> and \<open>complex_independent A\<close>
   shows \<open>Cauchy (\<lambda> k. r k x)\<close>
+  apply (insert assms)
+  using \<open>finite A\<close>
+(* In case this theorem is needed: A helpful theorem towards this might be 
+   finate_span_representation_bounded which essentially shows that
+   the map ("representation A") from "\<Sum>a\<in>A. r k a *\<^sub>C a" to "r k x" is bounded (and hence continous)
+   on span A. (But there are still many other steps to be done to prove finite_sum_Cauchy.)
+*)
   sorry
 
 

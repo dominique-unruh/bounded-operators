@@ -1,8 +1,12 @@
-section \<open>TODO: section title\<close>
+section \<open>\<open>Lattice_Missing\<close> -- Miscellaneous missing facts about lattices\<close>
 
 theory Lattice_Missing
-  imports Complex_Main  HOL.Lattices HOL.Complete_Lattices
+  imports Complex_Main HOL.Complete_Lattices
 begin
+
+text \<open>Two bundles to activate and deactivate lattice specific notation (e.g., \<sqinter> etc.).
+  Activate the notation locally via "@{theory_text \<open>includes lattice_notation\<close>}" in a lemma statement.
+  (Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle lattice_notation ... unbundle no_lattice_notation\<close>}.)\<close>
 
 bundle lattice_notation begin
 notation inf (infixl "\<sqinter>" 70)
@@ -64,33 +68,15 @@ lemma dual_orthocomplemented_lattice:
   by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
 
 lemma compl_eq_compl_iff [simp]: "- x = - y \<longleftrightarrow> x = y"
-proof
-  assume "- x = - y"
-  hence "- (- x) = - (- y)" by (rule arg_cong)
-  thus "x = y" by simp
-next
-  assume "x = y"
-  thus "- x = - y" by simp
-qed
+  by (metis ortho_involution)
 
 lemma compl_bot_eq [simp]: "- bot = top"
-proof -
-  from sup_compl_top 
-  have "sup bot (- bot) = top"
-    by simp
-  thus ?thesis
-    by (metis local.sup_bot.left_neutral) 
-qed
+  by (metis inf_compl_bot inf_top_left ortho_involution)
 
 lemma compl_top_eq [simp]: "- top = bot"
-proof -
-  from inf_compl_bot 
-  have "inf top (- top) = bot"
-    by simp
-  thus ?thesis
-    by (metis local.inf_top_left)    
-qed
+  using compl_bot_eq ortho_involution by blast
 
+text \<open>De Morgan's law\<close>
 (* Proof from: https://planetmath.org/orthocomplementedlattice *)
 lemma compl_sup [simp]: "- (x \<squnion> y) = - x \<sqinter> - y"
 proof -
@@ -112,6 +98,7 @@ proof -
     by (simp add: eq_iff)
 qed
 
+text \<open>De Morgan's law\<close>
 lemma compl_inf [simp]: "- (x \<sqinter> y) = - x \<squnion> - y"
   using compl_sup
   by (metis ortho_involution)
@@ -127,23 +114,12 @@ lemma compl_le_compl_iff [simp]: "- x \<le> - y \<longleftrightarrow> y \<le> x"
 lemma compl_le_swap1:
   assumes "y \<le> - x"
   shows "x \<le> -y"
-proof -
-  from assms 
-  have "- (- x) \<le> - y" 
-    by (simp only: compl_le_compl_iff)
-  thus ?thesis 
-    by simp
-qed
+  using assms ortho_antimono by fastforce
 
 lemma compl_le_swap2:
   assumes "- y \<le> x"
   shows "- x \<le> y"
-proof -
-  from assms 
-  have "- x \<le> - (- y)" 
-    by (simp only: compl_le_compl_iff)
-  thus ?thesis by simp
-qed
+  using assms local.ortho_antimono by fastforce
 
 lemma compl_less_compl_iff[simp]: "- x < - y \<longleftrightarrow> y < x"
   by (auto simp add: less_le)
@@ -151,34 +127,24 @@ lemma compl_less_compl_iff[simp]: "- x < - y \<longleftrightarrow> y < x"
 lemma compl_less_swap1:
   assumes "y < - x"
   shows "x < - y"
-proof -
-  from assms have "- (- x) < - y" by (simp only: compl_less_compl_iff)
-  then show ?thesis by simp
-qed
+  using assms compl_less_compl_iff by fastforce
 
 lemma compl_less_swap2:
   assumes "- y < x"
   shows "- x < y"
-proof -
-  from assms have "- x < - (- y)"
-    by (simp only: compl_less_compl_iff)
-  then show ?thesis by simp
-qed
+  using assms compl_le_swap1 compl_le_swap2 less_le_not_le by auto
 
 lemma sup_cancel_left1: "sup (sup x a) (sup (- x) b) = top"
-  by (simp add: inf_sup_aci sup_compl_top)
+  by (simp add: sup_commute sup_left_commute)
 
 lemma sup_cancel_left2: "sup (sup (- x) a) (sup x b) = top"
-  by (simp add: inf_sup_aci sup_compl_top)
+  by (simp add: sup.commute sup_left_commute)
 
 lemma inf_cancel_left1: "inf (inf x a) (inf (- x) b) = bot"
-  by (simp add: inf_sup_aci inf_compl_bot)
+  by (simp add: inf.left_commute inf_commute)
 
 lemma inf_cancel_left2: "inf (inf (- x) a) (inf x b) = bot"
-  by (simp add: inf_sup_aci inf_compl_bot)
-
-declare inf_compl_bot [simp]
-  and sup_compl_top [simp]
+  using inf.left_commute inf_commute by auto
 
 lemma sup_compl_top_left1 [simp]: "sup (- x) (sup x y) = top"
   by (simp add: sup_assoc[symmetric])
@@ -226,21 +192,6 @@ instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_la
 instance boolean_algebra \<subseteq> orthomodular_lattice
 proof
 (* TODO: "fix x y :: 'a" and then remove "for x :: 'a" everywhere *)
-  show "inf (x::'a) (- x) = bot"
-    for x :: 'a
-    by simp    
-  show "sup (x::'a) (- x) = top"
-    for x :: 'a
-    by simp
-  show "- (- (x::'a)) = x"
-    for x :: 'a
-    by simp
-  show "- (y::'a) \<le> - x"
-    if "(x::'a) \<le> y"
-    for x :: 'a
-      and y :: 'a
-    using that
-    by simp 
   show "sup (x::'a) (inf (- x) y) = y"
     if "(x::'a) \<le> y"
     for x :: 'a
@@ -252,7 +203,7 @@ proof
     for x :: 'a
       and y :: 'a
     by (simp add: boolean_algebra_class.diff_eq)
-qed
+qed auto
 
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
