@@ -5068,7 +5068,31 @@ lemma cGDERIV_norm:
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
 *)
 
+(* TODO (Jose): Change name, because it is more general than ell2 *)
+lemma cinner_ext_ell2_0: 
+  assumes "\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = 0"
+  shows "\<psi> = 0"
+  using assms cinner_eq_zero_iff by blast
 
+text \<open>This is a useful rule for establishing the equality of vectors\<close>
+(* TODO (Jose): Change name, because it is more general than ell2 *)
+lemma cinner_ext_ell2:
+  assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+proof-
+  have \<open>\<langle>\<gamma>, \<psi> - \<phi>\<rangle> = 0\<close>
+    for \<gamma>
+    using \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
+    by (simp add: cinner_diff_right)    
+  hence \<open>\<psi> - \<phi> = 0\<close>
+    using cinner_ext_ell2_0[where \<psi> = "\<psi> - \<phi>"] by blast
+  thus ?thesis by simp
+qed
+
+
+lemma linear_space_member_inf[simp]:
+  "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
+  apply transfer by simp
 
 
 end

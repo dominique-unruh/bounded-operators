@@ -2700,4 +2700,11 @@ lemma [vector_add_divide_simps]:
   by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
 
 
+lemma linear_space_leI:
+  assumes "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
+  shows "A \<le> B"
+  using assms apply transfer by auto
+
+
+
 end

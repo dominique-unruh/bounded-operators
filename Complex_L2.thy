@@ -3764,6 +3764,30 @@ lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
 lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_linear_space"
   by (simp add: add_increasing)
 
+lemma ket_is_orthogonal[simp]:
+  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
+  unfolding is_orthogonal_def
+  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
+
+lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
+proof-
+  have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
+    using Complex_L2.ket_ell2_span by blast
+  thus ?thesis
+    by (simp add: Span.abs_eq top_linear_space.abs_eq)
+qed
+
+lemma [simp]: "ket i \<noteq> 0"
+  using ell2_ket[of i] by force
+
+lemma equal_ket:
+  includes bounded_notation
+  assumes "\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x"
+  shows "A = B"
+  by (simp add: assms equal_basis)
+
+
+
 unbundle no_bounded_notation
 
 end
