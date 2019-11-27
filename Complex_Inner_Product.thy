@@ -4339,10 +4339,7 @@ hide_fact Gram_Schmidt0
 
 
 
-(* TODO: Holds for complex_normed_vector (with a different proof that even shows completeness). Use that proof? 
-
-Proof sketch given after the lemma (in a comment below)
-*)
+(* TODO: Use the one from ToDo_Finite_Span_Closed instead. *)
 lemma closed_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
   assumes \<open>finite T\<close>
