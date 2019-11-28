@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>\<open>Ordered_Fields\<close> -- Fields with an associated compatible order\<close>
 
 (*
 Authors: 
@@ -12,17 +12,39 @@ theory Ordered_Fields
   imports Complex_Main Extended_Sorry
 begin
 
+text \<open>In this section we introduce some type classes for ordered rings/fields/etc.
+that are weakenings of existing classes. Most theorems in this section are 
+copies of the eponymous theorems from Isabelle/HOL, except that they are now proven 
+requiring weaker type classes (usually the need for a total order is removed).
+
+Since the lemmas are identical to the originals except for weaker type constraints, 
+we use the same names as for the original lemmas. (In fact, the new lemmas could replace
+the original ones in Isabelle/HOL with at most minor incompatibilities.\<close>
+
 subsection \<open>Missing from Orderings.thy\<close>
+
+text \<open>This class is analogous to \<^class>\<open>unbounded_dense_linorder\<close>, except that it does not require a total order\<close>
 
 class unbounded_dense_order = dense_order + no_top + no_bot
 
+instance unbounded_dense_linorder \<subseteq> unbounded_dense_order ..
+
 subsection \<open>Missing from Rings.thy\<close>
 
+text \<open>The existing class \<^class>\<open>abs_if\<close> requires \<^term>\<open>\<bar>a\<bar> = (if a < 0 then - a else a)\<close>.
+However, if \<^term>\<open>(<)\<close> is not a total order, this condition is too strong when \<^term>\<open>a\<close> 
+is incomparable with \<^term>\<open>0\<close>. (Namely, it requires the absolute value to be
+the identity on such elements. E.g., the absolute value for complex numbers does not 
+satisfy this.) The following class \<open>incomplete_abs_if\<close> is analogous to \<^class>\<open>abs_if\<close>
+but does not require anything if \<^term>\<open>a\<close> is incomparable with \<^term>\<open>0\<close>.\<close>
+
+(* TODO: rename \<rightarrow> partial_abs_if *)
 class incomplete_abs_if = minus + uminus + ord + zero + abs +
   assumes abs_neg: "a \<le> 0 \<Longrightarrow> abs a = -a"
   assumes abs_pos: "a \<ge> 0 \<Longrightarrow> abs a = a"
 
 class ordered_semiring_1 = ordered_semiring + semiring_1
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_semiring_1\<close> without requiring a total order\<close>
 begin
 
 lemma convex_bound_le:
@@ -40,6 +62,7 @@ end
 subclass (in linordered_semiring_1) ordered_semiring_1 ..
 
 class ordered_semiring_strict = semiring + comm_monoid_add + ordered_cancel_ab_semigroup_add +
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_semiring_strict\<close> without requiring a total order\<close>
   assumes mult_strict_left_mono: "a < b \<Longrightarrow> 0 < c \<Longrightarrow> c * a < c * b"
   assumes mult_strict_right_mono: "a < b \<Longrightarrow> 0 < c \<Longrightarrow> a * c < b * c"
 begin
@@ -67,6 +90,7 @@ lemma mult_pos_neg: "0 < a \<Longrightarrow> b < 0 \<Longrightarrow> a * b < 0"
 lemma mult_neg_pos: "a < 0 \<Longrightarrow> 0 < b \<Longrightarrow> a * b < 0"
   using mult_strict_right_mono [of a 0 b] by simp
 
+(* TODO remove *)
 text \<open>Legacy -- use @{thm [source] mult_neg_pos}.\<close>
 lemma mult_pos_neg2: "0 < a \<Longrightarrow> b < 0 \<Longrightarrow> b * a < 0"
   by (drule mult_strict_right_mono [of b 0]) auto
@@ -122,6 +146,7 @@ subclass (in linordered_semiring_strict) ordered_semiring_strict
 
 
 class ordered_semiring_1_strict = ordered_semiring_strict + semiring_1
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_semiring_1_strict\<close> without requiring a total order\<close>
 begin
 
 subclass ordered_semiring_1 ..
@@ -141,6 +166,7 @@ end
 subclass (in linordered_semiring_1_strict) ordered_semiring_1_strict .. 
 
 class ordered_comm_semiring_strict = comm_semiring_0 + ordered_cancel_ab_semigroup_add +
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_comm_semiring_strict\<close> without requiring a total order\<close>
   assumes comm_mult_strict_left_mono: "a < b \<Longrightarrow> 0 < c \<Longrightarrow> c * a < c * b"
 begin
 
@@ -172,6 +198,7 @@ subclass (in linordered_comm_semiring_strict) ordered_comm_semiring_strict
 
 class ordered_ring_strict = ring + ordered_semiring_strict
   + ordered_ab_group_add + incomplete_abs_if
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_ring_strict\<close> without requiring a total order\<close>
 begin
 
 subclass ordered_ring ..
@@ -197,6 +224,7 @@ lemmas mult_sign_intros =
 subsection \<open>Ordered fields\<close>
 
 class ordered_field = field + order + ordered_comm_semiring_strict + ordered_ab_group_add + incomplete_abs_if 
+  \<comment> \<open>missing class analogous to \<^class>\<open>linordered_field\<close> without requiring a total order\<close>
 begin
 
 lemma frac_less_eq:
@@ -238,6 +266,12 @@ lemma divide_eq_eq_1 [simp]:
   by (auto simp add: divide_eq_eq)
 
 end
+
+text \<open>The following type class intends to capture some important properties 
+  that are common both to the real and the complex numbers. The purpose is
+  to be able to state and prove lemmas that apply both to the real and the complex 
+  numbers without needing to state the lemma twice.
+\<close>
 
 class nice_ordered_field = ordered_field + zero_less_one + idom_abs_sgn +
   assumes positive_imp_inverse_positive: "0 < a \<Longrightarrow> 0 < inverse a"
@@ -337,7 +371,6 @@ lemma inverse_less_imp_less:
   "inverse a < inverse b \<Longrightarrow> 0 < a \<Longrightarrow> b < a"
   apply (simp add: less_le [of "inverse a"] less_le [of "b"])
   by (force dest!: inverse_le_imp_le nonzero_inverse_eq_imp_eq)
-
 
 text\<open>Both premises are essential. Consider -1 and 1.\<close>
 lemma inverse_less_iff_less [simp]:
@@ -460,24 +493,10 @@ lemma frac_le_eq:
   "y \<noteq> 0 \<Longrightarrow> z \<noteq> 0 \<Longrightarrow> x / y \<le> w / z \<longleftrightarrow> (x * z - w * y) / (y * z) \<le> 0"
   by (subst le_iff_diff_le_0) (simp add: diff_frac_eq )
 
+
 text\<open>Lemmas \<open>sign_simps\<close> is a first attempt to automate proofs
 of positivity/negativity needed for \<open>field_simps\<close>. Have not added \<open>sign_simps\<close> to \<open>field_simps\<close> because the former can lead to case
 explosions.\<close>
-
-
-(* Only works once linear arithmetic is installed:
-text{*An example:*}
-lemma fixes a b c d e f :: "'a::linordered_field"
-shows "\<lbrakk>a>b; c<d; e<f; 0 < u \<rbrakk> \<Longrightarrow>
- ((a-b)*(c-d)*(e-f))/((c-d)*(e-f)*(a-b)) <
- ((e-f)*(a-b)*(c-d))/((e-f)*(a-b)*(c-d)) + u"
-apply(subgoal_tac "(c-d)*(e-f)*(a-b) > 0")
- prefer 2 apply(simp add:sign_simps)
-apply(subgoal_tac "(c-d)*(e-f)*(a-b)*u > 0")
- prefer 2 apply(simp add:sign_simps)
-apply(simp add:field_simps)
-done
-*)
 
 lemma divide_pos_pos[simp]:
   "0 < x ==> 0 < y ==> 0 < x / y"
