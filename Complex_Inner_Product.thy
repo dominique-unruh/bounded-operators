@@ -2995,8 +2995,9 @@ qed
 instance..
 end
 
+(* TODO: move to General_Results_Missing (also move lemmas related to not_singleton) *)
 class not_singleton =
-  assumes not_singleton_card: "\<exists> x. \<exists> y. x \<noteq> y"
+  assumes not_singleton_card: "\<exists>x. \<exists>y. x \<noteq> y"
 
 subclass (in card2) not_singleton
   apply standard using two_le_card
@@ -3023,6 +3024,8 @@ proof (rule classical)
   thus ?thesis using \<open>x \<noteq> y\<close> by blast
 qed
 
+lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
+  using not_singleton_existence[of x] by blast
 
 instantiation linear_space :: ("{complex_vector,topological_space}") inf begin 
 lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp

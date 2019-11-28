@@ -19,8 +19,12 @@ text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm
 
 subsection \<open>Sets defined using the norms\<close>
 
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead
+         (currently defined in Complex_Inner_Product).
+
+  "UNIV\<noteq>{0}" then is given by lemma UNIV_not_singleton (or "by simp")
+ *)
 lemma ex_norm_1:
-  (* TODO: rewrite using "assumes ... shows ..." *)
   \<open>(UNIV::('a::real_normed_vector) set) \<noteq> {0} \<Longrightarrow> \<exists> x::'a. norm x = 1\<close>
   by (metis (full_types) UNIV_eq_I insertI1 norm_sgn)
 
@@ -31,6 +35,7 @@ lemma norm_set_nonempty_eq1:
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
   using assms ex_norm_1 by blast
 
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma norm_set_bdd_above_eq1: 
   fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
   assumes \<open>bounded_linear f\<close> 
@@ -59,6 +64,7 @@ qed
 
 subsection \<open>Characterization of the operator norm\<close>
 
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and  \<open>bounded_linear f\<close>
@@ -203,7 +209,8 @@ next
   qed
 qed
 
-(* TODO: rename to operator_norm_open_ball or similar *)
+(* TODO: rename to onorm_open_ball or similar (analogous to onorm_sphere) *)
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 proposition operator_norm_characterization_1:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
@@ -533,7 +540,8 @@ next
     by metis 
 qed
 
-
+(* TODO: rename to onorm_Inf_bound or similar *)
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 proposition operator_norm_characterization_2:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes  \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
@@ -660,6 +668,10 @@ proof-
     by (simp add: onorm_def)
 qed
 
+(* TODO: Rewrite or remove. This lemma is a general fact, completely independent
+   of the norm. It holds without \<open>bounded_linear f\<close>, and with arbitrary functions
+   instead of "norm". And it is never used.
+ *)
 lemma operation_norm_closed:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
@@ -696,6 +708,8 @@ qed
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
+(* TODO: rename to onorm_open_ball_scaled *)
+(* TODO: remove case distinction "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma norm_ball:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
@@ -901,38 +915,17 @@ next
     by auto
 qed
 
-(* TODO: replace in a better place *)
+(* TODO: remove (too similar to cSUP_mono). Can use "apply (rule cSUP_mono)" instead.
+    Or, if not, then Sup_Ineq can just be proven inside that theorem
+ *)
 lemma Sup_Ineq:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>\<forall> x \<in> S. f x \<le> g x\<close>
     and \<open>bdd_above (g ` S)\<close>
   shows \<open>Sup (f ` S) \<le> Sup (g ` S)\<close>
-proof-
-  have  \<open>y \<in> (f ` S) \<Longrightarrow> y \<le> Sup (g ` S)\<close>
-    for y
-  proof-
-    assume \<open>y \<in> (f ` S)\<close>
-    hence \<open>\<exists> x\<in>S. y = f x\<close>
-      by blast
-    then obtain x where \<open>y = f x\<close> and \<open>x \<in> S\<close>
-      by blast
-    hence \<open>y \<le> g x\<close>
-      using  \<open>\<forall> x \<in> S. f x \<le> g x\<close> \<open>x \<in> S\<close>
-      by blast
-    have \<open>g x \<in> (g ` S)\<close>
-      by (simp add: \<open>x \<in> S\<close>)
-    hence \<open>g x \<le> Sup (g ` S)\<close>
-      using \<open>bdd_above (g ` S)\<close>
-      by (simp add: cSup_upper)
-    thus ?thesis using \<open>y \<le> g x\<close> by simp
-  qed
-  hence \<open>Sup (f ` S) \<le> Sup (g ` S)\<close>
-    by (metis assms(1) assms(2) cSUP_subset_mono image_empty order_refl)
-  thus ?thesis
-    by simp 
-qed
+  by (smt SUP_cong assms cSUP_mono empty_iff)
 
-text \<open>The proof of the following result was taken from [sokal2011really]\<close>
+text \<open>The proof of the following result was taken from @{cite sokal2011really}\<close>
 lemma sokal_banach_steinhaus:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
@@ -1053,7 +1046,7 @@ proof-
       by (meson bdd_aboveI2) 
   qed
   hence \<open>Sup (u ` S) \<le> Sup (v ` S)\<close>
-    using Sup_Ineq \<open>\<And> \<xi>. norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
+    using \<open>\<And> \<xi>. norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
     by (simp add: Sup_Ineq \<open>u \<equiv> \<lambda>\<xi>. norm (f \<xi>)\<close> \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>)    
   moreover have \<open>Sup (u ` S) = (onorm f) * r\<close>
   proof-
@@ -1248,6 +1241,8 @@ proof-
     using calculation(1) calculation(2) by auto 
 qed
 
+(* TODO (Dominique): read from here *)
+
 lemma bounded_linear_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and K :: real
@@ -1316,7 +1311,7 @@ proof-
   moreover have \<open>Sup S = onorm f\<close>
   proof-
     have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
-      using  \<open>(UNIV::'a set) \<noteq> 0\<close> \<open>bounded_linear f\<close> onorm_sphere
+      using  \<open>(UNIV::'a set) \<noteq> {0}\<close> \<open>bounded_linear f\<close> onorm_sphere
       by blast
     hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
       unfolding sphere_def
