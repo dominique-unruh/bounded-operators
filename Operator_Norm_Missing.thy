@@ -15,7 +15,8 @@ theory Operator_Norm_Missing
     "HOL-Analysis.Operator_Norm"
 begin
 
-text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm\<close>.\<close>
+text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm\<close>
+      additional useful facts about operator norms.\<close>
 
 subsection \<open>Sets defined using the norms\<close>
 
@@ -1241,8 +1242,6 @@ proof-
     using calculation(1) calculation(2) by auto 
 qed
 
-(* TODO (Dominique): read from here *)
-
 lemma bounded_linear_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and K :: real
@@ -1296,6 +1295,8 @@ proof-
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
 
+(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
+(* TODO: remove "\<forall>e>0.", add assumption "e>0"  *)
 lemma norm_unit_sphere:
   fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close> 
