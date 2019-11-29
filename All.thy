@@ -14,7 +14,7 @@ theory All
     Lattice_Missing Operator_Norm_Missing
     Ordered_Complex Ordered_Fields Real_Bounded_Operators
     Uniform_Limit_Missing Unobtrusive_NSA
-    Bounded_Operators_Code
+    Bounded_Operators_Code ToDo_Finite_Span_Closed
 begin
 
 end

@@ -4462,17 +4462,16 @@ of that instance. *)
 context one_dim begin
 
 lemma one_dim_to_complex_one[simp]: "one_dim_to_complex 1 = 1"
-  by (cheat one_dim_to_complex_one)
+  sorry
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
-  by (cheat one_dim_to_complex_inverse)
+  sorry
 
 lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
-  by (cheat complex_to_one_dim_inverse)
+  sorry
 
 lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
-  by (cheat bounded_clinear_one_dim_to_complex)
-
+  sorry
 end
 
 setup \<open>Sign.add_const_constraint

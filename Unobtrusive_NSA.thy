@@ -1,7 +1,7 @@
 section \<open>\<open>Unobtrusive_NSA\<close> -- Cleaning up syntax from \<open>Nonstandard_Analysis\<close>\<close>
 
 theory Unobtrusive_NSA
-  imports "HOL-Nonstandard_Analysis.Nonstandard_Analysis" Extended_Sorry
+  imports "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
 begin
 
 text \<open>

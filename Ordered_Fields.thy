@@ -9,7 +9,7 @@ Authors:
 
 
 theory Ordered_Fields
-  imports Complex_Main Extended_Sorry
+  imports Complex_Main 
 begin
 
 text \<open>In this section we introduce some type classes for ordered rings/fields/etc.

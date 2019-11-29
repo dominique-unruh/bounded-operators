@@ -12,9 +12,9 @@ Main results:
 
 theory Bounded_Operators
   imports Banach_Steinhaus Complex_Inner_Product Real_Bounded_Operators 
-    Lattice_Missing Extended_Sorry
-
+    Lattice_Missing
 begin
+
 subsection \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
@@ -109,6 +109,7 @@ lift_definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<R
   "\<lambda>f g x. f x + g x"
   by (rule bounded_clinear_add)
 
+(* TODO remove *)
 lemma rbounded_of_bounded_plus:
   fixes f g :: \<open>('a,'b) bounded\<close> 
   shows "rbounded_of_bounded (f + g) =  (rbounded_of_bounded f)+(rbounded_of_bounded g)"
@@ -2726,7 +2727,7 @@ proof-
 
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
-      using that by (cheat TODO)
+      using that sorry
        (* Prove it by induction on card S as a 
   separate lemma in order to do not confuse the variables *)
   qed
@@ -2744,11 +2745,11 @@ proof-
 
   have "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
     for s
-    by (cheat TODO)
+    sorry
   moreover have "G = F"
     if "\<forall>s\<in>S. G *\<^sub>v s = \<phi> s"
     for G :: "('a, 'b) bounded"
-    using that by (cheat TODO)
+    using that sorry
   ultimately show ?thesis
     by blast 
 qed

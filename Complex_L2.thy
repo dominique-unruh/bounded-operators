@@ -11,7 +11,6 @@ Authors:
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
-    Extended_Sorry
     "HOL-ex.Sketch_and_Explore"
     (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
 Or "sketch bla" for a proof outline starting with "proof bla" *)
@@ -1951,7 +1950,7 @@ proof
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
       (* by (meson inj_onI ket_distinct)         *) 
-      by (cheat SORRY)
+      sorry
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
@@ -2027,7 +2026,7 @@ proof
         proof-
           have \<open>closure
               (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-            (* by (simp add: ket_ell2_span) *) by (cheat SORRY)
+            (* by (simp add: ket_ell2_span) *) sorry
           moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
             using UNIV_enum
             by blast
@@ -2066,7 +2065,7 @@ instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
 clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
 instance
-  by (cheat \<open>instantiation ell2 :: (CARD_1) one_dim\<close>)
+  sorry
 end
 
 (* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). 
@@ -2133,13 +2132,13 @@ lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
 
 (* TODO remove (subsumed by one_dim_to_complex_inverse) *)
 lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  by (cheat "sorry")
+  sorry
   (* unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto *)
 
 (* TODO remove (subsumed by complex_to_one_dim_inverse) *)
 lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
   (* unfolding of_complex_def apply transfer by simp *)
-  by (cheat "sorry")
+  sorry
 
 (* TODO: remove (subsumed by bounded_clinear_of_complex) *)
 lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
@@ -2149,7 +2148,7 @@ lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
 lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
 (*   apply (rule bounded_clinear_intro[where K=1])
   by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+ *)
-  by (cheat SORRY)
+  sorry
 
 (* TODO: remove (use more general vector_to_bounded instead) *)
 lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is

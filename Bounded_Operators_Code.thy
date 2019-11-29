@@ -283,7 +283,7 @@ proof-
   hence \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
     for v
     unfolding f_def
-    by (cheat TODO)
+    sorry
   moreover have \<open>clinear f\<close>
   proof-
     have \<open>clinear (\<lambda> v. (basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) ( (vec_of_basis_enum::('a \<Rightarrow> complex vec)) v) )\<close>
@@ -374,7 +374,7 @@ qed
 (* TODO: Not true. Only holds for vectors v with "dim v = canonical_basis_length" *)
 lemma vec_of_basis_enum_COMP_basis_enum_of_vec:
   \<open>vec_of_basis_enum \<circ> basis_enum_of_vec = id\<close>
-  by (cheat TODO)
+  sorry
 
 definition mat_of_bounded :: \<open>('a::basis_enum,'b::basis_enum) bounded \<Rightarrow> complex mat\<close> where
   \<open>mat_of_bounded = undefined\<close>
@@ -384,7 +384,7 @@ definition bounded_of_mat :: \<open>complex mat \<Rightarrow> ('a::basis_enum,'b
 
 
 lemma mat_of_bounded_inj: "inj mat_of_bounded"
-  by (cheat 16)
+  sorry
 
 text \<open>The following lemma registers bounded as an abstract datatype with 
   constructor \<^const>\<open>bounded_of_mat\<close>.
@@ -403,7 +403,7 @@ text \<open>The following lemma registers bounded as an abstract datatype with
 lemma mat_of_bounded_inverse [code abstype]:
   "bounded_of_mat (mat_of_bounded B) = B" 
   for B::"('a::basis_enum,'b::basis_enum) bounded"
-  by (cheat 15)
+  sorry
 
 subsection \<open>Code equations for bounded operators\<close>
 
@@ -415,29 +415,29 @@ on the left hand side, we get access to the\<close>
 lemma bounded_of_mat_plusOp[code]:
   "mat_of_bounded (M + N) =  (mat_of_bounded M + mat_of_bounded N)" 
   for M::"('a::basis_enum,'b::basis_enum) bounded" and N::"('a::basis_enum,'b) bounded"
-  by (cheat 15)
+  sorry
 
 lemma bounded_of_mat_id[code]:
   "mat_of_bounded (idOp :: ('a::basis_enum,'a) bounded) = one_mat (canonical_basis_length TYPE('a))"
-  by (cheat 15)
+  sorry
 
 lemma bounded_of_mat_timesOp[code]:
   "mat_of_bounded (M *\<^sub>o N) =  (mat_of_bounded M * mat_of_bounded N)" 
   for M::"('b::basis_enum,'c::basis_enum) bounded" and N::"('a::basis_enum,'b) bounded"
-  by (cheat 15)
+  sorry
 
 lemma bounded_of_mat_minusOp[code]:
   "mat_of_bounded (M - N) =  (mat_of_bounded M - mat_of_bounded N)" 
   for M::"('a::basis_enum,'b::basis_enum) bounded" and N::"('a::basis_enum,'b) bounded"
-  by (cheat 15)
+  sorry
 
 lemma bounded_of_mat_uminusOp[code]:
   "mat_of_bounded (- M) = - mat_of_bounded M" for M::"('a::basis_enum,'b::basis_enum) bounded"
-  by (cheat 15)
+  sorry
 
 lemma mat_of_bounded_scalarMult[code]:
   "mat_of_bounded ((a::complex) *\<^sub>C M) = smult_mat a (mat_of_bounded M)" for M :: "('a::basis_enum,'b::basis_enum) bounded"
-  by (cheat 16)
+  sorry
 
 text \<open>This instantiation defines a code equation for equality tests for bounded operators.\<close>
 instantiation bounded :: (basis_enum,basis_enum) equal begin
@@ -454,18 +454,18 @@ definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 lemma bounded_of_mat_adjoint[code]:
   "mat_of_bounded (adjoint A) = adjoint_mat (mat_of_bounded A)"
   for A :: "('a::basis_enum,'b::basis_enum) bounded"
-  by (cheat 17)
+  sorry
 
 lemma mat_of_bounded_zero[code]:
   "mat_of_bounded (0::('a::basis_enum,'b::basis_enum) bounded)
        = zero_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
-  by (cheat 17)
+  sorry
 
 lemma mat_of_bounded_classical_operator[code]: 
   "mat_of_bounded (classical_operator f) = mat (CARD('b)) (CARD('a))
   (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)" 
   for f::"'a::enum \<Rightarrow> 'b::enum option"
-  by (cheat 17)
+  sorry
 
 subsection \<open>Miscellanea\<close>
 
