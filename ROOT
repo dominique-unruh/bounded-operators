@@ -9,6 +9,7 @@ session "Bounded_Operators-Prerequisites" = "HOL-Analysis" +
 
 session Bounded_Operators = "Bounded_Operators-Prerequisites" +
   options [record_proofs=1, document = pdf, document_output = "output", 
-           document_variants="document:outline=/proof,/ML"]
+           document_variants = "document:outline=/proof,/ML",
+           quick_and_dirty = true]
   theories All
   document_files "root.tex"

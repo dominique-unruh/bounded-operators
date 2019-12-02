@@ -4,7 +4,7 @@ theory Lattice_Missing
   imports Complex_Main HOL.Complete_Lattices
 begin
 
-text \<open>Two bundles to activate and deactivate lattice specific notation (e.g., \<sqinter> etc.).
+text \<open>Two bundles to activate and deactivate lattice specific notation (e.g., \<open>\<sqinter>\<close> etc.).
   Activate the notation locally via "@{theory_text \<open>includes lattice_notation\<close>}" in a lemma statement.
   (Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle lattice_notation ... unbundle no_lattice_notation\<close>}.)\<close>
 
