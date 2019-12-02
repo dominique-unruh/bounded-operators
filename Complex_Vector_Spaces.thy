@@ -1607,6 +1607,8 @@ qed
 
 subsection \<open>Nonstandard analysis\<close>
 
+unbundle nsa_notation
+
 definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
   where [transfer_unfold]: "scaleHC = starfun2 scaleC"
 
@@ -1687,6 +1689,8 @@ proof-
   thus ?thesis
     by (simp add: isNSCont_isCont_iff) 
 qed
+
+unbundle no_nsa_notation
 
 subsection \<open>Cauchy sequences\<close>
 
