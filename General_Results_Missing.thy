@@ -271,6 +271,7 @@ fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Right
 | "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
 
 (* TODO: remove (use sum_mono2 instead, followed by auto) *)
+(* TODO: also, the name is not good because there already is a "sum_mono" *)
 lemma sum_mono:
   fixes a :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close>
