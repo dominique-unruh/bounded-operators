@@ -5094,4 +5094,14 @@ lemma linear_space_member_inf[simp]:
   apply transfer by simp
 
 
+lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
+  apply transfer
+  by (metis complex_scaleC_def complex_to_one_dim_inverse of_complex_mult one_dim_to_complex_inverse scaleC_conv_of_complex)
+    (* > 1s *)
+  
+lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
+  apply transfer
+  by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
+
+
 end
