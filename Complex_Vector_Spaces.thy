@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Complex Vector Spaces\<close>
 
 (*
 Authors: 

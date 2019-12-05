@@ -34,8 +34,8 @@ proof-
     by auto
   hence \<open>incseq (\<lambda> n. (sum a  {..< Suc n}))\<close>
     by (meson incseq_Suc_iff)
-  hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>
-    by (metis (mono_tags, lifting) sum_mono assms(1) incseq_def le_add_same_cancel1 le_iff_add)
+  hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>  
+    by (simp add: sum_mono2 assms(1) incseq_def) 
   hence \<open>incseq (\<lambda> n. (sum a  {0..n})::ereal)\<close>
     using incseq_ereal by blast
   hence \<open>(\<lambda> n. (sum a  {0..n})::ereal) \<longlonglongrightarrow> Sup (range (\<lambda> n. (sum a  {0..n})::ereal))\<close>
@@ -215,8 +215,8 @@ proof-
         by blast
       moreover have \<open>m > n \<Longrightarrow> sum a {0..m} \<ge> sum a {0..n}\<close>
         for m n
-        using \<open>\<And> n. a n \<ge> 0\<close> sum_mono 
-        by (metis less_imp_add_positive less_imp_le_nat)
+        using \<open>\<And> n. a n \<ge> 0\<close> 
+        by (simp add: sum_mono2)
       ultimately show ?thesis 
         by auto
     qed
@@ -614,7 +614,7 @@ proof(rule classical)
     where \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
        (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
     by blast
-  define \<phi>::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<phi> n = rec 0 \<Phi> n\<close>
+  define \<phi>::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<phi> n = rec_nat 0 \<Phi> n\<close>
     for n
   have \<open>\<phi> 0 = 0\<close>
     using \<phi>_def by simp
