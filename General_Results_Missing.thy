@@ -1,7 +1,7 @@
 section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing facts\<close>
 
 theory General_Results_Missing
-  imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
+  imports Complex_Main Complex_Inner_Product "HOL-Analysis.Infinite_Set_Sum"
     "HOL-ex.Sketch_and_Explore" HOL.Groups
 begin
 
@@ -128,6 +128,53 @@ proof -
     unfolding c sum_up_index_split
     by auto 
 qed
+
+
+class not_singleton =
+  assumes not_singleton_card: "\<exists>x. \<exists>y. x \<noteq> y"
+
+subclass (in card2) not_singleton
+  apply standard using two_le_card
+  by (meson card_2_exists ex_card) 
+
+lemma not_singleton_existence[simp]:
+  \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
+proof (rule classical)
+  assume \<open>\<nexists>x. (x::'a) \<noteq> t\<close> 
+  have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+    using not_singleton_card
+    by blast
+  then obtain x y::'a where \<open>x \<noteq> y\<close>
+    by blast
+  have \<open>\<forall> x::'a. x = t\<close>
+    using \<open>\<nexists>x. (x::'a) \<noteq> t\<close> by simp
+  hence \<open>x = t\<close>
+    by blast
+  moreover have \<open>y = t\<close>
+    using \<open>\<forall> x::'a. x = t\<close>
+    by blast
+  ultimately have \<open>x = y\<close>
+    by simp
+  thus ?thesis using \<open>x \<noteq> y\<close> by blast
+qed
+
+lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
+  using not_singleton_existence[of x] by blast
+
+lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+  by (metis General_Results_Missing.UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
+ 
+lemma linear_space_bot_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+proof-
+  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+    using not_singleton_existence
+    by auto
+  thus ?thesis 
+    apply transfer
+    unfolding UNIV_def
+    by blast
+qed
+
 
 end
 
