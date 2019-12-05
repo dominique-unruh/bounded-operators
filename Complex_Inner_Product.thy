@@ -4307,13 +4307,14 @@ lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a) = 1"
   sorry
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
-  sorry
-
+  by (simp add: of_complex_def one_dim_1_times_a_eq_a one_dim_class.one_dim_to_complex_def)
+  
 lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
-  sorry
-
+  using of_complex_eq_iff one_dim_to_complex_inverse by blast
+  
 lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
-  sorry
+  by (smt Adj_D Adj_I Adj_I' Adj_bounded_clinear bounded_clinear_of_complex complex_inner_1_left of_complex_1 one_dim_class.one_dim_to_complex_def)
+  
 end
 
 setup \<open>Sign.add_const_constraint
