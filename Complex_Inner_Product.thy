@@ -25,7 +25,7 @@ subsection \<open>\<open>Complex_Inner_Product\<close> -- Inner Product Spaces a
 
 theory Complex_Inner_Product
   imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
-    "HOL-Analysis.Inner_Product"  Lattice_Missing
+    "HOL-Analysis.Inner_Product"  Lattice_Missing Operator_Norm_Missing
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -262,8 +262,6 @@ proof
 qed
 
 subsection \<open>Recovered theorems\<close>
-
-
 
 (* Recovered theorem *)
 lemma Cauchy_Schwarz_ineq2:
@@ -2613,6 +2611,12 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
     by auto
 qed
 
+lemma Adj_I':
+  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
+  assumes \<open>bounded_clinear G\<close>
+  shows \<open>\<forall>x. \<forall>y. \<langle>x, Adj G y\<rangle> = \<langle>G x, y\<rangle>\<close>
+  by (metis Adj_I assms cinner_commute')
+
 notation Adj ("_\<^sup>\<dagger>" [99] 100)
 
 lemma Adj_D:
@@ -2639,6 +2643,7 @@ proof-
     by (simp add: \<open>\<forall>x. F x - (G\<^sup>\<dagger>) x = 0\<close> eq_iff_diff_eq_0)
   thus ?thesis by auto
 qed
+
 
 lemma Adj_bounded_clinear:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::complex_inner"
@@ -3399,19 +3404,6 @@ definition is_onb :: "'a::complex_inner set \<Rightarrow> bool"
   S \<subseteq> sphere 0 1
 )"
 
-(* TODO: move *)
-lemma sphere_nonzero:
-  assumes \<open>S \<subseteq> sphere 0 r\<close> and \<open>r > 0\<close> and \<open>x \<in> S\<close>
-  shows \<open>x \<noteq> 0\<close>
-proof-
-  from \<open>S \<subseteq> sphere 0 r\<close> and  \<open>x \<in> S\<close>
-  have  \<open>x \<in> sphere 0 r\<close>
-    by blast
-  hence \<open>dist x 0 = r\<close>
-    by (simp add: dist_commute)     
-  thus ?thesis using \<open>r > 0\<close>
-    by auto
-qed
 
 lemma is_onb_nonzero:
   assumes \<open>is_onb S\<close> and \<open>x \<in> S\<close>
@@ -3447,14 +3439,15 @@ text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector s
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
-(* TODO: remove "+ complex_inner" (ToDo.thy contains a proof of "instance basis_enum \<subseteq> chilbert_space") *)
 class one_dim = basis_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
+  (* Jose: It produce errors *)
   assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
 begin
 
-definition "one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>"
+definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
+  \<open>one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>\<close>
 
 end
 
@@ -3511,129 +3504,24 @@ for A::\<open>'a::complex_vector set\<close>
     by auto 
 qed
 
-lemma finite_sum_tendsto':
- \<open>\<forall> A::('a::cbanach) set. (\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a) \<and> finite A \<and> card A = n \<longrightarrow> 
-((\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a))\<close>
-proof(induction n)
-  case 0
-  thus ?case
-    by fastforce 
-next
-  case (Suc n)
-  have \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a \<Longrightarrow> finite A \<Longrightarrow> card A = Suc n \<Longrightarrow> 
-(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-    for A::\<open>'a::cbanach set\<close>
-  proof-
-    assume \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close> and \<open>card A = Suc n\<close>
-    obtain x A' where \<open>A = insert x A'\<close> and \<open>x \<notin> A'\<close>
-    proof -
-      assume a1: "\<And>x A'. \<lbrakk>A = insert x A'; x \<notin> A'\<rbrakk> \<Longrightarrow> thesis"
-      have "Suc n \<le> Suc n"
-        by (metis inf.orderI inf_idem)
-      then have "Suc n \<le> card A"
-        by (metis \<open>card A = Suc n\<close>)
-      then show ?thesis
-        using a1 by (meson card_le_Suc_iff)
-    qed
-    have \<open>\<forall> a \<in> A'. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
-      by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)      
-    moreover have  \<open>finite A'\<close>
-      using \<open>A = insert x A'\<close> \<open>finite A\<close> 
-      by auto
-    moreover have \<open>card A' = n\<close>
-      using \<open>A = insert x A'\<close> \<open>card A = Suc n\<close> \<open>x \<notin> A'\<close> calculation(2) 
-      by auto      
-    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: Suc.IH)
-    moreover have \<open>(\<lambda> n. r n x *\<^sub>C x) \<longlonglongrightarrow> \<phi> x *\<^sub>C x\<close>
-    proof-
-      have \<open>(\<lambda> n. r n x) \<longlonglongrightarrow> \<phi> x\<close>
-        by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)
-      moreover have \<open>isCont (\<lambda> t. t *\<^sub>C x)  (\<phi> x)\<close>
-        by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)        
-      ultimately have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) \<longlonglongrightarrow> (\<lambda> t. t *\<^sub>C x) (\<phi> x)\<close>
-        using Elementary_Topology.continuous_at_sequentially[where f = "(\<lambda> t. t *\<^sub>C x)" and a = "\<phi> x"]
-        by auto
-      moreover have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) =  (\<lambda> n. (\<lambda> t. t *\<^sub>C x) (r n x))\<close>
-        by auto
-      ultimately show ?thesis by auto
-    qed
-    ultimately have \<open>(\<lambda> n. r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: tendsto_add)
-    moreover have \<open>(\<Sum>a\<in>A. r n a *\<^sub>C a) = r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)\<close>
-      for n
-      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
-    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by auto
-    moreover have \<open>(\<Sum>a\<in>A. \<phi> a *\<^sub>C a) = \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
-    ultimately show ?thesis by auto
-  qed
-  thus ?case 
-    by blast
-qed
-
-(* TODO move *)
-lemma finite_sum_tendsto:
-  fixes A::\<open>('a::cbanach) set\<close>
-  assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-  using finite_sum_tendsto' assms by blast
-
-
- 
-(* TODO: José, please compare this with your proof of finite_sum_tendsto
-   to see how inductions over finite sets are easier to do than by 
-   induction over the cardinality. 
-
-   TODO: Replace finite_sum_tendsto by this.
-*)
-lemma finite_sum_tendsto_NEW:
-  fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
-  assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
-  assumes \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
-  apply (insert assms(1)) using \<open>finite A\<close>
-proof induction
-  case empty
-  show ?case 
-    by auto
-next
-  case (insert x F)
-  then have "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
-    by auto
-  then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
-    using tendsto_add by blast
-  then show ?case 
-    using sum.insert insert by auto
-qed
-
 
 lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
 proof-
   include notation_norm
   have \<open>(canonical_basis::'a list) = [1::('a::one_dim)]\<close>
     by (simp add: one_dim_canonical_basis)    
-  hence \<open>is_onb {(1::('a::one_dim))}\<close> (* TODO unnecessary parentheses *)
+  hence \<open>is_onb {1::'a::one_dim}\<close>
     by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
-  hence \<open>\<parallel>(1::('a::one_dim))\<parallel> = 1\<close> (* TODO unnecessary parentheses *)
+  hence \<open>\<parallel>1::'a::one_dim\<parallel> = 1\<close>
     unfolding is_onb_def sphere_def
     using dist_norm
     by simp
-  hence \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = 1\<close> (* TODO unnecessary parentheses *)
+  hence \<open>\<parallel>1::'a::one_dim\<parallel>^2 = 1\<close>
     by simp
   moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
     using power2_norm_eq_cinner' by auto
   ultimately show ?thesis by simp
 qed
-
-
-
-
-
-
-
-
 
 lemma isCont_scalar_right:
   fixes k :: \<open>'a::complex_normed_vector\<close>
@@ -4295,10 +4183,6 @@ thm Gram_Schmidt
 
 hide_fact Gram_Schmidt0
 
-
-
-
-
 (* TODO: Use the one from ToDo_Finite_Span_Closed instead. *)
 lemma closed_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
@@ -4319,13 +4203,6 @@ proof-
     using \<open>complex_vector.span A = complex_vector.span T\<close>
     by auto
 qed
-
-
-
-
-
-
-
 
 lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^sub>C 1 = a\<close>
 proof-
@@ -4413,12 +4290,20 @@ instance one_dim \<subseteq> complex_algebra_1
   qed
 qed
 
+
+lemma one_dim_to_complex_one': "one_dim_to_complex (1::'a::one_dim) = 1"
+  by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
+
 (* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
 (before \<open>instance one_dim \<subseteq> complex_algebra_1\<close>) if they are useful for the proof
 of that instance. *)
 context one_dim begin
 
-lemma one_dim_to_complex_one[simp]: "one_dim_to_complex 1 = 1"
+(* Jose: I proved the lemma one_dim_to_complex_one', which should be equivalent to
+lemma one_dim_to_complex_one. Nevertheless, the second one does not follow
+from the first one by sledgehammer. *)
+lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a) = 1"
+  using one_dim_to_complex_one'
   sorry
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
@@ -5059,6 +4944,5 @@ lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) 
 lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
   apply transfer
   by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
-
 
 end

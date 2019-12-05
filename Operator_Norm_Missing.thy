@@ -1381,5 +1381,18 @@ proof-
   qed 
 qed
 
+lemma sphere_nonzero:
+  assumes \<open>S \<subseteq> sphere 0 r\<close> and \<open>r > 0\<close> and \<open>x \<in> S\<close>
+  shows \<open>x \<noteq> 0\<close>
+proof-
+  from \<open>S \<subseteq> sphere 0 r\<close> and  \<open>x \<in> S\<close>
+  have  \<open>x \<in> sphere 0 r\<close>
+    by blast
+  hence \<open>dist x 0 = r\<close>
+    by (simp add: dist_commute)     
+  thus ?thesis using \<open>r > 0\<close>
+    by auto
+qed
+
 
 end

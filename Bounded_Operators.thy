@@ -110,6 +110,7 @@ lift_definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<R
   by (rule bounded_clinear_add)
 
 (* TODO remove *)
+(* Jose: If I remove it, there are errors *)
 lemma rbounded_of_bounded_plus:
   fixes f g :: \<open>('a,'b) bounded\<close> 
   shows "rbounded_of_bounded (f + g) =  (rbounded_of_bounded f)+(rbounded_of_bounded g)"
@@ -553,13 +554,6 @@ lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
   shows \<open>\<langle>G* *\<^sub>v x, y\<rangle> = \<langle>x, G *\<^sub>v y\<rangle>\<close>
   apply transfer using Adj_I by blast
-
-(* TODO: move to Complex_Inner_Product (after Adj_I, perhaps) *)
-lemma Adj_I':
-  fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
-  assumes \<open>bounded_clinear G\<close>
-  shows \<open>\<forall>x. \<forall>y. \<langle>x, Adj G y\<rangle> = \<langle>G x, y\<rangle>\<close>
-  by (metis Adj_I assms cinner_commute')
 
 lemma adjoint_I':
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
@@ -1851,8 +1845,7 @@ lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector)
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-(* TODO: complex_normed_vector *)
-definition eigenspace :: "complex \<Rightarrow> ('a::chilbert_space,'a) bounded \<Rightarrow> 'a linear_space" where
+definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) bounded \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
@@ -3188,7 +3181,6 @@ proof
   qed
 qed
 
-(* TODO: move to where vector_to_bounded is defined *)
 lemma vector_to_bounded_adj_times_vector_to_bounded[simp]:
   includes bounded_notation
   shows "vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"

@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Lebesgue space of square-summable functions\<close>
 
 (*
 Authors:
@@ -12,8 +12,6 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
     "HOL-ex.Sketch_and_Explore"
-    (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
-Or "sketch bla" for a proof outline starting with "proof bla" *)
 begin
 
 unbundle bounded_notation
@@ -92,6 +90,7 @@ typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
   (* derive universe vector *)
+  (* Jose: I do not understand *)
 
 lemma SUP_max:
   fixes f::"'a::order\<Rightarrow>'b::conditionally_complete_lattice"
@@ -110,6 +109,7 @@ lemma ell2_norm_L2_set:
   assumes "has_ell2_norm x"
   shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
     (* TODO: doesn't work in Isabelle2019. Probably best to be just redone in nice Isar style *)
+    (* Jose: What doesn't work precisely? *)
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
@@ -1914,6 +1914,7 @@ qed
 
 
 (* TODO move *)
+(* Jose: To move where? *)
 context CARD_1 begin
 
 definition the_one :: 'a where "the_one = undefined"
@@ -1924,12 +1925,10 @@ lemma everything_the_same: "(x::'a)=y"
 lemma everything_the_one: "(x::'a)=the_one"
   by (rule everything_the_same)
 
-(* TODO rename \<rightarrow> CARD_1_UNIV *)
-lemma singleton_UNIV: "UNIV = {the_one::'a}"
+lemma CARD_1_UNIV: "UNIV = {the_one::'a}"
   by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
 
-(* TODO rename \<rightarrow> CARD_1_ext *)
-lemma singleton_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
+lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
   apply (rule ext) 
   apply (subst (asm) everything_the_same[where x=a])
   apply (subst (asm) everything_the_same[where x=b])
@@ -2057,19 +2056,8 @@ instance
   by auto
 end
 
-
-(* TODO prove *)
-(* TODO if moved *after* \<open>instantiation ell2 :: (enum) basis_enum\<close>,
-        there will be less to prove. *)
-instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
-text \<open>Note: enum is not really needed, but without it this instantiation
-clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
-instance
-  sorry
-end
-
-(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). 
-
+(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). *)
+(* Jose: If I remove it, I obtain errors *)
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
@@ -2116,86 +2104,30 @@ proof
     by (meson zero_neq_one)
 qed
 end
-*)
+
 
 (* TODO Remove (use one_dim_to_complex instead) *)
-(* lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
+(* lift_definition one_dim_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
   "\<lambda>\<psi>. \<psi> the_one" . *)
-abbreviation "C1_to_complex :: 'a::{CARD_1,enum} ell2 \<Rightarrow> complex == one_dim_to_complex"
 
 (* TODO remove *)
 abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::{CARD_1,enum} ell2 == of_complex"
 
 (* TODO remove (subsumed by one_dim_to_complex_one) *)
-lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
+lemma one_dim_to_complex_one[simp]: "one_dim_to_complex 1 = 1"
   apply transfer by simp
 
-(* TODO remove (subsumed by one_dim_to_complex_inverse) *)
-lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  sorry
-  (* unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto *)
-
-(* TODO remove (subsumed by complex_to_one_dim_inverse) *)
-lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
-  (* unfolding of_complex_def apply transfer by simp *)
-  sorry
 
 (* TODO: remove (subsumed by bounded_clinear_of_complex) *)
 lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
   by (rule Complex_Vector_Spaces.bounded_clinear_of_complex)
 
 (* TODO: remove (subsumed by bounded_clinear_one_dim_to_complex) *)
-lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
+lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
 (*   apply (rule bounded_clinear_intro[where K=1])
-  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+ *)
+  by (transfer; auto simp: ell2_norm_finite_def CARD_1_UNIV)+ *)
   sorry
 
-(* TODO: remove (use more general vector_to_bounded instead) *)
-lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is
-  "\<lambda>(\<psi>::'a) (x::'b::{CARD_1,enum} ell2). C1_to_complex x *\<^sub>C \<psi>"
-  by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
-
-(* TODO: remove (subsumed by vector_to_bounded_applyOp, currently in a comment) *)
-lemma ell2_to_bounded_applyOp:
-  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::{CARD_1,enum} ell2, 'a) bounded)) \<psi>\<close>
-proof-
-  have \<open>bounded_clinear (times_bounded_vec A)\<close>
-    using times_bounded_vec by blast
-  hence \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
-     =  (\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
-    using bounded_clinear_def
-    by simp 
-(* TODO: add CARD_1 \<rightarrow> {CARD_1,enum} in many places *)
-  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
-    = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    unfolding comp_def
-    by blast
-  finally have \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    by blast
-  moreover have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
-       = (\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))\<close>
-    using Complex_L2.ell2_to_bounded.rep_eq
-    by blast
-  ultimately have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    by simp
-  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
-    using Complex_L2.ell2_to_bounded.rep_eq
-    by blast
-  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (times_bounded_vec ((ell2_to_bounded:: _   \<Rightarrow> ('c ell2, _) bounded) \<psi>))\<close>
-    by simp
-  thus ?thesis
-    apply transfer
-    by simp
-qed
-
-(* TODO: remove (subsumed by vector_to_bounded_scalar_times, currently in a comment) *)
-lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
-  for a::complex
-  apply (transfer fixing: a) by auto
 
 subsection \<open>Classical operators\<close>
 
@@ -3785,6 +3717,80 @@ lemma equal_ket:
   shows "A = B"
   by (simp add: assms equal_basis)
 
+(* TODO prove *)
+(* TODO if moved *after* \<open>instantiation ell2 :: (enum) basis_enum\<close>,
+        there will be less to prove. *)
+instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
+text \<open>Note: enum is not really needed, but without it this instantiation
+clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
+instance
+  proof
+  show "canonical_basis = [1::'a ell2]"
+    sorry
+  show "(\<psi>::'a ell2) * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
+    for \<psi> :: "'a ell2"
+      and \<phi> :: "'a ell2"
+    sorry
+qed
+    
+end
+
+(* TODO remove (subsumed by one_dim_to_complex_inverse) *)
+lemma one_dim_to_complex_inverse[simp]: "complex_to_C1 (one_dim_to_complex \<psi>) = \<psi>"
+  sorry
+  (* unfolding of_complex_def apply transfer apply (rule CARD_1_ext) by auto *)
+
+(* TODO remove (subsumed by complex_to_one_dim_inverse) *)
+lemma complex_to_C1_inverse[simp]: "one_dim_to_complex (complex_to_C1 \<psi>) = \<psi>"
+  (* unfolding of_complex_def apply transfer by simp *)
+  sorry
+
+(* TODO: remove (use more general vector_to_bounded instead) *)
+lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is
+  "\<lambda>(\<psi>::'a) (x::'b::{CARD_1,enum} ell2). one_dim_to_complex x *\<^sub>C \<psi>"
+  by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
+
+(* TODO: remove (subsumed by vector_to_bounded_applyOp, currently in a comment) *)
+lemma ell2_to_bounded_applyOp:
+  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::{CARD_1,enum} ell2, 'a) bounded)) \<psi>\<close>
+proof-
+  have \<open>bounded_clinear (times_bounded_vec A)\<close>
+    using times_bounded_vec by blast
+  hence \<open>(\<lambda> x. (one_dim_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
+     =  (\<lambda> x. (times_bounded_vec A) ( one_dim_to_complex x *\<^sub>C \<psi>) )\<close>
+    using bounded_clinear_def
+    by simp 
+(* TODO: add CARD_1 \<rightarrow> {CARD_1,enum} in many places *)
+  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (one_dim_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
+    = (times_bounded_vec A) \<circ> (\<lambda> x. one_dim_to_complex x *\<^sub>C \<psi>)\<close>
+    unfolding comp_def
+    by blast
+  finally have \<open>(\<lambda> x. (one_dim_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (\<lambda> x. one_dim_to_complex x *\<^sub>C \<psi>)\<close>
+    by blast
+  moreover have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
+       = (\<lambda> x. one_dim_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))\<close>
+    using Complex_L2.ell2_to_bounded.rep_eq
+    by blast
+  ultimately have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (\<lambda> x. one_dim_to_complex x *\<^sub>C \<psi>)\<close>
+    by simp
+  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (one_dim_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
+    using Complex_L2.ell2_to_bounded.rep_eq
+    by blast
+  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
+     = (times_bounded_vec A) \<circ> (times_bounded_vec ((ell2_to_bounded:: _   \<Rightarrow> ('c ell2, _) bounded) \<psi>))\<close>
+    by simp
+  thus ?thesis
+    apply transfer
+    by simp
+qed
+
+(* TODO: remove (subsumed by vector_to_bounded_scalar_times, currently in a comment) *)
+lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
+  for a::complex
+  apply (transfer fixing: a) by auto
 
 
 unbundle no_bounded_notation
