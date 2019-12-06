@@ -67,8 +67,9 @@ proof-
       then obtain \<phi> where \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
         by blast
       hence \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-        using finite_sum_tendsto \<open>finite A\<close>
-        by blast
+        apply (rule_tac finite_sum_tendsto_NEW)
+         apply (rule_tac tendsto_scaleC) 
+        using \<open>finite A\<close> by auto
       hence \<open>(\<lambda> n. s n) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
         using \<open>\<And> n. s n = (\<Sum>a\<in>A. r n a *\<^sub>C a)\<close>
         by auto

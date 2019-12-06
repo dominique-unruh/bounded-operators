@@ -8,6 +8,22 @@ Authors:
 *)
 
 
+(* TODO:
+
+Strategy for tidying up this file:
+
+- Move Complex_Vector_Spaces to Old_Complex_Vector_Spaces
+- Create empty Complex_Vector_Spaces
+- Open Real_Vector_Spaces
+- For every lemma/definition/... X in Real_Vector_Spaces: (In the order from Real_Vector_Space
+  - Find the corresponding lemma/... X' in Old_Complex_Vector_Spaces
+  - Move X' to Complex_Vector_Spaces
+  - (If X' does not exist, add a TODO in Complex_Vector_Spaces)
+- In the end, we have: A new Complex_Vector_Spaces, leftover Old_Complex_Vector_Spaces,
+  and we can then decide where the leftovers go
+
+*)
+
 theory Complex_Vector_Spaces
   imports 
     "HOL-ex.Sketch_and_Explore"
@@ -2332,13 +2348,12 @@ lemma equal_span_0:
 
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
-(* TODO: add [code del] *)
-(* Jose: I do not know where to put  [code del] *)
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is  \<open>(\<subseteq>)\<close>.
-(* TODO: add [code del] *)
+declare less_eq_linear_space_def[code del]
 lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.
+declare less_linear_space_def[code del]
 instance
 proof
   show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
@@ -2709,7 +2724,7 @@ lemma linear_space_leI:
   shows "A \<le> B"
   using assms apply transfer by auto
 
-
+(* TODO: remove (we have finite_sum_tendsto_NEW below instead) *)
 lemma finite_sum_tendsto':
  \<open>\<forall> A::('a::cbanach) set. (\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a) \<and> finite A \<and> card A = n \<longrightarrow> 
 ((\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a))\<close>
@@ -2772,11 +2787,11 @@ next
     by blast
 qed
 
-lemma finite_sum_tendsto:
+(* lemma finite_sum_tendsto:
   fixes A::\<open>('a::cbanach) set\<close>
   assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
   shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-  using finite_sum_tendsto' assms by blast
+  using finite_sum_tendsto' assms by blast *)
 
 (* TODO: José, please compare this with your proof of finite_sum_tendsto
    to see how inductions over finite sets are easier to do than by 
@@ -2816,5 +2831,11 @@ next
     using sum.insert insert by auto
 qed
 
+lemma (in bounded_cbilinear) tendsto:
+  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. f x ** g x) \<longlongrightarrow> a ** b) F"
+  by (rule tendsto)
+
+lemmas tendsto_scaleC [tendsto_intros] =
+  bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
 end
