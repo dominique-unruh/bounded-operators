@@ -110,6 +110,7 @@ lemma ell2_norm_L2_set:
   shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
     (* TODO: doesn't work in Isabelle2019. Probably best to be just redone in nice Isar style *)
     (* Jose: What doesn't work precisely? *)
+    (* TODO: I don't know. You can remove this TODO *)
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
@@ -1983,16 +1984,20 @@ qed
 
 (* TODO move *)
 (* Jose: To move where? *)
+(* TODO move to General_Results_Missing *)
 context CARD_1 begin
 
+(* TODO: remove (can just use "undefined" instead) *)
 definition the_one :: 'a where "the_one = (SOME x. (x \<in> (UNIV::'a set)))"
 
-lemma everything_the_same: "(x::'a)=y"
+lemma everything_the_same[simp]: "(x::'a)=y"
   by (metis (full_types) UNIV_I card_1_singletonE empty_iff insert_iff local.CARD_1)
 
+(* TODO: remove *)
 lemma everything_the_one: "(x::'a)=the_one"
   by (rule everything_the_same)
 
+(* TODO: replace "the_one" by "a" (free variable) *)
 lemma CARD_1_UNIV: "UNIV = {the_one::'a}"
   by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
 
@@ -2496,6 +2501,7 @@ proof
 qed
 end
 
+(* TODO: move *)
 instantiation unit :: CARD_1
 begin
 instance 
@@ -2505,6 +2511,9 @@ end
 
 (* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). *)
 (* Jose: If I remove it, I obtain errors *)
+(* TODO: probably because \<open>instantiation ell2 :: (CARD_1) one_dim\<close> is only at the end of the file
+   if you move it forward to here, things should work. Any other unfixable errors?
+ *)
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
@@ -3720,20 +3729,32 @@ lemma equal_ket:
   shows "A = B"
   by (simp add: assms equal_basis)
 
-(* TODO prove *)
-(* TODO if moved *after* \<open>instantiation ell2 :: (enum) basis_enum\<close>,
-        there will be less to prove. *)
+
+lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
+proof -
+  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
+  have "length ?enum = 1"
+    apply (subst card_UNIV_length_enum[symmetric])
+    by (rule CARD_1)
+  then obtain b where "?enum = [b]"
+    apply atomize_elim
+    apply (cases ?enum, auto)
+    by (metis length_0_conv length_Cons nat.inject)
+  then show "?enum = [a]"
+    by (subst everything_the_same[of _ b], simp)
+qed
+
 instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
 clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
 instance
 proof
   show "canonical_basis = [1::'a ell2]"
-    sorry
-  show "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
-    for \<psi> :: "'a ell2"
-      and \<phi> :: "'a ell2"
-    sorry
+    unfolding canonical_basis_ell2_def
+    apply transfer
+    by (simp add: enum_CARD_1[of undefined])
+  show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
+    apply (transfer fixing: a b) by simp
 qed
 
 end

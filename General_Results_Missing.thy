@@ -8,6 +8,7 @@ begin
 
 (* TODO: Never used in Bounded Operators. Move to tensor product. *)
 (* Jose: I do not know how to move information from one library to another *)
+(* TODO: Should be possible now because you have both libraries in GitHub Desktop now *)
 lemma big_sum_reordering_fst:
   fixes  S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close>

@@ -3443,7 +3443,8 @@ class one_dim = basis_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
   (* Jose: It produce errors *)
-  assumes one_dim_prod: "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
+  (* TODO: but they were all easily fixable by proving one_dim_prod below (you can remove this TODO) *)
+  assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
 begin
 
 definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
@@ -4234,13 +4235,18 @@ proof-
     by (simp add: \<open>a = s *\<^sub>C 1\<close>) 
 qed
 
+lemma one_dim_prod: "(\<psi>::_::one_dim) * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
+  apply (subst one_dim_1_times_a_eq_a[symmetric, of \<psi>])
+  apply (subst one_dim_1_times_a_eq_a[symmetric, of \<phi>])
+  by (simp add: one_dim_prod_scale1)
+
 instance one_dim \<subseteq> complex_algebra_1
   proof
   show "(a * b) * c = a * (b * c)"
     for a :: 'a
       and b :: 'a
       and c :: 'a
-    apply (simp add: one_dim_prod).
+    by (simp add: one_dim_prod)
   show "(a + b) * c = a * c + b * c"
     for a :: 'a
       and b :: 'a
@@ -4291,7 +4297,7 @@ instance one_dim \<subseteq> complex_algebra_1
 qed
 
 
-lemma one_dim_to_complex_one': "one_dim_to_complex (1::'a::one_dim) = 1"
+lemma one_dim_to_complex_one'[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
   by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
 
 (* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
@@ -4302,6 +4308,16 @@ context one_dim begin
 (* Jose: I proved the lemma one_dim_to_complex_one', which should be equivalent to
 lemma one_dim_to_complex_one. Nevertheless, the second one does not follow
 from the first one by sledgehammer. *)
+(* TODO: That is because of technical reasons with locales.
+   one_dim.one_dim_to_complex_one (below) is defined in the locale one_dim.
+   This means, 'a does not have type class one_dim, but instead all all facts from the locale one_dim
+   are made temporarily available here. (And outside the locale, one_dim.one_dim_to_complex_one
+   is made available in a translated form with a type_class.) But the proof of 
+  one_dim_to_complex_one cannot use one_dim_to_complex_one' because 'a does not have
+  the right type class one_dim.
+
+  Solution (in this case): Keep one_dim_to_complex_one', remove one_dim_to_complex_one.
+*)
 lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a) = 1"
   using one_dim_to_complex_one'
   sorry
