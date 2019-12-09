@@ -2,7 +2,7 @@ theory ToDo_Finite_Span_Closed
   imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
-(* TODO move definition and properties of euclidean_space somewhere appropriate *)
+(* TODO move definition and properties of euclidean_space somewhere appropriate (maybe General_Results_Missing) *)
 typedef 'a euclidean_space = "UNIV :: ('a \<Rightarrow> real) set" ..
 setup_lifting type_definition_euclidean_space
 

@@ -52,7 +52,6 @@ lemma rbounded_of_bounded_prelim:
   using bounded_clinear_def
   by (simp add: bounded_clinear_def complex_vector.linear_scale)
 
-
 definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
 ('a, 'b) bounded\<close> where
   \<open>bounded_of_rbounded = inv rbounded_of_bounded\<close>
@@ -120,6 +119,7 @@ lemma rbounded_of_bounded_plus:
   by (simp add: bounded_clinear.bounded_linear eq_onp_same_args plus_rbounded.abs_eq)
 
 lemma bounded_of_rbounded_plus:
+  (* TODO: use \<And> (or introduce a definition "rbounded_is_bounded f" for it) *)
   assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
     and \<open>\<forall> c. \<forall> x. times_rbounded_vec g (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec g x)\<close>
   shows \<open>bounded_of_rbounded (f + g) = bounded_of_rbounded f + bounded_of_rbounded g\<close>
@@ -131,11 +131,12 @@ lift_definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
   by (rule Complex_Vector_Spaces.bounded_clinear_minus)
 
 lemma rbounded_of_bounded_uminus:
-  \<open>rbounded_of_bounded (- f) = - (rbounded_of_bounded f) \<close>
+  \<open>rbounded_of_bounded (- f) = - (rbounded_of_bounded f)\<close>
   apply transfer
   by auto
 
 lemma bounded_of_rbounded_uminus:
+  (* TODO: use \<And> (or introduce a definition "rbounded_is_bounded f" for it) *)
   assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
   shows  \<open>bounded_of_rbounded (- f) = - (bounded_of_rbounded f)\<close>
   using assms
@@ -201,7 +202,6 @@ lemma rbounded_of_bounded_norm:
   shows \<open>norm f = norm (rbounded_of_bounded f)\<close>
   apply transfer
   by auto
-
 
 lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
   is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x)\<close>.
@@ -1079,7 +1079,6 @@ qed
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
-
 fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
   and S::\<open>'a linear_space\<close> and \<alpha>::complex
 shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>s S  = \<alpha> *\<^sub>C (A *\<^sub>s S)\<close>
@@ -2416,6 +2415,7 @@ consts
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>s S = 0"
   by (metis (no_types, hide_lams) bot_eq_sup_iff cancel_comm_monoid_add_class.diff_cancel cdot_plus_distrib imageOp_Proj sup_top_right timesOp_assoc_linear_space timesOp_minus zero_linear_space_def) 
 
+(* TODO: remove (same as timesScalarSpace_not0) *)
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S"
   for S::\<open>'a::complex_normed_vector linear_space\<close>
   using Complex_Vector_Spaces.timesScalarSpace_not0 by blast
@@ -2427,48 +2427,33 @@ lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
 lemma timesOp_assoc_subspace: "(A *\<^sub>o B) *\<^sub>s S =  A *\<^sub>s (B *\<^sub>s S)"
   by (simp add: timesOp_assoc_linear_space) 
 
-(*
-(* TODO: inline into definition of + in instantiation *)
-consts plusOp :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" 
-  (* and uminusOp :: "('a,'b) bounded \<Rightarrow> ('a,'b) bounded" *)
-  
-lemma plusOp_assoc: "plusOp (plusOp a b) c = plusOp a (plusOp b c)" by (cheat plusOp_assoc)
-lemma plusOp_comm: "plusOp a b = plusOp b a" by (cheat plusOp_comm)
-lemma plusOp_0: "plusOp 0 a = a" by (cheat plusOp_0)
-lemma plusOp_cancel: "plusOp (timesScalarOp (-1) a) a = 0" by (cheat plusOp_cancel)
-(* for a b c :: "('a,'b) bounded" *)
-*)
-
-(*
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_subspace[symmetric] plusOp_assoc[symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_subspace plusOp_assoc
-*)
-
-
-
+(* TODO: remove (same as scalar_op_linear_space_assoc) *)
 lemma scalar_op_subspace_assoc [simp]: 
   "(\<alpha>*\<^sub>CA)*\<^sub>sS = \<alpha>*\<^sub>C(A*\<^sub>sS)" for \<alpha>::complex 
   and A::"('a::chilbert_space,'b::chilbert_space) bounded" 
   and S
   by simp
 
-
+(* TODO: remove (special case of complex_vector.scale_one) *)
 lemma scalar_mult_1_op[simp]: "1 *\<^sub>C A = A" 
   for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   by simp
 
+(* TODO: remove (special case of complex_vector.scale_zero_left) *)
 lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" 
   for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   by simp
 
-
+(* TODO remove (special case of complex_vector.scale_scale) *)
 lemma scalar_scalar_op[simp]: "a *\<^sub>C (b  *\<^sub>C A) = (a * b)  *\<^sub>C A"
   for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   by simp
 
+(* TODO remove (special case) *)
 lemma scalar_op_vec[simp]: "(a *\<^sub>C A) *\<^sub>v \<psi> = a *\<^sub>C (A *\<^sub>v \<psi>)"
   by simp
 
+(* TODO remove (special case) *)
 lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C B \<Longrightarrow> A=B" 
   for A B :: "('a::complex_normed_vector,'b::complex_normed_vector)bounded" and a::complex 
   by simp
@@ -2479,13 +2464,11 @@ lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarr
   by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
 
 
-(* FIXME: what is the definition corresponding to this "consts"?
-TODO: definition is above
-consts vector_to_bounded::\<open>'a::complex_normed_vector \<Rightarrow> (unit,'a) bounded\<close>
+(* 
 
 TODO: fix syntax and prove:
 lemma vector_to_bounded_applyOp: "vector_to_bounded (A\<cdot>\<psi>) = A \<cdot> vector_to_bounded \<psi>" for A :: "(_,_)bounded"
-  by (cheat TODO5)
+  sorry
 
 TODO: fix syntax and prove:
 lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<cdot> vector_to_bounded \<psi>" for a::complex
