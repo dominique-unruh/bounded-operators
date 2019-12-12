@@ -1263,8 +1263,8 @@ lemma equal_span:
   assumes \<open>clinear A\<close> and \<open>clinear B\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
-  using assms(1) assms(2) assms(3) assms(4) bounded_clinear.is_clinear 
-    complex_vector.module_hom_eq_on_span by blast
+  using assms(1) assms(2) assms(3) assms(4)
+  by (metis complex_vector.linear_eq_on_span) 
 
 lemma equal_span_applyOpSpace:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
@@ -2650,7 +2650,8 @@ proof-
           by auto
         hence \<open>t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
           using \<open>complex_vector.independent S\<close> that
-          by (metis (full_types) assms(3) complex_vector.dependent_finite)
+           assms(3) complex_vector.dependent_finite
+          sorry
         hence \<open>t (b1 + b2) s = t b1 s + t b2 s\<close>
           by simp
         thus ?thesis
@@ -2688,8 +2689,9 @@ proof-
         hence \<open>t (r *\<^sub>C b) s  - (r * t b s) = 0\<close>
         proof -
           have "\<And>f. (\<Sum>a\<in>S. f a *\<^sub>C a) \<noteq> 0 \<or> f s = 0"
-            using \<open>complex_independent S\<close> assms(3) complex_vector.dependent_finite 
-              that by auto
+            using  assms(3) complex_vector.dependent_finite 
+              that
+            by (metis Complex_Vector_Spaces.dependent_raw_def assms(2)) 
           then show ?thesis
             using \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s - r * t b s) *\<^sub>C s) = 0\<close> 
             by fastforce
@@ -3000,7 +3002,7 @@ proof-
   hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
   proof -
     have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = Complex_Vector_Spaces.span A"
-      by (simp add: Complex_Vector_Spaces.span_raw_def complex_vector.span_explicit)
+      by (simp add: complex_vector.span_explicit)      
     have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
       using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
     have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
