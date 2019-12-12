@@ -855,7 +855,7 @@ proof-
         finally have \<open> \<parallel>(1 / 2) *\<^sub>R r n - (1 / 2) *\<^sub>R r m\<parallel>\<^sup>2 < 1 / 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
           by blast
         hence \<open> \<parallel>(1 / 2) *\<^sub>R (r n - r m) \<parallel>\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by (simp add: scale_right_diff_distrib)
+          by (simp add: real_vector.scale_right_diff_distrib)          
         hence \<open> ((1 / 2)*\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
           by simp
         hence \<open> (1 / 2)^2*(\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
@@ -1931,8 +1931,8 @@ proof-
       hence \<open>x \<in> {v. (id - (projection M)) v = 0}\<close>
         by simp
       hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
-        using span_superset 
-        by fastforce 
+        using span_superset
+        by (simp add: real_vector.span_base)         
       hence \<open>x \<in> ( ( id - (projection M) ) -` {0} )\<close> 
         using ProjOntoOrtho \<open>(id - projection M) x = 0\<close> \<open>closed_subspace M\<close> calculation diff_zero  projection_intro1
           complex_vector.subspace_def \<open>(id - projection M) x = 0\<close> by blast
@@ -3348,7 +3348,7 @@ proof
         hence \<open>(projection x) u \<in> y\<close>
           using that(3) by auto        
         have \<open>subspace y\<close>
-          by (simp add: Complex_Vector_Spaces.subspace_raw_def closed_subspace.subspace that(2))
+          by (simp add: closed_subspace.subspace that(2))          
         have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
           by (simp add: projection_intro1 that(1))
         moreover have  \<open>u - (projection x) u \<in> y\<close>
@@ -4214,7 +4214,8 @@ proof-
   hence \<open>a \<in> complex_vector.span ({1::'a})\<close>
     unfolding is_onb_def is_basis_def
     apply auto
-    by (simp add: closed_finite_dim Complex_Vector_Spaces.span_raw_def)
+    using closed_finite_dim 
+    by (metis closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I)
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"
