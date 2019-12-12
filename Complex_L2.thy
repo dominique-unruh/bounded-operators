@@ -2166,38 +2166,6 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 lemma trunc_ell2_lim:
   includes nsa_notation
   shows \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
@@ -2350,7 +2318,6 @@ lemma trunc_ell2_complex_span:
   \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
   using trunc_ell2_complex_span_induct by auto
 
-
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
 proof
@@ -2448,7 +2415,7 @@ proof
       show "is_basis (set (canonical_basis::'a ell2 list))"
         unfolding canonical_basis_ell2_def is_basis_def
       proof
-        show "complex_independent (set (map ket (enum_class.enum::'a list)))"
+        show "complex_vector.independent (set (map ket (enum_class.enum::'a list)))"
         proof-
           have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
           proof (rule classical)
@@ -2471,7 +2438,7 @@ proof
           thus ?thesis 
             using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
             unfolding canonical_basis_ell2_def
-            by blast
+            by (metis Complex_Vector_Spaces.dependent_raw_def)            
         qed
         show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
         proof-
@@ -2502,6 +2469,7 @@ qed
 end
 
 (* TODO: move *)
+(* Jose: where? *)
 instantiation unit :: CARD_1
 begin
 instance 
@@ -3483,7 +3451,7 @@ proof-
       by auto
   qed
   moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
-    by (simp add: Complex_Vector_Spaces.span_raw_def ket_ell2_span)    
+    by (simp add: ket_ell2_span)        
   ultimately have \<open>A *\<^sub>v x = 0\<close>
     for x
     by blast
