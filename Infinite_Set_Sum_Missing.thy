@@ -1183,4 +1183,111 @@ proof -
     by auto
 qed
 
+lemma abs_summable_partition:
+  fixes T :: "'b set" and I :: "'a set"
+  assumes "\<And>i. f abs_summable_on S i"
+  assumes "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on I"
+  assumes "T \<subseteq> (\<Union>i\<in>I. S i)"
+  shows "f abs_summable_on T"
+proof (rule abs_summable_finiteI)
+  fix F assume finite_F: "finite F" and FT: "F \<subseteq> T"
+  define index where "index s = (SOME i. i\<in>I \<and> s\<in>S i)" for s
+  then have index_I: "index s \<in> I" and S_index: "s \<in> S (index s)" if "s \<in> (\<Union>i\<in>I. S i)" for s
+     apply auto
+    by (metis (no_types, lifting) UN_E someI_ex that)+
+  define S' where "S' i = {s\<in>S i. i = index s}" for i
+  have S'_S: "S' i \<subseteq> S i" for i
+    unfolding S'_def by simp
+  then have f_sum_S': "f abs_summable_on S' i" for i
+    by (meson abs_summable_on_subset assms(1))
+  with assms(1) S'_S have "(\<Sum>\<^sub>ax\<in>S' i. norm (f x)) \<le> (\<Sum>\<^sub>ax\<in>S i. norm (f x))" for i
+    by (simp add: infsetsum_mono_neutral_left)
+  with assms(2) have sum_I: "(\<lambda>i. \<Sum>\<^sub>ax\<in>S' i. norm (f x)) abs_summable_on I"
+    by (smt abs_summable_on_comparison_test' infsetsum_cong norm_ge_zero norm_infsetsum_bound real_norm_def)
+  have "(\<Union>i\<in>I. S i) = (\<Union>i\<in>I. S' i)"
+    unfolding S'_def by (auto intro!: index_I S_index)
+  with assms(3) have T_S': "T \<subseteq> (\<Union>i\<in>I. S' i)"
+    by simp
+  have S'_disj: "(S' i) \<inter> (S' j) = {}" if "i\<noteq>j" for i j
+    unfolding S'_def disjnt_def using that by auto
+  
+  define B where "B i = (\<Sum>\<^sub>ax\<in>S i. norm (f x))" for i
+  have sum_FS'_B: "(\<Sum>x\<in>F\<inter>S' i. norm (f x)) \<le> B i" for i
+    unfolding B_def using f_sum_S' finite_F FT
+    by (metis S'_S abs_summable_finiteI_converse assms(1) finite_Int le_inf_iff order_refl subset_antisym)
+  have B_pos[simp]: "B i \<ge> 0" for i
+    unfolding B_def by (rule infsetsum_nonneg, simp)
+  have B_sum_I[simp]: "B abs_summable_on I"
+    by (simp add: B_def assms(2))
+
+  define J where "J = {i\<in>I. F\<inter>S' i \<noteq> {}}"
+  have finite_J[simp]: "finite J"
+  proof -
+    define a where "a i = (SOME x. x\<in>F\<inter>S' i)" for i
+    then have a: "a i \<in> F\<inter>S' i" if "i \<in> J" for i
+      unfolding J_def
+      by (metis (mono_tags) Collect_conj_eq Int_Collect J_def some_in_eq that)
+    have "inj_on a J"
+      apply (rule inj_onI)
+      using a S'_disj apply auto
+      by (metis S'_disj disjoint_iff_not_equal)
+    moreover have "a ` J \<subseteq> F"
+      using a by auto
+    ultimately show "finite J"
+      using finite_F
+      using Finite_Set.inj_on_finite by blast
+  qed
+  have JI[simp]: "J \<subseteq> I"
+    unfolding J_def by simp
+
+  have "F = (\<Union>i\<in>J. F\<inter>S' i)"
+    unfolding J_def apply auto
+    by (metis FT T_S' UN_E disjoint_iff_not_equal subsetD)
+  then have "(\<Sum>x\<in>F. norm (f x)) = (\<Sum>x\<in>(\<Union>i\<in>J. F\<inter>S' i). norm (f x))"
+    by simp
+  also have "\<dots> = (\<Sum>i\<in>J. \<Sum>x\<in>F \<inter> S' i. norm (f x))"
+    apply (rule sum.UNION_disjoint)
+    using finite_J finite_F S'_disj by auto
+  also have "\<dots> \<le> (\<Sum>i\<in>J. B i)"
+    using sum_FS'_B
+    by (simp add: ordered_comm_monoid_add_class.sum_mono)
+  also have "\<dots> = (\<Sum>\<^sub>ai\<in>J. B i)"
+    by simp
+  also have "\<dots> \<le> (\<Sum>\<^sub>ai\<in>I. B i)"
+    apply (rule infsetsum_mono_neutral_left)
+    by auto
+  finally show "(\<Sum>x\<in>F. norm(f x)) \<le> (\<Sum>\<^sub>ai\<in>I. B i)"
+    by simp
+qed
+
+
+lemma abs_summable_product':
+  fixes X :: "'a set" and Y :: "'b set"
+  assumes "\<And>x. (\<lambda>y. f (x,y)) abs_summable_on Y"
+  assumes "(\<lambda>x. \<Sum>\<^sub>ay\<in>Y. norm (f (x,y))) abs_summable_on X"
+  shows "f abs_summable_on X\<times>Y"
+proof -
+  define S where "S x = {x} \<times> Y" for x :: 'a
+  have bij[simp]: "bij_betw (Pair x) Y (S x)" for x
+    apply (rule bij_betwI[where g=snd])
+    apply (simp_all add: S_def)
+    using SigmaE by auto
+  have "f abs_summable_on S x" for x
+    apply (subst abs_summable_on_reindex_bij_betw[symmetric, where A=Y and g="\<lambda>y. (x,y)"])
+    using assms(1) by simp_all
+  moreover 
+  have "(\<Sum>\<^sub>ay\<in>Y. norm (f (x, y))) = (\<Sum>\<^sub>ay\<in>S x. norm (f y))" for x
+    apply (rule infsetsum_reindex_bij_betw)
+    unfolding S_def using bij_betw_def
+    using S_def bij by auto 
+  then have "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
+    using assms(2) by simp
+  then have "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
+    by auto
+  moreover have "X \<times> Y \<subseteq> (\<Union>i\<in>X. S i)"
+    unfolding S_def by auto
+  ultimately show ?thesis
+    by (rule abs_summable_partition[where S=S and I=X])
+qed
+
 end
