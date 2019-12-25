@@ -1,9 +1,11 @@
+section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing facts\<close>
+
 theory General_Results_Missing
   imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
     "HOL-ex.Sketch_and_Explore" HOL.Groups
-
 begin
 
+(* TODO: remove (never used) *)
 lemma bij_inj:
   assumes \<open>f \<circ> f = id\<close>
   shows \<open>inj f\<close>
@@ -18,7 +20,7 @@ proof(rule injI)
     by (simp add: assms)
 qed
 
-
+(* TODO: Never used in Bounded Operators. Move to tensor product. *)
 lemma big_sum_reordering_fst:
   fixes  S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close>
@@ -62,19 +64,21 @@ proof-
   finally show ?thesis by blast
 qed
 
+(* TODO: Never used in Bounded Operators. Move to tensor product. *)
 lemma swap_set_fst:
   \<open>fst ` (prod.swap ` S) = snd ` S\<close>
   unfolding prod.swap_def apply auto
    apply (simp add: rev_image_eqI)
   by (metis (no_types, lifting) fst_conv image_cong image_eqI pair_in_swap_image prod.swap_def)
 
+(* TODO: Never used in Bounded Operators. Move to tensor product. *)
 lemma swap_set_snd:
   \<open>snd ` (prod.swap ` S) = fst ` S\<close>
   unfolding prod.swap_def apply auto
    apply (simp add: rev_image_eqI)
   using image_iff by fastforce
 
-
+(* TODO: Never used in Bounded Operators. Move to tensor product. *)
 lemma big_sum_reordering_snd:
   fixes  S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close>
@@ -125,10 +129,12 @@ proof-
   finally show ?thesis by blast
 qed
 
+(* TODO remove. Use (f^^n) c instead of f c n *)
 fun iteration::\<open>nat \<Rightarrow> 'a \<Rightarrow> ('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close> where
   \<open>iteration 0 c f = c\<close> |
   \<open>iteration (Suc n) c  f = f (iteration n c f)\<close>
 
+(* TODO: remove (never used) *)
 lemma decreasing_sequence_nat:
   fixes f :: \<open>nat \<Rightarrow> nat\<close>
   assumes \<open>\<And> n. f (Suc n) < f n\<close>
@@ -154,6 +160,7 @@ proof-
   thus ?thesis by blast
 qed
 
+(* TODO remove (never used) *)
 lemma pigeonhole_pair:
   assumes \<open>card (fst ` S) < card (snd ` S)\<close> and \<open>finite S\<close>
   shows \<open>\<exists> u v w. (u, v) \<in> S \<and> (u, w) \<in> S \<and> v \<noteq> w\<close>
@@ -191,8 +198,13 @@ proof-
     by auto    
 qed
 
+(* TODO: Can be proven very easily with metis (see below). Probably remove. (Check whether
+  add_cancel_right_left works where this is used.)
+ *)
+(* TODO: rename: additive_implies_zero *)
 lemma additive_imples_zero:
-\<open>(\<And> p q. f (p + q) = f p + f q) \<Longrightarrow> f  (0::'a::ab_group_add) = (0::'b::ab_group_add)\<close>
+  \<open>(\<And> p q. f (p + q) = f p + f q) \<Longrightarrow> f  (0::'a::ab_group_add) = (0::'b::ab_group_add)\<close>
+(* TODO: use this proof: by (metis add_cancel_right_left) *)
 proof-
   assume \<open>\<And> p q. f (p + q) = f p + f q\<close>
   hence \<open>f (0 + 0) = f 0 + f 0\<close>
@@ -207,6 +219,7 @@ proof-
     by (metis add_cancel_left_left) 
 qed
 
+(* TODO: remove (not used) *)
 lemma general_sum_from_addition_induction:
   fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
   assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
@@ -243,6 +256,7 @@ proof (induction n)
     by (smt assms card_eq_SucD finite_insert sum.insert) 
 qed
 
+(* TODO: remove (use additive.sum instead) *)
 lemma general_sum_from_addition:
   fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
   assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
@@ -251,11 +265,13 @@ lemma general_sum_from_addition:
   using general_sum_from_addition_induction
    assms(1) assms(2) by blast
 
-
+(* TODO: remove (use rec_nat instead) *)
 fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
   "rec x0 \<Phi> 0 = x0"
 | "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
 
+(* TODO: remove (use sum_mono2 instead, followed by auto) *)
+(* TODO: also, the name is not good because there already is a "sum_mono" *)
 lemma sum_mono:
   fixes a :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close>
@@ -270,9 +286,12 @@ next
     by (smt Suc_neq_Zero add_Suc_right assms le_SucE sum.atLeast0_atMost_Suc) 
 qed
 
+(* TODO remove (not used, I replaced its one use by sum_interval_split below) *)
 lemma sum_comp:
   fixes a :: \<open>nat \<Rightarrow> real\<close>
+  (* TODO: assumption useless (nat's are always \<ge>0 *)
   assumes \<open>p \<ge> 0\<close>
+  (*  TODO remove \<forall>n *)
   shows  \<open>\<forall> n. sum a {Suc n..n + p} = sum a {0.. n + p} - sum a {0..n}\<close>
 proof(induction p)
   case 0
@@ -284,6 +303,18 @@ next
     using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
 qed
 
+
+lemma sum_interval_split: 
+  fixes f :: "nat \<Rightarrow> 'a::ab_group_add" and a b :: nat
+  assumes "b>a" 
+  shows "sum f {Suc a..b} = sum f {..b} - sum f {..a}" 
+proof -
+  obtain c where c: "b = a+c"
+    using \<open>a < b\<close> less_imp_add_positive by blast
+  show ?thesis
+    unfolding c sum_up_index_split
+    by auto 
+qed
 
 end
 

@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors: 
 
@@ -19,7 +21,7 @@ begin
 
 unbundle nsa_notation
 
-section \<open>Boundeness\<close>
+subsection \<open>Boundeness\<close>
 
 lemma nsbounded_existencial:
   \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
@@ -295,7 +297,7 @@ definition starfun3 :: "('a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'd) 
   where "starfun3 f \<equiv> \<lambda>x y z. star_of f \<star> x \<star> y \<star> z"
 declare starfun3_def [StarDef.transfer_unfold]
 
-section \<open>Closure\<close>
+subsection \<open>Closure\<close>
 
 lemma nsclosure_I:
   \<open>r \<in> closure A \<Longrightarrow> \<exists> a \<in> *s* A. star_of r \<approx> a\<close>
@@ -390,7 +392,7 @@ text \<open>Hyperfinite set\<close>
 definition hypfinite where \<open>hypfinite = (*p* finite)\<close> 
 
 
-section \<open>Unsorted\<close>
+subsection \<open>Unsorted\<close>
 
 lemma Cauchy_convergent_norm:
   \<open>Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector) \<Longrightarrow> Cauchy (\<lambda> n. norm (x n))\<close>

@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors: 
 
@@ -198,11 +200,11 @@ proof-
       thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
     qed
     have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
-    proof-        
-      have \<open>m > n \<Longrightarrow> sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
-        for m n
-        using sum_comp 
-        by (metis less_imp_add_positive less_imp_le_nat)
+    proof-
+      have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
+        if "m > n" for m n
+        apply (simp add: that atLeast0AtMost)
+        using that by (rule sum_interval_split)
       thus ?thesis using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> 
         by smt 
     qed

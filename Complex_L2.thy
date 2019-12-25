@@ -1,3 +1,5 @@
+section \<open>TODO: section title\<close>
+
 (*
 Authors:
 
@@ -9,7 +11,6 @@ Authors:
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
-    Extended_Sorry
     "HOL-ex.Sketch_and_Explore"
     (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
 Or "sketch bla" for a proof outline starting with "proof bla" *)
@@ -17,11 +18,11 @@ begin
 
 unbundle bounded_notation
 
-section \<open>Preliminaries\<close>
+subsection \<open>Preliminaries\<close>
 
 hide_const (open) Real_Vector_Spaces.span
 
-section \<open>l2 norm - untyped\<close>
+subsection \<open>l2 norm - untyped\<close>
 
 definition "has_ell2_norm x = bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)"
 
@@ -80,7 +81,7 @@ proof -
     by (simp add: monoI)
 qed
 
-section \<open>Subspaces\<close>
+subsection \<open>Subspaces\<close>
 
 notation
   inf (infixl "\<sqinter>" 70) and
@@ -1948,7 +1949,8 @@ proof
     have \<open>distinct (enum_class.enum::'a list)\<close>
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-      (* by (meson inj_onI ket_distinct)         *) sorry
+      (* by (meson inj_onI ket_distinct)         *) 
+      sorry
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
@@ -2063,7 +2065,7 @@ instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
 clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
 instance
-  by (cheat \<open>instantiation ell2 :: (CARD_1) one_dim\<close>)
+  sorry
 end
 
 (* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). 
@@ -2195,7 +2197,7 @@ lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\
   for a::complex
   apply (transfer fixing: a) by auto
 
-section \<open>Classical operators\<close>
+subsection \<open>Classical operators\<close>
 
 lemma has_ell2_norm_classical_operator':
   \<open>has_ell2_norm \<psi> \<Longrightarrow>
@@ -3644,7 +3646,7 @@ next
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
-section \<open>Enum\<close>
+subsection \<open>Enum\<close>
 
 
 lemma ket_distinct:
@@ -3652,7 +3654,7 @@ lemma ket_distinct:
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
 
 
-section \<open>Recovered theorems\<close>
+subsection \<open>Recovered theorems\<close>
 
 lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
   apply (cases x)
@@ -3760,6 +3762,30 @@ lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
   by (simp add: add_increasing2)
 lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_linear_space"
   by (simp add: add_increasing)
+
+lemma ket_is_orthogonal[simp]:
+  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
+  unfolding is_orthogonal_def
+  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
+
+lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
+proof-
+  have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
+    using Complex_L2.ket_ell2_span by blast
+  thus ?thesis
+    by (simp add: Span.abs_eq top_linear_space.abs_eq)
+qed
+
+lemma [simp]: "ket i \<noteq> 0"
+  using ell2_ket[of i] by force
+
+lemma equal_ket:
+  includes bounded_notation
+  assumes "\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x"
+  shows "A = B"
+  by (simp add: assms equal_basis)
+
+
 
 unbundle no_bounded_notation
 
