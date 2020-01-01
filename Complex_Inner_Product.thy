@@ -4298,30 +4298,13 @@ instance one_dim \<subseteq> complex_algebra_1
 qed
 
 
-lemma one_dim_to_complex_one'[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
+lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
   by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
 
 (* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
 (before \<open>instance one_dim \<subseteq> complex_algebra_1\<close>) if they are useful for the proof
 of that instance. *)
 context one_dim begin
-
-(* Jose: I proved the lemma one_dim_to_complex_one', which should be equivalent to
-lemma one_dim_to_complex_one. Nevertheless, the second one does not follow
-from the first one by sledgehammer. *)
-(* TODO: That is because of technical reasons with locales.
-   one_dim.one_dim_to_complex_one (below) is defined in the locale one_dim.
-   This means, 'a does not have type class one_dim, but instead all all facts from the locale one_dim
-   are made temporarily available here. (And outside the locale, one_dim.one_dim_to_complex_one
-   is made available in a translated form with a type_class.) But the proof of 
-  one_dim_to_complex_one cannot use one_dim_to_complex_one' because 'a does not have
-  the right type class one_dim.
-
-  Solution (in this case): Keep one_dim_to_complex_one', remove one_dim_to_complex_one.
-*)
-lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a) = 1"
-  using one_dim_to_complex_one'
-  sorry
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
   by (simp add: of_complex_def one_dim_1_times_a_eq_a one_dim_class.one_dim_to_complex_def)
