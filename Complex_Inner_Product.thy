@@ -3711,11 +3711,14 @@ next
     using closed_sequential_limits by blast 
 qed
 
+
+
 (* TODO: remove lemma (subsumed by closed_finite_dim' below, hide_fact does not fully remove it) *)
 (* TODO: Use \<And> and \<Longrightarrow> instead of \<forall>, \<longrightarrow> *)
 lemma closed_finite_dim'_induction:
-  \<open>\<forall> A::'a::complex_inner set. card A = n \<and> finite A \<and> 0 \<notin> A \<and> (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) 
-\<longrightarrow> closed (complex_vector.span A)\<close>
+  \<open>\<And> A::'a::complex_inner set. card A = n \<Longrightarrow> finite A \<Longrightarrow> 0 \<notin> A \<Longrightarrow>
+ (\<And> a a'.  a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
+\<Longrightarrow> closed (complex_vector.span A)\<close>
 proof(induction n)
   case 0
   thus ?case
@@ -3862,25 +3865,20 @@ next
     thus \<open>closed (complex_vector.span A)\<close>
       using closed_sequential_limits by blast      
   qed
-  thus ?case by blast
+  thus ?case 
+    by (smt Suc.prems(1) Suc.prems(2) Suc.prems(3) Suc.prems(4))
+      (* > 1s *)
 qed
 
-(* TODO: Use \<And> and \<Longrightarrow> instead of \<forall>, \<longrightarrow> *)
 (* TODO: Remove lemma (subsumed by closed_finite_dim below) *)
 lemma closed_finite_dim':
   fixes A::\<open>'a::complex_inner set\<close>
-  assumes \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+  assumes \<open>\<And> a a'. a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
     and \<open>0 \<notin> A\<close> and \<open>finite A\<close>
   shows \<open>closed (complex_vector.span A)\<close>
   using assms closed_finite_dim'_induction by blast
 
 hide_fact closed_finite_dim'_induction
-
-
-
-
-
-
 
 (* TODO: remove lemma (subsumed by Gram_Schmidt0' below, hide_fact does not fully remove it) *)
 lemma Gram_Schmidt0':
@@ -4911,14 +4909,14 @@ lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
 *)
 
 (* TODO (Jose): Change name, because it is more general than ell2 *)
-lemma cinner_ext_ell2_0: 
+lemma cinner_ext_0: 
   assumes "\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = 0"
   shows "\<psi> = 0"
   using assms cinner_eq_zero_iff by blast
 
 text \<open>This is a useful rule for establishing the equality of vectors\<close>
 (* TODO (Jose): Change name, because it is more general than ell2 *)
-lemma cinner_ext_ell2:
+lemma cinner_ext:
   assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
   shows \<open>\<psi> = \<phi>\<close>
 proof-
@@ -4927,7 +4925,7 @@ proof-
     using \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
     by (simp add: cinner_diff_right)    
   hence \<open>\<psi> - \<phi> = 0\<close>
-    using cinner_ext_ell2_0[where \<psi> = "\<psi> - \<phi>"] by blast
+    using cinner_ext_0[where \<psi> = "\<psi> - \<phi>"] by blast
   thus ?thesis by simp
 qed
 
