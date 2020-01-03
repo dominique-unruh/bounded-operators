@@ -4746,7 +4746,114 @@ end
 
 lemma Pythagorean_generalized:
 \<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
+ \<Longrightarrow> (norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
+proof(induction "card t")
+case 0
+  thus ?case sorry
+next
+  case (Suc x)
+  thus ?case sorry
+qed
+
+corollary Pythagorean_generalized_scalar':
+\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t \<Longrightarrow>
+ (\<And> a. a \<in> t \<Longrightarrow> r a \<noteq> 0) \<Longrightarrow>
+ (norm  (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
+proof-
+  assume \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and \<open>finite t\<close>
+    and \<open>\<And> a. a \<in> t \<Longrightarrow> r a \<noteq> 0\<close>
+  define s where \<open>s = {r a *\<^sub>C a| a. a \<in> t}\<close>
+  have \<open>finite s\<close>
+    unfolding s_def
+    using  \<open>finite t\<close>
+    by simp
+  moreover have \<open>a \<in> s \<Longrightarrow> a' \<in> s \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close> 
+    for a a'
+  proof-
+    assume \<open>a \<in> s\<close> and \<open>a' \<in> s\<close> and \<open>a \<noteq> a'\<close>
+    have \<open>\<exists> b. a = r b *\<^sub>C b \<and> b \<in> t\<close>
+      using \<open>a \<in> s\<close> s_def by blast
+    then obtain b where \<open>a = r b *\<^sub>C b\<close> and \<open>b \<in> t\<close>
+      by blast
+    have \<open>\<exists> b'. a' = r b' *\<^sub>C b' \<and> b' \<in> t\<close>
+      using \<open>a' \<in> s\<close> s_def by blast
+    then obtain b' where \<open>a' = r b' *\<^sub>C b'\<close> and \<open>b' \<in> t\<close>
+      by blast
+    have \<open>b \<noteq> b'\<close>
+      using \<open>a \<noteq> a'\<close> \<open>a = r b *\<^sub>C b\<close> \<open>a' = r b' *\<^sub>C b'\<close> by blast
+    hence \<open>\<langle>b, b'\<rangle> = 0\<close>
+      using \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>[where a = "b" and a' = "b'"]
+      by (simp add: \<open>b \<in> t\<close> \<open>b' \<in> t\<close>)
+    have \<open>\<langle>a, a'\<rangle> = \<langle>r b *\<^sub>C b, r b' *\<^sub>C b'\<rangle>\<close>
+      by (simp add: \<open>a = r b *\<^sub>C b\<close> \<open>a' = r b' *\<^sub>C b'\<close>)
+    also have \<open>\<dots> = r b' * \<langle>r b *\<^sub>C b, b'\<rangle>\<close>
+      by simp
+    also have \<open>\<dots> = r b' * (cnj (r b)) * \<langle>b, b'\<rangle>\<close>
+      by simp
+    also have \<open>\<dots> = 0\<close>
+      using \<open>\<langle>b, b'\<rangle> = 0\<close> by simp
+    finally show ?thesis
+      by simp 
+  qed
+  ultimately have \<open>(norm (\<Sum>a\<in>s. a))^2 = (\<Sum>a\<in>s. (norm a)^2)\<close>
+    by (simp add: Pythagorean_generalized)
+  have p2: \<open>inj_on (\<lambda> a. r a *\<^sub>C a) t\<close>
+  proof(rule inj_onI)
+    fix x y
+    assume \<open>x \<in> t\<close> and \<open>y \<in> t\<close> and \<open>r x *\<^sub>C x = r y *\<^sub>C y\<close>
+    show \<open>x = y\<close> 
+    proof(rule classical)
+      assume \<open>\<not> (x = y)\<close>
+      hence \<open>\<langle>x, y\<rangle> = 0\<close>
+        using \<open>x \<in> t\<close> \<open>y \<in> t\<close>  \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+        by auto
+      moreover have \<open>\<langle>x, x\<rangle> = \<langle>x, y\<rangle>\<close>
+        by (metis \<open>\<And>a. a \<in> t \<Longrightarrow> r a \<noteq> 0\<close> \<open>r x *\<^sub>C x = r y *\<^sub>C y\<close> \<open>x \<in> t\<close> bounded_sesquilinear.scaleC_right bounded_sesquilinear_cinner calculation complex_vector.scale_eq_0_iff)        
+      ultimately have \<open>\<langle>x, x\<rangle> = 0\<close>
+        by simp        
+      hence \<open>(norm x)^2 = 0\<close>
+        by simp        
+      hence \<open>x = 0\<close>
+        by auto        
+      hence \<open>y = 0\<close>
+        using \<open>\<And>a. a \<in> t \<Longrightarrow> r a \<noteq> 0\<close> \<open>r x *\<^sub>C x = r y *\<^sub>C y\<close> \<open>y \<in> t\<close> by auto        
+      hence \<open>x = y\<close>
+        using \<open>x = 0\<close> \<open>y = 0\<close>
+        by simp
+      thus ?thesis by blast
+    qed
+  qed
+  hence p1: \<open>(\<lambda> a. r a *\<^sub>C a) ` t = s\<close>
+    by (simp add: Setcompr_eq_image s_def)    
+  show ?thesis
+  proof-
+    have \<open>(norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2 = (norm (\<Sum>a\<in>s. a))\<^sup>2\<close>
+    proof-
+      have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>s. a)\<close>
+        using p1 p2
+        by (metis (no_types, lifting) sum.reindex_cong)        
+      thus ?thesis
+        by simp 
+    qed
+    also have \<open>\<dots> = (\<Sum>a\<in>s. (norm a)^2)\<close>
+      by (simp add: \<open>(norm (\<Sum> s))\<^sup>2 = (\<Sum>a\<in>s. (norm a)\<^sup>2)\<close>)
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (norm (r a *\<^sub>C a))^2)\<close>
+      using p1 p2
+      by (metis (no_types, lifting) sum.reindex_cong)
+    also have \<open>\<dots> = (\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+      by (simp add: semiring_normalization_rules(30))      
+    finally show ?thesis by blast
+  qed
+qed
+
+corollary Pythagorean_generalized_scalar:
+\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
  \<Longrightarrow> (norm  (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
+  using Pythagorean_generalized_scalar'
+  sorry
+
+
+(*
 proof(induction "card t" arbitrary: r)
   case 0
   have \<open>t = {}\<close>
@@ -4787,6 +4894,7 @@ next
     using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto    
   finally show ?case sorry
 qed
+*)
 
 (*
 (* TODO: proof by induction *)
