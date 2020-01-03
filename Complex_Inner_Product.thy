@@ -4743,12 +4743,106 @@ instance
   by simp
 end
 
+
+lemma Pythagorean_generalized:
+\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
+ \<Longrightarrow> (norm  (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
+proof(induction "card t" arbitrary: r)
+  case 0
+  have \<open>t = {}\<close>
+    using "0.hyps" "0.prems"(2) by auto    
+  moreover have \<open>(norm (\<Sum>a\<in>{}. r a *\<^sub>C a))^2 = (\<Sum>a\<in>{}. norm (r a)^2 * (norm a)^2)\<close>
+  proof-
+    have \<open>(\<Sum>a\<in>{}. r a *\<^sub>C a) = 0\<close>
+      by simp
+    moreover have \<open>(\<Sum>a\<in>{}. norm (r a)^2 * (norm a)^2) = 0\<close>
+      by simp
+    ultimately show ?thesis by simp
+  qed
+  ultimately show ?case by blast
+next
+  case (Suc x)
+  have \<open>\<exists> s t'. t = insert s t' \<and> s \<notin> t'\<close>
+    by (metis Suc.hyps(2) card_eq_SucD)
+  then obtain s t' where \<open>t = insert s t'\<close> and \<open>s \<notin> t'\<close>
+    by blast
+  have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = 
+        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 
+      + (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto
+  also have \<open>\<dots> = 
+        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
+  proof-
+    have \<open>(norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2 = (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+      sorry
+    thus ?thesis by simp
+  qed
+  also have \<open>\<dots> = 
+        (norm (r s *\<^sub>C s))\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
+    by (simp add: power_mult_distrib)    
+  also have \<open>\<dots> = 
+        (norm (r s *\<^sub>C s + (\<Sum>a\<in>t'. r a *\<^sub>C a)))\<^sup>2\<close>
+    sorry
+  also have \<open>\<dots> = (norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2\<close>
+    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto    
+  finally show ?case sorry
+qed
+
+(*
 (* TODO: proof by induction *)
 lemma Pythagorean_generalized:
-  assumes \<open>finite t\<close> and \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close> 
-    and \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-  shows  \<open>(norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
-  sorry
+\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
+\<Longrightarrow> z = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow> (norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
+proof(induction "card t" arbitrary: z r)
+  case 0
+  hence \<open>t = {}\<close>
+    by auto 
+  moreover have \<open>(norm z)\<^sup>2 = (\<Sum>a\<in>{}. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+  proof-
+    have \<open>z = (\<Sum>a\<in>{}. r a *\<^sub>C a)\<close>
+      using  \<open>t = {}\<close>
+      by (simp add: "0.prems"(3)) 
+    hence \<open>z = 0\<close>
+      by simp      
+    thus ?thesis
+      by simp 
+  qed
+  ultimately show ?case
+    by blast
+next
+  case (Suc x)
+  have \<open>\<exists> s t'. t = insert s t' \<and> s \<notin> t'\<close>
+    by (metis Suc.hyps(2) card_eq_SucD)
+  then obtain s t' where \<open>t = insert s t'\<close> and \<open>s \<notin> t'\<close>
+    by blast
+  have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = 
+        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 
+      + (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto
+  also have \<open>\<dots> = 
+        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
+  proof-
+    have \<open>(norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2 = (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
+      sorry
+    thus ?thesis by simp
+  qed
+  also have \<open>\<dots> = 
+        (norm (r s *\<^sub>C s))\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
+    by (simp add: power_mult_distrib)    
+  also have \<open>\<dots> = 
+        (norm (r s *\<^sub>C s + (\<Sum>a\<in>t'. r a *\<^sub>C a)))\<^sup>2\<close>
+    sorry
+  also have \<open>\<dots> = (norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2\<close>
+    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto    
+  also have \<open>\<dots> = (norm z)\<^sup>2\<close>
+    by (simp add: Suc.prems(3))    
+  finally have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = (norm z)\<^sup>2\<close>
+    by simp    
+  thus ?case by auto
+qed
+
+*)
+
 (*
 proof-
   have \<open>card t = n \<Longrightarrow> finite t \<Longrightarrow> (\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
