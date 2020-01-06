@@ -378,6 +378,24 @@ proof -
   finally show ?thesis by auto
 qed
 
+lemma infsetsum_subset_real:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes "f abs_summable_on B" and "A \<subseteq> B" and "\<And>x. x\<notin>A \<Longrightarrow> f x \<ge> 0"
+  shows "infsetsum f A \<le> infsetsum f B"
+proof -
+  have fBA: "f abs_summable_on B - A"
+    by (meson Diff_subset abs_summable_on_subset assms(1))
+
+  have "0 = infsetsum (\<lambda>_.0) (B-A)" by auto
+  also have "... \<le> infsetsum f (B - A)"
+    apply (rule infsetsum_mono)
+    using assms fBA by auto
+  also have "... = infsetsum f B - infsetsum f A"
+    apply (rule infsetsum_Diff)
+    using assms by auto
+  finally show ?thesis by auto
+qed
+
 lemma abs_summable_product:
   fixes x :: "'a \<Rightarrow> 'b::{real_normed_div_algebra,banach,second_countable_topology}"
   assumes x2_sum: "(\<lambda>i. (x i) * (x i)) abs_summable_on A"
