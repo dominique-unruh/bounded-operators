@@ -3441,9 +3441,9 @@ via the canonical isomorphism between a one-dimensional vector space and
 \<^typ>\<open>complex\<close>.\<close>
 class one_dim = basis_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
-  (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
-  (* Jose: It produce errors *)
-  (* TODO: but they were all easily fixable by proving one_dim_prod below (you can remove this TODO) *)
+    (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
+    (* Jose: It produce errors *)
+    (* TODO: but they were all easily fixable by proving one_dim_prod below (you can remove this TODO) *)
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
 begin
 
@@ -3453,9 +3453,9 @@ definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
 end
 
 lemma span_explicit_finite:
-\<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
-for A::\<open>'a::complex_vector set\<close>
-  proof
+  \<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
+  for A::\<open>'a::complex_vector set\<close>
+proof
   show "{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} \<subseteq> {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}"
     if "finite A"
   proof
@@ -4240,7 +4240,7 @@ lemma one_dim_prod: "(\<psi>::_::one_dim) * \<phi> = (\<langle>1, \<psi>\<rangle
   by (simp add: one_dim_prod_scale1)
 
 instance one_dim \<subseteq> complex_algebra_1
-  proof
+proof
   show "(a * b) * c = a * (b * c)"
     for a :: 'a
       and b :: 'a
@@ -4282,7 +4282,7 @@ instance one_dim \<subseteq> complex_algebra_1
   qed
   show "(a::'a) * 1 = a"
     for a :: 'a
-        apply (simp add: one_dim_prod)
+    apply (simp add: one_dim_prod)
     by (simp add: one_dim_1_times_1 one_dim_1_times_a_eq_a)
   show "(0::'a) \<noteq> 1"
   proof-
@@ -4306,13 +4306,13 @@ context one_dim begin
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
   by (simp add: of_complex_def one_dim_1_times_a_eq_a one_dim_class.one_dim_to_complex_def)
-  
+
 lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
   using of_complex_eq_iff one_dim_to_complex_inverse by blast
-  
+
 lemma bounded_clinear_one_dim_to_complex: "bounded_clinear one_dim_to_complex"
   by (smt Adj_D Adj_I Adj_I' Adj_bounded_clinear bounded_clinear_of_complex complex_inner_1_left of_complex_1 one_dim_class.one_dim_to_complex_def)
-  
+
 end
 
 setup \<open>Sign.add_const_constraint
@@ -4743,16 +4743,72 @@ instance
   by simp
 end
 
-
 lemma Pythagorean_generalized:
-\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
+  \<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
  \<Longrightarrow> (norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
-proof(induction "card t")
-case 0
-  thus ?case sorry
-next
-  case (Suc x)
-  thus ?case sorry
+proof-
+  { have  \<open>\<And> t. card t = n \<Longrightarrow> (\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
+ \<Longrightarrow> finite t 
+ \<Longrightarrow> (norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
+      for n
+    proof(induction n)
+      case 0
+      fix t::\<open>'a set\<close>
+      show ?case
+        using "0.prems"(1) "0.prems"(3) by auto 
+    next
+      case (Suc n)
+      have \<open>\<exists> \<alpha> t'. t = insert \<alpha> t' \<and> \<alpha> \<notin> t'\<close>
+        using Suc.prems(1) card_eq_SucD by blast
+      then obtain \<alpha> t' where \<open>t = insert \<alpha> t'\<close> and \<open>\<alpha> \<notin> t'\<close>
+        by blast
+      have \<open>card t' = n\<close>
+        using Suc.prems(1) Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> by auto
+      have \<open>(norm  (\<Sum>a\<in>t. a))^2 = (norm  ((\<Sum>a\<in>t'. a) + \<alpha>))^2\<close>
+      proof-
+        have \<open>(\<Sum>a\<in>t. a) = (\<Sum>a\<in>t'. a) + \<alpha>\<close>
+          using Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> by auto
+        thus ?thesis
+          by simp 
+      qed
+      also have \<open>\<dots> = (norm (\<Sum>a\<in>t'. a))^2 + (norm \<alpha>)^2\<close>
+      proof-
+        have \<open>\<langle>(\<Sum>a\<in>t'. a), \<alpha>\<rangle> = 0\<close>
+        proof - (* sledgehammer *)
+          obtain bb :: "'b set \<Rightarrow> ('b \<Rightarrow> complex) \<Rightarrow> 'b" where
+            f1: "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 v2 \<noteq> 0) = (bb x0 x1 \<in> x0 \<and> x1 (bb x0 x1) \<noteq> 0)"
+            by moura
+          have "bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>) \<notin> t' \<or> \<langle>bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>), \<alpha>\<rangle> = 0"
+            by (metis Set.set_insert Suc.prems(2) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> insertI1 insert_commute)
+          then have "(\<Sum>b\<in>t'. \<langle>b, \<alpha>\<rangle>) = 0"
+            using f1 by (meson sum_not_0)
+          then show ?thesis
+            by (simp add: cinner_sum_left)
+        qed   
+        thus ?thesis
+          by (simp add: PythagoreanId) 
+      qed
+      also have \<open>\<dots> = (\<Sum>a\<in>t'.(norm a)^2) + (norm \<alpha>)^2\<close>
+      proof-
+        have \<open>\<And> a a'. a \<in> t' \<Longrightarrow> a' \<in> t' \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+          by (simp add: Suc.prems(2) \<open>t = insert \<alpha> t'\<close>)      
+        moreover have \<open>finite t'\<close>
+          using Suc.prems(3) \<open>t = insert \<alpha> t'\<close> by auto      
+        ultimately have \<open>(norm (\<Sum>a\<in>t'. a))^2 = (\<Sum>a\<in>t'.(norm a)^2)\<close>
+          using Suc.IH \<open>card t' = n\<close> by blast      
+        thus ?thesis by simp
+      qed
+      also have \<open>\<dots> = (\<Sum>a\<in>t.(norm a)^2)\<close>
+        using Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> by auto
+      finally show \<open>(norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
+        by blast
+    qed
+  } note 1 = this
+  assume \<open>\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+    and \<open>finite t\<close>
+  thus ?thesis 
+    using 1[where n1 = "card t"]
+    by blast
 qed
 
 corollary Pythagorean_generalized_scalar:
@@ -4909,215 +4965,8 @@ proof-
   qed
 qed
 
-(*
-proof(induction "card t" arbitrary: r)
-  case 0
-  have \<open>t = {}\<close>
-    using "0.hyps" "0.prems"(2) by auto    
-  moreover have \<open>(norm (\<Sum>a\<in>{}. r a *\<^sub>C a))^2 = (\<Sum>a\<in>{}. norm (r a)^2 * (norm a)^2)\<close>
-  proof-
-    have \<open>(\<Sum>a\<in>{}. r a *\<^sub>C a) = 0\<close>
-      by simp
-    moreover have \<open>(\<Sum>a\<in>{}. norm (r a)^2 * (norm a)^2) = 0\<close>
-      by simp
-    ultimately show ?thesis by simp
-  qed
-  ultimately show ?case by blast
-next
-  case (Suc x)
-  have \<open>\<exists> s t'. t = insert s t' \<and> s \<notin> t'\<close>
-    by (metis Suc.hyps(2) card_eq_SucD)
-  then obtain s t' where \<open>t = insert s t'\<close> and \<open>s \<notin> t'\<close>
-    by blast
-  have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = 
-        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 
-      + (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto
-  also have \<open>\<dots> = 
-        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
-  proof-
-    have \<open>(norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2 = (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      sorry
-    thus ?thesis by simp
-  qed
-  also have \<open>\<dots> = 
-        (norm (r s *\<^sub>C s))\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
-    by (simp add: power_mult_distrib)    
-  also have \<open>\<dots> = 
-        (norm (r s *\<^sub>C s + (\<Sum>a\<in>t'. r a *\<^sub>C a)))\<^sup>2\<close>
-    sorry
-  also have \<open>\<dots> = (norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2\<close>
-    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto    
-  finally show ?case sorry
-qed
-*)
-
-(*
-(* TODO: proof by induction *)
-lemma Pythagorean_generalized:
-\<open>(\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow> finite t 
-\<Longrightarrow> z = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow> (norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
-proof(induction "card t" arbitrary: z r)
-  case 0
-  hence \<open>t = {}\<close>
-    by auto 
-  moreover have \<open>(norm z)\<^sup>2 = (\<Sum>a\<in>{}. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-  proof-
-    have \<open>z = (\<Sum>a\<in>{}. r a *\<^sub>C a)\<close>
-      using  \<open>t = {}\<close>
-      by (simp add: "0.prems"(3)) 
-    hence \<open>z = 0\<close>
-      by simp      
-    thus ?thesis
-      by simp 
-  qed
-  ultimately show ?case
-    by blast
-next
-  case (Suc x)
-  have \<open>\<exists> s t'. t = insert s t' \<and> s \<notin> t'\<close>
-    by (metis Suc.hyps(2) card_eq_SucD)
-  then obtain s t' where \<open>t = insert s t'\<close> and \<open>s \<notin> t'\<close>
-    by blast
-  have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = 
-        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 
-      + (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto
-  also have \<open>\<dots> = 
-        (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
-  proof-
-    have \<open>(norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2 = (\<Sum>a\<in>t'. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      sorry
-    thus ?thesis by simp
-  qed
-  also have \<open>\<dots> = 
-        (norm (r s *\<^sub>C s))\<^sup>2 + (norm (\<Sum>a\<in>t'. r a *\<^sub>C a))\<^sup>2\<close>
-    by (simp add: power_mult_distrib)    
-  also have \<open>\<dots> = 
-        (norm (r s *\<^sub>C s + (\<Sum>a\<in>t'. r a *\<^sub>C a)))\<^sup>2\<close>
-    sorry
-  also have \<open>\<dots> = (norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2\<close>
-    using Suc.prems(2) \<open>s \<notin> t'\<close> \<open>t = insert s t'\<close> by auto    
-  also have \<open>\<dots> = (norm z)\<^sup>2\<close>
-    by (simp add: Suc.prems(3))    
-  finally have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = (norm z)\<^sup>2\<close>
-    by simp    
-  thus ?case by auto
-qed
-
-*)
-
-(*
-proof-
-  have \<open>card t = n \<Longrightarrow> finite t \<Longrightarrow> (\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
- \<Longrightarrow> z = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow> (norm z)^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
-    for   n
-  proof (induction n)
-    case 0
-    have \<open>card t = 0 \<Longrightarrow> finite t \<Longrightarrow>
-       (\<forall>a a'. a \<in> t \<and> a' \<in> t \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<Longrightarrow>
-       z = (\<Sum>a\<in>t. r a *\<^sub>C a) \<Longrightarrow>
-       (norm z)\<^sup>2 = (\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      for t::\<open>'a set\<close> and z::'a and r
-    proof-
-      assume \<open>card t = 0\<close> and \<open>finite t\<close> and
-        \<open>\<forall>a a'. a \<in> t \<and> a' \<in> t \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
-        \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      have \<open>t = {}\<close>
-        using \<open>card t = 0\<close> \<open>finite t\<close>
-        by auto
-      have \<open>(norm z)\<^sup>2 = 0\<close>
-        using \<open>z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        by (simp add: \<open>t = {}\<close>)
-      moreover have \<open>(\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2) = 0\<close>
-        by (simp add: \<open>t = {}\<close>)
-      ultimately show ?thesis by simp
-    qed
-    thus ?case
-      by (simp add: \<open>\<And>z t r. \<lbrakk>card t = 0; finite t; \<forall>a a'. a \<in> t \<and> a' \<in> t \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0; z = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> (norm z)\<^sup>2 = (\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close> "0.prems"(1) assms(1) assms(2) assms(3)) 
-  next
-    case (Suc n)
-    have \<open>card T = Suc n \<Longrightarrow> finite T \<Longrightarrow>
-            \<forall>a a'. a \<in> T \<and> a' \<in> T \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0 \<Longrightarrow>
-            z = (\<Sum>a\<in>T. r a *\<^sub>C a) \<Longrightarrow>
-            (norm z)\<^sup>2 = (\<Sum>a\<in>T. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      for T::\<open>'a set\<close> and z r
-    proof-
-      assume \<open>card T = Suc n\<close> and \<open>finite T\<close> and
-        \<open>\<forall>a a'. a \<in> T \<and> a' \<in> T \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
-        \<open>z = (\<Sum>a\<in>T. r a *\<^sub>C a)\<close>
-      have \<open>\<exists> s S. T = insert s S \<and> s \<notin> S\<close>
-        using \<open>card T = Suc n\<close> card_eq_SucD by blast
-      then obtain s S where \<open>T = insert s S\<close> and \<open>s \<notin> S\<close>
-        by blast
-      have \<open>card S = n\<close>
-        using \<open>T = insert s S\<close> \<open>card T = Suc n\<close> \<open>finite T\<close> \<open>s \<notin> S\<close> 
-        by auto
-      have \<open>z = r s *\<^sub>C s + (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
-        using \<open>T = insert s S\<close> \<open>finite T\<close> \<open>s \<notin> S\<close> \<open>z = (\<Sum>a\<in>T. r a *\<^sub>C a)\<close> 
-        by auto
-      hence \<open>(norm z)^2 = norm (r s *\<^sub>C s + (\<Sum>a\<in>S. r a *\<^sub>C a))^2\<close>
-        by simp
-      also have \<open>\<dots> = (norm (r s *\<^sub>C s))^2 + (norm (\<Sum>a\<in>S. r a *\<^sub>C a))^2\<close>
-      proof-
-        have \<open>\<langle>r s *\<^sub>C s, (\<Sum>a\<in>S. r a *\<^sub>C a)\<rangle> = 0\<close>
-        proof-
-          have \<open>\<langle>r s *\<^sub>C s, (\<Sum>a\<in>S. r a *\<^sub>C a)\<rangle> = (cnj (r s)) * \<langle>s, (\<Sum>a\<in>S. r a *\<^sub>C a)\<rangle>\<close>
-            by simp
-          moreover have \<open>\<langle>s, (\<Sum>a\<in>S. r a *\<^sub>C a)\<rangle> = 0\<close>
-          proof-
-            have \<open>\<langle>s, (\<Sum>a\<in>S. r a *\<^sub>C a)\<rangle> = (\<Sum>a\<in>S. \<langle>s,  r a *\<^sub>C a\<rangle>)\<close>
-              using cinner_sum_right by blast
-            also have \<open>\<dots> = (\<Sum>a\<in>S. r a * \<langle>s, a\<rangle>)\<close>
-              by auto
-            also have \<open>\<dots> = 0\<close>
-            proof-
-              have \<open>a \<in> S \<Longrightarrow> \<langle>s, a\<rangle> = 0\<close>
-                for a
-              proof-
-                assume \<open>a \<in> S\<close>
-                hence \<open>s \<noteq> a\<close>
-                  using \<open>s \<notin> S\<close> by blast
-                thus ?thesis
-                  by (simp add: \<open>T = insert s S\<close> \<open>\<forall>a a'. a \<in> T \<and> a' \<in> T \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a \<in> S\<close>) 
-              qed
-              thus ?thesis
-                by simp 
-            qed
-            finally show ?thesis by blast
-          qed
-          ultimately show ?thesis by simp
-        qed
-        thus ?thesis
-          using PythagoreanId by blast 
-      qed
-      also have \<open>\<dots> = (norm (r s *\<^sub>C s))^2 + (\<Sum>a\<in>S. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      proof-
-        have \<open>finite S\<close>
-          using \<open>T = insert s S\<close> \<open>finite T\<close> by auto        
-        moreover have \<open>\<forall>a a'. a \<in> S \<and> a' \<in> S \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-          by (simp add: \<open>T = insert s S\<close> \<open>\<forall>a a'. a \<in> T \<and> a' \<in> T \<and> a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>)
-        ultimately have \<open>(norm (\<Sum>a\<in>S. r a *\<^sub>C a))^2 = (\<Sum>a\<in>S. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-          using \<open>card S = n\<close> Suc.IH sorry
-        thus ?thesis by simp
-      qed
-      also have \<open>\<dots> = (cmod (r s))\<^sup>2 * (norm s)\<^sup>2 + (\<Sum>a\<in>S. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-        using power_mult_distrib by auto
-      also have \<open>\<dots> = (\<Sum>a\<in>T. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-        using \<open>T = insert s S\<close> \<open>finite T\<close> \<open>s \<notin> S\<close> by auto
-      finally show ?thesis by blast
-    qed
-    thus ?case sorry
-  qed
-  thus ?thesis
-    using assms
-    by force
-qed
-
-*)
-
 lemma projection_zero_subspace:
-\<open>projection {0::'a::chilbert_space} = (\<lambda> _. 0)\<close>
+  \<open>projection {0::'a::chilbert_space} = (\<lambda> _. 0)\<close>
 proof-
   have \<open>closed_subspace {0::'a::chilbert_space}\<close>
     by simp
@@ -5186,17 +5035,15 @@ proof-
   thus ?thesis by simp
 qed
 
-
 lemma linear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
   apply transfer by simp
-
 
 lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
   apply transfer
   by (metis complex_scaleC_def complex_to_one_dim_inverse of_complex_mult one_dim_to_complex_inverse scaleC_conv_of_complex)
     (* > 1s *)
-  
+
 lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
   apply transfer
   by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
