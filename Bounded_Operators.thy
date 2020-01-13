@@ -2488,9 +2488,11 @@ proof -
     using a1 by (metis (full_types) kernel_scalar_times)
 qed
 
+(* TODO: remove (is duplicate) *)
 lemma isProjector_Proj[simp]: "isProjector (Proj S)"
   by simp
 
+(* TODO: remove (is duplicate) *)
 lemma proj_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
   for a::complex and \<psi>::"'a::chilbert_space"
