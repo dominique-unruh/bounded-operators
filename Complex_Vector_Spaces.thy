@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Complex Vector Spaces\<close>
 
 (*
 Authors: 
@@ -6,7 +6,6 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 *)
-
 
 theory Complex_Vector_Spaces
   imports 
@@ -44,6 +43,7 @@ class complex_vector = scaleC + ab_group_add +
     and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
     and scaleC_one[simp]: "1 *\<^sub>C x = x"
 
+(*
 (* TODO remove (nothing like that in Real_Vector_Spaces) *)
 (* Jose: I find errors when I remove it *)
 interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
@@ -52,9 +52,85 @@ interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a 
     apply (rule scaleC_add_left)
    apply (rule scaleC_scaleC)
   by (rule scaleC_one)
+*)
 
 subclass (in complex_vector) real_vector
   by (standard, simp_all add: scaleR_scaleC scaleC_add_right scaleC_add_left)
+
+class complex_algebra = complex_vector + ring +
+  assumes mult_scaleC_left [simp]: "scaleC a x * y = scaleC a (x * y)"
+    and mult_scaleC_right [simp]: "x * scaleC a y = scaleC a (x * y)"
+
+subclass (in complex_algebra) real_algebra
+  by (standard, simp_all add: scaleR_scaleC)
+
+class complex_algebra_1 = complex_algebra + ring_1
+
+subclass (in complex_algebra_1) real_algebra_1 ..
+
+class complex_div_algebra = complex_algebra_1 + division_ring
+
+subclass (in complex_div_algebra) real_div_algebra ..
+
+class complex_field = complex_div_algebra + field
+
+subclass (in complex_field) real_field ..
+
+instantiation complex :: scaleC
+begin
+definition complex_scaleC_def [simp]: "scaleC = (*)"
+instance 
+  apply intro_classes
+  apply (rule ext)
+  by (simp add: scaleR_conv_of_real)
+end
+
+instantiation complex :: complex_field
+begin
+instance
+  apply intro_classes
+  by (simp_all add: algebra_simps scaleR_scaleC)
+end
+
+subsection \<open>Bounded Linear and Bilinear Operators\<close>
+
+definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
+  "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+
+global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
+  rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+  defines dependent_raw_def: dependent = complex_vector.dependent
+    and representation_raw_def: representation = complex_vector.representation
+    and subspace_raw_def: subspace = complex_vector.subspace
+    and span_raw_def: span = complex_vector.span
+    and extend_basis_raw_def: extend_basis = complex_vector.extend_basis
+    and dim_raw_def: dim = complex_vector.dim
+  apply (simp add: scaleC_add_left scaleC_add_right vector_space_def)    
+  unfolding clinear_def
+  by auto
+
+hide_const (open)\<comment> \<open>locale constants\<close>
+  complex_vector.dependent
+  complex_vector.independent
+  complex_vector.representation
+  complex_vector.subspace
+  complex_vector.span
+  complex_vector.extend_basis
+  complex_vector.dim
+
+abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+
+global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+  rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+  defines construct_raw_def: construct = complex_vector.construct
+    apply unfold_locales
+  unfolding clinear_def
+  by auto
+
+hide_const (open)\<comment> \<open>locale constants\<close>
+  complex_vector.construct
 
 text \<open>Recover original theorem names\<close>
 
@@ -91,41 +167,6 @@ proof -
   thus ?thesis
     by simp
 qed
-
-class complex_algebra = complex_vector + ring +
-  assumes mult_scaleC_left [simp]: "scaleC a x * y = scaleC a (x * y)"
-    and mult_scaleC_right [simp]: "x * scaleC a y = scaleC a (x * y)"
-
-subclass (in complex_algebra) real_algebra
-  by (standard, simp_all add: scaleR_scaleC)
-
-class complex_algebra_1 = complex_algebra + ring_1
-
-subclass (in complex_algebra_1) real_algebra_1 ..
-
-class complex_div_algebra = complex_algebra_1 + division_ring
-
-subclass (in complex_div_algebra) real_div_algebra ..
-
-class complex_field = complex_div_algebra + field
-
-subclass (in complex_field) real_field ..
-
-instantiation complex :: scaleC
-begin
-definition complex_scaleC_def [simp]: "scaleC = (*)"
-instance 
-  apply intro_classes
-  apply (rule ext)
-  by (simp add: scaleR_conv_of_real)
-end
-
-instantiation complex :: complex_field
-begin
-instance
-  apply intro_classes
-  by (simp_all add: algebra_simps scaleR_scaleC)
-end
 
 interpretation scaleC_left: additive "(\<lambda>a. scaleC a x :: 'a::complex_vector)"
   by standard (rule scaleC_add_left)
@@ -318,6 +359,7 @@ lemma scaleC_times [simp]:
 
 instance complex_field < field_char_0 ..
 
+
 subsection \<open>The Set of Complex Numbers\<close>
 
 definition Complexs :: "'a::complex_algebra_1 set"  ("\<complex>")
@@ -441,7 +483,6 @@ qed simp_all
 lemma Complexs_induct [case_names of_complex, induct set: Complexs]:
   "q \<in> \<complex> \<Longrightarrow> (\<And>r. P (of_complex r)) \<Longrightarrow> P q"
   by (rule Complexs_cases) auto
-
 
 subsection \<open>Ordered complex vector spaces\<close>
 
@@ -656,7 +697,6 @@ lemma norm_of_complex_diff [simp]:
   "norm (of_complex b - of_complex a :: 'a::complex_normed_algebra_1) \<le> cmod (b - a)"
   by (metis norm_of_complex of_complex_diff order_refl)
 
-
 subsection \<open>Class instances for complex numbers\<close>
 
 instantiation complex :: complex_normed_field
@@ -687,10 +727,6 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   for x :: complex
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
 
-subsection \<open>Bounded Linear and Bilinear Operators\<close>
-
-definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
-  "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
 
 lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
   unfolding clinear_def  linear_def
@@ -710,42 +746,6 @@ proof
 
 qed
 
-
-global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
-  rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
-    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-  defines dependent_raw_def: dependent = complex_vector.dependent
-    and representation_raw_def: representation = complex_vector.representation
-    and subspace_raw_def: subspace = complex_vector.subspace
-    and span_raw_def: span = complex_vector.span
-    and extend_basis_raw_def: extend_basis = complex_vector.extend_basis
-    and dim_raw_def: dim = complex_vector.dim
-    apply (simp add: complex_vector.vector_space_axioms)
-  unfolding clinear_def
-  by auto
-
-
-hide_const (open)\<comment> \<open>locale constants\<close>
-  complex_vector.dependent
-  complex_vector.independent
-  complex_vector.representation
-  complex_vector.subspace
-  complex_vector.span
-  complex_vector.extend_basis
-  complex_vector.dim
-
-abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
-
-global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
-  rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
-    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-  defines construct_raw_def: construct = complex_vector.construct
-    apply unfold_locales
-  unfolding clinear_def
-  by auto
-
-hide_const (open)\<comment> \<open>locale constants\<close>
-  complex_vector.construct
 
 lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
   unfolding clinear_def
@@ -1917,7 +1917,7 @@ proof-
       using closure_sequential by blast
     have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
       using \<open>\<forall>n. xx n \<in> A\<close> assms complex_vector.subspace_def
-      by (simp add: complex_vector.subspace_def subspace_raw_def)
+      by (simp add: complex_vector.subspace_def)
     have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
       using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
     hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
@@ -1928,8 +1928,8 @@ proof-
   moreover have "0 \<in> (closure A)"
     using assms closure_subset complex_vector.subspace_def
     by (metis in_mono)    
-  ultimately show ?thesis 
-    by (simp add: complex_vector.subspace_def subspace_raw_def) 
+  ultimately show ?thesis
+    by (simp add: complex_vector.subspaceI) 
 qed
 
 
@@ -1950,10 +1950,10 @@ proof-
       by (simp add: \<open>x = xA + xB\<close> \<open>y = yA + yB\<close>)
     moreover have \<open>xA + yA \<in> A\<close> 
       using \<open>xA \<in> A\<close> \<open>yA \<in> A\<close> assms(1) 
-      by (simp add: complex_vector.subspace_def subspace_raw_def)
+      by (smt complex_vector.subspace_add) 
     moreover have \<open>xB + yB \<in> B\<close>
       using \<open>xB \<in> B\<close> \<open>yB \<in> B\<close> assms(2)
-      by (simp add: complex_vector.subspace_def subspace_raw_def) 
+       by (smt complex_vector.subspace_add)
     ultimately show ?thesis
       using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
   qed
@@ -1966,17 +1966,17 @@ proof-
       by (simp add: \<open>x = xA + xB\<close> scaleC_add_right)
     moreover have \<open>c *\<^sub>C xA \<in> A\<close>
       using \<open>xA \<in> A\<close> assms(1) 
-      by (simp add: complex_vector.subspace_def subspace_raw_def)
+      by (smt complex_vector.subspace_scale) 
     moreover have \<open>c *\<^sub>C xB \<in> B\<close>
       using \<open>xB \<in> B\<close> assms(2)
-      by (simp add: complex_vector.subspace_def subspace_raw_def)
+      by (smt complex_vector.subspace_scale)
     ultimately show ?thesis
       using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
   qed
   moreover have  "0 \<in> C"
     using  \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0  mem_Collect_eq
-      subspace_raw_def add.right_inverse
-    by (metis (mono_tags, lifting) complex_vector.subspace_0)
+       add.right_inverse
+    by (metis (mono_tags, lifting) complex_vector.subspace_0)    
   ultimately show ?thesis
     unfolding C_def complex_vector.subspace_def
     by (smt mem_Collect_eq set_plus_elim set_plus_intro)    
@@ -1988,7 +1988,7 @@ lemma subspace_0[simp]:
 proof-
   have \<open>complex_vector.subspace {0}\<close>
     using add.right_neutral complex_vector.subspace_def scaleC_right.zero
-    by (simp add: subspace_raw_def)
+    by blast    
   moreover have "closed ({0} :: 'a set)"
     by simp 
   ultimately show ?thesis 
@@ -2130,7 +2130,6 @@ proof-
     hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
       using assms(2) complex_vector.subspace_def scaleC_one
       by (metis closed_subspace.subspace) 
-
     hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
       using assms(1) by auto
     thus ?thesis
@@ -2332,13 +2331,12 @@ lemma equal_span_0:
 
 instantiation linear_space :: ("{complex_vector,topological_space}") "order"
 begin
-(* TODO: add [code del] *)
-(* Jose: I do not know where to put  [code del] *)
 lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is  \<open>(\<subseteq>)\<close>.
-(* TODO: add [code del] *)
+declare less_eq_linear_space_def[code del]
 lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.
+declare less_linear_space_def[code del]
 instance
 proof
   show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
@@ -2574,12 +2572,13 @@ lemma bilinear_Kronecker_delta:
 proof-
   define f where \<open>f x = (if x = v then (1::complex) else 0)\<close> for x
   have \<open>\<exists>g. clinear g \<and> (\<forall>x\<in>B. g x = f x)\<close>
-    using \<open>complex_independent B\<close> complex_vector.linear_independent_extend by blast
+    using \<open>complex_vector.independent B\<close> complex_vector.linear_independent_extend
+    by (simp add: complex_vector.linear_independent_extend Complex_Vector_Spaces.dependent_raw_def) 
   then obtain g where \<open>clinear g\<close> and \<open>\<forall>x\<in>B. g x = f x\<close>
     by blast
   define f' where \<open>f' x = (if x = u then (1::complex) else 0)\<close> for x
   hence \<open>\<exists>g'. clinear g' \<and> (\<forall>x\<in>A. g' x = f' x)\<close>
-    by (simp add: \<open>complex_independent A\<close> complex_vector.linear_independent_extend)
+    by (simp add: Complex_Vector_Spaces.dependent_raw_def assms(1) complex_vector.linear_independent_extend)    
   then obtain g' where \<open>clinear g'\<close> and \<open>\<forall>x\<in>A. g' x = f' x\<close>
     by blast
   define h where \<open>h x y = (g' x)*(g y)\<close> for x y
@@ -2709,6 +2708,118 @@ lemma linear_space_leI:
   shows "A \<le> B"
   using assms apply transfer by auto
 
+(* TODO: remove (we have finite_sum_tendsto_NEW below instead) *)
+lemma finite_sum_tendsto':
+ \<open>\<forall> A::('a::cbanach) set. (\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a) \<and> finite A \<and> card A = n \<longrightarrow> 
+((\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a))\<close>
+proof(induction n)
+  case 0
+  thus ?case
+    by fastforce 
+next
+  case (Suc n)
+  have \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a \<Longrightarrow> finite A \<Longrightarrow> card A = Suc n \<Longrightarrow> 
+(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+    for A::\<open>'a::cbanach set\<close>
+  proof-
+    assume \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close> and \<open>card A = Suc n\<close>
+    obtain x A' where \<open>A = insert x A'\<close> and \<open>x \<notin> A'\<close>
+    proof -
+      assume a1: "\<And>x A'. \<lbrakk>A = insert x A'; x \<notin> A'\<rbrakk> \<Longrightarrow> thesis"
+      have "Suc n \<le> Suc n"
+        by (metis inf.orderI inf_idem)
+      then have "Suc n \<le> card A"
+        by (metis \<open>card A = Suc n\<close>)
+      then show ?thesis
+        using a1 by (meson card_le_Suc_iff)
+    qed
+    have \<open>\<forall> a \<in> A'. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
+      by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)      
+    moreover have  \<open>finite A'\<close>
+      using \<open>A = insert x A'\<close> \<open>finite A\<close> 
+      by auto
+    moreover have \<open>card A' = n\<close>
+      using \<open>A = insert x A'\<close> \<open>card A = Suc n\<close> \<open>x \<notin> A'\<close> calculation(2) 
+      by auto      
+    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: Suc.IH)
+    moreover have \<open>(\<lambda> n. r n x *\<^sub>C x) \<longlonglongrightarrow> \<phi> x *\<^sub>C x\<close>
+    proof-
+      have \<open>(\<lambda> n. r n x) \<longlonglongrightarrow> \<phi> x\<close>
+        by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)
+      moreover have \<open>isCont (\<lambda> t. t *\<^sub>C x)  (\<phi> x)\<close>
+        by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)        
+      ultimately have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) \<longlonglongrightarrow> (\<lambda> t. t *\<^sub>C x) (\<phi> x)\<close>
+        using Elementary_Topology.continuous_at_sequentially[where f = "(\<lambda> t. t *\<^sub>C x)" and a = "\<phi> x"]
+        by auto
+      moreover have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) =  (\<lambda> n. (\<lambda> t. t *\<^sub>C x) (r n x))\<close>
+        by auto
+      ultimately show ?thesis by auto
+    qed
+    ultimately have \<open>(\<lambda> n. r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: tendsto_add)
+    moreover have \<open>(\<Sum>a\<in>A. r n a *\<^sub>C a) = r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)\<close>
+      for n
+      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
+    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by auto
+    moreover have \<open>(\<Sum>a\<in>A. \<phi> a *\<^sub>C a) = \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
+      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
+    ultimately show ?thesis by auto
+  qed
+  thus ?case 
+    by blast
+qed
 
+(* lemma finite_sum_tendsto:
+  fixes A::\<open>('a::cbanach) set\<close>
+  assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
+  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
+  using finite_sum_tendsto' assms by blast *)
+
+(* TODO: José, please compare this with your proof of finite_sum_tendsto
+   to see how inductions over finite sets are easier to do than by 
+   induction over the cardinality. 
+
+   TODO: Replace finite_sum_tendsto by this.
+
+Jose: It is not possible to deduce finite_sum_tendsto from finite_sum_tendsto_NEW in 
+an via sledgehammer. Hence, finite_sum_tendsto and finite_sum_tendsto_NEW are not
+pre-equivalent.
+
+I define two theorems A and B to be pre-equivalent if and only if
+theorem A can be obtained from theorem B using sledgehammer and 
+theorem B can be obtained from theorem A using sledgehammer.
+
+Notice that this is not an equivalent relation, because transitivity may fail.
+
+*)
+
+lemma finite_sum_tendsto_NEW:
+  fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
+  assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
+  assumes \<open>finite A\<close>
+  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
+  apply (insert assms(1)) using \<open>finite A\<close>
+proof induction
+  case empty
+  show ?case 
+    by auto
+next
+  case (insert x F)
+  then have "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
+    by auto
+  then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
+    using tendsto_add by blast
+  then show ?case 
+    using sum.insert insert by auto
+qed
+
+lemma (in bounded_cbilinear) tendsto:
+  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. f x ** g x) \<longlongrightarrow> a ** b) F"
+  by (rule tendsto)
+
+lemmas tendsto_scaleC [tendsto_intros] =
+  bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
 end

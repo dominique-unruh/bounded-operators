@@ -1,26 +1,14 @@
 section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing facts\<close>
 
 theory General_Results_Missing
-  imports Complex_Main "HOL-Analysis.Infinite_Set_Sum"
+  imports Complex_Main Complex_Inner_Product "HOL-Analysis.Infinite_Set_Sum"
     "HOL-ex.Sketch_and_Explore" HOL.Groups
 begin
 
-(* TODO: remove (never used) *)
-lemma bij_inj:
-  assumes \<open>f \<circ> f = id\<close>
-  shows \<open>inj f\<close>
-proof(rule injI)
-  fix x y
-  assume \<open>f x = f y\<close>
-  hence \<open>f (f x) = f (f y)\<close>
-    by simp
-  hence \<open>(f \<circ> f) x = (f \<circ> f) y\<close>
-    by simp
-  thus \<open>x = y\<close>
-    by (simp add: assms)
-qed
 
 (* TODO: Never used in Bounded Operators. Move to tensor product. *)
+(* Jose: I do not know how to move information from one library to another *)
+(* TODO: Should be possible now because you have both libraries in GitHub Desktop now *)
 lemma big_sum_reordering_fst:
   fixes  S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close>
@@ -129,180 +117,6 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* TODO remove. Use (f^^n) c instead of f c n *)
-fun iteration::\<open>nat \<Rightarrow> 'a \<Rightarrow> ('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close> where
-  \<open>iteration 0 c f = c\<close> |
-  \<open>iteration (Suc n) c  f = f (iteration n c f)\<close>
-
-(* TODO: remove (never used) *)
-lemma decreasing_sequence_nat:
-  fixes f :: \<open>nat \<Rightarrow> nat\<close>
-  assumes \<open>\<And> n. f (Suc n) < f n\<close>
-  shows False
-proof-
-  have \<open>f n \<le> f 0 - n\<close>
-    for n
-  proof(induction n)
-    case 0
-    thus ?case
-      by simp 
-  next
-    case (Suc n)
-    thus ?case
-      by (metis (no_types, lifting) Suc_diff_le assms diff_Suc_Suc diff_is_0_eq leD le_less_trans nat_le_linear not_less_eq_eq) 
-  qed
-  hence \<open>f (f 0) \<le> 0\<close>
-    by (metis diff_self_eq_0)
-  moreover have \<open>f (Suc (f 0)) < f (f 0)\<close>
-    by (simp add: assms)
-  ultimately have \<open>f (Suc (f 0)) < 0\<close>
-    by simp
-  thus ?thesis by blast
-qed
-
-(* TODO remove (never used) *)
-lemma pigeonhole_pair:
-  assumes \<open>card (fst ` S) < card (snd ` S)\<close> and \<open>finite S\<close>
-  shows \<open>\<exists> u v w. (u, v) \<in> S \<and> (u, w) \<in> S \<and> v \<noteq> w\<close>
-proof-
-  have \<open>\<forall>v. \<exists>u.  v\<in>snd ` S \<longrightarrow> u\<in>fst ` S \<and> (u,v) \<in> S\<close>
-    using image_iff by fastforce
-  hence \<open>\<exists>f. \<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S \<and> (f v,v) \<in> S\<close>
-    by metis
-  then obtain f where \<open>\<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S \<and> (f v,v) \<in> S\<close>
-    by blast
-  hence \<open>\<forall>v.  v\<in>snd ` S \<longrightarrow> f v\<in>fst ` S\<close>
-    by blast
-  hence \<open>(f ` (snd ` S)) \<subseteq> (fst ` S)\<close>
-    by blast
-  hence \<open>card (f ` (snd ` S)) \<le> card (fst ` S)\<close>
-    by (simp add: assms(2) card_mono)
-  hence \<open>card (f ` (snd ` S)) < card (snd ` S)\<close>
-    using assms(1) dual_order.strict_trans2 by blast
-  hence \<open>\<not>(inj_on f (snd ` S))\<close>
-    using pigeonhole
-    by blast
-  hence \<open>\<exists> v \<in> (snd ` S). \<exists> w \<in> (snd ` S). f v = f w \<and> v \<noteq> w\<close>
-    unfolding inj_on_def by blast
-  then obtain v w where \<open>v \<in> (snd ` S)\<close> and \<open>w \<in> (snd ` S)\<close>
-    and \<open>f v = f w\<close> and \<open>v \<noteq> w\<close>
-    by blast
-  have \<open>f v\<in>fst ` S\<close> and \<open>(f v,v) \<in> S\<close>
-     apply (simp add: \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S\<close> \<open>v \<in> snd ` S\<close>)
-    by (simp add: \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S \<and> (f v, v) \<in> S\<close> \<open>v \<in> snd ` S\<close>)
-  have \<open>f w\<in>fst ` S\<close> and \<open>(f w,w) \<in> S\<close>
-    using \<open>f v = f w\<close> \<open>f v \<in> fst ` S\<close> apply auto[1]
-    using \<open>\<forall>v. v \<in> snd ` S \<longrightarrow> f v \<in> fst ` S \<and> (f v, v) \<in> S\<close> \<open>w \<in> snd ` S\<close> by blast
-  show ?thesis 
-    using \<open>(f v,v) \<in> S\<close>  \<open>(f w,w) \<in> S\<close>  \<open>f v = f w\<close> \<open>v \<noteq> w\<close>
-    by auto    
-qed
-
-(* TODO: Can be proven very easily with metis (see below). Probably remove. (Check whether
-  add_cancel_right_left works where this is used.)
- *)
-(* TODO: rename: additive_implies_zero *)
-lemma additive_imples_zero:
-  \<open>(\<And> p q. f (p + q) = f p + f q) \<Longrightarrow> f  (0::'a::ab_group_add) = (0::'b::ab_group_add)\<close>
-(* TODO: use this proof: by (metis add_cancel_right_left) *)
-proof-
-  assume \<open>\<And> p q. f (p + q) = f p + f q\<close>
-  hence \<open>f (0 + 0) = f 0 + f 0\<close>
-    by blast
-  moreover have \<open>f 0 = f (0 + 0)\<close>
-  proof-
-    have \<open>(0::'a::ab_group_add) = 0 + 0\<close>
-      by simp
-    thus ?thesis by simp
-  qed
-  ultimately show ?thesis
-    by (metis add_cancel_left_left) 
-qed
-
-(* TODO: remove (not used) *)
-lemma general_sum_from_addition_induction:
-  fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
-  assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
-  shows \<open>\<forall> S. card S = n \<and> finite S \<longrightarrow> f (\<Sum>a\<in>S.  a) = (\<Sum>a\<in>S. f a)\<close>
-proof (induction n)
-  show "\<forall>S. card S = 0 \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
-  proof-
-    have \<open>card S = 0 \<Longrightarrow> finite S \<Longrightarrow> f (\<Sum> S) = sum f S\<close>
-      for S
-    proof-
-      assume \<open>card S = 0\<close> and \<open>finite S\<close>
-      have \<open>S = {}\<close>
-        using \<open>card S = 0\<close> \<open>finite S\<close> by auto 
-      have \<open>sum f S = 0\<close>
-        by (simp add: \<open>S = {}\<close>)
-      moreover have \<open>f (\<Sum> S) = 0\<close>
-      proof-
-        have \<open>\<Sum> S = 0\<close>
-          by (simp add: \<open>S = {}\<close>)
-        moreover have \<open>f 0 = 0\<close>
-          using  \<open>\<And> p q. f (p + q) = f p + f q\<close> additive_imples_zero
-          by blast
-        ultimately show ?thesis by auto
-      qed
-      ultimately show \<open>f (\<Sum> S) = sum f S\<close>
-        by auto
-    qed
-    thus ?thesis by blast
-  qed
-  show "\<forall>S. card S = Suc n \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
-    if "\<forall>S. card S = n \<and> finite S \<longrightarrow> f (\<Sum> S) = sum f S"
-    for n :: nat
-    using that
-    by (smt assms card_eq_SucD finite_insert sum.insert) 
-qed
-
-(* TODO: remove (use additive.sum instead) *)
-lemma general_sum_from_addition:
-  fixes f :: \<open>'a::ab_group_add \<Rightarrow> 'b::ab_group_add\<close>
-  assumes \<open>\<And> p q. f (p + q) = f p + f q\<close>
-    and \<open>finite S\<close>
-  shows \<open>f (\<Sum>a\<in>S.  a) = (\<Sum>a\<in>S. f a)\<close>
-  using general_sum_from_addition_induction
-   assms(1) assms(2) by blast
-
-(* TODO: remove (use rec_nat instead) *)
-fun rec::\<open>'a \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a\<close> where
-  "rec x0 \<Phi> 0 = x0"
-| "rec x0 \<Phi> (Suc n) = \<Phi> n (rec x0 \<Phi> n)"
-
-(* TODO: remove (use sum_mono2 instead, followed by auto) *)
-(* TODO: also, the name is not good because there already is a "sum_mono" *)
-lemma sum_mono:
-  fixes a :: \<open>nat \<Rightarrow> real\<close>
-  assumes \<open>\<And> n. a n \<ge> 0\<close>
-  shows  \<open>p \<ge> 0 \<Longrightarrow> \<forall> n. sum a {0..n + p} \<ge> sum a {0..n}\<close>
-proof(induction p)
-  case 0
-  thus ?case
-    by simp 
-next
-  case (Suc p)
-  thus ?case
-    by (smt Suc_neq_Zero add_Suc_right assms le_SucE sum.atLeast0_atMost_Suc) 
-qed
-
-(* TODO remove (not used, I replaced its one use by sum_interval_split below) *)
-lemma sum_comp:
-  fixes a :: \<open>nat \<Rightarrow> real\<close>
-  (* TODO: assumption useless (nat's are always \<ge>0 *)
-  assumes \<open>p \<ge> 0\<close>
-  (*  TODO remove \<forall>n *)
-  shows  \<open>\<forall> n. sum a {Suc n..n + p} = sum a {0.. n + p} - sum a {0..n}\<close>
-proof(induction p)
-  case 0
-  thus ?case 
-    by simp
-next
-  case (Suc p)
-  thus ?case 
-    using add.commute add_nonneg_nonneg le_add1 le_add_same_cancel2 by auto
-qed
-
 
 lemma sum_interval_split: 
   fixes f :: "nat \<Rightarrow> 'a::ab_group_add" and a b :: nat
@@ -315,6 +129,53 @@ proof -
     unfolding c sum_up_index_split
     by auto 
 qed
+
+
+class not_singleton =
+  assumes not_singleton_card: "\<exists>x. \<exists>y. x \<noteq> y"
+
+subclass (in card2) not_singleton
+  apply standard using two_le_card
+  by (meson card_2_exists ex_card) 
+
+lemma not_singleton_existence[simp]:
+  \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
+proof (rule classical)
+  assume \<open>\<nexists>x. (x::'a) \<noteq> t\<close> 
+  have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+    using not_singleton_card
+    by blast
+  then obtain x y::'a where \<open>x \<noteq> y\<close>
+    by blast
+  have \<open>\<forall> x::'a. x = t\<close>
+    using \<open>\<nexists>x. (x::'a) \<noteq> t\<close> by simp
+  hence \<open>x = t\<close>
+    by blast
+  moreover have \<open>y = t\<close>
+    using \<open>\<forall> x::'a. x = t\<close>
+    by blast
+  ultimately have \<open>x = y\<close>
+    by simp
+  thus ?thesis using \<open>x \<noteq> y\<close> by blast
+qed
+
+lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
+  using not_singleton_existence[of x] by blast
+
+lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+  by (metis General_Results_Missing.UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
+ 
+lemma linear_space_bot_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+proof-
+  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+    using not_singleton_existence
+    by auto
+  thus ?thesis 
+    apply transfer
+    unfolding UNIV_def
+    by blast
+qed
+
 
 end
 

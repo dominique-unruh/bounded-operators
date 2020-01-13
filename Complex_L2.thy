@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Lebesgue space of square-summable functions\<close>
 
 (*
 Authors:
@@ -12,8 +12,6 @@ theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
     "HOL-ex.Sketch_and_Explore"
-    (* This theory allows to write "sketch -" to get a proof outline (click on the outline to insert).
-Or "sketch bla" for a proof outline starting with "proof bla" *)
 begin
 
 unbundle bounded_notation
@@ -92,6 +90,7 @@ typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
   (* derive universe vector *)
+  (* Jose: I do not understand *)
 
 lemma SUP_max:
   fixes f::"'a::order\<Rightarrow>'b::conditionally_complete_lattice"
@@ -110,6 +109,8 @@ lemma ell2_norm_L2_set:
   assumes "has_ell2_norm x"
   shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
     (* TODO: doesn't work in Isabelle2019. Probably best to be just redone in nice Isar style *)
+    (* Jose: What doesn't work precisely? *)
+    (* TODO: I don't know. You can remove this TODO *)
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
@@ -291,6 +292,7 @@ lift_definition ket :: "'a \<Rightarrow> 'a ell2" is "\<lambda>x y. if x=y then 
   apply (rule exI[of _ 1], rule allI, rule impI)
   by (rule ell2_1)
 
+
 lemma cSUP_eq_maximum:
   fixes z :: "_::conditionally_complete_lattice"
   assumes "\<exists>x\<in>X. f x = z"
@@ -326,7 +328,6 @@ instance apply intro_classes
    apply (transfer; rule ext; simp)
   by (transfer; rule ext; simp)
 end
-
 
 instantiation ell2 :: (type)complex_normed_vector begin
 lift_definition norm_ell2 :: "'a ell2 \<Rightarrow> real" is ell2_norm .
@@ -508,8 +509,6 @@ proof -
     using \<open>Cauchy X\<close> unfolding Cauchy_def
     by (meson le_less_trans) 
 qed
-
-
 
 lemma ellnorm_as_sup_set: 
   fixes f :: \<open>'a \<Rightarrow> complex\<close>
@@ -1846,6 +1845,76 @@ proof-
   qed
 qed
 
+
+lemma ell2_norm_explicit_finite_support:
+  assumes  \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
+  shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+proof-
+  have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<le> (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
+  proof-
+    have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<in>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using \<open>finite S\<close>
+      by simp
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using Rep_ell2 unfolding has_ell2_norm_def
+      by auto
+    ultimately show ?thesis using cSup_upper by simp
+  qed
+  moreover have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+  proof-
+    have \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<Longrightarrow> t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      for t
+    proof-
+      assume \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      hence \<open>\<exists> R \<in> (Collect finite). t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> 
+        by blast
+      then obtain R where \<open>R \<in> (Collect finite)\<close> and \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close>
+        by blast
+      from \<open>R \<in> (Collect finite)\<close>
+      have \<open>finite R\<close>
+        by blast
+      have \<open>R = (R - S) \<union> (R \<inter> S)\<close>
+        by (simp add: Un_Diff_Int)
+      moreover have \<open>(R - S) \<inter> (R \<inter> S) = {}\<close>
+        by auto
+      ultimately have  \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S)
+         + (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        using \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> and \<open>finite R\<close>
+        by (smt sum.Int_Diff)
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S) = 0\<close>
+      proof-
+        have \<open>r \<in> R - S \<Longrightarrow> (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) r = 0\<close>
+          for r
+          by (simp add: assms(2))        
+        thus ?thesis
+          by simp 
+      qed
+      ultimately have \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        by simp
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      proof-
+        have \<open>R \<inter> S \<subseteq> S\<close>
+          by simp        
+        moreover have \<open>(\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) i \<ge> 0\<close>
+          for i
+          by auto        
+        ultimately show ?thesis
+          by (simp add: assms(1) sum_mono2) 
+      qed
+      ultimately show \<open>t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close> by simp
+    qed
+    moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<noteq> {}\<close>
+      by auto      
+    ultimately show ?thesis
+      by (simp add: cSup_least) 
+  qed
+  ultimately have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+    by simp
+  thus ?thesis
+    by (metis ell2_norm_def norm_ell2.rep_eq) 
+qed
+
+
 lemma left_shift_ell2_clinear:
   \<open>clinear left_shift_ell2\<close>
   unfolding clinear_def
@@ -1914,28 +1983,378 @@ qed
 
 
 (* TODO move *)
+(* Jose: To move where? *)
+(* TODO move to General_Results_Missing *)
 context CARD_1 begin
 
-definition the_one :: 'a where "the_one = undefined"
+(* TODO: remove (can just use "undefined" instead) *)
+definition the_one :: 'a where "the_one = (SOME x. (x \<in> (UNIV::'a set)))"
 
-lemma everything_the_same: "(x::'a)=y"
+lemma everything_the_same[simp]: "(x::'a)=y"
   by (metis (full_types) UNIV_I card_1_singletonE empty_iff insert_iff local.CARD_1)
 
+(* TODO: remove *)
 lemma everything_the_one: "(x::'a)=the_one"
   by (rule everything_the_same)
 
-(* TODO rename \<rightarrow> CARD_1_UNIV *)
-lemma singleton_UNIV: "UNIV = {the_one::'a}"
+(* TODO: replace "the_one" by "a" (free variable) *)
+lemma CARD_1_UNIV: "UNIV = {the_one::'a}"
   by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
 
-(* TODO rename \<rightarrow> CARD_1_ext *)
-lemma singleton_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
+lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
   apply (rule ext) 
   apply (subst (asm) everything_the_same[where x=a])
   apply (subst (asm) everything_the_same[where x=b])
   by simp
 
 end
+
+lemma ket_distinct:
+  \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
+  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
+
+lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
+  is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
+proof transfer
+  show "has_ell2_norm (\<lambda>i. if (i::'a) \<in> S then x i else 0)"
+    if "has_ell2_norm (x::'a \<Rightarrow> complex)"
+    for S :: "'a set"
+      and x :: "'a \<Rightarrow> complex"
+  proof-
+    from \<open>has_ell2_norm (x::'a \<Rightarrow> complex)\<close>
+    have \<open>bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)\<close>
+      unfolding has_ell2_norm_def
+      by blast
+    hence \<open>\<exists> K. \<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
+      unfolding bdd_above_def
+      by blast
+    then obtain K where \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
+      by blast
+    have \<open>finite R \<Longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
+      for R
+    proof-
+      assume \<open>finite R\<close>
+      have \<open>(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2\<close>
+        for i                                 
+      proof (cases \<open>i \<in> S\<close>)
+        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
+          if "i \<in> S"
+          using that
+          by simp 
+        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
+          if "i \<notin> S"
+          using that
+          by auto 
+      qed    
+      hence \<open>(sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R)
+          \<le> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R)\<close>
+        by (simp add: ordered_comm_monoid_add_class.sum_mono)
+      thus ?thesis
+        using \<open>\<forall>R. finite R \<longrightarrow> (\<Sum>i\<in>R. (cmod (x i))\<^sup>2) \<le> K\<close> \<open>finite R\<close> by fastforce
+    qed
+    hence \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
+      by blast
+    hence \<open>\<forall> t \<in> {sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R}. t \<le> K\<close>
+      by blast      
+    moreover have \<open>{sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R }
+          = (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>  
+      by blast
+    ultimately have \<open>\<forall> t \<in> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite). t \<le> K\<close>
+      by auto     
+    hence \<open>bdd_above (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>
+      unfolding bdd_above_def 
+      by auto
+    thus ?thesis 
+      unfolding has_ell2_norm_def by blast
+  qed
+qed
+
+lemma truc_ell2_insert:
+  \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+proof-
+  assume \<open>k \<notin> R\<close>  
+  have \<open>(if i \<in> insert k R then Rep_ell2 w i else 0) =
+        (if i \<in> R then Rep_ell2 w i else 0)
+      + (if i = k then Rep_ell2 w i else 0)\<close>
+    for i
+  proof (cases \<open>i \<in> insert k R\<close>)
+    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+      if "i \<in> insert k R"
+      using that proof (cases \<open>i \<in> R\<close>)
+      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+        if "i \<in> insert k R"
+          and "i \<in> R"
+        using that \<open>k \<notin> R\<close> by auto 
+      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+        if "i \<in> insert k R"
+          and "i \<notin> R"
+        using that
+        by auto 
+    qed
+    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
+      if "i \<notin> insert k R"
+      using that
+      by simp 
+  qed
+  moreover have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) = (\<lambda> i. if i \<in> insert k R then Rep_ell2 w i else 0)\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  moreover have \<open>Rep_ell2 (trunc_ell2 R w) = (\<lambda> i. if i \<in> R then Rep_ell2 w i else 0)\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  moreover have \<open>Rep_ell2 ( (Rep_ell2 w k) *\<^sub>C (ket k) ) = (\<lambda> i. if i = k then Rep_ell2 w i else 0)\<close>
+  proof -
+    have "\<forall>a aa. a = k \<and> aa \<noteq> k \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> aa \<noteq> k \<or> a = k \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa"
+      by (simp add: ket.rep_eq scaleC_ell2.rep_eq)
+    thus ?thesis
+      by meson
+  qed
+  ultimately have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i = Rep_ell2 (trunc_ell2 R w) i + Rep_ell2 ((Rep_ell2 w k) *\<^sub>C (ket k)) i\<close>
+    for i
+    by (simp add: \<open>\<And>i. (if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)\<close> \<open>k \<notin> R\<close>)
+  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i =
+        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) ) i\<close>
+    for i
+    by (simp add: plus_ell2.rep_eq)
+  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) =
+        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) )\<close>
+    by blast
+  thus \<open>trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+    using Rep_ell2_inject
+    by blast
+qed
+
+
+lemma ell2_ortho:
+  assumes \<open>\<And> i. Rep_ell2 x i = 0 \<or> Rep_ell2 y i = 0\<close>
+  shows \<open>\<langle>x, y\<rangle> = 0\<close>
+  using assms apply transfer
+  by (simp add: infsetsum_all_0)
+
+lemma trunc_ell2_norm_diff:
+  \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
+proof-
+  have \<open>Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0\<close>
+    for i
+  proof (cases \<open>i \<in> S\<close>)
+    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
+      if "i \<in> S"
+      using that
+      by (simp add: minus_ell2.rep_eq trunc_ell2.rep_eq) 
+    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
+      if "i \<notin> S"
+      using that
+      by (simp add: trunc_ell2.rep_eq) 
+  qed
+  hence \<open>\<langle> (trunc_ell2 S x), (x - trunc_ell2 S x) \<rangle> = 0\<close>
+    using ell2_ortho by blast
+  hence \<open>(norm x)^2 = (norm (trunc_ell2 S x))^2 + (norm (x - trunc_ell2 S x))^2\<close>
+    using PythagoreanId by fastforce    
+  thus ?thesis by simp
+qed
+
+
+lemma trunc_ell2_norm_explicit:
+  \<open>finite S \<Longrightarrow> (norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+proof-
+  assume \<open>finite S\<close>
+  moreover have \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = 0\<close>
+    by (simp add: trunc_ell2.rep_eq)    
+  ultimately have \<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 ((trunc_ell2 S x)) i))\<^sup>2)) S)\<close>
+    using ell2_norm_explicit_finite_support
+    by blast 
+  moreover have \<open>\<And> i. i \<in> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = Rep_ell2 x i\<close>
+    by (simp add: trunc_ell2.rep_eq)
+  ultimately show ?thesis by simp
+qed
+
+lemma trunc_ell2_lim:
+  includes nsa_notation
+  shows \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+proof-
+  define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
+  have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
+    apply transfer unfolding ell2_norm_def by blast
+  hence \<open>(norm x)^2 = Sup (f ` Collect finite)\<close>
+    unfolding f_def
+    by (smt norm_not_less_zero real_sqrt_ge_0_iff real_sqrt_pow2) 
+  have \<open>Sup (f ` Collect finite) \<in> closure (f ` Collect finite)\<close>
+  proof (rule Borel_Space.closure_contains_Sup)
+    show "f ` Collect finite \<noteq> {}"
+      by blast      
+    show "bdd_above (f ` Collect finite)"
+    proof-
+      have \<open>has_ell2_norm (Rep_ell2 x)\<close>
+        using Rep_ell2 by blast
+      thus ?thesis unfolding has_ell2_norm_def f_def
+        by simp
+    qed
+  qed
+  hence \<open>(norm x)^2 \<in> closure (f ` Collect finite)\<close>
+    by (simp add: \<open>(norm x)\<^sup>2 = Sup (f ` Collect finite)\<close>)
+  hence \<open>\<exists> t\<in>*s* (f ` Collect finite). t \<approx> star_of ((norm x)^2)\<close>
+    using approx_sym nsclosure_I by blast
+  then obtain t where \<open>t\<in>*s* (f ` Collect finite)\<close> and \<open>t \<approx> star_of ((norm x)^2)\<close>
+    by blast
+  from \<open>t\<in>*s* (f ` Collect finite)\<close>
+  have \<open>\<exists> S \<in> (*s* (Collect finite)). t = (*f* f) S\<close>
+    by (simp add: image_iff)
+  then obtain S where \<open>S \<in> (*s* (Collect finite))\<close> and \<open>t = (*f* f) S\<close>
+    by blast
+  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = (*f* f) S\<close>
+  have \<open>(*f* f) S \<approx> star_of ((norm x)^2)\<close>
+    by simp
+  hence \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+    by simp    
+  have \<open>hypfinite S\<close>
+  proof-
+    have \<open>\<forall> S. S \<in> Collect finite \<longleftrightarrow> finite S\<close>
+      by blast
+    hence \<open>\<forall> S. S \<in>*s* (Collect finite) \<longleftrightarrow> hypfinite S\<close>
+      unfolding hypfinite_def
+      by StarDef.transfer
+    thus ?thesis
+      using \<open>S \<in> *s* Collect finite\<close> by blast 
+  qed
+  moreover have \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  proof-
+    have \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+    proof-
+      have \<open>\<forall> S. (norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
+        by (simp add: trunc_ell2_norm_diff)        
+      hence \<open>\<forall> S. (hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+        by StarDef.transfer
+      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+        by blast
+      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+      proof-
+        have \<open>\<forall> S. finite S \<longrightarrow> sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
+          using trunc_ell2_norm_explicit
+          by metis          
+        hence \<open>\<forall> S. finite S \<longrightarrow> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
+          using real_sqrt_eq_iff
+          by (smt norm_le_zero_iff norm_zero real_sqrt_unique)           
+        hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+          unfolding hypfinite_def
+          by StarDef.transfer
+        hence \<open>(*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+          using \<open>hypfinite S\<close> by blast
+        hence \<open>(*f* f) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+          unfolding f_def by blast
+        thus ?thesis using \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+          by (simp add: approx_reorient)          
+      qed
+      ultimately have \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
+        using approx_minus_iff by auto
+      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
+        by (simp add: mem_infmal_iff)       
+      hence \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+        using infinitesimal_square by blast        
+      thus ?thesis
+        by simp 
+    qed
+    thus ?thesis
+      by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff) 
+  qed
+  ultimately show ?thesis
+    by blast
+qed
+
+lemma trunc_ell2_complex_span_induct:
+  \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+proof (induction n)
+  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+  proof
+    show "finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+      for S :: "'a set"
+    proof
+      show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+        if "finite S \<and> card S = 0"
+        using that proof
+        show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+          if "finite S"
+            and "card S = 0"
+        proof-
+          have \<open>S = {}\<close>
+            using card_0_eq that(1) that(2) by blast
+          hence \<open>trunc_ell2 S x = 0\<close>
+            apply transfer
+            by simp
+          thus ?thesis
+            by (simp add: complex_vector.span_zero) 
+        qed
+      qed
+    qed
+  qed
+  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    for n :: nat
+  proof-
+    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+      for S
+    proof-
+      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
+      hence \<open>\<exists> R k. S = insert k R \<and> card R = n\<close>
+        by (meson card_Suc_eq)
+      then obtain R k where \<open>S = insert k R\<close> and \<open>card R = n\<close>
+        by blast
+      hence \<open>finite R\<close>
+        using \<open>finite S\<close>
+        by simp
+      have \<open>k \<notin> R\<close>
+        using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
+      hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
+        using \<open>S = insert k R\<close> truc_ell2_insert
+        by (simp add: truc_ell2_insert) 
+      moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
+      ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: complex_vector.span_add complex_vector.span_base complex_vector.span_scale)        
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+
+lemma trunc_ell2_complex_span:
+  \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+  using trunc_ell2_complex_span_induct by auto
+
+lemma ket_ell2_span:
+  \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
+proof
+  include nsa_notation
+  show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
+    by simp    
+  show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
+  proof
+    show "(x::'a ell2) \<in> closure (complex_vector.span (range ket))"
+      if "(x::'a ell2) \<in> UNIV"
+      for x :: "'a ell2"
+    proof-
+      have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
+      proof-
+        have \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          using trunc_ell2_lim by auto
+        then obtain S where \<open>hypfinite S\<close> and \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          by blast
+        have \<open>(*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
+        proof-
+          have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+            by (simp add: trunc_ell2_complex_span)
+          hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+            unfolding hypfinite_def
+            by StarDef.transfer
+          thus ?thesis
+            by (simp add: \<open>hypfinite S\<close>) 
+        qed
+        thus ?thesis using \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+          using approx_sym by blast          
+      qed
+      thus ?thesis using nsclosure_iff
+        by blast
+    qed
+  qed
+qed
+
 
 instantiation ell2 :: (enum) basis_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
@@ -1949,8 +2368,7 @@ proof
     have \<open>distinct (enum_class.enum::'a list)\<close>
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-      (* by (meson inj_onI ket_distinct)         *) 
-      sorry
+       by (meson inj_onI ket_distinct)         
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
@@ -1997,7 +2415,7 @@ proof
       show "is_basis (set (canonical_basis::'a ell2 list))"
         unfolding canonical_basis_ell2_def is_basis_def
       proof
-        show "complex_independent (set (map ket (enum_class.enum::'a list)))"
+        show "complex_vector.independent (set (map ket (enum_class.enum::'a list)))"
         proof-
           have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
           proof (rule classical)
@@ -2020,13 +2438,13 @@ proof
           thus ?thesis 
             using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
             unfolding canonical_basis_ell2_def
-            by blast
+            by (metis Complex_Vector_Spaces.dependent_raw_def)            
         qed
         show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
         proof-
           have \<open>closure
               (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-            (* by (simp add: ket_ell2_span) *) sorry
+             by (simp add: ket_ell2_span)
           moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
             using UNIV_enum
             by blast
@@ -2050,6 +2468,8 @@ proof
 qed
 end
 
+(* TODO: move *)
+(* Jose: where? *)
 instantiation unit :: CARD_1
 begin
 instance 
@@ -2057,19 +2477,11 @@ instance
   by auto
 end
 
-
-(* TODO prove *)
-(* TODO if moved *after* \<open>instantiation ell2 :: (enum) basis_enum\<close>,
-        there will be less to prove. *)
-instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
-text \<open>Note: enum is not really needed, but without it this instantiation
-clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
-instance
-  sorry
-end
-
-(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). 
-
+(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). *)
+(* Jose: If I remove it, I obtain errors *)
+(* TODO: probably because \<open>instantiation ell2 :: (CARD_1) one_dim\<close> is only at the end of the file
+   if you move it forward to here, things should work. Any other unfixable errors?
+ *)
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
@@ -2116,86 +2528,6 @@ proof
     by (meson zero_neq_one)
 qed
 end
-*)
-
-(* TODO Remove (use one_dim_to_complex instead) *)
-(* lift_definition C1_to_complex :: "'a::CARD_1 ell2 \<Rightarrow> complex" is
-  "\<lambda>\<psi>. \<psi> the_one" . *)
-abbreviation "C1_to_complex :: 'a::{CARD_1,enum} ell2 \<Rightarrow> complex == one_dim_to_complex"
-
-(* TODO remove *)
-abbreviation "complex_to_C1 :: complex \<Rightarrow> 'a::{CARD_1,enum} ell2 == of_complex"
-
-(* TODO remove (subsumed by one_dim_to_complex_one) *)
-lemma C1_to_complex_one[simp]: "C1_to_complex 1 = 1"
-  apply transfer by simp
-
-(* TODO remove (subsumed by one_dim_to_complex_inverse) *)
-lemma C1_to_complex_inverse[simp]: "complex_to_C1 (C1_to_complex \<psi>) = \<psi>"
-  sorry
-  (* unfolding of_complex_def apply transfer apply (rule singleton_ext) by auto *)
-
-(* TODO remove (subsumed by complex_to_one_dim_inverse) *)
-lemma complex_to_C1_inverse[simp]: "C1_to_complex (complex_to_C1 \<psi>) = \<psi>"
-  (* unfolding of_complex_def apply transfer by simp *)
-  sorry
-
-(* TODO: remove (subsumed by bounded_clinear_of_complex) *)
-lemma bounded_clinear_complex_to_C1: "bounded_clinear complex_to_C1"
-  by (rule Complex_Vector_Spaces.bounded_clinear_of_complex)
-
-(* TODO: remove (subsumed by bounded_clinear_one_dim_to_complex) *)
-lemma bounded_clinear_C1_to_complex: "bounded_clinear C1_to_complex"
-(*   apply (rule bounded_clinear_intro[where K=1])
-  by (transfer; auto simp: ell2_norm_finite_def singleton_UNIV)+ *)
-  sorry
-
-(* TODO: remove (use more general vector_to_bounded instead) *)
-lift_definition ell2_to_bounded :: "'a::chilbert_space \<Rightarrow> ('b::{CARD_1,enum} ell2,'a) bounded" is
-  "\<lambda>(\<psi>::'a) (x::'b::{CARD_1,enum} ell2). C1_to_complex x *\<^sub>C \<psi>"
-  by (simp add: bounded_clinear_C1_to_complex bounded_clinear_scaleC_const)
-
-(* TODO: remove (subsumed by vector_to_bounded_applyOp, currently in a comment) *)
-lemma ell2_to_bounded_applyOp:
-  fixes A::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
-  shows \<open>ell2_to_bounded (times_bounded_vec A \<psi>) = A *\<^sub>o (ell2_to_bounded::('a \<Rightarrow> ('c::{CARD_1,enum} ell2, 'a) bounded)) \<psi>\<close>
-proof-
-  have \<open>bounded_clinear (times_bounded_vec A)\<close>
-    using times_bounded_vec by blast
-  hence \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
-     =  (\<lambda> x. (times_bounded_vec A) ( C1_to_complex x *\<^sub>C \<psi>) )\<close>
-    using bounded_clinear_def
-    by simp 
-(* TODO: add CARD_1 \<rightarrow> {CARD_1,enum} in many places *)
-  also have \<open>(\<lambda> x. (times_bounded_vec A) ( (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>) )
-    = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    unfolding comp_def
-    by blast
-  finally have \<open>(\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    by blast
-  moreover have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
-       = (\<lambda> x. C1_to_complex x *\<^sub>C (times_bounded_vec A \<psi>))\<close>
-    using Complex_L2.ell2_to_bounded.rep_eq
-    by blast
-  ultimately have \<open>times_bounded_vec ((ell2_to_bounded::(_ \<Rightarrow> ('c ell2, _) bounded)) (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (\<lambda> x. C1_to_complex x *\<^sub>C \<psi>)\<close>
-    by simp
-  moreover have \<open>times_bounded_vec (ell2_to_bounded \<psi>) = (\<lambda> x. (C1_to_complex:: 'c::{CARD_1,enum} ell2 \<Rightarrow> complex) x *\<^sub>C \<psi>)\<close>
-    using Complex_L2.ell2_to_bounded.rep_eq
-    by blast
-  ultimately have \<open>times_bounded_vec (ell2_to_bounded (times_bounded_vec A \<psi>))
-     = (times_bounded_vec A) \<circ> (times_bounded_vec ((ell2_to_bounded:: _   \<Rightarrow> ('c ell2, _) bounded) \<psi>))\<close>
-    by simp
-  thus ?thesis
-    apply transfer
-    by simp
-qed
-
-(* TODO: remove (subsumed by vector_to_bounded_scalar_times, currently in a comment) *)
-lemma ell2_to_bounded_scalar_times: "ell2_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C ell2_to_bounded \<psi>" 
-  for a::complex
-  apply (transfer fixing: a) by auto
 
 subsection \<open>Classical operators\<close>
 
@@ -2863,419 +3195,6 @@ proof-
 qed
 
 
-lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
-  is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
-proof transfer
-  show "has_ell2_norm (\<lambda>i. if (i::'a) \<in> S then x i else 0)"
-    if "has_ell2_norm (x::'a \<Rightarrow> complex)"
-    for S :: "'a set"
-      and x :: "'a \<Rightarrow> complex"
-  proof-
-    from \<open>has_ell2_norm (x::'a \<Rightarrow> complex)\<close>
-    have \<open>bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)\<close>
-      unfolding has_ell2_norm_def
-      by blast
-    hence \<open>\<exists> K. \<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
-      unfolding bdd_above_def
-      by blast
-    then obtain K where \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R) \<le> K\<close>
-      by blast
-    have \<open>finite R \<Longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
-      for R
-    proof-
-      assume \<open>finite R\<close>
-      have \<open>(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2\<close>
-        for i                                 
-      proof (cases \<open>i \<in> S\<close>)
-        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
-          if "i \<in> S"
-          using that
-          by simp 
-        show "(cmod (if i \<in> S then x i else 0))\<^sup>2 \<le> (cmod (x i))\<^sup>2"
-          if "i \<notin> S"
-          using that
-          by auto 
-      qed    
-      hence \<open>(sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R)
-          \<le> (sum (\<lambda>i. (cmod (x i))\<^sup>2) R)\<close>
-        by (simp add: ordered_comm_monoid_add_class.sum_mono)
-      thus ?thesis
-        using \<open>\<forall>R. finite R \<longrightarrow> (\<Sum>i\<in>R. (cmod (x i))\<^sup>2) \<le> K\<close> \<open>finite R\<close> by fastforce
-    qed
-    hence \<open>\<forall> R. finite R \<longrightarrow> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R) \<le> K\<close>
-      by blast
-    hence \<open>\<forall> t \<in> {sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R}. t \<le> K\<close>
-      by blast      
-    moreover have \<open>{sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) R | R. finite R }
-          = (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>  
-      by blast
-    ultimately have \<open>\<forall> t \<in> (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite). t \<le> K\<close>
-      by auto     
-    hence \<open>bdd_above (sum (\<lambda>i. (cmod (if i \<in> S then x i else 0))\<^sup>2) ` Collect finite)\<close>
-      unfolding bdd_above_def 
-      by auto
-    thus ?thesis 
-      unfolding has_ell2_norm_def by blast
-  qed
-qed
-
-lemma truc_ell2_insert:
-  \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
-proof-
-  assume \<open>k \<notin> R\<close>  
-  have \<open>(if i \<in> insert k R then Rep_ell2 w i else 0) =
-        (if i \<in> R then Rep_ell2 w i else 0)
-      + (if i = k then Rep_ell2 w i else 0)\<close>
-    for i
-  proof (cases \<open>i \<in> insert k R\<close>)
-    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
-      if "i \<in> insert k R"
-      using that proof (cases \<open>i \<in> R\<close>)
-      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
-        if "i \<in> insert k R"
-          and "i \<in> R"
-        using that \<open>k \<notin> R\<close> by auto 
-      show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
-        if "i \<in> insert k R"
-          and "i \<notin> R"
-        using that
-        by auto 
-    qed
-    show "(if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)"
-      if "i \<notin> insert k R"
-      using that
-      by simp 
-  qed
-  moreover have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) = (\<lambda> i. if i \<in> insert k R then Rep_ell2 w i else 0)\<close>
-    by (simp add: trunc_ell2.rep_eq)
-  moreover have \<open>Rep_ell2 (trunc_ell2 R w) = (\<lambda> i. if i \<in> R then Rep_ell2 w i else 0)\<close>
-    by (simp add: trunc_ell2.rep_eq)
-  moreover have \<open>Rep_ell2 ( (Rep_ell2 w k) *\<^sub>C (ket k) ) = (\<lambda> i. if i = k then Rep_ell2 w i else 0)\<close>
-  proof -
-    have "\<forall>a aa. a = k \<and> aa \<noteq> k \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> aa \<noteq> k \<or> a = k \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa \<or> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) a = 0 \<and> Rep_ell2 (Rep_ell2 w k *\<^sub>C ket k) aa = Rep_ell2 w aa"
-      by (simp add: ket.rep_eq scaleC_ell2.rep_eq)
-    thus ?thesis
-      by meson
-  qed
-  ultimately have \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i = Rep_ell2 (trunc_ell2 R w) i + Rep_ell2 ((Rep_ell2 w k) *\<^sub>C (ket k)) i\<close>
-    for i
-    by (simp add: \<open>\<And>i. (if i \<in> insert k R then Rep_ell2 w i else 0) = (if i \<in> R then Rep_ell2 w i else 0) + (if i = k then Rep_ell2 w i else 0)\<close> \<open>k \<notin> R\<close>)
-  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) i =
-        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) ) i\<close>
-    for i
-    by (simp add: plus_ell2.rep_eq)
-  hence \<open>Rep_ell2 (trunc_ell2 (insert k R) w) =
-        Rep_ell2 ((trunc_ell2 R w) + ((Rep_ell2 w k) *\<^sub>C (ket k)) )\<close>
-    by blast
-  thus \<open>trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
-    using Rep_ell2_inject
-    by blast
-qed
-
-lemma trunc_ell2_complex_span_induct:
-  \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-proof (induction n)
-  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-  proof
-    show "finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-      for S :: "'a set"
-    proof
-      show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
-        if "finite S \<and> card S = 0"
-        using that proof
-        show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
-          if "finite S"
-            and "card S = 0"
-        proof-
-          have \<open>S = {}\<close>
-            using card_0_eq that(1) that(2) by blast
-          hence \<open>trunc_ell2 S x = 0\<close>
-            apply transfer
-            by simp
-          thus ?thesis
-            by (simp add: complex_vector.span_zero) 
-        qed
-      qed
-    qed
-  qed
-  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-    for n :: nat
-  proof-
-    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
-      for S
-    proof-
-      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
-      hence \<open>\<exists> R k. S = insert k R \<and> card R = n\<close>
-        by (meson card_Suc_eq)
-      then obtain R k where \<open>S = insert k R\<close> and \<open>card R = n\<close>
-        by blast
-      hence \<open>finite R\<close>
-        using \<open>finite S\<close>
-        by simp
-      have \<open>k \<notin> R\<close>
-        using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
-      hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
-        using \<open>S = insert k R\<close> truc_ell2_insert
-        by (simp add: truc_ell2_insert) 
-      moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
-        by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
-      ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
-        by (simp add: complex_vector.span_add complex_vector.span_base complex_vector.span_scale)        
-    qed
-    thus ?thesis by blast
-  qed
-qed
-
-lemma ell2_norm_explicit_finite_support:
-  assumes  \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
-  shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
-proof-
-  have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<le> (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
-  proof-
-    have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<in>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      using \<open>finite S\<close>
-      by simp
-    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      using Rep_ell2 unfolding has_ell2_norm_def
-      by auto
-    ultimately show ?thesis using cSup_upper by simp
-  qed
-  moreover have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-  proof-
-    have \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<Longrightarrow> t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-      for t
-    proof-
-      assume \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      hence \<open>\<exists> R \<in> (Collect finite). t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> 
-        by blast
-      then obtain R where \<open>R \<in> (Collect finite)\<close> and \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close>
-        by blast
-      from \<open>R \<in> (Collect finite)\<close>
-      have \<open>finite R\<close>
-        by blast
-      have \<open>R = (R - S) \<union> (R \<inter> S)\<close>
-        by (simp add: Un_Diff_Int)
-      moreover have \<open>(R - S) \<inter> (R \<inter> S) = {}\<close>
-        by auto
-      ultimately have  \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S)
-         + (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
-        using \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> and \<open>finite R\<close>
-        by (smt sum.Int_Diff)
-      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S) = 0\<close>
-      proof-
-        have \<open>r \<in> R - S \<Longrightarrow> (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) r = 0\<close>
-          for r
-          by (simp add: assms(2))        
-        thus ?thesis
-          by simp 
-      qed
-      ultimately have \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
-        by simp
-      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-      proof-
-        have \<open>R \<inter> S \<subseteq> S\<close>
-          by simp        
-        moreover have \<open>(\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) i \<ge> 0\<close>
-          for i
-          by auto        
-        ultimately show ?thesis
-          by (simp add: assms(1) sum_mono2) 
-      qed
-      ultimately show \<open>t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close> by simp
-    qed
-    moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<noteq> {}\<close>
-      by auto      
-    ultimately show ?thesis
-      by (simp add: cSup_least) 
-  qed
-  ultimately have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-    by simp
-  thus ?thesis
-    by (metis ell2_norm_def norm_ell2.rep_eq) 
-qed
-
-lemma trunc_ell2_norm_explicit:
-  \<open>finite S \<Longrightarrow> (norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
-proof-
-  assume \<open>finite S\<close>
-  moreover have \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = 0\<close>
-    by (simp add: trunc_ell2.rep_eq)    
-  ultimately have \<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 ((trunc_ell2 S x)) i))\<^sup>2)) S)\<close>
-    using ell2_norm_explicit_finite_support
-    by blast 
-  moreover have \<open>\<And> i. i \<in> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = Rep_ell2 x i\<close>
-    by (simp add: trunc_ell2.rep_eq)
-  ultimately show ?thesis by simp
-qed
-
-lemma ell2_ortho:
-  assumes \<open>\<And> i. Rep_ell2 x i = 0 \<or> Rep_ell2 y i = 0\<close>
-  shows \<open>\<langle>x, y\<rangle> = 0\<close>
-  using assms apply transfer
-  by (simp add: infsetsum_all_0)
-
-lemma trunc_ell2_norm_diff:
-  \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
-proof-
-  have \<open>Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0\<close>
-    for i
-  proof (cases \<open>i \<in> S\<close>)
-    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
-      if "i \<in> S"
-      using that
-      by (simp add: minus_ell2.rep_eq trunc_ell2.rep_eq) 
-    show "Rep_ell2 (trunc_ell2 S x) i = 0 \<or> Rep_ell2 (x - trunc_ell2 S x) i = 0"
-      if "i \<notin> S"
-      using that
-      by (simp add: trunc_ell2.rep_eq) 
-  qed
-  hence \<open>\<langle> (trunc_ell2 S x), (x - trunc_ell2 S x) \<rangle> = 0\<close>
-    using ell2_ortho by blast
-  hence \<open>(norm x)^2 = (norm (trunc_ell2 S x))^2 + (norm (x - trunc_ell2 S x))^2\<close>
-    using PythagoreanId by fastforce    
-  thus ?thesis by simp
-qed
-
-(* move to NSA_miscellany *)
-lemma infinitesimal_square:
-  fixes x::hypreal
-  shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
-  by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
-
-lemma trunc_ell2_complex_span:
-  \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-  using trunc_ell2_complex_span_induct by auto
-
-lemma trunc_ell2_lim:
-  includes nsa_notation
-  shows \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-proof-
-  define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
-  have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
-    apply transfer unfolding ell2_norm_def by blast
-  hence \<open>(norm x)^2 = Sup (f ` Collect finite)\<close>
-    unfolding f_def
-    by (smt norm_not_less_zero real_sqrt_ge_0_iff real_sqrt_pow2) 
-  have \<open>Sup (f ` Collect finite) \<in> closure (f ` Collect finite)\<close>
-  proof (rule Borel_Space.closure_contains_Sup)
-    show "f ` Collect finite \<noteq> {}"
-      by blast      
-    show "bdd_above (f ` Collect finite)"
-    proof-
-      have \<open>has_ell2_norm (Rep_ell2 x)\<close>
-        using Rep_ell2 by blast
-      thus ?thesis unfolding has_ell2_norm_def f_def
-        by simp
-    qed
-  qed
-  hence \<open>(norm x)^2 \<in> closure (f ` Collect finite)\<close>
-    by (simp add: \<open>(norm x)\<^sup>2 = Sup (f ` Collect finite)\<close>)
-  hence \<open>\<exists> t\<in>*s* (f ` Collect finite). t \<approx> star_of ((norm x)^2)\<close>
-    using approx_sym nsclosure_I by blast
-  then obtain t where \<open>t\<in>*s* (f ` Collect finite)\<close> and \<open>t \<approx> star_of ((norm x)^2)\<close>
-    by blast
-  from \<open>t\<in>*s* (f ` Collect finite)\<close>
-  have \<open>\<exists> S \<in> (*s* (Collect finite)). t = (*f* f) S\<close>
-    by (simp add: image_iff)
-  then obtain S where \<open>S \<in> (*s* (Collect finite))\<close> and \<open>t = (*f* f) S\<close>
-    by blast
-  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = (*f* f) S\<close>
-  have \<open>(*f* f) S \<approx> star_of ((norm x)^2)\<close>
-    by simp
-  hence \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
-    by simp    
-  have \<open>hypfinite S\<close>
-  proof-
-    have \<open>\<forall> S. S \<in> Collect finite \<longleftrightarrow> finite S\<close>
-      by blast
-    hence \<open>\<forall> S. S \<in>*s* (Collect finite) \<longleftrightarrow> hypfinite S\<close>
-      unfolding hypfinite_def
-      by StarDef.transfer
-    thus ?thesis
-      using \<open>S \<in> *s* Collect finite\<close> by blast 
-  qed
-  moreover have \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-  proof-
-    have \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
-    proof-
-      have \<open>\<forall> S. (norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
-        by (simp add: trunc_ell2_norm_diff)        
-      hence \<open>\<forall> S. (hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
-        by StarDef.transfer
-      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
-        by blast
-      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
-      proof-
-        have \<open>\<forall> S. finite S \<longrightarrow> sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
-          using trunc_ell2_norm_explicit
-          by metis          
-        hence \<open>\<forall> S. finite S \<longrightarrow> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
-          using real_sqrt_eq_iff
-          by (smt norm_le_zero_iff norm_zero real_sqrt_unique)           
-        hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
-          unfolding hypfinite_def
-          by StarDef.transfer
-        hence \<open>(*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
-          using \<open>hypfinite S\<close> by blast
-        hence \<open>(*f* f) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
-          unfolding f_def by blast
-        thus ?thesis using \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
-          by (simp add: approx_reorient)          
-      qed
-      ultimately have \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
-        using approx_minus_iff by auto
-      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
-        by (simp add: mem_infmal_iff)       
-      hence \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
-        using infinitesimal_square by blast        
-      thus ?thesis
-        by simp 
-    qed
-    thus ?thesis
-      by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff) 
-  qed
-  ultimately show ?thesis
-    by blast
-qed
-
-lemma ket_ell2_span:
-  \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
-proof
-  include nsa_notation
-  show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
-    by simp    
-  show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
-  proof
-    show "(x::'a ell2) \<in> closure (complex_vector.span (range ket))"
-      if "(x::'a ell2) \<in> UNIV"
-      for x :: "'a ell2"
-    proof-
-      have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
-      proof-
-        have \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          using trunc_ell2_lim by auto
-        then obtain S where \<open>hypfinite S\<close> and \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          by blast
-        have \<open>(*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
-        proof-
-          have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-            by (simp add: trunc_ell2_complex_span)
-          hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-            unfolding hypfinite_def
-            by StarDef.transfer
-          thus ?thesis
-            by (simp add: \<open>hypfinite S\<close>) 
-        qed
-        thus ?thesis using \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          using approx_sym by blast          
-      qed
-      thus ?thesis using nsclosure_iff
-        by blast
-    qed
-  qed
-qed
-
 lemma superposition_principle_linear_ket:
   fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) bounded\<close>
   shows \<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
@@ -3532,7 +3451,7 @@ proof-
       by auto
   qed
   moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
-    by (simp add: Complex_Vector_Spaces.span_raw_def ket_ell2_span)    
+    by (simp add: ket_ell2_span)        
   ultimately have \<open>A *\<^sub>v x = 0\<close>
     for x
     by blast
@@ -3645,13 +3564,6 @@ next
   show "classical_operator (Some \<circ> \<pi>) *\<^sub>o classical_operator (Some \<circ> \<pi>)* = idOp"
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
-
-subsection \<open>Enum\<close>
-
-
-lemma ket_distinct:
-  \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
-  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
 
 
 subsection \<open>Recovered theorems\<close>
@@ -3786,6 +3698,34 @@ lemma equal_ket:
   by (simp add: assms equal_basis)
 
 
+lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
+proof -
+  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
+  have "length ?enum = 1"
+    apply (subst card_UNIV_length_enum[symmetric])
+    by (rule CARD_1)
+  then obtain b where "?enum = [b]"
+    apply atomize_elim
+    apply (cases ?enum, auto)
+    by (metis length_0_conv length_Cons nat.inject)
+  then show "?enum = [a]"
+    by (subst everything_the_same[of _ b], simp)
+qed
+
+instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
+text \<open>Note: enum is not really needed, but without it this instantiation
+clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
+instance
+proof
+  show "canonical_basis = [1::'a ell2]"
+    unfolding canonical_basis_ell2_def
+    apply transfer
+    by (simp add: enum_CARD_1[of undefined])
+  show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
+    apply (transfer fixing: a b) by simp
+qed
+
+end
 
 unbundle no_bounded_notation
 

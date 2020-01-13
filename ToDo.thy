@@ -17,15 +17,7 @@ José can do one of the following things:
 This way, QRHL will not be broken by the work on these lemmas/definitions
 \<close>
 
-
-lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
-  (* apply transfer by simp *) 
-  sorry
-
-lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
-  (* apply transfer by simp *) 
-  sorry
-
+  
 
 
 

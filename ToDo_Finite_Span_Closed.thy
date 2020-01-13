@@ -2,7 +2,7 @@ theory ToDo_Finite_Span_Closed
   imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
-(* TODO move definition and properties of euclidean_space somewhere appropriate *)
+(* TODO move definition and properties of euclidean_space somewhere appropriate (maybe General_Results_Missing) *)
 typedef 'a euclidean_space = "UNIV :: ('a \<Rightarrow> real) set" ..
 setup_lifting type_definition_euclidean_space
 
@@ -129,18 +129,22 @@ proof -
   have comb_cong: "comb x = comb y" if "\<And>z. z\<in>B \<Longrightarrow> x z = y z" for x y
     unfolding comb_def using that by auto
   have comb_repr[simp]: "comb (repr \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
-    unfolding comb_def repr_def 
-    apply (rule sum_representation_eq)
-    using assms that by auto
+    unfolding comb_def repr_def
+    by (simp add: assms(2) assms(4) real_vector.sum_representation_eq that) 
   have repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
-    unfolding repr_def comb_def
+    sorry
+(*    unfolding repr_def comb_def
     apply (rule representation_eqI)
     using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: span_base span_scale span_sum)
     apply meson
     by (smt DiffD1 DiffD2 mem_Collect_eq scale_eq_0_iff subset_eq sum.mono_neutral_cong_left)
+*)
   have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
+    sorry
+(*
     unfolding repr_def using that
     by (simp add: representation_def)
+*)
   have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
     unfolding repr'_def repr_bad[OF that]
     by (transfer fixing: rep, simp)
@@ -174,7 +178,8 @@ proof -
      apply (transfer fixing: abs)
      apply (simp add: scaleR_add_left sum.distrib)
     apply (transfer fixing: abs)
-    by (simp add: scale_sum_right)
+    by (smt comp_apply scaleR_right.sum scaleR_scaleR sum.cong)
+
     
   then have "continuous_on X comb'" for X
     by (simp add: linear_continuous_on)
@@ -251,7 +256,6 @@ proof -
     unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
   then show "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>D>0\<close> by auto
-
   have complete_comb': "complete (comb' ` UNIV)"
     using \<open>d>0\<close> apply (rule complete_isometric_image)
     using blin_comb' norm_comb' complete_UNIV by auto
@@ -259,7 +263,8 @@ proof -
   have range_comb': "comb' ` UNIV = real_vector.span B"
   proof (auto simp: image_def)
     show "comb' x \<in> real_vector.span B" for x
-      by (metis comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb representation_zero span_zero)
+      using comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb representation_zero span_zero
+      by (smt \<open>\<And>\<psi>. \<psi> \<notin> Real_Vector_Spaces.span B \<Longrightarrow> repr' \<psi> = 0\<close> blin_comb' linear_simps(3) real_vector.span_zero repr'_comb')
   next
     fix \<psi> assume "\<psi> \<in> real_vector.span B"
     then obtain f where f: "comb f = \<psi>"
@@ -333,14 +338,16 @@ proof (cases "B\<noteq>{}")
     by (meson mult_left_mono norm_ge_zero order_trans)
   moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
     unfolding repr_def using representation_ne_zero True
-    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less subsetI subset_antisym)
+    by (smt \<open>0 < Dall\<close> mult_nonneg_nonneg norm_le_zero_iff norm_not_less_zero real_vector.representation_ne_zero that)
+    
   ultimately show "\<exists>D>0. \<forall>\<psi> b. norm (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>Dall > 0\<close> by metis
 next
   case False
   then show ?thesis
-      unfolding repr_def using representation_ne_zero[of B]
-      using nice_ordered_field_class.linordered_field_no_ub by fastforce
+    unfolding repr_def 
+    using nice_ordered_field_class.linordered_field_no_ub
+    by (metis all_not_in_conv less_eq_real_def norm_ge_zero norm_zero real_vector.representation_ne_zero zero_le_mult_iff) 
 qed
 
 lemma
@@ -359,8 +366,8 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   have "B\<noteq>{}"
     apply (rule ccontr, simp)
     using BT True
-    by (metis real_vector.span_superset span_empty subset_singletonD)
-
+    by (metis real_vector.span_empty real_vector.span_superset subset_singletonD)
+    
   define repr  where "repr = real_vector.representation B"
   {
     assume "\<exists>(Rep :: 'basis\<Rightarrow>'a) Abs. type_definition Rep Abs B"
@@ -413,7 +420,8 @@ proof auto
   also have "\<dots> \<in> ?rspan R"
     unfolding R_def
     apply (rule real_vector.span_sum)
-    using \<open>B' \<subseteq> B\<close> by (auto simp add: span_base span_scale subset_iff) 
+    using \<open>B' \<subseteq> B\<close> span_base span_scale subset_iff
+    sorry
   finally show "\<psi> \<in> ?rspan R" by -
 next
   let ?cspan = complex_vector.span
