@@ -176,44 +176,6 @@ proof-
     by blast
 qed
 
-lemma LIMSEQ_realpow_inf:
-  fixes x :: real
-  assumes \<open>x > 1\<close>
-  shows  \<open>( \<lambda> n::nat. x^n) \<longlonglongrightarrow> \<infinity>\<close>
-  using Limits.LIMSEQ_inverse_realpow_zero
-  by (metis (mono_tags, lifting) Elementary_Topology.real_arch_pow Lim_PInfty assms le_ereal_le less_eq_ereal_def less_ereal.simps(1) power_increasing_iff) 
-
-lemma lim_shift:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
-  shows \<open>x \<longlonglongrightarrow> l\<close>
-proof-
-  have \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
-  proof(induction n)
-    case 0
-    thus ?case by simp
-  next
-    case (Suc n)
-    have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
-      for x::"nat \<Rightarrow> 'a" and l::'a
-    proof-
-      assume \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l\<close>
-      hence \<open>(\<lambda>k. x (n + Suc k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) (Suc t)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) t) \<longlonglongrightarrow> l\<close>
-        by (rule LIMSEQ_imp_Suc)
-      hence \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      thus ?thesis 
-        by (simp add: \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close> Suc.IH)
-    qed
-    thus ?case by blast
-  qed
-  thus ?thesis
-    using assms by blast 
-qed
 
 end
 

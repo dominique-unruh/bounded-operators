@@ -8,7 +8,7 @@ Authors:
 *)                 
 
 theory All
-  imports ToDo Banach_Steinhaus Bounded_Operators
+  imports ToDo Real_Analysis_Missing Banach_Steinhaus Bounded_Operators
     Complex_Inner_Product Complex_L2 Complex_Vector_Spaces 
     General_Results_Missing Infinite_Set_Sum_Missing
     Lattice_Missing Operator_Norm_Missing
@@ -16,11 +16,5 @@ theory All
     Uniform_Limit_Missing Unobtrusive_NSA
     Bounded_Operators_Code ToDo_Finite_Span_Closed
 begin
-
-(* The following files are complete (without TODOs and without "sorry")
-
-
-
- *)
 
 end
