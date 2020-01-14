@@ -25,18 +25,11 @@ proof-
     by (metis (full_types) UNIV_eq_I insertI1 norm_sgn)
 qed
 
-(*
-lemma ex_norm_1:
-  \<open>(UNIV::('a::real_normed_vector) set) \<noteq> {0} \<Longrightarrow> \<exists> x::'a. norm x = 1\<close>
-  by (metis (full_types) UNIV_eq_I insertI1 norm_sgn)
-*)
-
 (* TODO: remove (very technical lemma that essentially is the same as ex_norm_1) *)
 lemma norm_set_nonempty_eq1:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close> 
-  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close>
+  fixes f :: \<open>'a::{real_normed_vector, not_singleton} \<Rightarrow> 'b::real_normed_vector\<close> 
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-  using assms ex_norm_1 by blast
+  using ex_norm_1 by blast
 
 lemma norm_set_bdd_above_less1: 
   fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
@@ -58,17 +51,15 @@ proof-
     by auto 
 qed
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma norm_set_bdd_above_eq1: 
   fixes f :: \<open>('a::real_normed_vector \<Rightarrow> 'b::real_normed_vector)\<close> 
   assumes \<open>bounded_linear f\<close> 
   shows \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
   by (smt assms bdd_aboveI bounded_linear.bounded mem_Collect_eq)
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 proposition onorm_open_ball:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
+  fixes f :: \<open>'a::{real_normed_vector, not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
   case True
@@ -84,7 +75,7 @@ proof(cases \<open>f = (\<lambda> _. 0)\<close>)
       have \<open>{norm (f x) | x. norm x < 1 } \<subseteq> {0}\<close>
         using \<open>\<And>x. norm (f x) = 0\<close> by blast        
       moreover have \<open>{norm (f x) | x. norm x < 1 } \<supseteq> {0}\<close>
-        using assms(2) linear_simps(3) by fastforce        
+        using assms linear_simps(3) by fastforce                
       ultimately show ?thesis 
         by blast
     qed
@@ -100,7 +91,7 @@ next
       have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
       proof -
         have "\<exists>a. norm (a::'a) = 1"
-          by (metis (full_types) False assms(2) linear_simps(3) norm_sgn)
+          by (simp add: ex_norm_1)          
         thus ?thesis
           by blast
       qed
@@ -198,8 +189,7 @@ next
             for x
             by simp            
           moreover have \<open>{norm (f x) |x::'a. norm x = 1} \<noteq> {}\<close>          
-            using  norm_set_nonempty_eq1 \<open>UNIV \<noteq> {0}\<close> 
-              \<open>bounded_linear f\<close> by blast 
+            using  norm_set_nonempty_eq1 \<open>bounded_linear f\<close> by blast 
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
             by (simp add: assms norm_set_bdd_above_eq1)            
           ultimately have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
@@ -335,7 +325,7 @@ next
         have \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
         proof-
           have \<open>\<exists> x::'a. norm x = 1\<close>
-            by (metis (full_types) False assms(2) linear_simps(3) norm_sgn)
+            by (simp add: ex_norm_1)            
           then obtain x::'a where \<open>norm x = 1\<close>
             by blast
           have \<open>norm (f x) \<ge> 0\<close>
@@ -395,44 +385,13 @@ next
     by metis 
 qed
 
-(* TODO: remove case distinction "UNIV\<noteq>{0}" and add type class not_singleton instead *)
-lemma onorm_open_ball_scaled:
-  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
+lemma onorm_open_ball_scaled_not_singleton:
+  fixes f :: \<open>'a::{real_normed_vector, not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
   shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
-proof (cases \<open>(UNIV::'a set) = {0}\<close>)
-  case True
-  have \<open>f 0 = 0\<close>
-    using \<open>bounded_linear f\<close>
-    by (simp add: linear_simps(3))
-  moreover have \<open>x = 0\<close>
-    for x::'a
-    using \<open>UNIV = {0}\<close>
-    by auto
-  ultimately have \<open>f x = 0\<close>
-    for x
-    by (metis (full_types))
-  hence \<open>norm (f x) = 0\<close>
-    for x
-    by auto
-  hence \<open>onorm f = 0\<close>
-    by (simp add: \<open>\<And>x. f x = 0\<close> assms(2) onorm_eq_0)    
-  moreover have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = 0\<close>
-  proof-
-    have \<open>\<exists> x. norm x < r\<close>
-      by (metis assms(1) norm_zero)
-    hence \<open>{norm (f x) | x. norm x < r} = {0}\<close>
-      using \<open>\<And> x. norm (f x) = 0\<close> norm_zero singleton_conv
-      by (simp add: \<open>\<exists>x. norm x < r\<close>)
-    thus ?thesis
-      by simp 
-  qed
-  ultimately show ?thesis
-    by simp
-next
-  case False
-  moreover have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = Sup {norm (f x) | x. norm x < 1}\<close>
+proof-
+  have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = Sup {norm (f x) | x. norm x < 1}\<close>
   proof-
     have \<open>(1/r) * Sup {norm (f x) | x. norm x < r}
         = Sup {(1/r) * norm (f x) | x. norm x < r}\<close>
@@ -595,11 +554,72 @@ next
     qed
     finally show ?thesis by blast
   qed
-  ultimately show ?thesis
-    using False onorm_open_ball 
-      \<open>bounded_linear f\<close>
-    by auto
+  thus ?thesis
+    using \<open>bounded_linear f\<close> onorm_open_ball
+    by simp
 qed
+
+lemma onorm_open_ball_scaled_not_singleton2:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and  r :: real
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close> and \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+  shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
+  using assms 
+    onorm_open_ball_scaled_not_singleton
+  sorry
+
+
+lemma onorm_open_ball_scaled_not_singleton':
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and  r :: real
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close> and \<open>(UNIV::'a set) \<noteq> {0}\<close>
+  shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
+  using assms onorm_open_ball_scaled_not_singleton
+  sorry
+
+lemma onorm_open_ball_scaled_singleton:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and  r :: real
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close> and \<open>(UNIV::'a set) = {0}\<close>
+  shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
+proof-
+  have \<open>f 0 = 0\<close>
+    using \<open>bounded_linear f\<close>
+    by (simp add: linear_simps(3))
+  moreover have \<open>x = 0\<close>
+    for x::'a
+    using \<open>UNIV = {0}\<close>
+    by auto
+  ultimately have \<open>f x = 0\<close>
+    for x
+    by (metis (full_types))
+  hence \<open>norm (f x) = 0\<close>
+    for x
+    by auto
+  hence \<open>onorm f = 0\<close>
+    by (simp add: \<open>\<And>x. f x = 0\<close> assms(2) onorm_eq_0)    
+  moreover have \<open>(1/r) * Sup {norm (f x) | x. norm x < r} = 0\<close>
+  proof-
+    have \<open>\<exists> x. norm x < r\<close>
+      by (metis assms(1) norm_zero)
+    hence \<open>{norm (f x) | x. norm x < r} = {0}\<close>
+      using \<open>\<And> x. norm (f x) = 0\<close> norm_zero singleton_conv
+      by (simp add: \<open>\<exists>x. norm x < r\<close>)
+    thus ?thesis
+      by simp 
+  qed
+  ultimately show ?thesis
+    by simp
+qed
+
+lemma onorm_open_ball_scaled:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+    and  r :: real
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
+  shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
+  using assms onorm_open_ball_scaled_singleton onorm_open_ball_scaled_not_singleton'
+  by blast
+  
 
 
 end
