@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Miscellany of Analysis (classical and nonstandard)\<close>
 
 (*
 Authors: 
@@ -1173,7 +1173,6 @@ lemma infinitesimal_square:
   fixes x::hypreal
   shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
   by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
-
 
 unbundle no_nsa_notation
 

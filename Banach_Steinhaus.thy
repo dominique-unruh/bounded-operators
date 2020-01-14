@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Banach-Steinhaus theorem\<close>
 
 (*
 Authors: 
@@ -16,10 +16,7 @@ to converge to a linear bounded operator.
 theory Banach_Steinhaus
   imports 
     "HOL-ex.Sketch_and_Explore"
-    Operator_Norm_Missing
-    Uniform_Limit_Missing
-    NSA_Miscellany
-    General_Results_Missing
+    Real_Analysis_Missing
 begin
 
 
@@ -325,18 +322,10 @@ proof-
     using Cauchy_altdef2 by fastforce 
 qed
 
-(* TODO: delete *)
-lemma LIMSEQ_realpow_inf: 
-  fixes x :: real
-  assumes \<open>x > 1\<close>
-  shows  \<open>( \<lambda> n::nat. x^n) \<longlonglongrightarrow> \<infinity>\<close>
-  using Limits.LIMSEQ_inverse_realpow_zero
-  by (metis (mono_tags, lifting) Elementary_Topology.real_arch_pow Lim_PInfty assms le_ereal_le less_eq_ereal_def less_ereal.simps(1) power_increasing_iff) 
-
 lemma LIMSEQ_scalarR: 
   fixes x :: \<open>nat \<Rightarrow> real\<close> and c :: real
   assumes \<open>x \<longlonglongrightarrow> \<infinity>\<close> and \<open>c > 0\<close>
-  shows  \<open>( \<lambda> n::nat. c * (x n)) \<longlonglongrightarrow> \<infinity>\<close>
+  shows  \<open>(\<lambda> n::nat. c * (x n)) \<longlonglongrightarrow> \<infinity>\<close>
 proof-
   have \<open>M \<ge> 0 \<Longrightarrow> \<exists> N. \<forall> n\<ge>N. c * x n \<ge> ereal M\<close>
     for M
@@ -386,38 +375,6 @@ proof-
     by (simp add: Lim_PInfty)
 qed
 
-lemma PRElim_shift:
-  fixes n::nat
-  shows  \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
-proof(induction n)
-  case 0
-  thus ?case by simp
-next
-  case (Suc n)
-  have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
-    for x::"nat \<Rightarrow> 'a" and l::'a
-  proof-
-    assume \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l\<close>
-    hence \<open>(\<lambda>k. x (n + Suc k)) \<longlonglongrightarrow> l\<close>
-      by simp
-    hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) (Suc t)) \<longlonglongrightarrow> l\<close>
-      by simp
-    hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) t) \<longlonglongrightarrow> l\<close>
-      by (rule LIMSEQ_imp_Suc)
-    hence \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close>
-      by simp
-    thus ?thesis 
-      by (simp add: \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close> Suc.IH)
-  qed
-  thus ?case by blast
-qed
-
-(* TODO: delete *)
-lemma lim_shift:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
-  shows \<open>x \<longlonglongrightarrow> l\<close>
-  using assms  PRElim_shift by auto
 
 lemma identity_telescopic:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat

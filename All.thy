@@ -17,4 +17,10 @@ theory All
     Bounded_Operators_Code ToDo_Finite_Span_Closed
 begin
 
+(* The following files are complete (without TODOs and without "sorry")
+
+
+
+ *)
+
 end
