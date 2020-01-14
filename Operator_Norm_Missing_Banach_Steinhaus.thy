@@ -12,16 +12,24 @@ Authors:
 theory Operator_Norm_Missing_Banach_Steinhaus
   imports 
     "HOL-Analysis.Infinite_Set_Sum"
+    General_Results_Missing_Banach_Steinhaus
 begin
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead
-         (currently defined in Complex_Inner_Product).
+lemma ex_norm_1:
+  \<open>\<exists> x::('a::{real_normed_vector,not_singleton}). norm x = 1\<close>
+proof-
+  have \<open>(UNIV::'a set) \<noteq> {0}\<close>
+    using UNIV_not_singleton
+    by blast
+  thus ?thesis
+    by (metis (full_types) UNIV_eq_I insertI1 norm_sgn)
+qed
 
-  "UNIV\<noteq>{0}" then is given by lemma UNIV_not_singleton (or "by simp")
- *)
+(*
 lemma ex_norm_1:
   \<open>(UNIV::('a::real_normed_vector) set) \<noteq> {0} \<Longrightarrow> \<exists> x::'a. norm x = 1\<close>
   by (metis (full_types) UNIV_eq_I insertI1 norm_sgn)
+*)
 
 (* TODO: remove (very technical lemma that essentially is the same as ex_norm_1) *)
 lemma norm_set_nonempty_eq1:
