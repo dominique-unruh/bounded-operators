@@ -2320,7 +2320,7 @@ proof - (* sledgehammer *)
   fix Sa :: "'a \<Rightarrow> 'b"
   assume a1: "bounded_clinear Sa"
   have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
-    using norm_ball by fastforce
+    using onorm_open_ball_scaled by fastforce
   thus "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
     using a1 by (simp add: bounded_clinear.bounded_linear)
 qed

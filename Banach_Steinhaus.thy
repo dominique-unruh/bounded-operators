@@ -1,24 +1,28 @@
 section \<open>Banach-Steinhaus theorem\<close>
-(*
+  (*
 Authors: 
-
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-Main results
-- banach_steinhaus: Banach-Steinhaus theorem. The reference of the proof is [sokal2011really].
-- bounded_linear_limit_bounded_linear: A corollary of  Banach-Steinhaus theorem. A sufficient 
-condition for a sequence of linear bounded operators to converge pointwise to a linear bounded 
+Main results:
+- sokal_banach_steinhaus: A lemma used by Sokal in order to prove Banach-Steinhaus theorem.
+- banach_steinhaus: Banach-Steinhaus theorem.
+- bounded_linear_limit_bounded_linear: A corollary of  Banach-Steinhaus theorem. A sufficient
+condition for a sequence of bounded linear operators to converge pointwise to a bounded linear 
 operator.
+
+References: @{cite sokal2011really}
 *)
 
 theory Banach_Steinhaus
-  imports Real_Analysis_Missing Operator_Norm_Missing_Banach_Steinhaus
+  imports 
+    Real_Analysis_Missing
+    Operator_Norm_Missing_Banach_Steinhaus
 begin
 
 subsection \<open>Preliminaries for the proof of Banach-Steinhaus\<close>
 
-text \<open>The proof of the following result was taken from @{cite sokal2011really}\<close>
+text \<open>Reference: @{cite sokal2011really}\<close>
 lemma sokal_banach_steinhaus:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and r :: real and x :: 'a 
@@ -152,7 +156,7 @@ proof-
   moreover have \<open>Sup (u ` S) = (onorm f) * r\<close>
   proof-
     have \<open>onorm f = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
-      using assms(1) assms(2) norm_ball by auto
+      using assms(1) assms(2) onorm_open_ball_scaled by auto
     hence  \<open> Sup {norm (f x) | x. norm x < r} = onorm f * r\<close>
       using assms(1) by auto
     moreover have \<open>Sup {norm (f x) |x. norm x < r} = (SUP \<xi>\<in>{\<xi>. norm \<xi> < r}. norm (f \<xi>))\<close>
@@ -345,6 +349,7 @@ qed
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
+text \<open>Reference: @{cite sokal2011really}\<close>
 theorem banach_steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close>

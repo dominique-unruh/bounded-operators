@@ -1,3 +1,6 @@
+section \<open>Results of Real Analysis missing, which are needed for the proof of Banach-Steinhaus 
+theorem\<close>
+
 theory Real_Analysis_Missing
   imports 
     "HOL-Analysis.Infinite_Set_Sum"
@@ -6,6 +9,118 @@ theory Real_Analysis_Missing
 begin
 
 subsection \<open>Limits of sequences\<close>
+
+lemma lim_shift:
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
+  assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
+  shows \<open>x \<longlonglongrightarrow> l\<close>
+proof-
+  have \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
+  proof(induction n)
+    case 0
+    thus ?case by simp
+  next
+    case (Suc n)
+    have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
+      for x::"nat \<Rightarrow> 'a" and l::'a
+    proof-
+      assume \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l\<close>
+      hence \<open>(\<lambda>k. x (n + Suc k)) \<longlonglongrightarrow> l\<close>
+        by simp
+      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) (Suc t)) \<longlonglongrightarrow> l\<close>
+        by simp
+      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) t) \<longlonglongrightarrow> l\<close>
+        by (rule LIMSEQ_imp_Suc)
+      hence \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close>
+        by simp
+      thus ?thesis 
+        by (simp add: \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close> Suc.IH)
+    qed
+    thus ?case by blast
+  qed
+  thus ?thesis
+    using assms by blast 
+qed
+
+lemma identity_telescopic:
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
+  assumes \<open>x \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+proof-
+  have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close>
+    for p
+  proof(induction p)
+    case 0
+    thus ?case by simp
+  next
+    case (Suc p)
+    thus ?case by simp
+  qed
+  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t)  = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close>
+    for t
+    by blast
+  moreover have \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
+  proof-
+    from \<open>x \<longlonglongrightarrow> l\<close>
+    have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
+      by (rule LIMSEQ_ignore_initial_segment)
+    hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
+      by (simp add: add.commute)
+    have \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
+    proof-
+      have \<open>Suc n + p = Suc (n + p)\<close>
+        for p
+        by simp
+      thus ?thesis using \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close> by simp 
+    qed
+    hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
+      using tendsto_add_const_iff 
+      by metis 
+    thus ?thesis by simp
+  qed
+  ultimately have  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + p)) \<longlonglongrightarrow> l - x n\<close>
+    by simp
+  hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) p) \<longlonglongrightarrow> l - x n\<close>
+    by (rule lim_shift)
+  hence  \<open>(\<lambda> M. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) M) \<longlonglongrightarrow> l - x n\<close>
+    by simp
+  thus ?thesis by blast
+qed
+
+lemma bound_telescopic:
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat and K::real
+  assumes \<open>x \<longlonglongrightarrow> l\<close> and \<open>\<And> k. (sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> K\<close>
+  shows \<open>norm (l - x n) \<le> K\<close>
+proof-
+  have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+    by (simp add: assms identity_telescopic)
+  hence \<open>(\<lambda> N. norm (sum (\<lambda> k. x (Suc k) - x k) {n..N})) \<longlonglongrightarrow> norm (l - x n)\<close>
+    using tendsto_norm by blast
+  moreover have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> K\<close>
+    for N
+  proof-
+    have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}\<close>
+      by (simp add: sum_norm_le)      
+    also have \<open>... \<le> K \<close>
+    proof-
+      have \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}
+               \<in> { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
+        by blast
+      moreover have \<open>bdd_above { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
+        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
+        by fastforce        
+      ultimately have  \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N} \<le> K\<close>
+        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
+        by blast
+      thus ?thesis
+        by (simp add: full_SetCompr_eq) 
+    qed
+    finally show ?thesis by blast
+  qed
+  ultimately show ?thesis
+    using Lim_bounded by blast 
+qed
+
 
 lemma LIMSEQ_realpow_inf:
   fixes x :: real
@@ -65,39 +180,6 @@ proof-
   qed
   thus ?thesis 
     by (simp add: Lim_PInfty)
-qed
-
-
-lemma lim_shift:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
-  shows \<open>x \<longlonglongrightarrow> l\<close>
-proof-
-  have \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
-  proof(induction n)
-    case 0
-    thus ?case by simp
-  next
-    case (Suc n)
-    have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
-      for x::"nat \<Rightarrow> 'a" and l::'a
-    proof-
-      assume \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l\<close>
-      hence \<open>(\<lambda>k. x (n + Suc k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) (Suc t)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) t) \<longlonglongrightarrow> l\<close>
-        by (rule LIMSEQ_imp_Suc)
-      hence \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      thus ?thesis 
-        by (simp add: \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close> Suc.IH)
-    qed
-    thus ?case by blast
-  qed
-  thus ?thesis
-    using assms by blast 
 qed
 
 subsection \<open>Cauchy sequences\<close>
@@ -405,88 +487,8 @@ proof-
 qed
 
 
-subsection \<open>Miscellany\<close>
-
-lemma identity_telescopic:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>x \<longlonglongrightarrow> l\<close>
-  shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
-proof-
-  have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close>
-    for p
-  proof(induction p)
-    case 0
-    thus ?case by simp
-  next
-    case (Suc p)
-    thus ?case by simp
-  qed
-  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t)  = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close>
-    for t
-    by blast
-  moreover have \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
-  proof-
-    from \<open>x \<longlonglongrightarrow> l\<close>
-    have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
-      by (rule LIMSEQ_ignore_initial_segment)
-    hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
-      by (simp add: add.commute)
-    have \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
-    proof-
-      have \<open>Suc n + p = Suc (n + p)\<close>
-        for p
-        by simp
-      thus ?thesis using \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close> by simp 
-    qed
-    hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
-      using tendsto_add_const_iff 
-      by metis 
-    thus ?thesis by simp
-  qed
-  ultimately have  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + p)) \<longlonglongrightarrow> l - x n\<close>
-    by simp
-  hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) p) \<longlonglongrightarrow> l - x n\<close>
-    by (rule lim_shift)
-  hence  \<open>(\<lambda> M. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) M) \<longlonglongrightarrow> l - x n\<close>
-    by simp
-  thus ?thesis by blast
-qed
-
-lemma bound_telescopic:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat and K::real
-  assumes \<open>x \<longlonglongrightarrow> l\<close> and \<open>\<And> k. (sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> K\<close>
-  shows \<open>norm (l - x n) \<le> K\<close>
-proof-
-  have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
-    by (simp add: assms identity_telescopic)
-  hence \<open>(\<lambda> N. norm (sum (\<lambda> k. x (Suc k) - x k) {n..N})) \<longlonglongrightarrow> norm (l - x n)\<close>
-    using tendsto_norm by blast
-  moreover have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> K\<close>
-    for N
-  proof-
-    have \<open>norm (sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<le> sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}\<close>
-      by (simp add: sum_norm_le)      
-    also have \<open>... \<le> K \<close>
-    proof-
-      have \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N}
-               \<in> { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
-        by blast
-      moreover have \<open>bdd_above { (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..K})|K::nat. True}\<close>
-        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
-        by fastforce        
-      ultimately have  \<open>sum (\<lambda> n. norm (x (Suc n) - x n)) {n..N} \<le> K\<close>
-        using  \<open>\<And> k. (sum (\<lambda> n. norm (x (Suc n) - x n)) {n..k}) \<le> K\<close>
-        by blast
-      thus ?thesis
-        by (simp add: full_SetCompr_eq) 
-    qed
-    finally show ?thesis by blast
-  qed
-  ultimately show ?thesis
-    using Lim_bounded by blast 
-qed
-
 subsection \<open>Pointwise convergence\<close>
+
 text\<open>Pointwise convergence\<close>
 definition pointwise_convergent_to :: 
   \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> 
@@ -496,8 +498,7 @@ definition pointwise_convergent_to ::
 lemma linear_limit_linear:
   fixes f :: \<open>nat \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
     and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes  \<open>\<And> n. linear (f n)\<close> 
-    and  \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
+  assumes  \<open>\<And> n. linear (f n)\<close> and  \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
   shows \<open>linear F\<close> 
 proof
   have \<open>\<And> x. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>

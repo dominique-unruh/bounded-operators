@@ -11,9 +11,7 @@ Authors:
 
 theory Operator_Norm_Missing_Banach_Steinhaus
   imports 
-    Complex_Main
     "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-Analysis.Operator_Norm"
 begin
 
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead
@@ -59,9 +57,8 @@ lemma norm_set_bdd_above_eq1:
   shows \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
   by (smt assms bdd_aboveI bounded_linear.bounded mem_Collect_eq)
 
-(* TODO: rename to onorm_open_ball or similar (analogous to onorm_sphere) *)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
-proposition operator_norm_characterization_1:
+proposition onorm_open_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
@@ -390,9 +387,8 @@ next
     by metis 
 qed
 
-(* TODO: rename to onorm_open_ball_scaled *)
 (* TODO: remove case distinction "UNIV\<noteq>{0}" and add type class not_singleton instead *)
-lemma norm_ball:
+lemma onorm_open_ball_scaled:
   fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
@@ -592,7 +588,7 @@ next
     finally show ?thesis by blast
   qed
   ultimately show ?thesis
-    using False operator_norm_characterization_1 
+    using False onorm_open_ball 
       \<open>bounded_linear f\<close>
     by auto
 qed
