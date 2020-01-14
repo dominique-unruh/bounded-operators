@@ -8,7 +8,8 @@ Authors:
 *)                 
 
 theory All_Banach_Steinhaus
-  imports Real_Analysis_Missing Banach_Steinhaus
+  imports General_Results_Missing_Banach_Steinhaus Real_Analysis_Missing 
+    Operator_Norm_Missing_Banach_Steinhaus Banach_Steinhaus
 begin
 
 end

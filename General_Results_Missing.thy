@@ -2,7 +2,7 @@ section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing f
 
 theory General_Results_Missing
   imports Complex_Main Complex_Inner_Product "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-ex.Sketch_and_Explore" HOL.Groups
+    "HOL-ex.Sketch_and_Explore" HOL.Groups General_Results_Missing_Banach_Steinhaus
 begin
 
 
@@ -116,20 +116,6 @@ proof-
   qed
   finally show ?thesis by blast
 qed
-
-
-lemma sum_interval_split: 
-  fixes f :: "nat \<Rightarrow> 'a::ab_group_add" and a b :: nat
-  assumes "b>a" 
-  shows "sum f {Suc a..b} = sum f {..b} - sum f {..a}" 
-proof -
-  obtain c where c: "b = a+c"
-    using \<open>a < b\<close> less_imp_add_positive by blast
-  show ?thesis
-    unfolding c sum_up_index_split
-    by auto 
-qed
-
 
 class not_singleton =
   assumes not_singleton_card: "\<exists>x. \<exists>y. x \<noteq> y"

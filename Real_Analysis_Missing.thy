@@ -1,14 +1,11 @@
 theory Real_Analysis_Missing
   imports 
-    "HOL-ex.Sketch_and_Explore"
-    Operator_Norm_Missing
-    Uniform_Limit_Missing
-    NSA_Miscellany
-    General_Results_Missing
+    "HOL-Analysis.Infinite_Set_Sum"
+    General_Results_Missing_Banach_Steinhaus
 
 begin
 
-subsection \<open>Properties of limits of sequences\<close>
+subsection \<open>Limits of sequences\<close>
 
 lemma LIMSEQ_realpow_inf:
   fixes x :: real
@@ -103,7 +100,7 @@ proof-
     using assms by blast 
 qed
 
-subsection \<open>Properties of Cauchy sequences\<close>
+subsection \<open>Cauchy sequences\<close>
 
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>nat \<Rightarrow> real\<close> and e::real
@@ -582,6 +579,5 @@ proof
       by (metis limI) 
   qed
 qed
-
 
 end
