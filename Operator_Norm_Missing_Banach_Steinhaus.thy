@@ -32,11 +32,29 @@ lemma norm_set_nonempty_eq1:
   by simp 
 
 lemma norm_set_nonempty_eq1':
-  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
-  assumes "(UNIV::'a set)\<noteq>0" 
+  fixes f :: \<open>'c::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
+  assumes "(UNIV::'c set)\<noteq>0" 
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-    (* TODO: Dominique works on this *)
-  sorry
+proof -
+  have ex2: "\<exists>x y :: 'c. x \<noteq> y"
+    apply (rule exI[of _ 0])
+    using assms by auto
+  have rnv: "class.real_normed_vector (-) dist norm (+) (0::'c) uminus (*\<^sub>R) sgn uniformity open"
+    apply (rule class.real_normed_vector.intro)
+         apply (rule class.dist_norm.intro)
+         apply (rule dist_norm)
+        apply (rule class.real_vector.intro)
+         apply (rule class.ab_group_add.intro)
+          apply (rule class.comm_monoid_add.intro)
+           apply (rule class.ab_semigroup_add.intro)
+            apply intro_classes
+    by (auto intro: sgn_div_norm uniformity_dist simp: open_uniformity scaleR_add_right 
+                    scaleR_add_left norm_triangle_ineq)
+  show ?thesis
+    apply (rule norm_set_nonempty_eq1[internalize_sort "'a::{real_normed_vector, not_singleton}"])
+    using ex2 apply (rule class.not_singleton.intro)
+    by (rule rnv)
+qed
 
 lemma norm_set_bdd_above_less1: 
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
