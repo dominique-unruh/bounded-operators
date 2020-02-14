@@ -1,19 +1,9 @@
-section \<open>Banach-Steinhaus theorem\<close>
-  (*
-Authors: 
-  Dominique Unruh, University of Tartu, unruh@ut.ee
-  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
-
-Main results:
-- sokal_banach_steinhaus: A lemma used by Sokal in order to prove Banach-Steinhaus theorem.
-- banach_steinhaus: Banach-Steinhaus theorem.
-- bounded_linear_limit_bounded_linear: A corollary of  Banach-Steinhaus theorem. A sufficient
-condition for a sequence of bounded linear operators to converge pointwise to a bounded linear 
-operator.
-
-References: @{cite sokal2011really}
+(*
+  File:   Banach_Steinhaus.thy
+  Author: Dominique Unruh, University of Tartu
+  Author: Jose Manuel Rodriguez Caballero, University of Tartu
 *)
-
+section \<open>Banach-Steinhaus theorem\<close>
 theory Banach_Steinhaus
   imports 
     Real_Analysis_Missing
@@ -156,7 +146,8 @@ proof-
   moreover have \<open>Sup (u ` S) = (onorm f) * r\<close>
   proof-
     have \<open>onorm f = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
-      using assms(1) assms(2) onorm_open_ball_scaled by auto
+      using assms(1) assms(2) onorm_open_ball_scaled 
+      sorry
     hence  \<open> Sup {norm (f x) | x. norm x < r} = onorm f * r\<close>
       using assms(1) by auto
     moreover have \<open>Sup {norm (f x) |x. norm x < r} = (SUP \<xi>\<in>{\<xi>. norm \<xi> < r}. norm (f \<xi>))\<close>
