@@ -13,6 +13,7 @@ theory Operator_Norm_Missing_Banach_Steinhaus
   imports 
     "HOL-Analysis.Infinite_Set_Sum"
     General_Results_Missing_Banach_Steinhaus
+    "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
 lemma ex_norm_1:
@@ -29,6 +30,13 @@ lemma norm_set_nonempty_eq1:
   shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
   using ex_norm_1
   by simp 
+
+lemma norm_set_nonempty_eq1':
+  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close> 
+  assumes "(UNIV::'a set)\<noteq>0" 
+  shows \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+    (* TODO: Dominique works on this *)
+  sorry
 
 lemma norm_set_bdd_above_less1: 
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
@@ -58,9 +66,10 @@ lemma norm_set_bdd_above_eq1:
 
 
 proposition onorm_open_ball:
-  fixes f :: \<open>'a::{real_normed_vector, not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
+(* TODO: case distinction "(UNIV::'a set) = 0" *)
 proof-
   have \<open>(UNIV::'a set) \<noteq> {0} \<Longrightarrow> onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
   proof(cases \<open>f = (\<lambda> _. 0)\<close>)
@@ -191,8 +200,8 @@ proof-
             have \<open>norm (f x) \<ge> 0\<close>
               for x
               by simp            
-            moreover have \<open>{norm (f x) |x::'a. norm x = 1} \<noteq> {}\<close>          
-              using  \<open>(UNIV::'a set) \<noteq> {0}\<close> norm_set_nonempty_eq1
+            moreover have \<open>{norm (f x) |x::'a. norm x = 1} \<noteq> {}\<close> 
+              apply (rule norm_set_nonempty_eq1')
               sorry
             moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
               by (simp add: assms norm_set_bdd_above_eq1)            
@@ -218,8 +227,7 @@ proof-
           then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
             by blast
           have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
-            using False \<open>y = norm (f x)\<close> assms norm_set_nonempty_eq1
-            sorry
+            by (rule norm_set_nonempty_eq1)
           moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
             using assms norm_set_bdd_above_eq1 by force
           moreover have \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
@@ -354,8 +362,7 @@ proof-
         moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
         proof-
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-            using False assms norm_set_nonempty_eq1 
-            sorry
+            by (rule norm_set_nonempty_eq1)
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
             by (simp add: assms norm_set_bdd_above_eq1)    
           have \<open>{0::real} \<noteq> {}\<close>
@@ -395,7 +402,7 @@ proof-
 qed
 
 lemma onorm_open_ball_scaled:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  fixes f :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
     and  r :: real
   assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
   shows  \<open>onorm f  = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
@@ -594,9 +601,8 @@ next
     finally show ?thesis by blast
   qed
   thus ?thesis
-    using \<open>bounded_linear f\<close> False 
-      onorm_open_ball
-    sorry
+    using \<open>bounded_linear f\<close> False
+    by (simp add: onorm_open_ball)
 qed
 
 end
