@@ -6,8 +6,7 @@
 section \<open>Banach-Steinhaus theorem\<close>
 theory Banach_Steinhaus
   imports 
-    Real_Analysis_Missing
-    Operator_Norm_Missing_Banach_Steinhaus
+    Banach_Steinhaus_Missing
 begin
 
 subsection \<open>Preliminaries for the proof of Banach-Steinhaus\<close>
