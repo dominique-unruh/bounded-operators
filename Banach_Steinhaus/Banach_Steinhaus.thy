@@ -110,7 +110,79 @@ proof-
   also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
     using \<open>r > 0\<close> by auto
   also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-    sorry
+  proof(rule cSup_eq_non_empty)
+    show \<open>((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+      by auto
+    show \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow>
+          x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
+    proof-
+      assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+      hence \<open>\<exists> t. x = r *\<^sub>R norm (f t) \<and> norm t < 1\<close>
+        by auto
+      then obtain t where \<open>x = r *\<^sub>R norm (f t)\<close> and \<open>norm t < 1\<close>
+        by blast
+      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+        by simp        
+      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+      moreover have \<open>\<exists> y. y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+      proof-
+        define y where \<open>y = x /\<^sub>R r\<close>
+        have \<open>y \<in> (norm \<circ> f) ` ball 0 1\<close>
+          unfolding y_def using \<open>x = r *\<^sub>R norm (f t)\<close>  \<open>norm t < 1\<close>
+          by (smt \<open>0 < r\<close> \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close> comp_apply image_iff 
+              inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive)
+        moreover have \<open>x \<le> r * y\<close>          
+        proof -
+          have "x = r * (inverse r * x)"
+            using \<open>x = r *\<^sub>R norm (f t)\<close> by auto
+          hence "x + - 1 * (r * (inverse r * x)) \<le> 0"
+            by linarith
+          hence "x \<le> r * (x /\<^sub>R r)"
+            by auto
+          thus ?thesis
+            unfolding y_def by blast
+        qed
+        ultimately show ?thesis 
+          by blast
+      qed
+      ultimately show ?thesis
+        by (smt \<open>0 < r\<close> cSup_upper ordered_comm_semiring_class.comm_mult_left_mono) 
+    qed
+    show \<open>(\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
+         r * Sup ((norm \<circ> f) ` ball 0 1) \<le> y\<close> for y
+    proof-
+      assume \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close>
+      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+        by simp        
+      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+      moreover have \<open>x \<in> ((norm \<circ> f) ` ball 0 1) \<Longrightarrow> x \<le> (inverse r) * y\<close> for x
+      proof-
+        assume \<open>x \<in> (norm \<circ> f) ` ball 0 1\<close>
+        then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = norm (f t)\<close>
+          by auto
+        define x' where \<open>x' = r *\<^sub>R x\<close>
+        have \<open>x' = r *  norm (f t)\<close>
+          by (simp add: \<open>x = norm (f t)\<close> x'_def)
+        hence \<open>x' \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+          using \<open>t \<in> ball (0::'a) 1\<close> by auto
+        hence \<open>x' \<le> y\<close>
+          using  \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast
+        thus ?thesis
+          unfolding x'_def using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def)
+      qed
+      ultimately have \<open>Sup ((norm \<circ> f) ` ball 0 1) \<le> (inverse r) * y\<close>
+        by (simp add: cSup_least)        
+      thus ?thesis 
+        using \<open>r > 0\<close>
+        by (metis pos_le_divideR_eq real_scaleR_def) 
+    qed
+  qed
   also have \<open>\<dots> = r * onorm f\<close>
   proof-
     have \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
