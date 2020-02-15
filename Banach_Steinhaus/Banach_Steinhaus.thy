@@ -197,6 +197,35 @@ proof-
     by simp
 qed
 
+(* TODO: move *)
+lemma bdd_above_plus:
+  \<open>S \<noteq> {} \<Longrightarrow> bdd_above (f ` S) \<Longrightarrow> bdd_above (g ` S) \<Longrightarrow> bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
+  for f::\<open>'a \<Rightarrow> real\<close>
+proof-
+  assume \<open>S \<noteq> {}\<close> and \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close>
+  obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
+    using \<open>bdd_above (f ` S)\<close>
+    unfolding bdd_above_def
+    by auto
+  obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
+    using \<open>bdd_above (g ` S)\<close>
+    unfolding bdd_above_def
+    by auto
+  have \<open>\<And> x. x\<in>S \<Longrightarrow> f x + g x \<le> M + N\<close>
+    using \<open>\<And>x. x \<in> S \<Longrightarrow> f x \<le> M\<close> \<open>\<And>x. x \<in> S \<Longrightarrow> g x \<le> N\<close> by fastforce
+  thus ?thesis
+    unfolding bdd_above_def by auto
+qed
+
+lemma sphere_antipodal:
+  \<open>\<xi> \<in> ball (0::'a::real_normed_vector) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close>
+proof-
+  assume \<open>\<xi> \<in> ball (0::'a) r\<close>
+  hence \<open>norm \<xi> < r\<close> by simp
+  moreover have \<open>norm (-\<xi>) = norm \<xi>\<close> by simp
+  ultimately show ?thesis by simp
+qed
+
 text \<open>                 
   The following lemma is due to Alain Sokal ~\cite{sokal2011reall}.
 \<close>
@@ -209,17 +238,105 @@ proof-
     using assms(1) assms(2) onorm_r by blast
   moreover have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close>
   proof-
-    have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> 
+    have \<open>(norm \<circ> f) \<xi> \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> for \<xi>
+      using linear_plus_norm \<open>bounded_linear f\<close>
+      by (simp add: linear_plus_norm bounded_linear.linear)
+    moreover have \<open>bdd_above ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close> 
+    proof-
+      have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
+      proof-
+        have \<open>ball (0::'a) r \<noteq> {}\<close>
+          using assms(1) by auto          
+        moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f x)) ` (ball 0 r))\<close>
+          by auto          
+        moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
+        proof-
+          obtain M where \<open>\<And> \<xi>. norm (f \<xi>) \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
+            using \<open>bounded_linear f\<close> 
+            by (metis bounded_linear.nonneg_bounded semiring_normalization_rules(7))            
+          hence \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f \<xi>) \<le> M * r\<close>
+            using \<open>r > 0\<close> by (smt mem_ball_0 mult_left_mono) 
+          thus ?thesis
+            by (meson bdd_aboveI2) 
+        qed
+        ultimately have \<open>bdd_above ((\<lambda> \<xi>. norm (f x) + norm (f \<xi>)) ` (ball 0 r))\<close>
+          using bdd_above_plus[where S = "ball (0::'a) r" and f = "\<lambda> \<xi>. norm (f x)" 
+              and g = "\<lambda> \<xi>. norm (f \<xi>)"] by simp
+        then obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball (0::'a) r \<Longrightarrow> norm (f x) + norm (f \<xi>) \<le> M\<close>
+          unfolding bdd_above_def by (meson image_eqI)
+        moreover have \<open>norm (f (x + \<xi>)) \<le> norm (f x) + norm (f \<xi>)\<close> for \<xi>
+          by (simp add: assms(2) linear_simps(1) norm_triangle_ineq)          
+        ultimately have \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> M\<close>
+          by (simp add: assms(2) linear_simps(1) norm_triangle_le)          
+        thus ?thesis
+          by (meson bdd_aboveI2)                    
+      qed
+      moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x - \<xi>))) ` (ball 0 r))\<close>
+      proof-
+        obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> M\<close>
+          using  \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
+          unfolding bdd_above_def
+          by (meson image_eqI)
+        moreover have \<open>\<xi> \<in> ball (0::'a) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close> for \<xi>
+          using sphere_antipodal by auto
+        ultimately show ?thesis
+        proof -
+          assume a1: "\<And>\<xi>. (\<xi>::'a) \<in> ball 0 r \<Longrightarrow> - \<xi> \<in> ball 0 r"
+          assume "\<And>\<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> M"
+          hence f2: "\<And>a. a \<notin> ball 0 r \<or> norm (f (a + x)) \<le> M"
+            by (metis add.commute)
+          have "\<forall>A f r. \<exists>a. (bdd_above (f ` A) \<or> (a::'a) \<in> A) \<and> (\<not> f a \<le> (r::real) \<or> bdd_above (f ` A))"
+            by (metis bdd_aboveI2)
+          thus ?thesis
+            using f2 a1 by (metis uminus_add_conv_diff)
+        qed       
+      qed
+      ultimately show ?thesis 
+        unfolding  max_def
+        apply auto
+         apply (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
+        by (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
+    qed
+    moreover have \<open>ball (0::'a) r \<noteq> {}\<close>
+      using assms(1) by auto      
+    ultimately have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> 
           Sup ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
-      sorry
+      using cSUP_mono[where A = "ball (0::'a) r" and B = "ball (0::'a) r"
+          and f = "norm \<circ> f" and g = "\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"]
+      by blast
     also have \<open>\<dots> = max (Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)))  
                         (Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)))\<close> 
       sorry
     also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r))\<close>
     proof-
-      have \<open>Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)) 
+      have \<open>(\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r) = (\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)\<close>
+      proof auto
+        show \<open>norm \<xi> < r \<Longrightarrow>
+         norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close> for \<xi>
+        proof-
+          assume \<open>norm \<xi> < r\<close>
+          have \<open>norm (f (x + \<xi>)) = norm (f (x - (- \<xi>)))\<close>
+            by simp
+          moreover have \<open>-\<xi> \<in> ball 0 r\<close>
+            by (simp add: \<open>norm \<xi> < r\<close>)            
+          ultimately show ?thesis
+            by blast             
+        qed
+        show  \<open>norm \<xi> < r \<Longrightarrow>
+         norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close> for \<xi>
+        proof-
+          assume \<open>norm \<xi> < r\<close>
+          have \<open>norm (f (x - \<xi>)) = norm (f (x + (- \<xi>)))\<close>
+            by simp
+          moreover have \<open>-\<xi> \<in> ball 0 r\<close>
+            by (simp add: \<open>norm \<xi> < r\<close>)            
+          ultimately show ?thesis
+            by blast             
+        qed
+      qed
+      hence \<open>Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)) 
           = Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
-        sorry
+        by simp
       thus ?thesis 
         by auto
     qed
