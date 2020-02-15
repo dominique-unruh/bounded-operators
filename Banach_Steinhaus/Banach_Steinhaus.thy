@@ -4,338 +4,161 @@
   Author: Jose Manuel Rodriguez Caballero, University of Tartu
 *)
 section \<open>Banach-Steinhaus theorem\<close>
+
 theory Banach_Steinhaus
   imports 
     Banach_Steinhaus_Missing
 begin
 
-subsection \<open>Preliminaries for the proof of Banach-Steinhaus\<close>
+text \<open>
+  We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
+\<close>
 
-text \<open>Reference: @{cite sokal2011really}\<close>
-lemma sokal_banach_steinhaus:
-  fixes f :: \<open>'a::{real_normed_vector} \<Rightarrow> 'b::real_normed_vector\<close>
-    and r :: real and x :: 'a 
-  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-  shows \<open>(onorm f) * r \<le> Sup {norm (f y) | y. dist y x < r}\<close>
+subsection \<open>Preliminaries for Sokal's proof of Banach-Steinhaus theorem\<close>
+
+lemma linear_plus_minus_one_half: 
+  "linear f \<Longrightarrow> f \<xi> = (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>))"
 proof-
-  have \<open>norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-    for \<xi>
-  proof-
-    from  \<open>bounded_linear f\<close>
-    have \<open>linear f\<close>
-      unfolding bounded_linear_def
-      by blast
-    hence \<open>Modules.additive f\<close>
-      by (simp add: Modules.additive_def linear_add)
-    have homogeneous: "f (r *\<^sub>R x) = r  *\<^sub>R (f x)"
-      for r and x
-      by (simp add: \<open>linear f\<close> linear.scaleR)
-    have \<open>2 *\<^sub>R \<xi> = (x + \<xi>) - (x - \<xi>)\<close>
-      by (simp add: scaleR_2)
-    hence \<open>f (2 *\<^sub>R \<xi>) = f ((x + \<xi>) - (x - \<xi>))\<close>
-      by simp
-    moreover have \<open>f (2 *\<^sub>R \<xi>) = 2 *\<^sub>R (f \<xi>)\<close>
-      using homogeneous
-      by (simp add: \<open>Modules.additive f\<close> additive.add scaleR_2)    
-    moreover have \<open>f ((x + \<xi>) - (x - \<xi>)) = f (x + \<xi>) - f (x - \<xi>)\<close>
-      using \<open>Modules.additive f\<close> additive.diff by blast
-    ultimately have \<open>2 *\<^sub>R (f \<xi>) = f (x + \<xi>) - f (x - \<xi>)\<close>
-      by simp
-    hence \<open>(f \<xi>) = (1/2) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>))\<close>
-      by (metis scaleR_2 scaleR_half_double)
-    hence \<open>norm (f \<xi>) = norm ( (1/2) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
-      by simp
-    moreover have \<open>norm ( (1/2) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )
-               = ((1/2)::real) * ( norm (f (x + \<xi>) - f (x - \<xi>)) )\<close>
-      by simp          
-    ultimately have \<open>norm (f \<xi>) = ((1/2)::real) * norm (f (x + \<xi>) - f (x - \<xi>))\<close>
-      by simp
-    moreover have \<open>norm (f (x + \<xi>) - f (x - \<xi>)) \<le> norm (f (x + \<xi>)) + norm (f (x - \<xi>))\<close>
-      by (simp add: norm_triangle_ineq4)
-    ultimately have \<open>norm (f \<xi>) \<le> ((1/2)::real) * (norm (f (x + \<xi>)) + norm (f (x - \<xi>)))\<close>
-      by simp
-    moreover have \<open>(norm (f (x + \<xi>)) + norm (f (x - \<xi>))) 
-        \<le> 2 * max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>  
-    proof(cases \<open>norm (f (x + \<xi>)) \<le> norm (f (x - \<xi>))\<close>)
-      case True
-      have \<open>(norm (f (x + \<xi>)) + norm (f (x - \<xi>))) \<le> 2*norm (f (x - \<xi>))\<close>
-        using True by auto    
-      moreover have \<open>norm (f (x - \<xi>)) \<le> Max { norm (f (x + \<xi>)),  norm (f (x - \<xi>))}\<close>
-        using True by simp
-      ultimately show ?thesis
-        by linarith 
-    next
-      case False
-      have \<open>(norm (f (x + \<xi>)) + norm (f (x - \<xi>))) \<le> 2*norm (f (x + \<xi>))\<close>
-        using False by auto    
-      moreover have \<open>norm (f (x + \<xi>)) \<le> max (norm (f (x + \<xi>)))  (norm (f (x - \<xi>)))\<close>
-        using False by simp
-      ultimately show ?thesis
-        by simp 
-    qed
-    ultimately show ?thesis
-      by simp 
-  qed
-  define u where \<open>u \<xi> = norm (f \<xi>)\<close>
-    for \<xi>
-  define v where \<open>v \<xi> = max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-    for \<xi>
-  define S where \<open>S = Collect (\<lambda> \<xi>::'a. norm \<xi> < r)\<close>
-  have \<open>bdd_above (v ` S)\<close>
-  proof-
-    have \<open>\<xi> \<in> S \<Longrightarrow> u \<xi> \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-      for \<xi>
-      by (simp add: \<open>\<And>\<xi>. norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> \<open>u \<equiv> \<lambda>\<xi>. norm (f \<xi>)\<close>)
-    moreover have \<open>norm (f (x + \<xi>)) \<le> (onorm f) * (norm x + norm \<xi>)\<close>
-      for \<xi>
-    proof-
-      have \<open>norm (f (x + \<xi>)) \<le> (onorm f) * (norm (x + \<xi>))\<close>
-        by (simp add: assms(2) onorm)        
-      moreover have \<open>norm (x + \<xi>) \<le> norm x + norm \<xi>\<close>
-        by (simp add: norm_triangle_ineq)        
-      moreover have \<open>onorm f \<ge> 0\<close>
-        by (simp add: assms(2) onorm_pos_le)        
-      ultimately show ?thesis
-        using mult_left_mono by fastforce
-    qed
-    moreover have \<open>norm (f (x - \<xi>)) \<le> (onorm f) * (norm x + norm \<xi>)\<close>
-      for \<xi>
-      by (metis (no_types, hide_lams) add_diff_cancel add_diff_eq calculation(2) norm_minus_commute)
-    ultimately have \<open>\<xi> \<in> S \<Longrightarrow> v \<xi> \<le> (onorm f) * (norm x + norm \<xi>)\<close>
-      for \<xi>
-      by (simp add: \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>)
-    moreover have \<open>\<xi> \<in> S \<Longrightarrow> norm \<xi> \<le> r\<close>
-      for \<xi>
-      by (simp add: S_def)      
-    moreover have \<open>onorm f \<ge> 0\<close>
-      by (simp add: assms(2) onorm_pos_le)      
-    ultimately have \<open>\<xi> \<in> S \<Longrightarrow> v \<xi> \<le> (onorm f) * (norm x + r)\<close>
-      for \<xi>
-    proof-
-      assume \<open>\<xi> \<in> S\<close>
-      have \<open>v \<xi> \<le> (onorm f) * (norm x + norm \<xi>)\<close>
-        by (simp add: \<open>\<And>\<xi>. \<xi> \<in> S \<Longrightarrow> v \<xi> \<le> onorm f * (norm x + norm \<xi>)\<close> \<open>\<xi> \<in> S\<close>)
-      moreover have \<open>(onorm f) * (norm x + norm \<xi>) \<le> (onorm f) * (norm x + r)\<close>
-      proof-
-        have \<open>norm \<xi> \<le> r\<close>
-          by (simp add: \<open>\<And>\<xi>. \<xi> \<in> S \<Longrightarrow> norm \<xi> \<le> r\<close> \<open>\<xi> \<in> S\<close>)
-        hence \<open>norm x + norm \<xi> \<le> norm x + r\<close>
-          by simp
-        thus ?thesis using \<open>onorm f \<ge> 0\<close>
-          by (simp add: mult_left_mono) 
-      qed
-      ultimately show ?thesis 
-        using mult_left_mono
-        by simp
-    qed
-    thus ?thesis
-      by (meson bdd_aboveI2) 
-  qed
-  hence \<open>Sup (u ` S) \<le> Sup (v ` S)\<close>
-    using \<open>\<And> \<xi>. norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-  proof -
-    assume "\<And>\<xi>. norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"
-    then have f1: "\<And>a. norm (f a) \<le> v a"
-      by (metis \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>)
-    have "(Sup {}::real) \<le> Sup {}"
-      by (metis order_refl)
-    then show ?thesis
-      using f1 by (metis (no_types) \<open>bdd_above (v ` S)\<close> \<open>u \<equiv> \<lambda>\<xi>. norm (f \<xi>)\<close> cSUP_mono image_empty)
-  qed
-  moreover have \<open>Sup (u ` S) = (onorm f) * r\<close>
-  proof-
-    have \<open>onorm f = (1/r) * Sup {norm (f x) | x. norm x < r}\<close>
-      using assms(1) assms(2) onorm_open_ball_scaled 
-      sorry
-    hence  \<open> Sup {norm (f x) | x. norm x < r} = onorm f * r\<close>
-      using assms(1) by auto
-    moreover have \<open>Sup {norm (f x) |x. norm x < r} = (SUP \<xi>\<in>{\<xi>. norm \<xi> < r}. norm (f \<xi>))\<close>
-      by (simp add: setcompr_eq_image)
-    ultimately show ?thesis unfolding S_def u_def by simp
-  qed
-  moreover have \<open>Sup (v ` S) = Sup {norm (f y) | y. dist y x < r }\<close>
-  proof-
-    have \<open>Sup (v ` S) \<le> Sup {norm (f y) | y. dist y x < r }\<close>
-    proof-
-      have \<open>y \<in> v ` S \<Longrightarrow> y \<in> {norm (f y) | y. dist y x < r }\<close>
-        for y
-      proof-
-        assume \<open>y \<in> v ` S\<close>
-        hence \<open>\<exists> t \<in> S. y = v t\<close>
-          by blast
-        then obtain t where \<open>y = v t\<close>
-          by blast
-        hence \<open>y = max (norm (f (x + t))) (norm (f (x - t)))\<close>
-          unfolding v_def by blast
-        show ?thesis
-        proof(cases \<open>y = (norm (f (x + t)))\<close>)
-          case True
-          thus ?thesis
-          proof -
-            have "\<exists>a. a \<in> S \<and> y = v a"
-              by (metis \<open>\<exists>t\<in>S. y = v t\<close>)
-            then obtain aa :: 'a where
-              f1: "aa \<in> S \<and> y = (if norm (f (x + aa)) + - 1 * norm (f (x - aa)) \<le> 0 then norm (f (x - aa)) else norm (f (x + aa)))"
-              using \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> by moura
-            hence f2: "aa \<in> {a. norm a < r}"
-              by (metis S_def)
-            have "norm aa = dist (x + aa) x"
-              by (metis (full_types) add_diff_cancel_right' dist_diff(1))
-            thus ?thesis
-              using f2 f1 by auto
-          qed            
-        next
-          case False
-          hence  \<open>y = (norm (f (x - t)))\<close>
-            using \<open>y = max (norm (f (x + t))) (norm (f (x - t)))\<close> by linarith
-          thus ?thesis
-          proof -
-            obtain aa :: 'a where
-              f1: "aa \<in> S \<and> y = (if norm (f (x + aa)) + - 1 * norm (f (x - aa)) \<le> 0 then norm (f (x - aa)) else norm (f (x + aa)))"
-              using \<open>\<exists>t\<in>S. y = v t\<close> \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> by moura
-            hence f2: "aa \<in> {a. norm a < r}"
-              using S_def by blast
-            have "norm aa = dist (x + aa) x"
-              by (metis add_diff_cancel_right' dist_diff(1))
-            hence "\<exists>a. norm (f (x - t)) = norm (f a) \<and> \<not> r + - 1 * dist a x \<le> 0"
-              using f2 f1 \<open>y = norm (f (x - t))\<close> by force
-            thus ?thesis
-              using \<open>y = norm (f (x - t))\<close> by force
-          qed
-        qed
-      qed
-      hence \<open>(v ` S) \<subseteq> {norm (f y) | y. dist y x < r }\<close>
-        by blast
-      moreover have \<open>bdd_above {norm (f y) | y. dist y x < r }\<close>
-      proof-
-        have \<open>dist t x < r \<Longrightarrow> norm (f t) \<le> onorm f * (r + norm x)\<close>
-          for t
-        proof-
-          assume \<open>dist t x < r\<close>
-          show ?thesis
-          proof-
-            have \<open>norm (f t) \<le> onorm f * norm t\<close>
-              using \<open>bounded_linear f\<close>
-              by (simp add: onorm)
-            have \<open>norm t \<le> norm x + norm (t - x)\<close>
-              by (simp add: norm_triangle_sub)
-            from \<open>dist t x < r\<close>
-            have \<open>norm (t - x) < r\<close>
-              by (simp add: dist_norm) 
-            have \<open>onorm f \<ge> 0\<close>
-              using assms(2) onorm_pos_le by auto
-            hence \<open>norm (f t) \<le> onorm f * (norm x + norm (t - x))\<close>
-              using \<open>norm (f t) \<le> onorm f * norm t\<close> \<open>norm t \<le> norm x + norm (t - x)\<close> mult_left_mono by fastforce
-            have \<open>norm x + norm (t - x) < norm x + r\<close>
-              by (simp add: \<open>norm (t - x) < r\<close>)
-            hence \<open>norm x + norm (t - x) \<le> norm x + r\<close>
-              by simp
-            hence \<open>onorm f * (norm x + norm (t - x)) \<le> onorm f * (norm x + r)\<close>
-              using \<open>0 \<le> onorm f\<close> mult_left_mono by blast
-            hence \<open>norm (f t) \<le> onorm f * (norm x + r)\<close>
-              using \<open>norm (f t) \<le> onorm f * (norm x + norm (t - x))\<close> by auto              
-            thus \<open>norm (f t) \<le> onorm f * (r + norm x)\<close>
-              by (simp add: add.commute)                             
-          qed
-        qed
-        thus ?thesis
-          by fastforce 
-      qed
-      moreover have \<open>{norm (f y) | y. dist y x < r } \<noteq> {}\<close>
-        by (metis S_def assms(1) bot.extremum_uniqueI calculation(1) empty_iff image_is_empty mem_Collect_eq norm_zero)
-      ultimately show ?thesis
-        by (metis (no_types, lifting) Collect_empty_eq S_def assms(1) cSup_subset_mono empty_is_image norm_zero)  
-    qed
-    have \<open>y \<in> {norm (f y) | y. dist y x < r } \<Longrightarrow> y \<le> Sup (v ` S)\<close>
-      for y
-    proof-
-      assume \<open>y \<in> {norm (f y) | y. dist y x < r }\<close>
-      hence \<open>\<exists> t. y = norm (f t) \<and> dist t x < r\<close>
-        by blast
-      then obtain t where \<open>y = norm (f t)\<close> and \<open>dist t x < r\<close>
-        by blast
-      define \<xi> where \<open>\<xi> = t - x\<close>
-      have \<open>norm \<xi> < r\<close>
-        using  \<open>dist t x < r\<close> \<xi>_def
-        by (simp add: dist_norm)
-      have \<open>v ` S = {max (norm (f (x + \<xi>))) (norm (f (x - \<xi>))) | \<xi>. norm \<xi> < r}\<close>
-        using v_def S_def
-        by auto
-      have \<open>norm (f (x + \<xi>)) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-        for \<xi>
-        by auto
-      moreover have \<open>max (norm (f (x + \<xi>))) (norm (f (x - \<xi>))) \<le> Sup {max (norm (f (x + \<xi>))) (norm (f (x - \<xi>))) | \<xi>. norm \<xi> < r}\<close>
-      proof-
-        have \<open>(v ` S) \<noteq> {}\<close>
-          unfolding  S_def 
-          using \<open>norm \<xi> < r\<close> by auto
-        thus ?thesis using  \<open>bdd_above (v ` S)\<close>   \<open>v ` S = {max (norm (f (x + \<xi>))) (norm (f (x - \<xi>))) | \<xi>. norm \<xi> < r}\<close>
-          by (metis S_def \<open>norm \<xi> < r\<close> cSUP_upper mem_Collect_eq v_def)
-      qed
-      ultimately show ?thesis
-        using S_def \<open>bdd_above (v ` S)\<close> \<open>norm \<xi> < r\<close> \<open>v \<equiv> \<lambda>\<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> \<open>y = norm (f t)\<close> \<xi>_def cSUP_upper2 by fastforce 
-    qed
-    moreover have  \<open>{norm (f y) | y. dist y x < r } \<noteq> {}\<close>
-    proof -
-      have "\<exists>ra a. ra = norm (f a) \<and> dist a x < r"
-        by (metis (full_types) assms(1) dist_eq_0_iff)
-      thus ?thesis
-        by blast
-    qed
-    moreover have \<open>bdd_above {norm (f y) | y. dist y x < r }\<close>
-    proof-
-      have \<open>dist t x < r \<Longrightarrow> norm (f t) \<le> onorm f * (r + norm x)\<close>
-        for t
-      proof-
-        assume \<open>dist t x < r\<close>
-        have \<open>norm (f t) \<le> onorm f * norm t\<close>
-          using \<open>bounded_linear f\<close>
-          by (simp add: onorm)
-        moreover have \<open>norm t \<le> norm x + norm (t - x)\<close>
-          by (simp add: norm_triangle_sub)
-        ultimately show ?thesis 
-        proof-
-          have \<open>norm (f t) \<le> onorm f * norm t\<close>
-            using \<open>bounded_linear f\<close>
-            by (simp add: onorm)
-          have \<open>norm t \<le> norm x + norm (t - x)\<close>
-            by (simp add: norm_triangle_sub)
-          from \<open>dist t x < r\<close>
-          have \<open>norm (t - x) < r\<close>
-            by (simp add: dist_norm) 
-          have \<open>onorm f \<ge> 0\<close>
-            using assms(2) onorm_pos_le by auto
-          hence \<open>norm (f t) \<le> onorm f * (norm x + norm (t - x))\<close>
-            using \<open>norm (f t) \<le> onorm f * norm t\<close> \<open>norm t \<le> norm x + norm (t - x)\<close> mult_left_mono by fastforce
-          have \<open>norm x + norm (t - x) < norm x + r\<close>
-            by (simp add: \<open>norm (t - x) < r\<close>)
-          hence \<open>norm x + norm (t - x) \<le> norm x + r\<close>
-            by simp
-          hence \<open>onorm f * (norm x + norm (t - x)) \<le> onorm f * (norm x + r)\<close>
-            using \<open>0 \<le> onorm f\<close> mult_left_mono by blast
-          hence \<open>norm (f t) \<le> onorm f * (norm x + r)\<close>
-            using \<open>norm (f t) \<le> onorm f * (norm x + norm (t - x))\<close> by auto              
-          thus \<open>norm (f t) \<le> onorm f * (r + norm x)\<close>
-            by (simp add: add.commute)                             
-        qed
-      qed
-      thus ?thesis
-        by fastforce 
-    qed
-    ultimately have \<open>Sup {norm (f y) |y. dist y x < r} \<le> Sup (v ` S)\<close>
-    proof -
-      assume "\<And>y. y \<in> {norm (f y) |y. dist y x < r} \<Longrightarrow> y \<le> Sup (v ` S)"
-      thus ?thesis
-        by (metis (lifting) \<open>{norm (f y) |y. dist y x < r} \<noteq> {}\<close> cSup_least)
-    qed 
-    thus ?thesis
-      using \<open>Sup (v ` S) \<le> Sup {norm (f y) |y. dist y x < r}\<close>
-      by linarith      
-  qed
-  thus ?thesis
-    using calculation(1) calculation(2) by auto 
+  assume \<open>linear f\<close>
+  have \<open>\<xi> = (inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) )\<close>
+    by simp
+  have \<open>f \<xi> = f ((inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) ))\<close>
+    by simp 
+  also have \<open>\<dots> = (inverse (of_nat 2)) *\<^sub>R f ( (x + \<xi>) - (x - \<xi>) )\<close>
+    using \<open>linear f\<close> linear_scale by blast
+  finally show ?thesis
+    using \<open>linear f\<close> linear_diff
+    by metis
 qed
 
+lemma linear_plus_norm:
+  "linear f \<Longrightarrow> norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"
+proof-
+  assume \<open>linear f\<close>
+  have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
+    by (metis \<open>linear f\<close> linear_plus_minus_one_half)    
+  also have \<open>\<dots> = inverse (of_nat 2) * norm (f (x + \<xi>) - f (x - \<xi>))\<close>
+    using Real_Vector_Spaces.real_normed_vector_class.norm_scaleR
+    by simp
+  also have \<open>\<dots> \<le> inverse (of_nat 2) * (norm (f (x + \<xi>)) + norm (f (x - \<xi>)))\<close>
+    by (simp add: norm_triangle_ineq4)
+  also have \<open>\<dots> \<le>  max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
+    by auto
+  finally show ?thesis
+    by blast
+qed
+
+lemma onorm_1:
+  \<open>bounded_linear f \<Longrightarrow> onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+  unfolding ball_def 
+  by (simp add: onorm_open_ball setcompr_eq_image)
+
+lemma ball_scale:
+  \<open>r > 0 \<Longrightarrow> ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+proof-
+  assume \<open>r > 0\<close>
+  have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close>
+    for x::'a
+    using  \<open>r > 0\<close> by auto
+  moreover have \<open>norm x < r \<Longrightarrow> x \<in> (*\<^sub>R) r ` {y. norm y < 1}\<close>
+    for x::'a
+  proof-
+    assume \<open>norm x < r\<close>
+    define y where \<open>y = (inverse r) *\<^sub>R x\<close>
+    have \<open>x = r *\<^sub>R y\<close>
+      unfolding y_def
+      using \<open>r > 0\<close>
+      by auto
+    moreover have \<open>norm y < 1\<close>
+      unfolding y_def
+      using \<open>r > 0\<close>  \<open>norm x < r\<close>
+      by (smt left_inverse mult_left_le_imp_le norm_scaleR positive_imp_inverse_positive)      
+    ultimately show ?thesis 
+      by blast
+  qed
+  ultimately show ?thesis
+    unfolding ball_def
+    by auto
+qed
+
+lemma onorm_r:
+  "bounded_linear f \<Longrightarrow> r > 0 \<Longrightarrow> onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))"
+proof-
+  assume \<open>bounded_linear f\<close> and \<open>r > 0\<close>
+  have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+    using \<open>0 < r\<close> ball_scale by blast
+  hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
+    by simp
+  also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
+    using Sup.SUP_image by auto
+  also have \<open>\<dots> = Sup ((norm \<circ> ((*\<^sub>R) r) \<circ> f) ` (ball 0 1))\<close>
+  proof-
+    have \<open>(f \<circ> ((*\<^sub>R) r)) x = (((*\<^sub>R) r) \<circ> f) x\<close> for x
+      using \<open>bounded_linear f\<close> by (simp add: linear_simps(5))
+    hence \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
+      by auto      
+    thus ?thesis
+      by (simp add: comp_assoc) 
+  qed
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) \<bar>r\<bar>) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+  proof-
+    have \<open>norm \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) \<bar>r\<bar>) \<circ> (norm::'a \<Rightarrow> real)\<close>
+      by auto
+    thus ?thesis 
+      by auto
+  qed
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+    using \<open>r > 0\<close> by auto
+  also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+    sorry
+  also have \<open>\<dots> = r * onorm f\<close>
+  proof-
+    have \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+      by (simp add: \<open>bounded_linear f\<close> onorm_1)      
+    thus ?thesis
+      by simp
+  qed
+  finally have \<open>Sup ((norm \<circ> f) ` ball 0 r) = r * onorm f\<close>
+    by simp    
+  thus ?thesis
+    using \<open>r > 0\<close>
+    by simp
+qed
+
+text \<open>                 
+  The following lemma is due to Alain Sokal ~\cite{sokal2011reall}.
+\<close>
+lemma sokal_banach_steinhaus:
+  fixes f::"'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector" and r::real and x::'a 
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close> 
+  shows "onorm f \<le> (inverse r) * Sup ((norm \<circ> f) ` (ball x r) )"
+proof-
+  have \<open>onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))\<close>
+    using assms(1) assms(2) onorm_r by blast
+  moreover have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close>
+  proof-
+    have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> 
+          Sup ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+      sorry
+    also have \<open>\<dots> = max (Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)))  
+                        (Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)))\<close> 
+      sorry
+    also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r))\<close>
+    proof-
+      have \<open>Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)) 
+          = Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+        sorry
+      thus ?thesis 
+        by auto
+    qed
+    also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f \<xi>))) ` (ball x r))\<close>
+      by (metis  add.right_neutral ball_translation image_image)      
+    finally show ?thesis
+      by blast
+  qed
+  ultimately show ?thesis
+    by (simp add: assms(1))    
+qed
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
@@ -366,74 +189,28 @@ proof(rule classical)
      \<Longrightarrow> \<exists> y. dist y x < r \<and> norm (h y) > (2/3) * r * onorm h\<close>
     for r and x and h::\<open>'a \<Rightarrow> 'b\<close>
   proof-
-    assume \<open>bounded_linear h\<close>
-    moreover assume \<open>r > 0\<close>
-    ultimately have \<open>(onorm h) * r \<le> Sup {norm (h y) | y. dist y x < r}\<close>
-      by (simp add: sokal_banach_steinhaus)
+    assume \<open>bounded_linear h\<close>  \<open>r > 0\<close>
+    hence \<open>onorm h \<le> (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      using sokal_banach_steinhaus[where r = r and f = h] 
+      by auto      
+    hence \<open>r * onorm h \<le> Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      sorry
     assume \<open>0 < onorm h\<close>
-    have \<open>(onorm h) * r * (2/3) < Sup {norm (h y) | y. dist y x < r}\<close>
-    proof -
-      have f1: "\<forall>r ra. (ra::real) * r = r * ra"
-        by auto
-      hence f2: "r * onorm h \<le> Sup {norm (h a) |a. dist a x < r}"
-        by (metis \<open>onorm h * r \<le> Sup {norm (h y) |y. dist y x < r}\<close>)
-      have "0 < r * onorm h"
-        by (metis \<open>0 < onorm h\<close> \<open>0 < r\<close> linordered_semiring_strict_class.mult_pos_pos)
-      hence "r * onorm h * (2 / 3) < Sup {norm (h a) |a. dist a x < r}"
-        using f2 by linarith
-      thus ?thesis
-        using f1 by presburger
-    qed 
-    moreover have \<open>{norm (h y) | y. dist y x < r} \<noteq> {}\<close>
-    proof-
-      have \<open>\<exists> y::'a. dist y x < r\<close>
-        using \<open>r > 0\<close>
-        by (metis dist_self)
-      hence \<open>{y | y. dist y x < r} \<noteq> {}\<close>
-        by simp
-      hence \<open>(\<lambda> y. norm ((g n) y)) ` {y | y. dist y x < r} \<noteq> {}\<close>
-        for n
-        by blast
-      thus ?thesis by blast
-    qed
-    moreover have \<open>bdd_above {norm (h y) | y. dist y x < r}\<close>
-    proof-
-      have \<open>norm (h y) \<le> onorm h * norm y\<close>
-        for y
-        using \<open>bounded_linear h\<close>
-        by (simp add: onorm)    
-      moreover have \<open>norm y \<le> norm x + norm (y - x)\<close>
-        for y
-        by (simp add: norm_triangle_sub)        
-      moreover have \<open>onorm h \<ge> 0\<close>
-        by (simp add: \<open>bounded_linear h\<close> onorm_pos_le)
-      ultimately have \<open>norm (h y) \<le> onorm h * (norm x + norm (y - x))\<close>
-        for y
-        by (smt ordered_comm_semiring_class.comm_mult_left_mono)
-      hence \<open>norm (h y) \<le> onorm h * (norm x + dist y x)\<close>
-        for y
-        by (simp add: dist_norm)
-      hence \<open>dist y x < r \<Longrightarrow> norm (h y) < onorm h * (norm x + r)\<close>
-        for y
-        by (smt \<open>0 < onorm h\<close> mult_left_le_imp_le)
-      hence \<open>t \<in> {norm (h y) | y. dist y x < r} \<Longrightarrow> t \<le> onorm h * (norm x + r)\<close>
-        for t
-        by fastforce
-      thus ?thesis by fastforce
-    qed
-    ultimately have \<open>\<exists> t \<in> {norm (h y) | y. dist y x < r}. 
-                    (onorm h) * r * (2/3) < t\<close>
+    have \<open>(2/3) * r * onorm h < Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      sorry
+    moreover have \<open>(norm \<circ> h) ` (ball x r) \<noteq> {}\<close>
+      sorry
+    moreover have \<open>bdd_above ((norm \<circ> h) ` (ball x r))\<close>
+      sorry
+    ultimately have \<open>\<exists> t \<in> (norm \<circ> h) ` (ball x r). (2/3) * r * onorm h <  t\<close>
       using less_cSup_iff
-      by smt
-    hence \<open>\<exists> s \<in> {y | y. dist y x < r}. 
-                    (onorm h) * r * (2/3) < norm (h s)\<close>
-      by blast
-    hence \<open>\<exists> y. dist y x < r \<and> 
-                    (onorm h) * r * (2/3) < norm (h y)\<close>
-      by blast
-    hence \<open>\<exists> y. dist y x < r \<and> 
-                   r * (2/3) * (onorm h) < norm (h y)\<close>
-      by (metis mult.commute vector_space_over_itself.scale_scale)
+      sorry
+    hence \<open>\<exists> s \<in> ball x r. (2/3) * r * onorm h < norm (h s)\<close>
+      sorry
+    hence \<open>\<exists> y. dist y x < r \<and> (2/3) * r * onorm h < norm (h y)\<close>
+      sorry
+    hence \<open>\<exists> y. dist y x < r \<and> (2/3) * r * onorm h < norm (h y)\<close>
+      sorry
     thus ?thesis by auto
   qed
   hence \<open>\<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) * (1/3)^n * onorm (g n)\<close>
