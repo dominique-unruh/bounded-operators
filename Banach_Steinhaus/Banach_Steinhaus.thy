@@ -197,7 +197,7 @@ proof-
     by simp
 qed
 
-(* TODO: move *)
+(* TODO: move? *)
 lemma bdd_above_plus:
   \<open>S \<noteq> {} \<Longrightarrow> bdd_above (f ` S) \<Longrightarrow> bdd_above (g ` S) \<Longrightarrow> bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
   for f::\<open>'a \<Rightarrow> real\<close>
@@ -224,6 +224,83 @@ proof-
   hence \<open>norm \<xi> < r\<close> by simp
   moreover have \<open>norm (-\<xi>) = norm \<xi>\<close> by simp
   ultimately show ?thesis by simp
+qed
+
+lemma max_Sup_absord_left:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<ge> Sup (g ` X) \<Longrightarrow>
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof-
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+  have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<le> Sup (f ` X)\<close>
+  proof-
+    have \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
+    proof-
+      assume \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X)\<close>
+      then obtain x where \<open>y = max (f x) (g x)\<close> and \<open>x \<in> X\<close>
+        by blast
+      have \<open>f x \<le> Sup (f ` X)\<close>
+        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (f ` X)\<close> cSUP_upper) 
+      moreover have  \<open>g x \<le> Sup (g ` X)\<close>
+        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (g ` X)\<close> cSUP_upper) 
+      ultimately have \<open>max (f x) (g x) \<le> Sup (f ` X)\<close>
+        using  \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+        by auto
+      thus ?thesis
+        by (simp add: \<open>y = max (f x) (g x)\<close>) 
+    qed
+    thus ?thesis
+      by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
+  qed
+  moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
+  proof-
+    have \<open>y \<in> f ` X \<Longrightarrow> y \<le> Sup ((\<lambda> x. max (f x) (g x)) ` X)\<close> for y
+    proof-
+      assume \<open>y \<in> f ` X\<close>
+      then obtain x where \<open>x \<in> X\<close> and \<open>y = f x\<close>
+        by blast
+      have  \<open>bdd_above ((\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X)\<close>
+        by (metis (no_types) \<open>bdd_above (f ` X)\<close> \<open>bdd_above (g ` X)\<close> bdd_above_image_sup sup_max)
+      moreover have \<open>e > 0 \<Longrightarrow> \<exists> k \<in> (\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X. y \<le> k + e\<close>
+        for e::real
+        using \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+        by (smt \<open>x \<in> X\<close> \<open>y = f x\<close> image_eqI)        
+      ultimately show ?thesis
+        using \<open>x \<in> X\<close> \<open>y = f x\<close> cSUP_upper by fastforce                 
+    qed
+    thus ?thesis
+      by (metis (mono_tags) cSup_least calculation empty_is_image)
+  qed
+  ultimately show ?thesis by simp
+qed
+
+lemma max_Sup_absord_right:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<le> Sup (g ` X) \<Longrightarrow>
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof-
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
+  hence \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
+    using max_Sup_absord_left by (simp add: \<open>bdd_above (g ` X)\<close> max_Sup_absord_left) 
+  moreover have \<open>max (g x) (f x) = max (f x) (g x)\<close> for x
+    by auto
+  ultimately show ?thesis by simp
+qed
+
+lemma max_Sup:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> 
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X))  (Sup (g ` X))\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
+  case True 
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
+  thus ?thesis
+    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_right)
+next
+  case False
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
+  thus ?thesis
+    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_left)
 qed
 
 text \<open>                 
@@ -306,7 +383,64 @@ proof-
       by blast
     also have \<open>\<dots> = max (Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)))  
                         (Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)))\<close> 
-      sorry
+    proof-
+      have \<open>ball (0::'a) r \<noteq> {}\<close>
+        using \<open>r > 0\<close> by auto
+      moreover have \<open>bdd_above ((\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r)\<close>
+      proof-
+        have \<open>(\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r = (norm \<circ> f) ` ball x r\<close>
+        proof -
+          have "(\<lambda>a. norm (f (x + a))) ` ball 0 r = (\<lambda>a. (norm \<circ> f) (x + a)) ` ball 0 r"
+            by (metis comp_apply)
+          thus ?thesis
+            by (metis (no_types) add.left_neutral image_add_ball image_image)
+        qed
+        moreover have \<open>bdd_above ((norm \<circ> f) ` ball x r)\<close>
+        proof-
+          have \<open>bounded (ball x r)\<close>
+            by simp            
+          hence \<open>bounded ((norm \<circ> f) ` ball x r)\<close>
+            using \<open>bounded_linear f\<close> bounded_linear_image bounded_norm_comp by auto 
+          thus ?thesis
+            by (simp add: bounded_imp_bdd_above)          
+        qed
+        ultimately show ?thesis 
+          by simp
+      qed
+      moreover have \<open>bdd_above ((\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r)\<close>
+      proof-
+        have \<open>(\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r = (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close>
+        proof auto
+          show \<open>norm \<xi> < r \<Longrightarrow>
+         norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close> for \<xi>
+          proof-
+            assume \<open>norm \<xi> < r\<close>
+            hence \<open>\<xi> \<in> ball (0::'a) r\<close>
+              by auto
+            hence \<open>-\<xi> \<in> ball (0::'a) r\<close>
+              by auto
+            thus ?thesis
+              by (metis (no_types, lifting) ab_group_add_class.ab_diff_conv_add_uminus image_iff) 
+          qed
+          show \<open>norm \<xi> < r \<Longrightarrow>
+         norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close> for \<xi>
+          proof-
+            assume \<open>norm \<xi> < r\<close>
+            hence \<open>\<xi> \<in> ball (0::'a) r\<close>
+              by auto
+            hence \<open>-\<xi> \<in> ball (0::'a) r\<close>
+              by auto
+            thus ?thesis
+              by (metis (no_types, lifting) diff_minus_eq_add image_iff)
+          qed
+        qed
+        thus ?thesis
+          by (simp add: calculation(2)) 
+      qed
+      ultimately show ?thesis
+        using max_Sup[where X = "ball (0::'a) r" and f = "\<lambda> \<xi>. (norm (f (x + \<xi>)))" 
+            and g = "\<lambda> \<xi>. (norm (f (x - \<xi>)))"] by blast
+    qed
     also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r))\<close>
     proof-
       have \<open>(\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r) = (\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)\<close>
