@@ -64,6 +64,40 @@ lemma UNIV_not_singleton_converse_zero: "((UNIV::('a::real_normed_vector) set) \
   using UNIV_not_singleton_converse
   by fastforce 
 
+lemma linear_plus_minus_one_half: 
+  "linear f \<Longrightarrow> f \<xi> = (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>))"
+proof-
+  assume \<open>linear f\<close>
+  have \<open>\<xi> = (inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) )\<close>
+    by simp
+  have \<open>f \<xi> = f ((inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) ))\<close>
+    by simp 
+  also have \<open>\<dots> = (inverse (of_nat 2)) *\<^sub>R f ( (x + \<xi>) - (x - \<xi>) )\<close>
+    using \<open>linear f\<close> linear_scale by blast
+  finally show ?thesis
+    using \<open>linear f\<close> linear_diff
+    by metis
+qed
+
+lemma bdd_above_plus:
+  \<open>S \<noteq> {} \<Longrightarrow> bdd_above (f ` S) \<Longrightarrow> bdd_above (g ` S) \<Longrightarrow> bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
+  for f::\<open>'a \<Rightarrow> real\<close>
+proof-
+  assume \<open>S \<noteq> {}\<close> and \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close>
+  obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
+    using \<open>bdd_above (f ` S)\<close>
+    unfolding bdd_above_def
+    by auto
+  obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
+    using \<open>bdd_above (g ` S)\<close>
+    unfolding bdd_above_def
+    by auto
+  have \<open>\<And> x. x\<in>S \<Longrightarrow> f x + g x \<le> M + N\<close>
+    using \<open>\<And>x. x \<in> S \<Longrightarrow> f x \<le> M\<close> \<open>\<And>x. x \<in> S \<Longrightarrow> g x \<le> N\<close> by fastforce
+  thus ?thesis
+    unfolding bdd_above_def by auto
+qed
+
 
 subsection\<open>Operator norm missing\<close>
 
@@ -140,9 +174,27 @@ proposition onorm_open_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>bounded_linear f\<close>
   shows \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
-    (* TODO: case distinction "(UNIV::'a set) = 0" *)
-proof-
-  have \<open>(UNIV::'a set) \<noteq> {0} \<Longrightarrow> onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
+proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  case True
+  hence \<open>x = 0\<close> for x::'a
+    by auto
+  hence \<open>f x = 0\<close> for x
+    using \<open>bounded_linear f\<close> by (metis (full_types) linear_simps(3))
+  hence \<open>onorm f = 0\<close>
+    by (simp add: assms onorm_eq_0)    
+  moreover have \<open>Sup {norm (f x) | x. norm x < 1} = 0\<close>
+  proof-
+    have \<open>{norm (f x) | x. norm x < 1} = {0}\<close>
+      by (smt Collect_cong \<open>\<And>x. f x = 0\<close> norm_zero singleton_conv)      
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis
+    by simp
+next
+  case False
+  hence \<open>(UNIV::'a set) \<noteq> 0\<close>
+    by simp
+  have \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
   proof(cases \<open>f = (\<lambda> _. 0)\<close>)
     case True
     have \<open>onorm f = 0\<close>
@@ -166,7 +218,6 @@ proof-
     ultimately show ?thesis by simp
   next
     case False
-    assume \<open>(UNIV::'a set) \<noteq> {0}\<close>
     have \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1}\<close>
     proof-
       have \<open>Sup {norm (f x) | x. norm x = 1} \<le> Sup {norm (f x) | x. norm x < 1}\<close>
@@ -273,7 +324,7 @@ proof-
               by simp            
             moreover have \<open>{norm (f x) |x::'a. norm x = 1} \<noteq> {}\<close> 
               apply (rule norm_set_nonempty_eq1')
-              sorry
+              using \<open>UNIV \<noteq> 0\<close> by auto                            
             moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
               by (simp add: assms norm_set_bdd_above_eq1)            
             ultimately have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
@@ -298,7 +349,28 @@ proof-
           then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
             by blast
           have \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
-            sorry
+          proof-              
+            have \<open>\<exists> x::'a. norm x = 1\<close>
+            proof-
+              have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+                using \<open>UNIV \<noteq> 0\<close> by auto
+              then obtain x::'a where \<open>x \<noteq> 0\<close>
+                by blast
+              hence \<open>norm x \<noteq> 0\<close>
+                by auto
+              define y where \<open>y = x /\<^sub>R norm x\<close>
+              have \<open>norm y = norm (x /\<^sub>R norm x)\<close>
+                unfolding y_def by auto
+              also have \<open>\<dots> = (norm x) /\<^sub>R (norm x)\<close>
+                by auto
+              also have \<open>\<dots> = 1\<close>
+                using \<open>norm x \<noteq> 0\<close> by auto
+              finally have \<open>norm y = 1\<close>
+                by blast
+              thus ?thesis by blast
+            qed
+            thus ?thesis by blast
+          qed
           moreover have \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
             using assms norm_set_bdd_above_eq1 by force
           moreover have \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
@@ -433,7 +505,7 @@ proof-
         moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
         proof-
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-            sorry
+            using \<open>UNIV \<noteq> 0\<close> norm_set_nonempty_eq1' by auto            
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
             by (simp add: assms norm_set_bdd_above_eq1)    
           have \<open>{0::real} \<noteq> {}\<close>
@@ -468,9 +540,12 @@ proof-
     thus ?thesis using onorm_def
       by metis 
   qed
-  thus ?thesis 
-    sorry
+  thus ?thesis
+    by simp    
 qed
+
+
+
 
 lemma onorm_open_ball_scaled:
   fixes f :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
@@ -675,6 +750,261 @@ next
     using \<open>bounded_linear f\<close> False
     by (simp add: onorm_open_ball)
 qed
+
+lemma linear_plus_norm:
+  "linear f \<Longrightarrow> norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"
+proof-
+  assume \<open>linear f\<close>
+  have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
+    by (metis \<open>linear f\<close> linear_plus_minus_one_half)    
+  also have \<open>\<dots> = inverse (of_nat 2) * norm (f (x + \<xi>) - f (x - \<xi>))\<close>
+    using Real_Vector_Spaces.real_normed_vector_class.norm_scaleR
+    by simp
+  also have \<open>\<dots> \<le> inverse (of_nat 2) * (norm (f (x + \<xi>)) + norm (f (x - \<xi>)))\<close>
+    by (simp add: norm_triangle_ineq4)
+  also have \<open>\<dots> \<le>  max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
+    by auto
+  finally show ?thesis
+    by blast
+qed
+
+lemma onorm_1:
+  \<open>bounded_linear f \<Longrightarrow> onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+  unfolding ball_def 
+  by (simp add: onorm_open_ball setcompr_eq_image)
+
+
+lemma ball_scale:
+  \<open>r > 0 \<Longrightarrow> ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+proof-
+  assume \<open>r > 0\<close>
+  have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close>
+    for x::'a
+    using  \<open>r > 0\<close> by auto
+  moreover have \<open>norm x < r \<Longrightarrow> x \<in> (*\<^sub>R) r ` {y. norm y < 1}\<close>
+    for x::'a
+  proof-
+    assume \<open>norm x < r\<close>
+    define y where \<open>y = (inverse r) *\<^sub>R x\<close>
+    have \<open>x = r *\<^sub>R y\<close>
+      unfolding y_def
+      using \<open>r > 0\<close>
+      by auto
+    moreover have \<open>norm y < 1\<close>
+      unfolding y_def
+      using \<open>r > 0\<close>  \<open>norm x < r\<close>
+      by (smt left_inverse mult_left_le_imp_le norm_scaleR positive_imp_inverse_positive)      
+    ultimately show ?thesis 
+      by blast
+  qed
+  ultimately show ?thesis
+    unfolding ball_def
+    by auto
+qed
+
+lemma onorm_r:
+  "bounded_linear f \<Longrightarrow> r > 0 \<Longrightarrow> onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))"
+proof-
+  assume \<open>bounded_linear f\<close> and \<open>r > 0\<close>
+  have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+    using \<open>0 < r\<close> ball_scale by blast
+  hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
+    by simp
+  also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
+    using Sup.SUP_image by auto
+  also have \<open>\<dots> = Sup ((norm \<circ> ((*\<^sub>R) r) \<circ> f) ` (ball 0 1))\<close>
+  proof-
+    have \<open>(f \<circ> ((*\<^sub>R) r)) x = (((*\<^sub>R) r) \<circ> f) x\<close> for x
+      using \<open>bounded_linear f\<close> by (simp add: linear_simps(5))
+    hence \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
+      by auto      
+    thus ?thesis
+      by (simp add: comp_assoc) 
+  qed
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) \<bar>r\<bar>) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+  proof-
+    have \<open>norm \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) \<bar>r\<bar>) \<circ> (norm::'a \<Rightarrow> real)\<close>
+      by auto
+    thus ?thesis 
+      by auto
+  qed
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+    using \<open>r > 0\<close> by auto
+  also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+  proof(rule cSup_eq_non_empty)
+    show \<open>((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+      by auto
+    show \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow>
+          x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
+    proof-
+      assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+      hence \<open>\<exists> t. x = r *\<^sub>R norm (f t) \<and> norm t < 1\<close>
+        by auto
+      then obtain t where \<open>x = r *\<^sub>R norm (f t)\<close> and \<open>norm t < 1\<close>
+        by blast
+      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+        by simp        
+      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+      moreover have \<open>\<exists> y. y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+      proof-
+        define y where \<open>y = x /\<^sub>R r\<close>
+        have \<open>y \<in> (norm \<circ> f) ` ball 0 1\<close>
+          unfolding y_def using \<open>x = r *\<^sub>R norm (f t)\<close>  \<open>norm t < 1\<close>
+          by (smt \<open>0 < r\<close> \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close> comp_apply image_iff 
+              inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive)
+        moreover have \<open>x \<le> r * y\<close>          
+        proof -
+          have "x = r * (inverse r * x)"
+            using \<open>x = r *\<^sub>R norm (f t)\<close> by auto
+          hence "x + - 1 * (r * (inverse r * x)) \<le> 0"
+            by linarith
+          hence "x \<le> r * (x /\<^sub>R r)"
+            by auto
+          thus ?thesis
+            unfolding y_def by blast
+        qed
+        ultimately show ?thesis 
+          by blast
+      qed
+      ultimately show ?thesis
+        by (smt \<open>0 < r\<close> cSup_upper ordered_comm_semiring_class.comm_mult_left_mono) 
+    qed
+    show \<open>(\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
+         r * Sup ((norm \<circ> f) ` ball 0 1) \<le> y\<close> for y
+    proof-
+      assume \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close>
+      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+        by simp        
+      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+      moreover have \<open>x \<in> ((norm \<circ> f) ` ball 0 1) \<Longrightarrow> x \<le> (inverse r) * y\<close> for x
+      proof-
+        assume \<open>x \<in> (norm \<circ> f) ` ball 0 1\<close>
+        then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = norm (f t)\<close>
+          by auto
+        define x' where \<open>x' = r *\<^sub>R x\<close>
+        have \<open>x' = r *  norm (f t)\<close>
+          by (simp add: \<open>x = norm (f t)\<close> x'_def)
+        hence \<open>x' \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+          using \<open>t \<in> ball (0::'a) 1\<close> by auto
+        hence \<open>x' \<le> y\<close>
+          using  \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast
+        thus ?thesis
+          unfolding x'_def using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def)
+      qed
+      ultimately have \<open>Sup ((norm \<circ> f) ` ball 0 1) \<le> (inverse r) * y\<close>
+        by (simp add: cSup_least)        
+      thus ?thesis 
+        using \<open>r > 0\<close>
+        by (metis pos_le_divideR_eq real_scaleR_def) 
+    qed
+  qed
+  also have \<open>\<dots> = r * onorm f\<close>
+  proof-
+    have \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+      by (simp add: \<open>bounded_linear f\<close> onorm_1)      
+    thus ?thesis
+      by simp
+  qed
+  finally have \<open>Sup ((norm \<circ> f) ` ball 0 r) = r * onorm f\<close>
+    by simp    
+  thus ?thesis
+    using \<open>r > 0\<close>
+    by simp
+qed
+
+
+lemma sphere_antipodal:
+  \<open>\<xi> \<in> ball (0::'a::real_normed_vector) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close>
+proof-
+  assume \<open>\<xi> \<in> ball (0::'a) r\<close>
+  hence \<open>norm \<xi> < r\<close> by simp
+  moreover have \<open>norm (-\<xi>) = norm \<xi>\<close> by simp
+  ultimately show ?thesis by simp
+qed
+
+lemma max_Sup_absord_left:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<ge> Sup (g ` X) \<Longrightarrow>
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof-
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+  have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<le> Sup (f ` X)\<close>
+  proof-
+    have \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
+    proof-
+      assume \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X)\<close>
+      then obtain x where \<open>y = max (f x) (g x)\<close> and \<open>x \<in> X\<close>
+        by blast
+      have \<open>f x \<le> Sup (f ` X)\<close>
+        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (f ` X)\<close> cSUP_upper) 
+      moreover have  \<open>g x \<le> Sup (g ` X)\<close>
+        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (g ` X)\<close> cSUP_upper) 
+      ultimately have \<open>max (f x) (g x) \<le> Sup (f ` X)\<close>
+        using  \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+        by auto
+      thus ?thesis
+        by (simp add: \<open>y = max (f x) (g x)\<close>) 
+    qed
+    thus ?thesis
+      by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
+  qed
+  moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
+  proof-
+    have \<open>y \<in> f ` X \<Longrightarrow> y \<le> Sup ((\<lambda> x. max (f x) (g x)) ` X)\<close> for y
+    proof-
+      assume \<open>y \<in> f ` X\<close>
+      then obtain x where \<open>x \<in> X\<close> and \<open>y = f x\<close>
+        by blast
+      have  \<open>bdd_above ((\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X)\<close>
+        by (metis (no_types) \<open>bdd_above (f ` X)\<close> \<open>bdd_above (g ` X)\<close> bdd_above_image_sup sup_max)
+      moreover have \<open>e > 0 \<Longrightarrow> \<exists> k \<in> (\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X. y \<le> k + e\<close>
+        for e::real
+        using \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+        by (smt \<open>x \<in> X\<close> \<open>y = f x\<close> image_eqI)        
+      ultimately show ?thesis
+        using \<open>x \<in> X\<close> \<open>y = f x\<close> cSUP_upper by fastforce                 
+    qed
+    thus ?thesis
+      by (metis (mono_tags) cSup_least calculation empty_is_image)
+  qed
+  ultimately show ?thesis by simp
+qed
+
+lemma max_Sup_absord_right:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<le> Sup (g ` X) \<Longrightarrow>
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof-
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
+  hence \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
+    using max_Sup_absord_left by (simp add: \<open>bdd_above (g ` X)\<close> max_Sup_absord_left) 
+  moreover have \<open>max (g x) (f x) = max (f x) (g x)\<close> for x
+    by auto
+  ultimately show ?thesis by simp
+qed
+
+lemma max_Sup:
+  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> 
+   Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X))  (Sup (g ` X))\<close>
+  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
+proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
+  case True 
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
+  thus ?thesis
+    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_right)
+next
+  case False
+  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
+  thus ?thesis
+    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_left)
+qed
+
 
 subsection \<open>Real Analysis Missing\<close>
 

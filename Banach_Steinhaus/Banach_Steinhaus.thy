@@ -16,293 +16,6 @@ text \<open>
 
 subsection \<open>Preliminaries for Sokal's proof of Banach-Steinhaus theorem\<close>
 
-lemma linear_plus_minus_one_half: 
-  "linear f \<Longrightarrow> f \<xi> = (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>))"
-proof-
-  assume \<open>linear f\<close>
-  have \<open>\<xi> = (inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) )\<close>
-    by simp
-  have \<open>f \<xi> = f ((inverse (of_nat 2)) *\<^sub>R ( (x + \<xi>) - (x - \<xi>) ))\<close>
-    by simp 
-  also have \<open>\<dots> = (inverse (of_nat 2)) *\<^sub>R f ( (x + \<xi>) - (x - \<xi>) )\<close>
-    using \<open>linear f\<close> linear_scale by blast
-  finally show ?thesis
-    using \<open>linear f\<close> linear_diff
-    by metis
-qed
-
-lemma linear_plus_norm:
-  "linear f \<Longrightarrow> norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"
-proof-
-  assume \<open>linear f\<close>
-  have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
-    by (metis \<open>linear f\<close> linear_plus_minus_one_half)    
-  also have \<open>\<dots> = inverse (of_nat 2) * norm (f (x + \<xi>) - f (x - \<xi>))\<close>
-    using Real_Vector_Spaces.real_normed_vector_class.norm_scaleR
-    by simp
-  also have \<open>\<dots> \<le> inverse (of_nat 2) * (norm (f (x + \<xi>)) + norm (f (x - \<xi>)))\<close>
-    by (simp add: norm_triangle_ineq4)
-  also have \<open>\<dots> \<le>  max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
-    by auto
-  finally show ?thesis
-    by blast
-qed
-
-lemma onorm_1:
-  \<open>bounded_linear f \<Longrightarrow> onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-  unfolding ball_def 
-  by (simp add: onorm_open_ball setcompr_eq_image)
-
-lemma ball_scale:
-  \<open>r > 0 \<Longrightarrow> ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
-proof-
-  assume \<open>r > 0\<close>
-  have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close>
-    for x::'a
-    using  \<open>r > 0\<close> by auto
-  moreover have \<open>norm x < r \<Longrightarrow> x \<in> (*\<^sub>R) r ` {y. norm y < 1}\<close>
-    for x::'a
-  proof-
-    assume \<open>norm x < r\<close>
-    define y where \<open>y = (inverse r) *\<^sub>R x\<close>
-    have \<open>x = r *\<^sub>R y\<close>
-      unfolding y_def
-      using \<open>r > 0\<close>
-      by auto
-    moreover have \<open>norm y < 1\<close>
-      unfolding y_def
-      using \<open>r > 0\<close>  \<open>norm x < r\<close>
-      by (smt left_inverse mult_left_le_imp_le norm_scaleR positive_imp_inverse_positive)      
-    ultimately show ?thesis 
-      by blast
-  qed
-  ultimately show ?thesis
-    unfolding ball_def
-    by auto
-qed
-
-lemma onorm_r:
-  "bounded_linear f \<Longrightarrow> r > 0 \<Longrightarrow> onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))"
-proof-
-  assume \<open>bounded_linear f\<close> and \<open>r > 0\<close>
-  have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
-    using \<open>0 < r\<close> ball_scale by blast
-  hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
-    by simp
-  also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
-    using Sup.SUP_image by auto
-  also have \<open>\<dots> = Sup ((norm \<circ> ((*\<^sub>R) r) \<circ> f) ` (ball 0 1))\<close>
-  proof-
-    have \<open>(f \<circ> ((*\<^sub>R) r)) x = (((*\<^sub>R) r) \<circ> f) x\<close> for x
-      using \<open>bounded_linear f\<close> by (simp add: linear_simps(5))
-    hence \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
-      by auto      
-    thus ?thesis
-      by (simp add: comp_assoc) 
-  qed
-  also have \<open>\<dots> = Sup ((((*\<^sub>R) \<bar>r\<bar>) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
-  proof-
-    have \<open>norm \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) \<bar>r\<bar>) \<circ> (norm::'a \<Rightarrow> real)\<close>
-      by auto
-    thus ?thesis 
-      by auto
-  qed
-  also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
-    using \<open>r > 0\<close> by auto
-  also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-  proof(rule cSup_eq_non_empty)
-    show \<open>((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
-      by auto
-    show \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow>
-          x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
-    proof-
-      assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
-      hence \<open>\<exists> t. x = r *\<^sub>R norm (f t) \<and> norm t < 1\<close>
-        by auto
-      then obtain t where \<open>x = r *\<^sub>R norm (f t)\<close> and \<open>norm t < 1\<close>
-        by blast
-      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
-        by simp        
-      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
-        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
-          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
-          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
-      moreover have \<open>\<exists> y. y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
-      proof-
-        define y where \<open>y = x /\<^sub>R r\<close>
-        have \<open>y \<in> (norm \<circ> f) ` ball 0 1\<close>
-          unfolding y_def using \<open>x = r *\<^sub>R norm (f t)\<close>  \<open>norm t < 1\<close>
-          by (smt \<open>0 < r\<close> \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close> comp_apply image_iff 
-              inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive)
-        moreover have \<open>x \<le> r * y\<close>          
-        proof -
-          have "x = r * (inverse r * x)"
-            using \<open>x = r *\<^sub>R norm (f t)\<close> by auto
-          hence "x + - 1 * (r * (inverse r * x)) \<le> 0"
-            by linarith
-          hence "x \<le> r * (x /\<^sub>R r)"
-            by auto
-          thus ?thesis
-            unfolding y_def by blast
-        qed
-        ultimately show ?thesis 
-          by blast
-      qed
-      ultimately show ?thesis
-        by (smt \<open>0 < r\<close> cSup_upper ordered_comm_semiring_class.comm_mult_left_mono) 
-    qed
-    show \<open>(\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
-         r * Sup ((norm \<circ> f) ` ball 0 1) \<le> y\<close> for y
-    proof-
-      assume \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close>
-      have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
-        by simp        
-      moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
-        using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
-          [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
-          Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
-      moreover have \<open>x \<in> ((norm \<circ> f) ` ball 0 1) \<Longrightarrow> x \<le> (inverse r) * y\<close> for x
-      proof-
-        assume \<open>x \<in> (norm \<circ> f) ` ball 0 1\<close>
-        then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = norm (f t)\<close>
-          by auto
-        define x' where \<open>x' = r *\<^sub>R x\<close>
-        have \<open>x' = r *  norm (f t)\<close>
-          by (simp add: \<open>x = norm (f t)\<close> x'_def)
-        hence \<open>x' \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
-          using \<open>t \<in> ball (0::'a) 1\<close> by auto
-        hence \<open>x' \<le> y\<close>
-          using  \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast
-        thus ?thesis
-          unfolding x'_def using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def)
-      qed
-      ultimately have \<open>Sup ((norm \<circ> f) ` ball 0 1) \<le> (inverse r) * y\<close>
-        by (simp add: cSup_least)        
-      thus ?thesis 
-        using \<open>r > 0\<close>
-        by (metis pos_le_divideR_eq real_scaleR_def) 
-    qed
-  qed
-  also have \<open>\<dots> = r * onorm f\<close>
-  proof-
-    have \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-      by (simp add: \<open>bounded_linear f\<close> onorm_1)      
-    thus ?thesis
-      by simp
-  qed
-  finally have \<open>Sup ((norm \<circ> f) ` ball 0 r) = r * onorm f\<close>
-    by simp    
-  thus ?thesis
-    using \<open>r > 0\<close>
-    by simp
-qed
-
-(* TODO: move? *)
-lemma bdd_above_plus:
-  \<open>S \<noteq> {} \<Longrightarrow> bdd_above (f ` S) \<Longrightarrow> bdd_above (g ` S) \<Longrightarrow> bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
-  for f::\<open>'a \<Rightarrow> real\<close>
-proof-
-  assume \<open>S \<noteq> {}\<close> and \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close>
-  obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
-    using \<open>bdd_above (f ` S)\<close>
-    unfolding bdd_above_def
-    by auto
-  obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
-    using \<open>bdd_above (g ` S)\<close>
-    unfolding bdd_above_def
-    by auto
-  have \<open>\<And> x. x\<in>S \<Longrightarrow> f x + g x \<le> M + N\<close>
-    using \<open>\<And>x. x \<in> S \<Longrightarrow> f x \<le> M\<close> \<open>\<And>x. x \<in> S \<Longrightarrow> g x \<le> N\<close> by fastforce
-  thus ?thesis
-    unfolding bdd_above_def by auto
-qed
-
-lemma sphere_antipodal:
-  \<open>\<xi> \<in> ball (0::'a::real_normed_vector) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close>
-proof-
-  assume \<open>\<xi> \<in> ball (0::'a) r\<close>
-  hence \<open>norm \<xi> < r\<close> by simp
-  moreover have \<open>norm (-\<xi>) = norm \<xi>\<close> by simp
-  ultimately show ?thesis by simp
-qed
-
-lemma max_Sup_absord_left:
-  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<ge> Sup (g ` X) \<Longrightarrow>
-   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
-  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
-proof-
-  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-  have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<le> Sup (f ` X)\<close>
-  proof-
-    have \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
-    proof-
-      assume \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X)\<close>
-      then obtain x where \<open>y = max (f x) (g x)\<close> and \<open>x \<in> X\<close>
-        by blast
-      have \<open>f x \<le> Sup (f ` X)\<close>
-        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (f ` X)\<close> cSUP_upper) 
-      moreover have  \<open>g x \<le> Sup (g ` X)\<close>
-        by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (g ` X)\<close> cSUP_upper) 
-      ultimately have \<open>max (f x) (g x) \<le> Sup (f ` X)\<close>
-        using  \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-        by auto
-      thus ?thesis
-        by (simp add: \<open>y = max (f x) (g x)\<close>) 
-    qed
-    thus ?thesis
-      by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
-  qed
-  moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
-  proof-
-    have \<open>y \<in> f ` X \<Longrightarrow> y \<le> Sup ((\<lambda> x. max (f x) (g x)) ` X)\<close> for y
-    proof-
-      assume \<open>y \<in> f ` X\<close>
-      then obtain x where \<open>x \<in> X\<close> and \<open>y = f x\<close>
-        by blast
-      have  \<open>bdd_above ((\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X)\<close>
-        by (metis (no_types) \<open>bdd_above (f ` X)\<close> \<open>bdd_above (g ` X)\<close> bdd_above_image_sup sup_max)
-      moreover have \<open>e > 0 \<Longrightarrow> \<exists> k \<in> (\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X. y \<le> k + e\<close>
-        for e::real
-        using \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-        by (smt \<open>x \<in> X\<close> \<open>y = f x\<close> image_eqI)        
-      ultimately show ?thesis
-        using \<open>x \<in> X\<close> \<open>y = f x\<close> cSUP_upper by fastforce                 
-    qed
-    thus ?thesis
-      by (metis (mono_tags) cSup_least calculation empty_is_image)
-  qed
-  ultimately show ?thesis by simp
-qed
-
-lemma max_Sup_absord_right:
-  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> Sup (f ` X) \<le> Sup (g ` X) \<Longrightarrow>
-   Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
-  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
-proof-
-  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
-  hence \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
-    using max_Sup_absord_left by (simp add: \<open>bdd_above (g ` X)\<close> max_Sup_absord_left) 
-  moreover have \<open>max (g x) (f x) = max (f x) (g x)\<close> for x
-    by auto
-  ultimately show ?thesis by simp
-qed
-
-lemma max_Sup:
-  \<open>X \<noteq> {} \<Longrightarrow> bdd_above (f ` X) \<Longrightarrow>  bdd_above (g ` X) \<Longrightarrow> 
-   Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X))  (Sup (g ` X))\<close>
-  for f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
-proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
-  case True 
-  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
-  thus ?thesis
-    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_right)
-next
-  case False
-  assume \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
-  thus ?thesis
-    by (smt Inf.INF_cong \<open>X \<noteq> {}\<close> max_Sup_absord_left)
-qed
-
 text \<open>                 
   The following lemma is due to Alain Sokal ~\cite{sokal2011reall}.
 \<close>
@@ -488,8 +201,7 @@ subsection \<open>Banach-Steinhaus theorem\<close>
 text \<open>Reference: @{cite sokal2011really}\<close>
 theorem banach_steinhaus:
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close>
-    and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
+  assumes \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
 proof(rule classical)
   assume \<open>\<not>(\<exists> M. \<forall> k. onorm (f k) \<le> M)\<close>
@@ -509,51 +221,81 @@ proof(rule classical)
   have \<open>\<And> n. bounded_linear (g n)\<close>
     using g_def by simp
   have \<open>bounded_linear h \<Longrightarrow> 0 < onorm h \<Longrightarrow> r > 0
-     \<Longrightarrow> \<exists> y. dist y x < r \<and> norm (h y) > (2/3) * r * onorm h\<close>
+     \<Longrightarrow> \<exists> y. dist y x < r \<and> norm (h y) > r * (of_rat (Fract 2 3)) * onorm h\<close>
     for r and x and h::\<open>'a \<Rightarrow> 'b\<close>
   proof-
     assume \<open>bounded_linear h\<close>  \<open>r > 0\<close>
     hence \<open>onorm h \<le> (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
       using sokal_banach_steinhaus[where r = r and f = h] 
-      by auto      
-    hence \<open>r * onorm h \<le> Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      sorry
-    assume \<open>0 < onorm h\<close>
-    have \<open>(2/3) * r * onorm h < Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      sorry
+      by auto
+    hence \<open>onorm h \<le> (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      by simp      
+    moreover assume \<open>0 < onorm h\<close>
+    moreover have \<open>((of_rat (Fract 2 3)) * onorm h) < onorm h\<close>
+    proof-
+      have \<open>of_rat (Fract 2 3) < (1::real)\<close>
+        by (simp add: Fract_less_one_iff)
+      thus ?thesis
+        using \<open>0 < onorm h\<close> by auto
+    qed
+    ultimately have \<open>(of_rat (Fract 2 3)) * onorm h < (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      by linarith
+    hence  \<open>r * (of_rat (Fract 2 3)) * onorm h < r * (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      by (simp add: \<open>0 < r\<close>) 
+    moreover have \<open>r * (inverse r) = 1\<close>
+      using \<open>r > 0\<close> by auto
+    ultimately have \<open>r * (of_rat (Fract 2 3)) * onorm h  < Sup ( (norm \<circ> h) ` (ball x r) )\<close>
+      by auto
     moreover have \<open>(norm \<circ> h) ` (ball x r) \<noteq> {}\<close>
-      sorry
+      using \<open>0 < r\<close> by auto      
     moreover have \<open>bdd_above ((norm \<circ> h) ` (ball x r))\<close>
-      sorry
-    ultimately have \<open>\<exists> t \<in> (norm \<circ> h) ` (ball x r). (2/3) * r * onorm h <  t\<close>
-      using less_cSup_iff
-      sorry
-    hence \<open>\<exists> s \<in> ball x r. (2/3) * r * onorm h < norm (h s)\<close>
-      sorry
-    hence \<open>\<exists> y. dist y x < r \<and> (2/3) * r * onorm h < norm (h y)\<close>
-      sorry
-    hence \<open>\<exists> y. dist y x < r \<and> (2/3) * r * onorm h < norm (h y)\<close>
-      sorry
+    proof-
+      have \<open>bounded (ball x r)\<close>
+        by simp
+      hence \<open>bounded (h ` (ball x r))\<close>
+        by (simp add: \<open>bounded_linear h\<close> bounded_linear_image)
+      hence \<open>\<exists> M. \<forall> \<xi> \<in> (h ` (ball x r)). norm \<xi> \<le> M\<close>
+        using bounded_iff by blast
+      then obtain M where \<open>\<And> \<xi>.  \<xi> \<in> (h ` (ball x r)) \<Longrightarrow> norm \<xi> \<le> M\<close>
+        by blast
+      hence \<open>\<And> \<sigma>. \<sigma> \<in> (ball x r) \<Longrightarrow> norm (h \<sigma>) \<le> M\<close>
+        by simp
+      hence \<open>bdd_above ((norm \<circ> h) ` (ball x r))\<close>
+        by (metis (full_types) \<open>bounded (h ` ball x r)\<close> bdd_above_norm image_comp)        
+      thus ?thesis
+        by auto        
+    qed
+    ultimately have \<open>\<exists> t \<in> (norm \<circ> h) ` (ball x r). r * (of_rat (Fract 2 3)) * onorm h < t\<close>
+      by (meson less_cSupD)
+    hence \<open>\<exists> s \<in> ball x r. r * (of_rat (Fract 2 3)) * onorm h < (norm \<circ> h) s\<close>
+      by auto
+    hence \<open>\<exists> s \<in> ball x r. r * (of_rat (Fract 2 3)) * onorm h < norm (h s)\<close>
+      by simp
+    hence \<open>\<exists> y. dist y x < r \<and> r * (of_rat (Fract 2 3)) * onorm h < norm (h y)\<close>
+      unfolding ball_def by (simp add: dist_commute) 
+    hence \<open>\<exists> y. dist y x < r \<and> r * (of_rat (Fract 2 3)) * onorm h < norm (h y)\<close>
+      by simp      
     thus ?thesis by auto
   qed
-  hence \<open>\<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) * (1/3)^n * onorm (g n)\<close>
+  hence \<open>\<exists> y. dist y x < (of_rat (Fract 1 3))^n \<and> 
+        norm ((g n) y) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
     for n and x
   proof-
-    have \<open>((1/3)::real)^n > 0\<close>
-      by simp
+    have \<open>(of_rat (Fract 1 3))^n > (0::real)\<close>
+      by (simp add: zero_less_Fract_iff)      
     moreover have \<open>\<And> n. onorm (g n) > 0\<close>
       using  \<open>\<forall> n. onorm (g n) > (4::real)^n\<close>
       by (smt zero_less_power)                             
     ultimately show ?thesis using  \<open>\<And> n. bounded_linear (g n)\<close>
-      using \<open>\<And>x r h. \<lbrakk>bounded_linear h; 0 < onorm h; 0 < r\<rbrakk> \<Longrightarrow> \<exists>y. dist y x < r \<and> 2 / 3 * r * onorm h < norm (h y)\<close> by auto
+      by (metis \<open>0 < real_of_rat (Fract 1 3) ^ n\<close> \<open>\<And>n. 0 < onorm (g n)\<close> \<open>\<And>n. bounded_linear (g n)\<close> \<open>\<And>x r h. \<lbrakk>bounded_linear h; 0 < onorm h; 0 < r\<rbrakk> \<Longrightarrow> \<exists>y. dist y x < r \<and> r * real_of_rat (Fract 2 3) * onorm h < norm (h y)\<close> linordered_field_class.sign_simps(5))          
   qed
-  hence \<open>\<forall> n. \<forall> x. \<exists> y. dist y x < (1/3)^n \<and> norm ((g n) y) > (2/3) * (1/3)^n * onorm (g n)\<close>
+  hence \<open>\<forall> n. \<forall> x. \<exists> y. dist y x < (of_rat (Fract 1 3))^n \<and> norm ((g n) y) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
     by blast
-  hence \<open>\<exists> \<Phi>. \<forall> n. \<forall> x. dist (\<Phi> n x) x < (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+  hence \<open>\<exists> \<Phi>. \<forall> n. \<forall> x. dist (\<Phi> n x) x < (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
     by metis
   then obtain \<Phi>
     where \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-       (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+       (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
     by blast
   define \<phi>::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<phi> n = rec_nat 0 \<Phi> n\<close>
     for n
@@ -563,8 +305,8 @@ proof(rule classical)
     for n
     using \<phi>_def by simp
   from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-       (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
-  have \<open>dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
+       (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
+  have  \<open>dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
     for n
     using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close> by auto
   have \<open>Cauchy \<phi>\<close>
@@ -644,8 +386,8 @@ proof(rule classical)
     hence \<open>\<exists> M. \<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> M\<close>
       by blast
     thus ?thesis
-      using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
-      by smt
+      using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
+      sorry
   qed
   hence \<open>\<exists> l. \<phi> \<longlonglongrightarrow> l\<close>
     by (simp add: convergent_eq_Cauchy)
@@ -668,26 +410,29 @@ proof(rule classical)
       proof-
         have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..k}) \<le> (1/2)*(1/3::real)^n\<close>
         proof-
-          from \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (1/3)^n\<close>
-          have \<open>norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (1/3::real)^(Suc t)\<close>
+          from \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
+          have \<open>norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (of_rat (Fract 1 3))^(Suc t)\<close>
             for t
-            by (metis dist_norm)            
+            using dist_norm
+            by metis 
           hence \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..n+p}) 
               \<le> (sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p})\<close> 
             for p::nat
           proof(induction p)
             case 0
-            have \<open>norm (\<phi> (Suc (Suc n)) - \<phi> (Suc n)) < (1/3::real)^(Suc n)\<close>
-              using \<open>\<And> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (1/3::real)^(Suc t)\<close>
+            have \<open>norm (\<phi> (Suc (Suc n)) - \<phi> (Suc n)) < (of_rat (Fract 1 3))^(Suc n)\<close>
+              using \<open>\<And> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (of_rat (Fract 1 3))^(Suc t)\<close>
               by blast
-            hence \<open>(\<Sum>t = n..n. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) \<le> (\<Sum>t = n..n. (1 / 3) ^ Suc t)\<close>
+            hence \<open>(\<Sum>t = n..n. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) \<le> (\<Sum>t = n..n. (of_rat (Fract 1 3)) ^ Suc t)\<close>
               by simp
             thus ?case 
-              by simp
+              sorry        
           next
             case (Suc p)
             thus ?case
-              by (smt add_Suc_right le_add1 sum.nat_ivl_Suc') 
+              (*
+              by (smt add_Suc_right le_add1 sum.nat_ivl_Suc')
+*) sorry
           qed
           moreover have  \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) \<le> (1/2)*(1/3::real)^n\<close> 
             for p::nat
@@ -784,13 +529,14 @@ proof(rule classical)
       moreover have \<open>norm ((g n) (\<phi> (Suc n))) > (2/3) * (1/3)^n * onorm (g n)\<close>
       proof-
         from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-         (1/3)^n \<and> norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
-        have \<open>norm ((g n) (\<Phi> n x)) > (2/3) * (1/3)^n * onorm (g n)\<close>
+         (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
+        have \<open>norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
           for x     
+          by auto          
+        hence \<open>norm ((g n) (\<Phi> n (\<phi> n))) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
           by blast
-        hence \<open>norm ((g n) (\<Phi> n (\<phi> n))) > (2/3) * (1/3)^n * onorm (g n)\<close>
-          by blast
-        thus ?thesis by (simp add: \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>)
+        thus ?thesis using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>
+          by (metis (mono_tags, hide_lams) divide_rat mult_numeral_1 mult_numeral_1_right numeral_One of_rat_divide of_rat_numeral_eq rat_number_expand(3))
       qed
       ultimately have \<open>(2/3) * (1/3)^n * onorm (g n) < norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
         by simp
