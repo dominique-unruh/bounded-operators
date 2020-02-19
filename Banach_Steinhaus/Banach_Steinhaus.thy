@@ -319,6 +319,11 @@ subsection \<open>Banach-Steinhaus theorem\<close>
 
 theorem banach_steinhaus:
   \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
+  for f::\<open>'c \<Rightarrow> ('a::banach, 'b::real_normed_vector) real_bounded\<close>
+  sorry
+
+theorem banach_steinhaus':
+  \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
 proof-
   assume \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close> show ?thesis
   proof(rule classical)
@@ -341,8 +346,7 @@ proof-
       moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1))\<close> for n
         apply transfer unfolding bdd_above_def ball_def bounded_linear_def  bounded_linear_axioms_def
         apply auto
-        by (metis dual_order.strict_implies_order dual_order.strict_trans1 mult.commute mult_le_cancel_left1 not_le zero_less_norm_iff)
-          (* > 1s TODO: improve *)
+        by (metis dual_order.strict_implies_order dual_order.trans mult.commute mult_le_cancel_left2 mult_le_cancel_left_neg norm_ge_zero)
       ultimately have \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
        (Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1) - e) < x\<close> for n and e
         apply auto using less_cSup_iff[where X = "(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1" 
@@ -396,7 +400,7 @@ qed
 
 
 (* TODO: delete *)
-theorem banach_steinhaus':
+theorem banach_steinhaus'':
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
