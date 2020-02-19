@@ -7,8 +7,11 @@ section \<open>Banach-Steinhaus theorem\<close>
 
 theory Banach_Steinhaus
   imports 
-    Banach_Steinhaus_Missing
+    Banach_Steinhaus_Missing    
+    "HOL-ex.Sketch_and_Explore"
 begin
+
+unbundle nsa_notation
 
 text \<open>
   We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
@@ -16,16 +19,135 @@ text \<open>
 
 subsection \<open>Preliminaries for Sokal's proof of Banach-Steinhaus theorem\<close>
 
+typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded
+  = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
+  morphisms times_real_bounded_vec Abs_real_bounded
+  using bounded_linear_zero by blast
+
+notation times_real_bounded_vec (infixr "*\<^sub>v" 70)
+
+setup_lifting type_definition_real_bounded
+
+instantiation  real_bounded :: (real_normed_vector, real_normed_vector) real_normed_vector
+begin
+lift_definition uminus_real_bounded ::
+  "('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded "  is \<open>\<lambda> f. \<lambda> x. - f x\<close>
+  by (simp add: bounded_linear_minus)
+
+lift_definition zero_real_bounded ::
+  "('a, 'b) real_bounded"  is \<open>\<lambda> x. 0\<close>
+  by simp
+
+lift_definition plus_real_bounded ::
+  "('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded "  
+  is \<open>\<lambda> f. \<lambda> g. \<lambda> x. f x + g x\<close>
+  by (simp add: bounded_linear_add)
+
+lift_definition minus_real_bounded ::
+  "('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded "  
+  is \<open>\<lambda> f. \<lambda> g. \<lambda> x. f x - g x\<close>
+  by (simp add: bounded_linear_sub)
+
+lift_definition norm_real_bounded :: \<open>('a, 'b) real_bounded \<Rightarrow> real\<close>
+  is \<open>onorm\<close>.
+
+lift_definition dist_real_bounded :: \<open>('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded \<Rightarrow> real\<close>
+  is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x )\<close>.
+
+lift_definition scaleR_real_bounded :: \<open>real \<Rightarrow> ('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded\<close>
+  is \<open>\<lambda> r. \<lambda> f. \<lambda> x. r *\<^sub>R f x\<close>
+  by (simp add: bounded_linear_const_scaleR)
+
+lift_definition sgn_real_bounded :: \<open>('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded\<close>
+  is \<open>\<lambda> f. (\<lambda> x. (f x) /\<^sub>R (onorm f) )\<close>
+  by (simp add: bounded_linear_const_scaleR)
+
+definition uniformity_real_bounded :: \<open>( ('a, 'b) real_bounded \<times> ('a, 'b) real_bounded ) filter\<close>
+  where  \<open>uniformity_real_bounded = (INF e:{0<..}. principal {((f::('a, 'b) real_bounded), g). 
+          dist f g < e})\<close>
+
+definition open_real_bounded :: \<open>(('a, 'b) real_bounded) set \<Rightarrow> bool\<close>
+  where \<open>open_real_bounded = (\<lambda> U::(('a, 'b) real_bounded) set. 
+  \<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity)\<close>
+
+instance
+proof
+  show "dist (x::('a, 'b) real_bounded) y = norm (x - y)"
+    for x :: "('a, 'b) real_bounded"
+      and y :: "('a, 'b) real_bounded"
+    apply transfer by simp 
+  show "a + b + c = a + (b + c)"
+    for a :: "('a, 'b) real_bounded"
+      and b :: "('a, 'b) real_bounded"
+      and c :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "a + b = b + a"
+    for a :: "('a, 'b) real_bounded"
+      and b :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "(0::('a, 'b) real_bounded) + a = a"
+    for a :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "- a + a = 0"
+    for a :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "a - b = a + - b"
+    for a :: "('a, 'b) real_bounded"
+      and b :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y"
+    for a :: real
+      and x :: "('a, 'b) real_bounded"
+      and y :: "('a, 'b) real_bounded"
+    apply transfer by (simp add: scaleR_add_right) 
+  show "(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "('a, 'b) real_bounded"
+    apply transfer by (simp add: scaleR_left.add)
+  show "a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x"
+    for a :: real
+      and b :: real
+      and x :: "('a, 'b) real_bounded"
+    apply transfer by simp 
+  show "1 *\<^sub>R x = x"
+    for x :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "sgn x = inverse (norm x) *\<^sub>R x"
+    for x :: "('a, 'b) real_bounded"
+    apply transfer by auto
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) real_bounded) y < e})"
+    by (simp add: Banach_Steinhaus.uniformity_real_bounded_def)    
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. x' = x \<longrightarrow> y \<in> U)"
+    for U :: "('a, 'b) real_bounded set"
+    by (simp add: Banach_Steinhaus.open_real_bounded_def)    
+  show "(norm x = 0) = (x = 0)"
+    for x :: "('a, 'b) real_bounded"
+    apply transfer using onorm_eq_0 by blast 
+  show "norm (x + y) \<le> norm x + norm y"
+    for x :: "('a, 'b) real_bounded"
+      and y :: "('a, 'b) real_bounded"
+    apply transfer by (simp add: onorm_triangle) 
+  show "norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x"
+    for a :: real
+      and x :: "('a, 'b) real_bounded"
+    apply transfer by (simp add: onorm_scaleR) 
+qed
+
+end
+
+
 text \<open>                 
   The following lemma is due to Alain Sokal ~\cite{sokal2011reall}.
 \<close>
+
 lemma sokal_banach_steinhaus:
-  fixes f::"'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector" and r::real and x::'a 
-  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close> 
-  shows "onorm f \<le> (inverse r) * Sup ((norm \<circ> f) ` (ball x r) )"
-proof-
+  "r > 0 \<Longrightarrow> norm f \<le> (inverse r) * Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )"
+proof transfer
+  fix r::real and f::\<open>'a \<Rightarrow> 'b\<close> and x::'a
+  assume \<open>r > 0\<close> and \<open>bounded_linear f\<close>
   have \<open>onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))\<close>
-    using assms(1) assms(2) onorm_r by blast
+    using \<open>0 < r\<close> \<open>bounded_linear f\<close> onorm_r by auto    
   moreover have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close>
   proof-
     have \<open>(norm \<circ> f) \<xi> \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> for \<xi>
@@ -36,7 +158,7 @@ proof-
       have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
       proof-
         have \<open>ball (0::'a) r \<noteq> {}\<close>
-          using assms(1) by auto          
+          using \<open>0 < r\<close> by auto          
         moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f x)) ` (ball 0 r))\<close>
           by auto          
         moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
@@ -55,9 +177,9 @@ proof-
         then obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball (0::'a) r \<Longrightarrow> norm (f x) + norm (f \<xi>) \<le> M\<close>
           unfolding bdd_above_def by (meson image_eqI)
         moreover have \<open>norm (f (x + \<xi>)) \<le> norm (f x) + norm (f \<xi>)\<close> for \<xi>
-          by (simp add: assms(2) linear_simps(1) norm_triangle_ineq)          
+          by (simp add: \<open>bounded_linear f\<close> linear_simps(1) norm_triangle_ineq)          
         ultimately have \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> M\<close>
-          by (simp add: assms(2) linear_simps(1) norm_triangle_le)          
+          by (simp add:  \<open>bounded_linear f\<close> linear_simps(1) norm_triangle_le)          
         thus ?thesis
           by (meson bdd_aboveI2)                    
       qed
@@ -82,18 +204,15 @@ proof-
         qed       
       qed
       ultimately show ?thesis 
-        unfolding  max_def
-        apply auto
-         apply (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
+        unfolding  max_def apply auto apply (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
         by (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
     qed
     moreover have \<open>ball (0::'a) r \<noteq> {}\<close>
-      using assms(1) by auto      
-    ultimately have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> 
-          Sup ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+      using \<open>r > 0\<close> by auto      
+    ultimately have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le>
+     Sup ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
       using cSUP_mono[where A = "ball (0::'a) r" and B = "ball (0::'a) r"
-          and f = "norm \<circ> f" and g = "\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"]
-      by blast
+          and f = "norm \<circ> f" and g = "\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"] by blast
     also have \<open>\<dots> = max (Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)))  
                         (Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)))\<close> 
     proof-
@@ -113,7 +232,7 @@ proof-
           have \<open>bounded (ball x r)\<close>
             by simp            
           hence \<open>bounded ((norm \<circ> f) ` ball x r)\<close>
-            using \<open>bounded_linear f\<close> bounded_linear_image bounded_norm_comp by auto 
+            using \<open>bounded_linear f\<close> bounded_linear_image bounded_norm_comp by auto
           thus ?thesis
             by (simp add: bounded_imp_bdd_above)          
         qed
@@ -182,7 +301,7 @@ proof-
         qed
       qed
       hence \<open>Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)) 
-          = Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+           = Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
         by simp
       thus ?thesis 
         by auto
@@ -192,14 +311,92 @@ proof-
     finally show ?thesis
       by blast
   qed
-  ultimately show ?thesis
-    by (simp add: assms(1))    
+  ultimately show \<open>onorm f \<le> inverse r * Sup ((norm \<circ> f) ` ball x r)\<close>
+    by (simp add: \<open>r > 0\<close>)    
 qed
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
-text \<open>Reference: @{cite sokal2011really}\<close>
 theorem banach_steinhaus:
+  \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
+proof-
+  assume \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close> show ?thesis
+  proof(rule classical)
+    assume \<open>\<not> (bounded (range f))\<close>
+    have \<open>\<exists> N. (*f* f) N \<in> HInfinite\<close>
+      using \<open>\<not> (bounded (range f))\<close> unbounded_nsbounded_D[where S = "range f"] by auto
+    then obtain N where \<open>(*f* f) N \<in> HInfinite\<close>
+      by blast  
+    hence \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>
+      by (simp add: HInfiniteD HInfiniteI)
+
+    have \<open>\<exists>x. hnorm x < 1 \<and> (*f2* (*\<^sub>v))  ((*f* f) N) x \<in> HInfinite\<close>
+    proof-
+      have  \<open>\<forall> n. norm (f n) \<le> (inverse 1) * Sup ( (norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) )\<close>
+        by (smt sokal_banach_steinhaus)
+      hence f1: \<open>\<forall> n. norm (f n) \<le> Sup ( (norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) )\<close>
+        by auto
+      have \<open>(norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) \<noteq> {}\<close> for n
+        by auto
+      moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1))\<close> for n
+        apply transfer unfolding bdd_above_def ball_def bounded_linear_def  bounded_linear_axioms_def
+        apply auto
+        by (metis dual_order.strict_implies_order dual_order.strict_trans1 mult.commute mult_le_cancel_left1 not_le zero_less_norm_iff)
+          (* > 1s TODO: improve *)
+      ultimately have \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
+       (Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1) - e) < x\<close> for n and e
+        apply auto using less_cSup_iff[where X = "(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1" 
+            and y = "Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1) - e"] by auto            
+      hence \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
+       (Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1)) < x + e\<close> for n and e
+        by (simp add: diff_less_eq)
+      hence \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
+       norm (f n) < x + e\<close> for n and e
+        using f1 by smt 
+      hence \<open>\<forall>n. \<forall>e>0. \<exists>x. norm x < 1 \<and> norm (f n) < norm ((f n) *\<^sub>v x) + e\<close>
+        unfolding ball_def by auto
+      hence \<open>\<forall>n. \<forall>e>0. \<exists>x. hnorm x < 1 \<and> hnorm ((*f* f) n) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) n) x) + e\<close>
+        by StarDef.transfer
+      hence \<open>\<exists>x. hnorm x < 1 \<and> hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close>
+        by (simp add: hypreal_epsilon_gt_zero)
+      then obtain x where \<open>hnorm x < 1\<close> and \<open>hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close>
+        by blast
+      have \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>
+        using  \<open>(*f* f) N \<in> HInfinite\<close>
+        by (simp add: \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>)        
+      hence \<open>hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon> \<in> HInfinite\<close>
+        using \<open>hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close> HInfinite_ge_HInfinite 
+        by auto
+      moreover have \<open>\<epsilon> \<in> HFinite\<close>
+        by simp        
+      ultimately have \<open>hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x)  \<in> HInfinite\<close>
+        using HInfinite_HFinite_add_cancel by blast
+      hence \<open>(*f2* (*\<^sub>v))  ((*f* f) N) x \<in> HInfinite\<close>
+        unfolding HInfinite_def by auto
+      thus ?thesis
+        using \<open>hnorm x < 1\<close> by blast
+    qed
+    then obtain x where \<open>hnorm x < 1\<close> and \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HInfinite\<close>
+      by blast
+    have \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HFinite\<close>
+    proof-
+      have \<open>\<forall>\<xi>. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v \<xi>) \<le> M\<close> 
+        using \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close>
+        unfolding bounded_def
+        by (metis \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> bounded_iff rangeI) 
+        
+      show ?thesis 
+        sorry
+    qed
+    thus ?thesis 
+      using  \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HInfinite\<close>
+      by (simp add: HFinite_HInfinite_iff)     
+  qed
+qed
+
+
+(* TODO: delete *)
+theorem banach_steinhaus':
   fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
@@ -599,33 +796,27 @@ proof(rule classical)
     by linarith
 qed
 
-subsection \<open>Consequences of Banach-Steinhaus\<close>
+subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
 
 corollary bounded_linear_limit_bounded_linear:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-    and F :: \<open>'a\<Rightarrow>'b\<close>
+  fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close> and F :: \<open>'a\<Rightarrow>'b\<close>
   assumes  \<open>\<And> n. bounded_linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close> 
   shows \<open>bounded_linear F\<close> 
 proof-
   have \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-    using \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
-    by (simp add: pointwise_convergent_to_def)
+    using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> by (simp add: pointwise_convergent_to_def)
   have \<open>linear F\<close>
     using assms(1) assms(2) bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
   proof
     have "\<exists>K. \<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * K"
     proof-
-      have \<open>\<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close>
-        for x
+      have \<open>\<exists> M. \<forall> n. norm ((f n) x) \<le> M\<close> for x
       proof-
-        have \<open>isCont (\<lambda> t::'b. norm t) y\<close>
-          for y::'b
-          using Limits.isCont_norm
-          by simp
+        have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
+          using Limits.isCont_norm by simp
         hence \<open>(\<lambda> n. norm ((f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
-          using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-          by (simp add: tendsto_norm)
+          using \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
         thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
           by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
       qed
@@ -641,17 +832,16 @@ proof-
       then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by blast
       have \<open>\<forall> n. \<forall>x. norm ((f n) x) \<le> norm x * onorm (f n)\<close>
-        using \<open>\<And> n. bounded_linear (f n)\<close>
-        unfolding bounded_linear_def
-        by (metis assms(1) mult.commute onorm)
+        using \<open>\<And> n. bounded_linear (f n)\<close> by (metis assms(1) mult.commute onorm)
       thus ?thesis using  \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
     qed
     thus "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
-      using  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      by (metis Lim_bounded tendsto_norm) 
+      using  \<open>\<And> x::'a. (\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close> by (metis Lim_bounded tendsto_norm) 
   qed
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
+
+unbundle no_nsa_notation
 
 end
