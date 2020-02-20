@@ -11,8 +11,6 @@ theory Banach_Steinhaus
     "HOL-ex.Sketch_and_Explore"
 begin
 
-unbundle nsa_notation
-
 text \<open>
   We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
 \<close>
@@ -316,9 +314,6 @@ proof transfer
     by (simp add: \<open>r > 0\<close>)    
 qed
 
-lemma real_bounded_ball_bdd_above:
-\<open>r > 0 \<Longrightarrow> bdd_above ((norm \<circ> ( (*\<^sub>v) f)) ` (ball x r))\<close>
-  sorry
 
 lemma sokal_banach_steinhaus':
   "r > 0 \<Longrightarrow> \<tau> < 1 \<Longrightarrow> f \<noteq> 0 \<Longrightarrow> \<exists>\<xi>\<in>ball x r.  \<tau> * r * norm f \<le> norm (f *\<^sub>v \<xi>)"
@@ -333,20 +328,19 @@ proof-
   hence \<open>r * norm f \<le> Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
     using \<open>0 < r\<close> by auto
   moreover have \<open>\<tau> * r * norm f < r * norm f\<close>
-      using  \<open>\<tau> < 1\<close> using \<open>0 < norm f\<close> \<open>0 < r\<close> by auto
+    using  \<open>\<tau> < 1\<close> using \<open>0 < norm f\<close> \<open>0 < r\<close> by auto
   ultimately have \<open>\<tau> * r * norm f < Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
     by simp
   moreover have \<open>(norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) \<noteq> {}\<close>
     using \<open>0 < r\<close> by auto    
   moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) f)) ` (ball x r))\<close>
-    using real_bounded_ball_bdd_above  \<open>0 < r\<close>
-    by simp
+    using   \<open>0 < r\<close> apply transfer
+    by (meson bounded_linear_ball_bdd_above)    
   ultimately have \<open>\<exists>t \<in> (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r). \<tau> * r * norm f < t\<close> 
     by (simp add: less_cSup_iff)    
   thus ?thesis
     by (smt comp_def image_iff) 
 qed
-
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
@@ -357,573 +351,220 @@ proof-
   assume \<open>\<And>x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close> show ?thesis
   proof(rule classical)
     assume \<open>\<not>(bounded (range f))\<close>
-    have \<open>\<exists> x k. (*f2* (*\<^sub>v)) ((*f* f) k) (star_of x) \<in> HInfinite\<close>
-    proof-
-      have \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
-               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v \<xi>))\<close> 
-        by (metis sokal_banach_steinhaus' inverse_eq_1_iff inverse_le_1_iff less_eq_real_def 
-            num.distinct(1) numeral_eq_one_iff of_nat_numeral one_le_numeral)
-      hence \<open>\<exists>\<xi>. \<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. g \<noteq> 0 \<and> r > 0
-               \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r)))\<close> 
-        by metis
-      then obtain \<xi> where \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
-        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
-        by blast
-
-
-      have \<open>\<forall>n. \<exists>k. norm (f k) \<ge> 4^n\<close>
-        using \<open>\<not>(bounded (range f))\<close> by (metis (mono_tags, hide_lams) boundedI image_iff linear)
-      hence  \<open>\<exists>k. \<forall>n. norm (f (k n)) \<ge> 4^n\<close>
-        by metis
-      hence  \<open>\<exists>k. \<forall>n. norm ((f \<circ> k) n) \<ge> 4^n\<close>
-        by simp
-      then obtain k where \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by blast
-      define T where \<open>T = f \<circ> k\<close>
-      have \<open>T n \<in> range f\<close> for n
-        unfolding T_def by simp        
-      have \<open>norm (T n) \<ge> of_nat (4^n)\<close> for n
-        unfolding T_def using \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by auto
-      hence \<open>T n \<noteq> 0\<close> for n
-        by (smt T_def \<open>\<And>n. 4 ^ n \<le> norm ((f \<circ> k) n)\<close> norm_zero power_not_zero zero_le_power)        
-      have \<open>inverse (of_nat 3^n) > (0::real)\<close> for n
-        by auto
-      define y::\<open>nat \<Rightarrow> 'a\<close> where
-        \<open>y = rec_nat 0 (\<lambda>n x. \<xi> (T n) x (inverse (of_nat 3^n)))\<close>
-
-      have \<open>y (Suc n) \<in> ball (y n) (inverse (of_nat 3^n))\<close> for n
-        using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
-        g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
-        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
-          \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
-        by auto       
-      hence \<open>norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close> for n
-        unfolding ball_def apply auto using dist_norm
-        by (smt norm_minus_commute) 
-      moreover have \<open>\<exists>M::real. \<forall>n. sum (\<lambda>n. inverse (of_nat 3^n)) {0..n} \<le> M\<close>
-        sorry
-      moreover have \<open>Cauchy y\<close>
-        using Banach_Steinhaus_Missing.convergent_series_Cauchy[where a = "\<lambda>n. inverse (of_nat 3^n)" 
-            and \<phi> = y] dist_norm
-        by (metis calculation(1) calculation(2))         
-      hence \<open>\<exists> x. y \<longlonglongrightarrow> x\<close>
-        by (simp add: convergent_eq_Cauchy)
-      then obtain x where \<open>y \<longlonglongrightarrow> x\<close>
-        by blast
-      have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> for n
-        using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
-        g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
-        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
-          \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
-        by auto
-      moreover have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*(of_nat 4^n) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n)\<close> for n
-        using \<open>\<And>n. norm (T n) \<ge> of_nat (4^n)\<close> 
-        by auto
-      ultimately have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*(of_nat 4^n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> for n
-        by smt
-
-      have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
-        sorry
-
-      have \<open>\<forall>r. \<exists>\<xi>. (T n) \<noteq> 0 \<and> r > 0
-               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm (T n) \<le> norm ((T n) *\<^sub>v \<xi>))\<close> for n
-        using \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
-               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v \<xi>))\<close>
-        sorry
-
-      show ?thesis sorry
-    qed
-    moreover have \<open>(*f2* (*\<^sub>v)) ((*f* f) k) (star_of x) \<in> range (*f* (\<lambda>n. f n *\<^sub>v x))\<close> for x k
-    proof-
-      have \<open>\<forall>k. (\<lambda>n. f n *\<^sub>v x) k =  f k *\<^sub>v x\<close>
-        by simp
-      hence \<open>\<forall>k. (*f* (\<lambda>n. f n *\<^sub>v x)) k = (*f2* (*\<^sub>v)) ((*f* f) k) (star_of x)\<close> 
-        by StarDef.transfer    
-      thus ?thesis
-        using starset_image by auto
-    qed
-    ultimately show ?thesis
-      using \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> starset_UNIV starset_image unbounded_nsbounded_I
+    have \<open>of_rat 2/3 < (1::real)\<close>
+      by auto
+    hence \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
+               \<longrightarrow> (\<xi>\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm (g *\<^sub>v \<xi>))\<close> 
+      using sokal_banach_steinhaus'[where \<tau> = "of_rat 2/3"] by blast
+    hence \<open>\<exists>\<xi>. \<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. g \<noteq> 0 \<and> r > 0
+               \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r)))\<close> 
+      by metis
+    then obtain \<xi> where \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+        \<xi> g x r \<in> ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
       by blast
-  qed
-qed
-
-
-theorem banach_steinhaus':
-  \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
-proof-
-  assume \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close> show ?thesis
-  proof(rule classical)
-    assume \<open>\<not> (bounded (range f))\<close>
-    have \<open>\<exists> N. (*f* f) N \<in> HInfinite\<close>
-      using \<open>\<not> (bounded (range f))\<close> unbounded_nsbounded_D[where S = "range f"] by auto
-    then obtain N where \<open>(*f* f) N \<in> HInfinite\<close>
-      by blast  
-    hence \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>
-      by (simp add: HInfiniteD HInfiniteI)
-
-    have \<open>\<exists>x. hnorm x < 1 \<and> (*f2* (*\<^sub>v))  ((*f* f) N) x \<in> HInfinite\<close>
-    proof-
-      have  \<open>\<forall> n. norm (f n) \<le> (inverse 1) * Sup ( (norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) )\<close>
-        by (smt sokal_banach_steinhaus)
-      hence f1: \<open>\<forall> n. norm (f n) \<le> Sup ( (norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) )\<close>
-        by auto
-      have \<open>(norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1) \<noteq> {}\<close> for n
-        by auto
-      moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) (f n))) ` (ball 0 1))\<close> for n
-        apply transfer unfolding bdd_above_def ball_def bounded_linear_def  bounded_linear_axioms_def
-        apply auto
-        by (metis dual_order.strict_implies_order dual_order.trans mult.commute mult_le_cancel_left2 mult_le_cancel_left_neg norm_ge_zero)
-      ultimately have \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
-       (Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1) - e) < x\<close> for n and e
-        apply auto using less_cSup_iff[where X = "(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1" 
-            and y = "Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1) - e"] by auto            
-      hence \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
-       (Sup ((norm \<circ> (*\<^sub>v) (f n)) ` ball 0 1)) < x + e\<close> for n and e
-        by (simp add: diff_less_eq)
-      hence \<open>e > 0 \<Longrightarrow> \<exists>x\<in>(\<lambda>x.  ((norm \<circ> (*\<^sub>v) (f n)) x)) ` ball 0 1.
-       norm (f n) < x + e\<close> for n and e
-        using f1 by smt 
-      hence \<open>\<forall>n. \<forall>e>0. \<exists>x. norm x < 1 \<and> norm (f n) < norm ((f n) *\<^sub>v x) + e\<close>
-        unfolding ball_def by auto
-      hence \<open>\<forall>n. \<forall>e>0. \<exists>x. hnorm x < 1 \<and> hnorm ((*f* f) n) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) n) x) + e\<close>
-        by StarDef.transfer
-      hence \<open>\<exists>x. hnorm x < 1 \<and> hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close>
-        by (simp add: hypreal_epsilon_gt_zero)
-      then obtain x where \<open>hnorm x < 1\<close> and \<open>hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close>
-        by blast
-      have \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>
-        using  \<open>(*f* f) N \<in> HInfinite\<close>
-        by (simp add: \<open>hnorm ((*f* f) N) \<in> HInfinite\<close>)        
-      hence \<open>hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon> \<in> HInfinite\<close>
-        using \<open>hnorm ((*f* f) N) < hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x) + \<epsilon>\<close> HInfinite_ge_HInfinite 
-        by auto
-      moreover have \<open>\<epsilon> \<in> HFinite\<close>
-        by simp        
-      ultimately have \<open>hnorm ( (*f2* (*\<^sub>v))  ((*f* f) N) x)  \<in> HInfinite\<close>
-        using HInfinite_HFinite_add_cancel by blast
-      hence \<open>(*f2* (*\<^sub>v))  ((*f* f) N) x \<in> HInfinite\<close>
-        unfolding HInfinite_def by auto
-      thus ?thesis
-        using \<open>hnorm x < 1\<close> by blast
-    qed
-    then obtain x where \<open>hnorm x < 1\<close> and \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HInfinite\<close>
-      by blast
-    have \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HFinite\<close>
-    proof-
-      have \<open>\<forall>\<xi>. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v \<xi>) \<le> M\<close> 
-        using \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close>
-        unfolding bounded_def
-        by (metis \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> bounded_iff rangeI) 
-
-      show ?thesis 
-        sorry
-    qed
-    thus ?thesis 
-      using  \<open>(*f2* (*\<^sub>v)) ((*f* f) N) x \<in> HInfinite\<close>
-      by (simp add: HFinite_HInfinite_iff)     
-  qed
-qed
-
-
-(* TODO: delete *)
-theorem banach_steinhaus'':
-  fixes f :: \<open>'c \<Rightarrow> ('a::{banach,perfect_space} \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes \<open>\<And> n. bounded_linear (f n)\<close> and  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. onorm (f n) \<le> M\<close>
-proof(rule classical)
-  assume \<open>\<not>(\<exists> M. \<forall> k. onorm (f k) \<le> M)\<close>
-  hence \<open>\<forall> M. \<exists> k. onorm (f k) > M\<close>
-    using leI by blast
-  hence \<open>\<forall> n. \<exists> k. onorm (f k) > 4^n\<close>
-    by simp
-  hence \<open>\<exists> k\<^sub>f. \<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close>
-    by metis
-  then obtain k\<^sub>f where \<open>\<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close> 
-    by blast
-  define g::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close> where \<open>g n = f (k\<^sub>f n)\<close>
-    for n
-  hence \<open>\<forall> n. onorm (g n) > 4^n\<close>
-    using  \<open>\<forall> n. onorm (f (k\<^sub>f n)) > 4^n\<close>  by simp
-  from \<open>\<And> n. bounded_linear (f n)\<close>
-  have \<open>\<And> n. bounded_linear (g n)\<close>
-    using g_def by simp
-  have \<open>bounded_linear h \<Longrightarrow> 0 < onorm h \<Longrightarrow> r > 0
-     \<Longrightarrow> \<exists> y. dist y x < r \<and> norm (h y) > r * (of_rat (Fract 2 3)) * onorm h\<close>
-    for r and x and h::\<open>'a \<Rightarrow> 'b\<close>
-  proof-
-    assume \<open>bounded_linear h\<close>  \<open>r > 0\<close>
-    hence \<open>onorm h \<le> (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      using sokal_banach_steinhaus[where r = r and f = h] 
-      by auto
-    hence \<open>onorm h \<le> (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      by simp      
-    moreover assume \<open>0 < onorm h\<close>
-    moreover have \<open>((of_rat (Fract 2 3)) * onorm h) < onorm h\<close>
-    proof-
-      have \<open>of_rat (Fract 2 3) < (1::real)\<close>
-        by (simp add: Fract_less_one_iff)
-      thus ?thesis
-        using \<open>0 < onorm h\<close> by auto
-    qed
-    ultimately have \<open>(of_rat (Fract 2 3)) * onorm h < (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      by linarith
-    hence  \<open>r * (of_rat (Fract 2 3)) * onorm h < r * (inverse r) * Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      by (simp add: \<open>0 < r\<close>) 
-    moreover have \<open>r * (inverse r) = 1\<close>
-      using \<open>r > 0\<close> by auto
-    ultimately have \<open>r * (of_rat (Fract 2 3)) * onorm h  < Sup ( (norm \<circ> h) ` (ball x r) )\<close>
-      by auto
-    moreover have \<open>(norm \<circ> h) ` (ball x r) \<noteq> {}\<close>
-      using \<open>0 < r\<close> by auto      
-    moreover have \<open>bdd_above ((norm \<circ> h) ` (ball x r))\<close>
-    proof-
-      have \<open>bounded (ball x r)\<close>
-        by simp
-      hence \<open>bounded (h ` (ball x r))\<close>
-        by (simp add: \<open>bounded_linear h\<close> bounded_linear_image)
-      hence \<open>\<exists> M. \<forall> \<xi> \<in> (h ` (ball x r)). norm \<xi> \<le> M\<close>
-        using bounded_iff by blast
-      then obtain M where \<open>\<And> \<xi>.  \<xi> \<in> (h ` (ball x r)) \<Longrightarrow> norm \<xi> \<le> M\<close>
-        by blast
-      hence \<open>\<And> \<sigma>. \<sigma> \<in> (ball x r) \<Longrightarrow> norm (h \<sigma>) \<le> M\<close>
-        by simp
-      hence \<open>bdd_above ((norm \<circ> h) ` (ball x r))\<close>
-        by (metis (full_types) \<open>bounded (h ` ball x r)\<close> bdd_above_norm image_comp)        
-      thus ?thesis
-        by auto        
-    qed
-    ultimately have \<open>\<exists> t \<in> (norm \<circ> h) ` (ball x r). r * (of_rat (Fract 2 3)) * onorm h < t\<close>
-      by (meson less_cSupD)
-    hence \<open>\<exists> s \<in> ball x r. r * (of_rat (Fract 2 3)) * onorm h < (norm \<circ> h) s\<close>
-      by auto
-    hence \<open>\<exists> s \<in> ball x r. r * (of_rat (Fract 2 3)) * onorm h < norm (h s)\<close>
+    have \<open>\<forall>n. \<exists>k. norm (f k) \<ge> 4^n\<close>
+      using \<open>\<not>(bounded (range f))\<close> by (metis (mono_tags, hide_lams) boundedI image_iff linear)
+    hence  \<open>\<exists>k. \<forall>n. norm (f (k n)) \<ge> 4^n\<close>
+      by metis
+    hence  \<open>\<exists>k. \<forall>n. norm ((f \<circ> k) n) \<ge> 4^n\<close>
       by simp
-    hence \<open>\<exists> y. dist y x < r \<and> r * (of_rat (Fract 2 3)) * onorm h < norm (h y)\<close>
-      unfolding ball_def by (simp add: dist_commute) 
-    hence \<open>\<exists> y. dist y x < r \<and> r * (of_rat (Fract 2 3)) * onorm h < norm (h y)\<close>
-      by simp      
-    thus ?thesis by auto
-  qed
-  hence \<open>\<exists> y. dist y x < (of_rat (Fract 1 3))^n \<and> 
-        norm ((g n) y) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-    for n and x
-  proof-
-    have \<open>(of_rat (Fract 1 3))^n > (0::real)\<close>
-      by (simp add: zero_less_Fract_iff)      
-    moreover have \<open>\<And> n. onorm (g n) > 0\<close>
-      using  \<open>\<forall> n. onorm (g n) > (4::real)^n\<close>
-      by (smt zero_less_power)                             
-    ultimately show ?thesis using  \<open>\<And> n. bounded_linear (g n)\<close>
-      by (metis \<open>0 < real_of_rat (Fract 1 3) ^ n\<close> \<open>\<And>n. 0 < onorm (g n)\<close> \<open>\<And>n. bounded_linear (g n)\<close> \<open>\<And>x r h. \<lbrakk>bounded_linear h; 0 < onorm h; 0 < r\<rbrakk> \<Longrightarrow> \<exists>y. dist y x < r \<and> r * real_of_rat (Fract 2 3) * onorm h < norm (h y)\<close> linordered_field_class.sign_simps(5))          
-  qed
-  hence \<open>\<forall> n. \<forall> x. \<exists> y. dist y x < (of_rat (Fract 1 3))^n \<and> norm ((g n) y) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-    by blast
-  hence \<open>\<exists> \<Phi>. \<forall> n. \<forall> x. dist (\<Phi> n x) x < (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-    by metis
-  then obtain \<Phi>
-    where \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-       (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-    by blast
-  define \<phi>::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<phi> n = rec_nat 0 \<Phi> n\<close>
-    for n
-  have \<open>\<phi> 0 = 0\<close>
-    using \<phi>_def by simp
-  have \<open>\<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>
-    for n
-    using \<phi>_def by simp
-  from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-       (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-  have  \<open>dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
-    for n
-    using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close> by auto
-  have \<open>Cauchy \<phi>\<close>
-  proof-
-    have \<open>norm ((1/3)::real) < 1\<close>
-      by simp      
-    hence \<open>summable (\<lambda> k. ((1/3)::real)^k)\<close>
-      using Series.summable_geometric_iff 
-      by fastforce
-    hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
-      unfolding summable_def sums_def by blast
-    hence \<open>\<exists>s. (\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
+    then obtain k where \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by blast
+    define T where \<open>T = f \<circ> k\<close>
+    have \<open>T n \<in> range f\<close> for n
+      unfolding T_def by simp        
+    have \<open>norm (T n) \<ge> of_nat (4^n)\<close> for n
+      unfolding T_def using \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by auto
+    hence \<open>T n \<noteq> 0\<close> for n
+      by (smt T_def \<open>\<And>n. 4 ^ n \<le> norm ((f \<circ> k) n)\<close> norm_zero power_not_zero zero_le_power)        
+    have \<open>inverse (of_nat 3^n) > (0::real)\<close> for n
+      by auto
+    define y::\<open>nat \<Rightarrow> 'a\<close> where
+      \<open>y = rec_nat 0 (\<lambda>n x. \<xi> (T n) x (inverse (of_nat 3^n)))\<close>
+    have \<open>y (Suc n) \<in> ball (y n) (inverse (of_nat 3^n))\<close> for n
+      using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
+        g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+        \<xi> g x r \<in> ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
+        \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
+      by auto       
+    hence \<open>norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close> for n
+      unfolding ball_def apply auto using dist_norm
+      by (smt norm_minus_commute) 
+    moreover have \<open>\<exists>K::real. \<forall>n::nat. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close>
     proof-
-      obtain s where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close>
-        using  \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) \<longlonglongrightarrow> s\<close> by blast
-      hence  \<open>(\<lambda>m. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..<n}) (Suc m)) \<longlonglongrightarrow> s\<close>
-        by (rule LIMSEQ_Suc) 
-      thus ?thesis by blast 
-    qed
-    hence \<open>\<exists>s. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {..n}) \<longlonglongrightarrow> s\<close>
-      using \<open>summable (\<lambda> k::nat. ((1/3)::real)^k)\<close> summable_LIMSEQ' by blast 
-    hence \<open>\<exists>s::real. (\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-      unfolding atLeastAtMost_def 
-      by auto
-    then obtain s::real where \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-      by blast
-    from  \<open>(\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<longlonglongrightarrow> s\<close>
-    have \<open>e > 0 \<Longrightarrow> \<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < e\<close>
-      for e::real
-      by (meson LIMSEQ_iff_nz)
-    moreover have \<open>(1::real) > 0\<close>
-      by auto
-    ultimately have \<open>\<exists> N. \<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
-      by auto
-    then obtain N where \<open>\<forall> m \<ge> N. dist ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m)  s < (1::real)\<close>
-      by blast
-    hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) - s \<bar> < (1::real)\<close>
-      by (simp add: dist_real_def)
-    hence \<open>\<forall> m \<ge> N. \<bar> ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) \<bar> < \<bar>s\<bar> + (1::real)\<close>
-      by auto
-    hence \<open>\<forall> m \<ge> N. ((\<lambda>n. sum (\<lambda> k. ((1/3)::real)^k) {0..n}) m) < \<bar>s\<bar> + (1::real)\<close>
-      by auto
-    hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) < \<bar>s\<bar> + (1::real)\<close>
-      by auto
-    hence \<open>\<forall> n \<ge> N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> \<bar>s\<bar> + (1::real)\<close>
-      by auto
-    moreover have \<open>\<forall> n < N. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
-    proof-
-      have  \<open>\<forall> n. f n \<ge> 0 \<Longrightarrow> \<forall> n < N. sum f {0..n} \<le> sum f {0..N}\<close>
-        for f :: \<open>nat \<Rightarrow> real\<close> and N::nat
-      proof(induction N)
-        case 0
-        thus ?case
-          by simp 
-      next
-        case (Suc N)
-        assume \<open>\<forall> n. f n \<ge> 0\<close>
-        moreover assume \<open>\<forall>n. 0 \<le> f n \<Longrightarrow> \<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
-        ultimately have \<open>\<forall>n<N. sum f {0..n} \<le> sum f {0..N}\<close>
-          by blast
-        moreover have  \<open>sum f {0..N} \<le> sum f {0..Suc N}\<close>
-        proof-
-          have \<open>sum f {0..Suc N} = sum f {0..N} + f (Suc N)\<close>
-            using sum.atLeast0_atMost_Suc by blast          
-          thus ?thesis
-            by (simp add: Suc.prems) 
-        qed
-        ultimately show ?case
-          by (smt less_antisym)  
-      qed
-      thus ?thesis
+      have \<open>summable (\<lambda>n. (inverse (real_of_nat 3))^n)\<close>
+        using Series.summable_geometric_iff [where c = "inverse (real_of_nat 3)"] by auto
+      moreover have \<open>(inverse (real_of_nat 3))^n = inverse (real_of_nat 3^n)\<close> for n::nat
+        using power_inverse by blast        
+      ultimately have \<open>summable (\<lambda>n. inverse (real_of_nat 3^n))\<close>
         by auto
-    qed
-    ultimately have \<open>\<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n})
-         \<le> max (\<bar>s\<bar> + (1::real)) (sum (\<lambda> k. ((1/3)::real)^k) {0..N})\<close>
-      by (smt diff_is_0_eq gr_zeroI zero_less_diff)
-    hence \<open>\<exists> M. \<forall> n. (sum (\<lambda> k. ((1/3)::real)^k) {0..n}) \<le> M\<close>
-      by blast
-    thus ?thesis
-      using convergent_series_Cauchy  \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
-      sorry
-  qed
-  hence \<open>\<exists> l. \<phi> \<longlonglongrightarrow> l\<close>
-    by (simp add: convergent_eq_Cauchy)
-  then obtain l where \<open>\<phi> \<longlonglongrightarrow> l\<close>
-    by blast
-  obtain M where \<open>\<forall> n.  norm ((f n) l) \<le> M\<close>
-    using \<open>\<And> x. \<exists> M. \<forall> n.  norm ((f n) x) \<le> M\<close>
-    by blast
-  have \<open>(\<lambda> n. norm ((g n) l)) \<longlonglongrightarrow> \<infinity>\<close>    
-  proof-
-    have \<open>norm ((\<phi> (Suc n)) - l) \<le> (1/2)*(1/3::real)^n\<close>
-      for n
-    proof-             
-      define x where \<open>x = (\<lambda> n.  \<phi> (Suc n))\<close>
-      have \<open>x \<longlonglongrightarrow> l\<close> 
-        using x_def
-        by (meson \<open>\<phi> \<longlonglongrightarrow> l\<close> le_imp_less_Suc pinf(8) tendsto_explicit)
-      moreover have \<open>(sum (\<lambda> t. norm (x (Suc t) - x t)) {n..k}) \<le> (1/2)*(1/3::real)^n\<close>
-        for k
+      hence \<open>bounded (range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n}))\<close>
+        using Elementary_Normed_Spaces.summable_imp_sums_bounded[where f = "(\<lambda>n. inverse (real_of_nat 3^n))"]
+          lessThan_atLeast0 by auto
+      hence \<open>\<exists>M. \<forall>h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})). norm h \<le> M\<close>
+        using bounded_iff by blast
+      then obtain M where \<open>\<And>h. h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})) \<Longrightarrow> norm h \<le> M\<close>
+        by blast      
+      have \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> for n 
       proof-
-        have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..k}) \<le> (1/2)*(1/3::real)^n\<close>
+        have  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..< Suc n}) \<le> M\<close>
+          using \<open>\<And>h. h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})) \<Longrightarrow> norm h \<le> M\<close> 
+          by blast
+        hence  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
+          by (simp add: atLeastLessThanSuc_atLeastAtMost)        
+        hence  \<open>(sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
+          by auto
+        thus ?thesis by blast
+      qed
+      thus ?thesis by blast
+    qed
+    moreover have \<open>Cauchy y\<close>
+      using Banach_Steinhaus_Missing.convergent_series_Cauchy[where a = "\<lambda>n. inverse (of_nat 3^n)" 
+          and \<phi> = y] dist_norm
+      by (metis calculation(1) calculation(2))         
+    hence \<open>\<exists> x. y \<longlonglongrightarrow> x\<close>
+      by (simp add: convergent_eq_Cauchy)
+    then obtain x where \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
+    proof-             
+      define z where \<open>z = (\<lambda> n.  y (Suc n))\<close>
+      have \<open>z \<longlonglongrightarrow> x\<close> 
+        using z_def
+        by (meson \<open>y \<longlonglongrightarrow> x\<close> le_imp_less_Suc pinf(8) tendsto_explicit)
+      moreover have \<open>(sum (\<lambda> t. norm (z (Suc t) - z t)) {n..k})
+                  \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for k
+      proof-
+        have \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..k}) \<le> inverse (of_nat 3^n)\<close>
         proof-
-          from \<open>\<And> n. dist (\<phi> (Suc n))  (\<phi> n) < (of_rat (Fract 1 3))^n\<close>
-          have \<open>norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (of_rat (Fract 1 3))^(Suc t)\<close>
+          have \<open>norm (y (Suc (Suc t)) - y (Suc t)) \<le> inverse (of_nat 3^(Suc t))\<close>
             for t
-            using dist_norm
-            by metis 
-          hence \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..n+p}) 
-              \<le> (sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p})\<close> 
+            using \<open>\<And> n. norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close>[where n = "Suc t"]
+            by blast
+          hence \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..n+p}) 
+              \<le> (sum (\<lambda> t. (inverse (of_nat 3))^(Suc t) ) {n..n+p})\<close> 
             for p::nat
-          proof(induction p)
-            case 0
-            have \<open>norm (\<phi> (Suc (Suc n)) - \<phi> (Suc n)) < (of_rat (Fract 1 3))^(Suc n)\<close>
-              using \<open>\<And> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t)) < (of_rat (Fract 1 3))^(Suc t)\<close>
-              by blast
-            hence \<open>(\<Sum>t = n..n. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) \<le> (\<Sum>t = n..n. (of_rat (Fract 1 3)) ^ Suc t)\<close>
-              by simp
-            thus ?case 
-              sorry        
-          next
-            case (Suc p)
-            thus ?case
-              (*
-              by (smt add_Suc_right le_add1 sum.nat_ivl_Suc')
-*) sorry
-          qed
-          moreover have  \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) \<le> (1/2)*(1/3::real)^n\<close> 
+            sorry
+          moreover have  \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t) ) {n..n+p}) 
+                       \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close> 
             for p::nat
           proof-
             have \<open>n \<le> n + p\<close>
               by auto
-            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
-                = (sum ((\<lambda> t. (1/3::real)^(Suc t))\<circ>((+) n)) {0..(n + p) - n})\<close> 
+            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})
+                 = (sum ((\<lambda> t. (inverse (of_nat 3))^(Suc t))\<circ>((+) n)) {0..(n + p) - n})\<close> 
               by (rule Set_Interval.comm_monoid_add_class.sum.atLeastAtMost_shift_0)
-            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
-                = (sum (\<lambda> t. (1/3::real)^(Suc n+t)) {0..p})\<close> 
+            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
+                 = (sum (\<lambda> t. (inverse (of_nat 3))^(Suc n+t)) {0..p})\<close> 
               by simp
-            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
-                = (sum (\<lambda> t. (1/3::real)^(Suc n)*(1/3::real)^t) {0..p})\<close>
-              by (simp add: power_add) 
-            hence \<open>(sum (\<lambda> t. (1/3::real)^(Suc t)) {n..n+p})  
-                = (1/3::real)^(Suc n)*(sum (\<lambda> t. (1/3::real)^t) {0..p})\<close>
+            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
+                = (sum (\<lambda> t. (inverse (of_nat 3))^(Suc n)*(inverse (of_nat 3))^t) {0..p})\<close>
+              by (smt power_add sum.cong)               
+            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
+                = (inverse (of_nat 3))^(Suc n)*(sum (\<lambda> t. (inverse (of_nat 3))^t) {0..p})\<close>
               by (simp add: sum_distrib_left)
-            moreover have  \<open>(sum (\<lambda> t. (1/3::real)^t) {0..p}) \<le> (3/2::real)\<close>
-            proof-
-              have \<open>norm (1/3::real) < 1\<close>
-                by simp
-              hence \<open>(sum (\<lambda> t. (1/3::real)^t) {0..p}) = (1 - (1/3::real)^(Suc p))/(1 -  (1/3::real))\<close>
-                using sum_gp0
-                by (smt atMost_atLeast0 right_inverse_eq)
-              also have \<open>... \<le> 1/(1 -  (1/3::real))\<close>
-                by simp
-              finally show ?thesis by simp
-            qed
-            ultimately have \<open>(sum (\<lambda> t. (1/3::real)^(Suc t) ) {n..n+p}) 
-                  \<le> (1/3::real)^(Suc n)*(3/2)\<close>
-              by (smt ordered_comm_semiring_class.comm_mult_left_mono zero_le_divide_1_iff zero_le_power)               
-            thus ?thesis
-              by simp 
+
+            have \<open>m \<ge> n \<Longrightarrow> (sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m})
+                           \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
+              for m::nat
+              sorry
+            moreover have \<open>m < n \<Longrightarrow> sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m}
+                           \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
+              for m::nat
+              by simp
+            ultimately have \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m})
+                           \<le>  (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
+              for m::nat
+              by (metis (full_types) le_eq_less_or_eq less_or_eq_imp_le linorder_neqE_nat) 
+            thus ?thesis sorry
           qed
-          ultimately have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..n+p})
-                           \<le> (1/2)*(1/3::real)^n\<close>
-            for p::nat
-            by smt
-          hence \<open>m \<ge> n \<Longrightarrow> (sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
-                           \<le> (1/2)*(1/3::real)^n\<close>
-            for m::nat
-            using nat_le_iff_add by auto
-          moreover have \<open>m < n \<Longrightarrow> (sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
-                           \<le> (1/2)*(1/3::real)^n\<close>
-            for m::nat
-            by simp
-          ultimately have \<open>(sum (\<lambda> t. norm (\<phi> (Suc (Suc t)) - \<phi> (Suc t))) {n..m})
-                           \<le> (1/2)*(1/3::real)^n\<close>
-            for m::nat
-            by (metis (full_types) le_eq_less_or_eq less_or_eq_imp_le linorder_neqE_nat) 
-          thus ?thesis by blast           
+          thus ?thesis unfolding z_def sorry
         qed
-        thus ?thesis unfolding x_def by blast
+        have \<open>norm (x - z n) \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
+          sorry
+        show ?thesis using z_def
+          sorry
       qed
-      ultimately have \<open>norm (l - x n) \<le> (1/2)*(1/3::real)^n\<close>
-        by (rule bound_telescopic )
-      show ?thesis using x_def
-        by (metis \<open>norm (l - x n) \<le> 1 / 2 * (1 / 3) ^ n\<close> norm_minus_commute) 
+      show ?thesis
+        sorry
     qed
-    have \<open>norm ((g n) l) \<ge> (1/6) * (1/3::real)^n * onorm (g n)\<close>
-      for n
+    have \<open>\<exists> M. \<forall> n. norm (T n *\<^sub>v x) \<le> M\<close>
     proof-
-      have \<open>norm ((g n) (\<phi> (Suc n))) = norm ( ((g n) l) + (g n) ((\<phi> (Suc n)) - l) )\<close>
+      have \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close>
+        by (metis \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> bounded_iff rangeI)
+      thus ?thesis unfolding T_def by auto
+    qed
+    then obtain M where \<open>\<And> n. norm (T n *\<^sub>v x) \<le> M\<close>
+      by blast
+    have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
+      by (simp add: Elementary_Topology.real_arch_pow)
+    moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
+    proof-
+      have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close>
       proof-
-        have \<open>(g n) (\<phi> (Suc n)) = ((g n) l) + (g n) ((\<phi> (Suc n)) - l)\<close>
-          using \<open>bounded_linear (g n)\<close>
-          by (simp add: linear_simps(2)) 
-        thus ?thesis by simp
-      qed
-      also have \<open>... \<le>  norm ((g n) l) + norm ((g n) ((\<phi> (Suc n)) - l))\<close>
-        by (simp add: norm_triangle_ineq) 
-      finally have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + norm ((g n) ((\<phi> (Suc n)) - l))\<close>
-        by blast
-      moreover have \<open>norm ((g n) ((\<phi> (Suc n)) - l)) \<le> onorm (g n) * norm ((\<phi> (Suc n)) - l)\<close>
-      proof-
-        have \<open>bounded_linear (g n)\<close>
-          by (simp add: \<open>\<And>n. bounded_linear (g n)\<close>)          
-        thus ?thesis using onorm by blast
-      qed
-      ultimately have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + onorm (g n) * norm ((\<phi> (Suc n)) - l)\<close>
-        by simp
-      also have \<open>... \<le>  norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n) \<close>
-      proof-
-        have \<open>onorm (g n)  \<ge> 0\<close>
-          by (simp add: \<open>\<And>n. bounded_linear (g n)\<close> onorm_pos_le)          
-        hence \<open>onorm (g n) * norm ((\<phi> (Suc n)) - l) \<le> onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
-          using \<open>norm ((\<phi> (Suc n)) - l) \<le> (1/2)*(1/3::real)^n\<close>
-          using mult_left_mono by blast
-        thus ?thesis by simp
-      qed
-      finally have \<open>norm ((g n) (\<phi> (Suc n))) \<le> norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
-        by blast
-      moreover have \<open>norm ((g n) (\<phi> (Suc n))) > (2/3) * (1/3)^n * onorm (g n)\<close>
-      proof-
-        from \<open>\<forall> n. \<forall> x. dist (\<Phi> n x) x <
-         (of_rat (Fract 1 3))^n \<and> norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-        have \<open>norm ((g n) (\<Phi> n x)) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
-          for x     
-          by auto          
-        hence \<open>norm ((g n) (\<Phi> n (\<phi> n))) > (of_rat (Fract 2 3)) * (of_rat (Fract 1 3))^n * onorm (g n)\<close>
+        have \<open>of_rat (4/3)^n = inverse (real 3 ^ n) * (of_nat 4^n)\<close>
+        proof -
+          have "real_of_rat (inverse (rat_of_nat 3) * rat_of_nat 4) ^ n = inverse (real_of_rat (rat_of_nat 3) ^ n) * real_of_rat (rat_of_nat 4) ^ n"
+            by (metis (no_types) divide_inverse_commute of_rat_divide power_divide)
+          thus ?thesis
+            by auto
+        qed            
+        also have \<open>\<dots> \<le>  inverse (real 3 ^ n) * norm (T n)\<close>
+          using \<open>\<And>n. norm (T n) \<ge> of_nat (4^n)\<close>
+          by simp
+        finally have \<open>of_rat (4/3)^n \<le> inverse (real 3 ^ n) * norm (T n)\<close>
           by blast
-        thus ?thesis using \<open>\<And>n. \<phi> (Suc n) = \<Phi> n (\<phi> n)\<close>
-          by (metis (mono_tags, hide_lams) divide_rat mult_numeral_1 mult_numeral_1_right numeral_One of_rat_divide of_rat_numeral_eq rat_number_expand(3))
+        moreover have \<open>inverse (of_nat 6) > (0::real)\<close>
+          by auto
+        ultimately show ?thesis by auto
       qed
-      ultimately have \<open>(2/3) * (1/3)^n * onorm (g n) < norm ((g n) l) + onorm (g n) * ((1/2) * (1/3::real)^n)\<close>
-        by simp
-      hence \<open>(2/3) * (1/3)^n * onorm (g n) - onorm (g n) * ((1/2) * (1/3::real)^n)  < norm ((g n) l)\<close>
-        by smt
-      hence \<open>(2/3) * ((1/3)^n * onorm (g n)) - (1/2) * ((1/3::real)^n * onorm (g n))  < norm ((g n) l)\<close>
-        by simp
-      moreover have \<open>(2/3) * ((1/3)^n * onorm (g n)) - (1/2) * ((1/3::real)^n * onorm (g n))
-          = (1/6) * (1/3)^n * onorm (g n)\<close>
-        by simp
-      ultimately have \<open>(1/6) * (1/3)^n * onorm (g n) < norm ((g n) l)\<close>
-        by linarith
-      thus ?thesis by simp
-    qed
-    moreover have \<open>(1/6) * (1/3::real)^n * onorm (g n) > (1/6) * (1/3::real)^n * 4^n\<close>
-      for n
-      using \<open>\<forall> n. onorm (g n) > 4^n\<close>
-      by auto
-    ultimately have \<open>norm ((g n) l) > (1/6) * (1/3::real)^n * 4^n\<close>
-      for n
-      by smt
-    hence \<open>norm ((g n) l) > ereal((1/6) * (4/3::real)^n)\<close>
-      for n
-      by (simp add: power_divide) 
-    moreover have \<open>(\<lambda> n::nat. ereal((1/6) * (4/3::real)^n) ) \<longlonglongrightarrow> \<infinity>\<close>
-    proof-
-      have \<open>norm (4/3::real) > 1\<close>
-        by simp
-      hence  \<open>(\<lambda> n::nat. ((4/3::real)^n)) \<longlonglongrightarrow> \<infinity>\<close>
-        using LIMSEQ_realpow_inf by auto
-      moreover have \<open>(1/6::real) > 0\<close>
-        by simp
-      ultimately have \<open>(\<lambda> n::nat. (1/6::real) * (4/3::real)^n ) \<longlonglongrightarrow> \<infinity>\<close>
-        using LIMSEQ_scalarR
-        by blast       
-      thus ?thesis by blast
-    qed
-    ultimately show ?thesis using Lim_PInfty
-    proof -
-      obtain rr :: real where
-        "\<forall>n. norm (g n l) \<le> rr"
-        by (metis (no_types) \<open>\<And>thesis. (\<And>M. \<forall>n. norm (f n l) \<le> M \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>g \<equiv> \<lambda>n. f (k\<^sub>f n)\<close>)
-      hence "\<forall>e. e \<le> ereal rr \<or> \<not> (\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> e"
-        by (meson Lim_bounded \<open>\<And>n. ereal (1 / 6 * (4 / 3) ^ n) < ereal (norm (g n l))\<close> less_eq_ereal_def less_ereal_le)
-      hence "\<infinity> \<le> ereal rr"
-        using \<open>(\<lambda>n. ereal (1 / 6 * (4 / 3) ^ n)) \<longlonglongrightarrow> \<infinity>\<close> by blast
-      thus ?thesis
-        by simp
-    qed 
+      also have \<open>\<dots> \<le> norm (T n *\<^sub>v x)\<close> 
+      proof-
+        have \<open>(of_rat 2/3)*(inverse (of_nat 3^n))*norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> 
+          using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
+                  g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+                  \<xi> g x r \<in> ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
+            \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
+          by auto
+        also have \<open>\<dots> = norm ((T n) *\<^sub>v ((y (Suc n) - x) + x))\<close>
+          by auto
+        also have \<open>\<dots> = norm ((T n) *\<^sub>v (y (Suc n) - x) + (T n) *\<^sub>v x)\<close>
+          apply transfer apply auto by (metis diff_add_cancel linear_simps(1))
+        also have \<open>\<dots> \<le> norm ((T n) *\<^sub>v (y (Suc n) - x)) + norm ((T n) *\<^sub>v x)\<close>
+          by (simp add: norm_triangle_ineq)
+        also have \<open>\<dots> \<le> norm (T n) * norm (y (Suc n) - x) + norm ((T n) *\<^sub>v x)\<close>
+        proof-
+          have \<open>norm ((T n) *\<^sub>v (y (Suc n) - x)) \<le> norm (T n) * norm (y (Suc n) - x)\<close>
+            apply transfer apply auto using onorm by auto 
+          thus ?thesis by simp
+        qed
+        also have \<open>\<dots> \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) + norm ((T n) *\<^sub>v x)\<close>
+        proof-
+          have \<open>norm (y (Suc n) - x) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
+            using \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
+            by (simp add: norm_minus_commute)
+          moreover have \<open>norm (T n) \<ge> 0\<close>
+            by auto
+          ultimately have \<open>norm (T n) * norm (y (Suc n) - x) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n)\<close>
+            by (simp add: \<open>\<And>n. T n \<noteq> 0\<close>)
+          thus ?thesis by simp
+        qed
+        finally have \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n)
+              \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (T n *\<^sub>v x)\<close>
+          by blast
+        hence \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
+             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
+          by linarith
+        thus \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
+          by (simp add: linordered_field_class.sign_simps(5))          
+      qed
+      finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm (T n *\<^sub>v x)\<close>
+        by auto
+      thus \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close>
+        using \<open>\<And> n. norm (T n *\<^sub>v x) \<le> M\<close> by smt
+    qed                      
+    ultimately show ?thesis
+      by smt   
   qed
-  hence \<open>(\<lambda> n. norm ((f (k\<^sub>f n)) l)) \<longlonglongrightarrow> \<infinity>\<close>    
-    using g_def by simp
-  hence \<open>\<exists> N. norm ((f (k\<^sub>f N)) l) > M\<close>
-    using Lim_bounded_PInfty2 \<open>\<forall>n. norm (f n l) \<le> M\<close> ereal_less_eq(3) by blast 
-  then obtain N where \<open>norm ((f (k\<^sub>f N)) l) > M\<close>
-    by blast
-  have \<open>norm ((f (k\<^sub>f N)) l) \<le> M\<close>
-    by (simp add: \<open>\<forall>n. norm (f n l) \<le> M\<close>)
-  show ?thesis using  \<open>norm ((f (k\<^sub>f N)) l) > M\<close>  \<open>norm ((f (k\<^sub>f N)) l) \<le> M\<close>
-    by linarith
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
@@ -957,7 +598,7 @@ proof-
         moreover have  \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>
           by (simp add: \<open>\<And>x. \<exists>M. \<forall>n. norm (f n x) \<le> M\<close>)          
         ultimately show ?thesis 
-          by (rule banach_steinhaus)
+          using banach_steinhaus sorry          
       qed
       then obtain M where \<open>\<forall> n. \<forall> x. onorm (f n) \<le> M\<close>
         by blast
@@ -972,6 +613,5 @@ proof-
   ultimately show ?thesis unfolding bounded_linear_def by blast
 qed
 
-unbundle no_nsa_notation
 
 end

@@ -1174,6 +1174,77 @@ lemma infinitesimal_square:
   shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
   by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
 
+proposition bounded_nsbounded_iff:
+  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
+  using bounded_nsbounded nsbounded_bounded by blast
+
+proposition unbounded_nsbounded_D:
+  \<open>\<not>(bounded S) \<Longrightarrow> \<exists> x\<in>*s* S. x \<in> HInfinite\<close>
+  for S::\<open>'a::real_normed_vector set\<close>
+proof-
+  assume \<open>\<not>(bounded S)\<close>
+  hence \<open>\<And> M. \<exists> x\<in>S. norm x > M\<close>
+    unfolding bounded_def by (metis dist_0_norm not_le_imp_less)
+  hence \<open>\<And> M. \<exists> x\<in>*s* S. hnorm x > M\<close>
+    by StarDef.transfer
+  hence \<open>\<exists> x\<in>*s* S. hnorm x > \<omega>\<close>
+    by blast
+  thus ?thesis
+    using HInfiniteI SReal_less_omega less_trans by blast
+qed
+
+proposition unbounded_nsbounded_I:
+  \<open>\<exists> x\<in>*s* S. x \<in> HInfinite \<Longrightarrow> \<not>(bounded S)\<close>
+  for S::\<open>'a::real_normed_vector set\<close>
+proof(rule classical)
+  assume \<open>\<exists> x\<in>*s* S. x \<in> HInfinite\<close> and \<open>\<not>( \<not>(bounded S))\<close>
+  have \<open>bounded S\<close>
+    using  \<open>\<not>( \<not>(bounded S))\<close> by blast
+  hence \<open>bounded (insert 0 S)\<close>
+    by simp
+  from  \<open>\<exists> x\<in>*s* S. x \<in> HInfinite\<close>
+  obtain x where \<open>x\<in>*s* S\<close> and \<open>x \<in> HInfinite\<close>
+    by blast
+  have \<open>x\<in>*s* (insert 0 S)\<close>
+    using \<open>x\<in>*s* S\<close> by simp 
+  moreover have \<open>0\<in>*s* (insert 0 S)\<close>
+    by auto
+  ultimately have \<open>(*f2* dist) 0 x \<in> HFinite\<close>
+    using \<open>bounded (insert 0 S)\<close> bounded_nsbounded by blast
+  moreover have \<open>(*f2* dist) 0 x = hnorm x\<close>
+  proof-
+    have \<open>\<forall> t::'a. dist 0 t = norm t\<close>
+      using dist_norm  by auto
+    hence \<open>\<forall> t::'a star. (*f2* dist) 0 t = hnorm t\<close>
+      by StarDef.transfer      
+    thus ?thesis by blast
+  qed
+  ultimately have \<open>hnorm x \<in> HFinite\<close>
+    by simp
+  hence \<open>x \<in> HFinite\<close>
+    unfolding HFinite_def by auto   
+  thus ?thesis using \<open>x \<in> HInfinite\<close>
+    by (simp add: HInfinite_HFinite_iff) 
+qed
+
+proposition bounded_nsbounded_norm_D:
+  \<open>bounded S \<Longrightarrow> \<forall> x\<in>*s* S. x \<in> HFinite\<close>
+  for S::\<open>'a::real_normed_vector set\<close>
+  using not_HFinite_HInfinite unbounded_nsbounded_I by blast
+
+proposition bounded_nsbounded_norm_I:
+  \<open>\<forall> x\<in>*s* S. x \<in> HFinite \<Longrightarrow> bounded S\<close>
+  for S::\<open>'a::real_normed_vector set\<close>
+  using HFinite_not_HInfinite unbounded_nsbounded_D by blast
+
+proposition bounded_nsbounded_norm:
+\<open>(\<forall> x\<in>*s* S. x \<in> HFinite) \<longleftrightarrow> bounded S\<close>
+  for S::\<open>'a::real_normed_vector set\<close>
+  using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
+  by blast
+
+
+
 unbundle no_nsa_notation
 
 end
