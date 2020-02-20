@@ -342,6 +342,76 @@ proof-
     by (smt comp_def image_iff) 
 qed
 
+lemma bound_Cauchy_to_lim:
+  assumes \<open>y \<longlonglongrightarrow> x\<close>  and \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
+  shows \<open>norm (x - y (Suc n)) \<le> (c * inverse (1 - c)) * (c ^ n)\<close>
+proof-
+  have \<open>c \<ge> 0\<close>
+    using  \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> by (smt norm_imp_pos_and_ge power_Suc0_right)
+  have \<open>(\<lambda> N. (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> x - y (Suc n)\<close>
+    by (metis (no_types) assms(1) identity_telescopic)
+  hence \<open>(\<lambda> N. norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> norm (x - y (Suc n))\<close>
+    using tendsto_norm by blast
+  moreover have \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> for N
+  proof(cases \<open>N < Suc n\<close>)
+    case True
+    hence \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) = 0\<close>
+      by auto
+    thus ?thesis
+      using  \<open>c \<ge> 0\<close> assms(4) by auto      
+  next
+    case False
+    hence \<open>N \<ge> Suc n\<close>
+      by auto
+    have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})
+            \<le> (sum (\<lambda>k. norm (y (Suc k) - y k)) {Suc n .. N})\<close>
+      by (simp add: sum_norm_le)
+    also have \<open>\<dots> \<le> (sum (power c) {Suc n .. N})\<close>
+      using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close>
+      by (simp add: sum_mono) 
+    finally have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) \<le> (sum (power c) {Suc n .. N})\<close>
+      by blast
+    moreover have \<open>1 - c > 0\<close>
+      by (simp add: assms(4))
+    ultimately have \<open>(1 - c) * norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) 
+                   \<le> (1 - c) * (sum (power c) {Suc n .. N})\<close>
+      by simp
+    also have \<open>\<dots> = c^(Suc n) - c^(Suc N)\<close>
+      using Set_Interval.sum_gp_multiplied \<open>Suc n \<le> N\<close> by blast
+    also have \<open>\<dots> \<le> c^(Suc n)\<close>
+    proof-
+      have \<open>c^(Suc N) \<ge> 0\<close>
+        using \<open>c \<ge> 0\<close> by auto
+      thus ?thesis by auto
+    qed
+    finally have \<open>(1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> c ^ Suc n\<close>
+      by blast
+    moreover have \<open>inverse (1 - c) > 0\<close>
+      using \<open>0 < 1 - c\<close> by auto      
+    ultimately have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) )
+                   \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+      by auto
+    moreover have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) ) 
+          = norm (\<Sum>k = Suc n..N. y (Suc k) - y k)\<close>
+    proof-
+      have \<open>inverse (1 - c) * (1 - c) = 1\<close>
+        using \<open>0 < 1 - c\<close> by auto
+      thus ?thesis by auto
+    qed
+    ultimately show \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+      by auto
+  qed
+  ultimately have \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    using Lim_bounded by blast
+  hence  \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    by auto
+  moreover have \<open> (inverse (1 - c)) * (c ^ Suc n) = (c * inverse (1 - c)) * (c ^ n)\<close>
+    by auto
+  ultimately show \<open>norm (x - y (Suc n)) \<le> (c * inverse (1 - c)) * (c ^ n)\<close>
+    by linarith 
+qed
+
+
 subsection \<open>Banach-Steinhaus theorem\<close>
 
 theorem banach_steinhaus:
@@ -425,68 +495,23 @@ proof-
       by (simp add: convergent_eq_Cauchy)
     then obtain x where \<open>y \<longlonglongrightarrow> x\<close>
       by blast
-    have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
-    proof-             
-      define z where \<open>z = (\<lambda> n.  y (Suc n))\<close>
-      have \<open>z \<longlonglongrightarrow> x\<close> 
-        using z_def
-        by (meson \<open>y \<longlonglongrightarrow> x\<close> le_imp_less_Suc pinf(8) tendsto_explicit)
-      moreover have \<open>(sum (\<lambda> t. norm (z (Suc t) - z t)) {n..k})
-                  \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for k
-      proof-
-        have \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..k}) \<le> inverse (of_nat 3^n)\<close>
-        proof-
-          have \<open>norm (y (Suc (Suc t)) - y (Suc t)) \<le> inverse (of_nat 3^(Suc t))\<close>
-            for t
-            using \<open>\<And> n. norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close>[where n = "Suc t"]
-            by blast
-          hence \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..n+p}) 
-              \<le> (sum (\<lambda> t. (inverse (of_nat 3))^(Suc t) ) {n..n+p})\<close> 
-            for p::nat
-            sorry
-          moreover have  \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t) ) {n..n+p}) 
-                       \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close> 
-            for p::nat
-          proof-
-            have \<open>n \<le> n + p\<close>
-              by auto
-            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})
-                 = (sum ((\<lambda> t. (inverse (of_nat 3))^(Suc t))\<circ>((+) n)) {0..(n + p) - n})\<close> 
-              by (rule Set_Interval.comm_monoid_add_class.sum.atLeastAtMost_shift_0)
-            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
-                 = (sum (\<lambda> t. (inverse (of_nat 3))^(Suc n+t)) {0..p})\<close> 
-              by simp
-            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
-                = (sum (\<lambda> t. (inverse (of_nat 3))^(Suc n)*(inverse (of_nat 3))^t) {0..p})\<close>
-              by (smt power_add sum.cong)               
-            hence \<open>(sum (\<lambda> t. (inverse (of_nat 3))^(Suc t)) {n..n+p})  
-                = (inverse (of_nat 3))^(Suc n)*(sum (\<lambda> t. (inverse (of_nat 3))^t) {0..p})\<close>
-              by (simp add: sum_distrib_left)
-
-            have \<open>m \<ge> n \<Longrightarrow> (sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m})
-                           \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
-              for m::nat
-              sorry
-            moreover have \<open>m < n \<Longrightarrow> sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m}
-                           \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
-              for m::nat
-              by simp
-            ultimately have \<open>(sum (\<lambda> t. norm (y (Suc (Suc t)) - y (Suc t))) {n..m})
-                           \<le>  (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
-              for m::nat
-              by (metis (full_types) le_eq_less_or_eq less_or_eq_imp_le linorder_neqE_nat) 
-            thus ?thesis sorry
-          qed
-          thus ?thesis unfolding z_def sorry
-        qed
-        have \<open>norm (x - z n) \<le> (inverse (of_nat 2))*(inverse (of_nat 3))^n\<close>
-          sorry
-        show ?thesis using z_def
-          sorry
-      qed
-      show ?thesis
-        sorry
-    qed
+    hence \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
+    proof-
+      have  \<open>inverse (real_of_nat 3) < 1\<close>
+        by simp        
+      moreover have \<open>y 0 = 0\<close>
+        using y_def by auto
+      ultimately have \<open>norm (x - y (Suc n)) 
+    \<le> ((inverse (of_nat 3)) * inverse (1 - (inverse (of_nat 3)))) * ((inverse (of_nat 3)) ^ n)\<close>
+        using bound_Cauchy_to_lim[where c = "inverse (of_nat 3)" and y = y and x = x]
+          power_inverse semiring_norm(77)  \<open>y \<longlonglongrightarrow> x\<close>
+          \<open>\<And> n. norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close>
+        by metis        
+      moreover have \<open>(inverse (real_of_nat 3)) * inverse (1 - (inverse (of_nat 3))) = inverse (of_nat 2)\<close>
+        by auto
+      ultimately show ?thesis
+        by (metis power_inverse) 
+    qed      
     have \<open>\<exists> M. \<forall> n. norm (T n *\<^sub>v x) \<le> M\<close>
     proof-
       have \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close>
