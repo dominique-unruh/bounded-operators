@@ -24,6 +24,7 @@ typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bound
   morphisms times_real_bounded_vec Abs_real_bounded
   using bounded_linear_zero by blast
 
+
 notation times_real_bounded_vec (infixr "*\<^sub>v" 70)
 
 setup_lifting type_definition_real_bounded
@@ -315,12 +316,137 @@ proof transfer
     by (simp add: \<open>r > 0\<close>)    
 qed
 
+lemma real_bounded_ball_bdd_above:
+\<open>r > 0 \<Longrightarrow> bdd_above ((norm \<circ> ( (*\<^sub>v) f)) ` (ball x r))\<close>
+  sorry
+
+lemma sokal_banach_steinhaus':
+  "r > 0 \<Longrightarrow> \<tau> < 1 \<Longrightarrow> f \<noteq> 0 \<Longrightarrow> \<exists>\<xi>\<in>ball x r.  \<tau> * r * norm f \<le> norm (f *\<^sub>v \<xi>)"
+proof-
+  assume \<open>r > 0\<close> and \<open>\<tau> < 1\<close> and \<open>f \<noteq> 0\<close>
+  have  \<open>norm f > 0\<close>
+    using \<open>f \<noteq> 0\<close> by auto
+  have \<open>norm f \<le> (inverse r) * Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
+    using \<open>r > 0\<close> sokal_banach_steinhaus by blast
+  hence \<open>r * norm f \<le> r * (inverse r) * Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
+    using \<open>r > 0\<close> by (smt linordered_field_class.sign_simps(4) mult_left_less_imp_less) 
+  hence \<open>r * norm f \<le> Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
+    using \<open>0 < r\<close> by auto
+  moreover have \<open>\<tau> * r * norm f < r * norm f\<close>
+      using  \<open>\<tau> < 1\<close> using \<open>0 < norm f\<close> \<open>0 < r\<close> by auto
+  ultimately have \<open>\<tau> * r * norm f < Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )\<close>
+    by simp
+  moreover have \<open>(norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) \<noteq> {}\<close>
+    using \<open>0 < r\<close> by auto    
+  moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) f)) ` (ball x r))\<close>
+    using real_bounded_ball_bdd_above  \<open>0 < r\<close>
+    by simp
+  ultimately have \<open>\<exists>t \<in> (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r). \<tau> * r * norm f < t\<close> 
+    by (simp add: less_cSup_iff)    
+  thus ?thesis
+    by (smt comp_def image_iff) 
+qed
+
+
 subsection \<open>Banach-Steinhaus theorem\<close>
 
 theorem banach_steinhaus:
-  \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
+  \<open>(\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
   for f::\<open>'c \<Rightarrow> ('a::banach, 'b::real_normed_vector) real_bounded\<close>
-  sorry
+proof-
+  assume \<open>\<And>x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close> show ?thesis
+  proof(rule classical)
+    assume \<open>\<not>(bounded (range f))\<close>
+    have \<open>\<exists> x k. (*f2* (*\<^sub>v)) ((*f* f) k) (star_of x) \<in> HInfinite\<close>
+    proof-
+      have \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
+               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v \<xi>))\<close> 
+        by (metis sokal_banach_steinhaus' inverse_eq_1_iff inverse_le_1_iff less_eq_real_def 
+            num.distinct(1) numeral_eq_one_iff of_nat_numeral one_le_numeral)
+      hence \<open>\<exists>\<xi>. \<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. g \<noteq> 0 \<and> r > 0
+               \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r)))\<close> 
+        by metis
+      then obtain \<xi> where \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
+        by blast
+
+
+      have \<open>\<forall>n. \<exists>k. norm (f k) \<ge> 4^n\<close>
+        using \<open>\<not>(bounded (range f))\<close> by (metis (mono_tags, hide_lams) boundedI image_iff linear)
+      hence  \<open>\<exists>k. \<forall>n. norm (f (k n)) \<ge> 4^n\<close>
+        by metis
+      hence  \<open>\<exists>k. \<forall>n. norm ((f \<circ> k) n) \<ge> 4^n\<close>
+        by simp
+      then obtain k where \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by blast
+      define T where \<open>T = f \<circ> k\<close>
+      have \<open>T n \<in> range f\<close> for n
+        unfolding T_def by simp        
+      have \<open>norm (T n) \<ge> of_nat (4^n)\<close> for n
+        unfolding T_def using \<open>\<And> n. norm ((f \<circ> k) n) \<ge> 4^n\<close> by auto
+      hence \<open>T n \<noteq> 0\<close> for n
+        by (smt T_def \<open>\<And>n. 4 ^ n \<le> norm ((f \<circ> k) n)\<close> norm_zero power_not_zero zero_le_power)        
+      have \<open>inverse (of_nat 3^n) > (0::real)\<close> for n
+        by auto
+      define y::\<open>nat \<Rightarrow> 'a\<close> where
+        \<open>y = rec_nat 0 (\<lambda>n x. \<xi> (T n) x (inverse (of_nat 3^n)))\<close>
+
+      have \<open>y (Suc n) \<in> ball (y n) (inverse (of_nat 3^n))\<close> for n
+        using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
+        g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
+          \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
+        by auto       
+      hence \<open>norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close> for n
+        unfolding ball_def apply auto using dist_norm
+        by (smt norm_minus_commute) 
+      moreover have \<open>\<exists>M::real. \<forall>n. sum (\<lambda>n. inverse (of_nat 3^n)) {0..n} \<le> M\<close>
+        sorry
+      moreover have \<open>Cauchy y\<close>
+        using Banach_Steinhaus_Missing.convergent_series_Cauchy[where a = "\<lambda>n. inverse (of_nat 3^n)" 
+            and \<phi> = y] dist_norm
+        by (metis calculation(1) calculation(2))         
+      hence \<open>\<exists> x. y \<longlonglongrightarrow> x\<close>
+        by (simp add: convergent_eq_Cauchy)
+      then obtain x where \<open>y \<longlonglongrightarrow> x\<close>
+        by blast
+      have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> for n
+        using \<open>\<And>g::('a, 'b) real_bounded. \<And>x. \<And>r. 
+        g \<noteq> 0 \<Longrightarrow> r > 0 \<Longrightarrow> 
+        \<xi> g x r \<in> ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v (\<xi> g x r))\<close>
+          \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def
+        by auto
+      moreover have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*(of_nat 4^n) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n)\<close> for n
+        using \<open>\<And>n. norm (T n) \<ge> of_nat (4^n)\<close> 
+        by auto
+      ultimately have \<open>(inverse (of_nat 2))*(inverse (of_nat 3^n))*(of_nat 4^n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> for n
+        by smt
+
+      have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
+        sorry
+
+      have \<open>\<forall>r. \<exists>\<xi>. (T n) \<noteq> 0 \<and> r > 0
+               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm (T n) \<le> norm ((T n) *\<^sub>v \<xi>))\<close> for n
+        using \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
+               \<longrightarrow> (\<xi>\<in>ball x r \<and> (inverse (of_nat 2)) * r * norm g \<le> norm (g *\<^sub>v \<xi>))\<close>
+        sorry
+
+      show ?thesis sorry
+    qed
+    moreover have \<open>(*f2* (*\<^sub>v)) ((*f* f) k) (star_of x) \<in> range (*f* (\<lambda>n. f n *\<^sub>v x))\<close> for x k
+    proof-
+      have \<open>\<forall>k. (\<lambda>n. f n *\<^sub>v x) k =  f k *\<^sub>v x\<close>
+        by simp
+      hence \<open>\<forall>k. (*f* (\<lambda>n. f n *\<^sub>v x)) k = (*f2* (*\<^sub>v)) ((*f* f) k) (star_of x)\<close> 
+        by StarDef.transfer    
+      thus ?thesis
+        using starset_image by auto
+    qed
+    ultimately show ?thesis
+      using \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> starset_UNIV starset_image unbounded_nsbounded_I
+      by blast
+  qed
+qed
+
 
 theorem banach_steinhaus':
   \<open>(\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))) \<Longrightarrow> bounded (range f)\<close>
@@ -388,7 +514,7 @@ proof-
         using \<open>\<And> x. bounded (range (\<lambda> n. (f n) *\<^sub>v x))\<close>
         unfolding bounded_def
         by (metis \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> bounded_iff rangeI) 
-        
+
       show ?thesis 
         sorry
     qed
