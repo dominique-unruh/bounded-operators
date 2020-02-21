@@ -1,7 +1,10 @@
 chapter AFP
 
 session Banach_Steinhaus (AFP) = "HOL-Analysis" + 
-  options [timeout = 300]
+  options [timeout = 300, document = pdf]
+  sessions
+    "HOL-Types_To_Sets"
+    "HOL-ex"
   theories
     Banach_Steinhaus
     Real_Bounded_Operators

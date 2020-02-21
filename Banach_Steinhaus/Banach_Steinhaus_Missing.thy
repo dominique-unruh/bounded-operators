@@ -105,7 +105,7 @@ qed
 
 subsection\<open>Operator norm missing\<close>
 
-text\<open>The results developed here are a complement to the file Operator_Norm.thy.\<close>
+text\<open>The results developed here are a complement to the theory \<^theory>\<open>HOL-Analysis.Operator_Norm\<close>.\<close>
 
 lemma ex_norm_1:
   \<open>\<exists> x::('a::{real_normed_vector,not_singleton}). norm x = 1\<close>
