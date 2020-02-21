@@ -246,9 +246,42 @@ theorem banach_steinhaus:
   \<open>\<lbrakk>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<rbrakk> \<Longrightarrow> bounded (range f)\<close>
   for f::\<open>'c \<Rightarrow> ('a::banach, 'b::real_normed_vector) real_bounded\<close>
 proof-
-  assume \<open>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<close> show ?thesis
-  proof(rule classical)
-    assume \<open>\<not>(bounded (range f))\<close>
+
+  {
+    assume \<open>\<not>(bounded (range f))\<close> and \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close>
+    {
+      have \<open>summable (\<lambda>n. (inverse (real_of_nat 3))^n)\<close>
+        using Series.summable_geometric_iff [where c = "inverse (real_of_nat 3)"] by auto
+      moreover have \<open>(inverse (real_of_nat 3))^n = inverse (real_of_nat 3^n)\<close> for n::nat
+        using power_inverse by blast        
+      ultimately have \<open>summable (\<lambda>n. inverse (real_of_nat 3^n))\<close>
+        by auto
+      hence \<open>bounded (range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n}))\<close>
+        using summable_imp_sums_bounded[where f = "(\<lambda>n. inverse (real_of_nat 3^n))"]
+          lessThan_atLeast0 by auto
+      hence \<open>\<exists>M. \<forall>h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})). norm h \<le> M\<close>
+        using bounded_iff by blast
+      then obtain M where \<open>h\<in>range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n}) \<Longrightarrow> norm h \<le> M\<close> 
+        for h
+        by blast      
+      {
+        fix n
+        have  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..< Suc n}) \<le> M\<close>
+          using \<open>\<And>h. h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})) \<Longrightarrow> norm h \<le> M\<close> 
+          by blast
+        hence  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
+          by (simp add: atLeastLessThanSuc_atLeastAtMost)        
+        hence  \<open>(sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
+          by auto
+        hence \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> by blast
+      } note sum_2 = this
+
+      have \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> for n 
+        using sum_2 by blast
+      hence \<open>\<exists>K. \<forall>n. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close> 
+        by blast
+    } note sum_1 = this
+
     have \<open>of_rat 2/3 < (1::real)\<close>
       by auto
     hence \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
@@ -284,34 +317,7 @@ proof-
     hence \<open>norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close> for n
       unfolding ball_def apply auto using dist_norm by (smt norm_minus_commute) 
     moreover have \<open>\<exists>K. \<forall>n. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close>
-    proof-
-      have \<open>summable (\<lambda>n. (inverse (real_of_nat 3))^n)\<close>
-        using Series.summable_geometric_iff [where c = "inverse (real_of_nat 3)"] by auto
-      moreover have \<open>(inverse (real_of_nat 3))^n = inverse (real_of_nat 3^n)\<close> for n::nat
-        using power_inverse by blast        
-      ultimately have \<open>summable (\<lambda>n. inverse (real_of_nat 3^n))\<close>
-        by auto
-      hence \<open>bounded (range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n}))\<close>
-        using summable_imp_sums_bounded[where f = "(\<lambda>n. inverse (real_of_nat 3^n))"]
-          lessThan_atLeast0 by auto
-      hence \<open>\<exists>M. \<forall>h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})). norm h \<le> M\<close>
-        using bounded_iff by blast
-      then obtain M where \<open>h\<in>range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n}) \<Longrightarrow> norm h \<le> M\<close> 
-        for h
-        by blast      
-      have \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> for n 
-      proof-
-        have  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..< Suc n}) \<le> M\<close>
-          using \<open>\<And>h. h\<in>(range (\<lambda>n. sum (\<lambda> k. inverse (real 3 ^ k)) {0..<n})) \<Longrightarrow> norm h \<le> M\<close> 
-          by blast
-        hence  \<open>norm (sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
-          by (simp add: atLeastLessThanSuc_atLeastAtMost)        
-        hence  \<open>(sum (\<lambda> k. inverse (real 3 ^ k)) {0..n}) \<le> M\<close>
-          by auto
-        thus ?thesis by blast
-      qed
-      thus ?thesis by blast
-    qed
+      using sum_1 by blast
     moreover have \<open>Cauchy y\<close>
       using convergent_series_Cauchy[where a = "\<lambda>n. inverse (of_nat 3^n)" and \<phi> = y] dist_norm
       by (metis calculation(1) calculation(2))
@@ -319,9 +325,9 @@ proof-
       by (simp add: convergent_eq_Cauchy)
     then obtain x where \<open>y \<longlonglongrightarrow> x\<close>
       by blast
-    hence \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
-    proof-
-      have  \<open>inverse (real_of_nat 3) < 1\<close>
+    { 
+      fix n
+      have \<open>inverse (real_of_nat 3) < 1\<close>
         by simp        
       moreover have \<open>y 0 = 0\<close>
         using y_def by auto
@@ -331,74 +337,92 @@ proof-
           power_inverse semiring_norm(77)  \<open>y \<longlonglongrightarrow> x\<close>
           \<open>\<And> n. norm (y (Suc n) - y n) \<le> inverse (of_nat 3^n)\<close> by metis
       moreover have \<open>inverse (real_of_nat 3) * inverse (1 - (inverse (of_nat 3)))
-                    = inverse (of_nat 2)\<close>
+                   = inverse (of_nat 2)\<close>
         by auto
-      ultimately show ?thesis
+      ultimately have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
         by (metis power_inverse) 
-    qed      
+    } note norm_2 = this
+
+    have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
+      using norm_2 by blast
     have \<open>\<exists> M. \<forall> n. norm (T n *\<^sub>v x) \<le> M\<close>
       unfolding T_def apply auto
       by (metis \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close> bounded_iff rangeI)
     then obtain M where \<open>norm (T n *\<^sub>v x) \<le> M\<close> for n
       by blast
+    {
+      fix n   
+      have \<open>norm (y (Suc n) - x) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
+        using \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> 
+        by (simp add: norm_minus_commute)
+      moreover have \<open>norm (T n) \<ge> 0\<close>
+        by auto
+      ultimately have \<open>norm (T n) * norm (y (Suc n) - x) 
+                     \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n)\<close>
+        by (simp add: \<open>\<And>n. T n \<noteq> 0\<close>)
+      hence \<open>norm (T n) * norm (y (Suc n) - x) + norm (T n *\<^sub>v x)
+    \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (T n *\<^sub>v x)\<close> by simp      
+    } note norm_1 = this
+
+    { fix n
+      have \<open>(of_rat 2/3)*(inverse (of_nat 3^n)) * norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> 
+        using f1 \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def by auto
+      also have \<open>\<dots> = norm ((T n) *\<^sub>v ((y (Suc n) - x) + x))\<close>
+        by auto
+      also have \<open>\<dots> = norm ((T n) *\<^sub>v (y (Suc n) - x) + (T n) *\<^sub>v x)\<close>
+        apply transfer apply auto by (metis diff_add_cancel linear_simps(1))
+      also have \<open>\<dots> \<le> norm ((T n) *\<^sub>v (y (Suc n) - x)) + norm ((T n) *\<^sub>v x)\<close>
+        by (simp add: norm_triangle_ineq)
+      also have \<open>\<dots> \<le> norm (T n) * norm (y (Suc n) - x) + norm ((T n) *\<^sub>v x)\<close>
+        apply transfer apply auto using onorm by auto 
+      also have \<open>\<dots> \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) + norm ((T n) *\<^sub>v x)\<close>
+        using norm_1 by blast
+      finally have \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n)
+                \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (T n *\<^sub>v x)\<close>
+        by blast
+      hence \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
+             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
+        by linarith
+      hence \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
+        by (simp add: linordered_field_class.sign_simps(5))                
+    } note inverse_2 = this
+
+    {
+      fix n
+      have \<open>of_rat (4/3)^n = inverse (real 3 ^ n) * (of_nat 4^n)\<close>
+        apply auto by (metis divide_inverse_commute of_rat_divide power_divide of_rat_numeral_eq) 
+      also have \<open>\<dots> \<le>  inverse (real 3 ^ n) * norm (T n)\<close>
+        using \<open>\<And>n. norm (T n) \<ge> of_nat (4^n)\<close> by simp
+      finally have \<open>of_rat (4/3)^n \<le> inverse (real 3 ^ n) * norm (T n)\<close>
+        by blast
+      moreover have \<open>inverse (of_nat 6) > (0::real)\<close>
+        by auto
+      ultimately have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
+                    \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close> by auto
+    } note inverse_3 = this
+
+    {
+      fix n
+      have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
+          \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close> 
+        using inverse_3 by blast
+      also have \<open>\<dots> \<le> norm (T n *\<^sub>v x)\<close> 
+        using inverse_2 by blast
+      finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm (T n *\<^sub>v x)\<close>
+        by auto
+      hence \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> 
+        using \<open>\<And> n. norm (T n *\<^sub>v x) \<le> M\<close> by smt
+    } note inverse_1 = this
+
     have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
       by (simp add: Elementary_Topology.real_arch_pow)
     moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
-    proof-
-      have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
-          \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close>
-      proof-
-        have \<open>of_rat (4/3)^n = inverse (real 3 ^ n) * (of_nat 4^n)\<close>
-          apply auto by (metis divide_inverse_commute of_rat_divide power_divide of_rat_numeral_eq) 
-        also have \<open>\<dots> \<le>  inverse (real 3 ^ n) * norm (T n)\<close>
-          using \<open>\<And>n. norm (T n) \<ge> of_nat (4^n)\<close> by simp
-        finally have \<open>of_rat (4/3)^n \<le> inverse (real 3 ^ n) * norm (T n)\<close>
-          by blast
-        moreover have \<open>inverse (of_nat 6) > (0::real)\<close>
-          by auto
-        ultimately show ?thesis by auto
-      qed
-      also have \<open>\<dots> \<le> norm (T n *\<^sub>v x)\<close> 
-      proof-
-        have \<open>(of_rat 2/3)*(inverse (of_nat 3^n)) * norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> 
-          using f1 \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def by auto
-        also have \<open>\<dots> = norm ((T n) *\<^sub>v ((y (Suc n) - x) + x))\<close>
-          by auto
-        also have \<open>\<dots> = norm ((T n) *\<^sub>v (y (Suc n) - x) + (T n) *\<^sub>v x)\<close>
-          apply transfer apply auto by (metis diff_add_cancel linear_simps(1))
-        also have \<open>\<dots> \<le> norm ((T n) *\<^sub>v (y (Suc n) - x)) + norm ((T n) *\<^sub>v x)\<close>
-          by (simp add: norm_triangle_ineq)
-        also have \<open>\<dots> \<le> norm (T n) * norm (y (Suc n) - x) + norm ((T n) *\<^sub>v x)\<close>
-          apply transfer apply auto using onorm by auto 
-        also have \<open>\<dots> \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) + norm ((T n) *\<^sub>v x)\<close>
-        proof-
-          have \<open>norm (y (Suc n) - x) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
-            using \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> 
-            by (simp add: norm_minus_commute)
-          moreover have \<open>norm (T n) \<ge> 0\<close>
-            by auto
-          ultimately have \<open>norm (T n) * norm (y (Suc n) - x) 
-                        \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n)\<close>
-            by (simp add: \<open>\<And>n. T n \<noteq> 0\<close>)
-          thus ?thesis by simp
-        qed
-        finally have \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n)
-                \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (T n *\<^sub>v x)\<close>
-          by blast
-        hence \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
-             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
-          by linarith
-        thus \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
-          by (simp add: linordered_field_class.sign_simps(5))          
-      qed
-      finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm (T n *\<^sub>v x)\<close>
-        by auto
-      thus \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close>
-        using \<open>\<And> n. norm (T n *\<^sub>v x) \<le> M\<close> by smt
-    qed                      
-    ultimately show ?thesis
-      by smt   
-  qed
+      using inverse_1 by blast                      
+    ultimately have False
+      by smt
+  } note main = this
+
+  assume \<open>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<close> thus ?thesis using main by blast
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
