@@ -1013,7 +1013,7 @@ proof-
     moreover have \<open>norm (f \<xi>) \<le> onorm f * norm \<xi>\<close> for \<xi>
       by (simp add: \<open>bounded_linear f\<close> onorm)    
     moreover have \<open>norm y \<le> norm (x - y) + norm x\<close> for y
-    by (smt norm_triangle_ineq3)
+      by (smt norm_triangle_ineq3)
     ultimately show ?thesis
       by (smt M_def \<open>bounded_linear f\<close> combine_common_factor 
           linordered_comm_semiring_strict_class.comm_mult_strict_left_mono onorm_pos_le) 
@@ -1022,7 +1022,6 @@ proof-
     unfolding bdd_above_def ball_def
     by (smt comp_eq_dest_lhs imageE mem_Collect_eq dist_norm)
 qed
-
 
 subsection \<open>Real Analysis Missing\<close>
 
@@ -1506,8 +1505,7 @@ proof-
     using Cauchy_altdef2 by fastforce 
 qed
 
-
-subsubsection \<open>Pointwise convergence\<close>
+subsubsection \<open>Convergence\<close>
 
 text\<open>Pointwise convergence\<close>
 definition pointwise_convergent_to :: 
@@ -1599,6 +1597,76 @@ proof
     ultimately show ?thesis
       by (metis limI) 
   qed
+qed
+
+lemma bound_Cauchy_to_lim:
+"\<lbrakk>y \<longlonglongrightarrow> x;  (\<And> n. norm (y (Suc n) - y n) \<le> c^n); y 0 = 0; c < 1\<rbrakk>
+ \<Longrightarrow> norm (x - y (Suc n)) \<le> (c * inverse (1 - c)) * (c ^ n)"
+proof-
+  assume \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
+  have \<open>c \<ge> 0\<close>
+    using  \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> by (smt norm_imp_pos_and_ge power_Suc0_right)
+  have \<open>(\<lambda> N. (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> x - y (Suc n)\<close>
+    by (metis (no_types) \<open>y \<longlonglongrightarrow> x\<close> identity_telescopic)
+  hence \<open>(\<lambda> N. norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> norm (x - y (Suc n))\<close>
+    using tendsto_norm by blast
+  moreover have \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> for N
+  proof(cases \<open>N < Suc n\<close>)
+    case True
+    hence \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) = 0\<close>
+      by auto
+    thus ?thesis
+      using  \<open>c \<ge> 0\<close> \<open>c < 1\<close> by auto       
+  next
+    case False
+    hence \<open>N \<ge> Suc n\<close>
+      by auto
+    have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})
+            \<le> (sum (\<lambda>k. norm (y (Suc k) - y k)) {Suc n .. N})\<close>
+      by (simp add: sum_norm_le)
+    also have \<open>\<dots> \<le> (sum (power c) {Suc n .. N})\<close>
+      using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close>
+      by (simp add: sum_mono) 
+    finally have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) \<le> (sum (power c) {Suc n .. N})\<close>
+      by blast
+    moreover have \<open>1 - c > 0\<close>
+      by (simp add: \<open>c < 1\<close>)      
+    ultimately have \<open>(1 - c) * norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) 
+                   \<le> (1 - c) * (sum (power c) {Suc n .. N})\<close>
+      by simp
+    also have \<open>\<dots> = c^(Suc n) - c^(Suc N)\<close>
+      using Set_Interval.sum_gp_multiplied \<open>Suc n \<le> N\<close> by blast
+    also have \<open>\<dots> \<le> c^(Suc n)\<close>
+    proof-
+      have \<open>c^(Suc N) \<ge> 0\<close>
+        using \<open>c \<ge> 0\<close> by auto
+      thus ?thesis by auto
+    qed
+    finally have \<open>(1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> c ^ Suc n\<close>
+      by blast
+    moreover have \<open>inverse (1 - c) > 0\<close>
+      using \<open>0 < 1 - c\<close> by auto      
+    ultimately have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) )
+                   \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+      by auto
+    moreover have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) ) 
+          = norm (\<Sum>k = Suc n..N. y (Suc k) - y k)\<close>
+    proof-
+      have \<open>inverse (1 - c) * (1 - c) = 1\<close>
+        using \<open>0 < 1 - c\<close> by auto
+      thus ?thesis by auto
+    qed
+    ultimately show \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+      by auto
+  qed
+  ultimately have \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    using Lim_bounded by blast
+  hence  \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    by auto
+  moreover have \<open> (inverse (1 - c)) * (c ^ Suc n) = (c * inverse (1 - c)) * (c ^ n)\<close>
+    by auto
+  ultimately show \<open>norm (x - y (Suc n)) \<le> (c * inverse (1 - c)) * (c ^ n)\<close>
+    by linarith 
 qed
 
 
