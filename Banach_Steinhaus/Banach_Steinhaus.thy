@@ -416,9 +416,56 @@ corollary bounded_linear_limit_bounded_linear:
   \<open>\<lbrakk>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<rbrakk> \<Longrightarrow> \<exists>g. f \<midarrow>Pointwise\<rightarrow> g\<close>
   for f::\<open>nat \<Rightarrow> ('a::{banach, perfect_space}, 'b::real_normed_vector) real_bounded\<close>
 proof-
+  {
+    assume \<open>\<And>x. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v x) \<le> M\<close>
+    have \<open>bounded (range (\<lambda>n. (f n)*\<^sub>v x))\<close> for x
+      using  \<open>\<And>x. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v x) \<le> M\<close>
+      by (metis (no_types, lifting) boundedI rangeE)
+    hence \<open>bounded (range f)\<close>
+      using banach_steinhaus by blast
+    hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close> unfolding bounded_def
+      by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI) 
+  } note norm_f_n = this
+
+  {
+    fix F::\<open>'a \<Rightarrow> 'b\<close> and x::'a
+    assume  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
+    have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
+      using Limits.isCont_norm by simp
+    hence \<open>(\<lambda> n. norm ((f n) *\<^sub>v x)) \<longlonglongrightarrow> (norm (F x))\<close>
+      using \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
+    hence \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close> for x 
+      using Elementary_Metric_Spaces.convergent_imp_bounded
+      by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
+  } note norm_f_n_x = this
+
+  { fix F::\<open>'a \<Rightarrow> 'b\<close>
+    assume \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
+    have \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close> for x
+      using norm_f_n_x  \<open>\<And>x. (\<lambda>n. f n *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by blast
+    hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
+      using norm_f_n by simp 
+    then obtain M::real where \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
+      by blast
+    have \<open>\<forall> n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * norm (f n)\<close>
+      apply transfer apply auto by (metis mult.commute onorm) 
+    hence "\<exists>K. \<forall>n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * K" using \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
+      by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)
+  } note norm_f = this
+
+  { 
+    fix F::\<open>'a \<Rightarrow> 'b\<close> 
+    assume \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
+    have "\<exists>K. \<forall>n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * K"
+      using norm_f \<open>\<And>x. (\<lambda>n. f n *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by auto
+    hence "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
+      using  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v  x) \<longlonglongrightarrow> F x\<close> apply transfer 
+      by (metis Lim_bounded tendsto_norm)   
+  } note norm_F_x = this
+
   assume \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
   hence \<open>\<exists>l. (\<lambda>n. (f n) *\<^sub>v x) \<longlonglongrightarrow> l\<close> for x
-    by (simp add: convergentD)    
+    by (simp add: convergentD)
   hence \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     unfolding pointwise_convergent_to_def by metis
   obtain F where \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
@@ -430,39 +477,7 @@ proof-
     using  \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     apply transfer apply auto using bounded_linear.linear linear_limit_linear by blast
   moreover have \<open>bounded_linear_axioms F\<close>
-  proof
-    have "\<exists>K. \<forall>n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * K"
-    proof-
-      have \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close> for x
-      proof-
-        have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
-          using Limits.isCont_norm by simp
-        hence \<open>(\<lambda> n. norm ((f n) *\<^sub>v x)) \<longlonglongrightarrow> (norm (F x))\<close>
-          using \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
-        thus ?thesis using Elementary_Metric_Spaces.convergent_imp_bounded
-          by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
-      qed
-      hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
-      proof-
-        have \<open>bounded (range (\<lambda>n. (f n)*\<^sub>v x))\<close> for x
-          using  \<open>\<And>x. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v x) \<le> M\<close>
-          by (metis (no_types, lifting) boundedI rangeE)
-        hence \<open>bounded (range f)\<close>
-          using banach_steinhaus by blast
-        thus ?thesis unfolding bounded_def
-          by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI) 
-      qed
-      then obtain M::real where \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
-        by blast
-      have \<open>\<forall> n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * norm (f n)\<close>
-        apply transfer apply auto by (metis mult.commute onorm) 
-      thus ?thesis using \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
-        by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)    
-    qed
-    thus "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
-      using  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v  x) \<longlonglongrightarrow> F x\<close> apply transfer 
-      by (metis Lim_bounded tendsto_norm) 
-  qed
+    using norm_F_x by (simp add: \<open>\<And>x. (\<lambda>n. f n *\<^sub>v x) \<longlonglongrightarrow> F x\<close> bounded_linear_axioms_def) 
   ultimately have \<open>bounded_linear F\<close> 
     unfolding bounded_linear_def by blast
   hence \<open>\<exists>g. (*\<^sub>v) g = F\<close>
