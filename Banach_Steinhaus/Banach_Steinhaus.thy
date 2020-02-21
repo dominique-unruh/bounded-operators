@@ -595,20 +595,29 @@ qed
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
 
 lift_definition real_bounded_pointwise::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> ('a \<Rightarrow> 'b) 
-  \<Rightarrow> bool\<close> (\<open>((_)/ \<midarrow>POINTWISE\<rightarrow> (_))\<close> [60, 60] 60)
-  is "Banach_Steinhaus_Missing.pointwise_convergent_to".
+  \<open>(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> ('a, 'b) real_bounded
+  \<Rightarrow> bool\<close> (\<open>((_)/ \<midarrow>Pointwise\<rightarrow> (_))\<close> [60, 60] 60)
+  is pointwise_convergent_to.
 
+text\<open>
+  An important consequence of Banach-Steinhaus theorem is that if a sequence of bounded operators 
+  converges pointwise, then the limit is a bounded operator too.
+\<close>
 corollary bounded_linear_limit_bounded_linear:
-  fixes f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space}, 'b::real_normed_vector) real_bounded\<close> 
-    and F :: \<open>'a\<Rightarrow>'b\<close>
-  assumes \<open>f \<midarrow>POINTWISE\<rightarrow> F\<close> 
-  shows \<open>bounded_linear F\<close> 
+  \<open>(\<And> x. convergent (\<lambda>n. (f n) *\<^sub>v x)) \<Longrightarrow> \<exists> g. f \<midarrow>Pointwise\<rightarrow> g\<close>
+  for f :: \<open>nat \<Rightarrow> ('a::{banach, perfect_space}, 'b::real_normed_vector) real_bounded\<close>
 proof-
+  assume \<open>\<And> x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
+  hence \<open>\<exists> l. (\<lambda>n. (f n) *\<^sub>v x) \<longlonglongrightarrow> l\<close> for x
+    by (simp add: convergentD)    
+  hence \<open>\<exists> F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+    unfolding pointwise_convergent_to_def by metis
+  obtain F where \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+    using \<open>\<exists> F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
   have \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
-    using \<open>f \<midarrow>POINTWISE\<rightarrow> F\<close> apply transfer by (simp add: pointwise_convergent_to_def)
+    using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by (simp add: pointwise_convergent_to_def)
   have \<open>linear F\<close>
-    using  \<open>f \<midarrow>POINTWISE\<rightarrow> F\<close>
+    using  \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     apply transfer apply auto using bounded_linear.linear linear_limit_linear
     by blast     
   moreover have \<open>bounded_linear_axioms F\<close>
@@ -646,7 +655,12 @@ proof-
       using  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v  x) \<longlonglongrightarrow> F x\<close> apply transfer 
       by (metis Lim_bounded tendsto_norm) 
   qed
-  ultimately show ?thesis unfolding bounded_linear_def by blast
+  ultimately have \<open>bounded_linear F\<close> 
+    unfolding bounded_linear_def by blast
+  hence \<open>\<exists>g. (*\<^sub>v) g = F\<close>
+    using Abs_real_bounded_inverse by auto
+  thus ?thesis
+    using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
 qed
 
 
