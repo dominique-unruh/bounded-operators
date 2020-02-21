@@ -4,6 +4,7 @@ session Banach_Steinhaus (AFP) = "HOL-Analysis" +
   options [timeout = 300]
   theories
     Banach_Steinhaus
+    Real_Bounded_Operators
     Banach_Steinhaus_Missing
   document_files
     "root.tex"

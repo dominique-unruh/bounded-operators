@@ -3,6 +3,11 @@
   Author: Dominique Unruh, University of Tartu
   Author: Jose Manuel Rodriguez Caballero, University of Tartu
 *)
+
+(*
+subjective perfection = 100% (Jose)
+*)
+
 section \<open>Real bounded operators\<close>
 
 theory Real_Bounded_Operators

@@ -4,6 +4,10 @@
   Author: Jose Manuel Rodriguez Caballero, University of Tartu
 *)
 section \<open>Missing results for Banach-Steinhaus\<close>
+(*
+subjective perfection = 60% (Jose)
+*)
+
 theory Banach_Steinhaus_Missing
   imports 
     "HOL-Analysis.Infinite_Set_Sum"
