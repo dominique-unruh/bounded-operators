@@ -13,19 +13,24 @@ section \<open>Real bounded operators\<close>
 theory Real_Bounded_Operators
   imports 
     "HOL-Analysis.Operator_Norm"
-
+    "HOL-Analysis.Bounded_Linear_Function"
 begin
 
-typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded
+type_synonym ('a,'b) real_bounded = "('a,'b) blinfun"
+
+(* typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) real_bounded
   = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
   morphisms times_real_bounded_vec Abs_real_bounded
-  using bounded_linear_zero by blast
+  using bounded_linear_zero by blast *)
+
+abbreviation "times_real_bounded_vec == blinfun_apply"
+abbreviation "Abs_real_bounded == Blinfun"
 
 notation times_real_bounded_vec (infixr "*\<^sub>v" 70)
 
-setup_lifting type_definition_real_bounded
+(* setup_lifting type_definition_real_bounded *)
 
-instantiation  real_bounded :: (real_normed_vector, real_normed_vector) real_normed_vector
+(* instantiation  blinfun :: (real_normed_vector, real_normed_vector) real_normed_vector
 begin
 lift_definition uminus_real_bounded ::
   "('a, 'b) real_bounded \<Rightarrow> ('a, 'b) real_bounded "  is \<open>\<lambda> f. \<lambda> x. - f x\<close>
@@ -131,7 +136,7 @@ proof
     apply transfer by (simp add: onorm_scaleR) 
 qed
 
-end
+end*)
 
 
 end

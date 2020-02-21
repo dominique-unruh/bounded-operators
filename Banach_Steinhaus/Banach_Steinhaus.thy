@@ -15,6 +15,13 @@ theory Banach_Steinhaus
     "HOL-ex.Sketch_and_Explore"
 begin
 
+(* 
+
+TODO: Change {} into proof-qed
+TODO: Avoid "literal facts" and use names instead
+
+*)
+
 text \<open>
   We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
 \<close>
@@ -25,11 +32,24 @@ text \<open>
   The following lemma is due to Alain Sokal ~\cite{sokal2011reall}.
 \<close>
 lemma sokal_banach_steinhaus:
+  (* "r > 0 \<Longrightarrow> norm f \<le> Sup ( norm ` blinfun_apply f ` (ball x r) ) / r" *)
   "r > 0 \<Longrightarrow> norm f \<le> (inverse r) * Sup ( (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) )"
 proof transfer
   fix r::real and f::\<open>'a \<Rightarrow> 'b\<close> and x::'a
   assume \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-  {
+
+  have bdd_above_3: \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
+  proof -
+    obtain M where \<open>\<And> \<xi>. norm (f \<xi>) \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
+      using \<open>bounded_linear f\<close> 
+      by (metis bounded_linear.nonneg_bounded semiring_normalization_rules(7))
+    hence \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f \<xi>) \<le> M * r\<close>
+      using \<open>r > 0\<close> by (smt mem_ball_0 mult_left_mono) 
+    thus ?thesis
+      by (meson bdd_aboveI2)     
+  qed
+
+(*   {
     obtain M where \<open>\<And> \<xi>. norm (f \<xi>) \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
       using \<open>bounded_linear f\<close> 
       by (metis bounded_linear.nonneg_bounded semiring_normalization_rules(7))
@@ -37,7 +57,8 @@ proof transfer
       using \<open>r > 0\<close> by (smt mem_ball_0 mult_left_mono) 
     hence \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
       by (meson bdd_aboveI2)     
-  } note bdd_above_3 = this
+  } note bdd_above_3 = this *)
+
   {
     have \<open>ball (0::'a) r \<noteq> {}\<close>
       using \<open>0 < r\<close> by auto          
@@ -58,14 +79,13 @@ proof transfer
       by (meson bdd_aboveI2)                          
   } note bdd_above_2 = this
   {
-    obtain K where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close>
+    obtain K where K_def: \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close>
       using  \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close> unfolding bdd_above_def 
       by (meson image_eqI)
     have \<open>\<xi> \<in> ball (0::'a) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close> for \<xi>
       using sphere_antipodal by auto
     hence \<open>bdd_above ((\<lambda> \<xi>. norm (f (x - \<xi>))) ` (ball 0 r))\<close>
-      by (metis \<open>\<And>\<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close> 
-          ab_group_add_class.ab_diff_conv_add_uminus bdd_aboveI2)        
+      by (metis K_def ab_group_add_class.ab_diff_conv_add_uminus bdd_aboveI2)
   } note bdd_above_4 = this
   {
     have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
@@ -415,6 +435,8 @@ text\<open>
   An important consequence of Banach-Steinhaus theorem is that if a sequence of bounded operators 
   converges pointwise, then the limit is a bounded operator too.
 \<close>
+
+(* TODO: Can we show this with \<exists>g. f \<longlonglongrightarrow> g instead? *)
 corollary bounded_linear_limit_bounded_linear:
   \<open>\<lbrakk>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<rbrakk> \<Longrightarrow> \<exists>g. f \<midarrow>Pointwise\<rightarrow> g\<close>
   for f::\<open>nat \<Rightarrow> ('a::{banach, perfect_space}, 'b::real_normed_vector) real_bounded\<close>
@@ -475,7 +497,7 @@ proof-
   ultimately have \<open>bounded_linear F\<close> 
     unfolding bounded_linear_def by blast
   hence \<open>\<exists>g. (*\<^sub>v) g = F\<close>
-    using Abs_real_bounded_inverse by auto
+    using bounded_linear_Blinfun_apply by auto
   thus ?thesis
     using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
 qed
