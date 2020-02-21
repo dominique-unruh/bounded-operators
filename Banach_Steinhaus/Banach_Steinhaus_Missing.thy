@@ -6,6 +6,7 @@
 section \<open>Missing results for Banach-Steinhaus\<close>
 (*
 subjective perfection = 60% (Jose)
+this file is really ugly
 *)
 
 theory Banach_Steinhaus_Missing

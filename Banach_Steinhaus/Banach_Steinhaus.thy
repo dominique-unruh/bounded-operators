@@ -5,7 +5,7 @@
 *)
 section \<open>Banach-Steinhaus theorem\<close>
   (*
-subjective perfection = 80% (Jose)
+subjective perfection = between 90% and 100% (Jose)
 *)
 
 theory Banach_Steinhaus
@@ -29,7 +29,6 @@ lemma sokal_banach_steinhaus:
 proof transfer
   fix r::real and f::\<open>'a \<Rightarrow> 'b\<close> and x::'a
   assume \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-
   {
     obtain M where \<open>\<And> \<xi>. norm (f \<xi>) \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
       using \<open>bounded_linear f\<close> 
@@ -39,7 +38,6 @@ proof transfer
     hence \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
       by (meson bdd_aboveI2)     
   } note bdd_above_3 = this
-
   {
     have \<open>ball (0::'a) r \<noteq> {}\<close>
       using \<open>0 < r\<close> by auto          
@@ -59,7 +57,6 @@ proof transfer
     hence \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
       by (meson bdd_aboveI2)                          
   } note bdd_above_2 = this
-
   {
     obtain K where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close>
       using  \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close> unfolding bdd_above_def 
@@ -70,7 +67,6 @@ proof transfer
       by (metis \<open>\<And>\<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close> 
           ab_group_add_class.ab_diff_conv_add_uminus bdd_aboveI2)        
   } note bdd_above_4 = this
-
   {
     have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
       using bdd_above_2 by blast
@@ -80,7 +76,6 @@ proof transfer
       unfolding max_def apply auto apply (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
       by (meson bdd_above_Int1 bdd_above_mono image_Int_subset)   
   } note bdd_above_1 = this
-
   {
     have \<open>bounded (ball x r)\<close>
       by simp            
@@ -89,14 +84,12 @@ proof transfer
     hence \<open>bdd_above ((norm \<circ> f) ` ball x r)\<close>
       by (simp add: bounded_imp_bdd_above)
   } note bdd_above_6 = this
-
   {
     have "(\<lambda>a. norm (f (x + a))) ` ball 0 r = (\<lambda>a. (norm \<circ> f) (x + a)) ` ball 0 r"
       by (metis comp_apply)
     hence \<open>(\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r = (norm \<circ> f) ` ball x r\<close>
       by (metis (no_types) add.left_neutral image_add_ball image_image)
   } note norm_1 = this
-
   {
     have \<open>(\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r = (norm \<circ> f) ` ball x r\<close>
       using norm_1 by blast
@@ -105,7 +98,6 @@ proof transfer
     ultimately have \<open>bdd_above ((\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r)\<close> 
       by simp
   } note bdd_above_5 = this
-
   {
     fix \<xi>::'a
     assume \<open>norm \<xi> < r\<close>
@@ -116,7 +108,6 @@ proof transfer
     hence \<open>norm \<xi> < r \<Longrightarrow> norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close> 
       by (metis (no_types, lifting) ab_group_add_class.ab_diff_conv_add_uminus image_iff) 
   } note norm_2 = this
-
   {
     fix \<xi>::'a
     assume \<open>norm \<xi> < r\<close>
@@ -127,14 +118,12 @@ proof transfer
     hence \<open>norm \<xi> < r \<Longrightarrow> norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close> 
       by (metis (no_types, lifting) diff_minus_eq_add image_iff)          
   } note norm_2' = this
-
   {
     have \<open>(\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r = (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close>
       apply auto using norm_2 apply auto using norm_2' by auto 
     hence \<open>bdd_above ((\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r)\<close>
       using bdd_above_4 by blast       
   } note bdd_above_6 = this
-
   {
     have \<open>ball (0::'a) r \<noteq> {}\<close>
       using \<open>r > 0\<close> by auto
@@ -147,7 +136,6 @@ proof transfer
       using max_Sup[where X = "ball (0::'a) r" and f = "\<lambda> \<xi>. (norm (f (x + \<xi>)))" 
           and g = "\<lambda> \<xi>. (norm (f (x - \<xi>)))"] by blast    
   } note Sup_2 = this
-
   {
     fix \<xi>::'a
     assume \<open>norm \<xi> < r\<close>
@@ -158,7 +146,6 @@ proof transfer
     ultimately have \<open>norm \<xi> < r \<Longrightarrow> norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close>
       by blast
   } note Sup_3' = this
-
   {
     fix \<xi>::'a
     assume \<open>norm \<xi> < r\<close>
@@ -169,7 +156,6 @@ proof transfer
     ultimately have \<open>norm \<xi> < r \<Longrightarrow> norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close>
       by blast             
   } note Sup_3'' = this
-
   {
     have \<open>(\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r) = (\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)\<close>
       apply auto using Sup_3' apply auto using Sup_3'' by blast
@@ -179,7 +165,6 @@ proof transfer
         (SUP \<xi>\<in>ball 0 r. norm (f (x + \<xi>)))\<close> 
       by auto
   } note Sup_3 = this
-
   {
     have \<open>(norm \<circ> f) \<xi> \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> for \<xi>
       using linear_plus_norm \<open>bounded_linear f\<close> 
@@ -201,7 +186,6 @@ proof transfer
       by (metis  add.right_neutral ball_translation image_image)      
     finally have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close> by blast
   } note Sup_1 = this
-
   have \<open>onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))\<close>
     using \<open>0 < r\<close> \<open>bounded_linear f\<close> onorm_r by blast
   moreover have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close>
@@ -246,7 +230,6 @@ theorem banach_steinhaus:
   \<open>\<lbrakk>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<rbrakk> \<Longrightarrow> bounded (range f)\<close>
   for f::\<open>'c \<Rightarrow> ('a::banach, 'b::real_normed_vector) real_bounded\<close>
 proof-
-
   {
     assume \<open>\<not>(bounded (range f))\<close> and \<open>\<And>x. bounded (range (\<lambda>n. f n *\<^sub>v x))\<close>
     {
@@ -275,13 +258,11 @@ proof-
           by auto
         hence \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> by blast
       } note sum_2 = this
-
       have \<open>sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> M\<close> for n 
         using sum_2 by blast
       hence \<open>\<exists>K. \<forall>n. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close> 
         by blast
     } note sum_1 = this
-
     have \<open>of_rat 2/3 < (1::real)\<close>
       by auto
     hence \<open>\<forall>g::('a, 'b) real_bounded. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
@@ -342,7 +323,6 @@ proof-
       ultimately have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
         by (metis power_inverse) 
     } note norm_2 = this
-
     have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
       using norm_2 by blast
     have \<open>\<exists> M. \<forall> n. norm (T n *\<^sub>v x) \<le> M\<close>
@@ -363,8 +343,8 @@ proof-
       hence \<open>norm (T n) * norm (y (Suc n) - x) + norm (T n *\<^sub>v x)
     \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (T n *\<^sub>v x)\<close> by simp      
     } note norm_1 = this
-
-    { fix n
+    { 
+      fix n
       have \<open>(of_rat 2/3)*(inverse (of_nat 3^n)) * norm (T n) \<le> norm ((T n) *\<^sub>v (y (Suc n)))\<close> 
         using f1 \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def by auto
       also have \<open>\<dots> = norm ((T n) *\<^sub>v ((y (Suc n) - x) + x))\<close>
@@ -386,7 +366,6 @@ proof-
       hence \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) \<le> norm (T n *\<^sub>v x)\<close>
         by (simp add: linordered_field_class.sign_simps(5))                
     } note inverse_2 = this
-
     {
       fix n
       have \<open>of_rat (4/3)^n = inverse (real 3 ^ n) * (of_nat 4^n)\<close>
@@ -400,7 +379,6 @@ proof-
       ultimately have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
                     \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close> by auto
     } note inverse_3 = this
-
     {
       fix n
       have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
@@ -413,7 +391,6 @@ proof-
       hence \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> 
         using \<open>\<And> n. norm (T n *\<^sub>v x) \<le> M\<close> by smt
     } note inverse_1 = this
-
     have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
       by (simp add: Elementary_Topology.real_arch_pow)
     moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
@@ -421,12 +398,14 @@ proof-
     ultimately have False
       by smt
   } note main = this
-
   assume \<open>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<close> thus ?thesis using main by blast
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
 
+text\<open>
+  We define the pointwise convergence of a sequence of real bounded operators.
+\<close>
 lift_definition real_bounded_pointwise::
   \<open>(nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) real_bounded) \<Rightarrow> ('a, 'b) real_bounded
   \<Rightarrow> bool\<close> (\<open>((_)/ \<midarrow>Pointwise\<rightarrow> (_))\<close> [60, 60] 60)
@@ -440,6 +419,16 @@ corollary bounded_linear_limit_bounded_linear:
   \<open>\<lbrakk>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<rbrakk> \<Longrightarrow> \<exists>g. f \<midarrow>Pointwise\<rightarrow> g\<close>
   for f::\<open>nat \<Rightarrow> ('a::{banach, perfect_space}, 'b::real_normed_vector) real_bounded\<close>
 proof-
+  assume \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
+  hence \<open>\<exists>l. (\<lambda>n. (f n) *\<^sub>v x) \<longlonglongrightarrow> l\<close> for x
+    by (simp add: convergentD)
+  hence \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+    unfolding pointwise_convergent_to_def by metis
+  obtain F where \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+    using \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
+  have \<open>\<And>x. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
+    using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer
+    by (simp add: pointwise_convergent_to_def)
   {
     assume \<open>\<And>x. \<exists>M. \<forall>n. norm ((f n) *\<^sub>v x) \<le> M\<close>
     have \<open>bounded (range (\<lambda>n. (f n)*\<^sub>v x))\<close> for x
@@ -450,10 +439,7 @@ proof-
     hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close> unfolding bounded_def
       by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI) 
   } note norm_f_n = this
-
   {
-    fix F::\<open>'a \<Rightarrow> 'b\<close> and x::'a
-    assume  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
     have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
       using Limits.isCont_norm by simp
     hence \<open>(\<lambda> n. norm ((f n) *\<^sub>v x)) \<longlonglongrightarrow> (norm (F x))\<close>
@@ -462,9 +448,7 @@ proof-
       using Elementary_Metric_Spaces.convergent_imp_bounded
       by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
   } note norm_f_n_x = this
-
-  { fix F::\<open>'a \<Rightarrow> 'b\<close>
-    assume \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
+  {
     have \<open>\<exists> M. \<forall> n. norm ((f n) *\<^sub>v x) \<le> M\<close> for x
       using norm_f_n_x  \<open>\<And>x. (\<lambda>n. f n *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by blast
     hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
@@ -476,27 +460,13 @@ proof-
     hence "\<exists>K. \<forall>n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * K" using \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
       by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)
   } note norm_f = this
-
   { 
-    fix F::\<open>'a \<Rightarrow> 'b\<close> 
-    assume \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
     have "\<exists>K. \<forall>n. \<forall>x. norm ((f n) *\<^sub>v x) \<le> norm x * K"
       using norm_f \<open>\<And>x. (\<lambda>n. f n *\<^sub>v x) \<longlonglongrightarrow> F x\<close> by auto
     hence "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
       using  \<open>\<And> x::'a. (\<lambda> n. (f n) *\<^sub>v  x) \<longlonglongrightarrow> F x\<close> apply transfer 
       by (metis Lim_bounded tendsto_norm)   
   } note norm_F_x = this
-
-  assume \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
-  hence \<open>\<exists>l. (\<lambda>n. (f n) *\<^sub>v x) \<longlonglongrightarrow> l\<close> for x
-    by (simp add: convergentD)
-  hence \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
-    unfolding pointwise_convergent_to_def by metis
-  obtain F where \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
-    using \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
-  have \<open>\<And>x. (\<lambda> n. (f n) *\<^sub>v x) \<longlonglongrightarrow> F x\<close>
-    using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer
-    by (simp add: pointwise_convergent_to_def)
   have \<open>linear F\<close>
     using  \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     apply transfer apply auto using bounded_linear.linear linear_limit_linear by blast
