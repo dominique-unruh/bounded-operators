@@ -11,7 +11,7 @@ Authors:
 theory Operator_Norm_Missing
   imports 
     Complex_Main
-    Operator_Norm_Missing_Banach_Steinhaus
+(*    Operator_Norm_Missing_Banach_Steinhaus*)
     "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
 begin
@@ -36,7 +36,8 @@ proof(cases \<open>f = (\<lambda> _. 0)\<close>)
       for x
       by (simp add: True)      
     hence \<open>{norm (f x) | x. norm x = 1} = {0}\<close>
-      using assms norm_set_nonempty_eq1 by fastforce
+(*      using assms norm_set_nonempty_eq1 by fastforce *)
+      sorry
     thus ?thesis
       by simp 
   qed
@@ -128,7 +129,8 @@ next
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-            by (simp add: assms norm_set_bdd_above_eq1)          
+(*            by (simp add: assms norm_set_bdd_above_eq1)          *)
+            sorry
           ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
             by (simp add: cSup_upper) 
@@ -137,9 +139,11 @@ next
         moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
         proof-
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-            using False assms norm_set_nonempty_eq1 by fastforce
+(*            using False assms norm_set_nonempty_eq1 by fastforce *)
+            sorry
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-            by (simp add: assms norm_set_bdd_above_eq1)    
+(*            by (simp add: assms norm_set_bdd_above_eq1)    *)
+            sorry
           have \<open>{0::real} \<noteq> {}\<close>
             by simp
           moreover have \<open>bdd_above {0::real}\<close>
@@ -409,7 +413,8 @@ proof-
   define S::\<open>real set\<close> where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
   have \<open>S\<noteq>{}\<close>
     unfolding S_def
-    using assms(1) assms(2) norm_set_nonempty_eq1 by auto
+(*    using assms(1) assms(2) norm_set_nonempty_eq1 by auto *)
+    sorry
   hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
     for e
     by (simp add: less_cSupD)
@@ -454,7 +459,8 @@ proof-
         ultimately show ?thesis by simp
       qed
       hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
-        using assms(2) norm_set_bdd_above_eq1 by force
+(*        using assms(2) norm_set_bdd_above_eq1 by force *)
+        sorry
       thus ?thesis unfolding S_def by blast 
     qed
     hence \<open>y \<le> Sup S\<close>

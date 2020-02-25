@@ -5,7 +5,7 @@
 *)
 section \<open>Banach-Steinhaus theorem\<close>
   (*
-subjective perfection = between 97% and 100% (Jose)
+subjective perfection = between 99% and 100% (Jose)
 *)
 
 theory Banach_Steinhaus
@@ -445,28 +445,17 @@ proof-
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
-
-text\<open>
-  We define the pointwise convergence of a sequence of real bounded operators.
-\<close>
-lift_definition real_bounded_pointwise::
-  \<open>(nat \<Rightarrow> ('a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector) ) \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)
-  \<Rightarrow> bool\<close> (\<open>((_)/ \<midarrow>Pointwise\<rightarrow> (_))\<close> [60, 60] 60)
-  is pointwise_convergent_to.
-
 text\<open>
   An important consequence of Banach-Steinhaus theorem is that if a sequence of bounded operators 
   converges pointwise, then the limit is a bounded operator too.
 \<close>
-
-(* TODO: Can we show this with \<exists>g. f \<longlonglongrightarrow> g instead? *)
 corollary bounded_linear_limit_bounded_linear:
-  \<open>\<lbrakk>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<rbrakk> \<Longrightarrow> \<exists>g. f \<midarrow>Pointwise\<rightarrow> g\<close>
-  for f::\<open>nat \<Rightarrow> ('a::{banach, perfect_space} \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
+  assumes \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close>
+  shows  \<open>\<exists>g. (\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> blinfun_apply g\<close>
 proof-
-  assume \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close>
-  hence \<open>\<exists>l. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> l\<close> for x
-    by (simp add: convergentD)
+  have \<open>\<exists>l. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> l\<close> for x
+    by (simp add:  \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close> convergentD)
   hence \<open>\<exists>F. (\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     unfolding pointwise_convergent_to_def by metis
   obtain F where \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
@@ -474,7 +463,6 @@ proof-
   have \<open>\<And>x. (\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close>
     using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer
     by (simp add: pointwise_convergent_to_def)
-
   have norm_f_n: \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
   proof-
     have \<open>bounded (range f)\<close>
@@ -483,7 +471,6 @@ proof-
     thus ?thesis  unfolding bounded_def
       by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI) 
   qed
-
   have norm_f_n_x: \<open>\<exists> M. \<forall> n. norm (blinfun_apply (f n) x) \<le> M\<close> for x
   proof-
     have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
@@ -494,7 +481,6 @@ proof-
       using Elementary_Metric_Spaces.convergent_imp_bounded
       by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
   qed
-
   have norm_f: \<open>\<exists>K. \<forall>n. \<forall>x. norm (blinfun_apply (f n) x) \<le> norm x * K\<close>
   proof-
     have \<open>\<exists> M. \<forall> n. norm (blinfun_apply (f n) x) \<le> M\<close> for x
@@ -508,7 +494,6 @@ proof-
     thus  ?thesis using \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
       by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl real_mult_le_cancel_iff2 vector_space_over_itself.scale_zero_left zero_less_norm_iff)
   qed 
-
   have norm_F_x: \<open>\<exists>K. \<forall>x. norm (F x) \<le> norm x * K\<close>
   proof-
     have "\<exists>K. \<forall>n. \<forall>x. norm (blinfun_apply (f n) x) \<le> norm x * K"
@@ -516,8 +501,7 @@ proof-
     thus ?thesis
       using  \<open>\<And> x::'a. (\<lambda> n. blinfun_apply (f n)  x) \<longlonglongrightarrow> F x\<close> apply transfer 
       by (metis Lim_bounded tendsto_norm)   
-  qed  
-
+  qed
   have \<open>linear F\<close>
     using  \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     apply transfer apply auto using bounded_linear.linear linear_limit_linear by blast
@@ -530,5 +514,6 @@ proof-
   thus ?thesis
     using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
 qed
+
 
 end
