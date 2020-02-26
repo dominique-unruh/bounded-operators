@@ -4,7 +4,7 @@
   Author: Jose Manuel Rodriguez Caballero, University of Tartu
 *)
 section \<open>Missing results for Banach-Steinhaus\<close>
-(*
+  (*
 subjective perfection = 60% (Jose)
 this file is really ugly
 *)
@@ -1033,79 +1033,34 @@ subsection \<open>Real Analysis Missing\<close>
 text\<open>The results developed here are a complement to the real analysis of Isabelle/HOL\<close>
 
 subsubsection \<open>Limits of sequences\<close>
-
-lemma lim_shift:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
-  assumes \<open>(\<lambda> k. x (n + k)) \<longlonglongrightarrow> l\<close>
-  shows \<open>x \<longlonglongrightarrow> l\<close>
-proof-
-  have \<open>\<forall> x::nat \<Rightarrow> 'a::real_normed_vector. \<forall> l::'a. ((\<lambda> k. x (n + k)) \<longlonglongrightarrow> l) \<longrightarrow> (x \<longlonglongrightarrow> l)\<close>
-  proof(induction n)
-    case 0
-    thus ?case by simp
-  next
-    case (Suc n)
-    have \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l \<Longrightarrow> x \<longlonglongrightarrow> l\<close>
-      for x::"nat \<Rightarrow> 'a" and l::'a
-    proof-
-      assume \<open>(\<lambda>k. x (Suc n + k)) \<longlonglongrightarrow> l\<close>
-      hence \<open>(\<lambda>k. x (n + Suc k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) (Suc t)) \<longlonglongrightarrow> l\<close>
-        by simp
-      hence \<open>(\<lambda> t. (\<lambda>k. x (n + k)) t) \<longlonglongrightarrow> l\<close>
-        by (rule LIMSEQ_imp_Suc)
-      hence \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close>
-        by simp
-      thus ?thesis 
-        by (simp add: \<open>(\<lambda>k. x (n + k)) \<longlonglongrightarrow> l\<close> Suc.IH)
-    qed
-    thus ?case by blast
-  qed
-  thus ?thesis
-    using assms by blast 
-qed
-
 lemma identity_telescopic:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> 
   assumes \<open>x \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
 proof-
-  have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close>
-    for p
-  proof(induction p)
-    case 0
-    thus ?case by simp
-  next
-    case (Suc p)
-    thus ?case by simp
-  qed
-  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t)  = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close>
-    for t
-    by blast
-  moreover have \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
-  proof-
-    from \<open>x \<longlonglongrightarrow> l\<close>
-    have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
-      by (rule LIMSEQ_ignore_initial_segment)
-    hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
-      by (simp add: add.commute)
-    have \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
-    proof-
-      have \<open>Suc n + p = Suc (n + p)\<close>
-        for p
-        by simp
-      thus ?thesis using \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close> by simp 
-    qed
-    hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
-      using tendsto_add_const_iff 
-      by metis 
-    thus ?thesis by simp
-  qed
+  from \<open>x \<longlonglongrightarrow> l\<close>
+  have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
+    by (rule LIMSEQ_ignore_initial_segment)
+  hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
+    by (simp add: add.commute)
+  hence \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
+    by simp
+  hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
+    using tendsto_add_const_iff by metis 
+  hence  \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
+    by simp
+  moreover have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close> for p
+    by (simp add: sum_Suc_diff)  
+  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t)  
+        = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close> for t
+    by blast  
   ultimately have  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + p)) \<longlonglongrightarrow> l - x n\<close>
     by simp
+  hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (p + n)) \<longlonglongrightarrow> l - x n\<close>
+    by (simp add: add.commute)
   hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) p) \<longlonglongrightarrow> l - x n\<close>
-    by (rule lim_shift)
+    using LIMSEQ_offset[where f = "(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N})" and k = n 
+        and a = "l - x n"] by auto
   hence  \<open>(\<lambda> M. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) M) \<longlonglongrightarrow> l - x n\<close>
     by simp
   thus ?thesis by blast
@@ -1605,7 +1560,7 @@ proof
 qed
 
 lemma bound_Cauchy_to_lim:
-"\<lbrakk>y \<longlonglongrightarrow> x;  (\<And> n. norm (y (Suc n) - y n) \<le> c^n); y 0 = 0; c < 1\<rbrakk>
+  "\<lbrakk>y \<longlonglongrightarrow> x;  (\<And> n. norm (y (Suc n) - y n) \<le> c^n); y 0 = 0; c < 1\<rbrakk>
  \<Longrightarrow> norm (x - y (Suc n)) \<le> (c * inverse (1 - c)) * (c ^ n)"
 proof-
   assume \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>

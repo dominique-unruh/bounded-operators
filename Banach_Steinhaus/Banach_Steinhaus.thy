@@ -37,7 +37,6 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
-
 lemma max_Sup_absord_left:
   fixes f g :: \<open>'a \<Rightarrow> real\<close> and X::\<open>'a set\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
@@ -56,7 +55,6 @@ proof-
       using  \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close> by auto
     thus ?thesis by (simp add: \<open>y = max (f x) (g x)\<close>) 
   qed
-
   have y_f_X: \<open>y \<in> f ` X \<Longrightarrow> y \<le> Sup ((\<lambda> x. max (f x) (g x)) ` X)\<close> for y
   proof-
     assume \<open>y \<in> f ` X\<close>
@@ -70,7 +68,6 @@ proof-
     ultimately show ?thesis
       using \<open>x \<in> X\<close> \<open>y = f x\<close> cSUP_upper by fastforce
   qed
-
   have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<le> Sup (f ` X)\<close>
     using y_Sup by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
   moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
@@ -132,10 +129,9 @@ proof-
     unfolding bdd_above_def ball_def by (smt comp_eq_dest_lhs imageE mem_Collect_eq dist_norm)
 qed
 
-
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>nat \<Rightarrow> real\<close> and e::real
-  assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close>
+  assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
     and \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
   shows \<open>(\<lambda> n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
 proof-
@@ -272,8 +268,8 @@ proof-
     qed
     have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
       if "m > n" for m n
-      apply (simp add: that atLeast0AtMost)
-        (*        using that by (rule sum_interval_split) *) sorry
+      apply (simp add: that atLeast0AtMost) using sum_up_index_split 
+      by (smt less_imp_add_positive that)
     hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
       using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> by smt     
     from \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
@@ -294,7 +290,6 @@ proof-
     using Cauchy_altdef2 le_refl by fastforce 
 qed
 
-
 lemma convergent_series_Cauchy:
   fixes a::\<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
@@ -312,21 +307,18 @@ proof-
       by blast
     { fix m n::nat
       assume \<open>n < m\<close>
-      have sum_plus: \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
-      proof-
-        have \<open>n < Suc n\<close>
-          by simp
-        have \<open>finite {0..n}\<close>
-          by simp
-        moreover have \<open>finite {Suc n..m}\<close>
-          by simp
-        moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
-          using \<open>n < Suc n\<close> \<open>n < m\<close> by auto
-        moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
-          by simp
-        ultimately show ?thesis
-          by (metis sum.union_disjoint)
-      qed
+      have \<open>n < Suc n\<close>
+        by simp
+      have \<open>finite {0..n}\<close>
+        by simp
+      moreover have \<open>finite {Suc n..m}\<close>
+        by simp
+      moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+        using \<open>n < Suc n\<close> \<open>n < m\<close> by auto
+      moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+        by simp
+      ultimately have sum_plus: \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
+        by (metis sum.union_disjoint)
       have \<open>dist (sum a {0..m}) (sum a {0..n}) = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
         using dist_real_def by blast
       moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
@@ -357,6 +349,39 @@ proof-
     hence \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (\<phi> m) (\<phi> n) < e\<close> 
       using sum_a2 \<open>e > 0\<close> by smt } 
   thus ?thesis using Cauchy_altdef2 by fastforce 
+qed
+
+
+lemma identity_telescopic:
+  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and l::'a and n::nat
+  assumes \<open>x \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+proof-
+  have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
+    using \<open>x \<longlonglongrightarrow> l\<close> by (rule LIMSEQ_ignore_initial_segment)
+  hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
+    by (simp add: add.commute)
+  hence \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
+    by simp 
+  hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
+    using tendsto_add_const_iff by metis 
+  hence f1: \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
+    by simp
+  have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close> for p
+    by (simp add: sum_Suc_diff)
+  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t) 
+               = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close> for t
+    by blast
+  ultimately have  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + p)) \<longlonglongrightarrow> l - x n\<close>
+    using f1 by simp
+  hence \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (p + n)) \<longlonglongrightarrow> l - x n\<close>
+    by (simp add: add.commute)
+  hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) p) \<longlonglongrightarrow> l - x n\<close>
+    using Topological_Spaces.LIMSEQ_offset[where f = "(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N})" 
+        and a = "l - x n" and k = n] by blast
+  hence  \<open>(\<lambda> M. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) M) \<longlonglongrightarrow> l - x n\<close>
+    by simp
+  thus ?thesis by blast
 qed
 
 lemma bound_Cauchy_to_lim:
@@ -411,8 +436,7 @@ proof-
       by auto
   qed
   have \<open>(\<lambda> N. (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> x - y (Suc n)\<close>
-    (*   by (metis (no_types) \<open>y \<longlonglongrightarrow> x\<close> identity_telescopic) *)
-    sorry
+    by (metis (no_types) \<open>y \<longlonglongrightarrow> x\<close> identity_telescopic)     
   hence \<open>(\<lambda> N. norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> norm (x - y (Suc n))\<close>
     using tendsto_norm by blast
   hence \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
@@ -433,8 +457,8 @@ lemma linear_plus_norm:
   shows \<open>norm (f \<xi>) \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close>
 proof-
   have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
-    (*    by (metis \<open>linear f\<close> linear_plus_minus_one_half)    
-*) sorry
+    by (smt add_diff_cancel_left' assms diff_add_cancel diff_diff_add linear_diff midpoint_def 
+        midpoint_plus_self of_nat_1 of_nat_add one_add_one scaleR_half_double)
   also have \<open>\<dots> = inverse (of_nat 2) * norm (f (x + \<xi>) - f (x - \<xi>))\<close>
     using Real_Vector_Spaces.real_normed_vector_class.norm_scaleR by simp
   also have \<open>\<dots> \<le> inverse (of_nat 2) * (norm (f (x + \<xi>)) + norm (f (x - \<xi>)))\<close>
@@ -444,13 +468,24 @@ proof-
   finally show ?thesis by blast
 qed
 
+proposition onorm_open_ball:
+  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes \<open>bounded_linear f\<close>
+  shows \<open>onorm f = Sup {norm (f x) | x. norm x < 1 }\<close>
+  sorry
+
+lemma ball_scale:
+  assumes \<open>r > 0\<close>
+  shows \<open>ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+  sorry
 
 lemma onorm_r:
   assumes \<open>bounded_linear f\<close> and \<open>r > 0\<close>
   shows \<open>onorm f = (inverse r) * Sup ((norm \<circ> f) ` (ball 0 r))\<close>
 proof-
   have onorm_f: \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-    (*  by (simp add: \<open>bounded_linear f\<close> onorm_1)      *) sorry
+    unfolding ball_def using \<open>bounded_linear f\<close> onorm_open_ball[where f = f] setcompr_eq_image
+    by (simp add: \<open>bounded_linear f \<Longrightarrow> onorm f = Sup {norm (f x) |x. norm x < 1}\<close> \<open>bounded_linear f\<close> setcompr_eq_image)
   have s2: \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
   proof-
     assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
@@ -522,7 +557,7 @@ proof-
   hence f_x2: \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
     by auto      
   have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
-    (*    using \<open>0 < r\<close> ball_scale by blast *) sorry
+    using \<open>0 < r\<close> ball_scale by blast
   hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
     by simp
   also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
@@ -1089,6 +1124,5 @@ proof-
   thus ?thesis
     using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
 qed
-
 
 end
