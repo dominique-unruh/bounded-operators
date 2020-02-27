@@ -7,8 +7,6 @@ session Banach_Steinhaus (AFP) = "HOL-Analysis" +
     "HOL-ex"
   theories
     Banach_Steinhaus
-    Real_Bounded_Operators
-    Banach_Steinhaus_Missing
   document_files
     "root.tex"
     "root.bib"
