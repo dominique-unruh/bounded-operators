@@ -22,11 +22,15 @@ text \<open>
   approach, but they do not explicitly appear in Sokal's paper ~\cite{sokal2011reall}.
 \<close>
 
+(* TODO: make file Banach_Steinhaus_Missing with these lemmas *)
+(* TODO: make one-line or few-line explanations for all lemmas *)
+
+text \<open>If the images of two functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded, then the image of the sum is bounded.\<close>
 lemma bdd_above_plus:
-  \<open>S \<noteq> {} \<Longrightarrow> bdd_above (f ` S) \<Longrightarrow> bdd_above (g ` S) \<Longrightarrow> bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
-  for f::\<open>'a \<Rightarrow> real\<close>
-proof-
-  assume \<open>S \<noteq> {}\<close> and \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close>
+  fixes f::\<open>'a \<Rightarrow> real\<close>
+  assumes \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close> 
+  shows \<open>bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
+proof -
   obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
     using \<open>bdd_above (f ` S)\<close> unfolding bdd_above_def by blast
   obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
@@ -240,112 +244,113 @@ lemma sum_Cauchy_positive:
   fixes a ::\<open>_ \<Rightarrow> real\<close>
   assumes \<open>\<And> n. a n \<ge> 0\<close> and \<open>\<exists> K. \<forall> n. (sum a  {0..n}) \<le> K\<close>
   shows \<open>Cauchy (\<lambda> n. (sum a  {0..n}))\<close>
-proof-
-  { fix e::real
-    assume \<open>e>0\<close>       
-    have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
-    proof(rule classical)
-      assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
-      hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
-        by blast
-      hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
-        by fastforce
-      hence \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
-        using non_Cauchy_unbounded \<open>0 < e\<close> assms(1) by blast
-      from  \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
-      obtain K where  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
-        by blast
-      from  \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
-      have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> ereal B\<close>
-        using Lim_PInfty by simp
-      hence  \<open>\<exists> n::nat. (sum a  {0..n}) \<ge> K+1\<close>
-        using ereal_less_eq(3) by blast        
-      thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
-    qed
-    have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
-      if "m > n" for m n
-      apply (simp add: that atLeast0AtMost) using sum_up_index_split 
-      by (smt less_imp_add_positive that)
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
-      using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> by smt     
-    from \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
-    obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+proof (unfold Cauchy_altdef2, rule, rule)
+  fix e::real
+  assume \<open>e>0\<close>       
+  have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+  proof(rule classical)
+    assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
+    hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
       by blast
-    moreover have \<open>m > n \<Longrightarrow> sum a {0..m} \<ge> sum a {0..n}\<close> for m n
-      using \<open>\<And> n. a n \<ge> 0\<close> by (simp add: sum_mono2)
-    ultimately have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
-      by auto
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m \<ge> n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
-      by (metis \<open>0 < e\<close> abs_zero cancel_comm_monoid_add_class.diff_cancel diff_is_0_eq' 
-          less_irrefl_nat linorder_neqE_nat zero_less_diff)      
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
-      by (metis abs_minus_commute nat_le_linear)
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
-      by (simp add: dist_real_def)      
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close> by blast }
-  thus ?thesis
-    using Cauchy_altdef2 le_refl by fastforce 
+    hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+      by fastforce
+    hence \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+      using non_Cauchy_unbounded \<open>0 < e\<close> assms(1) by blast
+    from  \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+    obtain K where  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+      by blast
+    from  \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+    have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> ereal B\<close>
+      using Lim_PInfty by simp
+    hence  \<open>\<exists> n::nat. (sum a  {0..n}) \<ge> K+1\<close>
+      using ereal_less_eq(3) by blast        
+    thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
+  qed
+  have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
+    if "m > n" for m n
+    apply (simp add: that atLeast0AtMost) using sum_up_index_split 
+    by (smt less_imp_add_positive that)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+    using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> by smt     
+  from \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+  obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+    by blast
+  moreover have \<open>m > n \<Longrightarrow> sum a {0..m} \<ge> sum a {0..n}\<close> for m n
+    using \<open>\<And> n. a n \<ge> 0\<close> by (simp add: sum_mono2)
+  ultimately have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by auto
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m \<ge> n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by (metis \<open>0 < e\<close> abs_zero cancel_comm_monoid_add_class.diff_cancel diff_is_0_eq' 
+        less_irrefl_nat linorder_neqE_nat zero_less_diff)      
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by (metis abs_minus_commute nat_le_linear)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    by (simp add: dist_real_def)      
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close> by blast
+  thus \<open>\<exists>N. \<forall>n\<ge>N. dist (sum a {0..n}) (sum a {0..N}) < e\<close> by auto
 qed
 
 lemma convergent_series_Cauchy:
   fixes a::\<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
-proof-
-  { fix e::real
-    assume \<open>e > 0\<close>
-    have \<open>\<And> k. a k \<ge> 0\<close>
-      using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
-    hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
-      using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> sum_Cauchy_positive by blast
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
-      unfolding Cauchy_def using \<open>e > 0\<close> by blast
-    hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
-      by blast
-    { fix m n::nat
-      assume \<open>n < m\<close>
-      have \<open>n < Suc n\<close>
-        by simp
-      have \<open>finite {0..n}\<close>
-        by simp
-      moreover have \<open>finite {Suc n..m}\<close>
-        by simp
-      moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
-        using \<open>n < Suc n\<close> \<open>n < m\<close> by auto
-      moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
-        by simp
-      ultimately have sum_plus: \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
-        by (metis sum.union_disjoint)
-      have \<open>dist (sum a {0..m}) (sum a {0..n}) = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
-        using dist_real_def by blast
-      moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
-        using sum_plus by linarith 
-      ultimately have \<open>m > n \<Longrightarrow> dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close>
-        by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg) }
-    hence sum_a: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
-      by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
-    obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
-      using sum_a \<open>e > 0\<close> by blast
-    hence  \<open>\<forall>m. \<forall>n. Suc m \<ge> Suc M \<and> Suc n \<ge> Suc M \<and> Suc m > Suc n \<longrightarrow> sum a {Suc n..Suc m - 1} < e\<close>
+proof (unfold Cauchy_altdef2, rule, rule)
+  fix e::real
+  assume \<open>e > 0\<close>
+  have \<open>\<And> k. a k \<ge> 0\<close>
+    using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
+  hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
+    using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> sum_Cauchy_positive by blast
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    unfolding Cauchy_def using \<open>e > 0\<close> by blast
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    by blast
+  have \<open>dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close> if \<open>n<m\<close> for m n
+  proof -
+    have \<open>n < Suc n\<close>
       by simp
-    hence  \<open>\<forall>m\<ge>1. \<forall>n\<ge>1. m \<ge> Suc M \<and> n \<ge> Suc M \<and> m > n \<longrightarrow> sum a {n..m - 1} < e\<close>
-      by (metis Suc_le_D)
-    hence sum_a2: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {n..m-1} < e\<close>
-      by (meson add_leE)
-    have \<open>dist (\<phi> (n+p+1)) (\<phi> n) \<le> sum a {n..n+p}\<close> for p n :: nat
-    proof(induction p)
-      case 0 thus ?case  by (simp add: assms(2))
-    next
-      case (Suc p) thus ?case
-        by (smt Suc_eq_plus1 add_Suc_right add_less_same_cancel1 assms(2) dist_self dist_triangle2 
-            gr_implies_not0 sum.cl_ivl_Suc)  
-    qed
-    hence \<open>m > n \<Longrightarrow> dist (\<phi> m) (\<phi> n) \<le> sum a {n..m-1}\<close> for m n :: nat
-      by (metis Suc_eq_plus1 Suc_le_D diff_Suc_1  gr0_implies_Suc less_eq_Suc_le less_imp_Suc_add 
-          zero_less_Suc)
-    hence \<open>e > 0 \<Longrightarrow> \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (\<phi> m) (\<phi> n) < e\<close> 
-      using sum_a2 \<open>e > 0\<close> by smt } 
-  thus ?thesis using Cauchy_altdef2 by fastforce 
+    have \<open>finite {0..n}\<close>
+      by simp
+    moreover have \<open>finite {Suc n..m}\<close>
+      by simp
+    moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+      using \<open>n < Suc n\<close> \<open>n < m\<close> by auto
+    moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+      by simp
+    ultimately have sum_plus: \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
+      by (metis sum.union_disjoint)
+    have \<open>dist (sum a {0..m}) (sum a {0..n}) = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
+      using dist_real_def by blast
+    moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
+      using sum_plus by linarith 
+    ultimately show ?thesis
+      by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg)
+  qed
+  hence sum_a: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+    by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
+  obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+    using sum_a \<open>e > 0\<close> by blast
+  hence  \<open>\<forall>m. \<forall>n. Suc m \<ge> Suc M \<and> Suc n \<ge> Suc M \<and> Suc m > Suc n \<longrightarrow> sum a {Suc n..Suc m - 1} < e\<close>
+    by simp
+  hence  \<open>\<forall>m\<ge>1. \<forall>n\<ge>1. m \<ge> Suc M \<and> n \<ge> Suc M \<and> m > n \<longrightarrow> sum a {n..m - 1} < e\<close>
+    by (metis Suc_le_D)
+  hence sum_a2: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {n..m-1} < e\<close>
+    by (meson add_leE)
+  have \<open>dist (\<phi> (n+p+1)) (\<phi> n) \<le> sum a {n..n+p}\<close> for p n :: nat
+  proof(induction p)
+    case 0 thus ?case  by (simp add: assms(2))
+  next
+    case (Suc p) thus ?case
+      by (smt Suc_eq_plus1 add_Suc_right add_less_same_cancel1 assms(2) dist_self dist_triangle2 
+          gr_implies_not0 sum.cl_ivl_Suc)  
+  qed
+  hence \<open>m > n \<Longrightarrow> dist (\<phi> m) (\<phi> n) \<le> sum a {n..m-1}\<close> for m n :: nat
+    by (metis Suc_eq_plus1 Suc_le_D diff_Suc_1  gr0_implies_Suc less_eq_Suc_le less_imp_Suc_add 
+        zero_less_Suc)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (\<phi> m) (\<phi> n) < e\<close> 
+    using sum_a2 \<open>e > 0\<close> by smt
+  thus "\<exists>N. \<forall>n\<ge>N. dist (\<phi> n) (\<phi> N) < e"
+    using \<open>0 < e\<close> by fastforce
 qed
 
 lemma identity_telescopic:
@@ -853,15 +858,12 @@ proof transfer
   qed
   have bdd_above_2: \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
   proof-
-    have \<open>ball (0::'a) r \<noteq> {}\<close>
-      using \<open>0 < r\<close> by auto          
-    moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f x)) ` (ball 0 r))\<close>
+    have \<open>bdd_above ((\<lambda> \<xi>. norm (f x)) ` (ball 0 r))\<close>
       by auto          
     moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
       using bdd_above_3 by blast
     ultimately have \<open>bdd_above ((\<lambda> \<xi>. norm (f x) + norm (f \<xi>)) ` (ball 0 r))\<close>
-      using bdd_above_plus[where S = "ball (0::'a) r" and f = "\<lambda> \<xi>. norm (f x)" 
-          and g = "\<lambda> \<xi>. norm (f \<xi>)"] by simp
+      by (rule bdd_above_plus)
     then obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f x) + norm (f \<xi>) \<le> M\<close>
       unfolding bdd_above_def by (meson image_eqI)
     moreover have \<open>norm (f (x + \<xi>)) \<le> norm (f x) + norm (f \<xi>)\<close> for \<xi>
@@ -1049,11 +1051,12 @@ qed
 subsection \<open>Banach-Steinhaus theorem\<close>
 
 theorem banach_steinhaus:
+(* TODO use "fixes" / "assumes" / "shows" *)
   \<open>\<lbrakk>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<rbrakk> \<Longrightarrow> bounded (range f)\<close>
   for f::\<open>'c \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
 proof-
-  assume \<open>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<close>
-  show ?thesis proof(rule classical)
+  assume \<open>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<close> (* TODO remove *)
+  show ?thesis proof(rule classical) (* TODO remove (do the (rule classical) at the first proof-command  *)
     assume \<open>\<not>(bounded (range f))\<close>
     have sum_1: \<open>\<exists>K. \<forall>n. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close>
     proof-
