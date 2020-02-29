@@ -150,7 +150,7 @@ proof-
     unfolding bdd_above_def ball_def using dist_norm apply auto 
     by (smt dist_0_norm dist_commute dist_norm norm_conv_dist)
 qed
-  
+
 text\<open>
   If the sequence of partial sums of nonnegative terms is not Cauchy, then it is unbounded.
 \<close>
@@ -774,23 +774,19 @@ lemma onorm_r:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close>
-  using assms proof transfer
-  fix r::real and f::\<open>'a \<Rightarrow> 'b\<close>
-  assume \<open>0 < r\<close> and \<open>bounded_linear f\<close>
-  thm onorm_open_ball
-  have \<open>\<parallel>f\<parallel> = Sup {\<parallel>blinfun_apply f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
+proof-
+  have \<open>\<parallel>f\<parallel> = Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close>
     using onorm_open_ball by blast
-  hence \<open>bounded_linear f \<Longrightarrow> onorm f = Sup {\<parallel>f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> for f::\<open>'a \<Rightarrow> 'b\<close>
-    apply transfer by blast
-  hence onorm_f: \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-    unfolding ball_def using \<open>bounded_linear f\<close> setcompr_eq_image
-    apply auto by (simp add: setcompr_eq_image) 
-  have s2: \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
+  moreover have \<open>{\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1} = (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 1)\<close>
+    unfolding ball_def by auto
+  ultimately have onorm_f: \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 1))\<close>
+    by simp
+  have s2: \<open>x \<in> (\<lambda>t. r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<Longrightarrow> x \<le> r * Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1)\<close> for x
   proof-
-    assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
-    hence \<open>\<exists> t. x = r *\<^sub>R norm (f t) \<and> norm t < 1\<close>
+    assume \<open>x \<in> (\<lambda>t. r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1\<close>
+    hence \<open>\<exists> t. x = r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel> \<and> \<parallel>t\<parallel> < 1\<close>
       by auto
-    then obtain t where \<open>x = r *\<^sub>R norm (f t)\<close> and \<open>norm t < 1\<close>
+    then obtain t where \<open>x = r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>\<close> and \<open>\<parallel>t\<parallel> < 1\<close>
       by blast
     define y where \<open>y = x /\<^sub>R r\<close>
     have \<open>x = r * (inverse r * x)\<close>
@@ -799,80 +795,78 @@ lemma onorm_r:
       by linarith
     hence \<open>x \<le> r * (x /\<^sub>R r)\<close>
       by auto
-    have \<open>y \<in> (norm \<circ> f) ` ball 0 1\<close>
-      unfolding y_def using \<open>x = r *\<^sub>R norm (f t)\<close>  \<open>norm t < 1\<close>
-      by (smt \<open>0 < r\<close> \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close> comp_apply image_iff 
-          inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive)
+    have \<open>y \<in> (\<lambda>k. \<parallel>f *\<^sub>v k\<parallel>) ` ball 0 1\<close>
+      unfolding y_def by (smt \<open>x \<in> (\<lambda>t. r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1\<close> assms image_iff 
+          inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive) 
     moreover have \<open>x \<le> r * y\<close>          
       using \<open>x \<le> r * (x /\<^sub>R r)\<close> y_def by blast
-    ultimately have y_norm_f: \<open>y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+    ultimately have y_norm_f: \<open>y \<in> (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<and> x \<le> r * y\<close>
       by blast
-    have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+    have \<open>(\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<noteq> {}\<close>
       by simp        
-    moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
-      using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
-        [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
-        Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
-    moreover have \<open>\<exists> y. y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+    moreover have \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1)\<close>
+      using Elementary_Metric_Spaces.bounded_ball Elementary_Normed_Spaces.bounded_linear_image 
+        bdd_above_norm image_comp
+      by (simp add: bounded_linear_image blinfun.bounded_linear_right bounded_imp_bdd_above 
+          bounded_norm_comp) 
+    moreover have \<open>\<exists> y. y \<in> (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<and> x \<le> r * y\<close>
       using y_norm_f by blast
     ultimately show ?thesis
       by (smt \<open>0 < r\<close> cSup_upper ordered_comm_semiring_class.comm_mult_left_mono) 
   qed
-  have s3: \<open>(\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
-         r * Sup ((norm \<circ> f) ` ball 0 1) \<le> y\<close> for y
+  have s3: \<open>(\<And>x. x \<in> (\<lambda>t. r * \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
+         r * Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1) \<le> y\<close> for y
   proof-
-    assume \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close>    
-    have x_leq: \<open>x \<in> ((norm \<circ> f) ` ball 0 1) \<Longrightarrow> x \<le> (inverse r) * y\<close> for x
+    assume \<open>\<And>x. x \<in> (\<lambda>t. r * \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> 
+    have x_leq: \<open>x \<in> (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<Longrightarrow> x \<le> y / r\<close> for x
     proof-
-      assume \<open>x \<in> (norm \<circ> f) ` ball 0 1\<close>
-      then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = norm (f t)\<close>
+      assume \<open>x \<in> (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1\<close>
+      then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = \<parallel>f *\<^sub>v t\<parallel>\<close>
         by auto
       define x' where \<open>x' = r *\<^sub>R x\<close>
-      have \<open>x' = r *  norm (f t)\<close>
-        by (simp add: \<open>x = norm (f t)\<close> x'_def)
-      hence \<open>x' \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+      have \<open>x' = r * \<parallel>f *\<^sub>v t\<parallel>\<close>
+        by (simp add: \<open>x = \<parallel>f *\<^sub>v t\<parallel>\<close> x'_def)
+      hence \<open>x' \<in> (\<lambda>t. r * \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1\<close>
         using \<open>t \<in> ball (0::'a) 1\<close> by auto
       hence \<open>x' \<le> y\<close>
-        using  \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast
-      thus \<open>x \<le> (inverse r) * y\<close>
-        unfolding x'_def using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def)
+        using \<open>\<And>x. x \<in> (\<lambda>t. r * \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast        
+      thus \<open>x \<le> y / r\<close>
+        unfolding x'_def using \<open>r > 0\<close> by (simp add: mult.commute pos_le_divide_eq) 
     qed
-    have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+    have \<open>(\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<noteq> {}\<close>
       by simp        
-    moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
-      using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
-        [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
-        Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
-    ultimately have \<open>Sup ((norm \<circ> f) ` ball 0 1) \<le> (inverse r) * y\<close>
-      by (simp add: x_leq cSup_least)
-    thus ?thesis using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def) 
+    moreover have \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1)\<close>
+      by (simp add: bounded_linear_image blinfun.bounded_linear_right bounded_imp_bdd_above 
+          bounded_norm_comp) 
+    ultimately have \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1) \<le> y/r\<close>
+      using x_leq by (simp add: \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1)\<close> cSup_least) 
+    thus ?thesis using \<open>r > 0\<close>
+      by (smt divide_strict_right_mono nonzero_mult_div_cancel_left)  
   qed
   have norm_scaleR: \<open>norm \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) \<bar>r\<bar>) \<circ> (norm::'a \<Rightarrow> real)\<close>
     by auto
-  have f_x1: \<open>(f \<circ> ((*\<^sub>R) r)) x = (((*\<^sub>R) r) \<circ> f) x\<close> for x
-    using \<open>bounded_linear f\<close> by (simp add: linear_simps(5))
-  hence f_x2: \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
-    by auto      
+  have f_x1: \<open>f (r *\<^sub>R x) = r *\<^sub>R f x\<close> for x
+    by (simp add: blinfun.scaleR_right)    
   have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
     using \<open>0 < r\<close> ball_scale by blast
-  hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
+  hence \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) = Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
     by simp
-  also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
+  also have \<open>\<dots> = Sup (((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
     using Sup.SUP_image by auto
-  also have \<open>\<dots> = Sup ((norm \<circ> ((*\<^sub>R) r) \<circ> f) ` (ball 0 1))\<close>
-    using f_x1 f_x2 by (simp add: comp_assoc) 
-  also have \<open>\<dots> = Sup ((((*\<^sub>R) \<bar>r\<bar>) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
-    using norm_scaleR by auto
-  also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+  also have \<open>\<dots> = Sup ((\<lambda>t. \<parallel>f *\<^sub>v (r *\<^sub>R t)\<parallel>) ` (ball 0 1))\<close>
+    using f_x1 by (simp add: comp_assoc) 
+  also have \<open>\<dots> = Sup ((\<lambda>t. \<bar>r\<bar> *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 1))\<close>
+    using norm_scaleR f_x1 by auto 
+  also have \<open>\<dots> = Sup ((\<lambda>t. r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 1))\<close>
     using \<open>r > 0\<close> by auto
-  also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
-    apply (rule cSup_eq_non_empty) apply simp using s2 apply blast using s3 by blast
-  also have \<open>\<dots> = r * onorm f\<close>
+  also have \<open>\<dots> = r * Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 1))\<close>
+    apply (rule cSup_eq_non_empty) apply simp using s2
+     apply auto using s3 by auto
+  also have \<open>\<dots> = r * \<parallel>f\<parallel>\<close>
     using onorm_f by auto
-  finally have \<open>Sup ((norm \<circ> f) ` ball 0 r) = r * onorm f\<close>
-    by simp    
-  thus \<open>onorm f = (SUP x\<in>ball 0 r. \<parallel>f x\<parallel>) / r\<close> using \<open>r > 0\<close> by simp
+  finally have \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 r) = r * \<parallel>f\<parallel>\<close>
+    by blast    
+  thus \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close> using \<open>r > 0\<close> by simp
 qed
-
 
 end
