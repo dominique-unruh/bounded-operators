@@ -1,0 +1,868 @@
+(*
+  File:   Banach_Steinhaus_Missing.thy
+  Author: Dominique Unruh, University of Tartu
+  Author: Jose Manuel Rodriguez Caballero, University of Tartu
+*)
+section \<open>Missing results for the proof of Banach-Steinhaus theorem\<close>
+
+theory Banach_Steinhaus_Missing
+  imports
+    "HOL-Analysis.Infinite_Set_Sum"
+    "HOL-Types_To_Sets.Types_To_Sets"
+
+begin
+subsection \<open>Results missing for the proof of Banach-Steinhaus theorem\<close>
+text \<open>
+  The results proved here are preliminaries for the proof of Banach-Steinhaus theorem using Sokal's 
+  approach, but they do not explicitly appear in Sokal's paper ~\cite{sokal2011reall}.
+\<close>
+
+text\<open>Notation for the norm\<close>
+bundle notation_norm begin
+notation norm ("\<parallel>_\<parallel>")
+end
+
+text \<open>
+  If the images of two functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded, then the image of their sum is 
+  bounded.
+\<close>
+lemma bdd_above_plus:
+  fixes f::\<open>'a \<Rightarrow> real\<close>
+  assumes \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close> 
+  shows \<open>bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
+proof -
+  obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
+    using \<open>bdd_above (f ` S)\<close> unfolding bdd_above_def by blast
+  obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
+    using \<open>bdd_above (g ` S)\<close> unfolding bdd_above_def by blast
+  have \<open>\<And> x. x\<in>S \<Longrightarrow> f x + g x \<le> M + N\<close>
+    using \<open>\<And>x. x \<in> S \<Longrightarrow> f x \<le> M\<close> \<open>\<And>x. x \<in> S \<Longrightarrow> g x \<le> N\<close> by fastforce
+  thus ?thesis unfolding bdd_above_def by blast
+qed
+
+text \<open>
+  Connection between the supremum and the maximum of two real-valued functions.
+\<close>
+lemma max_Sup_absord_left:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close> 
+  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
+proof-
+  have y_Sup: \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
+  proof-
+    assume \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X)\<close>
+    then obtain x where \<open>y = max (f x) (g x)\<close> and \<open>x \<in> X\<close>
+      by blast
+    have \<open>f x \<le> Sup (f ` X)\<close>
+      by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (f ` X)\<close> cSUP_upper) 
+    moreover have  \<open>g x \<le> Sup (g ` X)\<close>
+      by (simp add:  \<open>x \<in> X\<close> \<open>bdd_above (g ` X)\<close> cSUP_upper) 
+    ultimately have \<open>max (f x) (g x) \<le> Sup (f ` X)\<close>
+      using  \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close> by auto
+    thus ?thesis by (simp add: \<open>y = max (f x) (g x)\<close>) 
+  qed
+  have y_f_X: \<open>y \<in> f ` X \<Longrightarrow> y \<le> Sup ((\<lambda> x. max (f x) (g x)) ` X)\<close> for y
+  proof-
+    assume \<open>y \<in> f ` X\<close>
+    then obtain x where \<open>x \<in> X\<close> and \<open>y = f x\<close>
+      by blast
+    have  \<open>bdd_above ((\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X)\<close>
+      by (metis (no_types) \<open>bdd_above (f ` X)\<close> \<open>bdd_above (g ` X)\<close> bdd_above_image_sup sup_max)
+    moreover have \<open>e > 0 \<Longrightarrow> \<exists> k \<in> (\<lambda> \<xi>. max (f \<xi>) (g \<xi>)) ` X. y \<le> k + e\<close>
+      for e::real
+      using \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close> by (smt \<open>x \<in> X\<close> \<open>y = f x\<close> image_eqI)        
+    ultimately show ?thesis
+      using \<open>x \<in> X\<close> \<open>y = f x\<close> cSUP_upper by fastforce
+  qed
+  have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<le> Sup (f ` X)\<close>
+    using y_Sup by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
+  moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
+    using y_f_X by (metis (mono_tags) cSup_least calculation empty_is_image)  
+  ultimately show ?thesis by simp
+qed
+
+text \<open>
+  Connection between the supremum and the maximum of two real-valued functions.
+\<close>
+lemma max_Sup_absord_right:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
+  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
+proof-
+  have \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
+    using max_Sup_absord_left by (simp add: max_Sup_absord_left assms(1) assms(2) assms(3) assms(4)) 
+  moreover have \<open>max (g x) (f x) = max (f x) (g x)\<close> for x
+    by auto
+  ultimately show ?thesis by simp
+qed
+
+text \<open>
+  Connection between the supremum and the maximum of two real-valued functions.
+\<close>
+lemma max_Sup:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
+  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
+proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
+  case True thus ?thesis by (simp add: assms(1) assms(2) assms(3) max_Sup_absord_left)
+next
+  case False 
+  have f1: "Sup (f ` X) + - 1 * Sup (g ` X) \<le> 0"
+    using False by auto
+  have f2: "\<forall>A f g. A \<noteq> {} \<and> bdd_above (f ` A) \<and> bdd_above (g ` A) \<and> Sup (f ` A) \<le> Sup (g ` A)
+         \<longrightarrow> (SUP a\<in>A. if (f (a::'a)::real) \<le> g a then g a else f a) = Sup (g ` A)"
+    by (smt max_Sup_absord_right)    
+  have "(Sup (f ` X) \<le> Sup (g ` X)) = (Sup (f ` X) + - 1 * Sup (g ` X) \<le> 0)"
+    by auto
+  hence "(SUP a\<in>X. if f a \<le> g a then g a else f a) = 
+         (if Sup (f ` X) \<le> Sup (g ` X) then Sup (g ` X) else Sup (f ` X))"
+    using f2 f1 by (meson assms(1) assms(2) assms(3))
+  thus ?thesis
+    by (simp add: max_def_raw)
+qed
+
+text\<open>
+  The norm of a bounded operator over a ball is bounded.
+\<close>
+lemma bounded_linear_ball_bdd_above:
+  includes notation_norm
+  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
+  shows \<open>bdd_above ((\<lambda>t. \<parallel>f t\<parallel>) ` (ball x r))\<close>
+proof-
+  define M where \<open>M = onorm f * (r + norm x)\<close>
+  have \<open>norm (x - y) < r \<Longrightarrow> norm (f y) \<le> M\<close> for y
+  proof-
+    assume \<open>norm (x - y) < r\<close>
+    moreover have \<open>norm (f \<xi>) \<le> onorm f * norm \<xi>\<close> for \<xi>
+      by (simp add: \<open>bounded_linear f\<close> onorm)    
+    moreover have \<open>norm y \<le> norm (x - y) + norm x\<close> for y
+      by (smt norm_triangle_ineq3)
+    ultimately show ?thesis
+      by (smt M_def \<open>bounded_linear f\<close> combine_common_factor 
+          linordered_comm_semiring_strict_class.comm_mult_strict_left_mono onorm_pos_le) 
+  qed
+  thus ?thesis 
+    unfolding bdd_above_def ball_def using dist_norm apply auto 
+    by (smt dist_0_norm dist_commute dist_norm norm_conv_dist)
+qed
+
+
+text\<open>
+  If the sequence of partial sums of nonnegative terms is not Cauchy, then it is unbounded.
+\<close>
+lemma non_Cauchy_unbounded:
+  fixes a ::\<open>_ \<Rightarrow> real\<close> 
+  assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
+    and \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+  shows \<open>(\<lambda> n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
+proof-
+  define S where \<open>S = ((range (\<lambda> n. (sum a  {0..n})))::ereal set)\<close>
+  have \<open>\<exists> s \<in> S.  k*e \<le> s\<close> for k::nat
+  proof(induction k)
+    case 0
+    from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+    obtain m n where \<open>m \<ge> 0\<close> and \<open>n \<ge> 0\<close> and \<open>m > n\<close> and \<open>sum a {Suc n..m} \<ge> e\<close> by blast
+    have \<open>n < Suc n\<close>
+      by simp
+    hence \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+      using Set_Interval.ivl_disj_un(7) \<open>n < m\<close> by auto
+    moreover have \<open>finite {0..n}\<close>
+      by simp
+    moreover have \<open>finite {Suc n..m}\<close>
+      by simp
+    moreover have \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+      by simp
+    ultimately have \<open>sum a {0..n} + sum a {Suc n..m} = sum a {0..m}\<close>
+      by (metis sum.union_disjoint) 
+    moreover have \<open>sum a {Suc n..m} > 0\<close>
+      using \<open>e > 0\<close> \<open>sum a {Suc n..m} \<ge> e\<close> by linarith
+    moreover have \<open>sum a {0..n} \<ge> 0\<close>
+      by (simp add: assms(1) sum_nonneg)
+    ultimately have \<open>sum a {0..m} > 0\<close>
+      by linarith      
+    moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+      unfolding S_def by blast
+    ultimately have \<open>\<exists> s \<in> S. 0 \<le> s\<close>
+      using ereal_less_eq(5) by fastforce    
+    thus ?case
+      by (simp add: zero_ereal_def)  
+  next
+    case (Suc k)
+    assume \<open>\<exists>s\<in>S. ereal (real k * e) \<le> s\<close>
+    then obtain s where \<open>s \<in> S\<close> and \<open> ereal (real k * e) \<le> s\<close>
+      by blast
+    have \<open>\<exists> N. s = ereal (sum a {0..N})\<close>
+      using \<open>s \<in> S\<close> unfolding S_def by blast
+    then obtain N where \<open>s = ereal (sum a {0..N})\<close>
+      by blast
+    from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+    obtain m n where \<open>m \<ge> Suc N\<close> and \<open>n \<ge> Suc N\<close> and \<open>m > n\<close> and \<open>sum a {Suc n..m} \<ge> e\<close>
+      by blast
+    have \<open>finite {Suc N..n}\<close>
+      by simp
+    moreover have \<open>finite {Suc n..m}\<close>
+      by simp
+    moreover have \<open>{Suc N..n} \<union> {Suc n..m} = {Suc N..m}\<close>
+      using Set_Interval.ivl_disj_un
+      by (smt \<open>Suc N \<le> n\<close> \<open>n < m\<close> atLeastSucAtMost_greaterThanAtMost less_imp_le_nat)
+    moreover have \<open>{} = {Suc N..n} \<inter> {Suc n..m}\<close>
+      by simp
+    ultimately have \<open>sum a {Suc N..m} = sum a {Suc N..n} + sum a {Suc n..m}\<close>
+      by (metis sum.union_disjoint)
+    moreover have \<open>sum a {Suc N..n} \<ge> 0\<close>
+      using  \<open>\<And> n. a n \<ge> 0\<close> by (simp add: sum_nonneg) 
+    ultimately have \<open>sum a {Suc N..m} \<ge> e\<close>
+      using \<open>e \<le> sum a {Suc n..m}\<close> by linarith
+    have \<open>finite {0..N}\<close>
+      by simp
+    have \<open>finite {Suc N..m}\<close>
+      by simp
+    moreover have \<open>{0..N} \<union> {Suc N..m} = {0..m}\<close>
+      using Set_Interval.ivl_disj_un(7) \<open>Suc N \<le> m\<close> by auto          
+    moreover have \<open>{0..N} \<inter> {Suc N..m} = {}\<close>
+      by simp
+    ultimately have \<open>sum a {0..N} + sum a {Suc N..m} =  sum a {0..m}\<close> 
+      by (metis \<open>finite {0..N}\<close> sum.union_disjoint)    
+    hence \<open>e + k * e \<le> sum a {0..m}\<close>
+      using \<open>ereal (real k * e) \<le> s\<close> \<open>s = ereal (sum a {0..N})\<close> \<open>e \<le> sum a {Suc N..m}\<close> by auto 
+    moreover have \<open>e + k * e = (Suc k) * e\<close>
+      by (simp add: semiring_normalization_rules(3))
+    ultimately have \<open>(Suc k) * e \<le> sum a {0..m}\<close>
+      by linarith
+    hence \<open>ereal ((Suc k) * e) \<le> ereal (sum a {0..m})\<close>
+      by auto
+    moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+      unfolding S_def by blast
+    ultimately show ?case
+      by blast
+  qed
+  hence  \<open>\<exists> s \<in> S.  (real n) \<le> s\<close> for n
+    by (meson assms(2) ereal_le_le ex_less_of_nat_mult less_le_not_le)
+  hence  \<open>Sup S = \<infinity>\<close>
+    using Sup_le_iff Sup_subset_mono dual_order.strict_trans1 leD less_PInf_Ex_of_nat subsetI 
+    by metis
+  hence Sup: \<open>Sup ((range (\<lambda> n. (sum a  {0..n})))::ereal set) = \<infinity>\<close> using S_def 
+    by blast
+  have \<open>incseq (\<lambda> n. (sum a  {..<n}))\<close>
+    using \<open>\<And> n. a n \<ge> 0\<close> using Extended_Real.incseq_sumI by auto
+  hence \<open>incseq (\<lambda> n. (sum a  {..< Suc n}))\<close>
+    by (meson incseq_Suc_iff)
+  hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>  
+    by (simp add: sum_mono2 assms(1) incseq_def) 
+  hence \<open>incseq (\<lambda> n. (sum a  {0..n})::ereal)\<close>
+    using incseq_ereal by blast
+  hence \<open>(\<lambda> n. (sum a  {0..n})::ereal) \<longlonglongrightarrow> Sup (range (\<lambda> n. (sum a  {0..n})::ereal))\<close>
+    using LIMSEQ_SUP by auto
+  thus ?thesis 
+    using Sup PInfty_neq_ereal by auto 
+qed
+
+text\<open>
+  If the sequence of partial sums of positive terms is bounded, then it is Cauchy.
+\<close>
+lemma sum_Cauchy_positive:
+  fixes a ::\<open>_ \<Rightarrow> real\<close>
+  assumes \<open>\<And> n. a n \<ge> 0\<close> and \<open>\<exists> K. \<forall> n. (sum a  {0..n}) \<le> K\<close>
+  shows \<open>Cauchy (\<lambda> n. (sum a  {0..n}))\<close>
+proof (unfold Cauchy_altdef2, rule, rule)
+  fix e::real
+  assume \<open>e>0\<close>       
+  have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+  proof(rule classical)
+    assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
+    hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
+      by blast
+    hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
+      by fastforce
+    hence \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+      using non_Cauchy_unbounded \<open>0 < e\<close> assms(1) by blast
+    from  \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+    obtain K where  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+      by blast
+    from  \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+    have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> ereal B\<close>
+      using Lim_PInfty by simp
+    hence  \<open>\<exists> n::nat. (sum a  {0..n}) \<ge> K+1\<close>
+      using ereal_less_eq(3) by blast        
+    thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
+  qed
+  have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
+    if "m > n" for m n
+    apply (simp add: that atLeast0AtMost) using sum_up_index_split 
+    by (smt less_imp_add_positive that)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+    using \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close> by smt     
+  from \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+  obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {0..m} - sum a {0..n} < e\<close>
+    by blast
+  moreover have \<open>m > n \<Longrightarrow> sum a {0..m} \<ge> sum a {0..n}\<close> for m n
+    using \<open>\<And> n. a n \<ge> 0\<close> by (simp add: sum_mono2)
+  ultimately have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by auto
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m \<ge> n \<longrightarrow> \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by (metis \<open>0 < e\<close> abs_zero cancel_comm_monoid_add_class.diff_cancel diff_is_0_eq' 
+        less_irrefl_nat linorder_neqE_nat zero_less_diff)      
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<bar>sum a {0..m} - sum a {0..n}\<bar> < e\<close>
+    by (metis abs_minus_commute nat_le_linear)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    by (simp add: dist_real_def)      
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close> by blast
+  thus \<open>\<exists>N. \<forall>n\<ge>N. dist (sum a {0..n}) (sum a {0..N}) < e\<close> by auto
+qed
+
+lemma convergent_series_Cauchy:
+  fixes a::\<open>_ \<Rightarrow> real\<close> and \<phi>::\<open>_ \<Rightarrow> _\<close>
+  assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+  shows \<open>Cauchy \<phi>\<close>
+proof (unfold Cauchy_altdef2, rule, rule)
+  fix e::real
+  assume \<open>e > 0\<close>
+  have \<open>\<And> k. a k \<ge> 0\<close>
+    using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
+  hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
+    using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> sum_Cauchy_positive by blast
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    unfolding Cauchy_def using \<open>e > 0\<close> by blast
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
+    by blast
+  have \<open>dist (sum a {0..m}) (sum a {0..n}) = sum a {Suc n..m}\<close> if \<open>n<m\<close> for m n
+  proof -
+    have \<open>n < Suc n\<close>
+      by simp
+    have \<open>finite {0..n}\<close>
+      by simp
+    moreover have \<open>finite {Suc n..m}\<close>
+      by simp
+    moreover have \<open>{0..n} \<union> {Suc n..m} = {0..m}\<close>
+      using \<open>n < Suc n\<close> \<open>n < m\<close> by auto
+    moreover have  \<open>{0..n} \<inter> {Suc n..m} = {}\<close>
+      by simp
+    ultimately have sum_plus: \<open>(sum a {0..n}) + sum a {Suc n..m} = (sum a {0..m})\<close>
+      by (metis sum.union_disjoint)
+    have \<open>dist (sum a {0..m}) (sum a {0..n}) = \<bar>(sum a {0..m}) - (sum a {0..n})\<bar>\<close>
+      using dist_real_def by blast
+    moreover have \<open>(sum a {0..m}) - (sum a {0..n}) = sum a {Suc n..m}\<close>
+      using sum_plus by linarith 
+    ultimately show ?thesis
+      by (simp add: \<open>\<And>k. 0 \<le> a k\<close> sum_nonneg)
+  qed
+  hence sum_a: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+    by (metis \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>) 
+  obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
+    using sum_a \<open>e > 0\<close> by blast
+  hence  \<open>\<forall>m. \<forall>n. Suc m \<ge> Suc M \<and> Suc n \<ge> Suc M \<and> Suc m > Suc n \<longrightarrow> sum a {Suc n..Suc m - 1} < e\<close>
+    by simp
+  hence  \<open>\<forall>m\<ge>1. \<forall>n\<ge>1. m \<ge> Suc M \<and> n \<ge> Suc M \<and> m > n \<longrightarrow> sum a {n..m - 1} < e\<close>
+    by (metis Suc_le_D)
+  hence sum_a2: \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {n..m-1} < e\<close>
+    by (meson add_leE)
+  have \<open>dist (\<phi> (n+p+1)) (\<phi> n) \<le> sum a {n..n+p}\<close> for p n :: nat
+  proof(induction p)
+    case 0 thus ?case  by (simp add: assms(2))
+  next
+    case (Suc p) thus ?case
+      by (smt Suc_eq_plus1 add_Suc_right add_less_same_cancel1 assms(2) dist_self dist_triangle2 
+          gr_implies_not0 sum.cl_ivl_Suc)  
+  qed
+  hence \<open>m > n \<Longrightarrow> dist (\<phi> m) (\<phi> n) \<le> sum a {n..m-1}\<close> for m n :: nat
+    by (metis Suc_eq_plus1 Suc_le_D diff_Suc_1  gr0_implies_Suc less_eq_Suc_le less_imp_Suc_add 
+        zero_less_Suc)
+  hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (\<phi> m) (\<phi> n) < e\<close> 
+    using sum_a2 \<open>e > 0\<close> by smt
+  thus "\<exists>N. \<forall>n\<ge>N. dist (\<phi> n) (\<phi> N) < e"
+    using \<open>0 < e\<close> by fastforce
+qed
+
+text\<open>
+  Expression of a limit as a telescopic sum.
+\<close>
+lemma identity_telescopic:
+  fixes x :: \<open>_ \<Rightarrow> 'a::real_normed_vector\<close>
+  assumes \<open>x \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+proof-
+  have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
+    using \<open>x \<longlonglongrightarrow> l\<close> by (rule LIMSEQ_ignore_initial_segment)
+  hence \<open>(\<lambda> p. x (Suc n + p)) \<longlonglongrightarrow> l\<close>   
+    by (simp add: add.commute)
+  hence \<open>(\<lambda> p. x (Suc (n + p))) \<longlonglongrightarrow> l\<close>
+    by simp 
+  hence \<open>(\<lambda> t. (- (x n)) + (\<lambda> p.  x (Suc (n + p))) t ) \<longlonglongrightarrow> (- (x n))  + l\<close>
+    using tendsto_add_const_iff by metis 
+  hence f1: \<open>(\<lambda> p. x (Suc (n + p)) - x n)\<longlonglongrightarrow> l - x n\<close>
+    by simp
+  have \<open>sum (\<lambda> k. x (Suc k) - x k) {n..n+p} = x (Suc (n+p)) - x n\<close> for p
+    by (simp add: sum_Suc_diff)
+  moreover have \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + t) 
+               = (\<lambda> p. sum (\<lambda> k. x (Suc k) - x k) {n..n+p}) t\<close> for t
+    by blast
+  ultimately have  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (n + p)) \<longlonglongrightarrow> l - x n\<close>
+    using f1 by simp
+  hence \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) (p + n)) \<longlonglongrightarrow> l - x n\<close>
+    by (simp add: add.commute)
+  hence  \<open>(\<lambda> p. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) p) \<longlonglongrightarrow> l - x n\<close>
+    using Topological_Spaces.LIMSEQ_offset[where f = "(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N})" 
+        and a = "l - x n" and k = n] by blast
+  hence  \<open>(\<lambda> M. (\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) M) \<longlonglongrightarrow> l - x n\<close>
+    by simp
+  thus ?thesis by blast
+qed
+
+text\<open>
+  Inequality about a sequence of approximations assuming that the sequence of differences is bounded
+  by a geometric progression.
+\<close>
+lemma bound_Cauchy_to_lim:
+  includes notation_norm
+  assumes \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
+  shows \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * c ^ n\<close>
+proof-
+  have \<open>c \<ge> 0\<close>
+    using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> by (smt norm_imp_pos_and_ge power_Suc0_right)
+  have norm_1: \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> for N
+  proof(cases \<open>N < Suc n\<close>)
+    case True
+    hence \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) = 0\<close>
+      by auto
+    thus ?thesis  using  \<open>c \<ge> 0\<close> \<open>c < 1\<close> by auto       
+  next
+    case False
+    hence \<open>N \<ge> Suc n\<close>
+      by auto
+    have \<open>c^(Suc N) \<ge> 0\<close>
+      using \<open>c \<ge> 0\<close> by auto
+    have \<open>1 - c > 0\<close>
+      by (simp add: \<open>c < 1\<close>)
+    hence \<open>inverse (1 - c) * (1 - c) = 1\<close>
+      by auto
+    have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})
+            \<le> (sum (\<lambda>k. norm (y (Suc k) - y k)) {Suc n .. N})\<close>
+      by (simp add: sum_norm_le)
+    also have \<open>\<dots> \<le> (sum (power c) {Suc n .. N})\<close>
+      using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close>
+      by (simp add: sum_mono) 
+    finally have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) \<le> (sum (power c) {Suc n .. N})\<close>
+      by blast      
+    hence \<open>(1 - c) * norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) 
+                   \<le> (1 - c) * (sum (power c) {Suc n .. N})\<close>
+      using \<open>0 < 1 - c\<close> real_mult_le_cancel_iff2 by blast      
+    also have \<open>\<dots> = c^(Suc n) - c^(Suc N)\<close>
+      using Set_Interval.sum_gp_multiplied \<open>Suc n \<le> N\<close> by blast
+    also have \<open>\<dots> \<le> c^(Suc n)\<close>
+      using \<open>c^(Suc N) \<ge> 0\<close> by auto
+    finally have \<open>(1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> c ^ Suc n\<close>
+      by blast
+    moreover have \<open>inverse (1 - c) > 0\<close>
+      using \<open>0 < 1 - c\<close> by auto      
+    ultimately have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) )
+                   \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+      by auto
+    moreover have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) ) 
+          = norm (\<Sum>k = Suc n..N. y (Suc k) - y k)\<close>
+      by (simp add: \<open>inverse (1 - c) * (1 - c) = 1\<close>)      
+    ultimately show \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> 
+      by auto
+  qed
+  have \<open>(\<lambda> N. (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> x - y (Suc n)\<close>
+    by (metis (no_types) \<open>y \<longlonglongrightarrow> x\<close> identity_telescopic)     
+  hence \<open>(\<lambda> N. norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> norm (x - y (Suc n))\<close>
+    using tendsto_norm by blast
+  hence \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    using norm_1 Lim_bounded by blast
+  hence  \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+    by auto
+  moreover have \<open>(inverse (1 - c)) * (c ^ Suc n) = (c / (1 - c)) * (c ^ n)\<close>
+    by (simp add: divide_inverse_commute)    
+  ultimately show \<open>norm (x - y (Suc n)) \<le> (c / (1 - c)) * (c ^ n)\<close> by linarith
+qed
+
+text\<open>
+  Multiplication of the unit ball by a positive real number.
+\<close>
+lemma ball_scale:
+  assumes \<open>r > 0\<close>
+  shows \<open>ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+proof-
+  have norm_1: \<open>norm x < r \<Longrightarrow> x \<in> (*\<^sub>R) r ` {y. norm y < 1}\<close> for x::'a
+  proof- 
+    assume \<open>norm x < r\<close>
+    define y where \<open>y = (inverse r) *\<^sub>R x\<close>
+    have \<open>x = r *\<^sub>R y\<close>
+      unfolding y_def  using \<open>r > 0\<close> by auto
+    moreover have \<open>norm y < 1\<close>
+      unfolding y_def using \<open>r > 0\<close>  \<open>norm x < r\<close> 
+      by (smt left_inverse mult_left_le_imp_le norm_scaleR positive_imp_inverse_positive)
+    ultimately show ?thesis by blast
+  qed
+  have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close> for x::'a
+    using  \<open>r > 0\<close> by auto
+  thus ?thesis using norm_1 unfolding ball_def by auto
+qed
+
+text \<open>
+  Let \<^term>\<open>f\<close> be a bounded linear operator. The operator norm of \<^term>\<open>f\<close> is the supremum of 
+  \<^term>\<open>norm (f x)\<close> for \<^term>\<open>x\<close> such that \<^term>\<open>norm x < 1\<close>\<close>
+lemma onorm_open_ball:
+  includes notation_norm
+  shows \<open>\<parallel>f\<parallel> = Sup { \<parallel>blinfun_apply f x\<parallel> | x. norm x < 1 }\<close>
+proof transfer
+  fix f::\<open>'a \<Rightarrow> 'b\<close>
+  assume bl: \<open>bounded_linear f\<close>
+  show \<open>onorm f = Sup {\<parallel>f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close>
+  proof(cases \<open>(UNIV::'a set) = 0\<close>)
+    case True
+    hence \<open>x = 0\<close> for x::'a
+      by auto
+    hence \<open>f x = 0\<close> for x
+      using \<open>bounded_linear f\<close> by (metis (full_types) linear_simps(3))
+    hence \<open>onorm f = 0\<close>
+      by (simp add: bl onorm_eq_0)
+    have \<open>{norm (f x) | x. norm x < 1} = {0}\<close>
+      by (smt Collect_cong \<open>\<And>x. f x = 0\<close> norm_zero singleton_conv)      
+    have \<open>Sup {norm (f x) | x. norm x < 1} = 0\<close>
+      by (simp add: \<open>{norm (f x) |x. norm x < 1} = {0}\<close>)    
+    thus ?thesis
+      using \<open>onorm f = 0\<close> by simp
+  next
+    case False
+    hence \<open>(UNIV::'a set) \<noteq> 0\<close>
+      by simp
+    have nonnegative: \<open>norm (f x) \<ge> 0\<close> for x
+      by simp
+    have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+      using \<open>UNIV \<noteq> 0\<close> by auto
+    then obtain x::'a where \<open>x \<noteq> 0\<close>
+      by blast
+    hence \<open>norm x \<noteq> 0\<close>
+      by auto
+    define y where \<open>y = x /\<^sub>R norm x\<close>
+    have \<open>norm y = norm (x /\<^sub>R norm x)\<close>
+      unfolding y_def by auto
+    also have \<open>\<dots> = (norm x) /\<^sub>R (norm x)\<close>
+      by auto
+    also have \<open>\<dots> = 1\<close>
+      using \<open>norm x \<noteq> 0\<close> by auto
+    finally have \<open>norm y = 1\<close>
+      by blast
+    hence norm_1_non_empty: \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
+      by blast
+    have norm_1_bounded: \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
+      unfolding bdd_above_def apply auto by (metis bl bounded_linear.bounded)
+    have norm_less_1_non_empty: \<open>{norm (f x) | x. norm x < 1} \<noteq> {}\<close>
+      by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero 
+          zero_less_one)   
+    have norm_less_1_bounded: \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
+    proof-
+      have \<open>\<exists>r. norm (a r) < 1 \<longrightarrow> norm (f (a r)) \<le> r\<close> for a :: "real \<Rightarrow> 'a"
+      proof-
+        obtain r :: "('a \<Rightarrow> 'b) \<Rightarrow> real" where
+          "\<And>f x. 0 \<le> r f \<and> (bounded_linear f \<longrightarrow> norm (f x) \<le> norm x * r f)"
+          using bounded_linear.nonneg_bounded by moura
+        thus ?thesis
+          by (metis bl dual_order.trans less_eq_real_def mult.commute mult_left_le)
+      qed
+      hence \<open>\<exists> M. \<forall> x. norm x < 1 \<longrightarrow> norm (f x) \<le> M\<close>
+        by metis  
+      thus ?thesis by auto 
+    qed
+    have Sup_non_neg: \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+      by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded norm_1_non_empty)
+    have \<open>{0::real} \<noteq> {}\<close>
+      by simp
+    have \<open>bdd_above {0::real}\<close>
+      by simp
+    show \<open>onorm f = Sup {norm (f x) | x. norm x < 1}\<close>
+    proof(cases \<open>f = (\<lambda> _. 0)\<close>)
+      case True
+      have \<open>norm (f x) = 0\<close> for x
+        by (simp add: True)
+      hence \<open>{norm (f x) | x. norm x < 1 } \<subseteq> {0}\<close>
+        by blast        
+      moreover have \<open>{norm (f x) | x. norm x < 1 } \<supseteq> {0}\<close>
+        using bl linear_simps(3) by fastforce                
+      ultimately have \<open>{norm (f x) | x. norm x < 1 } = {0}\<close>  
+        by blast
+      hence Sup1: \<open>Sup {norm (f x) | x. norm x < 1 } = 0\<close> 
+        by simp
+      have \<open>onorm f = 0\<close>
+        by (simp add: True onorm_eq_0)
+      moreover have \<open>Sup {norm (f x) | x. norm x < 1} = 0\<close>
+        using Sup1 by blast
+      ultimately show ?thesis by simp
+    next
+      case False
+      have norm_f_eq_leq: \<open>y \<in> {norm (f x) | x. norm x = 1} \<Longrightarrow> 
+                         y \<le> Sup {norm (f x) | x. norm x < 1}\<close> for y
+      proof-
+        assume \<open>y \<in> {norm (f x) | x. norm x = 1}\<close>
+        hence \<open>\<exists> x. y = norm (f x) \<and> norm x = 1\<close>
+          by blast
+        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x = 1\<close>
+          by auto
+        define y' where \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R y\<close> for n
+        have \<open>y' n \<in> {norm (f x) | x. norm x < 1}\<close> for n
+        proof-
+          have \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R norm (f x)\<close>
+            using y'_def \<open>y = norm (f x)\<close> by blast
+          also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R norm (f x)\<close>
+            by (metis (mono_tags, hide_lams) \<open>y = norm (f x)\<close> abs_1 abs_le_self_iff abs_of_nat 
+                abs_of_nonneg add_diff_cancel_left' add_eq_if cancel_comm_monoid_add_class.diff_cancel
+                diff_ge_0_iff_ge eq_iff_diff_eq_0 inverse_1 inverse_le_iff_le nat.distinct(1) of_nat_0
+                of_nat_Suc of_nat_le_0_iff zero_less_abs_iff zero_neq_one)
+          also have \<open>... = norm ( (1 - (inverse (real (Suc n)))) *\<^sub>R (f x))\<close>
+            by simp
+          also have \<open>... = norm (f ((1 - (inverse (real (Suc n)))) *\<^sub>R  x))\<close>
+            using \<open>bounded_linear f\<close> by (simp add: linear_simps(5)) 
+          finally have y'_1: \<open>y' n = norm (f ( (1 - (inverse (real (Suc n)))) *\<^sub>R x) )\<close> by blast
+          have \<open>norm ((1 - (inverse (Suc n))) *\<^sub>R x) = (1 - (inverse (real (Suc n)))) * norm x\<close>
+            by (simp add: linordered_field_class.inverse_le_1_iff)                
+          hence \<open>norm ((1 - (inverse (Suc n))) *\<^sub>R x) < 1\<close>
+            by (simp add: \<open>norm x = 1\<close>) 
+          thus ?thesis using y'_1 by blast 
+        qed
+        have \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
+          using Limits.LIMSEQ_inverse_real_of_nat_add_minus by simp
+        hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
+          using Limits.tendsto_scaleR by blast
+        hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
+          by simp
+        hence \<open>(\<lambda> n. y' n) \<longlonglongrightarrow> y\<close>
+          using y'_def by simp
+        hence \<open>y' \<longlonglongrightarrow> y\<close> 
+          by simp
+        have \<open>y' n \<le> Sup {norm (f x) | x. norm x < 1}\<close> for n
+          using cSup_upper \<open>\<And>n. y' n \<in> {norm (f x) |x. norm x < 1}\<close> norm_less_1_bounded by blast
+        hence \<open>y \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+          using \<open>y' \<longlonglongrightarrow> y\<close> Topological_Spaces.Sup_lim by (meson LIMSEQ_le_const2) 
+        thus ?thesis by blast
+      qed
+      hence \<open>Sup {norm (f x) | x. norm x = 1} \<le> Sup {norm (f x) | x. norm x < 1}\<close>
+        by (metis (lifting) cSup_least norm_1_non_empty)
+      have \<open>y \<in> {norm (f x) | x. norm x < 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x = 1}\<close> 
+        for y
+      proof(cases \<open>y = 0\<close>)
+        case True thus ?thesis by (simp add: Sup_non_neg) 
+      next
+        case False
+        hence \<open>y \<noteq> 0\<close> by blast
+        assume \<open>y \<in> {norm (f x) | x. norm x < 1}\<close>
+        hence \<open>\<exists> x. y = norm (f x) \<and> norm x < 1\<close>
+          by blast
+        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
+          by blast
+        have \<open>(1/norm x) * y = (1/norm x) * norm (f x)\<close>
+          by (simp add: \<open>y = norm (f x)\<close>)
+        also have \<open>... = \<bar>1/norm x\<bar> * norm (f x)\<close>
+          by simp
+        also have \<open>... = norm ((1/norm x) *\<^sub>R (f x))\<close>
+          by simp
+        also have \<open>... = norm (f ((1/norm x) *\<^sub>R x))\<close>
+          by (simp add: bl linear_simps(5))
+        finally have \<open>(1/norm x) * y  = norm (f ((1/norm x) *\<^sub>R x))\<close>
+          by blast
+        have \<open>x \<noteq> 0\<close>
+          using  \<open>y \<noteq> 0\<close> \<open>y = norm (f x)\<close> bl linear_simps(3) by auto
+        have \<open>norm ((1/norm x) *\<^sub>R x) = \<bar> (1/norm x) \<bar> * norm x\<close>
+          by simp
+        also have \<open>... = (1/norm x) * norm x\<close>
+          by simp
+        finally have  \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+          using \<open>x \<noteq> 0\<close> by simp
+        hence \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
+          using \<open>1 / norm x * y = norm (f ((1 / norm x) *\<^sub>R x))\<close> by blast          
+        hence \<open>(1/norm x) * y \<le> Sup {norm (f x) | x. norm x = 1}\<close>
+          by (simp add: cSup_upper norm_1_bounded)
+        moreover have \<open>y \<le> (1/norm x) * y\<close>
+          by (smt \<open>norm x < 1\<close> \<open>y = norm (f x)\<close> bl bounded_linear.bounded divide_less_eq_1 
+              mult_cancel_left2 mult_le_cancel_right1 norm_not_less_zero) 
+        thus ?thesis using calculation by linarith 
+      qed
+      hence \<open>Sup {norm (f x) | x. norm x < 1} \<le> Sup {norm (f x) | x. norm x = 1}\<close>
+        by (smt cSup_least norm_less_1_non_empty) 
+      hence \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1}\<close>
+        using \<open>Sup {norm (f x) |x. norm x = 1} \<le> Sup {norm (f x) |x. norm x < 1}\<close> by linarith
+      have f1: \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
+        by (simp add: full_SetCompr_eq)
+      have \<open>y \<in> {norm (f x) / norm x |x. True} \<Longrightarrow> y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+        for y
+      proof-
+        assume \<open>y \<in> {norm (f x) / norm x |x. True}\<close> show ?thesis
+        proof(cases \<open>y = 0\<close>)
+          case True  thus ?thesis by simp 
+        next
+          case False
+          have \<open>\<exists> x. y = norm (f x) / norm x\<close>
+            using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
+          then obtain x where \<open>y = norm (f x) / norm x\<close>
+            by blast
+          hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
+            by simp
+          hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
+            by simp
+          hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
+            by (simp add: bl linear_simps(5))
+          moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+            using False \<open>y = norm (f x) / norm x\<close> by auto              
+          ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+            by blast
+          thus ?thesis by blast
+        qed
+      qed
+      moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0} \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
+        for y
+      proof(cases \<open>y = 0\<close>)
+        case True thus ?thesis by auto 
+      next
+        case False
+        hence \<open>y \<notin> {0}\<close>
+          by simp
+        moreover assume \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+        ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+          by simp
+        then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
+          by auto
+        have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
+          by simp 
+        thus ?thesis by auto 
+      qed
+      ultimately have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+        by blast
+      hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
+        by simp
+      have "\<And>r s. \<not> (r::real) \<le> s \<or> sup r s = s"
+        by (metis (lifting) sup.absorb_iff1 sup_commute)
+      hence \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
+             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
+        using \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close> \<open>bdd_above {0}\<close> \<open>{0} \<noteq> {}\<close> cSup_singleton 
+          cSup_union_distrib max.absorb_iff1 sup_commute norm_1_bounded norm_1_non_empty
+        by (metis (no_types, lifting) )
+      moreover have \<open>Sup {(0::real)} = (0::real)\<close>
+        by simp          
+      ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
+        using Sup_non_neg by linarith
+      moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0}) 
+                    = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
+        using Sup_non_neg  \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) 
+        = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0})\<close> 
+        by auto           
+      ultimately  have f2: \<open>Sup {norm (f x) / norm x | x. True} = Sup {norm (f x) | x. norm x = 1}\<close>
+        using \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close> 
+        by linarith
+      have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
+        using f1 f2 by linarith
+      hence \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x < 1 }\<close>
+        using \<open>Sup {norm (f x) |x. norm x = 1} = Sup {norm (f x) |x. norm x < 1}\<close> by linarith
+      thus ?thesis using onorm_def by metis 
+    qed      
+  qed
+qed
+
+text \<open>
+  Expression of the norm of a bounded operator as a supremum over a ball of arbitrary radius.
+\<close>
+lemma onorm_r:
+  includes notation_norm
+  assumes \<open>r > 0\<close>
+  shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>blinfun_apply f x\<parallel>) ` (ball 0 r)) / r\<close>
+  using assms proof transfer
+  fix r::real and f::\<open>'a \<Rightarrow> 'b\<close>
+  assume \<open>0 < r\<close> and \<open>bounded_linear f\<close>
+  thm onorm_open_ball
+  have \<open>\<parallel>f\<parallel> = Sup {\<parallel>blinfun_apply f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
+    using onorm_open_ball by blast
+  hence \<open>bounded_linear f \<Longrightarrow> onorm f = Sup {\<parallel>f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> for f::\<open>'a \<Rightarrow> 'b\<close>
+    apply transfer by blast
+  hence onorm_f: \<open>onorm f = Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+    unfolding ball_def using \<open>bounded_linear f\<close> setcompr_eq_image
+    apply auto by (simp add: setcompr_eq_image) 
+  have s2: \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> r * Sup ((norm \<circ> f) ` ball 0 1)\<close> for x
+  proof-
+    assume \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+    hence \<open>\<exists> t. x = r *\<^sub>R norm (f t) \<and> norm t < 1\<close>
+      by auto
+    then obtain t where \<open>x = r *\<^sub>R norm (f t)\<close> and \<open>norm t < 1\<close>
+      by blast
+    define y where \<open>y = x /\<^sub>R r\<close>
+    have \<open>x = r * (inverse r * x)\<close>
+      using \<open>x = r *\<^sub>R norm (f t)\<close> by auto
+    hence \<open>x + - 1 * (r * (inverse r * x)) \<le> 0\<close>
+      by linarith
+    hence \<open>x \<le> r * (x /\<^sub>R r)\<close>
+      by auto
+    have \<open>y \<in> (norm \<circ> f) ` ball 0 1\<close>
+      unfolding y_def using \<open>x = r *\<^sub>R norm (f t)\<close>  \<open>norm t < 1\<close>
+      by (smt \<open>0 < r\<close> \<open>x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close> comp_apply image_iff 
+          inverse_inverse_eq pos_le_divideR_eq positive_imp_inverse_positive)
+    moreover have \<open>x \<le> r * y\<close>          
+      using \<open>x \<le> r * (x /\<^sub>R r)\<close> y_def by blast
+    ultimately have y_norm_f: \<open>y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+      by blast
+    have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+      by simp        
+    moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+      using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+        [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+        Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+    moreover have \<open>\<exists> y. y \<in> (norm \<circ> f) ` ball 0 1 \<and> x \<le> r * y\<close>
+      using y_norm_f by blast
+    ultimately show ?thesis
+      by (smt \<open>0 < r\<close> cSup_upper ordered_comm_semiring_class.comm_mult_left_mono) 
+  qed
+  have s3: \<open>(\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y) \<Longrightarrow>
+         r * Sup ((norm \<circ> f) ` ball 0 1) \<le> y\<close> for y
+  proof-
+    assume \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close>    
+    have x_leq: \<open>x \<in> ((norm \<circ> f) ` ball 0 1) \<Longrightarrow> x \<le> (inverse r) * y\<close> for x
+    proof-
+      assume \<open>x \<in> (norm \<circ> f) ` ball 0 1\<close>
+      then obtain t where \<open>t \<in> ball (0::'a) 1\<close> and \<open>x = norm (f t)\<close>
+        by auto
+      define x' where \<open>x' = r *\<^sub>R x\<close>
+      have \<open>x' = r *  norm (f t)\<close>
+        by (simp add: \<open>x = norm (f t)\<close> x'_def)
+      hence \<open>x' \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1\<close>
+        using \<open>t \<in> ball (0::'a) 1\<close> by auto
+      hence \<open>x' \<le> y\<close>
+        using  \<open>\<And>x. x \<in> ((*\<^sub>R) r \<circ> norm \<circ> f) ` ball 0 1 \<Longrightarrow> x \<le> y\<close> by blast
+      thus \<open>x \<le> (inverse r) * y\<close>
+        unfolding x'_def using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def)
+    qed
+    have \<open>(norm \<circ> f) ` ball 0 1 \<noteq> {}\<close>
+      by simp        
+    moreover have \<open>bdd_above ((norm \<circ> f) ` ball 0 1)\<close>
+      using \<open>bounded_linear f\<close> Elementary_Normed_Spaces.bounded_linear_image
+        [where S = "ball (0::'a) 1" and f = f] bdd_above_norm image_comp
+        Elementary_Metric_Spaces.bounded_ball[where x = "0::'a" and e = 1] by metis
+    ultimately have \<open>Sup ((norm \<circ> f) ` ball 0 1) \<le> (inverse r) * y\<close>
+      by (simp add: x_leq cSup_least)
+    thus ?thesis using \<open>r > 0\<close> by (metis pos_le_divideR_eq real_scaleR_def) 
+  qed
+  have norm_scaleR: \<open>norm \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) \<bar>r\<bar>) \<circ> (norm::'a \<Rightarrow> real)\<close>
+    by auto
+  have f_x1: \<open>(f \<circ> ((*\<^sub>R) r)) x = (((*\<^sub>R) r) \<circ> f) x\<close> for x
+    using \<open>bounded_linear f\<close> by (simp add: linear_simps(5))
+  hence f_x2: \<open>f \<circ> ((*\<^sub>R) r) = ((*\<^sub>R) r) \<circ> f\<close>
+    by auto      
+  have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+    using \<open>0 < r\<close> ball_scale by blast
+  hence \<open>Sup ((norm \<circ> f) ` (ball 0 r)) = Sup ((norm \<circ> f) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
+    by simp
+  also have \<open>\<dots> = Sup ((norm \<circ> f \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
+    using Sup.SUP_image by auto
+  also have \<open>\<dots> = Sup ((norm \<circ> ((*\<^sub>R) r) \<circ> f) ` (ball 0 1))\<close>
+    using f_x1 f_x2 by (simp add: comp_assoc) 
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) \<bar>r\<bar>) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+    using norm_scaleR by auto
+  also have \<open>\<dots> = Sup ((((*\<^sub>R) r) \<circ> norm \<circ> f) ` (ball 0 1))\<close>
+    using \<open>r > 0\<close> by auto
+  also have \<open>\<dots> = r * Sup ((norm \<circ> f) ` (ball 0 1))\<close>
+    apply (rule cSup_eq_non_empty) apply simp using s2 apply blast using s3 by blast
+  also have \<open>\<dots> = r * onorm f\<close>
+    using onorm_f by auto
+  finally have \<open>Sup ((norm \<circ> f) ` ball 0 r) = r * onorm f\<close>
+    by simp    
+  thus \<open>onorm f = (SUP x\<in>ball 0 r. \<parallel>f x\<parallel>) / r\<close> using \<open>r > 0\<close> by simp
+qed
+
+
+end
