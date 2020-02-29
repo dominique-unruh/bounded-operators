@@ -17,10 +17,15 @@ text \<open>
   approach, but they do not explicitly appear in Sokal's paper ~\cite{sokal2011reall}.
 \<close>
 
+(* NEW *)
 text\<open>Notation for the norm\<close>
 bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
+
+(* NEW *)
+notation blinfun_apply (infixr "*\<^sub>v" 70)
+text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
 
 text \<open>
   If the images of two functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded, then the image of their sum is 
@@ -30,7 +35,7 @@ lemma bdd_above_plus:
   fixes f::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close> 
   shows \<open>bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
-proof -
+proof-
   obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
     using \<open>bdd_above (f ` S)\<close> unfolding bdd_above_def by blast
   obtain N where \<open>\<And> x. x\<in>S \<Longrightarrow> g x \<le> N\<close>
@@ -126,27 +131,26 @@ text\<open>
 \<close>
 lemma bounded_linear_ball_bdd_above:
   includes notation_norm
-  assumes \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-  shows \<open>bdd_above ((\<lambda>t. \<parallel>f t\<parallel>) ` (ball x r))\<close>
+  assumes \<open>r > 0\<close> 
+  shows \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball x r))\<close>
 proof-
-  define M where \<open>M = onorm f * (r + norm x)\<close>
-  have \<open>norm (x - y) < r \<Longrightarrow> norm (f y) \<le> M\<close> for y
+  define M where \<open>M = \<parallel>f\<parallel> * (r + norm x)\<close>
+  have \<open>\<parallel>x - y\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v y\<parallel> \<le> M\<close> for y
   proof-
-    assume \<open>norm (x - y) < r\<close>
-    moreover have \<open>norm (f \<xi>) \<le> onorm f * norm \<xi>\<close> for \<xi>
-      by (simp add: \<open>bounded_linear f\<close> onorm)    
-    moreover have \<open>norm y \<le> norm (x - y) + norm x\<close> for y
-      by (smt norm_triangle_ineq3)
+    assume \<open>\<parallel>x - y\<parallel> < r\<close>
+    moreover have \<open>\<parallel>f *\<^sub>v \<xi>\<parallel> \<le> \<parallel>f\<parallel> * \<parallel>\<xi>\<parallel>\<close> for \<xi>
+      by (simp add: norm_blinfun)          
+    moreover have \<open>\<parallel>y\<parallel> \<le> \<parallel>x - y\<parallel> + \<parallel>x\<parallel>\<close> for y
+      by (smt norm_minus_commute norm_triangle_ineq2)      
     ultimately show ?thesis
-      by (smt M_def \<open>bounded_linear f\<close> combine_common_factor 
-          linordered_comm_semiring_strict_class.comm_mult_strict_left_mono onorm_pos_le) 
+      by (smt M_def linordered_comm_semiring_strict_class.comm_mult_strict_left_mono 
+          mult_nonneg_nonneg mult_nonneg_nonpos2 norm_ge_zero)       
   qed
-  thus ?thesis 
+  thus \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r)\<close>
     unfolding bdd_above_def ball_def using dist_norm apply auto 
     by (smt dist_0_norm dist_commute dist_norm norm_conv_dist)
 qed
-
-
+  
 text\<open>
   If the sequence of partial sums of nonnegative terms is not Cauchy, then it is unbounded.
 \<close>
@@ -504,257 +508,263 @@ text \<open>
   \<^term>\<open>norm (f x)\<close> for \<^term>\<open>x\<close> such that \<^term>\<open>norm x < 1\<close>\<close>
 lemma onorm_open_ball:
   includes notation_norm
-  shows \<open>\<parallel>f\<parallel> = Sup { \<parallel>blinfun_apply f x\<parallel> | x. norm x < 1 }\<close>
-proof transfer
-  fix f::\<open>'a \<Rightarrow> 'b\<close>
-  assume bl: \<open>bounded_linear f\<close>
-  show \<open>onorm f = Sup {\<parallel>f x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close>
-  proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  shows \<open>\<parallel>f\<parallel> = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 }\<close>
+proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  case True
+  hence \<open>x = 0\<close> for x::'a
+    by auto
+  hence \<open>f *\<^sub>v x = 0\<close> for x
+    by (metis (full_types) blinfun.zero_right)
+  hence \<open>\<parallel>f\<parallel> = 0\<close>
+    by (simp add: blinfun_eqI zero_blinfun.rep_eq)      
+  have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = {0}\<close>
+    by (smt Collect_cong \<open>\<And>x. f x = 0\<close> norm_zero singleton_conv)      
+  hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
+    by simp    
+  thus ?thesis
+    using \<open>\<parallel>f\<parallel> = 0\<close> by auto      
+next
+  case False
+  hence \<open>(UNIV::'a set) \<noteq> 0\<close>
+    by simp
+  have nonnegative: \<open>\<parallel>f *\<^sub>v x\<parallel> \<ge> 0\<close> for x
+    by simp
+  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+    using \<open>UNIV \<noteq> 0\<close> by auto
+  then obtain x::'a where \<open>x \<noteq> 0\<close>
+    by blast
+  hence \<open>\<parallel>x\<parallel> \<noteq> 0\<close>
+    by auto
+  define y where \<open>y = x /\<^sub>R \<parallel>x\<parallel>\<close>
+  have \<open>norm y = \<parallel> x /\<^sub>R \<parallel>x\<parallel> \<parallel>\<close>
+    unfolding y_def by auto
+  also have \<open>\<dots> = \<parallel>x\<parallel> /\<^sub>R \<parallel>x\<parallel>\<close>
+    by auto
+  also have \<open>\<dots> = 1\<close>
+    using \<open>\<parallel>x\<parallel> \<noteq> 0\<close> by auto
+  finally have \<open>\<parallel>y\<parallel> = 1\<close>
+    by blast
+  hence norm_1_non_empty: \<open>{ \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> = 1} \<noteq> {}\<close>
+    by blast
+  have norm_1_bounded: \<open>bdd_above { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+    unfolding bdd_above_def apply auto
+    by (metis norm_blinfun)
+  have norm_less_1_non_empty: \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<noteq> {}\<close>
+    by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero 
+        zero_less_one)   
+  have norm_less_1_bounded: \<open>bdd_above { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+  proof-
+    have \<open>\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v (a r)\<parallel> \<le> r\<close> for a :: "real \<Rightarrow> 'a"
+    proof-
+      obtain r :: "('a \<Rightarrow>\<^sub>L 'b) \<Rightarrow> real" where
+        "\<And>f x. 0 \<le> r f \<and> (bounded_linear f \<longrightarrow> \<parallel>f *\<^sub>v x\<parallel> \<le> \<parallel>x\<parallel> * r f)"
+        using bounded_linear.nonneg_bounded by moura
+      show ?thesis
+      proof -
+        { assume "\<not> \<parallel>f\<parallel> < 0"
+          hence "(\<exists>r. \<parallel>f\<parallel> * \<parallel>a r\<parallel> \<le> r) \<or> (\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v a r\<parallel> \<le> r)"
+            by (meson less_eq_real_def mult_le_cancel_left2) }
+        hence "(\<exists>r. \<parallel>f\<parallel> * \<parallel>a r\<parallel> \<le> r) \<or> (\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v a r\<parallel> \<le> r)"
+          by (meson mult_le_cancel_left_neg norm_ge_zero)
+        thus ?thesis
+          using dual_order.trans norm_blinfun by blast
+      qed          
+    qed
+    hence \<open>\<exists> M. \<forall> x. \<parallel>x\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v x\<parallel> \<le> M\<close>
+      by metis  
+    thus ?thesis by auto 
+  qed
+  have Sup_non_neg: \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<ge> 0\<close>
+    by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded 
+        norm_1_non_empty)      
+  have \<open>{0::real} \<noteq> {}\<close>
+    by simp
+  have \<open>bdd_above {0::real}\<close>
+    by simp
+  show \<open>\<parallel>f\<parallel> = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+  proof(cases \<open>\<forall>x. f *\<^sub>v x = 0\<close>)
     case True
-    hence \<open>x = 0\<close> for x::'a
-      by auto
-    hence \<open>f x = 0\<close> for x
-      using \<open>bounded_linear f\<close> by (metis (full_types) linear_simps(3))
-    hence \<open>onorm f = 0\<close>
-      by (simp add: bl onorm_eq_0)
-    have \<open>{norm (f x) | x. norm x < 1} = {0}\<close>
-      by (smt Collect_cong \<open>\<And>x. f x = 0\<close> norm_zero singleton_conv)      
-    have \<open>Sup {norm (f x) | x. norm x < 1} = 0\<close>
-      by (simp add: \<open>{norm (f x) |x. norm x < 1} = {0}\<close>)    
-    thus ?thesis
-      using \<open>onorm f = 0\<close> by simp
+    have \<open>\<parallel>f *\<^sub>v x\<parallel> = 0\<close> for x
+      by (simp add: True)
+    hence \<open>{ \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<subseteq> {0}\<close>
+      by blast        
+    moreover have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<supseteq> {0}\<close>
+      using calculation norm_less_1_non_empty by fastforce                        
+    ultimately have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = {0}\<close>  
+      by blast
+    hence Sup1: \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = 0\<close> 
+      by simp
+    have \<open>\<parallel>f\<parallel> = 0\<close>
+      by (simp add: True blinfun.zero_left blinfun_eqI)        
+    moreover have \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
+      using Sup1 by blast
+    ultimately show ?thesis by simp
   next
     case False
-    hence \<open>(UNIV::'a set) \<noteq> 0\<close>
-      by simp
-    have nonnegative: \<open>norm (f x) \<ge> 0\<close> for x
-      by simp
-    have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-      using \<open>UNIV \<noteq> 0\<close> by auto
-    then obtain x::'a where \<open>x \<noteq> 0\<close>
-      by blast
-    hence \<open>norm x \<noteq> 0\<close>
-      by auto
-    define y where \<open>y = x /\<^sub>R norm x\<close>
-    have \<open>norm y = norm (x /\<^sub>R norm x)\<close>
-      unfolding y_def by auto
-    also have \<open>\<dots> = (norm x) /\<^sub>R (norm x)\<close>
-      by auto
-    also have \<open>\<dots> = 1\<close>
-      using \<open>norm x \<noteq> 0\<close> by auto
-    finally have \<open>norm y = 1\<close>
-      by blast
-    hence norm_1_non_empty: \<open>{norm (f x) | x. norm x = 1} \<noteq> {}\<close>
-      by blast
-    have norm_1_bounded: \<open>bdd_above {norm (f x) | x. norm x = 1}\<close>
-      unfolding bdd_above_def apply auto by (metis bl bounded_linear.bounded)
-    have norm_less_1_non_empty: \<open>{norm (f x) | x. norm x < 1} \<noteq> {}\<close>
-      by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero 
-          zero_less_one)   
-    have norm_less_1_bounded: \<open>bdd_above {norm (f x) | x. norm x < 1}\<close>
+    have norm_f_eq_leq: \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<Longrightarrow> 
+                         y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for y
     proof-
-      have \<open>\<exists>r. norm (a r) < 1 \<longrightarrow> norm (f (a r)) \<le> r\<close> for a :: "real \<Rightarrow> 'a"
-      proof-
-        obtain r :: "('a \<Rightarrow> 'b) \<Rightarrow> real" where
-          "\<And>f x. 0 \<le> r f \<and> (bounded_linear f \<longrightarrow> norm (f x) \<le> norm x * r f)"
-          using bounded_linear.nonneg_bounded by moura
-        thus ?thesis
-          by (metis bl dual_order.trans less_eq_real_def mult.commute mult_left_le)
-      qed
-      hence \<open>\<exists> M. \<forall> x. norm x < 1 \<longrightarrow> norm (f x) \<le> M\<close>
-        by metis  
-      thus ?thesis by auto 
-    qed
-    have Sup_non_neg: \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
-      by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded norm_1_non_empty)
-    have \<open>{0::real} \<noteq> {}\<close>
-      by simp
-    have \<open>bdd_above {0::real}\<close>
-      by simp
-    show \<open>onorm f = Sup {norm (f x) | x. norm x < 1}\<close>
-    proof(cases \<open>f = (\<lambda> _. 0)\<close>)
-      case True
-      have \<open>norm (f x) = 0\<close> for x
-        by (simp add: True)
-      hence \<open>{norm (f x) | x. norm x < 1 } \<subseteq> {0}\<close>
-        by blast        
-      moreover have \<open>{norm (f x) | x. norm x < 1 } \<supseteq> {0}\<close>
-        using bl linear_simps(3) by fastforce                
-      ultimately have \<open>{norm (f x) | x. norm x < 1 } = {0}\<close>  
+      assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      hence \<open>\<exists> x. y = \<parallel>f *\<^sub>v x\<parallel> \<and> \<parallel>x\<parallel> = 1\<close>
         by blast
-      hence Sup1: \<open>Sup {norm (f x) | x. norm x < 1 } = 0\<close> 
+      then obtain x where \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> and \<open>\<parallel>x\<parallel> = 1\<close>
+        by auto
+      define y' where \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R y\<close> for n
+      have \<open>y' n \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
+      proof-
+        have \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R \<parallel>f *\<^sub>v x\<parallel>\<close>
+          using y'_def \<open>y = norm (f x)\<close> by blast
+        also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R \<parallel>f x\<parallel>\<close>
+          by (metis (mono_tags, hide_lams) \<open>y = norm (f x)\<close> abs_1 abs_le_self_iff abs_of_nat 
+              abs_of_nonneg add_diff_cancel_left' add_eq_if cancel_comm_monoid_add_class.diff_cancel
+              diff_ge_0_iff_ge eq_iff_diff_eq_0 inverse_1 inverse_le_iff_le nat.distinct(1) of_nat_0
+              of_nat_Suc of_nat_le_0_iff zero_less_abs_iff zero_neq_one)
+        also have \<open>... = \<parallel>(1 - (inverse (real (Suc n)))) *\<^sub>R (f *\<^sub>v x)\<parallel>\<close>
+          by simp
+        also have \<open>... = \<parallel> f *\<^sub>v ((1 - (inverse (real (Suc n)))) *\<^sub>R  x) \<parallel>\<close>
+          by (simp add: blinfun.scaleR_right)            
+        finally have y'_1: \<open>y' n = \<parallel> f ( (1 - (inverse (real (Suc n)))) *\<^sub>R x) \<parallel>\<close> 
+          by blast
+        have \<open>\<parallel>(1 - (inverse (Suc n))) *\<^sub>R x\<parallel> = (1 - (inverse (real (Suc n)))) * \<parallel>x\<parallel>\<close>
+          by (simp add: linordered_field_class.inverse_le_1_iff)                
+        hence \<open>\<parallel>(1 - (inverse (Suc n))) *\<^sub>R x\<parallel> < 1\<close>
+          by (simp add: \<open>norm x = 1\<close>) 
+        thus ?thesis using y'_1 by blast 
+      qed
+      have \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
+        using Limits.LIMSEQ_inverse_real_of_nat_add_minus by simp
+      hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
+        using Limits.tendsto_scaleR by blast
+      hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
         by simp
-      have \<open>onorm f = 0\<close>
-        by (simp add: True onorm_eq_0)
-      moreover have \<open>Sup {norm (f x) | x. norm x < 1} = 0\<close>
-        using Sup1 by blast
-      ultimately show ?thesis by simp
+      hence \<open>(\<lambda> n. y' n) \<longlonglongrightarrow> y\<close>
+        using y'_def by simp
+      hence \<open>y' \<longlonglongrightarrow> y\<close> 
+        by simp
+      have \<open>y' n \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
+        using cSup_upper \<open>\<And>n. y' n \<in> {norm (f x) |x. norm x < 1}\<close> norm_less_1_bounded by blast
+      hence \<open>y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+        using \<open>y' \<longlonglongrightarrow> y\<close> Topological_Spaces.Sup_lim by (meson LIMSEQ_le_const2)
+      thus ?thesis by blast
+    qed
+    hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+      by (metis (lifting) cSup_least norm_1_non_empty)
+    have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<Longrightarrow> y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x.  \<parallel>x\<parallel> = 1}\<close> for y
+    proof(cases \<open>y = 0\<close>)
+      case True thus ?thesis by (simp add: Sup_non_neg) 
     next
       case False
-      have norm_f_eq_leq: \<open>y \<in> {norm (f x) | x. norm x = 1} \<Longrightarrow> 
-                         y \<le> Sup {norm (f x) | x. norm x < 1}\<close> for y
-      proof-
-        assume \<open>y \<in> {norm (f x) | x. norm x = 1}\<close>
-        hence \<open>\<exists> x. y = norm (f x) \<and> norm x = 1\<close>
+      hence \<open>y \<noteq> 0\<close> by blast
+      assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+      hence \<open>\<exists> x. y = \<parallel>f *\<^sub>v x\<parallel> \<and> \<parallel>x\<parallel> < 1\<close>
+        by blast
+      then obtain x where \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> and \<open>\<parallel>x\<parallel> < 1\<close>
+        by blast
+      have \<open>(1/\<parallel>x\<parallel>) * y = (1/\<parallel>x\<parallel>) * \<parallel>f x\<parallel>\<close>
+        by (simp add: \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close>)
+      also have \<open>... = \<bar>1/\<parallel>x\<parallel>\<bar> * \<parallel>f *\<^sub>v x\<parallel>\<close>
+        by simp
+      also have \<open>... = \<parallel> (1/\<parallel>x\<parallel>) *\<^sub>R (f x) \<parallel>\<close>
+        by simp
+      also have \<open>... = \<parallel>f ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
+        by (simp add: blinfun.scaleR_right)          
+      finally have \<open>(1/\<parallel>x\<parallel>) * y  = \<parallel>f ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
+        by blast
+      have \<open>x \<noteq> 0\<close>
+        using  \<open>y \<noteq> 0\<close> \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> blinfun.zero_right by auto 
+      have \<open>\<parallel> (1/\<parallel>x\<parallel>) *\<^sub>R x \<parallel> = \<bar> (1/\<parallel>x\<parallel>) \<bar> * \<parallel>x\<parallel>\<close>
+        by simp
+      also have \<open>... = (1/\<parallel>x\<parallel>) * \<parallel>x\<parallel>\<close>
+        by simp
+      finally have  \<open>\<parallel>(1/\<parallel>x\<parallel>) *\<^sub>R x\<parallel> = 1\<close>
+        using \<open>x \<noteq> 0\<close> by simp
+      hence \<open>(1/\<parallel>x\<parallel>) * y \<in> { \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+        using \<open>1 / \<parallel>x\<parallel> * y = \<parallel>f *\<^sub>v (1 / \<parallel>x\<parallel>) *\<^sub>R x\<parallel>\<close> by blast
+      hence \<open>(1/\<parallel>x\<parallel>) * y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+        by (simp add: cSup_upper norm_1_bounded)
+      moreover have \<open>y \<le> (1/\<parallel>x\<parallel>) * y\<close>
+        by (metis \<open>\<parallel>(1 / \<parallel>x\<parallel>) *\<^sub>R x\<parallel> = 1\<close> \<open>\<parallel>(1 / \<parallel>x\<parallel>) *\<^sub>R x\<parallel> = \<bar>1 / \<parallel>x\<parallel>\<bar> * \<parallel>x\<parallel>\<close> \<open>\<parallel>x\<parallel> < 1\<close> 
+            \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> inverse_eq_divide inverse_unique linordered_field_class.sign_simps(24) 
+            mult_le_cancel_left2 mult_le_cancel_right1 norm_not_less_zero 
+            order.strict_implies_order)
+      ultimately show ?thesis by linarith 
+    qed
+    hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      by (smt cSup_least norm_less_1_non_empty) 
+    hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+      using \<open>Sup {norm (f x) |x. norm x = 1} \<le> Sup {norm (f x) |x. norm x < 1}\<close> by linarith
+    have f1: \<open>(SUP x. \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>) = Sup { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> | x. True}\<close>
+      by (simp add: full_SetCompr_eq)
+    have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} \<Longrightarrow> y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
+      for y
+    proof-
+      assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True}\<close> show ?thesis
+      proof(cases \<open>y = 0\<close>)
+        case True  thus ?thesis by simp 
+      next
+        case False
+        have \<open>\<exists> x. y = \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>\<close>
+          using \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True}\<close> by auto
+        then obtain x where \<open>y = \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>\<close>
           by blast
-        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x = 1\<close>
-          by auto
-        define y' where \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R y\<close> for n
-        have \<open>y' n \<in> {norm (f x) | x. norm x < 1}\<close> for n
-        proof-
-          have \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R norm (f x)\<close>
-            using y'_def \<open>y = norm (f x)\<close> by blast
-          also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R norm (f x)\<close>
-            by (metis (mono_tags, hide_lams) \<open>y = norm (f x)\<close> abs_1 abs_le_self_iff abs_of_nat 
-                abs_of_nonneg add_diff_cancel_left' add_eq_if cancel_comm_monoid_add_class.diff_cancel
-                diff_ge_0_iff_ge eq_iff_diff_eq_0 inverse_1 inverse_le_iff_le nat.distinct(1) of_nat_0
-                of_nat_Suc of_nat_le_0_iff zero_less_abs_iff zero_neq_one)
-          also have \<open>... = norm ( (1 - (inverse (real (Suc n)))) *\<^sub>R (f x))\<close>
-            by simp
-          also have \<open>... = norm (f ((1 - (inverse (real (Suc n)))) *\<^sub>R  x))\<close>
-            using \<open>bounded_linear f\<close> by (simp add: linear_simps(5)) 
-          finally have y'_1: \<open>y' n = norm (f ( (1 - (inverse (real (Suc n)))) *\<^sub>R x) )\<close> by blast
-          have \<open>norm ((1 - (inverse (Suc n))) *\<^sub>R x) = (1 - (inverse (real (Suc n)))) * norm x\<close>
-            by (simp add: linordered_field_class.inverse_le_1_iff)                
-          hence \<open>norm ((1 - (inverse (Suc n))) *\<^sub>R x) < 1\<close>
-            by (simp add: \<open>norm x = 1\<close>) 
-          thus ?thesis using y'_1 by blast 
-        qed
-        have \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
-          using Limits.LIMSEQ_inverse_real_of_nat_add_minus by simp
-        hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
-          using Limits.tendsto_scaleR by blast
-        hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
+        hence \<open>y = \<bar>(1/\<parallel>x\<parallel>)\<bar> * \<parallel> f *\<^sub>v x \<parallel>\<close>
           by simp
-        hence \<open>(\<lambda> n. y' n) \<longlonglongrightarrow> y\<close>
-          using y'_def by simp
-        hence \<open>y' \<longlonglongrightarrow> y\<close> 
+        hence \<open>y = \<parallel>(1/\<parallel>x\<parallel>) *\<^sub>R (f *\<^sub>v x)\<parallel>\<close>
           by simp
-        have \<open>y' n \<le> Sup {norm (f x) | x. norm x < 1}\<close> for n
-          using cSup_upper \<open>\<And>n. y' n \<in> {norm (f x) |x. norm x < 1}\<close> norm_less_1_bounded by blast
-        hence \<open>y \<le> Sup {norm (f x) | x. norm x < 1}\<close>
-          using \<open>y' \<longlonglongrightarrow> y\<close> Topological_Spaces.Sup_lim by (meson LIMSEQ_le_const2) 
+        hence \<open>y = \<parallel>f ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
+          by (simp add: blinfun.scaleR_right)            
+        moreover have \<open>\<parallel> (1/\<parallel>x\<parallel>) *\<^sub>R x \<parallel> = 1\<close>
+          using False \<open>y = \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>\<close> by auto
+        ultimately have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
+          by blast
         thus ?thesis by blast
       qed
-      hence \<open>Sup {norm (f x) | x. norm x = 1} \<le> Sup {norm (f x) | x. norm x < 1}\<close>
-        by (metis (lifting) cSup_least norm_1_non_empty)
-      have \<open>y \<in> {norm (f x) | x. norm x < 1} \<Longrightarrow> y \<le> Sup {norm (f x) | x. norm x = 1}\<close> 
-        for y
-      proof(cases \<open>y = 0\<close>)
-        case True thus ?thesis by (simp add: Sup_non_neg) 
-      next
-        case False
-        hence \<open>y \<noteq> 0\<close> by blast
-        assume \<open>y \<in> {norm (f x) | x. norm x < 1}\<close>
-        hence \<open>\<exists> x. y = norm (f x) \<and> norm x < 1\<close>
-          by blast
-        then obtain x where \<open>y = norm (f x)\<close> and \<open>norm x < 1\<close>
-          by blast
-        have \<open>(1/norm x) * y = (1/norm x) * norm (f x)\<close>
-          by (simp add: \<open>y = norm (f x)\<close>)
-        also have \<open>... = \<bar>1/norm x\<bar> * norm (f x)\<close>
-          by simp
-        also have \<open>... = norm ((1/norm x) *\<^sub>R (f x))\<close>
-          by simp
-        also have \<open>... = norm (f ((1/norm x) *\<^sub>R x))\<close>
-          by (simp add: bl linear_simps(5))
-        finally have \<open>(1/norm x) * y  = norm (f ((1/norm x) *\<^sub>R x))\<close>
-          by blast
-        have \<open>x \<noteq> 0\<close>
-          using  \<open>y \<noteq> 0\<close> \<open>y = norm (f x)\<close> bl linear_simps(3) by auto
-        have \<open>norm ((1/norm x) *\<^sub>R x) = \<bar> (1/norm x) \<bar> * norm x\<close>
-          by simp
-        also have \<open>... = (1/norm x) * norm x\<close>
-          by simp
-        finally have  \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
-          using \<open>x \<noteq> 0\<close> by simp
-        hence \<open>(1/norm x) * y \<in> {norm (f x) | x. norm x = 1}\<close>
-          using \<open>1 / norm x * y = norm (f ((1 / norm x) *\<^sub>R x))\<close> by blast          
-        hence \<open>(1/norm x) * y \<le> Sup {norm (f x) | x. norm x = 1}\<close>
-          by (simp add: cSup_upper norm_1_bounded)
-        moreover have \<open>y \<le> (1/norm x) * y\<close>
-          by (smt \<open>norm x < 1\<close> \<open>y = norm (f x)\<close> bl bounded_linear.bounded divide_less_eq_1 
-              mult_cancel_left2 mult_le_cancel_right1 norm_not_less_zero) 
-        thus ?thesis using calculation by linarith 
-      qed
-      hence \<open>Sup {norm (f x) | x. norm x < 1} \<le> Sup {norm (f x) | x. norm x = 1}\<close>
-        by (smt cSup_least norm_less_1_non_empty) 
-      hence \<open>Sup {norm (f x) | x. norm x = 1} = Sup {norm (f x) | x. norm x < 1}\<close>
-        using \<open>Sup {norm (f x) |x. norm x = 1} \<le> Sup {norm (f x) |x. norm x < 1}\<close> by linarith
-      have f1: \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
-        by (simp add: full_SetCompr_eq)
-      have \<open>y \<in> {norm (f x) / norm x |x. True} \<Longrightarrow> y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-        for y
-      proof-
-        assume \<open>y \<in> {norm (f x) / norm x |x. True}\<close> show ?thesis
-        proof(cases \<open>y = 0\<close>)
-          case True  thus ?thesis by simp 
-        next
-          case False
-          have \<open>\<exists> x. y = norm (f x) / norm x\<close>
-            using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
-          then obtain x where \<open>y = norm (f x) / norm x\<close>
-            by blast
-          hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
-            by simp
-          hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
-            by simp
-          hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
-            by (simp add: bl linear_simps(5))
-          moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
-            using False \<open>y = norm (f x) / norm x\<close> by auto              
-          ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
-            by blast
-          thus ?thesis by blast
-        qed
-      qed
-      moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0} \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
-        for y
-      proof(cases \<open>y = 0\<close>)
-        case True thus ?thesis by auto 
-      next
-        case False
-        hence \<open>y \<notin> {0}\<close>
-          by simp
-        moreover assume \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-        ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
-          by simp
-        then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
-          by auto
-        have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
-          by simp 
-        thus ?thesis by auto 
-      qed
-      ultimately have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-        by blast
-      hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
+    qed
+    moreover have \<open>y \<in> { \<parallel>f x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0} \<Longrightarrow> y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True}\<close>
+      for y
+    proof(cases \<open>y = 0\<close>)
+      case True thus ?thesis by auto 
+    next
+      case False
+      hence \<open>y \<notin> {0}\<close>
         by simp
-      have "\<And>r s. \<not> (r::real) \<le> s \<or> sup r s = s"
-        by (metis (lifting) sup.absorb_iff1 sup_commute)
-      hence \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
-             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
-        using \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close> \<open>bdd_above {0}\<close> \<open>{0} \<noteq> {}\<close> cSup_singleton 
-          cSup_union_distrib max.absorb_iff1 sup_commute norm_1_bounded norm_1_non_empty
-        by (metis (no_types, lifting) )
-      moreover have \<open>Sup {(0::real)} = (0::real)\<close>
-        by simp          
-      ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
-        using Sup_non_neg by linarith
-      moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0}) 
-                    = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
-        using Sup_non_neg  \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) 
-        = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0})\<close> 
-        by auto           
-      ultimately  have f2: \<open>Sup {norm (f x) / norm x | x. True} = Sup {norm (f x) | x. norm x = 1}\<close>
-        using \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close> 
-        by linarith
-      have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
-        using f1 f2 by linarith
-      hence \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x < 1 }\<close>
-        using \<open>Sup {norm (f x) |x. norm x = 1} = Sup {norm (f x) |x. norm x < 1}\<close> by linarith
-      thus ?thesis using onorm_def by metis 
-    qed      
-  qed
+      moreover assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
+      ultimately have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
+        by simp
+      then obtain x where \<open>\<parallel>x\<parallel> = 1\<close> and \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close>
+        by auto
+      have \<open>y = \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>\<close> using  \<open>\<parallel>x\<parallel> = 1\<close>  \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close>
+        by simp 
+      thus ?thesis by auto 
+    qed
+    ultimately have \<open>{\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} = {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
+      by blast
+    hence \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} = Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0})\<close>
+      by simp
+    have "\<And>r s. \<not> (r::real) \<le> s \<or> sup r s = s"
+      by (metis (lifting) sup.absorb_iff1 sup_commute)
+    hence \<open>Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {(0::real)})
+             = max (Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}) (Sup {0::real})\<close>
+      using \<open>0 \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close> \<open>bdd_above {0}\<close> \<open>{0} \<noteq> {}\<close> cSup_singleton 
+        cSup_union_distrib max.absorb_iff1 sup_commute norm_1_bounded norm_1_non_empty
+      by (metis (no_types, lifting) )
+    moreover have \<open>Sup {(0::real)} = (0::real)\<close>
+      by simp          
+    ultimately have \<open>Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}) = Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
+      using Sup_non_neg by linarith
+    moreover have \<open>Sup ( {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}) 
+                    = max (Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}) (Sup {0}) \<close>
+      using Sup_non_neg  \<open>Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}) 
+        = max (Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}) (Sup {0})\<close> 
+      by auto           
+    ultimately  have f2: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> | x. True} = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      using \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} = Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0})\<close> by linarith
+    have \<open>(SUP x. \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>) = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      using f1 f2 by linarith
+    hence \<open>(SUP x. \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>) = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 }\<close>
+      by (simp add: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} = Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close>)        
+    thus ?thesis apply transfer by (simp add: onorm_def) 
+  qed      
 qed
 
 text \<open>
@@ -763,7 +773,7 @@ text \<open>
 lemma onorm_r:
   includes notation_norm
   assumes \<open>r > 0\<close>
-  shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>blinfun_apply f x\<parallel>) ` (ball 0 r)) / r\<close>
+  shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close>
   using assms proof transfer
   fix r::real and f::\<open>'a \<Rightarrow> 'b\<close>
   assume \<open>0 < r\<close> and \<open>bounded_linear f\<close>

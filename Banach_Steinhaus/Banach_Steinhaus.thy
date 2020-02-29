@@ -8,7 +8,6 @@ section \<open>Banach-Steinhaus theorem\<close>
 theory Banach_Steinhaus
   imports Banach_Steinhaus_Missing
 begin
-  (* TODO: make one-line or few-line explanations for all lemmas *)
 
 text \<open>
   We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
@@ -232,6 +231,8 @@ lemma sokal_banach_steinhaus':
   assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close> and \<open>f \<noteq> 0\<close>
   shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel>\<le> \<parallel>blinfun_apply f \<xi>\<parallel>\<close>
 proof-
+  have bdd_above_1: \<open>bdd_above ((\<lambda>t. \<parallel>blinfun_apply f t\<parallel>) ` ball x r)\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
+    by (metis assms(1) bounded_linear_ball_bdd_above)
   have  \<open>norm f > 0\<close>
     using \<open>f \<noteq> 0\<close> by auto
   have \<open>norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>blinfun_apply f \<xi>\<parallel>) ` (ball x r) ) / r\<close>
@@ -245,8 +246,7 @@ proof-
   moreover have \<open>(norm \<circ> ( blinfun_apply f)) ` (ball x r) \<noteq> {}\<close>
     using \<open>0 < r\<close> by auto    
   moreover have \<open>bdd_above ((norm \<circ> ( blinfun_apply f)) ` (ball x r))\<close>
-    using \<open>0 < r\<close> apply transfer apply auto
-    by (smt bounded_linear_ball_bdd_above)
+    using bdd_above_1 apply transfer by simp
   ultimately have \<open>\<exists>t \<in> (norm \<circ> ( blinfun_apply f)) ` (ball x r). \<tau> * r * norm f < t\<close> 
     by (simp add: less_cSup_iff)    
   thus ?thesis by (smt comp_def image_iff) 
