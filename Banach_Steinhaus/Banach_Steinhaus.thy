@@ -43,82 +43,68 @@ text \<open>
 lemma sokal_banach_steinhaus:
   includes notation_norm
   assumes \<open>r > 0\<close>
-  shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>blinfun_apply f x\<parallel>) ` (ball x r) ) / r"
-  using assms proof transfer
-  fix r::real and f::\<open>'a \<Rightarrow> 'b\<close> and x::'a
-  assume \<open>r > 0\<close> and \<open>bounded_linear f\<close>
-  have bdd_above_3: \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
+  shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball x r) ) / r"
+proof-
+  have bdd_above_3: \<open>bdd_above ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r))\<close>
   proof -
-    obtain M where \<open>\<And> \<xi>. norm (f \<xi>) \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
-      using \<open>bounded_linear f\<close> 
-      by (metis bounded_linear.nonneg_bounded semiring_normalization_rules(7))
-    hence \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f \<xi>) \<le> M * r\<close>
+    obtain M where \<open>\<And> \<xi>.  \<parallel>f *\<^sub>v \<xi>\<parallel> \<le> M * norm \<xi>\<close> and \<open>M \<ge> 0\<close>
+      using norm_blinfun norm_ge_zero by blast      
+    hence \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> \<parallel>f *\<^sub>v \<xi>\<parallel> \<le> M * r\<close>
       using \<open>r > 0\<close> by (smt mem_ball_0 mult_left_mono) 
     thus ?thesis by (meson bdd_aboveI2)     
   qed
-  have bdd_above_2: \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
+  have bdd_above_2: \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r))\<close>
   proof-
-    have \<open>bdd_above ((\<lambda> \<xi>. norm (f x)) ` (ball 0 r))\<close>
+    have \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r))\<close>
       by auto          
-    moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f \<xi>)) ` (ball 0 r))\<close>
+    moreover have \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v \<xi>\<parallel>) ` (ball 0 r))\<close>
       using bdd_above_3 by blast
-    ultimately have \<open>bdd_above ((\<lambda> \<xi>. norm (f x) + norm (f \<xi>)) ` (ball 0 r))\<close>
+    ultimately have \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v x\<parallel> + \<parallel>f *\<^sub>v \<xi>\<parallel>) ` (ball 0 r))\<close>
       by (rule bdd_above_plus)
-    then obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f x) + norm (f \<xi>) \<le> M\<close>
+    then obtain M where \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> \<parallel>f *\<^sub>v x\<parallel> + \<parallel>f *\<^sub>v \<xi>\<parallel> \<le> M\<close>
       unfolding bdd_above_def by (meson image_eqI)
-    moreover have \<open>norm (f (x + \<xi>)) \<le> norm (f x) + norm (f \<xi>)\<close> for \<xi>
-      by (simp add: \<open>bounded_linear f\<close> linear_simps(1) norm_triangle_ineq)          
-    ultimately have \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> M\<close>
-      by (simp add:  \<open>bounded_linear f\<close> linear_simps(1) norm_triangle_le)          
+    moreover have \<open>\<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<le> \<parallel>f *\<^sub>v x\<parallel> + \<parallel>f *\<^sub>v \<xi>\<parallel>\<close> for \<xi>
+      by (simp add: blinfun.add_right norm_triangle_ineq)                
+    ultimately have \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<le> M\<close>
+      by (simp add: blinfun.add_right norm_triangle_le)
     thus ?thesis by (meson bdd_aboveI2)                          
   qed 
-  have bdd_above_4: \<open>bdd_above ((\<lambda> \<xi>. norm (f (x - \<xi>))) ` (ball 0 r))\<close>
+  have bdd_above_4: \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close>
   proof-
-    obtain K where K_def: \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> norm (f (x + \<xi>)) \<le> K\<close>
+    obtain K where K_def: \<open>\<And> \<xi>. \<xi> \<in> ball 0 r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<le> K\<close>
       using  \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close> unfolding bdd_above_def 
       by (meson image_eqI)
     have \<open>\<xi> \<in> ball (0::'a) r \<Longrightarrow> -\<xi> \<in> ball 0 r\<close> for \<xi>
       by auto
     thus ?thesis by (metis K_def ab_group_add_class.ab_diff_conv_add_uminus bdd_aboveI2)
   qed
-  have bdd_above_1: \<open>bdd_above ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+  have bdd_above_1: \<open>bdd_above ((\<lambda> \<xi>. max \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>  \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close>
   proof-
-    have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x + \<xi>))) ` (ball 0 r))\<close>
+    have \<open>bdd_above ((\<lambda> \<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r))\<close>
       using bdd_above_2 by blast
-    moreover have \<open>bdd_above ((\<lambda> \<xi>. norm (f (x - \<xi>))) ` (ball 0 r))\<close>
+    moreover have \<open>bdd_above ((\<lambda> \<xi>.  \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close>
       using bdd_above_4 by blast
     ultimately show ?thesis
       unfolding max_def apply auto apply (meson bdd_above_Int1 bdd_above_mono image_Int_subset)
       by (meson bdd_above_Int1 bdd_above_mono image_Int_subset)   
   qed 
-  have bdd_above_6: \<open>bdd_above ((norm \<circ> f) ` ball x r)\<close>
+  have bdd_above_6: \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r)\<close>
   proof-
     have \<open>bounded (ball x r)\<close>
       by simp            
-    hence \<open>bounded ((norm \<circ> f) ` ball x r)\<close>
-      using \<open>bounded_linear f\<close> bounded_linear_image bounded_norm_comp by auto
+    hence \<open>bounded ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r)\<close>
+      by (metis (no_types) add.left_neutral bdd_above_2 bdd_above_norm bounded_norm_comp 
+          image_add_ball image_image)
     thus ?thesis
       by (simp add: bounded_imp_bdd_above)
   qed
-  have norm_1: \<open>(\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r = (norm \<circ> f) ` ball x r\<close>
-  proof-
-    have "(\<lambda>a. norm (f (x + a))) ` ball 0 r = (\<lambda>a. (norm \<circ> f) (x + a)) ` ball 0 r"
-      by (metis comp_apply)
-    thus ?thesis
-      by (metis (no_types) add.left_neutral image_add_ball image_image)
-  qed 
+  have norm_1: \<open>(\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` ball 0 r = (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r\<close>
+    by (metis add.right_neutral ball_translation image_image)   
   have bdd_above_5: \<open>bdd_above ((\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r)\<close>
+    by (simp add: bdd_above_2)   
+  have norm_2: \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x - \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>
   proof-
-    have \<open>(\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r = (norm \<circ> f) ` ball x r\<close>
-      using norm_1 by blast
-    moreover have \<open>bdd_above ((norm \<circ> f) ` ball x r)\<close>
-      using bdd_above_6 by blast
-    ultimately show ?thesis 
-      by simp
-  qed 
-  have norm_2: \<open>norm \<xi> < r \<Longrightarrow> norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close> for \<xi>
-  proof-
-    assume \<open>norm \<xi> < r\<close>
+    assume \<open>\<parallel>\<xi>\<parallel> < r\<close>
     hence \<open>\<xi> \<in> ball (0::'a) r\<close>
       by auto
     hence \<open>-\<xi> \<in> ball (0::'a) r\<close>
@@ -126,7 +112,7 @@ lemma sokal_banach_steinhaus:
     thus ?thesis 
       by (metis (no_types, lifting) ab_group_add_class.ab_diff_conv_add_uminus image_iff) 
   qed
-  have norm_2': \<open>norm \<xi> < r \<Longrightarrow> norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close> for \<xi>
+  have norm_2': \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>
   proof-
     assume \<open>norm \<xi> < r\<close>
     hence \<open>\<xi> \<in> ball (0::'a) r\<close>
@@ -136,90 +122,61 @@ lemma sokal_banach_steinhaus:
     thus ?thesis 
       by (metis (no_types, lifting) diff_minus_eq_add image_iff)          
   qed
-  have bdd_above_6: \<open>bdd_above ((\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r)\<close>
-  proof-
-    have \<open>(\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r = (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close>
-      apply auto using norm_2 apply auto using norm_2' by auto 
-    thus ?thesis
-      using bdd_above_4 by blast       
-  qed   
-  have Sup_2: \<open>(SUP \<xi>\<in>ball 0 r. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) =
-                 max (SUP \<xi>\<in>ball 0 r. norm (f (x + \<xi>))) (SUP \<xi>\<in>ball 0 r. norm (f (x - \<xi>)))\<close>
+  have bdd_above_6: \<open>bdd_above ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r)\<close>
+    by (simp add: bdd_above_4)   
+  have Sup_2: \<open>(SUP \<xi>\<in>ball 0 r. max \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) =
+                 max (SUP \<xi>\<in>ball 0 r. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) (SUP \<xi>\<in>ball 0 r. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>)\<close>
   proof-
     have \<open>ball (0::'a) r \<noteq> {}\<close>
       using \<open>r > 0\<close> by auto
-    moreover have \<open>bdd_above ((\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r)\<close>
+    moreover have \<open>bdd_above ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` ball 0 r)\<close>
       using bdd_above_5 by blast
-    moreover have \<open>bdd_above ((\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r)\<close>
+    moreover have \<open>bdd_above ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r)\<close>
       using bdd_above_6 by blast
     ultimately show ?thesis
-      using max_Sup[where X = "ball (0::'a) r" and f = "\<lambda> \<xi>. (norm (f (x + \<xi>)))" 
-          and g = "\<lambda> \<xi>. (norm (f (x - \<xi>)))"] by blast    
+      by (rule max_Sup)
   qed 
-  have Sup_3': \<open>norm \<xi> < r \<Longrightarrow> norm (f (x + \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x - \<xi>))) ` ball 0 r\<close> for \<xi>::'a
+  have Sup_3': \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>::'a
+    by (simp add: norm_2')
+  have Sup_3'': \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x - \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>::'a
+    by (simp add: norm_2)  
+  have Sup_3: \<open>max (SUP \<xi>\<in>ball 0 r. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) (SUP \<xi>\<in>ball 0 r.  \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) =
+        (SUP \<xi>\<in>ball 0 r. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>)\<close>
   proof-
-    assume \<open>norm \<xi> < r\<close>
-    have \<open>norm (f (x + \<xi>)) = norm (f (x - (- \<xi>)))\<close>
-      by simp
-    moreover have \<open>-\<xi> \<in> ball 0 r\<close>
-      by (simp add: \<open>norm \<xi> < r\<close>)            
-    ultimately show ?thesis
-      by blast
-  qed
-  have Sup_3'': \<open>norm \<xi> < r \<Longrightarrow> norm (f (x - \<xi>)) \<in> (\<lambda>\<xi>. norm (f (x + \<xi>))) ` ball 0 r\<close>  for \<xi>::'a
-  proof-
-    assume \<open>norm \<xi> < r\<close>
-    have \<open>norm (f (x - \<xi>)) = norm (f (x + (- \<xi>)))\<close>
-      by simp
-    moreover have \<open>-\<xi> \<in> ball 0 r\<close>
-      by (simp add: \<open>norm \<xi> < r\<close>)            
-    ultimately show ?thesis
-      by blast
-  qed
-  have Sup_3: \<open>max (SUP \<xi>\<in>ball 0 r. norm (f (x + \<xi>))) (SUP \<xi>\<in>ball 0 r. norm (f (x - \<xi>))) =
-        (SUP \<xi>\<in>ball 0 r. norm (f (x + \<xi>)))\<close>
-  proof-
-    have \<open>(\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r) = (\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)\<close>
+    have \<open>(\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r) = (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r)\<close>
       apply auto using Sup_3' apply auto using Sup_3'' by blast
-    hence \<open>Sup ((\<lambda> \<xi>.(norm (f (x + \<xi>)))) ` (ball 0 r))=Sup ((\<lambda> \<xi>.(norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
+    hence \<open>Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r))=Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close>
       by simp
-    thus ?thesis 
-      by auto
+    thus ?thesis by simp
   qed
-  have Sup_1: \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) )\<close> 
+  have Sup_1: \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) \<le> Sup ( (\<lambda>\<xi>. \<parallel>f *\<^sub>v \<xi>\<parallel>) ` (ball x r) )\<close> 
   proof-
-    have \<open>(norm \<circ> f) \<xi> \<le> max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))\<close> for \<xi>
-      using linear_plus_norm \<open>bounded_linear f\<close> 
-      by (simp add: linear_plus_norm bounded_linear.linear)
-    moreover have \<open>bdd_above ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close> 
+    have \<open>(\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) \<xi> \<le> max \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>\<close> for \<xi>
+      apply(rule linear_plus_norm) apply (rule bounded_linear.linear)
+      by (simp add: blinfun.bounded_linear_right)
+    moreover have \<open>bdd_above ((\<lambda> \<xi>. max \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>  \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close> 
       using bdd_above_1 by blast
     moreover have \<open>ball (0::'a) r \<noteq> {}\<close>
       using \<open>r > 0\<close> by auto      
-    ultimately have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) \<le>
-                     Sup ((\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))) ` (ball 0 r))\<close>
-      using cSUP_mono[where A = "ball (0::'a) r" and B = "ball (0::'a) r" and f = "norm \<circ> f" and 
-          g = "\<lambda> \<xi>. max (norm (f (x + \<xi>))) (norm (f (x - \<xi>)))"] by blast
-    also have \<open>\<dots> = max (Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r)))
-                        (Sup ((\<lambda> \<xi>. (norm (f (x - \<xi>)))) ` (ball 0 r)))\<close> 
+    ultimately have \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) \<le>
+                     Sup ((\<lambda>\<xi>. max \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r))\<close>
+      using cSUP_mono by smt 
+    also have \<open>\<dots> = max (Sup ((\<lambda>\<xi>.  \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r)))
+                        (Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` (ball 0 r)))\<close> 
       using Sup_2 by blast
-    also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f (x + \<xi>)))) ` (ball 0 r))\<close>
+    also have \<open>\<dots> = Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x + \<xi>)\<parallel>) ` (ball 0 r))\<close>
       using Sup_3 by blast
-    also have \<open>\<dots> = Sup ((\<lambda> \<xi>. (norm (f \<xi>))) ` (ball x r))\<close>
+    also have \<open>\<dots> = Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v \<xi>\<parallel>) ` (ball x r))\<close>
       by (metis  add.right_neutral ball_translation image_image)      
     finally show ?thesis by blast
   qed
-  have \<open>\<parallel>f\<parallel> = (SUP x\<in>ball 0 r. \<parallel>blinfun_apply f x\<parallel>) / r\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
-    using \<open>0 < r\<close> onorm_r by auto
-  hence \<open>bounded_linear f \<Longrightarrow> onorm f = (SUP x\<in>ball 0 r. \<parallel>f x\<parallel>) / r\<close> for f::\<open>'a \<Rightarrow> 'b\<close>
-    apply transfer by blast
-  hence \<open>onorm f =  Sup ((norm \<circ> f) ` (ball 0 r)) / r\<close>
-    using \<open>bounded_linear f\<close> by auto
-  moreover have \<open>Sup ((norm \<circ> f) ` (ball 0 r)) / r \<le> Sup ( (\<lambda> \<xi>. norm (f \<xi>)) ` (ball x r) ) / r\<close>
+  have \<open>\<parallel>f\<parallel> = (SUP x\<in>ball 0 r. \<parallel>f *\<^sub>v x\<parallel>) / r\<close>
+    using \<open>0 < r\<close> onorm_r by blast
+  moreover have \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) / r \<le> Sup ((\<lambda>\<xi>. \<parallel>f *\<^sub>v \<xi>\<parallel>) ` (ball x r)) / r\<close>
     using Sup_1 \<open>0 < r\<close> divide_right_mono by fastforce 
-  ultimately have \<open>onorm f \<le> Sup ((norm \<circ> f) ` ball x r) / r\<close>
+  ultimately have \<open>\<parallel>f\<parallel> \<le> Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r) / r\<close>
     by simp
-  thus \<open>onorm f \<le> (SUP x\<in>ball x r. \<parallel>f x\<parallel>) / r\<close>
-    using \<open>r > 0\<close> by (simp add: Sup.SUP_image divide_inverse_commute)
+  thus ?thesis by simp    
 qed
 
 text \<open>                 
