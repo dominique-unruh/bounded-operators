@@ -189,7 +189,8 @@ lemma sokal_banach_steinhaus':
   shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel>\<le> \<parallel>blinfun_apply f \<xi>\<parallel>\<close>
 proof-
   have bdd_above_1: \<open>bdd_above ((\<lambda>t. \<parallel>blinfun_apply f t\<parallel>) ` ball x r)\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
-    by (metis assms(1) bounded_linear_ball_bdd_above)
+    using assms(1) bounded_linear_image by (simp add: bounded_linear_image 
+        blinfun.bounded_linear_right bounded_imp_bdd_above bounded_norm_comp) 
   have  \<open>norm f > 0\<close>
     using \<open>f \<noteq> 0\<close> by auto
   have \<open>norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>blinfun_apply f \<xi>\<parallel>) ` (ball x r) ) / r\<close>

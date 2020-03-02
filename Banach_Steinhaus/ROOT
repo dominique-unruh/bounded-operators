@@ -7,6 +7,7 @@ session Banach_Steinhaus (AFP) = "HOL-Analysis" +
     "HOL-ex"
   theories
     Banach_Steinhaus
+    Banach_Steinhaus_Missing
   document_files
     "root.tex"
     "root.bib"

@@ -28,8 +28,8 @@ notation blinfun_apply (infixr "*\<^sub>v" 70)
 text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
 
 text \<open>
-  If the images of two functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded, then the image of their sum is 
-  bounded.
+  If the images of two real-valued functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded above on a set \<^term>\<open>S\<close>, 
+  then the image of their sum is bounded on \<^term>\<open>S\<close>.
 \<close>
 lemma bdd_above_plus:
   fixes f::\<open>'a \<Rightarrow> real\<close>
@@ -46,10 +46,14 @@ proof-
 qed
 
 text \<open>
-  Connection between the supremum and the maximum of two real-valued functions.
+  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
+  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is larger or equal to the supremum of  \<^term>\<open>g\<close> 
+  on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
+  supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close>.
 \<close>
 lemma max_Sup_absord_left:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close> 
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
   shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
 proof-
@@ -86,8 +90,13 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+
 text \<open>
-  Connection between the supremum and the maximum of two real-valued functions.
+  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
+  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is less or equal to the supremum of  \<^term>\<open>g\<close> 
+  on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
+  supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
 \<close>
 lemma max_Sup_absord_right:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
@@ -101,8 +110,12 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+
 text \<open>
-  Connection between the supremum and the maximum of two real-valued functions.
+  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
+  above then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
+  maximum of the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> and of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
 \<close>
 lemma max_Sup:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
@@ -126,30 +139,6 @@ next
     by (simp add: max_def_raw)
 qed
 
-text\<open>
-  The norm of a bounded operator over a ball is bounded.
-\<close>
-lemma bounded_linear_ball_bdd_above:
-  includes notation_norm
-  assumes \<open>r > 0\<close> 
-  shows \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball x r))\<close>
-proof-
-  define M where \<open>M = \<parallel>f\<parallel> * (r + norm x)\<close>
-  have \<open>\<parallel>x - y\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v y\<parallel> \<le> M\<close> for y
-  proof-
-    assume \<open>\<parallel>x - y\<parallel> < r\<close>
-    moreover have \<open>\<parallel>f *\<^sub>v \<xi>\<parallel> \<le> \<parallel>f\<parallel> * \<parallel>\<xi>\<parallel>\<close> for \<xi>
-      by (simp add: norm_blinfun)          
-    moreover have \<open>\<parallel>y\<parallel> \<le> \<parallel>x - y\<parallel> + \<parallel>x\<parallel>\<close> for y
-      by (smt norm_minus_commute norm_triangle_ineq2)      
-    ultimately show ?thesis
-      by (smt M_def linordered_comm_semiring_strict_class.comm_mult_strict_left_mono 
-          mult_nonneg_nonneg mult_nonneg_nonpos2 norm_ge_zero)       
-  qed
-  thus \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball x r)\<close>
-    unfolding bdd_above_def ball_def using dist_norm apply auto 
-    by (smt dist_0_norm dist_commute dist_norm norm_conv_dist)
-qed
 
 text\<open>
   If the sequence of partial sums of nonnegative terms is not Cauchy, then it is unbounded.
