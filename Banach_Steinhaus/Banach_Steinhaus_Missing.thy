@@ -27,14 +27,14 @@ end
 notation blinfun_apply (infixr "*\<^sub>v" 70)
 text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
 
-text \<open>
-  If the images of two real-valued functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded above on a set \<^term>\<open>S\<close>, 
-  then the image of their sum is bounded on \<^term>\<open>S\<close>.
-\<close>
 lemma bdd_above_plus:
   fixes f::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close> 
   shows \<open>bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
+text \<open>
+  Explanation: If the images of two real-valued functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded above on a 
+  set \<^term>\<open>S\<close>, then the image of their sum is bounded on \<^term>\<open>S\<close>.
+\<close>
 proof-
   obtain M where \<open>\<And> x. x\<in>S \<Longrightarrow> f x \<le> M\<close>
     using \<open>bdd_above (f ` S)\<close> unfolding bdd_above_def by blast
@@ -45,17 +45,17 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
+lemma max_Sup_absord_left:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
+  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
 text \<open>
-  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
   as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
   above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is larger or equal to the supremum of  \<^term>\<open>g\<close> 
   on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
   supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close>.
 \<close>
-lemma max_Sup_absord_left:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
-  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
 proof-
   have y_Sup: \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
   proof-
@@ -90,18 +90,17 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-
+lemma max_Sup_absord_right:
+  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
+  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
 text \<open>
-  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
   as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
   above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is less or equal to the supremum of  \<^term>\<open>g\<close> 
   on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
   supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
 \<close>
-lemma max_Sup_absord_right:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
-  assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
-  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
 proof-
   have \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
     using max_Sup_absord_left by (simp add: max_Sup_absord_left assms(1) assms(2) assms(3) assms(4)) 
@@ -111,16 +110,16 @@ proof-
 qed
 
 
-text \<open>
-  Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
-  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
-  above then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
-  maximum of the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> and of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
-\<close>
 lemma max_Sup:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
   shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
+text \<open>
+  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
+  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
+  above then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
+  maximum of the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> and of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
+\<close>
 proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
   case True thus ?thesis by (simp add: assms(1) assms(2) assms(3) max_Sup_absord_left)
 next
@@ -139,15 +138,16 @@ next
     by (simp add: max_def_raw)
 qed
 
-
-text\<open>
-  If the sequence of partial sums of nonnegative terms is not Cauchy, then it is unbounded.
-\<close>
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>_ \<Rightarrow> real\<close> 
   assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
     and \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
   shows \<open>(\<lambda> n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
+text\<open>
+  Explanation: If the sequence of partial sums of nonnegative terms is not Cauchy, then it converges
+  to infinite.
+\<close>
+
 proof-
   define S where \<open>S = ((range (\<lambda> n. (sum a  {0..n})))::ereal set)\<close>
   have \<open>\<exists> s \<in> S.  k*e \<le> s\<close> for k::nat
@@ -250,18 +250,18 @@ proof-
     using Sup PInfty_neq_ereal by auto 
 qed
 
-text\<open>
-  If the sequence of partial sums of positive terms is bounded, then it is Cauchy.
-\<close>
 lemma sum_Cauchy_positive:
   fixes a ::\<open>_ \<Rightarrow> real\<close>
-  assumes \<open>\<And> n. a n \<ge> 0\<close> and \<open>\<exists> K. \<forall> n. (sum a  {0..n}) \<le> K\<close>
-  shows \<open>Cauchy (\<lambda> n. (sum a  {0..n}))\<close>
+  assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>\<exists>K. \<forall>n. (sum a  {0..n}) \<le> K\<close>
+  shows \<open>Cauchy (\<lambda>n. (sum a {0..n}))\<close>
+text\<open>
+  Explanation: If the sequence of partial sums of nonnegative terms is bounded, then it is Cauchy.
+\<close>
 proof (unfold Cauchy_altdef2, rule, rule)
   fix e::real
   assume \<open>e>0\<close>       
   have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
-  proof(rule classical)
+   proof(rule classical)
     assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
     hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
       by blast
@@ -305,13 +305,18 @@ qed
 
 lemma convergent_series_Cauchy:
   fixes a::\<open>_ \<Rightarrow> real\<close> and \<phi>::\<open>_ \<Rightarrow> _\<close>
-  assumes \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> and \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+  assumes \<open>\<exists>M. \<forall>n. (sum a {0..n}) \<le> M\<close> and \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
+  text\<open>
+  Explanation: Let \<^term>\<open>a\<close> be a family of real numbers and let \<^term>\<open>\<phi>\<close> be a family. If the sequence
+  of partial sums of \<^term>\<open>a\<close> is uniformly bounded and the sequence of first differences of \<^term>\<open>\<phi>\<close>
+  is bounded by \<^term>\<open>a\<close> then \<^term>\<open>\<phi>\<close> is Cauchy.
+\<close>
 proof (unfold Cauchy_altdef2, rule, rule)
   fix e::real
   assume \<open>e > 0\<close>
-  have \<open>\<And> k. a k \<ge> 0\<close>
-    using \<open>\<And> n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
+  have \<open>\<And>k. a k \<ge> 0\<close>
+    using \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
   hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
     using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> sum_Cauchy_positive by blast
   hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
@@ -366,13 +371,16 @@ proof (unfold Cauchy_altdef2, rule, rule)
     using \<open>0 < e\<close> by fastforce
 qed
 
-text\<open>
-  Expression of a limit as a telescopic sum.
-\<close>
 lemma identity_telescopic:
   fixes x :: \<open>_ \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>x \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
+text\<open>
+  Expression of a limit as a telescopic sum.
+  Explanation: Let \<^term>\<open>x\<close> be a sequence which converges to \<^term>\<open>l\<close>. Then \<^term>\<open>l - x n\<close> can be 
+  expressed as the limit of the limit if the sum of differences of the sequence 
+  \<^term>\<open>sum (\<lambda> k. x (Suc k) - x k) {n..N}\<close> as \<^term>\<open>N\<close> goes to infinity.
+\<close>
 proof-
   have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
     using \<open>x \<longlonglongrightarrow> l\<close> by (rule LIMSEQ_ignore_initial_segment)
@@ -401,21 +409,24 @@ proof-
   thus ?thesis by blast
 qed
 
+lemma bound_Cauchy_to_lim:
+  includes notation_norm
+  assumes \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And>n. \<parallel>y (Suc n) - y n\<parallel> \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
+  shows \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * c ^ n\<close>
 text\<open>
   Inequality about a sequence of approximations assuming that the sequence of differences is bounded
   by a geometric progression.
+  Explanation: Let \<^term>\<open>y\<close> be a sequence converging to \<^term>\<open>x\<close>.
+  If \<^term>\<open>y\<close> satisfies the inequality \<open>\<parallel>y (Suc n) - y n\<parallel> \<le> c ^ n\<close> for some \<^term>\<open>c < 1\<close> and 
+  assuming \<^term>\<open>y 0 = 0\<close> then the inequality \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * c ^ n\<close> holds.
 \<close>
-lemma bound_Cauchy_to_lim:
-  includes notation_norm
-  assumes \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
-  shows \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * c ^ n\<close>
 proof-
   have \<open>c \<ge> 0\<close>
-    using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close> by (smt norm_imp_pos_and_ge power_Suc0_right)
+    using \<open>\<And> n. \<parallel>y (Suc n) - y n\<parallel> \<le> c^n\<close> by (smt norm_imp_pos_and_ge power_Suc0_right)
   have norm_1: \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> for N
   proof(cases \<open>N < Suc n\<close>)
     case True
-    hence \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) = 0\<close>
+    hence \<open>\<parallel>sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}\<parallel> = 0\<close>
       by auto
     thus ?thesis  using  \<open>c \<ge> 0\<close> \<open>c < 1\<close> by auto       
   next
@@ -428,53 +439,54 @@ proof-
       by (simp add: \<open>c < 1\<close>)
     hence \<open>inverse (1 - c) * (1 - c) = 1\<close>
       by auto
-    have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})
-            \<le> (sum (\<lambda>k. norm (y (Suc k) - y k)) {Suc n .. N})\<close>
+    have \<open>\<parallel>sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}\<parallel>
+            \<le> (sum (\<lambda>k. \<parallel>y (Suc k) - y k\<parallel>) {Suc n .. N})\<close>
       by (simp add: sum_norm_le)
     also have \<open>\<dots> \<le> (sum (power c) {Suc n .. N})\<close>
       using \<open>\<And> n. norm (y (Suc n) - y n) \<le> c^n\<close>
       by (simp add: sum_mono) 
-    finally have \<open>norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) \<le> (sum (power c) {Suc n .. N})\<close>
+    finally have \<open>\<parallel>sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}\<parallel> \<le> (sum (power c) {Suc n .. N})\<close>
       by blast      
-    hence \<open>(1 - c) * norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}) 
+    hence \<open>(1 - c) * \<parallel>sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}\<parallel>
                    \<le> (1 - c) * (sum (power c) {Suc n .. N})\<close>
       using \<open>0 < 1 - c\<close> real_mult_le_cancel_iff2 by blast      
     also have \<open>\<dots> = c^(Suc n) - c^(Suc N)\<close>
       using Set_Interval.sum_gp_multiplied \<open>Suc n \<le> N\<close> by blast
     also have \<open>\<dots> \<le> c^(Suc n)\<close>
       using \<open>c^(Suc N) \<ge> 0\<close> by auto
-    finally have \<open>(1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> c ^ Suc n\<close>
+    finally have \<open>(1 - c) * \<parallel>\<Sum>k = Suc n..N. y (Suc k) - y k\<parallel> \<le> c ^ Suc n\<close>
       by blast
     moreover have \<open>inverse (1 - c) > 0\<close>
       using \<open>0 < 1 - c\<close> by auto      
-    ultimately have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) )
+    ultimately have \<open>(inverse (1 - c)) * ((1 - c) * \<parallel>\<Sum>k = Suc n..N. y (Suc k) - y k\<parallel>)
                    \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
       by auto
-    moreover have \<open>(inverse (1 - c)) * ((1 - c) * norm (\<Sum>k = Suc n..N. y (Suc k) - y k) ) 
+    moreover have \<open>(inverse (1 - c)) * ((1 - c) * \<parallel>\<Sum>k = Suc n..N. y (Suc k) - y k\<parallel>) 
           = norm (\<Sum>k = Suc n..N. y (Suc k) - y k)\<close>
-      by (simp add: \<open>inverse (1 - c) * (1 - c) = 1\<close>)      
-    ultimately show \<open>norm (\<Sum>k = Suc n..N. y (Suc k) - y k) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> 
+      by (simp add: \<open>inverse (1 - c) * (1 - c) = 1\<close>)
+    ultimately show \<open>\<parallel>\<Sum>k = Suc n..N. y (Suc k) - y k\<parallel> \<le> (inverse (1 - c)) * (c ^ Suc n)\<close> 
       by auto
   qed
   have \<open>(\<lambda> N. (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> x - y (Suc n)\<close>
     by (metis (no_types) \<open>y \<longlonglongrightarrow> x\<close> identity_telescopic)     
-  hence \<open>(\<lambda> N. norm (sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N})) \<longlonglongrightarrow> norm (x - y (Suc n))\<close>
+  hence \<open>(\<lambda> N. \<parallel>sum (\<lambda>k. y (Suc k) - y k) {Suc n .. N}\<parallel>) \<longlonglongrightarrow> \<parallel>x - y (Suc n)\<parallel>\<close>
     using tendsto_norm by blast
-  hence \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+  hence \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
     using norm_1 Lim_bounded by blast
-  hence  \<open>norm (x - y (Suc n)) \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
+  hence  \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (inverse (1 - c)) * (c ^ Suc n)\<close>
     by auto
   moreover have \<open>(inverse (1 - c)) * (c ^ Suc n) = (c / (1 - c)) * (c ^ n)\<close>
     by (simp add: divide_inverse_commute)    
-  ultimately show \<open>norm (x - y (Suc n)) \<le> (c / (1 - c)) * (c ^ n)\<close> by linarith
+  ultimately show \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * (c ^ n)\<close> by linarith
 qed
 
-text\<open>
-  Multiplication of the unit ball by a positive real number.
-\<close>
 lemma ball_scale:
   assumes \<open>r > 0\<close>
   shows \<open>ball (0::'a::real_normed_vector) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
+text\<open>
+  Explanation: The pointwise product of a ball of radius 1 centered at the origin by a positive real number 
+  \<^term>\<open>r\<close> is the ball of radius \<^term>\<open>r\<close> centered at the origin.
+\<close>
 proof-
   have norm_1: \<open>norm x < r \<Longrightarrow> x \<in> (*\<^sub>R) r ` {y. norm y < 1}\<close> for x::'a
   proof- 
@@ -487,17 +499,18 @@ proof-
       by (smt left_inverse mult_left_le_imp_le norm_scaleR positive_imp_inverse_positive)
     ultimately show ?thesis by blast
   qed
-  have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close> for x::'a
+  moreover have \<open>norm x < 1 \<Longrightarrow> \<bar>r\<bar> * norm x < r\<close> for x::'a
     using  \<open>r > 0\<close> by auto
-  thus ?thesis using norm_1 unfolding ball_def by auto
+  ultimately show ?thesis  unfolding ball_def by auto
 qed
 
-text \<open>
-  Let \<^term>\<open>f\<close> be a bounded linear operator. The operator norm of \<^term>\<open>f\<close> is the supremum of 
-  \<^term>\<open>norm (f x)\<close> for \<^term>\<open>x\<close> such that \<^term>\<open>norm x < 1\<close>\<close>
 lemma onorm_open_ball:
   includes notation_norm
   shows \<open>\<parallel>f\<parallel> = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 }\<close>
+text \<open>
+  Explanation: Let \<^term>\<open>f\<close> be a bounded linear operator. The operator norm of \<^term>\<open>f\<close> is the
+  supremum of \<^term>\<open>norm (f x)\<close> for \<^term>\<open>x\<close> such that \<^term>\<open>norm x < 1\<close>.
+\<close>
 proof(cases \<open>(UNIV::'a set) = 0\<close>)
   case True
   hence \<open>x = 0\<close> for x::'a
@@ -564,8 +577,7 @@ next
     thus ?thesis by auto 
   qed
   have Sup_non_neg: \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<ge> 0\<close>
-    by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded 
-        norm_1_non_empty)      
+    by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded norm_1_non_empty)      
   have \<open>{0::real} \<noteq> {}\<close>
     by simp
   have \<open>bdd_above {0::real}\<close>
@@ -756,13 +768,14 @@ next
   qed      
 qed
 
-text \<open>
-  Expression of the norm of a bounded operator as a supremum over a ball of arbitrary radius.
-\<close>
 lemma onorm_r:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close>
+text \<open>
+  Explanation: The norm of \<^term>\<open>f\<close> is \<^term>\<open>1/r\<close> of the supremum of the norm of \<^term>\<open>f *\<^sub>v x\<close> for
+  \<^term>\<open>x\<close> in the ball of radius \<^term>\<open>r\<close> centered at the origin.
+\<close>
 proof-
   have \<open>\<parallel>f\<parallel> = Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close>
     using onorm_open_ball by blast
@@ -849,13 +862,80 @@ proof-
   also have \<open>\<dots> = Sup ((\<lambda>t. r *\<^sub>R \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 1))\<close>
     using \<open>r > 0\<close> by auto
   also have \<open>\<dots> = r * Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 1))\<close>
-    apply (rule cSup_eq_non_empty) apply simp using s2
-     apply auto using s3 by auto
+    apply (rule cSup_eq_non_empty) apply simp using s2 apply auto using s3 by auto
   also have \<open>\<dots> = r * \<parallel>f\<parallel>\<close>
     using onorm_f by auto
   finally have \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 r) = r * \<parallel>f\<parallel>\<close>
     by blast    
   thus \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close> using \<open>r > 0\<close> by simp
 qed
+
+text\<open>Pointwise convergence\<close>
+definition pointwise_convergent_to :: 
+  \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> 
+  (\<open>((_)/ \<midarrow>pointwise\<rightarrow> (_))\<close> [60, 60] 60) where
+  \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t) \<longlonglongrightarrow> l t)\<close>
+
+lemma linear_limit_linear:
+  fixes f :: \<open>_ \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
+  assumes  \<open>\<And> n. linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
+  shows \<open>linear F\<close>
+text\<open>
+  Explanation: If a family of linear operators converges pointwise, then the limit is also a linear
+  operator.
+\<close>
+proof
+  show "F (x + y) = F x + F y" for x y
+  proof-
+    have "\<forall>a. F a = lim (\<lambda>n. f n a)"
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by (metis (full_types) limI)
+    moreover have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
+      by (metis (no_types) limI tendsto_add)
+    moreover have "\<And>a. (\<lambda>n. f n a) \<longlonglongrightarrow> F a"
+      using assms(2) pointwise_convergent_to_def by force
+    ultimately have lim_sum: \<open>lim (\<lambda> n. (f n) x + (f n) y) 
+                            = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
+      by metis
+    have \<open>(f n) (x + y) = (f n) x + (f n) y\<close> for n
+      using \<open>\<And> n.  linear (f n)\<close> unfolding linear_def using Real_Vector_Spaces.linear_iff assms(1) 
+      by auto
+    hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x + (f n) y)\<close>
+      by simp
+    hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
+      using lim_sum by simp
+    moreover have \<open>(\<lambda> n. (f n) (x + y)) \<longlonglongrightarrow> F (x + y)\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
+    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
+    moreover have \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
+    ultimately show ?thesis
+      by (metis limI) 
+  qed
+  show "F (r *\<^sub>R x) = r *\<^sub>R F x" for r and x
+  proof-
+    have \<open>(f n) (r *\<^sub>R x) = r *\<^sub>R (f n) x\<close> for n
+      using  \<open>\<And> n.  linear (f n)\<close> 
+      by (simp add: Real_Vector_Spaces.linear_def real_vector.linear_scale)
+    hence \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close>
+      by simp
+    have \<open>convergent (\<lambda> n. (f n) x)\<close>
+      by (metis assms(2) convergentI pointwise_convergent_to_def)
+    moreover have \<open>isCont (\<lambda> t::'b. r *\<^sub>R t) tt\<close> for tt
+      by (simp add: bounded_linear_scaleR_right)
+    ultimately have \<open>lim (\<lambda> n. r *\<^sub>R ((f n) x)) =  r *\<^sub>R lim (\<lambda> n. (f n) x)\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def 
+      by (metis (mono_tags) isCont_tendsto_compose limI)
+    hence \<open>lim (\<lambda> n.  (f n) (r *\<^sub>R x)) = r *\<^sub>R lim (\<lambda> n. (f n) x)\<close> 
+      using \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close> by simp
+    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
+    moreover have \<open>(\<lambda> n.  (f n) (r *\<^sub>R x)) \<longlonglongrightarrow> F (r *\<^sub>R x)\<close>
+      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
+    ultimately show ?thesis
+      by (metis limI) 
+  qed
+qed
+
 
 end

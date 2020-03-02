@@ -10,19 +10,22 @@ theory Banach_Steinhaus
 begin
 
 text \<open>
-  We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}.
+  We formalize Banach-Steinhaus theorem as theorem @{text banach_steinhaus}. This theorem was 
+  originally proved in Banach-Steinhaus's paper ~\cite{banach1927principe}. For the proof, we follow
+  Sokal's approach ~\cite{sokal2011really}. Furthermore, we prove as a corollary a result about
+  pointwise convergent sequences of bounded operators whose domain is a Banach space.
 \<close>
 
 subsection \<open>Preliminaries for Sokal's proof of Banach-Steinhaus theorem\<close>
 
-text \<open>
-  Inequality relating the norm of a linear operator with the norms of its positive and negative 
-  shifts.
-\<close>
 lemma linear_plus_norm:
   includes notation_norm
   assumes \<open>linear f\<close>
   shows \<open>\<parallel>f \<xi>\<parallel> \<le> max \<parallel>f (x + \<xi>)\<parallel> \<parallel>f (x - \<xi>)\<parallel>\<close>
+  text \<open>
+  Explanation: The norm of a linear operator \<^term>\<open>f\<close> is bounded above by the maximum of the norms
+  of the shifts of \<^term>\<open>f\<close> given by \<^term>\<open>f (x + \<xi>)\<close> and \<^term>\<open>f (x - \<xi>)\<close>.
+\<close>
 proof-
   have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
     by (smt add_diff_cancel_left' assms diff_add_cancel diff_diff_add linear_diff midpoint_def 
@@ -36,14 +39,15 @@ proof-
   finally show ?thesis by blast
 qed
 
-
-text \<open>                 
-  Inequality relating the norm of an operator to a supremum over an arbitrary ball.
-\<close>
 lemma sokal_banach_steinhaus:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball x r) ) / r"
+  text \<open>
+  Explanation: Let \<^term>\<open>f\<close> be a bounded operator and let \<^term>\<open>x\<close> be a point. For any \<^term>\<open>r > 0\<close>, 
+  the norm of \<^term>\<open>f\<close> is bounded above by \<^term>\<open>1/r\<close> of the supremum of \<open>\<parallel>f *\<^sub>v x\<parallel>\<close> for \<^term>\<open>x\<close> in 
+  the ball of radius \<^term>\<open>r\<close> centered at \<^term>\<open>x\<close>.
+\<close>
 proof-
   have bdd_above_3: \<open>bdd_above ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r))\<close>
   proof -
@@ -179,47 +183,57 @@ proof-
   thus ?thesis by simp    
 qed
 
-text \<open>                 
-  In the proof of Banach-Steinhaus theorem, we will use the following variation of
-  the lemma @{thm sokal_banach_steinhaus}.
-\<close>
 lemma sokal_banach_steinhaus':
   includes notation_norm
-  assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close> and \<open>f \<noteq> 0\<close>
-  shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel>\<le> \<parallel>blinfun_apply f \<xi>\<parallel>\<close>
-proof-
-  have bdd_above_1: \<open>bdd_above ((\<lambda>t. \<parallel>blinfun_apply f t\<parallel>) ` ball x r)\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
+  assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close>
+  shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>
+  text \<open>                 
+  In the proof of Banach-Steinhaus theorem, we will use this variation of the 
+  lemma @{thm sokal_banach_steinhaus}.
+  Explanation: Let \<^term>\<open>f\<close> be a bounded operator, let \<^term>\<open>x\<close> be a point and let \<^term>\<open>r\<close> be a positive real
+  number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> on the ball of radius \<^term>\<open>r\<close>
+  centered at \<^term>\<open>x\<close> such that \<^term>\<open>\<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>.
+\<close>
+proof(cases  \<open>f = 0\<close>)
+  case True
+  thus ?thesis by (metis assms(1) centre_in_ball mult_zero_right norm_zero order_refl 
+        zero_blinfun.rep_eq) 
+next
+  case False
+  have bdd_above_1: \<open>bdd_above ((\<lambda>t. \<parallel>(*\<^sub>v) f t\<parallel>) ` ball x r)\<close> for f::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
     using assms(1) bounded_linear_image by (simp add: bounded_linear_image 
         blinfun.bounded_linear_right bounded_imp_bdd_above bounded_norm_comp) 
   have  \<open>norm f > 0\<close>
     using \<open>f \<noteq> 0\<close> by auto
-  have \<open>norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>blinfun_apply f \<xi>\<parallel>) ` (ball x r) ) / r\<close>
+  have \<open>norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>(*\<^sub>v) f \<xi>\<parallel>) ` (ball x r) ) / r\<close>
     using \<open>r > 0\<close> by (simp add: sokal_banach_steinhaus)  
-  hence \<open>r * norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>blinfun_apply f \<xi>\<parallel>) ` (ball x r) )\<close>
+  hence \<open>r * norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>(*\<^sub>v) f \<xi>\<parallel>) ` (ball x r) )\<close>
     using \<open>0 < r\<close> by (smt divide_strict_right_mono nonzero_mult_div_cancel_left) 
   moreover have \<open>\<tau> * r * norm f < r * norm f\<close>
     using  \<open>\<tau> < 1\<close> using \<open>0 < norm f\<close> \<open>0 < r\<close> by auto
-  ultimately have \<open>\<tau> * r * norm f < Sup ( (norm \<circ> (blinfun_apply f)) ` (ball x r) )\<close>
+  ultimately have \<open>\<tau> * r * norm f < Sup ( (norm \<circ> ((*\<^sub>v) f)) ` (ball x r) )\<close>
     by simp
-  moreover have \<open>(norm \<circ> ( blinfun_apply f)) ` (ball x r) \<noteq> {}\<close>
+  moreover have \<open>(norm \<circ> ( (*\<^sub>v) f)) ` (ball x r) \<noteq> {}\<close>
     using \<open>0 < r\<close> by auto    
-  moreover have \<open>bdd_above ((norm \<circ> ( blinfun_apply f)) ` (ball x r))\<close>
+  moreover have \<open>bdd_above ((norm \<circ> ( (*\<^sub>v) f)) ` (ball x r))\<close>
     using bdd_above_1 apply transfer by simp
-  ultimately have \<open>\<exists>t \<in> (norm \<circ> ( blinfun_apply f)) ` (ball x r). \<tau> * r * norm f < t\<close> 
+  ultimately have \<open>\<exists>t \<in> (norm \<circ> ( (*\<^sub>v) f)) ` (ball x r). \<tau> * r * norm f < t\<close> 
     by (simp add: less_cSup_iff)    
   thus ?thesis by (smt comp_def image_iff) 
 qed
 
+
 subsection \<open>Banach-Steinhaus theorem\<close>
 
-text\<open>
-  Banach-Steinhaus Theorem: If a family of bounded operators is pointwise bounded, then it is
-  uniformly bounded.
-\<close>
 theorem banach_steinhaus:
   fixes f::\<open>'c \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
-  assumes \<open>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<close>
+  assumes \<open>\<And>x. bounded (range (\<lambda>n. (f n) *\<^sub>v x))\<close>
   shows  \<open>bounded (range f)\<close>
+  text\<open>
+  This is Banach-Steinhaus Theorem.
+  Explanation: If a family of bounded operators, having a Banach space as common domain, is
+  pointwise bounded, then it is uniformly bounded.
+\<close>
 proof(rule classical)
   assume \<open>\<not>(bounded (range f))\<close>
   have sum_1: \<open>\<exists>K. \<forall>n. sum (\<lambda>k. inverse (real_of_nat 3^k)) {0..n} \<le> K\<close>
@@ -256,13 +270,13 @@ proof(rule classical)
   have \<open>of_rat 2/3 < (1::real)\<close>
     by auto
   hence \<open>\<forall>g::'a \<Rightarrow>\<^sub>L 'b. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
-               \<longrightarrow> (\<xi>\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm (blinfun_apply g \<xi>))\<close> 
+               \<longrightarrow> (\<xi>\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm ((*\<^sub>v) g \<xi>))\<close> 
     using sokal_banach_steinhaus' by blast
   hence \<open>\<exists>\<xi>. \<forall>g::'a \<Rightarrow>\<^sub>L 'b. \<forall>x. \<forall>r. g \<noteq> 0 \<and> r > 0
-           \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm (blinfun_apply g (\<xi> g x r)))\<close> 
+           \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm ((*\<^sub>v) g (\<xi> g x r)))\<close> 
     by metis
   then obtain \<xi> where f1: \<open>\<lbrakk>g \<noteq> 0; r > 0\<rbrakk> \<Longrightarrow> 
-        \<xi> g x r \<in> ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm (blinfun_apply g (\<xi> g x r))\<close>
+        \<xi> g x r \<in> ball x r \<and>  (of_rat 2/3) * r * norm g \<le> norm ((*\<^sub>v) g (\<xi> g x r))\<close>
     for g::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> and x and r
     by blast
   have \<open>\<forall>n. \<exists>k. norm (f k) \<ge> 4^n\<close>
@@ -315,13 +329,13 @@ proof(rule classical)
   qed
   have \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> for n
     using norm_2 by blast
-  have \<open>\<exists> M. \<forall> n. norm (blinfun_apply (T n) x) \<le> M\<close>
+  have \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close>
     unfolding T_def apply auto
-    by (metis \<open>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<close> bounded_iff rangeI)
-  then obtain M where \<open>norm (blinfun_apply (T n) x) \<le> M\<close> for n
+    by (metis \<open>\<And>x. bounded (range (\<lambda>n. (*\<^sub>v) (f n) x))\<close> bounded_iff rangeI)
+  then obtain M where \<open>norm ((*\<^sub>v) (T n) x) \<le> M\<close> for n
     by blast
-  have norm_1: \<open>norm (T n) * norm (y (Suc n) - x) + norm (blinfun_apply (T n) x)
-       \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm (blinfun_apply (T n) x)\<close> for n
+  have norm_1: \<open>norm (T n) * norm (y (Suc n) - x) + norm ((*\<^sub>v) (T n) x)
+       \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm ((*\<^sub>v) (T n) x)\<close> for n
   proof-   
     have \<open>norm (y (Suc n) - x) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close>
       using \<open>norm (x - y (Suc n)) \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))\<close> 
@@ -334,27 +348,27 @@ proof(rule classical)
     thus ?thesis by simp      
   qed 
   have inverse_2: \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) 
-                  \<le> norm (blinfun_apply (T n) x)\<close> for n
+                  \<le> norm ((*\<^sub>v) (T n) x)\<close> for n
   proof-
-    have \<open>(of_rat 2/3)*(inverse (of_nat 3^n))*norm (T n) \<le> norm (blinfun_apply (T n) (y (Suc n)))\<close> 
+    have \<open>(of_rat 2/3)*(inverse (of_nat 3^n))*norm (T n) \<le> norm ((*\<^sub>v) (T n) (y (Suc n)))\<close> 
       using f1 \<open>\<And> n. T n \<noteq> 0\<close> \<open>\<And> n. inverse (of_nat 3^n) > 0\<close> unfolding y_def by auto
-    also have \<open>\<dots> = norm (blinfun_apply (T n) ((y (Suc n) - x) + x))\<close>
+    also have \<open>\<dots> = norm ((*\<^sub>v) (T n) ((y (Suc n) - x) + x))\<close>
       by auto
-    also have \<open>\<dots> = norm (blinfun_apply (T n) (y (Suc n) - x) + blinfun_apply (T n) x)\<close>
+    also have \<open>\<dots> = norm ((*\<^sub>v) (T n) (y (Suc n) - x) + (*\<^sub>v) (T n) x)\<close>
       apply transfer apply auto by (metis diff_add_cancel linear_simps(1))
-    also have \<open>\<dots> \<le> norm (blinfun_apply (T n) (y (Suc n) - x)) + norm (blinfun_apply (T n) x)\<close>
+    also have \<open>\<dots> \<le> norm ((*\<^sub>v) (T n) (y (Suc n) - x)) + norm ((*\<^sub>v) (T n) x)\<close>
       by (simp add: norm_triangle_ineq)
-    also have \<open>\<dots> \<le> norm (T n) * norm (y (Suc n) - x) + norm (blinfun_apply (T n) x)\<close>
+    also have \<open>\<dots> \<le> norm (T n) * norm (y (Suc n) - x) + norm ((*\<^sub>v) (T n) x)\<close>
       apply transfer apply auto using onorm by auto 
     also have \<open>\<dots> \<le> (inverse (of_nat 2))*(inverse (of_nat 3^n))*norm (T n) 
-                + norm (blinfun_apply (T n) x)\<close>
+                + norm ((*\<^sub>v) (T n) x)\<close>
       using norm_1 by blast
     finally have \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n)
                 \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) 
-                + norm (blinfun_apply (T n) x)\<close>
+                + norm ((*\<^sub>v) (T n) x)\<close>
       by blast
     hence \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
-             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm (blinfun_apply (T n) x)\<close>
+             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm ((*\<^sub>v) (T n) x)\<close>
       by linarith
     thus ?thesis
       by (simp add: linordered_field_class.sign_simps(5))
@@ -377,12 +391,12 @@ proof(rule classical)
     have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
           \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close> 
       using inverse_3 by blast
-    also have \<open>\<dots> \<le> norm (blinfun_apply (T n) x)\<close> 
+    also have \<open>\<dots> \<le> norm ((*\<^sub>v) (T n) x)\<close> 
       using inverse_2 by blast
-    finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm (blinfun_apply (T n) x)\<close>
+    finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm ((*\<^sub>v) (T n) x)\<close>
       by auto
     thus ?thesis 
-      using \<open>\<And> n. norm (blinfun_apply (T n) x) \<le> M\<close> by smt
+      using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
     by (simp add: Elementary_Topology.real_arch_pow)
@@ -393,117 +407,47 @@ proof(rule classical)
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
-text\<open>
-  An important consequence of Banach-Steinhaus theorem is that if a sequence of bounded operators 
-  converges pointwise, then the limit is a bounded operator too.
-\<close>
 
-text\<open>Pointwise convergence\<close>
-definition pointwise_convergent_to :: 
-  \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> 
-  (\<open>((_)/ \<midarrow>pointwise\<rightarrow> (_))\<close> [60, 60] 60) where
-  \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t) \<longlonglongrightarrow> l t)\<close>
-
-text\<open>
-  If a family of linear operators converges pointwise, then the limit is also a linear operator.
-  Remark: We do not use Banach-Steinhaus here.
-\<close>
-lemma linear_limit_linear:
-  fixes f :: \<open>_ \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes  \<open>\<And> n. linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
-  shows \<open>linear F\<close>
-proof
-  show "F (x + y) = F x + F y" for x y
-  proof-
-    have "\<forall>a. F a = lim (\<lambda>n. f n a)"
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by (metis (full_types) limI)
-    moreover have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
-      by (metis (no_types) limI tendsto_add)
-    moreover have "\<And>a. (\<lambda>n. f n a) \<longlonglongrightarrow> F a"
-      using assms(2) pointwise_convergent_to_def by force
-    ultimately have lim_sum: \<open>lim (\<lambda> n. (f n) x + (f n) y) 
-                            = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
-      by metis
-    have \<open>(f n) (x + y) = (f n) x + (f n) y\<close> for n
-      using \<open>\<And> n.  linear (f n)\<close> unfolding linear_def using Real_Vector_Spaces.linear_iff assms(1) 
-      by auto
-    hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x + (f n) y)\<close>
-      by simp
-    hence \<open>lim (\<lambda> n. (f n) (x + y)) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
-      using lim_sum by simp
-    moreover have \<open>(\<lambda> n. (f n) (x + y)) \<longlonglongrightarrow> F (x + y)\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
-    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
-    moreover have \<open>(\<lambda> n. (f n) y) \<longlonglongrightarrow> F y\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
-    ultimately show ?thesis
-      by (metis limI) 
-  qed
-  show "F (r *\<^sub>R x) = r *\<^sub>R F x" for r and x
-  proof-
-    have \<open>(f n) (r *\<^sub>R x) = r *\<^sub>R (f n) x\<close> for n
-      using  \<open>\<And> n.  linear (f n)\<close> 
-      by (simp add: Real_Vector_Spaces.linear_def real_vector.linear_scale)
-    hence \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close>
-      by simp
-    have \<open>convergent (\<lambda> n. (f n) x)\<close>
-      by (metis assms(2) convergentI pointwise_convergent_to_def)
-    moreover have \<open>isCont (\<lambda> t::'b. r *\<^sub>R t) tt\<close> for tt
-      by (simp add: bounded_linear_scaleR_right)
-    ultimately have \<open>lim (\<lambda> n. r *\<^sub>R ((f n) x)) =  r *\<^sub>R lim (\<lambda> n. (f n) x)\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def 
-      by (metis (mono_tags) isCont_tendsto_compose limI)
-    hence \<open>lim (\<lambda> n.  (f n) (r *\<^sub>R x)) = r *\<^sub>R lim (\<lambda> n. (f n) x)\<close> 
-      using \<open>lim (\<lambda> n. (f n) (r *\<^sub>R x)) = lim (\<lambda> n. r *\<^sub>R (f n) x)\<close> by simp
-    moreover have \<open>(\<lambda> n. (f n) x) \<longlonglongrightarrow> F x\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
-    moreover have \<open>(\<lambda> n.  (f n) (r *\<^sub>R x)) \<longlonglongrightarrow> F (r *\<^sub>R x)\<close>
-      using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by blast
-    ultimately show ?thesis
-      by (metis limI) 
-  qed
-qed
-
-text\<open>
-  If a family of bounded operators converges pointwise, then the limit is also a bounded operator.
-\<close>
 corollary bounded_linear_limit_bounded_linear:
   fixes f::\<open>_ \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
-  assumes \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close>
-  shows  \<open>\<exists>g. (\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> blinfun_apply g\<close>
+  assumes \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
+  shows  \<open>\<exists>g. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> (*\<^sub>v) g\<close>
+  text\<open>
+  Explanation: If a family of bounded operators, having a Banach space as common domain, converges
+  pointwise, then the limit is also a bounded operator.
+\<close>
 proof-
-  have \<open>\<exists>l. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> l\<close> for x
-    by (simp add:  \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close> convergentD)
-  hence \<open>\<exists>F. (\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+  have \<open>\<exists>l. (\<lambda>n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> l\<close> for x
+    by (simp add:  \<open>\<And>x. convergent (\<lambda>n. (*\<^sub>v) (f n) x)\<close> convergentD)
+  hence \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
     unfolding pointwise_convergent_to_def by metis
-  obtain F where \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
-    using \<open>\<exists>F. (\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
-  have \<open>\<And>x. (\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close>
-    using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer
+  obtain F where \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close>
+    using \<open>\<exists>F. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
+  have \<open>\<And>x. (\<lambda> n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close>
+    using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer
     by (simp add: pointwise_convergent_to_def)
   have \<open>bounded (range f)\<close>
-    using \<open>\<And>x. convergent (\<lambda>n. blinfun_apply (f n) x)\<close> banach_steinhaus
-      \<open>\<And>x. \<exists>l. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> l\<close> convergent_imp_bounded by blast
+    using \<open>\<And>x. convergent (\<lambda>n. (*\<^sub>v) (f n) x)\<close> banach_steinhaus
+      \<open>\<And>x. \<exists>l. (\<lambda>n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> l\<close> convergent_imp_bounded by blast
   have norm_f_n: \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
     unfolding bounded_def
     by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI)
   have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
     using Limits.isCont_norm by simp
-  hence \<open>(\<lambda> n. norm (blinfun_apply (f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
-    using \<open>\<And> x::'a. (\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
-  hence norm_f_n_x: \<open>\<exists> M. \<forall> n. norm (blinfun_apply (f n) x) \<le> M\<close> for x
+  hence \<open>(\<lambda> n. norm ((*\<^sub>v) (f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
+    using \<open>\<And> x::'a. (\<lambda> n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
+  hence norm_f_n_x: \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (f n) x) \<le> M\<close> for x
     using Elementary_Metric_Spaces.convergent_imp_bounded
-    by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
-  have norm_f: \<open>\<exists>K. \<forall>n. \<forall>x. norm (blinfun_apply (f n) x) \<le> norm x * K\<close>
+    by (metis UNIV_I \<open>\<And> x::'a. (\<lambda> n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> bounded_iff image_eqI)
+  have norm_f: \<open>\<exists>K. \<forall>n. \<forall>x. norm ((*\<^sub>v) (f n) x) \<le> norm x * K\<close>
   proof-
-    have \<open>\<exists> M. \<forall> n. norm (blinfun_apply (f n) x) \<le> M\<close> for x
-      using norm_f_n_x  \<open>\<And>x. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> by blast
+    have \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (f n) x) \<le> M\<close> for x
+      using norm_f_n_x  \<open>\<And>x. (\<lambda>n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> by blast
     hence \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
       using norm_f_n by simp 
     then obtain M::real where \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
       by blast
-    have \<open>\<forall> n. \<forall>x. norm (blinfun_apply (f n) x) \<le> norm x * norm (f n)\<close>
+    have \<open>\<forall> n. \<forall>x. norm ((*\<^sub>v) (f n) x) \<le> norm x * norm (f n)\<close>
       apply transfer apply auto by (metis mult.commute onorm) 
     thus  ?thesis using \<open>\<exists> M. \<forall> n. norm (f n) \<le> M\<close>
       by (metis (no_types, hide_lams) dual_order.trans norm_eq_zero order_refl 
@@ -511,28 +455,26 @@ proof-
   qed 
   have norm_F_x: \<open>\<exists>K. \<forall>x. norm (F x) \<le> norm x * K\<close>
   proof-
-    have "\<exists>K. \<forall>n. \<forall>x. norm (blinfun_apply (f n) x) \<le> norm x * K"
-      using norm_f \<open>\<And>x. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> by auto
+    have "\<exists>K. \<forall>n. \<forall>x. norm ((*\<^sub>v) (f n) x) \<le> norm x * K"
+      using norm_f \<open>\<And>x. (\<lambda>n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> by auto
     thus ?thesis
-      using  \<open>\<And> x::'a. (\<lambda> n. blinfun_apply (f n)  x) \<longlonglongrightarrow> F x\<close> apply transfer 
+      using  \<open>\<And> x::'a. (\<lambda> n. (*\<^sub>v) (f n)  x) \<longlonglongrightarrow> F x\<close> apply transfer 
       by (metis Lim_bounded tendsto_norm)   
   qed
   have \<open>linear F\<close>
   proof(rule linear_limit_linear)
-    show \<open>linear (blinfun_apply (f n))\<close> for n
+    show \<open>linear ((*\<^sub>v) (f n))\<close> for n
       apply transfer apply auto by (simp add: bounded_linear.linear) 
     show \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
-      using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
+      using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> by auto
   qed
   moreover have \<open>bounded_linear_axioms F\<close>
-    using norm_F_x by (simp add: \<open>\<And>x. (\<lambda>n. blinfun_apply (f n) x) \<longlonglongrightarrow> F x\<close> 
-        bounded_linear_axioms_def) 
+    using norm_F_x by (simp add: \<open>\<And>x. (\<lambda>n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> bounded_linear_axioms_def) 
   ultimately have \<open>bounded_linear F\<close> 
     unfolding bounded_linear_def by blast
-  hence \<open>\<exists>g. blinfun_apply g = F\<close>
+  hence \<open>\<exists>g. (*\<^sub>v) g = F\<close>
     using bounded_linear_Blinfun_apply by auto
-  thus ?thesis
-    using \<open>(\<lambda>n. blinfun_apply (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
+  thus ?thesis using \<open>(\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> F\<close> apply transfer by auto
 qed
 
 end
