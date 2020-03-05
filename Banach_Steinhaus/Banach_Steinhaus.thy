@@ -370,8 +370,12 @@ proof(rule classical)
     hence \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
              - inverse (real 2) * inverse (real 3 ^ n) * norm (T n) \<le> norm ((*\<^sub>v) (T n) x)\<close>
       by linarith
-    thus ?thesis
-      by (simp add: linordered_field_class.sign_simps(5))
+    moreover have \<open>(of_rat 2/3) * inverse (real 3 ^ n) * norm (T n) 
+             - inverse (real 2) * inverse (real 3 ^ n) * norm (T n)
+             = (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close>
+      by fastforce
+    ultimately show \<open>(inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n) \<le> norm ((*\<^sub>v) (T n) x)\<close>
+      by linarith      
   qed
   have inverse_3: \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) 
                     \<le> (inverse (of_nat 6)) * inverse (real 3 ^ n) * norm (T n)\<close> for n
@@ -399,11 +403,10 @@ proof(rule classical)
       using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
-    by (simp add: Elementary_Topology.real_arch_pow)
+    using Real.real_arch_pow by auto
   moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
     using inverse_1 by blast                      
-  ultimately show ?thesis
-    by smt
+  ultimately show ?thesis by smt
 qed
 
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
