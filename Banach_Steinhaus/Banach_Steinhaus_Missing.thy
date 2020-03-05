@@ -255,11 +255,10 @@ proof(cases \<open>(UNIV::'a set) = 0\<close>)
   hence \<open>\<parallel>f\<parallel> = 0\<close>
     by (simp add: blinfun_eqI zero_blinfun.rep_eq)      
   have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = {0}\<close>
-    by (smt Collect_cong \<open>\<And>x. f x = 0\<close> norm_zero singleton_conv)      
+    by (smt Collect_cong \<open>\<And>x. f *\<^sub>v x = 0\<close> norm_zero singleton_conv)      
   hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
     by simp    
-  thus ?thesis
-    using \<open>\<parallel>f\<parallel> = 0\<close> by auto      
+  thus ?thesis using \<open>\<parallel>f\<parallel> = 0\<close> by auto      
 next
   case False
   hence \<open>(UNIV::'a set) \<noteq> 0\<close>
@@ -281,117 +280,110 @@ next
     using \<open>\<parallel>x\<parallel> \<noteq> 0\<close> by auto
   finally have \<open>\<parallel>y\<parallel> = 1\<close>
     by blast
-  hence norm_1_non_empty: \<open>{ \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> = 1} \<noteq> {}\<close>
+  hence norm_1_non_empty: \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<noteq> {}\<close>
     by blast
   have norm_1_bounded: \<open>bdd_above { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
     unfolding bdd_above_def apply auto
     by (metis norm_blinfun)
-  have norm_less_1_non_empty: \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<noteq> {}\<close>
+  have norm_less_1_non_empty: \<open>{\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<noteq> {}\<close>
     by (metis (mono_tags, lifting) Collect_empty_eq_bot bot_empty_eq empty_iff norm_zero 
         zero_less_one)   
-  have norm_less_1_bounded: \<open>bdd_above { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+  have norm_less_1_bounded: \<open>bdd_above {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
   proof-
     have \<open>\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v (a r)\<parallel> \<le> r\<close> for a :: "real \<Rightarrow> 'a"
     proof-
       obtain r :: "('a \<Rightarrow>\<^sub>L 'b) \<Rightarrow> real" where
         "\<And>f x. 0 \<le> r f \<and> (bounded_linear f \<longrightarrow> \<parallel>f *\<^sub>v x\<parallel> \<le> \<parallel>x\<parallel> * r f)"
         using bounded_linear.nonneg_bounded by moura
-      show ?thesis
-      proof -
-        { assume "\<not> \<parallel>f\<parallel> < 0"
-          hence "(\<exists>r. \<parallel>f\<parallel> * \<parallel>a r\<parallel> \<le> r) \<or> (\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v a r\<parallel> \<le> r)"
-            by (meson less_eq_real_def mult_le_cancel_left2) }
-        hence "(\<exists>r. \<parallel>f\<parallel> * \<parallel>a r\<parallel> \<le> r) \<or> (\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v a r\<parallel> \<le> r)"
-          by (meson mult_le_cancel_left_neg norm_ge_zero)
-        thus ?thesis
-          using dual_order.trans norm_blinfun by blast
-      qed          
+      have \<open>\<not> \<parallel>f\<parallel> < 0\<close>
+        by simp          
+      hence "(\<exists>r. \<parallel>f\<parallel> * \<parallel>a r\<parallel> \<le> r) \<or> (\<exists>r. \<parallel>a r\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v a r\<parallel> \<le> r)"
+        by (meson less_eq_real_def mult_le_cancel_left2) 
+      thus ?thesis using dual_order.trans norm_blinfun by blast
     qed
     hence \<open>\<exists> M. \<forall> x. \<parallel>x\<parallel> < 1 \<longrightarrow> \<parallel>f *\<^sub>v x\<parallel> \<le> M\<close>
-      by metis  
+      by metis
     thus ?thesis by auto 
   qed
-  have Sup_non_neg: \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<ge> 0\<close>
+  have Sup_non_neg: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<ge> 0\<close>
     by (smt Collect_empty_eq cSup_upper mem_Collect_eq nonnegative norm_1_bounded norm_1_non_empty)      
   have \<open>{0::real} \<noteq> {}\<close>
     by simp
   have \<open>bdd_above {0::real}\<close>
     by simp
-  show \<open>\<parallel>f\<parallel> = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+  show \<open>\<parallel>f\<parallel> = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
   proof(cases \<open>\<forall>x. f *\<^sub>v x = 0\<close>)
     case True
     have \<open>\<parallel>f *\<^sub>v x\<parallel> = 0\<close> for x
       by (simp add: True)
-    hence \<open>{ \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<subseteq> {0}\<close>
+    hence \<open>{\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<subseteq> {0}\<close>
       by blast        
-    moreover have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<supseteq> {0}\<close>
+    moreover have \<open>{\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } \<supseteq> {0}\<close>
       using calculation norm_less_1_non_empty by fastforce                        
-    ultimately have \<open>{ \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = {0}\<close>  
+    ultimately have \<open>{\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = {0}\<close>  
       by blast
-    hence Sup1: \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = 0\<close> 
+    hence Sup1: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = 0\<close> 
       by simp
     have \<open>\<parallel>f\<parallel> = 0\<close>
-      by (simp add: True blinfun.zero_left blinfun_eqI)        
-    moreover have \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
+      by (simp add: True blinfun_eqI)        
+    moreover have \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
       using Sup1 by blast
     ultimately show ?thesis by simp
   next
     case False
-    have norm_f_eq_leq: \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<Longrightarrow> 
-                         y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for y
+    have norm_f_eq_leq: \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<Longrightarrow> 
+                         y \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for y
     proof-
-      assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      assume \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
       hence \<open>\<exists> x. y = \<parallel>f *\<^sub>v x\<parallel> \<and> \<parallel>x\<parallel> = 1\<close>
         by blast
       then obtain x where \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> and \<open>\<parallel>x\<parallel> = 1\<close>
         by auto
       define y' where \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R y\<close> for n
-      have \<open>y' n \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
+      have \<open>y' n \<in> {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
       proof-
         have \<open>y' n = (1 - (inverse (real (Suc n)))) *\<^sub>R \<parallel>f *\<^sub>v x\<parallel>\<close>
-          using y'_def \<open>y = norm (f x)\<close> by blast
-        also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R \<parallel>f x\<parallel>\<close>
-          by (metis (mono_tags, hide_lams) \<open>y = norm (f x)\<close> abs_1 abs_le_self_iff abs_of_nat 
+          using y'_def \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> by blast
+        also have \<open>... = \<bar>(1 - (inverse (real (Suc n))))\<bar> *\<^sub>R \<parallel>f *\<^sub>v x\<parallel>\<close>
+          by (metis (mono_tags, hide_lams) \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> abs_1 abs_le_self_iff abs_of_nat 
               abs_of_nonneg add_diff_cancel_left' add_eq_if cancel_comm_monoid_add_class.diff_cancel
               diff_ge_0_iff_ge eq_iff_diff_eq_0 inverse_1 inverse_le_iff_le nat.distinct(1) of_nat_0
               of_nat_Suc of_nat_le_0_iff zero_less_abs_iff zero_neq_one)
-        also have \<open>... = \<parallel>(1 - (inverse (real (Suc n)))) *\<^sub>R (f *\<^sub>v x)\<parallel>\<close>
-          by simp
-        also have \<open>... = \<parallel> f *\<^sub>v ((1 - (inverse (real (Suc n)))) *\<^sub>R  x) \<parallel>\<close>
+        also have \<open>... = \<parallel>f *\<^sub>v ((1 - (inverse (real (Suc n)))) *\<^sub>R  x)\<parallel>\<close>
           by (simp add: blinfun.scaleR_right)            
-        finally have y'_1: \<open>y' n = \<parallel> f ( (1 - (inverse (real (Suc n)))) *\<^sub>R x) \<parallel>\<close> 
+        finally have y'_1: \<open>y' n = \<parallel>f *\<^sub>v ( (1 - (inverse (real (Suc n)))) *\<^sub>R x)\<parallel>\<close> 
           by blast
         have \<open>\<parallel>(1 - (inverse (Suc n))) *\<^sub>R x\<parallel> = (1 - (inverse (real (Suc n)))) * \<parallel>x\<parallel>\<close>
           by (simp add: linordered_field_class.inverse_le_1_iff)                
         hence \<open>\<parallel>(1 - (inverse (Suc n))) *\<^sub>R x\<parallel> < 1\<close>
-          by (simp add: \<open>norm x = 1\<close>) 
+          by (simp add: \<open>\<parallel>x\<parallel> = 1\<close>) 
         thus ?thesis using y'_1 by blast 
       qed
-      have \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
+      have \<open>(\<lambda>n. (1 - (inverse (real (Suc n)))) ) \<longlonglongrightarrow> 1\<close>
         using Limits.LIMSEQ_inverse_real_of_nat_add_minus by simp
-      hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
+      hence \<open>(\<lambda>n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> 1 *\<^sub>R y\<close>
         using Limits.tendsto_scaleR by blast
-      hence \<open>(\<lambda> n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
+      hence \<open>(\<lambda>n. (1 - (inverse (real (Suc n)))) *\<^sub>R y) \<longlonglongrightarrow> y\<close>
         by simp
-      hence \<open>(\<lambda> n. y' n) \<longlonglongrightarrow> y\<close>
+      hence \<open>(\<lambda>n. y' n) \<longlonglongrightarrow> y\<close>
         using y'_def by simp
       hence \<open>y' \<longlonglongrightarrow> y\<close> 
         by simp
-      have \<open>y' n \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
-        using cSup_upper \<open>\<And>n. y' n \<in> {norm (f x) |x. norm x < 1}\<close> norm_less_1_bounded by blast
-      hence \<open>y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+      have \<open>y' n \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close> for n
+        using cSup_upper \<open>\<And>n. y' n \<in> {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> norm_less_1_bounded by blast
+      hence \<open>y \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
         using \<open>y' \<longlonglongrightarrow> y\<close> Topological_Spaces.Sup_lim by (meson LIMSEQ_le_const2)
       thus ?thesis by blast
     qed
-    hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+    hence \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
       by (metis (lifting) cSup_least norm_1_non_empty)
-    have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<Longrightarrow> y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x.  \<parallel>x\<parallel> = 1}\<close> for y
+    have \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<Longrightarrow> y \<le> Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close> for y
     proof(cases \<open>y = 0\<close>)
       case True thus ?thesis by (simp add: Sup_non_neg) 
     next
       case False
       hence \<open>y \<noteq> 0\<close> by blast
-      assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
+      assume \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
       hence \<open>\<exists> x. y = \<parallel>f *\<^sub>v x\<parallel> \<and> \<parallel>x\<parallel> < 1\<close>
         by blast
       then obtain x where \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> and \<open>\<parallel>x\<parallel> < 1\<close>
@@ -400,11 +392,11 @@ next
         by (simp add: \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close>)
       also have \<open>... = \<bar>1/\<parallel>x\<parallel>\<bar> * \<parallel>f *\<^sub>v x\<parallel>\<close>
         by simp
-      also have \<open>... = \<parallel> (1/\<parallel>x\<parallel>) *\<^sub>R (f x) \<parallel>\<close>
+      also have \<open>... = \<parallel>(1/\<parallel>x\<parallel>) *\<^sub>R (f *\<^sub>v x)\<parallel>\<close>
         by simp
-      also have \<open>... = \<parallel>f ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
+      also have \<open>... = \<parallel>f *\<^sub>v ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
         by (simp add: blinfun.scaleR_right)          
-      finally have \<open>(1/\<parallel>x\<parallel>) * y  = \<parallel>f ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
+      finally have \<open>(1/\<parallel>x\<parallel>) * y  = \<parallel>f *\<^sub>v ((1/\<parallel>x\<parallel>) *\<^sub>R x)\<parallel>\<close>
         by blast
       have \<open>x \<noteq> 0\<close>
         using  \<open>y \<noteq> 0\<close> \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close> blinfun.zero_right by auto 
@@ -414,7 +406,7 @@ next
         by simp
       finally have  \<open>\<parallel>(1/\<parallel>x\<parallel>) *\<^sub>R x\<parallel> = 1\<close>
         using \<open>x \<noteq> 0\<close> by simp
-      hence \<open>(1/\<parallel>x\<parallel>) * y \<in> { \<parallel>f x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+      hence \<open>(1/\<parallel>x\<parallel>) * y \<in> { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
         using \<open>1 / \<parallel>x\<parallel> * y = \<parallel>f *\<^sub>v (1 / \<parallel>x\<parallel>) *\<^sub>R x\<parallel>\<close> by blast
       hence \<open>(1/\<parallel>x\<parallel>) * y \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
         by (simp add: cSup_upper norm_1_bounded)
@@ -426,7 +418,7 @@ next
     hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
       by (smt cSup_least norm_less_1_non_empty) 
     hence \<open>Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1} = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1}\<close>
-      using \<open>Sup {norm (f x) |x. norm x = 1} \<le> Sup {norm (f x) |x. norm x < 1}\<close> by linarith
+      using \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> |x. norm x = 1} \<le> Sup { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> < 1}\<close> by linarith
     have f1: \<open>(SUP x. \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>) = Sup { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> | x. True}\<close>
       by (simp add: full_SetCompr_eq)
     have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} \<Longrightarrow> y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
@@ -449,12 +441,12 @@ next
           by (simp add: blinfun.scaleR_right)            
         moreover have \<open>\<parallel> (1/\<parallel>x\<parallel>) *\<^sub>R x \<parallel> = 1\<close>
           using False \<open>y = \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>\<close> by auto
-        ultimately have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
+        ultimately have \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
           by blast
         thus ?thesis by blast
       qed
     qed
-    moreover have \<open>y \<in> { \<parallel>f x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0} \<Longrightarrow> y \<in> { \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True}\<close>
+    moreover have \<open>y \<in> {\<parallel>f x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0} \<Longrightarrow> y \<in> {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True}\<close>
       for y
     proof(cases \<open>y = 0\<close>)
       case True thus ?thesis by auto 
@@ -462,8 +454,8 @@ next
       case False
       hence \<open>y \<notin> {0}\<close>
         by simp
-      moreover assume \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
-      ultimately have \<open>y \<in> { \<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
+      moreover assume \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}\<close>
+      ultimately have \<open>y \<in> {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}\<close>
         by simp
       then obtain x where \<open>\<parallel>x\<parallel> = 1\<close> and \<open>y = \<parallel>f *\<^sub>v x\<parallel>\<close>
         by auto
@@ -491,7 +483,7 @@ next
       using Sup_non_neg  \<open>Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0}) 
         = max (Sup {\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1}) (Sup {0})\<close> 
       by auto           
-    ultimately  have f2: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> | x. True} = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
+    ultimately have f2: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> | x. True} = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
       using \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel> |x. True} = Sup ({\<parallel>f *\<^sub>v x\<parallel> |x. \<parallel>x\<parallel> = 1} \<union> {0})\<close> by linarith
     have \<open>(SUP x. \<parallel>f *\<^sub>v x\<parallel> / \<parallel>x\<parallel>) = Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> = 1}\<close>
       using f1 f2 by linarith
@@ -526,7 +518,7 @@ proof-
     define y where \<open>y = x /\<^sub>R r\<close>
     have \<open>x = r * (inverse r * x)\<close>
       using \<open>x = r *\<^sub>R norm (f t)\<close> by auto
-    hence \<open>x + - 1 * (r * (inverse r * x)) \<le> 0\<close>
+    hence \<open>x - (r * (inverse r * x)) \<le> 0\<close>
       by linarith
     hence \<open>x \<le> r * (x /\<^sub>R r)\<close>
       by auto
@@ -540,8 +532,6 @@ proof-
     have \<open>(\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<noteq> {}\<close>
       by simp        
     moreover have \<open>bdd_above ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1)\<close>
-      using Elementary_Metric_Spaces.bounded_ball Elementary_Normed_Spaces.bounded_linear_image 
-        bdd_above_norm image_comp
       by (simp add: bounded_linear_image blinfun.bounded_linear_right bounded_imp_bdd_above 
           bounded_norm_comp) 
     moreover have \<open>\<exists> y. y \<in> (\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` ball 0 1 \<and> x \<le> r * y\<close>
@@ -611,7 +601,7 @@ definition pointwise_convergent_to ::
 
 lemma linear_limit_linear:
   fixes f :: \<open>_ \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
-  assumes  \<open>\<And> n. linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
+  assumes  \<open>\<And>n. linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
   shows \<open>linear F\<close>
 text\<open>
   Explanation: If a family of linear operators converges pointwise, then the limit is also a linear
@@ -622,12 +612,12 @@ proof
   proof-
     have "\<forall>a. F a = lim (\<lambda>n. f n a)"
       using \<open>f \<midarrow>pointwise\<rightarrow> F\<close> unfolding pointwise_convergent_to_def by (metis (full_types) limI)
-    moreover have "\<forall>f b ba fa. (lim (\<lambda>n. fa n + f n) = (b::'b) + ba \<or> \<not> f \<longlonglongrightarrow> ba) \<or> \<not> fa \<longlonglongrightarrow> b"
+    moreover have "\<forall>f b c g. (lim (\<lambda>n. g n + f n) = (b::'b) + c \<or> \<not> f \<longlonglongrightarrow> c) \<or> \<not> g \<longlonglongrightarrow> b"
       by (metis (no_types) limI tendsto_add)
     moreover have "\<And>a. (\<lambda>n. f n a) \<longlonglongrightarrow> F a"
       using assms(2) pointwise_convergent_to_def by force
-    ultimately have lim_sum: \<open>lim (\<lambda> n. (f n) x + (f n) y) 
-                            = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
+    ultimately have 
+      lim_sum: \<open>lim (\<lambda> n. (f n) x + (f n) y) = lim (\<lambda> n. (f n) x) + lim (\<lambda> n. (f n) y)\<close>
       by metis
     have \<open>(f n) (x + y) = (f n) x + (f n) y\<close> for n
       using \<open>\<And> n.  linear (f n)\<close> unfolding linear_def using Real_Vector_Spaces.linear_iff assms(1) 
@@ -673,17 +663,16 @@ qed
 
 lemma non_Cauchy_unbounded:
   fixes a ::\<open>_ \<Rightarrow> real\<close> 
-  assumes  \<open>\<And> n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
+  assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
     and \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
-  shows \<open>(\<lambda> n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
+  shows \<open>(\<lambda>n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
 text\<open>
   Explanation: If the sequence of partial sums of nonnegative terms is not Cauchy, then it converges
   to infinite.
 \<close>
-
 proof-
-  define S where \<open>S = ((range (\<lambda> n. (sum a  {0..n})))::ereal set)\<close>
-  have \<open>\<exists> s \<in> S.  k*e \<le> s\<close> for k::nat
+  define S::"ereal set" where \<open>S = range (\<lambda>n. sum a  {0..n})\<close>
+  have \<open>\<exists>s\<in>S.  k*e \<le> s\<close> for k::nat
   proof(induction k)
     case 0
     from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
@@ -706,20 +695,20 @@ proof-
       by (simp add: assms(1) sum_nonneg)
     ultimately have \<open>sum a {0..m} > 0\<close>
       by linarith      
-    moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+    moreover have \<open>sum a {0..m} \<in> S\<close>
       unfolding S_def by blast
-    ultimately have \<open>\<exists> s \<in> S. 0 \<le> s\<close>
+    ultimately have \<open>\<exists>s\<in>S. 0 \<le> s\<close>
       using ereal_less_eq(5) by fastforce    
     thus ?case
       by (simp add: zero_ereal_def)  
   next
     case (Suc k)
-    assume \<open>\<exists>s\<in>S. ereal (real k * e) \<le> s\<close>
-    then obtain s where \<open>s \<in> S\<close> and \<open> ereal (real k * e) \<le> s\<close>
+    assume \<open>\<exists>s\<in>S. k*e \<le> s\<close>
+    then obtain s where \<open>s\<in>S\<close> and \<open>ereal (k * e) \<le> s\<close>
       by blast
-    have \<open>\<exists> N. s = ereal (sum a {0..N})\<close>
-      using \<open>s \<in> S\<close> unfolding S_def by blast
-    then obtain N where \<open>s = ereal (sum a {0..N})\<close>
+    have \<open>\<exists>N. s = sum a {0..N}\<close>
+      using \<open>s\<in>S\<close> unfolding S_def by blast
+    then obtain N where \<open>s = sum a {0..N}\<close>
       by blast
     from \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
     obtain m n where \<open>m \<ge> Suc N\<close> and \<open>n \<ge> Suc N\<close> and \<open>m > n\<close> and \<open>sum a {Suc n..m} \<ge> e\<close>
@@ -736,7 +725,7 @@ proof-
     ultimately have \<open>sum a {Suc N..m} = sum a {Suc N..n} + sum a {Suc n..m}\<close>
       by (metis sum.union_disjoint)
     moreover have \<open>sum a {Suc N..n} \<ge> 0\<close>
-      using  \<open>\<And> n. a n \<ge> 0\<close> by (simp add: sum_nonneg) 
+      using  \<open>\<And>n. a n \<ge> 0\<close> by (simp add: sum_nonneg) 
     ultimately have \<open>sum a {Suc N..m} \<ge> e\<close>
       using \<open>e \<le> sum a {Suc n..m}\<close> by linarith
     have \<open>finite {0..N}\<close>
@@ -755,38 +744,34 @@ proof-
       by (simp add: semiring_normalization_rules(3))
     ultimately have \<open>(Suc k) * e \<le> sum a {0..m}\<close>
       by linarith
-    hence \<open>ereal ((Suc k) * e) \<le> ereal (sum a {0..m})\<close>
+    hence \<open>ereal ((Suc k) * e) \<le> sum a {0..m}\<close>
       by auto
-    moreover have \<open>ereal (sum a {0..m}) \<in> S\<close>
+    moreover have \<open>sum a {0..m}\<in>S\<close>
       unfolding S_def by blast
-    ultimately show ?case
-      by blast
+    ultimately show ?case by blast
   qed
-  hence  \<open>\<exists> s \<in> S.  (real n) \<le> s\<close> for n
+  hence \<open>\<exists>s\<in>S. (real n) \<le> s\<close> for n
     by (meson assms(2) ereal_le_le ex_less_of_nat_mult less_le_not_le)
   hence  \<open>Sup S = \<infinity>\<close>
     using Sup_le_iff Sup_subset_mono dual_order.strict_trans1 leD less_PInf_Ex_of_nat subsetI 
     by metis
   hence Sup: \<open>Sup ((range (\<lambda> n. (sum a  {0..n})))::ereal set) = \<infinity>\<close> using S_def 
     by blast
-  have \<open>incseq (\<lambda> n. (sum a  {..<n}))\<close>
-    using \<open>\<And> n. a n \<ge> 0\<close> using Extended_Real.incseq_sumI by auto
-  hence \<open>incseq (\<lambda> n. (sum a  {..< Suc n}))\<close>
+  have \<open>incseq (\<lambda>n. (sum a  {..<n}))\<close>
+    using \<open>\<And>n. a n \<ge> 0\<close> using Extended_Real.incseq_sumI by auto
+  hence \<open>incseq (\<lambda>n. (sum a  {..< Suc n}))\<close>
     by (meson incseq_Suc_iff)
-  hence \<open>incseq (\<lambda> n. (sum a  {0..n}))\<close>  
-    by (simp add: sum_mono2 assms(1) incseq_def) 
-  hence \<open>incseq (\<lambda> n. (sum a  {0..n})::ereal)\<close>
-    using incseq_ereal by blast
-  hence \<open>(\<lambda> n. (sum a  {0..n})::ereal) \<longlonglongrightarrow> Sup (range (\<lambda> n. (sum a  {0..n})::ereal))\<close>
+  hence \<open>incseq (\<lambda>n. (sum a  {0..n})::ereal)\<close>
+    using incseq_ereal by (simp add: atLeast0AtMost lessThan_Suc_atMost) 
+  hence \<open>(\<lambda>n. sum a  {0..n}) \<longlonglongrightarrow> Sup (range (\<lambda>n. (sum a  {0..n})::ereal))\<close>
     using LIMSEQ_SUP by auto
-  thus ?thesis 
-    using Sup PInfty_neq_ereal by auto 
+  thus ?thesis using Sup PInfty_neq_ereal by auto 
 qed
 
 lemma sum_Cauchy_positive:
   fixes a ::\<open>_ \<Rightarrow> real\<close>
   assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>\<exists>K. \<forall>n. (sum a  {0..n}) \<le> K\<close>
-  shows \<open>Cauchy (\<lambda>n. (sum a {0..n}))\<close>
+  shows \<open>Cauchy (\<lambda>n. sum a {0..n})\<close>
 text\<open>
   Explanation: If the sequence of partial sums of nonnegative terms is bounded, then it is Cauchy.
 \<close>
@@ -800,17 +785,17 @@ proof (unfold Cauchy_altdef2, rule, rule)
       by blast
     hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
       by fastforce
-    hence \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
+    hence \<open>(\<lambda>n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
       using non_Cauchy_unbounded \<open>0 < e\<close> assms(1) by blast
-    from  \<open>\<exists> K. \<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
-    obtain K where  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close>
+    from  \<open>\<exists>K. \<forall>n. sum a  {0..n} \<le> K\<close>
+    obtain K where  \<open>\<forall>n. sum a {0..n} \<le> K\<close>
       by blast
-    from  \<open>(\<lambda> n. (sum a  {0..n}) ) \<longlonglongrightarrow> \<infinity>\<close>
-    have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> ereal B\<close>
+    from  \<open>(\<lambda>n. sum a {0..n})  \<longlonglongrightarrow> \<infinity>\<close>
+    have \<open>\<forall>B. \<exists>N. \<forall>n\<ge>N. (\<lambda> n. (sum a  {0..n}) ) n \<ge> B\<close>
       using Lim_PInfty by simp
-    hence  \<open>\<exists> n::nat. (sum a  {0..n}) \<ge> K+1\<close>
+    hence  \<open>\<exists>n. (sum a {0..n}) \<ge> K+1\<close>
       using ereal_less_eq(3) by blast        
-    thus ?thesis using  \<open>\<forall> n::nat. (sum a  {0..n}) \<le> K\<close> by smt       
+    thus ?thesis using  \<open>\<forall>n. (sum a  {0..n}) \<le> K\<close> by smt       
   qed
   have \<open>sum a {Suc n..m} = sum a {0..m} - sum a {0..n}\<close>
     if "m > n" for m n
@@ -838,7 +823,7 @@ qed
 
 lemma convergent_series_Cauchy:
   fixes a::\<open>_ \<Rightarrow> real\<close> and \<phi>::\<open>_ \<Rightarrow> _\<close>
-  assumes \<open>\<exists>M. \<forall>n. (sum a {0..n}) \<le> M\<close> and \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
+  assumes \<open>\<exists>M. \<forall>n. sum a {0..n} \<le> M\<close> and \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
   text\<open>
   Explanation: Let \<^term>\<open>a\<close> be a family of real numbers and let \<^term>\<open>\<phi>\<close> be a family. If the sequence
@@ -850,8 +835,8 @@ proof (unfold Cauchy_altdef2, rule, rule)
   assume \<open>e > 0\<close>
   have \<open>\<And>k. a k \<ge> 0\<close>
     using \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close> dual_order.trans zero_le_dist by blast
-  hence \<open>Cauchy (\<lambda> k. sum a {0..k})\<close>
-    using  \<open>\<exists> M. \<forall> n. (sum a {0..n}) \<le> M\<close> sum_Cauchy_positive by blast
+  hence \<open>Cauchy (\<lambda>k. sum a {0..k})\<close>
+    using  \<open>\<exists>M. \<forall>n. sum a {0..n} \<le> M\<close> sum_Cauchy_positive by blast
   hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (sum a {0..m}) (sum a {0..n}) < e\<close>
     unfolding Cauchy_def using \<open>e > 0\<close> by blast
   hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> dist (sum a {0..m}) (sum a {0..n}) < e\<close>
