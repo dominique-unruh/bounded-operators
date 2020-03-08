@@ -9,13 +9,11 @@ theory Complex_Vector_Spaces
 
 imports 
   "HOL-ex.Sketch_and_Explore"
-  "HOL.Real_Vector_Spaces"
   Complex_Main
 begin
 text\<open>
   We generalize the results in @text{HOL/Real_Vector_Spaces.thy (Brian Huffman, Johannes Hölzl)} 
   from the real numbers to the complex numbers as the ground field.\<close>
-
 
 subsection \<open>Complex vector spaces\<close>
 
@@ -275,6 +273,119 @@ qed
 lemma scaleC_collapse [simp]: "(1 - u) *\<^sub>C a + u *\<^sub>C a = a"
   for a :: "'a::complex_vector"
   by (simp add: algebra_simps)
+
+subsection \<open>Embedding of the Complex into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
+
+definition of_complex :: "complex \<Rightarrow> 'a::complex_algebra_1"
+  where "of_complex r = r *\<^sub>C 1"
+
+lemma scaleC_conv_of_complex: "r *\<^sub>C x = of_complex r * x"
+  by (simp add: of_complex_def)
+
+lemma of_complex_0 [simp]: "of_complex 0 = 0"
+  by (simp add: of_complex_def)
+
+lemma of_complex_1 [simp]: "of_complex 1 = 1"
+  by (simp add: of_complex_def)
+
+lemma of_complex_add [simp]: "of_complex (x + y) = of_complex x + of_complex y"
+  by (simp add: of_complex_def scaleC_left_distrib)
+
+lemma of_complex_minus [simp]: "of_complex (- x) = - of_complex x"
+  by (simp add: of_complex_def)
+
+lemma of_complex_diff [simp]: "of_complex (x - y) = of_complex x - of_complex y"
+  by (simp add: of_complex_def scaleC_left_diff_distrib)
+
+
+lemma of_complex_mult [simp]: "of_complex (x * y) = of_complex x * of_complex y"
+  by (simp add: of_complex_def)
+
+lemma of_complex_sum[simp]: "of_complex (sum f s) = (\<Sum>x\<in>s. of_complex (f x))"
+  by (induct s rule: infinite_finite_induct) auto
+
+lemma of_complex_prod[simp]: "of_complex (prod f s) = (\<Prod>x\<in>s. of_complex (f x))"
+  by (induct s rule: infinite_finite_induct) auto
+
+lemma nonzero_of_complex_inverse:
+  "x \<noteq> 0 \<Longrightarrow> of_complex (inverse x) = inverse (of_complex x :: 'a::complex_div_algebra)"
+  by (simp add: of_complex_def nonzero_inverse_scaleC_distrib)
+
+lemma of_complex_inverse [simp]:
+  "of_complex (inverse x) = inverse (of_complex x :: 'a::{complex_div_algebra,division_ring})"
+  by (simp add: of_complex_def inverse_scaleC_distrib)
+
+lemma nonzero_of_complex_divide:
+  "y \<noteq> 0 \<Longrightarrow> of_complex (x / y) = (of_complex x / of_complex y :: 'a::complex_field)"
+  by (simp add: divide_inverse)
+
+lemma of_complex_divide [simp]:
+  "of_complex (x / y) = (of_complex x / of_complex y :: 'a::complex_div_algebra)"
+  by (simp add: divide_inverse)
+
+lemma of_complex_power [simp]:
+  "of_complex (x ^ n) = (of_complex x :: 'a::{complex_algebra_1}) ^ n"
+  by (induct n) simp_all
+
+lemma of_complex_eq_iff [simp]: "of_complex x = of_complex y \<longleftrightarrow> x = y"
+  by (simp add: of_complex_def)
+
+lemma inj_of_complex: "inj of_complex"
+  by (auto intro: injI)
+
+lemmas of_complex_eq_0_iff [simp] = of_complex_eq_iff [of _ 0, simplified]
+lemmas of_complex_eq_1_iff [simp] = of_complex_eq_iff [of _ 1, simplified]
+
+lemma minus_of_complex_eq_of_complex_iff [simp]: "-of_complex x = of_complex y \<longleftrightarrow> -x = y"
+  using of_complex_eq_iff[of "-x" y] by (simp only: of_complex_minus)
+
+lemma of_complex_eq_minus_of_complex_iff [simp]: "of_complex x = -of_complex y \<longleftrightarrow> x = -y"
+  using of_complex_eq_iff[of x "-y"] by (simp only: of_complex_minus)
+
+lemma of_complex_eq_id [simp]: "of_complex = (id :: complex \<Rightarrow> complex)"
+  by (rule ext) (simp add: of_complex_def)
+
+text \<open>Collapse nested embeddings.\<close>
+lemma of_complex_of_nat_eq [simp]: "of_complex (of_nat n) = of_nat n"
+  by (induct n) auto
+
+lemma of_complex_of_int_eq [simp]: "of_complex (of_int z) = of_int z"
+  by (cases z rule: int_diff_cases) simp
+
+lemma of_complex_numeral [simp]: "of_complex (numeral w) = numeral w"
+  using of_complex_of_int_eq [of "numeral w"] by simp
+
+lemma of_complex_neg_numeral [simp]: "of_complex (- numeral w) = - numeral w"
+  using of_complex_of_int_eq [of "- numeral w"] by simp
+
+text \<open>Every complex algebra has characteristic zero.\<close>
+instance complex_algebra_1 < ring_char_0
+proof
+  from inj_of_complex inj_of_nat have "inj (of_complex \<circ> of_nat)"
+    by (rule inj_compose)
+  then show "inj (of_nat :: nat \<Rightarrow> 'a)"
+    by (simp add: comp_def)
+qed
+
+lemma fraction_scaleC_times [simp]:
+  fixes a :: "'a::complex_algebra_1"
+  shows "(numeral u / numeral v) *\<^sub>C (numeral w * a) = (numeral u * numeral w / numeral v) *\<^sub>C a"
+  by (metis (no_types, lifting) of_complex_numeral scaleC_conv_of_complex scaleC_scaleC
+      times_divide_eq_left)
+
+lemma inverse_scaleC_times [simp]:
+  fixes a :: "'a::complex_algebra_1"
+  shows "(1 / numeral v) *\<^sub>C (numeral w * a) = (numeral w / numeral v) *\<^sub>C a"
+  by (metis divide_inverse_commute inverse_eq_divide of_complex_numeral scaleC_conv_of_complex 
+      scaleC_scaleC)
+
+lemma scaleC_times [simp]:
+  fixes a :: "'a::complex_algebra_1"
+  shows "(numeral u) *\<^sub>C (numeral w * a) = (numeral u * numeral w) *\<^sub>C a"
+by (simp add: scaleC_conv_of_complex)
+
+instance complex_field < field_char_0 ..
+
 
 
 end
