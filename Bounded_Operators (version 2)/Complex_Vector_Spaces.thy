@@ -1,4 +1,4 @@
-(*  Title:      Complex_Vector_Spaces.thy
+(*  Title:      Complexes_Vector_Spaces.thy
     Author:     Dominique Unruh (University of Tartu)
     Author:     Jose Manuel Rodriguez Caballero (University of Tartu)
 *)
@@ -386,6 +386,91 @@ by (simp add: scaleC_conv_of_complex)
 
 instance complex_field < field_char_0 ..
 
+subsection \<open>The Set of Complex Numbers\<close>
+
+definition Complexes :: "'a::complex_algebra_1 set"  ("\<complex>")
+  where "\<complex> = range of_complex"
+
+lemma Complexes_of_complex [simp]: "of_complex r \<in> \<complex>"
+  by (simp add: Complexes_def)
+
+lemma Complexes_of_int [simp]: "of_int z \<in> \<complex>"
+  by (subst of_complex_of_int_eq [symmetric], rule Complexes_of_complex)
+
+lemma Complexes_of_nat [simp]: "of_nat n \<in> \<complex>"
+  by (subst of_complex_of_nat_eq [symmetric], rule Complexes_of_complex)
+
+lemma Complexes_numeral [simp]: "numeral w \<in> \<complex>"
+  by (subst of_complex_numeral [symmetric], rule Complexes_of_complex)
+
+lemma Complexes_0 [simp]: "0 \<in> \<complex>" and Complexes_1 [simp]: "1 \<in> \<complex>" 
+  and Complexes_I [simp]: "\<i> \<in> \<complex>"
+  by (simp_all add: Complexes_def)
+
+lemma Complexes_add [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a + b \<in> \<complex>"
+  by (metis (no_types, hide_lams) Complexes_def Complexes_of_complex imageE of_complex_add)
+
+lemma Complexes_minus [simp]: "a \<in> \<complex> \<Longrightarrow> - a \<in> \<complex>"
+  by (auto simp: Complexes_def)
+
+lemma Complexes_minus_iff [simp]: "- a \<in> \<complex> \<longleftrightarrow> a \<in> \<complex>"
+  apply (auto simp: Complexes_def)
+  by (metis add.inverse_inverse of_complex_minus rangeI)
+
+lemma Complexes_diff [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a - b \<in> \<complex>"
+  by (metis Complexes_add Complexes_minus_iff add_uminus_conv_diff)
+
+lemma Complexes_mult [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a * b \<in> \<complex>"
+  by (metis (no_types, lifting) Complexes_def Complexes_of_complex imageE of_complex_mult)
+
+lemma nonzero_Complexes_inverse: "a \<in> \<complex> \<Longrightarrow> a \<noteq> 0 \<Longrightarrow> inverse a \<in> \<complex>"
+  for a :: "'a::complex_div_algebra"
+  by (metis Complexes_def Complexes_of_complex imageE of_complex_inverse)
+
+lemma Complexes_inverse: "a \<in> \<complex> \<Longrightarrow> inverse a \<in> \<complex>"
+  for a :: "'a::{complex_div_algebra,division_ring}"
+  using nonzero_Complexes_inverse by fastforce
+
+lemma Complexes_inverse_iff [simp]: "inverse x \<in> \<complex> \<longleftrightarrow> x \<in> \<complex>"
+  for x :: "'a::{complex_div_algebra,division_ring}"
+  by (metis Complexes_inverse inverse_inverse_eq)
+
+lemma nonzero_Complexes_divide: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a / b \<in> \<complex>"
+  for a b :: "'a::complex_field"
+  by (simp add: divide_inverse)
+
+lemma Complexes_divide [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a / b \<in> \<complex>"
+  for a b :: "'a::{complex_field,field}"
+  using nonzero_Complexes_divide by fastforce
+
+lemma Complexes_power [simp]: "a \<in> \<complex> \<Longrightarrow> a ^ n \<in> \<complex>"
+  for a :: "'a::complex_algebra_1"
+  by (metis Complexes_def Complexes_of_complex imageE of_complex_power)
+
+lemma Complexes_cases [cases set: Complexes]:
+  assumes "q \<in> \<complex>"
+  obtains (of_complex) r where "q = of_complex r"
+  unfolding Complexes_def
+proof -
+  from \<open>q \<in> \<complex>\<close> have "q \<in> range of_complex" unfolding Complexes_def .
+  then obtain r where "q = of_complex r" ..
+  thus thesis ..
+qed
+
+lemma sum_in_Complexes [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> sum f s \<in> \<complex>"
+proof (induct s rule: infinite_finite_induct)
+  case infinite thus ?case by (metis Complexes_0 sum.infinite)
+qed simp_all
+
+lemma prod_in_Complexes [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> prod f s \<in> \<complex>"
+proof (induct s rule: infinite_finite_induct)
+  case infinite
+  thus ?case by (metis Complexes_1 prod.infinite)
+qed simp_all
+
+lemma Complexes_induct [case_names of_complex, induct set: Complexes]:
+  "q \<in> \<complex> \<Longrightarrow> (\<And>r. P (of_complex r)) \<Longrightarrow> P q"
+  by (rule Complexes_cases) auto
 
 
 end
