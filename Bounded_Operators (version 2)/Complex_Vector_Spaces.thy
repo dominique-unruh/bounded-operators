@@ -33,6 +33,9 @@ class complex_vector = real_vector + scaleC +
     and scaleC_one: "1 *\<^sub>C x = x"
     and scaleR_scaleC: "(*\<^sub>R) r  = (*\<^sub>C) (complex_of_real r)"
 
+subclass (in complex_vector) real_vector
+  by (rule real_vector_axioms)
+
 class complex_algebra = complex_vector + ring +
   assumes mult_scaleC_left [simp]: "a *\<^sub>C x * y = a *\<^sub>C (x * y)"
     and mult_scaleC_right [simp]: "x * a *\<^sub>C y = a *\<^sub>C (x * y)"
@@ -363,7 +366,7 @@ instance complex_algebra_1 < ring_char_0
 proof
   from inj_of_complex inj_of_nat have "inj (of_complex \<circ> of_nat)"
     by (rule inj_compose)
-  then show "inj (of_nat :: nat \<Rightarrow> 'a)"
+  thus "inj (of_nat :: nat \<Rightarrow> 'a)"
     by (simp add: comp_def)
 qed
 
@@ -382,7 +385,7 @@ lemma inverse_scaleC_times [simp]:
 lemma scaleC_times [simp]:
   fixes a :: "'a::complex_algebra_1"
   shows "(numeral u) *\<^sub>C (numeral w * a) = (numeral u * numeral w) *\<^sub>C a"
-by (simp add: scaleC_conv_of_complex)
+  by (simp add: scaleC_conv_of_complex)
 
 instance complex_field < field_char_0 ..
 
@@ -471,6 +474,50 @@ qed simp_all
 lemma Complexes_induct [case_names of_complex, induct set: Complexes]:
   "q \<in> \<complex> \<Longrightarrow> (\<And>r. P (of_complex r)) \<Longrightarrow> P q"
   by (rule Complexes_cases) auto
+
+subsection \<open>Complex normed vector spaces\<close>
+
+(* Already defined in Banach-Steinhaus *)
+bundle notation_norm begin
+notation norm ("\<parallel>_\<parallel>")
+end
+
+bundle no_notation_norm begin
+no_notation norm ("\<parallel>_\<parallel>")
+end
+
+unbundle notation_norm
+
+class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist 
+  + open_uniformity + real_normed_vector +
+  assumes norm_scaleC [simp]: "\<parallel>a *\<^sub>C x\<parallel> = \<parallel>a\<parallel> * \<parallel>x\<parallel>"
+
+class complex_normed_algebra = real_normed_algebra + complex_normed_vector
+
+class complex_normed_algebra_1 = complex_algebra_1 + complex_normed_algebra +
+  assumes norm_one [simp]: "\<parallel>1\<parallel> = 1"
+
+lemma (in complex_normed_algebra_1) scaleC_power [simp]: "(x *\<^sub>C y) ^ n = (x^n) *\<^sub>C (y^n)"
+  by (induct n) (simp_all add: scaleC_one scaleC_scaleC mult_ac)
+
+class complex_normed_div_algebra = complex_div_algebra + complex_normed_vector + real_normed_div_algebra
+
+class complex_normed_field = complex_field + complex_normed_div_algebra
+
+instance complex_normed_div_algebra < complex_normed_algebra_1
+proof
+  show "\<parallel>1::'a\<parallel> = 1"
+    by simp    
+qed
+
+lemma dist_scaleC [simp]: "dist (x *\<^sub>C a) (y *\<^sub>C a) = \<parallel>x - y\<parallel> * \<parallel>a\<parallel>"
+  for a :: "'a::complex_normed_vector"
+  by (metis complex_vector.scale_left_diff_distrib dist_norm norm_scaleC)
+  
+lemma norm_of_complex [simp]: "\<parallel>of_complex r :: 'a::complex_normed_algebra_1\<parallel> = \<parallel>r\<parallel>"
+  by (simp add: of_complex_def)
+
+unbundle no_notation_norm
 
 
 end
