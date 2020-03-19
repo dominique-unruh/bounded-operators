@@ -236,6 +236,114 @@ qed
 end
 
 
+declare uniformity_Abort[where 'a="('a :: complex_normed_vector) \<Rightarrow>\<^sub>L ('b :: complex_normed_vector)", code]
+
+lemma norm_bounded_eqI:
+  assumes "n \<le> \<parallel>bounded_apply f x\<parallel> / \<parallel>x\<parallel>"
+  assumes "\<And>x. \<parallel>bounded_apply f x\<parallel> \<le> n * \<parallel>x\<parallel>"
+  assumes "0 \<le> n"
+  shows "\<parallel>f\<parallel> = n"
+  using norm_blinfun_eqI bounded_apply_blinfun_apply
+  by (metis assms(1) assms(2) assms(3) norm_blinfun.rep_eq norm_bounded.rep_eq)
+
+lemma norm_bounded: "\<parallel>bounded_apply f x\<parallel> \<le> \<parallel>f\<parallel> * \<parallel>x\<parallel>"
+  apply transfer
+  by (simp add: bounded_clinear_is_bounded_linear onorm)  
+
+lemma norm_bounded_bound: "0 \<le> b \<Longrightarrow> (\<And>x. \<parallel>bounded_apply f x\<parallel> \<le> b * \<parallel>x\<parallel>) \<Longrightarrow> \<parallel>f\<parallel> \<le> b"
+  by transfer (rule onorm_bound)
+
+lemma tendsto_scaleC:
+  assumes a1: "(f \<longlongrightarrow> a) F" and a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. f x *\<^sub>C g x) \<longlongrightarrow> a *\<^sub>C b) F"
+  sorry
+
+lemma tendsto_scaleC_left:
+  assumes a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. c *\<^sub>C g x) \<longlongrightarrow> c *\<^sub>C b) F"
+  sorry
+
+lemma bounded_linear_scaleC_lim:
+  assumes a1: "f \<longlonglongrightarrow> l" 
+    and a2: "\<And>i.  blinfun_apply (f i) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f i) x)"
+  shows "blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)"
+proof-
+  have "(\<lambda>i. \<parallel>f i - l\<parallel>) \<longlonglongrightarrow> 0"
+    sorry
+  have "(\<lambda>i. \<parallel>(blinfun_apply (f i) x) - blinfun_apply l x\<parallel>) \<longlonglongrightarrow> 0" for x
+    sorry      
+  hence "(\<lambda>i. (blinfun_apply (f i) x) - blinfun_apply l x) \<longlonglongrightarrow> 0" for x
+    by (simp add: tendsto_norm_zero_iff)    
+  hence b1: "(\<lambda>i. (blinfun_apply (f i) x)) \<longlonglongrightarrow> (blinfun_apply l x)" for x
+    by (simp add: LIM_zero_cancel)    
+  hence "(\<lambda>i. blinfun_apply (f i) (c *\<^sub>C x)) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)"
+    by simp 
+  moreover have "(\<lambda>i. c *\<^sub>C (blinfun_apply (f i) x)) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)"
+    using b1 tendsto_scaleC_left
+    by blast 
+  moreover have "(\<lambda>i. blinfun_apply (f i) (c *\<^sub>C x)) = (\<lambda>i. c *\<^sub>C (blinfun_apply (f i) x))"
+    using a2 by auto
+  ultimately show ?thesis by (metis limI)     
+qed
+
+instance bounded :: (complex_normed_vector, cbanach) cbanach
+  proof
+  show "convergent X"
+    if "Cauchy X"
+    for X :: "nat \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
+  proof-
+    have "\<exists>f. bounded_apply (X i) = blinfun_apply f" for i
+      by (simp add: bounded_apply_blinfun_apply)      
+    then obtain Y where Cauchy1:"bounded_apply (X i) = blinfun_apply (Y i)" for i
+      by metis
+    have "bounded_clinear (bounded_apply (X i))" for i
+      using bounded_apply by blast
+    hence scaleC1: "blinfun_apply (Y i) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (Y i) x)" for i c x
+      using Cauchy1
+      by (simp add: bounded_clinear_scaleC) 
+    hence bounded_clinear1: "bounded_clinear (blinfun_apply (Y i))" for i
+      using Cauchy1 \<open>\<And>i. bounded_clinear (bounded_apply (X i))\<close> by auto      
+    have "dist (X m) (X n) = dist (Y m) (Y n)" for m n
+      using Cauchy1 unfolding dist_bounded_def dist_blinfun_def
+      by (metis blinfun.diff_left blinfun_eqI bounded_apply_blinfun_apply minus_bounded.rep_eq 
+          norm_blinfun.rep_eq norm_bounded.rep_eq)       
+    hence "Cauchy Y"
+      using that unfolding Cauchy_def by auto
+    hence "convergent Y"
+      by (simp add: Cauchy_convergent_iff)
+    hence "\<exists>l. Y \<longlonglongrightarrow> l"
+      by (simp add: convergentD)
+    then obtain l where l1: "Y \<longlonglongrightarrow> l"
+      by blast
+    have "(\<lambda>i. Y i - l) \<longlonglongrightarrow> 0"
+      using l1 by (simp add: LIM_zero)
+    hence "(\<lambda>i. \<parallel>Y i - l\<parallel>) \<longlonglongrightarrow> 0"
+      by (simp add: tendsto_norm_zero)
+    moreover have "\<parallel>Y i - l\<parallel> = \<parallel>X i - BOUNDED l\<parallel>" for i
+    proof-
+      have  "onorm (\<lambda>x. Y i x - l x) = onorm (bounded_apply (X i - BOUNDED l))"
+        for i :: nat 
+      proof-
+        have "l (c *\<^sub>C x) = c *\<^sub>C l x" for c and x
+          apply (rule bounded_linear_scaleC_lim[where f = Y])
+          using l1
+          apply simp
+          by (simp add: scaleC1) 
+        moreover have "bounded_linear l"
+          by (simp add: blinfun.bounded_linear_right)          
+        ultimately have "bounded_clinear l"
+          by (simp add: bounded_linear_bounded_clinear)          
+        hence "Y i x - l x = bounded_apply (X i - BOUNDED l) x" for x
+          by (simp add: Cauchy1 bounded_linear_BOUNDED_apply minus_bounded.rep_eq)          
+        thus ?thesis by simp
+      qed
+      thus ?thesis using Cauchy1 apply transfer unfolding norm_bounded_def by auto        
+    qed
+    ultimately have "(\<lambda>i. \<parallel>X i - BOUNDED (blinfun_apply l)\<parallel>) \<longlonglongrightarrow> 0"
+      by simp
+    thus ?thesis using LIM_zero_cancel convergent_def tendsto_norm_zero_iff by blast 
+  qed
+qed
 
 unbundle no_notation_norm
 
