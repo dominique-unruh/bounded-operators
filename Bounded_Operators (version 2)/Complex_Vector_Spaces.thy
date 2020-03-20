@@ -1818,6 +1818,66 @@ proof
   qed
 qed
 
+lemma bounded_bilinear_scaleC: "bounded_bilinear ((*\<^sub>C)::complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_vector)"
+proof
+  show "(a + a') *\<^sub>C b = a *\<^sub>C b + a' *\<^sub>C b"
+    for a :: complex
+      and a' :: complex
+      and b :: 'a
+    by (simp add: scaleC_add_left)
+
+  show "a *\<^sub>C (b + b') = a *\<^sub>C b + a *\<^sub>C b'"
+    for a :: complex
+      and b :: 'a
+      and b' :: 'a
+    by (simp add: scaleC_add_right)
+
+  show "(r *\<^sub>R a) *\<^sub>C b = r *\<^sub>R a *\<^sub>C b"
+    for r :: real
+      and a :: complex
+      and b :: 'a
+    by (simp add: scaleR_scaleC)
+
+  show "a *\<^sub>C r *\<^sub>R b = r *\<^sub>R a *\<^sub>C b"
+    for a :: complex
+      and r :: real
+      and b :: 'a
+    by (simp add: scaleR_scaleC)
+
+  show "\<exists>K. \<forall>a b. \<parallel>a *\<^sub>C (b::'a)\<parallel> \<le> cmod a * \<parallel>b\<parallel> * K"
+  proof-
+    have "\<parallel>a *\<^sub>C (b::'a)\<parallel> = cmod a * \<parallel>b\<parallel>" for a b
+      by simp      
+    hence "\<forall>a b. \<parallel>a *\<^sub>C (b::'a)\<parallel> = cmod a * \<parallel>b\<parallel> * 1"
+      by auto
+    thus ?thesis using eq_iff by blast 
+  qed
+qed
+
+lemma tendsto_scaleC:
+  fixes b::"'a::complex_normed_vector"
+  assumes a1: "(f \<longlongrightarrow> a) F" and a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. f x *\<^sub>C g x) \<longlongrightarrow> a *\<^sub>C b) F"
+  using bounded_bilinear_scaleC bounded_bilinear.tendsto[where F = F and f = f and g = g 
+      and a = a and b = b and prod = scaleC] assms by blast
+
+lemma tendsto_scaleC_left:
+  fixes b::"'a::complex_normed_vector"
+  assumes a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. c *\<^sub>C g x) \<longlongrightarrow> c *\<^sub>C b) F"
+  apply(rule tendsto_scaleC)
+   apply simp
+  by (simp add: assms)
+
+
+lemma tendsto_scaleC_right:
+  fixes c::"'a::complex_normed_vector"
+  assumes a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. g x *\<^sub>C c) \<longlongrightarrow> b *\<^sub>C c) F"
+  apply(rule tendsto_scaleC)
+   apply (simp add: assms)
+  by simp
+
 lemma bounded_clinear_is_bounded_linear:
   \<open>bounded_clinear f \<Longrightarrow> bounded_linear f\<close>
 proof

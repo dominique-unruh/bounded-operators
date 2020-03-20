@@ -253,25 +253,22 @@ lemma norm_bounded: "\<parallel>bounded_apply f x\<parallel> \<le> \<parallel>f\
 lemma norm_bounded_bound: "0 \<le> b \<Longrightarrow> (\<And>x. \<parallel>bounded_apply f x\<parallel> \<le> b * \<parallel>x\<parallel>) \<Longrightarrow> \<parallel>f\<parallel> \<le> b"
   by transfer (rule onorm_bound)
 
-lemma tendsto_scaleC:
-  assumes a1: "(f \<longlongrightarrow> a) F" and a2: "(g \<longlongrightarrow> b) F" 
-  shows "((\<lambda>x. f x *\<^sub>C g x) \<longlongrightarrow> a *\<^sub>C b) F"
-  sorry
-
-lemma tendsto_scaleC_left:
-  assumes a2: "(g \<longlongrightarrow> b) F" 
-  shows "((\<lambda>x. c *\<^sub>C g x) \<longlongrightarrow> c *\<^sub>C b) F"
-  sorry
-
 lemma bounded_linear_scaleC_lim:
+  fixes l::"'a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::complex_normed_vector"
   assumes a1: "f \<longlonglongrightarrow> l" 
     and a2: "\<And>i.  blinfun_apply (f i) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f i) x)"
   shows "blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)"
 proof-
-  have "(\<lambda>i. \<parallel>f i - l\<parallel>) \<longlonglongrightarrow> 0"
-    sorry
+  have diff_to_0: "(\<lambda>i. f i - l) \<longlonglongrightarrow> 0"
+    using a1 by (simp add: LIM_zero)
   have "(\<lambda>i. \<parallel>(blinfun_apply (f i) x) - blinfun_apply l x\<parallel>) \<longlonglongrightarrow> 0" for x
-    sorry      
+  proof-
+    have "\<parallel>(blinfun_apply (f i) x) - blinfun_apply l x\<parallel> \<le> \<parallel>f i - l\<parallel> * \<parallel>x\<parallel>" for i
+      by (metis blinfun.diff_left norm_blinfun)      
+    thus ?thesis using Limits.tendsto_0_le[where f = "\<lambda>i. f i - l" 
+          and g = "\<lambda>i. \<parallel>(blinfun_apply (f i) x) - blinfun_apply l x\<parallel>"
+          and K = "\<parallel>x\<parallel>" and F = "sequentially"] diff_to_0 by simp      
+  qed
   hence "(\<lambda>i. (blinfun_apply (f i) x) - blinfun_apply l x) \<longlonglongrightarrow> 0" for x
     by (simp add: tendsto_norm_zero_iff)    
   hence b1: "(\<lambda>i. (blinfun_apply (f i) x)) \<longlonglongrightarrow> (blinfun_apply l x)" for x
@@ -279,15 +276,14 @@ proof-
   hence "(\<lambda>i. blinfun_apply (f i) (c *\<^sub>C x)) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)"
     by simp 
   moreover have "(\<lambda>i. c *\<^sub>C (blinfun_apply (f i) x)) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)"
-    using b1 tendsto_scaleC_left
-    by blast 
+    using b1 by (simp add: tendsto_scaleC_left)    
   moreover have "(\<lambda>i. blinfun_apply (f i) (c *\<^sub>C x)) = (\<lambda>i. c *\<^sub>C (blinfun_apply (f i) x))"
     using a2 by auto
   ultimately show ?thesis by (metis limI)     
 qed
 
 instance bounded :: (complex_normed_vector, cbanach) cbanach
-  proof
+proof
   show "convergent X"
     if "Cauchy X"
     for X :: "nat \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
