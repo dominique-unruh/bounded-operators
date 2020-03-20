@@ -9,6 +9,7 @@ theory Bounded_Operators
 
 imports
   Complex_Vector_Spaces
+  Complex_Inner_Product
   "HOL-Analysis.Bounded_Linear_Function"
 
 begin
@@ -340,6 +341,15 @@ proof
     thus ?thesis using LIM_zero_cancel convergent_def tendsto_norm_zero_iff by blast 
   qed
 qed
+
+(* TODO: develop complex_inner in order to proceed with
+
+lift_definition
+  blinfun_of_matrix::"('b::euclidean_space \<Rightarrow> 'a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow>\<^sub>L 'b"
+  is "\<lambda>a x. \<Sum>i\<in>Basis. \<Sum>j\<in>Basis. ((x \<bullet> j) * a i j) *\<^sub>R i"
+  by (intro bounded_linear_intros)
+
+*)
 
 unbundle no_notation_norm
 
