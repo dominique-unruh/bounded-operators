@@ -18,7 +18,8 @@ imports
 begin
 text\<open>
   We extend the results in @text{HOL/Real_Vector_Spaces.thy (Brian Huffman, Johannes Hölzl)} 
-  from the real numbers to the complex numbers as the ground field.\<close>
+  from the real numbers to the complex numbers as the ground field.
+\<close>
 
 subsection \<open>Complex vector spaces\<close>
 
