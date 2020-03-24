@@ -342,13 +342,11 @@ proof
   qed
 qed
 
-(* TODO: develop complex_inner in order to proceed with
-
+(*
 lift_definition
-  blinfun_of_matrix::"('b::euclidean_space \<Rightarrow> 'a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow>\<^sub>L 'b"
-  is "\<lambda>a x. \<Sum>i\<in>Basis. \<Sum>j\<in>Basis. ((x \<bullet> j) * a i j) *\<^sub>R i"
-  by (intro bounded_linear_intros)
-
+  bounded_of_matrix::"('b::complex_euclidean_space \<Rightarrow> 'a::complex_euclidean_space \<Rightarrow> complex) 
+  \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
+  is "\<lambda>a x. \<Sum>i\<in>Basis. \<Sum>j\<in>Basis. (\<langle>x, j\<rangle> * a i j) *\<^sub>C i"
 *)
 
 unbundle no_notation_norm
