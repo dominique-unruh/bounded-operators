@@ -10,6 +10,8 @@ imports
   "HOL-Analysis.Product_Vector"  
 begin
 
+unbundle notation_norm
+
 text\<open>
   We extend the file @text{HOL/Analysis/Euclidean_Space.thy (Johannes Hölzl, Brian Huffman)} to the
   complex numbers.
@@ -224,8 +226,205 @@ lemma sum_cinner_Basis_eq [simp]:
   assumes "b \<in> cBasis" shows "(\<Sum>i\<in>cBasis. \<langle>i, b\<rangle> * f i) = f b"
   by (metis (no_types, lifting) assms complex_scaleC_def sum.cong sum_inner_cBasis_scaleC)
 
-(* Next theorem to translate from real to complex *)
+lemma sum_if_cinner [simp]:
+  assumes "i \<in> cBasis" "j \<in> cBasis"
+  shows "\<langle>(\<Sum>k\<in>cBasis. if k = i then cnj (f i) *\<^sub>C i else cnj (g k) *\<^sub>C k), j\<rangle>
+   = (if j=i then f j else g j)"
+proof (cases "i=j")
+  case True
+  with assms show ?thesis
+    by (auto simp: cinner_sum_left if_distrib [of "\<lambda>x. \<langle>x, j\<rangle>"] complex_inner_cBasis cong: if_cong)
+next
+  case False
+  have "(\<Sum>k\<in>cBasis. \<langle>(if k = i then cnj (f i) *\<^sub>C i else cnj (g k) *\<^sub>C k), j\<rangle>) =
+        (\<Sum>k\<in>cBasis. if k = j then g k else 0)"
+    apply (rule sum.cong)
+    using False assms by (auto simp: complex_inner_cBasis)
+  also have "... = g j"
+    using assms by auto
+  finally show ?thesis
+    using False by (auto simp: cinner_sum_left)
+qed
 
-thm sum_if_inner
+lemma cinner_Pythagoras: "\<parallel>x\<parallel>^2 = (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel>^2)"
+proof-
+  have a1: "\<langle>x, b\<rangle> *\<^sub>C cnj \<langle>x, b\<rangle> = \<parallel>\<langle>x, b\<rangle>\<parallel>^2" for b
+    using complex_norm_square by auto    
+  have "\<parallel>x\<parallel>^2 = \<langle>x, x\<rangle>"
+    using cpower2_norm_eq_inner by blast
+  also have "\<dots> = (\<Sum>b\<in>cBasis. \<langle>x, b\<rangle> *\<^sub>C cnj \<langle>x, b\<rangle>)"
+    using complex_euclidean_cinner by auto
+  also have "\<dots> = (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel>^2)"
+    using a1 by simp
+  finally show ?thesis using of_real_eq_iff by blast 
+qed
+
+lemma cnorm_le_componentwise:
+   "(\<And>b. b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>\<langle>y, b\<rangle>\<parallel>) \<Longrightarrow> \<parallel>x\<parallel> \<le> \<parallel>y\<parallel>"
+proof-
+  assume a1: "\<And>b. b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>\<langle>y, b\<rangle>\<parallel>"
+  have "\<parallel>x\<parallel>^2 = (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel>^2)"
+    using cinner_Pythagoras by blast    
+  moreover have "\<parallel>y\<parallel>^2 = (\<Sum>b\<in>cBasis. \<parallel>\<langle>y, b\<rangle>\<parallel>^2)"
+    using cinner_Pythagoras by blast    
+  ultimately show ?thesis using a1
+    by (metis (no_types, lifting) complex_dot_square_norm complex_norm_le sum_mono) 
+qed
+  
+lemma cBasis_le_norm: "b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>x\<parallel>"
+  by (metis cnorm_cBasis complex_inner_class.Cauchy_Schwarz_ineq mult_cancel_left1)
+  
+lemma norm_bound_cBasis_le: "b \<in> cBasis \<Longrightarrow> \<parallel>x\<parallel> \<le> e \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> e"
+  by (metis cBasis_le_norm order_trans)
+
+lemma norm_bound_cBasis_lt: "b \<in> cBasis \<Longrightarrow> \<parallel>x\<parallel> < e \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> < e"
+  by (metis cBasis_le_norm le_less_trans)
+
+lemma cnorm_le_l1: "\<parallel>x\<parallel> \<le> (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel>)"
+  apply (subst complex_euclidean_representation[of x, symmetric])
+  apply (rule order_trans[OF norm_sum])
+  apply (auto intro!: sum_mono)
+  done
+
+(* Ask to Dominique about the generalization to complex number in case such a generalization is
+   needed.
+
+lemma sum_norm_allsubsets_bound:
+  fixes f :: "'a \<Rightarrow> 'n::euclidean_space"
+  assumes fP: "finite P"
+    and fPs: "\<And>Q. Q \<subseteq> P \<Longrightarrow> norm (sum f Q) \<le> e"
+  shows "(\<Sum>x\<in>P. norm (f x)) \<le> 2 * real DIM('n) * e"
+
+*)
+
+subsection\<^marker>\<open>tag unimportant\<close> \<open>Subclass relationships\<close>
+
+instance complex_euclidean_space \<subseteq> perfect_space
+proof
+  fix x :: 'a show "\<not> open {x}"
+  proof
+    assume "open {x}"
+    then obtain e where "0 < e" and e: "\<forall>y. dist y x < e \<longrightarrow> y = x"
+      unfolding open_dist by fast
+    define y where "y = x + scaleC (e/2) (SOME b. b \<in> cBasis)"
+    have [simp]: "(SOME b. b \<in> cBasis) \<in> cBasis"
+      by (rule someI_ex) (auto simp: ex_in_conv)
+    from \<open>0 < e\<close> have "y \<noteq> x"
+      unfolding y_def by (auto intro!: cnonzero_cBasis)
+    from \<open>0 < e\<close> have "dist y x < e"
+      unfolding y_def by (simp add: dist_norm)
+    from \<open>y \<noteq> x\<close> and \<open>dist y x < e\<close> show "False"
+      using e by simp
+  qed
+qed
+
+subsection \<open>Class instances\<close>
+
+subsubsection\<^marker>\<open>tag unimportant\<close> \<open>Type \<^typ>\<open>complex\<close>\<close>
+
+instantiation complex :: complex_euclidean_space
+begin
+
+definition
+  [simp]: "cBasis = {1::complex}"
+
+instance
+  by standard auto
+
+end
+
+lemma DIM_real[simp]: "cDIM(complex) = 1"
+  by simp
+
+lemma complex_cBasis_1 [iff]: "(1::complex) \<in> cBasis"
+  by (simp add: Basis_complex_def)
+
+subsection \<open>Locale instances\<close>
+
+lemma finite_dimensional_vector_space_euclidean:
+  "finite_dimensional_vector_space (*\<^sub>C) cBasis"
+proof unfold_locales
+  show "finite (cBasis::'a set)" by (metis complex_finite_cBasis)
+  show "complex_vector.independent (cBasis::'a set)"
+  proof-
+    have a1: "a \<in> cBasis \<Longrightarrow> u \<in> UNIV \<Longrightarrow>
+          \<langle>a, a\<rangle> = \<langle>a, \<Sum>v\<in>cBasis - {a}. u v *\<^sub>C v\<rangle> \<Longrightarrow> False"
+      for a::'a and u
+    proof-
+      assume b1: "a \<in> cBasis" and b2: "u \<in> UNIV" and b3: "\<langle>a, a\<rangle> = \<langle>a, \<Sum>v\<in>cBasis - {a}. u v *\<^sub>C v\<rangle>"
+      have c1: "v\<in>cBasis - {a} \<Longrightarrow> \<langle>a, u v *\<^sub>C v\<rangle> = 0" for v
+        by (metis DiffD1 DiffD2 b1 cinner_cnj_commute cinner_not_same_cBasis cinner_scaleC_left 
+            mult_not_zero singleton_iff)        
+      have "\<langle>a, a\<rangle> = (\<Sum>v\<in>cBasis - {a}. \<langle>a, u v *\<^sub>C v\<rangle>)"
+        using b3 cinner_sum_right by auto 
+      also have "\<dots> = (\<Sum>v\<in>cBasis - {a}. 0)"
+        using c1 by auto
+      also have "\<dots> = 0"
+        by simp
+      finally have "\<langle>a, a\<rangle> = 0"
+        by blast
+      hence "a = 0"
+        by auto        
+      thus ?thesis using b1 by simp
+    qed
+    show ?thesis
+      unfolding complex_vector.dependent_def dependent_raw_def[symmetric]
+      apply (subst complex_vector.span_finite)
+       apply simp
+      apply clarify
+      apply (drule_tac f="cinner a" in arg_cong)
+      using a1 by blast
+  qed
+  show "module.span (*\<^sub>C) cBasis = UNIV"
+    unfolding complex_vector.span_finite [OF complex_finite_cBasis] span_raw_def[symmetric]
+    by (auto intro!: complex_euclidean_representation[symmetric])
+qed
+
+interpretation complex_eucl?: finite_dimensional_vector_space 
+  "scaleC :: complex => 'a => 'a::complex_euclidean_space" "cBasis"
+  rewrites "module.dependent (*\<^sub>C) = complex_vector.dependent"
+    and "module.representation (*\<^sub>C) = complex_vector.representation"
+    and "module.subspace (*\<^sub>C) = complex_vector.subspace"
+    and "module.span (*\<^sub>C) = complex_vector.span"
+    and "vector_space.extend_basis (*\<^sub>C) = complex_vector.extend_basis"
+    and "vector_space.dim (*\<^sub>C) = complex_vector.dim"
+    and "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+    and "finite_dimensional_vector_space.dimension cBasis = cDIM('a)"
+    and "dimension = cDIM('a)"
+  apply transfer
+  apply (simp add: Complex_Euclidean_Space.finite_dimensional_vector_space_euclidean)
+  apply (simp add: Complex_Vector_Spaces.dependent_raw_def)
+  apply (simp add: Complex_Vector_Spaces.representation_raw_def)
+  apply (simp add: Complex_Vector_Spaces.subspace_raw_def)
+  apply (simp add: Complex_Vector_Spaces.span_raw_def)
+  apply (simp add: Complex_Vector_Spaces.extend_basis_raw_def)
+  apply (simp add: Complex_Vector_Spaces.dim_raw_def)
+  proof
+  show "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) x = clinear x"
+    for x :: "'a \<Rightarrow> 'a"
+    by (simp add: clinear_def)    
+  show "Vector_Spaces.linear (*) ((*\<^sub>C)::complex \<Rightarrow> 'a \<Rightarrow> _) = clinear"
+    unfolding clinear_def complex_scaleC_def by blast
+  show a1: "finite_dimensional_vector_space.dimension (cBasis::'a set) = card (cBasis::'a set)"
+    using finite_dimensional_vector_space.dimension_def[where Basis = cBasis and scale = scaleC]
+    by (metis Complex_Euclidean_Space.finite_dimensional_vector_space_euclidean)
+  show "finite_dimensional_vector_space.dimension (cBasis::'a set) = card (cBasis::'a set)"
+    using a1 by blast
+qed
+
+interpretation complex_eucl?: finite_dimensional_vector_space_pair_1
+  "scaleC::complex\<Rightarrow>'a::complex_euclidean_space\<Rightarrow>'a" cBasis
+  "scaleC::complex \<Rightarrow>'b::complex_vector \<Rightarrow> 'b"
+  by unfold_locales
+
+(* Ask to Dominique how to generalize from real to complex 
+interpretation eucl?: finite_dimensional_vector_space_prod scaleR scaleR Basis Basis
+  rewrites "Basis_pair = Basis"
+    and "module_prod.scale *\<^sub>R *\<^sub>R = (scaleR::_\<Rightarrow>_\<Rightarrow>('a \<times> 'b))"
+*)
+
+
+unbundle no_notation_norm
 
 end
