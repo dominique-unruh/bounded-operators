@@ -5,9 +5,9 @@
 section \<open>Finite-Dimensional Complex Inner Product Spaces\<close>
 
 theory Complex_Euclidean_Space
-imports
-  Complex_Inner_Product
-  "HOL-Analysis.Product_Vector"  
+  imports
+    Complex_Inner_Product
+    "HOL-Analysis.Product_Vector"  
 begin
 
 unbundle notation_norm
@@ -39,7 +39,7 @@ typed_print_translation \<open>
 
 lemma (in complex_euclidean_space) cnorm_cBasis[simp]: "u \<in> cBasis \<Longrightarrow> norm u = 1"
   by (simp add: local.complex_inner_cBasis local.norm_eq_sqrt_cinner)
-  
+
 
 lemma (in complex_euclidean_space) cinner_same_cBasis[simp]: "u \<in> cBasis \<Longrightarrow> \<langle>u, u\<rangle> = 1"
   by (simp add: local.complex_inner_cBasis)
@@ -48,7 +48,7 @@ lemma (in complex_euclidean_space) cinner_same_cBasis[simp]: "u \<in> cBasis \<L
 lemma (in complex_euclidean_space) cinner_not_same_cBasis: "u \<in> cBasis \<Longrightarrow> v \<in> cBasis \<Longrightarrow> u \<noteq> v \<Longrightarrow> 
   \<langle>u, v\<rangle> = 0"
   by (simp add: local.complex_inner_cBasis)
-  
+
 
 lemma (in complex_euclidean_space) csgn_cBasis: "u \<in> cBasis \<Longrightarrow> sgn u = u"
   using local.scaleR_one local.sgn_div_norm by auto
@@ -66,10 +66,10 @@ lemma (in complex_euclidean_space) cSOME_cBasis: "(SOME i. i \<in> cBasis) \<in>
 
 lemma cnorm_some_cBasis [simp]: "norm (SOME i. i \<in> cBasis) = 1"
   using cSOME_cBasis cnorm_cBasis by auto
-  
+
 
 lemma (in complex_euclidean_space) cinner_sum_left_cBasis[simp]:
-    "b \<in> cBasis \<Longrightarrow> \<langle>(\<Sum>i\<in>cBasis. (cnj (f i)) *\<^sub>C i), b\<rangle> = f b"
+  "b \<in> cBasis \<Longrightarrow> \<langle>(\<Sum>i\<in>cBasis. (cnj (f i)) *\<^sub>C i), b\<rangle> = f b"
 proof-
   assume a1: "b \<in> cBasis"
   hence "\<exists>cBasis'. cBasis = insert b cBasis' \<and> b \<notin> cBasis'"
@@ -93,11 +93,11 @@ proof-
 qed
 
 lemma (in complex_euclidean_space) cinner_sum_left_cBasis'[simp]:
-    "b \<in> cBasis \<Longrightarrow> \<langle>(\<Sum>i\<in>cBasis. (f i) *\<^sub>C i), b\<rangle> = cnj (f b)"
+  "b \<in> cBasis \<Longrightarrow> \<langle>(\<Sum>i\<in>cBasis. (f i) *\<^sub>C i), b\<rangle> = cnj (f b)"
   using cinner_sum_left_cBasis[where f = "\<lambda>x. cnj (f x)"]
   by auto
 
-lemma (in complex_euclidean_space) euclidean_eqI:
+lemma (in complex_euclidean_space) complex_euclidean_eqI:
   assumes b: "\<And>b. b \<in> cBasis \<Longrightarrow> \<langle>x, b\<rangle> = \<langle>y, b\<rangle>" shows "x = y"
 proof -
   from b have "\<forall>b\<in>cBasis. \<langle>x - y, b\<rangle> = 0"
@@ -109,11 +109,11 @@ qed
 
 lemma (in complex_euclidean_space) complex_euclidean_eq_iff:
   "x = y \<longleftrightarrow> (\<forall>b\<in>cBasis. \<langle>x, b\<rangle> = \<langle>y, b\<rangle>)"
-  using local.euclidean_eqI by auto
-  
+  using local.complex_euclidean_eqI by auto
+
 lemma (in complex_euclidean_space) complex_euclidean_representation_sum:
   "(\<Sum>i\<in>cBasis. f i *\<^sub>C i) = b \<longleftrightarrow> (\<forall>i\<in>cBasis. f i = cnj \<langle>b, i\<rangle>)"
-  proof
+proof
   show "\<forall>i\<in>cBasis. f i = cnj \<langle>b, i\<rangle>"
     if "(\<Sum>i\<in>cBasis. f i *\<^sub>C i) = b"
   proof
@@ -129,7 +129,7 @@ lemma (in complex_euclidean_space) complex_euclidean_representation_sum:
     if "\<forall>i\<in>cBasis. f i = cnj \<langle>b, i\<rangle>"
   proof-
     have "(\<Sum>i\<in>cBasis. cnj \<langle>b, i\<rangle> *\<^sub>C i) = b"
-      using local.euclidean_eqI by auto      
+      using local.complex_euclidean_eqI by auto      
     thus ?thesis using that by (simp add: \<open>(\<Sum>i\<in>cBasis. cnj \<langle>b, i\<rangle> *\<^sub>C i) = b\<close>)
   qed
 qed
@@ -159,7 +159,7 @@ qed
 lemma (in complex_euclidean_space) choice_cBasis_iff:
   fixes P :: "'a \<Rightarrow> complex \<Rightarrow> bool"
   shows "(\<forall>i\<in>cBasis. \<exists>x. P i x) \<longleftrightarrow> (\<exists>x. \<forall>i\<in>cBasis. P i \<langle>x, i\<rangle>)"
-  proof
+proof
   show "\<exists>x. \<forall>i\<in>cBasis. P i \<langle>x, i\<rangle>"
     if "\<forall>i\<in>cBasis. \<exists>x. P i x"
   proof-
@@ -182,15 +182,15 @@ qed
 lemma (in complex_euclidean_space) bchoice_cBasis_iff:
   fixes P :: "'a \<Rightarrow> complex \<Rightarrow> bool"
   shows "(\<forall>i\<in>cBasis. \<exists>x\<in>A. P i x) \<longleftrightarrow> (\<exists>x. \<forall>i\<in>cBasis. \<langle>x, i\<rangle> \<in> A \<and> P i \<langle>x, i\<rangle>)"
-by (simp add: choice_cBasis_iff Bex_def)
+  by (simp add: choice_cBasis_iff Bex_def)
 
 lemma (in complex_euclidean_space) complex_euclidean_representation_sum_fun:
-    "(\<lambda>x. \<Sum>b\<in>cBasis. cnj \<langle>f x, b\<rangle> *\<^sub>C b) = f"
+  "(\<lambda>x. \<Sum>b\<in>cBasis. cnj \<langle>f x, b\<rangle> *\<^sub>C b) = f"
   by (rule ext) (simp add: complex_euclidean_representation_sum)
 
 lemma complex_euclidean_isCont:
   assumes "\<And>b. b \<in> cBasis \<Longrightarrow> isCont (\<lambda>x. cnj \<langle>f x, b\<rangle> *\<^sub>C b) x"
-    shows "isCont f x"
+  shows "isCont f x"
   apply (subst complex_euclidean_representation_sum_fun [symmetric])
   apply (rule isCont_sum)
   by (simp add: assms)
@@ -260,7 +260,7 @@ proof-
 qed
 
 lemma cnorm_le_componentwise:
-   "(\<And>b. b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>\<langle>y, b\<rangle>\<parallel>) \<Longrightarrow> \<parallel>x\<parallel> \<le> \<parallel>y\<parallel>"
+  "(\<And>b. b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>\<langle>y, b\<rangle>\<parallel>) \<Longrightarrow> \<parallel>x\<parallel> \<le> \<parallel>y\<parallel>"
 proof-
   assume a1: "\<And>b. b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>\<langle>y, b\<rangle>\<parallel>"
   have "\<parallel>x\<parallel>^2 = (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel>^2)"
@@ -270,10 +270,10 @@ proof-
   ultimately show ?thesis using a1
     by (metis (no_types, lifting) complex_dot_square_norm complex_norm_le sum_mono) 
 qed
-  
+
 lemma cBasis_le_norm: "b \<in> cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>x\<parallel>"
   by (metis cnorm_cBasis complex_inner_class.Cauchy_Schwarz_ineq mult_cancel_left1)
-  
+
 lemma norm_bound_cBasis_le: "b \<in> cBasis \<Longrightarrow> \<parallel>x\<parallel> \<le> e \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> e"
   by (metis cBasis_le_norm order_trans)
 
@@ -341,7 +341,7 @@ lemma complex_cBasis_1 [iff]: "(1::complex) \<in> cBasis"
 
 subsection \<open>Locale instances\<close>
 
-lemma finite_dimensional_vector_space_euclidean:
+lemma finite_dimensional_vector_space_complex_euclidean:
   "finite_dimensional_vector_space (*\<^sub>C) cBasis"
 proof unfold_locales
   show "finite (cBasis::'a set)" by (metis complex_finite_cBasis)
@@ -392,15 +392,15 @@ interpretation complex_eucl?: finite_dimensional_vector_space
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
     and "finite_dimensional_vector_space.dimension cBasis = cDIM('a)"
     and "dimension = cDIM('a)"
-  apply transfer
-  apply (simp add: Complex_Euclidean_Space.finite_dimensional_vector_space_euclidean)
-  apply (simp add: Complex_Vector_Spaces.dependent_raw_def)
-  apply (simp add: Complex_Vector_Spaces.representation_raw_def)
-  apply (simp add: Complex_Vector_Spaces.subspace_raw_def)
-  apply (simp add: Complex_Vector_Spaces.span_raw_def)
-  apply (simp add: Complex_Vector_Spaces.extend_basis_raw_def)
-  apply (simp add: Complex_Vector_Spaces.dim_raw_def)
-  proof
+            apply transfer
+            apply (simp add: Complex_Euclidean_Space.finite_dimensional_vector_space_complex_euclidean)
+           apply (simp add: Complex_Vector_Spaces.dependent_raw_def)
+          apply (simp add: Complex_Vector_Spaces.representation_raw_def)
+         apply (simp add: Complex_Vector_Spaces.subspace_raw_def)
+        apply (simp add: Complex_Vector_Spaces.span_raw_def)
+       apply (simp add: Complex_Vector_Spaces.extend_basis_raw_def)
+      apply (simp add: Complex_Vector_Spaces.dim_raw_def)
+proof
   show "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) x = clinear x"
     for x :: "'a \<Rightarrow> 'a"
     by (simp add: clinear_def)    
@@ -408,7 +408,7 @@ interpretation complex_eucl?: finite_dimensional_vector_space
     unfolding clinear_def complex_scaleC_def by blast
   show a1: "finite_dimensional_vector_space.dimension (cBasis::'a set) = card (cBasis::'a set)"
     using finite_dimensional_vector_space.dimension_def[where Basis = cBasis and scale = scaleC]
-    by (metis Complex_Euclidean_Space.finite_dimensional_vector_space_euclidean)
+    by (metis Complex_Euclidean_Space.finite_dimensional_vector_space_complex_euclidean)
   show "finite_dimensional_vector_space.dimension (cBasis::'a set) = card (cBasis::'a set)"
     using a1 by blast
 qed
@@ -424,6 +424,52 @@ interpretation eucl?: finite_dimensional_vector_space_prod scaleR scaleR Basis B
     and "module_prod.scale *\<^sub>R *\<^sub>R = (scaleR::_\<Rightarrow>_\<Rightarrow>('a \<times> 'b))"
 *)
 
+lemma sum_cinner_eq [simp]:
+  assumes clinear1: "clinear f"
+  shows "(\<Sum>i\<in>cBasis. \<langle>i, b\<rangle> *\<^sub>C f i) = f (b::'a::complex_euclidean_space)"
+proof-
+  have "complex_vector.span (cBasis::'a set) = UNIV"    
+    using finite_dimensional_vector_space_complex_euclidean finite_dimensional_vector_space.span_Basis
+    by (simp add: complex_eucl.span_Basis)    
+  hence "\<exists>t r. b = (\<Sum>a\<in>t. r a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> cBasis"
+    using complex_vector.span_explicit[where b = cBasis]
+    by auto
+  then obtain t r where f1: "b = (\<Sum>a\<in>t. r a *\<^sub>C a)" and f2: "finite t" and f3: "t \<subseteq> cBasis"
+    by blast
+  have "(\<Sum>i\<in>cBasis. \<langle>i, b\<rangle> *\<^sub>C f i) = (\<Sum>i\<in>cBasis. \<langle>i, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> *\<^sub>C f i)"
+    using f1 by simp
+  also have "\<dots> = (\<Sum>i\<in>cBasis. \<Sum>a\<in>t. \<langle>i, r a *\<^sub>C a\<rangle> *\<^sub>C f i)"
+    by (simp add: cinner_sum_right scaleC_left.sum)    
+  also have "\<dots> = (\<Sum>a\<in>t. \<Sum>i\<in>cBasis. \<langle>i, r a *\<^sub>C a\<rangle> *\<^sub>C f i)"
+    using sum.swap by auto
+  also have "\<dots> = (\<Sum>a\<in>t. \<Sum>i\<in>cBasis. (r a * \<langle>i, a\<rangle>) *\<^sub>C f i)"
+  proof-
+    have "\<langle>i, r a *\<^sub>C a\<rangle> = r a * \<langle>i, a\<rangle>" for i a
+      by (metis cinner_cnj_commute cinner_scaleC_left complex_cnj_cancel_iff complex_cnj_mult)      
+    thus ?thesis by auto
+  qed
+  also have "\<dots> = (\<Sum>a\<in>t. \<Sum>i\<in>cBasis. r a *\<^sub>C (\<langle>i, a\<rangle> *\<^sub>C f i))"
+    by simp
+  also have "\<dots> = (\<Sum>a\<in>t. r a *\<^sub>C (\<Sum>i\<in>cBasis. \<langle>i, a\<rangle> *\<^sub>C f i))"
+  proof-
+    have "(\<Sum>i\<in>cBasis. r a *\<^sub>C (\<langle>i, a\<rangle> *\<^sub>C f i)) =  r a *\<^sub>C (\<Sum>i\<in>cBasis. \<langle>i, a\<rangle> *\<^sub>C f i)" for a
+      by (metis (mono_tags, lifting) scaleC_right.sum sum.cong)      
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = (\<Sum>a\<in>t. r a *\<^sub>C f a)"
+  proof-
+    have "a \<in> cBasis \<Longrightarrow> (\<Sum>i\<in>cBasis. \<langle>i, a\<rangle> *\<^sub>C f i) = f a" for a
+      by auto
+    thus ?thesis using f3 subsetD by fastforce 
+  qed
+  also have "\<dots> = (\<Sum>a\<in>t. f (r a *\<^sub>C  a))"
+    using clinear1 complex_vector.linear_scale by fastforce
+  also have "\<dots> = f (\<Sum>a\<in>t. r a *\<^sub>C  a)"
+    by (metis clinear1 complex_vector.linear_sum)
+  also have "\<dots> = f b"
+    using f1 by simp
+  finally show ?thesis by blast
+qed
 
 unbundle no_notation_norm
 
