@@ -344,98 +344,101 @@ proof
   qed
 qed
 
+
 lift_definition
   bounded_of_matrix::"('b::complex_euclidean_space \<Rightarrow> 'a::complex_euclidean_space \<Rightarrow> complex) 
   \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
-  is "\<lambda>a x. \<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>x, j\<rangle> * a i j) *\<^sub>C i"
+  is "\<lambda>a x. \<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * a i j) *\<^sub>C i"
 proof
-  show "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b1 + b2, j\<rangle> * f i j) *\<^sub>C i) = 
-          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b1, j\<rangle> * f i j) *\<^sub>C i)
-        + (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b2, j\<rangle> * f i j) *\<^sub>C i)"
+  show "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b1 + b2\<rangle> * f i j) *\<^sub>C i) = 
+          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b1\<rangle> * f i j) *\<^sub>C i)
+        + (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b2\<rangle> * f i j) *\<^sub>C i)"
     for f :: "'b \<Rightarrow> 'a \<Rightarrow> complex"
       and b1 :: 'a
       and b2 :: 'a
   proof-
-    have "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b1 + b2, j\<rangle> * f i j) *\<^sub>C i) = 
-          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((cnj \<langle>b1, j\<rangle> + cnj \<langle>b2, j\<rangle>) * f i j) *\<^sub>C i)"
-      by (metis (no_types, lifting) cinner_left_distrib complex_cnj_add sum.cong)
+    have "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b1 + b2\<rangle> * f i j) *\<^sub>C i) = 
+          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((\<langle>j, b1\<rangle> + \<langle>j, b2\<rangle>) * f i j) *\<^sub>C i)"
+      by (metis (no_types, lifting) Finite_Cartesian_Product.sum_cong_aux cinner_right_distrib)
     also have "\<dots> = 
-          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b1, j\<rangle> * f i j + cnj \<langle>b2, j\<rangle> * f i j) *\<^sub>C i)"
+          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b1\<rangle> * f i j + \<langle>j, b2\<rangle> * f i j) *\<^sub>C i)"
       by (metis (mono_tags, lifting) sum.cong vector_space_over_itself.scale_left_distrib)
     also have "\<dots> = 
-          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((cnj \<langle>b1, j\<rangle> * f i j) *\<^sub>C i + (cnj \<langle>b2, j\<rangle> * f i j) *\<^sub>C i))"
+          (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((\<langle>j, b1\<rangle> * f i j) *\<^sub>C i + (\<langle>j, b2\<rangle> * f i j) *\<^sub>C i))"
       by (meson scaleC_left.add sum.cong)
     also have "\<dots> = 
-          (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. ((cnj \<langle>b1, j\<rangle> * f i j) *\<^sub>C i))
-        + (\<Sum>j\<in>cBasis. ((cnj \<langle>b2, j\<rangle> * f i j) *\<^sub>C i)) )"
+          (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. ((\<langle>j, b1\<rangle> * f i j) *\<^sub>C i))
+        + (\<Sum>j\<in>cBasis. ((\<langle>j, b2\<rangle> * f i j) *\<^sub>C i)) )"
       by (simp add: sum.distrib)
     also have "\<dots> = 
-           (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((cnj \<langle>b1, j\<rangle> * f i j) *\<^sub>C i))
-         + (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((cnj \<langle>b2, j\<rangle> * f i j) *\<^sub>C i)) "
+           (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((\<langle>j, b1\<rangle> * f i j) *\<^sub>C i))
+         + (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. ((\<langle>j, b2\<rangle> * f i j) *\<^sub>C i)) "
       by (simp add: sum.distrib)
     finally show ?thesis by blast
   qed
-  show "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>r *\<^sub>C b, j\<rangle> * f i j) *\<^sub>C i) 
-   =  r *\<^sub>C (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>b, j\<rangle> * f i j) *\<^sub>C i)"
+  show "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, r *\<^sub>C b\<rangle> * f i j) *\<^sub>C i) 
+   =  r *\<^sub>C (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, b\<rangle> * f i j) *\<^sub>C i)"
     for f :: "'b \<Rightarrow> 'a \<Rightarrow> complex"
       and r :: complex
       and b :: 'a
   proof-
-    have "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>r *\<^sub>C b, j\<rangle> * f i j) *\<^sub>C i) 
-         =  (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (r *\<^sub>C cnj \<langle>b, j\<rangle> * f i j) *\<^sub>C i)"
-      by auto
+    have "(\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, r *\<^sub>C b\<rangle> * f i j) *\<^sub>C i) 
+         =  (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (r * \<langle>j, b\<rangle> * f i j) *\<^sub>C i)"
+      by (metis (no_types, lifting) cinner_cnj_commute cinner_scaleC_left complex_cnj_cnj
+          complex_cnj_mult sum.cong)      
     also have "...  
-         =  (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. r *\<^sub>C (cnj \<langle>b, j\<rangle> * f i j) *\<^sub>C i))"
+         =  (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. r *\<^sub>C (\<langle>j, b\<rangle> * f i j) *\<^sub>C i))"
       by (smt Finite_Cartesian_Product.sum_cong_aux cinner_cnj_commute complex_scaleC_def 
           mult_commute_abs scaleC_scaleC vector_space_over_itself.scale_scale)
     also have "...  
-         =  (\<Sum>i\<in>cBasis. r *\<^sub>C (\<Sum>j\<in>cBasis. (cnj \<langle>b, j\<rangle> * f i j) *\<^sub>C i))"
+         =  (\<Sum>i\<in>cBasis. r *\<^sub>C (\<Sum>j\<in>cBasis. (\<langle>j, b\<rangle> * f i j) *\<^sub>C i))"
       by (simp add: complex_vector.scale_sum_right)
     also have "...  
-         = r *\<^sub>C  (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. (cnj \<langle>b, j\<rangle> * f i j) *\<^sub>C i))"
+         = r *\<^sub>C  (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. (\<langle>j, b\<rangle> * f i j) *\<^sub>C i))"
       by (metis (no_types, lifting) Finite_Cartesian_Product.sum_cong_aux scaleC_right.sum)
     finally show ?thesis by blast
   qed
-  show "\<exists>K. \<forall>x. \<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>x, j\<rangle> * f i j) *\<^sub>C i\<parallel> \<le> \<parallel>x\<parallel> * K"
+  show "\<exists>K. \<forall>x. \<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * f i j) *\<^sub>C i\<parallel> \<le> \<parallel>x\<parallel> * K"
     for f :: "'b \<Rightarrow> 'a \<Rightarrow> complex"
   proof-
     define K where "K = (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>f i j\<parallel>))"
-    have "\<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>x, j\<rangle> * f i j) *\<^sub>C i\<parallel> \<le> \<parallel>x\<parallel> * K" for x::'a
+    have "\<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * f i j) *\<^sub>C i\<parallel> \<le> \<parallel>x\<parallel> * K" for x::'a
     proof-
-      have "\<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (cnj \<langle>x, j\<rangle> * f i j) *\<^sub>C i\<parallel>
-      \<le> (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>(cnj \<langle>x, j\<rangle> * f i j) *\<^sub>C i\<parallel>)"
+      have "\<parallel>\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * f i j) *\<^sub>C i\<parallel>
+      \<le> (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>(\<langle>j, x\<rangle> * f i j) *\<^sub>C i\<parallel>)"
         by (simp add: sum_norm_le)
       also have "\<dots>
-      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>cnj \<langle>x, j\<rangle> * f i j\<parallel> * \<parallel>i\<parallel>)"
+      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle> * f i j\<parallel> * \<parallel>i\<parallel>)"
         by auto
       also have "\<dots>
-      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>cnj \<langle>x, j\<rangle> * f i j\<parallel>)"
+      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle> * f i j\<parallel>)"
       proof-
         have "i\<in>cBasis \<Longrightarrow> \<parallel>i\<parallel> = 1" for i::'a
           by simp        
         thus ?thesis by auto 
       qed
       also have "\<dots>
-      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>)"
+      = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>)"
       proof-
-        have "\<parallel>cnj \<langle>x, j\<rangle> * f i j\<parallel> = \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>" for i j
+        have "\<parallel>\<langle>j, x\<rangle> * f i j\<parallel> = \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>" for i j
           by (simp add: norm_mult)        
         thus ?thesis by simp
       qed
       also have "\<dots> \<le> \<parallel>x\<parallel> * K"
       proof-
-        have "j\<in>cBasis \<Longrightarrow> \<parallel>\<langle>x, j\<rangle>\<parallel> \<le> \<parallel>x\<parallel>" for j
-          by (simp add: cBasis_le_norm)
+        have "j\<in>cBasis \<Longrightarrow> \<parallel>\<langle>j, x\<rangle>\<parallel> \<le> \<parallel>x\<parallel>" for j
+          by (metis cinner_same_cBasis complex_inner_class.Cauchy_Schwarz_ineq 
+              complex_norm_eq_1 mult_cancel_right1 real_normed_algebra_1_class.norm_one)          
         moreover have "\<parallel>f i j\<parallel> \<ge> 0" for i j
           by simp
-        ultimately have "(\<Sum>j\<in>cBasis. \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>) \<le> (\<Sum>j\<in>cBasis. \<parallel>x\<parallel> * \<parallel>f i j\<parallel>)" for i
+        ultimately have "(\<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>) \<le> (\<Sum>j\<in>cBasis. \<parallel>x\<parallel> * \<parallel>f i j\<parallel>)" for i
           by (simp add: mult_right_mono sum_mono)
-        hence "(\<Sum>j\<in>cBasis. \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>) \<le> \<parallel>x\<parallel> * (\<Sum>j\<in>cBasis. \<parallel>f i j\<parallel>)" for i
+        hence "(\<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>) \<le> \<parallel>x\<parallel> * (\<Sum>j\<in>cBasis. \<parallel>f i j\<parallel>)" for i
           by (simp add: sum_distrib_left)
-        hence "(\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>)) 
+        hence "(\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>)) 
           \<le> (\<Sum>i\<in>cBasis. \<parallel>x\<parallel> * (\<Sum>j\<in>cBasis. \<parallel>f i j\<parallel>))"
           by (simp add: sum_mono) 
-        hence "(\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>\<langle>x, j\<rangle>\<parallel> * \<parallel>f i j\<parallel>)) 
+        hence "(\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>\<langle>j, x\<rangle>\<parallel> * \<parallel>f i j\<parallel>)) 
           \<le> \<parallel>x\<parallel> * (\<Sum>i\<in>cBasis. (\<Sum>j\<in>cBasis. \<parallel>f i j\<parallel>))"
           by (simp add: sum_distrib_left)
         thus ?thesis unfolding K_def by blast
@@ -446,63 +449,85 @@ proof
   qed
 qed
 
-
-lemma bounded_of_matrix_works':
-  assumes bc: "bounded_clinear f" and b: "b \<in> cBasis"
-  shows "\<langle>\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j, b\<rangle> = cnj \<langle>f x, b\<rangle>"
+lemma bounded_complex_euclidean_eqI: 
+  fixes f::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_euclidean_space"
+  assumes f1: "\<And>x. x\<in>cBasis \<Longrightarrow> bounded_apply f x = bounded_apply g x"
+  shows "f = g"
+proof-
+  have " \<And>i. (\<And>x. x \<in> cBasis \<Longrightarrow> bounded_apply f x = bounded_apply g x) \<Longrightarrow>
+         bounded_apply f (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b) =
+         bounded_apply g (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b)"
   proof-
-  have clinear1: "clinear f"
-    using bc
-    by (simp add: bounded_clinear.axioms(1)) 
-  have "\<langle>(\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j), b\<rangle>
-    = (\<Sum>j\<in>cBasis. if j = b then (\<Sum>i\<in>cBasis. cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)) else 0)"
-  proof-
-    have "\<langle>(\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j), b\<rangle>
-        = (\<Sum>j\<in>cBasis. \<langle>\<Sum>i\<in>cBasis. (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j, b\<rangle> )"
-      using cinner_sum_left by blast
-    also have "\<dots>
-        = (\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. \<langle>(\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j, b\<rangle> )"
-      by (simp add: cinner_sum_left)
-    also have "\<dots>
-        = (\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. (cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)) * \<langle>j, b\<rangle> )"
-      by simp
-    also have "\<dots>
-        = (\<Sum>j\<in>cBasis. (if j = b then \<Sum>i\<in>cBasis. (cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)) else 0))"
+    assume a1: "\<And>x. x \<in> cBasis \<Longrightarrow> bounded_apply f x = bounded_apply g x"
+    show "bounded_apply f (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b) =
+         bounded_apply g (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b)" for i
     proof-
-      have "j = b \<Longrightarrow> 
-          (\<Sum>i\<in>cBasis. (cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)) * \<langle>j, b\<rangle>) 
-        = (\<Sum>i\<in>cBasis. (cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)))" for j
-        using b by auto        
-      moreover have "j\<in>cBasis \<Longrightarrow> j \<noteq> b \<Longrightarrow> 
-          (\<Sum>i\<in>cBasis. (cnj (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>)) * \<langle>j, b\<rangle>) = 0" for j
-        by (simp add: b cinner_not_same_cBasis)        
-      ultimately show ?thesis using sum.cong by smt (* > 1s *)
+      have "bounded_apply f (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b) 
+        = (\<Sum>b\<in>cBasis. (cnj \<langle>i, b\<rangle> *\<^sub>C (bounded_apply f b)))"
+        apply transfer
+        by (smt Finite_Cartesian_Product.sum_cong_aux bounded_clinear.axioms(1)
+            bounded_clinear_scaleC complex_vector.linear_sum)
+      also have "\<dots> = (\<Sum>b\<in>cBasis. (cnj \<langle>i, b\<rangle> *\<^sub>C (bounded_apply g b)))"
+        using f1 by auto
+      also have "\<dots> = bounded_apply g (\<Sum>b\<in>cBasis. cnj \<langle>i, b\<rangle> *\<^sub>C b)"
+        apply transfer 
+        by (smt bounded_clinear.axioms(1) bounded_clinear_scaleC complex_vector.linear_sum sum.cong) 
+      finally show ?thesis by blast
     qed
-    finally show ?thesis by blast
-  qed       
-  also have "\<dots> = (\<Sum>i\<in>cBasis. cnj (\<langle>x, i\<rangle> * \<langle>f i, b\<rangle>))"
-    using b by simp
-  also have "\<dots> = cnj (\<Sum>i\<in>cBasis. \<langle>(cnj \<langle>x, i\<rangle>) *\<^sub>C f i, b\<rangle>)"
-    by auto
-  also have "\<dots> = cnj \<langle>\<Sum>i\<in>cBasis. (cnj \<langle>x, i\<rangle>) *\<^sub>C f i, b\<rangle>"
-    by (metis (mono_tags, lifting) cinner_sum_left sum.cong)
-  also have "\<dots> = cnj \<langle>f x, b\<rangle>"
-  proof-
-    have "(\<Sum>i\<in>cBasis. \<langle>i, x\<rangle> *\<^sub>C f i) = f x"
-      using clinear1 sum_cinner_eq[where b = x and f = f] by blast         
-    hence "(\<Sum>i\<in>cBasis. (cnj \<langle>x, i\<rangle>) *\<^sub>C f i) = f x"
-      by (metis (no_types, lifting) cinner_cnj_commute sum.cong)      
-    thus ?thesis by simp
   qed
-  finally show "\<langle>\<Sum>j\<in>cBasis. \<Sum>i\<in>cBasis. (\<langle>x, i\<rangle> * \<langle>f i, j\<rangle>) *\<^sub>C j, b\<rangle> = cnj \<langle>f x, b\<rangle>"
-    by blast  
+  thus ?thesis
+    by (simp add: bounded_eqI complex_euclidean_representation f1)
 qed
 
+lemma bounded_of_matrix_works:
+  fixes f::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_euclidean_space"
+  shows "bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>) = f"
+proof-
+  have "x \<in> cBasis \<Longrightarrow> bounded_apply (bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>)) x = bounded_apply f x" 
+    for x
+  proof-
+    assume x_basis: "x \<in> cBasis"
+    have "bounded_apply (bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>)) x 
+       = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * \<langle>i, (f j)\<rangle>) *\<^sub>C i)"
+      by (metis (no_types, lifting) bounded_of_matrix.rep_eq sum.cong)
+    also have "\<dots> = (\<Sum>i\<in>cBasis. (\<langle>x, x\<rangle> * \<langle>i, (f x)\<rangle>) *\<^sub>C i)"
+    proof-
+      have "(\<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i) =  (\<langle>x, x\<rangle> * \<langle>i, f x\<rangle>) *\<^sub>C i" for i
+      proof-
+        have "\<exists>cBasis'. cBasis = insert x cBasis' \<and> x \<notin> cBasis'"
+          using x_basis by (simp add: mk_disjoint_insert) 
+        then obtain cBasis' 
+          where c1: "cBasis = insert x cBasis'" and c2: "x \<notin> cBasis'"
+          by blast
+        have "(\<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i) = 
+              (\<langle>x, x\<rangle> * \<langle>i, f x\<rangle>) *\<^sub>C i + (\<Sum>j\<in>cBasis'. (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i)"
+          using c1 c2 by (metis (no_types, lifting) complex_finite_cBasis finite_insert sum.insert) 
+        also have d1: "\<dots> = \<langle>i, f x\<rangle> *\<^sub>C i + (\<Sum>j\<in>cBasis'. (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i)"
+          using x_basis by simp
+        also have "\<dots> = \<langle>i, f x\<rangle> *\<^sub>C i"
+        proof-
+          have "j\<in>cBasis' \<Longrightarrow> (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i = 0" for j
+            by (metis c1 c2 cinner_not_same_cBasis complex_vector.scale_eq_0_iff insert_iff 
+                mult_not_zero)            
+          hence "(\<Sum>j\<in>cBasis'. (\<langle>j, x\<rangle> * \<langle>i, f j\<rangle>) *\<^sub>C i) = 0"
+            by (simp add: sum.neutral)            
+          thus ?thesis by simp
+        qed
+        finally show ?thesis using d1 by auto 
+      qed
+      thus ?thesis by simp
+    qed
+    also have "\<dots> = (\<Sum>i\<in>cBasis. \<langle>i, f x\<rangle> *\<^sub>C i)"
+      using x_basis by simp
+    also have "\<dots> = f x"
+      using complex_euclidean_representation' by blast
+    finally show ?thesis by blast
+  qed
+  hence "bounded_apply (bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>)) x = bounded_apply f x" for x
+    using bounded_complex_euclidean_eqI by metis 
+  thus ?thesis by (simp add: bounded_eqI) 
+qed
 
-(* To adapt the definition of blinfun_of_matrix from the real to the complex in order to make the 
-  generalization of blinfun_of_matrix_works possible *)
-
-thm blinfun_of_matrix_works
 
 unbundle no_notation_norm
 

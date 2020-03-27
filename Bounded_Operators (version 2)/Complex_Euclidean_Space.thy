@@ -142,6 +142,12 @@ lemma (in complex_euclidean_space) complex_euclidean_representation:
   "(\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C b) = x"
   using complex_euclidean_representation_sum by simp
 
+lemma (in complex_euclidean_space) complex_euclidean_representation': 
+  "(\<Sum>b\<in>cBasis. \<langle>b, x\<rangle> *\<^sub>C b) = x"
+  using complex_euclidean_representation
+  by (metis local.cinner_cnj_commute local.complex_euclidean_representation_sum')
+
+
 lemma (in complex_euclidean_space) complex_euclidean_cinner:
   "\<langle>x, y\<rangle> = (\<Sum>b\<in>cBasis. \<langle>x, b\<rangle> * cnj \<langle>y, b\<rangle>)"
 proof-
