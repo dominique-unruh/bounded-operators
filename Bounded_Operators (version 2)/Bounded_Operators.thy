@@ -481,7 +481,7 @@ qed
 
 lemma bounded_of_matrix_works:
   fixes f::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_euclidean_space"
-  shows "bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>) = f"
+  shows "bounded_of_matrix (\<lambda>i j. \<langle>i, f j\<rangle>) = f"
 proof-
   have "x \<in> cBasis \<Longrightarrow> bounded_apply (bounded_of_matrix (\<lambda>i j. \<langle>i, (f j)\<rangle>)) x = bounded_apply f x" 
     for x
@@ -528,6 +528,73 @@ proof-
   thus ?thesis by (simp add: bounded_eqI) 
 qed
 
+lemma bounded_of_matrix_apply:
+  "bounded_of_matrix a x = (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. (\<langle>j, x\<rangle> * a i j) *\<^sub>C i)"
+  by transfer simp
+
+lemma bounded_of_matrix_minus: 
+  "bounded_of_matrix x - bounded_of_matrix y = bounded_of_matrix (x - y)"
+  by transfer (auto simp: algebra_simps sum_subtractf)
+
+lemma norm_bounded_of_matrix:
+  "\<parallel>bounded_of_matrix a\<parallel> \<le> (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>a i j\<parallel>)"
+proof-
+  have a1: "n \<in> cBasis \<Longrightarrow>
+       m \<in> cBasis \<Longrightarrow> cmod (\<langle>m, x\<rangle> * a n m) \<le> \<parallel>x\<parallel> * cmod (a n m)"
+    for n::'b and m::'a and x::'a
+  proof-
+    assume c1: "n \<in> cBasis" and c2: "m \<in> cBasis"
+    hence b1: "\<parallel>\<langle>m, x\<rangle>\<parallel> \<le> \<parallel>x\<parallel>"
+      by (metis cinner_same_cBasis complex_inner_class.Cauchy_Schwarz_ineq 
+          mult_cancel_right1 norm_eq_sqrt_cinner real_normed_algebra_1_class.norm_one real_sqrt_one)
+    have e1: "\<parallel>a n m\<parallel> \<ge> 0"
+      by simp
+    have "\<parallel>\<langle>m, x\<rangle> * a n m\<parallel> = \<parallel>\<langle>m, x\<rangle>\<parallel> * \<parallel>a n m\<parallel>"
+      using norm_mult by auto
+    also have "\<dots> \<le> \<parallel>x\<parallel> * \<parallel>a n m\<parallel>"
+      using b1 e1 mult_right_mono by blast 
+    finally show "\<parallel>\<langle>m, x\<rangle> * a n m\<parallel> \<le> \<parallel>x\<parallel> * \<parallel>a n m\<parallel>" 
+      using b1 by blast
+  qed
+  show ?thesis
+    apply (rule norm_bounded_bound)
+     apply (simp add: sum_nonneg)
+    apply (simp only: bounded_of_matrix_apply sum_distrib_right)
+    apply (rule order_trans[OF norm_sum sum_mono])
+    apply (rule order_trans[OF norm_sum sum_mono])
+    apply (simp add: abs_mult mult_right_mono)
+    apply (simp add: ac_simps)
+    using a1 by blast
+qed
+
+lemma tendsto_bounded_of_matrix:
+  assumes a1: "\<And>i j. i \<in> cBasis \<Longrightarrow> j \<in> cBasis \<Longrightarrow> ((\<lambda>n. b n i j) \<longlongrightarrow> a i j) F"
+  shows "((\<lambda>n. bounded_of_matrix (b n)) \<longlongrightarrow> bounded_of_matrix a) F"
+proof -
+  have b1: "\<And>i j. i \<in> cBasis \<Longrightarrow> j \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. \<parallel>b x i j - a i j\<parallel>) F"
+    using assms unfolding tendsto_Zfun_iff Zfun_norm_iff .
+  have "\<And>i. i \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. \<Sum>j\<in>cBasis. \<parallel>b x i j - a i j\<parallel>) F"
+  proof-
+    fix i::'a
+    assume "i \<in> cBasis"
+    hence "j \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. \<parallel>b x i j - a i j\<parallel>) F" for j
+      using b1 by simp 
+    thus "Zfun (\<lambda>x. \<Sum>j\<in>cBasis. \<parallel>b x i j - a i j\<parallel>) F"
+      using Zfun_sum[where s = cBasis and F = F and f = "(\<lambda>j x. cmod (b x i j - a i j))"]
+      by (simp add: \<open>\<And>j. j \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. cmod (b x i j - a i j)) F\<close> 
+          \<open>\<lbrakk>finite cBasis; \<And>ia. ia \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. cmod (b x i ia - a i ia)) F\<rbrakk> 
+          \<Longrightarrow> Zfun (\<lambda>x. \<Sum>ia\<in>cBasis. cmod (b x i ia - a i ia)) F\<close>)
+  qed
+  hence "Zfun (\<lambda>x. (\<Sum>i\<in>cBasis. \<Sum>j\<in>cBasis. \<parallel>b x i j - a i j\<parallel>)) F"
+    using Zfun_sum[where s = cBasis and F = F and f = "(\<lambda>i x. \<Sum>j\<in>cBasis. \<parallel>b x i j - a i j\<parallel>)"]
+    by auto
+  thus ?thesis
+    unfolding tendsto_Zfun_iff bounded_of_matrix_minus
+    apply (rule Zfun_le) apply auto
+    by (smt Finite_Cartesian_Product.sum_cong_aux fun_diff_def norm_bounded_of_matrix)
+qed
+
+thm tendsto_componentwise
 
 unbundle no_notation_norm
 
