@@ -594,7 +594,97 @@ proof -
     by (smt Finite_Cartesian_Product.sum_cong_aux fun_diff_def norm_bounded_of_matrix)
 qed
 
-thm tendsto_componentwise
+lemma ctendsto_componentwise:
+  fixes a::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_euclidean_space"
+    and b::"'c \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
+  shows "(\<And>i j. i \<in> cBasis \<Longrightarrow> j \<in> cBasis \<Longrightarrow> ((\<lambda>n. \<langle>i, b n j\<rangle>) \<longlongrightarrow> \<langle>i, a j\<rangle>) F) \<Longrightarrow> (b \<longlongrightarrow> a) F"
+  apply (subst bounded_of_matrix_works[of a, symmetric])
+  apply (subst bounded_of_matrix_works[of "b x" for x, symmetric, abs_def])
+  by (rule tendsto_bounded_of_matrix)
+
+lemma norm_bounded_complex_euclidean_le:
+  fixes a::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_normed_vector"
+  shows "\<parallel>a\<parallel> \<le> sum (\<lambda>x. \<parallel>a x\<parallel>) cBasis"
+proof-
+  have "\<parallel>bounded_apply a (\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C b)\<parallel>
+         \<le> (\<Sum>x\<in>cBasis. \<parallel>bounded_apply a x\<parallel>) * \<parallel>x\<parallel>" for x
+  proof-
+    have "bounded_apply a (\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C b)
+        = (\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C bounded_apply a b)"
+      apply transfer
+      by (smt bounded_clinear.axioms(1) bounded_clinear_scaleC complex_vector.linear_sum sum.cong) 
+    hence "\<parallel>bounded_apply a (\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C b)\<parallel>
+        = \<parallel>(\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C bounded_apply a b)\<parallel>"
+      by simp
+    also have  "\<dots> \<le> (\<Sum>b\<in>cBasis. \<parallel>cnj \<langle>x, b\<rangle> *\<^sub>C bounded_apply a b\<parallel>)"
+      by (simp add: sum_norm_le)
+    also have  "\<dots> \<le> (\<Sum>b\<in>cBasis. \<parallel>\<langle>x, b\<rangle>\<parallel> * \<parallel>bounded_apply a b\<parallel>)"
+    proof-
+      have "\<parallel>cnj \<langle>x, b\<rangle> *\<^sub>C bounded_apply a b\<parallel> = \<parallel>\<langle>x, b\<rangle>\<parallel> * \<parallel>bounded_apply a b\<parallel>" for b
+        by auto
+      thus ?thesis by auto
+    qed
+    also have  "\<dots> \<le> (\<Sum>b\<in>cBasis. \<parallel>x\<parallel> * \<parallel>bounded_apply a b\<parallel>)"
+    proof-
+      have "b\<in>cBasis \<Longrightarrow> \<parallel>\<langle>x, b\<rangle>\<parallel> \<le> \<parallel>x\<parallel>" for b
+        by (simp add: cBasis_le_norm)
+      thus ?thesis
+        by (simp add: mult_right_mono sum_mono) 
+    qed
+    finally show ?thesis by (simp add: mult.commute sum_distrib_left) 
+  qed
+  thus ?thesis
+  proof -
+    have f1: "\<forall>A f. 0 \<le> (\<Sum>a\<in>A. \<parallel>f (a::'a)::'b\<parallel>)"
+      using norm_ge_zero norm_sum order_trans by blast
+    have "\<forall>b. \<parallel>bounded_apply a b\<parallel> \<le> (\<Sum>b\<in>cBasis. \<parallel>bounded_apply a b\<parallel>) * \<parallel>b\<parallel>"
+      by (metis (no_types) \<open>\<And>x. \<parallel>bounded_apply a (\<Sum>b\<in>cBasis. cnj \<langle>x, b\<rangle> *\<^sub>C b)\<parallel> 
+      \<le> (\<Sum>x\<in>cBasis. \<parallel>bounded_apply a x\<parallel>) * \<parallel>x\<parallel>\<close> complex_euclidean_representation)
+    thus ?thesis using f1 by (meson norm_bounded_bound)
+  qed
+qed
+
+lemma ctendsto_componentwise1:
+  fixes a::"'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_normed_vector"
+    and b::"'c \<Rightarrow> 'a \<Rightarrow>\<^sub>B 'b"
+  assumes "(\<And>j. j \<in> cBasis \<Longrightarrow> ((\<lambda>n. b n j) \<longlongrightarrow> a j) F)"
+  shows "(b \<longlongrightarrow> a) F"
+proof -
+  have "\<And>j. j \<in> cBasis \<Longrightarrow> Zfun (\<lambda>x. norm (b x j - a j)) F"
+    using assms unfolding tendsto_Zfun_iff Zfun_norm_iff .
+  hence "Zfun (\<lambda>x. \<Sum>j\<in>cBasis. norm (b x j - a j)) F"
+    by (auto intro!: Zfun_sum)
+  thus ?thesis
+    unfolding tendsto_Zfun_iff
+    apply (rule Zfun_le)
+    apply (auto intro!: order_trans[OF norm_bounded_complex_euclidean_le] )
+    by (smt minus_bounded.rep_eq sum.cong)    
+qed
+
+
+lemma continuous_bounded_componentwiseI:
+  fixes f:: "'b::t2_space \<Rightarrow> 'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'c::complex_euclidean_space"
+  assumes "\<And>i j. i \<in> cBasis \<Longrightarrow> j \<in> cBasis \<Longrightarrow> continuous F (\<lambda>x. \<langle>i, (f x) j\<rangle>)"
+  shows "continuous F f"
+  using assms by (auto simp: continuous_def intro!: ctendsto_componentwise)
+
+lemma continuous_bounded_componentwiseI1:
+  fixes f:: "'b::t2_space \<Rightarrow> 'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'c::complex_normed_vector"
+  assumes "\<And>i. i \<in> cBasis \<Longrightarrow> continuous F (\<lambda>x. f x i)"
+  shows "continuous F f"
+  using assms apply (auto simp: continuous_def) 
+  by (simp add: ctendsto_componentwise1) 
+
+lemma continuous_on_bounded_componentwise:
+  fixes f:: "'d::t2_space \<Rightarrow> 'e::complex_euclidean_space \<Rightarrow>\<^sub>B 'f::complex_normed_vector"
+  assumes "\<And>i. i \<in> cBasis \<Longrightarrow> continuous_on s (\<lambda>x. f x i)"
+  shows "continuous_on s f"
+  using assms
+  by (auto intro!: continuous_at_imp_continuous_on intro!: ctendsto_componentwise1
+    simp: continuous_on_eq_continuous_within continuous_def)
+
+(* Next result *)
+thm bounded_linear_blinfun_matrix
 
 unbundle no_notation_norm
 
