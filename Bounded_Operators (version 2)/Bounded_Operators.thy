@@ -683,8 +683,56 @@ lemma continuous_on_bounded_componentwise:
   by (auto intro!: continuous_at_imp_continuous_on intro!: ctendsto_componentwise1
     simp: continuous_on_eq_continuous_within continuous_def)
 
-(* Next result *)
-thm bounded_linear_blinfun_matrix
+lemma bounded_clinear_bounded_matrix: "bounded_clinear (\<lambda>x. \<langle>j, bounded_apply (x::_\<Rightarrow>\<^sub>B _) i\<rangle>)"
+  proof
+  show "\<langle>j, bounded_apply (b1 + b2) i\<rangle> = \<langle>j, bounded_apply b1 i\<rangle> + \<langle>j, bounded_apply b2 i\<rangle>"
+    for b1 :: "'a \<Rightarrow>\<^sub>B 'b"
+      and b2 :: "'a \<Rightarrow>\<^sub>B 'b"
+    by (simp add: cinner_right_distrib plus_bounded.rep_eq)    
+  show "\<langle>j, bounded_apply (r *\<^sub>C b) i\<rangle> = r *\<^sub>C \<langle>j, bounded_apply b i\<rangle>"
+    for r :: complex
+      and b :: "'a \<Rightarrow>\<^sub>B 'b"
+    by (metis cinner_cnj_commute cinner_scaleC_left complex_cnj_cnj complex_cnj_mult 
+        complex_scaleC_def scaleC_bounded.rep_eq)    
+  show "\<exists>K. \<forall>x. \<parallel>\<langle>j, bounded_apply x i\<rangle>\<parallel> \<le> \<parallel>x\<parallel> * K"
+  proof-
+    have  "bounded_clinear x \<Longrightarrow> \<parallel>\<langle>j, x i\<rangle>\<parallel> \<le> onorm x * \<parallel>j\<parallel> * \<parallel>i\<parallel>" for j::'b and i::'a and x
+    proof-
+      assume bc: "bounded_clinear x"
+      hence "\<parallel>x i\<parallel> \<le> onorm x * \<parallel>i\<parallel>"
+        by (simp add: bounded_clinear_is_bounded_linear onorm)
+      moreover have "\<parallel>\<langle>j, x i\<rangle>\<parallel> \<le> \<parallel>j\<parallel>*\<parallel>x i\<parallel>"
+        by (simp add: complex_inner_class.Cauchy_Schwarz_ineq)
+      ultimately have "\<parallel>\<langle>j, x i\<rangle>\<parallel> \<le> \<parallel>j\<parallel> * onorm x * \<parallel>i\<parallel>"
+        by (smt norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono 
+            vector_space_over_itself.scale_scale)
+      thus ?thesis by (simp add: mult.commute) 
+    qed
+    hence f1: "\<exists>K. \<forall>x. bounded_clinear x \<longrightarrow> \<parallel>\<langle>j, x i\<rangle>\<parallel> \<le> onorm x * K" for j::'b and i::'a
+      by (metis vector_space_over_itself.scale_scale)              
+    show ?thesis apply transfer apply auto by (rule f1)
+  qed
+qed
+
+lemma (in bounded_clinear) tendsto: "(g \<longlongrightarrow> a) F \<Longrightarrow> ((\<lambda>x. f (g x)) \<longlongrightarrow> f a) F"
+  using bounded_clinear_is_bounded_linear  bounded_clinear_axioms bounded_linear.tendsto by blast
+  
+lemma (in bounded_clinear) continuous: "continuous F g \<Longrightarrow> continuous F (\<lambda>x. f (g x))"
+  using bounded_clinear_is_bounded_linear bounded_clinear_axioms bounded_linear.continuous by blast
+
+lemma (in bounded_clinear) continuous_on: "continuous_on s g \<Longrightarrow> continuous_on s (\<lambda>x. f (g x))"
+  using bounded_clinear_is_bounded_linear bounded_clinear_axioms bounded_linear.continuous_on 
+  by blast
+
+lemma (in bounded_clinear) tendsto_zero: "(g \<longlongrightarrow> 0) F \<Longrightarrow> ((\<lambda>x. f (g x)) \<longlongrightarrow> 0) F"
+  using bounded_clinear_is_bounded_linear tendsto by force
+
+lemma continuous_bounded_matrix:
+  fixes f:: "'b::t2_space \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>B 'c::complex_inner"
+  assumes f1:"continuous F f"
+  shows "continuous F (\<lambda>x. \<langle>j, bounded_apply (f x) i\<rangle>)"
+  by (rule bounded_clinear.continuous[OF bounded_clinear_bounded_matrix assms])
+
 
 unbundle no_notation_norm
 
