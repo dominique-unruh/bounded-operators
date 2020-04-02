@@ -326,7 +326,7 @@ proof
         have "l (c *\<^sub>C x) = c *\<^sub>C l x" for c and x
           apply (rule bounded_linear_scaleC_lim[where f = Y])
           using l1
-          apply simp
+           apply simp
           by (simp add: scaleC1) 
         moreover have "bounded_linear l"
           by (simp add: blinfun.bounded_linear_right)          
@@ -681,10 +681,10 @@ lemma continuous_on_bounded_componentwise:
   shows "continuous_on s f"
   using assms
   by (auto intro!: continuous_at_imp_continuous_on intro!: ctendsto_componentwise1
-    simp: continuous_on_eq_continuous_within continuous_def)
+      simp: continuous_on_eq_continuous_within continuous_def)
 
 lemma bounded_clinear_bounded_matrix: "bounded_clinear (\<lambda>x. \<langle>j, bounded_apply (x::_\<Rightarrow>\<^sub>B _) i\<rangle>)"
-  proof
+proof
   show "\<langle>j, bounded_apply (b1 + b2) i\<rangle> = \<langle>j, bounded_apply b1 i\<rangle> + \<langle>j, bounded_apply b2 i\<rangle>"
     for b1 :: "'a \<Rightarrow>\<^sub>B 'b"
       and b2 :: "'a \<Rightarrow>\<^sub>B 'b"
@@ -716,7 +716,7 @@ qed
 
 lemma (in bounded_clinear) tendsto: "(g \<longlongrightarrow> a) F \<Longrightarrow> ((\<lambda>x. f (g x)) \<longlongrightarrow> f a) F"
   using bounded_clinear_is_bounded_linear  bounded_clinear_axioms bounded_linear.tendsto by blast
-  
+
 lemma (in bounded_clinear) continuous: "continuous F g \<Longrightarrow> continuous F (\<lambda>x. f (g x))"
   using bounded_clinear_is_bounded_linear bounded_clinear_axioms bounded_linear.continuous by blast
 
@@ -732,6 +732,229 @@ lemma continuous_bounded_matrix:
   assumes f1:"continuous F f"
   shows "continuous F (\<lambda>x. \<langle>j, bounded_apply (f x) i\<rangle>)"
   by (rule bounded_clinear.continuous[OF bounded_clinear_bounded_matrix assms])
+
+lemma continuous_on_bounded_of_matrix[continuous_intros]:
+  assumes "\<And>i j. i \<in> cBasis \<Longrightarrow> j \<in> cBasis \<Longrightarrow> continuous_on S (\<lambda>s. g s i j)"
+  shows "continuous_on S (\<lambda>s. bounded_of_matrix (g s))"
+  using assms
+  by (auto simp: continuous_on intro!: tendsto_bounded_of_matrix)
+
+(* TODO: prove this
+thm compact_blinfun_lemma
+lemma compact_bounded_lemma:
+  fixes f :: "nat \<Rightarrow> 'a::complex_euclidean_space \<Rightarrow>\<^sub>B 'b::complex_euclidean_space"
+  assumes "bounded (range f)"
+  shows "\<forall>d\<subseteq>cBasis. \<exists>l::'a \<Rightarrow>\<^sub>B 'b. \<exists> r::nat\<Rightarrow>nat.
+    strict_mono r \<and> (\<forall>e>0. eventually (\<lambda>n. \<forall>i\<in>d. dist (f (r n) i) (l i) < e) sequentially)"
+  
+*)
+
+lemma bounded_euclidean_eqI: "(\<And>i. i \<in> cBasis \<Longrightarrow> bounded_apply x i = bounded_apply y i) \<Longrightarrow> x = y"
+proof-
+  have f1: "(\<And>i. i \<in> cBasis \<Longrightarrow>
+              bounded_apply x i = bounded_apply y i) \<Longrightarrow>
+         bounded_apply x (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C b) =
+         bounded_apply y (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C b)" for j::'a
+  proof-
+    assume h2: "\<And>i. i \<in> cBasis \<Longrightarrow> bounded_apply x i = bounded_apply y i"
+    have "bounded_apply x (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C b)
+        = (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C bounded_apply x b) "
+      apply transfer
+      by (smt Finite_Cartesian_Product.sum_cong_aux bounded_clinear.axioms(1) bounded_clinear_scaleC
+          complex_vector.linear_sum)
+    also have "\<dots> = (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C bounded_apply y b) "
+      using h2 by auto 
+    also have "\<dots> = bounded_apply y (\<Sum>b\<in>cBasis. cnj \<langle>j, b\<rangle> *\<^sub>C b) "
+      apply transfer
+      by (smt Finite_Cartesian_Product.sum_cong_aux bounded_clinear.axioms(1) bounded_clinear_scaleC
+          complex_vector.linear_sum) 
+    finally show ?thesis by blast
+  qed
+
+  assume h1: "(\<And>i. i \<in> cBasis \<Longrightarrow> bounded_apply x i = bounded_apply y i)"
+  show ?thesis
+    apply (auto intro!: bounded_eqI)
+    apply (subst (2) complex_euclidean_representation[symmetric, where 'a='a])
+    apply (subst (1) complex_euclidean_representation[symmetric, where 'a='a])
+    using f1 h1 by blast
+qed
+
+lemma Bounded_eq_matrix: "bounded_clinear f \<Longrightarrow> BOUNDED f = bounded_of_matrix (\<lambda>i j.\<langle>i,  f j\<rangle>)"
+  by (metis bounded_linear_BOUNDED_apply bounded_of_matrix_works)
+
+(* TODO: to extend to the complex numbers
+
+instance blinfun :: (euclidean_space, euclidean_space) heine_borel
+
+*)
+
+subsection\<^marker>\<open>tag unimportant\<close> \<open>concrete bounded complex-linear functions\<close>
+
+lemma transfer_bounded_bounded_bounded_linearI:
+  assumes g_def: "g = (\<lambda>i x. (bounded_apply (f i) x))"
+  shows "bounded_sesquilinear g = bounded_antilinear f"
+proof
+  show "bounded_antilinear f"
+    if "bounded_sesquilinear g"
+  proof
+    show "a \<cdot>\<^sub>C (x + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+      for a :: complex
+        and x :: "'b \<Rightarrow>\<^sub>B 'c"
+        and y :: "'b \<Rightarrow>\<^sub>B 'c"
+      by (simp add: cnj_scaleC_add_right)
+
+    show "(a + b) \<cdot>\<^sub>C x = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+      for a :: complex
+        and b :: complex
+        and x :: "'b \<Rightarrow>\<^sub>B 'c"
+      by (simp add: cnj_scaleC_add_left)
+
+    show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C x = (a * b) \<cdot>\<^sub>C x"
+      for a :: complex
+        and b :: complex
+        and x :: "'b \<Rightarrow>\<^sub>B 'c"
+      by (simp add: cnj_scaleC_scaleC)
+
+    show "1 \<cdot>\<^sub>C x = x"
+      for x :: "'b \<Rightarrow>\<^sub>B 'c"
+      by (simp add: cnj_scaleC_one)
+
+    show "f (b1 + b2) = f b1 + f b2"
+      for b1 :: 'a
+        and b2 :: 'a
+    proof-
+      have "\<forall>a a' b.
+       bounded_apply (f (a + a')) b =
+       bounded_apply (f a) b + bounded_apply (f a') b"
+        using that unfolding bounded_sesquilinear_def sesquilinear_def g_def by auto
+      thus ?thesis apply transfer by auto      
+    qed
+    show "f (r *\<^sub>C b) = r \<cdot>\<^sub>C f b"
+      for r :: complex
+        and b :: 'a
+    proof-
+      have "g (r *\<^sub>C b) x = r \<cdot>\<^sub>C g b x" for x
+        using that unfolding bounded_sesquilinear_def sesquilinear_def
+        by auto
+      thus ?thesis using g_def
+        by (simp add: bounded_eqI cnj_scaleC_def scaleC_bounded.rep_eq) 
+    qed
+    show "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+    proof-
+      have "\<exists>K. \<forall>a b. \<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+        using that unfolding g_def unfolding bounded_sesquilinear_def bounded_sesquilinear_axioms_def
+        by blast
+      hence "\<exists>K. \<forall>a b. \<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K \<and> K \<ge> 0"
+      proof -
+        { fix aa :: "real \<Rightarrow> 'a" and bb :: "real \<Rightarrow> 'b"
+          obtain rr :: real where
+            ff1: "\<forall>b a. \<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * (\<parallel>b\<parallel> * rr)"
+            by (metis (no_types) \<open>\<exists>K. \<forall>a b. \<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K\<close> vector_space_over_itself.scale_scale)
+          then have ff2: "\<forall>b a. 0 \<le> \<parallel>a::'a\<parallel> * (\<parallel>b::'b\<parallel> * rr)"
+            by (metis norm_ge_zero order.trans)
+          then have ff3: "\<forall>b a. 0 \<le> \<parallel>b::'b\<parallel> * rr \<or> \<parallel>a::'a\<parallel> \<le> 0"
+            by (metis zero_le_mult_iff)
+          { assume "\<exists>b a. \<parallel>bounded_apply (f a) b\<parallel> \<noteq> 0"
+            { assume "\<exists>b. \<parallel>b::'b\<parallel> \<noteq> 0"
+              moreover
+              { assume "\<exists>b a ba. \<parallel>bounded_apply (f a) b\<parallel> \<noteq> 0 \<and> \<parallel>ba::'b\<parallel> \<noteq> 0"
+                moreover
+                { assume "\<exists>r b. 0 * (\<parallel>b::'b\<parallel> * r) \<noteq> 0 * r"
+                  then have "rr \<le> 0 \<and> 0 \<le> rr * rr \<longrightarrow> 0 \<le> rr"
+                    by linarith }
+                ultimately have "rr \<le> 0 \<and> 0 \<le> rr * rr \<and> 0 * rr = 0 \<longrightarrow> 0 \<le> rr"
+                  using ff3 ff1 by (metis eq_iff norm_ge_zero zero_le_mult_iff) }
+              ultimately have "rr \<le> 0 \<and> 0 \<le> rr * rr \<and> 0 * rr = 0 \<longrightarrow> 0 \<le> rr \<or> \<parallel>bounded_apply (f (aa 0)) (bb 0)\<parallel> \<le> 0"
+                by fastforce }
+            then have "rr \<le> 0 \<and> 0 \<le> rr * rr \<and> 0 * rr = 0 \<longrightarrow> 0 \<le> rr \<or> (\<exists>a. \<parallel>a::'a\<parallel> * 0 \<noteq> 0) \<or> \<parallel>bounded_apply (f (aa 0)) (bb 0)\<parallel> \<le> 0"
+              using ff1 by (metis (full_types)) }
+          then have "rr \<le> 0 \<and> 0 \<le> rr * rr \<and> 0 * rr = 0 \<longrightarrow> (\<exists>r. \<parallel>bounded_apply (f (aa r)) (bb r)\<parallel> \<le> \<parallel>aa r\<parallel> * (\<parallel>bb r\<parallel> * r) \<and> 0 \<le> r) \<or> 0 \<le> rr"
+            by (metis (no_types) eq_iff norm_ge_zero vector_space_over_itself.scale_scale zero_le_mult_iff)
+          then have "rr \<le> 0 \<longrightarrow> (\<exists>r. \<parallel>bounded_apply (f (aa r)) (bb r)\<parallel> \<le> \<parallel>aa r\<parallel> * (\<parallel>bb r\<parallel> * r) \<and> 0 \<le> r) \<or> 0 \<le> rr"
+            by auto
+          then have "\<exists>r. \<parallel>bounded_apply (f (aa r)) (bb r)\<parallel> \<le> \<parallel>aa r\<parallel> * \<parallel>bb r\<parallel> * r \<and> 0 \<le> r"
+            using ff2 ff1 by (metis (no_types) vector_space_over_itself.scale_scale zero_le_mult_iff) }
+        then show ?thesis
+          by metis
+      qed
+      then obtain K where bound: "\<And>a b. \<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K" and K_geq0: "K \<ge> 0"
+        by blast
+      have "\<parallel>f a b\<parallel> / \<parallel>b\<parallel> \<le> \<parallel>a\<parallel> * K" for a b
+        using bound
+        by (metis K_geq0 divide_le_eq mult.commute norm_ge_zero norm_zero split_mult_pos_le 
+            vector_space_over_itself.scale_scale zero_less_norm_iff)      
+      hence "(SUP b. \<parallel>f a b\<parallel> / \<parallel>b\<parallel>) \<le> \<parallel>a\<parallel> * K" for a
+        using cSUP_least[where A = "UNIV" and M = "\<parallel>a\<parallel> * K"  and f = "\<lambda>b. \<parallel>f a b\<parallel> / \<parallel>b\<parallel>"]
+        by auto
+      moreover have "\<parallel>f a\<parallel> = (SUP b. \<parallel>f a b\<parallel> / \<parallel>b\<parallel>)" for a
+        by (metis norm_bounded.rep_eq onorm_def) 
+      ultimately have "\<parallel>f a\<parallel> \<le> \<parallel>a\<parallel> * K" for a
+        by simp
+      thus ?thesis by blast
+    qed
+  qed
+  show "bounded_sesquilinear g"
+    if "bounded_antilinear f"
+  proof
+    show "g (a + a') b = g a b + g a' b"
+      for a :: 'a
+        and a' :: 'a
+        and b :: 'b
+      unfolding g_def
+      using that
+      by (simp add: bounded_antilinear_addition plus_bounded.rep_eq) 
+    show "g a (b + b') = g a b + g a b'"
+      for a :: 'a
+        and b :: 'b
+        and b' :: 'b    
+    proof-
+      have "bounded_clinear (bounded_apply (f a))"
+        using bounded_apply by auto      
+      thus ?thesis unfolding g_def
+        by (simp add: bounded_clinear_addition) 
+    qed
+    show "g (r *\<^sub>C a) b = r \<cdot>\<^sub>C g a b"
+      for r :: complex
+        and a :: 'a
+        and b :: 'b
+    proof-
+      have "f (r *\<^sub>C a) = r \<cdot>\<^sub>C f a"
+        using that by (simp add: bounded_antilinear_scaleC)
+      hence "bounded_apply (f (r *\<^sub>C a)) b = r \<cdot>\<^sub>C bounded_apply (f a) b"
+        by (simp add: cnj_scaleC_def scaleC_bounded.rep_eq)      
+      thus "g (r *\<^sub>C a) b = r \<cdot>\<^sub>C g a b" unfolding g_def by blast
+    qed
+    show "g a (r *\<^sub>C b) = r *\<^sub>C g a b"
+      for a :: 'a
+        and r :: complex
+        and b :: 'b
+    proof-
+      have "bounded_clinear (bounded_apply (f a))"
+        using bounded_apply by auto      
+      thus "g a (r *\<^sub>C b) = r *\<^sub>C g a b"
+        unfolding g_def by (simp add: bounded_clinear_scaleC)
+    qed
+    show "\<exists>K. \<forall>a b. \<parallel>g a b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+    proof-
+      have  "\<exists>K. \<forall>a. \<parallel>f a\<parallel> \<le> \<parallel>a\<parallel> * K"
+        using that unfolding bounded_antilinear_def bounded_antilinear_axioms_def by auto
+      hence "\<exists>K. \<forall>a. \<parallel>f a\<parallel> \<le> \<parallel>a\<parallel> * K \<and> K \<ge> 0"
+        using bounded_antilinear.nonneg_bounded' that by blast
+      then obtain K where c1: "\<And>a. \<parallel>f a\<parallel> \<le> \<parallel>a\<parallel> * K" and c2: "K \<ge> 0"
+        by blast
+      have c3: "\<And>a::'a. \<And> b::'b. \<parallel>f a\<parallel> * \<parallel>b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+        using c1 c2
+        by (metis mult.commute mult.left_commute mult_left_mono norm_ge_zero) 
+      have bounded_clinear: "bounded_clinear (bounded_apply (f a))" for a
+        using bounded_apply by auto
+      hence "\<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>f a\<parallel> * \<parallel>b\<parallel>" for a b
+        using norm_bounded by auto
+      hence "\<parallel>bounded_apply (f a) b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K" for a b
+        using c3 dual_order.trans by blast 
+      thus ?thesis unfolding g_def by auto
+    qed
+  qed
+qed
 
 
 unbundle no_notation_norm
