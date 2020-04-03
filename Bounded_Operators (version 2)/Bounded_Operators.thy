@@ -957,6 +957,92 @@ proof
 qed
 
 
+lift_definition id_bounded::"'a::complex_normed_vector \<Rightarrow>\<^sub>B 'a" is id
+  proof
+  show "id (b1 + b2) = id b1 + id b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by simp
+  show "id (r *\<^sub>C b) = r *\<^sub>C id b"
+    for r :: complex
+      and b :: 'a
+    by simp
+  show "\<exists>K. \<forall>x. \<parallel>id (x::'a)\<parallel> \<le> \<parallel>x\<parallel> * K"
+    unfolding id_def using mult_le_cancel_left1 by blast 
+qed
+
+lemma norm_bounded_id[simp]:
+  "\<parallel>(id_bounded::'a::{complex_normed_vector, perfect_space} \<Rightarrow>\<^sub>B 'a)\<parallel> = 1"
+  apply transfer using onorm_id unfolding id_def by auto
+
+lemma norm_bounded_id_le:
+  "\<parallel>(id_bounded::'a::complex_normed_vector \<Rightarrow>\<^sub>B 'a)\<parallel> \<le> 1"
+  apply transfer using onorm_id_le unfolding id_def by auto
+
+lift_definition bounded_compose::
+  "'a::complex_normed_vector \<Rightarrow>\<^sub>B 'b::complex_normed_vector \<Rightarrow>
+    'c::complex_normed_vector \<Rightarrow>\<^sub>B 'a \<Rightarrow>
+    'c \<Rightarrow>\<^sub>B 'b" (infixl "o\<^sub>B" 55) is "(o)"
+  parametric comp_transfer
+  unfolding o_def
+  by (rule bounded_clinear_compose)
+
+lemma bounded_apply_bounded_compose[simp]: "(a o\<^sub>B b) c = a (b c)"
+  by (simp add: bounded_compose.rep_eq)
+  
+lemma norm_bounded_compose:
+  "norm (f o\<^sub>B g) \<le> norm f * norm g"
+  apply transfer
+  by (simp add: bounded_clinear_is_bounded_linear onorm_compose) 
+
+lemma bounded_compose_zero[simp]:
+  "bounded_compose 0 = (\<lambda>_. 0)"
+proof -
+  have "\<forall>b. (0::'b \<Rightarrow>\<^sub>B 'c) o\<^sub>B (b::'a \<Rightarrow>\<^sub>B _) = 0"
+    by (simp add: bounded_eqI zero_bounded.rep_eq)
+  thus ?thesis by metis
+qed
+  
+
+lemma bounded_compose_zero'[simp]:
+  "bounded_compose x 0 = 0"
+  apply transfer
+  using bounded_clinear_def complex_vector.linear_0 by fastforce 
+
+lemma bounded_bij2:
+  fixes f::"'a \<Rightarrow>\<^sub>B 'a::complex_euclidean_space"
+  assumes h1: "f o\<^sub>B g = id_bounded"
+  shows "bij (bounded_apply g)"
+proof (rule bijI)
+  show t1: "inj g"
+    using assms
+    by (metis bounded_compose.rep_eq id_bounded.rep_eq inj_on_id inj_on_imageI2)
+  show "surj g"
+  proof-
+    have "clinear g"
+      apply transfer by (simp add: bounded_clinear.axioms(1))
+    thus ?thesis using linear_inj_imp_surj h1 t1 by auto
+  qed
+qed
+
+lemma bounded_bij1:
+  fixes f::"'a \<Rightarrow>\<^sub>B 'a::complex_euclidean_space"
+  assumes "f o\<^sub>B g = id_bounded"
+  shows "bij (bounded_apply f)"
+proof (rule bijI)
+  show "surj (bounded_apply f)"
+    using assms
+    by (metis bij_is_surj bounded_bij2 bounded_compose.rep_eq fun.set_map id_bounded.rep_eq surj_id)
+  show "inj (bounded_apply f)"
+  proof-
+    have "clinear (bounded_apply f)"
+      apply transfer by (simp add: bounded_clinear.axioms(1)) 
+    thus ?thesis
+      using bounded_linear_def linear_surj_imp_inj  \<open>surj (bounded_apply f)\<close> by blast      
+  qed
+qed
+
+
 unbundle no_notation_norm
 
 end
