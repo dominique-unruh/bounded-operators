@@ -3368,10 +3368,10 @@ definition g_atensor_cbilinear:: \<open>'a::complex_inner \<Rightarrow> 'b::comp
   where \<open>g_atensor_cbilinear x y x\<^sub>1 y\<^sub>1 = \<langle>x, x\<^sub>1\<rangle>*\<langle>y, y\<^sub>1\<rangle>\<close>
 
 lemma g_atensor_cbilinear_cbilinear:
-  \<open>cbilinear (g_atensor_cbilinear x y)\<close>
+  \<open>cbilinear (g_atensor_cbilinear x y)\<close>  
   unfolding cbilinear_def clinear_def Vector_Spaces.linear_def vector_space_def
     module_hom_def module_hom_axioms_def module_def g_atensor_cbilinear_def
-  apply auto
+  apply auto  
   apply (simp add: scaleC_add_right)
   apply (simp add: scaleC_add_left)
   apply (simp add: ring_class.ring_distribs(1))
@@ -3380,16 +3380,19 @@ lemma g_atensor_cbilinear_cbilinear:
   apply (simp add: scaleC_add_left)
   apply (simp add: ring_class.ring_distribs(1))
   apply (simp add: ring_class.ring_distribs(2))
-  apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+             apply (simp add: cinner_right_distrib semiring_normalization_rules(1))
+  apply (metis cinner_cnj_commute cinner_scaleC_left complex_cnj_cnj complex_cnj_mult)
   apply (simp add: scaleC_add_right)
-  apply (simp add: scaleC_add_left)
+  apply (simp add: scaleC_left.add)
   apply (simp add: ring_class.ring_distribs(1))
   apply (simp add: ring_class.ring_distribs(2))
   using scaleC_add_right apply auto[1]
   apply (simp add: scaleC_add_left)
-  apply (simp add: ring_class.ring_distribs(1))
-  using ring_class.ring_distribs(2) apply auto[1]
-  by (simp add: cinner_right_distrib semiring_normalization_rules(34))
+  apply (simp add: vector_space_over_itself.scale_right_distrib)
+  apply (simp add: ring_class.ring_distribs(2))
+  apply (simp add: cinner_right_distrib ring_class.ring_distribs(1))
+  by (metis cinner_cnj_commute cinner_scaleC_left complex_cnj_cnj complex_cnj_mult)
+
 
 lemma g_atensor_clinear_existence:
   \<open>\<exists> H::'a::complex_inner \<Rightarrow> 'b::complex_inner \<Rightarrow> 'a \<otimes>\<^sub>a 'b \<Rightarrow> complex. \<forall> x. \<forall> y.
@@ -3444,7 +3447,7 @@ proof-
     unfolding F_def
   proof -
     have "g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q) = \<langle>y, q\<rangle> * (\<langle>b2, p\<rangle> + \<langle>b1, p\<rangle>)"
-      by (metis cinner_left_distrib g_atensor_clinear_cbilinear' ordered_field_class.sign_simps(2) ordered_field_class.sign_simps(28))
+      by (metis add.commute cinner_left_distrib g_atensor_clinear_cbilinear' mult.commute)      
     hence " (g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q)) -   (g_atensor_clinear b1 y (p \<otimes>\<^sub>a q)) =  (g_atensor_clinear b2 y (p \<otimes>\<^sub>a q))"
       by (metis add_diff_cancel g_atensor_clinear_cbilinear' left_diff_distrib' mult.commute)
     thus " (g_atensor_clinear (b1 + b2) y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b1 y (p \<otimes>\<^sub>a q)) -  (g_atensor_clinear b2 y (p \<otimes>\<^sub>a q)) = 0"
@@ -3940,12 +3943,78 @@ definition dist_atensor :: \<open>'a \<otimes>\<^sub>a 'b \<Rightarrow> 'a \<oti
   \<open>dist_atensor x y = norm (x - y)\<close> for x y
 
 definition uniformity_atensor :: \<open>(('a \<otimes>\<^sub>a 'b) \<times> ('a \<otimes>\<^sub>a 'b)) filter\<close>
-  where  \<open>uniformity_atensor = (INF e:{0<..}. principal {((f::'a \<otimes>\<^sub>a 'b), (g::'a \<otimes>\<^sub>a 'b)). dist f g < e})\<close>
-
+  where  \<open>uniformity_atensor = (INF e\<in>{0<..}. principal {((f::'a \<otimes>\<^sub>a 'b), (g::'a \<otimes>\<^sub>a 'b)). dist f g < e})\<close>
 definition open_atensor :: \<open>('a \<otimes>\<^sub>a 'b) set \<Rightarrow> bool\<close>
   where \<open>open_atensor = (\<lambda> U::('a \<otimes>\<^sub>a 'b) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
 
 instance
+  proof
+  show "dist x y = norm (x - y)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    by (simp add: Tensor_Product.dist_atensor_def)
+    
+  show "sgn (x::'a \<otimes>\<^sub>a 'b) = x /\<^sub>R norm x"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    by (simp add: Tensor_Product.sgn_atensor_def)
+    
+  show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a \<otimes>\<^sub>a 'b) y < e})"
+    using Tensor_Product.uniformity_atensor_def by auto
+    
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a \<otimes>\<^sub>a 'b) = x \<longrightarrow> y \<in> U)"
+    for U :: "('a \<otimes>\<^sub>a 'b) set"
+    by (simp add: Tensor_Product.open_atensor_def)
+    
+  show "(norm (x::'a \<otimes>\<^sub>a 'b) = 0) = (x = 0)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+  proof
+    show "x = 0"
+      if "norm x = 0"
+      using that unfolding norm_atensor_def cinner_atensor_def F_atensor_clinear_def apply auto 
+      sorry
+    show "norm x = 0"
+      if "x = 0"
+      using that unfolding norm_atensor_def apply auto
+      by (simp add: F_atensor_clinear_0 cinner_atensor_def)
+  qed
+  show "norm ((x::'a \<otimes>\<^sub>a 'b) + y) \<le> norm x + norm y"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "norm (a *\<^sub>R (x::'a \<otimes>\<^sub>a 'b)) = \<bar>a\<bar> * norm x"
+    for a :: real
+      and x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "norm (a *\<^sub>C (x::'a \<otimes>\<^sub>a 'b)) = cmod a * norm x"
+    for a :: complex
+      and x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>x::'a \<otimes>\<^sub>a 'b, y\<rangle> = cnj \<langle>y, x\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>(x::'a \<otimes>\<^sub>a 'b) + y, z\<rangle> = \<langle>x, z\<rangle> + \<langle>y, z\<rangle>"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+      and z :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>r *\<^sub>C (x::'a \<otimes>\<^sub>a 'b), y\<rangle> = cnj r * \<langle>x, y\<rangle>"
+    for r :: complex
+      and x :: "'a \<otimes>\<^sub>a 'b"
+      and y :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "\<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle> \<in> complex_of_real ` {r. 0 \<le> r}"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "(\<langle>x::'a \<otimes>\<^sub>a 'b, x\<rangle> = 0) = (x = 0)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+  show "norm (x::'a \<otimes>\<^sub>a 'b) = sqrt (cmod \<langle>x, x\<rangle>)"
+    for x :: "'a \<otimes>\<^sub>a 'b"
+    sorry
+qed
+
+
 proof
   show "dist x y = norm (x - y)"
     for x :: "'a \<otimes>\<^sub>a 'b"
@@ -4027,7 +4096,7 @@ proof
     also have \<open>\<dots> = (\<Sum>a\<in>t. (\<Sum>a'\<in>t'. (cnj (r a)) * r' a' *\<^sub>C \<langle>a,  a'\<rangle>) )\<close>
     proof -
       have "\<forall>a. cnj (r a) *\<^sub>C (\<Sum>a'\<in>t'. r' a' *\<^sub>C \<langle>a, a'\<rangle>) = (\<Sum>a'\<in>t'. cnj (r a) * r' a' *\<^sub>C \<langle>a, a'\<rangle>)"
-        by (metis (no_types) complex_scaleC_def complex_vector.scale_sum_right)
+        by (metis (mono_tags, lifting) complex_scaleC_def complex_vector.scale_sum_right sum.cong)        
       thus ?thesis
         by meson
     qed
@@ -4105,7 +4174,7 @@ proof
       qed
       also have \<open>\<dots> = cnj (cnj (g_atensor_cbilinear x\<^sub>1 x\<^sub>2 y\<^sub>1 y\<^sub>2))\<close>
         unfolding g_atensor_cbilinear_def
-        by simp
+        by (metis cinner_cnj_commute complex_cnj_mult)        
       also have \<open>\<dots> = cnj (cnj (g_atensor_clinear x\<^sub>1 x\<^sub>2 y))\<close>
         by (simp add: \<open>y = y\<^sub>1 \<otimes>\<^sub>a y\<^sub>2\<close> g_atensor_clinear_cbilinear)
       also have \<open>\<dots> = cnj (F_atensor_clinear y x)\<close>
@@ -4177,7 +4246,7 @@ proof
     have f1: "\<forall>b a c. \<langle>c, (a::'a) \<otimes>\<^sub>a (b::'b)\<rangle> = cnj (g_atensor_clinear a b c)"
       by (metis F_atensor_cbilinear_def F_atensor_clinear_cbilinear cinner_atensor_def)
     have "cnj (\<langle>y\<^sub>1, x\<^sub>1\<rangle> * \<langle>y\<^sub>2, x\<^sub>2\<rangle>) = \<langle>x\<^sub>1, y\<^sub>1\<rangle> * \<langle>x\<^sub>2, y\<^sub>2\<rangle>"
-      by auto
+      by (metis cinner_cnj_commute complex_cnj_mult)      
     thus ?thesis
       using f1 by (simp add: g_atensor_clinear_cbilinear')
   qed
@@ -4208,7 +4277,7 @@ proof
         unfolding D_def
         by auto 
       thus ?thesis
-        by (metis \<open>finite t\<close> finite_SigmaI ordered_field_class.sign_simps(2) sum.subset_diff) 
+        by (metis \<open>finite t\<close> add.commute finite_SigmaI sum.subset_diff) 
     qed
     also have \<open>\<dots> = (\<Sum>(a, a')\<in>D. f a a')\<close>
     proof-
@@ -4237,7 +4306,7 @@ proof
       unfolding f_def
       by (smt complex_norm_square complex_scaleC_def mult_scaleC_left semiring_normalization_rules(7) sum.cong)
   qed
-  have ortho_basis: \<open>\<exists> t r. finite t \<and> 
+  have ortho_basis: \<open>\<exists> t r. finite t \<and>
          (\<forall>a\<in>t. \<forall>a'\<in>t. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and>
          (\<forall>a\<in>t. \<langle>a, a\<rangle> > 0) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
     for x::\<open>'a \<otimes>\<^sub>a 'b\<close>
