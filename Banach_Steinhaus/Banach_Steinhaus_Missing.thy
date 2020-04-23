@@ -8,7 +8,6 @@ section \<open>Missing results for the proof of Banach-Steinhaus theorem\<close>
 theory Banach_Steinhaus_Missing
   imports
     "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-Types_To_Sets.Types_To_Sets"
 
 begin
 subsection \<open>Results missing for the proof of Banach-Steinhaus theorem\<close>
@@ -17,14 +16,15 @@ text \<open>
   approach, but they do not explicitly appear in Sokal's paper ~\cite{sokal2011reall}.
 \<close>
 
-(* NEW *)
 text\<open>Notation for the norm\<close>
 bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
 
-(* NEW *)
+(* TODO: We should also use a bundle for this. *)
 notation blinfun_apply (infixr "*\<^sub>v" 70)
+
+(* TODO: It is unclear what matrix_vector_mult refers to. *)
 text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
 
 lemma bdd_above_plus:
@@ -45,16 +45,26 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
+(* TODO absord \<rightarrow> absorb *)
 lemma max_Sup_absord_left:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
   shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
+(* TODO: This text is so long that it does not help reading the lemma because it is
+   just a textual representation of the formulas in the lemma. It contains a lot
+   of information that is not needed for understanding.
+   I am giving an example 
+   how it can be done shorter below *)
 text \<open>
   Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
   as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
-  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is larger or equal to the supremum of  \<^term>\<open>g\<close> 
+  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is larger or equal to the supremum of \<^term>\<open>g\<close> 
   on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
   supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close>.
+\<close>
+text \<open>
+  Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close>, if the supremum of \<^term>\<open>f\<close> is 
+  greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of \<^term>\<open>f\<close>.
 \<close>
 proof-
   have y_Sup: \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
@@ -90,10 +100,13 @@ proof-
   ultimately show ?thesis by simp
 qed
 
+(* TODO absord \<rightarrow> absorb *)
 lemma max_Sup_absord_right:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
   shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
+(* TODO: shorter explanation. (see above). Also say "This is the symmetric analogue of 
+         max_Sup_absorb_right" *)
 text \<open>
   Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
   as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
@@ -113,11 +126,15 @@ lemma max_Sup:
   fixes f g :: \<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
   shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
+(* TODO: shorter (see below) *)
 text \<open>
   Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
   as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
   above then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
   maximum of the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> and of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
+\<close>
+text \<open>
+  Explanation: Two supremum of the maximum of two real-value functions is equal to the maximum of their suprema.
 \<close>
 proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
   case True thus ?thesis by (simp add: assms(1) assms(2) assms(3) max_Sup_absord_left)
@@ -143,10 +160,10 @@ lemma identity_telescopic:
   assumes \<open>x \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
 text\<open>
-  Expression of a limit as a telescopic sum.
-  Explanation: Let \<^term>\<open>x\<close> be a sequence which converges to \<^term>\<open>l\<close>. Then \<^term>\<open>l - x n\<close> can be 
-  expressed as the limit of the limit if the sum of differences of the sequence 
-  \<^term>\<open>sum (\<lambda> k. x (Suc k) - x k) {n..N}\<close> as \<^term>\<open>N\<close> goes to infinity.
+  Expression of a limit as a telescopic series.
+
+  Explanation: Let \<^term>\<open>x\<close> be a sequence which converges to \<^term>\<open>l\<close>. Then \<^term>\<open>l - x n\<close>
+  is the limit $\sum_{k=n}^\infty x_{k+1} - x_k$.
 \<close>
 proof-
   have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
@@ -773,7 +790,8 @@ lemma sum_Cauchy_positive:
   assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>\<exists>K. \<forall>n. (sum a  {0..n}) \<le> K\<close>
   shows \<open>Cauchy (\<lambda>n. sum a {0..n})\<close>
 text\<open>
-  Explanation: If the sequence of partial sums of nonnegative terms is bounded, then it is Cauchy.
+  Explanation: If a series of nonnegative reals is bounded, then the series is 
+  Cauchy.
 \<close>
 proof (unfold Cauchy_altdef2, rule, rule)
   fix e::real
@@ -821,15 +839,16 @@ proof (unfold Cauchy_altdef2, rule, rule)
   thus \<open>\<exists>N. \<forall>n\<ge>N. dist (sum a {0..n}) (sum a {0..N}) < e\<close> by auto
 qed
 
+(* NOTE: I fixed the type of a's and phi's inputs to be nat because that's what the type was anyway.
+   Also made the type of \<phi>'s outputs explicit for clarity *)
 lemma convergent_series_Cauchy:
-  fixes a::\<open>_ \<Rightarrow> real\<close> and \<phi>::\<open>_ \<Rightarrow> _\<close>
+  fixes a::\<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::metric_space\<close>
   assumes \<open>\<exists>M. \<forall>n. sum a {0..n} \<le> M\<close> and \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
   shows \<open>Cauchy \<phi>\<close>
   text\<open>
-  Explanation: Let \<^term>\<open>a\<close> be a family of real numbers and let \<^term>\<open>\<phi>\<close> be a family. If the sequence
-  of partial sums of \<^term>\<open>a\<close> is uniformly bounded and the sequence of first differences of \<^term>\<open>\<phi>\<close>
-  is bounded by \<^term>\<open>a\<close> then \<^term>\<open>\<phi>\<close> is Cauchy.
-\<close>
+  Explanation: Let \<^term>\<open>a\<close> be a real-valued sequence and let \<^term>\<open>\<phi>\<close> be sequence in a metric space.
+  If the partial sums of \<^term>\<open>a\<close> are uniformly bounded and the distance between consecutive terms of \<^term>\<open>\<phi>\<close>
+  are bounded by the sequence \<^term>\<open>a\<close>, then \<^term>\<open>\<phi>\<close> is Cauchy.\<close>
 proof (unfold Cauchy_altdef2, rule, rule)
   fix e::real
   assume \<open>e > 0\<close>
@@ -888,6 +907,5 @@ proof (unfold Cauchy_altdef2, rule, rule)
   thus "\<exists>N. \<forall>n\<ge>N. dist (\<phi> n) (\<phi> N) < e"
     using \<open>0 < e\<close> by fastforce
 qed
-
 
 end
