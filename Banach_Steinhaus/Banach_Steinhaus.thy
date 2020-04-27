@@ -22,10 +22,12 @@ lemma linear_plus_norm:
   includes notation_norm
   assumes \<open>linear f\<close>
   shows \<open>\<parallel>f \<xi>\<parallel> \<le> max \<parallel>f (x + \<xi>)\<parallel> \<parallel>f (x - \<xi>)\<parallel>\<close>
-  text \<open>
-  Explanation: The norm of a linear operator \<^term>\<open>f\<close> is bounded above by the maximum of the norms
-  of the shifts of \<^term>\<open>f\<close> given by \<^term>\<open>f (x + \<xi>)\<close> and \<^term>\<open>f (x - \<xi>)\<close>.
+text \<open>
+  Explanation: For arbitrary $x$ and a linear operator \<^term>\<open>f\<close>,
+  \<^term>\<open>norm (f \<xi>)\<close> is upper bounded by the maximum of the norms
+  of the shifts of \<^term>\<open>f\<close> (i.e., \<^term>\<open>f (x + \<xi>)\<close> and \<^term>\<open>f (x - \<xi>)\<close>).
 \<close>
+(* NOTE: this said "the norm of f" earlier, but the operator norm does not occur here, so I changed it. *)
 proof-
   have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
     by (smt add_diff_cancel_left' assms diff_add_cancel diff_diff_add linear_diff midpoint_def 
@@ -43,10 +45,11 @@ lemma sokal_banach_steinhaus:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball x r) ) / r"
+(* TODO: Can you explain (to me) why this is called skokal_banach_steinhaus? *)
   text \<open>
   Explanation: Let \<^term>\<open>f\<close> be a bounded operator and let \<^term>\<open>x\<close> be a point. For any \<^term>\<open>r > 0\<close>, 
-  the norm of \<^term>\<open>f\<close> is bounded above by \<^term>\<open>1/r\<close> of the supremum of \<open>\<parallel>f *\<^sub>v x\<parallel>\<close> for \<^term>\<open>x\<close> in 
-  the ball of radius \<^term>\<open>r\<close> centered at \<^term>\<open>x\<close>.
+  the operator norm of \<^term>\<open>f\<close> is bounded above by the supremum of $f$ applied to the open ball of radius $r$ 
+  around $x$, divided by $r$.
 \<close>
 proof-
   have bdd_above_3: \<open>bdd_above ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r))\<close>
@@ -187,12 +190,20 @@ lemma sokal_banach_steinhaus':
   includes notation_norm
   assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close>
   shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>
+(* NOTE: You wrote @{thm sokal_banach_steinhaus} below. I think
+   you wanted to write @{text sokal_banach_steinhaus}, because @{thm sokal_banach_steinhaus} does
+   not show the lemma-name, but the lemma-formula.
+   But if you actually want to embed the formula, write
+   @{thm sokal_banach_steinhaus[no_vars]}, 
+   the [no_vars] gets rid of the question marks.
+ *)
   text \<open>                 
   In the proof of Banach-Steinhaus theorem, we will use this variation of the 
-  lemma @{thm sokal_banach_steinhaus}.
+  lemma @{text sokal_banach_steinhaus}.
+
   Explanation: Let \<^term>\<open>f\<close> be a bounded operator, let \<^term>\<open>x\<close> be a point and let \<^term>\<open>r\<close> be a positive real
-  number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> on the ball of radius \<^term>\<open>r\<close>
-  centered at \<^term>\<open>x\<close> such that \<^term>\<open>\<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>.
+  number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> in the open ball 
+  of radius \<^term>\<open>r\<close> around \<^term>\<open>x\<close> such that $\tau r \lVert f\rVert \leq \lVert f\xi\rVert$.
 \<close>
 proof(cases  \<open>f = 0\<close>)
   case True
@@ -231,8 +242,9 @@ theorem banach_steinhaus:
   shows  \<open>bounded (range f)\<close>
   text\<open>
   This is Banach-Steinhaus Theorem.
-  Explanation: If a family of bounded operators, having a Banach space as common domain, is
-  pointwise bounded, then it is uniformly bounded.
+
+  Explanation: If a family of bounded operators on a Banach space
+  is pointwise bounded, then it is uniformly bounded.
 \<close>
 proof(rule classical)
   assume \<open>\<not>(bounded (range f))\<close>
@@ -412,11 +424,14 @@ qed
 subsection \<open>A consequence of Banach-Steinhaus theorem\<close>
 
 corollary bounded_linear_limit_bounded_linear:
-  fixes f::\<open>_ \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
   assumes \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
   shows  \<open>\<exists>g. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> (*\<^sub>v) g\<close>
+(* NOTE: I wrote "sequence" instead of "family" here and
+   changed _ in the type annotation to nat because the type inference
+   uses nat here anyway. (So it's clearer now) *)
   text\<open>
-  Explanation: If a family of bounded operators, having a Banach space as common domain, converges
+  Explanation: If a sequence of bounded operators on a Banach space converges
   pointwise, then the limit is also a bounded operator.
 \<close>
 proof-

@@ -24,7 +24,7 @@ end
 (* TODO: We should also use a bundle for this. *)
 notation blinfun_apply (infixr "*\<^sub>v" 70)
 
-(* TODO: It is unclear what matrix_vector_mult refers to. *)
+(* TODO: It is unclear what matrix_vector_mult refers to in this explanation. *)
 text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
 
 lemma bdd_above_plus:
