@@ -22,12 +22,11 @@ lemma linear_plus_norm:
   includes notation_norm
   assumes \<open>linear f\<close>
   shows \<open>\<parallel>f \<xi>\<parallel> \<le> max \<parallel>f (x + \<xi>)\<parallel> \<parallel>f (x - \<xi>)\<parallel>\<close>
-text \<open>
-  Explanation: For arbitrary $x$ and a linear operator \<^term>\<open>f\<close>,
+  text \<open>
+  Explanation: For arbitrary \<^term>\<open>x\<close> and a linear operator \<^term>\<open>f\<close>,
   \<^term>\<open>norm (f \<xi>)\<close> is upper bounded by the maximum of the norms
   of the shifts of \<^term>\<open>f\<close> (i.e., \<^term>\<open>f (x + \<xi>)\<close> and \<^term>\<open>f (x - \<xi>)\<close>).
 \<close>
-(* NOTE: this said "the norm of f" earlier, but the operator norm does not occur here, so I changed it. *)
 proof-
   have \<open>norm (f \<xi>) = norm ( (inverse (of_nat 2)) *\<^sub>R (f (x + \<xi>) - f (x - \<xi>)) )\<close>
     by (smt add_diff_cancel_left' assms diff_add_cancel diff_diff_add linear_diff midpoint_def 
@@ -45,11 +44,13 @@ lemma sokal_banach_steinhaus:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball x r) ) / r"
-(* TODO: Can you explain (to me) why this is called skokal_banach_steinhaus? *)
+    (* TODO: Can you explain (to me) why this is called skokal_banach_steinhaus? *)
+    (* Answer: Because it is from a paper of Sokal about Banach-Steinhaus theorem. Another name is 
+  possible. *)
   text \<open>
   Explanation: Let \<^term>\<open>f\<close> be a bounded operator and let \<^term>\<open>x\<close> be a point. For any \<^term>\<open>r > 0\<close>, 
-  the operator norm of \<^term>\<open>f\<close> is bounded above by the supremum of $f$ applied to the open ball of radius $r$ 
-  around $x$, divided by $r$.
+  the operator norm of \<^term>\<open>f\<close> is bounded above by the supremum of $f$ applied to the open ball of 
+  radius \<^term>\<open>r\<close> around \<^term>\<open>x\<close>, divided by \<^term>\<open>r\<close>.
 \<close>
 proof-
   have bdd_above_3: \<open>bdd_above ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r))\<close>
@@ -141,7 +142,8 @@ proof-
     moreover have \<open>bdd_above ((\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r)\<close>
       using bdd_above_6 by blast
     ultimately show ?thesis
-      by (rule max_Sup)
+      using max_Sup
+      by (metis (mono_tags, lifting) Banach_Steinhaus_Missing.Max_def image_cong) 
   qed 
   have Sup_3': \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>::'a
     by (simp add: norm_2')
@@ -190,20 +192,13 @@ lemma sokal_banach_steinhaus':
   includes notation_norm
   assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close>
   shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>
-(* NOTE: You wrote @{thm sokal_banach_steinhaus} below. I think
-   you wanted to write @{text sokal_banach_steinhaus}, because @{thm sokal_banach_steinhaus} does
-   not show the lemma-name, but the lemma-formula.
-   But if you actually want to embed the formula, write
-   @{thm sokal_banach_steinhaus[no_vars]}, 
-   the [no_vars] gets rid of the question marks.
- *)
   text \<open>                 
   In the proof of Banach-Steinhaus theorem, we will use this variation of the 
   lemma @{text sokal_banach_steinhaus}.
 
-  Explanation: Let \<^term>\<open>f\<close> be a bounded operator, let \<^term>\<open>x\<close> be a point and let \<^term>\<open>r\<close> be a positive real
-  number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> in the open ball 
-  of radius \<^term>\<open>r\<close> around \<^term>\<open>x\<close> such that $\tau r \lVert f\rVert \leq \lVert f\xi\rVert$.
+  Explanation: Let \<^term>\<open>f\<close> be a bounded operator, let \<^term>\<open>x\<close> be a point and let \<^term>\<open>r\<close> be a 
+  positive real number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> in the open ball 
+  of radius \<^term>\<open>r\<close> around \<^term>\<open>x\<close> such that \<^term>\<open>\<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>.
 \<close>
 proof(cases  \<open>f = 0\<close>)
   case True
@@ -232,7 +227,6 @@ next
     by (simp add: less_cSup_iff)    
   thus ?thesis by (smt comp_def image_iff) 
 qed
-
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
@@ -411,8 +405,7 @@ proof(rule classical)
       using inverse_2 by blast
     finally have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> norm ((*\<^sub>v) (T n) x)\<close>
       by auto
-    thus ?thesis 
-      using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
+    thus ?thesis using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
     using Real.real_arch_pow by auto
@@ -427,9 +420,6 @@ corollary bounded_linear_limit_bounded_linear:
   fixes f::\<open>nat \<Rightarrow> ('a::banach \<Rightarrow>\<^sub>L 'b::real_normed_vector)\<close>
   assumes \<open>\<And>x. convergent (\<lambda>n. (f n) *\<^sub>v x)\<close>
   shows  \<open>\<exists>g. (\<lambda>n. (*\<^sub>v) (f n)) \<midarrow>pointwise\<rightarrow> (*\<^sub>v) g\<close>
-(* NOTE: I wrote "sequence" instead of "family" here and
-   changed _ in the type annotation to nat because the type inference
-   uses nat here anyway. (So it's clearer now) *)
   text\<open>
   Explanation: If a sequence of bounded operators on a Banach space converges
   pointwise, then the limit is also a bounded operator.
@@ -452,7 +442,7 @@ proof-
     by (meson UNIV_I \<open>bounded (range f)\<close> bounded_iff image_eqI)
   have \<open>isCont (\<lambda> t::'b. norm t) y\<close> for y::'b
     using Limits.isCont_norm by simp
-  hence \<open>(\<lambda> n. norm ((*\<^sub>v) (f n) x)) \<longlonglongrightarrow> (norm (F x))\<close>
+  hence \<open>(\<lambda> n. norm ((*\<^sub>v) (f n) x)) \<longlonglongrightarrow> (norm (F x))\<close> for x
     using \<open>\<And> x::'a. (\<lambda> n. (*\<^sub>v) (f n) x) \<longlonglongrightarrow> F x\<close> by (simp add: tendsto_norm)
   hence norm_f_n_x: \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (f n) x) \<le> M\<close> for x
     using Elementary_Metric_Spaces.convergent_imp_bounded

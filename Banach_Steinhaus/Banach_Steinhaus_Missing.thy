@@ -21,17 +21,28 @@ bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
 
-(* TODO: We should also use a bundle for this. *)
-notation blinfun_apply (infixr "*\<^sub>v" 70)
+bundle no_notation_norm begin
+no_notation norm ("\<parallel>_\<parallel>")
+end
 
-(* TODO: It is unclear what matrix_vector_mult refers to in this explanation. *)
-text\<open>This notation is inspired by @{text matrix_vector_mult}\<close>
+unbundle notation_norm
+
+text\<open>Notation for apply bilinear function\<close>
+bundle notation_blinfun_apply begin
+notation blinfun_apply (infixr "*\<^sub>v" 70)
+end
+
+bundle no_notation_blinfun_apply begin
+no_notation blinfun_apply (infixr "*\<^sub>v" 70)
+end
+
+unbundle notation_blinfun_apply
 
 lemma bdd_above_plus:
   fixes f::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>bdd_above (f ` S)\<close> and \<open>bdd_above (g ` S)\<close> 
   shows \<open>bdd_above ((\<lambda> x. f x + g x) ` S)\<close>
-text \<open>
+  text \<open>
   Explanation: If the images of two real-valued functions \<^term>\<open>f\<close>,\<^term>\<open>g\<close> are bounded above on a 
   set \<^term>\<open>S\<close>, then the image of their sum is bounded on \<^term>\<open>S\<close>.
 \<close>
@@ -45,26 +56,35 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
-(* TODO absord \<rightarrow> absorb *)
-lemma max_Sup_absord_left:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+(* New definition in order to make formulae shorter *)
+text\<open>The maximum of two functions\<close>
+definition Max:: "('a \<Rightarrow> 'b::ord) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
+  \<open>Max f g = (\<lambda>x. max (f x) (g x))\<close>
+
+lemma max_Sup_absorb_left:
+  fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (f ` X)\<close>
-(* TODO: This text is so long that it does not help reading the lemma because it is
-   just a textual representation of the formulas in the lemma. It contains a lot
-   of information that is not needed for understanding.
-   I am giving an example 
-   how it can be done shorter below *)
-text \<open>
-  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
-  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
-  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is larger or equal to the supremum of \<^term>\<open>g\<close> 
-  on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
-  supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close>.
-\<close>
+  shows \<open>Sup ((Max f g) ` X) = Sup (f ` X)\<close>
+    (* Disagreement: 
+The suggested explanation 
+
 text \<open>
   Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close>, if the supremum of \<^term>\<open>f\<close> is 
-  greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of \<^term>\<open>f\<close>.
+  greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of
+  \<^term>\<open>f\<close>.
+\<close>
+
+is inaccurate because it does not mention the assumptions \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> 
+and \<open>bdd_above (g ` X)\<close>. Furthermore, the statement is not about the supremum of max f g taken over
+all the domain, but just over X.
+
+I proposed a more accurate statement.
+ *)
+  text \<open>
+  Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close>, such that 
+  the \<^term>\<open>f\<close> and \<^term>\<open>g\<close> are bounded above on \<^term>\<open>X\<close>, if the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is 
+  greater-equal the supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>, then the supremum of \<^term>\<open>Max f g\<close> on \<^term>\<open>X\<close>
+  equals the supremum of \<^term>\<open>f\<close>.
 \<close>
 proof-
   have y_Sup: \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
@@ -97,61 +117,46 @@ proof-
     using y_Sup by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
   moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
     using y_f_X by (metis (mono_tags) cSup_least calculation empty_is_image)  
-  ultimately show ?thesis by simp
+  ultimately show ?thesis unfolding Max_def by simp
 qed
 
-(* TODO absord \<rightarrow> absorb *)
-lemma max_Sup_absord_right:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+lemma max_Sup_absorb_right:
+  fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
-  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = Sup (g ` X)\<close>
-(* TODO: shorter explanation. (see above). Also say "This is the symmetric analogue of 
-         max_Sup_absorb_right" *)
-text \<open>
-  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
-  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
-  above and the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is less or equal to the supremum of  \<^term>\<open>g\<close> 
-  on \<^term>\<open>X\<close> then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
-  supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
+  shows \<open>Sup ((Max f g) ` X) = Sup (g ` X)\<close>
+  text \<open>
+  Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close>, such that 
+  the \<^term>\<open>f\<close> and \<^term>\<open>g\<close> are bounded above on \<^term>\<open>X\<close>, if the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is 
+  lower-equal the supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>, then the supremum of \<^term>\<open>Max f g\<close> on \<^term>\<open>X\<close>
+  equals the supremum of \<^term>\<open>g\<close>. This is the right analog of @{text max_Sup_absorb_left}.
 \<close>
 proof-
-  have \<open>Sup ((\<lambda> x. max (g x) (f x)) ` X) = Sup (g ` X)\<close>
-    using max_Sup_absord_left by (simp add: max_Sup_absord_left assms(1) assms(2) assms(3) assms(4)) 
-  moreover have \<open>max (g x) (f x) = max (f x) (g x)\<close> for x
-    by auto
+  have \<open>Sup ((Max g f) ` X) = Sup (g ` X)\<close>
+    using  assms by (simp add: max_Sup_absorb_left)     
+  moreover have \<open>Max g f = Max f g\<close>
+    unfolding Max_def  by auto
   ultimately show ?thesis by simp
 qed
 
 lemma max_Sup:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
+  fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
-  shows \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
-(* TODO: shorter (see below) *)
-text \<open>
-  Explanation: Given two real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close> of the same type 
-  as the domain of these functions, if the images of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> on \<^term>\<open>X\<close> are bounded 
-  above then the supremum on \<^term>\<open>X\<close> of the maximum of \<^term>\<open>f\<close> and \<^term>\<open>g\<close> is equal to the 
-  maximum of the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> and of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>.
-\<close>
-text \<open>
-  Explanation: Two supremum of the maximum of two real-value functions is equal to the maximum of their suprema.
+  shows \<open>Sup ((Max f g) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
+  text \<open>
+  Explanation: Let \<^term>\<open>X\<close> be a nonempty set. Two supremum over \<^term>\<open>X\<close> of the maximum of two 
+  real-value functions is equal to the maximum of their suprema over \<^term>\<open>X\<close>, provided that the
+  functions are bounded above on \<^term>\<open>X\<close>.
 \<close>
 proof(cases \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>)
-  case True thus ?thesis by (simp add: assms(1) assms(2) assms(3) max_Sup_absord_left)
+  case True thus ?thesis by (simp add: assms(1) assms(2) assms(3) max_Sup_absorb_left)
 next
   case False 
-  have f1: "Sup (f ` X) + - 1 * Sup (g ` X) \<le> 0"
-    using False by auto
-  have f2: "\<forall>A f g. A \<noteq> {} \<and> bdd_above (f ` A) \<and> bdd_above (g ` A) \<and> Sup (f ` A) \<le> Sup (g ` A)
-         \<longrightarrow> (SUP a\<in>A. if (f (a::'a)::real) \<le> g a then g a else f a) = Sup (g ` A)"
-    by (smt max_Sup_absord_right)    
-  have "(Sup (f ` X) \<le> Sup (g ` X)) = (Sup (f ` X) + - 1 * Sup (g ` X) \<le> 0)"
-    by auto
-  hence "(SUP a\<in>X. if f a \<le> g a then g a else f a) = 
-         (if Sup (f ` X) \<le> Sup (g ` X) then Sup (g ` X) else Sup (f ` X))"
-    using f2 f1 by (meson assms(1) assms(2) assms(3))
+  have f1: "\<not> 0 \<le> Sup (f ` X) + - 1 * Sup (g ` X)"
+    using False by linarith
+  hence "Sup (Banach_Steinhaus_Missing.Max f g ` X) = Sup (g ` X)"
+    by (simp add: assms(1) assms(2) assms(3) max_Sup_absorb_right)
   thus ?thesis
-    by (simp add: max_def_raw)
+    using f1 by linarith
 qed
 
 
@@ -159,11 +164,10 @@ lemma identity_telescopic:
   fixes x :: \<open>_ \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>x \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda> N. sum (\<lambda> k. x (Suc k) - x k) {n..N}) \<longlonglongrightarrow> l - x n\<close>
-text\<open>
+  text\<open>
   Expression of a limit as a telescopic series.
-
-  Explanation: Let \<^term>\<open>x\<close> be a sequence which converges to \<^term>\<open>l\<close>. Then \<^term>\<open>l - x n\<close>
-  is the limit $\sum_{k=n}^\infty x_{k+1} - x_k$.
+  Explanation: If \<^term>\<open>x\<close> converges to \<^term>\<open>l\<close> then the sum \<^term>\<open>sum (\<lambda> k. x (Suc k) - x k) {n..N}\<close>
+  converges to \<^term>\<open>l - x n\<close> as \<^term>\<open>N\<close> goes to infinity.
 \<close>
 proof-
   have \<open>(\<lambda> p. x (p + Suc n)) \<longlonglongrightarrow> l\<close>
@@ -194,10 +198,9 @@ proof-
 qed
 
 lemma bound_Cauchy_to_lim:
-  includes notation_norm
   assumes \<open>y \<longlonglongrightarrow> x\<close> and \<open>\<And>n. \<parallel>y (Suc n) - y n\<parallel> \<le> c^n\<close> and \<open>y 0 = 0\<close> and \<open>c < 1\<close>
   shows \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * c ^ n\<close>
-text\<open>
+  text\<open>
   Inequality about a sequence of approximations assuming that the sequence of differences is bounded
   by a geometric progression.
   Explanation: Let \<^term>\<open>y\<close> be a sequence converging to \<^term>\<open>x\<close>.
@@ -255,11 +258,10 @@ proof-
   ultimately show \<open>\<parallel>x - y (Suc n)\<parallel> \<le> (c / (1 - c)) * (c ^ n)\<close> by linarith
 qed
 
-
 lemma onorm_open_ball:
   includes notation_norm
   shows \<open>\<parallel>f\<parallel> = Sup { \<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 }\<close>
-text \<open>
+  text \<open>
   Explanation: Let \<^term>\<open>f\<close> be a bounded linear operator. The operator norm of \<^term>\<open>f\<close> is the
   supremum of \<^term>\<open>norm (f x)\<close> for \<^term>\<open>x\<close> such that \<^term>\<open>norm x < 1\<close>.
 \<close>
@@ -514,7 +516,7 @@ lemma onorm_r:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows \<open>\<parallel>f\<parallel> = Sup ((\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball 0 r)) / r\<close>
-text \<open>
+  text \<open>
   Explanation: The norm of \<^term>\<open>f\<close> is \<^term>\<open>1/r\<close> of the supremum of the norm of \<^term>\<open>f *\<^sub>v x\<close> for
   \<^term>\<open>x\<close> in the ball of radius \<^term>\<open>r\<close> centered at the origin.
 \<close>
@@ -620,7 +622,7 @@ lemma linear_limit_linear:
   fixes f :: \<open>_ \<Rightarrow> ('a::real_vector \<Rightarrow> 'b::real_normed_vector)\<close>
   assumes  \<open>\<And>n. linear (f n)\<close> and \<open>f \<midarrow>pointwise\<rightarrow> F\<close>
   shows \<open>linear F\<close>
-text\<open>
+  text\<open>
   Explanation: If a family of linear operators converges pointwise, then the limit is also a linear
   operator.
 \<close>
@@ -683,7 +685,7 @@ lemma non_Cauchy_unbounded:
   assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>e > 0\<close> 
     and \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> sum a {Suc n..m} \<ge> e\<close>
   shows \<open>(\<lambda>n. (sum a  {0..n})) \<longlonglongrightarrow> \<infinity>\<close>
-text\<open>
+  text\<open>
   Explanation: If the sequence of partial sums of nonnegative terms is not Cauchy, then it converges
   to infinite.
 \<close>
@@ -789,7 +791,7 @@ lemma sum_Cauchy_positive:
   fixes a ::\<open>_ \<Rightarrow> real\<close>
   assumes \<open>\<And>n. a n \<ge> 0\<close> and \<open>\<exists>K. \<forall>n. (sum a  {0..n}) \<le> K\<close>
   shows \<open>Cauchy (\<lambda>n. sum a {0..n})\<close>
-text\<open>
+  text\<open>
   Explanation: If a series of nonnegative reals is bounded, then the series is 
   Cauchy.
 \<close>
@@ -797,7 +799,7 @@ proof (unfold Cauchy_altdef2, rule, rule)
   fix e::real
   assume \<open>e>0\<close>       
   have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e\<close>
-   proof(rule classical)
+  proof(rule classical)
     assume \<open>\<not>(\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. m > n \<longrightarrow> sum a {Suc n..m} < e)\<close>
     hence \<open>\<forall>M. \<exists>m. \<exists>n. m \<ge> M \<and> n \<ge> M \<and> m > n \<and> \<not>(sum a {Suc n..m} < e)\<close>
       by blast
@@ -839,8 +841,6 @@ proof (unfold Cauchy_altdef2, rule, rule)
   thus \<open>\<exists>N. \<forall>n\<ge>N. dist (sum a {0..n}) (sum a {0..N}) < e\<close> by auto
 qed
 
-(* NOTE: I fixed the type of a's and phi's inputs to be nat because that's what the type was anyway.
-   Also made the type of \<phi>'s outputs explicit for clarity *)
 lemma convergent_series_Cauchy:
   fixes a::\<open>nat \<Rightarrow> real\<close> and \<phi>::\<open>nat \<Rightarrow> 'a::metric_space\<close>
   assumes \<open>\<exists>M. \<forall>n. sum a {0..n} \<le> M\<close> and \<open>\<And>n. dist (\<phi> (Suc n)) (\<phi> n) \<le> a n\<close>
@@ -907,5 +907,9 @@ proof (unfold Cauchy_altdef2, rule, rule)
   thus "\<exists>N. \<forall>n\<ge>N. dist (\<phi> n) (\<phi> N) < e"
     using \<open>0 < e\<close> by fastforce
 qed
+
+unbundle notation_blinfun_apply
+
+unbundle no_notation_norm
 
 end
