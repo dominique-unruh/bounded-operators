@@ -40,6 +40,7 @@ proof-
   finally show ?thesis by blast
 qed
 
+(* TODO: Rename: onorm_Sup_on_ball *)
 lemma sokal_banach_steinhaus:
   includes notation_norm
   assumes \<open>r > 0\<close>
@@ -188,6 +189,7 @@ proof-
   thus ?thesis by simp    
 qed
 
+(* TODO: Rename onorm_Sup_on_ball' *)
 lemma sokal_banach_steinhaus':
   includes notation_norm
   assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close>

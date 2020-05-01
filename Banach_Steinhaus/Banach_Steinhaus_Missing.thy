@@ -56,6 +56,7 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
+(* TODO: name: pointwise_max *)
 (* New definition in order to make formulae shorter *)
 text\<open>The maximum of two functions\<close>
 definition Max:: "('a \<Rightarrow> 'b::ord) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
@@ -65,27 +66,11 @@ lemma max_Sup_absorb_left:
   fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
   shows \<open>Sup ((Max f g) ` X) = Sup (f ` X)\<close>
-    (* Disagreement: 
-The suggested explanation 
 
-text \<open>
-  Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close>, if the supremum of \<^term>\<open>f\<close> is 
-  greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of
-  \<^term>\<open>f\<close>.
-\<close>
+  text \<open>Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close>, if the supremum of \<^term>\<open>f\<close> is 
+    greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of
+    \<^term>\<open>f\<close>. (Under some technical conditions.)\<close>
 
-is inaccurate because it does not mention the assumptions \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> 
-and \<open>bdd_above (g ` X)\<close>. Furthermore, the statement is not about the supremum of max f g taken over
-all the domain, but just over X.
-
-I proposed a more accurate statement.
- *)
-  text \<open>
-  Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close>, such that 
-  the \<^term>\<open>f\<close> and \<^term>\<open>g\<close> are bounded above on \<^term>\<open>X\<close>, if the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is 
-  greater-equal the supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>, then the supremum of \<^term>\<open>Max f g\<close> on \<^term>\<open>X\<close>
-  equals the supremum of \<^term>\<open>f\<close>.
-\<close>
 proof-
   have y_Sup: \<open>y \<in> ((\<lambda> x. max (f x) (g x)) ` X) \<Longrightarrow> y \<le> Sup (f ` X)\<close> for y
   proof-
@@ -117,7 +102,7 @@ proof-
     using y_Sup by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
   moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
     using y_f_X by (metis (mono_tags) cSup_least calculation empty_is_image)  
-  ultimately show ?thesis unfolding Max_def by simp
+ultimately show ?thesis unfolding Max_def by simp
 qed
 
 lemma max_Sup_absorb_right:
