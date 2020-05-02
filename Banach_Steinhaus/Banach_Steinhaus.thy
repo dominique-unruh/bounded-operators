@@ -40,14 +40,10 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* TODO: Rename: onorm_Sup_on_ball *)
-lemma sokal_banach_steinhaus:
+lemma onorm_Sup_on_ball:
   includes notation_norm
   assumes \<open>r > 0\<close>
   shows "\<parallel>f\<parallel> \<le> Sup ( (\<lambda>x. \<parallel>f *\<^sub>v x\<parallel>) ` (ball x r) ) / r"
-    (* TODO: Can you explain (to me) why this is called skokal_banach_steinhaus? *)
-    (* Answer: Because it is from a paper of Sokal about Banach-Steinhaus theorem. Another name is 
-  possible. *)
   text \<open>
   Explanation: Let \<^term>\<open>f\<close> be a bounded operator and let \<^term>\<open>x\<close> be a point. For any \<^term>\<open>r > 0\<close>, 
   the operator norm of \<^term>\<open>f\<close> is bounded above by the supremum of $f$ applied to the open ball of 
@@ -144,7 +140,7 @@ proof-
       using bdd_above_6 by blast
     ultimately show ?thesis
       using max_Sup
-      by (metis (mono_tags, lifting) Banach_Steinhaus_Missing.Max_def image_cong) 
+      by (metis (mono_tags, lifting) Banach_Steinhaus_Missing.pointwise_max_def image_cong) 
   qed 
   have Sup_3': \<open>\<parallel>\<xi>\<parallel> < r \<Longrightarrow> \<parallel>f *\<^sub>v (x + \<xi>)\<parallel> \<in> (\<lambda>\<xi>. \<parallel>f *\<^sub>v (x - \<xi>)\<parallel>) ` ball 0 r\<close> for \<xi>::'a
     by (simp add: norm_2')
@@ -189,14 +185,13 @@ proof-
   thus ?thesis by simp    
 qed
 
-(* TODO: Rename onorm_Sup_on_ball' *)
-lemma sokal_banach_steinhaus':
+lemma onorm_Sup_on_ball':
   includes notation_norm
   assumes \<open>r > 0\<close> and \<open>\<tau> < 1\<close>
   shows \<open>\<exists>\<xi>\<in>ball x r.  \<tau> * r * \<parallel>f\<parallel> \<le> \<parallel>f *\<^sub>v \<xi>\<parallel>\<close>
   text \<open>                 
   In the proof of Banach-Steinhaus theorem, we will use this variation of the 
-  lemma @{text sokal_banach_steinhaus}.
+  lemma @{text onorm_Sup_on_ball}.
 
   Explanation: Let \<^term>\<open>f\<close> be a bounded operator, let \<^term>\<open>x\<close> be a point and let \<^term>\<open>r\<close> be a 
   positive real number. For any real number \<^term>\<open>\<tau> < 1\<close>, there is a point \<^term>\<open>\<xi>\<close> in the open ball 
@@ -214,7 +209,7 @@ next
   have  \<open>norm f > 0\<close>
     using \<open>f \<noteq> 0\<close> by auto
   have \<open>norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>(*\<^sub>v) f \<xi>\<parallel>) ` (ball x r) ) / r\<close>
-    using \<open>r > 0\<close> by (simp add: sokal_banach_steinhaus)  
+    using \<open>r > 0\<close> by (simp add: onorm_Sup_on_ball)  
   hence \<open>r * norm f \<le>  Sup ( (\<lambda>\<xi>.  \<parallel>(*\<^sub>v) f \<xi>\<parallel>) ` (ball x r) )\<close>
     using \<open>0 < r\<close> by (smt divide_strict_right_mono nonzero_mult_div_cancel_left) 
   moreover have \<open>\<tau> * r * norm f < r * norm f\<close>
@@ -279,7 +274,7 @@ proof(rule classical)
     by auto
   hence \<open>\<forall>g::'a \<Rightarrow>\<^sub>L 'b. \<forall>x. \<forall>r. \<exists>\<xi>. g \<noteq> 0 \<and> r > 0
                \<longrightarrow> (\<xi>\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm ((*\<^sub>v) g \<xi>))\<close> 
-    using sokal_banach_steinhaus' by blast
+    using onorm_Sup_on_ball' by blast
   hence \<open>\<exists>\<xi>. \<forall>g::'a \<Rightarrow>\<^sub>L 'b. \<forall>x. \<forall>r. g \<noteq> 0 \<and> r > 0
            \<longrightarrow> ((\<xi> g x r)\<in>ball x r \<and> (of_rat 2/3) * r * norm g \<le> norm ((*\<^sub>v) g (\<xi> g x r)))\<close> 
     by metis

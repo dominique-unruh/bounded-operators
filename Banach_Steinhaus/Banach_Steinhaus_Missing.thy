@@ -56,16 +56,14 @@ proof-
   thus ?thesis unfolding bdd_above_def by blast
 qed
 
-(* TODO: name: pointwise_max *)
-(* New definition in order to make formulae shorter *)
 text\<open>The maximum of two functions\<close>
-definition Max:: "('a \<Rightarrow> 'b::ord) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
-  \<open>Max f g = (\<lambda>x. max (f x) (g x))\<close>
+definition pointwise_max:: "('a \<Rightarrow> 'b::ord) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
+  \<open>pointwise_max f g = (\<lambda>x. max (f x) (g x))\<close>
 
 lemma max_Sup_absorb_left:
   fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<ge> Sup (g ` X)\<close>
-  shows \<open>Sup ((Max f g) ` X) = Sup (f ` X)\<close>
+  shows \<open>Sup ((pointwise_max f g) ` X) = Sup (f ` X)\<close>
 
   text \<open>Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close>, if the supremum of \<^term>\<open>f\<close> is 
     greater-equal the supremum of \<^term>\<open>g\<close>, then the supremum of \<^term>\<open>max f g\<close> equals the supremum of
@@ -102,31 +100,31 @@ proof-
     using y_Sup by (simp add: \<open>X \<noteq> {}\<close> cSup_least) 
   moreover have \<open>Sup ((\<lambda> x. max (f x) (g x)) ` X) \<ge> Sup (f ` X)\<close>
     using y_f_X by (metis (mono_tags) cSup_least calculation empty_is_image)  
-ultimately show ?thesis unfolding Max_def by simp
+  ultimately show ?thesis unfolding pointwise_max_def by simp
 qed
 
 lemma max_Sup_absorb_right:
   fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close> and \<open>Sup (f ` X) \<le> Sup (g ` X)\<close>
-  shows \<open>Sup ((Max f g) ` X) = Sup (g ` X)\<close>
+  shows \<open>Sup ((pointwise_max f g) ` X) = Sup (g ` X)\<close>
   text \<open>
   Explanation: For real-valued functions \<^term>\<open>f\<close> and \<^term>\<open>g\<close> and a nonempty set \<^term>\<open>X\<close>, such that 
   the \<^term>\<open>f\<close> and \<^term>\<open>g\<close> are bounded above on \<^term>\<open>X\<close>, if the supremum of \<^term>\<open>f\<close> on \<^term>\<open>X\<close> is 
-  lower-equal the supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>, then the supremum of \<^term>\<open>Max f g\<close> on \<^term>\<open>X\<close>
+  lower-equal the supremum of \<^term>\<open>g\<close> on \<^term>\<open>X\<close>, then the supremum of \<^term>\<open>pointwise_max f g\<close> on \<^term>\<open>X\<close>
   equals the supremum of \<^term>\<open>g\<close>. This is the right analog of @{text max_Sup_absorb_left}.
 \<close>
 proof-
-  have \<open>Sup ((Max g f) ` X) = Sup (g ` X)\<close>
+  have \<open>Sup ((pointwise_max g f) ` X) = Sup (g ` X)\<close>
     using  assms by (simp add: max_Sup_absorb_left)     
-  moreover have \<open>Max g f = Max f g\<close>
-    unfolding Max_def  by auto
+  moreover have \<open>pointwise_max g f = pointwise_max f g\<close>
+    unfolding pointwise_max_def  by auto
   ultimately show ?thesis by simp
 qed
 
 lemma max_Sup:
   fixes f g::\<open>'a \<Rightarrow> real\<close>
   assumes \<open>X \<noteq> {}\<close> and \<open>bdd_above (f ` X)\<close> and \<open>bdd_above (g ` X)\<close>
-  shows \<open>Sup ((Max f g) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
+  shows \<open>Sup ((pointwise_max f g) ` X) = max (Sup (f ` X)) (Sup (g ` X))\<close>
   text \<open>
   Explanation: Let \<^term>\<open>X\<close> be a nonempty set. Two supremum over \<^term>\<open>X\<close> of the maximum of two 
   real-value functions is equal to the maximum of their suprema over \<^term>\<open>X\<close>, provided that the
@@ -138,7 +136,7 @@ next
   case False 
   have f1: "\<not> 0 \<le> Sup (f ` X) + - 1 * Sup (g ` X)"
     using False by linarith
-  hence "Sup (Banach_Steinhaus_Missing.Max f g ` X) = Sup (g ` X)"
+  hence "Sup (Banach_Steinhaus_Missing.pointwise_max f g ` X) = Sup (g ` X)"
     by (simp add: assms(1) assms(2) assms(3) max_Sup_absorb_right)
   thus ?thesis
     using f1 by linarith
