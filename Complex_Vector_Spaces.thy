@@ -1,101 +1,78 @@
-section \<open>Complex Vector Spaces\<close>
-
-(*
-Authors: 
-
-  Dominique Unruh, University of Tartu, unruh@ut.ee
-  Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
+(*  Title:      Complex_Vector_Spaces.thy
+    Author:     Dominique Unruh (University of Tartu)
+    Author:     Jose Manuel Rodriguez Caballero (University of Tartu)
 *)
 
-theory Complex_Vector_Spaces
-  imports 
-    "HOL-ex.Sketch_and_Explore"
-    "HOL-Analysis.Elementary_Topology"
-    Ordered_Complex
-    "HOL-Analysis.Operator_Norm"
-    "HOL-Analysis.Elementary_Normed_Spaces"
-    Unobtrusive_NSA
-    "HOL-Library.Set_Algebras"
-begin
+section \<open>Vector Spaces and Algebras over the Complex\<close>
 
-bundle notation_norm begin
-notation norm ("\<parallel>_\<parallel>")
-end
+theory Complex_Vector_Spaces
+
+imports 
+  "HOL-ex.Sketch_and_Explore"
+  Complex_Main
+  Unobtrusive_NSA
+  "HOL-Analysis.Operator_Norm"
+  "HOL-Analysis.Elementary_Normed_Spaces"
+  "HOL-Library.Set_Algebras"
+
+begin
+text\<open>
+  We extend the results in @text{HOL/Real_Vector_Spaces.thy (Brian Huffman, Johannes Hölzl)} 
+  from the real numbers to the complex numbers as the ground field.
+\<close>
 
 subsection \<open>Complex vector spaces\<close>
 
-class scaleC = scaleR +
+class scaleC =
   fixes scaleC :: "complex \<Rightarrow> 'a \<Rightarrow> 'a" (infixr "*\<^sub>C" 75)
-  assumes scaleR_scaleC: "scaleR r = scaleC (complex_of_real r)"
 begin
 
 abbreviation divideC :: "'a \<Rightarrow> complex \<Rightarrow> 'a"  (infixl "'/\<^sub>C" 70)
-  where "x /\<^sub>C c \<equiv> scaleC (inverse c) x"
-
-lemma scaleC_real: assumes "r\<in>\<real>" shows "r *\<^sub>C x = Re r *\<^sub>R x"
-  unfolding scaleR_scaleC using assms by simp
+  where "x /\<^sub>C r \<equiv> inverse r *\<^sub>C x"
 
 end
 
-class complex_vector = scaleC + ab_group_add +
-  assumes scaleC_add_right: "a *\<^sub>C (x + y) = (a *\<^sub>C x) + (a *\<^sub>C y)"
-    and scaleC_add_left: "(a + b) *\<^sub>C x = (a *\<^sub>C x) + (b *\<^sub>C x)"
-    and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
-    and scaleC_one[simp]: "1 *\<^sub>C x = x"
-
-(*
-(* TODO remove (nothing like that in Real_Vector_Spaces) *)
-(* Jose: I find errors when I remove it *)
-interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
-  apply unfold_locales
-     apply (rule scaleC_add_right)
-    apply (rule scaleC_add_left)
-   apply (rule scaleC_scaleC)
-  by (rule scaleC_one)
-*)
+class complex_vector = real_vector + scaleC +
+  assumes scaleC_add_right: "a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y"
+    and scaleC_add_left: "(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x"
+    and scaleC_scaleC: "a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x"
+    and scaleC_one: "1 *\<^sub>C x = x"
+    and scaleR_scaleC: "(*\<^sub>R) r  = (*\<^sub>C) (complex_of_real r)"
 
 subclass (in complex_vector) real_vector
-  by (standard, simp_all add: scaleR_scaleC scaleC_add_right scaleC_add_left)
+  by (rule real_vector_axioms)
 
 class complex_algebra = complex_vector + ring +
-  assumes mult_scaleC_left [simp]: "scaleC a x * y = scaleC a (x * y)"
-    and mult_scaleC_right [simp]: "x * scaleC a y = scaleC a (x * y)"
-
-subclass (in complex_algebra) real_algebra
-  by (standard, simp_all add: scaleR_scaleC)
+  assumes mult_scaleC_left [simp]: "a *\<^sub>C x * y = a *\<^sub>C (x * y)"
+    and mult_scaleC_right [simp]: "x * a *\<^sub>C y = a *\<^sub>C (x * y)"
 
 class complex_algebra_1 = complex_algebra + ring_1
 
-subclass (in complex_algebra_1) real_algebra_1 ..
-
 class complex_div_algebra = complex_algebra_1 + division_ring
-
-subclass (in complex_div_algebra) real_div_algebra ..
 
 class complex_field = complex_div_algebra + field
 
-subclass (in complex_field) real_field ..
-
-instantiation complex :: scaleC
-begin
-definition complex_scaleC_def [simp]: "scaleC = (*)"
-instance 
-  apply intro_classes
-  apply (rule ext)
-  by (simp add: scaleR_conv_of_real)
-end
-
 instantiation complex :: complex_field
 begin
+
+definition complex_scaleC_def [simp]: "a *\<^sub>C x = a * x"
+
 instance
-  apply intro_classes
-  by (simp_all add: algebra_simps scaleR_scaleC)
+  apply standard
+        apply auto
+    apply (rule ring_class.ring_distribs(1))
+   apply (rule ring_class.ring_distribs(2))
+  using scaleR_conv_of_real by fastforce
+
 end
 
-subsection \<open>Bounded Linear and Bilinear Operators\<close>
+locale clinear = Vector_Spaces.linear "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" 
+  "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+begin
 
-definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
-  "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+lemmas scaleC = scale
+
+end
 
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
@@ -105,10 +82,26 @@ global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightar
     and subspace_raw_def: subspace = complex_vector.subspace
     and span_raw_def: span = complex_vector.span
     and extend_basis_raw_def: extend_basis = complex_vector.extend_basis
-    and dim_raw_def: dim = complex_vector.dim
-  apply (simp add: scaleC_add_left scaleC_add_right vector_space_def)    
-  unfolding clinear_def
-  by auto
+    and dim_raw_def: dim = complex_vector.dim 
+proof unfold_locales 
+  show f1: "a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y" for a and x y::'a
+    by (rule scaleC_add_right)
+
+  show f2: "(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x" for a b::complex and x::'a
+    by(rule scaleC_add_left)
+
+  show f3: "a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x" for a b::complex and x::'a
+    by (rule scaleC_scaleC)
+
+  show f4: "1 *\<^sub>C x = x" for x::'a
+    by (rule scaleC_one)
+
+  show "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+    unfolding clinear_def by simp
+
+  show "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+    unfolding clinear_def using complex_scaleC_def by presburger
+qed
 
 hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.dependent
@@ -119,18 +112,22 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.extend_basis
   complex_vector.dim
 
-abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+abbreviation "complex_independent x \<equiv> \<not> dependent x"
 
-global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" 
+  "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
   defines construct_raw_def: construct = complex_vector.construct
     apply unfold_locales
-  unfolding clinear_def
-  by auto
+  unfolding clinear_def complex_scaleC_def
+  by (rule refl)+
 
 hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.construct
+
+lemma clinear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
+  unfolding clinear_def by (rule Vector_Spaces.linear_compose)
 
 text \<open>Recover original theorem names\<close>
 
@@ -149,48 +146,77 @@ lemmas scaleC_right_imp_eq = complex_vector.scale_right_imp_eq
 lemmas scaleC_cancel_left = complex_vector.scale_cancel_left
 lemmas scaleC_cancel_right = complex_vector.scale_cancel_right
 
-lemma scaleC_minus1_left [simp]: "scaleC (-1) x = - x"
+lemma [field_simps]:
+  "c \<noteq> 0 \<Longrightarrow> a = b /\<^sub>C c \<longleftrightarrow> c *\<^sub>C a = b"
+  "c \<noteq> 0 \<Longrightarrow> b /\<^sub>C c = a \<longleftrightarrow> b = c *\<^sub>C a"
+  "c \<noteq> 0 \<Longrightarrow> a + b /\<^sub>C c = (c *\<^sub>C a + b) /\<^sub>C c"
+  "c \<noteq> 0 \<Longrightarrow> a /\<^sub>C c + b = (a + c *\<^sub>C b) /\<^sub>C c"
+  "c \<noteq> 0 \<Longrightarrow> a - b /\<^sub>C c = (c *\<^sub>C a - b) /\<^sub>C c"
+  "c \<noteq> 0 \<Longrightarrow> a /\<^sub>C c - b = (a - c *\<^sub>C b) /\<^sub>C c"
+  "c \<noteq> 0 \<Longrightarrow> - (a /\<^sub>C c) + b = (- a + c *\<^sub>C b) /\<^sub>C c"
+  "c \<noteq> 0 \<Longrightarrow> - (a /\<^sub>C c) - b = (- a - c *\<^sub>C b) /\<^sub>C c"
+  for a b :: "'a :: complex_vector"
+  by (auto simp add: scaleC_add_right scaleC_add_left scaleC_diff_right scaleC_diff_left)
+
+text \<open>Legacy names\<close>
+
+lemmas scaleC_left_distrib = scaleC_add_left
+lemmas scaleC_right_distrib = scaleC_add_right
+lemmas scaleC_left_diff_distrib = scaleC_diff_left
+lemmas scaleC_right_diff_distrib = scaleC_diff_right
+
+(* Ask to Dominique *)
+(*
+lemmas linear_injective_0 = linear_inj_iff_eq_0
+  and linear_injective_on_subspace_0 = linear_inj_on_iff_eq_0
+  and linear_cmul = linear_scale
+  and linear_scaleR = linear_scale_self
+  and subspace_mul = subspace_scale
+  and span_linear_image = linear_span_image
+  and span_0 = span_zero
+  and span_mul = span_scale
+  and injective_scaleR = injective_scale
+*)
+
+lemma scaleC_minus1_left [simp]: "(-1) *\<^sub>C x = - x"
   for x :: "'a::complex_vector"
   using scaleC_minus_left [of 1 x] by simp
 
 lemma scaleC_2:
   fixes x :: "'a::complex_vector"
-  shows "scaleC 2 x = x + x"
-  unfolding one_add_one [symmetric] scaleC_add_left by simp
+  shows "2 *\<^sub>C  x = x + x"
+  unfolding one_add_one [symmetric] scaleC_left_distrib by simp
 
 lemma scaleC_half_double [simp]:
   fixes a :: "'a::complex_vector"
   shows "(1 / 2) *\<^sub>C (a + a) = a"
-proof -
-  have "\<And>r. r *\<^sub>C (a + a) = (r * 2) *\<^sub>C a"
-    by (metis scaleC_2 scaleC_scaleC)
-  thus ?thesis
-    by simp
-qed
+  by (metis (no_types) nonzero_mult_div_cancel_right scaleC_2 scaleC_one scaleC_scaleC
+      times_divide_eq_left zero_neq_numeral)
 
-interpretation scaleC_left: additive "(\<lambda>a. scaleC a x :: 'a::complex_vector)"
-  by standard (rule scaleC_add_left)
+lemma clinear_scale_complex:
+  fixes r::complex shows "clinear f \<Longrightarrow> f (r * b) = r * f b"
+  by (metis (no_types) complex_scaleC_def complex_vector.linear_scale)
 
-interpretation scaleC_right: additive "(\<lambda>x. scaleC a x :: 'a::complex_vector)"
-  by standard (rule scaleC_add_right)
+interpretation scaleC_left: additive "(\<lambda>a. a *\<^sub>C x :: 'a::complex_vector)"
+  by standard (rule scaleC_left_distrib)
+
+interpretation scaleC_right: additive "(\<lambda>x. a *\<^sub>C x :: 'a::complex_vector)"
+  by standard (rule scaleC_right_distrib)
 
 lemma nonzero_inverse_scaleC_distrib:
-  "a \<noteq> 0 \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> inverse (scaleC a x) = scaleC (inverse a) (inverse x)"
+  "a \<noteq> 0 \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> inverse (a *\<^sub>C x) = (inverse a) *\<^sub>C (inverse x)"
   for x :: "'a::complex_div_algebra"
   by (rule inverse_unique) simp
 
-lemma inverse_scaleC_distrib: "inverse (scaleC a x) = scaleC (inverse a) (inverse x)"
+lemma inverse_scaleC_distrib: "inverse (a *\<^sub>C x) = (inverse a) *\<^sub>C (inverse x)"
   for x :: "'a::{complex_div_algebra,division_ring}"
-  apply (cases "a = 0")
-   apply simp
-  apply (cases "x = 0")
-   apply simp
-  by (erule (1) nonzero_inverse_scaleC_distrib)
+  by (metis inverse_zero nonzero_inverse_scaleC_distrib scale_eq_0_iff)
 
+lemmas sum_constant_scaleC = complex_vector.sum_constant_scale\<comment> \<open>legacy name\<close>
 
-lemma sum_constant_scaleC: "(\<Sum>x\<in>A. y) = of_nat (card A) *\<^sub>C y"
-  for y :: "'a::complex_vector"
-  by (induct A rule: infinite_finite_induct) (simp_all add: algebra_simps)
+(* Ask to Dominique
+named_theorems vector_add_divide_simps "to simplify sums of scaled vectors"
+*)
 
 lemma [vector_add_divide_simps]:
   "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
@@ -202,7 +228,8 @@ lemma [vector_add_divide_simps]:
   "(a / z) *\<^sub>C v - w = (if z = 0 then -w else (a *\<^sub>C v - z *\<^sub>C w) /\<^sub>C z)"
   "(a / z) *\<^sub>C v - b *\<^sub>C w = (if z = 0 then -b *\<^sub>C w else (a *\<^sub>C v - (b * z) *\<^sub>C w) /\<^sub>C z)"
   for v :: "'a :: complex_vector"
-  by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
+  by (simp_all add: divide_inverse_commute scaleC_add_right scaleC_diff_right)
+
 
 lemma eq_vector_fraction_iff [vector_add_divide_simps]:
   fixes x :: "'a :: complex_vector"
@@ -219,17 +246,15 @@ lemma complex_vector_affinity_eq:
   assumes m0: "m \<noteq> 0"
   shows "m *\<^sub>C x + c = y \<longleftrightarrow> x = inverse m *\<^sub>C y - (inverse m *\<^sub>C c)"
     (is "?lhs \<longleftrightarrow> ?rhs")
-proof
-  assume ?lhs
-  hence "m *\<^sub>C x = y - c" by (simp add: field_simps)
-  hence "inverse m *\<^sub>C (m *\<^sub>C x) = inverse m *\<^sub>C (y - c)" by simp
-  thus "x = inverse m *\<^sub>C y - (inverse m *\<^sub>C c)"
-    using m0
-    by (simp add: complex_vector.scale_right_diff_distrib)
+proof auto
+  assume a1: "y = m *\<^sub>C x + c"
+  hence "(y - c) /\<^sub>C m = x"
+    using m0 by fastforce
+  thus "x = (m *\<^sub>C x + c) /\<^sub>C m - c /\<^sub>C m"
+    using a1 complex_vector.scale_right_diff_distrib by fastforce
 next
-  assume ?rhs
-  with m0 show "m *\<^sub>C x + c = y"
-    by (simp add: complex_vector.scale_right_diff_distrib)
+  assume a1: "x = y /\<^sub>C m - c /\<^sub>C m" thus "m *\<^sub>C (y /\<^sub>C m - c /\<^sub>C m) + c = y"
+    by (simp add: complex_vector.scale_right_diff_distrib m0)
 qed
 
 lemma complex_vector_eq_affinity: "m \<noteq> 0 \<Longrightarrow> y = m *\<^sub>C x + c \<longleftrightarrow> inverse m *\<^sub>C y - (inverse m *\<^sub>C c) = x"
@@ -258,13 +283,67 @@ lemma scaleC_collapse [simp]: "(1 - u) *\<^sub>C a + u *\<^sub>C a = a"
   for a :: "'a::complex_vector"
   by (simp add: algebra_simps)
 
+(* NEW *)
+subsection\<open>Conjugate vector space and antilinear maps\<close>
 
-subsection \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
+definition cnj_scaleC :: "complex \<Rightarrow> 'a::complex_vector \<Rightarrow> 'a" (infixr "\<cdot>\<^sub>C" 75) where
+  "a \<cdot>\<^sub>C x = (cnj a) *\<^sub>C x"
+
+lemma cnj_scaleC_add_right: "a \<cdot>\<^sub>C (x + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+  unfolding cnj_scaleC_def by (simp add: scaleC_add_right) 
+
+lemma cnj_scaleC_add_left: "(a + b) \<cdot>\<^sub>C x = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+  by (simp add: cnj_scaleC_def scaleC_add_left)  
+
+lemma cnj_scaleC_scaleC: "a \<cdot>\<^sub>C b \<cdot>\<^sub>C x =  (a * b) \<cdot>\<^sub>C x"
+  unfolding cnj_scaleC_def using scaleC_scaleC  by simp
+
+lemma cnj_scaleC_one: "1 \<cdot>\<^sub>C x = x"
+  unfolding cnj_scaleC_def using scaleC_one by simp
+
+lemma cnj_scaleR_scaleC: "(*\<^sub>R) r  = (\<cdot>\<^sub>C) (complex_of_real r)"
+  unfolding cnj_scaleC_def using scaleR_scaleC by simp
+
+locale antilinear = Vector_Spaces.linear "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" 
+  "cnj_scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+begin
+
+lemmas scaleC = scale
+
+end
+
+
+lemma antilinear_intro:
+  assumes "\<And>x y. f (x + y) = f x + f y"
+    and "\<And>r x. f (r *\<^sub>C x) = r \<cdot>\<^sub>C (f x)"
+  shows "antilinear f"
+proof
+  show "a \<cdot>\<^sub>C ((x::'b) + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+    for a :: complex and x y :: 'b
+    by (rule cnj_scaleC_add_right)    
+  show "(a + b) \<cdot>\<^sub>C (x::'b) = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+    for a b :: complex and x :: 'b
+    by (rule cnj_scaleC_add_left)    
+  show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C (x::'b) = (a * b) \<cdot>\<^sub>C x"
+    for a :: complex and b :: complex and x :: 'b
+    by (rule cnj_scaleC_scaleC)    
+  show "1 \<cdot>\<^sub>C (x::'b) = x"
+    for x :: 'b
+    by (rule cnj_scaleC_one)    
+  show "f (b1 + b2) = f b1 + f b2"
+    for b1 b2 :: 'a
+    by (rule assms(1))    
+  show "f (r *\<^sub>C b) = r \<cdot>\<^sub>C f b"
+    for r :: complex and b :: 'a
+    by (rule assms(2))    
+qed
+
+subsection \<open>Embedding of the Complex into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
 
 definition of_complex :: "complex \<Rightarrow> 'a::complex_algebra_1"
-  where "of_complex c = scaleC c 1"
+  where "of_complex r = r *\<^sub>C 1"
 
-lemma scaleC_conv_of_complex: "scaleC r x = of_complex r * x"
+lemma scaleC_conv_of_complex: "r *\<^sub>C x = of_complex r * x"
   by (simp add: of_complex_def)
 
 lemma of_complex_0 [simp]: "of_complex 0 = 0"
@@ -274,16 +353,17 @@ lemma of_complex_1 [simp]: "of_complex 1 = 1"
   by (simp add: of_complex_def)
 
 lemma of_complex_add [simp]: "of_complex (x + y) = of_complex x + of_complex y"
-  by (simp add: of_complex_def scaleC_add_left)
+  by (simp add: of_complex_def scaleC_left_distrib)
 
 lemma of_complex_minus [simp]: "of_complex (- x) = - of_complex x"
   by (simp add: of_complex_def)
 
 lemma of_complex_diff [simp]: "of_complex (x - y) = of_complex x - of_complex y"
-  by (simp add: of_complex_def scaleC_diff_left)
+  by (simp add: of_complex_def scaleC_left_diff_distrib)
+
 
 lemma of_complex_mult [simp]: "of_complex (x * y) = of_complex x * of_complex y"
-  by (simp add: of_complex_def mult.commute)
+  by (simp add: of_complex_def)
 
 lemma of_complex_sum[simp]: "of_complex (sum f s) = (\<Sum>x\<in>s. of_complex (f x))"
   by (induct s rule: infinite_finite_induct) auto
@@ -301,7 +381,7 @@ lemma of_complex_inverse [simp]:
 
 lemma nonzero_of_complex_divide:
   "y \<noteq> 0 \<Longrightarrow> of_complex (x / y) = (of_complex x / of_complex y :: 'a::complex_field)"
-  by (simp add: divide_inverse nonzero_of_complex_inverse)
+  by (simp add: divide_inverse)
 
 lemma of_complex_divide [simp]:
   "of_complex (x / y) = (of_complex x / of_complex y :: 'a::complex_div_algebra)"
@@ -320,15 +400,18 @@ lemma inj_of_complex: "inj of_complex"
 lemmas of_complex_eq_0_iff [simp] = of_complex_eq_iff [of _ 0, simplified]
 lemmas of_complex_eq_1_iff [simp] = of_complex_eq_iff [of _ 1, simplified]
 
+lemma minus_of_complex_eq_of_complex_iff [simp]: "-of_complex x = of_complex y \<longleftrightarrow> -x = y"
+  using of_complex_eq_iff[of "-x" y] by (simp only: of_complex_minus)
+
+lemma of_complex_eq_minus_of_complex_iff [simp]: "of_complex x = -of_complex y \<longleftrightarrow> x = -y"
+  using of_complex_eq_iff[of x "-y"] by (simp only: of_complex_minus)
+
 lemma of_complex_eq_id [simp]: "of_complex = (id :: complex \<Rightarrow> complex)"
   by (rule ext) (simp add: of_complex_def)
 
 text \<open>Collapse nested embeddings.\<close>
 lemma of_complex_of_nat_eq [simp]: "of_complex (of_nat n) = of_nat n"
   by (induct n) auto
-
-lemma of_complex_of_real_eq [simp]: "of_complex (of_real n) = of_real n"
-  unfolding of_complex_def of_real_def unfolding scaleR_scaleC by simp
 
 lemma of_complex_of_int_eq [simp]: "of_complex (of_int z) = of_int z"
   by (cases z rule: int_diff_cases) simp
@@ -340,17 +423,25 @@ lemma of_complex_neg_numeral [simp]: "of_complex (- numeral w) = - numeral w"
   using of_complex_of_int_eq [of "- numeral w"] by simp
 
 text \<open>Every complex algebra has characteristic zero.\<close>
-instance complex_algebra_1 < ring_char_0 ..
+instance complex_algebra_1 < ring_char_0
+proof
+  from inj_of_complex inj_of_nat have "inj (of_complex \<circ> of_nat)"
+    by (rule inj_compose)
+  thus "inj (of_nat :: nat \<Rightarrow> 'a)"
+    by (simp add: comp_def)
+qed
 
 lemma fraction_scaleC_times [simp]:
   fixes a :: "'a::complex_algebra_1"
   shows "(numeral u / numeral v) *\<^sub>C (numeral w * a) = (numeral u * numeral w / numeral v) *\<^sub>C a"
-  by (metis (no_types, lifting) of_complex_numeral scaleC_conv_of_complex scaleC_scaleC times_divide_eq_left)
+  by (metis (no_types, lifting) of_complex_numeral scaleC_conv_of_complex scaleC_scaleC
+      times_divide_eq_left)
 
 lemma inverse_scaleC_times [simp]:
   fixes a :: "'a::complex_algebra_1"
   shows "(1 / numeral v) *\<^sub>C (numeral w * a) = (numeral w / numeral v) *\<^sub>C a"
-  by (metis divide_inverse_commute inverse_eq_divide of_complex_numeral scaleC_conv_of_complex scaleC_scaleC)
+  by (metis divide_inverse_commute inverse_eq_divide of_complex_numeral scaleC_conv_of_complex 
+      scaleC_scaleC)
 
 lemma scaleC_times [simp]:
   fixes a :: "'a::complex_algebra_1"
@@ -359,374 +450,806 @@ lemma scaleC_times [simp]:
 
 instance complex_field < field_char_0 ..
 
-
 subsection \<open>The Set of Complex Numbers\<close>
 
-definition Complexs :: "'a::complex_algebra_1 set"  ("\<complex>")
+definition Complexes :: "'a::complex_algebra_1 set"  ("\<complex>")
   where "\<complex> = range of_complex"
 
-lemma Complexs_of_complex [simp]: "of_complex r \<in> \<complex>"
-  by (simp add: Complexs_def)
+lemma Complexes_of_complex [simp]: "of_complex r \<in> \<complex>"
+  by (simp add: Complexes_def)
 
-lemma Complexs_of_real [simp]: "of_real r \<in> \<complex>"
-  unfolding Complexs_def of_real_def of_complex_def 
-  apply (subst scaleR_scaleC) by simp
+lemma Complexes_of_int [simp]: "of_int z \<in> \<complex>"
+  by (subst of_complex_of_int_eq [symmetric], rule Complexes_of_complex)
 
-lemma Reals_in_Complexs: "\<real> \<subseteq> \<complex>"
-  unfolding Reals_def by auto
+lemma Complexes_of_nat [simp]: "of_nat n \<in> \<complex>"
+  by (subst of_complex_of_nat_eq [symmetric], rule Complexes_of_complex)
 
-lemma Complexs_of_int [simp]: "of_int z \<in> \<complex>"
-  by (subst of_complex_of_int_eq [symmetric], rule Complexs_of_complex)
+lemma Complexes_numeral [simp]: "numeral w \<in> \<complex>"
+  by (subst of_complex_numeral [symmetric], rule Complexes_of_complex)
 
-lemma Complexs_of_nat [simp]: "of_nat n \<in> \<complex>"
-  by (subst of_complex_of_nat_eq [symmetric], rule Complexs_of_complex)
+lemma Complexes_0 [simp]: "0 \<in> \<complex>" and Complexes_1 [simp]: "1 \<in> \<complex>" 
+  and Complexes_I [simp]: "\<i> \<in> \<complex>"
+  by (simp_all add: Complexes_def)
 
-lemma Complexs_numeral [simp]: "numeral w \<in> \<complex>"
-  by (subst of_complex_numeral [symmetric], rule Complexs_of_complex)
+lemma Complexes_add [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a + b \<in> \<complex>"
+  by (metis (no_types, hide_lams) Complexes_def Complexes_of_complex imageE of_complex_add)
 
-lemma Complexs_0 [simp]: "0 \<in> \<complex>"
-  apply (unfold Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_0 [symmetric])
+lemma Complexes_minus [simp]: "a \<in> \<complex> \<Longrightarrow> - a \<in> \<complex>"
+  by (auto simp: Complexes_def)
 
-lemma Complexs_1 [simp]: "1 \<in> \<complex>"
-  apply (unfold Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_1 [symmetric])
+lemma Complexes_minus_iff [simp]: "- a \<in> \<complex> \<longleftrightarrow> a \<in> \<complex>"
+  apply (auto simp: Complexes_def)
+  by (metis add.inverse_inverse of_complex_minus rangeI)
 
+lemma Complexes_diff [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a - b \<in> \<complex>"
+  by (metis Complexes_add Complexes_minus_iff add_uminus_conv_diff)
 
-lemma Complexs_add [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a + b \<in> \<complex>"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_add [symmetric])
+lemma Complexes_mult [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a * b \<in> \<complex>"
+  by (metis (no_types, lifting) Complexes_def Complexes_of_complex imageE of_complex_mult)
 
-
-lemma Complexs_minus [simp]: "a \<in> \<complex> \<Longrightarrow> - a \<in> \<complex>"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_minus [symmetric])
-
-
-lemma Complexs_diff [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a - b \<in> \<complex>"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_diff [symmetric])
-
-
-lemma Complexs_mult [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a * b \<in> \<complex>"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_mult [symmetric])
-
-
-lemma nonzero_Complexs_inverse: "a \<in> \<complex> \<Longrightarrow> a \<noteq> 0 \<Longrightarrow> inverse a \<in> \<complex>"
+lemma nonzero_Complexes_inverse: "a \<in> \<complex> \<Longrightarrow> a \<noteq> 0 \<Longrightarrow> inverse a \<in> \<complex>"
   for a :: "'a::complex_div_algebra"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (erule nonzero_of_complex_inverse [symmetric])
+  by (metis Complexes_def Complexes_of_complex imageE of_complex_inverse)
 
-
-lemma Complexs_inverse: "a \<in> \<complex> \<Longrightarrow> inverse a \<in> \<complex>"
+lemma Complexes_inverse: "a \<in> \<complex> \<Longrightarrow> inverse a \<in> \<complex>"
   for a :: "'a::{complex_div_algebra,division_ring}"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_inverse [symmetric])
+  using nonzero_Complexes_inverse by fastforce
 
-
-lemma Complexs_inverse_iff [simp]: "inverse x \<in> \<complex> \<longleftrightarrow> x \<in> \<complex>"
+lemma Complexes_inverse_iff [simp]: "inverse x \<in> \<complex> \<longleftrightarrow> x \<in> \<complex>"
   for x :: "'a::{complex_div_algebra,division_ring}"
-  by (metis Complexs_inverse inverse_inverse_eq)
+  by (metis Complexes_inverse inverse_inverse_eq)
 
-lemma nonzero_Complexs_divide: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a / b \<in> \<complex>"
+lemma nonzero_Complexes_divide: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> b \<noteq> 0 \<Longrightarrow> a / b \<in> \<complex>"
   for a b :: "'a::complex_field"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (erule nonzero_of_complex_divide [symmetric])
+  by (simp add: divide_inverse)
 
-
-lemma Complexs_divide [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a / b \<in> \<complex>"
+lemma Complexes_divide [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a / b \<in> \<complex>"
   for a b :: "'a::{complex_field,field}"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_divide [symmetric])
+  using nonzero_Complexes_divide by fastforce
 
-
-lemma Complexs_power [simp]: "a \<in> \<complex> \<Longrightarrow> a ^ n \<in> \<complex>"
+lemma Complexes_power [simp]: "a \<in> \<complex> \<Longrightarrow> a ^ n \<in> \<complex>"
   for a :: "'a::complex_algebra_1"
-  apply (auto simp add: Complexs_def)
-  apply (rule range_eqI)
-  by (rule of_complex_power [symmetric])
+  by (metis Complexes_def Complexes_of_complex imageE of_complex_power)
 
-
-lemma Complexs_cases [cases set: Complexs]:
+lemma Complexes_cases [cases set: Complexes]:
   assumes "q \<in> \<complex>"
   obtains (of_complex) r where "q = of_complex r"
-  unfolding Complexs_def
+  unfolding Complexes_def
 proof -
-  from \<open>q \<in> \<complex>\<close> have "q \<in> range of_complex" unfolding Complexs_def .
+  from \<open>q \<in> \<complex>\<close> have "q \<in> range of_complex" unfolding Complexes_def .
   then obtain r where "q = of_complex r" ..
   thus thesis ..
 qed
 
-lemma sum_in_Complexs [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> sum f s \<in> \<complex>"
+lemma sum_in_Complexes [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> sum f s \<in> \<complex>"
 proof (induct s rule: infinite_finite_induct)
-  case infinite
-  thus ?case by (metis Complexs_0 sum.infinite)
+  case infinite thus ?case by (metis Complexes_0 sum.infinite)
 qed simp_all
 
-lemma prod_in_Complexs [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> prod f s \<in> \<complex>"
+lemma prod_in_Complexes [intro,simp]: "(\<And>i. i \<in> s \<Longrightarrow> f i \<in> \<complex>) \<Longrightarrow> prod f s \<in> \<complex>"
 proof (induct s rule: infinite_finite_induct)
   case infinite
-  thus ?case by (metis Complexs_1 prod.infinite)
+  thus ?case by (metis Complexes_1 prod.infinite)
 qed simp_all
 
-lemma Complexs_induct [case_names of_complex, induct set: Complexs]:
+lemma Complexes_induct [case_names of_complex, induct set: Complexes]:
   "q \<in> \<complex> \<Longrightarrow> (\<And>r. P (of_complex r)) \<Longrightarrow> P q"
-  by (rule Complexs_cases) auto
-
-subsection \<open>Ordered complex vector spaces\<close>
-
-class ordered_complex_vector = complex_vector + ordered_ab_group_add +
-  assumes scaleC_left_mono: "x \<le> y \<Longrightarrow> 0 \<le> a \<Longrightarrow> a *\<^sub>C x \<le> a *\<^sub>C y"
-    and scaleC_right_mono: "a \<le> b \<Longrightarrow> 0 \<le> x \<Longrightarrow> a *\<^sub>C x \<le> b *\<^sub>C x"
-begin
-
-subclass ordered_real_vector
-  apply standard unfolding scaleR_scaleC 
-   apply (rule scaleC_left_mono) apply auto[2] 
-  apply (rule scaleC_right_mono) by auto
-
-lemma scaleC_mono: "a \<le> b \<Longrightarrow> x \<le> y \<Longrightarrow> 0 \<le> b \<Longrightarrow> 0 \<le> x \<Longrightarrow> a *\<^sub>C x \<le> b *\<^sub>C y"
-  apply (erule scaleC_right_mono [THEN order_trans])
-   apply assumption
-  apply (erule scaleC_left_mono)
-  by assumption
-
-
-lemma scaleC_mono': "a \<le> b \<Longrightarrow> c \<le> d \<Longrightarrow> 0 \<le> a \<Longrightarrow> 0 \<le> c \<Longrightarrow> a *\<^sub>C c \<le> b *\<^sub>C d"
-  by (rule scaleC_mono) (auto intro: order.trans)
-
-lemma pos_le_divideRI:
-  assumes "0 < c"
-    and "c *\<^sub>C a \<le> b"
-  shows "a \<le> b /\<^sub>C c"
-proof -
-  have "a = inverse c *\<^sub>C c *\<^sub>C a" using assms(1) by auto
-  also have "\<dots> \<le> inverse c *\<^sub>C b"
-    apply (rule scaleC_left_mono) using assms by auto
-  finally show ?thesis by simp
-qed
-
-lemma pos_le_divideR_eq:
-  assumes "0 < c"
-  shows "a \<le> b /\<^sub>C c \<longleftrightarrow> c *\<^sub>C a \<le> b"
-    (is "?lhs \<longleftrightarrow> ?rhs")
-proof -
-  have "0 \<noteq> c"
-    using assms by blast
-  thus ?thesis
-    using assms local.pos_le_divideRI local.scaleC_left_mono preorder_class.less_imp_le by fastforce
-qed
-
-lemma scaleC_image_atLeastAtMost: "c > 0 \<Longrightarrow> scaleC c ` {x..y} = {c *\<^sub>C x..c *\<^sub>C y}"
-  apply (auto intro!: scaleC_left_mono)
-  apply (rule_tac x = "inverse c *\<^sub>C xa" in image_eqI)
-  by (simp_all add: pos_le_divideR_eq[symmetric])
-
-end
-
-lemma neg_le_divideR_eq:
-  fixes a :: "'a :: ordered_complex_vector"
-  assumes "c < 0"
-  shows "a \<le> b /\<^sub>C c \<longleftrightarrow> b \<le> c *\<^sub>C a"
-  using pos_le_divideR_eq [of "-c" a "-b"] assms by simp
-
-lemma scaleC_nonneg_nonneg: "0 \<le> a \<Longrightarrow> 0 \<le> x \<Longrightarrow> 0 \<le> a *\<^sub>C x"
-  for x :: "'a::ordered_complex_vector"
-  using scaleC_left_mono [of 0 x a] by simp
-
-lemma scaleC_nonneg_nonpos: "0 \<le> a \<Longrightarrow> x \<le> 0 \<Longrightarrow> a *\<^sub>C x \<le> 0"
-  for x :: "'a::ordered_complex_vector"
-  using scaleC_left_mono [of x 0 a] by simp
-
-lemma scaleC_nonpos_nonneg: "a \<le> 0 \<Longrightarrow> 0 \<le> x \<Longrightarrow> a *\<^sub>C x \<le> 0"
-  for x :: "'a::ordered_complex_vector"
-  using scaleC_right_mono [of a 0 x] by simp
-
-lemma split_scaleC_neg_le: "(0 \<le> a \<and> x \<le> 0) \<or> (a \<le> 0 \<and> 0 \<le> x) \<Longrightarrow> a *\<^sub>C x \<le> 0"
-  for x :: "'a::ordered_complex_vector"
-  by (auto simp add: scaleC_nonneg_nonpos scaleC_nonpos_nonneg)
-
-lemma le_add_iff1: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> (a - b) *\<^sub>C e + c \<le> d"
-  for c d e :: "'a::ordered_complex_vector"
-  by (simp add: algebra_simps)
-
-lemma le_add_iff2: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> c \<le> (b - a) *\<^sub>C e + d"
-  for c d e :: "'a::ordered_complex_vector"
-  by (simp add: algebra_simps)
-
-lemma scaleC_left_mono_neg: "b \<le> a \<Longrightarrow> c \<le> 0 \<Longrightarrow> c *\<^sub>C a \<le> c *\<^sub>C b"
-  for a b :: "'a::ordered_complex_vector"
-  apply (drule scaleC_left_mono [of _ _ "- c"])
-  by simp_all
-
-
-lemma scaleC_right_mono_neg: "b \<le> a \<Longrightarrow> c \<le> 0 \<Longrightarrow> a *\<^sub>C c \<le> b *\<^sub>C c"
-  for c :: "'a::ordered_complex_vector"
-  apply (drule scaleC_right_mono [of _ _ "- c"])
-  by simp_all
-
-
-lemma scaleC_nonpos_nonpos: "a \<le> 0 \<Longrightarrow> b \<le> 0 \<Longrightarrow> 0 \<le> a *\<^sub>C b"
-  for b :: "'a::ordered_complex_vector"
-  using scaleC_right_mono_neg [of a 0 b] by simp
-
-lemma split_scaleC_pos_le: "(0 \<le> a \<and> 0 \<le> b) \<or> (a \<le> 0 \<and> b \<le> 0) \<Longrightarrow> 0 \<le> a *\<^sub>C b"
-  for b :: "'a::ordered_complex_vector"
-  by (auto simp add: scaleC_nonneg_nonneg scaleC_nonpos_nonpos)
-
-lemma reals_zero_comparable_iff:
-  "(x::complex)\<in>\<real> \<longleftrightarrow> x \<le> 0 \<or> x \<ge> 0"
-  unfolding complex_is_Real_iff less_eq_complex_def
-  by auto
-
-lemma reals_zero_comparable:
-  fixes x::complex
-  assumes "x\<in>\<real>"
-  shows "x \<le> 0 \<or> x \<ge> 0"
-  using assms unfolding reals_zero_comparable_iff by assumption
-
-lemma zero_le_scaleC_iff:
-  fixes b :: "'a::ordered_complex_vector"
-  assumes "a \<in> \<real>"
-  shows "0 \<le> a *\<^sub>C b \<longleftrightarrow> 0 < a \<and> 0 \<le> b \<or> a < 0 \<and> b \<le> 0 \<or> a = 0"
-    (is "?lhs = ?rhs")
-proof (cases "a = 0")
-  case True
-  thus ?thesis by simp
-next
-  case False
-  show ?thesis
-  proof
-    assume ?lhs
-    from \<open>a \<noteq> 0\<close> consider "a > 0" | "a < 0"
-      using reals_zero_comparable[OF assms] by auto
-    thus ?rhs
-    proof cases
-      case 1
-      with \<open>?lhs\<close> have "inverse a *\<^sub>C 0 \<le> inverse a *\<^sub>C (a *\<^sub>C b)"
-        by (intro scaleC_mono) auto
-      with 1 show ?thesis
-        by simp
-    next
-      case 2
-      with \<open>?lhs\<close> have "- inverse a *\<^sub>C 0 \<le> - inverse a *\<^sub>C (a *\<^sub>C b)"
-        by (intro scaleC_mono) auto
-      with 2 show ?thesis
-        by simp
-    qed
-  next
-    assume ?rhs
-    thus ?lhs
-      using reals_zero_comparable[OF assms]
-      by (auto simp: not_le \<open>a \<noteq> 0\<close> intro!: split_scaleC_pos_le )
-  qed
-qed
-
-lemma scaleC_le_0_iff: 
-  fixes b::"'a::ordered_complex_vector"
-  assumes "a \<in> \<real>"
-  shows "a *\<^sub>C b \<le> 0 \<longleftrightarrow> 0 < a \<and> b \<le> 0 \<or> a < 0 \<and> 0 \<le> b \<or> a = 0"
-  apply (insert zero_le_scaleC_iff [of "-a" b]) 
-  using reals_zero_comparable[OF assms]
-  using assms by auto
-
-lemma scaleC_le_cancel_left: 
-  fixes b :: "'a::ordered_complex_vector"
-  assumes "c \<in> \<real>"
-  shows "c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> (0 < c \<longrightarrow> a \<le> b) \<and> (c < 0 \<longrightarrow> b \<le> a)"
-  using assms apply cases apply (simp add: scaleR_scaleC[symmetric] less_complex_def)
-  by (rule scaleR_le_cancel_left)
-
-lemma scaleC_le_cancel_left_pos: "0 < c \<Longrightarrow> c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> a \<le> b"
-  for b :: "'a::ordered_complex_vector"
-  by (meson dual_order.strict_implies_order reals_zero_comparable_iff scaleC_le_cancel_left scaleC_left_mono)
-
-lemma scaleC_le_cancel_left_neg: "c < 0 \<Longrightarrow> c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> b \<le> a"
-  for b :: "'a::ordered_complex_vector"
-  by (meson dual_order.strict_implies_order reals_zero_comparable_iff scaleC_le_cancel_left scaleC_left_mono_neg)
-
-lemma scaleC_left_le_one_le: "0 \<le> x \<Longrightarrow> a \<le> 1 \<Longrightarrow> a *\<^sub>C x \<le> x"
-  for x :: "'a::ordered_complex_vector" and a :: complex
-  using scaleC_right_mono[of a 1 x] by simp
+  by (rule Complexes_cases) auto
 
 subsection \<open>Complex normed vector spaces\<close>
 
-class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
-  real_normed_vector + 
-  assumes norm_scaleC [simp]: "norm (a *\<^sub>C x) = (cmod a) * norm x"
+(* Already defined in Banach-Steinhaus *)
+bundle notation_norm begin
+notation norm ("\<parallel>_\<parallel>")
+end
 
-class complex_normed_algebra = complex_algebra + complex_normed_vector + real_normed_algebra
+bundle no_notation_norm begin
+no_notation norm ("\<parallel>_\<parallel>")
+end
 
-class complex_normed_algebra_1 = complex_algebra_1 + complex_normed_algebra + real_normed_algebra_1
+unbundle notation_norm
 
-lemma (in complex_normed_algebra_1) scaleC_power [simp]: "(scaleC x y) ^ n = scaleC (x^n) (y^n)"
-  by (induct n) (simp_all add: mult_ac)
+class complex_normed_vector = complex_vector + sgn_div_norm + dist_norm + uniformity_dist 
+  + open_uniformity + real_normed_vector +
+  assumes norm_scaleC [simp]: "\<parallel>a *\<^sub>C x\<parallel> = \<parallel>a\<parallel> * \<parallel>x\<parallel>"
+
+class complex_normed_algebra = real_normed_algebra + complex_normed_vector
+
+class complex_normed_algebra_1 = complex_algebra_1 + complex_normed_algebra +
+  assumes norm_one [simp]: "\<parallel>1\<parallel> = 1"
+
+lemma (in complex_normed_algebra_1) scaleC_power [simp]: "(x *\<^sub>C y) ^ n = (x^n) *\<^sub>C (y^n)"
+  by (induct n) (simp_all add: scaleC_one scaleC_scaleC mult_ac)
 
 class complex_normed_div_algebra = complex_div_algebra + complex_normed_vector + real_normed_div_algebra
 
-class complex_normed_field = complex_field + complex_normed_div_algebra + real_normed_field
+class complex_normed_field = complex_field + complex_normed_div_algebra
 
-instance complex_normed_div_algebra < complex_normed_algebra_1 ..
+instance complex_normed_div_algebra < complex_normed_algebra_1
+proof
+  show "\<parallel>1::'a\<parallel> = 1"
+    by simp    
+qed
 
-lemma dist_scaleC [simp]: "dist (x *\<^sub>C a) (y *\<^sub>C a) = cmod (x - y) * norm a"
+lemma dist_scaleC [simp]: "dist (x *\<^sub>C a) (y *\<^sub>C a) = \<parallel>x - y\<parallel> * \<parallel>a\<parallel>"
   for a :: "'a::complex_normed_vector"
-  by (metis dist_norm norm_scaleC scaleC_left.diff)
+  by (metis complex_vector.scale_left_diff_distrib dist_norm norm_scaleC)
 
-lemma norm_of_complex [simp]: "norm (of_complex r :: 'a::complex_normed_algebra_1) = cmod r"
+lemma norm_of_complex [simp]: "\<parallel>of_complex r :: 'a::complex_normed_algebra_1\<parallel> = \<parallel>r\<parallel>"
   by (simp add: of_complex_def)
 
-lemma norm_of_complex_add1 [simp]: "norm (of_complex x + 1 :: 'a :: complex_normed_div_algebra) = cmod (x + 1)"
-  by (metis norm_of_complex of_complex_1 of_complex_add)
+subsection \<open>Class instances for real numbers\<close>
+
+instantiation complex :: complex_normed_field
+begin
+instance
+proof
+  show "\<parallel>a *\<^sub>C x\<parallel> = \<parallel>a\<parallel> * \<parallel>x\<parallel>" for a x::complex
+    by (simp add: norm_mult)    
+qed
+end
+
+(* Ask to Dominique
+declare uniformity_Abort[where 'a=real, code]
+*)
+
+lemma dist_of_complex [simp]: "dist (of_complex x :: 'a) (of_complex y) = dist x y"
+  for a :: "'a::complex_normed_div_algebra"
+  by (metis dist_norm norm_of_complex of_complex_diff)
+
+
+declare [[code abort: "open :: complex set \<Rightarrow> bool"]]
+
+(* Ask to Dominique
+instance real :: linorder_topology
+*)
+
+(* Ask to Dominique
+instance real :: linear_continuum_topology ..
+*)
+
+(* Ask to Dominique
+lemmas open_real_greaterThan = open_greaterThan[where 'a=real]
+lemmas open_real_lessThan = open_lessThan[where 'a=real]
+lemmas open_real_greaterThanLessThan = open_greaterThanLessThan[where 'a=real]
+lemmas closed_real_atMost = closed_atMost[where 'a=real]
+lemmas closed_real_atLeast = closed_atLeast[where 'a=real]
+lemmas closed_real_atLeastAtMost = closed_atLeastAtMost[where 'a=real]
+*)
+
+(* Ask to Dominique
+instance real :: ordered_real_vector
+  by standard (auto intro: mult_left_mono mult_right_mono)
+*)
+
+(* Ask to Dominique
+subsection \<open>Extra type constraints\<close>
+
+text \<open>Only allow \<^term>\<open>open\<close> in class \<open>topological_space\<close>.\<close>
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::topological_space set \<Rightarrow> bool\<close>)\<close>
+
+text \<open>Only allow \<^term>\<open>uniformity\<close> in class \<open>uniform_space\<close>.\<close>
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
+
+text \<open>Only allow \<^term>\<open>dist\<close> in class \<open>metric_space\<close>.\<close>
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+
+text \<open>Only allow \<^term>\<open>norm\<close> in class \<open>real_normed_vector\<close>.\<close>
+setup \<open>Sign.add_const_constraint
+  (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
+
+*)
+
+
+subsection \<open>Sign function\<close>
+
+lemma sgn_scaleC: "sgn (r *\<^sub>C x) = (sgn r) *\<^sub>C (sgn x)"
+  for x :: "'a::complex_normed_vector"  
+  by (simp add: scaleR_scaleC sgn_div_norm)
+
+lemma sgn_of_complex: "sgn (of_complex r :: 'a::complex_normed_algebra_1) = of_complex (sgn r)"
+  unfolding of_complex_def by (simp add: scaleR_scaleC sgn_div_norm)
+
+subsection \<open>Bounded linear and antilinear\<close>
+
+lemma clinearI: "clinear f"
+  if "\<And>b1 b2. f (b1 + b2) = f b1 + f b2"
+    "\<And>r b. f (r *\<^sub>C b) = r *\<^sub>C f b"
+  using that by unfold_locales (auto simp: algebra_simps)
+
+lemma clinear_iff:
+  "clinear f \<longleftrightarrow> (\<forall>x y. f (x + y) = f x + f y) \<and> (\<forall>c x. f (c *\<^sub>C x) = c *\<^sub>C f x)"
+  (is "clinear f \<longleftrightarrow> ?rhs")
+proof
+  assume "clinear f"
+  then interpret f: clinear f .
+  show "?rhs" by (simp add: f.add f.scaleC scaleR_scaleC) 
+next
+  assume "?rhs" thus "clinear f"
+    by (simp add: clinearI)
+qed
+
+lemma antilinear_iff:
+  "antilinear f \<longleftrightarrow> (\<forall>x y. f (x + y) = f x + f y) \<and> (\<forall>c x. f (c *\<^sub>C x) = c \<cdot>\<^sub>C f x)"
+proof
+  show "(\<forall>x y. f (x + y) = f x + f y) \<and> (\<forall>c x. f (c *\<^sub>C x) = c \<cdot>\<^sub>C f x)"
+    if "antilinear f"
+  proof
+    show \<open>\<forall>x y. f (x + y) = f x + f y\<close>
+      using that unfolding antilinear_def Vector_Spaces.linear_def module_hom_def 
+        module_hom_axioms_def by blast
+    show \<open>\<forall>c x. f (c *\<^sub>C x) = c \<cdot>\<^sub>C f x\<close>
+      using that unfolding antilinear_def Vector_Spaces.linear_def module_hom_def 
+        module_hom_axioms_def by blast
+  qed
+  show "antilinear f"
+    if "(\<forall>x y. f (x + y) = f x + f y) \<and> (\<forall>c x. f (c *\<^sub>C x) = c \<cdot>\<^sub>C f x)"
+    using that unfolding antilinear_def Vector_Spaces.linear_def module_hom_def 
+      module_hom_axioms_def module_def vector_space_def apply auto
+    using scaleC_add_right apply blast
+              apply (simp add: scaleC_left.add)
+             apply (simp add: cnj_scaleC_add_right)
+            apply (simp add: cnj_scaleC_add_left)
+           apply (simp add: cnj_scaleC_scaleC)
+          apply (simp add: cnj_scaleC_one)
+    using scaleC_add_right apply blast
+    using scaleC_add_left apply blast
+       apply (simp add: cnj_scaleC_add_right)
+    using cnj_scaleC_add_left apply blast
+     apply (simp add: cnj_scaleC_scaleC)
+    by (simp add: cnj_scaleC_one)
+qed
+
+lemmas clinear_scaleR_left = linear_scale_left
+lemmas clinear_imp_scaleR = linear_imp_scale
+
+corollary complex_clinearD:
+  fixes f :: "complex \<Rightarrow> complex"
+  assumes "clinear f" obtains c where "f = (*) c"
+  by (rule clinear_imp_scaleR [OF assms]) (force simp: scaleC_conv_of_complex)
+
+lemma clinear_times_of_real: "clinear (\<lambda>x. a * of_complex x)"
+  by (auto intro!: clinearI simp: distrib_left)
+    (metis mult_scaleC_right scaleC_conv_of_complex)
+
+locale bounded_clinear = clinear f 
+  for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" + 
+  assumes bounded: "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le>  \<parallel>x\<parallel> * K"
+begin
+
+lemma pos_bounded: "\<exists>K>0. \<forall>x. norm (f x) \<le> norm x * K"
+proof -
+  obtain K where K: "\<And>x. norm (f x) \<le> norm x * K"
+    using bounded by blast
+  show ?thesis
+  proof (intro exI impI conjI allI)
+    show "0 < max 1 K"
+      by (rule order_less_le_trans [OF zero_less_one max.cobounded1])
+  next
+    fix x
+    have "norm (f x) \<le> norm x * K" using K .
+    also have "\<dots> \<le> norm x * max 1 K"
+      by (rule mult_left_mono [OF max.cobounded2 norm_ge_zero])
+    finally show "norm (f x) \<le> norm x * max 1 K" .
+  qed
+qed
+
+lemma nonneg_bounded: "\<exists>K\<ge>0. \<forall>x. norm (f x) \<le> norm x * K"
+  using pos_bounded by (auto intro: order_less_imp_le)
+
+end
+
+locale bounded_antilinear = antilinear f 
+  for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" + 
+  assumes bounded': "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le>  \<parallel>x\<parallel> * K"
+begin
+
+lemma pos_bounded': "\<exists>K>0. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+proof -
+  obtain K where K: "\<And>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+    using bounded' by blast
+  show ?thesis
+  proof (intro exI impI conjI allI)
+    show "0 < max 1 K"
+      by (rule order_less_le_trans [OF zero_less_one max.cobounded1])
+  next
+    fix x
+    have "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K" using K .
+    also have "\<dots> \<le> \<parallel>x\<parallel> * max 1 K"
+      by (rule mult_left_mono [OF max.cobounded2 norm_ge_zero])
+    finally show "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * max 1 K" .
+  qed
+qed
+
+lemma nonneg_bounded': "\<exists>K\<ge>0. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  using pos_bounded' by (auto intro: order_less_imp_le)
+
+end
+
+
+lemma bounded_clinear_intro:
+  assumes "\<And>x y. f (x + y) = f x + f y"
+    and "\<And>r x. f (r *\<^sub>C x) = r *\<^sub>C (f x)"
+    and "\<And>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  shows "bounded_clinear f"
+  by standard (blast intro: assms)+
+
+lemma bounded_antilinear_intro:
+  assumes "\<And>x y. f (x + y) = f x + f y"
+    and "\<And>r x. f (r *\<^sub>C x) = r \<cdot>\<^sub>C (f x)"
+    and "\<And>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  shows "bounded_antilinear f"
+  by (meson antilinear_iff assms(1) assms(2) assms(3) bounded_antilinear_axioms_def
+      bounded_antilinear_def)
+
+
+section\<open>Bounded Sesquilinear\<close>
+
+locale sesquilinear =
+  fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
+    (infixl "***" 70)
+  assumes add_left: "(a + a') *** b = a *** b + a' *** b"
+    and add_right: "a *** (b + b') = a *** b + a *** b'"
+    and scaleC_left: "(r *\<^sub>C a) *** b = r \<cdot>\<^sub>C (a *** b)"
+    and scaleC_right: "a *** (r *\<^sub>C b) = r *\<^sub>C (a *** b)"
+begin
+
+lemma additive_right: "additive (\<lambda>b. a *** b)"
+  by (rule additive.intro, rule add_right)
+
+lemma additive_left: "additive (\<lambda>a. a *** b)"
+  by (rule additive.intro, rule add_left)
+
+lemma zero_left: "0 *** b = 0"
+  by (rule additive.zero [OF additive_left])
+
+lemma zero_right: "a *** 0 = 0"
+  by (rule additive.zero [OF additive_right])
+
+lemma minus_left: "(- a) *** b = - (a *** b)"
+  by (rule additive.minus [OF additive_left])
+
+lemma minus_right: "a *** (- b) = - (a *** b)"
+  by (rule additive.minus [OF additive_right])
+
+lemma diff_left: "(a - a') *** b = a *** b - a' *** b"
+  by (rule additive.diff [OF additive_left])
+
+lemma diff_right: "a *** (b - b') = a *** b - a *** b'"
+  by (rule additive.diff [OF additive_right])
+
+lemma sum_left: "(sum g S) *** x = sum ((\<lambda>i. (g i) *** x)) S"
+  by (rule additive.sum [OF additive_left])
+
+lemma sum_right: "x *** (sum g S) = sum ((\<lambda>i. (x *** (g i)))) S"
+  by (rule additive.sum [OF additive_right])
+
+lemma antilinear_left: "antilinear (\<lambda>a. a *** b)"
+  by (simp add: add_left antilinear_iff scaleC_left)
+
+lemma clinear_right: "clinear (\<lambda>b. a *** b)"
+  by (simp add: add_right clinear_iff sesquilinear.scaleC_right sesquilinear_axioms)
+
+
+lemma prod_diff_prod: "(x *** y - a *** b) = (x - a) *** (y - b) + (x - a) *** b + a *** (y - b)"
+  by (simp add: diff_left diff_right)
+
+lemma comp1_sesquilinear:
+  assumes a1: "clinear g"
+  shows "sesquilinear (\<lambda>x. (***) (g x))"
+proof
+  show "g (a + a') *** b = g a *** b + g a' *** b"
+    for a :: 'd
+      and a' :: 'd
+      and b :: 'b
+  proof-
+    have \<open>g (a + a') = g a + g a'\<close>
+      using a1 bounded_clinear.axioms(1) complex_vector.linear_add by auto 
+    thus ?thesis by (simp add: add_left)     
+  qed
+  show "g a *** (b + b') = g a *** b + g a *** b'"
+    for a :: 'd
+      and b :: 'b
+      and b' :: 'b
+    by (simp add: add_right)
+
+  show "g (r *\<^sub>C a) *** b = r \<cdot>\<^sub>C (g a *** b)"
+    for r :: complex
+      and a :: 'd
+      and b :: 'b
+  proof-
+    have \<open>g (r *\<^sub>C a) = r *\<^sub>C g a\<close>
+      by (simp add: a1 bounded_clinear.axioms(1) complex_vector.linear_scale)
+    thus ?thesis by (simp add: scaleC_left) 
+  qed
+  show "g a *** (r *\<^sub>C b) = r *\<^sub>C (g a *** b)"
+    for a :: 'd
+      and r :: complex
+      and b :: 'b
+    by (simp add: scaleC_right)    
+qed
+
+lemma comp2_sesquilinear:
+  assumes a1: "clinear g"
+  shows "sesquilinear (\<lambda>y. \<lambda>x. y *** (g x))"
+proof
+  show "(a + a') *** g b = a *** g b + a' *** g b"
+    for a :: 'a
+      and a' :: 'a
+      and b :: 'd
+    by (simp add: add_left)
+
+  show "a *** g (b + b') = a *** g b + a *** g b'"
+    for a :: 'a
+      and b :: 'd
+      and b' :: 'd
+  proof-
+    have \<open>g (b + b') = g b + g b'\<close>
+      using a1 bounded_clinear.axioms(1) complex_vector.linear_add by auto 
+    thus ?thesis by (simp add: add_right)     
+  qed
+
+  show "r *\<^sub>C a *** g b = r \<cdot>\<^sub>C (a *** g b)"
+    for r :: complex
+      and a :: 'a
+      and b :: 'd
+    by (simp add: scaleC_left)
+
+  show "a *** g (r *\<^sub>C b) = r *\<^sub>C (a *** g b)"
+    for a :: 'a
+      and r :: complex
+      and b :: 'd
+  proof-
+    have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
+      by (simp add: a1 bounded_clinear.axioms(1) complex_vector.linear_scale)
+    thus ?thesis by (simp add: scaleC_right) 
+  qed
+qed
+
+lemma comp_sesquilinear: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> sesquilinear (\<lambda>x y. f x *** g y)"
+  using comp1_sesquilinear sesquilinear.comp2_sesquilinear by auto
+
+end
+
+
+locale bounded_sesquilinear = sesquilinear +
+  assumes bounded: "\<exists>K. \<forall>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+begin
+
+lemma pos_bounded: "\<exists>K>0. \<forall>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+proof -
+  obtain K where "\<And>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+    using bounded by blast
+  hence "\<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * (max 1 K)" for a b
+    by (rule order.trans) (simp add: mult_left_mono)
+  thus ?thesis by force
+qed
+
+lemma nonneg_bounded: "\<exists>K\<ge>0. \<forall>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+  using pos_bounded by (auto intro: order_less_imp_le)
+
+
+lemma bounded_clinear_left: "bounded_antilinear (\<lambda>a. a *** b)"
+proof -
+  obtain K where "\<And>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+    using pos_bounded by blast
+  thus ?thesis
+    by (rule_tac K="norm b * K" in bounded_antilinear_intro)
+      (auto simp: algebra_simps scaleC_left add_left)
+qed
+
+lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. a *** b)"
+proof -
+  obtain K where "\<And>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+    using pos_bounded by blast
+  thus ?thesis
+    by (rule_tac K="norm a * K" in bounded_clinear_intro) 
+      (auto simp: algebra_simps scaleC_right add_right)
+qed
+
+lemma bounded_sesquilinearI:
+  assumes s1: "sesquilinear f" and b1: "\<exists>K. \<forall>a b. \<parallel>f a b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+  shows "bounded_sesquilinear f"
+  using b1 bounded_sesquilinear.intro bounded_sesquilinear_axioms_def s1 by auto
+
+lemma comp1:
+  assumes a1: "bounded_clinear g"
+  shows "bounded_sesquilinear (\<lambda>x. (***) (g x))"
+proof-
+  have "\<exists>K. \<forall>a b. \<parallel>g a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+  proof-
+    have \<open>\<exists>N. \<forall>a. \<parallel>g a\<parallel> \<le> \<parallel>a\<parallel> * N \<and> N \<ge> 0\<close>
+      using assms bounded_clinear.nonneg_bounded by blast      
+    then obtain N where n0: \<open>N \<ge> 0\<close> and n1: \<open>\<parallel>g a\<parallel> \<le> \<parallel>a\<parallel> * N\<close> for a
+      by blast
+    have \<open>\<exists>M. \<forall>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * M \<and> M \<ge> 0\<close>
+      using nonneg_bounded by blast      
+    then obtain M where m0: \<open>M \<ge> 0\<close> and m1: \<open>\<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * M\<close> for a b
+      by blast
+    define K where \<open>K = N * M\<close>
+    have \<open>\<parallel>g a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K\<close> for a b
+    proof-
+      have \<open>\<parallel>g a *** b\<parallel> \<le> \<parallel>g a\<parallel> * \<parallel>b\<parallel> * M\<close>
+        using m1 by blast
+      also have \<open>\<dots> \<le> (\<parallel>a\<parallel> * N) * \<parallel>b\<parallel> * M\<close>
+        using n0 n1 m0
+        by (smt mult_less_le_imp_less mult_nonneg_nonneg mult_nonneg_nonpos2 norm_ge_zero 
+            zero_less_mult_iff)
+      finally show ?thesis
+        by (metis K_def ab_semigroup_mult_class.mult_ac(1) mult.commute)
+    qed
+    thus ?thesis by auto 
+  qed
+  moreover have "sesquilinear (\<lambda>x. (***) (g x))"
+    by (simp add: assms bounded_clinear.axioms(1) comp1_sesquilinear)    
+  ultimately show ?thesis 
+    using bounded_sesquilinearI[where f = "\<lambda>x. (***) (g x)"] by blast
+qed
+
+lemma comp2:
+  assumes a1: "bounded_clinear g"
+  shows "bounded_sesquilinear (\<lambda>y. \<lambda>x. y *** (g x))"
+proof-
+  have "\<exists>K. \<forall>a b. \<parallel>a *** g b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K"
+  proof-
+    have \<open>\<exists>N. \<forall>a. \<parallel>g a\<parallel> \<le> \<parallel>a\<parallel> * N \<and> N \<ge> 0\<close>
+      using assms bounded_clinear.nonneg_bounded by blast      
+    then obtain N where n0: \<open>N \<ge> 0\<close> and n1: \<open>\<parallel>g a\<parallel> \<le> \<parallel>a\<parallel> * N\<close> for a
+      by blast
+    have \<open>\<exists>M. \<forall>a b. \<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * M \<and> M \<ge> 0\<close>
+      using nonneg_bounded by blast      
+    then obtain M where m0: \<open>M \<ge> 0\<close> and m1: \<open>\<parallel>a *** b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * M\<close> for a b
+      by blast
+    define K where \<open>K = N * M\<close>
+    have \<open>\<parallel>a *** g b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>b\<parallel> * K\<close> for a b
+    proof-
+      have \<open>\<parallel>a *** g b\<parallel> \<le> \<parallel>a\<parallel> * \<parallel>g b\<parallel> * M\<close>
+        using m1 by blast
+      also have \<open>\<dots> \<le> \<parallel>a\<parallel> * (\<parallel>b\<parallel> * N) * M\<close>
+        using n0 n1 m0
+        by (smt mult_right_less_imp_less norm_ge_zero 
+            ordered_comm_semiring_class.comm_mult_left_mono)
+      finally show ?thesis by (simp add: K_def)
+    qed
+    thus ?thesis by auto 
+  qed
+  moreover have "sesquilinear (\<lambda>y. \<lambda>x. y *** (g x))"
+    by (simp add: assms bounded_clinear.axioms(1) comp2_sesquilinear)    
+  ultimately show ?thesis 
+    using bounded_sesquilinearI[where f = "\<lambda>y. \<lambda>x. y *** (g x)"] by blast
+qed
+
+
+lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. f x *** g y)"
+  using comp1 comp2 bounded_sesquilinear.comp2 by auto 
+
+(* Recovered theorem *)
+sublocale bounded_bilinear
+  apply standard
+  unfolding scaleR_scaleC
+      apply (fact add_left)
+     apply (fact add_right)
+    apply (simp add: scaleC_left)
+    apply (metis cnj_scaleR_scaleC scaleR_scaleC)
+   apply (simp add: scaleC_right)
+  using bounded by auto
+
+end
+
+lemma bounded_clinear_ident[simp]: "bounded_clinear (\<lambda>x. x)"
+  by standard (auto intro!: exI[of _ 1])
+
+lemma bounded_clinear_zero[simp]: "bounded_clinear (\<lambda>x. 0)"
+  by standard (auto intro!: exI[of _ 1])
+
+lemma bounded_antilinear_zero[simp]: "bounded_antilinear (\<lambda>x. 0)"
+proof
+  show "a \<cdot>\<^sub>C (x + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+    for a :: complex
+      and x :: 'b
+      and y :: 'b
+    by (simp add: cnj_scaleC_add_right)
+
+  show "(a + b) \<cdot>\<^sub>C x = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    by (simp add: cnj_scaleC_add_left)   
+  show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C x = (a * b) \<cdot>\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    by (simp add: cnj_scaleC_scaleC)   
+  show "1 \<cdot>\<^sub>C x = x"
+    for x :: 'b
+    by (simp add: cnj_scaleC_one)
+
+  show "(0::'b) = 0 + 0"
+    for b1 :: 'a
+      and b2 :: 'a
+    by simp   
+  show "(0::'b) = r \<cdot>\<^sub>C 0"
+    for r :: complex
+      and b :: 'a
+    by (metis \<open>\<And>y x a. a \<cdot>\<^sub>C (x + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y\<close> add_cancel_right_right)   
+  show "\<exists>K. \<forall>x. \<parallel>0\<parallel> \<le> \<parallel>x\<parallel> * K"
+    by (metis eq_iff mult.commute mult_zero_left norm_zero)    
+qed
+
+
+lemma bounded_clinear_add:
+  assumes "bounded_clinear f"
+    and "bounded_clinear g"
+  shows "bounded_clinear (\<lambda>x. f x + g x)"
+proof -
+  interpret f: bounded_clinear f by fact
+  interpret g: bounded_clinear g by fact
+  show ?thesis
+  proof
+    from f.bounded obtain Kf where Kf: "norm (f x) \<le> norm x * Kf" for x
+      by blast
+    from g.bounded obtain Kg where Kg: "norm (g x) \<le> norm x * Kg" for x
+      by blast
+    show "\<exists>K. \<forall>x. norm (f x + g x) \<le> norm x * K"
+      using add_mono[OF Kf Kg]
+      by (intro exI[of _ "Kf + Kg"]) (auto simp: field_simps intro: norm_triangle_ineq order_trans)
+  qed (simp_all add: f.add g.add f.scaleC g.scaleC scaleC_right_distrib)
+qed
+
+lemma bounded_clinear_minus:
+  assumes "bounded_clinear f"
+  shows "bounded_clinear (\<lambda>x. - f x)"
+proof -
+  interpret f: bounded_clinear f by fact
+  show ?thesis
+    by unfold_locales (simp_all add: f.add f.scaleC f.bounded)
+qed
+
+lemma bounded_clinear_sub:
+  "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (\<lambda>x. f x - g x)"
+  using bounded_clinear_add[of f "\<lambda>x. - g x"] bounded_clinear_minus[of g]
+  by (auto simp: algebra_simps)
+
+lemma bounded_clinear_sum:
+  fixes f :: "'i \<Rightarrow> 'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+  shows "(\<And>i. i \<in> I \<Longrightarrow> bounded_clinear (f i)) \<Longrightarrow> bounded_clinear (\<lambda>x. \<Sum>i\<in>I. f i x)"
+  by (induct I rule: infinite_finite_induct) (auto intro!: bounded_clinear_add)
+
+lemma bounded_clinear_compose:
+  assumes "bounded_clinear f"
+    and "bounded_clinear g"
+  shows "bounded_clinear (\<lambda>x. f (g x))"
+proof -
+  interpret f: bounded_clinear f by fact
+  interpret g: bounded_clinear g by fact
+  show ?thesis
+  proof unfold_locales
+    show "f (g (x + y)) = f (g x) + f (g y)" for x y
+      by (simp only: f.add g.add)
+    show "f (g (r *\<^sub>C x)) = r *\<^sub>C (f (g x))" for r x
+      by (simp only: f.scaleC g.scaleC)
+    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
+      by blast
+    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
+      by blast
+    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    proof (intro exI allI)
+      fix x
+      have "norm (f (g x)) \<le> norm (g x) * Kf"
+        using f .
+      also have "\<dots> \<le> (norm x * Kg) * Kf"
+        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
+      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
+        by (rule mult.assoc)
+      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
+    qed
+  qed
+qed
+
+
+lemmas bounded_clinear_mult_const =
+  bounded_linear_mult_left [THEN bounded_linear_compose]
+
+lemmas bounded_clinear_const_mult =
+  bounded_linear_mult_right [THEN bounded_linear_compose]
+
+lemma bounded_clinear_scaleR_left: "bounded_clinear (\<lambda>r. r *\<^sub>C x)"
+proof
+  show "(b1 + b2) *\<^sub>C x = b1 *\<^sub>C x + b2 *\<^sub>C x"
+    for b1 :: complex
+      and b2 :: complex
+    by (simp add: scaleC_left.add)
+
+  show "(r *\<^sub>C b) *\<^sub>C x = r *\<^sub>C b *\<^sub>C x"
+    for r :: complex
+      and b :: complex
+    by simp
+
+  show "\<exists>K. \<forall>a. \<parallel>a *\<^sub>C x\<parallel> \<le> \<parallel>a\<parallel> * K"
+    by auto    
+qed
+
+lemma bounded_clinear_scaleR_right: "bounded_clinear (\<lambda>x. r *\<^sub>C x)"
+proof
+  show "r *\<^sub>C (b1 + b2) = r *\<^sub>C b1 + r *\<^sub>C b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by (simp add: scaleC_add_right)
+
+  show "r *\<^sub>C s *\<^sub>C b = s *\<^sub>C r *\<^sub>C b"
+    for s :: complex
+      and b :: 'a
+    by simp
+
+  show "\<exists>K. \<forall>x. \<parallel>r *\<^sub>C (x::'a)\<parallel> \<le> \<parallel>x\<parallel> * K"
+    by (metis mult.commute norm_scaleC order_refl)    
+qed
+
+(* Ask to Dominique
+lemmas bounded_clinear_scaleR_const =
+  bounded_clinear_scaleR_left[THEN bounded_clinear_compose]
+*)
+
+(* Ask to Dominique
+lemmas bounded_clinear_const_scaleR =
+  bounded_clinear_scaleR_right[THEN bounded_clinear_compose]
+*) 
+
+lemma bounded_clinear_of_complex: "bounded_clinear (\<lambda>r. of_complex r)"
+  unfolding of_complex_def by (rule bounded_clinear_scaleR_left)
+
+subsection \<open>The set of complex numbers is a complete metric space\<close>
+
+instance complex :: complete_space ..
+
+class cbanach = complex_normed_vector + complete_space
+
+instance complex :: cbanach ..
+
+subclass (in complex_algebra) real_algebra
+  by (standard, simp_all add: scaleR_scaleC)
+
+subclass (in complex_algebra_1) real_algebra_1 ..
+
+subclass (in complex_div_algebra) real_div_algebra ..
+
+subclass (in complex_field) real_field ..
+
+lemma Reals_in_Complexs: "\<real> \<subseteq> \<complex>"
+proof auto
+  fix x::'a
+  assume \<open>x \<in> \<real>\<close>
+  then obtain t where \<open>x = of_real t\<close>
+    using Reals_cases by auto
+  hence \<open>x = of_complex (Complex (of_real t) 0)\<close>
+    by (metis complex_of_real_def id_apply mult.right_neutral of_complex_def of_real_eq_id 
+        scaleR_conv_of_real scaleR_scaleC)
+  thus \<open>x \<in> \<complex>\<close> by simp
+qed
 
 lemma norm_of_complex_addn [simp]:
   "norm (of_complex x + numeral b :: 'a :: complex_normed_div_algebra) = cmod (x + numeral b)"
   by (metis norm_of_complex of_complex_add of_complex_numeral)
 
 lemma norm_of_complex_diff [simp]:
-  "norm (of_complex b - of_complex a :: 'a::complex_normed_algebra_1) \<le> cmod (b - a)"
-  by (metis norm_of_complex of_complex_diff order_refl)
+  "\<parallel>of_complex b - of_complex a :: 'a::complex_normed_algebra_1\<parallel> \<le> \<parallel>b - a\<parallel>"
+proof -
+  have "\<parallel>(of_complex b::'a) - of_complex a\<parallel> + - 1 * \<parallel>of_complex (b - a)::'a\<parallel> \<le> 0"
+    by auto
+  hence "\<parallel>(of_complex b::'a) - of_complex a\<parallel> + - 1 * cmod (b - a) \<le> 0"
+    by (metis norm_of_complex)
+  thus ?thesis by linarith
+qed
 
-subsection \<open>Class instances for complex numbers\<close>
-
-instantiation complex :: complex_normed_field
-begin
-
-instance
-  apply intro_classes 
-  by (simp add: norm_mult)
-
-end
-
-lemma dist_of_complex [simp]: "dist (of_complex x :: 'a) (of_complex y) = dist x y"
-  for a :: "'a::complex_normed_div_algebra"
-  by (metis dist_norm norm_of_complex of_complex_diff)
-
+(* Ask to Dominique *)
 declare [[code abort: "open :: complex set \<Rightarrow> bool"]]
-
-subsection \<open>Sign function\<close>
-
-lemma sgn_scaleC: "sgn (scaleC r x) = scaleC (sgn r) (sgn x)"
-  for x :: "'a::complex_normed_vector"
-  by (simp add: scaleR_scaleC sgn_div_norm ac_simps)
-
-lemma sgn_of_complex: "sgn (of_complex r :: 'a::complex_normed_algebra_1) = of_complex (sgn r)"
-  unfolding of_complex_def by (simp only: sgn_scaleC sgn_one)
 
 lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   for x :: complex
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
-
 
 lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
   unfolding clinear_def  linear_def
@@ -743,838 +1266,302 @@ proof
       and b :: 'a
     using that unfolding Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
     by (simp add: scaleR_scaleC)
-
-qed
-
-
-lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
-  unfolding clinear_def
-  using Vector_Spaces.linear_compose
-  by blast
-
-lemma clinear_additive_D:
-  \<open>clinear f \<Longrightarrow> additive f\<close>
-  by (simp add: additive.intro complex_vector.linear_add)
-
-lemma clinear_imp_scaleC:
-  assumes "clinear D"
-  obtains d where "D = (\<lambda>x. x *\<^sub>C d)"
-  by (metis assms complex_scaleC_def complex_vector.linear_scale mult.commute mult.left_neutral)
-
-corollary complex_clinearD:
-  fixes f :: "complex \<Rightarrow> complex"
-  assumes "clinear f" obtains c where "f = (*) c"
-  by (rule clinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
-
-lemma clinearI:
-  assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>c x. f (c *\<^sub>C x) = c *\<^sub>C f x"
-  shows "clinear f"
-  unfolding clinear_def
-proof
-  show "f (b1 + b2) = f b1 + f b2"
-    for b1 :: 'a
-      and b2 :: 'a
-    by (simp add: assms(1))    
-  show "f (r *\<^sub>C b) = r *\<^sub>C f b"
-    for r :: complex
-      and b :: 'a
-    by (simp add: assms(2))    
-qed
-
-lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
-proof (rule clinearI)
-  show "a * of_complex (x + y) = a * of_complex x + a * of_complex y"
-    for x :: complex
-      and y :: complex
-    by (simp add: ring_class.ring_distribs(1))    
-  show "a * of_complex (c *\<^sub>C x) = c *\<^sub>C (a * of_complex x)"
-    for c :: complex
-      and x :: complex
-    by (metis complex_scaleC_def mult_scaleC_right of_complex_mult scaleC_conv_of_complex)
-qed
-
-
-locale bounded_clinear = 
-  fixes f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  assumes 
-    is_clinear: "clinear f" and
-    bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-begin
-
-sublocale bounded_linear
-proof
-  have \<open>linear f\<close>
-    by (simp add: clinear_is_linear is_clinear)
-
-  show "f (b1 + b2) = f b1 + f b2"
-    for b1 :: 'a
-      and b2 :: 'a
-    using  \<open>linear f\<close>
-    by (simp add: real_vector.linear_add)
-  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
-    for r :: real
-      and b :: 'a
-    using \<open>linear f\<close>
-    by (simp add: real_vector.linear_scale)
-  show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-    by (simp add: bounded)    
-qed
-
-
-lemma bounded_linear: "bounded_linear f"
-  by (fact bounded_linear)
-
-lemma clinear: "clinear f"
-  by (simp add: is_clinear)
-
-end
-
-lemma clinear_times: "clinear (\<lambda>x. c * x)"
-  for c :: "'a::complex_algebra"
-  by (auto simp: clinearI distrib_left)
-
-lemma bounded_clinear_intro:
-  assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>r x. f (r *\<^sub>C x) = r *\<^sub>C (f x)"
-    and "\<And>x. norm (f x) \<le> norm x * K"
-  shows "bounded_clinear f"
-  using assms(1) assms(2) assms(3) bounded_clinear_def clinearI by blast
-
-locale csemilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
-  assumes scaleC: "f (scaleC r x) = scaleC (cnj r) (f x)"
-
-sublocale csemilinear \<subseteq> linear
-  apply (rule linearI)
-   apply (rule add)
-  unfolding scaleR_scaleC by (subst scaleC, simp)
-
-lemma csemilinear_imp_scaleC:
-  assumes "csemilinear D"
-  obtains d where "D = (\<lambda>x. cnj (x *\<^sub>C d))"
-proof (atomize_elim, rule exI[of _ "cnj (D 1)"], rule ext)
-  fix x
-  have "cnj (x *\<^sub>C cnj (D 1)) = cnj x *\<^sub>C D 1" by simp
-  also have "\<dots> = D (x *\<^sub>C 1)" by (rule csemilinear.scaleC[OF assms, symmetric])
-  also have "\<dots> = D x" by simp
-  finally show "D x = cnj (x *\<^sub>C cnj (D 1))" by simp
-qed
-
-corollary complex_csemilinearD:
-  fixes f :: "complex \<Rightarrow> complex"
-  assumes "csemilinear f" obtains c where "f = (\<lambda>x. cnj (c * x))"
-  by (rule csemilinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
-
-lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
-  apply (simp add: csemilinear_def additive_def csemilinear_axioms_def)
-  by (metis distrib_left)
-
-lemma csemilinearI:
-  assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>c x. f (c *\<^sub>C x) = cnj c *\<^sub>C f x"
-  shows "csemilinear f"
-  by standard (rule assms)+
-
-locale bounded_csemilinear = csemilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
-  assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-begin
-
-sublocale bounded_linear
-  apply standard by (fact bounded) 
-
-(* Recovered Theorem *)
-lemma bounded_linear: "bounded_linear f"
-  by (fact bounded_linear)
-
-(* Recovered Theorem *)
-lemma csemilinear: "csemilinear f"
-  by (fact csemilinear_axioms)
-
-end
-
-lemma bounded_csemilinear_intro:
-  assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>r x. f (scaleC r x) = scaleC (cnj r) (f x)"
-    and "\<And>x. norm (f x) \<le> norm x * K"
-  shows "bounded_csemilinear f"
-  by standard (blast intro: assms)+
-
-lemma cnj_bounded_csemilinear[simp]: "bounded_csemilinear cnj"
-  apply (rule bounded_csemilinear_intro[where K=1]) by auto
-
-lemma bounded_csemilinear_compose1:
-  assumes "bounded_csemilinear f"
-    and "bounded_csemilinear g"
-  shows "bounded_clinear (\<lambda>x. f (g x))"
-proof -
-  interpret f: bounded_csemilinear f by fact
-  interpret g: bounded_csemilinear g by fact
-  show ?thesis
-  proof 
-    show "clinear (\<lambda>x. f (g x))"
-      unfolding clinear_def
-    proof
-      show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
-        for b1 :: 'c
-          and b2 :: 'c
-        by (simp add: f.add g.add)
-
-      show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
-        for r :: complex
-          and b :: 'c
-        by (simp add: f.scaleC g.scaleC)  
-    qed
-    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof-
-      have "\<exists> Kf. \<forall>x. norm (f (g x)) \<le> norm (g x) * Kf"
-        using f.pos_bounded by auto
-      then obtain Kf where \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close>
-        by blast        
-      have "\<exists> Kg. \<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf"
-        by (metis g.pos_bounded mult.commute mult_eq_0_iff mult_le_cancel_left norm_ge_zero real_mult_le_cancel_iff2)        
-      then obtain Kg where \<open>\<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf\<close>
-        by blast
-      have \<open>\<forall>x. (norm x * Kg) * Kf = norm x * (Kg * Kf)\<close>
-        using mult.assoc
-        by simp 
-      define  K where \<open>K = Kg * Kf\<close>
-      have  \<open>\<forall>x. norm (f (g x)) \<le> norm x * K\<close>
-        unfolding K_def
-        by (metis K_def \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close> \<open>\<forall>x. norm (g x) * Kf \<le> norm x * Kg * Kf\<close> \<open>\<forall>x. norm x * Kg * Kf = norm x * (Kg * Kf)\<close> dual_order.trans) 
-      thus ?thesis 
-        by blast
-    qed
-  qed
-qed
-
-lemma bounded_csemilinear_compose2:
-  assumes "bounded_csemilinear f"
-    and "bounded_clinear g"
-  shows "bounded_csemilinear (\<lambda>x. f (g x))"
-proof -
-  interpret f: bounded_csemilinear f by fact
-  interpret g: bounded_clinear g by fact
-  show ?thesis
-  proof unfold_locales
-    show "f (g (x + y)) = f (g x) + f (g y)" for x y
-      by (simp only: f.add g.add)
-    show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-      by (simp add: complex_vector.linear_scale f.scaleC g.is_clinear)
-
-    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-      by blast
-    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-      by blast
-    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof (intro exI allI)
-      fix x
-      have "norm (f (g x)) \<le> norm (g x) * Kf"
-        using f .
-      also have "\<dots> \<le> (norm x * Kg) * Kf"
-        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-        by (rule mult.assoc)
-      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-    qed
-  qed
-qed
-
-lemma bounded_csemilinear_compose3:
-  assumes "bounded_clinear f"
-    and "bounded_csemilinear g"
-  shows "bounded_csemilinear (\<lambda>x. f (g x))"
-proof -
-  interpret f: bounded_clinear f by fact
-  interpret g: bounded_csemilinear g by fact
-  show ?thesis
-  proof unfold_locales
-    show "f (g (x + y)) = f (g x) + f (g y)" for x y
-      by (simp only: f.add g.add)
-    show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-      using complex_vector.linear_scale f.is_clinear g.scaleC by auto
-    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-      by blast
-    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-      by blast
-    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof (intro exI allI)
-      fix x
-      have "norm (f (g x)) \<le> norm (g x) * Kf"
-        using f .
-      also have "\<dots> \<le> (norm x * Kg) * Kf"
-        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-        by (rule mult.assoc)
-      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-    qed
-  qed
-qed
-
-locale bounded_cbilinear =
-  fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
-    (infixl "**" 70)
-  assumes add_left: "prod (a + a') b = prod a b + prod a' b"
-    and add_right: "prod a (b + b') = prod a b + prod a b'"
-    and scaleC_left: "prod (r *\<^sub>C a) b = r *\<^sub>C (prod a b)"
-    and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
-    and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-begin
-
-sublocale bounded_bilinear
-  apply standard
-  unfolding scaleR_scaleC
-      apply (fact add_left)
-     apply (fact add_right)
-    apply (fact scaleC_left)
-   apply (fact scaleC_right)
-  by (fact bounded)
-
-(* Should be bounded_cbilinear *)
-lemma bounded_bilinear: "bounded_bilinear prod"
-  by (fact bounded_bilinear_axioms)
-
-lemma bounded_clinear_left: "bounded_clinear (\<lambda>a. prod a b)"
-  apply (insert bounded)
-  apply safe
-  apply (rule_tac K="norm b * K" in bounded_clinear_intro)
-    apply (rule add_left)
-   apply (rule scaleC_left)
-  by (simp add: ac_simps)
-
-
-lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
-  apply (insert bounded)
-  apply safe
-  apply (rule_tac K="norm a * K" in bounded_clinear_intro)
-    apply (rule add_right)
-   apply (rule scaleC_right)
-  by (simp add: ac_simps)
-
-
-lemma flip: "bounded_cbilinear (\<lambda>x y. prod y x)"
-  apply standard
-      apply (rule add_right)
-     apply (rule add_left)
-    apply (rule scaleC_right)
-   apply (rule scaleC_left)
-  apply (subst mult.commute)
-  apply (insert bounded)
-  by blast
-
-
-lemma comp1:
-  assumes "bounded_clinear g"
-  shows "bounded_cbilinear (\<lambda>x. prod (g x))"
-proof unfold_locales
-  interpret g: bounded_clinear g by fact
-  write prod (infixl "**" 70)
-  show "\<And>a a' b. g (a + a') ** b = g a ** b + g a' ** b"
-    "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
-    "\<And>r a b. g (r *\<^sub>C a) ** b = r *\<^sub>C (g a ** b)"
-    "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
-       apply (simp add: add_left g.add)
-      apply (simp add: add_right)
-     apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_left)
-    by (simp add: scaleC_right)
-
-  from g.nonneg_bounded nonneg_bounded obtain K L
-    where nn: "0 \<le> K" "0 \<le> L"
-      and K: "\<And>x. norm (g x) \<le> norm x * K"
-      and L: "\<And>a b. norm (a ** b) \<le> norm a * norm b * L"
-    by auto
-  have "norm (g a ** b) \<le> norm a * K * norm b * L" for a b
-    by (auto intro!:  order_trans[OF K] order_trans[OF L] mult_mono simp: nn)
-  thus "\<exists>K. \<forall>a b. norm (g a ** b) \<le> norm a * norm b * K"
-    by (auto intro!: exI[where x="K * L"] simp: ac_simps)
-qed
-
-lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_cbilinear (\<lambda>x y. prod (f x) (g y))"
-  by (rule bounded_cbilinear.flip[OF bounded_cbilinear.comp1[OF bounded_cbilinear.flip[OF comp1]]])
-
-end
-
-lemma bounded_clinear_ident[simp]: "bounded_clinear id"
-  unfolding bounded_clinear_def
-  apply auto
-   apply (simp add: clinearI)
-  using less_eq_real_def by auto
-
-
-lemma bounded_clinear_zero[simp]: "bounded_clinear (\<lambda>x. 0)"
-  unfolding bounded_clinear_def
-  by (metis complex_vector.module_hom_zero mult.commute mult_zero_left norm_zero order_refl)
-
-
-lemma bounded_clinear_add:
-  assumes "bounded_clinear f"
-    and "bounded_clinear g"
-  shows "bounded_clinear (\<lambda>x. f x + g x)"
-proof -
-  interpret f: bounded_clinear f by fact
-  interpret g: bounded_clinear g by fact
-  from f.bounded obtain Kf where Kf: "norm (f x) \<le> norm x * Kf" for x
-    by blast
-  from g.bounded obtain Kg where Kg: "norm (g x) \<le> norm x * Kg" for x
-    by blast
-  show ?thesis
-  proof
-    show "clinear (\<lambda>x. f x + g x)"
-      by (simp add: clinearI complex_vector.linear_scale f.add f.is_clinear g.add g.is_clinear scaleC_add_right)
-
-    show "\<exists>K. \<forall>x. norm (f x + g x) \<le> norm x * K"
-      using add_mono[OF Kf Kg]
-      by (intro exI[of _ "Kf + Kg"]) (auto simp: field_simps intro: norm_triangle_ineq order_trans)
-  qed
-qed
-
-lemma bounded_clinear_minus:
-  assumes "bounded_clinear f"
-  shows "bounded_clinear (\<lambda>x. - f x)"
-proof -
-  interpret f: bounded_clinear f by fact
-  show ?thesis
-  proof
-    show "clinear (\<lambda>x. - f x)"
-      by (simp add: complex_vector.linear_compose_neg f.is_clinear)
-    show "\<exists>K. \<forall>x. norm (- f x) \<le> norm x * K"
-      using f.pos_bounded by auto    
-  qed
-qed
-
-lemma bounded_clinear_sub: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (\<lambda>x. f x - g x)"
-  using bounded_clinear_add[of f "\<lambda>x. - g x"] bounded_clinear_minus[of g]
-  by (auto simp add: algebra_simps)
-
-lemma bounded_clinear_sum:
-  fixes f :: "'i \<Rightarrow> 'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  shows "(\<And>i. i \<in> I \<Longrightarrow> bounded_clinear (f i)) \<Longrightarrow> bounded_clinear (\<lambda>x. \<Sum>i\<in>I. f i x)"
-  by (induct I rule: infinite_finite_induct) (auto intro!: bounded_clinear_add)
-
-lemma bounded_clinear_compose:
-  assumes "bounded_clinear f"
-    and "bounded_clinear g"
-  shows "bounded_clinear (\<lambda>x. f (g x))"
-proof -
-  interpret f: bounded_clinear f by fact
-  interpret g: bounded_clinear g by fact
-  show ?thesis
-  proof
-    show "clinear (\<lambda>x. f (g x))"
-      unfolding clinear_def
-    proof
-      show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
-        for b1 :: 'c
-          and b2 :: 'c
-        by (simp add: f.add g.add)
-
-      show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
-        for r :: complex
-          and b :: 'c
-        by (simp add: complex_vector.linear_scale f.is_clinear g.is_clinear)
-
-    qed
-    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-      by blast
-    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-      by blast
-    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof (intro exI allI)
-      fix x
-      have "norm (f (g x)) \<le> norm (g x) * Kf"
-        using f .
-      also have "\<dots> \<le> (norm x * Kg) * Kf"
-        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-        by (rule mult.assoc)
-      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-    qed
-  qed
-qed
-
-
-lemma bounded_cbilinear_mult: "bounded_cbilinear ((*) :: 'a \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_algebra)"
-  apply (rule bounded_cbilinear.intro)
-      apply (rule distrib_right)
-     apply (rule distrib_left)
-    apply (rule mult_scaleC_left)
-   apply (rule mult_scaleC_right)
-  apply (rule_tac x="1" in exI)
-  by (simp add: norm_mult_ineq)
-
-
-lemma bounded_clinear_mult_left: "bounded_clinear (\<lambda>x::'a::complex_normed_algebra. x * y)"
-  using bounded_cbilinear_mult
-  by (rule bounded_cbilinear.bounded_clinear_left)
-
-lemma bounded_clinear_mult_right: "bounded_clinear (\<lambda>y::'a::complex_normed_algebra. x * y)"
-  using bounded_cbilinear_mult
-  by (rule bounded_cbilinear.bounded_clinear_right)
-
-lemmas bounded_clinear_mult_const =
-  bounded_clinear_mult_left [THEN bounded_clinear_compose]
-
-lemmas bounded_clinear_const_mult =
-  bounded_clinear_mult_right [THEN bounded_clinear_compose]
-
-lemma bounded_clinear_divide: "bounded_clinear (\<lambda>x. x / y)"
-  for y :: "'a::complex_normed_field"
-  unfolding divide_inverse by (rule bounded_clinear_mult_left)
-
-lemma bounded_cbilinear_scaleC: "bounded_cbilinear scaleC"
-  apply (rule bounded_cbilinear.intro)
-      apply (rule scaleC_add_left)
-     apply (rule scaleC_add_right)
-    apply simp
-   apply (rule scaleC_left_commute)
-  apply (rule_tac x="1" in exI)
-  by simp
-
-
-lemma bounded_clinear_scaleC_left: "bounded_clinear (\<lambda>r. scaleC r x)"
-  using bounded_cbilinear_scaleC
-  by (rule bounded_cbilinear.bounded_clinear_left)
-
-lemma bounded_clinear_scaleC_right: "bounded_clinear (\<lambda>x. scaleC r x)"
-  using bounded_cbilinear_scaleC
-  by (rule bounded_cbilinear.bounded_clinear_right)
-
-lemmas bounded_clinear_scaleC_const =
-  bounded_clinear_scaleC_left[THEN bounded_clinear_compose]
-
-lemmas bounded_clinear_const_scaleC =
-  bounded_clinear_scaleC_right[THEN bounded_clinear_compose]
-
-lemma bounded_clinear_of_complex: "bounded_clinear (\<lambda>r. of_complex r)"
-  unfolding of_complex_def by (rule bounded_clinear_scaleC_left)
-
-lemma complex_bounded_clinear: "bounded_clinear f \<longleftrightarrow> (\<exists>c::complex. f = (\<lambda>x. x * c))"
-  for f :: "complex \<Rightarrow> complex"
-proof -
-  {
-    fix x
-    assume "bounded_clinear f"
-    then interpret bounded_clinear f .
-    have "f x = x * f 1"
-      by (metis complex_scaleC_def complex_vector.linear_scale is_clinear mult.comm_neutral)      
-  }
-  thus ?thesis
-    by (auto intro: exI[of _ "f 1"] bounded_clinear_mult_left)
 qed
 
 lemma bij_clinear_imp_inv_clinear: "clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear (inv f)"
-  unfolding clinear_def
 proof
   show "inv f (b1 + b2) = inv f b1 + inv f b2"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    if "clinear f"
       and "bij f"
     for b1 :: 'b
       and b2 :: 'b
-    using that  bij_inv_eq_iff complex_vector.vector_space_pair_axioms vector_space_pair.linear_add
-  proof -
-    have "\<And>a b. f a + f b = f (a + b)"
-      by (metis (no_types) complex_vector.vector_space_pair_axioms that(1) vector_space_pair.linear_add)
-    thus ?thesis
-      by (metis (no_types) bij_inv_eq_iff that(2))
-  qed
-
+    using that
+    by (simp add: bij_is_inj bij_is_surj complex_vector.linear_add inv_f_eq surj_f_inv_f) 
   show "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    if "clinear f"
       and "bij f"
     for r :: complex
       and b :: 'b
     using that
-    by (smt bij_inv_eq_iff clinear_def complex_vector.linear_scale) 
+    by (simp add: bij_is_inj bij_is_surj complex_vector.linear_scale inv_f_eq surj_f_inv_f) 
 qed
 
-locale bounded_sesquilinear =
-  fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
-  assumes add_left: "prod (a + a') b = prod a b + prod a' b"
-    and add_right: "prod a (b + b') = prod a b + prod a b'"
-    and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
-    and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
-    and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-begin
-
-(* Recovered theorem *)
-sublocale bounded_bilinear
-  apply standard
-  unfolding scaleR_scaleC
-      apply (fact add_left)
-     apply (fact add_right)
-    apply (simp add: scaleC_left)
-   apply (fact scaleC_right)
-  by (fact bounded)
-
-(* Recovered theorem *)
-lemma bounded_bilinear: "bounded_bilinear prod" by (fact bounded_bilinear_axioms)
-
-lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
-  apply (insert bounded)
-  apply safe
-  apply (rule_tac K="norm b * K" in bounded_csemilinear_intro)
-    apply (rule add_left)
-   apply (simp add: scaleC_left)
-  by (simp add: ac_simps)
-
-lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
-  apply (insert bounded)
-  apply safe
-  apply (rule_tac K="norm a * K" in bounded_clinear_intro)
-    apply (rule add_right)
-   apply (rule scaleC_right)
-  by (simp add: ac_simps)
-
-lemma comp1:
-  assumes \<open>bounded_clinear g\<close>
-  shows \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
+lemma bij_antilinear_imp_inv_antilinear: "antilinear f \<Longrightarrow> bij f \<Longrightarrow> antilinear (inv f)"
 proof
-  show "prod (g (a + a')) b = prod (g a) b + prod (g a') b"
-    for a :: 'd
-      and a' :: 'd
-      and b :: 'b
-  proof-
-    have \<open>g (a + a') = g a + g a'\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_add)
+  show "a \<cdot>\<^sub>C ((x::'a) + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+    if "antilinear f"
+      and "bij f"
+    for a :: complex
+      and x :: 'a
+      and y :: 'a
+    using that
+    by (simp add: cnj_scaleC_add_right) 
+  show "(a + b) \<cdot>\<^sub>C (x::'a) = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+    if "antilinear f"
+      and "bij f"
+    for a :: complex
+      and b :: complex
+      and x :: 'a
+    using that
+    using cnj_scaleC_add_left by auto 
+  show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C (x::'a) = (a * b) \<cdot>\<^sub>C x"
+    if "antilinear f"
+      and "bij f"
+    for a :: complex
+      and b :: complex
+      and x :: 'a
+    using that
+    by (simp add: cnj_scaleC_scaleC) 
+  show "1 \<cdot>\<^sub>C (x::'a) = x"
+    if "antilinear f"
+      and "bij f"
+    for x :: 'a
+    using that
+    by (simp add: cnj_scaleC_one) 
+  show "inv f (b1 + b2) = inv f b1 + inv f b2"
+    if "antilinear f"
+      and "bij f"
+    for b1 :: 'b
+      and b2 :: 'b
+  proof -
+    have f1: "\<forall>f a b. \<not> bij f \<or> ((a::'a) = inv f (b::'b)) = (f a = b)"
+      by (meson bij_inv_eq_iff)
+    hence "f (inv f b1) = b1"
+      using that(2) by blast
+    hence "f (inv f b1 + inv f b2) = b1 + b2"
+      using f1 by (metis (no_types) antilinear_iff that(1) that(2))
     thus ?thesis
-      by (simp add: add_left) 
-  qed
-  show "prod (g a) (b + b') = prod (g a) b + prod (g a) b'"
-    for a :: 'd
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: add_right)
-  show "prod (g (r *\<^sub>C a)) b = cnj r *\<^sub>C prod (g a) b"
+      using f1 by (metis (full_types) that(2))
+  qed 
+  show "inv f (r *\<^sub>C b) = r \<cdot>\<^sub>C inv f b"
+    if "antilinear f"
+      and "bij f"
     for r :: complex
-      and a :: 'd
       and b :: 'b
   proof-
-    have \<open>g (r *\<^sub>C a) = r *\<^sub>C (g a)\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_scale)
+    have "f (r \<cdot>\<^sub>C ((inv f) b)) = r *\<^sub>C f ((inv f) b)"
+      by (simp add: antilinear.scaleC cnj_scaleC_def that(1))      
+    also have "\<dots> = r *\<^sub>C b"
+      using bij_inv_eq_iff that(2) by metis      
+    finally have "f (r \<cdot>\<^sub>C ((inv f) b)) = r *\<^sub>C b"
+      by blast
     thus ?thesis
-      by (simp add: scaleC_left)      
-  qed  
-  show "prod (g a) (r *\<^sub>C b) = r *\<^sub>C prod (g a) b"
-    for a :: 'd
-      and r :: complex
-      and b :: 'b
-    by (simp add: scaleC_right)    
-  show "\<exists>K. \<forall>a b. norm (prod (g a) b) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by simp
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-    proof - (* sledgehammer *)
-      { fix aa :: "real \<Rightarrow> 'a" and bb :: "real \<Rightarrow> 'b"
-        have ff1: "\<forall>a b r. r * (norm (b::'b) * norm (a::'a)) \<le> 0 \<or> 0 \<le> r"
-          by (metis (no_types) linear mult_nonneg_nonpos2 norm_ge_zero semiring_normalization_rules(18))
-        obtain rr :: real where
-          "\<forall>a b r. norm (prod a b) \<le> r \<or> r < rr * (norm b * norm a)"
-          by (metis bounded dual_order.strict_trans1 mult.commute not_le)
-        hence "\<exists>r. norm (prod (aa r) (bb r)) \<le> norm (aa r) * norm (bb r) * r \<and> 0 \<le> r"
-          using ff1 by (metis (no_types) linear mult.commute mult_zero_left not_le) }
-      thus ?thesis
-        by metis
-    qed
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-    have \<open>norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close>
-      for a b
-      using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      by blast
-    hence \<open>norm (prod (g a) b) \<le> (norm a * M) * norm b * N\<close>
-      for a b
-    proof -
-      have "\<forall>d b. norm (b::'b) * norm (g d) \<le> norm b * (M * norm d)"
-        by (metis \<open>\<And>a. norm (g a) \<le> norm a * M\<close> mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono)
-      thus ?thesis
-        by (metis (no_types) \<open>0 \<le> N\<close> \<open>\<And>b a. norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close> dual_order.trans mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
-    qed
-    hence \<open>norm (prod (g a) b) \<le> norm a * norm b * K\<close>
-      for a b
-      unfolding K_def
-      by (simp add: mult.commute mult.left_commute)
-    thus ?thesis
-      by blast      
-  qed  
-qed
-
-lemma comp2:
-  assumes \<open>bounded_clinear g\<close>
-  shows \<open>bounded_sesquilinear (\<lambda>x y. prod x (g y))\<close>
-proof
-  show "prod (a + a') (g b) = prod a (g b) + prod a' (g b)"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'd
-    by (simp add: add_left)    
-  show "prod a (g (b + b')) = prod a (g b) + prod a (g b')"
-    for a :: 'a
-      and b :: 'd
-      and b' :: 'd
-  proof-
-    have \<open>g (b + b') = g b + g b'\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis
-      by (simp add: add_right) 
+      using bij_inv_eq_iff that(2) by force 
   qed
-  show "prod (r *\<^sub>C a) (g b) = cnj r *\<^sub>C prod a (g b)"
-    for r :: complex
-      and a :: 'a
-      and b :: 'd
-    by (simp add: scaleC_left)    
-  show "prod a (g (r *\<^sub>C b)) = r *\<^sub>C prod a (g b)"
-    for a :: 'a
-      and r :: complex
-      and b :: 'd
-  proof-
-    have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      by (simp add: scaleC_right) 
-  qed
-  show "\<exists>K. \<forall>a b. norm (prod a (g b)) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
-      by simp
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-    proof - (* sledgehammer *)
-      { fix aa :: "real \<Rightarrow> 'a" and bb :: "real \<Rightarrow> 'b"
-        have ff1: "\<forall>a b r. r * (norm (b::'b) * norm (a::'a)) \<le> 0 \<or> 0 \<le> r"
-          by (metis (no_types) linear mult_nonneg_nonpos2 norm_ge_zero semiring_normalization_rules(18))
-        obtain rr :: real where
-          "\<forall>a b r. norm (prod a b) \<le> r \<or> r < rr * (norm b * norm a)"
-          by (metis bounded dual_order.strict_trans1 mult.commute not_le)
-        hence "\<exists>r. norm (prod (aa r) (bb r)) \<le> norm (aa r) * norm (bb r) * r \<and> 0 \<le> r"
-          using ff1 by (metis (no_types) linear mult.commute mult_zero_left not_le) }
-      thus ?thesis
-        by metis
-    qed
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-
-    have \<open>norm (prod a (g b)) \<le> norm a * norm b * K\<close>
-      for a b
-    proof-
-      have \<open>norm (prod a (g b)) \<le> norm a * norm (g b) * N\<close>
-        using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-        by blast
-      also have \<open>norm a * norm (g b) * N \<le> norm a * (norm b * M) * N\<close>
-        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close>
-        by (smt \<open>0 \<le> N\<close> mult_cancel_right norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono real_mult_less_iff1)
-      also have \<open>norm a * (norm b * M) * N = norm a * norm b * K\<close>
-        by (simp add: K_def)
-      finally show ?thesis by blast
-    qed
-    thus ?thesis
-      by blast      
-  qed  
 qed
 
-lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
-  using comp1 bounded_sesquilinear.comp2 by auto
-
-end
-
-
-instance complex_normed_algebra_1 \<subseteq> perfect_space ..
-
-lemma clinear_linear:
-  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
-  assumes \<open>clinear f\<close>
-  shows \<open>linear f\<close>
-  using Complex_Vector_Spaces.clinear_is_linear
-  by (simp add: clinear_is_linear assms)
-
-lemma clinear_add:
-  \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
-  by (simp add: complex_vector.linear_compose_add)
-
-lemma clinear_minus:
-  \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
-  by (simp add: complex_vector.linear_compose_sub)
-
-lemma clinear_zero:
-  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
-  shows \<open>clinear f \<Longrightarrow> f 0 = 0\<close>
-  by (rule  Complex_Vector_Spaces.complex_vector.linear_0)
-
-lemma clinear_sum_induction:
-  \<open>\<forall> f S. card S = n \<and> (\<forall> t \<in> S. clinear (f t))  \<longrightarrow> clinear (\<lambda> x. \<Sum> t\<in>S. f t x)\<close>
-proof (induction n)
-  show "\<forall>f S. card S = 0 \<and> (\<forall>t\<in>S. clinear (\<lambda>a. f (t::'a) (a::'b)::'c)) \<longrightarrow> clinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
-    using complex_vector.linear_compose_sum by auto
-
-  show "\<forall>f S. card S = Suc n \<and> (\<forall>t\<in>S. clinear (\<lambda>a. f (t::'a) (a::'b)::'c)) \<longrightarrow> clinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
-    if "\<forall>f S. card S = n \<and> (\<forall>t\<in>S. clinear (\<lambda>a. f (t::'a) (a::'b)::'c)) \<longrightarrow> clinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
-    for n :: nat
-    using that complex_vector.linear_compose_sum by blast 
-qed
 
 lemma clinear_sum:
   \<open>finite S \<Longrightarrow> (\<And> t. t \<in> S \<Longrightarrow> clinear (f t)) \<Longrightarrow> clinear (\<lambda> x. \<Sum> t\<in>S. f t x)\<close>
-  using clinear_sum_induction by blast
+  by (simp add: complex_vector.linear_compose_sum)
 
-lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
-  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
+lemma antilinear_sum2:
+  assumes af: "antilinear f" and ag: "antilinear g"
+  shows "antilinear (\<lambda>x. f x + g x)"
+proof
+  show "a \<cdot>\<^sub>C ((x::'b) + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+    for a :: complex
+      and x :: 'b
+      and y :: 'b
+    by (simp add: cnj_scaleC_add_right)    
+  show "(a + b) \<cdot>\<^sub>C (x::'b) = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    by (simp add: cnj_scaleC_add_left)
+
+  show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C (x::'b) = (a * b) \<cdot>\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    by (simp add: cnj_scaleC_scaleC)
+
+  show "1 \<cdot>\<^sub>C (x::'b) = x"
+    for x :: 'b
+    by (simp add: cnj_scaleC_one)
+
+  show "f (b1 + b2) + g (b1 + b2) = f b1 + g b1 + (f b2 + g b2)"
+    for b1 :: 'a
+      and b2 :: 'a
+  proof -
+    have "g (b1 + b2) + f (b1 + b2) = g b1 + g b2 + (f b1 + f b2)"
+      by (metis (no_types) af ag antilinear_iff)
+    thus ?thesis
+      by (simp add: add.commute)
+  qed
+
+  show "f (r *\<^sub>C b) + g (r *\<^sub>C b) = r \<cdot>\<^sub>C (f b + g b)"
+    for r :: complex
+      and b :: 'a
+    by (simp add: af ag antilinear.scaleC cnj_scaleC_add_right)    
+qed
+
+lemma antilinear_zero: "antilinear (\<lambda>_. (0::'a::complex_vector))"
+  by (metis (no_types, lifting) add_cancel_right_right antilinear_iff cnj_scaleC_add_right)  
+
+lemma antilinear_sum:
+  assumes fS: "finite S" and al: "\<And>t. t \<in> S \<Longrightarrow> antilinear (f t)"
+  shows "antilinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
+    (* Ask to Dominique how to simplify this proof opening *)
+  using assms proof (induction S)
+  case empty
+  have "(\<lambda>x. \<Sum>t\<in>{}. f t x) = (\<lambda>_. (0::'c))"
+    by simp
+  moreover have "antilinear (\<lambda>_. (0::'c))"
+    using antilinear_zero by blast
+  ultimately show ?case by simp
+next
+  case (insert x F)
+  have "(\<lambda>y. \<Sum>t\<in>insert x F. f t y) = (\<lambda>y. (\<Sum>t\<in>F. f t y) + f x y)"
+    by (simp add: add.commute insert.hyps(1) insert.hyps(2))
+  moreover have "antilinear (\<lambda>y. \<Sum>t\<in>F. f t y)"
+    by (simp add: insert.IH insert.prems)    
+  moreover have "antilinear (f x)"
+    by (simp add: insert.prems)    
+  ultimately show ?case 
+    using antilinear_sum2 by auto
+qed
+
+lemma bounded_clinear_addition: \<open>bounded_clinear f \<Longrightarrow> f (b1 + b2) = f b1 + f b2\<close>
+  by (simp add: bounded_clinear.axioms(1) complex_vector.linear_add)
+
+lemma bounded_clinear_scaleC: \<open>bounded_clinear f \<Longrightarrow> f (c *\<^sub>C b) = c *\<^sub>C f b\<close>
+  unfolding bounded_clinear_def clinear_def
+  by (simp add: clinear.intro complex_vector.linear_scale)
+
+lemma bounded_antilinear_addition: \<open>bounded_antilinear f \<Longrightarrow> f (b1 + b2) = f b1 + f b2\<close>
+  unfolding bounded_antilinear_def antilinear_def
+  using antilinear.intro antilinear_iff by blast 
+
+lemma bounded_antilinear_scaleC: \<open>bounded_antilinear f \<Longrightarrow> f (c *\<^sub>C b) = c \<cdot>\<^sub>C f b\<close>
+  unfolding bounded_antilinear_def antilinear_def
+  by (simp add: antilinear.intro antilinear.scaleC)
+
+lemma bounded_antilinear_scaleC': \<open>bounded_antilinear f \<Longrightarrow> f (c \<cdot>\<^sub>C b) = c *\<^sub>C f b\<close>
+  by (simp add: bounded_antilinear_scaleC cnj_scaleC_def)
 
 lemma scalarR_bounded_clinear:
   fixes c :: real
-  assumes \<open>bounded_clinear f\<close>
-  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
-proof-
-  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
-    by (simp add: assms bounded_clinear_const_scaleC)
-  thus ?thesis
-    by (simp add: scaleR_scaleC) 
+  assumes b1: \<open>bounded_clinear f\<close>
+  shows \<open>bounded_clinear (\<lambda>x. c *\<^sub>R f x)\<close>
+proof
+  show "c *\<^sub>R f (b1 + b2) = c *\<^sub>R f b1 + c *\<^sub>R f b2"
+    for b1 :: 'a
+      and b2 :: 'a
+  proof-
+    have "f (b1 + b2) = f b1 + f b2"
+      using b1 by (simp add: bounded_clinear_addition) 
+    thus ?thesis by (simp add: scaleR_add_right) 
+  qed
+  show "c *\<^sub>R f (r *\<^sub>C b) = r *\<^sub>C c *\<^sub>R f b"
+    for r :: complex
+      and b :: 'a
+  proof-
+    have "f (c *\<^sub>C b) = c *\<^sub>C f b"
+      using b1 by (simp add: bounded_clinear_scaleC)
+    thus ?thesis
+      by (simp add: b1 bounded_clinear_scaleC scaleR_scaleC)      
+  qed
+  show "\<exists>K. \<forall>x. \<parallel>c *\<^sub>R f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  proof-
+    have "\<exists>M. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * M"
+      using b1 by (simp add: bounded_clinear.bounded)
+    then obtain M where "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * M" for x
+      by blast
+    hence "\<parallel>c\<parallel> * \<parallel>f x\<parallel> \<le> \<parallel>c\<parallel> * \<parallel>x\<parallel> * M" for x
+      by (metis mult_le_cancel_left norm_not_less_zero vector_space_over_itself.scale_scale)
+    thus ?thesis
+    proof -
+      assume a1: "\<And>x. \<parallel>c\<parallel> * \<parallel>f x\<parallel> \<le> \<parallel>c\<parallel> * \<parallel>x\<parallel> * M"
+      { fix b :: "real \<Rightarrow> 'a"
+        have "\<And>a. \<bar>c\<bar> * \<parallel>f a\<parallel> \<le> M * (\<bar>c\<bar> * \<parallel>a\<parallel>)"
+          using a1 by (simp add: mult.commute)
+        hence "\<exists>r. \<bar>c\<bar> * \<parallel>f (b r)\<parallel> \<le> r * \<parallel>b r\<parallel>"
+          by (metis (no_types) real_scaleR_def scaleR_scaleR)
+        hence "\<exists>r. \<parallel>c *\<^sub>R f (b r)\<parallel> \<le> \<parallel>b r\<parallel> * r"
+          by (metis mult.commute norm_scaleR) }
+      thus ?thesis
+        by metis
+    qed      
+  qed
 qed
 
 lemma bounded_linear_bounded_clinear:
   \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
 proof
-  show "clinear A"
+  show "A (b1 + b2) = A b1 + A b2"
     if "bounded_linear A"
       and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    for b1 :: 'a
+      and b2 :: 'a
     using that
-    by (simp add: bounded_linear.linear clinearI real_vector.linear_add) 
-  show "\<exists>K. \<forall>x. norm (A x) \<le> norm x * K"
+    by (simp add: linear_simps(1)) 
+  show "A (r *\<^sub>C b) = r *\<^sub>C A b"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+    for r :: complex
+      and b :: 'a
+    using that
+    by simp 
+  show "\<exists>K. \<forall>x. \<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * K"
     if "bounded_linear A"
       and "\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
     using that
     by (simp add: bounded_linear.bounded) 
+qed
+
+lemma bounded_linear_bounded_anti:
+  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x \<Longrightarrow> bounded_antilinear A\<close>
+proof
+  show "a \<cdot>\<^sub>C ((x::'b) + y) = a \<cdot>\<^sub>C x + a \<cdot>\<^sub>C y"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for a :: complex
+      and x :: 'b
+      and y :: 'b
+    using that
+    by (simp add: cnj_scaleC_add_right) 
+  show "(a + b) \<cdot>\<^sub>C (x::'b) = a \<cdot>\<^sub>C x + b \<cdot>\<^sub>C x"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    using that
+    by (simp add: cnj_scaleC_add_left) 
+  show "a \<cdot>\<^sub>C b \<cdot>\<^sub>C (x::'b) = (a * b) \<cdot>\<^sub>C x"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for a :: complex
+      and b :: complex
+      and x :: 'b
+    using that
+    by (simp add: cnj_scaleC_scaleC) 
+  show "1 \<cdot>\<^sub>C (x::'b) = x"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for x :: 'b
+    using that
+    by (simp add: cnj_scaleC_one) 
+  show "A (b1 + b2) = A b1 + A b2"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for b1 :: 'a
+      and b2 :: 'a
+    using that
+    by (simp add: linear_simps(1))
+
+  show "A (r *\<^sub>C b) = r \<cdot>\<^sub>C A b"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    for r :: complex
+      and b :: 'a
+    using that
+    by simp 
+  show "\<exists>K. \<forall>x. \<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * K"
+    if "bounded_linear A"
+      and "\<forall>c x. A (c *\<^sub>C x) = c \<cdot>\<^sub>C A x"
+    using that bounded_linear.bounded by auto 
 qed
 
 lemma comp_bounded_clinear:
@@ -1583,27 +1570,69 @@ lemma comp_bounded_clinear:
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
   shows \<open>bounded_clinear (A \<circ> B)\<close>
 proof
-  show "clinear (A \<circ> B)"
-    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) bounded_clinear.is_clinear)
+  show "(A \<circ> B) (b1 + b2) = (A \<circ> B) b1 + (A \<circ> B) b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by (simp add: assms(1) assms(2) bounded_clinear.axioms(1) complex_vector.linear_add)
 
-  show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
+  show "(A \<circ> B) (r *\<^sub>C b) = r *\<^sub>C (A \<circ> B) b"
+    for r :: complex
+      and b :: 'a
+    by (simp add: assms(1) assms(2) bounded_clinear.axioms(1) complex_vector.linear_scale)
+
+  show "\<exists>K. \<forall>x. \<parallel>(A \<circ> B) x\<parallel> \<le> \<parallel>x\<parallel> * K"
   proof-
-    obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
-      using assms(2) bounded_clinear.bounded
-      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
-    obtain KA where \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close> and \<open>KA \<ge> 0\<close>
-      using assms(1) bounded_clinear.bounded
-      by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
-    have \<open>\<forall>x. norm (A (B x)) \<le> norm x * KB * KA\<close>
-      using  \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close>  \<open>KA \<ge> 0\<close> 
-        \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close>  \<open>KB \<ge> 0\<close>
-      by (metis order.trans ordered_comm_semiring_class.comm_mult_left_mono semiring_normalization_rules(7))
+    have "\<exists>KB. \<forall>x. \<parallel>B x\<parallel> \<le> \<parallel>x\<parallel> * KB \<and> KB \<ge> 0"
+      using assms(2) bounded_clinear.nonneg_bounded by blast            
+    then obtain KB where KB0: \<open>KB \<ge> 0\<close> and  KB1: "\<parallel>B x\<parallel> \<le> \<parallel>x\<parallel> * KB" for x
+      by blast
+    have "\<exists>KA. \<forall>x. \<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * KA \<and> KA \<ge> 0"
+      using assms(1) bounded_clinear.nonneg_bounded by blast
+    then obtain KA where KA0: \<open>KA \<ge> 0\<close> and KA1: "\<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * KA" for x
+      by blast
+    hence "\<parallel>A (B x)\<parallel> \<le> \<parallel>B x\<parallel> * KA" for x
+      using KA1 by blast
+    hence "\<parallel>A (B x)\<parallel> \<le> \<parallel>x\<parallel> * KB * KA" for x
+      by (metis KB1 KA0 KA1 dual_order.trans mult.commute mult_left_mono)
     thus ?thesis
-      by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)     
+      by (metis ab_semigroup_mult_class.mult_ac(1) comp_apply)      
   qed
 qed
 
+lemma comp_bounded_antilinear:
+  fixes  A :: \<open>'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector\<close> 
+    and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
+  assumes \<open>bounded_antilinear A\<close> and \<open>bounded_antilinear B\<close>
+  shows \<open>bounded_clinear (A \<circ> B)\<close>
+proof
+  show "(A \<circ> B) (b1 + b2) = (A \<circ> B) b1 + (A \<circ> B) b2"
+    for b1 :: 'a
+      and b2 :: 'a
+    by (simp add: assms(1) assms(2) bounded_antilinear_addition)
 
+  show "(A \<circ> B) (r *\<^sub>C b) = r *\<^sub>C (A \<circ> B) b"
+    for r :: complex
+      and b :: 'a
+    by (simp add: assms(1) assms(2) bounded_antilinear_scaleC bounded_antilinear_scaleC')
+
+  show "\<exists>K. \<forall>x. \<parallel>(A \<circ> B) x\<parallel> \<le> \<parallel>x\<parallel> * K"
+  proof-
+    have "\<exists>M. \<forall>x. \<parallel>B x\<parallel> \<le> \<parallel>x\<parallel> * M \<and> M \<ge> 0"
+      using assms(2) bounded_antilinear.nonneg_bounded' by auto      
+    then obtain M where f1: "\<And>x. \<parallel>B x\<parallel> \<le> \<parallel>x\<parallel> * M" and fm: \<open>M \<ge> 0\<close>
+      by blast
+    have "\<exists>N. \<forall>x. \<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * N \<and> N \<ge> 0"
+      using assms(1) bounded_antilinear.nonneg_bounded' by auto
+    then obtain N where f2: "\<And>x. \<parallel>A x\<parallel> \<le> \<parallel>x\<parallel> * N" and fn: "N \<ge> 0"
+      by blast
+    define K where K_def: "K = M*N"
+    have "\<parallel>A (B x)\<parallel> \<le> \<parallel>x\<parallel> * K" for x
+      unfolding K_def using f1 f2 fm fn
+      by (smt ab_semigroup_mult_class.mult_ac(1) mult_right_mono) 
+    thus ?thesis
+      by auto 
+  qed
+qed
 
 subsection \<open>Nonstandard analysis\<close>
 
@@ -1615,9 +1644,7 @@ definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::comp
 instantiation star :: (scaleC) scaleC
 begin
 definition star_scaleC_def [transfer_unfold]: "scaleC r \<equiv> *f* (scaleC r)"
-instance 
-  apply intro_classes
-  by (simp add: scaleR_scaleC star_scaleC_def star_scaleR_def)  
+instance ..
 end
 
 lemma hnorm_scaleC: "\<And>x::'a::complex_normed_vector star. 
@@ -1634,15 +1661,15 @@ instance star :: (complex_vector) complex_vector
 proof
   fix a b :: complex
   show "\<And>x y::'a star. scaleC a (x + y) = scaleC a x + scaleC a y"
-    apply StarDef.transfer
-    by (simp add: scaleC_add_right)
+    apply StarDef.transfer by (simp add: scaleC_add_right)
   show "\<And>x::'a star. scaleC (a + b) x = scaleC a x + scaleC b x"
-    apply StarDef.transfer
-    by (simp add: scaleC_add_left)
+    apply StarDef.transfer by (simp add: scaleC_add_left)
   show "\<And>x::'a star. scaleC a (scaleC b x) = scaleC (a * b) x"
     by StarDef.transfer (rule scaleC_scaleC)
   show "\<And>x::'a star. scaleC 1 x = x"
     by StarDef.transfer (rule scaleC_one)
+  show "\<And>r. (((*\<^sub>R) r)::'a star \<Rightarrow> 'a star) = (*\<^sub>C) (complex_of_real r)"
+    by (simp add: scaleR_scaleC star_scaleC_def star_scaleR_def)
 qed
 
 instance star :: (complex_algebra) complex_algebra
@@ -1661,9 +1688,8 @@ instance star :: (complex_div_algebra) complex_div_algebra ..
 instance star :: (complex_field) complex_field ..
 
 lemma isCont_scaleC:
-  includes nsa_notation
   fixes l :: \<open>'a::complex_normed_vector\<close>
-  shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
+  shows \<open>isCont (\<lambda> v. a *\<^sub>C v) l\<close>
 proof-
   have \<open>y \<approx> star_of l \<Longrightarrow> (*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
     for y         
@@ -1690,45 +1716,18 @@ proof-
     by (simp add: isNSCont_isCont_iff) 
 qed
 
-unbundle no_nsa_notation
-
-subsection \<open>Cauchy sequences\<close>
-
 lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
   by (simp only: metric_Cauchy_iff2 dist_complex_def)
 
-subsection \<open>Cauchy Sequences are Convergent\<close>
-
-subsection \<open>The set of complex numbers is a complete metric space\<close>
-
-class cbanach = complex_normed_vector + complete_space
-
 subclass (in cbanach) banach ..
-
-instance complex :: cbanach ..
-
-lemmas sums_of_complex = bounded_linear.sums [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas summable_of_complex = bounded_linear.summable [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_of_complex = bounded_linear.suminf [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-
-lemmas sums_scaleC_left = bounded_linear.sums[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_left = bounded_linear.summable[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_left = bounded_linear.suminf[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-
-lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-
-subsection \<open>Miscellany\<close>
 
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
   assumes \<open>closed S\<close>
-  shows \<open>closed (scaleC a ` S)\<close>
+  shows \<open>closed ((*\<^sub>C) a ` S)\<close>
 proof (cases \<open>S = {}\<close>)
   case True
-  thus ?thesis
-    by simp 
+  thus ?thesis by simp 
 next
   case False
   hence \<open>S \<noteq> {}\<close> by blast
@@ -1760,14 +1759,12 @@ next
       moreover have \<open>isCont (\<lambda> v. scaleC (inverse a) v) l\<close>
         using isCont_scaleC by auto
       ultimately have \<open>((\<lambda> v. scaleC (inverse a) v) \<circ> x) \<longlonglongrightarrow> (\<lambda> v. scaleC (inverse a) v) l\<close>
-        using Elementary_Topology.continuous_at_sequentially
-        by auto
+        using Elementary_Topology.continuous_at_sequentially by auto
       moreover have \<open>(\<lambda> v. scaleC (inverse a) v) \<circ> x = t\<close>
       proof-
         have \<open>(\<lambda> v. scaleC (inverse a) v) \<circ> x = (\<lambda> n. scaleC (inverse a) (x n))\<close>
           by auto
-        thus ?thesis using \<open>\<forall>n. t n = scaleC (inverse a) (x n)\<close>
-          by auto
+        thus ?thesis using \<open>\<forall>n. t n = scaleC (inverse a) (x n)\<close> by auto
       qed
       ultimately have \<open>t \<longlonglongrightarrow> (\<lambda> v. scaleC (inverse a) v) l\<close>
         by simp
@@ -1781,10 +1778,8 @@ next
         by (simp add: \<open>a \<noteq> 0\<close>)
       ultimately show ?thesis by simp
     qed
-    thus ?thesis using Elementary_Topology.closed_sequential_limits
-      by blast
+    thus ?thesis using Elementary_Topology.closed_sequential_limits by blast
   qed
-
 qed
 
 lemma closure_scaleC: 
@@ -1824,6 +1819,89 @@ proof
   qed
 qed
 
+lemma bounded_bilinear_scaleC: "bounded_bilinear ((*\<^sub>C)::complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_normed_vector)"
+proof
+  show "(a + a') *\<^sub>C b = a *\<^sub>C b + a' *\<^sub>C b"
+    for a :: complex
+      and a' :: complex
+      and b :: 'a
+    by (simp add: scaleC_add_left)
+
+  show "a *\<^sub>C (b + b') = a *\<^sub>C b + a *\<^sub>C b'"
+    for a :: complex
+      and b :: 'a
+      and b' :: 'a
+    by (simp add: scaleC_add_right)
+
+  show "(r *\<^sub>R a) *\<^sub>C b = r *\<^sub>R a *\<^sub>C b"
+    for r :: real
+      and a :: complex
+      and b :: 'a
+    by (simp add: scaleR_scaleC)
+
+  show "a *\<^sub>C r *\<^sub>R b = r *\<^sub>R a *\<^sub>C b"
+    for a :: complex
+      and r :: real
+      and b :: 'a
+    by (simp add: scaleR_scaleC)
+
+  show "\<exists>K. \<forall>a b. \<parallel>a *\<^sub>C (b::'a)\<parallel> \<le> cmod a * \<parallel>b\<parallel> * K"
+  proof-
+    have "\<parallel>a *\<^sub>C (b::'a)\<parallel> = cmod a * \<parallel>b\<parallel>" for a b
+      by simp      
+    hence "\<forall>a b. \<parallel>a *\<^sub>C (b::'a)\<parallel> = cmod a * \<parallel>b\<parallel> * 1"
+      by auto
+    thus ?thesis using eq_iff by blast 
+  qed
+qed
+
+lemma tendsto_scaleC:
+  fixes b::"'a::complex_normed_vector"
+  assumes a1: "(f \<longlongrightarrow> a) F" and a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. f x *\<^sub>C g x) \<longlongrightarrow> a *\<^sub>C b) F"
+  using bounded_bilinear_scaleC bounded_bilinear.tendsto[where F = F and f = f and g = g 
+      and a = a and b = b and prod = scaleC] assms by blast
+
+lemma tendsto_scaleC_left:
+  fixes b::"'a::complex_normed_vector"
+  assumes a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. c *\<^sub>C g x) \<longlongrightarrow> c *\<^sub>C b) F"
+  apply(rule tendsto_scaleC)
+   apply simp
+  by (simp add: assms)
+
+
+lemma tendsto_scaleC_right:
+  fixes c::"'a::complex_normed_vector"
+  assumes a2: "(g \<longlongrightarrow> b) F" 
+  shows "((\<lambda>x. g x *\<^sub>C c) \<longlongrightarrow> b *\<^sub>C c) F"
+  apply(rule tendsto_scaleC)
+   apply (simp add: assms)
+  by simp
+
+lemma bounded_clinear_is_bounded_linear:
+  \<open>bounded_clinear f \<Longrightarrow> bounded_linear f\<close>
+proof
+  show "f (b1 + b2) = f b1 + f b2"
+    if "bounded_clinear f"
+    for b1 :: 'a
+      and b2 :: 'a
+    using that bounded_clinear_addition by auto 
+  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
+    if "bounded_clinear f"
+    for r :: real
+      and b :: 'a
+  proof-
+    have "f (r *\<^sub>C b) = r *\<^sub>C f b"
+      by (simp add: bounded_clinear_scaleC that)      
+    thus ?thesis by (simp add: scaleR_scaleC) 
+  qed
+  show "\<exists>K. \<forall>x. \<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * K"
+    if "bounded_clinear f"
+    using that
+    by (simp add: bounded_clinear.bounded) 
+qed    
+
 lemma onorm_scalarC:
   fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
   assumes \<open>bounded_clinear f\<close>
@@ -1839,10 +1917,13 @@ proof-
       by blast      
     moreover have \<open>bdd_above {(norm (f x)) / norm x | x. True}\<close>
     proof-
-      have \<open>(norm (f x)) / norm x \<le> onorm f\<close>
+      have \<open>bounded_linear f\<close>
+        using  \<open>bounded_clinear f\<close>
+        by (simp add: bounded_clinear_is_bounded_linear)         
+      hence \<open>(norm (f x)) / norm x \<le> onorm f\<close>
         for x
-        using \<open>bounded_clinear f\<close>
-        by (simp add: bounded_clinear.bounded_linear le_onorm)        
+        using le_onorm
+        by blast
       thus ?thesis
         by fastforce 
     qed
@@ -1879,9 +1960,7 @@ proof-
 qed
 
 subsection \<open>Subspace\<close>
-
-\<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
-
+  \<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
 
 locale closed_subspace =
   fixes A::"('a::{complex_vector,topological_space}) set"
@@ -1918,8 +1997,8 @@ proof-
     have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
       using \<open>\<forall>n. xx n \<in> A\<close> assms complex_vector.subspace_def
       by (simp add: complex_vector.subspace_def)
-    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
-      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
+    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close>
+      by (simp add: isCont_scaleC)      
     hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
       by (simp add: isCont_tendsto_compose)
     thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
@@ -1953,7 +2032,7 @@ proof-
       by (smt complex_vector.subspace_add) 
     moreover have \<open>xB + yB \<in> B\<close>
       using \<open>xB \<in> B\<close> \<open>yB \<in> B\<close> assms(2)
-       by (smt complex_vector.subspace_add)
+      by (smt complex_vector.subspace_add)
     ultimately show ?thesis
       using \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> by blast
   qed
@@ -1975,7 +2054,7 @@ proof-
   qed
   moreover have  "0 \<in> C"
     using  \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0  mem_Collect_eq
-       add.right_inverse
+      add.right_inverse
     by (metis (mono_tags, lifting) complex_vector.subspace_0)    
   ultimately show ?thesis
     unfolding C_def complex_vector.subspace_def
@@ -2031,28 +2110,31 @@ qed
 
 
 lemma subspace_INF[simp]:
-  "\<forall> A \<in> \<A>. (closed_subspace A) \<Longrightarrow> closed_subspace (\<Inter>\<A>)"
+  "(\<And>A. A\<in>\<A> \<Longrightarrow> closed_subspace A) \<Longrightarrow> closed_subspace (\<Inter>\<A>)"
 proof-
-  assume \<open>\<forall> A \<in> \<A>. (closed_subspace A)\<close>
+  assume \<open>\<And>A. A\<in>\<A> \<Longrightarrow> closed_subspace A\<close>
   have \<open>complex_vector.subspace (\<Inter>\<A>)\<close>
   proof -
     obtain aa :: "'a set \<Rightarrow> 'a" and cc :: "'a set \<Rightarrow> complex" where
-      f1: "\<forall>x0. (\<exists>v1 v2. v1 \<in> x0 \<and> v2 *\<^sub>C v1 \<notin> x0) = (aa x0 \<in> x0 \<and> cc x0 *\<^sub>C aa x0 \<notin> x0)"
+      f1: "(\<exists>v1 v2. v1 \<in> x0 \<and> v2 *\<^sub>C v1 \<notin> x0) = (aa x0 \<in> x0 \<and> cc x0 *\<^sub>C aa x0 \<notin> x0)" for x0
       by moura
     obtain aaa :: "'a set \<Rightarrow> 'a" and aab :: "'a set \<Rightarrow> 'a" where
-      "\<forall>x0. (\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0) = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)"
+      "(\<exists>v1 v2. (v1 \<in> x0 \<and> v2 \<in> x0) \<and> v1 + v2 \<notin> x0)
+         = ((aaa x0 \<in> x0 \<and> aab x0 \<in> x0) \<and> aaa x0 + aab x0 \<notin> x0)" for x0
       by moura
-    hence f2: "\<forall>A. (\<not> complex_vector.subspace A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (complex_vector.subspace A \<or> aaa A \<in> A \<and> aab A \<in> A \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)"
+    hence f2: "(\<not> complex_vector.subspace A \<or> (\<forall>a aa. a \<notin> A \<or> aa \<notin> A \<or> a + aa \<in> A) 
+      \<and> (\<forall>a c. a \<notin> A \<or> c *\<^sub>C a \<in> A) \<and> 0 \<in> A) \<and> (complex_vector.subspace A \<or> aaa A \<in> A \<and> aab A \<in> A 
+      \<and> aaa A + aab A \<notin> A \<or> aa A \<in> A \<and> cc A *\<^sub>C aa A \<notin> A \<or> 0 \<notin> A)" for A
       using f1 by (metis (no_types) complex_vector.subspace_def)
     obtain AA :: "'a set set \<Rightarrow> 'a \<Rightarrow> 'a set" where
       "\<forall>x0 x1. (\<exists>v2. v2 \<in> x0 \<and> x1 \<notin> v2) = (AA x0 x1 \<in> x0 \<and> x1 \<notin> AA x0 x1)"
       by moura
-    hence f3: "\<forall>a A. (a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)"
+    hence f3: "(a \<notin> \<Inter> A \<or> (\<forall>Aa. Aa \<notin> A \<or> a \<in> Aa)) \<and> (a \<in> \<Inter> A \<or> AA A a \<in> A \<and> a \<notin> AA A a)" for a A
       by auto
-    have f4: "\<forall>A. \<not> closed_subspace (A::'a set) \<or> complex_vector.subspace A"
+    have f4: " \<not> closed_subspace (A::'a set) \<or> complex_vector.subspace A" for A
       by (simp add: closed_subspace.subspace)      
-    have f5: "\<forall>A. A \<notin> \<A> \<or> closed_subspace A"
-      by (metis \<open>\<forall>A\<in>\<A>. closed_subspace A\<close>)
+    have f5: "A \<notin> \<A> \<or> closed_subspace A" for A
+      using \<open>\<And>A. A \<in> \<A> \<Longrightarrow> closed_subspace A\<close> by auto      
     hence f6: "aa (\<Inter> \<A>) \<notin> \<Inter> \<A> \<or> cc (\<Inter> \<A>) *\<^sub>C aa (\<Inter> \<A>) \<in> \<Inter> \<A>"
       using f4 f3 f2 by meson
     have f7: "0 \<in> \<Inter> \<A>"
@@ -2063,7 +2145,7 @@ proof-
       using f7 f6 f2 by (metis (no_types))
   qed
   moreover have \<open>closed (\<Inter>\<A>)\<close>
-    by (simp add: \<open>\<forall>A\<in>\<A>. closed_subspace A\<close> closed_Inter closed_subspace.closed)
+    by (simp add: \<open>\<And>A. A \<in> \<A> \<Longrightarrow> closed_subspace A\<close> closed_Inter closed_subspace.closed)    
   ultimately show ?thesis 
     by (simp add: closed_subspace.intro)
 qed
@@ -2076,31 +2158,24 @@ typedef (overloaded) ('a::"{complex_vector,topological_space}")
   morphisms space_as_set Abs_linear_space
   using Complex_Vector_Spaces.subspace_UNIV by blast
 
-
 setup_lifting type_definition_linear_space
-
-lemma subspace_image:
-  assumes "clinear f" and "complex_vector.subspace S"
-  shows "complex_vector.subspace (f ` S)"
-  by (simp add: assms(1) assms(2) complex_vector.linear_subspace_image)
-
 
 instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
-  "\<lambda>c S. scaleC c ` S"
+  "\<lambda>c S. (*\<^sub>C) c ` S"
   apply (rule closed_subspace.intro)
-  using bounded_clinear_def bounded_clinear_scaleC_right closed_subspace.subspace complex_vector.linear_subspace_image apply blast
+  using bounded_clinear_def  closed_subspace.subspace complex_vector.linear_subspace_image
+   apply (simp add: closed_subspace.subspace complex_vector.linear_subspace_image) 
   by (simp add: closed_scaleC closed_subspace.closed)
 
 lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
-  "\<lambda>c S. (scaleR c) ` S"
+  "\<lambda>c S. ((*\<^sub>R) c) ` S"
   apply (rule closed_subspace.intro)
-  using bounded_clinear_def bounded_clinear_scaleC_right scaleR_scaleC
-   apply (metis closed_subspace.subspace complex_vector.linear_subspace_image)
+  using bounded_clinear_def  scaleR_scaleC
+   apply (simp add: scaleR_scaleC closed_subspace.subspace complex_vector.linear_subspace_image)
   by (simp add: closed_scaling closed_subspace.closed)
-instance 
-  apply standard
-  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
+
+instance  ..  
 end
 
 instantiation linear_space :: ("{complex_vector,t1_space}") bot begin
@@ -2108,7 +2183,6 @@ lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}
   by simp
 instance..
 end
-
 
 lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = bot" for S :: "_ linear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
@@ -2120,11 +2194,9 @@ lemma subspace_scale_invariant:
   assumes \<open>a \<noteq> 0\<close> and \<open>closed_subspace S\<close>
   shows \<open>(*\<^sub>C) a ` S = S\<close>
 proof-
-  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
-    for x
+  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close> for x
     using assms(2) closed_subspace.subspace complex_vector.subspace_scale by blast 
-  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
-    for x
+  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close> for x
   proof -
     assume "x \<in> S"
     hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
@@ -2132,8 +2204,7 @@ proof-
       by (metis closed_subspace.subspace) 
     hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
       using assms(1) by auto
-    thus ?thesis
-      by (meson image_iff)
+    thus ?thesis by (meson image_iff)
   qed 
   ultimately show ?thesis by blast
 qed
@@ -2146,7 +2217,7 @@ lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S
 instantiation linear_space :: ("{complex_vector,topological_space}") "top"
 begin
 lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNIV\<close>
-  by simp
+  by (rule Complex_Vector_Spaces.subspace_UNIV)
 
 instance ..
 end
@@ -2159,25 +2230,21 @@ proof
   show "complex_vector.subspace (\<Inter> S::'a set)"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
-    using that
-    by (simp add: closed_subspace.subspace) 
+    using that by (simp add: closed_subspace.subspace) 
   show "closed (\<Inter> S::'a set)"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
-    using that
-    by (simp add: closed_subspace.closed) 
+    using that by (simp add: closed_subspace.closed) 
 qed
 
 instance ..
 end
 
-
 subsection \<open>Span\<close>
 
 lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
-  apply (rule closed_subspace.intro)
-   apply (simp add: subspace_cl)
+  apply (rule closed_subspace.intro) apply (simp add: subspace_cl)
   by simp
 
 lemma subspace_span_A:
@@ -2204,24 +2271,21 @@ proof-
     hence \<open>x \<in> closure (complex_vector.span A)\<close>
       unfolding Span_def
       apply auto
-      using Abs_linear_space_inverse \<open>x \<in> space_as_set (Span A)\<close> 
-        Span.rep_eq 
+      using Abs_linear_space_inverse \<open>x \<in> space_as_set (Span A)\<close> Span.rep_eq 
       by blast
     hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
       by (simp add: closure_sequential)
     then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
       by blast
-    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S}\<close>
-      for n
+    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S}\<close> for n
       using  \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close>
       by auto
     have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S}\<close> 
     proof-
-      have \<open>closed_subspace S \<Longrightarrow> closed S\<close>
-        for S::\<open>'a set\<close>
+      have \<open>closed_subspace S \<Longrightarrow> closed S\<close> for S::\<open>'a set\<close>
         by (simp add: closed_subspace.closed)
       hence \<open>closed ( \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S})\<close>
-        by simp
+        by blast        
       thus ?thesis using \<open>y \<longlonglongrightarrow> x\<close>
         using \<open>\<And>n. y n \<in> \<Inter> {S. complex_vector.span A \<subseteq> S \<and> closed_subspace S}\<close> closed_sequentially 
         by blast  
@@ -2232,20 +2296,16 @@ proof-
     ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_subspace S}\<close>
       by blast     
     thus \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close> 
-      apply transfer
-      by blast
+      apply transfer by blast
   qed
-  moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})
-             \<Longrightarrow> x \<in> space_as_set (Span A)\<close>
+  moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S}) \<Longrightarrow> x \<in> space_as_set (Span A)\<close> 
     for x::'a
   proof-
     assume \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_subspace S}\<close>
-      apply transfer
-      by blast
+      apply transfer by blast
     moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S} \<subseteq> {S. A \<subseteq> S \<and> closed_subspace S}\<close>
-      using Collect_mono_iff
-      by (simp add: Collect_mono_iff subspace_span_B) 
+      using Collect_mono_iff by (simp add: Collect_mono_iff subspace_span_B) 
     ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_subspace S}\<close>
       by blast 
     thus \<open>x \<in> space_as_set (Span A)\<close>
@@ -2285,13 +2345,11 @@ proof-
     moreover have \<open>(\<lambda> n. r n + s n) \<longlonglongrightarrow> x + y\<close>
       by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
     ultimately show ?thesis
-      using assms that(1) that(2)
-      by (simp add: complex_vector.subspace_add subspace_cl) 
+      using assms that(1) that(2) by (simp add: complex_vector.subspace_add subspace_cl) 
   qed
   moreover have "c *\<^sub>C x \<in> closure S"
     if "x \<in> closure S"
-    for x :: 'a
-      and c :: complex
+    for x :: 'a and c :: complex
   proof-
     have \<open>\<exists> y. (\<forall> n::nat. y n \<in> S) \<and> y \<longlonglongrightarrow> x\<close>
       using Elementary_Topology.closure_sequential that by auto
@@ -2306,8 +2364,7 @@ proof-
     have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
       using assms complex_vector.subspace_scale by auto
     thus ?thesis
-      using assms that
-      by (simp add: complex_vector.subspace_scale subspace_cl) 
+      using assms that by (simp add: complex_vector.subspace_scale subspace_cl) 
   qed
   moreover have "0 \<in> closure S"
     by (metis \<open>\<And>x c. x \<in> closure S \<Longrightarrow> c *\<^sub>C x \<in> closure S\<close> all_not_in_conv assms closure_eq_empty complex_vector.scale_zero_left complex_vector.subspace_def)    
@@ -2320,7 +2377,7 @@ qed
 lemma bounded_linear_continuous:
   assumes \<open>bounded_clinear f\<close> 
   shows \<open>isCont f x\<close>
-  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
+  using assms linear_continuous_at bounded_clinear_is_bounded_linear by auto 
 
 lemma equal_span_0:
   fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> 
@@ -2352,59 +2409,53 @@ proof
     for x :: "'a linear_space"
       and y :: "'a linear_space"
       and z :: "'a linear_space"
-    using that
-    using less_eq_linear_space.rep_eq by auto 
+    using that less_eq_linear_space.rep_eq by auto 
   show "(x::'a linear_space) = y"
     if "(x::'a linear_space) \<le> y"
       and "(y::'a linear_space) \<le> x"
     for x :: "'a linear_space"
       and y :: "'a linear_space"
-    using that
-    by (simp add: space_as_set_inject less_eq_linear_space.rep_eq) 
+    using that by (simp add: space_as_set_inject less_eq_linear_space.rep_eq) 
 qed
 end
 
-lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
-  by (rule Complex_Vector_Spaces.bounded_clinear_ident)
 
 lemma bounded_sesquilinear_diff:
-  \<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
+  \<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. A x y - B x y)\<close>
 proof
   show "A (a + a') b - B (a + a') b = A a b - B a b + (A a' b - B a' b)"
-    if "bounded_sesquilinear A"
-      and "bounded_sesquilinear B"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'b
+    if "bounded_sesquilinear A" and "bounded_sesquilinear B"
+    for a::'a and a'::'a and b::'b
     using that
-    by (simp add: bounded_sesquilinear.add_left) 
+    by (simp add: bounded_sesquilinear.axioms(1) sesquilinear.add_left)  
   show "A a (b + b') - B a (b + b') = A a b - B a b + (A a b' - B a b')"
-    if "bounded_sesquilinear A"
-      and "bounded_sesquilinear B"
-    for a :: 'a
-      and b :: 'b
-      and b' :: 'b
+    if "bounded_sesquilinear A" and "bounded_sesquilinear B"
+    for a::'a and b::'b and b'::'b
     using that
-    by (simp add: bounded_sesquilinear.add_right) 
-  show "A (r *\<^sub>C a) b - B (r *\<^sub>C a) b = cnj r *\<^sub>C (A a b - B a b)"
-    if "bounded_sesquilinear A"
-      and "bounded_sesquilinear B"
-    for r :: complex
-      and a :: 'a
-      and b :: 'b
+    by (simp add: bounded_sesquilinear.axioms(1) sesquilinear.add_right)  
+  show "A (r *\<^sub>C a) b - B (r *\<^sub>C a) b = r \<cdot>\<^sub>C (A a b - B a b)"
+    if "bounded_sesquilinear A" and "bounded_sesquilinear B"
+    for r :: complex and a::'a and b::'b
     using that
-    by (simp add: bounded_sesquilinear.scaleC_left complex_vector.scale_right_diff_distrib) 
+    by (simp add: bounded_sesquilinear.axioms(1) cnj_scaleC_def 
+        complex_vector.scale_right_diff_distrib sesquilinear.scaleC_left)
+
   show "A a (r *\<^sub>C b) - B a (r *\<^sub>C b) = r *\<^sub>C (A a b - B a b)"
-    if "bounded_sesquilinear A"
-      and "bounded_sesquilinear B"
-    for a :: 'a
-      and r :: complex
-      and b :: 'b
-    using that
-    by (simp add: bounded_sesquilinear.scaleC_right complex_vector.scale_right_diff_distrib) 
+    if "bounded_sesquilinear A" and "bounded_sesquilinear B"
+    for a :: 'a and r :: complex and b :: 'b
+  proof-
+    have "A a (r *\<^sub>C b) = r *\<^sub>C (A a b)"
+      by (simp add: bounded_sesquilinear.axioms(1) sesquilinear.scaleC_right that(1))
+    moreover have "B a (r *\<^sub>C b) = r *\<^sub>C (B a b)"
+      by (simp add: bounded_sesquilinear.axioms(1) sesquilinear.scaleC_right that(2))
+    ultimately have "A a (r *\<^sub>C b) - B a (r *\<^sub>C b) =  r *\<^sub>C (A a b) -  r *\<^sub>C (B a b)"
+      by simp
+    also have "\<dots> =  r *\<^sub>C (A a b - B a b)"
+      by (simp add: complex_vector.scale_right_diff_distrib)
+    finally show ?thesis by simp 
+  qed
   show "\<exists>K. \<forall>a b. norm (A a b - B a b) \<le> norm a * norm b * K"
-    if "bounded_sesquilinear A"
-      and "bounded_sesquilinear B"
+    if "bounded_sesquilinear A" and "bounded_sesquilinear B"
   proof-
     have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
       by (simp add: bounded_sesquilinear.bounded that(1))
@@ -2436,28 +2487,26 @@ subsection \<open>Unsorted\<close>
 
 definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
   where \<open>is_basis S = (
-  (complex_vector.independent S) \<and>
-  closure (complex_vector.span S) = UNIV
+    (complex_vector.independent S) \<and> closure (complex_vector.span S) = UNIV
 )\<close>
 
 
 lemma complex_dependent_isolation:
   assumes \<open>complex_vector.dependent V\<close> and \<open>finite V\<close>
-  shows \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
+  shows \<open>\<exists>f. \<exists>s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
 proof-
   from \<open>complex_vector.dependent V\<close>
   have \<open>\<exists>T f. finite T \<and>
            T \<subseteq> V \<and> (\<Sum>i\<in>T. f i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>T. f i \<noteq> 0)\<close>
-    using complex_vector.dependent_explicit
-    by blast
+    using complex_vector.dependent_explicit by blast
   hence \<open>\<exists>f. (\<Sum>i\<in>V. f i *\<^sub>C i) = 0 \<and> (\<exists> i\<in>V. f i \<noteq> 0)\<close>
     using \<open>complex_vector.dependent V\<close> \<open>finite V\<close> complex_vector.independent_if_scalars_zero by fastforce
-  show \<open>\<exists> f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
+  show \<open>\<exists>f. \<exists> s\<in>V. s = (\<Sum>v\<in>V-{s}. f v *\<^sub>C v )\<close>
   proof-
     from \<open>\<exists>f. (\<Sum>i\<in>V. f i *\<^sub>C i) = 0 \<and> (\<exists> i\<in>V. f i \<noteq> 0)\<close>
     obtain f where  \<open>(\<Sum>i\<in>V. f i *\<^sub>C i) = 0\<close> and \<open>\<exists> i\<in>V. f i \<noteq> 0\<close>
       by blast
-    from \<open>\<exists> i\<in>V. f i \<noteq> 0\<close>
+    from \<open>\<exists>i\<in>V. f i \<noteq> 0\<close>
     obtain s where \<open>s \<in> V\<close> and \<open>f s \<noteq> 0\<close>
       by blast
     from  \<open>f s \<noteq> 0\<close>
@@ -2481,10 +2530,10 @@ proof-
 qed
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
-  where \<open>cbilinear \<equiv> (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
+  where \<open>cbilinear \<equiv> (\<lambda>f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
 
 lemma cbilinear_from_product_clinear:
-  fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g :: \<open>'b::complex_vector \<Rightarrow> complex\<close>
+  fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g::\<open>'b::complex_vector \<Rightarrow> complex\<close>
   assumes \<open>\<And> x y. h x y = (g' x)*(g y)\<close> and \<open>clinear g\<close> and \<open>clinear g'\<close>
   shows \<open>cbilinear h\<close>
   unfolding cbilinear_def proof
@@ -2565,10 +2614,8 @@ qed
 
 lemma bilinear_Kronecker_delta:
   fixes u::\<open>'a::complex_vector\<close> and v::\<open>'b::complex_vector\<close>
-  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close>
-    and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
-  shows \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and>
-    (\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0)\<close>
+  assumes \<open>complex_vector.independent A\<close> and \<open>complex_vector.independent B\<close> and \<open>u \<in> A\<close> and \<open>v \<in> B\<close>
+  shows \<open>\<exists> h::_\<Rightarrow>_\<Rightarrow>complex. cbilinear h \<and> (h u v = 1) \<and> (\<forall>x\<in>A. \<forall>y\<in>B. (x,y) \<noteq> (u,v) \<longrightarrow> h x y = 0)\<close>
 proof-
   define f where \<open>f x = (if x = v then (1::complex) else 0)\<close> for x
   have \<open>\<exists>g. clinear g \<and> (\<forall>x\<in>B. g x = f x)\<close>
@@ -2589,8 +2636,7 @@ proof-
     have \<open>g' u = 1\<close>
     proof-
       have \<open>g' u = f' u\<close>
-        using \<open>u \<in> A\<close>
-        by (simp add: \<open>\<forall>x\<in>A. g' x = f' x\<close>)
+        using \<open>u \<in> A\<close> by (simp add: \<open>\<forall>x\<in>A. g' x = f' x\<close>)
       also have \<open>\<dots> = 1\<close>
         by (simp add: f'_def)
       finally show ?thesis by blast
@@ -2598,16 +2644,14 @@ proof-
     moreover have \<open>g v = 1\<close>
     proof-
       have \<open>g v = f v\<close>
-        using \<open>v \<in> B\<close>
-        by (simp add: \<open>\<forall>x\<in>B. g x = f x\<close>)
+        using \<open>v \<in> B\<close> by (simp add: \<open>\<forall>x\<in>B. g x = f x\<close>)
       also have \<open>\<dots> = 1\<close>
         by (simp add: f_def)
       finally show ?thesis by blast
     qed
     ultimately show ?thesis unfolding h_def by auto
   qed
-  moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> (x,y) \<noteq> (u,v) \<Longrightarrow> h x y = 0\<close>
-    for x y
+  moreover have \<open>x\<in>A \<Longrightarrow> y\<in>B \<Longrightarrow> (x,y) \<noteq> (u,v) \<Longrightarrow> h x y = 0\<close> for x y
   proof-
     assume \<open>x\<in>A\<close> and \<open>y\<in>B\<close> and \<open>(x,y) \<noteq> (u,v)\<close>
     from \<open>(x,y) \<noteq> (u,v)\<close>
@@ -2636,30 +2680,26 @@ proof-
 qed
 
 lemma span_finite:
-  assumes \<open>z \<in> complex_vector.span T\<close>
-  shows \<open>\<exists> S. finite S \<and> S \<subseteq> T \<and> z \<in> complex_vector.span S\<close>
+  assumes \<open>z\<in>complex_vector.span T\<close>
+  shows \<open>\<exists>S. finite S \<and> S \<subseteq> T \<and> z\<in>complex_vector.span S\<close>
 proof-
-  have \<open>\<exists> S r. finite S \<and> S \<subseteq> T \<and> z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
+  have \<open>\<exists>S r. finite S \<and> S \<subseteq> T \<and> z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
     using complex_vector.span_explicit[where b = "T"]
       assms by auto
   then obtain S r where \<open>finite S\<close> and \<open>S \<subseteq> T\<close> and \<open>z = (\<Sum>a\<in>S. r a *\<^sub>C a)\<close>
     by blast
-  thus ?thesis
-    by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset subset_iff) 
+  thus ?thesis by (meson complex_vector.span_scale complex_vector.span_sum 
+        complex_vector.span_superset subset_iff) 
 qed
 
 lemma span_explicit_finite:
-  assumes \<open>complex_vector.span S = UNIV\<close> 
-    and \<open>complex_vector.independent S\<close>
-    and \<open>finite S\<close>
-  shows \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+  assumes \<open>complex_vector.span S = UNIV\<close> and \<open>complex_vector.independent S\<close> and \<open>finite S\<close>
+  shows \<open>\<exists>t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
 proof-
   have \<open>x \<in> complex_vector.span S\<close>
-    using \<open>complex_vector.span S = UNIV\<close>
-    by blast
+    using \<open>complex_vector.span S = UNIV\<close> by blast
   hence \<open>\<exists> T t'. finite T \<and> T \<subseteq> S \<and> x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
-    using complex_vector.span_explicit[where b = S]
-    by auto
+    using complex_vector.span_explicit[where b = S] by auto
   then obtain T t' where \<open>finite T\<close> and \<open>T \<subseteq> S\<close> and
     \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
     by blast
@@ -2667,16 +2707,14 @@ proof-
   have \<open>(\<Sum>s\<in>T. t s *\<^sub>C s) + (\<Sum>s\<in>S-T. t s *\<^sub>C s)
     = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
     using \<open>T \<subseteq> S\<close>
-    by (metis (no_types, lifting) assms(3) ordered_field_class.sign_simps(2) sum.subset_diff)
+    by (metis (no_types, lifting) add.commute assms(3) sum.subset_diff)    
   moreover have \<open>(\<Sum>s\<in>S-T. t s *\<^sub>C s) = 0\<close>
   proof-
-    have \<open>s\<in>S-T \<Longrightarrow> t s *\<^sub>C s = 0\<close>
-      for s
+    have \<open>s\<in>S-T \<Longrightarrow> t s *\<^sub>C s = 0\<close> for s
     proof-
       assume \<open>s\<in>S-T\<close>
       hence \<open>t s = 0\<close>
-        unfolding t_def
-        by auto
+        unfolding t_def by auto
       thus ?thesis by auto
     qed
     thus ?thesis
@@ -2688,138 +2726,28 @@ proof-
 qed
 
 
-subsection \<open>Recovered theorems\<close>
-
-lemma [vector_add_divide_simps]:
-  "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
-  "a *\<^sub>C v + (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v + w = (if z = 0 then w else (a *\<^sub>C v + z *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v + b *\<^sub>C w = (if z = 0 then b *\<^sub>C w else (a *\<^sub>C v + (b * z) *\<^sub>C w) /\<^sub>C z)"
-  "v - (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
-  "a *\<^sub>C v - (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v - w = (if z = 0 then -w else (a *\<^sub>C v - z *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v - b *\<^sub>C w = (if z = 0 then -b *\<^sub>C w else (a *\<^sub>C v - (b * z) *\<^sub>C w) /\<^sub>C z)"
-  for v :: "'a :: complex_vector"
-  by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
-
-
 lemma linear_space_leI:
   assumes "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
   shows "A \<le> B"
   using assms apply transfer by auto
 
-(* TODO: remove (we have finite_sum_tendsto_NEW below instead) *)
-lemma finite_sum_tendsto':
- \<open>\<forall> A::('a::cbanach) set. (\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a) \<and> finite A \<and> card A = n \<longrightarrow> 
-((\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a))\<close>
-proof(induction n)
-  case 0
-  thus ?case
-    by fastforce 
-next
-  case (Suc n)
-  have \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a \<Longrightarrow> finite A \<Longrightarrow> card A = Suc n \<Longrightarrow> 
-(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-    for A::\<open>'a::cbanach set\<close>
-  proof-
-    assume \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close> and \<open>card A = Suc n\<close>
-    obtain x A' where \<open>A = insert x A'\<close> and \<open>x \<notin> A'\<close>
-    proof -
-      assume a1: "\<And>x A'. \<lbrakk>A = insert x A'; x \<notin> A'\<rbrakk> \<Longrightarrow> thesis"
-      have "Suc n \<le> Suc n"
-        by (metis inf.orderI inf_idem)
-      then have "Suc n \<le> card A"
-        by (metis \<open>card A = Suc n\<close>)
-      then show ?thesis
-        using a1 by (meson card_le_Suc_iff)
-    qed
-    have \<open>\<forall> a \<in> A'. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close>
-      by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)      
-    moreover have  \<open>finite A'\<close>
-      using \<open>A = insert x A'\<close> \<open>finite A\<close> 
-      by auto
-    moreover have \<open>card A' = n\<close>
-      using \<open>A = insert x A'\<close> \<open>card A = Suc n\<close> \<open>x \<notin> A'\<close> calculation(2) 
-      by auto      
-    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: Suc.IH)
-    moreover have \<open>(\<lambda> n. r n x *\<^sub>C x) \<longlonglongrightarrow> \<phi> x *\<^sub>C x\<close>
-    proof-
-      have \<open>(\<lambda> n. r n x) \<longlonglongrightarrow> \<phi> x\<close>
-        by (simp add: \<open>A = insert x A'\<close> \<open>\<forall>a\<in>A. (\<lambda>n. r n a) \<longlonglongrightarrow> \<phi> a\<close>)
-      moreover have \<open>isCont (\<lambda> t. t *\<^sub>C x)  (\<phi> x)\<close>
-        by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)        
-      ultimately have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) \<longlonglongrightarrow> (\<lambda> t. t *\<^sub>C x) (\<phi> x)\<close>
-        using Elementary_Topology.continuous_at_sequentially[where f = "(\<lambda> t. t *\<^sub>C x)" and a = "\<phi> x"]
-        by auto
-      moreover have \<open>((\<lambda> t. t *\<^sub>C x) \<circ> (\<lambda> n. (r n x))) =  (\<lambda> n. (\<lambda> t. t *\<^sub>C x) (r n x))\<close>
-        by auto
-      ultimately show ?thesis by auto
-    qed
-    ultimately have \<open>(\<lambda> n. r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: tendsto_add)
-    moreover have \<open>(\<Sum>a\<in>A. r n a *\<^sub>C a) = r n x *\<^sub>C x + (\<Sum>a\<in>A'. r n a *\<^sub>C a)\<close>
-      for n
-      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
-    ultimately have \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by auto
-    moreover have \<open>(\<Sum>a\<in>A. \<phi> a *\<^sub>C a) = \<phi> x *\<^sub>C x + (\<Sum>a\<in>A'. \<phi> a *\<^sub>C a)\<close>
-      by (simp add: \<open>A = insert x A'\<close> \<open>finite A'\<close> \<open>x \<notin> A'\<close>)
-    ultimately show ?thesis by auto
-  qed
-  thus ?case 
-    by blast
-qed
-
-(* lemma finite_sum_tendsto:
-  fixes A::\<open>('a::cbanach) set\<close>
-  assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-  using finite_sum_tendsto' assms by blast *)
-
-(* TODO: José, please compare this with your proof of finite_sum_tendsto
-   to see how inductions over finite sets are easier to do than by 
-   induction over the cardinality. 
-
-   TODO: Replace finite_sum_tendsto by this.
-
-Jose: It is not possible to deduce finite_sum_tendsto from finite_sum_tendsto_NEW in 
-an via sledgehammer. Hence, finite_sum_tendsto and finite_sum_tendsto_NEW are not
-pre-equivalent.
-
-I define two theorems A and B to be pre-equivalent if and only if
-theorem A can be obtained from theorem B using sledgehammer and 
-theorem B can be obtained from theorem A using sledgehammer.
-
-Notice that this is not an equivalent relation, because transitivity may fail.
-
-*)
-
-lemma finite_sum_tendsto_NEW:
+lemma finite_sum_tendsto:
   fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
-  assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
-  assumes \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
+  assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
+  shows \<open>(\<lambda>n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
   apply (insert assms(1)) using \<open>finite A\<close>
+    (* Ask to Dominique: how to make this proof more elegant *)
 proof induction
-  case empty
-  show ?case 
-    by auto
+  case empty show \<open>(\<lambda>n. \<Sum>a\<in>{}. r a n) \<longlonglongrightarrow> sum \<phi> {}\<close> by auto
 next
   case (insert x F)
-  then have "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
+  hence "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
     by auto
-  then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
+  hence "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
     using tendsto_add by blast
-  then show ?case 
-    using sum.insert insert by auto
+  thus \<open>(\<lambda>n. \<Sum>a\<in>insert x F. r a n) \<longlonglongrightarrow> sum \<phi> (insert x F)\<close> using sum.insert insert by auto
 qed
 
-lemma (in bounded_cbilinear) tendsto:
-  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. f x ** g x) \<longlongrightarrow> a ** b) F"
-  by (rule tendsto)
-
-lemmas tendsto_scaleC [tendsto_intros] =
-  bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
+unbundle no_notation_norm
 
 end
