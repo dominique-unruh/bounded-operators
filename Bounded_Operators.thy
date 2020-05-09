@@ -11,8 +11,7 @@ Main results:
 
 
 theory Bounded_Operators
-  imports Banach_Steinhaus Complex_Inner_Product Real_Bounded_Operators 
-    Lattice_Missing
+  imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
 begin
 
 subsection \<open>Complex bounded operators\<close>

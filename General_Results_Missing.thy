@@ -2,7 +2,7 @@ section \<open>\<open>General_Results_Missing\<close> -- Miscellaneous missing f
 
 theory General_Results_Missing
   imports Complex_Main Complex_Inner_Product "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-ex.Sketch_and_Explore" HOL.Groups General_Results_Missing_Banach_Steinhaus
+    "HOL-ex.Sketch_and_Explore" HOL.Groups
 begin
 
 
