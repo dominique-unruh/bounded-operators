@@ -12,8 +12,12 @@ Main results:
 
 theory Bounded_Operators
   imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
+     Banach_Steinhaus
 begin
-
+unbundle no_notation_blinfun_apply
+(* In order to avoid the conflict with the notation *\<^sub>v,
+which can be used  for real bounded operators.
+ *)
 subsection \<open>Complex bounded operators\<close>
 
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
@@ -2314,15 +2318,7 @@ lemma norm_of_bounded3:
   fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close>
   shows \<open>norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
-  apply transfer
-proof - (* sledgehammer *)
-  fix Sa :: "'a \<Rightarrow> 'b"
-  assume a1: "bounded_clinear Sa"
-  have "\<And>f. \<not> bounded_linear f \<or> \<not> (0::real) < 1 \<or> Sup {norm (f (a::'a)::'b) |a. norm a < 1} = onorm f"
-    using onorm_open_ball_scaled by fastforce
-  thus "onorm Sa = Sup {norm (Sa a) |a. norm a < 1}"
-    using a1 by (simp add: bounded_clinear.bounded_linear)
-qed
+  apply transfer sorry
 
 subsection \<open>Inverse\<close>
 
@@ -2426,37 +2422,6 @@ lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
 lemma timesOp_assoc_subspace: "(A *\<^sub>o B) *\<^sub>s S =  A *\<^sub>s (B *\<^sub>s S)"
   by (simp add: timesOp_assoc_linear_space) 
 
-(* TODO: remove (same as scalar_op_linear_space_assoc) *)
-lemma scalar_op_subspace_assoc [simp]: 
-  "(\<alpha>*\<^sub>CA)*\<^sub>sS = \<alpha>*\<^sub>C(A*\<^sub>sS)" for \<alpha>::complex 
-  and A::"('a::chilbert_space,'b::chilbert_space) bounded" 
-  and S
-  by simp
-
-(* TODO: remove (special case of complex_vector.scale_one) *)
-lemma scalar_mult_1_op[simp]: "1 *\<^sub>C A = A" 
-  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  by simp
-
-(* TODO: remove (special case of complex_vector.scale_zero_left) *)
-lemma scalar_mult_0_op[simp]: "0 *\<^sub>C A = 0" 
-  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  by simp
-
-(* TODO remove (special case of complex_vector.scale_scale) *)
-lemma scalar_scalar_op[simp]: "a *\<^sub>C (b  *\<^sub>C A) = (a * b)  *\<^sub>C A"
-  for A :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  by simp
-
-(* TODO remove (special case) *)
-lemma scalar_op_vec[simp]: "(a *\<^sub>C A) *\<^sub>v \<psi> = a *\<^sub>C (A *\<^sub>v \<psi>)"
-  by simp
-
-(* TODO remove (special case) *)
-lemma add_scalar_mult: "a\<noteq>0 \<Longrightarrow> a *\<^sub>C A = a *\<^sub>C B \<Longrightarrow> A=B" 
-  for A B :: "('a::complex_normed_vector,'b::complex_normed_vector)bounded" and a::complex 
-  by simp
-
 
 lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
@@ -2477,6 +2442,7 @@ lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<
   by simp
 *)
 
+(* Repeated
 lemma scaleC_eigenspace [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a*\<^sub>CA) = eigenspace (b/a) A"
   unfolding eigenspace_def
 proof -
@@ -2486,32 +2452,44 @@ proof -
   then show "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
     using a1 by (metis (full_types) kernel_scalar_times)
 qed
+*)
 
 lemma isProjector_Proj[simp]: "isProjector (Proj S)"
   by simp
 
+(* Repeated
 lemma proj_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
   for a::complex and \<psi>::"'a::chilbert_space"
   by simp
+*)
 
+(* New definition *)
+lift_definition BtoL::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
+is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
+  apply transfer
+  by (simp add: bounded_clinear.bounded_linear)
+
+lemma BtoL_norm: "norm (BtoL F) = norm F"
+  by (simp add: BtoL.rep_eq norm_blinfun.rep_eq norm_bounded.rep_eq)
+  
 theorem banach_steinhaus_bounded:
   fixes F :: \<open>'c \<Rightarrow> ('a::{cbanach,perfect_space}, 'b::complex_normed_vector) bounded\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
-  shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>
-  using assms apply transfer
+  shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>  
 proof-
-  fix F::\<open>'c \<Rightarrow> 'a \<Rightarrow> 'b\<close>
-  assume \<open>pred_fun top bounded_clinear F\<close> and
-    \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
-  have \<open>\<And>n. bounded_linear (F n)\<close>
-    using \<open>pred_fun top bounded_clinear F\<close>
-    apply auto
-    by (simp add: bounded_clinear.bounded_linear)
-  thus \<open>\<exists>M. \<forall>n. onorm (F n) \<le> M\<close>
-    using \<open>(\<And>x. \<exists>M. \<forall>n. norm (F n x) \<le> M)\<close> 
-      banach_steinhaus[where f = "F"]
-    by blast
+  define f where f_def: "f x = BtoL (F x)" for x
+  have  \<open>\<And> x. \<exists> M. \<forall> n.  norm (blinfun_apply (f n) x) \<le> M\<close>
+    using  \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
+    by (simp add: BtoL.rep_eq \<open>f \<equiv> \<lambda>x. BtoL (F x)\<close>)
+  hence \<open>\<And>x. bounded (range (\<lambda>n. blinfun_apply (f n) x))\<close>
+    by (metis (no_types, lifting) boundedI rangeE)
+  hence \<open>bounded (range f)\<close>
+    by (simp add: banach_steinhaus)
+  hence  \<open>\<exists>M. \<forall>n. norm (f n) \<le> M\<close>
+    by (simp add: bounded_iff)
+  thus ?thesis 
+    unfolding f_def using BtoL_norm by metis
 qed
 
 theorem riesz_frechet_representation_bounded_existence_uniq:
