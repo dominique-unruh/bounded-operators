@@ -2472,7 +2472,8 @@ is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
 
 lemma BtoL_norm: "norm (BtoL F) = norm F"
   by (simp add: BtoL.rep_eq norm_blinfun.rep_eq norm_bounded.rep_eq)
-  
+
+(* TODO: Remove "perfect_space" *)
 theorem banach_steinhaus_bounded:
   fixes F :: \<open>'c \<Rightarrow> ('a::{cbanach,perfect_space}, 'b::complex_normed_vector) bounded\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
