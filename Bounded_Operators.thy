@@ -3149,7 +3149,8 @@ lemma vector_to_bounded_adj_times_vector_to_bounded[simp]:
 proof -
   have "one_dim_to_complex ((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = one_dim_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
-    by (metis (no_types, hide_lams) apply_idOp cinner_scaleC_right complex_to_one_dim_inverse mult.commute one_dim_to_complex_def scalar_op_vec times_applyOp vector_to_bounded_adj_times_vec vector_to_bounded_times_vec)
+    by (simp add: times_applyOp)
+
   hence "((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
     using one_dim_to_complex_inverse by metis
