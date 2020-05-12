@@ -11,7 +11,7 @@ Authors:
 theory Operator_Norm_Missing
   imports 
     Complex_Main
-(*    Operator_Norm_Missing_Banach_Steinhaus*)
+    Banach_Steinhaus
     "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
 begin
@@ -21,6 +21,7 @@ text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm
 
 subsection \<open>Characterization of the operator norm\<close>
 
+(* ask to dominique where not_singleton was defined *)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
