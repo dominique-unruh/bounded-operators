@@ -117,10 +117,10 @@ proof-
   finally show ?thesis by blast
 qed
 
+(* Ask to Dominique
 subclass (in card2) not_singleton
   apply standard using two_le_card
   by (meson card_2_exists ex_card) 
-
 
 lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
   by (metis General_Results_Missing.UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
@@ -135,7 +135,7 @@ proof-
     unfolding UNIV_def
     by blast
 qed
-
+*)
 
 end
 
