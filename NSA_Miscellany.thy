@@ -1174,9 +1174,6 @@ lemma infinitesimal_square:
   shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
   by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
 
-proposition bounded_nsbounded_iff:
-  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
-  using bounded_nsbounded nsbounded_bounded by blast
 
 proposition unbounded_nsbounded_D:
   \<open>\<not>(bounded S) \<Longrightarrow> \<exists> x\<in>*s* S. x \<in> HInfinite\<close>
