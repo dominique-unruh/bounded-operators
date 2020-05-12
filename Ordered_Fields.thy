@@ -35,11 +35,11 @@ text \<open>The existing class \<^class>\<open>abs_if\<close> requires \<^term>\
 However, if \<^term>\<open>(<)\<close> is not a total order, this condition is too strong when \<^term>\<open>a\<close> 
 is incomparable with \<^term>\<open>0\<close>. (Namely, it requires the absolute value to be
 the identity on such elements. E.g., the absolute value for complex numbers does not 
-satisfy this.) The following class \<open>incomplete_abs_if\<close> is analogous to \<^class>\<open>abs_if\<close>
+satisfy this.) The following class \<open>partial_abs_if\<close> is analogous to \<^class>\<open>abs_if\<close>
 but does not require anything if \<^term>\<open>a\<close> is incomparable with \<^term>\<open>0\<close>.\<close>
 
-(* TODO: rename \<rightarrow> partial_abs_if *)
-class incomplete_abs_if = minus + uminus + ord + zero + abs +
+
+class partial_abs_if = minus + uminus + ord + zero + abs +
   assumes abs_neg: "a \<le> 0 \<Longrightarrow> abs a = -a"
   assumes abs_pos: "a \<ge> 0 \<Longrightarrow> abs a = a"
 
@@ -90,10 +90,6 @@ lemma mult_pos_neg: "0 < a \<Longrightarrow> b < 0 \<Longrightarrow> a * b < 0"
 lemma mult_neg_pos: "a < 0 \<Longrightarrow> 0 < b \<Longrightarrow> a * b < 0"
   using mult_strict_right_mono [of a 0 b] by simp
 
-(* TODO remove *)
-text \<open>Legacy -- use @{thm [source] mult_neg_pos}.\<close>
-lemma mult_pos_neg2: "0 < a \<Longrightarrow> b < 0 \<Longrightarrow> b * a < 0"
-  by (drule mult_strict_right_mono [of b 0]) auto
 
 text \<open>Strict monotonicity in both arguments\<close>
 lemma mult_strict_mono:
@@ -197,7 +193,7 @@ subclass (in linordered_comm_semiring_strict) ordered_comm_semiring_strict
 
 
 class ordered_ring_strict = ring + ordered_semiring_strict
-  + ordered_ab_group_add + incomplete_abs_if
+  + ordered_ab_group_add + partial_abs_if
   \<comment> \<open>missing class analogous to \<^class>\<open>linordered_ring_strict\<close> without requiring a total order\<close>
 begin
 
@@ -223,7 +219,7 @@ lemmas mult_sign_intros =
 
 subsection \<open>Ordered fields\<close>
 
-class ordered_field = field + order + ordered_comm_semiring_strict + ordered_ab_group_add + incomplete_abs_if 
+class ordered_field = field + order + ordered_comm_semiring_strict + ordered_ab_group_add + partial_abs_if 
   \<comment> \<open>missing class analogous to \<^class>\<open>linordered_field\<close> without requiring a total order\<close>
 begin
 

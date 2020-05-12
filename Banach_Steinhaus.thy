@@ -405,7 +405,7 @@ proof(rule classical)
     thus ?thesis using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
-    using Real.real_arch_pow by auto
+    sorry (* Incompatible Isabelle/2019 *)
   moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
     using inverse_1 by blast                      
   ultimately show ?thesis by smt

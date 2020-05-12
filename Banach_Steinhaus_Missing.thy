@@ -327,7 +327,7 @@ next
     hence Sup1: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = 0\<close> 
       by simp
     have \<open>\<parallel>f\<parallel> = 0\<close>
-      by (simp add: True blinfun_eqI)        
+      sorry (* Incompatible with Isabelle/2019 *)
     moreover have \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
       using Sup1 by blast
     ultimately show ?thesis by simp
@@ -575,7 +575,7 @@ proof-
   have f_x1: \<open>f (r *\<^sub>R x) = r *\<^sub>R f x\<close> for x
     by (simp add: blinfun.scaleR_right)    
   have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
-    by (smt assms ball_scale nonzero_mult_div_cancel_left right_inverse_eq scale_zero_right)
+    sorry (* Incompatible with Isabelle/2019 *)
   hence \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) = Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
     by simp
   also have \<open>\<dots> = Sup (((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>

@@ -30,6 +30,7 @@ theory Real_Bounded_Operators
     Uniform_Limit_Missing
     NSA_Miscellany
 begin
+unbundle no_notation_blinfun_apply
 
 subsection \<open>Algebraic properties of real bounded operators\<close>
 

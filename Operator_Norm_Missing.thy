@@ -21,6 +21,36 @@ text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm
 
 subsection \<open>Characterization of the operator norm\<close>
 
+lemma ex_norm1: 
+  assumes \<open>(UNIV::'a::real_normed_vector set) \<noteq> {0}\<close>
+  shows \<open>\<exists>x::'a. norm x = 1\<close>
+proof-
+  have \<open>\<exists>x::'a. x \<noteq> 0\<close>
+    using assms by fastforce
+  then obtain x::'a where \<open>x \<noteq> 0\<close>
+    by blast
+  hence \<open>norm x \<noteq> 0\<close>
+    by simp
+  hence \<open>(norm x) / (norm x) = 1\<close>
+    by simp
+  moreover have \<open>(norm x) / (norm x) = norm (x /\<^sub>R (norm x))\<close>
+    by simp
+  ultimately have \<open>norm (x /\<^sub>R (norm x)) = 1\<close>
+    by simp
+  thus ?thesis
+    by blast 
+qed
+
+lemma bdd_above_norm_f:
+  assumes "bounded_linear f"
+  shows \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+proof-
+  have \<open>\<exists>M. \<forall>x. norm x = 1 \<longrightarrow> norm (f x) \<le> M\<close>
+    using assms
+    by (metis bounded_linear.axioms(2) bounded_linear_axioms_def)
+  thus ?thesis by auto
+qed
+
 (* ask to dominique where not_singleton was defined *)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
@@ -33,12 +63,14 @@ proof(cases \<open>f = (\<lambda> _. 0)\<close>)
     by (simp add: True onorm_eq_0)  
   moreover have \<open>Sup {norm (f x) | x. norm x = 1} = 0\<close>
   proof-
+    have \<open>\<exists>x::'a. norm x = 1\<close>
+      using \<open>(UNIV::'a set) \<noteq> {0}\<close> ex_norm1
+      by blast
     have \<open>norm (f x) = 0\<close>
       for x
       by (simp add: True)      
     hence \<open>{norm (f x) | x. norm x = 1} = {0}\<close>
-(*      using assms norm_set_nonempty_eq1 by fastforce *)
-      sorry
+      apply auto using \<open>\<exists>x. norm x = 1\<close> by blast 
     thus ?thesis
       by simp 
   qed
@@ -130,8 +162,8 @@ next
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-(*            by (simp add: assms norm_set_bdd_above_eq1)          *)
-            sorry
+            using bdd_above_norm_f
+            by (metis (mono_tags, lifting) assms(2)) 
           ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
             by (simp add: cSup_upper) 
@@ -140,11 +172,9 @@ next
         moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
         proof-
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-(*            using False assms norm_set_nonempty_eq1 by fastforce *)
-            sorry
+            by (simp add: assms(1) ex_norm1)
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-(*            by (simp add: assms norm_set_bdd_above_eq1)    *)
-            sorry
+            using assms(2) bdd_above_norm_f by force
           have \<open>{0::real} \<noteq> {}\<close>
             by simp
           moreover have \<open>bdd_above {0::real}\<close>
@@ -278,7 +308,7 @@ proof-
         have \<open>\<exists> x::'a. x \<noteq> 0\<close>
           using \<open>UNIV\<noteq>{0}\<close> by auto
         thus ?thesis 
-         by auto
+          by auto
       qed
       moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
       proof-
@@ -408,14 +438,17 @@ qed
 (* TODO: remove "\<forall>e>0.", add assumption "e>0"  *)
 lemma norm_unit_sphere:
   fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close> 
-  shows \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1). norm (norm(f x) - (onorm f)) < e\<close>
+  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close> and \<open>e > 0\<close>
+  shows \<open>\<exists> x\<in>(sphere 0 1). norm (norm(f x) - (onorm f)) < e\<close>
 proof-
   define S::\<open>real set\<close> where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
   have \<open>S\<noteq>{}\<close>
-    unfolding S_def
-(*    using assms(1) assms(2) norm_set_nonempty_eq1 by auto *)
-    sorry
+  proof-
+    have \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
+      unfolding sphere_def apply auto using \<open>(UNIV::'a set) \<noteq> {0}\<close> ex_norm1
+      by auto      
+    thus ?thesis unfolding S_def by auto
+  qed
   hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
     for e
     by (simp add: less_cSupD)
@@ -460,8 +493,7 @@ proof-
         ultimately show ?thesis by simp
       qed
       hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
-(*        using assms(2) norm_set_bdd_above_eq1 by force *)
-        sorry
+        using assms(2) bdd_above_norm_f by force
       thus ?thesis unfolding S_def by blast 
     qed
     hence \<open>y \<le> Sup S\<close>
@@ -488,7 +520,7 @@ proof-
     have "\<forall>r. r \<notin> S \<or> (\<exists>a. r = norm (f a) \<and> a \<in> sphere 0 1)"
       using S_def by blast
     thus ?thesis
-      using a1 by (metis (lifting) S_def norm_minus_commute)
+      using a1 \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. norm (onorm f - y) < e\<close> assms(3) by force 
   qed 
 qed
 
