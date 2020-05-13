@@ -2314,11 +2314,55 @@ proof (cases \<open>z = 0\<close>)
     by (smt mult_left_le_one_le norm_ge_zero norm_of_bounded) 
 qed
 
+lemma onormless1: 
+  assumes a1: "norm x < 1" and a2: "bounded_linear f"
+  shows "norm (f x) \<le> onorm f"
+proof-
+  have "norm (f x) \<le> onorm f * norm x"
+    using a2 onorm
+    by (simp add: onorm)
+  also have "\<dots> \<le> onorm f"
+    using a1 a2 mult_right_le_one_le onorm_pos_le by force
+  finally show ?thesis by blast
+qed
+
+(* TODO: non_singleton *)
 lemma norm_of_bounded3:
   fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
-  assumes \<open>(UNIV::'a set) \<noteq> 0\<close>
-  shows \<open>norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
-  apply transfer sorry
+  shows \<open>(UNIV::'a set) \<noteq> 0 \<Longrightarrow> norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
+proof transfer 
+  fix S::\<open>'a \<Rightarrow> 'b\<close>
+  assume a1: \<open>(UNIV::'a set) \<noteq> 0\<close> and a2: \<open>bounded_clinear S\<close>
+  define X where X_def: "X = {norm (S x) |x. norm x < 1}"
+  define a where a_def: "a = onorm S"
+  have "x \<in> X \<Longrightarrow> x \<le> a" for x
+    unfolding X_def a_def 
+  proof-
+    assume x1: "x \<in> {norm (S x) |x. norm x < 1}"
+    then obtain x' where x2: "x = norm (S x')" and x3: "norm x' < 1"
+      by blast
+    have "norm (S x') \<le> onorm S"
+      using x3 a2 onormless1 bounded_clinear.bounded_linear by auto
+    thus "x \<le> onorm S"
+      by (simp add: x2) 
+  qed
+  moreover have "(\<And>x. x \<in> X \<Longrightarrow> x \<le> y) \<Longrightarrow> a \<le> y" for y
+  proof-
+    assume "\<And>x. x \<in> X \<Longrightarrow> x \<le> y"
+    hence "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
+      unfolding X_def by blast 
+    have "e>0 \<Longrightarrow> onorm S \<le> y+e" for e
+      sorry
+    hence "onorm S \<le> y"
+      using linordered_field_class.field_le_epsilon by blast      
+    thus "a \<le> y"
+      unfolding a_def by blast
+  qed
+  ultimately have "Sup X = a"
+    using cSup_eq by blast
+  thus "onorm S = Sup {norm (S x) |x. norm x < 1}"
+    unfolding X_def a_def by simp
+qed
 
 subsection \<open>Inverse\<close>
 
