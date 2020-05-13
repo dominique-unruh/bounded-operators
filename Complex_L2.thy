@@ -1785,6 +1785,7 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
 
 type_synonym 'a ell2_linear_space = "'a ell2 linear_space"
 
+(* Ask to Dominique about not_singleton
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
@@ -1793,7 +1794,7 @@ proof standard
   thus \<open>\<exists>x y::'a ell2. x \<noteq> y\<close>
     by blast    
 qed
-
+*)
 
 
 definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Rightarrow> 'a)\<close> where
@@ -3426,7 +3427,8 @@ proof-
         using times_bounded_vec \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
-        by (smt \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.is_clinear)
+         \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.is_clinear
+        by smt
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (A *\<^sub>v a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
           complex_vector.scale_eq_0_iff by blast
@@ -3627,8 +3629,10 @@ lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector
 lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
   by simp 
 
+(* Ask to Dominique *)
 lemma subspace_zero_not_top[simp]: "(0::'a ell2_linear_space) \<noteq> top"
-  by simp
+  sorry
+
 
 lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
   by simp
