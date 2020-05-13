@@ -12,7 +12,7 @@ Main results:
 
 theory Bounded_Operators
   imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
-     Banach_Steinhaus
+     Banach_Steinhaus Operator_Norm_Missing
 begin
 unbundle no_notation_blinfun_apply
 (* In order to avoid the conflict with the notation *\<^sub>v,
@@ -2352,7 +2352,23 @@ proof transfer
     hence "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
       unfolding X_def by blast 
     have "e>0 \<Longrightarrow> onorm S \<le> y+e" for e
-      sorry
+    proof-
+      assume e0:"e>0"
+      hence e1:"e/2>0"
+        by auto
+      have \<open>bounded_linear S\<close>
+        using a2
+        by (simp add: bounded_clinear.bounded_linear)
+      hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
+        using a1 onorm_sphere[where f = S]
+        by auto
+
+
+
+
+      show "onorm S \<le> y+e"
+        sorry
+    qed
     hence "onorm S \<le> y"
       using linordered_field_class.field_le_epsilon by blast      
     thus "a \<le> y"
