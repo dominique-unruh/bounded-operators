@@ -1,4 +1,4 @@
-section \<open>TODO: section title\<close>
+section \<open>Uniform_limit_Missing\<close>
 
 (*
 Authors: 
@@ -290,6 +290,7 @@ qed
 
 
 (* TODO: move to real_normed_vector *)
+(* Ask to Dominique: where is "real_normed_vector", it is a type, not a file. *)
 lemma linear_ball_zero:
   \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
 proof

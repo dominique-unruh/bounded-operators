@@ -191,17 +191,12 @@ instance complete_orthomodular_lattice \<subseteq> complete_orthocomplemented_la
 
 instance boolean_algebra \<subseteq> orthomodular_lattice
 proof
-(* TODO: "fix x y :: 'a" and then remove "for x :: 'a" everywhere *)
+  fix x y :: 'a  
   show "sup (x::'a) (inf (- x) y) = y"
     if "(x::'a) \<le> y"
-    for x :: 'a
-      and y :: 'a
     using that
     by (simp add: sup.absorb_iff2 sup_inf_distrib1) 
-
   show "x - y = inf x (- y)"
-    for x :: 'a
-      and y :: 'a
     by (simp add: boolean_algebra_class.diff_eq)
 qed auto
 

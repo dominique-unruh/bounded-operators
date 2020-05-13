@@ -202,9 +202,8 @@ next
 qed
 
 
-(* TODO: rename to onorm_Inf_bound or similar *)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
-proposition operator_norm_characterization_2:
+proposition onorm_Inf_bound:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes  \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
   shows  \<open>onorm f = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
@@ -330,56 +329,8 @@ proof-
     by (simp add: onorm_def)
 qed
 
-(* TODO: Rewrite or remove. This lemma is a general fact, completely independent
-   of the norm. It holds without \<open>bounded_linear f\<close>, and with arbitrary functions
-   instead of "norm". And it is never used.
- *)
-lemma operation_norm_closed:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes \<open>bounded_linear f\<close>
-  shows \<open>closed { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
-proof-
-  have \<open>\<forall> n. (k n) \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}
-    \<Longrightarrow> k \<longlonglongrightarrow> l 
-    \<Longrightarrow> l \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
-    for k and l
-  proof-
-    assume \<open>\<forall> n. (k n) \<in> { K | K::real. \<forall>x. norm (f x) \<le> norm x * K}\<close>
-    hence \<open>\<forall> n. norm (f x) \<le> norm x * (k n)\<close>
-      for x
-      by blast
-    assume \<open>k \<longlonglongrightarrow> l\<close>
-    have \<open>norm (f x) \<le> norm x * l\<close>
-      for x
-    proof-
-      have  \<open>\<forall> n. norm (f x) \<le> norm x * (k n)\<close>
-        by (simp add: \<open>\<And>x. \<forall>n. norm (f x) \<le> norm x * k n\<close>)
-      moreover have \<open>(\<lambda> n.  norm x * (k n) ) \<longlonglongrightarrow> norm x * l\<close>
-        using  \<open>k \<longlonglongrightarrow> l\<close>
-        by (simp add: tendsto_mult_left)
-      ultimately show ?thesis
-        using Topological_Spaces.Lim_bounded2
-        by fastforce
-    qed
-    thus ?thesis
-      by simp  
-  qed
-  thus ?thesis
-    by (meson closed_sequential_limits) 
-qed
 
 subsection \<open>Banach-Steinhaus theorem\<close>
-
-(* TODO: remove (too similar to cSUP_mono). Can use "apply (rule cSUP_mono)" instead.
-    Or, if not, then Sup_Ineq can just be proven inside that theorem
- 
-lemma Sup_Ineq:
-  fixes f g :: \<open>'a \<Rightarrow> real\<close>
-  assumes \<open>\<forall> x \<in> S. f x \<le> g x\<close>
-    and \<open>bdd_above (g ` S)\<close>
-  shows \<open>Sup (f ` S) \<le> Sup (g ` S)\<close>
-  by (smt SUP_cong assms cSUP_mono empty_iff)
-*)
 
 lemma bounded_linear_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>

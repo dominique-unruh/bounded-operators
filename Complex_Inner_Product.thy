@@ -3444,6 +3444,7 @@ class one_dim = basis_enum + one + times + complex_inner +
     (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
     (* Jose: It produce errors *)
     (* TODO: but they were all easily fixable by proving one_dim_prod below (you can remove this TODO) *)
+    (* Ask to Dominique*)
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
 begin
 
