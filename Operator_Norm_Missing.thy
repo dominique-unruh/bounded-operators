@@ -435,7 +435,6 @@ proof-
 qed
 
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
-(* TODO: remove "\<forall>e>0.", add assumption "e>0"  *)
 lemma norm_unit_sphere:
   fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
   assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close> and \<open>e > 0\<close>

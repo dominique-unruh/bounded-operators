@@ -458,11 +458,12 @@ proof-
   have \<open>bounded_linear (times_rbounded_vec (f n m))\<close>
     for n m
     using times_rbounded_vec by blast
-  hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+  hence \<open>e>0 \<Longrightarrow> \<exists> x\<in>(sphere 0 1).
       norm (norm((times_rbounded_vec (f n m)) x) - (onorm (times_rbounded_vec (f n m)))) < e\<close>
-    for n m
-    using norm_unit_sphere  \<open>(UNIV::'a set) \<noteq> 0\<close> 
-    by auto
+    for n m e
+    using norm_unit_sphere \<open>(UNIV::'a set) \<noteq> 0\<close> 
+    apply auto
+    by blast 
   moreover have \<open>norm (f n m) = onorm (times_rbounded_vec (f n m))\<close> 
     for n m
     apply transfer
