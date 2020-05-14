@@ -2707,12 +2707,12 @@ proof-
   have \<open>complex_independent S\<close>
     using \<open>complex_vector.independent S\<close>
     by (simp add: Complex_Vector_Spaces.dependent_raw_def)
-  have \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
+  have \<open>\<exists>t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
     for x
     by (simp add: Complex_Vector_Spaces.span_explicit_finite assms)
-  hence \<open>\<exists> t. \<forall> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+  hence \<open>\<exists> t. \<forall>x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
     by metis
-  then obtain t where \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
+  then obtain t where t_def: "\<And>x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)"
     by blast
   define f where \<open>f x = (\<Sum>s\<in>S. t x s *\<^sub>C \<phi> s)\<close> for x
   have \<open>s\<in>S \<Longrightarrow> bounded_clinear (\<lambda> x. t x s)\<close>
@@ -2824,9 +2824,65 @@ proof-
     using times_bounded_vec_cases by auto
   then obtain F where \<open>(*\<^sub>v) F = f\<close>
     by blast
-  have "s\<in>S \<Longrightarrow> f s = \<phi> s"
-    for s
-    unfolding f_def sorry
+  have "s\<in>S \<Longrightarrow> f s = \<phi> s" for s
+  proof-
+    assume "s\<in>S"
+    have "\<exists>R. S = insert s R \<and> s \<notin> R"
+      by (meson Set.set_insert \<open>s \<in> S\<close>)        
+    then obtain R where g1: "S = insert s R" and g2: "s \<notin> R"
+      by blast
+    have b1: "s = (\<Sum>a\<in>S. t s a *\<^sub>C a)"
+      using t_def by blast
+    have f2: "t s s = 1"
+    proof(rule classical)
+      assume "\<not>(t s s = 1)"
+      hence c1: "1 - t s s \<noteq> 0"
+        by simp
+      have "s = t s s *\<^sub>C s + (\<Sum>a\<in>R. t s a *\<^sub>C a)"
+        using assms(3) b1 g1 g2 by auto
+      hence "(\<Sum>a\<in>R. t s a *\<^sub>C a) = s - t s s *\<^sub>C s"
+        by (metis add_diff_cancel_left')
+      also have "\<dots> = (1 - t s s) *\<^sub>C s"
+        by (simp add: complex_vector.scale_left_diff_distrib)
+      finally have "(\<Sum>a\<in>R. t s a *\<^sub>C a) =  (1 - t s s) *\<^sub>C s"
+        by blast
+      hence "(1 - t s s) *\<^sub>C s \<in> complex_vector.span R"
+        by (metis (no_types, lifting) complex_vector.span_base complex_vector.span_scale 
+            complex_vector.span_sum)
+      hence "(1/(1 - t s s)) *\<^sub>C ((1 - t s s) *\<^sub>C s) \<in> complex_vector.span R"
+        using c1 by (smt complex_vector.span_scale)
+      hence "s \<in> complex_vector.span R"
+        by (smt Complex_Vector_Spaces.vector_fraction_eq_iff c1 scaleC_one) 
+      hence "complex_vector.dependent S"
+        using g1 g2  by (smt complex_vector.independent_insert) 
+      thus ?thesis
+        by (metis \<open>Complex_Vector_Spaces.dependent S\<close> \<open>complex_independent S\<close>)
+    qed
+    have f3: "b\<in>S \<Longrightarrow> b \<noteq> s \<Longrightarrow> t s b = 0" for b
+    proof-
+      assume c1: "b\<in>S" and c2: "b \<noteq> s"
+      have "s = s + (\<Sum>a\<in>R. t s a *\<^sub>C a)"
+        using assms(3) b1 f2 g1 g2 by auto
+      hence "(\<Sum>a\<in>R. t s a *\<^sub>C a) = 0"
+        by simp
+      thus "t s b = 0"
+        using \<open>complex_independent S\<close> assms(3) c1 c2 complex_vector.independentD g1 by auto        
+    qed
+    have "(\<Sum>a\<in>S. t s a *\<^sub>C \<phi> a) = \<phi> s"
+    proof-
+      have "(\<Sum>a\<in>S. t s a *\<^sub>C \<phi> a) = t s s *\<^sub>C \<phi> s + (\<Sum>a\<in>R. t s a *\<^sub>C \<phi> a)"
+        using g1 g2 assms(3) by auto 
+      moreover have "(\<Sum>a\<in>R. t s a *\<^sub>C \<phi> a) = 0"
+      proof-
+        have "a\<in>R \<Longrightarrow> t s a = 0" for a
+          using f3 g2 g1 by auto
+        thus ?thesis by simp 
+      qed
+      ultimately show ?thesis
+        by (simp add: f2) 
+    qed
+    thus "f s = \<phi> s" unfolding f_def by blast
+  qed
   hence "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
     for s
     using \<open>(*\<^sub>v) F = f\<close>
