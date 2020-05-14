@@ -12,10 +12,10 @@ Main results:
 
 theory Bounded_Operators
   imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
-     Banach_Steinhaus Operator_Norm_Missing
+    Banach_Steinhaus Operator_Norm_Missing
 begin
 unbundle no_notation_blinfun_apply
-(* In order to avoid the conflict with the notation *\<^sub>v,
+  (* In order to avoid the conflict with the notation *\<^sub>v,
 which can be used  for real bounded operators.
  *)
 subsection \<open>Complex bounded operators\<close>
@@ -1082,9 +1082,9 @@ qed
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
-fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
-  and S::\<open>'a linear_space\<close> and \<alpha>::complex
-shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>s S  = \<alpha> *\<^sub>C (A *\<^sub>s S)\<close>
+  fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+    and S::\<open>'a linear_space\<close> and \<alpha>::complex
+  shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>s S  = \<alpha> *\<^sub>C (A *\<^sub>s S)\<close>
 proof-
   have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (times_bounded_vec A) ) ` space_as_set S) =
    ((*\<^sub>C) \<alpha>) ` (closure (times_bounded_vec A ` space_as_set S))\<close>
@@ -2588,7 +2588,7 @@ lemma proj_scalar_mult[simp]:
 
 (* New definition *)
 lift_definition BtoL::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
-is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
+  is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
   apply transfer
   by (simp add: bounded_clinear.bounded_linear)
 
@@ -2696,6 +2696,47 @@ proof-
 qed
 
 
+lemma clinear_finite_sum:
+  assumes "finite S"
+  shows "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>v a))"
+proof-
+  have "\<And>S. card S = n \<Longrightarrow> finite S \<Longrightarrow> F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>v a))" for n
+  proof(induction n)
+    case 0
+    fix S::"'a set"
+    assume q1:"card S = 0" and q2:"finite S"
+    hence "S = {}" by auto
+    thus "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>v a))"
+      by simp 
+  next
+    case (Suc n)
+    fix S::"'a set"
+    assume q1:"card S = Suc n" and q2:"finite S"
+    hence "\<exists>R s. S = insert s R \<and> s \<notin> R"
+      by (metis card_le_Suc_iff le_Suc_eq)
+    then obtain R s where a1:"S = insert s R" and a2:"s \<notin> R"
+      by blast
+    have cardR: "card R = n"
+      using a1 a2 q1 q2 by auto
+    hence q3:"F *\<^sub>v (\<Sum>a\<in>R. r a *\<^sub>C a) = (\<Sum>a\<in>R. r a *\<^sub>C (F *\<^sub>v a))"
+      using Suc.IH a1 q2 by auto
+    have "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = F *\<^sub>v ((r s *\<^sub>C s) + (\<Sum>a\<in>R. r a *\<^sub>C a))"
+      using a1 a2 q2 by auto    
+    also have "\<dots> = F *\<^sub>v (r s *\<^sub>C s) + F *\<^sub>v (\<Sum>a\<in>R. r a *\<^sub>C a)"
+      apply transfer unfolding bounded_clinear_def  clinear_def Vector_Spaces.linear_def
+        module_hom_def module_hom_axioms_def by auto
+    also have "\<dots> = F *\<^sub>v (r s *\<^sub>C s) + (\<Sum>a\<in>R.  r a *\<^sub>C (F *\<^sub>v a))"
+      using q3 by auto
+    also have "\<dots> = r s *\<^sub>C (F *\<^sub>v s) + (\<Sum>a\<in>R.  r a *\<^sub>C (F *\<^sub>v a))"
+      by simp
+    also have "\<dots> = (\<Sum>a\<in>S.  r a *\<^sub>C (F *\<^sub>v a))"
+      using a1 a2 q2 by auto
+    finally show "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>v a))"
+      by blast
+  qed
+  thus ?thesis using assms by auto 
+qed
+
 (* NEW *)
 lemma bounded_operator_basis_existence_uniq:
   fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
@@ -2753,10 +2794,10 @@ proof-
           by auto
         hence \<open>t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
           using \<open>complex_independent S\<close> \<open>s\<in>S\<close>
-             using independentD[where s = S and t = S 
+          using independentD[where s = S and t = S 
               and u = "\<lambda>s. t (b1 + b2) s - (t b1 s + t b2 s)"] 
-             apply auto
-             using assms(3) by auto
+          apply auto
+          using assms(3) by auto
         hence \<open>t (b1 + b2) s = t b1 s + t b2 s\<close>
           by simp
         thus ?thesis
@@ -2810,7 +2851,7 @@ proof-
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
       sorry (* Ask to Dominique how to do such induction *)
-       (* Prove it by induction on card S as a 
+        (* Prove it by induction on card S as a 
   separate lemma in order to do not confuse the variables *)
   qed
   hence \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. (t x s) *\<^sub>C \<phi> s )\<close>
@@ -2890,7 +2931,39 @@ proof-
   moreover have "G = F"
     if "\<forall>s\<in>S. G *\<^sub>v s = \<phi> s"
     for G :: "('a, 'b) bounded"
-    using that sorry
+  proof-
+    have "\<forall>s\<in>S. G *\<^sub>v s =  F *\<^sub>v s"
+      using that
+      by (simp add: calculation)
+    hence "\<forall>s\<in>S. F *\<^sub>v s - G *\<^sub>v s = 0"
+      by simp
+    moreover have "\<forall>s\<in>S. F *\<^sub>v s - G *\<^sub>v s = (F - G) *\<^sub>v s"
+      by (simp add: minus_bounded.rep_eq)
+    ultimately have fg0: "\<forall>s\<in>S. (F - G) *\<^sub>v s = 0"
+      by simp
+    hence "(F - G) *\<^sub>v s = 0" for s
+    proof-
+      have "s \<in> complex_vector.span S"
+        using \<open>complex_vector.span S = UNIV\<close>
+        by blast
+      hence "\<exists>r S'. finite S' \<and> S' \<subseteq> S \<and> s = (\<Sum>a\<in>S'. r a *\<^sub>C a)"
+        using complex_vector.span_explicit[where b=S] by blast
+      then obtain r S' where fg1: "finite S'" and fg2: "S' \<subseteq> S" and fg3: "s = (\<Sum>a\<in>S'. r a *\<^sub>C a)"
+        by blast
+      have "(F - G) *\<^sub>v s = (F - G) *\<^sub>v (\<Sum>a\<in>S'. r a *\<^sub>C a)"
+        using fg3 by blast
+      also have "\<dots> = (\<Sum>a\<in>S'. r a *\<^sub>C ((F - G) *\<^sub>v a))"
+        using clinear_finite_sum fg1 by auto 
+      also have "\<dots> = 0"
+        by (metis (mono_tags, lifting) Diff_iff assms(3) complex_vector.scale_eq_0_iff fg0 fg2 
+            sum.mono_neutral_left sum.not_neutral_contains_not_neutral)
+      finally show ?thesis
+        by blast
+    qed
+    hence "F - G = 0"
+      apply transfer by metis
+    thus ?thesis by simp
+  qed
   ultimately show ?thesis
     by blast 
 qed
@@ -3289,7 +3362,7 @@ proof
       using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
         \<open>is_onb (set canonical_basis)\<close>  \<open>finite (set canonical_basis)\<close> 
       by auto
- (*     using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
+        (*     using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
         \<open>is_onb (set canonical_basis)\<close>  \<open>finite (set canonical_basis)\<close> *)
     moreover have  \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
     proof-
