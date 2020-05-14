@@ -119,7 +119,8 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.extend_basis
   complex_vector.dim
 
-abbreviation "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+abbreviation complex_independent where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+
 
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"

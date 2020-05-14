@@ -2704,6 +2704,9 @@ lemma bounded_operator_basis_existence_uniq:
     and \<open>finite S\<close>
   shows \<open>\<exists>!F. \<forall>s\<in>S. F *\<^sub>v s = \<phi> s\<close>
 proof-
+  have \<open>complex_independent S\<close>
+    using \<open>complex_vector.independent S\<close>
+    by (simp add: Complex_Vector_Spaces.dependent_raw_def)
   have \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
     for x
     by (simp add: Complex_Vector_Spaces.span_explicit_finite assms)
@@ -2712,7 +2715,7 @@ proof-
   then obtain t where \<open>\<And> x. x = (\<Sum>s\<in>S. t x s *\<^sub>C s)\<close>
     by blast
   define f where \<open>f x = (\<Sum>s\<in>S. t x s *\<^sub>C \<phi> s)\<close> for x
-  have \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. t x s)\<close>
+  have \<open>s\<in>S \<Longrightarrow> bounded_clinear (\<lambda> x. t x s)\<close>
     for s
   proof
     show "clinear (\<lambda>x. t x s)"
@@ -2749,9 +2752,11 @@ proof-
         hence \<open>(\<Sum>s\<in>S. ( t (b1 + b2) s - (t b1 s + t b2 s)) *\<^sub>C s) = 0\<close>
           by auto
         hence \<open>t (b1 + b2) s - (t b1 s + t b2 s) = 0\<close>
-          using \<open>complex_vector.independent S\<close> that
-           assms(3) complex_vector.dependent_finite
-          sorry
+          using \<open>complex_independent S\<close> \<open>s\<in>S\<close>
+             using independentD[where s = S and t = S 
+              and u = "\<lambda>s. t (b1 + b2) s - (t b1 s + t b2 s)"] 
+             apply auto
+             using assms(3) by auto
         hence \<open>t (b1 + b2) s = t b1 s + t b2 s\<close>
           by simp
         thus ?thesis
@@ -2792,7 +2797,7 @@ proof-
             using  assms(3) complex_vector.dependent_finite 
               that
             by (metis Complex_Vector_Spaces.dependent_raw_def assms(2)) 
-          then show ?thesis
+          thus ?thesis
             using \<open>(\<Sum>s\<in>S. (t (r *\<^sub>C b) s - r * t b s) *\<^sub>C s) = 0\<close> 
             by fastforce
         qed
@@ -2802,10 +2807,9 @@ proof-
           by auto 
       qed
     qed
-
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
-      using that sorry
+      sorry (* Ask to Dominique how to do such induction *)
        (* Prove it by induction on card S as a 
   separate lemma in order to do not confuse the variables *)
   qed
@@ -2820,10 +2824,13 @@ proof-
     using times_bounded_vec_cases by auto
   then obtain F where \<open>(*\<^sub>v) F = f\<close>
     by blast
-
-  have "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
+  have "s\<in>S \<Longrightarrow> f s = \<phi> s"
     for s
-    sorry
+    unfolding f_def sorry
+  hence "s\<in>S \<Longrightarrow> F *\<^sub>v s = \<phi> s"
+    for s
+    using \<open>(*\<^sub>v) F = f\<close>
+    by simp 
   moreover have "G = F"
     if "\<forall>s\<in>S. G *\<^sub>v s = \<phi> s"
     for G :: "('a, 'b) bounded"
