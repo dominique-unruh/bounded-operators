@@ -2326,6 +2326,33 @@ proof-
   finally show ?thesis by blast
 qed
 
+lemma norm1_normless1_approx:
+  assumes a1: "norm t = 1" and a2: "e > 0"
+  shows "\<exists>s. norm s < 1 \<and> norm (t - s) < e"
+proof(cases "e > 1")
+  case True
+  thus ?thesis
+    by (smt a1 diff_zero norm_zero) 
+next
+  case False
+  define s where "s = (1-e/2) *\<^sub>R t"
+  have a1:"1-e/2 < 1"
+    by (simp add: a2)
+  moreover have "norm s = abs (1-e/2) * norm t"
+    unfolding s_def by auto
+  ultimately have b1: "norm s < 1"
+    using a1 False assms(1) by auto 
+
+  have "t - s = (e/2) *\<^sub>R t"
+    unfolding s_def
+    by (smt diff_eq_eq scaleR_collapse) 
+  hence "norm (t - s) = abs (e/2) * norm t"
+    by simp    
+  hence b2: "norm (t - s) < e"
+    using a1 assms(1) by auto 
+  from b1 b2 show ?thesis by blast
+qed
+
 (* TODO: non_singleton *)
 lemma norm_of_bounded3:
   fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
@@ -2349,25 +2376,60 @@ proof transfer
   moreover have "(\<And>x. x \<in> X \<Longrightarrow> x \<le> y) \<Longrightarrow> a \<le> y" for y
   proof-
     assume "\<And>x. x \<in> X \<Longrightarrow> x \<le> y"
-    hence "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
+    hence f1: "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
       unfolding X_def by blast 
     have "e>0 \<Longrightarrow> onorm S \<le> y+e" for e
     proof-
       assume e0:"e>0"
-      hence e1:"e/2>0"
-        by auto
       have \<open>bounded_linear S\<close>
         using a2
         by (simp add: bounded_clinear.bounded_linear)
       hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
         using a1 onorm_sphere[where f = S]
         by auto
-
-
-
-
-      show "onorm S \<le> y+e"
-        sorry
+      hence "onorm S - e/2 < Sup { norm (S t) |t. norm t = 1 }"
+        by (simp add: e0)        
+      moreover have "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
+      proof-
+        have "\<exists>t::'a. norm t = 1"
+          using a1 ex_norm1 by simp
+        thus ?thesis
+          by simp 
+      qed
+      ultimately have "\<exists>T\<in>{ norm (S t) |t. norm t = 1 }. onorm S - e/2 \<le> T"
+        using e0 Sup_real_def
+        by (meson less_cSupE less_eq_real_def)
+      hence "\<exists>t. norm t = 1 \<and> onorm S - e/2 \<le> norm (S t)"
+        by auto
+      then obtain t where s1: "norm t = 1" and s2: "onorm S - e/2 \<le> norm (S t)"
+        by blast
+      have "isCont S w" for w
+        by (simp add: \<open>bounded_linear S\<close> linear_continuous_at)        
+      hence "isCont (\<lambda>x. norm (S x)) w" for w
+        by simp
+      hence "e > 0 \<Longrightarrow> \<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow>  norm (norm (S t) - norm (S s)) < e" for e
+        unfolding isCont_def LIM_def using dist_norm
+        by (metis dist_commute eq_iff_diff_eq_0 norm_eq_zero) 
+      hence "\<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow> norm (norm (S t) - norm (S s)) < e/2"
+        using e0 half_gt_zero by blast
+      then obtain \<delta> where delta1: "\<delta>>0" and 
+        delta2: "\<forall>s. norm (t - s) < \<delta> \<longrightarrow> norm (norm (S t) - norm (S s)) < e/2"
+        by blast
+      have "\<exists>s. norm s < 1 \<and> norm (t - s) < \<delta>"        
+        by (simp add: norm1_normless1_approx delta1 s1) 
+      then obtain s where b1:"norm s < 1" and b2:"norm (t - s) < \<delta>"
+        by blast
+      have w:"norm (norm (S t) - norm (S s)) < e/2"
+        using b2 delta2 by auto
+      have "norm (S t) \<le> norm (S s) + norm (norm (S t) - norm (S s))"
+        by auto
+      hence "norm (S t) \<le> norm (S s) + e/2"
+        using w by linarith        
+      moreover have "norm (S s) \<le> y"
+        using f1
+        by (simp add: b1)         
+      ultimately show "onorm S \<le> y+e"
+        using s2 by linarith        
     qed
     hence "onorm S \<le> y"
       using linordered_field_class.field_le_epsilon by blast      
