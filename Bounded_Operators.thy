@@ -12,7 +12,7 @@ Main results:
 
 theory Bounded_Operators
   imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
-    Banach_Steinhaus Operator_Norm_Missing
+    Banach_Steinhaus.Banach_Steinhaus Operator_Norm_Missing
 begin
 unbundle no_notation_blinfun_apply
   (* In order to avoid the conflict with the notation *\<^sub>v,
@@ -2850,9 +2850,7 @@ proof-
     qed
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
-      sorry (* Ask to Dominique how to do such induction *)
-        (* Prove it by induction on card S as a 
-  separate lemma in order to do not confuse the variables *)
+      using assms(3) that sorry
   qed
   hence \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. (t x s) *\<^sub>C \<phi> s )\<close>
     for s

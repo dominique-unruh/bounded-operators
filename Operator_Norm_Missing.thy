@@ -11,7 +11,7 @@ Authors:
 theory Operator_Norm_Missing
   imports 
     Complex_Main
-    Banach_Steinhaus
+    Banach_Steinhaus.Banach_Steinhaus
     "HOL-Analysis.Infinite_Set_Sum"
     "HOL-Analysis.Operator_Norm"
 begin

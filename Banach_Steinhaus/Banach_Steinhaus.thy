@@ -5,6 +5,11 @@
 *)
 section \<open>Banach-Steinhaus theorem\<close>
 
+(* WARNING: This is a temporary copy of Banach-Steinhaus.
+   For use in Bounded_Operators until we can use the AFP version.
+   If something needs to be fixed, fix it in the banach-steinhaus git repository.
+ *)
+
 theory Banach_Steinhaus
   imports Banach_Steinhaus_Missing
 begin
@@ -405,7 +410,7 @@ proof(rule classical)
     thus ?thesis using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
-    using Real.real_arch_pow by auto
+    sorry
   moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
     using inverse_1 by blast                      
   ultimately show ?thesis by smt
