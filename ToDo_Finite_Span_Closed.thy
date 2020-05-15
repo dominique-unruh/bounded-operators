@@ -2,8 +2,6 @@ theory ToDo_Finite_Span_Closed
   imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
-(* TODO for Dominique: Add some comments to make clear what the lemmas are for *)
-
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
@@ -216,20 +214,36 @@ text \<open>
 
 proof (cases "B\<noteq>{}")
   case True
+
+  (* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
   define repr  where "repr = real_vector.representation B"
   {
-    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux *)
+    (* Step 1: Create a fake type definition by introducing a new type variable 'basis
+               and then assuming the existence of the morphisms Rep/Abs to B
+               This is then roughly equivalent to "typedef 'basis = B" *)
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux
+       (I.e., we cannot call it 'basis) *)
     assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
     then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
       by auto
-    have *: "class.finite TYPE('basisT)"
+    (* Step 2: We show that our fake typedef 'basisT could be instantiated as type class finite *)
+    have basisT_finite: "class.finite TYPE('basisT)"
       apply intro_classes
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+    (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
+               (instead, a precondition "class.finite TYPE('basisT)" is introduced) *)
     note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
-    note this[OF *  t \<open>finite B\<close> _ \<open>independent B\<close>]
+    (* Step 4: We instantiate the premises *)
+    note this[OF basisT_finite t]
   }
-  note this[cancel_type_definition, OF True _]
+  (* Now we have the desired fact, except that it still assumes that B is isomorphic to some type 'basis
+     together with the assumption that there are morphisms between 'basis and B. 'basis and that premise
+     are removed using cancel_type_definition
+  *)
+  note this[cancel_type_definition, OF True \<open>finite B\<close> _ \<open>independent B\<close>]
+
   then have "\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
     by (simp add: repr_def that True)
   then obtain D where D: "D b > 0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
@@ -281,20 +295,22 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
     using BT True
     by (metis real_vector.span_superset real_vector.span_empty subset_singletonD)
 
-  define repr  where "repr = real_vector.representation B"
+  (* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
   {
-    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux *)
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux,
+       otherwise "internalize_sort" below fails *)
     assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
     then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
       by auto
-    have *: "class.finite TYPE('basisT)"
+    have basisT_finite: "class.finite TYPE('basisT)"
       apply intro_classes
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
     note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
-    note this[OF *  t \<open>finite B\<close> _ \<open>independent B\<close>]
+    note this[OF basisT_finite t]
   }
-  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close>]
+  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
   then have "complete (real_vector.span B)"
     using \<open>B\<noteq>{}\<close> by auto 
   then show "complete (real_vector.span A)"
@@ -325,8 +341,6 @@ proof auto
     using complex_vector.span_explicit[of B] cspan
     by auto
   define R where "R = B \<union> scaleC \<i> ` B"
-(*   then have "R' \<subseteq> R" 
-    using \<open>B' \<subseteq> B\<close> by auto *)
   have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
     by (metis (no_types, lifting) complex_eq ordered_field_class.sign_simps(28) scaleC_add_left scaleC_scaleC scaleR_scaleC)
   then have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
