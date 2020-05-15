@@ -9,9 +9,21 @@ lemma finite_span_complete_aux:
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
   assumes t: "type_definition rep abs B"
   assumes "finite B" and "b\<in>B" and "independent B"
-  (* shows "bounded_linear (\<lambda>\<psi>. real_vector.representation B \<psi> b)" *)
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
+
+text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
+     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
+     content of the lemmas. However, there is one difference: We additionally assume here
+     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
+     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
+     the type class \<^class>\<open>finite\<close>
+
+     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
+     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
+     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
+     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
+
 proof -
   define repr  where "repr = real_vector.representation B"
   define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
@@ -180,30 +192,42 @@ proof -
     by simp
 qed
 
-lemmas finite_span_complete_aux' = finite_span_complete_aux[internalize_sort "'basis::finite"]
-
+(* TODO: move to General_Results_Missing or similar *)
 lemma complete_singleton: 
   shows "complete {s::'a::uniform_space}"
   unfolding complete_uniform
   apply auto
   by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
 
-lemma finate_span_representation_bounded: 
+(* We do not need this theorem for our development but we get it almost for
+   free as a side effect of the proof of finite_span_complete. *)
+lemma finite_span_representation_bounded: 
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B" "independent B"
-  shows "\<exists>D>0. \<forall>\<psi> b. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+  shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+
+text \<open>
+  Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
+  Let $\<alpha>^\<psi>_b$ be the coefficients of $\<psi>$ expressed as a linear combination over $B$.
+  Then $\<alpha>$ is is uniformly bounded (i.e., $\lvert\alpha^\<psi>_b \leq D \lVert\psi\rVert\psi for some $D$ independent of $\<psi>,b$).
+
+  (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
+  is defined in this corner case.) \<close>
+
 proof (cases "B\<noteq>{}")
   case True
   define repr  where "repr = real_vector.representation B"
   {
-    assume "\<exists>(Rep :: 'basis\<Rightarrow>'a) Abs. type_definition Rep Abs B"
-    then obtain rep :: "'basis \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basis" where t: "type_definition rep abs B"
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
       by auto
-    have *: "class.finite TYPE('basis)"
+    have *: "class.finite TYPE('basisT)"
       apply intro_classes
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-    note finite_span_complete_aux'(1)[OF this t \<open>finite B\<close> _ \<open>independent B\<close>]
+    note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
+    note this[OF *  t \<open>finite B\<close> _ \<open>independent B\<close>]
   }
   note this[cancel_type_definition, OF True _]
   then have "\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
@@ -227,8 +251,8 @@ proof (cases "B\<noteq>{}")
   moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
     unfolding repr_def using real_vector.representation_ne_zero True
     by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less subsetI subset_antisym)
-  ultimately show "\<exists>D>0. \<forall>\<psi> b. norm (repr \<psi> b) \<le> norm \<psi> * D"
-    using \<open>Dall > 0\<close> by metis
+  ultimately show "\<exists>D>0. \<forall>\<psi> b. abs (repr \<psi> b) \<le> norm \<psi> * D"
+    using \<open>Dall > 0\<close> real_norm_def by metis
 next
   case False
   then show ?thesis
@@ -240,6 +264,9 @@ lemma
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
   shows finite_span_complete: "complete (real_vector.span A)"
+
+text \<open>The span of a finite set is complete.\<close>
+
 proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   case True
   obtain B where
@@ -256,14 +283,16 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
 
   define repr  where "repr = real_vector.representation B"
   {
-    assume "\<exists>(Rep :: 'basis\<Rightarrow>'a) Abs. type_definition Rep Abs B"
-    then obtain rep :: "'basis \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basis" where t: "type_definition rep abs B"
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
       by auto
-    have *: "class.finite TYPE('basis)"
+    have *: "class.finite TYPE('basisT)"
       apply intro_classes
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-    note finite_span_complete_aux'(2)[OF this t \<open>finite B\<close> _ \<open>independent B\<close>]
+    note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
+    note this[OF *  t \<open>finite B\<close> _ \<open>independent B\<close>]
   }
   note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close>]
   then have "complete (real_vector.span B)"
