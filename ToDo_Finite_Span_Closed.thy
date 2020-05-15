@@ -2,6 +2,8 @@ theory ToDo_Finite_Span_Closed
   imports General_Results_Missing ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
+(* TODO for Dominique: Add some comments to make clear what the lemmas are for *)
+
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
@@ -144,6 +146,7 @@ proof - (* Ask to Dominique about this proof, because it was not me who wrote it
     using \<open>D>0\<close> sorry
 qed
 
+(* TODO for Dominique: check if this theorem is even needed. If yes, make non-aux version *)
 lemma finite_span_complete_aux_2:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
@@ -319,7 +322,8 @@ proof-
 qed
 
 
-lemmas finite_span_complete_aux' = finite_span_complete_aux[internalize_sort "'basis::finite"]
+lemmas finite_span_complete_aux'
+  = finite_span_complete_aux[internalize_sort "'basis::finite"]
 
 lemma complete_singleton: 
   shows "complete {s::'a::uniform_space}"
@@ -327,6 +331,7 @@ lemma complete_singleton:
   apply auto
   by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
 
+(* TODO: fix name (finite not finate) *)
 lemma finate_span_representation_bounded: 
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B" "independent B"
@@ -377,10 +382,10 @@ next
     by (metis all_not_in_conv less_eq_real_def norm_ge_zero norm_zero real_vector.representation_ne_zero zero_le_mult_iff) 
 qed
 
-lemma
+lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
-  shows finite_span_complete: "complete (real_vector.span A)"
+  shows "complete (real_vector.span A)"
 proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   case True
   obtain B where

@@ -288,9 +288,6 @@ proof(rule nsupointwise_convergence_I)
     by metis
 qed
 
-
-(* TODO: move to real_normed_vector *)
-(* Ask to Dominique: where is "real_normed_vector", it is a type, not a file. *)
 lemma linear_ball_zero:
   \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
 proof
@@ -319,7 +316,6 @@ proof
   qed
 qed
 
-(* TODO: move to real_normed_vector? *)
 lemma linear_ball_uniq:
   \<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
 proof

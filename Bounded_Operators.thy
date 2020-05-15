@@ -2722,6 +2722,7 @@ proof-
 qed
 
 (* NEW *)
+(* TODO: Check if this can be made simpler / more general using lemmas from ToDo_Finite_Span_Closed *)
 lemma bounded_operator_basis_existence_uniq:
   fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.span S = UNIV\<close> 
