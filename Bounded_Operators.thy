@@ -20,6 +20,7 @@ which can be used  for real bounded operators.
  *)
 subsection \<open>Complex bounded operators\<close>
 
+(* TODO: rename \<rightarrow> cblinfun, notation \<Rightarrow>\<^sub>c\<^sub>L *)
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
   = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
   morphisms times_bounded_vec Abs_bounded
@@ -1877,7 +1878,7 @@ lemma kernel_id[simp]: "kernel idOp = 0"
   unfolding bot_linear_space_def
   by blast
 
-lemma [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
+lemma scaleC_eigenspace[simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
 proof -
   assume a1: "a \<noteq> 0"
   hence "b *\<^sub>C (idOp::('a, _) bounded) = a *\<^sub>C (b / a) *\<^sub>C idOp"
@@ -2529,14 +2530,23 @@ consts
 *)
 
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>s S = 0"
-  by (metis (no_types, hide_lams) bot_eq_sup_iff cancel_comm_monoid_add_class.diff_cancel cdot_plus_distrib imageOp_Proj sup_top_right timesOp_assoc_linear_space timesOp_minus zero_linear_space_def) 
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>s S = (0::_::{complex_vector,t1_space} linear_space)"
+proof (auto, transfer)
+  fix S :: "'b set"
+  have "closure ((\<lambda>_. 0) ` S) = closure {0::'a}"
+    sorry
+  also have "closure {0} = {0::'a}"
+    sorry
+  finally show "closure ((\<lambda>_. 0) ` S) = {0::'a}"
+    by simp
+qed
+  (* by (metis (no_xtypes, hide_lams) bot_eq_sup_iff cancel_comm_monoid_add_class.diff_cancel cdot_plus_distrib imageOp_Proj sup_top_right timesOp_assoc_linear_space timesOp_minus zero_linear_space_def)  *)
 
 (* TODO: remove (same as timesScalarSpace_not0) *)
 lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S"
   for S::\<open>'a::complex_normed_vector linear_space\<close>
   using Complex_Vector_Spaces.timesScalarSpace_not0 by blast
-
+                                              
 lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
   for B::\<open>'a::complex_normed_vector linear_space\<close>
   by simp
@@ -2549,44 +2559,19 @@ lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarr
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
 
-
-(* 
-
-TODO: fix syntax and prove:
-lemma vector_to_bounded_applyOp: "vector_to_bounded (A\<cdot>\<psi>) = A \<cdot> vector_to_bounded \<psi>" for A :: "(_,_)bounded"
+lemma vector_to_bounded_applyOp: 
+  "vector_to_bounded (A *\<^sub>v \<psi>) = A  *\<^sub>o (vector_to_bounded \<psi>)" 
+  apply transfer 
   sorry
 
-TODO: fix syntax and prove:
-lemma vector_to_bounded_scalar_times: "vector_to_bounded (a\<cdot>\<psi>) = a \<cdot> vector_to_bounded \<psi>" for a::complex
-  apply (rewrite at "a\<cdot>\<psi>" DEADID.rel_mono_strong[of _ "(a\<cdot>idOp)\<cdot>\<psi>"])
+lemma vector_to_bounded_scalar_times: 
+  "vector_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C vector_to_bounded \<psi>" for a::complex
+  apply (subst asm_rl[of "a *\<^sub>C \<psi> = (a *\<^sub>C idOp) *\<^sub>v \<psi>"])
    apply simp
   apply (subst vector_to_bounded_applyOp)
   by simp
-*)
 
-(* Repeated
-lemma scaleC_eigenspace [simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a*\<^sub>CA) = eigenspace (b/a) A"
-  unfolding eigenspace_def
-proof -
-  assume a1: "a \<noteq> 0"
-  then have "a *\<^sub>C A - b *\<^sub>C idOp = a *\<^sub>C (A - (b / a) *\<^sub>C idOp)"
-    by simp
-  then show "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
-    using a1 by (metis (full_types) kernel_scalar_times)
-qed
-*)
-
-lemma isProjector_Proj[simp]: "isProjector (Proj S)"
-  by simp
-
-(* Repeated
-lemma proj_scalar_mult[simp]: 
-  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
-  for a::complex and \<psi>::"'a::chilbert_space"
-  by simp
-*)
-
-(* New definition *)
+(* Rename: cblinfun_to_blinfun *)
 lift_definition BtoL::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
   is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
   apply transfer
@@ -2595,9 +2580,8 @@ lift_definition BtoL::\<open>('a::complex_normed_vector,'b::complex_normed_vecto
 lemma BtoL_norm: "norm (BtoL F) = norm F"
   by (simp add: BtoL.rep_eq norm_blinfun.rep_eq norm_bounded.rep_eq)
 
-(* TODO: Remove "perfect_space" *)
 theorem banach_steinhaus_bounded:
-  fixes F :: \<open>'c \<Rightarrow> ('a::{cbanach,perfect_space}, 'b::complex_normed_vector) bounded\<close>
+  fixes F :: \<open>'c \<Rightarrow> ('a::cbanach, 'b::complex_normed_vector) bounded\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>  
 proof-
@@ -2850,7 +2834,14 @@ proof-
     qed
     show "\<exists>K. \<forall>x. norm (t x s) \<le> norm x * K"
       if "s \<in> S"
-      using assms(3) that sorry
+      using assms(3) that t_def
+    proof (induction S arbitrary: t)
+      case (empty t)
+      then show ?case sorry
+    next
+      case (insert x S t)
+      then show ?case sorry
+    qed
   qed
   hence \<open>s \<in> S \<Longrightarrow> bounded_clinear (\<lambda> x. (t x s) *\<^sub>C \<phi> s )\<close>
     for s

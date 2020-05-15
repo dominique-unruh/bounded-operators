@@ -117,25 +117,52 @@ proof-
   finally show ?thesis by blast
 qed
 
-(* Ask to Dominique
+class not_singleton =
+  assumes not_singleton_card: "\<exists>x y. x \<noteq> y"
+
+lemma not_singleton_existence[simp]:
+  \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
+proof (rule classical)
+  assume \<open>\<nexists>x. (x::'a) \<noteq> t\<close> 
+  have \<open>\<exists> x::'a. \<exists> y::'a. x \<noteq> y\<close>
+    using not_singleton_card
+    by blast
+  then obtain x y::'a where \<open>x \<noteq> y\<close>
+    by blast
+  have \<open>\<forall> x::'a. x = t\<close>
+    using \<open>\<nexists>x. (x::'a) \<noteq> t\<close> by simp
+  hence \<open>x = t\<close>
+    by blast
+  moreover have \<open>y = t\<close>
+    using \<open>\<forall> x::'a. x = t\<close>
+    by blast
+  ultimately have \<open>x = y\<close>
+    by simp
+  thus ?thesis using \<open>x \<noteq> y\<close> by blast
+qed
+
+lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
+  using not_singleton_existence[of x] by blast
+
+(* lemma UNIV_not_singleton_converse: "(\<And> x. (UNIV::'a set) \<noteq> {x}) \<Longrightarrow> \<exists>x::'a. \<exists>y::'a. x \<noteq> y"
+  by fastforce *)
+
+(* lemma UNIV_not_singleton_converse_zero: "((UNIV::('a::real_normed_vector) set) \<noteq> {0}) \<Longrightarrow> \<exists>x::'a. \<exists>y::'a. x \<noteq> y"
+  using UNIV_not_singleton_converse
+  by fastforce  *)
+
 subclass (in card2) not_singleton
   apply standard using two_le_card
   by (meson card_2_exists ex_card) 
 
-lemma linear_space_top_not_bot[simp]: "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+lemma linear_space_top_not_bot[simp]: 
+  "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+  (* The type class t1_space is needed because the definition of bot in linear_space needs it *)
   by (metis General_Results_Missing.UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
- 
-lemma linear_space_bot_not_top[simp]: "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-proof-
-  have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-    using not_singleton_existence
-    by auto
-  thus ?thesis 
-    apply transfer
-    unfolding UNIV_def
-    by blast
-qed
-*)
+
+lemma linear_space_bot_not_top[simp]:
+  "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+  using linear_space_top_not_bot by metis
 
 typedef 'a euclidean_space = "UNIV :: ('a \<Rightarrow> real) set" ..
 setup_lifting type_definition_euclidean_space

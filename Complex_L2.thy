@@ -11,10 +11,11 @@ Authors:
 theory Complex_L2
   imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
-    "HOL-ex.Sketch_and_Explore"
+    "HOL-ex.Sketch_and_Explore" General_Results_Missing
 begin
 
 unbundle bounded_notation
+unbundle no_notation_blinfun_apply
 
 subsection \<open>Preliminaries\<close>
 
@@ -1785,7 +1786,6 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
 
 type_synonym 'a ell2_linear_space = "'a ell2 linear_space"
 
-(* Ask to Dominique about not_singleton
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
@@ -1794,7 +1794,6 @@ proof standard
   thus \<open>\<exists>x y::'a ell2. x \<noteq> y\<close>
     by blast    
 qed
-*)
 
 
 definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Rightarrow> 'a)\<close> where
@@ -3629,10 +3628,10 @@ lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector
 lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
   by simp 
 
-(* Ask to Dominique *)
-lemma subspace_zero_not_top[simp]: "(0::'a ell2_linear_space) \<noteq> top"
+(* TODO: move to earliest possible place *)
+lemma subspace_zero_not_top[simp]: 
+  "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
   sorry
-
 
 lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
   by simp

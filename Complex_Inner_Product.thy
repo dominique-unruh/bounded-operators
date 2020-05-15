@@ -3441,10 +3441,6 @@ via the canonical isomorphism between a one-dimensional vector space and
 \<^typ>\<open>complex\<close>.\<close>
 class one_dim = basis_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
-    (* TODO: replace by simpler "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1" *)
-    (* Jose: It produce errors *)
-    (* TODO: but they were all easily fixable by proving one_dim_prod below (you can remove this TODO) *)
-    (* Ask to Dominique*)
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
 begin
 
@@ -4734,8 +4730,13 @@ qed
 
 subsection \<open>Commutative monoid of subspaces\<close>
 
-instantiation linear_space :: (chilbert_space) comm_monoid_add begin
+(* TODO: move to earliest possible place *)
+instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
 definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
+instance ..
+end
+
+instantiation linear_space :: (chilbert_space) comm_monoid_add begin
 definition plus_linear_space :: "'a linear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_linear_space = sup"
 instance 
   apply standard 

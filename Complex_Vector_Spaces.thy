@@ -795,7 +795,7 @@ proof (rule clinearI)
     by (metis complex_scaleC_def mult_scaleC_right of_complex_mult scaleC_conv_of_complex)
 qed
 
-
+(* TODO rename \<rightarrow> cbounded_linear *)
 locale bounded_clinear = 
   fixes f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
   assumes 
@@ -2072,6 +2072,7 @@ qed
 
 subsection \<open>Linear space\<close>
 
+(* TODO rename (TODO discuss) *)
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
   linear_space = \<open>{S::'a set. closed_subspace S}\<close>
   morphisms space_as_set Abs_linear_space
