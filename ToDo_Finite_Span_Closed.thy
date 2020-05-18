@@ -2,6 +2,7 @@ theory ToDo_Finite_Span_Closed
   imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
 unbundle no_notation_blinfun_apply
+unbundle bounded_notation
 
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
@@ -378,18 +379,29 @@ lemma finite_complex_span_closed:
   shows "closed (complex_vector.span B)"
   by (simp add: assms complete_imp_closed finite_complex_span_complete)
 
-thm complex_vector.representation_sum
+
+thm complex_vector.representation_def
 
 lemma bounded_operator_basis_existence_uniq:
   fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
-  assumes \<open>complex_vector.span S = UNIV\<close> 
-    and \<open>complex_vector.independent S\<close>
-    and \<open>finite S\<close>
-  shows \<open>\<exists>!F. \<forall>s\<in>S. times_bounded_vec F s = \<phi> s\<close>
+  assumes \<open>complex_vector.span basis = UNIV\<close> 
+    and \<open>complex_vector.independent basis\<close>
+    and \<open>finite basis\<close>
+  shows \<open>\<exists>!F. \<forall>s\<in>basis. F *\<^sub>v s = \<phi> s\<close>
 proof-
+  have f1: "Complex_Vector_Spaces.representation basis w =
+        (if complex_independent basis \<and> w \<in> Complex_Vector_Spaces.span basis
+         then SOME f.
+         (\<forall>v. f v \<noteq> 0 \<longrightarrow> v \<in> basis) \<and>
+         finite {v. f v \<noteq> 0} \<and> (\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = w
+       else (\<lambda>b. 0))" for w
+    by (simp add: complex_vector.representation_def)
+  define f::"'a \<Rightarrow> 'a \<Rightarrow> complex" where
+    "f u v = Complex_Vector_Spaces.representation basis u v" for u v
   show ?thesis sorry
 qed
 
 
+unbundle no_bounded_notation
 
 end
