@@ -379,26 +379,189 @@ lemma finite_complex_span_closed:
   shows "closed (complex_vector.span B)"
   by (simp add: assms complete_imp_closed finite_complex_span_complete)
 
-
-thm complex_vector.representation_def
+lemma bounded_operator_basis_zero_uniq:
+  fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
+  assumes a1: "complex_vector.span basis = UNIV"
+    and a2: "complex_vector.independent basis"
+    and a3: "finite basis" and a4: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = 0"
+  shows \<open>F = 0\<close>
+proof-
+  have "F *\<^sub>v w = 0" for w
+  proof-
+    have "w \<in> complex_vector.span basis"
+      using a1 by blast
+    hence "\<exists>t r. finite t \<and> t \<subseteq> basis \<and>  w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+      using complex_vector.span_explicit by (smt mem_Collect_eq)
+    then obtain t r where b1: "finite t" and b2: "t \<subseteq> basis" and b3: "w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+      by blast
+    have  "F *\<^sub>v w = (\<Sum>a\<in>t. r a *\<^sub>C (F *\<^sub>v a))"
+      using b3
+      by (smt \<open>\<And>thesis. (\<And>t r. \<lbrakk>finite t; t \<subseteq> basis; w = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> a4 b2 clinear_finite_sum complex_vector.scale_eq_0_iff in_mono sum.neutral)
+    thus ?thesis using a4 b2
+      by (simp add: subset_eq) 
+  qed
+  thus ?thesis by (simp add: bounded_ext) 
+qed
 
 lemma bounded_operator_basis_existence_uniq:
-  fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
+  fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.span basis = UNIV\<close> 
     and \<open>complex_vector.independent basis\<close>
     and \<open>finite basis\<close>
   shows \<open>\<exists>!F. \<forall>s\<in>basis. F *\<^sub>v s = \<phi> s\<close>
 proof-
-  have f1: "Complex_Vector_Spaces.representation basis w =
+  have \<open>\<exists>F. \<forall>s\<in>basis. F *\<^sub>v s = \<phi> s\<close>
+  proof-
+    have f1: "Complex_Vector_Spaces.representation basis w =
         (if complex_independent basis \<and> w \<in> Complex_Vector_Spaces.span basis
          then SOME f.
          (\<forall>v. f v \<noteq> 0 \<longrightarrow> v \<in> basis) \<and>
          finite {v. f v \<noteq> 0} \<and> (\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = w
        else (\<lambda>b. 0))" for w
-    by (simp add: complex_vector.representation_def)
-  define f::"'a \<Rightarrow> 'a \<Rightarrow> complex" where
-    "f u v = Complex_Vector_Spaces.representation basis u v" for u v
-  show ?thesis sorry
+      by (simp add: complex_vector.representation_def)
+    define f::"'a \<Rightarrow> 'a \<Rightarrow> complex" where
+      "f w v = Complex_Vector_Spaces.representation basis w v" for w v
+    have f2: "\<forall>v. f w v \<noteq> 0 \<longrightarrow> v \<in> basis" for w
+      using complex_vector.representation_ne_zero f_def by auto
+    have f3: "finite {v. f w v \<noteq> 0}" for w
+      by (metis \<open>f \<equiv> Complex_Vector_Spaces.representation basis\<close> complex_vector.finite_representation)
+    have f4: "(\<Sum>v | f w v \<noteq> 0. f w v *\<^sub>C v) = w" for w
+      using \<open>complex_vector.independent basis\<close> \<open>complex_vector.span basis = UNIV\<close>
+        f1[where w = w] unfolding f_def
+      using Complex_Vector_Spaces.dependent_raw_def complex_vector.sum_nonzero_representation_eq 
+        iso_tuple_UNIV_I
+    proof -
+      have "complex_independent basis"
+        by (metis Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+      thus "(\<Sum>a | Complex_Vector_Spaces.representation basis w a \<noteq> 0. Complex_Vector_Spaces.representation basis w a *\<^sub>C a) = w"
+        using \<open>Complex_Vector_Spaces.span basis = UNIV\<close> complex_vector.sum_nonzero_representation_eq iso_tuple_UNIV_I
+        by metis (* > 1s *)
+    qed
+    have f5: "w \<in> basis \<Longrightarrow> f w w = 1" for w
+      using complex_vector.representation_basis[where basis = basis and b = w]
+      by (smt Complex_Vector_Spaces.dependent_raw_def \<open>f \<equiv> Complex_Vector_Spaces.representation basis\<close> assms(2))
+    have f6: "w\<in>basis \<Longrightarrow> v \<noteq> w \<Longrightarrow> f w v = 0" for v w
+      using complex_vector.representation_basis f1 f_def by fastforce
+
+    have f_add: "f (w1+w2) v = f w1 v + f w2 v" for w1 w2 v
+      sorry
+    have f_scaleC: "f (c *\<^sub>C w) v = c * f w v" for w v c
+      sorry
+    have f_bounded: "v\<in>basis \<Longrightarrow> \<exists>K. \<forall>w. norm (f w v) \<le> norm w * K" for v
+      sorry
+    define F where "F w = (\<Sum>v | f w v \<noteq> 0. f w v *\<^sub>C \<phi> v)" for w
+    have F_def': "F w = (\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v)" for w
+    proof- 
+      have "basis = {v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<union> {v |v. f w v = 0 \<and> v \<in> basis}"
+        by blast
+      moreover have "{v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<inter> {v |v. f w v = 0 \<and> v \<in> basis} = {}"
+        by blast
+      ultimately have "(\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v) =
+                     (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)
+                  +  (\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)"
+        by (metis (no_types, lifting) assms(3) finite_Un sum.union_disjoint)
+      moreover have "(\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v) = 0"
+        by simp        
+      ultimately 
+        have "(\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v) = (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)"
+        by simp
+      also have "\<dots> = (\<Sum>v\<in>{v |v. f w v \<noteq> 0}. f w v *\<^sub>C \<phi> v)"
+        using f2 by meson  
+      also have "\<dots> = F w"
+        unfolding F_def by auto
+      finally show ?thesis by simp
+    qed
+    have "clinear F" 
+      unfolding clinear_def proof
+      show "F (b1 + b2) = F b1 + F b2"
+        for b1 :: 'a
+          and b2 :: 'a
+        using f_add 
+        unfolding F_def'
+        by (smt scaleC_left.add sum.cong sum.distrib) 
+        
+      show "F (r *\<^sub>C b) = r *\<^sub>C F b"
+        for r :: complex
+          and b :: 'a
+      proof-
+        have "F (r *\<^sub>C b) = (\<Sum>v\<in>basis. f (r *\<^sub>C b) v *\<^sub>C \<phi> v)"
+          unfolding F_def' by blast
+        also have "\<dots> = (\<Sum>v\<in>basis. (r * f b v) *\<^sub>C \<phi> v)"
+          using f_scaleC by simp
+        also have "\<dots> = (\<Sum>v\<in>basis. r *\<^sub>C (f b v *\<^sub>C \<phi> v))"
+          by simp
+        also have "\<dots> = r *\<^sub>C (\<Sum>v\<in>basis. f b v *\<^sub>C \<phi> v)"
+          by (metis (full_types) scaleC_right.sum)          
+        finally show ?thesis using F_def' by simp
+      qed  
+    qed
+    moreover have "\<exists>K. \<forall>x. norm (F x) \<le> norm x * K"
+    proof-
+      from f_bounded
+      obtain M where M_def: "\<And> w v. v \<in> basis \<Longrightarrow> cmod (f w v) \<le> norm w * M v"
+        by metis
+      define K where "K = (sum (\<lambda>v. M v * norm (\<phi> v)) basis)"
+      have "norm (F x) \<le> norm x * K" for x
+      proof-
+        have "norm (F x) = norm (\<Sum>v\<in>basis. f x v *\<^sub>C \<phi> v)"
+          unfolding F_def' by blast
+        also have "\<dots> \<le> (\<Sum>v\<in>basis. norm (f x v *\<^sub>C \<phi> v))"
+          by (simp add: sum_norm_le)
+        also have "\<dots> = (\<Sum>v\<in>basis. norm (f x v) * norm (\<phi> v))"
+          by auto
+        also have "\<dots> \<le> (\<Sum>v\<in>basis. (norm x) * M v * norm (\<phi> v))"
+          using M_def
+          by (simp add: mult_right_mono sum_mono) 
+        also have "\<dots> \<le> (norm x) * (\<Sum>v\<in>basis. M v * norm (\<phi> v))"
+          by (smt sum.cong vector_space_over_itself.scale_scale vector_space_over_itself.scale_sum_right)
+        also have "\<dots> \<le> (norm x) * K"
+          unfolding K_def by simp
+        finally show ?thesis by simp
+      qed
+      thus ?thesis by blast
+    qed
+    ultimately have "bounded_clinear F"
+      unfolding bounded_clinear_def by blast
+    moreover have "w\<in>basis \<Longrightarrow> F w = \<phi> w" for w
+    proof-
+      assume b1: "w\<in>basis"
+      have "F w = (\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v)
+                 +(\<Sum>v | f w v \<noteq> 0 \<and> v \<noteq> w. f w v *\<^sub>C \<phi> v)"
+        by (smt Collect_cong F_def add.commute add_cancel_right_left b1 f6 mem_Collect_eq sum.cong 
+            sum.neutral_const)
+      moreover have "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = \<phi> w"
+      proof-
+        have "f w w \<noteq> 0"
+          by (simp add: b1 f5)
+        hence "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = (\<Sum>v | v = w. f w v *\<^sub>C \<phi> v)"
+          by metis
+        also have "\<dots> = f w w *\<^sub>C \<phi> w"
+          using Collect_mem_eq add_cancel_right_left complex_vector.scale_cancel_right 
+            complex_vector.scale_zero_right by auto          
+        finally have "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = f w w *\<^sub>C \<phi> w"
+          by blast
+        thus ?thesis
+          by (simp add: b1 f5) 
+      qed
+      moreover have "(\<Sum>v | f w v \<noteq> 0 \<and> v \<noteq> w. f w v *\<^sub>C \<phi> v) = 0"
+        by (simp add: b1 f6)        
+      ultimately show ?thesis by simp
+    qed
+    ultimately show ?thesis apply transfer
+      by blast
+  qed
+  moreover have \<open>(\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = \<phi> s) \<Longrightarrow> (\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>v s = \<phi> s) \<Longrightarrow> F = G\<close> for F G
+  proof-
+    assume a1: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = \<phi> s" and a2: "\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>v s = \<phi> s"
+    hence "s\<in>basis \<Longrightarrow> (F-G) *\<^sub>v s = 0" for s
+      by (simp add: minus_bounded.rep_eq)
+    hence "F - G = 0"
+      using bounded_operator_basis_zero_uniq[where F = "F - G" and basis = basis]
+      assms(1) assms(2) assms(3) by auto
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis
+    by auto 
 qed
 
 
