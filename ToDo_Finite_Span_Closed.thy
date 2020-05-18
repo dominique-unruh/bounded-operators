@@ -1,6 +1,7 @@
 theory ToDo_Finite_Span_Closed
   imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
 begin
+unbundle no_notation_blinfun_apply
 
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
@@ -376,5 +377,19 @@ lemma finite_complex_span_closed:
   assumes "finite B"
   shows "closed (complex_vector.span B)"
   by (simp add: assms complete_imp_closed finite_complex_span_complete)
+
+thm complex_vector.representation_sum
+
+lemma bounded_operator_basis_existence_uniq:
+  fixes S::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
+  assumes \<open>complex_vector.span S = UNIV\<close> 
+    and \<open>complex_vector.independent S\<close>
+    and \<open>finite S\<close>
+  shows \<open>\<exists>!F. \<forall>s\<in>S. times_bounded_vec F s = \<phi> s\<close>
+proof-
+  show ?thesis sorry
+qed
+
+
 
 end
