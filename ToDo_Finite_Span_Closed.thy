@@ -276,10 +276,10 @@ next
     using nice_ordered_field_class.linordered_field_no_ub by fastforce
 qed
 
-lemma
+lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
-  shows finite_span_complete: "complete (real_vector.span A)"
+  shows "complete (real_vector.span A)"
 
   text \<open>The span of a finite set is complete.\<close>
 
@@ -403,14 +403,16 @@ proof-
   thus ?thesis by (simp add: bounded_ext) 
 qed
 
+
 lemma bounded_operator_finite_dim':
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "complex_vector.independent basis"
     and b3:"finite basis" and b4:"clinear F" 
     and b5: "S \<subseteq> basis"  
-    and b6: "\<And>w. w \<notin> complex_vector.span S \<Longrightarrow> F w = 0"
-    and b7: "card S = n"
+    and b6: "\<And>w. w \<in> complex_vector.span (basis - S) \<Longrightarrow> F w = 0"
+    and b7: "card S = n" 
+    and b8: "\<And> u v. u \<in> basis \<Longrightarrow> v \<in> basis \<Longrightarrow> u \<noteq> v \<Longrightarrow> \<langle>u, v\<rangle> = 0"
   shows "bounded_clinear F"
   using assms
 proof(induction n arbitrary: S F)
@@ -421,11 +423,9 @@ proof(induction n arbitrary: S F)
     by simp
   hence "F s = 0" for s
   proof(cases "s = 0")
-    case True
-    thus ?thesis by (simp add: "0.prems"(4) complex_vector.linear_0)
+    case True thus ?thesis by (simp add: "0.prems"(4) complex_vector.linear_0)
   next
-    case False
-    thus ?thesis by (smt "0.prems"(6) \<open>Complex_Vector_Spaces.span S = {0}\<close> singletonD)
+    case False thus ?thesis by (simp add: "0.prems"(6) \<open>S = {}\<close> b1) 
   qed
   thus ?case by simp
 next
@@ -512,34 +512,93 @@ next
   have cs1: "closed_subspace (Complex_Vector_Spaces.span {s})"
     unfolding closed_subspace_def apply auto
     by (simp add: closed_finite_dim)
-  define F' where "F' x = F x - f x" for x
-  have r3: "w \<notin> complex_vector.span S' \<Longrightarrow> F' w = 0" for w 
-    (* Maybe it is wrong *)
-  proof-
-    assume z1: "w \<notin> complex_vector.span S'"
-    show ?thesis 
-    proof(cases "w \<notin> complex_vector.span S")
-      case True
-      hence "F w = 0"
-        by (simp add: Suc.prems(6))        
-      moreover have "F (projection (Complex_Vector_Spaces.span {s}) w) = 0"
-      proof-
-        have "projection (Complex_Vector_Spaces.span {s}) w \<in> Complex_Vector_Spaces.span {s}"
-          using Complex_Inner_Product.projection_intro2[where M = "Complex_Vector_Spaces.span {s}" 
-              and h = w] cs1 by auto
-        hence "projection (Complex_Vector_Spaces.span {s}) w \<in> Complex_Vector_Spaces.span S"
-          by (smt complex_vector.span_breakdown_eq complex_vector.span_empty complex_vector.span_zero s1 singletonD)
-        thus ?thesis sorry
-      qed
-      ultimately show ?thesis unfolding F'_def f_def by simp
-    next
-      case False
-      thus ?thesis sorry
-    qed
-  qed
+  define F' where "F' w = F w - f w" for w
   have r4: "clinear F'"
     unfolding F'_def bounded_clinear_def  using f1 Suc.prems(4)
     by (simp add: bounded_clinear.is_clinear complex_vector.linear_compose_sub)
+  hence r3: "w \<in> complex_vector.span (basis - S') \<Longrightarrow> F' w = 0" for w 
+  proof-
+    assume "w \<in> complex_vector.span (basis - S')"
+    moreover have "basis - S' = insert s (basis - S)"
+      using Suc.prems(5) s1 s2 by auto
+    ultimately have "w \<in> complex_vector.span (insert s (basis - S))"
+      by simp
+    hence "\<exists>k. w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+      by (smt complex_vector.span_breakdown_eq)
+    then obtain k where k_def: "w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+      by blast
+    hence "F (w - k *\<^sub>C s) = 0"
+      by (smt Suc.prems(6))
+    hence "F w - F (k *\<^sub>C s) = 0"
+      using Suc.prems(4) complex_vector.linear_diff by fastforce
+    moreover have "F (k *\<^sub>C s) = f w"
+    proof-
+      have "closed_subspace (Complex_Vector_Spaces.span (basis - S))"
+        unfolding closed_subspace_def apply auto
+        by (simp add: b3 closed_finite_dim)
+      have "x \<in> (Complex_Vector_Spaces.span (basis - S)) \<Longrightarrow> 
+            x \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})" for x
+      proof-
+        assume "x \<in> (Complex_Vector_Spaces.span (basis - S))"
+        have "\<exists>t r. finite t \<and> t \<subseteq> basis - S \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+          using complex_vector.span_explicit 
+          by (smt \<open>x \<in> Complex_Vector_Spaces.span (basis - S)\<close> mem_Collect_eq)
+        then obtain t r where t1: "finite t" and t2: "t \<subseteq> basis - S" and t3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+          by blast
+        have t4: "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> a \<in> t \<Longrightarrow> \<langle>q, a\<rangle> = 0" for a q
+        proof-
+          assume v1: "q \<in> Complex_Vector_Spaces.span {s}" and v2: "a \<in> t"
+          from v1 have "\<exists>h. q = h *\<^sub>C s"
+            using complex_vector.span_breakdown_eq by force
+          then obtain h where h_def: "q = h *\<^sub>C s" 
+            by blast
+          have "\<langle>q, a\<rangle> = \<langle>h *\<^sub>C s, a\<rangle>"
+            unfolding h_def by blast
+          also have "\<dots> = (cnj h) * \<langle>s, a\<rangle>"
+            by simp
+          also have "\<dots> = 0"
+          proof-
+            have "a \<in> basis - S"
+              using t2 v2 by auto
+            hence "\<langle>s, a\<rangle> = 0"
+              using b8 Suc.prems(5) s1 by blast
+            thus ?thesis by simp
+          qed
+          finally show ?thesis by blast
+        qed
+        hence "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> \<langle>q, x\<rangle> = 0" for q
+        proof-
+          assume "q \<in> Complex_Vector_Spaces.span {s}"
+          have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = (\<Sum>a\<in>t. r a * \<langle>q, a\<rangle>)"
+            by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong)
+          also have "\<dots> = 0"
+            using t4  by (smt \<open>q \<in> Complex_Vector_Spaces.span {s}\<close> 
+                mult_zero_right sum.not_neutral_contains_not_neutral) 
+          finally have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = 0"
+            by blast
+          thus ?thesis using t3 by auto
+        qed
+        thus ?thesis using orthogonal_complement_I1 by metis
+      qed
+      hence "w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})"
+        using k_def by auto
+      hence "projection (Complex_Vector_Spaces.span {s}) (w - k *\<^sub>C s) = 0"
+        by (smt cs1 projectionPropertiesD vimage_singleton_eq) 
+      hence "projection (Complex_Vector_Spaces.span {s}) w =
+             projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s)"
+        using Complex_Vector_Spaces.span_mult
+          \<open>w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})\<close> 
+          complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_zero cs1 
+          projection_fixed_points projection_uniq singletonI by metis
+      moreover have "projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s) = k *\<^sub>C s"
+        by (simp add: complex_vector.span_base complex_vector.span_scale cs1 projection_fixed_points)
+      ultimately have "projection (Complex_Vector_Spaces.span {s}) w = k *\<^sub>C s"
+        by simp
+      thus ?thesis unfolding f_def by simp
+    qed
+    ultimately show ?thesis 
+      unfolding F'_def by auto
+  qed
   from r1 r2 r3 r4 assms
   have "bounded_clinear F'"
     using Suc.IH by blast
@@ -549,15 +608,24 @@ next
     using f1 Complex_Vector_Spaces.bounded_clinear_add by blast
 qed
 
+lemma bounded_operator_finite_dim_ortho:
+  fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
+  assumes b1: "complex_vector.span basis = UNIV"
+    and b2: "complex_vector.independent basis"
+    and b3:"finite basis" and b4:"clinear F"
+    and b5: "\<And> u v. u \<in> basis \<Longrightarrow> v \<in> basis \<Longrightarrow> u \<noteq> v \<Longrightarrow> \<langle>u, v\<rangle> = 0"
+  shows "bounded_clinear F"
+  using bounded_operator_finite_dim'[where F = F and basis = basis and S = basis 
+      and n = "card basis"]
+  using Diff_iff b1 b2 b3 b4 b5 equal_span_0 order_refl by metis
+
 lemma bounded_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "complex_vector.independent basis"
     and b3:"finite basis" and b4:"clinear F"
   shows "bounded_clinear F"
-  using bounded_operator_finite_dim'[where F = F and basis = basis and S = basis 
-      and n = "card basis"]
-  by (metis b1 b2 b3 b4 iso_tuple_UNIV_I order_refl)
+  sorry (* apply orthogonalization to lemma bounded_operator_finite_dim_ortho *)
 
 lemma bounded_operator_basis_existence_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
