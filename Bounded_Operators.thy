@@ -2980,7 +2980,7 @@ lemma Ortho_expansion_finite:
 proof-
   have \<open>closure (complex_vector.span T) = UNIV\<close>
     using \<open>is_onb T\<close>
-    unfolding is_onb_def is_basis_def
+    unfolding is_onb_def is_ob_def is_basis_def
     by blast
   moreover have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
     using \<open>finite T\<close> span_finite_dim by blast
@@ -3039,7 +3039,7 @@ proof-
             by auto
           hence \<open>\<langle>a, t\<rangle> = 0\<close>
             using \<open>a \<in> T\<close> \<open>t \<in> T\<close> \<open>is_onb T\<close>
-            unfolding is_onb_def is_ortho_set_def
+            unfolding is_onb_def is_ob_def is_ortho_set_def
             by blast
           thus ?thesis by simp
         qed

@@ -3395,31 +3395,35 @@ text \<open>Orthogonal set\<close>
 definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
   \<open>is_ortho_set S = (\<forall> x \<in> S. \<forall> y \<in> S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
 
+text \<open>Orthogonal basis\<close>
+definition is_ob :: "'a::complex_inner set \<Rightarrow> bool" 
+  where "is_ob S  = (
+  is_ortho_set S \<and> 
+  is_basis S
+)"
+
 
 text \<open>Orthonormal basis\<close>
 definition is_onb :: "'a::complex_inner set \<Rightarrow> bool" 
   where "is_onb S  = (
-  is_ortho_set S \<and> 
-  is_basis S \<and>
-  S \<subseteq> sphere 0 1
+  is_ob S \<and> S \<subseteq> sphere 0 1
 )"
 
+lemma is_onb_then_is_ob:
+"is_onb S \<Longrightarrow> is_ob S"
+  unfolding is_onb_def
+  by simp
 
-lemma is_onb_nonzero:
-  assumes \<open>is_onb S\<close> and \<open>x \<in> S\<close>
+lemma is_ob_nonzero:
+  assumes \<open>is_ob S\<close> and \<open>x \<in> S\<close>
   shows \<open>x \<noteq> 0\<close>
-proof -
-  have f1: "(1::real) > 0"
-    by auto
-  have "\<forall>x. ((0::real) < x) = (\<not> x \<le> 0)"
-    by auto
-  then show ?thesis
-    using f1 by (metis (no_types) assms(1) assms(2) is_onb_def sphere_nonzero)
-qed 
+  using assms unfolding is_ob_def is_basis_def
+  by (metis Complex_Vector_Spaces.dependent_raw_def complex_vector.dependent_zero) 
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
+(* Change name to onb_enum ? *)
 class basis_enum = complex_inner +
   fixes canonical_basis :: "'a list"
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
@@ -3433,7 +3437,8 @@ class basis_enum = complex_inner +
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::basis_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
-  using assms is_onb_nonzero is_onb_set by blast
+  using assms is_ob_nonzero is_onb_set is_onb_then_is_ob
+  by blast
 
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
@@ -4175,8 +4180,6 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-thm Gram_Schmidt
-
 hide_fact Gram_Schmidt0
 
 (* TODO: Use the one from ToDo_Finite_Span_Closed instead. *)
@@ -4207,10 +4210,10 @@ proof-
   hence \<open>is_onb {1::'a}\<close>
     by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
   hence \<open>a \<in> complex_vector.span ({1::'a})\<close>
-    unfolding is_onb_def is_basis_def
+    unfolding is_onb_def is_ob_def is_basis_def
     apply auto
-    using closed_finite_dim 
-    by (metis closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I)
+    using closed_finite_dim closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I
+    by (simp add: closed_finite_dim)
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"

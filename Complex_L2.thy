@@ -2368,15 +2368,15 @@ proof
     have \<open>distinct (enum_class.enum::'a list)\<close>
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-       by (meson inj_onI ket_distinct)         
+      by (meson inj_onI ket_distinct)         
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
       by blast
   qed
   show "is_onb (set (canonical_basis::'a ell2 list))"
-    unfolding is_onb_def
-  proof
+    unfolding is_onb_def is_ob_def 
+  proof auto
     show \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close>
     proof-
       have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
@@ -2410,8 +2410,8 @@ proof
         unfolding is_ortho_set_def
         by blast
     qed
-    show "is_basis (set (canonical_basis::'a ell2 list)) \<and> set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
-    proof
+    show "is_basis (set (canonical_basis::'a ell2 list))"
+    proof-
       show "is_basis (set (canonical_basis::'a ell2 list))"
         unfolding canonical_basis_ell2_def is_basis_def
       proof
@@ -2444,7 +2444,7 @@ proof
         proof-
           have \<open>closure
               (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-             by (simp add: ket_ell2_span)
+            by (simp add: ket_ell2_span)
           moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
             using UNIV_enum
             by blast
@@ -2455,10 +2455,10 @@ proof
             by auto
         qed
       qed
-      show "set canonical_basis \<subseteq> sphere (0::'a ell2) 1"
-        unfolding canonical_basis_ell2_def sphere_def
-        by auto
     qed
+    show "\<And>x::'a ell2. x \<in> set canonical_basis \<Longrightarrow> norm x = 1"
+      unfolding canonical_basis_ell2_def sphere_def
+      by auto
   qed
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
        = length (canonical_basis::'a ell2 list)"
