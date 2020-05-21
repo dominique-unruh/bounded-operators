@@ -2,9 +2,47 @@ section \<open>\<open>Bounded_Operators_Code\<close> -- Support for code generat
 
 theory Bounded_Operators_Code
   imports
-    Bounded_Operators 
-    Jordan_Normal_Form_Notation
+    Complex_L2  Jordan_Normal_Form.Matrix 
 begin
+
+subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
+
+
+text \<open>This theory defines bundes to activate/deactivate the notation
+  from \<^session>\<open>Jordan_Normal_Form\<close>.
+
+Reactivate the notation locally via "@{theory_text \<open>includes jnf_notation\<close>}" in a lemma statement.
+(Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle jnf_notation ... unbundle no_jnf_notation\<close>}.)
+\<close>
+
+bundle jnf_notation begin
+notation transpose_mat ("(_\<^sup>T)" [1000])
+notation cscalar_prod (infix "\<bullet>c" 70)
+notation vec_index (infixl "$" 100)
+notation smult_vec (infixl "\<cdot>\<^sub>v" 70)
+notation scalar_prod (infix "\<bullet>" 70)
+notation index_mat (infixl "$$" 100)
+notation smult_mat (infixl "\<cdot>\<^sub>m" 70)
+notation mult_mat_vec (infixl "*\<^sub>v" 70)
+notation pow_mat (infixr "^\<^sub>m" 75)
+notation append_vec (infixr "@\<^sub>v" 65)
+notation append_rows (infixr "@\<^sub>r" 65)
+end
+
+
+bundle no_jnf_notation begin
+no_notation transpose_mat ("(_\<^sup>T)" [1000])
+no_notation cscalar_prod (infix "\<bullet>c" 70)
+no_notation vec_index (infixl "$" 100)
+no_notation smult_vec (infixl "\<cdot>\<^sub>v" 70)
+no_notation scalar_prod (infix "\<bullet>" 70)
+no_notation index_mat (infixl "$$" 100)
+no_notation smult_mat (infixl "\<cdot>\<^sub>m" 70)
+no_notation mult_mat_vec (infixl "*\<^sub>v" 70)
+no_notation pow_mat (infixr "^\<^sub>m" 75)
+no_notation append_vec (infixr "@\<^sub>v" 65)
+no_notation append_rows (infixr "@\<^sub>r" 65)
+end
 
 unbundle jnf_notation
 unbundle bounded_notation
@@ -122,7 +160,6 @@ qed
 lemma vec_of_basis_enum_mult:
   \<open>vec_of_basis_enum (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_basis_enum v\<close>
   by (simp add: vec_of_basis_enum_def vec_of_basis_enum_list_mult)
-
 
 fun basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::basis_enum\<close> where 
   \<open>basis_enum_of_vec_list [] v = 0\<close> |
@@ -267,6 +304,58 @@ proof -
     by auto
 qed
 
+(* NEW *)
+lemma vector_space_zero_canonical_basis:
+  assumes f1: "(canonical_basis::('a::basis_enum list)) = []"
+  shows "(v::'a) = 0"
+proof-
+  have "closure (complex_vector.span (set (canonical_basis::('a::basis_enum list)))) = UNIV"
+    using is_onb_set unfolding is_onb_def is_ob_def is_basis_def by auto
+  moreover have "complex_vector.span (set (canonical_basis::('a::basis_enum list))) = {0}"
+  proof-
+    have "set (canonical_basis::('a::basis_enum list)) = {}"
+      using f1 by auto      
+    thus ?thesis by simp 
+  qed
+  ultimately show ?thesis by auto
+qed
+
+(* NEW *)
+lemma basis_enum_of_vec_list_list_of_vec:
+  fixes w
+  assumes f1: "distinct (canonical_basis::('a list))"
+  shows  "basis_enum_of_vec_list (canonical_basis::('a::basis_enum list))
+         (list_of_vec (vec_of_basis_enum w)) = w"
+proof(induction "canonical_basis::('a list)" arbitrary: w)
+  case Nil
+  moreover have "vec_of_basis_enum_list [] w = 0\<^sub>v (length (canonical_basis::'a list))"
+    by simp
+  moreover have "basis_enum_of_vec_list (canonical_basis::('a list))
+                   (replicate (length (canonical_basis::('a list))) 0) = w"
+  proof-
+    have "w = 0"
+      using Nil 
+      by (simp add: vector_space_zero_canonical_basis) 
+    thus ?thesis
+      by (metis Nil.hyps basis_enum_of_vec_list.simps(1)) 
+  qed
+  ultimately show ?case unfolding vec_of_basis_enum_def 
+    by auto    
+next
+  case (Cons x ys)
+  have "basis_enum_of_vec_list (x#ys) (v#vs) 
+        = v *\<^sub>C x + basis_enum_of_vec_list ys vs" for v vs
+    sorry
+  moreover have  "vec_of_basis_enum w = vec_of_basis_enum_list(x#ys) w"
+    sorry
+  ultimately have "basis_enum_of_vec_list (x # ys)
+        (list_of_vec (vec_of_basis_enum w)) = w"
+    sorry
+  thus ?case
+    by (simp add: Cons.hyps(2)) 
+qed
+
+
 
 (* TODO: When written as \<open>basis_enum_of_vec (vec_of_basis_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
@@ -279,12 +368,17 @@ proof-
     by (simp add: dim_vec_of_basis_enum_list vec_of_basis_enum_def)    
   define f::\<open>'a \<Rightarrow> 'a\<close> where \<open>f v = basis_enum_of_vec ( vec_of_basis_enum v ) - v\<close>
     for v::'a
-  have \<open>distinct (canonical_basis::('a list))\<close>
-    by (simp add: distinct_canonical_basis)    
-  hence \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
+  have \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
     for v
-    unfolding f_def
-    sorry
+  proof-
+    have \<open>distinct (canonical_basis::('a list))\<close>
+      by (simp add: distinct_canonical_basis)    
+    thus ?thesis 
+      unfolding f_def
+      using Bounded_Operators_Code.basis_enum_of_vec_def[where v = "vec_of_basis_enum v"]
+        basis_enum_of_vec_list_list_of_vec
+      by (simp add: \<open>basis_enum_of_vec (vec_of_basis_enum v) = basis_enum_of_vec_list canonical_basis (list_of_vec (vec_of_basis_enum v))\<close>)
+  qed
   moreover have \<open>clinear f\<close>
   proof-
     have \<open>clinear (\<lambda> v. (basis_enum_of_vec::(complex vec \<Rightarrow> 'a::basis_enum)) ( (vec_of_basis_enum::('a \<Rightarrow> complex vec)) v) )\<close>

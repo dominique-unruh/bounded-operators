@@ -18,6 +18,7 @@ theory Preliminaries
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Uniform_Limit"
+    
 
 begin
 
@@ -315,6 +316,7 @@ proof intro_classes
     unfolding Basis_euclidean_space_def by simp
   show "finite (Basis::'a euclidean_space set)"
     unfolding Basis_euclidean_space_def by simp
+   (* Ask to Dominique *)
   show "u \<bullet> v = (if u = v then 1 else 0)"
     if "u \<in> Basis" and "v \<in> Basis"
     sorry    
@@ -1868,7 +1870,7 @@ proof -
     apply (subst max_absorb2)
      apply (metis (mono_tags, lifting) Sup_upper empty_subsetI ennreal_0 finite.emptyI
         mem_Collect_eq sum.empty zero_ennreal.rep_eq)
-    by (metis (mono_tags, lifting) Collect_cong enn2ereal_ennreal fnn in_mono sum_nonneg)
+    by (metis (mono_tags, lifting) enn2ereal_ennreal fnn in_mono sum_nonneg)
   finally show ?thesis
     by simp
 qed
@@ -2891,7 +2893,7 @@ class complemented_lattice = bounded_lattice + uminus + minus +
     and diff_eq:  "x - y = inf x (- y)" begin
 
 lemma dual_complemented_lattice:
-  "class.complemented_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
+  "class.complemented_lattice (\<lambda>x y. x \<squnion> (- y)) uminus sup greater_eq greater inf \<top> \<bottom>"
   apply (rule class.complemented_lattice.intro)
   apply (rule dual_bounded_lattice)
   by (unfold_locales, auto simp add: diff_eq)
@@ -3093,7 +3095,6 @@ proof-
   thus ?thesis by auto
 qed
 
-(* ask to dominique where not_singleton was defined *)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>

@@ -4,18 +4,1529 @@ Authors:
   Dominique Unruh, University of Tartu, unruh@ut.ee
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 
-Main results:
-- bounded: Definition of complex bounded operators. Instantiation as a complex Banach space.
-
 *)
 
 
 theory Bounded_Operators
   imports 
     Complex_Inner_Product 
-    Real_Bounded_Operators 
     Banach_Steinhaus.Banach_Steinhaus
+    "HOL-Types_To_Sets.Types_To_Sets"
 begin
+
+unbundle no_notation_blinfun_apply
+
+subsection \<open>Algebraic properties of real bounded operators\<close>
+
+(* TODO: The type rbounded already exists with the name "blinfun".
+
+   Step 1: Remove definition of rbounded. Add a type synonym rbounded \<rightarrow> blinfun
+   Step 2: Remove all lemmas that already exist for blinfun
+   Step 3: Replace "rbounded" by "blinfun" in remaining lemmas
+   Step 4: Remove type synonym
+   
+*)
+typ "(_,_) blinfun"
+
+typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
+  = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
+  morphisms times_rbounded_vec Abs_rbounded
+  using bounded_linear_zero by blast
+
+setup_lifting type_definition_rbounded
+
+instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_vector"
+begin
+lift_definition uminus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded"
+  is "\<lambda> f. (\<lambda> t::'a. - f t)"
+  by (fact bounded_linear_minus)
+
+lift_definition zero_rbounded :: "('a,'b) rbounded" is "\<lambda>x::'a. (0::'b)"
+  by (fact bounded_linear_zero)
+
+lift_definition plus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
+  \<open>\<lambda> f g. (\<lambda> t. f t + g t)\<close>
+  by (fact bounded_linear_add)
+
+lift_definition minus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
+  \<open>\<lambda> f g. (\<lambda> t. f t - g t)\<close>
+  by (simp add: bounded_linear_sub)
+
+lift_definition scaleR_rbounded :: \<open>real \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
+  is \<open>\<lambda> c. \<lambda> f. (\<lambda> x. c *\<^sub>R (f x))\<close>
+  by (rule Real_Vector_Spaces.bounded_linear_const_scaleR)
+instance
+proof      
+  fix a b c :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a + b + c = a + (b + c)\<close>
+    apply transfer by auto
+
+  fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  show \<open>a + b = b + a\<close>
+    apply transfer
+    by (simp add: linordered_field_class.sign_simps(2))
+
+  fix a :: \<open>('a, 'b) rbounded\<close>
+  show \<open>0 + a = a\<close>
+    apply transfer by simp
+
+  fix a :: \<open>('a, 'b) rbounded\<close>
+  show \<open>-a + a = 0\<close>
+    apply transfer
+    by simp
+
+  fix a b :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a - b = a + - b\<close>
+    apply transfer
+    by auto
+
+  fix a::real and x y :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
+    apply transfer
+    by (simp add: scaleR_add_right)
+  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
+    apply transfer
+    by (simp add: scaleR_add_left)
+  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
+    apply transfer
+    by simp
+  fix x :: \<open>('a, 'b) rbounded\<close>
+  show \<open>1 *\<^sub>R x = x\<close>
+    apply transfer
+    by simp
+qed
+end
+
+instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_normed_vector"
+begin
+lift_definition norm_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> real\<close>
+  is \<open>onorm\<close>.
+
+lift_definition dist_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> real\<close>
+  is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x )\<close>.
+
+lift_definition sgn_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
+  is \<open>\<lambda> f. (\<lambda> x. (f x) /\<^sub>R (onorm f) )\<close>
+  by (simp add: bounded_linear_const_scaleR)
+
+definition uniformity_rbounded :: \<open>( ('a, 'b) rbounded \<times> ('a, 'b) rbounded ) filter\<close>
+  where  \<open>uniformity_rbounded = (INF e:{0<..}. principal {((f::('a, 'b) rbounded), g). dist f g < e})\<close>
+
+definition open_rbounded :: \<open>(('a, 'b) rbounded) set \<Rightarrow> bool\<close>
+  where \<open>open_rbounded = (\<lambda> U::(('a, 'b) rbounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
+
+instance
+  apply intro_classes
+        apply transfer
+        apply auto
+         apply transfer
+         apply auto
+        apply (simp add: uniformity_rbounded_def)
+       apply (simp add: open_rbounded_def)
+      apply (simp add: open_rbounded_def)
+     apply transfer
+  using onorm_pos_lt apply fastforce
+    apply transfer
+    apply (simp add: onorm_zero)
+   apply transfer
+   apply (simp add: onorm_triangle)
+  apply transfer
+  using onorm_scaleR by blast 
+end
+
+instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_vector"
+begin
+lift_definition scaleC_rbounded :: \<open>complex \<Rightarrow>
+ ('a::real_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
+ ('a, 'b) rbounded\<close>
+  is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>'b. (\<lambda> x. c *\<^sub>C (f x) )\<close> 
+proof
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b1::'a and b2::'a
+  assume \<open>bounded_linear f\<close>
+  show \<open>c *\<^sub>C f (b1 + b2) = c *\<^sub>C f b1 + c *\<^sub>C f b2\<close>
+    by (simp add: \<open>bounded_linear f\<close> linear_simps scaleC_add_right)
+
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b::'a and r::real
+  assume \<open>bounded_linear f\<close>
+  show \<open>c *\<^sub>C f (r *\<^sub>R b) = r *\<^sub>R (c *\<^sub>C f b)\<close>
+    by (simp add: \<open>bounded_linear f\<close> linear_simps(5) scaleR_scaleC)
+
+  fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close>
+  assume \<open>bounded_linear f\<close>
+  show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
+  proof-
+    have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
+      using \<open>bounded_linear f\<close>
+      by (simp add: bounded_linear.bounded)
+    then obtain K where \<open>\<forall> x. norm (f x) \<le> norm x * K\<close>
+      by blast
+    have \<open>cmod c \<ge> 0\<close>
+      by simp
+    hence \<open>\<forall> x. (cmod c) * norm (f x) \<le> (cmod c) * norm x * K\<close>
+      using  \<open>\<forall> x. norm (f x) \<le> norm x * K\<close> 
+      by (metis ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale)
+    moreover have \<open>norm (c *\<^sub>C f x) = (cmod c) * norm (f x)\<close>
+      for x
+      by simp
+    ultimately show ?thesis
+      by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute) 
+  qed
+qed
+
+instance
+proof
+  show "((*\<^sub>R) r::('a, 'b) rbounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+    for r :: real
+  proof
+    show "r *\<^sub>R (x::('a, 'b) rbounded) = complex_of_real r *\<^sub>C x"
+      for x :: "('a, 'b) rbounded"
+      apply transfer
+      by (simp add: scaleR_scaleC)
+  qed
+
+  show "a *\<^sub>C ((x::('a, 'b) rbounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    for a :: complex
+      and x :: "('a, 'b) rbounded"
+      and y :: "('a, 'b) rbounded"
+    apply transfer
+    by (simp add: scaleC_add_right)
+
+  show "(a + b) *\<^sub>C (x::('a, 'b) rbounded) = a *\<^sub>C x + b *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) rbounded"
+    apply transfer
+    by (simp add: scaleC_add_left)
+
+  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) rbounded) = (a * b) *\<^sub>C x"
+    for a :: complex
+      and b :: complex
+      and x :: "('a, 'b) rbounded"
+    apply transfer
+    by simp
+
+  show "1 *\<^sub>C (x::('a, 'b) rbounded) = x"
+    for x :: "('a, 'b) rbounded"
+    apply transfer
+  proof
+    fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
+    show \<open>1 *\<^sub>C f x = f x\<close>
+      by auto
+  qed
+qed  
+end
+
+instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
+begin
+instance
+proof intro_classes 
+  {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
+    assume \<open>bounded_linear f\<close>
+    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
+      by (simp add: onorm_def)
+    also have \<open>... = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
+      by simp
+    also have \<open>... =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
+      by simp
+    also have \<open>... = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
+    proof-
+      have \<open>(UNIV::('a set)) \<noteq> {}\<close>
+        by simp
+      moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
+        by simp
+      moreover have \<open>cmod a \<ge> 0\<close>
+        by simp
+      ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
+        = ((cmod a)::ereal) * ( SUP i\<in>(UNIV::('a set)). (\<lambda> x. (norm (f x)) / norm x :: ereal) i )\<close>
+        by (simp add: Sup_ereal_mult_left')
+      hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+        = ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+        by simp
+      hence \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
+        = real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )\<close>
+        by simp
+      moreover have \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+                  = (SUP x. cmod a * (norm (f x) / norm x))\<close>
+      proof-
+        have \<open>cmod a \<ge> 0\<close>
+          by simp
+        have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+        proof-
+          have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+            using \<open>bounded_linear f\<close> le_onorm by fastforce
+          then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+            by blast
+          hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+            using \<open>cmod a \<ge> 0\<close> 
+            by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
+          hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+            by simp
+          hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+            by simp
+          moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+            by auto
+          ultimately have \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+            using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
+              Sup_least mem_Collect_eq
+            by (simp add: SUP_le_iff) 
+          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>
+          proof-
+            have  \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
+              by simp              
+            thus ?thesis
+              using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+                \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+          qed
+          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
+            using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+            by simp
+          thus ?thesis
+            by auto 
+        qed
+        hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. cmod a * (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+          by (simp add: ereal_SUP) 
+        thus ?thesis
+          by simp
+      qed
+      moreover have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                = cmod a * (SUP x. norm (f x) / norm x)\<close>
+      proof-
+        have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                =  (cmod a) * real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+          by simp
+        moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
+                  = ( SUP x. ((norm (f x)) / norm x) )\<close>
+        proof-
+          have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+          proof-
+            have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+              using \<open>bounded_linear f\<close> le_onorm by fastforce
+            then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+              by blast
+            hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+              by simp
+            moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by auto
+            ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+              using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
+                Sup_least mem_Collect_eq
+              by (simp add: SUP_le_iff) 
+            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>)\<close>
+              using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+                \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
+              using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+              by simp
+            thus ?thesis
+              by auto 
+          qed
+          hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+            by (simp add: ereal_SUP) 
+          thus ?thesis
+            by simp         
+        qed
+        show ?thesis
+          by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+      qed
+      ultimately have \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
+          cmod a * (SUP x. norm (f x) / norm x)\<close>
+        by simp     
+      thus ?thesis
+        by simp 
+    qed
+    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+      by (simp add: onorm_def) 
+  } note 1 = this 
+
+  show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
+    for a::complex and x::\<open>('a, 'b) rbounded\<close>
+    apply transfer
+    apply (rule 1)
+    by blast
+qed
+end
+
+
+
+lemma trivia_UNIV_rbounded:
+  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+  assumes \<open>(UNIV::'a set) = 0\<close>
+  shows \<open>f = 0\<close>
+proof-
+  have \<open>x = 0\<close>
+    for x::'a
+    using \<open>(UNIV::'a set) = 0\<close> by auto
+  moreover have \<open>bounded_linear (times_rbounded_vec f)\<close>
+    using times_rbounded_vec by auto
+  ultimately have \<open>times_rbounded_vec f x = 0\<close>
+    for x::'a
+    by (metis (full_types) linear_simps(3))
+  hence \<open>times_rbounded_vec f = (\<lambda> _. 0)\<close>
+    by blast
+  moreover have \<open>times_rbounded_vec (Abs_rbounded (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
+    by (simp add: Abs_rbounded_inverse)
+  moreover have \<open>0 \<equiv> Abs_rbounded (\<lambda> _::'a. 0::'b)\<close>
+    using zero_rbounded_def by auto
+  ultimately have \<open>times_rbounded_vec f = times_rbounded_vec 0\<close>
+    by simp
+  thus ?thesis using  times_rbounded_vec_inject 
+    by auto
+qed
+
+subsection \<open>Topological properties of real bounded operators\<close>
+
+lemma hnorm_unit_sphere:
+  includes nsa_notation
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+    and N::hypnat
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
+  shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
+    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x )\<close>
+proof-
+  have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+    for n
+    using times_rbounded_vec by blast
+  hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+      norm (norm((times_rbounded_vec (f n)) x) - (onorm (times_rbounded_vec (f n)))) < e\<close>
+    for n
+    using norm_unit_sphere  \<open>(UNIV::'a set) \<noteq> 0\<close> 
+    by auto
+  moreover have \<open>norm (f n) = onorm (times_rbounded_vec (f n))\<close> 
+    for n
+    apply transfer
+    by blast
+  ultimately have \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((times_rbounded_vec (f n)) x) - norm (f n) ) < e\<close>
+    for n
+    by simp
+  hence \<open>\<forall> n. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((\<lambda> m. times_rbounded_vec (f m)) n x) - norm (f n) ) < inverse (real (Suc n))\<close>
+    by auto
+  hence \<open>\<forall> n. \<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) n x) - hnorm ((*f* f) n) ) 
+            < inverse (hypreal_of_hypnat (hSuc n))\<close>
+    by StarDef.transfer
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) - hnorm ((*f* f) N) ) 
+            < inverse (hypreal_of_hypnat (hSuc N))\<close>
+    by blast
+  moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
+    using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
+    by blast
+  ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) - hnorm ((*f* f) N) \<in> Infinitesimal\<close>
+    using hnorm_less_Infinitesimal by blast
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) \<approx> hnorm ((*f* f) N)\<close>
+    using bex_Infinitesimal_iff by blast
+  thus ?thesis
+    using approx_sym by blast    
+qed
+
+lemma hnorm_unit_sphere_double:
+  includes nsa_notation
+  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+    and N M::hypnat 
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
+  shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
+    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x )\<close>
+proof-
+  have \<open>bounded_linear (times_rbounded_vec (f n m))\<close>
+    for n m
+    using times_rbounded_vec by blast
+  hence \<open>e>0 \<Longrightarrow> \<exists> x\<in>(sphere 0 1).
+      norm (norm((times_rbounded_vec (f n m)) x) - (onorm (times_rbounded_vec (f n m)))) < e\<close>
+    for n m e
+    using norm_unit_sphere \<open>(UNIV::'a set) \<noteq> 0\<close> 
+    apply auto
+    by blast 
+  moreover have \<open>norm (f n m) = onorm (times_rbounded_vec (f n m))\<close> 
+    for n m
+    apply transfer
+    by blast
+  ultimately have \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((times_rbounded_vec (f n m)) x) - norm (f n m) ) < e\<close>
+    for n m
+    by simp
+  hence \<open>\<forall> n m. \<exists> x\<in>(sphere 0 1).
+       norm ( norm ((\<lambda> n m. times_rbounded_vec (f n m)) n m x) - norm (f n m) ) < inverse (real (Suc n))\<close>
+    by auto
+  hence \<open>\<forall> n m. \<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) n m x) - hnorm ((*f2* f) n m) ) 
+            < inverse (hypreal_of_hypnat (hSuc n))\<close>
+    by StarDef.transfer
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) - hnorm ((*f2* f) N M) ) 
+            < inverse (hypreal_of_hypnat (hSuc N))\<close>
+    by blast
+  moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
+    using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
+    by blast
+  ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) - hnorm ((*f2* f) N M) \<in> Infinitesimal\<close>
+    using hnorm_less_Infinitesimal by blast
+  hence \<open>\<exists> x\<in>*s*(sphere 0 1).
+       hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) \<approx> hnorm ((*f2* f) N M)\<close>
+    using bex_Infinitesimal_iff by blast
+  thus ?thesis
+    using approx_sym by blast    
+qed
+
+lemma uCauchy_unit_sphere:
+  includes nsa_notation
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+    and N M::hypnat
+  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
+  shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
+         \<approx> hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+proof-
+  define g::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a, 'b) rbounded\<close>
+    where \<open>g n m = f n - f m\<close> for n and m
+  have \<open>\<exists> x \<in> *s* (sphere 0 1). 
+    hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+    using assms by (rule hnorm_unit_sphere_double)
+  then obtain x where \<open>x \<in> *s* (sphere 0 1)\<close> and
+    \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+    by blast
+  have \<open>\<forall> N M. hnorm ((*f2* g) N M) = hnorm ( (*f* f) N - (*f* f) M )\<close>
+  proof-
+    have \<open>\<forall> N M. norm (( (\<lambda>n m. f n - f m)) N M) =
+    norm (( f) N - ( f) M)\<close>
+      by blast
+    hence \<open>\<forall> N M. hnorm ((*f2* (\<lambda>n m. f n - f m)) N M) =
+    hnorm ((*f* f) N - (*f* f) M)\<close>
+      by StarDef.transfer
+    thus ?thesis unfolding g_def by blast
+  qed
+  moreover have \<open>\<forall> N M x. hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )
+      = hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+  proof-
+    have \<open>\<forall>N M x. norm
+           (( (\<lambda>n m. times_rbounded_vec (f n - f m))) N M x) =
+          norm
+           (( (\<lambda>n. times_rbounded_vec (f n))) N x -
+            ( (\<lambda>n. times_rbounded_vec (f n))) M x)\<close>
+      by (simp add: minus_rbounded.rep_eq)      
+    hence \<open>\<forall>N M x. hnorm
+           ((*f3* (\<lambda>n m. times_rbounded_vec (f n - f m))) N M x) =
+          hnorm
+           ((*f2* (\<lambda>n. times_rbounded_vec (f n))) N x -
+            (*f2* (\<lambda>n. times_rbounded_vec (f n))) M x)\<close>
+      by StarDef.transfer
+    thus ?thesis unfolding g_def by blast
+  qed
+  ultimately show ?thesis using \<open>x \<in> *s* (sphere 0 1)\<close> 
+      \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+    by auto
+qed
+
+lemma ustrong_onorm:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+    and l::\<open>('a, 'b) rbounded\<close>
+  assumes \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+  shows \<open>f \<longlonglongrightarrow> l\<close> 
+proof(cases \<open>(UNIV::'a set) = 0\<close>)
+  case True
+  hence \<open>f n = 0\<close>
+    for n
+    by (rule trivia_UNIV_rbounded) 
+  moreover have \<open>l = 0\<close>
+    using True by (rule trivia_UNIV_rbounded)
+  ultimately have \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow> 0\<close>
+    by auto
+  thus ?thesis
+    using LIM_zero_cancel tendsto_norm_zero_iff by blast 
+next
+  case False
+  include nsa_notation
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (star_of l)\<close>
+    for N::hypnat
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close>
+    from \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+    have \<open>NN\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+      for x::\<open>'a star\<close> and NN::hypnat
+      by (simp add: nsupointwise_convergence_D sphere_iff)
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+      for x::\<open>'a star\<close>
+      by (simp add: \<open>N \<in> HNatInfinite\<close>)
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+              (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x \<in> Infinitesimal\<close>
+      for x::\<open>'a star\<close>
+      using Infinitesimal_approx_minus by blast
+    hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
+             hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x ) \<in> Infinitesimal\<close>
+      for x::\<open>'a star\<close>
+      by (simp add: Infinitesimal_hnorm_iff)
+    moreover have \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
+        hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+    proof-
+      define g where \<open>g n = f n - l\<close> for n
+      have \<open>\<exists> x \<in> *s* (sphere 0 1). 
+        hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (g n))) N x )\<close>
+        using False \<open>N\<in>HNatInfinite\<close>
+        by (simp add: hnorm_unit_sphere)
+      moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
+      proof-
+        have  \<open>\<forall> NN. ( g) NN = ( f) NN - ( l)\<close>
+          unfolding g_def by auto
+        hence  \<open>\<forall> NN. (*f* g) NN = (*f* f) NN - (star_of l)\<close>
+          by StarDef.transfer
+        thus ?thesis by auto
+      qed
+      moreover have \<open>(*f2* (\<lambda> n. times_rbounded_vec (g n))) N x
+         = (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x\<close>
+        for x
+      proof-
+        have  \<open>\<forall> NN xx. ( (\<lambda> n. times_rbounded_vec (g n))) NN xx
+         = ( (\<lambda> n. times_rbounded_vec (f n))) NN xx - ( (times_rbounded_vec l)) xx\<close>
+          unfolding g_def
+          by (simp add: minus_rbounded.rep_eq) 
+        hence  \<open>\<forall> NN xx. (*f2* (\<lambda> n. times_rbounded_vec (g n))) NN xx
+         = (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN xx - (*f* (times_rbounded_vec l)) xx\<close>
+          by StarDef.transfer
+        thus ?thesis by auto
+      qed
+      ultimately show \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
+        hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+        by (metis (no_types, lifting) approx_hnorm approx_trans3)
+    qed
+    ultimately have \<open>hnorm ((*f* f) N - (star_of l)) \<in> Infinitesimal\<close>
+      using approx_trans mem_infmal_iff by blast      
+    hence \<open>(*f* f) N - (star_of l) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_hnorm_iff)      
+    thus ?thesis
+      using bex_Infinitesimal_iff by auto 
+  qed
+  hence \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow>\<^sub>N\<^sub>S 0\<close>
+    by (metis (full_types) NSLIMSEQ_I NSLIMSEQ_diff_const NSLIMSEQ_norm_zero cancel_comm_monoid_add_class.diff_cancel)     
+  hence \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow> 0\<close>
+    by (simp add: LIMSEQ_NSLIMSEQ_iff) 
+  thus ?thesis
+    using LIM_zero_cancel tendsto_norm_zero_iff by blast 
+qed 
+
+
+lemma oCauchy_uCauchy:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  assumes \<open>Cauchy f\<close>
+  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+proof-
+  include nsa_notation
+  have  \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> x\<in>*s* (sphere 0 1) \<Longrightarrow> 
+    (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x\<close>
+    for N M x
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* (sphere 0 1)\<close> 
+    from \<open>Cauchy f\<close>
+    have \<open>NSCauchy f\<close>
+      by (simp add: NSCauchy_Cauchy_iff)
+    hence \<open>(*f* f) N \<approx> (*f* f) M\<close>
+      unfolding NSCauchy_def
+      using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close>
+      by blast
+    hence \<open>(*f* f) N - (*f* f) M \<in> Infinitesimal\<close>
+      using bex_Infinitesimal_iff by blast
+    hence \<open>hnorm ((*f* f) N - (*f* f) M) \<in> Infinitesimal\<close>
+      by (simp add: Infinitesimal_hnorm_iff)
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x
+                                 - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )
+        \<le> hnorm ((*f* f) N - (*f* f) M)\<close>
+    proof-
+      have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+        for n
+        using times_rbounded_vec by blast
+      hence \<open>bounded_linear (\<lambda> x. times_rbounded_vec (f n) x - times_rbounded_vec (f m) x )\<close>
+        for n m
+        by (simp add: bounded_linear_sub)    
+      moreover have \<open>\<And>NN MM xx.
+       (\<And>n m. bounded_linear (\<lambda>x. times_rbounded_vec (f n) x - times_rbounded_vec (f m) x)) \<Longrightarrow>
+       norm xx = 1 \<Longrightarrow>
+       norm (times_rbounded_vec (f NN) xx - times_rbounded_vec (f MM) xx) \<le> onorm (times_rbounded_vec (f NN - f MM))\<close>
+        using onorm
+        by (metis (no_types, hide_lams) times_rbounded_vec mem_Collect_eq minus_rbounded.rep_eq mult.commute mult.left_neutral)        
+      ultimately have \<open>\<forall> NN MM xx. norm xx = 1 \<longrightarrow> norm ( ( (\<lambda> n. times_rbounded_vec (f n))) NN xx
+                                 - ( (\<lambda> n. times_rbounded_vec (f n))) MM xx )
+        \<le> norm (( f) NN - ( f) MM)\<close>
+        unfolding norm_rbounded_def
+        by auto
+      hence \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN xx
+                                 - (*f2* (\<lambda> n. times_rbounded_vec (f n))) MM xx )
+        \<le> hnorm ((*f* f) NN - (*f* f) MM)\<close>
+        by StarDef.transfer
+      moreover have \<open>hnorm x = 1\<close>
+      proof-
+        have \<open>\<forall> xx::'a. xx \<in> (sphere 0 1) \<longrightarrow> norm xx = 1\<close>
+          by auto
+        hence \<open>\<forall> xx::'a star. xx \<in> *s* (sphere 0 1) \<longrightarrow> hnorm xx = 1\<close>
+          by StarDef.transfer
+        thus ?thesis
+          using \<open>x \<in> *s* (sphere 0 1)\<close>
+          by blast
+      qed
+      ultimately show ?thesis by blast 
+    qed
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<ge> 0\<close>
+    proof-
+      have \<open>norm ( ( (\<lambda> n. times_rbounded_vec (f n))) NN xx - ( (\<lambda> n. times_rbounded_vec (f n))) MM xx ) \<ge> 0\<close>
+        for NN MM xx
+        by auto
+      thus ?thesis by auto 
+    qed
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<in> Infinitesimal\<close>
+      using Infinitesimal_interval2 by blast
+    thus ?thesis
+      using bex_Infinitesimal_iff hnorm_le_Infinitesimal by blast 
+  qed
+  thus ?thesis using nsuniformly_Cauchy_on_I by metis
+qed
+
+
+lemma uCauchy_oCauchy:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close> 
+  shows \<open>Cauchy f\<close>
+proof(cases \<open>(UNIV::('a set)) = 0\<close>)
+  case True
+  hence \<open>f n = 0\<close>
+    for n
+    by (rule trivia_UNIV_rbounded) 
+  moreover have \<open>Cauchy (\<lambda> n. 0::('a,'b) rbounded)\<close>
+    unfolding Cauchy_def by auto
+  ultimately show ?thesis
+    by presburger 
+next
+  case False
+  include nsa_notation
+  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow> (*f* f) N \<approx> (*f* f) M\<close>
+    for N M
+  proof-
+    assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
+    have \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
+      (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x\<close>
+      for x
+      using \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+      by (simp add: \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> nsuniformly_Cauchy_on_iff)    
+    hence \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
+      hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<in> Infinitesimal\<close>
+      for x
+      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast
+    moreover have \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
+         \<approx> hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+      using  False \<open>N \<in> HNatInfinite\<close> \<open>M \<in> HNatInfinite\<close>
+      by (rule uCauchy_unit_sphere)
+    ultimately have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
+      using approx_sym approx_trans3 mem_infmal_iff by blast          
+    thus \<open>(*f* f) N \<approx> (*f* f) M\<close>
+      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto      
+  qed
+  hence \<open>NSCauchy f\<close>
+    by (simp add: NSCauchy_def)
+  thus ?thesis
+    by (simp add: NSCauchy_Cauchy_iff) 
+qed
+
+
+proposition oCauchy_uCauchy_iff:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+proof
+  show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. times_rbounded_vec (f n))"
+    if "Cauchy f"
+    using that
+    by (simp add: oCauchy_uCauchy) 
+  show "Cauchy f"
+    if "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. times_rbounded_vec (f n))"
+    using that
+    by (simp add: uCauchy_oCauchy) 
+qed
+
+
+lemma uCauchy_ustrong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  shows  \<open>\<exists> l::('a,'b) rbounded. 
+    (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+proof-
+  include nsa_notation
+  from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  have \<open>\<exists> s::'a\<Rightarrow>'b.
+ (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    using uniformly_convergent_eq_Cauchy uniformly_convergent_on_def by blast
+  then obtain s::\<open>'a\<Rightarrow>'b\<close> where
+    \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    by blast
+  have \<open>\<exists> L. \<forall> x\<in>(sphere 0 1). times_rbounded_vec L x = s x\<close>
+  proof-
+    define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
+      for x::'a       
+    have \<open>t \<in> sphere 0 1 \<Longrightarrow> (\<lambda>x. norm x *\<^sub>R s (x /\<^sub>R norm x)) t = s t\<close>
+      for t
+      unfolding sphere_def
+      by simp
+    hence \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> l\<close>
+      using  \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+      unfolding l_def 
+      by (metis (no_types, lifting) uniform_limit_cong') 
+    hence \<open>x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close>
+      for x
+      using  \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+      by (meson LIMSEQ_unique tendsto_uniform_limitI)
+    have \<open>bounded_linear l\<close>
+    proof-
+      have \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
+        using times_rbounded_vec by blast
+      have \<open>(\<lambda> n. times_rbounded_vec (f n) x) \<longlonglongrightarrow> l x\<close>
+        for x
+      proof(cases \<open>x = 0\<close>)
+        case True
+        have \<open>(\<lambda> n. times_rbounded_vec (f n) x) \<longlonglongrightarrow> 0\<close>
+        proof-
+          have \<open>times_rbounded_vec (f n) x = (0::'b)\<close>
+            for n
+          proof-
+            have \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
+              using times_rbounded_vec by blast 
+            thus ?thesis
+              by (simp add: True linear_simps(3)) 
+          qed
+          moreover  have \<open>(\<lambda> n. (0::'b)) \<longlonglongrightarrow> 0\<close>
+            by simp            
+          ultimately show ?thesis by simp
+        qed
+        moreover have \<open>l x = 0\<close>
+        proof-
+          have \<open>norm x = 0\<close>
+            using \<open>x = 0\<close> by simp
+          thus ?thesis using l_def by simp
+        qed
+        ultimately show ?thesis by simp 
+      next
+        case False
+        hence  \<open>norm x \<noteq> 0\<close> by simp
+        thus ?thesis
+        proof-
+          have  \<open>(\<lambda> n. (times_rbounded_vec (f n)) (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
+          proof-
+            have \<open>\<forall> N\<in>HNatInfinite. \<forall>x\<in>*s* (sphere 0 1).
+                     (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* s) x\<close>
+              using \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close> nsuniform_convergence_D 
+              by blast
+            moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s* (sphere 0 1)\<close>
+            proof-
+              have \<open>norm (x  /\<^sub>R norm x) = 1\<close>
+                by (simp add: False)
+              hence \<open>(x  /\<^sub>R norm x) \<in> (sphere 0 1)\<close>
+                unfolding sphere_def by auto
+              thus ?thesis
+                by (meson starset_mem)                
+            qed
+            ultimately have \<open>\<forall> N\<in>HNatInfinite.
+               (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+              by blast 
+            moreover have \<open>\<forall> N. (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x))
+                        \<approx> (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+            proof-
+              have  \<open>\<forall> N. ( (\<lambda> n. times_rbounded_vec (f n))) N ( (x /\<^sub>R norm x))
+                        = ( (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+                by blast
+              hence \<open>\<forall> N. (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x))
+                        = (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+                by StarDef.transfer
+              thus ?thesis
+                by simp 
+            qed
+            ultimately have  \<open>\<forall> N\<in>HNatInfinite.
+               (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+              using approx_trans3 by blast                 
+            hence \<open> (\<lambda>n. times_rbounded_vec (f n)  (x /\<^sub>R norm x)) \<longlonglongrightarrow>\<^sub>N\<^sub>S s  (x /\<^sub>R norm x)\<close>
+              using NSLIMSEQ_def
+              by (metis starfun_eq)              
+            thus ?thesis
+              by (simp add: NSLIMSEQ_LIMSEQ)              
+          qed
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow>  (norm x) *\<^sub>R  s (x /\<^sub>R norm x)\<close>
+            using bounded_linear.tendsto bounded_linear_scaleR_right by blast
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+            using l_def
+            by simp
+          have  \<open>(\<lambda> n. (times_rbounded_vec(f n)) x) \<longlonglongrightarrow> l x\<close>
+          proof-
+            have \<open>(norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x) = (times_rbounded_vec (f n)) x\<close>
+              for n
+              using \<open>norm x \<noteq> 0\<close> \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
+              unfolding bounded_linear_def linear_def
+              by (simp add: \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))               
+            thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close> 
+              by simp
+          qed
+          thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+            by auto
+        qed
+      qed
+      have \<open>linear l\<close>
+      proof
+        show "l (b1 + b2) = l b1 + l b2"
+          for b1 :: 'a
+            and b2 :: 'a
+        proof-
+          have \<open>(\<lambda> n. (times_rbounded_vec (f n)) (b1 + b2)) \<longlonglongrightarrow> l (b1 + b2)\<close>
+            using  \<open>\<And> x. (\<lambda> n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> l x\<close>
+            by blast
+          moreover have \<open>(\<lambda> n. (times_rbounded_vec (f n)) (b1 + b2)) \<longlonglongrightarrow> l b1 + l b2\<close>
+          proof-
+            have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b1) \<longlonglongrightarrow> l b1\<close>
+              using  \<open>\<And> x. (\<lambda> n. (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            moreover have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b2) \<longlonglongrightarrow> l b2\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            ultimately have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2) \<longlonglongrightarrow> l b1 + l b2\<close>
+              by (simp add: tendsto_add) 
+            moreover have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (b1 + b2)) = (\<lambda> n.  (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2)\<close>
+            proof-
+              have \<open> (times_rbounded_vec (f n))  (b1 + b2) =  (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2\<close>
+                for n
+                using \<open>\<And> n. bounded_linear  (times_rbounded_vec (f n))\<close>
+                unfolding bounded_linear_def
+                by (simp add: real_vector.linear_add)                
+              thus ?thesis by blast
+            qed
+            ultimately show ?thesis by simp 
+          qed
+          ultimately show ?thesis
+            using LIMSEQ_unique by blast            
+        qed
+        show "l (r *\<^sub>R b) = r *\<^sub>R l b"
+          for r :: real
+            and b :: 'a
+        proof-
+          have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow> l (r *\<^sub>R b)\<close>
+            using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+            by blast
+          moreover have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow>  r *\<^sub>R (l b)\<close>
+          proof-
+            have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  b) \<longlonglongrightarrow> l b\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+              by blast
+            hence \<open>(\<lambda> n. r *\<^sub>R ( (times_rbounded_vec (f n))  b)) \<longlonglongrightarrow> r *\<^sub>R (l b)\<close>
+              using bounded_linear.tendsto bounded_linear_scaleR_right by blast
+            moreover have \<open>(\<lambda> n. ( (times_rbounded_vec (f n))  (r *\<^sub>R b))) = (\<lambda> n. r *\<^sub>R ( (times_rbounded_vec (f n))  b))\<close>
+            proof-
+              have \<open> (times_rbounded_vec (f n))  (r *\<^sub>R b) = r *\<^sub>R ( (times_rbounded_vec (f n))  b)\<close>
+                for n
+                using \<open>\<And> n. bounded_linear ( (times_rbounded_vec (f n)) )\<close>
+                unfolding bounded_linear_def
+                by (simp add: real_vector.linear_scale)
+              thus ?thesis by blast
+            qed
+            ultimately show ?thesis by simp 
+          qed
+          ultimately show ?thesis
+            using LIMSEQ_unique by blast            
+        qed
+      qed
+      moreover have \<open>bounded_linear_axioms l\<close>
+      proof-
+        have \<open>\<exists>K. \<forall>x. norm (l x) \<le> norm x * K\<close>
+        proof(rule classical)
+          assume \<open>\<not> (\<exists>K. \<forall>x. norm (l x) \<le> norm x * K)\<close>
+          hence \<open>\<forall> K. \<exists> x. norm (l x) > norm x * K\<close>
+            by smt
+          hence \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+            using calculation linear_0
+            by (smt norm_eq_zero real_vector.linear_0 vector_space_over_itself.scale_eq_0_iff)
+          have \<open>\<forall> K. \<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+          proof-
+            have \<open>\<exists> x. norm x = 1 \<and> K < norm (l x)\<close>
+              for K
+            proof-
+              have \<open>\<exists> x \<noteq> 0. norm (l x) > norm x * K\<close>
+                using  \<open>\<forall> K. \<exists> x \<noteq> 0. norm (l x) > norm x * K\<close> by blast
+              then obtain x where \<open>x \<noteq> 0\<close> and \<open>norm (l x) > norm x * K\<close>
+                by blast
+              have \<open>norm x > 0\<close> using \<open>x \<noteq> 0\<close> by simp
+              hence  \<open>inverse (norm x) * norm (l x) > inverse (norm x) * (norm x) * K\<close>
+                using  \<open>norm (l x) > norm x * K\<close>
+                by (smt linordered_field_class.sign_simps(23) mult_left_le_imp_le positive_imp_inverse_positive) 
+              moreover have \<open>(inverse (norm x)) * (norm x) = 1\<close>
+                using \<open>norm x > 0\<close> by simp
+              ultimately have \<open>(inverse (norm x)) * norm (l x) >  K\<close>
+                by simp
+              moreover have \<open>(inverse (norm x)) * norm (l x) = norm ((inverse (norm x)) *\<^sub>R (l x))\<close>
+              proof-
+                have \<open>(inverse (norm x)) > 0\<close>
+                  using \<open>norm x > 0\<close> 
+                  by simp
+                thus ?thesis using norm_scaleR
+                  by simp 
+              qed
+              hence \<open> norm ((inverse (norm x)) *\<^sub>R (l x)) >  K\<close>
+                using calculation by linarith
+              hence \<open> norm (l ((inverse (norm x)) *\<^sub>R  x)) >  K\<close>
+              proof-
+                have \<open>(inverse (norm x)) *\<^sub>R (l x) = l ((inverse (norm x)) *\<^sub>R  x)\<close>
+                  using \<open>linear l\<close> linear_scale
+                  by (simp add: real_vector.linear_scale)
+                thus ?thesis
+                  using \<open>K < norm (l x /\<^sub>R norm x)\<close> by simp                 
+              qed
+              have \<open>norm ( (inverse (norm x)) *\<^sub>R  x ) = 1\<close>
+                using \<open>norm x > 0\<close> by simp
+              show ?thesis
+                using \<open>K < norm (l (x /\<^sub>R norm x))\<close> \<open>norm (x /\<^sub>R norm x) = 1\<close> by blast 
+            qed
+            thus ?thesis by blast
+          qed
+          from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+          have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). dist ((times_rbounded_vec (f m)) x) (times_rbounded_vec (f n) x) < e\<close>
+            by (meson uniformly_Cauchy_on_def)
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). norm (((times_rbounded_vec (f m)) x) - (times_rbounded_vec (f n) x)) < e\<close>
+            by (simp add: dist_norm) 
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (((times_rbounded_vec (f m)) x) - (times_rbounded_vec (f n) x)) < e\<close>
+            unfolding sphere_def by auto
+          hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f n)) x) < 1\<close>
+            by auto
+          then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f n)) x) < 1\<close>
+            by blast
+          hence  \<open>\<forall>m\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
+                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x) < 1\<close>
+            by blast
+          have \<open>norm ((times_rbounded_vec (f m)) x) \<le> norm ((times_rbounded_vec (f M)) x) + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+            for m and x
+            by (simp add: norm_triangle_sub) 
+          hence \<open>norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) * norm x + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+            for m and x
+            using onorm  \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close>
+            by smt                    
+          hence \<open>norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+            for m and x
+            by (metis mult_cancel_left2)
+          hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) < onorm (times_rbounded_vec (f M)) + 1\<close>
+            for m and x
+            using  \<open>\<forall>m\<ge>M. \<forall>x. 
+            norm x = 1 \<longrightarrow> norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x) < 1\<close> 
+            by smt
+          have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. (times_rbounded_vec (f m)) x) \<longlonglongrightarrow> l x\<close>
+            for x
+            by (simp add: \<open>\<And>x. (\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> l x\<close>)
+          hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+            for x
+            by (simp add: tendsto_norm)
+          hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (times_rbounded_vec (f M)) + 1\<close>
+            for x
+          proof-
+            assume \<open>norm x = 1\<close>
+            hence \<open>(\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+              using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+              by blast
+            moreover have \<open>\<forall>  m \<ge> M. norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) + 1\<close>
+              using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) < onorm (times_rbounded_vec (f M)) + 1\<close>
+                \<open>norm x = 1\<close> by smt
+            ultimately show ?thesis 
+              by (rule Topological_Spaces.Lim_bounded)
+          qed
+          moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (times_rbounded_vec (f M)) + 1 < norm (l x)\<close>
+            by (simp add: \<open>\<forall>K. \<exists>x. norm x = 1 \<and> K < norm (l x)\<close>)
+          ultimately show ?thesis
+            by fastforce 
+        qed
+        thus ?thesis unfolding bounded_linear_axioms_def by blast 
+      qed
+      ultimately show ?thesis unfolding bounded_linear_def by blast
+    qed
+    hence \<open>\<exists> L. times_rbounded_vec L = l\<close>
+      using times_rbounded_vec_cases by auto
+    thus ?thesis
+      using \<open>\<And>x. x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close> 
+      by blast        
+  qed
+  then obtain L::\<open>('a,'b) rbounded\<close> where \<open>\<forall> x\<in>(sphere 0 1). (times_rbounded_vec L) x = s x\<close>
+    by blast
+  have "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L"
+    using  \<open>\<forall> x\<in>(sphere 0 1). (times_rbounded_vec L) x = s x\<close>  \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    by (metis (no_types, lifting) uniform_limit_cong')
+  thus ?thesis by blast
+qed  
+
+lemma onorm_ustrong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> 
+  assumes \<open>f \<longlonglongrightarrow> l\<close>
+  shows \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+proof-
+  include nsa_notation
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow>
+       (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+    for N and x
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close> and \<open>x \<in> *s* (sphere 0 1)\<close>
+    have \<open>(*f* f) N \<approx> (star_of l)\<close>
+      using \<open>f \<longlonglongrightarrow> l\<close> \<open>N\<in>HNatInfinite\<close>
+      by (simp add: LIMSEQ_NSLIMSEQ_iff NSLIMSEQ_D)
+    hence \<open>hnorm ( (*f* f) N - (star_of l) ) \<in> Infinitesimal\<close>
+      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+    proof-
+      have \<open>bounded_linear (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t)\<close>
+        for N
+        using times_rbounded_vec bounded_linear_sub by auto        
+      hence \<open>norm x = 1 \<Longrightarrow>
+           norm (times_rbounded_vec (f N) x - times_rbounded_vec l x)
+           \<le> onorm (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t)\<close>
+        for N x
+        by (metis (no_types) mult.commute mult.left_neutral onorm)
+      moreover have \<open> (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t) = times_rbounded_vec (f N - l)\<close>
+        for N
+        apply transfer
+        by auto
+      ultimately have \<open>norm x = 1 \<Longrightarrow>
+           norm (times_rbounded_vec (f N) x - times_rbounded_vec l x)
+           \<le> onorm (times_rbounded_vec (f N - l))\<close>
+        for N x
+        by simp
+      hence \<open>\<forall> N. \<forall> x. x \<in>  (sphere 0 1) \<longrightarrow> 
+         norm ( ( (\<lambda> n. times_rbounded_vec (f n))) N x - ( (times_rbounded_vec l)) x )
+                \<le> norm ( ( f) N - ( l) )\<close>
+        unfolding norm_rbounded_def
+        by auto
+      hence \<open>\<forall> N. \<forall> x. x \<in> *s* (sphere 0 1) \<longrightarrow> 
+         hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+        by StarDef.transfer
+      thus ?thesis using \<open>x\<in>*s* (sphere 0 1)\<close> by blast
+    qed
+    moreover have \<open>0 \<le> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+      by simp      
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+            \<in> Infinitesimal\<close>
+      using Infinitesimal_interval2 by blast
+    thus ?thesis
+      by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff) 
+  qed
+  hence \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+    by (simp add: nsupointwise_convergence_I sphere_iff)    
+  thus ?thesis by blast
+qed
+
+proposition onorm_ustrong_iff:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> 
+  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+proof
+  show "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l"
+    if "f \<longlonglongrightarrow> l"
+    using that
+    using onorm_ustrong by blast 
+  show "f \<longlonglongrightarrow> l"
+    if "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l"
+    using that
+    by (simp add: that ustrong_onorm) 
+qed
+
+theorem completeness_real_bounded:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
+  assumes \<open>Cauchy f\<close>
+  shows \<open>\<exists> L. f \<longlonglongrightarrow> L\<close>
+proof-
+  have  \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
+    using times_rbounded_vec by auto
+  hence \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+    using oCauchy_uCauchy  \<open>Cauchy f\<close> by blast
+  hence \<open>\<exists> L. sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L\<close>
+    using uCauchy_ustrong
+    by blast
+  then obtain L where \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L\<close>
+    by blast
+  thus ?thesis 
+    using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
+qed
+
+
+instantiation rbounded :: (real_normed_vector, banach) "banach"
+begin
+instance
+  apply intro_classes
+  using completeness_real_bounded convergentI by auto
+end
+
+instantiation rbounded :: (real_normed_vector, cbanach) "cbanach"
+begin
+instance..
+end
+
+lemma onorm_strong:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+    and l::\<open>('a, 'b) rbounded\<close> and x::'a
+  assumes \<open>f \<longlonglongrightarrow> l\<close>
+  shows \<open>(\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> (times_rbounded_vec l) x\<close>
+proof-
+  include nsa_notation
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda>n. (times_rbounded_vec (f n)) x)) N \<approx> star_of ((times_rbounded_vec l) x)\<close>
+    for N
+  proof-
+    assume \<open>N\<in>HNatInfinite\<close>
+    show ?thesis 
+    proof(cases \<open>x = 0\<close>)
+      case True
+      have \<open>(times_rbounded_vec (f n)) x = 0\<close>
+        for n
+      proof-
+        have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+          using times_rbounded_vec by blast
+        thus ?thesis
+          using \<open>x = 0\<close>
+          by (simp add: linear_simps(3))          
+      qed
+      moreover have \<open>(times_rbounded_vec l) x = 0\<close>
+      proof-
+        have \<open>bounded_linear (times_rbounded_vec l)\<close>
+          using times_rbounded_vec by blast
+        thus ?thesis 
+          using \<open>x = 0\<close>
+          by (simp add: linear_simps(3))          
+      qed
+      ultimately have \<open>(times_rbounded_vec (f n)) x = (times_rbounded_vec l) x\<close>
+        for n
+        by simp
+      hence \<open>star_of ((times_rbounded_vec (f n)) x) = star_of ((times_rbounded_vec l) x)\<close>
+        for n
+        by StarDef.transfer
+      hence \<open>(*f* (\<lambda> n. (times_rbounded_vec (f n)) x)) N = star_of ((times_rbounded_vec l) x)\<close>
+        by auto
+      thus ?thesis by auto 
+    next
+      case False
+      from \<open>f \<longlonglongrightarrow> l\<close>
+      have \<open>sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+        using onorm_ustrong by blast
+      hence \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> (*f2* (\<lambda>n. times_rbounded_vec (f n))) N t \<approx> (*f* (times_rbounded_vec l)) t\<close>
+        for t
+        using \<open>N \<in> HNatInfinite\<close> nsupointwise_convergence_D sphere_iff by blast
+      moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s*(sphere 0 1)\<close>
+      proof-
+        have \<open>(x /\<^sub>R norm x) \<in> (sphere 0 1)\<close>
+          using False unfolding sphere_def by auto
+        thus ?thesis by StarDef.transfer
+      qed
+      ultimately have \<open>(*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) 
+          \<approx> (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x))\<close>
+        by blast
+      hence \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) ) 
+          \<approx> (*f2* scaleR) (star_of (norm x)) ( (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x)) )\<close>
+        using approx_scaleR2 star_scaleR_def starfun2_star_of
+        by metis
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+      proof-
+        have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+          for n
+          using times_rbounded_vec by auto          
+        hence \<open>\<forall> N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. times_rbounded_vec (f n))) N ( (x /\<^sub>R norm x)) )
+          = ( (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+        proof - \<comment> \<open>Sledgehammer proof\<close>
+          have f1: "times_rbounded_vec (f v0_0) (x /\<^sub>R norm x) = times_rbounded_vec (f v0_0) x /\<^sub>R norm x"
+            using \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5) by blast
+          obtain nn :: nat where
+            "(\<exists>v0. norm x *\<^sub>R times_rbounded_vec (f v0) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f v0) x) = (norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f nn) x)"
+            by meson
+          moreover
+          { assume "norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f nn) x"
+            hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+              by (metis \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))
+            moreover
+            { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
+              moreover
+              { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                moreover
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                  moreover
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                    moreover
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                      moreover
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                        moreover
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x))"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x)"
+                              using vector_fraction_eq_iff
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                              using f1
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> scaleR_cong_right by blast  }
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                            by fastforce }
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                          by fastforce }
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                        by auto }
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                      by auto }
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                    by auto }
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                  by fastforce }
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                by (simp add: inverse_eq_divide) }
+            ultimately have "norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+              using f1
+              by (simp add: \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))  }
+          ultimately show ?thesis
+            by meson
+        qed       
+        hence  \<open>\<forall> N. (*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+          by StarDef.transfer
+        thus ?thesis by blast
+      qed
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x)) )
+            = star_of (times_rbounded_vec l x)\<close> 
+      proof-
+        have \<open>bounded_linear (times_rbounded_vec l)\<close>
+          using times_rbounded_vec by auto          
+        hence \<open>( scaleR) ( (norm x)) ( ( (times_rbounded_vec l)) ( (x /\<^sub>R norm x)) )
+            =  (times_rbounded_vec l x)\<close>
+        proof - \<comment> \<open>Sledgehammer proof\<close>
+          have f1: "times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x"
+            by (meson \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
+          { assume "norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) \<noteq> times_rbounded_vec l x"
+            hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
+              by (metis \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
+            moreover
+            { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
+              moreover
+              { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                moreover
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                  moreover
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                    moreover
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                      moreover
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                        moreover
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x))"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x)"
+                              using vector_fraction_eq_iff
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                              using f1 by fastforce }
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                            by fastforce }
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                          by force }
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                        by simp }
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                      by simp }
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                    by simp }
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                  by fastforce }
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                by auto }
+            ultimately have ?thesis
+              using f1 by auto }
+          thus ?thesis
+            by metis
+        qed          
+        thus ?thesis by StarDef.transfer
+      qed
+      ultimately show ?thesis by simp
+    qed
+  qed
+  hence  \<open>(\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow>\<^sub>N\<^sub>S (times_rbounded_vec l) x\<close>
+    by (simp add: NSLIMSEQ_I)
+  thus ?thesis
+    by (simp add: NSLIMSEQ_LIMSEQ)
+qed
+
+lift_definition times_rbounded:: 
+  "('b::real_normed_vector,'c::real_normed_vector) rbounded
+     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
+ is "(o)"
+  unfolding o_def 
+  by (rule bounded_linear_compose, simp_all)
+
+bundle rbounded_notation begin
+notation times_rbounded (infixl "*\<^sub>v" 69)
+end
+
+bundle no_rbounded_notation begin
+no_notation times_rbounded (infixl "*\<^sub>v" 69)
+end
+
+unbundle rbounded_notation
+
+lemma times_rbounded_assoc: "(A  *\<^sub>v B)  *\<^sub>v C = A  *\<^sub>v (B  *\<^sub>v C)" 
+  apply transfer
+  by (simp add: comp_assoc) 
+
+lemma times_rbounded_dist1:
+  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
+    and c :: "('a::real_normed_vector, 'b) rbounded"
+  shows "(a + b)  *\<^sub>v c = (a  *\<^sub>v c) + (b  *\<^sub>v c)"
+proof -
+ (* sledgehammer *)
+  {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
+  assume a1: "bounded_linear ca"
+  assume a2: "bounded_linear ba"
+  assume a3: "bounded_linear aa"
+  { fix aaa :: 'a
+    have ff1: "\<forall>r. times_rbounded_vec (r::('b, 'c) rbounded) \<circ> ca = times_rbounded_vec (r  *\<^sub>v Abs_rbounded ca)"
+      using a1 by (simp add: Abs_rbounded_inverse times_rbounded.rep_eq)
+    have ff2: "times_rbounded_vec (Abs_rbounded ba) = ba"
+      using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
+    have "times_rbounded_vec (Abs_rbounded aa) = aa"
+      using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
+    hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) aaa + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) aaa"
+      using ff2 ff1 by (metis (no_types) times_rbounded_vec_inverse comp_apply) }
+  hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a)"
+    by meson
+} note 1 = this
+
+  show ?thesis
+  unfolding times_rbounded_def 
+  apply auto
+  apply transfer
+  unfolding plus_rbounded_def
+  apply auto
+  apply (rule 1)
+  by blast
+qed
+
+lemma times_rbounded_dist2:
+  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
+    and c :: "('b, 'c::real_normed_vector) rbounded"
+  shows "c  *\<^sub>v (a + b) = (c  *\<^sub>v a) + (c  *\<^sub>v b)"
+proof-
+  have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) ) x\<close>
+    for x
+  proof-
+    have \<open>bounded_linear (times_rbounded_vec c)\<close>
+      using times_rbounded_vec by auto
+    have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = (times_rbounded_vec c) ( (times_rbounded_vec (a + b)) x )\<close>
+      by (simp add: times_rbounded.rep_eq)
+    also have \<open>\<dots> = (times_rbounded_vec c) ( times_rbounded_vec a x + times_rbounded_vec b x )\<close>
+      by (simp add: plus_rbounded.rep_eq)
+    also have \<open>\<dots> = (times_rbounded_vec c) ( times_rbounded_vec a x ) + (times_rbounded_vec c) ( times_rbounded_vec b x )\<close>
+      using  \<open>bounded_linear (times_rbounded_vec c)\<close>
+      unfolding bounded_linear_def linear_def
+      by (simp add: \<open>bounded_linear (times_rbounded_vec c)\<close> linear_simps(1))
+    also have \<open>\<dots> = ( (times_rbounded_vec c) \<circ> (times_rbounded_vec a) ) x
+                  + ( (times_rbounded_vec c) \<circ> (times_rbounded_vec b) ) x\<close>
+      by simp
+    finally have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) ) x\<close>
+      by (simp add: plus_rbounded.rep_eq times_rbounded.rep_eq)
+    thus ?thesis
+      by simp 
+  qed
+  hence \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) )\<close>
+    by blast
+  thus ?thesis 
+    using times_rbounded_vec_inject
+    by blast  
+qed
+
+lemma times_rbounded_scaleC:
+  fixes f::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
+    and g::"('a::complex_normed_vector, 'b) rbounded"
+  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
+    and \<open>\<forall> c. \<forall> x. times_rbounded_vec g (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec g x)\<close>
+  shows \<open>\<forall> c. \<forall> x. times_rbounded_vec (f  *\<^sub>v g) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (f   *\<^sub>v g) x)\<close>
+  by (simp add: assms(1) assms(2) times_rbounded.rep_eq)
+
+lemma rscalar_op_op: 
+  fixes A::"('b::real_normed_vector,'c::complex_normed_vector) rbounded" 
+    and B::"('a::real_normed_vector, 'b) rbounded"
+  shows \<open>(a *\<^sub>C A)  *\<^sub>v B = a *\<^sub>C (A  *\<^sub>v B)\<close>
+proof-
+  have \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) x =
+    times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x\<close>
+    for x
+  proof-
+    have \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) x
+       = a *\<^sub>C (times_rbounded_vec A ((times_rbounded_vec B) x))\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x
+        = a *\<^sub>C (times_rbounded_vec ( Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x)\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    moreover have \<open>(times_rbounded_vec A ((times_rbounded_vec B) x))
+        = (times_rbounded_vec ( Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x)\<close>
+    proof-
+      have \<open>times_rbounded_vec A ((times_rbounded_vec B) x) = ((times_rbounded_vec A \<circ> times_rbounded_vec B)) x\<close>
+        by simp        
+      thus ?thesis
+        using Abs_rbounded_inverse
+        by (metis times_rbounded_vec times_rbounded.rep_eq)
+    qed
+    ultimately show ?thesis by simp
+  qed
+  hence \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) =
+    times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B))\<close>
+    by blast
+  hence \<open>Abs_rbounded (times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) =
+    a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)\<close>
+    by (simp add: times_rbounded_vec_inverse)    
+  thus ?thesis
+    unfolding  times_rbounded_def
+    by auto
+qed
+
+
+lemma op_rscalar_op: 
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
+    and B::"('a::real_normed_vector, 'b) rbounded"
+  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec A (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec A x)\<close>
+  shows \<open>A  *\<^sub>v (a *\<^sub>C B) = a *\<^sub>C (A  *\<^sub>v B)\<close>
+proof-
+  have \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B)) x  = times_rbounded_vec (times_rbounded (a *\<^sub>C A) B) x\<close>
+    for x
+  proof-
+    have \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B)) x
+        = ( (times_rbounded_vec A) \<circ> (times_rbounded_vec (a *\<^sub>C B)) ) x\<close>
+      by (simp add: times_rbounded.rep_eq)
+    also have \<open>... = 
+        (times_rbounded_vec A) ( (times_rbounded_vec (a *\<^sub>C B))  x )\<close>
+      by simp
+    also have \<open>... = 
+        (times_rbounded_vec A) (a *\<^sub>C ( (times_rbounded_vec  B) x ))\<close>
+      by (simp add: scaleC_rbounded.rep_eq)
+    also have \<open>... = 
+       a *\<^sub>C ( (times_rbounded_vec A) ( (times_rbounded_vec  B) x ) )\<close>
+      using assms by auto      
+    finally show ?thesis
+      by (simp add: times_rbounded.rep_eq scaleC_rbounded.rep_eq) 
+  qed
+  hence \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B))  = times_rbounded_vec (times_rbounded (a *\<^sub>C A) B)\<close>
+    by blast     
+  hence \<open>times_rbounded A (a *\<^sub>C B) = times_rbounded (a *\<^sub>C A) B\<close>
+    using times_rbounded_vec_inject by auto    
+  thus ?thesis
+    by (simp add: rscalar_op_op)  
+qed
+
+subsection \<open>On-demand syntax\<close>
+
+
+unbundle no_rbounded_notation
+
+
 unbundle no_notation_blinfun_apply
   (* In order to avoid the conflict with the notation *\<^sub>v,
 which can be used  for real bounded operators.
@@ -3176,7 +4687,1151 @@ proof -
     by auto
 qed
 
+unbundle no_bounded_notation
+
+unbundle no_notation_blinfun_apply
+unbundle bounded_notation
+
+lemma finite_span_complete_aux:
+  fixes b :: "'b::real_normed_vector" and B :: "'b set"
+    and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
+  assumes t: "type_definition rep abs B"
+  assumes "finite B" and "b\<in>B" and "independent B"
+  shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+    and "complete (real_vector.span B)"
+
+  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
+     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
+     content of the lemmas. However, there is one difference: We additionally assume here
+     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
+     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
+     the type class \<^class>\<open>finite\<close>
+
+     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
+     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
+     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
+     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
+
+proof -
+  define repr  where "repr = real_vector.representation B"
+  define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
+  define comb  where "comb l = (\<Sum>b\<in>B. l b *\<^sub>R b)" for l
+  define comb' where "comb' l = comb (Rep_euclidean_space l o abs)" for l
+
+  have comb_cong: "comb x = comb y" if "\<And>z. z\<in>B \<Longrightarrow> x z = y z" for x y
+    unfolding comb_def using that by auto
+  have comb_repr[simp]: "comb (repr \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
+    unfolding comb_def repr_def 
+    apply (rule real_vector.sum_representation_eq)
+    using assms that by auto
+  have repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
+    unfolding repr_def comb_def
+    apply (rule real_vector.representation_eqI)
+    using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)
+      (* Sledgehammer *)
+     apply meson
+    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_cong_left)
+  have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
+    unfolding repr_def using that
+    by (simp add: real_vector.representation_def)
+  have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
+    unfolding repr'_def repr_bad[OF that]
+    by (transfer fixing: rep, simp)
+  have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
+  proof -
+    have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
+      unfolding comb'_def repr'_def
+      by (subst Abs_euclidean_space_inverse; simp)
+    also have "\<dots> = comb (repr \<psi>)"
+      apply (rule comb_cong) unfolding o_def
+      by (subst type_definition.Abs_inverse[OF t]; simp)
+    also have "\<dots> = \<psi>"
+      using that by simp
+    finally show ?thesis by -
+  qed
+  have repr'_comb'[simp]: "repr' (comb' x) = x" for x
+    unfolding comb'_def repr'_def o_def
+    apply simp
+    apply (subst type_definition.Rep_inverse[OF t])
+    using type_definition.Rep[OF t] apply simp
+    apply (subst Rep_euclidean_space_inverse)
+    by simp
+  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" for d
+    using compact_sphere by blast
+
+  have "complete (UNIV :: 'basis euclidean_space set)"
+    by (simp add: complete_UNIV)
+
+  have blin_comb': "bounded_linear comb'"
+    unfolding comb_def comb'_def apply (rule bounded_linearI')
+     apply (transfer fixing: abs)
+     apply (simp add: scaleR_add_left sum.distrib)
+    apply (transfer fixing: abs)
+    by (simp add: real_vector.scale_sum_right)
+
+  then have "continuous_on X comb'" for X
+    by (simp add: linear_continuous_on)
+
+  then have "compact (comb' ` sphere 0 d)" for d
+    using sphere
+    apply (rule compact_continuous_image)
+    by -
+
+  then have compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
+    apply (rule compact_continuous_image[rotated])
+    apply (rule continuous_on_norm)
+    by auto
+
+  have not0: "0 \<notin> norm ` comb' ` sphere 0 1"
+  proof (rule ccontr, simp)
+    assume "0 \<in> norm ` comb' ` sphere 0 1"
+    then obtain x where nc0: "norm (comb' x) = 0" and x: "x \<in> sphere 0 1"
+      by auto
+    then have "comb' x = 0"
+      by simp
+    then have "repr' (comb' x) = 0"
+      unfolding repr'_def o_def repr_def apply simp
+      by (smt repr'_comb' blin_comb' dist_0_norm linear_simps(3) mem_sphere norm_zero x)
+    then have "x = 0"
+      by auto
+    with x show False
+      by simp
+  qed
+  have "\<exists>d>0. \<forall>x\<in>norm ` comb' ` sphere 0 1. d \<le> dist 0 x"
+    apply (rule_tac separate_point_closed)
+    using not0 compact_norm_comb'
+     apply auto
+    using compact_imp_closed by blast
+
+  then obtain d where d: "x\<in>norm ` comb' ` sphere 0 1 \<Longrightarrow> d \<le> dist 0 x"  
+    and "d > 0" for x
+    by metis
+  define D where "D = 1/d"
+  then have "D > 0"
+    using \<open>d>0\<close> unfolding D_def by auto
+  from d have "x \<ge> d"  if "x\<in>norm ` comb' ` sphere 0 1" for x
+    apply auto
+    using that by fastforce
+  then have *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
+    using that by auto
+  have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
+    apply (cases "x=0")
+     apply simp
+    using *[of "(1/norm x) *\<^sub>R x"]
+    unfolding linear_simps(5)[OF blin_comb']
+    apply auto
+    by (simp add: le_divide_eq)
+  have *:  "norm (repr' \<psi>) \<le> norm \<psi> * D" for \<psi>
+    apply (cases "\<psi> \<in> real_vector.span B")
+    unfolding D_def
+    using norm_comb'[of "repr' \<psi>"] \<open>d>0\<close>
+    by (simp_all add: linordered_field_class.mult_imp_le_div_pos mult.commute)
+  then have "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
+  proof -
+    have "(Rep_euclidean_space (repr' \<psi>) (abs b)) = repr' \<psi> \<bullet> euclidean_space_basis_vector (abs b)"
+      apply (transfer fixing: abs b)
+      apply auto by -
+    also have "\<bar>\<dots>\<bar> \<le> norm (repr' \<psi>)"
+      apply (rule Basis_le_norm)
+      unfolding Basis_euclidean_space_def by simp
+    also have "\<dots> \<le> norm \<psi> * D"
+      using * by auto
+    finally show ?thesis by simp
+  qed
+  then have "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
+    unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
+     apply auto
+    unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
+  then show "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
+    using \<open>D>0\<close> by auto
+
+  have complete_comb': "complete (comb' ` UNIV)"
+    using \<open>d>0\<close> apply (rule complete_isometric_image)
+    using blin_comb' norm_comb' complete_UNIV by auto
+
+  have range_comb': "comb' ` UNIV = real_vector.span B"
+  proof (auto simp: image_def)
+    show "comb' x \<in> real_vector.span B" for x
+      by (metis comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb real_vector.representation_zero real_vector.span_zero)
+  next
+    fix \<psi> assume "\<psi> \<in> real_vector.span B"
+    then obtain f where f: "comb f = \<psi>"
+      apply atomize_elim
+      unfolding real_vector.span_finite[OF \<open>finite B\<close>] comb_def
+      by auto
+    define f' where "f' b = (if b\<in>B then f b else 0)" for b :: 'b
+    have f': "comb f' = \<psi>"
+      unfolding f[symmetric]
+      apply (rule comb_cong)
+      unfolding f'_def by simp
+    define x :: "'basis euclidean_space" where "x = Abs_euclidean_space (f' o rep)"
+    have "\<psi> = comb' x"
+      unfolding comb'_def x_def o_def
+      apply (subst Abs_euclidean_space_inverse, simp)
+      apply (subst comb_cong[of _ f'])
+       apply (subst type_definition.Abs_inverse[OF t]; simp)
+      using f' by simp
+    then show "\<exists>x. \<psi> = comb' x"
+      by auto
+  qed
+
+  from range_comb' complete_comb'
+  show "complete (real_vector.span B)"
+    by simp
+qed
+
+(* TODO: move to General_Results_Missing or similar *)
+lemma complete_singleton: 
+  shows "complete {s::'a::uniform_space}"
+  unfolding complete_uniform
+  apply auto
+  by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
+
+(* We do not need this theorem for our development but we get it almost for
+   free as a side effect of the proof of finite_span_complete. *)
+lemma finite_span_representation_bounded: 
+  fixes B :: "'a::real_normed_vector set"
+  assumes "finite B" "independent B"
+  shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+
+  text \<open>
+  Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
+  Let $\<alpha>^\<psi>_b$ be the coefficients of $\<psi>$ expressed as a linear combination over $B$.
+  Then $\<alpha>$ is is uniformly bounded (i.e., $\lvert\alpha^\<psi>_b \leq D \lVert\psi\rVert\psi for some $D$ independent of $\<psi>,b$).
+
+  (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
+  is defined in this corner case.) \<close>
+
+proof (cases "B\<noteq>{}")
+  case True
+
+(* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
+  define repr  where "repr = real_vector.representation B"
+  {
+    (* Step 1: Create a fake type definition by introducing a new type variable 'basis
+               and then assuming the existence of the morphisms Rep/Abs to B
+               This is then roughly equivalent to "typedef 'basis = B" *)
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux
+       (I.e., we cannot call it 'basis) *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
+      by auto
+        (* Step 2: We show that our fake typedef 'basisT could be instantiated as type class finite *)
+    have basisT_finite: "class.finite TYPE('basisT)"
+      apply intro_classes
+      using \<open>finite B\<close> t
+      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+        (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
+               (instead, a precondition "class.finite TYPE('basisT)" is introduced) *)
+    note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
+      (* Step 4: We instantiate the premises *)
+    note this[OF basisT_finite t]
+  }
+    (* Now we have the desired fact, except that it still assumes that B is isomorphic to some type 'basis
+     together with the assumption that there are morphisms between 'basis and B. 'basis and that premise
+     are removed using cancel_type_definition
+  *)
+  note this[cancel_type_definition, OF True \<open>finite B\<close> _ \<open>independent B\<close>]
+
+  then have "\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
+    by (simp add: repr_def that True)
+  then obtain D where D: "D b > 0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
+    apply atomize_elim apply (rule choice) by auto
+  then have Dpos: "D b > 0" and Dbound: "norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
+    using that by auto
+  define Dall where "Dall = Max (D`B)"
+  have "Dall > 0"
+    unfolding Dall_def using \<open>finite B\<close> \<open>B\<noteq>{}\<close> Dpos
+    apply auto
+    by (metis (mono_tags) Max_in True empty_is_image finite_imageI imageE)
+
+  have "Dall \<ge> D b" if "b\<in>B" for b
+    unfolding Dall_def using \<open>finite B\<close> that by auto
+  with Dbound
+  have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<in>B" for b \<psi>
+    using that apply auto
+    by (meson mult_left_mono norm_ge_zero order_trans)
+  moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
+    unfolding repr_def using real_vector.representation_ne_zero True
+    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less subsetI subset_antisym)
+  ultimately show "\<exists>D>0. \<forall>\<psi> b. abs (repr \<psi> b) \<le> norm \<psi> * D"
+    using \<open>Dall > 0\<close> real_norm_def by metis
+next
+  case False
+  then show ?thesis
+    unfolding repr_def using real_vector.representation_ne_zero[of B]
+    using nice_ordered_field_class.linordered_field_no_ub by fastforce
+qed
+
+lemma finite_span_complete:
+  fixes A :: "'a::real_normed_vector set"
+  assumes "finite A"
+  shows "complete (real_vector.span A)"
+
+  text \<open>The span of a finite set is complete.\<close>
+
+proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
+  case True
+  obtain B where
+    BT: "real_vector.span B = real_vector.span A"
+    and "independent B"  
+    and "finite B"
+    using real_vector.span_finite_basis_exists[where A=A, OF assms]
+    by metis
+
+  have "B\<noteq>{}"
+    apply (rule ccontr, simp)
+    using BT True
+    by (metis real_vector.span_superset real_vector.span_empty subset_singletonD)
+
+(* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
+  {
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux,
+       otherwise "internalize_sort" below fails *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
+      by auto
+    have basisT_finite: "class.finite TYPE('basisT)"
+      apply intro_classes
+      using \<open>finite B\<close> t
+      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+    note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
+    note this[OF basisT_finite t]
+  }
+  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
+  then have "complete (real_vector.span B)"
+    using \<open>B\<noteq>{}\<close> by auto 
+  then show "complete (real_vector.span A)"
+    unfolding BT by simp
+next
+  case False
+  then show ?thesis
+    using complete_singleton by auto
+qed
+
+hide_fact finite_span_complete_aux
+
+lemma finite_span_closed: 
+  fixes B :: "'a::real_normed_vector set"
+  assumes "finite B"
+  shows "closed (real_vector.span B)"
+  by (simp add: assms complete_imp_closed finite_span_complete)
+
+lemma complex_real_span:
+  "complex_vector.span B = real_vector.span (B \<union> scaleC \<i> ` B)"
+proof auto
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  fix \<psi>
+  assume cspan: "\<psi> \<in> ?cspan B"
+  obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
+    apply atomize_elim 
+    using complex_vector.span_explicit[of B] cspan
+    by auto
+  define R where "R = B \<union> scaleC \<i> ` B"
+  have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
+    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
+    by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
+  then have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
+    apply (subst sum.cartesian_product[symmetric])
+    by (simp add: UNIV_bool \<psi>_explicit)
+  also have "\<dots> \<in> ?rspan R"
+    unfolding R_def
+    apply (rule real_vector.span_sum)
+    using \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff) 
+  finally show "\<psi> \<in> ?rspan R" by -
+next
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  define R where "R = B \<union> scaleC \<i> ` B"
+  fix \<psi>
+  assume rspan: "\<psi> \<in> ?rspan R"
+  then show "\<psi> \<in> ?cspan B"
+    apply induction
+     apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
+    using R_def complex_vector.span_base complex_vector.span_scale by fastforce 
+qed
+
+lemma finite_complex_span_complete: 
+  fixes B :: "'a::complex_normed_vector set"
+  assumes "finite B"
+  shows "complete (complex_vector.span B)"
+  apply (subst complex_real_span)
+  apply (rule finite_span_complete)
+  using assms by auto
+
+lemma bounded_operator_basis_zero_uniq:
+  fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
+  assumes a1: "complex_vector.span basis = UNIV"
+    and a2: "complex_vector.independent basis"
+    and a3: "finite basis" and a4: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = 0"
+  shows \<open>F = 0\<close>
+proof-
+  have "F *\<^sub>v w = 0" for w
+  proof-
+    have "w \<in> complex_vector.span basis"
+      using a1 by blast
+    hence "\<exists>t r. finite t \<and> t \<subseteq> basis \<and>  w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+      using complex_vector.span_explicit by (smt mem_Collect_eq)
+    then obtain t r where b1: "finite t" and b2: "t \<subseteq> basis" and b3: "w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+      by blast
+    have  "F *\<^sub>v w = (\<Sum>a\<in>t. r a *\<^sub>C (F *\<^sub>v a))"
+      using b3
+      by (smt \<open>\<And>thesis. (\<And>t r. \<lbrakk>finite t; t \<subseteq> basis; w = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> a4 b2 clinear_finite_sum complex_vector.scale_eq_0_iff in_mono sum.neutral)
+    thus ?thesis using a4 b2
+      by (simp add: subset_eq) 
+  qed
+  thus ?thesis by (simp add: bounded_ext) 
+qed
+
+(*
+lemma bounded_operator_finite_dim':
+  fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S basis::"'a set"
+  assumes b4:"clinear F" 
+    and b9: "is_ob basis"
+    and b3:"finite basis"
+    and b5: "S \<subseteq> basis"  
+    and b6: "\<And>w. w \<in> complex_vector.span (basis - S) \<Longrightarrow> F w = 0"
+    and b7: "card S = n"     
+  shows "cbounded_linear F"
+  using assms
+proof(induction n arbitrary: S F)
+  case 0
+  hence S_empty: "S = {}"
+    using card_eq_0_iff finite_subset
+    by fastforce
+  hence "complex_vector.span S = {0}"
+    by simp
+  have "F s = 0" for s
+  proof-
+    have "s \<in> complex_vector.span basis"
+      using b9 unfolding is_ob_def is_basis_def
+      by (simp add: b3 span_finite_dim) 
+    moreover have "basis - S = basis"
+      using S_empty by blast
+    ultimately have "s \<in> complex_vector.span (basis-S)"
+      by simp
+    thus ?thesis by (smt "0.prems"(5))
+  qed
+  thus ?case by simp
+next
+  case (Suc n)
+  have "\<exists> s S'. S = insert s S' \<and> s \<notin> S'"
+    by (metis Suc.prems(6) card_Suc_eq) 
+
+  then obtain s S' where s1: "S = insert s S'" and s2: "s \<notin> S'"
+    by blast
+  have r1: "S' \<subseteq> basis"
+    using s1 Suc.prems(4) by auto 
+  have r2: "card S' = n"
+    using Suc.prems(5)  b3 rev_finite_subset s1 s2
+     Suc.prems(6) r1 by fastforce 
+
+  have s0: "s \<noteq> 0"
+  proof-
+    have "s \<in> S"
+      using s1 by auto
+    hence "s \<in> basis"
+      using Suc.prems(4) by blast
+    thus ?thesis
+      using b9 is_ob_nonzero by blast      
+  qed
+  hence snorm0: "norm s \<noteq> 0"
+    by simp
+  define f where "f x = F (projection (complex_vector.span {s}) x)" for x
+  have f1: "cbounded_linear f"
+  proof-
+    have "closed_subspace (complex_vector.span {s})"
+      unfolding closed_subspace_def apply auto
+      by (simp add: closed_finite_dim)
+    hence "cbounded_linear ( projection (complex_vector.span {s}) )"
+      by (smt projectionPropertiesA)
+    hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"
+      by (smt cbounded_linear.is_clinear)
+    hence "clinear f"
+      using Suc.prems(4)
+        Complex_Vector_Spaces.linear_compose
+        [where g = F and f = "\<lambda>x. projection (complex_vector.span {s}) x"]
+      unfolding f_def comp_def by (smt Suc.prems(1)) 
+    moreover have "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+    proof-
+      define K where "K = norm (F s) / norm s"
+      have xonedim: "x\<in>complex_vector.span {s} \<Longrightarrow> norm (F x) \<le> norm x * K" for x
+      proof-
+        assume "x\<in>complex_vector.span {s}"
+        hence "\<exists>r. x = r *\<^sub>C s"
+          using complex_vector.span_breakdown by fastforce
+        then obtain r where "x = r *\<^sub>C s"
+          by blast
+        hence "norm (F x) = norm (F (r *\<^sub>C s))"
+          by simp
+        also have "\<dots> = norm (r *\<^sub>C (F s))"
+        proof-
+          have "F (r *\<^sub>C s) = r *\<^sub>C (F s)"
+            using complex_vector.linear_scale
+            by (simp add: complex_vector.linear_scale Suc.prems(1))
+          thus ?thesis by simp
+        qed
+        also have "\<dots> = norm r * norm s * K"
+          unfolding K_def snorm0
+          using snorm0 by auto
+        also have "\<dots> = norm (r *\<^sub>C s) * K"
+          by simp
+        also have "\<dots> = norm x * K"
+          by (simp add: \<open>x = r *\<^sub>C s\<close>)
+        finally show ?thesis by auto
+      qed
+      have "norm (f x) \<le> norm x * K" for x
+      proof-
+        have proj_leq: "norm (projection (complex_vector.span {s}) x) \<le> norm x"
+          by (smt \<open>closed_subspace (Complex_Vector_Spaces.span {s})\<close> projectionPropertiesB) 
+        have "norm (f x) = norm (F (projection (complex_vector.span {s}) x))"
+          unfolding f_def by blast
+        also have "\<dots> \<le> norm (projection (complex_vector.span {s}) x) * K"
+          using xonedim by (smt \<open>closed_subspace (Complex_Vector_Spaces.span {s})\<close> projection_intro2)
+        also have "\<dots> \<le> (norm x) * K"
+          using proj_leq
+          by (metis K_def linordered_field_class.divide_nonneg_nonneg mult_right_mono norm_ge_zero)
+        finally show ?thesis by blast
+      qed
+      thus ?thesis by blast
+    qed
+    ultimately show ?thesis
+      unfolding cbounded_linear_def by blast
+  qed
+  have cs1: "closed_subspace (Complex_Vector_Spaces.span {s})"
+    unfolding closed_subspace_def apply auto
+    by (simp add: closed_finite_dim)
+  define F' where "F' w = F w - f w" for w
+  have r4: "clinear F'"
+    unfolding F'_def cbounded_linear_def 
+    using cbounded_linear.is_clinear complex_vector.linear_compose_sub f1
+    by (simp add: cbounded_linear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
+  hence r3: "w \<in> complex_vector.span (basis - S') \<Longrightarrow> F' w = 0" for w 
+  proof-
+    assume "w \<in> complex_vector.span (basis - S')"
+    moreover have "basis - S' = insert s (basis - S)"
+      using  s1 s2 Suc.prems(4) by blast 
+    ultimately have "w \<in> complex_vector.span (insert s (basis - S))"
+      by simp
+    hence "\<exists>k. w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+      by (smt complex_vector.span_breakdown_eq)
+    then obtain k where k_def: "w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+      by blast
+    hence "F (w - k *\<^sub>C s) = 0"
+      by (simp add: Suc.prems(5))
+    hence "F w - F (k *\<^sub>C s) = 0"
+      using  complex_vector.linear_diff Suc.prems(1) by fastforce 
+    moreover have "F (k *\<^sub>C s) = f w"
+    proof-
+      have "closed_subspace (Complex_Vector_Spaces.span (basis - S))"
+        unfolding closed_subspace_def apply auto
+        by (simp add: b3 closed_finite_dim)
+      have "x \<in> (Complex_Vector_Spaces.span (basis - S)) \<Longrightarrow> 
+            x \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})" for x
+      proof-
+        assume "x \<in> (Complex_Vector_Spaces.span (basis - S))"
+        have "\<exists>t r. finite t \<and> t \<subseteq> basis - S \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+          using complex_vector.span_explicit 
+          by (smt \<open>x \<in> Complex_Vector_Spaces.span (basis - S)\<close> mem_Collect_eq)
+        then obtain t r where t1: "finite t" and t2: "t \<subseteq> basis - S" and t3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+          by blast
+        have t4: "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> a \<in> t \<Longrightarrow> \<langle>q, a\<rangle> = 0" for a q
+        proof-
+          assume v1: "q \<in> Complex_Vector_Spaces.span {s}" and v2: "a \<in> t"
+          from v1 have "\<exists>h. q = h *\<^sub>C s"
+            using complex_vector.span_breakdown_eq by force
+          then obtain h where h_def: "q = h *\<^sub>C s" 
+            by blast
+          have "\<langle>q, a\<rangle> = \<langle>h *\<^sub>C s, a\<rangle>"
+            unfolding h_def by blast
+          also have "\<dots> = (cnj h) * \<langle>s, a\<rangle>"
+            by simp
+          also have "\<dots> = 0"
+          proof-
+            have "a \<in> basis - S"
+              using t2 v2 by auto
+            hence "\<langle>s, a\<rangle> = 0"
+              using s1 assms(2) Suc.prems(4) unfolding is_ob_def is_ortho_set_def by auto  
+            thus ?thesis by simp
+          qed
+          finally show ?thesis by blast
+        qed
+        hence "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> \<langle>q, x\<rangle> = 0" for q
+        proof-
+          assume "q \<in> Complex_Vector_Spaces.span {s}"
+          have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = (\<Sum>a\<in>t. r a * \<langle>q, a\<rangle>)"
+            by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong)
+          also have "\<dots> = 0"
+            using t4  by (smt \<open>q \<in> Complex_Vector_Spaces.span {s}\<close> 
+                mult_zero_right sum.not_neutral_contains_not_neutral) 
+          finally have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = 0"
+            by blast
+          thus ?thesis using t3 by auto
+        qed
+        thus ?thesis using orthogonal_complement_I1 by metis
+      qed
+      hence "w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})"
+        using k_def by auto
+      hence "projection (Complex_Vector_Spaces.span {s}) (w - k *\<^sub>C s) = 0"
+        by (smt cs1 projectionPropertiesD vimage_singleton_eq) 
+      hence "projection (Complex_Vector_Spaces.span {s}) w =
+             projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s)"
+        using Complex_Vector_Spaces.span_mult
+          \<open>w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})\<close> 
+          complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_zero cs1 
+          projection_fixed_points projection_uniq singletonI by metis
+      moreover have "projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s) = k *\<^sub>C s"
+        by (simp add: complex_vector.span_base complex_vector.span_scale cs1 projection_fixed_points)
+      ultimately have "projection (Complex_Vector_Spaces.span {s}) w = k *\<^sub>C s"
+        by simp
+      thus ?thesis unfolding f_def by simp
+    qed
+    ultimately show ?thesis 
+      unfolding F'_def by auto
+  qed
+  from r1 r2 r3 r4 assms
+  have "cbounded_linear F'"
+    using Suc.IH by blast
+  moreover have "F = (\<lambda>x. F' x + f x)"
+    using F'_def by auto
+  ultimately show "cbounded_linear F"
+    using f1 Complex_Vector_Spaces.cbounded_linear_add by blast
+qed
+*)
+
+lemma bounded_operator_finite_dim_ortho:
+  fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
+  assumes b4:"clinear F"  and b9:"is_ob basis" and b3:"finite basis"
+  shows "cbounded_linear F"
+proof-
+  have bounded_operator_finite_dim': "cbounded_linear F"
+    if b4:"clinear F" 
+      and b9: "is_ob basis"
+      and b3:"finite basis"
+      and b5: "S \<subseteq> basis"  
+      and b6: "\<And>w. w \<in> complex_vector.span (basis - S) \<Longrightarrow> F w = 0"
+      and b7: "card S = n"
+    for  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S basis::"'a set" and n::nat
+    using that
+  proof(induction n arbitrary: S F)
+    case 0
+    hence S_empty: "S = {}"
+      using card_eq_0_iff finite_subset
+      by fastforce
+    hence "complex_vector.span S = {0}"
+      by simp
+    have "F s = 0" for s
+    proof-
+      have "s \<in> complex_vector.span basis"
+        using b9 unfolding is_ob_def is_basis_def
+        by (simp add: b3 span_finite_dim) 
+      moreover have "basis - S = basis"
+        using S_empty by blast
+      ultimately have "s \<in> complex_vector.span (basis-S)"
+        by simp
+      thus ?thesis by (smt "0.prems"(5))
+    qed
+    thus ?case by simp
+  next
+    case (Suc n)
+    have "\<exists> s S'. S = insert s S' \<and> s \<notin> S'"
+      by (metis Suc.prems(6) card_Suc_eq) 
+
+    then obtain s S' where s1: "S = insert s S'" and s2: "s \<notin> S'"
+      by blast
+    have r1: "S' \<subseteq> basis"
+      using s1 Suc.prems(4) by auto 
+    have r2: "card S' = n"
+      using Suc.prems(5)  b3 rev_finite_subset s1 s2
+        Suc.prems(6) r1 by fastforce 
+    have s0: "s \<noteq> 0"
+    proof-
+      have "s \<in> S"
+        using s1 by auto
+      hence "s \<in> basis"
+        using Suc.prems(4) by blast
+      thus ?thesis
+        using b9 is_ob_nonzero by blast      
+    qed
+    hence snorm0: "norm s \<noteq> 0"
+      by simp
+    define f where "f x = F (projection (complex_vector.span {s}) x)" for x
+    have f1: "cbounded_linear f"
+    proof-
+      have "closed_subspace (complex_vector.span {s})"
+        unfolding closed_subspace_def apply auto
+        by (simp add: closed_finite_dim)
+      hence "cbounded_linear ( projection (complex_vector.span {s}) )"
+        by (smt projectionPropertiesA)
+      hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"
+        by (smt cbounded_linear.is_clinear)
+      hence "clinear f"
+        using Suc.prems(4)
+          Complex_Vector_Spaces.linear_compose
+          [where g = F and f = "\<lambda>x. projection (complex_vector.span {s}) x"]
+        unfolding f_def comp_def by (smt Suc.prems(1)) 
+      moreover have "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+      proof-
+        define K where "K = norm (F s) / norm s"
+        have xonedim: "x\<in>complex_vector.span {s} \<Longrightarrow> norm (F x) \<le> norm x * K" for x
+        proof-
+          assume "x\<in>complex_vector.span {s}"
+          hence "\<exists>r. x = r *\<^sub>C s"
+            using complex_vector.span_breakdown by fastforce
+          then obtain r where "x = r *\<^sub>C s"
+            by blast
+          hence "norm (F x) = norm (F (r *\<^sub>C s))"
+            by simp
+          also have "\<dots> = norm (r *\<^sub>C (F s))"
+          proof-
+            have "F (r *\<^sub>C s) = r *\<^sub>C (F s)"
+              using complex_vector.linear_scale
+              by (simp add: complex_vector.linear_scale Suc.prems(1))
+            thus ?thesis by simp
+          qed
+          also have "\<dots> = norm r * norm s * K"
+            unfolding K_def snorm0
+            using snorm0 by auto
+          also have "\<dots> = norm (r *\<^sub>C s) * K"
+            by simp
+          also have "\<dots> = norm x * K"
+            by (simp add: \<open>x = r *\<^sub>C s\<close>)
+          finally show ?thesis by auto
+        qed
+        have "norm (f x) \<le> norm x * K" for x
+        proof-
+          have proj_leq: "norm (projection (complex_vector.span {s}) x) \<le> norm x"
+            by (smt \<open>closed_subspace (Complex_Vector_Spaces.span {s})\<close> projectionPropertiesB) 
+          have "norm (f x) = norm (F (projection (complex_vector.span {s}) x))"
+            unfolding f_def by blast
+          also have "\<dots> \<le> norm (projection (complex_vector.span {s}) x) * K"
+            using xonedim by (smt \<open>closed_subspace (Complex_Vector_Spaces.span {s})\<close> projection_intro2)
+          also have "\<dots> \<le> (norm x) * K"
+            using proj_leq
+            by (metis K_def linordered_field_class.divide_nonneg_nonneg mult_right_mono norm_ge_zero)
+          finally show ?thesis by blast
+        qed
+        thus ?thesis by blast
+      qed
+      ultimately show ?thesis
+        unfolding cbounded_linear_def by blast
+    qed
+    have cs1: "closed_subspace (Complex_Vector_Spaces.span {s})"
+      unfolding closed_subspace_def apply auto
+      by (simp add: closed_finite_dim)
+    define F' where "F' w = F w - f w" for w
+    have r4: "clinear F'"
+      unfolding F'_def cbounded_linear_def 
+      using cbounded_linear.is_clinear complex_vector.linear_compose_sub f1
+      by (simp add: cbounded_linear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
+    hence r3: "w \<in> complex_vector.span (basis - S') \<Longrightarrow> F' w = 0" for w 
+    proof-
+      assume "w \<in> complex_vector.span (basis - S')"
+      moreover have "basis - S' = insert s (basis - S)"
+        using s1 s2 Suc.prems(4) by blast 
+      ultimately have "w \<in> complex_vector.span (insert s (basis - S))"
+        by simp
+      hence "\<exists>k. w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+        by (smt complex_vector.span_breakdown_eq)
+      then obtain k where k_def: "w - k *\<^sub>C s \<in> complex_vector.span (basis - S)"
+        by blast
+      hence "F (w - k *\<^sub>C s) = 0"
+        by (simp add: Suc.prems(5))
+      hence "F w - F (k *\<^sub>C s) = 0"
+        using  complex_vector.linear_diff Suc.prems(1) by fastforce 
+      moreover have "F (k *\<^sub>C s) = f w"
+      proof-
+        have "closed_subspace (Complex_Vector_Spaces.span (basis - S))"
+          unfolding closed_subspace_def apply auto
+          by (simp add: b3 closed_finite_dim)
+        have "x \<in> (Complex_Vector_Spaces.span (basis - S)) \<Longrightarrow> 
+            x \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})" for x
+        proof-
+          assume "x \<in> (Complex_Vector_Spaces.span (basis - S))"
+          have "\<exists>t r. finite t \<and> t \<subseteq> basis - S \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+            using complex_vector.span_explicit 
+            by (smt \<open>x \<in> Complex_Vector_Spaces.span (basis - S)\<close> mem_Collect_eq)
+          then obtain t r where t1: "finite t" and t2: "t \<subseteq> basis - S" and t3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+            by blast
+          have t4: "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> a \<in> t \<Longrightarrow> \<langle>q, a\<rangle> = 0" for a q
+          proof-
+            assume v1: "q \<in> Complex_Vector_Spaces.span {s}" and v2: "a \<in> t"
+            from v1 have "\<exists>h. q = h *\<^sub>C s"
+              using complex_vector.span_breakdown_eq by force
+            then obtain h where h_def: "q = h *\<^sub>C s" 
+              by blast
+            have "\<langle>q, a\<rangle> = \<langle>h *\<^sub>C s, a\<rangle>"
+              unfolding h_def by blast
+            also have "\<dots> = (cnj h) * \<langle>s, a\<rangle>"
+              by simp
+            also have "\<dots> = 0"
+            proof-
+              have "a \<in> basis - S"
+                using t2 v2 by auto
+              hence "\<langle>s, a\<rangle> = 0"
+                using s1 assms(2) Suc.prems(4) unfolding is_ob_def is_ortho_set_def
+                by (metis Diff_iff b9 insertI1 insert_subset is_ob_def is_ortho_set_def) 
+              thus ?thesis by simp
+            qed
+            finally show ?thesis by blast
+          qed
+          hence "q \<in> Complex_Vector_Spaces.span {s} \<Longrightarrow> \<langle>q, x\<rangle> = 0" for q
+          proof-
+            assume "q \<in> Complex_Vector_Spaces.span {s}"
+            have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = (\<Sum>a\<in>t. r a * \<langle>q, a\<rangle>)"
+              by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong)
+            also have "\<dots> = 0"
+              using t4  by (smt \<open>q \<in> Complex_Vector_Spaces.span {s}\<close> 
+                  mult_zero_right sum.not_neutral_contains_not_neutral) 
+            finally have "\<langle>q, (\<Sum>a\<in>t. r a *\<^sub>C a)\<rangle> = 0"
+              by blast
+            thus ?thesis using t3 by auto
+          qed
+          thus ?thesis using orthogonal_complement_I1 by metis
+        qed
+        hence "w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})"
+          using k_def by auto
+        hence "projection (Complex_Vector_Spaces.span {s}) (w - k *\<^sub>C s) = 0"
+          by (smt cs1 projectionPropertiesD vimage_singleton_eq) 
+        hence "projection (Complex_Vector_Spaces.span {s}) w =
+             projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s)"
+          using Complex_Vector_Spaces.span_mult
+            \<open>w - k *\<^sub>C s \<in> orthogonal_complement (Complex_Vector_Spaces.span {s})\<close> 
+            complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_zero cs1 
+            projection_fixed_points projection_uniq singletonI by metis
+        moreover have "projection (Complex_Vector_Spaces.span {s}) (k *\<^sub>C s) = k *\<^sub>C s"
+          by (simp add: complex_vector.span_base complex_vector.span_scale cs1 projection_fixed_points)
+        ultimately have "projection (Complex_Vector_Spaces.span {s}) w = k *\<^sub>C s"
+          by simp
+        thus ?thesis unfolding f_def by simp
+      qed
+      ultimately show ?thesis 
+        unfolding F'_def by auto
+    qed
+    from r1 r2 r3 r4 assms
+    have "cbounded_linear F'"
+      using Suc.IH b3 b9 by blast 
+    moreover have "F = (\<lambda>x. F' x + f x)"
+      using F'_def by auto
+    ultimately show "cbounded_linear F"
+      using f1 Complex_Vector_Spaces.cbounded_linear_add by blast
+  qed
+  show ?thesis
+    using bounded_operator_finite_dim'[where F = F and basis = basis and S = basis 
+        and n = "card basis"]  by (smt Diff_cancel b3 b4 b9 complex_vector.linear_0
+        complex_vector.span_empty empty_iff insert_iff order_refl)
+qed
+
+
+lemma ortho_imples_independent:
+  assumes a1: "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+    and a2: "0 \<notin> A" 
+  shows "complex_vector.independent A"
+proof-
+  have "finite t \<Longrightarrow> t \<subseteq> A \<Longrightarrow> (\<Sum>v\<in>t. u v *\<^sub>C v) = 0 \<Longrightarrow> v \<in> t \<Longrightarrow> u v = 0"
+    for t u v
+  proof-
+    assume b1: "finite t" and b2: "t \<subseteq> A" and b3: "(\<Sum>v\<in>t. u v *\<^sub>C v) = 0" and b4: "v \<in> t"
+    have "v'\<in>t-{v} \<Longrightarrow> \<langle>v, v'\<rangle> = 0" for v'
+    proof-
+      assume "v'\<in>t-{v}"
+      hence "v \<noteq> v'" by blast
+      thus ?thesis using a1
+        by (meson DiffD1 \<open>v' \<in> t - {v}\<close> b2 b4 subset_eq) 
+    qed
+    hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
+      by simp
+    have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
+      using b1
+      by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong) 
+    also have "\<dots> = u v * \<langle>v, v\<rangle> + (\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>)"
+      by (meson b1 b4 sum.remove)
+    also have "\<dots> = u v * \<langle>v, v\<rangle>"
+      using sum0 by simp
+    finally have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> =  u v * \<langle>v, v\<rangle>"
+      by blast
+    hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
+    moreover have "\<langle>v, v\<rangle> \<noteq> 0"
+    proof-
+      have "v \<in> A"
+        using b2 b4 by blast        
+      hence "v \<noteq> 0"
+        using a2 by blast
+      thus ?thesis by simp 
+    qed
+    ultimately show "u v = 0" by simp
+  qed
+  thus ?thesis using independent_explicit_module
+    by (smt Complex_Vector_Spaces.dependent_raw_def) 
+      (* > 1s *)
+qed
+
+lemma bounded_operator_finite_dim:
+  fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
+  assumes b1: "complex_vector.span basis = UNIV"
+    and b2: "complex_vector.independent basis"
+    and b3:"finite basis" and b4:"clinear F"
+  shows "cbounded_linear F"
+proof-
+  have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = complex_vector.span basis
+           \<and> 0 \<notin> A \<and> finite A\<close>
+    by (simp add: Gram_Schmidt b3)
+  then obtain A where a1: "\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0"
+    and a2: "complex_vector.span A = complex_vector.span basis"
+    and a4: "0 \<notin> A" and a5: "finite A"
+    by auto
+  have "is_ob A"
+    unfolding is_ob_def is_ortho_set_def is_basis_def
+  proof auto
+    show "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+      using a1 by auto
+    thus "module.dependent (*\<^sub>C) A \<Longrightarrow> False"
+      using ortho_imples_independent a4 by blast
+    show "\<And>x. x \<in> closure (Complex_Vector_Spaces.span A)"
+      using a2 b1 by auto
+  qed
+  thus ?thesis using bounded_operator_finite_dim_ortho[where F = F and basis = A]
+    by (simp add: a5 b4)
+qed
+
+
+lemma bounded_operator_basis_existence_uniq:
+  fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
+  assumes \<open>complex_vector.span basis = UNIV\<close> 
+    and \<open>complex_vector.independent basis\<close>
+    and \<open>finite basis\<close>
+  shows \<open>\<exists>!F. \<forall>s\<in>basis. F *\<^sub>v s = \<phi> s\<close>
+proof-
+  have \<open>\<exists>F. \<forall>s\<in>basis. F *\<^sub>v s = \<phi> s\<close>
+  proof-
+    have f1: "Complex_Vector_Spaces.representation basis w =
+        (if complex_independent basis \<and> w \<in> Complex_Vector_Spaces.span basis
+         then SOME f.
+         (\<forall>v. f v \<noteq> 0 \<longrightarrow> v \<in> basis) \<and>
+         finite {v. f v \<noteq> 0} \<and> (\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = w
+       else (\<lambda>b. 0))" for w
+      by (simp add: complex_vector.representation_def)
+    define f::"'a \<Rightarrow> 'a \<Rightarrow> complex" where
+      "f w v = Complex_Vector_Spaces.representation basis w v" for w v
+    have f2: "\<forall>v. f w v \<noteq> 0 \<longrightarrow> v \<in> basis" for w
+      using complex_vector.representation_ne_zero f_def by auto
+    have f3: "finite {v. f w v \<noteq> 0}" for w
+      by (metis \<open>f \<equiv> Complex_Vector_Spaces.representation basis\<close> complex_vector.finite_representation)
+    have f4: "(\<Sum>v | f w v \<noteq> 0. f w v *\<^sub>C v) = w" for w
+      using \<open>complex_vector.independent basis\<close> \<open>complex_vector.span basis = UNIV\<close>
+        f1[where w = w] unfolding f_def
+      using Complex_Vector_Spaces.dependent_raw_def complex_vector.sum_nonzero_representation_eq 
+        iso_tuple_UNIV_I
+    proof -
+      have "complex_independent basis"
+        by (metis Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+      thus "(\<Sum>a | Complex_Vector_Spaces.representation basis w a \<noteq> 0. 
+            Complex_Vector_Spaces.representation basis w a *\<^sub>C a) = w"
+        using \<open>Complex_Vector_Spaces.span basis = UNIV\<close> complex_vector.sum_nonzero_representation_eq iso_tuple_UNIV_I
+        by metis (* > 1s *)
+    qed
+    have f5: "w \<in> basis \<Longrightarrow> f w w = 1" for w
+      using complex_vector.representation_basis[where basis = basis and b = w]
+      by (smt Complex_Vector_Spaces.dependent_raw_def \<open>f \<equiv> Complex_Vector_Spaces.representation basis\<close> assms(2))
+    have f6: "w\<in>basis \<Longrightarrow> v \<noteq> w \<Longrightarrow> f w v = 0" for v w
+      using complex_vector.representation_basis f1 f_def by fastforce
+    define F where "F w = (\<Sum>v | f w v \<noteq> 0. f w v *\<^sub>C \<phi> v)" for w
+
+    have f_def': "w = (\<Sum>v\<in>basis. f w v *\<^sub>C v)" for w
+    proof- 
+      have "basis = {v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<union> {v |v. f w v = 0 \<and> v \<in> basis}"
+        by blast
+      moreover have "{v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<inter> {v |v. f w v = 0 \<and> v \<in> basis} = {}"
+        by blast
+      ultimately have "(\<Sum>v\<in>basis. f w v *\<^sub>C v) =
+                     (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C v)
+                  +  (\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C v)"
+        by (metis (no_types, lifting) assms(3) finite_Un sum.union_disjoint)
+      moreover have "(\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C v) = 0"
+        by simp        
+      ultimately 
+      have "(\<Sum>v\<in>basis. f w v *\<^sub>C v) = (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C v)"
+        by simp
+      also have "\<dots> = (\<Sum>v\<in>{v |v. f w v \<noteq> 0}. f w v *\<^sub>C v)"
+        using f2 by meson  
+      also have "\<dots> = w"
+        using f4 by auto
+      finally show ?thesis by simp
+    qed
+    have F_def': "F w = (\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v)" for w
+    proof- 
+      have "basis = {v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<union> {v |v. f w v = 0 \<and> v \<in> basis}"
+        by blast
+      moreover have "{v |v. f w v \<noteq> 0 \<and> v \<in> basis} \<inter> {v |v. f w v = 0 \<and> v \<in> basis} = {}"
+        by blast
+      ultimately have "(\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v) =
+                     (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)
+                  +  (\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)"
+        by (metis (no_types, lifting) assms(3) finite_Un sum.union_disjoint)
+      moreover have "(\<Sum>v\<in>{v |v. f w v = 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v) = 0"
+        by simp        
+      ultimately 
+      have "(\<Sum>v\<in>basis. f w v *\<^sub>C \<phi> v) = (\<Sum>v\<in>{v |v. f w v \<noteq> 0 \<and> v \<in> basis}. f w v *\<^sub>C \<phi> v)"
+        by simp
+      also have "\<dots> = (\<Sum>v\<in>{v |v. f w v \<noteq> 0}. f w v *\<^sub>C \<phi> v)"
+        using f2 by meson  
+      also have "\<dots> = F w"
+        unfolding F_def by auto
+      finally show ?thesis by simp
+    qed
+    have f_add: "v\<in>basis \<Longrightarrow> f (w1+w2) v = f w1 v + f w2 v" for w1 w2 v
+    proof-
+      have "w1 = (\<Sum>v | v\<in>basis. f w1 v *\<^sub>C v)"
+        using f_def' by auto
+      moreover have "w2 = (\<Sum>v | v\<in>basis. f w2 v *\<^sub>C v)"
+        using f_def' by auto
+      ultimately have "w1 + w2 = (\<Sum>v | v\<in>basis. f w1 v *\<^sub>C v) +  (\<Sum>v | v\<in>basis. f w2 v *\<^sub>C v)"
+        by simp
+      also have "\<dots> = (\<Sum>v | v\<in>basis. (f w1 v *\<^sub>C v + f w2 v *\<^sub>C v))"
+        by (metis (no_types, lifting) sum.cong sum.distrib)
+      also have "\<dots> = (\<Sum>v | v\<in>basis. ((f w1 v + f w2 v) *\<^sub>C v))"
+        by (metis scaleC_add_left)
+      finally have "w1 + w2 = (\<Sum>v | v\<in>basis. ((f w1 v + f w2 v) *\<^sub>C v))"
+        by blast
+      moreover have "w1 + w2 = (\<Sum>v | v\<in>basis. (f (w1 + w2) v *\<^sub>C v))"
+        using f_def' by auto
+      ultimately have "(\<Sum>v | v\<in>basis. (f (w1 + w2) v *\<^sub>C v)) = (\<Sum>v | v\<in>basis. ((f w1 v + f w2 v) *\<^sub>C v))"
+        by simp
+      hence "0 = (\<Sum>v | v\<in>basis. (f (w1 + w2) v *\<^sub>C v)) -  (\<Sum>v | v\<in>basis. ((f w1 v + f w2 v) *\<^sub>C v))"
+        by simp
+      also have "\<dots> = (\<Sum>v | v\<in>basis. (f (w1 + w2) v *\<^sub>C v)- (f w1 v + f w2 v) *\<^sub>C v)"
+        by (simp add: sum_subtractf)
+      also have "\<dots> = (\<Sum>v | v\<in>basis. (f (w1 + w2) v - f w1 v - f w2 v) *\<^sub>C v)"
+        by (metis (no_types, lifting) diff_diff_add scaleC_left.diff)
+      finally have "0 = (\<Sum>v | v\<in>basis. (f (w1 + w2) v - f w1 v - f w2 v) *\<^sub>C v)"
+        by simp
+      hence "(\<Sum>v | v\<in>basis. (f (w1 + w2) v - f w1 v - f w2 v) *\<^sub>C v) = 0"
+        by simp
+      hence "v\<in>basis \<Longrightarrow> f (w1 + w2) v - f w1 v - f w2 v = 0" for v
+      proof -
+        assume "v \<in> basis"
+        then have f1: "\<And>f. (\<Sum>a\<in>basis. f a *\<^sub>C a) \<noteq> 0 \<or> Complex_Vector_Spaces.dependent basis \<or> f v = 0"
+          using assms(3) complex_vector.dependent_finite by auto
+        have "complex_independent basis"
+          by (simp add: Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+        thus ?thesis
+          using f1 \<open>(\<Sum>v | v \<in> basis. (f (w1 + w2) v - f w1 v - f w2 v) *\<^sub>C v) = 0\<close> by fastforce
+      qed
+      thus ?thesis
+        by (metis add.commute eq_diff_eq eq_iff_diff_eq_0 f2) 
+    qed
+    have f_scaleC: "v\<in>basis \<Longrightarrow> f (r *\<^sub>C w) v = r * f w v" for w v r
+    proof-
+      have "w = (\<Sum>v | v\<in>basis. f w v *\<^sub>C v)"
+        using f_def' by auto
+      hence "r *\<^sub>C w = r *\<^sub>C (\<Sum>v | v\<in>basis. f w v *\<^sub>C v)"
+        by simp
+      also have "\<dots> = (\<Sum>v | v\<in>basis. r *\<^sub>C (f w v *\<^sub>C v))"
+        using scaleC_right.sum by blast
+      also have "\<dots> = (\<Sum>v | v\<in>basis. (r * f w v) *\<^sub>C v)"
+        by simp
+      finally have "r *\<^sub>C w = (\<Sum>v | v\<in>basis. (r * f w v) *\<^sub>C v)"
+        by blast
+      moreover have "r *\<^sub>C w = (\<Sum>v | v\<in>basis. f (r *\<^sub>C w) v *\<^sub>C v)"
+        by (simp add: f_def')
+      ultimately have "(\<Sum>v | v\<in>basis. f (r *\<^sub>C w) v *\<^sub>C v) =  (\<Sum>v | v\<in>basis. (r * f w v) *\<^sub>C v)"
+        by simp
+      hence "0 = (\<Sum>v | v\<in>basis. f (r *\<^sub>C w) v *\<^sub>C v) - (\<Sum>v | v\<in>basis. (r * f w v) *\<^sub>C v)"
+        by simp
+      also have "\<dots> = (\<Sum>v | v\<in>basis. f (r *\<^sub>C w) v *\<^sub>C v - (r * f w v) *\<^sub>C v)"
+        by (simp add: sum_subtractf)
+      also have "\<dots> = (\<Sum>v | v\<in>basis. (f (r *\<^sub>C w) v - r * f w v) *\<^sub>C v)"
+        by (metis (no_types, lifting) scaleC_left.diff)
+      finally have "0 = (\<Sum>v | v\<in>basis. (f (r *\<^sub>C w) v - r * f w v) *\<^sub>C v)"
+        by blast
+      hence \<open>(\<Sum>v | v\<in>basis. (f (r *\<^sub>C w) v - r * f w v) *\<^sub>C v) = 0\<close>
+        by simp
+      hence "v\<in>basis \<Longrightarrow> f (r *\<^sub>C w) v - r * f w v = 0" for v
+      proof -
+        assume "v \<in> basis"
+        then have f1: "\<And>f. (\<Sum>a\<in>basis. f a *\<^sub>C a) \<noteq> 0 \<or> Complex_Vector_Spaces.dependent basis \<or> f v = 0"
+          using assms(3) complex_vector.dependent_finite by auto
+        have "complex_independent basis"
+          by (simp add: Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+        thus ?thesis
+          using f1 \<open>(\<Sum>v | v\<in>basis. (f (r *\<^sub>C w) v - r * f w v) *\<^sub>C v) = 0\<close> by fastforce
+      qed
+      thus ?thesis
+        by (metis diff_eq_diff_eq diff_numeral_special(9) f2 mult_cancel_right1) 
+    qed
+    have "clinear F" 
+      unfolding clinear_def proof
+      show "F (b1 + b2) = F b1 + F b2"
+        for b1 :: 'a
+          and b2 :: 'a
+        using f_add 
+        unfolding F_def'
+        by (smt scaleC_add_left sum.cong sum.distrib)         
+
+      show "F (r *\<^sub>C b) = r *\<^sub>C F b"
+        for r :: complex
+          and b :: 'a
+      proof-
+        have "F (r *\<^sub>C b) = (\<Sum>v\<in>basis. f (r *\<^sub>C b) v *\<^sub>C \<phi> v)"
+          unfolding F_def' by blast
+        also have "\<dots> = (\<Sum>v\<in>basis. (r * f b v) *\<^sub>C \<phi> v)"
+          using f_scaleC by simp
+        also have "\<dots> = (\<Sum>v\<in>basis. r *\<^sub>C (f b v *\<^sub>C \<phi> v))"
+          by simp
+        also have "\<dots> = r *\<^sub>C (\<Sum>v\<in>basis. f b v *\<^sub>C \<phi> v)"
+          by (metis (full_types) scaleC_right.sum)          
+        finally show ?thesis using F_def' by simp
+      qed  
+    qed
+    hence "cbounded_linear F"
+      using bounded_operator_finite_dim assms(1) assms(2) assms(3) by blast 
+    moreover have "w\<in>basis \<Longrightarrow> F w = \<phi> w" for w
+    proof-
+      assume b1: "w\<in>basis"
+      have "F w = (\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v)
+                 +(\<Sum>v | f w v \<noteq> 0 \<and> v \<noteq> w. f w v *\<^sub>C \<phi> v)"
+        by (smt Collect_cong F_def add.commute add_cancel_right_left b1 f6 mem_Collect_eq sum.cong 
+            sum.neutral_const)
+      moreover have "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = \<phi> w"
+      proof-
+        have "f w w \<noteq> 0"
+          by (simp add: b1 f5)
+        hence "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = (\<Sum>v | v = w. f w v *\<^sub>C \<phi> v)"
+          by metis
+        also have "\<dots> = f w w *\<^sub>C \<phi> w"
+          using Collect_mem_eq add_cancel_right_left complex_vector.scale_cancel_right 
+            complex_vector.scale_zero_right by auto          
+        finally have "(\<Sum>v | f w v \<noteq> 0 \<and> v = w. f w v *\<^sub>C \<phi> v) = f w w *\<^sub>C \<phi> w"
+          by blast
+        thus ?thesis
+          by (simp add: b1 f5) 
+      qed
+      moreover have "(\<Sum>v | f w v \<noteq> 0 \<and> v \<noteq> w. f w v *\<^sub>C \<phi> v) = 0"
+        by (simp add: b1 f6)        
+      ultimately show ?thesis by simp
+    qed
+    ultimately show ?thesis apply transfer
+      by blast
+  qed
+  moreover have \<open>(\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = \<phi> s) \<Longrightarrow> (\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>v s = \<phi> s) \<Longrightarrow> F = G\<close> for F G
+  proof-
+    assume a1: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = \<phi> s" and a2: "\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>v s = \<phi> s"
+    hence "s\<in>basis \<Longrightarrow> (F-G) *\<^sub>v s = 0" for s
+      by (simp add: minus_bounded.rep_eq)
+    hence "F - G = 0"
+      using bounded_operator_basis_zero_uniq[where F = "F - G" and basis = basis]
+        assms(1) assms(2) assms(3) by auto
+    thus ?thesis by simp
+  qed
+  ultimately show ?thesis
+    by auto 
+qed
 
 unbundle no_bounded_notation
+
 
 end
