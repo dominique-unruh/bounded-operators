@@ -24,8 +24,13 @@ complement.
 subsection \<open>\<open>Complex_Inner_Product\<close> -- Inner Product Spaces and the Gradient Derivative\<close>
 
 theory Complex_Inner_Product
-  imports "HOL-Analysis.Infinite_Set_Sum" Complex_Main Complex_Vector_Spaces
-    "HOL-Analysis.Inner_Product"  Lattice_Missing Operator_Norm_Missing
+  imports 
+    Preliminaries
+    "HOL-Analysis.Infinite_Set_Sum" 
+    Complex_Main Complex_Vector_Spaces
+    "HOL-Analysis.Inner_Product"  
+    Lattice_Missing 
+    Operator_Norm_Missing
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -3423,7 +3428,7 @@ lemma is_ob_nonzero:
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
-(* Change name to onb_enum ? *)
+(* Ask to Dominique: Change name to onb_enum ? *)
 class basis_enum = complex_inner +
   fixes canonical_basis :: "'a list"
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
@@ -5052,5 +5057,14 @@ lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) 
 lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
   apply transfer
   by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
+
+lemma linear_space_top_not_bot[simp]: 
+  "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
+  (* The type class t1_space is needed because the definition of bot in linear_space needs it *)
+  by (metis UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
+
+lemma linear_space_bot_not_top[simp]:
+  "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+  using linear_space_top_not_bot by metis
 
 end

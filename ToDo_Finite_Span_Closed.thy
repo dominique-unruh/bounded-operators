@@ -373,12 +373,6 @@ lemma finite_complex_span_complete:
   apply (rule finite_span_complete)
   using assms by auto
 
-lemma finite_complex_span_closed: 
-  fixes B :: "'a::complex_normed_vector set"
-  assumes "finite B"
-  shows "closed (complex_vector.span B)"
-  by (simp add: assms complete_imp_closed finite_complex_span_complete)
-
 lemma bounded_operator_basis_zero_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes a1: "complex_vector.span basis = UNIV"
@@ -462,7 +456,7 @@ next
   proof-
     have "closed_subspace (complex_vector.span {s})"
       unfolding closed_subspace_def apply auto
-      by (simp add: finite_complex_span_closed)
+      by (simp add: closed_finite_dim)
     hence "bounded_clinear ( projection (complex_vector.span {s}) )"
       by (smt projectionPropertiesA)
     hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"
@@ -680,7 +674,7 @@ proof-
     proof-
       have "closed_subspace (complex_vector.span {s})"
         unfolding closed_subspace_def apply auto
-        by (simp add: finite_complex_span_closed)
+        by (simp add: closed_finite_dim)
       hence "bounded_clinear ( projection (complex_vector.span {s}) )"
         by (smt projectionPropertiesA)
       hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"

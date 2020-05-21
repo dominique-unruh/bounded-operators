@@ -3631,8 +3631,8 @@ lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightar
 (* TODO: move to earliest possible place *)
 lemma subspace_zero_not_top[simp]: 
   "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-  sorry
-
+  by simp
+ 
 lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
   by simp
 

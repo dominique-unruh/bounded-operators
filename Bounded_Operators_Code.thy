@@ -351,7 +351,7 @@ proof-
   proof-
     have \<open>closure (complex_vector.span (set (canonical_basis::('a list)))) = UNIV\<close>
       using is_onb_set
-      unfolding is_onb_def is_basis_def
+      unfolding is_onb_def is_ob_def is_basis_def
       by blast
     moreover have \<open>closure (complex_vector.span (set (canonical_basis::('a list)))) = 
                    complex_vector.span (set (canonical_basis::('a list)))\<close>
