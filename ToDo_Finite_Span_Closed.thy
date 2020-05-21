@@ -1,5 +1,8 @@
 theory ToDo_Finite_Span_Closed
-  imports ToDo "HOL-Types_To_Sets.Types_To_Sets"
+  imports
+    Preliminaries 
+    Bounded_Operators
+    "HOL-Types_To_Sets.Types_To_Sets"
 begin
 unbundle no_notation_blinfun_apply
 unbundle bounded_notation
@@ -344,7 +347,8 @@ proof auto
     by auto
   define R where "R = B \<union> scaleC \<i> ` B"
   have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
-    by (metis (no_types, lifting) complex_eq ordered_field_class.sign_simps(28) scaleC_add_left scaleC_scaleC scaleR_scaleC)
+    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
+    by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
   then have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
     apply (subst sum.cartesian_product[symmetric])
     by (simp add: UNIV_bool \<psi>_explicit)
@@ -406,7 +410,7 @@ lemma bounded_operator_finite_dim':
     and b5: "S \<subseteq> basis"  
     and b6: "\<And>w. w \<in> complex_vector.span (basis - S) \<Longrightarrow> F w = 0"
     and b7: "card S = n"     
-  shows "bounded_clinear F"
+  shows "cbounded_linear F"
   using assms
 proof(induction n arbitrary: S F)
   case 0
@@ -452,15 +456,15 @@ next
   hence snorm0: "norm s \<noteq> 0"
     by simp
   define f where "f x = F (projection (complex_vector.span {s}) x)" for x
-  have f1: "bounded_clinear f"
+  have f1: "cbounded_linear f"
   proof-
     have "closed_subspace (complex_vector.span {s})"
       unfolding closed_subspace_def apply auto
       by (simp add: closed_finite_dim)
-    hence "bounded_clinear ( projection (complex_vector.span {s}) )"
+    hence "cbounded_linear ( projection (complex_vector.span {s}) )"
       by (smt projectionPropertiesA)
     hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"
-      by (smt bounded_clinear.is_clinear)
+      by (smt cbounded_linear.is_clinear)
     hence "clinear f"
       using Suc.prems(4)
         Complex_Vector_Spaces.linear_compose
@@ -510,16 +514,16 @@ next
       thus ?thesis by blast
     qed
     ultimately show ?thesis
-      unfolding bounded_clinear_def by blast
+      unfolding cbounded_linear_def by blast
   qed
   have cs1: "closed_subspace (Complex_Vector_Spaces.span {s})"
     unfolding closed_subspace_def apply auto
     by (simp add: closed_finite_dim)
   define F' where "F' w = F w - f w" for w
   have r4: "clinear F'"
-    unfolding F'_def bounded_clinear_def 
-    using bounded_clinear.is_clinear complex_vector.linear_compose_sub f1
-    by (simp add: bounded_clinear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
+    unfolding F'_def cbounded_linear_def 
+    using cbounded_linear.is_clinear complex_vector.linear_compose_sub f1
+    by (simp add: cbounded_linear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
   hence r3: "w \<in> complex_vector.span (basis - S') \<Longrightarrow> F' w = 0" for w 
   proof-
     assume "w \<in> complex_vector.span (basis - S')"
@@ -604,21 +608,21 @@ next
       unfolding F'_def by auto
   qed
   from r1 r2 r3 r4 assms
-  have "bounded_clinear F'"
+  have "cbounded_linear F'"
     using Suc.IH by blast
   moreover have "F = (\<lambda>x. F' x + f x)"
     using F'_def by auto
-  ultimately show "bounded_clinear F"
-    using f1 Complex_Vector_Spaces.bounded_clinear_add by blast
+  ultimately show "cbounded_linear F"
+    using f1 Complex_Vector_Spaces.cbounded_linear_add by blast
 qed
 *)
 
 lemma bounded_operator_finite_dim_ortho:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b4:"clinear F"  and b9:"is_ob basis" and b3:"finite basis"
-  shows "bounded_clinear F"
+  shows "cbounded_linear F"
 proof-
-  have bounded_operator_finite_dim': "bounded_clinear F"
+  have bounded_operator_finite_dim': "cbounded_linear F"
     if b4:"clinear F" 
       and b9: "is_ob basis"
       and b3:"finite basis"
@@ -670,15 +674,15 @@ proof-
     hence snorm0: "norm s \<noteq> 0"
       by simp
     define f where "f x = F (projection (complex_vector.span {s}) x)" for x
-    have f1: "bounded_clinear f"
+    have f1: "cbounded_linear f"
     proof-
       have "closed_subspace (complex_vector.span {s})"
         unfolding closed_subspace_def apply auto
         by (simp add: closed_finite_dim)
-      hence "bounded_clinear ( projection (complex_vector.span {s}) )"
+      hence "cbounded_linear ( projection (complex_vector.span {s}) )"
         by (smt projectionPropertiesA)
       hence "clinear ( projection (Complex_Vector_Spaces.span {s}) )"
-        by (smt bounded_clinear.is_clinear)
+        by (smt cbounded_linear.is_clinear)
       hence "clinear f"
         using Suc.prems(4)
           Complex_Vector_Spaces.linear_compose
@@ -728,16 +732,16 @@ proof-
         thus ?thesis by blast
       qed
       ultimately show ?thesis
-        unfolding bounded_clinear_def by blast
+        unfolding cbounded_linear_def by blast
     qed
     have cs1: "closed_subspace (Complex_Vector_Spaces.span {s})"
       unfolding closed_subspace_def apply auto
       by (simp add: closed_finite_dim)
     define F' where "F' w = F w - f w" for w
     have r4: "clinear F'"
-      unfolding F'_def bounded_clinear_def 
-      using bounded_clinear.is_clinear complex_vector.linear_compose_sub f1
-      by (simp add: bounded_clinear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
+      unfolding F'_def cbounded_linear_def 
+      using cbounded_linear.is_clinear complex_vector.linear_compose_sub f1
+      by (simp add: cbounded_linear.is_clinear complex_vector.linear_compose_sub Suc.prems(1)) 
     hence r3: "w \<in> complex_vector.span (basis - S') \<Longrightarrow> F' w = 0" for w 
     proof-
       assume "w \<in> complex_vector.span (basis - S')"
@@ -823,12 +827,12 @@ proof-
         unfolding F'_def by auto
     qed
     from r1 r2 r3 r4 assms
-    have "bounded_clinear F'"
+    have "cbounded_linear F'"
       using Suc.IH b3 b9 by blast 
     moreover have "F = (\<lambda>x. F' x + f x)"
       using F'_def by auto
-    ultimately show "bounded_clinear F"
-      using f1 Complex_Vector_Spaces.bounded_clinear_add by blast
+    ultimately show "cbounded_linear F"
+      using f1 Complex_Vector_Spaces.cbounded_linear_add by blast
   qed
   show ?thesis
     using bounded_operator_finite_dim'[where F = F and basis = basis and S = basis 
@@ -885,7 +889,7 @@ lemma bounded_operator_finite_dim:
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "complex_vector.independent basis"
     and b3:"finite basis" and b4:"clinear F"
-  shows "bounded_clinear F"
+  shows "cbounded_linear F"
 proof-
   have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = complex_vector.span basis
@@ -1098,7 +1102,7 @@ proof-
         finally show ?thesis using F_def' by simp
       qed  
     qed
-    hence "bounded_clinear F"
+    hence "cbounded_linear F"
       using bounded_operator_finite_dim assms(1) assms(2) assms(3) by blast 
     moreover have "w\<in>basis \<Longrightarrow> F w = \<phi> w" for w
     proof-

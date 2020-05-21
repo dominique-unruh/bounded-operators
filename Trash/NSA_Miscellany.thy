@@ -14,8 +14,6 @@ theory NSA_Miscellany
   imports 
     "HOL-Analysis.Elementary_Metric_Spaces"
     "HOL-Analysis.Operator_Norm"
-    Ordered_Fields
-    Unobtrusive_NSA
     Complex_Inner_Product
 begin
 
@@ -1239,8 +1237,6 @@ proposition bounded_nsbounded_norm:
   for S::\<open>'a::real_normed_vector set\<close>
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
   by blast
-
-
 
 unbundle no_nsa_notation
 

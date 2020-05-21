@@ -11,8 +11,10 @@ Main results:
 
 
 theory Bounded_Operators
-  imports Complex_Inner_Product Real_Bounded_Operators Lattice_Missing
-    Banach_Steinhaus.Banach_Steinhaus Operator_Norm_Missing 
+  imports 
+    Complex_Inner_Product 
+    Real_Bounded_Operators 
+    Banach_Steinhaus.Banach_Steinhaus
 begin
 unbundle no_notation_blinfun_apply
   (* In order to avoid the conflict with the notation *\<^sub>v,
@@ -22,9 +24,9 @@ subsection \<open>Complex bounded operators\<close>
 
 (* TODO: rename \<rightarrow> cblinfun, notation \<Rightarrow>\<^sub>c\<^sub>L *)
 typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
-  = \<open>{A::'a \<Rightarrow> 'b. bounded_clinear A}\<close>
+  = \<open>{A::'a \<Rightarrow> 'b. cbounded_linear A}\<close>
   morphisms times_bounded_vec Abs_bounded
-  using bounded_clinear_zero by blast
+  using cbounded_linear_zero by blast
 
 notation times_bounded_vec (infixr "*\<^sub>v" 70)
 
@@ -33,7 +35,7 @@ setup_lifting type_definition_bounded
 lift_definition rbounded_of_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
 \<Rightarrow> ('a,'b) rbounded\<close> is "id"
   apply transfer apply auto
-  by (simp add: bounded_clinear.bounded_linear)
+  by (simp add: cbounded_linear.bounded_linear)
 
 lemma rbounded_of_bounded_inj:
   \<open>rbounded_of_bounded f = rbounded_of_bounded g \<Longrightarrow> f = g\<close>
@@ -42,7 +44,7 @@ lemma rbounded_of_bounded_inj:
 lemma rbounded_of_bounded_inv:
   \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x) \<Longrightarrow> \<exists> g. rbounded_of_bounded g = f\<close>
   apply transfer apply auto
-  by (simp add: bounded_linear_bounded_clinear)
+  by (simp add: bounded_linear_cbounded_linear)
 
 lemma rbounded_of_bounded_inv_uniq:
   \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x) \<Longrightarrow> \<exists>! g. rbounded_of_bounded g = f\<close>
@@ -53,8 +55,8 @@ lemma rbounded_of_bounded_prelim:
   \<open>\<forall> c. \<forall> x. times_rbounded_vec (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (rbounded_of_bounded g) x)\<close>
   apply transfer
   apply auto
-  using bounded_clinear_def
-  by (simp add: bounded_clinear_def complex_vector.linear_scale)
+  using cbounded_linear_def
+  by (simp add: cbounded_linear_def complex_vector.linear_scale)
 
 definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
 ('a, 'b) bounded\<close> where
@@ -68,7 +70,7 @@ lemma rbounded_bounded:
   \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x)
  = c *\<^sub>C (times_rbounded_vec f x)
  \<Longrightarrow> rbounded_of_bounded (bounded_of_rbounded f) = f\<close> 
-  by (metis Abs_bounded_inverse times_rbounded_vec times_rbounded_vec_inject bounded_linear_bounded_clinear bounded_rbounded mem_Collect_eq rbounded_of_bounded.rep_eq)
+  by (metis Abs_bounded_inverse times_rbounded_vec times_rbounded_vec_inject bounded_linear_cbounded_linear bounded_rbounded mem_Collect_eq rbounded_of_bounded.rep_eq)
 
 
 instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
@@ -82,7 +84,7 @@ proof-
     for t
   proof-
     have \<open>times_bounded_vec (SOME x. Abs_rbounded (times_bounded_vec x) = 0) t = 0\<close>
-      by (metis (mono_tags, lifting) Abs_bounded_inverse times_rbounded_vec_inverse bounded_clinear_zero mem_Collect_eq rbounded_of_bounded.rep_eq tfl_some zero_rbounded.abs_eq)
+      by (metis (mono_tags, lifting) Abs_bounded_inverse times_rbounded_vec_inverse cbounded_linear_zero mem_Collect_eq rbounded_of_bounded.rep_eq tfl_some zero_rbounded.abs_eq)
     moreover have \<open>times_bounded_vec 0 t = 0\<close>
       apply transfer by blast
     ultimately show ?thesis by simp
@@ -110,7 +112,7 @@ lemma rbounded_of_bounded_zero:
 
 lift_definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>f g x. f x + g x"
-  by (rule bounded_clinear_add)
+  by (rule cbounded_linear_add)
 
 (* TODO remove *)
 (* Jose: If I remove it, there are errors *)
@@ -120,7 +122,7 @@ lemma rbounded_of_bounded_plus:
   unfolding bounded_of_rbounded_def rbounded_of_bounded_def inv_def
   apply auto
   apply transfer
-  by (simp add: bounded_clinear.bounded_linear eq_onp_same_args plus_rbounded.abs_eq)
+  by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_rbounded.abs_eq)
 
 lemma bounded_of_rbounded_plus:
   (* TODO: use \<And> (or introduce a definition "rbounded_is_bounded f" for it) *)
@@ -132,7 +134,7 @@ lemma bounded_of_rbounded_plus:
 
 lift_definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>f x. - f x"
-  by (rule Complex_Vector_Spaces.bounded_clinear_minus)
+  by (rule Complex_Vector_Spaces.cbounded_linear_minus)
 
 lemma rbounded_of_bounded_uminus:
   \<open>rbounded_of_bounded (- f) = - (rbounded_of_bounded f)\<close>
@@ -148,7 +150,7 @@ lemma bounded_of_rbounded_uminus:
 
 lift_definition minus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
   "\<lambda>f g x. f x - g x"
-  by (rule Complex_Vector_Spaces.bounded_clinear_sub)
+  by (rule Complex_Vector_Spaces.cbounded_linear_sub)
 
 lemma rbounded_of_bounded_minus:
   \<open>rbounded_of_bounded (f - g) = rbounded_of_bounded f - rbounded_of_bounded g\<close>
@@ -165,7 +167,7 @@ lemma bounded_of_rbounded_minus:
 
 lift_definition scaleC_bounded :: \<open>complex \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
   is  "\<lambda> c f x. c *\<^sub>C (f x)"
-  by (rule Complex_Vector_Spaces.bounded_clinear_const_scaleC)
+  by (rule Complex_Vector_Spaces.cbounded_linear_const_scaleC)
 
 
 lemma rbounded_of_bounded_scaleC:
@@ -182,7 +184,7 @@ lemma bounded_of_rbounded_scaleC:
 
 lift_definition scaleR_bounded :: \<open>real \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
   is  "\<lambda> c f x. c *\<^sub>R (f x)"
-  by (rule Complex_Vector_Spaces.scalarR_bounded_clinear)
+  by (rule Complex_Vector_Spaces.scalarR_cbounded_linear)
 
 lemma rbounded_of_bounded_scaleR:
   \<open>rbounded_of_bounded (c *\<^sub>R f) = c *\<^sub>R (rbounded_of_bounded f)\<close>
@@ -219,7 +221,7 @@ lemma rbounded_of_bounded_dist:
 lift_definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
   is \<open>\<lambda> f x. (inverse (onorm f)) *\<^sub>R (f x)\<close>
   apply transfer
-  by (simp add: scalarR_bounded_clinear)
+  by (simp add: scalarR_cbounded_linear)
 
 lemma rbounded_of_bounded_sgn:
   \<open>rbounded_of_bounded (sgn f) =   (sgn (rbounded_of_bounded f))\<close>
@@ -552,7 +554,7 @@ subsection \<open>Adjoint\<close>
 
 lift_definition
   adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
-  is Adj by (fact Adj_bounded_clinear)
+  is Adj by (fact Adj_cbounded_linear)
 
 lemma adjoint_I:
   fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
@@ -577,7 +579,7 @@ lemma adjoint_twice[simp]: "(U*)* = U"
   using dagger_dagger_id by blast
 
 lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
-  using id_bounded_clinear by blast
+  using id_cbounded_linear by blast
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
@@ -586,13 +588,13 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
   for A::"('a::chilbert_space,'b::chilbert_space) bounded"
     and a :: complex 
 proof-
-  have \<open>bounded_clinear ((times_bounded_vec A))\<close>
+  have \<open>cbounded_linear ((times_bounded_vec A))\<close>
     using times_bounded_vec by blast
   hence \<open>(\<lambda> t. a *\<^sub>C ((times_bounded_vec A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((times_bounded_vec A)\<^sup>\<dagger>) s))\<close>
     using scalar_times_adjc_flatten
-    unfolding bounded_clinear_def 
-      scalar_times_adjc_flatten \<open>bounded_clinear (times_bounded_vec A)\<close> bounded_clinear.bounded_linear
-    by (simp add: scalar_times_adjc_flatten \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.bounded_linear complex_vector.linear_scale)
+    unfolding cbounded_linear_def 
+      scalar_times_adjc_flatten \<open>cbounded_linear (times_bounded_vec A)\<close> cbounded_linear.bounded_linear
+    by (simp add: scalar_times_adjc_flatten \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.bounded_linear complex_vector.linear_scale)
 
   moreover have \<open>times_bounded_vec ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((times_bounded_vec A) t))\<^sup>\<dagger>\<close>
     unfolding Adj_def
@@ -611,16 +613,16 @@ lemma Adj_bounded_plus:
   shows \<open>(A + B)* = (A*) + (B*)\<close>
 proof transfer
   fix A B::\<open>'a \<Rightarrow> 'b\<close>
-  assume \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+  assume \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
   define F where \<open>F = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
   define G where \<open>G = (\<lambda>x. A x + B x)\<close>
-  have \<open>bounded_clinear G\<close>
+  have \<open>cbounded_linear G\<close>
     unfolding G_def
-    by (simp add: \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> bounded_clinear_add)
+    by (simp add: \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear_add)
   moreover have \<open>\<langle>  F u,  v \<rangle> = \<langle> u, G v \<rangle>\<close>
     for u::'b and v::'a
     unfolding F_def G_def
-    by (simp add: Adj_I \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> bounded_sesquilinear.add_right bounded_sesquilinear_cinner cinner_left_distrib)
+    by (simp add: Adj_I \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> bounded_sesquilinear.add_right bounded_sesquilinear_cinner cinner_left_distrib)
   ultimately have \<open>F = G\<^sup>\<dagger> \<close>
     by (rule Adj_D)
   thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
@@ -648,14 +650,14 @@ lift_definition timesOp::
      \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
   is "(o)"
   unfolding o_def 
-  by (rule bounded_clinear_compose, simp_all)
+  by (rule cbounded_linear_compose, simp_all)
 
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
   is "\<lambda>A S. closure (A ` S)"
-  using  bounded_clinear_def closed_closure  closed_subspace.intro
-  by (simp add: bounded_clinear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
+  using  cbounded_linear_def closed_closure  closed_subspace.intro
+  by (simp add: cbounded_linear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
 
 bundle bounded_notation begin
 notation timesOp (infixl "*\<^sub>o" 69)
@@ -704,7 +706,7 @@ lemma timesOp_dist2:
 lemma timesOp_minus:
   \<open>A *\<^sub>o (B - C) = A *\<^sub>o B - A *\<^sub>o C\<close>
   apply transfer
-  using  bounded_clinear_def
+  using  cbounded_linear_def
   by (metis comp_apply complex_vector.linear_diff)
 
 
@@ -714,14 +716,14 @@ lemma times_adjoint[simp]:
   shows "(A *\<^sub>o B)* =  (B*) *\<^sub>o (A*)"
 proof transfer
   fix  A :: \<open>'b\<Rightarrow>'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
-  assume \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-  hence \<open>bounded_clinear (A \<circ> B)\<close>
-    by (simp add: comp_bounded_clinear)
+  assume \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
+  hence \<open>cbounded_linear (A \<circ> B)\<close>
+    by (simp add: comp_cbounded_linear)
   have \<open>\<langle> (A \<circ> B) u, v \<rangle> = \<langle> u, (B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>) v \<rangle>\<close>
     for u v
-    by (metis (no_types, lifting) Adj_I \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> cinner_commute' comp_def)    
+    by (metis (no_types, lifting) Adj_I \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cinner_commute' comp_def)    
   thus \<open>(A \<circ> B)\<^sup>\<dagger> = B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>\<close>
-    using \<open>bounded_clinear (A \<circ> B)\<close>
+    using \<open>cbounded_linear (A \<circ> B)\<close>
     by (metis Adj_D cinner_commute')
 qed
 
@@ -731,7 +733,7 @@ lemma times_bounded_vec_0[simp]:
   fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
   shows  "U *\<^sub>v 0 = 0"
   apply transfer
-  unfolding bounded_clinear_def
+  unfolding cbounded_linear_def
   by (simp add: complex_vector.linear_0)
 
 
@@ -740,24 +742,24 @@ lemma applyOp_0[simp]:
   shows   "U *\<^sub>s (0::'a linear_space) = (0::'b linear_space)"
 proof-
   {
-    have \<open>bounded_clinear U \<Longrightarrow>
+    have \<open>cbounded_linear U \<Longrightarrow>
           (closure
             (U ` {0})) = {0}\<close>
       for U::\<open>'a\<Rightarrow>'b\<close>
     proof-
-      assume \<open>bounded_clinear U\<close>
+      assume \<open>cbounded_linear U\<close>
       have \<open>U ` {0} = {U 0}\<close>
         by auto
       moreover have \<open>U 0 = 0\<close>
-        using \<open>bounded_clinear U\<close>
-        unfolding bounded_clinear_def
+        using \<open>cbounded_linear U\<close>
+        unfolding cbounded_linear_def
         by (simp add: complex_vector.linear_0)
       ultimately have \<open>U ` {0} = {0}\<close>
         by simp
       thus ?thesis
         by simp 
     qed
-    hence \<open>bounded_clinear U \<Longrightarrow>
+    hence \<open>cbounded_linear U \<Longrightarrow>
          Abs_linear_space
           (closure
             (U ` {0})) =
@@ -765,7 +767,7 @@ proof-
       for U::\<open>'a\<Rightarrow>'b\<close>
       using Abs_linear_space_inject
       by presburger
-    hence \<open>bounded_clinear U \<Longrightarrow>
+    hence \<open>cbounded_linear U \<Longrightarrow>
          Abs_linear_space
           (closure (U ` space_as_set (Abs_linear_space {0}))) =
          Abs_linear_space {0}\<close>
@@ -779,14 +781,14 @@ proof-
 qed
 
 lemma times_comp: \<open>\<And>A B \<psi>.
-       bounded_clinear A \<Longrightarrow>
-       bounded_clinear B \<Longrightarrow>
+       cbounded_linear A \<Longrightarrow>
+       cbounded_linear B \<Longrightarrow>
        closed_subspace \<psi> \<Longrightarrow>
        closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
 proof
   show "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
-    if "bounded_clinear (A::'a \<Rightarrow> 'b)"
-      and "bounded_clinear (B::'c \<Rightarrow> 'a)"
+    if "cbounded_linear (A::'a \<Rightarrow> 'b)"
+      and "cbounded_linear (B::'c \<Rightarrow> 'a)"
       and "closed_subspace (\<psi>::'c set)"
     for A :: "'a \<Rightarrow> 'b"
       and B :: "'c \<Rightarrow> 'a"
@@ -794,8 +796,8 @@ proof
     using that
     by (metis closure_mono closure_subset image_comp image_mono) 
   show "closure (A ` closure (B ` (\<psi>::'c set)::'a set)) \<subseteq> closure ((A \<circ> B) ` \<psi>::'b set)"
-    if "bounded_clinear (A::'a \<Rightarrow> 'b)"
-      and "bounded_clinear (B::'c \<Rightarrow> 'a)"
+    if "cbounded_linear (A::'a \<Rightarrow> 'b)"
+      and "cbounded_linear (B::'c \<Rightarrow> 'a)"
       and "closed_subspace (\<psi>::'c set)"
     for A :: "'a \<Rightarrow> 'b"
       and B :: "'c \<Rightarrow> 'a"
@@ -826,7 +828,7 @@ proof
           moreover have \<open>t \<longlonglongrightarrow> x\<close>
           proof-
             have \<open>isCont A y\<close>
-              using \<open>bounded_clinear A\<close>
+              using \<open>cbounded_linear A\<close>
               by (simp add: bounded_linear_continuous) 
             thus ?thesis unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
               by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
@@ -847,9 +849,9 @@ qed
 lemma timesOp_assoc_linear_space: 
   shows  \<open>(A *\<^sub>o B) *\<^sub>s \<psi> =  A *\<^sub>s (B *\<^sub>s \<psi>)\<close>
 proof-
-  have \<open>bounded_clinear (times_bounded_vec A)\<close>
+  have \<open>cbounded_linear (times_bounded_vec A)\<close>
     using times_bounded_vec by auto
-  moreover have \<open>bounded_clinear (times_bounded_vec B)\<close>
+  moreover have \<open>cbounded_linear (times_bounded_vec B)\<close>
     using times_bounded_vec by auto
   moreover have \<open>closed_subspace (space_as_set \<psi>)\<close>
     using space_as_set by auto
@@ -914,10 +916,10 @@ proof-
     by (simp add: closure_eq)    
   moreover have \<open>times_bounded_vec U ` {0::'a} = {0}\<close>
   proof-
-    have \<open>bounded_clinear (times_bounded_vec U)\<close>
+    have \<open>cbounded_linear (times_bounded_vec U)\<close>
       using times_bounded_vec by auto
     hence  \<open>times_bounded_vec U 0 = 0\<close>
-      by (simp add: bounded_clinear.clinear clinear_zero)
+      by (simp add: cbounded_linear.clinear clinear_zero)
     thus ?thesis
       by simp 
   qed
@@ -932,14 +934,14 @@ qed
 
 
 lemma cdot_plus_distrib_transfer:
-  \<open>bounded_clinear U \<Longrightarrow>
+  \<open>cbounded_linear U \<Longrightarrow>
        closed_subspace A \<Longrightarrow>
        closed_subspace B \<Longrightarrow>
         (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
   for U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
 proof-
-  assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
+  assume \<open>cbounded_linear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
   have \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) \<subseteq>
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
   proof-
@@ -952,8 +954,8 @@ proof-
                       = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}\<close>
       proof-
         have \<open>{U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
-          using \<open>bounded_clinear U\<close>
-          unfolding bounded_clinear_def
+          using \<open>cbounded_linear U\<close>
+          unfolding cbounded_linear_def
           by (metis (no_types, lifting) complex_vector.linear_add) 
 
         also have \<open>{U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} 
@@ -974,7 +976,7 @@ proof-
             \<subseteq> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
     proof-
       define S where \<open>S = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
-      from  \<open>bounded_clinear U\<close>
+      from  \<open>cbounded_linear U\<close>
       have \<open>isCont U x\<close>
         for x
         by (simp add: bounded_linear_continuous)
@@ -1038,8 +1040,8 @@ proof-
       proof-
         have \<open>U (psi n) +  U (phi n) =  U ( (psi n) +  (phi n))\<close>
           for n
-          using \<open>bounded_clinear U\<close>
-          unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
+          using \<open>cbounded_linear U\<close>
+          unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
             module_hom_def module_hom_axioms_def
           by auto
         thus ?thesis 
@@ -1068,7 +1070,7 @@ lemma cdot_plus_distrib[simp]:
   apply transfer
 proof-
   fix U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
-  assume \<open>bounded_clinear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
+  assume \<open>cbounded_linear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
   hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
@@ -1180,11 +1182,11 @@ lemma mult_INF1[simp]:
     and V :: "'a \<Rightarrow> 'b linear_space" 
   shows \<open>U *\<^sub>s (INF i. V i) \<le> (INF i. U *\<^sub>s (V i))\<close>
 proof-
-  have \<open>bounded_clinear U \<Longrightarrow>
+  have \<open>cbounded_linear U \<Longrightarrow>
        \<forall>j. closed_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
     for U::\<open>'b\<Rightarrow>'c\<close> and V::\<open>'a \<Rightarrow> 'b set\<close> and x::'c and i::'a
   proof-
-    assume \<open>bounded_clinear U\<close> and \<open>\<forall>j. closed_subspace (V j)\<close> 
+    assume \<open>cbounded_linear U\<close> and \<open>\<forall>j. closed_subspace (V j)\<close> 
     have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V i)\<close>
       by (simp add: Inter_lower image_mono)    
     thus ?thesis
@@ -1233,14 +1235,14 @@ lemma mult_inf_distrib':
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
   shows "U *\<^sub>s (inf B  C) \<le> inf (U *\<^sub>s B) (U *\<^sub>s C)"
 proof-
-  have \<open>bounded_clinear U \<Longrightarrow>
+  have \<open>cbounded_linear U \<Longrightarrow>
        closed_subspace B \<Longrightarrow>
        closed_subspace C \<Longrightarrow>
        closure (U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
     for U::\<open>'a\<Rightarrow>'b\<close> and B C::\<open>'a set\<close>
   proof-
-    assume \<open>bounded_clinear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
+    assume \<open>cbounded_linear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     have \<open>(U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
       using closure_subset by force      
@@ -1252,7 +1254,7 @@ proof-
   show ?thesis 
     apply transfer
     using \<open>\<And>U B C.
-       bounded_clinear U \<Longrightarrow>
+       cbounded_linear U \<Longrightarrow>
        closed_subspace B \<Longrightarrow>
        closed_subspace C \<Longrightarrow>
        closure (U ` (B \<inter> C))
@@ -1272,22 +1274,22 @@ lemma equal_span:
 
 lemma equal_span_applyOpSpace:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
+  assumes \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
   using assms 
 proof transfer
   include nsa_notation
   fix A B::\<open>'a \<Rightarrow> 'b\<close> and G::\<open>'a set\<close> and t::'a
-  assume \<open>bounded_clinear A\<close> and
-    \<open>bounded_clinear B\<close> and
+  assume \<open>cbounded_linear A\<close> and
+    \<open>cbounded_linear B\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and
     \<open>t \<in> closure (complex_vector.span G)\<close>
   define F where \<open>F = (\<lambda> x. A x - B x)\<close>
   have \<open>bounded_linear F\<close>
     unfolding F_def
-    using \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close>
-      bounded_clinear.bounded_linear bounded_linear_sub by auto
+    using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close>
+      cbounded_linear.bounded_linear bounded_linear_sub by auto
   hence \<open>isCont F t\<close>
     by (simp add: linear_continuous_at)
   hence \<open>isNSCont F t\<close>
@@ -1304,7 +1306,7 @@ proof transfer
   proof-
     from  \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close>
     have  \<open>\<And>x. x \<in> complex_vector.span G \<Longrightarrow> A x = B x\<close>
-      using \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> bounded_clinear.is_clinear equal_span by blast
+      using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear.is_clinear equal_span by blast
     hence \<open>\<forall>x.  x \<in> complex_vector.span G \<longrightarrow> F x = 0\<close>
       unfolding F_def
       by simp
@@ -1337,8 +1339,8 @@ lemma applyOpSpace_less_eq:
   apply transfer
 proof - (* sledgehammer *)
   fix Ga :: "'a set" and Aa :: "'a \<Rightarrow> 'b" and Ba :: "'a \<Rightarrow> 'b" and Sa :: "'a set"
-  assume a1: "bounded_clinear Aa"
-  assume a2: "bounded_clinear Ba"
+  assume a1: "cbounded_linear Aa"
+  assume a2: "cbounded_linear Ba"
   assume a3: "\<And>x. x \<in> Ga \<Longrightarrow> Aa x = Ba x"
   assume a4: "Sa \<subseteq> closure (complex_vector.span Ga)"
   have f5: "\<forall>A Aa f fa. (A \<noteq> Aa \<or> (\<exists>a. (a::'a) \<in> Aa \<and> (f a::'b) \<noteq> fa a)) \<or> f ` A = fa ` Aa"
@@ -1348,12 +1350,12 @@ proof - (* sledgehammer *)
     by moura
   hence f6: "aa Ba Aa Sa \<in> Sa \<and> Aa (aa Ba Aa Sa) \<noteq> Ba (aa Ba Aa Sa) \<or> Aa ` Sa = Ba ` Sa"
     using f5 by presburger
-  have f7: "\<forall>f fa A a. (\<not> bounded_clinear f \<or> \<not> bounded_clinear fa \<or> (\<exists>a. (a::'a) \<in> A \<and> (f a::'b) \<noteq> fa a) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
+  have f7: "\<forall>f fa A a. (\<not> cbounded_linear f \<or> \<not> cbounded_linear fa \<or> (\<exists>a. (a::'a) \<in> A \<and> (f a::'b) \<noteq> fa a) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
     using equal_span_applyOpSpace by blast
   obtain aaa :: "'a set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a" where
     "\<forall>x1 x2 x3. (\<exists>v4. v4 \<in> x1 \<and> x3 v4 \<noteq> x2 v4) = (aaa x1 x2 x3 \<in> x1 \<and> x3 (aaa x1 x2 x3) \<noteq> x2 (aaa x1 x2 x3))"
     by moura
-  hence "\<forall>f fa A a. (\<not> bounded_clinear f \<or> \<not> bounded_clinear fa \<or> aaa A fa f \<in> A \<and> f (aaa A fa f) \<noteq> fa (aaa A fa f) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
+  hence "\<forall>f fa A a. (\<not> cbounded_linear f \<or> \<not> cbounded_linear fa \<or> aaa A fa f \<in> A \<and> f (aaa A fa f) \<noteq> fa (aaa A fa f) \<or> a \<notin> closure (complex_vector.span A)) \<or> f a = fa a"
     using f7 by presburger
   hence "Aa ` Sa = Ba ` Sa"
     using f6 a4 a3 a2 a1 by blast
@@ -1563,7 +1565,7 @@ proof-
       proof-
         have \<open>times_bounded_vec (idOp - P) = (\<lambda> x. x - times_bounded_vec P x)\<close>
           by (simp add: idOp.rep_eq minus_bounded.rep_eq)                 
-        hence \<open>bounded_clinear (times_bounded_vec (idOp - P))\<close>
+        hence \<open>cbounded_linear (times_bounded_vec (idOp - P))\<close>
           using times_bounded_vec
           by blast 
         hence \<open>continuous (at x) (times_bounded_vec (idOp - P))\<close>
@@ -1578,11 +1580,11 @@ proof-
     ultimately show ?thesis
       by simp  
   qed
-  have \<open>bounded_clinear (times_bounded_vec P)\<close>
+  have \<open>cbounded_linear (times_bounded_vec P)\<close>
     using times_bounded_vec by auto
   hence \<open>closed_subspace ( range (times_bounded_vec P) )\<close>
     using \<open>closed (range (times_bounded_vec P))\<close>
-      bounded_clinear.clinear  closed_subspace.intro
+      cbounded_linear.clinear  closed_subspace.intro
     using complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast        
   hence \<open>\<exists> M. space_as_set M = (range (times_bounded_vec P))\<close>
     using  \<open>closed (range (times_bounded_vec P))\<close>
@@ -2053,7 +2055,7 @@ qed
 lemma mult_INF_less_eq_transfer_bij:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
     and U :: "'b \<Rightarrow>'c::chilbert_space"
-  assumes \<open>bounded_clinear U\<close> 
+  assumes \<open>cbounded_linear U\<close> 
        and \<open>\<forall>i. closed_subspace (V i)\<close>  
        and \<open>bij U\<close>
   shows \<open>\<Inter> (range (\<lambda> i. closure (U ` V i))) = closure (U ` \<Inter> (range V))\<close>
@@ -2070,8 +2072,8 @@ proof-
     have \<open>closed_subspace (V i)\<close>
       by (simp add: assms(2))
     thus \<open>complex_vector.subspace S\<close>
-      using  \<open>S = U ` (V i)\<close> \<open>bounded_clinear U\<close>
-      by (simp add: bounded_clinear.clinear complex_vector.subspace_image closed_subspace.complex_vector.subspace)
+      using  \<open>S = U ` (V i)\<close> \<open>cbounded_linear U\<close>
+      by (simp add: cbounded_linear.clinear complex_vector.subspace_image closed_subspace.complex_vector.subspace)
   qed
   hence \<open>\<forall>S\<in>I. convex S\<close>
     using linear_manifold_Convex by blast
@@ -2258,8 +2260,8 @@ lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) *\<^sub>v \<psi> = c *\<^sub>C (A 
 
 lemma applyOp_scaleC2[simp]: "A *\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A *\<^sub>v \<psi>)"
   apply transfer 
-  using bounded_clinear.clinear
-  by (simp add: bounded_clinear.is_clinear complex_vector.linear_scale)
+  using cbounded_linear.clinear
+  by (simp add: cbounded_linear.is_clinear complex_vector.linear_scale)
 
 
 definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
@@ -2287,13 +2289,13 @@ proof
     for a :: 'a
     apply transfer
     apply auto unfolding bifunctional_def
-    using bounded_clinear.bounded_linear onorm by blast 
+    using cbounded_linear.bounded_linear onorm by blast 
 qed
 
 lemma norm_of_bounded:
   \<open>norm (L *\<^sub>v z) \<le> norm z * norm L\<close>
   apply transfer
-  by (simp add: bounded_clinear.bounded_linear linordered_field_class.sign_simps(24) onorm)
+  by (simp add: cbounded_linear.bounded_linear linordered_field_class.sign_simps(24) onorm)
 
 lemma norm_of_bounded1:
   \<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
@@ -2360,7 +2362,7 @@ lemma norm_of_bounded3:
   shows \<open>(UNIV::'a set) \<noteq> 0 \<Longrightarrow> norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
 proof transfer 
   fix S::\<open>'a \<Rightarrow> 'b\<close>
-  assume a1: \<open>(UNIV::'a set) \<noteq> 0\<close> and a2: \<open>bounded_clinear S\<close>
+  assume a1: \<open>(UNIV::'a set) \<noteq> 0\<close> and a2: \<open>cbounded_linear S\<close>
   define X where X_def: "X = {norm (S x) |x. norm x < 1}"
   define a where a_def: "a = onorm S"
   have "x \<in> X \<Longrightarrow> x \<le> a" for x
@@ -2370,7 +2372,7 @@ proof transfer
     then obtain x' where x2: "x = norm (S x')" and x3: "norm x' < 1"
       by blast
     have "norm (S x') \<le> onorm S"
-      using x3 a2 onormless1 bounded_clinear.bounded_linear by auto
+      using x3 a2 onormless1 cbounded_linear.bounded_linear by auto
     thus "x \<le> onorm S"
       by (simp add: x2) 
   qed
@@ -2384,7 +2386,7 @@ proof transfer
       assume e0:"e>0"
       have \<open>bounded_linear S\<close>
         using a2
-        by (simp add: bounded_clinear.bounded_linear)
+        by (simp add: cbounded_linear.bounded_linear)
       hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
         using a1 onorm_sphere[where f = S]
         by auto
@@ -2558,12 +2560,12 @@ lemma timesOp_assoc_subspace: "(A *\<^sub>o B) *\<^sub>s S =  A *\<^sub>s (B *\<
 
 lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
-  by (simp add: bounded_clinear_one_dim_to_complex bounded_clinear_scaleC_const)
+  by (simp add: cbounded_linear_one_dim_to_complex cbounded_linear_scaleC_const)
 
 lemma vector_to_bounded_applyOp: 
   "vector_to_bounded (A *\<^sub>v \<psi>) = A  *\<^sub>o (vector_to_bounded \<psi>)" 
   apply transfer 
-  unfolding one_dim_to_complex_def comp_def bounded_clinear_def clinear_def Vector_Spaces.linear_def
+  unfolding one_dim_to_complex_def comp_def cbounded_linear_def clinear_def Vector_Spaces.linear_def
     module_hom_def module_hom_axioms_def
   by simp
   
@@ -2577,7 +2579,7 @@ lemma vector_to_bounded_scalar_times:
 lift_definition cblinfun_to_blinfun::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
   is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
   apply transfer
-  by (simp add: bounded_clinear.bounded_linear)
+  by (simp add: cbounded_linear.bounded_linear)
 
 lemma cblinfun_to_blinfun_norm: "norm (cblinfun_to_blinfun F) = norm F"
   by (simp add: cblinfun_to_blinfun.rep_eq norm_blinfun.rep_eq norm_bounded.rep_eq)
@@ -2608,7 +2610,7 @@ theorem riesz_frechet_representation_bounded_existence_uniq:
    apply (simp add: riesz_frechet_representation_existence)
 proof-
   fix y t::'a and f:: \<open>'a \<Rightarrow> complex\<close>
-  assume \<open>bounded_clinear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
+  assume \<open>cbounded_linear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
     and \<open>\<forall>x. f x = \<langle>t, x\<rangle>\<close>
   have  \<open>\<langle>y - t, x\<rangle> = 0\<close> 
     for x
@@ -2635,7 +2637,7 @@ theorem riesz_frechet_representation_bounded_norm:
   using assms apply transfer
 proof-
   fix f::\<open>'a \<Rightarrow> complex\<close> and t
-  assume \<open>bounded_clinear f\<close> and \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
+  assume \<open>cbounded_linear f\<close> and \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
   from  \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
   have \<open>(norm (f x)) / (norm x) \<le> norm t\<close>
     for x
@@ -2709,7 +2711,7 @@ proof-
     have "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = F *\<^sub>v ((r s *\<^sub>C s) + (\<Sum>a\<in>R. r a *\<^sub>C a))"
       using a1 a2 q2 by auto    
     also have "\<dots> = F *\<^sub>v (r s *\<^sub>C s) + F *\<^sub>v (\<Sum>a\<in>R. r a *\<^sub>C a)"
-      apply transfer unfolding bounded_clinear_def  clinear_def Vector_Spaces.linear_def
+      apply transfer unfolding cbounded_linear_def  clinear_def Vector_Spaces.linear_def
         module_hom_def module_hom_axioms_def by auto
     also have "\<dots> = F *\<^sub>v (r s *\<^sub>C s) + (\<Sum>a\<in>R.  r a *\<^sub>C (F *\<^sub>v a))"
       using q3 by auto
@@ -2780,7 +2782,7 @@ lemma applyOpSpace_Span:
   apply transfer
 proof
   show "closure (A ` closure (complex_vector.span (G::'b set))) \<subseteq> closure (complex_vector.span (A ` G::'a set))"
-    if "bounded_clinear (A::'b \<Rightarrow> 'a)"
+    if "cbounded_linear (A::'b \<Rightarrow> 'a)"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
   proof-
@@ -2805,9 +2807,9 @@ proof
           by blast
         from \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
         have \<open>\<forall> n. A (t n) \<in> complex_vector.span (A ` G)\<close>
-          using \<open>bounded_clinear A\<close>
+          using \<open>cbounded_linear A\<close>
             complex_vector.linear_span_image 
-          unfolding bounded_clinear_def
+          unfolding cbounded_linear_def
           by blast          
         moreover have \<open>(\<lambda> n. A (t n)) \<longlonglongrightarrow> A y\<close>
           using isContA  \<open>t \<longlonglongrightarrow> y\<close>
@@ -2821,11 +2823,11 @@ proof
       by (metis closure_closure closure_mono)       
   qed
   show "closure (complex_vector.span (A ` (G::'b set)::'a set)) \<subseteq> closure (A ` closure (complex_vector.span G))"
-    if "bounded_clinear (A::'b \<Rightarrow> 'a)"
+    if "cbounded_linear (A::'b \<Rightarrow> 'a)"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
     using that
-    by (simp add: bounded_clinear.is_clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
+    by (simp add: cbounded_linear.is_clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
 qed
 
 lemma span_ortho_span:
@@ -2945,7 +2947,7 @@ lemma timesOp0[simp]: "0 *\<^sub>o A = 0"
 
 lemma timesOp0'[simp]: "A *\<^sub>o 0 = 0"
   apply transfer apply auto
-  by (metis bounded_clinear_def mult_zero_left norm_le_zero_iff norm_zero)
+  by (metis cbounded_linear_def mult_zero_left norm_le_zero_iff norm_zero)
 
 lemma positive_idOp[simp]: "positive_op idOp"
   unfolding positive_op_def apply (rule exI[of _ idOp]) by simp
@@ -2960,7 +2962,7 @@ lemma norm_mult_ineq_bounded:
   fixes A B :: "(_,_) bounded"
   shows "norm (A *\<^sub>o B) \<le> norm A * norm B"
   apply transfer
-  by (simp add: bounded_clinear.bounded_linear onorm_compose)
+  by (simp add: cbounded_linear.bounded_linear onorm_compose)
 
 
 hide_fact closed_finite_dim'
@@ -3093,12 +3095,12 @@ proof
       for t
     proof-
       define f where \<open>f x = \<langle> t, x \<rangle>\<close> for x
-      have \<open>bounded_clinear f\<close>
+      have \<open>cbounded_linear f\<close>
         unfolding f_def
-        by (simp add: bounded_clinear_cinner_right)
+        by (simp add: cbounded_linear_cinner_right)
       hence \<open>Cauchy (\<lambda> n. f (X n))\<close>
         using that
-        by (simp add: bounded_clinear_Cauchy) 
+        by (simp add: cbounded_linear_Cauchy) 
       thus ?thesis
         unfolding f_def by blast
     qed
@@ -3134,7 +3136,7 @@ proof
           have \<open>isCont f r\<close>
             for r
             unfolding f_def
-            by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)
+            by (simp add: cbounded_linear_scaleC_left bounded_linear_continuous)
           hence \<open>(\<lambda> n. f \<langle> t, X n \<rangle>) \<longlonglongrightarrow> f (L t)\<close>
             using \<open>(\<lambda>n. \<langle>t, X n\<rangle>) \<longlonglongrightarrow> L t\<close> isCont_tendsto_compose by blast
           thus ?thesis unfolding f_def

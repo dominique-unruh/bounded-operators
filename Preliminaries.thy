@@ -11,7 +11,6 @@ theory Preliminaries
     Containers.Containers_Auxiliary
     "HOL.Complex" 
     "Jordan_Normal_Form.Conjugate" 
-    Ordered_Fields 
     HOL.Complete_Lattices
     Complex_Main
     Banach_Steinhaus.Banach_Steinhaus
@@ -318,9 +317,11 @@ proof intro_classes
     unfolding Basis_euclidean_space_def by simp
   show "u \<bullet> v = (if u = v then 1 else 0)"
     if "u \<in> Basis" and "v \<in> Basis"
-    sorry
-      (*    using that unfolding Basis_euclidean_space_def 
-    apply transfer using indicator_eq_0_iff  by fastforce *) 
+    sorry    
+(*
+    using that unfolding Basis_euclidean_space_def
+    apply transfer using indicator_eq_0_iff 
+*)  
 
   show "(\<forall>v\<in>Basis. (u::'a euclidean_space) \<bullet> v = 0) = (u = 0)"
     unfolding Basis_euclidean_space_def

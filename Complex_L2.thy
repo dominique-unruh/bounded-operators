@@ -9,9 +9,13 @@ Authors:
 *)
 
 theory Complex_L2
-  imports "HOL-Analysis.L2_Norm" "HOL-Library.Rewrite" "HOL-Analysis.Infinite_Set_Sum"
-    Complex_Inner_Product Infinite_Set_Sum_Missing Bounded_Operators Complex_Main
-    "HOL-ex.Sketch_and_Explore" General_Results_Missing
+  imports 
+    "HOL-Analysis.L2_Norm"
+    "HOL-Library.Rewrite"
+    "HOL-Analysis.Infinite_Set_Sum"
+    Complex_Inner_Product
+    Bounded_Operators Complex_Main
+    "HOL-ex.Sketch_and_Explore"
 begin
 
 unbundle bounded_notation
@@ -2645,7 +2649,7 @@ lift_definition classical_operator'::
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" 
   is "classical_operator'"
-  unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def
+  unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   apply auto
      apply (simp add: complex_vector.vector_space_axioms)
     apply (simp add: complex_vector.vector_space_axioms)
@@ -2916,8 +2920,8 @@ proof
   qed
 qed
 
-lemma bounded_clinear_Abs_ell2_option:
-  \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b
+lemma cbounded_linear_Abs_ell2_option:
+  \<open>cbounded_linear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
 proof-
   have \<open>classical_operator' \<pi> = 
@@ -2925,7 +2929,7 @@ proof-
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
     unfolding classical_operator'_def map_fun_def
     by auto
-  moreover have \<open>bounded_clinear (classical_operator' \<pi>)\<close>
+  moreover have \<open>cbounded_linear (classical_operator' \<pi>)\<close>
     by (metis classical_operator.rep_eq mem_Collect_eq times_bounded_vec)
   ultimately show ?thesis by auto
 qed
@@ -2980,9 +2984,9 @@ proof-
               (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
   proof-
-    have \<open>bounded_clinear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+    have \<open>cbounded_linear (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
-      using bounded_clinear_Abs_ell2_option by blast
+      using cbounded_linear_Abs_ell2_option by blast
     thus ?thesis
       using Abs_bounded_inverse
       by blast
@@ -3405,7 +3409,7 @@ proof-
       using approx_sym nsclosure_I by blast
     then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
       by blast
-    have \<open>bounded_clinear ((*\<^sub>v) A)\<close>
+    have \<open>cbounded_linear ((*\<^sub>v) A)\<close>
       using times_bounded_vec by blast
     hence \<open>isCont ((*\<^sub>v) A) x\<close>
       by simp
@@ -3422,11 +3426,11 @@ proof-
         by blast
       from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       have  \<open>A *\<^sub>v x = (\<Sum>a\<in>t. r a *\<^sub>C (A *\<^sub>v a))\<close>
-        unfolding bounded_clinear_def
+        unfolding cbounded_linear_def
         using times_bounded_vec \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
-         \<open>bounded_clinear ((*\<^sub>v) A)\<close> bounded_clinear.is_clinear
+         \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.is_clinear
         by smt
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (A *\<^sub>v a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>

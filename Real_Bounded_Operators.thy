@@ -25,10 +25,8 @@ theory Real_Bounded_Operators
   imports 
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
+    Complex_Inner_Product
     Complex_Vector_Spaces
-    Operator_Norm_Missing
-    Uniform_Limit_Missing
-    NSA_Miscellany
 begin
 unbundle no_notation_blinfun_apply
 

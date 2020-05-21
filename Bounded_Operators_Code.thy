@@ -1,7 +1,8 @@
 section \<open>\<open>Bounded_Operators_Code\<close> -- Support for code generation\<close>
 
 theory Bounded_Operators_Code
-  imports Bounded_Operators ToDo
+  imports
+    Bounded_Operators 
     Jordan_Normal_Form_Notation
 begin
 

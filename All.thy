@@ -11,6 +11,7 @@ theory All
   imports 
 (* preliminaries *)                
     Preliminaries
+    NSA_Miscellany
 (* main *)
     Complex_Vector_Spaces
     Complex_Inner_Product

@@ -11,11 +11,10 @@ theory Complex_Vector_Spaces
   imports 
     "HOL-ex.Sketch_and_Explore"
     "HOL-Analysis.Elementary_Topology"
-    Ordered_Complex
     "HOL-Analysis.Operator_Norm"
     "HOL-Analysis.Elementary_Normed_Spaces"
-    Unobtrusive_NSA
     "HOL-Library.Set_Algebras"
+    Preliminaries
 begin
 
 bundle notation_norm begin
@@ -747,14 +746,13 @@ proof
 
 qed
 
-
 lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
   unfolding clinear_def
   using Vector_Spaces.linear_compose
   by blast
 
 lemma clinear_additive_D:
-  \<open>clinear f \<Longrightarrow> additive f\<close>
+  \<open>clinear f \<Longrightarrow> (\<And> x y. f (x + y) = f x + f y)\<close>
   by (simp add: additive.intro complex_vector.linear_add)
 
 lemma clinear_imp_scaleC:
@@ -795,8 +793,7 @@ proof (rule clinearI)
     by (metis complex_scaleC_def mult_scaleC_right of_complex_mult scaleC_conv_of_complex)
 qed
 
-(* TODO rename \<rightarrow> cbounded_linear *)
-locale bounded_clinear = 
+locale cbounded_linear = 
   fixes f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
   assumes 
     is_clinear: "clinear f" and
@@ -835,12 +832,12 @@ lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
   by (auto simp: clinearI distrib_left)
 
-lemma bounded_clinear_intro:
+lemma cbounded_linear_intro:
   assumes "\<And>x y. f (x + y) = f x + f y"
     and "\<And>r x. f (r *\<^sub>C x) = r *\<^sub>C (f x)"
     and "\<And>x. norm (f x) \<le> norm x * K"
-  shows "bounded_clinear f"
-  using assms(1) assms(2) assms(3) bounded_clinear_def clinearI by blast
+  shows "cbounded_linear f"
+  using assms(1) assms(2) assms(3) cbounded_linear_def clinearI by blast
 
 locale csemilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
   assumes scaleC: "f (scaleC r x) = scaleC (cnj r) (f x)"
@@ -868,7 +865,7 @@ corollary complex_csemilinearD:
 
 lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
   apply (simp add: csemilinear_def additive_def csemilinear_axioms_def)
-  by (metis distrib_left)
+  by (simp add: distrib_left additive.intro)
 
 lemma csemilinearI:
   assumes "\<And>x y. f (x + y) = f x + f y"
@@ -906,7 +903,7 @@ lemma cnj_bounded_csemilinear[simp]: "bounded_csemilinear cnj"
 lemma bounded_csemilinear_compose1:
   assumes "bounded_csemilinear f"
     and "bounded_csemilinear g"
-  shows "bounded_clinear (\<lambda>x. f (g x))"
+  shows "cbounded_linear (\<lambda>x. f (g x))"
 proof -
   interpret f: bounded_csemilinear f by fact
   interpret g: bounded_csemilinear g by fact
@@ -950,11 +947,11 @@ qed
 
 lemma bounded_csemilinear_compose2:
   assumes "bounded_csemilinear f"
-    and "bounded_clinear g"
+    and "cbounded_linear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
 proof -
   interpret f: bounded_csemilinear f by fact
-  interpret g: bounded_clinear g by fact
+  interpret g: cbounded_linear g by fact
   show ?thesis
   proof unfold_locales
     show "f (g (x + y)) = f (g x) + f (g y)" for x y
@@ -981,11 +978,11 @@ proof -
 qed
 
 lemma bounded_csemilinear_compose3:
-  assumes "bounded_clinear f"
+  assumes "cbounded_linear f"
     and "bounded_csemilinear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
 proof -
-  interpret f: bounded_clinear f by fact
+  interpret f: cbounded_linear f by fact
   interpret g: bounded_csemilinear g by fact
   show ?thesis
   proof unfold_locales
@@ -1034,19 +1031,19 @@ sublocale bounded_bilinear
 lemma bounded_bilinear: "bounded_bilinear prod"
   by (fact bounded_bilinear_axioms)
 
-lemma bounded_clinear_left: "bounded_clinear (\<lambda>a. prod a b)"
+lemma cbounded_linear_left: "cbounded_linear (\<lambda>a. prod a b)"
   apply (insert bounded)
   apply safe
-  apply (rule_tac K="norm b * K" in bounded_clinear_intro)
+  apply (rule_tac K="norm b * K" in cbounded_linear_intro)
     apply (rule add_left)
    apply (rule scaleC_left)
   by (simp add: ac_simps)
 
 
-lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
+lemma cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
   apply (insert bounded)
   apply safe
-  apply (rule_tac K="norm a * K" in bounded_clinear_intro)
+  apply (rule_tac K="norm a * K" in cbounded_linear_intro)
     apply (rule add_right)
    apply (rule scaleC_right)
   by (simp add: ac_simps)
@@ -1064,15 +1061,15 @@ lemma flip: "bounded_cbilinear (\<lambda>x y. prod y x)"
 
 
 lemma comp1:
-  assumes "bounded_clinear g"
+  assumes "cbounded_linear g"
   shows "bounded_cbilinear (\<lambda>x. prod (g x))"
 proof unfold_locales
-  interpret g: bounded_clinear g by fact
-  write prod (infixl "**" 70)
-  show "\<And>a a' b. g (a + a') ** b = g a ** b + g a' ** b"
-    "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
-    "\<And>r a b. g (r *\<^sub>C a) ** b = r *\<^sub>C (g a ** b)"
-    "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
+  interpret g: cbounded_linear g by fact
+  write prod (infixl "***" 70)
+  show "\<And>a a' b. g (a + a') *** b = g a *** b + g a' *** b"
+    "\<And>a b b'. g a *** (b + b') = g a *** b + g a *** b'"
+    "\<And>r a b. g (r *\<^sub>C a) *** b = r *\<^sub>C (g a *** b)"
+    "\<And>a r b. g a *** (r *\<^sub>C b) = r *\<^sub>C (g a *** b)"
        apply (simp add: add_left g.add)
       apply (simp add: add_right)
      apply (simp add: complex_vector.linear_scale g.is_clinear scaleC_left)
@@ -1081,38 +1078,38 @@ proof unfold_locales
   from g.nonneg_bounded nonneg_bounded obtain K L
     where nn: "0 \<le> K" "0 \<le> L"
       and K: "\<And>x. norm (g x) \<le> norm x * K"
-      and L: "\<And>a b. norm (a ** b) \<le> norm a * norm b * L"
+      and L: "\<And>a b. norm (a *** b) \<le> norm a * norm b * L"
     by auto
-  have "norm (g a ** b) \<le> norm a * K * norm b * L" for a b
+  have "norm (g a *** b) \<le> norm a * K * norm b * L" for a b
     by (auto intro!:  order_trans[OF K] order_trans[OF L] mult_mono simp: nn)
-  thus "\<exists>K. \<forall>a b. norm (g a ** b) \<le> norm a * norm b * K"
+  thus "\<exists>K. \<forall>a b. norm (g a *** b) \<le> norm a * norm b * K"
     by (auto intro!: exI[where x="K * L"] simp: ac_simps)
 qed
 
-lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_cbilinear (\<lambda>x y. prod (f x) (g y))"
+lemma comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_cbilinear (\<lambda>x y. prod (f x) (g y))"
   by (rule bounded_cbilinear.flip[OF bounded_cbilinear.comp1[OF bounded_cbilinear.flip[OF comp1]]])
 
 end
 
-lemma bounded_clinear_ident[simp]: "bounded_clinear id"
-  unfolding bounded_clinear_def
+lemma cbounded_linear_ident[simp]: "cbounded_linear id"
+  unfolding cbounded_linear_def
   apply auto
    apply (simp add: clinearI)
   using less_eq_real_def by auto
 
 
-lemma bounded_clinear_zero[simp]: "bounded_clinear (\<lambda>x. 0)"
-  unfolding bounded_clinear_def
+lemma cbounded_linear_zero[simp]: "cbounded_linear (\<lambda>x. 0)"
+  unfolding cbounded_linear_def
   by (metis complex_vector.module_hom_zero mult.commute mult_zero_left norm_zero order_refl)
 
 
-lemma bounded_clinear_add:
-  assumes "bounded_clinear f"
-    and "bounded_clinear g"
-  shows "bounded_clinear (\<lambda>x. f x + g x)"
+lemma cbounded_linear_add:
+  assumes "cbounded_linear f"
+    and "cbounded_linear g"
+  shows "cbounded_linear (\<lambda>x. f x + g x)"
 proof -
-  interpret f: bounded_clinear f by fact
-  interpret g: bounded_clinear g by fact
+  interpret f: cbounded_linear f by fact
+  interpret g: cbounded_linear g by fact
   from f.bounded obtain Kf where Kf: "norm (f x) \<le> norm x * Kf" for x
     by blast
   from g.bounded obtain Kg where Kg: "norm (g x) \<le> norm x * Kg" for x
@@ -1128,11 +1125,11 @@ proof -
   qed
 qed
 
-lemma bounded_clinear_minus:
-  assumes "bounded_clinear f"
-  shows "bounded_clinear (\<lambda>x. - f x)"
+lemma cbounded_linear_minus:
+  assumes "cbounded_linear f"
+  shows "cbounded_linear (\<lambda>x. - f x)"
 proof -
-  interpret f: bounded_clinear f by fact
+  interpret f: cbounded_linear f by fact
   show ?thesis
   proof
     show "clinear (\<lambda>x. - f x)"
@@ -1142,22 +1139,22 @@ proof -
   qed
 qed
 
-lemma bounded_clinear_sub: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_clinear (\<lambda>x. f x - g x)"
-  using bounded_clinear_add[of f "\<lambda>x. - g x"] bounded_clinear_minus[of g]
+lemma cbounded_linear_sub: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> cbounded_linear (\<lambda>x. f x - g x)"
+  using cbounded_linear_add[of f "\<lambda>x. - g x"] cbounded_linear_minus[of g]
   by (auto simp add: algebra_simps)
 
-lemma bounded_clinear_sum:
+lemma cbounded_linear_sum:
   fixes f :: "'i \<Rightarrow> 'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  shows "(\<And>i. i \<in> I \<Longrightarrow> bounded_clinear (f i)) \<Longrightarrow> bounded_clinear (\<lambda>x. \<Sum>i\<in>I. f i x)"
-  by (induct I rule: infinite_finite_induct) (auto intro!: bounded_clinear_add)
+  shows "(\<And>i. i \<in> I \<Longrightarrow> cbounded_linear (f i)) \<Longrightarrow> cbounded_linear (\<lambda>x. \<Sum>i\<in>I. f i x)"
+  by (induct I rule: infinite_finite_induct) (auto intro!: cbounded_linear_add)
 
-lemma bounded_clinear_compose:
-  assumes "bounded_clinear f"
-    and "bounded_clinear g"
-  shows "bounded_clinear (\<lambda>x. f (g x))"
+lemma cbounded_linear_compose:
+  assumes "cbounded_linear f"
+    and "cbounded_linear g"
+  shows "cbounded_linear (\<lambda>x. f (g x))"
 proof -
-  interpret f: bounded_clinear f by fact
-  interpret g: bounded_clinear g by fact
+  interpret f: cbounded_linear f by fact
+  interpret g: cbounded_linear g by fact
   show ?thesis
   proof
     show "clinear (\<lambda>x. f (g x))"
@@ -1203,23 +1200,23 @@ lemma bounded_cbilinear_mult: "bounded_cbilinear ((*) :: 'a \<Rightarrow> 'a \<R
   by (simp add: norm_mult_ineq)
 
 
-lemma bounded_clinear_mult_left: "bounded_clinear (\<lambda>x::'a::complex_normed_algebra. x * y)"
+lemma cbounded_linear_mult_left: "cbounded_linear (\<lambda>x::'a::complex_normed_algebra. x * y)"
   using bounded_cbilinear_mult
-  by (rule bounded_cbilinear.bounded_clinear_left)
+  by (rule bounded_cbilinear.cbounded_linear_left)
 
-lemma bounded_clinear_mult_right: "bounded_clinear (\<lambda>y::'a::complex_normed_algebra. x * y)"
+lemma cbounded_linear_mult_right: "cbounded_linear (\<lambda>y::'a::complex_normed_algebra. x * y)"
   using bounded_cbilinear_mult
-  by (rule bounded_cbilinear.bounded_clinear_right)
+  by (rule bounded_cbilinear.cbounded_linear_right)
 
-lemmas bounded_clinear_mult_const =
-  bounded_clinear_mult_left [THEN bounded_clinear_compose]
+lemmas cbounded_linear_mult_const =
+  cbounded_linear_mult_left [THEN cbounded_linear_compose]
 
-lemmas bounded_clinear_const_mult =
-  bounded_clinear_mult_right [THEN bounded_clinear_compose]
+lemmas cbounded_linear_const_mult =
+  cbounded_linear_mult_right [THEN cbounded_linear_compose]
 
-lemma bounded_clinear_divide: "bounded_clinear (\<lambda>x. x / y)"
+lemma cbounded_linear_divide: "cbounded_linear (\<lambda>x. x / y)"
   for y :: "'a::complex_normed_field"
-  unfolding divide_inverse by (rule bounded_clinear_mult_left)
+  unfolding divide_inverse by (rule cbounded_linear_mult_left)
 
 lemma bounded_cbilinear_scaleC: "bounded_cbilinear scaleC"
   apply (rule bounded_cbilinear.intro)
@@ -1231,35 +1228,35 @@ lemma bounded_cbilinear_scaleC: "bounded_cbilinear scaleC"
   by simp
 
 
-lemma bounded_clinear_scaleC_left: "bounded_clinear (\<lambda>r. scaleC r x)"
+lemma cbounded_linear_scaleC_left: "cbounded_linear (\<lambda>r. scaleC r x)"
   using bounded_cbilinear_scaleC
-  by (rule bounded_cbilinear.bounded_clinear_left)
+  by (rule bounded_cbilinear.cbounded_linear_left)
 
-lemma bounded_clinear_scaleC_right: "bounded_clinear (\<lambda>x. scaleC r x)"
+lemma cbounded_linear_scaleC_right: "cbounded_linear (\<lambda>x. scaleC r x)"
   using bounded_cbilinear_scaleC
-  by (rule bounded_cbilinear.bounded_clinear_right)
+  by (rule bounded_cbilinear.cbounded_linear_right)
 
-lemmas bounded_clinear_scaleC_const =
-  bounded_clinear_scaleC_left[THEN bounded_clinear_compose]
+lemmas cbounded_linear_scaleC_const =
+  cbounded_linear_scaleC_left[THEN cbounded_linear_compose]
 
-lemmas bounded_clinear_const_scaleC =
-  bounded_clinear_scaleC_right[THEN bounded_clinear_compose]
+lemmas cbounded_linear_const_scaleC =
+  cbounded_linear_scaleC_right[THEN cbounded_linear_compose]
 
-lemma bounded_clinear_of_complex: "bounded_clinear (\<lambda>r. of_complex r)"
-  unfolding of_complex_def by (rule bounded_clinear_scaleC_left)
+lemma cbounded_linear_of_complex: "cbounded_linear (\<lambda>r. of_complex r)"
+  unfolding of_complex_def by (rule cbounded_linear_scaleC_left)
 
-lemma complex_bounded_clinear: "bounded_clinear f \<longleftrightarrow> (\<exists>c::complex. f = (\<lambda>x. x * c))"
+lemma complex_cbounded_linear: "cbounded_linear f \<longleftrightarrow> (\<exists>c::complex. f = (\<lambda>x. x * c))"
   for f :: "complex \<Rightarrow> complex"
 proof -
   {
     fix x
-    assume "bounded_clinear f"
-    then interpret bounded_clinear f .
+    assume "cbounded_linear f"
+    then interpret cbounded_linear f .
     have "f x = x * f 1"
       by (metis complex_scaleC_def complex_vector.linear_scale is_clinear mult.comm_neutral)      
   }
   thus ?thesis
-    by (auto intro: exI[of _ "f 1"] bounded_clinear_mult_left)
+    by (auto intro: exI[of _ "f 1"] cbounded_linear_mult_left)
 qed
 
 lemma bij_clinear_imp_inv_clinear: "clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear (inv f)"
@@ -1317,16 +1314,16 @@ lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
    apply (simp add: scaleC_left)
   by (simp add: ac_simps)
 
-lemma bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
+lemma cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
   apply (insert bounded)
   apply safe
-  apply (rule_tac K="norm a * K" in bounded_clinear_intro)
+  apply (rule_tac K="norm a * K" in cbounded_linear_intro)
     apply (rule add_right)
    apply (rule scaleC_right)
   by (simp add: ac_simps)
 
 lemma comp1:
-  assumes \<open>bounded_clinear g\<close>
+  assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
 proof
   show "prod (g (a + a')) b = prod (g a) b + prod (g a') b"
@@ -1335,8 +1332,8 @@ proof
       and b :: 'b
   proof-
     have \<open>g (a + a') = g a + g a'\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_add)
     thus ?thesis
       by (simp add: add_left) 
@@ -1352,8 +1349,8 @@ proof
       and b :: 'b
   proof-
     have \<open>g (r *\<^sub>C a) = r *\<^sub>C (g a)\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_scale)
     thus ?thesis
       by (simp add: scaleC_left)      
@@ -1366,8 +1363,8 @@ proof
   show "\<exists>K. \<forall>a b. norm (prod (g a) b) \<le> norm a * norm b * K"
   proof-
     have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by simp
     hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
       by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
@@ -1417,7 +1414,7 @@ proof
 qed
 
 lemma comp2:
-  assumes \<open>bounded_clinear g\<close>
+  assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x y. prod x (g y))\<close>
 proof
   show "prod (a + a') (g b) = prod a (g b) + prod a' (g b)"
@@ -1431,8 +1428,8 @@ proof
       and b' :: 'd
   proof-
     have \<open>g (b + b') = g b + g b'\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_add)
     thus ?thesis
       by (simp add: add_right) 
@@ -1448,8 +1445,8 @@ proof
       and b :: 'd
   proof-
     have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_scale)
     thus ?thesis
       by (simp add: scaleC_right) 
@@ -1457,8 +1454,8 @@ proof
   show "\<exists>K. \<forall>a b. norm (prod a (g b)) \<le> norm a * norm b * K"
   proof-
     have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>bounded_clinear g\<close>
-      unfolding bounded_clinear_def
+      using \<open>cbounded_linear g\<close>
+      unfolding cbounded_linear_def
       by simp
     hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
       by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
@@ -1505,7 +1502,7 @@ proof
   qed  
 qed
 
-lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
+lemma comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
 end
@@ -1549,22 +1546,22 @@ lemma clinear_sum:
   \<open>finite S \<Longrightarrow> (\<And> t. t \<in> S \<Longrightarrow> clinear (f t)) \<Longrightarrow> clinear (\<lambda> x. \<Sum> t\<in>S. f t x)\<close>
   using clinear_sum_induction by blast
 
-lemma bounded_clinearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
+lemma cbounded_linearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
   by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
 
-lemma scalarR_bounded_clinear:
+lemma scalarR_cbounded_linear:
   fixes c :: real
-  assumes \<open>bounded_clinear f\<close>
-  shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
+  assumes \<open>cbounded_linear f\<close>
+  shows \<open>cbounded_linear (\<lambda> x. c *\<^sub>R f x )\<close>
 proof-
-  have  \<open>bounded_clinear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
-    by (simp add: assms bounded_clinear_const_scaleC)
+  have  \<open>cbounded_linear (\<lambda> x. (complex_of_real c) *\<^sub>C f x )\<close>
+    by (simp add: assms cbounded_linear_const_scaleC)
   thus ?thesis
     by (simp add: scaleR_scaleC) 
 qed
 
-lemma bounded_linear_bounded_clinear:
-  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> bounded_clinear A\<close>
+lemma bounded_linear_cbounded_linear:
+  \<open>bounded_linear A \<Longrightarrow> \<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x \<Longrightarrow> cbounded_linear A\<close>
 proof
   show "clinear A"
     if "bounded_linear A"
@@ -1578,22 +1575,22 @@ proof
     by (simp add: bounded_linear.bounded) 
 qed
 
-lemma comp_bounded_clinear:
+lemma comp_cbounded_linear:
   fixes  A :: \<open>'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector\<close> 
     and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-  shows \<open>bounded_clinear (A \<circ> B)\<close>
+  assumes \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
+  shows \<open>cbounded_linear (A \<circ> B)\<close>
 proof
   show "clinear (A \<circ> B)"
-    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) bounded_clinear.is_clinear)
+    by (simp add: Complex_Vector_Spaces.linear_compose assms(1) assms(2) cbounded_linear.is_clinear)
 
   show "\<exists>K. \<forall>x. norm ((A \<circ> B) x) \<le> norm x * K"
   proof-
     obtain KB where \<open>\<forall>x. norm (B x) \<le> norm x * KB\<close> and \<open>KB \<ge> 0\<close>
-      using assms(2) bounded_clinear.bounded
+      using assms(2) cbounded_linear.bounded
       by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
     obtain KA where \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close> and \<open>KA \<ge> 0\<close>
-      using assms(1) bounded_clinear.bounded
+      using assms(1) cbounded_linear.bounded
       by (metis (mono_tags, hide_lams) mult_le_0_iff norm_ge_zero order.trans zero_le_mult_iff) 
     have \<open>\<forall>x. norm (A (B x)) \<le> norm x * KB * KA\<close>
       using  \<open>\<forall>x. norm (A x) \<le> norm x * KA\<close>  \<open>KA \<ge> 0\<close> 
@@ -1708,17 +1705,17 @@ subclass (in cbanach) banach ..
 
 instance complex :: cbanach ..
 
-lemmas sums_of_complex = bounded_linear.sums [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas summable_of_complex = bounded_linear.summable [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_of_complex = bounded_linear.suminf [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
+lemmas sums_of_complex = bounded_linear.sums [OF cbounded_linear_of_complex[THEN cbounded_linear.bounded_linear]]
+lemmas summable_of_complex = bounded_linear.summable [OF cbounded_linear_of_complex[THEN cbounded_linear.bounded_linear]]
+lemmas suminf_of_complex = bounded_linear.suminf [OF cbounded_linear_of_complex[THEN cbounded_linear.bounded_linear]]
 
-lemmas sums_scaleC_left = bounded_linear.sums[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_left = bounded_linear.summable[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_left = bounded_linear.suminf[OF bounded_clinear_scaleC_left[THEN bounded_clinear.bounded_linear]]
+lemmas sums_scaleC_left = bounded_linear.sums[OF cbounded_linear_scaleC_left[THEN cbounded_linear.bounded_linear]]
+lemmas summable_scaleC_left = bounded_linear.summable[OF cbounded_linear_scaleC_left[THEN cbounded_linear.bounded_linear]]
+lemmas suminf_scaleC_left = bounded_linear.suminf[OF cbounded_linear_scaleC_left[THEN cbounded_linear.bounded_linear]]
 
-lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
+lemmas sums_scaleC_right = bounded_linear.sums[OF cbounded_linear_scaleC_right[THEN cbounded_linear.bounded_linear]]
+lemmas summable_scaleC_right = bounded_linear.summable[OF cbounded_linear_scaleC_right[THEN cbounded_linear.bounded_linear]]
+lemmas suminf_scaleC_right = bounded_linear.suminf[OF cbounded_linear_scaleC_right[THEN cbounded_linear.bounded_linear]]
 
 subsection \<open>Miscellany\<close>
 
@@ -1827,7 +1824,7 @@ qed
 
 lemma onorm_scalarC:
   fixes f :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close>
-  assumes \<open>bounded_clinear f\<close>
+  assumes \<open>cbounded_linear f\<close>
   shows  \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (cmod r) * onorm f\<close>
 proof-
   have \<open>onorm (\<lambda> x. r *\<^sub>C (f x)) = (SUP x. norm ( (\<lambda> t. r *\<^sub>C (f t)) x) / norm x)\<close>
@@ -1842,8 +1839,8 @@ proof-
     proof-
       have \<open>(norm (f x)) / norm x \<le> onorm f\<close>
         for x
-        using \<open>bounded_clinear f\<close>
-        by (simp add: bounded_clinear.bounded_linear le_onorm)        
+        using \<open>cbounded_linear f\<close>
+        by (simp add: cbounded_linear.bounded_linear le_onorm)        
       thus ?thesis
         by fastforce 
     qed
@@ -1920,7 +1917,7 @@ proof-
       using \<open>\<forall>n. xx n \<in> A\<close> assms complex_vector.subspace_def
       by (simp add: complex_vector.subspace_def)
     have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
-      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
+      using cbounded_linear.bounded_linear cbounded_linear_scaleC_right linear_continuous_at by auto
     hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
       by (simp add: isCont_tendsto_compose)
     thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
@@ -2091,13 +2088,13 @@ instantiation linear_space :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. scaleC c ` S"
   apply (rule closed_subspace.intro)
-  using bounded_clinear_def bounded_clinear_scaleC_right closed_subspace.subspace complex_vector.linear_subspace_image apply blast
+  using cbounded_linear_def cbounded_linear_scaleC_right closed_subspace.subspace complex_vector.linear_subspace_image apply blast
   by (simp add: closed_scaleC closed_subspace.closed)
 
 lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
   "\<lambda>c S. (scaleR c) ` S"
   apply (rule closed_subspace.intro)
-  using bounded_clinear_def bounded_clinear_scaleC_right scaleR_scaleC
+  using cbounded_linear_def cbounded_linear_scaleC_right scaleR_scaleC
    apply (metis closed_subspace.subspace complex_vector.linear_subspace_image)
   by (simp add: closed_scaling closed_subspace.closed)
 instance 
@@ -2320,9 +2317,9 @@ proof-
 qed
 
 lemma bounded_linear_continuous:
-  assumes \<open>bounded_clinear f\<close> 
+  assumes \<open>cbounded_linear f\<close> 
   shows \<open>isCont f x\<close>
-  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
+  by (simp add: assms cbounded_linear.bounded_linear linear_continuous_at)
 
 lemma equal_span_0:
   fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> 
@@ -2366,8 +2363,8 @@ proof
 qed
 end
 
-lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
-  by (rule Complex_Vector_Spaces.bounded_clinear_ident)
+lemma id_cbounded_linear: \<open>cbounded_linear id\<close>
+  by (rule Complex_Vector_Spaces.cbounded_linear_ident)
 
 lemma bounded_sesquilinear_diff:
   \<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
@@ -2753,11 +2750,13 @@ next
     using sum.insert insert by auto
 qed
 
+(* Ask to Dominique
 lemma (in bounded_cbilinear) tendsto:
-  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. f x ** g x) \<longlongrightarrow> a ** b) F"
+  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. (f x) *** (g x)) \<longlongrightarrow> a *** b) F"
   by (rule tendsto)
-
+ 
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
+*)
 
 end
