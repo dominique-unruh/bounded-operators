@@ -207,7 +207,7 @@ proof -
   next
     case (Cons x xs y ys z zs)
     assume \<open>length xs = length ys\<close> and \<open>length ys = length zs\<close> and
-       \<open>basis_enum_of_vec_list zs (map2 (+) xs ys) =
+      \<open>basis_enum_of_vec_list zs (map2 (+) xs ys) =
        basis_enum_of_vec_list zs xs + basis_enum_of_vec_list zs ys\<close>
     have \<open>basis_enum_of_vec_list (z # zs) (map2 (+) (x # xs) (y # ys)) =
        (x + y) *\<^sub>C z + basis_enum_of_vec_list zs (map2 (+) xs ys)\<close>
@@ -278,7 +278,7 @@ proof -
   next
     case (Cons x xs y ys)
     assume \<open>length xs = length ys\<close> and 
-       \<open>basis_enum_of_vec_list ys (map ((*) c) xs) =
+      \<open>basis_enum_of_vec_list ys (map ((*) c) xs) =
        c *\<^sub>C basis_enum_of_vec_list ys xs\<close> 
     have \<open>basis_enum_of_vec_list (y # ys)
         (map ((*) c) (x # xs)) = (c * x) *\<^sub>C y +
@@ -320,42 +320,164 @@ proof-
   ultimately show ?thesis by auto
 qed
 
-(* NEW *)
-lemma basis_enum_of_vec_list_list_of_vec:
-  fixes w
-  assumes f1: "distinct (canonical_basis::('a list))"
-  shows  "basis_enum_of_vec_list (canonical_basis::('a::basis_enum list))
-         (list_of_vec (vec_of_basis_enum w)) = w"
-proof(induction "canonical_basis::('a list)" arbitrary: w)
-  case Nil
-  moreover have "vec_of_basis_enum_list [] w = 0\<^sub>v (length (canonical_basis::'a list))"
-    by simp
-  moreover have "basis_enum_of_vec_list (canonical_basis::('a list))
-                   (replicate (length (canonical_basis::('a list))) 0) = w"
+lemma cinner_span_breakdown_eq:
+  assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "a \<in> sphere 0 1"
+  shows
+    "(x \<in> Complex_Vector_Spaces.span (insert a S)) =
+   (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S)"
+proof
+  show "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+    if "x \<in> Complex_Vector_Spaces.span (insert a S)"
   proof-
-    have "w = 0"
-      using Nil 
-      by (simp add: vector_space_zero_canonical_basis) 
-    thus ?thesis
-      by (metis Nil.hyps basis_enum_of_vec_list.simps(1)) 
+    have "\<exists>k. x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+      using that
+      by (simp add: complex_vector.span_breakdown_eq)
+    then obtain k where "x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+      by blast
+    hence "\<exists>t r. finite t \<and> t \<subseteq> S \<and> x - k *\<^sub>C a = (\<Sum>c\<in>t. r c *\<^sub>C c)"
+      using complex_vector.span_explicit by (smt mem_Collect_eq)
+    then obtain t r where c1: "finite t" and c2: "t \<subseteq> S" and c3: "x - k *\<^sub>C a = (\<Sum>c\<in>t. r c *\<^sub>C c)"
+      by blast
+    have "\<langle>a, x - k *\<^sub>C a\<rangle> = \<langle>a, (\<Sum>c\<in>t. r c *\<^sub>C c)\<rangle>"
+      using c3
+      by simp
+    also have "\<dots> = (\<Sum>c\<in>t. r c * \<langle>a, c\<rangle>)"
+      by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong)
+    also have "\<dots> = 0"
+    proof-
+      have "c\<in>S \<Longrightarrow> \<langle>a, c\<rangle> = 0" for c
+      proof-
+        assume "c\<in>S"
+        hence "a \<noteq> c"
+          using f1 by blast
+        thus ?thesis
+          using f2
+          by (metis DiffD1 Diff_insert_absorb \<open>c \<in> S\<close> f1 insertI1 is_ortho_set_def) 
+      qed
+      thus ?thesis
+        by (metis (mono_tags, lifting) c2 mult_not_zero subset_eq sum_not_0)
+    qed
+    finally have "\<langle>a, x - k *\<^sub>C a\<rangle> = 0"
+      by blast
+    hence "\<langle>a, x\<rangle> - \<langle>a, k *\<^sub>C a\<rangle> = 0"
+      by (simp add: cinner_diff_right)
+    hence "\<langle>a, x\<rangle> = \<langle>a, k *\<^sub>C a\<rangle>"
+      by simp
+    hence "\<langle>a, x\<rangle> = k * \<langle>a, a\<rangle>"
+      by simp
+    moreover have "\<langle>a, a\<rangle> = 1"
+    proof-
+      have "cmod \<langle>a, a\<rangle> = 1"
+        using f3 unfolding sphere_def apply auto 
+        using norm_eq_sqrt_cinner[where x = a] 
+        by auto
+      moreover have "\<langle>a, a\<rangle> \<in> \<real>"
+        by (simp add: cinner_real)
+      moreover have "\<langle>a, a\<rangle> \<ge> 0"
+        using cinner_ge_zero by auto
+      ultimately show ?thesis
+        using complex_of_real_cmod by force 
+    qed
+    ultimately show ?thesis by (smt \<open>x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S\<close> mult_cancel_left1)
   qed
-  ultimately show ?case unfolding vec_of_basis_enum_def 
-    by auto    
-next
-  case (Cons x ys)
-  have "basis_enum_of_vec_list (x#ys) (v#vs) 
-        = v *\<^sub>C x + basis_enum_of_vec_list ys vs" for v vs
-    sorry
-  moreover have  "vec_of_basis_enum w = vec_of_basis_enum_list(x#ys) w"
-    sorry
-  ultimately have "basis_enum_of_vec_list (x # ys)
-        (list_of_vec (vec_of_basis_enum w)) = w"
-    sorry
-  thus ?case
-    by (simp add: Cons.hyps(2)) 
+  show "x \<in> Complex_Vector_Spaces.span (insert a S)"
+    if "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+    using that complex_vector.span_breakdown_eq by auto 
 qed
 
+lemma span_set_inner:
+  assumes "w \<in> complex_vector.span (set L)" and "distinct L" and "is_ortho_set (set L)" 
+    and "\<forall>a\<in>set L. a\<in>sphere 0 1"
+  shows  "w = (\<Sum>b\<in>set L. \<langle>b, w\<rangle> *\<^sub>C b)"
+  using assms
+proof(induction L arbitrary: w)
+  case Nil
+  hence "w = 0"
+    by auto
+  moreover have "(\<Sum>b\<in>set []. \<langle>b, w\<rangle> *\<^sub>C b) = 0"
+    by simp    
+  ultimately show ?case by simp
+next
+  case (Cons a L)
+  have "(\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b) = (\<Sum>b\<in>insert a (set L). \<langle>b, w\<rangle> *\<^sub>C b)"
+    by auto
+  also have "\<dots> = \<langle>a, w\<rangle> *\<^sub>C a + (\<Sum>b\<in>(set L). \<langle>b, w\<rangle> *\<^sub>C b)"
+    using Cons.prems(2) by auto
+  also have "\<dots> = \<langle>a, w\<rangle> *\<^sub>C a + (\<Sum>b\<in>(set L). \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> *\<^sub>C b)"
+  proof-
+    have "b\<in>(set L) \<Longrightarrow> \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> = \<langle>b, w\<rangle>" for b
+    proof-
+      assume "b\<in>(set L)"
+      hence "b \<noteq> a"
+        using Cons.prems(2) by auto        
+      hence g1: "\<langle>b, a\<rangle> = 0"
+        by (meson Cons.prems(3) \<open>b \<in> set L\<close> is_ortho_set_def list.set_intros(1) list.set_intros(2))        
+      have "\<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> = \<langle>b, w\<rangle> - \<langle>b, \<langle>a, w\<rangle> *\<^sub>C a\<rangle>"
+        using cinner_diff_right by blast
+      also have "\<dots> = \<langle>b, w\<rangle> - \<langle>a, w\<rangle> * \<langle>b, a\<rangle>"
+        by simp
+      also have "\<dots> = \<langle>b, w\<rangle>"
+        using g1 by simp
+      finally show ?thesis by blast
+    qed
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = \<langle>a, w\<rangle> *\<^sub>C a + (w - \<langle>a, w\<rangle> *\<^sub>C a)"
+  proof-
+    have "set (a # L) = insert a (set L)"
+      by simp
+    moreover have "a \<in> sphere 0 1"
+      using Cons.prems(4) by auto      
+    ultimately have "w - \<langle>a, w\<rangle> *\<^sub>C a \<in> complex_vector.span (set L)"
+      using Cons.prems(1) cinner_span_breakdown_eq[where S = "set L" and x = w and a = a]
+        Cons.prems(2) Cons.prems(3) distinct.simps(2) 
+      by smt
+    moreover have "is_ortho_set (set L)"
+      unfolding is_ortho_set_def 
+    proof auto
+      fix x y::'a
+      assume o1: "x \<in> set L" and o2: "y \<in> set L" and o3: "x \<noteq> y" 
+      have "x \<in> set (a#L)"
+        by (simp add: o1)        
+      moreover have "y \<in> set (a#L)"
+        by (simp add: o2)
+      ultimately show "\<langle>x, y\<rangle> = 0"
+        using o3 Cons.prems(3) is_ortho_set_def by blast 
+    qed
+    moreover have "\<forall>a\<in>set L. a\<in>sphere 0 1"
+      using Cons.prems(4) by auto      
+    ultimately have "(\<Sum>b\<in>(set L). \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> *\<^sub>C b) = w - \<langle>a, w\<rangle> *\<^sub>C a"
+      using Cons.IH Cons.prems(2) distinct.simps(2) sum.cong
+      by smt
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = w"
+    by simp
+  finally have "(\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b) = w"
+    by blast
+  thus "w = (\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b)" by simp
+qed
 
+lemma canonical_basis_inner:
+  "w = (\<Sum>b\<in>set canonical_basis. \<langle>b, w\<rangle> *\<^sub>C b)"
+  using span_set_inner
+  by (simp add: Ortho_expansion_finite is_onb_set)
+
+(* NEW *)
+lemma basis_enum_of_vec_list_list_of_vec:
+  fixes w::"'a::basis_enum"
+  assumes f1: "distinct (canonical_basis::('a list))"
+  shows  "basis_enum_of_vec_list (canonical_basis::('a list))
+         (list_of_vec (vec_of_basis_enum w)) = w"
+proof-
+  have "basis_enum_of_vec_list (canonical_basis::('a list))
+         (list_of_vec (vec_of_basis_enum w)) = 
+        sum (\<lambda>b. \<langle>b, w \<rangle> *\<^sub>C b) (set (canonical_basis::('a list)))"
+    sorry
+  also have "\<dots> = w"
+    using canonical_basis_inner[where w = w] by simp
+  finally show ?thesis by blast
+qed
 
 (* TODO: When written as \<open>basis_enum_of_vec (vec_of_basis_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
