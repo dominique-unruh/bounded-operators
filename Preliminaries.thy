@@ -316,15 +316,11 @@ proof intro_classes
     unfolding Basis_euclidean_space_def by simp
   show "finite (Basis::'a euclidean_space set)"
     unfolding Basis_euclidean_space_def by simp
-   (* Ask to Dominique *)
   show "u \<bullet> v = (if u = v then 1 else 0)"
     if "u \<in> Basis" and "v \<in> Basis"
-    sorry    
-(*
     using that unfolding Basis_euclidean_space_def
-    apply transfer using indicator_eq_0_iff 
-*)  
-
+    apply transfer apply auto
+    by (auto simp: indicator_def)
   show "(\<forall>v\<in>Basis. (u::'a euclidean_space) \<bullet> v = 0) = (u = 0)"
     unfolding Basis_euclidean_space_def
     apply transfer

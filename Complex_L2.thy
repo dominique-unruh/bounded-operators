@@ -2360,7 +2360,7 @@ proof
 qed
 
 
-instantiation ell2 :: (enum) basis_enum begin
+instantiation ell2 :: (enum) onb_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
 definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
 instance
@@ -2377,99 +2377,98 @@ proof
       unfolding canonical_basis_ell2_def
       using distinct_map
       by blast
-  qed
-  show "is_onb (set (canonical_basis::'a ell2 list))"
-    unfolding is_onb_def is_ob_def 
-  proof auto
-    show \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close>
-    proof-
-      have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
+  qed    
+  show "is_ortho_set (set (canonical_basis::'a ell2 list))"
+  proof-
+    have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
       \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>
-        for x y
-      proof-
-        assume \<open>x\<in>set (canonical_basis::'a ell2 list)\<close> and \<open>y\<in>set canonical_basis\<close>
-          and \<open>x \<noteq> y\<close>
-        from \<open>x\<in>set (canonical_basis::'a ell2 list)\<close>
-        have \<open>\<exists> i. x = ket i\<close>
-          unfolding canonical_basis_ell2_def
-          by auto
-        then obtain i where \<open>x = ket i\<close>
-          by blast
-        from \<open>y\<in>set (canonical_basis::'a ell2 list)\<close>
-        have \<open>\<exists> j. y = ket j\<close>
-          unfolding canonical_basis_ell2_def
-          by auto
-        then obtain j where \<open>y = ket j\<close>
-          by blast
-        have \<open>i \<noteq> j\<close>
-          using \<open>x \<noteq> y\<close>  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-          by auto
-        hence \<open>\<langle>ket i, ket j\<rangle> = 0\<close>
-          by (simp add: ket_Kronecker_delta_neq)
-        thus \<open>\<langle>x, y\<rangle> = 0\<close>
-          using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-          by simp
-      qed
-      thus ?thesis
-        unfolding is_ortho_set_def
-        by blast
-    qed
-    show "is_basis (set (canonical_basis::'a ell2 list))"
+      for x y
     proof-
-      show "is_basis (set (canonical_basis::'a ell2 list))"
-        unfolding canonical_basis_ell2_def is_basis_def
-      proof
-        show "complex_vector.independent (set (map ket (enum_class.enum::'a list)))"
-        proof-
-          have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
-          proof (rule classical)
-            assume \<open>\<not> (0::'a ell2) \<notin> set canonical_basis\<close>
-            hence \<open>(0::'a ell2) \<in> set canonical_basis\<close>
-              by blast
-            hence \<open>\<exists> i. (0::'a ell2) = ket i\<close>
-              unfolding canonical_basis_ell2_def
-              by auto
-            then obtain i where \<open>(0::'a ell2) = ket i\<close>
-              by blast
-            hence \<open>Rep_ell2 (0::'a ell2) i = Rep_ell2 (ket i) i\<close>
-              by simp
-            moreover have \<open>Rep_ell2 (0::'a ell2) i = 0\<close>
-              apply transfer by blast
-            moreover have \<open>Rep_ell2 (ket i) i = 1\<close>
-              apply transfer by auto
-            ultimately show ?thesis by simp
-          qed
-          thus ?thesis 
-            using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
-            unfolding canonical_basis_ell2_def
-            by (metis Complex_Vector_Spaces.dependent_raw_def)            
-        qed
-        show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
-        proof-
-          have \<open>closure
-              (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-            by (simp add: ket_ell2_span)
-          moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
-            using UNIV_enum
+      assume \<open>x\<in>set (canonical_basis::'a ell2 list)\<close> and \<open>y\<in>set canonical_basis\<close>
+        and \<open>x \<noteq> y\<close>
+      from \<open>x\<in>set (canonical_basis::'a ell2 list)\<close>
+      have \<open>\<exists> i. x = ket i\<close>
+        unfolding canonical_basis_ell2_def
+        by auto
+      then obtain i where \<open>x = ket i\<close>
+        by blast
+      from \<open>y\<in>set (canonical_basis::'a ell2 list)\<close>
+      have \<open>\<exists> j. y = ket j\<close>
+        unfolding canonical_basis_ell2_def
+        by auto
+      then obtain j where \<open>y = ket j\<close>
+        by blast
+      have \<open>i \<noteq> j\<close>
+        using \<open>x \<noteq> y\<close>  \<open>x = ket i\<close>  \<open>y = ket j\<close>
+        by auto
+      hence \<open>\<langle>ket i, ket j\<rangle> = 0\<close>
+        by (simp add: ket_Kronecker_delta_neq)
+      thus \<open>\<langle>x, y\<rangle> = 0\<close>
+        using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
+        by simp
+    qed
+    thus ?thesis
+      unfolding is_ortho_set_def
+      by blast
+  qed
+
+  show "is_basis (set (canonical_basis::'a ell2 list))"
+  proof-
+    show "is_basis (set (canonical_basis::'a ell2 list))"
+      unfolding canonical_basis_ell2_def is_basis_def
+    proof
+      show "complex_vector.independent (set (map ket (enum_class.enum::'a list)))"
+      proof-
+        have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
+        proof (rule classical)
+          assume \<open>\<not> (0::'a ell2) \<notin> set canonical_basis\<close>
+          hence \<open>(0::'a ell2) \<in> set canonical_basis\<close>
             by blast
-          ultimately have \<open>closure
-              (complex_vector.span (ket ` set (enum_class.enum::'a list))) = UNIV\<close>
-            by simp
-          thus ?thesis
+          hence \<open>\<exists> i. (0::'a ell2) = ket i\<close>
+            unfolding canonical_basis_ell2_def
             by auto
+          then obtain i where \<open>(0::'a ell2) = ket i\<close>
+            by blast
+          hence \<open>Rep_ell2 (0::'a ell2) i = Rep_ell2 (ket i) i\<close>
+            by simp
+          moreover have \<open>Rep_ell2 (0::'a ell2) i = 0\<close>
+            apply transfer by blast
+          moreover have \<open>Rep_ell2 (ket i) i = 1\<close>
+            apply transfer by auto
+          ultimately show ?thesis by simp
         qed
+        thus ?thesis 
+          using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
+          unfolding canonical_basis_ell2_def
+          by (metis Complex_Vector_Spaces.dependent_raw_def)            
+      qed
+      show "closure (complex_vector.span (set (map ket (enum_class.enum::'a list)))) = UNIV"
+      proof-
+        have \<open>closure
+              (complex_vector.span (ket ` UNIV)) = UNIV\<close>
+          by (simp add: ket_ell2_span)
+        moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
+          using UNIV_enum
+          by blast
+        ultimately have \<open>closure
+              (complex_vector.span (ket ` set (enum_class.enum::'a list))) = UNIV\<close>
+          by simp
+        thus ?thesis
+          by auto
       qed
     qed
-    show "\<And>x::'a ell2. x \<in> set canonical_basis \<Longrightarrow> norm x = 1"
-      unfolding canonical_basis_ell2_def sphere_def
-      by auto
   qed
-  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself)
-       = length (canonical_basis::'a ell2 list)"
+  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
     using card_UNIV_length_enum
     by auto
+  show "norm (x::'a ell2) = 1"
+    if "(x::'a ell2) \<in> set canonical_basis"
+    for x :: "'a ell2"
+    using that unfolding canonical_basis_ell2_def 
+    by auto
 qed
+
 end
 
 (* TODO: move *)
@@ -2651,15 +2650,15 @@ lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 
   is "classical_operator'"
   unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   apply auto
-     apply (simp add: complex_vector.vector_space_axioms)
-    apply (simp add: complex_vector.vector_space_axioms)
+  apply (simp add: complex_vector.vector_space_axioms)
+  apply (simp add: complex_vector.vector_space_axioms)
   unfolding module_hom_def module_hom_axioms_def module_def
-   apply auto
-        apply (simp add: scaleC_add_right)
+  apply auto
+  apply (simp add: scaleC_add_right)
   using scaleC_left.add apply auto[1]
-      apply (simp add: scaleC_add_right)
-     apply (simp add: scaleC_left.add)
-    apply transfer
+  apply (simp add: scaleC_add_right)
+  apply (simp add: scaleC_left.add)
+  apply transfer
 proof
   show "(case inv_option S (b::'b) of None \<Rightarrow> 0::complex | Some (a::'a) \<Rightarrow> b1 a + b2 a)
    = (case inv_option S b of None \<Rightarrow> 0 | Some x \<Rightarrow> b1 x)
@@ -3430,7 +3429,7 @@ proof-
         using times_bounded_vec \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
-         \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.is_clinear
+          \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.is_clinear
         by smt
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (A *\<^sub>v a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. A *\<^sub>v (ket j) = 0\<close>
@@ -3563,7 +3562,7 @@ next
     apply (rule ext)
     unfolding inv_option_def o_def map_comp_def
     unfolding inv_def apply auto
-     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
   show "classical_operator (Some \<circ> \<pi>) *\<^sub>o classical_operator (Some \<circ> \<pi>)* = idOp"
@@ -3636,7 +3635,7 @@ lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightar
 lemma subspace_zero_not_top[simp]: 
   "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
   by simp
- 
+
 lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
   by simp
 
@@ -3721,7 +3720,7 @@ qed
 
 instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
-clashes with \<open>instantiation ell2 :: (enum) basis_enum\<close>\<close>
+clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
 instance
 proof
   show "canonical_basis = [1::'a ell2]"

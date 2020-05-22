@@ -1010,7 +1010,7 @@ qed
 
 locale bounded_cbilinear =
   fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
-    (infixl "**" 70)
+    (* (infixl "**" 70) *)
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
     and scaleC_left: "prod (r *\<^sub>C a) b = r *\<^sub>C (prod a b)"
@@ -2750,13 +2750,11 @@ next
     using sum.insert insert by auto
 qed
 
-(* Ask to Dominique
 lemma (in bounded_cbilinear) tendsto:
-  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. (f x) *** (g x)) \<longlongrightarrow> a *** b) F"
+  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. prod (f x) (g x)) \<longlongrightarrow> prod a b) F"
   by (rule tendsto)
  
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
-*)
 
 end

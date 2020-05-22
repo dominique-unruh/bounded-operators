@@ -4592,7 +4592,7 @@ qed
 
 
 
-instance basis_enum \<subseteq> chilbert_space
+instance onb_enum \<subseteq> chilbert_space
 proof
   show "convergent X"
     if "Cauchy X"
@@ -4600,8 +4600,11 @@ proof
   proof-
     have \<open>finite (set canonical_basis)\<close>
       by simp
-    have \<open>is_onb (set canonical_basis)\<close>
-      by (simp add: is_onb_set)
+    have \<open>is_onb (set (canonical_basis::'a list))\<close>
+      unfolding is_onb_def is_ob_def apply auto
+        apply (simp add: is_orthonormal)
+       apply (simp add: is_basis_set)
+      by (simp add: is_normal)
     have \<open>Cauchy (\<lambda> n. \<langle> t, X n \<rangle>)\<close>
       for t
     proof-

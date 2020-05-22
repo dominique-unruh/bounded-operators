@@ -3410,21 +3410,41 @@ lemma is_ob_nonzero:
   by (metis Complex_Vector_Spaces.dependent_raw_def complex_vector.dependent_zero) 
 
 setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+(\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
-(* Ask to Dominique: Change name to onb_enum ? *)
 class basis_enum = complex_inner +
   fixes canonical_basis :: "'a list"
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
   assumes distinct_canonical_basis:
     "distinct canonical_basis"
-    and is_onb_set:
-    "is_onb (set canonical_basis)"
+    and is_basis_set:
+    "is_basis (set canonical_basis)"
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a::complex_normed_vector set \<Rightarrow> bool\<close>)\<close>
+
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+class onb_enum = basis_enum + complex_inner +
+  assumes is_orthonormal:
+    "is_ortho_set (set canonical_basis)"
+  and is_normal:
+    "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
+
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
+
+lemma is_onb_set:
+    "is_onb (set canonical_basis :: 'a::onb_enum set)"
+  using is_basis_set[where 'a='a] is_orthonormal[where 'a='a] is_normal[where 'a='a]
+  unfolding is_onb_def is_ob_def by auto
+
 lemma canonical_basis_non_zero:
-  assumes \<open>x \<in> set (canonical_basis::('a::basis_enum list))\<close>
+  assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
   using assms is_ob_nonzero is_onb_set is_onb_then_is_ob
   by blast
@@ -3433,7 +3453,7 @@ text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector s
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
-class one_dim = basis_enum + one + times + complex_inner +
+class one_dim = onb_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
 begin
@@ -4304,8 +4324,6 @@ lemma cbounded_linear_one_dim_to_complex: "cbounded_linear one_dim_to_complex"
 
 end
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_onb\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
 
 lemma bounded_sesquilinear_0_left: 
