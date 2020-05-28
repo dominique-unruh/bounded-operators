@@ -156,7 +156,6 @@ next
     by -
 qed
 
-
 lemma vec_of_onb_enum_mult:
   \<open>vec_of_onb_enum (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_onb_enum v\<close>
   by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_mult)
@@ -468,9 +467,95 @@ proof (rule Ortho_expansion_finite)
     apply (simp add: is_orthonormal)
     apply (simp add: is_basis_set)
     by (simp add: is_normal)
-
   show "finite (set (canonical_basis::'a list))"
     by simp    
+qed
+
+(* NEW *)
+lemma onb_enum_of_vec_expansion:  
+  fixes S::"'a::onb_enum list" and L::"complex list"
+  assumes f1: "distinct S" and f2: "length S = length L"
+  shows "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. (L ! i) *\<^sub>C S!i)"
+proof-
+  have "onb_enum_of_vec_list S L 
+      = (\<Sum>i\<in>{0..<length S}. (L!i) *\<^sub>C S!i)"
+    if  f1: "distinct S" and f2: "length S = length L"
+      and f3: "length S = n"
+    for S::"'a::onb_enum list" and L::"complex list" and n::nat
+    using that proof(induction n arbitrary: S L)
+    case 0
+    have "S = []"
+      using "0.prems"(3) by auto
+    moreover have "L = []"
+      using "0.prems"(2) "0.prems"(3) by auto
+    ultimately show ?case by simp
+  next
+    case (Suc n)
+    have "\<exists>S' s. S = s # S' \<and> s \<notin> set S'"
+      by (metis Suc.prems(1) Suc.prems(3) Suc_length_conv distinct.simps(2))
+    then obtain S' s where a1: "S = s # S'" and a2: "s \<notin> set S'"
+      by blast
+    have distinctS: "distinct S'"
+      using Suc.prems(1) a1 by auto
+    have "length L = Suc n"
+      using Suc.prems(2) Suc.prems(3) by auto
+    hence "\<exists>L' l. L = l # L'"
+      by (metis Suc_length_conv)    
+    then obtain L' l where b1: "L = l # L'"
+      by blast
+    have "length S' = length L'"
+      using Suc.prems(2) a1 b1 by auto    
+    moreover have "length S' = n"
+      using Suc.prems(2) Suc.prems(3) b1 calculation by auto    
+    ultimately have prethesis: "onb_enum_of_vec_list S' L' =
+    (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
+      using distinctS Suc.IH[where S = S' and L = L']
+      by blast
+    have "onb_enum_of_vec_list S L = onb_enum_of_vec_list (s#S') (l#L')"
+      by (simp add: a1 b1)
+    also have "\<dots> =  l *\<^sub>C s + onb_enum_of_vec_list S' L'"
+      by simp
+    also have "\<dots> =  l *\<^sub>C s + (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
+      by (simp add: prethesis)
+    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
+      by (simp add: a1 b1)
+    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 0..<length S'. L ! (Suc i) *\<^sub>C S ! (Suc i))"
+      using a1 b1 by auto
+    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = Suc 0..< Suc (length S'). L ! i *\<^sub>C S ! i)"
+      by (metis (no_types, lifting) sum.cong sum.shift_bounds_Suc_ivl)
+    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 1..< length S. L ! i *\<^sub>C S ! i)"
+      by (simp add: Suc.prems(3) \<open>length S' = n\<close>)
+    also have "\<dots> = (\<Sum>i = 0..< length S. L ! i *\<^sub>C S ! i)"
+      by (simp add: Suc.prems(3) sum.atLeast_Suc_lessThan)    
+    finally show ?case by blast
+  qed
+  thus ?thesis using assms by blast
+qed
+
+(* NEW *)
+lemma onb_enum_of_vec_list_sum:
+  fixes w::"'a::onb_enum" and S::"'a list"
+  assumes f1: "distinct S"
+  shows "onb_enum_of_vec_list S (list_of_vec (vec_of_onb_enum_list S w)) =
+    (\<Sum>b\<in>set S. \<langle>b, w\<rangle> *\<^sub>C b)"
+  using assms proof(induction S arbitrary: w)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a S)
+  have "vec_of_onb_enum_list (a # S) w = vec_of_onb_enum_list S w +
+    \<langle>a, w\<rangle> \<cdot>\<^sub>v
+    unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list) - length S)"
+    by simp    
+  hence "list_of_vec (vec_of_onb_enum_list (a # S) w) = list_of_vec (
+    vec_of_onb_enum_list S w +
+    \<langle>a, w\<rangle> \<cdot>\<^sub>v
+    unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list) - length S)
+)"
+    by simp
+
+  show "onb_enum_of_vec_list (a # S) (list_of_vec (vec_of_onb_enum_list (a # S) w)) =
+    (\<Sum>b\<in>set (a # S). \<langle>b, w\<rangle> *\<^sub>C b)" sorry
 qed
 
 (* NEW *)
@@ -482,8 +567,10 @@ lemma onb_enum_of_vec_list_list_of_vec:
 proof-
   have "onb_enum_of_vec_list (canonical_basis::('a list))
          (list_of_vec (vec_of_onb_enum w)) = 
-        sum (\<lambda>b. \<langle>b, w \<rangle> *\<^sub>C b) (set (canonical_basis::('a list)))"
-    sorry
+        sum (\<lambda>b. \<langle>b, w\<rangle> *\<^sub>C b) (set (canonical_basis::('a list)))"
+    unfolding vec_of_onb_enum_def
+    using onb_enum_of_vec_list_sum[where S = "canonical_basis::('a list)"] assms 
+    by blast
   also have "\<dots> = w"
     using canonical_basis_inner[where w = w] by simp
   finally show ?thesis by blast
