@@ -603,6 +603,7 @@ lemma vec_of_onb_enum_COMP_onb_enum_of_vec:
   \<open>vec_of_onb_enum \<circ> onb_enum_of_vec = id\<close>
   sorry
 
+
 definition mat_of_bounded :: \<open>('a::onb_enum,'b::onb_enum) bounded \<Rightarrow> complex mat\<close> where
   \<open>mat_of_bounded = undefined\<close>
 
