@@ -542,33 +542,101 @@ next
     by (metis (mono_tags, lifting) atLeastLessThan_iff length_map nth_map sum.cong sum_list_sum_nth) 
 qed
 
+
+(* NEW *)
+lemma length_list_of_vec_vec_of_onb_enum_list:
+  fixes w::"'a::onb_enum" and S::"'a list"
+  shows "length (list_of_vec (vec_of_onb_enum_list S w)) = length (canonical_basis::'a list)"
+  by (simp add: dim_vec_of_onb_enum_list)
+
+(* NEW *)
+lemma list_of_vec_vec_of_onb_enum_list_concat_zero: 
+        "list_of_vec (vec_of_onb_enum_list (a # S) w)!0
+        = list_of_vec (vec_of_onb_enum_list [a] w)!0"
+proof(induction S)
+case Nil
+  thus ?case
+    by simp 
+next
+  case (Cons t S)
+  thus ?case 
+    apply simp sorry
+qed
+
+(* NEW *)
+lemma list_of_vec_unit_vec:
+  "list_of_vec (\<langle>a::'a::basis_enum, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)))) = [\<langle>a, w\<rangle>]"
+  sorry
+
+(* NEW *)
+lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
+  assumes "i < length S"
+  shows "list_of_vec (vec_of_onb_enum_list S w)!i = \<langle>S! i, w\<rangle>"
+  using assms
+proof(induction S arbitrary: i w)
+case Nil thus ?case by simp 
+next
+  case (Cons a S)   
+  show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i =
+       \<langle>(a # S) ! i, w\<rangle>"
+  proof(cases "i = 0")
+    case True
+    have "vec_of_onb_enum_list [a] w =  \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list))"
+      by auto
+    moreover have "list_of_vec (\<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)))) = [\<langle>a, w\<rangle>]"
+      using list_of_vec_unit_vec by blast
+    ultimately show ?thesis 
+      by (metis True nth_Cons_0 list_of_vec_vec_of_onb_enum_list_concat_zero)      
+  next
+    case False
+    then show ?thesis sorry
+  qed
+qed
+
+
 (* NEW *)
 lemma onb_enum_of_vec_list_sum:
-  fixes w::"'a::onb_enum" and S::"'a list"
-  assumes f1: "distinct S"
-  shows "onb_enum_of_vec_list S (list_of_vec (vec_of_onb_enum_list S w)) =
-    (\<Sum>b\<in>set S. \<langle>b, w\<rangle> *\<^sub>C b)"
+  fixes w::"'a::onb_enum" 
+  shows "onb_enum_of_vec_list (canonical_basis::('a list)) 
+        (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
+      = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
 proof-
-  define L where "L = list_of_vec (vec_of_onb_enum_list S w)"
-  have "length S = length L"
-    sorry
-  hence "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
+  have f1: "distinct (canonical_basis::('a list))"
+    by (simp add: distinct_canonical_basis)
+  define L where "L = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)"
+  have "length (canonical_basis::('a list)) = length L"
+    using length_list_of_vec_vec_of_onb_enum_list
+    unfolding L_def
+    by metis 
+  hence "onb_enum_of_vec_list (canonical_basis::('a list)) L 
+  = (\<Sum>i\<in>{0..<length (canonical_basis::('a list))}. L!i *\<^sub>C (canonical_basis::('a list))!i)"
     using f1 onb_enum_of_vec_expansion by blast 
-  moreover have "i < length S \<Longrightarrow> L!i =  \<langle>S!i, w\<rangle>" for i
-    unfolding L_def sorry
-  ultimately have "onb_enum_of_vec_list S (list_of_vec (vec_of_onb_enum_list S w))
-       = (\<Sum>i=0..<length S. \<langle>S!i, w\<rangle> *\<^sub>C S!i)"
-    unfolding L_def by auto 
-  also have "\<dots> = (\<Sum>b\<in>set S. \<langle>b, w\<rangle> *\<^sub>C b)"
+  moreover have "i < length (canonical_basis::('a list)) \<Longrightarrow> 
+    L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>" for i
   proof-
-    have "(\<Sum>i = 0..<length S. \<langle>S ! i, w\<rangle> *\<^sub>C S ! i) =
-          (\<Sum>b\<leftarrow>S. \<langle>b, w\<rangle> *\<^sub>C b)"
-      using list_sum_function[where S = S and f = "\<lambda>x. \<langle>x, w\<rangle> *\<^sub>C x"]
+    assume h1: "i < length (canonical_basis::('a list))"
+    have "L!i = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)!i"
+      unfolding L_def by blast
+    also have "\<dots> = \<langle>(canonical_basis::('a list))!i, w\<rangle>"
+      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1.
+    finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
+  qed
+  ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
+         (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
+       = (\<Sum>i=0..<length (canonical_basis::('a list)). 
+         \<langle>(canonical_basis::('a list))!i, w\<rangle> *\<^sub>C (canonical_basis::('a list))!i)"
+    unfolding L_def by simp
+  also have "\<dots> = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+  proof-
+    have "(\<Sum>i = 0..<length (canonical_basis::('a list)). 
+          \<langle>(canonical_basis::('a list)) ! i, w\<rangle> *\<^sub>C (canonical_basis::('a list)) ! i) =
+          (\<Sum>b\<leftarrow>(canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+      using list_sum_function[where S = "(canonical_basis::('a list))" and f = "\<lambda>x. \<langle>x, w\<rangle> *\<^sub>C x"]
       by blast
     thus ?thesis
-    using f1 Groups_List.comm_monoid_add_class.sum.distinct_set_conv_list[where xs = S 
-        and g = "\<lambda>b.  \<langle>b, w\<rangle> *\<^sub>C b"] by auto    
-qed
+      using f1 Groups_List.comm_monoid_add_class.sum.distinct_set_conv_list[where xs = "(canonical_basis::('a list))" 
+          and g = "\<lambda>b.  \<langle>b, w\<rangle> *\<^sub>C b"] by auto
+  qed
   finally show ?thesis
     by blast
 qed
@@ -584,7 +652,7 @@ proof-
          (list_of_vec (vec_of_onb_enum w)) = 
         sum (\<lambda>b. \<langle>b, w\<rangle> *\<^sub>C b) (set (canonical_basis::('a list)))"
     unfolding vec_of_onb_enum_def
-    using onb_enum_of_vec_list_sum[where S = "canonical_basis::('a list)"] assms 
+    using onb_enum_of_vec_list_sum assms 
     by blast
   also have "\<dots> = w"
     using canonical_basis_inner[where w = w] by simp
