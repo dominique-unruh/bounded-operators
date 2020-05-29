@@ -457,8 +457,6 @@ next
   thus "w = (\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b)" by simp
 qed
 
-
-thm span_set_inner
 lemma canonical_basis_inner:
   "w = (\<Sum>b\<in>set (canonical_basis::'a::onb_enum list). \<langle>b, w\<rangle> *\<^sub>C b)"
 proof (rule Ortho_expansion_finite)
@@ -475,7 +473,7 @@ qed
 lemma onb_enum_of_vec_expansion:  
   fixes S::"'a::onb_enum list" and L::"complex list"
   assumes f1: "distinct S" and f2: "length S = length L"
-  shows "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. (L ! i) *\<^sub>C S!i)"
+  shows "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
 proof-
   have "onb_enum_of_vec_list S L 
       = (\<Sum>i\<in>{0..<length S}. (L!i) *\<^sub>C S!i)"
@@ -533,29 +531,46 @@ proof-
 qed
 
 (* NEW *)
+lemma list_sum_function:
+  fixes f :: "'a \<Rightarrow> 'b::ab_group_add" and S :: "'a list"
+  shows "(\<Sum>i = 0..<length S. f (S ! i)) = (\<Sum>b\<leftarrow>S. f b)"
+proof(induction S)
+case Nil thus ?case by simp 
+next
+  case (Cons a S)
+  thus ?case
+    by (metis (mono_tags, lifting) atLeastLessThan_iff length_map nth_map sum.cong sum_list_sum_nth) 
+qed
+
+(* NEW *)
 lemma onb_enum_of_vec_list_sum:
   fixes w::"'a::onb_enum" and S::"'a list"
   assumes f1: "distinct S"
   shows "onb_enum_of_vec_list S (list_of_vec (vec_of_onb_enum_list S w)) =
     (\<Sum>b\<in>set S. \<langle>b, w\<rangle> *\<^sub>C b)"
-  using assms proof(induction S arbitrary: w)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a S)
-  have "vec_of_onb_enum_list (a # S) w = vec_of_onb_enum_list S w +
-    \<langle>a, w\<rangle> \<cdot>\<^sub>v
-    unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list) - length S)"
-    by simp    
-  hence "list_of_vec (vec_of_onb_enum_list (a # S) w) = list_of_vec (
-    vec_of_onb_enum_list S w +
-    \<langle>a, w\<rangle> \<cdot>\<^sub>v
-    unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list) - length S)
-)"
-    by simp
-
-  show "onb_enum_of_vec_list (a # S) (list_of_vec (vec_of_onb_enum_list (a # S) w)) =
-    (\<Sum>b\<in>set (a # S). \<langle>b, w\<rangle> *\<^sub>C b)" sorry
+proof-
+  define L where "L = list_of_vec (vec_of_onb_enum_list S w)"
+  have "length S = length L"
+    sorry
+  hence "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
+    using f1 onb_enum_of_vec_expansion by blast 
+  moreover have "i < length S \<Longrightarrow> L!i =  \<langle>S!i, w\<rangle>" for i
+    unfolding L_def sorry
+  ultimately have "onb_enum_of_vec_list S (list_of_vec (vec_of_onb_enum_list S w))
+       = (\<Sum>i=0..<length S. \<langle>S!i, w\<rangle> *\<^sub>C S!i)"
+    unfolding L_def by auto 
+  also have "\<dots> = (\<Sum>b\<in>set S. \<langle>b, w\<rangle> *\<^sub>C b)"
+  proof-
+    have "(\<Sum>i = 0..<length S. \<langle>S ! i, w\<rangle> *\<^sub>C S ! i) =
+          (\<Sum>b\<leftarrow>S. \<langle>b, w\<rangle> *\<^sub>C b)"
+      using list_sum_function[where S = S and f = "\<lambda>x. \<langle>x, w\<rangle> *\<^sub>C x"]
+      by blast
+    thus ?thesis
+    using f1 Groups_List.comm_monoid_add_class.sum.distinct_set_conv_list[where xs = S 
+        and g = "\<lambda>b.  \<langle>b, w\<rangle> *\<^sub>C b"] by auto    
+qed
+  finally show ?thesis
+    by blast
 qed
 
 (* NEW *)
