@@ -550,49 +550,19 @@ lemma length_list_of_vec_vec_of_onb_enum_list:
   by (simp add: dim_vec_of_onb_enum_list)
 
 (* NEW *)
-lemma list_of_vec_vec_of_onb_enum_list_concat_zero: 
-        "list_of_vec (vec_of_onb_enum_list (a # S) w)!0
-        = list_of_vec (vec_of_onb_enum_list [a] w)!0"
-proof(induction S)
-case Nil
-  thus ?case
-    by simp 
-next
-  case (Cons t S)
-  thus ?case 
-    apply simp sorry
-qed
-
-(* NEW *)
 lemma list_of_vec_unit_vec:
-  "list_of_vec (\<langle>a::'a::basis_enum, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)))) = [\<langle>a, w\<rangle>]"
+   "list_of_vec (c \<cdot>\<^sub>v 
+  unit_vec (length (canonical_basis::'a::basis_enum list)) 
+  (length (canonical_basis::'a list)))!(length (canonical_basis::'a list))
+   = c"
   sorry
 
 (* NEW *)
 lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
-  assumes "i < length S"
+  assumes f1: "i < length S" and f2: "independent (set S)"
   shows "list_of_vec (vec_of_onb_enum_list S w)!i = \<langle>S! i, w\<rangle>"
   using assms
-proof(induction S arbitrary: i w)
-case Nil thus ?case by simp 
-next
-  case (Cons a S)   
-  show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i =
-       \<langle>(a # S) ! i, w\<rangle>"
-  proof(cases "i = 0")
-    case True
-    have "vec_of_onb_enum_list [a] w =  \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) (length (canonical_basis::'a list))"
-      by auto
-    moreover have "list_of_vec (\<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)))) = [\<langle>a, w\<rangle>]"
-      using list_of_vec_unit_vec by blast
-    ultimately show ?thesis 
-      by (metis True nth_Cons_0 list_of_vec_vec_of_onb_enum_list_concat_zero)      
-  next
-    case False
-    then show ?thesis sorry
-  qed
-qed
-
+  sorry
 
 (* NEW *)
 lemma onb_enum_of_vec_list_sum:
@@ -618,7 +588,8 @@ proof-
     have "L!i = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)!i"
       unfolding L_def by blast
     also have "\<dots> = \<langle>(canonical_basis::('a list))!i, w\<rangle>"
-      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1.
+      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1
+      sorry
     finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
   qed
   ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
