@@ -590,13 +590,55 @@ proof-
   finally show ?thesis 
     by auto 
 qed
+  
+
+(* NEW *)
+lemma independent_length_leq:
+  assumes f1: "complex_vector.independent (set (S::'a list))"
+    and f2: "distinct S"
+  shows "length S \<le> length (canonical_basis::'a::{basis_enum,euclidean_space} list)"
+proof-
+  have "independent (set S)"
+    using f1
+    sorry
+  hence "card (set S) \<le> DIM('a)"
+    using  Linear_Algebra.independent_bound[where S = "set S"]
+    by auto
+  moreover have "card (set S) = length S"
+    by (simp add: distinct_card f2)    
+  ultimately have "length S \<le> DIM('a)"
+    by simp
+  moreover have "DIM('a) = length (canonical_basis::'a::{basis_enum,euclidean_space} list)"
+    sorry
+  ultimately show ?thesis by auto    
+qed
+
 
 (* NEW *)
 lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
-  assumes f1: "i < length S" and f2: "independent (set S)"
-  shows "list_of_vec (vec_of_onb_enum_list S w)!i = \<langle>S! i, w\<rangle>"
-  using assms
-  sorry
+  assumes f1: "i < length S" and f2: "complex_vector.independent (set S)" and f3: "distinct S"
+  shows "list_of_vec (vec_of_onb_enum_list S w)!i = \<langle>S!i, w\<rangle>"
+  using assms proof(induction S arbitrary: i w)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a S)
+  show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i = \<langle>(a # S) ! i, w\<rangle>"
+  proof(cases "i = length S")
+    case True
+    show ?thesis sorry
+  next
+    case False            
+    have "length (a # S) \<le> length (canonical_basis::'a list)"
+      sorry      
+    hence "i \<le> length (a # S)"
+      using Cons.prems(1) by auto
+    hence "i \<le> length (a # S) - 1"
+      using Cons.prems(1) by auto      
+    show ?thesis sorry
+  qed
+qed
+
 
 (* NEW *)
 lemma onb_enum_of_vec_list_sum:
@@ -622,8 +664,12 @@ proof-
     have "L!i = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)!i"
       unfolding L_def by blast
     also have "\<dots> = \<langle>(canonical_basis::('a list))!i, w\<rangle>"
-      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1
-      sorry
+    proof-
+      have "complex_vector.independent (set (canonical_basis::('a list)))"
+        using is_basis_set unfolding is_basis_def by auto
+      thus ?thesis
+      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1 f1 by blast      
+  qed
     finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
   qed
   ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
