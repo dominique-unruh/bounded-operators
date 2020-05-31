@@ -551,11 +551,45 @@ lemma length_list_of_vec_vec_of_onb_enum_list:
 
 (* NEW *)
 lemma list_of_vec_unit_vec:
-   "list_of_vec (c \<cdot>\<^sub>v 
+  assumes "length (canonical_basis::'a::basis_enum list) \<ge> 1"
+  shows "list_of_vec (c \<cdot>\<^sub>v
+  unit_vec (length (canonical_basis::'a::basis_enum list))
+  (length (canonical_basis::'a list)-1))!(length (canonical_basis::'a list)-1)
+   = (c::complex)"
+proof-
+  have "c \<cdot>\<^sub>v
   unit_vec (length (canonical_basis::'a::basis_enum list)) 
-  (length (canonical_basis::'a list)))!(length (canonical_basis::'a list))
-   = c"
-  sorry
+  (length (canonical_basis::'a list)-1)
+   = Matrix.vec (length (canonical_basis::'a list))
+     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
+          else 0)"
+    unfolding smult_vec_def unit_vec_def mk_vec_def 
+    by auto
+  hence "list_of_vec (c \<cdot>\<^sub>v
+  unit_vec (length (canonical_basis::'a::basis_enum list)) 
+  (length (canonical_basis::'a list)-1))
+   = list_of_vec (Matrix.vec (length (canonical_basis::'a list))
+     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
+          else 0) )"
+    by simp
+  hence "list_of_vec (c \<cdot>\<^sub>v
+  unit_vec (length (canonical_basis::'a::basis_enum list)) 
+  (length (canonical_basis::'a list)-1))!(length (canonical_basis::'a list)-1)
+   = list_of_vec (Matrix.vec (length (canonical_basis::'a list))
+     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
+          else 0) )!(length (canonical_basis::'a list)-1)"
+    by simp
+  also have "\<dots> = c"
+  proof-
+    have "[0..<length (canonical_basis::'a list)] !
+    (length (canonical_basis::'a list) - Suc 0) = 
+     length (canonical_basis::'a list) - Suc 0"
+      using assms by auto      
+    thus ?thesis using assms by auto
+  qed
+  finally show ?thesis 
+    by auto 
+qed
 
 (* NEW *)
 lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
