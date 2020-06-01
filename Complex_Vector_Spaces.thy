@@ -2757,4 +2757,56 @@ lemma (in bounded_cbilinear) tendsto:
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
+(* NEW *)
+lemma independent_real_complex: 
+  assumes "complex_vector.independent (S::'a::complex_vector set)" and "finite S"
+  shows "real_vector.independent S"
+  using assms
+proof(induction "card S" arbitrary: S)
+  case 0
+  hence "card S = 0"
+    by auto    
+  hence "S = ({}::'a set)"
+    using "0.prems"(2) card_0_eq by blast    
+  moreover have "real_vector.independent ({}::'a set)"
+    by (metis Real_Vector_Spaces.dependent_raw_def real_vector.independent_empty)    
+  ultimately show ?case by simp
+next
+  case (Suc n)
+  have "\<exists>s S'. S = insert s S' \<and> s \<notin> S'"
+    by (metis Suc.hyps(2) card_le_Suc_iff order_refl)
+  then obtain s S' where g1: "S = insert s S'" and g2: "s \<notin> S'"
+    by blast
+  have "card S' = n"
+    using Suc.hyps(2) Suc.prems(2) g1 g2 by auto
+  moreover have "finite S'"
+    using Suc.prems(2) g1 by auto
+  moreover have "complex_vector.independent S'"
+    by (metis Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert g1 g2)
+  ultimately have "real_vector.independent S'"
+    by (simp add: Real_Vector_Spaces.dependent_raw_def Suc.hyps(1))
+  moreover have "s \<notin> real_vector.span S'"
+  proof(rule classical)
+    assume "\<not>(s \<notin> real_vector.span S')"
+    hence "s \<in> real_vector.span S'"
+      by blast
+    hence "\<exists> r R. s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R) \<and> R \<subseteq> S'"
+      by (smt mem_Collect_eq real_vector.span_explicit real_vector.span_explicit')
+    then obtain r R where s1: "s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R)" and s2: "R \<subseteq> S'"
+      by blast
+    have "s = (sum (\<lambda>s'. r s' *\<^sub>C s' ) R)"
+      using s1
+      by (metis (no_types, lifting) scaleR_scaleC sum.cong) 
+    hence "s \<in> complex_vector.span S'"
+      using  s2
+      by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset in_mono) 
+    thus ?thesis 
+      by (smt Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert 
+          g1 g2)
+  qed
+  ultimately show ?case 
+    by (smt Real_Vector_Spaces.dependent_raw_def g1 real_vector.independent_insertI)
+qed
+
+
 end

@@ -4731,9 +4731,9 @@ proof -
     unfolding repr_def comb_def
     apply (rule real_vector.representation_eqI)
     using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)
-      (* Sledgehammer *)
      apply meson
-    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_cong_left)
+    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left) 
+      (* > 1s *)
   have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
     unfolding repr_def using that
     by (simp add: real_vector.representation_def)
@@ -5600,7 +5600,6 @@ proof-
   thus ?thesis using bounded_operator_finite_dim_ortho[where F = F and basis = A]
     by (simp add: a5 b4)
 qed
-
 
 lemma bounded_operator_basis_existence_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>

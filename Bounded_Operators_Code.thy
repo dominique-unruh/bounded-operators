@@ -462,8 +462,8 @@ lemma canonical_basis_inner:
 proof (rule Ortho_expansion_finite)
   show "is_onb (set (canonical_basis::'a list))"
     unfolding is_onb_def is_ob_def apply auto
-    apply (simp add: is_orthonormal)
-    apply (simp add: is_basis_set)
+      apply (simp add: is_orthonormal)
+     apply (simp add: is_basis_set)
     by (simp add: is_normal)
   show "finite (set (canonical_basis::'a list))"
     by simp    
@@ -535,7 +535,7 @@ lemma list_sum_function:
   fixes f :: "'a \<Rightarrow> 'b::ab_group_add" and S :: "'a list"
   shows "(\<Sum>i = 0..<length S. f (S ! i)) = (\<Sum>b\<leftarrow>S. f b)"
 proof(induction S)
-case Nil thus ?case by simp 
+  case Nil thus ?case by simp 
 next
   case (Cons a S)
   thus ?case
@@ -591,81 +591,35 @@ proof-
     by auto 
 qed
 
-thm Real_Vector_Spaces.real_vector.independent_insertI
-
-(* NEW *)
-lemma independent_real_complex: 
-  assumes "complex_vector.independent (S::'a::complex_vector set)" and "finite S"
-  shows "real_vector.independent S"
-  using assms
-proof(induction "card S" arbitrary: S)
-  case 0
-  hence "card S = 0"
-    by auto    
-  hence "S = ({}::'a set)"
-    using "0.prems"(2) card_0_eq by blast    
-  moreover have "real_vector.independent ({}::'a set)"
-    by (metis Real_Vector_Spaces.dependent_raw_def real_vector.independent_empty)    
-  ultimately show ?case by simp
-next
-  case (Suc n)
-  have "\<exists>s S'. S = insert s S' \<and> s \<notin> S'"
-    by (metis Suc.hyps(2) card_le_Suc_iff order_refl)
-  then obtain s S' where g1: "S = insert s S'" and g2: "s \<notin> S'"
-    by blast
-  have "card S' = n"
-    using Suc.hyps(2) Suc.prems(2) g1 g2 by auto
-  moreover have "finite S'"
-    using Suc.prems(2) g1 by auto
-  moreover have "complex_vector.independent S'"
-    by (metis Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert g1 g2)
-  ultimately have "real_vector.independent S'"
-    by (simp add: Real_Vector_Spaces.dependent_raw_def Suc.hyps(1))
-  moreover have "s \<notin> real_vector.span S'"
-  proof(rule classical)
-    assume "\<not>(s \<notin> real_vector.span S')"
-    hence "s \<in> real_vector.span S'"
-      by blast
-    hence "\<exists> r R. s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R) \<and> R \<subseteq> S'"
-      by (smt mem_Collect_eq real_vector.span_explicit real_vector.span_explicit')
-    then obtain r R where s1: "s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R)" and s2: "R \<subseteq> S'"
-      by blast
-    have "s = (sum (\<lambda>s'. r s' *\<^sub>C s' ) R)"
-      using s1
-      by (metis (no_types, lifting) scaleR_scaleC sum.cong) 
-    hence "s \<in> complex_vector.span S'"
-      using  s2
-      by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset in_mono) 
-    thus ?thesis 
-      by (smt Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert 
-          g1 g2)
-  qed
-  ultimately show ?case 
-    by (smt Real_Vector_Spaces.dependent_raw_def g1 real_vector.independent_insertI)
-qed
-
-
 (* NEW *)
 lemma independent_length_leq:
   assumes f1: "complex_vector.independent (set (S::'a list))"
     and f2: "distinct S"
-  shows "length S \<le> length (canonical_basis::'a::{basis_enum,euclidean_space} list)"
-proof-
-  have "independent (set S)"
-    using f1 independent_real_complex
-    by (simp add: independent_real_complex Real_Vector_Spaces.dependent_raw_def) 
-  hence "card (set S) \<le> DIM('a)"
-    using  Linear_Algebra.independent_bound[where S = "set S"]
-    by auto
-  moreover have "card (set S) = length S"
-    by (simp add: distinct_card f2)    
-  ultimately have "length S \<le> DIM('a)"
+  shows "length S \<le> length (canonical_basis::'a::basis_enum list)"
+proof(rule classical)
+  have h1: "finite (set S)"
     by simp
-      (* Ask to Dominique: how to find the definition 
-        of DIM('a) ? *)
-  moreover have "DIM('a) = length (canonical_basis::'a::{basis_enum,euclidean_space} list)"
-    sorry
-  ultimately show ?thesis by auto    
+  assume "\<not>(length S \<le> length (canonical_basis::'a::basis_enum list))"
+  hence "length S > length (canonical_basis::'a::basis_enum list)"
+    by simp
+  hence g1: "card (set S) > card (set (canonical_basis::'a::basis_enum list))"
+    by (simp add: distinct_canonical_basis distinct_card f2)
+  have "finite (set (canonical_basis::'a::basis_enum list))"
+    by simp    
+  hence "complex_vector.span (set (canonical_basis::'a::basis_enum list)) = (UNIV:: 'a set)"
+    using span_finite_dim is_basis_set unfolding is_basis_def by auto 
+  hence g2: "card (set S) > dim (UNIV:: 'a set)"
+    using g1 
+    by (smt Complex_Vector_Spaces.dependent_raw_def complex_vector.dim_eq_card complex_vector.span_UNIV is_basis_def is_basis_set)
+  hence "complex_vector.span (set S) \<subseteq> (UNIV:: 'a set)"
+    by simp
+  hence "card (set S) \<le> dim (UNIV:: 'a set)"
+    using f1 h1 Complex_Vector_Spaces.dependent_raw_def 
+      \<open>Complex_Vector_Spaces.span (set canonical_basis) = UNIV\<close>
+      \<open>\<not> length S \<le> length canonical_basis\<close> \<open>finite (set canonical_basis)\<close> 
+      complex_vector.dim_le_card complex_vector.dim_span_eq_card_independent 
+      distinct_canonical_basis distinct_card f2 by smt
+  thus ?thesis using g2 by (smt leD)
 qed
 
 
@@ -723,8 +677,8 @@ proof-
       have "complex_vector.independent (set (canonical_basis::('a list)))"
         using is_basis_set unfolding is_basis_def by auto
       thus ?thesis
-      using list_of_vec_vec_of_onb_enum_list_canonical_basis h1 f1 by blast      
-  qed
+        using list_of_vec_vec_of_onb_enum_list_canonical_basis h1 f1 by blast      
+    qed
     finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
   qed
   ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
