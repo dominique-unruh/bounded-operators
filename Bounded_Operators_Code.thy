@@ -622,7 +622,6 @@ proof(rule classical)
   thus ?thesis using g2 by (smt leD)
 qed
 
-
 (* NEW *)
 lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
   assumes f1: "i < length S" and f2: "complex_vector.independent (set S)" and f3: "distinct S"
@@ -633,21 +632,44 @@ lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
 next
   case (Cons a S)
   show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i = \<langle>(a # S) ! i, w\<rangle>"
-  proof(cases "i = length S")
+  proof(cases "i = 0")
     case True
-    show ?thesis sorry
+    thus ?thesis
+      (* Ask to Dominique if there is a fast way to prove this *)
+      apply simp sorry
   next
-    case False            
-    have "length (a # S) \<le> length (canonical_basis::'a list)"
-      sorry      
-    hence "i \<le> length (a # S)"
-      using Cons.prems(1) by auto
-    hence "i \<le> length (a # S) - 1"
-      using Cons.prems(1) by auto      
-    show ?thesis sorry
+    case False
+    have "\<exists>k. i = Suc k"
+      by (meson False lessI less_Suc_eq_0_disj)
+    then obtain k where "i = Suc k"
+      by blast
+    have "k \<le> length (a # S)-1"
+      using Cons.prems(1)
+      by (simp add: \<open>i = Suc k\<close>) 
+    hence "k \<le> length (a # S) - 2"
+      using Cons.prems(1)
+      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
+    hence "k \<le> length S-1"
+      by auto
+    have "complex_vector.independent (set S)"
+      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
+    moreover have "distinct S"
+      using Cons.prems(3) by auto
+    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
+      by (simp add: Cons.IH)
+    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
+      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
+    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
+      by (simp add: \<open>i = Suc k\<close>)      
+    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
+                 = list_of_vec (vec_of_onb_enum_list S w)!k"
+      apply simp unfolding list_of_vec_def  apply auto      
+        (* Ask to Dominique if there is a fast way to prove this *)
+      sorry
+    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
+      using  \<open>i = Suc k\<close> by simp
   qed
 qed
-
 
 (* NEW *)
 lemma onb_enum_of_vec_list_sum:
