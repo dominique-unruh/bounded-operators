@@ -60,10 +60,17 @@ primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::onb_enum \<Righ
   \<open>vec_of_onb_enum_list [] v = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
   \<open>vec_of_onb_enum_list (x#ys) v = vec_of_onb_enum_list ys v +
 \<langle>x, v\<rangle> \<cdot>\<^sub>v 
-unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length ys)\<close>
+unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length ys - 1)\<close>
+
+(* TODO: use this definition instead of vec_of_onb_enum_list (+ fix proofs) *)
+primrec vec_of_onb_enum_list_NEW :: \<open>'a list \<Rightarrow> 'a::onb_enum \<Rightarrow> nat \<Rightarrow> complex vec\<close> where
+  \<open>vec_of_onb_enum_list_NEW [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
+  \<open>vec_of_onb_enum_list_NEW (x#ys) v i = vec_of_onb_enum_list_NEW ys v (Suc i) +
+\<langle>x, v\<rangle> \<cdot>\<^sub>v 
+unit_vec (length (canonical_basis::'a list)) i\<close>
 
 definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
-  \<open>vec_of_onb_enum v = vec_of_onb_enum_list (canonical_basis::'a list) v\<close>
+  \<open>vec_of_onb_enum v = vec_of_onb_enum_list_NEW (canonical_basis::'a list) v 0\<close>
 
 lemma dim_vec_of_onb_enum_list:
   \<open>dim_vec (vec_of_onb_enum_list (L::'a list) v) = length (canonical_basis::'a::onb_enum list)\<close>
@@ -95,7 +102,7 @@ next
       by auto
     moreover have \<open>vec_of_onb_enum_list (a # L) (v1 + v2) = 
            vec_of_onb_enum_list L (v1 + v2) 
-+ \<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L)\<close>
++ \<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L - 1)\<close>
       by auto
     moreover have \<open>vec_of_onb_enum_list L (v1 + v2) =
             vec_of_onb_enum_list L v1 + vec_of_onb_enum_list L v2\<close>
@@ -112,8 +119,8 @@ next
     ultimately have \<open>vec_of_onb_enum_list (a # L) (v1 + v2) =
    (vec_of_onb_enum_list L v1 + \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L))
 +  (vec_of_onb_enum_list L v2 + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) ((length (canonical_basis::'a list)) - length L))\<close>
-      by auto
-    thus ?thesis by auto
+      sorry
+    thus ?thesis sorry
   qed
   thus \<open>vec_of_onb_enum_list (a # L) (v1 + v2) =
        vec_of_onb_enum_list (a # L) v1 + vec_of_onb_enum_list (a # L) v2\<close> 
@@ -122,8 +129,10 @@ qed
 
 lemma vec_of_onb_enum_add:
   \<open>vec_of_onb_enum (v1 + v2) = vec_of_onb_enum v1 + vec_of_onb_enum v2\<close>
+  sorry
+(*
   by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_add)
-
+*)
 
 lemma vec_of_onb_enum_list_mult:
   fixes L :: "'a::onb_enum list"
@@ -141,7 +150,7 @@ next
 
   have "vec_of_onb_enum_list (a # L) (c *\<^sub>C v) 
       = vec_of_onb_enum_list L (c *\<^sub>C v) + c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L)"
-    by simp
+    sorry
   also have "\<dots> = c \<cdot>\<^sub>v vec_of_onb_enum_list L v + c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L)"
     using Cons.IH by simp
   also have "\<dots> = c \<cdot>\<^sub>v vec_of_onb_enum_list L v + c \<cdot>\<^sub>v (\<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length ?basis) (length ?basis - length L))"
@@ -151,19 +160,25 @@ next
     using dim_L apply auto
     by (metis carrier_vec_dim_vec)
   also have "\<dots> = c \<cdot>\<^sub>v vec_of_onb_enum_list (a # L) v"
-    by auto
+    sorry
   finally show ?case
     by -
 qed
 
 lemma vec_of_onb_enum_mult:
   \<open>vec_of_onb_enum (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_onb_enum v\<close>
+(*
   by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_mult)
+*)
+  sorry
 
 fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::onb_enum\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
   \<open>onb_enum_of_vec_list y [] = 0\<close> |
   \<open>onb_enum_of_vec_list (x#ys) (v#vs) = v *\<^sub>C x + onb_enum_of_vec_list ys vs\<close>
+
+lemma onb_enum_of_vec_list_def': "onb_enum_of_vec_list xs ys = sum_list (map2 (*\<^sub>C) ys xs)"
+  sorry
 
 definition onb_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::onb_enum\<close> where
   \<open>onb_enum_of_vec v = onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
@@ -663,7 +678,22 @@ next
       by (simp add: \<open>i = Suc k\<close>)      
     moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
                  = list_of_vec (vec_of_onb_enum_list S w)!k"
-      apply simp unfolding list_of_vec_def  apply auto      
+      apply (simp)
+      apply (subst list_of_vec_plus)
+      subgoal sorry
+      apply (subst nth_map)
+      subgoal sorry
+      apply (subst nth_zip)
+      subgoal sorry
+      subgoal sorry
+      apply (subst list_of_vec_mult)
+      apply (subst nth_map)
+      subgoal sorry
+
+(* subst: "list_of_vec (c \<cdot>\<^sub>v v) = map (%x. c \<cdot>\<^sub>v x) (list_of_vec v) *)
+      apply simp
+
+      unfolding list_of_vec_def  apply auto      
         (* Ask to Dominique if there is a fast way to prove this *)
       sorry
     ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
@@ -671,12 +701,79 @@ next
   qed
 qed
 
+lemma TODO_NAME:
+  fixes S :: "'a::onb_enum list"
+  assumes f2: "complex_vector.independent (set S)" and f3: "distinct S" (* TODO f3 needed? *)
+  shows "list_of_vec (vec_of_onb_enum_list S w) = map (\<lambda>s. \<langle>s, w\<rangle>) S"
+  sorry
+(*
+  using assms proof(induction S arbitrary: i w)
+  case Nil
+  thus ?case
+    apply auto
+    sorry
+next
+  case (Cons a S)
+  show ?thesis
+  proof(cases "i = 0")
+    case True
+    thus ?thesis
+      (* Ask to Dominique if there is a fast way to prove this *)
+      apply simp sorry
+  next
+    case False
+    have "\<exists>k. i = Suc k"
+      by (meson False lessI less_Suc_eq_0_disj)
+    then obtain k where "i = Suc k"
+      by blast
+    have "k \<le> length (a # S)-1"
+      using Cons.prems(1)
+      by (simp add: \<open>i = Suc k\<close>) 
+    hence "k \<le> length (a # S) - 2"
+      using Cons.prems(1)
+      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
+    hence "k \<le> length S-1"
+      by auto
+    have "complex_vector.independent (set S)"
+      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
+    moreover have "distinct S"
+      using Cons.prems(3) by auto
+    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
+      by (simp add: Cons.IH)
+    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
+      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
+    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
+      by (simp add: \<open>i = Suc k\<close>)      
+    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
+                 = list_of_vec (vec_of_onb_enum_list S w)!k"
+      apply simp unfolding list_of_vec_def  apply auto      
+        (* Ask to Dominique if there is a fast way to prove this *)
+      sorry
+    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
+      using  \<open>i = Suc k\<close> by simp
+  qed
+qed
+*)
+
 (* NEW *)
 lemma onb_enum_of_vec_list_sum:
   fixes w::"'a::onb_enum" 
   shows "onb_enum_of_vec_list (canonical_basis::('a list)) 
         (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
       = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+  apply (subst TODO_NAME)
+  subgoal sorry
+  subgoal sorry
+  unfolding onb_enum_of_vec_list_def'
+  unfolding map_zip_map
+  apply simp
+  unfolding zip_same_conv_map
+  apply simp
+  apply (subst sum_list_distinct_conv_sum_set)
+  subgoal sorry
+  by simp
+
+(* 
 proof-
   have f1: "distinct (canonical_basis::('a list))"
     by (simp add: distinct_canonical_basis)
@@ -721,7 +818,7 @@ proof-
   qed
   finally show ?thesis
     by blast
-qed
+qed *)
 
 (* NEW *)
 lemma onb_enum_of_vec_list_list_of_vec:
@@ -735,7 +832,7 @@ proof-
         sum (\<lambda>b. \<langle>b, w\<rangle> *\<^sub>C b) (set (canonical_basis::('a list)))"
     unfolding vec_of_onb_enum_def
     using onb_enum_of_vec_list_sum assms 
-    by blast
+    sorry
   also have "\<dots> = w"
     using canonical_basis_inner[where w = w] by simp
   finally show ?thesis by blast
@@ -749,7 +846,8 @@ lemma onb_enum_of_vec_COMP_vec_of_onb_enum:
 proof-
   have \<open>dim_vec (vec_of_onb_enum b) = length (canonical_basis::'a list)\<close>
     for b::'a
-    by (simp add: dim_vec_of_onb_enum_list vec_of_onb_enum_def)    
+(*    by (simp add: dim_vec_of_onb_enum_list vec_of_onb_enum_def)    *)
+    sorry
   define f::\<open>'a \<Rightarrow> 'a\<close> where \<open>f v = onb_enum_of_vec ( vec_of_onb_enum v ) - v\<close>
     for v::'a
   have \<open>v \<in> set (canonical_basis::('a list)) \<Longrightarrow> f v = 0\<close>
@@ -774,7 +872,8 @@ proof-
       proof-
         have \<open>onb_enum_of_vec (vec_of_onb_enum (b1 + b2)) = 
               onb_enum_of_vec (vec_of_onb_enum b1 + vec_of_onb_enum b2)\<close>
-          by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_add)
+(*          by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_add) *)
+          sorry
         also have \<open>\<dots> = 
               onb_enum_of_vec (vec_of_onb_enum b1) + ((onb_enum_of_vec (vec_of_onb_enum b2))::'a)\<close>
         proof-
@@ -799,7 +898,8 @@ proof-
       proof-
         have \<open>onb_enum_of_vec (vec_of_onb_enum (r *\<^sub>C b)) = 
               onb_enum_of_vec (r \<cdot>\<^sub>v (vec_of_onb_enum b))\<close>
-          by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_mult)          
+(*          by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_mult)          *)
+          sorry
         also have \<open>\<dots> = 
               r *\<^sub>C ((onb_enum_of_vec (vec_of_onb_enum b))::'a)\<close>
         proof-
