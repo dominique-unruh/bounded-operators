@@ -648,6 +648,8 @@ proof(rule classical)
   thus ?thesis using g2 by (smt leD)
 qed
 
+
+(* Ask to Dominique how to simplfy this *)
 (* NEW *)
 lemma onb_enum_of_vec_list_list_of_vec:
   fixes w::"'a::onb_enum"
