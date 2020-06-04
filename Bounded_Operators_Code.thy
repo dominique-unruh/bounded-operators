@@ -66,10 +66,15 @@ unit_vec (length (canonical_basis::'a list)) i\<close>
 definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum v = vec_of_onb_enum_list_NEW (canonical_basis::'a list) v 0\<close>
 
-
 lemma dim_vec_of_onb_enum_list_NEW:
   \<open>dim_vec (vec_of_onb_enum_list_NEW (L::'a list) v i) = length (canonical_basis::'a::onb_enum list)\<close>
   by (induction L, auto)
+
+lemma dim_vec_of_onb_enum_list:
+  \<open>dim_vec (vec_of_onb_enum (v::'a)) = length (canonical_basis::'a::onb_enum list)\<close>
+  unfolding vec_of_onb_enum_def 
+  using dim_vec_of_onb_enum_list_NEW[where L = "(canonical_basis::'a::onb_enum list)" 
+      and v = v and i = 0] by auto  
 
 lemma vec_of_onb_enum_list_add_NEW:
   \<open>vec_of_onb_enum_list_NEW (L::'a::onb_enum list) (v1 + v2) i =
@@ -644,231 +649,13 @@ proof(rule classical)
 qed
 
 (* NEW *)
-lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
-  assumes f1: "i < length S" and f2: "complex_vector.independent (set S)" and f3: "distinct S"
-  shows "list_of_vec (vec_of_onb_enum_list_NEW S w j)!i = \<langle>S!i, w\<rangle>"
-  using assms proof (induction S arbitrary: i j w)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a S)
-  show "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j) ! i = \<langle>(a # S) ! i, w\<rangle>"
-  proof(cases "i = 0")
-    case True
-    have "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j)!0 = 
-      list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j) 
-      + \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)!0"
-      by simp
-    also have "\<dots> = (map2 (+) 
-  (list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j))) 
-  (list_of_vec (\<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)))!0"
-      using list_of_vec_plus
-      by (simp add: dim_vec_of_onb_enum_list_NEW) 
-    finally show ?thesis
-      apply auto sorry
-  next
-    case False
-    hence "\<exists> i'. i = Suc i'"
-      by (simp add: not0_implies_Suc)
-    then obtain i' where i'_def: "i = Suc i'" by blast
-    have "i' < length S"
-      using i'_def Cons.prems(1) by auto 
-    have "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j) ! i
-           = list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j) 
-             + \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)!i"
-      by simp    
-    thus ?thesis sorry
-  qed
-qed
-
-
-(*
-  using assms proof(induction S arbitrary: i w)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a S)
-  show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i = \<langle>(a # S) ! i, w\<rangle>"
-  proof(cases "i = 0")
-    case True
-    thus ?thesis
-      (* Ask to Dominique if there is a fast way to prove this *)
-      apply simp sorry
-  next
-    case False
-    have "\<exists>k. i = Suc k"
-      by (meson False lessI less_Suc_eq_0_disj)
-    then obtain k where "i = Suc k"
-      by blast
-    have "k \<le> length (a # S)-1"
-      using Cons.prems(1)
-      by (simp add: \<open>i = Suc k\<close>) 
-    hence "k \<le> length (a # S) - 2"
-      using Cons.prems(1)
-      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
-    hence "k \<le> length S-1"
-      by auto
-    have "complex_vector.independent (set S)"
-      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
-    moreover have "distinct S"
-      using Cons.prems(3) by auto
-    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
-      by (simp add: Cons.IH)
-    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
-      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
-    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
-      by (simp add: \<open>i = Suc k\<close>)      
-    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
-                 = list_of_vec (vec_of_onb_enum_list S w)!k"
-      apply (simp)
-      apply (subst list_of_vec_plus)
-      subgoal sorry
-      apply (subst nth_map)
-      subgoal sorry
-      apply (subst nth_zip)
-      subgoal sorry
-      subgoal sorry
-      apply (subst list_of_vec_mult)
-      apply (subst nth_map)
-      subgoal sorry
-
-(* subst: "list_of_vec (c \<cdot>\<^sub>v v) = map (%x. c \<cdot>\<^sub>v x) (list_of_vec v) *)
-      apply simp
-
-      unfolding list_of_vec_def  apply auto      
-        (* Ask to Dominique if there is a fast way to prove this *)
-      sorry
-    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
-      using  \<open>i = Suc k\<close> by simp
-  qed
-qed
-*)
-
-lemma TODO_NAME:
-  fixes S :: "'a::onb_enum list"
-  assumes f2: "complex_vector.independent (set S)" and f3: "distinct S" (* TODO f3 needed? *)
-  shows "list_of_vec (vec_of_onb_enum_list S w) = map (\<lambda>s. \<langle>s, w\<rangle>) S"
-  sorry
-(*
-  using assms proof(induction S arbitrary: i w)
-  case Nil
-  thus ?case
-    apply auto
-    sorry
-next
-  case (Cons a S)
-  show ?thesis
-  proof(cases "i = 0")
-    case True
-    thus ?thesis
-      (* Ask to Dominique if there is a fast way to prove this *)
-      apply simp sorry
-  next
-    case False
-    have "\<exists>k. i = Suc k"
-      by (meson False lessI less_Suc_eq_0_disj)
-    then obtain k where "i = Suc k"
-      by blast
-    have "k \<le> length (a # S)-1"
-      using Cons.prems(1)
-      by (simp add: \<open>i = Suc k\<close>) 
-    hence "k \<le> length (a # S) - 2"
-      using Cons.prems(1)
-      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
-    hence "k \<le> length S-1"
-      by auto
-    have "complex_vector.independent (set S)"
-      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
-    moreover have "distinct S"
-      using Cons.prems(3) by auto
-    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
-      by (simp add: Cons.IH)
-    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
-      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
-    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
-      by (simp add: \<open>i = Suc k\<close>)      
-    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
-                 = list_of_vec (vec_of_onb_enum_list S w)!k"
-      apply simp unfolding list_of_vec_def  apply auto      
-        (* Ask to Dominique if there is a fast way to prove this *)
-      sorry
-    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
-      using  \<open>i = Suc k\<close> by simp
-  qed
-qed
-*)
-
-(* NEW *)
-lemma onb_enum_of_vec_list_sum:
-  fixes w::"'a::onb_enum" 
-  shows "onb_enum_of_vec_list (canonical_basis::('a list)) 
-        (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
-      = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
-  apply (subst TODO_NAME)
-  subgoal sorry
-  subgoal sorry
-  unfolding onb_enum_of_vec_list_def'
-  unfolding map_zip_map
-  apply simp
-  unfolding zip_same_conv_map
-  apply simp
-  apply (subst sum_list_distinct_conv_sum_set)
-  subgoal sorry
-  by simp
-
-(* 
-proof-
-  have f1: "distinct (canonical_basis::('a list))"
-    by (simp add: distinct_canonical_basis)
-  define L where "L = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)"
-  have "length (canonical_basis::('a list)) = length L"
-    using length_list_of_vec_vec_of_onb_enum_list
-    unfolding L_def
-    by metis 
-  hence "onb_enum_of_vec_list (canonical_basis::('a list)) L 
-  = (\<Sum>i\<in>{0..<length (canonical_basis::('a list))}. L!i *\<^sub>C (canonical_basis::('a list))!i)"
-    using f1 onb_enum_of_vec_expansion by blast 
-  moreover have "i < length (canonical_basis::('a list)) \<Longrightarrow> 
-    L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>" for i
-  proof-
-    assume h1: "i < length (canonical_basis::('a list))"
-    have "L!i = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)!i"
-      unfolding L_def by blast
-    also have "\<dots> = \<langle>(canonical_basis::('a list))!i, w\<rangle>"
-    proof-
-      have "complex_vector.independent (set (canonical_basis::('a list)))"
-        using is_basis_set unfolding is_basis_def by auto
-      thus ?thesis
-        using list_of_vec_vec_of_onb_enum_list_canonical_basis h1 f1 by blast      
-    qed
-    finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
-  qed
-  ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
-         (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
-       = (\<Sum>i=0..<length (canonical_basis::('a list)). 
-         \<langle>(canonical_basis::('a list))!i, w\<rangle> *\<^sub>C (canonical_basis::('a list))!i)"
-    unfolding L_def by simp
-  also have "\<dots> = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
-  proof-
-    have "(\<Sum>i = 0..<length (canonical_basis::('a list)). 
-          \<langle>(canonical_basis::('a list)) ! i, w\<rangle> *\<^sub>C (canonical_basis::('a list)) ! i) =
-          (\<Sum>b\<leftarrow>(canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
-      using list_sum_function[where S = "(canonical_basis::('a list))" and f = "\<lambda>x. \<langle>x, w\<rangle> *\<^sub>C x"]
-      by blast
-    thus ?thesis
-      using f1 Groups_List.comm_monoid_add_class.sum.distinct_set_conv_list[where xs = "(canonical_basis::('a list))" 
-          and g = "\<lambda>b.  \<langle>b, w\<rangle> *\<^sub>C b"] by auto
-  qed
-  finally show ?thesis
-    by blast
-qed *)
-
-(* NEW *)
 lemma onb_enum_of_vec_list_list_of_vec:
   fixes w::"'a::onb_enum"
-  assumes f1: "distinct (canonical_basis::('a list))"
   shows  "onb_enum_of_vec_list (canonical_basis::('a list))
          (list_of_vec (vec_of_onb_enum w)) = w"
+  unfolding vec_of_onb_enum_def 
+  sorry 
+(*
 proof-
   have "onb_enum_of_vec_list (canonical_basis::('a list))
          (list_of_vec (vec_of_onb_enum w)) = 
@@ -880,6 +667,7 @@ proof-
     using canonical_basis_inner[where w = w] by simp
   finally show ?thesis by blast
 qed
+*)
 
 (* TODO: When written as \<open>onb_enum_of_vec (vec_of_onb_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
@@ -1109,3 +897,242 @@ unbundle no_jnf_notation
 unbundle no_bounded_notation
 
 end
+
+
+
+
+(*
+Ask to Dominique: Is this necessary?
+lemma list_of_vec_vec_of_onb_enum_list_canonical_basis:
+  assumes f1: "i < length S" and f2: "complex_vector.independent (set S)" and f3: "distinct S"
+  shows "list_of_vec (vec_of_onb_enum_list_NEW S w j)!i = \<langle>S!i, w\<rangle>"
+  using assms proof (induction S arbitrary: i j w)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a S)
+  show "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j) ! i = \<langle>(a # S) ! i, w\<rangle>"
+  proof(cases "i = 0")
+    case True
+    have "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j)!0 = 
+      list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j) 
+      + \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)!0"
+      by simp
+    also have "\<dots> = (map2 (+) 
+  (list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j))) 
+  (list_of_vec (\<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)))!0"
+      using list_of_vec_plus
+      by (simp add: dim_vec_of_onb_enum_list_NEW) 
+    finally show ?thesis
+      apply auto sorry
+  next
+    case False
+    hence "\<exists> i'. i = Suc i'"
+      by (simp add: not0_implies_Suc)
+    then obtain i' where i'_def: "i = Suc i'" by blast
+    have "i' < length S"
+      using i'_def Cons.prems(1) by auto 
+    have "list_of_vec (vec_of_onb_enum_list_NEW (a # S) w j) ! i
+           = list_of_vec (vec_of_onb_enum_list_NEW S w (Suc j) 
+             + \<langle>a, w\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) j)!i"
+      by simp    
+    thus ?thesis sorry
+  qed
+qed
+*)
+
+(*
+  using assms proof(induction S arbitrary: i w)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a S)
+  show "list_of_vec (vec_of_onb_enum_list (a # S) w) ! i = \<langle>(a # S) ! i, w\<rangle>"
+  proof(cases "i = 0")
+    case True
+    thus ?thesis
+      (* Ask to Dominique if there is a fast way to prove this *)
+      apply simp sorry
+  next
+    case False
+    have "\<exists>k. i = Suc k"
+      by (meson False lessI less_Suc_eq_0_disj)
+    then obtain k where "i = Suc k"
+      by blast
+    have "k \<le> length (a # S)-1"
+      using Cons.prems(1)
+      by (simp add: \<open>i = Suc k\<close>) 
+    hence "k \<le> length (a # S) - 2"
+      using Cons.prems(1)
+      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
+    hence "k \<le> length S-1"
+      by auto
+    have "complex_vector.independent (set S)"
+      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
+    moreover have "distinct S"
+      using Cons.prems(3) by auto
+    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
+      by (simp add: Cons.IH)
+    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
+      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
+    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
+      by (simp add: \<open>i = Suc k\<close>)      
+    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
+                 = list_of_vec (vec_of_onb_enum_list S w)!k"
+      apply (simp)
+      apply (subst list_of_vec_plus)
+      subgoal sorry
+      apply (subst nth_map)
+      subgoal sorry
+      apply (subst nth_zip)
+      subgoal sorry
+      subgoal sorry
+      apply (subst list_of_vec_mult)
+      apply (subst nth_map)
+      subgoal sorry
+(* subst: "list_of_vec (c \<cdot>\<^sub>v v) = map (%x. c \<cdot>\<^sub>v x) (list_of_vec v) *)
+      apply simp
+
+      unfolding list_of_vec_def  apply auto      
+        (* Ask to Dominique if there is a fast way to prove this *)
+      sorry
+    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
+      using  \<open>i = Suc k\<close> by simp
+  qed
+qed
+*)
+
+(*
+lemma list_of_vec_vec_of_onb_enum_list_NEW_map:
+  fixes S :: "'a::onb_enum list"
+  assumes f2: "complex_vector.independent (set S)" 
+    (* and f3: "distinct S"*) (* TODO f3 needed? *)
+  shows "list_of_vec (vec_of_onb_enum_list_NEW S w 0)  = map (\<lambda>s. \<langle>s, w\<rangle>) S"
+proof(induction S arbitrary: w)
+case Nil
+then show ?case apply simp 
+next
+  case (Cons a S)
+  then show ?case apply simp sorry
+qed
+  
+
+(*
+  using assms proof(induction S arbitrary: i w)
+  case Nil
+  thus ?case
+    apply auto
+    sorry
+next
+  case (Cons a S)
+  show ?thesis
+  proof(cases "i = 0")
+    case True
+    thus ?thesis
+      (* Ask to Dominique if there is a fast way to prove this *)
+      apply simp sorry
+  next
+    case False
+    have "\<exists>k. i = Suc k"
+      by (meson False lessI less_Suc_eq_0_disj)
+    then obtain k where "i = Suc k"
+      by blast
+    have "k \<le> length (a # S)-1"
+      using Cons.prems(1)
+      by (simp add: \<open>i = Suc k\<close>) 
+    hence "k \<le> length (a # S) - 2"
+      using Cons.prems(1)
+      using \<open>i = Suc k\<close> le_neq_implies_less length_Cons less_Suc_eq_le nat_neq_iff by linarith 
+    hence "k \<le> length S-1"
+      by auto
+    have "complex_vector.independent (set S)"
+      by (metis Complex_Vector_Spaces.dependent_raw_def Cons.prems(2) complex_vector.dependent_mono set_subset_Cons)
+    moreover have "distinct S"
+      using Cons.prems(3) by auto
+    ultimately have "j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w)!j = \<langle>S!j, w\<rangle>" for j
+      by (simp add: Cons.IH)
+    have "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>S!k, w\<rangle>"
+      using Cons.prems(1) \<open>\<And>j. j < length S \<Longrightarrow> list_of_vec (vec_of_onb_enum_list S w) ! j = \<langle>S ! j, w\<rangle>\<close> \<open>i = Suc k\<close> by auto
+    hence "list_of_vec (vec_of_onb_enum_list S w)!k = \<langle>(a#S)!i, w\<rangle>"
+      by (simp add: \<open>i = Suc k\<close>)      
+    moreover have "list_of_vec (vec_of_onb_enum_list (a#S) w)!(Suc k)
+                 = list_of_vec (vec_of_onb_enum_list S w)!k"
+      apply simp unfolding list_of_vec_def  apply auto      
+        (* Ask to Dominique if there is a fast way to prove this *)
+      sorry
+    ultimately show "list_of_vec (vec_of_onb_enum_list (a#S) w)!i = \<langle>(a#S)!i, w\<rangle>"
+      using  \<open>i = Suc k\<close> by simp
+  qed
+qed
+*)
+*)
+
+(*
+(* NEW *)
+lemma onb_enum_of_vec_list_sum:
+  fixes w::"'a::onb_enum" 
+  shows "onb_enum_of_vec_list (canonical_basis::('a list)) 
+        (list_of_vec (vec_of_onb_enum_list_NEW (canonical_basis::('a list)) w 0))
+      = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+*)
+
+(*
+  apply (subst TODO_NAME)
+  subgoal sorry
+  subgoal sorry
+  unfolding onb_enum_of_vec_list_def'
+  unfolding map_zip_map
+  apply simp
+  unfolding zip_same_conv_map
+  apply simp
+  apply (subst sum_list_distinct_conv_sum_set)
+  subgoal sorry
+  by simp
+*)
+
+(* 
+proof-
+  have f1: "distinct (canonical_basis::('a list))"
+    by (simp add: distinct_canonical_basis)
+  define L where "L = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)"
+  have "length (canonical_basis::('a list)) = length L"
+    using length_list_of_vec_vec_of_onb_enum_list
+    unfolding L_def
+    by metis 
+  hence "onb_enum_of_vec_list (canonical_basis::('a list)) L 
+  = (\<Sum>i\<in>{0..<length (canonical_basis::('a list))}. L!i *\<^sub>C (canonical_basis::('a list))!i)"
+    using f1 onb_enum_of_vec_expansion by blast 
+  moreover have "i < length (canonical_basis::('a list)) \<Longrightarrow> 
+    L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>" for i
+  proof-
+    assume h1: "i < length (canonical_basis::('a list))"
+    have "L!i = list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w)!i"
+      unfolding L_def by blast
+    also have "\<dots> = \<langle>(canonical_basis::('a list))!i, w\<rangle>"
+    proof-
+      have "complex_vector.independent (set (canonical_basis::('a list)))"
+        using is_basis_set unfolding is_basis_def by auto
+      thus ?thesis
+        using list_of_vec_vec_of_onb_enum_list_canonical_basis h1 f1 by blast      
+    qed
+    finally show "L!i = \<langle>(canonical_basis::('a list))!i, w\<rangle>".
+  qed
+  ultimately have "onb_enum_of_vec_list (canonical_basis::('a list))
+         (list_of_vec (vec_of_onb_enum_list (canonical_basis::('a list)) w))
+       = (\<Sum>i=0..<length (canonical_basis::('a list)). 
+         \<langle>(canonical_basis::('a list))!i, w\<rangle> *\<^sub>C (canonical_basis::('a list))!i)"
+    unfolding L_def by simp
+  also have "\<dots> = (\<Sum>b\<in>set (canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+  proof-
+    have "(\<Sum>i = 0..<length (canonical_basis::('a list)). 
+          \<langle>(canonical_basis::('a list)) ! i, w\<rangle> *\<^sub>C (canonical_basis::('a list)) ! i) =
+          (\<Sum>b\<leftarrow>(canonical_basis::('a list)). \<langle>b, w\<rangle> *\<^sub>C b)"
+      using list_sum_function[where S = "(canonical_basis::('a list))" and f = "\<lambda>x. \<langle>x, w\<rangle> *\<^sub>C x"]
+      by blast
+    thus ?thesis
+      using f1 Groups_List.comm_monoid_add_class.sum.distinct_set_conv_list[where xs = "(canonical_basis::('a list))" 
+          and g = "\<lambda>b.  \<langle>b, w\<rangle> *\<^sub>C b"] by auto
+  qed
+  finally show ?thesis
+    by blast
+qed *)
