@@ -10,7 +10,7 @@ subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up synta
 
 text \<open>This theory defines bundes to activate/deactivate the notation
   from \<^session>\<open>Jordan_Normal_Form\<close>.
-
+                                                                         
 Reactivate the notation locally via "@{theory_text \<open>includes jnf_notation\<close>}" in a lemma statement.
 (Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle jnf_notation ... unbundle no_jnf_notation\<close>}.)
 \<close>
@@ -60,11 +60,13 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::onb_e
 primrec vec_of_onb_enum_list_NEW :: \<open>'a list \<Rightarrow> 'a::onb_enum \<Rightarrow> nat \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum_list_NEW [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
   \<open>vec_of_onb_enum_list_NEW (x#ys) v i = vec_of_onb_enum_list_NEW ys v (Suc i) +
-\<langle>x, v\<rangle> \<cdot>\<^sub>v 
-unit_vec (length (canonical_basis::'a list)) i\<close>
+    \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i\<close>
 
 definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum v = vec_of_onb_enum_list_NEW (canonical_basis::'a list) v 0\<close>
+
+definition vec_of_onb_enum_NEW2 :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
+  \<open>vec_of_onb_enum_NEW2 v = vec_of_list (map (complex_vector.representation (set canonical_basis) v) canonical_basis)\<close>
 
 lemma dim_vec_of_onb_enum_list_NEW:
   \<open>dim_vec (vec_of_onb_enum_list_NEW (L::'a list) v i) = length (canonical_basis::'a::onb_enum list)\<close>
@@ -166,7 +168,6 @@ qed
 lemma vec_of_onb_enum_mult:
   \<open>vec_of_onb_enum (c *\<^sub>C v) = c \<cdot>\<^sub>v vec_of_onb_enum v\<close>
   by (simp add: vec_of_onb_enum_def vec_of_onb_enum_list_mult)
-  
 
 fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::onb_enum\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
@@ -188,7 +189,6 @@ next
     thus ?case by auto
   qed
 qed
-
 
 definition onb_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::onb_enum\<close> where
   \<open>onb_enum_of_vec v = onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
@@ -346,6 +346,7 @@ qed
 
 lemma cinner_span_breakdown_eq:
   assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "a \<in> sphere 0 1"
+(* TODO: norm a = 1 *)
   shows
     "(x \<in> Complex_Vector_Spaces.span (insert a S)) =
    (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S)"
@@ -412,6 +413,7 @@ qed
 lemma span_set_inner:
   assumes "w \<in> complex_vector.span (set L)" and "distinct L" and "is_ortho_set (set L)" 
     and "\<forall>a\<in>set L. a\<in>sphere 0 1"
+(* TODO: norm a = 1 *)
   shows  "w = (\<Sum>b\<in>set L. \<langle>b, w\<rangle> *\<^sub>C b)"
   using assms
 proof(induction L arbitrary: w)
@@ -495,10 +497,12 @@ proof (rule Ortho_expansion_finite)
 qed
 
 (* NEW *)
+(* TODO?: Remove and use onb_enum_of_vec_list_def' instead? *)
 lemma onb_enum_of_vec_expansion:  
   fixes S::"'a::onb_enum list" and L::"complex list"
   assumes f1: "distinct S" and f2: "length S = length L"
   shows "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
+(* TODO?: = sum_list (map2 (\<lambda>(l,s). l *\<^sub>C s) S L) *)
 proof-
   have "onb_enum_of_vec_list S L 
       = (\<Sum>i\<in>{0..<length S}. (L!i) *\<^sub>C S!i)"
@@ -556,6 +560,7 @@ proof-
 qed
 
 (* NEW *)
+(* TODO: check if needed at all (in the end) *)
 lemma list_sum_function:
   fixes f :: "'a \<Rightarrow> 'b::ab_group_add" and S :: "'a list"
   shows "(\<Sum>i = 0..<length S. f (S ! i)) = (\<Sum>b\<leftarrow>S. f b)"
@@ -569,20 +574,22 @@ qed
 
 
 (* NEW *)
+(* TODO: Maybe just use (simp add: dim_vec_of_onb_enum_list_NEW) instead of using this *)
 lemma length_list_of_vec_vec_of_onb_enum_list:
   fixes w::"'a::onb_enum" and S::"'a list"
   shows "length (list_of_vec (vec_of_onb_enum_list_NEW S w i)) = length (canonical_basis::'a list)"
   by (simp add: dim_vec_of_onb_enum_list_NEW)
-  
 
 (* NEW *)
 lemma list_of_vec_unit_vec:
-  assumes "length (canonical_basis::'a::basis_enum list) \<ge> 1"
+  defines "basis == canonical_basis::'a::basis_enum list"
+  assumes "length basis \<ge> 1"
   shows "list_of_vec (c \<cdot>\<^sub>v
-  unit_vec (length (canonical_basis::'a::basis_enum list))
-  (length (canonical_basis::'a list)-1))!(length (canonical_basis::'a list)-1)
+  unit_vec (length basis)
+  (length basis-1))!(length basis-1)
    = (c::complex)"
 proof-
+(* TODO replace (canonical_basis::'a::basis_enum list) \<rightarrow> basis *)
   have "c \<cdot>\<^sub>v
   unit_vec (length (canonical_basis::'a::basis_enum list)) 
   (length (canonical_basis::'a list)-1)
@@ -614,6 +621,7 @@ proof-
     thus ?thesis using assms by auto
   qed
   finally show ?thesis 
+    unfolding basis_def
     by auto 
 qed
 
@@ -648,15 +656,27 @@ proof(rule classical)
   thus ?thesis using g2 by (smt leD)
 qed
 
+lemma onb_enum_of_vec_inverse:
+  fixes w::"'a::onb_enum"
+  shows  "onb_enum_of_vec (vec_of_onb_enum_NEW2 w) = w"
+  unfolding vec_of_onb_enum_NEW2_def onb_enum_of_vec_def onb_enum_of_vec_list_def'
+  unfolding list_vec zip_map1 zip_same_conv_map map_map 
+  apply (simp add: o_def)
+  apply (subst sum.distinct_set_conv_list[symmetric])
+   apply (simp add: distinct_canonical_basis)
+  apply (rule complex_vector.sum_representation_eq)
+  sorry
 
-(* Ask to Dominique how to simplfy this *)
+
+(* (* Ask to Dominique how to simplfy this *)
 (* NEW *)
 lemma onb_enum_of_vec_list_list_of_vec:
   fixes w::"'a::onb_enum"
   shows  "onb_enum_of_vec_list (canonical_basis::('a list))
          (list_of_vec (vec_of_onb_enum w)) = w"
   unfolding vec_of_onb_enum_def 
-  sorry 
+  sorry  *)
+
 (*
 proof-
   have "onb_enum_of_vec_list (canonical_basis::('a list))
@@ -673,6 +693,7 @@ qed
 
 (* TODO: When written as \<open>onb_enum_of_vec (vec_of_onb_enum v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
+(* TODO remove (done in onb_enum_of_vec_inverse)*)
 lemma onb_enum_of_vec_COMP_vec_of_onb_enum:
   \<open>(onb_enum_of_vec::(complex vec \<Rightarrow> 'a::onb_enum)) \<circ> (vec_of_onb_enum::('a \<Rightarrow> complex vec))
  = (id::('a \<Rightarrow> 'a))\<close>
@@ -692,7 +713,8 @@ proof-
       unfolding f_def
       using Bounded_Operators_Code.onb_enum_of_vec_def[where v = "vec_of_onb_enum v"]
         onb_enum_of_vec_list_list_of_vec
-      by (simp add: \<open>onb_enum_of_vec (vec_of_onb_enum v) = onb_enum_of_vec_list canonical_basis (list_of_vec (vec_of_onb_enum v))\<close>)
+       \<open>onb_enum_of_vec (vec_of_onb_enum v) = onb_enum_of_vec_list canonical_basis (list_of_vec (vec_of_onb_enum v))\<close>
+      sorry
   qed
   moreover have \<open>clinear f\<close>
   proof-
@@ -784,9 +806,24 @@ qed
 (* TODO: When written as \<open>vec_of_onb_enum (onb_enum_of_vec v) = v\<close>
    such a lemma is more easily used as, e.g., a simp-rule (in my experience) *)
 (* TODO: Not true. Only holds for vectors v with "dim v = canonical_basis_length" *)
-lemma vec_of_onb_enum_COMP_onb_enum_of_vec:
-  \<open>vec_of_onb_enum \<circ> onb_enum_of_vec = id\<close>
+(* TODO rename: vec_of_onb_enum_inverse *)
+lemma vec_of_onb_enum_COMP_onb_enum_of_vec[simp]:
+  \<open>vec_of_onb_enum_NEW2 (onb_enum_of_vec v) = v\<close>
+proof -
+  define w where "w = list_of_vec v"
+  define basis where "basis = (canonical_basis::'a list)"
+  (* let ?basis = " (canonical_basis::'a list)" *)
+  have "
+     (map (complex_vector.representation (set basis)
+            (onb_enum_of_vec_list basis w))
+       basis) =
+    w"
+    sorry
+  show ?thesis
+  unfolding vec_of_onb_enum_NEW2_def onb_enum_of_vec_def 
   sorry
+qed
+
 
 
 definition mat_of_bounded :: \<open>('a::onb_enum,'b::onb_enum) bounded \<Rightarrow> complex mat\<close> where
