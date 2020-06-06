@@ -3415,7 +3415,7 @@ setup \<open>Sign.add_const_constraint
 class basis_enum = complex_inner +
   fixes canonical_basis :: "'a list"
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
-  assumes distinct_canonical_basis: (* TODO [simp] *)
+  assumes distinct_canonical_basis[simp]: 
     "distinct canonical_basis"
     and is_basis_set:
     "is_basis (set canonical_basis)"
