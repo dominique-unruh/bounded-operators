@@ -14,133 +14,13 @@ theory Bounded_Operators
     "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
-unbundle no_notation_blinfun_apply
+subsection \<open>Algebraic properties of real cblinfun operators\<close>
 
-subsection \<open>Algebraic properties of real bounded operators\<close>
-
-(* TODO: The type rbounded already exists with the name "blinfun".
-
-   Step 1: Remove definition of rbounded. Add a type synonym rbounded \<rightarrow> blinfun
-   Step 2: Remove all lemmas that already exist for blinfun
-   Step 3: Replace "rbounded" by "blinfun" in remaining lemmas
-   Step 4: Remove type synonym
-   
-*)
-typ "(_,_) blinfun"
-
-typedef (overloaded) ('a::real_normed_vector, 'b::real_normed_vector) rbounded
-  = \<open>{f::'a \<Rightarrow> 'b. bounded_linear f}\<close>
-  morphisms times_rbounded_vec Abs_rbounded
-  using bounded_linear_zero by blast
-
-setup_lifting type_definition_rbounded
-
-instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_vector"
+instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_vector"
 begin
-lift_definition uminus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded"
-  is "\<lambda> f. (\<lambda> t::'a. - f t)"
-  by (fact bounded_linear_minus)
-
-lift_definition zero_rbounded :: "('a,'b) rbounded" is "\<lambda>x::'a. (0::'b)"
-  by (fact bounded_linear_zero)
-
-lift_definition plus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
-  \<open>\<lambda> f g. (\<lambda> t. f t + g t)\<close>
-  by (fact bounded_linear_add)
-
-lift_definition minus_rbounded :: "('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded \<Rightarrow> ('a,'b) rbounded" is
-  \<open>\<lambda> f g. (\<lambda> t. f t - g t)\<close>
-  by (simp add: bounded_linear_sub)
-
-lift_definition scaleR_rbounded :: \<open>real \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
-  is \<open>\<lambda> c. \<lambda> f. (\<lambda> x. c *\<^sub>R (f x))\<close>
-  by (rule Real_Vector_Spaces.bounded_linear_const_scaleR)
-instance
-proof      
-  fix a b c :: \<open>('a, 'b) rbounded\<close>
-  show \<open>a + b + c = a + (b + c)\<close>
-    apply transfer by auto
-
-  fix a b :: \<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-  show \<open>a + b = b + a\<close>
-    apply transfer
-    by (simp add: linordered_field_class.sign_simps(2))
-
-  fix a :: \<open>('a, 'b) rbounded\<close>
-  show \<open>0 + a = a\<close>
-    apply transfer by simp
-
-  fix a :: \<open>('a, 'b) rbounded\<close>
-  show \<open>-a + a = 0\<close>
-    apply transfer
-    by simp
-
-  fix a b :: \<open>('a, 'b) rbounded\<close>
-  show \<open>a - b = a + - b\<close>
-    apply transfer
-    by auto
-
-  fix a::real and x y :: \<open>('a, 'b) rbounded\<close>
-  show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x + a *\<^sub>R y\<close>
-    apply transfer
-    by (simp add: scaleR_add_right)
-  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
-  show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x + b *\<^sub>R x\<close>
-    apply transfer
-    by (simp add: scaleR_add_left)
-  fix a b :: real and x :: \<open>('a, 'b) rbounded\<close>
-  show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
-    apply transfer
-    by simp
-  fix x :: \<open>('a, 'b) rbounded\<close>
-  show \<open>1 *\<^sub>R x = x\<close>
-    apply transfer
-    by simp
-qed
-end
-
-instantiation rbounded :: (real_normed_vector, real_normed_vector) "real_normed_vector"
-begin
-lift_definition norm_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> real\<close>
-  is \<open>onorm\<close>.
-
-lift_definition dist_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded \<Rightarrow> real\<close>
-  is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x )\<close>.
-
-lift_definition sgn_rbounded :: \<open>('a, 'b) rbounded \<Rightarrow> ('a, 'b) rbounded\<close>
-  is \<open>\<lambda> f. (\<lambda> x. (f x) /\<^sub>R (onorm f) )\<close>
-  by (simp add: bounded_linear_const_scaleR)
-
-definition uniformity_rbounded :: \<open>( ('a, 'b) rbounded \<times> ('a, 'b) rbounded ) filter\<close>
-  where  \<open>uniformity_rbounded = (INF e:{0<..}. principal {((f::('a, 'b) rbounded), g). dist f g < e})\<close>
-
-definition open_rbounded :: \<open>(('a, 'b) rbounded) set \<Rightarrow> bool\<close>
-  where \<open>open_rbounded = (\<lambda> U::(('a, 'b) rbounded) set. (\<forall>x\<in>U. eventually (\<lambda>(x', y). x' = x \<longrightarrow> y \<in> U) uniformity))\<close>
-
-instance
-  apply intro_classes
-        apply transfer
-        apply auto
-         apply transfer
-         apply auto
-        apply (simp add: uniformity_rbounded_def)
-       apply (simp add: open_rbounded_def)
-      apply (simp add: open_rbounded_def)
-     apply transfer
-  using onorm_pos_lt apply fastforce
-    apply transfer
-    apply (simp add: onorm_zero)
-   apply transfer
-   apply (simp add: onorm_triangle)
-  apply transfer
-  using onorm_scaleR by blast 
-end
-
-instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_vector"
-begin
-lift_definition scaleC_rbounded :: \<open>complex \<Rightarrow>
- ('a::real_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
- ('a, 'b) rbounded\<close>
+lift_definition scaleC_blinfun :: \<open>complex \<Rightarrow>
+ ('a::real_normed_vector, 'b::complex_normed_vector) blinfun \<Rightarrow>
+ ('a, 'b) blinfun\<close>
   is \<open>\<lambda> c::complex. \<lambda> f::'a\<Rightarrow>'b. (\<lambda> x. c *\<^sub>C (f x) )\<close> 
 proof
   fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close> and b1::'a and b2::'a
@@ -159,7 +39,7 @@ proof
   proof-
     have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
       using \<open>bounded_linear f\<close>
-      by (simp add: bounded_linear.bounded)
+      by (simp add: bounded_linear.bounded)      
     then obtain K where \<open>\<forall> x. norm (f x) \<le> norm x * K\<close>
       by blast
     have \<open>cmod c \<ge> 0\<close>
@@ -177,38 +57,38 @@ qed
 
 instance
 proof
-  show "((*\<^sub>R) r::('a, 'b) rbounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  show "((*\<^sub>R) r::('a, 'b) blinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
   proof
-    show "r *\<^sub>R (x::('a, 'b) rbounded) = complex_of_real r *\<^sub>C x"
-      for x :: "('a, 'b) rbounded"
+    show "r *\<^sub>R (x::('a, 'b) blinfun) = complex_of_real r *\<^sub>C x"
+      for x :: "('a, 'b) blinfun"
       apply transfer
       by (simp add: scaleR_scaleC)
   qed
 
-  show "a *\<^sub>C ((x::('a, 'b) rbounded) + y) = a *\<^sub>C x + a *\<^sub>C y"
+  show "a *\<^sub>C ((x::('a, 'b) blinfun) + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
-      and x :: "('a, 'b) rbounded"
-      and y :: "('a, 'b) rbounded"
+      and x :: "('a, 'b) blinfun"
+      and y :: "('a, 'b) blinfun"
     apply transfer
     by (simp add: scaleC_add_right)
 
-  show "(a + b) *\<^sub>C (x::('a, 'b) rbounded) = a *\<^sub>C x + b *\<^sub>C x"
+  show "(a + b) *\<^sub>C (x::('a, 'b) blinfun) = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) rbounded"
+      and x :: "('a, 'b) blinfun"
     apply transfer
     by (simp add: scaleC_add_left)
 
-  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) rbounded) = (a * b) *\<^sub>C x"
+  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) blinfun) = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) rbounded"
+      and x :: "('a, 'b) blinfun"
     apply transfer
     by simp
 
-  show "1 *\<^sub>C (x::('a, 'b) rbounded) = x"
-    for x :: "('a, 'b) rbounded"
+  show "1 *\<^sub>C (x::('a, 'b) blinfun) = x"
+    for x :: "('a, 'b) blinfun"
     apply transfer
   proof
     fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
@@ -218,7 +98,7 @@ proof
 qed  
 end
 
-instantiation rbounded :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
+instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
 instance
 proof intro_classes 
@@ -347,85 +227,83 @@ proof intro_classes
   } note 1 = this 
 
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
-    for a::complex and x::\<open>('a, 'b) rbounded\<close>
+    for a::complex and x::\<open>('a, 'b) blinfun\<close>
     apply transfer
     apply (rule 1)
     by blast
 qed
 end
 
-
-
-lemma trivia_UNIV_rbounded:
-  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
+lemma trivia_UNIV_blinfun:
+  fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close> 
   assumes \<open>(UNIV::'a set) = 0\<close>
   shows \<open>f = 0\<close>
 proof-
   have \<open>x = 0\<close>
     for x::'a
     using \<open>(UNIV::'a set) = 0\<close> by auto
-  moreover have \<open>bounded_linear (times_rbounded_vec f)\<close>
-    using times_rbounded_vec by auto
-  ultimately have \<open>times_rbounded_vec f x = 0\<close>
+  moreover have \<open>bounded_linear (blinfun_apply f)\<close>
+    using blinfun_apply by auto
+  ultimately have \<open>blinfun_apply f x = 0\<close>
     for x::'a
     by (metis (full_types) linear_simps(3))
-  hence \<open>times_rbounded_vec f = (\<lambda> _. 0)\<close>
+  hence \<open>blinfun_apply f = (\<lambda> _. 0)\<close>
     by blast
-  moreover have \<open>times_rbounded_vec (Abs_rbounded (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
-    by (simp add: Abs_rbounded_inverse)
-  moreover have \<open>0 \<equiv> Abs_rbounded (\<lambda> _::'a. 0::'b)\<close>
-    using zero_rbounded_def by auto
-  ultimately have \<open>times_rbounded_vec f = times_rbounded_vec 0\<close>
+  moreover have \<open>blinfun_apply (Blinfun (\<lambda> _::'a. 0::'b)) = (\<lambda> _. 0)\<close>
+    by (simp add: Blinfun_inverse)
+  moreover have \<open>0 \<equiv> Blinfun (\<lambda> _::'a. 0::'b)\<close>
+    using zero_blinfun_def by auto
+  ultimately have \<open>blinfun_apply f = blinfun_apply 0\<close>
     by simp
-  thus ?thesis using  times_rbounded_vec_inject 
+  thus ?thesis using  blinfun_apply_inject 
     by auto
 qed
 
-subsection \<open>Topological properties of real bounded operators\<close>
+subsection \<open>Topological properties of real cblinfun operators\<close>
 
 lemma hnorm_unit_sphere:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
     and N::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x )\<close>
+    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x )\<close>
 proof-
-  have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+  have \<open>bounded_linear (blinfun_apply (f n))\<close>
     for n
-    using times_rbounded_vec by blast
+    using blinfun_apply by blast
   hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
-      norm (norm((times_rbounded_vec (f n)) x) - (onorm (times_rbounded_vec (f n)))) < e\<close>
+      norm (norm((blinfun_apply (f n)) x) - (onorm (blinfun_apply (f n)))) < e\<close>
     for n
     using norm_unit_sphere  \<open>(UNIV::'a set) \<noteq> 0\<close> 
     by auto
-  moreover have \<open>norm (f n) = onorm (times_rbounded_vec (f n))\<close> 
+  moreover have \<open>norm (f n) = onorm (blinfun_apply (f n))\<close> 
     for n
     apply transfer
     by blast
   ultimately have \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
-       norm ( norm ((times_rbounded_vec (f n)) x) - norm (f n) ) < e\<close>
+       norm ( norm ((blinfun_apply (f n)) x) - norm (f n) ) < e\<close>
     for n
     by simp
   hence \<open>\<forall> n. \<exists> x\<in>(sphere 0 1).
-       norm ( norm ((\<lambda> m. times_rbounded_vec (f m)) n x) - norm (f n) ) < inverse (real (Suc n))\<close>
+       norm ( norm ((\<lambda> m. blinfun_apply (f m)) n x) - norm (f n) ) < inverse (real (Suc n))\<close>
     by auto
   hence \<open>\<forall> n. \<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) n x) - hnorm ((*f* f) n) ) 
+       hnorm ( hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) n x) - hnorm ((*f* f) n) ) 
             < inverse (hypreal_of_hypnat (hSuc n))\<close>
     by StarDef.transfer
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) - hnorm ((*f* f) N) ) 
+       hnorm ( hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm ((*f* f) N) ) 
             < inverse (hypreal_of_hypnat (hSuc N))\<close>
     by blast
   moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
     using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
     by blast
   ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) - hnorm ((*f* f) N) \<in> Infinitesimal\<close>
+       hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm ((*f* f) N) \<in> Infinitesimal\<close>
     using hnorm_less_Infinitesimal by blast
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f2* (\<lambda> m. times_rbounded_vec (f m))) N x) \<approx> hnorm ((*f* f) N)\<close>
+       hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) \<approx> hnorm ((*f* f) N)\<close>
     using bex_Infinitesimal_iff by blast
   thus ?thesis
     using approx_sym by blast    
@@ -433,48 +311,48 @@ qed
 
 lemma hnorm_unit_sphere_double:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
     and N M::hypnat 
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x )\<close>
+    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x )\<close>
 proof-
-  have \<open>bounded_linear (times_rbounded_vec (f n m))\<close>
+  have \<open>bounded_linear (blinfun_apply (f n m))\<close>
     for n m
-    using times_rbounded_vec by blast
+    using blinfun_apply by blast
   hence \<open>e>0 \<Longrightarrow> \<exists> x\<in>(sphere 0 1).
-      norm (norm((times_rbounded_vec (f n m)) x) - (onorm (times_rbounded_vec (f n m)))) < e\<close>
+      norm (norm((blinfun_apply (f n m)) x) - (onorm (blinfun_apply (f n m)))) < e\<close>
     for n m e
     using norm_unit_sphere \<open>(UNIV::'a set) \<noteq> 0\<close> 
     apply auto
     by blast 
-  moreover have \<open>norm (f n m) = onorm (times_rbounded_vec (f n m))\<close> 
+  moreover have \<open>norm (f n m) = onorm (blinfun_apply (f n m))\<close> 
     for n m
     apply transfer
     by blast
   ultimately have \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
-       norm ( norm ((times_rbounded_vec (f n m)) x) - norm (f n m) ) < e\<close>
+       norm ( norm ((blinfun_apply (f n m)) x) - norm (f n m) ) < e\<close>
     for n m
     by simp
   hence \<open>\<forall> n m. \<exists> x\<in>(sphere 0 1).
-       norm ( norm ((\<lambda> n m. times_rbounded_vec (f n m)) n m x) - norm (f n m) ) < inverse (real (Suc n))\<close>
+       norm ( norm ((\<lambda> n m. blinfun_apply (f n m)) n m x) - norm (f n m) ) < inverse (real (Suc n))\<close>
     by auto
   hence \<open>\<forall> n m. \<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) n m x) - hnorm ((*f2* f) n m) ) 
+       hnorm ( hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) n m x) - hnorm ((*f2* f) n m) ) 
             < inverse (hypreal_of_hypnat (hSuc n))\<close>
     by StarDef.transfer
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) - hnorm ((*f2* f) N M) ) 
+       hnorm ( hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm ((*f2* f) N M) ) 
             < inverse (hypreal_of_hypnat (hSuc N))\<close>
     by blast
   moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
     using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
     by blast
   ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) - hnorm ((*f2* f) N M) \<in> Infinitesimal\<close>
+       hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm ((*f2* f) N M) \<in> Infinitesimal\<close>
     using hnorm_less_Infinitesimal by blast
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (f n m))) N M x) \<approx> hnorm ((*f2* f) N M)\<close>
+       hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) \<approx> hnorm ((*f2* f) N M)\<close>
     using bex_Infinitesimal_iff by blast
   thus ?thesis
     using approx_sym by blast    
@@ -482,19 +360,19 @@ qed
 
 lemma uCauchy_unit_sphere:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) rbounded\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
     and N M::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
   shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
-         \<approx> hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+         \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
 proof-
-  define g::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a, 'b) rbounded\<close>
+  define g::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a, 'b) blinfun\<close>
     where \<open>g n m = f n - f m\<close> for n and m
   have \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+    hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     using assms by (rule hnorm_unit_sphere_double)
   then obtain x where \<open>x \<in> *s* (sphere 0 1)\<close> and
-    \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+    \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     by blast
   have \<open>\<forall> N M. hnorm ((*f2* g) N M) = hnorm ( (*f* f) N - (*f* f) M )\<close>
   proof-
@@ -506,40 +384,40 @@ proof-
       by StarDef.transfer
     thus ?thesis unfolding g_def by blast
   qed
-  moreover have \<open>\<forall> N M x. hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )
-      = hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+  moreover have \<open>\<forall> N M x. hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )
+      = hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
   proof-
     have \<open>\<forall>N M x. norm
-           (( (\<lambda>n m. times_rbounded_vec (f n - f m))) N M x) =
+           (( (\<lambda>n m. blinfun_apply (f n - f m))) N M x) =
           norm
-           (( (\<lambda>n. times_rbounded_vec (f n))) N x -
-            ( (\<lambda>n. times_rbounded_vec (f n))) M x)\<close>
-      by (simp add: minus_rbounded.rep_eq)      
+           (( (\<lambda>n. blinfun_apply (f n))) N x -
+            ( (\<lambda>n. blinfun_apply (f n))) M x)\<close>
+      by (simp add: minus_blinfun.rep_eq)      
     hence \<open>\<forall>N M x. hnorm
-           ((*f3* (\<lambda>n m. times_rbounded_vec (f n - f m))) N M x) =
+           ((*f3* (\<lambda>n m. blinfun_apply (f n - f m))) N M x) =
           hnorm
-           ((*f2* (\<lambda>n. times_rbounded_vec (f n))) N x -
-            (*f2* (\<lambda>n. times_rbounded_vec (f n))) M x)\<close>
+           ((*f2* (\<lambda>n. blinfun_apply (f n))) N x -
+            (*f2* (\<lambda>n. blinfun_apply (f n))) M x)\<close>
       by StarDef.transfer
     thus ?thesis unfolding g_def by blast
   qed
   ultimately show ?thesis using \<open>x \<in> *s* (sphere 0 1)\<close> 
-      \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. times_rbounded_vec (g n m))) N M x )\<close>
+      \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     by auto
 qed
 
 lemma ustrong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close> 
-    and l::\<open>('a, 'b) rbounded\<close>
-  assumes \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close> 
+    and l::\<open>('a, 'b) blinfun\<close>
+  assumes \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
   shows \<open>f \<longlonglongrightarrow> l\<close> 
 proof(cases \<open>(UNIV::'a set) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
     for n
-    by (rule trivia_UNIV_rbounded) 
+    by (rule trivia_UNIV_blinfun) 
   moreover have \<open>l = 0\<close>
-    using True by (rule trivia_UNIV_rbounded)
+    using True by (rule trivia_UNIV_blinfun)
   ultimately have \<open>( \<lambda> n. norm (f n - l) ) \<longlonglongrightarrow> 0\<close>
     by auto
   thus ?thesis
@@ -551,29 +429,29 @@ next
     for N::hypnat
   proof-
     assume \<open>N\<in>HNatInfinite\<close>
-    from \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+    from \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
     have \<open>NN\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+              (*f2* (\<lambda> n. blinfun_apply (f n))) NN x \<approx> (*f* (blinfun_apply l)) x\<close>
       for x::\<open>'a star\<close> and NN::hypnat
       by (simp add: nsupointwise_convergence_D sphere_iff)
     hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+              (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* (blinfun_apply l)) x\<close>
       for x::\<open>'a star\<close>
       by (simp add: \<open>N \<in> HNatInfinite\<close>)
     hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x \<in> Infinitesimal\<close>
+              (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x \<in> Infinitesimal\<close>
       for x::\<open>'a star\<close>
       using Infinitesimal_approx_minus by blast
     hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-             hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x ) \<in> Infinitesimal\<close>
+             hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x ) \<in> Infinitesimal\<close>
       for x::\<open>'a star\<close>
       by (simp add: Infinitesimal_hnorm_iff)
     moreover have \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
-        hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+        hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
     proof-
       define g where \<open>g n = f n - l\<close> for n
       have \<open>\<exists> x \<in> *s* (sphere 0 1). 
-        hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (g n))) N x )\<close>
+        hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (g n))) N x )\<close>
         using False \<open>N\<in>HNatInfinite\<close>
         by (simp add: hnorm_unit_sphere)
       moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
@@ -584,21 +462,21 @@ next
           by StarDef.transfer
         thus ?thesis by auto
       qed
-      moreover have \<open>(*f2* (\<lambda> n. times_rbounded_vec (g n))) N x
-         = (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x\<close>
+      moreover have \<open>(*f2* (\<lambda> n. blinfun_apply (g n))) N x
+         = (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x\<close>
         for x
       proof-
-        have  \<open>\<forall> NN xx. ( (\<lambda> n. times_rbounded_vec (g n))) NN xx
-         = ( (\<lambda> n. times_rbounded_vec (f n))) NN xx - ( (times_rbounded_vec l)) xx\<close>
+        have  \<open>\<forall> NN xx. ( (\<lambda> n. blinfun_apply (g n))) NN xx
+         = ( (\<lambda> n. blinfun_apply (f n))) NN xx - ( (blinfun_apply l)) xx\<close>
           unfolding g_def
-          by (simp add: minus_rbounded.rep_eq) 
-        hence  \<open>\<forall> NN xx. (*f2* (\<lambda> n. times_rbounded_vec (g n))) NN xx
-         = (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN xx - (*f* (times_rbounded_vec l)) xx\<close>
+          by (simp add: minus_blinfun.rep_eq) 
+        hence  \<open>\<forall> NN xx. (*f2* (\<lambda> n. blinfun_apply (g n))) NN xx
+         = (*f2* (\<lambda> n. blinfun_apply (f n))) NN xx - (*f* (blinfun_apply l)) xx\<close>
           by StarDef.transfer
         thus ?thesis by auto
       qed
       ultimately show \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
-        hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+        hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
         by (metis (no_types, lifting) approx_hnorm approx_trans3)
     qed
     ultimately have \<open>hnorm ((*f* f) N - (star_of l)) \<in> Infinitesimal\<close>
@@ -618,13 +496,13 @@ qed
 
 
 lemma oCauchy_uCauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
   assumes \<open>Cauchy f\<close>
-  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
 proof-
   include nsa_notation
   have  \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> x\<in>*s* (sphere 0 1) \<Longrightarrow> 
-    (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x\<close>
+    (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
     for N M x
   proof-
     assume \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* (sphere 0 1)\<close> 
@@ -639,29 +517,29 @@ proof-
       using bex_Infinitesimal_iff by blast
     hence \<open>hnorm ((*f* f) N - (*f* f) M) \<in> Infinitesimal\<close>
       by (simp add: Infinitesimal_hnorm_iff)
-    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x
-                                 - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x
+                                 - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )
         \<le> hnorm ((*f* f) N - (*f* f) M)\<close>
     proof-
-      have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+      have \<open>bounded_linear (blinfun_apply (f n))\<close>
         for n
-        using times_rbounded_vec by blast
-      hence \<open>bounded_linear (\<lambda> x. times_rbounded_vec (f n) x - times_rbounded_vec (f m) x )\<close>
+        using blinfun_apply by blast
+      hence \<open>bounded_linear (\<lambda> x. blinfun_apply (f n) x - blinfun_apply (f m) x )\<close>
         for n m
         by (simp add: bounded_linear_sub)    
       moreover have \<open>\<And>NN MM xx.
-       (\<And>n m. bounded_linear (\<lambda>x. times_rbounded_vec (f n) x - times_rbounded_vec (f m) x)) \<Longrightarrow>
+       (\<And>n m. bounded_linear (\<lambda>x. blinfun_apply (f n) x - blinfun_apply (f m) x)) \<Longrightarrow>
        norm xx = 1 \<Longrightarrow>
-       norm (times_rbounded_vec (f NN) xx - times_rbounded_vec (f MM) xx) \<le> onorm (times_rbounded_vec (f NN - f MM))\<close>
+       norm (blinfun_apply (f NN) xx - blinfun_apply (f MM) xx) \<le> onorm (blinfun_apply (f NN - f MM))\<close>
         using onorm
-        by (metis (no_types, hide_lams) times_rbounded_vec mem_Collect_eq minus_rbounded.rep_eq mult.commute mult.left_neutral)        
-      ultimately have \<open>\<forall> NN MM xx. norm xx = 1 \<longrightarrow> norm ( ( (\<lambda> n. times_rbounded_vec (f n))) NN xx
-                                 - ( (\<lambda> n. times_rbounded_vec (f n))) MM xx )
+        by (metis (no_types, hide_lams) blinfun_apply mem_Collect_eq minus_blinfun.rep_eq mult.commute mult.left_neutral)        
+      ultimately have \<open>\<forall> NN MM xx. norm xx = 1 \<longrightarrow> norm ( ( (\<lambda> n. blinfun_apply (f n))) NN xx
+                                 - ( (\<lambda> n. blinfun_apply (f n))) MM xx )
         \<le> norm (( f) NN - ( f) MM)\<close>
-        unfolding norm_rbounded_def
+        unfolding norm_blinfun_def
         by auto
-      hence \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) NN xx
-                                 - (*f2* (\<lambda> n. times_rbounded_vec (f n))) MM xx )
+      hence \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) NN xx
+                                 - (*f2* (\<lambda> n. blinfun_apply (f n))) MM xx )
         \<le> hnorm ((*f* f) NN - (*f* f) MM)\<close>
         by StarDef.transfer
       moreover have \<open>hnorm x = 1\<close>
@@ -676,14 +554,14 @@ proof-
       qed
       ultimately show ?thesis by blast 
     qed
-    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<ge> 0\<close>
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<ge> 0\<close>
     proof-
-      have \<open>norm ( ( (\<lambda> n. times_rbounded_vec (f n))) NN xx - ( (\<lambda> n. times_rbounded_vec (f n))) MM xx ) \<ge> 0\<close>
+      have \<open>norm ( ( (\<lambda> n. blinfun_apply (f n))) NN xx - ( (\<lambda> n. blinfun_apply (f n))) MM xx ) \<ge> 0\<close>
         for NN MM xx
         by auto
       thus ?thesis by auto 
     qed
-    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<in> Infinitesimal\<close>
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
       using Infinitesimal_interval2 by blast
     thus ?thesis
       using bex_Infinitesimal_iff hnorm_le_Infinitesimal by blast 
@@ -693,15 +571,15 @@ qed
 
 
 lemma uCauchy_oCauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close> 
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close> 
   shows \<open>Cauchy f\<close>
 proof(cases \<open>(UNIV::('a set)) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
     for n
-    by (rule trivia_UNIV_rbounded) 
-  moreover have \<open>Cauchy (\<lambda> n. 0::('a,'b) rbounded)\<close>
+    by (rule trivia_UNIV_blinfun) 
+  moreover have \<open>Cauchy (\<lambda> n. 0::('a,'b) blinfun)\<close>
     unfolding Cauchy_def by auto
   ultimately show ?thesis
     by presburger 
@@ -713,16 +591,16 @@ next
   proof-
     assume \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
     have \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
-      (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x\<close>
+      (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
       for x
-      using \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+      using \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
       by (simp add: \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> nsuniformly_Cauchy_on_iff)    
     hence \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
-      hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x ) \<in> Infinitesimal\<close>
+      hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
       for x
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast
     moreover have \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
-         \<approx> hnorm( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f2* (\<lambda> n. times_rbounded_vec (f n))) M x )\<close>
+         \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
       using  False \<open>N \<in> HNatInfinite\<close> \<open>M \<in> HNatInfinite\<close>
       by (rule uCauchy_unit_sphere)
     ultimately have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
@@ -738,35 +616,35 @@ qed
 
 
 proposition oCauchy_uCauchy_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
 proof
-  show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. times_rbounded_vec (f n))"
+  show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. blinfun_apply (f n))"
     if "Cauchy f"
     using that
     by (simp add: oCauchy_uCauchy) 
   show "Cauchy f"
-    if "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. times_rbounded_vec (f n))"
+    if "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. blinfun_apply (f n))"
     using that
     by (simp add: uCauchy_oCauchy) 
 qed
 
 
 lemma uCauchy_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
-  shows  \<open>\<exists> l::('a,'b) rbounded. 
-    (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) blinfun\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
+  shows  \<open>\<exists> l::('a,'b) blinfun. 
+    (sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
 proof-
   include nsa_notation
-  from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
   have \<open>\<exists> s::'a\<Rightarrow>'b.
- (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+ (sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
     using uniformly_convergent_eq_Cauchy uniformly_convergent_on_def by blast
   then obtain s::\<open>'a\<Rightarrow>'b\<close> where
-    \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
     by blast
-  have \<open>\<exists> L. \<forall> x\<in>(sphere 0 1). times_rbounded_vec L x = s x\<close>
+  have \<open>\<exists> L. \<forall> x\<in>(sphere 0 1). blinfun_apply L x = s x\<close>
   proof-
     define l::\<open>'a \<Rightarrow> 'b\<close> where \<open>l x = (norm x) *\<^sub>R s ((inverse (norm x)) *\<^sub>R x)\<close>
       for x::'a       
@@ -774,29 +652,29 @@ proof-
       for t
       unfolding sphere_def
       by simp
-    hence \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> l\<close>
-      using  \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+    hence \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> l\<close>
+      using  \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
       unfolding l_def 
       by (metis (no_types, lifting) uniform_limit_cong') 
     hence \<open>x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close>
       for x
-      using  \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+      using  \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
       by (meson LIMSEQ_unique tendsto_uniform_limitI)
     have \<open>bounded_linear l\<close>
     proof-
-      have \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
-        using times_rbounded_vec by blast
-      have \<open>(\<lambda> n. times_rbounded_vec (f n) x) \<longlonglongrightarrow> l x\<close>
+      have \<open>\<And> n. bounded_linear (blinfun_apply (f n))\<close>
+        using blinfun_apply by blast
+      have \<open>(\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> l x\<close>
         for x
       proof(cases \<open>x = 0\<close>)
         case True
-        have \<open>(\<lambda> n. times_rbounded_vec (f n) x) \<longlonglongrightarrow> 0\<close>
+        have \<open>(\<lambda> n. blinfun_apply (f n) x) \<longlonglongrightarrow> 0\<close>
         proof-
-          have \<open>times_rbounded_vec (f n) x = (0::'b)\<close>
+          have \<open>blinfun_apply (f n) x = (0::'b)\<close>
             for n
           proof-
-            have \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
-              using times_rbounded_vec by blast 
+            have \<open>\<And> n. bounded_linear (blinfun_apply (f n))\<close>
+              using blinfun_apply by blast 
             thus ?thesis
               by (simp add: True linear_simps(3)) 
           qed
@@ -816,11 +694,11 @@ proof-
         hence  \<open>norm x \<noteq> 0\<close> by simp
         thus ?thesis
         proof-
-          have  \<open>(\<lambda> n. (times_rbounded_vec (f n)) (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
+          have  \<open>(\<lambda> n. (blinfun_apply (f n)) (x  /\<^sub>R norm x)) \<longlonglongrightarrow> s (x /\<^sub>R norm x)\<close>
           proof-
             have \<open>\<forall> N\<in>HNatInfinite. \<forall>x\<in>*s* (sphere 0 1).
-                     (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* s) x\<close>
-              using \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close> nsuniform_convergence_D 
+                     (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* s) x\<close>
+              using \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close> nsuniform_convergence_D 
               by blast
             moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s* (sphere 0 1)\<close>
             proof-
@@ -832,45 +710,45 @@ proof-
                 by (meson starset_mem)                
             qed
             ultimately have \<open>\<forall> N\<in>HNatInfinite.
-               (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+               (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
               by blast 
-            moreover have \<open>\<forall> N. (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x))
-                        \<approx> (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+            moreover have \<open>\<forall> N. (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
+                        \<approx> (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
             proof-
-              have  \<open>\<forall> N. ( (\<lambda> n. times_rbounded_vec (f n))) N ( (x /\<^sub>R norm x))
-                        = ( (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+              have  \<open>\<forall> N. ( (\<lambda> n. blinfun_apply (f n))) N ( (x /\<^sub>R norm x))
+                        = ( (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
                 by blast
-              hence \<open>\<forall> N. (*f2* (\<lambda> n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x))
-                        = (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N\<close>
+              hence \<open>\<forall> N. (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
+                        = (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
                 by StarDef.transfer
               thus ?thesis
                 by simp 
             qed
             ultimately have  \<open>\<forall> N\<in>HNatInfinite.
-               (*f* (\<lambda> n. times_rbounded_vec (f n) (x /\<^sub>R norm x) )) N \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+               (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
               using approx_trans3 by blast                 
-            hence \<open> (\<lambda>n. times_rbounded_vec (f n)  (x /\<^sub>R norm x)) \<longlonglongrightarrow>\<^sub>N\<^sub>S s  (x /\<^sub>R norm x)\<close>
+            hence \<open> (\<lambda>n. blinfun_apply (f n)  (x /\<^sub>R norm x)) \<longlonglongrightarrow>\<^sub>N\<^sub>S s  (x /\<^sub>R norm x)\<close>
               using NSLIMSEQ_def
               by (metis starfun_eq)              
             thus ?thesis
               by (simp add: NSLIMSEQ_LIMSEQ)              
           qed
-          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow>  (norm x) *\<^sub>R  s (x /\<^sub>R norm x)\<close>
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (blinfun_apply (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow>  (norm x) *\<^sub>R  s (x /\<^sub>R norm x)\<close>
             using bounded_linear.tendsto bounded_linear_scaleR_right by blast
-          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+          hence  \<open>(\<lambda> n. (norm x) *\<^sub>R (blinfun_apply (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
             using l_def
             by simp
-          have  \<open>(\<lambda> n. (times_rbounded_vec(f n)) x) \<longlonglongrightarrow> l x\<close>
+          have  \<open>(\<lambda> n. (blinfun_apply(f n)) x) \<longlonglongrightarrow> l x\<close>
           proof-
-            have \<open>(norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x) = (times_rbounded_vec (f n)) x\<close>
+            have \<open>(norm x) *\<^sub>R (blinfun_apply (f n)) (x /\<^sub>R norm x) = (blinfun_apply (f n)) x\<close>
               for n
-              using \<open>norm x \<noteq> 0\<close> \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
-              unfolding bounded_linear_def linear_def
-              by (simp add: \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))               
-            thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close> 
+              using \<open>norm x \<noteq> 0\<close> \<open>\<And> n. bounded_linear (blinfun_apply (f n))\<close>
+              unfolding cbounded_linear_def linear_def
+              by (simp add: \<open>\<And>n. bounded_linear (blinfun_apply (f n))\<close> linear_simps(5))               
+            thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (blinfun_apply (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close> 
               by simp
           qed
-          thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (times_rbounded_vec (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
+          thus ?thesis using  \<open>(\<lambda> n. (norm x) *\<^sub>R (blinfun_apply (f n)) (x /\<^sub>R norm x)) \<longlonglongrightarrow> l x\<close>
             by auto
         qed
       qed
@@ -880,24 +758,24 @@ proof-
           for b1 :: 'a
             and b2 :: 'a
         proof-
-          have \<open>(\<lambda> n. (times_rbounded_vec (f n)) (b1 + b2)) \<longlonglongrightarrow> l (b1 + b2)\<close>
-            using  \<open>\<And> x. (\<lambda> n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> l x\<close>
+          have \<open>(\<lambda> n. (blinfun_apply (f n)) (b1 + b2)) \<longlonglongrightarrow> l (b1 + b2)\<close>
+            using  \<open>\<And> x. (\<lambda> n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> l x\<close>
             by blast
-          moreover have \<open>(\<lambda> n. (times_rbounded_vec (f n)) (b1 + b2)) \<longlonglongrightarrow> l b1 + l b2\<close>
+          moreover have \<open>(\<lambda> n. (blinfun_apply (f n)) (b1 + b2)) \<longlonglongrightarrow> l b1 + l b2\<close>
           proof-
-            have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b1) \<longlonglongrightarrow> l b1\<close>
-              using  \<open>\<And> x. (\<lambda> n. (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+            have \<open>(\<lambda> n. (blinfun_apply (f n))  b1) \<longlonglongrightarrow> l b1\<close>
+              using  \<open>\<And> x. (\<lambda> n. (blinfun_apply (f n))  x) \<longlonglongrightarrow> l x\<close>
               by blast
-            moreover have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b2) \<longlonglongrightarrow> l b2\<close>
-              using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+            moreover have \<open>(\<lambda> n. (blinfun_apply (f n))  b2) \<longlonglongrightarrow> l b2\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (blinfun_apply (f n))  x) \<longlonglongrightarrow> l x\<close>
               by blast
-            ultimately have \<open>(\<lambda> n. (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2) \<longlonglongrightarrow> l b1 + l b2\<close>
+            ultimately have \<open>(\<lambda> n. (blinfun_apply (f n))  b1 +  (blinfun_apply (f n))  b2) \<longlonglongrightarrow> l b1 + l b2\<close>
               by (simp add: tendsto_add) 
-            moreover have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (b1 + b2)) = (\<lambda> n.  (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2)\<close>
+            moreover have \<open>(\<lambda> n.  (blinfun_apply (f n))  (b1 + b2)) = (\<lambda> n.  (blinfun_apply (f n))  b1 +  (blinfun_apply (f n))  b2)\<close>
             proof-
-              have \<open> (times_rbounded_vec (f n))  (b1 + b2) =  (times_rbounded_vec (f n))  b1 +  (times_rbounded_vec (f n))  b2\<close>
+              have \<open> (blinfun_apply (f n))  (b1 + b2) =  (blinfun_apply (f n))  b1 +  (blinfun_apply (f n))  b2\<close>
                 for n
-                using \<open>\<And> n. bounded_linear  (times_rbounded_vec (f n))\<close>
+                using \<open>\<And> n. bounded_linear  (blinfun_apply (f n))\<close>
                 unfolding bounded_linear_def
                 by (simp add: real_vector.linear_add)                
               thus ?thesis by blast
@@ -911,21 +789,21 @@ proof-
           for r :: real
             and b :: 'a
         proof-
-          have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow> l (r *\<^sub>R b)\<close>
-            using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+          have \<open>(\<lambda> n.  (blinfun_apply (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow> l (r *\<^sub>R b)\<close>
+            using  \<open>\<And> x. (\<lambda> n.  (blinfun_apply (f n))  x) \<longlonglongrightarrow> l x\<close>
             by blast
-          moreover have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow>  r *\<^sub>R (l b)\<close>
+          moreover have \<open>(\<lambda> n.  (blinfun_apply (f n))  (r *\<^sub>R b)) \<longlonglongrightarrow>  r *\<^sub>R (l b)\<close>
           proof-
-            have \<open>(\<lambda> n.  (times_rbounded_vec (f n))  b) \<longlonglongrightarrow> l b\<close>
-              using  \<open>\<And> x. (\<lambda> n.  (times_rbounded_vec (f n))  x) \<longlonglongrightarrow> l x\<close>
+            have \<open>(\<lambda> n.  (blinfun_apply (f n))  b) \<longlonglongrightarrow> l b\<close>
+              using  \<open>\<And> x. (\<lambda> n.  (blinfun_apply (f n))  x) \<longlonglongrightarrow> l x\<close>
               by blast
-            hence \<open>(\<lambda> n. r *\<^sub>R ( (times_rbounded_vec (f n))  b)) \<longlonglongrightarrow> r *\<^sub>R (l b)\<close>
+            hence \<open>(\<lambda> n. r *\<^sub>R ( (blinfun_apply (f n))  b)) \<longlonglongrightarrow> r *\<^sub>R (l b)\<close>
               using bounded_linear.tendsto bounded_linear_scaleR_right by blast
-            moreover have \<open>(\<lambda> n. ( (times_rbounded_vec (f n))  (r *\<^sub>R b))) = (\<lambda> n. r *\<^sub>R ( (times_rbounded_vec (f n))  b))\<close>
+            moreover have \<open>(\<lambda> n. ( (blinfun_apply (f n))  (r *\<^sub>R b))) = (\<lambda> n. r *\<^sub>R ( (blinfun_apply (f n))  b))\<close>
             proof-
-              have \<open> (times_rbounded_vec (f n))  (r *\<^sub>R b) = r *\<^sub>R ( (times_rbounded_vec (f n))  b)\<close>
+              have \<open> (blinfun_apply (f n))  (r *\<^sub>R b) = r *\<^sub>R ( (blinfun_apply (f n))  b)\<close>
                 for n
-                using \<open>\<And> n. bounded_linear ( (times_rbounded_vec (f n)) )\<close>
+                using \<open>\<And> n. bounded_linear (blinfun_apply (f n))\<close>
                 unfolding bounded_linear_def
                 by (simp add: real_vector.linear_scale)
               thus ?thesis by blast
@@ -988,57 +866,57 @@ proof-
             qed
             thus ?thesis by blast
           qed
-          from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
-          have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). dist ((times_rbounded_vec (f m)) x) (times_rbounded_vec (f n) x) < e\<close>
+          from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
+          have \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). dist ((blinfun_apply (f m)) x) (blinfun_apply (f n) x) < e\<close>
             by (meson uniformly_Cauchy_on_def)
-          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). norm (((times_rbounded_vec (f m)) x) - (times_rbounded_vec (f n) x)) < e\<close>
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x\<in>(sphere 0 1). norm (((blinfun_apply (f m)) x) - (blinfun_apply (f n) x)) < e\<close>
             by (simp add: dist_norm) 
-          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (((times_rbounded_vec (f m)) x) - (times_rbounded_vec (f n) x)) < e\<close>
+          hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow> norm (((blinfun_apply (f m)) x) - (blinfun_apply (f n) x)) < e\<close>
             unfolding sphere_def by auto
           hence \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f n)) x) < 1\<close>
+                             norm ((blinfun_apply (f m)) x - (blinfun_apply (f n)) x) < 1\<close>
             by auto
           then obtain M where \<open>\<forall>m\<ge>M. \<forall>n\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f n)) x) < 1\<close>
+                             norm ((blinfun_apply (f m)) x - (blinfun_apply (f n)) x) < 1\<close>
             by blast
           hence  \<open>\<forall>m\<ge>M. \<forall>x. norm x = 1 \<longrightarrow>
-                             norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x) < 1\<close>
+                             norm ((blinfun_apply (f m)) x - (blinfun_apply (f M)) x) < 1\<close>
             by blast
-          have \<open>norm ((times_rbounded_vec (f m)) x) \<le> norm ((times_rbounded_vec (f M)) x) + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+          have \<open>norm ((blinfun_apply (f m)) x) \<le> norm ((blinfun_apply (f M)) x) + norm ((blinfun_apply (f m)) x - (blinfun_apply (f M)) x)\<close>
             for m and x
             by (simp add: norm_triangle_sub) 
-          hence \<open>norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) * norm x + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+          hence \<open>norm ((blinfun_apply (f m)) x) \<le> onorm (blinfun_apply (f M)) * norm x + norm ((blinfun_apply (f m)) x - (blinfun_apply (f M)) x)\<close>
             for m and x
-            using onorm  \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close>
+            using onorm  \<open>\<And>n. bounded_linear (blinfun_apply (f n))\<close>
             by smt                    
-          hence \<open>norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) + norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x)\<close>
+          hence \<open>norm x = 1 \<Longrightarrow> norm ((blinfun_apply (f m)) x) \<le> onorm (blinfun_apply (f M)) + norm ((blinfun_apply (f m)) x - (blinfun_apply (f M)) x)\<close>
             for m and x
             by (metis mult_cancel_left2)
-          hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) < onorm (times_rbounded_vec (f M)) + 1\<close>
+          hence \<open>m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((blinfun_apply (f m)) x) < onorm (blinfun_apply (f M)) + 1\<close>
             for m and x
             using  \<open>\<forall>m\<ge>M. \<forall>x. 
-            norm x = 1 \<longrightarrow> norm ((times_rbounded_vec (f m)) x - (times_rbounded_vec (f M)) x) < 1\<close> 
+            norm x = 1 \<longrightarrow> norm ((blinfun_apply (f m)) x - (blinfun_apply (f M)) x) < 1\<close> 
             by smt
-          have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. (times_rbounded_vec (f m)) x) \<longlonglongrightarrow> l x\<close>
+          have \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. (blinfun_apply (f m)) x) \<longlonglongrightarrow> l x\<close>
             for x
-            by (simp add: \<open>\<And>x. (\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> l x\<close>)
-          hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+            by (simp add: \<open>\<And>x. (\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> l x\<close>)
+          hence \<open>norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((blinfun_apply (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
             for x
             by (simp add: tendsto_norm)
-          hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (times_rbounded_vec (f M)) + 1\<close>
+          hence \<open>norm x = 1 \<Longrightarrow> norm (l x) \<le> onorm (blinfun_apply (f M)) + 1\<close>
             for x
           proof-
             assume \<open>norm x = 1\<close>
-            hence \<open>(\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
-              using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((times_rbounded_vec (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+            hence \<open>(\<lambda> m. norm ((blinfun_apply (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
+              using  \<open>\<And> x. norm x = 1 \<Longrightarrow> (\<lambda> m. norm ((blinfun_apply (f m)) x)) \<longlonglongrightarrow> norm (l x)\<close>
               by blast
-            moreover have \<open>\<forall>  m \<ge> M. norm ((times_rbounded_vec (f m)) x) \<le> onorm (times_rbounded_vec (f M)) + 1\<close>
-              using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((times_rbounded_vec (f m)) x) < onorm (times_rbounded_vec (f M)) + 1\<close>
+            moreover have \<open>\<forall>  m \<ge> M. norm ((blinfun_apply (f m)) x) \<le> onorm (blinfun_apply (f M)) + 1\<close>
+              using  \<open>\<And> m. \<And> x.  m \<ge> M \<Longrightarrow> norm x = 1 \<Longrightarrow> norm ((blinfun_apply (f m)) x) < onorm (blinfun_apply (f M)) + 1\<close>
                 \<open>norm x = 1\<close> by smt
             ultimately show ?thesis 
               by (rule Topological_Spaces.Lim_bounded)
           qed
-          moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (times_rbounded_vec (f M)) + 1 < norm (l x)\<close>
+          moreover have  \<open>\<exists> x. norm x = 1 \<and> onorm (blinfun_apply (f M)) + 1 < norm (l x)\<close>
             by (simp add: \<open>\<forall>K. \<exists>x. norm x = 1 \<and> K < norm (l x)\<close>)
           ultimately show ?thesis
             by fastforce 
@@ -1047,29 +925,29 @@ proof-
       qed
       ultimately show ?thesis unfolding bounded_linear_def by blast
     qed
-    hence \<open>\<exists> L. times_rbounded_vec L = l\<close>
-      using times_rbounded_vec_cases by auto
+    hence \<open>\<exists> L. blinfun_apply L = l\<close>
+      using blinfun_apply_cases by auto
     thus ?thesis
       using \<open>\<And>x. x \<in> sphere 0 1 \<Longrightarrow> l x = s x\<close> 
       by blast        
   qed
-  then obtain L::\<open>('a,'b) rbounded\<close> where \<open>\<forall> x\<in>(sphere 0 1). (times_rbounded_vec L) x = s x\<close>
+  then obtain L::\<open>('a,'b) blinfun\<close> where \<open>\<forall> x\<in>(sphere 0 1). (blinfun_apply L) x = s x\<close>
     by blast
-  have "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L"
-    using  \<open>\<forall> x\<in>(sphere 0 1). (times_rbounded_vec L) x = s x\<close>  \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
+  have "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply L"
+    using  \<open>\<forall> x\<in>(sphere 0 1). (blinfun_apply L) x = s x\<close>  \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
     by (metis (no_types, lifting) uniform_limit_cong')
   thus ?thesis by blast
 qed  
 
 lemma onorm_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-    and l::\<open>('a, 'b) rbounded\<close> 
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+    and l::\<open>('a, 'b) blinfun\<close> 
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+  shows \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
 proof-
   include nsa_notation
   have \<open>N\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow>
-       (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x \<approx> (*f* (times_rbounded_vec l)) x\<close>
+       (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* (blinfun_apply l)) x\<close>
     for N and x
   proof-
     assume \<open>N\<in>HNatInfinite\<close> and \<open>x \<in> *s* (sphere 0 1)\<close>
@@ -1078,142 +956,135 @@ proof-
       by (simp add: LIMSEQ_NSLIMSEQ_iff NSLIMSEQ_D)
     hence \<open>hnorm ( (*f* f) N - (star_of l) ) \<in> Infinitesimal\<close>
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
-    moreover have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+    moreover have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
                 \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
     proof-
-      have \<open>bounded_linear (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t)\<close>
+      have \<open>bounded_linear (\<lambda> t. blinfun_apply (f N) t - blinfun_apply l t)\<close>
         for N
-        using times_rbounded_vec bounded_linear_sub by auto        
+        using blinfun_apply bounded_linear_sub by auto
       hence \<open>norm x = 1 \<Longrightarrow>
-           norm (times_rbounded_vec (f N) x - times_rbounded_vec l x)
-           \<le> onorm (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t)\<close>
+           norm (blinfun_apply (f N) x - blinfun_apply l x)
+           \<le> onorm (\<lambda> t. blinfun_apply (f N) t - blinfun_apply l t)\<close>
         for N x
         by (metis (no_types) mult.commute mult.left_neutral onorm)
-      moreover have \<open> (\<lambda> t. times_rbounded_vec (f N) t - times_rbounded_vec l t) = times_rbounded_vec (f N - l)\<close>
+      moreover have \<open> (\<lambda> t. blinfun_apply (f N) t - blinfun_apply l t) = blinfun_apply (f N - l)\<close>
         for N
         apply transfer
         by auto
       ultimately have \<open>norm x = 1 \<Longrightarrow>
-           norm (times_rbounded_vec (f N) x - times_rbounded_vec l x)
-           \<le> onorm (times_rbounded_vec (f N - l))\<close>
+           norm (blinfun_apply (f N) x - blinfun_apply l x)
+           \<le> onorm (blinfun_apply (f N - l))\<close>
         for N x
         by simp
       hence \<open>\<forall> N. \<forall> x. x \<in>  (sphere 0 1) \<longrightarrow> 
-         norm ( ( (\<lambda> n. times_rbounded_vec (f n))) N x - ( (times_rbounded_vec l)) x )
+         norm ( ( (\<lambda> n. blinfun_apply (f n))) N x - ( (blinfun_apply l)) x )
                 \<le> norm ( ( f) N - ( l) )\<close>
-        unfolding norm_rbounded_def
+        unfolding norm_blinfun_def
         by auto
       hence \<open>\<forall> N. \<forall> x. x \<in> *s* (sphere 0 1) \<longrightarrow> 
-         hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+         hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
                 \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
         by StarDef.transfer
       thus ?thesis using \<open>x\<in>*s* (sphere 0 1)\<close> by blast
     qed
-    moreover have \<open>0 \<le> hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )\<close>
+    moreover have \<open>0 \<le> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
       by simp      
-    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. times_rbounded_vec (f n))) N x - (*f* (times_rbounded_vec l)) x )
+    ultimately have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
             \<in> Infinitesimal\<close>
       using Infinitesimal_interval2 by blast
     thus ?thesis
       by (simp add: Infinitesimal_approx_minus Infinitesimal_hnorm_iff) 
   qed
-  hence \<open>(sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+  hence \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
     by (simp add: nsupointwise_convergence_I sphere_iff)    
   thus ?thesis by blast
 qed
 
 proposition onorm_ustrong_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-    and l::\<open>('a, 'b) rbounded\<close> 
-  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+    and l::\<open>('a, 'b) blinfun\<close> 
+  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
 proof
-  show "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l"
+  show "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l"
     if "f \<longlonglongrightarrow> l"
     using that
     using onorm_ustrong by blast 
   show "f \<longlonglongrightarrow> l"
-    if "sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec l"
+    if "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l"
     using that
     by (simp add: that ustrong_onorm) 
 qed
 
-theorem completeness_real_bounded:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) rbounded\<close>
+theorem completeness_real_cblinfun:
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) blinfun\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>\<exists> L. f \<longlonglongrightarrow> L\<close>
 proof-
-  have  \<open>\<And> n. bounded_linear (times_rbounded_vec (f n))\<close>
-    using times_rbounded_vec by auto
-  hence \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. times_rbounded_vec (f n))\<close>
+  have  \<open>\<And> n. bounded_linear (blinfun_apply (f n))\<close>
+    using blinfun_apply by auto
+  hence \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
     using oCauchy_uCauchy  \<open>Cauchy f\<close> by blast
-  hence \<open>\<exists> L. sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L\<close>
+  hence \<open>\<exists> L. sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply L\<close>
     using uCauchy_ustrong
     by blast
-  then obtain L where \<open>sphere 0 1: (\<lambda> n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> times_rbounded_vec L\<close>
+  then obtain L where \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply L\<close>
     by blast
   thus ?thesis 
     using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
 qed
 
 
-instantiation rbounded :: (real_normed_vector, banach) "banach"
-begin
-instance
-  apply intro_classes
-  using completeness_real_bounded convergentI by auto
-end
-
-instantiation rbounded :: (real_normed_vector, cbanach) "cbanach"
+instantiation blinfun :: (real_normed_vector, cbanach) "cbanach"
 begin
 instance..
 end
 
 lemma onorm_strong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) rbounded\<close>
-    and l::\<open>('a, 'b) rbounded\<close> and x::'a
+  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+    and l::\<open>('a, 'b) blinfun\<close> and x::'a
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow> (times_rbounded_vec l) x\<close>
+  shows \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> (blinfun_apply l) x\<close>
 proof-
   include nsa_notation
-  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda>n. (times_rbounded_vec (f n)) x)) N \<approx> star_of ((times_rbounded_vec l) x)\<close>
+  have \<open>N\<in>HNatInfinite \<Longrightarrow> (*f* (\<lambda>n. (blinfun_apply (f n)) x)) N \<approx> star_of ((blinfun_apply l) x)\<close>
     for N
   proof-
     assume \<open>N\<in>HNatInfinite\<close>
     show ?thesis 
     proof(cases \<open>x = 0\<close>)
       case True
-      have \<open>(times_rbounded_vec (f n)) x = 0\<close>
+      have \<open>(blinfun_apply (f n)) x = 0\<close>
         for n
       proof-
-        have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
-          using times_rbounded_vec by blast
+        have \<open>bounded_linear (blinfun_apply (f n))\<close>
+          using blinfun_apply by blast
         thus ?thesis
           using \<open>x = 0\<close>
           by (simp add: linear_simps(3))          
       qed
-      moreover have \<open>(times_rbounded_vec l) x = 0\<close>
+      moreover have \<open>(blinfun_apply l) x = 0\<close>
       proof-
-        have \<open>bounded_linear (times_rbounded_vec l)\<close>
-          using times_rbounded_vec by blast
+        have \<open>bounded_linear (blinfun_apply l)\<close>
+          using blinfun_apply by blast
         thus ?thesis 
           using \<open>x = 0\<close>
           by (simp add: linear_simps(3))          
       qed
-      ultimately have \<open>(times_rbounded_vec (f n)) x = (times_rbounded_vec l) x\<close>
+      ultimately have \<open>(blinfun_apply (f n)) x = (blinfun_apply l) x\<close>
         for n
         by simp
-      hence \<open>star_of ((times_rbounded_vec (f n)) x) = star_of ((times_rbounded_vec l) x)\<close>
+      hence \<open>star_of ((blinfun_apply (f n)) x) = star_of ((blinfun_apply l) x)\<close>
         for n
         by StarDef.transfer
-      hence \<open>(*f* (\<lambda> n. (times_rbounded_vec (f n)) x)) N = star_of ((times_rbounded_vec l) x)\<close>
+      hence \<open>(*f* (\<lambda> n. (blinfun_apply (f n)) x)) N = star_of ((blinfun_apply l) x)\<close>
         by auto
       thus ?thesis by auto 
     next
       case False
       from \<open>f \<longlonglongrightarrow> l\<close>
-      have \<open>sphere 0 1: (\<lambda>n. times_rbounded_vec (f n)) \<midarrow>uniformly\<rightarrow> (times_rbounded_vec l)\<close>
+      have \<open>sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
         using onorm_ustrong by blast
-      hence \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> (*f2* (\<lambda>n. times_rbounded_vec (f n))) N t \<approx> (*f* (times_rbounded_vec l)) t\<close>
+      hence \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> (*f2* (\<lambda>n. blinfun_apply (f n))) N t \<approx> (*f* (blinfun_apply l)) t\<close>
         for t
         using \<open>N \<in> HNatInfinite\<close> nsupointwise_convergence_D sphere_iff by blast
       moreover have \<open>star_of (x /\<^sub>R norm x) \<in> *s*(sphere 0 1)\<close>
@@ -1222,123 +1093,123 @@ proof-
           using False unfolding sphere_def by auto
         thus ?thesis by StarDef.transfer
       qed
-      ultimately have \<open>(*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) 
-          \<approx> (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x))\<close>
+      ultimately have \<open>(*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) 
+          \<approx> (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x))\<close>
         by blast
-      hence \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) ) 
-          \<approx> (*f2* scaleR) (star_of (norm x)) ( (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x)) )\<close>
+      hence \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) ) 
+          \<approx> (*f2* scaleR) (star_of (norm x)) ( (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )\<close>
         using approx_scaleR2 star_scaleR_def starfun2_star_of
         by metis
-      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) )
-          = (*f* (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
       proof-
-        have \<open>bounded_linear (times_rbounded_vec (f n))\<close>
+        have \<open>bounded_linear (blinfun_apply (f n))\<close>
           for n
-          using times_rbounded_vec by auto          
-        hence \<open>\<forall> N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. times_rbounded_vec (f n))) N ( (x /\<^sub>R norm x)) )
-          = ( (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+          using blinfun_apply by auto          
+        hence \<open>\<forall> N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. blinfun_apply (f n))) N ( (x /\<^sub>R norm x)) )
+          = ( (\<lambda>n. blinfun_apply (f n) x)) N\<close>
         proof - \<comment> \<open>Sledgehammer proof\<close>
-          have f1: "times_rbounded_vec (f v0_0) (x /\<^sub>R norm x) = times_rbounded_vec (f v0_0) x /\<^sub>R norm x"
-            using \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5) by blast
+          have f1: "blinfun_apply (f v0_0) (x /\<^sub>R norm x) = blinfun_apply (f v0_0) x /\<^sub>R norm x"
+            using \<open>\<And>n. bounded_linear (blinfun_apply (f n))\<close> linear_simps(5) by blast
           obtain nn :: nat where
-            "(\<exists>v0. norm x *\<^sub>R times_rbounded_vec (f v0) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f v0) x) = (norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f nn) x)"
+            "(\<exists>v0. norm x *\<^sub>R blinfun_apply (f v0) (x /\<^sub>R norm x) \<noteq> blinfun_apply (f v0) x) = (norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) \<noteq> blinfun_apply (f nn) x)"
             by meson
           moreover
-          { assume "norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) \<noteq> times_rbounded_vec (f nn) x"
+          { assume "norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) \<noteq> blinfun_apply (f nn) x"
             hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
-              by (metis \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))
+              by (metis \<open>\<And>n. bounded_linear (blinfun_apply (f n))\<close> linear_simps(5))
             moreover
             { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
               moreover
               { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
                 moreover
-                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
                   moreover
-                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
                     moreover
-                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
                       moreover
-                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
                         moreover
-                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
-                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x))"
-                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x)"
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x))"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x)"
                               using vector_fraction_eq_iff
-                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
-                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                               using f1
-                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec (f nn) x /\<^sub>R norm x) = times_rbounded_vec (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> scaleR_cong_right by blast  }
-                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply (f nn) x /\<^sub>R norm x) = blinfun_apply (f nn) x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> scaleR_cong_right by blast  }
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                             by fastforce }
-                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                           by fastforce }
-                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                         by auto }
-                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                       by auto }
-                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                     by auto }
-                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                   by fastforce }
-              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
                 by (simp add: inverse_eq_divide) }
-            ultimately have "norm x *\<^sub>R times_rbounded_vec (f nn) (x /\<^sub>R norm x) = times_rbounded_vec (f nn) x"
+            ultimately have "norm x *\<^sub>R blinfun_apply (f nn) (x /\<^sub>R norm x) = blinfun_apply (f nn) x"
               using f1
-              by (simp add: \<open>\<And>n. bounded_linear (times_rbounded_vec (f n))\<close> linear_simps(5))  }
+              by (simp add: \<open>\<And>n. bounded_linear (blinfun_apply (f n))\<close> linear_simps(5))  }
           ultimately show ?thesis
             by meson
         qed       
-        hence  \<open>\<forall> N. (*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. times_rbounded_vec (f n))) N (star_of (x /\<^sub>R norm x)) )
-          = (*f* (\<lambda>n. times_rbounded_vec (f n) x)) N\<close>
+        hence  \<open>\<forall> N. (*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = (*f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
           by StarDef.transfer
         thus ?thesis by blast
       qed
-      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f* (times_rbounded_vec l)) (star_of (x /\<^sub>R norm x)) )
-            = star_of (times_rbounded_vec l x)\<close> 
+      moreover have \<open>(*f2* scaleR) (star_of (norm x)) ( (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )
+            = star_of (blinfun_apply l x)\<close> 
       proof-
-        have \<open>bounded_linear (times_rbounded_vec l)\<close>
-          using times_rbounded_vec by auto          
-        hence \<open>( scaleR) ( (norm x)) ( ( (times_rbounded_vec l)) ( (x /\<^sub>R norm x)) )
-            =  (times_rbounded_vec l x)\<close>
+        have \<open>bounded_linear (blinfun_apply l)\<close>
+          using blinfun_apply by auto          
+        hence \<open>( scaleR) ( (norm x)) ( ( (blinfun_apply l)) ( (x /\<^sub>R norm x)) )
+            =  (blinfun_apply l x)\<close>
         proof - \<comment> \<open>Sledgehammer proof\<close>
-          have f1: "times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x"
-            by (meson \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
-          { assume "norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) \<noteq> times_rbounded_vec l x"
+          have f1: "blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x"
+            by (meson \<open>bounded_linear (blinfun_apply l)\<close> linear_simps(5))
+          { assume "norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) \<noteq> blinfun_apply l x"
             hence "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0 \<or> x \<noteq> 0"
-              by (metis \<open>bounded_linear (times_rbounded_vec l)\<close> linear_simps(5))
+              by (metis \<open>bounded_linear (blinfun_apply l)\<close> linear_simps(5))
             moreover
             { assume "norm x *\<^sub>R (x /\<^sub>R norm x) \<noteq> 0"
               moreover
               { assume "norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
                 moreover
-                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
+                { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> norm x *\<^sub>R x /\<^sub>R norm x \<noteq> norm x *\<^sub>R (x /\<^sub>R norm x)"
                   moreover
-                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
+                  { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> 0 *\<^sub>R (0::'a) \<noteq> (1 / norm x) *\<^sub>R 0"
                     moreover
-                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
+                    { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> x /\<^sub>R norm x"
                       moreover
-                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
+                      { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> norm x \<noteq> inverse (norm x)"
                         moreover
-                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
-                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x))"
-                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x)"
+                        { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> 1 / norm x \<noteq> 0"
+                          { assume "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> (if 1 / norm x = 0 then norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = 0 else (1 / norm x) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = (1 / norm x) *\<^sub>R norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x))"
+                            hence "(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> (1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x)"
                               using vector_fraction_eq_iff
-                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (times_rbounded_vec l x /\<^sub>R norm x) = times_rbounded_vec l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
-                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                              using \<open>(1 / norm x / (1 / norm x)) *\<^sub>R (blinfun_apply l x /\<^sub>R norm x) = blinfun_apply l x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 \<noteq> (1 / norm x) *\<^sub>R 0\<close> by auto
+                            hence "x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                               using f1 by fastforce }
-                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                          hence "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                             by fastforce }
-                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                        ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                           by force }
-                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                      ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                         by simp }
-                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                    ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> (1 / norm x) *\<^sub>R 0 = x /\<^sub>R norm x \<and> 0 *\<^sub>R 0 = norm x *\<^sub>R x \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                       by simp }
-                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                  ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                     by simp }
-                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+                ultimately have "norm x = 0 \<and> 1 / 0 = inverse (norm x) \<and> x = 0 \<and> x = x /\<^sub>R norm x \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                   by fastforce }
-              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R times_rbounded_vec l (x /\<^sub>R norm x) = times_rbounded_vec l x"
+              ultimately have "norm x = 0 \<and> x = 0 \<longrightarrow> norm x *\<^sub>R blinfun_apply l (x /\<^sub>R norm x) = blinfun_apply l x"
                 by auto }
             ultimately have ?thesis
               using f1 by auto }
@@ -1350,617 +1221,589 @@ proof-
       ultimately show ?thesis by simp
     qed
   qed
-  hence  \<open>(\<lambda>n. (times_rbounded_vec (f n)) x) \<longlonglongrightarrow>\<^sub>N\<^sub>S (times_rbounded_vec l) x\<close>
+  hence  \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow>\<^sub>N\<^sub>S (blinfun_apply l) x\<close>
     by (simp add: NSLIMSEQ_I)
   thus ?thesis
     by (simp add: NSLIMSEQ_LIMSEQ)
 qed
 
-lift_definition times_rbounded:: 
-  "('b::real_normed_vector,'c::real_normed_vector) rbounded
-     \<Rightarrow> ('a::real_normed_vector,'b) rbounded \<Rightarrow> ('a,'c) rbounded"
- is "(o)"
-  unfolding o_def 
-  by (rule bounded_linear_compose, simp_all)
-
-bundle rbounded_notation begin
-notation times_rbounded (infixl "*\<^sub>v" 69)
-end
-
-bundle no_rbounded_notation begin
-no_notation times_rbounded (infixl "*\<^sub>v" 69)
-end
-
-unbundle rbounded_notation
-
-lemma times_rbounded_assoc: "(A  *\<^sub>v B)  *\<^sub>v C = A  *\<^sub>v (B  *\<^sub>v C)" 
+lemma times_blinfun_assoc: "(A o\<^sub>L B)  o\<^sub>L C = A  o\<^sub>L (B  o\<^sub>L C)" 
   apply transfer
   by (simp add: comp_assoc) 
 
-lemma times_rbounded_dist1:
-  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) rbounded"
-    and c :: "('a::real_normed_vector, 'b) rbounded"
-  shows "(a + b)  *\<^sub>v c = (a  *\<^sub>v c) + (b  *\<^sub>v c)"
+lemma times_blinfun_dist1:
+  fixes a b :: "('b::real_normed_vector, 'c::real_normed_vector) blinfun"
+    and c :: "('a::real_normed_vector, 'b) blinfun"
+  shows "(a + b)  o\<^sub>L c = (a  o\<^sub>L c) + (b o\<^sub>L c)"
 proof -
- (* sledgehammer *)
+  (* sledgehammer *)
   {  fix aa :: "'b \<Rightarrow> 'c" and ba :: "'b \<Rightarrow> 'c" and ca :: "'a \<Rightarrow> 'b"
-  assume a1: "bounded_linear ca"
-  assume a2: "bounded_linear ba"
-  assume a3: "bounded_linear aa"
-  { fix aaa :: 'a
-    have ff1: "\<forall>r. times_rbounded_vec (r::('b, 'c) rbounded) \<circ> ca = times_rbounded_vec (r  *\<^sub>v Abs_rbounded ca)"
-      using a1 by (simp add: Abs_rbounded_inverse times_rbounded.rep_eq)
-    have ff2: "times_rbounded_vec (Abs_rbounded ba) = ba"
-      using a2 by (meson Abs_rbounded_inverse mem_Collect_eq)
-    have "times_rbounded_vec (Abs_rbounded aa) = aa"
-      using a3 by (metis Abs_rbounded_inverse mem_Collect_eq)
-    hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) aaa + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) aaa"
-      using ff2 ff1 by (metis (no_types) times_rbounded_vec_inverse comp_apply) }
-  hence "Abs_rbounded ((\<lambda>b. aa b + ba b) \<circ> ca) = Abs_rbounded (\<lambda>a. times_rbounded_vec (Abs_rbounded (aa \<circ> ca)) a + times_rbounded_vec (Abs_rbounded (ba \<circ> ca)) a)"
-    by meson
-} note 1 = this
+    assume a1: "bounded_linear ca"
+    assume a2: "bounded_linear ba"
+    assume a3: "bounded_linear aa"
+    { fix aaa :: 'a
+      have ff1: "\<forall>r. blinfun_apply (r::('b, 'c) blinfun) \<circ> ca = blinfun_apply (r  o\<^sub>L Blinfun ca)"
+        using a1
+        by (simp add: blinfun_compose.rep_eq bounded_linear_Blinfun_apply) 
+      have ff2: "blinfun_apply (Blinfun ba) = ba"
+        using a2 by (meson Blinfun_inverse mem_Collect_eq)
+      have "blinfun_apply (Blinfun aa) = aa"
+        using a3 by (metis Blinfun_inverse mem_Collect_eq)
+      hence "Blinfun ((\<lambda>b. aa b + ba b) \<circ> ca) = Blinfun (\<lambda>a. blinfun_apply (Blinfun (aa \<circ> ca)) a + blinfun_apply (Blinfun (ba \<circ> ca)) a) \<or> ((\<lambda>b. aa b + ba b) \<circ> ca) aaa = blinfun_apply (Blinfun (aa \<circ> ca)) aaa + blinfun_apply (Blinfun (ba \<circ> ca)) aaa"
+        using ff2 ff1 by (metis (no_types) blinfun_apply_inverse comp_apply) }
+    hence "Blinfun ((\<lambda>b. aa b + ba b) \<circ> ca) = Blinfun (\<lambda>a. blinfun_apply (Blinfun (aa \<circ> ca)) a + blinfun_apply (Blinfun (ba \<circ> ca)) a)"
+      by meson
+  } note 1 = this
 
   show ?thesis
-  unfolding times_rbounded_def 
-  apply auto
-  apply transfer
-  unfolding plus_rbounded_def
-  apply auto
-  apply (rule 1)
-  by blast
+    apply transfer
+    unfolding plus_blinfun_def
+    by auto  
 qed
 
-lemma times_rbounded_dist2:
-  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) rbounded"
-    and c :: "('b, 'c::real_normed_vector) rbounded"
-  shows "c  *\<^sub>v (a + b) = (c  *\<^sub>v a) + (c  *\<^sub>v b)"
+lemma times_blinfun_dist2:
+  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) blinfun"
+    and c :: "('b, 'c::real_normed_vector) blinfun"
+  shows "c  o\<^sub>L (a + b) = (c o\<^sub>L a) + (c o\<^sub>L b)"
 proof-
-  have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) ) x\<close>
+  have \<open>blinfun_apply (c  o\<^sub>L (a + b)) x = blinfun_apply ( (c  o\<^sub>L a) +  (c  o\<^sub>L b) ) x\<close>
     for x
   proof-
-    have \<open>bounded_linear (times_rbounded_vec c)\<close>
-      using times_rbounded_vec by auto
-    have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = (times_rbounded_vec c) ( (times_rbounded_vec (a + b)) x )\<close>
-      by (simp add: times_rbounded.rep_eq)
-    also have \<open>\<dots> = (times_rbounded_vec c) ( times_rbounded_vec a x + times_rbounded_vec b x )\<close>
-      by (simp add: plus_rbounded.rep_eq)
-    also have \<open>\<dots> = (times_rbounded_vec c) ( times_rbounded_vec a x ) + (times_rbounded_vec c) ( times_rbounded_vec b x )\<close>
-      using  \<open>bounded_linear (times_rbounded_vec c)\<close>
-      unfolding bounded_linear_def linear_def
-      by (simp add: \<open>bounded_linear (times_rbounded_vec c)\<close> linear_simps(1))
-    also have \<open>\<dots> = ( (times_rbounded_vec c) \<circ> (times_rbounded_vec a) ) x
-                  + ( (times_rbounded_vec c) \<circ> (times_rbounded_vec b) ) x\<close>
+    have \<open>bounded_linear (blinfun_apply c)\<close>
+      using blinfun_apply by auto
+    have \<open>blinfun_apply (c  o\<^sub>L (a + b)) x = (blinfun_apply c) ( (blinfun_apply (a + b)) x )\<close>
       by simp
-    finally have \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) x = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) ) x\<close>
-      by (simp add: plus_rbounded.rep_eq times_rbounded.rep_eq)
+    also have \<open>\<dots> = (blinfun_apply c) ( blinfun_apply a x + blinfun_apply b x )\<close>
+      by (simp add: plus_blinfun.rep_eq)
+    also have \<open>\<dots> = (blinfun_apply c) ( blinfun_apply a x ) + (blinfun_apply c) ( blinfun_apply b x )\<close>
+      using  \<open>bounded_linear (blinfun_apply c)\<close>
+      unfolding cbounded_linear_def linear_def
+      by (simp add: \<open>bounded_linear (blinfun_apply c)\<close> linear_simps(1))
+    also have \<open>\<dots> = ( (blinfun_apply c) \<circ> (blinfun_apply a) ) x
+                  + ( (blinfun_apply c) \<circ> (blinfun_apply b) ) x\<close>
+      by simp
+    finally have \<open>blinfun_apply (c o\<^sub>L (a + b)) x = blinfun_apply ( (c o\<^sub>L a) +  (c o\<^sub>L b) ) x\<close>
+      by (simp add: blinfun.add_left)      
     thus ?thesis
       by simp 
   qed
-  hence \<open>times_rbounded_vec (c  *\<^sub>v (a + b)) = times_rbounded_vec ( (c  *\<^sub>v a) +  (c  *\<^sub>v b) )\<close>
+  hence \<open>blinfun_apply (c  o\<^sub>L (a + b)) = blinfun_apply ( (c  o\<^sub>L a) +  (c  o\<^sub>L b) )\<close>
     by blast
   thus ?thesis 
-    using times_rbounded_vec_inject
+    using blinfun_apply_inject
     by blast  
 qed
 
-lemma times_rbounded_scaleC:
-  fixes f::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
-    and g::"('a::complex_normed_vector, 'b) rbounded"
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-    and \<open>\<forall> c. \<forall> x. times_rbounded_vec g (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec g x)\<close>
-  shows \<open>\<forall> c. \<forall> x. times_rbounded_vec (f  *\<^sub>v g) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (f   *\<^sub>v g) x)\<close>
-  by (simp add: assms(1) assms(2) times_rbounded.rep_eq)
+lemma times_blinfun_scaleC:
+  fixes f::"('b::complex_normed_vector,'c::complex_normed_vector) blinfun" 
+    and g::"('a::complex_normed_vector, 'b) blinfun"
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  shows \<open>\<forall> c. \<forall> x. blinfun_apply (f  o\<^sub>L g) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f  o\<^sub>L g) x)\<close>
+  by (simp add: assms(1) assms(2))
 
 lemma rscalar_op_op: 
-  fixes A::"('b::real_normed_vector,'c::complex_normed_vector) rbounded" 
-    and B::"('a::real_normed_vector, 'b) rbounded"
-  shows \<open>(a *\<^sub>C A)  *\<^sub>v B = a *\<^sub>C (A  *\<^sub>v B)\<close>
+  fixes A::"('b::real_normed_vector,'c::complex_normed_vector) blinfun" 
+    and B::"('a::real_normed_vector, 'b) blinfun"
+  shows \<open>(a *\<^sub>C A)  o\<^sub>L B = a *\<^sub>C (A  o\<^sub>L B)\<close>
 proof-
-  have \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) x =
-    times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x\<close>
+  have \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) x =
+    blinfun_apply (a *\<^sub>C Blinfun (blinfun_apply A \<circ> blinfun_apply B)) x\<close>
     for x
   proof-
-    have \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) x
-       = a *\<^sub>C (times_rbounded_vec A ((times_rbounded_vec B) x))\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
-    moreover have \<open>times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x
-        = a *\<^sub>C (times_rbounded_vec ( Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x)\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
-    moreover have \<open>(times_rbounded_vec A ((times_rbounded_vec B) x))
-        = (times_rbounded_vec ( Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)) x)\<close>
+    have \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) x
+       = a *\<^sub>C (blinfun_apply A ((blinfun_apply B) x))\<close>
+      by (simp add: scaleC_blinfun.rep_eq)
+    moreover have \<open>blinfun_apply (a *\<^sub>C Blinfun (blinfun_apply A \<circ> blinfun_apply B)) x
+        = a *\<^sub>C (blinfun_apply ( Blinfun (blinfun_apply A \<circ> blinfun_apply B)) x)\<close>
+      by (simp add: scaleC_blinfun.rep_eq)
+    moreover have \<open>(blinfun_apply A ((blinfun_apply B) x))
+        = (blinfun_apply ( Blinfun (blinfun_apply A \<circ> blinfun_apply B)) x)\<close>
     proof-
-      have \<open>times_rbounded_vec A ((times_rbounded_vec B) x) = ((times_rbounded_vec A \<circ> times_rbounded_vec B)) x\<close>
+      have \<open>blinfun_apply A ((blinfun_apply B) x) = ((blinfun_apply A \<circ> blinfun_apply B)) x\<close>
         by simp        
       thus ?thesis
-        using Abs_rbounded_inverse
-        by (metis times_rbounded_vec times_rbounded.rep_eq)
+        using Blinfun_inverse
+        by (metis blinfun_apply blinfun_compose.rep_eq)        
     qed
     ultimately show ?thesis by simp
   qed
-  hence \<open>(times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) =
-    times_rbounded_vec (a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B))\<close>
+  hence \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) =
+    blinfun_apply (a *\<^sub>C Blinfun (blinfun_apply A \<circ> blinfun_apply B))\<close>
     by blast
-  hence \<open>Abs_rbounded (times_rbounded_vec (a *\<^sub>C A) \<circ> times_rbounded_vec B) =
-    a *\<^sub>C Abs_rbounded (times_rbounded_vec A \<circ> times_rbounded_vec B)\<close>
-    by (simp add: times_rbounded_vec_inverse)    
+  hence \<open>Blinfun (blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) =
+    a *\<^sub>C Blinfun (blinfun_apply A \<circ> blinfun_apply B)\<close>
+    by (simp add: blinfun_apply_inverse)    
   thus ?thesis
-    unfolding  times_rbounded_def
-    by auto
+    by (metis blinfun_apply_inverse blinfun_compose.rep_eq)    
 qed
 
 
 lemma op_rscalar_op: 
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) rbounded" 
-    and B::"('a::real_normed_vector, 'b) rbounded"
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec A (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec A x)\<close>
-  shows \<open>A  *\<^sub>v (a *\<^sub>C B) = a *\<^sub>C (A  *\<^sub>v B)\<close>
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) blinfun" 
+    and B::"('a::real_normed_vector, 'b) blinfun"
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply A (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply A x)\<close>
+  shows \<open>A  o\<^sub>L (a *\<^sub>C B) = a *\<^sub>C (A  o\<^sub>L B)\<close>
 proof-
-  have \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B)) x  = times_rbounded_vec (times_rbounded (a *\<^sub>C A) B) x\<close>
+  have \<open>blinfun_apply (A o\<^sub>L (a *\<^sub>C B)) x  = blinfun_apply ((a *\<^sub>C A) o\<^sub>L B) x\<close>
     for x
   proof-
-    have \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B)) x
-        = ( (times_rbounded_vec A) \<circ> (times_rbounded_vec (a *\<^sub>C B)) ) x\<close>
-      by (simp add: times_rbounded.rep_eq)
-    also have \<open>... = 
-        (times_rbounded_vec A) ( (times_rbounded_vec (a *\<^sub>C B))  x )\<close>
+    have \<open>blinfun_apply (A o\<^sub>L (a *\<^sub>C B)) x
+        = ( (blinfun_apply A) \<circ> (blinfun_apply (a *\<^sub>C B)) ) x\<close>
       by simp
     also have \<open>... = 
-        (times_rbounded_vec A) (a *\<^sub>C ( (times_rbounded_vec  B) x ))\<close>
-      by (simp add: scaleC_rbounded.rep_eq)
+        (blinfun_apply A) ( (blinfun_apply (a *\<^sub>C B))  x )\<close>
+      by simp
     also have \<open>... = 
-       a *\<^sub>C ( (times_rbounded_vec A) ( (times_rbounded_vec  B) x ) )\<close>
+        (blinfun_apply A) (a *\<^sub>C ( (blinfun_apply  B) x ))\<close>
+      by (simp add: scaleC_blinfun.rep_eq)
+    also have \<open>... = 
+       a *\<^sub>C ( (blinfun_apply A) ( (blinfun_apply  B) x ) )\<close>
       using assms by auto      
     finally show ?thesis
-      by (simp add: times_rbounded.rep_eq scaleC_rbounded.rep_eq) 
+      by (simp add: scaleC_blinfun.rep_eq)       
   qed
-  hence \<open>times_rbounded_vec (times_rbounded A (a *\<^sub>C B))  = times_rbounded_vec (times_rbounded (a *\<^sub>C A) B)\<close>
+  hence \<open>blinfun_apply (A o\<^sub>L (a *\<^sub>C B))  = blinfun_apply ((a *\<^sub>C A) o\<^sub>L B)\<close>
     by blast     
-  hence \<open>times_rbounded A (a *\<^sub>C B) = times_rbounded (a *\<^sub>C A) B\<close>
-    using times_rbounded_vec_inject by auto    
+  hence \<open>A o\<^sub>L (a *\<^sub>C B) = (a *\<^sub>C A) o\<^sub>L B\<close>
+    using blinfun_apply_inject by auto    
   thus ?thesis
     by (simp add: rscalar_op_op)  
 qed
 
 subsection \<open>On-demand syntax\<close>
 
+subsection \<open>Complex cblinfun operators\<close>
 
-unbundle no_rbounded_notation
-
-
-unbundle no_notation_blinfun_apply
-  (* In order to avoid the conflict with the notation *\<^sub>v,
-which can be used  for real bounded operators.
- *)
-subsection \<open>Complex bounded operators\<close>
-
-(* TODO: rename \<rightarrow> cblinfun, notation \<Rightarrow>\<^sub>c\<^sub>L *)
-typedef (overloaded) ('a::complex_normed_vector, 'b::complex_normed_vector) bounded
-  = \<open>{A::'a \<Rightarrow> 'b. cbounded_linear A}\<close>
-  morphisms times_bounded_vec Abs_bounded
+typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(_ \<Rightarrow>\<^sub>C\<^sub>L /_)" [22, 21] 21) =
+  "{f::'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector. cbounded_linear f}"
+  morphisms cblinfun_apply cBlinfun
   using cbounded_linear_zero by blast
 
-notation times_bounded_vec (infixr "*\<^sub>v" 70)
+setup_lifting type_definition_cblinfun
 
-setup_lifting type_definition_bounded
+(* NEW *)
+declare [[coercion
+    "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
 
-lift_definition rbounded_of_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded
-\<Rightarrow> ('a,'b) rbounded\<close> is "id"
+notation cblinfun_apply (infixr "*\<^sub>v" 70)
+
+lift_definition blinfun_of_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun
+\<Rightarrow> ('a,'b) blinfun\<close> is "id"
   apply transfer apply auto
   by (simp add: cbounded_linear.bounded_linear)
 
-lemma rbounded_of_bounded_inj:
-  \<open>rbounded_of_bounded f = rbounded_of_bounded g \<Longrightarrow> f = g\<close>
-  by (metis times_bounded_vec_inject rbounded_of_bounded.rep_eq)
+lemma blinfun_of_cblinfun_inj:
+  \<open>blinfun_of_cblinfun f = blinfun_of_cblinfun g \<Longrightarrow> f = g\<close>
+  by (metis cblinfun_apply_inject blinfun_of_cblinfun.rep_eq)
 
-lemma rbounded_of_bounded_inv:
-  \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x) \<Longrightarrow> \<exists> g. rbounded_of_bounded g = f\<close>
+lemma blinfun_of_cblinfun_inv:
+  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x) \<Longrightarrow> \<exists> g. blinfun_of_cblinfun g = f\<close>
   apply transfer apply auto
   by (simp add: bounded_linear_cbounded_linear)
 
-lemma rbounded_of_bounded_inv_uniq:
-  \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x) \<Longrightarrow> \<exists>! g. rbounded_of_bounded g = f\<close>
-  using rbounded_of_bounded_inv rbounded_of_bounded_inj
+lemma blinfun_of_cblinfun_inv_uniq:
+  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x) \<Longrightarrow> \<exists>! g. blinfun_of_cblinfun g = f\<close>
+  using blinfun_of_cblinfun_inv blinfun_of_cblinfun_inj
   by blast
 
-lemma rbounded_of_bounded_prelim:
-  \<open>\<forall> c. \<forall> x. times_rbounded_vec (rbounded_of_bounded g) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (rbounded_of_bounded g) x)\<close>
+lemma blinfun_of_cblinfun_prelim:
+  \<open>\<forall> c. \<forall> x. blinfun_apply (blinfun_of_cblinfun g) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (blinfun_of_cblinfun g) x)\<close>
   apply transfer
   apply auto
   using cbounded_linear_def
   by (simp add: cbounded_linear_def complex_vector.linear_scale)
 
-definition bounded_of_rbounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) rbounded \<Rightarrow>
-('a, 'b) bounded\<close> where
-  \<open>bounded_of_rbounded = inv rbounded_of_bounded\<close>
+definition cblinfun_of_blinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) blinfun \<Rightarrow>
+('a, 'b) cblinfun\<close> where
+  \<open>cblinfun_of_blinfun = inv blinfun_of_cblinfun\<close>
 
-lemma bounded_rbounded:
-  \<open>bounded_of_rbounded (rbounded_of_bounded f) = f\<close>
-  by (metis (no_types, hide_lams) times_bounded_vec_inverse UNIV_I bounded_of_rbounded_def f_inv_into_f image_iff rbounded_of_bounded.rep_eq)
+lemma cblinfun_blinfun:
+  \<open>cblinfun_of_blinfun (blinfun_of_cblinfun f) = f\<close>
+  by (metis (no_types, hide_lams) cblinfun_apply_inverse UNIV_I cblinfun_of_blinfun_def f_inv_into_f image_iff blinfun_of_cblinfun.rep_eq)
 
-lemma rbounded_bounded:
-  \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x)
- = c *\<^sub>C (times_rbounded_vec f x)
- \<Longrightarrow> rbounded_of_bounded (bounded_of_rbounded f) = f\<close> 
-  by (metis Abs_bounded_inverse times_rbounded_vec times_rbounded_vec_inject bounded_linear_cbounded_linear bounded_rbounded mem_Collect_eq rbounded_of_bounded.rep_eq)
+lemma blinfun_cblinfun:
+  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x)
+ = c *\<^sub>C (blinfun_apply f x)
+ \<Longrightarrow> blinfun_of_cblinfun (cblinfun_of_blinfun f) = f\<close>
+  by (metis blinfun_of_cblinfun_inv cblinfun_blinfun) 
 
 
-instantiation bounded :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
+instantiation cblinfun :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
-lift_definition zero_bounded::"('a,'b) bounded" is "\<lambda>_. 0" by simp
+lift_definition zero_cblinfun::"('a,'b) cblinfun" is "\<lambda>_. 0" by simp
 
-lemma bounded_of_rbounded_zero:
-  "(0::('a::complex_normed_vector,'b::complex_normed_vector) bounded) = bounded_of_rbounded (0::('a,'b) rbounded)" 
+lemma cblinfun_of_blinfun_zero:
+  "(0::('a::complex_normed_vector,'b::complex_normed_vector) cblinfun) = cblinfun_of_blinfun (0::('a,'b) blinfun)" 
 proof-
-  have \<open>times_bounded_vec 0 t  = times_bounded_vec (SOME x. Abs_rbounded (times_bounded_vec x) = 0) t\<close>
+  have \<open>cblinfun_apply 0 t  = cblinfun_apply (SOME x. Blinfun (cblinfun_apply x) = 0) t\<close>
     for t
   proof-
-    have \<open>times_bounded_vec (SOME x. Abs_rbounded (times_bounded_vec x) = 0) t = 0\<close>
-      by (metis (mono_tags, lifting) Abs_bounded_inverse times_rbounded_vec_inverse cbounded_linear_zero mem_Collect_eq rbounded_of_bounded.rep_eq tfl_some zero_rbounded.abs_eq)
-    moreover have \<open>times_bounded_vec 0 t = 0\<close>
+    have \<open>cblinfun_apply (SOME x. Blinfun (cblinfun_apply x) = 0) t = 0\<close>
+      by (metis (mono_tags, lifting) cBlinfun_inverse blinfun_apply_inverse cbounded_linear_zero mem_Collect_eq blinfun_of_cblinfun.rep_eq tfl_some zero_blinfun.abs_eq)
+    moreover have \<open>cblinfun_apply 0 t = 0\<close>
       apply transfer by blast
     ultimately show ?thesis by simp
   qed
-  hence \<open>times_bounded_vec 0  = times_bounded_vec (SOME x. Abs_rbounded (times_bounded_vec x) = 0) \<close>
+  hence \<open>cblinfun_apply 0  = cblinfun_apply (SOME x. Blinfun (cblinfun_apply x) = 0) \<close>
     by blast
-  hence \<open>0 = (SOME x. Abs_rbounded (times_bounded_vec x) = 0)\<close>
-    using times_bounded_vec_inject
+  hence \<open>0 = (SOME x. Blinfun (cblinfun_apply x) = 0)\<close>
+    using cblinfun_apply_inject
     by blast
-  hence \<open>0 = inv (Abs_rbounded \<circ> times_bounded_vec) 0\<close>
+  hence \<open>0 = inv (Blinfun \<circ> cblinfun_apply) 0\<close>
     unfolding inv_def
     by auto
-  hence \<open>0 = inv (map_fun times_bounded_vec Abs_rbounded id) 0\<close>
+  hence \<open>0 = inv (map_fun cblinfun_apply Blinfun id) 0\<close>
     unfolding map_fun_def 
     by auto
   thus ?thesis
-    unfolding bounded_of_rbounded_def rbounded_of_bounded_def inv_def
+    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
     by blast
 qed
 
-lemma rbounded_of_bounded_zero:
-  \<open>rbounded_of_bounded 0 = 0\<close>
+lemma blinfun_of_cblinfun_zero:
+  \<open>blinfun_of_cblinfun 0 = 0\<close>
   apply transfer by simp
 
 
-lift_definition plus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
+lift_definition plus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
   "\<lambda>f g x. f x + g x"
   by (rule cbounded_linear_add)
 
 (* TODO remove *)
 (* Jose: If I remove it, there are errors *)
-lemma rbounded_of_bounded_plus:
-  fixes f g :: \<open>('a,'b) bounded\<close> 
-  shows "rbounded_of_bounded (f + g) =  (rbounded_of_bounded f)+(rbounded_of_bounded g)"
-  unfolding bounded_of_rbounded_def rbounded_of_bounded_def inv_def
+lemma blinfun_of_cblinfun_plus:
+  fixes f g :: \<open>('a,'b) cblinfun\<close> 
+  shows "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+  unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
   apply auto
   apply transfer
-  by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_rbounded.abs_eq)
+  by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
 
-lemma bounded_of_rbounded_plus:
-  (* TODO: use \<And> (or introduce a definition "rbounded_is_bounded f" for it) *)
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-    and \<open>\<forall> c. \<forall> x. times_rbounded_vec g (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec g x)\<close>
-  shows \<open>bounded_of_rbounded (f + g) = bounded_of_rbounded f + bounded_of_rbounded g\<close>
+lemma cblinfun_of_blinfun_plus:
+  (* TODO: use \<And> (or introduce a definition "blinfun_is_cblinfun f" for it) *)
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  shows \<open>cblinfun_of_blinfun (f + g) = cblinfun_of_blinfun f + cblinfun_of_blinfun g\<close>
   using assms
-  by (metis rbounded_of_bounded_plus rbounded_bounded rbounded_of_bounded_inj rbounded_of_bounded_prelim)
+  by (metis blinfun_of_cblinfun_plus blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim)
 
-lift_definition uminus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
+lift_definition uminus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
   "\<lambda>f x. - f x"
   by (rule Complex_Vector_Spaces.cbounded_linear_minus)
 
-lemma rbounded_of_bounded_uminus:
-  \<open>rbounded_of_bounded (- f) = - (rbounded_of_bounded f)\<close>
+lemma blinfun_of_cblinfun_uminus:
+  \<open>blinfun_of_cblinfun (- f) = - (blinfun_of_cblinfun f)\<close>
   apply transfer
   by auto
 
-lemma bounded_of_rbounded_uminus:
-  (* TODO: use \<And> (or introduce a definition "rbounded_is_bounded f" for it) *)
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-  shows  \<open>bounded_of_rbounded (- f) = - (bounded_of_rbounded f)\<close>
+lemma cblinfun_of_blinfun_uminus:
+  (* TODO: use \<And> (or introduce a definition "blinfun_is_cblinfun f" for it) *)
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  shows  \<open>cblinfun_of_blinfun (- f) = - (cblinfun_of_blinfun f)\<close>
   using assms
-  by (metis (mono_tags) rbounded_bounded rbounded_of_bounded_inj rbounded_of_bounded_prelim rbounded_of_bounded_uminus)
+  by (metis (mono_tags) blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim blinfun_of_cblinfun_uminus)
 
-lift_definition minus_bounded::"('a,'b) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded" is
+lift_definition minus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
   "\<lambda>f g x. f x - g x"
   by (rule Complex_Vector_Spaces.cbounded_linear_sub)
 
-lemma rbounded_of_bounded_minus:
-  \<open>rbounded_of_bounded (f - g) = rbounded_of_bounded f - rbounded_of_bounded g\<close>
+lemma blinfun_of_cblinfun_minus:
+  \<open>blinfun_of_cblinfun (f - g) = blinfun_of_cblinfun f - blinfun_of_cblinfun g\<close>
   apply transfer
   by auto
 
-lemma bounded_of_rbounded_minus:
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-    and \<open>\<forall> c. \<forall> x. times_rbounded_vec g (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec g x)\<close>
-  shows \<open>bounded_of_rbounded (f - g) = bounded_of_rbounded f - bounded_of_rbounded g\<close>
+lemma cblinfun_of_blinfun_minus:
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  shows \<open>cblinfun_of_blinfun (f - g) = cblinfun_of_blinfun f - cblinfun_of_blinfun g\<close>
   using assms
-  unfolding bounded_of_rbounded_def inv_def
-  by (smt bounded_rbounded rbounded_bounded rbounded_of_bounded_minus someI_ex)
+  unfolding cblinfun_of_blinfun_def inv_def
+  by (smt cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_minus someI_ex)
 
-lift_definition scaleC_bounded :: \<open>complex \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+lift_definition scaleC_cblinfun :: \<open>complex \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
   is  "\<lambda> c f x. c *\<^sub>C (f x)"
   by (rule Complex_Vector_Spaces.cbounded_linear_const_scaleC)
 
 
-lemma rbounded_of_bounded_scaleC:
-  \<open>rbounded_of_bounded ( c *\<^sub>C f ) = c *\<^sub>C (rbounded_of_bounded f)\<close>
+lemma blinfun_of_cblinfun_scaleC:
+  \<open>blinfun_of_cblinfun ( c *\<^sub>C f ) = c *\<^sub>C (blinfun_of_cblinfun f)\<close>
   apply transfer
   by auto
 
-lemma bounded_of_rbounded_scaleC:
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-  shows \<open>bounded_of_rbounded ( c *\<^sub>C f ) = c *\<^sub>C (bounded_of_rbounded f)\<close>
+lemma cblinfun_of_blinfun_scaleC:
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  shows \<open>cblinfun_of_blinfun ( c *\<^sub>C f ) = c *\<^sub>C (cblinfun_of_blinfun f)\<close>
   using assms
-  by (metis (mono_tags) bounded_rbounded rbounded_bounded rbounded_of_bounded_scaleC)
+  by (metis (mono_tags) cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_scaleC)
 
 
-lift_definition scaleR_bounded :: \<open>real \<Rightarrow> ('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+lift_definition scaleR_cblinfun :: \<open>real \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
   is  "\<lambda> c f x. c *\<^sub>R (f x)"
   by (rule Complex_Vector_Spaces.scalarR_cbounded_linear)
 
-lemma rbounded_of_bounded_scaleR:
-  \<open>rbounded_of_bounded (c *\<^sub>R f) = c *\<^sub>R (rbounded_of_bounded f)\<close>
+lemma blinfun_of_cblinfun_scaleR:
+  \<open>blinfun_of_cblinfun (c *\<^sub>R f) = c *\<^sub>R (blinfun_of_cblinfun f)\<close>
   apply transfer by auto
 
-lemma bounded_of_rbounded_scaleR:
-  assumes \<open>\<forall> c. \<forall> x. times_rbounded_vec f (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec f x)\<close>
-  shows \<open>bounded_of_rbounded ( c *\<^sub>R f ) = c *\<^sub>R (bounded_of_rbounded f)\<close>
+lemma cblinfun_of_blinfun_scaleR:
+  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  shows \<open>cblinfun_of_blinfun ( c *\<^sub>R f ) = c *\<^sub>R (cblinfun_of_blinfun f)\<close>
   using assms
-  by (metis (mono_tags) bounded_rbounded rbounded_bounded rbounded_of_bounded_scaleR)
+  by (metis (mono_tags) cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_scaleR)
 
-lemma bounded_of_rbounded_Abs_rbounded:
-  \<open>bounded_of_rbounded ( Abs_rbounded (times_bounded_vec f) ) = f\<close>
-  by (metis Quotient_bounded Quotient_rel_rep times_bounded_vec_inverse bounded_rbounded rbounded_of_bounded.abs_eq)
+lemma cblinfun_of_blinfun_Blinfun:
+  \<open>cblinfun_of_blinfun ( Blinfun (cblinfun_apply f) ) = f\<close>
+  by (metis Quotient_cblinfun Quotient_rel_rep cblinfun_apply_inverse cblinfun_blinfun blinfun_of_cblinfun.abs_eq)
 
-lift_definition norm_bounded :: \<open>('a, 'b) bounded \<Rightarrow> real\<close>
+lift_definition norm_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> real\<close>
   is onorm.
 
-lemma rbounded_of_bounded_norm:
-  fixes f::\<open>('a, 'b) bounded\<close>
-  shows \<open>norm f = norm (rbounded_of_bounded f)\<close>
+lemma blinfun_of_cblinfun_norm:
+  fixes f::\<open>('a, 'b) cblinfun\<close>
+  shows \<open>norm f = norm (blinfun_of_cblinfun f)\<close>
   apply transfer
   by auto
 
-lift_definition dist_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded \<Rightarrow> real\<close>
+lift_definition dist_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> real\<close>
   is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x)\<close>.
 
-lemma rbounded_of_bounded_dist:
-  fixes f::\<open>('a, 'b) bounded\<close>
-  shows \<open>dist f g = dist (rbounded_of_bounded f) (rbounded_of_bounded g)\<close>
-  apply transfer
+lemma blinfun_of_cblinfun_dist:
+  fixes f::\<open>('a, 'b) cblinfun\<close>
+  shows \<open>dist f g = dist (blinfun_of_cblinfun f) (blinfun_of_cblinfun g)\<close>
+  unfolding dist_cblinfun_def dist_blinfun_def apply auto apply transfer
   by auto
 
-lift_definition sgn_bounded :: \<open>('a, 'b) bounded \<Rightarrow> ('a, 'b) bounded\<close>
+lift_definition sgn_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
   is \<open>\<lambda> f x. (inverse (onorm f)) *\<^sub>R (f x)\<close>
   apply transfer
   by (simp add: scalarR_cbounded_linear)
 
-lemma rbounded_of_bounded_sgn:
-  \<open>rbounded_of_bounded (sgn f) =   (sgn (rbounded_of_bounded f))\<close>
-  apply transfer
-  by auto
+(* Ask to Dominique: how to prove this. *)
+lemma blinfun_of_cblinfun_sgn:
+  \<open>blinfun_of_cblinfun (sgn f) = (sgn (blinfun_of_cblinfun f))\<close>
+  sorry
 
+definition uniformity_cblinfun :: \<open>( ('a, 'b) cblinfun \<times> ('a, 'b) cblinfun ) filter\<close>
+  where \<open>uniformity_cblinfun = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) cblinfun) y < e})\<close>
 
-definition uniformity_bounded :: \<open>( ('a, 'b) bounded \<times> ('a, 'b) bounded ) filter\<close>
-  where \<open>uniformity_bounded = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) bounded) y < e})\<close>
-
-definition open_bounded :: \<open>(('a, 'b) bounded) set \<Rightarrow> bool\<close>
-  where \<open>open_bounded U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) bounded) = x \<longrightarrow> y \<in> U)\<close>
+definition open_cblinfun :: \<open>(('a, 'b) cblinfun) set \<Rightarrow> bool\<close>
+  where \<open>open_cblinfun U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) cblinfun) = x \<longrightarrow> y \<in> U)\<close>
 
 instance
 proof
   show \<open>a + b + c = a + (b + c)\<close>
-    for a :: "('a, 'b) bounded"
-      and b :: "('a, 'b) bounded"
-      and c :: "('a, 'b) bounded"
+    for a :: "('a, 'b) cblinfun"
+      and b :: "('a, 'b) cblinfun"
+      and c :: "('a, 'b) cblinfun"
   proof -
-    have f1: "\<forall>r ra. ((\<exists>c a. times_rbounded_vec r (c *\<^sub>C (a::'a)) \<noteq> c *\<^sub>C (times_rbounded_vec r a::'b)) \<or> (\<exists>c a. times_rbounded_vec ra (c *\<^sub>C a) \<noteq> c *\<^sub>C times_rbounded_vec ra a)) \<or> bounded_of_rbounded (r + ra) = bounded_of_rbounded r + bounded_of_rbounded ra"
-      using bounded_of_rbounded_plus by blast
-    obtain cc :: "('a, 'b) rbounded \<Rightarrow> complex" and aa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
-      "\<forall>x0. (\<exists>v2 v3. times_rbounded_vec x0 (v2 *\<^sub>C v3) \<noteq> v2 *\<^sub>C times_rbounded_vec x0 v3) = (times_rbounded_vec x0 (cc x0 *\<^sub>C aa x0) \<noteq> cc x0 *\<^sub>C times_rbounded_vec x0 (aa x0))"
+    have f1: "\<forall>r ra. ((\<exists>c a. blinfun_apply r (c *\<^sub>C (a::'a)) \<noteq> c *\<^sub>C (blinfun_apply r a::'b)) \<or> (\<exists>c a. blinfun_apply ra (c *\<^sub>C a) \<noteq> c *\<^sub>C blinfun_apply ra a)) \<or> cblinfun_of_blinfun (r + ra) = cblinfun_of_blinfun r + cblinfun_of_blinfun ra"
+      using cblinfun_of_blinfun_plus by blast
+    obtain cc :: "('a, 'b) blinfun \<Rightarrow> complex" and aa :: "('a, 'b) blinfun \<Rightarrow> 'a" where
+      "\<forall>x0. (\<exists>v2 v3. blinfun_apply x0 (v2 *\<^sub>C v3) \<noteq> v2 *\<^sub>C blinfun_apply x0 v3) = (blinfun_apply x0 (cc x0 *\<^sub>C aa x0) \<noteq> cc x0 *\<^sub>C blinfun_apply x0 (aa x0))"
       by moura
-    then obtain cca :: "('a, 'b) rbounded \<Rightarrow> complex" and aaa :: "('a, 'b) rbounded \<Rightarrow> 'a" where
-      f2: "\<forall>r ra. (times_rbounded_vec r (cca r *\<^sub>C aaa r) \<noteq> cca r *\<^sub>C times_rbounded_vec r (aaa r) \<or> times_rbounded_vec ra (cc ra *\<^sub>C aa ra) \<noteq> cc ra *\<^sub>C times_rbounded_vec ra (aa ra)) \<or> bounded_of_rbounded (r + ra) = bounded_of_rbounded r + bounded_of_rbounded ra"
+    then obtain cca :: "('a, 'b) blinfun \<Rightarrow> complex" and aaa :: "('a, 'b) blinfun \<Rightarrow> 'a" where
+      f2: "\<forall>r ra. (blinfun_apply r (cca r *\<^sub>C aaa r) \<noteq> cca r *\<^sub>C blinfun_apply r (aaa r) \<or> blinfun_apply ra (cc ra *\<^sub>C aa ra) \<noteq> cc ra *\<^sub>C blinfun_apply ra (aa ra)) \<or> cblinfun_of_blinfun (r + ra) = cblinfun_of_blinfun r + cblinfun_of_blinfun ra"
       using f1 by simp
-    hence "bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b + rbounded_of_bounded c) = bounded_of_rbounded (rbounded_of_bounded a + rbounded_of_bounded b) + bounded_of_rbounded (rbounded_of_bounded c)"
-      by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
-    hence f3: "bounded_of_rbounded (rbounded_of_bounded a + (rbounded_of_bounded b + rbounded_of_bounded c)) = a + b + c"
-      by (metis (mono_tags, lifting) ab_semigroup_add_class.add_ac(1) bounded_rbounded rbounded_of_bounded_plus)
-    have "bounded_of_rbounded (rbounded_of_bounded a) + bounded_of_rbounded (rbounded_of_bounded b + rbounded_of_bounded c) = a + (b + c)"
-      by (metis bounded_rbounded rbounded_of_bounded_plus)
+    hence "cblinfun_of_blinfun (blinfun_of_cblinfun a + blinfun_of_cblinfun b + blinfun_of_cblinfun c) = cblinfun_of_blinfun (blinfun_of_cblinfun a + blinfun_of_cblinfun b) + cblinfun_of_blinfun (blinfun_of_cblinfun c)"
+      by (simp add: plus_blinfun.rep_eq blinfun_of_cblinfun_prelim scaleC_add_right)
+    hence f3: "cblinfun_of_blinfun (blinfun_of_cblinfun a + (blinfun_of_cblinfun b + blinfun_of_cblinfun c)) = a + b + c"
+      by (metis (mono_tags, lifting) ab_semigroup_add_class.add_ac(1) cblinfun_blinfun blinfun_of_cblinfun_plus)
+    have "cblinfun_of_blinfun (blinfun_of_cblinfun a) + cblinfun_of_blinfun (blinfun_of_cblinfun b + blinfun_of_cblinfun c) = a + (b + c)"
+      by (metis cblinfun_blinfun blinfun_of_cblinfun_plus)
     thus ?thesis
-      using f3 f2 by (simp add: plus_rbounded.rep_eq rbounded_of_bounded_prelim scaleC_add_right)
+      using f3 f2 by (simp add: plus_blinfun.rep_eq blinfun_of_cblinfun_prelim scaleC_add_right)
   qed
 
-  show \<open>(0::('a, 'b) bounded) + a = a\<close>
-    for a :: "('a, 'b) bounded"
+  show \<open>(0::('a, 'b) cblinfun) + a = a\<close>
+    for a :: "('a, 'b) cblinfun"
   proof -
-    have "rbounded_of_bounded (map_fun times_bounded_vec (map_fun times_bounded_vec Abs_bounded) (\<lambda>f fa a. f a + fa a) 0 a) = rbounded_of_bounded 0 + rbounded_of_bounded a"
-      using Bounded_Operators.rbounded_of_bounded_plus plus_bounded_def by auto
-    hence "map_fun times_bounded_vec (map_fun times_bounded_vec Abs_bounded) (\<lambda>f fa a. f a + fa a) 0 a = a"
-      by (simp add: Bounded_Operators.rbounded_of_bounded_zero rbounded_of_bounded_inj)
+    have "blinfun_of_cblinfun (map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a) = blinfun_of_cblinfun 0 + blinfun_of_cblinfun a"
+      using Bounded_Operators.blinfun_of_cblinfun_plus plus_cblinfun_def by auto
+    hence "map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a = a"
+      by (simp add: Bounded_Operators.blinfun_of_cblinfun_zero blinfun_of_cblinfun_inj)
     thus ?thesis
-      unfolding plus_bounded_def
+      unfolding plus_cblinfun_def
       by blast
   qed
 
   show \<open>a + b = b + a\<close>
-    for a :: "('a, 'b) bounded"
-      and b :: "('a, 'b) bounded"
-    by (simp add: add.commute plus_bounded_def)
+    for a :: "('a, 'b) cblinfun"
+      and b :: "('a, 'b) cblinfun"
+    by (simp add: add.commute plus_cblinfun_def)
 
   show \<open>- a + a = 0\<close>
-    for a :: "('a, 'b) bounded"
-    by (metis (mono_tags) add.left_inverse bounded_of_rbounded_zero bounded_rbounded rbounded_of_bounded_plus rbounded_of_bounded_uminus)
+    for a :: "('a, 'b) cblinfun"
+    by (metis (mono_tags) add.left_inverse cblinfun_of_blinfun_zero cblinfun_blinfun blinfun_of_cblinfun_plus blinfun_of_cblinfun_uminus)
 
   show \<open>a - b = a + - b\<close>
-    for a :: "('a, 'b) bounded"
-      and b :: "('a, 'b) bounded"
-    by (metis (mono_tags, lifting) ab_group_add_class.ab_diff_conv_add_uminus rbounded_of_bounded_inj rbounded_of_bounded_minus rbounded_of_bounded_plus rbounded_of_bounded_uminus)
+    for a :: "('a, 'b) cblinfun"
+      and b :: "('a, 'b) cblinfun"
+    by (metis (mono_tags, lifting) ab_group_add_class.ab_diff_conv_add_uminus blinfun_of_cblinfun_inj blinfun_of_cblinfun_minus blinfun_of_cblinfun_plus blinfun_of_cblinfun_uminus)
 
-  show \<open>((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+  show \<open>((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
     for r :: real
   proof-
-    have \<open>r *\<^sub>R times_bounded_vec f t =
-          complex_of_real r *\<^sub>C times_bounded_vec f t\<close>
-      for f::\<open>('a, 'b) bounded\<close> and t
+    have \<open>r *\<^sub>R cblinfun_apply f t =
+          complex_of_real r *\<^sub>C cblinfun_apply f t\<close>
+      for f::\<open>('a, 'b) cblinfun\<close> and t
       by (simp add: scaleR_scaleC)      
-    hence \<open>(\<lambda>t. r *\<^sub>R times_bounded_vec f t) t =
-          (\<lambda>t. complex_of_real r *\<^sub>C times_bounded_vec f t) t\<close>
-      for f::\<open>('a, 'b) bounded\<close> and t
+    hence \<open>(\<lambda>t. r *\<^sub>R cblinfun_apply f t) t =
+          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t) t\<close>
+      for f::\<open>('a, 'b) cblinfun\<close> and t
       by simp      
-    hence \<open>(\<lambda>t. r *\<^sub>R times_bounded_vec f t) =
-          (\<lambda>t. complex_of_real r *\<^sub>C times_bounded_vec f t)\<close>
-      for f::\<open>('a, 'b) bounded\<close>
+    hence \<open>(\<lambda>t. r *\<^sub>R cblinfun_apply f t) =
+          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)\<close>
+      for f::\<open>('a, 'b) cblinfun\<close>
       by simp
-    hence \<open>Abs_bounded (\<lambda>t. r *\<^sub>R times_bounded_vec f t) =
-    Abs_bounded
-          (\<lambda>t. complex_of_real r *\<^sub>C times_bounded_vec f t)\<close>
-      for f::\<open>('a, 'b) bounded\<close>
+    hence \<open>cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t) =
+    cBlinfun
+          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)\<close>
+      for f::\<open>('a, 'b) cblinfun\<close>
       by simp
-    hence \<open>(\<lambda>f. Abs_bounded (\<lambda>t. r *\<^sub>R times_bounded_vec f t)) f =
-    (\<lambda>f. Abs_bounded
-          (\<lambda>t. complex_of_real r *\<^sub>C times_bounded_vec f t)) f\<close>
-      for f::\<open>('a, 'b) bounded\<close>
+    hence \<open>(\<lambda>f. cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t)) f =
+    (\<lambda>f. cBlinfun
+          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)) f\<close>
+      for f::\<open>('a, 'b) cblinfun\<close>
       by blast
-    hence \<open>(\<lambda>f. Abs_bounded (\<lambda>t. r *\<^sub>R times_bounded_vec f t)) =
-    (\<lambda>f. Abs_bounded
-          (\<lambda>t. complex_of_real r *\<^sub>C times_bounded_vec f t))\<close>
+    hence \<open>(\<lambda>f. cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t)) =
+    (\<lambda>f. cBlinfun
+          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t))\<close>
       by (simp add: scaleR_scaleC)      
     thus ?thesis
-      unfolding scaleR_bounded_def scaleC_bounded_def o_def rbounded_of_bounded_def map_fun_def
+      unfolding scaleR_cblinfun_def scaleC_cblinfun_def o_def blinfun_of_cblinfun_def map_fun_def
       by auto
   qed
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     for a :: complex
-      and x :: "('a, 'b) bounded"
-      and y :: "('a, 'b) bounded"
-    by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_scaleC scaleC_add_right)
+      and x :: "('a, 'b) cblinfun"
+      and y :: "('a, 'b) cblinfun"
+    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_scaleC scaleC_add_right)
 
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) bounded"
-    by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_scaleC scaleC_left.add)
+      and x :: "('a, 'b) cblinfun"
+    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_scaleC scaleC_left.add)
 
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) bounded"
-    by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_scaleC)
+      and x :: "('a, 'b) cblinfun"
+    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_scaleC)
 
   show \<open>1 *\<^sub>C x = x\<close>
-    for x :: "('a, 'b) bounded"
-    by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_scaleC)
+    for x :: "('a, 'b) cblinfun"
+    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_scaleC)
 
   show \<open>dist x y = norm (x - y)\<close>
-    for x :: "('a, 'b) bounded"
-      and y :: "('a, 'b) bounded"
-    by (simp add: dist_norm rbounded_of_bounded_dist rbounded_of_bounded_minus rbounded_of_bounded_norm)
+    for x :: "('a, 'b) cblinfun"
+      and y :: "('a, 'b) cblinfun"
+    by (simp add: dist_norm blinfun_of_cblinfun_dist blinfun_of_cblinfun_minus blinfun_of_cblinfun_norm)
 
   show \<open>sgn x = (inverse (norm x)) *\<^sub>R x\<close>
-    for x :: "('a, 'b) bounded"
-    by (simp add: norm_bounded_def scaleR_bounded_def sgn_bounded_def sgn_div_norm)
+    for x :: "('a, 'b) cblinfun"
+    by (simp add: norm_cblinfun_def scaleR_cblinfun_def sgn_cblinfun_def sgn_div_norm)
 
-  show \<open>uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) bounded) y < e})\<close>
-    by (simp add: Bounded_Operators.uniformity_bounded_def)
+  show \<open>uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) cblinfun) y < e})\<close>
+    by (simp add: Bounded_Operators.uniformity_cblinfun_def)
 
-  show \<open>open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) bounded) = x \<longrightarrow> y \<in> U)\<close>
-    for U :: "('a, 'b) bounded set"
-    by (simp add: Bounded_Operators.open_bounded_def)
+  show \<open>open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) cblinfun) = x \<longrightarrow> y \<in> U)\<close>
+    for U :: "('a, 'b) cblinfun set"
+    by (simp add: Bounded_Operators.open_cblinfun_def)
 
   show \<open>(norm x = 0) = (x = 0)\<close>
-    for x :: "('a, 'b) bounded"
+    for x :: "('a, 'b) cblinfun"
   proof -
-    have f1: "bounded_of_rbounded (0::('a, 'b) rbounded) = 0"
-      by (simp add: bounded_of_rbounded_zero)
+    have f1: "cblinfun_of_blinfun (0::('a, 'b) blinfun) = 0"
+      by (simp add: cblinfun_of_blinfun_zero)
 
     { assume "x \<noteq> 0"
-      hence "x \<noteq> 0 \<and> bounded_of_rbounded 0 \<noteq> x"
+      hence "x \<noteq> 0 \<and> cblinfun_of_blinfun 0 \<noteq> x"
         using f1 by meson
       hence ?thesis
-        by (metis bounded_rbounded norm_eq_zero rbounded_of_bounded_norm)
+        by (metis cblinfun_blinfun norm_eq_zero blinfun_of_cblinfun_norm)
     }
     thus ?thesis
-      using rbounded_of_bounded_norm rbounded_of_bounded_zero by auto     
+      using blinfun_of_cblinfun_norm blinfun_of_cblinfun_zero by auto     
   qed
 
   show \<open>norm (x + y) \<le> norm x + norm y\<close>
-    for x :: "('a, 'b) bounded"
-      and y :: "('a, 'b) bounded"
-    by (simp add: norm_triangle_ineq rbounded_of_bounded_norm rbounded_of_bounded_plus)
+    for x :: "('a, 'b) cblinfun"
+      and y :: "('a, 'b) cblinfun"
+    by (simp add: norm_triangle_ineq blinfun_of_cblinfun_norm blinfun_of_cblinfun_plus)
 
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
     for a :: complex
-      and x :: "('a, 'b) bounded"
-    using rbounded_of_bounded_norm rbounded_of_bounded_scaleC by auto
+      and x :: "('a, 'b) cblinfun"
+    using blinfun_of_cblinfun_norm blinfun_of_cblinfun_scaleC by auto
 
 
   show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
     for a :: real
-      and x :: "('a, 'b) bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x a. norm (a *\<^sub>C x) = cmod a * norm (x::('a, 'b) bounded)\<close>
+      and x :: "('a, 'b) cblinfun"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x a. norm (a *\<^sub>C x) = cmod a * norm (x::('a, 'b) cblinfun)\<close>
       of_real_mult
     by simp
 
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x +  a *\<^sub>R y\<close>
     for a :: real
-      and x y :: "('a, 'b) bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x y a. a *\<^sub>C (x + y) = a *\<^sub>C x +  a *\<^sub>C (y::('a, 'b) bounded)\<close>
+      and x y :: "('a, 'b) cblinfun"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x y a. a *\<^sub>C (x + y) = a *\<^sub>C x +  a *\<^sub>C (y::('a, 'b) cblinfun)\<close>
       of_real_mult
     by simp
 
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x +  b *\<^sub>R x\<close>
     for a b :: real
-      and x :: "('a, 'b) bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x b a. (a + b) *\<^sub>C (x::('a,'b) bounded) = a *\<^sub>C x +  b *\<^sub>C x\<close>
+      and x :: "('a, 'b) cblinfun"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. (a + b) *\<^sub>C (x::('a,'b) cblinfun) = a *\<^sub>C x +  b *\<^sub>C x\<close>
       of_real_mult
     by simp
 
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
     for a b :: real
-      and x :: "('a, 'b) bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x b a. a *\<^sub>C b *\<^sub>C (x::('a, 'b) bounded) = (a * b) *\<^sub>C x\<close>
+      and x :: "('a, 'b) cblinfun"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. a *\<^sub>C b *\<^sub>C (x::('a, 'b) cblinfun) = (a * b) *\<^sub>C x\<close>
       of_real_mult
     by simp
 
   show \<open>1 *\<^sub>R x = x\<close>
-    for x :: "('a, 'b) bounded"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) bounded \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x. 1 *\<^sub>C (x::('a, 'b) bounded) = x\<close> of_real_1
+    for x :: "('a, 'b) cblinfun"
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x. 1 *\<^sub>C (x::('a, 'b) cblinfun) = x\<close> of_real_1
     by simp
 
 qed
 
 end
 
-
-instantiation bounded :: (complex_normed_vector, cbanach) "cbanach"
+instantiation cblinfun :: (complex_normed_vector, cbanach) "cbanach"
 begin
-lemma rbounded_of_bounded_Cauchy:
+lemma blinfun_of_cblinfun_Cauchy:
   assumes \<open>Cauchy f\<close>
-  shows \<open>Cauchy (\<lambda> n. rbounded_of_bounded (f n))\<close>
+  shows \<open>Cauchy (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
   using assms unfolding Cauchy_def
-  by (simp add: rbounded_of_bounded_dist)  
+  by (simp add: blinfun_of_cblinfun_dist)  
 
 
-lemma bounded_of_rbounded_Cauchy:
+lemma cblinfun_of_blinfun_Cauchy:
   assumes \<open>Cauchy f\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. times_rbounded_vec (f n) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (f n) x)\<close>
-  shows \<open>Cauchy (\<lambda> n. bounded_of_rbounded (f n))\<close>
+    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close>
+  shows \<open>Cauchy (\<lambda> n. cblinfun_of_blinfun (f n))\<close>
   using assms  unfolding Cauchy_def 
-  using rbounded_of_bounded_dist
+  using blinfun_of_cblinfun_dist
   apply auto
-  by (simp add: rbounded_bounded rbounded_of_bounded_dist)
+  by (simp add: blinfun_cblinfun blinfun_of_cblinfun_dist)
 
-lemma rbounded_of_bounded_lim:
+lemma blinfun_of_cblinfun_lim:
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
+  shows \<open>(\<lambda> n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
 proof
-  show "\<forall>\<^sub>F x in sequentially. dist (rbounded_of_bounded (f x)) (rbounded_of_bounded l) < e"
+  show "\<forall>\<^sub>F x in sequentially. dist (blinfun_of_cblinfun (f x)) (blinfun_of_cblinfun l) < e"
     if "(0::real) < e"
     for e :: real
   proof-
@@ -1968,70 +1811,70 @@ proof
     have \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
       by (simp add: tendstoD that)
     thus ?thesis 
-      unfolding rbounded_of_bounded_dist by blast
+      unfolding blinfun_of_cblinfun_dist by blast
   qed
 qed
 
-lemma bounded_of_rbounded_complex_lim:
-  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
-    and l::\<open>('a, 'b) rbounded\<close>
+lemma cblinfun_of_blinfun_complex_lim:
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) blinfun\<close>
+    and l::\<open>('a, 'b) blinfun\<close>
   assumes  \<open>f \<longlonglongrightarrow> l\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. times_rbounded_vec (f n) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (f n) x)\<close> 
-  shows \<open>\<forall> c. \<forall> x. times_rbounded_vec l (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec l x)\<close>
+    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close> 
+  shows \<open>\<forall> c. \<forall> x. blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)\<close>
 proof-
-  have \<open>times_rbounded_vec l (c *\<^sub>C x) = c *\<^sub>C times_rbounded_vec l x\<close>
+  have \<open>blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C blinfun_apply l x\<close>
     for c::complex and x
   proof-
-    have \<open>(\<lambda> n. times_rbounded_vec (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> times_rbounded_vec l (c *\<^sub>C x)\<close>
+    have \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)\<close>
       by (simp add: assms(1) onorm_strong)        
-    moreover have \<open>(\<lambda> n. c *\<^sub>C (times_rbounded_vec (f n) x) ) \<longlonglongrightarrow> c *\<^sub>C (times_rbounded_vec l x)\<close>
+    moreover have \<open>(\<lambda> n. c *\<^sub>C (blinfun_apply (f n) x) ) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)\<close>
     proof-
       have \<open>isCont ((*\<^sub>C) c) y\<close>
         for y::'b
         using isCont_scaleC by auto
-      hence \<open>isCont ((*\<^sub>C) c) (times_rbounded_vec l x)\<close>
+      hence \<open>isCont ((*\<^sub>C) c) (blinfun_apply l x)\<close>
         by simp
       thus ?thesis
         using assms(1) isCont_tendsto_compose onorm_strong by blast 
     qed
-    moreover have \<open>times_rbounded_vec (f n) (c *\<^sub>C x) =  c *\<^sub>C (times_rbounded_vec (f n) x)\<close>
+    moreover have \<open>blinfun_apply (f n) (c *\<^sub>C x) =  c *\<^sub>C (blinfun_apply (f n) x)\<close>
       for n
       by (simp add: assms(2))
-    ultimately have \<open>(\<lambda> n. times_rbounded_vec (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> c *\<^sub>C (times_rbounded_vec l x)\<close>
+    ultimately have \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)\<close>
       by simp
     thus ?thesis
-      using  \<open>(\<lambda> n. times_rbounded_vec (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> times_rbounded_vec l (c *\<^sub>C x)\<close> LIMSEQ_unique 
+      using  \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)\<close> LIMSEQ_unique 
       by blast
   qed
   thus ?thesis by blast
 qed  
 
-lemma bounded_of_rbounded_lim:
-  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) rbounded\<close>
-    and l::\<open>('a, 'b) rbounded\<close>
+lemma cblinfun_of_blinfun_lim:
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) blinfun\<close>
+    and l::\<open>('a, 'b) blinfun\<close>
   assumes  \<open>f \<longlonglongrightarrow> l\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. times_rbounded_vec (f n) (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec (f n) x)\<close>
-  shows \<open>(\<lambda> n. bounded_of_rbounded (f n)) \<longlonglongrightarrow> bounded_of_rbounded l\<close>
+    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close>
+  shows \<open>(\<lambda> n. cblinfun_of_blinfun (f n)) \<longlonglongrightarrow> cblinfun_of_blinfun l\<close>
 proof
-  show "\<forall>\<^sub>F x in sequentially. dist (bounded_of_rbounded (f x)) (bounded_of_rbounded l) < e"
+  show "\<forall>\<^sub>F x in sequentially. dist (cblinfun_of_blinfun (f x)) (cblinfun_of_blinfun l) < e"
     if "(0::real) < e"
     for e :: real
   proof-
     from \<open>f \<longlonglongrightarrow> l\<close>
     have \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
       by (simp add: tendstoD that)
-    moreover have \<open>rbounded_of_bounded (bounded_of_rbounded (f n)) = f n\<close>
+    moreover have \<open>blinfun_of_cblinfun (cblinfun_of_blinfun (f n)) = f n\<close>
       for n
-      by (simp add: assms(2) rbounded_bounded)
-    moreover have \<open>rbounded_of_bounded (bounded_of_rbounded l) = l\<close>
+      by (simp add: assms(2) blinfun_cblinfun)
+    moreover have \<open>blinfun_of_cblinfun (cblinfun_of_blinfun l) = l\<close>
     proof-
-      have \<open>\<forall> c. \<forall> x. times_rbounded_vec l (c *\<^sub>C x) = c *\<^sub>C (times_rbounded_vec l x)\<close>
-        using assms(1) assms(2) bounded_of_rbounded_complex_lim by blast        
+      have \<open>\<forall> c. \<forall> x. blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)\<close>
+        using assms(1) assms(2) cblinfun_of_blinfun_complex_lim by blast        
       thus ?thesis
-        by (simp add: rbounded_bounded) 
+        by (simp add: blinfun_cblinfun) 
     qed
     ultimately show ?thesis 
-      unfolding rbounded_of_bounded_dist
+      unfolding blinfun_of_cblinfun_dist
       by simp  
   qed    
 qed
@@ -2040,20 +1883,20 @@ instance
 proof
   show "convergent f"
     if "Cauchy f"
-    for f :: "nat \<Rightarrow> ('a, 'b) bounded"
+    for f :: "nat \<Rightarrow> ('a, 'b) cblinfun"
   proof-
-    have \<open>Cauchy (\<lambda> n. rbounded_of_bounded (f n))\<close>
-      by (simp add: rbounded_of_bounded_Cauchy that)
-    hence \<open>convergent (\<lambda> n. rbounded_of_bounded (f n))\<close>
+    have \<open>Cauchy (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
+      by (simp add: blinfun_of_cblinfun_Cauchy that)
+    hence \<open>convergent (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
       by (simp add: Cauchy_convergent_iff)
-    hence \<open>\<exists> l. (\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
-      by (metis (no_types, lifting) Bounded_Operators.bounded_of_rbounded_complex_lim convergent_LIMSEQ_iff rbounded_bounded rbounded_of_bounded_prelim)
-    then obtain l where \<open>(\<lambda> n. rbounded_of_bounded (f n)) \<longlonglongrightarrow> rbounded_of_bounded l\<close>
+    hence \<open>\<exists> l. (\<lambda> n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
+      by (metis (no_types, lifting) Bounded_Operators.cblinfun_of_blinfun_complex_lim convergent_LIMSEQ_iff blinfun_cblinfun blinfun_of_cblinfun_prelim)
+    then obtain l where \<open>(\<lambda> n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
       by blast
-    hence \<open>(\<lambda> n. bounded_of_rbounded (rbounded_of_bounded (f n))) \<longlonglongrightarrow> bounded_of_rbounded (rbounded_of_bounded l)\<close>
-      by (simp add: Bounded_Operators.bounded_of_rbounded_lim rbounded_of_bounded_prelim)
+    hence \<open>(\<lambda> n. cblinfun_of_blinfun (blinfun_of_cblinfun (f n))) \<longlonglongrightarrow> cblinfun_of_blinfun (blinfun_of_cblinfun l)\<close>
+      by (simp add: Bounded_Operators.cblinfun_of_blinfun_lim blinfun_of_cblinfun_prelim)
     hence \<open>f \<longlonglongrightarrow> l\<close>
-      by (simp add: bounded_rbounded)
+      by (simp add: cblinfun_blinfun)
     thus ?thesis
       using convergent_def by blast 
   qed
@@ -2064,63 +1907,43 @@ end
 subsection \<open>Adjoint\<close>
 
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
+  adjoint :: "('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
   is Adj by (fact Adj_cbounded_linear)
 
-lemma adjoint_I:
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
-  shows \<open>\<langle>G* *\<^sub>v x, y\<rangle> = \<langle>x, G *\<^sub>v y\<rangle>\<close>
-  apply transfer using Adj_I by blast
-
-lemma adjoint_I':
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) bounded"
-  shows \<open>\<langle>x, G* *\<^sub>v y\<rangle> = \<langle>G *\<^sub>v x, y\<rangle>\<close> 
-  apply transfer using Adj_I' by blast
-
-lemma adjoint_D:
-  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) bounded\<close>
-    and F:: \<open>('a, 'b) bounded\<close>
-  assumes \<open>\<And>x y. \<langle>(times_bounded_vec F) x, y\<rangle> = \<langle>x, (times_bounded_vec G) y\<rangle>\<close>
-  shows \<open>F = G*\<close>
-  using assms apply transfer using Adj_D by auto
-
-lemma adjoint_twice[simp]: "(U*)* = U" 
-  for U :: "('a::chilbert_space,'b::chilbert_space) bounded"
-  apply transfer
-  using dagger_dagger_id by blast
-
-lift_definition idOp::\<open>('a::complex_normed_vector,'a) bounded\<close> is id
+lift_definition idOp::\<open>('a::complex_normed_vector,'a) cblinfun\<close> is id
   using id_cbounded_linear by blast
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
+  for A::"('a::chilbert_space,'b::chilbert_space) cblinfun"
     and a :: complex 
 proof-
-  have \<open>cbounded_linear ((times_bounded_vec A))\<close>
-    using times_bounded_vec by blast
-  hence \<open>(\<lambda> t. a *\<^sub>C ((times_bounded_vec A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((times_bounded_vec A)\<^sup>\<dagger>) s))\<close>
+  have \<open>cbounded_linear ((cblinfun_apply A))\<close>
+    using cblinfun_apply by blast
+  hence \<open>(\<lambda> t. a *\<^sub>C ((cblinfun_apply A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
     using scalar_times_adjc_flatten
     unfolding cbounded_linear_def 
-      scalar_times_adjc_flatten \<open>cbounded_linear (times_bounded_vec A)\<close> cbounded_linear.bounded_linear
-    by (simp add: scalar_times_adjc_flatten \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.bounded_linear complex_vector.linear_scale)
-
-  moreover have \<open>times_bounded_vec ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((times_bounded_vec A) t))\<^sup>\<dagger>\<close>
+      scalar_times_adjc_flatten \<open>cbounded_linear (cblinfun_apply A)\<close>
+    using scalar_times_adjc_flatten complex_vector.linear_scale
+    by (simp add: complex_vector.linear_scale scalar_times_adjc_flatten \<open>cbounded_linear ((*\<^sub>v) A)\<close> 
+        cbounded_linear.bounded_linear)
+      (* Ask to Dominique about 2 parse trees *)
+  moreover have \<open>cblinfun_apply ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((cblinfun_apply A) t))\<^sup>\<dagger>\<close>
     unfolding Adj_def
     apply auto
-    by (smt Adj_def Eps_cong adjoint.rep_eq cinner_scaleC_right scaleC_bounded.rep_eq)
-  moreover have \<open>times_bounded_vec (cnj a *\<^sub>C (A*)) = (\<lambda> s. (cnj a) *\<^sub>C (((times_bounded_vec A)\<^sup>\<dagger>) s))\<close>
+    by (smt Adj_def Eps_cong adjoint.rep_eq cinner_scaleC_right scaleC_cblinfun.rep_eq)
+  moreover have \<open>cblinfun_apply (cnj a *\<^sub>C (A*)) = (\<lambda> s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
     unfolding Adj_def
-    by (simp add: Adj_def adjoint.rep_eq scaleC_bounded.rep_eq)    
+    by (simp add: Adj_def adjoint.rep_eq scaleC_cblinfun.rep_eq)    
   ultimately show ?thesis
-    using times_bounded_vec_inject
+    using cblinfun_apply_inject
     by fastforce 
 qed
 
-lemma Adj_bounded_plus:
-  fixes A B :: \<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close>
+lemma Adj_cblinfun_plus:
+  fixes A B :: \<open>('a::chilbert_space, 'b::chilbert_space) cblinfun\<close>
   shows \<open>(A + B)* = (A*) + (B*)\<close>
 proof transfer
   fix A B::\<open>'a \<Rightarrow> 'b\<close>
@@ -2130,10 +1953,12 @@ proof transfer
   have \<open>cbounded_linear G\<close>
     unfolding G_def
     by (simp add: \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear_add)
-  moreover have \<open>\<langle>  F u,  v \<rangle> = \<langle> u, G v \<rangle>\<close>
+  moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close>
     for u::'b and v::'a
     unfolding F_def G_def
-    by (simp add: Adj_I \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> bounded_sesquilinear.add_right bounded_sesquilinear_cinner cinner_left_distrib)
+    using Adj_I \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> 
+      cinner_left_distrib
+    by (simp add: Adj_I cinner_left_distrib cinner_right_distrib) 
   ultimately have \<open>F = G\<^sup>\<dagger> \<close>
     by (rule Adj_D)
   thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
@@ -2141,90 +1966,113 @@ proof transfer
     by auto
 qed
 
-lemma Adj_bounded_uminus[simp]:
+lemma Adj_cblinfun_uminus[simp]:
   \<open>(- A)* = - (A*)\<close>
-  by (metis (no_types, lifting) Adj_bounded_plus  add_cancel_left_right diff_0 ordered_field_class.sign_simps(9))
+  by (metis (no_types, lifting) Adj_cblinfun_plus  add_cancel_left_right diff_0 ordered_field_class.sign_simps(9))
 
-lemma Adj_bounded_minus[simp]:
+lemma Adj_cblinfun_minus[simp]:
   \<open>(A - B)* = (A*) - (B*)\<close>
-  by (metis Adj_bounded_plus add_right_cancel diff_add_cancel)
+  by (metis Adj_cblinfun_plus add_right_cancel diff_add_cancel)
 
 
-lemma Adj_bounded_zero[simp]:
+lemma Adj_cblinfun_zero[simp]:
   \<open>0* = 0\<close>
-  by (metis Adj_bounded_plus add_cancel_right_right)
+  by (metis Adj_cblinfun_plus add_cancel_right_right)
 
 subsection \<open>Composition\<close>
 
 lift_definition timesOp:: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) bounded
-     \<Rightarrow> ('a::complex_normed_vector,'b) bounded \<Rightarrow> ('a,'c) bounded"
+  "('b::complex_normed_vector,'c::complex_normed_vector) cblinfun
+     \<Rightarrow> ('a::complex_normed_vector,'b) cblinfun \<Rightarrow> ('a,'c) cblinfun"
   is "(o)"
   unfolding o_def 
   by (rule cbounded_linear_compose, simp_all)
 
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
-lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded
+lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun
 \<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  cbounded_linear_def closed_closure  closed_subspace.intro
   by (simp add: cbounded_linear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
 
-bundle bounded_notation begin
-notation timesOp (infixl "*\<^sub>o" 69)
-notation times_bounded_vec (infixr "*\<^sub>v" 70)
+
+
+bundle cblinfun_notation begin
+notation timesOp (infixl " o\<^sub>C\<^sub>L" 69)
+no_notation blinfun_apply (infixr "*\<^sub>v" 70) (* NEW *)
+notation cblinfun_apply (infixr "*\<^sub>v" 70)
 notation applyOpSpace (infixr "*\<^sub>s" 70)
 notation adjoint ("_*" [99] 100)
 end
 
-bundle no_bounded_notation begin
-no_notation timesOp (infixl "*\<^sub>o" 69)
-no_notation times_bounded_vec (infixr "*\<^sub>v" 70)
+bundle no_cblinfun_notation begin
+no_notation timesOp (infixl " o\<^sub>C\<^sub>L" 69)
+no_notation cblinfun_apply (infixr "*\<^sub>v" 70)
+notation blinfun_apply (infixr "*\<^sub>v" 70)
 no_notation applyOpSpace (infixr "*\<^sub>s" 70)
 no_notation adjoint ("_*" [99] 100)
 end
 
-unbundle bounded_notation
+unbundle cblinfun_notation
 
-lemma rbounded_of_bounded_timesOp:
-  fixes f::\<open>('b::complex_normed_vector,'c::complex_normed_vector) bounded\<close>
-    and g::\<open>('a::complex_normed_vector,'b) bounded\<close>
-  shows \<open>rbounded_of_bounded (f *\<^sub>o g) = times_rbounded (rbounded_of_bounded f) (rbounded_of_bounded g)\<close> 
+lemma adjoint_I:
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cblinfun"
+  shows \<open>\<langle>G* *\<^sub>v x, y\<rangle> = \<langle>x, G *\<^sub>v y\<rangle>\<close>
+  apply transfer using Adj_I by blast
+
+lemma adjoint_I':
+  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cblinfun"
+  shows \<open>\<langle>x, G* *\<^sub>v y\<rangle> = \<langle>G *\<^sub>v x, y\<rangle>\<close> 
+  apply transfer using Adj_I' by blast
+
+lemma adjoint_D:
+  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cblinfun\<close>
+    and F:: \<open>('a, 'b) cblinfun\<close>
+  assumes \<open>\<And>x y. \<langle>(cblinfun_apply F) x, y\<rangle> = \<langle>x, (cblinfun_apply G) y\<rangle>\<close>
+  shows \<open>F = G*\<close>
+  using assms apply transfer using Adj_D by auto
+
+lemma adjoint_twice[simp]: "(U*)* = U" 
+  for U :: "('a::chilbert_space,'b::chilbert_space) cblinfun"
   apply transfer
-  by auto
+  using dagger_dagger_id by blast
+
+
+
+lemma blinfun_of_cblinfun_timesOp:
+  fixes f::\<open>('b::complex_normed_vector,'c::complex_normed_vector) cblinfun\<close>
+    and g::\<open>('a::complex_normed_vector,'b) cblinfun\<close>
+  shows \<open>blinfun_of_cblinfun (f  o\<^sub>C\<^sub>L g) = (blinfun_of_cblinfun f) o\<^sub>L (blinfun_of_cblinfun g)\<close>
+  apply transfer by auto
 
 lemma timesOp_assoc: 
-  shows "(A *\<^sub>o B) *\<^sub>o C = A  *\<^sub>o (B  *\<^sub>o C)"
-  by (metis (no_types, lifting) times_bounded_vec_inject fun.map_comp timesOp.rep_eq)
-
+  shows "(A  o\<^sub>C\<^sub>L B)  o\<^sub>C\<^sub>L C = A  o\<^sub>C\<^sub>L (B  o\<^sub>C\<^sub>L C)"
+  by (metis (no_types, lifting) cblinfun_apply_inject fun.map_comp timesOp.rep_eq)
 
 lemma timesOp_dist1:  
-  fixes a b :: "('b::complex_normed_vector, 'c::complex_normed_vector) bounded"
-    and c :: "('a::complex_normed_vector, 'b) bounded"
-  shows "(a + b) *\<^sub>o c = (a *\<^sub>o c) + (b *\<^sub>o c)"
-  using rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_timesOp
-  by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_timesOp times_rbounded_dist1)
-
+  fixes a b :: "('b::complex_normed_vector, 'c::complex_normed_vector) cblinfun"
+    and c :: "('a::complex_normed_vector, 'b) cblinfun"
+  shows "(a + b)  o\<^sub>C\<^sub>L c = (a  o\<^sub>C\<^sub>L c) + (b  o\<^sub>C\<^sub>L c)"
+  using blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp
+  by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp times_blinfun_dist1)
 
 lemma timesOp_dist2:  
-  fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) bounded"
-    and c :: "('b, 'c::complex_normed_vector) bounded"
-  shows "c *\<^sub>o (a + b) = (c *\<^sub>o a) + (c *\<^sub>o b)"
-  using  rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_timesOp
-  by (simp add: rbounded_of_bounded_inj rbounded_of_bounded_plus rbounded_of_bounded_timesOp times_rbounded_dist2)
-
+  fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun"
+    and c :: "('b, 'c::complex_normed_vector) cblinfun"
+  shows "c o\<^sub>C\<^sub>L (a + b) = (c o\<^sub>C\<^sub>L a) + (c o\<^sub>C\<^sub>L b)"
+  using  blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp
+  by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp times_blinfun_dist2)
 
 lemma timesOp_minus:
-  \<open>A *\<^sub>o (B - C) = A *\<^sub>o B - A *\<^sub>o C\<close>
+  \<open>A o\<^sub>C\<^sub>L (B - C) = A o\<^sub>C\<^sub>L B - A o\<^sub>C\<^sub>L C\<close>
   apply transfer
   using  cbounded_linear_def
   by (metis comp_apply complex_vector.linear_diff)
 
-
 lemma times_adjoint[simp]:
-  fixes B::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
-    and A::\<open>('b,'c::chilbert_space) bounded\<close> 
-  shows "(A *\<^sub>o B)* =  (B*) *\<^sub>o (A*)"
+  fixes B::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
+    and A::\<open>('b,'c::chilbert_space) cblinfun\<close> 
+  shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
 proof transfer
   fix  A :: \<open>'b\<Rightarrow>'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
   assume \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
@@ -2238,18 +2086,16 @@ proof transfer
     by (metis Adj_D cinner_commute')
 qed
 
-
-
-lemma times_bounded_vec_0[simp]:  
-  fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded\<close>
-  shows  "U *\<^sub>v 0 = 0"
+lemma cblinfun_apply_0[simp]:  
+  fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun\<close>
+  shows  "U  o\<^sub>C\<^sub>L 0 = 0"
   apply transfer
   unfolding cbounded_linear_def
   by (simp add: complex_vector.linear_0)
 
 
 lemma applyOp_0[simp]:  
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
   shows   "U *\<^sub>s (0::'a linear_space) = (0::'b linear_space)"
 proof-
   {
@@ -2287,8 +2133,8 @@ proof-
   thus ?thesis
     unfolding zero_linear_space_def applyOpSpace_def
     apply auto
-    using 1
-    by (metis times_bounded_vec_0 bot_linear_space.abs_eq bot_linear_space.rep_eq closure_empty closure_insert image_empty image_insert)  
+    using 1 bot_linear_space.abs_eq   
+    by (metis (full_types) mem_Collect_eq cblinfun_apply) 
 qed
 
 lemma times_comp: \<open>\<And>A B \<psi>.
@@ -2358,48 +2204,48 @@ proof
 qed
 
 lemma timesOp_assoc_linear_space: 
-  shows  \<open>(A *\<^sub>o B) *\<^sub>s \<psi> =  A *\<^sub>s (B *\<^sub>s \<psi>)\<close>
+  shows  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>s \<psi> =  A *\<^sub>s (B *\<^sub>s \<psi>)\<close>
 proof-
-  have \<open>cbounded_linear (times_bounded_vec A)\<close>
-    using times_bounded_vec by auto
-  moreover have \<open>cbounded_linear (times_bounded_vec B)\<close>
-    using times_bounded_vec by auto
+  have \<open>cbounded_linear (cblinfun_apply A)\<close>
+    using cblinfun_apply by auto
+  moreover have \<open>cbounded_linear (cblinfun_apply B)\<close>
+    using cblinfun_apply by auto
   moreover have \<open>closed_subspace (space_as_set \<psi>)\<close>
     using space_as_set by auto
   ultimately have  \<open>
      (closure
-       ( (times_bounded_vec A \<circ> times_bounded_vec B) ` space_as_set \<psi>)) =
+       ( (cblinfun_apply A \<circ> cblinfun_apply B) ` space_as_set \<psi>)) =
      (closure
-       (times_bounded_vec A `
-      closure (times_bounded_vec B ` space_as_set \<psi>)))\<close>
+       (cblinfun_apply A `
+      closure (cblinfun_apply B ` space_as_set \<psi>)))\<close>
     using times_comp by blast
   hence  \<open>
      (closure
-       ( (times_bounded_vec A \<circ> times_bounded_vec B) ` space_as_set \<psi>)) =
+       ( (cblinfun_apply A \<circ> cblinfun_apply B) ` space_as_set \<psi>)) =
      (closure
-       (times_bounded_vec A `
+       (cblinfun_apply A `
         space_as_set
          (Abs_linear_space
-           (closure (times_bounded_vec B ` space_as_set \<psi>)))))\<close>
+           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
     by (metis space_as_set_inverse applyOpSpace.rep_eq)    
   hence  \<open>
      (closure
-       (times_bounded_vec (timesOp A B) ` space_as_set \<psi>)) =
+       (cblinfun_apply (timesOp A B) ` space_as_set \<psi>)) =
      (closure
-       (times_bounded_vec A `
+       (cblinfun_apply A `
         space_as_set
          (Abs_linear_space
-           (closure (times_bounded_vec B ` space_as_set \<psi>)))))\<close>
+           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
     by (simp add: timesOp.rep_eq)    
   hence \<open> Abs_linear_space
      (closure
-       (times_bounded_vec (timesOp A B) ` space_as_set \<psi>)) =
+       (cblinfun_apply (timesOp A B) ` space_as_set \<psi>)) =
     Abs_linear_space
      (closure
-       (times_bounded_vec A `
+       (cblinfun_apply A `
         space_as_set
          (Abs_linear_space
-           (closure (times_bounded_vec B ` space_as_set \<psi>)))))\<close>
+           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
     using Abs_linear_space_inject by auto
   thus ?thesis
     unfolding applyOpSpace_def
@@ -2407,42 +2253,40 @@ proof-
 qed
 
 
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded", symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) bounded"]
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun", symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun"]
 
-lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
   by (simp add: scaleC_add_right)
 
-lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) bounded"
+lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 
 lemma applyOp_bot[simp]:
-  fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) bounded\<close> 
+  fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) cblinfun\<close> 
   shows "U *\<^sub>s bot = bot"
 proof-
   have \<open>closed {0::'a}\<close>
     using Topological_Spaces.t1_space_class.closed_singleton by blast
   hence \<open>closure {0::'a} = {0}\<close>
     by (simp add: closure_eq)    
-  moreover have \<open>times_bounded_vec U ` {0::'a} = {0}\<close>
+  moreover have \<open>cblinfun_apply U ` {0::'a} = {0}\<close>
   proof-
-    have \<open>cbounded_linear (times_bounded_vec U)\<close>
-      using times_bounded_vec by auto
-    hence  \<open>times_bounded_vec U 0 = 0\<close>
+    have \<open>cbounded_linear (cblinfun_apply U)\<close>
+      using cblinfun_apply by auto
+    hence  \<open>cblinfun_apply U 0 = 0\<close>
       by (simp add: cbounded_linear.clinear clinear_zero)
     thus ?thesis
       by simp 
   qed
-  ultimately have \<open>closure (times_bounded_vec U ` {0}) = {0}\<close>
+  ultimately have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
     by simp
-  hence \<open>(closure (times_bounded_vec U ` space_as_set (Abs_linear_space {0}))) = {0}\<close>
+  hence \<open>(closure (cblinfun_apply U ` space_as_set (Abs_linear_space {0}))) = {0}\<close>
     by (metis bot_linear_space.abs_eq bot_linear_space.rep_eq) 
   thus ?thesis
     unfolding applyOpSpace_def bot_linear_space_def by simp
 qed
-
-
 
 lemma cdot_plus_distrib_transfer:
   \<open>cbounded_linear U \<Longrightarrow>
@@ -2576,7 +2420,7 @@ proof-
 qed
 
 lemma cdot_plus_distrib[simp]:   
-  fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) bounded"
+  fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) cblinfun"
   shows \<open>U *\<^sub>s (sup A B) = sup (U *\<^sub>s A) (U *\<^sub>s B)\<close>
   apply transfer
 proof-
@@ -2596,26 +2440,26 @@ qed
 
 
 lemma scalar_op_linear_space_assoc [simp]: 
-  fixes A::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+  fixes A::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
     and S::\<open>'a linear_space\<close> and \<alpha>::complex
   shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>s S  = \<alpha> *\<^sub>C (A *\<^sub>s S)\<close>
 proof-
-  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (times_bounded_vec A) ) ` space_as_set S) =
-   ((*\<^sub>C) \<alpha>) ` (closure (times_bounded_vec A ` space_as_set S))\<close>
+  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (cblinfun_apply A) ) ` space_as_set S) =
+   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
     by (metis closure_scaleC image_comp)    
-  hence \<open>(closure (times_bounded_vec (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-   ((*\<^sub>C) \<alpha>) ` (closure (times_bounded_vec A ` space_as_set S))\<close>
-    by (metis (mono_tags, lifting) comp_apply image_cong scaleC_bounded.rep_eq)
+  hence \<open>(closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by (metis (mono_tags, lifting) comp_apply image_cong scaleC_cblinfun.rep_eq)
   hence \<open>Abs_linear_space
-     (closure (times_bounded_vec (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+     (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C
-    Abs_linear_space (closure (times_bounded_vec A ` space_as_set S))\<close>
+    Abs_linear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_linear_space.rep_eq)    
   show ?thesis 
     unfolding applyOpSpace_def apply auto
     using \<open>Abs_linear_space
-     (closure (times_bounded_vec (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-    \<alpha> *\<^sub>C Abs_linear_space (closure (times_bounded_vec A ` space_as_set S))\<close>
+     (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+    \<alpha> *\<^sub>C Abs_linear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by blast
 qed
 
@@ -2630,66 +2474,66 @@ proof-
     by simp    
   hence \<open>(closure ( id ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
     by simp    
-  hence \<open>(closure (times_bounded_vec (Abs_bounded id) ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
+  hence \<open>(closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
     by (metis idOp.abs_eq idOp.rep_eq)    
   hence \<open>Abs_linear_space
-     (closure (times_bounded_vec (Abs_bounded id) ` space_as_set \<psi>)) = \<psi>\<close>
+     (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by (simp add: space_as_set_inverse)    
   show ?thesis
     unfolding applyOpSpace_def idOp_def
     apply auto
     using  \<open>Abs_linear_space
-     (closure (times_bounded_vec (Abs_bounded id) ` space_as_set \<psi>)) = \<psi>\<close>
+     (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by blast
 qed
 
 lemma scalar_op_op[simp]:
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) bounded"
-    and B::"('a::complex_normed_vector, 'b) bounded"
-  shows \<open>(a *\<^sub>C A) *\<^sub>o B = a *\<^sub>C (A *\<^sub>o B)\<close>
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) cblinfun"
+    and B::"('a::complex_normed_vector, 'b) cblinfun"
+  shows \<open>(a *\<^sub>C A) o\<^sub>C\<^sub>L B = a *\<^sub>C (A o\<^sub>C\<^sub>L B)\<close>
 proof-
-  have \<open>(times_rbounded (a *\<^sub>C (rbounded_of_bounded A))
-       (rbounded_of_bounded B)) =
-   ( a *\<^sub>C  (times_rbounded (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
+  have \<open>(a *\<^sub>C (blinfun_of_cblinfun A) o\<^sub>L
+       (blinfun_of_cblinfun B)) =
+   ( a *\<^sub>C  ( (blinfun_of_cblinfun A) o\<^sub>L (blinfun_of_cblinfun B)) )\<close>
     by (simp add: rscalar_op_op)
-  hence \<open>(times_rbounded (rbounded_of_bounded (a *\<^sub>C A))
-       (rbounded_of_bounded B)) =
-   ( a *\<^sub>C  (times_rbounded (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
-    by (simp add: rbounded_of_bounded_scaleC)    
-  hence \<open>bounded_of_rbounded
-     (times_rbounded (rbounded_of_bounded (a *\<^sub>C A))
-       (rbounded_of_bounded B)) =
-    bounded_of_rbounded
-   ( a *\<^sub>C  (times_rbounded (rbounded_of_bounded A) (rbounded_of_bounded B)) )\<close>
+  hence \<open> (blinfun_of_cblinfun (a *\<^sub>C A) o\<^sub>L
+       (blinfun_of_cblinfun B)) =
+   ( a *\<^sub>C  ((blinfun_of_cblinfun A) o\<^sub>L (blinfun_of_cblinfun B)) )\<close>
+    by (simp add: blinfun_of_cblinfun_scaleC)    
+  hence \<open>cblinfun_of_blinfun
+     ( (blinfun_of_cblinfun (a *\<^sub>C A))
+      o\<^sub>L (blinfun_of_cblinfun B)) =
+    cblinfun_of_blinfun
+   ( a *\<^sub>C  ( (blinfun_of_cblinfun A) o\<^sub>L (blinfun_of_cblinfun B)) )\<close>
     by simp    
-  hence \<open>bounded_of_rbounded
-     (times_rbounded (rbounded_of_bounded (a *\<^sub>C A))
-       (rbounded_of_bounded B)) =
-    a *\<^sub>C bounded_of_rbounded
-     (times_rbounded (rbounded_of_bounded A) (rbounded_of_bounded B))\<close>
-    by (simp add: bounded_of_rbounded_scaleC rbounded_of_bounded_prelim times_rbounded_scaleC)  
+  hence \<open>cblinfun_of_blinfun
+     ( (blinfun_of_cblinfun (a *\<^sub>C A))
+      o\<^sub>L (blinfun_of_cblinfun B)) =
+    a *\<^sub>C cblinfun_of_blinfun
+     ((blinfun_of_cblinfun A) o\<^sub>L (blinfun_of_cblinfun B))\<close>
+    by (simp add: cblinfun_of_blinfun_scaleC blinfun_of_cblinfun_prelim times_blinfun_scaleC)  
   thus ?thesis
-    by (metis bounded_rbounded rbounded_of_bounded_timesOp)   
+    by (metis cblinfun_blinfun blinfun_of_cblinfun_timesOp)   
 qed
 
 
 lemma op_scalar_op[simp]:
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) bounded" 
-    and B::"('a::complex_normed_vector, 'b) bounded"
-  shows \<open>A *\<^sub>o (a *\<^sub>C B) = a *\<^sub>C (A *\<^sub>o B)\<close>
+  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) cblinfun" 
+    and B::"('a::complex_normed_vector, 'b) cblinfun"
+  shows \<open>A o\<^sub>C\<^sub>L (a *\<^sub>C B) = a *\<^sub>C (A o\<^sub>C\<^sub>L B)\<close>
   using op_rscalar_op
-  by (simp add: op_rscalar_op rbounded_of_bounded_inj rbounded_of_bounded_prelim rbounded_of_bounded_scaleC rbounded_of_bounded_timesOp)
+  by (simp add: op_rscalar_op blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim blinfun_of_cblinfun_scaleC blinfun_of_cblinfun_timesOp)
 
 lemma times_idOp1[simp]: 
-  shows "U *\<^sub>o idOp = U"
-  by (metis times_bounded_vec_inject comp_id idOp.rep_eq timesOp.rep_eq)
+  shows "U o\<^sub>C\<^sub>L idOp = U"
+  by (metis cblinfun_apply_inject comp_id idOp.rep_eq timesOp.rep_eq)
 
 lemma times_idOp2[simp]: 
-  shows "idOp *\<^sub>o U  = U"
-  by (metis times_bounded_vec_inject idOp.rep_eq id_comp timesOp.rep_eq)
+  shows "idOp o\<^sub>C\<^sub>L U  = U"
+  by (metis cblinfun_apply_inject idOp.rep_eq id_comp timesOp.rep_eq)
 
 lemma mult_INF1[simp]:
-  fixes U :: "('b::complex_normed_vector,'c::cbanach) bounded"
+  fixes U :: "('b::complex_normed_vector,'c::cbanach) cblinfun"
     and V :: "'a \<Rightarrow> 'b linear_space" 
   shows \<open>U *\<^sub>s (INF i. V i) \<le> (INF i. U *\<^sub>s (V i))\<close>
 proof-
@@ -2743,7 +2587,7 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
 
 lemma mult_inf_distrib':
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close> and B C::"'a linear_space"
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close> and B C::"'a linear_space"
   shows "U *\<^sub>s (inf B  C) \<le> inf (U *\<^sub>s B) (U *\<^sub>s C)"
 proof-
   have \<open>cbounded_linear U \<Longrightarrow>
@@ -2797,12 +2641,13 @@ proof transfer
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and
     \<open>t \<in> closure (complex_vector.span G)\<close>
   define F where \<open>F = (\<lambda> x. A x - B x)\<close>
-  have \<open>bounded_linear F\<close>
+  have \<open>cbounded_linear F\<close>
     unfolding F_def
     using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close>
-      cbounded_linear.bounded_linear bounded_linear_sub by auto
+      cbounded_linear_sub by auto
   hence \<open>isCont F t\<close>
-    by (simp add: linear_continuous_at)
+    using linear_continuous_at
+    by (simp add: bounded_linear_continuous) 
   hence \<open>isNSCont F t\<close>
     by (simp add: isCont_isNSCont)
   from \<open>t \<in> closure (complex_vector.span G)\<close>
@@ -2834,8 +2679,8 @@ proof transfer
 qed
 
 lemma applyOpSpace_span:
-  fixes A B :: "('a::cbanach,'b::cbanach) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x" and \<open>t \<in> space_as_set (Span G)\<close>
+  fixes A B :: "('a::cbanach,'b::cbanach) cblinfun"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A  *\<^sub>v x = B  *\<^sub>v x" and \<open>t \<in> space_as_set (Span G)\<close>
   shows "A *\<^sub>v t = B *\<^sub>v t"
   using assms
   apply transfer
@@ -2843,8 +2688,8 @@ lemma applyOpSpace_span:
 
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::cbanach linear_space" 
-    and A B :: "('a::cbanach,'b::cbanach) bounded"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x" and "Span G \<ge> S"
+    and A B :: "('a::cbanach,'b::cbanach) cblinfun"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>v x = B  *\<^sub>v x" and "Span G \<ge> S"
   shows "A *\<^sub>s S \<le> B *\<^sub>s S"
   using assms
   apply transfer
@@ -2875,62 +2720,62 @@ proof - (* sledgehammer *)
 qed
 
 lemma applyOpSpace_eq:
-  fixes S :: "'a::chilbert_space linear_space" 
-    and A B :: "('a::chilbert_space,'b::chilbert_space) bounded"
+  fixes S :: "'a::chilbert_space linear_space"                        
+    and A B :: "('a::chilbert_space,'b::chilbert_space) cblinfun"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x" and "Span G \<ge> S"
   shows "A *\<^sub>s S = B *\<^sub>s S"
   by (metis applyOpSpace_less_eq assms(1) assms(2) dual_order.antisym)
 
 subsection \<open>Unitary\<close>
 
-definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> bool\<close> where
-  \<open>isometry U \<longleftrightarrow> U* *\<^sub>o  U = idOp\<close>
+definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> bool\<close> where
+  \<open>isometry U \<longleftrightarrow> U* o\<^sub>C\<^sub>L  U = idOp\<close>
 
-definition unitary::\<open>('a::chilbert_space,'b::chilbert_space) bounded \<Rightarrow> bool\<close> where
-  \<open>unitary U \<longleftrightarrow> U* *\<^sub>o  U  = idOp \<and> U *\<^sub>o U* = idOp\<close>
+definition unitary::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> bool\<close> where
+  \<open>unitary U \<longleftrightarrow> U* o\<^sub>C\<^sub>L  U  = idOp \<and> U o\<^sub>C\<^sub>L U* = idOp\<close>
 
 lemma unitary_def': "unitary U \<longleftrightarrow> isometry U \<and> isometry (U*)"
   unfolding unitary_def isometry_def by simp
 
-lemma adjUU[simp]: "isometry U \<Longrightarrow> U* *\<^sub>o U = idOp" 
+lemma adjUU[simp]: "isometry U \<Longrightarrow> U* o\<^sub>C\<^sub>L U = idOp" 
   unfolding isometry_def 
   by simp
 
-lemma UadjU[simp]: "unitary U \<Longrightarrow> U *\<^sub>o U* = idOp"
+lemma UadjU[simp]: "unitary U \<Longrightarrow> U o\<^sub>C\<^sub>L U* = idOp"
   unfolding unitary_def isometry_def by simp
 
 
 lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
   unfolding unitary_def isometry_def by simp
 
-lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)bounded"
+lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)cblinfun"
   unfolding unitary_def by auto
 
-lemma isometry_times[simp]: "isometry A \<Longrightarrow> isometry B \<Longrightarrow> isometry (A *\<^sub>o B)"
+lemma isometry_times[simp]: "isometry A \<Longrightarrow> isometry B \<Longrightarrow> isometry (A o\<^sub>C\<^sub>L B)"
   unfolding isometry_def apply simp
   apply (subst timesOp_assoc[symmetric])  
   apply (subst timesOp_assoc)  
   by simp
 
-lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A *\<^sub>o B)"
+lemma unitary_times[simp]: "unitary A \<Longrightarrow> unitary B \<Longrightarrow> unitary (A o\<^sub>C\<^sub>L B)"
   unfolding unitary_def' by simp
 
-lemma unitary_surj: "unitary U \<Longrightarrow> surj (times_bounded_vec U)"
+lemma unitary_surj: "unitary U \<Longrightarrow> surj (cblinfun_apply U)"
 proof-
   assume \<open>unitary U\<close>
-  have \<open>\<exists> t. (times_bounded_vec U) t = x\<close>
+  have \<open>\<exists> t. (cblinfun_apply U) t = x\<close>
     for x
   proof-
-    have \<open>(times_bounded_vec U) ((times_bounded_vec (U*)) x) = x\<close>
+    have \<open>(cblinfun_apply U) ((cblinfun_apply (U*)) x) = x\<close>
     proof-
-      have \<open>(times_bounded_vec U) ((times_bounded_vec (U*)) x)
-          = ((times_bounded_vec U) \<circ> (times_bounded_vec (U*))) x\<close>
+      have \<open>(cblinfun_apply U) ((cblinfun_apply (U*)) x)
+          = ((cblinfun_apply U) \<circ> (cblinfun_apply (U*))) x\<close>
         by simp        
       also have \<open>\<dots>
-          = (times_bounded_vec ( U *\<^sub>o (U*) )) x\<close>
+          = (cblinfun_apply ( U o\<^sub>C\<^sub>L (U*) )) x\<close>
         by (simp add: timesOp.rep_eq)
       also have \<open>\<dots>
-          = (times_bounded_vec ( idOp )) x\<close>
+          = (cblinfun_apply ( idOp )) x\<close>
         by (simp add: \<open>unitary U\<close>)
       also have \<open>\<dots> =  x\<close>
         by (simp add: idOp.rep_eq)        
@@ -2947,11 +2792,11 @@ qed
 lemma unitary_image[simp]: "unitary U \<Longrightarrow> U *\<^sub>s top = top"
 proof-
   assume \<open>unitary U\<close>
-  hence \<open>surj (times_bounded_vec U)\<close>
+  hence \<open>surj (cblinfun_apply U)\<close>
     using unitary_surj by blast
-  hence \<open>range (times_bounded_vec U)  = UNIV\<close>
+  hence \<open>range (cblinfun_apply U)  = UNIV\<close>
     by simp
-  hence \<open>closure (range (times_bounded_vec U))  = UNIV\<close>
+  hence \<open>closure (range (cblinfun_apply U))  = UNIV\<close>
     by simp
   thus ?thesis
     apply transfer
@@ -2965,7 +2810,7 @@ lemma unitary_id[simp]: "unitary idOp"
 
 subsection \<open>Projectors\<close>
 
-lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) bounded"
+lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) cblinfun"
   is \<open>projection\<close>
   by (rule Complex_Inner_Product.projectionPropertiesA)
 
@@ -2992,9 +2837,9 @@ lemma Proj_D1: \<open>(Proj M) = (Proj M)*\<close>
   by (rule projection_D1)
 
 
-lemma Proj_D2[simp]: \<open>(Proj M) *\<^sub>o (Proj M) = (Proj M)\<close>
+lemma Proj_D2[simp]: \<open>(Proj M) o\<^sub>C\<^sub>L (Proj M) = (Proj M)\<close>
 proof-
-  have \<open>(times_bounded_vec (Proj M)) = projection (space_as_set M)\<close>
+  have \<open>(cblinfun_apply (Proj M)) = projection (space_as_set M)\<close>
     apply transfer
     by blast
   moreover have \<open>(projection (space_as_set M))\<circ>(projection (space_as_set M))
@@ -3005,84 +2850,84 @@ proof-
     thus ?thesis
       by (simp add: projectionPropertiesC) 
   qed
-  ultimately have \<open>(times_bounded_vec (Proj M)) \<circ> (times_bounded_vec (Proj M)) = times_bounded_vec (Proj M)\<close>
+  ultimately have \<open>(cblinfun_apply (Proj M)) \<circ> (cblinfun_apply (Proj M)) = cblinfun_apply (Proj M)\<close>
     by simp    
-  hence \<open>times_bounded_vec ((Proj M) *\<^sub>o (Proj M)) = times_bounded_vec (Proj M)\<close>
+  hence \<open>cblinfun_apply ((Proj M) o\<^sub>C\<^sub>L (Proj M)) = cblinfun_apply (Proj M)\<close>
     by (simp add: timesOp.rep_eq)
-  thus ?thesis using times_bounded_vec_inject
+  thus ?thesis using cblinfun_apply_inject
     by auto 
 qed
 
-lift_definition isProjector::\<open>('a::chilbert_space, 'a) bounded \<Rightarrow> bool\<close> is
+lift_definition isProjector::\<open>('a::chilbert_space, 'a) cblinfun \<Rightarrow> bool\<close> is
   \<open>\<lambda> P. \<exists> M. closed_subspace M \<and> is_projection_on P M\<close>.
 
 lemma Proj_I:
-  \<open>P *\<^sub>o P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (times_bounded_vec P)\<close>
-  for P :: \<open>('a::chilbert_space,'a) bounded\<close>
+  \<open>P o\<^sub>C\<^sub>L P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply P)\<close>
+  for P :: \<open>('a::chilbert_space,'a) cblinfun\<close>
 proof-
-  assume \<open>P *\<^sub>o P = P\<close> and \<open>P = P*\<close>
-  have \<open>closed (range (times_bounded_vec P))\<close>
+  assume \<open>P o\<^sub>C\<^sub>L P = P\<close> and \<open>P = P*\<close>
+  have \<open>closed (range (cblinfun_apply P))\<close>
   proof-
-    have \<open>range (times_bounded_vec P) = (\<lambda> x. x - times_bounded_vec P x) -` {0}\<close>
+    have \<open>range (cblinfun_apply P) = (\<lambda> x. x - cblinfun_apply P x) -` {0}\<close>
     proof
-      show "range (times_bounded_vec P) \<subseteq> (\<lambda>x. x - times_bounded_vec P x) -` {0}"
+      show "range (cblinfun_apply P) \<subseteq> (\<lambda>x. x - cblinfun_apply P x) -` {0}"
       proof
-        show "x \<in> (\<lambda>x. x - times_bounded_vec P x) -` {0}"
-          if "x \<in> range (times_bounded_vec P)"
+        show "x \<in> (\<lambda>x. x - cblinfun_apply P x) -` {0}"
+          if "x \<in> range (cblinfun_apply P)"
           for x :: 'a
         proof-
-          have \<open>\<exists> t. times_bounded_vec P t = x\<close>
+          have \<open>\<exists> t. cblinfun_apply P t = x\<close>
             using that by blast
-          then obtain t where \<open>times_bounded_vec P t = x\<close>
+          then obtain t where \<open>cblinfun_apply P t = x\<close>
             by blast 
-          hence \<open>x - times_bounded_vec P x = x - times_bounded_vec P (times_bounded_vec P t)\<close>
+          hence \<open>x - cblinfun_apply P x = x - cblinfun_apply P (cblinfun_apply P t)\<close>
             by simp
-          also have \<open>\<dots> = x - (times_bounded_vec P t)\<close>
+          also have \<open>\<dots> = x - (cblinfun_apply P t)\<close>
           proof-
-            have \<open>times_bounded_vec P \<circ> times_bounded_vec P = times_bounded_vec P\<close>
-              by (metis \<open>P *\<^sub>o P = P\<close> timesOp.rep_eq)
+            have \<open>cblinfun_apply P \<circ> cblinfun_apply P = cblinfun_apply P\<close>
+              by (metis \<open>P o\<^sub>C\<^sub>L P = P\<close> timesOp.rep_eq)
             thus ?thesis
               by (metis comp_apply) 
           qed
           also have \<open>\<dots> = 0\<close>
-            by (simp add: \<open>times_bounded_vec P t = x\<close>)
-          finally have \<open>x - times_bounded_vec P x = 0\<close>
+            by (simp add: \<open>cblinfun_apply P t = x\<close>)
+          finally have \<open>x - cblinfun_apply P x = 0\<close>
             by blast
           thus ?thesis
             by simp 
         qed
       qed
-      show "(\<lambda>x. x - times_bounded_vec P x) -` {0} \<subseteq> range (times_bounded_vec P)"
+      show "(\<lambda>x. x - cblinfun_apply P x) -` {0} \<subseteq> range (cblinfun_apply P)"
       proof
-        show "x \<in> range (times_bounded_vec P)"
-          if "x \<in> (\<lambda>x. x - times_bounded_vec P x) -` {0}"
+        show "x \<in> range (cblinfun_apply P)"
+          if "x \<in> (\<lambda>x. x - cblinfun_apply P x) -` {0}"
           for x :: 'a
         proof-
-          have \<open>x - times_bounded_vec P x = 0\<close>
+          have \<open>x - cblinfun_apply P x = 0\<close>
             using that by blast
-          hence \<open>x = times_bounded_vec P x\<close>
-            by (simp add: \<open>x - times_bounded_vec P x = 0\<close> eq_iff_diff_eq_0)
+          hence \<open>x = cblinfun_apply P x\<close>
+            by (simp add: \<open>x - cblinfun_apply P x = 0\<close> eq_iff_diff_eq_0)
           thus ?thesis
             by blast 
         qed
       qed
     qed
-    moreover have \<open>closed ( (\<lambda> x. x - times_bounded_vec P x) -` {0} )\<close>
+    moreover have \<open>closed ( (\<lambda> x. x - cblinfun_apply P x) -` {0} )\<close>
     proof-
       have \<open>closed {(0::'a)}\<close>
         by simp        
-      moreover have \<open>continuous (at x) (\<lambda> x. x - times_bounded_vec P x)\<close>
+      moreover have \<open>continuous (at x) (\<lambda> x. x - cblinfun_apply P x)\<close>
         for x
       proof-
-        have \<open>times_bounded_vec (idOp - P) = (\<lambda> x. x - times_bounded_vec P x)\<close>
-          by (simp add: idOp.rep_eq minus_bounded.rep_eq)                 
-        hence \<open>cbounded_linear (times_bounded_vec (idOp - P))\<close>
-          using times_bounded_vec
+        have \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - cblinfun_apply P x)\<close>
+          by (simp add: idOp.rep_eq minus_cblinfun.rep_eq)                 
+        hence \<open>cbounded_linear (cblinfun_apply (idOp - P))\<close>
+          using cblinfun_apply
           by blast 
-        hence \<open>continuous (at x) (times_bounded_vec (idOp - P))\<close>
-          by (simp add: bounded_linear_continuous)          
+        hence \<open>continuous (at x) (cblinfun_apply (idOp - P))\<close>
+          by (simp add: bounded_linear_continuous)
         thus ?thesis
-          using \<open>times_bounded_vec (idOp - P) = (\<lambda> x. x - times_bounded_vec P x)\<close>
+          using \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - cblinfun_apply P x)\<close>
           by simp
       qed
       ultimately show ?thesis  
@@ -3091,41 +2936,41 @@ proof-
     ultimately show ?thesis
       by simp  
   qed
-  have \<open>cbounded_linear (times_bounded_vec P)\<close>
-    using times_bounded_vec by auto
-  hence \<open>closed_subspace ( range (times_bounded_vec P) )\<close>
-    using \<open>closed (range (times_bounded_vec P))\<close>
+  have \<open>cbounded_linear (cblinfun_apply P)\<close>
+    using cblinfun_apply by auto
+  hence \<open>closed_subspace ( range (cblinfun_apply P) )\<close>
+    using \<open>closed (range (cblinfun_apply P))\<close>
       cbounded_linear.clinear  closed_subspace.intro
     using complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast        
-  hence \<open>\<exists> M. space_as_set M = (range (times_bounded_vec P))\<close>
-    using  \<open>closed (range (times_bounded_vec P))\<close>
+  hence \<open>\<exists> M. space_as_set M = (range (cblinfun_apply P))\<close>
+    using  \<open>closed (range (cblinfun_apply P))\<close>
     by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
-  then obtain M where \<open>space_as_set M = (range (times_bounded_vec P))\<close>
+  then obtain M where \<open>space_as_set M = (range (cblinfun_apply P))\<close>
     by blast
-  have \<open>times_bounded_vec P x \<in> space_as_set M\<close>
+  have \<open>cblinfun_apply P x \<in> space_as_set M\<close>
     for x
-    by (simp add: \<open>space_as_set M = range (times_bounded_vec P)\<close>)
-  moreover have \<open>x - times_bounded_vec P x \<in> orthogonal_complement ( space_as_set M)\<close>
+    by (simp add: \<open>space_as_set M = range (cblinfun_apply P)\<close>)
+  moreover have \<open>x - cblinfun_apply P x \<in> orthogonal_complement ( space_as_set M)\<close>
     for x
   proof-
-    have \<open>y \<in> space_as_set M \<Longrightarrow> \<langle> x - times_bounded_vec P x, y \<rangle> = 0\<close>
+    have \<open>y \<in> space_as_set M \<Longrightarrow> \<langle> x - cblinfun_apply P x, y \<rangle> = 0\<close>
       for y
     proof-
       assume \<open>y \<in> space_as_set M\<close>
-      hence \<open>\<exists> t. y = times_bounded_vec P t\<close>
-        by (simp add: \<open>space_as_set M = range (times_bounded_vec P)\<close> image_iff)
-      then obtain t where \<open>y = times_bounded_vec P t\<close>
+      hence \<open>\<exists> t. y = cblinfun_apply P t\<close>
+        by (simp add: \<open>space_as_set M = range (cblinfun_apply P)\<close> image_iff)
+      then obtain t where \<open>y = cblinfun_apply P t\<close>
         by blast
-      have \<open>\<langle> x - times_bounded_vec P x, y \<rangle> = \<langle> x - times_bounded_vec P x, times_bounded_vec P t \<rangle>\<close>
-        by (simp add: \<open>y = times_bounded_vec P t\<close>)
-      also have \<open>\<dots> = \<langle> times_bounded_vec P (x - times_bounded_vec P x), t \<rangle>\<close>
+      have \<open>\<langle> x - cblinfun_apply P x, y \<rangle> = \<langle> x - cblinfun_apply P x, cblinfun_apply P t \<rangle>\<close>
+        by (simp add: \<open>y = cblinfun_apply P t\<close>)
+      also have \<open>\<dots> = \<langle> cblinfun_apply P (x - cblinfun_apply P x), t \<rangle>\<close>
         by (metis \<open>P = P*\<close> adjoint_I)
-      also have \<open>\<dots> = \<langle> times_bounded_vec P x - times_bounded_vec P (times_bounded_vec P x), t \<rangle>\<close>
+      also have \<open>\<dots> = \<langle> cblinfun_apply P x - cblinfun_apply P (cblinfun_apply P x), t \<rangle>\<close>
         by (metis \<open>P = P*\<close> adjoint_I cinner_diff_left)
-      also have \<open>\<dots> = \<langle> times_bounded_vec P x - times_bounded_vec P x, t \<rangle>\<close>
+      also have \<open>\<dots> = \<langle> cblinfun_apply P x - cblinfun_apply P x, t \<rangle>\<close>
       proof-
-        have \<open>(times_bounded_vec P) \<circ> (times_bounded_vec P) = (times_bounded_vec P)\<close>
-          using  \<open>P *\<^sub>o P = P\<close>
+        have \<open>(cblinfun_apply P) \<circ> (cblinfun_apply P) = (cblinfun_apply P)\<close>
+          using  \<open>P o\<^sub>C\<^sub>L P = P\<close>
           by (metis timesOp.rep_eq)
         thus ?thesis
           using comp_eq_dest_lhs by fastforce 
@@ -3142,23 +2987,23 @@ proof-
   ultimately have \<open>P = Proj M\<close>
   proof - (* sledgehammer *)
     have "closed_subspace (space_as_set M)"
-      by (metis \<open>space_as_set M = range (times_bounded_vec P)\<close> \<open>closed_subspace (range (times_bounded_vec P))\<close>)
-    hence f1: "\<forall>a. times_bounded_vec (Proj M) a = times_bounded_vec P a"
-      by (simp add: Proj.rep_eq \<open>\<And>x. times_bounded_vec P x \<in> space_as_set M\<close> \<open>\<And>x. x - times_bounded_vec P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
+      by (metis \<open>space_as_set M = range (cblinfun_apply P)\<close> \<open>closed_subspace (range (cblinfun_apply P))\<close>)
+    hence f1: "\<forall>a. cblinfun_apply (Proj M) a = cblinfun_apply P a"
+      by (simp add: Proj.rep_eq \<open>\<And>x. cblinfun_apply P x \<in> space_as_set M\<close> \<open>\<And>x. x - cblinfun_apply P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
     have "\<forall>a. (+) ((a::'a) - a) = id"
       by force
-    hence "\<forall>a. (+) (times_bounded_vec (P - Proj M) a) = id"
+    hence "\<forall>a. (+) (cblinfun_apply (P - Proj M) a) = id"
       using f1
-      by (simp add: minus_bounded.rep_eq) 
-    hence "\<forall>a aa. aa - aa = times_bounded_vec (P - Proj M) a"
+      by (simp add: minus_cblinfun.rep_eq) 
+    hence "\<forall>a aa. aa - aa = cblinfun_apply (P - Proj M) a"
       by (metis (no_types) add_diff_cancel_right' id_apply)
-    hence "\<forall>a. times_bounded_vec (idOp - (P - Proj M)) a = a"
-      by (simp add: idOp.rep_eq minus_bounded.rep_eq)      
+    hence "\<forall>a. cblinfun_apply (idOp - (P - Proj M)) a = a"
+      by (simp add: idOp.rep_eq minus_cblinfun.rep_eq)      
     thus ?thesis
-      by (metis (no_types) times_bounded_vec_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
+      by (metis (no_types) cblinfun_apply_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
   qed
   thus ?thesis
-    using \<open>space_as_set M = range (times_bounded_vec P)\<close> by blast 
+    using \<open>space_as_set M = range (cblinfun_apply P)\<close> by blast 
 qed
 
 lemma Proj_isProjector[simp]:
@@ -3180,13 +3025,13 @@ proof
 qed
 
 lemma isProjector_algebraic: 
-  fixes P::\<open>('a::chilbert_space, 'a) bounded\<close>
-  shows \<open>isProjector P \<longleftrightarrow> P *\<^sub>o P = P \<and> P = P*\<close>
+  fixes P::\<open>('a::chilbert_space, 'a) cblinfun\<close>
+  shows \<open>isProjector P \<longleftrightarrow> P o\<^sub>C\<^sub>L P = P \<and> P = P*\<close>
 proof
-  show "P *\<^sub>o P = P \<and> P = P*"
+  show "P o\<^sub>C\<^sub>L P = P \<and> P = P*"
     if "isProjector P"
   proof
-    show "P *\<^sub>o P = P"
+    show "P o\<^sub>C\<^sub>L P = P"
       using that apply transfer
       using  projectionPropertiesC'
       by auto
@@ -3196,7 +3041,7 @@ proof
       by blast
   qed
   show "isProjector P"
-    if "P *\<^sub>o P = P \<and> P = P*"
+    if "P o\<^sub>C\<^sub>L P = P \<and> P = P*"
     using that Proj_I Proj_isProjector
     by blast    
 qed
@@ -3215,12 +3060,12 @@ proof -
 qed
 
 
-lemma Proj_times: "isometry A \<Longrightarrow> A *\<^sub>o (Proj S) *\<^sub>o (A*) = Proj (A *\<^sub>s S)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) bounded"
+lemma Proj_times: "isometry A \<Longrightarrow> A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*) = Proj (A *\<^sub>s S)" 
+  for A::"('a::chilbert_space,'b::chilbert_space) cblinfun"
 proof-
   assume \<open>isometry A\<close>
-  define P where \<open>P = A *\<^sub>o (Proj S) *\<^sub>o (A*)\<close>
-  have \<open>P *\<^sub>o P = P\<close>
+  define P where \<open>P = A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)\<close>
+  have \<open>P o\<^sub>C\<^sub>L P = P\<close>
     using  \<open>isometry A\<close>
     unfolding P_def isometry_def
     by (metis (no_types, lifting) Proj_D2 timesOp_assoc times_idOp2)
@@ -3228,10 +3073,10 @@ proof-
     unfolding P_def
     by (metis Proj_D1 adjoint_twice timesOp_assoc times_adjoint)
   ultimately have 
-    \<open>\<exists> M. P = Proj M \<and> space_as_set M = range (times_bounded_vec (A *\<^sub>o (Proj S) *\<^sub>o (A*)))\<close>
+    \<open>\<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
     using P_def Proj_I by blast
   then obtain M where \<open>P = Proj M\<close>
-    and \<open>space_as_set M = range (times_bounded_vec (A *\<^sub>o (Proj S) *\<^sub>o (A*)))\<close>
+    and \<open>space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
     by blast
   have \<open>M = A *\<^sub>s S\<close>
   proof - (* sledgehammer *)
@@ -3252,41 +3097,40 @@ proof-
     by blast
 qed
 
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) bounded" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) cblinfun" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
-  by (metis Complex_Vector_Spaces.span_raw_def Span.abs_eq span_mult)
-
+  by (metis Span.abs_eq span_mult)
 
 lemma move_plus:
   "(Proj (- C)) *\<^sub>s A \<le> B \<Longrightarrow> A \<le> sup B C"
   for A B C::"'a::chilbert_space linear_space"
 proof-
   assume \<open>(Proj (- C)) *\<^sub>s A \<le> B\<close>
-  hence \<open>Abs_bounded
+  hence \<open>cBlinfun
      (projection
        (space_as_set
          (Abs_linear_space (orthogonal_complement (space_as_set C))))) *\<^sub>s A \<le> B\<close>
     unfolding Proj_def  less_eq_linear_space_def
     by (simp add: uminus_linear_space_def)
 
-  hence proj_ortho_CAB: \<open>Abs_bounded (projection (orthogonal_complement (space_as_set C))) *\<^sub>s A \<le> B\<close>
+  hence proj_ortho_CAB: \<open>cBlinfun (projection (orthogonal_complement (space_as_set C))) *\<^sub>s A \<le> B\<close>
     using Proj_def \<open>Proj (- C) *\<^sub>s A \<le> B\<close> map_fun_apply
     by (simp add: Proj_def uminus_linear_space.rep_eq) 
 
   hence \<open>x \<in> space_as_set
               (Abs_linear_space
                 (closure
-                  (times_bounded_vec
-                    (Abs_bounded
+                  (cblinfun_apply
+                    (cBlinfun
                       (projection (orthogonal_complement (space_as_set C)))) `
                    space_as_set A))) \<Longrightarrow>
          x \<in> space_as_set B\<close>
     for x
     unfolding applyOpSpace_def less_eq_linear_space_def
     by auto
-  hence \<open>x \<in>  closure (times_bounded_vec (Abs_bounded
+  hence \<open>x \<in>  closure (cblinfun_apply (cBlinfun
                       (projection (orthogonal_complement (space_as_set C)))) `
                    space_as_set A) \<Longrightarrow>
          x \<in> space_as_set B\<close>
@@ -3350,22 +3194,22 @@ Dominique: complex_vector+topological_space is strictly more general.
   can be directly used in a situation requiring complex_normed_vector as well.
   Thus restricting to complex_normed_vector reduces the generality of the results without
   good reason. In specific cases, of course, there are good reasons. For example,
-  the type bounded only makes sense for complex_normed_vector because we need the norm.
+  the type cblinfun only makes sense for complex_normed_vector because we need the norm.
 
   Why would complex_normed_vector be more natural in this setting?
 
   I am not sure which specific lemma/definition this debate refers to.
 *)
 
-lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> 'a linear_space" 
+lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> 'a linear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) bounded \<Rightarrow> 'a linear_space" where
+definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) cblinfun \<Rightarrow> 'a linear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
-  for a :: complex and A :: "(_,_) bounded"
+  for a :: complex and A :: "(_,_) cblinfun"
   apply transfer
   using complex_vector.scale_eq_0_iff by blast
 
@@ -3374,14 +3218,14 @@ proof-
   have \<open>(\<lambda> _. 0) -` {0} = UNIV\<close>
     using Collect_cong UNIV_def
     by blast
-  hence \<open>(times_bounded_vec (bounded_of_rbounded 0)) -` {0} = UNIV\<close>
-    by (metis bounded_of_rbounded_zero cr_rbounded_def rbounded.pcr_cr_eq rbounded_of_bounded.rep_eq rbounded_of_bounded_zero zero_rbounded.transfer)
-  hence \<open>Abs_linear_space ( (times_bounded_vec (bounded_of_rbounded 0)) -` {0} ) = Abs_linear_space UNIV\<close>
+  hence \<open>(cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} = UNIV\<close>
+    by (metis cblinfun_of_blinfun_zero cr_blinfun_def blinfun.pcr_cr_eq blinfun_of_cblinfun.rep_eq blinfun_of_cblinfun_zero zero_blinfun.transfer)
+  hence \<open>Abs_linear_space ( (cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} ) = Abs_linear_space UNIV\<close>
     using Abs_linear_space_inject
-    by (simp add: \<open>(times_bounded_vec (bounded_of_rbounded 0)) -` {0} = UNIV\<close>)
+    by (simp add: \<open>(cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} = UNIV\<close>)
   thus ?thesis
-    unfolding kernel_def zero_bounded_def top_linear_space_def
-    by (simp add: Abs_bounded_inverse \<open>(\<lambda>_. 0) -` {0} = UNIV\<close>)   
+    unfolding kernel_def zero_cblinfun_def top_linear_space_def
+    by (simp add: cBlinfun_inverse \<open>(\<lambda>_. 0) -` {0} = UNIV\<close>)   
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
@@ -3394,7 +3238,7 @@ lemma kernel_id[simp]: "kernel idOp = 0"
 lemma scaleC_eigenspace[simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
 proof -
   assume a1: "a \<noteq> 0"
-  hence "b *\<^sub>C (idOp::('a, _) bounded) = a *\<^sub>C (b / a) *\<^sub>C idOp"
+  hence "b *\<^sub>C (idOp::('a, _) cblinfun) = a *\<^sub>C (b / a) *\<^sub>C idOp"
     by (metis Complex_Vector_Spaces.eq_vector_fraction_iff)
   hence "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
     using a1 by (metis (no_types) complex_vector.scale_right_diff_distrib kernel_scalar_times)
@@ -3447,21 +3291,21 @@ qed
 subsection \<open>New/restored things\<close>
 
 
-lemma isProjector_D1: \<open>isProjector P \<Longrightarrow> P *\<^sub>o P = P\<close>
+lemma isProjector_D1: \<open>isProjector P \<Longrightarrow> P o\<^sub>C\<^sub>L P = P\<close>
   unfolding isProjector_def
   apply auto
-  by (metis projectionPropertiesC' timesOp.rep_eq times_bounded_vec_inject)
+  by (metis projectionPropertiesC' timesOp.rep_eq cblinfun_apply_inject)
 
 lemma isProjector_D2: \<open>isProjector P \<Longrightarrow> P* = P\<close>
   unfolding isProjector_def
   by (metis isProjector_algebraic isProjector_def) 
 
 
-lemma isProjector_I: \<open>P *\<^sub>o P = P \<Longrightarrow> P* = P \<Longrightarrow> isProjector P\<close>
+lemma isProjector_I: \<open>P o\<^sub>C\<^sub>L P = P \<Longrightarrow> P* = P \<Longrightarrow> isProjector P\<close>
   unfolding isProjector_def
   by (metis (mono_tags, lifting) isProjector_algebraic isProjector_def) 
 
-lemma isProjector0[simp]: "isProjector ( 0::('a::chilbert_space, 'a) bounded )"
+lemma isProjector0[simp]: "isProjector ( 0::('a::chilbert_space, 'a) cblinfun )"
   unfolding isProjector_def is_projection_on_def
   apply auto
 proof
@@ -3473,19 +3317,19 @@ proof
       by simp
 
     show "\<forall>h. (h::'a) - 0 *\<^sub>v h \<in> orthogonal_complement {0} \<and> 0 *\<^sub>v h \<in> {0::'a}"
-      by (simp add: zero_bounded.rep_eq)    
+      by (simp add: zero_cblinfun.rep_eq)    
   qed
 qed
 
 lemma isProjectoridMinus[simp]: "isProjector P \<Longrightarrow> isProjector (idOp-P)"
 proof (rule isProjector_I)
-  show "(idOp - P) *\<^sub>o (idOp - P) = idOp - P"
+  show "(idOp - P) o\<^sub>C\<^sub>L (idOp - P) = idOp - P"
     if "isProjector P"
   proof -
-    have f1: "P *\<^sub>o P = P \<and> P* = P"
+    have f1: "P o\<^sub>C\<^sub>L P = P \<and> P* = P"
       using isProjector_algebraic that by auto
 
-    hence "(idOp - P) *\<^sub>o (idOp - P) = ((idOp - P) *\<^sub>o (idOp - P))*"
+    hence "(idOp - P) o\<^sub>C\<^sub>L (idOp - P) = ((idOp - P) o\<^sub>C\<^sub>L (idOp - P))*"
       by auto
     thus ?thesis
       using f1 by (simp add: timesOp_minus)
@@ -3620,7 +3464,7 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> 
+lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> bool\<close> 
 is bij.
 *)
 
@@ -3633,11 +3477,11 @@ lemma applyOpSpace_mono:
   by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_linear_space.rep_eq)
 
 lemma apply_left_neutral:
-  assumes "A *\<^sub>o B = B"
+  assumes "A o\<^sub>C\<^sub>L B = B"
   assumes "\<psi> \<in> space_as_set (B *\<^sub>s top)"
   shows "A *\<^sub>v \<psi> = \<psi>" 
 proof -
-  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>s top)" and "rangeB' = range (times_bounded_vec B)"
+  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>s top)" and "rangeB' = range (cblinfun_apply B)"
   from assms have "\<psi> \<in> closure rangeB'"
     unfolding rangeB'_def apply (transfer fixing: \<psi>) by simp
   then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
@@ -3646,7 +3490,7 @@ proof -
   proof -
     from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>v \<phi>"
       apply atomize_elim unfolding rangeB'_def apply transfer by auto
-    hence "A *\<^sub>v \<psi>i i = (A *\<^sub>o B) *\<^sub>v \<phi>"
+    hence "A *\<^sub>v \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>v \<phi>"
       by (simp add: timesOp.rep_eq)
     also have "\<dots> = B *\<^sub>v \<phi>"
       by (simp add: assms)
@@ -3678,10 +3522,10 @@ qed
 
 lemma mult_INF_general[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
-    and U :: "('b,'c::chilbert_space) bounded"
-    and Uinv :: "('c,'b) bounded" 
-  assumes UinvUUinv: "Uinv *\<^sub>o U *\<^sub>o Uinv = Uinv"
-    and UUinvU: "U *\<^sub>o Uinv *\<^sub>o U = U"
+    and U :: "('b,'c::chilbert_space) cblinfun"
+    and Uinv :: "('c,'b) cblinfun" 
+  assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv"
+    and UUinvU: "U o\<^sub>C\<^sub>L Uinv o\<^sub>C\<^sub>L U = U"
     and V: "\<And>i. V i \<le> Uinv *\<^sub>s top"
   shows "U *\<^sub>s (INF i. V i) = (INF i. U *\<^sub>s V i)"
 proof (rule antisym)
@@ -3697,12 +3541,12 @@ next
       by (meson closure_mono image_mono subsetD top_greatest)
     hence "INFUV \<le> rangeU"
       unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
-    moreover have "(U *\<^sub>o Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
+    moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
       apply (rule apply_left_neutral[where B=U])
       using assms that rangeU_def by auto
-    ultimately have "(U *\<^sub>o Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
+    ultimately have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
       by (simp add: in_mono less_eq_linear_space.rep_eq that)
-    hence "(U *\<^sub>o Uinv) *\<^sub>s INFUV = INFUV"
+    hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>s INFUV = INFUV"
       apply transfer apply auto
        apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
@@ -3717,12 +3561,12 @@ next
   proof -
     from assms have "V i \<le> rangeUinv" for i
       unfolding rangeUinv_def by simp
-    moreover have "(Uinv *\<^sub>o U) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" for \<psi>
+    moreover have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" for \<psi>
       apply (rule apply_left_neutral[where B=Uinv])
       using assms that rangeUinv_def by auto
-    ultimately have "(Uinv *\<^sub>o U) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
+    ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>v \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
       using less_eq_linear_space.rep_eq that by blast
-    hence "(Uinv *\<^sub>o U) *\<^sub>s (V i) = (V i)" for i
+    hence "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>s (V i) = (V i)" for i
       apply transfer apply auto
        apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
@@ -3734,13 +3578,13 @@ next
 qed
 
 lemma mult_INF[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) bounded"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) cblinfun"
   assumes \<open>isometry U\<close>
   shows "U *\<^sub>s (INF i. V i) = (INF i. U *\<^sub>s V i)"
 proof -
-  from \<open>isometry U\<close> have "U* *\<^sub>o U *\<^sub>o U* = U*"
+  from \<open>isometry U\<close> have "U* o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L U* = U*"
     unfolding isometry_def by simp
-  moreover from \<open>isometry U\<close> have "U *\<^sub>o U* *\<^sub>o U = U"
+  moreover from \<open>isometry U\<close> have "U o\<^sub>C\<^sub>L U* o\<^sub>C\<^sub>L U = U"
     unfolding isometry_def
     by (simp add: timesOp_assoc)
   moreover have "V i \<le> U* *\<^sub>s top" for i
@@ -3754,11 +3598,11 @@ lemma leq_INF[simp]:
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
   by (simp add: le_Inf_iff)
 
-lemma times_applyOp: "(A *\<^sub>o B) *\<^sub>v \<psi> = A *\<^sub>v (B *\<^sub>v \<psi>)"
+lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>v \<psi> = A *\<^sub>v (B *\<^sub>v \<psi>)"
   apply transfer by simp
 
 lemma mult_inf_distrib[simp]:
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) bounded\<close>
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
     and X Y::"'a linear_space"
   assumes "isometry U"
   shows "U *\<^sub>s (inf X Y) = inf (U *\<^sub>s X) (U *\<^sub>s Y)"
@@ -3778,22 +3622,22 @@ lemma applyOp_scaleC2[simp]: "A *\<^sub>v (c *\<^sub>C \<psi>) = c *\<^sub>C (A 
 definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
   \<open>bifunctional x = (\<lambda> f. f x)\<close>
 
-lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded \<Rightarrow> complex)\<close> 
+lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun \<Rightarrow> complex)\<close> 
   is bifunctional.
 
-lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) bounded, complex) bounded\<close> 
+lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun, complex) cblinfun\<close> 
   is Bifunctional'
 proof
   show "clinear (Bifunctional' (a::'a))"
     for a :: 'a
     unfolding clinear_def proof
     show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
-      for b1 :: "('a, complex) bounded"
-        and b2 :: "('a, complex) bounded"
-      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_bounded.rep_eq)
+      for b1 :: "('a, complex) cblinfun"
+        and b2 :: "('a, complex) cblinfun"
+      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_cblinfun.rep_eq)
     show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
       for r :: complex
-        and b :: "('a, complex) bounded"
+        and b :: "('a, complex) cblinfun"
       by (simp add: Bifunctional'.rep_eq bifunctional_def)    
   qed
   show "\<exists>K. \<forall>x. cmod (Bifunctional' (a::'a) x) \<le> norm x * K"
@@ -3803,40 +3647,42 @@ proof
     using cbounded_linear.bounded_linear onorm by blast 
 qed
 
-lemma norm_of_bounded:
+lemma norm_of_cblinfun:
   \<open>norm (L *\<^sub>v z) \<le> norm z * norm L\<close>
   apply transfer
   by (simp add: cbounded_linear.bounded_linear linordered_field_class.sign_simps(24) onorm)
 
-lemma norm_of_bounded1:
+lemma norm_of_cblinfun1:
   \<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
-  using norm_of_bounded
+  using norm_of_cblinfun
   by (metis mult_cancel_right1) 
 
-lemma norm_of_bounded2:
+lemma norm_of_cblinfun2:
   \<open>norm z \<le> 1 \<Longrightarrow> norm (L *\<^sub>v z) \<le> norm L\<close>
 proof (cases \<open>z = 0\<close>)
   show "norm (L *\<^sub>v z) \<le> norm L"
     if "norm z \<le> 1"
       and "z = 0"
     using that
-    by simp 
+    by (smt mult_cancel_left1 norm_ge_zero norm_of_cblinfun norm_zero)
+
   show "norm (L *\<^sub>v z) \<le> norm L"
     if "norm z \<le> 1"
       and "z \<noteq> 0"
     using that
-    by (smt mult_left_le_one_le norm_ge_zero norm_of_bounded) 
+    by (smt mult_left_le_one_le norm_ge_zero norm_of_cblinfun) 
 qed
 
 lemma onormless1: 
-  assumes a1: "norm x < 1" and a2: "bounded_linear f"
+  assumes a1: "norm x < 1" and a2: "cbounded_linear f"
   shows "norm (f x) \<le> onorm f"
 proof-
   have "norm (f x) \<le> onorm f * norm x"
     using a2 onorm
-    by (simp add: onorm)
+    by (simp add: onorm cbounded_linear.bounded_linear)    
   also have "\<dots> \<le> onorm f"
-    using a1 a2 mult_right_le_one_le onorm_pos_le by force
+    using a1 a2 mult_right_le_one_le onorm_pos_le
+    by (smt cbounded_linear.bounded_linear norm_not_less_zero) 
   finally show ?thesis by blast
 qed
 
@@ -3868,8 +3714,8 @@ next
 qed
 
 (* TODO: non_singleton *)
-lemma norm_of_bounded3:
-  fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded\<close>
+lemma norm_of_cblinfun3:
+  fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun\<close>
   shows \<open>(UNIV::'a set) \<noteq> 0 \<Longrightarrow> norm S = Sup {norm (S *\<^sub>v x)| x. norm x < 1}\<close>
 proof transfer 
   fix S::\<open>'a \<Rightarrow> 'b\<close>
@@ -3895,12 +3741,12 @@ proof transfer
     have "e>0 \<Longrightarrow> onorm S \<le> y+e" for e
     proof-
       assume e0:"e>0"
-      have \<open>bounded_linear S\<close>
+      have \<open>cbounded_linear S\<close>
         using a2
         by (simp add: cbounded_linear.bounded_linear)
       hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
         using a1 onorm_sphere[where f = S]
-        by auto
+        by (simp add: cbounded_linear.bounded_linear)
       hence "onorm S - e/2 < Sup { norm (S t) |t. norm t = 1 }"
         by (simp add: e0)        
       moreover have "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
@@ -3918,7 +3764,8 @@ proof transfer
       then obtain t where s1: "norm t = 1" and s2: "onorm S - e/2 \<le> norm (S t)"
         by blast
       have "isCont S w" for w
-        by (simp add: \<open>bounded_linear S\<close> linear_continuous_at)        
+        using linear_continuous_at
+        by (simp add: a2 bounded_linear_continuous)
       hence "isCont (\<lambda>x. norm (S x)) w" for w
         by simp
       hence "e > 0 \<Longrightarrow> \<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow>  norm (norm (S t) - norm (S s)) < e" for e
@@ -3958,26 +3805,26 @@ qed
 
 subsection \<open>Inverse\<close>
 
-lemma inverse_bounded_uniq':
-  \<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> A *\<^sub>o B' = idOp \<Longrightarrow> B' *\<^sub>o A = idOp \<Longrightarrow> B = B'\<close>
+lemma inverse_cblinfun_uniq':
+  \<open>A o\<^sub>C\<^sub>L B = idOp \<Longrightarrow> B o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> A o\<^sub>C\<^sub>L B' = idOp \<Longrightarrow> B' o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> B = B'\<close>
 proof-
-  assume \<open>A *\<^sub>o B = idOp\<close> and \<open>B *\<^sub>o A = idOp\<close> and \<open>A *\<^sub>o B' = idOp\<close> and \<open>B' *\<^sub>o A = idOp\<close>
+  assume \<open>A o\<^sub>C\<^sub>L B = idOp\<close> and \<open>B o\<^sub>C\<^sub>L A = idOp\<close> and \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> and \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>
   have \<open>B *\<^sub>v x = B' *\<^sub>v x\<close>
     for x
   proof-
-    have \<open>(A *\<^sub>o B) *\<^sub>v x = x\<close>
-      using \<open>A *\<^sub>o B = idOp\<close>
+    have \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>v x = x\<close>
+      using \<open>A o\<^sub>C\<^sub>L B = idOp\<close>
       by simp
-    hence \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B' *\<^sub>v x\<close>
+    hence \<open>B' *\<^sub>v ((A o\<^sub>C\<^sub>L B) *\<^sub>v x) = B' *\<^sub>v x\<close>
       by simp
-    moreover have \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B *\<^sub>v x\<close>
+    moreover have \<open>B' *\<^sub>v ((A o\<^sub>C\<^sub>L B) *\<^sub>v x) = B *\<^sub>v x\<close>
     proof-
-      have \<open>B' *\<^sub>v ((A *\<^sub>o B) *\<^sub>v x) = B' *\<^sub>v (A *\<^sub>v (B *\<^sub>v x))\<close>
+      have \<open>B' *\<^sub>v ((A o\<^sub>C\<^sub>L B) *\<^sub>v x) = B' *\<^sub>v (A *\<^sub>v (B *\<^sub>v x))\<close>
         by (simp add: times_applyOp)
-      also have \<open>\<dots> = (B' *\<^sub>o A) *\<^sub>v (B *\<^sub>v x)\<close>
+      also have \<open>\<dots> = (B' o\<^sub>C\<^sub>L A) *\<^sub>v (B *\<^sub>v x)\<close>
         by (simp add: times_applyOp)
       also have \<open>\<dots> = idOp *\<^sub>v (B *\<^sub>v x)\<close>
-        by (simp add: \<open>B' *\<^sub>o A = idOp\<close>)
+        by (simp add: \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>)
       also have \<open>\<dots> = B *\<^sub>v x\<close>
         by simp
       finally show ?thesis by blast
@@ -3985,60 +3832,60 @@ proof-
     ultimately show ?thesis by auto
   qed
   thus ?thesis
-    by (metis \<open>A *\<^sub>o B' = idOp\<close> \<open>B *\<^sub>o A = idOp\<close> timesOp_assoc times_idOp1 times_idOp2) 
+    by (metis \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> \<open>B o\<^sub>C\<^sub>L A = idOp\<close> timesOp_assoc times_idOp1 times_idOp2) 
 qed
 
-definition invertible_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> bool\<close> where
-  \<open>invertible_bounded A = (\<exists> B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+definition invertible_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun \<Rightarrow> bool\<close> where
+  \<open>invertible_cblinfun A = (\<exists> B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp)\<close>
 
-definition inverse_bounded::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) bounded \<Rightarrow> ('b,'a) bounded\<close> where
-  \<open>inverse_bounded A = (THE B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp)\<close>
+definition inverse_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun \<Rightarrow> ('b,'a) cblinfun\<close> where
+  \<open>inverse_cblinfun A = (THE B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp)\<close>
 
-lemma inverse_bounded_well_defined:
-  \<open>invertible_bounded A \<Longrightarrow> \<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
-  by (meson inverse_bounded_uniq' invertible_bounded_def)
+lemma inverse_cblinfun_well_defined:
+  \<open>invertible_cblinfun A \<Longrightarrow> \<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
+  by (meson inverse_cblinfun_uniq' invertible_cblinfun_def)
 
-lemma inverse_bounded_left:
-  \<open>invertible_bounded A \<Longrightarrow> (inverse_bounded A) *\<^sub>o A = idOp\<close>
+lemma inverse_cblinfun_left:
+  \<open>invertible_cblinfun A \<Longrightarrow> (inverse_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
 proof-
-  assume \<open>invertible_bounded A\<close>
-  hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
-    using inverse_bounded_well_defined by blast
-  hence \<open>A *\<^sub>o (inverse_bounded A) = idOp \<and> (inverse_bounded A) *\<^sub>o A = idOp\<close>
-    unfolding inverse_bounded_def
+  assume \<open>invertible_cblinfun A\<close>
+  hence \<open>\<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
+    using inverse_cblinfun_well_defined by blast
+  hence \<open>A o\<^sub>C\<^sub>L (inverse_cblinfun A) = idOp \<and> (inverse_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
+    unfolding inverse_cblinfun_def
     by (smt theI)
   thus ?thesis by blast
 qed
 
-lemma inverse_bounded_right:
-  \<open>invertible_bounded A \<Longrightarrow> A *\<^sub>o (inverse_bounded A) = idOp\<close>
+lemma inverse_cblinfun_right:
+  \<open>invertible_cblinfun A \<Longrightarrow> A o\<^sub>C\<^sub>L (inverse_cblinfun A) = idOp\<close>
 proof-
-  assume \<open>invertible_bounded A\<close>
-  hence \<open>\<exists>! B. A *\<^sub>o B = idOp \<and> B *\<^sub>o A = idOp\<close>
-    using inverse_bounded_well_defined by blast
-  hence \<open>A *\<^sub>o (inverse_bounded A) = idOp \<and> (inverse_bounded A) *\<^sub>o A = idOp\<close>
-    unfolding inverse_bounded_def
+  assume \<open>invertible_cblinfun A\<close>
+  hence \<open>\<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
+    using inverse_cblinfun_well_defined by blast
+  hence \<open>A o\<^sub>C\<^sub>L (inverse_cblinfun A) = idOp \<and> (inverse_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
+    unfolding inverse_cblinfun_def
     by (smt theI)
   thus ?thesis by blast
 qed
 
-lemma inverse_bounded_uniq:
-  \<open>A *\<^sub>o B = idOp \<Longrightarrow> B *\<^sub>o A = idOp \<Longrightarrow> inverse_bounded A = B\<close>
-  using inverse_bounded_left inverse_bounded_right inverse_bounded_uniq' invertible_bounded_def 
+lemma inverse_cblinfun_uniq:
+  \<open>A o\<^sub>C\<^sub>L B = idOp \<Longrightarrow> B o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> inverse_cblinfun A = B\<close>
+  using inverse_cblinfun_left inverse_cblinfun_right inverse_cblinfun_uniq' invertible_cblinfun_def 
   by blast
 
-hide_fact inverse_bounded_uniq'
+hide_fact inverse_cblinfun_uniq'
 
 
 subsection \<open>Recovered theorems\<close>
 
 (*
 consts
-  adjoint :: "('a,'b) bounded \<Rightarrow> ('b,'a) bounded" ("_*" [99] 100)
- timesOp :: "('b,'c) bounded \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'c) bounded" 
-(* and applyOp :: "('a,'b) bounded \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
- applyOpSpace :: "('a,'b) bounded \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace"
- timesScalarOp :: "complex \<Rightarrow> ('a,'b) bounded \<Rightarrow> ('a,'b) bounded"
+  adjoint :: "('a,'b) cblinfun \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
+ timesOp :: "('b,'c) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'c) cblinfun" 
+(* and applyOp :: "('a,'b) cblinfun \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
+ applyOpSpace :: "('a,'b) cblinfun \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace"
+ timesScalarOp :: "complex \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun"
  timesScalarSpace :: "complex \<Rightarrow> 'a subspace \<Rightarrow> 'a subspace"
 *)
 
@@ -4060,43 +3907,43 @@ proof (auto, transfer)
     by simp
 qed
 
-                                              
+
 lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
   for B::\<open>'a::complex_normed_vector linear_space\<close>
   by simp
 
-lemma timesOp_assoc_subspace: "(A *\<^sub>o B) *\<^sub>s S =  A *\<^sub>s (B *\<^sub>s S)"
+lemma timesOp_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>s S =  A *\<^sub>s (B *\<^sub>s S)"
   by (simp add: timesOp_assoc_linear_space) 
 
 
-lift_definition vector_to_bounded :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) bounded\<close> is
+lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) cblinfun\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: cbounded_linear_one_dim_to_complex cbounded_linear_scaleC_const)
 
-lemma vector_to_bounded_applyOp: 
-  "vector_to_bounded (A *\<^sub>v \<psi>) = A  *\<^sub>o (vector_to_bounded \<psi>)" 
+lemma vector_to_cblinfun_applyOp: 
+  "vector_to_cblinfun (A *\<^sub>v \<psi>) = A  o\<^sub>C\<^sub>L (vector_to_cblinfun \<psi>)" 
   apply transfer 
   unfolding one_dim_to_complex_def comp_def cbounded_linear_def clinear_def Vector_Spaces.linear_def
     module_hom_def module_hom_axioms_def
   by simp
-  
-lemma vector_to_bounded_scalar_times: 
-  "vector_to_bounded (a *\<^sub>C \<psi>) = a *\<^sub>C vector_to_bounded \<psi>" for a::complex
+
+lemma vector_to_cblinfun_scalar_times: 
+  "vector_to_cblinfun (a *\<^sub>C \<psi>) = a *\<^sub>C vector_to_cblinfun \<psi>" for a::complex
   apply (subst asm_rl[of "a *\<^sub>C \<psi> = (a *\<^sub>C idOp) *\<^sub>v \<psi>"])
    apply simp
-  apply (subst vector_to_bounded_applyOp)
+  apply (subst vector_to_cblinfun_applyOp)
   by simp
 
-lift_definition cblinfun_to_blinfun::\<open>('a::complex_normed_vector,'b::complex_normed_vector) bounded \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
+lift_definition cblinfun_to_blinfun::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
   is \<open>(\<lambda>f. ((*\<^sub>v) f))\<close>
   apply transfer
   by (simp add: cbounded_linear.bounded_linear)
 
 lemma cblinfun_to_blinfun_norm: "norm (cblinfun_to_blinfun F) = norm F"
-  by (simp add: cblinfun_to_blinfun.rep_eq norm_blinfun.rep_eq norm_bounded.rep_eq)
+  by (simp add: cblinfun_to_blinfun.rep_eq norm_blinfun.rep_eq norm_cblinfun.rep_eq)
 
-theorem banach_steinhaus_bounded:
-  fixes F :: \<open>'c \<Rightarrow> ('a::cbanach, 'b::complex_normed_vector) bounded\<close>
+theorem banach_steinhaus_cblinfun:
+  fixes F :: \<open>'c \<Rightarrow> ('a::cbanach, 'b::complex_normed_vector) cblinfun\<close>
   assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>v x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>  
 proof-
@@ -4114,8 +3961,8 @@ proof-
     unfolding f_def using cblinfun_to_blinfun_norm by metis
 qed
 
-theorem riesz_frechet_representation_bounded_existence_uniq:
-  fixes f::\<open>('a::chilbert_space, complex) bounded\<close>
+theorem riesz_frechet_representation_cblinfun_existence_uniq:
+  fixes f::\<open>('a::chilbert_space, complex) cblinfun\<close>
   shows \<open>\<exists>!t. \<forall>x.  f *\<^sub>v x = \<langle>t, x\<rangle>\<close>
   apply transfer apply auto
    apply (simp add: riesz_frechet_representation_existence)
@@ -4140,9 +3987,9 @@ proof-
     by auto
 qed
 
-theorem riesz_frechet_representation_bounded_norm:
+theorem riesz_frechet_representation_cblinfun_norm:
   includes notation_norm
-  fixes f::\<open>('a::chilbert_space, complex) bounded\<close>
+  fixes f::\<open>('a::chilbert_space, complex) cblinfun\<close>
   assumes \<open>\<And> x.  f *\<^sub>v x = \<langle>t, x\<rangle>\<close>
   shows \<open>\<parallel>f\<parallel> = \<parallel>t\<parallel>\<close>
   using assms apply transfer
@@ -4206,7 +4053,7 @@ proof-
     assume q1:"card S = 0" and q2:"finite S"
     hence "S = {}" by auto
     thus "F *\<^sub>v (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>v a))"
-      by simp 
+      sorry
   next
     case (Suc n)
     fix S::"'a set"
@@ -4237,58 +4084,58 @@ proof-
 qed
 
 
-lemma vector_to_bounded_times_vec[simp]:
-  includes bounded_notation
-  shows "vector_to_bounded \<phi> *\<^sub>v \<gamma> = one_dim_to_complex \<gamma> *\<^sub>C \<phi>"
+lemma vector_to_cblinfun_times_vec[simp]:
+  includes cblinfun_notation
+  shows "vector_to_cblinfun \<phi> *\<^sub>v \<gamma> = one_dim_to_complex \<gamma> *\<^sub>C \<phi>"
   apply transfer by (rule refl)
 
-lemma vector_to_bounded_adj_times_vec[simp]:
-  includes bounded_notation
-  shows "vector_to_bounded \<psi>* *\<^sub>v \<phi> = of_complex (cinner \<psi> \<phi>)"
+lemma vector_to_cblinfun_adj_times_vec[simp]:
+  includes cblinfun_notation
+  shows "vector_to_cblinfun \<psi>* *\<^sub>v \<phi> = of_complex (cinner \<psi> \<phi>)"
 proof -
-  have "one_dim_to_complex (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a) = cinner 1 (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a)"
+  have "one_dim_to_complex (vector_to_cblinfun \<psi>* *\<^sub>v \<phi> :: 'a) = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>v \<phi> :: 'a)"
     by (simp add: one_dim_to_complex_def)
-  also have "\<dots> = cinner (vector_to_bounded \<psi> *\<^sub>v (1::'a)) \<phi>"
+  also have "\<dots> = cinner (vector_to_cblinfun \<psi> *\<^sub>v (1::'a)) \<phi>"
     by (metis adjoint_I adjoint_twice)
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
-  finally have "one_dim_to_complex (vector_to_bounded \<psi>* *\<^sub>v \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>" by -
+  finally have "one_dim_to_complex (vector_to_cblinfun \<psi>* *\<^sub>v \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>" by -
   thus ?thesis
     by (metis one_dim_to_complex_inverse)
 qed
 
-lemma bounded_ext: 
-  includes bounded_notation
+lemma cblinfun_ext: 
+  includes cblinfun_notation
   assumes "\<And>x::'a::chilbert_space. A *\<^sub>v x = B *\<^sub>v x"
   shows "A = B" 
   using assms apply transfer by auto
 
 lemma eigenspace_memberE:
-  includes bounded_notation
+  includes cblinfun_notation
   assumes "x \<in> space_as_set (eigenspace e A)"
   shows "A *\<^sub>v x = e *\<^sub>C x"
   using assms unfolding eigenspace_def apply transfer by auto
 
 lemma kernel_memberE:
-  includes bounded_notation
+  includes cblinfun_notation
   assumes "x \<in> space_as_set (kernel A)"
   shows "A *\<^sub>v x = 0"
   using assms apply transfer by auto
 
 lemma eigenspace_memberI:
-  includes bounded_notation
+  includes cblinfun_notation
   assumes "A *\<^sub>v x = e *\<^sub>C x"
   shows "x \<in> space_as_set (eigenspace e A)"
   using assms unfolding eigenspace_def apply transfer by auto
 
 lemma kernel_memberI:
-  includes bounded_notation
+  includes cblinfun_notation
   assumes "A *\<^sub>v x = 0"
   shows "x \<in> space_as_set (kernel A)"
   using assms apply transfer by auto
 
 lemma applyOpSpace_Span: 
-  includes bounded_notation
+  includes cblinfun_notation
   shows "A *\<^sub>s Span G = Span ((*\<^sub>v) A ` G)"
   apply transfer
 proof
@@ -4451,12 +4298,12 @@ proof
   qed
 qed
 
-definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) bounded. A = B* *\<^sub>o B)"
+definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) cblinfun. A = B* o\<^sub>C\<^sub>L B)"
 
-lemma timesOp0[simp]: "0 *\<^sub>o A = 0"
+lemma timesOp0[simp]: "0 o\<^sub>C\<^sub>L A = 0"
   apply transfer by simp
 
-lemma timesOp0'[simp]: "A *\<^sub>o 0 = 0"
+lemma timesOp0'[simp]: "A o\<^sub>C\<^sub>L 0 = 0"
   apply transfer apply auto
   by (metis cbounded_linear_def mult_zero_left norm_le_zero_iff norm_zero)
 
@@ -4469,12 +4316,11 @@ lemma positive_0[simp]: "positive_op 0"
 abbreviation "loewner_leq A B == (positive_op (B-A))"
 
 
-lemma norm_mult_ineq_bounded:
-  fixes A B :: "(_,_) bounded"
-  shows "norm (A *\<^sub>o B) \<le> norm A * norm B"
+lemma norm_mult_ineq_cblinfun:
+  fixes A B :: "(_,_) cblinfun"
+  shows "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B"
   apply transfer
   by (simp add: cbounded_linear.bounded_linear onorm_compose)
-
 
 hide_fact closed_finite_dim'
 
@@ -4673,27 +4519,27 @@ proof
   qed
 qed
 
-lemma vector_to_bounded_adj_times_vector_to_bounded[simp]:
-  includes bounded_notation
-  shows "vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
+lemma vector_to_cblinfun_adj_times_vector_to_cblinfun[simp]:
+  includes cblinfun_notation
+  shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
-  have "one_dim_to_complex ((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = one_dim_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+  have "one_dim_to_complex ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>v \<gamma>) = one_dim_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
     by (simp add: times_applyOp)
 
-  hence "((vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
+  hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>v \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>v \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
     using one_dim_to_complex_inverse by metis
   thus ?thesis
-    using  bounded_ext[where A = "vector_to_bounded \<psi>* *\<^sub>o vector_to_bounded \<phi>"
+    using  cblinfun_ext[where A = "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>"
         and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
     by auto
 qed
 
-unbundle no_bounded_notation
+unbundle no_cblinfun_notation
 
 unbundle no_notation_blinfun_apply
-unbundle bounded_notation
+unbundle cblinfun_notation
 
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
@@ -4703,7 +4549,7 @@ lemma finite_span_complete_aux:
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
 
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
+  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_cblinfun\<close>
      \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
      content of the lemmas. However, there is one difference: We additionally assume here
      that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
@@ -4892,7 +4738,7 @@ lemma complete_singleton:
 
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
-lemma finite_span_representation_bounded: 
+lemma finite_span_representation_cblinfun: 
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B" "independent B"
   shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
@@ -4900,7 +4746,7 @@ lemma finite_span_representation_bounded:
   text \<open>
   Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
   Let $\<alpha>^\<psi>_b$ be the coefficients of $\<psi>$ expressed as a linear combination over $B$.
-  Then $\<alpha>$ is is uniformly bounded (i.e., $\lvert\alpha^\<psi>_b \leq D \lVert\psi\rVert\psi for some $D$ independent of $\<psi>,b$).
+  Then $\<alpha>$ is is uniformly cblinfun (i.e., $\lvert\alpha^\<psi>_b \leq D \lVert\psi\rVert\psi for some $D$ independent of $\<psi>,b$).
 
   (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
   is defined in this corner case.) \<close>
@@ -5065,7 +4911,7 @@ lemma finite_complex_span_complete:
   apply (rule finite_span_complete)
   using assms by auto
 
-lemma bounded_operator_basis_zero_uniq:
+lemma cblinfun_operator_basis_zero_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes a1: "complex_vector.span basis = UNIV"
     and a2: "complex_vector.independent basis"
@@ -5086,11 +4932,11 @@ proof-
     thus ?thesis using a4 b2
       by (simp add: subset_eq) 
   qed
-  thus ?thesis by (simp add: bounded_ext) 
+  thus ?thesis by (simp add: cblinfun_ext) 
 qed
 
 (*
-lemma bounded_operator_finite_dim':
+lemma cblinfun_operator_finite_dim':
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S basis::"'a set"
   assumes b4:"clinear F" 
     and b9: "is_ob basis"
@@ -5305,12 +5151,12 @@ next
 qed
 *)
 
-lemma bounded_operator_finite_dim_ortho:
+lemma cblinfun_operator_finite_dim_ortho:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b4:"clinear F"  and b9:"is_ob basis" and b3:"finite basis"
   shows "cbounded_linear F"
 proof-
-  have bounded_operator_finite_dim': "cbounded_linear F"
+  have cblinfun_operator_finite_dim': "cbounded_linear F"
     if b4:"clinear F" 
       and b9: "is_ob basis"
       and b3:"finite basis"
@@ -5523,7 +5369,7 @@ proof-
       using f1 Complex_Vector_Spaces.cbounded_linear_add by blast
   qed
   show ?thesis
-    using bounded_operator_finite_dim'[where F = F and basis = basis and S = basis 
+    using cblinfun_operator_finite_dim'[where F = F and basis = basis and S = basis 
         and n = "card basis"]  by (smt Diff_cancel b3 b4 b9 complex_vector.linear_0
         complex_vector.span_empty empty_iff insert_iff order_refl)
 qed
@@ -5572,7 +5418,7 @@ proof-
       (* > 1s *)
 qed
 
-lemma bounded_operator_finite_dim:
+lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "complex_vector.independent basis"
@@ -5597,11 +5443,11 @@ proof-
     show "\<And>x. x \<in> closure (Complex_Vector_Spaces.span A)"
       using a2 b1 by auto
   qed
-  thus ?thesis using bounded_operator_finite_dim_ortho[where F = F and basis = A]
+  thus ?thesis using cblinfun_operator_finite_dim_ortho[where F = F and basis = A]
     by (simp add: a5 b4)
 qed
 
-lemma bounded_operator_basis_existence_uniq:
+lemma cblinfun_operator_basis_existence_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.span basis = UNIV\<close> 
     and \<open>complex_vector.independent basis\<close>
@@ -5790,7 +5636,7 @@ proof-
       qed  
     qed
     hence "cbounded_linear F"
-      using bounded_operator_finite_dim assms(1) assms(2) assms(3) by blast 
+      using cblinfun_operator_finite_dim assms(1) assms(2) assms(3) by blast 
     moreover have "w\<in>basis \<Longrightarrow> F w = \<phi> w" for w
     proof-
       assume b1: "w\<in>basis"
@@ -5823,9 +5669,9 @@ proof-
   proof-
     assume a1: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>v s = \<phi> s" and a2: "\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>v s = \<phi> s"
     hence "s\<in>basis \<Longrightarrow> (F-G) *\<^sub>v s = 0" for s
-      by (simp add: minus_bounded.rep_eq)
+      by (simp add: minus_cblinfun.rep_eq)
     hence "F - G = 0"
-      using bounded_operator_basis_zero_uniq[where F = "F - G" and basis = basis]
+      using cblinfun_operator_basis_zero_uniq[where F = "F - G" and basis = basis]
         assms(1) assms(2) assms(3) by auto
     thus ?thesis by simp
   qed
@@ -5833,7 +5679,7 @@ proof-
     by auto 
 qed
 
-unbundle no_bounded_notation
+unbundle no_cblinfun_notation
 
 
 end

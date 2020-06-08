@@ -18,7 +18,7 @@ theory Complex_L2
     "HOL-ex.Sketch_and_Explore"
 begin
 
-unbundle bounded_notation
+unbundle cblinfun_notation
 unbundle no_notation_blinfun_apply
 
 subsection \<open>Preliminaries\<close>
@@ -852,7 +852,7 @@ proof-
     using \<open>sqrt (\<Sum>x\<in>S. (cmod (f x - g x + g x))\<^sup>2) \<le> sqrt (\<Sum>x\<in>S. (cmod (f x - g x))\<^sup>2) + sqrt (\<Sum>x\<in>S. (cmod (g x))\<^sup>2)\<close> \<open>sqrt (\<Sum>x\<in>S. (cmod (f x))\<^sup>2) = sqrt (\<Sum>x\<in>S. (cmod (f x - g x + g x))\<^sup>2)\<close> by linarith
 qed
 
-lemma CauchyImplies_ell2Bounded:                         
+lemma CauchyImplies_ell2Cblinfun:                         
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
   assumes \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
     and \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>    
@@ -1104,7 +1104,7 @@ proof-
     proof-
       have \<open>\<exists> M::real. \<forall> m. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. (cmod ((a m) x))^2) \<le> M\<close>
         using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-          \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> CauchyImplies_ell2Bounded
+          \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> CauchyImplies_ell2Cblinfun
         by blast
       thus ?thesis
         by (meson real_sqrt_le_iff) 
@@ -2646,7 +2646,7 @@ lift_definition classical_operator'::
   is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
   by (simp add: has_ell2_norm_classical_operator')
 
-lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) bounded" 
+lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) cblinfun" 
   is "classical_operator'"
   unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   apply auto
@@ -2929,12 +2929,12 @@ proof-
     unfolding classical_operator'_def map_fun_def
     by auto
   moreover have \<open>cbounded_linear (classical_operator' \<pi>)\<close>
-    by (metis classical_operator.rep_eq mem_Collect_eq times_bounded_vec)
+    by (metis classical_operator.rep_eq mem_Collect_eq cblinfun_apply)
   ultimately show ?thesis by auto
 qed
 
 lemma classical_operator_identity_1:
-  \<open>Abs_bounded (Abs_ell2 \<circ>
+  \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
 proof-
@@ -2978,7 +2978,7 @@ proof-
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
     using Abs_ell2_inject
     by simp
-  moreover have \<open>(*\<^sub>v)  (Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+  moreover have \<open>(*\<^sub>v)  (cBlinfun (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))) = 
               (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
@@ -2987,10 +2987,10 @@ proof-
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i))\<close>
       using cbounded_linear_Abs_ell2_option by blast
     thus ?thesis
-      using Abs_bounded_inverse
+      using cBlinfun_inverse
       by blast
   qed        
-  ultimately have \<open>(Abs_bounded (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
+  ultimately have \<open>(cBlinfun (\<lambda>\<phi>. Abs_ell2 (\<lambda> b. case inv_option \<pi> b 
               of None \<Rightarrow> 0 | Some i \<Rightarrow> (Rep_ell2 \<phi>) i)) *\<^sub>v ket x)
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
@@ -3004,13 +3004,13 @@ proof-
     thus ?thesis
       by auto
   qed
-  ultimately have \<open>Abs_bounded (Abs_ell2 \<circ>
+  ultimately have \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ>
       Rep_ell2) *\<^sub>v ket x
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
     by simp
-  hence \<open>Abs_bounded (Abs_ell2 \<circ>
+  hence \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
@@ -3090,12 +3090,12 @@ proof-
         thus ?case
           by (metis (mono_tags, lifting) Some.hyps option.simps(5)) 
       qed
-      moreover have \<open>Abs_bounded (Abs_ell2 \<circ>
+      moreover have \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
     = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
         by (simp add: classical_operator_identity_1)        
-      ultimately have \<open>Abs_bounded (Abs_ell2 \<circ>
+      ultimately have \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
         = 0\<close>
         using \<open>Abs_ell2 (\<lambda>j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = 0\<close> by auto      
@@ -3179,12 +3179,12 @@ proof-
     = Abs_ell2 (\<lambda>y. if t = y then 1 else 0)\<close>
         using Abs_ell2_inject
         by (simp add: \<open>(\<lambda>j. case inv_option \<pi> j of None \<Rightarrow> 0 | Some i \<Rightarrow> if x = i then 1 else 0) = (\<lambda>y. if t = y then 1 else 0)\<close>)        
-      moreover have \<open>Abs_bounded (Abs_ell2 \<circ>
+      moreover have \<open>cBlinfun (Abs_ell2 \<circ>
       (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v ket x
   = Abs_ell2 (\<lambda> j. case inv_option \<pi> j of None \<Rightarrow> 0
      | Some i \<Rightarrow> (\<lambda>y. if x = y then 1 else 0) i)\<close>
         by (simp add: classical_operator_identity_1)        
-      ultimately have \<open>Abs_bounded 
+      ultimately have \<open>cBlinfun 
     (Abs_ell2 \<circ> (\<lambda>\<psi> b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some i \<Rightarrow> \<psi> i) \<circ> Rep_ell2) *\<^sub>v
     Abs_ell2 (\<lambda>y. if x = y then 1 else 0) =
     Abs_ell2 (\<lambda>y. if t = y then 1 else 0)\<close>
@@ -3199,12 +3199,12 @@ qed
 
 
 lemma superposition_principle_linear_ket:
-  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) bounded\<close>
+  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close>
   shows \<open>(\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)) \<Longrightarrow> A = B\<close>
 proof-
   assume \<open>\<And> x. A *\<^sub>v (ket x) = B *\<^sub>v (ket x)\<close>
   define S::\<open>('a ell2) set\<close> where \<open>S = range ket\<close>
-  have \<open>\<And>x. x \<in> S \<Longrightarrow> times_bounded_vec A x = times_bounded_vec B x\<close>
+  have \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close>
     using S_def \<open>\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x\<close> by blast
   have \<open>A *\<^sub>v t = B *\<^sub>v t\<close>
     for t
@@ -3218,9 +3218,9 @@ proof-
     thus ?thesis
       by (metis Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> A *\<^sub>v x = B *\<^sub>v x\<close> applyOpSpace_span) 
   qed
-  hence \<open>times_bounded_vec A = times_bounded_vec B\<close>
+  hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
     by blast
-  thus ?thesis using times_bounded_vec_inject by auto
+  thus ?thesis using cblinfun_apply_inject by auto
 qed
 
 
@@ -3370,12 +3370,10 @@ proof-
     for x y 
     have \<open>bounded_sesquilinear U\<close>
       unfolding U_def
-      using bounded_sesquilinear_bounded_clinnear_cinner_left times_bounded_vec
-      by auto
+      using cblinfun_apply bounded_sesquilinear_bounded_clinnear_cinner_left by auto
     moreover have \<open>bounded_sesquilinear V\<close>
       unfolding V_def
-      using bounded_sesquilinear_bounded_clinnear_cinner_right times_bounded_vec
-      by auto
+      using  cblinfun_apply bounded_sesquilinear_bounded_clinnear_cinner_right by auto      
     ultimately have \<open>bounded_sesquilinear (\<lambda> x y. U x y - V x y)\<close>
       by (rule bounded_sesquilinear_diff)  
     moreover have \<open>B = (\<lambda> x y. U x y - V x y)\<close>
@@ -3409,7 +3407,7 @@ proof-
     then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
       by blast
     have \<open>cbounded_linear ((*\<^sub>v) A)\<close>
-      using times_bounded_vec by blast
+      using cblinfun_apply by blast
     hence \<open>isCont ((*\<^sub>v) A) x\<close>
       by simp
     hence \<open>isNSCont ((*\<^sub>v) A) x\<close>
@@ -3426,7 +3424,7 @@ proof-
       from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       have  \<open>A *\<^sub>v x = (\<Sum>a\<in>t. r a *\<^sub>C (A *\<^sub>v a))\<close>
         unfolding cbounded_linear_def
-        using times_bounded_vec \<open>finite t\<close>
+        using cblinfun_apply \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
           \<open>cbounded_linear ((*\<^sub>v) A)\<close> cbounded_linear.is_clinear
@@ -3437,19 +3435,19 @@ proof-
       ultimately show \<open>A *\<^sub>v x = 0\<close>
         by simp
     qed
-    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (times_bounded_vec A) x = 0\<close>
+    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (cblinfun_apply A) x = 0\<close>
       by blast
-    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (times_bounded_vec A)) x = 0\<close>
+    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (cblinfun_apply A)) x = 0\<close>
       by StarDef.transfer
-    hence \<open>(*f* (times_bounded_vec A)) r = 0\<close>
+    hence \<open>(*f* (cblinfun_apply A)) r = 0\<close>
       using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
       by blast
-    moreover have \<open>(*f* (times_bounded_vec A)) r \<approx> (*f* (times_bounded_vec A)) (star_of x)\<close>
+    moreover have \<open>(*f* (cblinfun_apply A)) r \<approx> (*f* (cblinfun_apply A)) (star_of x)\<close>
       using \<open>r \<approx> star_of x\<close> \<open>isNSCont ((*\<^sub>v) A) x\<close>
       by (simp add: isNSContD)
-    ultimately have \<open>(*f* (times_bounded_vec A)) (star_of x) \<approx> 0\<close>
+    ultimately have \<open>(*f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
       by simp
-    hence \<open>norm ( (times_bounded_vec A) x ) = 0\<close>
+    hence \<open>norm ( (cblinfun_apply A) x ) = 0\<close>
       by auto
     thus \<open>A *\<^sub>v x = 0\<close>
       by auto
@@ -3461,7 +3459,7 @@ proof-
     by blast
   hence \<open>(*\<^sub>v) A = (\<lambda> _. 0)\<close>
     by blast
-  thus ?thesis using times_bounded_vec_inject
+  thus ?thesis using cblinfun_apply_inject
     by fastforce 
 qed
 
@@ -3472,17 +3470,18 @@ proof-
   have \<open>\<And> j. A *\<^sub>v (ket j) - B *\<^sub>v  (ket j) = 0\<close>
     using \<open>\<And> j. A *\<^sub>v (ket j) = B *\<^sub>v  (ket j)\<close> by simp
   hence \<open>\<And> j. (A - B) *\<^sub>v  (ket j) = 0\<close>
-    by (simp add: minus_bounded.rep_eq)
+    by (simp add: minus_cblinfun.rep_eq)
   hence \<open>A - B = 0\<close>
     using equal_basis_0 by blast
   thus ?thesis by simp
 qed
 
 lemma classical_operator_mult[simp]:
-  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
+  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> 
+  classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
 proof-
   assume \<open>inj_option \<pi>\<close> and \<open>inj_option \<rho>\<close>
-  have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+  have \<open>(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>v (ket j)
          = (classical_operator (map_comp \<pi> \<rho>)) *\<^sub>v (ket j)\<close>
     for j
   proof-
@@ -3492,17 +3491,17 @@ proof-
     hence \<open>classical_operator (map_comp \<pi> \<rho>) *\<^sub>v ket j
          = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
       by (simp add: classical_operator_basis)
-    moreover have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+    moreover have \<open>(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>v (ket j)
          = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
     proof-
-      have \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+      have \<open>(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>v (ket j)
           = (classical_operator \<pi>) *\<^sub>v ( (classical_operator \<rho>) *\<^sub>v (ket j) )\<close>
         by (simp add: times_applyOp)
       moreover have \<open>(classical_operator \<rho>) *\<^sub>v (ket j) = 
           (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
         using \<open>inj_option \<rho>\<close>
         by (simp add: classical_operator_basis)
-      ultimately have  \<open>(classical_operator \<pi> *\<^sub>o classical_operator \<rho>) *\<^sub>v (ket j)
+      ultimately have  \<open>(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>v (ket j)
           = (classical_operator \<pi>) *\<^sub>v ( (case \<rho> j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i) )\<close>
         by simp
       also have \<open>\<dots> = (case (map_comp \<pi> \<rho>) j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)\<close>
@@ -3510,7 +3509,8 @@ proof-
         show "classical_operator \<pi> *\<^sub>v (case \<rho> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a) = (case (\<pi> \<circ>\<^sub>m \<rho>) j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a)"
           if "None = \<rho> j"
           using that
-          by (simp add: option.case_eq_if) 
+          by (metis applyOp0 map_comp_simps(1) option.simps(4) timesOp0' times_applyOp)
+           
         show "classical_operator \<pi> *\<^sub>v (case \<rho> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a) = (case (\<pi> \<circ>\<^sub>m \<rho>) j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a)"
           if "Some p = \<rho> j"
           for p :: 'a
@@ -3521,7 +3521,7 @@ proof-
     qed
     ultimately show ?thesis by simp
   qed
-  thus \<open>classical_operator \<pi> *\<^sub>o classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)\<close>
+  thus \<open>classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)\<close>
     using equal_basis by blast
 qed
 
@@ -3551,9 +3551,9 @@ lemma unitary_classical_operator[simp]:
 proof (unfold unitary_def, rule conjI)
   have "isometry (classical_operator (Some o \<pi>))"
     by (simp add: assms bij_is_inj)
-  hence "classical_operator (Some \<circ> \<pi>)* *\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp"
+  hence "classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp"
     unfolding isometry_def by simp
-  thus \<open>classical_operator (Some \<circ> \<pi>)* *\<^sub>o classical_operator (Some \<circ> \<pi>) = idOp\<close>
+  thus \<open>classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp\<close>
     by simp 
 next
   have "inj \<pi>"
@@ -3565,7 +3565,7 @@ next
     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     by (metis assms bij_def image_iff range_eqI)
 
-  show "classical_operator (Some \<circ> \<pi>) *\<^sub>o classical_operator (Some \<circ> \<pi>)* = idOp"
+  show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = idOp"
     by (simp add: comp \<open>inj \<pi>\<close>)
 qed
 
@@ -3698,7 +3698,7 @@ lemma [simp]: "ket i \<noteq> 0"
   using ell2_ket[of i] by force
 
 lemma equal_ket:
-  includes bounded_notation
+  includes cblinfun_notation
   assumes "\<And>x. A *\<^sub>v ket x = B *\<^sub>v ket x"
   shows "A = B"
   by (simp add: assms equal_basis)
@@ -3733,6 +3733,6 @@ qed
 
 end
 
-unbundle no_bounded_notation
+unbundle no_cblinfun_notation
 
 end

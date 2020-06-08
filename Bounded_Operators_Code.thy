@@ -45,11 +45,11 @@ no_notation append_rows (infixr "@\<^sub>r" 65)
 end
 
 unbundle jnf_notation
-unbundle bounded_notation
+unbundle cblinfun_notation
 
-subsection \<open>Setting up code generation for type bounded\<close>
+subsection \<open>Setting up code generation for type cblinfun\<close>
 
-text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::onb_enum,'b::onb_enum) bounded\<close>
+text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::onb_enum,'b::onb_enum) cblinfun\<close>
   and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the dimensions of 'a,'b, 
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>onb_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
@@ -887,93 +887,93 @@ proof-
     by (simp add: onb_enum_of_vec_def vec_list vec_of_onb_enum2_def w_def)    
 qed
 
-definition mat_of_bounded :: \<open>('a::onb_enum,'b::onb_enum) bounded \<Rightarrow> complex mat\<close> where
-  \<open>mat_of_bounded = undefined\<close>
+definition mat_of_cblinfun :: \<open>('a::onb_enum,'b::onb_enum) cblinfun \<Rightarrow> complex mat\<close> where
+  \<open>mat_of_cblinfun = undefined\<close>
 
-definition bounded_of_mat :: \<open>complex mat \<Rightarrow> ('a::onb_enum,'b::onb_enum) bounded\<close> where
-  \<open>bounded_of_mat = undefined\<close>
+definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> ('a::onb_enum,'b::onb_enum) cblinfun\<close> where
+  \<open>cblinfun_of_mat = undefined\<close>
 
 
-lemma mat_of_bounded_inj: "inj mat_of_bounded"
+lemma mat_of_cblinfun_inj: "inj mat_of_cblinfun"
   sorry
 
-text \<open>The following lemma registers bounded as an abstract datatype with 
-  constructor \<^const>\<open>bounded_of_mat\<close>.
-  That means that in generated code, all bounded operators will be represented
-  as \<^term>\<open>bounded_of_mat X\<close> where X is a matrix.
+text \<open>The following lemma registers cblinfun as an abstract datatype with 
+  constructor \<^const>\<open>cblinfun_of_mat\<close>.
+  That means that in generated code, all cblinfun operators will be represented
+  as \<^term>\<open>cblinfun_of_mat X\<close> where X is a matrix.
   In code equations for operations involving operators (e.g., +), we
   can then write the equation directly in terms of matrices
-  by writing, e.g., \<^term>\<open>mat_of_bounded (A+B)\<close> in the lhs,
+  by writing, e.g., \<^term>\<open>mat_of_cblinfun (A+B)\<close> in the lhs,
   and in the rhs we define the matrix that corresponds to the sum of A,B.
   In the rhs, we can access the matrices corresponding to A,B by
-  writing \<^term>\<open>mat_of_bounded B\<close>.
-  (See, e.g., lemma \<open>bounded_of_mat_plusOp\<close> below).
+  writing \<^term>\<open>mat_of_cblinfun B\<close>.
+  (See, e.g., lemma \<open>cblinfun_of_mat_plusOp\<close> below).
 
   See [TODO: bibtex reference to code generation tutorial] for more information on 
   @{theory_text \<open>[code abstype]\<close>}.\<close>
-lemma mat_of_bounded_inverse [code abstype]:
-  "bounded_of_mat (mat_of_bounded B) = B" 
-  for B::"('a::onb_enum,'b::onb_enum) bounded"
+lemma mat_of_cblinfun_inverse [code abstype]:
+  "cblinfun_of_mat (mat_of_cblinfun B) = B" 
+  for B::"('a::onb_enum,'b::onb_enum) cblinfun"
   sorry
 
-subsection \<open>Code equations for bounded operators\<close>
+subsection \<open>Code equations for cblinfun operators\<close>
 
 text \<open>In this subsection, we define the code for all operations involving only 
   operators (no combinations of operators/vectors/subspaces)\<close>
 
-text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_bounded (M + N)\<close>
+text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
-lemma bounded_of_mat_plusOp[code]:
-  "mat_of_bounded (M + N) =  (mat_of_bounded M + mat_of_bounded N)" 
-  for M::"('a::onb_enum,'b::onb_enum) bounded" and N::"('a::onb_enum,'b) bounded"
+lemma cblinfun_of_mat_plusOp[code]:
+  "mat_of_cblinfun (M + N) =  (mat_of_cblinfun M + mat_of_cblinfun N)" 
+  for M::"('a::onb_enum,'b::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
   sorry
 
-lemma bounded_of_mat_id[code]:
-  "mat_of_bounded (idOp :: ('a::onb_enum,'a) bounded) = one_mat (canonical_basis_length TYPE('a))"
+lemma cblinfun_of_mat_id[code]:
+  "mat_of_cblinfun (idOp :: ('a::onb_enum,'a) cblinfun) = one_mat (canonical_basis_length TYPE('a))"
   sorry
 
-lemma bounded_of_mat_timesOp[code]:
-  "mat_of_bounded (M *\<^sub>o N) =  (mat_of_bounded M * mat_of_bounded N)" 
-  for M::"('b::onb_enum,'c::onb_enum) bounded" and N::"('a::onb_enum,'b) bounded"
+lemma cblinfun_of_mat_timesOp[code]:
+  "mat_of_cblinfun (M o\<^sub>C\<^sub>L N) =  (mat_of_cblinfun M * mat_of_cblinfun N)" 
+  for M::"('b::onb_enum,'c::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
   sorry
 
-lemma bounded_of_mat_minusOp[code]:
-  "mat_of_bounded (M - N) =  (mat_of_bounded M - mat_of_bounded N)" 
-  for M::"('a::onb_enum,'b::onb_enum) bounded" and N::"('a::onb_enum,'b) bounded"
+lemma cblinfun_of_mat_minusOp[code]:
+  "mat_of_cblinfun (M - N) =  (mat_of_cblinfun M - mat_of_cblinfun N)" 
+  for M::"('a::onb_enum,'b::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
   sorry
 
-lemma bounded_of_mat_uminusOp[code]:
-  "mat_of_bounded (- M) = - mat_of_bounded M" for M::"('a::onb_enum,'b::onb_enum) bounded"
+lemma cblinfun_of_mat_uminusOp[code]:
+  "mat_of_cblinfun (- M) = - mat_of_cblinfun M" for M::"('a::onb_enum,'b::onb_enum) cblinfun"
   sorry
 
-lemma mat_of_bounded_scalarMult[code]:
-  "mat_of_bounded ((a::complex) *\<^sub>C M) = smult_mat a (mat_of_bounded M)" for M :: "('a::onb_enum,'b::onb_enum) bounded"
+lemma mat_of_cblinfun_scalarMult[code]:
+  "mat_of_cblinfun ((a::complex) *\<^sub>C M) = smult_mat a (mat_of_cblinfun M)" for M :: "('a::onb_enum,'b::onb_enum) cblinfun"
   sorry
 
-text \<open>This instantiation defines a code equation for equality tests for bounded operators.\<close>
-instantiation bounded :: (onb_enum,onb_enum) equal begin
-definition [code]: "equal_bounded M N \<longleftrightarrow> mat_of_bounded M = mat_of_bounded N" 
-  for M N :: "('a,'b) bounded"
+text \<open>This instantiation defines a code equation for equality tests for cblinfun operators.\<close>
+instantiation cblinfun :: (onb_enum,onb_enum) equal begin
+definition [code]: "equal_cblinfun M N \<longleftrightarrow> mat_of_cblinfun M = mat_of_cblinfun N" 
+  for M N :: "('a,'b) cblinfun"
 instance 
   apply intro_classes
-  unfolding equal_bounded_def 
-  using mat_of_bounded_inj injD by fastforce
+  unfolding equal_cblinfun_def 
+  using mat_of_cblinfun_inj injD by fastforce
 end
 
 definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
-lemma bounded_of_mat_adjoint[code]:
-  "mat_of_bounded (adjoint A) = adjoint_mat (mat_of_bounded A)"
-  for A :: "('a::onb_enum,'b::onb_enum) bounded"
+lemma cblinfun_of_mat_adjoint[code]:
+  "mat_of_cblinfun (adjoint A) = adjoint_mat (mat_of_cblinfun A)"
+  for A :: "('a::onb_enum,'b::onb_enum) cblinfun"
   sorry
 
-lemma mat_of_bounded_zero[code]:
-  "mat_of_bounded (0::('a::onb_enum,'b::onb_enum) bounded)
+lemma mat_of_cblinfun_zero[code]:
+  "mat_of_cblinfun (0::('a::onb_enum,'b::onb_enum) cblinfun)
        = zero_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
   sorry
 
-lemma mat_of_bounded_classical_operator[code]: 
-  "mat_of_bounded (classical_operator f) = mat (CARD('b)) (CARD('a))
+lemma mat_of_cblinfun_classical_operator[code]: 
+  "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
   (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)" 
   for f::"'a::enum \<Rightarrow> 'b::enum option"
   sorry
@@ -994,6 +994,6 @@ lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_
   by auto
 
 unbundle no_jnf_notation
-unbundle no_bounded_notation
+unbundle no_cblinfun_notation
 
 end

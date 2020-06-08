@@ -4,6 +4,6 @@ theory Bounded_Operators_Code_Examples
     Bounded_Operators.Bounded_Operators_Code 
 begin
 
-value "idOp + idOp :: (bool ell2,bool ell2) bounded"
+value "idOp + idOp :: (bool ell2,bool ell2) cblinfun"
 
 end

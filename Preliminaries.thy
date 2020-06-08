@@ -143,14 +143,14 @@ lemma swap_set_fst:
    apply (simp add: rev_image_eqI)
   by (metis (no_types, lifting) fst_conv image_cong image_eqI pair_in_swap_image prod.swap_def)
 
-(* TODO: Never used in Bounded Operators. Move to tensor product. *)
+(* TODO: Never used in CBounded Operators. Move to tensor product. *)
 lemma swap_set_snd:
   \<open>snd ` (prod.swap ` S) = fst ` S\<close>
   unfolding prod.swap_def apply auto
    apply (simp add: rev_image_eqI)
   using image_iff by fastforce
 
-(* TODO: Never used in Bounded Operators. Move to tensor product. *)
+(* TODO: Never used in CBounded Operators. Move to tensor product. *)
 lemma big_sum_reordering_snd:
   fixes  S :: \<open>('a \<times> 'b) set\<close>
   assumes \<open>finite S\<close>
