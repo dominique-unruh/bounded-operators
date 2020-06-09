@@ -887,11 +887,48 @@ proof-
     by (simp add: onb_enum_of_vec_def vec_list vec_of_onb_enum2_def w_def)    
 qed
 
-definition mat_of_cblinfun :: \<open>('a::onb_enum,'b::onb_enum) cblinfun \<Rightarrow> complex mat\<close> where
-  \<open>mat_of_cblinfun = undefined\<close>
+lemma vec_of_onb_enum2_add:
+  "vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2"
+  sorry
 
-definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> ('a::onb_enum,'b::onb_enum) cblinfun\<close> where
-  \<open>cblinfun_of_mat = undefined\<close>
+lemma vec_of_onb_enum2_scaleC:
+  "vec_of_onb_enum2 (c *\<^sub>C b) = c \<cdot>\<^sub>v (vec_of_onb_enum2 b1)"
+  sorry
+
+lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is
+  \<open>\<lambda>M. \<lambda>v. onb_enum_of_vec (mult_mat_vec M (vec_of_onb_enum2 v))\<close>
+proof
+  fix M :: "complex mat"
+  define f::"complex mat \<Rightarrow> 'a \<Rightarrow> 'b" 
+    where "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum2 v))" 
+      for M::"complex mat" and v::'a
+  show "clinear (f M)"
+    unfolding clinear_def proof
+    show "f M (b1 + b2) = f M b1 + f M b2"
+      for b1 :: 'a
+        and b2 :: 'a
+    proof-
+      have "vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2"
+        by (simp add: vec_of_onb_enum2_add)
+      hence "M *\<^sub>v vec_of_onb_enum2 (b1 + b2) = M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2"
+        using  Matrix.mult_add_distrib_mat_vec[where A = M and v\<^sub>1 = "vec_of_onb_enum2 b1" and v\<^sub>2 = "vec_of_onb_enum2 b2"] 
+        sorry
+      hence "M *\<^sub>v vec_of_onb_enum2 (b1 + b2) = M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2"
+        sorry
+      show ?thesis 
+      unfolding f_def sorry
+    qed
+    show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
+      for r :: complex
+        and b :: 'a
+      sorry
+  qed
+  show "\<exists>K. \<forall>x. norm (f M x) \<le> norm x * K"
+    sorry
+qed
+
+definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
+  \<open>mat_of_cblinfun = undefined\<close>
 
 
 lemma mat_of_cblinfun_inj: "inj mat_of_cblinfun"
