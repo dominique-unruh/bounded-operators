@@ -889,7 +889,56 @@ qed
 
 lemma vec_of_onb_enum2_add:
   "vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2"
-  sorry
+proof-
+  have "Complex_Vector_Spaces.span
+         (set (canonical_basis::'a list)) = UNIV"
+    using is_basis_set unfolding is_basis_def
+    using span_finite_dim by auto 
+  hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (b1+b2) i
+      = Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b1 i + 
+        Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b2 i" for i
+    using Complex_Vector_Spaces.complex_vector.representation_add[where basis = "set (canonical_basis::'a list)"]
+    by (smt canonical_basis_non_zero is_ortho_set_independent is_orthonormal iso_tuple_UNIV_I)  
+  moreover have "vec_of_list (map (\<lambda>x. f x + g x) S) = vec_of_list (map f S) + vec_of_list (map g S)"
+    for S::"'a list" and f g::"'a \<Rightarrow> complex" 
+  proof(induction S)
+    case Nil
+    then show ?case by auto
+  next
+    case (Cons a S)
+
+    have "vec_of_list (map (\<lambda>x. f x + g x) (a # S)) = 
+      vCons (f a + g a)
+     (map_vec (\<lambda>x. f x + g x) (vec_of_list S))"
+      by auto
+    also have "\<dots> = vCons (f a + g a)
+     (map_vec f (vec_of_list S) + map_vec g (vec_of_list S))"
+      by auto
+    also have "\<dots> =  vec_of_list (map f (a#S)) + vec_of_list (map g (a#S))"
+    proof auto
+      have "dim_vec A = n \<Longrightarrow>  dim_vec B = n \<Longrightarrow> 
+            vCons (p + q) (A + B) = vCons p A + vCons q B"
+        for p q::complex and A B and n
+      proof(induction n)
+case 0
+  then show ?case by auto
+next
+  case (Suc n)
+  then show ?case 
+qed
+
+      thus "vCons (f a + g a)
+     (map_vec f (vec_of_list S) + map_vec g (vec_of_list S)) =
+    vCons (f a) (map_vec f (vec_of_list S)) +
+    vCons (g a) (map_vec g (vec_of_list S))"
+        by simp         
+    qed
+    finally show ?case sorry
+  qed
+  ultimately show ?thesis 
+    unfolding vec_of_onb_enum2_def 
+    by auto
+qed
 
 lemma vec_of_onb_enum2_scaleC:
   "vec_of_onb_enum2 (c *\<^sub>C b) = c \<cdot>\<^sub>v (vec_of_onb_enum2 b1)"
@@ -908,15 +957,34 @@ proof
       for b1 :: 'a
         and b2 :: 'a
     proof-
+      have dim1: "dim_vec (vec_of_onb_enum2 b1) = canonical_basis_length TYPE('a)"
+        by (metis canonical_basis_length_eq dim_vec_of_onb_enum_list index_smult_vec(2) vec_of_onb_enum2_scaleC vec_of_onb_enum_inverse)
+      have dim2: "dim_vec (vec_of_onb_enum2 b2) = canonical_basis_length TYPE('a)"
+        by (metis canonical_basis_length_eq dim_vec_of_onb_enum_list index_smult_vec(2) vec_of_onb_enum2_scaleC vec_of_onb_enum_inverse)
       have "vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2"
         by (simp add: vec_of_onb_enum2_add)
-      hence "M *\<^sub>v vec_of_onb_enum2 (b1 + b2) = M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2"
-        using  Matrix.mult_add_distrib_mat_vec[where A = M and v\<^sub>1 = "vec_of_onb_enum2 b1" and v\<^sub>2 = "vec_of_onb_enum2 b2"] 
-        sorry
-      hence "M *\<^sub>v vec_of_onb_enum2 (b1 + b2) = M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2"
-        sorry
-      show ?thesis 
-      unfolding f_def sorry
+      have "M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
+        sorry (* Ask to Dominique *)        
+      moreover have "vec_of_onb_enum2 b1 \<in> carrier_vec (canonical_basis_length TYPE('a))"
+        by (simp add: carrier_vecI dim1)        
+      moreover have "vec_of_onb_enum2 b2 \<in> carrier_vec (canonical_basis_length TYPE('a))"
+        by (simp add: carrier_dim_vec dim2)        
+      ultimately have "M *\<^sub>v vec_of_onb_enum2 (b1 + b2) = M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2"
+        using  Matrix.mult_add_distrib_mat_vec[where A = M and v\<^sub>1 = "vec_of_onb_enum2 b1" and v\<^sub>2 = "vec_of_onb_enum2 b2"]
+        using \<open>vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2\<close> by auto         
+      moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum2 b1) = canonical_basis_length TYPE('b)" 
+        using dim1 sorry
+      moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum2 b2) = canonical_basis_length TYPE('b)" 
+        using dim2 sorry
+      ultimately show ?thesis 
+        unfolding f_def 
+        using Bounded_Operators_Code.onb_enum_of_vec_add[where ?v1.0 = "M *\<^sub>v vec_of_onb_enum2 b1" 
+            and ?v2.0 = "M *\<^sub>v vec_of_onb_enum2 b2"]
+        by (simp add: \<open>\<lbrakk>dim_vec (M *\<^sub>v vec_of_onb_enum2 b1) = length canonical_basis; dim_vec 
+          (M *\<^sub>v vec_of_onb_enum2 b2) = length canonical_basis\<rbrakk> \<Longrightarrow> 
+          onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum2 b1 + M *\<^sub>v vec_of_onb_enum2 b2) 
+        = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum2 b1) + onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum2 b2)\<close> 
+            canonical_basis_length_eq)
     qed
     show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
       for r :: complex
