@@ -906,7 +906,6 @@ proof-
     then show ?case by auto
   next
     case (Cons a S)
-
     have "vec_of_list (map (\<lambda>x. f x + g x) (a # S)) = 
       vCons (f a + g a)
      (map_vec (\<lambda>x. f x + g x) (vec_of_list S))"
@@ -916,24 +915,36 @@ proof-
       by auto
     also have "\<dots> =  vec_of_list (map f (a#S)) + vec_of_list (map g (a#S))"
     proof auto
-      have "dim_vec A = n \<Longrightarrow>  dim_vec B = n \<Longrightarrow> 
+      have "dim_vec A = n \<Longrightarrow> dim_vec B = n \<Longrightarrow> 
             vCons (p + q) (A + B) = vCons p A + vCons q B"
         for p q::complex and A B and n
-      proof(induction n)
-case 0
-  then show ?case by auto
-next
-  case (Suc n)
-  then show ?case 
-qed
-
+      proof-
+        assume d1: "dim_vec A = n" and d2: "dim_vec B = n"
+        hence d3: "dim_vec (A + B) = n"
+          by simp
+        have d4: "dim_vec (vCons (p + q) (A + B)) = Suc n"
+          using d3 by auto
+        have d5': "dim_vec  (vCons p A) = Suc n"
+          by (simp add: d1)          
+        moreover have d5'': "dim_vec  (vCons q B) = Suc n"
+          by (simp add: d2)          
+        ultimately have d5: "dim_vec  (vCons p A + vCons q B) = Suc n"
+          by simp
+        have "i < Suc n \<Longrightarrow> vec_index (vCons (p + q) (A + B)) i = vec_index (vCons p A + vCons q B) i"
+          for i
+          using d5'' index_add_vec(1) less_Suc_eq_0_disj by auto          
+        thus ?thesis
+          using d4 
+          by auto 
+      qed
       thus "vCons (f a + g a)
      (map_vec f (vec_of_list S) + map_vec g (vec_of_list S)) =
     vCons (f a) (map_vec f (vec_of_list S)) +
     vCons (g a) (map_vec g (vec_of_list S))"
         by simp         
     qed
-    finally show ?case sorry
+    finally show ?case
+      by simp 
   qed
   ultimately show ?thesis 
     unfolding vec_of_onb_enum2_def 
@@ -941,8 +952,39 @@ qed
 qed
 
 lemma vec_of_onb_enum2_scaleC:
-  "vec_of_onb_enum2 (c *\<^sub>C b) = c \<cdot>\<^sub>v (vec_of_onb_enum2 b1)"
-  sorry
+  "vec_of_onb_enum2 (c *\<^sub>C b) = c \<cdot>\<^sub>v (vec_of_onb_enum2 b)"
+proof-
+  have "Complex_Vector_Spaces.span
+         (set (canonical_basis::'a list)) = UNIV"
+    using is_basis_set unfolding is_basis_def
+    using span_finite_dim by auto 
+  hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
+      = c *\<^sub>C (Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b i)" for i
+    using Complex_Vector_Spaces.complex_vector.representation_scale
+    by (smt UNIV_I canonical_basis_non_zero complex_scaleC_def is_ortho_set_independent is_orthonormal)
+  moreover have "vec_of_list (map (\<lambda>x. c *\<^sub>C (f x)) S) = c \<cdot>\<^sub>v vec_of_list (map f S)"
+    for S::"'a list" and f g::"'a \<Rightarrow> complex" 
+  proof(induction S)
+    case Nil
+    then show ?case by auto
+  next
+    case (Cons a S)
+    have "vec_of_list (map (\<lambda>x. c *\<^sub>C f x) (a # S)) = 
+      vCons (c *\<^sub>C f a)
+     (map_vec (\<lambda>x. c *\<^sub>C f x) (vec_of_list S))"
+      by auto
+    also have "\<dots> = c \<cdot>\<^sub>v vCons (f a) (map_vec f (vec_of_list S))"
+      by (metis Cons.IH complex_scaleC_def list.simps(9) list_of_vec_mult list_of_vec_vCons vec_list
+          vec_of_list_map)      
+    also have "\<dots> =  c \<cdot>\<^sub>v (vec_of_list (map f (a#S)))"
+      by simp    
+    finally show ?case
+      by simp 
+  qed
+  ultimately show ?thesis 
+    unfolding vec_of_onb_enum2_def 
+    by auto
+qed
 
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is
   \<open>\<lambda>M. \<lambda>v. onb_enum_of_vec (mult_mat_vec M (vec_of_onb_enum2 v))\<close>
@@ -950,7 +992,7 @@ proof
   fix M :: "complex mat"
   define f::"complex mat \<Rightarrow> 'a \<Rightarrow> 'b" 
     where "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum2 v))" 
-      for M::"complex mat" and v::'a
+    for M::"complex mat" and v::'a
   show "clinear (f M)"
     unfolding clinear_def proof
     show "f M (b1 + b2) = f M b1 + f M b2"
@@ -958,13 +1000,17 @@ proof
         and b2 :: 'a
     proof-
       have dim1: "dim_vec (vec_of_onb_enum2 b1) = canonical_basis_length TYPE('a)"
-        by (metis canonical_basis_length_eq dim_vec_of_onb_enum_list index_smult_vec(2) vec_of_onb_enum2_scaleC vec_of_onb_enum_inverse)
+        by (metis (full_types) canonical_basis_length_eq complex_vector.scale_zero_left 
+            dim_vec_of_onb_enum_list' index_smult_vec(2) vec_of_onb_enum2_scaleC 
+            vec_of_onb_enum_inverse)
       have dim2: "dim_vec (vec_of_onb_enum2 b2) = canonical_basis_length TYPE('a)"
-        by (metis canonical_basis_length_eq dim_vec_of_onb_enum_list index_smult_vec(2) vec_of_onb_enum2_scaleC vec_of_onb_enum_inverse)
+        by (metis (full_types) canonical_basis_length_eq complex_vector.scale_zero_left 
+            dim_vec_of_onb_enum_list' index_smult_vec(2) vec_of_onb_enum2_scaleC 
+            vec_of_onb_enum_inverse)
       have "vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2"
         by (simp add: vec_of_onb_enum2_add)
       have "M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
-        sorry (* Ask to Dominique *)        
+        sorry
       moreover have "vec_of_onb_enum2 b1 \<in> carrier_vec (canonical_basis_length TYPE('a))"
         by (simp add: carrier_vecI dim1)        
       moreover have "vec_of_onb_enum2 b2 \<in> carrier_vec (canonical_basis_length TYPE('a))"
@@ -973,9 +1019,13 @@ proof
         using  Matrix.mult_add_distrib_mat_vec[where A = M and v\<^sub>1 = "vec_of_onb_enum2 b1" and v\<^sub>2 = "vec_of_onb_enum2 b2"]
         using \<open>vec_of_onb_enum2 (b1 + b2) = vec_of_onb_enum2 b1 + vec_of_onb_enum2 b2\<close> by auto         
       moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum2 b1) = canonical_basis_length TYPE('b)" 
-        using dim1 sorry
+        using dim1
+        using \<open>M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> 
+        by auto 
       moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum2 b2) = canonical_basis_length TYPE('b)" 
-        using dim2 sorry
+        using dim2
+        using \<open>M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> 
+        by auto 
       ultimately show ?thesis 
         unfolding f_def 
         using Bounded_Operators_Code.onb_enum_of_vec_add[where ?v1.0 = "M *\<^sub>v vec_of_onb_enum2 b1" 
@@ -986,11 +1036,13 @@ proof
         = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum2 b1) + onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum2 b2)\<close> 
             canonical_basis_length_eq)
     qed
+
     show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
       for r :: complex
         and b :: 'a
       sorry
   qed
+
   show "\<exists>K. \<forall>x. norm (f M x) \<le> norm x * K"
     sorry
 qed
