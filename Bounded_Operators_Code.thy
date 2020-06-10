@@ -980,7 +980,7 @@ proof-
 qed
 
 definition norm_vec :: "complex vec \<Rightarrow> complex" where
-"norm_vec x = sqrt (norm (x \<bullet>c x) )"
+  "norm_vec x = sqrt (norm (x \<bullet>c x) )"
 
 lemma norm_vec_onb_enum_of_vec:
   fixes x::"complex vec"
@@ -1101,7 +1101,7 @@ proof
     case False
     thus ?thesis
       by (metis f_def linordered_field_class.sign_simps(24) norm_zero order_refl 
-            vector_space_over_itself.scale_zero_left)       
+          vector_space_over_itself.scale_zero_left)       
   qed
 qed
 
