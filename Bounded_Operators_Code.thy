@@ -981,10 +981,91 @@ qed
 
 (* NEW *)
 lemma onb_enum_of_vec_unit_vec:
-  assumes "i < canonical_basis_length TYPE('a::onb_enum)"
-  shows "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i) 
-      = (canonical_basis::'a list)!i"
-  sorry
+  defines a1: "basis == (canonical_basis::'a::onb_enum list)"
+    and a2: "n == canonical_basis_length TYPE('a)"
+  assumes a3: "i < n"
+  shows "onb_enum_of_vec (unit_vec n i) = basis!i"
+proof-
+  define L::"complex list" where "L = list_of_vec (unit_vec n i)"
+  define I::"nat list" where "I = [0..<n]"
+  have "length L = n"
+    by (simp add: L_def)    
+  moreover have "length basis = n"
+    by (simp add: a1 a2 canonical_basis_length_eq)
+  ultimately have "map2 (*\<^sub>C) L basis = map (\<lambda>j. L!j *\<^sub>C basis!j) I"
+    by (simp add: I_def list_eq_iff_nth_eq)  
+  hence "sum_list (map2 (*\<^sub>C) L basis) = sum_list (map (\<lambda>j. L!j *\<^sub>C basis!j) I)"
+    by simp
+  also have "\<dots> = sum (\<lambda>j. L!j *\<^sub>C basis!j) {0..n-1}"
+  proof-
+    have "set I = {0..n-1}"
+      using I_def a3 by auto      
+    thus ?thesis 
+      using Groups_List.sum_code[where xs = I and g = "(\<lambda>j. L!j *\<^sub>C basis!j)"]
+      by (simp add: I_def)      
+  qed
+  also have "\<dots> = sum (\<lambda>j. (list_of_vec (unit_vec n i))!j *\<^sub>C basis!j) {0..n-1}"
+    unfolding L_def by blast
+  finally have "sum_list (map2 (*\<^sub>C) (list_of_vec (unit_vec n i)) basis)
+       = sum (\<lambda>j. (list_of_vec (unit_vec n i))!j *\<^sub>C basis!j) {0..n-1}"
+    using L_def by blast    
+  also have "\<dots> = basis ! i"
+  proof-
+    have "(\<Sum>j = 0..n - 1. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j) =
+          (\<Sum>j \<in> {0..n - 1}. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j)"
+      by simp
+    also have "\<dots> = list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i
+               + (\<Sum>j \<in> {0..n - 1}-{i}. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j)"
+    proof-
+      define a where "a j = list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j" for j
+      define S where "S = {0..n - 1}"
+      have "finite S"
+        by (simp add: S_def)        
+      hence "(\<Sum>j \<in> insert i S. a j) = a i + (\<Sum>j\<in>S-{i}. a j)"
+        using Groups_Big.comm_monoid_add_class.sum.insert_remove
+        by auto
+      moreover have "S-{i} = {0..n-1}-{i}"
+        unfolding S_def
+        by blast 
+      moreover have "insert i S = {0..n-1}"
+        using S_def Suc_diff_1 a3 atLeastAtMost_iff diff_is_0_eq' le_SucE le_numeral_extra(4) 
+          less_imp_le not_gr_zero by auto                
+      ultimately show ?thesis
+        using \<open>a \<equiv> \<lambda>j. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j\<close> by auto 
+    qed
+    also have "\<dots> = list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i"
+    proof-
+      have "j \<in> {0..n - 1}-{i} \<Longrightarrow> list_of_vec (unit_vec n i) ! j = 0"
+        for j
+        using a3 atMost_atLeast0 atMost_iff diff_Suc_less index_unit_vec(1) le_less_trans 
+          list_of_vec_index member_remove zero_le by fastforce         
+      hence "j \<in> {0..n - 1}-{i} \<Longrightarrow> list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j = 0"
+        for j
+        by auto         
+      hence "(\<Sum>j \<in> {0..n - 1}-{i}. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j) = 0"
+        by (simp add: \<open>\<And>j. j \<in> {0..n - 1} - {i} \<Longrightarrow> list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j = 0\<close>)        
+      thus ?thesis by simp
+    qed
+    also have "\<dots> = basis ! i"
+      by (simp add: a3)      
+    finally show ?thesis
+      using \<open>(\<Sum>j = 0..n - 1. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j)
+             = list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i + (\<Sum>j\<in>{0..n - 1} - {i}. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j)\<close>
+        \<open>list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i + (\<Sum>j\<in>{0..n - 1} - {i}. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j)
+           = list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i\<close>
+        \<open>list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i = basis ! i\<close> 
+      by auto 
+  qed
+  finally have "sum_list (map2 (*\<^sub>C) (list_of_vec (unit_vec n i)) basis)
+      = basis ! i"
+    by (simp add: a1 a2)    
+  hence "onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec (unit_vec n i)) 
+      = (canonical_basis::'a list) ! i"     
+    by (simp add: onb_enum_of_vec_list_def' a1)
+  thus ?thesis 
+    unfolding onb_enum_of_vec_def
+    by (simp add: a1 a2) 
+qed
 
 (* NEW *)
 lemma cinner_onb_enum_of_vec: 
