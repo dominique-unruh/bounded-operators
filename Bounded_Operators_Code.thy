@@ -979,19 +979,66 @@ proof-
     by auto
 qed
 
+(* NEW *)
+lemma onb_enum_of_vec_unit_vec:
+  assumes "i < canonical_basis_length TYPE('a::onb_enum)"
+  shows "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i) 
+      = (canonical_basis::'a list)!i"
+  sorry
+
+(* NEW *)
+lemma cinner_onb_enum_of_vec: 
+  assumes "dim_vec x = dim_vec y"
+  shows  "\<langle>onb_enum_of_vec x, onb_enum_of_vec y\<rangle> =  y \<bullet>c x"
+proof-
+  have a1: " \<langle>onb_enum_of_vec x, onb_enum_of_vec y\<rangle> =
+    (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+    sorry
+
+  show ?thesis
+    unfolding scalar_prod_def apply auto
+    by (simp add: a1 ordered_field_class.sign_simps(5))    
+qed
+
+
+(* NEW *)
 definition norm_vec :: "complex vec \<Rightarrow> complex" where
   "norm_vec x = sqrt (norm (x \<bullet>c x) )"
 
+(* NEW *)
 lemma norm_vec_onb_enum_of_vec:
   fixes x::"complex vec"
   shows "norm (onb_enum_of_vec x) = norm_vec x"
-  sorry
+proof-
+  have "(norm_vec x)^2 = norm (x \<bullet>c x)"
+    by (metis Bounded_Operators_Code.norm_vec_def norm_eq_sqrt_cinner of_real_power power2_norm_eq_cinner real_sqrt_power)
+  also have "\<dots> = x \<bullet>c x"
+    using complex_of_real_cmod by blast
+  finally have a1: "(norm_vec x)^2 =  x \<bullet>c x"
+    by blast
+  have "\<langle>onb_enum_of_vec x, onb_enum_of_vec x\<rangle> =  x \<bullet>c x"
+    using cinner_onb_enum_of_vec
+    by (simp add: cinner_onb_enum_of_vec)
+  hence a2: "(norm (onb_enum_of_vec x))^2 = x \<bullet>c x"
+    by (smt power2_norm_eq_cinner')   
+  have "(norm (onb_enum_of_vec x))^2 = (norm_vec x)^2"
+    using a1 a2
+    by simp
+  moreover have "norm (onb_enum_of_vec x) \<ge> 0"
+    by simp    
+  moreover have "norm_vec x \<ge> 0"
+    unfolding norm_vec_def by simp
+  ultimately show ?thesis
+    by (smt complex_of_real_cmod norm_ge_zero of_real_hom.injectivity of_real_power power2_eq_imp_eq) 
+qed
 
+(* NEW *)
 lemma norm_vec_vec_of_onb_enum:
   fixes x::"'a::onb_enum"
   shows "norm_vec (vec_of_onb_enum x) = norm x"
   sorry
 
+(* NEW *)
 lemma norm_vec_mat:
   shows "\<exists>K. \<forall>x. dim_col M = dim_vec x \<longrightarrow> norm_vec (M *\<^sub>v x) \<le> norm_vec x * K"
   sorry
