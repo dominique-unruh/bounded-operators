@@ -3610,14 +3610,6 @@ proof -
     by (meson le_less_trans) 
 qed
 
-(* Ask to Dominique: delete this? *)
-lemma subspace_0[simp]: "complex_vector.subspace {0}"
-  by simp
-
-(* Ask to Dominique: delete this? *)
-lemma subspace_UNIV[simp]: "complex_vector.subspace UNIV"
-  by simp
-
 lemma subspace_inter[simp]: 
   assumes "complex_vector.subspace A" and "complex_vector.subspace B" 
   shows "complex_vector.subspace (A\<inter>B)"

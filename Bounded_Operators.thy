@@ -1574,15 +1574,13 @@ lemma blinfun_of_cblinfun_dist:
   unfolding dist_cblinfun_def dist_blinfun_def apply auto apply transfer
   by auto
 
-lift_definition sgn_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
-  is \<open>\<lambda> f x. (inverse (onorm f)) *\<^sub>R (f x)\<close>
-  apply transfer
-  by (simp add: scalarR_cbounded_linear)
+definition sgn_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  where "sgn_cblinfun x = scaleR (inverse (norm x)) x"
 
-(* Ask to Dominique: how to prove this. *)
 lemma blinfun_of_cblinfun_sgn:
   \<open>blinfun_of_cblinfun (sgn f) = (sgn (blinfun_of_cblinfun f))\<close>
-  sorry
+  by (simp add: sgn_cblinfun_def sgn_blinfun_def
+      blinfun_of_cblinfun_scaleR blinfun_of_cblinfun_norm)
 
 definition uniformity_cblinfun :: \<open>( ('a, 'b) cblinfun \<times> ('a, 'b) cblinfun ) filter\<close>
   where \<open>uniformity_cblinfun = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) cblinfun) y < e})\<close>
@@ -1929,7 +1927,6 @@ proof-
     using scalar_times_adjc_flatten complex_vector.linear_scale
     by (simp add: complex_vector.linear_scale scalar_times_adjc_flatten \<open>cbounded_linear ((*\<^sub>V) A)\<close> 
         cbounded_linear.bounded_linear)
-      (* Ask to Dominique about 2 parse trees *)
   moreover have \<open>cblinfun_apply ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((cblinfun_apply A) t))\<^sup>\<dagger>\<close>
     unfolding Adj_def
     apply auto

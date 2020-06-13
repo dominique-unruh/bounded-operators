@@ -162,7 +162,7 @@ next
     by simp
 qed
 
-fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::onb_enum\<close> where 
+fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
   \<open>onb_enum_of_vec_list y [] = 0\<close> |
   \<open>onb_enum_of_vec_list (x#ys) (v#vs) = v *\<^sub>C x + onb_enum_of_vec_list ys vs\<close>
@@ -1068,14 +1068,90 @@ proof-
 qed
 
 (* NEW *)
+(* TODO: move this lemma near "is_ortho_set_def" *)
+lemma is_onb_delete:
+  assumes "is_ortho_set (insert x B)"
+  shows "is_ortho_set B"
+  using assms
+  unfolding  is_ortho_set_def
+  by blast  
+
+(* NEW *)
 lemma cinner_onb_enum_of_vec: 
   assumes "dim_vec x = dim_vec y"
   shows  "\<langle>onb_enum_of_vec x, onb_enum_of_vec y\<rangle> =  y \<bullet>c x"
 proof-
-  have a1: " \<langle>onb_enum_of_vec x, onb_enum_of_vec y\<rangle> =
-    (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+  define B where "B = (canonical_basis::'a list)"
+  have a0: "\<langle>onb_enum_of_vec_list B xs, onb_enum_of_vec_list B ys\<rangle> = 
+    sum_list (map2 (\<lambda>x y. cnj x * y) xs ys)"
+    if "length xs = length ys" and "length ys = length B" 
+      and "is_onb (set B)" and "distinct B"
+    for xs ys and B :: "'a list"
+    unfolding onb_enum_of_vec_list_def'
+    using that
+  proof (induction xs ys B rule:list_induct3)
+    case Nil then show ?case by auto
+  next
+    case (Cons x xs y ys b B)
+    have "length xs = length B"
+      by (simp add: Cons.hyps(1) Cons.hyps(2))
+    moreover have "b \<notin> set B"
+      using Cons.prems(2) by auto
+    moreover have "is_ortho_set (set (b#B))"
+      using Cons.prems(1) unfolding is_onb_def is_ob_def
+      by simp
+    ultimately have "\<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle> = 0"
+    proof (induction xs B rule:list_induct2)
+      case Nil thus ?case by auto
+    next
+      case (Cons x xs b' B)
+
+      have "b' \<noteq> b"
+        using Cons.prems by auto
+
+      have  "is_ortho_set (set (b'#(b#B)))"
+        using Cons.prems(2)
+        by (simp add: insert_commute) 
+      hence b2: "is_ortho_set (set (b#B))"
+        using is_onb_delete by auto        
+      have b1: "\<langle>b', b\<rangle> = 0"
+        by (meson Cons.prems(2) \<open>b' \<noteq> b\<close> is_ob_def is_onb_then_is_ob is_ortho_set_def 
+            list.set_intros(1) list.set_intros(2))        
+      have "\<langle>sum_list (map2 (*\<^sub>C) (x # xs) (b' # B)), b\<rangle> = \<langle>x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
+        by auto
+      also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle> + \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
+        by (simp add: cinner_left_distrib)
+      also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle>"
+        using Cons.IH Cons.prems b2 by simp
+      also have "\<dots> = cnj x * \<langle>b', b\<rangle>"
+        by simp
+      also have "\<dots> = 0"
+        using b1 by simp
+      finally show ?case .
+    qed
+    thus ?case
+      apply (simp add: cinner_add_left cinner_add_right)
+      sorry
+  qed
+
+  have a2: "sum_list (map2 (\<lambda>x. (*) (cnj x)) (list_of_vec x)
+       (list_of_vec y)) = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
     sorry
 
+  (* Maybe fake *)
+  have a3: "length (list_of_vec y) = length (canonical_basis::'a list)"
+    sorry
+
+  have a1: "\<langle>onb_enum_of_vec x, onb_enum_of_vec y :: 'a\<rangle> =
+    (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+    unfolding onb_enum_of_vec_def 
+    apply (subst a0)
+    using assms apply auto[1]
+    using a3 apply simp
+      apply (simp add: is_onb_set)
+     apply simp
+    using a2 .
+    
   show ?thesis
     unfolding scalar_prod_def apply auto
     by (simp add: a1 ordered_field_class.sign_simps(5))    
