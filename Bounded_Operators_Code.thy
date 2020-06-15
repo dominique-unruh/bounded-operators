@@ -1076,13 +1076,106 @@ lemma is_onb_delete:
   unfolding  is_ortho_set_def
   by blast
 
+(* NEW *)
+lemma is_ortho_setsum_list_map2_zero:
+  assumes "length ys = length B"
+    and "is_ortho_set (set (b#B))"
+    and "distinct (b#B)"
+  shows "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
+  using assms proof(induction ys B rule: list_induct2)
+  case Nil
+  show ?case by auto
+next
+  case (Cons x xs b' B)
+  have "b \<noteq> b'"
+    using Cons.prems(2) by auto    
+  hence h1: "\<langle>b, b'\<rangle> = 0"
+    by (meson Cons.prems is_ortho_set_def list.set_intros(1) list.set_intros(2))
+  have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = \<langle>b, x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+    by simp
+  also have "\<dots> = \<langle>b, x *\<^sub>C b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+    by (simp add: cinner_right_distrib)
+  also have "\<dots> = x * \<langle>b, b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+    by simp
+  also have "\<dots> = \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+    using h1 by simp
+  also have "\<dots> = 0"
+    by (metis Cons.IH Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def 
+        list.set_intros(1) list.set_intros(2) set_ConsD)    
+  finally have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = 0"
+    .
+  thus ?case .
+qed
+
+
+(* NEW *)
 lemma sum_list_orthonormal:
-  assumes "is_onb (set B)" and "length xs = length ys"
-    and "length ys = length B"
+  assumes  "length xs = length ys"
+    and "length ys = length B" 
+    and "is_ortho_set (set B)"
+    and "distinct B"
+    and "set B \<subseteq> sphere 0 1"
   shows "\<langle>sum_list (map2 (*\<^sub>C) xs B), 
           sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
       sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)"
-  sorry
+  using assms proof(induction xs ys B rule: list_induct3)
+  case Nil show ?case by auto
+next
+  case (Cons x xs y ys b B)
+  have h1: "is_ortho_set (set B)"
+    using Cons.prems(1) is_onb_delete by auto    
+  have h2: "set B \<subseteq> sphere 0 1"
+    using Cons.prems(3) by auto
+  have h3: "distinct B"
+    using Cons.prems(2) by auto
+  have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
+        (b # B)), sum_list (map2 (*\<^sub>C) (y # ys) (b # B))\<rangle> =
+    \<langle>x *\<^sub>C b + sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+    by auto
+  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>
+                + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+    by (simp add: cinner_left_distrib)
+  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
+                 +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
+                + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+    by (simp add: cinner_right_distrib)
+  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
+                 +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
+                 +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b\<rangle>
+                 +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+    by (simp add: cinner_right_distrib)
+  also have "\<dots> = cnj x * y * \<langle>b, b\<rangle>
+                 +cnj x * \<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
+                 + y * \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>
+                 +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+    by auto
+  also have "\<dots> = cnj x * y                 
+                 +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
+  proof-
+    have "b\<in>sphere 0 1"
+      using Cons.prems(3) by auto
+    hence "norm b = 1"
+      by simp
+    hence "(norm b)^2 = 1"
+      by simp
+    hence "\<langle>b, b\<rangle> = 1"
+      by (metis of_real_hom.hom_one power2_norm_eq_cinner')       
+    moreover have "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
+      using Cons.hyps(2) Cons.prems(1) Cons.prems(2) is_ortho_setsum_list_map2_zero by auto
+    moreover have "\<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle> = 0"
+      using  is_ortho_setsum_list_map2_zero
+      by (metis Cons.hyps(1) Cons.hyps(2) Cons.prems(1) Cons.prems(2) cinner_commute' complex_cnj_zero)
+    ultimately show ?thesis by simp
+  qed
+  also have "\<dots> =  sum_list (map2 (\<lambda>x. (*) (cnj x)) (x # xs) (y # ys))"
+    using h1 h3 h2 Cons.IH by auto
+  finally have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
+        (b # B)), sum_list (map2 (*\<^sub>C) (y # ys) (b # B))\<rangle> =
+    sum_list (map2 (\<lambda>x. (*) (cnj x)) (x # xs) (y # ys))"
+    .
+  thus ?case .
+qed
+
 
 (* NEW *)
 lemma cinner_onb_enum_of_vec: 
@@ -1101,6 +1194,8 @@ proof-
     case Nil then show ?case by auto
   next
     case (Cons x xs y ys b B)
+    have w1: "distinct B"
+      using Cons.prems(2) by auto
     have "length xs = length B"
       by (simp add: Cons.hyps(1) Cons.hyps(2))
     moreover have "b \<notin> set B"
@@ -1142,7 +1237,7 @@ proof-
     moreover have "is_ortho_set (set (b#B))"
       using Cons.prems(1) unfolding is_onb_def is_ob_def
       by simp
-    ultimately have braket1: "\<langle>sum_list (map2 (*\<^sub>C) ys B), b\<rangle> = 0"
+    ultimately have braket1: "\<langle>sum_list (map2 (*\<^sub>C) ys B), b\<rangle> = 0"      
     proof (induction ys B rule:list_induct2)
       case Nil thus ?case by auto
     next
@@ -1226,7 +1321,12 @@ proof-
       moreover have "\<langle>sum_list (map2 (*\<^sub>C) xs B), 
                       sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
       sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)"
-        using sum_list_orthonormal sorry
+        apply(rule sum_list_orthonormal)
+            apply (simp add: Cons.hyps(1))
+           apply (simp add: Cons.hyps(2))
+        using Cons.prems(1) is_ob_def is_onb_delete is_onb_then_is_ob apply auto[1]
+        using w1 apply auto[1]
+        using Cons.prems(1) dual_order.trans is_onb_def by auto        
       ultimately show " y * (cnj x * \<langle>b, b\<rangle>) +
     \<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
     cnj x * y + sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)" 
