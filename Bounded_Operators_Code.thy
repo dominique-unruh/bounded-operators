@@ -1339,9 +1339,62 @@ proof-
     thus ?case .      
   qed
 
-  have a2: "sum_list (map2 (\<lambda>x. (*) (cnj x)) (list_of_vec x)
-       (list_of_vec y)) = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
-    sorry
+  have "length (list_of_vec x) = length (list_of_vec y)"
+    by (simp add: assms)    
+  hence a2: "sum_list (map2 (\<lambda>x. (*) (cnj x)) (list_of_vec x) (list_of_vec y))
+         = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+  proof(induction "list_of_vec x" "list_of_vec y" arbitrary: x y rule: list_induct2)
+    case Nil
+    have "dim_vec x = 0"
+      by (metis Nil.hyps(1) length_list_of_vec list.size(3))
+    thus ?case by auto
+  next
+    case (Cons x' xs' y' ys')
+    have "sum_list (map2 (\<lambda>t. (*) (cnj t)) (list_of_vec x) (list_of_vec y)) =
+          sum_list (map2 (\<lambda>t. (*) (cnj t)) (x' # xs') (y' # ys'))"
+      by (simp add: Cons.hyps(3) Cons.hyps(4))
+    also have "\<dots> = (cnj x')*y' + sum_list (map2 (\<lambda>t. (*) (cnj t)) xs' ys')"
+      by auto     
+    also have "\<dots> = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+    proof-     
+      define a where "a = vec_of_list xs'"
+      define b where "b = vec_of_list ys'"
+      have xs'1: "xs' = list_of_vec a"
+        unfolding a_def
+        by (simp add: list_vec)
+      moreover have ys'1: "ys' = list_of_vec b"
+        unfolding b_def
+        by (simp add: list_vec)
+      ultimately have "sum_list (map2 (\<lambda>x. (*) (cnj x)) (list_of_vec a) (list_of_vec b)) =
+            (\<Sum>i = 0..<dim_vec a. cnj (vec_index a i) * (vec_index b i))"
+        using Cons.hyps(2) by blast        
+      hence h1: "(\<Sum>i = 0..<length xs'. cnj (xs' ! i) * ys' ! i) =
+                sum_list (map2 (\<lambda>t. (*) (cnj t)) xs' ys')"
+        using xs'1 ys'1
+        by (metis (no_types, lifting) a_def b_def length_list_of_vec sum.cong vec_of_list_index) 
+      have "(\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))
+          = (\<Sum>i = 0..<length (x'#xs'). cnj ((x'#xs')!i) * ((y'#ys')!i))"
+        by (metis (no_types, lifting) Cons.hyps(3) Cons.hyps(4) length_list_of_vec list_of_vec_index
+            sum.cong)
+      also have "\<dots> = (\<Sum>i = 0..<Suc (length xs'). cnj ((x'#xs')!i) * ((y'#ys')!i))"
+        by simp
+      also have "\<dots> = cnj ((x'#xs')!0) * ((y'#ys')!0) + (\<Sum>i = Suc 0..<Suc (length xs'). cnj ((x'#xs')!i) * ((y'#ys')!i))"
+        using sum.atLeast_Suc_lessThan by blast
+      also have "\<dots> = cnj x' * y' + (\<Sum>i = Suc 0..<Suc (length xs'). cnj ((x'#xs')!i) * ((y'#ys')!i))"
+        by simp
+      also have "\<dots> = cnj x' * y' + (\<Sum>i = 0..<(length xs'). cnj ((x'#xs')!(Suc i)) * ((y'#ys')!(Suc i)))"
+        by (metis (mono_tags, lifting) sum.cong sum.shift_bounds_Suc_ivl)
+      also have "\<dots> = cnj x' * y' + (\<Sum>i = 0..<(length xs'). cnj (xs'!i) * (ys'!i))"
+        by auto
+      also have "\<dots> = cnj x' * y' + sum_list (map2 (\<lambda>t. (*) (cnj t)) xs' ys')"
+        using h1 by simp
+      finally show ?thesis by auto
+    qed
+    finally have "sum_list (map2 (\<lambda>t. (*) (cnj t)) (list_of_vec x) (list_of_vec y)) =
+          (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+      by blast
+    thus ?case .
+  qed
 
 (* Maybe fake *)
   have a3: "length (list_of_vec y) = length (canonical_basis::'a list)"
