@@ -1179,8 +1179,9 @@ qed
 
 (* NEW *)
 lemma cinner_onb_enum_of_vec: 
-  assumes "dim_vec x = dim_vec y"
-  shows  "\<langle>onb_enum_of_vec x, onb_enum_of_vec y\<rangle> =  y \<bullet>c x"
+  assumes w1: "dim_vec x = dim_vec y" 
+    and w2: "dim_vec y = canonical_basis_length TYPE('a::onb_enum)"
+  shows  "\<langle>(onb_enum_of_vec::_\<Rightarrow> 'a) x, (onb_enum_of_vec::_\<Rightarrow> 'a) y\<rangle> =  y \<bullet>c x"
 proof-
   define B where "B = (canonical_basis::'a list)"
   have a0: "\<langle>onb_enum_of_vec_list B xs, onb_enum_of_vec_list B ys\<rangle> = 
@@ -1395,24 +1396,20 @@ proof-
       by blast
     thus ?case .
   qed
-
-(* Maybe fake *)
   have a3: "length (list_of_vec y) = length (canonical_basis::'a list)"
-    sorry
-
-  have a1: "\<langle>onb_enum_of_vec x, onb_enum_of_vec y :: 'a\<rangle> =
-    (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
+    by (simp add: canonical_basis_length_eq w2)    
+  have a1: "\<langle>onb_enum_of_vec_list B (list_of_vec x), onb_enum_of_vec_list B (list_of_vec y)\<rangle>
+          = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
     unfolding onb_enum_of_vec_def 
     apply (subst a0)
     using assms apply auto[1]
-    using a3 apply simp
-      apply (simp add: is_onb_set)
-     apply simp
-    using a2 .
-
-  show ?thesis
+    using B_def a3 apply auto[1]
+      apply (simp add: B_def is_onb_set)
+     apply (simp add: B_def)
+    by (simp add: a2)
+  thus ?thesis
     unfolding scalar_prod_def apply auto
-    by (simp add: a1 ordered_field_class.sign_simps(5))    
+    by (metis (no_types, lifting) B_def onb_enum_of_vec_def semiring_normalization_rules(7) sum.cong)        
 qed
 
 
@@ -1423,7 +1420,8 @@ definition norm_vec :: "complex vec \<Rightarrow> complex" where
 (* NEW *)
 lemma norm_vec_onb_enum_of_vec:
   fixes x::"complex vec"
-  shows "norm (onb_enum_of_vec x) = norm_vec x"
+  assumes a1: "dim_vec x = canonical_basis_length TYPE('a)"
+  shows "norm ((onb_enum_of_vec::_\<Rightarrow>'a::onb_enum) x) = norm_vec x"
 proof-
   have "(norm_vec x)^2 = norm (x \<bullet>c x)"
     by (metis Bounded_Operators_Code.norm_vec_def norm_eq_sqrt_cinner of_real_power power2_norm_eq_cinner real_sqrt_power)
@@ -1431,12 +1429,11 @@ proof-
     using complex_of_real_cmod by blast
   finally have a1: "(norm_vec x)^2 =  x \<bullet>c x"
     by blast
-  have "\<langle>onb_enum_of_vec x, onb_enum_of_vec x\<rangle> =  x \<bullet>c x"
-    using cinner_onb_enum_of_vec
-    by (simp add: cinner_onb_enum_of_vec)
-  hence a2: "(norm (onb_enum_of_vec x))^2 = x \<bullet>c x"
+  have "\<langle>(onb_enum_of_vec::_\<Rightarrow>'a) x, (onb_enum_of_vec::_\<Rightarrow>'a) x\<rangle> =  x \<bullet>c x"
+    using cinner_onb_enum_of_vec cinner_onb_enum_of_vec assms by blast    
+  hence a2: "(norm ((onb_enum_of_vec::_\<Rightarrow>'a) x))^2 = x \<bullet>c x"
     by (smt power2_norm_eq_cinner')   
-  have "(norm (onb_enum_of_vec x))^2 = (norm_vec x)^2"
+  have "(norm ((onb_enum_of_vec::_\<Rightarrow>'a) x))^2 = (norm_vec x)^2"
     using a1 a2
     by simp
   moreover have "norm (onb_enum_of_vec x) \<ge> 0"
