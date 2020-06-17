@@ -1420,8 +1420,8 @@ definition norm_vec :: "complex vec \<Rightarrow> complex" where
 (* NEW *)
 lemma norm_vec_onb_enum_of_vec:
   fixes x::"complex vec"
-  assumes a1: "dim_vec x = canonical_basis_length TYPE('a)"
-  shows "norm ((onb_enum_of_vec::_\<Rightarrow>'a::onb_enum) x) = norm_vec x"
+  assumes a1: "dim_vec x = canonical_basis_length TYPE('a::onb_enum)"
+  shows "norm ((onb_enum_of_vec::_\<Rightarrow>'a) x) = norm_vec x"
 proof-
   have "(norm_vec x)^2 = norm (x \<bullet>c x)"
     by (metis Bounded_Operators_Code.norm_vec_def norm_eq_sqrt_cinner of_real_power power2_norm_eq_cinner real_sqrt_power)
@@ -1448,7 +1448,181 @@ qed
 lemma norm_vec_vec_of_onb_enum:
   fixes x::"'a::onb_enum"
   shows "norm_vec (vec_of_onb_enum x) = norm x"
+proof-
+  define y where "y = vec_of_onb_enum x"
+  have a1: "dim_vec y = canonical_basis_length TYPE('a)"
+    unfolding y_def
+    by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list')    
+  have "x = onb_enum_of_vec y"
+    unfolding y_def
+    by (simp add: onb_enum_of_vec_inverse)
+  moreover have "norm ((onb_enum_of_vec::_\<Rightarrow>'a) y) = norm_vec y"
+    apply (rule norm_vec_onb_enum_of_vec[where x = y])
+    using a1.
+  ultimately show ?thesis unfolding y_def
+    by simp 
+qed
+
+(* NEW *)
+lemma norm_vec_0:
+  "norm_vec (0\<^sub>v n) = 0"
+  unfolding norm_vec_def by auto
+
+(* NEW *)
+lemma norm_vec_0':
+  assumes "norm_vec x = 0"
+  shows "x = 0\<^sub>v (dim_vec x)"
+proof-
+  have "(norm_vec x)^2 = 0"
+    using assms by simp
+  moreover have "(norm_vec x)^2 = x \<bullet>c x"
+    unfolding norm_vec_def
+    using Bounded_Operators_Code.norm_vec_def calculation by auto
+  ultimately have "x \<bullet>c x = 0"
+    by simp
+  thus ?thesis
+    using carrier_vec_dim_vec conjugate_square_eq_0_vec by blast 
+qed
+
+(* NEW *)
+lemma norm_vec_scalar:
+  "norm_vec (c \<cdot>\<^sub>v x) = norm c * norm_vec x"
+proof-
+  have "(c \<cdot>\<^sub>v x)\<bullet>c(c \<cdot>\<^sub>v x) = c * (x \<bullet>c (c \<cdot>\<^sub>v x))"
+    by simp
+  also have "\<dots> = c * (cnj c) * (x \<bullet>c x)"
+    by (simp add: conjugate_smult_vec)
+  also have "\<dots> =  (norm c)^2 *(x \<bullet>c x)"
+    using complex_norm_square by auto    
+  finally have "(c \<cdot>\<^sub>v x)\<bullet>c(c \<cdot>\<^sub>v x) = (norm c)^2 *(x \<bullet>c x)"
+    .
+  thus ?thesis 
+    unfolding norm_vec_def
+    by (smt norm_ge_zero norm_mult norm_of_real of_real_mult real_sqrt_abs real_sqrt_mult sum_power2_ge_zero)    
+qed
+
+(* NEW *)
+lemma norm_vec_geq0:
+  "norm_vec x \<ge> 0"
+  unfolding norm_vec_def by auto
+
+(* NEW *)
+lemma norm_vec_Real:
+  "norm_vec x \<in> \<real>"
+  using norm_vec_geq0 reals_zero_comparable_iff by auto
+
+(* NEWS *)
+lemma arithmeticgeometric_vec:
+  assumes "dim_vec x = dim_vec y"
+  shows"2 * Re (x \<bullet>c y) \<le> x \<bullet>c x + y \<bullet>c y"
+proof-
+  have "0 \<le> (x - y) \<bullet>c (x - y)"
+    by blast
+  also have "\<dots> = (x - y) \<bullet>c x + (x - y) \<bullet>c (-y)"
+    by (smt assms carrier_vecD carrier_vec_conjugate carrier_vec_dim_vec conjugate_add_vec 
+        index_minus_vec(2) index_uminus_vec(2) minus_add_uminus_vec scalar_prod_add_distrib)
+  also have "\<dots> = x \<bullet>c x + (-y) \<bullet>c x + x \<bullet>c (-y) + (-y) \<bullet>c (-y)"
+  proof-
+    have "(x - y) \<bullet>c x = x \<bullet>c x + (-y) \<bullet>c x"
+      by (metis (mono_tags, lifting) assms carrier_vec_dim_vec diff_minus_eq_add dim_vec_conjugate 
+          index_uminus_vec(2) minus_scalar_prod_distrib scalar_prod_uminus_left uminus_uminus_vec)      
+    moreover have "(x - y) \<bullet>c (-y) = x \<bullet>c (-y) + (-y) \<bullet>c (-y)"
+    proof -
+      have "x \<in> carrier_vec (dim_vec y)"
+        by (metis assms carrier_vec_dim_vec)
+      hence "(x - y) \<bullet>c - y = x \<bullet>c - y - y \<bullet>c - y"
+        by (simp add: minus_scalar_prod_distrib)
+      thus ?thesis
+        by simp
+    qed     
+    ultimately show ?thesis by simp
+  qed
+  also have "\<dots> = x \<bullet>c x - x \<bullet>c y - y \<bullet>c x + y \<bullet>c y"
+    by (smt ab_group_add_class.ab_diff_conv_add_uminus assms diff_minus_eq_add dim_vec_conjugate 
+        index_uminus_vec(2) scalar_prod_uminus_left scalar_prod_uminus_right 
+        semiring_normalization_rules(23) uminus_conjugate_vec)    
+  also have "\<dots> = x \<bullet>c x - 2 * Re (x \<bullet>c y) + y \<bullet>c y"
+  proof-
+    have "y \<bullet>c x = cnj (x \<bullet>c y)"
+      using assms carrier_vec_dim_vec conjugate_complex_def  
+        conjugate_vec_sprod_comm
+      by (metis complex_cnj_complex_of_real vec_conjugate_real)
+    hence "x \<bullet>c y + y \<bullet>c x = x \<bullet>c y + cnj (x \<bullet>c y)"
+      by simp
+    hence "x \<bullet>c y + y \<bullet>c x = 2 * Re (x \<bullet>c y)"
+      by (simp add: complex_add_cnj)     
+    thus ?thesis
+      by (simp add: diff_diff_add) 
+  qed
+  finally have "0 \<le> x \<bullet>c x - 2 * Re (x \<bullet>c y) + y \<bullet>c y"
+    by simp
+  thus ?thesis
+    by (simp add: diff_add_eq)
+qed
+
+(* NEW *)
+lemma Cauchy_Schwarz:
+  assumes "dim_vec x = dim_vec y"
+  shows "Re (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
   sorry
+
+(* NEW *)
+lemma norm_vec_triangular:
+  assumes "dim_vec x = dim_vec y"
+  shows "norm_vec (x + y) \<le> norm_vec x + norm_vec y"
+proof-
+  have "(complex_of_real (sqrt (cmod ((x + y) \<bullet>c (x + y)))))\<^sup>2 = (x + y) \<bullet>c (x + y)"
+    by (metis complex_of_real_cmod conjugate_square_ge_0_vec norm_ge_zero of_real_sqrt power2_csqrt)
+  also have "\<dots> = (x + y) \<bullet>c x +  (x + y) \<bullet>c y"
+    by (smt add_scalar_prod_distrib assms carrier_vec_dim_vec conjugate_add_vec 
+        conjugate_vec_sprod_comm dim_vec_conjugate index_add_vec(2))    
+  also have "\<dots> = x \<bullet>c x + y \<bullet>c x + x \<bullet>c y + y \<bullet>c y"
+    by (smt add_scalar_prod_distrib assms carrier_vec_dim_vec dim_vec_conjugate 
+        semiring_normalization_rules(25))
+  also have "\<dots> = x \<bullet>c x + cnj (x \<bullet>c y) + x \<bullet>c y + y \<bullet>c y"
+    by (metis assms carrier_vec_dim_vec conjugate_complex_def conjugate_conjugate_sprod 
+        conjugate_vec_sprod_comm)
+  also have "\<dots> = x \<bullet>c x + 2 * Re (x \<bullet>c y) + y \<bullet>c y"
+    by (simp add: complex_add_cnj linordered_field_class.sign_simps(2))
+  also have "\<dots> \<le> x \<bullet>c x + 2 * sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y)) + y \<bullet>c y"
+  proof-
+    have "Re (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
+      using Cauchy_Schwarz assms by blast
+    thus ?thesis by simp
+  qed
+  also have "\<dots> \<le> (sqrt (norm (x \<bullet>c x)))^2 + 2 * sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y)) + (sqrt (norm (y \<bullet>c y)))^2"
+  proof-
+    have "(sqrt (norm (x \<bullet>c x)))^2 = x \<bullet>c x"
+      by (metis abs_norm_cancel complex_of_real_cmod conjugate_square_ge_0_vec real_sqrt_abs 
+          real_sqrt_power)      
+    moreover have "(sqrt (norm (y \<bullet>c y)))^2 = y \<bullet>c y"
+      by (metis abs_norm_cancel complex_of_real_cmod conjugate_square_ge_0_vec real_sqrt_abs 
+          real_sqrt_power)
+    ultimately show ?thesis by simp
+  qed
+  also have "\<dots> = (complex_of_real (sqrt (cmod (x \<bullet>c x))) + complex_of_real (sqrt (cmod (y \<bullet>c y))))\<^sup>2"
+  proof -
+    have f1: "\<And>r s. (r::real)\<^sup>2 + (s\<^sup>2 + 2 * r * s) = (r + s)\<^sup>2"
+      by (metis (no_types) power2_sum semiring_normalization_rules(25))
+    have "\<And>r s t. (r::real) + s + t = s + (r + t)"
+      by linarith
+    thus ?thesis
+      using f1 by (metis (no_types) of_real_add of_real_power semiring_normalization_rules(24) 
+          semiring_normalization_rules(25))
+  qed       
+  finally have "(complex_of_real (sqrt (cmod ((x + y) \<bullet>c (x + y)))))\<^sup>2
+    \<le> (complex_of_real (sqrt (cmod (x \<bullet>c x))) + complex_of_real (sqrt (cmod (y \<bullet>c y))))\<^sup>2"
+    by simp
+  hence "(norm_vec (x + y))^2 \<le> (norm_vec x + norm_vec y)^2"
+    unfolding norm_vec_def.
+  moreover have "norm_vec (x + y) \<ge> 0"
+    using norm_vec_geq0 by blast     
+  moreover have "norm_vec x + norm_vec y \<ge> 0"
+    using norm_vec_geq0 by auto    
+  ultimately show ?thesis     
+    using power2_le_imp_le
+    by auto
+qed
 
 (* NEW *)
 lemma norm_vec_mat:
