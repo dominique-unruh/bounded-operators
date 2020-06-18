@@ -1560,11 +1560,171 @@ proof-
     by (simp add: diff_add_eq)
 qed
 
+
+
 (* NEW *)
-lemma Cauchy_Schwarz:
-  assumes "dim_vec x = dim_vec y"
-  shows "Re (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
-  sorry
+(* TODO: move *)
+lemma Cauchy_Schwarz_sum_abs:
+  fixes x y :: "complex list"
+  assumes a1: "length x = n" and a2: "length y = n"
+  shows "cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)) \<le> 
+   sqrt (cmod (\<Sum>i = 0..<n. x!i * cnj (x!i)))
+ * sqrt (cmod (\<Sum>i = 0..<n. y!i * cnj (y!i)))"
+proof-
+  have "(2::complex)*(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+                    x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j) = 
+      (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)
+     +(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    using mult_2 by blast
+  also have "\<dots> = 
+      (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!j * (cnj (x!j)) * y!i * (cnj (y!i)) - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i)
+     +(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+  proof-
+    have "(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!j * (cnj (x!j)) * y!i * (cnj (y!i)) - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i)
+     =(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+      sorry (* interchange of j and i *)
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = 
+      (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+           x!j * (cnj (x!j)) * y!i * (cnj (y!i)) - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i
+      +x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    sorry
+  also have "\<dots> =  (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2 )"
+    sorry
+  finally have w1: "(2::complex)*(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j) =
+   (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2 )"
+    .
+  have "(cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 = 
+            (\<Sum>i = 0..<n. x!i * cnj (y!i)) * cnj (\<Sum>j = 0..<n. x!j * cnj (y!j))"
+    using complex_norm_square by blast
+  also have "\<dots> = (\<Sum>i = 0..<n. x!i * cnj (y!i)) * (\<Sum>j = 0..<n. cnj (x!j * cnj (y!j)))"
+    by auto
+  also have "\<dots> = (\<Sum>i = 0..<n. x!i * cnj (y!i)) * (\<Sum>j = 0..<n. (cnj (x!j)) * y!j)"
+    by auto
+  also have "\<dots> = (\<Sum>j = 0..<n. (\<Sum>i = 0..<n. x!i * cnj (y!i)) * (cnj (x!j)) * y!j)"
+    by (simp add: mult_hom.hom_sum vector_space_over_itself.scale_scale)
+  also have "\<dots> = (\<Sum>j = 0..<n. (\<Sum>i = 0..<n. x!i * (cnj (y!i)) * (cnj (x!j)) * y!j))"
+    by (simp add: vector_space_over_itself.scale_sum_left)
+  also have "\<dots> = (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    by (simp add: sum.cartesian_product)
+  finally have c1: "(cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 = 
+                 (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    by blast
+
+  have "(\<Sum>i = 0..<n. x!i * cnj (x!i)) * (\<Sum>j = 0..<n. y!j * cnj (y!j))
+     =  (\<Sum>j = 0..<n. (\<Sum>i = 0..<n. x!i * cnj (x!i)) * y!j * cnj (y!j))"
+  proof -
+    have "(\<Sum>i = 0..<n. (\<Sum>j = 0..<n. x ! j * cnj (x ! j)) * y ! i * cnj (y ! i))
+        = (\<Sum>i = 0..<n. (\<Sum>j = 0..<n. x ! j * cnj (x ! j)) * (y ! i * cnj (y ! i)))"
+      by (metis (no_types) vector_space_over_itself.scale_scale)
+    thus ?thesis by (metis (no_types) mult_hom.hom_sum)
+  qed
+  also have "\<dots> =  (\<Sum>j = 0..<n. (\<Sum>i = 0..<n. x!i * cnj (x!i) * y!j * cnj (y!j)))"
+    by (simp add: vector_space_over_itself.scale_sum_left)
+  also have "\<dots> =  (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * cnj (x!i) * y!j * cnj (y!j))"
+    by (simp add: sum.cartesian_product)
+  finally have c2: "(\<Sum>i = 0..<n. x!i * cnj (x!i)) * (\<Sum>j = 0..<n. y!j * cnj (y!j))
+              = (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (x!i)) * y!j * (cnj (y!j)))"
+    by blast
+
+  have "(\<Sum>i = 0..<n. x!i * cnj (x!i)) * (\<Sum>i = 0..<n. y!i * cnj (y!i))
+       - (cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 =
+   (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (x!i)) * y!j * (cnj (y!j)))
+-  (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    using c1 c2 by simp
+  also have "\<dots> =  (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      x!i * (cnj (x!i)) * y!j * (cnj (y!j)) - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+  proof-
+    have h1: "(\<Sum>(j, i)\<in>{0..<n} \<times> {0..<n}.f (j, i)) -
+    (\<Sum>(j, i)\<in>{0..<n} \<times> {0..<n}. g (j, i)) =
+    (\<Sum>(j, i)\<in>{0..<n} \<times> {0..<n}. f (j, i) - g (j, i))" for f g::"nat\<times>nat \<Rightarrow> complex"
+      by (smt SigmaE case_prod_conv sum.cong sum_subtractf)      
+    show ?thesis using h1[where f = "\<lambda>(j, i). x!i * (cnj (x!i)) * y!j * (cnj (y!j))"
+          and g = "\<lambda>(j,i). x!i * (cnj (y!i)) * (cnj (x!j)) * y!j"]
+      by auto
+  qed
+  also have "\<dots> = (inverse 2::complex)* (\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2 )"
+    using w1
+    by (metis (no_types, lifting) divide_complex_def nonzero_mult_div_cancel_left 
+        semiring_normalization_rules(7) zero_neq_numeral)    
+  also have "\<dots> \<ge> 0"
+  proof-
+    have "(j, i)\<in>{0..<n}\<times>{0..<n} \<Longrightarrow> (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2 \<ge> 0"
+      for j i
+      by simp   
+    hence "(\<Sum>(j, i)\<in>{0..<n}\<times>{0..<n}. 
+      (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2 ) \<ge> 0"
+      using Groups_Big.ordered_comm_monoid_add_class.sum_nonneg[where A = "{0..<n}\<times>{0..<n}" 
+          and f = "\<lambda> (j, i). (cmod ( x!i * cnj (y!j) - x!j * cnj (y!i) ))^2"]
+      by auto
+    thus ?thesis 
+      by auto
+  qed
+  finally have "(\<Sum>i = 0..<n. x!i * cnj (x!i)) * (\<Sum>i = 0..<n. y!i * cnj (y!i))
+       - (cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 \<ge> 0"
+    by blast
+  hence "(cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 \<le> 
+   (\<Sum>i = 0..<n. x!i * cnj (x!i)) * (\<Sum>i = 0..<n. y!i * cnj (y!i))"
+    by simp
+  moreover have "(\<Sum>i = 0..<n. x!i * cnj (x!i)) \<ge> 0"
+    by (simp add: sum_nonneg)    
+  moreover have "(\<Sum>i = 0..<n. y!i * cnj (y!i)) \<ge> 0"
+    by (simp add: sum_nonneg)
+  ultimately have b1: "(cmod (\<Sum>i = 0..<n. x!i * cnj (y!i)))^2 \<le> 
+   cmod (\<Sum>i = 0..<n. x!i * cnj (x!i)) * cmod (\<Sum>i = 0..<n. y!i * cnj (y!i))"
+    by (metis (no_types, lifting) complex_of_real_cmod complex_of_real_mono_iff of_real_mult)    
+  thus ?thesis
+    by (metis (lifting) b1 real_le_rsqrt real_sqrt_mult)
+qed
+
+(* NEW *)
+lemma Cauchy_Schwarz_vec:
+  assumes a1: "dim_vec x = dim_vec y"
+  shows "cmod (x \<bullet>c y) \<le> sqrt (cmod (x \<bullet>c x) ) * sqrt (cmod (y \<bullet>c y))"
+proof-
+  define n where "n = dim_vec y"
+  have n_def': "n = dim_vec x"
+    unfolding n_def using a1 by simp
+
+  have "x \<bullet>c y = (\<Sum>i = 0..<n. (vec_index x i) * cnj (vec_index y i))"
+    unfolding n_def
+    using scalar_prod_def[where v = x and w = "conjugate y"] 
+    by simp
+  moreover have "x \<bullet>c x = (\<Sum>i = 0..<n. (vec_index x i) * cnj (vec_index x i))"
+    unfolding n_def'
+    using scalar_prod_def[where v = x and w = "conjugate x"] 
+    by simp
+  moreover have "y \<bullet>c y = (\<Sum>i = 0..<n. (vec_index y i) * cnj (vec_index y i))"
+    unfolding n_def
+    using scalar_prod_def[where v = y and w = "conjugate y"] 
+    by simp
+  moreover have "cmod (\<Sum>i = 0..<n. (vec_index x i) * cnj (vec_index y i)) \<le> 
+    sqrt (cmod (\<Sum>i = 0..<n. (vec_index x i) * cnj (vec_index x i)))
+  * sqrt (cmod (\<Sum>i = 0..<n. (vec_index y i) * cnj (vec_index y i)))"
+  proof-
+    define u where "u = list_of_vec x"
+    define v where "v = list_of_vec y"
+    have "length u = n"
+      by (simp add: n_def' u_def)      
+    moreover have "length v = n"
+      using n_def v_def by auto      
+    ultimately show ?thesis
+      using Cauchy_Schwarz_sum_abs[where x = u and y = v]
+      unfolding u_def v_def by simp      
+  qed
+  ultimately show ?thesis by simp
+qed
 
 (* NEW *)
 lemma norm_vec_triangular:
@@ -1586,8 +1746,10 @@ proof-
     by (simp add: complex_add_cnj linordered_field_class.sign_simps(2))
   also have "\<dots> \<le> x \<bullet>c x + 2 * sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y)) + y \<bullet>c y"
   proof-
-    have "Re (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
-      using Cauchy_Schwarz assms by blast
+    have "norm (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
+      using Cauchy_Schwarz_vec assms by blast
+    hence "Re (x \<bullet>c y) \<le> sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y))"
+      using complex_Re_le_cmod dual_order.trans by blast 
     thus ?thesis by simp
   qed
   also have "\<dots> \<le> (sqrt (norm (x \<bullet>c x)))^2 + 2 * sqrt (norm (x \<bullet>c x) ) * sqrt (norm (y \<bullet>c y)) + (sqrt (norm (y \<bullet>c y)))^2"
