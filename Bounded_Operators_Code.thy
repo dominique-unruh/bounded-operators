@@ -1609,7 +1609,6 @@ proof-
   finally have c2: "(cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2 
               = (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. x!i * cnj (y!i) * (cnj (x!j)) * y!j)"
     .
-
   have "(\<Sum>i = 0..<n. x!i * cnj (x!i))*(\<Sum>j = 0..<n. y!j * cnj (y!j))
        - (cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2
       = (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. x!i * (cnj (x!i)) * y!j * (cnj (y!j)))
@@ -1636,75 +1635,224 @@ proof-
    x!i * (cnj (x!i)) * y!j * (cnj (y!j))
  - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )"
     .
-
-  have "2*((\<Sum>i = 0..<n. x!i * cnj (x!i))*(\<Sum>j = 0..<n. y!j * cnj (y!j))
-       - (cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2)
-= (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )
-+ (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )"
-    using c3 by auto
-  also  have "\<dots>= (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )
-+ (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i  )"
-  proof-
-    define f where "f = (\<lambda>(i,j). x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
-    have "(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. f(i,j)) = 
-          (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. f(j,i))"
-      sorry
-    hence "(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )
-        = (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i  )"
-      unfolding f_def by simp
-    thus ?thesis by simp
-  qed
-  also  have "\<dots>= (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
-   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  
- + x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i  )"
-  proof-
-    define g where "g = (\<lambda>(i,j). x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
-    define h where "h = (\<lambda>(i,j). x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i)"
-    have "(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. g (i,j) )
-        + (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. h (i,j) )
-       = (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. g (i,j) + h (i, j) )"
-      using Groups_Big.comm_monoid_add_class.sum.distrib[where A = "{0..<n}\<times>{0..<n}" 
-          and g = g and h = h] by auto          
-    thus ?thesis 
-      unfolding g_def h_def
-      apply auto
-      by (simp add: add_diff_eq)
-  qed
-  also  have "\<dots>= (\<Sum>(i, j)\<in>{0..<n} \<times> {0..<n}.
-        (cmod (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)))\<^sup>2)"
+  have "(cmod (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)))\<^sup>2
+    = x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i)"
+    for i j
   proof-
     have "(cmod (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)))\<^sup>2
-        =  x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  
- + x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i" for i j
-      sorry
-    hence "(\<lambda>(i,j). x!i * (cnj (x!i)) * y!j * (cnj (y!j))
- - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  
- + x!j * (cnj (x!j)) * y!i * (cnj (y!i))
- - x!j * (cnj (y!j)) * (cnj (x!i)) * y!i) = 
-(\<lambda>(i,j). (cmod (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)))\<^sup>2)"
-      by auto
-    thus ?thesis by auto
+    = (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)) * cnj (x ! i * cnj (y ! j) - x ! j * cnj (y ! i))"
+      using complex_norm_square by auto
+    also have "\<dots>
+    = (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)) * (cnj (x ! i) * (y ! j) - cnj (x ! j) * (y ! i))"
+      by simp
+    also have "\<dots>
+    = x ! i * cnj (y ! j)  * (cnj (x ! i) * (y ! j) - cnj (x ! j) * (y ! i))
+    - x ! j * cnj (y ! i)  * (cnj (x ! i) * (y ! j) - cnj (x ! j) * (y ! i))"
+      by (simp add: linordered_field_class.sign_simps(20))
+    also have "\<dots>
+    = x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j) - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i)  * (cnj (x ! i) * (y ! j) - cnj (x ! j) * (y ! i))"
+      by (simp add: linordered_field_class.sign_simps(19) linordered_field_class.sign_simps(4))
+    also have "\<dots>
+    = x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i)"
+      by (simp add: right_diff_distrib')
+    finally show ?thesis .
   qed
-  finally show ?thesis .
+  hence "(\<lambda>(i,j). (cmod (x ! i * cnj (y ! j) - x ! j * cnj (y ! i)))\<^sup>2 )
+    =(\<lambda>(i,j). x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+    by auto
+  hence c4: "(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  (cmod( x!i * (cnj (y!j)) - x!j * (cnj (y!i)) ))^2 )
+         = (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  
+      x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+    by (smt of_real_hom.hom_sum sum.cong)
+
+  have "2*((\<Sum>i = 0..<n. x!i * cnj (x!i))*(\<Sum>j = 0..<n. y!j * cnj (y!j))
+       - (cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2) -
+         (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  (cmod( x!i * (cnj (y!j)) - x!j * (cnj (y!i)) ))^2 ) = 
+   2 * (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )
+ - (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  
+      x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+    using c3 c4 
+    by simp
+  also have "\<dots> = 
+   (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+    x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+ +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+ -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i 
+ )
+ - (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  
+      x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+    - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+    - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+    + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+  proof-
+    define f where "f = (\<lambda> (i,j). x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+                       - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j)"
+    have "2 * (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. f (i,j)) = 
+        (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  2*f (i,j))"
+      using Cartesian_Space.vector_space_over_itself.scale_sum_right
+        [where A = "{0..<n}\<times>{0..<n}" and a = 2 and f = f]
+      by auto
+    moreover have "2 * (x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+                 - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j )
+=  2 * x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ - 2 * x!i * (cnj (y!i)) * (cnj (x!j)) * y!j"
+      for i j
+      by auto
+    ultimately have "2 * (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+   x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ - x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  ) = 
+  (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+   2 * x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ - 2 * x!i * (cnj (y!i)) * (cnj (x!j)) * y!j  )"
+      unfolding f_def apply auto
+      by (simp add: mult.commute mult.left_commute)
+    thus ?thesis sorry  (* Ask to Dominique *)
+  qed
+  also have "\<dots> = 
+   (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+      ( x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+     -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+     +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+     -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i  ) 
+   - ( x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+     - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+     - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+     + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) ) )"
+  proof-
+    define f where "f = (\<lambda>(i,j). x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+ -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+ +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+ -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i )"
+    define g where "g = (\<lambda>(i,j). x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+     - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+     - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+     + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+    have "(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. f (i,j) - g (i,j)) = 
+          (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. f (i,j))
+        - (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. g (i,j))"
+      using Groups_Big.sum_subtractf[where A = "{0..<n}\<times>{0..<n}" and f = f and g = g]
+      by simp
+    thus ?thesis unfolding f_def g_def by auto
+  qed
+  also have "\<dots> = 
+   (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+        x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+     -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+     +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+     -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i   
+     - x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+     + x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+     + x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+     - x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) )"
+  proof-
+    have " 
+      ( x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+     -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+     +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+     -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i  ) 
+   - ( x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+     - x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+     - x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+     + x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i) ) = 
+     x!i * (cnj (x!i)) * y!j * (cnj (y!j))
+     -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+     +  x!j * (cnj (x!j)) * y!i * (cnj (y!i))
+     -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i   
+     - x ! i * cnj (y ! j) * cnj (x ! i) * (y ! j)
+     + x ! i * cnj (y ! j) * cnj (x ! j) * (y ! i)
+     + x ! j * cnj (y ! i) * cnj (x ! i) * (y ! j)
+     - x ! j * cnj (y ! i) * cnj (x ! j) * (y ! i)"
+      for i j
+      by auto
+    thus ?thesis
+      by meson 
+  qed
+  also have "\<dots> = 
+   (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}. 
+      (x!i * cnj (x!j) - x!j * cnj (x!i))
+    * (y!i * cnj (y!j) - y!j * cnj (y!i)))"
+  proof-
+    have "x!i * (cnj (x!i)) * y!j         * (cnj (y!j))
+       -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+       +  x!j * (cnj (x!j)) * y!i         * (cnj (y!i))
+       -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i   
+       -  x!i * (cnj (y!j)) * (cnj (x!i)) * y!j
+       +  x!i * (cnj (y!j)) * (cnj (x!j)) * y!i
+       +  x!j * (cnj (y!i)) * (cnj (x!i)) * y!j
+       -  x!j * (cnj (y!i)) * (cnj (x!j)) * y!i = 
+      (x!i * cnj (x!j) - x!j * cnj (x!i))
+    * (y!i * cnj (y!j) - y!j * cnj (y!i))"
+      for i j
+    proof-
+      have "x!i * (cnj (x!i)) * y!j         * (cnj (y!j))
+       -  x!i * (cnj (y!i)) * (cnj (x!j)) * y!j 
+       +  x!j * (cnj (x!j)) * y!i         * (cnj (y!i))
+       -  x!j * (cnj (y!j)) * (cnj (x!i)) * y!i   
+       -  x!i * (cnj (y!j)) * (cnj (x!i)) * y!j
+       +  x!i * (cnj (y!j)) * (cnj (x!j)) * y!i
+       +  x!j * (cnj (y!i)) * (cnj (x!i)) * y!j
+       -  x!j * (cnj (y!i)) * (cnj (x!j)) * y!i 
+      = 
+          x!i * (cnj (x!i)) * (cnj (y!j))  * y!j              
+       -  x!i * (cnj (x!j)) * (cnj (y!i))  * y!j 
+       +  x!j * (cnj (x!j)) * (cnj (y!i))  * y!i          
+       -  x!j * (cnj (y!j)) * (cnj (x!i))  * y!i   
+       -  x!i * (cnj (x!i)) * (cnj (y!j))  * y!j
+       +  x!i * (cnj (x!j)) * (cnj (y!j))  * y!i
+       +  x!j * (cnj (x!i)) * (cnj (y!i))  * y!j
+       -  x!j * (cnj (x!j)) * (cnj (y!i))  * y!i"
+        by auto
+      also have "\<dots> = 
+    x ! i * cnj (x ! j) * cnj (y ! j) * y ! i 
+  + x ! j * cnj (x ! i) * cnj (y ! i) * y ! j 
+  - x ! i * cnj (x ! j) * cnj (y ! i) * y ! j 
+  - x ! j * cnj (x ! i) * cnj (y ! j) * y ! i"
+        by simp
+      also have "\<dots> = 
+    (  x ! i * cnj (x ! j) * cnj (y ! j) * y ! i 
+     - x ! i * cnj (x ! j) * cnj (y ! i) * y ! j) 
+  - (  x ! j * cnj (x ! i) * cnj (y ! j) * y ! i
+     - x ! j * cnj (x ! i) * cnj (y ! i) * y ! j )"
+        by simp
+      also have "\<dots> =  x ! i * cnj (x ! j) * (cnj (y ! j) * y ! i -  cnj (y ! i) * y ! j) 
+    - x ! j * cnj (x ! i) * (cnj (y ! j) * y ! i -  cnj (y ! i) * y ! j )"
+        by (simp add: ab_semigroup_mult_class.mult_ac(1) right_diff_distrib)
+      also have "\<dots> = (x!i * cnj (x!j) - x!j * cnj (x!i)) * (cnj (y!j) * y!i -  cnj (y!i) * y!j)"
+        by (simp add: left_diff_distrib)        
+      also have "\<dots> = (x!i * cnj (x!j) - x!j * cnj (x!i))
+    * (y!i * cnj (y!j) - y!j * cnj (y!i))"
+        by auto
+      finally show 
+        ?thesis by auto
+    qed
+    thus ?thesis by meson 
+  qed
+  also have "\<dots> = 0"
+    sorry (* Ask to Dominique *)
+  finally have "2*((\<Sum>i = 0..<n. x!i * cnj (x!i))*(\<Sum>j = 0..<n. y!j * cnj (y!j))
+       - (cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2) -
+ (\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  (cmod( x!i * (cnj (y!j)) - x!j * (cnj (y!i)) ))^2 ) = 0"
+    .
+  thus ?thesis by simp  
 qed
 
 (* NEW *)
@@ -1716,7 +1864,7 @@ lemma Lagrange_identity_squares:
        - (cmod (\<Sum>k = 0..<n. x!k * cnj (y!k)))^2 = 
  (inverse 2::complex)*(\<Sum>(i,j)\<in>{0..<n}\<times>{0..<n}.  (cmod( x!i * (cnj (y!j)) - x!j * (cnj (y!i)) ))^2 )"
   sorry
-  
+
 (* NEW *)
 (* TODO: move *)
 lemma Cauchy_Schwarz_sum_abs:
