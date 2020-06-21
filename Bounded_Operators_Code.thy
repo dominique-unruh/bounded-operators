@@ -664,13 +664,13 @@ lemma onb_enum_of_vec_inverse:
   qed
    apply simp
   by simp
-  
+
 (* NEW *)
 lemma uniq_linear_expansion_sum_list_zero:
   fixes f::"'a::basis_enum \<Rightarrow> complex"
   defines  "basis == (canonical_basis::'a list)"
   assumes h0: "sum_list (map2 (*\<^sub>C) (map f basis) basis) = 0"
-      and h1: "b \<in> set basis"
+    and h1: "b \<in> set basis"
   shows "f b = 0"
 proof-
   have a1: "distinct basis"
@@ -708,7 +708,7 @@ proof-
           complex_vector_eq_affinity)
     hence "complex_vector.dependent (set basis)"
       using complex_vector.dependent_def[where P = "set basis"]
-       h1 by blast
+        h1 by blast
     moreover have "complex_vector.independent (set basis)"
       using is_basis_set unfolding basis_def is_basis_def
       by blast       
@@ -730,7 +730,7 @@ lemma uniq_linear_expansion_sum_list:
   defines  "basis == (canonical_basis::'a list)"
   assumes h0: "sum_list (map2 (*\<^sub>C) (map f basis) basis)
              = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
-      and h1: "b \<in> set basis"
+    and h1: "b \<in> set basis"
   shows "f b = g b"
 proof-
   have a1: "sum_list (map2 (*\<^sub>C) (map f basis) basis)
@@ -762,16 +762,17 @@ qed
 
 lemma vec_of_onb_enum_inverse[simp]:
   fixes v::"complex vec"
-  assumes f1: "dim_vec v = canonical_basis_length TYPE('a::onb_enum)"
+  defines "n == canonical_basis_length TYPE('a::onb_enum)"
+  assumes f1: "dim_vec v = n"
   shows "vec_of_onb_enum ((onb_enum_of_vec v)::'a) = v"
-proof- (* TODO: rewrite the proof using sum_list *)
+proof- 
   define w where "w = list_of_vec v"
   define basis where "basis = (canonical_basis::'a list)"
   have length_w: "length w = dim_vec v"
     using f1 unfolding w_def
     by simp 
   hence length_basis: "length basis = length w"
-    by (simp add: basis_def canonical_basis_length_eq f1)    
+    by (simp add: basis_def canonical_basis_length_eq f1 n_def)    
   have "map (complex_vector.representation (set basis) (onb_enum_of_vec_list basis w)) basis = w"
   proof-
     have "i < length basis \<Longrightarrow> 
@@ -780,7 +781,7 @@ proof- (* TODO: rewrite the proof using sum_list *)
     proof-
       assume h1: "i < length basis"
       have h2: "complex_independent (set basis)"
-        using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by blast        
+        using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by blast
       have h3: "onb_enum_of_vec_list basis w \<in> Complex_Vector_Spaces.span (set basis)"
       proof-
         have "Complex_Vector_Spaces.span (set basis) = 
@@ -805,7 +806,6 @@ proof- (* TODO: rewrite the proof using sum_list *)
         using is_basis_set complex_vector.representation_def 
         by (smt Collect_cong \<open>f \<equiv> Complex_Vector_Spaces.representation (set basis) 
         (onb_enum_of_vec_list basis w)\<close> complex_vector.sum_nonzero_representation_eq h2 h3 sum.cong) 
-
       have h7: "distinct basis"
         by (simp add: basis_def)
       have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
@@ -813,27 +813,53 @@ proof- (* TODO: rewrite the proof using sum_list *)
       also have "\<dots> = sum_list (map (\<lambda>x. f x *\<^sub>C x) basis)"
         using Groups_List.monoid_add_class.sum_list_distinct_conv_sum_set
         by (simp add: sum_list_distinct_conv_sum_set h7)        
-      also have "\<dots> = (\<Sum>i = 0..< length basis. f (basis!i) *\<^sub>C (basis!i))"
-        by (metis (mono_tags, lifting) list_sum_function sum.cong)        
-      finally have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>i = 0..< length basis. f (basis!i) *\<^sub>C (basis!i))"
-        by auto
-      hence "(\<Sum>i = 0..< length basis. f (basis!i) *\<^sub>C (basis!i)) = onb_enum_of_vec_list basis w"
-        by (simp add: h6) 
-      also have "onb_enum_of_vec_list basis w = (\<Sum>i = 0..<length basis. (w!i) *\<^sub>C (basis!i))"
-        using Bounded_Operators_Code.onb_enum_of_vec_expansion[where S = basis and L = w]
-          length_basis
-        using h7 by blast 
-      finally have "(\<Sum>i = 0..<length basis. f (basis!i) *\<^sub>C (basis!i))
-                  = (\<Sum>i = 0..<length basis. (w!i) *\<^sub>C (basis!i))"
+      also have "\<dots> = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
+        by simp
+      finally have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
+        by (simp add: \<open>(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)\<close> 
+            \<open>(\<Sum>v\<in>set basis. f v *\<^sub>C v) = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x)\<close>)
+      define g where "g b = w!(SOME i::nat. i < n \<and> basis!i = b)" for b
+      have e1: "i < n \<Longrightarrow>  w!i = g (basis!i)" for i
+        unfolding g_def
+        by (smt basis_def canonical_basis_length_eq distinct_Ex1 f1 h1 h7 le_neq_implies_less length_basis length_list_of_vec less_not_refl mem_Collect_eq nth_mem set_conv_nth someI_ex sup.strict_order_iff sup_ge2 w_def) 
+      have "sum_list (map2 (*\<^sub>C) (map f basis) basis)
+            = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
+        by (metis (mono_tags, lifting) basis_def distinct_canonical_basis list.map_ident 
+            map2_map_map sum.cong sum_list_distinct_conv_sum_set)        
+      also have "(\<Sum>b\<leftarrow>basis. f b *\<^sub>C b) 
+            = onb_enum_of_vec_list basis w"
+        using \<open>(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)\<close> h6 by auto
+      also have "\<dots> = sum_list (map2 (*\<^sub>C) w basis)"
+        by (simp add: onb_enum_of_vec_list_def')      
+      also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. w!i *\<^sub>C (basis!i))"
+        by (smt basis_def canonical_basis_length_eq f1 length_w map2_map_map map_eq_conv map_nth n_def)
+      also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. g (basis!i) *\<^sub>C (basis!i))"
+      proof-
+        have "i < n \<Longrightarrow>  w!i *\<^sub>C (basis!i) = g (basis!i) *\<^sub>C (basis!i)" for i
+          using e1
+          by simp 
+        hence "(\<Sum>i=0..<n. w ! i *\<^sub>C basis ! i) =
+               (\<Sum>i=0..<n. g (basis ! i) *\<^sub>C basis ! i)"
+          by (meson sum.ivl_cong)
+        thus ?thesis
+          by (metis (no_types, lifting) atLeastLessThan_upt interv_sum_list_conv_sum_set_nat)
+      qed
+      also have "\<dots> = (\<Sum>b\<leftarrow>basis. g b *\<^sub>C b)"
+        unfolding n_def basis_def
+        by (smt canonical_basis_length_eq length_map map_nth nth_equalityI nth_map) 
+      also have "\<dots> = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
+        by (metis (no_types) map2_map_map map_ident)
+      finally have "sum_list (map2 (*\<^sub>C) (map f basis) basis)
+                  = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
         by blast
+      hence "f (basis!i) = g (basis!i)"
+        using basis_def h1 nth_mem uniq_linear_expansion_sum_list by blast        
       hence "f (basis!i) = w!i"
-        (*         using uniq_linear_expansion[where f = "\<lambda>i. f (basis ! i)" and g = "\<lambda>i. w!i"]
-          basis_def h1 by blast *)
-        sorry
+        using e1 f1 h1 length_basis length_w by auto        
       thus ?thesis unfolding f_def.
     qed
     thus ?thesis 
-      by (smt basis_def canonical_basis_length_eq f1 length_map length_w nth_equalityI nth_map)
+      by (smt length_basis length_map nth_equalityI nth_map)
   qed
   thus ?thesis
     unfolding basis_def
