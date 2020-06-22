@@ -1397,6 +1397,153 @@ proof-
     by (metis (no_types, lifting) B_def onb_enum_of_vec_def semiring_normalization_rules(7) sum.cong)        
 qed
 
+(* NEW *)
+lemma Cauchy_Schwarz_real:
+  fixes a b :: "'a \<Rightarrow> real"
+  assumes "finite X"
+  shows
+    "norm (\<Sum>t\<in>X. a t * b t) \<le> sqrt (\<Sum>t\<in>X. (a t)\<^sup>2) * sqrt (\<Sum>t\<in>X. (b t)\<^sup>2)"
+  sorry
+
+(* NEW *)
+(* TODO: move to near the definition of onb_enum *)
+lemma clinear_cbounded_linear_onb_enum: 
+  fixes f::"'a::onb_enum \<Rightarrow> 'b::onb_enum"
+  assumes "clinear f"
+  shows "cbounded_linear f"
+  using assms unfolding cbounded_linear_def
+proof auto
+  assume "clinear f"
+  define basis where "basis = (canonical_basis::'a list)"
+  define K::real where "K = sqrt (\<Sum>t\<in>set basis. norm (f t)^2)"
+
+  have "norm (f x) \<le> norm x * K" for x
+  proof-
+    define c where "c t = complex_vector.representation (set basis) x t" for t
+    have c1: "c t \<noteq> 0 \<Longrightarrow> t \<in> set basis" for t
+      by (simp add: c_def complex_vector.representation_ne_zero)      
+    have c2: "finite {t. c t \<noteq> 0}"
+      by (metis (mono_tags, lifting) Collect_cong List.finite_set Set.filter_def c1 finite_filter)
+    have basis_finite: "finite (set basis)"
+      by simp
+    have c3: "(\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t) = x"
+      unfolding c_def Complex_Vector_Spaces.representation_def
+      apply auto
+      subgoal
+      proof-
+        assume a1: "complex_independent (set basis)"
+        assume a2: "x \<in> Complex_Vector_Spaces.span (set basis)"
+        then have f3: "(\<Sum>a | Complex_Vector_Spaces.representation (set basis) x a \<noteq> 0. Complex_Vector_Spaces.representation (set basis) x a *\<^sub>C a) = x"
+          using a1 complex_vector.sum_nonzero_representation_eq by blast
+        have "Complex_Vector_Spaces.representation (set basis) x = (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x)"
+          using a2 a1 by (simp add: complex_vector.representation_def)
+        thus "(\<Sum>a | (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a \<noteq> 0. (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a *\<^sub>C a) = x"
+          using f3 by presburger
+      qed
+      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]
+      subgoal
+      proof-
+        assume "x \<notin> Complex_Vector_Spaces.span (set basis)"
+        moreover have "Complex_Vector_Spaces.span (set basis) = UNIV"
+        proof-
+          have "Complex_Vector_Spaces.span (set basis) 
+              = closure (Complex_Vector_Spaces.span (set basis))"
+            by (simp add: span_finite_dim)
+          thus ?thesis
+          using is_basis_set
+          unfolding basis_def is_basis_def
+          by blast          
+        qed
+        ultimately show ?thesis
+          by auto
+      qed
+      done
+    hence "x = (\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t)"
+      by simp
+    also have "\<dots> = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
+      using DiffD2 List.finite_set c1 complex_vector.scale_eq_0_iff mem_Collect_eq subsetI 
+        sum.mono_neutral_cong_left
+      by smt (* > 1s *)
+    finally have c4: "x = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
+      by blast
+    hence "f x = (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
+      by (smt assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    hence "norm (f x) = norm (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
+      by simp
+    also have "\<dots> \<le> (\<Sum>t\<in>set basis. norm (c t *\<^sub>C f t))"
+      by (simp add: sum_norm_le)
+    also have "\<dots> = (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
+      by auto
+    also have "\<dots> = norm (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
+    proof-
+      have "(\<Sum>t\<in>set basis. norm (c t) * norm (f t)) \<ge> 0"
+        by (smt calculation norm_ge_zero)        
+      thus ?thesis by simp
+    qed
+    also have "\<dots> \<le> sqrt (\<Sum>t\<in>set basis. (norm (c t))^2) * sqrt (\<Sum>t\<in>set basis. (norm (f t))^2)"
+      using Cauchy_Schwarz_real
+      by fastforce
+    also have "\<dots> \<le> norm x * K"
+    proof-
+      have "(norm x)^2 = \<langle>x, x\<rangle>"
+        using power2_norm_eq_cinner' by blast
+      also have "\<dots> = \<langle>(\<Sum>t\<in>set basis. c t *\<^sub>C t), (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>"
+        using c4
+        by simp 
+      also have "\<dots> = (\<Sum>t\<in>set basis. \<langle>c t *\<^sub>C t, (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>)"
+        using cinner_sum_left by blast
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. \<langle>c t *\<^sub>C t, c s *\<^sub>C s\<rangle>))"
+        by (metis (mono_tags, lifting) cinner_sum_right sum.cong)
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * \<langle>c t *\<^sub>C t,  s\<rangle>))"
+        by simp
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
+        by (metis (no_types, lifting) cinner_scaleC_left sum.cong vector_space_over_itself.scale_scale)
+      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
+      proof-
+        have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) = (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
+          if "t \<in> set basis" for t
+        proof-         
+          have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) =  c t * cnj (c t) * \<langle>t,  t\<rangle> + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
+            using that basis_finite
+            Groups_Big.comm_monoid_add_class.sum.remove
+            by (metis (no_types, lifting))
+          moreover have "\<langle>t,  t\<rangle> = 1"
+          proof-
+            have "norm t = 1"
+              using that is_normal[where x = t] unfolding basis_def is_basis_def
+              by blast
+            hence "(norm t)^2 = 1"
+              by simp
+            thus ?thesis
+              by (metis of_real_hom.hom_one power2_norm_eq_cinner') 
+          qed
+          ultimately show ?thesis
+            using complex_norm_square by auto 
+        qed
+        thus ?thesis by simp
+      qed
+      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2)"
+      proof-
+        have "s\<in>(set basis)-{t} \<Longrightarrow> c s * cnj (c t) * \<langle>t,  s\<rangle> = 0"
+          for s t
+          by (metis DiffD2 basis_def c1 complex_cnj_zero_iff is_ortho_set_def is_orthonormal mult_not_zero singleton_iff)          
+        hence " (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>) = 0"
+          for t
+          by (simp add: \<open>\<And>t s. s \<in> set basis - {t} \<Longrightarrow> c s * cnj (c t) * \<langle>t, s\<rangle> = 0\<close>) 
+        thus ?thesis by simp
+      qed
+      finally have "(norm x)^2 = (\<Sum>t\<in>set basis. (norm (c t))^2)"
+        using of_real_eq_iff by blast        
+      hence "norm x = sqrt (\<Sum>t\<in>set basis. norm (c t)^2)"
+        using real_sqrt_unique by auto        
+      thus ?thesis 
+        unfolding K_def by simp
+    qed
+    finally show ?thesis by blast
+  qed
+  thus "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K" 
+    by blast
+qed
 
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))
@@ -1410,15 +1557,16 @@ proof
         then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum (v::'a)) 
         else (0::'b))" 
     for M::"complex mat" and v::'a
+  define m where "m = canonical_basis_length TYPE('b)"
+  define n where "n = canonical_basis_length TYPE('a)"
 
   show "clinear (f M)"
-  proof(cases "M\<in>carrier_mat (canonical_basis_length (TYPE('b)::'b itself)) 
-               (canonical_basis_length (TYPE('a)::'a itself))")
+  proof(cases "M\<in>carrier_mat m n")
     case True
     have "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum v))" for v
-      by (simp add: True f_def)
+      using True f_def m_def n_def by auto
     have M_carrier_mat: 
-      "M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
+      "M \<in> carrier_mat m n"
       by (simp add: True)
     show ?thesis
       unfolding clinear_def proof
@@ -1426,83 +1574,89 @@ proof
         for b1 :: 'a
           and b2 :: 'a
       proof-
-        have dim1: "dim_vec (vec_of_onb_enum b1) = canonical_basis_length TYPE('a)"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list')          
-        have dim2: "dim_vec (vec_of_onb_enum b2) = canonical_basis_length TYPE('a)"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list')
+        have dim1: "dim_vec (vec_of_onb_enum b1) = n"
+          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
+
+        have dim2: "dim_vec (vec_of_onb_enum b2) = n"
+          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
+
         have "vec_of_onb_enum (b1 + b2) = vec_of_onb_enum b1 + vec_of_onb_enum b2"
           by (simp add: vec_of_onb_enum_add)
-        have "vec_of_onb_enum b1 \<in> carrier_vec (canonical_basis_length TYPE('a))"
+        have "vec_of_onb_enum b1 \<in> carrier_vec n"
           by (simp add: carrier_vecI dim1)        
-        moreover have "vec_of_onb_enum b2 \<in> carrier_vec (canonical_basis_length TYPE('a))"
+        moreover have "vec_of_onb_enum b2 \<in> carrier_vec n"
           by (simp add: carrier_dim_vec dim2)        
-        ultimately have "M *\<^sub>v vec_of_onb_enum (b1 + b2) = M *\<^sub>v vec_of_onb_enum b1 + M *\<^sub>v vec_of_onb_enum b2"
+        ultimately have "M *\<^sub>v vec_of_onb_enum (b1 + b2) = M *\<^sub>v vec_of_onb_enum b1
+                                                        + M *\<^sub>v vec_of_onb_enum b2"
           using  M_carrier_mat Matrix.mult_add_distrib_mat_vec[where A = M 
               and v\<^sub>1 = "vec_of_onb_enum b1" and v\<^sub>2 = "vec_of_onb_enum b2"]
             \<open>vec_of_onb_enum (b1 + b2) = vec_of_onb_enum b1 + vec_of_onb_enum b2\<close> by auto
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b1) = canonical_basis_length TYPE('b)" 
+        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b1) = m" 
           using dim1
-          using \<open>M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> 
-          by auto 
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b2) = canonical_basis_length TYPE('b)" 
+          using True dim_mult_mat_vec by blast           
+        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b2) = m" 
           using dim2
-          using \<open>M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> 
-          by auto 
+          using True by auto
         ultimately show ?thesis 
           unfolding f_def 
           using Bounded_Operators_Code.onb_enum_of_vec_add[where ?v1.0 = "M *\<^sub>v vec_of_onb_enum b1" 
               and ?v2.0 = "M *\<^sub>v vec_of_onb_enum b2"]
-          by (simp add: \<open>\<lbrakk>dim_vec (M *\<^sub>v vec_of_onb_enum b1) = length canonical_basis; dim_vec 
-          (M *\<^sub>v vec_of_onb_enum b2) = length canonical_basis\<rbrakk> \<Longrightarrow> 
-          onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1 + M *\<^sub>v vec_of_onb_enum b2) 
-        = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1) + onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b2)\<close> 
-              canonical_basis_length_eq)
+          by (simp add: \<open>\<lbrakk>dim_vec (M *\<^sub>v vec_of_onb_enum b1) = length canonical_basis; 
+            dim_vec (M *\<^sub>v vec_of_onb_enum b2) = length canonical_basis\<rbrakk>
+        \<Longrightarrow> onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1 + M *\<^sub>v vec_of_onb_enum b2) 
+          = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1) + onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b2)\<close> 
+           canonical_basis_length_eq m_def)          
       qed
 
       show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
         for r :: complex
           and b :: 'a
       proof-
-        have dim1: "dim_vec (vec_of_onb_enum b) = canonical_basis_length TYPE('a)"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list')          
+        have dim1: "dim_vec (vec_of_onb_enum b) = n"
+          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
         have "vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v vec_of_onb_enum b"
-          by (simp add: vec_of_onb_enum_scaleC)          
-        have "vec_of_onb_enum b \<in> carrier_vec (canonical_basis_length TYPE('a))"
+          by (simp add: vec_of_onb_enum_scaleC)
+        have "vec_of_onb_enum b \<in> carrier_vec n"
           by (simp add: carrier_vecI dim1)        
         hence "M *\<^sub>v vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v (M *\<^sub>v vec_of_onb_enum b)"
           using True \<open>vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v vec_of_onb_enum b\<close> by auto
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b) = canonical_basis_length TYPE('b)" 
+        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b) = m" 
           using dim1
-          using \<open>M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> 
-          by auto 
+          using True by auto           
         thus ?thesis 
           unfolding f_def
-          by (smt True calculation onb_enum_of_vec_inverse vec_of_onb_enum_inverse vec_of_onb_enum_scaleC)           
+          by (smt True calculation m_def n_def onb_enum_of_vec_inverse 
+              vec_of_onb_enum_inverse vec_of_onb_enum_scaleC)
       qed
     qed
   next
     case False
     thus ?thesis
+      unfolding m_def n_def
       by (simp add: clinearI f_def) 
   qed
 
   show "\<exists>K. \<forall>x. norm (f M x) \<le> norm x * K"
-  proof(cases "M\<in>carrier_mat (canonical_basis_length (TYPE('b)::'b itself)) 
-               (canonical_basis_length (TYPE('a)::'a itself))")
+  proof(cases "M\<in>carrier_mat m n")
     case True
     have f_def': "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum v))" for v
-      by (simp add: True f_def)
+      using True \<open>f \<equiv> \<lambda>M v. if M \<in> carrier_mat (canonical_basis_length TYPE('b)) 
+        (canonical_basis_length TYPE('a)) then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v) else 0\<close> 
+        m_def n_def by auto      
     have M_carrier_mat: 
-      "M \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
+      "M \<in> carrier_mat m n"
       by (simp add: True)
-    show ?thesis 
-      unfolding f_def' 
-      sorry
+    have "clinear (f M)"
+      by (simp add: \<open>clinear (f M)\<close>)
+    hence "cbounded_linear (f M)"
+      using clinear_cbounded_linear_onb_enum by blast
+    thus ?thesis
+      by (simp add: cbounded_linear.bounded) 
   next
     case False
     thus ?thesis
-      by (metis f_def linordered_field_class.sign_simps(24) norm_zero order_refl 
-          vector_space_over_itself.scale_zero_left)       
+      unfolding f_def m_def n_def
+      by (metis (full_types) order_refl mult_eq_0_iff norm_eq_zero)
   qed
 qed
 
