@@ -1398,12 +1398,133 @@ proof-
 qed
 
 (* NEW *)
+(* TODO: move to ell2 *)
+lemma ell2_norm_cinner:
+  fixes a b :: "'a \<Rightarrow> complex" and X :: "'a set"
+  assumes h1: "finite X"
+  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)" and "y == (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
+  shows "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+proof-
+  have "\<langle>x, y\<rangle> = \<langle>(\<Sum>t\<in>X. a t *\<^sub>C ket t), (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>"
+    unfolding x_def y_def by blast
+  also have "\<dots> = (\<Sum>t\<in>X. \<langle>a t *\<^sub>C ket t, (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>)"
+    using cinner_sum_left by blast
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. \<langle>a t *\<^sub>C ket t, b s *\<^sub>C ket s\<rangle>))"
+    by (simp add: cinner_sum_right)
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * \<langle>ket t, b s *\<^sub>C ket s\<rangle>))"
+    by (meson cinner_scaleC_left sum.cong)
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
+    by (metis (mono_tags, lifting) cinner_scaleC_right sum.cong vector_space_over_itself.scale_scale)
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
+  proof-
+    have "t\<in>X \<Longrightarrow> (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>)"
+      for t
+      using h1 Groups_Big.comm_monoid_add_class.sum.remove
+      by (simp add: sum.remove)
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle>)"
+  proof-
+    have "s\<in>X-{t} \<Longrightarrow> (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle> = 0"
+      for s t
+      by (metis DiffD2 ket_Kronecker_delta_neq mult_not_zero singletonI) 
+    hence "(\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = 0" for t
+      by (simp add: \<open>\<And>t s. s \<in> X - {t} \<Longrightarrow> cnj (a t) * b s * \<langle>ket t, ket s\<rangle> = 0\<close>)      
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+  proof-
+    have "\<langle>ket t, ket t\<rangle> = 1" for t::'a
+      by (simp add: ket_Kronecker_delta_eq)      
+    thus ?thesis
+      by auto 
+  qed
+  finally show ?thesis .
+qed
+
+(* NEW *)
+lemma ell2_norm_list:
+  fixes a :: "'a \<Rightarrow> complex" and X :: "'a set"
+  assumes h1: "finite X"
+  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
+  shows "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+proof-
+  have "(norm x)^2 = \<langle>x, x\<rangle>"
+    using power2_norm_eq_cinner' by auto
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * (a t))"   
+    using h1 ell2_norm_cinner[where X = X and a = a and b = a]
+    using x_def by blast    
+  also have "\<dots> = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"   
+  proof-
+    have "(cnj (a t)) * (a t) = (norm (a t))\<^sup>2" for t
+      using complex_norm_square by auto      
+    thus ?thesis by simp
+  qed
+  finally have "(norm x)^2 = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+    using of_real_eq_iff by blast    
+  thus ?thesis
+    by (metis abs_norm_cancel real_sqrt_abs) 
+qed
+
+(* NEW *)
+lemma Cauchy_Schwarz_complex:
+  fixes a b :: "'a \<Rightarrow> complex"
+  assumes h1: "finite X"
+  shows "norm (\<Sum>t\<in>X. (cnj (a t)) * b t) \<le> sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2) * sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
+proof-
+  define x where "x = (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
+  define y where "y = (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
+  have "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+    using h1 ell2_norm_cinner[where X = X and a = a and b = b]
+     x_def y_def by blast    
+  hence "norm \<langle>x, y\<rangle> = norm (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+    by simp
+  moreover have "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+    using h1 ell2_norm_list[where X = X and a = a]
+     x_def by blast        
+  moreover have "norm y = sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
+    using h1 ell2_norm_list[where X = X and a = b]
+      y_def by blast        
+  moreover have "norm \<langle>x, y\<rangle> \<le> norm x * norm y"
+    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)    
+  ultimately show ?thesis by simp
+qed
+
+
+(* NEW *)
 lemma Cauchy_Schwarz_real:
   fixes a b :: "'a \<Rightarrow> real"
   assumes "finite X"
-  shows
-    "norm (\<Sum>t\<in>X. a t * b t) \<le> sqrt (\<Sum>t\<in>X. (a t)\<^sup>2) * sqrt (\<Sum>t\<in>X. (b t)\<^sup>2)"
-  sorry
+  shows "norm (\<Sum>t\<in>X. a t * b t) \<le> sqrt (\<Sum>t\<in>X. (a t)\<^sup>2) * sqrt (\<Sum>t\<in>X. (b t)\<^sup>2)"
+proof-
+  have "norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))
+    \<le> sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) *
+      sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2)"
+  using assms Cauchy_Schwarz_complex [where X = X and a = a and b = b]
+  by simp
+  moreover have "norm (\<Sum>t\<in>X. (a t) * (b t)) = norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
+  proof-
+    have "(a t) * (b t) = cnj (complex_of_real (a t)) * complex_of_real (b t)"
+      for t
+      by simp      
+    hence "(\<Sum>t\<in>X. (a t) * (b t)) = (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
+      by simp
+    moreover have "norm (complex_of_real (\<Sum>t\<in>X. (a t) * (b t))) = norm (\<Sum>t\<in>X. (a t) * (b t))"
+    proof-
+      have "cmod (complex_of_real r) = norm r" for r::real
+        by auto
+      thus ?thesis
+        by blast 
+    qed
+    ultimately show ?thesis by simp
+  qed
+  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (a t)\<^sup>2)"
+    by simp
+  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (b t)\<^sup>2)"
+    by simp    
+  ultimately show ?thesis 
+    by simp    
+qed
 
 (* NEW *)
 (* TODO: move to near the definition of onb_enum *)
