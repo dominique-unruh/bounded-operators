@@ -1781,10 +1781,15 @@ proof
   qed
 qed
 
+
 (* TODO: constructive definition *)
 definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
-  \<open>mat_of_cblinfun = undefined\<close>
-
+  \<open>mat_of_cblinfun f  = mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
+  \<lambda> (i, j).
+  \<langle> (canonical_basis::'b list)!i,
+    (map (cblinfun_apply f) (canonical_basis::'a list) )!j\<rangle>
+)\<close>
+  for f
 
 text \<open>The following lemma registers cblinfun as an abstract datatype with 
   constructor \<^const>\<open>cblinfun_of_mat\<close>.
@@ -1817,7 +1822,7 @@ text \<open>In this subsection, we define the code for all operations involving 
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
 lemma cblinfun_of_mat_plusOp[code]:
-  "mat_of_cblinfun (M + N) =  (mat_of_cblinfun M + mat_of_cblinfun N)" 
+  "mat_of_cblinfun (M + N) = mat_of_cblinfun M + mat_of_cblinfun N" 
   for M::"('a::onb_enum,'b::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
     (* 
 
