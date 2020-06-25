@@ -1781,93 +1781,15 @@ proof
   qed
 qed
 
-
+(* NEW *)
 (* TODO: constructive definition *)
 definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
   \<open>mat_of_cblinfun f  = mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
   \<lambda> (i, j).
-  \<langle> (canonical_basis::'b list)!i,
-    (cblinfun_apply f) ((canonical_basis::'a list)!j) \<rangle>
+  \<langle> (cblinfun_apply f) ((canonical_basis::'a list)!i), (canonical_basis::'b list)!j \<rangle>
 )\<close>
 for f
 
-
-(* NEW *)
-lemma obn_enum_uniq_zero:
-  fixes f ::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
-  defines "basis == set (canonical_basis::'a list)"
-  assumes "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply f u = 0"
-  shows  "f = 0" 
-proof-
-  have "cblinfun_apply f x = 0" for x
-  proof-
-    define a where "a = ((complex_vector.representation basis x)::'a \<Rightarrow> complex)"
-    have a1: "a v \<noteq> 0 \<Longrightarrow> v \<in> basis" for v
-      by (simp add: a_def complex_vector.representation_ne_zero)      
-    have "finite {v. a v \<noteq> 0}"
-      by (simp add: a_def complex_vector.finite_representation)      
-    have "complex_independent basis"
-      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto
-    moreover have "x \<in> Complex_Vector_Spaces.span basis"
-    proof-
-      have "closure (Complex_Vector_Spaces.span basis) = UNIV"
-        using is_basis_set
-        unfolding basis_def is_basis_def
-        by blast        
-      moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
-        by (simp add: basis_def span_finite_dim)        
-      ultimately have "Complex_Vector_Spaces.span basis = UNIV"
-        by blast
-      thus ?thesis by blast
-    qed
-    ultimately have "(\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v) = x"
-      unfolding a_def 
-      using sum.cong Collect_cong DiffD1 DiffD2 Eps_cong \<open>finite {v. a v \<noteq> 0}\<close> a_def complex_vector.representation_def complex_vector.sum_nonzero_representation_eq subset_iff sum.mono_neutral_cong_right
-      by smt
-    hence "cblinfun_apply f x = cblinfun_apply f (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v)"
-      by simp
-    also have "\<dots> = (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C cblinfun_apply f v)"
-      using \<open>finite {v. a v \<noteq> 0}\<close> clinear_finite_sum by blast
-    also have "\<dots> = 0"
-    proof-
-      have "a v \<noteq> 0 \<Longrightarrow> a v *\<^sub>C (cblinfun_apply f v) = 0" for v
-      proof-
-        assume "a v \<noteq> 0"
-        hence "v \<in> basis"
-          by (simp add: a1)
-        hence "cblinfun_apply f v = 0"
-          using assms(2) by auto          
-        thus ?thesis by simp
-      qed
-      thus ?thesis
-        by simp 
-    qed
-    finally show ?thesis
-      by simp 
-  qed
-  thus ?thesis
-    by (simp add: cblinfun_ext) 
-qed
-
-(* NEW *)
-lemma obn_enum_uniq:
-  fixes f g::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
-  defines "basis == set (canonical_basis::'a list)"
-  assumes "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply f u = cblinfun_apply g u"
-    (* Ask to Dominique why the notation for cblinfun_apply does not work *)
-  shows  "f = g" 
-proof-
-  define h where "h = f - g"
-  have "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply h u = 0"
-    using assms unfolding h_def
-    by (simp add: assms(2) minus_cblinfun.rep_eq)
-  hence "h = 0"
-    using obn_enum_uniq_zero[where f = h]
-      basis_def by blast 
-  thus ?thesis 
-    unfolding h_def
-    using eq_iff_diff_eq_0 by blast 
-qed
 
 
 text \<open>The following lemma registers cblinfun as an abstract datatype with 
@@ -1884,6 +1806,75 @@ text \<open>The following lemma registers cblinfun as an abstract datatype with
 
   See [TODO: bibtex reference to code generation tutorial] for more information on 
   @{theory_text \<open>[code abstype]\<close>}.\<close>
+
+lemma mat_of_cblinfun_inverse [code abstype]:
+  "cblinfun_of_mat (mat_of_cblinfun B) = B" 
+  for B::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+proof-
+  define Basis where "Basis = (canonical_basis::'a list)"
+  define Basis' where "Basis' = (canonical_basis::'b list)"
+  define basis where "basis = set Basis"
+  define n where "n = canonical_basis_length TYPE('a)"
+  define m where "m = canonical_basis_length TYPE('b)"
+  define M where "M = mat_of_cblinfun B"
+  have carrier_M: "M \<in> carrier_mat m n"
+    unfolding M_def mat_of_cblinfun_def m_def n_def by simp
+  have "cblinfun_apply (cblinfun_of_mat M) u = cblinfun_apply B u"
+    for u
+  proof-
+    have b1: "i < m \<Longrightarrow> j < n \<Longrightarrow> index_mat M (i, j) =   \<langle> (cblinfun_apply B) (Basis!i), Basis'!j \<rangle>"
+      for i j::nat
+      unfolding M_def mat_of_cblinfun_def Basis_def Basis'_def
+      by (simp add: m_def n_def) 
+    define v where "v = vec_of_onb_enum u"
+    define w where "w = M *\<^sub>v v"
+    have B1: "(cblinfun_apply B) u = (\<Sum>j=0..<n. vec_index v j *\<^sub>C Basis'!j)"
+      sorry
+    have "i < m \<Longrightarrow> vec_index w i = (\<Sum>j=0..<n. index_mat M (i, j) * vec_index v j)"
+      for i::nat
+      sorry
+    hence "i < m \<Longrightarrow> vec_index w i = (\<Sum>j=0..<n.  \<langle>(cblinfun_apply B) (Basis!i),  Basis'!j\<rangle> * vec_index v j)"
+      for i::nat
+      using b1 by auto
+    hence "i < m \<Longrightarrow> vec_index w i = (\<Sum>j=0..<n.  \<langle>  (cblinfun_apply B) (Basis!i), vec_index v j *\<^sub>C Basis'!j \<rangle>)"
+      for i::nat
+      by (metis (no_types, lifting) cinner_scaleC_right mult.commute sum.cong)
+    hence "i < m \<Longrightarrow> vec_index w i =  \<langle>  (cblinfun_apply B) (Basis!i), (\<Sum>j=0..<n. vec_index v j *\<^sub>C Basis'!j) \<rangle>"
+      for i::nat
+      by (metis (no_types, lifting) cinner_sum_right sum.cong)
+    hence "i < m \<Longrightarrow> vec_index w i =  \<langle> (cblinfun_apply B) (Basis!i), (cblinfun_apply B) u \<rangle>"
+      for i::nat
+      by (simp add: B1)
+      
+
+
+
+    have a1: "u = onb_enum_of_vec v"
+      unfolding v_def
+      by (simp add: onb_enum_of_vec_inverse) 
+    have "cblinfun_apply (cblinfun_of_mat M) u
+       = (onb_enum_of_vec::complex vec \<Rightarrow>'b) w"
+      unfolding cblinfun_of_mat_def id_def v_def w_def
+      apply auto using carrier_M
+      unfolding m_def n_def
+      by (metis cblinfun_of_mat.abs_eq cblinfun_of_mat.rep_eq)
+    also have "\<dots>
+       = sum_list (map2 (*\<^sub>C) (list_of_vec w) Basis')"
+      unfolding onb_enum_of_vec_def unfolding Basis'_def
+      by (simp add: onb_enum_of_vec_list_def')
+    also have "\<dots> = cblinfun_apply B (onb_enum_of_vec v)"
+      sorry
+    also have "\<dots> = cblinfun_apply B u"
+      using a1 by simp
+    finally show ?thesis by blast
+  qed
+  hence "cblinfun_apply (cblinfun_of_mat M) = cblinfun_apply B"
+    by auto
+  thus ?thesis
+    using cblinfun_apply_inject unfolding M_def by blast
+qed
+
+(*
 lemma mat_of_cblinfun_inverse [code abstype]:
   "cblinfun_of_mat (mat_of_cblinfun B) = B" 
   for B::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -1907,25 +1898,20 @@ proof-
     have "dim_row (mat_of_cblinfun B) = m"
       unfolding m_def mat_of_cblinfun_def
       by simp
-    have "mat_of_cblinfun B
-             \<in> carrier_mat
-                 (canonical_basis_length TYPE('b))
-                 (canonical_basis_length TYPE('a))"
-      unfolding mat_of_cblinfun_def by auto
+    have "mat_of_cblinfun B \<in> carrier_mat m n"
+      unfolding mat_of_cblinfun_def m_def n_def by auto
     have "(cblinfun_apply::'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow> 'b) (cblinfun_of_mat (mat_of_cblinfun B)) u
         = cblinfun_apply (cBlinfun
      (\<lambda>v. if mat_of_cblinfun B
-             \<in> carrier_mat
-                 (canonical_basis_length TYPE('b))
-                 (canonical_basis_length TYPE('a))
+             \<in> carrier_mat m n
           then onb_enum_of_vec
                 (id (mat_of_cblinfun B) *\<^sub>v
                  vec_of_onb_enum v)
           else 0)) u"
-      unfolding cblinfun_of_mat_def by auto
+      unfolding cblinfun_of_mat_def m_def n_def by auto
     also have "\<dots>
         = onb_enum_of_vec ((mat_of_cblinfun B) *\<^sub>v vec_of_onb_enum u)"
-      by (metis \<open>mat_of_cblinfun B \<in> carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))\<close> calculation cblinfun_of_mat.rep_eq)
+      by (metis \<open>mat_of_cblinfun B \<in> carrier_mat m n\<close> calculation cblinfun_of_mat.rep_eq m_def n_def)
     also have "\<dots>        
         = onb_enum_of_vec ((mat_of_cblinfun B) *\<^sub>v unit_vec n i)"
       by (simp add: \<open>vec_of_onb_enum u = unit_vec n i\<close>)
@@ -1941,8 +1927,7 @@ proof-
                vec_index (Matrix.row (mat_of_cblinfun B) j) k * vec_index (unit_vec n i) k))"
       unfolding Matrix.scalar_prod_def by simp
     also have "\<dots>        
-        = onb_enum_of_vec
-     (Matrix.vec m
+        = onb_enum_of_vec (Matrix.vec m
        (\<lambda>j. vec_index (Matrix.row (mat_of_cblinfun B) j) i))"
     proof-
       have "(\<Sum>k = 0..<n.
@@ -2017,11 +2002,12 @@ vec_index (Matrix.vec n
     qed
     show ?thesis sorry
   qed
-  hence "cblinfun_apply (cblinfun_of_mat (mat_of_cblinfun B)) = cblinfun_apply B"    
+  hence "cblinfun_apply (cblinfun_of_mat (mat_of_cblinfun B)) = cblinfun_apply B"
     by (metis basis_def obn_enum_uniq)    
   thus ?thesis
     using cblinfun_apply_inject by blast 
 qed
+*)
 
 lemma mat_of_cblinfun_inj: "inj mat_of_cblinfun"
   by (metis inj_on_def mat_of_cblinfun_inverse)

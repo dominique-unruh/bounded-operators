@@ -4736,8 +4736,6 @@ proof
   qed
 qed
 
-
-
 subsection \<open>Commutative monoid of subspaces\<close>
 
 (* TODO: move to earliest possible place *)

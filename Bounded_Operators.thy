@@ -2313,7 +2313,8 @@ proof-
       qed
       moreover have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}
            \<subseteq> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
-        by (smt Collect_mono_iff closure_subset subsetD)
+        by (smt closure_subset mem_Collect_eq subsetD subsetI)
+        (* > 1s *)
       ultimately show ?thesis
         by simp 
     qed
@@ -5673,7 +5674,84 @@ proof-
     by auto 
 qed
 
-unbundle no_cblinfun_notation
+(* NEW *)
+(* TODO: move *)
+lemma obn_enum_uniq_zero:
+  fixes f ::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+  defines "basis == set (canonical_basis::'a list)"
+  assumes "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply f u = 0"
+  shows  "f = 0" 
+proof-
+  have "cblinfun_apply f x = 0" for x
+  proof-
+    define a where "a = ((complex_vector.representation basis x)::'a \<Rightarrow> complex)"
+    have a1: "a v \<noteq> 0 \<Longrightarrow> v \<in> basis" for v
+      by (simp add: a_def complex_vector.representation_ne_zero)      
+    have "finite {v. a v \<noteq> 0}"
+      by (simp add: a_def complex_vector.finite_representation)      
+    have "complex_independent basis"
+      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto
+    moreover have "x \<in> Complex_Vector_Spaces.span basis"
+    proof-
+      have "closure (Complex_Vector_Spaces.span basis) = UNIV"
+        using is_basis_set
+        unfolding basis_def is_basis_def
+        by blast        
+      moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
+        by (simp add: basis_def span_finite_dim)        
+      ultimately have "Complex_Vector_Spaces.span basis = UNIV"
+        by blast
+      thus ?thesis by blast
+    qed
+    ultimately have "(\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v) = x"
+      unfolding a_def 
+      using sum.cong Collect_cong DiffD1 DiffD2 Eps_cong \<open>finite {v. a v \<noteq> 0}\<close> a_def complex_vector.representation_def complex_vector.sum_nonzero_representation_eq subset_iff sum.mono_neutral_cong_right
+      by smt
+    hence "cblinfun_apply f x = cblinfun_apply f (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v)"
+      by simp
+    also have "\<dots> = (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C cblinfun_apply f v)"
+      using \<open>finite {v. a v \<noteq> 0}\<close> clinear_finite_sum by blast
+    also have "\<dots> = 0"
+    proof-
+      have "a v \<noteq> 0 \<Longrightarrow> a v *\<^sub>C (cblinfun_apply f v) = 0" for v
+      proof-
+        assume "a v \<noteq> 0"
+        hence "v \<in> basis"
+          by (simp add: a1)
+        hence "cblinfun_apply f v = 0"
+          using assms(2) by auto          
+        thus ?thesis by simp
+      qed
+      thus ?thesis
+        by simp 
+    qed
+    finally show ?thesis
+      by simp 
+  qed
+  thus ?thesis
+    by (simp add: cblinfun_ext) 
+qed
 
+(* NEW *)
+lemma obn_enum_uniq:
+  fixes f g::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+  defines "basis == set (canonical_basis::'a list)"
+  assumes "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply f u = cblinfun_apply g u"
+    (* Ask to Dominique why the notation for cblinfun_apply does not work *)
+  shows  "f = g" 
+proof-
+  define h where "h = f - g"
+  have "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply h u = 0"
+    using assms unfolding h_def
+    by (simp add: assms(2) minus_cblinfun.rep_eq)
+  hence "h = 0"
+    using obn_enum_uniq_zero[where f = h]
+      basis_def by blast 
+  thus ?thesis 
+    unfolding h_def
+    using eq_iff_diff_eq_0 by blast 
+qed
+
+unbundle no_cblinfun_notation
 
 end
