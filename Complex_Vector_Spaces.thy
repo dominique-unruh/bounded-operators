@@ -2757,7 +2757,7 @@ lemma (in bounded_cbilinear) tendsto:
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
-(* NEW *)
+
 lemma independent_real_complex: 
   assumes "complex_vector.independent (S::'a::complex_vector set)" and "finite S"
   shows "real_vector.independent S"

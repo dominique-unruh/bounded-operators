@@ -1382,7 +1382,7 @@ typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(
 
 setup_lifting type_definition_cblinfun
 
-(* NEW *)
+
 declare [[coercion
     "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
 
@@ -1995,18 +1995,27 @@ lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_norm
 
 
 bundle cblinfun_notation begin
-notation timesOp (infixl " o\<^sub>C\<^sub>L" 69)
+notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
 notation cblinfun_apply (infixr "*\<^sub>V" 70) (* NEW: not it is capital *)
 notation applyOpSpace (infixr "*\<^sub>S" 70) (* NEW: not it is capital *)
 notation adjoint ("_*" [99] 100)
 end
 
 bundle no_cblinfun_notation begin
-no_notation timesOp (infixl " o\<^sub>C\<^sub>L" 69)
-notation blinfun_apply (infixr "*\<^sub>V" 70)
+no_notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
+no_notation cblinfun_apply (infixr "*\<^sub>V" 70) (* NEW: not it is capital *)
 no_notation applyOpSpace (infixr "*\<^sub>S" 70)
 no_notation adjoint ("_*" [99] 100)
 end
+
+bundle blinfun_notation begin
+notation blinfun_apply (infixr "*\<^sub>V" 70)
+end
+
+bundle no_blinfun_notation begin
+no_notation blinfun_apply (infixr "*\<^sub>V" 70)
+end
+
 
 unbundle cblinfun_notation
 
@@ -3340,7 +3349,7 @@ lemma applyOp0[simp]: "0 *\<^sub>V \<psi> = 0"
 lemma apply_idOp[simp]: "idOp *\<^sub>V \<psi> = \<psi>"
   apply transfer by simp
 
-(* NEW *)
+
 lemma rel_interior_sing_generalized:
   fixes a :: "'n::chilbert_space"
   shows "rel_interior {a} = {a}"
@@ -4529,11 +4538,6 @@ proof -
     by auto
 qed
 
-unbundle no_cblinfun_notation
-
-unbundle no_notation_blinfun_apply
-unbundle cblinfun_notation
-
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
@@ -5674,7 +5678,7 @@ proof-
     by auto 
 qed
 
-(* NEW *)
+
 (* TODO: move *)
 lemma obn_enum_uniq_zero:
   fixes f ::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -5732,12 +5736,11 @@ proof-
     by (simp add: cblinfun_ext) 
 qed
 
-(* NEW *)
+
 lemma obn_enum_uniq:
   fixes f g::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   defines "basis == set (canonical_basis::'a list)"
-  assumes "\<And>u. u \<in> basis \<Longrightarrow> cblinfun_apply f u = cblinfun_apply g u"
-    (* Ask to Dominique why the notation for cblinfun_apply does not work *)
+  assumes "\<And>u. u \<in> basis \<Longrightarrow> f *\<^sub>V u = g *\<^sub>V u"
   shows  "f = g" 
 proof-
   define h where "h = f - g"
@@ -5751,6 +5754,7 @@ proof-
     unfolding h_def
     using eq_iff_diff_eq_0 by blast 
 qed
+
 
 unbundle no_cblinfun_notation
 
