@@ -1779,6 +1779,21 @@ qed
 
 end
 
+(* NEW *)
+lemma cblinfun_apply_add: "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
+  apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+  using module_hom.add by blast
+
+(* NEW *)
+lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
+  apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+  using module_hom.scale by blast
+  
+(* NEW *)
+lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
+  apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+  by simp
+  
 instantiation cblinfun :: (complex_normed_vector, cbanach) "cbanach"
 begin
 lemma blinfun_of_cblinfun_Cauchy:
@@ -5754,6 +5769,78 @@ proof-
     unfolding h_def
     using eq_iff_diff_eq_0 by blast 
 qed
+
+lemma cinner_unique_onb_enum_zero:
+  defines "basisA == set (canonical_basis::'a::onb_enum list)"
+    and   "basisB == set (canonical_basis::'b::onb_enum list)"
+  assumes "\<And>u v. u\<in>basisA \<Longrightarrow> v\<in>basisB \<Longrightarrow> \<langle>v, F *\<^sub>V u\<rangle> = 0"
+  shows "F = 0"
+proof-
+  have "F *\<^sub>V u = 0"
+    if "u\<in>basisA" for u
+  proof-
+    have "\<And>v. v\<in>basisB \<Longrightarrow> \<langle>v, F *\<^sub>V u\<rangle> = 0"
+      by (simp add: assms(3) that)
+    moreover have "(\<And>v. v\<in>basisB \<Longrightarrow> \<langle>v, x\<rangle> = 0) \<Longrightarrow> x = 0"
+      for x
+    proof-     
+      assume r1: "\<And>v. v\<in>basisB \<Longrightarrow> \<langle>v, x\<rangle> = 0"      
+      have "\<langle>v, x\<rangle> = 0" for v
+      proof-
+        have "closure (Complex_Vector_Spaces.span basisB) = UNIV"
+          using is_basis_set
+          unfolding basisB_def is_basis_def
+          by auto
+        hence "Complex_Vector_Spaces.span basisB = UNIV"
+          by (smt List.finite_set basisB_def span_finite_dim)
+        hence "v \<in> Complex_Vector_Spaces.span basisB"
+          by (smt iso_tuple_UNIV_I)
+        hence "\<exists>t s. v = (\<Sum>a\<in>t. s a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> basisB"
+          using complex_vector.span_explicit
+          by (smt mem_Collect_eq)
+        then obtain t s where b1: "v = (\<Sum>a\<in>t. s a *\<^sub>C a)" and b2: "finite t" and b3: "t \<subseteq> basisB"
+          by blast
+        have "\<langle>v, x\<rangle> = \<langle>(\<Sum>a\<in>t. s a *\<^sub>C a), x\<rangle>"
+          by (simp add: b1)
+        also have "\<dots> = (\<Sum>a\<in>t. \<langle>s a *\<^sub>C a, x\<rangle>)"
+          using cinner_sum_left by blast
+        also have "\<dots> = (\<Sum>a\<in>t. cnj (s a) * \<langle>a, x\<rangle>)"
+          by auto
+        also have "\<dots> = 0"
+          using b3 r1 subsetD by force
+        finally show ?thesis by simp
+      qed
+      thus ?thesis
+        by (simp add: \<open>\<And>v. \<langle>v, x\<rangle> = 0\<close> cinner_ext_0) 
+    qed
+    ultimately show ?thesis by simp
+  qed
+  thus ?thesis
+    using basisA_def obn_enum_uniq_zero by auto 
+qed
+
+lemma cinner_unique_onb_enum:
+  defines "basisA == set (canonical_basis::'a::onb_enum list)"
+    and   "basisB == set (canonical_basis::'b::onb_enum list)"
+  assumes "\<And>u v. u\<in>basisA \<Longrightarrow> v\<in>basisB \<Longrightarrow> \<langle>v, F *\<^sub>V u\<rangle> = \<langle>v, G *\<^sub>V u\<rangle>"
+  shows "F = G"
+proof-
+  define H where "H = F - G"
+  have "\<And>u v. u\<in>basisA \<Longrightarrow> v\<in>basisB \<Longrightarrow> \<langle>v, H *\<^sub>V u\<rangle> = 0"
+    unfolding H_def
+    by (simp add: assms(3) cinner_diff_right minus_cblinfun.rep_eq) 
+  hence "H = 0"
+    by (simp add: basisA_def basisB_def cinner_unique_onb_enum_zero)    
+  thus ?thesis unfolding H_def by simp
+qed
+
+lemma cinner_unique_onb_enum':
+  defines "basisA == set (canonical_basis::'a::onb_enum list)"
+    and   "basisB == set (canonical_basis::'b::onb_enum list)"
+  assumes "\<And>u v. u\<in>basisA \<Longrightarrow> v\<in>basisB \<Longrightarrow> \<langle>F *\<^sub>V u, v\<rangle> = \<langle>G *\<^sub>V u, v\<rangle>"
+  shows "F = G"
+  using cinner_unique_onb_enum assms
+  by (metis cinner_commute')
 
 
 unbundle no_cblinfun_notation
