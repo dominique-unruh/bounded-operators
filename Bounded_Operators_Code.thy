@@ -2210,24 +2210,139 @@ text \<open>In this subsection, we define the code for all operations involving 
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
 lemma cblinfun_of_mat_plusOp[code]:
-  "mat_of_cblinfun (M + N) = mat_of_cblinfun M + mat_of_cblinfun N" 
-  for M::"('a::onb_enum,'b::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
-    (* 
+  "mat_of_cblinfun (F + G) = mat_of_cblinfun F + mat_of_cblinfun G"
+  for F G::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+  define BasisA where "BasisA = (canonical_basis::'a list)"
+  define BasisB where "BasisB = (canonical_basis::'b list)"
 
-Approach 1: Use definition of mat_of_cblinfun. Then do linear algebra.
+  have a1: "mat_of_cblinfun F \<in> carrier_mat nB nA"
+    unfolding mat_of_cblinfun_def nA_def nB_def
+    by simp
+  moreover have a2: "mat_of_cblinfun G \<in> carrier_mat nB nA"
+    unfolding mat_of_cblinfun_def nA_def nB_def
+    by simp
+  ultimately have "mat_of_cblinfun F + mat_of_cblinfun G \<in> carrier_mat nB nA"
+    using  Matrix.add_carrier_mat by blast
+  moreover have "mat_of_cblinfun (F + G) \<in> carrier_mat nB nA"
+    unfolding mat_of_cblinfun_def nA_def nB_def
+    by simp
+  moreover have "(mat_of_cblinfun (F + G)) $$ (iB,iA)
+           = (mat_of_cblinfun F + mat_of_cblinfun G) $$ (iB,iA)"
+    if "iB < nB" and "iA < nA"
+    for iB iA
+  proof-
+    have "(mat_of_cblinfun F) $$ (iB,iA) = 
+          \<langle>BasisB ! iB, F *\<^sub>V BasisA ! iA\<rangle>"
+      unfolding mat_of_cblinfun_def BasisA_def BasisB_def
+      using nA_def nB_def that(1) that(2) by auto
+    moreover have "(mat_of_cblinfun G) $$ (iB,iA) = 
+          \<langle>BasisB ! iB, G *\<^sub>V BasisA ! iA\<rangle>"
+      unfolding mat_of_cblinfun_def BasisA_def BasisB_def
+      using nA_def nB_def that(1) that(2) by auto
+    ultimately have "(mat_of_cblinfun F) $$ (iB,iA) + (mat_of_cblinfun G) $$ (iB,iA)
+      = \<langle>BasisB ! iB, F *\<^sub>V BasisA ! iA\<rangle> + \<langle>BasisB ! iB, G *\<^sub>V BasisA ! iA\<rangle>"
+      by simp
+    also have "\<dots> = \<langle>BasisB ! iB, F *\<^sub>V BasisA!iA +  G *\<^sub>V BasisA!iA\<rangle>"
+      by (simp add: cinner_right_distrib)
+    also have "\<dots> = \<langle>BasisB ! iB, (F + G) *\<^sub>V BasisA!iA\<rangle>"
+      by (simp add: plus_cblinfun.rep_eq)
+    also have "\<dots> = (mat_of_cblinfun (F + G)) $$ (iB,iA)"
+      unfolding mat_of_cblinfun_def BasisA_def BasisB_def
+      using nA_def nB_def that(1) that(2) by auto
+    finally have "(mat_of_cblinfun F) $$ (iB,iA) + (mat_of_cblinfun G) $$ (iB,iA)
+                = (mat_of_cblinfun (F + G)) $$ (iB,iA)"
+      by blast
+    moreover have "(mat_of_cblinfun F + mat_of_cblinfun G) $$ (iB,iA)
+        = (mat_of_cblinfun F) $$ (iB,iA) + (mat_of_cblinfun G) $$ (iB,iA)"
+      using a2 that(1) that(2) by auto
+    ultimately show ?thesis
+      by simp
+  qed
+  ultimately show ?thesis 
+    using Matrix.eq_matI
+    by blast
+qed
 
-Approach 2: Show
-"(M + N) =  (cblinfun_of_mat M + cblinfun_of_mat N)" first.
-Then use mat_of_cblinfun_inverse to get the lemma.
-
-(Probably approach 2 is easier)
-
-*)
-  sorry
 
 lemma cblinfun_of_mat_id[code]:
-  "mat_of_cblinfun (idOp :: ('a::onb_enum,'a) cblinfun) = one_mat (canonical_basis_length TYPE('a))"
-  sorry
+  "mat_of_cblinfun (idOp :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L'a)) = 1\<^sub>m (canonical_basis_length TYPE('a))"
+proof-
+  define n where "n = canonical_basis_length TYPE('a)"
+  define Basis where "Basis = (canonical_basis::'a list)"
+  define I where "I = (idOp ::'a \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  have b1: "dim_row (mat_of_cblinfun I) = n"
+    unfolding mat_of_cblinfun_def n_def
+    by simp
+  have b2: "dim_col (mat_of_cblinfun I) = n"
+    unfolding mat_of_cblinfun_def n_def
+    by simp
+  have b3: "dim_row (1\<^sub>m n) = n"
+    by simp    
+  have b4: "dim_col (1\<^sub>m n) = n"
+    by simp
+  have "(mat_of_cblinfun I)$$(i, j) = (one_mat n)$$(i, j)"
+    if "i < n" and "j < n"
+    for i j
+  proof-
+    have "(mat_of_cblinfun I)$$(i, j) = \<langle>Basis!i, Basis!j\<rangle>"
+      using that 
+      unfolding Basis_def mat_of_cblinfun_def one_mat_def I_def n_def
+      apply transfer
+      unfolding id_def apply auto
+      by (simp add: mk_mat_def)
+    also have "\<dots> = (if i = j then 1 else 0)"
+    proof(cases "i = j")
+      case True
+      have "Basis!i \<in> set Basis"
+        using that(1) unfolding n_def Basis_def
+        by (simp add: canonical_basis_length_eq)
+      hence "norm (Basis!i) = 1"
+        using is_onb_set 
+        unfolding Basis_def is_onb_def
+        by (simp add: is_normal) 
+      hence "(norm (Basis!i))^2 = 1"
+        by simp
+      thus ?thesis
+        by (metis True of_real_hom.hom_one power2_norm_eq_cinner') 
+    next
+      case False
+      have c1: "distinct Basis"
+        unfolding Basis_def
+        by simp
+      have "x\<in>set Basis \<Longrightarrow> y\<in>set Basis \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+        for x y
+        using is_onb_set
+        unfolding is_onb_def is_ob_def is_ortho_set_def Basis_def by blast
+      moreover have "Basis!i \<in> set Basis"
+        using that(1) unfolding n_def Basis_def
+        by (simp add: canonical_basis_length_eq) 
+      moreover have "Basis!j \<in> set Basis"
+        using that(2) unfolding n_def Basis_def
+        by (simp add: canonical_basis_length_eq) 
+      moreover have  "Basis!i \<noteq> Basis!j"
+        using c1 that  unfolding n_def Basis_def
+        by (simp add: False canonical_basis_length_eq distinct_conv_nth) 
+      ultimately show ?thesis
+        by auto        
+    qed
+    also have "\<dots> = (one_mat n)$$(i, j)"
+      unfolding one_mat_def
+      by (simp add: that(1) that(2))
+    finally show ?thesis
+      .
+  qed    
+
+  thus ?thesis 
+    unfolding n_def I_def
+    apply (rule Matrix.eq_matI)
+    apply simp
+    apply simp
+    using I_def b1 n_def apply auto[1]
+    using I_def b2 n_def by auto
+qed
 
 lemma cblinfun_of_mat_timesOp[code]:
   "mat_of_cblinfun (M o\<^sub>C\<^sub>L N) =  (mat_of_cblinfun M * mat_of_cblinfun N)" 
