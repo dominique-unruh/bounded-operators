@@ -1877,7 +1877,6 @@ proof-
   finally show ?thesis .
 qed
 
-
 (* NEW *)
 lemma cinner_mat_of_cblinfun:
   fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -1927,7 +1926,7 @@ proof-
         by simp
       also have "\<dots> = r \<cdot>\<^sub>v (mat_of_cblinfun F *\<^sub>v (vec_of_onb_enum b))"
         apply (rule Matrix.mult_mat_vec[where nr = nB and nc = nA and k = r and A = "mat_of_cblinfun F" and v = "vec_of_onb_enum b"])
-        apply (simp add: carrier_mat1)
+         apply (simp add: carrier_mat1)
         by (simp add: carrier_vec1)
       finally have "mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (r *\<^sub>C b) =
              r \<cdot>\<^sub>v (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum b)"
@@ -1997,23 +1996,172 @@ proof-
 qed
 
 (* NEW *)
+lemma onb_enum_of_vec_mat_of_cblinfun_cinner:
+  fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+  defines "BasisA == (canonical_basis::'a list)"
+    and "BasisB == (canonical_basis::'b list)"
+    and "nA == canonical_basis_length TYPE('a)"
+    and "nB == canonical_basis_length TYPE('b)"
+  assumes "iB < nB" and "iA < nA"
+  shows "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB =
+        \<langle> BasisB!iB, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (BasisA!iA)) \<rangle>"
+proof-
+  define v where "v = mat_of_cblinfun F *\<^sub>v unit_vec nA iA"
+  have r1: "vec_of_onb_enum (BasisA!iA) = unit_vec nA iA"
+    by (metis BasisA_def assms(6) index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec vec_of_onb_enum_inverse)
+  have "length BasisB = nB"
+    by (simp add: BasisB_def canonical_basis_length_eq nB_def)    
+  moreover have "length (list_of_vec v) = nB"
+  proof-
+    have "mat_of_cblinfun F \<in> carrier_mat nB nA"
+      unfolding nB_def nA_def mat_of_cblinfun_def by auto
+    hence "dim_vec v = nB"
+      unfolding v_def
+      by auto       
+    thus ?thesis
+      by simp 
+  qed
+  ultimately have "sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)
+      = (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)"
+    by (metis BasisB_def distinct_canonical_basis onb_enum_of_vec_expansion onb_enum_of_vec_list_def')
+  hence "\<langle>BasisB!iB, sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)\<rangle> 
+      =  \<langle>BasisB!iB, (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)\<rangle>"
+    by simp
+  also have "\<dots> = 
+     (\<Sum>jB\<in>{0..<nB}. \<langle>BasisB!iB, (list_of_vec v)!jB *\<^sub>C BasisB!jB\<rangle>)"
+    using Complex_Inner_Product.complex_inner_class.cinner_sum_right[where 
+        x = "BasisB!iB" and f = "\<lambda>x. (list_of_vec v)!x *\<^sub>C BasisB!x" and A = "{0..<nB}"]
+    by blast
+  also have "\<dots> = 
+     (\<Sum>jB\<in>{0..<nB}.  (list_of_vec v)!jB * \<langle>BasisB!iB, BasisB!jB\<rangle>)"
+    by simp
+  also have "\<dots> = 
+      (list_of_vec v)!iB * \<langle>BasisB!iB, BasisB!iB\<rangle>
+       + (\<Sum>jB\<in>{0..<nB}-{iB}.  (list_of_vec v)!jB * \<langle>BasisB!iB, BasisB!jB\<rangle>)"
+  proof-
+    have "iB \<in> {0..<nB}"
+      by (simp add: assms(5))
+    thus ?thesis
+      by (simp add: sum.remove)      
+  qed
+  also have "\<dots> = 
+      (list_of_vec v)!iB * \<langle>BasisB!iB, BasisB!iB\<rangle>"
+  proof-
+    have "jB\<in>{0..<nB}-{iB} \<Longrightarrow> (list_of_vec v)!jB * \<langle>BasisB!iB, BasisB!jB\<rangle> = 0"
+      for jB
+    proof-
+      assume a1: "jB\<in>{0..<nB}-{iB}"
+      hence a2: "jB < nB"
+        by simp
+      have "iB \<noteq> jB"
+        using a1
+        by simp
+      moreover have "distinct BasisB"
+        unfolding BasisB_def
+        by simp
+      ultimately have "BasisB!iB \<noteq> BasisB!jB"
+        using \<open>jB \<in> {0..<nB} - {iB}\<close> \<open>length BasisB = nB\<close> assms(5) nth_eq_iff_index_eq 
+        by auto
+      moreover have "BasisB!iB \<in> set BasisB"
+        by (simp add: \<open>length BasisB = nB\<close> assms(5))        
+      moreover have "BasisB!jB \<in> set BasisB"
+        by (simp add: \<open>length BasisB = nB\<close> a2)        
+      moreover have "x\<in>set BasisB \<Longrightarrow> y\<in>set BasisB \<Longrightarrow>
+            x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+        for x y::'b
+        using is_onb_set 
+        unfolding BasisB_def is_onb_def is_ob_def is_ortho_set_def
+        by blast        
+      ultimately have "\<langle>BasisB!iB, BasisB!jB\<rangle> = 0"
+        by blast
+      thus ?thesis by simp
+    qed
+    hence "(\<Sum>jB\<in>{0..<nB}-{iB}.  (list_of_vec v)!jB * \<langle>BasisB!iB, BasisB!jB\<rangle>) = 0"
+      by (simp add: \<open>\<And>jB. jB \<in> {0..<nB} - {iB} \<Longrightarrow> list_of_vec v ! jB * \<langle>BasisB ! iB, BasisB ! jB\<rangle> = 0\<close>)      
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = 
+      (list_of_vec v)!iB"
+  proof-
+    have "BasisB!iB \<in> set BasisB"
+      by (simp add: \<open>length BasisB = nB\<close> assms(5))
+    hence "BasisB!iB \<in> sphere (0::'b) 1"
+      using is_onb_set BasisB_def unfolding is_onb_def by blast
+    hence "norm (BasisB!iB) = 1"
+      by simp
+    hence "(norm (BasisB!iB))^2 = 1"
+      by simp
+    hence "\<langle>BasisB!iB, BasisB!iB\<rangle> = 1"
+      by (metis of_real_hom.hom_one power2_norm_eq_cinner')
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = vec_index v iB"
+    by (simp add: list_of_vec_index)
+  finally have "\<langle>BasisB!iB, sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)\<rangle> 
+        = vec_index v iB"
+    .
+  hence "vec_index v iB = \<langle> BasisB!iB, onb_enum_of_vec v\<rangle>"
+    unfolding onb_enum_of_vec_def onb_enum_of_vec_list_def'
+    using BasisB_def by auto    
+  thus ?thesis unfolding v_def using r1
+    by simp 
+qed
+
+(* NEW *)
 lemma mat_of_cblinfun_description:
-  "onb_enum_of_vec (mat_of_cblinfun B *\<^sub>v vec_of_onb_enum u) = B *\<^sub>V u"
-  for B::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+  "onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u) = F *\<^sub>V u"
+  for F::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
 proof-
   define BasisA where "BasisA = (canonical_basis::'a list)"
   define BasisB where "BasisB = (canonical_basis::'b list)"
   define basisA where "basisA = set BasisA"
   define basisB where "basisB = set BasisB"
-  define n where "n = canonical_basis_length TYPE('a)"
-  define m where "m = canonical_basis_length TYPE('b)"
-  define M where "M = mat_of_cblinfun B"
-  have carrier_M: "M \<in> carrier_mat m n"
-    unfolding M_def mat_of_cblinfun_def m_def n_def by simp
-
-  show ?thesis
-    unfolding onb_enum_of_vec_def
-    sorry
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+  define M where "M = mat_of_cblinfun F"
+  have carrier_M: "M \<in> carrier_mat nB nA"
+    unfolding nB_def nA_def M_def mat_of_cblinfun_def
+    by auto
+  have "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB =
+        \<langle>BasisB!iB, F *\<^sub>V BasisA!iA\<rangle>"
+    if "iA < nA" and "iB < nB"
+    for iA iB
+    using nA_def nB_def that(1) that(2) 
+      cinner_mat_of_cblinfun_basis[where iA = iA and iB = iB and F = F]
+    unfolding nA_def nB_def BasisA_def BasisB_def
+    by blast 
+  moreover have "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB = 
+          \<langle> BasisB!iB, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (BasisA!iA)) \<rangle>"
+    if "iA < nA" and "iB < nB"
+    for iA iB
+    using onb_enum_of_vec_mat_of_cblinfun_cinner
+      BasisA_def BasisB_def nA_def nB_def that(1) that(2) by blast    
+  ultimately have r1: "\<langle> BasisB!iB, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (BasisA!iA)) \<rangle>
+         = \<langle>BasisB!iB, F *\<^sub>V BasisA!iA\<rangle>"
+    if "iA < nA" and "iB < nB"
+    for iA iB
+    by (simp add: that(1) that(2))
+  hence "\<langle> v, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u) \<rangle> = \<langle> v, F *\<^sub>V u \<rangle>"
+    if "u \<in> basisA" and "v \<in> basisB"
+    for u v
+  proof-
+    have "length BasisA = nA"
+      by (simp add: BasisA_def canonical_basis_length_eq nA_def)
+    moreover have "length BasisB = nB"
+      by (simp add: BasisB_def canonical_basis_length_eq nB_def)
+    moreover have "distinct BasisA"
+      by (simp add: BasisA_def)
+    moreover have "distinct BasisB"
+      by (simp add: BasisB_def)
+    ultimately show ?thesis 
+      using that
+      unfolding basisA_def basisB_def
+      by (metis r1 distinct_Ex1)     
+  qed
+  thus ?thesis
+    using cinner_unique_onb_enum
+    by (metis BasisA_def BasisB_def M_def basisA_def basisB_def carrier_M cblinfun_of_mat.rep_eq
+        nA_def nB_def)    
 qed
 
 lemma mat_of_cblinfun_inverse [code abstype]:
