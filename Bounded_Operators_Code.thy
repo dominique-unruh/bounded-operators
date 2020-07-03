@@ -2338,34 +2338,214 @@ proof-
   thus ?thesis 
     unfolding n_def I_def
     apply (rule Matrix.eq_matI)
-    apply simp
-    apply simp
+       apply simp
+      apply simp
     using I_def b1 n_def apply auto[1]
     using I_def b2 n_def by auto
 qed
 
-lemma cblinfun_of_mat_timesOp[code]:
-  "mat_of_cblinfun (M o\<^sub>C\<^sub>L N) =  (mat_of_cblinfun M * mat_of_cblinfun N)" 
-  for M::"('b::onb_enum,'c::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
-  sorry
+(* NEW *)
+(* Ask to Dominiaque: Should I include "[code]" *)
+lemma mat_of_cblinfun_zero:
+  "mat_of_cblinfun (0 :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+  = 0\<^sub>m (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
+proof-
+  define Z where "Z = (0 :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum))"
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
 
-lemma cblinfun_of_mat_minusOp[code]:
-  "mat_of_cblinfun (M - N) =  (mat_of_cblinfun M - mat_of_cblinfun N)" 
-  for M::"('a::onb_enum,'b::onb_enum) cblinfun" and N::"('a::onb_enum,'b) cblinfun"
-  sorry
+  have z1: "Z + Z = Z"
+    unfolding Z_def by simp
+  have z2: "mat_of_cblinfun Z \<in> carrier_mat nB nA"
+    unfolding nB_def nA_def mat_of_cblinfun_def by auto
+  hence "mat_of_cblinfun (Z + Z) = mat_of_cblinfun Z + mat_of_cblinfun Z"
+    by (simp add: cblinfun_of_mat_plusOp)
+  hence "mat_of_cblinfun Z = mat_of_cblinfun Z + mat_of_cblinfun Z"
+    using z1 by simp
+  hence "mat_of_cblinfun Z = 0\<^sub>m nB nA"
+    unfolding nB_def nA_def
+    by (smt add_uminus_minus_mat assoc_add_mat minus_r_inv_mat nA_def nB_def right_add_zero_mat 
+        uminus_carrier_mat z2)  
+  thus ?thesis unfolding Z_def nB_def nA_def by simp
+qed
 
 lemma cblinfun_of_mat_uminusOp[code]:
-  "mat_of_cblinfun (- M) = - mat_of_cblinfun M" for M::"('a::onb_enum,'b::onb_enum) cblinfun"
+  "mat_of_cblinfun (- M) = - mat_of_cblinfun M" 
+  for M::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+  have M1: "mat_of_cblinfun M \<in> carrier_mat nB nA"
+    unfolding nB_def nA_def
+    by (metis add.right_neutral add_carrier_mat cblinfun_of_mat_plusOp mat_of_cblinfun_zero nA_def
+        nB_def zero_carrier_mat) 
+  have M2: "mat_of_cblinfun (-M) \<in> carrier_mat nB nA"
+    by (metis add_carrier_mat cblinfun_of_mat_plusOp mat_of_cblinfun_zero diff_0 nA_def nB_def 
+        uminus_add_conv_diff zero_carrier_mat)
+  have "mat_of_cblinfun (M - M) =  0\<^sub>m nB nA"
+    unfolding nA_def nB_def
+    by (simp add: mat_of_cblinfun_zero)
+  moreover have "mat_of_cblinfun (M - M) = mat_of_cblinfun M + mat_of_cblinfun (- M)"
+    by (metis cblinfun_of_mat_plusOp pth_2)
+  ultimately have "mat_of_cblinfun M + mat_of_cblinfun (- M) = 0\<^sub>m nB nA"
+    by simp
+  thus ?thesis
+    using M1 M2
+    by (smt add_uminus_minus_mat assoc_add_mat comm_add_mat left_add_zero_mat minus_r_inv_mat 
+        uminus_carrier_mat) 
+qed
+
+lemma cblinfun_of_mat_minusOp[code]:
+  "mat_of_cblinfun (M - N) = mat_of_cblinfun M - mat_of_cblinfun N" 
+  for M::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" and N::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b"
+proof-
+  have a1: "mat_of_cblinfun (- N) = -(mat_of_cblinfun N)"
+    using cblinfun_of_mat_uminusOp .
+  have "mat_of_cblinfun (M - N) = mat_of_cblinfun (M + (- N))"
+    by simp
+  also have "\<dots> = mat_of_cblinfun M + mat_of_cblinfun (- N)"
+    using cblinfun_of_mat_plusOp. 
+  also have "\<dots> = mat_of_cblinfun M - mat_of_cblinfun N"
+    using a1 by auto
+  finally show ?thesis .
+qed  
+
+(* NEW *)
+lemma cblinfun_of_mat_inverse:
+  fixes M::"complex mat"
+  assumes "M \<in> carrier_mat m n"
+    and "n = canonical_basis_length TYPE('a)" 
+    and "m = canonical_basis_length TYPE('b)"
+  shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) =  M"
   sorry
 
-lemma mat_of_cblinfun_scalarMult[code]:
-  "mat_of_cblinfun ((a::complex) *\<^sub>C M) = smult_mat a (mat_of_cblinfun M)" for M :: "('a::onb_enum,'b::onb_enum) cblinfun"
+(* NEW *)
+lemma mat_of_cblinfun_timesOp:
+  fixes M N ::"complex mat"
+  defines "nA == canonical_basis_length TYPE('a::onb_enum)" 
+    and "nB == canonical_basis_length TYPE('b::onb_enum)"
+    and "nC == canonical_basis_length TYPE('c::onb_enum)"
+  assumes "M \<in> carrier_mat nC nB" and "N \<in> carrier_mat nB nA"
+  shows  "cblinfun_of_mat (M * N)
+     = ((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) o\<^sub>C\<^sub>L ((cblinfun_of_mat N)::'a \<Rightarrow>\<^sub>C\<^sub>L'b)"
   sorry
+
+lemma cblinfun_of_mat_timesOp[code]:
+  "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) = mat_of_cblinfun F * mat_of_cblinfun G" 
+  for F::"'b::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'c::onb_enum" and G::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b"
+proof- (* NEW *)
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+  define nC where "nC = canonical_basis_length TYPE('c)"
+  have a3: "mat_of_cblinfun F \<in> carrier_mat nC nB"
+    unfolding nC_def nB_def mat_of_cblinfun_def
+    by simp
+  moreover have a2: "mat_of_cblinfun G \<in> carrier_mat nB nA"
+    unfolding nB_def nA_def mat_of_cblinfun_def
+    by simp
+  ultimately have a1: "mat_of_cblinfun F * mat_of_cblinfun G \<in> carrier_mat nC nA"
+    using Matrix.mult_carrier_mat[where A = "mat_of_cblinfun F" and B = "mat_of_cblinfun G" 
+        and nr = nC and n = nB and nc = nA] 
+    by blast
+  have "cblinfun_of_mat (mat_of_cblinfun F * mat_of_cblinfun G)
+      = ((cblinfun_of_mat (mat_of_cblinfun F))::'b\<Rightarrow>\<^sub>C\<^sub>L'c) o\<^sub>C\<^sub>L 
+        ((cblinfun_of_mat (mat_of_cblinfun G))::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
+    using mat_of_cblinfun_timesOp a2 a3 nA_def nB_def nC_def by blast
+  moreover have "((cblinfun_of_mat (mat_of_cblinfun F))::'b\<Rightarrow>\<^sub>C\<^sub>L'c) = F"
+    by (simp add: mat_of_cblinfun_inverse)    
+  moreover have "((cblinfun_of_mat (mat_of_cblinfun G))::'a\<Rightarrow>\<^sub>C\<^sub>L'b) = G"
+    by (simp add: mat_of_cblinfun_inverse)    
+  ultimately have "F o\<^sub>C\<^sub>L G = cblinfun_of_mat (mat_of_cblinfun F * mat_of_cblinfun G)"
+    by simp
+  hence "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) 
+    = mat_of_cblinfun ((cblinfun_of_mat::complex mat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'c) 
+                        (mat_of_cblinfun F * mat_of_cblinfun G))"
+    by simp
+  moreover have "mat_of_cblinfun ((cblinfun_of_mat::complex mat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'c) 
+                        (mat_of_cblinfun F * mat_of_cblinfun G))
+        = mat_of_cblinfun F * mat_of_cblinfun G"
+    using a1 cblinfun_of_mat_inverse
+    by (simp add: cblinfun_of_mat_inverse nA_def nC_def)
+  ultimately show ?thesis by simp
+qed
+
+
+lemma mat_of_cblinfun_scalarMult[code]:
+  "mat_of_cblinfun ((a::complex) *\<^sub>C F) = a \<cdot>\<^sub>m (mat_of_cblinfun F)"
+  for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+proof- (* NEW *)
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+  define BasisA where "BasisA = (canonical_basis::'a list)"
+  define BasisB where "BasisB = (canonical_basis::'b list)"
+
+  define G where "G = (a::complex) *\<^sub>C (idOp:: 'b \<Rightarrow>\<^sub>C\<^sub>L 'b)"
+  have w1: "a *\<^sub>C F = G o\<^sub>C\<^sub>L F"
+    unfolding G_def
+    by simp
+  have "\<langle>BasisB ! i, BasisB ! j\<rangle> = (if i = j then 1 else 0)"
+    if "i < nB" and "j < nB"
+    for i j
+  proof(cases "i = j")
+    case True
+    have "BasisB!i \<in> set BasisB"
+      using that(1) unfolding nB_def BasisB_def
+      by (simp add: canonical_basis_length_eq) 
+    hence "norm (BasisB!i) = 1"
+      using is_onb_set that(1)
+      unfolding BasisB_def is_onb_def
+      by auto
+    hence "(norm (BasisB!i))^2 = 1"
+      by simp
+    thus ?thesis
+      by (metis True of_real_hom.hom_one power2_norm_eq_cinner') 
+  next
+    case False
+    moreover have "distinct BasisB"
+      unfolding BasisB_def
+      by simp
+    ultimately have "BasisB!i \<noteq> BasisB!j"
+      using that unfolding nB_def
+      by (simp add: BasisB_def canonical_basis_length_eq nth_eq_iff_index_eq) 
+    moreover have "BasisB!i \<in> set BasisB"
+      using that(1) unfolding nB_def BasisB_def
+      by (simp add: canonical_basis_length_eq) 
+    moreover have "BasisB!j \<in> set BasisB"
+      using that(2) unfolding nB_def BasisB_def
+      by (simp add: canonical_basis_length_eq) 
+    ultimately show ?thesis 
+      using is_onb_set
+      unfolding BasisB_def nB_def is_onb_def is_ob_def is_ortho_set_def      
+      by auto
+  qed
+
+  hence w2: "mat_of_cblinfun G = a \<cdot>\<^sub>m (1\<^sub>m nB)"
+    unfolding BasisB_def nB_def mat_of_cblinfun_def G_def smult_mat_def one_mat_def
+    by auto
+  have w3: "1\<^sub>m nB \<in> carrier_mat nB nB"
+    unfolding nB_def  mat_of_cblinfun_def by auto
+  have w4: "mat_of_cblinfun F \<in> carrier_mat nB nA"
+    unfolding nB_def nA_def mat_of_cblinfun_def by auto
+  have w5: "(1\<^sub>m nB) * (mat_of_cblinfun F) = (mat_of_cblinfun F)"
+    using w4 by auto    
+  have "mat_of_cblinfun (a *\<^sub>C F) = mat_of_cblinfun (G o\<^sub>C\<^sub>L F)"
+    using w1
+    by simp
+  also have "\<dots> = (mat_of_cblinfun G)* (mat_of_cblinfun F)"
+    by (simp add: cblinfun_of_mat_timesOp)
+  also have "\<dots> = (a \<cdot>\<^sub>m (1\<^sub>m nB)) * (mat_of_cblinfun F)"
+    using w2 by simp
+  also have "\<dots> = a \<cdot>\<^sub>m ((1\<^sub>m nB) * (mat_of_cblinfun F))"
+    using Matrix.mult_smult_distrib w4 by auto
+  also have "\<dots> = a \<cdot>\<^sub>m (mat_of_cblinfun F)"
+    by (simp add: w5)
+  finally show ?thesis .
+qed
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun operators.\<close>
 instantiation cblinfun :: (onb_enum,onb_enum) equal begin
 definition [code]: "equal_cblinfun M N \<longleftrightarrow> mat_of_cblinfun M = mat_of_cblinfun N" 
-  for M N :: "('a,'b) cblinfun"
+  for M N :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
 instance 
   apply intro_classes
   unfolding equal_cblinfun_def 
@@ -2376,13 +2556,9 @@ definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
 lemma cblinfun_of_mat_adjoint[code]:
   "mat_of_cblinfun (adjoint A) = adjoint_mat (mat_of_cblinfun A)"
-  for A :: "('a::onb_enum,'b::onb_enum) cblinfun"
+  for A :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
   sorry
 
-lemma mat_of_cblinfun_zero[code]:
-  "mat_of_cblinfun (0::('a::onb_enum,'b::onb_enum) cblinfun)
-       = zero_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
-  sorry
 
 lemma mat_of_cblinfun_classical_operator[code]: 
   "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
@@ -2404,16 +2580,6 @@ lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
   by auto
-
-(* Optional *)
-lemma cblinfun_of_mat_inverse:
-  fixes M::"complex mat"
-  assumes "M \<in> carrier_mat m n"
-    and "n = canonical_basis_length TYPE('a)" 
-    and "m = canonical_basis_length TYPE('b)"
-  shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) =  M"
-  sorry
-
 
 
 unbundle no_jnf_notation
