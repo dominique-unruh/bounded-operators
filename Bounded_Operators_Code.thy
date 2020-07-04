@@ -5,8 +5,9 @@ theory Bounded_Operators_Code
     Complex_L2 Jordan_Normal_Form.Matrix 
 begin
 
-subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
+(* TODO: Move theorems that are not code-specific into Bounded_Operators_Matrices *)
 
+subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
 
 text \<open>This theory defines bundes to activate/deactivate the notation
   from \<^session>\<open>Jordan_Normal_Form\<close>.
@@ -56,7 +57,7 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::onb_e
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
   (* TODO: Define (canonical isomorphism). *)
 
-(* TODO: use this definition instead of vec_of_onb_enum_list (+ fix proofs) *)
+(* TODO: Find out whether this is still useful for anything *)
 primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::onb_enum \<Rightarrow> nat \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum_list [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
   \<open>vec_of_onb_enum_list (x#ys) v i = vec_of_onb_enum_list ys v (Suc i) +
@@ -67,6 +68,7 @@ definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<clo
   \<open>vec_of_onb_enum v = vec_of_onb_enum_list (canonical_basis::'a list) v 0\<close>
 *)
 
+(* TODO: Move to Bounded_Operators_Matrices *)
 definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum v = vec_of_list (map (complex_vector.representation (set canonical_basis) v) canonical_basis)\<close>
 
@@ -162,6 +164,7 @@ next
     by simp
 qed
 
+(* TODO: Move to Bounded_Operators_Matrices *)
 fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
   \<open>onb_enum_of_vec_list y [] = 0\<close> |
@@ -183,6 +186,7 @@ next
   qed
 qed
 
+(* TODO: Move to Bounded_Operators_Matrices *)
 definition onb_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::onb_enum\<close> where
   \<open>onb_enum_of_vec v = onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
 
@@ -1803,7 +1807,7 @@ text \<open>The following lemma registers cblinfun as an abstract datatype with
   See [TODO: bibtex reference to code generation tutorial] for more information on 
   @{theory_text \<open>[code abstype]\<close>}.\<close>
 
-(* NEW *)
+(* TODO: move to "missing" theory (for Jordan_Normal_Form) *)
 lemma mat_entry_explicit:
   fixes M :: "complex mat"
   assumes "M \<in> carrier_mat m n" and "i < m" and "j < n"
@@ -1855,7 +1859,6 @@ proof-
   finally show ?thesis by simp
 qed
 
-(* NEW *)
 lemma cinner_mat_of_cblinfun_basis:
   fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   defines "BasisA == (canonical_basis::'a list)"
@@ -1877,7 +1880,6 @@ proof-
   finally show ?thesis .
 qed
 
-(* NEW *)
 lemma cinner_mat_of_cblinfun:
   fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   defines "BasisB == (canonical_basis::'b list)"
@@ -1995,7 +1997,7 @@ proof-
     by meson 
 qed
 
-(* NEW *)
+(* TODO: make this an inner lemma below *)
 lemma onb_enum_of_vec_mat_of_cblinfun_cinner:
   fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   defines "BasisA == (canonical_basis::'a list)"
@@ -2107,7 +2109,6 @@ proof-
     by simp 
 qed
 
-(* NEW *)
 lemma mat_of_cblinfun_description:
   "onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u) = F *\<^sub>V u"
   for F::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -2164,10 +2165,11 @@ proof-
         nA_def nB_def)    
 qed
 
-lemma mat_of_cblinfun_inverse [code abstype]:
+(* TODO move to ..._Matrices *)
+lemma mat_of_cblinfun_inverse:
   "cblinfun_of_mat (mat_of_cblinfun B) = B"
   for B::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
-proof- (* NEW *)
+proof -
   define BasisA where "BasisA = (canonical_basis::'a list)"
   define BasisB where "BasisB = (canonical_basis::'b list)"
   define basisA where "basisA = set BasisA"
@@ -2197,6 +2199,8 @@ proof- (* NEW *)
   thus ?thesis
     using cblinfun_apply_inject unfolding M_def by blast
 qed
+
+declare mat_of_cblinfun_inverse [code abstype]
 
 lemma mat_of_cblinfun_inj: "inj mat_of_cblinfun"
   by (metis inj_on_def mat_of_cblinfun_inverse)
@@ -2344,9 +2348,7 @@ proof-
     using I_def b2 n_def by auto
 qed
 
-(* NEW *)
-(* Ask to Dominiaque: Should I include "[code]" *)
-lemma mat_of_cblinfun_zero:
+lemma mat_of_cblinfun_zero[code]:
   "mat_of_cblinfun (0 :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
   = 0\<^sub>m (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
 proof-
@@ -2410,7 +2412,6 @@ proof-
   finally show ?thesis .
 qed  
 
-(* NEW *)
 lemma cblinfun_of_mat_inverse:
   fixes M::"complex mat"
   assumes "M \<in> carrier_mat m n"
@@ -2419,7 +2420,6 @@ lemma cblinfun_of_mat_inverse:
   shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) =  M"
   sorry
 
-(* NEW *)
 lemma mat_of_cblinfun_timesOp:
   fixes M N ::"complex mat"
   defines "nA == canonical_basis_length TYPE('a::onb_enum)" 
@@ -2433,7 +2433,7 @@ lemma mat_of_cblinfun_timesOp:
 lemma cblinfun_of_mat_timesOp[code]:
   "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) = mat_of_cblinfun F * mat_of_cblinfun G" 
   for F::"'b::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'c::onb_enum" and G::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b"
-proof- (* NEW *)
+proof -
   define nA where "nA = canonical_basis_length TYPE('a)"
   define nB where "nB = canonical_basis_length TYPE('b)"
   define nC where "nC = canonical_basis_length TYPE('c)"
@@ -2473,7 +2473,7 @@ qed
 lemma mat_of_cblinfun_scalarMult[code]:
   "mat_of_cblinfun ((a::complex) *\<^sub>C F) = a \<cdot>\<^sub>m (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
-proof- (* NEW *)
+proof -
   define nA where "nA = canonical_basis_length TYPE('a)"
   define nB where "nB = canonical_basis_length TYPE('b)"
   define BasisA where "BasisA = (canonical_basis::'a list)"
