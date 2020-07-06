@@ -2412,13 +2412,191 @@ proof-
   finally show ?thesis .
 qed  
 
+(* NEW *)
+lemma cblinfun_of_mat_plus:
+  assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
+    and a3: "nA = canonical_basis_length TYPE('a)" 
+    and a4: "nB = canonical_basis_length TYPE('b)"
+  shows "(cblinfun_of_mat (M + N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) 
+  = ((cblinfun_of_mat M + cblinfun_of_mat N):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+proof-
+  have "(cblinfun_of_mat (M + N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v
+  = ((cblinfun_of_mat M + cblinfun_of_mat N):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v"
+    for v
+  proof-
+    have w1: "dim_vec (M *\<^sub>v vec_of_onb_enum v) = dim_vec (N *\<^sub>v vec_of_onb_enum v)"
+      using a1 a2 by auto      
+    have "vec_of_onb_enum v \<in> carrier_vec nA"
+      by (metis a3 carrier_vec_dim_vec diff_add_cancel dim_vec index_add_vec(2) 
+          vec_of_onb_enum_add vec_of_onb_enum_inverse)      
+    hence w2: "M *\<^sub>v vec_of_onb_enum v + N *\<^sub>v vec_of_onb_enum v = (M + N) *\<^sub>v vec_of_onb_enum v"
+      using a1 a2 Matrix.add_mult_distrib_mat_vec
+      by metis
+    have "((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v = 
+        onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)"
+      by (metis a1 a3 a4 cblinfun_of_mat.rep_eq)      
+    moreover have "((cblinfun_of_mat N)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v = 
+        onb_enum_of_vec (N *\<^sub>v vec_of_onb_enum v)"
+      by (metis a2 a3 a4 cblinfun_of_mat.rep_eq)
+    ultimately have "((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v 
+                   + ((cblinfun_of_mat N)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v
+        = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)
+        + onb_enum_of_vec (N *\<^sub>v vec_of_onb_enum v)"
+      by simp
+    also have "\<dots>
+        = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v + N *\<^sub>v vec_of_onb_enum v)"
+      using onb_enum_of_vec_add w1
+      by (metis a2 a4 canonical_basis_length_eq carrier_matD(1) dim_mult_mat_vec) 
+    also have "\<dots>
+        = onb_enum_of_vec ((M + N) *\<^sub>v vec_of_onb_enum v)"
+      by (simp add: w2)
+    also have "\<dots>
+        = (cblinfun_of_mat (M + N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v"
+      by (metis a2 a3 a4 add_carrier_mat cblinfun_of_mat.rep_eq)
+    finally have "((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v 
+                   + ((cblinfun_of_mat N)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v 
+        = (cblinfun_of_mat (M + N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) v"
+      .    
+    thus ?thesis
+      by (simp add: plus_cblinfun.rep_eq) 
+  qed
+  thus ?thesis
+    by (simp add: cblinfun_ext) 
+qed
+
+(* NEW *)
+lemma cblinfun_of_mat_uminus:
+  assumes a1: "M \<in> carrier_mat nB nA"
+    and a2: "nA = canonical_basis_length TYPE('a)" 
+    and a3: "nB = canonical_basis_length TYPE('b)"
+  shows
+    "(cblinfun_of_mat (-M) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) 
+  = -((cblinfun_of_mat M):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+  by (smt a1 a2 a3 add.group_axioms add.right_neutral add_minus_cancel add_uminus_minus_mat 
+      cblinfun_of_mat_plus group.inverse_inverse mat_of_cblinfun_inverse mat_of_cblinfun_zero 
+      minus_r_inv_mat uminus_carrier_mat)
+
+(* NEW *)
+lemma cblinfun_of_mat_minus:
+  fixes M::"complex mat"
+  assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
+    and a3: "nA = canonical_basis_length TYPE('a)" 
+    and a4: "nB = canonical_basis_length TYPE('b)"
+  shows   "(cblinfun_of_mat (M - N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) 
+  = ((cblinfun_of_mat M - cblinfun_of_mat N):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+proof-
+  have b1: "-N \<in> carrier_mat nB nA"
+    by (simp add: a2)
+  hence b2: "((cblinfun_of_mat (-N)):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)
+       = -((cblinfun_of_mat N):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    by (simp add: a3 a4 cblinfun_of_mat_uminus)
+  have "(cblinfun_of_mat (M - N) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)
+     = (cblinfun_of_mat (M + (- N)) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) "
+    by (metis a1 a2 minus_add_uminus_mat)
+  also have "\<dots>
+     = ((cblinfun_of_mat M + cblinfun_of_mat (-N)):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    using a1 a3 a4 b1 cblinfun_of_mat_plus by blast
+  also have "\<dots>
+     = ((cblinfun_of_mat M - cblinfun_of_mat N):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    using b2
+    by simp
+  finally show ?thesis .
+qed
+
+(* NEW *)
+lemma vec_of_onb_enum_zero:
+  assumes a1: "nA = canonical_basis_length TYPE('a::onb_enum)" 
+  shows "vec_of_onb_enum (0::'a) = 0\<^sub>v nA"
+  by (smt add_cancel_right_left assms index_zero_vec(2) left_zero_vec onb_enum_of_vec_inverse
+      vec_of_onb_enum_add vec_of_onb_enum_inverse zero_carrier_vec)  
+
+(* NEW *)
+lemma cblinfun_of_mat_kernel:
+  fixes M::"complex mat"
+  assumes a1: "M \<in> carrier_mat nB nA"
+    and a2: "nA = canonical_basis_length TYPE('a)" 
+    and a3: "nB = canonical_basis_length TYPE('b)"  
+    and a4: "(cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) = 0"
+  shows "M = 0\<^sub>m nB nA"
+proof-
+  have "M $$ (iB,iA) = 0"
+    if "iB < nB" and "iA < nA" 
+    for iB iA
+  proof-
+    have "(cblinfun_of_mat M :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V v = 0"
+      for v
+      by (simp add: a4)
+    moreover have "((cblinfun_of_mat M) :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V v = 
+          onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)"
+      for v
+      by (metis a1 a2 a3 cblinfun_of_mat.rep_eq)
+    ultimately have c1: "onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v) = (0::'b)"
+      for v::'a
+      by simp
+    have "M *\<^sub>v vec_of_onb_enum v = 0\<^sub>v nB"
+      for v::'a
+    proof-
+      have "vec_of_onb_enum (onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)::'b) = vec_of_onb_enum (0::'b)"
+        by (simp add: c1)
+      hence "M *\<^sub>v vec_of_onb_enum v = vec_of_onb_enum (0::'b)"
+        using vec_of_onb_enum_inverse a1 a3 by auto
+      also have "vec_of_onb_enum (0::'b) = 0\<^sub>v nB"
+        using vec_of_onb_enum_zero
+        by (simp add: vec_of_onb_enum_zero a3) 
+      finally show ?thesis 
+        .
+    qed
+    moreover have "M $$ (iB,iA) = vec_index (M *\<^sub>v unit_vec nA iA) iB"
+      using a1 that(1) that(2) by auto
+    ultimately show ?thesis
+      by (metis a2 index_unit_vec(3) index_zero_vec(1) that(1) vec_of_onb_enum_inverse)      
+  qed
+  thus ?thesis 
+    using Matrix.eq_matI a1 by auto
+qed
+
+
 lemma cblinfun_of_mat_inverse:
   fixes M::"complex mat"
-  assumes "M \<in> carrier_mat m n"
-    and "n = canonical_basis_length TYPE('a)" 
-    and "m = canonical_basis_length TYPE('b)"
-  shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) =  M"
-  sorry
+  assumes "M \<in> carrier_mat nB nA"
+    and "nA = canonical_basis_length TYPE('a)" 
+    and "nB = canonical_basis_length TYPE('b)"
+  shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) = M"
+proof-
+  define F where "F = (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+  have g1: "M \<in> carrier_mat nB nA"
+    by (simp add: assms(1))
+  have g2: "(mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum))
+                   \<in> carrier_mat nB nA"
+    by (metis add_diff_cancel_right' assms(2) assms(3) cblinfun_of_mat_minusOp mat_of_cblinfun_zero
+        minus_carrier_mat zero_carrier_mat)
+  have  "cblinfun_of_mat (mat_of_cblinfun F) = F"
+    by (simp add: mat_of_cblinfun_inverse)
+  hence "cblinfun_of_mat (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+      = (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    unfolding F_def .
+  hence "0 = 
+        cblinfun_of_mat (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+      - (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    by simp
+  also have "\<dots> = 
+        (cblinfun_of_mat
+        ( (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+          - M ):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
+    using g1 g2
+    by (simp add: assms(2) assms(3) cblinfun_of_mat_minus) 
+  finally have "0 = (cblinfun_of_mat
+        ( (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+          - M ):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)".
+  hence "(mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
+          - M = 0\<^sub>m nB nA"
+    by (metis assms(1) assms(2) assms(3) cblinfun_of_mat_kernel minus_carrier_mat)
+  thus ?thesis
+    by (smt add.inverse_neutral assms(1) assms(2) assms(3) cblinfun_of_mat_minusOp 
+        cblinfun_of_mat_uminusOp diff_zero mat_of_cblinfun_zero minus_add_minus_mat
+        minus_add_uminus_mat minus_carrier_mat minus_r_inv_mat right_add_zero_mat 
+        uminus_carrier_mat zero_carrier_mat) 
+qed
 
 lemma mat_of_cblinfun_timesOp:
   fixes M N ::"complex mat"
@@ -2579,7 +2757,7 @@ text \<open>This is a hack to circumvent a bug in the code generation. The autom
 lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
-  by auto
+  by auto                     
 
 
 unbundle no_jnf_notation
