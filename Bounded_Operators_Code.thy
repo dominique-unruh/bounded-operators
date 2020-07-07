@@ -1164,8 +1164,6 @@ next
   thus ?case .
 qed
 
-
-
 lemma cinner_onb_enum_of_vec:
   defines "n == canonical_basis_length TYPE('a::onb_enum)"
   assumes w1: "dim_vec x = n" and w2: "dim_vec y = n"
@@ -2603,10 +2601,45 @@ lemma mat_of_cblinfun_timesOp:
   defines "nA == canonical_basis_length TYPE('a::onb_enum)" 
     and "nB == canonical_basis_length TYPE('b::onb_enum)"
     and "nC == canonical_basis_length TYPE('c::onb_enum)"
-  assumes "M \<in> carrier_mat nC nB" and "N \<in> carrier_mat nB nA"
+  assumes a1: "M \<in> carrier_mat nC nB" and a2: "N \<in> carrier_mat nB nA"
   shows  "cblinfun_of_mat (M * N)
-     = ((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) o\<^sub>C\<^sub>L ((cblinfun_of_mat N)::'a \<Rightarrow>\<^sub>C\<^sub>L'b)"
-  sorry
+       = ((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) o\<^sub>C\<^sub>L ((cblinfun_of_mat N)::'a \<Rightarrow>\<^sub>C\<^sub>L'b)"
+proof-(* NEW *)
+  have b1: "((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) v = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)"
+    for v
+    by (metis assms(4) cblinfun_of_mat.rep_eq nB_def nC_def)
+  have b2: "((cblinfun_of_mat N)::'a \<Rightarrow>\<^sub>C\<^sub>L'b) v = onb_enum_of_vec (N *\<^sub>v vec_of_onb_enum v)"
+    for v
+    by (metis assms(5) cblinfun_of_mat.rep_eq nA_def nB_def)
+  have b3: "((cblinfun_of_mat (M * N))::'a \<Rightarrow>\<^sub>C\<^sub>L'c) v
+       = onb_enum_of_vec ((M * N) *\<^sub>v vec_of_onb_enum v)"
+    for v
+    by (metis assms(4) assms(5) cblinfun_of_mat.rep_eq mult_carrier_mat nA_def nC_def)
+  have "(onb_enum_of_vec ((M * N) *\<^sub>v vec_of_onb_enum v)::'c)
+      = (onb_enum_of_vec (M *\<^sub>v ( vec_of_onb_enum ( (onb_enum_of_vec (N *\<^sub>v vec_of_onb_enum v))::'b ))))"
+    for v::'a
+  proof-
+    have c1: "vec_of_onb_enum (onb_enum_of_vec x :: 'b) = x"
+      if "dim_vec x = nB"
+      for x::"complex vec"
+      using that unfolding nB_def
+      by simp
+    have c2: "vec_of_onb_enum v \<in> carrier_vec nA"
+      by (metis (mono_tags, hide_lams) add.commute carrier_vec_dim_vec index_add_vec(2) 
+          index_zero_vec(2) nA_def vec_of_onb_enum_add vec_of_onb_enum_inverse)      
+    have "(M * N) *\<^sub>v vec_of_onb_enum v = M *\<^sub>v (N *\<^sub>v vec_of_onb_enum v)"
+      using Matrix.assoc_mult_mat_vec a1 a2 c2 by blast      
+    hence "(onb_enum_of_vec ((M * N) *\<^sub>v vec_of_onb_enum v)::'c)
+        = (onb_enum_of_vec (M *\<^sub>v (N *\<^sub>v vec_of_onb_enum v))::'c)"
+      by simp
+    also have "\<dots> = 
+      (onb_enum_of_vec (M *\<^sub>v ( vec_of_onb_enum ( (onb_enum_of_vec (N *\<^sub>v vec_of_onb_enum v))::'b ))))"
+      using c1 a2 by auto 
+    finally show ?thesis by simp
+  qed
+  thus ?thesis using b1 b2 b3
+    by (simp add: cblinfun_ext times_applyOp)    
+qed
 
 lemma cblinfun_of_mat_timesOp[code]:
   "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) = mat_of_cblinfun F * mat_of_cblinfun G" 
@@ -2730,12 +2763,88 @@ instance
   using mat_of_cblinfun_inj injD by fastforce
 end
 
+(* NEW *)
+lemma cinner_vec_of_onb_enum:
+  "\<langle>x, y\<rangle> = (vec_of_onb_enum y) \<bullet>c (vec_of_onb_enum x)"
+proof-
+  define u where "u = vec_of_onb_enum x"
+  define v where "v = vec_of_onb_enum y"
+  define n where "n = canonical_basis_length TYPE('a)"
+  have b1: "dim_vec u = n"
+    unfolding u_def n_def
+    by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
+  have b2: "dim_vec v = n"
+    unfolding v_def n_def
+    by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
+  have  "\<langle>(onb_enum_of_vec::_\<Rightarrow> 'a) u, (onb_enum_of_vec::_\<Rightarrow> 'a) v\<rangle>
+           = v \<bullet>c u"
+    using b1 b2 cinner_onb_enum_of_vec
+    by (simp add: cinner_onb_enum_of_vec n_def)
+  moreover have "x = onb_enum_of_vec u"
+    by (simp add: onb_enum_of_vec_inverse u_def)
+  moreover have "y = onb_enum_of_vec v"
+    by (simp add: onb_enum_of_vec_inverse v_def)
+  ultimately show ?thesis
+    using u_def v_def by presburger 
+qed
+
 definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
+(* NEW *)
+lemma adjoint_mat_swap:
+  fixes M ::"complex mat"
+  assumes "M \<in> carrier_mat nB nA" and "iA < dim_row M" and "iB < dim_col M"
+  shows "(adjoint_mat M)$$(iB,iA) = cnj (M$$(iA,iB))"
+  unfolding adjoint_mat_def transpose_mat_def map_mat_def
+  by (simp add: assms(2) assms(3))
+
+
 lemma cblinfun_of_mat_adjoint[code]:
-  "mat_of_cblinfun (adjoint A) = adjoint_mat (mat_of_cblinfun A)"
-  for A :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
-  sorry
+  "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
+  for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
+proof- (* NEW *)
+  define nA where "nA = canonical_basis_length TYPE('a::onb_enum)" 
+  define nB where "nB = canonical_basis_length TYPE('b::onb_enum)" 
+  define BasisA where "BasisA = (canonical_basis::'a list)"
+  define BasisB where "BasisB = (canonical_basis::'b list)"
+
+  have a1: "mat_of_cblinfun F \<in> carrier_mat nB nA"
+    unfolding nA_def nB_def
+    by (metis (mono_tags, lifting) add.left_inverse add_carrier_mat cblinfun_of_mat_plusOp 
+        mat_of_cblinfun_zero minus_add_cancel zero_carrier_mat)    
+  have a2: "dim_row (adjoint_mat (mat_of_cblinfun F)) = nA"
+    using a1 adjoint_mat_def by auto    
+  have a3: "dim_col (adjoint_mat (mat_of_cblinfun F)) = nB"
+    using a1 adjoint_mat_def by auto    
+  have a4: "dim_row (mat_of_cblinfun (F*)) = nA"
+    using a1
+    by (metis cblinfun_of_mat_id cblinfun_of_mat_timesOp idOp_adjoint index_mult_mat(2) 
+        index_one_mat(2) nA_def times_adjoint times_idOp1)     
+  have a5: "dim_col (mat_of_cblinfun (F*)) = nB"
+    using a1
+    by (metis cblinfun_of_mat_id cblinfun_of_mat_timesOp idOp_adjoint index_mult_mat(3) 
+        index_one_mat(3) left_mult_one_mat mat_of_cblinfun_inverse nB_def times_adjoint)
+  have "(mat_of_cblinfun (F*))$$(iA,iB) = (adjoint_mat (mat_of_cblinfun F))$$(iA,iB)"
+    if "iA < nA" and "iB < nB"
+    for iA iB
+  proof-  
+    have t1: "nA = dim_col (mat_of_cblinfun F)"
+      using a1 by auto
+    have t2: "nB = dim_row (mat_of_cblinfun F)"
+      using a1 by auto
+    have t3: "mat_of_cblinfun F \<in> carrier_mat nB nA"
+      by (simp add: a1)
+    thm adjoint_D
+    have "(mat_of_cblinfun (F*))$$(iA,iB) = cnj ((mat_of_cblinfun F)$$(iB,iA))"
+      sorry
+    moreover have "(adjoint_mat (mat_of_cblinfun F))$$(iA,iB) = cnj ((mat_of_cblinfun F)$$(iB,iA))"
+      using t1 t2 t3 that adjoint_mat_swap by blast             
+    ultimately show ?thesis by simp
+  qed
+  thus ?thesis using eq_matI[where A = "mat_of_cblinfun (F*)"
+        and B = "adjoint_mat (mat_of_cblinfun F)"]
+    using a2 a3 a4 a5 by blast    
+qed
 
 
 lemma mat_of_cblinfun_classical_operator[code]: 
