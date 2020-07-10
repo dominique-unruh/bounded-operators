@@ -2829,7 +2829,7 @@ qed
 lemma cblinfun_of_mat_description:
   fixes M::"complex mat"
   defines "nA == canonical_basis_length TYPE('a::onb_enum)"
-      and "nB == canonical_basis_length TYPE('b::onb_enum)"
+    and "nB == canonical_basis_length TYPE('b::onb_enum)"
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "dim_vec x = nA"
   shows "((onb_enum_of_vec (M *\<^sub>v x))::'b) 
       = ((cblinfun_of_mat M)::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V ((onb_enum_of_vec x)::'a)"
@@ -2855,14 +2855,127 @@ proof-
   thus ?thesis by simp
 qed
 
+
+(* Ask to Dominique *)
+(* How to solve the problem with the notation "($)" for "vec_index" *)
+(* How to solve the problem with the notation "(\<bullet>)" for "scalar_prod" *)
+
 (* NEW *)
 lemma cscalar_prod_adjoint:
   fixes M:: "complex mat"
-  assumes "M \<in> carrier_mat nB nA" 
-      and "dim_vec v = nA"
-      and "dim_vec u = nB"
+  assumes a1: "M \<in> carrier_mat nB nA" 
+    and a2: "dim_vec v = nA"
+    and a3: "dim_vec u = nB"
   shows "v \<bullet>c ((adjoint_mat M) *\<^sub>v u) = (M *\<^sub>v v) \<bullet>c u"
-  sorry
+proof-
+  define N where "N = adjoint_mat M"
+  have b1: "N \<in> carrier_mat nA nB"
+    unfolding N_def
+    using a1 unfolding adjoint_mat_def by simp
+  hence b2: "dim_vec (N *\<^sub>v u) = nA"    
+    using a3 dim_mult_mat_vec by blast
+  hence b3: "dim_vec (conjugate (N *\<^sub>v u)) = nA"
+    by simp
+  have b4: "vec_index (conjugate v) i = cnj (vec_index v i)"
+    if "i < nA"
+    for i
+    using a2 that by auto
+  have b5: "(Matrix.row N) i = (Matrix.col (map_mat cnj M)) i"
+    if "i < nA"
+    for i
+    unfolding N_def adjoint_mat_def
+    using row_transpose a1 that by auto    
+  have b6: "vec_index (N *\<^sub>v u) i = cnj (scalar_prod ( (Matrix.col M) i ) (conjugate u))"
+    if "i < nA"
+    for i
+  proof-
+    have "vec_index (N *\<^sub>v u) i = scalar_prod ((Matrix.row N) i) u"
+      using Matrix.index_mult_mat_vec
+      using b1 that by auto
+    also have "\<dots> = scalar_prod ((Matrix.col (map_mat cnj M)) i) u"
+      by (simp add: b5 that)
+    also have "\<dots> = scalar_prod ( conjugate ((Matrix.col M) i) ) u"
+      by (smt a1 carrier_matD(2) col_map_mat conjugate_complex_def dim_col dim_vec_conjugate eq_vecI 
+          index_map_mat(2) index_map_vec(1) that vec_index_conjugate)
+    also have "\<dots> = cnj (scalar_prod ( (Matrix.col M) i ) (conjugate u))"
+      by (metis a1 a3 carrier_matD(1) carrier_vec_dim_vec col_dim complex_cnj_cnj 
+          conjugate_complex_def conjugate_conjugate_sprod)
+    finally show ?thesis .
+  qed    
+  have b7: "dim_vec (conjugate u) = nB"
+    by (simp add: a3)
+  have b8: "vec_index (conjugate u) j = cnj (vec_index u j)"
+    if "j < nB"
+    for j
+    by (simp add: a3 that)    
+  have b9: "scalar_prod ( (Matrix.col M) i ) (conjugate u) = 
+      (\<Sum>j=0..< nB.  vec_index ( (Matrix.col M) i ) j * cnj (vec_index u j) )"
+    if "i < nA"
+    for i
+    unfolding scalar_prod_def
+    using b7 b8 by auto
+  have b10: "vec_index (M *\<^sub>v v) j = 
+      (\<Sum>i=0..<nA.  
+      vec_index ( (Matrix.col M) i ) j  * (vec_index v i) )"
+    if "j < nB"
+    for j
+  proof-
+    have "vec_index ( (Matrix.col M) i ) j = vec_index ( (Matrix.row M) j ) i"
+      if "i < nA"
+      for i
+      unfolding col_def row_def
+      using \<open>j < nB\<close> a1 that by auto 
+    moreover have "vec_index (M *\<^sub>v v) j = 
+      (\<Sum>i=0..<nA.  
+      vec_index ( (Matrix.row M) j ) i  * (vec_index v i) )"
+      unfolding mult_mat_vec_def scalar_prod_def using a2 a1 index_vec that by blast
+    ultimately show ?thesis by simp
+  qed
+  have "v \<bullet>c ((adjoint_mat M) *\<^sub>v u) = cnj ((N *\<^sub>v u) \<bullet>c v)"
+    by (metis N_def a2 b2 carrier_vec_dim_vec conjugate_complex_def conjugate_conjugate_sprod 
+        conjugate_vec_sprod_comm)    
+  also have "\<dots> = cnj (\<Sum>i = 0..<nA.
+            vec_index (N *\<^sub>v u) i * vec_index (conjugate v) i)"
+    unfolding scalar_prod_def
+    by (simp add: a2)    
+  also have "\<dots> = cnj (\<Sum>i = 0..<nA.
+            vec_index (N *\<^sub>v u) i * cnj (vec_index v i))"
+    using b4 by simp
+  also have "\<dots> = (\<Sum>i = 0..<nA.
+            (cnj (vec_index (N *\<^sub>v u) i)) * (vec_index v i))"
+    by auto
+  also have "\<dots> = (\<Sum>i = 0..<nA.
+            (cnj (cnj (scalar_prod ( (Matrix.col M) i ) (conjugate u)))) * (vec_index v i))"
+    using b6 by auto
+  also have "\<dots> = (\<Sum>i = 0..<nA.
+            (scalar_prod ( (Matrix.col M) i ) (conjugate u)) * (vec_index v i))"
+    by simp
+  also have "\<dots> = (\<Sum>i = 0..<nA.
+                  (\<Sum>j=0..< nB.  
+      vec_index ( (Matrix.col M) i ) j * cnj (vec_index u j) ) * (vec_index v i))"
+    using b9 by simp
+  also have "\<dots> = (\<Sum>i=0..<nA.
+                  (\<Sum>j=0..< nB.  
+      vec_index ( (Matrix.col M) i ) j * cnj (vec_index u j) * (vec_index v i) ))"
+    by (simp add: vector_space_over_itself.scale_sum_left)
+  also have "\<dots> = (\<Sum>i=0..<nA.
+                  (\<Sum>j=0..<nB.  
+      vec_index ( (Matrix.col M) i ) j  * (vec_index v i) * cnj (vec_index u j) ))"
+    by (smt conjugate_complex_def mult.commute sum.cong vector_space_over_itself.scale_scale)
+  also have "\<dots> = (\<Sum>j=0..<nB.
+                  (\<Sum>i=0..<nA.  
+      vec_index ( (Matrix.col M) i ) j  * (vec_index v i) * cnj (vec_index u j) ))"
+    using sum.swap by auto
+  also have "\<dots> = (\<Sum>j=0..<nB.
+                  (\<Sum>i=0..<nA.  
+      vec_index ( (Matrix.col M) i ) j  * (vec_index v i) ) * cnj (vec_index u j) )"
+    by (simp add: vector_space_over_itself.scale_sum_left)
+  also have "\<dots> = (\<Sum>j\<in>{0..<nB}. vec_index (M *\<^sub>v v) j * cnj (vec_index u j))"
+    using b10 by simp
+  also have "\<dots> = (M *\<^sub>v v) \<bullet>c u"
+    unfolding scalar_prod_def using a3 by auto
+  finally show ?thesis .
+qed
 
 (* NEW *)
 lemma mat_of_cblinfun_adjoint:
