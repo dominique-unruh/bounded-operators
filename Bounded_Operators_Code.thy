@@ -9,6 +9,10 @@ begin
 
 subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
 
+text \<open>\<^const>\<open>Finite_Cartesian_Product.vec_nth\<close> collides with the notation from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
+no_notation vec_nth (infixl "$" 90)
+
+
 text \<open>This theory defines bundes to activate/deactivate the notation
   from \<^session>\<open>Jordan_Normal_Form\<close>.
                                                                          
@@ -913,9 +917,9 @@ proof-
           by (simp add: d2)          
         ultimately have d5: "dim_vec  (vCons p A + vCons q B) = Suc n"
           by simp
-        have "i < Suc n \<Longrightarrow> vec_index (vCons (p + q) (A + B)) i = vec_index (vCons p A + vCons q B) i"
+        have "i < Suc n \<Longrightarrow> vCons (p + q) (A + B) $ i = (vCons p A + vCons q B) $ i"
           for i
-          using d5'' index_add_vec(1) less_Suc_eq_0_disj by auto          
+          using d5'' index_add_vec(1) less_Suc_eq_0_disj by auto
         thus ?thesis
           using d4 
           by auto 
@@ -2420,7 +2424,7 @@ proof-
   finally show ?thesis .
 qed  
 
-(* NEW *)
+(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_plus:
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
     and a3: "nA = canonical_basis_length TYPE('a)" 
@@ -2472,7 +2476,7 @@ proof-
     by (simp add: cblinfun_ext) 
 qed
 
-(* NEW *)
+(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_uminus:
   assumes a1: "M \<in> carrier_mat nB nA"
     and a2: "nA = canonical_basis_length TYPE('a)" 
@@ -2484,7 +2488,7 @@ lemma cblinfun_of_mat_uminus:
       cblinfun_of_mat_plus group.inverse_inverse mat_of_cblinfun_inverse mat_of_cblinfun_zero 
       minus_r_inv_mat uminus_carrier_mat)
 
-(* NEW *)
+(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_minus:
   fixes M::"complex mat"
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
@@ -2511,15 +2515,15 @@ proof-
   finally show ?thesis .
 qed
 
-(* NEW *)
+(* TODO: move to Bounded_Operators_Matrices *)
 lemma vec_of_onb_enum_zero:
   assumes a1: "nA = canonical_basis_length TYPE('a::onb_enum)" 
   shows "vec_of_onb_enum (0::'a) = 0\<^sub>v nA"
   by (smt add_cancel_right_left assms index_zero_vec(2) left_zero_vec onb_enum_of_vec_inverse
       vec_of_onb_enum_add vec_of_onb_enum_inverse zero_carrier_vec)  
 
-(* NEW *)
-lemma cblinfun_of_mat_kernel:
+(* TODO: move to Bounded_Operators_Matrices *)
+lemma cblinfun_of_mat_zero_converse:
   fixes M::"complex mat"
   assumes a1: "M \<in> carrier_mat nB nA"
     and a2: "nA = canonical_basis_length TYPE('a)" 
@@ -2598,7 +2602,7 @@ proof-
           - M ):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)".
   hence "(mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
           - M = 0\<^sub>m nB nA"
-    by (metis assms(1) assms(2) assms(3) cblinfun_of_mat_kernel minus_carrier_mat)
+    by (metis assms(1) assms(2) assms(3) cblinfun_of_mat_zero_converse minus_carrier_mat)
   thus ?thesis
     by (smt add.inverse_neutral assms(1) assms(2) assms(3) cblinfun_of_mat_minusOp 
         cblinfun_of_mat_uminusOp diff_zero mat_of_cblinfun_zero minus_add_minus_mat
@@ -2614,7 +2618,7 @@ lemma mat_of_cblinfun_timesOp:
   assumes a1: "M \<in> carrier_mat nC nB" and a2: "N \<in> carrier_mat nB nA"
   shows  "cblinfun_of_mat (M * N)
        = ((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) o\<^sub>C\<^sub>L ((cblinfun_of_mat N)::'a \<Rightarrow>\<^sub>C\<^sub>L'b)"
-proof-(* NEW *)
+proof -
   have b1: "((cblinfun_of_mat M)::'b \<Rightarrow>\<^sub>C\<^sub>L'c) v = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)"
     for v
     by (metis assms(4) cblinfun_of_mat.rep_eq nB_def nC_def)
@@ -2773,7 +2777,6 @@ instance
   using mat_of_cblinfun_inj injD by fastforce
 end
 
-(* NEW *)
 lemma cinner_vec_of_onb_enum:
   "\<langle>x, y\<rangle> = (vec_of_onb_enum y) \<bullet>c (vec_of_onb_enum x)"
 proof-
@@ -2798,9 +2801,10 @@ proof-
     using u_def v_def by presburger 
 qed
 
+(* TODO Move to JNF Missing *)
 definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
 
-(* NEW *)
+(* TODO: Move to JNF Missing *)
 lemma adjoint_mat_swap:
   fixes M ::"complex mat"
   assumes "M \<in> carrier_mat nB nA" and "iA < dim_row M" and "iB < dim_col M"
@@ -2808,31 +2812,19 @@ lemma adjoint_mat_swap:
   unfolding adjoint_mat_def transpose_mat_def map_mat_def
   by (simp add: assms(2) assms(3))
 
-(* NEW *)
-lemma cblinfun_of_mat_inj: "inj_on (cblinfun_of_mat::complex mat \<Rightarrow>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) 
-      (carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)))"
-proof-
-  have "M = N"
-    if "((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)
-      = ((cblinfun_of_mat N)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
-      and "M \<in> (carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)))"
-      and "N \<in> (carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)))"
-    for M N::"complex mat"
+lemma cblinfun_of_mat_inj: "inj_on (cblinfun_of_mat::complex mat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) 
+      (carrier_mat (canonical_basis_length TYPE('b::onb_enum))
+                   (canonical_basis_length TYPE('a::onb_enum)))"
     using cblinfun_of_mat_inverse
-    by (metis that(1) that(2) that(3))    
-  thus ?thesis 
-    unfolding inj_on_def
-    by blast 
-qed
+    by (metis inj_onI)
 
-(* NEW *)
-lemma cblinfun_of_mat_description:
-  fixes M::"complex mat"
+lemma cblinfun_of_mat_apply_cblinfun:
+  fixes M :: "complex mat"
   defines "nA == canonical_basis_length TYPE('a::onb_enum)"
-    and "nB == canonical_basis_length TYPE('b::onb_enum)"
+      and "nB == canonical_basis_length TYPE('b::onb_enum)"
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "dim_vec x = nA"
   shows "((onb_enum_of_vec (M *\<^sub>v x))::'b) 
-      = ((cblinfun_of_mat M)::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V ((onb_enum_of_vec x)::'a)"
+       = ((cblinfun_of_mat M)::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V ((onb_enum_of_vec x)::'a)"
 proof-
   define F::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b" where "F = cblinfun_of_mat M"
   have b1: "M = mat_of_cblinfun F"
@@ -2855,12 +2847,7 @@ proof-
   thus ?thesis by simp
 qed
 
-
-(* Ask to Dominique *)
-(* How to solve the problem with the notation "($)" for "vec_index" *)
-(* How to solve the problem with the notation "(\<bullet>)" for "scalar_prod" *)
-
-(* NEW *)
+(* TODO: Move to JNF Missing theory *)
 lemma cscalar_prod_adjoint:
   fixes M:: "complex mat"
   assumes a1: "M \<in> carrier_mat nB nA" 
@@ -2876,7 +2863,7 @@ proof-
     using a3 dim_mult_mat_vec by blast
   hence b3: "dim_vec (conjugate (N *\<^sub>v u)) = nA"
     by simp
-  have b4: "vec_index (conjugate v) i = cnj (vec_index v i)"
+  have b4: " (conjugate v) $ i = cnj (vec_index v i)"
     if "i < nA"
     for i
     using a2 that by auto
@@ -2977,15 +2964,14 @@ proof-
   finally show ?thesis .
 qed
 
-(* NEW *)
 lemma mat_of_cblinfun_adjoint:
   defines "nA == canonical_basis_length TYPE('a::onb_enum)" 
-    and "nB == canonical_basis_length TYPE('b::onb_enum)" 
+      and "nB == canonical_basis_length TYPE('b::onb_enum)" 
   fixes M:: "complex mat"
   assumes "M \<in> carrier_mat nB nA"
-  shows "((cblinfun_of_mat (adjoint_mat M)):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
-       = ((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum)*"
-proof(rule adjoint_D)
+  shows "((cblinfun_of_mat (adjoint_mat M)) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
+       = ((cblinfun_of_mat M) :: 'a \<Rightarrow>\<^sub>C\<^sub>L'b)*"
+proof (rule adjoint_D)
   show "\<langle>cblinfun_of_mat (adjoint_mat M) *\<^sub>V x, y\<rangle> =
            \<langle>x, cblinfun_of_mat M *\<^sub>V y\<rangle>"
     for x::'b and y::'a
@@ -3021,8 +3007,8 @@ qed
 
 lemma cblinfun_of_mat_adjoint[code]:
   "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
-  for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
-proof- (* NEW *)
+  for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+proof -
   define nA where "nA = canonical_basis_length TYPE('a::onb_enum)" 
   define nB where "nB = canonical_basis_length TYPE('b::onb_enum)" 
   define M  where "M = mat_of_cblinfun F"
