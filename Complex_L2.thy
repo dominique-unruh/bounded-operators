@@ -2646,7 +2646,7 @@ lift_definition classical_operator'::
   is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
   by (simp add: has_ell2_norm_classical_operator')
 
-lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> ('a ell2,'b ell2) cblinfun" 
+lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" 
   is "classical_operator'"
   unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   apply auto

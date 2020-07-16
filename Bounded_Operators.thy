@@ -1779,17 +1779,17 @@ qed
 
 end
 
-(* NEW *)
+
 lemma cblinfun_apply_add: "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   using module_hom.add by blast
 
-(* NEW *)
+
 lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   using module_hom.scale by blast
   
-(* NEW *)
+
 lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   by simp

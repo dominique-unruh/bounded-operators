@@ -2815,13 +2815,13 @@ lemma adjoint_mat_swap:
 lemma cblinfun_of_mat_inj: "inj_on (cblinfun_of_mat::complex mat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) 
       (carrier_mat (canonical_basis_length TYPE('b::onb_enum))
                    (canonical_basis_length TYPE('a::onb_enum)))"
-    using cblinfun_of_mat_inverse
-    by (metis inj_onI)
+  using cblinfun_of_mat_inverse
+  by (metis inj_onI)
 
 lemma cblinfun_of_mat_apply_cblinfun:
   fixes M :: "complex mat"
   defines "nA == canonical_basis_length TYPE('a::onb_enum)"
-      and "nB == canonical_basis_length TYPE('b::onb_enum)"
+    and "nB == canonical_basis_length TYPE('b::onb_enum)"
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "dim_vec x = nA"
   shows "((onb_enum_of_vec (M *\<^sub>v x))::'b) 
        = ((cblinfun_of_mat M)::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) *\<^sub>V ((onb_enum_of_vec x)::'a)"
@@ -2966,7 +2966,7 @@ qed
 
 lemma mat_of_cblinfun_adjoint:
   defines "nA == canonical_basis_length TYPE('a::onb_enum)" 
-      and "nB == canonical_basis_length TYPE('b::onb_enum)" 
+    and "nB == canonical_basis_length TYPE('b::onb_enum)" 
   fixes M:: "complex mat"
   assumes "M \<in> carrier_mat nB nA"
   shows "((cblinfun_of_mat (adjoint_mat M)) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
@@ -3036,10 +3036,310 @@ proof -
   finally show ?thesis .
 qed
 
+(* NEW *)
+lemma cinner_square: 
+  defines "BasisA == (canonical_basis:: ('a::onb_enum list))"
+    and "n == canonical_basis_length TYPE('a)"
+  assumes a1: "i < n"
+  shows "\<langle>BasisA!i, BasisA!i\<rangle> = 1"
+proof-
+  have "set BasisA \<subseteq> sphere 0 1"
+    using is_onb_set unfolding BasisA_def is_onb_def by blast
+  moreover have "BasisA!i \<in> set BasisA"
+    using a1 unfolding n_def BasisA_def
+    by (simp add: canonical_basis_length_eq) 
+  ultimately have "norm (BasisA!i) = 1"
+    by auto
+  hence "(norm (BasisA!i))^2 = 1"
+    by simp
+  thus ?thesis
+    by (metis of_real_hom.hom_one power2_norm_eq_cinner') 
+qed
 
-lemma mat_of_cblinfun_classical_operator[code]: 
+(* NEW *)
+lemma enum_canonical_basis_length:
+"length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a ell2)" 
+  define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
+  have q1:"BasisA = map ket (enum_class.enum::'a list)"
+    unfolding BasisA_def
+    using canonical_basis_ell2_def by auto
+  hence "length BasisA = length (map ket (enum_class.enum::'a list))"
+    by simp
+  also have "\<dots> = length (enum_class.enum::'a list)"
+    by simp
+  finally have "length BasisA = length (enum_class.enum::'a list)"
+    .
+  hence "length (enum_class.enum::'a list) = length BasisA"
+    by simp
+  also have "length BasisA = nA"
+    unfolding BasisA_def nA_def
+    by (simp add: canonical_basis_length_eq)
+  finally show ?thesis unfolding nA_def .
+qed
+
+(* NEW *)
+lemma mat_of_cblinfun_classical_operator_inj_option:
+  fixes f::"'a::enum \<Rightarrow> 'b::enum option"
+  assumes r1: "inj_option f"
+  shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
+  (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a ell2)" 
+  define nB where "nB = canonical_basis_length TYPE('b ell2)" 
+  have r2: "nA = (CARD('a))"
+    unfolding nA_def
+    using canonical_basis_length_ell2_def by auto
+  have r3: "nB = (CARD('b))"
+    unfolding nB_def
+    using canonical_basis_length_ell2_def by auto
+  define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
+  define BasisB where "BasisB = (canonical_basis::'b ell2 list)"
+  define g where "g = classical_operator f"
+  define M where "M = mat_of_cblinfun g"
+  have l1: "length BasisA = nA"
+    unfolding BasisA_def nA_def
+    by (simp add: canonical_basis_length_eq)    
+  have l2: "length BasisB = nB"
+    unfolding BasisB_def nB_def
+    by (simp add: canonical_basis_length_eq)    
+  have q1: "BasisA = map ket (enum_class.enum::'a list)"
+    unfolding BasisA_def
+    using canonical_basis_ell2_def by auto
+  have q2: "BasisB = map ket (enum_class.enum::'b list)"
+    unfolding BasisB_def
+    using canonical_basis_ell2_def by auto
+  have q3: "length (enum_class.enum::'a list) = nA"
+    unfolding nA_def
+    using enum_canonical_basis_length[where 'a = 'a] .
+  hence q4: "BasisA!j = ket ((enum_class.enum!j)::'a)"
+    if "j < nA"
+    for j
+    using q1 that nth_map[where xs = "enum_class.enum::'a list" and n = j and f = ket]
+    unfolding nA_def by simp
+  have q5: "g *\<^sub>V ket j = (case f j of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
+    for j
+    unfolding g_def
+    using r1 Complex_L2.classical_operator_basis[where \<pi> = f and x = j]
+    by blast
+  hence q6: "g *\<^sub>V ket ((enum_class.enum!j)::'a) 
+     = (case f ((enum_class.enum!j)::'a) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
+    for j
+    by blast
+  moreover have "g *\<^sub>V BasisA!j = g *\<^sub>V ket ((enum_class.enum!j)::'a)"
+    if "j < nA"
+    for j
+    using q4 that by auto    
+  ultimately have q7: "g *\<^sub>V BasisA!jA 
+     = (case f ((enum_class.enum!jA)::'a) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
+    if "jA < nA"
+    for jA
+    by (simp add: that)
+  have w1: "\<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle> = (if f (Enum.enum!iA) = Some (Enum.enum!iB) then 1 else 0)"
+    if "iB < nB" and "iA < nA"
+    for iA iB
+  proof (cases "f (Enum.enum!iA) = Some (Enum.enum!iB)")
+    case True
+    have "ket (enum_class.enum ! iB) = BasisB!iB"
+      using q2 that(1) nth_map[where xs = "enum_class.enum::'b list" and n = iB and f = ket]
+      unfolding nB_def BasisB_def
+      by (metis canonical_basis_length_eq length_map) 
+    hence "g *\<^sub>V (BasisA!iA) = BasisB!iB"
+      using q7[where jA = iA] True
+      unfolding BasisA_def BasisB_def
+      by (simp add: that(2))
+    moreover have "\<langle>BasisB!iB, BasisB!iB\<rangle> = 1"
+      unfolding BasisB_def
+      using cinner_square nB_def that(1) by blast
+    ultimately have "\<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle> = 1"
+      by simp
+    thus ?thesis using True by simp
+  next
+    case False
+
+    hence v1: "(if f (enum_class.enum ! iA) = Some (enum_class.enum ! iB)
+                then 1 else 0) = 0" by auto
+    have v2: "(g *\<^sub>V (BasisA!iA) = 0) \<or> (\<exists>k. g *\<^sub>V (BasisA!iA) = BasisB!k \<and> k < nB)"
+      sorry
+    have v3: "f (enum_class.enum ! iA) \<noteq> Some (enum_class.enum ! iB)"
+    using False .
+    show ?thesis 
+    proof(cases "g *\<^sub>V (BasisA!iA) = 0")
+      case True
+      hence "\<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle> = 0"
+        by auto
+      thus ?thesis using False by auto
+    next
+      case False
+      hence "\<exists>k. g *\<^sub>V (BasisA!iA) = BasisB!k \<and> k < nB"
+        using v2 by blast
+      then obtain k where s1: "g *\<^sub>V (BasisA!iA) = BasisB!k" and s0: "k < nB"
+        by blast
+      have "iB \<noteq> k"
+      proof(rule classical)
+        assume "\<not>(iB \<noteq> k)"
+        hence "iB = k"
+          by blast
+        hence "g *\<^sub>V (BasisA!iA) = BasisB!iB"
+          by (simp add: s1)
+        moreover have "BasisA!iA = ket (enum_class.enum!iA)"
+          using l1 q1 using nth_map[where n = iA and xs = BasisA and f = ket] that(2)
+          by auto
+        moreover have "BasisB!iB = ket (enum_class.enum!iB)"
+          using l2 q2 using nth_map[where n = iB and xs = BasisB and f = ket] that(1)
+          by auto
+        ultimately have "g *\<^sub>V ket (enum_class.enum!iA) = ket (enum_class.enum!iB)"
+          by simp
+        hence "Rep_ell2 (g *\<^sub>V ket (enum_class.enum!iA)) 
+              = (\<lambda>j. if enum_class.enum!iB = j then 1 else 0)"
+          apply transfer by blast        
+        hence "f (enum_class.enum!iA) = Some (enum_class.enum!iB)"
+          unfolding g_def using r1 sorry
+        thus ?thesis using v3 by blast
+      qed
+      have "BasisB!iB \<noteq> BasisB!k"
+        using  distinct_conv_nth[where xs = BasisB]  distinct_canonical_basis
+          that(1) s0 canonical_basis_length_eq
+        unfolding BasisB_def nB_def
+        by (simp add: canonical_basis_length_eq \<open>iB \<noteq> k\<close>)         
+      moreover have "BasisB!iB \<in> set BasisB"
+        using canonical_basis_length_eq
+        unfolding BasisB_def nB_def
+        by (metis nB_def nth_mem that(1))      
+      moreover have "BasisB!k \<in> set BasisB"
+        using s0 unfolding BasisB_def nB_def
+        by (simp add: canonical_basis_length_eq)
+      ultimately have "\<langle>BasisB!iB, BasisB!k\<rangle> = 0"
+        using is_ortho_set_def[where S = "set BasisB"]
+          is_orthonormal unfolding BasisB_def by blast      
+      hence "\<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle> = 0"
+        using s1 by simp
+      thus ?thesis using v1 by simp
+    qed
+  qed
+  have "M \<in> carrier_mat nB nA"
+    unfolding M_def nA_def nB_def
+    by (metis add_diff_cancel cblinfun_of_mat_minusOp mat_of_cblinfun_zero minus_carrier_mat
+        zero_carrier_mat) 
+  hence "M$$(jB, jA)  = (M *\<^sub>v unit_vec nA jA)$jB"
+    if "jA < nA" and "jB < nB"
+    for jA jB
+    using mat_entry_explicit that(1) that(2) by auto    
+  have "(M *\<^sub>v unit_vec nA jA)$jB = \<langle>BasisB!jB, g *\<^sub>V (BasisA!jA)\<rangle>"
+    if "jA < nA" and "jB < nB"
+    for jA jB
+    using cinner_mat_of_cblinfun_basis[where iA = jA and iB = jB and F = g]
+    that unfolding M_def nA_def nB_def BasisA_def BasisB_def by blast
+  have "mat_of_cblinfun g = mat nB nA (\<lambda>(iB, iA). \<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle>)"
+    unfolding nA_def nB_def BasisA_def BasisB_def mat_of_cblinfun_def by blast
+  also have "\<dots> = mat nB nA
+  (\<lambda>(iB,iA). if f (Enum.enum!iA) = Some (Enum.enum!iB) then 1 else 0)"
+    using w1 by auto
+  finally show ?thesis unfolding g_def using r2 r3 by simp
+qed
+
+(*
+lemma mat_of_cblinfun_classical_operator_inj_option:
+  fixes f::"'a::enum \<Rightarrow> 'b::enum option"
+  assumes r1: "inj_option f"
+  shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
+  (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a ell2)"
+  define nB where "nB = canonical_basis_length TYPE('b ell2)"
+  define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
+  define BasisB where "BasisB = (canonical_basis::'b ell2 list)"
+  have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat nB nA"
+    unfolding nA_def nB_def
+    by (metis add_diff_cancel cblinfun_of_mat_minusOp mat_of_cblinfun_zero minus_carrier_mat 
+        zero_carrier_mat)    
+  moreover have "nA = CARD ('a)"
+    unfolding nA_def
+    by (simp add: canonical_basis_length_ell2_def)    
+  moreover have "nB = CARD ('b)"
+    unfolding nB_def
+    by (simp add: canonical_basis_length_ell2_def)
+  ultimately have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat (CARD('b)) (CARD('a))"
+    unfolding nA_def nB_def
+    by simp
+  moreover have "(mat_of_cblinfun (classical_operator f))$$(r,c) 
+  = (mat (CARD('b)) (CARD('a))
+    (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0))$$(r,c)"
+    if a1: "r < CARD('b)" and a2: "c < CARD('a)"
+    for r c
+  proof-
+    have "(mat_of_cblinfun (classical_operator f))$$(r,c) = 1"
+      if b1: "f (Enum.enum!c) = Some (Enum.enum!r)"
+    proof-
+      have "f (Enum.enum!c) \<in> range f"
+        by blast
+      hence "Some (Enum.enum!r) \<in> range f"
+        using b1 by simp
+      hence b1_inv: "inv_option f (Enum.enum!r) = Some (Enum.enum!c)"
+        unfolding inv_option_def inv_def
+      proof auto 
+        fix x::'a
+        assume t1: "Some (enum_class.enum ! r) = f x"
+        have "f (Enum.enum!c) = f x"
+          using b1 t1 by auto
+        moreover have "f (Enum.enum!c) \<noteq> None"
+        proof-
+          have "Some (Enum.enum!r) \<noteq> None"
+            by simp
+          thus ?thesis
+            using b1 by simp
+        qed
+        ultimately show "(SOME y. f y = f x) = enum_class.enum ! c"
+          using r1  unfolding inj_option_def by auto
+      qed
+      have "(\<lambda>j. case inv_option f j of 
+                 None   \<Rightarrow> 0
+               | Some i \<Rightarrow> (Rep_ell2 (BasisA!c)) i)
+           = (Rep_ell2 (BasisB!r))"
+        sorry        
+      hence "(\<lambda>\<psi> b. case inv_option f b of 
+                 None \<Rightarrow> 0
+               | Some i \<Rightarrow> \<psi> i)
+          (Rep_ell2 (BasisA!c)) = (Rep_ell2 (BasisB!r))"
+        by simp        
+      hence "cBlinfun (map_fun Rep_ell2 Abs_ell2
+       (\<lambda>\<psi> b. case inv_option f b of 
+                 None \<Rightarrow> 0
+               | Some x \<Rightarrow> \<psi> x)) *\<^sub>V
+          BasisA!c = BasisB!r"
+        by (metis Rep_ell2_inverse classical_operator'_def classical_operator.abs_eq 
+            classical_operator.rep_eq id_apply map_fun_apply)        
+      hence w1: "(classical_operator f) *\<^sub>V (BasisA!c) = BasisB!r"
+        unfolding BasisA_def BasisB_def
+          classical_operator_def classical_operator'_def 
+        by auto
+      have "(mat_of_cblinfun (classical_operator f))$$(r,c)
+        = \<langle>BasisB!r, (classical_operator f) *\<^sub>V (BasisA!c)\<rangle>"
+        unfolding BasisB_def BasisA_def mat_of_cblinfun_def
+        using \<open>nA = CARD('a)\<close> \<open>nB = CARD('b)\<close> a1 a2 nA_def nB_def by auto
+      also have "\<dots> = \<langle>BasisB!r, BasisB!r\<rangle>"
+        using w1 by simp        
+      also have "\<dots> = 1"
+        unfolding BasisB_def
+        using \<open>nB = CARD('b)\<close> a1 cinner_square nB_def by fastforce 
+      finally show ?thesis by blast
+    qed
+    moreover have "(mat_of_cblinfun (classical_operator f))$$(r,c) = 0"
+      if c1: "f (Enum.enum!c) \<noteq> Some (Enum.enum!r)"
+      sorry
+    ultimately show ?thesis
+      using a1 a2 by simp
+  qed
+  ultimately show ?thesis using eq_matI
+    by auto
+qed
+*)
+
+(* Ask to Dominique: Does the conditon inj_option is needed? *)
+lemma mat_of_cblinfun_classical_operator[code]:
   "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
-  (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)" 
+  (\<lambda>(r, c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)" 
   for f::"'a::enum \<Rightarrow> 'b::enum option"
   sorry
 
@@ -3056,7 +3356,7 @@ text \<open>This is a hack to circumvent a bug in the code generation. The autom
 lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
-  by auto                     
+  by auto
 
 
 unbundle no_jnf_notation
