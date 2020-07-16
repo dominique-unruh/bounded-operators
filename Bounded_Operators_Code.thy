@@ -3058,7 +3058,7 @@ qed
 
 (* NEW *)
 lemma enum_canonical_basis_length:
-"length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)"
+  "length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)"
 proof-
   define nA where "nA = canonical_basis_length TYPE('a ell2)" 
   define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
@@ -3163,7 +3163,7 @@ proof-
     have v2: "(g *\<^sub>V (BasisA!iA) = 0) \<or> (\<exists>k. g *\<^sub>V (BasisA!iA) = BasisB!k \<and> k < nB)"
       sorry
     have v3: "f (enum_class.enum ! iA) \<noteq> Some (enum_class.enum ! iB)"
-    using False .
+      using False .
     show ?thesis 
     proof(cases "g *\<^sub>V (BasisA!iA) = 0")
       case True
@@ -3191,11 +3191,11 @@ proof-
           by auto
         ultimately have "g *\<^sub>V ket (enum_class.enum!iA) = ket (enum_class.enum!iB)"
           by simp
-        hence "Rep_ell2 (g *\<^sub>V ket (enum_class.enum!iA)) 
+        hence b1: "Rep_ell2 (g *\<^sub>V ket (enum_class.enum!iA)) 
               = (\<lambda>j. if enum_class.enum!iB = j then 1 else 0)"
-          apply transfer by blast        
-        hence "f (enum_class.enum!iA) = Some (enum_class.enum!iB)"
-          unfolding g_def using r1 sorry
+          apply transfer by blast
+        have "f (enum_class.enum!iA) = Some (enum_class.enum!iB)"
+          using r1 sorry
         thus ?thesis using v3 by blast
       qed
       have "BasisB!iB \<noteq> BasisB!k"
@@ -3230,7 +3230,7 @@ proof-
     if "jA < nA" and "jB < nB"
     for jA jB
     using cinner_mat_of_cblinfun_basis[where iA = jA and iB = jB and F = g]
-    that unfolding M_def nA_def nB_def BasisA_def BasisB_def by blast
+      that unfolding M_def nA_def nB_def BasisA_def BasisB_def by blast
   have "mat_of_cblinfun g = mat nB nA (\<lambda>(iB, iA). \<langle>BasisB!iB, g *\<^sub>V (BasisA!iA)\<rangle>)"
     unfolding nA_def nB_def BasisA_def BasisB_def mat_of_cblinfun_def by blast
   also have "\<dots> = mat nB nA
