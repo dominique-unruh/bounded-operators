@@ -5460,12 +5460,37 @@ proof-
     by (simp add: a5 b4)
 qed
 
+definition construct_infinite :: "'a::chilbert_space set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
+  "construct_infinite basis \<phi> = undefined" 
+(* TODO: Look at literature for a definition that is:
+   - Not needing finiteness of basis
+   - As general as possible (i.e., should give the right operator under as little assumptions as possible) *)
+
+(* 
+TODO:
+
+Question: Under what assumptions about B and \<phi>, there exists a bounded linear F such that F=\<phi> on B
+
+Maybe: convergent (sum B \<parallel>\<phi>\<parallel>^2)
+
+ *)
+
+typ "(_,_) blinfun"
+
+(*
+TODO
+lemma construct_infinite_id: 
+  assumes "basis is a basis or something like that"
+  shows "construct_infinite basis id = id" *)
+
+(* TODO: Remove existence (because we have Complex_Vector_Spaces.construct).
+   For uniqueness: check if that already exists (probably!) *)
 lemma cblinfun_operator_basis_existence_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.span basis = UNIV\<close> 
     and \<open>complex_vector.independent basis\<close>
     and \<open>finite basis\<close>
-  shows \<open>\<exists>!F. \<forall>s\<in>basis.  cblinfun_apply F s = \<phi> s\<close>
+  shows \<open>\<exists>!F. \<forall>s\<in>basis.  F *\<^sub>V s = \<phi> s\<close>
 proof-
   have \<open>\<exists>F. \<forall>s\<in>basis.  cblinfun_apply F s = \<phi> s\<close>
   proof-
@@ -5841,7 +5866,6 @@ lemma cinner_unique_onb_enum':
   shows "F = G"
   using cinner_unique_onb_enum assms
   by (metis cinner_commute')
-
 
 unbundle no_cblinfun_notation
 

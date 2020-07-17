@@ -2641,10 +2641,12 @@ lemma has_ell2_norm_classical_operator:
   using has_ell2_norm_classical_operator'
   using Rep_ell2 by blast
 
-lift_definition classical_operator':: 
+lift_definition classical_operator' :: 
   "('a \<Rightarrow> 'b option) \<Rightarrow> ('a ell2 \<Rightarrow> 'b ell2)" 
   is "\<lambda>\<pi> \<psi> b. case inv_option \<pi> b of Some a \<Rightarrow> \<psi> a | None \<Rightarrow> 0"
   by (simp add: has_ell2_norm_classical_operator')
+
+
 
 lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" 
   is "classical_operator'"

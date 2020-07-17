@@ -3036,7 +3036,7 @@ proof -
   finally show ?thesis .
 qed
 
-(* NEW *)
+(* TODO: rename cinner_square_canonical_basis *)
 lemma cinner_square: 
   defines "BasisA == (canonical_basis:: ('a::onb_enum list))"
     and "n == canonical_basis_length TYPE('a)"
@@ -3056,7 +3056,6 @@ proof-
     by (metis of_real_hom.hom_one power2_norm_eq_cinner') 
 qed
 
-(* NEW *)
 lemma enum_canonical_basis_length:
   "length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)"
 proof-
@@ -3079,7 +3078,6 @@ proof-
   finally show ?thesis unfolding nA_def .
 qed
 
-(* NEW *)
 lemma mat_of_cblinfun_classical_operator_inj_option:
   fixes f:: "'a::enum \<Rightarrow> 'b::enum option"
   assumes r1: "inj_option f"
