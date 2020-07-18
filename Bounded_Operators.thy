@@ -2011,14 +2011,14 @@ lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_norm
 
 bundle cblinfun_notation begin
 notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
-notation cblinfun_apply (infixr "*\<^sub>V" 70) (* NEW: now it is capital *)
-notation applyOpSpace (infixr "*\<^sub>S" 70) (* NEW: now it is capital *)
+notation cblinfun_apply (infixr "*\<^sub>V" 70)
+notation applyOpSpace (infixr "*\<^sub>S" 70)
 notation adjoint ("_*" [99] 100)
 end
 
 bundle no_cblinfun_notation begin
 no_notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
-no_notation cblinfun_apply (infixr "*\<^sub>V" 70) (* NEW: now it is capital *)
+no_notation cblinfun_apply (infixr "*\<^sub>V" 70)
 no_notation applyOpSpace (infixr "*\<^sub>S" 70)
 no_notation adjoint ("_*" [99] 100)
 end

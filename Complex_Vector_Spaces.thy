@@ -2718,8 +2718,8 @@ lemma linear_space_leI:
 
    TODO: Replace finite_sum_tendsto by this.
 
-Jose: It is not possible to deduce finite_sum_tendsto from finite_sum_tendsto_NEW in 
-an via sledgehammer. Hence, finite_sum_tendsto and finite_sum_tendsto_NEW are not
+Jose: It is not possible to deduce finite_sum_tendsto from finite_sum_tendsto in 
+an via sledgehammer. Hence, finite_sum_tendsto and finite_sum_tendsto are not
 pre-equivalent.
 
 I define two theorems A and B to be pre-equivalent if and only if
@@ -2730,7 +2730,7 @@ Notice that this is not an equivalent relation, because transitivity may fail.
 
 *)
 
-lemma finite_sum_tendsto_NEW:
+lemma finite_sum_tendsto:
   fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
   assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
   assumes \<open>finite A\<close>
