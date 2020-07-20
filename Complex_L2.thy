@@ -1339,7 +1339,8 @@ proof-
           by (smt \<open>0 < \<epsilon>\<close> divide_less_0_iff power2_eq_iff_nonneg power2_less_imp_less)  
         hence \<open>\<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> (\<epsilon>/4)^2\<close>
           using \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-            \<open>(\<epsilon>/4)^2 > (0::real)\<close> by smt
+            \<open>(\<epsilon>/4)^2 > (0::real)\<close>
+          by blast 
         hence \<open>\<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2) < (\<epsilon>/2)^2\<close>
           using \<open>(\<epsilon>/4)^2 < (\<epsilon>/2)^2\<close> by smt
         hence \<open>\<exists> N::nat. \<forall> k \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite' S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a k) - (a n)) x ) )^2) < (\<epsilon>/2)^2\<close>
@@ -2532,8 +2533,338 @@ proof
 qed
 end
 
+
+lemma superposition_principle_linear_ket:
+  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close>
+  shows \<open>(\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)) \<Longrightarrow> A = B\<close>
+proof-
+  assume \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
+  define S::\<open>('a ell2) set\<close> where \<open>S = range ket\<close>
+  have \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close>
+    using S_def \<open>\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close> by blast
+  have \<open>cblinfun_apply A t = cblinfun_apply B t\<close>
+    for t
+  proof-
+    have \<open>t \<in> closure (complex_vector.span S)\<close>
+    proof-
+      have \<open>closure (complex_vector.span S) = UNIV\<close>
+        by (simp add: S_def ket_ell2_span)        
+      thus ?thesis by blast
+    qed
+    thus ?thesis
+      using Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> applyOpSpace_span
+      by smt
+  qed
+  hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
+    by blast
+  thus ?thesis using cblinfun_apply_inject by auto
+qed
+
+
+
+lemma superposition_principle_bounded_sesquilinear_ket:
+  \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
+proof-
+  include nsa_notation
+  assume \<open>bounded_sesquilinear B\<close>
+    and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
+  show \<open>B x y = 0\<close>
+    for x y
+  proof-
+    have \<open>x \<in> closure (complex_vector.span (range ket))\<close>
+      by (metis iso_tuple_UNIV_I ket_ell2_span)      
+    hence \<open>\<exists> u\<in>*s* (complex_vector.span (range ket)). star_of x \<approx> u\<close>
+      using nsclosure_I by blast
+    then obtain u where \<open>u\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of x \<approx> u\<close>
+      by blast
+    have \<open>y \<in> closure (complex_vector.span (range ket))\<close>
+      by (simp add: ket_ell2_span)      
+    hence \<open>\<exists> v\<in>*s* (complex_vector.span (range ket)). star_of y \<approx> v\<close>
+      using nsclosure_I by blast
+    then obtain v where \<open>v\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of y \<approx> v\<close>
+      by blast
+    have \<open>(*f2* B) u v = 0\<close>
+    proof-
+      have  \<open>p \<in> (complex_vector.span (range ket)) \<Longrightarrow> q \<in> (complex_vector.span (range ket))
+        \<Longrightarrow> B p q = 0\<close>
+        for p q
+      proof-
+        assume \<open>p \<in> (complex_vector.span (range ket))\<close>
+          and \<open>q \<in> (complex_vector.span (range ket))\<close>
+        define S_left::\<open>('a ell2) set\<close> where \<open>S_left = range (ket)\<close>
+        define S_right::\<open>('b ell2) set\<close> where \<open>S_right = range (ket)\<close>
+        from \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
+        have \<open>\<And>p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
+          using S_left_def S_right_def by blast          
+        thus \<open>B p q = 0\<close>
+          using  \<open>bounded_sesquilinear B\<close> sesquilinear_superposition
+            S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
+            \<open>q \<in> complex_vector.span (range ket)\<close>
+          by smt (* > 1s *)
+      qed
+      hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
+        by blast
+      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). (*f2* B) p q = 0\<close>
+        by StarDef.transfer
+      thus ?thesis
+        using \<open>u \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> \<open>v \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> by blast 
+    qed
+    moreover have \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+      using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
+        \<open>star_of x \<approx> u\<close> \<open>star_of y \<approx> v\<close> by blast
+    ultimately have \<open>(*f2* B) (star_of x) (star_of y) \<approx> 0\<close>
+      by simp
+    hence \<open>(*f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
+      by simp
+    thus \<open>B x y = 0\<close>
+      by simp
+  qed
+qed
+
+
+lemma equal_basis_0:
+  assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
+  shows \<open>A = 0\<close>
+proof-
+  include nsa_notation
+  have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> cblinfun_apply A x = 0\<close>
+    for x
+  proof-
+    assume \<open>x \<in> closure (complex_vector.span (range ket))\<close>
+    hence \<open>\<exists> r \<in> *s* (complex_vector.span (range ket)). r \<approx> star_of x\<close>
+      using approx_sym nsclosure_I by blast
+    then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
+      by blast
+    have \<open>cbounded_linear (cblinfun_apply A)\<close>
+      using cblinfun_apply by blast
+    hence \<open>isCont (cblinfun_apply A) x\<close>
+      by simp
+    hence \<open>isNSCont (cblinfun_apply A) x\<close>
+      by (simp add: isCont_isNSCont)
+    have \<open>x \<in> complex_vector.span (range ket) \<Longrightarrow> cblinfun_apply A x = 0\<close>
+      for x
+    proof-
+      assume \<open>x \<in> complex_vector.span (range ket)\<close>
+      have \<open>\<exists> t r. finite t \<and> t \<subseteq> (range ket) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        using complex_vector.span_explicit
+        by (smt \<open>x \<in> complex_vector.span (range ket)\<close> mem_Collect_eq)
+      then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> (range ket)\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+        by blast
+      from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      have  \<open>cblinfun_apply A x = (\<Sum>a\<in>t. r a *\<^sub>C (cblinfun_apply A a))\<close>
+        unfolding cbounded_linear_def
+        using cblinfun_apply \<open>finite t\<close>
+          Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
+          complex_vector.linear_sum
+          \<open>cbounded_linear (cblinfun_apply A)\<close> cbounded_linear.is_clinear
+        by smt
+      moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (cblinfun_apply A a) = 0\<close>
+        using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
+          complex_vector.scale_eq_0_iff by blast
+      ultimately show \<open>cblinfun_apply A x = 0\<close>
+        by simp
+    qed
+    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (cblinfun_apply A) x = 0\<close>
+      by blast
+    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (cblinfun_apply A)) x = 0\<close>
+      by StarDef.transfer
+    hence \<open>(*f* (cblinfun_apply A)) r = 0\<close>
+      using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
+      by blast
+    moreover have \<open>(*f* (cblinfun_apply A)) r \<approx> (*f* (cblinfun_apply A)) (star_of x)\<close>
+      using \<open>r \<approx> star_of x\<close> \<open>isNSCont (cblinfun_apply A) x\<close>
+      by (simp add: isNSContD)
+    ultimately have \<open>(*f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
+      by simp
+    hence \<open>norm ( (cblinfun_apply A) x ) = 0\<close>
+      by auto
+    thus \<open>cblinfun_apply A x = 0\<close>
+      by auto
+  qed
+  moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
+    by (simp add: ket_ell2_span)        
+  ultimately have \<open>cblinfun_apply A x = 0\<close>
+    for x
+    by blast
+  hence \<open>cblinfun_apply A = (\<lambda> _. 0)\<close>
+    by blast
+  thus ?thesis using cblinfun_apply_inject
+    by fastforce 
+qed
+
+lemma equal_basis:
+  assumes \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close>
+  shows \<open>A = B\<close>
+proof-
+  have \<open>\<And> j. cblinfun_apply A (ket j) - cblinfun_apply B (ket j) = 0\<close>
+    using \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close> by simp
+  hence \<open>\<And> j. cblinfun_apply (A - B) (ket j) = 0\<close>
+    by (simp add: minus_cblinfun.rep_eq)
+  hence \<open>A - B = 0\<close>
+    using equal_basis_0 by blast
+  thus ?thesis by simp
+qed
+
+
+subsection \<open>Recovered theorems\<close>
+
+lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
+
+lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
+
+lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
+  using norm_ell2_component
+  by (simp add: norm_ell2_component) 
+
+lemma Cauchy_vector_component: 
+  fixes X
+  defines "x i == Rep_ell2 (X i)"
+  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
+proof -
+  assume "Cauchy X"
+  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
+  proof -
+    have "dist (X i) (X i') = norm (X i - X i')"
+      unfolding dist_norm by simp
+    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
+      by (rule norm_vector_component)
+    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
+      unfolding x_def
+      by (simp add: minus_ell2.rep_eq)       
+    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
+      unfolding dist_norm by simp
+    finally show ?thesis by assumption
+  qed
+  thus ?thesis
+    unfolding Cauchy_def
+    using \<open>Cauchy X\<close> unfolding Cauchy_def
+    by (meson le_less_trans) 
+qed
+
+lemma subspace_inter[simp]: 
+  assumes "complex_vector.subspace A" and "complex_vector.subspace B" 
+  shows "complex_vector.subspace (A\<inter>B)"
+  by (simp add: assms(1) assms(2) complex_vector.subspace_inter)
+
+lemma subspace_contains_0: "complex_vector.subspace A \<Longrightarrow> 0 \<in> A"
+  unfolding complex_vector.subspace_def by auto
+
+lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector.subspace x) \<Longrightarrow> complex_vector.subspace (\<Inter>AA)"
+  by (simp add: complex_vector.subspace_Inter)
+
+lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
+  by simp 
+
+(* TODO: move to earliest possible place *)
+lemma subspace_zero_not_top[simp]: 
+  "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+  by simp
+
+lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
+  by simp
+
+lemma  subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
+  for x y z :: "'a ell2_linear_space"
+  unfolding subspace_sup_plus[symmetric] by auto
+
+lemma subspace_empty_Sup: "Sup {} = (0::'a ell2_linear_space)"
+  unfolding subspace_zero_bot by auto
+
+lemma top_not_bot[simp]: "(top::'a ell2_linear_space) \<noteq> bot"
+  by (metis subspace_zero_bot subspace_zero_not_top) 
+
+lemma bot_not_top[simp]: "(bot::'a ell2_linear_space) \<noteq> top"
+  using top_not_bot
+  by simp 
+
+lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
+  for A B C :: "_ ell2_linear_space"
+  unfolding inf.assoc by simp
+
+lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ ell2_linear_space"
+  using inf.left_commute by auto
+
+lemma bot_plus[simp]: "bot + x = x" 
+  for x :: "'a ell2_linear_space"
+  by simp
+
+lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
+
+lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
+  for \<psi>
+  by simp
+
+lemma leq_INF[simp]:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
+  by (simp add: le_Inf_iff)
+
+lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
+  by (simp add: add_increasing2)
+lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_linear_space"
+  by (simp add: add_increasing)
+
+lemma ket_is_orthogonal[simp]:
+  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
+  unfolding is_orthogonal_def
+  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
+
+lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
+proof-
+  have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
+    using Complex_L2.ket_ell2_span by blast
+  thus ?thesis
+    by (simp add: Span.abs_eq top_linear_space.abs_eq)
+qed
+
+lemma [simp]: "ket i \<noteq> 0"
+  using ell2_ket[of i] by force
+
+lemma equal_ket:
+  includes cblinfun_notation
+  assumes "\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)"
+  shows "A = B"
+  by (simp add: assms equal_basis)
+
+
+lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
+proof -
+  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
+  have "length ?enum = 1"
+    apply (subst card_UNIV_length_enum[symmetric])
+    by (rule CARD_1)
+  then obtain b where "?enum = [b]"
+    apply atomize_elim
+    apply (cases ?enum, auto)
+    by (metis length_0_conv length_Cons nat.inject)
+  then show "?enum = [a]"
+    by (subst everything_the_same[of _ b], simp)
+qed
+
+instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
+text \<open>Note: enum is not really needed, but without it this instantiation
+clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
+instance
+proof
+  show "canonical_basis = [1::'a ell2]"
+    unfolding canonical_basis_ell2_def
+    apply transfer
+    by (simp add: enum_CARD_1[of undefined])
+  show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
+    apply (transfer fixing: a b) by simp
+qed
+
+end
+
 subsection \<open>Classical operators\<close>
 
+(* Ask to Dominique: Delete this? *)
 lemma has_ell2_norm_classical_operator':
   \<open>has_ell2_norm \<psi> \<Longrightarrow>
         has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close>
@@ -2635,17 +2966,19 @@ proof-
     using \<open>\<phi> \<equiv> \<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x\<close> has_ell2_norm_def by blast 
 qed
 
+(* Ask to Dominique: Delete this? *)
 lemma has_ell2_norm_classical_operator:
   \<open>has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0
                     | Some u \<Rightarrow> Rep_ell2 x u)\<close>
   using has_ell2_norm_classical_operator'
   using Rep_ell2 by blast
 
-(*
-lift_definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" 
-  is "classical_operator'"
-  sorry
-*)
+(* NEW *)
+definition classical_operator :: "('a\<Rightarrow>'b) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
+  "classical_operator f = cblinfun_extension (range (ket::'a \<Rightarrow> 'a ell2)) 
+      (\<lambda>v::'a ell2. case inv (ket::'a \<Rightarrow> 'a ell2) v 
+        of x \<Rightarrow> ket (f x))"
+
 
 (*
 (* Ask to Dominique: delete this? *)
@@ -2921,94 +3254,6 @@ proof-
 qed
 *)
 
-lemma superposition_principle_linear_ket:
-  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close>
-  shows \<open>(\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)) \<Longrightarrow> A = B\<close>
-proof-
-  assume \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
-  define S::\<open>('a ell2) set\<close> where \<open>S = range ket\<close>
-  have \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close>
-    using S_def \<open>\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close> by blast
-  have \<open>cblinfun_apply A t = cblinfun_apply B t\<close>
-    for t
-  proof-
-    have \<open>t \<in> closure (complex_vector.span S)\<close>
-    proof-
-      have \<open>closure (complex_vector.span S) = UNIV\<close>
-        by (simp add: S_def ket_ell2_span)        
-      thus ?thesis by blast
-    qed
-    thus ?thesis
-      using Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> applyOpSpace_span
-      by smt
-  qed
-  hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
-    by blast
-  thus ?thesis using cblinfun_apply_inject by auto
-qed
-
-
-
-lemma superposition_principle_bounded_sesquilinear_ket:
-  \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
-proof-
-  include nsa_notation
-  assume \<open>bounded_sesquilinear B\<close>
-    and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
-  show \<open>B x y = 0\<close>
-    for x y
-  proof-
-    have \<open>x \<in> closure (complex_vector.span (range ket))\<close>
-      by (metis iso_tuple_UNIV_I ket_ell2_span)      
-    hence \<open>\<exists> u\<in>*s* (complex_vector.span (range ket)). star_of x \<approx> u\<close>
-      using nsclosure_I by blast
-    then obtain u where \<open>u\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of x \<approx> u\<close>
-      by blast
-    have \<open>y \<in> closure (complex_vector.span (range ket))\<close>
-      by (simp add: ket_ell2_span)      
-    hence \<open>\<exists> v\<in>*s* (complex_vector.span (range ket)). star_of y \<approx> v\<close>
-      using nsclosure_I by blast
-    then obtain v where \<open>v\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of y \<approx> v\<close>
-      by blast
-    have \<open>(*f2* B) u v = 0\<close>
-    proof-
-      have  \<open>p \<in> (complex_vector.span (range ket)) \<Longrightarrow> q \<in> (complex_vector.span (range ket))
-        \<Longrightarrow> B p q = 0\<close>
-        for p q
-      proof-
-        assume \<open>p \<in> (complex_vector.span (range ket))\<close>
-          and \<open>q \<in> (complex_vector.span (range ket))\<close>
-        define S_left::\<open>('a ell2) set\<close> where \<open>S_left = range (ket)\<close>
-        define S_right::\<open>('b ell2) set\<close> where \<open>S_right = range (ket)\<close>
-        from \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
-        have \<open>\<And>p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
-          using S_left_def S_right_def by blast          
-        thus \<open>B p q = 0\<close>
-          using  \<open>bounded_sesquilinear B\<close> sesquilinear_superposition
-            S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
-            \<open>q \<in> complex_vector.span (range ket)\<close>
-          by smt (* > 1s *)
-      qed
-      hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
-        by blast
-      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). (*f2* B) p q = 0\<close>
-        by StarDef.transfer
-      thus ?thesis
-        using \<open>u \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> \<open>v \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> by blast 
-    qed
-    moreover have \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
-      using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
-        \<open>star_of x \<approx> u\<close> \<open>star_of y \<approx> v\<close> by blast
-    ultimately have \<open>(*f2* B) (star_of x) (star_of y) \<approx> 0\<close>
-      by simp
-    hence \<open>(*f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
-      by simp
-    thus \<open>B x y = 0\<close>
-      by simp
-  qed
-qed
-
-
 
 
 (*
@@ -3123,93 +3368,6 @@ qed
 *)
 
 
-
-lemma equal_basis_0:
-  assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
-  shows \<open>A = 0\<close>
-proof-
-  include nsa_notation
-  have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> cblinfun_apply A x = 0\<close>
-    for x
-  proof-
-    assume \<open>x \<in> closure (complex_vector.span (range ket))\<close>
-    hence \<open>\<exists> r \<in> *s* (complex_vector.span (range ket)). r \<approx> star_of x\<close>
-      using approx_sym nsclosure_I by blast
-    then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
-      by blast
-    have \<open>cbounded_linear (cblinfun_apply A)\<close>
-      using cblinfun_apply by blast
-    hence \<open>isCont (cblinfun_apply A) x\<close>
-      by simp
-    hence \<open>isNSCont (cblinfun_apply A) x\<close>
-      by (simp add: isCont_isNSCont)
-    have \<open>x \<in> complex_vector.span (range ket) \<Longrightarrow> cblinfun_apply A x = 0\<close>
-      for x
-    proof-
-      assume \<open>x \<in> complex_vector.span (range ket)\<close>
-      have \<open>\<exists> t r. finite t \<and> t \<subseteq> (range ket) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        using complex_vector.span_explicit
-        by (smt \<open>x \<in> complex_vector.span (range ket)\<close> mem_Collect_eq)
-      then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> (range ket)\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        by blast
-      from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      have  \<open>cblinfun_apply A x = (\<Sum>a\<in>t. r a *\<^sub>C (cblinfun_apply A a))\<close>
-        unfolding cbounded_linear_def
-        using cblinfun_apply \<open>finite t\<close>
-          Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
-          complex_vector.linear_sum
-          \<open>cbounded_linear (cblinfun_apply A)\<close> cbounded_linear.is_clinear
-        by smt
-      moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (cblinfun_apply A a) = 0\<close>
-        using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
-          complex_vector.scale_eq_0_iff by blast
-      ultimately show \<open>cblinfun_apply A x = 0\<close>
-        by simp
-    qed
-    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (cblinfun_apply A) x = 0\<close>
-      by blast
-    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (cblinfun_apply A)) x = 0\<close>
-      by StarDef.transfer
-    hence \<open>(*f* (cblinfun_apply A)) r = 0\<close>
-      using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
-      by blast
-    moreover have \<open>(*f* (cblinfun_apply A)) r \<approx> (*f* (cblinfun_apply A)) (star_of x)\<close>
-      using \<open>r \<approx> star_of x\<close> \<open>isNSCont (cblinfun_apply A) x\<close>
-      by (simp add: isNSContD)
-    ultimately have \<open>(*f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
-      by simp
-    hence \<open>norm ( (cblinfun_apply A) x ) = 0\<close>
-      by auto
-    thus \<open>cblinfun_apply A x = 0\<close>
-      by auto
-  qed
-  moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
-    by (simp add: ket_ell2_span)        
-  ultimately have \<open>cblinfun_apply A x = 0\<close>
-    for x
-    by blast
-  hence \<open>cblinfun_apply A = (\<lambda> _. 0)\<close>
-    by blast
-  thus ?thesis using cblinfun_apply_inject
-    by fastforce 
-qed
-
-lemma equal_basis:
-  assumes \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close>
-  shows \<open>A = B\<close>
-proof-
-  have \<open>\<And> j. cblinfun_apply A (ket j) - cblinfun_apply B (ket j) = 0\<close>
-    using \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close> by simp
-  hence \<open>\<And> j. cblinfun_apply (A - B) (ket j) = 0\<close>
-    by (simp add: minus_cblinfun.rep_eq)
-  hence \<open>A - B = 0\<close>
-    using equal_basis_0 by blast
-  thus ?thesis by simp
-qed
-
-
-
-
 (*
 (* Ask to Dominique: keep? *)
 lemma classical_operator_mult[simp]:
@@ -3316,161 +3474,6 @@ next
 qed
 *)
 
-subsection \<open>Recovered theorems\<close>
-
-lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
-
-lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
-
-lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
-  using norm_ell2_component
-  by (simp add: norm_ell2_component) 
-
-lemma Cauchy_vector_component: 
-  fixes X
-  defines "x i == Rep_ell2 (X i)"
-  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
-proof -
-  assume "Cauchy X"
-  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
-  proof -
-    have "dist (X i) (X i') = norm (X i - X i')"
-      unfolding dist_norm by simp
-    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
-      by (rule norm_vector_component)
-    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
-      unfolding x_def
-      by (simp add: minus_ell2.rep_eq)       
-    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
-      unfolding dist_norm by simp
-    finally show ?thesis by assumption
-  qed
-  thus ?thesis
-    unfolding Cauchy_def
-    using \<open>Cauchy X\<close> unfolding Cauchy_def
-    by (meson le_less_trans) 
-qed
-
-lemma subspace_inter[simp]: 
-  assumes "complex_vector.subspace A" and "complex_vector.subspace B" 
-  shows "complex_vector.subspace (A\<inter>B)"
-  by (simp add: assms(1) assms(2) complex_vector.subspace_inter)
-
-lemma subspace_contains_0: "complex_vector.subspace A \<Longrightarrow> 0 \<in> A"
-  unfolding complex_vector.subspace_def by auto
-
-lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector.subspace x) \<Longrightarrow> complex_vector.subspace (\<Inter>AA)"
-  by (simp add: complex_vector.subspace_Inter)
-
-lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
-  by simp 
-
-(* TODO: move to earliest possible place *)
-lemma subspace_zero_not_top[simp]: 
-  "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-  by simp
-
-lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
-  by simp
-
-lemma  subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
-  for x y z :: "'a ell2_linear_space"
-  unfolding subspace_sup_plus[symmetric] by auto
-
-lemma subspace_empty_Sup: "Sup {} = (0::'a ell2_linear_space)"
-  unfolding subspace_zero_bot by auto
-
-lemma top_not_bot[simp]: "(top::'a ell2_linear_space) \<noteq> bot"
-  by (metis subspace_zero_bot subspace_zero_not_top) 
-
-lemma bot_not_top[simp]: "(bot::'a ell2_linear_space) \<noteq> top"
-  using top_not_bot
-  by simp 
-
-lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
-  for A B C :: "_ ell2_linear_space"
-  unfolding inf.assoc by simp
-
-lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ ell2_linear_space"
-  using inf.left_commute by auto
-
-lemma bot_plus[simp]: "bot + x = x" 
-  for x :: "'a ell2_linear_space"
-  by simp
-
-lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
-lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
-lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
-
-lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
-  for \<psi>
-  by simp
-
-lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
-  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
-  by (simp add: le_Inf_iff)
-
-lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
-  by (simp add: add_increasing2)
-lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_linear_space"
-  by (simp add: add_increasing)
-
-lemma ket_is_orthogonal[simp]:
-  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
-  unfolding is_orthogonal_def
-  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
-
-lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_linear_space))"
-proof-
-  have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
-    using Complex_L2.ket_ell2_span by blast
-  thus ?thesis
-    by (simp add: Span.abs_eq top_linear_space.abs_eq)
-qed
-
-lemma [simp]: "ket i \<noteq> 0"
-  using ell2_ket[of i] by force
-
-lemma equal_ket:
-  includes cblinfun_notation
-  assumes "\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)"
-  shows "A = B"
-  by (simp add: assms equal_basis)
-
-
-lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
-proof -
-  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
-  have "length ?enum = 1"
-    apply (subst card_UNIV_length_enum[symmetric])
-    by (rule CARD_1)
-  then obtain b where "?enum = [b]"
-    apply atomize_elim
-    apply (cases ?enum, auto)
-    by (metis length_0_conv length_Cons nat.inject)
-  then show "?enum = [a]"
-    by (subst everything_the_same[of _ b], simp)
-qed
-
-instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
-text \<open>Note: enum is not really needed, but without it this instantiation
-clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
-instance
-proof
-  show "canonical_basis = [1::'a ell2]"
-    unfolding canonical_basis_ell2_def
-    apply transfer
-    by (simp add: enum_CARD_1[of undefined])
-  show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
-    apply (transfer fixing: a b) by simp
-qed
-
-end
 
 unbundle no_cblinfun_notation
 

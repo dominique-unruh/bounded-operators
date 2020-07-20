@@ -1040,7 +1040,7 @@ instance..
 end
 
 lemma onorm_strong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and l::\<open>('a, 'b) blinfun\<close> and x::'a
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> (blinfun_apply l) x\<close>
@@ -4923,30 +4923,53 @@ lemma finite_complex_span_complete:
   apply (rule finite_span_complete)
   using assms by auto
 
-lemma cblinfun_operator_basis_zero_uniq:
-  fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
-  assumes a1: "complex_vector.span basis = UNIV"
-    and a2: "complex_vector.independent basis"
-    and a3: "finite basis" 
-    and a4: "\<And>s. s\<in>basis \<Longrightarrow> cblinfun_apply F s = 0"
-  shows \<open>F = 0\<close>
+lemma cblinfun_operator_S_zero_uniq_span:
+  fixes S::\<open>'a::chilbert_space set\<close>
+  assumes a1: "x \<in> complex_vector.span S"
+    and a2: "complex_vector.independent S"
+    and a4: "\<And>s. s\<in>S \<Longrightarrow> F *\<^sub>V s = 0"
+  shows \<open>F *\<^sub>V x = 0\<close>
 proof-
-  have "cblinfun_apply F w = 0" for w
+  have "F x = 0"
   proof-
-    have "w \<in> complex_vector.span basis"
-      using a1 by blast
-    hence "\<exists>t r. finite t \<and> t \<subseteq> basis \<and>  w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
-      using complex_vector.span_explicit by (smt mem_Collect_eq)
-    then obtain t r where b1: "finite t" and b2: "t \<subseteq> basis" and b3: "w = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+    have "\<exists>t r. finite t \<and> t \<subseteq> S \<and>  x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+      using complex_vector.span_explicit a1 by (smt mem_Collect_eq)
+    then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
       by blast
-    have  "F w = (\<Sum>a\<in>t. r a *\<^sub>C (F a))"
+    have  "F x = (\<Sum>a\<in>t. r a *\<^sub>C (F a))"
       using b3
-      by (smt \<open>\<And>thesis. (\<And>t r. \<lbrakk>finite t; t \<subseteq> basis; w = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> a4 b2 clinear_finite_sum complex_vector.scale_eq_0_iff in_mono sum.neutral)
+      by (smt \<open>\<And>thesis. (\<And>t r. \<lbrakk>finite t; t \<subseteq> S; x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> a4 b2 clinear_finite_sum complex_vector.scale_eq_0_iff in_mono sum.neutral)
     thus ?thesis using a4 b2
       by (simp add: subset_eq) 
   qed
   thus ?thesis by (simp add: cblinfun_ext) 
 qed
+
+lemma cblinfun_operator_S_uniq_span:
+  fixes S::\<open>'a::chilbert_space set\<close>
+  assumes a1: "x \<in> complex_vector.span S"
+    and a2: "complex_vector.independent S"
+    and a4: "\<And>s. s\<in>S \<Longrightarrow> F *\<^sub>V s = G *\<^sub>V s"
+  shows \<open>F *\<^sub>V x = G *\<^sub>V x\<close>
+proof-
+  define H where "H = F - G"
+  have "\<And>s. s\<in>S \<Longrightarrow> H *\<^sub>V s = 0"
+    unfolding H_def
+    by (simp add: a4 minus_cblinfun.rep_eq)
+  hence "H x = 0"
+    using a1 a2 cblinfun_operator_S_zero_uniq_span by auto
+  thus ?thesis unfolding H_def
+    by (metis eq_iff_diff_eq_0 minus_cblinfun.rep_eq)
+qed
+
+lemma cblinfun_operator_basis_zero_uniq:
+  fixes basis::\<open>'a::chilbert_space set\<close>
+  assumes a1: "complex_vector.span basis = UNIV"
+    and a2: "complex_vector.independent basis"
+    and a4: "\<And>s. s\<in>basis \<Longrightarrow> cblinfun_apply F s = 0"
+  shows \<open>F = 0\<close>
+  using cblinfun_operator_S_zero_uniq_span
+  by (metis UNIV_I a1 a2 a4 applyOp0 cblinfun_ext)
 
 (*
 lemma cblinfun_operator_finite_dim':
@@ -5866,6 +5889,62 @@ lemma cinner_unique_onb_enum':
   shows "F = G"
   using cinner_unique_onb_enum assms
   by (metis cinner_commute')
+
+subsection \<open>Extension of complex bounded operators\<close>
+
+(* NEW *)
+definition cblinfun_extension where 
+"cblinfun_extension S \<phi> = (SOME B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
+
+(* NEW *)
+definition cblinfun_extension_exists where 
+"cblinfun_extension_exists S \<phi> = (\<exists>B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
+
+(* NEW *)
+lemma cblinfun_extension_itself:
+  fixes B::"_ \<Rightarrow>\<^sub>C\<^sub>L _"
+  assumes a1: "x \<in> complex_vector.span S" and a2: "complex_independent S"
+  shows "cblinfun_extension S B x = B x"
+proof-
+  have "cblinfun_extension S B t = B t"
+    if "t \<in> S"
+    for t
+    unfolding cblinfun_extension_def
+    by (smt someI_ex that) 
+  thus ?thesis using assms
+    using equal_span
+    by (meson applyOp_scaleC2 cblinfun_apply_add clinearI complex_vector.linear_eq_on_span)    
+qed
+
+
+(* NEW *)
+lemma cblinfun_extension_exists_finite:
+  fixes \<phi>::"'a::onb_enum \<Rightarrow> 'b::onb_enum" 
+  assumes a1: "complex_independent S" and a2: "finite S"
+  shows "cblinfun_extension_exists S \<phi>"
+proof-
+  define f::"'a \<Rightarrow> 'b" where "f = construct S \<phi>"
+  have  "clinear f"
+    by (simp add: a1 complex_vector.linear_construct f_def)
+  hence "cbounded_linear f"
+    using cblinfun_operator_finite_dim[where F = f and basis="set (canonical_basis::'a list)"]
+    apply auto
+    using is_basis_def is_basis_set span_finite_dim by blast
+  then obtain F where "(*\<^sub>V) F = f"
+    using cblinfun_apply_cases by auto
+  have "(cblinfun_extension S F) *\<^sub>V x = F *\<^sub>V x"
+    if "x \<in> complex_vector.span S"
+    for x
+    by (simp add: a1 cblinfun_extension_itself that)    
+  moreover have "F *\<^sub>V x = \<phi> x"
+    if "x \<in> S"
+    for x
+    by (simp add: \<open>(*\<^sub>V) F = f\<close> a1 complex_vector.construct_basis f_def that)    
+  ultimately show ?thesis
+    by (metis (no_types) cblinfun_extension_exists_def)
+qed
+
+
 
 unbundle no_cblinfun_notation
 
