@@ -5904,9 +5904,9 @@ definition cblinfun_extension_exists where
 lemma cblinfun_extension_itself:
   fixes B::"_ \<Rightarrow>\<^sub>C\<^sub>L _"
   assumes a1: "x \<in> complex_vector.span S" and a2: "complex_independent S"
-  shows "cblinfun_extension S B x = B x"
+  shows "cblinfun_extension S ((*\<^sub>V) B) x = B *\<^sub>V x"
 proof-
-  have "cblinfun_extension S B t = B t"
+  have "cblinfun_extension S ((*\<^sub>V) B) t = B *\<^sub>V t"
     if "t \<in> S"
     for t
     unfolding cblinfun_extension_def
