@@ -2864,111 +2864,9 @@ end
 
 subsection \<open>Classical operators\<close>
 
-(* Ask to Dominique: Delete this? *)
-lemma has_ell2_norm_classical_operator':
-  \<open>has_ell2_norm \<psi> \<Longrightarrow>
-        has_ell2_norm (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close>
-proof-
-  assume \<open>has_ell2_norm \<psi>\<close>
-  hence \<open>bdd_above (sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) ` Collect finite)\<close>
-    unfolding has_ell2_norm_def
-    by blast
-  hence \<open>\<exists> M. \<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
-    by (simp add: bdd_above_def)
-  then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
-    by blast
-  define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
-    \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
-  have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
-    for R::\<open>'b set\<close>
-  proof-
-    assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-    from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-    have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
-      unfolding \<phi>_def
-      by (metis option.case_eq_if option.collapse)
-    hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
-      by metis
-    then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
-      by blast
-    define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
-    have \<open>finite S\<close>
-      using \<open>finite R\<close>
-      by (simp add: S_def)
-    moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
-    proof-
-      have \<open>inj_on f R\<close>
-      proof(rule inj_onI)
-        fix x y :: 'b
-        assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
-        from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
-        have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
-          by (metis inv_option_def option.distinct(1))
-        hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
-          by blast
-        hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
-          by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
-        have \<open>\<pi> (f x) = Some x\<close>
-          using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
-        moreover have \<open>\<pi> (f y) = Some y\<close>
-          using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
-        ultimately have \<open>Some x = Some y\<close>
-          using \<open>f x = f y\<close> by metis
-        thus \<open>x = y\<close> by simp
-      qed
-      moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
-        for i
-      proof-
-        assume \<open>i \<in> R\<close>
-        hence \<open>\<phi> i = \<psi> (f i)\<close>
-          unfolding \<phi>_def
-          by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
-        thus ?thesis
-          by simp 
-      qed
-      ultimately show ?thesis unfolding S_def
-        by (metis (mono_tags, lifting) sum.reindex_cong)
-    qed
-    ultimately show ?thesis
-      by (simp add: \<open>\<And>S. finite S \<Longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> M\<close>) 
-  qed     
-  have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> M\<close>
-    for R::\<open>'b set\<close>
-  proof-
-    assume \<open>finite R\<close>
-    define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
-    define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
-    have \<open>U \<inter> V = {}\<close>
-      unfolding U_def V_def by blast
-    moreover have \<open>U \<union> V = R\<close>
-      unfolding U_def V_def by blast
-    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
-            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
-      using \<open>finite R\<close> sum.union_disjoint by auto
-    moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
-      unfolding V_def by auto
-    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
-      by simp
-    moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
-      by (simp add: U_def)
-    moreover have \<open>finite U\<close>
-      unfolding U_def using \<open>finite R\<close>
-      by simp
-    ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le> M\<close>
-      using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close> by blast        
-    thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
-      by simp
-  qed
-  hence  \<open>bdd_above (sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) ` Collect finite)\<close>
-    unfolding bdd_above_def
-    by blast
-  thus ?thesis
-    using \<open>\<phi> \<equiv> \<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x\<close> has_ell2_norm_def by blast 
-qed
-
 (* NEW *)
 definition classical_function :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" where
-"classical_function \<pi> t = (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+  "classical_function \<pi> t = (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
 
@@ -2997,20 +2895,235 @@ proof-
     using Rep_ell2_inject by blast
 qed
 
+(* NEW *)
+lemma cinner_ket:
+  fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
+  assumes a1: "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
+  shows "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
+proof-
+  define H where "H u v = \<langle>F *\<^sub>V u, v\<rangle> - \<langle>u, G *\<^sub>V v\<rangle>" for u v
+  define SA where "SA = range (ket::'a\<Rightarrow>_)"
+  define SB where "SB = range (ket::'b\<Rightarrow>_)"
+  have u1: "closure (complex_vector.span SA) = UNIV"
+    unfolding SA_def using ket_ell2_span by blast
+  hence v1: "x \<in> closure (complex_vector.span (range ket))"
+    unfolding SA_def by blast
+  have u2: "closure (complex_vector.span SB) = UNIV"
+    unfolding SB_def using ket_ell2_span by blast
+  hence v2: "y \<in> closure (complex_vector.span (range ket))"
+    unfolding SB_def by blast
+
+  have "H (ket i) (ket j) = 0"
+    for i j
+    unfolding H_def using a1 by simp
+  moreover have q1: "cbounded_linear (H (ket i))"
+    for i
+  proof-
+    have "cbounded_linear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
+      by (simp add: cbounded_linear_cinner_right)      
+    moreover have "cbounded_linear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
+      using cblinfun_apply cbounded_linear_cinner_right_comp by auto      
+    ultimately show ?thesis unfolding H_def using cbounded_linear_sub by blast
+  qed
+  moreover have z1: "cbounded_linear (\<lambda>_. (0::complex))"
+    by simp    
+  ultimately have "H (ket i) v = 0"
+    if "v \<in> complex_vector.span SB"
+    for i v
+    using equal_span_applyOpSpace[where G = SB and A = "H (ket i)" and B = "\<lambda>_. (0::complex)"]
+    by (smt SB_def UNIV_I rangeE u2)
+  moreover have "continuous_on (closure (complex_vector.span SB)) (H (ket i))"
+    for i
+    by (simp add: q1 bounded_linear_continuous continuous_at_imp_continuous_on)
+  ultimately have "H (ket i) v = 0"
+    if "v \<in> closure (complex_vector.span SB)"
+    for i v
+    using continuous_constant_on_closure that
+    by smt
+  hence "H (ket i) v = 0"
+    for i v
+    by (smt UNIV_I u2)
+  moreover have jj: "cbounded_linear (\<lambda>u. cnj (H u v))"
+    for v
+  proof-
+    have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
+      using bounded_csemilinear_compose1 cblinfun_apply cbounded_linear_cinner_left_comp 
+        cnj_bounded_csemilinear by blast      
+    moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
+      using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
+      by blast      
+    ultimately show ?thesis unfolding H_def 
+      using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
+      by auto      
+  qed
+  ultimately have cHu0: "cnj (H u v) = 0"
+    if "u \<in> complex_vector.span SA"
+    for u v
+    using z1 SA_def equal_span_applyOpSpace iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
+    by smt (* > 1s *)
+  hence Hu0: "H u v = 0"
+    if "u \<in> complex_vector.span SA"
+    for u v
+    by (smt complex_cnj_zero_iff that) 
+  moreover have "continuous_on (closure (complex_vector.span SA)) (\<lambda>u. H u v)"
+    for v
+    using jj bounded_linear_continuous continuous_at_imp_continuous_on
+      cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
+      equal_span_applyOpSpace z1
+    by smt (* > 1s *)
+  ultimately have "H u v = 0"
+    if "u \<in> closure (complex_vector.span SA)"
+    for u v
+    using continuous_constant_on_closure that
+    by smt
+  hence "H u v = 0"
+    for u v
+    by (smt UNIV_I u1)
+  thus ?thesis unfolding H_def by simp 
+qed
 
 (* Ask to Dominique: delete or change? *)
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
   assumes a1: "inj_option \<pi>"
-      and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
+    and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
+    and a3:"cblinfun_extension_exists (range (ket::'b\<Rightarrow>_)) (classical_function (inv_option \<pi>))"
   shows  "(classical_operator \<pi>)* = classical_operator (inv_option \<pi>)"
+proof-
+  define F where "F = classical_operator (inv_option \<pi>)"
+  define G where "G = classical_operator \<pi>"
+  have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>" for i j
+  proof-
+    have w1: "(classical_operator (inv_option \<pi>)) *\<^sub>V (ket i)
+     = (case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
+      by (simp add: a3 classical_operator_basis)
+    have w2: "(classical_operator \<pi>) *\<^sub>V (ket j)
+     = (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
+      by (simp add: a2 classical_operator_basis)
+    have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>classical_operator (inv_option \<pi>) *\<^sub>V ket i, ket j\<rangle>"
+      unfolding F_def by blast
+    also have "\<dots> = \<langle>(case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0), ket j\<rangle>"
+      using w1 by simp
+    also have "\<dots> = \<langle>ket i, (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)\<rangle>"
+    proof(induction "inv_option \<pi> i")
+      case None
+      hence pi1: "None = inv_option \<pi> i".
+      show ?case 
+      proof (induction "\<pi> j")
+        case None
+        thus ?case
+          using pi1 by auto
+      next
+        case (Some c)
+        have "c \<noteq> i"
+        proof(rule classical)
+          assume "\<not>(c \<noteq> i)"
+          hence "c = i"
+            by blast
+          hence "inv_option \<pi> c = inv_option \<pi> i"
+            by simp
+          hence "inv_option \<pi> c = None"
+            by (simp add: pi1)
+          moreover have "inv_option \<pi> c = Some j"
+            using Some.hyps unfolding inv_option_def
+            apply auto
+            by (metis a1 f_inv_into_f inj_option_def option.distinct(1) rangeI)
+          ultimately show ?thesis by simp
+        qed
+        thus ?thesis
+          by (metis None.hyps Some.hyps cinner_zero_left ket_Kronecker_delta_neq option.simps(4) 
+              option.simps(5)) 
+      qed       
+    next
+      case (Some d)
+      hence s1: "Some d = inv_option \<pi> i".
+      show "\<langle>case inv_option \<pi> i of 
+            None \<Rightarrow> 0
+        | Some a \<Rightarrow> ket a, ket j\<rangle> =
+       \<langle>ket i, case \<pi> j of 
+            None \<Rightarrow> 0 
+        | Some a \<Rightarrow> ket a\<rangle>" 
+      proof(induction "\<pi> j")
+        case None
+        have "d \<noteq> j"
+        proof(rule classical)
+          assume "\<not>(d \<noteq> j)"
+          hence "d = j"
+            by blast
+          hence "\<pi> d = \<pi> j"
+            by simp
+          hence "\<pi> d = None"
+            by (simp add: None.hyps)
+          moreover have "\<pi> d = Some i"
+            using Some.hyps unfolding inv_option_def
+            apply auto
+            by (metis f_inv_into_f option.distinct(1) option.inject)
+          ultimately show ?thesis 
+            by simp
+        qed
+        thus ?case
+          by (metis None.hyps Some.hyps cinner_zero_right ket_Kronecker_delta_neq option.case_eq_if 
+              option.simps(5)) 
+      next
+        case (Some c)
+        hence s2: "\<pi> j = Some c" by simp
+
+        have "\<langle>ket d, ket j\<rangle> = \<langle>ket i, ket c\<rangle>"
+        proof(cases "\<pi> j = Some i")
+          case True
+          hence ij: "Some j = inv_option \<pi> i"
+            unfolding inv_option_def apply auto
+             apply (metis a1 f_inv_into_f inj_option_def option.discI range_eqI)
+            by (metis range_eqI)
+          have "i = c"
+            using True s2 by auto
+          moreover have "j = d"
+            by (metis option.inject s1 ij)
+          ultimately show ?thesis
+            by (simp add: ket_Kronecker_delta_eq) 
+        next
+          case False
+          moreover have "\<pi> d = Some i"
+            using s1 unfolding inv_option_def
+            by (metis f_inv_into_f option.distinct(1) option.inject)            
+          ultimately have "j \<noteq> d"
+            by auto            
+          moreover have "i \<noteq> c"
+            using False s2 by auto            
+          ultimately show ?thesis
+            by (metis ket_Kronecker_delta_neq) 
+        qed
+
+        hence "\<langle>case Some d of None \<Rightarrow> 0
+        | Some a \<Rightarrow> ket a, ket j\<rangle> =
+       \<langle>ket i, case Some c of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a\<rangle>"
+          by simp          
+        thus "\<langle>case inv_option \<pi> i of None \<Rightarrow> 0
+        | Some a \<Rightarrow> ket a, ket j\<rangle> =
+       \<langle>ket i, case \<pi> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a\<rangle>"
+          by (simp add: Some.hyps s1)          
+      qed
+    qed
+    also have "\<dots> = \<langle>ket i, classical_operator \<pi> *\<^sub>V ket j\<rangle>"
+      by (simp add: w2)
+    also have "\<dots> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
+      unfolding G_def by blast
+    finally show ?thesis .
+  qed
+  hence "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>" for x y
+    using cinner_ket by blast
+  hence "G* = F"
+    using adjoint_D[where F = F and G = G] by blast
+  thus ?thesis unfolding G_def F_def .
+qed
+
+(* NEW version *)
+lemma classical_operator_mult[simp]:
+  assumes a1: "inj_option \<pi>" and a2: "inj_option \<rho>"  
+  shows "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
   sorry
 
 (*
-(* Ask to Dominique: keep? *)
-lemma classical_operator_mult[simp]:
-  "inj_option \<pi> \<Longrightarrow> inj_option \<rho> \<Longrightarrow> 
-  classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (map_comp \<pi> \<rho>)"
 proof-
   assume \<open>inj_option \<pi>\<close> and \<open>inj_option \<rho>\<close>
   have \<open>cblinfun_apply (classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) (ket j)
