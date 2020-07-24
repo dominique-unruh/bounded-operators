@@ -193,13 +193,8 @@ proof -
   finally show ?thesis .
 qed
 
-(* Ask to Dominique: transform?
-lemma mat_of_cblinfun_classical_operator[code]:
-  "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
-  (\<lambda>(r, c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)" 
-  for f::"'a::enum \<Rightarrow> 'b::enum option"
-  sorry
-*)
+declare mat_of_cblinfun_classical_operator_inj_option[code]
+
 
 subsection \<open>Miscellanea\<close>
 
@@ -214,7 +209,7 @@ text \<open>This is a hack to circumvent a bug in the code generation. The autom
 lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
-  by auto
+  by simp
 
 
 unbundle no_jnf_notation

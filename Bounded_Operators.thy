@@ -5454,6 +5454,9 @@ proof-
       (* > 1s *)
 qed
 
+(* There is an existing locale "finite_dimensional_vector_space" *)
+(* TODO: Should hold for type_class complex_normed_vector.
+See chapter on Finite Dimensional Normed Spaces in Conway's Functional Analysis book *)
 lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
@@ -5482,29 +5485,6 @@ proof-
   thus ?thesis using cblinfun_operator_finite_dim_ortho[where F = F and basis = A]
     by (simp add: a5 b4)
 qed
-
-definition construct_infinite :: "'a::chilbert_space set \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b)" where
-  "construct_infinite basis \<phi> = undefined" 
-(* TODO: Look at literature for a definition that is:
-   - Not needing finiteness of basis
-   - As general as possible (i.e., should give the right operator under as little assumptions as possible) *)
-
-(* 
-TODO:
-
-Question: Under what assumptions about B and \<phi>, there exists a bounded linear F such that F=\<phi> on B
-
-Maybe: convergent (sum B \<parallel>\<phi>\<parallel>^2)
-
- *)
-
-typ "(_,_) blinfun"
-
-(*
-TODO
-lemma construct_infinite_id: 
-  assumes "basis is a basis or something like that"
-  shows "construct_infinite basis id = id" *)
 
 (* TODO: Remove existence (because we have Complex_Vector_Spaces.construct).
    For uniqueness: check if that already exists (probably!) *)
@@ -5892,15 +5872,13 @@ lemma cinner_unique_onb_enum':
 
 subsection \<open>Extension of complex bounded operators\<close>
 
-(* NEW *)
 definition cblinfun_extension where 
 "cblinfun_extension S \<phi> = (SOME B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
 
-(* NEW *)
 definition cblinfun_extension_exists where 
 "cblinfun_extension_exists S \<phi> = (\<exists>B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
 
-(* NEW *)
+(* TODO remove *)
 lemma cblinfun_extension_itself:
   fixes B::"_ \<Rightarrow>\<^sub>C\<^sub>L _"
   assumes a1: "x \<in> complex_vector.span S" and a2: "complex_independent S"
@@ -5916,13 +5894,29 @@ proof-
     by (meson applyOp_scaleC2 cblinfun_apply_add clinearI complex_vector.linear_eq_on_span)    
 qed
 
+lemma sfdsfs:
+  assumes a1: "complex_independent S"
+  shows "finite (S::'a::onb_enum set)"
+  sorry
 
-(* NEW *)
+(* TODO: prove this *)
 lemma cblinfun_extension_exists_finite:
+  fixes \<phi>::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
+  assumes a1: "complex_independent S"
+    and a2: "complex_vector.span S = UNIV"
+    and a3: "finite S"
+  shows "cblinfun_extension_exists S \<phi>"
+  thm cblinfun_operator_finite_dim
+  sorry
+
+(* TODO remove this *)
+(* lemma cblinfun_extension_exists_finite:
   fixes \<phi>::"'a::onb_enum \<Rightarrow> 'b::onb_enum" 
-  assumes a1: "complex_independent S" and a2: "finite S"
+  assumes a1: "complex_independent S"
   shows "cblinfun_extension_exists S \<phi>"
 proof-
+  have a2: "finite S"
+    using a1 using sfdsfs by metis
   define f::"'a \<Rightarrow> 'b" where "f = construct S \<phi>"
   have  "clinear f"
     by (simp add: a1 complex_vector.linear_construct f_def)
@@ -5930,8 +5924,9 @@ proof-
     using cblinfun_operator_finite_dim[where F = f and basis="set (canonical_basis::'a list)"]
     apply auto
     using is_basis_def is_basis_set span_finite_dim by blast
-  then obtain F where "(*\<^sub>V) F = f"
+  then obtain F where "( *\<^sub>V) F = f"
     using cblinfun_apply_cases by auto
+(* TODO simpler proof from email *)
   have "(cblinfun_extension S F) *\<^sub>V x = F *\<^sub>V x"
     if "x \<in> complex_vector.span S"
     for x
@@ -5939,12 +5934,11 @@ proof-
   moreover have "F *\<^sub>V x = \<phi> x"
     if "x \<in> S"
     for x
-    by (simp add: \<open>(*\<^sub>V) F = f\<close> a1 complex_vector.construct_basis f_def that)    
+    by (simp add: \<open>( *\<^sub>V) F = f\<close> a1 complex_vector.construct_basis f_def that)    
   ultimately show ?thesis
     by (metis (no_types) cblinfun_extension_exists_def)
 qed
-
-
+ *)
 
 unbundle no_cblinfun_notation
 

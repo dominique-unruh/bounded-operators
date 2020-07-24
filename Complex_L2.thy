@@ -2796,10 +2796,12 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding su
 lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 
+(* Ask to Dominique: yellow dot *)
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>
   by simp
 
+(* Ask to Dominique: yellow dot *)
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
@@ -2864,36 +2866,58 @@ end
 
 subsection \<open>Classical operators\<close>
 
-(* NEW *)
+(* 
+TODO use this definition
+
+definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
+  "classical_operator \<pi> = 
+    (let f = (\<lambda>t. (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+                           of None \<Rightarrow> (0::'b ell2) 
+                          | Some i \<Rightarrow> ket i))
+     in
+      cblinfun_extension (range (ket::'a\<Rightarrow>_)) f
+    )"
+*)
+
 definition classical_function :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" where
   "classical_function \<pi> t = (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
 
-(* NEW *)
 definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
   "classical_operator \<pi> = cblinfun_extension (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
+
+(* TODO: move to right theory *)
+lemma cblinfun_extension_exists:
+  assumes "cblinfun_extension_exists S f"
+  assumes "v \<in> S"
+  shows "(cblinfun_extension S f) *\<^sub>V v = f v"
+  by (smt assms(1) assms(2) cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
 
 (* NEW approach *)
 lemma classical_operator_basis:
   assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-proof-
-  have b1: "inv ket (ket t) = t"
-    for t::'a
-    by (meson f_inv_into_f ket_distinct rangeI)    
-  hence b2:  "\<pi> (inv ket (ket t)) = \<pi> t"
-    for t::'a
-    by simp
-  have "(classical_operator \<pi>) *\<^sub>V (ket x)
-       = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-    using a1
-    unfolding classical_operator_def cblinfun_extension_def
-    by (smt Eps_cong b2 cblinfun_extension_exists_def classical_function_def equal_basis rangeI some_sym_eq_trivial)
-      (* > 1s *)    
-  thus ?thesis
-    using Rep_ell2_inject by blast
+(* TODO: redo using cblinfun_extension_exists *)
+
+  unfolding classical_operator_def classical_function_def
+  apply (subst cblinfun_extension_exists)
+  using assms apply (auto simp: classical_function_def[abs_def])
+  by (metis f_inv_into_f ket_distinct rangeI)
+
+lemma classical_operator_finite:
+  shows "(classical_operator \<pi>) *\<^sub>V (ket (x::_::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+proof -
+  have 1: "complex_independent (range ket)"
+    sorry
+  have 2: "complex_vector.span (range ket) = UNIV"
+    sorry
+  show ?thesis
+    apply (rule classical_operator_basis)
+    apply (rule cblinfun_extension_exists_finite)
+    using 1 2 by auto
 qed
+
 
 (* NEW *)
 lemma cinner_ket:
@@ -3219,7 +3243,6 @@ proof -
 qed
 
 
-
 (* NEW version *)
 lemma unitary_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
@@ -3254,11 +3277,12 @@ next
     by (simp add: \<open>inj \<pi>\<close> a2 a3)
   also have "\<dots> = classical_operator ((Some \<circ> \<pi>) \<circ>\<^sub>m (inv_option (Some \<circ> \<pi>)))"
     using classical_operator_mult a2 a3 a5
-    by (simp add: \<open>inj \<pi>\<close> comp) 
+    by (simp add: \<open>inj \<pi>\<close> comp)
   also have "\<dots> = classical_operator (Some::'b\<Rightarrow>_)"
-    using comp by auto
+    using comp
+    by simp 
   also have "\<dots> = (idOp:: 'b ell2 \<Rightarrow>\<^sub>C\<^sub>L _)"
-    by (simp add: a5)
+    by (simp add: a5)    
   finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = idOp"
     .
 qed
@@ -3266,3 +3290,4 @@ qed
 unbundle no_cblinfun_notation
 
 end
+

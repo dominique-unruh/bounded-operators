@@ -2920,6 +2920,74 @@ proof-
 qed
 
 
+lemma mat_of_cblinfun_classical_operator_inj_option:
+  fixes f::"'a::enum \<Rightarrow> 'b::enum option"
+  (* assumes r1: "inj_option f" *)
+  shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
+  (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
+proof-
+  define nA where "nA = canonical_basis_length TYPE('a ell2)"
+  define nB where "nB = canonical_basis_length TYPE('b ell2)"
+  define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
+  define BasisB where "BasisB = (canonical_basis::'b ell2 list)"
+  have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat nB nA"
+    unfolding nA_def nB_def
+    by (metis add_diff_cancel cblinfun_of_mat_minusOp mat_of_cblinfun_zero minus_carrier_mat 
+        zero_carrier_mat)    
+  moreover have "nA = CARD ('a)"
+    unfolding nA_def
+    by (simp add: canonical_basis_length_ell2_def)    
+  moreover have "nB = CARD ('b)"
+    unfolding nB_def
+    by (simp add: canonical_basis_length_ell2_def)
+  ultimately have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat (CARD('b)) (CARD('a))"
+    unfolding nA_def nB_def
+    by simp
+  moreover have "(mat_of_cblinfun (classical_operator f))$$(r,c) 
+  = (mat (CARD('b)) (CARD('a))
+    (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0))$$(r,c)"
+    if a1: "r < CARD('b)" and a2: "c < CARD('a)"
+    for r c
+  proof-
+    have "(mat_of_cblinfun (classical_operator f))$$(r,c) = 1"
+      if b1: "f (Enum.enum!c) = Some (Enum.enum!r)"
+    proof-
+      have "(classical_operator f) *\<^sub>V (BasisA!c) = (classical_operator f) *\<^sub>V (ket (Enum.enum!c))"
+        unfolding BasisA_def canonical_basis_ell2_def sorry
+      also have "... = (case f (enum_class.enum ! c) of None \<Rightarrow> 0 | Some x \<Rightarrow> ket x)"
+        by (rule classical_operator_finite)
+      also have "\<dots> = BasisB!r"
+        using b1 apply (simp add: BasisB_def canonical_basis_ell2_def) sorry
+      finally have w1: "(classical_operator f) *\<^sub>V (BasisA!c) = BasisB!r"
+        by -
+(*         unfolding BasisA_def BasisB_def
+          classical_operator_def classical_operator'_def 
+        by auto *)
+      have "(mat_of_cblinfun (classical_operator f))$$(r,c)
+        = \<langle>BasisB!r, (classical_operator f) *\<^sub>V (BasisA!c)\<rangle>"
+        unfolding BasisB_def BasisA_def mat_of_cblinfun_def
+        using \<open>nA = CARD('a)\<close> \<open>nB = CARD('b)\<close> a1 a2 nA_def nB_def by auto
+      also have "\<dots> = \<langle>BasisB!r, BasisB!r\<rangle>"
+        using w1 by simp        
+      also have "\<dots> = 1"
+        unfolding BasisB_def
+        using \<open>nB = CARD('b)\<close> a1 cinner_square nB_def by fastforce 
+      finally show ?thesis by blast
+    qed
+    moreover have "(mat_of_cblinfun (classical_operator f))$$(r,c) = 0"
+      if c1: "f (Enum.enum!c) = None"
+      sorry
+    moreover have "(mat_of_cblinfun (classical_operator f))$$(r,c) = 0"
+      if c1: "f (Enum.enum!c) = Some (Enum.enum!r')" and "r\<noteq>r'" for r'
+      sorry
+    ultimately show ?thesis
+      using a1 a2 sorry
+  qed
+  ultimately show ?thesis using eq_matI
+    by auto
+qed
+
+
 unbundle no_jnf_notation
 unbundle no_cblinfun_notation
 

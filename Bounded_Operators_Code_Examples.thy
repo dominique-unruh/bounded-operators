@@ -70,4 +70,6 @@ value "idOp + idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "0 :: (bool ell2 \<Rightarrow>\<^sub>C\<^sub>L Enum.finite_3 ell2)"
 
+value "classical_operator (\<lambda>b. Some (\<not> b))"
+
 end
