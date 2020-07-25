@@ -2898,20 +2898,42 @@ lemma cblinfun_extension_exists:
 lemma classical_operator_basis:
   assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-(* TODO: redo using cblinfun_extension_exists *)
+    (* TODO: redo using cblinfun_extension_exists *)
 
   unfolding classical_operator_def classical_function_def
   apply (subst cblinfun_extension_exists)
   using assms apply (auto simp: classical_function_def[abs_def])
   by (metis f_inv_into_f ket_distinct rangeI)
 
+(* NEW *)
+lemma ket_zero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
+  apply transfer
+  by (metis zero_neq_one)
+
+(* NEW *)
+lemma complex_independent_ket:
+  "complex_independent (range (ket::'a\<Rightarrow>_))"
+proof-
+  define S where "S = range (ket::'a\<Rightarrow>_)"
+  have "is_ortho_set S"
+    unfolding S_def is_ortho_set_def apply auto
+    by (metis ket_Kronecker_delta_neq)
+  moreover have "0 \<notin> S"
+    unfolding S_def
+    using ket_zero
+    by (simp add: image_iff)
+  ultimately show ?thesis
+    using is_ortho_set_independent[where S = S] unfolding S_def 
+    by blast
+qed
+
 lemma classical_operator_finite:
-  shows "(classical_operator \<pi>) *\<^sub>V (ket (x::_::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+  "(classical_operator \<pi>) *\<^sub>V (ket (x::'a::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
 proof -
-  have 1: "complex_independent (range ket)"
-    sorry
-  have 2: "complex_vector.span (range ket) = UNIV"
-    sorry
+  have 1: "complex_independent (range (ket::'a\<Rightarrow>_))"
+    by (simp add: complex_independent_ket)    
+  have 2: "complex_vector.span (range (ket::'a\<Rightarrow>_)) = UNIV"
+    using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim by blast    
   show ?thesis
     apply (rule classical_operator_basis)
     apply (rule cblinfun_extension_exists_finite)
@@ -3011,7 +3033,7 @@ lemma classical_operator_adjoint[simp]:
   assumes a1: "inj_option \<pi>"
     and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
     and a3:"cblinfun_extension_exists (range (ket::'b\<Rightarrow>_)) (classical_function (inv_option \<pi>))"
-          (* Maybe a3 is a consequence of a2 *)
+    (* Maybe a3 is a consequence of a2 *)
   shows  "(classical_operator \<pi>)* = classical_operator (inv_option \<pi>)"
 proof-
   define F where "F = classical_operator (inv_option \<pi>)"
@@ -3143,11 +3165,11 @@ qed
 lemma classical_operator_mult[simp]:
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
   assumes a1: "inj_option \<pi>" 
-      and a2: "inj_option \<rho>"  
-      and a3:"cblinfun_extension_exists (range ket) (classical_function \<pi>)"
-      and a4:"cblinfun_extension_exists (range ket) (classical_function \<rho>)"
-      and a5: "cblinfun_extension_exists (range ket) (classical_function (\<pi> \<circ>\<^sub>m \<rho>))" 
-          (* Maybe a5 is a consequence of a3 and a4 *)
+    and a2: "inj_option \<rho>"  
+    and a3:"cblinfun_extension_exists (range ket) (classical_function \<pi>)"
+    and a4:"cblinfun_extension_exists (range ket) (classical_function \<rho>)"
+    and a5: "cblinfun_extension_exists (range ket) (classical_function (\<pi> \<circ>\<^sub>m \<rho>))" 
+    (* Maybe a5 is a consequence of a3 and a4 *)
   shows "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
 proof-
   have "(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>V (ket i)
@@ -3212,11 +3234,11 @@ qed
 lemma isometry_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
   assumes a1: "inj \<pi>"
-      and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
-      and a3: "cblinfun_extension_exists (range ket)
+    and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
+    and a3: "cblinfun_extension_exists (range ket)
      (classical_function (inv_option (Some \<circ> \<pi>)))" 
-      (* maybe dependent on a2 *)
-      and a4: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
+    (* maybe dependent on a2 *)
+    and a4: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
   shows "isometry (classical_operator (Some o \<pi>))"
 proof -
   have b0: "inj_option (Some \<circ> \<pi>)"
@@ -3233,12 +3255,12 @@ proof -
   have b3: "classical_operator (inv_option (Some \<circ> \<pi>)) o\<^sub>C\<^sub>L
             classical_operator (Some \<circ> \<pi>) = classical_operator (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>))"
     using classical_operator_mult[where \<pi> = "inv_option (Some \<circ> \<pi>)" and \<rho> = "Some \<circ> \<pi>"]
-    b0 b0' a2 a3 b2 by blast
+      b0 b0' a2 a3 b2 by blast
   show ?thesis
     unfolding isometry_def
     apply (subst classical_operator_adjoint) using assms apply simp
-    apply (simp add: a2)
-    apply (simp add: a3)
+      apply (simp add: a2)
+     apply (simp add: a3)
     by (simp add: a4 b1 b3)
 qed
 
@@ -3247,11 +3269,11 @@ qed
 lemma unitary_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
   assumes a1: "bij \<pi>"
-      and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
-      and a3: "cblinfun_extension_exists (range ket)
+    and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
+    and a3: "cblinfun_extension_exists (range ket)
      (classical_function (inv_option (Some \<circ> \<pi>)))"
-      and a4: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
-      and a5: "cblinfun_extension_exists (range ket) (classical_function (Some::'b\<Rightarrow>_))"
+    and a4: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
+    and a5: "cblinfun_extension_exists (range ket) (classical_function (Some::'b\<Rightarrow>_))"
   shows "unitary (classical_operator (Some o \<pi>))"
 proof (unfold unitary_def, rule conjI)
   have "inj \<pi>"
@@ -3269,7 +3291,7 @@ next
     apply (rule ext)
     unfolding inv_option_def o_def map_comp_def
     unfolding inv_def apply auto
-    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     using bij_def image_iff range_eqI
     by (metis a1)
   have "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)*
