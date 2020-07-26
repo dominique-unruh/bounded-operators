@@ -2932,7 +2932,7 @@ proof-
   define BasisB where "BasisB = (canonical_basis::'b ell2 list)"
   have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat nB nA"
     unfolding nA_def nB_def
-    by (metis add_diff_cancel cblinfun_of_mat_minusOp mat_of_cblinfun_zero minus_carrier_mat 
+    by (metis cblinfun_of_mat_minusOp' diff_zero mat_of_cblinfun_zero' minus_carrier_mat 
         zero_carrier_mat)    
   moreover have "nA = CARD ('a)"
     unfolding nA_def
@@ -2959,10 +2959,7 @@ proof-
       also have "\<dots> = BasisB!r"
         using b1 apply (simp add: BasisB_def canonical_basis_ell2_def) sorry
       finally have w1: "(classical_operator f) *\<^sub>V (BasisA!c) = BasisB!r"
-        by -
-(*         unfolding BasisA_def BasisB_def
-          classical_operator_def classical_operator'_def 
-        by auto *)
+        by simp        
       have "(mat_of_cblinfun (classical_operator f))$$(r,c)
         = \<langle>BasisB!r, (classical_operator f) *\<^sub>V (BasisA!c)\<rangle>"
         unfolding BasisB_def BasisA_def mat_of_cblinfun_def

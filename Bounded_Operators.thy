@@ -5894,10 +5894,47 @@ proof-
     by (meson applyOp_scaleC2 cblinfun_apply_add clinearI complex_vector.linear_eq_on_span)    
 qed
 
-lemma sfdsfs:
-  assumes a1: "complex_independent S"
-  shows "finite (S::'a::onb_enum set)"
-  sorry
+lemma complex_independent_finite_onb_enum:
+  assumes a1: "complex_independent A"
+  shows "finite (A::'a::onb_enum set)"
+(* NEW *)
+proof(cases "set (canonical_basis::'a list) = {}")
+  case True
+  have "complex_vector.span (set (canonical_basis::'a list)) = {0}"
+    by (simp add: True)
+  moreover have "closure (complex_vector.span (set (canonical_basis::'a list))) = UNIV"
+    using is_basis_def is_basis_set by blast    
+  ultimately have "(UNIV::'a set) = {0}"
+    by simp
+  hence "finite (UNIV::'a set)"
+    by (metis finite.emptyI finite.insertI)   
+  thus ?thesis
+    using rev_finite_subset by auto 
+next
+  case False
+  define AA where "AA = Complex_Vector_Spaces.extend_basis A"
+  have "complex_vector.span AA = UNIV"
+    using span_extend_basis a1
+    by (simp add: AA_def)
+  moreover have "complex_independent AA"
+    using a1
+    by (simp add: AA_def complex_vector.independent_extend_basis)
+  ultimately have "card AA = dim (UNIV::'a set)"
+    by (metis complex_vector.basis_card_eq_dim subset_UNIV)
+  also have "dim (UNIV::'a set) = card (set (canonical_basis::'a list))"
+    using is_basis_set unfolding is_basis_def
+    by (smt Complex_Vector_Spaces.dependent_raw_def List.finite_set complex_vector.dim_eq_card 
+        complex_vector.dim_span is_basis_set span_finite_dim)
+  finally have r1: "card AA = card (set (canonical_basis::'a list))".
+  have "finite (set (canonical_basis::'a list))"
+    by simp    
+  hence "card (set (canonical_basis::'a list)) \<noteq> 0"
+    using False by auto    
+  hence "finite AA"
+    using r1 card_infinite by force
+  thus ?thesis unfolding AA_def
+    by (simp add: assms complex_vector.extend_basis_superset rev_finite_subset)
+qed
 
 (* TODO: prove this *)
 lemma cblinfun_extension_exists_finite:
@@ -5916,7 +5953,7 @@ lemma cblinfun_extension_exists_finite:
   shows "cblinfun_extension_exists S \<phi>"
 proof-
   have a2: "finite S"
-    using a1 using sfdsfs by metis
+    using a1 using complex_independent_finite_onb_enum by metis
   define f::"'a \<Rightarrow> 'b" where "f = construct S \<phi>"
   have  "clinear f"
     by (simp add: a1 complex_vector.linear_construct f_def)
