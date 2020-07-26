@@ -5938,13 +5938,40 @@ qed
 
 (* TODO: prove this *)
 lemma cblinfun_extension_exists_finite:
-  fixes \<phi>::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
+(* TODO: generalize to 
+\<phi>::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
+*)
+  fixes \<phi>::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" 
   assumes a1: "complex_independent S"
-    and a2: "complex_vector.span S = UNIV"
-    and a3: "finite S"
+      and a2: "complex_vector.span S = UNIV"
+      and a3: "finite S"
   shows "cblinfun_extension_exists S \<phi>"
-  thm cblinfun_operator_finite_dim
-  sorry
+proof-
+  define f::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" 
+    where "f = complex_vector.construct S \<phi>"
+  have "clinear f"
+    using linear_construct
+    by (simp add: complex_vector.linear_construct a1 f_def)    
+  have "cbounded_linear f"
+    by (metis cblinfun_operator_finite_dim Complex_Vector_Spaces.dependent_raw_def \<open>clinear f\<close> 
+        a1 a2 a3)
+  then obtain B::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space" 
+    where "B *\<^sub>V x = f x" for x
+    using cblinfun_apply_cases by blast
+  have "B *\<^sub>V x = \<phi> x"
+    if c1: "x\<in>S"
+    for x
+  proof-
+    have "B *\<^sub>V x = f x"
+      by (simp add: \<open>\<And>x. B *\<^sub>V x = f x\<close>)
+    also have "\<dots> = \<phi> x"
+      by (simp add: a1 complex_vector.construct_basis f_def that)
+    finally show?thesis by blast
+  qed
+  thus ?thesis 
+    unfolding cblinfun_extension_exists_def
+    by blast
+qed
 
 (* TODO remove this *)
 (* lemma cblinfun_extension_exists_finite:
