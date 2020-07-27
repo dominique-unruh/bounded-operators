@@ -5973,36 +5973,6 @@ proof-
     by blast
 qed
 
-(* TODO remove this *)
-(* lemma cblinfun_extension_exists_finite:
-  fixes \<phi>::"'a::onb_enum \<Rightarrow> 'b::onb_enum" 
-  assumes a1: "complex_independent S"
-  shows "cblinfun_extension_exists S \<phi>"
-proof-
-  have a2: "finite S"
-    using a1 using complex_independent_finite_onb_enum by metis
-  define f::"'a \<Rightarrow> 'b" where "f = construct S \<phi>"
-  have  "clinear f"
-    by (simp add: a1 complex_vector.linear_construct f_def)
-  hence "cbounded_linear f"
-    using cblinfun_operator_finite_dim[where F = f and basis="set (canonical_basis::'a list)"]
-    apply auto
-    using is_basis_def is_basis_set span_finite_dim by blast
-  then obtain F where "( *\<^sub>V) F = f"
-    using cblinfun_apply_cases by auto
-(* TODO simpler proof from email *)
-  have "(cblinfun_extension S F) *\<^sub>V x = F *\<^sub>V x"
-    if "x \<in> complex_vector.span S"
-    for x
-    by (simp add: a1 cblinfun_extension_itself that)    
-  moreover have "F *\<^sub>V x = \<phi> x"
-    if "x \<in> S"
-    for x
-    by (simp add: \<open>( *\<^sub>V) F = f\<close> a1 complex_vector.construct_basis f_def that)    
-  ultimately show ?thesis
-    by (metis (no_types) cblinfun_extension_exists_def)
-qed
- *)
 
 unbundle no_cblinfun_notation
 
