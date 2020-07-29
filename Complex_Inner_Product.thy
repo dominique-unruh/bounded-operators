@@ -3384,6 +3384,13 @@ text \<open>Orthogonal set\<close>
 definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
   \<open>is_ortho_set S = (\<forall> x \<in> S. \<forall> y \<in> S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
 
+lemma is_onb_delete:
+  assumes "is_ortho_set (insert x B)"
+  shows "is_ortho_set B"
+  using assms
+  unfolding  is_ortho_set_def
+  by blast
+
 text \<open>Orthogonal basis\<close>
 definition is_ob :: "'a::complex_inner set \<Rightarrow> bool" 
   where "is_ob S  = (

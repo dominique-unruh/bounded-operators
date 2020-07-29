@@ -90,116 +90,6 @@ method_setup transfer = \<open>
 
 
 subsection\<open>General Results Missing\<close>
-(* TODO: Never used in Bounded Operators. Move to tensor product. *)
-(* Jose: I do not know how to move information from one library to another *)
-(* TODO: Should be possible now because you have both libraries in GitHub Desktop now *)
-lemma big_sum_reordering_fst:
-  fixes  S :: \<open>('a \<times> 'b) set\<close>
-  assumes \<open>finite S\<close>
-  shows \<open>(\<Sum>z\<in>S. f z) = (\<Sum>u\<in>fst ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>S}. f (u, v)))\<close>
-proof-
-  define g where \<open>g z = (if z \<in> S then f z else 0)\<close>
-    for z
-  have \<open>(\<Sum>z\<in>S. f z) = (\<Sum>z\<in>S. g z)\<close>
-    unfolding g_def
-    by auto
-  also have \<open>\<dots>  = (\<Sum>z\<in>((fst ` S) \<times> (snd ` S)). g z)\<close>
-  proof-
-    have \<open>S \<subseteq> ((fst ` S) \<times> (snd ` S))\<close>
-      by (simp add: subset_fst_snd)
-    thus ?thesis unfolding g_def
-      by (smt DiffD2 assms finite_SigmaI finite_imageI sum.mono_neutral_right)
-        (* > 1s *)
-  qed
-  also have \<open>\<dots>  = (\<Sum>u\<in>(fst ` S). (\<Sum>v\<in>(snd ` S). g (u,v)))\<close>
-    by (simp add: sum.cartesian_product)
-  also have \<open>\<dots>  = (\<Sum>u\<in>(fst ` S). (\<Sum>v\<in>{v|v. (u,v)\<in>S}.  f (u, v)) )\<close>
-  proof-
-    have \<open>u \<in> fst ` S \<Longrightarrow> (\<Sum>v\<in>(snd ` S). g (u,v)) = (\<Sum>v\<in>{v|v. (u,v)\<in>S}.  f (u, v))\<close>
-      for u
-    proof-
-      have \<open>{v|v. (u,v)\<in>S} \<subseteq> (snd ` S)\<close>
-        using image_iff by fastforce
-      hence \<open>(\<Sum>v\<in>(snd ` S). g (u,v)) = (\<Sum>v\<in>{v|v. (u,v)\<in>S}. g (u,v))
-             + (\<Sum>v\<in>(snd ` S)-{v|v. (u,v)\<in>S}. g (u,v))\<close>
-        by (simp add: add.commute assms sum.subset_diff)
-      moreover have \<open>(\<Sum>v\<in>(snd ` S)-{v|v. (u,v)\<in>S}. g (u,v)) = 0\<close>
-        by (simp add: g_def)        
-      moreover have \<open>(\<Sum>v\<in>{v|v. (u,v)\<in>S}. g (u,v)) = (\<Sum>v\<in>{v|v. (u,v)\<in>S}. f (u,v))\<close>
-        unfolding g_def
-        by auto
-      ultimately show ?thesis by auto
-    qed
-    thus ?thesis
-      by auto 
-  qed
-  finally show ?thesis by blast
-qed
-
-(* TODO: Never used in Bounded Operators. Move to tensor product. *)
-lemma swap_set_fst:
-  \<open>fst ` (prod.swap ` S) = snd ` S\<close>
-  unfolding prod.swap_def apply auto
-   apply (simp add: rev_image_eqI)
-  by (metis (no_types, lifting) fst_conv image_cong image_eqI pair_in_swap_image prod.swap_def)
-
-(* TODO: Never used in CBounded Operators. Move to tensor product. *)
-lemma swap_set_snd:
-  \<open>snd ` (prod.swap ` S) = fst ` S\<close>
-  unfolding prod.swap_def apply auto
-   apply (simp add: rev_image_eqI)
-  using image_iff by fastforce
-
-(* TODO: Never used in CBounded Operators. Move to tensor product. *)
-lemma big_sum_reordering_snd:
-  fixes  S :: \<open>('a \<times> 'b) set\<close>
-  assumes \<open>finite S\<close>
-  shows \<open>(\<Sum>z\<in>S. f z) = (\<Sum>v\<in>snd ` S. (\<Sum>u\<in>{u|u. (u,v)\<in>S}. f (u, v)))\<close>
-proof-
-  have \<open>prod.swap \<circ> (prod.swap::('a \<times> 'b \<Rightarrow> 'b \<times> 'a)) = id\<close>
-    by simp    
-  hence \<open>(\<Sum>z\<in>S. f z) = (\<Sum>z\<in>prod.swap ` (prod.swap ` S). f z)\<close>
-    by (simp add: \<open>prod.swap \<circ> prod.swap = id\<close> image_comp)
-  also have \<open>\<dots> = (\<Sum>z\<in>(prod.swap ` S). (f \<circ> prod.swap) z)\<close>
-  proof-
-    have \<open>inj prod.swap\<close>
-      by simp      
-    show ?thesis
-      by (meson \<open>inj prod.swap\<close> inj_def inj_on_def sum.reindex)    
-  qed
-  also have \<open>\<dots> = (\<Sum>u\<in>fst ` (prod.swap ` S). (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. (f \<circ> prod.swap) (u,v)))\<close>
-  proof-
-    have \<open>finite (prod.swap ` S)\<close>
-      using \<open>finite S\<close> by simp
-    thus ?thesis
-      using big_sum_reordering_fst[where S = "prod.swap ` S" and f = "f \<circ> prod.swap"]
-      by blast
-  qed
-  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. (f \<circ> prod.swap) (u,v)))\<close>
-  proof-
-    have \<open>fst ` (prod.swap ` S) = snd ` S\<close>
-      by (simp add: swap_set_fst) 
-    thus ?thesis by simp
-  qed
-  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (u,v)\<in>(prod.swap ` S)}. f (v,u) ))\<close>
-  proof-
-    have \<open>prod.swap (u, v) = (v, u)\<close>
-      for u::'a and v::'b
-      unfolding prod.swap_def by auto
-    hence \<open>(f \<circ> prod.swap) (u, v) = f (v, u)\<close>
-      for v::'a and u::'b
-      by simp
-    thus ?thesis by simp      
-  qed
-  also have \<open>\<dots> = (\<Sum>u\<in>snd ` S. (\<Sum>v\<in>{v|v. (v,u)\<in>S}. f (v,u) ))\<close>
-  proof-
-    have \<open>(u,v)\<in>(prod.swap ` S) \<longleftrightarrow> (v,u)\<in>S\<close>
-      for u v
-      by simp
-    thus ?thesis by simp
-  qed
-  finally show ?thesis by blast
-qed
 
 class not_singleton =
   assumes not_singleton_card: "\<exists>x y. x \<noteq> y"
@@ -328,27 +218,6 @@ proof intro_classes
 qed
 end
 
-(* TODO move somewhere appropriate *)
-lemma (in vector_space) span_finite_basis_exists:
-  assumes "finite A"
-  shows "\<exists>B. finite B \<and> independent B \<and> span B = span A \<and> card B = dim A"
-proof -
-  obtain B where BT1: "B \<subseteq> span A" 
-    and BT2: "span A \<subseteq> span B"
-    and indep: "independent B"  
-    and card: "card B = dim (span A)"
-    using basis_exists[where V="span A"]
-    by metis
-  have "finite B"
-    using assms indep BT1 by (rule independent_span_bound[THEN conjunct1])
-  moreover from BT1 BT2 have BT: "span B = span A"
-    using span_mono span_span by blast
-  moreover from card have "card B = dim (span A)"
-    by auto
-  moreover note indep
-  ultimately show ?thesis
-    by auto
-qed
 
 
 subsection\<open>Ordered Fields\<close>
@@ -2001,6 +1870,7 @@ proof -
   finally show ?thesis .
 qed
 
+
 (* TODO move *)
 lemma cauchy_filter_metricI:
   fixes F :: "'a::metric_space filter"
@@ -2017,6 +1887,7 @@ proof (unfold cauchy_filter_def le_filter_def, auto)
   show "eventually P (F \<times>\<^sub>F F)"
     unfolding eventually_uniformity_metric eventually_prod_filter eventually_filtermap by metis
 qed
+
 
 (* TODO move *)
 lemma cauchy_filter_metric_filtermapI:
@@ -3424,17 +3295,18 @@ proof-
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma norm_unit_sphere:
-  fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close> and \<open>e > 0\<close>
-  shows \<open>\<exists> x\<in>(sphere 0 1). norm (norm(f x) - (onorm f)) < e\<close>
+  includes notation_norm
+  fixes f::\<open>'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  assumes a1: "bounded_linear f" and a2: "e > 0" 
+    and a3: "(UNIV::'a set) \<noteq> {0}"
+  shows \<open>\<exists>x\<in>(sphere 0 1). \<parallel> \<parallel>f *\<^sub>v x\<parallel> - \<parallel>f\<parallel> \<parallel> < e\<close>
 proof-
-  define S::\<open>real set\<close> where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+  define S::"real set" where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
   have \<open>S\<noteq>{}\<close>
   proof-
     have \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
-      unfolding sphere_def apply auto using \<open>(UNIV::'a set) \<noteq> {0}\<close> ex_norm1
+      unfolding sphere_def apply auto using a3 ex_norm1
       by auto      
     thus ?thesis unfolding S_def by auto
   qed
@@ -3476,13 +3348,13 @@ proof-
           by blast
         from \<open>y = norm (f x)\<close>
         have \<open>y \<le> onorm f * norm x\<close>
-          using assms(2) onorm by auto
+          using a1 onorm by auto
         moreover have \<open>norm x = 1\<close>
           using  \<open>x \<in> sphere 0 1\<close> unfolding sphere_def by auto
         ultimately show ?thesis by simp
       qed
       hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
-        using assms(2) bdd_above_norm_f by force
+        using a1 bdd_above_norm_f by force
       thus ?thesis unfolding S_def by blast 
     qed
     hence \<open>y \<le> Sup S\<close>
@@ -3509,9 +3381,11 @@ proof-
     have "\<forall>r. r \<notin> S \<or> (\<exists>a. r = norm (f a) \<and> a \<in> sphere 0 1)"
       using S_def by blast
     thus ?thesis
-      using a1 \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. norm (onorm f - y) < e\<close> assms(3) by force 
+      using a1 \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. norm (onorm f - y) < e\<close> a2
+      by (metis (full_types) norm_blinfun.rep_eq norm_minus_commute) 
   qed 
 qed
+
 
 lemma sphere_nonzero:
   assumes \<open>S \<subseteq> sphere 0 r\<close> and \<open>r > 0\<close> and \<open>x \<in> S\<close>
@@ -3868,6 +3742,23 @@ proof-
   thus ?thesis using linear_ball_uniq  \<open>linear a\<close>  \<open>linear b\<close>
     by blast
 qed
+
+context CARD_1 begin
+
+lemma everything_the_same[simp]: "(x::'a)=y"
+  by (metis (full_types) UNIV_I card_1_singletonE empty_iff insert_iff local.CARD_1)
+
+lemma CARD_1_UNIV: "UNIV = {x::'a}"
+  by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
+
+lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
+  apply (rule ext) 
+  apply (subst (asm) everything_the_same[where x=a])
+  apply (subst (asm) everything_the_same[where x=b])
+  by simp
+
+end
+
 
 unbundle no_nsa_notation
 

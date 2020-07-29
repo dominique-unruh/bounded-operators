@@ -14,8 +14,9 @@ theory Complex_L2
     "HOL-Library.Rewrite"
     "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product
-    Bounded_Operators Complex_Main
+    Bounded_Operators
     "HOL-ex.Sketch_and_Explore"
+    Preliminaries
 begin
 
 unbundle cblinfun_notation
@@ -1987,33 +1988,6 @@ proof-
 qed
 
 
-(* TODO move *)
-(* Jose: To move where? *)
-(* TODO move to General_Results_Missing *)
-context CARD_1 begin
-
-(* TODO: remove (can just use "undefined" instead) *)
-definition the_one :: 'a where "the_one = (SOME x. (x \<in> (UNIV::'a set)))"
-
-lemma everything_the_same[simp]: "(x::'a)=y"
-  by (metis (full_types) UNIV_I card_1_singletonE empty_iff insert_iff local.CARD_1)
-
-(* TODO: remove *)
-lemma everything_the_one: "(x::'a)=the_one"
-  by (rule everything_the_same)
-
-(* TODO: replace "the_one" by "a" (free variable) *)
-lemma CARD_1_UNIV: "UNIV = {the_one::'a}"
-  by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
-
-lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
-  apply (rule ext) 
-  apply (subst (asm) everything_the_same[where x=a])
-  apply (subst (asm) everything_the_same[where x=b])
-  by simp
-
-end
-
 lemma ket_distinct:
   \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
@@ -2489,7 +2463,8 @@ end
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
-lift_definition times_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a b _. a the_one * b the_one" by simp
+lift_definition times_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a b x. a x * b x"
+  by simp   
 instance 
 proof
   show "(a::'a ell2) * b * c = a * (b * c)"
@@ -2521,12 +2496,10 @@ proof
     by (transfer, auto)
   show "(1::'a ell2) * a = a"
     for a :: "'a ell2"
-    apply (transfer, rule ext, auto simp: everything_the_one)
-    by (metis (full_types) everything_the_one)
+    by (transfer, rule ext, auto)
   show "(a::'a ell2) * 1 = a"
     for a :: "'a ell2"
-    apply (transfer, rule ext, auto simp: everything_the_one)
-    by (metis (full_types) everything_the_one)
+    by (transfer, rule ext, auto)
   show "(0::'a ell2) \<noteq> 1"
     apply transfer
     by (meson zero_neq_one)
@@ -3308,6 +3281,270 @@ next
   finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = idOp"
     .
 qed
+
+lemma ell2_norm_cinner:
+  fixes a b :: "'a \<Rightarrow> complex" and X :: "'a set"
+  assumes h1: "finite X"
+  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)" and "y == (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
+  shows "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+proof-
+  have "\<langle>x, y\<rangle> = \<langle>(\<Sum>t\<in>X. a t *\<^sub>C ket t), (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>"
+    unfolding x_def y_def by blast
+  also have "\<dots> = (\<Sum>t\<in>X. \<langle>a t *\<^sub>C ket t, (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>)"
+    using cinner_sum_left by blast
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. \<langle>a t *\<^sub>C ket t, b s *\<^sub>C ket s\<rangle>))"
+    by (simp add: cinner_sum_right)
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * \<langle>ket t, b s *\<^sub>C ket s\<rangle>))"
+    by (meson cinner_scaleC_left sum.cong)
+  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
+    by (metis (mono_tags, lifting) cinner_scaleC_right sum.cong vector_space_over_itself.scale_scale)
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
+  proof-
+    have "t\<in>X \<Longrightarrow> (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>)"
+      for t
+      using h1 Groups_Big.comm_monoid_add_class.sum.remove
+      by (simp add: sum.remove)
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle>)"
+  proof-
+    have "s\<in>X-{t} \<Longrightarrow> (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle> = 0"
+      for s t
+      by (metis DiffD2 ket_Kronecker_delta_neq mult_not_zero singletonI) 
+    hence "(\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = 0" for t
+      by (simp add: \<open>\<And>t s. s \<in> X - {t} \<Longrightarrow> cnj (a t) * b s * \<langle>ket t, ket s\<rangle> = 0\<close>)      
+    thus ?thesis by simp
+  qed
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+  proof-
+    have "\<langle>ket t, ket t\<rangle> = 1" for t::'a
+      by (simp add: ket_Kronecker_delta_eq)      
+    thus ?thesis
+      by auto 
+  qed
+  finally show ?thesis .
+qed
+
+lemma ell2_norm_list:
+  fixes a :: "'a \<Rightarrow> complex" and X :: "'a set"
+  assumes h1: "finite X"
+  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
+  shows "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+proof-
+  have "(norm x)^2 = \<langle>x, x\<rangle>"
+    using power2_norm_eq_cinner' by auto
+  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * (a t))"   
+    using h1 ell2_norm_cinner[where X = X and a = a and b = a]
+    using x_def by blast    
+  also have "\<dots> = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"   
+  proof-
+    have "(cnj (a t)) * (a t) = (norm (a t))\<^sup>2" for t
+      using complex_norm_square by auto      
+    thus ?thesis by simp
+  qed
+  finally have "(norm x)^2 = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+    using of_real_eq_iff by blast    
+  thus ?thesis
+    by (metis abs_norm_cancel real_sqrt_abs) 
+qed
+
+
+lemma Cauchy_Schwarz_complex:
+  fixes a b :: "'a \<Rightarrow> complex"
+  assumes h1: "finite X"
+  shows "norm (\<Sum>t\<in>X. (cnj (a t)) * b t) \<le> sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2) * sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
+proof-
+  define x where "x = (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
+  define y where "y = (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
+  have "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+    using h1 ell2_norm_cinner[where X = X and a = a and b = b]
+      x_def y_def by blast    
+  hence "norm \<langle>x, y\<rangle> = norm (\<Sum>t\<in>X. (cnj (a t)) * b t)"
+    by simp
+  moreover have "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
+    using h1 ell2_norm_list x_def by blast        
+  moreover have "norm y = sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
+    using h1 ell2_norm_list y_def by blast        
+  moreover have "norm \<langle>x, y\<rangle> \<le> norm x * norm y"
+    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)    
+  ultimately show ?thesis by simp
+qed
+
+
+lemma Cauchy_Schwarz_real:
+  fixes a b :: "'a \<Rightarrow> real"
+  assumes "finite X"
+  shows "norm (\<Sum>t\<in>X. a t * b t) \<le> sqrt (\<Sum>t\<in>X. (a t)\<^sup>2) * sqrt (\<Sum>t\<in>X. (b t)\<^sup>2)"
+proof-
+  have "norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))
+    \<le> sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) *
+      sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2)"
+    using assms Cauchy_Schwarz_complex [where X = X and a = a and b = b]
+    by simp
+  moreover have "norm (\<Sum>t\<in>X. (a t) * (b t)) = norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
+  proof-
+    have "(a t) * (b t) = cnj (complex_of_real (a t)) * complex_of_real (b t)"
+      for t
+      by simp      
+    hence "(\<Sum>t\<in>X. (a t) * (b t)) = (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
+      by simp
+    moreover have "norm (complex_of_real (\<Sum>t\<in>X. (a t) * (b t))) = norm (\<Sum>t\<in>X. (a t) * (b t))"
+    proof-
+      have "cmod (complex_of_real r) = norm r" for r::real
+        by auto
+      thus ?thesis
+        by blast 
+    qed
+    ultimately show ?thesis by simp
+  qed
+  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (a t)\<^sup>2)"
+    by simp
+  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (b t)\<^sup>2)"
+    by simp    
+  ultimately show ?thesis 
+    by simp    
+qed
+
+
+lemma clinear_cbounded_linear_onb_enum: 
+  fixes f::"'a::onb_enum \<Rightarrow> 'b::onb_enum"
+  assumes "clinear f"
+  shows "cbounded_linear f"
+  using assms unfolding cbounded_linear_def
+proof auto
+  assume "clinear f"
+  define basis where "basis = (canonical_basis::'a list)"
+  define K::real where "K = sqrt (\<Sum>t\<in>set basis. norm (f t)^2)"
+
+  have "norm (f x) \<le> norm x * K" for x
+  proof-
+    define c where "c t = complex_vector.representation (set basis) x t" for t
+    have c1: "c t \<noteq> 0 \<Longrightarrow> t \<in> set basis" for t
+      by (simp add: c_def complex_vector.representation_ne_zero)      
+    have c2: "finite {t. c t \<noteq> 0}"
+      by (metis (mono_tags, lifting) Collect_cong List.finite_set Set.filter_def c1 finite_filter)
+    have basis_finite: "finite (set basis)"
+      by simp
+    have c3: "(\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t) = x"
+      unfolding c_def Complex_Vector_Spaces.representation_def
+      apply auto
+      subgoal
+      proof-
+        assume a1: "complex_independent (set basis)"
+        assume a2: "x \<in> Complex_Vector_Spaces.span (set basis)"
+        then have f3: "(\<Sum>a | Complex_Vector_Spaces.representation (set basis) x a \<noteq> 0. Complex_Vector_Spaces.representation (set basis) x a *\<^sub>C a) = x"
+          using a1 complex_vector.sum_nonzero_representation_eq by blast
+        have "Complex_Vector_Spaces.representation (set basis) x = (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x)"
+          using a2 a1 by (simp add: complex_vector.representation_def)
+        thus "(\<Sum>a | (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a \<noteq> 0. (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a *\<^sub>C a) = x"
+          using f3 by presburger
+      qed
+      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]
+      subgoal
+      proof-
+        assume "x \<notin> Complex_Vector_Spaces.span (set basis)"
+        moreover have "Complex_Vector_Spaces.span (set basis) = UNIV"
+        proof-
+          have "Complex_Vector_Spaces.span (set basis) 
+              = closure (Complex_Vector_Spaces.span (set basis))"
+            by (simp add: span_finite_dim)
+          thus ?thesis
+            using is_basis_set
+            unfolding basis_def is_basis_def
+            by blast          
+        qed
+        ultimately show ?thesis
+          by auto
+      qed
+      done
+    hence "x = (\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t)"
+      by simp
+    also have "\<dots> = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
+      using DiffD2 List.finite_set c1 complex_vector.scale_eq_0_iff mem_Collect_eq subsetI 
+        sum.mono_neutral_cong_left
+      by smt (* > 1s *)
+    finally have c4: "x = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
+      by blast
+    hence "f x = (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
+      by (smt assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    hence "norm (f x) = norm (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
+      by simp
+    also have "\<dots> \<le> (\<Sum>t\<in>set basis. norm (c t *\<^sub>C f t))"
+      by (simp add: sum_norm_le)
+    also have "\<dots> = (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
+      by auto
+    also have "\<dots> = norm (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
+    proof-
+      have "(\<Sum>t\<in>set basis. norm (c t) * norm (f t)) \<ge> 0"
+        by (smt calculation norm_ge_zero)        
+      thus ?thesis by simp
+    qed
+    also have "\<dots> \<le> sqrt (\<Sum>t\<in>set basis. (norm (c t))^2) * sqrt (\<Sum>t\<in>set basis. (norm (f t))^2)"
+      using Cauchy_Schwarz_real
+      by fastforce
+    also have "\<dots> \<le> norm x * K"
+    proof-
+      have "(norm x)^2 = \<langle>x, x\<rangle>"
+        using power2_norm_eq_cinner' by blast
+      also have "\<dots> = \<langle>(\<Sum>t\<in>set basis. c t *\<^sub>C t), (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>"
+        using c4
+        by simp 
+      also have "\<dots> = (\<Sum>t\<in>set basis. \<langle>c t *\<^sub>C t, (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>)"
+        using cinner_sum_left by blast
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. \<langle>c t *\<^sub>C t, c s *\<^sub>C s\<rangle>))"
+        by (metis (mono_tags, lifting) cinner_sum_right sum.cong)
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * \<langle>c t *\<^sub>C t,  s\<rangle>))"
+        by simp
+      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
+        by (metis (no_types, lifting) cinner_scaleC_left sum.cong vector_space_over_itself.scale_scale)
+      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
+      proof-
+        have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) = (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
+          if "t \<in> set basis" for t
+        proof-         
+          have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) =  c t * cnj (c t) * \<langle>t,  t\<rangle> + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
+            using that basis_finite
+              Groups_Big.comm_monoid_add_class.sum.remove
+            by (metis (no_types, lifting))
+          moreover have "\<langle>t,  t\<rangle> = 1"
+          proof-
+            have "norm t = 1"
+              using that is_normal[where x = t] unfolding basis_def is_basis_def
+              by blast
+            hence "(norm t)^2 = 1"
+              by simp
+            thus ?thesis
+              by (metis of_real_1 power2_norm_eq_cinner') 
+          qed
+          ultimately show ?thesis
+            using complex_norm_square by auto 
+        qed
+        thus ?thesis by simp
+      qed
+      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2)"
+      proof-
+        have "s\<in>(set basis)-{t} \<Longrightarrow> c s * cnj (c t) * \<langle>t,  s\<rangle> = 0"
+          for s t
+          by (metis DiffD2 basis_def c1 complex_cnj_zero_iff is_ortho_set_def is_orthonormal mult_not_zero singleton_iff)          
+        hence " (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>) = 0"
+          for t
+          by (simp add: \<open>\<And>t s. s \<in> set basis - {t} \<Longrightarrow> c s * cnj (c t) * \<langle>t, s\<rangle> = 0\<close>) 
+        thus ?thesis by simp
+      qed
+      finally have "(norm x)^2 = (\<Sum>t\<in>set basis. (norm (c t))^2)"
+        using of_real_eq_iff by blast        
+      hence "norm x = sqrt (\<Sum>t\<in>set basis. norm (c t)^2)"
+        using real_sqrt_unique by auto        
+      thus ?thesis 
+        unfolding K_def by simp
+    qed
+    finally show ?thesis by blast
+  qed
+  thus "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K" 
+    by blast
+qed
+
+
 
 unbundle no_cblinfun_notation
 

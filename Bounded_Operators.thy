@@ -263,20 +263,21 @@ subsection \<open>Topological properties of real cblinfun operators\<close>
 
 lemma hnorm_unit_sphere:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and N::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x )\<close>
+    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x )\<close>
 proof-
-  have \<open>bounded_linear (blinfun_apply (f n))\<close>
+  have \<open>bounded_linear ((*\<^sub>v) (f n))\<close>
     for n
     using blinfun_apply by blast
   hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
-      norm (norm((blinfun_apply (f n)) x) - (onorm (blinfun_apply (f n)))) < e\<close>
+      norm (norm(((*\<^sub>v) (f n)) x) - (onorm ((*\<^sub>v) (f n)))) < e\<close>
     for n
-    using norm_unit_sphere  \<open>(UNIV::'a set) \<noteq> 0\<close> 
-    by auto
+    using  \<open>(UNIV::'a set) \<noteq> 0\<close> norm_unit_sphere[where f = "Blinfun (f n)"]
+    apply transfer apply auto
+    by (metis bounded_linear_Blinfun_apply norm_blinfun.rep_eq)
   moreover have \<open>norm (f n) = onorm (blinfun_apply (f n))\<close> 
     for n
     apply transfer
@@ -311,11 +312,11 @@ qed
 
 lemma hnorm_unit_sphere_double:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and N M::hypnat 
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x )\<close>
+    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. (*\<^sub>v) (f n m))) N M x )\<close>
 proof-
   have \<open>bounded_linear (blinfun_apply (f n m))\<close>
     for n m
@@ -323,9 +324,8 @@ proof-
   hence \<open>e>0 \<Longrightarrow> \<exists> x\<in>(sphere 0 1).
       norm (norm((blinfun_apply (f n m)) x) - (onorm (blinfun_apply (f n m)))) < e\<close>
     for n m e
-    using norm_unit_sphere \<open>(UNIV::'a set) \<noteq> 0\<close> 
-    apply auto
-    by blast 
+    using norm_unit_sphere[where f = "f n m"] \<open>(UNIV::'a set) \<noteq> 0\<close> 
+    apply transfer by auto     
   moreover have \<open>norm (f n m) = onorm (blinfun_apply (f n m))\<close> 
     for n m
     apply transfer
@@ -364,7 +364,7 @@ lemma uCauchy_unit_sphere:
     and N M::hypnat
   assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
   shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
-         \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
+         \<approx> hnorm( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x - (*f2* (\<lambda> n. (*\<^sub>v) (f n))) M x )\<close>
 proof-
   define g::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a, 'b) blinfun\<close>
     where \<open>g n m = f n - f m\<close> for n and m
@@ -407,9 +407,9 @@ proof-
 qed
 
 lemma ustrong_onorm:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close> 
-    and l::\<open>('a, 'b) blinfun\<close>
-  assumes \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
+  fixes f::"nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector"
+    and l::"'a \<Rightarrow>\<^sub>L 'b"
+  assumes \<open>sphere 0 1: (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ((*\<^sub>v) l)\<close>
   shows \<open>f \<longlonglongrightarrow> l\<close> 
 proof(cases \<open>(UNIV::'a set) = 0\<close>)
   case True
@@ -496,9 +496,9 @@ qed
 
 
 lemma oCauchy_uCauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
   assumes \<open>Cauchy f\<close>
-  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
+  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
 proof-
   include nsa_notation
   have  \<open>N\<in>HNatInfinite \<Longrightarrow> M\<in>HNatInfinite \<Longrightarrow> x\<in>*s* (sphere 0 1) \<Longrightarrow> 
@@ -571,8 +571,8 @@ qed
 
 
 lemma uCauchy_oCauchy:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close> 
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close> 
   shows \<open>Cauchy f\<close>
 proof(cases \<open>(UNIV::('a set)) = 0\<close>)
   case True
@@ -616,8 +616,8 @@ qed
 
 
 proposition oCauchy_uCauchy_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
-  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
 proof
   show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. blinfun_apply (f n))"
     if "Cauchy f"
@@ -631,10 +631,10 @@ qed
 
 
 lemma uCauchy_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) blinfun\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
-  shows  \<open>\<exists> l::('a,'b) blinfun. 
-    (sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::banach\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
+  shows  \<open>\<exists> l::'a \<Rightarrow>\<^sub>L 'b. 
+    (sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
 proof-
   include nsa_notation
   from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
@@ -940,10 +940,10 @@ proof-
 qed  
 
 lemma onorm_ustrong:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
-    and l::\<open>('a, 'b) blinfun\<close> 
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+    and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> 
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
+  shows \<open>(sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
 proof-
   include nsa_notation
   have \<open>N\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow>
@@ -1001,9 +1001,9 @@ proof-
 qed
 
 proposition onorm_ustrong_iff:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close>
-    and l::\<open>('a, 'b) blinfun\<close> 
-  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+    and l::\<open>'a  \<Rightarrow>\<^sub>L 'b\<close> 
+  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
 proof
   show "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l"
     if "f \<longlonglongrightarrow> l"
@@ -1016,7 +1016,7 @@ proof
 qed
 
 theorem completeness_real_cblinfun:
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector, 'b::banach) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::banach\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>\<exists> L. f \<longlonglongrightarrow> L\<close>
 proof-
@@ -1041,7 +1041,7 @@ end
 
 lemma onorm_strong:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
-    and l::\<open>('a, 'b) blinfun\<close> and x::'a
+    and l::\<open>'a  \<Rightarrow>\<^sub>L 'b\<close> and x::'a
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> (blinfun_apply l) x\<close>
 proof-
@@ -1262,8 +1262,8 @@ proof -
 qed
 
 lemma times_blinfun_dist2:
-  fixes a b :: "('a::real_normed_vector, 'b::real_normed_vector) blinfun"
-    and c :: "('b, 'c::real_normed_vector) blinfun"
+  fixes a b :: "'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector"
+    and c :: "'b  \<Rightarrow>\<^sub>L 'c::real_normed_vector"
   shows "c  o\<^sub>L (a + b) = (c o\<^sub>L a) + (c o\<^sub>L b)"
 proof-
   have \<open>blinfun_apply (c  o\<^sub>L (a + b)) x = blinfun_apply ( (c  o\<^sub>L a) +  (c  o\<^sub>L b) ) x\<close>
@@ -1295,16 +1295,16 @@ proof-
 qed
 
 lemma times_blinfun_scaleC:
-  fixes f::"('b::complex_normed_vector,'c::complex_normed_vector) blinfun" 
-    and g::"('a::complex_normed_vector, 'b) blinfun"
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
-    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
-  shows \<open>\<forall> c. \<forall> x. blinfun_apply (f  o\<^sub>L g) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f  o\<^sub>L g) x)\<close>
+  fixes f::"'b::complex_normed_vector \<Rightarrow>\<^sub>L'c::complex_normed_vector" 
+    and g::"'a::complex_normed_vector \<Rightarrow>\<^sub>L 'b"
+  assumes \<open>\<forall> c. \<forall> x. (*\<^sub>v) f (c *\<^sub>C x) = c *\<^sub>C ((*\<^sub>v) f x)\<close>
+    and \<open>\<forall> c. \<forall> x. (*\<^sub>v) g (c *\<^sub>C x) = c *\<^sub>C ((*\<^sub>v) g x)\<close>
+  shows \<open>\<forall> c. \<forall> x. (*\<^sub>v) (f  o\<^sub>L g) (c *\<^sub>C x) = c *\<^sub>C ((*\<^sub>v) (f  o\<^sub>L g) x)\<close>
   by (simp add: assms(1) assms(2))
 
 lemma rscalar_op_op: 
-  fixes A::"('b::real_normed_vector,'c::complex_normed_vector) blinfun" 
-    and B::"('a::real_normed_vector, 'b) blinfun"
+  fixes A::"'b::real_normed_vector \<Rightarrow>\<^sub>L 'c::complex_normed_vector" 
+    and B::"'a::real_normed_vector \<Rightarrow>\<^sub>L 'b"
   shows \<open>(a *\<^sub>C A)  o\<^sub>L B = a *\<^sub>C (A  o\<^sub>L B)\<close>
 proof-
   have \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) x =
@@ -1340,9 +1340,9 @@ qed
 
 
 lemma op_rscalar_op: 
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) blinfun" 
-    and B::"('a::real_normed_vector, 'b) blinfun"
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply A (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply A x)\<close>
+  fixes A::"'b::complex_normed_vector  \<Rightarrow>\<^sub>L 'c::complex_normed_vector" 
+    and B::"'a::real_normed_vector  \<Rightarrow>\<^sub>L  'b"
+  assumes \<open>\<forall> c. \<forall> x. A *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (A *\<^sub>v x)\<close>
   shows \<open>A  o\<^sub>L (a *\<^sub>C B) = a *\<^sub>C (A  o\<^sub>L B)\<close>
 proof-
   have \<open>blinfun_apply (A o\<^sub>L (a *\<^sub>C B)) x  = blinfun_apply ((a *\<^sub>C A) o\<^sub>L B) x\<close>
@@ -4838,9 +4838,9 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
     BT: "real_vector.span B = real_vector.span A"
     and "independent B"  
     and "finite B"
-    using real_vector.span_finite_basis_exists[where A=A, OF assms]
-    by metis
-
+    by (smt assms empty_subsetI real_vector.independent_empty 
+        real_vector.maximal_independent_subset_extend real_vector.span_eq rev_finite_subset 
+        subset_trans)
   have "B\<noteq>{}"
     apply (rule ccontr, simp)
     using BT True

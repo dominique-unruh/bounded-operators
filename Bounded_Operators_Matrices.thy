@@ -50,25 +50,20 @@ unbundle cblinfun_notation
 
 subsection \<open>Setting up code generation for type cblinfun\<close>
 
-text \<open>We define the canonical isomorphism between \<^typ>\<open>('a::onb_enum,'b::onb_enum) cblinfun\<close>
+text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close>
   and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the dimensions of 'a,'b, 
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>onb_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
   (* TODO: Define (canonical isomorphism). *)
+  (* Jose: More details please *)
 
-(* TODO: Find out whether this is still useful for anything *)
 primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::onb_enum \<Rightarrow> nat \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum_list [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
   \<open>vec_of_onb_enum_list (x#ys) v i = vec_of_onb_enum_list ys v (Suc i) +
     \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i\<close>
 
-(*
-definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
-  \<open>vec_of_onb_enum v = vec_of_onb_enum_list (canonical_basis::'a list) v 0\<close>
-*)
 
-(* TODO: Move to Bounded_Operators_Matrices *)
 definition vec_of_onb_enum :: \<open>'a::onb_enum \<Rightarrow> complex vec\<close> where
   \<open>vec_of_onb_enum v = vec_of_list (map (complex_vector.representation (set canonical_basis) v) canonical_basis)\<close>
 
@@ -164,7 +159,6 @@ next
     by simp
 qed
 
-(* TODO: Move to Bounded_Operators_Matrices *)
 fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
   \<open>onb_enum_of_vec_list y [] = 0\<close> |
@@ -186,7 +180,6 @@ next
   qed
 qed
 
-(* TODO: Move to Bounded_Operators_Matrices *)
 definition onb_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::onb_enum\<close> where
   \<open>onb_enum_of_vec v = onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
 
@@ -341,11 +334,10 @@ proof-
 qed
 
 lemma cinner_span_breakdown_eq:
-  assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "a \<in> sphere 0 1"
-    (* TODO: norm a = 1 *)
+  includes notation_norm
+  assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "\<parallel>a\<parallel> = 1"
   shows
-    "(x \<in> Complex_Vector_Spaces.span (insert a S)) =
-   (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S)"
+ "(x \<in> Complex_Vector_Spaces.span (insert a S)) = (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S)"
 proof
   show "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
     if "x \<in> Complex_Vector_Spaces.span (insert a S)"
@@ -388,10 +380,9 @@ proof
       by simp
     moreover have "\<langle>a, a\<rangle> = 1"
     proof-
-      have "cmod \<langle>a, a\<rangle> = 1"
-        using f3 unfolding sphere_def apply auto 
-        using norm_eq_sqrt_cinner[where x = a] 
-        by auto
+      have "norm \<langle>a, a\<rangle> = 1"
+        using norm_eq_sqrt_cinner[where x = a]
+        using f3 by auto         
       moreover have "\<langle>a, a\<rangle> \<in> \<real>"
         by (simp add: cinner_real)
       moreover have "\<langle>a, a\<rangle> \<ge> 0"
@@ -407,11 +398,11 @@ proof
 qed
 
 lemma span_set_inner:
+  includes notation_norm
   assumes "w \<in> complex_vector.span (set L)" and "distinct L" and "is_ortho_set (set L)" 
-    and "\<forall>a\<in>set L. a\<in>sphere 0 1"
-    (* TODO: norm a = 1 *)
+      and "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
   shows  "w = (\<Sum>b\<in>set L. \<langle>b, w\<rangle> *\<^sub>C b)"
-  using assms
+using assms
 proof(induction L arbitrary: w)
   case Nil
   hence "w = 0"
@@ -453,7 +444,7 @@ next
     ultimately have "w - \<langle>a, w\<rangle> *\<^sub>C a \<in> complex_vector.span (set L)"
       using Cons.prems(1) cinner_span_breakdown_eq[where S = "set L" and x = w and a = a]
         Cons.prems(2) Cons.prems(3) distinct.simps(2) 
-      by smt
+      by (smt mem_sphere_0) 
     moreover have "is_ortho_set (set L)"
       unfolding is_ortho_set_def 
     proof auto
@@ -466,7 +457,7 @@ next
       ultimately show "\<langle>x, y\<rangle> = 0"
         using o3 Cons.prems(3) is_ortho_set_def by blast 
     qed
-    moreover have "\<forall>a\<in>set L. a\<in>sphere 0 1"
+    moreover have "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
       using Cons.prems(4) by auto      
     ultimately have "(\<Sum>b\<in>(set L). \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> *\<^sub>C b) = w - \<langle>a, w\<rangle> *\<^sub>C a"
       using Cons.IH Cons.prems(2) distinct.simps(2) sum.cong
@@ -492,82 +483,14 @@ proof (rule Ortho_expansion_finite)
     by simp    
 qed
 
-(* TODO?: Remove and use onb_enum_of_vec_list_def' instead? *)
+(* NEW formulation *)
 lemma onb_enum_of_vec_expansion:  
   fixes S::"'a::onb_enum list" and L::"complex list"
-  assumes f1: "distinct S" and f2: "length S = length L"
-  shows "onb_enum_of_vec_list S L = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
-    (* TODO?: = sum_list (map2 (\<lambda>(l,s). l *\<^sub>C s) S L) *)
-proof-
-  have "onb_enum_of_vec_list S L 
-      = (\<Sum>i\<in>{0..<length S}. (L!i) *\<^sub>C S!i)"
-    if  f1: "distinct S" and f2: "length S = length L"
-      and f3: "length S = n"
-    for S::"'a::onb_enum list" and L::"complex list" and n::nat
-    using that proof(induction n arbitrary: S L)
-    case 0
-    have "S = []"
-      using "0.prems"(3) by auto
-    moreover have "L = []"
-      using "0.prems"(2) "0.prems"(3) by auto
-    ultimately show ?case by simp
-  next
-    case (Suc n)
-    have "\<exists>S' s. S = s # S' \<and> s \<notin> set S'"
-      by (metis Suc.prems(1) Suc.prems(3) Suc_length_conv distinct.simps(2))
-    then obtain S' s where a1: "S = s # S'" and a2: "s \<notin> set S'"
-      by blast
-    have distinctS: "distinct S'"
-      using Suc.prems(1) a1 by auto
-    have "length L = Suc n"
-      using Suc.prems(2) Suc.prems(3) by auto
-    hence "\<exists>L' l. L = l # L'"
-      by (metis Suc_length_conv)    
-    then obtain L' l where b1: "L = l # L'"
-      by blast
-    have "length S' = length L'"
-      using Suc.prems(2) a1 b1 by auto    
-    moreover have "length S' = n"
-      using Suc.prems(2) Suc.prems(3) b1 calculation by auto    
-    ultimately have prethesis: "onb_enum_of_vec_list S' L' =
-    (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
-      using distinctS Suc.IH[where S = S' and L = L']
-      by blast
-    have "onb_enum_of_vec_list S L = onb_enum_of_vec_list (s#S') (l#L')"
-      by (simp add: a1 b1)
-    also have "\<dots> =  l *\<^sub>C s + onb_enum_of_vec_list S' L'"
-      by simp
-    also have "\<dots> =  l *\<^sub>C s + (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
-      by (simp add: prethesis)
-    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 0..<length S'. L' ! i *\<^sub>C S' ! i)"
-      by (simp add: a1 b1)
-    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 0..<length S'. L ! (Suc i) *\<^sub>C S ! (Suc i))"
-      using a1 b1 by auto
-    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = Suc 0..< Suc (length S'). L ! i *\<^sub>C S ! i)"
-      by (metis (no_types, lifting) sum.cong sum.shift_bounds_Suc_ivl)
-    also have "\<dots> =  L ! 0 *\<^sub>C S ! 0 + (\<Sum>i = 1..< length S. L ! i *\<^sub>C S ! i)"
-      by (simp add: Suc.prems(3) \<open>length S' = n\<close>)
-    also have "\<dots> = (\<Sum>i = 0..< length S. L ! i *\<^sub>C S ! i)"
-      by (simp add: Suc.prems(3) sum.atLeast_Suc_lessThan)    
-    finally show ?case by blast
-  qed
-  thus ?thesis using assms by blast
-qed
+  assumes "length S = length L" and "distinct S"
+  shows   "sum_list (map2 (\<lambda>l s. l *\<^sub>C s) L S) = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
+  using assms sum_list_sum_nth[where xs = "map2 (*\<^sub>C) L S"]
+  by auto
 
-(* TODO: check if needed at all (in the end) *)
-lemma list_sum_function:
-  fixes f :: "'a \<Rightarrow> 'b::ab_group_add" and S :: "'a list"
-  shows "(\<Sum>i = 0..<length S. f (S ! i)) = (\<Sum>b\<leftarrow>S. f b)"
-proof(induction S)
-  case Nil thus ?case by simp 
-next
-  case (Cons a S)
-  thus ?case
-    by (metis (mono_tags, lifting) atLeastLessThan_iff length_map nth_map sum.cong sum_list_sum_nth) 
-qed
-
-
-(* TODO: Maybe just use (simp add: dim_vec_of_onb_enum_list) instead of using this *)
 lemma length_list_of_vec_vec_of_onb_enum_list:
   fixes w::"'a::onb_enum" and S::"'a list"
   shows "length (list_of_vec (vec_of_onb_enum_list S w i)) = length (canonical_basis::'a list)"
@@ -576,74 +499,71 @@ lemma length_list_of_vec_vec_of_onb_enum_list:
 lemma list_of_vec_unit_vec:
   defines "basis == canonical_basis::'a::basis_enum list"
   assumes "length basis \<ge> 1"
-  shows "list_of_vec (c \<cdot>\<^sub>v
-  unit_vec (length basis)
-  (length basis-1))!(length basis-1)
-   = (c::complex)"
+  shows "list_of_vec (c \<cdot>\<^sub>v unit_vec (length basis) (length basis-1))!(length basis-1) = (c::complex)"
 proof-
-  (* TODO replace (canonical_basis::'a::basis_enum list) \<rightarrow> basis *)
   have "c \<cdot>\<^sub>v
-  unit_vec (length (canonical_basis::'a::basis_enum list)) 
-  (length (canonical_basis::'a list)-1)
-   = Matrix.vec (length (canonical_basis::'a list))
-     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
+  unit_vec (length basis) 
+  (length basis - 1)
+   = Matrix.vec (length basis)
+     (\<lambda>j. if j = length basis - 1 then c
           else 0)"
     unfolding smult_vec_def unit_vec_def mk_vec_def 
     by auto
-  hence "list_of_vec (c \<cdot>\<^sub>v
-  unit_vec (length (canonical_basis::'a::basis_enum list)) 
-  (length (canonical_basis::'a list)-1))
-   = list_of_vec (Matrix.vec (length (canonical_basis::'a list))
-     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
-          else 0) )"
+  hence "list_of_vec (c \<cdot>\<^sub>v unit_vec (length (basis)) 
+  (length basis -1))
+   = list_of_vec (Matrix.vec (length basis)
+     (\<lambda>j. if j = length basis - 1 then c else 0) )"
     by simp
-  hence "list_of_vec (c \<cdot>\<^sub>v
-  unit_vec (length (canonical_basis::'a::basis_enum list)) 
-  (length (canonical_basis::'a list)-1))!(length (canonical_basis::'a list)-1)
-   = list_of_vec (Matrix.vec (length (canonical_basis::'a list))
-     (\<lambda>j. if j = length (canonical_basis::'a list)-1 then c
-          else 0) )!(length (canonical_basis::'a list)-1)"
+  hence "list_of_vec (c \<cdot>\<^sub>v unit_vec (length basis) 
+  (length basis - 1))!(length basis - 1)
+   = list_of_vec (Matrix.vec (length basis)
+     (\<lambda>j. if j = length basis - 1 then c
+          else 0) )!(length basis - 1)"
     by simp
   also have "\<dots> = c"
   proof-
-    have "[0..<length (canonical_basis::'a list)] !
-    (length (canonical_basis::'a list) - Suc 0) = 
-     length (canonical_basis::'a list) - Suc 0"
+    have "[0..<length basis] !
+    (length basis - Suc 0) = length basis - Suc 0"
+      unfolding basis_def
       using assms by auto      
-    thus ?thesis using assms by auto
+    thus ?thesis unfolding basis_def using assms by auto
   qed
   finally show ?thesis 
     unfolding basis_def
-    by auto 
+    using assms(1) by blast    
 qed
 
 lemma independent_length_leq:
+  defines "basis == canonical_basis::'a::basis_enum list"
   assumes f1: "complex_vector.independent (set (S::'a list))"
     and f2: "distinct S"
-  shows "length S \<le> length (canonical_basis::'a::basis_enum list)"
+  shows "length S \<le> length basis"
 proof(rule classical)
   have h1: "finite (set S)"
     by simp
-  assume "\<not>(length S \<le> length (canonical_basis::'a::basis_enum list))"
-  hence "length S > length (canonical_basis::'a::basis_enum list)"
+  assume "\<not>(length S \<le> length basis)"
+  hence "length S > length basis"
     by simp
-  hence g1: "card (set S) > card (set (canonical_basis::'a::basis_enum list))"
+  hence g1: "card (set S) > card (set basis)"
+    unfolding basis_def
     by (simp add: distinct_card f2)
-  have "finite (set (canonical_basis::'a::basis_enum list))"
+  have "finite (set basis)"
     by simp    
-  hence "complex_vector.span (set (canonical_basis::'a::basis_enum list)) = (UNIV:: 'a set)"
-    using span_finite_dim is_basis_set unfolding is_basis_def by auto 
+  hence "complex_vector.span (set basis) = (UNIV:: 'a set)"
+    using span_finite_dim is_basis_set unfolding is_basis_def basis_def by auto 
   hence g2: "card (set S) > dim (UNIV:: 'a set)"
     using g1 
-    by (smt Complex_Vector_Spaces.dependent_raw_def complex_vector.dim_eq_card complex_vector.span_UNIV is_basis_def is_basis_set)
+    by (smt \<open>\<not> length S \<le> length basis\<close> \<open>finite (set basis)\<close> basis_def complex_vector.dim_le_card' 
+        complex_vector.dim_span distinct_canonical_basis distinct_card f2 not_le_imp_less 
+        order.trans)
   hence "complex_vector.span (set S) \<subseteq> (UNIV:: 'a set)"
     by simp
   hence "card (set S) \<le> dim (UNIV:: 'a set)"
     using f1 h1 Complex_Vector_Spaces.dependent_raw_def 
-      \<open>Complex_Vector_Spaces.span (set canonical_basis) = UNIV\<close>
-      \<open>\<not> length S \<le> length canonical_basis\<close> \<open>finite (set canonical_basis)\<close> 
       complex_vector.dim_le_card complex_vector.dim_span_eq_card_independent 
-      distinct_canonical_basis distinct_card f2 by smt
+      distinct_canonical_basis distinct_card f2 
+    by (smt \<open>Complex_Vector_Spaces.span (set basis) = UNIV\<close> \<open>\<not> length S \<le> length basis\<close> 
+        \<open>finite (set basis)\<close> basis_def) 
   thus ?thesis using g2 by (smt leD)
 qed
 
@@ -1057,111 +977,106 @@ proof-
     by (simp add: a1 a2) 
 qed
 
-(* TODO: move this lemma near "is_ortho_set_def" *)
-lemma is_onb_delete:
-  assumes "is_ortho_set (insert x B)"
-  shows "is_ortho_set B"
-  using assms
-  unfolding  is_ortho_set_def
-  by blast
-
-(* TODO: put inside other lemma *)
-lemma is_ortho_setsum_list_map2_zero:
-  assumes "length ys = length B"
-    and "is_ortho_set (set (b#B))"
-    and "distinct (b#B)"
-  shows "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
-  using assms proof(induction ys B rule: list_induct2)
-  case Nil
-  show ?case by auto
-next
-  case (Cons x xs b' B)
-  have "b \<noteq> b'"
-    using Cons.prems(2) by auto    
-  hence h1: "\<langle>b, b'\<rangle> = 0"
-    by (meson Cons.prems is_ortho_set_def list.set_intros(1) list.set_intros(2))
-  have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = \<langle>b, x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
-    by simp
-  also have "\<dots> = \<langle>b, x *\<^sub>C b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
-    by (simp add: cinner_right_distrib)
-  also have "\<dots> = x * \<langle>b, b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
-    by simp
-  also have "\<dots> = \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
-    using h1 by simp
-  also have "\<dots> = 0"
-    by (metis Cons.IH Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def 
-        list.set_intros(1) list.set_intros(2) set_ConsD)    
-  finally have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = 0"
-    .
-  thus ?case .
-qed
-
-
 lemma sum_list_orthonormal:
   assumes  "length xs = length ys"
     and "length ys = length B" 
     and "is_ortho_set (set B)"
     and "distinct B"
     and "set B \<subseteq> sphere 0 1"
-  shows "\<langle>sum_list (map2 (*\<^sub>C) xs B), 
-          sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
-      sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)"
-  using assms proof(induction xs ys B rule: list_induct3)
-  case Nil show ?case by auto
-next
-  case (Cons x xs y ys b B)
-  have h1: "is_ortho_set (set B)"
-    using Cons.prems(1) is_onb_delete by auto    
-  have h2: "set B \<subseteq> sphere 0 1"
-    using Cons.prems(3) by auto
-  have h3: "distinct B"
-    using Cons.prems(2) by auto
-  have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
+  shows "\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle> 
+       = sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)"
+proof-
+  have is_ortho_setsum_list_map2_zero:
+    "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
+    if "length ys = length B"
+      and "is_ortho_set (set (b#B))"
+      and "distinct (b#B)"
+    for b::'a and B::"'a list" and ys
+    using that proof(induction ys B rule: list_induct2)
+    case Nil
+    show ?case by auto
+  next
+    case (Cons x xs b' B)
+    have "b \<noteq> b'"
+      using Cons.prems(2) by auto    
+    hence h1: "\<langle>b, b'\<rangle> = 0"
+      by (meson Cons.prems is_ortho_set_def list.set_intros(1) list.set_intros(2))
+    have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = \<langle>b, x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+      by simp
+    also have "\<dots> = \<langle>b, x *\<^sub>C b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+      by (simp add: cinner_right_distrib)
+    also have "\<dots> = x * \<langle>b, b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+      by simp
+    also have "\<dots> = \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
+      using h1 by simp
+    also have "\<dots> = 0"
+      by (metis Cons.IH Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def 
+          list.set_intros(1) list.set_intros(2) set_ConsD)    
+    finally have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = 0"
+      .
+    thus ?case .
+  qed
+  show ?thesis
+    using assms
+  proof(induction xs ys B rule: list_induct3)
+    case Nil show ?case by auto
+  next
+    case (Cons x xs y ys b B)
+    have h1: "is_ortho_set (set B)"
+      using Cons.prems(1) is_onb_delete by auto    
+    have h2: "set B \<subseteq> sphere 0 1"
+      using Cons.prems(3) by auto
+    have h3: "distinct B"
+      using Cons.prems(2) by auto
+    have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
         (b # B)), sum_list (map2 (*\<^sub>C) (y # ys) (b # B))\<rangle> =
     \<langle>x *\<^sub>C b + sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-    by auto
-  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>
+      by auto
+    also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                 + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-    by (simp add: cinner_left_distrib)
-  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
+      by (simp add: cinner_left_distrib)
+    also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
                  +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                 + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-    by (simp add: cinner_right_distrib)
-  also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
+      by (simp add: cinner_right_distrib)
+    also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
                  +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b\<rangle>
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-    by (simp add: cinner_right_distrib)
-  also have "\<dots> = cnj x * y * \<langle>b, b\<rangle>
+      by (simp add: cinner_right_distrib)
+    also have "\<dots> = cnj x * y * \<langle>b, b\<rangle>
                  +cnj x * \<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                  + y * \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-    by auto
-  also have "\<dots> = cnj x * y                 
+      by auto
+    also have "\<dots> = cnj x * y                 
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-  proof-
-    have "b\<in>sphere 0 1"
-      using Cons.prems(3) by auto
-    hence "norm b = 1"
-      by simp
-    hence "(norm b)^2 = 1"
-      by simp
-    hence "\<langle>b, b\<rangle> = 1"
-      by (metis of_real_hom.hom_one power2_norm_eq_cinner')       
-    moreover have "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
-      using Cons.hyps(2) Cons.prems(1) Cons.prems(2) is_ortho_setsum_list_map2_zero by auto
-    moreover have "\<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle> = 0"
-      using  is_ortho_setsum_list_map2_zero
-      by (metis Cons.hyps(1) Cons.hyps(2) Cons.prems(1) Cons.prems(2) cinner_commute' complex_cnj_zero)
-    ultimately show ?thesis by simp
-  qed
-  also have "\<dots> =  sum_list (map2 (\<lambda>x. (*) (cnj x)) (x # xs) (y # ys))"
-    using h1 h3 h2 Cons.IH by auto
-  finally have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
+    proof-
+      have "b\<in>sphere 0 1"
+        using Cons.prems(3) by auto
+      hence "norm b = 1"
+        by simp
+      hence "(norm b)^2 = 1"
+        by simp
+      hence "\<langle>b, b\<rangle> = 1"
+        by (metis of_real_hom.hom_one power2_norm_eq_cinner')       
+      moreover have "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
+        using Cons.hyps(2) Cons.prems(1) Cons.prems(2) 
+          is_ortho_setsum_list_map2_zero[where B = B and b = b and ys = ys]
+        by blast
+      moreover have "\<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle> = 0"
+        using  is_ortho_setsum_list_map2_zero
+        by (metis Cons.hyps(1) Cons.hyps(2) Cons.prems(1) Cons.prems(2) cinner_commute' complex_cnj_zero)
+      ultimately show ?thesis by simp
+    qed
+    also have "\<dots> =  sum_list (map2 (\<lambda>x. (*) (cnj x)) (x # xs) (y # ys))"
+      using h1 h3 h2 Cons.IH by auto
+    finally have " \<langle>sum_list (map2 (*\<^sub>C) (x # xs)
         (b # B)), sum_list (map2 (*\<^sub>C) (y # ys) (b # B))\<rangle> =
     sum_list (map2 (\<lambda>x. (*) (cnj x)) (x # xs) (y # ys))"
-    .
-  thus ?case .
+      .
+    thus ?case .
+  qed
 qed
 
 lemma cinner_onb_enum_of_vec:
@@ -1399,274 +1314,6 @@ proof-
     by (metis (no_types, lifting) B_def onb_enum_of_vec_def semiring_normalization_rules(7) sum.cong)        
 qed
 
-
-(* TODO: move to ell2 *)
-lemma ell2_norm_cinner:
-  fixes a b :: "'a \<Rightarrow> complex" and X :: "'a set"
-  assumes h1: "finite X"
-  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)" and "y == (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
-  shows "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
-proof-
-  have "\<langle>x, y\<rangle> = \<langle>(\<Sum>t\<in>X. a t *\<^sub>C ket t), (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>"
-    unfolding x_def y_def by blast
-  also have "\<dots> = (\<Sum>t\<in>X. \<langle>a t *\<^sub>C ket t, (\<Sum>s\<in>X. b s *\<^sub>C ket s)\<rangle>)"
-    using cinner_sum_left by blast
-  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. \<langle>a t *\<^sub>C ket t, b s *\<^sub>C ket s\<rangle>))"
-    by (simp add: cinner_sum_right)
-  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * \<langle>ket t, b s *\<^sub>C ket s\<rangle>))"
-    by (meson cinner_scaleC_left sum.cong)
-  also have "\<dots> = (\<Sum>t\<in>X. (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
-    by (metis (mono_tags, lifting) cinner_scaleC_right sum.cong vector_space_over_itself.scale_scale)
-  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>))"
-  proof-
-    have "t\<in>X \<Longrightarrow> (\<Sum>s\<in>X. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle> + (\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>)"
-      for t
-      using h1 Groups_Big.comm_monoid_add_class.sum.remove
-      by (simp add: sum.remove)
-    thus ?thesis by simp
-  qed
-  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t * \<langle>ket t, ket t\<rangle>)"
-  proof-
-    have "s\<in>X-{t} \<Longrightarrow> (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle> = 0"
-      for s t
-      by (metis DiffD2 ket_Kronecker_delta_neq mult_not_zero singletonI) 
-    hence "(\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = 0" for t
-      by (simp add: \<open>\<And>t s. s \<in> X - {t} \<Longrightarrow> cnj (a t) * b s * \<langle>ket t, ket s\<rangle> = 0\<close>)      
-    thus ?thesis by simp
-  qed
-  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
-  proof-
-    have "\<langle>ket t, ket t\<rangle> = 1" for t::'a
-      by (simp add: ket_Kronecker_delta_eq)      
-    thus ?thesis
-      by auto 
-  qed
-  finally show ?thesis .
-qed
-
-
-lemma ell2_norm_list:
-  fixes a :: "'a \<Rightarrow> complex" and X :: "'a set"
-  assumes h1: "finite X"
-  defines "x == (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
-  shows "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
-proof-
-  have "(norm x)^2 = \<langle>x, x\<rangle>"
-    using power2_norm_eq_cinner' by auto
-  also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * (a t))"   
-    using h1 ell2_norm_cinner[where X = X and a = a and b = a]
-    using x_def by blast    
-  also have "\<dots> = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"   
-  proof-
-    have "(cnj (a t)) * (a t) = (norm (a t))\<^sup>2" for t
-      using complex_norm_square by auto      
-    thus ?thesis by simp
-  qed
-  finally have "(norm x)^2 = (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
-    using of_real_eq_iff by blast    
-  thus ?thesis
-    by (metis abs_norm_cancel real_sqrt_abs) 
-qed
-
-
-lemma Cauchy_Schwarz_complex:
-  fixes a b :: "'a \<Rightarrow> complex"
-  assumes h1: "finite X"
-  shows "norm (\<Sum>t\<in>X. (cnj (a t)) * b t) \<le> sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2) * sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
-proof-
-  define x where "x = (\<Sum>t\<in>X. a t *\<^sub>C ket t)"
-  define y where "y = (\<Sum>t\<in>X. b t *\<^sub>C ket t)"
-  have "\<langle>x, y\<rangle> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
-    using h1 ell2_norm_cinner[where X = X and a = a and b = b]
-      x_def y_def by blast    
-  hence "norm \<langle>x, y\<rangle> = norm (\<Sum>t\<in>X. (cnj (a t)) * b t)"
-    by simp
-  moreover have "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
-    using h1 ell2_norm_list[where X = X and a = a]
-      x_def by blast        
-  moreover have "norm y = sqrt (\<Sum>t\<in>X. (norm (b t))\<^sup>2)"
-    using h1 ell2_norm_list[where X = X and a = b]
-      y_def by blast        
-  moreover have "norm \<langle>x, y\<rangle> \<le> norm x * norm y"
-    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)    
-  ultimately show ?thesis by simp
-qed
-
-
-
-lemma Cauchy_Schwarz_real:
-  fixes a b :: "'a \<Rightarrow> real"
-  assumes "finite X"
-  shows "norm (\<Sum>t\<in>X. a t * b t) \<le> sqrt (\<Sum>t\<in>X. (a t)\<^sup>2) * sqrt (\<Sum>t\<in>X. (b t)\<^sup>2)"
-proof-
-  have "norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))
-    \<le> sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) *
-      sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2)"
-    using assms Cauchy_Schwarz_complex [where X = X and a = a and b = b]
-    by simp
-  moreover have "norm (\<Sum>t\<in>X. (a t) * (b t)) = norm (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
-  proof-
-    have "(a t) * (b t) = cnj (complex_of_real (a t)) * complex_of_real (b t)"
-      for t
-      by simp      
-    hence "(\<Sum>t\<in>X. (a t) * (b t)) = (\<Sum>t\<in>X. cnj (complex_of_real (a t)) * complex_of_real (b t))"
-      by simp
-    moreover have "norm (complex_of_real (\<Sum>t\<in>X. (a t) * (b t))) = norm (\<Sum>t\<in>X. (a t) * (b t))"
-    proof-
-      have "cmod (complex_of_real r) = norm r" for r::real
-        by auto
-      thus ?thesis
-        by blast 
-    qed
-    ultimately show ?thesis by simp
-  qed
-  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (a t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (a t)\<^sup>2)"
-    by simp
-  moreover have "sqrt (\<Sum>t\<in>X. (cmod (complex_of_real (b t)))\<^sup>2) = sqrt (\<Sum>t\<in>X.  (b t)\<^sup>2)"
-    by simp    
-  ultimately show ?thesis 
-    by simp    
-qed
-
-
-(* TODO: move to near the definition of onb_enum *)
-lemma clinear_cbounded_linear_onb_enum: 
-  fixes f::"'a::onb_enum \<Rightarrow> 'b::onb_enum"
-  assumes "clinear f"
-  shows "cbounded_linear f"
-  using assms unfolding cbounded_linear_def
-proof auto
-  assume "clinear f"
-  define basis where "basis = (canonical_basis::'a list)"
-  define K::real where "K = sqrt (\<Sum>t\<in>set basis. norm (f t)^2)"
-
-  have "norm (f x) \<le> norm x * K" for x
-  proof-
-    define c where "c t = complex_vector.representation (set basis) x t" for t
-    have c1: "c t \<noteq> 0 \<Longrightarrow> t \<in> set basis" for t
-      by (simp add: c_def complex_vector.representation_ne_zero)      
-    have c2: "finite {t. c t \<noteq> 0}"
-      by (metis (mono_tags, lifting) Collect_cong List.finite_set Set.filter_def c1 finite_filter)
-    have basis_finite: "finite (set basis)"
-      by simp
-    have c3: "(\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t) = x"
-      unfolding c_def Complex_Vector_Spaces.representation_def
-      apply auto
-      subgoal
-      proof-
-        assume a1: "complex_independent (set basis)"
-        assume a2: "x \<in> Complex_Vector_Spaces.span (set basis)"
-        then have f3: "(\<Sum>a | Complex_Vector_Spaces.representation (set basis) x a \<noteq> 0. Complex_Vector_Spaces.representation (set basis) x a *\<^sub>C a) = x"
-          using a1 complex_vector.sum_nonzero_representation_eq by blast
-        have "Complex_Vector_Spaces.representation (set basis) x = (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x)"
-          using a2 a1 by (simp add: complex_vector.representation_def)
-        thus "(\<Sum>a | (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a \<noteq> 0. (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a *\<^sub>C a) = x"
-          using f3 by presburger
-      qed
-      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]
-      subgoal
-      proof-
-        assume "x \<notin> Complex_Vector_Spaces.span (set basis)"
-        moreover have "Complex_Vector_Spaces.span (set basis) = UNIV"
-        proof-
-          have "Complex_Vector_Spaces.span (set basis) 
-              = closure (Complex_Vector_Spaces.span (set basis))"
-            by (simp add: span_finite_dim)
-          thus ?thesis
-            using is_basis_set
-            unfolding basis_def is_basis_def
-            by blast          
-        qed
-        ultimately show ?thesis
-          by auto
-      qed
-      done
-    hence "x = (\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t)"
-      by simp
-    also have "\<dots> = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
-      using DiffD2 List.finite_set c1 complex_vector.scale_eq_0_iff mem_Collect_eq subsetI 
-        sum.mono_neutral_cong_left
-      by smt (* > 1s *)
-    finally have c4: "x = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"
-      by blast
-    hence "f x = (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
-      by (smt assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
-    hence "norm (f x) = norm (\<Sum>t\<in>set basis. c t *\<^sub>C f t)"
-      by simp
-    also have "\<dots> \<le> (\<Sum>t\<in>set basis. norm (c t *\<^sub>C f t))"
-      by (simp add: sum_norm_le)
-    also have "\<dots> = (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
-      by auto
-    also have "\<dots> = norm (\<Sum>t\<in>set basis. norm (c t) * norm (f t))"
-    proof-
-      have "(\<Sum>t\<in>set basis. norm (c t) * norm (f t)) \<ge> 0"
-        by (smt calculation norm_ge_zero)        
-      thus ?thesis by simp
-    qed
-    also have "\<dots> \<le> sqrt (\<Sum>t\<in>set basis. (norm (c t))^2) * sqrt (\<Sum>t\<in>set basis. (norm (f t))^2)"
-      using Cauchy_Schwarz_real
-      by fastforce
-    also have "\<dots> \<le> norm x * K"
-    proof-
-      have "(norm x)^2 = \<langle>x, x\<rangle>"
-        using power2_norm_eq_cinner' by blast
-      also have "\<dots> = \<langle>(\<Sum>t\<in>set basis. c t *\<^sub>C t), (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>"
-        using c4
-        by simp 
-      also have "\<dots> = (\<Sum>t\<in>set basis. \<langle>c t *\<^sub>C t, (\<Sum>s\<in>set basis. c s *\<^sub>C s)\<rangle>)"
-        using cinner_sum_left by blast
-      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. \<langle>c t *\<^sub>C t, c s *\<^sub>C s\<rangle>))"
-        by (metis (mono_tags, lifting) cinner_sum_right sum.cong)
-      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * \<langle>c t *\<^sub>C t,  s\<rangle>))"
-        by simp
-      also have "\<dots> = (\<Sum>t\<in>set basis. (\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
-        by (metis (no_types, lifting) cinner_scaleC_left sum.cong vector_space_over_itself.scale_scale)
-      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>))"
-      proof-
-        have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) = (norm (c t))^2 + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
-          if "t \<in> set basis" for t
-        proof-         
-          have "(\<Sum>s\<in>set basis. c s * cnj (c t) * \<langle>t,  s\<rangle>) =  c t * cnj (c t) * \<langle>t,  t\<rangle> + (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>)"
-            using that basis_finite
-              Groups_Big.comm_monoid_add_class.sum.remove
-            by (metis (no_types, lifting))
-          moreover have "\<langle>t,  t\<rangle> = 1"
-          proof-
-            have "norm t = 1"
-              using that is_normal[where x = t] unfolding basis_def is_basis_def
-              by blast
-            hence "(norm t)^2 = 1"
-              by simp
-            thus ?thesis
-              by (metis of_real_hom.hom_one power2_norm_eq_cinner') 
-          qed
-          ultimately show ?thesis
-            using complex_norm_square by auto 
-        qed
-        thus ?thesis by simp
-      qed
-      also have "\<dots> = (\<Sum>t\<in>set basis. (norm (c t))^2)"
-      proof-
-        have "s\<in>(set basis)-{t} \<Longrightarrow> c s * cnj (c t) * \<langle>t,  s\<rangle> = 0"
-          for s t
-          by (metis DiffD2 basis_def c1 complex_cnj_zero_iff is_ortho_set_def is_orthonormal mult_not_zero singleton_iff)          
-        hence " (\<Sum>s\<in>(set basis)-{t}. c s * cnj (c t) * \<langle>t,  s\<rangle>) = 0"
-          for t
-          by (simp add: \<open>\<And>t s. s \<in> set basis - {t} \<Longrightarrow> c s * cnj (c t) * \<langle>t, s\<rangle> = 0\<close>) 
-        thus ?thesis by simp
-      qed
-      finally have "(norm x)^2 = (\<Sum>t\<in>set basis. (norm (c t))^2)"
-        using of_real_eq_iff by blast        
-      hence "norm x = sqrt (\<Sum>t\<in>set basis. norm (c t)^2)"
-        using real_sqrt_unique by auto        
-      thus ?thesis 
-        unfolding K_def by simp
-    qed
-    finally show ?thesis by blast
-  qed
-  thus "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K" 
-    by blast
-qed
 
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))
@@ -1995,20 +1642,29 @@ proof-
     by meson 
 qed
 
-(* TODO: make this an inner lemma below *)
-lemma onb_enum_of_vec_mat_of_cblinfun_cinner:
-  fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
-  defines "BasisA == (canonical_basis::'a list)"
-    and "BasisB == (canonical_basis::'b list)"
-    and "nA == canonical_basis_length TYPE('a)"
-    and "nB == canonical_basis_length TYPE('b)"
-  assumes "iB < nB" and "iA < nA"
-  shows "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB =
-        \<langle> BasisB!iB, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (BasisA!iA)) \<rangle>"
+
+lemma mat_of_cblinfun_description:
+  "vec_of_onb_enum (F *\<^sub>V u) = mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u"
+  for F::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" and u::'a
 proof-
+
+  define BasisA where "BasisA = (canonical_basis::'a list)"
+  define BasisB where "BasisB = (canonical_basis::'b list)"
+  define basisA where "basisA = set BasisA"
+  define basisB where "basisB = set BasisB"
+  define nA where "nA = canonical_basis_length TYPE('a)"
+  define nB where "nB = canonical_basis_length TYPE('b)"
+
+  have onb_enum_of_vec_mat_of_cblinfun_cinner:
+    "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB =
+        \<langle> BasisB!iB, onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum (BasisA!iA)) \<rangle>"
+    if "iB < nB" and "iA < nA"
+    for F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" and iA iB
+  proof-
   define v where "v = mat_of_cblinfun F *\<^sub>v unit_vec nA iA"
   have r1: "vec_of_onb_enum (BasisA!iA) = unit_vec nA iA"
-    by (metis BasisA_def assms(6) index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec vec_of_onb_enum_inverse)
+    by (metis BasisA_def index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec that(2) 
+        vec_of_onb_enum_inverse)
   have "length BasisB = nB"
     by (simp add: BasisB_def canonical_basis_length_eq nB_def)    
   moreover have "length (list_of_vec v) = nB"
@@ -2023,7 +1679,7 @@ proof-
   qed
   ultimately have "sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)
       = (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)"
-    by (metis BasisB_def distinct_canonical_basis onb_enum_of_vec_expansion onb_enum_of_vec_list_def')
+    by (metis BasisB_def distinct_canonical_basis onb_enum_of_vec_expansion)
   hence "\<langle>BasisB!iB, sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)\<rangle> 
       =  \<langle>BasisB!iB, (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)\<rangle>"
     by simp
@@ -2040,7 +1696,7 @@ proof-
        + (\<Sum>jB\<in>{0..<nB}-{iB}.  (list_of_vec v)!jB * \<langle>BasisB!iB, BasisB!jB\<rangle>)"
   proof-
     have "iB \<in> {0..<nB}"
-      by (simp add: assms(5))
+      using that(1) by auto      
     thus ?thesis
       by (simp add: sum.remove)      
   qed
@@ -2060,10 +1716,11 @@ proof-
         unfolding BasisB_def
         by simp
       ultimately have "BasisB!iB \<noteq> BasisB!jB"
-        using \<open>jB \<in> {0..<nB} - {iB}\<close> \<open>length BasisB = nB\<close> assms(5) nth_eq_iff_index_eq 
-        by auto
+        using \<open>jB \<in> {0..<nB} - {iB}\<close> \<open>length BasisB = nB\<close> nth_eq_iff_index_eq
+         a2 that(1) by blast         
       moreover have "BasisB!iB \<in> set BasisB"
-        by (simp add: \<open>length BasisB = nB\<close> assms(5))        
+        using \<open>length BasisB = nB\<close>
+        by (simp add: that(1)) 
       moreover have "BasisB!jB \<in> set BasisB"
         by (simp add: \<open>length BasisB = nB\<close> a2)        
       moreover have "x\<in>set BasisB \<Longrightarrow> y\<in>set BasisB \<Longrightarrow>
@@ -2084,7 +1741,8 @@ proof-
       (list_of_vec v)!iB"
   proof-
     have "BasisB!iB \<in> set BasisB"
-      by (simp add: \<open>length BasisB = nB\<close> assms(5))
+      using \<open>length BasisB = nB\<close>
+      by (simp add: that(1)) 
     hence "BasisB!iB \<in> sphere (0::'b) 1"
       using is_onb_set BasisB_def unfolding is_onb_def by blast
     hence "norm (BasisB!iB) = 1"
@@ -2098,8 +1756,7 @@ proof-
   also have "\<dots> = vec_index v iB"
     by (simp add: list_of_vec_index)
   finally have "\<langle>BasisB!iB, sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)\<rangle> 
-        = vec_index v iB"
-    .
+        = vec_index v iB".
   hence "vec_index v iB = \<langle> BasisB!iB, onb_enum_of_vec v\<rangle>"
     unfolding onb_enum_of_vec_def onb_enum_of_vec_list_def'
     using BasisB_def by auto    
@@ -2107,16 +1764,6 @@ proof-
     by simp 
 qed
 
-lemma mat_of_cblinfun_description:
-  "vec_of_onb_enum (F *\<^sub>V u) = mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u"
-  for F::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" and u::'a
-proof-
-  define BasisA where "BasisA = (canonical_basis::'a list)"
-  define BasisB where "BasisB = (canonical_basis::'b list)"
-  define basisA where "basisA = set BasisA"
-  define basisB where "basisB = set BasisB"
-  define nA where "nA = canonical_basis_length TYPE('a)"
-  define nB where "nB = canonical_basis_length TYPE('b)"
   define M where "M = mat_of_cblinfun F"
   have carrier_M: "M \<in> carrier_mat nB nA"
     unfolding nB_def nA_def M_def mat_of_cblinfun_def
@@ -2171,7 +1818,6 @@ proof-
 qed
 
 
-(* TODO move to ..._Matrices *)
 lemma mat_of_cblinfun_inverse:
   "cblinfun_of_mat (mat_of_cblinfun B) = B"
   for B::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -2214,7 +1860,6 @@ lemma mat_of_cblinfun_inj: "inj mat_of_cblinfun"
   by (metis inj_on_def mat_of_cblinfun_inverse)
 
 
-(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_plus:
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
     and a3: "nA = canonical_basis_length TYPE('a)" 
@@ -2266,14 +1911,12 @@ proof-
     by (simp add: cblinfun_ext) 
 qed
 
-(* TODO: move to Bounded_Operators_Matrices *)
 lemma vec_of_onb_enum_zero:
   assumes a1: "nA = canonical_basis_length TYPE('a::onb_enum)" 
   shows "vec_of_onb_enum (0::'a) = 0\<^sub>v nA"
   by (smt add_cancel_right_left assms index_zero_vec(2) left_zero_vec onb_enum_of_vec_inverse
       vec_of_onb_enum_add vec_of_onb_enum_inverse zero_carrier_vec)  
 
-(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_zero_converse:
   fixes M::"complex mat"
   assumes a1: "M \<in> carrier_mat nB nA"
@@ -2440,10 +2083,8 @@ proof-
     also have "\<dots> = (one_mat n)$$(i, j)"
       unfolding one_mat_def
       by (simp add: that(1) that(2))
-    finally show ?thesis
-      .
+    finally show ?thesis .
   qed    
-
   thus ?thesis 
     unfolding n_def I_def
     apply (rule Matrix.eq_matI)
@@ -2520,7 +2161,6 @@ proof-
   finally show ?thesis .
 qed  
 
-(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_uminus:
   assumes a1: "M \<in> carrier_mat nB nA"
     and a2: "nA = canonical_basis_length TYPE('a)" 
@@ -2532,7 +2172,6 @@ lemma cblinfun_of_mat_uminus:
       cblinfun_of_mat_plus group.inverse_inverse mat_of_cblinfun_inverse mat_of_cblinfun_zero' 
       minus_r_inv_mat uminus_carrier_mat)
 
-(* TODO: move to Bounded_Operators_Matrices *)
 lemma cblinfun_of_mat_minus:
   fixes M::"complex mat"
   assumes a1: "M \<in> carrier_mat nB nA" and a2: "N \<in> carrier_mat nB nA"
@@ -2877,8 +2516,7 @@ proof (rule adjoint_D)
 qed
 
 
-(* TODO: rename cinner_square_canonical_basis *)
-lemma cinner_square: 
+lemma cinner_square_canonical_basis: 
   defines "BasisA == (canonical_basis:: ('a::onb_enum list))"
     and "n == canonical_basis_length TYPE('a)"
   assumes a1: "i < n"
@@ -3090,7 +2728,7 @@ proof-(* NEW *)
         using w1 by simp        
       also have "\<dots> = 1"
         unfolding BasisB_def
-        using \<open>nB = CARD('b)\<close> a1 cinner_square nB_def by fastforce 
+        using \<open>nB = CARD('b)\<close> a1 cinner_square_canonical_basis nB_def by fastforce 
       finally show ?thesis by blast
     qed
     ultimately show ?thesis
