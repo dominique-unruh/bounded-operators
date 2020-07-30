@@ -1473,7 +1473,7 @@ lift_definition plus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun 
 (* TODO remove *)
 (* Jose: If I remove it, there are errors *)
 lemma blinfun_of_cblinfun_plus:
-  fixes f g :: \<open>('a,'b) cblinfun\<close> 
+  fixes f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close> 
   shows "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
   unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
   apply auto
@@ -1481,9 +1481,8 @@ lemma blinfun_of_cblinfun_plus:
   by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
 
 lemma cblinfun_of_blinfun_plus:
-  (* TODO: use \<And> (or introduce a definition "blinfun_is_cblinfun f" for it) *)
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
-    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  assumes \<open>\<And>c. \<And>x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+    and \<open>\<And>c. \<And>x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
   shows \<open>cblinfun_of_blinfun (f + g) = cblinfun_of_blinfun f + cblinfun_of_blinfun g\<close>
   using assms
   by (metis blinfun_of_cblinfun_plus blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim)
@@ -1498,8 +1497,7 @@ lemma blinfun_of_cblinfun_uminus:
   by auto
 
 lemma cblinfun_of_blinfun_uminus:
-  (* TODO: use \<And> (or introduce a definition "blinfun_is_cblinfun f" for it) *)
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  assumes \<open>\<And>c. \<And>x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
   shows  \<open>cblinfun_of_blinfun (- f) = - (cblinfun_of_blinfun f)\<close>
   using assms
   by (metis (mono_tags) blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim blinfun_of_cblinfun_uminus)
@@ -3731,13 +3729,15 @@ next
   from b1 b2 show ?thesis by blast
 qed
 
-(* TODO: non_singleton *)
+
 lemma norm_of_cblinfun3:
-  fixes S :: \<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun\<close>
-  shows \<open>(UNIV::'a set) \<noteq> 0 \<Longrightarrow> norm S = Sup {norm (S *\<^sub>V x)| x. norm x < 1}\<close>
+  fixes S::"'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector"
+  shows "norm S = Sup {norm (S *\<^sub>V x)| x. norm x < 1}"
 proof transfer 
+  have a1: \<open>(UNIV::'a set) \<noteq> 0\<close>
+    by simp
   fix S::\<open>'a \<Rightarrow> 'b\<close>
-  assume a1: \<open>(UNIV::'a set) \<noteq> 0\<close> and a2: \<open>cbounded_linear S\<close>
+  assume a2: \<open>cbounded_linear S\<close>
   define X where X_def: "X = {norm (S x) |x. norm x < 1}"
   define a where a_def: "a = onorm S"
   have "x \<in> X \<Longrightarrow> x \<le> a" for x
@@ -3770,7 +3770,8 @@ proof transfer
       moreover have "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
       proof-
         have "\<exists>t::'a. norm t = 1"
-          using a1 ex_norm1 by simp
+          using a1 ex_norm1
+          by (simp add: ex_norm1) 
         thus ?thesis
           by simp 
       qed
@@ -5458,6 +5459,41 @@ qed
 (* TODO: Should hold for type_class complex_normed_vector.
 See chapter on Finite Dimensional Normed Spaces in Conway's Functional Analysis book *)
 lemma cblinfun_operator_finite_dim:
+  fixes  F::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
+    and basis::"'a set"
+  assumes b1: "complex_vector.span basis = UNIV" (* TODO: eliminate this hypothesis *)
+      and b2: "complex_vector.independent basis"
+      and b3:"finite basis" and b4:"clinear F"
+  shows "cbounded_linear F"
+proof-(* NEW *)
+  include notation_norm
+  define M::real where "M = undefined"
+  have "\<parallel>F x\<parallel> \<le> \<parallel>x\<parallel> * M"
+    for x
+  proof-
+    have "x \<in> complex_vector.span basis"
+      by (simp add: b1)
+    have "\<exists>r. x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      by (simp add: Complex_Vector_Spaces.span_explicit_finite b1 b2 b3)
+    then obtain r where "x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      by blast
+    hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      by simp
+    also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
+      by (smt Finite_Cartesian_Product.sum_cong_aux b4 complex_vector.linear_scale 
+          complex_vector.linear_sum)
+    finally have "F x = (\<Sum>a\<in>basis. r a *\<^sub>C F a)".
+    hence "\<parallel>F x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C F a)\<parallel>"
+      by simp
+
+    show ?thesis sorry
+  qed
+  thus ?thesis
+    using b4 cbounded_linear_def by blast
+qed
+
+(* see above
+lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "complex_vector.independent basis"
@@ -5485,6 +5521,9 @@ proof-
   thus ?thesis using cblinfun_operator_finite_dim_ortho[where F = F and basis = A]
     by (simp add: a5 b4)
 qed
+*)*)
+
+
 
 (* TODO: Remove existence (because we have Complex_Vector_Spaces.construct).
    For uniqueness: check if that already exists (probably!) *)
@@ -5971,6 +6010,7 @@ proof-
   thus ?thesis 
     unfolding cblinfun_extension_exists_def
     by blast
+    
 qed
 
 
