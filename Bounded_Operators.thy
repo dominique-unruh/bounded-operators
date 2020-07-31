@@ -1384,7 +1384,7 @@ setup_lifting type_definition_cblinfun
 
 
 declare [[coercion
-    "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
+      "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
 
 notation cblinfun_apply (infixr "*\<^sub>V" 70)
 
@@ -1786,12 +1786,12 @@ lemma cblinfun_apply_add: "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V 
 lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   using module_hom.scale by blast
-  
+
 
 lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
   by simp
-  
+
 instantiation cblinfun :: (complex_normed_vector, cbanach) "cbanach"
 begin
 lemma blinfun_of_cblinfun_Cauchy:
@@ -2336,7 +2336,7 @@ proof-
       moreover have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}
            \<subseteq> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
         by (smt closure_subset mem_Collect_eq subsetD subsetI)
-        (* > 1s *)
+          (* > 1s *)
       ultimately show ?thesis
         by simp 
     qed
@@ -5455,19 +5455,257 @@ proof-
       (* > 1s *)
 qed
 
+
+(* NEW *)
+(* TODO: Put inside complex_normed_vector_inf_norm_leq_any_norm'
+  after the proof is completed *)
+lemma complex_normed_vector_inf_norm_leq_any_norm':
+  includes notation_norm
+  fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+     and basis:: "'a set"
+  assumes b1: "complex_vector.span basis = UNIV"
+      and b2: "complex_vector.independent basis"
+      and b3: "finite basis"
+      and b4: "basis \<noteq> {}"
+    shows "\<exists>c>0. \<forall>r. (\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1) \<longrightarrow> c \<le> \<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+proof-
+  define f::"'a \<Rightarrow> real" where "f s = \<parallel>s\<parallel>" for s
+  define S where "S = {(\<Sum>i\<in>basis. r i *\<^sub>C i) |r. (\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1)}"
+  have "S \<noteq> {}"
+  proof-
+    obtain b where "b\<in>basis"
+      using b4 by blast
+    define r::"'a \<Rightarrow> complex" where "r = (\<lambda>i. if i = b then 1 else 0)"
+    have "\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1"
+      unfolding r_def by auto
+    moreover have "\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1"
+      unfolding r_def
+      by (simp add: \<open>b \<in> basis\<close>) 
+    ultimately have "(\<Sum>i\<in>basis. r i *\<^sub>C i)\<in>S"
+      unfolding S_def
+      by blast
+    thus ?thesis by blast
+  qed
+  moreover have "compact S"
+    sorry
+ (* Ask to Dominique for a fast proof *)
+ (* using unions of compact sets *)
+  moreover have "continuous_on S f"
+    unfolding f_def
+    by (simp add: continuous_on_norm)   
+  ultimately have "\<exists>x\<in>S. \<forall>y\<in>S. f x \<le> f y"
+    using continuous_attains_inf
+    by blast
+  then obtain x where u1: "x\<in>S" and u2: "y\<in>S \<Longrightarrow> f x \<le> f y" for y
+    by blast
+  have "f x > 0"
+  proof(rule classical)
+    assume "\<not>(f x > 0)"
+    hence "\<parallel>x\<parallel> = 0"
+      unfolding f_def by auto
+    hence "x = 0"
+      by auto
+    hence "\<exists>r.  (\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1) \<and> (\<Sum>i\<in>basis. r i *\<^sub>C i) = 0"
+      using u1 unfolding S_def by auto
+    then obtain r where v1: "\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1" and v2: "\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1" 
+      and v3: "(\<Sum>i\<in>basis. r i *\<^sub>C i) = 0" by blast
+    from v3 have "r i = 0"
+      if "i\<in>basis" for i
+      by (metis b2 Complex_Vector_Spaces.dependent_raw_def b3 complex_vector.dependent_finite that)
+    thus ?thesis using v2 by simp
+  qed
+  moreover have "\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1 \<Longrightarrow> \<exists>i\<in>basis. \<parallel>r i\<parallel> = 1 \<Longrightarrow> f x \<le> \<parallel> (\<Sum>i\<in>basis. r i *\<^sub>C i) \<parallel>"
+    for r
+    using u2 unfolding S_def f_def by blast
+  ultimately show ?thesis
+    by blast 
+qed
+
+(* NEW *)
+lemma complex_normed_vector_inf_norm_leq_any_norm:
+  includes notation_norm
+  fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+     and basis:: "'a set"
+  assumes b1: "complex_vector.span basis = UNIV"
+      and b2: "complex_vector.independent basis"
+      and b3: "finite basis" 
+      and b4: "basis \<noteq> {}"
+    shows "\<exists>C>0. \<forall>r. Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+proof-
+  have "\<exists>c>0. \<forall>r. (\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1) \<longrightarrow> c \<le> \<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+    using assms complex_normed_vector_inf_norm_leq_any_norm'
+    by blast
+  then obtain c where q1: "c > 0" and
+    q2: "(\<forall>i\<in>basis. \<parallel>s i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>s i\<parallel> = 1) \<longrightarrow> c \<le> \<parallel>(\<Sum>i\<in>basis. s i *\<^sub>C i)\<parallel>" for s
+    by blast
+  define C::real where "C = 1/c"
+  have "C > 0"
+    unfolding C_def q1
+    by (simp add: q1) 
+  moreover have "Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>" for r
+  proof(cases "\<forall>i\<in>basis. r i = 0")
+    case True
+    have "i\<in>basis \<Longrightarrow> \<parallel>r i\<parallel> = 0" for i
+      by (simp add: True)      
+    hence "{\<parallel>r j\<parallel> |j. j\<in>basis} = {0}"
+      by (smt Collect_cong b3 b4 finite.cases insertI1 singleton_conv)     
+    hence "Max {\<parallel>r j\<parallel> |j. j\<in>basis} = 0"
+      by simp      
+    moreover have "\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel> = 0"
+      using True
+      by simp 
+    ultimately show ?thesis by simp
+  next
+    case False
+    define s where "s i = (r i)/( Max {\<parallel>r j\<parallel> |j. j\<in>basis} )" for i
+    have p1: "i\<in>basis \<Longrightarrow> \<parallel>s i\<parallel> \<le> 1"
+      for i
+    proof-
+      assume i1: "i\<in>basis"
+      define S where "S = {\<parallel>r j\<parallel> |j. j\<in>basis}"
+      have "\<parallel>r i\<parallel> \<in> S"
+        unfolding S_def
+        using i1 by blast 
+      moreover have "finite S"
+        unfolding S_def
+        by (simp add: b3) 
+      ultimately have "\<parallel>r i\<parallel> \<le> ( Max S )"
+        by simp
+      thus ?thesis
+        unfolding s_def S_def
+        by (smt complex_of_real_cmod complex_of_real_nn_iff div_by_0 
+            linordered_field_class.less_divide_eq_1_pos norm_divide norm_le_zero_iff of_real_eq_iff)        
+    qed
+    moreover have p2: "\<exists>i\<in>basis. \<parallel>s i\<parallel> = 1"
+    proof-
+      define S where "S = {\<parallel>r j\<parallel> |j. j\<in>basis}"
+      have "finite S"
+        unfolding S_def
+        by (simp add: b3) 
+      hence "\<exists>i\<in>basis. \<parallel>r i\<parallel> = Max S"
+        unfolding S_def
+        by (smt False Max_in S_def empty_iff mem_Collect_eq) 
+      then obtain i where r1: "i\<in>basis" and r2: "\<parallel>r i\<parallel> = ( Max S )"
+        by blast
+      have "\<exists>i\<in>basis. r i \<noteq> 0"
+        using False by blast
+      hence "\<exists>i\<in>basis. \<parallel>r i\<parallel> > 0"
+        by auto
+      hence "Max S \<noteq> 0"
+        unfolding S_def
+        using Max_gr_iff S_def \<open>finite S\<close> by fastforce 
+      hence "\<parallel>r i\<parallel> / ( Max S ) = 1"
+        using r2
+        by simp
+      thus ?thesis
+        unfolding s_def 
+        using r1
+        by (metis S_def \<open>\<And>thesis. (\<And>i. \<lbrakk>i \<in> basis; cmod (r i) = Max S\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close>
+            complex_of_real_cmod complex_of_real_nn_iff norm_divide norm_ge_zero of_real_eq_iff) 
+    qed
+    ultimately have p3: "c \<le> \<parallel>(\<Sum>i\<in>basis. s i *\<^sub>C i)\<parallel>"
+      using q2 by blast
+    moreover have m0: "Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<ge> 0"
+    proof-
+      define S where "S = {\<parallel>r j\<parallel> |j. j\<in>basis}"
+      have "\<parallel>r j\<parallel> \<in> S"
+        if "j\<in>basis"
+        for j
+        unfolding S_def
+        using that by auto
+      moreover have "\<parallel>r j\<parallel> \<ge> 0"
+        if "j\<in>basis"
+        for j
+        by simp       
+      moreover have "finite S"
+        unfolding S_def
+        by (simp add: b3) 
+      ultimately show ?thesis using Lattices_Big.linorder_class.Max.coboundedI
+        by (smt False S_def)
+    qed
+    ultimately have 
+      "( Max {\<parallel>r j\<parallel> |j. j\<in>basis} ) * c \<le> ( Max {\<parallel>r j\<parallel> |j. j\<in>basis} ) * \<parallel>(\<Sum>i\<in>basis. s i *\<^sub>C i)\<parallel>"
+      using mult_left_mono by blast
+    also have "\<dots> = \<parallel>( Max {\<parallel>r j\<parallel> |j. j\<in>basis} ) *\<^sub>C (\<Sum>i\<in>basis. s i *\<^sub>C i)\<parallel>"
+      by (simp add: m0)
+    also have "\<dots> = \<parallel>(\<Sum>i\<in>basis. ( Max {\<parallel>r j\<parallel> |j. j\<in>basis} ) *\<^sub>C (s i *\<^sub>C i))\<parallel>"
+      by (simp add: scaleC_right.sum)
+    also have "\<dots> = \<parallel>(\<Sum>i\<in>basis. ( (Max {\<parallel>r j\<parallel> |j. j\<in>basis}) * s i) *\<^sub>C i)\<parallel>"
+      by auto
+    also have "\<dots> = \<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+    proof-
+      have "(Max {\<parallel>r j\<parallel> |j. j\<in>basis}) \<noteq> 0"
+        using p2 s_def by auto
+      hence "(Max {\<parallel>r j\<parallel> |j. j\<in>basis}) * s i = r i"
+        for i
+        unfolding s_def
+        by simp
+      thus ?thesis
+        by simp
+    qed
+    finally have "( Max {\<parallel>r j\<parallel> |j. j\<in>basis} ) * c \<le> \<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>".
+    thus ?thesis using C_def
+      by (smt divide_cancel_left divide_divide_eq_left' linordered_field_class.divide_pos_pos 
+          nonzero_divide_mult_cancel_left norm_ge_zero ordered_field_class.sign_simps(67) 
+          ordered_semiring_strict_class.mult_less_le_imp_less q1) 
+  qed
+  ultimately show ?thesis by blast
+qed
+
+(* NEW *)
+lemma complex_normed_vector_norm_basis:
+  includes notation_norm
+  fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+     and basis:: "'a set"
+  assumes b1: "complex_vector.span basis = UNIV"
+      and b2: "complex_vector.independent basis"
+      and b3: "finite basis" 
+      and b4: "basis \<noteq> {}"
+  shows "\<exists>C>0. \<forall>r. \<forall>j\<in>basis. \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+proof-
+  have "\<exists>C>0. \<forall>r. Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"  
+    using assms complex_normed_vector_inf_norm_leq_any_norm
+    by blast
+  then obtain C where c0: "C > 0" 
+    and c1: "Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>" for r
+    by blast
+  have "\<parallel>r k\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
+    if a1: "k\<in>basis"
+    for r k
+  proof-
+    define S where "S = {\<parallel>r j\<parallel> |j. j\<in>basis}"
+    have "\<parallel>r k\<parallel>\<in>S"
+      unfolding S_def using a1 by blast
+    moreover have "finite S"
+      unfolding S_def using b3 by simp
+    ultimately have "\<parallel>r k\<parallel> \<le> Max S"
+      using a1
+      by simp 
+    thus ?thesis unfolding S_def using c1[where r = r] by simp
+  qed
+  thus ?thesis using c0 by blast
+qed
+
+
 (* There is an existing locale "finite_dimensional_vector_space" *)
 (* TODO: Should hold for type_class complex_normed_vector.
 See chapter on Finite Dimensional Normed Spaces in Conway's Functional Analysis book *)
 lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
     and basis::"'a set"
-  assumes b1: "complex_vector.span basis = UNIV" (* TODO: eliminate this hypothesis *)
+  assumes b1: "complex_vector.span basis = UNIV"
       and b2: "complex_vector.independent basis"
-      and b3:"finite basis" and b4:"clinear F"
+      and b3:"finite basis" 
+      and b4: "basis \<noteq> {}" (* NEW premise *)
+      and b5:"clinear F"
   shows "cbounded_linear F"
 proof-(* NEW *)
   include notation_norm
-  define M::real where "M = undefined"
+  have "\<exists>C>0. \<forall>r. \<forall>j\<in>basis. \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"   
+    using complex_normed_vector_norm_basis b1 b2 b3 b4.
+  then obtain C where C_def: "j\<in>basis \<Longrightarrow> \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>" for r j
+    by blast
+  define M::real where "M = C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
   have "\<parallel>F x\<parallel> \<le> \<parallel>x\<parallel> * M"
     for x
   proof-
@@ -5475,21 +5713,41 @@ proof-(* NEW *)
       by (simp add: b1)
     have "\<exists>r. x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
       by (simp add: Complex_Vector_Spaces.span_explicit_finite b1 b2 b3)
-    then obtain r where "x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
-      by blast
-    hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+    then obtain r where r_def: "x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      by blast     
+    have "a\<in>basis \<Longrightarrow> \<parallel>F a\<parallel> \<ge> 0"
+      for a
+      by simp      
+    hence FM: "a\<in>basis \<Longrightarrow> \<parallel>r a\<parallel> * \<parallel>F a\<parallel> \<le> C * \<parallel>x\<parallel> * \<parallel>F a\<parallel>"
+      for a
+      by (simp add: C_def mult_right_mono r_def)
+    have "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      using r_def
       by simp
     also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
-      by (smt Finite_Cartesian_Product.sum_cong_aux b4 complex_vector.linear_scale 
+      by (smt Finite_Cartesian_Product.sum_cong_aux b5 complex_vector.linear_scale 
           complex_vector.linear_sum)
     finally have "F x = (\<Sum>a\<in>basis. r a *\<^sub>C F a)".
     hence "\<parallel>F x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C F a)\<parallel>"
       by simp
-
-    show ?thesis sorry
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a *\<^sub>C F a\<parallel>)"
+      by (simp add: sum_norm_le)
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>F a\<parallel>)"
+      by simp
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. C * \<parallel>x\<parallel> * \<parallel>F a\<parallel>)"
+      using FM
+      by (simp add: sum_mono) 
+    also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
+      using sum_distrib_left
+      by (metis eq_iff vector_space_over_itself.scale_left_commute 
+          vector_space_over_itself.scale_scale)
+    also have "\<dots> = \<parallel>x\<parallel> * M"
+      unfolding M_def
+      by linarith 
+    finally show ?thesis .
   qed
   thus ?thesis
-    using b4 cbounded_linear_def by blast
+    using b5 cbounded_linear_def by blast
 qed
 
 (* see above
@@ -5532,6 +5790,7 @@ lemma cblinfun_operator_basis_existence_uniq:
   assumes \<open>complex_vector.span basis = UNIV\<close> 
     and \<open>complex_vector.independent basis\<close>
     and \<open>finite basis\<close>
+    and "basis \<noteq> {}" (* NEW premise *)
   shows \<open>\<exists>!F. \<forall>s\<in>basis.  F *\<^sub>V s = \<phi> s\<close>
 proof-
   have \<open>\<exists>F. \<forall>s\<in>basis.  cblinfun_apply F s = \<phi> s\<close>
@@ -5716,7 +5975,7 @@ proof-
       qed  
     qed
     hence "cbounded_linear F"
-      using cblinfun_operator_finite_dim assms(1) assms(2) assms(3) by blast 
+      using cblinfun_operator_finite_dim assms by smt 
     moreover have "w\<in>basis \<Longrightarrow> F w = \<phi> w" for w
     proof-
       assume b1: "w\<in>basis"
@@ -5912,10 +6171,10 @@ lemma cinner_unique_onb_enum':
 subsection \<open>Extension of complex bounded operators\<close>
 
 definition cblinfun_extension where 
-"cblinfun_extension S \<phi> = (SOME B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
+  "cblinfun_extension S \<phi> = (SOME B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
 
 definition cblinfun_extension_exists where 
-"cblinfun_extension_exists S \<phi> = (\<exists>B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
+  "cblinfun_extension_exists S \<phi> = (\<exists>B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
 
 (* TODO remove *)
 lemma cblinfun_extension_itself:
@@ -5936,7 +6195,7 @@ qed
 lemma complex_independent_finite_onb_enum:
   assumes a1: "complex_independent A"
   shows "finite (A::'a::onb_enum set)"
-(* NEW *)
+    (* NEW *)
 proof(cases "set (canonical_basis::'a list) = {}")
   case True
   have "complex_vector.span (set (canonical_basis::'a list)) = {0}"
@@ -5977,13 +6236,14 @@ qed
 
 (* TODO: prove this *)
 lemma cblinfun_extension_exists_finite:
-(* TODO: generalize to 
+  (* TODO: generalize to 
 \<phi>::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
 *)
   fixes \<phi>::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" 
   assumes a1: "complex_independent S"
-      and a2: "complex_vector.span S = UNIV"
-      and a3: "finite S"
+    and a2: "complex_vector.span S = UNIV"
+    and a3: "finite S"
+    and a4: "S \<noteq> {}" (* NEW premise *)
   shows "cblinfun_extension_exists S \<phi>"
 proof-
   define f::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" 
@@ -5993,7 +6253,7 @@ proof-
     by (simp add: complex_vector.linear_construct a1 f_def)    
   have "cbounded_linear f"
     by (metis cblinfun_operator_finite_dim Complex_Vector_Spaces.dependent_raw_def \<open>clinear f\<close> 
-        a1 a2 a3)
+        a1 a2 a3 a4)
   then obtain B::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space" 
     where "B *\<^sub>V x = f x" for x
     using cblinfun_apply_cases by blast
@@ -6010,7 +6270,7 @@ proof-
   thus ?thesis 
     unfolding cblinfun_extension_exists_def
     by blast
-    
+
 qed
 
 
