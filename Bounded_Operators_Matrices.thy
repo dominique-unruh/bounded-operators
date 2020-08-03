@@ -483,11 +483,11 @@ proof (rule Ortho_expansion_finite)
     by simp    
 qed
 
-(* NEW formulation *)
 lemma onb_enum_of_vec_expansion:  
   fixes S::"'a::onb_enum list" and L::"complex list"
   assumes "length S = length L" and "distinct S"
-  shows   "sum_list (map2 (\<lambda>l s. l *\<^sub>C s) L S) = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
+  shows   "sum_list (map2 (\<lambda>l s. l *\<^sub>C s) L S)
+             = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
   using assms sum_list_sum_nth[where xs = "map2 (*\<^sub>C) L S"]
   by auto
 
@@ -2562,8 +2562,8 @@ lemma mat_of_cblinfun_classical_operator_inj_option:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
   assumes r1: "inj_option f" 
   shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
-  (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
-proof-(* NEW *)
+           (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
+proof-
   define nA where "nA = canonical_basis_length TYPE('a ell2)"
   define nB where "nB = canonical_basis_length TYPE('b ell2)"
   define BasisA where "BasisA = (canonical_basis::'a ell2 list)"

@@ -2867,23 +2867,20 @@ lemma cblinfun_extension_exists:
   shows "(cblinfun_extension S f) *\<^sub>V v = f v"
   by (smt assms(1) assms(2) cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
 
-(* NEW approach *)
 lemma classical_operator_basis:
   assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-    (* TODO: redo using cblinfun_extension_exists *)
 
   unfolding classical_operator_def classical_function_def
   apply (subst cblinfun_extension_exists)
   using assms apply (auto simp: classical_function_def[abs_def])
   by (metis f_inv_into_f ket_distinct rangeI)
 
-(* NEW *)
+(* TODO rename ket_nonzero *)
 lemma ket_zero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
   apply transfer
   by (metis zero_neq_one)
 
-(* NEW *)
 lemma complex_independent_ket:
   "complex_independent (range (ket::'a\<Rightarrow>_))"
 proof-
@@ -2914,11 +2911,11 @@ proof -
 qed
 
 
-(* NEW *)
+(* TODO rename cinner_ket_adjointI *)
 lemma cinner_ket:
   fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
   assumes a1: "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
-  shows "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
+  shows "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>" (* TODO: or F = G* ?  *)
 proof-
   define H where "H u v = \<langle>F *\<^sub>V u, v\<rangle> - \<langle>u, G *\<^sub>V v\<rangle>" for u v
   define SA where "SA = range (ket::'a\<Rightarrow>_)"
@@ -3000,7 +2997,7 @@ proof-
   thus ?thesis unfolding H_def by simp 
 qed
 
-(* NEW version *)
+(* TODO: finite dimensional corollary as a simp-rule *)
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
   assumes a1: "inj_option \<pi>"
@@ -3134,7 +3131,7 @@ proof-
   thus ?thesis unfolding G_def F_def .
 qed
 
-(* NEW version *)
+(* TODO: finite dimensional corollary as a simp-rule *)
 lemma classical_operator_mult[simp]:
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
   assumes a1: "inj_option \<pi>" 
@@ -3181,9 +3178,34 @@ proof-
     by (simp add: equal_basis) 
 qed
 
-(* NEW version *)
+(* TODO
+
+lemma classical_operator_eqI:
+  assume "\<And>x. C *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+  shows "classical_operator \<pi> = C" and maybe "cblinfun_extension_exists ..."
+
+Useful for showing classical_operator_Some, 
+   maybe also classical_operator_mult with less assumptions
+
+
+*)
+
+(* TODO:
+
+lemma
+assumes "inj \<pi>"
+shows "cblinfun_extension_exists ..."
+
+Reason: we can use the *old* definition of classical_operator and
+        classical_operator_eqI to show that the classical_operator exists
+
+This allows to remove cblinfun_extension_exists in lemmas that assume inj \<pi>
+
+*)
+
 lemma classical_operator_Some[simp]: 
   assumes  a1: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
+      (* TODO: remove assumption *)
   shows "classical_operator (Some::'a\<Rightarrow>_) = idOp"
 proof-
   have "(classical_operator Some) *\<^sub>V (ket i)  = idOp *\<^sub>V (ket i)"
@@ -3203,7 +3225,6 @@ proof-
     by blast
 qed
 
-(* NEW version *)
 lemma isometry_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
   assumes a1: "inj \<pi>"
@@ -3212,6 +3233,7 @@ lemma isometry_classical_operator[simp]:
      (classical_function (inv_option (Some \<circ> \<pi>)))" 
     (* maybe dependent on a2 *)
     and a4: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
+(* TODO: remove assumptions a2-a4 because we have that \<pi> inj *)
   shows "isometry (classical_operator (Some o \<pi>))"
 proof -
   have b0: "inj_option (Some \<circ> \<pi>)"
@@ -3238,7 +3260,7 @@ proof -
 qed
 
 
-(* NEW version *)
+(* TODO remove cblinfun-extension_exists assms because \<pi> bij *)
 lemma unitary_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
   assumes a1: "bij \<pi>"
