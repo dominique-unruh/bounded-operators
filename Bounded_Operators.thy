@@ -4989,7 +4989,6 @@ proof-
 qed
 
 
-
 lemma complex_real_independent:
   assumes a1: "complex_vector.independent B" and a2: "finite B"
   shows "real_vector.independent (B \<union> (*\<^sub>C) \<i> ` B)"
@@ -5034,22 +5033,71 @@ proof- (* NEW *)
     ultimately have "(\<Sum>x\<in>B \<union> (*\<^sub>C) \<i> ` B. f x *\<^sub>R x) = (\<Sum>x\<in>B. f x *\<^sub>R x) + (\<Sum>x\<in>(*\<^sub>C) \<i> ` B. f x *\<^sub>R x)"
       by (simp add: a2 sum.union_disjoint)
     also have "\<dots> = (\<Sum>x\<in>B. f x *\<^sub>R x) + (\<Sum>x\<in>B. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
-      sorry
-    also have "\<dots> = (\<Sum>x\<in>B. f x *\<^sub>R x) + (\<Sum>x\<in>B. (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      sorry
+    proof-
+      have "\<i> \<noteq> 0"
+        by simp
+      hence "inj (((*\<^sub>C) \<i>)::'a\<Rightarrow>'a)"
+        unfolding inj_def
+        by simp
+      hence "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. f x *\<^sub>R x) = (\<Sum>x\<in>B. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
+        by (smt UNIV_I inj_on_def sum.reindex_cong)
+        (* >1s *)
+      thus ?thesis by simp
+    qed
+    also have "\<dots> = (\<Sum>x\<in>B. f x *\<^sub>C x) + (\<Sum>x\<in>B. (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+    proof-
+      have "f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x) = (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x"
+        for x
+      proof-
+        have "f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x) = f (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x)"
+          by (simp add: scaleR_scaleC)          
+        also have "\<dots>  =  (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x"
+          by simp
+        finally show ?thesis .
+      qed
+      hence "(\<Sum>x\<in>B. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x)) = (\<Sum>x\<in>B. (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+        by simp
+      moreover have "(\<Sum>x\<in>B. f x *\<^sub>R x) = (\<Sum>x\<in>B. f x *\<^sub>C x)"
+        by (metis scaleR_scaleC)        
+      ultimately show ?thesis
+        by simp
+    qed
     also have "\<dots> = (\<Sum>x\<in>B. f x *\<^sub>C x + (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      sorry
+      using Groups_Big.comm_monoid_add_class.sum.distrib[where A = B and g = "\<lambda>x. f x *\<^sub>C x" 
+          and h = "\<lambda>x. (\<i> *\<^sub>C f (\<i> *\<^sub>C x)) *\<^sub>C x"]
+      by simp
     also have "\<dots> = (\<Sum>x\<in>B. (f x + (\<i> *\<^sub>C f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-      sorry
+      by (simp add: scaleC_left.add)      
     also have "\<dots> = (\<Sum>x\<in>B. (g x) *\<^sub>C x)"
-      sorry
+      unfolding g_def
+      by blast
     finally have "(\<Sum>x\<in>B \<union> (*\<^sub>C) \<i> ` B. f x *\<^sub>R x) = (\<Sum>x\<in>B. (g x) *\<^sub>C x)".
     hence "(\<Sum>x\<in>B. (g x) *\<^sub>C x) = 0"
       using b1 by auto
-    hence "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. (g (-\<i> *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C x)) = 0"
-      sorry
-    hence k1: "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. h x *\<^sub>C x) = 0"
-      sorry
+    moreover have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. (g (-\<i> *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C x)) = (\<Sum>x\<in>B. (g x) *\<^sub>C x)"
+    proof-
+      have "\<i> \<noteq> 0"
+        by simp
+      hence "inj (((*\<^sub>C) \<i>)::'a\<Rightarrow>'a)"
+        unfolding inj_def
+        by simp
+      hence "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. (g (-\<i> *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C x))
+           = (\<Sum>x\<in>B. (g (-\<i> *\<^sub>C (\<i> *\<^sub>C x))) *\<^sub>C (-\<i> *\<^sub>C (\<i> *\<^sub>C x)))"
+        by (smt UNIV_I inj_on_def sum.reindex_cong)
+      also have "\<dots> = (\<Sum>x\<in>B. (g ((-\<i> * \<i>) *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C \<i>) *\<^sub>C x)"
+        by simp
+      also have  "\<dots> = (\<Sum>x\<in>B. (g x) *\<^sub>C x)"
+        by simp
+      finally show ?thesis .
+    qed
+    ultimately have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. (g (-\<i> *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C x)) = 0"
+      by simp
+    moreover have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. (g (-\<i> *\<^sub>C x)) *\<^sub>C (-\<i> *\<^sub>C x)) = -\<i> *\<^sub>C (\<Sum>x\<in>(*\<^sub>C) \<i> ` B. h x *\<^sub>C x)"
+      unfolding h_def
+      by (metis (mono_tags, lifting) complex_vector.scale_left_commute 
+          complex_vector.scale_sum_right sum.cong)
+    ultimately have k1: "(\<Sum>x\<in>(*\<^sub>C) \<i> ` B. h x *\<^sub>C x) = 0"
+      by simp
     show ?thesis 
     proof(cases "y \<in> B")
       case True
