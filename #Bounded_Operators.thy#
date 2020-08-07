@@ -5166,7 +5166,7 @@ proof (cases "\<psi> \<in> complex_vector.span B") (* NEW *)
   ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
     unfolding g_def
     by (smt Complex_Vector_Spaces.dependent_raw_def True 
-         a1 a3 complex_vector.sum_representation_eq 
+        a1 a3 complex_vector.sum_representation_eq 
         subsetI sum.cong) 
   have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
     unfolding inj_def 
