@@ -4562,7 +4562,7 @@ lemma finite_span_complete_aux:
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
 
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_cblinfun\<close>
+  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
      \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
      content of the lemmas. However, there is one difference: We additionally assume here
      that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
@@ -4751,9 +4751,9 @@ lemma complete_singleton:
 
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
-lemma finite_span_representation_cblinfun:  (* TODO: cblinfun \<rightarrow> bounded *)
+lemma finite_span_representation_bounded:
   fixes B :: "'a::real_normed_vector set"
-  assumes "finite B" "independent B"
+  assumes "finite B" and "independent B"
   shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
 
   text \<open>
@@ -4882,7 +4882,7 @@ lemma finite_span_closed:
   by (simp add: assms complete_imp_closed finite_span_complete)
 
 lemma complex_real_span:
-  "complex_vector.span B = real_vector.span (B \<union> scaleC \<i> ` B)"
+  "complex_vector.span B = real_vector.span (B \<union> (*\<^sub>C) \<i> ` B)"
 proof auto
   let ?cspan = complex_vector.span
   let ?rspan = real_vector.span
@@ -5166,7 +5166,7 @@ proof (cases "\<psi> \<in> complex_vector.span B") (* NEW *)
   ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
     unfolding g_def
     by (smt Complex_Vector_Spaces.dependent_raw_def True 
-         a1 a3 complex_vector.sum_representation_eq 
+        a1 a3 complex_vector.sum_representation_eq 
         subsetI sum.cong) 
   have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
     unfolding inj_def 
@@ -5280,7 +5280,7 @@ proof -
   obtain D' where "D' > 0" and D': "norm (real_vector.representation B' \<psi> b) \<le> norm \<psi> * D'" for \<psi> b
     apply atomize_elim
     using independent_B' \<open>finite B'\<close>
-    by (simp add: Real_Vector_Spaces.dependent_raw_def finite_span_representation_cblinfun)
+    by (simp add: Real_Vector_Spaces.dependent_raw_def finite_span_representation_bounded)
   define D where "D = 2*D'" 
   from \<open>D' > 0\<close> have \<open>D > 0\<close>
     unfolding D_def by simp
@@ -5296,11 +5296,24 @@ proof -
              + norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
       using norm_triangle_ineq by blast
     also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> b))
-             + norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      sorry
+                  + norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+    proof-
+      have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm \<i> * norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+        using norm_scaleC by blast
+      also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      proof-
+        have "norm \<i> = 1"
+          by simp          
+        thus ?thesis by simp
+      qed
+      finally have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))".
+      thus ?thesis by simp
+    qed
     also have "\<dots> = norm (real_vector.representation B' \<psi> b)
-             + norm (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
-      sorry
+                  + norm (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
+      by simp
     also have "\<dots> \<le> norm \<psi> * D' + norm \<psi> * D'"
       by (rule add_mono; rule D')
     also have "\<dots> \<le> norm \<psi> * D"
@@ -5309,8 +5322,10 @@ proof -
       by auto
   next
     case False
-    show ?thesis
-      sorry
+    hence "Complex_Vector_Spaces.representation B \<psi> b = 0"
+      using complex_vector.representation_ne_zero by blast      
+    thus ?thesis
+      by (smt \<open>0 < D\<close> norm_ge_zero norm_zero split_mult_pos_le)
   qed
   with \<open>D > 0\<close>
   show ?thesis
@@ -5370,12 +5385,12 @@ lemma cblinfun_operator_basis_zero_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close>
   assumes a1: "complex_vector.span basis = UNIV"
     and a2: "complex_vector.independent basis"
-    and a4: "\<And>s. s\<in>basis \<Longrightarrow> cblinfun_apply F s = 0"
+    and a4: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>V s = 0"
   shows \<open>F = 0\<close>
   using cblinfun_operator_S_zero_uniq_span
   by (metis UNIV_I a1 a2 a4 applyOp0 cblinfun_ext)
 
-(*
+(* Ask to Dominique: what about this?
 lemma cblinfun_operator_finite_dim':
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and S basis::"'a set"
   assumes b4:"clinear F" 
@@ -5591,6 +5606,7 @@ next
 qed
 *)
 
+(* Ask to Dominique: Delete this? *)
 lemma cblinfun_operator_finite_dim_ortho:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b4:"clinear F"  and b9:"is_ob basis" and b3:"finite basis"
@@ -5857,6 +5873,9 @@ proof-
       (* > 1s *)
 qed
 
+(* Ask to Dominique: Delete this or recover using the previous proofs instead of the
+ proof of compactness?
+
 (* TODO: Put inside complex_normed_vector_inf_norm_leq_any_norm'
   after the proof is completed *)
 lemma complex_normed_vector_inf_norm_leq_any_norm':
@@ -5922,6 +5941,9 @@ proof-
     by blast 
 qed
 
+*)
+
+(* Ask to Dominique: Delete this or recover using the new approach?
 lemma complex_normed_vector_inf_norm_leq_any_norm:
   includes notation_norm
   fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" (* TODO remove *)
@@ -6051,7 +6073,10 @@ proof-
   qed
   ultimately show ?thesis by blast
 qed
+*)
 
+
+(* Ask to Dominique: Delete this or recover using the new approach?
 lemma complex_normed_vector_norm_basis:
   includes notation_norm
   fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" (* TODO remove *)
@@ -6084,7 +6109,7 @@ proof-
   qed
   thus ?thesis using c0 by blast
 qed
-
+*)
 
 (* There is an existing locale "finite_dimensional_vector_space" *)
 (* TODO: Should hold for type_class complex_normed_vector.
@@ -6100,28 +6125,45 @@ lemma cblinfun_operator_finite_dim:
   shows "cbounded_linear F"
 proof -
   include notation_norm
-  have "\<exists>C>0. \<forall>r. \<forall>j\<in>basis. \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"   
-    using complex_normed_vector_norm_basis b1 b2 b3 b4.
-  then obtain C where C_def: "j\<in>basis \<Longrightarrow> \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>" for r j
-    by blast
-  define M::real where "M = C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
+  have "\<exists>C>0. \<forall>\<psi> b. cmod (Complex_Vector_Spaces.representation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
+    using finite_complex_span_representation_bounded[where B = basis] b2 b3 by blast
+  then obtain C where s1: "cmod (Complex_Vector_Spaces.representation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
+    and s2: "C > 0"
+  for \<psi> b by blast
+  define M where "M = C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
   have "\<parallel>F x\<parallel> \<le> \<parallel>x\<parallel> * M"
     for x
   proof-
-    have "x \<in> complex_vector.span basis"
+    define r where "r b = Complex_Vector_Spaces.representation basis x b" for b
+    have x_span: "x \<in> complex_vector.span basis"
       by (simp add: b1)
-    have "\<exists>r. x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
-      by (simp add: Complex_Vector_Spaces.span_explicit_finite b1 b2 b3)
-    then obtain r where r_def: "x = (\<Sum>a\<in>basis. r a *\<^sub>C a)"
-      by blast     
-    have "a\<in>basis \<Longrightarrow> \<parallel>F a\<parallel> \<ge> 0"
-      for a
-      by simp      
-    hence FM: "a\<in>basis \<Longrightarrow> \<parallel>r a\<parallel> * \<parallel>F a\<parallel> \<le> C * \<parallel>x\<parallel> * \<parallel>F a\<parallel>"
-      for a
-      by (simp add: C_def mult_right_mono r_def)
-    have "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
-      using r_def
+    have f0: "v \<in> basis"
+      if "r v \<noteq> 0" for v
+      using that
+      unfolding r_def Complex_Vector_Spaces.representation_def
+      using b2  x_span
+      using complex_vector.representation_ne_zero r_def that by auto       
+    moreover have f1: "finite {a|a. r a \<noteq> 0}"
+    proof-
+      have "{a|a. r a \<noteq> 0} \<subseteq> basis"
+        using f0 by blast
+      thus ?thesis
+        using b3
+        using rev_finite_subset by auto 
+    qed
+    moreover have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
+      unfolding Complex_Vector_Spaces.representation_def
+      using b2  x_span Complex_Vector_Spaces.complex_vector.sum_representation_eq[where B = basis 
+          and basis = basis and v = x]
+      by (metis Complex_Vector_Spaces.dependent_raw_def 
+          \<open>r \<equiv> Complex_Vector_Spaces.representation basis x\<close> 
+          complex_vector.sum_nonzero_representation_eq)
+        (* >> 1s *) (* Ask to Dominique: how to reduce the time? *)
+    ultimately have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
+      unfolding r_def
+      by (metis (no_types, lifting) b2 b3 Complex_Vector_Spaces.dependent_raw_def x_span 
+          complex_vector.sum_representation_eq subsetI sum.cong) 
+    hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
       by simp
     also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
       by (smt Finite_Cartesian_Product.sum_cong_aux b5 complex_vector.linear_scale 
@@ -6133,13 +6175,12 @@ proof -
       by (simp add: sum_norm_le)
     also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>F a\<parallel>)"
       by simp
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. C * \<parallel>x\<parallel> * \<parallel>F a\<parallel>)"
-      using FM
-      by (simp add: sum_mono) 
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>x\<parallel> * C * \<parallel>F a\<parallel>)"      
+      using sum_mono s1 unfolding r_def
+      by (simp add: sum_mono mult_right_mono)
     also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
       using sum_distrib_left
-      by (metis eq_iff vector_space_over_itself.scale_left_commute 
-          vector_space_over_itself.scale_scale)
+      by (smt sum.cong)
     also have "\<dots> = \<parallel>x\<parallel> * M"
       unfolding M_def
       by linarith 
@@ -6149,7 +6190,7 @@ proof -
     using b5 cbounded_linear_def by blast
 qed
 
-(* see above
+(* Ask to Dominique: Delete?
 lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
@@ -6668,7 +6709,6 @@ proof-
   thus ?thesis 
     unfolding cblinfun_extension_exists_def
     by blast
-
 qed
 
 unbundle no_cblinfun_notation
