@@ -2560,7 +2560,7 @@ qed
 
 lemma mat_of_cblinfun_classical_operator_inj_option:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
-  assumes r1: "inj_option f" 
+  (* assumes r1: "inj_option f"  *)
   shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
            (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
 proof-

@@ -43,6 +43,7 @@ lemma cblinfun_of_mat_minusOp[code]:
 lemma cblinfun_of_mat_timesOp[code]:
   "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) = mat_of_cblinfun F * mat_of_cblinfun G" 
   for F::"'b::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'c::onb_enum" and G::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b"
+(* TODO: move proof to Bounded_Operators_Matrices *)
 proof -
   define nA where "nA = canonical_basis_length TYPE('a)"
   define nB where "nB = canonical_basis_length TYPE('b)"
@@ -83,6 +84,7 @@ qed
 lemma mat_of_cblinfun_scalarMult[code]:
   "mat_of_cblinfun ((a::complex) *\<^sub>C F) = a \<cdot>\<^sub>m (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+(* TODO: move proof to Bounded_Operators_Matrices *)
 proof -
   define nA where "nA = canonical_basis_length TYPE('a)"
   define nB where "nB = canonical_basis_length TYPE('b)"
@@ -165,6 +167,7 @@ end
 lemma cblinfun_of_mat_adjoint[code]:
   "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+(* TODO: move proof to Bounded_Operators_Matrices *)
 proof -
   define nA where "nA = canonical_basis_length TYPE('a::onb_enum)" 
   define nB where "nB = canonical_basis_length TYPE('b::onb_enum)" 

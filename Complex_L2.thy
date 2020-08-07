@@ -2769,12 +2769,12 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding su
 lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 
-(* Ask to Dominique: yellow dot *)
+(* TODO remove *)
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>
   by simp
 
-(* Ask to Dominique: yellow dot *)
+(* TODO remove *)
 lemma leq_INF[simp]:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
