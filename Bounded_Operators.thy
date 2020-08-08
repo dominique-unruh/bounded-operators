@@ -4742,12 +4742,6 @@ proof -
     by simp
 qed
 
-(* TODO: move to General_Results_Missing or similar *)
-lemma complete_singleton: 
-  shows "complete {s::'a::uniform_space}"
-  unfolding complete_uniform
-  apply auto
-  by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
 
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
@@ -4917,7 +4911,7 @@ next
 qed
 
 lemma scaleC_complex_independent:
-  assumes a1: "complex_independent B" (* and a2: "finite B" *) and a3: "c \<noteq> 0"
+  assumes a1: "complex_independent B" and a3: "c \<noteq> 0"
   shows "complex_independent ((*\<^sub>C) c ` B)"
 proof-
   have "u y = 0"
@@ -4927,11 +4921,12 @@ proof-
     define v where "v x = u (c *\<^sub>C x)" for x
     obtain S' where "S'\<subseteq>B" and S_S': "S = (*\<^sub>C) c ` S'"
       by (meson \<open>S \<subseteq> (*\<^sub>C) c ` B\<close> subset_imageE)
-    from \<open>finite S\<close> have "finite S'"
-      using S_S'
-      (* TODO: prove this *)
-      sorry
-      (* using \<open>S' \<subseteq> B\<close> a2 finite_subset by blast *)
+    have "inj ((*\<^sub>C) c::'a\<Rightarrow>_)"
+      unfolding inj_def
+      using a3 by auto 
+    hence "finite S'"
+      using S_S' \<open>finite S\<close>
+      by (meson finite_imageD subset_inj_on top_greatest)      
     have "t \<in> (*\<^sub>C) (inverse c) ` S"
       if "t \<in> S'" for t
     proof-
@@ -4981,13 +4976,14 @@ proof-
       using a3 by auto
     hence "v (inverse c *\<^sub>C y) = 0"
       using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
-      using complex_vector.independentD by blast
+       complex_vector.independentD by blast
     thus "u y = 0"
       unfolding v_def
       by (simp add: a3) 
   qed
   thus ?thesis
     by (simp add: complex_vector.independent_explicit_finite_subsets)
+
 qed
 
 lemma inter_complex_independent:
@@ -5020,14 +5016,14 @@ proof(rule classical)
 qed
 
 (* TODO: In all lemmas, use always complex_independent or 
-   always complex_vector.independent *)
+   always complex_independent *)
 
 lemma complex_real_independent:
-  assumes a1: "complex_vector.independent B" (* TODO remove a2 *) and a2: "finite B"
-  shows "real_vector.independent (B \<union> (*\<^sub>C) \<i> ` B)"
+  assumes a1: "complex_independent B"
+  shows "independent (B \<union> (*\<^sub>C) \<i> ` B)"
 (* proof (rule ccontr)
   define B' where "B' = B \<union> ( *\<^sub>C) \<i> ` B"
-  assume "\<not> real_vector.independent B'"
+  assume "\<not> independent B'"
   then obtain t u where "finite t \<and> t \<subseteq> B' \<and> (\<Sum>v\<in>t. u v *\<^sub>R v) = 0 \<and> (\<exists>v\<in>t. u v \<noteq> 0)"
     by (smt Real_Vector_Spaces.dependent_raw_def real_vector.dependent_explicit) *)
 proof -
@@ -5044,12 +5040,11 @@ proof -
     define g where "g x = f x + \<i> *\<^sub>C f (\<i> *\<^sub>C x)" for x
     define h where "h x = g (-\<i> *\<^sub>C x)" for x
     have "finite ((*\<^sub>C) \<i> ` B)"
-      using a2
-      by simp      
+      sorry
     moreover have "B \<inter> (*\<^sub>C) \<i> ` B = {}"
       using inter_complex_independent a1' complex_i_not_one complex_i_not_zero by blast 
     ultimately have "(\<Sum>x\<in>B \<union> (*\<^sub>C) \<i> ` B. f x *\<^sub>R x) = (\<Sum>x\<in>B. f x *\<^sub>R x) + (\<Sum>x\<in>(*\<^sub>C) \<i> ` B. f x *\<^sub>R x)"
-      by (simp add: a2 sum.union_disjoint)
+      sorry
     also have "\<dots> = (\<Sum>x\<in>B. f x *\<^sub>R x) + (\<Sum>x\<in>B. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
     proof-
       have "\<i> \<noteq> 0"
@@ -5120,8 +5115,8 @@ proof -
     proof(cases "y \<in> B")
       case True
       hence "g y = 0"
-        using a1' a2 independent_explicit_finite_subsets[where A = B]
-          \<open>(\<Sum>x\<in>B. g x *\<^sub>C x) = 0\<close> by blast
+        using a1'  independent_explicit_finite_subsets[where A = B]
+          \<open>(\<Sum>x\<in>B. g x *\<^sub>C x) = 0\<close> sorry
       thus "f y = 0"
         unfolding g_def
         using complex_eq_cancel_iff2
@@ -5133,7 +5128,7 @@ proof -
       moreover have "finite ((*\<^sub>C) \<i> ` B)"
         by (simp add: \<open>finite ((*\<^sub>C) \<i> ` B)\<close>)        
       moreover have "complex_independent ((*\<^sub>C) \<i> ` B)"
-        by (simp add: a1' a2 scaleC_complex_independent)        
+        sorry
       ultimately have "h y = 0"        
         using k1 independent_explicit_finite_subsets[where A = "(*\<^sub>C) \<i> ` B"]
         by blast        
@@ -5152,8 +5147,7 @@ qed
 lemma complex_real_vector_representation:
   fixes B::"'a::complex_vector set"
   defines "B' == B \<union> (*\<^sub>C) \<i> ` B"
-(* TODO: can we remove "finite B" here? *)
-  assumes a1: "complex_vector.independent B" and a2: "b \<in> B" and a3: "finite B"
+  assumes a1: "complex_independent B" and a2: "b \<in> B"
   shows "complex_vector.representation B \<psi> b
        = (real_vector.representation B' \<psi> b)
    + \<i> *\<^sub>C (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
@@ -5176,9 +5170,7 @@ proof (cases "\<psi> \<in> complex_vector.span B")
     by (simp add: complex_vector.representation_ne_zero)        
   ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
     unfolding g_def
-    by (smt Complex_Vector_Spaces.dependent_raw_def True 
-        a1 a3 complex_vector.sum_representation_eq 
-        subsetI sum.cong) 
+    sorry
   have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
     unfolding inj_def 
     by simp 
@@ -5187,16 +5179,17 @@ proof (cases "\<psi> \<in> complex_vector.span B")
     by simp 
   have l1: "(*\<^sub>C) (- \<i>) ` B \<inter> B = {}"
     using inter_complex_independent[where B=B and c = "- \<i>"]
-    by (metis Complex_Vector_Spaces.dependent_raw_def a1 complex_i_not_zero equation_minus_iff 
-        i_squared inf_commute neg_equal_0_iff_equal one_neq_neg_one square_eq_1_iff)    
+    by (metis Int_commute a1 add.inverse_inverse complex_i_not_one i_squared mult_cancel_left1 
+        neg_equal_0_iff_equal)
   have l2: "B \<inter> (*\<^sub>C) \<i> ` B = {}"
-    by (simp add: Complex_Vector_Spaces.dependent_raw_def a1 inter_complex_independent)
+    by (simp add: a1 inter_complex_independent)
+
   have rr1: "r (\<i> *\<^sub>C v) = r' v" for v
     unfolding r_def r'_def
     by simp 
-  have k1: "real_vector.independent B'"
+  have k1: "independent B'"
     unfolding B'_def using a1 complex_real_independent
-    by (simp add: complex_real_independent a3)
+    sorry
   have "\<psi> \<in> Real_Vector_Spaces.span B'"
     using B'_def True complex_real_span by blast    
   have "v \<in> B'"
@@ -5205,7 +5198,7 @@ proof (cases "\<psi> \<in> complex_vector.span B")
     unfolding r_def
     using r_def real_vector.representation_ne_zero that by auto
   have "finite B'"
-    by (simp add: B'_def a3)    
+    sorry
   have "(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>"
     unfolding r_def 
     using True  Real_Vector_Spaces.real_vector.sum_representation_eq[where B = B' and basis = B' 
@@ -5235,8 +5228,7 @@ proof (cases "\<psi> \<in> complex_vector.span B")
     qed
     also have "\<dots> = \<psi>"
       using l2 \<open>(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>\<close>
-      by (metis (mono_tags, lifting) B'_def a3 finite_imageI 
-          sum.union_disjoint) 
+      sorry
     finally show ?thesis unfolding r'_def r_def f_def by simp
   qed
   hence "0 = (\<Sum>v\<in>B. f v *\<^sub>C v) - (\<Sum>v\<in>B. complex_vector.representation B \<psi> v *\<^sub>C v)"
@@ -5251,9 +5243,8 @@ proof (cases "\<psi> \<in> complex_vector.span B")
   hence "(\<Sum>v\<in>B. (f v - complex_vector.representation B \<psi> v) *\<^sub>C v) = 0"
     by simp
   hence "f b - complex_vector.representation B \<psi> b = 0"
-    using a1 a2 Complex_Vector_Spaces.complex_vector.independentD[where s = B and t = B and v = b 
-        and u = "\<lambda>v. f v - complex_vector.representation B \<psi> v"] 
-    by (metis Complex_Vector_Spaces.dependent_raw_def a3 subsetI)
+    using a1 a2 Complex_Vector_Spaces.complex_vector.independentD 
+    sorry
   hence "complex_vector.representation B \<psi> b = f b"
     by simp
   thus ?thesis unfolding f_def r_def r'_def B'_def by auto
@@ -5279,12 +5270,12 @@ qed
 
 lemma finite_complex_span_representation_bounded:
   fixes B :: "'a::complex_normed_vector set"
-  assumes a1: "finite B" and a2: "complex_vector.independent B"
+  assumes a1: "finite B" and a2: "complex_independent B"
   shows "\<exists>D>0. \<forall>\<psi> b. norm (complex_vector.representation B \<psi> b) \<le> norm \<psi> * D"
 proof -
   define B' where "B' = (B \<union> scaleC \<i> ` B)"
-  have independent_B': "real_vector.independent B'"
-    using complex_real_independent B'_def \<open>complex_vector.independent B\<close>
+  have independent_B': "independent B'"
+    using complex_real_independent B'_def \<open>complex_independent B\<close>
     by (simp add: complex_real_independent a1) 
   have "finite B'"
     unfolding B'_def using \<open>finite B\<close> by simp
@@ -5302,7 +5293,7 @@ proof -
         = norm (complex_of_real (real_vector.representation B' \<psi> b)
             + \<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
       apply (subst complex_real_vector_representation)
-      using \<open>complex_vector.independent B\<close> True B'_def a1 by auto
+      using \<open>complex_independent B\<close> True B'_def a1 by auto
     also have "\<dots> \<le> norm (complex_of_real (real_vector.representation B' \<psi> b))
              + norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
       using norm_triangle_ineq by blast
@@ -5356,7 +5347,7 @@ lemma finite_complex_span_complete:
 lemma cblinfun_operator_S_zero_uniq_span:
   fixes S::\<open>'a::chilbert_space set\<close>
   assumes a1: "x \<in> complex_vector.span S"
-    and a2: "complex_vector.independent S"
+    and a2: "complex_independent S"
     and a4: "\<And>s. s\<in>S \<Longrightarrow> F *\<^sub>V s = 0"
   shows \<open>F *\<^sub>V x = 0\<close>
 proof-
@@ -5378,7 +5369,7 @@ qed
 lemma cblinfun_operator_S_uniq_span:
   fixes S::\<open>'a::chilbert_space set\<close>
   assumes a1: "x \<in> complex_vector.span S"
-    and a2: "complex_vector.independent S"
+    and a2: "complex_independent S"
     and a4: "\<And>s. s\<in>S \<Longrightarrow> F *\<^sub>V s = G *\<^sub>V s"
   shows \<open>F *\<^sub>V x = G *\<^sub>V x\<close>
 proof-
@@ -5395,7 +5386,7 @@ qed
 lemma cblinfun_operator_basis_zero_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close>
   assumes a1: "complex_vector.span basis = UNIV"
-    and a2: "complex_vector.independent basis"
+    and a2: "complex_independent basis"
     and a4: "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>V s = 0"
   shows \<open>F = 0\<close>
   using cblinfun_operator_S_zero_uniq_span
@@ -5845,7 +5836,7 @@ qed
 lemma ortho_imples_independent:
   assumes a1: "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
     and a2: "0 \<notin> A" 
-  shows "complex_vector.independent A"
+  shows "complex_independent A"
 proof-
   have "finite t \<Longrightarrow> t \<subseteq> A \<Longrightarrow> (\<Sum>v\<in>t. u v *\<^sub>C v) = 0 \<Longrightarrow> v \<in> t \<Longrightarrow> u v = 0"
     for t u v
@@ -5893,7 +5884,7 @@ lemma complex_normed_vector_inf_norm_leq_any_norm':
   fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" (* TODO remove *)
     and basis:: "'a set"
   assumes b1: "complex_vector.span basis = UNIV"
-    and b2: "complex_vector.independent basis"
+    and b2: "complex_independent basis"
     and b3: "finite basis"
     and b4: "basis \<noteq> {}" (* TODO: remove: if basis={}, (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1) is false *)
   shows "\<exists>c>0. \<forall>r. (\<forall>i\<in>basis. \<parallel>r i\<parallel> \<le> 1) \<and> (\<exists>i\<in>basis. \<parallel>r i\<parallel> = 1)
@@ -5959,7 +5950,7 @@ lemma complex_normed_vector_inf_norm_leq_any_norm:
   fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
     and basis:: "'a set"
   assumes b1: "complex_vector.span basis = UNIV"
-    and b2: "complex_vector.independent basis"
+    and b2: "complex_independent basis"
     and b3: "finite basis" 
     and b4: "basis \<noteq> {}"
   shows "\<exists>C>0. \<forall>r. Max {\<parallel>r j\<parallel> |j. j\<in>basis} \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
@@ -6093,7 +6084,7 @@ lemma complex_normed_vector_norm_basis:
   fixes  F:: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" (* TODO remove *)
     and basis:: "'a set"
   assumes b1: "complex_vector.span basis = UNIV"
-    and b2: "complex_vector.independent basis"
+    and b2: "complex_independent basis"
     and b3: "finite basis" 
     and b4: "basis \<noteq> {}"
   shows "\<exists>C>0. \<forall>r. \<forall>j\<in>basis. \<parallel>r j\<parallel> \<le> C*\<parallel>(\<Sum>i\<in>basis. r i *\<^sub>C i)\<parallel>"
@@ -6129,7 +6120,7 @@ lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
     and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
-    and b2: "complex_vector.independent basis"
+    and b2: "complex_independent basis"
     and b3:"finite basis" 
     and b4: "basis \<noteq> {}" (* TODO: remove premise (if basis={}, then span={0}, then F=0, then bounded) *)
     and b5:"clinear F"
@@ -6207,7 +6198,7 @@ qed
 lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space" and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
-    and b2: "complex_vector.independent basis"
+    and b2: "complex_independent basis"
     and b3:"finite basis" and b4:"clinear F"
   shows "cbounded_linear F"
 proof-
@@ -6241,7 +6232,7 @@ qed
 lemma cblinfun_operator_basis_existence_uniq:
   fixes basis::\<open>'a::chilbert_space set\<close> and \<phi>::\<open>'a \<Rightarrow> 'b::chilbert_space\<close>
   assumes \<open>complex_vector.span basis = UNIV\<close> 
-    and \<open>complex_vector.independent basis\<close>
+    and \<open>complex_independent basis\<close>
     and \<open>finite basis\<close>
     and "basis \<noteq> {}" (* TODO remove (if basis empty, all functions 0), or not used after changing lemmas above *)
   shows \<open>\<exists>!F. \<forall>s\<in>basis.  F *\<^sub>V s = \<phi> s\<close>
@@ -6262,13 +6253,13 @@ proof-
     have f3: "finite {v. f w v \<noteq> 0}" for w
       by (metis \<open>f \<equiv> Complex_Vector_Spaces.representation basis\<close> complex_vector.finite_representation)
     have f4: "(\<Sum>v | f w v \<noteq> 0. f w v *\<^sub>C v) = w" for w
-      using \<open>complex_vector.independent basis\<close> \<open>complex_vector.span basis = UNIV\<close>
+      using \<open>complex_independent basis\<close> \<open>complex_vector.span basis = UNIV\<close>
         f1[where w = w] unfolding f_def
       using Complex_Vector_Spaces.dependent_raw_def complex_vector.sum_nonzero_representation_eq 
         iso_tuple_UNIV_I
     proof -
       have "complex_independent basis"
-        by (metis Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+        by (metis Complex_Vector_Spaces.dependent_raw_def \<open>complex_independent basis\<close>)
       thus "(\<Sum>a | Complex_Vector_Spaces.representation basis w a \<noteq> 0. 
             Complex_Vector_Spaces.representation basis w a *\<^sub>C a) = w"
         using \<open>Complex_Vector_Spaces.span basis = UNIV\<close> complex_vector.sum_nonzero_representation_eq iso_tuple_UNIV_I
@@ -6357,7 +6348,7 @@ proof-
         then have f1: "\<And>f. (\<Sum>a\<in>basis. f a *\<^sub>C a) \<noteq> 0 \<or> Complex_Vector_Spaces.dependent basis \<or> f v = 0"
           using assms(3) complex_vector.dependent_finite by auto
         have "complex_independent basis"
-          by (simp add: Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+          by (simp add: assms(2))
         thus ?thesis
           using f1 \<open>(\<Sum>v | v \<in> basis. (f (w1 + w2) v - f w1 v - f w2 v) *\<^sub>C v) = 0\<close> by fastforce
       qed
@@ -6396,7 +6387,7 @@ proof-
         then have f1: "\<And>f. (\<Sum>a\<in>basis. f a *\<^sub>C a) \<noteq> 0 \<or> Complex_Vector_Spaces.dependent basis \<or> f v = 0"
           using assms(3) complex_vector.dependent_finite by auto
         have "complex_independent basis"
-          by (simp add: Complex_Vector_Spaces.dependent_raw_def \<open>complex_vector.independent basis\<close>)
+          by (simp add: assms(2))
         thus ?thesis
           using f1 \<open>(\<Sum>v | v\<in>basis. (f (r *\<^sub>C w) v - r * f w v) *\<^sub>C v) = 0\<close> by fastforce
       qed
@@ -6704,8 +6695,7 @@ proof-
     using linear_construct
     by (simp add: complex_vector.linear_construct a1 f_def)    
   have "cbounded_linear f"
-    by (metis cblinfun_operator_finite_dim Complex_Vector_Spaces.dependent_raw_def \<open>clinear f\<close> 
-        a1 a2 a3 a4)
+    using \<open>clinear f\<close> a1 a2 a3 a4 cblinfun_operator_finite_dim by auto    
   then obtain B::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space" 
     where "B *\<^sub>V x = f x" for x
     using cblinfun_apply_cases by blast
@@ -6725,6 +6715,11 @@ proof-
 qed
 
 
+lemma cblinfun_extension_exists:
+  assumes "cblinfun_extension_exists S f"
+  assumes "v \<in> S"
+  shows "(cblinfun_extension S f) *\<^sub>V v = f v"
+  by (smt assms(1) assms(2) cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
 
 unbundle no_cblinfun_notation
 

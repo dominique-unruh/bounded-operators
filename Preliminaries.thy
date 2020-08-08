@@ -3759,6 +3759,14 @@ lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
 
 end
 
+subsection\<open>Unclassified\<close>
+
+lemma complete_singleton: 
+  shows "complete {s::'a::uniform_space}"
+  unfolding complete_uniform
+  apply auto
+  by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
+
 
 unbundle no_nsa_notation
 

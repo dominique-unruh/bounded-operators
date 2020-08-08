@@ -91,12 +91,12 @@ notation
   inf (infixl "\<sqinter>" 70) and
   sup (infixl "\<squnion>" 65) 
 
-(* TODO rename to l2? *)
+
 typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
-  (* derive universe vector *)
-  (* Jose: I do not understand *)
+  (* TODO: derive universe vector *)
+  (* Ask to Dominique: I do not understand *)
 
 lemma SUP_max:
   fixes f::"'a::order\<Rightarrow>'b::conditionally_complete_lattice"
@@ -114,9 +114,6 @@ definition "ell2_norm x = sqrt (SUP F:{F. finite F}. sum (\<lambda>i. norm (x i)
 lemma ell2_norm_L2_set: 
   assumes "has_ell2_norm x"
   shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
-    (* TODO: doesn't work in Isabelle2019. Probably best to be just redone in nice Isar style *)
-    (* Jose: What doesn't work precisely? *)
-    (* TODO: I don't know. You can remove this TODO *)
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
@@ -1792,6 +1789,10 @@ lemma ell2_ket[simp]: "norm (ket i) = 1"
 
 type_synonym 'a ell2_linear_space = "'a ell2 linear_space"
 
+lemma subspace_zero_not_top[simp]: 
+  "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
+  by simp
+
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
@@ -2447,7 +2448,7 @@ qed
 end
 
 (* TODO: move *)
-(* Jose: where? *)
+(* Ask to Dominique: where? *)
 instantiation unit :: CARD_1
 begin
 instance 
@@ -2732,10 +2733,7 @@ lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector
 lemma subspace_sup_plus: "(sup :: 'a ell2_linear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
   by simp 
 
-(* TODO: move to earliest possible place *)
-lemma subspace_zero_not_top[simp]: 
-  "(0::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-  by simp
+
 
 lemma subspace_zero_bot: "(0::_ ell2_linear_space) = bot" 
   by simp
@@ -2769,16 +2767,6 @@ lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2_linear_space" unfolding su
 lemma top_plus[simp]: "top + x = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 lemma plus_top[simp]: "x + top = top" for x :: "'a ell2_linear_space" unfolding subspace_sup_plus[symmetric] by simp
 
-(* TODO remove *)
-lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
-  for \<psi>
-  by simp
-
-(* TODO remove *)
-lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
-  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
-  by (simp add: le_Inf_iff)
 
 lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2_linear_space"
   by (simp add: add_increasing2)
@@ -2860,12 +2848,7 @@ definition classical_function :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a el
 definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
   "classical_operator \<pi> = cblinfun_extension (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
 
-(* TODO: move to right theory *)
-lemma cblinfun_extension_exists:
-  assumes "cblinfun_extension_exists S f"
-  assumes "v \<in> S"
-  shows "(cblinfun_extension S f) *\<^sub>V v = f v"
-  by (smt assms(1) assms(2) cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
+
 
 lemma classical_operator_basis:
   assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
@@ -2876,8 +2859,7 @@ lemma classical_operator_basis:
   using assms apply (auto simp: classical_function_def[abs_def])
   by (metis f_inv_into_f ket_distinct rangeI)
 
-(* TODO rename ket_nonzero *)
-lemma ket_zero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
+lemma ket_nonzero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
   apply transfer
   by (metis zero_neq_one)
 
@@ -2890,7 +2872,7 @@ proof-
     by (metis ket_Kronecker_delta_neq)
   moreover have "0 \<notin> S"
     unfolding S_def
-    using ket_zero
+    using ket_nonzero
     by (simp add: image_iff)
   ultimately show ?thesis
     using is_ortho_set_independent[where S = S] unfolding S_def 
@@ -2910,91 +2892,96 @@ proof -
     using 1 2 by auto
 qed
 
-
-(* TODO rename cinner_ket_adjointI *)
-lemma cinner_ket:
+lemma cinner_ket_adjointI:
   fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
   assumes a1: "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
-  shows "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>" (* TODO: or F = G* ?  *)
+  shows "F = G*" 
 proof-
-  define H where "H u v = \<langle>F *\<^sub>V u, v\<rangle> - \<langle>u, G *\<^sub>V v\<rangle>" for u v
-  define SA where "SA = range (ket::'a\<Rightarrow>_)"
-  define SB where "SB = range (ket::'b\<Rightarrow>_)"
-  have u1: "closure (complex_vector.span SA) = UNIV"
-    unfolding SA_def using ket_ell2_span by blast
-  hence v1: "x \<in> closure (complex_vector.span (range ket))"
-    unfolding SA_def by blast
-  have u2: "closure (complex_vector.span SB) = UNIV"
-    unfolding SB_def using ket_ell2_span by blast
-  hence v2: "y \<in> closure (complex_vector.span (range ket))"
-    unfolding SB_def by blast
-  have "H (ket i) (ket j) = 0"
-    for i j
-    unfolding H_def using a1 by simp
-  moreover have q1: "cbounded_linear (H (ket i))"
-    for i
+  have "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
+    for x::"'a ell2" and y::"'b ell2"
   proof-
-    have "cbounded_linear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
-      by (simp add: cbounded_linear_cinner_right)      
-    moreover have "cbounded_linear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
-      using cblinfun_apply cbounded_linear_cinner_right_comp by auto      
-    ultimately show ?thesis unfolding H_def using cbounded_linear_sub by blast
+    define H where "H u v = \<langle>F *\<^sub>V u, v\<rangle> - \<langle>u, G *\<^sub>V v\<rangle>" for u v
+    define SA where "SA = range (ket::'a\<Rightarrow>_)"
+    define SB where "SB = range (ket::'b\<Rightarrow>_)"
+    have u1: "closure (complex_vector.span SA) = UNIV"
+      unfolding SA_def using ket_ell2_span by blast
+    hence v1: "x \<in> closure (complex_vector.span (range ket))"
+      unfolding SA_def by blast
+    have u2: "closure (complex_vector.span SB) = UNIV"
+      unfolding SB_def using ket_ell2_span by blast
+    hence v2: "y \<in> closure (complex_vector.span (range ket))"
+      unfolding SB_def by blast
+    have "H (ket i) (ket j) = 0"
+      for i j
+      unfolding H_def using a1 by simp
+    moreover have q1: "cbounded_linear (H (ket i))"
+      for i
+    proof-
+      have "cbounded_linear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
+        by (simp add: cbounded_linear_cinner_right)      
+      moreover have "cbounded_linear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
+        using cblinfun_apply cbounded_linear_cinner_right_comp by auto      
+      ultimately show ?thesis unfolding H_def using cbounded_linear_sub by blast
+    qed
+    moreover have z1: "cbounded_linear (\<lambda>_. (0::complex))"
+      by simp    
+    ultimately have "H (ket i) v = 0"
+      if "v \<in> complex_vector.span SB"
+      for i v
+      using equal_span_applyOpSpace[where G = SB and A = "H (ket i)" and B = "\<lambda>_. (0::complex)"]
+      by (smt SB_def UNIV_I rangeE u2)
+    moreover have "continuous_on (closure (complex_vector.span SB)) (H (ket i))"
+      for i
+      by (simp add: q1 bounded_linear_continuous continuous_at_imp_continuous_on)
+    ultimately have "H (ket i) v = 0"
+      if "v \<in> closure (complex_vector.span SB)"
+      for i v
+      using continuous_constant_on_closure that
+      by smt
+    hence "H (ket i) v = 0"
+      for i v
+      by (smt UNIV_I u2)
+    moreover have jj: "cbounded_linear (\<lambda>u. cnj (H u v))"
+      for v
+    proof-
+      have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
+        using bounded_csemilinear_compose1 cblinfun_apply cbounded_linear_cinner_left_comp 
+          cnj_bounded_csemilinear by blast      
+      moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
+        using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
+        by blast      
+      ultimately show ?thesis unfolding H_def 
+        using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
+        by auto      
+    qed
+    ultimately have cHu0: "cnj (H u v) = 0"
+      if "u \<in> complex_vector.span SA"
+      for u v
+      using z1 SA_def equal_span_applyOpSpace iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
+      by smt (* > 1s *)
+    hence Hu0: "H u v = 0"
+      if "u \<in> complex_vector.span SA"
+      for u v
+      by (smt complex_cnj_zero_iff that) 
+    moreover have "continuous_on (closure (complex_vector.span SA)) (\<lambda>u. H u v)"
+      for v
+      using jj bounded_linear_continuous continuous_at_imp_continuous_on
+        cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
+        equal_span_applyOpSpace z1
+      by smt (* > 1s *)
+    ultimately have "H u v = 0"
+      if "u \<in> closure (complex_vector.span SA)"
+      for u v
+      using continuous_constant_on_closure that
+      by smt
+    hence "H u v = 0"
+      for u v
+      by (smt UNIV_I u1)
+    thus "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
+      unfolding H_def by simp
   qed
-  moreover have z1: "cbounded_linear (\<lambda>_. (0::complex))"
-    by simp    
-  ultimately have "H (ket i) v = 0"
-    if "v \<in> complex_vector.span SB"
-    for i v
-    using equal_span_applyOpSpace[where G = SB and A = "H (ket i)" and B = "\<lambda>_. (0::complex)"]
-    by (smt SB_def UNIV_I rangeE u2)
-  moreover have "continuous_on (closure (complex_vector.span SB)) (H (ket i))"
-    for i
-    by (simp add: q1 bounded_linear_continuous continuous_at_imp_continuous_on)
-  ultimately have "H (ket i) v = 0"
-    if "v \<in> closure (complex_vector.span SB)"
-    for i v
-    using continuous_constant_on_closure that
-    by smt
-  hence "H (ket i) v = 0"
-    for i v
-    by (smt UNIV_I u2)
-  moreover have jj: "cbounded_linear (\<lambda>u. cnj (H u v))"
-    for v
-  proof-
-    have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-      using bounded_csemilinear_compose1 cblinfun_apply cbounded_linear_cinner_left_comp 
-        cnj_bounded_csemilinear by blast      
-    moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
-      using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
-      by blast      
-    ultimately show ?thesis unfolding H_def 
-      using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
-      by auto      
-  qed
-  ultimately have cHu0: "cnj (H u v) = 0"
-    if "u \<in> complex_vector.span SA"
-    for u v
-    using z1 SA_def equal_span_applyOpSpace iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
-    by smt (* > 1s *)
-  hence Hu0: "H u v = 0"
-    if "u \<in> complex_vector.span SA"
-    for u v
-    by (smt complex_cnj_zero_iff that) 
-  moreover have "continuous_on (closure (complex_vector.span SA)) (\<lambda>u. H u v)"
-    for v
-    using jj bounded_linear_continuous continuous_at_imp_continuous_on
-      cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
-      equal_span_applyOpSpace z1
-    by smt (* > 1s *)
-  ultimately have "H u v = 0"
-    if "u \<in> closure (complex_vector.span SA)"
-    for u v
-    using continuous_constant_on_closure that
-    by smt
-  hence "H u v = 0"
-    for u v
-    by (smt UNIV_I u1)
-  thus ?thesis unfolding H_def by simp 
+  thus ?thesis
+    using adjoint_D by auto 
 qed
 
 (* TODO: finite dimensional corollary as a simp-rule *)
@@ -3124,10 +3111,9 @@ proof-
       unfolding G_def by blast
     finally show ?thesis .
   qed
-  hence "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>" for x y
-    using cinner_ket by blast
   hence "G* = F"
-    using adjoint_D[where F = F and G = G] by blast
+    using cinner_ket_adjointI
+    by auto
   thus ?thesis unfolding G_def F_def .
 qed
 
