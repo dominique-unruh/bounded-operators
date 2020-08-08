@@ -38,7 +38,9 @@
 \maketitle
 
 \begin{abstract}
-\blindtext[1]
+In quantum relational Hoare logic (qRHL), (complex) Hilbert spaces and bounded operators between Hilbert spaces are the basic building blocks. These structures also appears in quantum information theory, quantum mechanics, machine learning, (ordinary and partial) differential equations and many areas of Mathematical Analysis (Fourier Analysis, Functional Analysis, etc.). We develop a new library for the theory of bounded operators that allows the development of a future library of qRHL over this ground.
+
+Our library contains a type class corresponding to complex vector spaces, that we specify until we obtain a type class corresponding to Hilbert spaces. We define a type of $\ell^2$ sequences over a given set represented by a type as parameter. We we introduce a type for bounded operators between two complex vector spaces. We prove the essential properties of these objects and we add code generation for the cases when computation is possible.
 \end{abstract}
 
 \section{Introduction}
@@ -60,6 +62,13 @@
 
 \section{Code generation}
 \blindtext[6]
+
+
+\section{Future work}
+Our next project is to develop a library for the Hilbert tensor product between two Hilbert spaces. This library will involve the bounded operators that are induced between tensor products by the bounded operators between the respective (tensor) factors.
+
+\section{Final remarks}
+\blindtext[3]
 
 \section*{Acknowledgments}
 \blindtext[1]

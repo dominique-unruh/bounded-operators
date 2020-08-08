@@ -70,7 +70,6 @@ lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
   by simp
 
-
 unbundle no_jnf_notation
 unbundle no_cblinfun_notation
 
