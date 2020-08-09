@@ -2069,7 +2069,9 @@ qed
 
 subsection \<open>Linear space\<close>
 
-(* TODO rename (TODO discuss) *)
+(* TODO rename 
+  Ask to Dominique: Which name?
+ *)
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
   linear_space = \<open>{S::'a set. closed_subspace S}\<close>
   morphisms space_as_set Abs_linear_space
@@ -2647,16 +2649,13 @@ proof-
 qed
 
 lemma span_explicit_finite:
-  assumes \<open>complex_vector.span S = UNIV\<close> 
-    and \<open>complex_vector.independent S\<close>
-    and \<open>finite S\<close>
+  assumes a1: \<open>x \<in> complex_vector.span S\<close> 
+    and a2: \<open>complex_vector.independent S\<close>
+    and a3: \<open>finite S\<close>
   shows \<open>\<exists> t. x = (\<Sum>s\<in>S. t s *\<^sub>C s)\<close>
 proof-
-  have \<open>x \<in> complex_vector.span S\<close>
-    using \<open>complex_vector.span S = UNIV\<close>
-    by blast
-  hence \<open>\<exists> T t'. finite T \<and> T \<subseteq> S \<and> x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
-    using complex_vector.span_explicit[where b = S]
+  have \<open>\<exists> T t'. finite T \<and> T \<subseteq> S \<and> x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>
+    using a1 complex_vector.span_explicit[where b = S]
     by auto
   then obtain T t' where \<open>finite T\<close> and \<open>T \<subseteq> S\<close> and
     \<open>x = (\<Sum>s\<in>T. t' s *\<^sub>C s)\<close>

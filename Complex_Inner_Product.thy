@@ -10,13 +10,19 @@ section \<open>\<open>Complex_Inner_Product\<close> -- Inner Product Spaces and 
 
 theory Complex_Inner_Product
   imports 
-    Preliminaries
+    Complex_Vector_Spaces
     "HOL-Analysis.Infinite_Set_Sum" 
-    Complex_Main Complex_Vector_Spaces
     "HOL-Analysis.Inner_Product"  
 begin
 
 subsection \<open>Complex inner product spaces\<close>
+
+
+instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
+definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
+instance ..
+end
+
 
 text \<open>
 Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
@@ -3406,7 +3412,7 @@ definition is_onb :: "'a::complex_inner set \<Rightarrow> bool"
 )"
 
 lemma is_onb_then_is_ob:
-"is_onb S \<Longrightarrow> is_ob S"
+  "is_onb S \<Longrightarrow> is_ob S"
   unfolding is_onb_def
   by simp
 
@@ -3439,14 +3445,14 @@ setup \<open>Sign.add_const_constraint
 class onb_enum = basis_enum + complex_inner +
   assumes is_orthonormal:
     "is_ortho_set (set canonical_basis)"
-  and is_normal:
+    and is_normal:
     "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
 lemma is_onb_set:
-    "is_onb (set canonical_basis :: 'a::onb_enum set)"
+  "is_onb (set canonical_basis :: 'a::onb_enum set)"
   using is_basis_set[where 'a='a] is_orthonormal[where 'a='a] is_normal[where 'a='a]
   unfolding is_onb_def is_ob_def by auto
 
@@ -3730,450 +3736,6 @@ next
 qed
 
 
-
-(* TODO: remove lemma (subsumed by closed_finite_dim' below, hide_fact does not fully remove it) *)
-(* TODO: Use \<And> and \<Longrightarrow> instead of \<forall>, \<longrightarrow> *)
-lemma closed_finite_dim'_induction:
-  \<open>\<And> A::'a::complex_inner set. card A = n \<Longrightarrow> finite A \<Longrightarrow> 0 \<notin> A \<Longrightarrow>
- (\<And> a a'.  a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
-\<Longrightarrow> closed (complex_vector.span A)\<close>
-proof(induction n)
-  case 0
-  thus ?case
-    by fastforce 
-next
-  case (Suc n)
-  have \<open>card A = Suc n \<Longrightarrow> finite A \<Longrightarrow> 0 \<notin> A \<Longrightarrow> \<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0 
-  \<Longrightarrow> closed (complex_vector.span A)\<close>
-    for A::\<open>'a set\<close>
-  proof-
-    assume \<open>card A = Suc n\<close> and \<open>finite A\<close> and \<open>0 \<notin> A\<close> and
-      \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-    from \<open>card A = Suc n\<close>
-    have \<open>\<exists> b B. b \<notin> B \<and> A = insert b B\<close>
-      by (meson card_Suc_eq)
-    then obtain b B where \<open>b \<notin> B\<close> and \<open>A = insert b B\<close>
-      by blast
-    have \<open>card B = n\<close>
-      using \<open>A = insert b B\<close> \<open>b \<notin> B\<close> \<open>card A = Suc n\<close> \<open>finite A\<close> 
-      by auto      
-    moreover have \<open>finite B\<close>
-      using \<open>A = insert b B\<close> \<open>finite A\<close> 
-      by auto
-    moreover have \<open>0 \<notin> B\<close>
-      using \<open>0 \<notin> A\<close> \<open>A = insert b B\<close> 
-      by auto
-    moreover have \<open>\<forall>a\<in>B. \<forall>a'\<in>B. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-      by (simp add: \<open>A = insert b B\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>)      
-    ultimately have \<open>closed (complex_vector.span B)\<close>
-      using Suc.IH by blast
-    have \<open>(\<And> k. x k \<in> complex_vector.span A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> complex_vector.span A\<close>
-      for x l
-    proof-
-      assume \<open>\<And> k. x k \<in> complex_vector.span A\<close> and \<open>x \<longlonglongrightarrow> l\<close>
-      have \<open>convergent x\<close>
-        using  \<open>x \<longlonglongrightarrow> l\<close>
-        unfolding convergent_def by blast
-      have \<open>\<exists> c. x k - c *\<^sub>C b \<in> complex_vector.span B\<close>
-        for k
-        using \<open>A = insert b B\<close> \<open>\<And>k. x k \<in> complex_vector.span A\<close> complex_vector.span_breakdown_eq 
-        by blast
-      hence \<open>\<exists> c. \<forall> k. x k - (c k) *\<^sub>C b \<in> complex_vector.span B\<close>
-        by metis
-      then obtain c where \<open>\<And> k. x k - (c k) *\<^sub>C b \<in> complex_vector.span B\<close>
-        by blast
-      have \<open>convergent c\<close>
-      proof-
-        have \<open>b \<in> A\<close>
-          by (simp add: \<open>A = insert b B\<close>)
-        hence \<open>b \<noteq> 0\<close>
-          using \<open>0 \<notin> A\<close> by auto          
-        hence \<open>\<langle> b, b \<rangle> \<noteq> 0\<close>
-          by simp          
-        have \<open>\<langle> b, x k \<rangle> = c k * \<langle> b, b \<rangle>\<close>
-          for k
-        proof-
-          have \<open>\<langle> b, x k \<rangle> = \<langle> b, (x k - c k *\<^sub>C b) + c k *\<^sub>C b\<rangle>\<close>
-            by simp
-          also have \<open>\<dots> = \<langle>b, x k - c k *\<^sub>C b\<rangle> + \<langle>b, c k *\<^sub>C b\<rangle>\<close>
-            using cinner_right_distrib by blast
-          also have \<open>\<dots> = \<langle>b, c k *\<^sub>C b\<rangle>\<close>
-          proof-
-            have \<open>b \<in> orthogonal_complement (complex_vector.span B)\<close>
-            proof-
-              have \<open>b' \<in> B \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
-                for b'
-                using \<open>A = insert b B\<close> \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>b \<notin> B\<close> 
-                by auto
-              hence \<open>b' \<in> complex_vector.span B \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
-                for b'
-              proof-
-                assume \<open>b' \<in> complex_vector.span B\<close>
-                hence \<open>\<exists> T r. finite T \<and> T \<subseteq> B \<and> b' = (\<Sum>a \<in>T. r a *\<^sub>C a)\<close>
-                  by (smt complex_vector.span_explicit mem_Collect_eq)
-                then obtain T r where \<open>finite T\<close> and \<open>T \<subseteq> B\<close> and \<open>b' = (\<Sum>a\<in>T. r a *\<^sub>C a)\<close>
-                  by blast
-                have \<open>\<langle>b, b'\<rangle> = (\<Sum>a\<in>T. \<langle>b, r a *\<^sub>C a\<rangle>)\<close>
-                  using  \<open>finite T\<close> \<open>b' = (\<Sum>a\<in>T. r a *\<^sub>C a)\<close> cinner_sum_right by blast
-                show \<open>\<langle>b, b'\<rangle> = 0\<close>
-                proof-
-                  have \<open>a \<in> T \<Longrightarrow> \<langle>b, r a *\<^sub>C a\<rangle> = 0\<close>
-                    for a
-                  proof-
-                    assume \<open>a \<in> T\<close>
-                    hence \<open>\<langle>b, a\<rangle> = 0\<close>
-                      using \<open>T \<subseteq> B\<close> \<open>\<And>b'. b' \<in> B \<Longrightarrow> \<langle>b, b'\<rangle> = 0\<close>
-                      by auto
-                    thus ?thesis
-                      by simp 
-                  qed
-                  thus ?thesis 
-                    using \<open>\<langle>b, b'\<rangle> = (\<Sum>a\<in>T. \<langle>b, r a *\<^sub>C a\<rangle>)\<close> sum.not_neutral_contains_not_neutral 
-                    by force                    
-                qed
-              qed
-              thus ?thesis
-                by (simp add: orthogonal_complement_I2) 
-            qed
-            hence \<open>\<langle>b, x k - c k *\<^sub>C b\<rangle> = 0\<close>
-              using \<open>x k - c k *\<^sub>C b \<in> complex_vector.span B\<close>
-              using orthogonal_complement_D1 by blast
-            thus ?thesis by simp
-          qed
-          also have \<open>\<dots> = c k * \<langle>b, b\<rangle>\<close>
-            by simp
-          finally show ?thesis by blast
-        qed
-        moreover have \<open>(\<lambda> k. \<langle> b, x k \<rangle>) \<longlonglongrightarrow>  \<langle> b, l \<rangle>\<close>
-          using \<open>x \<longlonglongrightarrow> l\<close>
-          by (simp add: cinner_continuous_right)
-        ultimately have \<open>(\<lambda> k. c k * \<langle> b, b \<rangle>) \<longlonglongrightarrow>  \<langle> b, l \<rangle>\<close>
-          by simp
-        hence \<open>convergent (\<lambda> k. c k * \<langle> b, b \<rangle>)\<close>
-          using convergentI by auto
-        hence \<open>convergent (\<lambda> k. (c k * \<langle> b, b \<rangle>)*(1/\<langle> b, b \<rangle>))\<close>
-          using \<open>\<langle> b, b \<rangle> \<noteq> 0\<close>
-          by (metis convergent_mult_const_right_iff divide_eq_0_iff zero_neq_one)          
-        thus \<open>convergent c\<close>
-          using \<open>\<langle> b, b \<rangle> \<noteq> 0\<close>
-          by simp
-      qed
-      hence \<open>\<exists> a. c \<longlonglongrightarrow> a\<close>
-        by (simp add: convergentD)
-      then obtain a where \<open>c \<longlonglongrightarrow> a\<close>
-        by blast
-      moreover have \<open>isCont (\<lambda> t. t *\<^sub>C b) a\<close>
-        using isCont_scalar_right by auto
-      ultimately have \<open>(\<lambda> k. (c k) *\<^sub>C b) \<longlonglongrightarrow> a *\<^sub>C b\<close>
-        using isCont_tendsto_compose[where g = "(\<lambda> t. t *\<^sub>C b)" and l = "a" and f = "c" 
-            and F = "sequentially"]
-        by blast
-      hence \<open>(\<lambda> k. x k - (c k) *\<^sub>C b) \<longlonglongrightarrow> l - a *\<^sub>C b\<close>
-        using \<open>x \<longlonglongrightarrow> l\<close> tendsto_diff by blast
-      hence \<open>l - a *\<^sub>C b \<in> complex_vector.span B\<close>
-        by (meson \<open>\<And>k. x k - c k *\<^sub>C b \<in> complex_vector.span B\<close> \<open>closed (complex_vector.span B)\<close> closed_sequentially)
-      hence \<open>l - a *\<^sub>C b \<in> complex_vector.span A\<close>
-        by (metis \<open>A = insert b B\<close> complex_vector.span_base complex_vector.span_breakdown_eq complex_vector.span_diff complex_vector.span_scale insertI1)
-      moreover have \<open>a *\<^sub>C b \<in> complex_vector.span A\<close>
-        by (simp add: \<open>A = insert b B\<close> complex_vector.span_base complex_vector.span_scale)
-      ultimately show \<open>l \<in> complex_vector.span A\<close>
-        using \<open>A = insert b B\<close> \<open>l - a *\<^sub>C b \<in> complex_vector.span B\<close> complex_vector.span_breakdown_eq 
-        by blast 
-    qed
-    thus \<open>closed (complex_vector.span A)\<close>
-      using closed_sequential_limits by blast      
-  qed
-  thus ?case 
-    by (smt Suc.prems(1) Suc.prems(2) Suc.prems(3) Suc.prems(4))
-      (* > 1s *)
-qed
-
-(* TODO: Remove lemma (subsumed by closed_finite_dim below) *)
-lemma closed_finite_dim':
-  fixes A::\<open>'a::complex_inner set\<close>
-  assumes \<open>\<And> a a'. a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-    and \<open>0 \<notin> A\<close> and \<open>finite A\<close>
-  shows \<open>closed (complex_vector.span A)\<close>
-  using assms closed_finite_dim'_induction by blast
-
-hide_fact closed_finite_dim'_induction
-
-(* TODO: remove lemma (subsumed by Gram_Schmidt0' below, hide_fact does not fully remove it) *)
-lemma Gram_Schmidt0':
-  \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
-           \<and> 0 \<notin> A \<and> finite A)\<close>
-proof (induction n)
-  show "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = 0 \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
-    using card_0_eq by blast
-
-  show "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = Suc n \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
-    if "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = n \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
-    for n :: nat
-  proof-
-    have \<open>0 \<notin> S \<Longrightarrow> finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> \<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A\<close>
-      for S
-    proof-
-      assume \<open>0 \<notin> S\<close> and \<open>finite S\<close> and \<open>card S = Suc n\<close>
-      hence \<open>\<exists> S' s. finite S' \<and> s\<notin>S' \<and> S = insert s S'\<close>
-        by (metis card_Suc_eq finite_insert)
-      then obtain S' s where \<open>finite S'\<close> and \<open>s\<notin>S'\<close> and \<open>S = insert s S'\<close>
-        by blast
-      have \<open>card S' = n\<close>
-        using \<open>S = insert s S'\<close> \<open>card S = Suc n\<close> \<open>finite S'\<close> \<open>s \<notin> S'\<close> 
-        by auto
-      have \<open>\<exists>A'. (\<forall>a\<in>A'. \<forall>a'\<in>A'. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
-          complex_vector.span A' = complex_vector.span S' \<and> 0 \<notin> A' \<and> finite A'\<close>
-        using \<open>0 \<notin> S\<close> \<open>S = insert s S'\<close> \<open>card S' = n\<close> \<open>finite S'\<close> that 
-        by blast
-      then obtain A'::\<open>'a set\<close> where \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
-        \<open>complex_vector.span A' = complex_vector.span S'\<close> and \<open>0 \<notin> A'\<close> and \<open>finite A'\<close>
-        by auto
-      define \<sigma> where \<open>\<sigma> = s - (\<Sum>a'\<in>A'. ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a')\<close>
-      show ?thesis
-      proof (cases \<open>\<sigma> = 0\<close>)
-        show "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
-            complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
-          if "\<sigma> = 0"
-        proof-
-          have \<open>complex_vector.span A' = complex_vector.span S\<close>
-          proof-
-            have \<open>s \<in> complex_vector.span A'\<close>
-              unfolding \<sigma>_def
-              by (metis (no_types, lifting) \<sigma>_def complex_vector.span_base complex_vector.span_scale complex_vector.span_sum eq_iff_diff_eq_0 that)
-            thus ?thesis
-              by (simp add: \<open>S = insert s S'\<close> \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_redundant) 
-          qed
-          thus ?thesis
-            using \<open>0 \<notin> A'\<close> \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>finite A'\<close> 
-            by blast 
-        qed
-        show "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
-          if "\<sigma> \<noteq> 0"
-        proof-
-          define A where \<open>A = insert \<sigma> A'\<close>
-          have \<open>a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-            for a a'
-          proof (cases \<open>a \<in> A' \<and> a' \<in> A'\<close>)
-            show "\<langle>a, a'\<rangle> = 0"
-              if "a \<in> A"
-                and "a' \<in> A"
-                and "a \<noteq> a'"
-                and "a \<in> A' \<and> a' \<in> A'"
-              using that
-              by (simp add: \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>) 
-            show  "\<langle>a, a'\<rangle> = 0"
-              if "a \<in> A"
-                and "a' \<in> A"
-                and "a \<noteq> a'"
-                and "\<not> (a \<in> A' \<and> a' \<in> A')"
-            proof-
-              have \<open>a \<notin> A' \<or> a' \<notin> A'\<close>
-                using that(4) by blast
-              show ?thesis 
-              proof (cases \<open>a \<notin> A'\<close>)
-                have caseI : \<open>a \<in> A \<Longrightarrow> a' \<in> A \<Longrightarrow> a' \<in> A' \<Longrightarrow> a \<notin> A' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-                  for a a'::'a
-                proof-
-                  assume \<open>a \<in> A\<close> and \<open>a' \<in> A\<close> and \<open>a' \<in> A'\<close> and \<open>a \<notin> A'\<close>
-                  have \<open>a = \<sigma>\<close>
-                    using A_def \<open>a \<in> A\<close>
-                    by (simp add: \<open>a \<notin> A'\<close>) 
-                  hence \<open>\<langle>a, a'\<rangle> = \<langle>s - (\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a') , a'\<rangle>\<close>
-                    using \<sigma>_def by auto
-                  also have \<open>\<dots> = \<langle>s, a'\<rangle> - \<langle>(\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'), a'\<rangle>\<close>
-                    by (simp add: cinner_diff_left)
-                  also have \<open>\<dots> = 0\<close>
-                  proof-
-                    have \<open>\<langle>(\<Sum>a''\<in>A'.  ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a''), a'\<rangle>
-                         = (\<Sum>a''\<in>A'. \<langle> ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle>)\<close>
-                      using cinner_sum_left by blast
-                    also have \<open>\<dots> = (\<Sum>a''\<in>A'.  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
-                    proof-
-                      have \<open>\<langle> ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'', a'\<rangle> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>\<close>
-                        for a'' a'
-                        by simp
-                      thus ?thesis
-                        by (smt \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a' \<in> A'\<close> cinner_scaleC_left mult_not_zero sum.cong) 
-                    qed
-                    also have \<open>\<dots> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a', a'\<rangle>
-                                  + (\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
-                    proof-
-                      have \<open>a' \<in> A\<close>
-                        by (simp add: \<open>a' \<in> A\<close>)
-                      thus ?thesis
-                        by (meson \<open>a' \<in> A'\<close> \<open>finite A'\<close> sum.remove)                        
-                    qed
-                    also have \<open>\<dots> =  \<langle>s, a'\<rangle>\<close>
-                    proof-
-                      have \<open>a''\<in>A'-{a'} \<Longrightarrow> \<langle> a'', a' \<rangle> = 0\<close>
-                        for a''
-                        using \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a' \<in> A'\<close> by auto                        
-                      hence \<open>(\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>) = 0\<close>
-                        by simp                        
-                      thus ?thesis by simp
-                    qed
-                    finally have \<open>\<langle>\<Sum>a''\<in>A'. ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle> = \<langle>s, a'\<rangle>\<close>
-                      by blast
-                    thus ?thesis by simp
-                  qed
-                  finally show ?thesis by blast
-                qed
-                show   "\<langle>a, a'\<rangle> = 0"
-                  if "a \<notin> A'"
-                proof-
-                  have \<open>a' \<in> A'\<close>
-                    using A_def \<open>a \<in> A\<close> \<open>a \<noteq> a'\<close> \<open>a' \<in> A\<close> that 
-                    by auto
-                  moreover have \<open>a \<notin> A'\<close>
-                    using \<open>\<not> (a \<in> A' \<and> a' \<in> A')\<close> \<open>a' \<in> A'\<close>
-                    by blast
-                  ultimately show \<open>\<langle>a, a'\<rangle> = 0\<close>
-                    using caseI[where a = "a" and a' = "a'"] \<open>a \<in> A\<close> \<open>a' \<in> A\<close> by blast
-                qed
-                show "\<langle>a, a'\<rangle> = 0"
-                  if "\<not> a \<notin> A'"
-                proof-
-                  have \<open>a \<in> A'\<close>
-                    using that by auto
-                  moreover have \<open>a' \<notin> A'\<close>
-                    using \<open>\<not> (a \<in> A' \<and> a' \<in> A')\<close> \<open>a \<in> A'\<close>
-                    by blast
-                  ultimately have \<open>\<langle>a', a\<rangle> = 0\<close>
-                    using caseI[where a = "a'" and a' = "a"] \<open>a \<in> A\<close> \<open>a' \<in> A\<close> 
-                    by blast
-                  moreover have \<open>\<langle>a, a'\<rangle> =  cnj \<langle>a', a\<rangle>\<close>
-                    by simp
-                  ultimately show ?thesis by simp
-                qed
-              qed
-            qed
-          qed
-          moreover have \<open>complex_vector.span A = complex_vector.span S\<close>
-          proof-
-            have \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
-            proof-
-              have \<open>\<sigma> \<in> complex_vector.span S\<close>
-              proof-
-                have \<open>s \<in> S\<close>
-                  by (simp add: \<open>S = insert s S'\<close>)                  
-                moreover have \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span S\<close>
-                proof-
-                  have \<open>a'\<in>A' \<Longrightarrow> a' \<in> complex_vector.span S\<close>
-                    for a'
-                  proof-
-                    assume \<open>a'\<in>A'\<close>
-                    hence \<open>a' \<in> complex_vector.span S'\<close>
-                      using \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_base
-                      by blast
-                    moreover have \<open>complex_vector.span S' \<subseteq> complex_vector.span S\<close>
-                    proof-
-                      have \<open>S' \<subseteq> S\<close>
-                        by (simp add: \<open>S = insert s S'\<close> subset_insertI)
-                      thus ?thesis
-                        by (simp add: complex_vector.span_mono) 
-                    qed
-                    ultimately show ?thesis by blast
-                  qed
-                  thus ?thesis
-                    by (simp add: complex_vector.span_scale complex_vector.span_sum) 
-                qed
-                ultimately show ?thesis
-                  using \<sigma>_def complex_vector.span_base complex_vector.span_diff by blast 
-              qed
-              moreover have \<open>A' \<subseteq> complex_vector.span S\<close>
-              proof-
-                have \<open>A' \<subseteq> complex_vector.span A\<close>
-                  by (simp add: A_def complex_vector.span_base subsetI)                  
-                moreover have \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
-                  by (smt A_def \<open>S = insert s S'\<close> \<open>\<sigma> \<in> complex_vector.span S\<close> \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_mono complex_vector.span_span complex_vector.span_superset insert_subset order_subst1)
-                    (* > 1 s *)
-                ultimately show ?thesis by blast
-              qed
-              ultimately show ?thesis unfolding A_def
-                by (metis complex_vector.span_mono complex_vector.span_span insert_subset) 
-            qed
-            moreover have \<open>complex_vector.span S \<subseteq> complex_vector.span A\<close>
-            proof-
-              have \<open>S \<subseteq> complex_vector.span A\<close>
-              proof-
-                have \<open>s \<in> complex_vector.span A\<close>
-                proof-
-                  have \<open>\<sigma> \<in> complex_vector.span A\<close>
-                    by (simp add: A_def complex_vector.span_base)
-                  moreover have \<open>\<sigma> - s  \<in> complex_vector.span A\<close>
-                  proof-
-                    have \<open>a'\<in>A' \<Longrightarrow> a' \<in> complex_vector.span A\<close>
-                      for a'
-                    proof-
-                      assume \<open>a'\<in>A'\<close>
-                      hence \<open> a' \<in> complex_vector.span A'\<close>
-                        by (simp add: complex_vector.span_base)
-                      moreover have \<open>complex_vector.span A' \<subseteq> complex_vector.span A\<close>
-                      proof-
-                        have \<open>A' \<subseteq> A\<close>
-                          by (simp add: A_def subset_insertI)
-                        thus ?thesis
-                          by (simp add: complex_vector.span_mono) 
-                      qed
-                      ultimately show ?thesis by blast
-                    qed
-                    hence \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span A\<close>
-                      by (simp add: complex_vector.span_scale complex_vector.span_sum)
-                    thus ?thesis
-                      unfolding \<sigma>_def
-                      using complex_vector.span_diff complex_vector.span_zero by fastforce 
-                  qed
-                  ultimately show ?thesis
-                    by (metis complex_vector.eq_span_insert_eq complex_vector.span_base complex_vector.span_redundant insertI1) 
-                qed
-                moreover have \<open>S' \<subseteq> complex_vector.span A\<close>
-                proof-
-                  have \<open>S' \<subseteq>  complex_vector.span S'\<close>
-                    using complex_vector.span_eq by auto
-                  hence \<open>S' \<subseteq>  complex_vector.span A'\<close>
-                    by (simp add: \<open>complex_vector.span A' = complex_vector.span S'\<close>)
-                  moreover have \<open>complex_vector.span A' \<subseteq> complex_vector.span A\<close>
-                  proof-
-                    have  \<open>A' \<subseteq> A\<close>
-                      by (simp add: A_def subset_insertI)
-                    thus ?thesis
-                      by (simp add: complex_vector.span_mono) 
-                  qed
-                  ultimately show ?thesis by blast
-                qed
-                ultimately show ?thesis
-                  by (simp add: \<open>S = insert s S'\<close>) 
-              qed
-              thus ?thesis
-                using complex_vector.span_mono complex_vector.span_span
-                by blast 
-            qed
-            ultimately show ?thesis by auto
-          qed
-          moreover have \<open>0 \<notin> A\<close>
-            by (simp add: A_def \<open>0 \<notin> A'\<close> that)            
-          moreover have \<open>finite A\<close>
-            by (simp add: A_def \<open>finite A'\<close>)            
-          ultimately show ?thesis by blast
-        qed
-      qed
-    qed
-    thus ?thesis by blast
-  qed
-qed
-
-
-lemma Gram_Schmidt0:
-  fixes S::\<open>'a::complex_inner set\<close>
-  assumes \<open>0 \<notin> S\<close> and \<open>finite S\<close>
-  shows \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
-           \<and> 0 \<notin> A \<and> finite A\<close>
-  using assms Gram_Schmidt0' by blast
-
-hide_fact Gram_Schmidt0'
-
 lemma Gram_Schmidt:
   fixes S::\<open>'a::complex_inner set\<close>
   assumes \<open>finite S\<close>
@@ -4181,6 +3743,279 @@ lemma Gram_Schmidt:
            \<and> complex_vector.span A = complex_vector.span S
            \<and> 0 \<notin> A \<and> finite A\<close>
 proof-
+  have Gram_Schmidt0:
+    \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = complex_vector.span S
+           \<and> 0 \<notin> A \<and> finite A\<close>
+    if \<open>0 \<notin> S\<close> and \<open>finite S\<close>
+    for S::\<open>'a::complex_inner set\<close>
+  proof-
+    have  \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
+           \<and> complex_vector.span A = complex_vector.span S
+           \<and> 0 \<notin> A \<and> finite A)\<close> for n
+    proof (induction n)
+      show "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = 0 \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
+        using card_0_eq by blast
+
+      show "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = Suc n \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
+        if "\<forall>S. (0::'a) \<notin> S \<and> finite S \<and> card S = n \<longrightarrow> (\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A)"
+        for n :: nat
+      proof-
+        have \<open>0 \<notin> S \<Longrightarrow> finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> \<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A\<close>
+          for S
+        proof-
+          assume \<open>0 \<notin> S\<close> and \<open>finite S\<close> and \<open>card S = Suc n\<close>
+          hence \<open>\<exists> S' s. finite S' \<and> s\<notin>S' \<and> S = insert s S'\<close>
+            by (metis card_Suc_eq finite_insert)
+          then obtain S' s where \<open>finite S'\<close> and \<open>s\<notin>S'\<close> and \<open>S = insert s S'\<close>
+            by blast
+          have \<open>card S' = n\<close>
+            using \<open>S = insert s S'\<close> \<open>card S = Suc n\<close> \<open>finite S'\<close> \<open>s \<notin> S'\<close> 
+            by auto
+          have \<open>\<exists>A'. (\<forall>a\<in>A'. \<forall>a'\<in>A'. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
+          complex_vector.span A' = complex_vector.span S' \<and> 0 \<notin> A' \<and> finite A'\<close>
+            using \<open>0 \<notin> S\<close> \<open>S = insert s S'\<close> \<open>card S' = n\<close> \<open>finite S'\<close> that 
+            by blast
+          then obtain A'::\<open>'a set\<close> where \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
+            \<open>complex_vector.span A' = complex_vector.span S'\<close> and \<open>0 \<notin> A'\<close> and \<open>finite A'\<close>
+            by auto
+          define \<sigma> where \<open>\<sigma> = s - (\<Sum>a'\<in>A'. ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a')\<close>
+          show ?thesis
+          proof (cases \<open>\<sigma> = 0\<close>)
+            show "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
+            complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
+              if "\<sigma> = 0"
+            proof-
+              have \<open>complex_vector.span A' = complex_vector.span S\<close>
+              proof-
+                have \<open>s \<in> complex_vector.span A'\<close>
+                  unfolding \<sigma>_def
+                  by (metis (no_types, lifting) \<sigma>_def complex_vector.span_base complex_vector.span_scale complex_vector.span_sum eq_iff_diff_eq_0 that)
+                thus ?thesis
+                  by (simp add: \<open>S = insert s S'\<close> \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_redundant) 
+              qed
+              thus ?thesis
+                using \<open>0 \<notin> A'\<close> \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>finite A'\<close> 
+                by blast 
+            qed
+            show "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
+              if "\<sigma> \<noteq> 0"
+            proof-
+              define A where \<open>A = insert \<sigma> A'\<close>
+              have \<open>a\<in>A \<Longrightarrow> a'\<in>A \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                for a a'
+              proof (cases \<open>a \<in> A' \<and> a' \<in> A'\<close>)
+                show "\<langle>a, a'\<rangle> = 0"
+                  if "a \<in> A"
+                    and "a' \<in> A"
+                    and "a \<noteq> a'"
+                    and "a \<in> A' \<and> a' \<in> A'"
+                  using that
+                  by (simp add: \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>) 
+                show  "\<langle>a, a'\<rangle> = 0"
+                  if "a \<in> A"
+                    and "a' \<in> A"
+                    and "a \<noteq> a'"
+                    and "\<not> (a \<in> A' \<and> a' \<in> A')"
+                proof-
+                  have \<open>a \<notin> A' \<or> a' \<notin> A'\<close>
+                    using that(4) by blast
+                  show ?thesis 
+                  proof (cases \<open>a \<notin> A'\<close>)
+                    have caseI : \<open>a \<in> A \<Longrightarrow> a' \<in> A \<Longrightarrow> a' \<in> A' \<Longrightarrow> a \<notin> A' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
+                      for a a'::'a
+                    proof-
+                      assume \<open>a \<in> A\<close> and \<open>a' \<in> A\<close> and \<open>a' \<in> A'\<close> and \<open>a \<notin> A'\<close>
+                      have \<open>a = \<sigma>\<close>
+                        using A_def \<open>a \<in> A\<close>
+                        by (simp add: \<open>a \<notin> A'\<close>) 
+                      hence \<open>\<langle>a, a'\<rangle> = \<langle>s - (\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a') , a'\<rangle>\<close>
+                        using \<sigma>_def by auto
+                      also have \<open>\<dots> = \<langle>s, a'\<rangle> - \<langle>(\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'), a'\<rangle>\<close>
+                        by (simp add: cinner_diff_left)
+                      also have \<open>\<dots> = 0\<close>
+                      proof-
+                        have \<open>\<langle>(\<Sum>a''\<in>A'.  ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a''), a'\<rangle>
+                         = (\<Sum>a''\<in>A'. \<langle> ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle>)\<close>
+                          using cinner_sum_left by blast
+                        also have \<open>\<dots> = (\<Sum>a''\<in>A'.  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
+                        proof-
+                          have \<open>\<langle> ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'', a'\<rangle> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>\<close>
+                            for a'' a'
+                            by simp
+                          thus ?thesis
+                            by (smt \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a' \<in> A'\<close> cinner_scaleC_left mult_not_zero sum.cong) 
+                        qed
+                        also have \<open>\<dots> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a', a'\<rangle>
+                                  + (\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
+                        proof-
+                          have \<open>a' \<in> A\<close>
+                            by (simp add: \<open>a' \<in> A\<close>)
+                          thus ?thesis
+                            by (meson \<open>a' \<in> A'\<close> \<open>finite A'\<close> sum.remove)                        
+                        qed
+                        also have \<open>\<dots> =  \<langle>s, a'\<rangle>\<close>
+                        proof-
+                          have \<open>a''\<in>A'-{a'} \<Longrightarrow> \<langle> a'', a' \<rangle> = 0\<close>
+                            for a''
+                            using \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> \<open>a' \<in> A'\<close> by auto                        
+                          hence \<open>(\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>) = 0\<close>
+                            by simp                        
+                          thus ?thesis by simp
+                        qed
+                        finally have \<open>\<langle>\<Sum>a''\<in>A'. ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle> = \<langle>s, a'\<rangle>\<close>
+                          by blast
+                        thus ?thesis by simp
+                      qed
+                      finally show ?thesis by blast
+                    qed
+                    show   "\<langle>a, a'\<rangle> = 0"
+                      if "a \<notin> A'"
+                    proof-
+                      have \<open>a' \<in> A'\<close>
+                        using A_def \<open>a \<in> A\<close> \<open>a \<noteq> a'\<close> \<open>a' \<in> A\<close> that 
+                        by auto
+                      moreover have \<open>a \<notin> A'\<close>
+                        using \<open>\<not> (a \<in> A' \<and> a' \<in> A')\<close> \<open>a' \<in> A'\<close>
+                        by blast
+                      ultimately show \<open>\<langle>a, a'\<rangle> = 0\<close>
+                        using caseI[where a = "a" and a' = "a'"] \<open>a \<in> A\<close> \<open>a' \<in> A\<close> by blast
+                    qed
+                    show "\<langle>a, a'\<rangle> = 0"
+                      if "\<not> a \<notin> A'"
+                    proof-
+                      have \<open>a \<in> A'\<close>
+                        using that by auto
+                      moreover have \<open>a' \<notin> A'\<close>
+                        using \<open>\<not> (a \<in> A' \<and> a' \<in> A')\<close> \<open>a \<in> A'\<close>
+                        by blast
+                      ultimately have \<open>\<langle>a', a\<rangle> = 0\<close>
+                        using caseI[where a = "a'" and a' = "a"] \<open>a \<in> A\<close> \<open>a' \<in> A\<close> 
+                        by blast
+                      moreover have \<open>\<langle>a, a'\<rangle> =  cnj \<langle>a', a\<rangle>\<close>
+                        by simp
+                      ultimately show ?thesis by simp
+                    qed
+                  qed
+                qed
+              qed
+              moreover have \<open>complex_vector.span A = complex_vector.span S\<close>
+              proof-
+                have \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
+                proof-
+                  have \<open>\<sigma> \<in> complex_vector.span S\<close>
+                  proof-
+                    have \<open>s \<in> S\<close>
+                      by (simp add: \<open>S = insert s S'\<close>)                  
+                    moreover have \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span S\<close>
+                    proof-
+                      have \<open>a'\<in>A' \<Longrightarrow> a' \<in> complex_vector.span S\<close>
+                        for a'
+                      proof-
+                        assume \<open>a'\<in>A'\<close>
+                        hence \<open>a' \<in> complex_vector.span S'\<close>
+                          using \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_base
+                          by blast
+                        moreover have \<open>complex_vector.span S' \<subseteq> complex_vector.span S\<close>
+                        proof-
+                          have \<open>S' \<subseteq> S\<close>
+                            by (simp add: \<open>S = insert s S'\<close> subset_insertI)
+                          thus ?thesis
+                            by (simp add: complex_vector.span_mono) 
+                        qed
+                        ultimately show ?thesis by blast
+                      qed
+                      thus ?thesis
+                        by (simp add: complex_vector.span_scale complex_vector.span_sum) 
+                    qed
+                    ultimately show ?thesis
+                      using \<sigma>_def complex_vector.span_base complex_vector.span_diff by blast 
+                  qed
+                  moreover have \<open>A' \<subseteq> complex_vector.span S\<close>
+                  proof-
+                    have \<open>A' \<subseteq> complex_vector.span A\<close>
+                      by (simp add: A_def complex_vector.span_base subsetI)                  
+                    moreover have \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
+                      by (smt A_def \<open>S = insert s S'\<close> \<open>\<sigma> \<in> complex_vector.span S\<close> \<open>complex_vector.span A' = complex_vector.span S'\<close> complex_vector.span_mono complex_vector.span_span complex_vector.span_superset insert_subset order_subst1)
+                        (* > 1 s *)
+                    ultimately show ?thesis by blast
+                  qed
+                  ultimately show ?thesis unfolding A_def
+                    by (metis complex_vector.span_mono complex_vector.span_span insert_subset) 
+                qed
+                moreover have \<open>complex_vector.span S \<subseteq> complex_vector.span A\<close>
+                proof-
+                  have \<open>S \<subseteq> complex_vector.span A\<close>
+                  proof-
+                    have \<open>s \<in> complex_vector.span A\<close>
+                    proof-
+                      have \<open>\<sigma> \<in> complex_vector.span A\<close>
+                        by (simp add: A_def complex_vector.span_base)
+                      moreover have \<open>\<sigma> - s  \<in> complex_vector.span A\<close>
+                      proof-
+                        have \<open>a'\<in>A' \<Longrightarrow> a' \<in> complex_vector.span A\<close>
+                          for a'
+                        proof-
+                          assume \<open>a'\<in>A'\<close>
+                          hence \<open> a' \<in> complex_vector.span A'\<close>
+                            by (simp add: complex_vector.span_base)
+                          moreover have \<open>complex_vector.span A' \<subseteq> complex_vector.span A\<close>
+                          proof-
+                            have \<open>A' \<subseteq> A\<close>
+                              by (simp add: A_def subset_insertI)
+                            thus ?thesis
+                              by (simp add: complex_vector.span_mono) 
+                          qed
+                          ultimately show ?thesis by blast
+                        qed
+                        hence \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span A\<close>
+                          by (simp add: complex_vector.span_scale complex_vector.span_sum)
+                        thus ?thesis
+                          unfolding \<sigma>_def
+                          using complex_vector.span_diff complex_vector.span_zero by fastforce 
+                      qed
+                      ultimately show ?thesis
+                        by (metis complex_vector.eq_span_insert_eq complex_vector.span_base complex_vector.span_redundant insertI1) 
+                    qed
+                    moreover have \<open>S' \<subseteq> complex_vector.span A\<close>
+                    proof-
+                      have \<open>S' \<subseteq>  complex_vector.span S'\<close>
+                        using complex_vector.span_eq by auto
+                      hence \<open>S' \<subseteq>  complex_vector.span A'\<close>
+                        by (simp add: \<open>complex_vector.span A' = complex_vector.span S'\<close>)
+                      moreover have \<open>complex_vector.span A' \<subseteq> complex_vector.span A\<close>
+                      proof-
+                        have  \<open>A' \<subseteq> A\<close>
+                          by (simp add: A_def subset_insertI)
+                        thus ?thesis
+                          by (simp add: complex_vector.span_mono) 
+                      qed
+                      ultimately show ?thesis by blast
+                    qed
+                    ultimately show ?thesis
+                      by (simp add: \<open>S = insert s S'\<close>) 
+                  qed
+                  thus ?thesis
+                    using complex_vector.span_mono complex_vector.span_span
+                    by blast 
+                qed
+                ultimately show ?thesis by auto
+              qed
+              moreover have \<open>0 \<notin> A\<close>
+                by (simp add: A_def \<open>0 \<notin> A'\<close> that)            
+              moreover have \<open>finite A\<close>
+                by (simp add: A_def \<open>finite A'\<close>)            
+              ultimately show ?thesis by blast
+            qed
+          qed
+        qed
+        thus ?thesis by blast
+      qed
+    qed
+    thus ?thesis  
+      by (smt that(1) that(2)) (* > 1s *)
+  qed
+
   have \<open>0 \<notin> S - {0}\<close>
     by simp
   moreover have \<open>finite (S - {0})\<close>
@@ -4196,28 +4031,346 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-hide_fact Gram_Schmidt0
 
-(* TODO: Use the one from ToDo_Finite_Span_Closed instead. *)
-lemma closed_finite_dim:
-  fixes T::\<open>'a::complex_inner set\<close>
-  assumes \<open>finite T\<close>
-  shows \<open>closed (complex_vector.span T)\<close>
+lemma ortho_imples_independent:
+  assumes a1: "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+    and a2: "0 \<notin> A" 
+  shows "complex_vector.independent A"
 proof-
-  have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span T
-           \<and> 0 \<notin> A \<and> finite A\<close>
-    using \<open>finite T\<close> Gram_Schmidt by blast
-  then obtain A where \<open>\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-    and \<open>complex_vector.span A = complex_vector.span T\<close>
-    and \<open>0 \<notin> A\<close> and \<open>finite A\<close>
-    by auto
-  hence \<open>closed (complex_vector.span A)\<close>
-    using closed_finite_dim' by blast
-  thus ?thesis 
-    using \<open>complex_vector.span A = complex_vector.span T\<close>
-    by auto
+  have "finite t \<Longrightarrow> t \<subseteq> A \<Longrightarrow> (\<Sum>v\<in>t. u v *\<^sub>C v) = 0 \<Longrightarrow> v \<in> t \<Longrightarrow> u v = 0"
+    for t u v
+  proof-
+    assume b1: "finite t" and b2: "t \<subseteq> A" and b3: "(\<Sum>v\<in>t. u v *\<^sub>C v) = 0" and b4: "v \<in> t"
+    have "v'\<in>t-{v} \<Longrightarrow> \<langle>v, v'\<rangle> = 0" for v'
+    proof-
+      assume "v'\<in>t-{v}"
+      hence "v \<noteq> v'" by blast
+      thus ?thesis using a1
+        by (meson DiffD1 \<open>v' \<in> t - {v}\<close> b2 b4 subset_eq) 
+    qed
+    hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
+      by simp
+    have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
+      using b1
+      by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong) 
+    also have "\<dots> = u v * \<langle>v, v\<rangle> + (\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>)"
+      by (meson b1 b4 sum.remove)
+    also have "\<dots> = u v * \<langle>v, v\<rangle>"
+      using sum0 by simp
+    finally have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> =  u v * \<langle>v, v\<rangle>"
+      by blast
+    hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
+    moreover have "\<langle>v, v\<rangle> \<noteq> 0"
+    proof-
+      have "v \<in> A"
+        using b2 b4 by blast        
+      hence "v \<noteq> 0"
+        using a2 by blast
+      thus ?thesis by simp 
+    qed
+    ultimately show "u v = 0" by simp
+  qed
+  thus ?thesis using independent_explicit_module
+    by (smt Complex_Vector_Spaces.dependent_raw_def) 
+      (* > 1s *)
 qed
+
+
+
+lemma complex_real_span:
+  "complex_vector.span B = real_vector.span (B \<union> scaleC \<i> ` B)"
+proof auto
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  fix \<psi>
+  assume cspan: "\<psi> \<in> ?cspan B"
+  obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
+    apply atomize_elim 
+    using complex_vector.span_explicit[of B] cspan
+    by auto
+  define R where "R = B \<union> scaleC \<i> ` B"
+  have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
+    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
+    by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
+  then have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
+    apply (subst sum.cartesian_product[symmetric])
+    by (simp add: UNIV_bool \<psi>_explicit)
+  also have "\<dots> \<in> ?rspan R"
+    unfolding R_def
+    apply (rule real_vector.span_sum)
+    using \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff) 
+  finally show "\<psi> \<in> ?rspan R" by -
+next
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  define R where "R = B \<union> scaleC \<i> ` B"
+  fix \<psi>
+  assume rspan: "\<psi> \<in> ?rspan R"
+  then show "\<psi> \<in> ?cspan B"
+    apply induction
+     apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
+    using R_def complex_vector.span_base complex_vector.span_scale by fastforce 
+qed
+
+lemma finite_span_complete_aux:
+  fixes b :: "'b::real_normed_vector" and B :: "'b set"
+    and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
+  assumes t: "type_definition rep abs B"
+  assumes "finite B" and "b\<in>B" and "independent B"
+  shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+    and "complete (real_vector.span B)"
+(* Ask to Dominique: why there is an error here?
+  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
+     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
+     content of the lemmas. However, there is one difference: We additionally assume here
+     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
+     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
+     the type class \<^class>\<open>finite\<close>
+
+     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
+     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
+     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
+     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
+*)
+proof -
+  define repr  where "repr = real_vector.representation B"
+  define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
+  define comb  where "comb l = (\<Sum>b\<in>B. l b *\<^sub>R b)" for l
+  define comb' where "comb' l = comb (Rep_euclidean_space l o abs)" for l
+
+  have comb_cong: "comb x = comb y" if "\<And>z. z\<in>B \<Longrightarrow> x z = y z" for x y
+    unfolding comb_def using that by auto
+  have comb_repr[simp]: "comb (repr \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
+    unfolding comb_def repr_def 
+    apply (rule real_vector.sum_representation_eq)
+    using assms that by auto
+  have repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
+    unfolding repr_def comb_def
+    apply (rule real_vector.representation_eqI)
+    using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)
+      (* Sledgehammer *)
+     apply meson
+    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_cong_left)
+(* > 1s *)
+  have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
+    unfolding repr_def using that
+    by (simp add: real_vector.representation_def)
+  have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
+    unfolding repr'_def repr_bad[OF that]
+    by (transfer fixing: rep, simp)
+  have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
+  proof -
+    have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
+      unfolding comb'_def repr'_def
+      by (subst Abs_euclidean_space_inverse; simp)
+    also have "\<dots> = comb (repr \<psi>)"
+      apply (rule comb_cong) unfolding o_def
+      by (subst type_definition.Abs_inverse[OF t]; simp)
+    also have "\<dots> = \<psi>"
+      using that by simp
+    finally show ?thesis by -
+  qed
+  have repr'_comb'[simp]: "repr' (comb' x) = x" for x
+    unfolding comb'_def repr'_def o_def
+    apply simp
+    apply (subst type_definition.Rep_inverse[OF t])
+    using type_definition.Rep[OF t] apply simp
+    apply (subst Rep_euclidean_space_inverse)
+    by simp
+  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" for d
+    using compact_sphere by blast
+
+  have "complete (UNIV :: 'basis euclidean_space set)"
+    by (simp add: complete_UNIV)
+
+  have blin_comb': "bounded_linear comb'"
+    unfolding comb_def comb'_def apply (rule bounded_linearI')
+     apply (transfer fixing: abs)
+     apply (simp add: scaleR_add_left sum.distrib)
+    apply (transfer fixing: abs)
+    by (simp add: real_vector.scale_sum_right)
+
+  then have "continuous_on X comb'" for X
+    by (simp add: linear_continuous_on)
+
+  then have "compact (comb' ` sphere 0 d)" for d
+    using sphere
+    apply (rule compact_continuous_image)
+    by -
+
+  then have compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
+    apply (rule compact_continuous_image[rotated])
+    apply (rule continuous_on_norm)
+    by auto
+
+  have not0: "0 \<notin> norm ` comb' ` sphere 0 1"
+  proof (rule ccontr, simp)
+    assume "0 \<in> norm ` comb' ` sphere 0 1"
+    then obtain x where nc0: "norm (comb' x) = 0" and x: "x \<in> sphere 0 1"
+      by auto
+    then have "comb' x = 0"
+      by simp
+    then have "repr' (comb' x) = 0"
+      unfolding repr'_def o_def repr_def apply simp
+      by (smt repr'_comb' blin_comb' dist_0_norm linear_simps(3) mem_sphere norm_zero x)
+    then have "x = 0"
+      by auto
+    with x show False
+      by simp
+  qed
+  have "\<exists>d>0. \<forall>x\<in>norm ` comb' ` sphere 0 1. d \<le> dist 0 x"
+    apply (rule_tac separate_point_closed)
+    using not0 compact_norm_comb'
+     apply auto
+    using compact_imp_closed by blast
+
+  then obtain d where d: "x\<in>norm ` comb' ` sphere 0 1 \<Longrightarrow> d \<le> dist 0 x"  
+    and "d > 0" for x
+    by metis
+  define D where "D = 1/d"
+  then have "D > 0"
+    using \<open>d>0\<close> unfolding D_def by auto
+  from d have "x \<ge> d"  if "x\<in>norm ` comb' ` sphere 0 1" for x
+    apply auto
+    using that by fastforce
+  then have *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
+    using that by auto
+  have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
+    apply (cases "x=0")
+     apply simp
+    using *[of "(1/norm x) *\<^sub>R x"]
+    unfolding linear_simps(5)[OF blin_comb']
+    apply auto
+    by (simp add: le_divide_eq)
+  have *:  "norm (repr' \<psi>) \<le> norm \<psi> * D" for \<psi>
+    apply (cases "\<psi> \<in> real_vector.span B")
+    unfolding D_def
+    using norm_comb'[of "repr' \<psi>"] \<open>d>0\<close>
+    by (simp_all add: linordered_field_class.mult_imp_le_div_pos mult.commute)
+  then have "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
+  proof -
+    have "(Rep_euclidean_space (repr' \<psi>) (abs b)) = repr' \<psi> \<bullet> euclidean_space_basis_vector (abs b)"
+      apply (transfer fixing: abs b)
+      apply auto by -
+    also have "\<bar>\<dots>\<bar> \<le> norm (repr' \<psi>)"
+      apply (rule Basis_le_norm)
+      unfolding Basis_euclidean_space_def by simp
+    also have "\<dots> \<le> norm \<psi> * D"
+      using * by auto
+    finally show ?thesis by simp
+  qed
+  then have "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
+    unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
+     apply auto
+    unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
+  then show "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
+    using \<open>D>0\<close> by auto
+
+  have complete_comb': "complete (comb' ` UNIV)"
+    using \<open>d>0\<close> apply (rule complete_isometric_image)
+    using blin_comb' norm_comb' complete_UNIV by auto
+
+  have range_comb': "comb' ` UNIV = real_vector.span B"
+  proof (auto simp: image_def)
+    show "comb' x \<in> real_vector.span B" for x
+      by (metis comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb real_vector.representation_zero real_vector.span_zero)
+  next
+    fix \<psi> assume "\<psi> \<in> real_vector.span B"
+    then obtain f where f: "comb f = \<psi>"
+      apply atomize_elim
+      unfolding real_vector.span_finite[OF \<open>finite B\<close>] comb_def
+      by auto
+    define f' where "f' b = (if b\<in>B then f b else 0)" for b :: 'b
+    have f': "comb f' = \<psi>"
+      unfolding f[symmetric]
+      apply (rule comb_cong)
+      unfolding f'_def by simp
+    define x :: "'basis euclidean_space" where "x = Abs_euclidean_space (f' o rep)"
+    have "\<psi> = comb' x"
+      unfolding comb'_def x_def o_def
+      apply (subst Abs_euclidean_space_inverse, simp)
+      apply (subst comb_cong[of _ f'])
+       apply (subst type_definition.Abs_inverse[OF t]; simp)
+      using f' by simp
+    then show "\<exists>x. \<psi> = comb' x"
+      by auto
+  qed
+
+  from range_comb' complete_comb'
+  show "complete (real_vector.span B)"
+    by simp
+qed
+
+
+lemma finite_span_complete:
+  fixes A :: "'a::real_normed_vector set"
+  assumes "finite A"
+  shows "complete (real_vector.span A)"
+  text \<open>The span of a finite set is complete.\<close>
+proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
+  case True
+  obtain B where
+    BT: "real_vector.span B = real_vector.span A"
+    and "independent B"  
+    and "finite B"
+    by (metis (no_types, lifting) True assms dual_order.trans finite.cases finite_subset 
+        real_vector.maximal_independent_subset real_vector.maximal_independent_subset_extend 
+        real_vector.span_eq real_vector.span_superset)
+
+
+  have "B\<noteq>{}"
+    apply (rule ccontr, simp)
+    using BT True
+    by (metis real_vector.span_superset real_vector.span_empty subset_singletonD)
+
+(* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
+  {
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux,
+       otherwise "internalize_sort" below fails *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
+      by auto
+    have basisT_finite: "class.finite TYPE('basisT)"
+      apply intro_classes
+      using \<open>finite B\<close> t
+      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+    note finite_span_complete_aux(2)(* [internalize_sort "'basis::finite"] *) 
+      (* Ask to Dominique: I do not know how to use "internalize_sort" and "OF" *)
+    note this(* [OF basisT_finite t] *)
+  }
+  note this (* [cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>] *)
+  then have "complete (real_vector.span B)"
+    using \<open>B\<noteq>{}\<close>  sorry (* Ask to Dominique: how to prove this *)
+  then show "complete (real_vector.span A)"
+    unfolding BT by simp
+next
+  case False
+  then show ?thesis
+    using complete_singleton by auto
+qed
+
+
+lemma finite_complex_span_complete: 
+  fixes B :: "'a::complex_normed_vector set"
+  assumes "finite B"
+  shows "complete (complex_vector.span B)"
+  apply (subst complex_real_span)
+  apply (rule finite_span_complete)
+  using assms by auto
+
+lemma finite_span_closed: 
+  fixes B :: "'a::real_normed_vector set"
+  assumes "finite B"
+  shows "closed (real_vector.span B)"
+    by (simp add: assms complete_imp_closed finite_span_complete) 
+
+lemma closed_finite_dim:
+  fixes S::\<open>'a::complex_normed_vector set\<close> (* NEW: Generalization, it was for Hilbert spaces *)
+  assumes a1: \<open>finite S\<close>
+  shows \<open>closed (complex_vector.span S)\<close>  
+  by (simp add: finite_complex_span_complete assms complete_imp_closed)
+
 
 lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^sub>C 1 = a\<close>
 proof-
@@ -4254,6 +4407,7 @@ lemma one_dim_prod: "(\<psi>::_::one_dim) * \<phi> = (\<langle>1, \<psi>\<rangle
   apply (subst one_dim_1_times_a_eq_a[symmetric, of \<psi>])
   apply (subst one_dim_1_times_a_eq_a[symmetric, of \<phi>])
   by (simp add: one_dim_prod_scale1)
+
 
 instance one_dim \<subseteq> complex_algebra_1
 proof
@@ -4311,13 +4465,6 @@ proof
   qed
 qed
 
-
-lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
-  by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
-
-(* TODO: prove those lemmas. Some of them can be moved into the class one_dim context above
-(before \<open>instance one_dim \<subseteq> complex_algebra_1\<close>) if they are useful for the proof
-of that instance. *)
 context one_dim begin
 
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
@@ -4331,6 +4478,10 @@ lemma cbounded_linear_one_dim_to_complex: "cbounded_linear one_dim_to_complex"
 
 end
 
+
+
+lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
+  by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
 
 
 lemma bounded_sesquilinear_0_left: 
@@ -4745,12 +4896,6 @@ qed
 
 subsection \<open>Commutative monoid of subspaces\<close>
 
-(* TODO: move to earliest possible place *)
-instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
-definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
-instance ..
-end
-
 instantiation linear_space :: (chilbert_space) comm_monoid_add begin
 definition plus_linear_space :: "'a linear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_linear_space = sup"
 instance 
@@ -5025,12 +5170,13 @@ lemma differentiable_cinner [simp]:
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
 
-(* TODO: 
-
+(* Ask to Dominique: how to prove this?
 lemma cGDERIV_norm:
   assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
+  sorry
 
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
+  sorry
 *)
 
 lemma cinner_ext_0: 
@@ -5194,6 +5340,7 @@ proof-
 qed
 
 (* TODO: move? *)
+(* Ask to Dominique: where? *)
 lemma hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat:
   \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
 proof-
@@ -6047,7 +6194,7 @@ proof-
     using \<open>convergent x\<close> unfolding convergent_def
     by blast
   then obtain l where
-   \<open>x \<longlonglongrightarrow> l\<close>
+    \<open>x \<longlonglongrightarrow> l\<close>
     by blast
   moreover have \<open>(\<lambda>n. (0::real)) \<longlonglongrightarrow> 0\<close>
     by auto
@@ -6159,7 +6306,7 @@ lemma tendsto_finite_sum_induction:
   fixes X :: \<open>_ \<Rightarrow> _ \<Rightarrow> _::topological_monoid_add\<close>
   shows \<open>\<forall> T. card T = n \<and> finite T \<and> (\<forall> t. t\<in>T \<longrightarrow> (X t \<longlonglongrightarrow> L t)) \<longrightarrow> 
 ((\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t))\<close>
-  proof (induction n)
+proof (induction n)
   show "\<forall>T. card T = 0 \<and> finite T \<and> (\<forall>t. t \<in> T \<longrightarrow> X t \<longlonglongrightarrow> L t) \<longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T"
   proof-
     have \<open>card T = 0 \<Longrightarrow> finite T \<Longrightarrow> (\<And> t. t \<in> T \<Longrightarrow> X t \<longlonglongrightarrow> L t) \<Longrightarrow> (\<lambda>n. \<Sum>t\<in>T. X t n) \<longlonglongrightarrow> sum L T\<close>
@@ -6292,7 +6439,7 @@ proposition bounded_nsbounded_norm_I:
   using HFinite_not_HInfinite unbounded_nsbounded_D by blast
 
 proposition bounded_nsbounded_norm:
-\<open>(\<forall> x\<in>*s* S. x \<in> HFinite) \<longleftrightarrow> bounded S\<close>
+  \<open>(\<forall> x\<in>*s* S. x \<in> HFinite) \<longleftrightarrow> bounded S\<close>
   for S::\<open>'a::real_normed_vector set\<close>
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
   by blast

@@ -13,7 +13,11 @@ theory All
     Complex_Inner_Product
     Bounded_Operators
     Complex_L2
-    Bounded_Operators_Code 
+    Bounded_Operators_Code
+    Bounded_Operators_Matrices
+    Bounded_Operators_Code_Examples
+    Real_Sqrt2
+    Jordan_Normal_Form_Missing
 begin
 
 
