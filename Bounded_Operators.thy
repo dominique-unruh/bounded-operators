@@ -1470,22 +1470,21 @@ lift_definition plus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun 
   "\<lambda>f g x. f x + g x"
   by (rule cbounded_linear_add)
 
-(* TODO remove *)
-(* Jose: If I remove it, there are errors *)
-lemma blinfun_of_cblinfun_plus:
-  fixes f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close> 
-  shows "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-  unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-  apply auto
-  apply transfer
-  by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
 
 lemma cblinfun_of_blinfun_plus:
   assumes \<open>\<And>c. \<And>x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
     and \<open>\<And>c. \<And>x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
   shows \<open>cblinfun_of_blinfun (f + g) = cblinfun_of_blinfun f + cblinfun_of_blinfun g\<close>
-  using assms
-  by (metis blinfun_of_cblinfun_plus blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim)
+proof-
+  have "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
+    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
+    apply auto
+    apply transfer
+    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
+  thus ?thesis using assms
+    by (metis blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim)
+qed
 
 lift_definition uminus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
   "\<lambda>f x. - f x"
@@ -1593,6 +1592,13 @@ proof
       and b :: "('a, 'b) cblinfun"
       and c :: "('a, 'b) cblinfun"
   proof -
+    have blinfun_of_cblinfun_plus:
+      "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+      for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
+      unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
+      apply auto
+      apply transfer
+      by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
     have f1: "\<forall>r ra. ((\<exists>c a. blinfun_apply r (c *\<^sub>C (a::'a)) \<noteq> c *\<^sub>C (blinfun_apply r a::'b)) \<or> (\<exists>c a. blinfun_apply ra (c *\<^sub>C a) \<noteq> c *\<^sub>C blinfun_apply ra a)) \<or> cblinfun_of_blinfun (r + ra) = cblinfun_of_blinfun r + cblinfun_of_blinfun ra"
       using cblinfun_of_blinfun_plus by blast
     obtain cc :: "('a, 'b) blinfun \<Rightarrow> complex" and aa :: "('a, 'b) blinfun \<Rightarrow> 'a" where
@@ -1614,8 +1620,15 @@ proof
   show \<open>(0::('a, 'b) cblinfun) + a = a\<close>
     for a :: "('a, 'b) cblinfun"
   proof -
+    have blinfun_of_cblinfun_plus:
+      "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+      for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
+      unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
+      apply auto
+      apply transfer
+      by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
     have "blinfun_of_cblinfun (map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a) = blinfun_of_cblinfun 0 + blinfun_of_cblinfun a"
-      using Bounded_Operators.blinfun_of_cblinfun_plus plus_cblinfun_def by auto
+      using blinfun_of_cblinfun_plus plus_cblinfun_def by auto
     hence "map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a = a"
       by (simp add: Bounded_Operators.blinfun_of_cblinfun_zero blinfun_of_cblinfun_inj)
     thus ?thesis
@@ -1627,7 +1640,13 @@ proof
     for a :: "('a, 'b) cblinfun"
       and b :: "('a, 'b) cblinfun"
     by (simp add: add.commute plus_cblinfun_def)
-
+  have blinfun_of_cblinfun_plus:
+    "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
+    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
+    apply auto
+    apply transfer
+    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
   show \<open>- a + a = 0\<close>
     for a :: "('a, 'b) cblinfun"
     by (metis (mono_tags) add.left_inverse cblinfun_of_blinfun_zero cblinfun_blinfun blinfun_of_cblinfun_plus blinfun_of_cblinfun_uminus)
@@ -2065,18 +2084,29 @@ lemma timesOp_assoc:
   by (metis (no_types, lifting) cblinfun_apply_inject fun.map_comp timesOp.rep_eq)
 
 lemma timesOp_dist1:  
-  fixes a b :: "('b::complex_normed_vector, 'c::complex_normed_vector) cblinfun"
-    and c :: "('a::complex_normed_vector, 'b) cblinfun"
+  fixes a b :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
+    and c :: "'a::complex_normed_vector   \<Rightarrow>\<^sub>C\<^sub>L 'b"
   shows "(a + b)  o\<^sub>C\<^sub>L c = (a  o\<^sub>C\<^sub>L c) + (b  o\<^sub>C\<^sub>L c)"
-  using blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp
-  by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp times_blinfun_dist1)
+  apply transfer
+  by auto
+
 
 lemma timesOp_dist2:  
   fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun"
     and c :: "('b, 'c::complex_normed_vector) cblinfun"
   shows "c o\<^sub>C\<^sub>L (a + b) = (c o\<^sub>C\<^sub>L a) + (c o\<^sub>C\<^sub>L b)"
-  using  blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp
-  by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_timesOp times_blinfun_dist2)
+proof-
+  have blinfun_of_cblinfun_plus:
+    "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
+    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
+    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
+    apply auto
+    apply transfer
+    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
+  thus ?thesis
+    apply transfer unfolding id_def apply auto   using  blinfun_of_cblinfun_inj  blinfun_of_cblinfun_timesOp times_blinfun_dist2
+    using cbounded_linear.bounded_linear linear_simps(1) by fastforce
+qed
 
 lemma timesOp_minus:
   \<open>A o\<^sub>C\<^sub>L (B - C) = A o\<^sub>C\<^sub>L B - A o\<^sub>C\<^sub>L C\<close>
@@ -4976,7 +5006,7 @@ proof-
       using a3 by auto
     hence "v (inverse c *\<^sub>C y) = 0"
       using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
-       complex_vector.independentD by blast
+        complex_vector.independentD by blast
     thus "u y = 0"
       unfolding v_def
       by (simp add: a3) 
@@ -5021,7 +5051,7 @@ qed
 lemma complex_real_independent:
   assumes a1: "complex_independent B"
   shows "independent (B \<union> (*\<^sub>C) \<i> ` B)"
-(* proof (rule ccontr)
+    (* proof (rule ccontr)
   define B' where "B' = B \<union> ( *\<^sub>C) \<i> ` B"
   assume "\<not> independent B'"
   then obtain t u where "finite t \<and> t \<subseteq> B' \<and> (\<Sum>v\<in>t. u v *\<^sub>R v) = 0 \<and> (\<exists>v\<in>t. u v \<noteq> 0)"
@@ -5032,9 +5062,9 @@ proof -
     by (simp add: Complex_Vector_Spaces.dependent_raw_def)
   have "f y = 0"
     if b0: "y\<in>B \<union> (*\<^sub>C) \<i> ` B" and
-(* and "finite {x. f x \<noteq> 0}" *)
+      (* and "finite {x. f x \<noteq> 0}" *)
       b1: "(\<Sum>x\<in>B \<union> (*\<^sub>C) \<i> ` B. f x *\<^sub>R x) = 0"  
-(*       b1: "(\<Sum>x\<in>B \<union> ( *\<^sub>C) \<i> ` B | f x \<noteq> 0. f x *\<^sub>R x) = 0" *)
+      (*       b1: "(\<Sum>x\<in>B \<union> ( *\<^sub>C) \<i> ` B | f x \<noteq> 0. f x *\<^sub>R x) = 0" *)
     for y and f::"'a \<Rightarrow> real"
   proof-
     define g where "g x = f x + \<i> *\<^sub>C f (\<i> *\<^sub>C x)" for x
@@ -6717,7 +6747,7 @@ qed
 
 lemma cblinfun_extension_exists:
   assumes "cblinfun_extension_exists S f"
-  assumes "v \<in> S"
+    and "v \<in> S"
   shows "(cblinfun_extension S f) *\<^sub>V v = f v"
   by (smt assms(1) assms(2) cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
 
