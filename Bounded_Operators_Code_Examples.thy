@@ -2,7 +2,7 @@ theory Bounded_Operators_Code_Examples
   imports
     Real_Impl.Real_Impl "HOL-Library.Code_Target_Numeral" Jordan_Normal_Form.Matrix_Impl
   "HOL-ex.Sqrt"
-    Bounded_Operators.Bounded_Operators_Code 
+    Bounded_Operators_Code 
 begin
 
 section \<open>Making output of value more readable\<close>

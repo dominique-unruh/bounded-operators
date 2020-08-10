@@ -1,7 +1,7 @@
 theory ToDo_Finite_Span_Closed
   imports
-    Bounded_Operators.Preliminaries 
-    Bounded_Operators.Bounded_Operators
+    Preliminaries 
+    Bounded_Operators
     "HOL-Types_To_Sets.Types_To_Sets"
 begin
 unbundle no_notation_blinfun_apply
