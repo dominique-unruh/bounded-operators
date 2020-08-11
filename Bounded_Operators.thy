@@ -263,9 +263,9 @@ subsection \<open>Topological properties of real cblinfun operators\<close>
 
 lemma hnorm_unit_sphere:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  fixes f::\<open>nat \<Rightarrow> 'a::{real_normed_vector,not_singleton} \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and N::hypnat
-  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> 
+  assumes \<open>N\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
     hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x )\<close>
 proof-
@@ -275,7 +275,7 @@ proof-
   hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
       norm (norm(((*\<^sub>v) (f n)) x) - (onorm ((*\<^sub>v) (f n)))) < e\<close>
     for n
-    using  \<open>(UNIV::'a set) \<noteq> 0\<close> norm_unit_sphere[where f = "Blinfun (f n)"]
+    using norm_unit_sphere[where f = "Blinfun (f n)"]
     apply transfer apply auto
     by (metis bounded_linear_Blinfun_apply norm_blinfun.rep_eq)
   moreover have \<open>norm (f n) = onorm (blinfun_apply (f n))\<close> 
@@ -312,9 +312,9 @@ qed
 
 lemma hnorm_unit_sphere_double:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  fixes f::\<open>nat \<Rightarrow> nat \<Rightarrow> 'a::{real_normed_vector,not_singleton} \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and N M::hypnat 
-  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
+  assumes \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
     hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. (*\<^sub>v) (f n m))) N M x )\<close>
 proof-
@@ -324,7 +324,7 @@ proof-
   hence \<open>e>0 \<Longrightarrow> \<exists> x\<in>(sphere 0 1).
       norm (norm((blinfun_apply (f n m)) x) - (onorm (blinfun_apply (f n m)))) < e\<close>
     for n m e
-    using norm_unit_sphere[where f = "f n m"] \<open>(UNIV::'a set) \<noteq> 0\<close> 
+    using norm_unit_sphere[where f = "f n m"]
     apply transfer by auto     
   moreover have \<open>norm (f n m) = onorm (blinfun_apply (f n m))\<close> 
     for n m
@@ -360,9 +360,9 @@ qed
 
 lemma uCauchy_unit_sphere:
   includes nsa_notation
-  fixes f::\<open>nat \<Rightarrow> ('a::real_normed_vector,'b::real_normed_vector) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector,not_singleton},'b::real_normed_vector) blinfun\<close>
     and N M::hypnat
-  assumes \<open>(UNIV::'a set) \<noteq> 0\<close> and \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
+  assumes \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
   shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
          \<approx> hnorm( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x - (*f2* (\<lambda> n. (*\<^sub>v) (f n))) M x )\<close>
 proof-
@@ -453,7 +453,12 @@ next
       have \<open>\<exists> x \<in> *s* (sphere 0 1). 
         hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (g n))) N x )\<close>
         using False \<open>N\<in>HNatInfinite\<close>
-        by (simp add: hnorm_unit_sphere)
+          hnorm_unit_sphere
+        sorry (* Ask to Dominique: how to use "False" in order 
+              to consider the type of the domain as "not_singleton" 
+              It think that "hnorm_unit_sphere[where f = g]", but considering 
+              the domain of g having type "{not_singleton, real_normed_vector}"
+              *)
       moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
       proof-
         have  \<open>\<forall> NN. ( g) NN = ( f) NN - ( l)\<close>
@@ -602,7 +607,9 @@ next
     moreover have \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
          \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
       using  False \<open>N \<in> HNatInfinite\<close> \<open>M \<in> HNatInfinite\<close>
-      by (rule uCauchy_unit_sphere)
+      sorry (* by (rule uCauchy_unit_sphere) *)
+(* Ask to Dominique: Incompatibility between "False" and type not_singleton      
+*)
     ultimately have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
       using approx_sym approx_trans3 mem_infmal_iff by blast          
     thus \<open>(*f* f) N \<approx> (*f* f) M\<close>
@@ -2019,7 +2026,7 @@ lift_definition timesOp::
 
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun
-\<Rightarrow> 'a linear_space \<Rightarrow> 'b linear_space\<close> 
+\<Rightarrow> 'a clinear_space \<Rightarrow> 'b clinear_space\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  cbounded_linear_def closed_closure  closed_subspace.intro
   by (simp add: cbounded_linear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
@@ -2141,7 +2148,7 @@ lemma cblinfun_apply_0[simp]:
 
 lemma applyOp_0[simp]:  
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
-  shows   "U *\<^sub>S (0::'a linear_space) = (0::'b linear_space)"
+  shows   "U *\<^sub>S (0::'a clinear_space) = (0::'b clinear_space)"
 proof-
   {
     have \<open>cbounded_linear U \<Longrightarrow>
@@ -2162,23 +2169,23 @@ proof-
         by simp 
     qed
     hence \<open>cbounded_linear U \<Longrightarrow>
-         Abs_linear_space
+         Abs_clinear_space
           (closure
             (U ` {0})) =
-         Abs_linear_space {0}\<close>
+         Abs_clinear_space {0}\<close>
       for U::\<open>'a\<Rightarrow>'b\<close>
-      using Abs_linear_space_inject
+      using Abs_clinear_space_inject
       by presburger
     hence \<open>cbounded_linear U \<Longrightarrow>
-         Abs_linear_space
-          (closure (U ` space_as_set (Abs_linear_space {0}))) =
-         Abs_linear_space {0}\<close>
+         Abs_clinear_space
+          (closure (U ` space_as_set (Abs_clinear_space {0}))) =
+         Abs_clinear_space {0}\<close>
       for U::\<open>'a\<Rightarrow>'b\<close>
-      by (simp add: Abs_linear_space_inverse)  } note 1 = this
+      by (simp add: Abs_clinear_space_inverse)  } note 1 = this
   thus ?thesis
-    unfolding zero_linear_space_def applyOpSpace_def
+    unfolding zero_clinear_space_def applyOpSpace_def
     apply auto
-    using 1 bot_linear_space.abs_eq   
+    using 1 bot_clinear_space.abs_eq   
     by (metis (full_types) mem_Collect_eq cblinfun_apply) 
 qed
 
@@ -2248,7 +2255,7 @@ proof
   qed
 qed
 
-lemma timesOp_assoc_linear_space: 
+lemma timesOp_assoc_clinear_space: 
   shows  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>S \<psi> =  A *\<^sub>S (B *\<^sub>S \<psi>)\<close>
 proof-
   have \<open>cbounded_linear (cblinfun_apply A)\<close>
@@ -2270,7 +2277,7 @@ proof-
      (closure
        (cblinfun_apply A `
         space_as_set
-         (Abs_linear_space
+         (Abs_clinear_space
            (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
     by (metis space_as_set_inverse applyOpSpace.rep_eq)    
   hence  \<open>
@@ -2279,27 +2286,27 @@ proof-
      (closure
        (cblinfun_apply A `
         space_as_set
-         (Abs_linear_space
+         (Abs_clinear_space
            (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
     by (simp add: timesOp.rep_eq)    
-  hence \<open> Abs_linear_space
+  hence \<open> Abs_clinear_space
      (closure
        (cblinfun_apply (timesOp A B) ` space_as_set \<psi>)) =
-    Abs_linear_space
+    Abs_clinear_space
      (closure
        (cblinfun_apply A `
         space_as_set
-         (Abs_linear_space
+         (Abs_clinear_space
            (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
-    using Abs_linear_space_inject by auto
+    using Abs_clinear_space_inject by auto
   thus ?thesis
     unfolding applyOpSpace_def
     by auto
 qed
 
 
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_linear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun", symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_linear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun"]
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_clinear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun", symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_clinear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun"]
 
 lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
   by (simp add: scaleC_add_right)
@@ -2327,10 +2334,10 @@ proof-
   qed
   ultimately have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
     by simp
-  hence \<open>(closure (cblinfun_apply U ` space_as_set (Abs_linear_space {0}))) = {0}\<close>
-    by (metis bot_linear_space.abs_eq bot_linear_space.rep_eq) 
+  hence \<open>(closure (cblinfun_apply U ` space_as_set (Abs_clinear_space {0}))) = {0}\<close>
+    by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq) 
   thus ?thesis
-    unfolding applyOpSpace_def bot_linear_space_def by simp
+    unfolding applyOpSpace_def bot_clinear_space_def by simp
 qed
 
 lemma cdot_plus_distrib_transfer:
@@ -2466,7 +2473,7 @@ proof-
 qed
 
 lemma cdot_plus_distrib[simp]:   
-  fixes A B :: \<open>('a::chilbert_space) linear_space\<close> and U :: "('a,'b::chilbert_space) cblinfun"
+  fixes A B :: \<open>('a::chilbert_space) clinear_space\<close> and U :: "('a,'b::chilbert_space) cblinfun"
   shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>
   apply transfer
 proof-
@@ -2485,9 +2492,9 @@ proof-
 qed
 
 
-lemma scalar_op_linear_space_assoc [simp]: 
+lemma scalar_op_clinear_space_assoc [simp]: 
   fixes A::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
-    and S::\<open>'a linear_space\<close> and \<alpha>::complex
+    and S::\<open>'a clinear_space\<close> and \<alpha>::complex
   shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>S S  = \<alpha> *\<^sub>C (A *\<^sub>S S)\<close>
 proof-
   have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (cblinfun_apply A) ) ` space_as_set S) =
@@ -2496,16 +2503,16 @@ proof-
   hence \<open>(closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
    ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
     by (metis (mono_tags, lifting) comp_apply image_cong scaleC_cblinfun.rep_eq)
-  hence \<open>Abs_linear_space
+  hence \<open>Abs_clinear_space
      (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C
-    Abs_linear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_linear_space.rep_eq)    
+    Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_clinear_space.rep_eq)    
   show ?thesis 
     unfolding applyOpSpace_def apply auto
-    using \<open>Abs_linear_space
+    using \<open>Abs_clinear_space
      (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-    \<alpha> *\<^sub>C Abs_linear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
+    \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by blast
 qed
 
@@ -2522,13 +2529,13 @@ proof-
     by simp    
   hence \<open>(closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
     by (metis idOp.abs_eq idOp.rep_eq)    
-  hence \<open>Abs_linear_space
+  hence \<open>Abs_clinear_space
      (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by (simp add: space_as_set_inverse)    
   show ?thesis
     unfolding applyOpSpace_def idOp_def
     apply auto
-    using  \<open>Abs_linear_space
+    using  \<open>Abs_clinear_space
      (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by blast
 qed
@@ -2580,7 +2587,7 @@ lemma times_idOp2[simp]:
 
 lemma mult_INF1[simp]:
   fixes U :: "('b::complex_normed_vector,'c::cbanach) cblinfun"
-    and V :: "'a \<Rightarrow> 'b linear_space" 
+    and V :: "'a \<Rightarrow> 'b clinear_space" 
   shows \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
 proof-
   have \<open>cbounded_linear U \<Longrightarrow>
@@ -2633,7 +2640,7 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
 
 lemma mult_inf_distrib':
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close> and B C::"'a linear_space"
+  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close> and B C::"'a clinear_space"
   shows "U *\<^sub>S (inf B  C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
 proof-
   have \<open>cbounded_linear U \<Longrightarrow>
@@ -2733,7 +2740,7 @@ lemma applyOpSpace_span:
   using equal_span_applyOpSpace by blast
 
 lemma applyOpSpace_less_eq:
-  fixes S :: "'a::cbanach linear_space" 
+  fixes S :: "'a::cbanach clinear_space" 
     and A B :: "('a::cbanach,'b::cbanach) cblinfun"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S \<le> B *\<^sub>S S"
@@ -2766,7 +2773,7 @@ proof - (* sledgehammer *)
 qed
 
 lemma applyOpSpace_eq:
-  fixes S :: "'a::chilbert_space linear_space"                        
+  fixes S :: "'a::chilbert_space clinear_space"                        
     and A B :: "('a::chilbert_space,'b::chilbert_space) cblinfun"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S = B *\<^sub>S S"
@@ -2856,7 +2863,7 @@ lemma unitary_id[simp]: "unitary idOp"
 
 subsection \<open>Projectors\<close>
 
-lift_definition Proj :: "('a::chilbert_space) linear_space \<Rightarrow> ('a,'a) cblinfun"
+lift_definition Proj :: "('a::chilbert_space) clinear_space \<Rightarrow> ('a,'a) cblinfun"
   is \<open>projection\<close>
   by (rule Complex_Inner_Product.projectionPropertiesA)
 
@@ -2990,7 +2997,7 @@ proof-
     using complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast        
   hence \<open>\<exists> M. space_as_set M = (range (cblinfun_apply P))\<close>
     using  \<open>closed (range (cblinfun_apply P))\<close>
-    by (metis applyOpSpace.rep_eq closure_eq top_linear_space.rep_eq)    
+    by (metis applyOpSpace.rep_eq closure_eq top_clinear_space.rep_eq)    
   then obtain M where \<open>space_as_set M = (range (cblinfun_apply P))\<close>
     by blast
   have \<open>cblinfun_apply P x \<in> space_as_set M\<close>
@@ -3053,7 +3060,7 @@ proof-
 qed
 
 lemma Proj_isProjector[simp]:
-  fixes M::\<open>'a::chilbert_space linear_space\<close>
+  fixes M::\<open>'a::chilbert_space clinear_space\<close>
   shows \<open>isProjector (Proj M)\<close>
   unfolding isProjector_def
   apply auto
@@ -3127,12 +3134,12 @@ proof-
   have \<open>M = A *\<^sub>S S\<close>
   proof - (* sledgehammer *)
     have f1: "\<forall>l. A *\<^sub>S Proj S *\<^sub>S A* *\<^sub>S l = P *\<^sub>S l"
-      by (simp add: P_def timesOp_assoc_linear_space)
-    have f2: "\<forall>l b. b* *\<^sub>S (b *\<^sub>S (l::'a linear_space)::'b linear_space) = idOp *\<^sub>S l \<or> \<not> isometry b"
-      by (metis (no_types) adjUU timesOp_assoc_linear_space)
-    have f3: "\<forall>l b. b *\<^sub>S idOp *\<^sub>S (l::'a linear_space) = (b *\<^sub>S l::'a linear_space)"
-      by (metis timesOp_assoc_linear_space times_idOp1)
-    have "\<forall>l la. sup (Proj (la::'a linear_space) *\<^sub>S l) la = la"
+      by (simp add: P_def timesOp_assoc_clinear_space)
+    have f2: "\<forall>l b. b* *\<^sub>S (b *\<^sub>S (l::'a clinear_space)::'b clinear_space) = idOp *\<^sub>S l \<or> \<not> isometry b"
+      by (metis (no_types) adjUU timesOp_assoc_clinear_space)
+    have f3: "\<forall>l b. b *\<^sub>S idOp *\<^sub>S (l::'a clinear_space) = (b *\<^sub>S l::'a clinear_space)"
+      by (metis timesOp_assoc_clinear_space times_idOp1)
+    have "\<forall>l la. sup (Proj (la::'a clinear_space) *\<^sub>S l) la = la"
       by (metis Proj_leq sup.absorb_iff2)
     thus ?thesis
       using f3 f2 f1 by (metis Proj_leq \<open>P = Proj M\<close> \<open>isometry A\<close> cdot_plus_distrib imageOp_Proj sup.order_iff)
@@ -3151,22 +3158,22 @@ lemma projection_scalar_mult[simp]:
 
 lemma move_plus:
   "(Proj (- C)) *\<^sub>S A \<le> B \<Longrightarrow> A \<le> sup B C"
-  for A B C::"'a::chilbert_space linear_space"
+  for A B C::"'a::chilbert_space clinear_space"
 proof-
   assume \<open>(Proj (- C)) *\<^sub>S A \<le> B\<close>
   hence \<open>cBlinfun
      (projection
        (space_as_set
-         (Abs_linear_space (orthogonal_complement (space_as_set C))))) *\<^sub>S A \<le> B\<close>
-    unfolding Proj_def  less_eq_linear_space_def
-    by (simp add: uminus_linear_space_def)
+         (Abs_clinear_space (orthogonal_complement (space_as_set C))))) *\<^sub>S A \<le> B\<close>
+    unfolding Proj_def  less_eq_clinear_space_def
+    by (simp add: uminus_clinear_space_def)
 
   hence proj_ortho_CAB: \<open>cBlinfun (projection (orthogonal_complement (space_as_set C))) *\<^sub>S A \<le> B\<close>
     using Proj_def \<open>Proj (- C) *\<^sub>S A \<le> B\<close> map_fun_apply
-    by (simp add: Proj_def uminus_linear_space.rep_eq) 
+    by (simp add: Proj_def uminus_clinear_space.rep_eq) 
 
   hence \<open>x \<in> space_as_set
-              (Abs_linear_space
+              (Abs_clinear_space
                 (closure
                   (cblinfun_apply
                     (cBlinfun
@@ -3174,7 +3181,7 @@ proof-
                    space_as_set A))) \<Longrightarrow>
          x \<in> space_as_set B\<close>
     for x
-    unfolding applyOpSpace_def less_eq_linear_space_def
+    unfolding applyOpSpace_def less_eq_clinear_space_def
     by auto
   hence \<open>x \<in>  closure (cblinfun_apply (cBlinfun
                       (projection (orthogonal_complement (space_as_set C)))) `
@@ -3182,13 +3189,13 @@ proof-
          x \<in> space_as_set B\<close>
     for x
     using proj_ortho_CAB
-      applyOpSpace.rep_eq less_eq_linear_space.rep_eq by blast
+      applyOpSpace.rep_eq less_eq_clinear_space.rep_eq by blast
   hence \<open>x \<in>  closure ( (projection (orthogonal_complement (space_as_set C))) `
                    space_as_set A) \<Longrightarrow>
          x \<in> space_as_set B\<close>
     for x
     using Proj.rep_eq Proj_def map_fun_apply
-    by (metis (full_types) uminus_linear_space.rep_eq)
+    by (metis (full_types) uminus_clinear_space.rep_eq)
 
   hence \<open>x \<in> space_as_set A \<Longrightarrow>
     x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set B \<and> \<phi> \<in> space_as_set C}\<close>
@@ -3220,11 +3227,11 @@ proof-
       (* > 1 s *)
   hence \<open> x \<in> space_as_set A \<Longrightarrow>
          x \<in> space_as_set
-               (Abs_linear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
+               (Abs_clinear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
     for x
-    by (metis space_as_set_inverse sup_linear_space.rep_eq)
+    by (metis space_as_set_inverse sup_clinear_space.rep_eq)
   thus ?thesis 
-    by (simp add: \<open>\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B +\<^sub>M space_as_set C\<close> less_eq_linear_space.rep_eq subset_eq sup_linear_space.rep_eq)    
+    by (simp add: \<open>\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B +\<^sub>M space_as_set C\<close> less_eq_clinear_space.rep_eq subset_eq sup_clinear_space.rep_eq)    
 qed
 
 
@@ -3247,11 +3254,11 @@ Dominique: complex_vector+topological_space is strictly more general.
   I am not sure which specific lemma/definition this debate refers to.
 *)
 
-lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> 'a linear_space" 
+lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> 'a clinear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) cblinfun \<Rightarrow> 'a linear_space" where
+definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) cblinfun \<Rightarrow> 'a clinear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
@@ -3266,11 +3273,11 @@ proof-
     by blast
   hence \<open>(cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} = UNIV\<close>
     by (metis cblinfun_of_blinfun_zero cr_blinfun_def blinfun.pcr_cr_eq blinfun_of_cblinfun.rep_eq blinfun_of_cblinfun_zero zero_blinfun.transfer)
-  hence \<open>Abs_linear_space ( (cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} ) = Abs_linear_space UNIV\<close>
-    using Abs_linear_space_inject
+  hence \<open>Abs_clinear_space ( (cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} ) = Abs_clinear_space UNIV\<close>
+    using Abs_clinear_space_inject
     by (simp add: \<open>(cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} = UNIV\<close>)
   thus ?thesis
-    unfolding kernel_def zero_cblinfun_def top_linear_space_def
+    unfolding kernel_def zero_cblinfun_def top_clinear_space_def
     by (simp add: cBlinfun_inverse \<open>(\<lambda>_. 0) -` {0} = UNIV\<close>)   
 qed
 
@@ -3278,7 +3285,7 @@ lemma kernel_id[simp]: "kernel idOp = 0"
   unfolding kernel_def
   apply transfer
   apply auto
-  unfolding bot_linear_space_def
+  unfolding bot_clinear_space_def
   by blast
 
 lemma scaleC_eigenspace[simp]: "a\<noteq>0 \<Longrightarrow> eigenspace b (a *\<^sub>C A) = eigenspace (b/a) A"
@@ -3520,7 +3527,7 @@ lemma isCont_applyOp[simp]: "isCont ((*\<^sub>V) A) \<psi>"
 
 lemma applyOpSpace_mono:
   "S \<le> T \<Longrightarrow> A *\<^sub>S S \<le> A *\<^sub>S T"
-  by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_linear_space.rep_eq)
+  by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_clinear_space.rep_eq)
 
 lemma apply_left_neutral:
   assumes "A o\<^sub>C\<^sub>L B = B"
@@ -3558,7 +3565,7 @@ lemma range_adjoint_isometry:
   shows "U* *\<^sub>S top = top"
 proof -
   from assms have "top = U* *\<^sub>S U *\<^sub>S top"
-    by (metis adjUU applyOpSpace_id timesOp_assoc_linear_space)
+    by (metis adjUU applyOpSpace_id timesOp_assoc_clinear_space)
   also have "\<dots> \<le> U* *\<^sub>S top"
     by (simp add: applyOpSpace_mono)
   finally show ?thesis
@@ -3567,7 +3574,7 @@ qed
 
 
 lemma mult_INF_general[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space"
     and U :: "('b,'c::chilbert_space) cblinfun"
     and Uinv :: "('c,'b) cblinfun" 
   assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv"
@@ -3591,13 +3598,13 @@ next
       apply (rule apply_left_neutral[where B=U])
       using assms that rangeU_def by auto
     ultimately have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
-      by (simp add: in_mono less_eq_linear_space.rep_eq that)
+      by (simp add: in_mono less_eq_clinear_space.rep_eq that)
     hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
       apply transfer apply auto
        apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     thus ?thesis
-      by (simp add: timesOp_assoc_linear_space)
+      by (simp add: timesOp_assoc_clinear_space)
   qed
   also have "\<dots> \<le> U *\<^sub>S (INF i. Uinv *\<^sub>S U *\<^sub>S V i)"
     unfolding INFUV_def
@@ -3611,20 +3618,20 @@ next
       apply (rule apply_left_neutral[where B=Uinv])
       using assms that rangeUinv_def by auto
     ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
-      using less_eq_linear_space.rep_eq that by blast
+      using less_eq_clinear_space.rep_eq that by blast
     hence "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
       apply transfer apply auto
        apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
       using closure_subset by blast
     thus ?thesis
       unfolding INFV_def
-      by (simp add: timesOp_assoc_linear_space)
+      by (simp add: timesOp_assoc_clinear_space)
   qed
   finally show "INFUV \<le> U *\<^sub>S INFV".
 qed
 
 lemma mult_INF[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space" and U :: "('b,'c::chilbert_space) cblinfun"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" and U :: "('b,'c::chilbert_space) cblinfun"
   assumes \<open>isometry U\<close>
   shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
 proof -
@@ -3640,7 +3647,7 @@ proof -
 qed
 
 lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space linear_space"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
   by (simp add: le_Inf_iff)
 
@@ -3649,7 +3656,7 @@ lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>V \<psi> = A *\<^sub>V (B 
 
 lemma mult_inf_distrib[simp]:
   fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
-    and X Y::"'a linear_space"
+    and X Y::"'a clinear_space"
   assumes "isometry U"
   shows "U *\<^sub>S (inf X Y) = inf (U *\<^sub>S X) (U *\<^sub>S Y)"
   using mult_INF[where V="\<lambda>b. if b then X else Y" and U=U]
@@ -3939,7 +3946,7 @@ consts
 *)
 
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>S S = (0::_::{complex_vector,t1_space} linear_space)"
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>S S = (0::_::{complex_vector,t1_space} clinear_space)"
 proof (auto, transfer)
   fix S :: "'b set"
   assume "closed_subspace S"
@@ -3958,11 +3965,11 @@ qed
 
 
 lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
-  for B::\<open>'a::complex_normed_vector linear_space\<close>
+  for B::\<open>'a::complex_normed_vector clinear_space\<close>
   by simp
 
 lemma timesOp_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)"
-  by (simp add: timesOp_assoc_linear_space) 
+  by (simp add: timesOp_assoc_clinear_space) 
 
 
 lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) cblinfun\<close> is

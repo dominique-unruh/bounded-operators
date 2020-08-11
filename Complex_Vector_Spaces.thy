@@ -42,17 +42,6 @@ class complex_vector = scaleC + ab_group_add +
     and scaleC_scaleC[simp]: "a *\<^sub>C (b *\<^sub>C x) =  (a * b) *\<^sub>C x"
     and scaleC_one[simp]: "1 *\<^sub>C x = x"
 
-(*
-(* TODO remove (nothing like that in Real_Vector_Spaces) *)
-(* Jose: I find errors when I remove it *)
-interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
-  apply unfold_locales
-     apply (rule scaleC_add_right)
-    apply (rule scaleC_add_left)
-   apply (rule scaleC_scaleC)
-  by (rule scaleC_one)
-*)
-
 subclass (in complex_vector) real_vector
   by (standard, simp_all add: scaleR_scaleC scaleC_add_right scaleC_add_left)
 
@@ -2069,16 +2058,14 @@ qed
 
 subsection \<open>Linear space\<close>
 
-(* TODO rename 
-  Ask to Dominique: Which name?
- *)
+
 typedef (overloaded) ('a::"{complex_vector,topological_space}") 
-  linear_space = \<open>{S::'a set. closed_subspace S}\<close>
-  morphisms space_as_set Abs_linear_space
+  clinear_space = \<open>{S::'a set. closed_subspace S}\<close>
+  morphisms space_as_set Abs_clinear_space
   using Complex_Vector_Spaces.subspace_UNIV by blast
 
 
-setup_lifting type_definition_linear_space
+setup_lifting type_definition_clinear_space
 
 lemma subspace_image:
   assumes "clinear f" and "complex_vector.subspace S"
@@ -2086,14 +2073,14 @@ lemma subspace_image:
   by (simp add: assms(1) assms(2) complex_vector.linear_subspace_image)
 
 
-instantiation linear_space :: (complex_normed_vector) scaleC begin
-lift_definition scaleC_linear_space :: "complex \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+instantiation clinear_space :: (complex_normed_vector) scaleC begin
+lift_definition scaleC_clinear_space :: "complex \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" is
   "\<lambda>c S. scaleC c ` S"
   apply (rule closed_subspace.intro)
   using cbounded_linear_def cbounded_linear_scaleC_right closed_subspace.subspace complex_vector.linear_subspace_image apply blast
   by (simp add: closed_scaleC closed_subspace.closed)
 
-lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is
+lift_definition scaleR_clinear_space :: "real \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" is
   "\<lambda>c S. (scaleR c) ` S"
   apply (rule closed_subspace.intro)
   using cbounded_linear_def cbounded_linear_scaleC_right scaleR_scaleC
@@ -2101,17 +2088,17 @@ lift_definition scaleR_linear_space :: "real \<Rightarrow> 'a linear_space \<Rig
   by (simp add: closed_scaling closed_subspace.closed)
 instance 
   apply standard
-  by (simp add: scaleR_scaleC scaleC_linear_space_def scaleR_linear_space_def)
+  by (simp add: scaleR_scaleC scaleC_clinear_space_def scaleR_clinear_space_def)
 end
 
-instantiation linear_space :: ("{complex_vector,t1_space}") bot begin
-lift_definition bot_linear_space :: \<open>'a linear_space\<close> is \<open>{0}\<close>
+instantiation clinear_space :: ("{complex_vector,t1_space}") bot begin
+lift_definition bot_clinear_space :: \<open>'a clinear_space\<close> is \<open>{0}\<close>
   by simp
 instance..
 end
 
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = bot" for S :: "_ linear_space"
+lemma timesScalarSpace_0[simp]: "0 *\<^sub>C S = bot" for S :: "_ clinear_space"
   apply transfer apply (auto intro!: exI[of _ 0])
   unfolding closed_subspace_def
   by (simp add: complex_vector.linear_subspace_image complex_vector.module_hom_zero complex_vector.subspace_0)
@@ -2140,21 +2127,21 @@ proof-
 qed
 
 
-lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ linear_space"
+lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ clinear_space"
   apply transfer
   by (simp add: subspace_scale_invariant) 
 
-instantiation linear_space :: ("{complex_vector,topological_space}") "top"
+instantiation clinear_space :: ("{complex_vector,topological_space}") "top"
 begin
-lift_definition top_linear_space :: \<open>'a linear_space\<close> is \<open>UNIV\<close>
+lift_definition top_clinear_space :: \<open>'a clinear_space\<close> is \<open>UNIV\<close>
   by simp
 
 instance ..
 end
 
-instantiation linear_space :: ("{complex_vector,topological_space}") "Inf"
+instantiation clinear_space :: ("{complex_vector,topological_space}") "Inf"
 begin
-lift_definition Inf_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+lift_definition Inf_clinear_space::\<open>'a clinear_space set \<Rightarrow> 'a clinear_space\<close>
   is \<open>\<lambda> S. \<Inter> S\<close>
 proof
   show "complex_vector.subspace (\<Inter> S::'a set)"
@@ -2175,7 +2162,7 @@ end
 
 subsection \<open>Span\<close>
 
-lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a linear_space"
+lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a clinear_space"
   is "\<lambda>G. closure (complex_vector.span G)"
   apply (rule closed_subspace.intro)
    apply (simp add: subspace_cl)
@@ -2205,7 +2192,7 @@ proof-
     hence \<open>x \<in> closure (complex_vector.span A)\<close>
       unfolding Span_def
       apply auto
-      using Abs_linear_space_inverse \<open>x \<in> space_as_set (Span A)\<close> 
+      using Abs_clinear_space_inverse \<open>x \<in> space_as_set (Span A)\<close> 
         Span.rep_eq 
       by blast
     hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
@@ -2330,38 +2317,38 @@ lemma equal_span_0:
   shows \<open>f x = 0\<close>
   using assms(1) assms(2) complex_vector.linear_eq_0_on_span xS by blast
 
-instantiation linear_space :: ("{complex_vector,topological_space}") "order"
+instantiation clinear_space :: ("{complex_vector,topological_space}") "order"
 begin
-lift_definition less_eq_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+lift_definition less_eq_clinear_space :: \<open>'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> bool\<close>
   is  \<open>(\<subseteq>)\<close>.
-declare less_eq_linear_space_def[code del]
-lift_definition less_linear_space :: \<open>'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> bool\<close>
+declare less_eq_clinear_space_def[code del]
+lift_definition less_clinear_space :: \<open>'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> bool\<close>
   is \<open>(\<subset>)\<close>.
-declare less_linear_space_def[code del]
+declare less_clinear_space_def[code del]
 instance
 proof
-  show "((x::'a linear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
-    by (simp add: less_eq_linear_space.rep_eq less_le_not_le less_linear_space.rep_eq)    
-  show "(x::'a linear_space) \<le> x"
-    for x :: "'a linear_space"
-    by (simp add: less_eq_linear_space.rep_eq)    
-  show "(x::'a linear_space) \<le> z"
-    if "(x::'a linear_space) \<le> y"
-      and "(y::'a linear_space) \<le> z"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
-      and z :: "'a linear_space"
+  show "((x::'a clinear_space) < y) = (x \<le> y \<and> \<not> y \<le> x)"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
+    by (simp add: less_eq_clinear_space.rep_eq less_le_not_le less_clinear_space.rep_eq)    
+  show "(x::'a clinear_space) \<le> x"
+    for x :: "'a clinear_space"
+    by (simp add: less_eq_clinear_space.rep_eq)    
+  show "(x::'a clinear_space) \<le> z"
+    if "(x::'a clinear_space) \<le> y"
+      and "(y::'a clinear_space) \<le> z"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
+      and z :: "'a clinear_space"
     using that
-    using less_eq_linear_space.rep_eq by auto 
-  show "(x::'a linear_space) = y"
-    if "(x::'a linear_space) \<le> y"
-      and "(y::'a linear_space) \<le> x"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
+    using less_eq_clinear_space.rep_eq by auto 
+  show "(x::'a clinear_space) = y"
+    if "(x::'a clinear_space) \<le> y"
+      and "(y::'a clinear_space) \<le> x"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
     using that
-    by (simp add: space_as_set_inject less_eq_linear_space.rep_eq) 
+    by (simp add: space_as_set_inject less_eq_clinear_space.rep_eq) 
 qed
 end
 
@@ -2700,7 +2687,7 @@ lemma [vector_add_divide_simps]:
   by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
 
 
-lemma linear_space_leI:
+lemma clinear_space_leI:
   assumes "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
   shows "A \<le> B"
   using assms apply transfer by auto

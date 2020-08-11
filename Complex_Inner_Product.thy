@@ -18,8 +18,8 @@ begin
 subsection \<open>Complex inner product spaces\<close>
 
 
-instantiation linear_space :: ("{complex_vector,t1_space}") zero begin
-definition zero_linear_space :: "'a linear_space" where [simp]: "zero_linear_space = bot"
+instantiation clinear_space :: ("{complex_vector,t1_space}") zero begin
+definition zero_clinear_space :: "'a clinear_space" where [simp]: "zero_clinear_space = bot"
 instance ..
 end
 
@@ -2964,9 +2964,9 @@ proof -
 qed
 
 
-instantiation linear_space :: (complex_inner) "uminus"
+instantiation clinear_space :: (complex_inner) "uminus"
 begin
-lift_definition uminus_linear_space::\<open>'a linear_space  \<Rightarrow> 'a linear_space\<close>
+lift_definition uminus_clinear_space::\<open>'a clinear_space  \<Rightarrow> 'a clinear_space\<close>
   is \<open>orthogonal_complement\<close>
   by simp
 
@@ -2975,9 +2975,9 @@ end
 
 
 
-instantiation linear_space :: (complex_inner) "Sup"
+instantiation clinear_space :: (complex_inner) "Sup"
 begin
-lift_definition Sup_linear_space::\<open>'a linear_space set \<Rightarrow> 'a linear_space\<close>
+lift_definition Sup_clinear_space::\<open>'a clinear_space set \<Rightarrow> 'a clinear_space\<close>
   is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
 proof
   show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
@@ -2996,38 +2996,38 @@ instance..
 end
 
 
-instantiation linear_space :: ("{complex_vector,topological_space}") inf begin 
-lift_definition inf_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" is "(\<inter>)" by simp
+instantiation clinear_space :: ("{complex_vector,topological_space}") inf begin 
+lift_definition inf_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" is "(\<inter>)" by simp
 instance .. end
 
-instantiation linear_space :: (complex_normed_vector) sup begin
-lift_definition sup_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space" 
+instantiation clinear_space :: (complex_normed_vector) sup begin
+lift_definition sup_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" 
   is "\<lambda>A B::'a set. A +\<^sub>M B"
   by (simp add: subspace_closed_plus) 
 instance .. 
 end
 
-instantiation linear_space :: (complex_inner) minus begin
-lift_definition minus_linear_space :: "'a linear_space \<Rightarrow> 'a linear_space \<Rightarrow> 'a linear_space"
+instantiation clinear_space :: (complex_inner) minus begin
+lift_definition minus_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space"
   is "\<lambda> A B. ( A \<inter> (orthogonal_complement B) )"
   by simp
 instance..
 end
 
 
-instantiation linear_space :: ("{complex_vector,topological_space}") order_top begin
+instantiation clinear_space :: ("{complex_vector,topological_space}") order_top begin
 instance apply intro_classes
   apply transfer by simp
 end
 
-instantiation linear_space :: (chilbert_space) order_bot begin
+instantiation clinear_space :: (chilbert_space) order_bot begin
 instance apply intro_classes
   apply transfer 
   using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 
   by blast 
 end
 
-instantiation linear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
+instantiation clinear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
 instance apply intro_classes
     apply transfer apply simp
    apply transfer apply simp
@@ -3036,10 +3036,10 @@ end
 
 
 (* 
-Dominique: Try if "linear_space :: (complex_inner) lattice"
-and "linear_space :: (complex_inner) complete_lattice" (below)
+Dominique: Try if "clinear_space :: (complex_inner) lattice"
+and "clinear_space :: (complex_inner) complete_lattice" (below)
 work with something weaker than complex_inner
-(it does not work for "linear_space :: (complex_inner) orthocomplemented_lattice"). 
+(it does not work for "clinear_space :: (complex_inner) orthocomplemented_lattice"). 
 
 Jose: I substituted al the "chilbert_spaces" by "complex_inner", I corrected
 lemma by lemma and even in that case, it does not work the elimination of the hypothesis
@@ -3047,16 +3047,16 @@ of completeness.
 
 *)
 
-instantiation linear_space :: (chilbert_space) lattice begin
+instantiation clinear_space :: (chilbert_space) lattice begin
 instance 
 proof
-  show \<open>(x::'a linear_space) \<le> (sup x y)\<close>
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
+  show \<open>(x::'a clinear_space) \<le> (sup x y)\<close>
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
   proof-
     have \<open>t \<in> space_as_set x \<Longrightarrow>
           t \<in> space_as_set
-                 (Abs_linear_space
+                 (Abs_clinear_space
                    (closure
                      {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}))\<close>
       for t
@@ -3076,29 +3076,29 @@ proof
         by force
       hence \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
         by (meson closure_subset subset_eq)        
-      thus ?thesis using Abs_linear_space_inverse
+      thus ?thesis using Abs_clinear_space_inverse
       proof -
         have "t \<in> closure (space_as_set x + space_as_set y)"
           using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
           by (metis (no_types, lifting) \<open>0 \<in> space_as_set y\<close> \<open>t = t + 0\<close> \<open>t \<in> space_as_set x\<close> closure_subset in_mono set_plus_intro)
-        hence "t \<in> space_as_set (Abs_linear_space (closure (space_as_set x + space_as_set y)))"
-          by (metis (no_types) Abs_linear_space_inverse closed_sum_def mem_Collect_eq space_as_set subspace_closed_plus)
+        hence "t \<in> space_as_set (Abs_clinear_space (closure (space_as_set x + space_as_set y)))"
+          by (metis (no_types) Abs_clinear_space_inverse closed_sum_def mem_Collect_eq space_as_set subspace_closed_plus)
         thus ?thesis
           unfolding set_plus_def
           by (smt Collect_cong)
       qed
     qed
     thus ?thesis
-      unfolding  less_eq_linear_space_def 
+      unfolding  less_eq_clinear_space_def 
         closed_sum_def 
       apply auto
-      using is_closed_subspace_universal_inclusion_left space_as_set sup_linear_space.rep_eq
+      using is_closed_subspace_universal_inclusion_left space_as_set sup_clinear_space.rep_eq
       by fastforce
   qed
 
-  show "(y::'a linear_space) \<le> (sup x y)"
-    for y :: "'a linear_space"
-      and x :: "'a linear_space"
+  show "(y::'a clinear_space) \<le> (sup x y)"
+    for y :: "'a clinear_space"
+      and x :: "'a clinear_space"
   proof-
     have \<open>y \<le> (sup y x)\<close>
       by (simp add: \<open>\<And>y x. x \<le> sup x y\<close>)
@@ -3108,12 +3108,12 @@ proof
     ultimately show ?thesis
       by simp     
   qed
-  show "(sup (y::'a linear_space) z) \<le> x"
-    if "(y::'a linear_space) \<le> x"
-      and "(z::'a linear_space) \<le> x"
-    for y :: "'a linear_space"
-      and x :: "'a linear_space"
-      and z :: "'a linear_space"
+  show "(sup (y::'a clinear_space) z) \<le> x"
+    if "(y::'a clinear_space) \<le> x"
+      and "(z::'a clinear_space) \<le> x"
+    for y :: "'a clinear_space"
+      and x :: "'a clinear_space"
+      and z :: "'a clinear_space"
     using that
   proof-
     have \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
@@ -3159,7 +3159,7 @@ proof
     hence \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
           space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
            space_as_set
-                 (Abs_linear_space
+                 (Abs_clinear_space
                    (closure
                      {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) 
           \<subseteq> space_as_set x\<close>
@@ -3167,7 +3167,7 @@ proof
       assume a1: "space_as_set y \<subseteq> space_as_set x"
       assume a2: "space_as_set z \<subseteq> space_as_set x"
       have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (sup l la)"
-        using closed_sum_def sup_linear_space.rep_eq Collect_cong
+        using closed_sum_def sup_clinear_space.rep_eq Collect_cong
         unfolding set_plus_def
         by smt
           (* > 1 s *)
@@ -3179,11 +3179,11 @@ proof
     thus ?thesis
     proof -
       have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
-        by (metis less_eq_linear_space.rep_eq that(1) that(2))
+        by (metis less_eq_clinear_space.rep_eq that(1) that(2))
       thus ?thesis
-        unfolding less_eq_linear_space_def 
+        unfolding less_eq_clinear_space_def 
           closed_sum_def set_plus_def
-        using set_plus_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_linear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_linear_space_def
+        using set_plus_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_clinear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_clinear_space_def
         by (smt Collect_cong id_apply map_fun_apply)
           (* > 1 s *)
     qed  
@@ -3201,70 +3201,70 @@ proof-
   hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
     by blast
   hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_linear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
+    by (metis (no_types, lifting)  INF_greatest Inf_clinear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
   thus ?thesis using span_def' by metis
 qed
 
-lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space linear_space"
+lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space clinear_space"
   apply transfer
-  unfolding sup_linear_space_def[symmetric] 
+  unfolding sup_clinear_space_def[symmetric] 
   using is_closed_subspace_zero
   unfolding closed_sum_def
   unfolding set_plus_def
   by smt
 
-instantiation linear_space :: (chilbert_space) complete_lattice begin
+instantiation clinear_space :: (chilbert_space) complete_lattice begin
 instance 
 proof
-  show "Inf A \<le> (x::'a linear_space)"
-    if "(x::'a linear_space) \<in> A"
-    for x :: "'a linear_space"
-      and A :: "'a linear_space set"
+  show "Inf A \<le> (x::'a clinear_space)"
+    if "(x::'a clinear_space) \<in> A"
+    for x :: "'a clinear_space"
+      and A :: "'a clinear_space set"
     using that 
     apply transfer
     by auto
 
-  show "(z::'a linear_space) \<le> Inf A"
-    if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> z \<le> x"
-    for A :: "'a linear_space set"
-      and z :: "'a linear_space"
+  show "(z::'a clinear_space) \<le> Inf A"
+    if "\<And>x. (x::'a clinear_space) \<in> A \<Longrightarrow> z \<le> x"
+    for A :: "'a clinear_space set"
+      and z :: "'a clinear_space"
     using that 
     apply transfer
     by auto
 
-  show "(x::'a linear_space) \<le> Sup A"
-    if "(x::'a linear_space) \<in> A"
-    for x :: "'a linear_space"
-      and A :: "'a linear_space set"
+  show "(x::'a clinear_space) \<le> Sup A"
+    if "(x::'a clinear_space) \<in> A"
+    for x :: "'a clinear_space"
+      and A :: "'a clinear_space set"
     using that 
     apply transfer
     by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)
 
-  show "Sup A \<le> (z::'a linear_space)"
-    if "\<And>x. (x::'a linear_space) \<in> A \<Longrightarrow> x \<le> z"
-    for A :: "'a linear_space set"
-      and z :: "'a linear_space"
+  show "Sup A \<le> (z::'a clinear_space)"
+    if "\<And>x. (x::'a clinear_space) \<in> A \<Longrightarrow> x \<le> z"
+    for A :: "'a clinear_space set"
+      and z :: "'a clinear_space"
     using that 
     apply transfer
     apply auto
     by (metis (no_types, hide_lams) Sup_least closed_subspace.closed closure_minimal subsetD subspace_span_A)
 
-  show "Inf {} = (top::'a linear_space)"
+  show "Inf {} = (top::'a clinear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
 
-  show "Sup {} = (bot::'a linear_space)"
+  show "Sup {} = (bot::'a clinear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto    
 qed
 end
 
-instance linear_space :: (chilbert_space) complete_orthomodular_lattice 
+instance clinear_space :: (chilbert_space) complete_orthomodular_lattice 
 proof
   show "inf x (- x) = bot"
-    for x :: "'a linear_space"
+    for x :: "'a clinear_space"
     apply transfer
     by (metis Complex_Vector_Spaces.subspace_0 insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero ortho_inter_zero)
   show "sup x (- x) = top"
-    for x :: "'a linear_space"
+    for x :: "'a clinear_space"
   proof-
     have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
       for x::\<open>'a set\<close>
@@ -3301,21 +3301,21 @@ proof
       by blast
   qed
   show "- (- x) = x"
-    for x :: "'a linear_space"
+    for x :: "'a clinear_space"
     apply transfer
     by (simp add: orthogonal_complement_twice)
 
   show "- y \<le> - x"
     if "x \<le> y"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
     using that apply transfer
     by simp 
 
   show "sup x (inf (- x) y) = y"
     if "x \<le> y"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
     using that apply transfer
   proof
     show "(x::'a set) +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
@@ -3368,8 +3368,8 @@ proof
   qed
 
   show "x - y = inf x (- y)"
-    for x :: "'a linear_space"
-      and y :: "'a linear_space"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
     apply transfer
     by simp
 qed
@@ -4896,8 +4896,8 @@ qed
 
 subsection \<open>Commutative monoid of subspaces\<close>
 
-instantiation linear_space :: (chilbert_space) comm_monoid_add begin
-definition plus_linear_space :: "'a linear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_linear_space = sup"
+instantiation clinear_space :: (chilbert_space) comm_monoid_add begin
+definition plus_clinear_space :: "'a clinear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_clinear_space = sup"
 instance 
   apply standard 
     apply (simp add: sup_assoc)
@@ -5198,7 +5198,7 @@ proof-
   thus ?thesis by simp
 qed
 
-lemma linear_space_member_inf[simp]:
+lemma clinear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
   apply transfer by simp
 
@@ -5211,14 +5211,14 @@ lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = on
   apply transfer
   by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
 
-lemma linear_space_top_not_bot[simp]: 
-  "(top::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> bot"
-  (* The type class t1_space is needed because the definition of bot in linear_space needs it *)
-  by (metis UNIV_not_singleton bot_linear_space.rep_eq top_linear_space.rep_eq)
+lemma clinear_space_top_not_bot[simp]: 
+  "(top::'a::{complex_vector,t1_space,not_singleton} clinear_space) \<noteq> bot"
+  (* The type class t1_space is needed because the definition of bot in clinear_space needs it *)
+  by (metis UNIV_not_singleton bot_clinear_space.rep_eq top_clinear_space.rep_eq)
 
-lemma linear_space_bot_not_top[simp]:
-  "(bot::'a::{complex_vector,t1_space,not_singleton} linear_space) \<noteq> top"
-  using linear_space_top_not_bot by metis
+lemma clinear_space_bot_not_top[simp]:
+  "(bot::'a::{complex_vector,t1_space,not_singleton} clinear_space) \<noteq> top"
+  using clinear_space_top_not_bot by metis
 
 subsection\<open>NSA miscellany\<close>
 

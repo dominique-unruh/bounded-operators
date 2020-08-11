@@ -18,7 +18,7 @@ theory Preliminaries
     "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Uniform_Limit"
-    
+
 
 begin
 
@@ -156,7 +156,7 @@ instance
 proof intro_classes
   fix x :: "'a euclidean_space"
     and y :: "'a euclidean_space"
-      and z :: "'a euclidean_space"
+    and z :: "'a euclidean_space"
   show "dist (x::'a euclidean_space) y = norm (x - y)"
     and "sgn (x::'a euclidean_space) = x /\<^sub>R norm x"
     and "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a euclidean_space) y < e})"
@@ -1210,9 +1210,9 @@ next
   define M normf where "M = count_space S" and "normf x = ennreal (norm (f x))" for x
 
   have normf_B: "finite F \<Longrightarrow> F\<subseteq>S \<Longrightarrow> sum normf F \<le> ennreal B" for F
-        using assms[THEN ennreal_leI] 
-        apply (subst (asm) sum_ennreal[symmetric], simp)
-        unfolding normf_def[symmetric] by simp
+    using assms[THEN ennreal_leI] 
+    apply (subst (asm) sum_ennreal[symmetric], simp)
+    unfolding normf_def[symmetric] by simp
 
   have "integral\<^sup>S M g \<le> B" if "simple_function M g" and "g \<le> normf" for g 
   proof -
@@ -1276,7 +1276,7 @@ next
         using \<open>finite gS\<close> apply assumption
         using Ffin apply simp
         using Fpartr[unfolded part_def] apply auto[1]
-        apply (metis subsetCE vimage_singleton_eq)
+         apply (metis subsetCE vimage_singleton_eq)
         by simp
       also have "\<dots> \<le> B + \<epsilon>"
         apply (rule add_right_mono)
@@ -1291,7 +1291,7 @@ next
       apply atomize_elim apply (rule_tac choice) 
       using B'fin apply auto using less_top_ennreal by blast
     have cases[case_names zero finite infinite]: "P" if "r=0 \<Longrightarrow> P" and "finite (part r) \<Longrightarrow> P"
-        and "infinite (part r) \<Longrightarrow> r\<noteq>0 \<Longrightarrow> P" for P r
+      and "infinite (part r) \<Longrightarrow> r\<noteq>0 \<Longrightarrow> P" for P r
       using that by metis
     have emeasure_B': "r * emeasure M (part r) \<le> B' r" if "r : gS" for r
     proof (cases rule:cases[of r])
@@ -1347,7 +1347,7 @@ next
       also have "(\<Sum>x\<in>F. g x) \<le> (\<Sum>x\<in>F. ennreal (norm (f x)))"
         apply (rule sum_mono) using \<open>g \<le> normf\<close> unfolding normf_def le_fun_def by auto
       also have "(\<Sum>x\<in>F. ennreal (norm (f x))) \<le> B" 
-         apply auto using assms(1)[OF \<open>finite F\<close> \<open>F \<subseteq> S\<close>] by (rule ennreal_leI)
+        apply auto using assms(1)[OF \<open>finite F\<close> \<open>F \<subseteq> S\<close>] by (rule ennreal_leI)
       finally have "B < B" by auto
       thus ?thesis by simp
     qed
@@ -1407,8 +1407,8 @@ proof -
     apply (rule infsetsum_mono_neutral_left)
     using finite_F apply (rule abs_summable_on_finite)
     using f_sum_S apply (rule abs_summable_on_normI)
-    apply (rule order.refl)
-    apply (fact FS)
+      apply (rule order.refl)
+     apply (fact FS)
     by (rule norm_ge_zero)
   finally show ?thesis by assumption
 qed
@@ -1467,7 +1467,7 @@ lemma infsetsum_Re:
   shows "infsetsum (\<lambda>x. Re (f x)) M = Re (infsetsum f M)"
   unfolding infsetsum_def apply (rule integral_Re)
   using assms by (simp add: abs_summable_on_def)
-  
+
 lemma infsetsum_Im: 
   assumes "f abs_summable_on M"
   shows "infsetsum (\<lambda>x. Im (f x)) M = Im (infsetsum f M)"
@@ -1507,7 +1507,7 @@ proof -
   have Regsum: "(\<lambda>x. Re (g x)) abs_summable_on A"
     using assms(2) apply (rule abs_summable_on_comparison_test[where g=g])
     using abs_Re_le_cmod by auto
-    
+
   show "infsetsum f A \<le> infsetsum g A"
     unfolding fsplit gsplit
     apply (rule less_eq_complexI; simp)
@@ -1554,7 +1554,7 @@ qed
 lemma abs_summable_product:
   fixes x :: "'a \<Rightarrow> 'b::{real_normed_div_algebra,banach,second_countable_topology}"
   assumes x2_sum: "(\<lambda>i. (x i) * (x i)) abs_summable_on A"
-  and y2_sum: "(\<lambda>i. (y i) * (y i)) abs_summable_on A"
+    and y2_sum: "(\<lambda>i. (y i) * (y i)) abs_summable_on A"
   shows "(\<lambda>i. x i * y i) abs_summable_on A"
 proof (rule abs_summable_finiteI)
   have aux: "a\<le>a' \<Longrightarrow> b\<le>b' \<Longrightarrow> a+b \<le> a'+b'" for a b a' b' :: real by simp
@@ -1864,7 +1864,7 @@ proof -
     using summable by (subst infsetsum_Times) auto
   also have "\<dots> = infsetsum (\<lambda>(x,y). f y x) (B \<times> A)"
     by (subst infsetsum_reindex_bij_betw[OF bij, of "\<lambda>(x,y). f x y", symmetric])
-       (simp_all add: case_prod_unfold)
+      (simp_all add: case_prod_unfold)
   also have "\<dots> = infsetsum (\<lambda>y. infsetsum (\<lambda>x. f x y) A) B"
     using summable' by (subst infsetsum_Times) auto
   finally show ?thesis .
@@ -1872,6 +1872,7 @@ qed
 
 
 (* TODO move *)
+(* Ask to Dominique: to move where? *)
 lemma cauchy_filter_metricI:
   fixes F :: "'a::metric_space filter"
   assumes "\<And>e. e>0 \<Longrightarrow> \<exists>P. eventually P F \<and> (\<forall>x y. P x \<and> P y \<longrightarrow> dist x y < e)"
@@ -1890,6 +1891,7 @@ qed
 
 
 (* TODO move *)
+(* Ask to Dominique: to move where? *)
 lemma cauchy_filter_metric_filtermapI:
   fixes F :: "'a filter" and f :: "'a\<Rightarrow>'b::metric_space"
   assumes "\<And>e. e>0 \<Longrightarrow> \<exists>P. eventually P F \<and> (\<forall>x y. P x \<and> P y \<longrightarrow> dist (f x) (f y) < e)"
@@ -1945,13 +1947,13 @@ proof -
         by (simp add: \<open>finite F1\<close> \<open>finite F2\<close>)
       also have "\<dots> = infsetsum (\<lambda>x. norm (f x)) ((F1-F2)\<union>(F2-F1))"
         apply (rule infsetsum_Un_disjoint[symmetric])
-            apply (simp_all add: \<open>finite F1\<close> \<open>finite F2\<close>)
+          apply (simp_all add: \<open>finite F1\<close> \<open>finite F2\<close>)
         by blast
       also have "\<dots> \<le> infsetsum (\<lambda>x. norm (f x)) (A-F0)"
         apply (rule infsetsum_mono_neutral_left)
             apply (simp add: \<open>finite F1\<close> \<open>finite F2\<close>)
-           using abs_summable_on_subset assms apply fastforce
-          using \<open>F1 \<supseteq> F0\<close> \<open>F2 \<supseteq> F0\<close> \<open>F1 \<subseteq> A\<close> \<open>F2 \<subseteq> A\<close> by auto
+        using abs_summable_on_subset assms apply fastforce
+        using \<open>F1 \<supseteq> F0\<close> \<open>F2 \<supseteq> F0\<close> \<open>F1 \<subseteq> A\<close> \<open>F2 \<subseteq> A\<close> by auto
       also have "\<dots> = infsetsum (\<lambda>x. norm (f x)) A - infsetsum (\<lambda>x. norm (f x)) F0"
         by (simp add: assms infsetsum_Diff)
       also have "\<dots> < e"
@@ -2022,7 +2024,7 @@ proof -
 
   hence "((\<lambda>G. sum f F' + sum f G) \<longlongrightarrow> sum f F' + (x-sum f F')) (finite_subsets_at_top (A-F))"
     by simp
-  
+
   hence "(sum f \<longlongrightarrow> x - sum f F') (finite_subsets_at_top (A-F))"
     apply (subst (asm) tendsto_add_const_iff) by simp
 
@@ -2037,7 +2039,7 @@ lemma finite_subsets_at_top_inter:
   unfolding eventually_filtermap
   unfolding eventually_finite_subsets_at_top
   by (metis Int_subset_iff assms finite_Int inf_le2 subset_trans)
-  
+
 lemma finite_subsets_at_top_minus: 
   assumes "A\<subseteq>B"
   shows "finite_subsets_at_top (B - A) \<le> filtermap (\<lambda>F. F - A) (finite_subsets_at_top B)"
@@ -2083,7 +2085,7 @@ proof -
     hence "(sum f \<longlongrightarrow> x) (finite_subsets_at_top (A-D))"
       apply (rule tendsto_mono[rotated])
       apply (rule finite_subsets_at_top_minus) 
-      (* using finite_subsets_at_top_minus[where A=D and B=A] *)
+        (* using finite_subsets_at_top_minus[where A=D and B=A] *)
       unfolding D_def by simp
     hence "(sum f \<longlongrightarrow> x) (filtermap (\<lambda>F. F \<inter> (A - D)) (finite_subsets_at_top B))"
       apply (rule tendsto_mono[rotated])
@@ -2227,20 +2229,21 @@ proof -
     apply (rule_tac x=X in exI) by auto
 qed
 
+
 theorem norm_infsetsum'_bound:
   fixes f :: "'b \<Rightarrow> 'a::real_normed_vector"
     and A :: "'b set"
-  assumes "infsetsum'_converges (\<lambda>x. norm (f x)) A"
-  assumes "infsetsum'_converges f A" (* TODO: can this be removed? *)
+  assumes a1: "infsetsum'_converges (\<lambda>x. norm (f x)) A"
   shows "norm (infsetsum' f A) \<le> (infsetsum' (\<lambda>x. norm (f x)) A)"
-proof -
+proof(cases "infsetsum'_converges f A") (* NEW *)
+  case True
   have "norm (infsetsum' f A) \<le> (infsetsum' (\<lambda>x. norm (f x)) A) + \<epsilon>" if "\<epsilon>>0" for \<epsilon>
   proof -
     obtain F where "norm (infsetsum' f A - sum f F) \<le> \<epsilon>"
       and "finite F" and "F \<subseteq> A"
       apply atomize_elim
       using infsetsum'_approx_sum[where A=A and f=f and \<epsilon>="\<epsilon>"]
-      using assms \<open>0 < \<epsilon>\<close> apply auto
+      using a1 True \<open>0 < \<epsilon>\<close> apply auto
       by (metis dist_commute dist_norm)
     hence "norm (infsetsum' f A) \<le> norm (sum f F) + \<epsilon>"
       by (smt norm_triangle_sub)
@@ -2255,6 +2258,51 @@ proof -
   qed
   thus ?thesis
     using linordered_field_class.field_le_epsilon by blast
+next
+  case False
+  obtain t where t_def: "(sum (\<lambda>x. norm (f x)) \<longlongrightarrow> t) (finite_subsets_at_top A)"
+    using a1 unfolding infsetsum'_converges_def by blast
+  have sumpos: "sum (\<lambda>x. norm (f x)) X \<ge> 0"
+    for X
+    by (simp add: sum_nonneg)
+  have tgeq0:"t \<ge> 0"
+  proof(rule ccontr)
+    define S::"real set" where "S = {s. s < 0}"
+    assume "\<not> 0 \<le> t"
+    hence "t < 0" by simp
+    hence "t \<in> S"
+      unfolding S_def by blast
+    moreover have "open S"
+    proof-
+      have "closed {s::real. s \<ge> 0}"
+        using Elementary_Topology.closed_sequential_limits[where S = "{s::real. s \<ge> 0}"]
+        by (metis Lim_bounded2 mem_Collect_eq)
+      moreover have "{s::real. s \<ge> 0} = UNIV - S"
+        unfolding S_def by auto
+      ultimately have "closed (UNIV - S)"
+        by simp
+      thus ?thesis
+        by (simp add: Compl_eq_Diff_UNIV open_closed) 
+    qed
+    ultimately have "\<forall>\<^sub>F X in finite_subsets_at_top A. (\<Sum>x\<in>X. norm (f x)) \<in> S"
+      using t_def unfolding tendsto_def by blast
+    hence "\<exists>X. (\<Sum>x\<in>X. norm (f x)) \<in> S"
+      by (metis (no_types, lifting) False eventually_mono filterlim_iff infsetsum'_converges_def)
+    then obtain X where "(\<Sum>x\<in>X. norm (f x)) \<in> S"
+      by blast
+    hence "(\<Sum>x\<in>X. norm (f x)) < 0"
+      unfolding S_def by auto      
+    thus False using sumpos by smt
+  qed
+  have "\<exists>!h. (sum (\<lambda>x. norm (f x)) \<longlongrightarrow> h) (finite_subsets_at_top A)"
+    using t_def finite_subsets_at_top_neq_bot tendsto_unique by blast
+  hence "t = (Topological_Spaces.Lim (finite_subsets_at_top A) (sum (\<lambda>x. norm (f x))))"
+    using t_def unfolding Topological_Spaces.Lim_def
+    by (metis the_equality)     
+  hence "Lim (finite_subsets_at_top A) (sum (\<lambda>x. norm (f x))) \<ge> 0"
+    using tgeq0 by blast
+  thus ?thesis unfolding infsetsum'_def 
+    using False by auto
 qed
 
 lemma
@@ -2311,7 +2359,7 @@ proof -
       unfolding F_def 
       apply (rule order.trans[OF _ leq_eps'])
       apply (rule infsetsum'_mono_set)
-      apply auto
+         apply auto
       using F_def conv_sum_norm finF infsetsum'_converges_cofin_subset by blast+
 
     have "norm (infsetsum f A - infsetsum f F) =
@@ -2334,8 +2382,7 @@ proof -
       apply (rule norm_infsetsum'_bound[where A="A-F"])
       apply (rule abs_summable_infsetsum'_converges)
       using assms
-      using abs_summable_on_subset apply fastforce
-      by (simp add: abs_summable_infsetsum'_converges assms finF infsetsum'_converges_cofin_subset)
+      using abs_summable_on_subset by fastforce
     also have "\<dots> \<le> \<delta>"
       using leq_eps' by simp
     finally have diff2: "norm (infsetsum' f A - infsetsum' f F) \<le> \<delta>"
@@ -2345,7 +2392,7 @@ proof -
       using finF by simp
     hence "norm (infsetsum f A - infsetsum' f A) \<le> norm (infsetsum f A - infsetsum f F) + norm (infsetsum' f A - infsetsum' f F)"
       apply (rule_tac norm_diff_triangle_le)
-      apply auto
+       apply auto
       by (simp_all add: norm_minus_commute)
     also have "\<dots> \<le> \<epsilon>"
       using diff1 diff2 \<delta>_def by linarith
@@ -2385,7 +2432,7 @@ proof (rule abs_summable_finiteI)
     by simp
   have S'_disj: "(S' i) \<inter> (S' j) = {}" if "i\<noteq>j" for i j
     unfolding S'_def disjnt_def using that by auto
-  
+
   define B where "B i = (\<Sum>\<^sub>ax\<in>S i. norm (f x))" for i
   have sum_FS'_B: "(\<Sum>x\<in>F\<inter>S' i. norm (f x)) \<le> B i" for i
     unfolding B_def using f_sum_S' finite_F FT
@@ -2445,7 +2492,7 @@ proof -
   define S where "S x = {x} \<times> Y" for x :: 'a
   have bij[simp]: "bij_betw (Pair x) Y (S x)" for x
     apply (rule bij_betwI[where g=snd])
-    apply (simp_all add: S_def)
+       apply (simp_all add: S_def)
     using SigmaE by auto
   have "f abs_summable_on S x" for x
     apply (subst abs_summable_on_reindex_bij_betw[symmetric, where A=Y and g="\<lambda>y. (x,y)"])
@@ -2562,7 +2609,7 @@ qed
 
 lemma infsetsum_cmult_left':
   fixes f :: "'a \<Rightarrow> 'b :: {banach, real_normed_algebra, second_countable_topology, division_ring}"
-  (* assumes "c \<noteq> 0 \<Longrightarrow> f abs_summable_on A" *)
+    (* assumes "c \<noteq> 0 \<Longrightarrow> f abs_summable_on A" *)
   shows   "infsetsum (\<lambda>x. f x * c) A = infsetsum f A * c"
 proof (cases "c \<noteq> 0 \<longrightarrow> f abs_summable_on A")
   case True
@@ -2644,7 +2691,7 @@ proof auto
     using that by auto
   moreover have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A - A'" for x
     apply (subst abs_summable_on_zero_diff[where A="{}"])
-    apply auto apply (subst f0) using that apply auto
+      apply auto apply (subst f0) using that apply auto
     using f0 that B'B by auto
   ultimately have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A" for x
     using that by auto
@@ -2716,10 +2763,10 @@ lemma
 proof -
   from assms show "(\<lambda>(x,y). f x * g y) abs_summable_on A \<times> B"
     by (subst abs_summable_on_Sigma_iff)
-       (auto simp: norm_mult infsetsum_cmult_right)
+      (auto simp: norm_mult infsetsum_cmult_right)
   with assms show "infsetsum (\<lambda>(x,y). f x * g y) (A \<times> B) = infsetsum f A * infsetsum g B"
     by (subst infsetsum_Sigma)
-       (auto simp: infsetsum_cmult_left infsetsum_cmult_right)
+      (auto simp: infsetsum_cmult_left infsetsum_cmult_right)
 qed
 
 subsection\<open>\<open>Lattice_Missing\<close> -- Miscellaneous missing facts about lattices\<close>
@@ -2797,7 +2844,7 @@ lemma compl_top_eq [simp]: "- top = bot"
   using compl_bot_eq ortho_involution by blast
 
 text \<open>De Morgan's law\<close>
-(* Proof from: https://planetmath.org/orthocomplementedlattice *)
+  (* Proof from: https://planetmath.org/orthocomplementedlattice *)
 lemma compl_sup [simp]: "- (x \<squnion> y) = - x \<sqinter> - y"
 proof -
   have "- (x \<squnion> y) \<le> - x"
@@ -2827,7 +2874,7 @@ lemma compl_mono:
   assumes "x \<le> y"
   shows "- y \<le> - x"
   by (simp add: assms local.ortho_antimono)
-  
+
 lemma compl_le_compl_iff [simp]: "- x \<le> - y \<longleftrightarrow> y \<le> x"
   by (auto dest: compl_mono)
 
@@ -2962,10 +3009,9 @@ proof-
   thus ?thesis by auto
 qed
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes \<open>(UNIV::'a set) \<noteq> {0}\<close> and  \<open>bounded_linear f\<close>
+  fixes f :: "'a::{real_normed_vector, not_singleton} \<Rightarrow> 'b::real_normed_vector"
+  assumes a1: "bounded_linear f"
   shows \<open>onorm f = Sup {norm (f x) | x. norm x = 1}\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
   case True
@@ -2973,8 +3019,10 @@ proof(cases \<open>f = (\<lambda> _. 0)\<close>)
     by (simp add: True onorm_eq_0)  
   moreover have \<open>Sup {norm (f x) | x. norm x = 1} = 0\<close>
   proof-
-    have \<open>\<exists>x::'a. norm x = 1\<close>
-      using \<open>(UNIV::'a set) \<noteq> {0}\<close> ex_norm1
+    have \<open>(UNIV::'a set) \<noteq> {0}\<close>
+      by simp
+    hence \<open>\<exists>x::'a. norm x = 1\<close>
+      using  ex_norm1
       by blast
     have \<open>norm (f x) = 0\<close>
       for x
@@ -3057,7 +3105,7 @@ next
           have \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
           proof-
             have \<open>\<exists> x::'a. norm x = 1\<close>
-              by (metis (full_types) False assms(2) linear_simps(3) norm_sgn)              
+              by (metis (full_types) False a1 linear_simps(3) norm_sgn)              
             then obtain x::'a where \<open>norm x = 1\<close>
               by blast
             have \<open>norm (f x) \<ge> 0\<close>
@@ -3073,7 +3121,7 @@ next
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
             using bdd_above_norm_f
-            by (metis (mono_tags, lifting) assms(2)) 
+            by (metis (mono_tags, lifting) a1) 
           ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
             using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
             by (simp add: cSup_upper) 
@@ -3084,7 +3132,7 @@ next
           have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
             by (simp add: assms(1) ex_norm1)
           moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-            using assms(2) bdd_above_norm_f by force
+            using a1 bdd_above_norm_f by force
           have \<open>{0::real} \<noteq> {}\<close>
             by simp
           moreover have \<open>bdd_above {0::real}\<close>
@@ -3112,19 +3160,21 @@ next
 qed
 
 
-(* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 proposition onorm_Inf_bound:
-  fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-  assumes  \<open>(UNIV::'a set) \<noteq> {0}\<close> and \<open>bounded_linear f\<close>
-  shows  \<open>onorm f = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
+  fixes f :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
+  assumes a1: "bounded_linear f"
+  shows "onorm f = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}"
 proof-
+  have a2: \<open>(UNIV::'a set) \<noteq> {0}\<close>
+    by simp
+
   have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Inf {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
   proof-
     define A where \<open>A = {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
     have \<open>A \<noteq> {}\<close>
     proof-
       have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-        using \<open>UNIV \<noteq> {0}\<close> by auto
+        using a2 by auto
       thus ?thesis using A_def
         by simp 
     qed
@@ -3297,17 +3347,16 @@ qed
 
 lemma norm_unit_sphere:
   includes notation_norm
-  fixes f::\<open>'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
-  assumes a1: "bounded_linear f" and a2: "e > 0" 
-    and a3: "(UNIV::'a set) \<noteq> {0}"
+  fixes f::\<open>'a::{real_normed_vector,not_singleton} \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  assumes a1: "bounded_linear f" and a2: "e > 0"     
   shows \<open>\<exists>x\<in>(sphere 0 1). \<parallel> \<parallel>f *\<^sub>v x\<parallel> - \<parallel>f\<parallel> \<parallel> < e\<close>
 proof-
   define S::"real set" where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
   have \<open>S\<noteq>{}\<close>
   proof-
     have \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
-      unfolding sphere_def apply auto using a3 ex_norm1
-      by auto      
+      unfolding sphere_def apply auto using ex_norm1
+      by (simp add: ex_norm1)      
     thus ?thesis unfolding S_def by auto
   qed
   hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
@@ -3316,8 +3365,8 @@ proof-
   moreover have \<open>Sup S = onorm f\<close>
   proof-
     have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
-      using  \<open>(UNIV::'a set) \<noteq> {0}\<close> \<open>bounded_linear f\<close> onorm_sphere
-      by blast
+      using \<open>bounded_linear f\<close> onorm_sphere
+      by auto      
     hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
       unfolding sphere_def
       by simp
