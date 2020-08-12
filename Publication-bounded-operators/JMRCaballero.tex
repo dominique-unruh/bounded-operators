@@ -1,9 +1,6 @@
-\title{A library about bounded operators in Isabelle/HOL}
+\title{A library about complex bounded operators in Isabelle/HOL}
 \author{ 
-        Dominique Unruh \\
-                Institute of Computer Science \\ University of Tartu \\ Tartu, Estonia
-\and
-        Jos\'e Manuel Rodr\'iguez Caballero \\
+        Dominique Unruh and Jos\'e M. Rodr\'iguez Caballero \\
                 Institute of Computer Science \\ University of Tartu \\ Tartu, Estonia
 }
 \date{\today}
@@ -38,25 +35,42 @@
 \maketitle
 
 \begin{abstract}
-In quantum relational Hoare logic (qRHL), (complex) Hilbert spaces and bounded operators between Hilbert spaces are the basic building blocks. These structures also appears in quantum information theory, quantum mechanics, machine learning, (ordinary and partial) differential equations and several areas of mathematical analysis (Fourier analysis, functional analysis, etc.). We develop a new library for the theory of bounded operators that allows the development of a future library of qRHL over this ground.
+We develop a new library in Isabelle/HOL for the theory of complex bounded operators. Our library is an extension of earlier formalizations of the basics notions of functional analysis that were limited to the real numbers as the ground field. Our library contains a type classes corresponding to complex vector spaces, complex normed spaces, the complex Banach spaces, the complex Hilbert spaces and finite-dimensional versions. We define a type of $\ell^2$ sequences of complex numbers indexed by a given type. We introduce a type for bounded operators between two complex vector spaces. Then we prove the essential properties of these objects and we add code generation for the cases when computation is possible.
+$\newline$
+\begin{flushleft} 
+\textbf{Categories and Subject Descriptors.} F.4.1 [Mathematical Logic]:
+Mechanical theorem proving; G.4.2 [Certification and testing]; G.4.9 [Verification]
+$\newline$
 
-Our library contains a type class corresponding to complex vector spaces, that we specify until we obtain a type class corresponding to Hilbert spaces. We define a type of $\ell^2$ sequences over a given set represented by a type as parameter. We introduce a type for bounded operators between two complex vector spaces. Then we prove the essential properties of these objects and we add code generation for the cases when computation is possible.
+\textbf{Keywords.} complex Hilbert spaces, complex bounded operators, Isabelle/HOL, formal verification
+\end{flushleft}
 \end{abstract}
 
 
-\begin{flushleft}
-\textbf{Categories and Subject Descriptors.} F.4.1 [Mathematical Logic]:
-Mechanical theorem proving; G.4.2 [Certification and testing]; G.4.9 [Verification]
-
-\textbf{Keywords.} Hilbert spaces, bounded operators, Isabelle/HOL,
-quantum relational Hoare logic
-\end{flushleft}
-
 \section{Introduction}
-\cite{unruh2019quantum}
+In Unruh's quantum relational Hoare logic (qRHL) \cite{unruh2019quantum}, the complex Hilbert spaces and complex bounded operators between Hilbert spaces are the basic building blocks. These structures also appears in quantum information theory \cite{wilde2013quantum}, quantum mechanics \cite{prugovecki1982quantum}, machine learning \cite{zhang2012refinement}, partial differential equations \cite{picard2011partial} and several areas of mathematical analysis \cite{conway2019course}, e.g., Fourier analysis and functional analysis. Previously to the present work, in the default libraries of Isabelle/HOL and in Archives of Formal Proofs there was a development of functional analysis mainly in the direction of real analysis \cite{fleuriot2000mechanization, fleuriot2000mechanizing, holzl2011three, holzl2013type, boldo2016formalization}
+ and of linear algebra mainly in the direction of finite-dimensional vector spaces over an arbitrary ground field \cite{thiemann2016formalizing}. Also, there were some results in complex analysis \cite{li2020evaluating, eberl2019nine, li2019counting} formalized in Isabelle/HOL, but (infinite-dimensional) complex functional analysis was absent, despite its importance in quantum theory.
 
-\blindtext[4]
 
+Our new library for complex functional analysis in Isabelle/HOL derives from the
+earlier libraries on real mathematical analysis (including nonstandard analysis), real functional analysis and finite dimensional linear algebra, but brings them closer to the goal of formal verification of quantum cryptography: our ultimate goal is to embed Unruh's qRHL into Isabelle/HOL, using Hilbert spaces, bounded operators and tensor products as basic building blocks. The missing ingredient, the tensor products, are work-in-progress\footnote{\url{https://github.com/dominique-unruh/tensor-product}} and they will be introduced in a future library.
+
+In the next lines we describe our main contribution to the development of analysis in Isabelle/HOL. We will omit some of our results in order to avoid an overload of information in the description of our work.
+
+\begin{enumerate}[label*=\Alph*.]
+\item The main type classes that we introduced are the following ones, ordered in decreasing order of generality (each class is a subclass of the classes above, classes at the same level are incomparable).
+\begin{enumerate}[label*=\arabic*.]
+\item \textsf{complex\_vector} (vector spaces over the complex numbers),
+\item \textsf{complex\_normed\_vector} (normed space over the complex numbers), 
+\item \textsf{cbanach\_space} (Banach space over the complex number) and \textsf{complex\_inner\_product} (vector space endowed with a sesquilinear form),
+\item \textsf{chilbert\_space} (Hilbert space over the complex numbers),
+\item \textsf{onb\_enum} (finite dimensional Hilbert space over the complex numbers with an identified orthonormal basis).
+\end{enumerate}
+\item We introduced the (parametric) type of \emph{square-summable} families of complex numbers indexed by a type $\textsf{'a}$, denoted $\textsf{'a ell2}$, which is an instantiation of the type class $\textsf{chilbert\_space}$.
+\item We introduced the (parametric) type of \emph{complex bounded operator} between two complex normed spaces $\textsf{'a}$ and  $\textsf{'b}$, denoted $\textsf{'a} \Rightarrow_{\textsf{CL}} \textsf{'b}$, which is, under some conditions, is an instantiation of the type class \textsf{cbanach\_space}.
+\item We developed code generation for the transformation of a bounded operator of type $\textsf{'a}::\textsf{onb\_enum} \Rightarrow_{\textsf{CL}} \textsf{'b}::\textsf{onb\_enum}$ into a matrix of type $\textsf{complex mat}$ (this type was defined in \cite{Jordan_Normal_Form-AFP}).
+\item We used techniques from nonstandard analysis in order to simplify some of our proofs.
+\end{enumerate}
 
 \section{Preliminaries}
 On the side of mathematics, we assume basic knowledge of the basic functional analysis \cite{conway2019course}, essentially the concepts of Hilbert space and bounded operators. On the side of programming, we assume basic knowledge of the proof assistant Isabelle/HOL \cite{nipkow2002isabelle}, in particular, the Isar language for formal proofs.
@@ -78,7 +92,8 @@ On the side of mathematics, we assume basic knowledge of the basic functional an
 \blindtext[6]
 
 
-\section{Summary}
+\section{Final Remarks}
+\blindtext[3]
 
 
 \section{Future work}
@@ -86,7 +101,9 @@ Our next project is to develop a library for the Hilbert tensor product between 
 
 
 \section*{Acknowledgments}
-\blindtext[1]
+The second author is supported by the Air Force Office of Scientific Research
+through the project ``Verification of quantum cryptography" (AOARD Grant
+FA2386-17-1- 4022).
 
 
 \bibliographystyle{alpha}
