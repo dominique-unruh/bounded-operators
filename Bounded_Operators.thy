@@ -5965,6 +5965,10 @@ definition cblinfun_extension where
 definition cblinfun_extension_exists where 
   "cblinfun_extension_exists S \<phi> = (\<exists>B. \<forall>x\<in>S. B *\<^sub>V x = \<phi> x)"
 
+lemma cblinfun_extension_existsI:
+  assumes "\<And>x. x\<in>S \<Longrightarrow> B *\<^sub>V x = \<phi> x"
+  shows "cblinfun_extension_exists S \<phi>"
+  using assms cblinfun_extension_exists_def by blast
 
 lemma complex_independent_finite_onb_enum:
   assumes a1: "complex_independent A"
