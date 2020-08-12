@@ -7,6 +7,8 @@ begin
 
 section \<open>Making output of value more readable\<close>
 
+unbundle cblinfun_notation
+
 lemma two_sqrt_irrat[simp]: "2 \<in> sqrt_irrat"
   using sqrt_prime_irrational[OF two_is_prime_nat]
   unfolding Rats_def sqrt_irrat_def image_def apply auto
@@ -64,12 +66,52 @@ section \<open>Examples\<close>
 
 (* TODO: add an example for every operation that is supported by Bounded_Operators_Code *)
 
+subsection \<open>Operators\<close>
+
 value "idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "idOp + idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "0 :: (bool ell2 \<Rightarrow>\<^sub>C\<^sub>L Enum.finite_3 ell2)"
 
+value "- idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
+value "idOp - idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
 value "classical_operator (\<lambda>b. Some (\<not> b))"
+
+value "idOp = (0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2)"
+
+subsection \<open>Vectors\<close>
+
+value "0 :: bool ell2"
+
+value "ket False"
+
+value "2 *\<^sub>C ket False"
+
+value "2 *\<^sub>R ket False"
+
+value "ket True + ket False"
+
+value "ket True - ket True"
+
+value "ket True = ket True"
+
+value "- ket True"
+
+value "cinner (ket True) (ket True)"
+
+value "norm (ket True)"
+
+value "ket () * ket ()"
+
+value "1 :: unit ell2"
+
+subsection \<open>Vector/Matrix\<close>
+
+value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)"
+
+value "idOp *\<^sub>V ket True"
 
 end

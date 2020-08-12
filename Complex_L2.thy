@@ -2447,8 +2447,7 @@ qed
 
 end
 
-(* TODO: move *)
-(* Ask to Dominique: where? *)
+(* TODO: move to Preliminaries *)
 instantiation unit :: CARD_1
 begin
 instance 
