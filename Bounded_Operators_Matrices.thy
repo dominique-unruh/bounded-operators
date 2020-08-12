@@ -852,6 +852,31 @@ proof-
     by auto
 qed
 
+lemma vec_of_onb_enum_scaleR:
+  "vec_of_onb_enum (r *\<^sub>R b) = complex_of_real r \<cdot>\<^sub>v (vec_of_onb_enum b)"
+  by (simp add: scaleR_scaleC vec_of_onb_enum_scaleC)
+
+lemma vec_of_onb_enum_uminus:
+  "vec_of_onb_enum (- b2) = - vec_of_onb_enum b2"
+(* TODO: proof should be easy by using the fact that "- b2 = -1 *\<^sub>C b2" and "- vec_of_onb_enum b2 = -1 \<cdot>\<^sub>v vec_of_onb_enum b2 
+  and then vec_of_onb_enum_scaleR
+*)
+  sorry
+
+
+lemma vec_of_onb_enum_minus:
+  "vec_of_onb_enum (b1 - b2) = vec_of_onb_enum b1 - vec_of_onb_enum b2"
+  by (metis (mono_tags, hide_lams) carrier_vec_dim_vec diff_conv_add_uminus diff_zero index_add_vec(2) minus_add_uminus_vec vec_of_onb_enum_add vec_of_onb_enum_uminus)
+
+(* TODO: give better name *)
+lemma cinner_ell2_code: "cinner \<psi> \<phi> = scalar_prod (map_vec cnj (vec_of_onb_enum \<psi>)) (vec_of_onb_enum \<phi>)"
+  sorry
+
+(* TODO: give better name *)
+lemma norm_ell2_code: "norm \<psi> = 
+  (let \<psi>' = vec_of_onb_enum \<psi> in
+    sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
+  sorry
 
 lemma onb_enum_of_vec_unit_vec:
   defines a1: "basis == (canonical_basis::'a::onb_enum list)"

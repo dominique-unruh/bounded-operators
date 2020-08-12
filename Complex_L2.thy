@@ -2447,8 +2447,7 @@ qed
 
 end
 
-(* TODO: move *)
-(* Ask to Dominique: where? *)
+(* TODO: move to Preliminaries *)
 instantiation unit :: CARD_1
 begin
 instance 
@@ -2827,32 +2826,10 @@ qed
 
 end
 
-subsection \<open>Classical operators\<close>
-
-definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
-  "classical_operator \<pi> = 
-    (let f = (\<lambda>t. (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i))
-     in
-      cblinfun_extension (range (ket::'a\<Rightarrow>_)) f
-    )"
-
-
-lemma classical_operator_basis:
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
-  shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-  unfolding classical_operator_def 
-  using    f_inv_into_f ket_distinct rangeI
-  by (metis (mono_tags, lifting) a1 cblinfun_extension_exists cblinfun_extension_exists_def 
-      classical_function_def)
-
 lemma ket_nonzero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
   apply transfer
   by (metis zero_neq_one)
+
 
 lemma complex_independent_ket:
   "complex_independent (range (ket::'a\<Rightarrow>_))"
@@ -2870,18 +2847,69 @@ proof-
     by blast
 qed
 
+
+subsection \<open>Classical operators\<close>
+
+definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
+  "classical_operator \<pi> = 
+    (let f = (\<lambda>t. (case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+                           of None \<Rightarrow> (0::'b ell2) 
+                          | Some i \<Rightarrow> ket i))
+     in
+      cblinfun_extension (range (ket::'a\<Rightarrow>_)) f
+    )"
+
+
+definition "classical_operator_exists \<pi> \<longleftrightarrow>
+  cblinfun_extension_exists (range ket)
+    (\<lambda>t. case \<pi> (inv ket t) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
+
+lemma inj_ket: "inj ket"
+  sorry
+
+lemma classical_operator_existsI:
+  assumes "\<And>x. B *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+  shows "classical_operator_exists \<pi>"
+  unfolding classical_operator_exists_def
+  apply (rule cblinfun_extension_existsI[of _ B])
+  using assms 
+  by (auto simp: inv_f_f[OF inj_ket])
+
+lemma classical_operator_exists_inj:
+  assumes "inj_option \<pi>"
+  shows "classical_operator_exists \<pi>"
+(* TODO
+
+  Proof sketch:
+
+  Define C as the classical_operator for \<pi> using the old definition
+  Show that "C (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+  Using classical_operator_existsI, show "classical_operator_exists \<pi>"
+
+*)
+  sorry
+
+lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> :: _::finite \<Rightarrow> _)"
+  unfolding classical_operator_exists_def
+  apply (rule cblinfun_extension_exists_finite)
+  using complex_independent_ket apply blast
+  using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim apply blast
+  by simp
+
+lemma classical_operator_basis:
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+                           of None \<Rightarrow> (0::'b ell2) 
+                          | Some i \<Rightarrow> ket i)"
+  assumes a1:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)" *)
+  assumes "classical_operator_exists \<pi>"
+  shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
+  unfolding classical_operator_def 
+  using    f_inv_into_f ket_distinct rangeI
+  by (metis (mono_tags, lifting) assms cblinfun_extension_exists classical_operator_exists_def)
+
 lemma classical_operator_finite:
   "(classical_operator \<pi>) *\<^sub>V (ket (x::'a::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-proof -
-  have 1: "complex_independent (range (ket::'a\<Rightarrow>_))"
-    by (simp add: complex_independent_ket)    
-  have 2: "complex_vector.span (range (ket::'a\<Rightarrow>_)) = UNIV"
-    using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim by blast    
-  show ?thesis
-    apply (rule classical_operator_basis)
-    apply (rule cblinfun_extension_exists_finite)
-    using 1 2 by auto
-qed
+  by (rule classical_operator_basis, simp)
 
 lemma cinner_ket_adjointI:
   fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
@@ -2980,15 +3008,15 @@ qed
 *)
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
       and  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
+                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "inj_option \<pi>"
-    and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
-    and a3:"cblinfun_extension_exists (range (ket::'b\<Rightarrow>_)) (classical_function' (inv_option \<pi>))"
+(*     and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
+    and a3:"cblinfun_extension_exists (range (ket::'b\<Rightarrow>_)) (classical_function' (inv_option \<pi>))" *)
   shows  "(classical_operator \<pi>)* = classical_operator (inv_option \<pi>)"
 proof-
   define F where "F = classical_operator (inv_option \<pi>)"
@@ -2997,10 +3025,10 @@ proof-
   proof-
     have w1: "(classical_operator (inv_option \<pi>)) *\<^sub>V (ket i)
      = (case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      using a3 classical_function'_def classical_operator_basis by fastforce
+      by (simp add: classical_operator_basis classical_operator_exists_inj)
     have w2: "(classical_operator \<pi>) *\<^sub>V (ket j)
      = (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      using a2 classical_function_def classical_operator_basis by fastforce
+      by (simp add: assms classical_operator_basis classical_operator_exists_inj)
     have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>classical_operator (inv_option \<pi>) *\<^sub>V ket i, ket j\<rangle>"
       unfolding F_def by blast
     also have "\<dots> = \<langle>(case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0), ket j\<rangle>"
@@ -3120,7 +3148,7 @@ qed
 *)
 lemma classical_operator_mult[simp]:
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
   defines  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
@@ -3128,14 +3156,33 @@ lemma classical_operator_mult[simp]:
                           | Some i \<Rightarrow> ket i)"
   defines  "classical_function''  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'c ell2) 
-                          | Some i \<Rightarrow> ket i)"
+                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "inj_option \<pi>" 
     and a2: "inj_option \<rho>"  
-    and a3:"cblinfun_extension_exists (range ket) (classical_function' \<pi>)"
-    and a4:"cblinfun_extension_exists (range ket) (classical_function \<rho>)"
-    and a5: "cblinfun_extension_exists (range ket) (classical_function'' (\<pi> \<circ>\<^sub>m \<rho>))" 
+    and a3:"classical_operator_exists \<pi>"
+    and a4:"classical_operator_exists \<rho>"
+    and a5: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)" 
   shows "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
-proof-
+(* TODO:
+
+  Should be provable with much less assumptions. Sketch:
+  
+  By classical_operator_exists \<pi>, classical_operator_exists \<pi>,
+  we have "C1 (ket i) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for C1 := (classical_operator_exists \<pi>)
+  and "C2 (ket i) = (case \<rho> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for C2 := (classical_operator_exists \<rho>)
+  Then it follows 
+  "(C1 oCL C2) (ket i) = (case (\<pi> \<circ>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" by properties of oCL (and using C1 0 = 0).
+  By classical_operator_existsI, we get
+  "classical_operator_exists (\<pi> \<circ>m \<rho>)".
+  Then we have that 
+  "C12 (ket i) = (case (\<pi> \<circ>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" by properties of oCL (and using C1 0 = 0).
+  for C12 = (classical_operator_exists \<pi>) oCL (classical_operator_exists \<rho>).
+  Thus "C1 oCL C2 = C12" because both sides are equivalent on a basis.
+
+  Note that this does not use injectivity of \<pi> or \<rho>.
+
+ *)
+proof -
   have "(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>V (ket i)
       = (classical_operator (\<pi> \<circ>\<^sub>m \<rho>)) *\<^sub>V ket i"
     for i
@@ -3144,7 +3191,7 @@ proof-
         = (classical_operator \<pi>) *\<^sub>V ((classical_operator \<rho>) *\<^sub>V (ket i))"
       by (simp add: times_applyOp)
     also have "\<dots> = (classical_operator \<pi>) *\<^sub>V (case \<rho> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      using a4 classical_function_def classical_operator_basis by fastforce
+      by (simp add: a4 classical_operator_basis)
     also have "\<dots> = (case \<rho> i of Some k \<Rightarrow> (classical_operator \<pi>) *\<^sub>V (ket k) 
         | None \<Rightarrow> (classical_operator \<pi>) *\<^sub>V 0)"
       by (metis option.case_distrib)
@@ -3153,8 +3200,7 @@ proof-
       by (metis applyOp_scaleC2 complex_vector.scale_zero_left)
     also have "\<dots> = (case \<rho> i of Some k \<Rightarrow> (case \<pi> k of Some j \<Rightarrow> ket j | None \<Rightarrow> 0) 
         | None \<Rightarrow> 0)"
-      using a3 classical_operator_basis
-      unfolding classical_function'_def by metis
+      using a3 classical_operator_basis by metis
     also have "\<dots> = (case (\<pi> \<circ>\<^sub>m \<rho>) i of Some t \<Rightarrow> ket t | None \<Rightarrow> 0)"
     proof(induction "\<rho> i")
       case None
@@ -3166,37 +3212,18 @@ proof-
         by (metis map_comp_simps(2) option.simps(5)) 
     qed
     also have "\<dots> = (classical_operator (\<pi> \<circ>\<^sub>m \<rho>)) *\<^sub>V (ket i)"
-      using a5 classical_operator_basis unfolding classical_function''_def by metis
+      using a5 classical_operator_basis by metis
     finally show ?thesis .
   qed
   thus ?thesis
     by (simp add: equal_basis) 
 qed
 
-(* TODO
+lemma classical_operator_exists_comp[simp]: 
+  assumes "classical_operator_exists f" and "classical_operator_exists g"
+  shows "classical_operator_exists (g \<circ>\<^sub>m f)"
+  sorry
 
-lemma classical_operator_eqI:
-  assume "\<And>x. C *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-  shows "classical_operator \<pi> = C" and maybe "cblinfun_extension_exists ..."
-
-Useful for showing classical_operator_Some, 
-   maybe also classical_operator_mult with less assumptions
-
-
-*)
-
-(* TODO:
-
-lemma
-assumes "inj \<pi>"
-shows "cblinfun_extension_exists ..."
-
-Reason: we can use the *old* definition of classical_operator and
-        classical_operator_eqI to show that the classical_operator exists
-
-This allows to remove cblinfun_extension_exists in lemmas that assume inj \<pi>
-
-*)
 
 lemma classical_operator_Some[simp]: 
   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
@@ -3206,18 +3233,21 @@ lemma classical_operator_Some[simp]:
 proof-
   have "(classical_operator Some) *\<^sub>V (ket i)  = idOp *\<^sub>V (ket i)"
     for i::'a
-  proof-
+    apply (subst classical_operator_basis)
+     apply (rule classical_operator_exists_inj)
+    by auto
+(*   proof-
     have a1: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
       unfolding cblinfun_extension_exists_def classical_function_def
       by (metis apply_idOp f_inv_into_f option.simps(5))
     have "(classical_operator Some) *\<^sub>V (ket i) = (case Some i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      using a1 classical_operator_basis unfolding classical_function_def by metis
+      using a1 classical_operator_basis unfolding classical_function_def by metisx
     also have "\<dots> = ket i"
       by simp
     also have "\<dots> = idOp *\<^sub>V (ket i)"
       by simp      
     finally show ?thesis .
-  qed
+  qed *)
   thus ?thesis
     using equal_ket[where A = "classical_operator (Some::'a \<Rightarrow> _ option)"
         and B = "idOp::'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _"]
@@ -3226,7 +3256,7 @@ qed
 
 lemma isometry_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
       and  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
@@ -3234,14 +3264,17 @@ lemma isometry_classical_operator[simp]:
                           | Some i \<Rightarrow> ket i)"
       and  "classical_function''  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
+                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "inj \<pi>"
-    and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
+(*     and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
     and a3: "cblinfun_extension_exists (range ket)
      (classical_function' (inv_option (Some \<circ> \<pi>)))" 
-    and a4: "cblinfun_extension_exists (range ket) (classical_function'' (Some::'a\<Rightarrow>_))"
+    and a4: "cblinfun_extension_exists (range ket) (classical_function'' (Some::'a\<Rightarrow>_))" *)
 (* TODO: remove assumptions a2-a4 because we have that \<pi> inj 
   Ask to Dominique: I am not convinced that this is possible
+
+  \<longrightarrow> Yes, it is possible! (Using classical_operator_exists_inj, which I already had sketched in the TODOs but which you ignored.)
+
 *)
   shows "isometry (classical_operator (Some o \<pi>))"
 proof -
@@ -3252,34 +3285,22 @@ proof -
   have b1: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
     apply (rule ext) unfolding inv_option_def o_def 
     using assms unfolding inj_def inv_def by auto
-  hence b2: "cblinfun_extension_exists (range ket)
+(*   hence b2: "cblinfun_extension_exists (range ket)
      (classical_function''
        (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>)))"
-    using a4 by simp
+    using a4 by simp *)
   have b3: "classical_operator (inv_option (Some \<circ> \<pi>)) o\<^sub>C\<^sub>L
             classical_operator (Some \<circ> \<pi>) = classical_operator (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>))"
-    using classical_operator_mult[where \<pi> = "inv_option (Some \<circ> \<pi>)" and \<rho> = "Some \<circ> \<pi>"]   
-      b0 b0' a2 a3 b2 unfolding classical_function_def classical_function'_def 
-      classical_function''_def by blast
+    by (metis assms b0 b0' b1 classical_operator_Some classical_operator_def classical_operator_exists_inj classical_operator_mult inj_option_Some inj_option_Some_pi)
   show ?thesis
     unfolding isometry_def
-    apply (subst classical_operator_adjoint) using assms apply simp
-      apply (simp add: a2)
-    using a3 unfolding classical_function'_def
-      apply simp
-    using a2 classical_function_def apply auto[1]
-    using a3 classical_function'_def apply auto[1]
-    using a4 b1 b3 unfolding classical_function''_def
-    by auto 
+    apply (subst classical_operator_adjoint)
+    using b0 by (auto simp add: b1 b3)
 qed
 
-
-(* TODO remove cblinfun-extension_exists assms because \<pi> bij 
-  Ask to Dominique: I am not convinced that this is possible
-*)
 lemma unitary_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i)"
   and "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
@@ -3290,20 +3311,19 @@ lemma unitary_classical_operator[simp]:
                           | Some i \<Rightarrow> ket i)"
   and  "classical_functionB  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
+                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "bij \<pi>"
-    and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
+(*     and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
     and a3: "cblinfun_extension_exists (range ket)
      (classical_function' (inv_option (Some \<circ> \<pi>)))"
     and a4: "cblinfun_extension_exists (range ket) (classical_functionA (Some::'a\<Rightarrow>_))"
-    and a5: "cblinfun_extension_exists (range ket) (classical_functionB (Some::'b\<Rightarrow>_))"
+    and a5: "cblinfun_extension_exists (range ket) (classical_functionB (Some::'b\<Rightarrow>_))" *)
   shows "unitary (classical_operator (Some o \<pi>))"
 proof (unfold unitary_def, rule conjI)
   have "inj \<pi>"
     using a1 bij_betw_imp_inj_on by auto
   hence "isometry (classical_operator (Some o \<pi>))"
-    using a2 a3 a4 unfolding classical_function_def classical_function'_def classical_functionA_def
-    by auto
+    by simp
   hence "classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp"
     unfolding isometry_def by simp
   thus \<open>classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp\<close>
@@ -3320,17 +3340,14 @@ next
     by (metis a1)
   have "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)*
       = classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (inv_option (Some \<circ> \<pi>))"
-    using \<open>inj \<pi>\<close> a2 a3 unfolding classical_function_def classical_function'_def
-    by auto
+    by (simp add: \<open>inj \<pi>\<close>)
   also have "\<dots> = classical_operator ((Some \<circ> \<pi>) \<circ>\<^sub>m (inv_option (Some \<circ> \<pi>)))"
-    using classical_operator_mult a2 a3 a5 \<open>inj \<pi>\<close> comp
-    unfolding classical_function_def classical_function'_def classical_functionB_def
-    by auto
+    by (simp add: \<open>inj \<pi>\<close> classical_operator_exists_inj)
   also have "\<dots> = classical_operator (Some::'b\<Rightarrow>_)"
     using comp
     by simp 
   also have "\<dots> = (idOp:: 'b ell2 \<Rightarrow>\<^sub>C\<^sub>L _)"
-    using a5 unfolding classical_functionB_def by auto
+    by simp
   finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = idOp".
 qed
 
