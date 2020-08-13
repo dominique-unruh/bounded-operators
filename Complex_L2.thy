@@ -2876,16 +2876,327 @@ lemma classical_operator_existsI:
 lemma classical_operator_exists_inj:
   assumes "inj_option \<pi>"
   shows "classical_operator_exists \<pi>"
-(* TODO
+proof -
+  define C0 where "C0 \<psi> = (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
-  Proof sketch:
+  have has_ell2_norm_C0: \<open>has_ell2_norm \<psi> \<Longrightarrow> has_ell2_norm (C0 \<psi>)\<close> for \<psi>
+  proof -
+    assume \<open>has_ell2_norm \<psi>\<close>
+    hence \<open>bdd_above (sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) ` Collect finite)\<close>
+      unfolding has_ell2_norm_def
+      by blast
+    hence \<open>\<exists> M. \<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+      by (simp add: bdd_above_def)
+    then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
+      by blast
+    define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
+      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+    have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+        unfolding \<phi>_def
+        by (metis option.case_eq_if option.collapse)
+      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+        by metis
+      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+        by blast
+      define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
+      have \<open>finite S\<close>
+        using \<open>finite R\<close>
+        by (simp add: S_def)
+      moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
+      proof-
+        have \<open>inj_on f R\<close>
+        proof(rule inj_onI)
+          fix x y :: 'b
+          assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
+          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+          have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
+            by (metis inv_option_def option.distinct(1))
+          hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
+            by blast
+          hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+          have \<open>\<pi> (f x) = Some x\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
+          moreover have \<open>\<pi> (f y) = Some y\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
+          ultimately have \<open>Some x = Some y\<close>
+            using \<open>f x = f y\<close> by metis
+          thus \<open>x = y\<close> by simp
+        qed
+        moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
+          for i
+        proof-
+          assume \<open>i \<in> R\<close>
+          hence \<open>\<phi> i = \<psi> (f i)\<close>
+            unfolding \<phi>_def
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis unfolding S_def
+          by (metis (mono_tags, lifting) sum.reindex_cong)
+      qed
+      ultimately show ?thesis
+        by (simp add: \<open>\<And>S. finite S \<Longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> M\<close>) 
+    qed     
+    have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> M\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close>
+      define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
+      define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
+      have \<open>U \<inter> V = {}\<close>
+        unfolding U_def V_def by blast
+      moreover have \<open>U \<union> V = R\<close>
+        unfolding U_def V_def by blast
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
+            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
+        using \<open>finite R\<close> sum.union_disjoint by auto
+      moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
+        unfolding V_def by auto
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+      moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
+        by (simp add: U_def)
+      moreover have \<open>finite U\<close>
+        unfolding U_def using \<open>finite R\<close>
+        by simp
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le> M\<close>
+        using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close> by blast        
+      thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+    qed
+    hence  \<open>bdd_above (sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) ` Collect finite)\<close>
+      unfolding bdd_above_def
+      by blast
+    thus ?thesis
+      unfolding \<phi>_def C0_def using has_ell2_norm_def by blast
+  qed
 
-  Define C as the classical_operator for \<pi> using the old definition
-  Show that "C (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-  Using classical_operator_existsI, show "classical_operator_exists \<pi>"
+  define C1 :: "('a ell2 \<Rightarrow> 'b ell2)"
+    where "C1 \<psi> = Abs_ell2 (C0 (Rep_ell2 \<psi>))" for \<psi>
+  have [transfer_rule]: "rel_fun (pcr_ell2 (=)) (pcr_ell2 (=)) C0 C1" 
+    apply (rule rel_funI)
+    unfolding ell2.pcr_cr_eq cr_ell2_def C1_def 
+    apply (subst Abs_ell2_inverse)
+    using has_ell2_norm_C0 Rep_ell2 by blast+
 
-*)
-  sorry
+  have add: "C1 (x + y) = C1 x + C1 y" for x y
+    apply transfer unfolding C0_def 
+    apply (rule ext, rename_tac b)
+    apply (case_tac "inv_option \<pi> b")
+    by auto
+
+  have scaleC: "C1 (c *\<^sub>C x) = c *\<^sub>C C1 x" for c x
+    apply transfer unfolding C0_def 
+    apply (rule ext, rename_tac b)
+    apply (case_tac "inv_option \<pi> b")
+    by auto
+
+  have "clinear C1"
+    using add scaleC by (rule clinearI)
+
+  have bounded_C0: \<open>ell2_norm (C0 \<psi>) \<le> ell2_norm \<psi>\<close> if \<open>has_ell2_norm \<psi>\<close> for \<psi>  
+  proof-
+    have \<open>\<forall> S. finite S \<longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> (ell2_norm \<psi>)^2\<close>
+      using \<open>has_ell2_norm \<psi>\<close> ell2_norm_def
+      by (smt cSUP_upper has_ell2_norm_def mem_Collect_eq sqrt_le_D sum.cong)
+    define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
+      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+    have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le>  (ell2_norm \<psi>)^2\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
+      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+        unfolding \<phi>_def
+        by (metis option.case_eq_if option.collapse)
+      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+        by metis
+      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+        by blast
+      define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
+      have \<open>finite S\<close>
+        using \<open>finite R\<close>
+        by (simp add: S_def)
+      moreover have \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) =  (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2)\<close>
+      proof-
+        have \<open>inj_on f R\<close>
+        proof(rule inj_onI)
+          fix x y :: 'b
+          assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
+          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+          have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
+            by (metis inv_option_def option.distinct(1))
+          hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
+            by blast
+          hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+          have \<open>\<pi> (f x) = Some x\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
+          moreover have \<open>\<pi> (f y) = Some y\<close>
+            using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>y\<in>R\<close> by blast
+          ultimately have \<open>Some x = Some y\<close>
+            using \<open>f x = f y\<close> by metis
+          thus \<open>x = y\<close> by simp
+        qed
+        moreover have \<open>i \<in> R \<Longrightarrow> (cmod (\<phi> i))\<^sup>2 = (cmod (\<psi> (f i)))\<^sup>2\<close>
+          for i
+        proof-
+          assume \<open>i \<in> R\<close>
+          hence \<open>\<phi> i = \<psi> (f i)\<close>
+            unfolding \<phi>_def
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+          thus ?thesis
+            by simp 
+        qed
+        ultimately show ?thesis unfolding S_def
+          by (metis (mono_tags, lifting) sum.reindex_cong)
+      qed
+      ultimately show ?thesis
+        by (simp add: \<open>\<forall>S. finite S \<longrightarrow> (\<Sum>i\<in>S. (cmod (\<psi> i))\<^sup>2) \<le> (ell2_norm \<psi>)\<^sup>2\<close>)
+    qed     
+    have \<open>finite R \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le> (ell2_norm \<psi>)\<^sup>2\<close>
+      for R::\<open>'b set\<close>
+    proof-
+      assume \<open>finite R\<close>
+      define U::\<open>'b set\<close> where \<open>U = {i | i::'b. i \<in> R \<and>  \<phi> i \<noteq> 0 }\<close>
+      define V::\<open>'b set\<close> where \<open>V = {i | i::'b. i \<in> R \<and>  \<phi> i = 0 }\<close>
+      have \<open>U \<inter> V = {}\<close>
+        unfolding U_def V_def by blast
+      moreover have \<open>U \<union> V = R\<close>
+        unfolding U_def V_def by blast
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) + 
+            ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V )\<close>
+        using \<open>finite R\<close> sum.union_disjoint by auto
+      moreover have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) V ) = 0\<close>
+        unfolding V_def by auto
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+      moreover have \<open>\<forall> i \<in> U. \<phi> i \<noteq> 0\<close>
+        by (simp add: U_def)
+      moreover have \<open>finite U\<close>
+        unfolding U_def using \<open>finite R\<close>
+        by simp
+      ultimately have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U ) \<le>  (ell2_norm \<psi>)\<^sup>2\<close>
+        using \<open>\<And>R. \<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le>  (ell2_norm \<psi>)\<^sup>2\<close> by blast        
+      thus ?thesis using \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) U )\<close>
+        by simp
+    qed
+    hence \<open>finite R \<Longrightarrow> sqrt (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> ell2_norm \<psi>\<close>
+      for R
+    proof-
+      assume \<open>finite R\<close>
+      hence \<open>(\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> (ell2_norm \<psi>)^2\<close>
+        by (simp add: \<open>\<And>R. finite R \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> (ell2_norm \<psi>)\<^sup>2\<close>)
+      hence \<open>sqrt (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> sqrt ((ell2_norm \<psi>)^2)\<close>
+        using real_sqrt_le_iff by blast
+      moreover have \<open>sqrt ((ell2_norm \<psi>)^2) = ell2_norm \<psi>\<close>
+      proof-
+        have \<open>ell2_norm \<psi> \<ge> 0\<close>
+        proof-
+          obtain X where \<open>Rep_ell2 X = \<psi>\<close>
+            using Rep_ell2_cases \<open>has_ell2_norm \<psi>\<close> by auto
+          have \<open>norm X \<ge> 0\<close>
+            by simp
+          thus \<open>ell2_norm \<psi> \<ge> 0\<close> 
+            using \<open>Rep_ell2 X = \<psi>\<close>
+            by (simp add: norm_ell2.rep_eq) 
+        qed
+        thus ?thesis
+          by simp 
+      qed
+      ultimately show ?thesis
+        by linarith 
+    qed
+    hence \<open>\<forall> L \<in> { sqrt (sum (\<lambda>i. norm (\<phi> i)^2) F) | F. F\<in>{F. finite F} }. L \<le> ell2_norm \<psi>\<close>
+      by blast
+    moreover have \<open>{ sqrt (sum (\<lambda>i. norm (\<phi> i)^2) F) | F. F\<in>{F. finite F} } \<noteq> {}\<close>
+      by force
+    ultimately have \<open>Sup { sqrt (sum (\<lambda>i. norm (\<phi> i)^2) F) | F. F\<in>{F. finite F} } \<le> ell2_norm \<psi>\<close>
+      by (meson cSup_least)
+    moreover have \<open>sqrt ( Sup { sum (\<lambda>i. norm (\<phi> i)^2) F | F. F\<in>{F. finite F} } )
+          = Sup { sqrt (sum (\<lambda>i. norm (\<phi> i)^2) F) | F. F\<in>{F. finite F}  }\<close>
+    proof-
+      define T where \<open>T = { sum (\<lambda>i. norm (\<phi> i)^2) F | F. F\<in>{F. finite F} }\<close>
+      have \<open>mono sqrt\<close>
+        by (simp add: monoI)
+      moreover have \<open>continuous (at_left (Sup T)) sqrt\<close>
+        by (simp add: continuous_at_imp_continuous_at_within isCont_real_sqrt)      
+      moreover have \<open>T \<noteq> {}\<close>
+        unfolding T_def
+        by blast
+      moreover have \<open>bdd_above T\<close>
+      proof(rule bdd_aboveI)
+        fix x
+        assume \<open>x \<in> T\<close>
+        hence \<open>\<exists> R. finite R \<and> x = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R )\<close>
+          unfolding T_def
+          by blast
+        then obtain R where \<open>finite R\<close> and \<open>x = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R )\<close>
+          by blast
+        from  \<open>finite R\<close>
+        have \<open>( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R ) \<le>  (ell2_norm \<psi>)^2\<close>
+          by (simp add: \<open>\<And>R. finite R \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> (ell2_norm \<psi>)\<^sup>2\<close>)
+        thus \<open>x \<le> (ell2_norm \<psi>)^2\<close>
+          using  \<open>x = ( sum (\<lambda>i. (cmod (\<phi> i))\<^sup>2) R )\<close> by simp
+      qed
+      ultimately have \<open>sqrt (Sup T) = Sup (sqrt ` T)\<close>
+        by (rule Topological_Spaces.continuous_at_Sup_mono)
+      moreover have \<open>sqrt ` {\<Sum>i\<in>F. (cmod (\<phi> i))\<^sup>2 |F. F \<in> Collect finite}
+             =  {sqrt (\<Sum>i\<in>F. (cmod (\<phi> i))\<^sup>2) |F. F \<in> Collect finite}\<close>
+        by auto
+      ultimately show ?thesis 
+        unfolding T_def
+        by simp
+    qed
+    ultimately have \<open>sqrt ( Sup { sum (\<lambda>i. norm (\<phi> i)^2) F | F. F\<in>{F. finite F} } ) \<le> ell2_norm \<psi>\<close>
+      by simp
+    moreover have \<open>ell2_norm \<phi> = sqrt ( Sup { sum (\<lambda>i. norm (\<phi> i)^2) F | F. F\<in>{F. finite F} } )\<close>
+      unfolding ell2_norm_def
+      by (metis Setcompr_eq_image)
+    ultimately have \<open>ell2_norm \<phi> \<le> ell2_norm \<psi>\<close>
+      by simp
+    thus ?thesis
+      unfolding C0_def \<phi>_def by simp
+  qed
+
+  then have bounded_C1: "\<exists>K. \<forall>x. norm (C1 x) \<le> norm x * K"
+    apply transfer apply (rule exI[of _ 1]) by auto
+
+  have "cbounded_linear C1"
+    using \<open>clinear C1\<close> bounded_C1 by (rule cbounded_linear.intro)
+
+  define C where "C = cBlinfun C1"
+  have [transfer_rule]: "pcr_cblinfun (=) (=) C1 C"
+    unfolding C_def unfolding cblinfun.pcr_cr_eq cr_cblinfun_def
+    apply (subst cBlinfun_inverse)
+    using \<open>cbounded_linear C1\<close> by auto
+
+  have C1_ket: "C1 (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
+    apply (transfer fixing: \<pi> x) unfolding C0_def
+    apply (rule ext, rename_tac b)
+    apply (case_tac "inv_option \<pi> b"; cases "\<pi> x")
+    apply auto
+       apply (metis inv_option_def option.simps(3) range_eqI)
+      apply (metis f_inv_into_f inv_option_def option.distinct(1) option.sel)
+     apply (metis f_inv_into_f inv_option_def option.sel option.simps(3))
+    by (metis (no_types, lifting) assms f_inv_into_f inj_option_def inv_option_def option.sel option.simps(3))
+
+  have "C *\<^sub>V ket x = (case \<pi> x of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)" for x
+    using ket.transfer[transfer_rule del] zero_ell2.transfer[transfer_rule del] 
+    apply (tactic \<open>all_tac\<close>)
+    apply (transfer fixing: \<pi>)
+    by (fact C1_ket)
+
+  then show "classical_operator_exists \<pi>"
+    by (rule classical_operator_existsI[of C])
+qed
 
 lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> :: _::finite \<Rightarrow> _)"
   unfolding classical_operator_exists_def
