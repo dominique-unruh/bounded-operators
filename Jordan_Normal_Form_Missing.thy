@@ -7,7 +7,7 @@ Authors:
 
 theory Jordan_Normal_Form_Missing
   imports
-    Complex_L2 Jordan_Normal_Form.Matrix
+    Jordan_Normal_Form.Matrix
 begin
 text \<open>This theory defines bundes to activate/deactivate the notation
   from \<^session>\<open>Jordan_Normal_Form\<close>.
@@ -84,7 +84,7 @@ proof-
         by (simp add: \<open>vec_index (unit_vec n j) k = 0\<close>) 
     qed
     hence "(\<Sum>k\<in>{0..<n}-{j}. vec_index (vec n (\<lambda>j. M $$ (i, j))) k * vec_index (unit_vec n j) k) = 0"
-      using sum_not_0 by blast      
+      by (simp add: assms(3))
     thus ?thesis by simp
   qed
   also have "\<dots> = vec_index (vec n (\<lambda>j. M $$ (i, j))) j"
@@ -206,11 +206,12 @@ proof-
   also have "\<dots> = (\<Sum>i=0..<nA.
                   (\<Sum>j=0..< nB.  
       vec_index ( (Matrix.col M) i ) j * cnj (vec_index u j) * (vec_index v i) ))"
-    by (simp add: vector_space_over_itself.scale_sum_left)
+    by (simp add: sum_distrib_right)
   also have "\<dots> = (\<Sum>i=0..<nA.
                   (\<Sum>j=0..<nB.  
       vec_index ( (Matrix.col M) i ) j  * (vec_index v i) * cnj (vec_index u j) ))"
-    by (smt conjugate_complex_def mult.commute sum.cong vector_space_over_itself.scale_scale)
+    apply (simp add: mult.assoc)
+    by (simp add: mult.commute)
   also have "\<dots> = (\<Sum>j=0..<nB.
                   (\<Sum>i=0..<nA.  
       vec_index ( (Matrix.col M) i ) j  * (vec_index v i) * cnj (vec_index u j) ))"
@@ -218,7 +219,7 @@ proof-
   also have "\<dots> = (\<Sum>j=0..<nB.
                   (\<Sum>i=0..<nA.  
       vec_index ( (Matrix.col M) i ) j  * (vec_index v i) ) * cnj (vec_index u j) )"
-    by (simp add: vector_space_over_itself.scale_sum_left)
+    by (simp add: sum_distrib_right)
   also have "\<dots> = (\<Sum>j\<in>{0..<nB}. vec_index (M *\<^sub>v v) j * cnj (vec_index u j))"
     using b10 by simp
   also have "\<dots> = (M *\<^sub>v v) \<bullet>c u"

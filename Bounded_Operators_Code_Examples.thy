@@ -114,4 +114,14 @@ value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)"
 
 value "idOp *\<^sub>V ket True"
 
+value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L _\<close>
+
+subsection \<open>Subspaces\<close>
+
+value "Span {ket False}"
+
+value "Proj (Span {ket False})"
+
+(* TODO: add all *)
+
 end

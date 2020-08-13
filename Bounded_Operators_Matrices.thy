@@ -1,5 +1,5 @@
 theory Bounded_Operators_Matrices
-  imports Jordan_Normal_Form_Missing 
+  imports Complex_L2 Jordan_Normal_Form_Missing Jordan_Normal_Form.Gram_Schmidt 
 begin
 
 subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
@@ -418,7 +418,7 @@ next
       moreover have "y \<in> set (a#L)"
         by (simp add: o2)
       ultimately show "\<langle>x, y\<rangle> = 0"
-        using o3 Cons.prems(3) is_ortho_set_def by blast 
+        using o3 Cons.prems(3) is_ortho_set_def by metis
     qed
     moreover have "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
       using Cons.prems(4) by auto      
@@ -927,9 +927,11 @@ proof-
         by blast 
       moreover have "insert i S = {0..n-1}"
         using S_def Suc_diff_1 a3 atLeastAtMost_iff diff_is_0_eq' le_SucE le_numeral_extra(4) 
-          less_imp_le not_gr_zero by auto                
+          less_imp_le not_gr_zero
+        by fastforce 
       ultimately show ?thesis
-        using \<open>a \<equiv> \<lambda>j. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j\<close> by auto 
+        using \<open>a \<equiv> \<lambda>j. list_of_vec (unit_vec n i) ! j *\<^sub>C basis ! j\<close>
+        by simp 
     qed
     also have "\<dots> = list_of_vec (unit_vec n i) ! i *\<^sub>C basis ! i"
     proof-
@@ -1217,7 +1219,7 @@ proof-
            apply (simp add: Cons.hyps(2))
         using Cons.prems(1) is_ob_def is_onb_delete is_onb_then_is_ob apply auto[1]
         using w1 apply auto[1]
-        using Cons.prems(1) dual_order.trans is_onb_def by auto        
+        by (metis Cons.prems(1) insert_subset is_onb_def list.set(2))
       ultimately show " y * (cnj x * \<langle>b, b\<rangle>) +
     \<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
     cnj x * y + sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)" 
