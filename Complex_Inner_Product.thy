@@ -13,6 +13,7 @@ theory Complex_Inner_Product
     Complex_Vector_Spaces
     "HOL-Analysis.Infinite_Set_Sum" 
     "HOL-Analysis.Inner_Product"  
+    "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -4120,6 +4121,8 @@ lemma finite_span_complete_aux:
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
 (* Ask to Dominique: why there is an error here?
+
+    \<Longrightarrow> José, because the theory Types_To_Sets was not imported which defines internalize_sort*)
   text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
      \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
      content of the lemmas. However, there is one difference: We additionally assume here
@@ -4131,7 +4134,7 @@ lemma finite_span_complete_aux:
      weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
      (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
      an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
-*)
+
 proof -
   define repr  where "repr = real_vector.representation B"
   define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
@@ -4335,13 +4338,12 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
       apply intro_classes
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-    note finite_span_complete_aux(2)(* [internalize_sort "'basis::finite"] *) 
-      (* Ask to Dominique: I do not know how to use "internalize_sort" and "OF" *)
-    note this(* [OF basisT_finite t] *)
+    note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
+    note this[OF basisT_finite t]
   }
-  note this (* [cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>] *)
+  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
   then have "complete (real_vector.span B)"
-    using \<open>B\<noteq>{}\<close>  sorry (* Ask to Dominique: how to prove this *)
+    using \<open>B\<noteq>{}\<close> by auto
   then show "complete (real_vector.span A)"
     unfolding BT by simp
 next
@@ -5169,11 +5171,46 @@ lemma differentiable_cinner [simp]:
         (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
+(* TODO move to Preliminaries *)
+lemmas has_derivative_of_real [derivative_intros] = bounded_linear.has_derivative[OF bounded_linear_of_real]
 
-(* Ask to Dominique: how to prove this?
+(* TODO move to Preliminaries *)
+lemma cmod_Re:
+  assumes "x \<ge> 0"
+  shows "cmod x = Re x"
+  using assms unfolding less_eq_complex_def cmod_def
+  by auto
+
+lemma has_derivative_norm[derivative_intros]:
+  fixes x :: "'a::complex_inner"
+  assumes "x \<noteq> 0" shows "(norm has_derivative (\<lambda>y. Re \<langle>x, y\<rangle> / norm x)) (at x)"
+proof -
+  have Re_pos: "0 < Re \<langle>x, x\<rangle>"
+    using assms by (metis Re_strict_mono cinner_gt_zero_iff zero_complex.simps(1))
+  have Re_plus_Re: "Re \<langle>x, y\<rangle> + Re \<langle>y, x\<rangle> = 2 * Re \<langle>x, y\<rangle>" for x y :: 'a
+    by (metis cinner_commute cnj.simps(1) mult_2_right semiring_normalization_rules(7))
+  have norm: "norm x = sqrt (Re \<langle>x, x\<rangle>)" for x :: 'a
+    apply (subst norm_eq_sqrt_cinner, subst cmod_Re)
+    by auto
+  have "((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative
+          (\<lambda>xa. (Re \<langle>x, xa\<rangle> + Re \<langle>xa, x\<rangle>) * (inverse (sqrt (Re \<langle>x, x\<rangle>)) / 2))) (at x)" 
+    by (rule derivative_eq_intros | simp add: Re_pos)+
+  then show ?thesis
+    apply (auto simp: Re_plus_Re norm[abs_def])
+    apply (subst divide_real_def)
+    by simp
+qed
+
+(*
+(* Ask to Dominique: how to prove this? 
+
+\<Longrightarrow> cGDERIV_norm is wrong (as can be seen by unfolding the definition of cGDERIV_norm and comparing with
+has_derivative_norm above. has_derivative_norm I have proven directly above *)
+
+TODO: remove
+
 lemma cGDERIV_norm:
   assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
-  sorry
 
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
   sorry
@@ -5340,7 +5377,7 @@ proof-
 qed
 
 (* TODO: move? *)
-(* Ask to Dominique: where? *)
+(* Ask to Dominique: where? \<Longrightarrow> Preliminaries *)
 lemma hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat:
   \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
 proof-

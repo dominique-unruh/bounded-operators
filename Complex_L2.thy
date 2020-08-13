@@ -95,8 +95,6 @@ notation
 typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
-  (* TODO: derive universe vector *)
-  (* Ask to Dominique: I do not understand *)
 
 lemma SUP_max:
   fixes f::"'a::order\<Rightarrow>'b::conditionally_complete_lattice"
@@ -3003,9 +3001,6 @@ proof-
     using adjoint_D by auto 
 qed
 
-(* TODO: finite dimensional corollary as a simp-rule
-  Ask to Dominique: I do not understand this TODO.
-*)
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
 (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
@@ -3145,6 +3140,12 @@ qed
 
 (* TODO: finite dimensional corollary as a simp-rule
   Ask to Dominique: I do not understand this TODO.
+
+  \<Longrightarrow> Make a corollary classical_operator_mult_finite[simp] that has no assumptions
+      but uses type class "finite".
+
+  (To be done after getting rid of the inj_option assumptions, see the next TODO)
+
 *)
 lemma classical_operator_mult[simp]:
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
@@ -3273,7 +3274,7 @@ lemma isometry_classical_operator[simp]:
 (* TODO: remove assumptions a2-a4 because we have that \<pi> inj 
   Ask to Dominique: I am not convinced that this is possible
 
-  \<longrightarrow> Yes, it is possible! (Using classical_operator_exists_inj, which I already had sketched in the TODOs but which you ignored.)
+  \<Longrightarrow> Yes, it is possible! (Using classical_operator_exists_inj, which I already had sketched in the TODOs but which you ignored.)
 
 *)
   shows "isometry (classical_operator (Some o \<pi>))"
