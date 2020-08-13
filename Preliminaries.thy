@@ -1870,9 +1870,6 @@ proof -
   finally show ?thesis .
 qed
 
-
-(* TODO move *)
-(* Ask to Dominique: to move where? *)
 lemma cauchy_filter_metricI:
   fixes F :: "'a::metric_space filter"
   assumes "\<And>e. e>0 \<Longrightarrow> \<exists>P. eventually P F \<and> (\<forall>x y. P x \<and> P y \<longrightarrow> dist x y < e)"
@@ -1890,8 +1887,6 @@ proof (unfold cauchy_filter_def le_filter_def, auto)
 qed
 
 
-(* TODO move *)
-(* Ask to Dominique: to move where? *)
 lemma cauchy_filter_metric_filtermapI:
   fixes F :: "'a filter" and f :: "'a\<Rightarrow>'b::metric_space"
   assumes "\<And>e. e>0 \<Longrightarrow> \<exists>P. eventually P F \<and> (\<forall>x y. P x \<and> P y \<longrightarrow> dist (f x) (f y) < e)"

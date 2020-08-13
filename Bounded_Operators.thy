@@ -406,6 +406,18 @@ proof-
     by auto
 qed
 
+(* TODO: move to Preliminaries *)
+lemma class_not_singletonI_monoid_add:
+  assumes "(UNIV::'a set) \<noteq> 0"
+  shows "class.not_singleton TYPE('a::monoid_add)"
+proof intro_classes
+  let ?univ = "UNIV :: 'a set"
+  from assms obtain x::'a where "x \<noteq> 0"
+    by auto
+  then show "\<exists>x y :: 'a. x \<noteq> y"
+    by auto
+qed
+
 lemma ustrong_onorm:
   fixes f::"nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector"
     and l::"'a \<Rightarrow>\<^sub>L 'b"
@@ -450,14 +462,31 @@ next
         hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
     proof-
       define g where \<open>g n = f n - l\<close> for n
+
+      note hnorm_unit_sphere' = hnorm_unit_sphere[
+          where 'a="'z::{not_singleton,real_normed_vector}",
+          rule_format,
+          internalize_sort "'z::{not_singleton,real_normed_vector}"]
+
       have \<open>\<exists> x \<in> *s* (sphere 0 1). 
         hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (g n))) N x )\<close>
-        using False \<open>N\<in>HNatInfinite\<close>
-          hnorm_unit_sphere
-        sorry (* Ask to Dominique: how to use "False" in order 
+        (* The attributes to hnorm_unit_sphere remove the sort from variable 'a in hnorm_unit_sphere.
+           This is needed because 'a has sort not_singleton there that we don't have *)
+        apply (rule hnorm_unit_sphere[
+              where 'a="'z::{not_singleton,real_normed_vector}", (* Rename 'a because internalize_sort does not work with type variables already in use in the proof *)
+                rule_format, (* The first step renamed 'a to 'z1, rule_format brings it back to 'z ('z1 cannot be used in internalize_sort either) *)
+                internalize_sort "'z::{not_singleton,real_normed_vector}"]) (* Remove type_classes from 'z *)
+        using False apply (rule class_not_singletonI_monoid_add)
+         apply (rule real_normed_vector_class.real_normed_vector_axioms)
+        by (fact \<open>N\<in>HNatInfinite\<close>)
+
+           (* Asked to Dominique: how to use "False" in order 
               to consider the type of the domain as "not_singleton" 
               It think that "hnorm_unit_sphere[where f = g]", but considering 
               the domain of g having type "{not_singleton, real_normed_vector}"
+
+              \<Longrightarrow> TODO: José, please inspect my solution here for future situations.
+
               *)
       moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
       proof-
@@ -606,9 +635,20 @@ next
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast
     moreover have \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
          \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
-      using  False \<open>N \<in> HNatInfinite\<close> \<open>M \<in> HNatInfinite\<close>
-      sorry (* by (rule uCauchy_unit_sphere) *)
+        (* The attributes to hnorm_unit_sphere remove the sort from variable 'a in hnorm_unit_sphere.
+           This is needed because 'a has sort not_singleton there that we don't have *)
+      apply (rule uCauchy_unit_sphere[
+              where 'a="'z::{not_singleton,real_normed_vector}", (* Rename 'a because internalize_sort does not work with type variables already in use in the proof *)
+                rule_format, (* The first step renamed 'a to 'z1, rule_format brings it back to 'z ('z1 cannot be used in internalize_sort either) *)
+                internalize_sort "'z::{not_singleton,real_normed_vector}",
+              where M=M and N=N and f=f]) (* Remove type_classes from 'z *)
+        using False apply (rule class_not_singletonI_monoid_add)
+          apply (rule real_normed_vector_class.real_normed_vector_axioms)
+        using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close> by -
 (* Ask to Dominique: Incompatibility between "False" and type not_singleton      
+
+\<Longrightarrow> Proved it.
+
 *)
     ultimately have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
       using approx_sym approx_trans3 mem_infmal_iff by blast          
@@ -5808,8 +5848,11 @@ proof-
 qed
 
 
-(* TODO: move *)
-(* Ask to Dominique: move where? *)
+(* TODO: move*)
+(* Ask to Dominique: move where? 
+
+  \<Longrightarrow> Complex_Inner_Product (because that's where onb_enum and canonical_basis are defined)
+*)
 lemma obn_enum_uniq_zero:
   fixes f ::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   defines "basis == set (canonical_basis::'a list)"
