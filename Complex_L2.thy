@@ -2863,7 +2863,7 @@ definition "classical_operator_exists \<pi> \<longleftrightarrow>
     (\<lambda>t. case \<pi> (inv ket t) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
 
 lemma inj_ket: "inj ket"
-  sorry
+  by (meson injI ket_distinct)
 
 lemma classical_operator_existsI:
   assumes "\<And>x. B *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
@@ -3138,16 +3138,11 @@ proof-
   thus ?thesis unfolding G_def F_def .
 qed
 
-(* TODO: finite dimensional corollary as a simp-rule
-  Ask to Dominique: I do not understand this TODO.
+(* TODO: move to Bounded_Operators *)
+lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0"
+  by (metis applyOp0 cblinfun_apply_0 times_applyOp)
 
-  \<Longrightarrow> Make a corollary classical_operator_mult_finite[simp] that has no assumptions
-      but uses type class "finite".
-
-  (To be done after getting rid of the inj_option assumptions, see the next TODO)
-
-*)
-lemma classical_operator_mult[simp]:
+lemma
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
 (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'b ell2) 
@@ -3158,32 +3153,41 @@ lemma classical_operator_mult[simp]:
   defines  "classical_function''  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'c ell2) 
                           | Some i \<Rightarrow> ket i)" *)
-  assumes a1: "inj_option \<pi>" 
+  assumes "classical_operator_exists \<pi>"
+  assumes "classical_operator_exists \<rho>"
+(*   assumes a1: "inj_option \<pi>" 
     and a2: "inj_option \<rho>"  
     and a3:"classical_operator_exists \<pi>"
     and a4:"classical_operator_exists \<rho>"
-    and a5: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)" 
-  shows "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
-(* TODO:
-
-  Should be provable with much less assumptions. Sketch:
-  
-  By classical_operator_exists \<pi>, classical_operator_exists \<pi>,
-  we have "C1 (ket i) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for C1 := (classical_operator_exists \<pi>)
-  and "C2 (ket i) = (case \<rho> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for C2 := (classical_operator_exists \<rho>)
-  Then it follows 
-  "(C1 oCL C2) (ket i) = (case (\<pi> \<circ>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" by properties of oCL (and using C1 0 = 0).
-  By classical_operator_existsI, we get
-  "classical_operator_exists (\<pi> \<circ>m \<rho>)".
-  Then we have that 
-  "C12 (ket i) = (case (\<pi> \<circ>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" by properties of oCL (and using C1 0 = 0).
-  for C12 = (classical_operator_exists \<pi>) oCL (classical_operator_exists \<rho>).
-  Thus "C1 oCL C2 = C12" because both sides are equivalent on a basis.
-
-  Note that this does not use injectivity of \<pi> or \<rho>.
-
+    and a5: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"  *)
+  shows classical_operator_exists_comp[simp]: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"
+    and classical_operator_mult[simp]: "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
+(* TODO: (Just a note for José) I rewrote the proof, needs much less assumptions now.
+Also added the conclusion classical_operator_exists_comp[simp]
  *)
 proof -
+  define C\<pi> C\<rho> C\<pi>\<rho> where "C\<pi> = classical_operator \<pi>" and "C\<rho> = classical_operator \<rho>" 
+    and "C\<pi>\<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
+  have C\<pi>x: "C\<pi> *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
+    unfolding C\<pi>_def using \<open>classical_operator_exists \<pi>\<close> by (rule classical_operator_basis)
+  have C\<rho>x: "C\<rho> *\<^sub>V (ket x) = (case \<rho> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
+    unfolding C\<rho>_def using \<open>classical_operator_exists \<rho>\<close> by (rule classical_operator_basis)
+  have C\<pi>\<rho>x': "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
+    apply (simp add: times_applyOp C\<rho>x)
+    apply (cases "\<rho> x")
+    by (auto simp: C\<pi>x)
+  then show \<open>classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)\<close>
+    by (rule classical_operator_existsI)
+  then have "C\<pi>\<rho> *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
+    unfolding C\<pi>\<rho>_def
+    by (rule classical_operator_basis)
+  with C\<pi>\<rho>x' have "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = C\<pi>\<rho> *\<^sub>V (ket x)" for x
+    by simp
+  then show "C\<pi> o\<^sub>C\<^sub>L C\<rho> = C\<pi>\<rho>"
+    by (simp add: equal_basis)
+qed
+
+(* proof -
   have "(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>V (ket i)
       = (classical_operator (\<pi> \<circ>\<^sub>m \<rho>)) *\<^sub>V ket i"
     for i
@@ -3218,13 +3222,7 @@ proof -
   qed
   thus ?thesis
     by (simp add: equal_basis) 
-qed
-
-lemma classical_operator_exists_comp[simp]: 
-  assumes "classical_operator_exists f" and "classical_operator_exists g"
-  shows "classical_operator_exists (g \<circ>\<^sub>m f)"
-  sorry
-
+qed *)
 
 lemma classical_operator_Some[simp]: 
   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 

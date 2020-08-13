@@ -2178,6 +2178,7 @@ proof transfer
     by (metis Adj_D cinner_commute')
 qed
 
+(* TODO: this is a bad name because cblinfun_apply is not involved *)
 lemma cblinfun_apply_0[simp]:  
   fixes U::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun\<close>
   shows  "U  o\<^sub>C\<^sub>L 0 = 0"
