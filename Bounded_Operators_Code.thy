@@ -18,6 +18,25 @@ subsection \<open>Code equations for cblinfun operators\<close>
 text \<open>In this subsection, we define the code for all operations involving only 
   operators (no combinations of operators/vectors/subspaces)\<close>
 
+
+text \<open>The following lemma registers cblinfun as an abstract datatype with 
+  constructor \<^const>\<open>cblinfun_of_mat\<close>.
+  That means that in generated code, all cblinfun operators will be represented
+  as \<^term>\<open>cblinfun_of_mat X\<close> where X is a matrix.
+  In code equations for operations involving operators (e.g., +), we
+  can then write the equation directly in terms of matrices
+  by writing, e.g., \<^term>\<open>mat_of_cblinfun (A+B)\<close> in the lhs,
+  and in the rhs we define the matrix that corresponds to the sum of A,B.
+  In the rhs, we can access the matrices corresponding to A,B by
+  writing \<^term>\<open>mat_of_cblinfun B\<close>.
+  (See, e.g., lemma \<open>cblinfun_of_mat_plusOp\<close> below).
+
+  See [TODO: bibtex reference to code generation tutorial] for more information on 
+  @{theory_text \<open>[code abstype]\<close>}.\<close>
+
+declare mat_of_cblinfun_inverse [code abstype]
+
+
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
 (* TODO: rename \<rightarrow> cblinfun_of_mat_plus *)
@@ -44,6 +63,7 @@ instance
 end
 
 subsection \<open>Vectors\<close>
+
 
 text \<open>In this section, we define code for operations on vectors. As with operators above,
   we do this by using an isomorphism between finite vectors
@@ -125,7 +145,7 @@ lemma ell2_of_vec_uminus[code]:
   "vec_of_ell2 (- y) =  - (vec_of_ell2 y)" for y :: "'a::enum ell2"
   by (simp add: vec_of_ell2_def vec_of_onb_enum_uminus)
 
-lemma cinner_ell2_code [code]: "cinner \<psi> \<phi> = scalar_prod (map_vec cnj (vec_of_ell2 \<psi>)) (vec_of_ell2 \<phi>)"
+lemma cinner_ell2_code [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
   by (simp add: cinner_ell2_code vec_of_ell2_def)
 
 lemma norm_ell2_code [code]: "norm \<psi> = 
