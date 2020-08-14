@@ -856,12 +856,15 @@ lemma vec_of_onb_enum_scaleR:
   "vec_of_onb_enum (r *\<^sub>R b) = complex_of_real r \<cdot>\<^sub>v (vec_of_onb_enum b)"
   by (simp add: scaleR_scaleC vec_of_onb_enum_scaleC)
 
+(* TODO: Move to Jordan...Missing *)
+lemma scaleC_minus1_left_vec: "-1 \<cdot>\<^sub>v v = - v" for v :: "_::ring_1 vec"
+  unfolding smult_vec_def uminus_vec_def by auto
+
 lemma vec_of_onb_enum_uminus:
   "vec_of_onb_enum (- b2) = - vec_of_onb_enum b2"
-(* TODO: proof should be easy by using the fact that "- b2 = -1 *\<^sub>C b2" and "- vec_of_onb_enum b2 = -1 \<cdot>\<^sub>v vec_of_onb_enum b2 
-  and then vec_of_onb_enum_scaleR
-*)
-  sorry
+  unfolding scaleC_minus1_left[symmetric, of b2]
+  unfolding scaleC_minus1_left_vec[symmetric]
+  by (rule vec_of_onb_enum_scaleC)
 
 
 lemma vec_of_onb_enum_minus:
@@ -872,11 +875,55 @@ lemma vec_of_onb_enum_minus:
 lemma cinner_ell2_code: "cinner \<psi> \<phi> = scalar_prod (map_vec cnj (vec_of_onb_enum \<psi>)) (vec_of_onb_enum \<phi>)"
   sorry
 
+(* TODO move to JNF_Missing *)
+lemma square_nneg_complex:
+  fixes x :: complex
+  assumes "x \<in> \<real>" shows "x^2 \<ge> 0"
+  thm less_eq_complex_def
+  sorry
+
+
+(* TODO move to Preliminaries *)
+lemma abs_complex_real[simp]: "abs x \<in> \<real>" for x :: complex
+  by (simp add: abs_complex_def)
+
+(* TODO move to Preliminaries *)
+lemma Im_abs[simp]: "Im (abs x) = 0"
+  using abs_complex_real complex_is_Real_iff by blast
+
+
 (* TODO: give better name *)
 lemma norm_ell2_code: "norm \<psi> = 
   (let \<psi>' = vec_of_onb_enum \<psi> in
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
-  sorry
+  (is "_ = ?rhs")
+proof -
+  have "norm \<psi> = sqrt (cmod (\<Sum>i = 0..<dim_vec (vec_of_onb_enum \<psi>). 
+            map_vec cnj (vec_of_onb_enum \<psi>) $ i * vec_of_onb_enum \<psi> $ i))"
+    unfolding norm_eq_sqrt_cinner[where 'a='a] cinner_ell2_code scalar_prod_def 
+    by rule
+  also have "\<dots> = sqrt (cmod (\<Sum>x = 0..<dim_vec (vec_of_onb_enum \<psi>). 
+          cnj (vec_of_onb_enum \<psi> $ x) * vec_of_onb_enum \<psi> $ x))"
+    apply (subst sum.cong, rule refl)
+     apply (subst index_map_vec)
+    by simp_all
+  also have "\<dots> = sqrt (cmod (\<Sum>x = 0..<dim_vec (vec_of_onb_enum \<psi>). 
+          abs (vec_of_onb_enum \<psi> $ x) ^ 2))"
+    by (subst cnj_x_x, rule refl)
+  also have "\<dots> = sqrt (\<Sum>x = 0..<dim_vec (vec_of_onb_enum \<psi>). Re (\<bar>vec_of_onb_enum \<psi> $ x\<bar>\<^sup>2))"
+    apply (subst cmod_Re)
+     apply (rule sum_nonneg)
+     apply (rule square_nneg_complex)
+    by auto
+  also have "\<dots> = sqrt (\<Sum>x = 0..<dim_vec (vec_of_onb_enum \<psi>). 
+                  let z = vec_of_onb_enum \<psi> $ x in (Re z)\<^sup>2 + (Im z)\<^sup>2)"
+    unfolding Re_power2 apply simp
+    unfolding abs_complex_def cmod_def Let_def by simp
+  also have "\<dots> = ?rhs"
+    unfolding Let_def by simp
+  finally show ?thesis
+    by -
+qed
 
 lemma onb_enum_of_vec_unit_vec:
   defines a1: "basis == (canonical_basis::'a::onb_enum list)"
