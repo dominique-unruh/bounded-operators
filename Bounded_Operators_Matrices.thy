@@ -879,8 +879,7 @@ lemma cinner_ell2_code: "cinner \<psi> \<phi> = scalar_prod (map_vec cnj (vec_of
 lemma square_nneg_complex:
   fixes x :: complex
   assumes "x \<in> \<real>" shows "x^2 \<ge> 0"
-  thm less_eq_complex_def
-  sorry
+  apply (cases x) using assms unfolding Reals_def by auto
 
 
 (* TODO move to Preliminaries *)
