@@ -148,6 +148,7 @@ qed
 (* TODO: To preliminaries *)
 definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
 
+<<<<<<< HEAD
 (* NEW *)
 lemma index_of_def':
   assumes "x \<in> set y"
@@ -280,6 +281,57 @@ proof-
     using Matrix.eq_vecI
     by auto
 qed
+=======
+(* TODO: To preliminaries *)
+lemma enum_idx_bound: "enum_idx x < length (Enum.enum :: 'a list)" for x :: "'a::enum"
+  sorry
+
+(* TODO: To preliminaries *)
+lemma enum_idx_correct: "Enum.enum ! enum_idx x = x"
+  sorry
+
+(* TODO: To Bounded_Operators_Matrices *)
+lemma vec_of_basis_vector:
+  assumes "i < canonical_basis_length TYPE('a)"
+  shows "vec_of_onb_enum (canonical_basis!i :: 'a) = unit_vec (canonical_basis_length TYPE('a::basis_enum)) i" 
+proof (rule eq_vecI, rename_tac j)
+  show "dim_vec (vec_of_onb_enum (canonical_basis ! i :: 'a)) = dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
+    by (simp add: dim_vec_of_onb_enum_list' canonical_basis_length_eq)
+next
+  fix j
+  define dim where "dim = canonical_basis_length TYPE('a)"
+  assume "j < dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
+  then have "j < dim"
+    by (simp add: dim_def)
+  from assms have "i < dim"
+    unfolding dim_def by simp
+
+  show "vec_of_onb_enum (canonical_basis ! i) $ j = unit_vec dim i $ j "
+  proof (cases "i=j")
+    case True
+    then show ?thesis
+      using \<open>j < dim\<close> apply auto
+      sorry
+  next
+    case False
+    then show ?thesis
+      using \<open>j<dim\<close> \<open>i<dim\<close>
+      apply auto
+      sorry
+  qed
+qed
+
+(* TODO: To Bounded_Operators_Matrices *)
+lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
+  sorry
+>>>>>>> 4753785387134126cc84ce8bf80d5558a802d8f4
+
+lemma vec_of_ell2_ket:
+  "vec_of_ell2 (ket x) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx x)" for x::"'a::enum"
+  unfolding ket_canonical_basis vec_of_ell2_def
+  apply (subst vec_of_basis_vector)
+  using enum_idx_bound by (auto simp: canonical_basis_length_eq canonical_basis_ell2_def)
+
 
 declare vec_of_ell2_ket[code]
 
