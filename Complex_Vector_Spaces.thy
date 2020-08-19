@@ -106,9 +106,17 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.span
   complex_vector.extend_basis
   complex_vector.dim
-
+(* TODO Jose: delete
 abbreviation complex_independent where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+*)
 
+(* NEW *)
+definition complex_independent::"'a::complex_vector set \<Rightarrow> bool" 
+  where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+
+(* NEW *)
+definition complex_span::"'a::complex_vector set \<Rightarrow> 'a set"
+  where "complex_span x \<equiv> complex_vector.span x"
 
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
@@ -2422,11 +2430,12 @@ qed
 
 subsection \<open>Unsorted\<close>
 
+(* TODO (Jose): delete (better to work with two property independently)
 definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
   where \<open>is_basis S = (
   (complex_vector.independent S) \<and> closure (complex_vector.span S) = UNIV
 )\<close>
-
+*)
 
 lemma complex_dependent_isolation:
   assumes \<open>complex_vector.dependent V\<close> and \<open>finite V\<close>

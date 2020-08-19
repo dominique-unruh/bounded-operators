@@ -3786,7 +3786,7 @@ lemma norm1_normless1_approx:
 proof(cases "e > 1")
   case True
   thus ?thesis
-    by (smt a1 diff_zero norm_zero) 
+    by (smt a1 diff_zero norm_zero)     
 next
   case False
   define s where "s = (1-e/2) *\<^sub>R t"
@@ -4430,18 +4430,14 @@ lemma span_finite_dim:
 
 
 lemma Ortho_expansion_finite:
+  includes notation_norm
   fixes T::\<open>'a::complex_inner set\<close>
-  assumes \<open>is_onb T\<close> and \<open>finite T\<close>
+  assumes a1: \<open>complex_vector.span T = UNIV\<close> and a2: \<open>finite T\<close> and a3: \<open>is_ortho_set T\<close>
+    and a4: \<open>\<And>t. t\<in>T \<Longrightarrow> \<parallel>t\<parallel> = 1\<close>
   shows \<open>x = (\<Sum>t\<in>T. \<langle> t, x \<rangle> *\<^sub>C t)\<close>
 proof-
-  have \<open>closure (complex_vector.span T) = UNIV\<close>
-    using \<open>is_onb T\<close>
-    unfolding is_onb_def is_ob_def is_basis_def
-    by blast
-  moreover have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
+  have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
     using \<open>finite T\<close> span_finite_dim by blast
-  ultimately have \<open>complex_vector.span T = (UNIV::'a set)\<close>
-    by blast
   have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} =
     {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
     using span_explicit_finite[where A = "T"] \<open>finite T\<close>
@@ -4493,10 +4489,9 @@ proof-
           have \<open>a \<noteq> t\<close>
             using  \<open>t \<in> T-{a}\<close>
             by auto
-          hence \<open>\<langle>a, t\<rangle> = 0\<close>
-            using \<open>a \<in> T\<close> \<open>t \<in> T\<close> \<open>is_onb T\<close>
-            unfolding is_onb_def is_ob_def is_ortho_set_def
-            by blast
+          have \<open>\<langle>a, t\<rangle> = 0\<close>
+            using a3 unfolding is_ortho_set_def
+            by (simp add: \<open>a \<in> T\<close> \<open>a \<noteq> t\<close> \<open>t \<in> T\<close>) 
           thus ?thesis by simp
         qed
         show ?thesis
@@ -4506,12 +4501,9 @@ proof-
     qed
     also have \<open>\<dots> = r a\<close>
     proof-
-      have \<open>a \<in> sphere 0 1\<close>
-        using \<open>a\<in>T\<close> \<open>is_onb T\<close>
-        unfolding is_onb_def
-        by blast
-      hence \<open>norm a = 1\<close>
-        unfolding sphere_def by auto
+      have \<open>norm a = 1\<close>
+        using a4
+        by (simp add: \<open>a \<in> T\<close>)
       moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
         using norm_eq_sqrt_cinner by auto        
       ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
@@ -4533,8 +4525,6 @@ proof-
     by fastforce 
 qed
 
-
-
 instance onb_enum \<subseteq> chilbert_space
 proof
   show "convergent X"
@@ -4543,11 +4533,6 @@ proof
   proof-
     have \<open>finite (set canonical_basis)\<close>
       by simp
-    have \<open>is_onb (set (canonical_basis::'a list))\<close>
-      unfolding is_onb_def is_ob_def apply auto
-        apply (simp add: is_orthonormal)
-       apply (simp add: is_basis_set)
-      by (simp add: is_normal)
     have \<open>Cauchy (\<lambda> n. \<langle> t, X n \<rangle>)\<close>
       for t
     proof-
@@ -4574,10 +4559,8 @@ proof
     have \<open>X n = (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)\<close>
       for n
       using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
-        \<open>is_onb (set canonical_basis)\<close>  \<open>finite (set canonical_basis)\<close> 
-      by auto
-        (*     using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
-        \<open>is_onb (set canonical_basis)\<close>  \<open>finite (set canonical_basis)\<close> *)
+        \<open>finite (set canonical_basis)\<close> 
+      by (smt complex_span_def is_generator_set is_normal is_orthonormal)
     moreover have  \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
     proof-
       have \<open>t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 
@@ -4989,7 +4972,7 @@ next
 qed
 
 lemma scaleC_complex_independent:
-  assumes a1: "complex_independent B" and a3: "c \<noteq> 0"
+  assumes a1: "complex_independent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
   shows "complex_independent ((*\<^sub>C) c ` B)"
 proof-
   have "u y = 0"
@@ -5054,18 +5037,17 @@ proof-
       using a3 by auto
     hence "v (inverse c *\<^sub>C y) = 0"
       using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
-        complex_vector.independentD by blast
+        complex_vector.independentD complex_independent_def by blast
     thus "u y = 0"
       unfolding v_def
       by (simp add: a3) 
   qed
   thus ?thesis
-    by (simp add: complex_vector.independent_explicit_finite_subsets)
-
+    by (simp add: complex_independent_def complex_vector.dependent_explicit)    
 qed
 
 lemma inter_complex_independent:
-  assumes a1: "complex_independent B" and a2: "c \<noteq> 0" and a3: "c \<noteq> 1"
+  assumes a1: "complex_independent (B::'a::complex_vector set)" and a2: "c \<noteq> 0" and a3: "c \<noteq> 1"
   shows "B \<inter> (*\<^sub>C) c ` B = {}"
 proof(rule classical)
   assume "\<not>(B \<inter> (*\<^sub>C) c ` B = {})"
@@ -5084,13 +5066,15 @@ proof(rule classical)
     using complex_vector.span_base
     using a2 by force 
   hence "b = b'"
-    by (smt a1 complex_vector.dependent_def complex_vector.span_base complex_vector.span_scale 
-        insert_Diff insert_iff u2 u2' u3 u3') 
+    by (smt Diff_insert_absorb a1 complex_independent_def complex_vector.dependent_def 
+        complex_vector.span_base complex_vector.span_scale insert_Diff insert_Diff_if insert_absorb2
+        singletonD u2 u2' u3 u3')
   hence "b' = c *\<^sub>C b'"
     using g1 by blast
   thus ?thesis
-    by (metis a1 a3 complex_vector.dependent_zero complex_vector.scale_cancel_right 
-        mult_cancel_right2 scaleC_scaleC u3') 
+    using a1 a3 complex_vector.dependent_zero complex_vector.scale_cancel_right 
+        mult_cancel_right2 scaleC_scaleC u3' complex_independent_def
+    by metis
 qed
 
 
@@ -5123,10 +5107,10 @@ lemma sum_3_sets:
 
 
 lemma complex_real_independent:
-  assumes a1: "complex_independent B"
+  assumes a1: "complex_independent (B::'a::complex_vector set)"
   defines "B' == ((*\<^sub>C) \<i> ` B)"
   shows "independent (B \<union> B')"
-proof- (* NEW *)
+proof-
   have inj_scaleC: "inj (((*\<^sub>C) \<i>) ::'a \<Rightarrow> 'a)"
     unfolding inj_def
     by simp
@@ -5333,7 +5317,7 @@ proof- (* NEW *)
       case True     
       have "g y = 0"
         using g1 g2 g3 True a1 Complex_Vector_Spaces.complex_vector.independent_alt[where B = B]
-        by meson
+        by (smt Collect_cong complex_independent_def sum.cong)
       thus ?thesis unfolding g_def
         using True by auto 
     next
@@ -5443,7 +5427,7 @@ proof- (* NEW *)
             using g3 by auto 
         qed        
         ultimately have "h y = 0"
-          using complex_vector.independentD by blast 
+          using complex_vector.independentD complex_independent_def by blast  
         thus ?thesis
           unfolding h_def g_def using yB by simp
       qed
@@ -5475,8 +5459,9 @@ proof -
     define g  where "g v = complex_vector.representation B \<psi> v" for v
     have "(\<Sum>v | g v \<noteq> 0. g v *\<^sub>C v) = \<psi>"
       unfolding g_def
-      by (metis (mono_tags, lifting) True a1 
-          complex_vector.sum_nonzero_representation_eq)
+      by (metis (mono_tags, lifting) Collect_cong Collect_mono_iff DiffD1 DiffD2 True a1 
+          complex_independent_def complex_vector.finite_representation
+          complex_vector.sum_nonzero_representation_eq sum.mono_neutral_cong_left)
     moreover have "finite {v. g v \<noteq> 0}"
       unfolding g_def
       by (simp add: complex_vector.finite_representation)
@@ -5487,9 +5472,8 @@ proof -
     ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
       unfolding g_def
       using a3
-      by (metis (no_types, lifting) Complex_Vector_Spaces.span_finite True a1 
-          complex_vector.independent_mono complex_vector.maximal_independent_subset_extend 
-          complex_vector.spanning_subset_independent complex_vector.sum_representation_eq sum.cong)
+      by (smt DiffD2 complex_vector.scale_eq_0_iff mem_Collect_eq subset_eq 
+          sum.mono_neutral_cong_left) (* > 1s *)
     have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
       unfolding inj_def 
       by simp 
@@ -5566,7 +5550,7 @@ proof -
     hence "f b - complex_vector.representation B \<psi> b = 0"
       using a1 a2 a3 Complex_Vector_Spaces.complex_vector.independentD[where s = B and t = B 
           and u = "\<lambda>v. f v - complex_vector.representation B \<psi> v" and v = b]
-      by auto    
+     by (smt complex_independent_def order_refl) 
     hence "complex_vector.representation B \<psi> b = f b"
       by simp
     thus ?thesis unfolding f_def r_def r'_def B'_def by auto
@@ -5750,8 +5734,7 @@ proof-
     ultimately show "u v = 0" by simp
   qed
   thus ?thesis using independent_explicit_module
-    by (smt Complex_Vector_Spaces.dependent_raw_def) 
-      (* > 1s *)
+    using complex_independent_def by smt
 qed
 
 
@@ -5793,15 +5776,12 @@ proof-
     qed
     moreover have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
       unfolding r_def
-      using b2  x_span 
-        Complex_Vector_Spaces.complex_vector.sum_representation_eq[where B = basis 
-          and basis = basis and v = x]
-        complex_vector.sum_nonzero_representation_eq
-        using b2 complex_vector.sum_nonzero_representation_eq x_span by blast        
+      using b2 complex_vector.sum_nonzero_representation_eq x_span complex_independent_def 
+      by blast 
     ultimately have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
       unfolding r_def
-      by (metis (no_types, lifting) b2 b3 x_span complex_vector.sum_representation_eq subsetI 
-          sum.cong) 
+      by (smt Diff_iff b3 complex_vector.scale_eq_0_iff mem_Collect_eq subset_iff 
+          sum.mono_neutral_cong_right) (* > 1s *)       
     hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
       by simp
     also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
@@ -5872,9 +5852,7 @@ proof-
     moreover have "x \<in> Complex_Vector_Spaces.span basis"
     proof-
       have "closure (Complex_Vector_Spaces.span basis) = UNIV"
-        using is_basis_set
-        unfolding basis_def is_basis_def
-        by blast        
+        by (metis basis_def closure_UNIV complex_span_def is_generator_set)
       moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
         by (simp add: basis_def span_finite_dim)        
       ultimately have "Complex_Vector_Spaces.span basis = UNIV"
@@ -5884,7 +5862,7 @@ proof-
     ultimately have "(\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v) = x"
       unfolding a_def 
       using sum.cong Collect_cong DiffD1 DiffD2 Eps_cong \<open>finite {v. a v \<noteq> 0}\<close> a_def complex_vector.representation_def complex_vector.sum_nonzero_representation_eq subset_iff sum.mono_neutral_cong_right
-      by smt
+      by (smt complex_independent_def)
     hence "cblinfun_apply f x = cblinfun_apply f (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v)"
       by simp
     also have "\<dots> = (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C cblinfun_apply f v)"
@@ -5946,12 +5924,8 @@ proof-
       assume r1: "\<And>v. v\<in>basisB \<Longrightarrow> \<langle>v, x\<rangle> = 0"      
       have "\<langle>v, x\<rangle> = 0" for v
       proof-
-        have "closure (Complex_Vector_Spaces.span basisB) = UNIV"
-          using is_basis_set
-          unfolding basisB_def is_basis_def
-          by auto
-        hence "Complex_Vector_Spaces.span basisB = UNIV"
-          by (smt List.finite_set basisB_def span_finite_dim)
+        have "Complex_Vector_Spaces.span basisB = UNIV"
+          using basisB_def complex_span_def is_generator_set by auto          
         hence "v \<in> Complex_Vector_Spaces.span basisB"
           by (smt iso_tuple_UNIV_I)
         hence "\<exists>t s. v = (\<Sum>a\<in>t. s a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> basisB"
@@ -6021,8 +5995,8 @@ proof(cases "set (canonical_basis::'a list) = {}")
   case True
   have "complex_vector.span (set (canonical_basis::'a list)) = {0}"
     by (simp add: True)
-  moreover have "closure (complex_vector.span (set (canonical_basis::'a list))) = UNIV"
-    using is_basis_def is_basis_set by blast    
+  moreover have "complex_vector.span (set (canonical_basis::'a list)) = UNIV"
+    using complex_span_def is_generator_set by auto            
   ultimately have "(UNIV::'a set) = {0}"
     by simp
   hence "finite (UNIV::'a set)"
@@ -6034,16 +6008,16 @@ next
   define AA where "AA = Complex_Vector_Spaces.extend_basis A"
   have "complex_vector.span AA = UNIV"
     using span_extend_basis a1
-    by (simp add: AA_def)
+    by (simp add: AA_def complex_independent_def)
   moreover have "complex_independent AA"
     using a1
-    by (simp add: AA_def complex_vector.independent_extend_basis)
+    by (simp add: AA_def complex_independent_def complex_vector.independent_extend_basis)
   ultimately have "card AA = dim (UNIV::'a set)"
-    by (metis complex_vector.basis_card_eq_dim subset_UNIV)
-  also have "dim (UNIV::'a set) = card (set (canonical_basis::'a list))"
-    using is_basis_set unfolding is_basis_def
-    by (smt Complex_Vector_Spaces.dependent_raw_def List.finite_set complex_vector.dim_eq_card 
-        complex_vector.dim_span is_basis_set span_finite_dim)
+    by (smt complex_independent_def complex_vector.dim_eq_card_independent complex_vector.dim_span)
+  also have "dim (UNIV::'a set) = card (set (canonical_basis::'a list))"    
+    using Complex_Vector_Spaces.dependent_raw_def List.finite_set complex_vector.dim_eq_card 
+        complex_vector.dim_span  span_finite_dim
+    by (metis complex_independent_def complex_span_def is_complex_independent_set is_generator_set)
   finally have r1: "card AA = card (set (canonical_basis::'a list))".
   have "finite (set (canonical_basis::'a list))"
     by simp    
@@ -6052,7 +6026,8 @@ next
   hence "finite AA"
     using r1 card_infinite by force
   thus ?thesis unfolding AA_def
-    by (simp add: assms complex_vector.extend_basis_superset rev_finite_subset)
+    using assms complex_vector.extend_basis_superset rev_finite_subset
+    by (simp add: complex_vector.extend_basis_superset rev_finite_subset complex_independent_def)
 qed
 
 lemma cblinfun_extension_exists_finite:
@@ -6065,8 +6040,7 @@ proof-
   define f::"'a \<Rightarrow> 'b" 
     where "f = complex_vector.construct S \<phi>"
   have "clinear f"
-    using linear_construct
-    by (simp add: complex_vector.linear_construct a1 f_def)    
+    using linear_construct a1 complex_independent_def f_def by auto    
   have "cbounded_linear f"
     using \<open>clinear f\<close> a1 a2 a3  cblinfun_operator_finite_dim by auto    
   then obtain B::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b" 
@@ -6079,7 +6053,7 @@ proof-
     have "B *\<^sub>V x = f x"
       by (simp add: \<open>\<And>x. B *\<^sub>V x = f x\<close>)
     also have "\<dots> = \<phi> x"
-      by (simp add: a1 complex_vector.construct_basis f_def that)
+      using a1 complex_independent_def complex_vector.construct_basis f_def that by auto      
     finally show?thesis by blast
   qed
   thus ?thesis 
@@ -6098,6 +6072,3 @@ lemma cblinfun_extension_exists:
 unbundle no_cblinfun_notation
 
 end
-
-
-

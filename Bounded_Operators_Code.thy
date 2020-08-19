@@ -39,17 +39,17 @@ declare mat_of_cblinfun_inverse [code abstype]
 
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
-(* TODO: rename \<rightarrow> cblinfun_of_mat_plus *)
+  (* TODO: rename \<rightarrow> cblinfun_of_mat_plus *)
 declare cblinfun_of_mat_plusOp'[code]
-(* TODO: rename (remove ') *)
+  (* TODO: rename (remove ') *)
 declare cblinfun_of_mat_id'[code]
-(* TODO: rename (remove ') *)
+  (* TODO: rename (remove ') *)
 declare mat_of_cblinfun_zero'[code]
-(* TODO: rename (remove ') *)
+  (* TODO: rename (remove ') *)
 declare cblinfun_of_mat_uminusOp'[code]
-(* TODO: rename (remove ') *)
+  (* TODO: rename (remove ') *)
 declare cblinfun_of_mat_minusOp'[code]
-(* TODO: rename (remove inj_option) *)
+  (* TODO: rename (remove inj_option) *)
 declare mat_of_cblinfun_classical_operator_inj_option[code]
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun operators.\<close>
@@ -115,13 +115,171 @@ fun index_of where
   "index_of x [] = (0::nat)"
 | "index_of x (y#ys) = (if x=y then 0 else (index_of x ys + 1))"
 
+(* NEW *)
+lemma index_of_length: "index_of x y \<le> length y"
+proof(induction y)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  thus ?case by auto
+qed
+
+(* NEW *)
+lemma index_of_length': 
+  assumes "y \<noteq> []" and "x \<in> set y"
+  shows "index_of x y < length y"
+  using assms proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  show ?case 
+  proof(cases "a = x")
+    case True
+    then show ?thesis by auto
+  next
+    case False
+    thus ?thesis apply auto
+      using Cons.IH Cons.prems(2) by fastforce
+  qed
+qed
+
 (* TODO: To preliminaries *)
 definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
 
+(* NEW *)
+lemma index_of_def':
+  assumes "x \<in> set y"
+  shows "y ! index_of x y = x"
+  using assms 
+proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  thus ?case by auto
+qed
+
+(* NEW *)
+lemma enum_idx_def': 
+  "enum_class.enum ! enum_idx i = i"
+proof-
+  have "i \<in> set enum_class.enum"
+    using UNIV_enum by blast 
+  thus ?thesis
+    unfolding enum_idx_def
+    using index_of_def' by metis
+qed
+
 (* TODO: To Bounded_Operators_Matrices *)
 lemma vec_of_ell2_ket:
-  "vec_of_ell2 (ket i) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)" for i::"'a::enum"
-  sorry
+  "vec_of_ell2 (ket i) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)" 
+  for i::"'a::enum"
+proof-
+  have "dim_vec (vec_of_ell2 (ket i)) 
+      = dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i))"
+  proof-
+    have "dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)) 
+      = canonical_basis_length TYPE('a ell2)"
+      by simp     
+    moreover have "dim_vec (vec_of_ell2 (ket i)) = canonical_basis_length TYPE('a ell2)"
+      unfolding vec_of_ell2_def vec_of_onb_enum_def apply auto
+      using canonical_basis_length_eq[where 'a = "'a ell2"] by auto
+    ultimately show ?thesis by simp
+  qed
+  moreover have "vec_of_ell2 (ket i) $ j =
+    (unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)) $ j"
+    if "j < dim_vec (vec_of_ell2 (ket i))"
+    for j
+  proof-
+    have j_bound: "j < length (canonical_basis::'a ell2 list)"
+      by (metis dim_vec_of_onb_enum_list' that vec_of_ell2_def)
+    have y1: "complex_independent (set (canonical_basis::'a ell2 list))"
+      using canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto        
+    have y2: "canonical_basis ! j \<in> set (canonical_basis::'a ell2 list)"
+      using j_bound by auto
+    have p1: "enum_class.enum ! enum_idx i = i"
+      using enum_idx_def' by blast
+    moreover have p2: "(canonical_basis::'a ell2 list) ! t  = ket ((enum_class.enum::'a list) ! t)"
+      if "t < length (enum_class.enum::'a list)"
+      for t
+      unfolding canonical_basis_ell2_def 
+      using that by auto
+    moreover have p3: "enum_idx i < length (enum_class.enum::'a list)"
+    proof-
+      have "set (enum_class.enum::'a list) = UNIV"
+        using UNIV_enum by blast
+      hence "i \<in> set (enum_class.enum::'a list)"
+        by blast
+      thus ?thesis
+        unfolding enum_idx_def
+        by (metis index_of_length' length_greater_0_conv length_pos_if_in_set) 
+    qed
+    ultimately have p4: "(canonical_basis::'a ell2 list) ! (enum_idx i)  = ket i"
+      by auto
+    have "enum_idx i < length (enum_class.enum::'a list)"
+      using p3
+      by auto
+    moreover have "length (enum_class.enum::'a list) = dim_vec (vec_of_ell2 (ket i))"
+      unfolding vec_of_ell2_def canonical_basis_ell2_def
+      using dim_vec_of_onb_enum_list'[where v = "ket i"]
+      unfolding canonical_basis_ell2_def by simp              
+    ultimately have "enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
+        (enum_idx i))"
+      using \<open>dim_vec (vec_of_ell2 (ket i)) = dim_vec (unit_vec (canonical_basis_length 
+        TYPE('a ell2)) (enum_idx i))\<close> by auto            
+    hence r1: "(unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)) $ j
+        = (if enum_idx i = j then 1 else 0)"
+      using \<open>dim_vec (vec_of_ell2 (ket i)) = dim_vec (unit_vec (canonical_basis_length 
+        TYPE('a ell2)) (enum_idx i))\<close> that by auto
+    moreover have "vec_of_ell2 (ket i) $ j = (if enum_idx i = j then 1 else 0)"
+    proof(cases "enum_idx i = j")
+      case True                        
+      have "Complex_Vector_Spaces.representation (set (canonical_basis::'a ell2 list)) 
+          ((canonical_basis::'a ell2 list) ! j) ((canonical_basis::'a ell2 list) ! j) = 1"        
+        using y1 y2 Complex_Vector_Spaces.representation_basis[where 
+            basis = "set (canonical_basis::'a ell2 list)" 
+            and b = "(canonical_basis::'a ell2 list) ! j"]
+        by (smt complex_independent_def)
+      hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! j) $ j = 1"
+        unfolding vec_of_onb_enum_def 
+        by (metis True \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
+          (enum_idx i))\<close> canonical_basis_length_eq index_unit_vec(3) list_of_vec_index list_vec nth_map)
+      hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) 
+            $ enum_idx i = 1"
+        using True by simp
+      hence "vec_of_onb_enum (ket i) $ enum_idx i = 1"
+        using p4
+        by simp
+      thus ?thesis using True unfolding vec_of_ell2_def by auto
+    next
+      case False
+      have "Complex_Vector_Spaces.representation (set (canonical_basis::'a ell2 list)) 
+          ((canonical_basis::'a ell2 list) ! (enum_idx i)) ((canonical_basis::'a ell2 list) ! j) = 0"        
+        using y1 y2 Complex_Vector_Spaces.representation_basis[where 
+            basis = "set (canonical_basis::'a ell2 list)" 
+            and b = "(canonical_basis::'a ell2 list) ! j"]
+        by (metis False \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
+          (enum_idx i))\<close> canonical_basis_length_eq complex_independent_def 
+            complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
+            j_bound nth_eq_iff_index_eq nth_mem)
+      hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
+        unfolding vec_of_onb_enum_def by (smt j_bound nth_map vec_of_list_index)        
+      hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) 
+            $ j = 0"
+        by auto
+      hence "vec_of_onb_enum (ket i) $ j = 0"
+        using p4
+        by simp
+      thus ?thesis using False unfolding vec_of_ell2_def by simp
+    qed
+    ultimately show ?thesis by auto
+  qed
+  ultimately show ?thesis 
+    using Matrix.eq_vecI
+    by auto
+qed
 
 declare vec_of_ell2_ket[code]
 
@@ -286,7 +444,7 @@ lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
 (* TODO: move to Preliminaries *)
 lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
   apply (induction l)
-   apply (simp add: map_filter_simps)
+  apply (simp add: map_filter_simps)
   by (simp add: map_filter_simps(1))
 
 (* (* TODO: move to Preliminaries *)
@@ -301,7 +459,9 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
 
 (* TODO: Move to Complex_Inner_Product *)
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
-  using Span.rep_eq is_basis_def is_basis_set space_as_set_inject top_clinear_space.rep_eq by fastforce
+  using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
+  by (metis closure_UNIV complex_span_def is_generator_set) 
+
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 
   (let n = canonical_basis_length TYPE('a::onb_enum) in
@@ -385,7 +545,7 @@ lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S) = SPAN (map (mult_mat_ve
   for A::"('a::onb_enum,'b::onb_enum) cblinfun"
   unfolding SPAN_def Let_def
   using apply_cblinfun_Span[where A = A and S = 
-        "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
+      "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
   sorry
 
 lemma kernel_SPAN[code]: "kernel A = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 

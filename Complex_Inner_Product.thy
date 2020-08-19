@@ -3389,7 +3389,7 @@ subsection \<open>Unsorted\<close>
 
 text \<open>Orthogonal set\<close>
 definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
-  \<open>is_ortho_set S = (\<forall> x \<in> S. \<forall> y \<in> S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
+  \<open>is_ortho_set S = (\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
 
 lemma is_onb_delete:
   assumes "is_ortho_set (insert x B)"
@@ -3398,47 +3398,65 @@ lemma is_onb_delete:
   unfolding  is_ortho_set_def
   by blast
 
+(* TODO (Jose): delete
 text \<open>Orthogonal basis\<close>
 definition is_ob :: "'a::complex_inner set \<Rightarrow> bool" 
   where "is_ob S  = (
   is_ortho_set S \<and> 
-  is_basis S
+  (complex_vector.independent S) \<and> closure (complex_vector.span S) = UNIV
 )"
+*)
 
-
+(* TODO (Jose): Delete
 text \<open>Orthonormal basis\<close>
 definition is_onb :: "'a::complex_inner set \<Rightarrow> bool" 
   where "is_onb S  = (
   is_ob S \<and> S \<subseteq> sphere 0 1
 )"
+*)
 
+(* TODO (Jose): Delete
 lemma is_onb_then_is_ob:
   "is_onb S \<Longrightarrow> is_ob S"
   unfolding is_onb_def
   by simp
+*)
 
 lemma is_ob_nonzero:
-  assumes \<open>is_ob S\<close> and \<open>x \<in> S\<close>
+  assumes "is_ortho_set S" and 
+    "complex_vector.independent S" and
+    "closure (complex_vector.span S) = UNIV" 
+    and \<open>x \<in> S\<close>
   shows \<open>x \<noteq> 0\<close>
-  using assms unfolding is_ob_def is_basis_def
+  using assms 
   by (metis Complex_Vector_Spaces.dependent_raw_def complex_vector.dependent_zero) 
 
+(* TODO Jose: delete
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+*)
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>complex_independent\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
-class basis_enum = complex_inner +
+setup \<open>Sign.add_const_constraint
+(\<^const_name>\<open>complex_span\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+
+class basis_enum = complex_vector +
   fixes canonical_basis :: "'a list"
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
   assumes distinct_canonical_basis[simp]: 
     "distinct canonical_basis"
-    and is_basis_set:
-    "is_basis (set canonical_basis)"
+    and is_complex_independent_set:
+    "complex_independent (set canonical_basis)"
+    and is_generator_set:
+    "complex_span (set canonical_basis) = UNIV" 
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
+(* TODO Jose: Delete
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a::complex_normed_vector set \<Rightarrow> bool\<close>)\<close>
-
+*)
 
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
@@ -3452,17 +3470,19 @@ class onb_enum = basis_enum + complex_inner +
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
+(* TODO Jose: Delete
 lemma is_onb_set:
   "is_onb (set canonical_basis :: 'a::onb_enum set)"
   using is_basis_set[where 'a='a] is_orthonormal[where 'a='a] is_normal[where 'a='a]
   unfolding is_onb_def is_ob_def by auto
+*)
 
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
-  using assms is_ob_nonzero is_onb_set is_onb_then_is_ob
-  by blast
-
+  by (metis \<open>x \<in> set canonical_basis\<close> complex_independent_def complex_vector.dependent_zero 
+      is_complex_independent_set)
+  
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
@@ -3536,12 +3556,8 @@ proof-
   include notation_norm
   have \<open>(canonical_basis::'a list) = [1::('a::one_dim)]\<close>
     by (simp add: one_dim_canonical_basis)    
-  hence \<open>is_onb {1::'a::one_dim}\<close>
-    by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
   hence \<open>\<parallel>1::'a::one_dim\<parallel> = 1\<close>
-    unfolding is_onb_def sphere_def
-    using dist_norm
-    by simp
+    by (metis is_normal list.set_intros(1))
   hence \<open>\<parallel>1::'a::one_dim\<parallel>^2 = 1\<close>
     by simp
   moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
@@ -4150,11 +4166,10 @@ proof -
   have repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
     unfolding repr_def comb_def
     apply (rule real_vector.representation_eqI)
-    using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)
-      (* Sledgehammer *)
+    using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)      
      apply meson
-    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_cong_left)
-(* > 1s *)
+    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left)
+      (* > 1s *)
   have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
     unfolding repr_def using that
     by (simp add: real_vector.representation_def)
@@ -4378,13 +4393,10 @@ lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^s
 proof-
   have \<open>(canonical_basis::'a list) = [1]\<close>
     by (simp add: one_dim_canonical_basis)
-  hence \<open>is_onb {1::'a}\<close>
-    by (metis \<open>canonical_basis = [1]\<close> empty_set is_onb_set list.simps(15))    
-  hence \<open>a \<in> complex_vector.span ({1::'a})\<close>
-    unfolding is_onb_def is_ob_def is_basis_def
-    apply auto
+  hence \<open>a \<in> complex_vector.span ({1::'a})\<close>        
     using closed_finite_dim closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I
-    by (simp add: closed_finite_dim)
+     closed_finite_dim
+    by (metis complex_span_def empty_set is_generator_set list.simps(15))
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"
@@ -4823,9 +4835,10 @@ qed
 
 lemma is_ortho_set_independent:
   \<open>0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S\<close>
+  unfolding is_ortho_set_def complex_independent_def
 proof
   show False
-    if "is_ortho_set S" 
+    if "\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0" 
       and "complex_vector.dependent S"
       and "0 \<notin> S"
   proof-
