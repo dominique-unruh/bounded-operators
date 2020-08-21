@@ -94,7 +94,7 @@ lemma Rats_abs_real [simp]: "a \<in> \<rat> \<Longrightarrow> abs a \<in> \<rat>
 lemma REAL_SQRT2_inverse [code]: "inverse (REAL_SQRT2 a b) = (let x = inverse (a*a-2*b*b) in REAL_SQRT2 (a*x) (-b*x))" (is "?lhs = ?rhs")
 proof (cases "a=0 \<and> b=0")
   case True
-  then show ?thesis by (simp add: REAL_SQRT2_def)
+  thus ?thesis by (simp add: REAL_SQRT2_def)
 next
   case False
   define aa bb lhs rhs where "aa = real_of_rat a" and "bb = real_of_rat b"
@@ -115,7 +115,7 @@ next
         by auto
       ultimately have False
         using sqrt_2_not_rat by auto }
-    then show ?thesis by auto
+    thus ?thesis by auto
   qed
   have rhs2: "rhs = inverse (aa*aa-2*bb*bb) * REAL_SQRT2 a (-b)"
     unfolding rhs_def Let_def REAL_SQRT2_def of_rat_mult of_rat_inverse of_rat_diff of_rat_minus of_rat_numeral_eq defs[symmetric]
@@ -130,7 +130,7 @@ next
   finally have "rhs * (REAL_SQRT2 a b) = 1" by assumption
   then have "rhs = inverse (REAL_SQRT2 a b)"
     using inverse_eq_iff_eq inverse_unique by fastforce
-  then show ?thesis 
+  thus ?thesis 
     unfolding rhs_def by simp
 qed
 

@@ -2801,7 +2801,7 @@ proof -
     apply atomize_elim
     apply (cases ?enum, auto)
     by (metis length_0_conv length_Cons nat.inject)
-  then show "?enum = [a]"
+  thus "?enum = [a]"
     by (subst everything_the_same[of _ b], simp)
 qed
 
@@ -3190,7 +3190,7 @@ proof -
     apply (transfer fixing: \<pi>)
     by (fact C1_ket)
 
-  then show "classical_operator_exists \<pi>"
+  thus "classical_operator_exists \<pi>"
     by (rule classical_operator_existsI[of C])
 qed
 
@@ -3483,14 +3483,14 @@ proof -
     apply (simp add: times_applyOp C\<rho>x)
     apply (cases "\<rho> x")
     by (auto simp: C\<pi>x)
-  then show \<open>classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)\<close>
+  thus \<open>classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)\<close>
     by (rule classical_operator_existsI)
   then have "C\<pi>\<rho> *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     unfolding C\<pi>\<rho>_def
     by (rule classical_operator_basis)
   with C\<pi>\<rho>x' have "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = C\<pi>\<rho> *\<^sub>V (ket x)" for x
     by simp
-  then show "C\<pi> o\<^sub>C\<^sub>L C\<rho> = C\<pi>\<rho>"
+  thus "C\<pi> o\<^sub>C\<^sub>L C\<rho> = C\<pi>\<rho>"
     by (simp add: equal_basis)
 qed
 

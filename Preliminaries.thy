@@ -188,7 +188,7 @@ proof intro_classes
     then have "f x * f x = 0" for x
       apply (rule_tac sum_nonneg_eq_0_iff[THEN iffD1, rule_format, where A=UNIV and x=x])
       by auto
-    then show "f = (\<lambda>_. 0)"
+    thus "f = (\<lambda>_. 0)"
       by auto
   qed auto
 qed
@@ -2596,7 +2596,7 @@ proof -
   have "infsetsum f M \<le> infsetsum f N"
     apply (rule infsetsum_mono_neutral_left)
     using assms by auto
-  then show ?thesis
+  thus ?thesis
     using assms by auto
 qed
 
@@ -2608,7 +2608,7 @@ lemma infsetsum_cmult_left':
   shows   "infsetsum (\<lambda>x. f x * c) A = infsetsum f A * c"
 proof (cases "c \<noteq> 0 \<longrightarrow> f abs_summable_on A")
   case True
-  then show ?thesis 
+  thus ?thesis 
     apply auto
     by (rule infsetsum_cmult_left)
 next
@@ -2690,7 +2690,7 @@ proof auto
     using f0 that B'B by auto
   ultimately have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A" for x
     using that by auto
-  then show "(\<lambda>y. f (x, y)) abs_summable_on B x" if "x \<in> A" for x
+  thus "(\<lambda>y. f (x, y)) abs_summable_on B x" if "x \<in> A" for x
     apply (rule abs_summable_on_zero_diff)
     using that f0' by auto
 
@@ -2700,7 +2700,7 @@ proof auto
     apply (rule abs_summable_on_zero_diff)
     apply (subst infsetsum_cong[where g=\<open>\<lambda>x. 0\<close> and B="B' _"])
     using f0 B'B by auto
-  then show "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B x)) abs_summable_on A"
+  thus "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B x)) abs_summable_on A"
     apply (rule abs_summable_on_cong[THEN iffD1, rotated 2])
      apply (rule infsetsum_cong_neutral)
     using B'B f0' by auto 
@@ -2725,7 +2725,7 @@ next
     then have "norm (f (x, y)) = 0"
       apply (rule infsetsum_0D)
       using sum_B that by auto
-    then show ?thesis
+    thus ?thesis
       by auto
   qed
 
@@ -2744,7 +2744,7 @@ next
   have "f abs_summable_on Sigma A' B'"
     using abs_summable_on_Sigma_iff[where A=A' and B=B' and f=f, OF cnt_A' cnt_B'] 
     using A'A by auto
-  then show "f abs_summable_on Sigma A B"
+  thus "f abs_summable_on Sigma A B"
     apply (rule abs_summable_on_zero_diff)
     using f0 f0' by auto
 qed

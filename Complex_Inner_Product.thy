@@ -4123,7 +4123,7 @@ next
   define R where "R = B \<union> scaleC \<i> ` B"
   fix \<psi>
   assume rspan: "\<psi> \<in> ?rspan R"
-  then show "\<psi> \<in> ?cspan B"
+  thus "\<psi> \<in> ?cspan B"
     apply induction
      apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
     using R_def complex_vector.span_base complex_vector.span_scale by fastforce 
@@ -4281,7 +4281,7 @@ proof -
     unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
      apply auto
     unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
-  then show "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
+  thus "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>D>0\<close> by auto
 
   have complete_comb': "complete (comb' ` UNIV)"
@@ -4310,7 +4310,7 @@ proof -
       apply (subst comb_cong[of _ f'])
        apply (subst type_definition.Abs_inverse[OF t]; simp)
       using f' by simp
-    then show "\<exists>x. \<psi> = comb' x"
+    thus "\<exists>x. \<psi> = comb' x"
       by auto
   qed
 
@@ -4359,11 +4359,11 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
   then have "complete (real_vector.span B)"
     using \<open>B\<noteq>{}\<close> by auto
-  then show "complete (real_vector.span A)"
+  thus "complete (real_vector.span A)"
     unfolding BT by simp
 next
   case False
-  then show ?thesis
+  thus ?thesis
     using complete_singleton by auto
 qed
 
@@ -4401,7 +4401,7 @@ proof-
   proof -
     have "(1::'a) \<notin> {}"
       by (metis equals0D)
-    then show ?thesis
+    thus ?thesis
       by (metis Diff_insert_absorb \<open>a \<in> complex_vector.span {1}\<close> complex_vector.span_breakdown complex_vector.span_empty eq_iff_diff_eq_0 singleton_iff)
   qed
   then obtain s where \<open>a = s *\<^sub>C 1\<close>
@@ -4959,7 +4959,7 @@ proof-
             by (metis Set.set_insert Suc.prems(2) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> insertI1 insert_commute)
           then have "(\<Sum>b\<in>t'. \<langle>b, \<alpha>\<rangle>) = 0"
             using f1 by (meson sum_not_0)
-          then show ?thesis
+          thus ?thesis
             by (simp add: cinner_sum_left)
         qed   
         thus ?thesis
@@ -5208,7 +5208,7 @@ proof -
   have "((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative
           (\<lambda>xa. (Re \<langle>x, xa\<rangle> + Re \<langle>xa, x\<rangle>) * (inverse (sqrt (Re \<langle>x, x\<rangle>)) / 2))) (at x)" 
     by (rule derivative_eq_intros | simp add: Re_pos)+
-  then show ?thesis
+  thus ?thesis
     apply (auto simp: Re_plus_Re norm[abs_def])
     apply (subst divide_real_def)
     by simp

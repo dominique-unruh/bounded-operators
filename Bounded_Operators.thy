@@ -414,7 +414,7 @@ proof intro_classes
   let ?univ = "UNIV :: 'a set"
   from assms obtain x::'a where "x \<noteq> 0"
     by auto
-  then show "\<exists>x y :: 'a. x \<noteq> y"
+  thus "\<exists>x y :: 'a. x \<noteq> y"
     by auto
 qed
 
@@ -4452,7 +4452,7 @@ proof-
       using f1 by blast
     have "Complex_Vector_Spaces.span T = UNIV"
       by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
-    then show ?thesis
+    thus ?thesis
       using f3 f2 by blast
   qed 
   then obtain r where \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
@@ -4765,7 +4765,7 @@ proof -
     unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
      apply auto
     unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
-  then show "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
+  thus "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>D>0\<close> by auto
 
   have complete_comb': "complete (comb' ` UNIV)"
@@ -4794,7 +4794,7 @@ proof -
       apply (subst comb_cong[of _ f'])
        apply (subst type_definition.Abs_inverse[OF t]; simp)
       using f' by simp
-    then show "\<exists>x. \<psi> = comb' x"
+    thus "\<exists>x. \<psi> = comb' x"
       by auto
   qed
 
@@ -4876,7 +4876,7 @@ proof (cases "B\<noteq>{}")
     using \<open>Dall > 0\<close> real_norm_def by metis
 next
   case False
-  then show ?thesis
+  thus ?thesis
     unfolding repr_def using real_vector.representation_ne_zero[of B]
     using nice_ordered_field_class.linordered_field_no_ub by fastforce
 qed
@@ -4920,11 +4920,11 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
   then have "complete (real_vector.span B)"
     using \<open>B\<noteq>{}\<close> by auto 
-  then show "complete (real_vector.span A)"
+  thus "complete (real_vector.span A)"
     unfolding BT by simp
 next
   case False
-  then show ?thesis
+  thus ?thesis
     using complete_singleton by auto
 qed
 
@@ -4965,7 +4965,7 @@ next
   define R where "R = B \<union> scaleC \<i> ` B"
   fix \<psi>
   assume rspan: "\<psi> \<in> ?rspan R"
-  then show "\<psi> \<in> ?cspan B"
+  thus "\<psi> \<in> ?cspan B"
     apply induction
      apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
     using R_def complex_vector.span_base complex_vector.span_scale by fastforce 

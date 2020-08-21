@@ -31,7 +31,7 @@ proof - (* Sledgehammer proof *)
     by auto
   then have "sqrt (real 2) + real_of_rat p \<noteq> 0"
     using f5 by (metis (no_types) Rats_def Rats_minus_iff \<open>sqrt (real 2) \<notin> \<rat>\<close> range_eqI)
-  then show False
+  thus False
     using f4 f3 f2 by simp
 qed
 

@@ -757,7 +757,7 @@ proof-
     for S::"'a list" and f g::"'a \<Rightarrow> complex" 
   proof (induction S)
     case Nil
-    then show ?case by auto
+    thus ?case by auto
   next
     case (Cons a S)
     have "vec_of_list (map (\<lambda>x. f x + g x) (a # S)) = 
@@ -820,7 +820,7 @@ proof-
     for S::"'a list" and f g::"'a \<Rightarrow> complex" 
   proof(induction S)
     case Nil
-    then show ?case by auto
+    thus ?case by auto
   next
     case (Cons a S)
     have "vec_of_list (map (\<lambda>x. c *\<^sub>C f x) (a # S)) = 
@@ -978,7 +978,7 @@ proof-
     unfolding onb_enum_of_vec_list_def'
     using that
   proof (induction xs ys B rule:list_induct3)
-    case Nil then show ?case by auto
+    case Nil thus ?case by auto
   next
     case (Cons x xs y ys b B)
     have w1: "distinct B"      

@@ -137,7 +137,7 @@ next
   show ?case 
   proof(cases "a = x")
     case True
-    then show ?thesis by auto
+    thus ?thesis by auto
   next
     case False
     thus ?thesis apply auto
@@ -283,47 +283,120 @@ qed
 
 (* TODO: To preliminaries *)
 lemma enum_idx_bound: "enum_idx x < length (Enum.enum :: 'a list)" for x :: "'a::enum"
-  sorry
+proof-
+  have p1: "False"
+    if "(Enum.enum :: 'a list) = []"
+  proof-
+    have "(UNIV::'a set) = set ([]::'a list)"
+      using that UNIV_enum by metis
+    also have "\<dots> = {}"
+      by blast
+    finally have "(UNIV::'a set) = {}".
+    thus ?thesis by simp
+  qed    
+  have p2: "x \<in> set (Enum.enum :: 'a list)"
+    using UNIV_enum by auto
+  show ?thesis
+  unfolding enum_idx_def apply (rule Bounded_Operators_Code.index_of_length'[where x = x 
+      and y = "(Enum.enum :: 'a list)"])
+  using p1 apply auto using p2 by auto
+qed
 
 (* TODO: To preliminaries *)
+(* Ask to Dominique: delete? *)
 lemma enum_idx_correct: "Enum.enum ! enum_idx x = x"
-  sorry
+  using Bounded_Operators_Code.enum_idx_def'.
 
 (* TODO: To Bounded_Operators_Matrices *)
 lemma vec_of_basis_vector:
   assumes "i < canonical_basis_length TYPE('a)"
-  shows "vec_of_onb_enum (canonical_basis!i :: 'a) = unit_vec (canonical_basis_length TYPE('a::basis_enum)) i" 
-proof (rule eq_vecI, rename_tac j)
-  show "dim_vec (vec_of_onb_enum (canonical_basis ! i :: 'a)) = dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
-    by (simp add: dim_vec_of_onb_enum_list' canonical_basis_length_eq)
-next
-  fix j
-  define dim where "dim = canonical_basis_length TYPE('a)"
-  assume "j < dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
-  then have "j < dim"
-    by (simp add: dim_def)
-  from assms have "i < dim"
-    unfolding dim_def by simp
-
-  show "vec_of_onb_enum (canonical_basis ! i) $ j = unit_vec dim i $ j "
-  proof (cases "i=j")
-    case True
-    then show ?thesis
-      using \<open>j < dim\<close> apply auto
-      sorry
-  next
-    case False
-    then show ?thesis
-      using \<open>j<dim\<close> \<open>i<dim\<close>
-      apply auto
-      sorry
+  shows "vec_of_onb_enum (canonical_basis!i :: 'a)
+       = unit_vec (canonical_basis_length TYPE('a::basis_enum)) i" 
+proof-
+  have "dim_vec (vec_of_onb_enum (canonical_basis!i :: 'a)) 
+      = dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
+  proof-
+    have "dim_vec (unit_vec (canonical_basis_length TYPE('a)) i) 
+      = canonical_basis_length TYPE('a)"
+      by simp     
+    moreover have "dim_vec (vec_of_onb_enum (canonical_basis!i :: 'a)) 
+        = canonical_basis_length TYPE('a)"
+      unfolding vec_of_ell2_def vec_of_onb_enum_def apply auto
+      using canonical_basis_length_eq[where 'a = "'a"] by auto
+    ultimately show ?thesis by simp
   qed
+  moreover have "vec_of_onb_enum (canonical_basis!i :: 'a) $ j =
+    (unit_vec (canonical_basis_length TYPE('a)) i) $ j"
+    if "j < dim_vec (vec_of_onb_enum (canonical_basis!i::'a))"
+    for j
+  proof-
+    have j_bound: "j < length (canonical_basis::'a list)"
+      by (metis dim_vec_of_onb_enum_list' that)
+    have y1: "complex_independent (set (canonical_basis::'a list))"
+      by (simp add: is_complex_independent_set)              
+    have y2: "canonical_basis ! j \<in> set (canonical_basis::'a list)"
+      using j_bound by auto    
+    have "i < dim_vec (unit_vec (canonical_basis_length TYPE('a)) i)"
+      by (simp add: assms)
+    hence r1: "(unit_vec (canonical_basis_length TYPE('a)) i) $ j
+        = (if i = j then 1 else 0)"
+      by (simp add: canonical_basis_length_eq j_bound)
+    have r2: "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = (if i = j then 1 else 0)"
+    proof(cases "i = j")
+      case True
+      have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
+        using complex_independent_def is_complex_independent_set by blast        
+      moreover have "canonical_basis ! i \<in> set (canonical_basis::'a list)"
+        by (simp add: True y2)        
+      ultimately have "(Complex_Vector_Spaces.representation
+            (set (canonical_basis::'a list)) ((canonical_basis::'a list) ! i)) 
+          ((canonical_basis::'a list) ! i) = 1"       
+        using Complex_Vector_Spaces.representation_basis[where basis = "set (canonical_basis::'a list)" 
+          and b = "(canonical_basis::'a list)!i"] by simp
+      hence "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = 1"
+        unfolding vec_of_onb_enum_def using True by (smt j_bound nth_map vec_of_list_index)
+      thus ?thesis using True by simp
+    next
+      case False
+      have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
+        using complex_independent_def is_complex_independent_set by blast        
+      moreover have "canonical_basis ! j \<in> set (canonical_basis::'a list)"
+        by (simp add: y2)
+      ultimately have "(Complex_Vector_Spaces.representation
+            (set (canonical_basis::'a list)) ((canonical_basis::'a list) ! i)) 
+          ((canonical_basis::'a list) ! j) = 0"       
+        using Complex_Vector_Spaces.representation_basis[where basis = 
+            "set (canonical_basis::'a list)" 
+          and b = "(canonical_basis::'a list)!i"] False 
+        by (smt assms canonical_basis_length_eq distinct_canonical_basis j_bound nth_eq_iff_index_eq 
+            nth_mem) 
+      hence "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = 0"
+        unfolding vec_of_onb_enum_def using False by (smt j_bound nth_map vec_of_list_index)
+      thus ?thesis using False by simp
+    qed
+    show ?thesis using r1 r2 by auto
+  qed
+  ultimately show ?thesis 
+    using Matrix.eq_vecI
+    by auto
 qed
 
-(* TODO: To Bounded_Operators_Matrices *)
-lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
-  sorry
 
+(* TODO: To Bounded_Operators_Matrices *)
+lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"  
+proof-
+  have "x = (enum_class.enum::'a list) ! enum_idx x"
+    using Bounded_Operators_Code.enum_idx_def'[where i = x] by simp
+  hence p1: "ket x = ket ((enum_class.enum::'a list) ! enum_idx x)"
+    by simp
+  have "enum_idx x < length (enum_class.enum::'a list)"
+    using Bounded_Operators_Code.enum_idx_bound[where x = x].
+  hence "(map ket (enum_class.enum::'a list)) ! enum_idx x 
+        = ket ((enum_class.enum::'a list) ! enum_idx x)"
+    by auto      
+  thus ?thesis
+    unfolding canonical_basis_ell2_def using p1 by auto    
+qed
   
 declare vec_of_ell2_ket[code]
 
@@ -360,6 +433,7 @@ lemma norm_ell2_code [code]: "norm \<psi> =
 lemma times_ell2_code: "vec_of_ell2 (\<psi> * \<phi>) == vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
   for \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   sorry
+
 declare times_ell2_code[code]
 
 (* TODO move to ..._Matrices *)

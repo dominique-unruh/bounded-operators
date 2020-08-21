@@ -2741,7 +2741,7 @@ next
     by auto
   then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
     using tendsto_add by blast
-  then show ?case 
+  thus ?case 
     using sum.insert insert by auto
 qed
 
