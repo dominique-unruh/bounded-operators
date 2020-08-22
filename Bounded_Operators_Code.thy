@@ -297,9 +297,9 @@ proof-
   have p2: "x \<in> set (Enum.enum :: 'a list)"
     using UNIV_enum by auto
   show ?thesis
-  unfolding enum_idx_def apply (rule Bounded_Operators_Code.index_of_length'[where x = x 
-      and y = "(Enum.enum :: 'a list)"])
-  using p1 apply auto using p2 by auto
+    unfolding enum_idx_def apply (rule Bounded_Operators_Code.index_of_length'[where x = x 
+          and y = "(Enum.enum :: 'a list)"])
+    using p1 apply auto using p2 by auto
 qed
 
 (* TODO: To preliminaries *)
@@ -352,7 +352,7 @@ proof-
             (set (canonical_basis::'a list)) ((canonical_basis::'a list) ! i)) 
           ((canonical_basis::'a list) ! i) = 1"       
         using Complex_Vector_Spaces.representation_basis[where basis = "set (canonical_basis::'a list)" 
-          and b = "(canonical_basis::'a list)!i"] by simp
+            and b = "(canonical_basis::'a list)!i"] by simp
       hence "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = 1"
         unfolding vec_of_onb_enum_def using True by (smt j_bound nth_map vec_of_list_index)
       thus ?thesis using True by simp
@@ -367,7 +367,7 @@ proof-
           ((canonical_basis::'a list) ! j) = 0"       
         using Complex_Vector_Spaces.representation_basis[where basis = 
             "set (canonical_basis::'a list)" 
-          and b = "(canonical_basis::'a list)!i"] False 
+            and b = "(canonical_basis::'a list)!i"] False 
         by (smt assms canonical_basis_length_eq distinct_canonical_basis j_bound nth_eq_iff_index_eq 
             nth_mem) 
       hence "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = 0"
@@ -397,7 +397,7 @@ proof-
   thus ?thesis
     unfolding canonical_basis_ell2_def using p1 by auto    
 qed
-  
+
 declare vec_of_ell2_ket[code]
 
 lemma vec_of_ell2_timesScalarVec[code]: "vec_of_ell2 (scaleC a \<psi>) = smult_vec a (vec_of_ell2 \<psi>)"
@@ -428,11 +428,172 @@ lemma norm_ell2_code [code]: "norm \<psi> =
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
   by (simp add: norm_ell2_code vec_of_ell2_def)
 
+(* NEW *)
+lemma complex_span_singleton:
+  fixes x y::"'a::complex_vector"
+  assumes a1: "x \<in> complex_span {y}"
+  shows "\<exists>\<alpha>. x = \<alpha> *\<^sub>C y"
+proof-
+  have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
+    using a1 unfolding complex_span_def using complex_vector.span_explicit[where b = "{y}"]
+    by blast
+  then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
+    by blast
+  show ?thesis
+  proof(cases "t = {}")
+    case True
+    hence "(\<Sum>j\<in>t. r j *\<^sub>C j) = 0"
+      using b2
+      by simp
+    thus ?thesis using b1 by simp
+  next
+    case False
+    hence "t = {y}"
+      using b3 by auto
+    moreover have "(\<Sum>j\<in>{y}. r j *\<^sub>C j) = r y *\<^sub>C y"
+      by auto
+    ultimately show  ?thesis using b1 by blast
+  qed
+
+qed
+
 (* TODO move to ..._Matrices *)
 (* TODO better name *)
-lemma times_ell2_code: "vec_of_ell2 (\<psi> * \<phi>) == vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-  for \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
-  sorry
+lemma times_ell2_code: 
+  fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
+  shows "vec_of_ell2 (\<psi> * \<phi>)
+   = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
+    (* Ask to Dominique:
+Original statement (three lines equal symbol)
+"vec_of_ell2 (\<psi> * \<phi>)
+   \<equiv> vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
+
+Is it ok to substitute \<equiv> by =.
+ *)
+proof-
+  have "\<exists>i. i\<in>(UNIV::'a set)"
+    by blast
+  then obtain i where i_def: "i\<in>(UNIV::'a set)"
+    by blast
+  have "set (enum_class.enum::'a list) = UNIV"
+    using UNIV_enum by blast
+  moreover have "card (UNIV::'a set) = 1"
+    by (simp add: CARD_1)      
+  moreover have "distinct (enum_class.enum::'a list)"
+    using enum_distinct by auto
+  ultimately have "length (enum_class.enum::'a list) = 1"
+    by (metis One_nat_def UNIV_witness \<open>\<exists>i. i \<in> UNIV\<close> card_num1 class_semiring.one_closed
+        length_remdups_card_conv plus_1_eq_Suc remdups_id_iff_distinct top.extremum_unique)      
+  hence p0: "length (canonical_basis::'a ell2 list) = 1"
+    unfolding canonical_basis_ell2_def by simp
+  hence q1: "canonical_basis_length TYPE('a ell2) = 1"
+    using canonical_basis_length_eq[where 'a = "'a ell2"] by simp
+  have "vec_of_ell2 f = vec_of_list [vec_of_ell2 f $ 0]"
+    for f::"'a ell2" 
+  proof-
+    have p1: "dim_vec (vec_of_ell2 f) = 1"
+      using p0
+      unfolding vec_of_ell2_def vec_of_onb_enum_def
+      by auto
+    have "(vec_of_ell2 f) $ k = vec_of_list [vec_of_ell2 f $ 0] $ k"
+      if "k < dim_vec (vec_of_ell2 f)"
+      for k
+    proof-
+      have "k = 0"
+        using that p1 by auto
+      moreover have "vec_of_list [vec_of_ell2 f $ 0] $ 0 = vec_of_ell2 f $ 0"
+        by simp        
+      ultimately show ?thesis by simp
+    qed
+    moreover have "dim_vec (vec_of_list [vec_of_ell2 f $ 0]) = 1"
+    proof-
+      have "length [vec_of_ell2 f $ 0] = 1"
+        by simp
+      thus ?thesis
+        by simp 
+    qed
+    ultimately show ?thesis
+      by (metis eq_vecI p1) 
+  qed
+  hence "vec_of_ell2 (\<psi> * \<phi>) = vec_of_list [vec_of_ell2 (\<psi> * \<phi>) $ 0]"
+    by blast
+  also have "\<dots> = vec_of_list [vec_of_ell2 \<psi> $ 0 * vec_of_ell2 \<phi> $ 0]"
+  proof-
+    have "Rep_ell2 (\<psi> * \<phi>) i = Rep_ell2 \<psi> i * Rep_ell2 \<phi> i"
+      by (simp add: times_ell2.rep_eq)
+    moreover have "vec_of_ell2 x $ 0 = Rep_ell2 x i"
+      for x
+    proof-
+      have "(UNIV::'a set) = {i}"
+        using CARD_1[where 'a = 'a] i_def by auto
+      hence t1: "set (enum_class.enum::'a list) = {i}"
+        using UNIV_enum by auto
+      hence s0: "(enum_class.enum::'a list)!0 = i"
+        by auto
+      have "card (set (enum_class.enum::'a list)) = 1"
+        using t1 by simp
+      hence "length (enum_class.enum::'a list) = 1"
+        using enum_distinct List.distinct_card by smt
+      hence "(enum_class.enum::'a list) = [i]"
+        by (metis s0 One_nat_def length_0_conv length_Suc_conv length_nth_simps(3))                    
+      hence "map ket (enum_class.enum::'a list) = [ket i]"
+        by (metis list.simps(8) list.simps(9))          
+      hence "(map ket (enum_class.enum::'a list)) ! 0 = ket i"
+        by simp
+      hence ket_canonical_basis: "(canonical_basis::'a ell2 list)!0 = ket i"
+        unfolding canonical_basis_ell2_def.
+      have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
+      proof-
+        have "x \<in> complex_span (range ket)"
+          unfolding complex_span_def
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim by blast
+        moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
+          by (simp add: \<open>UNIV = {i}\<close>)
+        ultimately have "x \<in> complex_span {ket i}"
+          by simp
+        hence "\<exists>\<alpha>. x = \<alpha> *\<^sub>C ket i"
+          using complex_span_singleton by blast
+        then obtain \<alpha> where "x = \<alpha> *\<^sub>C ket i"
+          by blast
+        hence "(Rep_ell2 x) i = (Rep_ell2 (\<alpha> *\<^sub>C ket i)) i"
+          by simp
+        moreover have "(Rep_ell2 (\<alpha> *\<^sub>C ket i)) i = \<alpha>"
+          apply transfer
+          by simp
+        ultimately show ?thesis
+          by (simp add: \<open>x = \<alpha> *\<^sub>C ket i\<close>) 
+      qed
+      have "x = Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0"
+        using i_def x_ket ket_canonical_basis by simp
+      hence "vec_of_ell2 x = vec_of_ell2 (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
+        by simp
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_ell2 ((canonical_basis::'a ell2 list)!0)"
+        by (simp add: vec_of_ell2_timesScalarVec)
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
+        by (simp add: canonical_basis_length_ell2_def vec_of_basis_vector vec_of_ell2_def)
+      finally have "vec_of_ell2 x
+         = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0".
+      hence "vec_of_ell2 x $ 0
+         = (Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0"
+        by simp
+      also have "\<dots> = Rep_ell2 x i * ((unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0)"
+        by (simp add: canonical_basis_length_ell2_def)
+      also have "\<dots> = Rep_ell2 x i"
+      proof-
+        have "(unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0 = 1"
+          using q1
+          by auto
+        thus ?thesis by auto
+      qed
+      finally show ?thesis.
+    qed  
+    ultimately have "vec_of_ell2 (\<psi> * \<phi>) $ 0 = vec_of_ell2 \<psi> $ 0 * vec_of_ell2 \<phi> $ 0"
+      by auto
+    thus ?thesis by simp
+  qed
+  finally show "vec_of_ell2 (\<psi> * \<phi>) =
+        vec_of_list [vec_of_ell2 \<psi> $ 0 * vec_of_ell2 \<phi> $ 0]".
+qed
 
 declare times_ell2_code[code]
 
