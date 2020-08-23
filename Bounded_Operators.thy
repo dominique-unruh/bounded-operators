@@ -4013,7 +4013,7 @@ lemma timesOp_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>
   by (simp add: timesOp_assoc_clinear_space) 
 
 
-lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> ('b::one_dim,'a) cblinfun\<close> is
+lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L'a\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: cbounded_linear_one_dim_to_complex cbounded_linear_scaleC_const)
 
