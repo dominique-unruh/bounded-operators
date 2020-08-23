@@ -906,7 +906,7 @@ lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S)))"
   for S :: "'a::onb_enum list"
-  using[[show_consts,show_types]]
+  using[[show_consts,show_types]]  
   sorry
 
 lemma mk_projector_SPAN[code]: 
@@ -953,7 +953,8 @@ lemma map_filter_Some'[simp]: "List.map_filter (\<lambda>x. if f x then Some x e
   by (simp add: map_filter_simps(1)) *)
 
 (* TODO move to ..._Matrices *)
-lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i) = (canonical_basis!i :: 'a::onb_enum)"
+lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i)
+   = (canonical_basis!i :: 'a::onb_enum)"
   sorry
 
 (* TODO: Move to Complex_Inner_Product *)
@@ -966,21 +967,66 @@ lemma top_as_span[code]: "(top::'a clinear_space) =
   (let n = canonical_basis_length TYPE('a::onb_enum) in
     SPAN (map (unit_vec n) [0..<n]))"
   unfolding SPAN_def
-  apply (simp only: index_unit_vec Let_def map_filter_map_filter filter_set image_set map_map_filter map_filter_map o_def)
+  apply (simp only: index_unit_vec Let_def map_filter_map_filter filter_set image_set map_map_filter 
+      map_filter_map o_def)
   apply (simp add: onb_enum_of_vec_unit_vec)
   apply (subst nth_image)
   by (auto simp: canonical_basis_length_eq)
 
 (* TODO: Move to the Complex_Vector_Spaces *)
 lemma Span_empty[simp]: "Span {} = bot"
-  sorry
+  apply transfer
+  by simp
 
 lemma bot_as_span[code]: "(bot::'a::onb_enum clinear_space) = SPAN []"
   unfolding SPAN_def by (auto simp: Set.filter_def)
 
 (* TODO: Move to the Complex_Vector_Spaces *)
 lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
-  sorry
+proof (transfer, auto)
+  have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
+      Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B"
+    for A B::"'a set"
+    using Complex_Vector_Spaces.complex_vector.span_Un
+    by (smt Collect_cong set_plus_def)
+  hence p1: "closure (Complex_Vector_Spaces.span (A \<union> B)) = 
+             closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
+    for A B::"'a set"
+    by simp
+
+  show "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
+    if "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
+            closure (Complex_Vector_Spaces.span B)"
+    for x::'a and A B
+  proof-
+    have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
+          closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
+      using Starlike.closure_sum by auto
+    hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
+        \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
+      by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
+           \<subseteq> closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)\<close> p1)
+    thus ?thesis by (smt closed_sum_def closure_closure closure_mono subsetD that)
+  qed
+
+  show "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
+            closure (Complex_Vector_Spaces.span B)"
+    if "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
+    for x::'a and A B
+  proof-
+    have "Complex_Vector_Spaces.span (A \<union> B) \<subseteq>
+           closure (Complex_Vector_Spaces.span A) +
+           closure (Complex_Vector_Spaces.span B)"
+      apply auto
+      by (metis closure_subset p0 set_plus_mono2_b) 
+    hence "closure (Complex_Vector_Spaces.span (A \<union> B)) \<subseteq>
+           closure (closure (Complex_Vector_Spaces.span A) +
+                    closure (Complex_Vector_Spaces.span B))"
+      by (smt closure_mono)
+    thus ?thesis by (smt closed_sum_def in_mono that)
+  qed
+qed
+ 
 
 lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
   by (simp add: Int_Un_distrib2 Set_project_code)
