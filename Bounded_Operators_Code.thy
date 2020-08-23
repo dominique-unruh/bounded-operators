@@ -726,8 +726,11 @@ proof-
   proof transfer
     fix x::'b and \<psi>::'a and nA::nat
     assume nA_def': "nA = canonical_basis_length TYPE('a)"
-    have dim_vec_b: "dim_vec (vec_of_onb_enum x) = 1"
-      sorry
+    have "length (canonical_basis::'b list) = 1"
+      using one_dim_canonical_basis[where 'a = 'b]
+      by (metis One_nat_def length_nth_simps(1) length_nth_simps(2)) 
+    hence dim_vec_b: "dim_vec (vec_of_onb_enum x) = 1"
+      by (simp add: dim_vec_of_onb_enum_list')            
     have "mat_of_cols nA [vec_of_onb_enum \<psi>] *\<^sub>v vec_of_onb_enum x
         = vec nA
      (\<lambda>i. scalar_prod (row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) (vec_of_onb_enum x))"
@@ -737,8 +740,12 @@ proof-
       row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ j * vec_of_onb_enum x $ j)"
       unfolding scalar_prod_def using dim_vec_b by auto
     also have "\<dots> = vec nA
+     (\<lambda>i. \<Sum>j\<in>{0}.
+      row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ j * vec_of_onb_enum x $ j)"
+      by auto
+    also have "\<dots> = vec nA
      (\<lambda>i. row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ 0 * vec_of_onb_enum x $ 0)"
-      sorry
+      using VS_Connect.class_semiring.finsum_singleton_set by auto
     also have "\<dots> = vec nA
      (\<lambda>i. row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ 0 * one_dim_to_complex x)"
     proof-
@@ -779,12 +786,56 @@ proof-
       by auto
     also have "\<dots> = vec nA
      (\<lambda>i. ( row (mat_of_cols nA [one_dim_to_complex x \<cdot>\<^sub>v vec_of_onb_enum \<psi>]) i) $ 0 )"
-      unfolding mat_of_cols_def apply auto sorry
+    proof-
+      have sss: "a \<cdot>\<^sub>m mat_of_cols nA [y] = mat_of_cols nA [a \<cdot>\<^sub>v y]"
+        if "dim_vec y = nA"
+        for a and y::"complex vec"
+      proof-
+        have "(a \<cdot>\<^sub>m mat_of_cols nA [y]) $$ (i,j) = (mat_of_cols nA [a \<cdot>\<^sub>v y]) $$ (i,j)"
+          if "i < dim_row (mat_of_cols nA [y])" and "j < dim_col (mat_of_cols nA [y])"
+          for i j
+          using that Matrix.index_smult_mat(1)[where i = i and j = j and a = a 
+              and A = "mat_of_cols nA [y]"] apply auto
+          by (simp add: \<open>dim_vec y = nA\<close> mat_of_cols_Cons_index_0)          
+        thus ?thesis
+          by auto
+      qed
+      have "dim_vec (vec_of_onb_enum \<psi>) = nA"
+        by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' nA_def')
+      thus ?thesis
+        using sss[where a = "one_dim_to_complex x" and y = "vec_of_onb_enum \<psi>"]
+        by auto
+    qed
     also have "\<dots> = vec nA
      (\<lambda>i. ( row (mat_of_cols nA [vec_of_onb_enum (one_dim_to_complex x *\<^sub>C \<psi>)]) i) $ 0 )"
       by (simp add: vec_of_onb_enum_scaleC)
     also have "\<dots> = vec_of_onb_enum (one_dim_to_complex x *\<^sub>C \<psi>)"
-      sorry
+    proof-
+      have ll: "vec nA (\<lambda>i. ( row (mat_of_cols nA [y]) i) $ 0 ) = y"
+        if "dim_vec y = nA"
+        for y::"complex vec"
+      proof-
+        have "vec nA (\<lambda>i. ( row (mat_of_cols nA [y]) i) $ 0 ) $ j = y $ j"
+          if "j < dim_vec y"
+          for j
+        proof-
+          have "vec nA (\<lambda>i. ( row (mat_of_cols nA [y]) i) $ 0 ) $ j
+              = (row (mat_of_cols nA [y]) j) $ 0"
+            using \<open>dim_vec y = nA\<close> index_vec that by blast            
+          also have "\<dots> = y $ j"
+            unfolding row_def apply auto unfolding mat_of_cols_def apply auto
+            using \<open>dim_vec y = nA\<close> that by auto
+          finally show ?thesis.
+        qed
+        thus ?thesis
+          using dim_vec that by blast 
+      qed
+      have "dim_vec (vec_of_onb_enum (one_dim_to_complex (x::'b::one_dim) *\<^sub>C (\<psi>::'a::onb_enum))) 
+            = (nA::nat)"
+        by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' nA_def')
+      thus ?thesis using ll[where y = "vec_of_onb_enum (one_dim_to_complex x *\<^sub>C \<psi>)"]
+        by blast
+    qed
     finally have "mat_of_cols nA [vec_of_onb_enum \<psi>] *\<^sub>v vec_of_onb_enum x = 
               vec_of_onb_enum (one_dim_to_complex x *\<^sub>C \<psi>)". 
     thus "one_dim_to_complex x *\<^sub>C \<psi> =
