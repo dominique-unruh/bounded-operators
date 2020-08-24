@@ -939,6 +939,9 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
   by (simp add: onb_enum_of_vec_unit_vec that)
 
 (* Ask to Dominique: Is this lemma incorrect. See the version that I proved above.
+
+\<Longrightarrow> You are right. You can remove the incorrect version.
+
 (* TODO move to ..._Matrices *)
 lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i)
    = (canonical_basis!i :: 'a::onb_enum)"
