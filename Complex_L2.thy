@@ -2425,7 +2425,8 @@ instance
           by simp
         thus ?thesis
           unfolding canonical_basis_ell2_def apply auto
-          by (simp add: span_finite_dim)
+          using span_finite_dim
+          by (simp add: span_finite_dim complex_span_def)
       qed
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
@@ -3814,6 +3815,9 @@ proof auto
           using f3 by auto
       qed
       using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]
+      using complex_independent_def apply blast
+      using basis_def complex_span_def is_generator_set by auto
+
       (* subgoal
       proof-
         assume "Complex_Vector_Spaces.dependent (set canonical_basis)"
@@ -3836,8 +3840,7 @@ proof auto
         thus "x = 0"
           by (metis complex_independent_def)          
       qed
-      using basis_def is_generator_set by auto *)
-      sorry
+      using basis_def is_generator_set by auto *)      
     hence "x = (\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t)"
       by simp
     also have "\<dots> = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"

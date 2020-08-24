@@ -3478,8 +3478,12 @@ lemma is_onb_set:
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
-  by (metis \<open>x \<in> set canonical_basis\<close> complex_vector.dependent_zero is_complex_independent_set)
-  
+  using \<open>x \<in> set canonical_basis\<close> 
+    complex_vector.dependent_zero[where A = "set (canonical_basis::('a::onb_enum list))"]
+    is_complex_independent_set
+    by (smt complex_independent_def)
+
+
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
@@ -4391,9 +4395,9 @@ proof-
   have \<open>(canonical_basis::'a list) = [1]\<close>
     by (simp add: one_dim_canonical_basis)
   hence \<open>a \<in> complex_vector.span ({1::'a})\<close>        
-    using closed_finite_dim closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I
-     closed_finite_dim
-    by (metis empty_set is_generator_set list.simps(15))
+    using  iso_tuple_UNIV_I empty_set is_generator_set list.simps(15)
+    by (metis complex_span_def)
+
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"
@@ -4833,77 +4837,74 @@ qed
 lemma is_ortho_set_independent:
   \<open>0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S\<close>
   unfolding is_ortho_set_def
-proof
-  show False
-    if "\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0" 
-      and "complex_vector.dependent S"
-      and "0 \<notin> S"
+proof(rule ccontr)
+  assume  a1: "\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0" 
+    and a2: "\<not> complex_independent S"
+    and a3: "0 \<notin> S"
+  have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
+    using complex_vector.dependent_explicit a2 unfolding complex_independent_def
+    by auto
+  then obtain t u where \<open>finite t\<close> and \<open>t \<subseteq> S\<close> and \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close> 
+    and \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
+    by blast
+  from \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
+  obtain k where \<open>u k \<noteq> 0\<close> and \<open>k\<in>t\<close>
+    by blast
+  have \<open>\<langle>(\<Sum>i\<in>t. u i *\<^sub>C i), k\<rangle> = (\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
   proof-
-    have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
-      using complex_vector.dependent_explicit that(2)
+    have \<open>bounded_sesquilinear cinner\<close>
+      by (simp add: bounded_sesquilinear_cinner)
+    thus ?thesis
+      using \<open>finite t\<close> sesquilinear_finite_sum
       by blast
-    then obtain t u where \<open>finite t\<close> and \<open>t \<subseteq> S\<close> and \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close> 
-      and \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
-      by blast
-    from \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
-    obtain k where \<open>u k \<noteq> 0\<close> and \<open>k\<in>t\<close>
-      by blast
-    have \<open>\<langle>(\<Sum>i\<in>t. u i *\<^sub>C i), k\<rangle> = (\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    proof-
-      have \<open>bounded_sesquilinear cinner\<close>
-        by (simp add: bounded_sesquilinear_cinner)
-      thus ?thesis
-        using \<open>finite t\<close> sesquilinear_finite_sum
-        by blast
-    qed
-    hence \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
-      by (simp add: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close>)
-    moreover have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle> + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    proof-
-      have \<open>t = {k} \<union> (t-{k})\<close>
-        using  \<open>k \<in> t\<close>
-        by auto
-      moreover have \<open>{k} \<inter> (t-{k}) = {}\<close>
-        by simp
-      ultimately have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)
-         = (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-        by (metis (no_types, lifting) Un_upper1 \<open>finite t\<close> add.commute sum.subset_diff)
-      moreover have \<open> (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle>\<close>
-        by simp
-      ultimately show ?thesis by simp
-    qed
-    moreover have \<open>(\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
-    proof-
-      have \<open>i \<in> t-{k} \<Longrightarrow> cnj (u i) *\<^sub>C \<langle>i,k\<rangle> = 0\<close>
-        for i
-      proof-
-        assume \<open>i \<in> t-{k}\<close>
-        hence \<open>\<langle>i,k\<rangle> = 0\<close>
-          by (metis DiffD1 DiffD2 \<open>k \<in> t\<close> \<open>t \<subseteq> S\<close> in_mono is_ortho_set_def singletonI that(1))
-        thus ?thesis
-          by simp 
-      qed
-      thus ?thesis
-        by (meson sum.not_neutral_contains_not_neutral) 
-    qed
-    ultimately have \<open>cnj (u k) *\<^sub>C \<langle>k,k\<rangle> = 0\<close>
+  qed
+  hence \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
+    by (simp add: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close>)
+  moreover have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle> + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
+  proof-
+    have \<open>t = {k} \<union> (t-{k})\<close>
+      using  \<open>k \<in> t\<close>
+      by auto
+    moreover have \<open>{k} \<inter> (t-{k}) = {}\<close>
       by simp
-    moreover have \<open>\<langle>k,k\<rangle> \<noteq> 0\<close>
+    ultimately have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)
+         = (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
+      by (metis (no_types, lifting) Un_upper1 \<open>finite t\<close> add.commute sum.subset_diff)
+    moreover have \<open> (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle>\<close>
+      by simp
+    ultimately show ?thesis by simp
+  qed
+  moreover have \<open>(\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
+  proof-
+    have \<open>i \<in> t-{k} \<Longrightarrow> cnj (u i) *\<^sub>C \<langle>i,k\<rangle> = 0\<close>
+      for i
     proof-
-      have \<open>0 \<notin> t\<close>
-        using \<open>0 \<notin> S\<close> \<open>t \<subseteq> S\<close> by auto
-      hence \<open>k \<noteq> 0\<close>
-        using \<open>k \<in> t\<close>
-        by blast
+      assume \<open>i \<in> t-{k}\<close>
+      hence \<open>\<langle>i,k\<rangle> = 0\<close>
+        by (metis DiffD1 DiffD2 \<open>k \<in> t\<close> \<open>t \<subseteq> S\<close> in_mono singletonI a1)
       thus ?thesis
         by simp 
     qed
-    ultimately have \<open>cnj (u k) = 0\<close>
-      by auto
-    hence \<open>u k = 0\<close>
-      by auto
-    thus ?thesis using \<open>u k \<noteq> 0\<close> by blast
+    thus ?thesis
+      by (meson sum.not_neutral_contains_not_neutral) 
   qed
+  ultimately have \<open>cnj (u k) *\<^sub>C \<langle>k,k\<rangle> = 0\<close>
+    by simp
+  moreover have \<open>\<langle>k,k\<rangle> \<noteq> 0\<close>
+  proof-
+    have \<open>0 \<notin> t\<close>
+      using \<open>0 \<notin> S\<close> \<open>t \<subseteq> S\<close> by auto
+    hence \<open>k \<noteq> 0\<close>
+      using \<open>k \<in> t\<close>
+      by blast
+    thus ?thesis
+      by simp 
+  qed
+  ultimately have \<open>cnj (u k) = 0\<close>
+    by auto
+  hence \<open>u k = 0\<close>
+    by auto
+  thus False using \<open>u k \<noteq> 0\<close> by blast
 qed
 
 subsection \<open>Commutative monoid of subspaces\<close>
