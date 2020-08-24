@@ -108,6 +108,8 @@ value "ket () * ket ()"
 
 value "1 :: unit ell2"
 
+value "(1::unit ell2) * (1::unit ell2)"
+
 subsection \<open>Vector/Matrix\<close>
 
 value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)"

@@ -125,8 +125,7 @@ next
   thus ?case by auto
 qed
 
-(* NEW *)
-lemma index_of_length': 
+lemma index_of_bound: 
   assumes "y \<noteq> []" and "x \<in> set y"
   shows "index_of x y < length y"
   using assms proof(induction y arbitrary: x)
@@ -148,8 +147,8 @@ qed
 (* TODO: To preliminaries *)
 definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
 
-(* NEW *)
-lemma index_of_def':
+(* TODO To preliminaries *)
+lemma index_of_correct:
   assumes "x \<in> set y"
   shows "y ! index_of x y = x"
   using assms 
@@ -161,15 +160,15 @@ next
   thus ?case by auto
 qed
 
-(* NEW *)
-lemma enum_idx_def': 
-  "enum_class.enum ! enum_idx i = i"
+(* TODO To preliminaries *)
+lemma enum_idx_correct: 
+  "Enum.enum ! enum_idx i = i"
 proof-
   have "i \<in> set enum_class.enum"
     using UNIV_enum by blast 
   thus ?thesis
     unfolding enum_idx_def
-    using index_of_def' by metis
+    using index_of_correct by metis
 qed
 
 (* TODO: To Bounded_Operators_Matrices *)
@@ -200,7 +199,7 @@ proof-
     have y2: "canonical_basis ! j \<in> set (canonical_basis::'a ell2 list)"
       using j_bound by auto
     have p1: "enum_class.enum ! enum_idx i = i"
-      using enum_idx_def' by blast
+      using enum_idx_correct by blast
     moreover have p2: "(canonical_basis::'a ell2 list) ! t  = ket ((enum_class.enum::'a list) ! t)"
       if "t < length (enum_class.enum::'a list)"
       for t
@@ -214,7 +213,7 @@ proof-
         by blast
       thus ?thesis
         unfolding enum_idx_def
-        by (metis index_of_length' length_greater_0_conv length_pos_if_in_set) 
+        by (metis index_of_bound length_greater_0_conv length_pos_if_in_set) 
     qed
     ultimately have p4: "(canonical_basis::'a ell2 list) ! (enum_idx i)  = ket i"
       by auto
@@ -241,7 +240,7 @@ proof-
         using y1 y2 Complex_Vector_Spaces.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
-        by (smt complex_independent_def)
+        by smt
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! j) $ j = 1"
         unfolding vec_of_onb_enum_def 
         by (metis True \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
@@ -261,7 +260,7 @@ proof-
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
         by (metis False \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
-          (enum_idx i))\<close> canonical_basis_length_eq complex_independent_def 
+          (enum_idx i))\<close> canonical_basis_length_eq 
             complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
             j_bound nth_eq_iff_index_eq nth_mem)
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
@@ -297,15 +296,10 @@ proof-
   have p2: "x \<in> set (Enum.enum :: 'a list)"
     using UNIV_enum by auto
   show ?thesis
-    unfolding enum_idx_def apply (rule Bounded_Operators_Code.index_of_length'[where x = x 
+    unfolding enum_idx_def apply (rule Bounded_Operators_Code.index_of_bound[where x = x 
           and y = "(Enum.enum :: 'a list)"])
     using p1 apply auto using p2 by auto
 qed
-
-(* TODO: To preliminaries *)
-(* Ask to Dominique: delete? *)
-lemma enum_idx_correct: "Enum.enum ! enum_idx x = x"
-  using Bounded_Operators_Code.enum_idx_def'.
 
 (* TODO: To Bounded_Operators_Matrices *)
 lemma vec_of_basis_vector:
@@ -345,7 +339,7 @@ proof-
     proof(cases "i = j")
       case True
       have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
-        using complex_independent_def is_complex_independent_set by blast        
+        using is_complex_independent_set by blast        
       moreover have "canonical_basis ! i \<in> set (canonical_basis::'a list)"
         by (simp add: True y2)        
       ultimately have "(Complex_Vector_Spaces.representation
@@ -359,7 +353,7 @@ proof-
     next
       case False
       have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
-        using complex_independent_def is_complex_independent_set by blast        
+        using is_complex_independent_set by blast        
       moreover have "canonical_basis ! j \<in> set (canonical_basis::'a list)"
         by (simp add: y2)
       ultimately have "(Complex_Vector_Spaces.representation
@@ -386,7 +380,7 @@ qed
 lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"  
 proof-
   have "x = (enum_class.enum::'a list) ! enum_idx x"
-    using Bounded_Operators_Code.enum_idx_def'[where i = x] by simp
+    using Bounded_Operators_Code.enum_idx_correct[where i = x] by simp
   hence p1: "ket x = ket ((enum_class.enum::'a list) ! enum_idx x)"
     by simp
   have "enum_idx x < length (enum_class.enum::'a list)"
@@ -435,7 +429,7 @@ lemma complex_span_singleton:
   shows "\<exists>\<alpha>. x = \<alpha> *\<^sub>C y"
 proof-
   have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
-    using a1 unfolding complex_span_def using complex_vector.span_explicit[where b = "{y}"]
+    using a1 using complex_vector.span_explicit[where b = "{y}"]
     by blast
   then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
     by blast
@@ -463,13 +457,6 @@ lemma times_ell2_code:
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (\<psi> * \<phi>)
    = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-    (* Ask to Dominique:
-Original statement (three lines equal symbol)
-"vec_of_ell2 (\<psi> * \<phi>)
-   \<equiv> vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-
-Is it ok to substitute \<equiv> by =.
- *)
 proof-
   have "\<exists>i. i\<in>(UNIV::'a set)"
     by blast
@@ -545,7 +532,6 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> complex_span (range ket)"
-          unfolding complex_span_def
           using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim by blast
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
           by (simp add: \<open>UNIV = {i}\<close>)
@@ -600,12 +586,6 @@ declare times_ell2_code[code]
 (* TODO move to ..._Matrices *)
 (* TODO better name *)
 lemma one_ell2_code: "vec_of_ell2 (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
-(* Ask to Dominique
-The original statement was
-"vec_of_ell2 (1 :: 'a::{CARD_1,enum} ell2) \<equiv> vec_of_list [1]"
-Should I keep it?
- *)
-
 proof-
   have "\<exists>i. i\<in>(UNIV::'a set)"
     by blast
@@ -960,7 +940,7 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
 (* TODO: Move to Complex_Inner_Product *)
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
   using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
-  by (metis closure_UNIV complex_span_def is_generator_set) 
+  by (metis closure_UNIV is_generator_set) 
 
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 

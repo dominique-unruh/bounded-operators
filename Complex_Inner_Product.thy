@@ -3431,15 +3431,11 @@ lemma is_ob_nonzero:
   using assms 
   by (metis Complex_Vector_Spaces.dependent_raw_def complex_vector.dependent_zero) 
 
-(* TODO Jose: delete
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-*)
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>complex_independent\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>complex_span\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_independent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.dependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 
 class basis_enum = complex_vector +
   fixes canonical_basis :: "'a list"
@@ -3453,13 +3449,15 @@ class basis_enum = complex_vector +
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
-(* TODO Jose: Delete
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_basis\<close>, SOME \<^typ>\<open>'a::complex_normed_vector set \<Rightarrow> bool\<close>)\<close>
-*)
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_independent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.dependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
 class onb_enum = basis_enum + complex_inner +
   assumes is_orthonormal:
@@ -3480,8 +3478,7 @@ lemma is_onb_set:
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
-  by (metis \<open>x \<in> set canonical_basis\<close> complex_independent_def complex_vector.dependent_zero 
-      is_complex_independent_set)
+  by (metis \<open>x \<in> set canonical_basis\<close> complex_vector.dependent_zero is_complex_independent_set)
   
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
@@ -4396,7 +4393,7 @@ proof-
   hence \<open>a \<in> complex_vector.span ({1::'a})\<close>        
     using closed_finite_dim closure_eq finite.emptyI finite.insertI iso_tuple_UNIV_I
      closed_finite_dim
-    by (metis complex_span_def empty_set is_generator_set list.simps(15))
+    by (metis empty_set is_generator_set list.simps(15))
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"
@@ -4835,7 +4832,7 @@ qed
 
 lemma is_ortho_set_independent:
   \<open>0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S\<close>
-  unfolding is_ortho_set_def complex_independent_def
+  unfolding is_ortho_set_def
 proof
   show False
     if "\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0" 

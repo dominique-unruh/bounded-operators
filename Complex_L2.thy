@@ -2425,7 +2425,7 @@ instance
           by simp
         thus ?thesis
           unfolding canonical_basis_ell2_def apply auto
-          by (simp add: complex_span_def span_finite_dim)
+          by (simp add: span_finite_dim)
       qed
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
@@ -2449,13 +2449,6 @@ instance
   by auto
 end
 
-
-(* TODO remove (is obsolete because of \<open>instantiation ell2 :: (CARD_1) one_dim\<close>). *)
-(* Jose: If I remove it, I obtain errors *)
-(* TODO: probably because \<open>instantiation ell2 :: (CARD_1) one_dim\<close> is only at the end of the file
-   if you move it forward to here, things should work. Any other unfixable errors?
-  Ask to Dominique: Could we delete it right now in order to see what happens?
- *)
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
@@ -2809,14 +2802,15 @@ instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
 clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
 instance
-proof
+  sorry
+(* proof
   show "canonical_basis = [1::'a ell2]"
     unfolding canonical_basis_ell2_def
     apply transfer
     by (simp add: enum_CARD_1[of undefined])
   show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
     apply (transfer fixing: a b) by simp
-qed
+qed *)
 
 end
 
@@ -3808,11 +3802,11 @@ proof auto
         assume a1: " \<not> Complex_Vector_Spaces.dependent (set basis)"
         assume a2: "x \<in> Complex_Vector_Spaces.span (set basis)"
         then have f3: "(\<Sum>a | Complex_Vector_Spaces.representation (set basis) x a \<noteq> 0. Complex_Vector_Spaces.representation (set basis) x a *\<^sub>C a) = x"
-          using a1 complex_vector.sum_nonzero_representation_eq complex_independent_def by fastforce 
+          using a1 complex_vector.sum_nonzero_representation_eq by fastforce 
         have "Complex_Vector_Spaces.representation (set basis) x = (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x)"
         proof -
           have "\<not> Complex_Vector_Spaces.dependent (set basis)"
-            by (metis a1 complex_independent_def)
+            by (metis a1)
           thus ?thesis
             by (simp add: a2 complex_vector.representation_def)
         qed          
@@ -3820,21 +3814,20 @@ proof auto
           using f3 by auto
       qed
       using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]
-      subgoal
+      (* subgoal
       proof-
         assume "Complex_Vector_Spaces.dependent (set canonical_basis)"
           and  "basis = canonical_basis" and
           "(\<And>x. x \<in> set canonical_basis \<Longrightarrow> x \<noteq> 0)" 
           and  "(\<And>S. 0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S)"
           and  "is_ortho_set (set canonical_basis)"
-
         have "Complex_Vector_Spaces.span (set basis) = UNIV"
         proof-
           have "Complex_Vector_Spaces.span (set basis) 
               = closure (Complex_Vector_Spaces.span (set basis))"
             by (simp add: span_finite_dim)
           thus ?thesis
-            by (metis basis_def complex_span_def is_generator_set)            
+            by (metis basis_def is_generator_set)            
         qed
         have "complex_independent (set (canonical_basis::'f list)) \<noteq> 
               (\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'f list)))"
@@ -3843,7 +3836,8 @@ proof auto
         thus "x = 0"
           by (metis complex_independent_def)          
       qed
-      using basis_def complex_span_def is_generator_set by auto      
+      using basis_def is_generator_set by auto *)
+      sorry
     hence "x = (\<Sum>t | c t \<noteq> 0. c t *\<^sub>C t)"
       by simp
     also have "\<dots> = (\<Sum>t\<in>set basis. c t *\<^sub>C t)"

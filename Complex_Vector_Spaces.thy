@@ -85,6 +85,7 @@ subsection \<open>Bounded Linear and Bilinear Operators\<close>
 definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
   "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
 
+(* TODO: Dominique: Figure out how global interpretation works and why constants get ?? in front of them *)
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
@@ -106,17 +107,9 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.span
   complex_vector.extend_basis
   complex_vector.dim
-(* TODO Jose: delete
+
 abbreviation complex_independent where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
-*)
-
-(* NEW *)
-definition complex_independent::"'a::complex_vector set \<Rightarrow> bool" 
-  where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
-
-(* NEW *)
-definition complex_span::"'a::complex_vector set \<Rightarrow> 'a set"
-  where "complex_span x \<equiv> complex_vector.span x"
+abbreviation "complex_span x \<equiv> complex_vector.span x"
 
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
