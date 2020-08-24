@@ -825,7 +825,7 @@ proof-
   hence  "((vector_to_cblinfun \<psi>)::'b\<Rightarrow>\<^sub>C\<^sub>L'a) *\<^sub>V x
        = ((cblinfun_of_mat (mat_of_cols nA [vec_of_onb_enum \<psi>]))::'b\<Rightarrow>\<^sub>C\<^sub>L'a) *\<^sub>V x"
     for x
-     using t1 
+    using t1 
     unfolding nA_def nB_def apply auto
     by (simp add: cblinfun_of_mat.rep_eq)
   hence  "((vector_to_cblinfun \<psi>)::'b\<Rightarrow>\<^sub>C\<^sub>L'a)
@@ -917,13 +917,13 @@ definition "orthogonal_complement_vec n vs =
 (* TODO: move to Preliminaries *)
 lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
   apply (induction l)
-  apply (simp add: map_filter_simps)
+   apply (simp add: map_filter_simps)
   apply auto by (metis map_filter_simps(1))
 
 (* TODO: move to Preliminaries *)
 lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
   apply (induction l)
-  apply (simp add: map_filter_simps)
+   apply (simp add: map_filter_simps)
   by (simp add: map_filter_simps(1))
 
 (* (* TODO: move to Preliminaries *)
@@ -932,10 +932,18 @@ lemma map_filter_Some'[simp]: "List.map_filter (\<lambda>x. if f x then Some x e
    apply (simp add: map_filter_simps)
   by (simp add: map_filter_simps(1)) *)
 
+
+lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i)
+   = (canonical_basis!i :: 'a::onb_enum)"
+  if "i < canonical_basis_length TYPE('a)"
+  by (simp add: onb_enum_of_vec_unit_vec that)
+
+(* Ask to Dominique: Is this lemma incorrect. See the version that I proved above.
 (* TODO move to ..._Matrices *)
 lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i)
    = (canonical_basis!i :: 'a::onb_enum)"
   sorry
+*)
 
 (* TODO: Move to Complex_Inner_Product *)
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
@@ -1006,7 +1014,7 @@ proof (transfer, auto)
     thus ?thesis by (smt closed_sum_def in_mono that)
   qed
 qed
- 
+
 
 lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
   by (simp add: Int_Un_distrib2 Set_project_code)
@@ -1066,14 +1074,16 @@ lemma apply_cblinfun_Span:
   apply (auto simp: applyOpSpace_Span image_image)
   by (metis mat_of_cblinfun_description onb_enum_of_vec_inverse)
 
-lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S) = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S)"
-  for A::"('a::onb_enum,'b::onb_enum) cblinfun"
+lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S)
+      = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S)"
+  for A::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
   unfolding SPAN_def Let_def
   using apply_cblinfun_Span[where A = A and S = 
       "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
   sorry
 
-lemma kernel_SPAN[code]: "kernel A = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
+lemma kernel_SPAN[code]: "kernel A 
+    = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
   for A::"('a::onb_enum,'b::onb_enum) cblinfun"
   sorry
 
