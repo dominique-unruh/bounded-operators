@@ -85,10 +85,14 @@ subsection \<open>Bounded Linear and Bilinear Operators\<close>
 definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector) \<Rightarrow> bool\<close> where
   "clinear f =  Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
 
+term "Real_Vector_Spaces.linear"
+
 (* TODO: Dominique: Figure out how global interpretation works and why constants get ?? in front of them *)
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+(* TODO rename all these with c-prefixes.
+E.g., cdependent_raw_def: cdependent = complex_vector.dependent *)
   defines dependent_raw_def: dependent = complex_vector.dependent
     and representation_raw_def: representation = complex_vector.representation
     and subspace_raw_def: subspace = complex_vector.subspace
@@ -108,12 +112,15 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.extend_basis
   complex_vector.dim
 
+(* TODO: Change into "cindependent x \<equiv> \<not> cdependent x" (when dependent is renamed into cdependent) *)
 abbreviation complex_independent where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+(* TODO: If we have renamed span into cspan above, we can remove this appreviation and use cspan instead *)
 abbreviation "complex_span x \<equiv> complex_vector.span x"
 
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
+(* TODO: rename to cconstruct *)
   defines construct_raw_def: construct = complex_vector.construct
     apply unfold_locales
   unfolding clinear_def
