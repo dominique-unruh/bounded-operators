@@ -185,7 +185,7 @@ proof intro_classes
   proof (transfer, rule)
     fix f :: "'a \<Rightarrow> real"
     assume "(\<Sum>xa\<in>UNIV. f xa * f xa) = 0"
-    then have "f x * f x = 0" for x
+    hence "f x * f x = 0" for x
       apply (rule_tac sum_nonneg_eq_0_iff[THEN iffD1, rule_format, where A=UNIV and x=x])
       by auto
     thus "f = (\<lambda>_. 0)"
@@ -2409,13 +2409,13 @@ lemma abs_summable_partition:
 proof (rule abs_summable_finiteI)
   fix F assume finite_F: "finite F" and FT: "F \<subseteq> T"
   define index where "index s = (SOME i. i\<in>I \<and> s\<in>S i)" for s
-  then have index_I: "index s \<in> I" and S_index: "s \<in> S (index s)" if "s \<in> (\<Union>i\<in>I. S i)" for s
+  hence index_I: "index s \<in> I" and S_index: "s \<in> S (index s)" if "s \<in> (\<Union>i\<in>I. S i)" for s
      apply auto
     by (metis (no_types, lifting) UN_E someI_ex that)+
   define S' where "S' i = {s\<in>S i. i = index s}" for i
   have S'_S: "S' i \<subseteq> S i" for i
     unfolding S'_def by simp
-  then have f_sum_S': "f abs_summable_on S' i" for i
+  hence f_sum_S': "f abs_summable_on S' i" for i
     by (meson abs_summable_on_subset assms(1))
   with assms(1) S'_S have "(\<Sum>\<^sub>ax\<in>S' i. norm (f x)) \<le> (\<Sum>\<^sub>ax\<in>S i. norm (f x))" for i
     by (simp add: infsetsum_mono_neutral_left)
@@ -2441,7 +2441,7 @@ proof (rule abs_summable_finiteI)
   have finite_J[simp]: "finite J"
   proof -
     define a where "a i = (SOME x. x\<in>F\<inter>S' i)" for i
-    then have a: "a i \<in> F\<inter>S' i" if "i \<in> J" for i
+    hence a: "a i \<in> F\<inter>S' i" if "i \<in> J" for i
       unfolding J_def
       by (metis (mono_tags) Collect_conj_eq Int_Collect J_def some_in_eq that)
     have "inj_on a J"
@@ -2460,7 +2460,7 @@ proof (rule abs_summable_finiteI)
   have "F = (\<Union>i\<in>J. F\<inter>S' i)"
     unfolding J_def apply auto
     by (metis FT T_S' UN_E disjoint_iff_not_equal subsetD)
-  then have "(\<Sum>x\<in>F. norm (f x)) = (\<Sum>x\<in>(\<Union>i\<in>J. F\<inter>S' i). norm (f x))"
+  hence "(\<Sum>x\<in>F. norm (f x)) = (\<Sum>x\<in>(\<Union>i\<in>J. F\<inter>S' i). norm (f x))"
     by simp
   also have "\<dots> = (\<Sum>i\<in>J. \<Sum>x\<in>F \<inter> S' i. norm (f x))"
     apply (rule sum.UNION_disjoint)
@@ -2497,9 +2497,9 @@ proof -
     apply (rule infsetsum_reindex_bij_betw)
     unfolding S_def using bij_betw_def
     using S_def bij by auto 
-  then have "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
+  hence "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
     using assms(2) by simp
-  then have "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
+  hence "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
     by auto
   moreover have "X \<times> Y \<subseteq> (\<Union>i\<in>X. S i)"
     unfolding S_def by auto
@@ -2534,7 +2534,7 @@ proof -
       unfolding PiE_def by simp
     then obtain x where "x\<in>A" and "g x \<notin> B' x"
       unfolding Pi_def by auto
-    then have "f x (g x) = 0"
+    hence "f x (g x) = 0"
       unfolding B'_def using that by auto
     with finite show ?thesis
       using finite apply (rule_tac prod_zero)
@@ -2613,12 +2613,12 @@ proof (cases "c \<noteq> 0 \<longrightarrow> f abs_summable_on A")
     by (rule infsetsum_cmult_left)
 next
   case False
-  then have "c\<noteq>0" and "\<not> f abs_summable_on A"
+  hence "c\<noteq>0" and "\<not> f abs_summable_on A"
     by auto
   have "\<not> (\<lambda>x. f x * c) abs_summable_on A"
   proof (rule notI)
     assume "(\<lambda>x. f x * c) abs_summable_on A"
-    then have "(\<lambda>x. (f x * c) * inverse c) abs_summable_on A"
+    hence "(\<lambda>x. (f x * c) * inverse c) abs_summable_on A"
       by (rule abs_summable_on_cmult_left)
     with \<open>\<not> f abs_summable_on A\<close> show False
       apply auto
@@ -2696,7 +2696,7 @@ proof auto
 
   from sum_A'B' have "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B' x)) abs_summable_on A'"
     using abs_summable_on_Sigma_iff[OF cntA cntB, where f=f] by auto
-  then have "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B' x)) abs_summable_on A"
+  hence "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B' x)) abs_summable_on A"
     apply (rule abs_summable_on_zero_diff)
     apply (subst infsetsum_cong[where g=\<open>\<lambda>x. 0\<close> and B="B' _"])
     using f0 B'B by auto
@@ -2722,7 +2722,7 @@ next
   proof -
     have "(\<Sum>\<^sub>ay\<in>B x. norm (f (x, y))) = 0"
       using that unfolding A'_def by auto
-    then have "norm (f (x, y)) = 0"
+    hence "norm (f (x, y)) = 0"
       apply (rule infsetsum_0D)
       using sum_B that by auto
     thus ?thesis
@@ -2854,7 +2854,7 @@ proof -
     by (metis inf.cobounded2 ortho_antimono ortho_involution)
   ultimately have \<open>x \<squnion> y \<le> - (-x \<sqinter> -y)\<close>
     by auto
-  then have 2: \<open>-x \<sqinter> -y \<le> - (x \<squnion> y)\<close>
+  hence 2: \<open>-x \<sqinter> -y \<le> - (x \<squnion> y)\<close>
     using ortho_antimono by fastforce
   from 1 2 show ?thesis
     by (simp add: eq_iff)

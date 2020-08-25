@@ -31,7 +31,7 @@ proof (unfold equal, rule iffI[rotated], simp, rule ccontr)
   define aa bb cc dd where "aa = real_of_rat a" and "bb = real_of_rat b" and "cc = real_of_rat c" and "dd = real_of_rat d"
   note defs = this
   assume "REAL_SQRT2 a b = REAL_SQRT2 c d"
-  then have aa_cc: "aa-cc = (dd-bb) * sqrt 2"
+  hence aa_cc: "aa-cc = (dd-bb) * sqrt 2"
     unfolding REAL_SQRT2_def defs[symmetric] by algebra
   assume "\<not> (a=c \<and> b=d)"
   with aa_cc have "(aa-cc)/(dd-bb) = sqrt 2"
@@ -109,7 +109,7 @@ next
     case False 
     { assume "aa * aa - 2 * bb * bb = 0"
       with False have "(aa/bb)^2 = 2" unfolding power2_eq_square by simp
-      then have "abs (aa/bb) = sqrt 2"
+      hence "abs (aa/bb) = sqrt 2"
         by (metis real_sqrt_abs)
       moreover have "abs (aa/bb) \<in> \<rat>" unfolding aa_def bb_def 
         by auto
@@ -128,7 +128,7 @@ next
   also have "inverse (aa*aa-2*bb*bb) * (aa*aa-2*bb*bb) = 1"
     using neq0 by (rule field_class.field_inverse)
   finally have "rhs * (REAL_SQRT2 a b) = 1" by assumption
-  then have "rhs = inverse (REAL_SQRT2 a b)"
+  hence "rhs = inverse (REAL_SQRT2 a b)"
     using inverse_eq_iff_eq inverse_unique by fastforce
   thus ?thesis 
     unfolding rhs_def by simp

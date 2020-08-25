@@ -2737,9 +2737,9 @@ proof induction
     by auto
 next
   case (insert x F)
-  then have "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
+  hence "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
     by auto
-  then have "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
+  hence "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
     using tendsto_add by blast
   thus ?case 
     using sum.insert insert by auto

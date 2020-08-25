@@ -15,11 +15,11 @@ lemma two_sqrt_irrat[simp]: "2 \<in> sqrt_irrat"
 proof - (* Sledgehammer proof *)
   fix p :: rat
   assume "p * p = 2"
-  then have f1: "(Ratreal p)\<^sup>2 = real 2"
+  hence f1: "(Ratreal p)\<^sup>2 = real 2"
     by (metis Ratreal_def of_nat_numeral of_rat_numeral_eq power2_eq_square real_times_code)
   have "\<forall>r. if 0 \<le> r then sqrt (r\<^sup>2) = r else r + sqrt (r\<^sup>2) = 0"
     by simp
-  then have f2: "Ratreal p + sqrt ((Ratreal p)\<^sup>2) = 0"
+  hence f2: "Ratreal p + sqrt ((Ratreal p)\<^sup>2) = 0"
     using f1 by (metis Ratreal_def Rats_def \<open>sqrt (real 2) \<notin> \<rat>\<close> range_eqI)
   have f3: "sqrt (real 2) + - 1 * sqrt ((Ratreal p)\<^sup>2) \<le> 0"
     using f1 by fastforce
@@ -29,7 +29,7 @@ proof - (* Sledgehammer proof *)
     by linarith
   have "\<forall>x0. - (x0::real) = - 1 * x0"
     by auto
-  then have "sqrt (real 2) + real_of_rat p \<noteq> 0"
+  hence "sqrt (real 2) + real_of_rat p \<noteq> 0"
     using f5 by (metis (no_types) Rats_def Rats_minus_iff \<open>sqrt (real 2) \<notin> \<rat>\<close> range_eqI)
   thus False
     using f4 f3 f2 by simp

@@ -240,7 +240,7 @@ proof-
         using y1 y2 Complex_Vector_Spaces.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
-        by (smt complex_independent_def) 
+        by (smt ) 
 
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! j) $ j = 1"
         unfolding vec_of_onb_enum_def 
@@ -264,7 +264,7 @@ proof-
           (enum_idx i))\<close> canonical_basis_length_eq 
             complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
             j_bound nth_eq_iff_index_eq nth_mem 
-          by (metis complex_independent_def) 
+          by (metis ) 
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
         unfolding vec_of_onb_enum_def by (smt j_bound nth_map vec_of_list_index)        
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) 
@@ -342,7 +342,7 @@ proof-
       case True
       have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
         using is_complex_independent_set
-        by (simp add: complex_independent_def)       
+        by (simp add: )       
       moreover have "canonical_basis ! i \<in> set (canonical_basis::'a list)"
         by (simp add: True y2)        
       ultimately have "(Complex_Vector_Spaces.representation
@@ -357,7 +357,7 @@ proof-
       case False
       have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
         using is_complex_independent_set
-        by (simp add: complex_independent_def)     
+        by (simp add: )     
       moreover have "canonical_basis ! j \<in> set (canonical_basis::'a list)"
         by (simp add: y2)
       ultimately have "(Complex_Vector_Spaces.representation
@@ -434,7 +434,7 @@ lemma complex_span_singleton:
 proof-
   have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
     using a1 using complex_vector.span_explicit[where b = "{y}"]
-    by (smt complex_span_def mem_Collect_eq)
+    by (smt  mem_Collect_eq)
   then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
     by blast
   show ?thesis
@@ -537,7 +537,7 @@ proof-
       proof-
         have "x \<in> complex_span (range ket)"
           using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
-          by (metis complex_span_def iso_tuple_UNIV_I) 
+          by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
           by (simp add: \<open>UNIV = {i}\<close>)
@@ -958,7 +958,7 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
   using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
    closure_UNIV is_generator_set
-  by (metis complex_span_def)
+  by (metis )
 
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 

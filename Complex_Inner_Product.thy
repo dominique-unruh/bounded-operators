@@ -956,8 +956,19 @@ proof-
     moreover have \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close>
     proof-
       have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
-        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
-        by smt
+        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def
+      proof -
+        have f1: "\<forall>x0. (0 \<le> - 1 * \<parallel>r\<parallel> + \<parallel>x0::'a\<parallel>) = (\<parallel>r\<parallel> + - 1 * \<parallel>x0\<parallel> \<le> 0)"
+          by auto
+        have f2: "\<forall>x0. \<parallel>x0::'a\<parallel> + - 1 * \<parallel>r\<parallel> = - 1 * \<parallel>r\<parallel> + \<parallel>x0\<parallel>"
+          by auto
+        have "\<forall>x0 x1 x3. (x3 (x0::'a) < x3 x1) = (\<not> (0::real) \<le> x3 x0 + - 1 * x3 x1)"
+          by force
+        hence "\<parallel>r\<parallel> + - 1 * \<parallel>s\<parallel> \<le> 0"
+          using f2 f1 by (metis (no_types) \<open>is_arg_min norm (\<lambda>t. t \<in> M) r\<close> \<open>is_arg_min norm (\<lambda>t. t \<in> M) s\<close> is_arg_min_def)
+        thus ?thesis
+          by linarith
+      qed         
       moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
         using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
         by smt
@@ -3481,7 +3492,7 @@ lemma canonical_basis_non_zero:
   using \<open>x \<in> set canonical_basis\<close> 
     complex_vector.dependent_zero[where A = "set (canonical_basis::('a::onb_enum list))"]
     is_complex_independent_set
-    by (smt complex_independent_def)
+  by smt
 
 
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
@@ -4110,7 +4121,7 @@ proof auto
   have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
     using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
     by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
-  then have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
+  hence "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
     apply (subst sum.cartesian_product[symmetric])
     by (simp add: UNIV_bool \<psi>_explicit)
   also have "\<dots> \<in> ?rspan R"
@@ -4209,15 +4220,15 @@ proof -
     apply (transfer fixing: abs)
     by (simp add: real_vector.scale_sum_right)
 
-  then have "continuous_on X comb'" for X
+  hence "continuous_on X comb'" for X
     by (simp add: linear_continuous_on)
 
-  then have "compact (comb' ` sphere 0 d)" for d
+  hence "compact (comb' ` sphere 0 d)" for d
     using sphere
     apply (rule compact_continuous_image)
     by -
 
-  then have compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
+  hence compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
     apply (rule compact_continuous_image[rotated])
     apply (rule continuous_on_norm)
     by auto
@@ -4227,12 +4238,12 @@ proof -
     assume "0 \<in> norm ` comb' ` sphere 0 1"
     then obtain x where nc0: "norm (comb' x) = 0" and x: "x \<in> sphere 0 1"
       by auto
-    then have "comb' x = 0"
+    hence "comb' x = 0"
       by simp
-    then have "repr' (comb' x) = 0"
+    hence "repr' (comb' x) = 0"
       unfolding repr'_def o_def repr_def apply simp
       by (smt repr'_comb' blin_comb' dist_0_norm linear_simps(3) mem_sphere norm_zero x)
-    then have "x = 0"
+    hence "x = 0"
       by auto
     with x show False
       by simp
@@ -4247,12 +4258,12 @@ proof -
     and "d > 0" for x
     by metis
   define D where "D = 1/d"
-  then have "D > 0"
+  hence "D > 0"
     using \<open>d>0\<close> unfolding D_def by auto
   from d have "x \<ge> d"  if "x\<in>norm ` comb' ` sphere 0 1" for x
     apply auto
     using that by fastforce
-  then have *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
+  hence *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
     using that by auto
   have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
     apply (cases "x=0")
@@ -4266,7 +4277,7 @@ proof -
     unfolding D_def
     using norm_comb'[of "repr' \<psi>"] \<open>d>0\<close>
     by (simp_all add: linordered_field_class.mult_imp_le_div_pos mult.commute)
-  then have "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
+  hence "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
   proof -
     have "(Rep_euclidean_space (repr' \<psi>) (abs b)) = repr' \<psi> \<bullet> euclidean_space_basis_vector (abs b)"
       apply (transfer fixing: abs b)
@@ -4278,7 +4289,7 @@ proof -
       using * by auto
     finally show ?thesis by simp
   qed
-  then have "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
+  hence "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
     unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
      apply auto
     unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
@@ -4358,7 +4369,7 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
     note this[OF basisT_finite t]
   }
   note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
-  then have "complete (real_vector.span B)"
+  hence "complete (real_vector.span B)"
     using \<open>B\<noteq>{}\<close> by auto
   thus "complete (real_vector.span A)"
     unfolding BT by simp
@@ -4396,8 +4407,7 @@ proof-
     by (simp add: one_dim_canonical_basis)
   hence \<open>a \<in> complex_vector.span ({1::'a})\<close>        
     using  iso_tuple_UNIV_I empty_set is_generator_set list.simps(15)
-    by (metis complex_span_def)
-
+    by metis
   hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
   proof -
     have "(1::'a) \<notin> {}"
@@ -4842,7 +4852,7 @@ proof(rule ccontr)
     and a2: "\<not> complex_independent S"
     and a3: "0 \<notin> S"
   have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
-    using complex_vector.dependent_explicit a2 unfolding complex_independent_def
+    using complex_vector.dependent_explicit a2 
     by auto
   then obtain t u where \<open>finite t\<close> and \<open>t \<subseteq> S\<close> and \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close> 
     and \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
@@ -4955,7 +4965,7 @@ proof-
             by moura
           have "bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>) \<notin> t' \<or> \<langle>bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>), \<alpha>\<rangle> = 0"
             by (metis Set.set_insert Suc.prems(2) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> insertI1 insert_commute)
-          then have "(\<Sum>b\<in>t'. \<langle>b, \<alpha>\<rangle>) = 0"
+          hence "(\<Sum>b\<in>t'. \<langle>b, \<alpha>\<rangle>) = 0"
             using f1 by (meson sum_not_0)
           thus ?thesis
             by (simp add: cinner_sum_left)

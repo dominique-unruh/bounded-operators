@@ -286,7 +286,7 @@ lemma vector_space_zero_canonical_basis:
   shows "(v::'a) = 0"
 proof-
   have "complex_vector.span (set (canonical_basis::('a list))) = UNIV"
-    using is_generator_set complex_span_def by auto
+    using is_generator_set  by auto
   moreover have "complex_vector.span (set (canonical_basis::('a list))) = {0}"
   proof-
     have "set (canonical_basis::('a list)) = {}"
@@ -438,8 +438,7 @@ lemma canonical_basis_inner:
   "w = (\<Sum>b\<in>set (canonical_basis::'a::onb_enum list). \<langle>b, w\<rangle> *\<^sub>C b)"
   apply (rule Ortho_expansion_finite)
   using is_generator_set apply auto[1]
-  using complex_span_def apply auto[1]
-  apply simp
+  apply auto[1]
   apply (simp add: is_orthonormal)
   by (simp add: is_normal)
 
@@ -511,7 +510,7 @@ proof(rule classical)
     by simp    
   hence "complex_vector.span (set basis) = (UNIV:: 'a set)"
     using basis_def is_generator_set
-    using basis_def complex_span_def is_generator_set by blast
+    using basis_def  is_generator_set by blast
   hence g2: "card (set S) > dim (UNIV:: 'a set)"
     using g1 
     by (smt \<open>\<not> length S \<le> length basis\<close> \<open>finite (set basis)\<close> basis_def complex_vector.dim_le_card' 
@@ -537,16 +536,15 @@ lemma onb_enum_of_vec_inverse[simp]:
   apply (subst sum.distinct_set_conv_list[symmetric])
    apply simp
   apply (rule complex_vector.sum_representation_eq)
-  using is_complex_independent_set apply auto[1]
-  using complex_independent_def apply auto[1]
-  using complex_span_def is_generator_set apply auto[1]
+  using is_complex_independent_set apply auto[1]    
+  using  is_generator_set apply auto[1]
   apply simp
   by simp
 (*
   subgoal 
   proof- 
     have "w \<in> closure (Complex_Vector_Spaces.span (set canonical_basis))"
-      by (metis UNIV_I closure_UNIV complex_span_def is_generator_set)
+      by (metis UNIV_I closure_UNIV  is_generator_set)
       
     moreover have "closure (Complex_Vector_Spaces.span (set (canonical_basis::'a list)))
                  = Complex_Vector_Spaces.span (set (canonical_basis::'a list))"
@@ -602,14 +600,14 @@ proof-
         h1 by blast
     moreover have "complex_vector.independent (set basis)"
       using basis_def calculation is_complex_independent_set
-      using complex_independent_def by blast 
+      by blast 
     ultimately show ?thesis 
       by (metis Complex_Vector_Spaces.dependent_raw_def)
   qed
   moreover have "b \<noteq> 0"  
     using Complex_Vector_Spaces.complex_vector.dependent_zero[where A = "set basis"]
       h1 is_complex_independent_set unfolding basis_def
-    using complex_independent_def by blast
+    by blast
   ultimately have "-f b = 0"
     by simp
   thus ?thesis by simp
@@ -673,7 +671,7 @@ proof-
         by (simp add: basis_def is_complex_independent_set)
       have h3: "onb_enum_of_vec_list basis w \<in> Complex_Vector_Spaces.span (set basis)"
         using basis_def is_generator_set
-         complex_span_def by blast 
+          by blast 
       define f where 
         "f x = complex_vector.representation (set basis) (onb_enum_of_vec_list basis w) x"
       for x
@@ -687,7 +685,7 @@ proof-
          (onb_enum_of_vec_list basis w)\<close> 
             complex_vector.sum_nonzero_representation_eq h2 h3 h5 subset_iff 
             sum.mono_neutral_cong_left
-        by (smt complex_independent_def) (* > 1 s*)
+        by (smt ) (* > 1 s*)
       have h7: "distinct basis"
         by (simp add: basis_def)
       have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
@@ -756,14 +754,14 @@ proof-
   have "Complex_Vector_Spaces.span
          (set (canonical_basis::'a list)) = UNIV"
     using span_finite_dim is_generator_set
-    by (simp add: complex_span_def) 
+    by (simp add: ) 
   hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (b1+b2) i
       = Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b1 i + 
         Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b2 i" for i
   proof -
     have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
       using is_complex_independent_set
-      by (simp add: complex_independent_def) 
+      by (simp add: ) 
     thus ?thesis
       by (metis UNIV_I \<open>Complex_Vector_Spaces.span (set canonical_basis) = UNIV\<close> complex_vector.representation_add) (* failed *)
   qed 
@@ -825,13 +823,13 @@ proof-
   have "Complex_Vector_Spaces.span
          (set (canonical_basis::'a list)) = UNIV"    
     using span_finite_dim is_generator_set
-    by (simp add: complex_span_def)
+    by (simp add: )
   hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
       = c *\<^sub>C (Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b i)" for i
     using Complex_Vector_Spaces.complex_vector.representation_scale
       Complex_Vector_Spaces.dependent_raw_def UNIV_I complex_scaleC_def
      is_complex_independent_set 
-    by (smt complex_independent_def) 
+    by (smt ) 
   moreover have "vec_of_list (map (\<lambda>x. c *\<^sub>C (f x)) S) = c \<cdot>\<^sub>v vec_of_list (map f S)"
     for S::"'a list" and f g::"'a \<Rightarrow> complex" 
   proof(induction S)
@@ -1202,7 +1200,6 @@ proof-
     apply (simp add: B_def is_orthonormal)
     using B_def is_generator_set apply auto[1]
        apply (simp add: B_def)
-    using complex_span_def apply blast
     apply (simp add: B_def)
     apply (simp add: B_def is_normal)
     using a2 by blast
@@ -1606,7 +1603,7 @@ proof-
       by (simp add: basisA_def span_finite_dim)      
     thus ?thesis
       using BasisA_def basisA_def is_generator_set
-        by (metis BasisA_def basisA_def complex_span_def is_generator_set)
+        by (metis BasisA_def basisA_def  is_generator_set)
   qed
   ultimately have "P = Q" 
     by (metis UNIV_I ext)    
