@@ -260,11 +260,11 @@ proof-
         using y1 y2 Complex_Vector_Spaces.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
-        False \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
+          False \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
           (enum_idx i))\<close> canonical_basis_length_eq 
-            complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
-            j_bound nth_eq_iff_index_eq nth_mem 
-          by (metis ) 
+          complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
+          j_bound nth_eq_iff_index_eq nth_mem 
+        by (metis ) 
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
         unfolding vec_of_onb_enum_def by (smt j_bound nth_map vec_of_list_index)        
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) 
@@ -892,8 +892,16 @@ lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S)))"
   for S :: "'a::onb_enum list"
-  using[[show_consts,show_types]]  
-  sorry
+    (*  using[[show_consts,show_types]]  *)
+proof(induction S)
+  case Nil
+  then show ?case sorry
+next
+  case (Cons a S)
+  then show ?case sorry
+qed
+
+
 
 lemma mk_projector_SPAN[code]: 
   "mk_projector (SPAN S :: 'a::onb_enum clinear_space) = 
@@ -957,7 +965,7 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
 (* TODO: Move to Complex_Inner_Product *)
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
   using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
-   closure_UNIV is_generator_set
+    closure_UNIV is_generator_set
   by (metis )
 
 
@@ -1073,10 +1081,21 @@ definition "is_subspace_of n vs ws =
 
 (* TODO: Move to ..._Matrices *)
 lemma Span_leq: "(Span (set A) \<le> Span (set B)) =
-    is_subspace_of (canonical_basis_length TYPE('a::onb_enum)) (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
-  sorry
+    is_subspace_of (canonical_basis_length TYPE('a::onb_enum)) 
+      (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
+proof
+  show "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
+        (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
+    if "Span (set A) \<le> Span (set B)"
+    sorry
+  show "Span (set A) \<le> Span (set B)"
+    if "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
+        (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
+    sorry
+qed
 
-lemma SPAN_leq[code]: "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space) \<longleftrightarrow> is_subspace_of (canonical_basis_length TYPE('a)) A B"
+lemma SPAN_leq[code]: "SPAN A \<le> 
+  (SPAN B :: 'a::onb_enum clinear_space) \<longleftrightarrow> is_subspace_of (canonical_basis_length TYPE('a)) A B"
   sorry
 
 lemma apply_cblinfun_Span: 

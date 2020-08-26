@@ -2803,15 +2803,14 @@ instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not really needed, but without it this instantiation
 clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
 instance
-  sorry
-(* proof
+ proof
   show "canonical_basis = [1::'a ell2]"
     unfolding canonical_basis_ell2_def
     apply transfer
     by (simp add: enum_CARD_1[of undefined])
   show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
     apply (transfer fixing: a b) by simp
-qed *)
+qed 
 
 end
 
