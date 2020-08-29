@@ -887,12 +887,298 @@ fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> com
                                    smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [v]) 
                                         + mk_projector_orthog d vs)"
 
+
+(* NEW *)
+lemma Span_insert:
+  assumes "finite (S::'a'::complex_inner set)"
+  shows "space_as_set (Span (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (Span S)}"
+proof -
+  have "closure (complex_span (insert a S)) = complex_span (insert a S)"
+    by (metis assms finite_insert span_finite_dim)
+  thus ?thesis
+    by (simp add: Span.rep_eq assms complex_vector.span_insert span_finite_dim)
+qed
+
+(* NEW *)
+lemma closed_subspace_complex_span_finite:
+  assumes "finite (S::'a::chilbert_space set)"
+  shows "closed_subspace (complex_span S)"
+  unfolding closed_subspace_def apply auto
+  by (simp add: assms closed_finite_dim)
+
+(* NEW *)
+lemma projection_singleton:
+  assumes "(a::'a::chilbert_space) \<noteq> 0"
+  shows "projection (complex_span {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+proof-
+  define p where "p u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" for u
+  define M where "M = complex_span {a}"
+  have "closed_subspace M"
+    unfolding M_def 
+    using closed_subspace_complex_span_finite
+    by (simp add: closed_subspace_complex_span_finite)
+  moreover have "u - p u \<in> orthogonal_complement M"
+    unfolding p_def M_def orthogonal_complement_def
+  proof auto
+    fix y
+    assume "y \<in> complex_span {a}" 
+    hence "\<exists>c. y = c *\<^sub>C a"
+      by (simp add: complex_span_singleton)
+    then obtain c where c_def: "y = c *\<^sub>C a"
+      by blast
+    have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 
+          \<langle>u, c *\<^sub>C a\<rangle> - \<langle>(\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle>"
+      using cinner_diff_left by blast    
+    also have "\<dots> = 0"
+      by simp
+    finally have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 0".
+    thus "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, y\<rangle> = 0"
+      using c_def by simp
+  qed
+  moreover have "p u \<in> M"
+    unfolding p_def M_def
+    by (simp add: complex_vector.span_base complex_vector.span_scale)
+  ultimately have "projection M u = p u"
+    using projection_uniq[where x = "p u" and h = u and M = M] by blast
+  thus ?thesis unfolding M_def p_def.
+qed
+
+(* NEW *)
+lemma ortho_complex_span:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+    and a3: "x \<in> complex_span S"
+  shows "\<langle>a, x\<rangle> = 0"
+proof-
+  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    using complex_vector.span_explicit
+    by (smt a3 mem_Collect_eq)
+  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "(\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    by blast
+  have x1: "\<langle>a, i\<rangle> = 0"
+    if "i\<in>t" for i
+    using b2 a1 that by blast
+  have  "\<langle>a, x\<rangle> = \<langle>a, (\<Sum>i\<in>t. r i *\<^sub>C i)\<rangle>"
+    by (simp add: b3) 
+  also have  "\<dots> = (\<Sum>i\<in>t. r i *\<^sub>C \<langle>a, i\<rangle>)"
+    by (simp add: cinner_sum_right)
+  also have  "\<dots> = 0"
+    using x1 by simp
+  finally show ?thesis.
+qed
+
+(* NEW *)
+lemma projection_insert:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+  shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span S} u
+        = projection (complex_span {a}) u
+        + projection (complex_span S) u"
+proof-
+  define p where "p u = projection (complex_span {a}) u
+                      + projection (complex_span S) u" for u
+  define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span S}"
+  have "projection (complex_span {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+    by (metis complex_vector.scale_zero_right complex_vector.span_empty complex_vector.span_insert_0 
+        projection_singleton projection_zero_subspace)
+  have "closed_subspace M"
+    unfolding M_def
+    by (metis (no_types) a2 closed_subspace_complex_span_finite complex_vector.span_insert 
+        finite_insert) 
+  moreover have "p u \<in> M"
+    unfolding p_def M_def 
+  proof auto 
+    define k where "k = \<langle>a, u\<rangle>/\<langle>a, a\<rangle>"
+    have "projection (complex_span {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+      by (simp add: \<open>projection (complex_span {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)      
+    hence "projection (complex_span {a}) u +
+          projection (complex_span S) u - k *\<^sub>C a
+          \<in> complex_span S"
+      unfolding k_def
+      by (simp add: a2 closed_subspace_complex_span_finite projection_intro2)      
+    thus "\<exists>k. projection (complex_span {a}) u +
+              projection (complex_span S) u - k *\<^sub>C a
+              \<in> complex_span S"
+      by blast
+  qed
+  moreover have "u - p u \<in> orthogonal_complement M"
+    unfolding orthogonal_complement_def
+  proof auto
+    fix y
+    assume b1: "y \<in> M"
+    hence "\<exists>k. y - k *\<^sub>C a \<in> complex_span S"
+      unfolding M_def by simp
+    then obtain k where k_def: "y - k *\<^sub>C a \<in> complex_span S"
+      by blast
+    have "u - projection (complex_span S) u \<in> orthogonal_complement (complex_span S)"
+      by (simp add: a2 closed_subspace_complex_span_finite projection_intro1)
+    moreover have "projection (complex_span {a}) u \<in> orthogonal_complement (complex_span S)"
+      unfolding orthogonal_complement_def
+    proof auto
+      fix y
+      assume "y \<in> complex_span S"
+      have "\<langle>a, y\<rangle> = 0"
+        using ortho_complex_span
+          \<open>y \<in> complex_span S\<close> a1 a2 by auto
+      thus "\<langle>projection (complex_span {a}) u, y\<rangle> = 0"
+        by (simp add: \<open>projection (complex_span {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)         
+    qed
+    ultimately have "(u - projection (complex_span S) u)
+                    - projection (complex_span {a}) u \<in> orthogonal_complement (complex_span S)"
+      using Complex_Vector_Spaces.complex_vector.span_diff
+      by (smt cinner_diff_left diff_zero orthogonal_complement_D1 orthogonal_complement_I2)
+    hence "u - projection (complex_span {a}) u 
+            - projection (complex_span S) u \<in> orthogonal_complement (complex_span S)"
+      by (simp add: cancel_ab_semigroup_add_class.diff_right_commute)
+    have "\<langle>u - projection (complex_span {a}) u 
+         - projection (complex_span S) u, y - k *\<^sub>C a\<rangle> = 0"
+      using \<open>u - projection (complex_span {a}) u - projection (complex_span S) u \<in> 
+        orthogonal_complement (complex_span S)\<close> k_def orthogonal_complement_D1 by auto      
+    moreover have "\<langle>u - projection (complex_span {a}) u 
+         - projection (complex_span S) u, k *\<^sub>C a\<rangle> = 0"
+    proof-
+      have "u - projection (complex_span {a}) u \<in> orthogonal_complement (complex_span {a})"
+        by (simp add: closed_subspace_complex_span_finite projection_intro1)
+      moreover have "projection (complex_span S) u \<in> orthogonal_complement (complex_span {a})"
+        unfolding orthogonal_complement_def
+      proof auto
+        fix y
+        assume "y \<in> complex_span {a}"
+        hence "\<exists>k. y = k *\<^sub>C a"
+          by (simp add: complex_span_singleton)
+        then obtain k where ky:"y = k *\<^sub>C a"
+          by blast
+        have "projection (complex_span S) u \<in> complex_span S"
+          by (simp add: a2 closed_subspace_complex_span_finite projection_intro2)          
+        hence "\<langle>projection (complex_span S) u, a\<rangle> = 0"
+          by (meson a1 a2 ortho_complex_span orthogonal_complement_D2 orthogonal_complement_I2)          
+        thus "\<langle>projection (complex_span S) u, y\<rangle> = 0"
+          using ky
+          by simp
+      qed
+      moreover have "complex_vector.subspace ( orthogonal_complement (complex_span {a}))"
+        by (simp add: closed_subspace.subspace closed_subspace_complex_span_finite)
+
+      ultimately have "(u - projection (complex_span {a}) u) - projection (complex_span S) u
+                   \<in> orthogonal_complement (complex_span {a})"
+        by (smt complex_vector.subspace_diff)
+      thus ?thesis
+        using complex_vector.span_base orthogonal_complement_D1 by fastforce 
+    qed
+    ultimately have "\<langle>u - projection (complex_span {a}) u 
+         - projection (complex_span S) u, y\<rangle> = 0"
+      by (metis cinner_right_distrib class_semiring.add.l_one 
+          class_semiring.add.one_closed diff_add_cancel)      
+    moreover have "\<langle>u - p u, y\<rangle> =
+      \<langle>u - projection (complex_span {a}) u 
+         - projection (complex_span S) u, y\<rangle>"
+      unfolding p_def
+      by (simp add: diff_diff_add) 
+    ultimately show "\<langle>u - p u, y\<rangle> = 0" by simp
+  qed
+  ultimately have "projection M u = p u"
+    using projection_uniq[where x = "p u" and h = u and M = M] by blast
+  thus ?thesis 
+    unfolding p_def M_def by auto
+qed
+
+(* NEW *)
+lemma mat_of_cblinfun_Proj_Span_EASY:
+  fixes S :: "'a::{onb_enum, chilbert_space} list"
+  assumes "is_ortho_set (set S)" and "distinct S"
+  shows
+    "mat_of_cblinfun (Proj (Span (set S))) =
+    (let d = canonical_basis_length TYPE('a) in 
+      mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S)))"
+  using assms proof(induction S)
+  case Nil
+  have "space_as_set (Abs_clinear_space {0::'a}) = {0::'a}"
+    by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq)    
+  hence "projection (space_as_set (Abs_clinear_space {0::'a})) = 
+        projection {0::'a}"
+    by simp
+  also have "\<dots> = (\<lambda>_. (0::'a))"
+    by (simp add: projection_zero_subspace)    
+  finally have x2: "projection (space_as_set (Abs_clinear_space {0::'a})) = (\<lambda>_. (0::'a))".
+  have " \<langle>(canonical_basis::'a list)!i, cBlinfun (\<lambda>_. 0) *\<^sub>V (canonical_basis::'a list)!j\<rangle> = 0"
+    for i j
+    by (metis cinner_zero_right zero_cblinfun.abs_eq zero_cblinfun.rep_eq)    
+  hence x1: "mat_of_cblinfun (cBlinfun (\<lambda>_::'a. (0::'a)))
+     = (let d = canonical_basis_length TYPE('a) in 0\<^sub>m d d)"
+    unfolding mat_of_cblinfun_def zero_mat_def
+    by (metis mat_of_cblinfun_def mat_of_cblinfun_zero' zero_cblinfun.abs_eq zero_mat_def) 
+  show ?case apply auto unfolding gram_schmidt_def apply auto
+    unfolding Span_def Proj_def apply auto
+    using x1 x2 by simp
+next
+  case (Cons a S)
+  hence IH': "is_ortho_set (set S)"
+    using is_onb_delete by auto
+  have IH0: "distinct S"
+    using Cons.prems(2) by auto
+  define d where "d = canonical_basis_length TYPE('a)"
+  have "dim_vec (vec_of_onb_enum a) = d"
+    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
+  moreover have "dim_vec (0\<^sub>v d) = d"
+    by simp
+  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
+    using carrier_vec_dim_vec left_zero_vec by blast   
+  have "complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    using complex_vector.span_insert[where a = a and S = "(set S)"].
+  moreover have "finite (insert a (set S))"
+    by simp    
+  ultimately have "closure (complex_span (insert a (set S))) = 
+        complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    by (metis complex_vector.span_span span_finite_dim)
+  hence s2: "space_as_set (Abs_clinear_space (closure (complex_span (insert a (set S))))) 
+        = complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    by (metis Span.rep_eq space_as_set_inverse)
+  have "closure (complex_span (set S)) = complex_span (set S)"
+    by (simp add: span_finite_dim)    
+  hence q1: "mat_of_cblinfun
+    (cBlinfun (projection (complex_span (set S)))) =
+    (let d = canonical_basis_length TYPE('a)
+     in mk_projector_orthog d
+         (rev (gram_schmidt_sub d [] (map vec_of_onb_enum S))))"
+    using IH' IH0 Proj_def Span.rep_eq gram_schmidt_def map_fun_apply
+      Cons.IH by metis
+  have ios: "is_ortho_set (set S)"
+    by (simp add: IH')    
+  have aS: "a \<notin> set S"
+    using Cons.prems(2) by auto    
+  have "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
+        = projection (complex_span {a}) u
+        + projection (complex_span (set S)) u"
+    for u   
+    apply(rule projection_insert)
+    using ios unfolding is_ortho_set_def apply auto
+    using aS
+    by (metis Cons.prems(1) insertCI is_ortho_set_def list.simps(15))
+
+  have "mat_of_cblinfun
+     (cBlinfun
+       (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) =
+          mk_projector_orthog d
+         (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))"
+    using q1 sorry
+  thus ?case apply auto unfolding d_def gram_schmidt_def apply auto
+    unfolding Span_def Proj_def using d_def s2 s1 Span.abs_eq Span_def map_fun_apply
+    apply simp
+    using \<open>closure (complex_span (insert a (set S))) = complex_span {x. \<exists>k. x - k *\<^sub>C a 
+    \<in> complex_span (set S)}\<close> \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span 
+    (set S)}\<close> \<open>finite (insert a (set S))\<close> span_finite_dim
+  proof -
+    show "mat_of_cblinfun (cBlinfun (projection (complex_span {aa. \<exists>c. aa - c *\<^sub>C a \<in> complex_span (set S)}))) = (let n = canonical_basis_length (TYPE('a)::'a itself) in mk_projector_orthog n (rev (gram_schmidt_sub n [vec_of_onb_enum a] (map vec_of_onb_enum S))))"
+      by (metis (no_types) \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}\<close> \<open>mat_of_cblinfun (cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) = mk_projector_orthog d (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))\<close> complex_vector.span_span d_def)
+  qed 
+qed
+
 (* TODO move to ..._Matrices *)
 lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S)))"
   for S :: "'a::onb_enum list"
     (*  using[[show_consts,show_types]]  *)
+  thm Complex_Inner_Product.inner_product_projection
+  thm Complex_Inner_Product.ortho_decomp
 proof(induction S)
   case Nil
   have "space_as_set (Abs_clinear_space {0::'a}) = {0::'a}"
@@ -909,7 +1195,7 @@ proof(induction S)
   hence x1: "mat_of_cblinfun (cBlinfun (\<lambda>_::'a. (0::'a)))
      = (let d = canonical_basis_length TYPE('a) in 0\<^sub>m d d)"
     unfolding mat_of_cblinfun_def zero_mat_def
-    by (metis mat_of_cblinfun_def mat_of_cblinfun_zero' zero_cblinfun.abs_eq zero_mat_def)  
+    by (metis mat_of_cblinfun_def mat_of_cblinfun_zero' zero_cblinfun.abs_eq zero_mat_def) 
   show ?case apply auto unfolding gram_schmidt_def apply auto
     unfolding Span_def Proj_def apply auto
     using x1 x2 by simp
@@ -932,19 +1218,31 @@ next
   hence s2: "space_as_set (Abs_clinear_space (closure (complex_span (insert a (set S))))) 
         = complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
     by (metis Span.rep_eq space_as_set_inverse)
-
-
+  have "closure (complex_span (set S)) = complex_span (set S)"
+    by (simp add: span_finite_dim)    
+  hence q1: "mat_of_cblinfun
+    (cBlinfun (projection (complex_span (set S)))) =
+    (let d = canonical_basis_length TYPE('a)
+     in mk_projector_orthog d
+         (rev (gram_schmidt_sub d [] (map vec_of_onb_enum S))))"
+    by (metis Cons.IH Proj_def Span.rep_eq gram_schmidt_def map_fun_apply)
 
   have "mat_of_cblinfun
      (cBlinfun
-       (projection (complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}))) =
+       (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) =
           mk_projector_orthog d
          (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))"
-    sorry
+    using q1 sorry
   thus ?case apply auto unfolding d_def gram_schmidt_def apply auto
-    unfolding Span_def Proj_def using s2 s1 Span.abs_eq Span_def map_fun_apply
+    unfolding Span_def Proj_def using d_def s2 s1 Span.abs_eq Span_def map_fun_apply
     apply simp
-    by (smt d_def)
+    using \<open>closure (complex_span (insert a (set S))) = complex_span {x. \<exists>k. x - k *\<^sub>C a 
+    \<in> complex_span (set S)}\<close> \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span 
+    (set S)}\<close> \<open>finite (insert a (set S))\<close> span_finite_dim
+  proof -
+    show "mat_of_cblinfun (cBlinfun (projection (complex_span {aa. \<exists>c. aa - c *\<^sub>C a \<in> complex_span (set S)}))) = (let n = canonical_basis_length (TYPE('a)::'a itself) in mk_projector_orthog n (rev (gram_schmidt_sub n [vec_of_onb_enum a] (map vec_of_onb_enum S))))"
+      by (metis (no_types) \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}\<close> \<open>mat_of_cblinfun (cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) = mk_projector_orthog d (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))\<close> complex_vector.span_span d_def)
+  qed
 qed
 
 
