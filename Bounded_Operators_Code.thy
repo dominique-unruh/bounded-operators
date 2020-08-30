@@ -1171,7 +1171,71 @@ proof(cases "a = 0")
     ultimately show ?thesis by auto
 next
   case False
-  then show ?thesis sorry
+  have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
+    unfolding d_def mat_of_cblinfun_def
+    by auto
+  moreover have "(1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a]))
+         \<in> carrier_mat d d"
+  proof-
+    have d1: "dim_vec (vec_of_onb_enum a) = d"
+      by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
+    hence d2: "mat_of_cols d [vec_of_onb_enum a] \<in> carrier_mat d 1"
+      unfolding mat_of_cols_def by auto
+    have d3: "mat_of_rows d [vec_of_onb_enum a] \<in> carrier_mat 1 d"
+      using d1 unfolding mat_of_rows_def by auto
+    have "mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a]
+         \<in> carrier_mat d d"
+      using d2 d3
+      by simp 
+    thus ?thesis
+      by simp      
+  qed
+  moreover have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
+  (1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) $$ (i, j)"
+    if "i < d" and "j < d" for i j
+  proof-
+    have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
+        \<langle>(canonical_basis::'a list) ! i, 
+          proj a *\<^sub>V (canonical_basis::'a list) ! j\<rangle>"
+      unfolding mat_of_cblinfun_def
+      using d_def that(1) that(2) by auto
+    also have "\<dots> = (vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)) 
+            \<bullet>c (vec_of_onb_enum((canonical_basis::'a list) ! i))"
+      by (simp add: Bounded_Operators_Matrices.cinner_ell2_code)
+    also have "\<dots> = (vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)) \<bullet>c (unit_vec d i)"
+      unfolding d_def
+      using d_def that(1) vec_of_basis_vector by fastforce 
+    also have "\<dots> = ((mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)) \<bullet>c (unit_vec d i)"
+    proof-
+      have "vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)
+            = (mat_of_cblinfun (proj a)) *\<^sub>v (vec_of_onb_enum ((canonical_basis::'a list) ! j))"
+        by (simp add: mat_of_cblinfun_description)
+      also have "\<dots> = (mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)"
+        using d_def that(2) vec_of_basis_vector by fastforce
+      finally have "vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)
+                = (mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)".
+      thus ?thesis
+        by simp 
+    qed
+    finally have "mat_of_cblinfun (proj a) $$ (i, j) =
+                 (mat_of_cblinfun (proj a) *\<^sub>v unit_vec d j) \<bullet>c unit_vec d i".
+
+    have "(1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
+          $$ (i, j) = 
+          (((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
+          $$ (i, j)) / norm2"
+      unfolding smult_mat_def map_mat_def mat_def apply auto
+      by (metis index_mat(1) mat.abs_eq that(1) that(2))
+    also have "\<dots> = 
+ (scalar_prod (row (Matrix.mat d (Suc 0) (\<lambda>(i, j). [vec_of_onb_enum a] ! j $ i)) i) 
+              (col (Matrix.mat (Suc 0) d (\<lambda>(i, y). [vec_of_onb_enum a] ! i $ y)) j)) / norm2"
+      unfolding mat_of_cols_def mat_of_rows_def times_mat_def apply auto
+      by (simp add: that(1) that(2))
+    
+    show ?thesis sorry
+  qed  
+  ultimately show ?thesis
+    by auto
 qed
 
 
