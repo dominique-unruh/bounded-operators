@@ -3191,7 +3191,7 @@ proof-
     by blast
 qed
 
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> ('a,'a) cblinfun" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"

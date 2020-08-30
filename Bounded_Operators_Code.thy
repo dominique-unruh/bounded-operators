@@ -1081,6 +1081,186 @@ proof-
 qed
 
 (* NEW *)
+lemma Proj_Span_insert:
+  fixes S :: "'a::{onb_enum, chilbert_space} list"
+    and a::'a 
+  assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
+  shows "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))"
+proof-
+  define d where "d = canonical_basis_length TYPE('a)"
+  hence IH': "is_ortho_set (set S)"
+    using assms is_onb_delete by auto    
+  have IH0: "distinct S"
+    using a2 by auto   
+  have "closure (complex_span (set S)) = complex_span (set S)"
+    by (simp add: span_finite_dim)    
+  have "complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    using complex_vector.span_insert[where a = a and S = "(set S)"].
+  moreover have "finite (insert a (set S))"
+    by simp    
+  ultimately have "closure (complex_span (insert a (set S))) = 
+        complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    by (metis complex_vector.span_span span_finite_dim)
+  hence s2: "space_as_set (Abs_clinear_space (closure (complex_span (insert a (set S))))) 
+        = complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
+    by (metis Span.rep_eq space_as_set_inverse)
+  have "closure (complex_span (set S)) = complex_span (set S)"
+    by (simp add: span_finite_dim)    
+  have ios: "is_ortho_set (set S)"
+    by (simp add: IH')    
+  have aS: "a \<notin> set S"
+    using a2 by auto
+  have "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
+        = projection (complex_span {a}) u
+        + projection (complex_span (set S)) u"
+    for u   
+    apply(rule projection_insert)
+    using ios unfolding is_ortho_set_def apply auto
+    using aS
+    by (metis a1 insertCI is_ortho_set_def list.simps(15))
+  have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
+        = projection (complex_span {a}) u + projection (complex_span (set S)) u"
+    for u
+    by (simp add: \<open>\<And>u. projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
+     = projection (complex_span {a}) u + projection (complex_span (set S)) u\<close>)
+  have "Proj (Span (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})"
+    unfolding Proj_def Span_def id_def apply auto
+    by (metis \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}\<close> 
+        complex_vector.span_span s2)
+  also have "\<dots> = (cBlinfun (\<lambda>u. projection (complex_span {a}) u
+                   + projection (complex_span (set S)) u))"
+    using s1
+    by presburger 
+  also have "\<dots> = cBlinfun (\<lambda>u. projection (complex_span {a}) u)
+               +  cBlinfun (\<lambda>u. projection (complex_span (set S)) u)"
+    unfolding plus_cblinfun_def apply auto
+    by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq Span.rep_eq
+        cblinfun_apply_inverse finite.emptyI finite_list span_finite_dim)
+  also have "\<dots> = Proj (Abs_clinear_space (complex_span {a}))
+               +  Proj (Abs_clinear_space (complex_span (set S)))"
+    unfolding Proj_def apply auto
+    by (metis Span.rep_eq \<open>closure (complex_span (set S)) = complex_span (set S)\<close> finite.emptyI 
+        finite.insertI space_as_set_inverse span_finite_dim)
+  also have "\<dots> = Proj (Span {a}) + Proj (Span (set S))"
+    by (simp add: Span.abs_eq span_finite_dim)
+  finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
+qed
+
+(* NEW *)
+lemma mat_of_cblinfun_proj:
+  fixes a::"'a::{onb_enum, chilbert_space}"
+  defines   "d == canonical_basis_length TYPE('a)"
+    and "norm2 == (vec_of_onb_enum a) \<bullet>c (vec_of_onb_enum a)"
+  shows  "mat_of_cblinfun (proj a) = 
+  1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])"
+proof(cases "a = 0")
+  case True
+  have q1: \<open>mat_of_cblinfun (proj a) \<in> carrier_mat d d\<close>
+    unfolding mat_of_cblinfun_def d_def
+    by auto
+  have"proj a = 0"
+    using True
+      apply transfer
+      by (simp add: projection_zero_subspace)
+    hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
+      by (metis q1 cancel_comm_monoid_add_class.diff_cancel 
+          cblinfun_of_mat_minusOp' minus_r_inv_mat)
+    moreover have "norm2 = 0"
+      unfolding norm2_def
+      by (metis Bounded_Operators_Matrices.cinner_ell2_code True cinner_zero_left) 
+    ultimately show ?thesis by auto
+next
+  case False
+  then show ?thesis sorry
+qed
+
+
+(* NEW *)
+lemma mk_projector_orthog_recurrence:
+  fixes S::"'a::{onb_enum, chilbert_space} list"
+    and a::'a
+  defines "d == canonical_basis_length TYPE('a)"
+  assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
+  shows "mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum (a # S)))
+  = mat_of_cblinfun (proj a) +
+    mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S))"
+  using assms proof(induction S)
+  case Nil
+  have "dim_vec (vec_of_onb_enum a) = d"
+    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
+  moreover have "dim_vec (0\<^sub>v d) = d"
+    by simp
+  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
+    using carrier_vec_dim_vec left_zero_vec by blast   
+  define norm2 where "norm2 = (vec_of_onb_enum a) \<bullet>c (vec_of_onb_enum a)"
+  have dvad: "dim_vec (vec_of_onb_enum a) = d"
+    by (simp add: \<open>dim_vec (vec_of_onb_enum a) = d\<close>)    
+  have norm2_0:"norm2 = (0\<^sub>v d + vec_of_onb_enum a) \<bullet>c (0\<^sub>v d + vec_of_onb_enum a)"
+    unfolding norm2_def
+    using s1 by auto 
+  have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
+    unfolding mat_of_cblinfun_def d_def by auto
+  hence w1: "mat_of_cblinfun (proj a) +
+    0\<^sub>m (dim_vec (vec_of_onb_enum a)) (dim_vec (vec_of_onb_enum a)) 
+    = mat_of_cblinfun (proj a)"
+    by (simp add: dvad)    
+  have "(if norm2 = 0 then 0\<^sub>m d d
+        else 1 / norm2 \<cdot>\<^sub>m
+     (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
+    = mat_of_cblinfun (proj a)"
+  proof(cases "norm2 = 0")
+    case True
+    hence "a = 0"
+      unfolding norm2_def
+      by (metis Bounded_Operators_Matrices.cinner_ell2_code cinner_eq_zero_iff) 
+    hence "proj a = 0"
+      apply transfer
+      by (simp add: projection_zero_subspace)
+    hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
+      by (metis \<open>mat_of_cblinfun (proj a) \<in> carrier_mat d d\<close> cancel_comm_monoid_add_class.diff_cancel 
+          cblinfun_of_mat_minusOp' minus_r_inv_mat)      
+    thus ?thesis
+      by (simp add: True) 
+  next
+    case False
+    hence "a \<noteq> 0"
+      unfolding norm2_def
+      by (metis Bounded_Operators_Matrices.cinner_ell2_code cinner_zero_left)
+    hence "1 / norm2 \<cdot>\<^sub>m
+          (mat_of_cols d [vec_of_onb_enum a] *
+           mat_of_rows d [vec_of_onb_enum a]) =
+    mat_of_cblinfun (proj a)"
+      using mat_of_cblinfun_proj
+      by (simp add: mat_of_cblinfun_proj d_def norm2_def)
+    thus ?thesis using False by auto
+  qed
+  thus ?case apply auto unfolding norm2_def gram_schmidt_def apply auto
+    using w1 dvad norm2_0 apply auto
+    using s1 by presburger
+next
+  case (Cons b S)
+
+  have "dim_vec (vec_of_onb_enum a) = d"
+    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
+  moreover have "dim_vec (0\<^sub>v d) = d"
+    by simp
+  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
+    using carrier_vec_dim_vec left_zero_vec by blast   
+
+  have "gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S) = X"
+    sorry    
+
+  have "mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum (a # S)))
+      = mk_projector_orthog d
+     (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))"
+    unfolding gram_schmidt_def using s1 by auto
+
+
+  show ?case sorry
+qed
+
+
+(* NEW *)
 lemma mat_of_cblinfun_Proj_Span_EASY:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
   assumes "is_ortho_set (set S)" and "distinct S"
@@ -1110,65 +1290,31 @@ lemma mat_of_cblinfun_Proj_Span_EASY:
     using x1 x2 by simp
 next
   case (Cons a S)
-  hence IH': "is_ortho_set (set S)"
-    using is_onb_delete by auto
-  have IH0: "distinct S"
-    using Cons.prems(2) by auto
   define d where "d = canonical_basis_length TYPE('a)"
-  have "dim_vec (vec_of_onb_enum a) = d"
-    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
-  moreover have "dim_vec (0\<^sub>v d) = d"
-    by simp
-  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
-    using carrier_vec_dim_vec left_zero_vec by blast   
-  have "complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    using complex_vector.span_insert[where a = a and S = "(set S)"].
-  moreover have "finite (insert a (set S))"
-    by simp    
-  ultimately have "closure (complex_span (insert a (set S))) = 
-        complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    by (metis complex_vector.span_span span_finite_dim)
-  hence s2: "space_as_set (Abs_clinear_space (closure (complex_span (insert a (set S))))) 
-        = complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    by (metis Span.rep_eq space_as_set_inverse)
-  have "closure (complex_span (set S)) = complex_span (set S)"
-    by (simp add: span_finite_dim)    
-  hence q1: "mat_of_cblinfun
-    (cBlinfun (projection (complex_span (set S)))) =
+  have "is_ortho_set (set S)"
+    using Cons.prems(1) is_onb_delete by auto    
+  moreover have "distinct S"
+    using Cons.prems(2) by auto    
+  ultimately have t1: "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a)
      in mk_projector_orthog d
-         (rev (gram_schmidt_sub d [] (map vec_of_onb_enum S))))"
-    using IH' IH0 Proj_def Span.rep_eq gram_schmidt_def map_fun_apply
-      Cons.IH by metis
-  have ios: "is_ortho_set (set S)"
-    by (simp add: IH')    
-  have aS: "a \<notin> set S"
-    using Cons.prems(2) by auto    
-  have "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
-        = projection (complex_span {a}) u
-        + projection (complex_span (set S)) u"
-    for u   
-    apply(rule projection_insert)
-    using ios unfolding is_ortho_set_def apply auto
-    using aS
-    by (metis Cons.prems(1) insertCI is_ortho_set_def list.simps(15))
-
-  have "mat_of_cblinfun
-     (cBlinfun
-       (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) =
-          mk_projector_orthog d
-         (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))"
-    using q1 sorry
-  thus ?case apply auto unfolding d_def gram_schmidt_def apply auto
-    unfolding Span_def Proj_def using d_def s2 s1 Span.abs_eq Span_def map_fun_apply
-    apply simp
-    using \<open>closure (complex_span (insert a (set S))) = complex_span {x. \<exists>k. x - k *\<^sub>C a 
-    \<in> complex_span (set S)}\<close> \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span 
-    (set S)}\<close> \<open>finite (insert a (set S))\<close> span_finite_dim
-  proof -
-    show "mat_of_cblinfun (cBlinfun (projection (complex_span {aa. \<exists>c. aa - c *\<^sub>C a \<in> complex_span (set S)}))) = (let n = canonical_basis_length (TYPE('a)::'a itself) in mk_projector_orthog n (rev (gram_schmidt_sub n [vec_of_onb_enum a] (map vec_of_onb_enum S))))"
-      by (metis (no_types) \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}\<close> \<open>mat_of_cblinfun (cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) = mk_projector_orthog d (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))\<close> complex_vector.span_span d_def)
-  qed 
+         (gram_schmidt d (map vec_of_onb_enum S)))"
+    by (simp add: Cons.IH)    
+  have "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))"
+    using Cons.prems(1) Cons.prems(2) Proj_Span_insert by auto
+  hence "mat_of_cblinfun (Proj (Span (set (a#S)))) = 
+         mat_of_cblinfun (Proj (Span {a}))
+       + mat_of_cblinfun (Proj (Span (set S)))"
+    by (simp add: cblinfun_of_mat_plusOp')
+  hence "mat_of_cblinfun (Proj (Span (set (a#S)))) = 
+         mat_of_cblinfun (Proj (Span {a}))
+       + mk_projector_orthog d
+         (gram_schmidt d (map vec_of_onb_enum S))"
+    unfolding d_def using t1 by metis
+  thus ?case
+    using mk_projector_orthog_recurrence
+    by (metis Cons.prems(1) Cons.prems(2) \<open>mat_of_cblinfun (Proj (Span (set (a # S)))) 
+    = mat_of_cblinfun (proj a) + mat_of_cblinfun (Proj (Span (set S)))\<close> t1)
 qed
 
 (* TODO move to ..._Matrices *)
