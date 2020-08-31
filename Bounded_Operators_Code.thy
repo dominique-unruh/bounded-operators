@@ -878,28 +878,14 @@ definition "mk_projector (S::'a::onb_enum clinear_space) = mat_of_cblinfun (Proj
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
 and returns the projector onto the span of L. (Assuming that all vectors in L are orthogonal.)\<close>
 
-(* Ask to Dominique:
-I think that this definition is wrong, because it lack of complex conjugation. I think that 
-the right definition is as follows.
-
 fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
   "mk_projector_orthog d [] = zero_mat d d"
 | "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
                                 if norm2=0 then zero_mat d d else
-                             smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]))"
+                                smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]))"
 | "mk_projector_orthog d (v#vs) = (let norm2 = cscalar_prod v v in
                                    if norm2=0 then mk_projector_orthog d vs else
-                              smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
-                                        + mk_projector_orthog d vs)"
- *)
-fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
-  "mk_projector_orthog d [] = zero_mat d d"
-| "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
-                                if norm2=0 then zero_mat d d else
-                                smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [v]))"
-| "mk_projector_orthog d (v#vs) = (let norm2 = cscalar_prod v v in
-                                   if norm2=0 then mk_projector_orthog d vs else
-                                   smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [v]) 
+                                   smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
                                         + mk_projector_orthog d vs)"
 
 
@@ -1163,11 +1149,12 @@ qed
 
 (* NEW *)
 lemma mat_of_cblinfun_proj:
-  fixes a::"'a::{onb_enum, chilbert_space}"
+  fixes a::"'a::{onb_enum}"
   defines   "d == canonical_basis_length TYPE('a)"
     and "norm2 == (vec_of_onb_enum a) \<bullet>c (vec_of_onb_enum a)"
   shows  "mat_of_cblinfun (proj a) = 
-  1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])"
+      1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a]
+                 * mat_of_rows d [conjugate (vec_of_onb_enum a)])"
 proof(cases "a = 0")
   case True
   have q1: \<open>mat_of_cblinfun (proj a) \<in> carrier_mat d d\<close>
@@ -1186,6 +1173,7 @@ proof(cases "a = 0")
     ultimately show ?thesis by auto
 next
   case False
+  define basis where "basis = (canonical_basis :: 'a list)"
   have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
     unfolding d_def mat_of_cblinfun_def
     by auto
@@ -1214,13 +1202,13 @@ next
       unfolding norm2_def
       by (simp add: Bounded_Operators_Matrices.cinner_ell2_code)
 
-    have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
+    have "\<langle>a, basis ! j\<rangle> * cnj \<langle>a, basis ! i\<rangle>
         = (unit_vec d j \<bullet>c vec_of_onb_enum a) * cnj (unit_vec d i \<bullet>c vec_of_onb_enum a)"
     proof-
-      have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a"
-        by (metis Bounded_Operators_Matrices.cinner_ell2_code d_def that(2) vec_of_basis_vector)
-      moreover have "\<langle>a, (canonical_basis::'a list) ! i\<rangle> = unit_vec d i \<bullet>c vec_of_onb_enum a"
-        by (metis Bounded_Operators_Matrices.cinner_ell2_code d_def that(1) vec_of_basis_vector)
+      have "\<langle>a, basis ! j\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a"
+        by (metis basis_def Bounded_Operators_Matrices.cinner_ell2_code d_def that(2) vec_of_basis_vector)
+      moreover have "\<langle>a, basis ! i\<rangle> = unit_vec d i \<bullet>c vec_of_onb_enum a"
+        by (metis basis_def Bounded_Operators_Matrices.cinner_ell2_code d_def that(1) vec_of_basis_vector)
       ultimately show ?thesis by simp
     qed
     have "\<dots> = (vec_of_onb_enum a $ i) * cnj (vec_of_onb_enum a $ j)"
@@ -1237,18 +1225,29 @@ next
       ultimately show ?thesis by simp
     qed
     also have "\<dots> = ((mat_of_cols d [vec_of_onb_enum a] 
-                    * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
+                    * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)" (is "?lhs = ?rhs")
     proof-
-      have "vec_of_onb_enum a $ i * vec_of_onb_enum a $ j =
-   scalar_prod (Matrix.vec (Suc 0) (\<lambda>j. mat_of_cols d [vec_of_onb_enum a] $$ (i, j))) 
-               (Matrix.vec (Suc 0) (\<lambda>i. mat_of_rows d [vec_of_onb_enum a] $$ (i, j)))"
-        using that unfolding mat_of_cols_def mat_of_rows_def mat_def mk_mat_def id_def vec_def
-          mk_vec_def
-        apply auto
-        sorry
-      show ?thesis
-        unfolding times_mat_def row_def col_def using that apply auto
-        sorry        
+      have "?rhs = Matrix.row (mat_of_cols d [vec_of_onb_enum a]) i \<bullet>
+                   Matrix.col (mat_of_rows d [conjugate (vec_of_onb_enum a)]) j"
+        apply (subst index_mult_mat)
+        using \<open>j < d\<close> \<open>i < d\<close> by auto
+      also have "\<dots> = Matrix.row (mat_of_cols d [vec_of_onb_enum a]) i $ 0 *
+                 Matrix.col (mat_of_rows d [conjugate (vec_of_onb_enum a)]) j $ 0"
+        unfolding scalar_prod_def
+        apply (subgoal_tac "dim_vec (col (mat_of_rows d [conjugate (vec_of_onb_enum a)]) j) = 1")
+        by auto
+      also have "\<dots> = mat_of_cols d [vec_of_onb_enum a] $$ (i, 0) *
+                 mat_of_rows d [conjugate (vec_of_onb_enum a)] $$ (0, j)"
+        apply (subst index_row) using \<open>i < d\<close> apply auto[2]
+        apply (subst index_col) using \<open>j < d\<close> by auto
+      also have "\<dots> = vec_of_onb_enum a $ i * conjugate (vec_of_onb_enum a) $ j"
+        apply (subst mat_of_cols_Cons_index_0) using \<open>i < d\<close> apply simp
+        apply (subst mat_of_rows_index) using \<open>j < d\<close> by auto
+      also have "\<dots> = vec_of_onb_enum a $ i * cnj (vec_of_onb_enum a $ j)"
+        apply (subst vec_index_conjugate) using \<open>j < d\<close> apply auto
+        by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
+      finally show ?thesis
+        by simp
     qed     
 
     have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
