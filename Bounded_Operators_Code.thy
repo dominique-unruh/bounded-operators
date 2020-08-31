@@ -877,6 +877,21 @@ definition "mk_projector (S::'a::onb_enum clinear_space) = mat_of_cblinfun (Proj
 (* TODO: move to ..._Matrices *)
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
 and returns the projector onto the span of L. (Assuming that all vectors in L are orthogonal.)\<close>
+
+(* Ask to Dominique:
+I think that this definition is wrong, because it lack of complex conjugation. I think that 
+the right definition is as follows.
+
+fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
+  "mk_projector_orthog d [] = zero_mat d d"
+| "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
+                                if norm2=0 then zero_mat d d else
+                             smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]))"
+| "mk_projector_orthog d (v#vs) = (let norm2 = cscalar_prod v v in
+                                   if norm2=0 then mk_projector_orthog d vs else
+                              smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
+                                        + mk_projector_orthog d vs)"
+ *)
 fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
   "mk_projector_orthog d [] = zero_mat d d"
 | "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
@@ -1152,7 +1167,7 @@ lemma mat_of_cblinfun_proj:
   defines   "d == canonical_basis_length TYPE('a)"
     and "norm2 == (vec_of_onb_enum a) \<bullet>c (vec_of_onb_enum a)"
   shows  "mat_of_cblinfun (proj a) = 
-  1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])"
+  1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])"
 proof(cases "a = 0")
   case True
   have q1: \<open>mat_of_cblinfun (proj a) \<in> carrier_mat d d\<close>
@@ -1174,16 +1189,17 @@ next
   have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
     unfolding d_def mat_of_cblinfun_def
     by auto
-  moreover have "(1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a]))
+  moreover have "(1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a]
+             * mat_of_rows d [conjugate (vec_of_onb_enum a)]))
          \<in> carrier_mat d d"
   proof-
     have d1: "dim_vec (vec_of_onb_enum a) = d"
       by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
     hence d2: "mat_of_cols d [vec_of_onb_enum a] \<in> carrier_mat d 1"
       unfolding mat_of_cols_def by auto
-    have d3: "mat_of_rows d [vec_of_onb_enum a] \<in> carrier_mat 1 d"
+    have d3: "mat_of_rows d [conjugate (vec_of_onb_enum a)] \<in> carrier_mat 1 d"
       using d1 unfolding mat_of_rows_def by auto
-    have "mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a]
+    have "mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]
          \<in> carrier_mat d d"
       using d2 d3
       by simp 
@@ -1191,51 +1207,67 @@ next
       by simp      
   qed
   moreover have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
-  (1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) $$ (i, j)"
+  (1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
     if "i < d" and "j < d" for i j
   proof-
+    have norm2a: "norm2 = \<langle>a, a\<rangle>"
+      unfolding norm2_def
+      by (simp add: Bounded_Operators_Matrices.cinner_ell2_code)
+
+    have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
+        = (unit_vec d j \<bullet>c vec_of_onb_enum a) * cnj (unit_vec d i \<bullet>c vec_of_onb_enum a)"
+    proof-
+      have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a"
+        by (metis Bounded_Operators_Matrices.cinner_ell2_code d_def that(2) vec_of_basis_vector)
+      moreover have "\<langle>a, (canonical_basis::'a list) ! i\<rangle> = unit_vec d i \<bullet>c vec_of_onb_enum a"
+        by (metis Bounded_Operators_Matrices.cinner_ell2_code d_def that(1) vec_of_basis_vector)
+      ultimately show ?thesis by simp
+    qed
+    have "\<dots> = (vec_of_onb_enum a $ i) * cnj (vec_of_onb_enum a $ j)"
+    proof-
+      have t1: "vec_of_onb_enum a \<in> carrier_vec d"
+        by (metis add.right_neutral carrier_vec_dim_vec d_def index_add_vec(2) index_zero_vec(2) 
+            vec_of_onb_enum_add vec_of_onb_enum_zero)
+      hence "unit_vec d j \<bullet>c vec_of_onb_enum a = cnj (vec_of_onb_enum a $ j)"
+        using Matrix.scalar_prod_left_unit that(2)
+        by auto 
+      moreover have "unit_vec d i \<bullet>c vec_of_onb_enum a = cnj (vec_of_onb_enum a $ i)"
+        using t1 Matrix.scalar_prod_left_unit that(1)
+        by auto
+      ultimately show ?thesis by simp
+    qed
+    also have "\<dots> = ((mat_of_cols d [vec_of_onb_enum a] 
+                    * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
+    proof-
+      have "vec_of_onb_enum a $ i * vec_of_onb_enum a $ j =
+   scalar_prod (Matrix.vec (Suc 0) (\<lambda>j. mat_of_cols d [vec_of_onb_enum a] $$ (i, j))) 
+               (Matrix.vec (Suc 0) (\<lambda>i. mat_of_rows d [vec_of_onb_enum a] $$ (i, j)))"
+        using that unfolding mat_of_cols_def mat_of_rows_def mat_def mk_mat_def id_def vec_def
+          mk_vec_def
+        apply auto
+        sorry
+      show ?thesis
+        unfolding times_mat_def row_def col_def using that apply auto
+        sorry        
+    qed     
+
+    have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
+        = ((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
+      sorry
+    have x1: "proj a *\<^sub>V (canonical_basis::'a list) ! j = 
+         (\<langle>a, (canonical_basis::'a list) ! j\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+      using projection_singleton[where a = a and u = "(canonical_basis::'a list)!j"] False
+      apply transfer
+      by (simp add: span_finite_dim)
     have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
         \<langle>(canonical_basis::'a list) ! i, 
           proj a *\<^sub>V (canonical_basis::'a list) ! j\<rangle>"
       unfolding mat_of_cblinfun_def
       using d_def that(1) that(2) by auto
-    also have "\<dots> = (vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)) 
-            \<bullet>c (vec_of_onb_enum((canonical_basis::'a list) ! i))"
-      by (simp add: Bounded_Operators_Matrices.cinner_ell2_code)
-    also have "\<dots> = (vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)) \<bullet>c (unit_vec d i)"
-      unfolding d_def
-      using d_def that(1) vec_of_basis_vector by fastforce 
-    also have "\<dots> = ((mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)) \<bullet>c (unit_vec d i)"
-    proof-
-      have "vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)
-            = (mat_of_cblinfun (proj a)) *\<^sub>v (vec_of_onb_enum ((canonical_basis::'a list) ! j))"
-        by (simp add: mat_of_cblinfun_description)
-      also have "\<dots> = (mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)"
-        using d_def that(2) vec_of_basis_vector by fastforce
-      finally have "vec_of_onb_enum (proj a *\<^sub>V (canonical_basis::'a list) ! j)
-                = (mat_of_cblinfun (proj a)) *\<^sub>v (unit_vec d j)".
-      thus ?thesis
-        by simp 
-    qed
-    finally have "mat_of_cblinfun (proj a) $$ (i, j) =
-                 (mat_of_cblinfun (proj a) *\<^sub>v unit_vec d j) \<bullet>c unit_vec d i".
-
-    have "(1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
-          $$ (i, j) = 
-          (((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
-          $$ (i, j)) / norm2"
-      unfolding smult_mat_def map_mat_def mat_def apply auto
-      by (metis index_mat(1) mat.abs_eq that(1) that(2))
-    also have "\<dots> = 
- (scalar_prod (row (Matrix.mat d (Suc 0) (\<lambda>(i, j). [vec_of_onb_enum a] ! j $ i)) i) 
-              (col (Matrix.mat (Suc 0) d (\<lambda>(i, y). [vec_of_onb_enum a] ! i $ y)) j)) / norm2"
-      unfolding mat_of_cols_def mat_of_rows_def times_mat_def apply auto
-      by (simp add: that(1) that(2))
-    
     show ?thesis sorry
   qed  
   ultimately show ?thesis
-    by auto
+    by auto 
 qed
 
 
@@ -1270,7 +1302,7 @@ lemma mk_projector_orthog_recurrence:
     by (simp add: dvad)    
   have "(if norm2 = 0 then 0\<^sub>m d d
         else 1 / norm2 \<cdot>\<^sub>m
-     (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [vec_of_onb_enum a])) 
+     (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) 
     = mat_of_cblinfun (proj a)"
   proof(cases "norm2 = 0")
     case True
@@ -1292,7 +1324,7 @@ lemma mk_projector_orthog_recurrence:
       by (metis Bounded_Operators_Matrices.cinner_ell2_code cinner_zero_left)
     hence "1 / norm2 \<cdot>\<^sub>m
           (mat_of_cols d [vec_of_onb_enum a] *
-           mat_of_rows d [vec_of_onb_enum a]) =
+           mat_of_rows d [conjugate (vec_of_onb_enum a)]) =
     mat_of_cblinfun (proj a)"
       using mat_of_cblinfun_proj
       by (simp add: mat_of_cblinfun_proj d_def norm2_def)
@@ -1300,7 +1332,7 @@ lemma mk_projector_orthog_recurrence:
   qed
   thus ?case apply auto unfolding norm2_def gram_schmidt_def apply auto
     using w1 dvad norm2_0 apply auto
-    using s1 by presburger
+    using s1 sorry
 next
   case (Cons b S)
 
@@ -1506,15 +1538,6 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
   if "i < canonical_basis_length TYPE('a)"
   by (simp add: onb_enum_of_vec_unit_vec that)
 
-(* Ask to Dominique: Is this lemma incorrect. See the version that I proved above.
-
-\<Longrightarrow> You are right. You can remove the incorrect version.
-
-(* TODO move to ..._Matrices *)
-lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_length TYPE('a)) i)
-   = (canonical_basis!i :: 'a::onb_enum)"
-  sorry
-*)
 
 (* TODO: Move to Complex_Inner_Product *)
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
