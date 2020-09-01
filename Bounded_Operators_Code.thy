@@ -1162,18 +1162,25 @@ proof(cases "a = 0")
     by auto
   have"proj a = 0"
     using True
-      apply transfer
-      by (simp add: projection_zero_subspace)
-    hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
-      by (metis q1 cancel_comm_monoid_add_class.diff_cancel 
-          cblinfun_of_mat_minusOp' minus_r_inv_mat)
-    moreover have "norm2 = 0"
-      unfolding norm2_def
-      by (metis Bounded_Operators_Matrices.cinner_ell2_code True cinner_zero_left) 
-    ultimately show ?thesis by auto
+    apply transfer
+    by (simp add: projection_zero_subspace)
+  hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
+    by (metis q1 cancel_comm_monoid_add_class.diff_cancel 
+        cblinfun_of_mat_minusOp' minus_r_inv_mat)
+  moreover have "norm2 = 0"
+    unfolding norm2_def
+    by (metis Bounded_Operators_Matrices.cinner_ell2_code True cinner_zero_left) 
+  ultimately show ?thesis by auto
 next
   case False
   define basis where "basis = (canonical_basis :: 'a list)"
+  have "mat_of_cols d [vec_of_onb_enum a] \<in> carrier_mat d 1"
+    by auto
+  moreover have "mat_of_rows d [vec_of_onb_enum a] \<in> carrier_mat 1 d"
+    by auto
+  ultimately have f1: "mat_of_cols d [vec_of_onb_enum a]
+           * mat_of_rows d [conjugate (vec_of_onb_enum a)] \<in> carrier_mat d d"
+    by auto
   have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
     unfolding d_def mat_of_cblinfun_def
     by auto
@@ -1195,7 +1202,8 @@ next
       by simp      
   qed
   moreover have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
-  (1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
+  (1 / norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) 
+    $$ (i, j)"
     if "i < d" and "j < d" for i j
   proof-
     have norm2a: "norm2 = \<langle>a, a\<rangle>"
@@ -1227,8 +1235,8 @@ next
     also have "\<dots> = ((mat_of_cols d [vec_of_onb_enum a] 
                     * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)" (is "?lhs = ?rhs")
     proof-
-      have "?rhs = Matrix.row (mat_of_cols d [vec_of_onb_enum a]) i \<bullet>
-                   Matrix.col (mat_of_rows d [conjugate (vec_of_onb_enum a)]) j"
+      have "?rhs = scalar_prod (Matrix.row (mat_of_cols d [vec_of_onb_enum a]) i) 
+                   (Matrix.col (mat_of_rows d [conjugate (vec_of_onb_enum a)]) j)"
         apply (subst index_mult_mat)
         using \<open>j < d\<close> \<open>i < d\<close> by auto
       also have "\<dots> = Matrix.row (mat_of_cols d [vec_of_onb_enum a]) i $ 0 *
@@ -1249,21 +1257,58 @@ next
       finally show ?thesis
         by simp
     qed     
-
     have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
-        = ((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) $$ (i, j)"
-      sorry
+        = ((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) 
+      $$ (i, j)"
+      using \<open>\<langle>a, basis ! j\<rangle> * cnj \<langle>a, basis ! i\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a * cnj 
+      (unit_vec d i \<bullet>c vec_of_onb_enum a)\<close> \<open>vec_of_onb_enum a $ i * cnj (vec_of_onb_enum a $ j)
+       = (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) 
+      $$ (i, j)\<close> basis_def calculation by auto
     have x1: "proj a *\<^sub>V (canonical_basis::'a list) ! j = 
          (\<langle>a, (canonical_basis::'a list) ! j\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
       using projection_singleton[where a = a and u = "(canonical_basis::'a list)!j"] False
       apply transfer
       by (simp add: span_finite_dim)
-    have "(mat_of_cblinfun (proj a)) $$ (i, j) = 
+    have x2: "(mat_of_cblinfun (proj a)) $$ (i, j) =
         \<langle>(canonical_basis::'a list) ! i, 
           proj a *\<^sub>V (canonical_basis::'a list) ! j\<rangle>"
       unfolding mat_of_cblinfun_def
       using d_def that(1) that(2) by auto
-    show ?thesis sorry
+    have x3: "\<langle>(canonical_basis::'a list) ! i, 
+          proj a *\<^sub>V (canonical_basis::'a list) ! j\<rangle> =
+        \<langle>(canonical_basis::'a list) ! i, 
+          (\<langle>a, (canonical_basis::'a list) ! j\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a\<rangle>"
+      using x1 x2 by simp
+    have x4: "(mat_of_cblinfun (proj a)) $$ (i, j)
+          = \<langle>(canonical_basis::'a list) ! i, a\<rangle>*\<langle>a, (canonical_basis::'a list) ! j\<rangle>/norm2"
+      using  x2 x3
+      by (simp add: norm2a)
+    have y1:"(mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) 
+          $$ (i, j) = \<langle>(canonical_basis::'a list) ! i, a\<rangle>*\<langle>a, (canonical_basis::'a list) ! j\<rangle>"
+      by (metis \<open>\<langle>a, canonical_basis ! j\<rangle> * cnj \<langle>a, canonical_basis ! i\<rangle> = (mat_of_cols d 
+          [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) $$ (i, j)\<close> 
+          cinner_commute' ordered_field_class.sign_simps(46))      
+    have "(mat_of_cblinfun (proj a)) $$ (i, j)
+          = ((mat_of_cols d [vec_of_onb_enum a]
+           * mat_of_rows d [conjugate (vec_of_onb_enum a)])$$(i,j))/norm2"
+      using y1 x4
+      by simp      
+    moreover have "((mat_of_cols d [vec_of_onb_enum a]
+           * mat_of_rows d [conjugate (vec_of_onb_enum a)])$$(i,j))/norm2 = (1/norm2 \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a]
+           * mat_of_rows d [conjugate (vec_of_onb_enum a)]))$$(i,j)"
+    proof-
+      have "p * (M $$ (i,j)) = (p \<cdot>\<^sub>m M) $$ (i,j)"
+        if "M \<in> carrier_mat d d" and "i < d" and "j < d"
+        for p::complex and  M::"complex mat" and i j::nat
+        using that(1) that(2) that(3) by auto        
+      moreover have f1: "mat_of_cols d [vec_of_onb_enum a]
+           * mat_of_rows d [conjugate (vec_of_onb_enum a)] \<in> carrier_mat d d"
+        by (simp add: f1)        
+      ultimately show ?thesis
+        by (metis mult.left_neutral that(1) that(2) times_divide_eq_left)            
+    qed
+    ultimately show ?thesis
+      by simp
   qed  
   ultimately show ?thesis
     by auto 
@@ -1331,7 +1376,8 @@ lemma mk_projector_orthog_recurrence:
   qed
   thus ?case apply auto unfolding norm2_def gram_schmidt_def apply auto
     using w1 dvad norm2_0 apply auto
-    using s1 sorry
+    using s1
+    by presburger 
 next
   case (Cons b S)
 
