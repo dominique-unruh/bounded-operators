@@ -5,6 +5,10 @@ theory Bounded_Operators_Code_Examples
     Bounded_Operators_Code 
 begin
 
+hide_const (open) Order.bottom Order.top
+no_notation Lattice.join (infixl "\<squnion>\<index>" 65)
+no_notation Lattice.meet (infixl "\<sqinter>\<index>" 70)
+
 section \<open>Making output of value more readable\<close>
 
 unbundle cblinfun_notation
@@ -82,6 +86,14 @@ value "classical_operator (\<lambda>b. Some (\<not> b))"
 
 value "idOp = (0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2)"
 
+value "2 *\<^sub>R idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
+value "imaginary_unit *\<^sub>C idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
+value "idOp o\<^sub>C\<^sub>L 0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
+value "idOp* :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+
 subsection \<open>Vectors\<close>
 
 value "0 :: bool ell2"
@@ -124,6 +136,28 @@ value "Span {ket False}"
 
 value "Proj (Span {ket False})"
 
-(* TODO: add all *)
+value "top :: bool ell2 clinear_space"
+
+value "bot :: bool ell2 clinear_space"
+
+value "Span {ket False} \<squnion> Span {ket True}"
+
+value "Span {ket False} + Span {ket True}"
+
+value "Span {ket False} \<sqinter> Span {ket True}"
+
+value "- Span {ket False}"
+
+value "Span {ket False, ket True} = top"
+
+value "Span {ket False} \<le> Span {ket True}"
+
+value "applyOpSpace idOp (Span {ket True})"
+
+value "kernel idOp :: bool ell2 clinear_space"
+
+value "eigenspace 1 idOp :: bool ell2 clinear_space"
+
+value "Inf {Span {ket False}, top}"
 
 end

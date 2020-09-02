@@ -261,6 +261,10 @@ declare cblinfun_of_mat_uminusOp'[code]
 declare cblinfun_of_mat_minusOp'[code]
   (* TODO: rename (remove inj_option) *)
 declare mat_of_cblinfun_classical_operator_inj_option[code]
+declare cblinfun_of_mat_timesOp[code]
+declare mat_of_cblinfun_scalarMult[code]
+declare mat_of_cblinfun_scaleR[code]
+declare cblinfun_of_mat_adjoint[code]
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun operators.\<close>
 instantiation cblinfun :: (onb_enum,onb_enum) equal begin
@@ -2073,8 +2077,8 @@ proof
     sorry
 qed
 
-lemma SPAN_leq[code]: "SPAN A \<le> 
-  (SPAN B :: 'a::onb_enum clinear_space) \<longleftrightarrow> is_subspace_of (canonical_basis_length TYPE('a)) A B"
+lemma SPAN_leq[code]: "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space) 
+      \<longleftrightarrow> is_subspace_of (canonical_basis_length TYPE('a)) A B"
   sorry
 
 lemma apply_cblinfun_Span: 
