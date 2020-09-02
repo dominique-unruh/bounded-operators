@@ -1528,6 +1528,77 @@ next
     by auto 
 qed
 
+lemma mat_of_cblinfun_proj':
+  fixes a b::"'a::{onb_enum, chilbert_space}" 
+  defines "u == vec_of_onb_enum a"
+    and "v == vec_of_onb_enum b"
+    and "norm2 == vec_of_onb_enum a \<bullet>c vec_of_onb_enum a"
+  shows "mat_of_cblinfun (proj a) *\<^sub>v v = (v \<bullet>c u) / norm2 \<cdot>\<^sub>v u"
+proof-
+  define d where "d = canonical_basis_length TYPE('a)"
+  have udim: "dim_vec u = d"
+    unfolding u_def d_def
+    by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
+  have vdim: "dim_vec v = d"
+    unfolding v_def d_def
+    by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
+
+  have "dim_col (mat_of_cols d [u]) = 1"
+    by auto
+  hence x1: "row (mat_of_cols d [u]) i $ 0 = u $ i"
+    if "i < d"
+    for i
+    unfolding row_def mat_of_cols_def using that by auto
+
+  have "dim_row (mat_of_rows d [conjugate u]) = 1"
+    by auto  
+  hence x3: "col (mat_of_rows d [conjugate u]) j $ 0 = cnj (u $ j)"
+    if "j < d"
+    for j
+    unfolding col_def mat_of_rows_def using that
+    by (simp add: udim)
+  have "row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k = vec_of_list [u $ k * cnj (u $ k)]"
+    if "k < d"
+    for k
+    unfolding row_def mat_def apply auto sorry
+  hence "mat d d (\<lambda>(i, j). u $ i * cnj (u $ j)) *\<^sub>v v = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) \<cdot>\<^sub>v u"
+    sorry
+  moreover have "mat d d (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0
+                                 * col (mat_of_rows d [conjugate u]) j $ 0)
+      = mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))"
+  proof-
+    have "(mat d d (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0
+        * col (mat_of_rows d [conjugate u]) j $ 0)) $$ (i, j)
+        = (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) $$ (i, j)"
+      if "i < d" and "j < d"
+      for i j
+    proof-
+      have "(mat d d (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0
+        * col (mat_of_rows d [conjugate u]) j $ 0)) $$ (i, j)
+       = row (mat_of_cols d [u]) i $ 0 * col (mat_of_rows d [conjugate u]) j $ 0"
+        by (simp add: that)        
+      moreover have "(mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) $$ (i, j) =  u $ i * cnj (u $ j)"
+        by (simp add: that)        
+      ultimately show ?thesis
+        using x1 x3 that
+        by auto
+  qed
+    thus ?thesis 
+      by auto
+  qed
+  ultimately have "mat d d
+     (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0 * col (mat_of_rows d [conjugate u]) j $ 0) *\<^sub>v
+    v = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) \<cdot>\<^sub>v u"
+    by simp
+
+  hence "(mat_of_cols d [u] * mat_of_rows d [conjugate u]) *\<^sub>v v = (v \<bullet>c u) \<cdot>\<^sub>v u"
+    unfolding times_mat_def scalar_prod_def apply auto
+    using udim by blast    
+  show ?thesis
+    using mat_of_cblinfun_proj[where 'a = 'a and a = a]
+    sorry
+qed
+
 (* NEW *)
 lemma mk_projector_orthog_recurrence:
   fixes S::"'a::{onb_enum, chilbert_space} list"
@@ -1712,7 +1783,13 @@ next
       by simp
     moreover have "mk_projector_orthog d (gram_schmidt_sub0 d [w, u] (map vec_of_onb_enum S)) =
   mat_of_cblinfun (proj a) + mk_projector_orthog d (gram_schmidt_sub0 d [v] (map vec_of_onb_enum S))"
-      sorry
+    proof-
+      have  "mat_of_cblinfun (proj a) *\<^sub>v v = v \<bullet>c u / (u \<bullet>c u) \<cdot>\<^sub>v u"
+        unfolding v_def' u_def'
+        using mat_of_cblinfun_proj' by blast
+      show ?thesis 
+        sorry        
+    qed
     ultimately have "mk_projector_orthog d
      (gram_schmidt_sub0 d [w, u] (map vec_of_onb_enum S)) =
     mat_of_cblinfun (proj a) +
