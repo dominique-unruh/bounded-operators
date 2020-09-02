@@ -2572,7 +2572,7 @@ proof-
     by auto
 qed
 
-lemma cblinfun_of_mat_timesOp[code]:
+lemma cblinfun_of_mat_timesOp:
   "mat_of_cblinfun (F o\<^sub>C\<^sub>L G) = mat_of_cblinfun F * mat_of_cblinfun G" 
   for F::"'b::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'c::onb_enum" and G::"'a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b"
 proof -
@@ -2612,7 +2612,7 @@ proof -
 qed
 
 
-lemma mat_of_cblinfun_scalarMult[code]:
+lemma mat_of_cblinfun_scalarMult:
   "mat_of_cblinfun ((a::complex) *\<^sub>C F) = a \<cdot>\<^sub>m (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
 proof -
@@ -2679,7 +2679,11 @@ proof -
   finally show ?thesis .
 qed
 
-lemma cblinfun_of_mat_adjoint[code]:
+lemma mat_of_cblinfun_scaleR:
+  "mat_of_cblinfun ((a::real) *\<^sub>R F) = (complex_of_real a) \<cdot>\<^sub>m (mat_of_cblinfun F)"
+  unfolding scaleR_scaleC by (rule mat_of_cblinfun_scalarMult)
+
+lemma cblinfun_of_mat_adjoint:
   "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
 proof -
