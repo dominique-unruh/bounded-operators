@@ -329,7 +329,7 @@ fun index_of where
   "index_of x [] = (0::nat)"
 | "index_of x (y#ys) = (if x=y then 0 else (index_of x ys + 1))"
 
-(* NEW *)
+
 lemma index_of_length: "index_of x y \<le> length y"
 proof(induction y)
   case Nil
@@ -640,7 +640,7 @@ lemma norm_ell2_code [code]: "norm \<psi> =
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
   by (simp add: norm_ell2_code vec_of_ell2_def)
 
-(* NEW *)
+
 lemma complex_span_singleton:
   fixes x y::"'a::complex_vector"
   assumes a1: "x \<in> complex_span {y}"
@@ -1103,7 +1103,7 @@ fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> com
                                         + mk_projector_orthog d vs)"
 
 
-(* NEW *)
+
 lemma Span_insert:
   assumes "finite (S::'a'::complex_inner set)"
   shows "space_as_set (Span (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (Span S)}"
@@ -1114,14 +1114,14 @@ proof -
     by (simp add: Span.rep_eq assms complex_vector.span_insert span_finite_dim)
 qed
 
-(* NEW *)
+
 lemma closed_subspace_complex_span_finite:
   assumes "finite (S::'a::chilbert_space set)"
   shows "closed_subspace (complex_span S)"
   unfolding closed_subspace_def apply auto
   by (simp add: assms closed_finite_dim)
 
-(* NEW *)
+
 lemma projection_singleton:
   assumes "(a::'a::chilbert_space) \<noteq> 0"
   shows "projection (complex_span {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
@@ -1158,7 +1158,7 @@ proof-
   thus ?thesis unfolding M_def p_def.
 qed
 
-(* NEW *)
+
 lemma ortho_complex_span:
   assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
     and a3: "x \<in> complex_span S"
@@ -1181,7 +1181,7 @@ proof-
   finally show ?thesis.
 qed
 
-(* NEW *)
+
 lemma projection_insert:
   assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
   shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span S} u
@@ -1295,7 +1295,7 @@ proof-
     unfolding p_def M_def by auto
 qed
 
-(* NEW *)
+
 lemma Proj_Span_insert:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
     and a::'a 
@@ -1361,7 +1361,7 @@ proof-
   finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
 qed
 
-(* NEW *)
+
 lemma mat_of_cblinfun_proj:
   fixes a::"'a::{onb_enum}"
   defines   "d == canonical_basis_length TYPE('a)"
@@ -1528,12 +1528,13 @@ next
     by auto 
 qed
 
+(* NEW *)
 lemma mat_of_cblinfun_proj':
   fixes a b::"'a::{onb_enum, chilbert_space}" 
   defines "u == vec_of_onb_enum a"
     and "v == vec_of_onb_enum b"
     and "norm2 == vec_of_onb_enum a \<bullet>c vec_of_onb_enum a"
-  shows "mat_of_cblinfun (proj a) *\<^sub>v v = (v \<bullet>c u) / norm2 \<cdot>\<^sub>v u"
+  shows   "mat_of_cblinfun (proj a) *\<^sub>v v = (v \<bullet>c u) / norm2 \<cdot>\<^sub>v u"
 proof-
   define d where "d = canonical_basis_length TYPE('a)"
   have udim: "dim_vec u = d"
@@ -1542,14 +1543,12 @@ proof-
   have vdim: "dim_vec v = d"
     unfolding v_def d_def
     by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
-
   have "dim_col (mat_of_cols d [u]) = 1"
     by auto
   hence x1: "row (mat_of_cols d [u]) i $ 0 = u $ i"
     if "i < d"
     for i
     unfolding row_def mat_of_cols_def using that by auto
-
   have "dim_row (mat_of_rows d [conjugate u]) = 1"
     by auto  
   hence x3: "col (mat_of_rows d [conjugate u]) j $ 0 = cnj (u $ j)"
@@ -1557,12 +1556,40 @@ proof-
     for j
     unfolding col_def mat_of_rows_def using that
     by (simp add: udim)
-  have "row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k = vec_of_list [u $ k * cnj (u $ k)]"
+  have "row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k $ l = cnj (u $ l) * u $ k"
+    if "k < d" and "l < d"
+    for k l    
+    by (simp add: that)    
+  hence "row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k $ l * v $ l =
+        v $ l * cnj (u $ l) * u $ k"
+    if "k < d" and "l < d"
+    for k l
+    by (simp add: that)
+  moreover have "(\<And> k. k < d \<Longrightarrow> f k = g k) \<Longrightarrow> (\<Sum>k = 0..<d. f k) =  (\<Sum>k = 0..<d. g k)"
+    for f g::"nat \<Rightarrow> complex"
+    by auto    
+  ultimately have "(\<Sum>l = 0..<d. row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k $ l * v $ l) =
+         (\<Sum>l = 0..<d. v $ l * cnj (u $ l) * u $ k)"
+    if "k < d" 
+    for k
+    using that by presburger    
+  hence "(\<Sum>i = 0..<d.
+        row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k $ i * v $ i) =
+        (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) * u $ k"
     if "k < d"
     for k
-    unfolding row_def mat_def apply auto sorry
+    by (metis (mono_tags, lifting) sum.cong that vector_space_over_itself.scale_sum_left)    
+  hence "scalar_prod (row (mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k) v
+      = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) * (u $ k)"
+    if "k < d"
+    for k
+    unfolding scalar_prod_def vdim 
+    apply auto                 
+    using \<open>\<And>k. k < d \<Longrightarrow> (\<Sum>i = 0..<d. Matrix.row (Matrix.mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k
+     $ i * v $ i) = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) * u $ k\<close> that by blast
   hence "mat d d (\<lambda>(i, j). u $ i * cnj (u $ j)) *\<^sub>v v = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) \<cdot>\<^sub>v u"
-    sorry
+    unfolding mult_mat_vec_def apply auto
+    by (smt \<open>\<And>k. k < d \<Longrightarrow> scalar_prod (row (Matrix.mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))) k) v = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) * u $ k\<close> dim_vec eq_vecI index_smult_vec(1) index_smult_vec(2) index_vec udim) 
   moreover have "mat d d (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0
                                  * col (mat_of_rows d [conjugate u]) j $ 0)
       = mat d d (\<lambda>(i, j). u $ i * cnj (u $ j))"
@@ -1582,7 +1609,7 @@ proof-
       ultimately show ?thesis
         using x1 x3 that
         by auto
-  qed
+    qed
     thus ?thesis 
       by auto
   qed
@@ -1590,16 +1617,41 @@ proof-
      (\<lambda>(i, j). row (mat_of_cols d [u]) i $ 0 * col (mat_of_rows d [conjugate u]) j $ 0) *\<^sub>v
     v = (\<Sum>i = 0..<d. v $ i * cnj (u $ i)) \<cdot>\<^sub>v u"
     by simp
-
   hence "(mat_of_cols d [u] * mat_of_rows d [conjugate u]) *\<^sub>v v = (v \<bullet>c u) \<cdot>\<^sub>v u"
     unfolding times_mat_def scalar_prod_def apply auto
-    using udim by blast    
-  show ?thesis
-    using mat_of_cblinfun_proj[where 'a = 'a and a = a]
-    sorry
+    using udim by blast
+  moreover have "1 / norm2 \<cdot>\<^sub>m
+      (mat_of_cols d [vec_of_onb_enum a] *
+       mat_of_rows d [conjugate (vec_of_onb_enum a)]) *\<^sub>v v =
+       1 / norm2 \<cdot>\<^sub>v
+      ((mat_of_cols d [vec_of_onb_enum a] *
+       mat_of_rows d [conjugate (vec_of_onb_enum a)]) *\<^sub>v v)"
+  proof-
+    have "mat_of_cols d [vec_of_onb_enum a] *
+       mat_of_rows d [conjugate (vec_of_onb_enum a)] \<in> carrier_mat d d"
+      unfolding d_def
+      by (simp add: carrier_matI) 
+    moreover have "v \<in> carrier_vec d"
+      unfolding d_def v_def
+      using carrier_vecI d_def v_def vdim by auto
+    ultimately show ?thesis 
+      using mult_mat_vec by auto
+  qed
+  ultimately have "1 / norm2 \<cdot>\<^sub>m
+      (mat_of_cols d [vec_of_onb_enum a] *
+       mat_of_rows d [conjugate (vec_of_onb_enum a)]) *\<^sub>v v =
+       1 / norm2 \<cdot>\<^sub>v (v \<bullet>c u \<cdot>\<^sub>v u)"
+    by (simp add: u_def)    
+  hence "1 / norm2 \<cdot>\<^sub>m
+      (mat_of_cols d [vec_of_onb_enum a] *
+       mat_of_rows d [conjugate (vec_of_onb_enum a)]) *\<^sub>v v =
+       v \<bullet>c u / norm2 \<cdot>\<^sub>v u"
+    by auto
+  thus ?thesis
+    unfolding d_def norm2_def mat_of_cblinfun_proj[where 'a = 'a and a = a].
 qed
 
-(* NEW *)
+
 lemma mk_projector_orthog_recurrence:
   fixes S::"'a::{onb_enum, chilbert_space} list"
     and a::'a
@@ -1831,7 +1883,7 @@ qed
 
 
 (*
-(* NEW *)
+
 lemma mat_of_cblinfun_Proj_Span_EASY:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
   assumes "is_ortho_set (set S)" and "distinct S"
