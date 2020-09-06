@@ -16,8 +16,14 @@ unbundle cblinfun_notation
 
 subsubsection\<open>Gram Schmidt sub\<close>
 
+
+
 (* Probably more effecient in code generation than comparing with 0 *)
+(* Ask to Dominique: Could we avoid the variable n? For example:
+definition "vec_is_zero v = (\<forall>i<dim_vec n. v $ i = 0)"
+ *)
 definition "vec_is_zero n v = (\<forall>i<n. v $ i = 0)"
+
 
 lemma vec_is_zero: "dim_vec v = n \<Longrightarrow> vec_is_zero n v \<longleftrightarrow> v = 0\<^sub>v n"
   unfolding vec_is_zero_def apply auto
@@ -2026,12 +2032,83 @@ proof-
 qed
 
 (* NEW *)
-lemma Span_map_vec_of_onb_enum:
-  fixes S :: "'a::onb_enum list"
-  assumes "map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)"
-  shows "Span (set S') = Span (set S)"
-  sorry
+fun nonzero_vec :: "(complex vec) list \<Rightarrow> (complex vec) list"
+  where "nonzero_vec [] =  []"
+  | "nonzero_vec (x#xs) = (if vec_is_zero (dim_vec x) x then xs else x#(nonzero_vec xs))"
 
+
+(* NEW *)
+lemma gram_schmidt0_corthogonal':
+  assumes a1: "corthogonal R" 
+    and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
+    and a3: "vec_is_zero d a"
+    and a4: "a \<in> set R"
+  shows "gram_schmidt_sub0 d [] R = nonzero_vec (a # R)"
+  using assms proof(induction R)
+  case Nil
+  have "a \<in> set R"
+    by (simp add: a4)    
+  hence w1: "dim_vec a = d"
+    by (simp add: a2)    
+  have "gram_schmidt_sub0 d [] [] = []"
+    by auto
+  moreover have "nonzero_vec [a] = ([]::complex vec list)"
+    using a3 w1 by auto
+  ultimately show ?case by auto
+next
+  case (Cons a R)
+  then show ?case sorry
+qed
+
+
+
+(* NEW *)
+lemma gram_schmidt0_corthogonal:
+  assumes a1: "corthogonal R" 
+    and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
+  shows "gram_schmidt0 d R = nonzero_vec R"
+  using assms
+proof(induction R)
+  case Nil
+  thus ?case
+    by (simp add: gram_schmidt0_def) 
+next
+  case (Cons a R)
+  assume  b2: "corthogonal (a # R)"
+    and b3: "\<And>x. x \<in> set (a # R) \<Longrightarrow> dim_vec x = d"
+  define w' where "w' = 0\<^sub>v d + a"
+  have "dim_vec a = d"
+    by (simp add: b3)    
+  hence "w' = a"
+    unfolding w'_def 
+    by auto
+  have "corthogonal R"
+    using b2 unfolding corthogonal_def
+    apply auto
+     apply (metis Ex_less_Suc less_trans_Suc nth_Cons_Suc)
+    by (metis (no_types, lifting) Ex_less_Suc Suc_inject less_trans_Suc nth_Cons_Suc)
+  have "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
+    using b3 by auto
+  have "gram_schmidt0 d R = nonzero_vec R"
+    by (simp add: Cons.IH \<open>\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d\<close> \<open>corthogonal R\<close>)  
+  have "(if vec_is_zero d a then gram_schmidt_sub0 d [] R
+        else gram_schmidt_sub0 d [a] R) = nonzero_vec (a # R)"
+  proof(cases "vec_is_zero d a")
+    case True    
+    have "gram_schmidt_sub0 d [] R = nonzero_vec (a # R)"
+      using gram_schmidt0_corthogonal' True \<open>\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d\<close> \<open>corthogonal R\<close> 
+      sorry (* Ask to Dominique about the proof of this fact *)
+    thus ?thesis using True by auto
+  next
+    case False
+    have "gram_schmidt_sub0 d [a] R = nonzero_vec (a # R)"
+      sorry
+    thus ?thesis using False by auto
+  qed
+  thus "gram_schmidt0 d (a # R) = nonzero_vec (a # R)"
+    unfolding gram_schmidt0_def apply auto
+    using \<open>w' = a\<close> w'_def by auto    
+qed
 
 (* NEW *)
 lemma gram_schmidt0_fixpoint:
@@ -2039,7 +2116,27 @@ lemma gram_schmidt0_fixpoint:
   defines "d == canonical_basis_length TYPE('a)"
   assumes "is_ortho_set (set S)" and "distinct S"
   shows "gram_schmidt0 d (map vec_of_onb_enum S) = map vec_of_onb_enum S"
+proof-
+  define R where "R = map vec_of_onb_enum S"
+  have  "dim_vec x = d"
+    if "x \<in> set R"
+    for x
+    sorry
+  moreover have "corthogonal R"
+    sorry
+  ultimately have "gram_schmidt0 d R = R"
+    using gram_schmidt0_corthogonal (*by blast*) sorry
+  thus ?thesis unfolding R_def.
+qed
+
+(* NEW *)
+lemma Span_map_vec_of_onb_enum:
+  fixes S :: "'a::onb_enum list"
+  assumes "map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)"
+  shows "Span (set S') = Span (set S)"
   sorry
+
+
 
 (* NEW *)
 lemma mat_of_cblinfun_Proj_Span_aux_1:
