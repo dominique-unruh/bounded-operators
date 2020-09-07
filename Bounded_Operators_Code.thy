@@ -19,9 +19,6 @@ subsubsection\<open>Gram Schmidt sub\<close>
 
 
 (* Probably more effecient in code generation than comparing with 0 *)
-(* Ask to Dominique: Could we avoid the variable n? For example:
-definition "vec_is_zero v = (\<forall>i<dim_vec n. v $ i = 0)"
- *)
 definition "vec_is_zero n v = (\<forall>i<n. v $ i = 0)"
 
 
@@ -1534,7 +1531,6 @@ next
     by auto 
 qed
 
-(* NEW *)
 lemma mat_of_cblinfun_proj':
   fixes a b::"'a::{onb_enum, chilbert_space}" 
   defines "u == vec_of_onb_enum a"
@@ -1947,12 +1943,111 @@ next
 qed
 *)
 
-(* NEW *)
+lemma is_ortho_set_corthogonal:
+  fixes S :: "'a::onb_enum list"
+  defines  "R == map vec_of_onb_enum S"
+  assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
+      and a3: "0 \<notin> set S"
+  shows    "corthogonal R"
+proof-
+  have x1: "R ! i \<bullet>c R ! j = \<langle>S ! j, S ! i\<rangle>"
+    if b1: "i < length R"
+      and b2: "j < length R"
+    for i j
+    by (metis Bounded_Operators_Matrices.cinner_ell2_code R_def b1 b2 length_map nth_map)     
+  have "R ! i \<bullet>c R ! j = 0"
+    if b1: "i < length R"
+      and b2: "j < length R"
+      and b3: "i \<noteq> j"
+    for i j 
+  proof-
+    have "S ! i \<in> set S"
+      using R_def b1 by auto
+    moreover have "S ! j \<in> set S"
+      using R_def b2 by auto      
+    moreover have "S ! j \<noteq> S ! i"
+      using that a2 R_def nth_eq_iff_index_eq by auto
+    ultimately have "\<langle>S ! j, S ! i\<rangle> = 0"
+      using a1 unfolding is_ortho_set_def by blast
+    thus ?thesis
+      by (simp add: b1 b2 x1) 
+  qed
+  moreover have "i \<noteq> j"
+    if b1: "i < length R"
+      and b2: "j < length R"
+      and b3: "R ! i \<bullet>c R ! j = 0"
+    for i j 
+  proof(rule ccontr)
+    assume c1: "\<not> i \<noteq> j"
+    hence  "i = j" by blast
+    have "S ! i \<in> set S"
+      using R_def b1 by auto
+    have "S ! j \<in> set S"
+      using R_def b2 by auto      
+    have "S ! j = S ! i"
+      using c1 by auto            
+    hence "\<langle>S ! j, S ! i\<rangle> \<noteq> 0"
+      using \<open>S ! i \<in> set S\<close> a3 by auto
+    hence "R ! i \<bullet>c R ! j \<noteq> 0"
+      using b2 c1 x1 by auto
+    thus False using that(3) by blast
+  qed
+  ultimately show ?thesis by blast
+qed
+
+
+
 lemma exists_map_vec_of_onb_enum:
   fixes S::"'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
   shows "\<exists>S'::'a list. map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)
         \<and> is_ortho_set (set S') \<and> distinct S'"
+(* TODO: Make lemma: corthogonal \<Longrightarrow> is_ortho_set.
+    Then use this proof or José's proof, whichever ends up nicer after that lemma is used *)
+proof -
+  let ?vec_of_onb_enum = "vec_of_onb_enum :: 'a \<Rightarrow> complex vec"
+  let ?onb_enum_of_vec = "onb_enum_of_vec::complex vec \<Rightarrow> 'a"
+  define R where "R = map vec_of_onb_enum S"
+  define S'::"'a list" where 
+    "S' = map ?onb_enum_of_vec (gram_schmidt0 d R)"
+  have gs_dim: "\<And>x. x \<in> set (gram_schmidt0 d R) \<Longrightarrow> dim_vec x = d"
+    using cof_vec_space.gram_schmidt0_result(1)[where n=d and ws=R]
+    by (metis R_def canonical_basis_length_eq carrier_vecD carrier_vecI d_def dim_vec_of_onb_enum_list' ex_map_conv subset_code(1))
+  have "map ?vec_of_onb_enum S'
+      = map (?vec_of_onb_enum \<circ> ?onb_enum_of_vec) (gram_schmidt0 d R)"
+    unfolding S'_def by simp
+  also have "\<dots> = map id (gram_schmidt0 d R)"
+    apply (rule map_cong)
+     apply auto
+    apply (subst vec_of_onb_enum_inverse)
+    using gs_dim d_def by auto
+  also have "\<dots> = gram_schmidt0 d R"
+    by simp
+  finally have 1: "map vec_of_onb_enum S' = gram_schmidt0 d R"
+    by -
+  have "corthogonal (gram_schmidt0 d R)"
+    apply (rule cof_vec_space.gram_schmidt0_result(3)[where n=d and ws=R])
+    using gs_dim
+    by (metis R_def canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' imageE set_map subset_code(1))
+  have 2: "is_ortho_set (set S')"
+    (* Make lemma: corthogonal \<Longrightarrow> is_ortho_set. Possibly using stuff from the proof below *)
+    sorry
+  have "distinct (gram_schmidt0 d R)"
+    apply (rule cof_vec_space.gram_schmidt0_result(2)[where n=d and ws=R])
+    using gs_dim
+    by (metis R_def canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' imageE set_map subset_code(1))
+  then have 3: "distinct S'"
+    unfolding S'_def distinct_map
+    apply simp
+    using gs_dim
+    by (metis "1" S'_def distinct_map)
+  show ?thesis
+    apply (rule exI[of _ S'])
+    using 1 2 3 unfolding R_def
+    by auto
+qed
+(*
+(* \<exists>S': S' = gram_schmidt0 d S \<and> is_ortho_set S' \<and> distinct S' *)
 proof-
   define R where "R = map vec_of_onb_enum S"
   define S'::"'a list" where 
@@ -2030,115 +2125,46 @@ proof-
         cof_vec_space.gram_schmidt0_result(2) distinct_map)    
   ultimately show ?thesis by auto
 qed
+*)
 
-(* NEW *)
-fun nonzero_vec :: "(complex vec) list \<Rightarrow> (complex vec) list"
+(* fun nonzero_vec :: "(complex vec) list \<Rightarrow> (complex vec) list"
   where "nonzero_vec [] =  []"
-  | "nonzero_vec (x#xs) = (if vec_is_zero (dim_vec x) x then xs else x#(nonzero_vec xs))"
+  | "nonzero_vec (x#xs) = (if vec_is_zero (dim_vec x) x then xs else x#(nonzero_vec xs))" *)
 
 
-(* NEW *)
 lemma gram_schmidt0_corthogonal:
   assumes a1: "corthogonal R" 
     and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
-  shows "gram_schmidt0 d R = nonzero_vec R"
-  using assms
-proof(induction R)
-  case Nil
-  thus ?case
-    by (simp add: gram_schmidt0_def) 
-next
-  case (Cons a R)
-  assume  b2: "corthogonal (a # R)"
-    and b3: "\<And>x. x \<in> set (a # R) \<Longrightarrow> dim_vec x = d"
-  define w' where "w' = 0\<^sub>v d + a"
-  have "dim_vec a = d"
-    by (simp add: b3)    
-  hence "w' = a"
-    unfolding w'_def 
-    by auto
-  have "corthogonal R"
-    using b2 unfolding corthogonal_def
-    apply auto
-     apply (metis Ex_less_Suc less_trans_Suc nth_Cons_Suc)
-    by (metis (no_types, lifting) Ex_less_Suc Suc_inject less_trans_Suc nth_Cons_Suc)
-  have "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
-    using b3 by auto
-  have "gram_schmidt0 d R = nonzero_vec R"
-    by (simp add: Cons.IH \<open>\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d\<close> \<open>corthogonal R\<close>)  
-  have "(if vec_is_zero d a then gram_schmidt_sub0 d [] R
-        else gram_schmidt_sub0 d [a] R) = nonzero_vec (a # R)"
-  proof(cases "vec_is_zero d a")
-    case True    
-    have "gram_schmidt_sub0 d [] R = nonzero_vec (a # R)" 
-      sorry (* Ask to Dominique about the proof of this fact *)
-    thus ?thesis using True by auto
+  shows "gram_schmidt0 d R = rev R"
+proof -
+  have "gram_schmidt_sub0 d U R = rev R @ U"
+    if "corthogonal ((rev U) @ R)" 
+      and "\<And>x. x \<in> set U \<union> set R \<Longrightarrow> dim_vec x = d" for U
+  proof (insert that, induction R arbitrary: U)
+    case Nil
+    show ?case 
+      by auto
   next
-    case False
-    have "gram_schmidt_sub0 d [a] R = nonzero_vec (a # R)"
+    case (Cons a R)
+    have \<open>a \<noteq> 0\<^sub>v d\<close>
+      using Cons.prems sorry
+    then have nonzero_a: "\<not> vec_is_zero d a"
+      by (simp add: Cons.prems(2) vec_is_zero)
+    have adjuster_a: "adjuster d a U + a = a"
       sorry
-    thus ?thesis using False by auto
+    have "gram_schmidt_sub0 d U (a # R) = gram_schmidt_sub0 d (a # U) R"
+      by (simp add: adjuster_a nonzero_a)
+    also have "\<dots> = rev (a # R) @ U"
+      apply (subst Cons.IH)
+      using Cons.prems by simp_all
+    finally show ?case
+      by -
   qed
-  thus "gram_schmidt0 d (a # R) = nonzero_vec (a # R)"
-    unfolding gram_schmidt0_def apply auto
-    using \<open>w' = a\<close> w'_def by auto    
+  from this[where U="[]"] show ?thesis
+    unfolding gram_schmidt0_def using assms by auto
 qed
 
-(* NEW *)
-lemma is_ortho_set_corthogonal:
-  fixes S :: "'a::onb_enum list"
-  defines  "R == map vec_of_onb_enum S"
-  assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
-      and a3: "0 \<notin> set S"
-  shows    "corthogonal R"
-proof-
-  have x1: "R ! i \<bullet>c R ! j = \<langle>S ! j, S ! i\<rangle>"
-    if b1: "i < length R"
-      and b2: "j < length R"
-    for i j
-    by (metis Bounded_Operators_Matrices.cinner_ell2_code R_def b1 b2 length_map nth_map)     
-  have "R ! i \<bullet>c R ! j = 0"
-    if b1: "i < length R"
-      and b2: "j < length R"
-      and b3: "i \<noteq> j"
-    for i j 
-  proof-
-    have "S ! i \<in> set S"
-      using R_def b1 by auto
-    moreover have "S ! j \<in> set S"
-      using R_def b2 by auto      
-    moreover have "S ! j \<noteq> S ! i"
-      using that a2 R_def nth_eq_iff_index_eq by auto
-    ultimately have "\<langle>S ! j, S ! i\<rangle> = 0"
-      using a1 unfolding is_ortho_set_def by blast
-    thus ?thesis
-      by (simp add: b1 b2 x1) 
-  qed
-  moreover have "i \<noteq> j"
-    if b1: "i < length R"
-      and b2: "j < length R"
-      and b3: "R ! i \<bullet>c R ! j = 0"
-    for i j 
-  proof(rule ccontr)
-    assume c1: "\<not> i \<noteq> j"
-    hence  "i = j" by blast
-    have "S ! i \<in> set S"
-      using R_def b1 by auto
-    have "S ! j \<in> set S"
-      using R_def b2 by auto      
-    have "S ! j = S ! i"
-      using c1 by auto            
-    hence "\<langle>S ! j, S ! i\<rangle> \<noteq> 0"
-      using \<open>S ! i \<in> set S\<close> a3 by auto
-    hence "R ! i \<bullet>c R ! j \<noteq> 0"
-      using b2 c1 x1 by auto
-    thus False using that(3) by blast
-  qed
-  ultimately show ?thesis by blast
-qed
-
-(* NEW *)
-lemma gram_schmidt0_fixpoint:
+(* lemma gram_schmidt0_fixpoint:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)" 
       and "R == map vec_of_onb_enum S"
@@ -2146,7 +2172,7 @@ lemma gram_schmidt0_fixpoint:
       and   a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
       and   a3: "0 \<notin> set S"
       and   a4: "distinct S"
-  shows "gram_schmidt0 d R = nonzero_vec R"
+  shows "gram_schmidt0 d R = rev R"
 proof-  
   have  "dim_vec x = d"
     if "x \<in> set R"
@@ -2154,22 +2180,21 @@ proof-
     by (simp add: a2 that)    
   moreover have "corthogonal R"
     by (simp add: R_def a1 a3 a4 is_ortho_set_corthogonal)    
-  ultimately have "gram_schmidt0 d R = nonzero_vec R"
+  ultimately have "gram_schmidt0 d R = rev R"
     using gram_schmidt0_corthogonal
-    by blast 
+    by blast
   thus ?thesis unfolding R_def.
 qed
+ *)
 
-(* NEW *)
 lemma Span_map_vec_of_onb_enum:
   fixes S S' :: "'a::onb_enum list"
   defines "R == map vec_of_onb_enum S" and "R' == map vec_of_onb_enum S'"
-  assumes "gram_schmidt0 d R = R'"
+  assumes "gram_schmidt0 d R = rev R'"
   shows "Span (set S) = Span (set S')"
   sorry
 
 
-(* NEW *)
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"

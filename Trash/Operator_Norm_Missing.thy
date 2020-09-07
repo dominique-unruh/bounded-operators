@@ -51,7 +51,9 @@ proof-
   thus ?thesis by auto
 qed
 
-(* ask to dominique where not_singleton was defined *)
+(* ask to dominique where not_singleton was defined 
+ \<Longrightarrow> In Preliminaries.thy
+*)
 (* TODO: remove assumption "UNIV\<noteq>{0}" and add type class not_singleton instead *)
 lemma onorm_sphere:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>

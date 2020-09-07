@@ -527,6 +527,7 @@ proof(rule classical)
   thus ?thesis using g2 by (smt leD)
 qed
 
+(* TODO: should be called vec_of_onb_enum_inverse *)
 lemma onb_enum_of_vec_inverse[simp]:
   fixes w::"'a::onb_enum"
   shows  "onb_enum_of_vec (vec_of_onb_enum w) = w"
