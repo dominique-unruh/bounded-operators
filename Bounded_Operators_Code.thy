@@ -16,11 +16,7 @@ unbundle cblinfun_notation
 
 subsubsection\<open>Gram Schmidt sub\<close>
 
-
-
-(* Probably more effecient in code generation than comparing with 0 *)
 definition "vec_is_zero n v = (\<forall>i<n. v $ i = 0)"
-
 
 lemma vec_is_zero: "dim_vec v = n \<Longrightarrow> vec_is_zero n v \<longleftrightarrow> v = 0\<^sub>v n"
   unfolding vec_is_zero_def apply auto
@@ -32,7 +28,6 @@ fun gram_schmidt_sub0
      (let w' = adjuster n w us + w in
       if vec_is_zero n w' then gram_schmidt_sub0 n us ws
                           else gram_schmidt_sub0 n (w' # us) ws)"
-
 
 lemma (in cof_vec_space) adjuster_already_in_span:
   assumes "w \<in> carrier_vec n"
@@ -690,8 +685,7 @@ proof-
   moreover have "distinct (enum_class.enum::'a list)"
     using enum_distinct by auto
   ultimately have "length (enum_class.enum::'a list) = 1"
-    by (metis One_nat_def UNIV_witness \<open>\<exists>i. i \<in> UNIV\<close> card_num1 class_semiring.one_closed
-        length_remdups_card_conv plus_1_eq_Suc remdups_id_iff_distinct top.extremum_unique)      
+    using distinct_card by fastforce      
   hence p0: "length (canonical_basis::'a ell2 list) = 1"
     unfolding canonical_basis_ell2_def by simp
   hence q1: "canonical_basis_length TYPE('a ell2) = 1"
@@ -1333,9 +1327,10 @@ proof-
         + projection (complex_span (set S)) u"
     for u   
     apply(rule projection_insert)
-    using ios unfolding is_ortho_set_def apply auto
+    using ios unfolding is_ortho_set_def
+    apply (metis Set.set_insert Un_insert_left a1 aS insertI1 insert_union is_ortho_set_def list.simps(15))
     using aS
-    by (metis a1 insertCI is_ortho_set_def list.simps(15))
+    by simp
   have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
         = projection (complex_span {a}) u + projection (complex_span (set S)) u"
     for u
@@ -1653,295 +1648,6 @@ proof-
     unfolding d_def norm2_def mat_of_cblinfun_proj[where 'a = 'a and a = a].
 qed
 
-(*
-lemma mk_projector_orthog_recurrence:
-  fixes S::"'a::{onb_enum, chilbert_space} list"
-    and a::'a
-  defines "d == canonical_basis_length TYPE('a)"
-  assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)" 
-    and a3: "\<And>x. x\<in>set (a#S) \<Longrightarrow> x \<noteq> 0"
-  shows "mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum (a # S)))
-  = mat_of_cblinfun (proj a) +
-    mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S))"
-  using assms proof(induction S arbitrary: a)
-  case Nil
-  have "dim_vec (vec_of_onb_enum a) = d"
-    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
-  moreover have "dim_vec (0\<^sub>v d) = d"
-    by simp
-  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
-    using carrier_vec_dim_vec left_zero_vec by blast   
-  define norm2 where "norm2 = (vec_of_onb_enum a) \<bullet>c (vec_of_onb_enum a)"
-  have dvad: "dim_vec (vec_of_onb_enum a) = d"
-    by (simp add: \<open>dim_vec (vec_of_onb_enum a) = d\<close>)    
-  have norm2_0:"norm2 = (0\<^sub>v d + vec_of_onb_enum a) \<bullet>c (0\<^sub>v d + vec_of_onb_enum a)"
-    unfolding norm2_def
-    using s1 by auto 
-  have "mat_of_cblinfun (proj a) \<in> carrier_mat d d"
-    unfolding mat_of_cblinfun_def d_def by auto
-  hence w1: "mat_of_cblinfun (proj a) +
-    0\<^sub>m (dim_vec (vec_of_onb_enum a)) (dim_vec (vec_of_onb_enum a)) 
-    = mat_of_cblinfun (proj a)"
-    by (simp add: dvad)    
-  have w2: "(if norm2 = 0 then 0\<^sub>m d d
-        else 1 / norm2 \<cdot>\<^sub>m
-     (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) 
-    = mat_of_cblinfun (proj a)"
-  proof(cases "norm2 = 0")
-    case True
-    hence "a = 0"
-      unfolding norm2_def
-      by (metis Bounded_Operators_Matrices.cinner_ell2_code cinner_eq_zero_iff) 
-    hence "proj a = 0"
-      apply transfer
-      by (simp add: projection_zero_subspace)
-    hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
-      by (metis \<open>mat_of_cblinfun (proj a) \<in> carrier_mat d d\<close> cancel_comm_monoid_add_class.diff_cancel 
-          cblinfun_of_mat_minusOp' minus_r_inv_mat)      
-    thus ?thesis
-      by (simp add: True) 
-  next
-    case False
-    hence "a \<noteq> 0"
-      unfolding norm2_def
-      by (metis Bounded_Operators_Matrices.cinner_ell2_code cinner_zero_left)
-    hence "1 / norm2 \<cdot>\<^sub>m
-          (mat_of_cols d [vec_of_onb_enum a] *
-           mat_of_rows d [conjugate (vec_of_onb_enum a)]) =
-    mat_of_cblinfun (proj a)"
-      using mat_of_cblinfun_proj
-      by (simp add: mat_of_cblinfun_proj d_def norm2_def)
-    thus ?thesis using False by auto
-  qed
-  have w3: "gram_schmidt0 d ([]::complex vec list) = []"
-    unfolding gram_schmidt0_def by auto
-  show ?case 
-    apply auto using w3 apply auto
-    unfolding gram_schmidt0_def
-    using s1 w1 dvad norm2_0  unfolding d_def apply auto
-    using d_def vec_is_zero w2 by fastforce     
-next
-  case (Cons b S)
-  define u where "u = 0\<^sub>v d + vec_of_onb_enum a"
-  define v where "v = 0\<^sub>v d + vec_of_onb_enum b"
-  have "dim_vec (vec_of_onb_enum a) = d"
-    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
-  hence u_def': "u = vec_of_onb_enum a"
-    unfolding u_def
-    using carrier_vec_dim_vec left_zero_vec by blast   
-  have "dim_vec (vec_of_onb_enum b) = d"
-    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
-  hence v_def': "v = vec_of_onb_enum b"
-    unfolding v_def
-    using carrier_vec_dim_vec left_zero_vec by blast   
-  have "a \<noteq> 0"
-    by (simp add: Cons.prems(3))    
-  hence not_vec_is_zero_u: "\<not> vec_is_zero d u"
-    unfolding u_def'
-    by (metis \<open>dim_vec (vec_of_onb_enum a) = d\<close> d_def onb_enum_of_vec_inverse vec_is_zero 
-        vec_of_onb_enum_zero) 
-  have "b \<noteq> 0"
-    using Cons.prems(3) by auto
-  hence not_vec_is_zero_v: "\<not> vec_is_zero d v"
-    unfolding v_def'
-    by (metis \<open>dim_vec (vec_of_onb_enum b) = d\<close> d_def onb_enum_of_vec_inverse vec_is_zero
-        vec_of_onb_enum_zero)
-  define w where "w = - (vec_of_onb_enum b \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u + 0\<^sub>v d +
-               vec_of_onb_enum b"
-  hence w_def': "w = - (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u + v"
-    unfolding u_def' v_def' apply auto
-    by (simp add: \<open>dim_vec (vec_of_onb_enum a) = d\<close> carrier_vecI)
-  have dim_vec_u: "dim_vec u = d"
-    unfolding u_def'
-    by (simp add: \<open>dim_vec (vec_of_onb_enum a) = d\<close>)
-  hence carrier_vec_u: "u \<in> carrier_vec d"
-    by auto
-  have dim_vec_v: "dim_vec v = d"
-    unfolding v_def'
-    by (simp add: \<open>dim_vec (vec_of_onb_enum b) = d\<close>)
-  hence carrier_vec_v: "v \<in> carrier_vec d"
-    by auto
-  have dim_vec_w: "dim_vec w = d"
-    unfolding w_def
-    by (simp add: \<open>dim_vec (vec_of_onb_enum b) = d\<close>)
-  hence carrier_vec_w: "w \<in> carrier_vec d"
-    by auto
-  have "- (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u \<in> carrier_vec d"
-    by (simp add: carrier_vec_u)    
-  hence "w = v + (- (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)"
-    unfolding w_def' 
-    using comm_add_vec carrier_vec_v by blast    
-  also have "\<dots> = v - (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u"
-    by auto
-  finally have w_def'': "w = v - (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u".
-  have "mk_projector_orthog d (gram_schmidt_sub0 d [u] (vec_of_onb_enum b # map vec_of_onb_enum S))
-      = mat_of_cblinfun (proj a)
-      + mk_projector_orthog d (gram_schmidt_sub0 d [v] (map vec_of_onb_enum S))"
-  proof(cases "vec_is_zero d (v - (v \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)")
-    case True
-    thus ?thesis unfolding u_def' v_def' apply auto
-    proof -
-      assume a1: "vec_is_zero d (vec_of_onb_enum b - vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a)"
-      have f2: "\<forall>v. dim_vec v \<noteq> canonical_basis_length (TYPE('a)::'a itself) \<or> vec_of_onb_enum (onb_enum_of_vec v::'a) = v"
-        by (meson vec_of_onb_enum_inverse)
-      have f3: "dim_vec (- (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)) \<cdot>\<^sub>v vec_of_onb_enum a) = canonical_basis_length (TYPE('a)::'a itself)"
-        by (metis \<open>dim_vec (vec_of_onb_enum a) = d\<close> d_def index_smult_vec(2))
-      have f4: "vec_of_onb_enum (onb_enum_of_vec (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a)::'a) = vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a"
-        using \<open>dim_vec (vec_of_onb_enum a) = d\<close> d_def by auto
-      have "dim_vec (vec_of_onb_enum b - vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a) = d"
-        using \<open>dim_vec (vec_of_onb_enum a) = d\<close> by auto
-      hence "vec_of_onb_enum b - vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a = 0\<^sub>v d"
-        using a1 vec_is_zero by blast
-      hence "vec_of_onb_enum (b - onb_enum_of_vec (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a)) = 0\<^sub>v d"
-        using f4 by (simp add: vec_of_onb_enum_minus)
-      hence f5: "b = onb_enum_of_vec (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) \<cdot>\<^sub>v vec_of_onb_enum a)"
-        by (metis (no_types) d_def eq_iff_diff_eq_0 onb_enum_of_vec_inverse vec_of_onb_enum_zero)
-      have "b \<in> set (a # b # S)"
-        by auto
-      hence "\<langle>a, b\<rangle> = 0"
-        by (metis Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def list.set_intros(1))
-      hence "0 = vec_of_onb_enum b \<bullet>c vec_of_onb_enum a"
-        using f5 f4 by (metis (no_types) \<open>dim_vec (vec_of_onb_enum a) = d\<close> cinner_onb_enum_of_vec d_def index_smult_vec(2) onb_enum_of_vec_inverse)
-      hence "- (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a) / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) + vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a) = - (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a) / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)"
-        by auto
-      hence "vec_of_onb_enum (onb_enum_of_vec (- (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)) \<cdot>\<^sub>v vec_of_onb_enum a) + 0 + b) = - (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)) \<cdot>\<^sub>v vec_of_onb_enum a"
-        using f5 f4 f3 f2 by (metis (no_types) add_cancel_right_right add_smult_distrib_vec minus_divide_left vec_of_onb_enum_add)
-      thus "mk_projector_orthog d (let w' = - (vec_of_onb_enum b \<bullet>c vec_of_onb_enum a / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)) \<cdot>\<^sub>v vec_of_onb_enum a + 0\<^sub>v d + vec_of_onb_enum b in if vec_is_zero d w' then gram_schmidt_sub0 d [vec_of_onb_enum a] (map vec_of_onb_enum S) else gram_schmidt_sub0 d [w', vec_of_onb_enum a] (map vec_of_onb_enum S)) = mat_of_cblinfun (proj a) + mk_projector_orthog d (gram_schmidt_sub0 d [vec_of_onb_enum b] (map vec_of_onb_enum S))"
-        by (metis (no_types) \<open>b \<noteq> 0\<close> add_cancel_right_right onb_enum_of_vec_inverse)
-    qed 
-  next
-    case False
-    have b1: "is_ortho_set (set S)"
-      using Cons.prems(1) is_onb_delete by auto      
-    have b2: "distinct S"
-      using Cons.prems(2) by auto      
-    have b3: "\<And>x. x\<in>set S \<Longrightarrow> x \<noteq> 0"
-      by (simp add: Cons.prems(3))
-    have r1: "\<not> (vec_is_zero d v)"
-      unfolding v_def'
-      using not_vec_is_zero_v v_def' by auto      
-    have "mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum (b # S)))
-  = mat_of_cblinfun (proj b) +
-    mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S))"
-      by (metis Cons.hyps(1) Cons.prems(1) Cons.prems(2) Cons.prems(3) d_def 
-          distinct_length_2_or_more is_onb_delete list.set_intros(2) list.simps(15))
-    hence " mk_projector_orthog d
-     (gram_schmidt_sub0 d [v]
-               (map vec_of_onb_enum S)) =
-    mat_of_cblinfun (proj b) +
-    mk_projector_orthog d
-     (gram_schmidt0 d (map vec_of_onb_enum S))"      
-      apply auto
-      unfolding v_def gram_schmidt0_def
-      using v_def v_def' r1
-      by simp
-    moreover have "mk_projector_orthog d (gram_schmidt_sub0 d [w, u] (map vec_of_onb_enum S)) =
-  mat_of_cblinfun (proj a) + mk_projector_orthog d (gram_schmidt_sub0 d [v] (map vec_of_onb_enum S))"
-    proof-
-      have  "mat_of_cblinfun (proj a) *\<^sub>v v = v \<bullet>c u / (u \<bullet>c u) \<cdot>\<^sub>v u"
-        unfolding v_def' u_def'
-        using mat_of_cblinfun_proj' by blast
-      show ?thesis 
-        sorry        
-    qed
-    ultimately have "mk_projector_orthog d
-     (gram_schmidt_sub0 d [w, u] (map vec_of_onb_enum S)) =
-    mat_of_cblinfun (proj a) +
-    mk_projector_orthog d (gram_schmidt_sub0 d [v] (map vec_of_onb_enum S))"
-      unfolding gram_schmidt0_def
-      by auto     
-    moreover have "\<not> (vec_is_zero d w)"
-      unfolding w_def''  using False 
-      by auto
-    ultimately have "mk_projector_orthog d
-     (if vec_is_zero d w
-         then gram_schmidt_sub0 d [u] (map vec_of_onb_enum S)
-         else gram_schmidt_sub0 d [w, u] (map vec_of_onb_enum S)) =
-    mat_of_cblinfun (proj a) +
-    mk_projector_orthog d (gram_schmidt_sub0 d [v] (map vec_of_onb_enum S))"
-      by simp
-    thus ?thesis unfolding w_def
-      by (metis (no_types, lifting) adjuster.simps(1) adjuster.simps(2) gram_schmidt_sub0.simps(2)
-          minus_divide_left) 
-  qed
-  hence "mk_projector_orthog d
-      (if vec_is_zero d u
-         then gram_schmidt_sub0 d []
-               (vec_of_onb_enum b # map vec_of_onb_enum S)
-         else gram_schmidt_sub0 d [u]
-               (vec_of_onb_enum b # map vec_of_onb_enum S)) =
-    mat_of_cblinfun (proj a) +
-    mk_projector_orthog d
-     ( if vec_is_zero d v
-         then gram_schmidt_sub0 d [] (map vec_of_onb_enum S)
-         else gram_schmidt_sub0 d [v]
-               (map vec_of_onb_enum S))"
-    using not_vec_is_zero_u not_vec_is_zero_v
-    by simp
-  thus ?case     
-    apply auto
-    by (metis adjuster.simps(1) gram_schmidt0_def gram_schmidt_sub0.simps(2) u_def v_def)
-qed
-*)
-
-(*
-
-lemma mat_of_cblinfun_Proj_Span_EASY:
-  fixes S :: "'a::{onb_enum, chilbert_space} list"
-  assumes "is_ortho_set (set S)" and "distinct S"
-  shows
-    "mat_of_cblinfun (Proj (Span (set S))) =
-    (let d = canonical_basis_length TYPE('a) in 
-      mk_projector_orthog d (gram_schmidt d (map vec_of_onb_enum S)))"
-  using assms proof(induction S)
-  case Nil
-  have "space_as_set (Abs_clinear_space {0::'a}) = {0::'a}"
-    by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq)    
-  hence "projection (space_as_set (Abs_clinear_space {0::'a})) = 
-        projection {0::'a}"
-    by simp
-  also have "\<dots> = (\<lambda>_. (0::'a))"
-    by (simp add: projection_zero_subspace)    
-  finally have x2: "projection (space_as_set (Abs_clinear_space {0::'a})) = (\<lambda>_. (0::'a))".
-  have " \<langle>(canonical_basis::'a list)!i, cBlinfun (\<lambda>_. 0) *\<^sub>V (canonical_basis::'a list)!j\<rangle> = 0"
-    for i j
-    by (metis cinner_zero_right zero_cblinfun.abs_eq zero_cblinfun.rep_eq)    
-  hence x1: "mat_of_cblinfun (cBlinfun (\<lambda>_::'a. (0::'a)))
-     = (let d = canonical_basis_length TYPE('a) in 0\<^sub>m d d)"
-    unfolding mat_of_cblinfun_def zero_mat_def
-    by (metis mat_of_cblinfun_def mat_of_cblinfun_zero' zero_cblinfun.abs_eq zero_mat_def) 
-  show ?case apply auto unfolding gram_schmidt_def apply auto
-    unfolding Span_def Proj_def apply auto
-    using x1 x2 by simp
-next
-  case (Cons a S)
-  define d where "d = canonical_basis_length TYPE('a)"
-  have "is_ortho_set (set S)"
-    using Cons.prems(1) is_onb_delete by auto    
-  moreover have "distinct S"
-    using Cons.prems(2) by auto    
-  ultimately have t1: "mat_of_cblinfun (Proj (Span (set S))) =
-    (let d = canonical_basis_length TYPE('a)
-     in mk_projector_orthog d
-         (gram_schmidt d (map vec_of_onb_enum S)))"
-    by (simp add: Cons.IH)    
-  have "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))"
-    using Cons.prems(1) Cons.prems(2) Proj_Span_insert by auto
-  hence "mat_of_cblinfun (Proj (Span (set (a#S)))) = 
-         mat_of_cblinfun (Proj (Span {a}))
-       + mat_of_cblinfun (Proj (Span (set S)))"
-    by (simp add: cblinfun_of_mat_plusOp')
-  hence "mat_of_cblinfun (Proj (Span (set (a#S)))) = 
-         mat_of_cblinfun (Proj (Span {a}))
-       + mk_projector_orthog d
-         (gram_schmidt d (map vec_of_onb_enum S))"
-    unfolding d_def using t1 by metis
-  thus ?case
-    using mk_projector_orthog_recurrence
-    by (metis Cons.prems(1) Cons.prems(2) \<open>mat_of_cblinfun (Proj (Span (set (a # S)))) 
-    = mat_of_cblinfun (proj a) + mat_of_cblinfun (Proj (Span (set S)))\<close> t1)
-qed
-*)
 
 lemma is_ortho_set_corthogonal:
   fixes S :: "'a::onb_enum list"
@@ -1996,58 +1702,16 @@ proof-
 qed
 
 
+(* TODO: add a lemma relating 
+corthogonal and is_ortho_set
+*)
+
 
 lemma exists_map_vec_of_onb_enum:
   fixes S::"'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
   shows "\<exists>S'::'a list. map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)
         \<and> is_ortho_set (set S') \<and> distinct S'"
-(* TODO: Make lemma: corthogonal \<Longrightarrow> is_ortho_set.
-    Then use this proof or José's proof, whichever ends up nicer after that lemma is used *)
-proof -
-  let ?vec_of_onb_enum = "vec_of_onb_enum :: 'a \<Rightarrow> complex vec"
-  let ?onb_enum_of_vec = "onb_enum_of_vec::complex vec \<Rightarrow> 'a"
-  define R where "R = map vec_of_onb_enum S"
-  define S'::"'a list" where 
-    "S' = map ?onb_enum_of_vec (gram_schmidt0 d R)"
-  have gs_dim: "\<And>x. x \<in> set (gram_schmidt0 d R) \<Longrightarrow> dim_vec x = d"
-    using cof_vec_space.gram_schmidt0_result(1)[where n=d and ws=R]
-    by (metis R_def canonical_basis_length_eq carrier_vecD carrier_vecI d_def dim_vec_of_onb_enum_list' ex_map_conv subset_code(1))
-  have "map ?vec_of_onb_enum S'
-      = map (?vec_of_onb_enum \<circ> ?onb_enum_of_vec) (gram_schmidt0 d R)"
-    unfolding S'_def by simp
-  also have "\<dots> = map id (gram_schmidt0 d R)"
-    apply (rule map_cong)
-     apply auto
-    apply (subst vec_of_onb_enum_inverse)
-    using gs_dim d_def by auto
-  also have "\<dots> = gram_schmidt0 d R"
-    by simp
-  finally have 1: "map vec_of_onb_enum S' = gram_schmidt0 d R"
-    by -
-  have "corthogonal (gram_schmidt0 d R)"
-    apply (rule cof_vec_space.gram_schmidt0_result(3)[where n=d and ws=R])
-    using gs_dim
-    by (metis R_def canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' imageE set_map subset_code(1))
-  have 2: "is_ortho_set (set S')"
-    (* Make lemma: corthogonal \<Longrightarrow> is_ortho_set. Possibly using stuff from the proof below *)
-    sorry
-  have "distinct (gram_schmidt0 d R)"
-    apply (rule cof_vec_space.gram_schmidt0_result(2)[where n=d and ws=R])
-    using gs_dim
-    by (metis R_def canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' imageE set_map subset_code(1))
-  then have 3: "distinct S'"
-    unfolding S'_def distinct_map
-    apply simp
-    using gs_dim
-    by (metis "1" S'_def distinct_map)
-  show ?thesis
-    apply (rule exI[of _ S'])
-    using 1 2 3 unfolding R_def
-    by auto
-qed
-(*
-(* \<exists>S': S' = gram_schmidt0 d S \<and> is_ortho_set S' \<and> distinct S' *)
 proof-
   define R where "R = map vec_of_onb_enum S"
   define S'::"'a list" where 
@@ -2083,41 +1747,71 @@ proof-
   moreover have "is_ortho_set (set S')"
     unfolding is_ortho_set_def
   proof auto
-    fix x y
-    assume xs: "x \<in> set S'" and ys: "y \<in> set S'" and xy: "x \<noteq> y"
-    have "\<exists>xx. x = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) xx \<and> 
-              xx \<in> set (gram_schmidt0 d R)"
-      using xs unfolding S'_def by auto
-    then obtain xx where xx_def: "x = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) xx"
-      and "xx \<in> set (gram_schmidt0 d R)"
-      by blast
-    have "\<exists>yy. y = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) yy \<and> 
-              yy \<in> set (gram_schmidt0 d R)"
-      using ys unfolding S'_def by auto
-    then obtain yy where yy_def: "y = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) yy" 
-      and "yy \<in> set (gram_schmidt0 d R)"
-      by blast
-    have "xx \<noteq> yy"
-      using xy
-      using \<open>x = onb_enum_of_vec xx\<close> \<open>y = onb_enum_of_vec yy\<close> by auto
-    hence "yy \<bullet>c xx = 0"
+    show "x \<in> set S' \<Longrightarrow> y \<in> set S' \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+      for x y
     proof-
-      have "set (gram_schmidt0 d R) \<subseteq> carrier_vec d"
-        by (simp add: \<open>set R \<subseteq> carrier_vec d\<close> cof_vec_space.gram_schmidt0_result(1))        
-      hence "corthogonal (gram_schmidt0 d (gram_schmidt0 d R))"
+      assume xs: "x \<in> set S'" and ys: "y \<in> set S'" and xy: "x \<noteq> y"
+      have "\<exists>xx. x = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) xx \<and> 
+              xx \<in> set (gram_schmidt0 d R)"
+        using xs unfolding S'_def by auto
+      then obtain xx where xx_def: "x = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) xx"
+        and "xx \<in> set (gram_schmidt0 d R)"
+        by blast
+      have "\<exists>yy. y = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) yy \<and> 
+              yy \<in> set (gram_schmidt0 d R)"
+        using ys unfolding S'_def by auto
+      then obtain yy where yy_def: "y = (onb_enum_of_vec::complex vec \<Rightarrow> 'a) yy" 
+        and "yy \<in> set (gram_schmidt0 d R)"
+        by blast
+      have "xx \<noteq> yy"
+        using xy
+        using \<open>x = onb_enum_of_vec xx\<close> \<open>y = onb_enum_of_vec yy\<close> by auto
+      hence "yy \<bullet>c xx = 0"
+      proof-
+        have "set (gram_schmidt0 d R) \<subseteq> carrier_vec d"
+          by (simp add: \<open>set R \<subseteq> carrier_vec d\<close> cof_vec_space.gram_schmidt0_result(1))        
+        hence "corthogonal (gram_schmidt0 d (gram_schmidt0 d R))"
+          using Bounded_Operators_Code.cof_vec_space.gram_schmidt0_result(3)
+          by auto
+        thus ?thesis
+          unfolding corthogonal_def
+          by (metis \<open>set R \<subseteq> carrier_vec d\<close> \<open>xx \<in> set (gram_schmidt0 d R)\<close> \<open>xx \<noteq> yy\<close> 
+              \<open>yy \<in> set (gram_schmidt0 d R)\<close> cof_vec_space.gram_schmidt0_result(3) corthogonalD 
+              in_set_conv_nth) 
+      qed
+      thus "\<langle>x, y\<rangle> = 0"
+        using Bounded_Operators_Matrices.cinner_onb_enum_of_vec[where x = xx and y = yy]
+          xx_def yy_def 
+        by (smt \<open>set R \<subseteq> carrier_vec d\<close> \<open>xx \<in> set (gram_schmidt0 d R)\<close> \<open>yy \<in> set (gram_schmidt0 d R)\<close> 
+            carrier_vecD cof_vec_space.gram_schmidt0_result(1) d_def subset_code(1)) 
+    qed
+    show False
+      if "0 \<in> set S'"
+      using that unfolding S'_def
+    proof auto
+      fix x::"complex vec"
+      assume a1: "onb_enum_of_vec x = (0::'a)" and
+             a2: "x \<in> set (gram_schmidt0 d R)" 
+      have "vec_of_onb_enum (onb_enum_of_vec x ::'a) = vec_of_onb_enum (0::'a)"
+        using a1 unfolding d_def by simp
+      moreover have "vec_of_onb_enum (onb_enum_of_vec x ::'a) = x"
+        by (metis \<open>set R \<subseteq> carrier_vec d\<close> a2 carrier_vecD cof_vec_space.gram_schmidt0_result(1) 
+            d_def in_mono vec_of_onb_enum_inverse)        
+      moreover have "vec_of_onb_enum (0::'a) = 0\<^sub>v d"
+        by (simp add: d_def vec_of_onb_enum_zero)        
+      ultimately have t1: "x = 0\<^sub>v d"
+        by simp    
+      have "set R \<subseteq> carrier_vec d"
+        unfolding d_def
+        using \<open>set R \<subseteq> carrier_vec d\<close> d_def by auto 
+      hence "corthogonal (gram_schmidt0 d R)"
         using Bounded_Operators_Code.cof_vec_space.gram_schmidt0_result(3)
         by auto
-      thus ?thesis
-        unfolding corthogonal_def
-        by (metis \<open>set R \<subseteq> carrier_vec d\<close> \<open>xx \<in> set (gram_schmidt0 d R)\<close> \<open>xx \<noteq> yy\<close> 
-            \<open>yy \<in> set (gram_schmidt0 d R)\<close> cof_vec_space.gram_schmidt0_result(3) corthogonalD 
-            in_set_conv_nth) 
+      hence t2: "0\<^sub>v d \<notin> set (gram_schmidt0 d R)"
+        unfolding corthogonal_def apply auto
+        by (metis conjugate_square_eq_0_vec in_set_conv_nth zero_carrier_vec)
+      show False using t1 t2 a2 by blast
     qed
-    thus "\<langle>x, y\<rangle> = 0"
-      using Bounded_Operators_Matrices.cinner_onb_enum_of_vec[where x = xx and y = yy]
-        xx_def yy_def 
-      by (smt \<open>set R \<subseteq> carrier_vec d\<close> \<open>xx \<in> set (gram_schmidt0 d R)\<close> \<open>yy \<in> set (gram_schmidt0 d R)\<close> 
-          carrier_vecD cof_vec_space.gram_schmidt0_result(1) d_def subset_code(1)) 
   qed
   moreover have "distinct S'"
     unfolding S'_def R_def
@@ -2125,7 +1819,7 @@ proof-
         cof_vec_space.gram_schmidt0_result(2) distinct_map)    
   ultimately show ?thesis by auto
 qed
-*)
+
 
 (* fun nonzero_vec :: "(complex vec) list \<Rightarrow> (complex vec) list"
   where "nonzero_vec [] =  []"
@@ -2134,11 +1828,11 @@ qed
 
 lemma gram_schmidt0_corthogonal:
   assumes a1: "corthogonal R" 
-    and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
+      and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
   shows "gram_schmidt0 d R = rev R"
 proof -
   have "gram_schmidt_sub0 d U R = rev R @ U"
-    if "corthogonal ((rev U) @ R)" 
+    if "corthogonal ((rev U) @ R)"
       and "\<And>x. x \<in> set U \<union> set R \<Longrightarrow> dim_vec x = d" for U
   proof (insert that, induction R arbitrary: U)
     case Nil
@@ -2146,12 +1840,76 @@ proof -
       by auto
   next
     case (Cons a R)
-    have \<open>a \<noteq> 0\<^sub>v d\<close>
-      using Cons.prems sorry
+    have "a \<in> set (rev U @ a # R)"
+      by simp      
+    moreover have uar: "corthogonal (rev U @ a # R)"
+      by (simp add: Cons.prems(1))      
+    ultimately have \<open>a \<noteq> 0\<^sub>v d\<close>
+      unfolding corthogonal_def
+      by (metis conjugate_zero_vec in_set_conv_nth scalar_prod_right_zero zero_carrier_vec)
     then have nonzero_a: "\<not> vec_is_zero d a"
       by (simp add: Cons.prems(2) vec_is_zero)
-    have adjuster_a: "adjuster d a U + a = a"
-      sorry
+    define T where "T = rev U @ a # R"
+    have "T ! length (rev U) = a"
+      unfolding T_def
+      by (meson nth_append_length) 
+    moreover have "(T ! i \<bullet>c T ! j = 0) = (i \<noteq> j)"
+      if "i<length T"
+        and "j<length T"
+      for i j
+      using uar 
+      unfolding corthogonal_def T_def
+      apply auto
+      using T_def that(2) apply auto[1]
+      using T_def that(1) that(2) by auto     
+    moreover have "length (rev U) < length T"
+      by (simp add: T_def)
+    ultimately have "(T ! (length (rev U)) \<bullet>c T ! j = 0) = (length (rev U) \<noteq> j)"
+      if "j<length T"
+      for j
+      using that by blast    
+    hence "T ! (length (rev U)) \<bullet>c T ! j = 0"
+      if  "j<length T"
+        and "j \<noteq> length (rev U)"
+      for j
+      using that(1) that(2) by blast
+    hence "a \<bullet>c T ! j = 0"
+      if   "j < length (rev U)"
+      for j
+      using \<open>T ! length (rev U) = a\<close> that(1)
+       \<open>length (rev U) < length T\<close> dual_order.strict_trans by blast
+    moreover have "T ! j = (rev U) ! j"
+      if   "j < length (rev U)"
+      for j
+      by (smt T_def \<open>length (rev U) < length T\<close> dual_order.strict_trans list_update_append1
+          list_update_id nth_list_update_eq that)
+    ultimately have "a \<bullet>c u = 0"
+      if "u \<in> set (rev U)"
+      for u
+      by (metis in_set_conv_nth that)
+    hence "a \<bullet>c u = 0"
+      if "u \<in> set U"
+      for u
+      by (simp add: that)
+    moreover have "\<And>x. x \<in> set U \<Longrightarrow> dim_vec x = d"
+      by (simp add: Cons.prems(2))      
+    ultimately have "adjuster d a U = 0\<^sub>v d"
+    proof(induction U)
+      case Nil
+      then show ?case by simp
+    next
+      case (Cons u U)
+      moreover have "0 \<cdot>\<^sub>v u + 0\<^sub>v d = 0\<^sub>v d"
+      proof-
+        have "dim_vec u = d"
+          by (simp add: calculation(3))          
+        thus ?thesis
+          by auto 
+      qed
+      ultimately show ?case by auto
+    qed
+    hence adjuster_a: "adjuster d a U + a = a"
+      by (simp add: Cons.prems(2) carrier_vecI)      
     have "gram_schmidt_sub0 d U (a # R) = gram_schmidt_sub0 d (a # U) R"
       by (simp add: adjuster_a nonzero_a)
     also have "\<dots> = rev (a # R) @ U"
@@ -2194,7 +1952,6 @@ lemma Span_map_vec_of_onb_enum:
   shows "Span (set S) = Span (set S')"
   sorry
 
-
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
@@ -2230,7 +1987,7 @@ proof-
     by (metis d_def S'_def)
   moreover have "Span (set S') = Span (set S)"
     using S'_def Span_map_vec_of_onb_enum
-    by metis 
+    by (metis rev_map rev_swap set_rev) 
   ultimately show ?thesis
     by simp
 qed

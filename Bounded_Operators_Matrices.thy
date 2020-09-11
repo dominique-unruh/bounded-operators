@@ -411,7 +411,10 @@ next
     moreover have "is_ortho_set (set L)"
       unfolding is_ortho_set_def 
     proof auto
-      fix x y::'a
+      show "x \<in> set L \<Longrightarrow>
+           y \<in> set L \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+        for x y
+      proof-
       assume o1: "x \<in> set L" and o2: "y \<in> set L" and o3: "x \<noteq> y" 
       have "x \<in> set (a#L)"
         by (simp add: o1)        
@@ -419,12 +422,20 @@ next
         by (simp add: o2)
       ultimately show "\<langle>x, y\<rangle> = 0"
         using o3 Cons.prems(3) is_ortho_set_def by metis
+      qed
+      show "0 \<in> set L \<Longrightarrow> False"
+        using Cons.prems(4) by auto        
     qed
     moreover have "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
       using Cons.prems(4) by auto      
     ultimately have "(\<Sum>b\<in>(set L). \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> *\<^sub>C b) = w - \<langle>a, w\<rangle> *\<^sub>C a"
-      using Cons.IH Cons.prems(2) distinct.simps(2) sum.cong
-      by smt
+    proof -
+      have "is_ortho_set (set L)"
+        using Cons.prems(3) is_onb_delete by fastforce
+      thus ?thesis
+        using Cons.IH \<open>\<forall>a\<in>set L. \<parallel>a\<parallel> = 1\<close> \<open>distinct (a # L)\<close> \<open>w - \<langle>a, w\<rangle> *\<^sub>C a \<in> complex_span (set L)\<close> by fastforce
+    qed
+
     thus ?thesis by simp
   qed
   also have "\<dots> = w"
@@ -902,8 +913,8 @@ proof-
     also have "\<dots> = \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
       using h1 by simp
     also have "\<dots> = 0"
-      by (metis Cons.IH Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def 
-          list.set_intros(1) list.set_intros(2) set_ConsD)    
+      using Cons.IH Cons.prems(1) Cons.prems(2) distinct_length_2_or_more is_ortho_set_def list.set_intros(1) list.set_intros(2) set_ConsD
+      by (simp add: is_ortho_set_def)
     finally have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = 0"
       .
     thus ?case .

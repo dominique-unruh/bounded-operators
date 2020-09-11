@@ -2382,7 +2382,11 @@ instance
         using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
         by simp
     qed
-    thus ?thesis
+    moreover have "0 \<notin> set (canonical_basis::'a ell2 list)"
+      unfolding canonical_basis_ell2_def
+      apply auto apply transfer
+      by (metis zero_neq_one) 
+    ultimately show ?thesis
       unfolding is_ortho_set_def
       by blast
   qed

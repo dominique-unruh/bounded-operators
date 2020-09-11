@@ -5702,8 +5702,7 @@ lemma cblinfun_operator_basis_zero_uniq:
 
 
 lemma ortho_imples_independent:
-  assumes a1: "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
-    and a2: "0 \<notin> A" 
+  assumes a1: "is_ortho_set A"
   shows "complex_independent A"
 proof-
   have "finite t \<Longrightarrow> t \<subseteq> A \<Longrightarrow> (\<Sum>v\<in>t. u v *\<^sub>C v) = 0 \<Longrightarrow> v \<in> t \<Longrightarrow> u v = 0"
@@ -5715,7 +5714,7 @@ proof-
       assume "v'\<in>t-{v}"
       hence "v \<noteq> v'" by blast
       thus ?thesis using a1
-        by (meson DiffD1 \<open>v' \<in> t - {v}\<close> b2 b4 subset_eq) 
+        by (meson DiffD1 \<open>v' \<in> t - {v}\<close> b2 b4 is_ortho_set_def subsetD)         
     qed
     hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
       by simp
@@ -5734,7 +5733,8 @@ proof-
       have "v \<in> A"
         using b2 b4 by blast        
       hence "v \<noteq> 0"
-        using a2 by blast
+        using a1 unfolding is_ortho_set_def
+        by blast
       thus ?thesis by simp 
     qed
     ultimately show "u v = 0" by simp

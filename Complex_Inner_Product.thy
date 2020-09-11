@@ -3400,8 +3400,7 @@ subsection \<open>Unsorted\<close>
 
 text \<open>Orthogonal set\<close>
 definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
-  \<open>is_ortho_set S = (\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0)\<close>
-(* TODO: add " \<and> (\<forall>x\<in>S. x \<noteq> 0)  *)
+  \<open>is_ortho_set S = ((\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0) \<and> (\<forall>x\<in>S. x \<noteq> 0))\<close>
 
 lemma is_onb_delete:
   assumes "is_ortho_set (insert x B)"
@@ -3409,30 +3408,6 @@ lemma is_onb_delete:
   using assms
   unfolding  is_ortho_set_def
   by blast
-
-(* TODO (Jose): delete
-text \<open>Orthogonal basis\<close>
-definition is_ob :: "'a::complex_inner set \<Rightarrow> bool" 
-  where "is_ob S  = (
-  is_ortho_set S \<and> 
-  (complex_vector.independent S) \<and> closure (complex_vector.span S) = UNIV
-)"
-*)
-
-(* TODO (Jose): Delete
-text \<open>Orthonormal basis\<close>
-definition is_onb :: "'a::complex_inner set \<Rightarrow> bool" 
-  where "is_onb S  = (
-  is_ob S \<and> S \<subseteq> sphere 0 1
-)"
-*)
-
-(* TODO (Jose): Delete
-lemma is_onb_then_is_ob:
-  "is_onb S \<Longrightarrow> is_ob S"
-  unfolding is_onb_def
-  by simp
-*)
 
 lemma is_ob_nonzero:
   assumes "is_ortho_set S" and 
@@ -4846,12 +4821,11 @@ qed
 
 
 lemma is_ortho_set_independent:
-  \<open>0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S\<close>
+  \<open>is_ortho_set S \<Longrightarrow> complex_independent S\<close>
   unfolding is_ortho_set_def
 proof(rule ccontr)
-  assume  a1: "\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0" 
+  assume  a1: "(\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0) \<and> (\<forall>x\<in>S. x \<noteq> 0)"
     and a2: "\<not> complex_independent S"
-    and a3: "0 \<notin> S"
   have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
     using complex_vector.dependent_explicit a2 
     by auto
@@ -4904,7 +4878,7 @@ proof(rule ccontr)
   moreover have \<open>\<langle>k,k\<rangle> \<noteq> 0\<close>
   proof-
     have \<open>0 \<notin> t\<close>
-      using \<open>0 \<notin> S\<close> \<open>t \<subseteq> S\<close> by auto
+      using \<open>t \<subseteq> S\<close> a1 by auto 
     hence \<open>k \<noteq> 0\<close>
       using \<open>k \<in> t\<close>
       by blast
