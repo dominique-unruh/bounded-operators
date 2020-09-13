@@ -1922,140 +1922,304 @@ proof -
     unfolding gram_schmidt0_def using assms by auto
 qed
 
+
 (* NEW *)
-lemma Span_map_vec_of_onb_enum_flexible:
-  assumes 
-    a1: "gram_schmidt_sub0 (canonical_basis_length TYPE('a::onb_enum)) T R = rev R'"
-    and  a2: "\<And> x. x \<in> set R \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
-    and  a3: "\<And> x. x \<in> set R' \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
-    and  a4: "distinct T"
-    and  a5: "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
-  shows "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))
-       = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R'))"
+lemma Span_rev_gram_schmidt_sub0:
+  defines "d==canonical_basis_length TYPE('a::onb_enum)"
+    and "onb_of_vec == (onb_enum_of_vec::_\<Rightarrow>'a)"
+  assumes a4: "set R \<subseteq> carrier_vec d"
+    and  a5: "set T \<subseteq> carrier_vec d"
+  shows "Span (set (map onb_of_vec (rev (gram_schmidt_sub0 d T R))))
+       = Span (set (map onb_of_vec (T @ R)))"
   using assms
-proof(induction R arbitrary: T R')
+proof(induction R arbitrary: T)
   case Nil
-  have "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T [] = T"
-    by auto
-  hence "T = rev R'"
-    using Nil.prems(1) by auto
-  thus ?case
-    by auto 
+  thus ?case by auto
 next
   case (Cons a R)
-  define w' where "w' = adjuster (canonical_basis_length TYPE('a)) a T + a"
-  have "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T (a # R) = rev R'"
-    apply auto
-    using Cons.prems(1) by auto
-  have "(if vec_is_zero (canonical_basis_length TYPE('a)) w'
-        then gram_schmidt_sub0 (canonical_basis_length TYPE('a))
-              T R
-        else gram_schmidt_sub0 (canonical_basis_length TYPE('a))
-              (w' # T) R) = rev R'"
-    using Cons.prems(1) w'_def by auto
+  define w' where "w' = adjuster d a T + a"
   show ?case 
-  proof(cases "vec_is_zero (canonical_basis_length TYPE('a)) w'")
+  proof (cases "vec_is_zero d w'")
     case True
-    hence "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T R = rev R'"
-      using \<open>(if vec_is_zero (canonical_basis_length TYPE('a)) w' 
-          then gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T R 
-          else gram_schmidt_sub0 (canonical_basis_length TYPE('a)) (w' # T) R) = rev R'\<close> by auto
-    moreover have "\<And>x. x \<in> set R \<Longrightarrow>
-      dim_vec x = canonical_basis_length TYPE('a)"
-      by (simp add: Cons.prems(2))      
-    moreover have "\<And>x. x \<in> set R' \<Longrightarrow>
-      dim_vec x = canonical_basis_length TYPE('a)"
-      by (simp add: Cons.prems(3))      
-    moreover have "distinct T"
-      by (simp add: Cons.prems(4))      
-    moreover have "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
-      by (simp add: Cons.prems(5))
-    ultimately have p1:"Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))) =
-          Span (set (map onb_enum_of_vec R'))"
-      using Cons(1)[where R' = "R'" and T = T]
-      by blast            
-    have "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ a # R)))
-        = Span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) a) (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))))"
-      by auto
-    also have "\<dots> = Span (insert (- (onb_enum_of_vec::_\<Rightarrow>'a) 
-             (adjuster (canonical_basis_length TYPE('a)) a T)) 
-                         (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))))"
+    have "Span (onb_of_vec ` set (gram_schmidt_sub0 d T R)) =
+    Span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+      using Cons(5) Cons(1) Cons.prems(1) d_def onb_of_vec_def by auto
+    have "finite (onb_of_vec ` set (gram_schmidt_sub0 d T R))"
+      by simp      
+    hence "space_as_set (Span (onb_of_vec ` set (gram_schmidt_sub0 d T R)))
+        = complex_span (onb_of_vec ` set (gram_schmidt_sub0 d T R))"
+      apply transfer
+      using span_finite_dim by blast
+    have "finite (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+      by simp
+    hence "space_as_set (Span (onb_of_vec ` set T \<union> onb_of_vec ` set R))
+        = complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+      apply transfer
+      using span_finite_dim by blast
+    have "complex_span (onb_of_vec ` set (gram_schmidt_sub0 d T R)) =
+          complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+      using \<open>Span (onb_of_vec ` set (gram_schmidt_sub0 d T R)) = Span (onb_of_vec ` set T 
+      \<union> onb_of_vec ` set R)\<close> \<open>space_as_set (Span (onb_of_vec ` set (gram_schmidt_sub0 d T R)))
+     = complex_span (onb_of_vec ` set (gram_schmidt_sub0 d T R))\<close> \<open>space_as_set (Span (
+      onb_of_vec ` set T \<union> onb_of_vec ` set R)) = complex_span (onb_of_vec ` set T \<union> 
+      onb_of_vec ` set R)\<close> by auto
+    moreover have "onb_of_vec a \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
     proof-
-      have "dim_vec w' = canonical_basis_length TYPE('a)"
-        by (simp add: Cons.prems(2) w'_def)        
-      hence "w' = 0\<^sub>v (canonical_basis_length TYPE('a))"
-        using True vec_is_zero by blast 
-      hence "adjuster (canonical_basis_length TYPE('a)) a T + a 
-            = 0\<^sub>v (canonical_basis_length TYPE('a))"
-        using w'_def by auto
-      moreover have "dim_vec (adjuster (canonical_basis_length TYPE('a)) a T)
-                     = canonical_basis_length TYPE('a)"
-      proof-
-        have "a \<in> carrier_vec (canonical_basis_length TYPE('a))"
-          using \<open>dim_vec w' = canonical_basis_length TYPE('a)\<close> carrier_vecI w'_def by auto          
-        moreover have "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
-          by (simp add: Cons.prems(5))          
-        moreover have "distinct T"
-          by (simp add: Cons.prems(4))          
-        ultimately have "adjuster (canonical_basis_length TYPE('a)) a T 
-              \<in> carrier_vec (canonical_basis_length TYPE('a))"
-          using Gram_Schmidt.cof_vec_space.adjuster_carrier
-          by auto
-        thus ?thesis
-          by auto
-      qed
-      ultimately have "a = - adjuster (canonical_basis_length TYPE('a)) a T"
-        by (smt assoc_add_vec carrier_vec_dim_vec index_add_vec(2) right_zero_vec uminus_carrier_vec 
-            uminus_r_inv_vec)        
-      hence "(onb_enum_of_vec::_\<Rightarrow>'a) a = (onb_enum_of_vec::_\<Rightarrow>'a) 
-             (- adjuster (canonical_basis_length TYPE('a)) a T)"
-        by auto
-      hence "(onb_enum_of_vec::_\<Rightarrow>'a) a = - (onb_enum_of_vec::_\<Rightarrow>'a) 
-             (adjuster (canonical_basis_length TYPE('a)) a T)"
-        by (metis \<open>dim_vec (adjuster (canonical_basis_length TYPE('a)) a T) = canonical_basis_length TYPE('a)\<close> onb_enum_of_vec_inverse vec_of_onb_enum_inverse vec_of_onb_enum_uminus)
-      thus ?thesis by simp
-    qed
-    also have "\<dots> = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
-    proof-
-      have "(onb_enum_of_vec::_\<Rightarrow>'a)
-             (adjuster (canonical_basis_length TYPE('a)) a T)
-           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) T))"
-        if "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
-        using that
+      have "w' = 0\<^sub>v d"
+        using True
+        unfolding d_def
+        by (metis Cons.prems(1) carrier_vecD d_def index_add_vec(2) list.set_intros(1) subsetD 
+            vec_is_zero w'_def)
+      moreover have "dim_vec a = d"
+        by (metis calculation index_add_vec(2) index_zero_vec(2) w'_def)        
+      moreover have "dim_vec (adjuster d a T) = d"
       proof(induction T)
         case Nil
-        have "(onb_enum_of_vec::_\<Rightarrow>'a)
-         (adjuster (canonical_basis_length TYPE('a)) a []) = 0"
-          by (metis adjuster.simps(1) onb_enum_of_vec_inverse vec_of_onb_enum_zero)          
-        thus ?case
-          by auto
+        show ?case by auto
+      next
+        case (Cons a T)
+        thus ?case by auto
+      qed
+      ultimately have "a = - adjuster d a T"
+        unfolding  w'_def
+        by (metis carrier_vecI comm_add_vec minus_add_minus_vec minus_cancel_vec minus_zero_vec 
+            zero_minus_vec)  
+      hence "onb_of_vec a = onb_of_vec (- adjuster d a T)"
+        by simp
+      moreover have "onb_of_vec (- adjuster d a T) = - onb_of_vec (adjuster d a T)"
+        using onb_enum_of_vec_mult \<open>dim_vec (adjuster d a T) = d\<close>
+        unfolding onb_of_vec_def d_def
+        by (metis canonical_basis_length_eq scaleC_minus1_left scaleC_minus1_left_vec)
+      ultimately have "onb_of_vec a = - onb_of_vec (adjuster d a T)"
+        by simp
+      moreover have "onb_of_vec (adjuster d a T)
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        using Cons(5)
+      proof(induction T)
+        case Nil
+        have "onb_of_vec (0\<^sub>v d) = 0"
+          by (metis d_def onb_enum_of_vec_inverse onb_of_vec_def vec_of_onb_enum_zero)                    
+        thus ?case apply auto
+          using complex_vector.span_zero by auto
       next
         case (Cons u T)
-        have "(onb_enum_of_vec::_\<Rightarrow>'a) (
-      adjuster (canonical_basis_length TYPE('a)) a T)
-      \<in> complex_span ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T)"
-          using Cons.IH Cons.prems by auto          
-        hence q1: "(onb_enum_of_vec::_\<Rightarrow>'a) (
-      adjuster (canonical_basis_length TYPE('a)) a T)
-      \<in> complex_span (insert (onb_enum_of_vec u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
-          using complex_vector.span_mono insert_subset by blast
-        have "(onb_enum_of_vec::_\<Rightarrow>'a) u
-      \<in> complex_span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
-          apply auto
-          by (simp add: complex_vector.span_base) 
-        moreover have "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
-            = - (a \<bullet>c u / (u \<bullet>c u)) *\<^sub>C ((onb_enum_of_vec::_\<Rightarrow>'a) u)"
-          apply(rule Bounded_Operators_Matrices.onb_enum_of_vec_mult)
-          using canonical_basis_length_eq[where 'a = 'a] Cons.prems by auto  
-        ultimately have q2: "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
-      \<in> complex_span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
+        have u_dim: "dim_vec u = length (canonical_basis::'a list)"
+          using Cons.prems canonical_basis_length_eq d_def by auto
+
+        have "onb_of_vec u
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          by (simp add: complex_vector.span_base)          
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+              = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C (onb_of_vec u)"
+          using u_dim onb_enum_of_vec_mult onb_of_vec_def by blast 
+        ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
           by (metis complex_vector.span_scale)          
-        have "dim_vec u = canonical_basis_length TYPE('a)"
+        moreover have "onb_of_vec (adjuster d a T)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          by (metis Cons.IH Cons.prems complex_vector.span_mono insert_subset list.simps(15) 
+              mk_disjoint_insert subset_insertI)          
+        ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          using complex_vector.span_add_eq2 by blast
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)
+            = onb_of_vec ( (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + (adjuster d a T) )"
+        proof-
+          have "dim_vec  (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) = d"
+            using Cons.prems by auto            
+          moreover have "dim_vec  (adjuster d a T) = d"
+          proof(induction T)
+            case Nil
+            thus ?case by auto
+          next
+            case (Cons a T)
+            thus ?case by auto
+          qed
+          ultimately show ?thesis
+            by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim) 
+        qed
+        ultimately show ?case by auto
+      qed
+      ultimately show ?thesis
+        by (simp add: complex_vector.span_neg) 
+    qed
+    ultimately have "complex_span (onb_of_vec ` set (gram_schmidt_sub0 d T R)) =
+          complex_span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+      using complex_vector.span_redundant by blast      
+    hence "Span (onb_of_vec ` set (gram_schmidt_sub0 d T R)) =
+    Span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+      apply transfer
+      by simp
+    thus ?thesis using True
+      by (simp add: w'_def) 
+  next
+    case False
+    have x1: "finite (insert (onb_of_vec a) 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+      by auto
+    have u1: "x \<in> space_as_set (Span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R))" 
+      if "x \<in> space_as_set (Span (insert (onb_of_vec a) 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+      for x
+    proof-
+      have x0: "x \<in> complex_span (insert (onb_of_vec a) 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        using that x1 closed_finite_dim
+        by (simp add: Span.rep_eq span_finite_dim)
+      have u1_1:"dim_vec (adjuster d a T) = length (canonical_basis::'a list)"
+      proof(induction T)
+        case Nil
+        thus ?case
+          by (simp add: canonical_basis_length_eq d_def) 
+      next
+        case (Cons u T)
+        thus ?case by auto
+      qed
+      have "a \<in> carrier_vec d"
+        using Cons
+        by auto
+      hence u1_2:"dim_vec a = length (canonical_basis::'a list)"
+        using canonical_basis_length_eq unfolding d_def by auto
+
+      have "\<exists>k. x - k*\<^sub>C (onb_of_vec a) \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        using x0
+        using complex_vector.span_breakdown_eq by blast 
+      then obtain k where 
+        k_def: "x - k *\<^sub>C (onb_of_vec a) \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        by blast
+      have "onb_of_vec (adjuster d a T)
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        using Cons(5)
+      proof(induction T)
+        case Nil
+        have "onb_of_vec (0\<^sub>v d) = 0"
+          by (metis \<open>a \<in> carrier_vec d\<close> add_cancel_right_right canonical_basis_length_eq d_def index_zero_vec(2) onb_enum_of_vec_add onb_of_vec_def right_zero_vec u1_2)          
+        thus ?case apply auto
+          using complex_vector.span_zero by auto
+      next
+        case (Cons u T)
+        have u_dim: "dim_vec u = length (canonical_basis::'a list)"
+          using Cons.prems canonical_basis_length_eq d_def by auto
+
+        have "onb_of_vec u
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          by (simp add: complex_vector.span_base)          
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+              = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C (onb_of_vec u)"
+          using u_dim onb_enum_of_vec_mult onb_of_vec_def by blast 
+        ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          by (metis complex_vector.span_scale)          
+        moreover have "onb_of_vec (adjuster d a T)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          by (metis Cons.IH Cons.prems complex_vector.span_mono insert_subset list.simps(15) 
+              mk_disjoint_insert subset_insertI)          
+        ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)
+        \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+          using complex_vector.span_add_eq2 by blast
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)
+            = onb_of_vec ( (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + (adjuster d a T) )"
+        proof-
+          have "dim_vec  (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) = d"
+            using Cons.prems by auto            
+          moreover have "dim_vec  (adjuster d a T) = d"
+          proof(induction T)
+            case Nil
+            thus ?case by auto
+          next
+            case (Cons a T)
+            thus ?case by auto
+          qed
+          ultimately show ?thesis
+            by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim) 
+        qed
+        ultimately show ?case by auto
+      qed
+      hence "x - k *\<^sub>C (onb_of_vec a) - k *\<^sub>C (onb_of_vec (adjuster d a T))
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        using complex_vector.span_diff complex_vector.span_scale k_def by blast
+      hence "x - k *\<^sub>C (onb_of_vec (adjuster d a T)) - k *\<^sub>C (onb_of_vec a)
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        by (simp add: cancel_ab_semigroup_add_class.diff_right_commute)
+      hence "x - k *\<^sub>C ((onb_of_vec (adjuster d a T)) + (onb_of_vec a))
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        by (simp add: linordered_field_class.sign_simps(7) scaleC_add_right)
+      hence "x - k *\<^sub>C onb_of_vec w'
+            \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        unfolding w'_def
+        using u1_1 u1_2 onb_enum_of_vec_add
+        by (simp add: onb_enum_of_vec_add onb_of_vec_def) 
+      hence "x \<in> complex_span (insert (onb_of_vec w') (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        using complex_vector.span_breakdown_eq by blast
+      hence "x \<in> complex_span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)"
+        unfolding w'_def
+        by simp        
+      thus ?thesis apply transfer
+        using closure_subset by blast
+    qed
+    moreover have v1: "x \<in> space_as_set (Span (insert (onb_of_vec a) 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R)))" 
+      if  "x \<in> space_as_set (Span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R))"
+      for x
+    proof-
+      have "finite (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)"
+        by auto
+      hence "x \<in> complex_span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)"
+        using that  apply transfer using closed_finite_dim
+        by (simp add: span_finite_dim)
+      hence "x \<in> complex_span (insert (onb_of_vec w') 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        by simp
+      hence "\<exists>k. x - k *\<^sub>C onb_of_vec w' \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        using complex_vector.span_breakdown_eq by blast
+      then obtain k where 
+        "x - k *\<^sub>C onb_of_vec w' \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        by blast
+      hence "x - k *\<^sub>C onb_of_vec (adjuster d a T + a) \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        unfolding w'_def by blast
+      moreover have "k *\<^sub>C onb_of_vec (adjuster d a T + a)
+          = k *\<^sub>C onb_of_vec (adjuster d a T) + k *\<^sub>C onb_of_vec a"
+      proof-
+        have "dim_vec a = d"
+          using Cons.prems(1) by auto          
+        moreover have "dim_vec (adjuster d a T) = d"
+        proof(induction T)
+          case Nil
+          then show ?case by auto
+        next
+          case (Cons u T)
+          then show ?case by auto
+        qed
+        ultimately have "onb_of_vec (adjuster d a T + a)
+            = onb_of_vec (adjuster d a T) + onb_of_vec a"
+          by (metis d_def onb_enum_of_vec_inverse onb_of_vec_def vec_of_onb_enum_add 
+              vec_of_onb_enum_inverse)          
+        thus ?thesis
+          by (simp add: scaleC_add_right) 
+      qed
+      ultimately have "x - k *\<^sub>C onb_of_vec (adjuster d a T) - k *\<^sub>C onb_of_vec a
+         \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
+        by (simp add: diff_diff_add)
+      hence "x - k *\<^sub>C onb_of_vec (adjuster d a T) 
+         \<in> complex_span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        using complex_vector.span_breakdown_eq by blast
+      moreover have "onb_of_vec (adjuster d a T) 
+         \<in> complex_span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        using Cons(5)
+      proof(induction T)
+        case Nil
+        have "onb_of_vec (adjuster d a []) = 0"
+          apply auto
+          by (metis d_def onb_enum_of_vec_inverse onb_of_vec_def vec_of_onb_enum_zero)
+        thus ?case
+          by (simp add: complex_vector.span_zero) 
+      next
+        case (Cons u T)
+        have "dim_vec u = d"
           using Cons.prems by auto          
-        hence "dim_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) = canonical_basis_length TYPE('a)"
-          by auto
-        moreover have "dim_vec (adjuster (canonical_basis_length TYPE('a)) a T)
-               = canonical_basis_length TYPE('a)"
+        hence q1: "dim_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) = d"
+          by simp          
+        have q2: "dim_vec (adjuster d a T) = d"
         proof(induction T)
           case Nil
           thus ?case by auto
@@ -2063,84 +2227,233 @@ next
           case (Cons a T)
           thus ?case by auto
         qed
-        moreover have "dim_vec x = canonical_basis_length TYPE('a) \<Longrightarrow>
-                        dim_vec y = canonical_basis_length TYPE('a) \<Longrightarrow>
-        (onb_enum_of_vec::_\<Rightarrow>'a) (x + y) =
-        onb_enum_of_vec x + onb_enum_of_vec y"
-          for x y
-          using Bounded_Operators_Matrices.onb_enum_of_vec_add
-          by (simp add: onb_enum_of_vec_add canonical_basis_length_eq)
-        ultimately have "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u +
-      adjuster (canonical_basis_length TYPE('a)) a T)
-      \<in> complex_span (insert (onb_enum_of_vec u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
-          using q1 q2 Complex_Vector_Spaces.complex_vector.span_add           
-          apply auto
-          by blast 
-        thus ?case by auto 
-      qed
-      moreover have "complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) T))
-                  \<subseteq> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
-        by (simp add: complex_vector.span_mono)        
-      ultimately have "(onb_enum_of_vec::_\<Rightarrow>'a)
-             (adjuster (canonical_basis_length TYPE('a)) a T)
-           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
-        using Cons.prems(5) by blast  
-      hence "- (onb_enum_of_vec::_\<Rightarrow>'a)
-             (adjuster (canonical_basis_length TYPE('a)) a T)
-           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
-        using complex_vector.span_neg by blast        
-      hence "(complex_span
-          (insert (- onb_enum_of_vec
-                (adjuster (canonical_basis_length TYPE('a)) a T))
-            ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T \<union>
-             onb_enum_of_vec ` set R))) =
-        (complex_span
-          (onb_enum_of_vec ` set T \<union>
-           onb_enum_of_vec ` set R))"
-        by (simp add: complex_vector.span_redundant)        
-      thus ?thesis 
-        apply transfer
-        by simp
-    qed
-    finally have p2: "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ a # R)))
-            = Span (set (map onb_enum_of_vec (T @ R)))".
-    show ?thesis
-      using p1 p2 by simp
-  next
-    case False
 
-    show ?thesis
-      sorry
+        have "onb_of_vec u
+              \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u) 
+              (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+          by (simp add: complex_vector.span_base)          
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+                    = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C onb_of_vec u"
+        proof-
+          have "dim_vec u = canonical_basis_length TYPE('a)"
+            by (simp add: \<open>dim_vec u = d\<close> d_def)            
+          thus ?thesis
+            using onb_enum_of_vec_mult
+            by (simp add: onb_enum_of_vec_mult canonical_basis_length_eq onb_of_vec_def)            
+        qed
+        ultimately have s1: "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+              \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u) 
+              (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+          by (metis complex_vector.span_scale)
+        have "set T \<subseteq> carrier_vec d"
+          using Cons(2) by auto
+        hence s2: "onb_of_vec (adjuster d a T)
+              \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u) 
+              (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"          
+        proof(induction T)
+          case Nil
+          have "onb_of_vec (adjuster d a []) = 0"
+            apply auto
+            by (metis d_def onb_enum_of_vec_inverse onb_of_vec_def vec_of_onb_enum_zero)
+          thus ?case
+            by (simp add: complex_vector.span_zero) 
+        next
+          case (Cons v T)
+          have "set T \<subseteq> carrier_vec d"
+            using Cons.prems by auto
+          hence "onb_of_vec (adjuster d a T)
+            \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u) 
+                              (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+            using Cons.IH by blast
+          moreover have "insert (onb_of_vec a) (insert (onb_of_vec u) 
+                              (onb_of_vec ` set T \<union> onb_of_vec ` set R))
+          \<subseteq> (insert (onb_of_vec a)
+             (insert (onb_of_vec u) (insert (onb_of_vec v)
+             (onb_of_vec ` set T \<union> onb_of_vec ` set R))))"
+            by blast            
+          ultimately have "onb_of_vec (adjuster d a T)
+            \<in> complex_span (insert (onb_of_vec a)
+             (insert (onb_of_vec u) (insert (onb_of_vec v)
+             (onb_of_vec ` set T \<union> onb_of_vec ` set R))))"
+            by (metis (no_types, lifting) complex_vector.span_mono insert_subset mk_disjoint_insert)            
+          moreover have "onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v)
+          \<in> complex_span (insert (onb_of_vec a)
+             (insert (onb_of_vec u) (insert (onb_of_vec v)
+             (onb_of_vec ` set T \<union> onb_of_vec ` set R))))"
+          proof-
+            have "onb_of_vec v
+          \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u)
+            (insert (onb_of_vec v) (onb_of_vec ` set T \<union> onb_of_vec ` set R))))"
+              by (simp add: complex_vector.span_base)              
+            moreover have "onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v)
+                          = (- (a \<bullet>c v / (v \<bullet>c v))) *\<^sub>C (onb_of_vec v)"
+            proof-
+              have "dim_vec v = d"
+                using Cons.prems by auto                
+              thus ?thesis unfolding d_def
+                by (metis onb_enum_of_vec_inverse onb_of_vec_def vec_of_onb_enum_inverse 
+                    vec_of_onb_enum_scaleC) 
+            qed
+            ultimately show ?thesis
+              by (metis complex_vector.span_scale) 
+          qed
+          ultimately have  "onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v) + onb_of_vec (adjuster d a T)
+          \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u)
+            (insert (onb_of_vec v) (onb_of_vec ` set T \<union> onb_of_vec ` set R))))"
+            using Complex_Vector_Spaces.complex_vector.span_add[where S = "insert (onb_of_vec a)
+             (insert (onb_of_vec u) (insert (onb_of_vec v)
+             (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+                and x = "onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v)"
+                and y = "onb_of_vec (adjuster d a T)"]            
+            by auto
+          moreover have "onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v + adjuster d a T)
+                = onb_of_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v) + onb_of_vec (adjuster d a T)"
+          proof-
+            have "dim_vec v = d"
+              using Cons.prems by auto              
+            hence "dim_vec (- (a \<bullet>c v / (v \<bullet>c v)) \<cdot>\<^sub>v v) = d"
+              by auto
+            moreover have "dim_vec (adjuster d a T) = d"
+            proof(induction T)
+              case Nil
+              thus ?case by auto
+            next
+              case (Cons f T)
+              thus ?case by auto
+            qed
+            ultimately show ?thesis unfolding onb_of_vec_def
+              using onb_enum_of_vec_add unfolding d_def
+              by (simp add: onb_enum_of_vec_add canonical_basis_length_eq) 
+          qed
+          ultimately show ?case by auto
+        qed          
+
+        have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)
+              \<in> complex_span (insert (onb_of_vec a) (insert (onb_of_vec u) 
+              (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+          using s1 s2 complex_vector.span_add by blast 
+        moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u + (adjuster d a T))
+                     = onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) + onb_of_vec (adjuster d a T)"
+          using q1 q2 onb_enum_of_vec_add unfolding onb_of_vec_def d_def
+          by (simp add: onb_enum_of_vec_add canonical_basis_length_eq)
+        ultimately show ?case by auto
+      qed
+      ultimately have "x \<in> complex_span (insert (onb_of_vec a) 
+                                (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+        by (metis complex_vector.span_add complex_vector.span_scale diff_add_cancel)        
+      thus ?thesis apply transfer
+        by (simp add: span_finite_dim)
+    qed
+    ultimately have w1: "space_as_set (Span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)) =
+    space_as_set (Span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R)))"
+      by blast
+    have "set R \<subseteq> carrier_vec d"
+      using Cons
+      by auto
+    moreover have "set (w'#T) \<subseteq> carrier_vec d"
+    proof-
+      have "a \<in> carrier_vec d"
+        using Cons.prems(1) by auto        
+      moreover have "adjuster d a T \<in> carrier_vec d"
+      proof(induction T)
+        case Nil
+        then show ?case by auto
+      next
+        case (Cons u T)
+        then show ?case apply auto
+          using carrier_dim_vec by fastforce
+      qed
+      ultimately have "w' \<in> carrier_vec d"
+        unfolding w'_def
+        by auto
+      moreover have "set T \<subseteq> carrier_vec d"
+        using Cons
+        by auto
+      ultimately show ?thesis by simp
+    qed
+    ultimately have "Span (onb_of_vec ` set (gram_schmidt_sub0 d (w' # T) R)) =
+          Span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)"
+      using Cons by auto
+    also have "\<dots> = Span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
+      using w1 apply auto
+      using space_as_set_inject by auto
+    finally have "Span (onb_of_vec ` set (gram_schmidt_sub0 d (w' # T) R)) =
+                  Span (insert (onb_of_vec a) (onb_of_vec ` set T \<union> onb_of_vec ` set R))".
+    thus ?thesis using False
+      by (simp add: w'_def)
   qed
 qed
 
-
-(* NEW *)
-lemma Span_map_vec_of_onb_enum'':
-  assumes 
-    a1: "gram_schmidt0 (canonical_basis_length TYPE('a::onb_enum)) R = rev R'"
-    and  a2: "\<And> x. x \<in> set R \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
-    and  a3: "\<And> x. x \<in> set R' \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
-  shows "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R))
-       = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R'))"
-  sorry
-
-(* NEW *)
-lemma Span_map_vec_of_onb_enum':
-  fixes S S' :: "'a::onb_enum list"
-  assumes a1: "gram_schmidt0 (canonical_basis_length TYPE('a)) (map vec_of_onb_enum S) 
-              = rev (map vec_of_onb_enum S')"
-  shows "Span (set S) = Span (set S')"
-  using Span_map_vec_of_onb_enum''
-  sorry
-
 lemma Span_map_vec_of_onb_enum:
   fixes S S' :: "'a::onb_enum list"
-  defines "R == map vec_of_onb_enum S" and "R' == map vec_of_onb_enum S'"
+  defines "R == map vec_of_onb_enum S"
+    and "R' == map vec_of_onb_enum S'"
     and "d == canonical_basis_length TYPE('a)"
   assumes a1: "gram_schmidt0 d R = rev R'"
   shows "Span (set S) = Span (set S')"
-  using assms Span_map_vec_of_onb_enum' by auto
+proof- (* NEW *)
+  define onb_of_vec where "onb_of_vec = (onb_enum_of_vec::_\<Rightarrow>'a)"
+
+  have "map onb_of_vec R = S"
+    unfolding R_def onb_of_vec_def apply auto
+    by (simp add: map_idI)
+
+  have "R' = rev (gram_schmidt0 d R)"
+    using a1
+    by simp
+
+  have "map onb_of_vec (rev (gram_schmidt_sub0  d [] R)) =
+        map onb_of_vec (rev (rev R'))"
+    using a1
+    unfolding gram_schmidt0_def
+    by simp
+  also have "\<dots> = map onb_of_vec  R'"
+    by auto
+  also have "\<dots> = S'"
+    unfolding R'_def onb_of_vec_def
+    apply auto 
+    by (simp add: map_idI )
+  finally have "map onb_of_vec (rev (gram_schmidt_sub0  d [] R)) = S'".
+  have "dim_vec r = d" 
+    if "r \<in> set R"
+    for r
+  proof-
+    have "\<exists>s\<in>set S. r = vec_of_onb_enum s"
+      using R_def that by auto
+    then obtain s where "s\<in>set S" and "r = vec_of_onb_enum s"
+      by blast
+    have "dim_vec r = dim_vec (vec_of_onb_enum s)"
+      by (simp add: \<open>r = vec_of_onb_enum s\<close>)
+    also have "\<dots> = d"
+      unfolding d_def
+      by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list') 
+    finally have "dim_vec r = d".
+    thus ?thesis
+      using that
+      unfolding d_def R_def
+      by auto
+  qed
+  hence "set R \<subseteq> carrier_vec d"
+    unfolding d_def R_def
+    using carrier_dim_vec by blast 
+  moreover have "set [] \<subseteq> carrier_vec d"
+    by auto
+  ultimately have "Span  (set (map onb_of_vec (rev (gram_schmidt_sub0  d [] R)))) =
+        Span (set (map onb_of_vec ([] @ R)))"
+    unfolding onb_of_vec_def
+    using Span_rev_gram_schmidt_sub0[where T = "[]" and R = R and 'a = 'a]
+      d_def by blast    
+  hence "Span  (set (map onb_of_vec (rev (gram_schmidt_sub0  d [] R)))) =
+         Span (set (map onb_of_vec R))"
+    by auto
+  hence "Span  (set (map onb_of_vec (rev (gram_schmidt_sub0  d [] R)))) = Span (set S)"
+    using \<open>map onb_of_vec R = S\<close> by blast
+  hence "Span  (set S') = Span (set S)"
+    using \<open>map onb_of_vec (rev (gram_schmidt_sub0 d [] R)) = S'\<close> by auto
+  thus ?thesis
+    by simp 
+qed
+
 
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
