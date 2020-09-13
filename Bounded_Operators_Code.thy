@@ -1328,7 +1328,7 @@ proof-
     for u   
     apply(rule projection_insert)
     using ios unfolding is_ortho_set_def
-    apply (metis Set.set_insert Un_insert_left a1 aS insertI1 insert_union is_ortho_set_def list.simps(15))
+     apply (metis Set.set_insert Un_insert_left a1 aS insertI1 insert_union is_ortho_set_def list.simps(15))
     using aS
     by simp
   have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)} u
@@ -1653,7 +1653,7 @@ lemma is_ortho_set_corthogonal:
   fixes S :: "'a::onb_enum list"
   defines  "R == map vec_of_onb_enum S"
   assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
-      and a3: "0 \<notin> set S"
+    and a3: "0 \<notin> set S"
   shows    "corthogonal R"
 proof-
   have x1: "R ! i \<bullet>c R ! j = \<langle>S ! j, S ! i\<rangle>"
@@ -1791,7 +1791,7 @@ proof-
     proof auto
       fix x::"complex vec"
       assume a1: "onb_enum_of_vec x = (0::'a)" and
-             a2: "x \<in> set (gram_schmidt0 d R)" 
+        a2: "x \<in> set (gram_schmidt0 d R)" 
       have "vec_of_onb_enum (onb_enum_of_vec x ::'a) = vec_of_onb_enum (0::'a)"
         using a1 unfolding d_def by simp
       moreover have "vec_of_onb_enum (onb_enum_of_vec x ::'a) = x"
@@ -1828,7 +1828,7 @@ qed
 
 lemma gram_schmidt0_corthogonal:
   assumes a1: "corthogonal R" 
-      and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
+    and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
   shows "gram_schmidt0 d R = rev R"
 proof -
   have "gram_schmidt_sub0 d U R = rev R @ U"
@@ -1877,7 +1877,7 @@ proof -
       if   "j < length (rev U)"
       for j
       using \<open>T ! length (rev U) = a\<close> that(1)
-       \<open>length (rev U) < length T\<close> dual_order.strict_trans by blast
+        \<open>length (rev U) < length T\<close> dual_order.strict_trans by blast
     moreover have "T ! j = (rev U) ! j"
       if   "j < length (rev U)"
       for j
@@ -1922,40 +1922,230 @@ proof -
     unfolding gram_schmidt0_def using assms by auto
 qed
 
-(* lemma gram_schmidt0_fixpoint:
-  fixes S :: "'a::onb_enum list"
-  defines "d == canonical_basis_length TYPE('a)" 
-      and "R == map vec_of_onb_enum S"
-    assumes a1: "is_ortho_set (set S)"
-      and   a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
-      and   a3: "0 \<notin> set S"
-      and   a4: "distinct S"
-  shows "gram_schmidt0 d R = rev R"
-proof-  
-  have  "dim_vec x = d"
-    if "x \<in> set R"
-    for x
-    by (simp add: a2 that)    
-  moreover have "corthogonal R"
-    by (simp add: R_def a1 a3 a4 is_ortho_set_corthogonal)    
-  ultimately have "gram_schmidt0 d R = rev R"
-    using gram_schmidt0_corthogonal
-    by blast
-  thus ?thesis unfolding R_def.
+(* NEW *)
+lemma Span_map_vec_of_onb_enum_flexible:
+  assumes 
+    a1: "gram_schmidt_sub0 (canonical_basis_length TYPE('a::onb_enum)) T R = rev R'"
+    and  a2: "\<And> x. x \<in> set R \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
+    and  a3: "\<And> x. x \<in> set R' \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
+    and  a4: "distinct T"
+    and  a5: "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
+  shows "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))
+       = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R'))"
+  using assms
+proof(induction R arbitrary: T R')
+  case Nil
+  have "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T [] = T"
+    by auto
+  hence "T = rev R'"
+    using Nil.prems(1) by auto
+  thus ?case
+    by auto 
+next
+  case (Cons a R)
+  define w' where "w' = adjuster (canonical_basis_length TYPE('a)) a T + a"
+  have "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T (a # R) = rev R'"
+    apply auto
+    using Cons.prems(1) by auto
+  have "(if vec_is_zero (canonical_basis_length TYPE('a)) w'
+        then gram_schmidt_sub0 (canonical_basis_length TYPE('a))
+              T R
+        else gram_schmidt_sub0 (canonical_basis_length TYPE('a))
+              (w' # T) R) = rev R'"
+    using Cons.prems(1) w'_def by auto
+  show ?case 
+  proof(cases "vec_is_zero (canonical_basis_length TYPE('a)) w'")
+    case True
+    hence "gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T R = rev R'"
+      using \<open>(if vec_is_zero (canonical_basis_length TYPE('a)) w' 
+          then gram_schmidt_sub0 (canonical_basis_length TYPE('a)) T R 
+          else gram_schmidt_sub0 (canonical_basis_length TYPE('a)) (w' # T) R) = rev R'\<close> by auto
+    moreover have "\<And>x. x \<in> set R \<Longrightarrow>
+      dim_vec x = canonical_basis_length TYPE('a)"
+      by (simp add: Cons.prems(2))      
+    moreover have "\<And>x. x \<in> set R' \<Longrightarrow>
+      dim_vec x = canonical_basis_length TYPE('a)"
+      by (simp add: Cons.prems(3))      
+    moreover have "distinct T"
+      by (simp add: Cons.prems(4))      
+    moreover have "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
+      by (simp add: Cons.prems(5))
+    ultimately have p1:"Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))) =
+          Span (set (map onb_enum_of_vec R'))"
+      using Cons(1)[where R' = "R'" and T = T]
+      by blast            
+    have "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ a # R)))
+        = Span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) a) (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))))"
+      by auto
+    also have "\<dots> = Span (insert (- (onb_enum_of_vec::_\<Rightarrow>'a) 
+             (adjuster (canonical_basis_length TYPE('a)) a T)) 
+                         (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R))))"
+    proof-
+      have "dim_vec w' = canonical_basis_length TYPE('a)"
+        by (simp add: Cons.prems(2) w'_def)        
+      hence "w' = 0\<^sub>v (canonical_basis_length TYPE('a))"
+        using True vec_is_zero by blast 
+      hence "adjuster (canonical_basis_length TYPE('a)) a T + a 
+            = 0\<^sub>v (canonical_basis_length TYPE('a))"
+        using w'_def by auto
+      moreover have "dim_vec (adjuster (canonical_basis_length TYPE('a)) a T)
+                     = canonical_basis_length TYPE('a)"
+      proof-
+        have "a \<in> carrier_vec (canonical_basis_length TYPE('a))"
+          using \<open>dim_vec w' = canonical_basis_length TYPE('a)\<close> carrier_vecI w'_def by auto          
+        moreover have "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
+          by (simp add: Cons.prems(5))          
+        moreover have "distinct T"
+          by (simp add: Cons.prems(4))          
+        ultimately have "adjuster (canonical_basis_length TYPE('a)) a T 
+              \<in> carrier_vec (canonical_basis_length TYPE('a))"
+          using Gram_Schmidt.cof_vec_space.adjuster_carrier
+          by auto
+        thus ?thesis
+          by auto
+      qed
+      ultimately have "a = - adjuster (canonical_basis_length TYPE('a)) a T"
+        by (smt assoc_add_vec carrier_vec_dim_vec index_add_vec(2) right_zero_vec uminus_carrier_vec 
+            uminus_r_inv_vec)        
+      hence "(onb_enum_of_vec::_\<Rightarrow>'a) a = (onb_enum_of_vec::_\<Rightarrow>'a) 
+             (- adjuster (canonical_basis_length TYPE('a)) a T)"
+        by auto
+      hence "(onb_enum_of_vec::_\<Rightarrow>'a) a = - (onb_enum_of_vec::_\<Rightarrow>'a) 
+             (adjuster (canonical_basis_length TYPE('a)) a T)"
+        by (metis \<open>dim_vec (adjuster (canonical_basis_length TYPE('a)) a T) = canonical_basis_length TYPE('a)\<close> onb_enum_of_vec_inverse vec_of_onb_enum_inverse vec_of_onb_enum_uminus)
+      thus ?thesis by simp
+    qed
+    also have "\<dots> = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
+    proof-
+      have "(onb_enum_of_vec::_\<Rightarrow>'a)
+             (adjuster (canonical_basis_length TYPE('a)) a T)
+           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) T))"
+        if "set T \<subseteq> carrier_vec (canonical_basis_length TYPE('a))"
+        using that
+      proof(induction T)
+        case Nil
+        have "(onb_enum_of_vec::_\<Rightarrow>'a)
+         (adjuster (canonical_basis_length TYPE('a)) a []) = 0"
+          by (metis adjuster.simps(1) onb_enum_of_vec_inverse vec_of_onb_enum_zero)          
+        thus ?case
+          by auto
+      next
+        case (Cons u T)
+        have "(onb_enum_of_vec::_\<Rightarrow>'a) (
+      adjuster (canonical_basis_length TYPE('a)) a T)
+      \<in> complex_span ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T)"
+          using Cons.IH Cons.prems by auto          
+        hence q1: "(onb_enum_of_vec::_\<Rightarrow>'a) (
+      adjuster (canonical_basis_length TYPE('a)) a T)
+      \<in> complex_span (insert (onb_enum_of_vec u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
+          using complex_vector.span_mono insert_subset by blast
+        have "(onb_enum_of_vec::_\<Rightarrow>'a) u
+      \<in> complex_span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
+          apply auto
+          by (simp add: complex_vector.span_base) 
+        moreover have "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+            = - (a \<bullet>c u / (u \<bullet>c u)) *\<^sub>C ((onb_enum_of_vec::_\<Rightarrow>'a) u)"
+          apply(rule Bounded_Operators_Matrices.onb_enum_of_vec_mult)
+          using canonical_basis_length_eq[where 'a = 'a] Cons.prems by auto  
+        ultimately have q2: "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
+      \<in> complex_span (insert ((onb_enum_of_vec::_\<Rightarrow>'a) u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
+          by (metis complex_vector.span_scale)          
+        have "dim_vec u = canonical_basis_length TYPE('a)"
+          using Cons.prems by auto          
+        hence "dim_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u) = canonical_basis_length TYPE('a)"
+          by auto
+        moreover have "dim_vec (adjuster (canonical_basis_length TYPE('a)) a T)
+               = canonical_basis_length TYPE('a)"
+        proof(induction T)
+          case Nil
+          thus ?case by auto
+        next
+          case (Cons a T)
+          thus ?case by auto
+        qed
+        moreover have "dim_vec x = canonical_basis_length TYPE('a) \<Longrightarrow>
+                        dim_vec y = canonical_basis_length TYPE('a) \<Longrightarrow>
+        (onb_enum_of_vec::_\<Rightarrow>'a) (x + y) =
+        onb_enum_of_vec x + onb_enum_of_vec y"
+          for x y
+          using Bounded_Operators_Matrices.onb_enum_of_vec_add
+          by (simp add: onb_enum_of_vec_add canonical_basis_length_eq)
+        ultimately have "(onb_enum_of_vec::_\<Rightarrow>'a) (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u +
+      adjuster (canonical_basis_length TYPE('a)) a T)
+      \<in> complex_span (insert (onb_enum_of_vec u) ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T))"
+          using q1 q2 Complex_Vector_Spaces.complex_vector.span_add           
+          apply auto
+          by blast 
+        thus ?case by auto 
+      qed
+      moreover have "complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) T))
+                  \<subseteq> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
+        by (simp add: complex_vector.span_mono)        
+      ultimately have "(onb_enum_of_vec::_\<Rightarrow>'a)
+             (adjuster (canonical_basis_length TYPE('a)) a T)
+           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
+        using Cons.prems(5) by blast  
+      hence "- (onb_enum_of_vec::_\<Rightarrow>'a)
+             (adjuster (canonical_basis_length TYPE('a)) a T)
+           \<in> complex_span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ R)))"
+        using complex_vector.span_neg by blast        
+      hence "(complex_span
+          (insert (- onb_enum_of_vec
+                (adjuster (canonical_basis_length TYPE('a)) a T))
+            ((onb_enum_of_vec::_\<Rightarrow>'a) ` set T \<union>
+             onb_enum_of_vec ` set R))) =
+        (complex_span
+          (onb_enum_of_vec ` set T \<union>
+           onb_enum_of_vec ` set R))"
+        by (simp add: complex_vector.span_redundant)        
+      thus ?thesis 
+        apply transfer
+        by simp
+    qed
+    finally have p2: "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) (T @ a # R)))
+            = Span (set (map onb_enum_of_vec (T @ R)))".
+    show ?thesis
+      using p1 p2 by simp
+  next
+    case False
+
+    show ?thesis
+      sorry
+  qed
 qed
- *)
+
+
+(* NEW *)
+lemma Span_map_vec_of_onb_enum'':
+  assumes 
+    a1: "gram_schmidt0 (canonical_basis_length TYPE('a::onb_enum)) R = rev R'"
+    and  a2: "\<And> x. x \<in> set R \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
+    and  a3: "\<And> x. x \<in> set R' \<Longrightarrow> dim_vec x = canonical_basis_length TYPE('a)"
+  shows "Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R))
+       = Span (set (map (onb_enum_of_vec::_\<Rightarrow>'a) R'))"
+  sorry
+
+(* NEW *)
+lemma Span_map_vec_of_onb_enum':
+  fixes S S' :: "'a::onb_enum list"
+  assumes a1: "gram_schmidt0 (canonical_basis_length TYPE('a)) (map vec_of_onb_enum S) 
+              = rev (map vec_of_onb_enum S')"
+  shows "Span (set S) = Span (set S')"
+  using Span_map_vec_of_onb_enum''
+  sorry
 
 lemma Span_map_vec_of_onb_enum:
   fixes S S' :: "'a::onb_enum list"
   defines "R == map vec_of_onb_enum S" and "R' == map vec_of_onb_enum S'"
-  assumes "gram_schmidt0 d R = rev R'"
+    and "d == canonical_basis_length TYPE('a)"
+  assumes a1: "gram_schmidt0 d R = rev R'"
   shows "Span (set S) = Span (set S')"
-  sorry
+  using assms Span_map_vec_of_onb_enum' by auto
 
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
-      and "R == map vec_of_onb_enum S"
+    and "R == map vec_of_onb_enum S"
   assumes "is_ortho_set (set S)" and "distinct S"
   shows "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
@@ -1987,86 +2177,10 @@ proof-
     by (metis d_def S'_def)
   moreover have "Span (set S') = Span (set S)"
     using S'_def Span_map_vec_of_onb_enum
-    by (metis rev_map rev_swap set_rev) 
+    by (metis d_def rev_map rev_rev_ident set_rev) 
   ultimately show ?thesis
     by simp
 qed
-
-
-(*
-proof(induction S)
-  case Nil
-  have "space_as_set (Abs_clinear_space {0::'a}) = {0::'a}"
-    by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq)    
-  hence "projection (space_as_set (Abs_clinear_space {0::'a})) = 
-        projection {0::'a}"
-    by simp
-  also have "\<dots> = (\<lambda>_. (0::'a))"
-    by (simp add: projection_zero_subspace)    
-  finally have x2: "projection (space_as_set (Abs_clinear_space {0::'a})) = (\<lambda>_. (0::'a))".
-  have " \<langle>(canonical_basis::'a list)!i, cBlinfun (\<lambda>_. 0) *\<^sub>V (canonical_basis::'a list)!j\<rangle> = 0"
-    for i j
-    by (metis cinner_zero_right zero_cblinfun.abs_eq zero_cblinfun.rep_eq)    
-  hence x1: "mat_of_cblinfun (cBlinfun (\<lambda>_::'a. (0::'a)))
-     = (let d = canonical_basis_length TYPE('a) in 0\<^sub>m d d)"
-    unfolding mat_of_cblinfun_def zero_mat_def
-    by (metis mat_of_cblinfun_def mat_of_cblinfun_zero' zero_cblinfun.abs_eq zero_mat_def) 
-  show ?case 
-    sorry
-      (*apply auto unfolding gram_schmidt_def apply auto
-    unfolding Span_def Proj_def apply auto
-    using x1 x2 by simp *)
-next
-  case (Cons a S)
-  define d where "d = canonical_basis_length TYPE('a)"
-  have "dim_vec (vec_of_onb_enum a) = d"
-    by (simp add: canonical_basis_length_eq d_def dim_vec_of_onb_enum_list')
-  moreover have "dim_vec (0\<^sub>v d) = d"
-    by simp
-  ultimately have s1: "0\<^sub>v d + vec_of_onb_enum a = vec_of_onb_enum a"
-    using carrier_vec_dim_vec left_zero_vec by blast   
-  have "complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    using complex_vector.span_insert[where a = a and S = "(set S)"].
-  moreover have "finite (insert a (set S))"
-    by simp    
-  ultimately have "closure (complex_span (insert a (set S))) = 
-        complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    by (metis complex_vector.span_span span_finite_dim)
-  hence s2: "space_as_set (Abs_clinear_space (closure (complex_span (insert a (set S))))) 
-        = complex_span {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}"
-    by (metis Span.rep_eq space_as_set_inverse)
-  have "closure (complex_span (set S)) = complex_span (set S)"
-    by (simp add: span_finite_dim)    
-  hence q1: "mat_of_cblinfun
-    (cBlinfun (projection (complex_span (set S)))) =
-    (let d = canonical_basis_length TYPE('a)
-     in mk_projector_orthog d
-         (rev (gram_schmidt_sub d [] (map vec_of_onb_enum S))))"
-    sorry
-      (*    by (metis Cons.IH Proj_def Span.rep_eq gram_schmidt_def map_fun_apply)
-*)
-  have "mat_of_cblinfun
-     (cBlinfun
-       (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) =
-          mk_projector_orthog d
-         (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))"
-    using q1 sorry
-  thus ?case 
-    sorry
-      (*
-    apply auto unfolding d_def gram_schmidt_def apply auto
-    unfolding Span_def Proj_def using d_def s2 s1 Span.abs_eq Span_def map_fun_apply
-    apply simp
-    using \<open>closure (complex_span (insert a (set S))) = complex_span {x. \<exists>k. x - k *\<^sub>C a 
-    \<in> complex_span (set S)}\<close> \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span 
-    (set S)}\<close> \<open>finite (insert a (set S))\<close> span_finite_dim
-  proof -
-    show "mat_of_cblinfun (cBlinfun (projection (complex_span {aa. \<exists>c. aa - c *\<^sub>C a \<in> complex_span (set S)}))) = (let n = canonical_basis_length (TYPE('a)::'a itself) in mk_projector_orthog n (rev (gram_schmidt_sub n [vec_of_onb_enum a] (map vec_of_onb_enum S))))"
-      by (metis (no_types) \<open>complex_span (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)}\<close> \<open>mat_of_cblinfun (cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> complex_span (set S)})) = mk_projector_orthog d (rev (gram_schmidt_sub d [vec_of_onb_enum a] (map vec_of_onb_enum S)))\<close> complex_vector.span_span d_def)
-  qed *)
-
-qed
-*)
 
 
 lemma mk_projector_SPAN[code]: 
