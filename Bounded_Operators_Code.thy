@@ -2454,16 +2454,14 @@ proof- (* NEW *)
     by simp 
 qed
 
-
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
-    and "R == map vec_of_onb_enum S"
   assumes "is_ortho_set (set S)" and "distinct S"
-  shows "mat_of_cblinfun (Proj (Span (set S))) =
-    (let d = canonical_basis_length TYPE('a) in 
-      mk_projector_orthog d R)"
-  sorry 
+  shows "mk_projector (Span (set S)) =
+    mk_projector_orthog d (map vec_of_onb_enum S)"
+  using assms
+  sorry (* Ask to Dominique for suggestions in order to prove this theorem *)
 
 (* TODO move to ..._Matrices *)
 lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
@@ -2483,7 +2481,9 @@ proof-
   have "mat_of_cblinfun (Proj (Span (set S'))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (map vec_of_onb_enum S'))"
-    using S'_def' S'_def'' mat_of_cblinfun_Proj_Span_aux_1 by blast
+    using S'_def' S'_def'' mat_of_cblinfun_Proj_Span_aux_1
+    unfolding mk_projector_def
+    by auto 
   hence "mat_of_cblinfun (Proj (Span (set S'))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S)))"
