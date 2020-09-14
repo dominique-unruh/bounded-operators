@@ -3485,6 +3485,8 @@ definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
 
 end
 
+
+
 lemma span_explicit_finite:
   \<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
   for A::\<open>'a::complex_vector set\<close>
@@ -4463,6 +4465,37 @@ proof
       by (metis list.set_intros(1))
     thus ?thesis
       using canonical_basis_non_zero by fastforce       
+  qed
+qed
+
+instance one_dim \<subseteq> complex_normed_algebra
+proof
+  show "norm (x * y) \<le> norm x * norm y"
+    for x y::"'a::one_dim"
+  proof-
+    have "\<langle>(1::'a), 1\<rangle> = 1"
+      by (simp add: one_dim_1_times_1)
+    hence "(norm (1::'a))^2 = 1"
+      by (simp add: power2_norm_eq_cinner)
+    hence "norm (1::'a) = 1"
+      by (smt abs_norm_cancel power2_eq_1_iff)
+    hence "cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>) * norm (1::'a) = cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>)"
+      by simp
+    also have "\<dots> = cmod (\<langle>1::'a, x\<rangle>) * cmod (\<langle>1::'a, y\<rangle>)"
+      by (simp add: norm_mult)
+    also have "\<dots> \<le> norm (1::'a) * norm x * norm (1::'a) * norm y"
+    proof-
+      have "cmod (\<langle>1::'a, x\<rangle>) \<le> norm (1::'a) * norm x"
+        by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)
+      moreover have "cmod (\<langle>1::'a, y\<rangle>) \<le> norm (1::'a) * norm y"
+        by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)
+      ultimately show ?thesis
+        by (smt \<open>norm 1 = 1\<close> mult_cancel_left1 mult_cancel_right1 norm_scaleC one_dim_1_times_a_eq_a)
+    qed
+    also have "\<dots> = norm x * norm y"
+      by (simp add: \<open>norm 1 = 1\<close>)
+    finally show ?thesis
+      by (simp add: one_dim_prod)
   qed
 qed
 
@@ -6476,6 +6509,7 @@ proposition bounded_nsbounded_norm:
   for S::\<open>'a::real_normed_vector set\<close>
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
   by blast
+
 
 unbundle no_nsa_notation
 
