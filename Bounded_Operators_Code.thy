@@ -199,6 +199,47 @@ qed simp
 
 definition "gram_schmidt0 n ws = gram_schmidt_sub0 n [] ws"
 
+lemma (in module) lin_indep_empty: "\<not> lin_dep {}"
+  unfolding lin_dep_def by auto
+
+lemma Span_onb_enum_gram_schmidt0:
+  defines "onb_enum == (onb_enum_of_vec :: _ \<Rightarrow> 'a::onb_enum)"
+  assumes "set ws \<subseteq> carrier_vec n"
+  shows "Span (set (map onb_enum (gram_schmidt0 n ws)))
+     = Span (set (map onb_enum ws))"
+proof (transfer fixing: n ws onb_enum)
+  define gs where "gs = gram_schmidt0 n ws"
+  define cspan where "cspan =
+    LinearCombinations.module.span class_ring
+     (module_vec TYPE(complex) n)"
+  have "closure (complex_span (set (map onb_enum gs)))
+     = complex_span (set (map onb_enum gs))"
+    apply (rule span_finite_dim)
+    by simp
+  also have "\<dots> = complex_span (onb_enum ` set gs)"
+    by simp
+  also have "\<dots> = onb_enum ` cspan (set gs)"
+    unfolding cspan_def
+(* TODO: extract a lemma from José's proof below for the
+fact that "onb_enum ` cspan X = complex_span (onb_enum ` X)"
+(possibly using that X is a finite set) *)
+    sorry
+  also have "\<dots> = onb_enum ` cspan (set ws)"
+    unfolding gs_def cspan_def gram_schmidt0_def
+    apply (subst cof_vec_space.gram_schmidt_sub0_result[where ws=ws and us="[]", simplified, THEN conjunct2, THEN conjunct2, THEN conjunct2, symmetric])
+    using assms module.lin_indep_empty apply auto
+    using vec_module by blast
+  also have "\<dots> = complex_span (onb_enum ` set ws)"
+    sorry
+  also have "\<dots> = complex_span (set (map onb_enum ws))"
+    by simp
+  also have "\<dots> = closure (complex_span (set (map onb_enum ws)))"
+    apply (rule span_finite_dim[symmetric])
+    by simp
+  finally show "closure (complex_span (set (map onb_enum gs)))
+              = closure (complex_span (set (map onb_enum ws)))".
+qed
+
 lemma (in cof_vec_space) gram_schmidt0_result:
   fixes ws
   defines "us' \<equiv> gram_schmidt0 n ws"
@@ -1083,7 +1124,8 @@ definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_en
 code_datatype SPAN
 
 
-definition "mk_projector (S::'a::onb_enum clinear_space) = mat_of_cblinfun (Proj S)" 
+definition "mk_projector (S::'a::onb_enum clinear_space)
+   = mat_of_cblinfun (Proj S)" 
 
 (* TODO: move to ..._Matrices *)
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
@@ -1923,7 +1965,7 @@ proof -
 qed
 
 
-(* NEW *)
+(* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
 lemma Span_rev_gram_schmidt_sub0:
   defines "d==canonical_basis_length TYPE('a::onb_enum)"
     and "onb_of_vec == (onb_enum_of_vec::_\<Rightarrow>'a)"
@@ -2384,6 +2426,8 @@ next
   qed
 qed
 
+
+(* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
 lemma Span_map_vec_of_onb_enum:
   fixes S S' :: "'a::onb_enum list"
   defines "R == map vec_of_onb_enum S"
