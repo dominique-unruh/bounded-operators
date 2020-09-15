@@ -77,7 +77,7 @@ proof -
 qed
 
 
-(* Following closed Gram_Schmidt.gram_schmidt_sub_result in Jordan_Normal_Form *)
+(* Following closely Gram_Schmidt.gram_schmidt_sub_result in Jordan_Normal_Form *)
 lemma (in cof_vec_space) gram_schmidt_sub0_result:
   assumes "gram_schmidt_sub0 n us ws = us'"
     and "set ws \<subseteq> carrier_vec n"
@@ -199,47 +199,6 @@ qed simp
 
 definition "gram_schmidt0 n ws = gram_schmidt_sub0 n [] ws"
 
-lemma (in module) lin_indep_empty: "\<not> lin_dep {}"
-  unfolding lin_dep_def by auto
-
-lemma Span_onb_enum_gram_schmidt0:
-  defines "onb_enum == (onb_enum_of_vec :: _ \<Rightarrow> 'a::onb_enum)"
-  assumes "set ws \<subseteq> carrier_vec n"
-  shows "Span (set (map onb_enum (gram_schmidt0 n ws)))
-     = Span (set (map onb_enum ws))"
-proof (transfer fixing: n ws onb_enum)
-  define gs where "gs = gram_schmidt0 n ws"
-  define cspan where "cspan =
-    LinearCombinations.module.span class_ring
-     (module_vec TYPE(complex) n)"
-  have "closure (complex_span (set (map onb_enum gs)))
-     = complex_span (set (map onb_enum gs))"
-    apply (rule span_finite_dim)
-    by simp
-  also have "\<dots> = complex_span (onb_enum ` set gs)"
-    by simp
-  also have "\<dots> = onb_enum ` cspan (set gs)"
-    unfolding cspan_def
-(* TODO: extract a lemma from José's proof below for the
-fact that "onb_enum ` cspan X = complex_span (onb_enum ` X)"
-(possibly using that X is a finite set) *)
-    sorry
-  also have "\<dots> = onb_enum ` cspan (set ws)"
-    unfolding gs_def cspan_def gram_schmidt0_def
-    apply (subst cof_vec_space.gram_schmidt_sub0_result[where ws=ws and us="[]", simplified, THEN conjunct2, THEN conjunct2, THEN conjunct2, symmetric])
-    using assms module.lin_indep_empty apply auto
-    using vec_module by blast
-  also have "\<dots> = complex_span (onb_enum ` set ws)"
-    sorry
-  also have "\<dots> = complex_span (set (map onb_enum ws))"
-    by simp
-  also have "\<dots> = closure (complex_span (set (map onb_enum ws)))"
-    apply (rule span_finite_dim[symmetric])
-    by simp
-  finally show "closure (complex_span (set (map onb_enum gs)))
-              = closure (complex_span (set (map onb_enum ws)))".
-qed
-
 lemma (in cof_vec_space) gram_schmidt0_result:
   fixes ws
   defines "us' \<equiv> gram_schmidt0 n ws"
@@ -260,6 +219,150 @@ proof -
   thus ?thesis1 ?thesis2 ?thesis3 ?thesis4
     by auto
 qed
+
+(* (* TODO: More to Preliminaries *)
+lemma (in module) lin_indep_empty: "\<not> lin_dep {}"
+  unfolding lin_dep_def by auto
+ *)
+
+locale complex_vec_space = cof_vec_space n "TYPE(complex)" for n :: nat
+
+lemma (in complex_vec_space) module_span_complex_span:
+  fixes X :: "'a::onb_enum set"
+  assumes "canonical_basis_length TYPE('a) = n"
+  shows "span (vec_of_onb_enum ` X) = vec_of_onb_enum ` complex_span X"
+proof -
+  have carrier: "vec_of_onb_enum ` X \<subseteq> carrier_vec n"
+    by (metis assms canonical_basis_length_eq carrier_vecI dim_vec_of_onb_enum_list' image_subsetI)
+  have lincomb_sum: "lincomb c A = vec_of_onb_enum (\<Sum>b\<in>B. c' b *\<^sub>C b)" 
+    if B_def: "B = onb_enum_of_vec ` A" and \<open>finite A\<close>
+      and AX: "A \<subseteq> vec_of_onb_enum ` X" and c'_def: "\<And>b. c' b = c (vec_of_onb_enum b)"
+    for c c' A and B::"'a set"
+    unfolding B_def using \<open>finite A\<close> AX
+  proof induction
+    case empty
+    then show ?case
+      by (simp add: assms vec_of_onb_enum_zero)
+  next
+    case (insert x F)
+    then have IH: "lincomb c F = vec_of_onb_enum (\<Sum>b\<in>onb_enum_of_vec ` F. c' b *\<^sub>C b)"
+      (is "_ = ?sum")
+      by simp
+    have xx: "vec_of_onb_enum (onb_enum_of_vec x :: 'a) = x"
+      apply (rule vec_of_onb_enum_inverse)
+      using assms carrier carrier_vecD insert.prems by auto
+    have "lincomb c (insert x F) = c x \<cdot>\<^sub>v x + lincomb c F"
+      apply (rule lincomb_insert2)
+      using insert.hyps insert.prems carrier by auto
+    also have "c x \<cdot>\<^sub>v x = vec_of_onb_enum (c' (onb_enum_of_vec x) *\<^sub>C (onb_enum_of_vec x :: 'a))"
+      by (simp add: xx vec_of_onb_enum_scaleC c'_def)
+    also note IH
+    also have
+      "vec_of_onb_enum (c' (onb_enum_of_vec x) *\<^sub>C (onb_enum_of_vec x :: 'a)) + ?sum
+          = vec_of_onb_enum (\<Sum>b\<in>onb_enum_of_vec ` insert x F. c' b *\<^sub>C b)"
+      apply simp apply (rule sym)
+      apply (subst sum.insert)
+      using \<open>finite F\<close> \<open>x \<notin> F\<close> dim_vec_of_onb_enum_list' insert.prems 
+        vec_of_onb_enum_add c'_def by auto
+    finally show ?case
+      by -
+  qed
+
+  show ?thesis
+  proof auto
+    fix x assume "x \<in> local.span (vec_of_onb_enum ` X)"
+    then obtain c A where xA: "x = lincomb c A" and "finite A" and AX: "A \<subseteq> vec_of_onb_enum ` X"
+      unfolding span_def by auto
+    define B::"'a set" and c' where "B = onb_enum_of_vec ` A"
+      and "c' b = c (vec_of_onb_enum b)" for b::'a
+    note xA
+    also have "lincomb c A = vec_of_onb_enum (\<Sum>b\<in>B. c' b *\<^sub>C b)"
+      using B_def \<open>finite A\<close> AX c'_def by (rule lincomb_sum)
+    also have "\<dots> \<in> vec_of_onb_enum ` complex_span X"
+      unfolding complex_vector.span_explicit
+      apply (rule imageI) apply (rule CollectI)
+      apply (rule exI) apply (rule exI)
+      using \<open>finite A\<close> AX by (auto simp: B_def)
+    finally show "x \<in> vec_of_onb_enum ` complex_span X"
+      by -
+  next
+    fix x assume "x \<in> complex_span X" 
+    then obtain c' B where x: "x = (\<Sum>b\<in>B. c' b *\<^sub>C b)" and "finite B" and BX: "B \<subseteq> X"
+      unfolding span_explicit by auto
+    define A and c where "A = vec_of_onb_enum ` B"
+      and "c b = c' (onb_enum_of_vec b)" for b
+    have "vec_of_onb_enum x = vec_of_onb_enum (\<Sum>b\<in>B. c' b *\<^sub>C b)"
+      using x by simp
+    also have "\<dots> = lincomb c A"
+      apply (rule lincomb_sum[symmetric])
+      unfolding A_def c_def using BX \<open>finite B\<close>
+      by (auto simp: image_image)
+    also have "\<dots> \<in> span (vec_of_onb_enum ` X)"
+      unfolding span_def apply (rule CollectI)
+      apply (rule exI, rule exI)
+      unfolding A_def using \<open>finite B\<close> BX by auto
+    finally show "vec_of_onb_enum x \<in> local.span (vec_of_onb_enum ` X)"
+      by -
+  qed
+qed
+
+lemma (in complex_vec_space) module_span_complex_span':
+  assumes "canonical_basis_length TYPE('a) = n"
+  assumes "Y \<subseteq> carrier_vec n"
+  shows "complex_span (onb_enum_of_vec ` Y :: 'a::onb_enum set) = onb_enum_of_vec ` local.span Y"
+proof -
+  define X::"'a set" where "X = onb_enum_of_vec ` Y"
+  then have "complex_span (onb_enum_of_vec ` Y :: 'a set) = onb_enum_of_vec ` vec_of_onb_enum ` complex_span X"
+    by (simp add: image_image)
+  also have "\<dots> = onb_enum_of_vec ` local.span (vec_of_onb_enum ` X)"
+    apply (subst module_span_complex_span)
+    using assms by simp_all
+  also have "vec_of_onb_enum ` X = Y"
+    unfolding X_def image_image
+    apply (rule image_cong[where g=id and M=Y and N=Y, simplified])
+    using assms(1) assms(2) by auto
+  finally show ?thesis
+    by simp
+qed
+
+lemma Span_onb_enum_gram_schmidt0:
+  defines "onb_enum == (onb_enum_of_vec :: _ \<Rightarrow> 'a::onb_enum)"
+  defines "n == canonical_basis_length TYPE('a)"
+  assumes "set ws \<subseteq> carrier_vec n"
+  shows "Span (set (map onb_enum (gram_schmidt0 n ws)))
+     = Span (set (map onb_enum ws))"
+proof (transfer fixing: n ws onb_enum)
+  interpret complex_vec_space.
+  define gs where "gs = gram_schmidt0 n ws"
+  have "closure (complex_span (set (map onb_enum gs)))
+     = complex_span (set (map onb_enum gs))"
+    apply (rule span_finite_dim)
+    by simp
+  also have "\<dots> = complex_span (onb_enum ` set gs)"
+    by simp
+  also have "\<dots> = onb_enum ` span (set gs)"
+    unfolding onb_enum_def
+    apply (rule module_span_complex_span')
+    using n_def apply simp
+    by (simp add: assms(3) cof_vec_space.gram_schmidt0_result(1) gs_def)
+  also have "\<dots> = onb_enum ` span (set ws)"
+    unfolding gs_def
+    apply (subst gram_schmidt0_result(4)[where ws=ws, symmetric])
+    using assms by auto
+  also have "\<dots> = complex_span (onb_enum ` set ws)"
+    unfolding onb_enum_def
+    apply (rule module_span_complex_span'[symmetric])
+    using n_def apply simp
+    by (simp add: assms(3))
+  also have "\<dots> = complex_span (set (map onb_enum ws))"
+    by simp
+  also have "\<dots> = closure (complex_span (set (map onb_enum ws)))"
+    apply (rule span_finite_dim[symmetric])
+    by simp
+  finally show "closure (complex_span (set (map onb_enum gs)))
+              = closure (complex_span (set (map onb_enum ws)))".
+qed
+
 
 
 subsection \<open>Code equations for cblinfun operators\<close>
@@ -671,7 +774,7 @@ lemma ell2_of_vec_uminus[code]:
   "vec_of_ell2 (- y) =  - (vec_of_ell2 y)" for y :: "'a::enum ell2"
   by (simp add: vec_of_ell2_def vec_of_onb_enum_uminus)
 
-lemma cinner_ell2_code [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
+lemma cinner_ell2_code' [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
   by (simp add: cinner_ell2_code vec_of_ell2_def)
 
 lemma norm_ell2_code [code]: "norm \<psi> = 
@@ -1129,19 +1232,16 @@ definition "mk_projector (S::'a::onb_enum clinear_space)
 
 (* TODO: move to ..._Matrices *)
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
-and returns the projector onto the span of L. (Assuming that all vectors in L are orthogonal.)\<close>
+and returns the projector onto the span of L. (Assuming that all vectors in L are orthogonal
+and nonzero.)\<close>
 
 fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
   "mk_projector_orthog d [] = zero_mat d d"
 | "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
-                                if norm2=0 then zero_mat d d else
                                 smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]))"
 | "mk_projector_orthog d (v#vs) = (let norm2 = cscalar_prod v v in
-                                   if norm2=0 then mk_projector_orthog d vs else
                                    smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
                                         + mk_projector_orthog d vs)"
-
-
 
 lemma Span_insert:
   assumes "finite (S::'a'::complex_inner set)"
@@ -2498,14 +2598,308 @@ proof- (* NEW *)
     by simp 
 qed
 
+instantiation complex :: basis_enum begin
+definition "canonical_basis = [1::complex]"
+definition "canonical_basis_length (_::complex itself) = 1"
+instance
+  apply intro_classes
+  unfolding canonical_basis_complex_def canonical_basis_length_complex_def
+  by (auto simp add: Complex_Vector_Spaces.span_raw_def vector_space_over_itself.span_Basis)
+end
+
+instance complex :: one_dim
+  apply intro_classes
+  unfolding canonical_basis_complex_def is_ortho_set_def
+  by auto
+
+definition butterfly_def': "butterfly (s::'a::chilbert_space)
+   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
+
+lift_definition one_dim_isom :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b::one_dim" is
+  "\<lambda>a. of_complex (one_dim_to_complex a)"
+  apply (rule cbounded_linear_intro[where K=1])
+  apply (auto simp: one_dim_to_complex_def cinner_add_right)
+  apply (simp add: scaleC_conv_of_complex)
+  by (smt cinner_scaleC_left complex_to_one_dim_inverse norm_eq_sqrt_cinner of_complex_def one_dim_1_times_a_eq_a)
+
+lemma one_dim_isom_inverse[simp]: "one_dim_isom o\<^sub>C\<^sub>L one_dim_isom = idOp"
+  by (transfer, rule ext, simp)
+
+lemma one_dim_isom_adj[simp]: "one_dim_isom* = one_dim_isom"
+  apply (rule adjoint_D[symmetric])
+  apply transfer
+  by (simp add: of_complex_def one_dim_to_complex_def)
+
+
+lemma one_dim_isom_vector_to_cblinfun: 
+  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L one_dim_isom = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
+  by (transfer fixing: s, auto)
+
+
+
+lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
+                                 o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)*"
+    (is "_ = ?rhs")
+proof -
+  let ?isoAC = "one_dim_isom :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
+  let ?isoCA = "one_dim_isom :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
+
+  have "butterfly s =
+    (vector_to_cblinfun s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (vector_to_cblinfun s o\<^sub>C\<^sub>L ?isoCA)*"
+    unfolding butterfly_def' one_dim_isom_vector_to_cblinfun by simp
+  also have "\<dots> = vector_to_cblinfun s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (vector_to_cblinfun s)*"
+    by (simp add: timesOp_assoc del: one_dim_isom_adj)
+  also have "\<dots> = ?rhs"
+    by simp
+  finally show ?thesis
+    by simp
+qed
+
+lemma butterfly_apply: "butterfly \<psi> *\<^sub>V \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C \<psi>"
+  apply (subst butterfly_def)
+  by (simp add: times_applyOp)
+
+lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
+  apply transfer by simp
+
+lemma butterfly_0[simp]: "butterfly 0 = 0"
+  apply (subst butterfly_def)
+  by simp
+
+lemma onormI:
+  assumes "\<And>x. norm (f x) \<le> b * norm x"
+    and "x \<noteq> 0" and "norm (f x) = b * norm x"
+  shows "onorm f = b"
+proof (unfold onorm_def, rule cSup_eq_maximum)
+  from assms(2) have "norm x \<noteq> 0"
+    by auto
+  with assms(3) 
+  have "norm (f x) / norm x = b"
+    by auto
+  then show "b \<in> range (\<lambda>x. norm (f x) / norm x)"
+    by auto
+next
+  fix y 
+  assume "y \<in> range (\<lambda>x. norm (f x) / norm x)"
+  then obtain x where y_def: "y = norm (f x) / norm x"
+    by auto
+  then show "y \<le> b"
+    unfolding y_def using assms(1)[of x]
+    by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
+qed
+
+
+lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"
+proof (cases "\<psi>=0")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  show ?thesis 
+    unfolding norm_cblinfun.rep_eq
+  proof (rule onormI[OF _ False])
+    fix x 
+    show "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
+      apply (simp add: butterfly_apply power2_eq_square)
+      using norm_cauchy_schwarz[of \<psi> x]
+      by (simp add: linordered_field_class.sign_simps(25) mult_left_mono ordered_field_class.sign_simps(5))
+    show "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
+      apply (simp add: butterfly_apply power2_eq_square)
+      by (simp add: power2_norm_eq_cinner semiring_normalization_rules(29))
+  qed
+qed
+
+lemma butterfly_scaleC: "butterfly (c *\<^sub>C \<psi>) = abs c ^ 2 *\<^sub>C butterfly \<psi>"
+  unfolding butterfly_def' vector_to_cblinfun_scalar_times scalar_times_adj
+  by (simp add: cnj_x_x)
+
+lemma butterfly_scaleR: "butterfly (r *\<^sub>R \<psi>) = r ^ 2 *\<^sub>R butterfly \<psi>"
+  unfolding scaleR_scaleC butterfly_scaleC power2_abs cnj_x_x[symmetric]
+  unfolding power2_eq_square
+  by auto
+
+lemma inj_butterfly: 
+  assumes "butterfly x = butterfly y"
+  shows "\<exists>c. cmod c = 1 \<and> x = c *\<^sub>C y"
+proof (cases "x = 0")
+  case True
+  from assms have "y = 0"
+    using norm_butterfly
+    by (metis True norm_eq_zero zero_less_power2)
+  with True show ?thesis
+    apply (rule_tac exI[of _ 1])
+    by auto
+next
+  case False
+  define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
+  have "\<langle>x, x\<rangle> *\<^sub>C x = butterfly x *\<^sub>V x"
+    by (simp add: butterfly_apply)
+  also have "\<dots> = butterfly y *\<^sub>V x"
+    using assms by simp
+  also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
+    by (simp add: butterfly_apply)
+  finally have xcy: "x = c *\<^sub>C y"
+    by (simp add: c_def Complex_Vector_Spaces.eq_vector_fraction_iff)
+  have "cmod c * norm x = cmod c * norm y"
+    using assms norm_butterfly
+    by (metis norm_eq_sqrt_cinner power2_norm_eq_cinner) 
+  also have "cmod c * norm y = norm (c *\<^sub>C y)"
+    by simp
+  also have "\<dots> = norm x"
+    unfolding xcy[symmetric] by simp
+  finally have c: "cmod c = 1"
+    by (simp add: False)
+  from c xcy show ?thesis
+    by auto
+qed
+
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
-  assumes "is_ortho_set (set S)" and "distinct S"
-  shows "mk_projector (Span (set S)) =
-    mk_projector_orthog d (map vec_of_onb_enum S)"
-  using assms
-  sorry (* Ask to Dominique for suggestions in order to prove this theorem *)
+  assumes ortho: "is_ortho_set (set S)" and distinct: "distinct S"
+  shows "mk_projector_orthog d (map vec_of_onb_enum S) = mk_projector (Span (set S))"
+proof -
+  define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
+  
+  have "distinct Snorm"
+  proof (insert ortho distinct, unfold Snorm_def, induction S)
+    case Nil
+    show ?case by simp
+  next
+    case (Cons s S)
+    then have "is_ortho_set (set S)" and "distinct S"
+      unfolding is_ortho_set_def by auto
+    note IH = Cons.IH[OF this]
+    have "s /\<^sub>R norm s \<notin> (\<lambda>s. s /\<^sub>R norm s) ` set S"
+    proof auto
+      fix s' assume "s' \<in> set S" and same: "s /\<^sub>R norm s = s' /\<^sub>R norm s'"
+      with Cons.prems have "s \<noteq> s'" by auto
+      have "s \<noteq> 0"
+        by (metis Cons.prems(1) is_ortho_set_def list.set_intros(1))
+      then have "0 \<noteq> \<langle>s /\<^sub>R norm s, s /\<^sub>R norm s\<rangle>"
+        by simp
+      also have \<open>\<langle>s /\<^sub>R norm s, s /\<^sub>R norm s\<rangle> = \<langle>s /\<^sub>R norm s, s' /\<^sub>R norm s'\<rangle>\<close>
+        by (simp add: same)
+      also have \<open>\<langle>s /\<^sub>R norm s, s' /\<^sub>R norm s'\<rangle> = \<langle>s, s'\<rangle> / (norm s * norm s')\<close>
+        by (simp add: scaleR_scaleC divide_inverse_commute)
+      also from \<open>s' \<in> set S\<close> \<open>s \<noteq> s'\<close> have "\<dots> = 0"
+        using Cons.prems unfolding is_ortho_set_def by simp
+      finally show False
+        by simp
+    qed
+    then show ?case
+      using IH by simp
+  qed
+
+  have norm_Snorm: "norm s = 1" if "s \<in> set Snorm" for s
+    using that ortho unfolding Snorm_def is_ortho_set_def by auto
+
+  have ortho_Snorm: "is_ortho_set (set Snorm)"
+    unfolding is_ortho_set_def
+  proof (intro conjI ballI impI)
+    fix x y
+    show "x \<in> set Snorm \<Longrightarrow> x \<noteq> 0"
+      using norm_Snorm[of 0] by auto
+    assume "x \<in> set Snorm" and "y \<in> set Snorm" and "x \<noteq> y"
+    from \<open>x \<in> set Snorm\<close>
+    obtain x' where x: "x = x' /\<^sub>R norm x'" and x': "x' \<in> set S"
+      unfolding Snorm_def by auto
+    from \<open>y \<in> set Snorm\<close>
+    obtain y' where y: "y = y' /\<^sub>R norm y'" and y': "y' \<in> set S"
+      unfolding Snorm_def by auto
+    from \<open>x \<noteq> y\<close> x y have \<open>x' \<noteq> y'\<close> by auto
+    with x' y' ortho have "cinner x' y' = 0"
+      unfolding is_ortho_set_def by auto
+    then show "cinner x y = 0"
+      unfolding x y scaleR_scaleC by auto
+  qed
+
+  have inj_butter: "inj_on butterfly (set Snorm)"
+  proof (rule inj_onI)
+    fix x y 
+    assume "x \<in> set Snorm" and "y \<in> set Snorm"
+    assume "butterfly x = butterfly y"
+    then obtain c where xcy: "x = c *\<^sub>C y" and "cmod c = 1"
+      using inj_butterfly by auto
+    have "0 \<noteq> cmod (cinner x x)"
+      using \<open>x \<in> set Snorm\<close> norm_Snorm
+      by (simp add: cinner_norm_sq)
+    also have "cmod (cinner x x) = cmod (c * \<langle>x, y\<rangle>)"
+      apply (subst (2) xcy) by simp
+    also have "\<dots> = cmod \<langle>x, y\<rangle>"
+      using \<open>cmod c = 1\<close> by (simp add: norm_mult)
+    finally have "\<langle>x, y\<rangle> \<noteq> 0"
+      by simp
+    then show "x = y"
+      using ortho_Snorm \<open>x \<in> set Snorm\<close> \<open>y \<in> set Snorm\<close>
+      unfolding is_ortho_set_def by auto
+  qed
+
+  from \<open>distinct Snorm\<close> inj_butter
+  have distinct': "distinct (map butterfly Snorm)"
+    unfolding distinct_map by simp
+
+  have Span_Snorm: "Span (set Snorm) = Span (set S)"
+    apply (transfer fixing: Snorm S)
+    apply (simp add: scaleR_scaleC Snorm_def)
+    apply (subst span_image_scale) 
+    using is_ortho_set_def ortho by fastforce+
+
+  have "mk_projector_orthog d (map vec_of_onb_enum S)
+      = mat_of_cblinfun (sum_list (map butterfly Snorm))"
+    unfolding Snorm_def
+  proof (induction S)
+    case Nil
+    show ?case 
+      by (simp add: d_def mat_of_cblinfun_zero')
+  next
+    case (Cons a S)
+    define sumS where "sumS = sum_list (map butterfly (map (\<lambda>s. s /\<^sub>R norm s) S))"
+    with Cons have IH: "mk_projector_orthog d (map vec_of_onb_enum S)
+                  = mat_of_cblinfun sumS"
+      by simp
+
+    define factor where "factor = inverse ((complex_of_real (norm a))\<^sup>2)"
+    have factor': "factor = 1 / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)"
+      unfolding factor_def cinner_ell2_code[symmetric]
+      by (simp add: inverse_eq_divide power2_norm_eq_cinner'')
+
+    have "mk_projector_orthog d (map vec_of_onb_enum (a # S))
+          = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] 
+                    * mat_of_rows d [conjugate (vec_of_onb_enum a)])
+            + mat_of_cblinfun sumS"
+      apply (cases S)
+       apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero')[1]
+      by (auto simp add: IH[symmetric] factor' d_def)
+
+    also have "\<dots> = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] *
+         adjoint_mat (mat_of_cols d [vec_of_onb_enum a])) + mat_of_cblinfun sumS"
+      apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
+      apply (rule mat_eq_iff[THEN iffD2])
+        apply (auto simp add: adjoint_mat_def)
+      apply (subst mat_of_rows_index)
+        apply auto
+      apply (subst mat_of_cols_index)
+        apply auto
+      by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
+
+    also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
+      apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
+      by (simp add: butterfly_def' cblinfun_of_mat_timesOp
+          cblinfun_of_mat_adjoint mat_of_cblinfun_ell2_to_l2bounded d_def)
+
+    finally show ?case
+      by (simp add: cblinfun_of_mat_plusOp' sumS_def)
+  qed
+  also have "\<dots> =  mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
+    by (metis distinct' distinct_map sum.distinct_set_conv_list)
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set Snorm)))"
+    sorry
+  also have "\<dots> = mk_projector (Span (set S))"
+    unfolding mk_projector_def Span_Snorm by simp
+  finally show ?thesis
+    by -
+qed
 
 (* TODO move to ..._Matrices *)
 lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
@@ -2525,7 +2919,7 @@ proof-
   have "mat_of_cblinfun (Proj (Span (set S'))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (map vec_of_onb_enum S'))"
-    using S'_def' S'_def'' mat_of_cblinfun_Proj_Span_aux_1
+    using S'_def' S'_def'' mat_of_cblinfun_Proj_Span_aux_1[symmetric]
     unfolding mk_projector_def
     by auto 
   hence "mat_of_cblinfun (Proj (Span (set S'))) =
@@ -2704,8 +3098,9 @@ instance apply intro_classes unfolding equal_clinear_space_def by simp
 end
 
 (* TODO: Move to ..._Matrices *)
-definition "is_subspace_of n vs ws =  
-  list_all ((=) (zero_vec n)) (drop (length ws) (gram_schmidt n (ws @ vs)))"
+definition "is_subspace_of n vs ws = 
+  (let ws' = gram_schmidt0 n ws in
+     \<forall>v\<in>set vs. adjuster n v vs = v)"
 
 (* TODO: Move to ..._Matrices *)
 lemma Span_leq: "(Span (set A) \<le> Span (set B)) =

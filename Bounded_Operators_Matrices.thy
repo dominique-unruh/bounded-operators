@@ -658,7 +658,7 @@ proof-
   thus ?thesis by simp
 qed
 
-
+(* TODO: rename: onb_enum_of_vec_inverse *)
 lemma vec_of_onb_enum_inverse[simp]:
   fixes v::"complex vec"
   defines "n == canonical_basis_length TYPE('a::{basis_enum,complex_inner})"
@@ -2695,6 +2695,7 @@ lemma mat_of_cblinfun_scaleR:
   "mat_of_cblinfun ((a::real) *\<^sub>R F) = (complex_of_real a) \<cdot>\<^sub>m (mat_of_cblinfun F)"
   unfolding scaleR_scaleC by (rule mat_of_cblinfun_scalarMult)
 
+(* TODO: rename \<rightarrow> mat_of_cblinfun_adjoint *)
 lemma cblinfun_of_mat_adjoint:
   "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"

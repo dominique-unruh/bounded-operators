@@ -7,7 +7,7 @@ Authors:
 
 theory Jordan_Normal_Form_Missing
   imports
-    Jordan_Normal_Form.Matrix
+    Jordan_Normal_Form.Matrix Jordan_Normal_Form.Schur_Decomposition
 begin
 text \<open>This theory defines bundes to activate/deactivate the notation
   from \<^session>\<open>Jordan_Normal_Form\<close>.
@@ -99,8 +99,13 @@ proof-
   finally show ?thesis by simp
 qed
 
-definition "adjoint_mat M = transpose_mat (map_mat cnj M)"
-
+(* TODO: remove this because it already exists as mat_adjoint *)
+definition "adjoint_mat M = transpose_mat (map_mat conjugate M)"
+lemma adjoint_mat_mat_adjoint: "adjoint_mat M = mat_adjoint M"
+  apply (rule mat_eq_iff[THEN iffD2])
+  apply (auto simp: adjoint_mat_def mat_adjoint_def transpose_mat_def)
+  apply (subst mat_of_rows_index)
+  by auto
 
 lemma adjoint_mat_swap:
   fixes M ::"complex mat"
