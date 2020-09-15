@@ -4059,7 +4059,7 @@ proof-
 qed
 
 theorem riesz_frechet_representation_cblinfun_existence_uniq:
-  fixes f::\<open>('a::chilbert_space, complex) cblinfun\<close>
+  fixes f::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   shows \<open>\<exists>!t. \<forall>x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
   apply transfer apply auto
    apply (simp add: riesz_frechet_representation_existence)
@@ -4086,8 +4086,8 @@ qed
 
 theorem riesz_frechet_representation_cblinfun_norm:
   includes notation_norm
-  fixes f::\<open>('a::chilbert_space, complex) cblinfun\<close>
-  assumes \<open>\<And> x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
+  fixes f::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
+  assumes \<open>\<And>x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
   shows \<open>\<parallel>f\<parallel> = \<parallel>t\<parallel>\<close>
   using assms apply transfer
 proof-
