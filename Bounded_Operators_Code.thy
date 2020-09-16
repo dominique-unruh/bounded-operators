@@ -1434,7 +1434,8 @@ proof-
     unfolding p_def M_def by auto
 qed
 
-
+(* TODO: replace by a more general lemma that show Proj (A\<union>B) = Proj A + Proj B
+         under orthogonality assumptions *)
 lemma Proj_Span_insert:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
     and a::'a 
@@ -1795,7 +1796,7 @@ lemma is_ortho_set_corthogonal:
   fixes S :: "'a::onb_enum list"
   defines  "R == map vec_of_onb_enum S"
   assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
-    and a3: "0 \<notin> set S"
+    and a3: "0 \<notin> set S" (* TODO: redundant assumption *)
   shows    "corthogonal R"
 proof-
   have x1: "R ! i \<bullet>c R ! j = \<langle>S ! j, S ! i\<rangle>"
@@ -2753,6 +2754,57 @@ next
     by auto
 qed
 
+lemma isometry_vector_to_cblinfun:
+  assumes "norm x = 1"
+  shows "isometry (vector_to_cblinfun x)"
+  by (simp add: isometry_def cinner_norm_sq assms)
+
+lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
+  apply transfer
+  apply (rule arg_cong[where f=closure])
+  unfolding complex_vector.span_singleton
+  apply auto
+  by (smt UNIV_I complex_scaleC_def image_iff mult.right_neutral one_dim_to_complex_one one_dim_to_complex_scaleC)
+
+
+lemma butterfly_proj:
+  assumes "norm x = 1"
+  shows "butterfly x = proj x"
+proof -
+  define B and \<phi> :: "complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
+    where "B = butterfly x" and "\<phi> = vector_to_cblinfun x"
+  then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
+    unfolding butterfly_def' by simp
+  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = idOp"
+    by (simp add: \<phi>_def cinner_norm_sq assms)
+  have "B o\<^sub>C\<^sub>L B = \<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>*"
+    unfolding B timesOp_assoc by rule
+  also have "\<dots> = B"
+    unfolding \<phi>adj\<phi> by (simp add: B)
+  finally have idem: "B o\<^sub>C\<^sub>L B = B"
+    by -
+  have herm: "B = B*"
+    unfolding B by simp
+  from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
+    by (rule Proj_I)
+
+  have "B *\<^sub>S top = Span {x}"
+    unfolding B timesOp_assoc_subspace 
+    by (simp add: \<phi>_def isometry_vector_to_cblinfun assms range_adjoint_isometry)
+
+  with BProj show "B = proj x"
+    by simp
+qed
+
+
+(* TODO: Move to the Complex_Vector_Spaces *)
+lemma Span_empty[simp]: "Span {} = bot"
+  apply transfer
+  by simp
+
+lemma Proj_bot[simp]: "Proj bot = 0"
+  by (metis Bounded_Operators.timesScalarSpace_0 Proj_I imageOp_Proj isProjector0 isProjector_algebraic zero_clinear_space_def)
+
 lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
@@ -2891,10 +2943,37 @@ proof -
     finally show ?case
       by (simp add: cblinfun_of_mat_plusOp' sumS_def)
   qed
-  also have "\<dots> =  mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
+  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
     by (metis distinct' distinct_map sum.distinct_set_conv_list)
+  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. proj s)"
+    apply (rule arg_cong[where f="mat_of_cblinfun"])
+    apply (rule sum.cong[OF refl])
+    apply (rule butterfly_proj)
+    using norm_Snorm by simp
   also have "\<dots> = mat_of_cblinfun (Proj (Span (set Snorm)))"
-    sorry
+    apply (rule arg_cong[of _ _ mat_of_cblinfun])
+  proof (insert ortho_Snorm, insert \<open>distinct Snorm\<close>, induction Snorm)
+    case Nil
+    show ?case
+      by simp
+  next
+    case (Cons a Snorm)
+    from Cons.prems have [simp]: "a \<notin> set Snorm"
+      by simp
+
+    have "sum proj (set (a # Snorm))
+        = proj a + sum proj (set Snorm)"
+      by auto
+    also have "\<dots> = proj a + Proj (Span (set Snorm))"
+      apply (subst Cons.IH)
+      using Cons.prems apply auto
+      using is_onb_delete by blast
+    also have "\<dots> = Proj (Span (set (a # Snorm)))"
+      apply (rule Proj_Span_insert[symmetric])
+      using Cons.prems by auto
+    finally show ?case
+      by -
+  qed
   also have "\<dots> = mk_projector (Span (set S))"
     unfolding mk_projector_def Span_Snorm by simp
   finally show ?thesis
@@ -3000,11 +3079,6 @@ lemma top_as_span[code]: "(top::'a clinear_space) =
   apply (simp add: onb_enum_of_vec_unit_vec)
   apply (subst nth_image)
   by (auto simp: canonical_basis_length_eq)
-
-(* TODO: Move to the Complex_Vector_Spaces *)
-lemma Span_empty[simp]: "Span {} = bot"
-  apply transfer
-  by simp
 
 lemma bot_as_span[code]: "(bot::'a::onb_enum clinear_space) = SPAN []"
   unfolding SPAN_def by (auto simp: Set.filter_def)

@@ -2956,10 +2956,11 @@ lift_definition isProjector::\<open>('a::chilbert_space, 'a) cblinfun \<Rightarr
   \<open>\<lambda> P. \<exists> M. closed_subspace M \<and> is_projection_on P M\<close>.
 
 lemma Proj_I:
-  \<open>P o\<^sub>C\<^sub>L P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply P)\<close>
-  for P :: \<open>('a::chilbert_space,'a) cblinfun\<close>
+  fixes P :: \<open>('a::chilbert_space,'a) cblinfun\<close>
+  assumes \<open>P o\<^sub>C\<^sub>L P = P\<close> and \<open>P = P*\<close>
+  shows \<open>P = Proj (P *\<^sub>S top)\<close>
 proof-
-  assume \<open>P o\<^sub>C\<^sub>L P = P\<close> and \<open>P = P*\<close>
+  define M where "M = P *\<^sub>S top"
   have \<open>closed (range (cblinfun_apply P))\<close>
   proof-
     have \<open>range (cblinfun_apply P) = (\<lambda> x. x - cblinfun_apply P x) -` {0}\<close>
@@ -3030,29 +3031,17 @@ proof-
     ultimately show ?thesis
       by simp  
   qed
-  have \<open>cbounded_linear (cblinfun_apply P)\<close>
-    using cblinfun_apply by auto
-  hence \<open>closed_subspace ( range (cblinfun_apply P) )\<close>
-    using \<open>closed (range (cblinfun_apply P))\<close>
-      cbounded_linear.clinear  closed_subspace.intro
-    using complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast        
-  hence \<open>\<exists> M. space_as_set M = (range (cblinfun_apply P))\<close>
-    using  \<open>closed (range (cblinfun_apply P))\<close>
-    by (metis applyOpSpace.rep_eq closure_eq top_clinear_space.rep_eq)    
-  then obtain M where \<open>space_as_set M = (range (cblinfun_apply P))\<close>
-    by blast
   have \<open>cblinfun_apply P x \<in> space_as_set M\<close>
     for x
-    by (simp add: \<open>space_as_set M = range (cblinfun_apply P)\<close>)
-  moreover have \<open>x - cblinfun_apply P x \<in> orthogonal_complement ( space_as_set M)\<close>
-    for x
+    by (simp add: M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq top_clinear_space.rep_eq)
+  moreover have \<open>x - cblinfun_apply P x \<in> orthogonal_complement (space_as_set M)\<close> for x
   proof-
     have \<open>y \<in> space_as_set M \<Longrightarrow> \<langle> x - cblinfun_apply P x, y \<rangle> = 0\<close>
       for y
     proof-
       assume \<open>y \<in> space_as_set M\<close>
       hence \<open>\<exists> t. y = cblinfun_apply P t\<close>
-        by (simp add: \<open>space_as_set M = range (cblinfun_apply P)\<close> image_iff)
+        by (simp add: M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq image_iff top_clinear_space.rep_eq)
       then obtain t where \<open>y = cblinfun_apply P t\<close>
         by blast
       have \<open>\<langle> x - cblinfun_apply P x, y \<rangle> = \<langle> x - cblinfun_apply P x, cblinfun_apply P t \<rangle>\<close>
@@ -3078,10 +3067,10 @@ proof-
     thus ?thesis
       by (simp add: orthogonal_complement_I2) 
   qed
-  ultimately have \<open>P = Proj M\<close>
+  ultimately show \<open>P = Proj M\<close>
   proof - (* sledgehammer *)
     have "closed_subspace (space_as_set M)"
-      by (metis \<open>space_as_set M = range (cblinfun_apply P)\<close> \<open>closed_subspace (range (cblinfun_apply P))\<close>)
+      using space_as_set by auto
     hence f1: "\<forall>a. cblinfun_apply (Proj M) a = cblinfun_apply P a"
       by (simp add: Proj.rep_eq \<open>\<And>x. cblinfun_apply P x \<in> space_as_set M\<close> \<open>\<And>x. x - cblinfun_apply P x \<in> orthogonal_complement (space_as_set M)\<close> projection_uniq)
     have "\<forall>a. (+) ((a::'a) - a) = id"
@@ -3096,9 +3085,19 @@ proof-
     thus ?thesis
       by (metis (no_types) cblinfun_apply_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff idOp.rep_eq)
   qed
-  thus ?thesis
-    using \<open>space_as_set M = range (cblinfun_apply P)\<close> by blast 
 qed
+
+lemma Proj_range_closed:
+  assumes "isProjector P"
+  shows "closed (range (cblinfun_apply P))"
+  using assms apply transfer
+  using closed_subspace.closed projectionPropertiesE' by blast
+
+(* TODO remove *)
+(* lemma Proj_I_old:
+  \<open>P o\<^sub>C\<^sub>L P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply P)\<close>
+  for P :: \<open>('a::chilbert_space,'a) cblinfun\<close>
+  sorry *)
 
 lemma Proj_isProjector[simp]:
   fixes M::\<open>'a::chilbert_space clinear_space\<close>
@@ -3136,8 +3135,7 @@ proof
   qed
   show "isProjector P"
     if "P o\<^sub>C\<^sub>L P = P \<and> P = P*"
-    using that Proj_I Proj_isProjector
-    by blast    
+    using that Proj_I Proj_isProjector by metis
 qed
 
 
@@ -3168,7 +3166,8 @@ proof-
     by (metis Proj_D1 adjoint_twice timesOp_assoc times_adjoint)
   ultimately have 
     \<open>\<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
-    using P_def Proj_I by blast
+    using P_def Proj_I
+    by (metis Proj.rep_eq mem_Collect_eq projectionPropertiesE space_as_set)
   then obtain M where \<open>P = Proj M\<close>
     and \<open>space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
     by blast
