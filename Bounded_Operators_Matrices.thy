@@ -144,7 +144,10 @@ next
 qed
 
 definition onb_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
-  \<open>onb_enum_of_vec v = onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)\<close>
+  \<open>onb_enum_of_vec v = 
+    (if dim_vec v = canonical_basis_length TYPE('a)
+     then onb_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)
+     else 0)\<close>
 
 lemma list_of_vec_plus:
   fixes v1 v2 :: \<open>complex vec\<close>
@@ -159,18 +162,18 @@ proof-
 qed
 
 lemma onb_enum_of_vec_add:
-  defines "basis \<equiv> canonical_basis::'a::basis_enum list"
-  assumes \<open>dim_vec v1 = length basis\<close> and
-    \<open>dim_vec v2 = length basis\<close>
+  assumes \<open>dim_vec v1 = canonical_basis_length TYPE('a::basis_enum)\<close> and
+    \<open>dim_vec v2 = canonical_basis_length TYPE('a)\<close>
   shows \<open>((onb_enum_of_vec (v1 + v2)) :: 'a) = onb_enum_of_vec v1 + onb_enum_of_vec v2\<close>
 proof -
   define l1 l2 where "l1 = list_of_vec v1" and "l2 = list_of_vec v2"
+  define basis where "basis = (canonical_basis::'a list)"
   have length: "length l1 = length l2"
-    by (simp add: assms(2) assms(3) l1_def l2_def)
+    by (simp add: assms l1_def l2_def)
   have length_basis: "length l2 = length basis"
-    by (simp add: assms(3) l2_def)
+    by (simp add: assms basis_def l2_def canonical_basis_length_eq)
   have \<open>(onb_enum_of_vec::_\<Rightarrow>'a) (v1 + v2) = onb_enum_of_vec_list basis (list_of_vec (v1+v2))\<close>
-    by (simp add: basis_def onb_enum_of_vec_def)
+    by (simp add: basis_def onb_enum_of_vec_def assms)
   also have \<open>\<dots> = onb_enum_of_vec_list basis (map2 (+) l1 l2)\<close>
     apply (subst list_of_vec_plus)
     using assms l1_def l2_def by auto
@@ -215,7 +218,7 @@ proof -
       by blast
   qed
   also have \<open>\<dots> = onb_enum_of_vec v1 + onb_enum_of_vec v2\<close>
-    by (simp add: basis_def onb_enum_of_vec_def l1_def l2_def)
+    by (simp add: basis_def onb_enum_of_vec_def l1_def l2_def assms)
   finally show ?thesis
     by auto
 qed
@@ -232,16 +235,16 @@ proof-
 qed
 
 lemma onb_enum_of_vec_mult:
-  defines "basis \<equiv> canonical_basis::'a::basis_enum list"
-  assumes \<open>dim_vec v = length basis\<close> 
+  assumes \<open>dim_vec v = canonical_basis_length TYPE('a::basis_enum)\<close> 
   shows \<open>((onb_enum_of_vec (c \<cdot>\<^sub>v v)) :: 'a) =  c *\<^sub>C onb_enum_of_vec v\<close>
 proof -
+  define basis where "basis \<equiv> canonical_basis::'a::basis_enum list"
   define l where "l = list_of_vec v"
   have length_basis: "length l = length basis"
-    by (simp add: assms(2) l_def)
+    by (simp add: assms basis_def canonical_basis_length_eq l_def)
   have \<open>(onb_enum_of_vec::_\<Rightarrow>'a) (c \<cdot>\<^sub>v v) =
  onb_enum_of_vec_list basis (list_of_vec (c \<cdot>\<^sub>v v))\<close>
-    by (simp add: basis_def onb_enum_of_vec_def)
+    by (simp add: basis_def onb_enum_of_vec_def assms)
   also have \<open>\<dots> = onb_enum_of_vec_list basis (map ((*) c) (list_of_vec v))\<close>
     apply (subst list_of_vec_mult)
     by auto
@@ -276,7 +279,7 @@ proof -
       by blast
   qed
   also have \<open>\<dots> = c *\<^sub>C onb_enum_of_vec v\<close>
-    by (simp add: basis_def onb_enum_of_vec_def l_def)
+    by (simp add: basis_def onb_enum_of_vec_def l_def assms)
   finally show ?thesis
     by auto
 qed
@@ -544,28 +547,13 @@ lemma onb_enum_of_vec_inverse[simp]:
   shows  "onb_enum_of_vec (vec_of_onb_enum w) = w"
   unfolding vec_of_onb_enum_def onb_enum_of_vec_def onb_enum_of_vec_list_def'
   unfolding list_vec zip_map1 zip_same_conv_map map_map 
-  apply (simp add: o_def)
-  apply (subst sum.distinct_set_conv_list[symmetric])
-   apply simp
+  apply (simp add: o_def canonical_basis_length_eq)
+  apply (subst sum.distinct_set_conv_list[symmetric], simp)
   apply (rule complex_vector.sum_representation_eq)
   using is_complex_independent_set apply auto[1]    
   using  is_generator_set apply auto[1]
   apply simp
   by simp
-(*
-  subgoal 
-  proof- 
-    have "w \<in> closure (Complex_Vector_Spaces.span (set canonical_basis))"
-      by (metis UNIV_I closure_UNIV  is_generator_set)
-      
-    moreover have "closure (Complex_Vector_Spaces.span (set (canonical_basis::'a list)))
-                 = Complex_Vector_Spaces.span (set (canonical_basis::'a list))"
-      by (simp add: span_finite_dim)      
-    ultimately show ?thesis sorry
-  qed
-   apply simp
-  by simp
-*)
 
 lemma uniq_linear_expansion_sum_list_zero:
   fixes f::"'a::{basis_enum,complex_inner} \<Rightarrow> complex"
@@ -757,7 +745,7 @@ proof-
   qed
   thus ?thesis
     unfolding basis_def
-    by (simp add: onb_enum_of_vec_def vec_list vec_of_onb_enum_def w_def)    
+    by (simp add: onb_enum_of_vec_def vec_list vec_of_onb_enum_def w_def assms)
 qed
 
 lemma vec_of_onb_enum_add:
@@ -1217,7 +1205,7 @@ proof-
     using a2 by blast
    thus ?thesis
     unfolding scalar_prod_def apply auto
-    by (metis (no_types, lifting) B_def onb_enum_of_vec_def semiring_normalization_rules(7) sum.cong)        
+    by (metis (no_types, lifting) B_def mult.commute n_def onb_enum_of_vec_def sum.cong w1 w2)
 qed
 
 
@@ -1412,15 +1400,8 @@ proof
         moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b2) = m" 
           using dim2
           using True by auto
-        ultimately show ?thesis 
-          unfolding f_def 
-          using onb_enum_of_vec_add[where ?v1.0 = "M *\<^sub>v vec_of_onb_enum b1" 
-              and ?v2.0 = "M *\<^sub>v vec_of_onb_enum b2"]
-          by (simp add: \<open>\<lbrakk>dim_vec (M *\<^sub>v vec_of_onb_enum b1) = length canonical_basis; 
-            dim_vec (M *\<^sub>v vec_of_onb_enum b2) = length canonical_basis\<rbrakk>
-        \<Longrightarrow> onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1 + M *\<^sub>v vec_of_onb_enum b2) 
-          = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b1) + onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum b2)\<close> 
-              canonical_basis_length_eq m_def)          
+        ultimately show ?thesis
+          by (simp add: f_def m_def onb_enum_of_vec_add)
       qed
 
       show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
@@ -1648,7 +1629,7 @@ proof-
         vec_of_onb_enum_inverse)
   have "length BasisB = nB"
     by (simp add: BasisB_def canonical_basis_length_eq nB_def)    
-  moreover have "length (list_of_vec v) = nB"
+  moreover have length_v: "length (list_of_vec v) = nB"
   proof-
     have "mat_of_cblinfun F \<in> carrier_mat nB nA"
       unfolding nB_def nA_def mat_of_cblinfun_def by auto
@@ -1736,7 +1717,7 @@ proof-
         = vec_index v iB".
   hence "vec_index v iB = \<langle> BasisB!iB, onb_enum_of_vec v\<rangle>"
     unfolding onb_enum_of_vec_def onb_enum_of_vec_list_def'
-    using BasisB_def by auto    
+    using BasisB_def length_v nB_def by auto
   thus ?thesis unfolding v_def using r1
     by simp 
 qed

@@ -1220,10 +1220,8 @@ subsection \<open>Subspaces\<close>
 
 (* TODO add explanations *)
 
-(* TODO: Problem: this is only well-defined if x contains only vectors of the right dimension.
-   Otherwise all the code below might be incorrect. *)
 definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
-  Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a clinear_space)"
+    Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a clinear_space)"
 code_datatype SPAN
 
 
@@ -2154,7 +2152,8 @@ next
           by (simp add: complex_vector.span_base)          
         moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
               = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C (onb_of_vec u)"
-          using u_dim onb_enum_of_vec_mult onb_of_vec_def by blast 
+          using u_dim onb_enum_of_vec_mult onb_of_vec_def
+          by (simp add: onb_enum_of_vec_mult canonical_basis_length_eq)
         ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
         \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
           by (metis complex_vector.span_scale)          
@@ -2179,7 +2178,8 @@ next
             thus ?case by auto
           qed
           ultimately show ?thesis
-            by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim) 
+            sorry
+            (* by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim)  *)
         qed
         ultimately show ?case by auto
       qed
@@ -2249,7 +2249,9 @@ next
           by (simp add: complex_vector.span_base)          
         moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
               = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C (onb_of_vec u)"
-          using u_dim onb_enum_of_vec_mult onb_of_vec_def by blast 
+          using u_dim onb_enum_of_vec_mult onb_of_vec_def 
+            sorry
+          (* by blast  *)
         ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
         \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
           by (metis complex_vector.span_scale)          
@@ -2274,7 +2276,7 @@ next
             thus ?case by auto
           qed
           ultimately show ?thesis
-            by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim) 
+            by (simp add: Cons.hyps(2) onb_enum_of_vec_add onb_of_vec_def)
         qed
         ultimately show ?case by auto
       qed
@@ -2291,7 +2293,7 @@ next
             \<in> complex_span (onb_of_vec ` set T \<union> onb_of_vec ` set R)"
         unfolding w'_def
         using u1_1 u1_2 onb_enum_of_vec_add
-        by (simp add: onb_enum_of_vec_add onb_of_vec_def) 
+        by (simp add: onb_enum_of_vec_add canonical_basis_length_eq onb_of_vec_def)
       hence "x \<in> complex_span (insert (onb_of_vec w') (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
         using complex_vector.span_breakdown_eq by blast
       hence "x \<in> complex_span (onb_of_vec ` set (w' # T) \<union> onb_of_vec ` set R)"
@@ -3018,7 +3020,7 @@ lemma mk_projector_SPAN[code]:
     (let d = canonical_basis_length TYPE('a) in mk_projector_orthog d 
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
-  note [[show_types, show_consts]]
+  (* note [[show_types, show_consts]] *)
   have *: "map_option vec_of_onb_enum (if dim_vec x = canonical_basis_length TYPE('a) then Some (onb_enum_of_vec x :: 'a) else None)
       = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
     by auto
@@ -3139,9 +3141,11 @@ lemma sup_spans[code]: "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
   by (auto simp: Span_union image_Un filter_Un Let_def)
 
 (* TODO move to ..._Matrices *)
-lemma ortho_Span: "- Span (set S) =
+lemma ortho_Span: 
+  fixes S :: "'a::onb_enum list"
+  shows "- Span (set S) =
     Span (onb_enum_of_vec ` set (orthogonal_complement_vec 
-        (canonical_basis_length TYPE('a::onb_enum)) (map vec_of_onb_enum S)))"
+        (canonical_basis_length TYPE('a)) (map vec_of_onb_enum S)) :: 'a set)"
   sorry
 
 
@@ -3150,37 +3154,57 @@ lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrigh
   by (simp add: Set_project_code subsetI subset_antisym that)
 
 
+lemma adjuster_carrier': (* List adjuster_carrier but with one assm less *)
+  assumes w: "(w :: 'a::conjugatable_field vec) : carrier_vec n"
+    and us: "set (us :: 'a vec list) \<subseteq> carrier_vec n"
+  shows "adjuster n w us \<in> carrier_vec n"
+  by (insert us, induction us, auto)
+
+lemma orthogonal_complement_vec_carrier:
+  assumes "set S \<subseteq> carrier_vec d"
+  shows "set (orthogonal_complement_vec d S :: 'a::conjugatable_ordered_field vec list) \<subseteq> carrier_vec d"
+proof -
+  define vs_ortho where "vs_ortho = gram_schmidt0 d S"
+  have vs_ortho: "set vs_ortho \<subseteq> carrier_vec d"
+    unfolding vs_ortho_def
+    using assms by (rule cof_vec_space.gram_schmidt0_result(1))
+  have "set (map (\<lambda>w. adjuster d w vs_ortho) (unit_vecs d)) \<subseteq> carrier_vec d"
+    apply auto
+    apply (rule adjuster_carrier')
+    using unit_vecs_carrier vs_ortho by auto
+  then show ?thesis
+    unfolding orthogonal_complement_vec_def vs_ortho_def by simp
+qed
+
 lemma ortho_SPAN[code]: "- (SPAN S :: 'a::onb_enum clinear_space)
         = (let d = canonical_basis_length TYPE('a) in 
             SPAN (orthogonal_complement_vec d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
-  define d Sd where "d = canonical_basis_length TYPE('a)"
-    and "Sd = filter (\<lambda>v. dim_vec v = d) S"
-  have "SPAN S = Span (onb_enum_of_vec ` set Sd :: 'a set)"
-    by (simp add: Set.filter_def SPAN_def Sd_def d_def)
+  define d Sd and Sd' :: "'a list"
+    where "d = canonical_basis_length TYPE('a)"
+      and "Sd = filter (\<lambda>v. dim_vec v = d) S"
+      and "Sd' = map onb_enum_of_vec Sd"
+  have Sd_Sd': "Sd = map vec_of_onb_enum Sd'"
+    unfolding Sd'_def apply auto
+    apply (subst map_cong[where g=id, OF refl])
+     apply (auto simp: Sd_def)
+    by (simp add: d_def)
+  have Sd_carrier: "set Sd \<subseteq> carrier_vec d"
+    unfolding Sd_def by auto
+
   have "SPAN (orthogonal_complement_vec d Sd)
-      = Span (onb_enum_of_vec ` set (orthogonal_complement_vec d Sd))"
-    unfolding SPAN_def
+      = Span (onb_enum_of_vec ` set (orthogonal_complement_vec d Sd) :: 'a set)"
+    unfolding SPAN_def Let_def d_def[symmetric]
     apply (subst Set_filter_unchanged)
-    sorry
-  have "- (SPAN S :: 'a clinear_space)
-         = (SPAN (orthogonal_complement_vec d Sd))"
-    sorry
-  then show ?thesis
-    unfolding d_def Sd_def Let_def by simp
-
-
-(*   note [[show_types, show_consts]]
-  have *: "map_option vec_of_onb_enum (if dim_vec x = canonical_basis_length TYPE('a) 
-          then Some (onb_enum_of_vec x :: 'a) else None)
-      = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
+    using orthogonal_complement_vec_carrier[OF Sd_carrier]
     by auto
-  show ?thesis
-    unfolding mk_projector_def SPAN_def
-    using ortho_Span[where S = 
-        "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
-    apply (simp only: Let_def  filter_set image_set map_map_filter o_def)
-    sorry *)
+  also have "\<dots> = - Span (set Sd' :: 'a set)"
+    by (simp add: ortho_Span d_def Sd_Sd')
+  also have "\<dots> = - SPAN S"
+    by (simp add: Set.filter_def SPAN_def Sd_def d_def Sd'_def)
+  finally show ?thesis
+    unfolding d_def[symmetric] Sd_def
+    by simp
 qed
 
 definition [code del,code_abbrev]: "span_code (S::'a::enum ell2 set) = (Span S)"
