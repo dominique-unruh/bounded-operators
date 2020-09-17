@@ -3036,7 +3036,8 @@ lemma [code]: "mat_of_cblinfun (Proj S) = mk_projector S" for S :: "'a::onb_enum
 
 (* TODO move to ..._Matrices *)
 definition "orthogonal_complement_vec n vs = 
-  filter ((\<noteq>) (zero_vec n)) (drop (length vs) (gram_schmidt n (vs @ map (unit_vec n) [0..<n])))"
+  (let vs_ortho = gram_schmidt0 n vs in
+   map (\<lambda>w. adjuster n w vs_ortho) (unit_vecs n))"
 
 (* TODO: move to Preliminaries *)
 lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
@@ -3067,7 +3068,7 @@ lemma onb_enum_of_vec_unit_vec: "onb_enum_of_vec (unit_vec (canonical_basis_leng
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
   using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
     closure_UNIV is_generator_set
-  by (metis )
+  by metis
 
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 
@@ -3143,11 +3144,33 @@ lemma ortho_Span: "- Span (set S) =
         (canonical_basis_length TYPE('a::onb_enum)) (map vec_of_onb_enum S)))"
   sorry
 
+
+(* TODO To Preliminaries *)
+lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
+  by (simp add: Set_project_code subsetI subset_antisym that)
+
+
 lemma ortho_SPAN[code]: "- (SPAN S :: 'a::onb_enum clinear_space)
         = (let d = canonical_basis_length TYPE('a) in 
             SPAN (orthogonal_complement_vec d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
-  note [[show_types, show_consts]]
+  define d Sd where "d = canonical_basis_length TYPE('a)"
+    and "Sd = filter (\<lambda>v. dim_vec v = d) S"
+  have "SPAN S = Span (onb_enum_of_vec ` set Sd :: 'a set)"
+    by (simp add: Set.filter_def SPAN_def Sd_def d_def)
+  have "SPAN (orthogonal_complement_vec d Sd)
+      = Span (onb_enum_of_vec ` set (orthogonal_complement_vec d Sd))"
+    unfolding SPAN_def
+    apply (subst Set_filter_unchanged)
+    sorry
+  have "- (SPAN S :: 'a clinear_space)
+         = (SPAN (orthogonal_complement_vec d Sd))"
+    sorry
+  then show ?thesis
+    unfolding d_def Sd_def Let_def by simp
+
+
+(*   note [[show_types, show_consts]]
   have *: "map_option vec_of_onb_enum (if dim_vec x = canonical_basis_length TYPE('a) 
           then Some (onb_enum_of_vec x :: 'a) else None)
       = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
@@ -3157,14 +3180,16 @@ proof -
     using ortho_Span[where S = 
         "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
     apply (simp only: Let_def  filter_set image_set map_map_filter o_def)
-    sorry
+    sorry *)
 qed
 
 definition [code del,code_abbrev]: "span_code (S::'a::enum ell2 set) = (Span S)"
 
 lemma span_Set_Monad[code]: "span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l))"
-  apply (auto simp: SPAN_def vec_of_ell2_def image_image Set.filter_def)
-  sorry
+  apply (simp add: span_code_def SPAN_def Let_def)
+  apply (subst Set_filter_unchanged)
+   apply (metis canonical_basis_length_eq dim_vec_of_onb_enum_list' imageE vec_of_ell2_def)
+  by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
 
 instantiation clinear_space :: (onb_enum) equal begin
 definition [code del]: "equal_clinear_space (A::'a clinear_space) B = (A=B)"
