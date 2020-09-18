@@ -3140,14 +3140,40 @@ lemma sup_spans[code]: "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
   unfolding SPAN_def 
   by (auto simp: Span_union image_Un filter_Un Let_def)
 
+lemma orthogonal_complementI:
+  assumes "\<And>x y. x \<in> Y \<Longrightarrow> y \<in> X \<Longrightarrow> \<langle>x, y\<rangle> = 0"
+  assumes "\<And>x. (\<And>y. y\<in>X \<Longrightarrow> \<langle>x, y\<rangle> = 0) \<Longrightarrow> x \<in> Y"
+  shows "orthogonal_complement X = Y"
+  unfolding orthogonal_complement_def using assms by auto
+
+
 (* TODO move to ..._Matrices *)
 lemma ortho_Span: 
   fixes S :: "'a::onb_enum list"
   shows "- Span (set S) =
     Span (onb_enum_of_vec ` set (orthogonal_complement_vec 
         (canonical_basis_length TYPE('a)) (map vec_of_onb_enum S)) :: 'a set)"
-  sorry
+(* proof (transfer fixing: S)
+  let ?onb_enum_of_vec = "onb_enum_of_vec :: _ \<Rightarrow> 'a"
+  let ?vec_of_onb_enum = "vec_of_onb_enum :: 'a \<Rightarrow> _"
+  define d where "d = (canonical_basis_length TYPE('a))"
+  have "orthogonal_complement (closure (complex_span (set S))) =
+      orthogonal_complement (complex_span (set S))"
+    by (subst span_finite_dim, simp_all)
 
+  have "complex_span
+       (?onb_enum_of_vec `
+        set (orthogonal_complement_vec d
+              (map ?vec_of_onb_enum S))) = orthogonal_complement xxx"
+    apply (rule sym)
+    apply (rule orthogonal_complementI)
+
+    sorry
+
+  show ?thesis
+    sorry
+qed *)
+  sorry
 
 (* TODO To Preliminaries *)
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
