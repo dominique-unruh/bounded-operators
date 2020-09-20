@@ -3097,7 +3097,7 @@ lemma Proj_range_closed:
 (* lemma Proj_I_old:
   \<open>P o\<^sub>C\<^sub>L P = P \<Longrightarrow> P = P* \<Longrightarrow> \<exists> M. P = Proj M \<and> space_as_set M = range (cblinfun_apply P)\<close>
   for P :: \<open>('a::chilbert_space,'a) cblinfun\<close>
-  sorry *)
+   *)
 
 lemma Proj_isProjector[simp]:
   fixes M::\<open>'a::chilbert_space clinear_space\<close>

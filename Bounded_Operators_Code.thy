@@ -2,12 +2,13 @@ section \<open>\<open>Bounded_Operators_Code\<close> -- Support for code generat
 
 theory Bounded_Operators_Code
   imports
-    Bounded_Operators_Matrices Containers.Set_Impl 
+    Bounded_Operators_Matrices Containers.Set_Impl Jordan_Normal_Form.Matrix_Kernel
 begin
 
 no_notation "Lattice.meet" (infixl "\<sqinter>\<index>" 70)
 no_notation "Lattice.join" (infixl "\<squnion>\<index>" 65)
 hide_const (open) Coset.kernel
+hide_const (open) Matrix_Kernel.kernel
 hide_const (open) Order.bottom Order.top
 
 unbundle jnf_notation
@@ -3279,7 +3280,7 @@ end
 (* TODO: Move to ..._Matrices *)
 definition "is_subspace_of n vs ws = 
   (let ws' = gram_schmidt0 n ws in
-     \<forall>v\<in>set vs. adjuster n v vs = - v)"
+     \<forall>v\<in>set vs. adjuster n v ws' = - v)"
 
 (* TODO: Move to ..._Matrices *)
 lemma Span_leq:
@@ -3287,39 +3288,100 @@ lemma Span_leq:
   shows "(Span (set A) \<le> Span (set B)) \<longleftrightarrow>
     is_subspace_of (canonical_basis_length TYPE('a)) 
       (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
-proof
-  define d A' B' 
+proof -
+  define d Av Bv Bo
     where "d = canonical_basis_length TYPE('a)"
-      and "A' = gram_schmidt0 d (map vec_of_onb_enum A)"
-      and "B' = gram_schmidt0 d (map vec_of_onb_enum B)"
+      and "Av = map vec_of_onb_enum A"
+      and "Bv = map vec_of_onb_enum B"
+      (* and "Ao = gram_schmidt0 d Av" *)
+      and "Bo = gram_schmidt0 d Bv" 
   interpret complex_vec_space d.
 
-  have "Span (set A) \<le> Span (set B) \<longleftrightarrow> complex_span (set A) \<le> complex_span (set B)"
+  have Av_carrier: "set Av \<subseteq> carrier_vec d"
+    unfolding Av_def apply auto
+    by (simp add: canonical_basis_length_eq carrier_vecI d_def dim_vec_of_onb_enum_list')
+  have Bv_carrier: "set Bv \<subseteq> carrier_vec d"
+    unfolding Bv_def apply auto
+    by (simp add: canonical_basis_length_eq carrier_vecI d_def dim_vec_of_onb_enum_list')
+  have Bo_carrier: "set Bo \<subseteq> carrier_vec d"
+    apply (simp add: Bo_def)
+    using Bv_carrier by (rule gram_schmidt0_result(1))
+  have orth_Bo: "corthogonal Bo"
+    apply (simp add: Bo_def)
+    using Bv_carrier by (rule gram_schmidt0_result(3))
+  have distinct_Bo: "distinct Bo"
+    apply (simp add: Bo_def)
+    using Bv_carrier by (rule gram_schmidt0_result(2))
+
+  have "Span (set A) \<le> Span (set B) \<longleftrightarrow> complex_span (set A) \<subseteq> complex_span (set B)"
     apply (transfer fixing: A B)
-    apply (subst span_finite_dim)
-
-    thm span_finite_dim
-    thm span_finite_dim
-  thm adjuster_already_in_span
-
-  show "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
-        (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
-    if "Span (set A) \<le> Span (set B)"
-  proof -
-    from that have "complex_span (set A) \<le> complex_span (set B)"
-      apply transfer 
-    have "adjuster d v A = - v" if "v \<in> span (set A')"
-    sorry
-qed
-  show "Span (set A) \<le> Span (set B)"
-    if "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
-        (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
-    sorry
+    apply (subst span_finite_dim, simp)
+    by (subst span_finite_dim, simp_all)
+  also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bv)"
+    apply (simp add: Av_def Bv_def)
+    apply (subst module_span_complex_span, simp add: d_def)
+    apply (subst module_span_complex_span, simp add: d_def)
+    by (metis inj_image_subset_iff inj_on_def onb_enum_of_vec_inverse)
+  also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bo)"
+    unfolding Bo_def Av_def Bv_def
+    apply (subst gram_schmidt0_result(4)[symmetric])
+    by (simp_all add: canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' image_subset_iff)
+    (* apply (subst gram_schmidt0_result(4)[symmetric]) *)
+    (* by (simp_all add: canonical_basis_length_eq carrier_dim_vec d_def dim_vec_of_onb_enum_list' image_subset_iff) *)
+  also have "\<dots> \<longleftrightarrow> (\<forall>v\<in>set Av. adjuster d v Bo = - v)"
+  proof (intro iffI ballI)
+    fix v assume "v \<in> set Av" and "span (set Av) \<subseteq> span (set Bo)"
+    then have "v \<in> span (set Bo)"
+      using Av_carrier span_mem by auto
+    have "adjuster d v Bo + v = 0\<^sub>v d"
+      apply (rule adjuster_already_in_span)
+      using Av_carrier \<open>v \<in> set Av\<close> Bo_carrier orth_Bo
+        \<open>v \<in> span (set Bo)\<close> by simp_all
+    then show "adjuster d v Bo = - v"
+      using Av_carrier Bo_carrier \<open>v \<in> set Av\<close>
+      by (metis (no_types, lifting) add.inv_equality adjuster_carrier' local.vec_neg subsetD)
+  next
+    fix v
+    assume adj_minusv: "\<forall>v\<in>set Av. adjuster d v Bo = - v"
+    have *: "adjuster d v Bo \<in> span (set Bo)" if "v \<in> set Av" for v
+      apply (rule adjuster_in_span)
+      using Bo_carrier that Av_carrier distinct_Bo by auto
+    have "v \<in> span (set Bo)" if "v \<in> set Av" for v
+      using *[OF that] adj_minusv[rule_format, OF that]
+      apply auto
+      by (metis (no_types, lifting) Av_carrier Bo_carrier adjust_nonzero distinct_Bo subsetD that uminus_l_inv_vec)
+    then show "span (set Av) \<subseteq> span (set Bo)"
+      apply auto
+      by (meson Bo_carrier in_mono span_subsetI subsetI)
+  qed
+  also have "\<dots> = is_subspace_of d Av Bv"
+    by (simp add: is_subspace_of_def d_def Bo_def)
+  finally show "Span (set A) \<le> Span (set B) \<longleftrightarrow> is_subspace_of d Av Bv"
+    by simp
 qed
 
 lemma SPAN_leq[code]: "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space) 
-      \<longleftrightarrow> is_subspace_of (canonical_basis_length TYPE('a)) A B"
-  sorry
+      \<longleftrightarrow> (let d = canonical_basis_length TYPE('a) in
+          is_subspace_of d
+          (filter (\<lambda>v. dim_vec v = d) A)
+          (filter (\<lambda>v. dim_vec v = d) B))"
+proof -
+  define d A' B' where "d = canonical_basis_length TYPE('a)"
+    and "A' = filter (\<lambda>v. dim_vec v = d) A"
+    and "B' = filter (\<lambda>v. dim_vec v = d) B"
+
+  show ?thesis
+    unfolding SPAN_def d_def[symmetric] filter_set Let_def
+        A'_def[symmetric] B'_def[symmetric] image_set
+    apply (subst Span_leq)
+    unfolding d_def[symmetric] map_map o_def
+    apply (subst map_cong[where xs=A', OF refl])
+     apply (rule vec_of_onb_enum_inverse)
+     apply (simp add: A'_def d_def)
+    apply (subst map_cong[where xs=B', OF refl])
+     apply (rule vec_of_onb_enum_inverse)
+    by (simp_all add: B'_def d_def)
+qed
 
 lemma apply_cblinfun_Span: 
   "A *\<^sub>S Span (set S) = Span (onb_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_onb_enum S)))"
@@ -3410,7 +3472,72 @@ qed
 lemma kernel_SPAN[code]: "kernel A 
     = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
   for A::"('a::onb_enum,'b::onb_enum) cblinfun"
-  sorry
+proof -
+  define dA dB Am Ag base
+    where "dA = canonical_basis_length TYPE('a)"
+      and "dB = canonical_basis_length TYPE('b)"
+      and "Am = mat_of_cblinfun A"
+      and "Ag = gauss_jordan_single Am"
+      and "base = find_base_vectors Ag"
+
+  interpret complex_vec_space dA.
+
+  have Am_carrier: "Am \<in> carrier_mat dB dA"
+    unfolding Am_def mat_of_cblinfun_def dA_def dB_def by simp
+
+  have row_echelon: "row_echelon_form Ag"
+    unfolding Ag_def
+    using Am_carrier refl by (rule gauss_jordan_single)
+
+  have Ag_carrier: "Ag \<in> carrier_mat dB dA"
+    unfolding Ag_def
+    using Am_carrier refl by (rule gauss_jordan_single(2))
+
+  have base_carrier: "set base \<subseteq> carrier_vec dA"
+    unfolding base_def apply auto
+    sorry
+
+  interpret k: kernel dB dA Ag
+      apply standard using Ag_carrier by simp
+  
+  have basis_base: "kernel.basis dA Ag (set base)"
+    using row_echelon Ag_carrier unfolding base_def
+    by (rule find_base_vectors(3))
+
+
+  have "space_as_set (SPAN base)
+       = space_as_set (Span (onb_enum_of_vec ` set base :: 'a set))"
+    unfolding SPAN_def dA_def[symmetric] Let_def filter_set
+    apply (subst filter_True)
+    using base_carrier by auto
+
+  also have "\<dots> = complex_span (onb_enum_of_vec ` set base)"
+    apply transfer apply (subst span_finite_dim)
+    by simp_all
+
+  also have "\<dots> = onb_enum_of_vec ` span (set base)"
+    apply (subst module_span_complex_span')
+    using base_carrier dA_def by auto
+
+  also have "\<dots> = onb_enum_of_vec ` mat_kernel Ag"
+    using basis_base k.Ker.basis_def k.span_same by auto
+
+  also have "\<dots> = onb_enum_of_vec ` {v \<in> carrier_vec dA. Ag *\<^sub>v v = 0\<^sub>v dB}"
+    apply (rule arg_cong[where f="\<lambda>x. onb_enum_of_vec ` x"])
+    unfolding mat_kernel_def using Ag_carrier
+    by simp
+
+  also have "\<dots> = onb_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}"
+    using gauss_jordan_single(1)[OF Am_carrier Ag_def[symmetric]]
+    by auto
+
+  also have "\<dots> = {w. A *\<^sub>V w = 0}"
+  proof (rule Set.set_eqI)
+    fix x :: 'a
+    have "x \<in> onb_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}
+        \<longleftrightarrow> xxx"
+      (* TRICKY (would like to see what constant are interally used to express {v \<in> ....} *)
+
 
 lemma [code_abbrev]: "kernel (A - a *\<^sub>C idOp) = eigenspace a A" 
   unfolding eigenspace_def by simp
