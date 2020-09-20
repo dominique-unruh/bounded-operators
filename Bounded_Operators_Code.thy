@@ -3063,10 +3063,10 @@ qed
 lemma [code]: "mat_of_cblinfun (Proj S) = mk_projector S" for S :: "'a::onb_enum clinear_space"
   unfolding mk_projector_def by simp
 
-(* TODO move to ..._Matrices *)
+(* (* TODO move to ..._Matrices *)
 definition "orthogonal_complement_vec n vs = 
   (let vs_ortho = gram_schmidt0 n vs in
-   map (\<lambda>w. adjuster n w vs_ortho) (unit_vecs n))"
+   map (\<lambda>w. adjuster n w vs_ortho) (unit_vecs n))" *)
 
 (* TODO: move to Preliminaries *)
 lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
@@ -3279,17 +3279,37 @@ end
 (* TODO: Move to ..._Matrices *)
 definition "is_subspace_of n vs ws = 
   (let ws' = gram_schmidt0 n ws in
-     \<forall>v\<in>set vs. adjuster n v vs = v)"
+     \<forall>v\<in>set vs. adjuster n v vs = - v)"
 
 (* TODO: Move to ..._Matrices *)
-lemma Span_leq: "(Span (set A) \<le> Span (set B)) =
+lemma Span_leq: "(Span (set A) \<le> Span (set B)) \<longleftrightarrow>
     is_subspace_of (canonical_basis_length TYPE('a::onb_enum)) 
       (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
 proof
+  define d A' B' 
+    where "d = canonical_basis_length TYPE('a)"
+      and "A' = gram_schmidt0 d (map vec_of_onb_enum A)"
+      and "B' = gram_schmidt0 d (map vec_of_onb_enum B)"
+  interpret complex_vec_space d.
+
+  have "Span (set A) \<le> Span (set B) \<longleftrightarrow> complex_span (set A) \<le> complex_span (set B)"
+    apply (transfer fixing: A B)
+    apply (subst span_finite_dim)
+(* TRICKY *)
+
+    thm span_finite_dim
+    thm span_finite_dim
+  thm adjuster_already_in_span
+
   show "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
         (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
     if "Span (set A) \<le> Span (set B)"
+  proof -
+    from that have "complex_span (set A) \<le> complex_span (set B)"
+      apply transfer 
+    have "adjuster d v A = - v" if "v \<in> span (set A')"
     sorry
+qed
   show "Span (set A) \<le> Span (set B)"
     if "is_subspace_of (canonical_basis_length (TYPE('a)::'a itself)) 
         (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
