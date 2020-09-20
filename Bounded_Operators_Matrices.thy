@@ -2156,8 +2156,8 @@ qed
 lemma cblinfun_of_mat_inverse:
   fixes M::"complex mat"
   assumes "M \<in> carrier_mat nB nA"
-    and "nA = canonical_basis_length TYPE('a)" 
-    and "nB = canonical_basis_length TYPE('b)"
+    and "nA = canonical_basis_length TYPE('a)" (* TODO: use 'defines' *)
+    and "nB = canonical_basis_length TYPE('b)" (* TODO: use 'defines' *)
   shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) = M"
 proof-
   define F where "F = (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"

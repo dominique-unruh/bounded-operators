@@ -3102,10 +3102,10 @@ lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 
   (let n = canonical_basis_length TYPE('a::onb_enum) in
-    SPAN (map (unit_vec n) [0..<n]))"
+    SPAN (unit_vecs n))"
   unfolding SPAN_def
   apply (simp only: index_unit_vec Let_def map_filter_map_filter filter_set image_set map_map_filter 
-      map_filter_map o_def)
+      map_filter_map o_def unit_vecs_def)
   apply (simp add: onb_enum_of_vec_unit_vec)
   apply (subst nth_image)
   by (auto simp: canonical_basis_length_eq)
@@ -3352,8 +3352,39 @@ proof -
     by simp
 qed
 
-lemma range_cblinfun_code[code]: "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
-  sorry
+lemma range_cblinfun_code[code]: 
+  fixes A :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
+  shows "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
+proof -
+  define dA dB
+    where "dA = canonical_basis_length TYPE('a)"
+      and "dB = canonical_basis_length TYPE('b)"
+  have carrier_A: "mat_of_cblinfun A \<in> carrier_mat dB dA"
+    unfolding mat_of_cblinfun_def dA_def dB_def by simp
+
+  have "range_cblinfun_code A = A *\<^sub>S SPAN (unit_vecs dA)"
+    unfolding range_cblinfun_code_def
+    by (metis dA_def top_as_span)
+  also have "\<dots> = SPAN (map (\<lambda>i. mat_of_cblinfun A *\<^sub>v unit_vec dA i) [0..<dA])"
+    unfolding applyOpSpace_SPAN dA_def[symmetric] Let_def
+    apply (subst filter_True)
+    apply (meson carrier_vecD subset_code(1) unit_vecs_carrier)
+    by (simp add: unit_vecs_def o_def)
+  also have "\<dots> = SPAN (map (\<lambda>x. mat_of_cblinfun A *\<^sub>v col (1\<^sub>m dA) x) [0..<dA])"
+    apply (subst map_cong[OF refl])
+    by auto
+  also have "\<dots> = SPAN (map (col (mat_of_cblinfun A * 1\<^sub>m dA)) [0..<dA])"
+    apply (subst map_cong[OF refl])
+    apply (subst col_mult2[symmetric])
+    apply (rule carrier_A)
+    by auto
+  also have "\<dots> = SPAN (cols (mat_of_cblinfun A))"
+    unfolding cols_def dA_def[symmetric]
+    apply (subst right_mult_one_mat[OF carrier_A])
+    using carrier_A by blast
+  finally show ?thesis
+    by -
+qed
 
 lemma kernel_SPAN[code]: "kernel A 
     = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
