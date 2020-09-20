@@ -2064,7 +2064,7 @@ proof -
 qed
 
 
-(* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
+(* (* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
 lemma Span_rev_gram_schmidt_sub0:
   defines "d==canonical_basis_length TYPE('a::onb_enum)"
     and "onb_of_vec == (onb_enum_of_vec::_\<Rightarrow>'a)"
@@ -2527,10 +2527,10 @@ next
     thus ?thesis using False
       by (simp add: w'_def)
   qed
-qed
+qed *)
 
 
-(* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
+(* (* TODO: probably remove in favor of Span_onb_enum_gram_schmidt0 *)
 lemma Span_map_vec_of_onb_enum:
   fixes S S' :: "'a::onb_enum list"
   defines "R == map vec_of_onb_enum S"
@@ -2599,7 +2599,7 @@ proof- (* NEW *)
     using \<open>map onb_of_vec (rev (gram_schmidt_sub0 d [] R)) = S'\<close> by auto
   thus ?thesis
     by simp 
-qed
+qed *)
 
 instantiation complex :: basis_enum begin
 definition "canonical_basis = [1::complex]"
@@ -3140,14 +3140,15 @@ lemma sup_spans[code]: "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
   unfolding SPAN_def 
   by (auto simp: Span_union image_Un filter_Un Let_def)
 
-lemma orthogonal_complementI:
+(* lemma orthogonal_complementI:
   assumes "\<And>x y. x \<in> Y \<Longrightarrow> y \<in> X \<Longrightarrow> \<langle>x, y\<rangle> = 0"
   assumes "\<And>x. (\<And>y. y\<in>X \<Longrightarrow> \<langle>x, y\<rangle> = 0) \<Longrightarrow> x \<in> Y"
   shows "orthogonal_complement X = Y"
-  unfolding orthogonal_complement_def using assms by auto
+  unfolding orthogonal_complement_def using assms by auto *)
 
 
-(* TODO move to ..._Matrices *)
+(* (* TODO move to ..._Matrices *)
+(* TODO: Do it differently (using image (1-Proj S)) *)
 lemma ortho_Span: 
   fixes S :: "'a::onb_enum list"
   shows "- Span (set S) =
@@ -3173,7 +3174,7 @@ lemma ortho_Span:
   show ?thesis
     sorry
 qed *)
-  sorry
+  sorry *)
 
 (* TODO To Preliminaries *)
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
@@ -3186,6 +3187,7 @@ lemma adjuster_carrier': (* List adjuster_carrier but with one assm less *)
   shows "adjuster n w us \<in> carrier_vec n"
   by (insert us, induction us, auto)
 
+(* (* TODO: Do it differently (using image (1-Proj S)) *)
 lemma orthogonal_complement_vec_carrier:
   assumes "set S \<subseteq> carrier_vec d"
   shows "set (orthogonal_complement_vec d S :: 'a::conjugatable_ordered_field vec list) \<subseteq> carrier_vec d"
@@ -3200,9 +3202,10 @@ proof -
     using unit_vecs_carrier vs_ortho by auto
   then show ?thesis
     unfolding orthogonal_complement_vec_def vs_ortho_def by simp
-qed
+qed *)
 
-lemma ortho_SPAN[code]: "- (SPAN S :: 'a::onb_enum clinear_space)
+
+(* lemma ortho_SPAN[code]: "- (SPAN S :: 'a::onb_enum clinear_space)
         = (let d = canonical_basis_length TYPE('a) in 
             SPAN (orthogonal_complement_vec d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
@@ -3231,7 +3234,7 @@ proof -
   finally show ?thesis
     unfolding d_def[symmetric] Sd_def
     by simp
-qed
+qed *)
 
 definition [code del,code_abbrev]: "span_code (S::'a::enum ell2 set) = (Span S)"
 
@@ -3275,6 +3278,19 @@ lemma apply_cblinfun_Span:
   apply (auto simp: applyOpSpace_Span image_image)
   by (metis mat_of_cblinfun_description onb_enum_of_vec_inverse)
 
+definition [code del, code_abbrev]: "range_cblinfun_code A = A *\<^sub>S top"
+
+
+lemma ortho_SPAN_code[code_unfold]: "- X = range_cblinfun_code (idOp - Proj X)"
+  unfolding range_cblinfun_code_def
+  apply transfer apply simp
+(* Potentially useful:  *)
+  thm ProjOntoOrtho ortho_decomp
+  sorry
+lemma range_cblinfun_code[code]: "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
+  sorry
+
+(* TODO: Add special case for A *\<^sub>S top *)
 lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S)
       = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S)"
   for A::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"

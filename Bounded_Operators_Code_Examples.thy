@@ -146,6 +146,10 @@ value "Span {ket False} + Span {ket True}"
 
 value "Span {ket False} \<sqinter> Span {ket True}"
 
+value "idOp *\<^sub>S Span {ket False}"
+
+value "idOp *\<^sub>S (top :: bool ell2 clinear_space)" (* Special case, using range_cblinfun_code for efficiency *)
+
 value "- Span {ket False}"
 
 value "Span {ket False, ket True} = top"
