@@ -5242,7 +5242,6 @@ lemma cGDERIV_norm:
   assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
 
 lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
-  sorry
 *)
 
 lemma cinner_ext_0: 
