@@ -1689,7 +1689,8 @@ unbundle no_nsa_notation
 
 subsection \<open>Cauchy sequences\<close>
 
-lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
+lemma cCauchy_iff2: 
+  "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
   by (simp only: metric_Cauchy_iff2 dist_complex_def)
 
 subsection \<open>Cauchy Sequences are Convergent\<close>
@@ -1719,7 +1720,7 @@ subsection \<open>Miscellany\<close>
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
   assumes \<open>closed S\<close>
-  shows \<open>closed (scaleC a ` S)\<close>
+  shows \<open>closed ((*\<^sub>C) a ` S)\<close>
 proof (cases \<open>S = {}\<close>)
   case True
   thus ?thesis
