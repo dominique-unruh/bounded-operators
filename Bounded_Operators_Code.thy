@@ -1842,15 +1842,42 @@ proof-
   ultimately show ?thesis by blast
 qed
 
+lemma corthogonal_is_ortho_set:
+  assumes "corthogonal (map vec_of_onb_enum vs)"
+  shows "is_ortho_set (set vs)"
+proof (unfold is_ortho_set_def, intro conjI ballI impI)
+  fix x y :: 'a
+  assume "x \<in> set vs"
+(*   then have "vec_of_onb_enum x \<in> set (map vec_of_onb_enum vs)"
+    by simp *)
+  then obtain i where "map vec_of_onb_enum vs ! i = vec_of_onb_enum x"
+    and "i \<le> length (map vec_of_onb_enum vs)"
+    by (metis in_set_conv_nth length_map less_or_eq_imp_le nth_map)
+  then have "vec_of_onb_enum x \<bullet>c vec_of_onb_enum x \<noteq> 0"
+    using assms \<open>x \<in> set vs\<close> unfolding corthogonal_def apply auto
+    by (metis in_set_conv_nth)
+  then have "\<langle>x, x\<rangle> \<noteq> 0"
+    apply (subst cinner_ell2_code)
+TRICKY
+    thm cinner_ell2_code
+    by auto
+  then show "x \<noteq> 0"
+    by auto
+
+  assume "y \<in> set vs"
+  then obtain j where "map vec_of_onb_enum vs ! j = vec_of_onb_enum y"
+    and "j \<le> length (map vec_of_onb_enum vs)"
+    by (metis in_set_conv_nth length_map less_or_eq_imp_le nth_map)
+
 
 (* TODO: add a lemma relating 
 corthogonal and is_ortho_set
 *)
 
-
-lemma exists_map_vec_of_onb_enum:
+(* TODO remove? *)
+(* lemma exists_map_vec_of_onb_enum:
   fixes S::"'a::onb_enum list"
-  defines "d == canonical_basis_length TYPE('a)"
+  defines "d \<equiv> canonical_basis_length TYPE('a)"
   shows "\<exists>S'::'a list. map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)
         \<and> is_ortho_set (set S') \<and> distinct S'"
 proof-
@@ -1959,7 +1986,7 @@ proof-
     by (metis R_def S'_def \<open>set R \<subseteq> carrier_vec d\<close> calculation(1) 
         cof_vec_space.gram_schmidt0_result(2) distinct_map)    
   ultimately show ?thesis by auto
-qed
+qed *)
 
 
 (* fun nonzero_vec :: "(complex vec) list \<Rightarrow> (complex vec) list"
@@ -2178,7 +2205,7 @@ next
             thus ?case by auto
           qed
           ultimately show ?thesis
-            sorry
+            
             (* by (simp add: onb_enum_of_vec_add onb_of_vec_def u_dim)  *)
         qed
         ultimately show ?case by auto
@@ -2250,7 +2277,7 @@ next
         moreover have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
               = (- (a \<bullet>c u / (u \<bullet>c u))) *\<^sub>C (onb_of_vec u)"
           using u_dim onb_enum_of_vec_mult onb_of_vec_def 
-            sorry
+            
           (* by blast  *)
         ultimately have "onb_of_vec (- (a \<bullet>c u / (u \<bullet>c u)) \<cdot>\<^sub>v u)
         \<in> complex_span (insert (onb_of_vec u) (onb_of_vec ` set T \<union> onb_of_vec ` set R))"
@@ -2983,35 +3010,42 @@ proof -
 qed
 
 (* TODO move to ..._Matrices *)
-lemma mat_of_cblinfun_Proj_Span: "mat_of_cblinfun (Proj (Span (set S))) =
+lemma mat_of_cblinfun_Proj_Span: 
+  fixes S :: "'a::onb_enum list"
+  shows "mat_of_cblinfun (Proj (Span (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S)))"
-  for S :: "'a::onb_enum list"
 proof-
-  define d where "d = canonical_basis_length TYPE('a)"
-  have "\<exists>S'::'a list. map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)
-        \<and> is_ortho_set (set S') \<and> distinct S'"
-    using exists_map_vec_of_onb_enum d_def by auto
-  then obtain S'::"'a list" where 
-    S'_def: "map vec_of_onb_enum S' = gram_schmidt0 d (map vec_of_onb_enum S)"
-    and S'_def': "is_ortho_set (set S')"
-    and S'_def'': "distinct S'"
-    by blast
-  have "mat_of_cblinfun (Proj (Span (set S'))) =
-    (let d = canonical_basis_length TYPE('a) in 
-      mk_projector_orthog d (map vec_of_onb_enum S'))"
-    using S'_def' S'_def'' mat_of_cblinfun_Proj_Span_aux_1[symmetric]
-    unfolding mk_projector_def
-    by auto 
-  hence "mat_of_cblinfun (Proj (Span (set S'))) =
-    (let d = canonical_basis_length TYPE('a) in 
-      mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S)))"
-    by (metis d_def S'_def)
-  moreover have "Span (set S') = Span (set S)"
-    using S'_def Span_map_vec_of_onb_enum
-    by (metis d_def rev_map rev_rev_ident set_rev) 
-  ultimately show ?thesis
-    by simp
+  define d gs 
+    where "d = canonical_basis_length TYPE('a)"
+      and "gs = gram_schmidt0 d (map vec_of_onb_enum S)"
+  interpret complex_vec_space d.
+  have gs_dim: "x \<in> set gs \<Longrightarrow> dim_vec x = d" for x
+    by (smt canonical_basis_length_eq carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_onb_enum_list' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
+  have ortho_gs: "is_ortho_set (set (map onb_enum_of_vec gs :: 'a list))"
+    apply (rule corthogonal_is_ortho_set)
+    by (smt canonical_basis_length_eq carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum_list' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) vec_of_onb_enum_inverse)
+  have distinct_gs: "distinct (map onb_enum_of_vec gs :: 'a list)"
+    by (metis (mono_tags, hide_lams) canonical_basis_length_eq carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum_list' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI vec_of_onb_enum_inverse)
+
+  have "mk_projector_orthog d gs 
+      = mk_projector_orthog d (map vec_of_onb_enum (map onb_enum_of_vec gs :: 'a list))"
+    apply simp
+    apply (subst map_cong[where ys=gs and g=id], simp)
+    using gs_dim by (auto intro!: vec_of_onb_enum_inverse simp: d_def)
+  also have "\<dots> = mk_projector (Span (set (map onb_enum_of_vec gs :: 'a list)))"
+    unfolding d_def
+    apply (subst mat_of_cblinfun_Proj_Span_aux_1)
+    using ortho_gs distinct_gs by auto
+  also have "\<dots> = mk_projector (Span (set S))"
+    apply (rule arg_cong[where f=mk_projector])
+    unfolding gs_def d_def
+    apply (subst Span_onb_enum_gram_schmidt0)
+    by (auto simp add: canonical_basis_length_eq carrier_vecI dim_vec_of_onb_enum_list')
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+    unfolding mk_projector_def by simp
+  finally show ?thesis
+    unfolding d_def gs_def by auto
 qed
 
 
@@ -3169,12 +3203,12 @@ lemma ortho_Span:
     apply (rule sym)
     apply (rule orthogonal_complementI)
 
-    sorry
+    
 
   show ?thesis
-    sorry
+    
 qed *)
-  sorry *)
+   *)
 
 (* TODO To Preliminaries *)
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
