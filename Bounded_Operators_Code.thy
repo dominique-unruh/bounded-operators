@@ -3307,23 +3307,52 @@ lemma apply_cblinfun_Span:
 
 definition [code del, code_abbrev]: "range_cblinfun_code A = A *\<^sub>S top"
 
+lemma Proj_ortho_compl:
+  "Proj (- X) = idOp - Proj X"
+  apply (transfer, auto)
+  using ortho_decomp
+  by (metis add_diff_cancel_left') 
+
+lemma Proj_inj: "Proj X = Proj Y \<Longrightarrow> X = Y"
+  by (metis imageOp_Proj)
 
 lemma ortho_SPAN_code[code_unfold]: "- X = range_cblinfun_code (idOp - Proj X)"
   unfolding range_cblinfun_code_def
-  apply transfer apply simp
-(* Potentially useful:  *)
-  thm ProjOntoOrtho ortho_decomp
-  sorry
-lemma range_cblinfun_code[code]: "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
-  sorry
+  by (metis Proj_ortho_compl imageOp_Proj)
 
-(* TODO: Add special case for A *\<^sub>S top *)
 lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S)
-      = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S)"
+      = (let d = canonical_basis_length TYPE('a) in
+         SPAN (map (mult_mat_vec (mat_of_cblinfun A))
+               (filter (\<lambda>v. dim_vec v = d) S)))"
   for A::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
-  unfolding SPAN_def Let_def
-  using apply_cblinfun_Span[where A = A and S = 
-      "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
+proof -
+  define dA dB S'
+    where "dA = canonical_basis_length TYPE('a)"
+      and "dB = canonical_basis_length TYPE('b)"
+      and "S' = filter (\<lambda>v. dim_vec v = dA) S"
+
+  have "applyOpSpace A (SPAN S) = A *\<^sub>S Span (set (map onb_enum_of_vec S'))"
+    unfolding SPAN_def dA_def[symmetric] Let_def S'_def filter_set
+    by simp
+  also have "\<dots> = Span ((\<lambda>x. onb_enum_of_vec 
+            (mat_of_cblinfun A *\<^sub>v vec_of_onb_enum (onb_enum_of_vec x :: 'a))) ` set S')"
+    apply (subst apply_cblinfun_Span)
+    by (simp add: image_image)
+  also have "\<dots> = Span ((\<lambda>x. onb_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
+    apply (subst image_cong[OF refl])
+     apply (subst vec_of_onb_enum_inverse)
+    by (auto simp add: S'_def dA_def)
+  also have "\<dots> = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S')"
+    unfolding SPAN_def dB_def[symmetric] Let_def filter_set 
+    apply (subst filter_True)
+    by (simp_all add: dB_def mat_of_cblinfun_def image_image)
+
+  finally show ?thesis
+    unfolding dA_def[symmetric] S'_def[symmetric] Let_def
+    by simp
+qed
+
+lemma range_cblinfun_code[code]: "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
   sorry
 
 lemma kernel_SPAN[code]: "kernel A 
