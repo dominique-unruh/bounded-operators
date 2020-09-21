@@ -3747,7 +3747,7 @@ lemma Gram_Schmidt:
   fixes S::\<open>'a::complex_inner set\<close>
   assumes \<open>finite S\<close>
   shows \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
+           \<and> complex_span A = complex_span S
            \<and> 0 \<notin> A \<and> finite A\<close>
 proof-
   have Gram_Schmidt0:
