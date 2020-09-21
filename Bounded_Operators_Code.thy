@@ -59,7 +59,7 @@ declare mat_of_cblinfun_scalarMult[code]
 declare mat_of_cblinfun_scaleR[code]
 declare cblinfun_of_mat_adjoint[code]
 
-text \<open>This instantiation defines a code equation for equality tests for cblinfun operators.\<close>
+text \<open>This instantiation defines a code equation for equality tests for cblinfun.\<close>
 instantiation cblinfun :: (onb_enum,onb_enum) equal begin
 definition [code]: "equal_cblinfun M N \<longleftrightarrow> mat_of_cblinfun M = mat_of_cblinfun N" 
   for M N :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -82,7 +82,7 @@ text \<open>In this section, we define code for operations on vectors. As with o
   Unfortunately, we cannot declare code equations for a type class, 
   code equations must be related to a specific type constructor.
   So we give code definition only for vectors of type \<^typ>\<open>'a ell2\<close> (where \<^typ>\<open>'a\<close>
-  must be of sort \<open>enum\<close> to make make sure that  \<^typ>\<open>'a ell2\<close> is finite dimensional).
+  must be of sort \<open>enum\<close> to make make sure that \<^typ>\<open>'a ell2\<close> is finite dimensional).
   
   The isomorphism between \<^typ>\<open>'a ell2\<close> is given by the constants \<open>ell2_of_vec\<close>
   and \<open>vec_of_ell2\<close> which are copies of the more general \<^const>\<open>onb_enum_of_vec\<close>
@@ -104,13 +104,14 @@ lemma vec_of_ell2_inverse [code abstype]:
   unfolding ell2_of_vec_def vec_of_ell2_def
   by (rule onb_enum_of_vec_inverse)
 
+text \<open>This instantiation defines a code equation for equality tests for ell2.\<close>
 instantiation ell2 :: (enum) equal begin
 definition [code]: "equal_ell2 M N \<longleftrightarrow> vec_of_ell2 M = vec_of_ell2 N" 
   for M N :: "'a::enum ell2"
 instance 
   apply intro_classes
   unfolding equal_ell2_def
-  by (metis vec_of_ell2_inverse) 
+  by (metis vec_of_ell2_inverse)
 end
 
 lemma vec_of_ell2_zero[code]:
@@ -163,7 +164,14 @@ subsection \<open>Vector/Matrix\<close>
 
 (* TODO explain everything in this section *)
 
-(* Wrapper class so that we can define a code datatype constructors for that type (does not work with type synonyms) *)
+(* definition cblinfun_apply' :: "'a ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" where "cblinfun_apply' = cblinfun_apply"
+lemma ell2_of_vec_applyOp[code]:
+  "vec_of_ell2 (cblinfun_apply' M x) = (mult_mat_vec (mat_of_cblinfun M) (vec_of_ell2 x))"
+  by (simp add: cblinfun_apply'_def mat_of_cblinfun_description vec_of_ell2_def) *)
+
+
+(* Wrapper class so that we can define a code datatype constructors for that type
+   (does not work with type synonyms) *)
 (* TODO: Find out if it's OK to remove the ell2 from the output (once QRHL compiles) *)
 typedef ('a::enum,'b::enum) code_l2bounded = "UNIV::('a ell2, 'b ell2) cblinfun set" ..
 setup_lifting type_definition_code_l2bounded
@@ -182,7 +190,6 @@ lemma [code]: "mat_of_l2bounded' (Abs_code_l2bounded X) = mat_of_cblinfun X"
   apply transfer by simp
 lemma [code]: "mat_of_cblinfun (Rep_code_l2bounded X) = mat_of_l2bounded' X"
   apply transfer by simp
-
 
 lift_definition applyOp_code :: "('a::enum, 'b::enum) code_l2bounded \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" 
   is "cblinfun_apply :: ('a ell2,'b ell2) cblinfun \<Rightarrow> _ \<Rightarrow> _".
