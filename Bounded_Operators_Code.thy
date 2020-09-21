@@ -43,8 +43,11 @@ declare mat_of_cblinfun_inverse [code abstype]
 text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinfun (M + N)\<close>
 on the left hand side, we get access to the\<close>
   (* TODO: rename \<rightarrow> cblinfun_of_mat_plus *)
+
+(* Code equation for addition of cblinfuns *)
 declare cblinfun_of_mat_plusOp'[code]
   (* TODO: rename (remove ') *)
+(* Support for identity operator *)
 declare cblinfun_of_mat_id'[code]
   (* TODO: rename (remove ') *)
 declare mat_of_cblinfun_zero'[code]
@@ -164,42 +167,12 @@ subsection \<open>Vector/Matrix\<close>
 
 (* TODO explain everything in this section *)
 
-(* definition cblinfun_apply' :: "'a ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" where "cblinfun_apply' = cblinfun_apply"
-lemma ell2_of_vec_applyOp[code]:
-  "vec_of_ell2 (cblinfun_apply' M x) = (mult_mat_vec (mat_of_cblinfun M) (vec_of_ell2 x))"
-  by (simp add: cblinfun_apply'_def mat_of_cblinfun_description vec_of_ell2_def) *)
-
-
-(* Wrapper class so that we can define a code datatype constructors for that type
-   (does not work with type synonyms) *)
-(* TODO: Find out if it's OK to remove the ell2 from the output (once QRHL compiles) *)
-typedef ('a::enum,'b::enum) code_l2bounded = "UNIV::('a ell2, 'b ell2) cblinfun set" ..
-setup_lifting type_definition_code_l2bounded
-
-lift_definition l2bounded_of_mat' :: "complex mat \<Rightarrow> ('a::enum,'b::enum) code_l2bounded"
-  is cblinfun_of_mat.
-lift_definition mat_of_l2bounded' :: "('a::enum,'b::enum) code_l2bounded \<Rightarrow> complex mat"
-  is mat_of_cblinfun.
-
-lemma mat_of_cblinfun_inverse' [code abstype]:
-  "l2bounded_of_mat' (mat_of_l2bounded' B) = B" 
-  apply transfer
-  using mat_of_cblinfun_inverse by blast
-
-lemma [code]: "mat_of_l2bounded' (Abs_code_l2bounded X) = mat_of_cblinfun X"
-  apply transfer by simp
-lemma [code]: "mat_of_cblinfun (Rep_code_l2bounded X) = mat_of_l2bounded' X"
-  apply transfer by simp
-
-lift_definition applyOp_code :: "('a::enum, 'b::enum) code_l2bounded \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" 
-  is "cblinfun_apply :: ('a ell2,'b ell2) cblinfun \<Rightarrow> _ \<Rightarrow> _".
-
-lemma [symmetric,code_abbrev]: "cblinfun_apply M = applyOp_code (Abs_code_l2bounded M)"
-  apply transfer by simp
+definition cblinfun_apply_code :: "'a ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" 
+  where [code del, code_abbrev]: "cblinfun_apply_code = cblinfun_apply"
 
 lemma ell2_of_vec_applyOp[code]:
-  "vec_of_ell2 (applyOp_code M x) = (mult_mat_vec (mat_of_l2bounded' M) (vec_of_ell2 x))"
-  by (simp add: applyOp_code.rep_eq mat_of_cblinfun_description mat_of_l2bounded'.rep_eq vec_of_ell2_def) 
+  "vec_of_ell2 (cblinfun_apply_code M x) = (mult_mat_vec (mat_of_cblinfun M) (vec_of_ell2 x))"
+  by (simp add: cblinfun_apply_code_def mat_of_cblinfun_description vec_of_ell2_def)
 
 definition [code del,code_abbrev]: "vector_to_cblinfun_code (\<psi>::'a ell2) = (vector_to_cblinfun \<psi>)"
 
@@ -208,8 +181,6 @@ lemma mat_of_cblinfun_ell2_to_l2bounded_code[code]:
   for \<psi>::"'a::enum ell2"
   by (simp add: mat_of_cblinfun_ell2_to_l2bounded canonical_basis_length_ell2_def vec_of_ell2_def vector_to_cblinfun_code_def)
 
-
-
 subsection \<open>Subspaces\<close>
 
 (* TODO add explanations *)
@@ -217,10 +188,6 @@ subsection \<open>Subspaces\<close>
 definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
     Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a clinear_space)"
 code_datatype SPAN
-
-
-definition "mk_projector (S::'a::onb_enum clinear_space)
-   = mat_of_cblinfun (Proj S)" 
 
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
 and returns the projector onto the span of L. (Assuming that all vectors in L are orthogonal
@@ -238,7 +205,8 @@ lemma mat_of_cblinfun_Proj_Span_aux_1:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
   assumes ortho: "is_ortho_set (set S)" and distinct: "distinct S"
-  shows "mk_projector_orthog d (map vec_of_onb_enum S) = mk_projector (Span (set S))"
+  shows "mk_projector_orthog d (map vec_of_onb_enum S) 
+       = mat_of_cblinfun (Proj (Span (set S)))"
 proof -
   define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
   
@@ -403,8 +371,8 @@ proof -
     finally show ?case
       by -
   qed
-  also have "\<dots> = mk_projector (Span (set S))"
-    unfolding mk_projector_def Span_Snorm by simp
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+    unfolding Span_Snorm by simp
   finally show ?thesis
     by -
 qed
@@ -432,27 +400,24 @@ proof-
     apply simp
     apply (subst map_cong[where ys=gs and g=id], simp)
     using gs_dim by (auto intro!: vec_of_onb_enum_inverse simp: d_def)
-  also have "\<dots> = mk_projector (Span (set (map onb_enum_of_vec gs :: 'a list)))"
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set (map onb_enum_of_vec gs :: 'a list))))"
     unfolding d_def
     apply (subst mat_of_cblinfun_Proj_Span_aux_1)
     using ortho_gs distinct_gs by auto
-  also have "\<dots> = mk_projector (Span (set S))"
-    apply (rule arg_cong[where f=mk_projector])
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+    apply (rule arg_cong[where f="\<lambda>x. mat_of_cblinfun (Proj x)"])
     unfolding gs_def d_def
     apply (subst Span_onb_enum_gram_schmidt0)
     by (auto simp add: canonical_basis_length_eq carrier_vecI dim_vec_of_onb_enum_list')
-  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
-    unfolding mk_projector_def by simp
   finally show ?thesis
     unfolding d_def gs_def by auto
 qed
 
-
-
-
+definition "mat_of_cblinfun_Proj S = mat_of_cblinfun (Proj S)"
+declare mat_of_cblinfun_Proj_def[symmetric, code]
 
 lemma mk_projector_SPAN[code]: 
-  "mk_projector (SPAN S :: 'a::onb_enum clinear_space) = 
+  "mat_of_cblinfun_Proj (SPAN S :: 'a::onb_enum clinear_space) = 
     (let d = canonical_basis_length TYPE('a) in mk_projector_orthog d 
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
@@ -461,19 +426,13 @@ proof -
       = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
     by auto
   show ?thesis
-    unfolding mk_projector_def SPAN_def
+    unfolding SPAN_def mat_of_cblinfun_Proj_def
     using mat_of_cblinfun_Proj_Span[where S = 
         "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
     apply (simp only: Let_def map_filter_map_filter filter_set image_set map_map_filter o_def)
     unfolding *
     by (simp add: map_filter_map_filter[symmetric])
 qed
-
-lemma [code]: "mat_of_cblinfun (Proj S) = mk_projector S" for S :: "'a::onb_enum clinear_space"
-  unfolding mk_projector_def by simp
-
-
-
 
 lemma top_as_span[code]: "(top::'a clinear_space) = 
   (let n = canonical_basis_length TYPE('a::onb_enum) in
