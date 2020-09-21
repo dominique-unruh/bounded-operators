@@ -140,6 +140,8 @@ value "top :: bool ell2 clinear_space"
 
 value "bot :: bool ell2 clinear_space"
 
+value "0 :: bool ell2 clinear_space"
+
 value "Span {ket False} \<squnion> Span {ket True}"
 
 value "Span {ket False} + Span {ket True}"

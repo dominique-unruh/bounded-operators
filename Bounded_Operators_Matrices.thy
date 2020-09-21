@@ -4864,6 +4864,230 @@ lemma Proj_inj: "Proj X = Proj Y \<Longrightarrow> X = Y"
   by (metis imageOp_Proj)
 
 
+text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
+and returns the projector onto the span of L. (Assuming that all vectors in L are 
+orthogonal and nonzero.)\<close>
+fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
+  "mk_projector_orthog d [] = zero_mat d d"
+| "mk_projector_orthog d [v] = (let norm2 = cscalar_prod v v in
+                                smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]))"
+| "mk_projector_orthog d (v#vs) = (let norm2 = cscalar_prod v v in
+                                   smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
+                                        + mk_projector_orthog d vs)"
+
+lemma mat_of_cblinfun_Proj_Span_aux_1:
+  fixes S :: "'a::onb_enum list"
+  defines "d == canonical_basis_length TYPE('a)"
+  assumes ortho: "is_ortho_set (set S)" and distinct: "distinct S"
+  shows "mk_projector_orthog d (map vec_of_onb_enum S) 
+       = mat_of_cblinfun (Proj (Span (set S)))"
+proof -
+  define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
+  
+  have "distinct Snorm"
+  proof (insert ortho distinct, unfold Snorm_def, induction S)
+    case Nil
+    show ?case by simp
+  next
+    case (Cons s S)
+    then have "is_ortho_set (set S)" and "distinct S"
+      unfolding is_ortho_set_def by auto
+    note IH = Cons.IH[OF this]
+    have "s /\<^sub>R norm s \<notin> (\<lambda>s. s /\<^sub>R norm s) ` set S"
+    proof auto
+      fix s' assume "s' \<in> set S" and same: "s /\<^sub>R norm s = s' /\<^sub>R norm s'"
+      with Cons.prems have "s \<noteq> s'" by auto
+      have "s \<noteq> 0"
+        by (metis Cons.prems(1) is_ortho_set_def list.set_intros(1))
+      then have "0 \<noteq> \<langle>s /\<^sub>R norm s, s /\<^sub>R norm s\<rangle>"
+        by simp
+      also have \<open>\<langle>s /\<^sub>R norm s, s /\<^sub>R norm s\<rangle> = \<langle>s /\<^sub>R norm s, s' /\<^sub>R norm s'\<rangle>\<close>
+        by (simp add: same)
+      also have \<open>\<langle>s /\<^sub>R norm s, s' /\<^sub>R norm s'\<rangle> = \<langle>s, s'\<rangle> / (norm s * norm s')\<close>
+        by (simp add: scaleR_scaleC divide_inverse_commute)
+      also from \<open>s' \<in> set S\<close> \<open>s \<noteq> s'\<close> have "\<dots> = 0"
+        using Cons.prems unfolding is_ortho_set_def by simp
+      finally show False
+        by simp
+    qed
+    then show ?case
+      using IH by simp
+  qed
+
+  have norm_Snorm: "norm s = 1" if "s \<in> set Snorm" for s
+    using that ortho unfolding Snorm_def is_ortho_set_def by auto
+
+  have ortho_Snorm: "is_ortho_set (set Snorm)"
+    unfolding is_ortho_set_def
+  proof (intro conjI ballI impI)
+    fix x y
+    show "x \<in> set Snorm \<Longrightarrow> x \<noteq> 0"
+      using norm_Snorm[of 0] by auto
+    assume "x \<in> set Snorm" and "y \<in> set Snorm" and "x \<noteq> y"
+    from \<open>x \<in> set Snorm\<close>
+    obtain x' where x: "x = x' /\<^sub>R norm x'" and x': "x' \<in> set S"
+      unfolding Snorm_def by auto
+    from \<open>y \<in> set Snorm\<close>
+    obtain y' where y: "y = y' /\<^sub>R norm y'" and y': "y' \<in> set S"
+      unfolding Snorm_def by auto
+    from \<open>x \<noteq> y\<close> x y have \<open>x' \<noteq> y'\<close> by auto
+    with x' y' ortho have "cinner x' y' = 0"
+      unfolding is_ortho_set_def by auto
+    then show "cinner x y = 0"
+      unfolding x y scaleR_scaleC by auto
+  qed
+
+  have inj_butter: "inj_on butterfly (set Snorm)"
+  proof (rule inj_onI)
+    fix x y 
+    assume "x \<in> set Snorm" and "y \<in> set Snorm"
+    assume "butterfly x = butterfly y"
+    then obtain c where xcy: "x = c *\<^sub>C y" and "cmod c = 1"
+      using inj_butterfly by auto
+    have "0 \<noteq> cmod (cinner x x)"
+      using \<open>x \<in> set Snorm\<close> norm_Snorm
+      by (simp add: cinner_norm_sq)
+    also have "cmod (cinner x x) = cmod (c * \<langle>x, y\<rangle>)"
+      apply (subst (2) xcy) by simp
+    also have "\<dots> = cmod \<langle>x, y\<rangle>"
+      using \<open>cmod c = 1\<close> by (simp add: norm_mult)
+    finally have "\<langle>x, y\<rangle> \<noteq> 0"
+      by simp
+    then show "x = y"
+      using ortho_Snorm \<open>x \<in> set Snorm\<close> \<open>y \<in> set Snorm\<close>
+      unfolding is_ortho_set_def by auto
+  qed
+
+  from \<open>distinct Snorm\<close> inj_butter
+  have distinct': "distinct (map butterfly Snorm)"
+    unfolding distinct_map by simp
+
+  have Span_Snorm: "Span (set Snorm) = Span (set S)"
+    apply (transfer fixing: Snorm S)
+    apply (simp add: scaleR_scaleC Snorm_def)
+    apply (subst span_image_scale) 
+    using is_ortho_set_def ortho by fastforce+
+
+  have "mk_projector_orthog d (map vec_of_onb_enum S)
+      = mat_of_cblinfun (sum_list (map butterfly Snorm))"
+    unfolding Snorm_def
+  proof (induction S)
+    case Nil
+    show ?case 
+      by (simp add: d_def mat_of_cblinfun_zero')
+  next
+    case (Cons a S)
+    define sumS where "sumS = sum_list (map butterfly (map (\<lambda>s. s /\<^sub>R norm s) S))"
+    with Cons have IH: "mk_projector_orthog d (map vec_of_onb_enum S)
+                  = mat_of_cblinfun sumS"
+      by simp
+
+    define factor where "factor = inverse ((complex_of_real (norm a))\<^sup>2)"
+    have factor': "factor = 1 / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)"
+      unfolding factor_def cinner_ell2_code[symmetric]
+      by (simp add: inverse_eq_divide power2_norm_eq_cinner'')
+
+    have "mk_projector_orthog d (map vec_of_onb_enum (a # S))
+          = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] 
+                    * mat_of_rows d [conjugate (vec_of_onb_enum a)])
+            + mat_of_cblinfun sumS"
+      apply (cases S)
+       apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero')[1]
+      by (auto simp add: IH[symmetric] factor' d_def)
+
+    also have "\<dots> = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] *
+         adjoint_mat (mat_of_cols d [vec_of_onb_enum a])) + mat_of_cblinfun sumS"
+      apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
+      apply (rule mat_eq_iff[THEN iffD2])
+        apply (auto simp add: adjoint_mat_def)
+      apply (subst mat_of_rows_index)
+        apply auto
+      apply (subst mat_of_cols_index)
+        apply auto
+      by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
+
+    also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
+      apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
+      by (simp add: butterfly_def' cblinfun_of_mat_timesOp
+          cblinfun_of_mat_adjoint mat_of_cblinfun_ell2_to_l2bounded d_def)
+
+    finally show ?case
+      by (simp add: cblinfun_of_mat_plusOp' sumS_def)
+  qed
+  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
+    by (metis distinct' distinct_map sum.distinct_set_conv_list)
+  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. proj s)"
+    apply (rule arg_cong[where f="mat_of_cblinfun"])
+    apply (rule sum.cong[OF refl])
+    apply (rule butterfly_proj)
+    using norm_Snorm by simp
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set Snorm)))"
+    apply (rule arg_cong[of _ _ mat_of_cblinfun])
+  proof (insert ortho_Snorm, insert \<open>distinct Snorm\<close>, induction Snorm)
+    case Nil
+    show ?case
+      by simp
+  next
+    case (Cons a Snorm)
+    from Cons.prems have [simp]: "a \<notin> set Snorm"
+      by simp
+
+    have "sum proj (set (a # Snorm))
+        = proj a + sum proj (set Snorm)"
+      by auto
+    also have "\<dots> = proj a + Proj (Span (set Snorm))"
+      apply (subst Cons.IH)
+      using Cons.prems apply auto
+      using is_onb_delete by blast
+    also have "\<dots> = Proj (Span (set (a # Snorm)))"
+      apply (rule Proj_Span_insert[symmetric])
+      using Cons.prems by auto
+    finally show ?case
+      by -
+  qed
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+    unfolding Span_Snorm by simp
+  finally show ?thesis
+    by -
+qed
+
+lemma mat_of_cblinfun_Proj_Span: 
+  fixes S :: "'a::onb_enum list"
+  shows "mat_of_cblinfun (Proj (Span (set S))) =
+    (let d = canonical_basis_length TYPE('a) in 
+      mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S)))"
+proof-
+  define d gs 
+    where "d = canonical_basis_length TYPE('a)"
+      and "gs = gram_schmidt0 d (map vec_of_onb_enum S)"
+  interpret complex_vec_space d.
+  have gs_dim: "x \<in> set gs \<Longrightarrow> dim_vec x = d" for x
+    by (smt canonical_basis_length_eq carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_onb_enum_list' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
+  have ortho_gs: "is_ortho_set (set (map onb_enum_of_vec gs :: 'a list))"
+    apply (rule corthogonal_is_ortho_set)
+    by (smt canonical_basis_length_eq carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum_list' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) vec_of_onb_enum_inverse)
+  have distinct_gs: "distinct (map onb_enum_of_vec gs :: 'a list)"
+    by (metis (mono_tags, hide_lams) canonical_basis_length_eq carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum_list' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI vec_of_onb_enum_inverse)
+
+  have "mk_projector_orthog d gs 
+      = mk_projector_orthog d (map vec_of_onb_enum (map onb_enum_of_vec gs :: 'a list))"
+    apply simp
+    apply (subst map_cong[where ys=gs and g=id], simp)
+    using gs_dim by (auto intro!: vec_of_onb_enum_inverse simp: d_def)
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set (map onb_enum_of_vec gs :: 'a list))))"
+    unfolding d_def
+    apply (subst mat_of_cblinfun_Proj_Span_aux_1)
+    using ortho_gs distinct_gs by auto
+  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+    apply (rule arg_cong[where f="\<lambda>x. mat_of_cblinfun (Proj x)"])
+    unfolding gs_def d_def
+    apply (subst Span_onb_enum_gram_schmidt0)
+    by (auto simp add: canonical_basis_length_eq carrier_vecI dim_vec_of_onb_enum_list')
+  finally show ?thesis
+    unfolding d_def gs_def by auto
+qed
+
+
 unbundle no_jnf_notation
 unbundle no_cblinfun_notation
 
