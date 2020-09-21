@@ -4928,7 +4928,8 @@ qed
 subsection \<open>Commutative monoid of subspaces\<close>
 
 instantiation clinear_space :: (chilbert_space) comm_monoid_add begin
-definition plus_clinear_space :: "'a clinear_space \<Rightarrow> _ \<Rightarrow> _" where [simp]: "plus_clinear_space = sup"
+definition plus_clinear_space :: "'a clinear_space \<Rightarrow> _ \<Rightarrow> _"
+  where [simp]: "plus_clinear_space = sup"
 instance 
   apply standard 
     apply (simp add: sup_assoc)

@@ -4814,11 +4814,12 @@ lemma finite_span_representation_bounded:
 
   text \<open>
   Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
-  Let $\<alpha>^\<psi>_b$ be the coefficients of $\<psi>$ expressed as a linear combination over $B$.
-  Then $\<alpha>$ is is uniformly cblinfun (i.e., $\lvert\alpha^\<psi>_b \leq D \lVert\psi\rVert\psi for some $D$ independent of $\<psi>,b$).
+  Let $\alpha^\psi_b$ be the coefficients of $\psi$ expressed as a linear combination over $B$.
+  Then $\alpha$ is is uniformly cblinfun (i.e., $\lvert\alpha^\psi_b \leq D \lVert\psi\rVert\psi$
+  for some $D$ independent of $\psi,b$).
 
   (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
-  is defined in this corner case.) \<close>
+  is defined in this corner case.)\<close>
 
 proof (cases "B\<noteq>{}")
   case True

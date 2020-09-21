@@ -3444,7 +3444,7 @@ proof-
     by auto
 qed
 
-subsection \<open>Uniform_limit_Missing\<close>
+subsection \<open>\<open>Uniform_Limit_Missing\<close>\<close>
 
 unbundle nsa_notation
 
