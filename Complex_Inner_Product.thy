@@ -1053,7 +1053,7 @@ qed
 
 \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
 theorem existence_uniqueness_min_dist:
-  fixes M::\<open>('a::chilbert_space) set\<close> and h::'a 
+  fixes M::\<open>'a::chilbert_space set\<close> and h 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
 proof-

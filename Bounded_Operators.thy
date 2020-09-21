@@ -3671,7 +3671,8 @@ next
 qed
 
 lemma mult_INF[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" and U :: "('b,'c::chilbert_space) cblinfun"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" 
+    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space"
   assumes \<open>isometry U\<close>
   shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
 proof -
