@@ -5,7 +5,7 @@ session "Bounded_Operators-Prerequisites" = "HOL-Analysis" +
 	   "HOL-Library.Rewrite" "HOL-ex.Sketch_and_Explore"
 	   "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
      Real_Impl.Real_Impl Jordan_Normal_Form.Matrix
-     "HOL-Types_To_Sets.Types_To_Sets"
+     "HOL-Types_To_Sets.Types_To_Sets" Jordan_Normal_Form.Matrix_Kernel
 
 session Bounded_Operators = "Bounded_Operators-Prerequisites" +
   options [record_proofs=1, document = pdf, document_output = "output", 
