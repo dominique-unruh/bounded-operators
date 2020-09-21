@@ -1984,17 +1984,17 @@ end
 subsection \<open>Adjoint\<close>
 
 lift_definition
-  adjoint :: "('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
+  adjoint :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
   is Adj by (fact Adj_cbounded_linear)
 
-lift_definition idOp::\<open>('a::complex_normed_vector,'a) cblinfun\<close> is id
+lift_definition idOp::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> is id
   using id_cbounded_linear by blast
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) cblinfun"
+  for A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
     and a :: complex 
 proof-
   have \<open>cbounded_linear ((cblinfun_apply A))\<close>
@@ -2116,7 +2116,7 @@ lemma adjoint_D:
   using assms apply transfer using Adj_D by auto
 
 lemma adjoint_twice[simp]: "(U*)* = U" 
-  for U :: "('a::chilbert_space,'b::chilbert_space) cblinfun"
+  for U :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   apply transfer
   using dagger_dagger_id by blast
 
@@ -2162,7 +2162,7 @@ lemma timesOp_minus:
   by (metis comp_apply complex_vector.linear_diff)
 
 lemma times_adjoint[simp]:
-  fixes B::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
+  fixes B::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
     and A::\<open>('b,'c::chilbert_space) cblinfun\<close> 
   shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
 proof transfer
@@ -2188,7 +2188,7 @@ lemma cblinfun_apply_0[simp]:
 
 
 lemma applyOp_0[simp]:  
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
   shows   "U *\<^sub>S (0::'a clinear_space) = (0::'b clinear_space)"
 proof-
   {
@@ -2346,8 +2346,8 @@ proof-
 qed
 
 
-lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_clinear_space[symmetric] add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun", symmetric]
-lemmas assoc_right = timesOp_assoc timesOp_assoc_clinear_space add.assoc[where ?'a="('a::chilbert_space,'b::chilbert_space) cblinfun"]
+lemmas assoc_left = timesOp_assoc[symmetric] timesOp_assoc_clinear_space[symmetric] add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space", symmetric]
+lemmas assoc_right = timesOp_assoc timesOp_assoc_clinear_space add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
 
 lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
   by (simp add: scaleC_add_right)
@@ -2534,7 +2534,7 @@ qed
 
 
 lemma scalar_op_clinear_space_assoc [simp]: 
-  fixes A::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
+  fixes A::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
     and S::\<open>'a clinear_space\<close> and \<alpha>::complex
   shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>S S  = \<alpha> *\<^sub>C (A *\<^sub>S S)\<close>
 proof-
@@ -2681,7 +2681,7 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
 
 lemma mult_inf_distrib':
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close> and B C::"'a clinear_space"
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> and B C::"'a clinear_space"
   shows "U *\<^sub>S (inf B  C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
 proof-
   have \<open>cbounded_linear U \<Longrightarrow>
@@ -2815,17 +2815,17 @@ qed
 
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space clinear_space"                        
-    and A B :: "('a::chilbert_space,'b::chilbert_space) cblinfun"
+    and A B :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S = B *\<^sub>S S"
   by (metis applyOpSpace_less_eq assms(1) assms(2) dual_order.antisym)
 
 subsection \<open>Unitary\<close>
 
-definition isometry::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> bool\<close> where
+definition isometry::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> bool\<close> where
   \<open>isometry U \<longleftrightarrow> U* o\<^sub>C\<^sub>L  U = idOp\<close>
 
-definition unitary::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun \<Rightarrow> bool\<close> where
+definition unitary::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> bool\<close> where
   \<open>unitary U \<longleftrightarrow> U* o\<^sub>C\<^sub>L  U  = idOp \<and> U o\<^sub>C\<^sub>L U* = idOp\<close>
 
 lemma unitary_def': "unitary U \<longleftrightarrow> isometry U \<and> isometry (U*)"
@@ -3153,7 +3153,7 @@ qed
 
 
 lemma Proj_times: "isometry A \<Longrightarrow> A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*) = Proj (A *\<^sub>S S)" 
-  for A::"('a::chilbert_space,'b::chilbert_space) cblinfun"
+  for A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
 proof-
   assume \<open>isometry A\<close>
   define P where \<open>P = A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)\<close>
@@ -3671,7 +3671,8 @@ next
 qed
 
 lemma mult_INF[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" and U :: "('b,'c::chilbert_space) cblinfun"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" 
+    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space"
   assumes \<open>isometry U\<close>
   shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
 proof -
@@ -3695,7 +3696,7 @@ lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>V \<psi> = A *\<^sub>V (B 
   apply transfer by simp
 
 lemma mult_inf_distrib[simp]:
-  fixes U::\<open>('a::chilbert_space,'b::chilbert_space) cblinfun\<close>
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
     and X Y::"'a clinear_space"
   assumes "isometry U"
   shows "U *\<^sub>S (inf X Y) = inf (U *\<^sub>S X) (U *\<^sub>S Y)"

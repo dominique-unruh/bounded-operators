@@ -1053,7 +1053,7 @@ qed
 
 \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
 theorem existence_uniqueness_min_dist:
-  fixes M::\<open>('a::chilbert_space) set\<close> and h::'a 
+  fixes M::\<open>'a::chilbert_space set\<close> and h 
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
 proof-
@@ -3747,7 +3747,7 @@ lemma Gram_Schmidt:
   fixes S::\<open>'a::complex_inner set\<close>
   assumes \<open>finite S\<close>
   shows \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
+           \<and> complex_span A = complex_span S
            \<and> 0 \<notin> A \<and> finite A\<close>
 proof-
   have Gram_Schmidt0:
