@@ -34,7 +34,7 @@ text \<open>The following lemma registers cblinfun as an abstract datatype with
   writing \<^term>\<open>mat_of_cblinfun B\<close>.
   (See, e.g., lemma \<open>cblinfun_of_mat_plusOp\<close> below).
 
-  See [TODO: bibtex reference to code generation tutorial] for more information on 
+  See @{cite "code-generation-tutorial"} for more information on 
   @{theory_text \<open>[code abstype]\<close>}.\<close>
 
 declare mat_of_cblinfun_inverse [code abstype]
@@ -349,7 +349,7 @@ lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l)
    apply (metis canonical_basis_length_eq dim_vec_of_onb_enum_list' imageE vec_of_ell2_def)
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
 
-text \<open>This instantiation defines a code equation for equality tests for clinear_space.
+text \<open>This instantiation defines a code equation for equality tests for \<^type>\<open>clinear_space\<close>.
       The actual code for equality tests is given below (lemma \<open>equal_clinear_space_code\<close>).\<close>
 instantiation clinear_space :: (onb_enum) equal begin
 definition [code del]: "equal_clinear_space (A::'a clinear_space) B = (A=B)"
@@ -619,7 +619,7 @@ text \<open>Code equation for \<^term>\<open>UNIV\<close>.
 declare [[code drop: UNIV]]
 declare enum_class.UNIV_enum[code]
 
-text \<open>Setup for code generation involving sets of ell2/clinear_spaces.
+text \<open>Setup for code generation involving sets of \<^type>\<open>ell2\<close>/\<^type>\<open>clinear_space\<close>.
   This configures to use lists for representing sets in code.\<close>
 derive (eq) ceq clinear_space
 derive (no) ccompare clinear_space
