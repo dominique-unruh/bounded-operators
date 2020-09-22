@@ -1919,7 +1919,7 @@ proof-
     using Matrix.eq_matI a1 by auto
 qed
 
-lemma cblinfun_of_mat_plusOp':
+lemma cblinfun_of_mat_plus:
   "mat_of_cblinfun (F + G) = mat_of_cblinfun F + mat_of_cblinfun G"
   for F G::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
 proof-
