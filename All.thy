@@ -16,7 +16,6 @@ theory All
     Bounded_Operators_Code
     Bounded_Operators_Matrices
     Bounded_Operators_Code_Examples
-    Real_Sqrt2
     Jordan_Normal_Form_Missing
 begin
 
