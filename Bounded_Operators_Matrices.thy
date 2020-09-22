@@ -1919,7 +1919,7 @@ proof-
     using Matrix.eq_matI a1 by auto
 qed
 
-lemma cblinfun_of_mat_plus:
+lemma mat_of_cblinfun_plus:
   "mat_of_cblinfun (F + G) = mat_of_cblinfun F + mat_of_cblinfun G"
   for F G::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
 proof-
@@ -2063,7 +2063,7 @@ proof-
   have z2: "mat_of_cblinfun Z \<in> carrier_mat nB nA"
     unfolding nB_def nA_def mat_of_cblinfun_def by auto
   hence "mat_of_cblinfun (Z + Z) = mat_of_cblinfun Z + mat_of_cblinfun Z"
-    by (simp add: cblinfun_of_mat_plusOp')
+    by (simp add: mat_of_cblinfun_plus)
   hence "mat_of_cblinfun Z = mat_of_cblinfun Z + mat_of_cblinfun Z"
     using z1 by simp
   hence "mat_of_cblinfun Z = 0\<^sub>m nB nA"
@@ -2082,16 +2082,16 @@ proof-
   define nB where "nB = canonical_basis_length TYPE('b)"
   have M1: "mat_of_cblinfun M \<in> carrier_mat nB nA"
     unfolding nB_def nA_def
-    by (metis add.right_neutral add_carrier_mat cblinfun_of_mat_plusOp' mat_of_cblinfun_zero' nA_def
+    by (metis add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero' nA_def
         nB_def zero_carrier_mat) 
   have M2: "mat_of_cblinfun (-M) \<in> carrier_mat nB nA"
-    by (metis add_carrier_mat cblinfun_of_mat_plusOp' mat_of_cblinfun_zero' diff_0 nA_def nB_def 
+    by (metis add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero' diff_0 nA_def nB_def 
         uminus_add_conv_diff zero_carrier_mat)
   have "mat_of_cblinfun (M - M) =  0\<^sub>m nB nA"
     unfolding nA_def nB_def
     by (simp add: mat_of_cblinfun_zero')
   moreover have "mat_of_cblinfun (M - M) = mat_of_cblinfun M + mat_of_cblinfun (- M)"
-    by (metis cblinfun_of_mat_plusOp' pth_2)
+    by (metis mat_of_cblinfun_plus pth_2)
   ultimately have "mat_of_cblinfun M + mat_of_cblinfun (- M) = 0\<^sub>m nB nA"
     by simp
   thus ?thesis
@@ -2110,7 +2110,7 @@ proof-
   have "mat_of_cblinfun (M - N) = mat_of_cblinfun (M + (- N))"
     by simp
   also have "\<dots> = mat_of_cblinfun M + mat_of_cblinfun (- N)"
-    using cblinfun_of_mat_plusOp'. 
+    using mat_of_cblinfun_plus. 
   also have "\<dots> = mat_of_cblinfun M - mat_of_cblinfun N"
     using a1 by auto
   finally show ?thesis .
@@ -2687,7 +2687,7 @@ proof -
   define nB where "nB = canonical_basis_length TYPE('b::onb_enum)" 
   define M  where "M = mat_of_cblinfun F"
   have b1: "M \<in> carrier_mat nB nA"
-    by (metis M_def add.right_neutral add_carrier_mat cblinfun_of_mat_plusOp' mat_of_cblinfun_zero'
+    by (metis M_def add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero'
         nA_def nB_def zero_carrier_mat)
   hence b2: "adjoint_mat M \<in> carrier_mat nA nB"
     unfolding adjoint_mat_def
@@ -4488,7 +4488,7 @@ lift_definition one_dim_isom :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b::o
   apply (rule cbounded_linear_intro[where K=1])
   apply (auto simp: one_dim_to_complex_def cinner_add_right)
   apply (simp add: scaleC_conv_of_complex)
-  by (smt cinner_scaleC_left complex_to_one_dim_inverse norm_eq_sqrt_cinner of_complex_def one_dim_1_times_a_eq_a)
+  by (metis norm_of_complex of_complex_def one_dim_1_times_a_eq_a order_refl)
 
 (* TODO move to Bounded_Op *)
 lemma one_dim_isom_inverse[simp]: "one_dim_isom o\<^sub>C\<^sub>L one_dim_isom = idOp"
@@ -5012,7 +5012,7 @@ proof -
           cblinfun_of_mat_adjoint mat_of_cblinfun_ell2_to_l2bounded d_def)
 
     finally show ?case
-      by (simp add: cblinfun_of_mat_plusOp' sumS_def)
+      by (simp add: mat_of_cblinfun_plus sumS_def)
   qed
   also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
     by (metis distinct' distinct_map sum.distinct_set_conv_list)

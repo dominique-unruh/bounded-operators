@@ -44,7 +44,7 @@ text \<open>This lemma defines addition. By writing \<^term>\<open>mat_of_cblinf
 on the left hand side, we get access to the\<close>
 
 
-declare cblinfun_of_mat_plus[code]
+declare mat_of_cblinfun_plus[code]
   \<comment> \<open>Code equation for addition of cblinfuns\<close>
 
   (* TODO: rename (remove ') *)
