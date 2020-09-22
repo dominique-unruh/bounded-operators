@@ -3478,6 +3478,7 @@ via the canonical isomorphism between a one-dimensional vector space and
 class one_dim = onb_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
+  (* TODO: Add whatever is necessary to make one_dim also a complex_normed_field *)
 begin
 
 definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
@@ -4498,6 +4499,10 @@ proof
       by (simp add: one_dim_prod)
   qed
 qed
+
+instance one_dim \<subseteq> complex_normed_algebra_1
+  apply intro_classes
+  by (metis complex_inner_1_left norm_eq_sqrt_cinner norm_one one_dim_1_times_1)
 
 context one_dim begin
 
