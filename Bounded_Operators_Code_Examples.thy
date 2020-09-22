@@ -68,8 +68,6 @@ translations "x" \<leftharpoondown> "CONST IArray x"
 
 section \<open>Examples\<close>
 
-(* TODO: add an example for every operation that is supported by Bounded_Operators_Code *)
-
 subsection \<open>Operators\<close>
 
 value "idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
@@ -165,5 +163,8 @@ value "kernel idOp :: bool ell2 clinear_space"
 value "eigenspace 1 idOp :: bool ell2 clinear_space"
 
 value "Inf {Span {ket False}, top}"
+
+value "Sup {Span {ket False}, top}"
+
 
 end

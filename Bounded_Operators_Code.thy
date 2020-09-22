@@ -337,22 +337,32 @@ text \<open>We do not need an equation for \<^term>\<open>(+)\<close> because \<
 is defined in terms of \<^term>\<open>(\<squnion>)\<close> (for \<^type>\<open>clinear_space\<close>), thus the code generation automatically
 computes \<^term>\<open>(+)\<close> in terms of the code for \<^term>\<open>(\<squnion>)\<close>\<close>
 
-definition [code del,code_abbrev]: "span_code (S::'a::enum ell2 set) = (Span S)"
+definition [code del,code_abbrev]: "Span_code (S::'a::enum ell2 set) = (Span S)"
+  \<comment> \<open>A copy of \<^term>\<open>Span\<close> with restricted type. For analogous reasons as
+     \<^term>\<open>cblinfun_apply_code\<close>, see there for explanations\<close>
 
-(* TODO document from here *)
-
-lemma span_Set_Monad[code]: "span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l))"
-  apply (simp add: span_code_def SPAN_def Let_def)
+lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l))"
+  \<comment> \<open>Code equation for the span of a finite set. (\<^term>\<open>Set_Monad\<close> is a datatype
+     constructor that represents sets as lists in the computation.)\<close>
+  apply (simp add: Span_code_def SPAN_def Let_def)
   apply (subst Set_filter_unchanged)
    apply (metis canonical_basis_length_eq dim_vec_of_onb_enum_list' imageE vec_of_ell2_def)
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
 
+text \<open>This instantiation defines a code equation for equality tests for clinear_space.
+      The actual code for equality tests is given below (lemma \<open>equal_clinear_space_code\<close>).\<close>
 instantiation clinear_space :: (onb_enum) equal begin
 definition [code del]: "equal_clinear_space (A::'a clinear_space) B = (A=B)"
 instance apply intro_classes unfolding equal_clinear_space_def by simp
 end
 
-lemma SPAN_leq[code]: "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space) 
+lemma leq_clinear_space_code[code]:
+  \<comment> \<open>Code equation for deciding inclusion of one space in another.
+     Uses the constant \<^term>\<open>is_subspace_of\<close> which implements the actual
+     computation by checking for each generator of A whether it is in the
+     span of B (by orthogonal projection onto an orthonormal basis of B
+     which is computed using Gram-Schmidt).\<close>
+  "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space)
       \<longleftrightarrow> (let d = canonical_basis_length TYPE('a) in
           is_subspace_of d
           (filter (\<lambda>v. dim_vec v = d) A)
@@ -375,14 +385,16 @@ proof -
     by (simp_all add: B'_def d_def)
 qed
 
-definition [code del, code_abbrev]: "range_cblinfun_code A = A *\<^sub>S top"
+lemma equal_clinear_space_code[code]:
+  \<comment> \<open>Code equation for equality test. By checking mutual inclusion
+      (for which we have code by the preceding code equation).\<close>
+  "HOL.equal (A::_ clinear_space) B = (A\<le>B \<and> B\<le>A)"
+  unfolding equal_clinear_space_def by auto
 
-lemma ortho_SPAN_code[code_unfold]: "- X = range_cblinfun_code (idOp - Proj X)"
-  unfolding range_cblinfun_code_def
-  by (metis Proj_ortho_compl imageOp_Proj)
-
-lemma applyOpSpace_SPAN[code]: "applyOpSpace A (SPAN S)
-      = (let d = canonical_basis_length TYPE('a) in
+lemma apply_cblinfun_code[code]:
+  \<comment> \<open>Code equation for applying an operator \<^term>\<open>A\<close> to a subspace. 
+      Simply by multiplying each generator with \<^term>\<open>A\<close>\<close>
+  "A *\<^sub>S SPAN S = (let d = canonical_basis_length TYPE('a) in
          SPAN (map (mult_mat_vec (mat_of_cblinfun A))
                (filter (\<lambda>v. dim_vec v = d) S)))"
   for A::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
@@ -413,7 +425,17 @@ proof -
     by simp
 qed
 
+definition [code del, code_abbrev]: "range_cblinfun_code A = A *\<^sub>S top"
+\<comment> \<open>A new constant for the special case of applying an operator to the subspace \<^term>\<open>top\<close>
+  (i.e., for computing the range of the operator). We do this to be able to give
+  more specialized code for this specific situation. (The generic code for
+  \<^term>\<open>(*\<^sub>S)\<close> would work but is less efficient because it involves repeated matrix 
+  multiplications. @{attribute code_abbrev} makes sure occurrences of \<^term>\<open>A *\<^sub>S top\<close>
+  are replaced before starting the actual code generation.\<close>
+
 lemma range_cblinfun_code[code]: 
+  \<comment> \<open>Code equation for computing the range of an operator \<^term>\<open>A\<close>.
+      Returns the columns of the matrix representation of \<^term>\<open>A\<close>.\<close>
   fixes A :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   shows "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
 proof -
@@ -427,7 +449,7 @@ proof -
     unfolding range_cblinfun_code_def
     by (metis dA_def top_clinear_space_code)
   also have "\<dots> = SPAN (map (\<lambda>i. mat_of_cblinfun A *\<^sub>v unit_vec dA i) [0..<dA])"
-    unfolding applyOpSpace_SPAN dA_def[symmetric] Let_def
+    unfolding apply_cblinfun_code dA_def[symmetric] Let_def
     apply (subst filter_True)
     apply (meson carrier_vecD subset_code(1) unit_vecs_carrier)
     by (simp add: unit_vecs_def o_def)
@@ -447,8 +469,20 @@ proof -
     by -
 qed
 
-lemma kernel_SPAN[code]: "kernel A 
-    = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
+
+lemma uminus_Span_code[code]: "- X = range_cblinfun_code (idOp - Proj X)"
+  \<comment> \<open>Code equation for the orthogonal complement of a subspace \<^term>\<open>X\<close>. 
+      Computed as the range of one minus the projector on \<^term>\<open>X\<close>\<close>
+  unfolding range_cblinfun_code_def
+  by (metis Proj_ortho_compl imageOp_Proj)
+
+lemma kernel_code[code]: 
+  \<comment> \<open>Computes the kernel of an operator \<^term>\<open>A\<close>.
+      This is implemented using the existing functions 
+      for transforming a matrix into row echelon form (\<^term>\<open>gauss_jordan_single\<close>)
+      and for computing a basis of the kernel of such a matrix
+      (\<^term>\<open>find_base_vectors\<close>)\<close>
+  "kernel A = SPAN (find_base_vectors (gauss_jordan_single (mat_of_cblinfun A)))" 
   for A::"('a::onb_enum,'b::onb_enum) cblinfun"
 proof -
   define dA dB Am Ag base
@@ -540,19 +574,29 @@ proof -
     by (simp add: base_def Ag_def Am_def)
 qed
 
-lemma [code_abbrev]: "kernel (A - a *\<^sub>C idOp) = eigenspace a A" 
-  unfolding eigenspace_def by simp
-
-lemma [code]: "HOL.equal (A::_ clinear_space) B = (A\<le>B \<and> B\<le>A)"
-  unfolding equal_clinear_space_def by auto
-
-lemma [code]: "(A::'a::onb_enum clinear_space) \<sqinter> B = - (- A \<squnion> - B)"
+lemma inf_clinear_space_code[code]: 
+  \<comment> \<open>Code equation for intersection of subspaces.
+     Reduced to orthogonal complement and sum of subspaces
+     for which we already have code equations.\<close>
+  "(A::'a::onb_enum clinear_space) \<sqinter> B = - (- A \<squnion> - B)"
   by (subst ortho_involution[symmetric], subst compl_inf, simp)
 
-lemma [code]: "Inf (Set_Monad l :: 'a::onb_enum clinear_space set) = fold inf l top"
+lemma Sup_clinear_space_code[code]:
+  \<comment> \<open>Supremum (sum) of a set of subspaces. Implemented
+     by repeated pairwise sum.\<close>
+  "Sup (Set_Monad l :: 'a::onb_enum clinear_space set) = fold sup l bot"
   unfolding Set_Monad_def
-  by (simp add: Inf_set_fold)
+  by (simp add: Sup_set_fold)
 
+
+lemma Inf_clinear_space_code[code]: 
+  \<comment> \<open>Infimum (intersection) of a set of subspaces. 
+      Implemented by the orthogonal complement of the supremum.\<close>
+  "Inf (Set_Monad l :: 'a::onb_enum clinear_space set)
+  = - Sup (Set_Monad (map uminus l))"
+  unfolding Set_Monad_def
+  apply (induction l)
+  by auto
 
 subsection \<open>Miscellanea\<close>
 
@@ -569,11 +613,14 @@ lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
   by simp
 
-(* TODO explain what for *)
+text \<open>Code equation for \<^term>\<open>UNIV\<close>. 
+  It is now implemented via type class \<^class>\<open>enum\<close> 
+  (which provides a list of all values).\<close>
 declare [[code drop: UNIV]]
 declare enum_class.UNIV_enum[code]
 
-(* TODO explain what for *)
+text \<open>Setup for code generation involving sets of ell2/clinear_spaces.
+  This configures to use lists for representing sets in code.\<close>
 derive (eq) ceq clinear_space
 derive (no) ccompare clinear_space
 derive (monad) set_impl clinear_space
