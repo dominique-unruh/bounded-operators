@@ -263,11 +263,11 @@ thm times_ell2_code
 
 thm mat_of_cblinfun_ell2_to_l2bounded
 
-thm mk_projector_SPAN
+(* thm mk_projector_SPAN *)
 
 thm apply_cblinfun_Span
 
-thm applyOpSpace_SPAN
+(* thm applyOpSpace_SPAN *)
 
 
 

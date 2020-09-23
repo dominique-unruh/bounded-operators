@@ -340,7 +340,9 @@ proof(rule classical)
   have \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close>
     unfolding T_def apply auto
     by (metis \<open>\<And>x. bounded (range (\<lambda>n. (*\<^sub>v) (f n) x))\<close> bounded_iff rangeI)
-  then obtain M where \<open>norm ((*\<^sub>v) (T n) x) \<le> M\<close> for n
+  hence \<open>\<exists> M. \<forall> n. norm ((*\<^sub>v) (T n) x) \<le> M \<and> M > 0\<close>
+    by (metis \<open>\<And>n. T n \<noteq> 0\<close> eucl_less_le_not_le linear norm_le_zero_iff order.trans)
+  then obtain M where \<open>norm ((*\<^sub>v) (T n) x) \<le> M\<close> and "M > 0"for n
     by blast
   have norm_1: \<open>norm (T n) * norm (y (Suc n) - x) + norm ((*\<^sub>v) (T n) x)
        \<le> inverse (real 2) * inverse (real 3 ^ n) * norm (T n) + norm ((*\<^sub>v) (T n) x)\<close> for n
@@ -410,7 +412,31 @@ proof(rule classical)
     thus ?thesis using \<open>\<And> n. norm ((*\<^sub>v) (T n) x) \<le> M\<close> by smt
   qed
   have \<open>\<exists>n. M < (inverse (of_nat 6)) * (of_rat (4/3)^n)\<close>
-    sorry
+  proof-
+    have "\<exists>n. M < a * b^n"
+      if "a > 0" and "b > 1"
+      for a b::real and n::nat
+    proof-
+      have "2*M/a > 0"
+        by (simp add: \<open>0 < M\<close> that(1))
+      hence "\<exists>n::nat. log b (2*M/a) < n"
+        by (simp add: reals_Archimedean2)
+      then obtain n::nat where "log b (2*M/a) < n"
+        by blast
+      hence "2*M/a < b^n"
+        by (smt less_log_of_power log_eq_one log_nat_power mult_numeral_1_right
+            numeral_One of_nat_1 of_nat_mult that(2))
+      hence "2*M < a * b^n"
+        using divide_less_cancel that(1) by fastforce
+      hence "M < a * b^n"
+        using \<open>0 < M\<close> by auto
+      thus ?thesis
+        by blast 
+    qed
+    thus ?thesis
+      by (metis inverse_positive_iff_positive less_divide_eq_1_pos numeral_less_iff of_nat_numeral 
+          one_less_of_rat_iff semiring_norm(76) semiring_norm(81) zero_less_numeral)
+  qed
   moreover have \<open>(inverse (of_nat 6)) * (of_rat (4/3)^n) \<le> M\<close> for n
     using inverse_1 by blast                      
   ultimately show ?thesis by smt

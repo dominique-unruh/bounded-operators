@@ -332,7 +332,7 @@ next
     hence Sup1: \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1 } = 0\<close> 
       by simp
     have \<open>\<parallel>f\<parallel> = 0\<close>
-      sorry 
+      by (simp add: True blinfun_eqI zero_blinfun.rep_eq)       
     moreover have \<open>Sup {\<parallel>f *\<^sub>v x\<parallel> | x. \<parallel>x\<parallel> < 1} = 0\<close>
       using Sup1 by blast
     ultimately show ?thesis by simp
@@ -580,7 +580,39 @@ proof-
   have f_x1: \<open>f (r *\<^sub>R x) = r *\<^sub>R f x\<close> for x
     by (simp add: blinfun.scaleR_right)    
   have \<open>ball (0::'a) r = ((*\<^sub>R) r) ` (ball 0 1)\<close>
-    sorry
+    apply auto
+    unfolding ball_def
+  proof auto
+    show "x \<in> (*\<^sub>R) r ` {y. \<parallel>y\<parallel> < 1}"
+      if "\<parallel>x\<parallel> < r"
+      for x::'a
+    proof-
+      define y where "y = x /\<^sub>R r"
+      have s1: "x = r *\<^sub>R y"
+        unfolding y_def
+        using assms by auto
+      moreover have "\<parallel>y\<parallel> < 1"
+      proof-
+        have "y = inverse r *\<^sub>R x"
+          using s1
+          by (simp add: y_def) 
+        hence "\<parallel>y\<parallel> = \<parallel>inverse r *\<^sub>R x\<parallel>"
+          by simp
+        also have "\<dots> = inverse r * \<parallel>x\<parallel>"
+          using assms by auto
+        also have "\<dots> < inverse r * r"
+          by (simp add: assms that)
+        also have "\<dots> = 1"
+          using assms by auto
+        finally show ?thesis by auto
+      qed
+      ultimately show ?thesis by auto
+    qed
+    show "\<bar>r\<bar> * \<parallel>x\<parallel> < r"
+      if "\<parallel>x\<parallel> < 1"
+      for x::'a
+      using assms that by auto      
+  qed
   hence \<open>Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (ball 0 r)) = Sup ((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) ` (((*\<^sub>R) r) ` (ball 0 1)))\<close>
     by simp
   also have \<open>\<dots> = Sup (((\<lambda>t. \<parallel>f *\<^sub>v t\<parallel>) \<circ> ((*\<^sub>R) r)) ` (ball 0 1))\<close>
