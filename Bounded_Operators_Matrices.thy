@@ -4482,43 +4482,22 @@ instance complex :: one_dim
 definition butterfly_def': "butterfly (s::'a::chilbert_space)
    = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
 
-(* TODO move to Bounded_Op *)
-lift_definition one_dim_isom :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b::one_dim" is
-  "\<lambda>a. of_complex (one_dim_to_complex a)"
-  apply (rule cbounded_linear_intro[where K=1])
-  apply (auto simp: one_dim_to_complex_def cinner_add_right)
-  apply (simp add: scaleC_conv_of_complex)
-  by (metis norm_of_complex of_complex_def one_dim_1_times_a_eq_a order_refl)
 
 (* TODO move to Bounded_Op *)
-lemma one_dim_isom_inverse[simp]: "one_dim_isom o\<^sub>C\<^sub>L one_dim_isom = idOp"
-  by (transfer, rule ext, simp)
-
-(* TODO move to Bounded_Op *)
-lemma one_dim_isom_adj[simp]: "one_dim_isom* = one_dim_isom"
-  apply (rule adjoint_D[symmetric])
-  apply transfer
-  by (simp add: of_complex_def one_dim_to_complex_def)
-
-(* TODO move to Bounded_Op *)
-lemma one_dim_isom_vector_to_cblinfun: 
-  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L one_dim_isom = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
-  by (transfer fixing: s, auto)
-
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
-                                 o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)*"
-    (is "_ = ?rhs")
+lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)
+                                 o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)*"
+    (is "_ = ?rhs") for s :: "'b::chilbert_space"
+    using [[show_consts]]
 proof -
   let ?isoAC = "one_dim_isom :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
   let ?isoCA = "one_dim_isom :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
+  let ?vector = "vector_to_cblinfun :: 'b \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
 
   have "butterfly s =
-    (vector_to_cblinfun s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (vector_to_cblinfun s o\<^sub>C\<^sub>L ?isoCA)*"
+    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector s o\<^sub>C\<^sub>L ?isoCA)*"
     unfolding butterfly_def' one_dim_isom_vector_to_cblinfun by simp
-  also have "\<dots> = vector_to_cblinfun s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (vector_to_cblinfun s)*"
-    by (simp add: timesOp_assoc del: one_dim_isom_adj)
+  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector s)*"
+    by (simp add: timesOp_assoc del: one_dim_isom_adj one_dim_isom_vector_to_cblinfun)
   also have "\<dots> = ?rhs"
     by simp
   finally show ?thesis
@@ -4539,28 +4518,6 @@ lemma butterfly_0[simp]: "butterfly 0 = 0"
   apply (subst butterfly_def)
   by simp
 
-(* TODO move to Preliminaries *)
-lemma onormI:
-  assumes "\<And>x. norm (f x) \<le> b * norm x"
-    and "x \<noteq> 0" and "norm (f x) = b * norm x"
-  shows "onorm f = b"
-proof (unfold onorm_def, rule cSup_eq_maximum)
-  from assms(2) have "norm x \<noteq> 0"
-    by auto
-  with assms(3) 
-  have "norm (f x) / norm x = b"
-    by auto
-  then show "b \<in> range (\<lambda>x. norm (f x) / norm x)"
-    by auto
-next
-  fix y 
-  assume "y \<in> range (\<lambda>x. norm (f x) / norm x)"
-  then obtain x where y_def: "y = norm (f x) / norm x"
-    by auto
-  then show "y \<le> b"
-    unfolding y_def using assms(1)[of x]
-    by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
-qed
 
 (* TODO move to Bounded_Op *)
 lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"

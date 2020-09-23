@@ -1874,6 +1874,51 @@ proof-
     by (simp add: onorm_def) 
 qed
 
+lemma onorm_scaleC_left_lemma:
+  fixes f :: "'a::complex_normed_vector"
+  assumes r: "cbounded_linear r"
+  shows "onorm (\<lambda>x. r x *\<^sub>C f) \<le> onorm r * norm f"
+proof (rule onorm_bound)
+  fix x
+  have "norm (r x *\<^sub>C f) = norm (r x) * norm f"
+    by simp
+  also have "\<dots> \<le> onorm r * norm x * norm f"
+    by (simp add: cbounded_linear.bounded_linear mult.commute mult_left_mono onorm r)
+  finally show "norm (r x *\<^sub>C f) \<le> onorm r * norm f * norm x"
+    by (simp add: ac_simps)
+  show "0 \<le> onorm r * norm f"
+    by (simp add: cbounded_linear.bounded_linear onorm_pos_le r)
+qed
+
+lemma onorm_scaleC_left:
+  fixes f :: "'a::complex_normed_vector"
+  assumes f: "cbounded_linear r"
+  shows "onorm (\<lambda>x. r x *\<^sub>C f) = onorm r * norm f"
+proof (cases "f = 0")
+  assume "f \<noteq> 0"
+  show ?thesis
+  proof (rule order_antisym)
+    show "onorm (\<lambda>x. r x *\<^sub>C f) \<le> onorm r * norm f"
+      using f by (rule onorm_scaleC_left_lemma)
+  next
+    have bl1: "cbounded_linear (\<lambda>x. r x *\<^sub>C f)"
+      by (metis cbounded_linear_scaleC_const f)
+    have "cbounded_linear (\<lambda>x. r x * norm f)"
+      by (metis cbounded_linear_mult_const f)
+    from onorm_scaleC_left_lemma[OF this, of "inverse (norm f)"]
+    have "onorm r \<le> onorm (\<lambda>x. r x * norm f) * inverse (norm f)"
+      using \<open>f \<noteq> 0\<close>
+      apply (simp add: inverse_eq_divide)
+      by (smt divide_inverse inverse_eq_divide norm_divide norm_ge_zero norm_of_real norm_one)
+    also have "onorm (\<lambda>x. r x * norm f) \<le> onorm (\<lambda>x. r x *\<^sub>C f)"
+      apply (rule onorm_bound)
+      by (auto simp: norm_mult cbounded_linear.bounded_linear abs_mult bl1 onorm_pos_le intro!: order_trans[OF _ onorm])
+    finally show "onorm r * norm f \<le> onorm (\<lambda>x. r x *\<^sub>C f)"
+      using \<open>f \<noteq> 0\<close>
+      by (simp add: inverse_eq_divide pos_le_divide_eq mult.commute)
+  qed
+qed (simp add: onorm_zero)
+
 subsection \<open>Subspace\<close>
 
 \<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 

@@ -3811,6 +3811,27 @@ lemma complete_singleton:
   apply auto
   by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
 
+lemma onormI:
+  assumes "\<And>x. norm (f x) \<le> b * norm x"
+    and "x \<noteq> 0" and "norm (f x) = b * norm x"
+  shows "onorm f = b"
+proof (unfold onorm_def, rule cSup_eq_maximum)
+  from assms(2) have "norm x \<noteq> 0"
+    by auto
+  with assms(3) 
+  have "norm (f x) / norm x = b"
+    by auto
+  then show "b \<in> range (\<lambda>x. norm (f x) / norm x)"
+    by auto
+next
+  fix y 
+  assume "y \<in> range (\<lambda>x. norm (f x) / norm x)"
+  then obtain x where y_def: "y = norm (f x) / norm x"
+    by auto
+  then show "y \<le> b"
+    unfolding y_def using assms(1)[of x]
+    by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
+qed
 
 unbundle no_nsa_notation
 

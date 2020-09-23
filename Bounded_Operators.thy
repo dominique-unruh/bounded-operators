@@ -2126,10 +2126,12 @@ lemma blinfun_of_cblinfun_timesOp:
   shows \<open>blinfun_of_cblinfun (f  o\<^sub>C\<^sub>L g) = (blinfun_of_cblinfun f) o\<^sub>L (blinfun_of_cblinfun g)\<close>
   apply transfer by auto
 
+(* TODO: Rename to cblinfun_apply_assoc *)
 lemma timesOp_assoc: 
   shows "(A  o\<^sub>C\<^sub>L B)  o\<^sub>C\<^sub>L C = A  o\<^sub>C\<^sub>L (B  o\<^sub>C\<^sub>L C)"
   by (metis (no_types, lifting) cblinfun_apply_inject fun.map_comp timesOp.rep_eq)
 
+(* TODO: Rename to cblinfun_apply_dist1 *)
 lemma timesOp_dist1:  
   fixes a b :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
     and c :: "'a::complex_normed_vector   \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -2138,6 +2140,7 @@ lemma timesOp_dist1:
   by auto
 
 
+(* TODO: Rename to cblinfun_apply_dist2 *)
 lemma timesOp_dist2:  
   fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun"
     and c :: "('b, 'c::complex_normed_vector) cblinfun"
@@ -3719,6 +3722,8 @@ definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \
 lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun \<Rightarrow> complex)\<close> 
   is bifunctional.
 
+(* TODO: Isn't "Bifunctional x" just the adjoint of x?
+   (I.e., "(vector_to_cblinfun x)*") *)
 lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun, complex) cblinfun\<close> 
   is Bifunctional'
 proof
@@ -4200,6 +4205,92 @@ proof -
   thus ?thesis
     by (metis one_dim_to_complex_inverse)
 qed
+
+lift_definition one_dim_isom :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b::one_dim" is
+  "\<lambda>a. of_complex (one_dim_to_complex a)"
+  apply (rule cbounded_linear_intro[where K=1])
+  apply (auto simp: one_dim_to_complex_def cinner_add_right)
+  apply (simp add: scaleC_conv_of_complex)
+  by (metis norm_of_complex of_complex_def one_dim_1_times_a_eq_a order_refl)
+
+lemma one_dim_isom_inverse[simp]: "one_dim_isom o\<^sub>C\<^sub>L one_dim_isom = idOp"
+  by (transfer, rule ext, simp)
+
+lemma one_dim_isom_adj[simp]: "one_dim_isom* = one_dim_isom"
+  apply (rule adjoint_D[symmetric])
+  apply transfer
+  by (simp add: of_complex_def one_dim_to_complex_def)
+
+lemma one_dim_isom_vector_to_cblinfun[simp]: 
+  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L one_dim_isom = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
+  by (transfer fixing: s, auto)
+
+lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
+  apply transfer
+  apply (subst onorm_scaleC_left)
+  by auto
+
+lemma norm_one_dim_isom[simp]: "norm one_dim_isom = 1"
+  apply transfer
+  apply (rule onormI[where b=1 and x=1])
+    apply auto
+  by (metis norm_of_complex one_dim_to_complex_inverse order_refl)
+
+instantiation cblinfun :: (one_dim, one_dim) complex_algebra begin
+definition "A * B = A o\<^sub>C\<^sub>L one_dim_isom o\<^sub>C\<^sub>L B" for A B :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+instance
+  apply intro_classes
+  unfolding times_cblinfun_def
+  by (auto simp: timesOp_assoc timesOp_dist1 timesOp_dist2)
+end
+
+lemma norm_cblinfun_times:
+  "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B"
+  apply transfer
+  by (simp add: cbounded_linear.bounded_linear onorm_compose)
+
+instantiation cblinfun :: (one_dim, one_dim) complex_normed_algebra begin
+instance
+proof intro_classes
+  fix x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  let ?iso = "one_dim_isom :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a"
+  have "norm (x * y) = norm ((x o\<^sub>C\<^sub>L ?iso) o\<^sub>C\<^sub>L y)"
+    unfolding times_cblinfun_def by rule
+  also have "\<dots> \<le> norm (x o\<^sub>C\<^sub>L ?iso) * norm y"
+    by (rule norm_cblinfun_times)
+  also have "\<dots> \<le> (norm x * norm ?iso) * norm y"
+    apply (rule mult_right_mono)
+     apply (rule norm_cblinfun_times)
+    by simp
+  also have "\<dots> = norm x * norm y"
+    by simp
+  finally show "norm (x * y) \<le> norm x * norm y"
+    by -
+qed
+end
+
+instantiation cblinfun :: (one_dim, one_dim) complex_normed_algebra_1 begin
+definition "one_cblinfun = one_dim_isom"
+instance
+  apply intro_classes
+  unfolding times_cblinfun_def one_cblinfun_def
+     apply (auto simp: timesOp_assoc)
+  by (metis applyOp0 apply_idOp cblinfun_apply_0 one_dim_isom_inverse zero_neq_one)
+end
+
+definition 
+  "one_dim_cblinfun_to_complex A = one_dim_to_complex (A *\<^sub>V 1)"
+
+lemma one_dim_cblinfun_to_complex_of_complex[simp]:
+  "one_dim_cblinfun_to_complex (of_complex c) = c"
+  unfolding one_dim_cblinfun_to_complex_def
+  by (simp add: of_complex_def one_cblinfun_def one_dim_isom.rep_eq)
+
+(* (* TODO: prove this *)
+lemma of_complex_one_dim_cblinfun_to_complex[simp]:
+  "of_complex (one_dim_cblinfun_to_complex A) = A"
+  unfolding one_dim_cblinfun_to_complex_def
+  unfolding one_dim_to_complex_def *)
 
 lemma cblinfun_ext: 
   includes cblinfun_notation

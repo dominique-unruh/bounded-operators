@@ -3486,8 +3486,6 @@ definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
 
 end
 
-
-
 lemma span_explicit_finite:
   \<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
   for A::\<open>'a::complex_vector set\<close>
@@ -4504,24 +4502,39 @@ instance one_dim \<subseteq> complex_normed_algebra_1
   apply intro_classes
   by (metis complex_inner_1_left norm_eq_sqrt_cinner norm_one one_dim_1_times_1)
 
-context one_dim begin
-
 lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
   by (simp add: of_complex_def one_dim_1_times_a_eq_a one_dim_class.one_dim_to_complex_def)
 
 lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
   using of_complex_eq_iff one_dim_to_complex_inverse by blast
 
-lemma cbounded_linear_one_dim_to_complex: "cbounded_linear one_dim_to_complex"
-  by (smt Adj_D Adj_I Adj_I' Adj_cbounded_linear cbounded_linear_of_complex complex_inner_1_left of_complex_1 one_dim_class.one_dim_to_complex_def)
 
-end
+lemma one_dim_to_complex_add[simp]:
+  \<open>one_dim_to_complex (a + b) = one_dim_to_complex a + one_dim_to_complex b\<close>
+  unfolding one_dim_to_complex_def
+  by (simp add: cinner_right_distrib)
 
+lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
+  apply transfer
+  by (metis complex_scaleC_def complex_to_one_dim_inverse of_complex_mult one_dim_to_complex_inverse scaleC_conv_of_complex)
+    (* > 1s *)
 
+lemma clinear_one_dim_to_complex[simp]: "clinear one_dim_to_complex"
+  apply (rule clinearI) by auto
+
+lemma cbounded_linear_one_dim_to_complex[simp]: "cbounded_linear one_dim_to_complex"
+  apply (rule cbounded_linear.intro) 
+   apply simp
+  apply (rule exI[of _ 1])
+  by (metis (full_types) mult.right_neutral norm_of_complex one_dim_to_complex_inverse order_refl)
 
 lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
   by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
 
+lemma onorm_one_dim_to_complex[simp]: "onorm one_dim_to_complex = 1"
+  apply (rule onormI[where b=1 and x=1])
+  apply auto
+  by (smt norm_of_complex one_dim_to_complex_inverse)
 
 lemma bounded_sesquilinear_0_left: 
   assumes \<open>bounded_sesquilinear B\<close>
@@ -5272,11 +5285,6 @@ qed
 lemma clinear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
   apply transfer by simp
-
-lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
-  apply transfer
-  by (metis complex_scaleC_def complex_to_one_dim_inverse of_complex_mult one_dim_to_complex_inverse scaleC_conv_of_complex)
-    (* > 1s *)
 
 lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
   apply transfer
@@ -6514,6 +6522,7 @@ proposition bounded_nsbounded_norm:
   for S::\<open>'a::real_normed_vector set\<close>
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
   by blast
+
 
 
 unbundle no_nsa_notation
