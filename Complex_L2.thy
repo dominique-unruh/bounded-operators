@@ -101,17 +101,17 @@ lemma SUP_max:
   assumes "mono f"
   assumes "\<And>x. x:M \<Longrightarrow> x\<le>m"
   assumes "m:M"
-  shows "(SUP x:M. f x) = f m"
+  shows "(SUP x\<in>M. f x) = f m"
   apply (rule antisym)
    apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
   by (metis assms(1) assms(2) assms(3) bdd_aboveI bdd_above_image_mono cSUP_upper)
 
 
-definition "ell2_norm x = sqrt (SUP F:{F. finite F}. sum (\<lambda>i. norm (x i)^2) F)"
+definition "ell2_norm x = sqrt (SUP F\<in>{F. finite F}. sum (\<lambda>i. norm (x i)^2) F)"
 
 lemma ell2_norm_L2_set: 
   assumes "has_ell2_norm x"
-  shows "ell2_norm x = (SUP F:{F. finite F}. L2_set (norm o x) F)"
+  shows "ell2_norm x = (SUP F\<in>{F. finite F}. L2_set (norm o x) F)"
   unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
   using monoI real_sqrt_le_mono apply blast
   using continuous_at_split isCont_real_sqrt apply blast
@@ -170,7 +170,8 @@ proof -
 qed
 
 
-lemma cSUP_leD: "bdd_above (f`A) \<Longrightarrow> (SUP i:A. f i) \<le> y \<Longrightarrow> i \<in> A \<Longrightarrow> f i \<le> y" for y :: "'a::conditionally_complete_lattice"
+lemma cSUP_leD: "bdd_above (f`A) \<Longrightarrow> (SUP i\<in>A. f i) \<le> y \<Longrightarrow> i \<in> A \<Longrightarrow> f i \<le> y" 
+  for y :: "'a::conditionally_complete_lattice"
   by (meson cSUP_upper order_trans)
 
 lemma ell2_norm_0:
@@ -213,9 +214,9 @@ proof -
     by (simp add: ordered_comm_semiring_class.comm_mult_left_mono that) 
   thus has: "has_ell2_norm (\<lambda>i. c * x i)"
     unfolding has_ell2_norm_L2_set bdd_above_def using L2_set_mul[symmetric] by auto
-  have "ell2_norm (\<lambda>i. c * x i) = SUPREMUM (Collect finite) (L2_set (cmod \<circ> (\<lambda>i. c * x i)))"
+  have "ell2_norm (\<lambda>i. c * x i) = (SUP F \<in> Collect finite. (L2_set (cmod \<circ> (\<lambda>i. c * x i)) F))"
     apply (rule ell2_norm_L2_set) by (rule has)
-  also have "\<dots> = SUPREMUM (Collect finite) (\<lambda>F. cmod c * L2_set (cmod \<circ> x) F)"
+  also have "\<dots> = (SUP F \<in> Collect finite. (cmod c * L2_set (cmod \<circ> x) F))"
     apply (rule SUP_cong) apply auto by (rule L2_set_mul)
   also have "\<dots> = cmod c * ell2_norm x" 
     apply (subst ell2_norm_L2_set) apply (fact assms)
@@ -255,19 +256,19 @@ proof -
     using triangle that by fastforce
   thus has: "has_ell2_norm (\<lambda>i. x i + y i)"
     unfolding has_ell2_norm_L2_set bdd_above_def by auto
-  have SUP_plus: "(SUP x:A. f x + g x) \<le> (SUP x:A. f x) + (SUP x:A. g x)" 
+  have SUP_plus: "(SUP x\<in>A. f x + g x) \<le> (SUP x\<in>A. f x) + (SUP x\<in>A. g x)" 
     if notempty: "A\<noteq>{}" and bddf: "bdd_above (f`A)"and bddg: "bdd_above (g`A)"
     for f g :: "'a set \<Rightarrow> real" and A
   proof -
-    have xleq: "x \<le> (SUP x:A. f x) + (SUP x:A. g x)" if x: "x \<in> (\<lambda>x. f x + g x) ` A" for x
+    have xleq: "x \<le> (SUP x\<in>A. f x) + (SUP x\<in>A. g x)" if x: "x \<in> (\<lambda>x. f x + g x) ` A" for x
     proof -
       obtain a where aA: "a:A" and ax: "x = f a + g a"
         using x by blast
-      have fa: "f a \<le> (SUP x:A. f x)"
+      have fa: "f a \<le> (SUP x\<in>A. f x)"
         by (simp add: bddf aA cSUP_upper)
-      moreover have "g a \<le> (SUP x:A. g x)"
+      moreover have "g a \<le> (SUP x\<in>A. g x)"
         by (simp add: bddg aA cSUP_upper)
-      ultimately have "f a + g a \<le> (SUP x:A. f x) + (SUP x:A. g x)" by simp
+      ultimately have "f a + g a \<le> (SUP x\<in>A. f x) + (SUP x\<in>A. g x)" by simp
       with ax show ?thesis by simp
     qed
     show ?thesis
@@ -298,7 +299,7 @@ lemma cSUP_eq_maximum:
   fixes z :: "_::conditionally_complete_lattice"
   assumes "\<exists>x\<in>X. f x = z"
   assumes "\<And>x. x \<in> X \<Longrightarrow> f x \<le> z"
-  shows "(SUP x:X. f x) = z"
+  shows "(SUP x\<in>X. f x) = z"
   by (metis (mono_tags, hide_lams) assms(1) assms(2) cSup_eq_maximum imageE image_eqI)
 
 
@@ -335,8 +336,8 @@ lift_definition norm_ell2 :: "'a ell2 \<Rightarrow> real" is ell2_norm .
 declare norm_ell2_def[code del]
 definition "dist x y = norm (x - y)" for x y::"'a ell2"
 definition "sgn x = x /\<^sub>R norm x" for x::"'a ell2"
-definition [code del]: "uniformity = (INF e:{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
-definition [code del]: "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e:{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
+definition [code del]: "uniformity = (INF e\<in>{0<..}. principal {(x::'a ell2, y). norm (x - y) < e})"
+definition [code del]: "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e\<in>{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
 instance apply intro_classes
   unfolding dist_ell2_def sgn_ell2_def uniformity_ell2_def open_ell2_def apply simp_all
      apply transfer apply (fact ell2_norm_0)
@@ -2155,16 +2156,18 @@ proof-
     unfolding f_def
     by (smt norm_not_less_zero real_sqrt_ge_0_iff real_sqrt_pow2) 
   have \<open>Sup (f ` Collect finite) \<in> closure (f ` Collect finite)\<close>
-  proof (rule Borel_Space.closure_contains_Sup)
-    show "f ` Collect finite \<noteq> {}"
+  proof-
+    have "f ` Collect finite \<noteq> {}"
       by blast      
-    show "bdd_above (f ` Collect finite)"
+    moreover have "bdd_above (f ` Collect finite)"
     proof-
       have \<open>has_ell2_norm (Rep_ell2 x)\<close>
         using Rep_ell2 by blast
       thus ?thesis unfolding has_ell2_norm_def f_def
         by simp
     qed
+    ultimately show ?thesis 
+      by (simp add: closure_contains_Sup) 
   qed
   hence \<open>(norm x)^2 \<in> closure (f ` Collect finite)\<close>
     by (simp add: \<open>(norm x)\<^sup>2 = Sup (f ` Collect finite)\<close>)
