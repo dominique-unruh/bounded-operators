@@ -336,7 +336,7 @@ proof
           by (metis DiffD1 Diff_insert_absorb \<open>c \<in> S\<close> f1 insertI1 is_ortho_set_def) 
       qed
       thus ?thesis
-        by (metis (mono_tags, lifting) c2 mult_not_zero subset_eq sum_not_0)
+        by (metis (mono_tags, lifting) c2 class_semiring.add.finprod_all1 mult_hom.hom_zero subset_iff)
     qed
     finally have "\<langle>a, x - k *\<^sub>C a\<rangle> = 0"
       by blast
@@ -4134,9 +4134,8 @@ next
       by (simp add: norm2a)
     have y1:"(mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) 
           $$ (i, j) = \<langle>(canonical_basis::'a list) ! i, a\<rangle>*\<langle>a, (canonical_basis::'a list) ! j\<rangle>"
-      by (metis \<open>\<langle>a, canonical_basis ! j\<rangle> * cnj \<langle>a, canonical_basis ! i\<rangle> = (mat_of_cols d 
-          [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) $$ (i, j)\<close> 
-          cinner_commute' ordered_field_class.sign_simps(46))      
+      by (metis \<open>\<langle>a, canonical_basis ! j\<rangle> * cnj \<langle>a, canonical_basis ! i\<rangle> = (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) $$ (i, j)\<close> cinner_commute' ordered_field_class.sign_simps(47))
+
     have "(mat_of_cblinfun (proj a)) $$ (i, j)
           = ((mat_of_cols d [vec_of_onb_enum a]
            * mat_of_rows d [conjugate (vec_of_onb_enum a)])$$(i,j))/norm2"
@@ -4533,7 +4532,8 @@ next
     show "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
       apply (simp add: butterfly_apply power2_eq_square)
       using norm_cauchy_schwarz[of \<psi> x]
-      by (simp add: linordered_field_class.sign_simps(25) mult_left_mono ordered_field_class.sign_simps(5))
+      by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) ordered_field_class.sign_simps(47))
+
     show "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
       apply (simp add: butterfly_apply power2_eq_square)
       by (simp add: power2_norm_eq_cinner semiring_normalization_rules(29))
@@ -4681,7 +4681,7 @@ proof (transfer, auto)
   proof-
     have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
           closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-      using Starlike.closure_sum by auto
+      sorry (* Ask to Dominique *)
     hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
         \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
       by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
