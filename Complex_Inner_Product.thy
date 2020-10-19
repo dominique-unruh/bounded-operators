@@ -4097,7 +4097,7 @@ proof auto
   define R where "R = B \<union> scaleC \<i> ` B"
   have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
     using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
-    by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
+    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
   hence "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
     apply (subst sum.cartesian_product[symmetric])
     by (simp add: UNIV_bool \<psi>_explicit)
@@ -4164,7 +4164,8 @@ proof -
     by (simp add: real_vector.representation_def)
   have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
     unfolding repr'_def repr_bad[OF that]
-    by (transfer fixing: rep, simp)
+    apply transfer
+    by auto
   have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
   proof -
     have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
@@ -4993,7 +4994,7 @@ proof-
           have "bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>) \<notin> t' \<or> \<langle>bb t' (\<lambda>b. \<langle>b, \<alpha>\<rangle>), \<alpha>\<rangle> = 0"
             by (metis Set.set_insert Suc.prems(2) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> insertI1 insert_commute)
           hence "(\<Sum>b\<in>t'. \<langle>b, \<alpha>\<rangle>) = 0"
-            using f1 by (meson sum_not_0)
+            by (meson f1 sum.neutral)
           thus ?thesis
             by (simp add: cinner_sum_left)
         qed   
@@ -5548,12 +5549,12 @@ proof-
   have \<open>\<forall>e>0. (*f* x) e \<in> *s* S\<close>
     by StarDef.transfer
   hence \<open>(*f* x) epsilon \<in> *s* S\<close>
-    by (simp add: hypreal_epsilon_gt_zero)
+    using epsilon_gt_zero by auto
   from  \<open>\<forall>e>0. norm (f (x e) - l) < e\<close>
   have  \<open>\<forall>e>0. hnorm ((*f* f) ((*f* x) e) - (star_of l)) < e\<close>
     by StarDef.transfer
   hence  \<open>hnorm ((*f* f) ((*f* x) epsilon) - (star_of l)) < epsilon\<close>
-    by (simp add: hypreal_epsilon_gt_zero)
+    using epsilon_gt_zero by blast    
   hence  \<open>(*f* f) ((*f* x) epsilon) \<approx> (star_of l)\<close>
     by (metis Infinitesimal_epsilon add_diff_cancel_left' bex_Infinitesimal_iff2 diff_add_cancel hnorm_less_Infinitesimal)
   thus ?thesis using \<open>(*f* x) epsilon \<in> *s* S\<close> by blast
