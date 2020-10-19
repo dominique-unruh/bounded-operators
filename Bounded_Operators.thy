@@ -883,7 +883,8 @@ proof-
               have \<open>norm x > 0\<close> using \<open>x \<noteq> 0\<close> by simp
               hence  \<open>inverse (norm x) * norm (l x) > inverse (norm x) * (norm x) * K\<close>
                 using  \<open>norm (l x) > norm x * K\<close>
-                by (smt linordered_field_class.sign_simps(23) mult_left_le_imp_le positive_imp_inverse_positive) 
+                by (smt linordered_field_class.positive_imp_inverse_positive mult.assoc 
+                    mult_left_le_imp_le)
               moreover have \<open>(inverse (norm x)) * (norm x) = 1\<close>
                 using \<open>norm x > 0\<close> by simp
               ultimately have \<open>(inverse (norm x)) * norm (l x) >  K\<close>
@@ -2187,7 +2188,8 @@ lemma cblinfun_apply_0[simp]:
   shows  "U  o\<^sub>C\<^sub>L 0 = 0"
   apply transfer
   unfolding cbounded_linear_def
-  by (simp add: complex_vector.linear_0)
+  using complex_vector.linear_0 by force
+
 
 
 lemma applyOp_0[simp]:  
@@ -3749,7 +3751,8 @@ qed
 lemma norm_of_cblinfun:
   \<open>norm (L *\<^sub>V z) \<le> norm z * norm L\<close>
   apply transfer
-  by (simp add: cbounded_linear.bounded_linear linordered_field_class.sign_simps(24) onorm)
+  using cbounded_linear.bounded_linear onorm
+  by (simp add: cbounded_linear.bounded_linear onorm ordered_field_class.sign_simps(47))
 
 lemma norm_of_cblinfun1:
   \<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>V z) \<le> norm L\<close>
@@ -4489,11 +4492,11 @@ qed
 definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) cblinfun. A = B* o\<^sub>C\<^sub>L B)"
 
 lemma timesOp0[simp]: "0 o\<^sub>C\<^sub>L A = 0"
-  apply transfer by simp
+  apply transfer
+  by (simp add: K_record_comp) 
 
 lemma timesOp0'[simp]: "A o\<^sub>C\<^sub>L 0 = 0"
-  apply transfer apply auto
-  by (metis cbounded_linear_def mult_zero_left norm_le_zero_iff norm_zero)
+  using cblinfun_apply_0 by blast
 
 lemma positive_idOp[simp]: "positive_op idOp"
   unfolding positive_op_def apply (rule exI[of _ idOp]) by simp
@@ -4751,7 +4754,7 @@ proof -
     by (simp add: real_vector.representation_def)
   have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
     unfolding repr'_def repr_bad[OF that]
-    by (transfer fixing: rep, simp)
+    apply transfer by auto
   have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
   proof -
     have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
@@ -5043,7 +5046,7 @@ proof auto
   define R where "R = B \<union> scaleC \<i> ` B"
   have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
     using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
-    by (metis (no_types, lifting) ordered_field_class.sign_simps(46))
+    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
   hence "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
     apply (subst sum.cartesian_product[symmetric])
     by (simp add: UNIV_bool \<psi>_explicit)
