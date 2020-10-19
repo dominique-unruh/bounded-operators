@@ -123,7 +123,7 @@ value "(1::unit ell2) * (1::unit ell2)"
 subsection \<open>Vector/Matrix\<close>
 
 value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)"
-
+(* Ask to Dominique: is Abs_code_l2bounded well-defined? *)
 value "idOp *\<^sub>V ket True"
 
 value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L _\<close>
