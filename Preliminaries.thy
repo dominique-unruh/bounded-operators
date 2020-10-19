@@ -127,7 +127,8 @@ lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
 
 subclass (in card2) not_singleton
   apply standard using two_le_card
-  by (meson card_2_exists ex_card) 
+  by (meson card_2_iff' obtain_subset_with_card_n)
+ 
 
 
 typedef 'a euclidean_space = "UNIV :: ('a \<Rightarrow> real) set" ..
@@ -1224,10 +1225,10 @@ next
     have r_finite: "r < \<infinity>" if "r : gS" for r 
       using \<open>g \<le> normf\<close> that unfolding gS_def le_fun_def normf_def apply auto
       using ennreal_less_top neq_top_trans top.not_eq_extremum by blast
-    define B' where "B' r = (SUP F:{F. finite F \<and> F\<subseteq>part r}. sum normf F)" for r
+    define B' where "B' r = (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)" for r
     have B'fin: "B' r < \<infinity>" for r
     proof -
-      have "B' r \<le> (SUP F:{F. finite F \<and> F\<subseteq>part r}. sum normf F)"
+      have "B' r \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)"
         unfolding B'_def
         by (metis (mono_tags, lifting) SUP_least SUP_upper)
       also have "\<dots> \<le> B"
@@ -1271,12 +1272,12 @@ next
       also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + \<epsilon>"
         unfolding \<epsilon>N_def N_def[symmetric] using \<open>N>0\<close> 
         by (simp add: ennreal_times_divide mult.commute mult_divide_eq_ennreal)
-      also have "\<dots> = sum normf (UNION gS F) + \<epsilon>" 
+      also have "\<dots> = sum normf (\<Union> (F ` gS)) + \<epsilon>" 
         apply (subst sum.UNION_disjoint[symmetric])
         using \<open>finite gS\<close> apply assumption
         using Ffin apply simp
         using Fpartr[unfolded part_def] apply auto[1]
-         apply (metis subsetCE vimage_singleton_eq)
+         apply (metis subsetCE vimage_singleton_eq)        
         by simp
       also have "\<dots> \<le> B + \<epsilon>"
         apply (rule add_right_mono)
@@ -1304,7 +1305,7 @@ next
         using mult.commute by auto
       also have "\<dots> = (\<Sum>x\<in>part r. g x)"
         unfolding part_def by auto
-      also have "\<dots> \<le> (SUP F:{F. finite F \<and> F\<subseteq>part r}. sum g F)"
+      also have "\<dots> \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum g F)"
         using finite apply auto
         by (simp add: Sup_upper)
       also have "\<dots> \<le> B' r"
@@ -1620,9 +1621,9 @@ lemma infsetsum_nonneg_is_SUPREMUM_ennreal:
   fixes f :: "'a \<Rightarrow> real"
   assumes summable: "f abs_summable_on A"
   assumes fnn: "\<And>x. x\<in>A \<Longrightarrow> f x \<ge> 0"
-  shows "ennreal (infsetsum f A) = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
+  shows "ennreal (infsetsum f A) = (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ennreal (sum f F)))"
 proof -
-  have sum_F_A: "sum f F \<le> infsetsum f A" if "F : {F. finite F \<and> F \<subseteq> A}" for F
+  have sum_F_A: "sum f F \<le> infsetsum f A" if "F \<in> {F. finite F \<and> F \<subseteq> A}" for F
   proof -
     from that have "finite F" and "F \<subseteq> A" by auto
     from \<open>finite F\<close> have "sum f F = infsetsum f F" by auto
@@ -1630,8 +1631,8 @@ proof -
       apply (rule infsetsum_mono_neutral_left)
       using fnn summable \<open>F\<subseteq>A\<close> \<open>finite F\<close> by auto
     finally show ?thesis by assumption
-  qed
-  hence geq: "ennreal (infsetsum f A) \<ge> SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
+  qed 
+  hence geq: "ennreal (infsetsum f A) \<ge> (SUP F\<in>{G. finite G \<and> G \<subseteq> A}. (ennreal (sum f F)))"
     by (meson SUP_least ennreal_leI)
 
   define fe where "fe x = ennreal (f x)" for x
@@ -1640,9 +1641,9 @@ proof -
     unfolding infsetsum_def fe_def
     apply (rule nn_integral_eq_integral[symmetric])
     using assms by (simp_all add: abs_summable_on_def AE_count_space)
-  also have "\<dots> = (SUP g : {g. finite (g`A) \<and> g \<le> fe}. integral\<^sup>S (count_space A) g)"
+  also have "\<dots> = (SUP g \<in> {g. finite (g`A) \<and> g \<le> fe}. integral\<^sup>S (count_space A) g)"
     unfolding nn_integral_def simple_function_count_space by simp
-  also have "\<dots> \<le> SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
+  also have "\<dots> \<le> (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ennreal (sum f F)))"
   proof (rule Sup_least)
     fix x assume "x \<in> integral\<^sup>S (count_space A) ` {g. finite (g ` A) \<and> g \<le> fe}"
     then obtain g where xg: "x = integral\<^sup>S (count_space A) g" and fin_gA: "finite (g`A)" and g_fe: "g \<le> fe" by auto
@@ -1704,17 +1705,16 @@ proof -
       using \<open>finite F\<close> by (rule nn_integral_count_space_finite)
     also have "sum g F \<le> sum fe F"
       apply (rule sum_mono) using g_fe unfolding le_fun_def by simp
-    also have "\<dots> \<le> SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum fe)"
+    also have "\<dots> \<le> (SUP F \<in> {G. finite G \<and> G \<subseteq> A}. (sum fe F))"
       using \<open>finite F\<close> \<open>F\<subseteq>A\<close>
       by (simp add: SUP_upper)
-    also have "\<dots> = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ennreal (sum f F))"
+    also have "\<dots> = (SUP F \<in> {F. finite F \<and> F \<subseteq> A}. (ennreal (sum f F)))"
       apply (rule SUP_cong[OF refl]) unfolding fe_def apply auto
       by (metis fnn subsetCE sum_ennreal)
     finally show "x \<le> \<dots>" by simp
   qed
-  finally have leq: "ennreal (infsetsum f A) \<le> SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. (ennreal (sum f F)))"
+  finally have leq: "ennreal (infsetsum f A) \<le> (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ennreal (sum f F)))"
     by assumption
-
   from leq geq show ?thesis by simp
 qed
 
@@ -1723,14 +1723,14 @@ lemma infsetsum_nonneg_is_SUPREMUM_ereal:
   fixes f :: "'a \<Rightarrow> real"
   assumes summable: "f abs_summable_on A"
   assumes fnn: "\<And>x. x\<in>A \<Longrightarrow> f x \<ge> 0"
-  shows "ereal (infsetsum f A) = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ereal (sum f F))"
+  shows "ereal (infsetsum f A) = (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ereal (sum f F)))"
 proof -
   have "ereal (infsetsum f A) = enn2ereal (ennreal (infsetsum f A))"
     by (simp add: fnn infsetsum_nonneg)
   also have "\<dots> = enn2ereal (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. ennreal (sum f F))"
     apply (subst infsetsum_nonneg_is_SUPREMUM_ennreal)
     using assms by auto
-  also have "\<dots> = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ereal (sum f F))"
+  also have "\<dots> = (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ereal (sum f F)))"
     apply (simp add: image_def Sup_ennreal.rep_eq)
     apply (subst max_absorb2)
      apply (metis (mono_tags, lifting) Sup_upper empty_subsetI ennreal_0 finite.emptyI
@@ -1744,11 +1744,11 @@ lemma infsetsum_nonneg_is_SUPREMUM:
   fixes f :: "'a \<Rightarrow> real"
   assumes summable: "f abs_summable_on A"
   assumes fnn: "\<And>x. x\<in>A \<Longrightarrow> f x \<ge> 0"
-  shows "infsetsum f A = SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum f)"
+  shows "infsetsum f A = (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (sum f F))"
 proof -
-  have "ereal (infsetsum f A) = SUPREMUM {F. finite F \<and> F \<subseteq> A} (\<lambda>F. ereal (sum f F))"
+  have "ereal (infsetsum f A) = (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (ereal (sum f F)))"
     using assms by (rule infsetsum_nonneg_is_SUPREMUM_ereal)
-  also have "\<dots> = ereal (SUPREMUM {F. finite F \<and> F \<subseteq> A} (sum f))"
+  also have "\<dots> = ereal (SUP F\<in>{F. finite F \<and> F \<subseteq> A}. (sum f F))"
     apply (subst ereal_SUP)
     using calculation by fastforce+
   finally show ?thesis by simp
@@ -3180,8 +3180,7 @@ proof-
       thus ?thesis using A_def
         by auto 
     qed
-    ultimately have \<open>Sup A = Inf {b. \<forall>a\<in>A. a \<le> b}\<close>
-      using Complete_Lattices.complete_lattice_class.Sup_Inf
+    ultimately have \<open>Sup A = Inf {b. \<forall>a\<in>A. a \<le> b}\<close>      
       by (simp add: cSup_cInf)  
     moreover have \<open>{b. \<forall>a\<in>A. a \<le> b} = {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
     proof-
