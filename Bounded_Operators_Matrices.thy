@@ -1,5 +1,6 @@
 theory Bounded_Operators_Matrices
   imports Complex_L2 Jordan_Normal_Form_Missing Jordan_Normal_Form.Gram_Schmidt 
+          "HOL-Analysis.Starlike"
 begin
 
 hide_const (open) Order.bottom Order.top
@@ -4681,7 +4682,8 @@ proof (transfer, auto)
   proof-
     have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
           closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-      sorry (* Ask to Dominique *)
+      (* Ask to Dominique. \<Longrightarrow> The 2019 proof still works but we needed to import theory Starlike. *)
+      using Starlike.closure_sum by auto
     hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
         \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
       by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
