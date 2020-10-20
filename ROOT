@@ -1,4 +1,4 @@
-session "Bounded_Operators-Prerequisites" in "tmp" = "HOL-Analysis" +
+session "Bounded_Operators-Prerequisites" in "fake-session-dir/1" = "HOL-Analysis" +
   sessions "HOL-Library" "Jordan_Normal_Form" "HOL-Analysis" "HOL-Nonstandard_Analysis"
            "Real_Impl" "HOL-Types_To_Sets" "Banach_Steinhaus" "Containers"
   theories
