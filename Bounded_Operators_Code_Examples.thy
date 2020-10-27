@@ -122,8 +122,13 @@ value "(1::unit ell2) * (1::unit ell2)"
 
 subsection \<open>Vector/Matrix\<close>
 
-value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)"
-(* Ask to Dominique: is Abs_code_l2bounded well-defined? *)
+(* value "Abs_code_l2bounded (idOp :: (bool ell2, bool ell2) cblinfun)" *)
+(* Ask to Dominique: is Abs_code_l2bounded well-defined? 
+   \<Longrightarrow> I deleted Abs_code_l2bounded some revisions back, it was not needed any more because
+       of some improvements in the code generation theory. I'm not sure why
+       this line was still here. TODO: remove
+*)
+
 value "idOp *\<^sub>V ket True"
 
 value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L _\<close>

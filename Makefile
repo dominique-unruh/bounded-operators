@@ -41,6 +41,6 @@ bounded-operators-cpp.zip : $(FILES)
 	rm -rf tmp2
 	mkdir tmp2
 	cd tmp2 && unzip ../$@
-	rm -f /opt/Isabelle2019/heaps/polyml-5.8_x86_64_32-linux/Bounded_Operators
-	cd tmp2 && /opt/Isabelle2019/bin/isabelle build -d . Bounded_Operators
+	rm -f /opt/Isabelle2020/heaps/polyml-5.8_x86_64_32-linux/Bounded_Operators
+	cd tmp2 && /opt/Isabelle2020/bin/isabelle build -d . Bounded_Operators
 	rm -rf tmp2
