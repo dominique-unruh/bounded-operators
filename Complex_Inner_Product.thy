@@ -3354,12 +3354,12 @@ proof
           by (simp add: projection_intro2 that(1))
         hence \<open>(projection x) u \<in> y\<close>
           using that(3) by auto        
-        have \<open>subspace y\<close>
+        have \<open>csubspace y\<close>
           by (simp add: closed_subspace.subspace that(2))          
         have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
           by (simp add: projection_intro1 that(1))
         moreover have  \<open>u - (projection x) u \<in> y\<close>
-          using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>subspace y\<close>
+          using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>csubspace y\<close>
           by (smt complex_vector.subspace_diff)
         ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
           by simp
@@ -3418,10 +3418,10 @@ lemma is_ob_nonzero:
   using assms
   by (simp add: is_ortho_set_def) 
 
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_independent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.dependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 
 class basis_enum = complex_vector +
@@ -3429,17 +3429,17 @@ class basis_enum = complex_vector +
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
   assumes distinct_canonical_basis[simp]: 
     "distinct canonical_basis"
-    and is_complex_independent_set:
-    "complex_independent (set canonical_basis)"
+    and is_cindependent_set:
+    "cindependent (set canonical_basis)"
     and is_generator_set:
     "complex_span (set canonical_basis) = UNIV" 
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_independent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.dependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 
 
@@ -3467,7 +3467,7 @@ lemma canonical_basis_non_zero:
   shows \<open>x \<noteq> 0\<close>
   using \<open>x \<in> set canonical_basis\<close> 
     complex_vector.dependent_zero[where A = "set (canonical_basis::('a::onb_enum list))"]
-    is_complex_independent_set
+    is_cindependent_set
   by smt
 
 
@@ -4873,11 +4873,11 @@ qed
 
 
 lemma is_ortho_set_independent:
-  \<open>is_ortho_set S \<Longrightarrow> complex_independent S\<close>
+  \<open>is_ortho_set S \<Longrightarrow> cindependent S\<close>
   unfolding is_ortho_set_def
 proof(rule ccontr)
   assume  a1: "(\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0) \<and> (\<forall>x\<in>S. x \<noteq> 0)"
-    and a2: "\<not> complex_independent S"
+    and a2: "\<not> cindependent S"
   have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
     using complex_vector.dependent_explicit a2 
     by auto

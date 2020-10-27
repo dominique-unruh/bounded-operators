@@ -2394,7 +2394,7 @@ instance
       by blast
   qed
 
-  show "complex_independent (set (canonical_basis::'a ell2 list))"
+  show "cindependent (set (canonical_basis::'a ell2 list))"
   proof-
     have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
     proof (rule classical)
@@ -2826,8 +2826,8 @@ lemma ket_nonzero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
   by (metis zero_neq_one)
 
 
-lemma complex_independent_ket:
-  "complex_independent (range (ket::'a\<Rightarrow>_))"
+lemma cindependent_ket:
+  "cindependent (range (ket::'a\<Rightarrow>_))"
 proof-
   define S where "S = range (ket::'a\<Rightarrow>_)"
   have "is_ortho_set S"
@@ -3198,7 +3198,7 @@ qed
 lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> :: _::finite \<Rightarrow> _)"
   unfolding classical_operator_exists_def
   apply (rule cblinfun_extension_exists_finite)
-  using complex_independent_ket apply blast
+  using cindependent_ket apply blast
   using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim apply blast
   by simp
 
@@ -3828,7 +3828,7 @@ proof auto
         assume "Complex_Vector_Spaces.dependent (set canonical_basis)"
           and  "basis = canonical_basis" and
           "(\<And>x. x \<in> set canonical_basis \<Longrightarrow> x \<noteq> 0)" 
-          and  "(\<And>S. 0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> complex_independent S)"
+          and  "(\<And>S. 0 \<notin> S \<Longrightarrow> is_ortho_set S \<Longrightarrow> cindependent S)"
           and  "is_ortho_set (set canonical_basis)"
         have "Complex_Vector_Spaces.span (set basis) = UNIV"
         proof-
@@ -3838,10 +3838,10 @@ proof auto
           thus ?thesis
             by (metis basis_def is_generator_set)            
         qed
-        have "complex_independent (set (canonical_basis::'f list)) \<noteq> 
+        have "cindependent (set (canonical_basis::'f list)) \<noteq> 
               (\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'f list)))"
           by (metis \<open>Complex_Vector_Spaces.dependent (set canonical_basis)\<close> 
-                is_complex_independent_set)
+                is_cindependent_set)
         thus "x = 0"
           by (metis )          
       qed
