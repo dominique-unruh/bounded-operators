@@ -3360,7 +3360,7 @@ proof
           by (simp add: projection_intro1 that(1))
         moreover have  \<open>u - (projection x) u \<in> y\<close>
           using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>subspace y\<close>
-          by (simp add: Complex_Vector_Spaces.subspace_raw_def complex_vector.subspace_diff)
+          by (smt complex_vector.subspace_diff)
         ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
           by simp
         hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
@@ -3415,8 +3415,8 @@ lemma is_ob_nonzero:
     "closure (complex_vector.span S) = UNIV" 
     and \<open>x \<in> S\<close>
   shows \<open>x \<noteq> 0\<close>
-  using assms 
-  by (metis Complex_Vector_Spaces.dependent_raw_def complex_vector.dependent_zero) 
+  using assms
+  by (simp add: is_ortho_set_def) 
 
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_independent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.dependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
@@ -4077,8 +4077,8 @@ proof-
     ultimately show "u v = 0" by simp
   qed
   thus ?thesis using independent_explicit_module
-    by (smt Complex_Vector_Spaces.dependent_raw_def) 
-      (* > 1s *)
+    by (smt cdependent_raw_def)
+
 qed
 
 

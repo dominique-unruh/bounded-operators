@@ -2417,7 +2417,7 @@ instance
     thus ?thesis 
       using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
       unfolding canonical_basis_ell2_def
-      by (metis Complex_Vector_Spaces.dependent_raw_def)            
+      by blast                  
   qed
 
   show "complex_span (set (canonical_basis::'a ell2 list)) = UNIV"

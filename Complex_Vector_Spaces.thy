@@ -91,12 +91,12 @@ term "Real_Vector_Spaces.linear"
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-  defines cdependent_raw_def: dependent = complex_vector.dependent
-    and crepresentation_raw_def: representation = complex_vector.representation
-    and csubspace_raw_def: subspace = complex_vector.subspace
-    and cspan_raw_def: span = complex_vector.span
-    and cextend_basis_raw_def: extend_basis = complex_vector.extend_basis
-    and cdim_raw_def: dim = complex_vector.dim
+  defines cdependent_raw_def: cdependent = complex_vector.dependent
+    and crepresentation_raw_def: crepresentation = complex_vector.representation
+    and csubspace_raw_def: csubspace = complex_vector.subspace
+    and cspan_raw_def: cspan = complex_vector.span
+    and cextend_basis_raw_def: cextend_basis = complex_vector.extend_basis
+    and cdim_raw_def: cdim = complex_vector.dim
   apply (simp add: scaleC_add_left scaleC_add_right vector_space_def)    
   unfolding clinear_def
   by auto
@@ -110,8 +110,8 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.extend_basis
   complex_vector.dim
 
-(* TODO: Change into "cindependent x \<equiv> \<not> cdependent x" (when dependent is renamed into cdependent) *)
-abbreviation complex_independent where "complex_independent x \<equiv> \<not> complex_vector.dependent x"
+
+abbreviation cindependent where "cindependent x \<equiv> \<not> cdependent x"
 (* TODO: If we have renamed span into cspan above, we can remove this appreviation and use cspan instead *)
 abbreviation "complex_span x \<equiv> complex_vector.span x"
 

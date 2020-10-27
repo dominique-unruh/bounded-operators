@@ -5665,8 +5665,7 @@ proof -
       using False by blast
     have "complex_vector.representation B \<psi> b = 0"
       unfolding complex_vector.representation_def
-      using Complex_Vector_Spaces.dependent_raw_def False a1
-      by simp
+      by (simp add: False)
     moreover have "real_vector.representation B' \<psi> b = 0"
       unfolding real_vector.representation_def
       by (simp add: b2)

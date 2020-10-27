@@ -536,7 +536,7 @@ proof(rule classical)
   hence "complex_vector.span (set S) \<subseteq> (UNIV:: 'a set)"
     by simp
   hence "card (set S) \<le> dim (UNIV:: 'a set)"
-    using f1 h1 Complex_Vector_Spaces.dependent_raw_def 
+    using f1 h1 Complex_Vector_Spaces.cdependent_raw_def 
       complex_vector.dim_le_card complex_vector.dim_span_eq_card_independent 
       distinct_canonical_basis distinct_card f2 
     by (smt \<open>Complex_Vector_Spaces.span (set basis) = UNIV\<close> \<open>\<not> length S \<le> length basis\<close> 
@@ -605,7 +605,7 @@ proof-
       using basis_def calculation is_complex_independent_set
       by blast 
     ultimately show ?thesis 
-      by (metis Complex_Vector_Spaces.dependent_raw_def)
+      by (metis Complex_Vector_Spaces.cdependent_raw_def)
   qed
   moreover have "b \<noteq> 0"  
     using Complex_Vector_Spaces.complex_vector.dependent_zero[where A = "set basis"]
@@ -830,9 +830,9 @@ proof-
   hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
       = c *\<^sub>C (Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b i)" for i
     using Complex_Vector_Spaces.complex_vector.representation_scale
-      Complex_Vector_Spaces.dependent_raw_def UNIV_I complex_scaleC_def
+      Complex_Vector_Spaces.cdependent_raw_def UNIV_I complex_scaleC_def
      is_complex_independent_set 
-    by (smt ) 
+    by smt
   moreover have "vec_of_list (map (\<lambda>x. c *\<^sub>C (f x)) S) = c \<cdot>\<^sub>v vec_of_list (map f S)"
     for S::"'a list" and f g::"'a \<Rightarrow> complex" 
   proof(induction S)
@@ -4469,7 +4469,7 @@ definition "canonical_basis_length (_::complex itself) = 1"
 instance
   apply intro_classes
   unfolding canonical_basis_complex_def canonical_basis_length_complex_def
-  by (auto simp add: Complex_Vector_Spaces.span_raw_def vector_space_over_itself.span_Basis)
+  by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
 end
 
 (* TODO move to Complex_Inner *)
