@@ -91,14 +91,12 @@ term "Real_Vector_Spaces.linear"
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-(* TODO rename all these with c-prefixes.
-E.g., cdependent_raw_def: cdependent = complex_vector.dependent *)
-  defines dependent_raw_def: dependent = complex_vector.dependent
-    and representation_raw_def: representation = complex_vector.representation
-    and subspace_raw_def: subspace = complex_vector.subspace
-    and span_raw_def: span = complex_vector.span
-    and extend_basis_raw_def: extend_basis = complex_vector.extend_basis
-    and dim_raw_def: dim = complex_vector.dim
+  defines cdependent_raw_def: dependent = complex_vector.dependent
+    and crepresentation_raw_def: representation = complex_vector.representation
+    and csubspace_raw_def: subspace = complex_vector.subspace
+    and cspan_raw_def: span = complex_vector.span
+    and cextend_basis_raw_def: extend_basis = complex_vector.extend_basis
+    and cdim_raw_def: dim = complex_vector.dim
   apply (simp add: scaleC_add_left scaleC_add_right vector_space_def)    
   unfolding clinear_def
   by auto
@@ -1944,7 +1942,7 @@ proof-
       using closure_sequential by blast
     have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
       using \<open>\<forall>n. xx n \<in> A\<close> \<open>\<forall>n. yy n \<in> A\<close> assms 
-        complex_vector.subspace_def subspace_raw_def
+        complex_vector.subspace_def csubspace_raw_def
       by (simp add: complex_vector.subspace_def)      
     hence  \<open>(\<lambda> n. (xx n) + (yy n)) \<longlonglongrightarrow> x + y\<close> using  \<open>xx \<longlonglongrightarrow> x\<close> \<open>yy \<longlonglongrightarrow> y\<close> 
       by (simp add: tendsto_add)
@@ -2301,7 +2299,7 @@ qed
 
 lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> span { a *\<^sub>C \<psi> } = span {\<psi>}"
   for \<psi>::"'a::complex_vector"
-  by (smt Complex_Vector_Spaces.span_raw_def Diff_insert_absorb complex_vector.dependent_single complex_vector.in_span_delete complex_vector.independent_insert complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant complex_vector.span_scale insert_absorb insert_commute insert_not_empty singletonI)
+  by (smt Complex_Vector_Spaces.cspan_raw_def Diff_insert_absorb complex_vector.dependent_single complex_vector.in_span_delete complex_vector.independent_insert complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant complex_vector.span_scale insert_absorb insert_commute insert_not_empty singletonI)
 
 lemma subspace_I:
   fixes S::\<open>'a::complex_normed_vector set\<close>
@@ -2615,12 +2613,12 @@ proof-
   define f where \<open>f x = (if x = v then (1::complex) else 0)\<close> for x
   have \<open>\<exists>g. clinear g \<and> (\<forall>x\<in>B. g x = f x)\<close>
     using \<open>complex_vector.independent B\<close> complex_vector.linear_independent_extend
-    by (simp add: complex_vector.linear_independent_extend Complex_Vector_Spaces.dependent_raw_def) 
+    by (simp add: complex_vector.linear_independent_extend Complex_Vector_Spaces.cdependent_raw_def) 
   then obtain g where \<open>clinear g\<close> and \<open>\<forall>x\<in>B. g x = f x\<close>
     by blast
   define f' where \<open>f' x = (if x = u then (1::complex) else 0)\<close> for x
   hence \<open>\<exists>g'. clinear g' \<and> (\<forall>x\<in>A. g' x = f' x)\<close>
-    by (simp add: Complex_Vector_Spaces.dependent_raw_def assms(1) complex_vector.linear_independent_extend)    
+    by (simp add: Complex_Vector_Spaces.cdependent_raw_def assms(1) complex_vector.linear_independent_extend)    
   then obtain g' where \<open>clinear g'\<close> and \<open>\<forall>x\<in>A. g' x = f' x\<close>
     by blast
   define h where \<open>h x y = (g' x)*(g y)\<close> for x y
@@ -2810,7 +2808,7 @@ proof(induction "card S" arbitrary: S)
   hence "S = ({}::'a set)"
     using "0.prems"(2) card_0_eq by blast    
   moreover have "real_vector.independent ({}::'a set)"
-    by (metis Real_Vector_Spaces.dependent_raw_def real_vector.independent_empty)    
+    by (metis dependent_raw_def real_vector.independent_empty)    
   ultimately show ?case by simp
 next
   case (Suc n)
@@ -2823,9 +2821,9 @@ next
   moreover have "finite S'"
     using Suc.prems(2) g1 by auto
   moreover have "complex_vector.independent S'"
-    by (metis Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert g1 g2)
+    by (metis Complex_Vector_Spaces.cdependent_raw_def Suc.prems(1) complex_vector.independent_insert g1 g2)
   ultimately have "real_vector.independent S'"
-    by (simp add: Real_Vector_Spaces.dependent_raw_def Suc.hyps(1))
+    by (simp add: Suc.hyps(1))
   moreover have "s \<notin> real_vector.span S'"
   proof(rule classical)
     assume "\<not>(s \<notin> real_vector.span S')"
@@ -2842,11 +2840,12 @@ next
       using  s2
       by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset in_mono) 
     thus ?thesis 
-      by (smt Complex_Vector_Spaces.dependent_raw_def Suc.prems(1) complex_vector.independent_insert 
+      by (smt Complex_Vector_Spaces.cdependent_raw_def Suc.prems(1) complex_vector.independent_insert 
           g1 g2)
   qed
   ultimately show ?case 
-    by (smt Real_Vector_Spaces.dependent_raw_def g1 real_vector.independent_insertI)
+  by (smt dependent_raw_def g1 real_vector.independent_insertI)
+
 qed
 
 
