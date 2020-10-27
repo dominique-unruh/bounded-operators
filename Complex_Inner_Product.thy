@@ -3420,7 +3420,6 @@ lemma is_ob_nonzero:
 
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 
@@ -3432,13 +3431,12 @@ class basis_enum = complex_vector +
     and is_cindependent_set:
     "cindependent (set canonical_basis)"
     and is_generator_set:
-    "complex_span (set canonical_basis) = UNIV" 
+    "cspan (set canonical_basis) = UNIV" 
     and canonical_basis_length_eq:
     "canonical_basis_length TYPE('a) = length canonical_basis"
 
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 
@@ -3746,7 +3744,7 @@ lemma Gram_Schmidt:
   fixes S::\<open>'a::complex_inner set\<close>
   assumes \<open>finite S\<close>
   shows \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_span A = complex_span S
+           \<and> cspan A = cspan S
            \<and> 0 \<notin> A \<and> finite A\<close>
 proof-
   have Gram_Schmidt0:
@@ -4358,7 +4356,7 @@ next
 qed
 
 
-lemma finite_complex_span_complete: 
+lemma finite_cspan_complete: 
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
   shows "complete (complex_vector.span B)"
@@ -4376,7 +4374,7 @@ lemma closed_finite_dim:
   fixes S::\<open>'a::complex_normed_vector set\<close> (* NEW: Generalization, it was for Hilbert spaces *)
   assumes a1: \<open>finite S\<close>
   shows \<open>closed (complex_vector.span S)\<close>  
-  by (simp add: finite_complex_span_complete assms complete_imp_closed)
+  by (simp add: finite_cspan_complete assms complete_imp_closed)
 
 
 lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^sub>C 1 = a\<close>

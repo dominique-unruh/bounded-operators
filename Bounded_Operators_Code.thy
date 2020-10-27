@@ -523,12 +523,12 @@ proof -
     apply (subst filter_True)
     using base_carrier by auto
 
-  also have "\<dots> = complex_span (onb_enum_of_vec ` set base)"
+  also have "\<dots> = cspan (onb_enum_of_vec ` set base)"
     apply transfer apply (subst span_finite_dim)
     by simp_all
 
   also have "\<dots> = onb_enum_of_vec ` span (set base)"
-    apply (subst module_span_complex_span')
+    apply (subst module_span_cspan')
     using base_carrier dA_def by auto
 
   also have "\<dots> = onb_enum_of_vec ` mat_kernel Ag"

@@ -2239,7 +2239,7 @@ proof-
     by blast
 qed
 
-lemma trunc_ell2_complex_span_induct:
+lemma trunc_ell2_cspan_induct:
   \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
 proof (induction n)
   show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
@@ -2295,9 +2295,9 @@ proof (induction n)
 qed
 
 
-lemma trunc_ell2_complex_span:
+lemma trunc_ell2_cspan:
   \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-  using trunc_ell2_complex_span_induct by auto
+  using trunc_ell2_cspan_induct by auto
 
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
@@ -2320,7 +2320,7 @@ proof
         have \<open>(*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
         proof-
           have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-            by (simp add: trunc_ell2_complex_span)
+            by (simp add: trunc_ell2_cspan)
           hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
             unfolding hypfinite_def
             by StarDef.transfer
@@ -2420,7 +2420,7 @@ instance
       by blast                  
   qed
 
-  show "complex_span (set (canonical_basis::'a ell2 list)) = UNIV"
+  show "cspan (set (canonical_basis::'a ell2 list)) = UNIV"
     proof-
         have \<open>closure (complex_vector.span (ket ` UNIV)) = UNIV\<close>
           by (simp add: ket_ell2_span)

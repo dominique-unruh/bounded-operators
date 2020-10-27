@@ -112,8 +112,6 @@ hide_const (open)\<comment> \<open>locale constants\<close>
 
 
 abbreviation cindependent where "cindependent x \<equiv> \<not> cdependent x"
-(* TODO: If we have renamed span into cspan above, we can remove this appreviation and use cspan instead *)
-abbreviation "complex_span x \<equiv> complex_vector.span x"
 
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
