@@ -2839,5 +2839,35 @@ next
 
 qed
 
+lemma cspan_singleton:
+  fixes x y::"'a::complex_vector"
+  assumes a1: "x \<in> cspan {y}"
+  shows "\<exists>\<alpha>. x = \<alpha> *\<^sub>C y"
+proof-
+  have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
+    using a1 using complex_vector.span_explicit[where b = "{y}"]
+    by (smt  mem_Collect_eq)
+  then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
+    by blast
+  show ?thesis
+  proof(cases "t = {}")
+    case True
+    hence "(\<Sum>j\<in>t. r j *\<^sub>C j) = 0"
+      using b2
+      by simp
+    thus ?thesis using b1 by simp
+  next
+    case False
+    hence "t = {y}"
+      using b3 by auto
+    moreover have "(\<Sum>j\<in>{y}. r j *\<^sub>C j) = r y *\<^sub>C y"
+      by auto
+    ultimately show  ?thesis using b1 by blast
+  qed
+qed
+
+lemma Span_empty[simp]: "Span {} = bot"
+  apply transfer
+  by simp
 
 end

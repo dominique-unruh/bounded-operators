@@ -544,7 +544,7 @@ proof(rule classical)
   thus ?thesis using g2 by (smt leD)
 qed
 
-(* TODO: should be called vec_of_onb_enum_inverse *)
+
 lemma onb_enum_of_vec_inverse[simp]:
   fixes w::"'a::onb_enum"
   shows  "onb_enum_of_vec (vec_of_onb_enum w) = w"
@@ -649,8 +649,7 @@ proof-
   thus ?thesis by simp
 qed
 
-(* TODO: rename: onb_enum_of_vec_inverse *)
-lemma vec_of_onb_enum_inverse[simp]:
+lemma onb_enum_of_vec_inverse'[simp]:
   fixes v::"complex vec"
   defines "n == canonical_basis_length TYPE('a::{basis_enum,complex_inner})"
   assumes f1: "dim_vec v = n"
@@ -860,10 +859,6 @@ qed
 lemma vec_of_onb_enum_scaleR:
   "vec_of_onb_enum (r *\<^sub>R b) = complex_of_real r \<cdot>\<^sub>v (vec_of_onb_enum b)"
   by (simp add: scaleR_scaleC vec_of_onb_enum_scaleC)
-
-(* TODO: Move to Jordan...Missing *)
-lemma scaleC_minus1_left_vec: "-1 \<cdot>\<^sub>v v = - v" for v :: "_::ring_1 vec"
-  unfolding smult_vec_def uminus_vec_def by auto
 
 lemma vec_of_onb_enum_uminus:
   "vec_of_onb_enum (- b2) = - vec_of_onb_enum b2"
@@ -1211,39 +1206,20 @@ proof-
     by (metis (no_types, lifting) B_def mult.commute n_def onb_enum_of_vec_def sum.cong w1 w2)
 qed
 
-
-(* TODO: give better name *)
-lemma cinner_ell2_code: "cinner \<psi> \<phi> = cscalar_prod (vec_of_onb_enum \<phi>) (vec_of_onb_enum \<psi>)"
+lemma cscalar_prod_cinner: "cinner \<psi> \<phi> = cscalar_prod (vec_of_onb_enum \<phi>) (vec_of_onb_enum \<psi>)"
   for \<psi> :: "'a::onb_enum"
   thm cinner_onb_enum_of_vec
   apply (subst cinner_onb_enum_of_vec[symmetric, where 'a='a])
   by (simp_all add: canonical_basis_length_eq dim_vec_of_onb_enum_list')
 
-(* TODO move to JNF_Missing *)
-lemma square_nneg_complex:
-  fixes x :: complex
-  assumes "x \<in> \<real>" shows "x^2 \<ge> 0"
-  apply (cases x) using assms unfolding Reals_def by auto
-
-
-(* TODO move to Preliminaries *)
-lemma abs_complex_real[simp]: "abs x \<in> \<real>" for x :: complex
-  by (simp add: abs_complex_def)
-
-(* TODO move to Preliminaries *)
-lemma Im_abs[simp]: "Im (abs x) = 0"
-  using abs_complex_real complex_is_Real_iff by blast
-
-
-(* TODO: give better name *)
-lemma norm_ell2_code: "norm \<psi> = 
+lemma norm_ell2_vec: "norm \<psi> = 
   (let \<psi>' = vec_of_onb_enum \<psi> in
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
   (is "_ = ?rhs") for \<psi> :: "'a::onb_enum"
 proof -
   have "norm \<psi> = sqrt (cmod (\<Sum>i = 0..<dim_vec (vec_of_onb_enum \<psi>). 
             vec_of_onb_enum \<psi> $ i * conjugate (vec_of_onb_enum \<psi>) $ i))"
-    unfolding norm_eq_sqrt_cinner[where 'a='a] cinner_ell2_code scalar_prod_def dim_vec_conjugate
+    unfolding norm_eq_sqrt_cinner[where 'a='a] cscalar_prod_cinner scalar_prod_def dim_vec_conjugate
     by rule
   also have "\<dots> = sqrt (cmod (\<Sum>x = 0..<dim_vec (vec_of_onb_enum \<psi>). 
                     let z = vec_of_onb_enum \<psi> $ x in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
@@ -1351,6 +1327,7 @@ qed
 
 (* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
    Most of the rules don't need an ONB *)
+(* Jose: There is an error when I change onb_enum by basis_enum *)
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))
            then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)
@@ -1460,6 +1437,7 @@ qed
 
 (* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
    Most of the rules don't need an ONB *)
+(* Jose: Error when onb_enum is substituted by basis_enum  *)
 definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
   \<open>mat_of_cblinfun f = 
     mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
@@ -1518,7 +1496,7 @@ proof-
             + mat_of_cblinfun F *\<^sub>v (vec_of_onb_enum b2)"
         using carrier_mat1
           add.commute carrier_vec_dim_vec dim_vec_last index_add_vec(2) mult_add_distrib_mat_vec 
-          nA_def vec_of_onb_enum_add vec_of_onb_enum_inverse
+          nA_def vec_of_onb_enum_add onb_enum_of_vec_inverse'
         by metis
       thus ?thesis
         unfolding P_def
@@ -1581,7 +1559,7 @@ proof-
       by blast
     have "vec_of_onb_enum (BasisA ! iA) = unit_vec nA iA"
       unfolding BasisA_def nA_def
-      by (metis a2 index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec vec_of_onb_enum_inverse)
+      by (metis a2 index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec onb_enum_of_vec_inverse')
     hence "P (BasisA!iA) = Q (BasisA!iA)"
       using cinner_mat_of_cblinfun_basis[where iA = iA and iB = iB and F = F]
       unfolding P_def Q_def nA_def BasisA_def BasisB_def
@@ -1629,7 +1607,7 @@ proof-
   define v where "v = mat_of_cblinfun F *\<^sub>v unit_vec nA iA"
   have r1: "vec_of_onb_enum (BasisA!iA) = unit_vec nA iA"
     by (metis BasisA_def index_unit_vec(3) nA_def onb_enum_of_vec_unit_vec that(2) 
-        vec_of_onb_enum_inverse)
+        onb_enum_of_vec_inverse')
   have "length BasisB = nB"
     by (simp add: BasisB_def canonical_basis_length_eq nB_def)    
   moreover have length_v: "length (list_of_vec v) = nB"
@@ -1775,7 +1753,7 @@ qed
   moreover have "dim_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u) = nB"
     using M_def carrier_M dim_mult_mat_vec by blast    
   ultimately show ?thesis
-    using vec_of_onb_enum_inverse nB_def by auto 
+    using onb_enum_of_vec_inverse nB_def by auto 
 qed
 
 
@@ -1834,7 +1812,7 @@ proof-
       using a1 a2 by auto      
     have "vec_of_onb_enum v \<in> carrier_vec nA"
       by (metis a3 carrier_vec_dim_vec diff_add_cancel dim_vec index_add_vec(2) 
-          vec_of_onb_enum_add vec_of_onb_enum_inverse)      
+          vec_of_onb_enum_add onb_enum_of_vec_inverse')      
     hence w2: "M *\<^sub>v vec_of_onb_enum v + N *\<^sub>v vec_of_onb_enum v = (M + N) *\<^sub>v vec_of_onb_enum v"
       using a1 a2 Matrix.add_mult_distrib_mat_vec
       by metis
@@ -1874,7 +1852,7 @@ lemma vec_of_onb_enum_zero:
   assumes a1: "nA = canonical_basis_length TYPE('a::onb_enum)" 
   shows "vec_of_onb_enum (0::'a) = 0\<^sub>v nA"
   by (smt add_cancel_right_left assms index_zero_vec(2) left_zero_vec onb_enum_of_vec_inverse
-      vec_of_onb_enum_add vec_of_onb_enum_inverse zero_carrier_vec)  
+      vec_of_onb_enum_add onb_enum_of_vec_inverse' zero_carrier_vec)  
 
 lemma cblinfun_of_mat_zero_converse:
   fixes M::"complex mat"
@@ -1904,7 +1882,7 @@ proof-
       have "vec_of_onb_enum (onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)::'b) = vec_of_onb_enum (0::'b)"
         by (simp add: c1)
       hence "M *\<^sub>v vec_of_onb_enum v = vec_of_onb_enum (0::'b)"
-        using vec_of_onb_enum_inverse a1 a3 by auto
+        using onb_enum_of_vec_inverse a1 a3 by auto
       also have "vec_of_onb_enum (0::'b) = 0\<^sub>v nB"
         using vec_of_onb_enum_zero
         by (simp add: vec_of_onb_enum_zero a3) 
@@ -1914,7 +1892,7 @@ proof-
     moreover have "M $$ (iB,iA) = vec_index (M *\<^sub>v unit_vec nA iA) iB"
       using a1 that(1) that(2) by auto
     ultimately show ?thesis
-      by (metis a2 index_unit_vec(3) index_zero_vec(1) that(1) vec_of_onb_enum_inverse)      
+      by (metis a2 index_unit_vec(3) index_zero_vec(1) that(1) onb_enum_of_vec_inverse')      
   qed
   thus ?thesis 
     using Matrix.eq_matI a1 by auto
@@ -1978,7 +1956,7 @@ proof-
 qed
 
 
-lemma cblinfun_of_mat_id':
+lemma cblinfun_of_mat_id:
   "mat_of_cblinfun (idOp :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L'a)) = 1\<^sub>m (canonical_basis_length TYPE('a))"
 proof-
   define n where "n = canonical_basis_length TYPE('a)"
@@ -2051,7 +2029,7 @@ proof-
 qed
 
 
-lemma mat_of_cblinfun_zero':
+lemma mat_of_cblinfun_zero:
   "mat_of_cblinfun (0 :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
   = 0\<^sub>m (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))"
 proof-
@@ -2075,7 +2053,7 @@ proof-
 qed
 
 
-lemma cblinfun_of_mat_uminusOp':
+lemma cblinfun_of_mat_uminusOp:
   "mat_of_cblinfun (- M) = - mat_of_cblinfun M" 
   for M::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
 proof-
@@ -2083,14 +2061,14 @@ proof-
   define nB where "nB = canonical_basis_length TYPE('b)"
   have M1: "mat_of_cblinfun M \<in> carrier_mat nB nA"
     unfolding nB_def nA_def
-    by (metis add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero' nA_def
+    by (metis add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero nA_def
         nB_def zero_carrier_mat) 
   have M2: "mat_of_cblinfun (-M) \<in> carrier_mat nB nA"
-    by (metis add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero' diff_0 nA_def nB_def 
+    by (metis add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero diff_0 nA_def nB_def 
         uminus_add_conv_diff zero_carrier_mat)
   have "mat_of_cblinfun (M - M) =  0\<^sub>m nB nA"
     unfolding nA_def nB_def
-    by (simp add: mat_of_cblinfun_zero')
+    by (simp add: mat_of_cblinfun_zero)
   moreover have "mat_of_cblinfun (M - M) = mat_of_cblinfun M + mat_of_cblinfun (- M)"
     by (metis mat_of_cblinfun_plus pth_2)
   ultimately have "mat_of_cblinfun M + mat_of_cblinfun (- M) = 0\<^sub>m nB nA"
@@ -2102,12 +2080,12 @@ proof-
 qed
 
 
-lemma cblinfun_of_mat_minusOp':
+lemma cblinfun_of_mat_minusOp:
   "mat_of_cblinfun (M - N) = mat_of_cblinfun M - mat_of_cblinfun N" 
   for M::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" and N::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b"
 proof-
   have a1: "mat_of_cblinfun (- N) = -(mat_of_cblinfun N)"
-    using cblinfun_of_mat_uminusOp' .
+    using cblinfun_of_mat_uminusOp .
   have "mat_of_cblinfun (M - N) = mat_of_cblinfun (M + (- N))"
     by simp
   also have "\<dots> = mat_of_cblinfun M + mat_of_cblinfun (- N)"
@@ -2125,7 +2103,7 @@ lemma cblinfun_of_mat_uminus:
     "(cblinfun_of_mat (-M) :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) 
   = -((cblinfun_of_mat M):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
   by (smt a1 a2 a3 add.group_axioms add.right_neutral add_minus_cancel add_uminus_minus_mat 
-      cblinfun_of_mat_plus group.inverse_inverse mat_of_cblinfun_inverse mat_of_cblinfun_zero' 
+      cblinfun_of_mat_plus group.inverse_inverse mat_of_cblinfun_inverse mat_of_cblinfun_zero 
       minus_r_inv_mat uminus_carrier_mat)
 
 lemma cblinfun_of_mat_minus:
@@ -2154,22 +2132,20 @@ proof-
   finally show ?thesis .
 qed
 
-
-
 lemma cblinfun_of_mat_inverse:
   fixes M::"complex mat"
+  defines "nA == canonical_basis_length TYPE('a)"
+    and "nB == canonical_basis_length TYPE('b)"
   assumes "M \<in> carrier_mat nB nA"
-    and "nA = canonical_basis_length TYPE('a)" (* TODO: use 'defines' *)
-    and "nB = canonical_basis_length TYPE('b)" (* TODO: use 'defines' *)
   shows "mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum) = M"
 proof-
   define F where "F = (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
   have g1: "M \<in> carrier_mat nB nA"
-    by (simp add: assms(1))
+    by (simp add: assms(3))    
   have g2: "(mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum))
                    \<in> carrier_mat nB nA"
-    by (metis add_diff_cancel_right' assms(2) assms(3) cblinfun_of_mat_minusOp' mat_of_cblinfun_zero'
-        minus_carrier_mat zero_carrier_mat)
+    by (smt add_carrier_mat cblinfun_of_mat_plus g1 mat_of_cblinfun_inverse mat_of_cblinfun_plus 
+        mat_of_cblinfun_zero nA_def nB_def right_add_zero_mat zero_carrier_mat)
   have  "cblinfun_of_mat (mat_of_cblinfun F) = F"
     by (simp add: mat_of_cblinfun_inverse)
   hence "cblinfun_of_mat (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
@@ -2184,7 +2160,8 @@ proof-
         ( (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
           - M ):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)"
     using g1 g2
-    by (simp add: assms(2) assms(3) cblinfun_of_mat_minus) 
+    by (simp add: cblinfun_of_mat_minus nA_def nB_def)
+     
   finally have "0 = (cblinfun_of_mat
         ( (mat_of_cblinfun (cblinfun_of_mat M :: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
           - M ):: 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)".
@@ -2192,8 +2169,8 @@ proof-
           - M = 0\<^sub>m nB nA"
     by (metis assms(1) assms(2) assms(3) cblinfun_of_mat_zero_converse minus_carrier_mat)
   thus ?thesis
-    by (smt add.inverse_neutral assms(1) assms(2) assms(3) cblinfun_of_mat_minusOp' 
-        cblinfun_of_mat_uminusOp' diff_zero mat_of_cblinfun_zero' minus_add_minus_mat
+    by (smt add.inverse_neutral assms(1) assms(2) assms(3) cblinfun_of_mat_minusOp 
+        cblinfun_of_mat_uminusOp diff_zero mat_of_cblinfun_zero minus_add_minus_mat
         minus_add_uminus_mat minus_carrier_mat minus_r_inv_mat right_add_zero_mat 
         uminus_carrier_mat zero_carrier_mat) 
 qed
@@ -2228,7 +2205,7 @@ proof -
       by simp
     have c2: "vec_of_onb_enum v \<in> carrier_vec nA"
       by (metis (mono_tags, hide_lams) add.commute carrier_vec_dim_vec index_add_vec(2) 
-          index_zero_vec(2) nA_def vec_of_onb_enum_add vec_of_onb_enum_inverse)      
+          index_zero_vec(2) nA_def vec_of_onb_enum_add onb_enum_of_vec_inverse')      
     have "(M * N) *\<^sub>v vec_of_onb_enum v = M *\<^sub>v (N *\<^sub>v vec_of_onb_enum v)"
       using Matrix.assoc_mult_mat_vec a1 a2 c2 by blast      
     hence "(onb_enum_of_vec ((M * N) *\<^sub>v vec_of_onb_enum v)::'c)
@@ -2291,7 +2268,7 @@ proof-
   define u::'a where "u = onb_enum_of_vec x"
   have b2: "x = vec_of_onb_enum u"
     unfolding u_def 
-    using vec_of_onb_enum_inverse
+    using onb_enum_of_vec_inverse
     by (simp add: a2 nA_def)
   have "vec_of_onb_enum (F *\<^sub>V u) = mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u"
     by (simp add: mat_of_cblinfun_description)
@@ -2312,19 +2289,19 @@ lemma mat_of_cblinfun_adjoint:
     and "nB == canonical_basis_length TYPE('b::onb_enum)" 
   fixes M:: "complex mat"
   assumes "M \<in> carrier_mat nB nA"
-  shows "((cblinfun_of_mat (adjoint_mat M)) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
+  shows "((cblinfun_of_mat (mat_adjoint M)) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
        = ((cblinfun_of_mat M) :: 'a \<Rightarrow>\<^sub>C\<^sub>L'b)*"
 proof (rule adjoint_D)
-  show "\<langle>cblinfun_of_mat (adjoint_mat M) *\<^sub>V x, y\<rangle> =
+  show "\<langle>cblinfun_of_mat (mat_adjoint M) *\<^sub>V x, y\<rangle> =
            \<langle>x, cblinfun_of_mat M *\<^sub>V y\<rangle>"
     for x::'b and y::'a
   proof-
     define u where "u = vec_of_onb_enum x"
     define v where "v = vec_of_onb_enum y"
-    have c1: "vec_of_onb_enum ((cblinfun_of_mat (adjoint_mat M) *\<^sub>V x)::'a)
-          = (adjoint_mat M) *\<^sub>v u"
+    have c1: "vec_of_onb_enum ((cblinfun_of_mat (mat_adjoint M) *\<^sub>V x)::'a)
+          = (mat_adjoint M) *\<^sub>v u"
       unfolding u_def
-      by (metis adjoint_mat_def assms(3) cblinfun_of_mat_inverse map_carrier_mat 
+      by (metis mat_adjoint_def' assms(3) cblinfun_of_mat_inverse map_carrier_mat 
           mat_of_cblinfun_description nA_def nB_def transpose_carrier_mat)
     have c2: "(vec_of_onb_enum ((cblinfun_of_mat M *\<^sub>V y)::'b))
         = M *\<^sub>v v"
@@ -2335,15 +2312,15 @@ proof (rule adjoint_D)
     have c4: "dim_vec u = nB"
       unfolding u_def nB_def vec_of_onb_enum_def
       by (simp add: canonical_basis_length_eq)
-    have "v \<bullet>c ((adjoint_mat M) *\<^sub>v u) = (M *\<^sub>v v) \<bullet>c u"
+    have "v \<bullet>c ((mat_adjoint M) *\<^sub>v u) = (M *\<^sub>v v) \<bullet>c u"
       using c3 c4 cscalar_prod_adjoint assms(3) by blast      
-    hence "v \<bullet>c (vec_of_onb_enum ((cblinfun_of_mat (adjoint_mat M) *\<^sub>V x)::'a))
+    hence "v \<bullet>c (vec_of_onb_enum ((cblinfun_of_mat (mat_adjoint M) *\<^sub>V x)::'a))
         = (vec_of_onb_enum ((cblinfun_of_mat M *\<^sub>V y)::'b)) \<bullet>c u"
       using c1 c2 by simp
-    thus "\<langle>cblinfun_of_mat (adjoint_mat M) *\<^sub>V x, y\<rangle> =
+    thus "\<langle>cblinfun_of_mat (mat_adjoint M) *\<^sub>V x, y\<rangle> =
           \<langle>x, cblinfun_of_mat M *\<^sub>V y\<rangle>"
       unfolding u_def v_def
-      by (simp add: cinner_ell2_code)      
+      by (simp add: cscalar_prod_cinner)      
   qed
 qed
 
@@ -2388,7 +2365,7 @@ proof-
 qed
 
 
-lemma mat_of_cblinfun_classical_operator_inj_option:
+lemma mat_of_cblinfun_classical_operator:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
   (* assumes r1: "inj_option f"  *)
   shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
@@ -2400,7 +2377,7 @@ proof-
   define BasisB where "BasisB = (canonical_basis::'b ell2 list)"
   have "mat_of_cblinfun (classical_operator f) \<in> carrier_mat nB nA"
     unfolding nA_def nB_def
-    by (metis cblinfun_of_mat_minusOp' diff_zero mat_of_cblinfun_zero' minus_carrier_mat 
+    by (metis cblinfun_of_mat_minusOp diff_zero mat_of_cblinfun_zero minus_carrier_mat 
         zero_carrier_mat)    
   moreover have "nA = CARD ('a)"
     unfolding nA_def
@@ -2679,259 +2656,39 @@ lemma mat_of_cblinfun_scaleR:
   "mat_of_cblinfun ((a::real) *\<^sub>R F) = (complex_of_real a) \<cdot>\<^sub>m (mat_of_cblinfun F)"
   unfolding scaleR_scaleC by (rule mat_of_cblinfun_scalarMult)
 
-(* TODO: rename \<rightarrow> mat_of_cblinfun_adjoint *)
-lemma cblinfun_of_mat_adjoint:
-  "mat_of_cblinfun (F*) = adjoint_mat (mat_of_cblinfun F)"
+lemma mat_of_cblinfun_adjoint':
+  "mat_of_cblinfun (F*) = mat_adjoint (mat_of_cblinfun F)"
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
 proof -
   define nA where "nA = canonical_basis_length TYPE('a::onb_enum)" 
   define nB where "nB = canonical_basis_length TYPE('b::onb_enum)" 
   define M  where "M = mat_of_cblinfun F"
   have b1: "M \<in> carrier_mat nB nA"
-    by (metis M_def add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero'
+    by (metis M_def add.right_neutral add_carrier_mat mat_of_cblinfun_plus mat_of_cblinfun_zero
         nA_def nB_def zero_carrier_mat)
-  hence b2: "adjoint_mat M \<in> carrier_mat nA nB"
-    unfolding adjoint_mat_def
+  hence b2: "mat_adjoint M \<in> carrier_mat nA nB"
+    unfolding mat_adjoint_def'
     by simp
   hence "((cblinfun_of_mat M)::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum)* 
-  = ((cblinfun_of_mat (adjoint_mat M)):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  = ((cblinfun_of_mat (mat_adjoint M)):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
     using b1 mat_of_cblinfun_adjoint nA_def nB_def by metis
   hence "((cblinfun_of_mat (mat_of_cblinfun F))::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum)* 
-  = ((cblinfun_of_mat (adjoint_mat (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  = ((cblinfun_of_mat (mat_adjoint (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
     unfolding M_def by simp
   moreover have "((cblinfun_of_mat (mat_of_cblinfun F))::'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum) = F"
     by (simp add: mat_of_cblinfun_inverse)    
-  ultimately have "F*  = ((cblinfun_of_mat (adjoint_mat (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  ultimately have "F*  = ((cblinfun_of_mat (mat_adjoint (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
     by simp
-  hence "mat_of_cblinfun (F*) = mat_of_cblinfun ((cblinfun_of_mat (adjoint_mat (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  hence "mat_of_cblinfun (F*) = mat_of_cblinfun ((cblinfun_of_mat (mat_adjoint (mat_of_cblinfun F))):: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
     by simp
-  also have "\<dots> = adjoint_mat (mat_of_cblinfun F)"
-    using b2 cblinfun_of_mat_inverse[where M = "adjoint_mat (mat_of_cblinfun F)"]
+  also have "\<dots> = mat_adjoint (mat_of_cblinfun F)"
+    using b2 cblinfun_of_mat_inverse[where M = "mat_adjoint (mat_of_cblinfun F)"]
     by (metis M_def nA_def nB_def)
   finally show ?thesis .
 qed
 
 
 subsubsection\<open>Gram Schmidt sub\<close>
-
-(* TODO: Move to JNF_Missing *)
-definition "vec_is_zero n v = (\<forall>i<n. v $ i = 0)"
-
-(* TODO: Move to JNF_Missing *)
-lemma vec_is_zero: "dim_vec v = n \<Longrightarrow> vec_is_zero n v \<longleftrightarrow> v = 0\<^sub>v n"
-  unfolding vec_is_zero_def apply auto
-  by (metis index_zero_vec(1))
-
-(* TODO: Move to JNF_Missing *)
-fun gram_schmidt_sub0
-  where "gram_schmidt_sub0 n us [] = us"
-  | "gram_schmidt_sub0 n us (w # ws) =
-     (let w' = adjuster n w us + w in
-      if vec_is_zero n w' then gram_schmidt_sub0 n us ws
-                          else gram_schmidt_sub0 n (w' # us) ws)"
-
-(* TODO: Move to JNF_Missing *)
-lemma (in cof_vec_space) adjuster_already_in_span:
-  assumes "w \<in> carrier_vec n"
-  assumes us_carrier: "set us \<subseteq> carrier_vec n"
-  assumes "corthogonal us"
-  assumes "w \<in> span (set us)"
-  shows "adjuster n w us + w = 0\<^sub>v n"
-proof -
-  define v U where "v = adjuster n w us + w" and "U = set us"
-  have span: "v \<in> span U"
-    unfolding v_def U_def
-    apply (rule adjust_preserves_span[THEN iffD1])
-    using assms corthogonal_distinct by simp_all
-  have v_carrier: "v \<in> carrier_vec n"
-    by (simp add: v_def assms corthogonal_distinct)
-  have "v \<bullet>c us!i = 0" if "i < length us" for i
-    unfolding v_def
-    apply (rule adjust_zero)
-    using that assms by simp_all
-  hence "v \<bullet>c u = 0" if "u \<in> U" for u
-    by (metis assms(3) U_def corthogonal_distinct distinct_Ex1 that)
-  hence ortho: "u \<bullet>c v = 0" if "u \<in> U" for u
-    apply (subst conjugate_zero_iff[symmetric])
-    apply (subst conjugate_vec_sprod_comm)
-    using that us_carrier v_carrier apply (auto simp: U_def)[2]
-    apply (subst conjugate_conjugate_sprod)
-    using that us_carrier v_carrier by (auto simp: U_def)
-  from span obtain a where v: "lincomb a U = v"
-    apply atomize_elim apply (rule finite_in_span[simplified])
-    unfolding U_def using us_carrier by auto
-  have "v \<bullet>c v = (\<Sum>u\<in>U. (a u \<cdot>\<^sub>v u) \<bullet>c v)"
-    apply (subst v[symmetric])
-    unfolding lincomb_def
-    apply (subst finsum_scalar_prod_sum)
-    using U_def span us_carrier by auto
-  also have "\<dots> = (\<Sum>u\<in>U. a u * (u \<bullet>c v))"
-    using U_def assms(1) in_mono us_carrier v_def by fastforce
-  also have "\<dots> = (\<Sum>u\<in>U. a u * conjugate 0)"
-    apply (rule sum.cong, simp)
-    using span span_closed U_def us_carrier ortho by auto
-  also have "\<dots> = 0"
-    by auto
-  finally have "v \<bullet>c v = 0"
-    by -
-  thus "v = 0\<^sub>v n"
-    using U_def conjugate_square_eq_0_vec span span_closed us_carrier by blast
-qed
-
-
-(* Following closely Gram_Schmidt.gram_schmidt_sub_result in Jordan_Normal_Form *)
-(* TODO: Move to JNF_Missing *)
-lemma (in cof_vec_space) gram_schmidt_sub0_result:
-  assumes "gram_schmidt_sub0 n us ws = us'"
-    and "set ws \<subseteq> carrier_vec n"
-    and "set us \<subseteq> carrier_vec n"
-    and "distinct us"
-    and "~ lin_dep (set us)"
-    and "corthogonal us"
-  shows "set us' \<subseteq> carrier_vec n \<and>
-         distinct us' \<and>
-         corthogonal us' \<and>
-         span (set (us @ ws)) = span (set us')"  
-  using assms
-proof (induct ws arbitrary: us us')
-  case (Cons w ws)
-  show ?case
-  proof (cases "w \<in> span (set us)")
-    case False
-    let ?v = "adjuster n w us"
-    have wW[simp]: "set (w#ws) \<subseteq> carrier_vec n" using Cons by simp
-    hence W[simp]: "set ws \<subseteq> carrier_vec n"
-      and w[simp]: "w : carrier_vec n" by auto
-    have U[simp]: "set us \<subseteq> carrier_vec n" using Cons by simp
-    have UW: "set (us@ws) \<subseteq> carrier_vec n" by simp
-    have wU: "set (w#us) \<subseteq> carrier_vec n" by simp
-        (* have dist: "distinct (us @ w # ws)" using Cons by simp *)
-    have dist_U: "distinct us" using Cons by simp
-        (* and dist_W: "distinct ws" *)
-        (* and dist_UW: "distinct (us @ ws)" *)
-    have w_U: "w \<notin> set us" using False using span_mem by auto
-        (* and w_W: "w \<notin> set ws" *)
-        (* and w_UW: "w \<notin> set (us @ ws)" *)
-        (* have ind: "~ lin_dep (set (us @ w # ws))" using Cons by simp *)
-    have ind_U: "~ lin_dep (set us)"
-      using Cons by simp
-        (* and ind_W: "~ lin_dep (set ws)" *)
-    have ind_wU: "~ lin_dep (insert w (set us))"
-      apply (subst lin_dep_iff_in_span[simplified, symmetric])
-      using w_U ind_U False by auto
-    thm lin_dep_iff_in_span[simplified, symmetric]
-    have corth: "corthogonal us" using Cons by simp
-    have "?v + w \<noteq> 0\<^sub>v n"
-      by (simp add: False adjust_nonzero dist_U)
-    hence "\<not> vec_is_zero n (?v + w)"
-      by (simp add: vec_is_zero)
-    hence U'def: "gram_schmidt_sub0 n ((?v + w)#us) ws = us'" 
-      using Cons by simp
-    have v: "?v : carrier_vec n" using dist_U by auto
-    hence vw: "?v + w : carrier_vec n" by auto
-    hence vwU: "set ((?v + w) # us) \<subseteq> carrier_vec n" by auto
-    have vsU: "?v : span (set us)" 
-      apply (rule adjuster_in_span[OF w])
-      using Cons by simp_all
-    hence vsUW: "?v : span (set (us @ ws))"
-      using span_is_monotone[of "set us" "set (us@ws)"] by auto
-    have wsU: "w \<notin> span (set us)"
-      using lin_dep_iff_in_span[OF U ind_U w w_U] ind_wU by auto
-    hence vwU: "?v + w \<notin> span (set us)" using adjust_not_in_span[OF w U dist_U] by auto
-
-    have span: "?v + w \<notin> span (set us)" 
-      apply (subst span_add[symmetric])
-      by (simp_all add: False vsU)
-    hence vwUS: "?v + w \<notin> set us" using span_mem by auto
-        (*     hence ind2: "~ lin_dep (set (((?v + w) # us) @ ws))"
-      using lin_dep_iff_in_span[OF UW ind_UW vw] span by auto *)
-
-    have vwU: "set ((?v + w) # us) \<subseteq> carrier_vec n" 
-      using U w vw by simp
-    have dist2: "distinct (((?v + w) # us))" 
-      using vwUS
-      by (simp add: dist_U)
-
-    have orth2: "corthogonal ((adjuster n w us + w) # us)"
-      using adjust_orthogonal[OF U corth w wsU].
-
-    have ind_vwU: "~ lin_dep (set ((adjuster n w us + w) # us))"
-      apply simp
-      apply (subst lin_dep_iff_in_span[simplified, symmetric])
-      by (simp_all add: ind_U vw vwUS span)
-
-    have span_UwW_U': "span (set (us @ w # ws)) = span (set us')"
-      using Cons(1)[OF U'def W vwU dist2 ind_vwU orth2] 
-      using span_Un[OF vwU wU gram_schmidt_sub_span[OF w U dist_U] W W refl]
-      by simp
-
-    show ?thesis
-      apply (intro conjI)
-      using Cons(1)[OF U'def W vwU dist2 ind_vwU orth2] span_UwW_U' by simp_all
-  next
-    case True
-
-    let ?v = "adjuster n w us"
-    have "?v + w = 0\<^sub>v n"
-      apply (rule adjuster_already_in_span)
-      using True Cons by auto
-    hence "vec_is_zero n (?v + w)"
-      by (simp add: vec_is_zero)
-    hence U'_def: "us' = gram_schmidt_sub0 n us ws"
-      using Cons by simp
-    have span: "span (set (us @ w # ws)) = span (set us')"
-    proof -
-      have wU_U: "span (set (w # us)) = span (set us)"
-        apply (subst already_in_span[OF _ True, simplified])
-        using Cons by auto
-      have "span (set (us @ w # ws)) = span (set (w # us) \<union> set ws)"
-        by simp
-      also have "\<dots> = span (set us \<union> set ws)"
-        apply (rule span_Un) using wU_U Cons by auto
-      also have "\<dots> = local.span (set us')"
-        using Cons U'_def by auto
-      finally show ?thesis
-        by -
-    qed
-    moreover have "set us' \<subseteq> carrier_vec n \<and> distinct us' \<and> corthogonal us'"
-      unfolding U'_def using Cons by simp
-    ultimately show ?thesis
-      by auto
-  qed
-qed simp
-
-(* TODO: Move to JNF_Missing *)
-definition "gram_schmidt0 n ws = gram_schmidt_sub0 n [] ws"
-
-(* TODO: Move to JNF_Missing *)
-lemma (in cof_vec_space) gram_schmidt0_result:
-  fixes ws
-  defines "us' \<equiv> gram_schmidt0 n ws"
-  assumes ws: "set ws \<subseteq> carrier_vec n"
-  shows "set us' \<subseteq> carrier_vec n"        (is ?thesis1)
-    and "distinct us'"                    (is ?thesis2)
-    and "corthogonal us'"                 (is ?thesis3)
-    and "span (set ws) = span (set us')"  (is ?thesis4)
-proof -
-  have carrier_empty: "set [] \<subseteq> carrier_vec n" by auto
-  have distinct_empty: "distinct []" by simp
-  have indep_empty: "lin_indpt (set [])"
-    using basis_def subset_li_is_li unit_vecs_basis by auto
-  have ortho_empty: "corthogonal []" by auto
-  note gram_schmidt_sub0_result' = gram_schmidt_sub0_result
-    [OF us'_def[symmetric, THEN meta_eq_to_obj_eq, unfolded gram_schmidt0_def] ws
-      carrier_empty distinct_empty indep_empty ortho_empty]
-  thus ?thesis1 ?thesis2 ?thesis3 ?thesis4
-    by auto
-qed
-
-(* (* TODO: More to Preliminaries *)
-lemma (in module) lin_indep_empty: "\<not> lin_dep {}"
-  unfolding lin_dep_def by auto
- *)
-
-(* TODO: Move to JNF_Missing *)
-locale complex_vec_space = cof_vec_space n "TYPE(complex)" for n :: nat
 
 lemma (in complex_vec_space) module_span_cspan:
   fixes X :: "'a::onb_enum set"
@@ -2955,7 +2712,7 @@ proof -
       (is "_ = ?sum")
       by simp
     have xx: "vec_of_onb_enum (onb_enum_of_vec x :: 'a) = x"
-      apply (rule vec_of_onb_enum_inverse)
+      apply (rule onb_enum_of_vec_inverse')
       using assms carrier carrier_vecD insert.prems by auto
     have "lincomb c (insert x F) = c x \<cdot>\<^sub>v x + lincomb c F"
       apply (rule lincomb_insert2)
@@ -3069,11 +2826,6 @@ proof (transfer fixing: n ws onb_enum)
               = closure (cspan (set (map onb_enum ws)))".
 qed
 
-(* TODO: To preliminaries *)
-fun index_of where
-  "index_of x [] = (0::nat)"
-| "index_of x (y#ys) = (if x=y then 0 else (index_of x ys + 1))"
-
 
 lemma index_of_length: "index_of x y \<le> length y"
 proof(induction y)
@@ -3084,51 +2836,6 @@ next
   thus ?case by auto
 qed
 
-lemma index_of_bound: 
-  assumes "y \<noteq> []" and "x \<in> set y"
-  shows "index_of x y < length y"
-  using assms proof(induction y arbitrary: x)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a y)
-  show ?case 
-  proof(cases "a = x")
-    case True
-    thus ?thesis by auto
-  next
-    case False
-    thus ?thesis apply auto
-      using Cons.IH Cons.prems(2) by fastforce
-  qed
-qed
-
-(* TODO: To preliminaries *)
-definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
-
-(* TODO To preliminaries *)
-lemma index_of_correct:
-  assumes "x \<in> set y"
-  shows "y ! index_of x y = x"
-  using assms 
-proof(induction y arbitrary: x)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a y)
-  thus ?case by auto
-qed
-
-(* TODO To preliminaries *)
-lemma enum_idx_correct: 
-  "Enum.enum ! enum_idx i = i"
-proof-
-  have "i \<in> set enum_class.enum"
-    using UNIV_enum by blast 
-  thus ?thesis
-    unfolding enum_idx_def
-    using index_of_correct by metis
-qed
 
 lemma vec_of_onb_enum_ket:
   "vec_of_onb_enum (ket i) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)" 
@@ -3240,26 +2947,6 @@ proof-
     by auto
 qed
 
-(* TODO: To preliminaries *)
-lemma enum_idx_bound: "enum_idx x < length (Enum.enum :: 'a list)" for x :: "'a::enum"
-proof-
-  have p1: "False"
-    if "(Enum.enum :: 'a list) = []"
-  proof-
-    have "(UNIV::'a set) = set ([]::'a list)"
-      using that UNIV_enum by metis
-    also have "\<dots> = {}"
-      by blast
-    finally have "(UNIV::'a set) = {}".
-    thus ?thesis by simp
-  qed    
-  have p2: "x \<in> set (Enum.enum :: 'a list)"
-    using UNIV_enum by auto
-  show ?thesis
-    unfolding enum_idx_def apply (rule index_of_bound[where x = x 
-          and y = "(Enum.enum :: 'a list)"])
-    using p1 apply auto using p2 by auto
-qed
 
 lemma vec_of_basis_vector:
   assumes "i < canonical_basis_length TYPE('a)"
@@ -3351,37 +3038,8 @@ proof-
     unfolding canonical_basis_ell2_def using p1 by auto    
 qed
 
-(* TODO move to Complex_Vector *)
-lemma cspan_singleton:
-  fixes x y::"'a::complex_vector"
-  assumes a1: "x \<in> cspan {y}"
-  shows "\<exists>\<alpha>. x = \<alpha> *\<^sub>C y"
-proof-
-  have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
-    using a1 using complex_vector.span_explicit[where b = "{y}"]
-    by (smt  mem_Collect_eq)
-  then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
-    by blast
-  show ?thesis
-  proof(cases "t = {}")
-    case True
-    hence "(\<Sum>j\<in>t. r j *\<^sub>C j) = 0"
-      using b2
-      by simp
-    thus ?thesis using b1 by simp
-  next
-    case False
-    hence "t = {y}"
-      using b3 by auto
-    moreover have "(\<Sum>j\<in>{y}. r j *\<^sub>C j) = r y *\<^sub>C y"
-      by auto
-    ultimately show  ?thesis using b1 by blast
-  qed
-qed
 
-(* TODO better name *)
-(* TODO: Can probably be generalized to "'a::{one_dim,basis_enum}" *)
-lemma times_ell2_code: 
+lemma vec_of_onb_enum_times: 
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_onb_enum (\<psi> * \<phi>)
    = vec_of_list [vec_index (vec_of_onb_enum \<psi>) 0 * vec_index (vec_of_onb_enum \<phi>) 0]"
@@ -3512,9 +3170,7 @@ proof-
         vec_of_list [vec_of_onb_enum \<psi> $ 0 * vec_of_onb_enum \<phi> $ 0]".
 qed
 
-(* TODO better name *)
-(* TODO: Can probably be generalized to "'a::{one_dim,basis_enum}" *)
-lemma one_ell2_code: "vec_of_onb_enum (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
+lemma vec_of_onb_enum_1: "vec_of_onb_enum (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
 proof-
   have "\<exists>i. i\<in>(UNIV::'a set)"
     by blast
@@ -3727,275 +3383,12 @@ proof-
   also have "mat_of_cblinfun
    (cblinfun_of_mat (mat_of_cols nA [vec_of_onb_enum \<psi>]) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a) =
                      mat_of_cols nA [vec_of_onb_enum \<psi>]"
-    apply (rule cblinfun_of_mat_inverse[where 'a = 'b and 'b = 'a
-          and M = "mat_of_cols nA [vec_of_onb_enum \<psi>]" and nA = nB and nB = nA])
+    apply (rule cblinfun_of_mat_inverse)
     using carrier_mat1 nA_def nB_def by auto
   finally show ?thesis 
     unfolding nA_def by auto
 qed
 
-(* TODO Move to Complex_Inner *)
-lemma Span_insert:
-  assumes "finite (S::'a'::complex_inner set)"
-  shows "space_as_set (Span (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (Span S)}"
-proof -
-  have "closure (cspan (insert a S)) = cspan (insert a S)"
-    by (metis assms finite_insert span_finite_dim)
-  thus ?thesis
-    by (simp add: Span.rep_eq assms complex_vector.span_insert span_finite_dim)
-qed
-
-(* TODO Move to Complex_Inner *)
-lemma closed_subspace_cspan_finite:
-  assumes "finite (S::'a::chilbert_space set)"
-  shows "closed_subspace (cspan S)"
-  unfolding closed_subspace_def apply auto
-  by (simp add: assms closed_finite_dim)
-
-(* TODO Move to Complex_Inner *)
-lemma projection_singleton:
-  assumes "(a::'a::chilbert_space) \<noteq> 0"
-  shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-proof-
-  define p where "p u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" for u
-  define M where "M = cspan {a}"
-  have "closed_subspace M"
-    unfolding M_def 
-    using closed_subspace_cspan_finite
-    by (simp add: closed_subspace_cspan_finite)
-  moreover have "u - p u \<in> orthogonal_complement M"
-    unfolding p_def M_def orthogonal_complement_def
-  proof auto
-    fix y
-    assume "y \<in> cspan {a}" 
-    hence "\<exists>c. y = c *\<^sub>C a"
-      by (simp add: cspan_singleton)
-    then obtain c where c_def: "y = c *\<^sub>C a"
-      by blast
-    have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 
-          \<langle>u, c *\<^sub>C a\<rangle> - \<langle>(\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle>"
-      using cinner_diff_left by blast    
-    also have "\<dots> = 0"
-      by simp
-    finally have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 0".
-    thus "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, y\<rangle> = 0"
-      using c_def by simp
-  qed
-  moreover have "p u \<in> M"
-    unfolding p_def M_def
-    by (simp add: complex_vector.span_base complex_vector.span_scale)
-  ultimately have "projection M u = p u"
-    using projection_uniq[where x = "p u" and h = u and M = M] by blast
-  thus ?thesis unfolding M_def p_def.
-qed
-
-
-(* TODO Move to Complex_Inner *)
-lemma ortho_cspan:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
-    and a3: "x \<in> cspan S"
-  shows "\<langle>a, x\<rangle> = 0"
-proof-
-  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
-    using complex_vector.span_explicit
-    by (smt a3 mem_Collect_eq)
-  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "(\<Sum>a\<in>t. r a *\<^sub>C a) = x"
-    by blast
-  have x1: "\<langle>a, i\<rangle> = 0"
-    if "i\<in>t" for i
-    using b2 a1 that by blast
-  have  "\<langle>a, x\<rangle> = \<langle>a, (\<Sum>i\<in>t. r i *\<^sub>C i)\<rangle>"
-    by (simp add: b3) 
-  also have  "\<dots> = (\<Sum>i\<in>t. r i *\<^sub>C \<langle>a, i\<rangle>)"
-    by (simp add: cinner_sum_right)
-  also have  "\<dots> = 0"
-    using x1 by simp
-  finally show ?thesis.
-qed
-
-
-(* TODO Move to Complex_Inner *)
-lemma projection_insert:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
-  shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S} u
-        = projection (cspan {a}) u
-        + projection (cspan S) u"
-proof-
-  define p where "p u = projection (cspan {a}) u
-                      + projection (cspan S) u" for u
-  define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
-  have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-    by (metis complex_vector.scale_zero_right complex_vector.span_empty complex_vector.span_insert_0 
-        projection_singleton projection_zero_subspace)
-  have "closed_subspace M"
-    unfolding M_def
-    by (metis (no_types) a2 closed_subspace_cspan_finite complex_vector.span_insert 
-        finite_insert) 
-  moreover have "p u \<in> M"
-    unfolding p_def M_def 
-  proof auto 
-    define k where "k = \<langle>a, u\<rangle>/\<langle>a, a\<rangle>"
-    have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-      by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)      
-    hence "projection (cspan {a}) u +
-          projection (cspan S) u - k *\<^sub>C a
-          \<in> cspan S"
-      unfolding k_def
-      by (simp add: a2 closed_subspace_cspan_finite projection_intro2)      
-    thus "\<exists>k. projection (cspan {a}) u +
-              projection (cspan S) u - k *\<^sub>C a
-              \<in> cspan S"
-      by blast
-  qed
-  moreover have "u - p u \<in> orthogonal_complement M"
-    unfolding orthogonal_complement_def
-  proof auto
-    fix y
-    assume b1: "y \<in> M"
-    hence "\<exists>k. y - k *\<^sub>C a \<in> cspan S"
-      unfolding M_def by simp
-    then obtain k where k_def: "y - k *\<^sub>C a \<in> cspan S"
-      by blast
-    have "u - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
-      by (simp add: a2 closed_subspace_cspan_finite projection_intro1)
-    moreover have "projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
-      unfolding orthogonal_complement_def
-    proof auto
-      fix y
-      assume "y \<in> cspan S"
-      have "\<langle>a, y\<rangle> = 0"
-        using ortho_cspan
-          \<open>y \<in> cspan S\<close> a1 a2 by auto
-      thus "\<langle>projection (cspan {a}) u, y\<rangle> = 0"
-        by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)         
-    qed
-    ultimately have "(u - projection (cspan S) u)
-                    - projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
-      using Complex_Vector_Spaces.complex_vector.span_diff
-      by (smt cinner_diff_left diff_zero orthogonal_complement_D1 orthogonal_complement_I2)
-    hence "u - projection (cspan {a}) u 
-            - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
-      by (simp add: cancel_ab_semigroup_add_class.diff_right_commute)
-    have "\<langle>u - projection (cspan {a}) u 
-         - projection (cspan S) u, y - k *\<^sub>C a\<rangle> = 0"
-      using \<open>u - projection (cspan {a}) u - projection (cspan S) u \<in> 
-        orthogonal_complement (cspan S)\<close> k_def orthogonal_complement_D1 by auto      
-    moreover have "\<langle>u - projection (cspan {a}) u 
-         - projection (cspan S) u, k *\<^sub>C a\<rangle> = 0"
-    proof-
-      have "u - projection (cspan {a}) u \<in> orthogonal_complement (cspan {a})"
-        by (simp add: closed_subspace_cspan_finite projection_intro1)
-      moreover have "projection (cspan S) u \<in> orthogonal_complement (cspan {a})"
-        unfolding orthogonal_complement_def
-      proof auto
-        fix y
-        assume "y \<in> cspan {a}"
-        hence "\<exists>k. y = k *\<^sub>C a"
-          by (simp add: cspan_singleton)
-        then obtain k where ky:"y = k *\<^sub>C a"
-          by blast
-        have "projection (cspan S) u \<in> cspan S"
-          by (simp add: a2 closed_subspace_cspan_finite projection_intro2)          
-        hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
-          by (meson a1 a2 ortho_cspan orthogonal_complement_D2 orthogonal_complement_I2)          
-        thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
-          using ky
-          by simp
-      qed
-      moreover have "complex_vector.subspace ( orthogonal_complement (cspan {a}))"
-        by (simp add: closed_subspace.subspace closed_subspace_cspan_finite)
-
-      ultimately have "(u - projection (cspan {a}) u) - projection (cspan S) u
-                   \<in> orthogonal_complement (cspan {a})"
-        by (smt complex_vector.subspace_diff)
-      thus ?thesis
-        using complex_vector.span_base orthogonal_complement_D1 by fastforce 
-    qed
-    ultimately have "\<langle>u - projection (cspan {a}) u 
-         - projection (cspan S) u, y\<rangle> = 0"
-      by (metis cinner_right_distrib class_semiring.add.l_one 
-          class_semiring.add.one_closed diff_add_cancel)      
-    moreover have "\<langle>u - p u, y\<rangle> =
-      \<langle>u - projection (cspan {a}) u 
-         - projection (cspan S) u, y\<rangle>"
-      unfolding p_def
-      by (simp add: diff_diff_add) 
-    ultimately show "\<langle>u - p u, y\<rangle> = 0" by simp
-  qed
-  ultimately have "projection M u = p u"
-    using projection_uniq[where x = "p u" and h = u and M = M] by blast
-  thus ?thesis 
-    unfolding p_def M_def by auto
-qed
-
-(* TODO: replace by a more general lemma that show Proj (A\<union>B) = Proj A + Proj B
-         under orthogonality assumptions *)
-(* TODO: move to Complex_Inner *)
-lemma Proj_Span_insert:
-  fixes S :: "'a::{onb_enum, chilbert_space} list"
-    and a::'a 
-  assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
-  shows "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))"
-proof-
-  define d where "d = canonical_basis_length TYPE('a)"
-  hence IH': "is_ortho_set (set S)"
-    using assms is_onb_delete by auto    
-  have IH0: "distinct S"
-    using a2 by auto   
-  have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: span_finite_dim)    
-  have "cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    using complex_vector.span_insert[where a = a and S = "(set S)"].
-  moreover have "finite (insert a (set S))"
-    by simp    
-  ultimately have "closure (cspan (insert a (set S))) = 
-        cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis complex_vector.span_span span_finite_dim)
-  hence s2: "space_as_set (Abs_clinear_space (closure (cspan (insert a (set S))))) 
-        = cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis Span.rep_eq space_as_set_inverse)
-  have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: span_finite_dim)    
-  have ios: "is_ortho_set (set S)"
-    by (simp add: IH')    
-  have aS: "a \<notin> set S"
-    using a2 by auto
-  have "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
-        = projection (cspan {a}) u
-        + projection (cspan (set S)) u"
-    for u   
-    apply(rule projection_insert)
-    using ios unfolding is_ortho_set_def
-     apply (metis Set.set_insert Un_insert_left a1 aS insertI1 insert_union is_ortho_set_def list.simps(15))
-    using aS
-    by simp
-  have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
-        = projection (cspan {a}) u + projection (cspan (set S)) u"
-    for u
-    by (simp add: \<open>\<And>u. projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
-     = projection (cspan {a}) u + projection (cspan (set S)) u\<close>)
-  have "Proj (Span (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)})"
-    unfolding Proj_def Span_def id_def apply auto
-    by (metis \<open>cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}\<close> 
-        complex_vector.span_span s2)
-  also have "\<dots> = (cBlinfun (\<lambda>u. projection (cspan {a}) u
-                   + projection (cspan (set S)) u))"
-    using s1
-    by presburger 
-  also have "\<dots> = cBlinfun (\<lambda>u. projection (cspan {a}) u)
-               +  cBlinfun (\<lambda>u. projection (cspan (set S)) u)"
-    unfolding plus_cblinfun_def apply auto
-    by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq Span.rep_eq
-        cblinfun_apply_inverse finite.emptyI finite_list span_finite_dim)
-  also have "\<dots> = Proj (Abs_clinear_space (cspan {a}))
-               +  Proj (Abs_clinear_space (cspan (set S)))"
-    unfolding Proj_def apply auto
-    by (metis Span.rep_eq \<open>closure (cspan (set S)) = cspan (set S)\<close> finite.emptyI 
-        finite.insertI space_as_set_inverse span_finite_dim)
-  also have "\<dots> = Proj (Span {a}) + Proj (Span (set S))"
-    by (simp add: Span.abs_eq span_finite_dim)
-  finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
-qed
 
 
 lemma mat_of_cblinfun_proj:
@@ -4016,10 +3409,10 @@ proof(cases "a = 0")
     by (simp add: projection_zero_subspace)
   hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
     by (metis q1 cancel_comm_monoid_add_class.diff_cancel 
-        cblinfun_of_mat_minusOp' minus_r_inv_mat)
+        cblinfun_of_mat_minusOp minus_r_inv_mat)
   moreover have "norm2 = 0"
     unfolding norm2_def
-    by (metis Bounded_Operators_Matrices.cinner_ell2_code True cinner_zero_left) 
+    by (metis Bounded_Operators_Matrices.cscalar_prod_cinner True cinner_zero_left) 
   ultimately show ?thesis by auto
 next
   case False
@@ -4058,15 +3451,15 @@ next
   proof-
     have norm2a: "norm2 = \<langle>a, a\<rangle>"
       unfolding norm2_def
-      by (simp add: Bounded_Operators_Matrices.cinner_ell2_code)
+      by (simp add: Bounded_Operators_Matrices.cscalar_prod_cinner)
 
     have "\<langle>a, basis ! j\<rangle> * cnj \<langle>a, basis ! i\<rangle>
         = (unit_vec d j \<bullet>c vec_of_onb_enum a) * cnj (unit_vec d i \<bullet>c vec_of_onb_enum a)"
     proof-
       have "\<langle>a, basis ! j\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a"
-        by (metis basis_def Bounded_Operators_Matrices.cinner_ell2_code d_def that(2) vec_of_basis_vector)
+        by (metis basis_def Bounded_Operators_Matrices.cscalar_prod_cinner d_def that(2) vec_of_basis_vector)
       moreover have "\<langle>a, basis ! i\<rangle> = unit_vec d i \<bullet>c vec_of_onb_enum a"
-        by (metis basis_def Bounded_Operators_Matrices.cinner_ell2_code d_def that(1) vec_of_basis_vector)
+        by (metis basis_def Bounded_Operators_Matrices.cscalar_prod_cinner d_def that(1) vec_of_basis_vector)
       ultimately show ?thesis by simp
     qed
     have "\<dots> = (vec_of_onb_enum a $ i) * cnj (vec_of_onb_enum a $ j)"
@@ -4290,14 +3683,15 @@ lemma is_ortho_set_corthogonal:
   fixes S :: "'a::onb_enum list"
   defines  "R == map vec_of_onb_enum S"
   assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
-    and a3: "0 \<notin> set S" (* TODO: redundant assumption *)
   shows    "corthogonal R"
 proof-
+  have a3: "0 \<notin> set S"
+    using a1 unfolding is_ortho_set_def by auto
   have x1: "R ! i \<bullet>c R ! j = \<langle>S ! j, S ! i\<rangle>"
     if b1: "i < length R"
       and b2: "j < length R"
     for i j
-    by (metis Bounded_Operators_Matrices.cinner_ell2_code R_def b1 b2 length_map nth_map)     
+    by (metis Bounded_Operators_Matrices.cscalar_prod_cinner R_def b1 b2 length_map nth_map)     
   have "R ! i \<bullet>c R ! j = 0"
     if b1: "i < length R"
       and b2: "j < length R"
@@ -4349,7 +3743,7 @@ proof (unfold is_ortho_set_def, intro conjI ballI impI)
     using assms unfolding corthogonal_def apply auto
     by (metis in_set_conv_nth)
   then have "\<langle>x, x\<rangle> \<noteq> 0"
-    apply (subst cinner_ell2_code)
+    apply (subst cscalar_prod_cinner)
     by simp
   then show "x \<noteq> 0"
     by auto
@@ -4359,371 +3753,9 @@ proof (unfold is_ortho_set_def, intro conjI ballI impI)
     using assms \<open>x \<in> set vs\<close> unfolding corthogonal_def apply auto
     by (metis in_set_conv_nth)
   then show "\<langle>x, y\<rangle> = 0"
-    apply (subst cinner_ell2_code)
-    by (metis cinner_commute cinner_ell2_code conjugate_complex_def conjugate_zero)
+    apply (subst cscalar_prod_cinner)
+    by (metis cinner_commute cscalar_prod_cinner conjugate_complex_def conjugate_zero)
 qed
-
-(* TODO: Move to JNF_Missing (or remove, it's unused) *)
-lemma gram_schmidt0_corthogonal:
-  assumes a1: "corthogonal R" 
-    and a2: "\<And>x. x \<in> set R \<Longrightarrow> dim_vec x = d"
-  shows "gram_schmidt0 d R = rev R"
-proof -
-  have "gram_schmidt_sub0 d U R = rev R @ U"
-    if "corthogonal ((rev U) @ R)"
-      and "\<And>x. x \<in> set U \<union> set R \<Longrightarrow> dim_vec x = d" for U
-  proof (insert that, induction R arbitrary: U)
-    case Nil
-    show ?case 
-      by auto
-  next
-    case (Cons a R)
-    have "a \<in> set (rev U @ a # R)"
-      by simp      
-    moreover have uar: "corthogonal (rev U @ a # R)"
-      by (simp add: Cons.prems(1))      
-    ultimately have \<open>a \<noteq> 0\<^sub>v d\<close>
-      unfolding corthogonal_def
-      by (metis conjugate_zero_vec in_set_conv_nth scalar_prod_right_zero zero_carrier_vec)
-    then have nonzero_a: "\<not> vec_is_zero d a"
-      by (simp add: Cons.prems(2) vec_is_zero)
-    define T where "T = rev U @ a # R"
-    have "T ! length (rev U) = a"
-      unfolding T_def
-      by (meson nth_append_length) 
-    moreover have "(T ! i \<bullet>c T ! j = 0) = (i \<noteq> j)"
-      if "i<length T"
-        and "j<length T"
-      for i j
-      using uar 
-      unfolding corthogonal_def T_def
-      apply auto
-      using T_def that(2) apply auto[1]
-      using T_def that(1) that(2) by auto     
-    moreover have "length (rev U) < length T"
-      by (simp add: T_def)
-    ultimately have "(T ! (length (rev U)) \<bullet>c T ! j = 0) = (length (rev U) \<noteq> j)"
-      if "j<length T"
-      for j
-      using that by blast    
-    hence "T ! (length (rev U)) \<bullet>c T ! j = 0"
-      if  "j<length T"
-        and "j \<noteq> length (rev U)"
-      for j
-      using that(1) that(2) by blast
-    hence "a \<bullet>c T ! j = 0"
-      if   "j < length (rev U)"
-      for j
-      using \<open>T ! length (rev U) = a\<close> that(1)
-        \<open>length (rev U) < length T\<close> dual_order.strict_trans by blast
-    moreover have "T ! j = (rev U) ! j"
-      if   "j < length (rev U)"
-      for j
-      by (smt T_def \<open>length (rev U) < length T\<close> dual_order.strict_trans list_update_append1
-          list_update_id nth_list_update_eq that)
-    ultimately have "a \<bullet>c u = 0"
-      if "u \<in> set (rev U)"
-      for u
-      by (metis in_set_conv_nth that)
-    hence "a \<bullet>c u = 0"
-      if "u \<in> set U"
-      for u
-      by (simp add: that)
-    moreover have "\<And>x. x \<in> set U \<Longrightarrow> dim_vec x = d"
-      by (simp add: Cons.prems(2))      
-    ultimately have "adjuster d a U = 0\<^sub>v d"
-    proof(induction U)
-      case Nil
-      then show ?case by simp
-    next
-      case (Cons u U)
-      moreover have "0 \<cdot>\<^sub>v u + 0\<^sub>v d = 0\<^sub>v d"
-      proof-
-        have "dim_vec u = d"
-          by (simp add: calculation(3))          
-        thus ?thesis
-          by auto 
-      qed
-      ultimately show ?case by auto
-    qed
-    hence adjuster_a: "adjuster d a U + a = a"
-      by (simp add: Cons.prems(2) carrier_vecI)      
-    have "gram_schmidt_sub0 d U (a # R) = gram_schmidt_sub0 d (a # U) R"
-      by (simp add: adjuster_a nonzero_a)
-    also have "\<dots> = rev (a # R) @ U"
-      apply (subst Cons.IH)
-      using Cons.prems by simp_all
-    finally show ?case
-      by -
-  qed
-  from this[where U="[]"] show ?thesis
-    unfolding gram_schmidt0_def using assms by auto
-qed
-
-
-
-(* TODO move to Complex_Inner *)
-instantiation complex :: basis_enum begin
-definition "canonical_basis = [1::complex]"
-definition "canonical_basis_length (_::complex itself) = 1"
-instance
-  apply intro_classes
-  unfolding canonical_basis_complex_def canonical_basis_length_complex_def
-  by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
-end
-
-(* TODO move to Complex_Inner *)
-instance complex :: one_dim
-  apply intro_classes
-  unfolding canonical_basis_complex_def is_ortho_set_def
-  by auto
-
-(* TODO move to Bounded_Op *)
-definition butterfly_def': "butterfly (s::'a::chilbert_space)
-   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
-
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)
-                                 o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)*"
-    (is "_ = ?rhs") for s :: "'b::chilbert_space"
-    using [[show_consts]]
-proof -
-  let ?isoAC = "one_dim_isom :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
-  let ?isoCA = "one_dim_isom :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
-  let ?vector = "vector_to_cblinfun :: 'b \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
-
-  have "butterfly s =
-    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector s o\<^sub>C\<^sub>L ?isoCA)*"
-    unfolding butterfly_def' one_dim_isom_vector_to_cblinfun by simp
-  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector s)*"
-    by (simp add: timesOp_assoc del: one_dim_isom_adj one_dim_isom_vector_to_cblinfun)
-  also have "\<dots> = ?rhs"
-    by simp
-  finally show ?thesis
-    by simp
-qed
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_apply: "butterfly \<psi> *\<^sub>V \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C \<psi>"
-  apply (subst butterfly_def)
-  by (simp add: times_applyOp)
-
-(* TODO move to Bounded_Op *)
-lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
-  apply transfer by simp
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_0[simp]: "butterfly 0 = 0"
-  apply (subst butterfly_def)
-  by simp
-
-
-(* TODO move to Bounded_Op *)
-lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"
-proof (cases "\<psi>=0")
-  case True
-  then show ?thesis by simp
-next
-  case False
-  show ?thesis 
-    unfolding norm_cblinfun.rep_eq
-  proof (rule onormI[OF _ False])
-    fix x 
-    show "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
-      apply (simp add: butterfly_apply power2_eq_square)
-      using norm_cauchy_schwarz[of \<psi> x]
-      by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) ordered_field_class.sign_simps(47))
-
-    show "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
-      apply (simp add: butterfly_apply power2_eq_square)
-      by (simp add: power2_norm_eq_cinner semiring_normalization_rules(29))
-  qed
-qed
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_scaleC: "butterfly (c *\<^sub>C \<psi>) = abs c ^ 2 *\<^sub>C butterfly \<psi>"
-  unfolding butterfly_def' vector_to_cblinfun_scalar_times scalar_times_adj
-  by (simp add: cnj_x_x)
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_scaleR: "butterfly (r *\<^sub>R \<psi>) = r ^ 2 *\<^sub>R butterfly \<psi>"
-  unfolding scaleR_scaleC butterfly_scaleC power2_abs cnj_x_x[symmetric]
-  unfolding power2_eq_square
-  by auto
-
-(* TODO move to Bounded_Op *)
-lemma inj_butterfly: 
-  assumes "butterfly x = butterfly y"
-  shows "\<exists>c. cmod c = 1 \<and> x = c *\<^sub>C y"
-proof (cases "x = 0")
-  case True
-  from assms have "y = 0"
-    using norm_butterfly
-    by (metis True norm_eq_zero zero_less_power2)
-  with True show ?thesis
-    apply (rule_tac exI[of _ 1])
-    by auto
-next
-  case False
-  define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
-  have "\<langle>x, x\<rangle> *\<^sub>C x = butterfly x *\<^sub>V x"
-    by (simp add: butterfly_apply)
-  also have "\<dots> = butterfly y *\<^sub>V x"
-    using assms by simp
-  also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
-    by (simp add: butterfly_apply)
-  finally have xcy: "x = c *\<^sub>C y"
-    by (simp add: c_def Complex_Vector_Spaces.eq_vector_fraction_iff)
-  have "cmod c * norm x = cmod c * norm y"
-    using assms norm_butterfly
-    by (metis norm_eq_sqrt_cinner power2_norm_eq_cinner) 
-  also have "cmod c * norm y = norm (c *\<^sub>C y)"
-    by simp
-  also have "\<dots> = norm x"
-    unfolding xcy[symmetric] by simp
-  finally have c: "cmod c = 1"
-    by (simp add: False)
-  from c xcy show ?thesis
-    by auto
-qed
-
-(* TODO move to Bounded_Op *)
-lemma isometry_vector_to_cblinfun:
-  assumes "norm x = 1"
-  shows "isometry (vector_to_cblinfun x)"
-  by (simp add: isometry_def cinner_norm_sq assms)
-
-(* TODO move to Bounded_Op *)
-lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
-  apply transfer
-  apply (rule arg_cong[where f=closure])
-  unfolding complex_vector.span_singleton
-  apply auto
-  by (smt UNIV_I complex_scaleC_def image_iff mult.right_neutral one_dim_to_complex_one one_dim_to_complex_scaleC)
-
-
-(* TODO move to Bounded_Op *)
-lemma butterfly_proj:
-  assumes "norm x = 1"
-  shows "butterfly x = proj x"
-proof -
-  define B and \<phi> :: "complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
-    where "B = butterfly x" and "\<phi> = vector_to_cblinfun x"
-  then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
-    unfolding butterfly_def' by simp
-  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = idOp"
-    by (simp add: \<phi>_def cinner_norm_sq assms)
-  have "B o\<^sub>C\<^sub>L B = \<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>*"
-    unfolding B timesOp_assoc by rule
-  also have "\<dots> = B"
-    unfolding \<phi>adj\<phi> by (simp add: B)
-  finally have idem: "B o\<^sub>C\<^sub>L B = B"
-    by -
-  have herm: "B = B*"
-    unfolding B by simp
-  from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
-    by (rule Proj_I)
-
-  have "B *\<^sub>S top = Span {x}"
-    unfolding B timesOp_assoc_subspace 
-    by (simp add: \<phi>_def isometry_vector_to_cblinfun assms range_adjoint_isometry)
-
-  with BProj show "B = proj x"
-    by simp
-qed
-
-
-(* TODO: Move to the Complex_Vector_Spaces *)
-lemma Span_empty[simp]: "Span {} = bot"
-  apply transfer
-  by simp
-
-(* TODO move to Bounded_Op *)
-lemma Proj_bot[simp]: "Proj bot = 0"
-  by (metis Bounded_Operators.timesScalarSpace_0 Proj_I isProjector0 isProjector_algebraic zero_clinear_space_def)
-
-(* TODO: move to Preliminaries *)
-lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
-  apply (induction l)
-   apply (simp add: map_filter_simps)
-  apply auto by (metis map_filter_simps(1))
-
-(* TODO: move to Preliminaries *)
-lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
-  apply (induction l)
-   apply (simp add: map_filter_simps)
-  by (simp add: map_filter_simps(1))
-
-
-(* TODO: Move to Complex_Inner_Product *)
-lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
-  using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
-    closure_UNIV is_generator_set
-  by metis
-
-(* TODO: Move to the Complex_Vector_Spaces *)
-lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
-proof (transfer, auto)
-  have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
-      Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B"
-    for A B::"'a set"
-    using Complex_Vector_Spaces.complex_vector.span_Un
-    by (smt Collect_cong set_plus_def)
-  hence p1: "closure (Complex_Vector_Spaces.span (A \<union> B)) = 
-             closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-    for A B::"'a set"
-    by simp
-
-  show "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
-    if "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
-            closure (Complex_Vector_Spaces.span B)"
-    for x::'a and A B
-  proof-
-    have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
-          closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-      (* Ask to Dominique. \<Longrightarrow> The 2019 proof still works but we needed to import theory Starlike. *)
-      using Starlike.closure_sum by auto
-    hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
-        \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
-      by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
-           \<subseteq> closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)\<close> p1)
-    thus ?thesis by (smt closed_sum_def closure_closure closure_mono subsetD that)
-  qed
-
-  show "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
-            closure (Complex_Vector_Spaces.span B)"
-    if "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
-    for x::'a and A B
-  proof-
-    have "Complex_Vector_Spaces.span (A \<union> B) \<subseteq>
-           closure (Complex_Vector_Spaces.span A) +
-           closure (Complex_Vector_Spaces.span B)"
-      apply auto
-      by (metis closure_subset p0 set_plus_mono2_b) 
-    hence "closure (Complex_Vector_Spaces.span (A \<union> B)) \<subseteq>
-           closure (closure (Complex_Vector_Spaces.span A) +
-                    closure (Complex_Vector_Spaces.span B))"
-      by (smt closure_mono)
-    thus ?thesis by (smt closed_sum_def in_mono that)
-  qed
-qed
-
-(* TODO Move to Preliminaries *)
-lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
-  unfolding Set.filter_def by auto
-
-(* TODO To Preliminaries *)
-lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
-  using that unfolding Set.filter_def by auto
-
-(* TODO To JNF_Missing *)
-lemma adjuster_carrier': (* Like adjuster_carrier but with one assm less *)
-  assumes w: "(w :: 'a::conjugatable_field vec) : carrier_vec n"
-    and us: "set (us :: 'a vec list) \<subseteq> carrier_vec n"
-  shows "adjuster n w us \<in> carrier_vec n"
-  by (insert us, induction us, auto)
-
 
 definition "is_subspace_of n vs ws = 
   (let ws' = gram_schmidt0 n ws in
@@ -4810,17 +3842,6 @@ lemma apply_cblinfun_Span:
   "A *\<^sub>S Span (set S) = Span (onb_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_onb_enum S)))"
   apply (auto simp: applyOpSpace_Span image_image)
   by (metis mat_of_cblinfun_description onb_enum_of_vec_inverse)
-
-(* TODO move to Bounded_Operators *)
-lemma Proj_ortho_compl:
-  "Proj (- X) = idOp - Proj X"
-  apply (transfer, auto)
-  using ortho_decomp
-  by (metis add_diff_cancel_left') 
-
-(* TODO move to Bounded_Operators *)
-lemma Proj_inj: "Proj X = Proj Y \<Longrightarrow> X = Y"
-  by (metis imageOp_Proj)
 
 
 text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-cdimensional vectors
@@ -4933,7 +3954,7 @@ proof -
   proof (induction S)
     case Nil
     show ?case 
-      by (simp add: d_def mat_of_cblinfun_zero')
+      by (simp add: d_def mat_of_cblinfun_zero)
   next
     case (Cons a S)
     define sumS where "sumS = sum_list (map butterfly (map (\<lambda>s. s /\<^sub>R norm s) S))"
@@ -4943,7 +3964,7 @@ proof -
 
     define factor where "factor = inverse ((complex_of_real (norm a))\<^sup>2)"
     have factor': "factor = 1 / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)"
-      unfolding factor_def cinner_ell2_code[symmetric]
+      unfolding factor_def cscalar_prod_cinner[symmetric]
       by (simp add: inverse_eq_divide power2_norm_eq_cinner'')
 
     have "mk_projector_orthog d (map vec_of_onb_enum (a # S))
@@ -4951,25 +3972,27 @@ proof -
                     * mat_of_rows d [conjugate (vec_of_onb_enum a)])
             + mat_of_cblinfun sumS"
       apply (cases S)
-       apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero')[1]
+       apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero)[1]
       by (auto simp add: IH[symmetric] factor' d_def)
 
     also have "\<dots> = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] *
-         adjoint_mat (mat_of_cols d [vec_of_onb_enum a])) + mat_of_cblinfun sumS"
+         mat_adjoint (mat_of_cols d [vec_of_onb_enum a])) + mat_of_cblinfun sumS"
       apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
       apply (rule mat_eq_iff[THEN iffD2])
-        apply (auto simp add: adjoint_mat_def)
+        apply (auto simp add: mat_adjoint_def)
       apply (subst mat_of_rows_index)
         apply auto
+      sorry
+(* Ask to Dominique *)
+(* Previouos:
       apply (subst mat_of_cols_index)
         apply auto
       by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
-
+*)
     also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
       apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
       by (simp add: butterfly_def' cblinfun_of_mat_timesOp
-          cblinfun_of_mat_adjoint mat_of_cblinfun_ell2_to_l2bounded d_def)
-
+          mat_of_cblinfun_adjoint' mat_of_cblinfun_ell2_to_l2bounded d_def)
     finally show ?case
       by (simp add: mat_of_cblinfun_plus sumS_def)
   qed
@@ -5024,15 +4047,15 @@ proof-
     by (smt canonical_basis_length_eq carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_onb_enum_list' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
   have ortho_gs: "is_ortho_set (set (map onb_enum_of_vec gs :: 'a list))"
     apply (rule corthogonal_is_ortho_set)
-    by (smt canonical_basis_length_eq carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum_list' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) vec_of_onb_enum_inverse)
+    by (smt canonical_basis_length_eq carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum_list' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) onb_enum_of_vec_inverse')
   have distinct_gs: "distinct (map onb_enum_of_vec gs :: 'a list)"
-    by (metis (mono_tags, hide_lams) canonical_basis_length_eq carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum_list' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI vec_of_onb_enum_inverse)
+    by (metis (mono_tags, hide_lams) canonical_basis_length_eq carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum_list' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI onb_enum_of_vec_inverse')
 
   have "mk_projector_orthog d gs 
       = mk_projector_orthog d (map vec_of_onb_enum (map onb_enum_of_vec gs :: 'a list))"
     apply simp
     apply (subst map_cong[where ys=gs and g=id], simp)
-    using gs_dim by (auto intro!: vec_of_onb_enum_inverse simp: d_def)
+    using gs_dim by (auto intro!: onb_enum_of_vec_inverse simp: d_def)
   also have "\<dots> = mat_of_cblinfun (Proj (Span (set (map onb_enum_of_vec gs :: 'a list))))"
     unfolding d_def
     apply (subst mat_of_cblinfun_Proj_Span_aux_1)
@@ -5044,6 +4067,55 @@ proof-
     by (auto simp add: canonical_basis_length_eq carrier_vecI dim_vec_of_onb_enum_list')
   finally show ?thesis
     unfolding d_def gs_def by auto
+qed
+
+(* Ask to Dominique:
+I tried to move it to Complex_Vector_Spaces,
+but there is a problem with Starlike *)
+lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
+proof (transfer, auto)
+  have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
+      Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B"
+    for A B::"'a set"
+    using Complex_Vector_Spaces.complex_vector.span_Un
+    by (smt Collect_cong set_plus_def)
+  hence p1: "closure (Complex_Vector_Spaces.span (A \<union> B)) = 
+             closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
+    for A B::"'a set"
+    by simp
+
+  show "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
+    if "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
+            closure (Complex_Vector_Spaces.span B)"
+    for x::'a and A B
+  proof-
+    have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
+          closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
+      (* Ask to Dominique. \<Longrightarrow> The 2019 proof still works but we needed to import theory Starlike. *)
+      using Starlike.closure_sum by auto
+    hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
+        \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
+      by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
+           \<subseteq> closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)\<close> p1)
+    thus ?thesis by (smt closed_sum_def closure_closure closure_mono subsetD that)
+  qed
+
+  show "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
+            closure (Complex_Vector_Spaces.span B)"
+    if "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
+    for x::'a and A B
+  proof-
+    have "Complex_Vector_Spaces.span (A \<union> B) \<subseteq>
+           closure (Complex_Vector_Spaces.span A) +
+           closure (Complex_Vector_Spaces.span B)"
+      apply auto
+      by (metis closure_subset p0 set_plus_mono2_b) 
+    hence "closure (Complex_Vector_Spaces.span (A \<union> B)) \<subseteq>
+           closure (closure (Complex_Vector_Spaces.span A) +
+                    closure (Complex_Vector_Spaces.span B))"
+      by (smt closure_mono)
+    thus ?thesis by (smt closed_sum_def in_mono that)
+  qed
 qed
 
 

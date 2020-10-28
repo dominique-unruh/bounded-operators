@@ -3857,8 +3857,122 @@ proof-
     by (simp add: of_hypnat_def)  
 qed
 
+lemma class_not_singletonI_monoid_add:
+  assumes "(UNIV::'a set) \<noteq> 0"
+  shows "class.not_singleton TYPE('a::monoid_add)"
+proof intro_classes
+  let ?univ = "UNIV :: 'a set"
+  from assms obtain x::'a where "x \<noteq> 0"
+    by auto
+  thus "\<exists>x y :: 'a. x \<noteq> y"
+    by auto
+qed
+
+instantiation unit :: CARD_1
+begin
+instance 
+  apply standard 
+  by auto
+end
+
+lemma abs_complex_real[simp]: "abs x \<in> \<real>" for x :: complex
+  by (simp add: abs_complex_def)
+
+lemma Im_abs[simp]: "Im (abs x) = 0"
+  using abs_complex_real complex_is_Real_iff by blast
+
+fun index_of where
+  "index_of x [] = (0::nat)"
+| "index_of x (y#ys) = (if x=y then 0 else (index_of x ys + 1))"
+
+definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
+
+lemma index_of_correct:
+  assumes "x \<in> set y"
+  shows "y ! index_of x y = x"
+  using assms 
+proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  thus ?case by auto
+qed
+
+lemma enum_idx_correct: 
+  "Enum.enum ! enum_idx i = i"
+proof-
+  have "i \<in> set enum_class.enum"
+    using UNIV_enum by blast 
+  thus ?thesis
+    unfolding enum_idx_def
+    using index_of_correct by metis
+qed
+
+lemma index_of_bound: 
+  assumes "y \<noteq> []" and "x \<in> set y"
+  shows "index_of x y < length y"
+  using assms proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  show ?case 
+  proof(cases "a = x")
+    case True
+    thus ?thesis by auto
+  next
+    case False
+    thus ?thesis apply auto
+      using Cons.IH Cons.prems(2) by fastforce
+  qed
+qed
+
+lemma enum_idx_bound: "enum_idx x < length (Enum.enum :: 'a list)" for x :: "'a::enum"
+proof-
+  have p1: "False"
+    if "(Enum.enum :: 'a list) = []"
+  proof-
+    have "(UNIV::'a set) = set ([]::'a list)"
+      using that UNIV_enum by metis
+    also have "\<dots> = {}"
+      by blast
+    finally have "(UNIV::'a set) = {}".
+    thus ?thesis by simp
+  qed    
+  have p2: "x \<in> set (Enum.enum :: 'a list)"
+    using UNIV_enum by auto
+  show ?thesis
+    unfolding enum_idx_def apply (rule index_of_bound[where x = x 
+          and y = "(Enum.enum :: 'a list)"])
+    using p1 apply auto using p2 by auto
+qed
+
+lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
+
+lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
+  apply (cases x)
+  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
+
+lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
+  apply (induction l)
+   apply (simp add: map_filter_simps)
+  apply auto by (metis map_filter_simps(1))
+
+lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
+  apply (induction l)
+   apply (simp add: map_filter_simps)
+  by (simp add: map_filter_simps(1))
+
+lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
+  unfolding Set.filter_def by auto
+
+lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
+  using that unfolding Set.filter_def by auto
+
 
 unbundle no_nsa_notation
-
 
 end

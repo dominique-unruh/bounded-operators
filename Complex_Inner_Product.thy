@@ -6476,6 +6476,220 @@ proposition bounded_nsbounded_norm:
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
   by blast
 
+lemma span_finite_dim:
+  fixes T::\<open>'a::complex_inner set\<close>
+  assumes \<open>finite T\<close>
+  shows \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
+  using closed_finite_dim
+  by (simp add: closed_finite_dim assms)
+
+lemma Span_insert:
+  assumes "finite (S::'a'::complex_inner set)"
+  shows "space_as_set (Span (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (Span S)}"
+proof -
+  have "closure (cspan (insert a S)) = cspan (insert a S)"
+    by (metis assms finite_insert span_finite_dim)
+  thus ?thesis
+    by (simp add: Span.rep_eq assms complex_vector.span_insert span_finite_dim)
+qed
+
+lemma closed_subspace_cspan_finite:
+  assumes "finite (S::'a::chilbert_space set)"
+  shows "closed_subspace (cspan S)"
+  unfolding closed_subspace_def apply auto
+  by (simp add: assms closed_finite_dim)
+
+lemma projection_singleton:
+  assumes "(a::'a::chilbert_space) \<noteq> 0"
+  shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+proof-
+  define p where "p u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" for u
+  define M where "M = cspan {a}"
+  have "closed_subspace M"
+    unfolding M_def 
+    using closed_subspace_cspan_finite
+    by (simp add: closed_subspace_cspan_finite)
+  moreover have "u - p u \<in> orthogonal_complement M"
+    unfolding p_def M_def orthogonal_complement_def
+  proof auto
+    fix y
+    assume "y \<in> cspan {a}" 
+    hence "\<exists>c. y = c *\<^sub>C a"
+      by (simp add: cspan_singleton)
+    then obtain c where c_def: "y = c *\<^sub>C a"
+      by blast
+    have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 
+          \<langle>u, c *\<^sub>C a\<rangle> - \<langle>(\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle>"
+      using cinner_diff_left by blast    
+    also have "\<dots> = 0"
+      by simp
+    finally have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 0".
+    thus "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, y\<rangle> = 0"
+      using c_def by simp
+  qed
+  moreover have "p u \<in> M"
+    unfolding p_def M_def
+    by (simp add: complex_vector.span_base complex_vector.span_scale)
+  ultimately have "projection M u = p u"
+    using projection_uniq[where x = "p u" and h = u and M = M] by blast
+  thus ?thesis unfolding M_def p_def.
+qed
+
+lemma ortho_cspan:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+    and a3: "x \<in> cspan S"
+  shows "\<langle>a, x\<rangle> = 0"
+proof-
+  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    using complex_vector.span_explicit
+    by (smt a3 mem_Collect_eq)
+  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "(\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    by blast
+  have x1: "\<langle>a, i\<rangle> = 0"
+    if "i\<in>t" for i
+    using b2 a1 that by blast
+  have  "\<langle>a, x\<rangle> = \<langle>a, (\<Sum>i\<in>t. r i *\<^sub>C i)\<rangle>"
+    by (simp add: b3) 
+  also have  "\<dots> = (\<Sum>i\<in>t. r i *\<^sub>C \<langle>a, i\<rangle>)"
+    by (simp add: cinner_sum_right)
+  also have  "\<dots> = 0"
+    using x1 by simp
+  finally show ?thesis.
+qed
+
+
+lemma projection_insert:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+  shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S} u
+        = projection (cspan {a}) u
+        + projection (cspan S) u"
+proof-
+  define p where "p u = projection (cspan {a}) u
+                      + projection (cspan S) u" for u
+  define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
+  have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+    by (metis complex_vector.scale_zero_right complex_vector.span_empty complex_vector.span_insert_0 
+        projection_singleton projection_zero_subspace)
+  have "closed_subspace M"
+    unfolding M_def
+    by (metis (no_types) a2 closed_subspace_cspan_finite complex_vector.span_insert 
+        finite_insert) 
+  moreover have "p u \<in> M"
+    unfolding p_def M_def 
+  proof auto 
+    define k where "k = \<langle>a, u\<rangle>/\<langle>a, a\<rangle>"
+    have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+      by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)      
+    hence "projection (cspan {a}) u +
+          projection (cspan S) u - k *\<^sub>C a
+          \<in> cspan S"
+      unfolding k_def
+      by (simp add: a2 closed_subspace_cspan_finite projection_intro2)      
+    thus "\<exists>k. projection (cspan {a}) u +
+              projection (cspan S) u - k *\<^sub>C a
+              \<in> cspan S"
+      by blast
+  qed
+  moreover have "u - p u \<in> orthogonal_complement M"
+    unfolding orthogonal_complement_def
+  proof auto
+    fix y
+    assume b1: "y \<in> M"
+    hence "\<exists>k. y - k *\<^sub>C a \<in> cspan S"
+      unfolding M_def by simp
+    then obtain k where k_def: "y - k *\<^sub>C a \<in> cspan S"
+      by blast
+    have "u - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
+      by (simp add: a2 closed_subspace_cspan_finite projection_intro1)
+    moreover have "projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
+      unfolding orthogonal_complement_def
+    proof auto
+      fix y
+      assume "y \<in> cspan S"
+      have "\<langle>a, y\<rangle> = 0"
+        using ortho_cspan
+          \<open>y \<in> cspan S\<close> a1 a2 by auto
+      thus "\<langle>projection (cspan {a}) u, y\<rangle> = 0"
+        by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)         
+    qed
+    ultimately have "(u - projection (cspan S) u)
+                    - projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
+      using Complex_Vector_Spaces.complex_vector.span_diff
+      by (smt cinner_diff_left diff_zero orthogonal_complement_D1 orthogonal_complement_I2)
+    hence "u - projection (cspan {a}) u 
+            - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
+      by (simp add: cancel_ab_semigroup_add_class.diff_right_commute)
+    have "\<langle>u - projection (cspan {a}) u 
+         - projection (cspan S) u, y - k *\<^sub>C a\<rangle> = 0"
+      using \<open>u - projection (cspan {a}) u - projection (cspan S) u \<in> 
+        orthogonal_complement (cspan S)\<close> k_def orthogonal_complement_D1 by auto      
+    moreover have "\<langle>u - projection (cspan {a}) u 
+         - projection (cspan S) u, k *\<^sub>C a\<rangle> = 0"
+    proof-
+      have "u - projection (cspan {a}) u \<in> orthogonal_complement (cspan {a})"
+        by (simp add: closed_subspace_cspan_finite projection_intro1)
+      moreover have "projection (cspan S) u \<in> orthogonal_complement (cspan {a})"
+        unfolding orthogonal_complement_def
+      proof auto
+        fix y
+        assume "y \<in> cspan {a}"
+        hence "\<exists>k. y = k *\<^sub>C a"
+          by (simp add: cspan_singleton)
+        then obtain k where ky:"y = k *\<^sub>C a"
+          by blast
+        have "projection (cspan S) u \<in> cspan S"
+          by (simp add: a2 closed_subspace_cspan_finite projection_intro2)          
+        hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
+          by (meson a1 a2 ortho_cspan orthogonal_complement_D2 orthogonal_complement_I2)          
+        thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
+          using ky
+          by simp
+      qed
+      moreover have "complex_vector.subspace ( orthogonal_complement (cspan {a}))"
+        by (simp add: closed_subspace.subspace closed_subspace_cspan_finite)
+
+      ultimately have "(u - projection (cspan {a}) u) - projection (cspan S) u
+                   \<in> orthogonal_complement (cspan {a})"
+        by (smt complex_vector.subspace_diff)
+      thus ?thesis
+        using complex_vector.span_base orthogonal_complement_D1 by fastforce 
+    qed
+    ultimately have "\<langle>u - projection (cspan {a}) u 
+         - projection (cspan S) u, y\<rangle> = 0"
+      by (simp add: cinner_diff_right)
+      
+    moreover have "\<langle>u - p u, y\<rangle> =
+      \<langle>u - projection (cspan {a}) u 
+         - projection (cspan S) u, y\<rangle>"
+      unfolding p_def
+      by (simp add: diff_diff_add) 
+    ultimately show "\<langle>u - p u, y\<rangle> = 0" by simp
+  qed
+  ultimately have "projection M u = p u"
+    using projection_uniq[where x = "p u" and h = u and M = M] by blast
+  thus ?thesis 
+    unfolding p_def M_def by auto
+qed
+
+instantiation complex :: basis_enum begin
+definition "canonical_basis = [1::complex]"
+definition "canonical_basis_length (_::complex itself) = 1"
+instance
+  apply intro_classes
+  unfolding canonical_basis_complex_def canonical_basis_length_complex_def
+  by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
+end
+
+instance complex :: one_dim
+  apply intro_classes
+  unfolding canonical_basis_complex_def is_ortho_set_def
+  by auto
+
+lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
+  using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
+    closure_UNIV is_generator_set
+  by metis
+
 
 
 unbundle no_nsa_notation

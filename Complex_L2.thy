@@ -2449,14 +2449,6 @@ qed
 
 end
 
-(* TODO: move to Preliminaries *)
-instantiation unit :: CARD_1
-begin
-instance 
-  apply standard 
-  by auto
-end
-
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin
 lift_definition one_ell2 :: "'a ell2" is "\<lambda>_. 1" by simp
@@ -2677,14 +2669,6 @@ qed
 
 
 subsection \<open>Recovered theorems\<close>
-
-lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
-
-lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
 
 lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
   using norm_ell2_component
@@ -3446,10 +3430,6 @@ proof-
   thus ?thesis unfolding G_def F_def .
 qed
 
-(* TODO: move to Bounded_Operators *)
-lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0"
-  by (metis applyOp0 cblinfun_apply_0 times_applyOp)
-
 lemma
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
 (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
@@ -3470,9 +3450,6 @@ lemma
     and a5: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"  *)
   shows classical_operator_exists_comp[simp]: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"
     and classical_operator_mult[simp]: "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
-(* TODO: (Just a note for José) I rewrote the proof, needs much less assumptions now.
-Also added the conclusion classical_operator_exists_comp[simp]
- *)
 proof -
   define C\<pi> C\<rho> C\<pi>\<rho> where "C\<pi> = classical_operator \<pi>" and "C\<rho> = classical_operator \<rho>" 
     and "C\<pi>\<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
@@ -3563,26 +3540,7 @@ qed
 
 lemma isometry_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
-(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
-      and  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
-      and  "classical_function''  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "inj \<pi>"
-(*     and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
-    and a3: "cblinfun_extension_exists (range ket)
-     (classical_function' (inv_option (Some \<circ> \<pi>)))" 
-    and a4: "cblinfun_extension_exists (range ket) (classical_function'' (Some::'a\<Rightarrow>_))" *)
-(* TODO: remove assumptions a2-a4 because we have that \<pi> inj 
-  Ask to Dominique: I am not convinced that this is possible
-
-  \<Longrightarrow> Yes, it is possible! (Using classical_operator_exists_inj, which I already had sketched in the TODOs but which you ignored.)
-
-*)
   shows "isometry (classical_operator (Some o \<pi>))"
 proof -
   have b0: "inj_option (Some \<circ> \<pi>)"

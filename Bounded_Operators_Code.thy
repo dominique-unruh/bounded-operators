@@ -47,24 +47,22 @@ on the left hand side, we get access to the\<close>
 declare mat_of_cblinfun_plus[code]
   \<comment> \<open>Code equation for addition of cblinfuns\<close>
 
-  (* TODO: rename (remove ') *)
-declare cblinfun_of_mat_id'[code]
+declare cblinfun_of_mat_id[code]
   \<comment> \<open>Code equation for computing the identity operator\<close>
 
-  (* TODO: rename (remove ') *)
-declare mat_of_cblinfun_zero'[code]
+declare mat_of_cblinfun_zero[code]
   \<comment> \<open>Code equation for computing the zero operator\<close>
 
-(* TODO: rename (remove ') *)
-declare cblinfun_of_mat_uminusOp'[code]
+
+declare cblinfun_of_mat_uminusOp[code]
   \<comment> \<open>Code equation for computing the unary minus on cblinfun's\<close>
 
-  (* TODO: rename (remove ') *)
-declare cblinfun_of_mat_minusOp'[code]
+
+declare cblinfun_of_mat_minusOp[code]
   \<comment> \<open>Code equation for computing the difference of cblinfun's\<close>
 
-  (* TODO: rename (remove inj_option) *)
-declare mat_of_cblinfun_classical_operator_inj_option[code]
+
+declare mat_of_cblinfun_classical_operator[code]
   \<comment> \<open>Code equation for computing the "classical operator"\<close>
 
 declare cblinfun_of_mat_timesOp[code]
@@ -76,7 +74,7 @@ declare mat_of_cblinfun_scalarMult[code]
 declare mat_of_cblinfun_scaleR[code]
   \<comment> \<open>Code equation for multiplication with real scalar\<close>
 
-declare cblinfun_of_mat_adjoint[code]
+declare mat_of_cblinfun_adjoint'[code]
   \<comment> \<open>Code equation for computing the adjoint\<close>
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun.\<close>
@@ -174,25 +172,25 @@ lemma ell2_of_vec_uminus[code]:
 
 lemma cinner_ell2_code' [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
   \<comment> \<open>Code equation for the inner product of vectors\<close>
-  by (simp add: cinner_ell2_code vec_of_ell2_def)
+  by (simp add: cscalar_prod_cinner vec_of_ell2_def)
 
 lemma norm_ell2_code [code]: 
   \<comment> \<open>Code equation for the norm of a vector\<close>
   "norm \<psi> = (let \<psi>' = vec_of_ell2 \<psi> in
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
-  by (simp add: norm_ell2_code vec_of_ell2_def)
+  by (simp add: norm_ell2_vec vec_of_ell2_def)
 
 lemma times_ell2_code'[code]: 
   \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (\<psi> * \<phi>)
    = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-  using vec_of_ell2_def times_ell2_code by metis
+  by (simp add: vec_of_ell2_def vec_of_onb_enum_times) 
 
 lemma one_ell2_code'[code]: 
   \<comment> \<open>Code equation for the unit in the algebra of one-dimensional vectors\<close>
   "vec_of_ell2 (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
-  using one_ell2_code vec_of_ell2_def by metis
+  by (simp add: vec_of_ell2_def vec_of_onb_enum_1) 
 
 subsection \<open>Vector/Matrix\<close>
 
@@ -377,10 +375,10 @@ proof -
     apply (subst Span_leq)
     unfolding d_def[symmetric] map_map o_def
     apply (subst map_cong[where xs=A', OF refl])
-     apply (rule vec_of_onb_enum_inverse)
+        apply (rule onb_enum_of_vec_inverse')
      apply (simp add: A'_def d_def)
     apply (subst map_cong[where xs=B', OF refl])
-     apply (rule vec_of_onb_enum_inverse)
+     apply (rule onb_enum_of_vec_inverse')
     by (simp_all add: B'_def d_def)
 qed
 
@@ -412,7 +410,7 @@ proof -
     by (simp add: image_image)
   also have "\<dots> = Span ((\<lambda>x. onb_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
     apply (subst image_cong[OF refl])
-     apply (subst vec_of_onb_enum_inverse)
+     apply (subst onb_enum_of_vec_inverse')
     by (auto simp add: S'_def dA_def)
   also have "\<dots> = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S')"
     unfolding SPAN_def dB_def[symmetric] Let_def filter_set 
@@ -550,13 +548,12 @@ proof -
       apply (rule arg_cong[where f="\<lambda>t. onb_enum_of_vec ` t"])
       apply (rule Collect_cong)
       apply (simp add: Am_def)
-      by (metis Am_carrier Am_def carrier_matD(2) carrier_vecD dB_def mat_carrier mat_of_cblinfun_def mat_of_cblinfun_description onb_enum_of_vec_inverse vec_of_onb_enum_inverse vec_of_onb_enum_zero)
+      by (metis Am_carrier Am_def carrier_matD(2) carrier_vecD dB_def mat_carrier 
+          mat_of_cblinfun_def mat_of_cblinfun_description onb_enum_of_vec_inverse 
+          onb_enum_of_vec_inverse' vec_of_onb_enum_zero)
     also have "\<dots> = {w \<in> onb_enum_of_vec ` carrier_vec dA. A *\<^sub>V w = 0}"
       apply (subst Compr_image_eq[symmetric])
       by simp
-(*     also have "\<dots> \<longleftrightarrow> A *\<^sub>V x = 0"
-      apply auto
-      by (metis (no_types, lifting) Am_carrier Am_def canonical_basis_length_eq carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum_list' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse) *)
     also have "\<dots> = {w. A *\<^sub>V w = 0}"
       apply auto
       by (metis (no_types, lifting) Am_carrier Am_def canonical_basis_length_eq carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum_list' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
