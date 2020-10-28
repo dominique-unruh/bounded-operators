@@ -116,8 +116,7 @@ abbreviation cindependent where "cindependent x \<equiv> \<not> cdependent x"
 global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-(* TODO: rename to cconstruct *)
-  defines construct_raw_def: construct = complex_vector.construct
+  defines cconstruct_raw_def: cconstruct = complex_vector.construct
     apply unfold_locales
   unfolding clinear_def
   by auto
@@ -2472,13 +2471,6 @@ proof
 qed
 
 subsection \<open>Unsorted\<close>
-
-(* TODO (Jose): delete (better to work with two property independently)
-definition is_basis :: "'a::complex_normed_vector set \<Rightarrow> bool" 
-  where \<open>is_basis S = (
-  (complex_vector.independent S) \<and> closure (complex_vector.span S) = UNIV
-)\<close>
-*)
 
 lemma complex_dependent_isolation:
   assumes \<open>complex_vector.dependent V\<close> and \<open>finite V\<close>

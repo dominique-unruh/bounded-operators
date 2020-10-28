@@ -3453,12 +3453,6 @@ class onb_enum = basis_enum + complex_inner +
 setup \<open>Sign.add_const_constraint
 (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
-(* TODO Jose: Delete
-lemma is_onb_set:
-  "is_onb (set canonical_basis :: 'a::onb_enum set)"
-  using is_basis_set[where 'a='a] is_orthonormal[where 'a='a] is_normal[where 'a='a]
-  unfolding is_onb_def is_ob_def by auto
-*)
 
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
@@ -5218,15 +5212,6 @@ lemma differentiable_cinner [simp]:
         (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
 
-(* TODO move to Preliminaries *)
-lemmas has_derivative_of_real [derivative_intros] = bounded_linear.has_derivative[OF bounded_linear_of_real]
-
-(* TODO move to Preliminaries *)
-lemma cmod_Re:
-  assumes "x \<ge> 0"
-  shows "cmod x = Re x"
-  using assms unfolding less_eq_complex_def cmod_def
-  by auto
 
 lemma has_derivative_norm[derivative_intros]:
   fixes x :: "'a::complex_inner"
@@ -5248,19 +5233,6 @@ proof -
     by simp
 qed
 
-(*
-(* Ask to Dominique: how to prove this? 
-
-\<Longrightarrow> cGDERIV_norm is wrong (as can be seen by unfolding the definition of cGDERIV_norm and comparing with
-has_derivative_norm above. has_derivative_norm I have proven directly above *)
-
-TODO: remove
-
-lemma cGDERIV_norm:
-  assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. complex_of_real (norm x)) x :> sgn x"
-
-lemmas has_derivative_norm = cGDERIV_norm [unfolded cgderiv_def]
-*)
 
 lemma cinner_ext_0: 
   assumes "\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = 0"
@@ -5417,24 +5389,6 @@ proof-
     by (simp add: nsbounded_D) 
 qed
 
-(* TODO: move? *)
-(* Ask to Dominique: where? \<Longrightarrow> Preliminaries *)
-lemma hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat:
-  \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
-proof-
-  have \<open>(*f* of_nat) (star_of n) = (plus 1 ^^ n) (0::hypreal)\<close>
-  proof(induction n)
-    case 0
-    thus ?case
-      by (metis funpow_0 of_nat_0 star_zero_def starfun_eq) 
-  next
-    case (Suc n)
-    thus ?case
-      by (metis of_nat_def star_of_nat_def starfun_star_of) 
-  qed
-  thus ?thesis
-    by (simp add: of_hypnat_def)  
-qed
 
 lemma nsbounded_bounded:
   fixes S :: \<open>('a::metric_space) set\<close>

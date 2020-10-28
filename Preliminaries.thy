@@ -3832,6 +3832,32 @@ next
     by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
 qed
 
+lemmas has_derivative_of_real [derivative_intros] = bounded_linear.has_derivative[OF bounded_linear_of_real]
+
+lemma cmod_Re:
+  assumes "x \<ge> 0"
+  shows "cmod x = Re x"
+  using assms unfolding less_eq_complex_def cmod_def
+  by auto
+
+lemma hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat:
+  \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
+proof-
+  have \<open>(*f* of_nat) (star_of n) = (plus 1 ^^ n) (0::hypreal)\<close>
+  proof(induction n)
+    case 0
+    thus ?case
+      by (metis funpow_0 of_nat_0 star_zero_def starfun_eq) 
+  next
+    case (Suc n)
+    thus ?case
+      by (metis of_nat_def star_of_nat_def starfun_star_of) 
+  qed
+  thus ?thesis
+    by (simp add: of_hypnat_def)  
+qed
+
+
 unbundle no_nsa_notation
 
 
