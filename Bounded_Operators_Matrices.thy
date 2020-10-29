@@ -3980,15 +3980,12 @@ proof -
       apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
       apply (rule mat_eq_iff[THEN iffD2])
         apply (auto simp add: mat_adjoint_def)
-      apply (subst mat_of_rows_index)
-        apply auto
-      sorry
-(* Ask to Dominique *)
-(* Previouos:
-      apply (subst mat_of_cols_index)
-        apply auto
+      apply (subst mat_of_rows_index) apply auto
+      apply (subst mat_of_rows_index) apply auto
+      apply (subst mat_of_cols_index) apply auto
       by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
-*)
+(* Ask to Dominique \<Longrightarrow> it needed an additional "apply (subst mat_of_rows_index) apply auto" and
+   from there on it worked like the old proof. *)
     also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
       apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
       by (simp add: butterfly_def' cblinfun_of_mat_timesOp
@@ -4071,7 +4068,11 @@ qed
 
 (* Ask to Dominique:
 I tried to move it to Complex_Vector_Spaces,
-but there is a problem with Starlike *)
+but there is a problem with Starlike
+
+\<Longrightarrow> What is the problem? Did you import the theory Starlike?
+
+ *)
 lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
 proof (transfer, auto)
   have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
