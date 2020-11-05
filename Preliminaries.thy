@@ -902,29 +902,19 @@ proof
   show "x < y \<Longrightarrow> \<exists>z>x. z < y" by (blast intro!: less_half_sum gt_half_sum)
 qed
 
-(* here *)
 
 lemma dense_le_bounded:
   fixes x y z :: 'a
   assumes "x < y"
-  assumes *: "\<And>w. \<lbrakk> x < w ; w < y \<rbrakk> \<Longrightarrow> w \<le> z"
+  and *: "\<And>w. \<lbrakk> x < w ; w < y \<rbrakk> \<Longrightarrow> w \<le> z"
   shows "y \<le> z"
 proof (rule dense_le)
   fix w assume "w < y"
   from dense[OF \<open>x < y\<close>] obtain u where "x < u" "u < y" by safe
   have "u \<le> w \<or> w \<le> u"
-    apply (rule comparable[of _ y])
-    using \<open>w<y\<close> \<open>u<y\<close> by auto
+    using \<open>u < y\<close> \<open>w < y\<close> comparable local.order.strict_implies_order by blast
   thus "w \<le> z"
-  proof (rule disjE)
-    assume "u \<le> w"
-    from less_le_trans[OF \<open>x < u\<close> \<open>u \<le> w\<close>] \<open>w < y\<close>
-    show "w \<le> z" by (rule *)
-  next
-    assume "w \<le> u"
-    from \<open>w \<le> u\<close> *[OF \<open>x < u\<close> \<open>u < y\<close>]
-    show "w \<le> z" by (rule order_trans)
-  qed
+    using "*" \<open>u < y\<close> \<open>w < y\<close> \<open>x < u\<close> local.dual_order.trans local.order.strict_trans2 by blast
 qed
 
 subclass field_abs_sgn ..
@@ -951,15 +941,11 @@ qed
 
 lemma inverse_positive_iff_positive [simp]:
   "(0 < inverse a) = (0 < a)"
-  apply (cases "a = 0", simp)
-  by (blast intro: inverse_positive_imp_positive positive_imp_inverse_positive)
-
+  using local.positive_imp_inverse_positive by fastforce
 
 lemma inverse_negative_iff_negative [simp]:
   "(inverse a < 0) = (a < 0)"
-  apply (cases "a = 0", simp)
-  by (blast intro: inverse_negative_imp_negative negative_imp_inverse_negative)
-
+  using local.negative_imp_inverse_negative by fastforce
 
 lemma inverse_nonnegative_iff_nonnegative [simp]:
   "0 \<le> inverse a \<longleftrightarrow> 0 \<le> a"
@@ -980,50 +966,31 @@ lemma inverse_less_1_iff: "inverse x < 1 \<longleftrightarrow> x \<le> 0 \<or> 1
 proof (rule)
   assume invx1: "inverse x < 1"
   have "inverse x \<le> 0 \<or> inverse x \<ge> 0"
-    apply (rule comparable[where c=1]) 
-     apply (rule disjI1) using invx1 apply simp
-    using zero_less_one
-    by (simp add: local.order.strict_iff_order)
+    using comparable invx1 local.order.strict_implies_order local.zero_less_one by blast
   then consider (leq0) "inverse x \<le> 0" | (pos) "inverse x > 0" | (zero) "inverse x = 0"
-    apply atomize_elim by auto
+    using local.antisym_conv1 by blast
   thus "x \<le> 0 \<or> 1 < x"
-  proof cases
-    case leq0
-      (* hence "x \<le> 0" by auto *)
-    thus ?thesis by simp
-  next
-    case pos
-    hence "x > 0" by auto
-    moreover from invx1 have "inverse x < inverse 1" by auto
-    ultimately have "x > 1"
-      using local.inverse_less_imp_less by blast
-    thus ?thesis by simp
-  next
-    case zero thus ?thesis by simp
-  qed
+    by (metis invx1 local.eq_iff local.inverse_1 local.inverse_less_imp_less 
+        local.inverse_nonpositive_iff_nonpositive local.inverse_positive_imp_positive)
 next
   assume "x \<le> 0 \<or> 1 < x"
   then consider (neg) "x \<le> 0" | (g1) "1 < x" by auto
   thus "inverse x < 1"
-  proof cases
-    case neg
-    thus ?thesis
-      by (metis local.dual_order.order_iff_strict local.dual_order.strict_trans local.inverse_negative_iff_negative local.inverse_zero local.zero_less_one)
-  next
-    case g1
-    thus ?thesis
-      using local.less_imp_inverse_less by fastforce
-  qed
+    by (metis local.dual_order.not_eq_order_implies_strict local.dual_order.strict_trans
+        local.inverse_1 local.inverse_negative_iff_negative local.inverse_zero 
+        local.less_imp_inverse_less local.zero_less_one)  
 qed
 
 lemma inverse_le_1_iff: "inverse x \<le> 1 \<longleftrightarrow> x \<le> 0 \<or> 1 \<le> x"
-  by (metis local.dual_order.order_iff_strict local.inverse_1 local.inverse_le_iff_le local.inverse_less_1_iff local.one_le_inverse_iff)
+  by (metis local.dual_order.order_iff_strict local.inverse_1 local.inverse_le_iff_le 
+      local.inverse_less_1_iff local.one_le_inverse_iff)
 
 text\<open>Simplify expressions such as \<open>0 < 1/x\<close> to \<open>0 < x\<close>\<close>
 
 lemma zero_le_divide_1_iff [simp]:
   "0 \<le> 1 / a \<longleftrightarrow> 0 \<le> a"
-  using local.dual_order.order_iff_strict local.inverse_eq_divide local.inverse_positive_iff_positive by auto
+  using local.dual_order.order_iff_strict local.inverse_eq_divide 
+    local.inverse_positive_iff_positive by auto
 
 lemma zero_less_divide_1_iff [simp]:
   "0 < 1 / a \<longleftrightarrow> 0 < a"
@@ -1031,14 +998,15 @@ lemma zero_less_divide_1_iff [simp]:
 
 lemma divide_le_0_1_iff [simp]:
   "1 / a \<le> 0 \<longleftrightarrow> a \<le> 0"
-  by (smt comparable local.dual_order.order_iff_strict local.eq_iff local.inverse_eq_divide local.inverse_le_1_iff local.one_divide_eq_0_iff local.one_le_inverse_iff local.zero_less_divide_1_iff)
+  by (smt local.abs_0 local.abs_1 local.abs_divide local.abs_neg local.abs_nn 
+      local.divide_cancel_left local.le_minus_iff local.minus_divide_right local.zero_neq_one)
 
 lemma divide_less_0_1_iff [simp]:
   "1 / a < 0 \<longleftrightarrow> a < 0"
   using local.dual_order.strict_iff_order by auto
 
 lemma divide_right_mono:
-  "[|a \<le> b; 0 \<le> c|] \<Longrightarrow> a/c \<le> b/c"
+  "a \<le> b \<Longrightarrow> 0 \<le> c \<Longrightarrow> a/c \<le> b/c"
   using local.divide_cancel_right local.divide_strict_right_mono local.dual_order.order_iff_strict by blast
 
 lemma divide_right_mono_neg: "a \<le> b
@@ -1081,7 +1049,8 @@ lemma divide_le_eq_1_pos [simp]:
 
 lemma divide_le_eq_1_neg [simp]:
   "a < 0 \<Longrightarrow> (b/a \<le> 1) = (a \<le> b)"
-  by (metis local.divide_le_eq_1_pos local.minus_divide_divide local.neg_0_less_iff_less local.neg_le_iff_le)
+  by (metis local.divide_le_eq_1_pos local.minus_divide_divide local.neg_0_less_iff_less 
+      local.neg_le_iff_le)
 
 lemma less_divide_eq_1_pos [simp]:
   "0 < a \<Longrightarrow> (1 < b/a) = (a < b)"
@@ -1103,64 +1072,41 @@ lemma abs_div_pos: "0 < y \<Longrightarrow>
     \<bar>x\<bar> / y = \<bar>x / y\<bar>"
   by (simp add: local.abs_pos)
 
-
 lemma zero_le_divide_abs_iff [simp]: "(0 \<le> a / \<bar>b\<bar>) = (0 \<le> a | b = 0)"
 proof 
   assume assm: "0 \<le> a / \<bar>b\<bar>"
   have absb: "abs b \<ge> 0" by (fact abs_nn)
-  hence eq: "0 * abs b \<le> a / abs b * abs b"
-    using assm local.mult_right_mono by blast
-  show "0 \<le> a \<or> b = 0"
-  proof (cases "b=0")
-    case False
-    hence absb0: "abs b \<noteq> 0"
-      by (simp add: local.abs_eq_0_iff)
-    hence "a / abs b * abs b = a" by simp
-    with eq absb0 have "0 \<le> a" by auto
-    thus ?thesis by simp
-  next
-    case True
-    thus ?thesis by simp
-  qed
+  thus "0 \<le> a \<or> b = 0"
+    using absb assm local.abs_eq_0_iff local.mult_nonneg_nonneg by fastforce
 next
   assume "0 \<le> a \<or> b = 0"
   then consider (a) "0 \<le> a" | (b) "b = 0" by atomize_elim auto
   thus "0 \<le> a / \<bar>b\<bar>"
-  proof cases
-    case a
-    thus ?thesis using abs_nn by auto
-  next
-    case b
-    thus ?thesis by auto
-  qed
+    by (metis local.abs_eq_0_iff local.abs_nn local.divide_eq_0_iff local.divide_nonneg_nonneg)
 qed
 
 
 lemma divide_le_0_abs_iff [simp]: "(a / \<bar>b\<bar> \<le> 0) = (a \<le> 0 | b = 0)"
   by (metis local.minus_divide_left local.neg_0_le_iff_le local.zero_le_divide_abs_iff)
 
-
 text\<open>For creating values between \<^term>\<open>u\<close> and \<^term>\<open>v\<close>.\<close>
 lemma scaling_mono:
-  assumes "u \<le> v" "0 \<le> r" "r \<le> s"
+  assumes "u \<le> v" and "0 \<le> r" and "r \<le> s"
   shows "u + r * (v - u) / s \<le> v"
 proof -
   have "r/s \<le> 1" using assms
-    by (metis local.divide_le_eq_1_pos local.division_ring_divide_zero local.dual_order.order_iff_strict local.dual_order.trans local.zero_less_one)
+    by (metis local.divide_le_eq_1_pos local.division_ring_divide_zero 
+        local.dual_order.order_iff_strict local.dual_order.trans local.zero_less_one)
   hence "(r/s) * (v - u) \<le> 1 * (v - u)"
-    apply (rule mult_right_mono)
-    using assms by simp
+    using assms(1) local.diff_ge_0_iff_ge local.mult_right_mono by blast
   thus ?thesis
     by (simp add: field_simps)
 qed
 
 end
 
-
 code_identifier
   code_module Ordered_Fields \<rightharpoonup> (SML) Arith and (OCaml) Arith and (Haskell) Arith
-
-
 
 subsection\<open>Ordered Complex\<close>
 
@@ -1186,22 +1132,32 @@ proof intro_classes
   note ri = this[symmetric]
   hence "a = Complex ra ia" "b = Complex rb ib" "c = Complex rc ic" by auto
   note ri = this ri
-  show "inverse a \<le> inverse b \<Longrightarrow> 0 < a \<Longrightarrow> b \<le> a" unfolding defs ri
-    apply (auto simp: power2_eq_square) apply (cases "rb=0") 
-     apply auto
-    by (metis divide_eq_0_iff divide_le_eq_1 eq_iff less_eq_real_def less_le nice_ordered_field_class.frac_le nice_ordered_field_class.frac_less2 not_le)
+  have "rb \<le> ra"
+    if "1 / ra \<le> (if rb = 0 then 0 else 1 / rb)" 
+      and "ia = 0" and "0 < ra" and "ib = 0"
+  proof(cases "rb = 0")
+    case True
+    thus ?thesis
+      using that(3) by auto 
+  next
+    case False
+    thus ?thesis
+      by (smt nice_ordered_field_class.frac_less2 that(1) that(3)) 
+  qed
+  thus "inverse a \<le> inverse b \<Longrightarrow> 0 < a \<Longrightarrow> b \<le> a" unfolding defs ri
+    by (auto simp: power2_eq_square) 
   show "(\<And>a. a < b \<Longrightarrow> a \<le> c) \<Longrightarrow> b \<le> c" unfolding defs ri
-    apply auto
-     apply (metis complex.sel(1) complex.sel(2) lt_ex)
-    by (metis complex.sel(1) complex.sel(2) dense not_less)
+    by (metis complex.sel(1) complex.sel(2) dense less_le_not_le 
+        nice_ordered_field_class.linordered_field_no_lb not_le_imp_less)    
   show "0 \<le> a \<Longrightarrow> 0 \<le> b \<Longrightarrow> a \<le> b \<or> b \<le> a" unfolding defs by auto
   show "0 \<le> \<bar>x\<bar>" unfolding defs by auto
 qed
 end
 
-lemma less_eq_complexI: "Re x \<le> Re y \<Longrightarrow> Im x = Im y \<Longrightarrow> x\<le>y" unfolding less_eq_complex_def by simp
-lemma less_complexI: "Re x < Re y \<Longrightarrow> Im x = Im y \<Longrightarrow> x<y" unfolding less_complex_def by simp
-
+lemma less_eq_complexI: "Re x \<le> Re y \<Longrightarrow> Im x = Im y \<Longrightarrow> x\<le>y" unfolding less_eq_complex_def 
+  by simp
+lemma less_complexI: "Re x < Re y \<Longrightarrow> Im x = Im y \<Longrightarrow> x<y" unfolding less_complex_def 
+  by simp
 
 lemma complex_of_real_mono:
   "x \<le> y \<Longrightarrow> complex_of_real x \<le> complex_of_real y"
@@ -1229,16 +1185,13 @@ lemma Re_mono: "x \<le> y \<Longrightarrow> Re x \<le> Re y"
 lemma comp_Im_same: "x \<le> y \<Longrightarrow> Im x = Im y"
   unfolding less_eq_complex_def by simp
 
-
 lemma Re_strict_mono: "x < y \<Longrightarrow> Re x < Re y"
   unfolding less_complex_def by simp
 
 lemma complex_of_real_cmod: assumes "x \<ge> 0" shows "complex_of_real (cmod x) = x"
   by (metis Reals_cases abs_of_nonneg assms comp_Im_same complex_is_Real_iff complex_of_real_nn_iff norm_of_real zero_complex.simps(2))
 
-
 subsection\<open>Infinite Set Sum Missing\<close>
-
 
 definition "infsetsum'_converges f A = (\<exists>x. (sum f \<longlongrightarrow> x) (finite_subsets_at_top A))"
 
@@ -1247,214 +1200,267 @@ definition infsetsum' :: "('a \<Rightarrow> 'b::{comm_monoid_add,t2_space}) \<Ri
 
 
 lemma infsetsum'_converges_cong: 
-  assumes "\<And>x. x\<in>A \<Longrightarrow> f x = g x"
+  assumes t1: "\<And>x. x\<in>A \<Longrightarrow> f x = g x"
   shows "infsetsum'_converges f A = infsetsum'_converges g A"
-  unfolding infsetsum'_converges_def
-  apply (rule ex_cong1)
-  apply (rule tendsto_cong)
-  apply (rule eventually_finite_subsets_at_top_weakI)
-  using assms
-  by (meson subset_eq sum.cong) 
+proof-
+  have "sum f X = sum g X"
+    if "finite X" and "X \<subseteq> A"
+    for X
+    by (meson Finite_Cartesian_Product.sum_cong_aux subsetD t1 that(2))    
+  hence "\<forall>\<^sub>F x in finite_subsets_at_top A. sum f x = sum g x"
+    by (simp add: eventually_finite_subsets_at_top_weakI)
+  hence  "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A) =
+         (sum g \<longlongrightarrow> x) (finite_subsets_at_top A)"
+    for x
+    by (simp add: filterlim_cong)
+  thus ?thesis
+    by (simp add: infsetsum'_converges_def)
+  qed
 
 lemma infsetsum'_cong:
   assumes "\<And>x. x\<in>A \<Longrightarrow> f x = g x"
   shows "infsetsum' f A = infsetsum' g A"
-proof -
-  have "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A) \<longleftrightarrow> (sum g \<longlongrightarrow> x) (finite_subsets_at_top A)" for x
-    apply (rule tendsto_cong)
-    apply (rule eventually_finite_subsets_at_top_weakI)
-    using assms
-    by (meson subset_eq sum.cong)
+proof-
+  have "sum f X = sum g X"
+    if "finite X" and "X \<subseteq> A"
+    for X
+    by (meson Finite_Cartesian_Product.sum_cong_aux assms in_mono that(2))    
+  hence "\<forall>\<^sub>F x in finite_subsets_at_top A. sum f x = sum g x"
+    by (rule eventually_finite_subsets_at_top_weakI)
+  hence "(sum f \<longlongrightarrow> x) (finite_subsets_at_top A) \<longleftrightarrow> (sum g \<longlongrightarrow> x) (finite_subsets_at_top A)" 
+    for x
+    by (rule tendsto_cong)
   hence "Lim (finite_subsets_at_top A) (sum f) = Lim (finite_subsets_at_top A) (sum g)"
     unfolding Topological_Spaces.Lim_def[abs_def]
     by auto
   thus ?thesis
     unfolding infsetsum'_def
-    apply (subst infsetsum'_converges_cong[OF assms])
-    by auto
+    using assms infsetsum'_converges_cong by auto
 qed
-
 
 lemma abs_summable_finiteI0:
   assumes "\<And>F. finite F \<Longrightarrow> F\<subseteq>S \<Longrightarrow> sum (\<lambda>x. norm (f x)) F \<le> B"
     and "B \<ge> 0"
   shows "f abs_summable_on S" and "infsetsum (\<lambda>x. norm (f x)) S \<le> B"
-  unfolding atomize_conj
-proof (cases "S={}")
-  case True
-  thus "f abs_summable_on S \<and> infsetsum (\<lambda>x. norm (f x)) S \<le> B" 
-    using assms by auto
-next
-  case False
-  define M normf where "M = count_space S" and "normf x = ennreal (norm (f x))" for x
-
-  have normf_B: "finite F \<Longrightarrow> F\<subseteq>S \<Longrightarrow> sum normf F \<le> ennreal B" for F
-    using assms[THEN ennreal_leI] 
-    apply (subst (asm) sum_ennreal[symmetric], simp)
-    unfolding normf_def[symmetric] by simp
-
-  have "integral\<^sup>S M g \<le> B" if "simple_function M g" and "g \<le> normf" for g 
-  proof -
-    define gS where "gS = g ` S"
-    have "finite gS"
-      using that unfolding gS_def M_def simple_function_count_space by simp
-    have "gS \<noteq> {}" unfolding gS_def using False by auto
-    define part where "part r = g -` {r} \<inter> S" for r
-    have r_finite: "r < \<infinity>" if "r : gS" for r 
-      using \<open>g \<le> normf\<close> that unfolding gS_def le_fun_def normf_def apply auto
-      using ennreal_less_top neq_top_trans top.not_eq_extremum by blast
-    define B' where "B' r = (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)" for r
-    have B'fin: "B' r < \<infinity>" for r
+proof-
+  have t1: "f abs_summable_on S \<and> infsetsum (\<lambda>x. norm (f x)) S \<le> B"
+  proof(cases "S = {}")
+    case True
+    thus ?thesis
+      by (simp add: assms(2)) 
+  next
+    case False
+    define M normf where "M = count_space S" and "normf x = ennreal (norm (f x))" for x
+    have "sum normf F \<le> ennreal B"
+      if "finite F" and "F \<subseteq> S" and
+    "\<And>F. finite F \<Longrightarrow> F \<subseteq> S \<Longrightarrow> (\<Sum>i\<in>F. ennreal (norm (f i))) \<le> ennreal B" and
+    "ennreal 0 \<le> ennreal B"
+      for F
+      using that unfolding normf_def[symmetric] by simp    
+    hence normf_B: "finite F \<Longrightarrow> F\<subseteq>S \<Longrightarrow> sum normf F \<le> ennreal B" for F
+      using assms[THEN ennreal_leI] 
+      by auto
+    have "integral\<^sup>S M g \<le> B" if "simple_function M g" and "g \<le> normf" for g 
     proof -
-      have "B' r \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)"
-        unfolding B'_def
-        by (metis (mono_tags, lifting) SUP_least SUP_upper)
-      also have "\<dots> \<le> B"
-        using normf_B unfolding part_def
-        by (metis (no_types, lifting) Int_subset_iff SUP_least mem_Collect_eq)
-      also have "\<dots> < \<infinity>"
-        by simp
-      finally show ?thesis by simp
-    qed
-    have sumB': "sum B' gS \<le> ennreal B + \<epsilon>" if "\<epsilon>>0" for \<epsilon>
-    proof -
-      define N \<epsilon>N where "N = card gS" and "\<epsilon>N = \<epsilon> / N"
-      have "N > 0" 
-        unfolding N_def using \<open>gS\<noteq>{}\<close> \<open>finite gS\<close>
-        by (simp add: card_gt_0_iff)
-      from \<epsilon>N_def that have "\<epsilon>N > 0"
-        by (simp add: ennreal_of_nat_eq_real_of_nat ennreal_zero_less_divide)
-      obtain F where F: "sum normf (F r) + \<epsilon>N \<ge> B' r" and Ffin: "finite (F r)" and Fpartr: "F r \<subseteq> part r" for r
-        apply atomize_elim apply (subst all_conj_distrib[symmetric])+ apply (rule choice) apply (rule allI)
-        apply (rename_tac r) apply (case_tac "B' r = 0") 
+      define gS where "gS = g ` S"
+      have "finite gS"
+        using that unfolding gS_def M_def simple_function_count_space by simp
+      have "gS \<noteq> {}" unfolding gS_def False
+        by (simp add: False) 
+      define part where "part r = g -` {r} \<inter> S" for r
+      have r_finite: "r < \<infinity>" if "r : gS" for r 
+        using \<open>g \<le> normf\<close> that unfolding gS_def le_fun_def normf_def apply auto
+        using ennreal_less_top neq_top_trans top.not_eq_extremum by blast
+      define B' where "B' r = (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)" for r
+      have B'fin: "B' r < \<infinity>" for r
       proof -
-        fix r assume "B' r = 0" 
-        thus "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r" by auto
-      next
-        fix r :: ennreal
-        assume "B' r \<noteq> 0"
-        with \<open>\<epsilon>N > 0\<close> B'fin have "B' r - \<epsilon>N < B' r"
-          by (metis ennreal_between infinity_ennreal_def le_zero_eq not_le)
-        then obtain F where "B' r - \<epsilon>N \<le> sum normf F" and "finite F" and "F \<subseteq> part r"
-          apply atomize_elim apply (subst (asm) (2) B'_def)
-          by (metis (no_types, lifting) leD le_cases less_SUP_iff mem_Collect_eq)
-        thus "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r"
-          by (metis add.commute ennreal_minus_le_iff)
+        have "B' r \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum normf F)"
+          unfolding B'_def
+          by (metis (mono_tags, lifting) SUP_least SUP_upper)
+        also have "\<dots> \<le> B"
+          using normf_B unfolding part_def
+          by (metis (no_types, lifting) Int_subset_iff SUP_least mem_Collect_eq)
+        also have "\<dots> < \<infinity>"
+          by simp
+        finally show ?thesis by simp
       qed
-      have "sum B' gS \<le> (\<Sum>r\<in>gS. sum normf (F r) + \<epsilon>N)"
-        using F by (simp add: sum_mono)
-      also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + (\<Sum>r\<in>gS. \<epsilon>N)"
-        by (simp add: sum.distrib)
-      also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + (card gS * \<epsilon>N)"
-        by auto
-      also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + \<epsilon>"
-        unfolding \<epsilon>N_def N_def[symmetric] using \<open>N>0\<close> 
-        by (simp add: ennreal_times_divide mult.commute mult_divide_eq_ennreal)
-      also have "\<dots> = sum normf (\<Union> (F ` gS)) + \<epsilon>" 
-        apply (subst sum.UNION_disjoint[symmetric])
-        using \<open>finite gS\<close> apply assumption
-        using Ffin apply simp
-        using Fpartr[unfolded part_def] apply auto[1]
-         apply (metis subsetCE vimage_singleton_eq)        
-        by simp
-      also have "\<dots> \<le> B + \<epsilon>"
-        apply (rule add_right_mono)
-        apply (rule normf_B)
-        using \<open>finite gS\<close> Ffin Fpartr unfolding part_def by auto
-      finally show ?thesis
-        by auto
-    qed
-    hence sumB': "sum B' gS \<le> B"
-      using ennreal_le_epsilon ennreal_less_zero_iff by blast
-    obtain B'' where B'': "B' r = ennreal (B'' r)" if "r \<in> gS" for r
-      apply atomize_elim apply (rule_tac choice) 
-      using B'fin apply auto using less_top_ennreal by blast
-    have cases[case_names zero finite infinite]: "P" if "r=0 \<Longrightarrow> P" and "finite (part r) \<Longrightarrow> P"
-      and "infinite (part r) \<Longrightarrow> r\<noteq>0 \<Longrightarrow> P" for P r
-      using that by metis
-    have emeasure_B': "r * emeasure M (part r) \<le> B' r" if "r : gS" for r
-    proof (cases rule:cases[of r])
-      case zero
-      thus ?thesis by simp
-    next
-      case finite
-      have "r * of_nat (card (part r)) = r * (\<Sum>x\<in>part r. 1)" by simp
-      also have "\<dots> = (\<Sum>x\<in>part r. r)"
-        using mult.commute by auto
-      also have "\<dots> = (\<Sum>x\<in>part r. g x)"
-        unfolding part_def by auto
-      also have "\<dots> \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum g F)"
-        using finite apply auto
-        by (simp add: Sup_upper)
-      also have "\<dots> \<le> B' r"
-        unfolding B'_def
-        apply (rule SUP_subset_mono, simp) 
-        apply (rule sum_mono) 
-        using \<open>g \<le> normf\<close>
-        by (simp add: le_fun_def) 
-      finally have "r * of_nat (card (part r)) \<le> B' r" by assumption
-      thus ?thesis
-        unfolding M_def
-        apply (subst emeasure_count_space_finite)
-        using part_def finite by auto
-    next
-      case infinite
-      from r_finite[OF \<open>r : gS\<close>] obtain r' where r': "r = ennreal r'"
-        using ennreal_cases by auto
-      with infinite have "r' > 0"
-        using ennreal_less_zero_iff not_gr_zero by blast
-      obtain N::nat where N:"N > B / r'" and "real N > 0" apply atomize_elim
-        using reals_Archimedean2
-        by (metis less_trans linorder_neqE_linordered_idom)
-      obtain F where "finite F" and "card F = N" and "F \<subseteq> part r"
-        apply atomize_elim using infinite
-        by (simp add: infinite_arbitrarily_large)
-      from \<open>F \<subseteq> part r\<close> have "F \<subseteq> S" unfolding part_def by simp
-      have "B < r * N"
-        using N unfolding r' ennreal_of_nat_eq_real_of_nat
-        apply (subst ennreal_mult[symmetric])
-        using ennreal_le_iff2 ennreal_neg infinite(2) r' apply blast
-         apply simp
-        apply (rule ennreal_lessI)
-        using \<open>r' > 0\<close> \<open>real N > 0\<close> apply simp
-        using \<open>r' > 0\<close> by (simp add: linordered_field_class.pos_divide_less_eq mult.commute)
-      also have "r * N = (\<Sum>x\<in>F. r)"
-        using \<open>card F = N\<close> by (simp add: mult.commute)
-      also have "(\<Sum>x\<in>F. r) = (\<Sum>x\<in>F. g x)"
-        apply (rule sum.cong)
-        using \<open>F \<subseteq> part r\<close> using part_def by auto
-      also have "(\<Sum>x\<in>F. g x) \<le> (\<Sum>x\<in>F. ennreal (norm (f x)))"
-        apply (rule sum_mono) using \<open>g \<le> normf\<close> unfolding normf_def le_fun_def by auto
-      also have "(\<Sum>x\<in>F. ennreal (norm (f x))) \<le> B" 
-        apply auto using assms(1)[OF \<open>finite F\<close> \<open>F \<subseteq> S\<close>] by (rule ennreal_leI)
-      finally have "B < B" by auto
-      thus ?thesis by simp
-    qed
+      have sumB': "sum B' gS \<le> ennreal B + \<epsilon>" if "\<epsilon>>0" for \<epsilon>
+      proof -
+        define N \<epsilon>N where "N = card gS" and "\<epsilon>N = \<epsilon> / N"
+        have "N > 0" 
+          unfolding N_def using \<open>gS\<noteq>{}\<close> \<open>finite gS\<close>
+          by (simp add: card_gt_0_iff)
+        from \<epsilon>N_def that have "\<epsilon>N > 0"
+          by (simp add: ennreal_of_nat_eq_real_of_nat ennreal_zero_less_divide)
+        have c1: "\<exists>y. B' r \<le> sum normf y + \<epsilon>N \<and>
+             finite y \<and> y \<subseteq> part r"
+          if "B' r = 0"
+          for r
+          using that by auto
+        have c2: "\<exists>y. B' r \<le> sum normf y + \<epsilon>N \<and>
+             finite y \<and> y \<subseteq> part r"
+          if "B' r \<noteq> 0"
+          for r
+        proof-
+          have "B' r - \<epsilon>N < B' r"
+            using B'fin \<open>0 < \<epsilon>N\<close> ennreal_between that by fastforce
+          have "B' r - \<epsilon>N < Sup (sum normf ` {F. finite F \<and> F \<subseteq> part r}) \<Longrightarrow>
+               \<exists>F. B' r - \<epsilon>N \<le> sum normf F \<and> finite F \<and> F \<subseteq> part r"
+            by (metis (no_types, lifting) leD le_cases less_SUP_iff mem_Collect_eq)
+          hence "B' r - \<epsilon>N < B' r \<Longrightarrow>
+                \<exists>F. B' r - \<epsilon>N \<le> sum normf F \<and>
+                finite F \<and> F \<subseteq> part r"
+            by (subst (asm) (2) B'_def)
+          then obtain F where "B' r - \<epsilon>N \<le> sum normf F" and "finite F" and "F \<subseteq> part r"
+            using \<open>B' r - \<epsilon>N < B' r\<close> by auto  
+          thus "\<exists>F. B' r \<le> sum normf F + \<epsilon>N \<and> finite F \<and> F \<subseteq> part r"
+            by (metis add.commute ennreal_minus_le_iff)
+        qed
+        have "\<forall>x. \<exists>y. B' x \<le> sum normf y + \<epsilon>N \<and>
+            finite y \<and> y \<subseteq> part x"
+          using c1 c2
+          by blast 
+        hence "\<exists>F. \<forall>x. B' x \<le> sum normf (F x) + \<epsilon>N \<and> finite (F x) \<and> F x \<subseteq> part x"
+          by metis 
+        then obtain F where F: "sum normf (F r) + \<epsilon>N \<ge> B' r" and Ffin: "finite (F r)" and Fpartr: "F r \<subseteq> part r" for r
+          using atomize_elim by auto
+        have w1: "finite gS"
+          by (simp add: \<open>finite gS\<close>)          
+        have w2: "\<forall>i\<in>gS. finite (F i)"
+          by (simp add: Ffin)          
+        have False
+          if "\<And>r. F r \<subseteq> g -` {r} \<and> F r \<subseteq> S"
+            and "i \<in> gS" and "j \<in> gS" and "i \<noteq> j" and "x \<in> F i" and "x \<in> F j"
+          for i j x
+          by (metis subsetD that(1) that(4) that(5) that(6) vimage_singleton_eq)          
+        hence w3: "\<forall>i\<in>gS. \<forall>j\<in>gS. i \<noteq> j \<longrightarrow> F i \<inter> F j = {}"
+          using Fpartr[unfolded part_def] by auto          
+        have w4: "sum normf (\<Union> (F ` gS)) + \<epsilon> = sum normf (\<Union> (F ` gS)) + \<epsilon>"
+          by simp
+        have "sum B' gS \<le> (\<Sum>r\<in>gS. sum normf (F r) + \<epsilon>N)"
+          using F by (simp add: sum_mono)
+        also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + (\<Sum>r\<in>gS. \<epsilon>N)"
+          by (simp add: sum.distrib)
+        also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + (card gS * \<epsilon>N)"
+          by auto
+        also have "\<dots> = (\<Sum>r\<in>gS. sum normf (F r)) + \<epsilon>"
+          unfolding \<epsilon>N_def N_def[symmetric] using \<open>N>0\<close> 
+          by (simp add: ennreal_times_divide mult.commute mult_divide_eq_ennreal)
+        also have "\<dots> = sum normf (\<Union> (F ` gS)) + \<epsilon>" 
+          using w1 w2 w3 w4
+          by (subst sum.UNION_disjoint[symmetric])
+        also have "\<dots> \<le> B + \<epsilon>"
+          using \<open>finite gS\<close> normf_B add_right_mono Ffin Fpartr unfolding part_def
+          by (simp add: \<open>gS \<noteq> {}\<close> cSUP_least)          
+        finally show ?thesis
+          by auto
+      qed
+      hence sumB': "sum B' gS \<le> B"
+        using ennreal_le_epsilon ennreal_less_zero_iff by blast
+      have "\<forall>r. \<exists>y. r \<in> gS \<longrightarrow> B' r = ennreal y"
+        using B'fin less_top_ennreal by auto
+      hence "\<exists>B''. \<forall>r. r \<in> gS \<longrightarrow> B' r = ennreal (B'' r)"
+        by (rule_tac choice) 
+      then obtain B'' where B'': "B' r = ennreal (B'' r)" if "r \<in> gS" for r
+        by atomize_elim 
+      have cases[case_names zero finite infinite]: "P" if "r=0 \<Longrightarrow> P" and "finite (part r) \<Longrightarrow> P"
+        and "infinite (part r) \<Longrightarrow> r\<noteq>0 \<Longrightarrow> P" for P r
+        using that by metis
+      have emeasure_B': "r * emeasure M (part r) \<le> B' r" if "r : gS" for r
+      proof (cases rule:cases[of r])
+        case zero
+        thus ?thesis by simp
+      next
+        case finite
+        have s1: "sum g F \<le> sum normf F"
+          if "F \<in> {F. finite F \<and> F \<subseteq> part r}"
+          for F
+          using \<open>g \<le> normf\<close> 
+          by (simp add: le_fun_def sum_mono)
+         
+        have "r * of_nat (card (part r)) = r * (\<Sum>x\<in>part r. 1)" by simp
+        also have "\<dots> = (\<Sum>x\<in>part r. r)"
+          using mult.commute by auto
+        also have "\<dots> = (\<Sum>x\<in>part r. g x)"
+          unfolding part_def by auto
+        also have "\<dots> \<le> (SUP F\<in>{F. finite F \<and> F\<subseteq>part r}. sum g F)"
+          using finite
+          by (simp add: Sup_upper)
+        also have "\<dots> \<le> B' r"        
+          unfolding B'_def
+          using s1 SUP_subset_mono by blast
+        finally have "r * of_nat (card (part r)) \<le> B' r" by assumption
+        thus ?thesis
+          unfolding M_def
+          using part_def finite by auto
+      next
+        case infinite
+        from r_finite[OF \<open>r : gS\<close>] obtain r' where r': "r = ennreal r'"
+          using ennreal_cases by auto
+        with infinite have "r' > 0"
+          using ennreal_less_zero_iff not_gr_zero by blast
+        obtain N::nat where N:"N > B / r'" and "real N > 0" apply atomize_elim
+          using reals_Archimedean2
+          by (metis less_trans linorder_neqE_linordered_idom)
+        obtain F where "finite F" and "card F = N" and "F \<subseteq> part r"
+          using infinite(1) infinite_arbitrarily_large by blast
+        from \<open>F \<subseteq> part r\<close> have "F \<subseteq> S" unfolding part_def by simp
+        have "B < r * N"
+          by (metis (mono_tags, hide_lams) N \<open>0 < r'\<close> assms(2) ennreal_less_iff ennreal_mult' 
+              ennreal_of_nat_eq_real_of_nat less_eq_real_def 
+              nice_ordered_field_class.pos_divide_less_eq ordered_field_class.sign_simps(47) r')
+        also have "r * N = (\<Sum>x\<in>F. r)"
+          using \<open>card F = N\<close> by (simp add: mult.commute)
+        also have "(\<Sum>x\<in>F. r) = (\<Sum>x\<in>F. g x)"
+          using \<open>F \<subseteq> part r\<close>  part_def sum.cong subsetD by fastforce
+        also have "(\<Sum>x\<in>F. g x) \<le> (\<Sum>x\<in>F. ennreal (norm (f x)))"
+          by (metis (mono_tags, lifting) \<open>g \<le> normf\<close> \<open>normf \<equiv> \<lambda>x. ennreal (norm (f x))\<close> le_fun_def 
+              sum_mono)
+        also have "(\<Sum>x\<in>F. ennreal (norm (f x))) \<le> B"
+          using \<open>F \<subseteq> S\<close> \<open>finite F\<close> \<open>normf \<equiv> \<lambda>x. ennreal (norm (f x))\<close> normf_B by blast 
+        finally have "B < B" by auto
+        thus ?thesis by simp
+      qed
 
-    have "integral\<^sup>S M g = (\<Sum>r \<in> gS. r * emeasure M (part r))"
-      unfolding simple_integral_def gS_def M_def part_def by simp
-    also have "\<dots> \<le> (\<Sum>r \<in> gS. B' r)"
-      apply (rule sum_mono) using emeasure_B' by auto
-    also have "\<dots> \<le> B"
-      using sumB' by blast
-    finally show ?thesis by assumption
+      have "integral\<^sup>S M g = (\<Sum>r \<in> gS. r * emeasure M (part r))"
+        unfolding simple_integral_def gS_def M_def part_def by simp
+      also have "\<dots> \<le> (\<Sum>r \<in> gS. B' r)"
+        by (simp add: emeasure_B' sum_mono)
+      also have "\<dots> \<le> B"
+        using sumB' by blast
+      finally show ?thesis by assumption
+    qed
+    hence int_leq_B: "integral\<^sup>N M normf \<le> B"
+      unfolding nn_integral_def by (metis (no_types, lifting) SUP_least mem_Collect_eq)
+    hence "integral\<^sup>N M normf < \<infinity>"
+      using le_less_trans by fastforce
+    hence "integrable M f"
+      unfolding M_def normf_def by (rule integrableI_bounded[rotated], simp)
+    hence v1: "f abs_summable_on S"
+      unfolding abs_summable_on_def M_def by simp  
+
+    have "(\<lambda>x. norm (f x)) abs_summable_on S"
+      using v1 Infinite_Set_Sum.abs_summable_on_norm_iff[where A = S and f = f]
+      by auto
+    moreover have "0 \<le> norm (f x)"
+      if "x \<in> S" for x
+      by simp    
+    moreover have "(\<integral>\<^sup>+ x. ennreal (norm (f x)) \<partial>count_space S) \<le> ennreal B"
+      using M_def \<open>normf \<equiv> \<lambda>x. ennreal (norm (f x))\<close> int_leq_B by auto    
+    ultimately have "ennreal (\<Sum>\<^sub>ax\<in>S. norm (f x)) \<le> ennreal B"
+      by (simp add: nn_integral_conv_infsetsum)    
+    hence v2: "(\<Sum>\<^sub>ax\<in>S. norm (f x)) \<le> B"
+      by (subst ennreal_le_iff[symmetric], simp add: assms)
+    show ?thesis
+      using v1 v2 by auto
   qed
-  hence int_leq_B: "integral\<^sup>N M normf \<le> B"
-    unfolding nn_integral_def by (metis (no_types, lifting) SUP_least mem_Collect_eq)
-  hence "integral\<^sup>N M normf < \<infinity>"
-    using le_less_trans by fastforce
-  hence "integrable M f"
-    unfolding M_def normf_def by (rule integrableI_bounded[rotated], simp)
-  hence f_sum_S: "f abs_summable_on S"
-    unfolding abs_summable_on_def M_def by simp
-  have "infsetsum (\<lambda>x. norm (f x)) S \<le> B"
-    apply (subst ennreal_le_iff[symmetric], simp add: assms)
-    apply (subst nn_integral_conv_infsetsum[symmetric])
-    using f_sum_S int_leq_B 
-    unfolding normf_def M_def by auto
-  with f_sum_S
-  show "f abs_summable_on S \<and> infsetsum (\<lambda>x. norm (f x)) S \<le> B" by simp
+  show "f abs_summable_on S"
+    using t1 by blast
+  show "(\<Sum>\<^sub>ax\<in>S. norm (f x)) \<le> B"
+    using t1 by blast
 qed
+
+(*here*)
 
 lemma abs_summable_finiteI:
   assumes "\<And>F. finite F \<Longrightarrow> F\<subseteq>S \<Longrightarrow> sum (\<lambda>x. norm (f x)) F \<le> B"
