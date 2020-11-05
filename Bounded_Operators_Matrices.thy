@@ -3984,8 +3984,6 @@ proof -
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_cols_index) apply auto
       by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
-(* Ask to Dominique \<Longrightarrow> it needed an additional "apply (subst mat_of_rows_index) apply auto" and
-   from there on it worked like the old proof. *)
     also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
       apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
       by (simp add: butterfly_def' cblinfun_of_mat_timesOp
@@ -4092,7 +4090,6 @@ proof (transfer, auto)
   proof-
     have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
           closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-      (* Ask to Dominique. \<Longrightarrow> The 2019 proof still works but we needed to import theory Starlike. *)
       using Starlike.closure_sum by auto
     hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
         \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"

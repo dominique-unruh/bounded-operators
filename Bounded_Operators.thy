@@ -633,11 +633,6 @@ next
         using False apply (rule class_not_singletonI_monoid_add)
           apply (rule real_normed_vector_class.real_normed_vector_axioms)
         using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close> by -
-(* Ask to Dominique: Incompatibility between "False" and type not_singleton      
-
-\<Longrightarrow> Proved it.
-
-*)
     ultimately have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
       using approx_sym approx_trans3 mem_infmal_iff by blast          
     thus \<open>(*f* f) N \<approx> (*f* f) M\<close>
@@ -6215,12 +6210,12 @@ proof-
   finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
 qed
 
-(* TODO move to Bounded_Op *)
+
 definition butterfly_def': "butterfly (s::'a::chilbert_space)
    = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
 
 
-(* TODO move to Bounded_Op *)
+
 lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)
                                  o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)*"
     (is "_ = ?rhs") for s :: "'b::chilbert_space"
@@ -6242,22 +6237,22 @@ proof -
     by simp
 qed
 
-(* TODO move to Bounded_Op *)
+
 lemma butterfly_apply: "butterfly \<psi> *\<^sub>V \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C \<psi>"
   apply (subst butterfly_def)
   by (simp add: times_applyOp)
 
-(* TODO move to Bounded_Op *)
+
 lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
   apply transfer by simp
 
-(* TODO move to Bounded_Op *)
+
 lemma butterfly_0[simp]: "butterfly 0 = 0"
   apply (subst butterfly_def)
   by simp
 
 
-(* TODO move to Bounded_Op *)
+
 lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"
 proof (cases "\<psi>=0")
   case True
