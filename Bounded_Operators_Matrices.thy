@@ -21,8 +21,7 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::onb_en
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>onb_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
-  (* TODO: Define (canonical isomorphism). *)
-  (* Jose: More details please *)
+  (* TODO (for Dominique): Define in this description what the canonical isomorphism is. *)
 
 primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,complex_inner} \<Rightarrow> nat \<Rightarrow> complex vec\<close> 
   where
@@ -1328,6 +1327,7 @@ qed
 (* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
    Most of the rules don't need an ONB *)
 (* Jose: There is an error when I change onb_enum by basis_enum *)
+(* TODO: Dominique: Figure out why this does not work... *)
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))
            then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)
@@ -1438,6 +1438,7 @@ qed
 (* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
    Most of the rules don't need an ONB *)
 (* Jose: Error when onb_enum is substituted by basis_enum  *)
+(* TODO: Dominique: Think about it. *)
 definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
   \<open>mat_of_cblinfun f = 
     mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (

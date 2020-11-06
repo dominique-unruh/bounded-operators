@@ -467,15 +467,6 @@ next
         using False apply (rule class_not_singletonI_monoid_add)
          apply (rule real_normed_vector_class.real_normed_vector_axioms)
         by (fact \<open>N\<in>HNatInfinite\<close>)
-
-           (* Asked to Dominique: how to use "False" in order 
-              to consider the type of the domain as "not_singleton" 
-              It think that "hnorm_unit_sphere[where f = g]", but considering 
-              the domain of g having type "{not_singleton, real_normed_vector}"
-
-              \<Longrightarrow> TODO: José, please inspect my solution here for future situations.
-
-              *)
       moreover have \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
       proof-
         have  \<open>\<forall> NN. ( g) NN = ( f) NN - ( l)\<close>
@@ -3696,8 +3687,6 @@ definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \
 lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun \<Rightarrow> complex)\<close>
   is bifunctional.
 
-(* TODO: Isn't "Bifunctional x" just the adjoint of x?
-   (I.e., "(vector_to_cblinfun x)*") *)
 lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L complex) \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   is Bifunctional'
 proof
@@ -4263,11 +4252,14 @@ lemma one_dim_cblinfun_to_complex_of_complex[simp]:
   unfolding one_dim_cblinfun_to_complex_def
   by (simp add: of_complex_def one_cblinfun_def one_dim_isom.rep_eq)
 
-(* (* TODO: prove this *)
+(*
+(* TODO: prove this *) (* TODO: Dominique does it. *)
 lemma of_complex_one_dim_cblinfun_to_complex[simp]:
   "of_complex (one_dim_cblinfun_to_complex A) = A"
   unfolding one_dim_cblinfun_to_complex_def
-  unfolding one_dim_to_complex_def *)
+  unfolding one_dim_to_complex_def
+  sorry
+*)
 
 lemma cblinfun_ext: 
   includes cblinfun_notation
@@ -6142,8 +6134,10 @@ lemma cblinfun_extension_exists:
 lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0"
   by (metis add_cancel_left_left cblinfun_apply_add)
 
-(* TODO: replace by a more general lemma that show Proj (A\<union>B) = Proj A + Proj B
-         under orthogonality assumptions *)
+
+(* TODO: replace by a more general lemma that shows Proj (A\<union>B) = Proj A + Proj B
+         under orthogonality assumptions (using projection_union (other TODO)) *)
+(* It follows from projection_union *)
 lemma Proj_Span_insert:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
     and a::'a 

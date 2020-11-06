@@ -3471,6 +3471,7 @@ class one_dim = onb_enum + one + times + complex_inner +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
   (* TODO: Add whatever is necessary to make one_dim also a complex_normed_field *)
+  (* TODO: Dominique does it *)
 begin
 
 definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
@@ -6557,7 +6558,12 @@ proof-
   finally show ?thesis.
 qed
 
-
+(* TODO: replace by lemma projection_union:
+  assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> orthogonal x y"
+  shows projection (A \<union> B) = projection A + projection B
+  
+  do not assume that A and B are finite-dimensional
+ *)
 lemma projection_insert:
   assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
   shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S} u

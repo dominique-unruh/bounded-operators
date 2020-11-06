@@ -2736,30 +2736,6 @@ lemma clinear_space_leI:
   shows "A \<le> B"
   using assms apply transfer by auto
 
-(* lemma finite_sum_tendsto:
-  fixes A::\<open>('a::cbanach) set\<close>
-  assumes  \<open>\<forall> a \<in> A. (\<lambda> n. r n a) \<longlonglongrightarrow> \<phi> a\<close> and \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r n a *\<^sub>C a)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a *\<^sub>C a)\<close>
-  using finite_sum_tendsto' assms by blast *)
-
-(* TODO: José, please compare this with your proof of finite_sum_tendsto
-   to see how inductions over finite sets are easier to do than by 
-   induction over the cardinality. 
-
-   TODO: Replace finite_sum_tendsto by this.
-
-Jose: It is not possible to deduce finite_sum_tendsto from finite_sum_tendsto in 
-an via sledgehammer. Hence, finite_sum_tendsto and finite_sum_tendsto are not
-pre-equivalent.
-
-I define two theorems A and B to be pre-equivalent if and only if
-theorem A can be obtained from theorem B using sledgehammer and 
-theorem B can be obtained from theorem A using sledgehammer.
-
-Notice that this is not an equivalent relation, because transitivity may fail.
-
-*)
-
 lemma finite_sum_tendsto:
   fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
   assumes  \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 

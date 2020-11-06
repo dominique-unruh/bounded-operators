@@ -2105,8 +2105,10 @@ proof (unfold cauchy_filter_def le_filter_def, auto)
   assume "eventually P uniformity"
   then obtain e where e: "e > 0" and P: "dist x y < e \<Longrightarrow> P (x, y)" for x y
     unfolding eventually_uniformity_metric by auto
-  from assms e obtain P' where evP': "eventually P' F" and P'_dist: "P' x \<and> P' y \<Longrightarrow> dist x y < e" for x y
-    apply atomize_elim by auto
+
+  obtain P' where evP': "eventually P' F" and P'_dist: "P' x \<and> P' y \<Longrightarrow> dist x y < e" for x y
+    apply atomize_elim using assms e by auto
+  
   from evP' P'_dist P
   show "eventually P (F \<times>\<^sub>F F)"
     unfolding eventually_uniformity_metric eventually_prod_filter eventually_filtermap by metis
@@ -2237,8 +2239,9 @@ proof-
     unfolding infsetsum'_converges_def by auto
 qed
 
-(* Limits.tendsto_add_const_iff is the same but with a more restrictive sort *)
 lemma tendsto_add_const_iff:
+  \<comment> \<open>This is a generalization of \<open>Limits.tendsto_add_const_iff\<close>, 
+      the only difference is that the sort here is more general.\<close>
   "((\<lambda>x. c + f x :: 'a::topological_group_add) \<longlongrightarrow> c + d) F \<longleftrightarrow> (f \<longlongrightarrow> d) F"
   using tendsto_add[OF tendsto_const[of c], of f d]
     and tendsto_add[OF tendsto_const[of "-c"], of "\<lambda>x. c + f x" "c + d"] by auto
