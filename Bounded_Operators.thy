@@ -9,7 +9,7 @@ Authors:
 
 theory Bounded_Operators
   imports 
-    Complex_Inner_Product 
+    Complex_Inner_Product One_Dimensional_Spaces
     Banach_Steinhaus.Banach_Steinhaus
     "HOL-Types_To_Sets.Types_To_Sets"
 begin
@@ -3245,23 +3245,6 @@ qed
 
 subsection \<open>Kernel\<close>
 
-(* debate 1 Bounded_Operators
-- Dominique: type class: complex_vector + topological_space
-- Jose: it is more natural, in the setting of this library, to
-  take the class "complex_normed_vector" in place of "complex_vector + topological_space".
-  
-Dominique: complex_vector+topological_space is strictly more general.
-  Any theorem or definition that is proven wrt. complex_vector+topological_space
-  can be directly used in a situation requiring complex_normed_vector as well.
-  Thus restricting to complex_normed_vector reduces the generality of the results without
-  good reason. In specific cases, of course, there are good reasons. For example,
-  the type cblinfun only makes sense for complex_normed_vector because we need the norm.
-
-  Why would complex_normed_vector be more natural in this setting?
-
-  I am not sure which specific lemma/definition this debate refers to.
-*)
-
 lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> 'a clinear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
@@ -3983,13 +3966,13 @@ lemma cblinfun_apply_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *
 
 
 lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L'a\<close> is
-  \<open>\<lambda>\<psi> \<phi>. one_dim_to_complex \<phi> *\<^sub>C \<psi>\<close>
-  by (simp add: cbounded_linear_one_dim_to_complex cbounded_linear_scaleC_const)
+  \<open>\<lambda>\<psi> \<phi>. one_dim_isom' \<phi> *\<^sub>C \<psi>\<close>
+  by (simp add: cbounded_linear_scaleC_const)
 
 lemma vector_to_cblinfun_applyOp: 
   "vector_to_cblinfun (A *\<^sub>V \<psi>) = A  o\<^sub>C\<^sub>L (vector_to_cblinfun \<psi>)" 
   apply transfer 
-  unfolding one_dim_to_complex_def comp_def cbounded_linear_def clinear_def Vector_Spaces.linear_def
+  unfolding comp_def cbounded_linear_def clinear_def Vector_Spaces.linear_def
     module_hom_def module_hom_axioms_def
   by simp
 
@@ -4152,114 +4135,141 @@ qed
 
 lemma vector_to_cblinfun_times_vec[simp]:
   includes cblinfun_notation
-  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_to_complex \<gamma> *\<^sub>C \<phi>"
+  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_isom' \<gamma> *\<^sub>C \<phi>"
   apply transfer by (rule refl)
 
 lemma vector_to_cblinfun_adj_times_vec[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
 proof -
-  have "one_dim_to_complex (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a)"
-    by (simp add: one_dim_to_complex_def)
-  also have "\<dots> = cinner (vector_to_cblinfun \<psi> *\<^sub>V (1::'a)) \<phi>"
+  have "one_dim_isom' (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a)"
+    by (simp add: one_dim_isom'_def)
+  also have *: "\<dots> = cinner (vector_to_cblinfun \<psi> *\<^sub>V (1::'a)) \<phi>"
     by (metis adjoint_I adjoint_twice)
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
-  finally have "one_dim_to_complex (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>" by -
+  finally have "one_dim_isom' (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>"
+    using "*" by auto
   thus ?thesis
-    by (metis one_dim_to_complex_inverse)
+    by (metis one_dim_isom'_eq_of_complex one_dim_isom'_inverse)
 qed
 
-lift_definition one_dim_isom :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b::one_dim" is
-  "\<lambda>a. of_complex (one_dim_to_complex a)"
-  apply (rule cbounded_linear_intro[where K=1])
-  apply (auto simp: one_dim_to_complex_def cinner_add_right)
-  apply (simp add: scaleC_conv_of_complex)
-  by (metis norm_of_complex of_complex_def one_dim_1_times_a_eq_a order_refl)
+term cinner
 
-lemma one_dim_isom_inverse[simp]: "one_dim_isom o\<^sub>C\<^sub>L one_dim_isom = idOp"
-  by (transfer, rule ext, simp)
+instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
+text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
+  and make cblinfun and relax the one_dim-sort constraint\<close>
+definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = cnj (one_dim_isom' (A *\<^sub>V 1)) * one_dim_isom' (B *\<^sub>V 1)"
+instance
+proof intro_classes
+  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    and c c' :: complex
+  show "\<langle>A, B\<rangle> = cnj \<langle>B, A\<rangle>"
+    unfolding cinner_cblinfun_def by auto
+  show "\<langle>A + B, C\<rangle> = \<langle>A, C\<rangle> + \<langle>B, C\<rangle>"
+    by (simp add: cinner_cblinfun_def ordered_field_class.sign_simps(43) plus_cblinfun.rep_eq) 
+  show "\<langle>c *\<^sub>C A, B\<rangle> = cnj c * \<langle>A, B\<rangle>"
+    unfolding cinner_cblinfun_def by auto
+  show "0 \<le> \<langle>A, A\<rangle>"
+    unfolding cinner_cblinfun_def by auto
+  show "(\<langle>A, A\<rangle> = 0) = (A = 0)"
+    apply (auto simp: cinner_cblinfun_def)
+    apply (drule one_dim_isom'_0')
+    apply transfer
+    apply (rule one_dim_linear_eq[where x=1], auto)
+    using cbounded_linear.is_clinear apply auto[1]
+    using complex_vector.module_hom_zero by blast
+  show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
+    unfolding cinner_cblinfun_def 
+    apply transfer 
+    by (simp add: norm_mult abs_complex_def one_dim_onorm' cnj_x_x power2_eq_square cbounded_linear.is_clinear)
+qed
+end
 
-lemma one_dim_isom_adj[simp]: "one_dim_isom* = one_dim_isom"
+instantiation cblinfun :: (one_dim, one_dim) one_dim begin
+lift_definition one_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "one_dim_isom'"
+  by (rule cbounded_linear_one_dim_isom')
+lift_definition times_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  is "\<lambda>f g. f o one_dim_isom' o g"
+  by (simp add: comp_cbounded_linear)
+definition "canonical_basis_cblinfun = [1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b]"
+definition "canonical_basis_length_cblinfun (_::('a \<Rightarrow>\<^sub>C\<^sub>L 'b) itself) = (1::nat)"
+instance
+proof intro_classes
+  let ?basis = "canonical_basis :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) list"
+  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    and c c' :: complex
+  show "distinct ?basis"
+    unfolding canonical_basis_cblinfun_def by simp
+  show "cindependent (set ?basis)"
+    unfolding canonical_basis_cblinfun_def apply simp
+    by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom'_one zero_neq_one)
+  show "cspan (set ?basis) = UNIV"
+  proof -
+    have "A \<in> cspan (set ?basis)" for A
+    proof -
+      define c :: complex where "c = one_dim_isom' (A *\<^sub>V 1)"
+      have "A x = one_dim_isom' (A 1) *\<^sub>C one_dim_isom' x" for x
+        by (metis (mono_tags, hide_lams) applyOp_scaleC2 complex_vector.scale_left_commute mult.right_neutral of_complex_inner_1 of_complex_one_dim_isom' one_dim_isom'_def scaleC_conv_of_complex)
+      then have "A = one_dim_isom' (A *\<^sub>V 1) *\<^sub>C 1"
+        apply transfer by metis
+      then show "A \<in> cspan (set ?basis)"
+        unfolding canonical_basis_cblinfun_def
+        by (smt complex_vector.span_base complex_vector.span_scale list.set_intros(1))
+    qed
+    then show ?thesis by auto
+  qed
+  show "canonical_basis_length TYPE('a \<Rightarrow>\<^sub>C\<^sub>L 'b) = length ?basis"
+    unfolding canonical_basis_length_cblinfun_def canonical_basis_cblinfun_def by simp
+  show "A \<in> set ?basis \<Longrightarrow> norm A = 1"
+    unfolding canonical_basis_cblinfun_def apply simp apply transfer by simp
+  show "?basis = [1]"
+    unfolding canonical_basis_cblinfun_def by simp
+  show "c *\<^sub>C 1 * c' *\<^sub>C 1 = (c * c') *\<^sub>C (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
+    apply transfer by auto
+  show "is_ortho_set (set ?basis)"
+    unfolding is_ortho_set_def canonical_basis_cblinfun_def apply auto
+    by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom'_0' zero_neq_neg_one)
+qed
+end
+
+(* TODO-DOMINIQUE *)
+lemma one_dim_idOp: "1 = idOp"
+  sorry
+
+(* TODO-DOMINIQUE *)
+lemma one_dim_times: 
+  fixes A :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'a" and B :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'a"
+  shows "A * B = A o\<^sub>C\<^sub>L B"
+  sorry
+
+(* TODO-DOMINIQUE *)
+lemma one_dim_isom_inverse[simp]: "1 o\<^sub>C\<^sub>L 1 = 1"
+  apply transfer sorry
+
+lemma one_dim_isom_adj[simp]: "1* = 1"
   apply (rule adjoint_D[symmetric])
-  apply transfer
-  by (simp add: of_complex_def one_dim_to_complex_def)
+  apply transfer by (rule one_dim_isom'_adjoint)
 
 lemma one_dim_isom_vector_to_cblinfun[simp]: 
-  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L one_dim_isom = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
-  by (transfer fixing: s, auto)
+  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L 1 
+     = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
+  apply (transfer fixing: s)
+  by (metis (full_types) comp_apply of_complex_inner_1 one_dim_isom'_def)
 
 lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
   apply transfer
   apply (subst onorm_scaleC_left)
   by auto
 
-lemma norm_one_dim_isom[simp]: "norm one_dim_isom = 1"
-  apply transfer
-  apply (rule onormI[where b=1 and x=1])
-    apply auto
-  by (metis norm_of_complex one_dim_to_complex_inverse order_refl)
-
-instantiation cblinfun :: (one_dim, one_dim) complex_algebra begin
-definition "A * B = A o\<^sub>C\<^sub>L one_dim_isom o\<^sub>C\<^sub>L B" for A B :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-instance
-  apply intro_classes
-  unfolding times_cblinfun_def
-  by (auto simp: cblinfun_apply_assoc cblinfun_apply_dist1 cblinfun_apply_dist2)
-end
+(* TODO-DOMINIQUE *)
+lemma norm_one_dim_isom[simp]: "norm 1 = 1"
+  apply transfer using onorm_one_dim_isom' sorry
 
 lemma norm_cblinfun_times:
   "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B"
   apply transfer
   by (simp add: cbounded_linear.bounded_linear onorm_compose)
-
-instantiation cblinfun :: (one_dim, one_dim) complex_normed_algebra begin
-instance
-proof intro_classes
-  fix x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-  let ?iso = "one_dim_isom :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a"
-  have "norm (x * y) = norm ((x o\<^sub>C\<^sub>L ?iso) o\<^sub>C\<^sub>L y)"
-    unfolding times_cblinfun_def by rule
-  also have "\<dots> \<le> norm (x o\<^sub>C\<^sub>L ?iso) * norm y"
-    by (rule norm_cblinfun_times)
-  also have "\<dots> \<le> (norm x * norm ?iso) * norm y"
-    apply (rule mult_right_mono)
-     apply (rule norm_cblinfun_times)
-    by simp
-  also have "\<dots> = norm x * norm y"
-    by simp
-  finally show "norm (x * y) \<le> norm x * norm y"
-    by -
-qed
-end
-
-instantiation cblinfun :: (one_dim, one_dim) complex_normed_algebra_1 begin
-definition "one_cblinfun = one_dim_isom"
-instance
-  apply intro_classes
-  unfolding times_cblinfun_def one_cblinfun_def
-     apply (auto simp: cblinfun_apply_assoc)
-  by (metis add_cancel_right_right apply_idOp cblinfun_apply_dist1 one_dim_isom_inverse 
-      zero_cblinfun.rep_eq zero_neq_one)
-
-end
-
-definition 
-  "one_dim_cblinfun_to_complex A = one_dim_to_complex (A *\<^sub>V 1)"
-
-lemma one_dim_cblinfun_to_complex_of_complex[simp]:
-  "one_dim_cblinfun_to_complex (of_complex c) = c"
-  unfolding one_dim_cblinfun_to_complex_def
-  by (simp add: of_complex_def one_cblinfun_def one_dim_isom.rep_eq)
-
-(*
-(* TODO: prove this *) (* TODO: Dominique does it. *)
-lemma of_complex_one_dim_cblinfun_to_complex[simp]:
-  "of_complex (one_dim_cblinfun_to_complex A) = A"
-  unfolding one_dim_cblinfun_to_complex_def
-  unfolding one_dim_to_complex_def
-  sorry
-*)
 
 lemma cblinfun_ext: 
   includes cblinfun_notation
@@ -4655,12 +4665,13 @@ lemma vector_to_cblinfun_adj_times_vector_to_cblinfun[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
-  have "one_dim_to_complex ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = one_dim_to_complex ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
+  have "one_dim_isom' ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = one_dim_isom' ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
-    by (simp add: times_applyOp)
+    apply (simp add: times_applyOp)
+    by (metis (mono_tags, hide_lams) complex_vector.scale_left_commute id_apply of_complex_def of_complex_eq_id of_complex_inner_1 one_dim_isom'_def)
   hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
-    using one_dim_to_complex_inverse by metis
+    by (rule one_dim_isom'_inj)
   thus ?thesis
     using  cblinfun_ext[where A = "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>"
         and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
@@ -6215,16 +6226,15 @@ lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Right
     (is "_ = ?rhs") for s :: "'b::chilbert_space"
     using [[show_consts]]
 proof -
-  let ?isoAC = "one_dim_isom :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
-  let ?isoCA = "one_dim_isom :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
+  let ?isoAC = "1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
+  let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
   let ?vector = "vector_to_cblinfun :: 'b \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
 
   have "butterfly s =
     (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector s o\<^sub>C\<^sub>L ?isoCA)*"
     unfolding butterfly_def' one_dim_isom_vector_to_cblinfun by simp
   also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector s)*"
-    by (metis (no_types, lifting) cblinfun_apply_assoc one_dim_isom_adj one_dim_isom_inverse 
-        times_adjoint times_idOp1)
+    by (metis (no_types, lifting) cblinfun_apply_assoc times_adjoint)
   also have "\<dots> = ?rhs"
     by simp
   finally show ?thesis
@@ -6317,12 +6327,13 @@ lemma isometry_vector_to_cblinfun:
   shows "isometry (vector_to_cblinfun x)"
   by (simp add: isometry_def cinner_norm_sq assms)
 
+
 lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
   apply transfer
   apply (rule arg_cong[where f=closure])
   unfolding complex_vector.span_singleton
   apply auto
-  by (smt UNIV_I complex_scaleC_def image_iff mult.right_neutral one_dim_to_complex_one one_dim_to_complex_scaleC)
+  by (metis (no_types, lifting) one_dim_isom'_inverse rangeI)
 
 
 lemma butterfly_proj:

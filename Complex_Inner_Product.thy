@@ -3418,6 +3418,7 @@ lemma is_ob_nonzero:
   using assms
   by (simp add: is_ortho_set_def) 
 
+(* TODO: From here until "TODO end move": Move to Complex_Vector_Spaces *)
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
@@ -3439,7 +3440,7 @@ setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SO
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-
+(* TODO end move *)
 
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
@@ -3463,22 +3464,20 @@ lemma canonical_basis_non_zero:
   by smt
 
 
-text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
-Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
-via the canonical isomorphism between a one-dimensional vector space and 
-\<^typ>\<open>complex\<close>.\<close>
-class one_dim = onb_enum + one + times + complex_inner +
-  assumes one_dim_canonical_basis: "canonical_basis = [1]"
-  assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
-  (* TODO: Add whatever is necessary to make one_dim also a complex_normed_field *)
-  (* TODO: Dominique does it *)
-begin
 
-definition one_dim_to_complex :: \<open>'a \<Rightarrow> complex\<close> where
-  \<open>one_dim_to_complex \<psi> = \<langle>1, \<psi>\<rangle>\<close>
-
+(* TODO: move to Complex_Vector_Spaces *)
+instantiation complex :: basis_enum begin
+definition "canonical_basis = [1::complex]"
+definition "canonical_basis_length (_::complex itself) = 1"
+instance
+  apply intro_classes
+  unfolding canonical_basis_complex_def canonical_basis_length_complex_def
+  by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
 end
 
+
+
+(* TODO: move to Complex_Vector_Spaces *)
 lemma span_explicit_finite:
   \<open>finite A \<Longrightarrow> {\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> A} = {\<Sum>a\<in>A. r a *\<^sub>C a |r. True}\<close>
   for A::\<open>'a::complex_vector set\<close>
@@ -3533,19 +3532,6 @@ proof
 qed
 
 
-lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
-proof-
-  include notation_norm
-  have \<open>(canonical_basis::'a list) = [1::('a::one_dim)]\<close>
-    by (simp add: one_dim_canonical_basis)    
-  hence \<open>\<parallel>1::'a::one_dim\<parallel> = 1\<close>
-    by (metis is_normal list.set_intros(1))
-  hence \<open>\<parallel>1::'a::one_dim\<parallel>^2 = 1\<close>
-    by simp
-  moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
-    using power2_norm_eq_cinner' by auto
-  ultimately show ?thesis by simp
-qed
 
 lemma isCont_scalar_right:
   fixes k :: \<open>'a::complex_normed_vector\<close>
@@ -4372,164 +4358,9 @@ lemma closed_finite_dim:
   by (simp add: finite_cspan_complete assms complete_imp_closed)
 
 
-lemma one_dim_1_times_a_eq_a: \<open>\<langle>1::('a::one_dim), a\<rangle> *\<^sub>C 1 = a\<close>
-proof-
-  have \<open>(canonical_basis::'a list) = [1]\<close>
-    by (simp add: one_dim_canonical_basis)
-  hence \<open>a \<in> complex_vector.span ({1::'a})\<close>        
-    using  iso_tuple_UNIV_I empty_set is_generator_set list.simps(15)
-    by metis
-  hence \<open>\<exists> s. a = s *\<^sub>C 1\<close>
-  proof -
-    have "(1::'a) \<notin> {}"
-      by (metis equals0D)
-    thus ?thesis
-      by (metis Diff_insert_absorb \<open>a \<in> complex_vector.span {1}\<close> complex_vector.span_breakdown complex_vector.span_empty eq_iff_diff_eq_0 singleton_iff)
-  qed
-  then obtain s where \<open>a = s *\<^sub>C 1\<close>
-    by blast
-  have  \<open>\<langle>(1::'a), a\<rangle> = \<langle>(1::'a), s *\<^sub>C 1\<rangle>\<close>
-    using \<open>a = s *\<^sub>C 1\<close>
-    by simp 
-  also have \<open>\<dots> = s * \<langle>(1::'a), 1\<rangle>\<close>
-    by simp
-  also have \<open>\<dots> = s\<close>
-    using one_dim_1_times_1 by auto
-  finally show ?thesis
-    by (simp add: \<open>a = s *\<^sub>C 1\<close>) 
-qed
-
-lemma one_dim_prod: "(\<psi>::_::one_dim) * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1"
-  apply (subst one_dim_1_times_a_eq_a[symmetric, of \<psi>])
-  apply (subst one_dim_1_times_a_eq_a[symmetric, of \<phi>])
-  by (simp add: one_dim_prod_scale1)
 
 
-instance one_dim \<subseteq> complex_algebra_1
-proof
-  show "(a * b) * c = a * (b * c)"
-    for a :: 'a
-      and b :: 'a
-      and c :: 'a
-    by (simp add: one_dim_prod)
-  show "(a + b) * c = a * c + b * c"
-    for a :: 'a
-      and b :: 'a
-      and c :: 'a
-    apply (simp add: one_dim_prod)
-    by (metis (no_types, lifting) cinner_right_distrib scaleC_add_left scaleC_scaleC)
-  show "a * (b + c) = a * b + a * c"
-    for a :: 'a
-      and b :: 'a
-      and c :: 'a
-    apply (simp add: one_dim_prod)
-    by (simp add: cinner_right_distrib scaleC_add_left vector_space_over_itself.scale_right_distrib)
-  show "(a *\<^sub>C x) * y = a *\<^sub>C (x * y)"
-    for a :: complex
-      and x :: 'a
-      and y :: 'a
-    apply (simp add: one_dim_prod).
-  show "x * (a *\<^sub>C y) = a *\<^sub>C (x * y)"
-    for x :: 'a
-      and a :: complex
-      and y :: 'a
-    apply (simp add: one_dim_prod).
-  show "(1::'a) * a = a"
-    for a :: 'a
-  proof-
-    have \<open>\<langle>(1::'a), 1\<rangle> = 1\<close>
-      by (simp add: one_dim_1_times_1)      
-    moreover have \<open>\<langle>1, a\<rangle> *\<^sub>C 1 = a\<close>
-      using one_dim_1_times_a_eq_a by blast
-    ultimately have \<open>(\<langle>(1::'a), 1\<rangle> * \<langle>1, a\<rangle>) *\<^sub>C 1 = a\<close>
-      by simp
-    thus ?thesis
-      by (simp add: one_dim_prod)
-  qed
-  show "(a::'a) * 1 = a"
-    for a :: 'a
-    apply (simp add: one_dim_prod)
-    by (simp add: one_dim_1_times_1 one_dim_1_times_a_eq_a)
-  show "(0::'a) \<noteq> 1"
-  proof-
-    have \<open>(canonical_basis::('a list)) = [1]\<close>
-      by (simp add: one_dim_canonical_basis)
-    hence \<open>1 \<in> set (canonical_basis::('a list))\<close>
-      by (metis list.set_intros(1))
-    thus ?thesis
-      using canonical_basis_non_zero by fastforce       
-  qed
-qed
-
-instance one_dim \<subseteq> complex_normed_algebra
-proof
-  show "norm (x * y) \<le> norm x * norm y"
-    for x y::"'a::one_dim"
-  proof-
-    have "\<langle>(1::'a), 1\<rangle> = 1"
-      by (simp add: one_dim_1_times_1)
-    hence "(norm (1::'a))^2 = 1"
-      by (simp add: power2_norm_eq_cinner)
-    hence "norm (1::'a) = 1"
-      by (smt abs_norm_cancel power2_eq_1_iff)
-    hence "cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>) * norm (1::'a) = cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>)"
-      by simp
-    also have "\<dots> = cmod (\<langle>1::'a, x\<rangle>) * cmod (\<langle>1::'a, y\<rangle>)"
-      by (simp add: norm_mult)
-    also have "\<dots> \<le> norm (1::'a) * norm x * norm (1::'a) * norm y"
-    proof-
-      have "cmod (\<langle>1::'a, x\<rangle>) \<le> norm (1::'a) * norm x"
-        by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)
-      moreover have "cmod (\<langle>1::'a, y\<rangle>) \<le> norm (1::'a) * norm y"
-        by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2)
-      ultimately show ?thesis
-        by (smt \<open>norm 1 = 1\<close> mult_cancel_left1 mult_cancel_right1 norm_scaleC one_dim_1_times_a_eq_a)
-    qed
-    also have "\<dots> = norm x * norm y"
-      by (simp add: \<open>norm 1 = 1\<close>)
-    finally show ?thesis
-      by (simp add: one_dim_prod)
-  qed
-qed
-
-instance one_dim \<subseteq> complex_normed_algebra_1
-  apply intro_classes
-  by (metis complex_inner_1_left norm_eq_sqrt_cinner norm_one one_dim_1_times_1)
-
-lemma one_dim_to_complex_inverse[simp]: "of_complex (one_dim_to_complex \<psi>) = \<psi>"
-  by (simp add: of_complex_def one_dim_1_times_a_eq_a one_dim_class.one_dim_to_complex_def)
-
-lemma complex_to_one_dim_inverse[simp]: "one_dim_to_complex (of_complex c) = c"
-  using of_complex_eq_iff one_dim_to_complex_inverse by blast
-
-
-lemma one_dim_to_complex_add[simp]:
-  \<open>one_dim_to_complex (a + b) = one_dim_to_complex a + one_dim_to_complex b\<close>
-  unfolding one_dim_to_complex_def
-  by (simp add: cinner_right_distrib)
-
-lemma one_dim_to_complex_scaleC[simp]: "one_dim_to_complex (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_to_complex \<psi>"
-  apply transfer
-  by (metis complex_scaleC_def complex_to_one_dim_inverse of_complex_mult one_dim_to_complex_inverse scaleC_conv_of_complex)
-    (* > 1s *)
-
-lemma clinear_one_dim_to_complex[simp]: "clinear one_dim_to_complex"
-  apply (rule clinearI) by auto
-
-lemma cbounded_linear_one_dim_to_complex[simp]: "cbounded_linear one_dim_to_complex"
-  apply (rule cbounded_linear.intro) 
-   apply simp
-  apply (rule exI[of _ 1])
-  by (metis (full_types) mult.right_neutral norm_of_complex one_dim_to_complex_inverse order_refl)
-
-lemma one_dim_to_complex_one[simp]: "one_dim_to_complex (1::'a::one_dim) = 1"
-  by (simp add: one_dim_1_times_1 one_dim_to_complex_def)
-
-lemma onorm_one_dim_to_complex[simp]: "onorm one_dim_to_complex = 1"
-  apply (rule onormI[where b=1 and x=1])
-  apply auto
-  by (smt norm_of_complex one_dim_to_complex_inverse)
-
+(* TODO move to Complex_Vector_Spaces *)
 lemma bounded_sesquilinear_0_left: 
   assumes \<open>bounded_sesquilinear B\<close>
   shows \<open>B 0 y = 0\<close>
@@ -4543,6 +4374,7 @@ proof-
   thus ?thesis by simp
 qed
 
+(* TODO move to Complex_Vector_Spaces *)
 lemma sesquilinear_finite_sum_induction:
   assumes \<open>bounded_sesquilinear B\<close>
   shows \<open>\<forall> t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
@@ -4612,11 +4444,13 @@ proof (induction n)
   qed
 qed
 
+(* TODO move to Complex_Vector_Spaces *)
 lemma sesquilinear_finite_sum:                     
   assumes \<open>bounded_sesquilinear B\<close> and \<open>finite t\<close>
   shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
   by (simp add: sesquilinear_finite_sum_induction assms(1) assms(2))
 
+(* TODO move to Complex_Vector_Spaces *)
 lemma sesquilinear_superposition:
   assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
     and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
@@ -4727,6 +4561,7 @@ proof-
     by (simp add: assms(3) assms(4))        
 qed
 
+(* TODO move to Complex_Vector_Spaces *)
 lemma bounded_sesquilinear_continuous:
   includes nsa_notation
   assumes \<open>bounded_sesquilinear B\<close>
@@ -5257,10 +5092,6 @@ qed
 lemma clinear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
   apply transfer by simp
-
-lemma one_dim_to_complex_times[simp]: "one_dim_to_complex (\<psi> * \<phi>) = one_dim_to_complex \<psi> * one_dim_to_complex \<phi>"
-  apply transfer
-  by (metis of_complex_eq_iff of_complex_mult one_dim_to_complex_inverse)
 
 lemma clinear_space_top_not_bot[simp]: 
   "(top::'a::{complex_vector,t1_space,not_singleton} clinear_space) \<noteq> bot"
@@ -6676,20 +6507,6 @@ proof-
   thus ?thesis 
     unfolding p_def M_def by auto
 qed
-
-instantiation complex :: basis_enum begin
-definition "canonical_basis = [1::complex]"
-definition "canonical_basis_length (_::complex itself) = 1"
-instance
-  apply intro_classes
-  unfolding canonical_basis_complex_def canonical_basis_length_complex_def
-  by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
-end
-
-instance complex :: one_dim
-  apply intro_classes
-  unfolding canonical_basis_complex_def is_ortho_set_def
-  by auto
 
 lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
   using Span.rep_eq space_as_set_inject top_clinear_space.rep_eq
