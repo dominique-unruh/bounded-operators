@@ -4199,14 +4199,16 @@ proof intro_classes
   show "0 \<le> \<langle>A, A\<rangle>"
     unfolding cinner_cblinfun_def by auto
   show "(\<langle>A, A\<rangle> = 0) = (A = 0)"
-    apply (auto simp: cinner_cblinfun_def intro!: one_dim_linear_eq)
+    apply (auto simp: cinner_cblinfun_def)
     apply (drule one_dim_isom'_0')
     apply transfer
-    apply simp
-  proof (auto simp: cinner_cblinfun_def, one_dim_isom'_0')
-    unfolding cinner_cblinfun_def apply auto
-    sorry
+    apply (rule one_dim_linear_eq[where x=1], auto)
+    using cbounded_linear.is_clinear apply auto[1]
+    using complex_vector.module_hom_zero by blast
   show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
+    unfolding cinner_cblinfun_def
+    apply transfer unfolding cnj_x_x power2_eq_square
+    
     unfolding cinner_cblinfun_def apply auto
     sorry
   
