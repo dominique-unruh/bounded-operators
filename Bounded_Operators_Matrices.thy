@@ -3245,7 +3245,7 @@ proof-
   have t1: "mat_of_cols nA [vec_of_onb_enum \<psi>] \<in> carrier_mat nA nB"
     unfolding nA_def nB_def
     using carrier_mat1 nA_def nB_def by auto 
-  have "one_dim_isom' x *\<^sub>C \<psi> = (onb_enum_of_vec (mat_of_cols nA [vec_of_onb_enum \<psi>]
+  have "one_dim_isom x *\<^sub>C \<psi> = (onb_enum_of_vec (mat_of_cols nA [vec_of_onb_enum \<psi>]
         *\<^sub>v vec_of_onb_enum x)::'a)"
     for x::'b
     using nA_def
@@ -3273,20 +3273,20 @@ proof-
      (\<lambda>i. row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ 0 * vec_of_onb_enum x $ 0)"
       using VS_Connect.class_semiring.finsum_singleton_set by auto
     also have "\<dots> = vec nA
-     (\<lambda>i. row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ 0 * one_dim_isom' x)"
+     (\<lambda>i. row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i $ 0 * one_dim_isom x)"
     proof-
-      have "x = one_dim_isom' x *\<^sub>C 1"
+      have "x = one_dim_isom x *\<^sub>C 1"
         by (simp add: one_dim_1_times_a_eq_a)
-      hence "vec_of_onb_enum x = vec_of_onb_enum (one_dim_isom' x *\<^sub>C (1::'b))"
+      hence "vec_of_onb_enum x = vec_of_onb_enum (one_dim_isom x *\<^sub>C (1::'b))"
         by simp
-      also have "\<dots> = one_dim_isom' x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b))"
+      also have "\<dots> = one_dim_isom x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b))"
         using vec_of_onb_enum_scaleC by blast
-      finally have "vec_of_onb_enum x = one_dim_isom' x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b))".
-      hence "(vec_of_onb_enum x)$0 = (one_dim_isom' x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b)))$0"
+      finally have "vec_of_onb_enum x = one_dim_isom x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b))".
+      hence "(vec_of_onb_enum x)$0 = (one_dim_isom x \<cdot>\<^sub>v (vec_of_onb_enum (1::'b)))$0"
         by auto
-      also have "\<dots> = one_dim_isom' x * ((vec_of_onb_enum (1::'b))$0)"
-        using \<open>vec_of_onb_enum x = one_dim_isom' x \<cdot>\<^sub>v vec_of_onb_enum 1\<close> dim_vec_b by auto
-      also have "\<dots> = one_dim_isom' x"
+      also have "\<dots> = one_dim_isom x * ((vec_of_onb_enum (1::'b))$0)"
+        using \<open>vec_of_onb_enum x = one_dim_isom x \<cdot>\<^sub>v vec_of_onb_enum 1\<close> dim_vec_b by auto
+      also have "\<dots> = one_dim_isom x"
       proof-
         have "Complex_Vector_Spaces.representation
          (set (canonical_basis::'b list)) 1 ((canonical_basis::'b list)!0) = 1"
@@ -3296,22 +3296,22 @@ proof-
           by (simp add: one_dim_canonical_basis) 
         thus ?thesis by simp
       qed
-      finally have "vec_of_onb_enum x $ 0 = one_dim_isom' x".
+      finally have "vec_of_onb_enum x $ 0 = one_dim_isom x".
       thus ?thesis 
-        unfolding one_dim_isom'_def 
+        unfolding one_dim_isom_def 
         by simp
     qed
     also have "\<dots> = vec nA
-     (\<lambda>i. one_dim_isom' x * (row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) $ 0 )"
+     (\<lambda>i. one_dim_isom x * (row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) $ 0 )"
       by auto
     also have "\<dots> = vec nA
-     (\<lambda>i. (one_dim_isom' x \<cdot>\<^sub>v ( row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) ) $ 0 )"
+     (\<lambda>i. (one_dim_isom x \<cdot>\<^sub>v ( row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) ) $ 0 )"
       by auto
     also have "\<dots> = vec nA
-     (\<lambda>i. ( row (one_dim_isom' x \<cdot>\<^sub>m mat_of_cols nA [vec_of_onb_enum \<psi>]) i) $ 0 )"
+     (\<lambda>i. ( row (one_dim_isom x \<cdot>\<^sub>m mat_of_cols nA [vec_of_onb_enum \<psi>]) i) $ 0 )"
       by auto
     also have "\<dots> = vec nA
-     (\<lambda>i. ( row (mat_of_cols nA [one_dim_isom' x \<cdot>\<^sub>v vec_of_onb_enum \<psi>]) i) $ 0 )"
+     (\<lambda>i. ( row (mat_of_cols nA [one_dim_isom x \<cdot>\<^sub>v vec_of_onb_enum \<psi>]) i) $ 0 )"
     proof-
       have sss: "a \<cdot>\<^sub>m mat_of_cols nA [y] = mat_of_cols nA [a \<cdot>\<^sub>v y]"
         if "dim_vec y = nA"
@@ -3329,13 +3329,13 @@ proof-
       have "dim_vec (vec_of_onb_enum \<psi>) = nA"
         by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' nA_def')
       thus ?thesis
-        using sss[where a = "one_dim_isom' x" and y = "vec_of_onb_enum \<psi>"]
+        using sss[where a = "one_dim_isom x" and y = "vec_of_onb_enum \<psi>"]
         by auto
     qed
     also have "\<dots> = vec nA
-     (\<lambda>i. ( row (mat_of_cols nA [vec_of_onb_enum (one_dim_isom' x *\<^sub>C \<psi>)]) i) $ 0 )"
+     (\<lambda>i. ( row (mat_of_cols nA [vec_of_onb_enum (one_dim_isom x *\<^sub>C \<psi>)]) i) $ 0 )"
       by (simp add: vec_of_onb_enum_scaleC)
-    also have "\<dots> = vec_of_onb_enum (one_dim_isom' x *\<^sub>C \<psi>)"
+    also have "\<dots> = vec_of_onb_enum (one_dim_isom x *\<^sub>C \<psi>)"
     proof-
       have ll: "vec nA (\<lambda>i. ( row (mat_of_cols nA [y]) i) $ 0 ) = y"
         if "dim_vec y = nA"
@@ -3356,15 +3356,15 @@ proof-
         thus ?thesis
           using dim_vec that by blast 
       qed
-      have "dim_vec (vec_of_onb_enum (one_dim_isom' (x::'b::one_dim) *\<^sub>C (\<psi>::'a::onb_enum))) 
+      have "dim_vec (vec_of_onb_enum (one_dim_isom (x::'b::one_dim) *\<^sub>C (\<psi>::'a::onb_enum))) 
             = (nA::nat)"
         by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' nA_def')
-      thus ?thesis using ll[where y = "vec_of_onb_enum (one_dim_isom' x *\<^sub>C \<psi>)"]
+      thus ?thesis using ll[where y = "vec_of_onb_enum (one_dim_isom x *\<^sub>C \<psi>)"]
         by blast
     qed
     finally have "mat_of_cols nA [vec_of_onb_enum \<psi>] *\<^sub>v vec_of_onb_enum x = 
-              vec_of_onb_enum (one_dim_isom' x *\<^sub>C \<psi>)". 
-    thus "one_dim_isom' x *\<^sub>C \<psi> =
+              vec_of_onb_enum (one_dim_isom x *\<^sub>C \<psi>)". 
+    thus "one_dim_isom x *\<^sub>C \<psi> =
           onb_enum_of_vec (mat_of_cols nA [vec_of_onb_enum \<psi>] *\<^sub>v vec_of_onb_enum x)" 
       by simp
   qed

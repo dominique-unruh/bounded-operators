@@ -2495,6 +2495,30 @@ proof
 qed
 end
 
+instantiation ell2 :: (CARD_1) field begin
+lift_definition divide_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a b x. a x / b x"
+  by simp   
+lift_definition inverse_ell2 :: "'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>a x. inverse (a x)"
+  by simp
+instance
+proof (intro_classes; transfer)
+  fix a :: "'a \<Rightarrow> complex"
+  assume "a \<noteq> (\<lambda>_. 0)"
+  then obtain y where ay: "a y \<noteq> 0"
+    by auto
+  show "(\<lambda>x. inverse (a x) * a x) = (\<lambda>_. 1)"
+  proof (rule ext)
+    fix x
+    have "x = y"
+      by auto
+    with ay have "a x \<noteq> 0"
+      by metis
+    then show "inverse (a x) * a x = 1"
+      by auto
+  qed
+qed (auto simp add: divide_complex_def mult.commute ring_class.ring_distribs)
+end
+
 
 lemma superposition_principle_linear_ket:
   fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close>
@@ -2801,8 +2825,11 @@ instance
     by (simp add: enum_CARD_1[of undefined])
   show "a *\<^sub>C 1 * b *\<^sub>C 1 = (a * b) *\<^sub>C (1::'a ell2)" for a b
     apply (transfer fixing: a b) by simp
-qed 
-
+  show "x / y = x * inverse y" for x y :: "'a ell2"
+    by (simp add: divide_inverse)
+  show "inverse (c *\<^sub>C 1) = inverse c *\<^sub>C (1::'a ell2)" for c :: complex
+    apply transfer by auto
+qed
 end
 
 lemma ket_nonzero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"

@@ -6,16 +6,16 @@ text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector s
 Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
 via the canonical isomorphism between a one-dimensional vector space and 
 \<^typ>\<open>complex\<close>.\<close>
-class one_dim = onb_enum + one + times + complex_inner +
+class one_dim = onb_enum + one + times + complex_inner + inverse +
   assumes one_dim_canonical_basis: "canonical_basis = [1]"
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"
-  (* TODO: Add whatever is necessary to make one_dim also a complex_normed_field *)
-  (* TODO: Dominique does it *)
+  assumes one_dim_divide_inverse: "x / y = x * inverse y"
+  assumes one_dim_inverse: "inverse (a *\<^sub>C 1) = inverse a *\<^sub>C 1"
 
 instance complex :: one_dim
   apply intro_classes
   unfolding canonical_basis_complex_def is_ortho_set_def
-  by auto
+  by (auto simp: divide_complex_def)
 
 lemma one_dim_1_times_1: \<open>\<langle>(1::('a::one_dim)), 1\<rangle> = 1\<close>
 proof-
@@ -155,59 +155,61 @@ instance one_dim \<subseteq> complex_normed_algebra_1
   apply intro_classes
   by (metis complex_inner_1_left norm_eq_sqrt_cinner norm_one one_dim_1_times_1)
 
-(* TODO-DOMINIQUE rename to one_dim_isom *)
-definition one_dim_isom' :: "'a::one_dim \<Rightarrow> 'b::one_dim"
-  where "one_dim_isom' a = of_complex (\<langle>1, a\<rangle>)"
+text \<open>This is the canonical isomorphism between any two one dimensional spaces. Specifically,
+  if 1 denotes the element of the canonical basis (which is specified by type class \<^class>\<open>basis_enum\<close>,
+  then \<^term>\<open>one_dim_isom\<close> is the unique isomorphism that maps 1 to 1.\<close>
+definition one_dim_isom :: "'a::one_dim \<Rightarrow> 'b::one_dim"
+  where "one_dim_isom a = of_complex (\<langle>1, a\<rangle>)"
 
-lemma one_dim_isom'_inverse[simp]: "one_dim_isom' (one_dim_isom' x) = x"
-  apply (simp add: one_dim_isom'_def)
+lemma one_dim_isom_inverse[simp]: "one_dim_isom (one_dim_isom x) = x"
+  apply (simp add: one_dim_isom_def)
   by (simp add: of_complex_def one_dim_1_times_a_eq_a)
 
-lemma one_dim_isom'_adjoint: "\<langle>one_dim_isom' x, y\<rangle> = \<langle>x, one_dim_isom' y\<rangle>"
-  by (simp add: one_dim_isom'_def of_complex_def)
+lemma one_dim_isom_adjoint: "\<langle>one_dim_isom x, y\<rangle> = \<langle>x, one_dim_isom y\<rangle>"
+  by (simp add: one_dim_isom_def of_complex_def)
 
-lemma one_dim_isom'_eq_of_complex[simp]: "one_dim_isom' = of_complex"
-  unfolding one_dim_isom'_def by auto
+lemma one_dim_isom_eq_of_complex[simp]: "one_dim_isom = of_complex"
+  unfolding one_dim_isom_def by auto
 
-lemma of_complex_one_dim_isom'[simp]: "of_complex (one_dim_isom' \<psi>) = \<psi>"
-  by (subst one_dim_isom'_eq_of_complex[symmetric], rule one_dim_isom'_inverse)
+lemma of_complex_one_dim_isom[simp]: "of_complex (one_dim_isom \<psi>) = \<psi>"
+  by (subst one_dim_isom_eq_of_complex[symmetric], rule one_dim_isom_inverse)
 
-lemma one_dim_isom'_of_complex[simp]: "one_dim_isom' (of_complex c) = c"
-  by (subst one_dim_isom'_eq_of_complex[symmetric], rule one_dim_isom'_inverse)
+lemma one_dim_isom_of_complex[simp]: "one_dim_isom (of_complex c) = c"
+  by (subst one_dim_isom_eq_of_complex[symmetric], rule one_dim_isom_inverse)
 
-lemma one_dim_isom'_add[simp]:
-  \<open>one_dim_isom' (a + b) = one_dim_isom' a + one_dim_isom' b\<close>
-  by (simp add: cinner_simps(2) one_dim_isom'_def)
+lemma one_dim_isom_add[simp]:
+  \<open>one_dim_isom (a + b) = one_dim_isom a + one_dim_isom b\<close>
+  by (simp add: cinner_simps(2) one_dim_isom_def)
 
-lemma one_dim_isom'_scaleC[simp]: "one_dim_isom' (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_isom' \<psi>"
-  by (metis cinner_scaleC_right of_complex_mult one_dim_isom'_def scaleC_conv_of_complex)
+lemma one_dim_isom_scaleC[simp]: "one_dim_isom (c *\<^sub>C \<psi>) = c *\<^sub>C one_dim_isom \<psi>"
+  by (metis cinner_scaleC_right of_complex_mult one_dim_isom_def scaleC_conv_of_complex)
 
-lemma clinear_one_dim_isom'[simp]: "clinear one_dim_isom'"
+lemma clinear_one_dim_isom[simp]: "clinear one_dim_isom"
   apply (rule clinearI) by auto
 
-lemma cbounded_linear_one_dim_isom'[simp]: "cbounded_linear one_dim_isom'"
+lemma cbounded_linear_one_dim_isom[simp]: "cbounded_linear one_dim_isom"
   apply (rule cbounded_linear_intro[where K=1], auto)
-  by (metis (full_types) norm_of_complex of_complex_def one_dim_1_times_a_eq_a one_dim_isom'_def order_refl)
+  by (metis (full_types) norm_of_complex of_complex_def one_dim_1_times_a_eq_a one_dim_isom_def order_refl)
 
-lemma one_dim_isom'_one[simp]: "one_dim_isom' (1::'a::one_dim) = 1"
-  by (simp add: one_dim_1_times_1 one_dim_isom'_def)
+lemma one_dim_isom_one[simp]: "one_dim_isom (1::'a::one_dim) = 1"
+  by (simp add: one_dim_1_times_1 one_dim_isom_def)
 
-lemma onorm_one_dim_isom'[simp]: "onorm one_dim_isom' = 1"
+lemma onorm_one_dim_isom[simp]: "onorm one_dim_isom = 1"
   apply (rule onormI[where b=1 and x=1])
   apply auto
-  by (metis eq_iff norm_of_complex of_complex_def one_dim_1_times_a_eq_a one_dim_isom'_def)
+  by (metis eq_iff norm_of_complex of_complex_def one_dim_1_times_a_eq_a one_dim_isom_def)
 
-lemma one_dim_isom'_times[simp]: "one_dim_isom' (\<psi> * \<phi>) = one_dim_isom' \<psi> * one_dim_isom' \<phi>"
-  by (smt of_complex_inner_1 one_dim_isom'_def one_dim_isom'_one one_dim_isom'_scaleC one_dim_prod)
+lemma one_dim_isom_times[simp]: "one_dim_isom (\<psi> * \<phi>) = one_dim_isom \<psi> * one_dim_isom \<phi>"
+  by (smt of_complex_inner_1 one_dim_isom_def one_dim_isom_one one_dim_isom_scaleC one_dim_prod)
 
-lemma one_dim_isom'_0[simp]: "one_dim_isom' 0 = 0"
+lemma one_dim_isom_0[simp]: "one_dim_isom 0 = 0"
   by (simp add: complex_vector.linear_0)
 
-lemma one_dim_isom'_0': "one_dim_isom' x = 0 \<Longrightarrow> x = 0"
-  by (metis one_dim_isom'_0 one_dim_isom'_inverse)
+lemma one_dim_isom_0': "one_dim_isom x = 0 \<Longrightarrow> x = 0"
+  by (metis one_dim_isom_0 one_dim_isom_inverse)
 
-lemma one_dim_scaleC_1[simp]: "one_dim_isom' x *\<^sub>C 1 = x"
-  sorry
+lemma one_dim_scaleC_1[simp]: "one_dim_isom x *\<^sub>C 1 = x"
+  by (simp add: one_dim_1_times_a_eq_a one_dim_isom_def)
 
 lemma one_dim_linear_eq: 
   assumes "(x::'a::one_dim) \<noteq> 0"
@@ -217,15 +219,15 @@ lemma one_dim_linear_eq:
 proof (rule ext)
   fix y :: 'a
   from \<open>f x = g x\<close>
-  have \<open>one_dim_isom' x *\<^sub>C f 1 = one_dim_isom' x *\<^sub>C g 1\<close>
+  have \<open>one_dim_isom x *\<^sub>C f 1 = one_dim_isom x *\<^sub>C g 1\<close>
    by (metis assms(2) assms(3) complex_vector.linear_scale one_dim_scaleC_1)
   then have "f 1 = g 1"
-    using assms(1) one_dim_isom'_0' by auto
+    using assms(1) one_dim_isom_0' by auto
   then show "f y = g y"
     by (metis assms(2) assms(3) complex_vector.linear_scale one_dim_scaleC_1)
 qed
 
-lemma one_dim_norm: "norm x = cmod (one_dim_isom' x)"
+lemma one_dim_norm: "norm x = cmod (one_dim_isom x)"
   apply (subst one_dim_scaleC_1[symmetric])
   apply (simp only: norm_scaleC) by simp
 
@@ -244,13 +246,51 @@ qed auto
 lemma one_dim_onorm':
   fixes f :: "'a::one_dim \<Rightarrow> 'b::one_dim"
   assumes "clinear f"
-  shows "onorm f = cmod (one_dim_isom' (f 1))"
+  shows "onorm f = cmod (one_dim_isom (f 1))"
   using assms one_dim_norm one_dim_onorm by fastforce
 
 instance one_dim \<subseteq> zero_neq_one ..
 
-lemma one_dim_isom'_inj: "one_dim_isom' x = one_dim_isom' y \<Longrightarrow> x = y"
-  by (metis one_dim_isom'_inverse)
-  
+lemma one_dim_isom_inj: "one_dim_isom x = one_dim_isom y \<Longrightarrow> x = y"
+  by (metis one_dim_isom_inverse)
+
+lemma one_dim_isom_id[simp]: "one_dim_isom = id"
+  by (metis eq_id_iff of_complex_def one_dim_1_times_a_eq_a one_dim_isom_def)
+
+lemma one_dim_isom_idem[simp]: "one_dim_isom (one_dim_isom x) = one_dim_isom x"
+  by (simp add: one_dim_isom_def)
+
+instance one_dim \<subseteq> comm_ring
+proof intro_classes
+  fix x y z :: 'a
+  show "x * y = y * x"
+    by (metis one_dim_prod ordered_field_class.sign_simps(47))
+  show "(x + y) * z = x * z + y * z"
+    by (simp add: ring_class.ring_distribs(2))
+qed
+
+instance one_dim \<subseteq> field
+proof intro_classes
+  fix x y z :: 'a
+  show "1 * x = x"
+    by simp
+  show "inverse x * x = 1" if "x \<noteq> 0"
+    apply (subst one_dim_1_times_a_eq_a[of x, symmetric])
+    apply (subst (2) one_dim_1_times_a_eq_a[of x, symmetric])
+    apply (simp only: one_dim_inverse one_dim_prod_scale1)
+    by (metis left_inverse of_complex_def one_dim_1_times_a_eq_a one_dim_isom_0 one_dim_isom_eq_of_complex one_dim_isom_one that)
+  show "x / y = x * inverse y"
+    by (simp add: one_dim_divide_inverse)
+  show "inverse (0::'a) = 0"
+    by (subst scale_zero_left[symmetric], subst one_dim_inverse, simp)
+qed
+
+
+instance one_dim \<subseteq> complex_normed_field
+proof intro_classes
+  fix x y :: 'a
+  show "norm (x * y) = norm x * norm y"
+    by (metis norm_mult one_dim_isom_times one_dim_norm)
+qed
 
 end
