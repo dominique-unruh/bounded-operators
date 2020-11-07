@@ -3766,9 +3766,10 @@ proof-
     by simp    
 qed
 
+(* Superseeded by cblinfun_operator_finite_dim
 
 lemma clinear_cbounded_linear_onb_enum: 
-  fixes f::"'a::onb_enum \<Rightarrow> 'b::onb_enum"
+  fixes f::"'a::{basis_enum,complex_normed_vector} \<Rightarrow> 'b::{basis_enum,complex_normed_vector}"
   assumes "clinear f"
   shows "cbounded_linear f"
   using assms unfolding cbounded_linear_def
@@ -3805,8 +3806,8 @@ proof auto
         thus "(\<Sum>a | (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a \<noteq> 0. (SOME f. (\<forall>a. f a \<noteq> 0 \<longrightarrow> a \<in> set basis) \<and> finite {a. f a \<noteq> 0} \<and> (\<Sum>a | f a \<noteq> 0. f a *\<^sub>C a) = x) a *\<^sub>C a) = x"
           using f3 by auto
       qed
-      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal apply auto[1]       
-      using basis_def  is_generator_set by auto
+      apply (simp add: basis_def is_cindependent_set)
+      by (simp add: basis_def is_generator_set)
 
       (* subgoal
       proof-
@@ -3917,7 +3918,7 @@ proof auto
   thus "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K" 
     by blast
 qed
-
+*)
 
 
 unbundle no_cblinfun_notation

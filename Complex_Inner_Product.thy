@@ -3048,7 +3048,7 @@ end
 
 
 (* 
-Dominique: Try if "clinear_space :: (complex_inner) lattice"
+DOMINIQUE: Try if "clinear_space :: (complex_inner) lattice"
 and "clinear_space :: (complex_inner) complete_lattice" (below)
 work with something weaker than complex_inner
 (it does not work for "clinear_space :: (complex_inner) orthocomplemented_lattice"). 

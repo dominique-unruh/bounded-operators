@@ -87,7 +87,7 @@ definition clinear::\<open>('a::complex_vector \<Rightarrow>'b'::complex_vector)
 
 term "Real_Vector_Spaces.linear"
 
-(* TODO: Dominique: Figure out how global interpretation works and why constants get ?? in front of them *)
+(* TODO: DOMINIQUE: Figure out how global interpretation works and why constants get ?? in front of them *)
 global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a::complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"

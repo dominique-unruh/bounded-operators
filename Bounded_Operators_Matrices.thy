@@ -21,7 +21,7 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::onb_en
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>onb_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
-  (* TODO (for Dominique): Define in this description what the canonical isomorphism is. *)
+  (* TODO (for DOMINIQUE): Define in this description what the canonical isomorphism is. *)
 
 primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,complex_inner} \<Rightarrow> nat \<Rightarrow> complex vec\<close> 
   where
@@ -1324,11 +1324,7 @@ proof-
 qed
 
 
-(* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
-   Most of the rules don't need an ONB *)
-(* Jose: There is an error when I change onb_enum by basis_enum *)
-(* TODO: Dominique: Figure out why this does not work... *)
-lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum\<close> is  
+lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector}\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a))
            then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v)
            else 0)\<close>
@@ -1421,10 +1417,9 @@ proof
     have M_carrier_mat: 
       "M \<in> carrier_mat m n"
       by (simp add: True)
-    have "clinear (f M)"
-      by (simp add: \<open>clinear (f M)\<close>)
-    hence "cbounded_linear (f M)"
-      using clinear_cbounded_linear_onb_enum by blast
+    have "cbounded_linear (f M)"
+      apply (rule cblinfun_operator_finite_dim[where basis="set canonical_basis"]) 
+      using \<open>clinear (f M)\<close> is_generator_set is_cindependent_set by auto
     thus ?thesis
       by (simp add: cbounded_linear.bounded) 
   next
@@ -1435,17 +1430,21 @@ proof
   qed
 qed
 
-(* TODO: Could be defined on basis_enum (like the vec_of_onb_enum).
-   Most of the rules don't need an ONB *)
-(* Jose: Error when onb_enum is substituted by basis_enum  *)
-(* TODO: Dominique: Think about it. *)
+(* TODO: Consider generalizing the definition so that it does not need onb_enum:
+
+definition mat_of_cblinfun :: \<open>'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector} \<Rightarrow> complex mat\<close> where
+  \<open>mat_of_cblinfun f = 
+    mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
+    \<lambda> (i, j). crepresentation (set (canonical_basis::'b list)) (f *\<^sub>V ((canonical_basis::'a list)!j)) ((canonical_basis::'b list)!i))\<close>
+  for f
+
+This will need changing some proofs below. José can decide whether to do this.
+ *)
 definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum \<Rightarrow> complex mat\<close> where
   \<open>mat_of_cblinfun f = 
     mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
     \<lambda> (i, j). \<langle> (canonical_basis::'b list)!i, f *\<^sub>V ((canonical_basis::'a list)!j) \<rangle> )\<close>
   for f
-
-
 
 
 lemma cinner_mat_of_cblinfun_basis:
