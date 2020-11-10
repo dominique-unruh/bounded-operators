@@ -2646,7 +2646,6 @@ next
     using False by auto
 qed
 
-(*here*)
 
 lemma
   assumes "f abs_summable_on A"
@@ -2675,67 +2674,124 @@ proof-
           by simp 
       qed
 
-      obtain F where "F\<in>{F. finite F \<and> F \<subseteq> A}" and "ereal (sum (\<lambda>x. norm (f x)) F) > ?SUP - ereal (\<delta>)"
-        apply atomize_elim unfolding Bex_def[symmetric]
-        apply (subst less_SUP_iff[symmetric]) 
+      have "(SUP F\<in>{F. finite F \<and> F \<subseteq> A}. ereal (\<Sum>x\<in>F. norm (f x))) - ereal \<delta>
+    < (SUP i\<in>{F. finite F \<and> F \<subseteq> A}. ereal (\<Sum>x\<in>i. norm (f x)))"
         using \<open>\<delta>>0\<close>
         by (metis diff_strict_left_mono diff_zero ereal_less_eq(3) ereal_minus(1) not_le sum_SUP)
+      then obtain F where "F\<in>{F. finite F \<and> F \<subseteq> A}" and "ereal (sum (\<lambda>x. norm (f x)) F) > ?SUP - ereal (\<delta>)"
+        by (meson less_SUP_iff)
+        
       hence "sum (\<lambda>x. norm (f x)) F > infsetsum (\<lambda>x. norm (f x)) A -  (\<delta>)"
         unfolding sum_SUP[symmetric] by auto
       hence "\<delta> > infsetsum (\<lambda>x. norm (f x)) (A-F)"
-        apply (subst infsetsum_Diff)
-        using abs_summable_on_norm_iff assms 
-        using \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> by auto
+      proof (subst infsetsum_Diff)
+        show "(\<lambda>x. norm (f x)) abs_summable_on A"
+          if "(\<Sum>\<^sub>ax\<in>A. norm (f x)) - \<delta> < (\<Sum>x\<in>F. norm (f x))"
+          using that
+          by (simp add: assms) 
+        show "F \<subseteq> A"
+          if "(\<Sum>\<^sub>ax\<in>A. norm (f x)) - \<delta> < (\<Sum>x\<in>F. norm (f x))"
+          using that \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> by blast 
+        show "(\<Sum>\<^sub>ax\<in>A. norm (f x)) - (\<Sum>\<^sub>ax\<in>F. norm (f x)) < \<delta>"
+          if "(\<Sum>\<^sub>ax\<in>A. norm (f x)) - \<delta> < (\<Sum>x\<in>F. norm (f x))"
+          using that \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> by auto 
+      qed
       thus ?thesis using that 
         apply atomize_elim
         using \<open>F \<in> {F. finite F \<and> F \<subseteq> A}\<close> less_imp_le by blast
     qed
-    obtain F2 where F2A: "F2 \<subseteq> A" and finF2: "finite F2"
-      and dist: "dist (sum (\<lambda>x. norm (f x)) F2) (infsetsum' (\<lambda>x. norm (f x)) A) \<le> \<delta>"
-      apply atomize_elim
+    have "\<exists>F2\<subseteq>A.
+       finite F2 \<and>
+       dist (\<Sum>x\<in>F2. norm (f x)) (infsetsum' (\<lambda>x. norm (f x)) A) \<le> \<delta>"
       using infsetsum'_approx_sum[where f="(\<lambda>x. norm (f x))" and A=A and \<epsilon>=\<delta>]
-      using abs_summable_infsetsum'_converges assms by auto
+        abs_summable_infsetsum'_converges assms by auto
+    then obtain F2 where F2A: "F2 \<subseteq> A" and finF2: "finite F2"
+      and dist: "dist (sum (\<lambda>x. norm (f x)) F2) (infsetsum' (\<lambda>x. norm (f x)) A) \<le> \<delta>"
+      by blast     
     have  leq_eps': "infsetsum' (\<lambda>x. norm (f x)) (A-F2) \<le> \<delta>"
-      apply (subst infsetsum'_Diff) using F2A dist finF2
-      by (auto simp: dist_norm)
-
+    proof (subst infsetsum'_Diff)
+      show "infsetsum'_converges (\<lambda>x. norm (f x)) A"
+        by simp        
+      show "infsetsum'_converges (\<lambda>x. norm (f x)) F2"
+        by (simp add: finF2)        
+      show "F2 \<subseteq> A"
+        by (simp add: F2A)        
+      show "infsetsum' (\<lambda>x. norm (f x)) A - infsetsum' (\<lambda>x. norm (f x)) F2 \<le> \<delta>"
+        using dist finF2
+        by (auto simp: dist_norm)
+    qed 
     define F where "F = F1 \<union> F2"
-
     have FA: "F \<subseteq> A" and finF: "finite F" 
       unfolding F_def using F1A F2A finF1 finF2 by auto
-    have leq_eps: "infsetsum (\<lambda>x. norm (f x)) (A-F) \<le> \<delta>"
-      unfolding F_def 
-      apply (rule order.trans[OF _ leq_eps])
-      apply (rule infsetsum_mono_neutral_left)
-      using assms by (auto intro: abs_summable_on_subset)
-    have leq_eps': "infsetsum' (\<lambda>x. norm (f x)) (A-F) \<le> \<delta>"
-      unfolding F_def 
-      apply (rule order.trans[OF _ leq_eps'])
-      apply (rule infsetsum'_mono_set)
-         apply auto
-      using F_def conv_sum_norm finF infsetsum'_converges_cofin_subset by blast+
 
-    have "norm (infsetsum f A - infsetsum f F) =
-        norm (infsetsum f (A-F))"
-      apply (subst infsetsum_Diff[symmetric])
-      by (simp_all add: FA assms \<delta>_def)
+    have "(\<Sum>\<^sub>ax\<in>A - (F1 \<union> F2). norm (f x)) \<le> (\<Sum>\<^sub>ax\<in>A - F1. norm (f x))"
+    proof (rule infsetsum_mono_neutral_left)
+      show "(\<lambda>x. norm (f x)) abs_summable_on A - (F1 \<union> F2)"
+        using abs_summable_on_subset assms by fastforce        
+      show "(\<lambda>x. norm (f x)) abs_summable_on A - F1"
+        using abs_summable_on_subset assms by fastforce        
+      show "norm (f x) \<le> norm (f x)"
+        if "x \<in> A - (F1 \<union> F2)"
+        for x :: 'a
+        using that
+        by auto 
+      show "A - (F1 \<union> F2) \<subseteq> A - F1"
+        by (simp add: Diff_mono)        
+      show "0 \<le> norm (f x)"
+        if "x \<in> A - F1 - (A - (F1 \<union> F2))"
+        for x :: 'a
+        using that
+        by auto 
+    qed
+    hence leq_eps: "infsetsum (\<lambda>x. norm (f x)) (A-F) \<le> \<delta>"
+      unfolding F_def
+      using leq_eps by linarith
+    have "infsetsum' (\<lambda>x. norm (f x)) (A - (F1 \<union> F2))
+    \<le> infsetsum' (\<lambda>x. norm (f x)) (A - F2)"
+    proof (rule infsetsum'_mono_set)
+      show "0 \<le> norm (f x)"
+        if "x \<in> A - F2 - (A - (F1 \<union> F2))"
+        for x :: 'a
+        using that
+        by simp 
+      show "A - (F1 \<union> F2) \<subseteq> A - F2"
+        by (simp add: Diff_mono)        
+      show "infsetsum'_converges (\<lambda>x. norm (f x)) (A - (F1 \<union> F2))"
+        using F_def conv_sum_norm finF infsetsum'_converges_cofin_subset by blast        
+      show "infsetsum'_converges (\<lambda>x. norm (f x)) (A - F2)"
+        by (simp add: finF2 infsetsum'_converges_cofin_subset)        
+    qed
+    hence leq_eps': "infsetsum' (\<lambda>x. norm (f x)) (A-F) \<le> \<delta>"
+      unfolding F_def 
+      by (rule order.trans[OF _ leq_eps'])
+    have "norm (infsetsum f A - infsetsum f F) = norm (infsetsum f (A-F))"
+    proof (subst infsetsum_Diff [symmetric])
+      show "f abs_summable_on A"
+        by (simp add: assms)          
+      show "F \<subseteq> A"
+        by (simp add: FA)          
+      show "norm (infsetsum f (A - F)) = norm (infsetsum f (A - F))"
+        by simp          
+    qed
     also have "\<dots> \<le> infsetsum (\<lambda>x. norm (f x)) (A-F)"
       using norm_infsetsum_bound by blast
     also have "\<dots> \<le> \<delta>"
       using leq_eps by simp
     finally have diff1: "norm (infsetsum f A - infsetsum f F) \<le> \<delta>"
       by assumption
-
-    have "norm (infsetsum' f A - infsetsum' f F) =
-        norm (infsetsum' f (A-F))"
-      apply (subst infsetsum'_Diff[symmetric])
-         apply (rule abs_summable_infsetsum'_converges)
-      using assms FA finF by auto
+    have "norm (infsetsum' f A - infsetsum' f F) = norm (infsetsum' f (A-F))"
+    proof (subst infsetsum'_Diff [symmetric])
+      show "infsetsum'_converges f A"
+        by (simp add: abs_summable_infsetsum'_converges assms)        
+      show "infsetsum'_converges f F"
+        by (simp add: finF)        
+      show "F \<subseteq> A"
+        by (simp add: FA)        
+      show "norm (infsetsum' f (A - F)) = norm (infsetsum' f (A - F))"
+        by simp        
+    qed
     also have "\<dots> \<le> infsetsum' (\<lambda>x. norm (f x)) (A-F)"
-      apply (rule norm_infsetsum'_bound[where A="A-F"])
-      apply (rule abs_summable_infsetsum'_converges)
-      using assms
-      using abs_summable_on_subset by fastforce
+      by (simp add: finF infsetsum'_converges_cofin_subset norm_infsetsum'_bound)
     also have "\<dots> \<le> \<delta>"
       using leq_eps' by simp
     finally have diff2: "norm (infsetsum' f A - infsetsum' f F) \<le> \<delta>"
@@ -2761,15 +2817,23 @@ qed
 lemma abs_summable_partition:
   fixes T :: "'b set" and I :: "'a set"
   assumes "\<And>i. f abs_summable_on S i"
-  assumes "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on I"
-  assumes "T \<subseteq> (\<Union>i\<in>I. S i)"
+  and "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on I"
+  and "T \<subseteq> (\<Union>i\<in>I. S i)"
   shows "f abs_summable_on T"
 proof (rule abs_summable_finiteI)
   fix F assume finite_F: "finite F" and FT: "F \<subseteq> T"
   define index where "index s = (SOME i. i\<in>I \<and> s\<in>S i)" for s
   hence index_I: "index s \<in> I" and S_index: "s \<in> S (index s)" if "s \<in> (\<Union>i\<in>I. S i)" for s
-     apply auto
-    by (metis (no_types, lifting) UN_E someI_ex that)+
+  proof auto
+    show "(SOME i. i \<in> I \<and> s \<in> S i) \<in> I"
+      if "\<And>s. index s = (SOME i. i \<in> I \<and> s \<in> S i)"
+      using that
+      by (metis (no_types, lifting) UN_iff \<open>s \<in> \<Union> (S ` I)\<close> someI_ex) 
+    show "s \<in> S (SOME i. i \<in> I \<and> s \<in> S i)"
+      if "\<And>s. index s = (SOME i. i \<in> I \<and> s \<in> S i)"
+      using that
+      by (metis (no_types, lifting) UN_iff \<open>s \<in> \<Union> (S ` I)\<close> someI_ex) 
+  qed
   define S' where "S' i = {s\<in>S i. i = index s}" for i
   have S'_S: "S' i \<subseteq> S i" for i
     unfolding S'_def by simp
@@ -2789,12 +2853,12 @@ proof (rule abs_summable_finiteI)
   define B where "B i = (\<Sum>\<^sub>ax\<in>S i. norm (f x))" for i
   have sum_FS'_B: "(\<Sum>x\<in>F\<inter>S' i. norm (f x)) \<le> B i" for i
     unfolding B_def using f_sum_S' finite_F FT
-    by (metis S'_S abs_summable_finiteI_converse assms(1) finite_Int le_inf_iff order_refl subset_antisym)
+    by (metis S'_S abs_summable_finiteI_converse assms(1) finite_Int le_inf_iff order_refl 
+        subset_antisym)
   have B_pos[simp]: "B i \<ge> 0" for i
     unfolding B_def by (rule infsetsum_nonneg, simp)
   have B_sum_I[simp]: "B abs_summable_on I"
     by (simp add: B_def assms(2))
-
   define J where "J = {i\<in>I. F\<inter>S' i \<noteq> {}}"
   have finite_J[simp]: "finite J"
   proof -
@@ -2802,59 +2866,102 @@ proof (rule abs_summable_finiteI)
     hence a: "a i \<in> F\<inter>S' i" if "i \<in> J" for i
       unfolding J_def
       by (metis (mono_tags) Collect_conj_eq Int_Collect J_def some_in_eq that)
-    have "inj_on a J"
-      apply (rule inj_onI)
-      using a S'_disj apply auto
+    have xy: "x = y"
+      if "x \<in> J" and "y \<in> J" and "a x = a y" and "\<And>i. i \<in> J \<Longrightarrow> a i \<in> F \<and> a i \<in> S' i"
+           and "\<And>i j. i \<noteq> j \<Longrightarrow> S' i \<inter> S' j = {}"
+         for x y     
+      using that a S'_disj
       by (metis S'_disj disjoint_iff_not_equal)
+    hence "inj_on a J"
+      unfolding inj_on_def
+      using S'_disj a by auto 
     moreover have "a ` J \<subseteq> F"
       using a by auto
     ultimately show "finite J"
-      using finite_F
-      using Finite_Set.inj_on_finite by blast
+      using finite_F Finite_Set.inj_on_finite by blast
   qed
   have JI[simp]: "J \<subseteq> I"
     unfolding J_def by simp
-
   have "F = (\<Union>i\<in>J. F\<inter>S' i)"
     unfolding J_def apply auto
     by (metis FT T_S' UN_E disjoint_iff_not_equal subsetD)
   hence "(\<Sum>x\<in>F. norm (f x)) = (\<Sum>x\<in>(\<Union>i\<in>J. F\<inter>S' i). norm (f x))"
     by simp
   also have "\<dots> = (\<Sum>i\<in>J. \<Sum>x\<in>F \<inter> S' i. norm (f x))"
-    apply (rule sum.UNION_disjoint)
-    using finite_J finite_F S'_disj by auto
+  proof (rule sum.UNION_disjoint)
+    show "finite J"
+      by simp      
+    show "\<forall>i\<in>J. finite (F \<inter> S' i)"
+      by (simp add: finite_F)      
+    show "\<forall>i\<in>J. \<forall>j\<in>J. i \<noteq> j \<longrightarrow> F \<inter> S' i \<inter> (F \<inter> S' j) = {}"
+      using S'_disj by auto      
+  qed
   also have "\<dots> \<le> (\<Sum>i\<in>J. B i)"
     using sum_FS'_B
     by (simp add: ordered_comm_monoid_add_class.sum_mono)
   also have "\<dots> = (\<Sum>\<^sub>ai\<in>J. B i)"
     by simp
   also have "\<dots> \<le> (\<Sum>\<^sub>ai\<in>I. B i)"
-    apply (rule infsetsum_mono_neutral_left)
-    by auto
+  proof (rule infsetsum_mono_neutral_left)
+    show "B abs_summable_on J"
+      by simp      
+    show "B abs_summable_on I"
+      by simp
+    show "B x \<le> B x"
+      if "x \<in> J"
+      for x :: 'a
+      using that
+      by simp 
+    show "J \<subseteq> I"
+      by simp      
+    show "0 \<le> B x"
+      if "x \<in> I - J"
+      for x :: 'a
+      using that
+      by simp 
+  qed    
   finally show "(\<Sum>x\<in>F. norm(f x)) \<le> (\<Sum>\<^sub>ai\<in>I. B i)"
     by simp
 qed
 
-
 lemma abs_summable_product':
   fixes X :: "'a set" and Y :: "'b set"
   assumes "\<And>x. (\<lambda>y. f (x,y)) abs_summable_on Y"
-  assumes "(\<lambda>x. \<Sum>\<^sub>ay\<in>Y. norm (f (x,y))) abs_summable_on X"
+    and "(\<lambda>x. \<Sum>\<^sub>ay\<in>Y. norm (f (x,y))) abs_summable_on X"
   shows "f abs_summable_on X\<times>Y"
-proof -
+proof-
   define S where "S x = {x} \<times> Y" for x :: 'a
   have bij[simp]: "bij_betw (Pair x) Y (S x)" for x
-    apply (rule bij_betwI[where g=snd])
-       apply (simp_all add: S_def)
-    using SigmaE by auto
+  proof (rule bij_betwI [where g = snd])
+    show "Pair x \<in> Y \<rightarrow> S x"
+      by (simp add: S_def)      
+    show "snd \<in> S x \<rightarrow> Y"
+      using Pi_I' S_def by auto      
+    show "snd (y, x::'b) = x"
+      if "x \<in> Y"
+      for x :: 'b and y::'a
+      using that
+      by simp 
+    show "(x, snd y::'b) = y"
+      if "y \<in> S x"
+      for y :: "'a \<times> 'b"
+      using that
+      unfolding S_def
+      by auto
+  qed
   have "f abs_summable_on S x" for x
-    apply (subst abs_summable_on_reindex_bij_betw[symmetric, where A=Y and g="\<lambda>y. (x,y)"])
-    using assms(1) by simp_all
-  moreover 
-  have "(\<Sum>\<^sub>ay\<in>Y. norm (f (x, y))) = (\<Sum>\<^sub>ay\<in>S x. norm (f y))" for x
-    apply (rule infsetsum_reindex_bij_betw)
+  proof (subst abs_summable_on_reindex_bij_betw [symmetric , where A = Y and g = "\<lambda>y. (x,y)"])
+    show "bij_betw (Pair x) Y (S x)"
+      by simp      
+    show "(\<lambda>xa. f (x, xa)) abs_summable_on Y"
+      using assms(1) by auto      
+  qed
+  moreover have "bij_betw (Pair x) Y (S x)"
+    for x
     unfolding S_def using bij_betw_def
-    using S_def bij by auto 
+    using S_def bij by auto
+  hence "(\<Sum>\<^sub>ay\<in>Y. norm (f (x, y))) = (\<Sum>\<^sub>ay\<in>S x. norm (f y))" for x
+    by (rule infsetsum_reindex_bij_betw) 
   hence "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
     using assms(2) by simp
   hence "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on X"
@@ -2868,22 +2975,26 @@ qed
 lemma infsetsum_prod_PiE:
   fixes f :: "'a \<Rightarrow> 'b \<Rightarrow> 'c :: {real_normed_field,banach,second_countable_topology}"
   assumes finite: "finite A"
-  assumes summable: "\<And>x. x \<in> A \<Longrightarrow> f x abs_summable_on B x"
-  shows   "infsetsum (\<lambda>g. \<Prod>x\<in>A. f x (g x)) (PiE A B) = (\<Prod>x\<in>A. infsetsum (f x) (B x))"
-proof -
+    and summable: "\<And>x. x \<in> A \<Longrightarrow> f x abs_summable_on B x"
+  shows "infsetsum (\<lambda>g. \<Prod>x\<in>A. f x (g x)) (PiE A B) = (\<Prod>x\<in>A. infsetsum (f x) (B x))"
+proof-
   define B' where "B' x = {y\<in>B x. 0 \<noteq> f x y}" for x
   have [simp]: "B' x \<subseteq> B x" for x
     unfolding B'_def by simp
   have PiE_subset: "Pi\<^sub>E A B' \<subseteq> Pi\<^sub>E A B"
-    apply (rule PiE_mono) by simp
-  have countable: "countable (B' x)" if "x\<in>A" for x
-    unfolding B'_def apply (rule abs_summable_countable)
-    using that by (rule summable)
+    by (simp add: PiE_mono)
+  have "f x abs_summable_on B x"
+    if "x\<in>A"
+    for x
+    using that
+    by (simp add: local.summable) 
+  hence countable: "countable (B' x)" if "x\<in>A" for x
+    unfolding B'_def using abs_summable_countable
+    using that by blast
   have summable: "f x abs_summable_on B' x" if "x\<in>A" for x
-    using summable apply (rule abs_summable_on_subset)
-    using that by auto
+    using that summable[where x = x] \<open>\<And>x. B' x \<subseteq> B x\<close> abs_summable_on_subset by blast
   have 0: "(\<Prod>x\<in>A. f x (g x)) = 0" if "g \<in> Pi\<^sub>E A B - Pi\<^sub>E A B'" for g
-  proof -
+  proof-
     from that have "g \<in> extensional A"
       by (simp add: PiE_def)
     from that have "g \<notin> Pi\<^sub>E A B'"
@@ -2895,50 +3006,98 @@ proof -
     hence "f x (g x) = 0"
       unfolding B'_def using that by auto
     with finite show ?thesis
-      using finite apply (rule_tac prod_zero)
-      using \<open>x\<in>A\<close> by auto
+    proof (rule_tac prod_zero)
+      show "finite A"
+        if "finite A"
+          and "f x (g x) = 0"
+        using that
+        by simp 
+      show "\<exists>a\<in>A. f a (g a) = 0"
+        if "finite A"
+          and "f x (g x) = 0"
+        using that \<open>x \<in> A\<close> by blast 
+    qed      
   qed
 
+  have d: "infsetsum (f x) (B' x) = infsetsum (f x) (B x)"
+    if "x \<in> A"
+    for x
+  proof (rule infsetsum_cong_neutral)
+    show "f y x = 0"
+      if "x \<in> B' y - B y"
+      for x :: 'b and y :: 'a
+      using that
+      by (meson DiffD1 DiffD2 \<open>\<And>x. B' x \<subseteq> B x\<close> in_mono) 
+    show "f y x = 0"
+      if "x \<in> B y - B' y"
+      for x :: 'b and y
+      using that B'_def by auto 
+    show "f y x = f y x"
+      if "x \<in> B' y \<inter> B y"
+      for x :: 'b and y
+      using that
+      by simp 
+  qed    
   have "infsetsum (\<lambda>g. \<Prod>x\<in>A. f x (g x)) (PiE A B)
       = infsetsum (\<lambda>g. \<Prod>x\<in>A. f x (g x)) (PiE A B')"
-    apply (rule infsetsum_cong_neutral)
-    using 0 PiE_subset by auto
+  proof (rule infsetsum_cong_neutral)
+    show "(\<Prod>a\<in>A. f a (x a)) = 0"
+      if "x \<in> Pi\<^sub>E A B - Pi\<^sub>E A B'"
+      for x :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: "0") 
+    show "(\<Prod>a\<in>A. f a (x a)) = 0"
+      if "x \<in> Pi\<^sub>E A B' - Pi\<^sub>E A B"
+      for x :: "'a \<Rightarrow> 'b"
+      using that PiE_subset by auto 
+    show "(\<Prod>a\<in>A. f a (x a)) = (\<Prod>a\<in>A. f a (x a))"
+      if "x \<in> Pi\<^sub>E A B \<inter> Pi\<^sub>E A B'"
+      for x :: "'a \<Rightarrow> 'b"
+      using that
+      by simp 
+  qed
   also have "\<dots> = (\<Prod>x\<in>A. infsetsum (f x) (B' x))"
     using finite countable summable by (rule infsetsum_prod_PiE)
   also have "\<dots> = (\<Prod>x\<in>A. infsetsum (f x) (B x))"
-    apply (rule prod.cong, simp)
-    apply (rule infsetsum_cong_neutral)
-    unfolding B'_def by auto
-  finally show ?thesis
-    by -
+    using d
+    by auto
+  finally show ?thesis.
 qed
 
 
 lemma infsetsum_0D:
   fixes f :: "'a \<Rightarrow> real"
   assumes "infsetsum f A = 0"
-  assumes abs_sum: "f abs_summable_on A"
-  assumes nneg: "\<And>x. x \<in> A \<Longrightarrow> f x \<ge> 0"
-  assumes "x \<in> A"
+  and abs_sum: "f abs_summable_on A"
+  and nneg: "\<And>x. x \<in> A \<Longrightarrow> f x \<ge> 0"
+  and "x \<in> A"
   shows "f x = 0"
 proof -
   from abs_sum have [simp]: "f abs_summable_on (A-{x})"
     by (meson Diff_subset abs_summable_on_subset)
   from abs_sum \<open>x\<in>A\<close> have [simp]: "f abs_summable_on {x}"
     by auto
+  have a: "\<And>a. a \<in> A - {x} \<Longrightarrow> a \<in> A"
+    by simp   
   from assms have "0 = infsetsum f A"
     by simp
   also have "\<dots> = infsetsum f (A-{x}) + infsetsum f {x}"
-    apply (subst infsetsum_Un_disjoint[symmetric])
-    using \<open>x\<in>A\<close> by (auto simp add: insert_absorb)
+  proof (subst infsetsum_Un_disjoint [symmetric])
+    show "f abs_summable_on A - {x}"
+      by simp      
+    show "f abs_summable_on {x}"
+      by simp      
+    show "(A - {x}) \<inter> {x} = {}"
+      by simp      
+    show "infsetsum f A = infsetsum f (A - {x} \<union> {x})"
+      using assms(4) insert_Diff by fastforce      
+  qed
   also have "\<dots> \<ge> 0 + infsetsum f {x}" (is "_ \<ge> \<dots>")
-    apply (rule add_right_mono)
-    using nneg apply (rule infsetsum_nonneg)
-    by simp
+    using a
+    by (smt infsetsum_nonneg nneg)    
   also have "\<dots> = f x"
     by simp
-  finally have "f x \<le> 0"
-    by -
+  finally have "f x \<le> 0".
   with nneg[OF \<open>x\<in>A\<close>] show "f x = 0"
     by auto
 qed
@@ -2946,29 +3105,44 @@ qed
 lemma sum_leq_infsetsum:
   fixes f :: "_ \<Rightarrow> real"
   assumes "f abs_summable_on N"
-  assumes "finite M"
-  assumes "M \<subseteq> N"
-  assumes "\<And>x. x\<in>N-M \<Longrightarrow> f x \<ge> 0"
+  and "finite M"
+  and "M \<subseteq> N"
+  and "\<And>x. x\<in>N-M \<Longrightarrow> f x \<ge> 0"
   shows "sum f M \<le> infsetsum f N"
 proof -
   have "infsetsum f M \<le> infsetsum f N"
-    apply (rule infsetsum_mono_neutral_left)
-    using assms by auto
+  proof (rule infsetsum_mono_neutral_left)
+    show "f abs_summable_on M"
+      by (simp add: assms(2))      
+    show "f abs_summable_on N"
+      by (simp add: assms(1))      
+    show "f x \<le> f x"
+      if "x \<in> M"
+      for x :: 'b
+      using that
+      by simp 
+    show "M \<subseteq> N"
+      by (simp add: assms(3))      
+    show "0 \<le> f x"
+      if "x \<in> N - M"
+      for x :: 'b
+      using that
+      by (simp add: assms(4)) 
+  qed
   thus ?thesis
     using assms by auto
 qed
 
-
-
 lemma infsetsum_cmult_left':
   fixes f :: "'a \<Rightarrow> 'b :: {banach, real_normed_algebra, second_countable_topology, division_ring}"
-    (* assumes "c \<noteq> 0 \<Longrightarrow> f abs_summable_on A" *)
-  shows   "infsetsum (\<lambda>x. f x * c) A = infsetsum f A * c"
+  shows  "infsetsum (\<lambda>x. f x * c) A = infsetsum f A * c"
 proof (cases "c \<noteq> 0 \<longrightarrow> f abs_summable_on A")
   case True
-  thus ?thesis 
-    apply auto
-    by (rule infsetsum_cmult_left)
+  have "(\<Sum>\<^sub>ax\<in>A. f x * c) = infsetsum f A * c"
+    if "f abs_summable_on A"
+    using infsetsum_cmult_left that by blast
+  thus ?thesis
+    using True by auto     
 next
   case False
   hence "c\<noteq>0" and "\<not> f abs_summable_on A"
@@ -2979,8 +3153,8 @@ next
     hence "(\<lambda>x. (f x * c) * inverse c) abs_summable_on A"
       by (rule abs_summable_on_cmult_left)
     with \<open>\<not> f abs_summable_on A\<close> show False
-      apply auto
-      by (metis (no_types, lifting) False Groups.mult_ac(1) abs_summable_on_cong mult_1_right right_inverse)
+      by (metis (no_types, lifting) False Groups.mult_ac(1) abs_summable_on_cong mult_1_right
+          right_inverse)
   qed
   with \<open>\<not> f abs_summable_on A\<close>
   show ?thesis 
@@ -2989,19 +3163,28 @@ qed
 
 lemma abs_summable_on_zero_diff:
   assumes "f abs_summable_on A"
-  assumes "\<And>x. x \<in> B - A \<Longrightarrow> f x = 0"
+  and "\<And>x. x \<in> B - A \<Longrightarrow> f x = 0"
   shows "f abs_summable_on B"
-  apply (rewrite at B DEADID.rel_mono_strong[of _ "(B-A) \<union> (A\<inter>B)"])
-   apply auto[1]
-  apply (rule abs_summable_on_union)
-   apply (rule abs_summable_on_comparison_test'[where g="\<lambda>x. 0"])
-    apply simp
-  using assms(2) apply auto[1]
-  using assms(1) apply (rule abs_summable_on_subset)
-  by simp
+proof (rewrite at B DEADID.rel_mono_strong [of _ "(B-A) \<union> (A\<inter>B)"])
+  show "B = B - A \<union> A \<inter> B"
+    by auto
+  have "(\<lambda>x. 0::real) abs_summable_on B - A"
+    by simp    
+  moreover have "norm (f x) \<le> 0"
+    if "x \<in> B - A"
+    for x :: 'a
+    using that
+    by (simp add: assms(2)) 
+  ultimately have "f abs_summable_on B - A"
+    by (rule abs_summable_on_comparison_test' [where g = "\<lambda>x. 0"])   
+  moreover have "f abs_summable_on A \<inter> B"
+      using abs_summable_on_subset assms(1) by blast
+  ultimately show "f abs_summable_on B - A \<union> A \<inter> B"
+    by (rule abs_summable_on_union)    
+qed
 
-theorem abs_summable_on_Sigma_iff:
-  shows   "f abs_summable_on Sigma A B \<longleftrightarrow>
+lemma abs_summable_on_Sigma_iff:
+  "f abs_summable_on Sigma A B \<longleftrightarrow>
              (\<forall>x\<in>A. (\<lambda>y. f (x, y)) abs_summable_on B x) \<and>
              ((\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B x)) abs_summable_on A)"
 proof auto
@@ -3009,8 +3192,7 @@ proof auto
   define S' where "S' = {x\<in>Sigma A B. 0 \<noteq> f x}"
   from sum_AB have "countable S'"
     unfolding S'_def by (rule abs_summable_countable)
-  define A' B' where "A' = fst ` S'"
-    and "B' x = B x \<inter> snd ` S'" for x
+  define A' B' where "A' = fst ` S'" and "B' x = B x \<inter> snd ` S'" for x
   have A'A: \<open>A' \<subseteq> A\<close> and B'B: \<open>B' x \<subseteq> B x\<close> for x
     unfolding A'_def B'_def S'_def by auto
   have  cntA: "countable A'" and cntB: "countable (B' x)" for x
@@ -3035,33 +3217,71 @@ proof auto
     ultimately show "f (x,y) = 0"
       unfolding S'_def by auto
   qed
-  from sum_AB have sum_A'B': "f abs_summable_on Sigma A' B'"
-    apply (rule abs_summable_on_subset)
+  have "Sigma A' B' \<subseteq> Sigma A B"
     using A'A B'B by (rule Sigma_mono)
-
+  hence sum_A'B': "f abs_summable_on Sigma A' B'"
+    using sum_AB abs_summable_on_subset by auto 
   from sum_A'B' have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A'" for x
-    using abs_summable_on_Sigma_iff[OF cntA cntB, where f=f]
-    using that by auto
-  moreover have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A - A'" for x
-    apply (subst abs_summable_on_zero_diff[where A="{}"])
-      apply auto apply (subst f0) using that apply auto
-    using f0 that B'B by auto
+    using abs_summable_on_Sigma_iff[OF cntA cntB, where f=f] that by auto
+  moreover have "(\<lambda>y. f (x, y)) abs_summable_on B' x" 
+    if t:"x \<in> A - A'" 
+    for x
+  proof (subst abs_summable_on_zero_diff [where A = "{}"])
+    show "(\<lambda>y. f (x, y)) abs_summable_on {}"
+      by simp
+    have "f (x, a) = 0"
+      if "a \<in> B' x"
+      for a
+      using t f0 that B'B
+      by auto
+    thus "f (x, a) = 0"
+      if "a \<in> B' x - {}"
+      for a
+      using that by auto 
+    show True by blast
+  qed     
   ultimately have "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x \<in> A" for x
     using that by auto
   thus "(\<lambda>y. f (x, y)) abs_summable_on B x" if "x \<in> A" for x
     apply (rule abs_summable_on_zero_diff)
     using that f0' by auto
 
+  have Q: "\<And>x. x \<in> A - A' \<Longrightarrow> (\<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) = 0"
+    apply (subst infsetsum_cong[where g=\<open>\<lambda>x. 0\<close> and B="B' _"])
+    using f0 B'B by auto
+
   from sum_A'B' have "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B' x)) abs_summable_on A'"
     using abs_summable_on_Sigma_iff[OF cntA cntB, where f=f] by auto
   hence "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B' x)) abs_summable_on A"
     apply (rule abs_summable_on_zero_diff)
-    apply (subst infsetsum_cong[where g=\<open>\<lambda>x. 0\<close> and B="B' _"])
-    using f0 B'B by auto
-  thus "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B x)) abs_summable_on A"
-    apply (rule abs_summable_on_cong[THEN iffD1, rotated 2])
-     apply (rule infsetsum_cong_neutral)
-    using B'B f0' by auto 
+    using Q by auto
+  have R: "\<And>x. x \<in> A \<Longrightarrow>
+         (\<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) =
+         (\<Sum>\<^sub>ay\<in>B x. norm (f (x, y)))"
+  proof (rule infsetsum_cong_neutral)
+    show "norm (f (x, a)) = 0"
+      if "x \<in> A"
+        and "a \<in> B' x - B x"
+      for x :: 'a
+        and a :: 'b
+      using that B'B by blast 
+    show "norm (f (x, a)) = 0"
+      if "x \<in> A"
+        and "a \<in> B x - B' x"
+      for x :: 'a
+        and a :: 'b
+      using that
+      by (simp add: f0') 
+    show "norm (f (x, a)) = norm (f (x, a))"
+      if "x \<in> A"
+        and "a \<in> B' x \<inter> B x"
+      for x :: 'a
+        and a :: 'b
+      using that
+      by simp 
+  qed
+  thus "(\<lambda>x. infsetsum (\<lambda>y. norm (f (x, y))) (B x)) abs_summable_on A"    
+    using \<open>(\<lambda>x. \<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) abs_summable_on A\<close> by auto 
 next
   assume sum_B: "\<forall>x\<in>A. (\<lambda>y. f (x, y)) abs_summable_on B x"
   assume sum_A: "(\<lambda>x. \<Sum>\<^sub>ay\<in>B x. norm (f (x, y))) abs_summable_on A"
@@ -3088,23 +3308,30 @@ next
   qed
 
   from sum_B have sum_B': "(\<lambda>y. f (x, y)) abs_summable_on B' x" if "x\<in>A" for x
-    apply (rule_tac abs_summable_on_subset[where B="B x"]) using B'B that by auto
+  proof (rule_tac abs_summable_on_subset [where B = "B x"])
+    show "(\<lambda>y. f (x, y)) abs_summable_on B x"
+      if "\<forall>x\<in>A. (\<lambda>y. f (x, y)) abs_summable_on B x"
+      using that \<open>x \<in> A\<close> by blast 
+    show "B' x \<subseteq> B x"
+      if "\<forall>x\<in>A. (\<lambda>y. f (x, y)) abs_summable_on B x"
+      using that
+      by (simp add: B'B) 
+  qed
   have *: "(\<Sum>\<^sub>ay\<in>B x. norm (f (x, y))) = (\<Sum>\<^sub>ay\<in>B' x. norm (f (x, y)))" if "x\<in>A" for x
-    apply (rule infsetsum_cong_neutral)
-    using f0' B'B that by auto
-  have sum_A': "(\<lambda>x. \<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) abs_summable_on A'"
-    using _ A'A apply (rule abs_summable_on_subset[where B=A])
-    apply (subst abs_summable_on_cong)
-      apply (rule *[symmetric])
-    using sum_A by auto
-
+    using infsetsum_cong_neutral f0' B'B that
+    by (metis (no_types, lifting) DiffD1 DiffD2 Int_iff inf.absorb_iff2 norm_zero)
+  have "(\<lambda>x. \<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) abs_summable_on A"
+    using abs_summable_on_cong sum_A "*" by auto
+  hence sum_A': "(\<lambda>x. \<Sum>\<^sub>ay\<in>B' x. norm (f (x, y))) abs_summable_on A'"
+    using _ A'A abs_summable_on_subset by blast 
   from sum_A' sum_B'
   have "f abs_summable_on Sigma A' B'"
-    using abs_summable_on_Sigma_iff[where A=A' and B=B' and f=f, OF cnt_A' cnt_B'] 
-    using A'A by auto
-  thus "f abs_summable_on Sigma A B"
-    apply (rule abs_summable_on_zero_diff)
-    using f0 f0' by auto
+    using abs_summable_on_Sigma_iff[where A=A' and B=B' and f=f, OF cnt_A' cnt_B'] A'A by auto
+  moreover have "f x = 0"
+    if "x \<in> Sigma A B - Sigma A' B'" for x
+    using that f0 f0' by force     
+  ultimately show "f abs_summable_on Sigma A B"
+    by (rule abs_summable_on_zero_diff)
 qed
 
 lemma
@@ -3161,9 +3388,13 @@ class complemented_lattice = bounded_lattice + uminus + minus +
 
 lemma dual_complemented_lattice:
   "class.complemented_lattice (\<lambda>x y. x \<squnion> (- y)) uminus sup greater_eq greater inf \<top> \<bottom>"
-  apply (rule class.complemented_lattice.intro)
-   apply (rule dual_bounded_lattice)
-  by (unfold_locales, auto simp add: diff_eq)
+  proof (rule class.complemented_lattice.intro)
+  show "class.bounded_lattice (\<squnion>) (\<lambda>x y. (y::'a) \<le> x) (\<lambda>x y. y < x) (\<sqinter>) \<top> \<bottom>"
+    by (rule dual_bounded_lattice)
+  show "class.complemented_lattice_axioms (\<lambda>x y. (x::'a) \<squnion> - y) uminus (\<squnion>) (\<sqinter>) \<top> \<bottom>"
+    by (unfold_locales, auto simp add: diff_eq)
+qed
+
 
 lemma compl_inf_bot [simp]: "inf (- x) x = bot"
   by (simp add: inf_commute)
@@ -3183,9 +3414,14 @@ class orthocomplemented_lattice = complemented_lattice +
 
 lemma dual_orthocomplemented_lattice:
   "class.orthocomplemented_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
-  apply (rule class.orthocomplemented_lattice.intro)
-  apply (rule dual_complemented_lattice)
-  by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
+  proof (rule class.orthocomplemented_lattice.intro)
+  show "class.complemented_lattice (\<lambda>x y. (x::'a) \<squnion> - y) uminus (\<squnion>) (\<lambda>x y. y \<le> x) (\<lambda>x y. y < x) (\<sqinter>) \<top> \<bottom>"
+    by (rule dual_complemented_lattice)
+  show "class.orthocomplemented_lattice_axioms uminus (\<lambda>x y. (y::'a) \<le> x)"
+      by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
+qed
+
+
 
 lemma compl_eq_compl_iff [simp]: "- x = - y \<longleftrightarrow> x = y"
   by (metis ortho_involution)
@@ -3295,10 +3531,21 @@ class orthomodular_lattice = orthocomplemented_lattice +
 
 lemma dual_orthomodular_lattice:
   "class.orthomodular_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
-  apply (rule class.orthomodular_lattice.intro)
-  apply (rule dual_orthocomplemented_lattice)
-  apply (unfold_locales)
-  using local.compl_eq_compl_iff local.ortho_antimono local.orthomodular by fastforce
+proof (rule class.orthomodular_lattice.intro)
+  show "class.orthocomplemented_lattice (\<lambda>x y. (x::'a) \<squnion> - y) uminus (\<squnion>) (\<lambda>x y. y \<le> x) (\<lambda>x y. y < x) (\<sqinter>) \<top> \<bottom>"
+    by (rule dual_orthocomplemented_lattice)
+  show "class.orthomodular_lattice_axioms uminus (\<squnion>) (\<lambda>x y. (y::'a) \<le> x) (\<sqinter>)"
+  proof (unfold_locales)
+    show "(x::'a) \<sqinter> (- x \<squnion> y) = y"
+      if "(y::'a) \<le> x"
+      for x :: 'a
+        and y :: 'a
+      using that local.compl_eq_compl_iff local.ortho_antimono local.orthomodular by fastforce
+  qed
+    
+qed
+
+
 end
 
 class complete_orthomodular_lattice = orthomodular_lattice + complete_lattice begin
@@ -3368,152 +3615,136 @@ lemma onorm_sphere:
   shows \<open>onorm f = Sup {norm (f x) | x. norm x = 1}\<close>
 proof(cases \<open>f = (\<lambda> _. 0)\<close>)
   case True
+  have \<open>(UNIV::'a set) \<noteq> {0}\<close>
+    by simp
+  hence \<open>\<exists>x::'a. norm x = 1\<close>
+    using  ex_norm1
+    by blast
+  have \<open>norm (f x) = 0\<close>
+    for x
+    by (simp add: True)      
+  hence \<open>{norm (f x) | x. norm x = 1} = {0}\<close>
+    using \<open>\<exists>x. norm x = 1\<close> by auto
+  hence v1: \<open>Sup {norm (f x) | x. norm x = 1} = 0\<close>
+    by simp 
   have \<open>onorm f = 0\<close>
     by (simp add: True onorm_eq_0)  
-  moreover have \<open>Sup {norm (f x) | x. norm x = 1} = 0\<close>
-  proof-
-    have \<open>(UNIV::'a set) \<noteq> {0}\<close>
-      by simp
-    hence \<open>\<exists>x::'a. norm x = 1\<close>
-      using  ex_norm1
-      by blast
-    have \<open>norm (f x) = 0\<close>
-      for x
-      by (simp add: True)      
-    hence \<open>{norm (f x) | x. norm x = 1} = {0}\<close>
-      apply auto using \<open>\<exists>x. norm x = 1\<close> by blast 
-    thus ?thesis
-      by simp 
-  qed
-  ultimately show ?thesis by simp
+  thus ?thesis using v1 by simp
 next
   case False
-  thus ?thesis 
-  proof-
-    have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
-    proof-
-      have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
-        by (simp add: full_SetCompr_eq)
-      also have \<open>... = Sup {norm (f x) | x. norm x = 1}\<close>
-      proof-
-        have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-        proof-
-          have \<open>y \<in> {norm (f x) / norm x |x. True} \<Longrightarrow> y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-            for y
-          proof-
-            assume \<open>y \<in> {norm (f x) / norm x |x. True}\<close>
-            show ?thesis
-            proof(cases \<open>y = 0\<close>)
-              case True
-              thus ?thesis
-                by simp 
-            next
-              case False
-              have \<open>\<exists> x. y = norm (f x) / norm x\<close>
-                using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
-              then obtain x where \<open>y = norm (f x) / norm x\<close>
-                by blast
-              hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
-                by simp
-              hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
-                by simp
-              hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
-                by (simp add: assms linear_simps(5))
-              moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
-                using False \<open>y = norm (f x) / norm x\<close> by auto              
-              ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
-                by blast
-              thus ?thesis by blast
-            qed
-          qed
-          moreover have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}
-                     \<Longrightarrow> y \<in> {norm (f x) / norm x |x. True}\<close>
-            for y
-          proof(cases \<open>y = 0\<close>)
-            case True
-            thus ?thesis
-              by auto 
-          next
-            case False
-            hence \<open>y \<notin> {0}\<close>
-              by simp
-            moreover assume \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
-            ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
-              by simp
-            hence \<open>\<exists> x. norm x = 1 \<and> y = norm (f x)\<close>
-              by auto
-            then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
-              by auto
-            have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
-              by simp 
-            thus ?thesis
-              by auto 
-          qed
-          ultimately show ?thesis by blast
-        qed
-        hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
-          by simp
-        moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
-        proof-
-          have \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
-          proof-
-            have \<open>\<exists> x::'a. norm x = 1\<close>
-              by (metis (full_types) False a1 linear_simps(3) norm_sgn)              
-            then obtain x::'a where \<open>norm x = 1\<close>
-              by blast
-            have \<open>norm (f x) \<ge> 0\<close>
-              by simp
-            thus ?thesis using \<open>norm x = 1\<close> by blast
-          qed
-          hence \<open>\<exists> y \<in> {norm (f x) |x. norm x = 1}. y \<ge> 0\<close>
-            by blast
-          then obtain y::real where \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> 
-            and \<open>y \<ge> 0\<close>
-            by auto
-          have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-            using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
-          moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-            using bdd_above_norm_f
-            by (metis (mono_tags, lifting) a1) 
-          ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
-            using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
-            by (simp add: cSup_upper) 
-          thus ?thesis using \<open>y \<ge> 0\<close> by simp
-        qed
-        moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
-        proof-
-          have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
-            by (simp add: assms(1) ex_norm1)
-          moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
-            using a1 bdd_above_norm_f by force
-          have \<open>{0::real} \<noteq> {}\<close>
-            by simp
-          moreover have \<open>bdd_above {0::real}\<close>
-            by simp
-          ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
-             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
-            by (metis (lifting) \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close> \<open>bdd_above {0}\<close> \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> \<open>{0} \<noteq> {}\<close> \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close> cSup_singleton cSup_union_distrib max.absorb_iff1 sup.absorb_iff1)
-          moreover have \<open>Sup {(0::real)} = (0::real)\<close>
-            by simp          
-          moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
-            by (simp add: \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close>)
-          ultimately show ?thesis
-            by simp
-        qed
-        moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0})
-           = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
-          using calculation(2) calculation(3) by auto
-        ultimately show ?thesis by simp 
-      qed
-      ultimately show ?thesis
-        by linarith 
-    qed
-    thus ?thesis unfolding onorm_def by blast
+  have \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+    if "y \<in> {norm (f x) / norm x |x. True}"
+    for y
+  proof(cases \<open>y = 0\<close>)
+    case True
+    thus ?thesis
+      by simp 
+  next
+    case False
+    have \<open>\<exists> x. y = norm (f x) / norm x\<close>
+      using \<open>y \<in> {norm (f x) / norm x |x. True}\<close> by auto
+    then obtain x where \<open>y = norm (f x) / norm x\<close>
+      by blast
+    hence \<open>y = \<bar>(1/norm x)\<bar> * norm ( f x )\<close>
+      by simp
+    hence \<open>y = norm ( (1/norm x) *\<^sub>R f x )\<close>
+      by simp
+    hence \<open>y = norm ( f ((1/norm x) *\<^sub>R x) )\<close>
+      by (simp add: assms linear_simps(5))
+    moreover have \<open>norm ((1/norm x) *\<^sub>R x) = 1\<close>
+      using False \<open>y = norm (f x) / norm x\<close> by auto              
+    ultimately have \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+      by blast
+    thus ?thesis by blast
   qed
+  moreover have "y \<in> {norm (f x) / norm x |x. True}"
+    if \<open>y \<in> {norm (f x) |x. norm x = 1} \<union> {0}\<close>
+    for y
+  proof(cases \<open>y = 0\<close>)
+    case True
+    thus ?thesis
+      by auto 
+  next
+    case False
+    hence \<open>y \<notin> {0}\<close>
+      by simp
+    hence \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+      using that by auto      
+    hence \<open>\<exists> x. norm x = 1 \<and> y = norm (f x)\<close>
+      by auto
+    then obtain x where \<open>norm x = 1\<close> and \<open>y = norm (f x)\<close>
+      by auto
+    have \<open>y = norm (f x) / norm x\<close> using  \<open>norm x = 1\<close>  \<open>y = norm (f x)\<close>
+      by simp 
+    thus ?thesis
+      by auto 
+  qed
+  ultimately have \<open>{norm (f x) / norm x |x. True} = {norm (f x) |x. norm x = 1} \<union> {0}\<close> 
+    by blast
+  hence \<open>Sup {norm (f x) / norm x |x. True} = Sup ({norm (f x) |x. norm x = 1} \<union> {0})\<close>
+    by simp
+  moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+  proof-
+    have \<open>\<exists> x::'a. norm x = 1\<close>
+      by (metis (full_types) False a1 linear_simps(3) norm_sgn)              
+    then obtain x::'a where \<open>norm x = 1\<close>
+      by blast
+    have \<open>norm (f x) \<ge> 0\<close>
+      by simp
+    hence \<open>\<exists> x::'a. norm x = 1 \<and> norm (f x) \<ge> 0\<close>
+      using \<open>norm x = 1\<close> by blast
+    hence \<open>\<exists> y \<in> {norm (f x) |x. norm x = 1}. y \<ge> 0\<close>
+      by blast
+    then obtain y::real where \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> 
+      and \<open>y \<ge> 0\<close>
+      by auto
+    have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+      using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close> by blast         
+    moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+      using bdd_above_norm_f
+      by (metis (mono_tags, lifting) a1) 
+    ultimately have \<open>y \<le> Sup {norm (f x) |x. norm x = 1}\<close>
+      using \<open>y \<in> {norm (f x) |x. norm x = 1}\<close>
+      by (simp add: cSup_upper) 
+    thus ?thesis using \<open>y \<ge> 0\<close> by simp
+  qed
+  moreover have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {0}) = Sup {norm (f x) |x. norm x = 1}\<close>
+  proof-
+    have \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close>
+      by (simp add: assms(1) ex_norm1)
+    moreover have \<open>bdd_above {norm (f x) |x. norm x = 1}\<close>
+      using a1 bdd_above_norm_f by force
+    have \<open>{0::real} \<noteq> {}\<close>
+      by simp
+    moreover have \<open>bdd_above {0::real}\<close>
+      by simp
+    ultimately have \<open>Sup ({norm (f x) |x. norm x = 1} \<union> {(0::real)})
+             = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0::real})\<close>
+      by (metis (lifting) \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close> \<open>bdd_above {0}\<close> \<open>bdd_above {norm (f x) |x. norm x = 1}\<close> \<open>{0} \<noteq> {}\<close> \<open>{norm (f x) |x. norm x = 1} \<noteq> {}\<close> cSup_singleton cSup_union_distrib max.absorb_iff1 sup.absorb_iff1)
+    moreover have \<open>Sup {(0::real)} = (0::real)\<close>
+      by simp          
+    moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
+      by (simp add: \<open>0 \<le> Sup {norm (f x) |x. norm x = 1}\<close>)
+    ultimately show ?thesis
+      by simp
+  qed
+  moreover have \<open>Sup ( {norm (f x) |x. norm x = 1} \<union> {0})
+           = max (Sup {norm (f x) |x. norm x = 1}) (Sup {0}) \<close>
+    using calculation(2) calculation(3) by auto
+  ultimately have w1: "Sup {norm (f x) / norm x | x. True} = Sup {norm (f x) | x. norm x = 1}"
+    by simp 
+
+  have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) / norm x | x. True}\<close>
+    by (simp add: full_SetCompr_eq)
+  also have \<open>... = Sup {norm (f x) | x. norm x = 1}\<close>
+    using w1 by auto
+  ultimately  have \<open>(SUP x. norm (f x) / (norm x)) = Sup {norm (f x) | x. norm x = 1}\<close>
+    by linarith
+  thus ?thesis unfolding onorm_def by blast
 qed
 
 
-proposition onorm_Inf_bound:
+lemma onorm_Inf_bound:
   fixes f :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::real_normed_vector\<close>
   assumes a1: "bounded_linear f"
   shows "onorm f = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}"
@@ -3521,39 +3752,37 @@ proof-
   have a2: \<open>(UNIV::'a set) \<noteq> {0}\<close>
     by simp
 
-  have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Inf {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
+  define A where \<open>A = {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
+  have \<open>A \<noteq> {}\<close>
   proof-
-    define A where \<open>A = {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
-    have \<open>A \<noteq> {}\<close>
-    proof-
-      have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-        using a2 by auto
-      thus ?thesis using A_def
-        by simp 
-    qed
-    moreover have \<open>bdd_above A\<close>
-    proof-
-      have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
-        using \<open>bounded_linear f\<close> le_onorm by auto
-      thus ?thesis using A_def
-        by auto 
-    qed
-    ultimately have \<open>Sup A = Inf {b. \<forall>a\<in>A. a \<le> b}\<close>      
-      by (simp add: cSup_cInf)  
-    moreover have \<open>{b. \<forall>a\<in>A. a \<le> b} = {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
-    proof-
-      have \<open>{b. \<forall>a\<in>A. a \<le> b} = {b. \<forall>a\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. a \<le> b}\<close>
-        using A_def by blast
-      also have \<open>... = {b. \<forall>x\<in>{x | x. x \<noteq> 0}. norm (f x) / (norm x) \<le> b}\<close>
-        by auto
-      also have \<open>... = {b. \<forall>x\<noteq>0. norm (f x) / (norm x) \<le> b}\<close>
-        by auto
-      finally show ?thesis by blast
-    qed
-    ultimately show ?thesis 
-      using A_def
+    have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+      using a2 by auto
+    thus ?thesis using A_def
       by simp 
   qed
+  moreover have \<open>bdd_above A\<close>
+  proof-
+    have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
+      using \<open>bounded_linear f\<close> le_onorm by auto
+    thus ?thesis using A_def
+      by auto 
+  qed
+  ultimately have \<open>Sup A = Inf {b. \<forall>a\<in>A. a \<le> b}\<close>      
+    by (simp add: cSup_cInf)  
+  moreover have \<open>{b. \<forall>a\<in>A. a \<le> b} = {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
+  proof-
+    have \<open>{b. \<forall>a\<in>A. a \<le> b} = {b. \<forall>a\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. a \<le> b}\<close>
+      using A_def by blast
+    also have \<open>... = {b. \<forall>x\<in>{x | x. x \<noteq> 0}. norm (f x) / (norm x) \<le> b}\<close>
+      by auto
+    also have \<open>... = {b. \<forall>x\<noteq>0. norm (f x) / (norm x) \<le> b}\<close>
+      by auto
+    finally show ?thesis by blast
+  qed
+  ultimately have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} 
+                    = Inf {K. (\<forall>x\<noteq>0. norm (f x)/ norm x \<le>  K)}\<close>
+    using A_def
+    by simp 
   moreover have \<open>(\<forall>x\<noteq>0. norm (f x) \<le> norm x * K) \<longleftrightarrow> (\<forall>x\<noteq>0. norm (f x)/ norm x \<le> K)\<close>
     for K
   proof
@@ -3567,80 +3796,74 @@ proof-
       using divide_le_eq nonzero_mult_div_cancel_left norm_le_zero_iff that
       by (simp add: divide_le_eq mult.commute)
   qed
-  ultimately have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
+  ultimately have f1: \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
     by simp
-  moreover have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Sup {norm (f x) / (norm x) | x. True}\<close>
+  moreover 
+  have t1: \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0}  = {norm (f x) / (norm x) | x. True}\<close>
+    using Collect_cong by blast
+
+  have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
   proof-
-    have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0}  = {norm (f x) / (norm x) | x. True}\<close>
-      using Collect_cong by blast
-    hence \<open>Sup ({norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0}) = Sup {norm (f x) / (norm x) | x. True}\<close>
-      by simp
-    moreover have \<open>Sup ({norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0})
-        = max (Sup {norm (f x) / (norm x) | x. x \<noteq> 0}) (Sup {norm (f x) / (norm x) | x. x = 0})\<close>
-    proof-
-      have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
-      proof-
-        have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-          using \<open>UNIV\<noteq>{0}\<close> by auto
-        thus ?thesis
-          by simp 
-      qed
-      moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
-      proof-
-        have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
-          using \<open>bounded_linear f\<close>
-          by (metis \<open>\<And>K. (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) \<le> norm x * K) = (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) / norm x \<le> K)\<close> bounded_linear.nonneg_bounded mult_divide_mult_cancel_left_if norm_zero real_divide_square_eq)
-        thus ?thesis
-          by auto 
-      qed
-      moreover have \<open>{norm (f x) / (norm x) | x. x = 0} \<noteq> {}\<close>
-        by simp
-      moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x = 0}\<close>
-        by simp
-      ultimately show ?thesis
-        by (metis (no_types, lifting) cSup_union_distrib sup_max)  
-    qed      
-    moreover have \<open>Sup {norm (f x) / (norm x) | x. x = 0} = 0\<close>
-    proof-
-      have \<open>{norm (f x) / (norm x) | x. x = 0} = {norm (f 0) / (norm 0)}\<close>
-        by simp
-      thus ?thesis
-        by simp 
-    qed
-    moreover have \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} \<ge> 0\<close>
-    proof-
-      have \<open>norm (f x) / (norm x) \<ge> 0\<close>
-        for x
-        by simp
-      hence \<open>\<forall> y\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. y \<ge> 0\<close>
-        by blast
-      moreover have \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
-      proof-
-        have \<open>\<exists> x::'a. x \<noteq> 0\<close>
-          using \<open>UNIV\<noteq>{0}\<close> by auto
-        thus ?thesis 
-          by auto
-      qed
-      moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
-      proof-
-        have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
-          using \<open>bounded_linear f\<close>
-          by (metis \<open>\<And>K. (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) \<le> norm x * K) = (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) / norm x \<le> K)\<close> bounded_linear.nonneg_bounded mult_divide_mult_cancel_left_if norm_zero real_divide_square_eq)
-        thus ?thesis
-          by auto 
-      qed
-      ultimately show ?thesis
-        by (metis (lifting) \<open>\<forall>y\<in>{norm (f x) / norm x |x. x \<noteq> 0}. 0 \<le> y\<close> \<open>bdd_above {norm (f x) / norm x |x. x \<noteq> 0}\<close> \<open>{norm (f x) / norm x |x. x \<noteq> 0} \<noteq> {}\<close> bot.extremum_uniqueI cSup_upper2 subset_emptyI)        
-    qed
-    ultimately show ?thesis
-      by linarith 
+    have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+      using \<open>UNIV\<noteq>{0}\<close> by auto
+    thus ?thesis
+      by simp 
   qed
-  ultimately have \<open>(SUP x. norm (f x) / (norm x)) = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
-    by (simp add: full_SetCompr_eq)
+  moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
+  proof-
+    have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
+      using \<open>bounded_linear f\<close> bounded_linear.nonneg_bounded 
+        mult_divide_mult_cancel_left_if norm_zero real_divide_square_eq
+      by (metis nice_ordered_field_class.mult_imp_div_pos_le ordered_field_class.sign_simps(5) 
+          zero_less_norm_iff)
+    thus ?thesis
+      by auto 
+  qed
+  moreover have \<open>{norm (f x) / (norm x) | x. x = 0} \<noteq> {}\<close>
+    by simp
+  moreover have \<open>bdd_above {norm (f x) / (norm x) | x. x = 0}\<close>
+    by simp
+  ultimately 
+  have d1: \<open>Sup ({norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0})
+        = max (Sup {norm (f x) / (norm x) | x. x \<noteq> 0}) (Sup {norm (f x) / (norm x) | x. x = 0})\<close>
+    by (metis (no_types, lifting) cSup_union_distrib sup_max)
+  have g1: \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} \<ge> 0\<close>
+  proof-
+    have t2: \<open>{norm (f x) / (norm x) | x. x \<noteq> 0} \<noteq> {}\<close>
+    proof-
+      have \<open>\<exists> x::'a. x \<noteq> 0\<close>
+        using \<open>UNIV\<noteq>{0}\<close> by auto
+      thus ?thesis 
+        by auto
+    qed
+    have \<open>\<exists> M. \<forall> x.  norm (f x) / (norm x) \<le> M\<close>
+      using \<open>bounded_linear f\<close>
+      by (metis \<open>\<And>K. (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) \<le> norm x * K) = (\<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) / norm x \<le> K)\<close> bounded_linear.nonneg_bounded mult_divide_mult_cancel_left_if norm_zero real_divide_square_eq)
+    hence t3: \<open>bdd_above {norm (f x) / (norm x) | x. x \<noteq> 0}\<close>
+      by auto
+    have \<open>norm (f x) / (norm x) \<ge> 0\<close>
+      for x
+      by simp
+    hence \<open>\<forall> y\<in>{norm (f x) / (norm x) | x. x \<noteq> 0}. y \<ge> 0\<close>
+      by blast
+    show ?thesis
+      by (metis (lifting) \<open>\<forall>y\<in>{norm (f x) / norm x |x. x \<noteq> 0}. 0 \<le> y\<close> \<open>bdd_above {norm (f x) / norm x |x. x \<noteq> 0}\<close> \<open>{norm (f x) / norm x |x. x \<noteq> 0} \<noteq> {}\<close> bot.extremum_uniqueI cSup_upper2 subset_emptyI)
+  qed
+  hence r: \<open>Sup ({norm (f x) / (norm x) | x. x \<noteq> 0} \<union> {norm (f x) / (norm x) | x. x = 0}) 
+         = Sup {norm (f x) / (norm x) | x. True}\<close>
+    using t1 by auto
+  have \<open>{norm (f x) / (norm x) | x. x = 0} = {norm (f 0) / (norm 0)}\<close>
+    by simp
+  hence \<open>Sup {norm (f x) / (norm x) | x. x = 0} = 0\<close>
+    by simp
+  have h1: \<open>Sup {norm (f x) / (norm x) | x. x \<noteq> 0} = Sup {norm (f x) / (norm x) | x. True}\<close>
+    using d1 r g1 by auto 
+  have \<open>(SUP x. norm (f x) / (norm x)) = Inf {K. (\<forall>x\<noteq>0. norm (f x) \<le> norm x * K)}\<close>
+    using full_SetCompr_eq
+    by (metis \<open>\<Squnion> {norm (f x) / norm x |x. x \<noteq> 0} = \<Sqinter> {K. \<forall>x. x \<noteq> 0 \<longrightarrow> norm (f x) \<le> norm x * K}\<close> h1) 
   thus ?thesis
     by (simp add: onorm_def)
 qed
-
 
 subsection \<open>Banach-Steinhaus theorem\<close>
 
@@ -3672,27 +3895,21 @@ proof-
     hence \<open>inverse (norm x) * norm (f x) \<le> K\<close>
       using \<open>norm x > 0\<close>
       by simp
-    show ?thesis 
-    proof-
-      have \<open>inverse (norm x) \<ge> 0\<close>
-        using \<open>norm x > 0\<close>
-        by simp
-      moreover have \<open>norm (f x) \<ge> 0\<close>
-        by simp
-      moreover have \<open>K \<ge> 0\<close>
-        using \<open>inverse (norm x) * norm (f x) \<le> K\<close> \<open>inverse (norm x) \<ge> 0\<close> \<open>norm x > 0\<close>
-          calculation(2) 
-        by (metis \<open>norm (f (x /\<^sub>R norm x)) \<le> K\<close> dual_order.trans norm_ge_zero)
-      ultimately show ?thesis  using \<open>inverse (norm x) * norm (f x) \<le> K\<close>
-      proof -
-        have "\<forall>r. norm x * (inverse (norm x) * r) = r"
-          by (metis \<open>norm (x /\<^sub>R norm x) = 1\<close> ab_semigroup_mult_class.mult_ac(1) abs_inverse abs_norm_cancel mult.commute mult.left_neutral norm_scaleR)
-        hence "norm (f x) \<le> K * norm x"
-          by (metis (no_types) \<open>inverse (norm x) * norm (f x) \<le> K\<close> mult.commute norm_ge_zero real_scaleR_def scaleR_left_mono)
-        thus ?thesis
-          by (metis mult.commute)
-      qed  
-    qed
+    have t1: \<open>inverse (norm x) \<ge> 0\<close>
+      using \<open>norm x > 0\<close>
+      by simp
+    have t2: \<open>norm (f x) \<ge> 0\<close>
+      by simp
+    have t3: \<open>K \<ge> 0\<close>
+      using \<open>inverse (norm x) * norm (f x) \<le> K\<close> \<open>inverse (norm x) \<ge> 0\<close> \<open>norm x > 0\<close> t2
+      by (metis \<open>norm (f (x /\<^sub>R norm x)) \<le> K\<close> dual_order.trans norm_ge_zero)
+    have t4: "\<forall>r. norm x * (inverse (norm x) * r) = r"
+      by (metis \<open>norm (x /\<^sub>R norm x) = 1\<close> ab_semigroup_mult_class.mult_ac(1) abs_inverse abs_norm_cancel mult.commute mult.left_neutral norm_scaleR)
+    hence t5: "norm (f x) \<le> K * norm x"
+      by (metis (no_types) \<open>inverse (norm x) * norm (f x) \<le> K\<close> mult.commute norm_ge_zero real_scaleR_def scaleR_left_mono)
+    show ?thesis
+      using mult.commute
+      by (simp add: mult.commute t5)
   qed
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
 qed
@@ -3704,60 +3921,54 @@ lemma norm_unit_sphere:
   shows \<open>\<exists>x\<in>(sphere 0 1). \<parallel> \<parallel>f *\<^sub>v x\<parallel> - \<parallel>f\<parallel> \<parallel> < e\<close>
 proof-
   define S::"real set" where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
-  have \<open>S\<noteq>{}\<close>
-  proof-
-    have \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
-      unfolding sphere_def apply auto using ex_norm1
-      by (simp add: ex_norm1)      
-    thus ?thesis unfolding S_def by auto
-  qed
-  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
+  have "\<exists>x::'a. \<parallel>x\<parallel> = 1"
+    by (simp add: ex_norm1)    
+  hence \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
+    by simp                
+  hence \<open>S\<noteq>{}\<close>unfolding S_def 
+    by auto 
+  hence t1: \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
     for e
     by (simp add: less_cSupD)
-  moreover have \<open>Sup S = onorm f\<close>
-  proof-
-    have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
-      using \<open>bounded_linear f\<close> onorm_sphere
-      by auto      
-    hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
-      unfolding sphere_def
-      by simp
-    thus ?thesis unfolding S_def by auto
-  qed
-  ultimately have \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. (onorm f) - e < y\<close>
-    for e
+  have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
+    using \<open>bounded_linear f\<close> onorm_sphere
+    by auto      
+  hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+    unfolding sphere_def
     by simp
-  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. (onorm f) - y  < e\<close>
-    for e
-    by force
-  hence \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. norm ((onorm f) - y)  < e\<close>
+  hence t2: \<open>Sup S = onorm f\<close> unfolding S_def 
+    by auto
+  have s1: \<open>\<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e\<close>
+    if "0 < e"
     for e
   proof-
-    assume \<open>e > 0\<close>
+    have \<open>\<exists> y \<in> S. (onorm f) - e < y\<close>
+      using t1 t2 that by auto
+    hence \<open>\<exists> y \<in> S. (onorm f) - y  < e\<close>
+      using that
+      by force
     have \<open>\<exists> y \<in> S. (onorm f) - y  < e\<close>
-      using \<open>0 < e\<close> \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. onorm f - y < e\<close> by auto
+      using \<open>0 < e\<close> \<open>\<exists>y\<in>S. onorm f - y < e\<close> by auto
     then obtain y where \<open>y \<in> S\<close> and \<open>(onorm f) - y  < e\<close>
       by blast
-    have  \<open>bdd_above S\<close>
+    have \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1} \<Longrightarrow> y \<le> onorm f\<close>
     proof-
-      have \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1} \<Longrightarrow> y \<le> onorm f\<close>
-      proof-
-        assume \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1}\<close>
-        hence \<open>\<exists> x \<in> sphere 0 1. y = norm (f x)\<close>
-          by blast
-        then obtain x where \<open>x \<in> sphere 0 1\<close> and \<open>y = norm (f x)\<close>
-          by blast
-        from \<open>y = norm (f x)\<close>
-        have \<open>y \<le> onorm f * norm x\<close>
-          using a1 onorm by auto
-        moreover have \<open>norm x = 1\<close>
-          using  \<open>x \<in> sphere 0 1\<close> unfolding sphere_def by auto
-        ultimately show ?thesis by simp
-      qed
-      hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
-        using a1 bdd_above_norm_f by force
-      thus ?thesis unfolding S_def by blast 
+      assume \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1}\<close>
+      hence \<open>\<exists> x \<in> sphere 0 1. y = norm (f x)\<close>
+        by blast
+      then obtain x where \<open>x \<in> sphere 0 1\<close> and \<open>y = norm (f x)\<close>
+        by blast
+      from \<open>y = norm (f x)\<close>
+      have \<open>y \<le> onorm f * norm x\<close>
+        using a1 onorm by auto
+      moreover have \<open>norm x = 1\<close>
+        using  \<open>x \<in> sphere 0 1\<close> unfolding sphere_def by auto
+      ultimately show ?thesis by simp
     qed
+    hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
+      using a1 bdd_above_norm_f by force
+    hence \<open>bdd_above S\<close> unfolding S_def 
+      by blast
     hence \<open>y \<le> Sup S\<close>
       using \<open>y \<in> S\<close> \<open>S \<noteq> {}\<close> cSup_upper
       by blast
@@ -3770,21 +3981,19 @@ proof-
       by simp
     hence \<open>norm (onorm f - y)  = onorm f - y\<close>
       by auto
-    thus ?thesis
-      using \<open>onorm f - y < e\<close> \<open>y \<in> S\<close> by force 
+    hence \<open>\<exists> y \<in> S. norm ((onorm f) - y)  < e\<close>
+      using \<open>onorm f - y < e\<close> \<open>y \<in> S\<close> by force    
+    show ?thesis
+      unfolding S_def
+      using S_def \<open>\<exists>y\<in>S. \<parallel>onorm ((*\<^sub>v) f) - y\<parallel> < e\<close> by blast      
   qed
-  hence \<open> 0 < e \<Longrightarrow> \<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e\<close>
-    for e
-    unfolding S_def by blast
-  thus ?thesis 
-  proof -
-    assume a1: "\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e"
-    have "\<forall>r. r \<notin> S \<or> (\<exists>a. r = norm (f a) \<and> a \<in> sphere 0 1)"
-      using S_def by blast
-    thus ?thesis
-      using a1 \<open>\<And>e. 0 < e \<Longrightarrow> \<exists>y\<in>S. norm (onorm f - y) < e\<close> a2
-      by (metis (full_types) norm_blinfun.rep_eq norm_minus_commute) 
-  qed 
+  have f2: "onorm ((*\<^sub>v) f) = \<Squnion> S"
+    using S_def \<open>onorm ((*\<^sub>v) f) = \<Squnion> {\<parallel>f *\<^sub>v x\<parallel> |x. x \<in> sphere 0 1}\<close> by blast
+  hence "\<exists>a. \<parallel>\<parallel>f *\<^sub>v a\<parallel> - \<Squnion> S\<parallel> < e \<and> a \<in> sphere 0 1"
+    using a1 a2 s1 a2 t2 
+    by force 
+  thus ?thesis
+    using f2 by (metis (full_types) norm_blinfun.rep_eq)  
 qed
 
 
@@ -3845,25 +4054,23 @@ lemma nsuniform_convergence_I:
   assumes \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f* l) x\<close>
   shows \<open>S: f \<midarrow>uniformly\<rightarrow> l\<close>
 proof-
-  have \<open>r > 0 \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. \<forall>x\<in>S. norm (f n x - l x) < r\<close>
+  have \<open>\<exists>N. \<forall>n\<ge>N. \<forall>x\<in>S. norm (f n x - l x) < r\<close>
+    if "r > 0"
     for r::real
   proof-
-    assume \<open>r > 0\<close>
     from \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f* l) x\<close>
     have \<open>\<forall>n\<in>HNatInfinite.
        \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
       by (simp add: InfinitesimalD2 Infinitesimal_approx_minus \<open>r > 0\<close>)
-    have \<open>\<exists> no. \<forall>n \<ge> no.
+    have \<open>n \<ge> whn \<Longrightarrow>
        \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
-    proof-
-      have \<open>n \<ge> whn \<Longrightarrow>
-       \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close>
-        for n
-        using HNatInfinite_upward_closed HNatInfinite_whn
-          \<open>\<forall>n\<in>HNatInfinite. \<forall>x\<in>*s* S. hnorm ((*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close> 
-        by blast     
-      thus ?thesis by blast
-    qed
+      for n
+      using HNatInfinite_upward_closed HNatInfinite_whn
+        \<open>\<forall>n\<in>HNatInfinite. \<forall>x\<in>*s* S. hnorm ((*f2* f) n x - (*f* l) x) < hypreal_of_real r\<close> 
+      by blast     
+    hence \<open>\<exists> no. \<forall>n \<ge> no.
+       \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f* l) x ) < hypreal_of_real r\<close> 
+      by blast    
     thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall>x\<in>S. norm ( f n x - l x ) < r\<close>
       by StarDef.transfer
   qed
@@ -3885,7 +4092,6 @@ proof
     using that
     by (simp add: nsuniform_convergence_I) 
 qed
-
 
 lemma nsuniformly_Cauchy_on_D:
   fixes f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close> 
@@ -3922,25 +4128,23 @@ lemma nsuniformly_Cauchy_on_I:
   assumes \<open>\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x\<close>
   shows \<open>uniformly_Cauchy_on S f\<close>
 proof-
-  have \<open>r > 0 \<Longrightarrow> \<exists>N. \<forall>n\<ge>N. \<forall> m\<ge>N. \<forall>x\<in>S. norm (f n x - f m x) < r\<close>
+  have \<open>\<exists>N. \<forall>n\<ge>N. \<forall> m\<ge>N. \<forall>x\<in>S. norm (f n x - f m x) < r\<close>
+    if "r > 0"
     for r::real
   proof-
-    assume \<open>r > 0\<close>
     from \<open>\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x\<close>
     have \<open>\<forall>n\<in>HNatInfinite. \<forall> m\<in>HNatInfinite.
        \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f2* f) m x ) < hypreal_of_real r\<close>
       by (simp add: InfinitesimalD2 Infinitesimal_approx_minus \<open>r > 0\<close>)
-    have \<open>\<exists> no. \<forall>n \<ge> no. \<forall> m \<ge> no.
+    have \<open>n \<ge> whn \<Longrightarrow> m \<ge> whn \<Longrightarrow>
        \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f2* f) m x ) < hypreal_of_real r\<close>
-    proof-
-      have \<open>n \<ge> whn \<Longrightarrow> m \<ge> whn \<Longrightarrow>
+      for n m
+      using HNatInfinite_upward_closed HNatInfinite_whn
+        \<open>\<forall>n\<in>HNatInfinite. \<forall> m\<in>HNatInfinite. \<forall>x\<in>*s* S. hnorm ((*f2* f) n x - (*f2* f) m x) < hypreal_of_real r\<close> 
+      by blast     
+    hence \<open>\<exists> no. \<forall>n \<ge> no. \<forall> m \<ge> no.
        \<forall>x\<in>*s* S. hnorm ( (*f2* f) n x - (*f2* f) m x ) < hypreal_of_real r\<close>
-        for n m
-        using HNatInfinite_upward_closed HNatInfinite_whn
-          \<open>\<forall>n\<in>HNatInfinite. \<forall> m\<in>HNatInfinite. \<forall>x\<in>*s* S. hnorm ((*f2* f) n x - (*f2* f) m x) < hypreal_of_real r\<close> 
-        by blast     
-      thus ?thesis by blast
-    qed
+      by blast
     thus \<open>\<exists> no. \<forall>n \<ge> no. \<forall> m \<ge> no. \<forall>x\<in>S. norm ( f n x - f m x ) < r\<close>
       by StarDef.transfer
   qed
@@ -3950,8 +4154,7 @@ proof-
     by metis
 qed
 
-
-proposition nsuniformly_Cauchy_on_iff:
+lemma nsuniformly_Cauchy_on_iff:
   fixes  f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b::real_normed_vector)\<close> and S::\<open>'a set\<close>
   shows \<open>(uniformly_Cauchy_on S f) \<longleftrightarrow> 
     (\<forall>N\<in>HNatInfinite. \<forall> M\<in>HNatInfinite. \<forall>x\<in>*s* S. (*f2* f) N x \<approx> (*f2* f) M x)\<close>
@@ -3979,12 +4182,11 @@ proof-
 qed
 
 lemma nsupointwise_convergence_I: 
-  \<open>( \<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x )
-   \<Longrightarrow> (sphere 0 1): f \<midarrow>uniformly\<rightarrow> l\<close> 
+  assumes a1: "\<And>N. \<And> x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x  \<approx> (*f* l) x"
+  shows "(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l"  
 proof-
-  assume \<open>\<And>N x. N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
-  hence \<open>\<forall>N\<in>HNatInfinite. \<forall>x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
-    by blast                
+  have \<open>\<forall>N\<in>HNatInfinite. \<forall>x. hnorm x = 1 \<longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
+    using a1 by blast                
   hence \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>*s*(sphere 0 1).  (*f2* f) N x \<approx> (*f* l) x\<close>
     using sphere_iff by auto
   hence \<open>(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l\<close>
@@ -3994,10 +4196,9 @@ proof-
 qed
 
 lemma nsupointwise_convergence_D:
-  \<open>(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l \<Longrightarrow> N \<in> HNatInfinite \<Longrightarrow> hnorm x = 1 
-  \<Longrightarrow> (*f2* f) N x \<approx> (*f* l) x\<close>
+  assumes \<open>(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
+  shows "(*f2* f) N x \<approx> (*f* l) x"
 proof-
-  assume \<open>(sphere 0 1): f \<midarrow>uniformly\<rightarrow> l\<close> and \<open>N \<in> HNatInfinite\<close> and \<open>hnorm x = 1\<close>
   have \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>*s*(sphere 0 1). (*f2* f) N x \<approx> (*f* l) x\<close>
     using nsuniform_convergence_D \<open>sphere 0 1: f \<midarrow>uniformly\<rightarrow> l\<close> by blast                     
   thus \<open>(*f2* f) N x \<approx> (*f* l) x\<close>
@@ -4005,12 +4206,13 @@ proof-
 qed
 
 lemma bounded_linear_HFinite:
-  \<open>bounded_linear a \<Longrightarrow> hnorm x = 1 \<Longrightarrow> ((*f* a) x) \<in> HFinite\<close>
+  assumes a1: "bounded_linear a" and a2: "hnorm x = 1"
+  shows "(*f* a) x \<in> HFinite"
 proof-
   {
     assume \<open>bounded_linear a\<close> and \<open>hnorm x = 1\<close>
     have \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) \<le> onorm a\<close>
-      using \<open>bounded_linear a\<close> by (metis mult_cancel_left2 onorm)      
+      using \<open>bounded_linear a\<close> by (metis mult_cancel_left2 onorm)
     hence  \<open>\<And> t. norm t = 1 \<Longrightarrow> norm (a t) < onorm a + 1\<close>
       by fastforce      
     hence  \<open>\<And> t. hnorm t = 1 \<Longrightarrow> hnorm ((*f* a) t) < star_of (onorm a + 1)\<close>
@@ -4020,12 +4222,9 @@ proof-
       by auto
     hence \<open>\<exists>xa\<in>\<real>. hnorm ((*f* a) x) < xa\<close> by auto
   } note 1 = this
-  assume \<open>bounded_linear a\<close> and \<open>hnorm x = 1\<close>
-  thus ?thesis
+  show ?thesis
     unfolding HFinite_def
-    apply auto
-    apply (rule 1)
-    by auto
+    using "1" a1 a2 by auto
 qed
 
 lemma nsupointwise_convergence_mult: 
@@ -4065,22 +4264,21 @@ proof(rule nsupointwise_convergence_I)
 qed
 
 lemma linear_ball_zero:
-  \<open>linear f \<Longrightarrow>  \<forall> x. norm x = 1 \<longrightarrow> f x = 0 \<Longrightarrow> f = (\<lambda> _. 0)\<close>
-proof
-  show "f u = 0"
-    if "linear f"
-      and "\<forall>x. norm x = 1 \<longrightarrow> f x = 0"
-    for u :: 'a
-  proof(cases \<open>u = 0\<close>)
+  assumes t1: "linear f" and t2: "\<forall> x. norm x = 1 \<longrightarrow> f x = 0"
+  shows "f = (\<lambda> _. 0)"
+proof-
+  have "f u = 0"
+    for u
+  proof(cases "u = 0")
     case True
     thus ?thesis
-      by (simp add: linear_0 that(1))
+      by (simp add: linear_0 t1) 
   next
     case False
     have \<open>norm ( (inverse (norm u)) *\<^sub>R u ) = 1\<close>
       by (simp add: False)
     hence \<open>f ( (inverse (norm u)) *\<^sub>R u ) = 0\<close>
-      by (simp add: that(2))
+      by (simp add: t2)
     moreover have \<open>f ( (inverse (norm u)) *\<^sub>R u ) = (inverse (norm u)) *\<^sub>R (f  u)\<close>
       using \<open>linear f\<close> unfolding linear_def
       by (simp add: Real_Vector_Spaces.linear_def linear_scale) 
@@ -4090,19 +4288,18 @@ proof
       using \<open>norm (u /\<^sub>R norm u) = 1\<close> by auto
     ultimately show ?thesis by simp
   qed
+  thus ?thesis by auto
 qed
 
 lemma linear_ball_uniq:
-  \<open>linear f \<Longrightarrow> linear g \<Longrightarrow> \<forall> x. norm x = 1 \<longrightarrow> f x = g x \<Longrightarrow> f = g\<close>
-proof
-  show "f x = g x"
-    if "linear f"
-      and "linear g"
-      and "\<forall>x. norm x = 1 \<longrightarrow> f x = g x"
+  assumes t1: "linear f" and t2: "linear g" and t3: "\<forall> x. norm x = 1 \<longrightarrow> f x = g x"
+shows "f = g"
+proof-
+  have "f x = g x"
     for x :: 'a
   proof-
     have "\<forall>x. norm x = 1 \<longrightarrow> (\<lambda> t. f t - g t) x = 0"
-      by (simp add: that(3))
+      using t3 by auto  
     moreover have \<open>linear (\<lambda> t. f t - g t)\<close>
       using \<open>linear f\<close> \<open>linear g\<close>
       by (simp add: linear_compose_sub) 
@@ -4111,6 +4308,7 @@ proof
     thus ?thesis
       by (meson eq_iff_diff_eq_0) 
   qed
+  thus ?thesis by auto
 qed
 
 lemma nsupointwise_convergence_unique: 
@@ -4129,12 +4327,12 @@ proof-
     by (simp add: approx_monad_iff)
   hence \<open>\<forall> x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close>
     by (meson NSLIMSEQ_def NSLIMSEQ_unique zero_neq_one)
-  have \<open>norm t = 1 \<Longrightarrow> a t = b t\<close>
+  have \<open>a t = b t\<close>
+    if "norm t = 1"
     for t
   proof-
-    assume \<open>norm t = 1\<close>
-    hence \<open>hnorm (star_of t) = 1\<close>
-      by (metis star_of_norm star_one_def)
+    have \<open>hnorm (star_of t) = 1\<close>
+      by (metis star_of_norm star_one_def that)
     hence \<open>(*f* a) (star_of t) \<approx> (*f* b) (star_of t)\<close>
       using \<open>\<forall>x. hnorm x = 1 \<longrightarrow> (*f* a) x \<approx> (*f* b) x\<close> by blast
     thus ?thesis
@@ -4153,20 +4351,29 @@ lemma CARD_1_UNIV: "UNIV = {x::'a}"
   by (metis (full_types) UNIV_I card_1_singletonE local.CARD_1 singletonD)
 
 lemma CARD_1_ext: "x (a::'a) = y b \<Longrightarrow> x = y"
-  apply (rule ext) 
-  apply (subst (asm) everything_the_same[where x=a])
-  apply (subst (asm) everything_the_same[where x=b])
-  by simp
+proof (rule ext)
+  show "x t = y t"
+    if "x a = y b"
+    for t :: 'a
+    using that  apply (subst (asm) everything_the_same[where x=a])
+    apply (subst (asm) everything_the_same[where x=b])
+    by simp
+qed 
 
 end
 
 subsection\<open>Unclassified\<close>
 
 lemma complete_singleton: 
-  shows "complete {s::'a::uniform_space}"
-  unfolding complete_uniform
-  apply auto
-  by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
+  "complete {s::'a::uniform_space}"
+proof-
+  have "\<And>F. F \<le> principal {s} \<Longrightarrow>
+         F \<noteq> \<bottom> \<Longrightarrow> cauchy_filter F \<Longrightarrow> F \<le> nhds s"
+    by (meson dual_order.trans empty_subsetI insert_subset le_nhds le_principal principal_le_iff)
+  thus ?thesis
+    unfolding complete_uniform
+    by simp
+qed
 
 lemma onormI:
   assumes "\<And>x. norm (f x) \<le> b * norm x"
@@ -4178,14 +4385,14 @@ proof (unfold onorm_def, rule cSup_eq_maximum)
   with assms(3) 
   have "norm (f x) / norm x = b"
     by auto
-  then show "b \<in> range (\<lambda>x. norm (f x) / norm x)"
+  thus "b \<in> range (\<lambda>x. norm (f x) / norm x)"
     by auto
 next
   fix y 
   assume "y \<in> range (\<lambda>x. norm (f x) / norm x)"
   then obtain x where y_def: "y = norm (f x) / norm x"
     by auto
-  then show "y \<le> b"
+  thus "y \<le> b"
     unfolding y_def using assms(1)[of x]
     by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
 qed
@@ -4229,8 +4436,11 @@ qed
 instantiation unit :: CARD_1
 begin
 instance 
-  apply standard 
-  by auto
+  proof standard
+  show "card (UNIV::unit set) = 1"
+    by auto
+qed 
+
 end
 
 lemma abs_complex_real[simp]: "abs x \<in> \<real>" for x :: complex
@@ -4281,8 +4491,9 @@ next
     thus ?thesis by auto
   next
     case False
-    thus ?thesis apply auto
-      using Cons.IH Cons.prems(2) by fastforce
+    moreover have "a \<noteq> x \<Longrightarrow> index_of x y < length y"
+      using Cons.IH Cons.prems(2) by fastforce      
+    ultimately show ?thesis by auto
   qed
 qed
 
@@ -4300,36 +4511,63 @@ proof-
   qed    
   have p2: "x \<in> set (Enum.enum :: 'a list)"
     using UNIV_enum by auto
-  show ?thesis
-    unfolding enum_idx_def apply (rule index_of_bound[where x = x 
-          and y = "(Enum.enum :: 'a list)"])
-    using p1 apply auto using p2 by auto
+  moreover have "(enum_class.enum::'a list) \<noteq> []"
+    using p2 by auto
+  ultimately show ?thesis
+    unfolding enum_idx_def     
+    using index_of_bound [where x = x and y = "(Enum.enum :: 'a list)"]
+    by auto   
 qed
 
 lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult abs_complex_def complex_norm power2_eq_square complex_of_real_def)
+  proof (cases x)
+  show "cnj x * x = \<bar>x\<bar>\<^sup>2"
+    if "x = Complex x1 x2"
+    for x1 :: real
+      and x2 :: real
+    using that   by (auto simp: complex_cnj complex_mult abs_complex_def 
+        complex_norm power2_eq_square complex_of_real_def)
+qed
 
 lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-  apply (cases x)
-  by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
+  proof (cases x)
+  show "0 \<le> cnj x * x"
+    if "x = Complex x1 x2"
+    for x1 :: real
+      and x2 :: real
+    using that by (auto simp: complex_cnj complex_mult complex_of_real_def less_eq_complex_def)
+qed
+
 
 lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
-  apply (induction l)
-  apply (simp add: map_filter_simps)
-  apply auto by (metis map_filter_simps(1))
+proof (induction l)
+  show "List.map_filter f (map g []) = List.map_filter (f \<circ> g) []"
+    by (simp add: map_filter_simps)
+  show "List.map_filter f (map g (a # l)) = List.map_filter (f \<circ> g) (a # l)"
+    if "List.map_filter f (map g l) = List.map_filter (f \<circ> g) l"
+    for a :: 'c
+      and l :: "'c list"
+    using that  map_filter_simps(1)
+    by (metis comp_eq_dest_lhs list.simps(9))
+qed
+
 
 lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
-  apply (induction l)
-  apply (simp add: map_filter_simps)
-  by (simp add: map_filter_simps(1))
+  proof (induction l)
+  show "List.map_filter (\<lambda>x. Some (f x)) [] = map f []"
+    by (simp add: map_filter_simps)
+  show "List.map_filter (\<lambda>x. Some (f x)) (a # l) = map f (a # l)"
+    if "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
+    for a :: 'b
+      and l :: "'b list"
+    using that by (simp add: map_filter_simps(1))
+qed
 
 lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
   unfolding Set.filter_def by auto
 
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
   using that unfolding Set.filter_def by auto
-
 
 unbundle no_nsa_notation
 
