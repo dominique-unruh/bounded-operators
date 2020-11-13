@@ -1549,17 +1549,35 @@ lemma cbounded_linear_divide: "cbounded_linear (\<lambda>x. x / y)"
   for y :: "'a::complex_normed_field"
   unfolding divide_inverse by (rule cbounded_linear_mult_left)
 
-(*here*)
-
 lemma bounded_cbilinear_scaleC: "bounded_cbilinear scaleC"
-  apply (rule bounded_cbilinear.intro)
-      apply (rule scaleC_add_left)
-     apply (rule scaleC_add_right)
-    apply simp
-   apply (rule scaleC_left_commute)
-  apply (rule_tac x="1" in exI)
-  by simp
-
+  proof (rule bounded_cbilinear.intro)
+  show "(a + a') *\<^sub>C b = a *\<^sub>C b + a' *\<^sub>C b"
+    for a :: complex
+      and a' :: complex
+      and b :: 'a
+    by (simp add: scaleC_add_left)
+    
+  show "a *\<^sub>C (b + b') = a *\<^sub>C b + a *\<^sub>C b'"
+    for a :: complex
+      and b :: 'a
+      and b' :: 'a
+    by (simp add: scaleC_add_right)
+    
+  show "(r *\<^sub>C a) *\<^sub>C b = r *\<^sub>C a *\<^sub>C b"
+    for r :: complex
+      and a :: complex
+      and b :: 'a
+    by simp
+    
+  show "a *\<^sub>C r *\<^sub>C b = r *\<^sub>C a *\<^sub>C b"
+    for a :: complex
+      and r :: complex
+      and b :: 'a
+    by simp
+    
+  show "\<exists>K. \<forall>a b::'a. norm (a *\<^sub>C b) \<le> cmod a * norm b * K"
+    by (metis eq_iff mult.commute norm_scaleC vector_space_over_itself.scale_one)    
+qed
 
 lemma cbounded_linear_scaleC_left: "cbounded_linear (\<lambda>r. scaleC r x)"
   using bounded_cbilinear_scaleC
@@ -1580,45 +1598,43 @@ lemma cbounded_linear_of_complex: "cbounded_linear (\<lambda>r. of_complex r)"
 
 lemma complex_cbounded_linear: "cbounded_linear f \<longleftrightarrow> (\<exists>c::complex. f = (\<lambda>x. x * c))"
   for f :: "complex \<Rightarrow> complex"
-proof -
-  {
-    fix x
-    assume "cbounded_linear f"
-    then interpret cbounded_linear f .
-    have "f x = x * f 1"
-      by (metis complex_scaleC_def complex_vector.linear_scale is_clinear mult.comm_neutral)      
-  }
-  thus ?thesis
-    by (auto intro: exI[of _ "f 1"] cbounded_linear_mult_left)
+  proof
+  show "\<exists>c. f = (\<lambda>x. x * c)"
+    if "cbounded_linear f"
+    using that complex_scaleC_def complex_vector.linear_scale 
+      mult.comm_neutral
+    by (metis (no_types, hide_lams) cbounded_linear.is_clinear)
+
+  show "cbounded_linear f"
+    if "\<exists>c. f = (\<lambda>x. x * c)"
+    using that cbounded_linear_mult_left by auto 
 qed
 
-lemma bij_clinear_imp_inv_clinear: "clinear f \<Longrightarrow> bij f \<Longrightarrow> clinear (inv f)"
-  unfolding clinear_def
-proof
-  show "inv f (b1 + b2) = inv f b1 + inv f b2"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
-      and "bij f"
+lemma bij_clinear_imp_inv_clinear: "clinear (inv f)"
+  if a1: "clinear f" and a2: "bij f"
+proof-
+  have "f a + f b = f (a + b)"
+    for a b
+    by (simp add: a1 complex_vector.linear_add)    
+  hence t1: "inv f (b1 + b2) = inv f b1 + inv f b2"
     for b1 :: 'b
       and b2 :: 'b
-    using that  bij_inv_eq_iff complex_vector.vector_space_pair_axioms vector_space_pair.linear_add
-  proof -
-    have "\<And>a b. f a + f b = f (a + b)"
-      by (metis (no_types) complex_vector.vector_space_pair_axioms that(1) vector_space_pair.linear_add)
-    thus ?thesis
-      by (metis (no_types) bij_inv_eq_iff that(2))
-  qed
-
-  show "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
+    by (metis (no_types) bij_inv_eq_iff that(2))
+  have t2: "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
     if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
       and "bij f"
     for r :: complex
       and b :: 'b
     using that
     by (smt bij_inv_eq_iff clinear_def complex_vector.linear_scale) 
+  show ?thesis
+    unfolding clinear_def
+    by (meson clinearI clinear_def a1 a2 t1 t2)
 qed
 
 locale bounded_sesquilinear =
-  fixes prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
+  fixes 
+    prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
     and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
@@ -1626,26 +1642,67 @@ locale bounded_sesquilinear =
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
 begin
 
-(* Recovered theorem *)
 sublocale bounded_bilinear
-  apply standard
-  unfolding scaleR_scaleC
-      apply (fact add_left)
-     apply (fact add_right)
-    apply (simp add: scaleC_left)
-   apply (fact scaleC_right)
-  by (fact bounded)
+proof
+  show "prod (a + a') b = prod a b + prod a' b"
+    for a :: 'a
+      and a' :: 'a
+      and b :: 'b
+    by (simp add: add_left)
 
-(* Recovered theorem *)
+  show "prod a (b + b') = prod a b + prod a b'"
+    for a :: 'a
+      and b :: 'b
+      and b' :: 'b
+    by (simp add: add_right)
+
+  show "prod (r *\<^sub>R a) b = r *\<^sub>R prod a b"
+    for r :: real
+      and a :: 'a
+      and b :: 'b
+    unfolding scaleR_scaleC
+    by (simp add: scaleC_left)
+
+  show "prod a (r *\<^sub>R b) = r *\<^sub>R prod a b"
+    for a :: 'a
+      and r :: real
+      and b :: 'b
+    unfolding scaleR_scaleC
+    by (fact scaleC_right)
+
+  show "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
+    unfolding scaleR_scaleC
+    by (fact bounded)
+qed
+
+
 lemma bounded_bilinear: "bounded_bilinear prod" by (fact bounded_bilinear_axioms)
 
 lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
-  apply (insert bounded)
-  apply safe
-  apply (rule_tac K="norm b * K" in bounded_csemilinear_intro)
-    apply (rule add_left)
-   apply (simp add: scaleC_left)
-  by (simp add: ac_simps)
+proof (insert bounded)
+
+  have "prod (x + y) b = prod x b + prod y b"
+    for x :: 'a
+      and y :: 'a
+    by (simp add: add_left)      
+  moreover have "prod (r *\<^sub>C x) b = cnj r *\<^sub>C prod x b"
+    for r :: complex
+      and x :: 'a
+    by (simp add: scaleC_left)      
+  moreover have "norm (prod x b) \<le> norm x * (norm b * K)"
+    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
+    for K :: real and x :: 'a
+    by (simp add: that vector_space_over_itself.scale_scale)
+  ultimately  have "bounded_csemilinear (\<lambda>a. prod a b)"
+    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
+    for K :: real
+    by (meson bounded_csemilinear_intro that) 
+  thus "bounded_csemilinear (\<lambda>a. prod a b)"
+    if "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
+    using that by safe    
+qed
+
+(*here*)
 
 lemma cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
   apply (insert bounded)
