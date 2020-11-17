@@ -95,10 +95,16 @@ lemma cinner_diff_right: "\<langle>x , (y - z)\<rangle> = (\<langle>x , y\<rangl
   by (metis complex_cnj_diff local.cinner_commute)
 
 lemma cinner_sum_right: "\<langle>x , (\<Sum>y\<in>A. f y)\<rangle> = (\<Sum>y\<in>A. \<langle>x , (f y)\<rangle>)"
-  apply (subst cinner_commute)
-  apply (subst (2) cinner_commute)
-  unfolding cnj_sum[symmetric]
-  apply (subst cinner_sum_left) by simp
+proof (subst cinner_commute)
+  have "(\<Sum>y\<in>A. \<langle>f y, x\<rangle>) = (\<Sum>y\<in>A. \<langle>f y, x\<rangle>)" 
+    by blast   
+  hence "cnj (\<Sum>y\<in>A. \<langle>f y, x\<rangle>) = cnj (\<Sum>y\<in>A. \<langle>f y, x\<rangle>)"
+    by simp
+  hence "cnj \<langle>sum f A, x\<rangle> = (\<Sum>y\<in>A. cnj \<langle>f y, x\<rangle>)"
+    by (simp add: cinner_sum_left)
+  thus "cnj \<langle>sum f A, x\<rangle> = (\<Sum>y\<in>A. \<langle>x, f y\<rangle>)"
+    by (subst (2) cinner_commute)    
+qed
 
 lemmas cinner_add [algebra_simps] = cinner_add_left cinner_add_right
 lemmas cinner_diff [algebra_simps]  = cinner_diff_left cinner_diff_right
@@ -121,14 +127,12 @@ lemma power2_norm_eq_cinner:
 lemma power2_norm_eq_cinner':
   includes notation_norm
   shows "complex_of_real (\<parallel> x \<parallel>\<^sup>2) = \<langle>x, x\<rangle>"
-  apply (subst power2_norm_eq_cinner)
-  using cinner_ge_zero by (rule complex_of_real_cmod)
+  by (simp add: complex_of_real_cmod power2_norm_eq_cinner)
 
 lemma power2_norm_eq_cinner'':
   includes notation_norm
   shows "(complex_of_real \<parallel>x\<parallel>)\<^sup>2 = \<langle>x, x\<rangle>"
   using power2_norm_eq_cinner' by simp
-
 
 text \<open>Identities involving complex multiplication and division.\<close>
 
@@ -177,9 +181,15 @@ lemma cinner_norm_sq:
   shows "\<langle>x, x\<rangle> = complex_of_real (\<parallel>x\<parallel>^2)"
 proof -
   define r where "r = Re (cinner x x)"
+  have "\<langle>x, x\<rangle> = complex_of_real (Re \<langle>x, x\<rangle>)"
+    if "Im \<langle>x, x\<rangle> = 0" and "\<langle>x, x\<rangle> = Complex x1 x2"
+    for x1 x2
+    using that
+    by (auto simp: complex_of_real_def)
   have r: "cinner x x = complex_of_real r"
     unfolding r_def
-    using Im_cinner_x_x[of x] apply (cases "cinner x x") by (auto simp: complex_of_real_def)
+    using Im_cinner_x_x[of x]
+    by (simp add: cinner_real)      
   have rpos: "r \<ge> 0"
     unfolding r_def
     using complex_of_real_nn_iff r r_def by fastforce
@@ -221,19 +231,26 @@ proof
     unfolding norm_eq_sqrt_cinner by simp
   show "norm (x + y) \<le> norm x + norm y"
   proof (rule power2_le_imp_le)
+    have "Re \<langle>x, y\<rangle> \<le> cmod \<langle>x, y\<rangle>"
+      if "\<And>x. Re x \<le> cmod x" and
+        "\<And>x y. x \<le> y \<Longrightarrow> complex_of_real x \<le> complex_of_real y"
+      using that by simp
+    hence a1: "2 * Re \<langle>x, y\<rangle> \<le> 2 * cmod \<langle>x, y\<rangle>"
+      if "\<And>x. Re x \<le> cmod x" and
+        "\<And>x y. x \<le> y \<Longrightarrow> complex_of_real x \<le> complex_of_real y"
+      using that by simp
     have "cinner x y + cinner y x = complex_of_real (2 * Re (cinner x y))"
-      apply (subst (2) cinner_commute)
-      by (cases "cinner x y", simp add: complex_add complex_cnj complex_of_real_def)
+      by (metis cinner_commute' complex_add_cnj)
     also have "\<dots> \<le> complex_of_real (2 * cmod (cinner x y))"
-      apply (subst complex_of_real_mono_iff)
-      using complex_Re_le_cmod by auto
+      using complex_Re_le_cmod complex_of_real_mono a1
+      by blast      
     also have "\<dots> = 2 * abs (cinner x y)"
       unfolding abs_complex_def by simp
     also have "\<dots> \<le> 2 * complex_of_real (norm x) * complex_of_real (norm y)"
       using norm_cauchy_schwarz2
       by (metis add_mono_thms_linordered_semiring(1) mult.assoc mult_2) 
-    finally have xyyx: "cinner x y + cinner y x \<le> complex_of_real (2 * norm x * norm y)" by auto
-
+    finally have xyyx: "cinner x y + cinner y x \<le> complex_of_real (2 * norm x * norm y)" 
+      by auto
     have "complex_of_real ((norm (x + y))\<^sup>2) = cinner (x+y) (x+y)"
       by (fact power2_norm_eq_cinner')
     also have "\<dots> = cinner x x + cinner x y + cinner y x + cinner y y"
@@ -245,20 +262,25 @@ proof
     also have "\<dots> = complex_of_real ((norm x + norm y)\<^sup>2)"
       unfolding power2_sum by auto
     finally show "(norm (x + y))\<^sup>2 \<le> (norm x + norm y)\<^sup>2"
-      apply (subst (asm) complex_of_real_mono_iff) by assumption
+      using complex_of_real_mono_iff by blast
     show "0 \<le> norm x + norm y"
       unfolding norm_eq_sqrt_cinner by simp
   qed
   show norm_scaleC: "norm (a *\<^sub>C x) = cmod a * norm x" for a
-    apply (rule power2_eq_imp_eq)
-    by (simp_all add: norm_eq_sqrt_cinner norm_mult power2_eq_square power2_norm_eq_cinner power_mult_distrib)
+  proof (rule power2_eq_imp_eq)
+    show "(norm (a *\<^sub>C x))\<^sup>2 = (cmod a * norm x)\<^sup>2"
+      by (simp_all add: norm_eq_sqrt_cinner norm_mult power2_eq_square)      
+    show "0 \<le> norm (a *\<^sub>C x)"
+      by (simp_all add: norm_eq_sqrt_cinner)     
+    show "0 \<le> cmod a * norm x"
+      by (simp_all add: norm_eq_sqrt_cinner)     
+  qed
   show "norm (r *\<^sub>R x) = \<bar>r\<bar> * norm x"
     unfolding scaleR_scaleC norm_scaleC by auto
 qed
 
 subsection \<open>Recovered theorems\<close>
 
-(* Recovered theorem *)
 lemma Cauchy_Schwarz_ineq2:
   "norm (cinner x y) \<le> norm x * norm y"
   by (simp add: local.norm_cauchy_schwarz)
@@ -273,7 +295,7 @@ lemma cinner_divide_right:
 lemma cinner_divide_left:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
   shows "\<langle>(a / of_complex m) , b\<rangle> = (\<langle>a , b\<rangle>) / (cnj m)"
-  apply (subst cinner_commute) apply (subst cinner_divide_right) by simp
+  by (metis cinner_commute' cinner_divide_right complex_cnj_divide)
 
 text \<open>
 Re-enable constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
@@ -304,11 +326,10 @@ proof
     unfolding complex_scaleC_def by (rule cinner_scaleC_left)
   show "cinner x (scaleC r y) = scaleC r (cinner x y)"
     unfolding complex_scaleC_def by (rule cinner_scaleC_right)
-  show "\<exists>K. \<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * K"
-  proof
-    show "\<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * 1"
-      by (simp add: norm_cauchy_schwarz)
-  qed
+  have "\<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * 1"
+    by (simp add: norm_cauchy_schwarz)
+  thus "\<exists>K. \<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * K"
+    by metis
 qed
 
 (* FIXME
@@ -317,9 +338,7 @@ lemmas tendsto_cinner [tendsto_intros] =
 *)
 
 lemma tendsto_cinner0: "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
-  if "Cauchy (x::nat \<Rightarrow> 'a)"
-    and "Cauchy (\<lambda>n. 0::'a)"
-    and "x \<longlonglongrightarrow> (0::'a)"
+  if "Cauchy (x::nat \<Rightarrow> 'a)" and "Cauchy (\<lambda>n. 0::'a)" and "x \<longlonglongrightarrow> (0::'a)"
   for x :: "nat \<Rightarrow> 'a::complex_inner"
 proof-
   have \<open>(\<lambda> n. norm (x n) ) \<longlonglongrightarrow> 0\<close>
@@ -392,15 +411,16 @@ proof
     by (simp add: ring_class.ring_distribs(2))
   show "cinner (scaleC r x) y = cnj r * cinner x y"
     unfolding cinner_complex_def complex_scaleC_def by simp
-  show "0 \<le> cinner x x"
-    apply (rule less_eq_complexI)
-    unfolding cinner_complex_def by auto
+  show "0 \<le> \<langle>x, x\<rangle>"
+    by simp
   show "cinner x x = 0 \<longleftrightarrow> x = 0"
     unfolding cinner_complex_def by simp
-  show "norm x = sqrt (cmod (cinner x x))"
-    apply (cases x, hypsubst_thin)
+  have "cmod (Complex x1 x2) = sqrt (cmod \<langle>Complex x1 x2, Complex x1 x2\<rangle>)"
+    for x1 x2
     unfolding cinner_complex_def complex_cnj complex_mult complex_norm
-    by (simp add: power2_eq_square) 
+    by (simp add: power2_eq_square)
+  thus "norm x = sqrt (cmod (cinner x x))"
+    by (cases x, hypsubst_thin) 
 qed
 
 end
@@ -442,9 +462,10 @@ lemma summable_of_complex_iff:
   "summable (\<lambda>x. of_complex (f x) :: 'a :: {complex_normed_algebra_1,complex_inner}) \<longleftrightarrow> summable f"
 proof
   assume *: "summable (\<lambda>x. of_complex (f x) :: 'a)"
-  interpret bounded_linear "\<lambda>x::'a. cinner 1 x"
-    apply (rule cbounded_linear.bounded_linear)
+  have "cbounded_linear (cinner (1::'a))"
     by (rule cbounded_linear_cinner_right)
+  then interpret bounded_linear "\<lambda>x::'a. cinner 1 x"
+    by (rule cbounded_linear.bounded_linear)
   from summable [OF *] show "summable f" by simp
 next
   assume sum: "summable f"
@@ -467,35 +488,49 @@ lemma cgderiv_deriv [simp]: "cGDERIV f x :> D \<longleftrightarrow> DERIV f x :>
 lemma cGDERIV_DERIV_compose:
   assumes "cGDERIV f x :> df" and "DERIV g (f x) :> cnj dg"
   shows "cGDERIV (\<lambda>x. g (f x)) x :> scaleC dg df"
-  apply (insert assms)
-  unfolding cgderiv_def has_field_derivative_def
-  apply (drule (1) has_derivative_compose)
-  unfolding cinner_scaleC_left complex_cnj_cnj
-  by assumption
+proof (insert assms)
+  show "cGDERIV (\<lambda>x. g (f x)) x :> dg *\<^sub>C df"
+    if "cGDERIV f x :> df"
+      and "(g has_field_derivative cnj dg) (at (f x))"
+    unfolding cgderiv_def has_field_derivative_def cinner_scaleC_left complex_cnj_cnj
+    using that
+    by (simp add: cgderiv_def has_derivative_compose has_field_derivative_imp_has_derivative) 
 
-lemma cGDERIV_subst: "\<lbrakk>cGDERIV f x :> df; df = d\<rbrakk> \<Longrightarrow> cGDERIV f x :> d"
+qed
+
+lemma cGDERIV_subst: 
+  assumes a1: "cGDERIV f x :> df" and a2: "df = d"
+  shows  "cGDERIV f x :> d"
+  using a1 a2
   by simp
 
 lemma cGDERIV_const: "cGDERIV (\<lambda>x. k) x :> 0"
   unfolding cgderiv_def cinner_zero_left[THEN ext] by (rule has_derivative_const)
 
 lemma cGDERIV_add:
-  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-   \<Longrightarrow> cGDERIV (\<lambda>x. f x + g x) x :> df + dg"
+  assumes a1: "cGDERIV f x :> df" and a2: "cGDERIV g x :> dg"
+  shows "cGDERIV (\<lambda>x. f x + g x) x :> df + dg"
+  using a1 a2
   unfolding cgderiv_def cinner_add_left[THEN ext] by (rule has_derivative_add)
 
 lemma cGDERIV_minus:
-  "cGDERIV f x :> df \<Longrightarrow> cGDERIV (\<lambda>x. - f x) x :> - df"
+  assumes a1: "cGDERIV f x :> df"
+  shows "cGDERIV (\<lambda>x. - f x) x :> - df"
+  using a1
   unfolding cgderiv_def cinner_minus_left[THEN ext] by (rule has_derivative_minus)
 
 lemma cGDERIV_diff:
-  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-   \<Longrightarrow> cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
+  assumes a1: "cGDERIV f x :> df" and a2: "cGDERIV g x :> dg"
+  shows "cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
+  using a1 a2
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
-lemmas has_derivative_scaleC[simp, derivative_intros] = 
+(* Ask to Dominique
+lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
+*)
 
+(* Ask to Dominique
 lemma cGDERIV_scaleC:
   "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
    \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
@@ -504,11 +539,14 @@ lemma cGDERIV_scaleC:
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_scaleC)
   by (simp add: ac_simps)
+*)
 
 
+(* Ask to Dominique: how to simplify this lemma *)
 lemma cGDERIV_mult:
-  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
-   \<Longrightarrow> cGDERIV (\<lambda>x. f x * g x) x :> scaleC (cnj (f x)) dg + scaleC (cnj (g x)) df"
+  "cGDERIV f x :> df \<Longrightarrow>
+    cGDERIV g x :> dg \<Longrightarrow>
+    cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
   unfolding cgderiv_def
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_mult)
@@ -517,10 +555,18 @@ lemma cGDERIV_mult:
   by (simp add: cinner_add ac_simps)
 
 lemma cGDERIV_inverse:
-  "\<lbrakk>cGDERIV f x :> df; f x \<noteq> 0\<rbrakk>
-   \<Longrightarrow> cGDERIV (\<lambda>x. inverse (f x)) x :> cnj (- (inverse (f x))\<^sup>2) *\<^sub>C df"
-  apply (erule cGDERIV_DERIV_compose, simp)
-  by (erule DERIV_inverse [folded numeral_2_eq_2])
+  assumes a1: "cGDERIV f x :> df" and a2: "f x \<noteq> 0"
+  shows "cGDERIV (\<lambda>x. inverse (f x)) x :> cnj (- (inverse (f x))\<^sup>2) *\<^sub>C df"
+proof-
+  have "(inverse has_field_derivative - (inverse (f x))\<^sup>2) (at (f x))"
+    if "f x \<noteq> 0"
+    using that  DERIV_inverse [folded numeral_2_eq_2]
+    by blast
+  thus ?thesis
+    using cGDERIV_DERIV_compose
+    by (metis a1 a2 complex_cnj_cnj)
+qed
+
 
 class chilbert_space =  complex_inner + complete_space
 begin
@@ -541,25 +587,25 @@ lemma polarization_identity_plus:
   shows \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re \<langle>x, y\<rangle>\<close>
     \<comment> \<open>Shown in the proof of Corollary 1.5 in @{cite conway2013course}\<close> 
 proof-
-  have \<open>(\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) = (\<langle>x , y\<rangle>) + cnj (\<langle>x , y\<rangle>)\<close>
+  have \<open>\<langle>x , y\<rangle> + \<langle>y , x\<rangle> = \<langle>x , y\<rangle> + cnj \<langle>x , y\<rangle>\<close>
     by simp
-  hence \<open>(\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) = 2* Re (\<langle>x , y\<rangle>) \<close>
+  hence \<open>\<langle>x , y\<rangle> + \<langle>y , x\<rangle> = 2 * Re \<langle>x , y\<rangle> \<close>
     using complex_add_cnj by presburger
-  have \<open>\<parallel>x + y\<parallel>^2 = ( \<langle>(x+y) , (x+y)\<rangle> )\<close> 
+  have \<open>\<parallel>x + y\<parallel>^2 = \<langle>x+y, x+y\<rangle>\<close> 
     using power2_norm_eq_cinner' by auto
-  hence \<open>\<parallel>x + y\<parallel>^2 = (\<langle>x , x\<rangle>) + (\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) + (\<langle>y , y\<rangle>)\<close>
+  hence \<open>\<parallel>x + y\<parallel>^2 = \<langle>x , x\<rangle> + \<langle>x , y\<rangle> + \<langle>y , x\<rangle> + \<langle>y , y\<rangle>\<close>
     by (simp add: cinner_left_distrib cinner_right_distrib)
-  thus ?thesis using  \<open>(\<langle>x , y\<rangle>) + (\<langle>y , x\<rangle>) = 2* Re (\<langle>x , y\<rangle>)\<close>
+  thus ?thesis using  \<open>\<langle>x , y\<rangle> + \<langle>y , x\<rangle> = 2 * Re \<langle>x , y\<rangle>\<close>
     by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))
 qed
 
 lemma polarization_identity_minus:
   includes notation_norm 
-  shows \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re \<langle>x, y\<rangle>\<close>
+  shows \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2 * Re \<langle>x, y\<rangle>\<close>
 proof-
-  have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2*Re (\<langle>x , (-y)\<rangle>)\<close>
+  have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2 * Re \<langle>x , (-y)\<rangle>\<close>
     using polarization_identity_plus by blast
-  hence \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re (\<langle>x , y\<rangle>)\<close>
+  hence \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re \<langle>x , y\<rangle>\<close>
     by simp
   thus ?thesis 
     by blast
@@ -641,11 +687,12 @@ lemma orthogonal_complement_I1:
   \<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
 proof-
   assume \<open>\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
-  have  \<open>x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0\<close>
+  have  \<open>\<langle> y, x \<rangle> = 0\<close>
+    if "x \<in> M"
     for x
   proof-
-    assume \<open>x \<in> M\<close>
-    hence \<open>\<langle> x, y \<rangle> = 0\<close>
+    have \<open>\<langle> x, y \<rangle> = 0\<close> 
+      using that
       by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>)
     moreover have \<open>\<langle> y, x \<rangle> = cnj \<langle> x, y \<rangle>\<close>
       by auto
@@ -659,7 +706,7 @@ proof-
 qed
 
 definition is_orthogonal::\<open>'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool\<close>  where
-  \<open>is_orthogonal x y \<equiv> ( \<langle> x, y \<rangle> = 0 )\<close>
+  \<open>is_orthogonal x y \<equiv> \<langle> x, y \<rangle> = 0\<close>
 
 bundle orthogonal_notation begin
 notation is_orthogonal (infixl "\<bottom>" 69)
@@ -670,19 +717,47 @@ no_notation is_orthogonal (infixl "\<bottom>" 69)
 end
 
 
-lemma orthogonal_comm: "(is_orthogonal \<psi>  \<phi>) = (is_orthogonal \<phi> \<psi>)"
-  unfolding is_orthogonal_def apply (subst cinner_commute) by blast
+lemma orthogonal_comm: "is_orthogonal \<psi>  \<phi> = is_orthogonal \<phi> \<psi>"
+  by (metis is_orthogonal_def mem_Collect_eq orthogonal_complement_D2 orthogonal_complement_I2)
 
-
-lemma subspace_orthog[simp]: "closed_subspace A \<Longrightarrow> closed_subspace (orthogonal_complement A)"
+lemma subspace_orthog[simp]: 
+  "closed_subspace (orthogonal_complement A)"
+  if "closed_subspace A"
   for A :: \<open>('a::complex_inner) set\<close>
 proof-
-  assume \<open>closed_subspace A\<close>
-  have  "x\<in>(orthogonal_complement A) \<Longrightarrow> y\<in>(orthogonal_complement A) \<Longrightarrow> x+y\<in>(orthogonal_complement A)" for x y
+  have c1: "l \<in> orthogonal_complement A"
+    if "\<forall>n::nat. x n \<in> orthogonal_complement A" and "x \<longlonglongrightarrow> l"
+    for x::\<open>nat \<Rightarrow> 'a::complex_inner\<close> and l::"'a::complex_inner"
   proof-
-    assume \<open>x\<in>(orthogonal_complement A)\<close>
-    assume \<open>y\<in>(orthogonal_complement A)\<close>
-    hence  \<open>\<forall> z \<in> A. \<langle>z, y\<rangle> = 0\<close> 
+    have b1: \<open>cbounded_linear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
+      for y::'a
+      by (simp add: cbounded_linear_cinner_right)
+    have \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
+      using orthogonal_complement_D2
+      by (simp add: orthogonal_complement_D2 that(1))
+    moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
+      using b1 bounded_linear_continuous
+      by (simp add: bounded_linear_continuous cbounded_linear_cinner_right)
+    ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
+      using isCont_tendsto_compose
+      by (simp add: isCont_tendsto_compose that(2))
+    hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y , x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close>
+      by simp
+    hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close> 
+      using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close> 
+      by fastforce
+    hence  \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
+      using limI by fastforce
+    thus ?thesis
+      by (simp add: orthogonal_complement_I1)         
+  qed
+
+  have "x+y\<in>(orthogonal_complement A)"
+    if a1: "x\<in>(orthogonal_complement A)" and a2: "y\<in>(orthogonal_complement A)"
+    for x y
+  proof-
+    have  \<open>\<forall> z \<in> A. \<langle>z, y\<rangle> = 0\<close> 
+      using a2
       by (simp add: orthogonal_complement_D2) 
     moreover have   \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> = 0\<close>
       using  \<open>x\<in>(orthogonal_complement A)\<close>
@@ -691,52 +766,26 @@ proof-
       by simp
     hence  \<open>\<forall> z \<in> A. \<langle> z , x + y \<rangle> = 0\<close> 
       by (simp add: cinner_right_distrib)
-    thus ?thesis 
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    thus ?thesis
+      by (simp add: orthogonal_complement_I1)       
   qed
-  moreover have "x\<in>(orthogonal_complement A) \<Longrightarrow> c *\<^sub>C x \<in> (orthogonal_complement A)" for x c
+  moreover have "c *\<^sub>C x \<in> (orthogonal_complement A)" 
+    if "x\<in>(orthogonal_complement A)"
+    for x c
   proof-
-    assume \<open>x \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
+    have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
+      using that
       by (simp add: orthogonal_complement_D2)
-    hence \<open>\<forall> y \<in> A. c*\<langle> y , x \<rangle> = 0\<close>
+    hence \<open>\<forall> y \<in> A. c * \<langle> y , x \<rangle> = 0\<close>
       by simp
     hence \<open>\<forall> y \<in> A. \<langle> y , c *\<^sub>C x \<rangle> = 0\<close>
       by simp
-    thus ?thesis 
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    thus ?thesis
+      using orthogonal_complement_I1 by blast 
   qed
   moreover have  "closed (orthogonal_complement A)"
-  proof-
-    have \<open>\<lbrakk>(\<forall> n::nat. x n \<in> (orthogonal_complement A)); x \<longlonglongrightarrow> l \<rbrakk> \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x::\<open>nat \<Rightarrow> ('a::complex_inner)\<close> and l::\<open>('a::complex_inner)\<close>
-    proof-
-      assume \<open>\<forall> n::nat. x n \<in> (orthogonal_complement A)\<close>
-      hence \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
-        by (simp add: orthogonal_complement_D2)
-      assume \<open>x \<longlonglongrightarrow> l\<close>
-      moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
-      proof-
-        have \<open>cbounded_linear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
-          by (simp add: cbounded_linear_cinner_right)
-        thus ?thesis
-          by (simp add: bounded_linear_continuous)          
-      qed
-      ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
-        using isCont_tendsto_compose by fastforce
-      hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y , x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close>
-        by simp
-      hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close> 
-        using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close> 
-        by fastforce
-      hence  \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
-        using limI by fastforce
-      thus ?thesis 
-        by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    qed
-    thus ?thesis 
-      using closed_sequential_limits by blast
-  qed
-  moreover have  "0 \<in> (orthogonal_complement A)"
+    using closed_sequential_limits c1 by blast
+  moreover have  "0 \<in> orthogonal_complement A"
     by (simp add: is_orthogonal_def orthogonal_complement_def)
   ultimately show ?thesis 
     using closed_subspace_def
@@ -764,217 +813,216 @@ subsection \<open>Minimum distance\<close>
 
 lemma ExistenceUniquenessMinNorm:
   includes notation_norm
-  fixes M :: \<open>('a::chilbert_space) set\<close>  
-  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
+  fixes M :: \<open>'a::chilbert_space set\<close>  
+  assumes q1: \<open>convex M\<close> and q2: \<open>closed M\<close> and q3: \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
 proof-
-  have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
+  define d where \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>    
+  have w4: \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>
+    by (simp add: assms(3))
+  have \<open>\<forall> x. \<parallel>x\<parallel>^2 \<ge> 0\<close>
+    by simp
+  hence bdd_below1: \<open>bdd_below { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
+    by fastforce    
+  have \<open>d \<le> \<parallel>x\<parallel>^2\<close> 
+    if a1: "x \<in> M"
+    for x
   proof-
-    have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>^2) (\<lambda> t. t \<in> M) k\<close>
-    proof-
-      obtain d where \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
-        by blast
-      have \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>
-        by (simp add: assms(3))
-      have \<open>\<forall> x. \<parallel>x\<parallel>^2 \<ge> 0\<close>
-        by simp
-      hence \<open>bdd_below  { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
-        by fastforce
-      have \<open>x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>^2\<close> for x
-      proof -
-        assume a1: "x \<in> M"
-        have "\<forall>v. (\<exists>va. Re (\<langle>v , v\<rangle> ) = \<parallel>va\<parallel>\<^sup>2 \<and> va \<in> M) \<or> v \<notin> M"
-          by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
-        hence "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
-          using a1 by blast
-        thus ?thesis
-          by (metis (lifting) Re_complex_of_real \<open>bdd_below {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> \<open>d = Inf {\<parallel>x\<parallel>\<^sup>2 |x. x \<in> M}\<close> cInf_lower power2_norm_eq_cinner')
-      qed
-      have  \<open>\<forall> n::nat. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + 1/(n+1)\<close>
-      proof-
-        have \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> { \<parallel>x\<parallel>^2 | x. x \<in> M }.  t < d + \<epsilon>\<close>
-          using \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>  \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>  \<open>bdd_below  { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>
-          by (meson cInf_lessD less_add_same_cancel1)
-        hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + \<epsilon>\<close>
-          by auto    
-        hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + \<epsilon>\<close>
-          by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
-        thus ?thesis by auto
-      qed
-      then obtain r::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
-        by metis
-      have \<open>\<forall> n. r n \<in> M\<close> 
-        by (simp add: \<open>\<forall>n. r n \<in> M \<and>  \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>)
-      have \<open>\<forall> n. \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
-        by (simp add: \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>)    
-      have \<open>\<parallel> (r n) - (r m) \<parallel>^2 < 2*(1/(n+1) + 1/(m+1))\<close> for m n 
-      proof-
-        have \<open> \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
-          by (metis \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>  of_nat_1 of_nat_add)
-        have \<open> \<parallel> r m \<parallel>^2 < d + 1/(m+1)\<close>
-          by (metis \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close>  of_nat_1 of_nat_add)
-        have \<open>(r n) \<in> M\<close> 
-          by (simp add: \<open>\<forall>n. r n \<in> M\<close>)
-        moreover have \<open>(r m) \<in> M\<close> 
-          by (simp add: \<open>\<forall>n. r n \<in> M\<close>)
-        ultimately have \<open>(1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<in> M\<close>
-          using \<open>convex M\<close> 
-          by (simp add: convexD)
-        hence \<open> \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2 \<ge> d\<close>
-          by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
-        have \<open>\<parallel> (1/2) *\<^sub>R (r n) - (1/2) *\<^sub>R (r m) \<parallel>^2
-              = (1/2)*( \<parallel> r n \<parallel>^2 + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close> 
-          using  ParallelogramLawVersion1 
-          by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
-        also have  \<open>...  
-              < (1/2)*( d + 1/(n+1) + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close>
-          using \<open>\<parallel>r n\<parallel>\<^sup>2 < d + 1 / real (n + 1)\<close> by auto
-        also have  \<open>...  
-              < (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close>
-          using \<open>\<parallel>r m\<parallel>\<^sup>2 < d + 1 / real (m + 1)\<close> by auto
-        also have  \<open>...  
-              \<le> (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - d\<close>
-          by (simp add: \<open>d \<le> \<parallel>(1 / 2) *\<^sub>R r n + (1 / 2) *\<^sub>R r m\<parallel>\<^sup>2\<close>)
-        also have  \<open>...  
-              \<le> (1/2)*( 1/(n+1) + 1/(m+1) + 2*d ) - d\<close>
-          by simp
-        also have  \<open>...  
-              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + (1/2)*(2*d) - d\<close>
-          by (simp add: distrib_left)
-        also have  \<open>...  
-              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + d - d\<close>
-          by simp
-        also have  \<open>...  
-              \<le> (1/2)*( 1/(n+1) + 1/(m+1) )\<close>
-          by simp
-        finally have \<open> \<parallel>(1 / 2) *\<^sub>R r n - (1 / 2) *\<^sub>R r m\<parallel>\<^sup>2 < 1 / 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by blast
-        hence \<open> \<parallel>(1 / 2) *\<^sub>R (r n - r m) \<parallel>\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by (simp add: real_vector.scale_right_diff_distrib)          
-        hence \<open> ((1 / 2)*\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by simp
-        hence \<open> (1 / 2)^2*(\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by (metis power_mult_distrib)
-        hence \<open> (1 / 4) *(\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by (simp add: power_divide)
-        hence \<open> \<parallel> (r n - r m) \<parallel>\<^sup>2 < 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
-          by simp
-        thus ?thesis 
-          by (metis of_nat_1 of_nat_add)
-      qed
-      hence  \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2\<close> for \<epsilon>
-      proof-
-        assume \<open>\<epsilon> > 0\<close>
-        obtain N::nat where \<open>1/(N + 1) < \<epsilon>^2/4\<close>
-          using LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
-          by (metis Suc_eq_plus1 \<open>0 < \<epsilon>\<close> nat_approx_posE zero_less_divide_iff zero_less_numeral zero_less_power )
-        hence \<open>4/(N + 1) < \<epsilon>^2\<close>
-          by simp
-        have \<open>n \<ge> N \<Longrightarrow> m \<ge> N \<Longrightarrow> 2*(1/(n+1) + 1/(m+1)) < \<epsilon>^2\<close> for m n::nat
-        proof-
-          assume \<open>n \<ge> N\<close>
-          hence \<open>1/(n+1) \<le> 1/(N+1)\<close> 
-            by (simp add: linordered_field_class.frac_le)
-          assume \<open>m \<ge> N\<close>
-          hence \<open>1/(m+1) \<le> 1/(N+1)\<close> 
-            by (simp add: linordered_field_class.frac_le)
-          have  \<open>2*(1/(n+1) + 1/(m+1)) \<le> 4/(N+1)\<close>
-            using  \<open>1/(n+1) \<le> 1/(N+1)\<close>  \<open>1/(m+1) \<le> 1/(N+1)\<close>
-            by simp
-          thus ?thesis using \<open>4/(N + 1) < \<epsilon>^2\<close> 
-            by linarith
-        qed
-        hence \<open> n \<ge> N \<Longrightarrow> m \<ge> N \<Longrightarrow> \<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2\<close> for m n::nat
-          by (smt \<open>\<And>n m. \<parallel>r n - r m\<parallel>\<^sup>2 < 2 * (1 / (real n + 1) + 1 / (real m + 1))\<close> of_nat_1 of_nat_add)
-        thus ?thesis 
-          by blast
-      qed
-      hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2\<close>
-        by blast
-      hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel> < \<epsilon>\<close>
-        by (meson less_eq_real_def power_less_imp_less_base)
-      hence \<open>Cauchy r\<close>
-        using CauchyI by fastforce
-      then obtain k where \<open>r \<longlonglongrightarrow> k\<close>
-        using  convergent_eq_Cauchy by auto
-      have \<open>k \<in> M\<close> using \<open>closed M\<close>
-        using \<open>\<forall>n. r n \<in> M\<close> \<open>r \<longlonglongrightarrow> k\<close> closed_sequentially by auto
-      have  \<open>(\<lambda> n.  \<parallel> r n \<parallel>^2) \<longlonglongrightarrow>  \<parallel> k \<parallel>^2\<close>
-        by (simp add: \<open>r \<longlonglongrightarrow> k\<close> tendsto_norm tendsto_power)
-      moreover  have  \<open>(\<lambda> n.  \<parallel> r n \<parallel>^2) \<longlonglongrightarrow>  d\<close>
-      proof-
-        have \<open>\<bar>\<parallel> r n \<parallel>^2 - d\<bar> < 1/(n+1)\<close> for n :: nat
-          using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close> of_nat_1 of_nat_add
-          by smt
-        moreover have \<open>(\<lambda>n. 1 / real (n + 1)) \<longlonglongrightarrow> 0\<close> 
-          using  LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1] by blast        
-        ultimately have \<open>(\<lambda> n. \<bar>\<parallel> r n \<parallel>^2 - d\<bar> ) \<longlonglongrightarrow> 0\<close> 
-          by (simp add: LIMSEQ_norm_0)
-        hence \<open>(\<lambda> n. \<parallel> r n \<parallel>^2 - d ) \<longlonglongrightarrow> 0\<close> 
-          by (simp add: tendsto_rabs_zero_iff)
-        moreover have \<open>(\<lambda> n. d ) \<longlonglongrightarrow> d\<close>
-          by simp
-        ultimately have \<open>(\<lambda> n. (\<parallel> r n \<parallel>^2 - d)+d ) \<longlonglongrightarrow> 0+d\<close> 
-          using tendsto_add by fastforce
-        thus ?thesis by simp
-      qed
-      ultimately have \<open>d = \<parallel> k \<parallel>^2\<close>
-        using LIMSEQ_unique by auto
-      hence \<open>t \<in> M \<Longrightarrow> \<parallel> k \<parallel>^2 \<le> \<parallel> t \<parallel>^2\<close> for t
-        using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> by auto
-      thus ?thesis using \<open>k \<in> M\<close>
-          is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
-        by smt
-    qed
-    thus ?thesis 
-      by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
+    have "\<forall>v. (\<exists>w. Re (\<langle>v , v\<rangle> ) = \<parallel>w\<parallel>\<^sup>2 \<and> w \<in> M) \<or> v \<notin> M"
+      by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
+    hence "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
+      using a1 by blast
+    thus ?thesis
+      unfolding d_def
+      by (metis (lifting) Re_complex_of_real bdd_below1 cInf_lower power2_norm_eq_cinner')
   qed
-  moreover have \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r \<Longrightarrow> is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s \<Longrightarrow> r = s\<close> for r s
+
+  have \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> { \<parallel>x\<parallel>^2 | x. x \<in> M }.  t < d + \<epsilon>\<close>
+    unfolding d_def
+    using w4  bdd_below1
+    by (meson cInf_lessD less_add_same_cancel1)
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + \<epsilon>\<close>
+    by auto    
+  hence \<open>\<forall> \<epsilon> > 0. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + \<epsilon>\<close>
+    by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
+  hence w1: \<open>\<forall> n::nat. \<exists> x \<in> M.  \<parallel>x\<parallel>^2 < d + 1/(n+1)\<close> by auto
+
+  then obtain r::\<open>nat \<Rightarrow> 'a\<close> where w2: \<open>\<forall> n. r n \<in> M \<and>  \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
+    by metis
+  have w3: \<open>\<forall> n. r n \<in> M\<close> 
+    by (simp add: w2)
+  have \<open>\<forall> n. \<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
+    by (simp add: w2)    
+  have w5: \<open>\<parallel> (r n) - (r m) \<parallel>^2 < 2*(1/(n+1) + 1/(m+1))\<close> 
+    for m n 
   proof-
-    assume \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
-    assume \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
-    have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
+    have w6: \<open>\<parallel> r n \<parallel>^2 < d + 1/(n+1)\<close>
+      by (metis w2  of_nat_1 of_nat_add)
+    have \<open> \<parallel> r m \<parallel>^2 < d + 1/(m+1)\<close>
+      by (metis w2 of_nat_1 of_nat_add)
+    have \<open>(r n) \<in> M\<close>
+      by (simp add: \<open>\<forall>n. r n \<in> M\<close>) 
+    moreover have \<open>(r m) \<in> M\<close> 
+      by (simp add: \<open>\<forall>n. r n \<in> M\<close>)
+    ultimately have \<open>(1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<in> M\<close>
+      using \<open>convex M\<close> 
+      by (simp add: convexD)
+    hence \<open>\<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2 \<ge> d\<close>
+      by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
+    have \<open>\<parallel> (1/2) *\<^sub>R (r n) - (1/2) *\<^sub>R (r m) \<parallel>^2
+              = (1/2)*( \<parallel> r n \<parallel>^2 + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close> 
+      using ParallelogramLawVersion1 
+      by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
+    also have  \<open>...  
+              < (1/2)*( d + 1/(n+1) + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close>
+      using \<open>\<parallel>r n\<parallel>\<^sup>2 < d + 1 / real (n + 1)\<close> by auto
+    also have  \<open>...  
+              < (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close>
+      using \<open>\<parallel>r m\<parallel>\<^sup>2 < d + 1 / real (m + 1)\<close> by auto
+    also have  \<open>...  
+              \<le> (1/2)*( d + 1/(n+1) + d + 1/(m+1) ) - d\<close>
+      by (simp add: \<open>d \<le> \<parallel>(1 / 2) *\<^sub>R r n + (1 / 2) *\<^sub>R r m\<parallel>\<^sup>2\<close>)
+    also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) + 2*d ) - d\<close>
+      by simp
+    also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + (1/2)*(2*d) - d\<close>
+      by (simp add: distrib_left)
+    also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) ) + d - d\<close>
+      by simp
+    also have  \<open>...  
+              \<le> (1/2)*( 1/(n+1) + 1/(m+1) )\<close>
+      by simp
+    finally have \<open> \<parallel>(1 / 2) *\<^sub>R r n - (1 / 2) *\<^sub>R r m\<parallel>\<^sup>2 < 1 / 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by blast
+    hence \<open> \<parallel>(1 / 2) *\<^sub>R (r n - r m) \<parallel>\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by (simp add: real_vector.scale_right_diff_distrib)          
+    hence \<open> ((1 / 2)*\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by simp
+    hence \<open> (1 / 2)^2*(\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by (metis power_mult_distrib)
+    hence \<open> (1 / 4) *(\<parallel> (r n - r m) \<parallel>)\<^sup>2 < (1 / 2) * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by (simp add: power_divide)
+    hence \<open> \<parallel> (r n - r m) \<parallel>\<^sup>2 < 2 * (1 / real (n + 1) + 1 / real (m + 1)) \<close>
+      by simp
+    thus ?thesis 
+      by (metis of_nat_1 of_nat_add)
+  qed
+  hence "\<exists> N. \<forall> n m. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2"
+    if "\<epsilon> > 0" 
+    for \<epsilon>
+  proof-
+    obtain N::nat where \<open>1/(N + 1) < \<epsilon>^2/4\<close>
+      using LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1]
+      by (metis Suc_eq_plus1 \<open>0 < \<epsilon>\<close> nat_approx_posE zero_less_divide_iff zero_less_numeral 
+          zero_less_power )
+    hence \<open>4/(N + 1) < \<epsilon>^2\<close>
+      by simp
+    have "2*(1/(n+1) + 1/(m+1)) < \<epsilon>^2"
+      if f1: "n \<ge> N" and f2: "m \<ge> N" 
+      for m n::nat
+    proof-
+      have \<open>1/(n+1) \<le> 1/(N+1)\<close> 
+        by (simp add: f1 linordered_field_class.frac_le)
+      moreover have \<open>1/(m+1) \<le> 1/(N+1)\<close> 
+        by (simp add: f2 linordered_field_class.frac_le)
+      ultimately have  \<open>2*(1/(n+1) + 1/(m+1)) \<le> 4/(N+1)\<close>
+        by simp
+      thus ?thesis using \<open>4/(N + 1) < \<epsilon>^2\<close> 
+        by linarith
+    qed
+    hence "\<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2"
+      if y1: "n \<ge> N" and y2: "m \<ge> N" 
+      for m n::nat
+      using that
+      by (smt \<open>\<And>n m. \<parallel>r n - r m\<parallel>\<^sup>2 < 2 * (1 / (real n + 1) + 1 / (real m + 1))\<close> of_nat_1 of_nat_add)
+    thus ?thesis 
+      by blast
+  qed
+  hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel>^2 < \<epsilon>^2\<close>
+    by blast
+  hence  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> n m::nat. n \<ge> N \<and> m \<ge> N \<longrightarrow> \<parallel> (r n) - (r m) \<parallel> < \<epsilon>\<close>
+    by (meson less_eq_real_def power_less_imp_less_base)
+  hence \<open>Cauchy r\<close>
+    using CauchyI by fastforce
+  then obtain k where \<open>r \<longlonglongrightarrow> k\<close>
+    using  convergent_eq_Cauchy by auto
+  have \<open>k \<in> M\<close> using \<open>closed M\<close>
+    using \<open>\<forall>n. r n \<in> M\<close> \<open>r \<longlonglongrightarrow> k\<close> closed_sequentially by auto
+  have  \<open>(\<lambda> n.  \<parallel> r n \<parallel>^2) \<longlonglongrightarrow>  \<parallel> k \<parallel>^2\<close>
+    by (simp add: \<open>r \<longlonglongrightarrow> k\<close> tendsto_norm tendsto_power)
+  moreover  have  \<open>(\<lambda> n.  \<parallel> r n \<parallel>^2) \<longlonglongrightarrow>  d\<close>
+  proof-
+    have \<open>\<bar>\<parallel> r n \<parallel>^2 - d\<bar> < 1/(n+1)\<close> for n :: nat
+      using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> \<open>\<forall>n. r n \<in> M \<and> \<parallel>r n\<parallel>\<^sup>2 < d + 1 / (real n + 1)\<close> of_nat_1 of_nat_add
+      by smt
+    moreover have \<open>(\<lambda>n. 1 / real (n + 1)) \<longlonglongrightarrow> 0\<close> 
+      using  LIMSEQ_ignore_initial_segment[OF lim_inverse_n', where k=1] by blast        
+    ultimately have \<open>(\<lambda> n. \<bar>\<parallel> r n \<parallel>^2 - d\<bar> ) \<longlonglongrightarrow> 0\<close> 
+      by (simp add: LIMSEQ_norm_0)
+    hence \<open>(\<lambda> n. \<parallel> r n \<parallel>^2 - d ) \<longlonglongrightarrow> 0\<close> 
+      by (simp add: tendsto_rabs_zero_iff)
+    moreover have \<open>(\<lambda> n. d ) \<longlonglongrightarrow> d\<close>
+      by simp
+    ultimately have \<open>(\<lambda> n. (\<parallel> r n \<parallel>^2 - d)+d ) \<longlonglongrightarrow> 0+d\<close> 
+      using tendsto_add by fastforce
+    thus ?thesis by simp
+  qed
+  ultimately have \<open>d = \<parallel> k \<parallel>^2\<close>
+    using LIMSEQ_unique by auto
+  hence \<open>t \<in> M \<Longrightarrow> \<parallel> k \<parallel>^2 \<le> \<parallel> t \<parallel>^2\<close> for t
+    using \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close> by auto
+  hence q1: \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>^2) (\<lambda> t. t \<in> M) k\<close> 
+    using \<open>k \<in> M\<close>
+      is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
+    by smt
+  hence r1: \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close> 
+    by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
+  have rs: "r = s"
+    if y1: "is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r" and y2: "is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s"
+    for r s
+  proof-
+    have u1: \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
       = (1/2)*( \<parallel>r\<parallel>^2 + \<parallel>s\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close> 
       using  ParallelogramLawVersion1 
       by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
-    moreover have \<open>\<parallel>r\<parallel>^2 \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close>
-    proof-
-      have \<open>r \<in> M\<close> 
-        using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
-        by (simp add: is_arg_min_def)
-      moreover have \<open>s \<in> M\<close> 
-        using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
-        by (simp add: is_arg_min_def)
-      ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
-        by (simp add: convexD)
-      hence \<open> \<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
-        using  \<open>is_arg_min norm (\<lambda> t. t \<in> M) r\<close>
-        by (smt is_arg_min_def)
+
+    have \<open>r \<in> M\<close> 
+      using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
+      by (simp add: is_arg_min_def)
+    moreover have \<open>s \<in> M\<close> 
+      using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
+      by (simp add: is_arg_min_def)
+    ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
+      by (simp add: convexD)
+    hence \<open> \<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
+      using  \<open>is_arg_min norm (\<lambda> t. t \<in> M) r\<close>
+      by (smt is_arg_min_def)
+    hence u2: \<open>\<parallel>r\<parallel>^2 \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close>
+      using norm_ge_zero power_mono by blast
+
+    have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
+      using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def
+    proof -
+      have f1: "\<forall>x0. (0 \<le> - 1 * \<parallel>r\<parallel> + \<parallel>x0::'a\<parallel>) = (\<parallel>r\<parallel> + - 1 * \<parallel>x0\<parallel> \<le> 0)"
+        by auto
+      have f2: "\<forall>x0. \<parallel>x0::'a\<parallel> + - 1 * \<parallel>r\<parallel> = - 1 * \<parallel>r\<parallel> + \<parallel>x0\<parallel>"
+        by auto
+      have "\<forall>x0 x1 x3. (x3 (x0::'a) < x3 x1) = (\<not> (0::real) \<le> x3 x0 + - 1 * x3 x1)"
+        by force
+      hence "\<parallel>r\<parallel> + - 1 * \<parallel>s\<parallel> \<le> 0"
+        using f2 f1 by (metis (no_types) \<open>is_arg_min norm (\<lambda>t. t \<in> M) r\<close> \<open>is_arg_min norm (\<lambda>t. t \<in> M) s\<close> is_arg_min_def)
       thus ?thesis
-        using norm_ge_zero power_mono by blast
-    qed
-    moreover have \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close>
-    proof-
-      have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
-        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def
-      proof -
-        have f1: "\<forall>x0. (0 \<le> - 1 * \<parallel>r\<parallel> + \<parallel>x0::'a\<parallel>) = (\<parallel>r\<parallel> + - 1 * \<parallel>x0\<parallel> \<le> 0)"
-          by auto
-        have f2: "\<forall>x0. \<parallel>x0::'a\<parallel> + - 1 * \<parallel>r\<parallel> = - 1 * \<parallel>r\<parallel> + \<parallel>x0\<parallel>"
-          by auto
-        have "\<forall>x0 x1 x3. (x3 (x0::'a) < x3 x1) = (\<not> (0::real) \<le> x3 x0 + - 1 * x3 x1)"
-          by force
-        hence "\<parallel>r\<parallel> + - 1 * \<parallel>s\<parallel> \<le> 0"
-          using f2 f1 by (metis (no_types) \<open>is_arg_min norm (\<lambda>t. t \<in> M) r\<close> \<open>is_arg_min norm (\<lambda>t. t \<in> M) s\<close> is_arg_min_def)
-        thus ?thesis
-          by linarith
-      qed         
-      moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
-        using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
-        by smt
-      ultimately show ?thesis by simp
-    qed
-    ultimately have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 \<le> 0\<close>
+        by linarith
+    qed         
+    moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
+      using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
+      by smt
+    ultimately have u3: \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close> by simp      
+
+    have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 \<le> 0\<close>
+      using u1 u2 u3
       by simp
     hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 = 0\<close>
       by simp
@@ -984,8 +1032,8 @@ proof-
       using norm_eq_zero by blast
     thus ?thesis by simp
   qed
-  ultimately show ?thesis 
-    by auto
+  show ?thesis
+    using r1 rs by blast     
 qed
 
 lemma TransClosed:
@@ -1050,6 +1098,8 @@ proof-
   thus ?thesis unfolding convergent_LIMSEQ_iff 
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
+
+(*here*)
 
 \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
 theorem existence_uniqueness_min_dist:
@@ -2971,7 +3021,7 @@ proof -
     by (simp add: Setcompr_eq_image complex_vector.linear_subspace_image)
   thus \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
     apply (rule_tac closed_subspace.intro)
-     apply (simp add: subspace_cl)
+    apply (simp add: subspace_cl)
     by simp
 qed
 
@@ -3041,8 +3091,8 @@ end
 
 instantiation clinear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
 instance apply intro_classes
-    apply transfer apply simp
-   apply transfer apply simp
+  apply transfer apply simp
+  apply transfer apply simp
   apply transfer by simp
 end
 
@@ -3440,7 +3490,7 @@ setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SO
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-(* TODO end move *)
+  (* TODO end move *)
 
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
@@ -4093,7 +4143,7 @@ next
   assume rspan: "\<psi> \<in> ?rspan R"
   thus "\<psi> \<in> ?cspan B"
     apply induction
-     apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
+    apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
     using R_def complex_vector.span_base complex_vector.span_scale by fastforce 
 qed
 
@@ -4104,7 +4154,7 @@ lemma finite_span_complete_aux:
   assumes "finite B" and "b\<in>B" and "independent B"
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
-(* Ask to Dominique: why there is an error here?
+    (* Ask to Dominique: why there is an error here?
 
     \<Longrightarrow> José, because the theory Types_To_Sets was not imported which defines internalize_sort*)
   text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
@@ -4135,7 +4185,7 @@ proof -
     unfolding repr_def comb_def
     apply (rule real_vector.representation_eqI)
     using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)      
-     apply meson
+    apply meson
     by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left)
       (* > 1s *)
   have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
@@ -4172,8 +4222,8 @@ proof -
 
   have blin_comb': "bounded_linear comb'"
     unfolding comb_def comb'_def apply (rule bounded_linearI')
-     apply (transfer fixing: abs)
-     apply (simp add: scaleR_add_left sum.distrib)
+    apply (transfer fixing: abs)
+    apply (simp add: scaleR_add_left sum.distrib)
     apply (transfer fixing: abs)
     by (simp add: real_vector.scale_sum_right)
 
@@ -4208,7 +4258,7 @@ proof -
   have "\<exists>d>0. \<forall>x\<in>norm ` comb' ` sphere 0 1. d \<le> dist 0 x"
     apply (rule_tac separate_point_closed)
     using not0 compact_norm_comb'
-     apply auto
+    apply auto
     using compact_imp_closed by blast
 
   then obtain d where d: "x\<in>norm ` comb' ` sphere 0 1 \<Longrightarrow> d \<le> dist 0 x"  
@@ -4224,7 +4274,7 @@ proof -
     using that by auto
   have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
     apply (cases "x=0")
-     apply simp
+    apply simp
     using *[of "(1/norm x) *\<^sub>R x"]
     unfolding linear_simps(5)[OF blin_comb']
     apply auto
@@ -4248,7 +4298,7 @@ proof -
   qed
   hence "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
     unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
-     apply auto
+    apply auto
     unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
   thus "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>D>0\<close> by auto
@@ -4277,7 +4327,7 @@ proof -
       unfolding comb'_def x_def o_def
       apply (subst Abs_euclidean_space_inverse, simp)
       apply (subst comb_cong[of _ f'])
-       apply (subst type_definition.Abs_inverse[OF t]; simp)
+      apply (subst type_definition.Abs_inverse[OF t]; simp)
       using f' by simp
     thus "\<exists>x. \<psi> = comb' x"
       by auto
@@ -4349,7 +4399,7 @@ lemma finite_span_closed:
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B"
   shows "closed (real_vector.span B)"
-    by (simp add: assms complete_imp_closed finite_span_complete) 
+  by (simp add: assms complete_imp_closed finite_span_complete) 
 
 lemma closed_finite_dim:
   fixes S::\<open>'a::complex_normed_vector set\<close> (* NEW: Generalization, it was for Hilbert spaces *)
@@ -4779,8 +4829,8 @@ definition plus_clinear_space :: "'a clinear_space \<Rightarrow> _ \<Rightarrow>
   where [simp]: "plus_clinear_space = sup"
 instance 
   apply standard 
-    apply (simp add: sup_assoc)
-   apply (simp add: sup_commute)
+  apply (simp add: sup_assoc)
+  apply (simp add: sup_commute)
   by simp
 end
 
@@ -6494,7 +6544,7 @@ proof-
     ultimately have "\<langle>u - projection (cspan {a}) u 
          - projection (cspan S) u, y\<rangle> = 0"
       by (simp add: cinner_diff_right)
-      
+
     moreover have "\<langle>u - p u, y\<rangle> =
       \<langle>u - projection (cspan {a}) u 
          - projection (cspan S) u, y\<rangle>"
