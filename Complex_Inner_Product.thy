@@ -1037,25 +1037,29 @@ proof-
 qed
 
 lemma TransClosed:
-  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set) 
-\<Longrightarrow> closed {s + h| s. s \<in> S}\<close>
+  assumes t1:  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set)\<close>
+  shows "closed {s + h| s. s \<in> S}"
 proof-
-  assume \<open>closed S\<close>
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
-    using closed_sequentially convergent_LIMSEQ_iff by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
+  have \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
+    using closed_sequentially convergent_LIMSEQ_iff t1 by blast
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) 
+          \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
     by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) 
+          \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
     by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) 
+            \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
     by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
+  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) 
+            \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
     by auto
-  have \<open>convergent r \<Longrightarrow>  (lim r) + h = lim (\<lambda> n. (r n)+h)\<close> for r::\<open>nat \<Rightarrow> 'a\<close>
+  have \<open>(lim r) + h = lim (\<lambda> n. (r n)+h)\<close> 
+    if r1: \<open>convergent r\<close>    
+    for r::\<open>nat \<Rightarrow> 'a\<close>
   proof-
-    assume \<open>convergent r\<close>
-    then obtain R where \<open>r \<longlonglongrightarrow> R\<close>
-      using convergent_def by auto
+    obtain R where \<open>r \<longlonglongrightarrow> R\<close>
+      using convergent_def r1 by auto
     have \<open>(\<lambda> n. h) \<longlonglongrightarrow> h\<close>
       by simp
     have \<open>(\<lambda> n. (r n)+h) \<longlonglongrightarrow> R + h\<close>  
@@ -1069,21 +1073,20 @@ proof-
       add_diff_cancel_left' by auto
   hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
     using convergent_add_const_right_iff by blast
-  have \<open> \<forall>r. convergent (\<lambda>n. r n + (h::'a)) \<and> (\<forall>n. r n \<in> S)
- \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)
- \<Longrightarrow>   convergent t \<Longrightarrow> \<forall>n. \<exists>s. t n = s + h \<and> s \<in> S \<Longrightarrow> \<exists>s. lim t = s + h \<and> s \<in> S \<close> for t
+  have \<open>\<exists>s. lim t = s + h \<and> s \<in> S \<close> 
+    if t1: \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
+      and t2: \<open>convergent t\<close> and t3: \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
+    for t
   proof-
-    assume \<open> \<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
-    assume \<open>convergent t\<close>
-    assume \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
     obtain r::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
       by metis
     from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
     have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
     from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
     have  \<open>\<forall>n. r n \<in> S\<close> by simp
-    have \<open> convergent (\<lambda>n. t n) \<close> using  \<open>convergent t\<close> by blast
-    hence \<open> convergent (\<lambda>n. (r n) + h) \<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
+    have \<open>convergent (\<lambda>n. t n) \<close>
+      by (simp add: t2) 
+    hence \<open>convergent (\<lambda>n. (r n) + h)\<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
       by simp
     have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
       using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
@@ -1099,107 +1102,91 @@ proof-
     by (metis (no_types, lifting) closed_sequential_limits limI)
 qed
 
-(*here*)
 
 \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
 theorem existence_uniqueness_min_dist:
   fixes M::\<open>'a::chilbert_space set\<close> and h 
-  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
+  assumes a1: \<open>convex M\<close> and a2: \<open>closed M\<close> and a3: \<open>M \<noteq> {}\<close>
   shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
 proof-
   include notation_norm 
-  have \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
-    by (simp add: assms(3))
-  moreover have \<open>closed {m - h| m. m \<in> M}\<close>
-  proof-
-    have \<open>closed {m + (- h)| m. m \<in> M}\<close>
-      using  \<open>closed M\<close> TransClosed by blast
-    thus ?thesis by simp
-  qed
-  moreover have \<open>convex {m - h| m. m \<in> M}\<close>
-  proof-
-    have \<open>convex ((\<lambda>x. -h + x) ` M)\<close>
-      using convex_translation \<open>convex M\<close> by blast
-    hence \<open>convex ((\<lambda>x.  x - h) ` M)\<close> by simp
-    moreover have \<open>{(\<lambda>x.  x - h) m | m. m \<in> M} = ((\<lambda>x.  x - h) ` M)\<close>
-      by auto
-    ultimately show ?thesis by simp
-  qed
-  ultimately have \<open>\<exists>! k. is_arg_min norm (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
-    using ExistenceUniquenessMinNorm \<open>closed {m - h |m. m \<in> M}\<close> \<open>convex {m - h |m. m \<in> M}\<close> \<open>{m - h |m. m \<in> M} \<noteq> {}\<close> 
+  have t6: \<open>closed {m + (- h)| m. m \<in> M}\<close>
+    using  a2 TransClosed by blast
+  hence t1: \<open>closed {m - h| m. m \<in> M}\<close> by simp
+  have t5: \<open>{m - h| m. m \<in> M} \<noteq> {}\<close>
+    by (simp add: a3)  
+  have t4: \<open>convex ((\<lambda>x. -h + x) ` M)\<close>
+    using convex_translation \<open>convex M\<close> by blast
+  hence t3: \<open>convex ((\<lambda>x.  x - h) ` M)\<close> by simp
+  moreover have t7: \<open>{(\<lambda>x.  x - h) m | m. m \<in> M} = ((\<lambda>x.  x - h) ` M)\<close>
+    by auto
+  ultimately have t2: \<open>convex {m - h| m. m \<in> M}\<close> by simp
+  have v2: \<open>\<exists>! k. is_arg_min norm (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
+    using ExistenceUniquenessMinNorm
+    by (metis t7 t1 t3 t5)
+  obtain k where v6: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
+    using  v2 by blast
+  have v7: \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>) \<and> k \<in> {m - h |m. m \<in> M}\<close>
+    using is_arg_min_def  v6
+    by smt
+  hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>\<close>
     by blast
-  have \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
+  hence \<open>\<forall>t. t + h \<in> M \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>\<close>
+    by auto
+  hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
+    by auto
+  hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>(k+h)-h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
+    by auto
+  have  \<open>k \<in> {m - h |m. m \<in> M}\<close>
+    using v7
+    by blast
+  hence  \<open>k + h \<in> M\<close>
+    by auto
+  have \<open>\<nexists>y. y \<in> {m |m. m \<in> M} \<and> \<parallel>y - h\<parallel> < \<parallel>(k + h) - h\<parallel>\<close>
+    using \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>(k+h)-h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>  
+    by auto
+  hence \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> {m| m. m \<in> M}) (k + h)\<close>
+    using \<open>k + h \<in> M\<close>
+    by (simp add: is_arg_min_def)
+  hence q1: \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
+    by auto 
+  have g1: "is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)"
+    if x1: \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close> 
+    for k
   proof-
-    have \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
-    proof-
-      obtain k where \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
-        using  \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x  \<in> {m - h| m. m \<in> M}) k\<close> by blast
-      have \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>) \<and> k \<in> {m - h |m. m \<in> M}\<close>
-        using is_arg_min_def  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h| m. m \<in> M}) k\<close>
-        by smt
-      hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>\<close>
-        by blast
-      hence \<open>\<forall>t. t + h \<in> M \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>\<close>
-        by auto
-      hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
-        by auto
-      hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>(k+h)-h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
-        by auto
-      from \<open>(\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k\<parallel> \<le> \<parallel>t\<parallel>) \<and> k \<in> {m - h |m. m \<in> M}\<close>
-      have  \<open>k \<in> {m - h |m. m \<in> M}\<close>
-        by blast
-      hence  \<open>k + h \<in> M\<close>
-        by auto
-      have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> {m| m. m \<in> M}) (k + h)\<close>
-      proof-
-        have \<open>\<nexists>y. y \<in> {m |m. m \<in> M} \<and> \<parallel>y - h\<parallel> < \<parallel>(k + h) - h\<parallel>\<close>
-          using \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>(k+h)-h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>  
-          by auto
-        thus ?thesis
-          using \<open>k + h \<in> M\<close>
-          by (simp add: is_arg_min_def)
-      qed
-      thus ?thesis 
-        by auto
-    qed 
-    moreover have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) t
-                    \<Longrightarrow> k = t\<close> for k t
-    proof-
-      have \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> for k
-      proof-
-        assume \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
-        hence \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
-          by (meson is_arg_min_linorder)
-        hence \<open>\<forall>t. t - h \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
-          by auto
-        hence \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t\<parallel>\<close>
-          by blast
-        have \<open>k \<in> M\<close>
-          using  \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<close>
-          using is_arg_min_def
-          by (simp add: is_arg_min_linorder)
-        hence \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
-          by auto
-        have  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
-          using  \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t\<parallel>\<close>
-            \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
-            is_arg_min_def
-          by smt
-        thus ?thesis by blast
-      qed
-      assume \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
-      hence  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
-        using  \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
-        by blast
-      assume  \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) t\<close> 
-      hence  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (t - h)\<close>
-        using \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> by auto
-      show ?thesis 
-        using \<open>\<exists>!k. is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) k\<close> \<open>is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> \<open>is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (t - h)\<close> diff_add_cancel
-        by (metis (no_types, lifting))
-    qed
-    ultimately show ?thesis by blast
+    have \<open>\<forall>t. t \<in> M \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
+      using x1
+      by (meson is_arg_min_linorder)
+    hence \<open>\<forall>t. t - h \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t - h\<parallel>\<close>
+      by auto
+    hence s1: \<open>\<forall>t. t \<in> {m - h |m. m \<in> M} \<longrightarrow> \<parallel>k - h\<parallel> \<le> \<parallel>t\<parallel>\<close>
+      by blast
+    have \<open>k \<in> M\<close>
+      using  \<open>is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close> is_arg_min_def
+      by (simp add: is_arg_min_linorder)
+    hence \<open>k - h \<in> {m - h |m. m \<in> M}\<close>
+      by auto
+    hence  \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
+      using  s1 is_arg_min_def
+      by smt
+    thus ?thesis by blast
   qed
+  have v1: \<open>k = t\<close> 
+    if x1: "is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k"
+      and x2: "is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) t"
+    for k t
+  proof-   
+    have v3: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
+      using x1  \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close>
+      by blast
+    have v4: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (t - h)\<close>
+      using x2 \<open>\<And>k. is_arg_min (\<lambda>x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k \<Longrightarrow> is_arg_min norm (\<lambda> x. x \<in> {m - h |m. m \<in> M}) (k - h)\<close> by auto
+    show ?thesis 
+      using v2 v3 v4 diff_add_cancel
+      by (metis (no_types, lifting))
+  qed
+  have \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x - h\<parallel>) (\<lambda> x. x \<in> M) k\<close>
+    using v1 q1 by blast    
   moreover have \<open>(\<lambda> x. dist x h) = (\<lambda> x. \<parallel>x - h\<parallel>)\<close>
     by (simp add: dist_norm)
   ultimately show ?thesis by auto
@@ -1208,183 +1195,189 @@ qed
 
 \<comment> \<open>Theorem 2.6 in @{cite conway2013course}\<close> 
 theorem dist_min_ortho:
-  fixes M::\<open>('a::complex_inner) set\<close> and h k::'a 
-  assumes \<open>closed_subspace M\<close>
-  shows  \<open>(is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k) \<longleftrightarrow> h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
+  fixes M::\<open>'a::complex_inner set\<close> and h k::'a 
+  assumes b1: \<open>closed_subspace M\<close>
+  shows  \<open>(is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k) \<longleftrightarrow> 
+          h - k \<in> (orthogonal_complement M) \<and> k \<in> M\<close>
 proof-
   include notation_norm
   have  \<open>complex_vector.subspace M\<close>
     using \<open>closed_subspace M\<close> unfolding closed_subspace_def by blast
-  have \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k
-     \<Longrightarrow>  h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
+  have r1: \<open>2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close>
+    if "f \<in> M" and \<open>k \<in> M\<close> and \<open>is_arg_min (\<lambda>x. dist x h) (\<lambda> x. x \<in> M) k\<close>
+    for f
   proof-
-    assume \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
-    hence  \<open>k \<in> M\<close>
-      by (simp add: is_arg_min_def)
-    moreover have \<open>h - k \<in> orthogonal_complement M\<close>
-    proof-
-      have \<open>f \<in> M \<Longrightarrow> \<langle> h - k , f \<rangle> = 0\<close> for f
-      proof-
-        assume \<open>f \<in> M\<close>
-        hence  \<open>\<forall> c. c *\<^sub>R f \<in> M\<close>
-          using assms scaleR_scaleC  \<open>complex_vector.subspace M\<close> complex_vector.subspace_def
-          by (simp add: complex_vector.subspace_def scaleR_scaleC)
-        have \<open>f \<in> M \<Longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close> for f
-        proof-
-          assume \<open>f \<in>  M\<close>             
-          hence \<open>k + f \<in>  M\<close> 
-            using  calculation \<open>complex_vector.subspace M\<close>
-            by (simp add: complex_vector.subspace_def)
-          hence \<open>dist h k \<le> dist  h (k + f)\<close>
-          proof -
-            have "\<forall>f A a aa. \<not> is_arg_min f (\<lambda> x. x \<in> A) (a::'a) \<or> (f a::real) \<le> f aa \<or> aa \<notin> A"
-              by (metis (no_types) is_arg_min_linorder)
-            hence "dist k h \<le> dist (f + k) h"
-              by (metis \<open>is_arg_min (\<lambda>x. dist x h) (\<lambda> x. x \<in> M) k\<close> \<open>k + f \<in> M\<close> add.commute)
-            thus ?thesis
-              by (simp add: add.commute dist_commute)
-          qed
-          hence \<open>\<parallel> h - k \<parallel> \<le> \<parallel> h - (k + f) \<parallel>\<close>
-            by (simp add: dist_norm)
-          hence \<open>\<parallel> h - k \<parallel>^2 \<le> \<parallel> h - (k + f) \<parallel>^2\<close>
-            by (simp add: power_mono)
-          also have \<open>... \<le> \<parallel> (h - k) - f \<parallel>^2\<close>
-            by (simp add: diff_diff_add)
-          also have \<open>... \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
-            by (simp add: polarization_identity_minus)
-          finally have \<open>\<parallel> (h - k) \<parallel>^2 \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
-            by simp
-          thus ?thesis by simp
-        qed
-        hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close>
-          by blast
-        hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , f \<rangle>) = 0\<close>
-        proof-
-          have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real.  2 * Re (\<langle> h - k , c *\<^sub>R f \<rangle>) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
-            using \<open>\<And>f. f \<in> M \<Longrightarrow> 2 * Re (\<langle>(h - k) , f\<rangle>) \<le> \<parallel>f\<parallel>\<^sup>2\<close> assms scaleR_scaleC
-              complex_vector.subspace_def
-            by (metis \<open>complex_vector.subspace M\<close>)
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
-            by (metis Re_complex_of_real cinner_scaleC_right complex_add_cnj complex_cnj_complex_of_real complex_cnj_mult of_real_mult scaleR_scaleC semiring_normalization_rules(34))
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<bar>c\<bar>^2*\<parallel> f \<parallel>^2)\<close>
-            by (simp add: power_mult_distrib)
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
-            by auto
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
-            by simp
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> c*(2 * Re (\<langle> h - k , f \<rangle>)) \<le> c*(c*\<parallel> f \<parallel>^2))\<close>
-            by (simp add: power2_eq_square)
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2)\<close>
-            by simp 
-          have \<open>f \<in>  M \<Longrightarrow> \<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0\<close> for f
-          proof-
-            assume \<open>f \<in>  M\<close> 
-            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2\<close>
-              by (simp add: \<open>\<forall>f. f \<in> M \<longrightarrow> (\<forall>c>0. 2 * Re \<langle>h - k , f\<rangle> \<le> c * \<parallel>f\<parallel>\<^sup>2)\<close>)
-            hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c\<close>
-            proof (cases \<open>\<parallel> f \<parallel>^2 > 0\<close>)
-              case True
-              hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> (c/\<parallel> f \<parallel>^2)*\<parallel> f \<parallel>^2\<close>
-                using \<open>\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) \<le> c * \<parallel>f\<parallel>\<^sup>2\<close> linordered_field_class.divide_pos_pos by blast
-              thus ?thesis 
-                using True by auto
-            next
-              case False
-              hence \<open>\<parallel> f \<parallel>^2 = 0\<close> 
-                by simp
-              thus ?thesis 
-                by auto
-            qed
-            thus ?thesis 
-              by smt
-          qed
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0)\<close>
-            by simp
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , (-1) *\<^sub>R f \<rangle>)) \<le> 0)\<close>
-            using assms scaleR_scaleC complex_vector.subspace_def
-            by (metis \<open>complex_vector.subspace M\<close>)
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
-                (\<forall> c::real. c > 0 \<longrightarrow> -(2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
-            by simp
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<ge> 0)\<close>
-            by simp
-          hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
-            using  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
-            by fastforce
-          hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0\<close>
-          proof-
-            have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
-                 ((1::real) > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
-              using \<open>\<forall>f. f \<in>  M \<longrightarrow> (\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) = 0)\<close> by blast
-            thus ?thesis by auto
-          qed
-          thus ?thesis by simp
-        qed
-        also have \<open>\<forall> f. f \<in>  M \<longrightarrow> Im (\<langle> h - k , f \<rangle>) = 0\<close>
-        proof-
-          have  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , (Complex 0 (-1)) *\<^sub>C f \<rangle>) = 0\<close>
-            using assms calculation complex_vector.subspace_def
-            by (metis \<open>complex_vector.subspace M\<close>) 
-          hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re ( (Complex 0 (-1))*(\<langle> h - k , f \<rangle>) ) = 0\<close>
-            by simp
-          thus ?thesis 
-            using Complex_eq_neg_1 Re_i_times cinner_scaleC_right complex_of_real_def by auto
-        qed
-        ultimately have \<open>\<forall> f. f \<in>  M \<longrightarrow> (\<langle> h - k , f \<rangle>) = 0\<close>
-          by (simp add: complex_eq_iff)
-        thus ?thesis 
-          by (simp add: \<open>f \<in>  M\<close>)
-      qed
-      thus ?thesis 
-        by (simp add: is_orthogonal_def orthogonal_complement_def)
-    qed
-    ultimately show ?thesis 
+    have \<open>k + f \<in>  M\<close> 
+      using \<open>complex_vector.subspace M\<close>
+      by (simp add:complex_vector.subspace_add that)
+    have "\<forall>f A a b. \<not> is_arg_min f (\<lambda> x. x \<in> A) (a::'a) \<or> (f a::real) \<le> f b \<or> b \<notin> A"
+      by (metis (no_types) is_arg_min_linorder)
+    hence "dist k h \<le> dist (f + k) h"
+      by (metis \<open>is_arg_min (\<lambda>x. dist x h) (\<lambda> x. x \<in> M) k\<close> \<open>k + f \<in> M\<close> add.commute)
+    hence \<open>dist h k \<le> dist  h (k + f)\<close>
+      by (simp add: add.commute dist_commute)
+    hence \<open>\<parallel> h - k \<parallel> \<le> \<parallel> h - (k + f) \<parallel>\<close>
+      by (simp add: dist_norm)
+    hence \<open>\<parallel> h - k \<parallel>^2 \<le> \<parallel> h - (k + f) \<parallel>^2\<close>
+      by (simp add: power_mono)
+    also have \<open>... \<le> \<parallel> (h - k) - f \<parallel>^2\<close>
+      by (simp add: diff_diff_add)
+    also have \<open>... \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
+      by (simp add: polarization_identity_minus)
+    finally have \<open>\<parallel> (h - k) \<parallel>^2 \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
       by simp
+    thus ?thesis by simp
   qed
-  also have  \<open>h - k \<in> orthogonal_complement M \<and> k \<in>  M 
-     \<Longrightarrow> ( is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k )\<close>
-  proof-
-    assume \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
-    hence \<open>h - k \<in> orthogonal_complement M\<close>
-      by blast
-    have \<open>k \<in> M\<close> using \<open>h - k \<in> orthogonal_complement M \<and> k \<in>  M\<close>
-      by blast
-    have \<open>f \<in> M \<Longrightarrow> dist h k \<le> dist h f \<close> for f
-    proof-
-      assume \<open>f \<in>  M\<close>
-      hence \<open>\<langle> h - k,  k - f \<rangle> = 0\<close>
-        by (metis (no_types, lifting) \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> cinner_diff_right diff_0_right orthogonal_complement_D1)
-      have \<open>\<parallel> h - f \<parallel>^2 = \<parallel> (h - k) + (k - f) \<parallel>^2\<close>
-        by simp
-      also have \<open>... = \<parallel> h - k \<parallel>^2 + \<parallel> k - f \<parallel>^2\<close>
-        using  \<open>\<langle> h - k, k - f \<rangle> = 0\<close> PythagoreanId 
-        using is_orthogonal_def by blast
-      also have \<open>... \<ge> \<parallel> h - k \<parallel>^2\<close>
-        by simp
-      finally have \<open>\<parallel>h - k\<parallel>\<^sup>2 \<le> \<parallel>h - f\<parallel>\<^sup>2 \<close>
-        by blast
-      hence \<open>\<parallel>h - k\<parallel> \<le> \<parallel>h - f\<parallel>\<close>
-        using norm_ge_zero power2_le_imp_le by blast
+
+  have q4: \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c\<close>
+    if  \<open>\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) \<le> c * \<parallel>f\<parallel>\<^sup>2\<close>
+    for f
+    proof (cases \<open>\<parallel> f \<parallel>^2 > 0\<close>)
+      case True
+      hence \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> (c/\<parallel> f \<parallel>^2)*\<parallel> f \<parallel>^2\<close>
+        using that linordered_field_class.divide_pos_pos by blast
       thus ?thesis 
-        by (simp add: dist_norm)
+        using True by auto
+    next
+      case False
+      hence \<open>\<parallel> f \<parallel>^2 = 0\<close> 
+        by simp
+      thus ?thesis 
+        by auto
     qed
+  have q3: \<open>\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0\<close> 
+    if a3: \<open>\<forall>f. f \<in> M \<longrightarrow> (\<forall>c>0. 2 * Re \<langle>h - k , f\<rangle> \<le> c * \<parallel>f\<parallel>\<^sup>2)\<close>
+      and a2: "f \<in>  M"
+      and a1: "is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k"
+    for f
+  proof-
+    have \<open>\<forall> c > 0.  2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2\<close>
+      by (simp add: that )    
     thus ?thesis 
-      by (simp add: \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> dist_commute is_arg_min_linorder)
+      using q4 by smt
   qed
-  ultimately show ?thesis by blast
+  have w2: "h - k \<in> orthogonal_complement M \<and> k \<in> M"
+    if a1: "is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k"
+  proof-
+    have  \<open>k \<in> M\<close>
+      using is_arg_min_def that by fastforce    
+    hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> \<parallel> f \<parallel>^2\<close>
+      using r1
+      by (simp add: that) 
+    have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real.  2 * Re (\<langle> h - k , c *\<^sub>R f \<rangle>) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
+      using  assms scaleR_scaleC complex_vector.subspace_def \<open>complex_vector.subspace M\<close>
+      by (metis \<open>\<forall>f. f \<in> M \<longrightarrow> 2 * Re \<langle>h - k, f\<rangle> \<le> \<parallel>f\<parallel>\<^sup>2\<close>)
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<parallel> c *\<^sub>R f \<parallel>^2)\<close>
+      by (metis Re_complex_of_real cinner_scaleC_right complex_add_cnj complex_cnj_complex_of_real
+          complex_cnj_mult of_real_mult scaleR_scaleC semiring_normalization_rules(34))
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> \<bar>c\<bar>^2*\<parallel> f \<parallel>^2)\<close>
+      by (simp add: power_mult_distrib)
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
+      by auto
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> c * (2 * Re (\<langle> h - k , f \<rangle>)) \<le> c^2*\<parallel> f \<parallel>^2)\<close>
+      by simp
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> c*(2 * Re (\<langle> h - k , f \<rangle>)) \<le> c*(c*\<parallel> f \<parallel>^2))\<close>
+      by (simp add: power2_eq_square)
+    hence  q4: \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> c*\<parallel> f \<parallel>^2)\<close>
+      by simp     
+    have  \<open>\<forall> f. f \<in>  M \<longrightarrow>
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<le> 0)\<close>
+      using q3
+      by (simp add: q4 that)      
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , (-1) *\<^sub>R f \<rangle>)) \<le> 0)\<close>
+      using assms scaleR_scaleC complex_vector.subspace_def
+      by (metis \<open>complex_vector.subspace M\<close>)
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow>
+                (\<forall> c::real. c > 0 \<longrightarrow> -(2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
+      by simp
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) \<ge> 0)\<close>
+      by simp
+    hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
+      using  \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                (\<forall> c::real. c > 0 \<longrightarrow> (2 * Re (\<langle> h - k , f \<rangle>)) \<le> 0)\<close>
+      by fastforce
+
+    have \<open>\<forall> f. f \<in>  M \<longrightarrow> 
+                 ((1::real) > 0 \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0)\<close>
+      using \<open>\<forall>f. f \<in>  M \<longrightarrow> (\<forall>c>0. 2 * Re (\<langle>h - k , f\<rangle> ) = 0)\<close> by blast
+    hence \<open>\<forall> f. f \<in>  M \<longrightarrow> 2 * Re (\<langle> h - k , f \<rangle>) = 0\<close>
+      by simp
+    hence \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , f \<rangle>) = 0\<close> 
+      by simp     
+    have  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re (\<langle> h - k , (Complex 0 (-1)) *\<^sub>C f \<rangle>) = 0\<close>
+      using assms  complex_vector.subspace_def \<open>complex_vector.subspace M\<close>
+      by (metis \<open>\<forall>f. f \<in> M \<longrightarrow> Re \<langle>h - k, f\<rangle> = 0\<close>)
+    hence  \<open>\<forall> f. f \<in>  M \<longrightarrow> Re ( (Complex 0 (-1))*(\<langle> h - k , f \<rangle>) ) = 0\<close>
+      by simp
+    hence \<open>\<forall> f. f \<in>  M \<longrightarrow> Im (\<langle> h - k , f \<rangle>) = 0\<close> 
+      using Complex_eq_neg_1 Re_i_times cinner_scaleC_right complex_of_real_def by auto        
+
+    have \<open>\<forall> f. f \<in>  M \<longrightarrow> (\<langle> h - k , f \<rangle>) = 0\<close>
+      using complex_eq_iff
+      by (simp add: \<open>\<forall>f. f \<in> M \<longrightarrow> Im \<langle>h - k, f\<rangle> = 0\<close> \<open>\<forall>f. f \<in> M \<longrightarrow> Re \<langle>h - k, f\<rangle> = 0\<close>)
+    hence \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
+      by (simp add: \<open>k \<in> M\<close> orthogonal_complement_I2) 
+    have  \<open>\<forall> c. c *\<^sub>R f \<in> M\<close>
+      if "f \<in> M"
+      for f
+      using that scaleR_scaleC  \<open>complex_vector.subspace M\<close> complex_vector.subspace_def
+      by (simp add: complex_vector.subspace_def scaleR_scaleC)
+    have \<open>\<langle> h - k , f \<rangle> = 0\<close> 
+      if "f \<in> M"
+      for f
+      using \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> orthogonal_complement_D1 that by auto
+    hence \<open>h - k \<in> orthogonal_complement M\<close> 
+      by (simp add: is_orthogonal_def orthogonal_complement_def)
+    thus ?thesis
+      using \<open>k \<in> M\<close> by auto       
+  qed
+
+  have q1: \<open>dist h k \<le> dist h f \<close> 
+    if "f \<in> M" and  \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
+    for f
+  proof-
+    have \<open>\<langle> h - k,  k - f \<rangle> = 0\<close>
+      by (metis (no_types, lifting) that 
+          cinner_diff_right diff_0_right orthogonal_complement_D1 that)
+    have \<open>\<parallel> h - f \<parallel>^2 = \<parallel> (h - k) + (k - f) \<parallel>^2\<close>
+      by simp
+    also have \<open>... = \<parallel> h - k \<parallel>^2 + \<parallel> k - f \<parallel>^2\<close>
+      using  \<open>\<langle> h - k, k - f \<rangle> = 0\<close> PythagoreanId  is_orthogonal_def by blast
+    also have \<open>... \<ge> \<parallel> h - k \<parallel>^2\<close>
+      by simp
+    finally have \<open>\<parallel>h - k\<parallel>\<^sup>2 \<le> \<parallel>h - f\<parallel>\<^sup>2 \<close>
+      by blast
+    hence \<open>\<parallel>h - k\<parallel> \<le> \<parallel>h - f\<parallel>\<close>
+      using norm_ge_zero power2_le_imp_le by blast
+    thus ?thesis 
+      by (simp add: dist_norm)
+  qed
+
+  have  w1: "is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k"
+    if "h - k \<in> orthogonal_complement M \<and> k \<in>  M"
+  proof-
+    have \<open>h - k \<in> orthogonal_complement M\<close>
+      using that by blast
+    have \<open>k \<in> M\<close> using \<open>h - k \<in> orthogonal_complement M \<and> k \<in>  M\<close>
+      by blast   
+    thus ?thesis
+      by (metis (no_types, lifting) dist_commute is_arg_min_linorder q1 that) 
+  qed
+  show ?thesis
+    using w1 w2 by blast 
 qed
+
+(*here*)
 
 lemma linear_manifold_Convex:
   \<open>complex_vector.subspace M \<Longrightarrow> convex M\<close> 
