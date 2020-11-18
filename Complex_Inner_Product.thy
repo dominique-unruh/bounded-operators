@@ -1904,96 +1904,94 @@ proof-
     by (simp add: subsetI)
 qed
 
-(*here*)
 
 lemma ProjOntoOrtho':
-  \<open>is_projection_on \<pi> M \<Longrightarrow> is_projection_on \<sigma> (orthogonal_complement M)
- \<Longrightarrow> closed_subspace M  \<Longrightarrow> id - \<pi> = \<sigma>\<close>
-  for M :: \<open>('a::complex_inner) set\<close>
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes a1: "is_projection_on \<pi> M" and a2: "is_projection_on \<sigma> (orthogonal_complement M)"
+    and a3: "closed_subspace M"
+  shows "id - \<pi> = \<sigma>"   
 proof-
-  assume \<open>is_projection_on \<pi> M\<close> and \<open>is_projection_on \<sigma> (orthogonal_complement M)\<close> and \<open>closed_subspace M\<close>
-  have   \<open> (id - \<pi>) x = \<sigma> x \<close> for x
+  have \<open>(id - \<pi>) x = \<sigma> x\<close> for x
   proof-
-    have \<open>x - \<pi> x \<in> orthogonal_complement M\<close>
-      using \<open>closed_subspace M\<close>
-      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro1') 
-    hence \<open>(id -  \<pi>) x \<in> orthogonal_complement M\<close>
+    have b1:\<open>x - \<pi> x \<in> orthogonal_complement M\<close>
+      by (simp add: a1 projection_intro1')            
+    hence b2: \<open>(id -  \<pi>) x \<in> orthogonal_complement M\<close>
       by simp
-    have \<open>\<pi> x \<in>  M\<close>
-      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro2') 
-    hence  \<open>x - (id - \<pi>) x \<in>  M\<close>
+    have b3: \<open>\<pi> x \<in>  M\<close>
+      by (simp add: a1 projection_intro2')      
+    hence b4: \<open>x - (id - \<pi>) x \<in>  M\<close>
       by simp
-    hence \<open>\<pi> x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
-      using pre_ortho_twice  \<open>closed_subspace M\<close> complex_vector.subspace_def
-      unfolding closed_subspace_def
-      using \<open>\<pi> x \<in> M\<close> by blast            
-    hence  \<open>x - (id -  \<pi>) x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
+    hence b5: \<open>\<pi> x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
+      by (simp add: orthogonal_complement_D1 orthogonal_complement_I1)            
+    hence b6:\<open>x - (id -  \<pi>) x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
       by simp
     thus ?thesis
-      using \<open>closed_subspace M\<close>  subspace_orthog
-      by (metis \<open>(id - \<pi>) x \<in> orthogonal_complement M\<close> \<open>is_projection_on \<sigma> (orthogonal_complement M)\<close> projection_uniq')
+      using a2 a3 b2 projection_uniq' subspace_orthog by fastforce
   qed
   thus ?thesis by blast
 qed
 
 \<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
 lemma ProjOntoOrtho:
-  \<open>closed_subspace M  \<Longrightarrow> id - projection M = projection (orthogonal_complement M)\<close>
-  for M :: \<open>('a::chilbert_space) set\<close>
+  fixes M :: "'a::chilbert_space set"
+  assumes a1: "closed_subspace M"
+  shows "id - projection M = projection (orthogonal_complement M)"
   using ProjOntoOrtho'
-  by (metis is_projection_on_def projection_intro1 projection_intro2 subspace_orthog)
+  by (metis assms is_projection_on_def projection_intro1 projection_intro2 subspace_orthog)
+
 
 \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close>
 theorem orthogonal_complement_twice:
-  "closed_subspace M \<Longrightarrow> (orthogonal_complement (orthogonal_complement M)) = M"
-  for M :: \<open>('a::chilbert_space) set\<close>
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes a1: "closed_subspace M"
+  shows "orthogonal_complement (orthogonal_complement M) = M"  
 proof-
-  assume \<open>closed_subspace M\<close>
-  have \<open>(orthogonal_complement (orthogonal_complement M)) =  (projection (orthogonal_complement M)) -` {0}\<close>
-    by (simp add: \<open>closed_subspace M\<close> projectionPropertiesD)
-  also have \<open>... = ( id - (projection M) ) -` {0}\<close>
-    by (simp add: ProjOntoOrtho \<open>closed_subspace M\<close>)
-  also have \<open>... = M\<close>
+  have b2: "x \<in>  ( ( id - (projection M) ) -` {0} )"
+    if c1: "x \<in>  M"
+    for x
   proof-
-    have \<open>x \<in>  M \<Longrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
-    proof-
-      assume \<open>x \<in> M\<close>
-      hence \<open>(projection M) x = x\<close>
-        using \<open>closed_subspace M\<close> projection_fixed_points by auto
-      hence \<open>(id - (projection M)) x = 0\<close> 
-        by simp
-      hence \<open>x \<in> {v. (id - (projection M)) v = 0}\<close>
-        by simp
-      hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
-        using span_superset
-        by (simp add: real_vector.span_base)         
-      hence \<open>x \<in> ( ( id - (projection M) ) -` {0} )\<close> 
-        using ProjOntoOrtho \<open>(id - projection M) x = 0\<close> \<open>closed_subspace M\<close> calculation diff_zero  projection_intro1
-          complex_vector.subspace_def \<open>(id - projection M) x = 0\<close> by blast
-      thus ?thesis 
-        by simp                  
-    qed
-    moreover have \<open>x \<in>  ( ( id - (projection M) ) -` {0} ) \<Longrightarrow> x \<in>  M\<close> for x
-    proof-
-      assume \<open>x \<in>  ( ( id - (projection M) ) -` {0} )\<close>
-      hence \<open>(id - (projection M)) x = 0\<close>
-        by simp
-      hence \<open>(projection M) x = x\<close>
-        by auto
-      hence \<open>(projection M) x \<in>  M\<close>
-        by (metis \<open>closed_subspace M\<close> projection_intro2)
-      hence \<open>x \<in>  M\<close>
-        using  \<open>(projection M) x = x\<close> 
-        by simp
-      thus ?thesis by blast
-    qed
-    ultimately have \<open>x \<in>  M \<longleftrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
-      by blast
-    hence \<open> (  ( id - (projection M) ) -` {0} ) =  M\<close>
-      by blast
-    thus ?thesis
+    have \<open>(projection M) x = x\<close>
+      by (simp add: assms projection_fixed_points that)
+    hence \<open>(id - (projection M)) x = 0\<close> 
       by simp
-  qed     
+    hence \<open>x \<in> {v. (id - (projection M)) v = 0}\<close>
+      by simp
+    hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
+      using span_superset
+      by (simp add: real_vector.span_base)         
+    hence \<open>x \<in> ( ( id - (projection M) ) -` {0} )\<close>
+      using \<open>(id - projection M) x = 0\<close> by auto 
+    thus ?thesis 
+      by simp                  
+  qed
+
+  have b3: \<open>x \<in>  M\<close> 
+    if c1: \<open>x \<in> ( id - (projection M) ) -` {0}\<close>
+    for x
+  proof-
+    have \<open>(id - (projection M)) x = 0\<close>
+      using c1
+      by simp
+    hence \<open>(projection M) x = x\<close>
+      by auto
+    hence \<open>(projection M) x \<in>  M\<close>
+      by (metis \<open>closed_subspace M\<close> projection_intro2)
+    hence \<open>x \<in>  M\<close>
+      using  \<open>(projection M) x = x\<close> 
+      by simp
+    thus ?thesis by blast
+  qed
+  have \<open>x \<in>  M \<longleftrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
+    using b2 b3 by blast      
+  hence b4: \<open>( id - (projection M) ) -` {0} =  M\<close>
+    by blast
+  have b1: "orthogonal_complement (orthogonal_complement M) 
+          = (projection (orthogonal_complement M)) -` {0}"
+    by (simp add: a1 projectionPropertiesD)
+  also have \<open>... = ( id - (projection M) ) -` {0}\<close>
+    by (simp add: ProjOntoOrtho a1)
+  also have \<open>... = M\<close>
+    by (simp add: b4)     
   finally show ?thesis by blast
 qed
 
@@ -2001,7 +1999,7 @@ qed
 lemma ortho_leq[simp]:
   fixes  A B :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_subspace A\<close> and  \<open>closed_subspace B\<close>
-  shows \<open>(orthogonal_complement A) \<subseteq> (orthogonal_complement B) \<longleftrightarrow> A \<supseteq> B\<close>
+  shows \<open>orthogonal_complement A \<subseteq> orthogonal_complement B \<longleftrightarrow> A \<supseteq> B\<close>
 proof-
   have \<open>A \<supseteq> B \<Longrightarrow> (orthogonal_complement A) \<subseteq> (orthogonal_complement B)\<close>
     by (simp add: orthogonal_complement_def subset_eq)
@@ -2028,27 +2026,22 @@ proof-
 qed
 
 lemma ortho_bot[simp]:
-  "(orthogonal_complement ({0}::'a::chilbert_space set))  = (top::'a set)"
+  "orthogonal_complement ({0}::'a::chilbert_space set) = (top::'a set)"
   using  orthogonal_complement_twice 
   by (metis Complex_Vector_Spaces.subspace_UNIV ortho_top)
 
 
 subsection \<open>Closed sum\<close>
 
-definition closed_sum:: \<open>('a::{complex_vector,topological_space}) set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+definition closed_sum:: \<open>'a::{complex_vector,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>closed_sum A B = closure (A + B)\<close>
 
 notation closed_sum (infixl "+\<^sub>M" 65)
 
 lemma sum_existential:
-  \<open>x \<in> (A + B) \<Longrightarrow> \<exists> a\<in>A. \<exists> b\<in>B. x = a + b\<close>
-proof -
-  assume "x \<in> (A + B)"
-  hence "\<exists>a aa. x = a + aa \<and> a \<in> A \<and> aa \<in> B"
-    by (meson set_plus_elim)    
-  thus ?thesis
-    by (metis (lifting))
-qed
+  assumes  "x \<in> (A + B)"
+  shows "\<exists>a\<in>A. \<exists>b\<in>B. x = a + b"
+  by (meson assms set_plus_elim)
 
 lemma is_closed_subspace_comm:                                                                 
   assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
@@ -2056,36 +2049,33 @@ lemma is_closed_subspace_comm:
   by (smt Collect_cong add.commute closed_sum_def)
 
 lemma cinner_isCont_left:
-  \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+  \<open>isCont (\<lambda> t. \<langle> t, x \<rangle>) y\<close>
 proof-
-  have \<open>s \<longlonglongrightarrow> y \<Longrightarrow> ((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) \<longlonglongrightarrow> (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+  have \<open>((\<lambda> t. \<langle> t , x \<rangle>) \<circ> s) \<longlonglongrightarrow> (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+    if a1: "s \<longlonglongrightarrow> y"
     for s::\<open>nat \<Rightarrow> _\<close>
   proof-
-    assume \<open>s \<longlonglongrightarrow> y\<close>
     have \<open>\<exists> K. \<forall> u v. norm \<langle>u , v \<rangle> \<le> norm u * norm v * K\<close>
       using bounded_sesquilinear.bounded bounded_sesquilinear_cinner by auto
-    then obtain K where  \<open>\<forall> u v::'a. norm \<langle>u , v\<rangle> \<le> norm u * norm v * K\<close>
+    then obtain K where K_def: \<open>\<forall> u v::'a. norm \<langle>u , v\<rangle> \<le> norm u * norm v * K\<close>
       by blast
-    hence CS: \<open>norm \<langle>u , v\<rangle> \<le> norm u * norm v * K\<close>
+    hence CS: \<open>norm \<langle>u, v\<rangle> \<le> norm u * norm v * K\<close>
       for u::'a and v::'a
       by auto
-    have \<open>norm \<langle>s n - y , x\<rangle> \<le> norm (s n - y) * norm x * K\<close>
+    have \<open>norm \<langle>s n - y, x\<rangle> \<le> norm (s n - y) * norm x * K\<close>
       for n
       using CS[where u1 = "s n - y" and v1 = "x"]
       by blast
-    hence \<open>\<forall> n. cmod \<langle>s n - y, x\<rangle> \<le> norm (norm (s n - y) * norm x) * norm K\<close>
+    hence s1: \<open>\<forall> n. cmod \<langle>s n - y, x\<rangle> \<le> norm (norm (s n - y) * norm x) * norm K\<close>
       by (smt norm_mult real_norm_def)      
-    moreover have \<open>(\<lambda> n.  norm (s n - y) * norm x) \<longlonglongrightarrow> 0\<close>
-    proof-
-      have \<open>(\<lambda> n.  norm (s n - y)) \<longlonglongrightarrow> 0\<close>
-        using \<open>s \<longlonglongrightarrow> y\<close>
-        by (simp add: LIM_zero_iff tendsto_norm_zero)
-      thus ?thesis
-        by (simp add: tendsto_mult_left_zero) 
-    qed
-    ultimately have \<open>(\<lambda> n. \<langle> s n - y , x \<rangle>) \<longlonglongrightarrow> 0\<close>
+    have \<open>(\<lambda> n.  norm (s n - y)) \<longlonglongrightarrow> 0\<close>
+      using \<open>s \<longlonglongrightarrow> y\<close>
+      by (simp add: LIM_zero_iff tendsto_norm_zero)
+    hence s2: \<open>(\<lambda> n.  norm (s n - y) * norm x) \<longlonglongrightarrow> 0\<close>
+      by (simp add: tendsto_mult_left_zero)
+    hence \<open>(\<lambda> n. \<langle> s n - y , x \<rangle>) \<longlonglongrightarrow> 0\<close>
       using Limits.tendsto_0_le[where g = "(\<lambda> n. \<langle> s n - y , x \<rangle>)" and f = "(\<lambda> n. norm (s n - y) * norm x)" and K = "norm K"]
-      by auto      
+        always_eventually s1 by blast            
     moreover have \<open>\<langle> s n - y , x \<rangle> =  \<langle> s n , x \<rangle> - \<langle> y , x \<rangle>\<close>
       for n
       by (simp add: cinner_diff_left)      
@@ -2125,24 +2115,25 @@ lemma OrthoClosed:
   fixes A ::"('a::complex_inner) set"
   shows \<open>closed (orthogonal_complement A)\<close>                                                
 proof-
-  have \<open>\<forall> n. x n \<in> (orthogonal_complement A) \<Longrightarrow> x \<longlonglongrightarrow> l \<Longrightarrow> l \<in> (orthogonal_complement A)\<close> for x l
+  have "l \<in> (orthogonal_complement A)"
+    if a1: "\<forall> n. x n \<in> (orthogonal_complement A)" and a2: "x \<longlonglongrightarrow> l"
+    for x l
   proof-
-    assume \<open>\<forall> n. x n \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close>
-      by (simp add: orthogonal_complement_D2)
-    assume \<open>x \<longlonglongrightarrow> l\<close>
+    have \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close>
+      by (simp add: a1 orthogonal_complement_D2)      
     moreover have \<open>isCont (\<lambda> t. \<langle> y , t \<rangle>) l\<close> for y
       using cinner_isCont_right by blast
     ultimately have \<open>(\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close> for y 
-      by (simp add: isCont_tendsto_compose)
+      using isCont_tendsto_compose
+      by (simp add: isCont_tendsto_compose a2)
     hence \<open>\<forall> y \<in> A. (\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close>
       by simp
     hence \<open>\<forall> y \<in> A. (\<lambda> n. 0 ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close>
       using  \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close> by fastforce
     hence \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
       using limI by fastforce
-    thus ?thesis 
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+    thus ?thesis
+      by (simp add: orthogonal_complement_I1) 
   qed
   thus ?thesis 
     using closed_sequential_limits by blast
@@ -2151,94 +2142,98 @@ qed
 
 lemma OrthoClosedEq:
   fixes A ::"('a::complex_inner) set"
-  shows \<open>(orthogonal_complement A) = (orthogonal_complement (closure A))\<close>
+  shows "orthogonal_complement A = orthogonal_complement (closure A)"
 proof-
-  have \<open>x \<in> (orthogonal_complement A) \<Longrightarrow> x \<in> (orthogonal_complement (closure A))\<close> for x
+  have s1: \<open>\<langle> y, x \<rangle> = 0\<close> 
+    if a1: "x \<in> (orthogonal_complement A)"
+    and a2: \<open>y \<in> closure A\<close>  
+    for x y
   proof-
-    assume \<open>x \<in> (orthogonal_complement A)\<close>
-    hence \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
-      by (simp add: orthogonal_complement_D2)
-    hence \<open>y \<in> closure A \<Longrightarrow> \<langle> y , x \<rangle> = 0\<close> for y
-    proof-
-      assume \<open>y \<in> closure A\<close>  
-      then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close> 
-        by (meson closure_sequential)
-      have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
-        using cinner_isCont_left by blast
-      hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
-        using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
-        by fastforce
-      hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
-        using \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
-      thus ?thesis 
-        using limI by force
-    qed
+    have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
+      by (simp add: a1 orthogonal_complement_D2)
+    then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+      using a2 closure_sequential by blast       
+    have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+      using cinner_isCont_left by blast
+    hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
+      using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
+      by fastforce
+    hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
+      using \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
     thus ?thesis 
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+      using limI by force
   qed
-  moreover have \<open>x \<in> (orthogonal_complement (closure A)) \<Longrightarrow> x \<in> (orthogonal_complement A)\<close> for x
-    by (smt closure_subset mem_Collect_eq orthogonal_complement_def subset_eq)
+  hence "x \<in> orthogonal_complement (closure A)"
+    if a1: "x \<in> (orthogonal_complement A)"
+    for x
+    using that
+    by (simp add: orthogonal_complement_I1) 
+  moreover have \<open>x \<in> (orthogonal_complement A)\<close> 
+    if "x \<in> (orthogonal_complement (closure A))"
+    for x
+    using that
+    by (meson closure_subset orthogonal_complement_D1 orthogonal_complement_I2 subset_eq)
   ultimately show ?thesis by blast
 qed
 
 lemma subspace_closed_plus:
   fixes A B::"('a::complex_normed_vector) set"
-  assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
+  assumes a1: \<open>closed_subspace A\<close> and a2: \<open>closed_subspace B\<close>
   shows \<open>closed_subspace (A +\<^sub>M B)\<close>
-  using assms(1) assms(2) closed_sum_def 
+  using a1 a2 closed_sum_def 
   by (metis closed_subspace.subspace subspace_I subspace_plus)
 
 lemma DeMorganOrtho:        
   fixes A B::"('a::complex_inner) set"
-  assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
+  assumes a1: \<open>closed_subspace A\<close> and a2: \<open>closed_subspace B\<close>
   shows \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close>
 proof-
-  have \<open>x \<in> (orthogonal_complement (A +\<^sub>M B)) \<Longrightarrow> x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close> for x
+  have "x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)"
+    if "x \<in> orthogonal_complement (A +\<^sub>M B)" 
+    for x
   proof-
-    assume \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
-    moreover have \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement (A + B))\<close>
+    have \<open>orthogonal_complement (A +\<^sub>M B) = orthogonal_complement (A + B)\<close>
       unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
-    ultimately have \<open>x \<in> (orthogonal_complement (A + B))\<close>
-      by smt
-    hence \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> 
+    hence \<open>x \<in> orthogonal_complement (A + B)\<close>
+      using that by blast      
+    hence t1: \<open>\<forall>z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close>
+      by (simp add: orthogonal_complement_D2) 
+    have \<open>0 \<in> B\<close>
+      using assms(2) complex_vector.subspace_def
+      unfolding closed_subspace_def
+      by auto
+    hence \<open>A \<subseteq> A + B\<close>
+      using subset_iff add.commute set_zero_plus2 
+      by fastforce
+    hence \<open>\<forall>z \<in> A. \<langle> z , x \<rangle> = 0\<close> 
+      using t1 by auto
+    hence w1: \<open>x \<in> (orthogonal_complement A)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    hence \<open>\<forall> z \<in> A. \<langle> z , x \<rangle> = 0\<close> 
-    proof-
-      have \<open>0 \<in> B\<close>
-        using assms(2) complex_vector.subspace_def
-        unfolding closed_subspace_def
-        by auto
-      hence \<open>A \<subseteq> A + B\<close>
-        using subset_iff add.commute set_zero_plus2 
-        by fastforce
-      thus ?thesis
-        using  \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> by auto
-    qed
-    hence \<open>x \<in> (orthogonal_complement A)\<close>
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    have \<open>\<forall> z \<in> B. \<langle> z , x \<rangle> = 0\<close> 
-    proof-
-      have \<open>0 \<in> A\<close>
-        using assms(1) complex_vector.subspace_def
-        unfolding closed_subspace_def
-        by auto
-      hence \<open>B \<subseteq> A + B\<close>
-        using subset_iff set_zero_plus2 by blast        
-      thus ?thesis
-        using  \<open>\<forall> z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close> by auto
-    qed
+    have \<open>0 \<in> A\<close>
+      using assms(1) complex_vector.subspace_def
+      unfolding closed_subspace_def
+      by auto
+    hence \<open>B \<subseteq> A + B\<close>
+      using subset_iff set_zero_plus2 by blast        
+    hence \<open>\<forall> z \<in> B. \<langle> z , x \<rangle> = 0\<close>
+      using t1 by auto   
     hence \<open>x \<in> (orthogonal_complement B)\<close>
       by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
-    show ?thesis 
-      using \<open>x \<in> (orthogonal_complement A)\<close> \<open>x \<in> (orthogonal_complement B)\<close> by auto
+    thus ?thesis 
+      using w1 by auto
   qed
-  moreover have \<open>x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B) \<Longrightarrow> x \<in> (orthogonal_complement (A +\<^sub>M B))\<close> for x
+  moreover have "x \<in> (orthogonal_complement (A +\<^sub>M B))"
+    if v1: "x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)"
+    for x
   proof-
-    assume \<open>x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close>
-    hence \<open>x \<in> (orthogonal_complement A)\<close> by blast
-    hence \<open> \<forall> y\<in> A. \<langle> y , x \<rangle> = 0\<close>
+    have \<open>x \<in> (orthogonal_complement A)\<close> 
+      using v1
+      by blast
+    hence \<open>\<forall>y\<in> A. \<langle> y , x \<rangle> = 0\<close>
       by (simp add: orthogonal_complement_D2)
-    have \<open>x \<in> (orthogonal_complement B)\<close> using \<open>x \<in> (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close> by blast
+    have \<open>x \<in> (orthogonal_complement B)\<close> 
+      using v1 
+      by blast
     hence \<open>\<forall> y\<in> B. \<langle> y , x \<rangle> = 0\<close>
       by (simp add: orthogonal_complement_D2)
     have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b , x \<rangle> = 0\<close>
@@ -2266,17 +2261,20 @@ theorem ortho_decomp:
   by (smt subspace_orthog)
 
 lemma DeMorganOrthoDual:
-  fixes A B::"('a::chilbert_space) set"
-  assumes \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close>
-  shows  \<open>orthogonal_complement (A \<inter> B) = ((orthogonal_complement A) +\<^sub>M (orthogonal_complement B))\<close>  
+  fixes A B::"'a::chilbert_space set"
+  assumes a1: \<open>closed_subspace A\<close> and a2: \<open>closed_subspace B\<close>
+  shows  \<open>orthogonal_complement (A \<inter> B) = orthogonal_complement A +\<^sub>M orthogonal_complement B\<close>
 proof-
-  have \<open>orthogonal_complement (A \<inter> B) = (orthogonal_complement ((orthogonal_complement (orthogonal_complement A)) \<inter> (orthogonal_complement (orthogonal_complement B) )))\<close>
+  have \<open>orthogonal_complement (A \<inter> B) 
+    = orthogonal_complement ((orthogonal_complement (orthogonal_complement A)
+   \<inter> orthogonal_complement (orthogonal_complement B) ))\<close>
     by (metis assms(1) assms(2) orthogonal_complement_twice)
-  also have \<open>... = (orthogonal_complement ( orthogonal_complement ((orthogonal_complement A) +\<^sub>M (orthogonal_complement B)) ))\<close>
+  also have \<open>... = orthogonal_complement ( orthogonal_complement ((orthogonal_complement A)
+                     +\<^sub>M (orthogonal_complement B)) )\<close>
     using DeMorganOrtho assms(1) assms(2) complex_vector.subspace_def
     by (simp add: DeMorganOrtho)
-  also have \<open>... = ((orthogonal_complement A) +\<^sub>M (orthogonal_complement B))\<close>
-    using assms(1) assms(2) orthogonal_complement_twice
+  also have \<open>... = (orthogonal_complement A +\<^sub>M orthogonal_complement B)\<close>
+    using a1 a2 orthogonal_complement_twice
       complex_vector.subspace_def
     by (simp add: orthogonal_complement_twice subspace_closed_plus)
   finally show ?thesis by blast
@@ -2376,133 +2374,114 @@ qed
 
 lemma inner_product_projection:
   fixes x t :: \<open>'a::chilbert_space\<close>
-  assumes \<open>closed_subspace M\<close> and \<open>t \<noteq> 0\<close> and \<open>t \<in> M\<close>
-    and \<open>\<forall> m \<in> M. \<exists> k. m = k *\<^sub>C t\<close>
+  assumes a1: \<open>closed_subspace M\<close> and a2: \<open>t \<noteq> 0\<close> and a3: \<open>t \<in> M\<close>
+    and a4: \<open>\<forall> m \<in> M. \<exists> k. m = k *\<^sub>C t\<close>
   shows \<open>projection M x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close>
 proof-
-  have \<open>(\<langle>t , t\<rangle>) \<noteq> 0\<close>
-    using \<open>t \<noteq> 0\<close>
+  have tt: \<open>\<langle>t , t\<rangle> \<noteq> 0\<close>
+    by (simp add: a2)
+  obtain k where k_def: \<open>projection M x = k *\<^sub>C t\<close>
+    using assms(1) assms(4) projection_intro2 by blast
+  have \<open>projection (orthogonal_complement M) x \<in> orthogonal_complement M\<close>
+    by (simp add: a1 projection_intro2)
+  hence t1: \<open>\<langle>t , projection (orthogonal_complement M) x\<rangle> = 0\<close>
+    using a3
+    unfolding orthogonal_complement_def is_orthogonal_def
+    by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm)
+  have \<open>(\<langle>t , x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t =
+ (\<langle>t , projection M x + projection (orthogonal_complement M) x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
+    using a1 ortho_decomp by fastforce
+  also have \<open>... = (\<langle>t , (projection M) x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
+    using t1 by (simp add: cinner_right_distrib) 
+  also have \<open>... = (\<langle>t , (k *\<^sub>C t)\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
+    using k_def 
     by simp
-  obtain k where \<open>(projection M) x = k *\<^sub>C t\<close>
-    using assms(1) assms(4) projection_intro2 by blast    
-  have \<open>((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t =
- ((\<langle>t , ((projection M) x + (projection (orthogonal_complement M)) x)\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
-    using assms(1) ortho_decomp by fastforce
-  also have \<open>... = ((\<langle>t , ((projection M) x)\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
-  proof-
-    have \<open> (projection (orthogonal_complement M)) x \<in> orthogonal_complement M\<close>
-      by (simp add: assms(1) projection_intro2)
-    hence \<open>\<langle>t , (projection (orthogonal_complement M)) x\<rangle> = 0\<close>
-      using \<open>t \<in> M\<close>
-      unfolding orthogonal_complement_def
-      unfolding is_orthogonal_def
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm)
-    thus ?thesis
-      by (simp add: cinner_right_distrib) 
-  qed
-  also have \<open>... = ((\<langle>t , (k *\<^sub>C t)\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
-    using \<open>(projection M) x = k *\<^sub>C t\<close> 
-    by simp
-  also have \<open>... = ((k*(\<langle>t , t\<rangle>))/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
+  also have \<open>... = (k*\<langle>t , t\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
     by simp   
   also have \<open>... = k *\<^sub>C t\<close>
-    using  \<open>(\<langle>t , t\<rangle>) \<noteq> 0\<close> by simp
-  finally show ?thesis using \<open>(projection M) x = k *\<^sub>C t\<close> 
-    by auto
+    using  tt by simp
+  finally show ?thesis
+    using k_def by auto      
 qed
 
 
 subsection \<open>Riesz Representation\<close>
 
-definition proportion :: \<open>('a::complex_vector) set \<Rightarrow> bool\<close> where
+definition proportion :: \<open>'a::complex_vector set \<Rightarrow> bool\<close> where
   \<open>proportion S =  (
   \<forall> x y. x \<in> S \<and> x \<noteq> 0 \<and> y \<in> S \<and> y \<noteq> 0 \<longrightarrow> (\<exists> k. x = k *\<^sub>C y) 
 )\<close>
 
 lemma proportion_existence:
-  \<open>proportion S \<Longrightarrow> S \<noteq> {} \<Longrightarrow> \<exists> t \<in> S. (\<forall> x \<in> S. \<exists> k. x = k *\<^sub>C t)\<close>
-  using complex_vector.scale_zero_left ex_in_conv proportion_def
+  assumes a1: "proportion S" and a2: "S \<noteq> {}"
+  shows "\<exists> t \<in> S. \<forall> x \<in> S. \<exists> k. x = k *\<^sub>C t" 
+  using a1 a2 complex_vector.scale_zero_left ex_in_conv proportion_def
   by metis
 
 type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
 
 lemma ker_ortho_nonzero:
-  fixes f :: \<open>('a::chilbert_space) functional\<close> and x :: 'a
-  assumes \<open>cbounded_linear f\<close> and \<open>x \<noteq> 0\<close> and \<open>x \<in> (orthogonal_complement (f -` {0}))\<close> 
+  fixes f :: \<open>'a::chilbert_space functional\<close> and x :: 'a
+  assumes a1: \<open>cbounded_linear f\<close> and a2: \<open>x \<noteq> 0\<close> and a3: \<open>x \<in> orthogonal_complement (f -` {0})\<close> 
   shows \<open>f x \<noteq> 0\<close>
-proof(rule classical)
-  have \<open>closed_subspace (f -` {0})\<close> using \<open>cbounded_linear f\<close>
-    by (simp add: ker_op_lin) 
-  assume \<open>\<not>(f x \<noteq> 0)\<close>
-  hence \<open>x \<in> f -` {0}\<close>
-    by simp  
-  moreover have \<open>(f -` {0})\<inter>(orthogonal_complement (f -` {0})) = {0}\<close>
-    using \<open>closed_subspace (f -` {0})\<close>  ortho_inter_zero
-    by (metis assms(3) projectionPropertiesD projection_intro2 vimage_singleton_eq)    
-  ultimately have  \<open>x \<notin> orthogonal_complement (f -` {0})\<close> using \<open>x \<noteq> 0\<close>
-    by (smt Int_iff empty_iff insert_iff) 
-  thus ?thesis using \<open>x \<in> orthogonal_complement (f -` {0})\<close> by blast
-qed
+  using a1 a2 a3 ker_op_lin projectionPropertiesD projection_fixed_points by force
 
 lemma ker_unidim:
-  fixes f :: \<open>('a::chilbert_space) functional\<close>
-  assumes \<open>cbounded_linear f\<close>
+  fixes f :: \<open>'a::chilbert_space functional\<close>
+  assumes a1: \<open>cbounded_linear f\<close>
   shows \<open>proportion (orthogonal_complement (f -` {0}))\<close>
 proof-
-  have \<open>x \<in> (orthogonal_complement (f -` {0})) \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> y \<in> orthogonal_complement (f -` {0})
- \<Longrightarrow> y \<noteq> 0  \<Longrightarrow> \<exists> k. x = k *\<^sub>C y\<close>
+  have "\<exists> k. x = k *\<^sub>C y"
+    if b1: \<open>x \<in> (orthogonal_complement (f -` {0}))\<close> and b2: \<open>x \<noteq> 0\<close> 
+      and b3:  \<open>y \<in>(orthogonal_complement (f -` {0}))\<close> and b4: \<open>y \<noteq> 0\<close>
     for x y
   proof-
-    assume \<open>x \<in> (orthogonal_complement (f -` {0}))\<close> and \<open>x \<noteq> 0\<close> and \<open>y \<in>(orthogonal_complement (f -` {0}))\<close> and \<open>y \<noteq> 0\<close>
-    from \<open>cbounded_linear f\<close> 
-    have \<open>closed_subspace (f -` {0})\<close>
+    have f1: \<open>closed_subspace (f -` {0})\<close>
+      using a1
       by (simp add: ker_op_lin)
-    hence \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
+    hence r3: \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
       by simp
-    hence \<open>f x \<noteq> 0\<close>
-      using \<open>closed_subspace (f -` {0})\<close> \<open>x \<in> orthogonal_complement (f -` {0})\<close> \<open>x \<noteq> 0\<close> projectionPropertiesD projection_fixed_points by force
-    have \<open>f y \<noteq> 0\<close>
-      by (metis \<open>y \<in> orthogonal_complement (f -` {0})\<close> \<open>y \<noteq> 0\<close> cinner_eq_zero_iff orthogonal_complement_D2 vimage_singleton_eq)
-    from  \<open>f x \<noteq> 0\<close>  \<open>f y \<noteq> 0\<close>
+    hence r1: \<open>f x \<noteq> 0\<close>
+      by (simp add: assms b1 b2 ker_ortho_nonzero)
+    have r2: \<open>f y \<noteq> 0\<close>
+      by (simp add: assms b3 b4 ker_ortho_nonzero)
     have \<open>\<exists> k. (f x) = k*(f y)\<close>
-      by (metis add.inverse_inverse minus_divide_eq_eq)
-    then obtain k where \<open>(f x) = k*(f y)\<close>
+      by (metis add.inverse_inverse minus_divide_eq_eq r2)
+    then obtain k where k_def: \<open>f x = k * f y\<close>
       by blast
-    hence  \<open>(f x) = (f (k *\<^sub>C y))\<close>
-      using  \<open>cbounded_linear f\<close>
+    hence  \<open>f x = f (k *\<^sub>C y)\<close>
+      using a1
       unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_scale)
-    hence  \<open>(f x) - (f (k *\<^sub>C y)) = 0\<close>
+    hence  \<open>f x - f (k *\<^sub>C y) = 0\<close>
       by simp
-    hence  \<open>f (x - (k *\<^sub>C y)) = 0\<close>
-      using additive.diff  \<open>cbounded_linear f\<close>
+    hence s1: \<open>f (x - k *\<^sub>C y) = 0\<close>
+      using additive.diff a1
       unfolding cbounded_linear_def
       by (simp add: complex_vector.linear_diff)        
-    hence  \<open>(x - (k *\<^sub>C y)) \<in> f -` {0}\<close>
+    have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (f -` {0}))\<close>
+      using r3 complex_vector.subspace_scale
+      unfolding closed_subspace_def
+      by (simp add: complex_vector.subspace_scale b3)
+    hence s2: \<open>x - (k *\<^sub>C y) \<in> orthogonal_complement (f -` {0})\<close>
+      by (smt f1 b1 eq_iff_diff_eq_0 is_projection_on_existence 
+          orthogonal_complement_twice projectionPropertiesD projection_fixed_points 
+          projection_fixed_points' projection_uniq' r3 s1 vimage_singleton_eq)
+    have s3: \<open>(x - (k *\<^sub>C y)) \<in> f -` {0}\<close>
+      using s1
       by simp
     moreover have \<open>(f -` {0}) \<inter> (orthogonal_complement (f -` {0})) = {0}\<close>
-      by (metis \<open>closed_subspace (f -` {0})\<close> \<open>x \<in> orthogonal_complement (f -` {0})\<close> ortho_inter_zero projectionPropertiesD projection_intro2 vimage_singleton_eq)
-    moreover have \<open>(x - (k *\<^sub>C y)) \<in> orthogonal_complement (f -` {0})\<close>
-    proof-
-      from  \<open>y \<in> (orthogonal_complement (f -` {0}))\<close>
-      have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (f -` {0}))\<close>
-        using \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
-        unfolding closed_subspace_def
-        by (simp add: complex_vector.subspace_scale)        
-      thus ?thesis using  \<open>x \<in> (orthogonal_complement (f -` {0}))\<close>  \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
-        unfolding closed_subspace_def
-        using \<open>closed_subspace (f -` {0})\<close> add_diff_cancel_left' calculation(1) 
-          diff_add_cancel diff_zero  projection_uniq
-        by (simp add: complex_vector.subspace_diff)
-    qed
+      by (metis f1 b1 ortho_inter_zero projectionPropertiesD projection_intro2 vimage_singleton_eq)    
     ultimately have \<open>x - (k *\<^sub>C y) = 0\<close>
-      using \<open>f (x - k *\<^sub>C y) = 0\<close> \<open>x - k *\<^sub>C y \<in> orthogonal_complement (f -` {0})\<close> 
-        assms ker_ortho_nonzero by blast
+      using s2 by blast
     thus ?thesis by simp
   qed 
   thus ?thesis
     by (simp add: proportion_def) 
 qed
+
+
+(*here*)
 
 lemma riesz_frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space functional\<close>
