@@ -2480,12 +2480,9 @@ proof-
     by (simp add: proportion_def) 
 qed
 
-
-(*here*)
-
 lemma riesz_frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space functional\<close>
-  assumes \<open>cbounded_linear f\<close>
+  assumes a1: \<open>cbounded_linear f\<close>
   shows \<open>\<exists>t. \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
@@ -2493,92 +2490,79 @@ proof(cases \<open>\<forall> x. f x = 0\<close>)
     by (metis cinner_zero_left) 
 next
   case False
-  thus ?thesis 
+  have r1: \<open>proportion (orthogonal_complement (f -` {0}))\<close>
+    using a1
+    by (simp add: ker_unidim)    
+  have "(\<exists>a\<in>orthogonal_complement (f -` {0}). a \<noteq> 0)
+     \<or> orthogonal_complement (f -` {0}) \<noteq> {} \<and> f -` {0} \<noteq> UNIV"
+    by (metis (no_types) False UNIV_I assms insert_absorb ker_op_lin ortho_bot 
+        orthogonal_complement_twice projection_intro1 vimage_singleton_eq)
+  hence  r2: \<open>\<exists> h \<in> (orthogonal_complement (f -` {0})). h \<noteq> 0\<close>
+    by (metis (no_types) assms insertI1 is_singletonE is_singletonI' ker_op_lin ortho_bot 
+        orthogonal_complement_twice)        
+  have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t)\<close>
+    using r1 r2
+    by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
+  then obtain t where w1: \<open>t \<noteq> 0\<close> and w2: \<open>\<forall>x\<in>orthogonal_complement (f -` {0}). \<exists>k. x = k *\<^sub>C t\<close>
+    by blast
+  have q1: \<open>closed_subspace (orthogonal_complement (f -` {0}))\<close>
+    by (simp add: assms ker_op_lin)
+  have \<open>\<exists>s \<in> (orthogonal_complement (f -` {0})). s \<noteq> 0\<close>
+    by (simp add: r2)
+  then obtain s where s1: \<open>s \<in> (orthogonal_complement (f -` {0}))\<close> and s2: \<open>s \<noteq> 0\<close>
+    by blast
+  have \<open>\<exists> k. s = k *\<^sub>C t\<close>
+    by (simp add: s1 w2)    
+  then obtain k where k_def: \<open>s = k *\<^sub>C t\<close>
+    by blast
+  have  \<open>k \<noteq> 0\<close>
+    using k_def s2 by auto    
+  hence  \<open>(1/k) *\<^sub>C s = t\<close>
+    by (simp add: k_def)
+  moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (f -` {0}))\<close>
+    unfolding closed_subspace_def
+    by (simp add: s1 orthogonal_complement_D2 orthogonal_complement_I1)
+  ultimately have w3: \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
+    by simp
+  have \<open>projection (orthogonal_complement (f -` {0})) x = (\<langle>t , x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
+    for x
+    using inner_product_projection
+    by (simp add: inner_product_projection q1 w1 w2 w3) 
+  hence l1: \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
+    for x
+    using a1
+    unfolding cbounded_linear_def
+    by (simp add: complex_vector.linear_scale)
+  hence l2: \<open>f (projection (orthogonal_complement (f -` {0})) x) = \<langle>((cnj (f t)/\<langle>t , t\<rangle>) *\<^sub>C t) , x\<rangle>\<close>
+    for x
   proof-
-    from \<open>cbounded_linear f\<close>
-    have \<open>proportion (orthogonal_complement (f -` {0}))\<close>
-      by (simp add: ker_unidim)
-    moreover have \<open>\<exists> h \<in> (orthogonal_complement (f -` {0})). h \<noteq> 0\<close>
-    proof -
-      have "(\<exists>a\<in>orthogonal_complement (f -` {0}). a \<noteq> 0) \<or> orthogonal_complement (f -` {0}) \<noteq> {} \<and> f -` {0} \<noteq> UNIV"
-        by (metis (no_types) False UNIV_I assms insert_absorb ker_op_lin ortho_bot orthogonal_complement_twice projection_intro1 vimage_singleton_eq)
-      thus ?thesis
-        by (metis (no_types) assms insertI1 is_singletonE is_singletonI' ker_op_lin ortho_bot orthogonal_complement_twice)
-    qed
-    ultimately have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t)\<close>
-      by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
-    then obtain t where \<open>t \<noteq> 0\<close> and \<open>\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t\<close>
-      by blast
-    have  \<open>closed_subspace ( orthogonal_complement (f -` {0}))\<close>
-      by (simp add: assms ker_op_lin)
-    hence  \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
-    proof-
-      have \<open>\<exists> s \<in> (orthogonal_complement (f -` {0})). s \<noteq> 0\<close>
-        by (simp add: \<open>\<exists>h\<in>orthogonal_complement (f -` {0}). h \<noteq> 0\<close>)
-      then obtain s where \<open>s \<in> (orthogonal_complement (f -` {0}))\<close> and \<open>s \<noteq> 0\<close>
-        by blast
-      have \<open>\<exists> k. s = k *\<^sub>C t\<close>
-        by (simp add: \<open>\<forall>x\<in>orthogonal_complement (f -` {0}). \<exists>k. x = k *\<^sub>C t\<close> \<open>s \<in> orthogonal_complement (f -` {0})\<close>)
-      then obtain k where \<open>s = k *\<^sub>C t\<close>
-        by blast
-      have  \<open>k \<noteq> 0\<close>
-        using \<open>s \<noteq> 0\<close>
-        by (simp add: \<open>s = k *\<^sub>C t\<close>) 
-      hence  \<open>(1/k) *\<^sub>C s = t\<close>
-        using  \<open>s = k *\<^sub>C t\<close> by simp
-      moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (f -` {0}))\<close>
-        unfolding closed_subspace_def
-        by (simp add: \<open>s \<in> orthogonal_complement (f -` {0})\<close> orthogonal_complement_D2 orthogonal_complement_I1)
-      ultimately show ?thesis
-        by simp 
-    qed
-    have \<open>projection (orthogonal_complement (f -` {0})) x = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) *\<^sub>C t\<close>
-      for x
-      using inner_product_projection \<open>closed_subspace  (orthogonal_complement (f -` {0}))\<close>
-        \<open>\<forall> m \<in>  (orthogonal_complement (f -` {0})). \<exists> k. m = k *\<^sub>C t\<close>  \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
-      by (simp add: inner_product_projection \<open>t \<noteq> 0\<close>)
-    hence \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
-      for x
-      using \<open>cbounded_linear f\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_scale)
-    hence \<open>f (projection (orthogonal_complement (f -` {0})) x) = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
-      for x
-    proof-
-      from \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
-      have \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((f t)/(\<langle>t , t\<rangle>)) * (\<langle>t , x\<rangle>)\<close>
-        by simp
-      thus ?thesis
-        by auto 
-    qed
-    moreover have \<open>f (projection (f -` {0}) x) = 0\<close>
-      for x
-      using  assms ker_op_lin projection_intro2 by blast
-    ultimately have \<open>f x = \<langle>(((cnj (f t))/(\<langle>t , t\<rangle>)) *\<^sub>C t) , x\<rangle>\<close>
-      for x
-    proof -
-      assume "\<And>x. f (projection (f -` {0}) x) = 0"
-      hence "\<And>a b. f (projection (f -` {0}) a + b) = 0 + f b"
-        using additive.add assms 
-        by (simp add: cbounded_linear_def complex_vector.linear_add)
-      hence "\<And>a. 0 + f (projection (orthogonal_complement (f -` {0})) a) = f a"
-        by (metis (no_types) assms ker_op_lin ortho_decomp)
-      thus ?thesis
-        by (simp add: \<open>\<And>x. f (projection (orthogonal_complement (f -` {0})) x) = \<langle>(cnj (f t) / \<langle>t, t\<rangle>) *\<^sub>C t, x\<rangle>\<close>)
-    qed
+    have \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((f t)/(\<langle>t , t\<rangle>)) * (\<langle>t , x\<rangle>)\<close>
+      by (simp add: l1)
     thus ?thesis
-      by blast  
+      by auto 
   qed
+  have l3: \<open>f (projection (f -` {0}) x) = 0\<close>
+    for x
+    using  assms ker_op_lin projection_intro2 by blast
+  have "\<And>a b. f (projection (f -` {0}) a + b) = 0 + f b"
+    using additive.add assms l3
+    by (simp add: cbounded_linear_def complex_vector.linear_add)
+  hence "\<And>a. 0 + f (projection (orthogonal_complement (f -` {0})) a) = f a"
+    by (metis (no_types) assms ker_op_lin ortho_decomp)
+  hence \<open>f x = \<langle>(cnj (f t)/\<langle>t , t\<rangle>) *\<^sub>C t, x\<rangle>\<close>
+    for x
+    by (simp add: l2) 
+  thus ?thesis
+    by blast
 qed
 
 subsection \<open>Adjointness\<close>
-
 definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>)\<close>
   for G :: "'b::complex_inner \<Rightarrow> 'a::complex_inner"
-
+(*here*)
 lemma Adj_I:
   fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
-  assumes \<open>cbounded_linear G\<close>
+  assumes a1: \<open>cbounded_linear G\<close>
   shows \<open>\<forall>x. \<forall>y. \<langle>Adj G x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
 proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>"])
   include notation_norm
