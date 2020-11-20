@@ -525,10 +525,10 @@ lemma cGDERIV_diff:
   using a1 a2
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
-(* Ask to Dominique
+
 lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
-*)
+
 
 (* Ask to Dominique
 lemma cGDERIV_scaleC:
@@ -4073,9 +4073,7 @@ lemma finite_span_complete_aux:
   assumes "finite B" and "b\<in>B" and "independent B"
   shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (real_vector.span B)"
-    (* Ask to Dominique: why there is an error here?
-
-    \<Longrightarrow> José, because the theory Types_To_Sets was not imported which defines internalize_sort*)
+  
   text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
      \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
      content of the lemmas. However, there is one difference: We additionally assume here
