@@ -525,10 +525,12 @@ lemma cGDERIV_diff:
   using a1 a2
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
+(* Ask to Dominique:
+(It works on Dominique's computer in commit 432c931ba428f7af47c1654436b4160493f3208a)
 
 lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
-
+*)
 
 (* Ask to Dominique
 lemma cGDERIV_scaleC:
@@ -541,12 +543,12 @@ lemma cGDERIV_scaleC:
   by (simp add: ac_simps)
 *)
 
-
 (* Ask to Dominique: how to simplify this lemma *)
 lemma cGDERIV_mult:
-  "cGDERIV f x :> df \<Longrightarrow>
-    cGDERIV g x :> dg \<Longrightarrow>
-    cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
+  assumes "cGDERIV f x :> df"
+  assumes "cGDERIV g x :> dg"
+  shows "cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
+  using assms apply -
   unfolding cgderiv_def
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_mult)
