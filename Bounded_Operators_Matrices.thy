@@ -686,7 +686,8 @@ proof-
          (onb_enum_of_vec_list basis w)\<close> 
             complex_vector.sum_nonzero_representation_eq h2 h3 h5 subset_iff 
             sum.mono_neutral_cong_left
-        by (smt ) (* > 1 s*)
+        using [[smt_timeout=60]] (* Rarely needed but our CircleCI process can fail otherwise *)
+        by smt (* > 1 s*)
       have h7: "distinct basis"
         by (simp add: basis_def)
       have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
