@@ -3282,5 +3282,11 @@ proof transfer
     by simp
 qed
 
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", 
+  SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+
 
 end

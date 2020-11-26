@@ -2780,24 +2780,25 @@ proof-
     by (smt Adj_D)  
 qed
 
-(*here*)
+
 lemma scalar_times_adjc_flatten:
-  fixes A::\<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  assumes \<open>bounded_linear A\<close> and \<open>\<forall>c x. A (c *\<^sub>C x) = c *\<^sub>C A x\<close> 
-  shows \<open>(\<lambda> t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
+  fixes A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
+  assumes a1: "bounded_linear A" and a2: "\<And>c x. A (c *\<^sub>C x) = c *\<^sub>C A x"
+  shows \<open>(\<lambda>t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda>s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
 proof-
-  from \<open>bounded_linear A\<close>
-  have \<open>bounded_linear (\<lambda> t. a *\<^sub>C (A t))\<close>
-    by (simp add: cbounded_linear.bounded_linear cbounded_linear_scaleC_right bounded_linear_compose)
-  moreover have \<open>cbounded_linear (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
-  proof-
-    from \<open>bounded_linear A\<close>
-    have \<open>bounded_linear (A\<^sup>\<dagger>)\<close>
-      using Adj_cbounded_linear assms(2) cbounded_linear.bounded_linear bounded_linear_cbounded_linear by blast
-    thus ?thesis
-      by (simp add: Adj_cbounded_linear assms(1) assms(2) cbounded_linear_const_scaleC bounded_linear_cbounded_linear) 
-  qed
-  moreover have \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
+  have b1: \<open>bounded_linear (\<lambda> t. a *\<^sub>C (A t))\<close>
+    using a1
+    by (simp add: cbounded_linear.bounded_linear cbounded_linear_scaleC_right 
+        bounded_linear_compose)
+
+  have \<open>bounded_linear (A\<^sup>\<dagger>)\<close>
+    using a1 a2 Adj_cbounded_linear cbounded_linear.bounded_linear bounded_linear_cbounded_linear 
+    by blast
+  hence b2: \<open>cbounded_linear (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
+    by (simp add: Adj_cbounded_linear a1 a2 cbounded_linear_const_scaleC 
+        bounded_linear_cbounded_linear)
+
+  have b3: \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
     for x y
   proof-
     have \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>(cnj a) *\<^sub>C ((A\<^sup>\<dagger>) x), y \<rangle>\<close>
@@ -2820,104 +2821,79 @@ proof-
       by simp
     thus ?thesis by blast
   qed
-  ultimately show ?thesis
-  proof - (* sledgehammer *)
-    assume a1: "\<And>x y. \<langle>cnj a *\<^sub>C (A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, a *\<^sub>C A y\<rangle>"
-    { fix bb :: 'b
-      have "\<And>b aa. \<langle>cnj a *\<^sub>C (A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
-        using a1 by (metis (lifting) assms(2))
-      hence "\<And>aa b. \<langle>aa, cnj a *\<^sub>C (A\<^sup>\<dagger>) b\<rangle> = cnj \<langle>b, A (a *\<^sub>C aa)\<rangle>"
-        by (metis (lifting) cinner_commute')
-      hence "\<And>b aa. a *\<^sub>C \<langle>(A\<^sup>\<dagger>) b, aa\<rangle> = \<langle>b, A (a *\<^sub>C aa)\<rangle>"
-        by (metis (no_types) cinner_commute' cinner_scaleC_left cinner_scaleC_right complex_scaleC_def)
-      hence "(\<lambda>b. cnj a *\<^sub>C (A\<^sup>\<dagger>) b) = (\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>"
-        by (simp add: Adj_D \<open>bounded_linear (\<lambda>t. a *\<^sub>C A t)\<close> assms(2) bounded_linear_cbounded_linear)
-      hence "cnj a *\<^sub>C (A\<^sup>\<dagger>) bb = ((\<lambda>aa. a *\<^sub>C A aa)\<^sup>\<dagger>) bb"
-        by metis }
+
+  have "((\<lambda>t. a *\<^sub>C A t)\<^sup>\<dagger>) b = cnj a *\<^sub>C (A\<^sup>\<dagger>) b"
+    for b::'b
+  proof-
+    have "\<forall>t c. c *\<^sub>C a *\<^sub>C A t = a *\<^sub>C A (c *\<^sub>C t)"
+      using a2 by force
+    hence "cbounded_linear (\<lambda>t. a *\<^sub>C A t)"
+      by (simp add: b1 bounded_linear_cbounded_linear)
     thus ?thesis
-      by presburger
-  qed  
+      by (metis (no_types) Adj_D b3) 
+  qed
+  thus ?thesis
+    by blast
 qed
 
 lemma projection_D1':
   fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_subspace M\<close>
+  assumes a1: \<open>is_projection_on \<pi> M\<close> and a2: \<open>closed_subspace M\<close>
   shows \<open>\<pi> = \<pi>\<^sup>\<dagger>\<close>
 proof-
-  have \<open>\<pi> x = (\<pi>\<^sup>\<dagger>) x\<close>
+  have b1: \<open>\<pi> x = (\<pi>\<^sup>\<dagger>) x\<close>
     for x
   proof-
-    have "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
+    have d1: "\<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0"
+      if "y \<in> M"
+      for y :: 'a
     proof-
-      have "\<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0"
-        if "y \<in> M"
-        for y :: 'a
-      proof-
-        have \<open>y = \<pi> y\<close>
-          using that(1) assms(1) assms(2) projection_fixed_points' 
-          by fastforce 
-        hence \<open>y - \<pi> y = 0\<close>
-          by simp
-        have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
-          by (simp add: cinner_diff_left)
-        also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
-          using Adj_I assms(1) assms(2) projectionPropertiesA' 
-          by auto          
-        also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
-          by (simp add: cinner_diff_right)
-        also have \<open>... = \<langle>x, 0\<rangle>\<close>
-          using  \<open>y - \<pi> y = 0\<close>
-          by simp
-        also have \<open>... = 0\<close>
-          by simp          
-        finally show ?thesis
-          by simp 
-      qed
-      thus ?thesis
-      proof - (* sledgehammer *)
-        obtain aa :: "'a \<Rightarrow> 'a set \<Rightarrow> 'a" where
-          "\<forall>x0 x1. (\<exists>v2. v2 \<in> x1 \<and> \<langle>x0, v2\<rangle> \<noteq> 0) = (aa x0 x1 \<in> x1 \<and> \<langle>x0, aa x0 x1\<rangle> \<noteq> 0)"
-          by moura
-        hence f1: "\<forall>A a. aa a A \<in> A \<and> \<langle>a, aa a A\<rangle> \<noteq> 0 \<or> a \<in> orthogonal_complement A"
-          by (meson orthogonal_complement_I2)
-        have f2: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
-          by (metis \<open>is_projection_on \<pi> M\<close> is_projection_on_def)
-        hence f3: "\<pi> (\<pi> x) = \<pi> x"
-          by (metis \<open>closed_subspace M\<close> \<open>is_projection_on \<pi> M\<close> projection_fixed_points')
-        { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> 0"
-          { assume "\<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> \<langle>x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
-            hence "(+) \<langle>\<pi> x - \<pi> (\<pi> x), aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> \<noteq> (+) \<langle>x - \<pi> x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle>"
-              using f3 by (metis (no_types) cinner_diff_left diff_add_cancel)
-            hence "aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M \<notin> M \<or> \<langle>\<pi> x - (\<pi>\<^sup>\<dagger>) x, aa (\<pi> x - (\<pi>\<^sup>\<dagger>) x) M\<rangle> = 0"
-              using f2 by (metis \<open>closed_subspace M\<close> orthogonal_complement_D2 orthogonal_complement_twice) }
-          hence ?thesis
-            using f1 by (metis (no_types) \<open>\<And>y. y \<in> M \<Longrightarrow> \<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0\<close>) }
-        thus ?thesis
-          using f1 by metis
-      qed        
+      have \<open>y = \<pi> y\<close>
+        using that(1) assms(1) assms(2) projection_fixed_points' 
+        by fastforce 
+      hence \<open>y - \<pi> y = 0\<close>
+        by simp
+      have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
+        by (simp add: cinner_diff_left)
+      also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
+        using Adj_I assms(1) assms(2) projectionPropertiesA' 
+        by auto          
+      also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
+        by (simp add: cinner_diff_right)
+      also have \<open>... = \<langle>x, 0\<rangle>\<close>
+        using  \<open>y - \<pi> y = 0\<close>
+        by simp
+      also have \<open>... = 0\<close>
+        by simp          
+      finally show ?thesis
+        by simp 
     qed
-    moreover have "(\<pi>\<^sup>\<dagger>) x \<in> M"
+    hence c2: "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
+      by (smt Adj_I' a1 a2 cinner_diff_right is_projection_on_def minus_diff_eq
+          orthogonal_complement_D2 orthogonal_complement_I1 projectionPropertiesA' 
+          projection_fixed_points')
+    have "\<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
+      if "y \<in> orthogonal_complement M"
+      for y
     proof-
-      have "y \<in> orthogonal_complement M \<Longrightarrow> \<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
-        for y
-      proof-
-        assume \<open>y \<in> orthogonal_complement M\<close>
-        hence \<open>\<pi> y = 0\<close>
-          by (metis assms(1) assms(2) cinner_zero_left diff_zero orthogonal_complement_I2 orthogonal_complement_twice projection_uniq')           
-        hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
-          by simp
-        thus ?thesis
-          using Adj_I assms projectionPropertiesA'
-          by fastforce 
-      qed
-      hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
-        unfolding orthogonal_complement_def is_orthogonal_def
-        by simp        
+      have \<open>\<pi> y = 0\<close>
+        by (metis a1 a2 diff_0_right diff_self is_projection_on_existence 
+            orthogonal_complement_twice projection_fixed_points' projection_intro1' projection_uniq' 
+            subspace_orthog that)           
+      hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
+        by simp
       thus ?thesis
-        by (simp add: assms orthogonal_complement_twice) 
+        using Adj_I assms projectionPropertiesA'
+        by fastforce 
     qed
-    ultimately show ?thesis
-      by (metis assms(1) assms(2) is_projection_on_def projection_fixed_points projection_uniq) 
+
+    hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
+      unfolding orthogonal_complement_def is_orthogonal_def
+      by simp        
+    hence c1: "(\<pi>\<^sup>\<dagger>) x \<in> M"
+      by (simp add: assms orthogonal_complement_twice)    
+    show ?thesis
+      by (metis a1 a2 c1 c2 is_projection_on_def projection_fixed_points projection_uniq) 
   qed
   thus ?thesis by blast
 qed
@@ -2932,20 +2908,21 @@ lemma projection_D1:
 
 
 lemma closed_subspace_closure:
-  fixes f::\<open>('a::complex_inner) \<Rightarrow> ('b::complex_inner)\<close>
+  fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close>
     and S::\<open>'a set\<close>
-  assumes "clinear f" and "complex_vector.subspace S"
+  assumes a1: "clinear f" and a2: "complex_vector.subspace S"
   shows  \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
 proof -
-  have "complex_vector.subspace {f x |x. x \<in> S}"
+  have b1: "complex_vector.subspace {f x |x. x \<in> S}"
     using assms Setcompr_eq_image
     by (simp add: Setcompr_eq_image complex_vector.linear_subspace_image)
-  thus \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
-    apply (rule_tac closed_subspace.intro)
-    apply (simp add: subspace_cl)
-    by simp
+  have b2: "csubspace (closure {f x |x. x \<in> S})"
+    if "csubspace {f x |x. x \<in> S}"
+    using that
+    by (simp add: subspace_cl) 
+  show \<open>closed_subspace (closure {f x |x. x \<in> S})\<close>
+    using b2 b1 subspace_I by auto
 qed
-
 
 instantiation clinear_space :: (complex_inner) "uminus"
 begin
@@ -2956,15 +2933,13 @@ lift_definition uminus_clinear_space::\<open>'a clinear_space  \<Rightarrow> 'a 
 instance ..
 end
 
-
-
 instantiation clinear_space :: (complex_inner) "Sup"
 begin
 lift_definition Sup_clinear_space::\<open>'a clinear_space set \<Rightarrow> 'a clinear_space\<close>
-  is \<open>\<lambda> S. closure (complex_vector.span (Union S))\<close>
+  is \<open>\<lambda>S. closure (complex_vector.span (Union S))\<close>
 proof
   show "complex_vector.subspace (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_subspace x"
+    if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_subspace x"
     for S :: "'a set set"
     using that
     by (simp add: closed_subspace.subspace subspace_I) 
@@ -2980,7 +2955,8 @@ end
 
 
 instantiation clinear_space :: ("{complex_vector,topological_space}") inf begin 
-lift_definition inf_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" is "(\<inter>)" by simp
+lift_definition inf_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" 
+is "(\<inter>)" by simp
 instance .. end
 
 instantiation clinear_space :: (complex_normed_vector) sup begin
@@ -2992,29 +2968,58 @@ end
 
 instantiation clinear_space :: (complex_inner) minus begin
 lift_definition minus_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space"
-  is "\<lambda> A B. ( A \<inter> (orthogonal_complement B) )"
+  is "\<lambda>A B. A \<inter> (orthogonal_complement B)"
   by simp
 instance..
 end
 
 
 instantiation clinear_space :: ("{complex_vector,topological_space}") order_top begin
-instance apply intro_classes
-  apply transfer by simp
+instance 
+  proof
+  show "a \<le> \<top>"
+    for a :: "'a clinear_space"
+    apply transfer
+    by simp
+qed
 end
 
 instantiation clinear_space :: (chilbert_space) order_bot begin
-instance apply intro_classes
-  apply transfer 
-  using ortho_bot ortho_leq Complex_Vector_Spaces.subspace_0 
-  by blast 
+instance 
+  proof
+  show "(\<bottom>::'a clinear_space) \<le> a"
+    for a :: "'a clinear_space"
+    apply transfer
+    using Complex_Vector_Spaces.subspace_0 is_closed_subspace_universal_inclusion_left 
+      is_closed_subspace_zero by blast
+qed
 end
 
 instantiation clinear_space :: ("{complex_vector,topological_space}") semilattice_inf begin
-instance apply intro_classes
-  apply transfer apply simp
-  apply transfer apply simp
-  apply transfer by simp
+instance 
+  proof
+  show "x \<sqinter> y \<le> x"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
+    apply transfer
+    by simp
+
+  show "x \<sqinter> y \<le> y"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
+    apply transfer
+    by simp
+
+  show "x \<le> y \<sqinter> z"
+    if "x \<le> y"
+      and "x \<le> z"
+    for x :: "'a clinear_space"
+      and y :: "'a clinear_space"
+      and z :: "'a clinear_space"
+    using that 
+    apply transfer
+    by simp
+qed  
 end
 
 
@@ -3033,210 +3038,109 @@ of completeness.
 instantiation clinear_space :: (chilbert_space) lattice begin
 instance 
 proof
-  show \<open>(x::'a clinear_space) \<le> (sup x y)\<close>
+  show \<open>x \<le> (sup x y)\<close>
     for x :: "'a clinear_space"
       and y :: "'a clinear_space"
-  proof-
-    have \<open>t \<in> space_as_set x \<Longrightarrow>
-          t \<in> space_as_set
-                 (Abs_clinear_space
-                   (closure
-                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}))\<close>
-      for t
-    proof-
-      assume \<open>t \<in> space_as_set x\<close>
-      moreover have \<open>0 \<in> space_as_set y\<close>
-      proof-
-        have \<open>closed_subspace (space_as_set y)\<close>
-          using space_as_set by blast
-        thus ?thesis
-          using insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero
-          by (metis Complex_Vector_Spaces.subspace_0) 
-      qed
-      moreover have \<open>t = t + 0\<close>
-        by simp
-      ultimately have \<open>t \<in>  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
-        by force
-      hence \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
-        by (meson closure_subset subset_eq)        
-      thus ?thesis using Abs_clinear_space_inverse
-      proof -
-        have "t \<in> closure (space_as_set x + space_as_set y)"
-          using \<open>t \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set x \<and> \<phi> \<in> space_as_set y}\<close>
-          by (metis (no_types, lifting) \<open>0 \<in> space_as_set y\<close> \<open>t = t + 0\<close> \<open>t \<in> space_as_set x\<close> closure_subset in_mono set_plus_intro)
-        hence "t \<in> space_as_set (Abs_clinear_space (closure (space_as_set x + space_as_set y)))"
-          by (metis (no_types) Abs_clinear_space_inverse closed_sum_def mem_Collect_eq space_as_set subspace_closed_plus)
-        thus ?thesis
-          unfolding set_plus_def
-          by (smt Collect_cong)
-      qed
-    qed
-    thus ?thesis
-      unfolding  less_eq_clinear_space_def 
-        closed_sum_def 
-      apply auto
-      using is_closed_subspace_universal_inclusion_left space_as_set sup_clinear_space.rep_eq
-      by fastforce
-  qed
-
-  show "(y::'a clinear_space) \<le> (sup x y)"
+    apply transfer
+    by (simp add: is_closed_subspace_universal_inclusion_left)
+  
+  show "y \<le> sup x y"
     for y :: "'a clinear_space"
       and x :: "'a clinear_space"
-  proof-
-    have \<open>y \<le> (sup y x)\<close>
-      by (simp add: \<open>\<And>y x. x \<le> sup x y\<close>)
-    moreover have \<open>sup y x = sup x y\<close>
-      apply transfer
-      by (simp add: is_closed_subspace_comm)
-    ultimately show ?thesis
-      by simp     
-  qed
-  show "(sup (y::'a clinear_space) z) \<le> x"
-    if "(y::'a clinear_space) \<le> x"
-      and "(z::'a clinear_space) \<le> x"
+    apply transfer
+    by (simp add: is_closed_subspace_universal_inclusion_right) 
+
+  show "sup y z \<le> x"
+    if "y \<le> x" and "z \<le> x"
     for y :: "'a clinear_space"
       and x :: "'a clinear_space"
       and z :: "'a clinear_space"
     using that
-  proof-
-    have \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
-          space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
-          (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})
-          \<subseteq> space_as_set x\<close>
-    proof-
-      assume \<open>space_as_set y \<subseteq> space_as_set x\<close>
-        and \<open>space_as_set z \<subseteq> space_as_set x\<close>
-      have \<open>closed (space_as_set x)\<close>
-      proof-
-        have \<open>closed_subspace (space_as_set x)\<close>
-          using space_as_set by simp
-        thus ?thesis
-          by (simp add: closed_subspace.closed) 
-      qed
-      moreover have \<open>({\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})
-          \<subseteq> space_as_set x\<close>
-      proof
-        show "t \<in> space_as_set x"
-          if "t \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z}"
-          for t :: 'a
-        proof-
-          have \<open>\<exists> \<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z \<and> t = \<psi> + \<phi>\<close>
-            using that by blast
-          then obtain  \<psi> \<phi> where \<open>\<psi> \<in> space_as_set y\<close> and \<open>\<phi> \<in> space_as_set z\<close> 
-            and \<open>t = \<psi> + \<phi>\<close>
-            by blast
-          have \<open>\<psi> \<in> space_as_set x\<close>
-            using \<open>space_as_set y \<subseteq> space_as_set x\<close> \<open>\<psi> \<in> space_as_set y\<close> by auto
-          moreover have \<open>\<phi> \<in> space_as_set x\<close>
-            using \<open>space_as_set z \<subseteq> space_as_set x\<close> \<open>\<phi> \<in> space_as_set z\<close> by auto
-          moreover have \<open>closed_subspace (space_as_set x)\<close>
-            using space_as_set by simp
-          ultimately show ?thesis
-            using \<open>t = \<psi> + \<phi>\<close>  complex_vector.subspace_def
-            using closed_subspace.subspace by blast
-        qed
-      qed
-      ultimately show ?thesis
-        by (simp add: closure_minimal)  
-    qed
-    hence \<open>space_as_set y \<subseteq> space_as_set x \<Longrightarrow>
-          space_as_set z \<subseteq> space_as_set x \<Longrightarrow>
-           space_as_set
-                 (Abs_clinear_space
-                   (closure
-                     {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) 
-          \<subseteq> space_as_set x\<close>
-    proof -
-      assume a1: "space_as_set y \<subseteq> space_as_set x"
-      assume a2: "space_as_set z \<subseteq> space_as_set x"
-      have f3: "\<And>l la. closure {a. \<exists>aa ab. (a::'a) = aa + ab \<and> aa \<in> space_as_set l \<and> ab \<in> space_as_set la} = space_as_set (sup l la)"
-        using closed_sum_def sup_clinear_space.rep_eq Collect_cong
-        unfolding set_plus_def
-        by smt
-          (* > 1 s *)
-      hence "space_as_set (sup y z) \<subseteq> space_as_set x"
-        using a2 a1 \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z} \<subseteq> space_as_set x\<close> by blast
-      thus ?thesis
-        using f3 by (simp add: space_as_set_inverse)
-    qed
-    thus ?thesis
-    proof -
-      have "space_as_set y \<subseteq> space_as_set x \<and> space_as_set z \<subseteq> space_as_set x"
-        by (metis less_eq_clinear_space.rep_eq that(1) that(2))
-      thus ?thesis
-        unfolding less_eq_clinear_space_def 
-          closed_sum_def set_plus_def
-        using set_plus_def \<open>\<lbrakk>space_as_set y \<subseteq> space_as_set x; space_as_set z \<subseteq> space_as_set x\<rbrakk> \<Longrightarrow> space_as_set (Abs_clinear_space (closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set y \<and> \<phi> \<in> space_as_set z})) \<subseteq> space_as_set x\<close> closed_sum_def sup_clinear_space_def
-        by (smt Collect_cong id_apply map_fun_apply)
-          (* > 1 s *)
-    qed  
-  qed
+    apply transfer
+    using is_closed_subspace_universal_inclusion_inverse by blast 
 qed
 end
 
 
 
 lemma span_superset:
-  \<open>A \<subseteq> space_as_set (Span A)\<close> for A :: \<open>('a::chilbert_space) set\<close>
+  \<open>A \<subseteq> space_as_set (Span A)\<close> 
+  for A :: \<open>'a::chilbert_space set\<close>
 proof-
-  have \<open>\<forall> S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>
+  have b1: \<open>A \<subseteq> space_as_set S\<close>
+    if "S \<in> {S. A \<subseteq> space_as_set S}"
+    for S
+    using that
     by simp
   hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
     by blast
   hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
-    by (metis (no_types, lifting)  INF_greatest Inf_clinear_space.rep_eq \<open>\<forall>S. S \<in> {S. A \<subseteq> space_as_set S} \<longrightarrow> A \<subseteq> space_as_set S\<close>)
+    using Inf_clinear_space.rep_eq by fastforce    
   thus ?thesis using span_def' by metis
 qed
 
-lemma bot_plus[simp]: "sup bot x = x" for x :: "'a::chilbert_space clinear_space"
+lemma bot_plus[simp]: "sup bot x = x" 
+  for x :: "'a::chilbert_space clinear_space"
   apply transfer
-  unfolding sup_clinear_space_def[symmetric] 
   using is_closed_subspace_zero
-  unfolding closed_sum_def
-  unfolding set_plus_def
+  unfolding sup_clinear_space_def[symmetric] closed_sum_def set_plus_def
   by smt
 
 instantiation clinear_space :: (chilbert_space) complete_lattice begin
 instance 
 proof
-  show "Inf A \<le> (x::'a clinear_space)"
-    if "(x::'a clinear_space) \<in> A"
+  show "Inf A \<le> x"
+    if "x \<in> A"
     for x :: "'a clinear_space"
       and A :: "'a clinear_space set"
     using that 
     apply transfer
     by auto
 
-  show "(z::'a clinear_space) \<le> Inf A"
-    if "\<And>x. (x::'a clinear_space) \<in> A \<Longrightarrow> z \<le> x"
+  have b1: "z \<subseteq> \<Inter> A"
+    if "Ball A closed_subspace" and
+      "closed_subspace z" and
+      "(\<And>x. closed_subspace x \<Longrightarrow> x \<in> A \<Longrightarrow> z \<subseteq> x)"
+    for z::"'a set" and A
+    using that
+    by auto 
+  show "z \<le> Inf A"
+    if "\<And>x::'a clinear_space. x \<in> A \<Longrightarrow> z \<le> x"
     for A :: "'a clinear_space set"
       and z :: "'a clinear_space"
     using that 
     apply transfer
-    by auto
+    using b1 by blast
 
-  show "(x::'a clinear_space) \<le> Sup A"
-    if "(x::'a clinear_space) \<in> A"
+  show "x \<le> Sup A"
+    if "x \<in> A"
     for x :: "'a clinear_space"
       and A :: "'a clinear_space set"
     using that 
     apply transfer
-    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)
-
-  show "Sup A \<le> (z::'a clinear_space)"
-    if "\<And>x. (x::'a clinear_space) \<in> A \<Longrightarrow> x \<le> z"
+    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)  
+  have b2: "x \<in> z"
+    if "\<forall>x\<in>A. closed_subspace x" and
+       "closed_subspace z" and
+       "\<And>x. x \<in> A \<Longrightarrow> x \<subseteq> z" and
+       "x \<in> closure (cspan (\<Union> A))"
+     for x::'a and z and A
+    by (metis OrthoClosedEq Sup_subset_mono atMost_iff cSup_atMost closed_subspace.subspace 
+        closure_mono orthogonal_complement_twice subset_iff subspace_I subspace_span_A that(2) 
+        that(3) that(4))    
+  show "Sup A \<le> z"
+    if "\<And>x::'a clinear_space. x \<in> A \<Longrightarrow> x \<le> z"
     for A :: "'a clinear_space set"
       and z :: "'a clinear_space"
     using that 
     apply transfer
-    apply auto
-    by (metis (no_types, hide_lams) Sup_least closed_subspace.closed closure_minimal subsetD subspace_span_A)
-
+    using b2 by blast
+    
   show "Inf {} = (top::'a clinear_space)"
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
 
   show "Sup {} = (bot::'a clinear_space)"
-    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto    
+    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto 
 qed
 end
 
@@ -3245,44 +3149,36 @@ proof
   show "inf x (- x) = bot"
     for x :: "'a clinear_space"
     apply transfer
-    by (metis Complex_Vector_Spaces.subspace_0 insert_subset is_closed_subspace_universal_inclusion_left is_closed_subspace_zero ortho_inter_zero)
-  show "sup x (- x) = top"
-    for x :: "'a clinear_space"
-  proof-
-    have \<open>closed_subspace x \<Longrightarrow> x +\<^sub>M orthogonal_complement x = UNIV\<close>
-      for x::\<open>'a set\<close>
+    by (metis Complex_Vector_Spaces.subspace_0 insert_subset 
+        is_closed_subspace_universal_inclusion_left is_closed_subspace_zero ortho_inter_zero)
+
+  have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
+    if a1: \<open>closed_subspace x\<close>
+      for t::'a and x
     proof-
-      assume \<open>closed_subspace x\<close>
-      have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
-        for t
-      proof-
-        have \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
-          using \<open>closed_subspace x\<close> ortho_decomp by blast
-        moreover have \<open>(projection x) t \<in> x\<close>
-          by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-        moreover have \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
-          by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
-        ultimately show ?thesis
-        proof -
-          have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
-            using \<open>closed_subspace x\<close> is_closed_subspace_universal_inclusion_right
-              subspace_orthog by blast 
-          thus ?thesis
-            using \<open>closed_subspace x\<close> 
-              \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
-              \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
-              is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
-            by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog)               
-        qed 
-      qed
+      have e1: \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
+        using \<open>closed_subspace x\<close> ortho_decomp by blast
+      have e2: \<open>(projection x) t \<in> x\<close>
+        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+      have e3: \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
+        by (simp add: \<open>closed_subspace x\<close> projection_intro2)        
+      have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
+        by (simp add: is_closed_subspace_universal_inclusion_right that)
       thus ?thesis
-        by auto 
-    qed
-    thus ?thesis
+      using \<open>closed_subspace x\<close> 
+            \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
+            \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
+            is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
+          by (metis closed_subspace.subspace subspace_closed_plus subspace_orthog) 
+    qed  
+    hence b1: \<open>x +\<^sub>M orthogonal_complement x = UNIV\<close>
+      if a1: \<open>closed_subspace x\<close>
+      for x::\<open>'a set\<close>
+      using that by blast
+    show "sup x (- x) = top"
+      for x :: "'a clinear_space"
       apply transfer
-      using ortho_decomp
-      by blast
-  qed
+      using b1 by auto
   show "- (- x) = x"
     for x :: "'a clinear_space"
     apply transfer
@@ -3295,75 +3191,71 @@ proof
     using that apply transfer
     by simp 
 
-  show "sup x (inf (- x) y) = y"
-    if "x \<le> y"
-    for x :: "'a clinear_space"
-      and y :: "'a clinear_space"
-    using that apply transfer
-  proof
-    show "(x::'a set) +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
-      if "closed_subspace (x::'a set)"
-        and "closed_subspace (y::'a set)"
-        and "(x::'a set) \<subseteq> y"
-      for x :: "'a set"
-        and y :: "'a set"
-      using that
-      by (simp add: is_closed_subspace_universal_inclusion_inverse) 
+  have c1: "x +\<^sub>M orthogonal_complement x \<inter> y \<subseteq> y"
+    if "closed_subspace x"
+      and "closed_subspace y"
+      and "x \<subseteq> y"
+    for x :: "'a set"
+      and y :: "'a set"
+    using that
+    by (simp add: is_closed_subspace_universal_inclusion_inverse) 
 
-    show "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
-      if "closed_subspace x"
-        and "closed_subspace y"
-        and "x \<subseteq> y"
-      for x :: "'a set"
-        and y :: "'a set"   
-    proof-
-      have \<open>u \<in> y \<Longrightarrow> u \<in> x +\<^sub>M ((orthogonal_complement x) \<inter> y)\<close>
-        for u
-      proof-
-        assume \<open>u \<in> y\<close>
-        have \<open>(projection x) u \<in> x\<close>
-          by (simp add: projection_intro2 that(1))
-        hence \<open>(projection x) u \<in> y\<close>
-          using that(3) by auto        
-        have \<open>csubspace y\<close>
-          by (simp add: closed_subspace.subspace that(2))          
-        have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
-          by (simp add: projection_intro1 that(1))
-        moreover have  \<open>u - (projection x) u \<in> y\<close>
-          using \<open>u \<in> y\<close> \<open>(projection x) u \<in> y\<close> \<open>csubspace y\<close>
-          by (smt complex_vector.subspace_diff)
-        ultimately have \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
-          by simp
-        hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
-          by (metis \<open>u - projection x u \<in> orthogonal_complement x \<inter> y\<close> diff_add_cancel ordered_field_class.sign_simps(2))
-        then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
-          by blast
-        hence \<open>u \<in> x + ((orthogonal_complement x) \<inter> y)\<close>
-          using \<open>projection x u \<in> x\<close> \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> \<open>u = (projection x) u + v\<close>
-          unfolding set_plus_def
-          by blast
-        thus ?thesis
-          unfolding closed_sum_def
-          using closure_subset by blast 
-      qed
-      thus ?thesis by blast
-    qed
+  have c2: \<open>u \<in> x +\<^sub>M ((orthogonal_complement x) \<inter> y)\<close>
+    if a1: "closed_subspace x" and a2: "closed_subspace y" and a3: "x \<subseteq> y" and x1: \<open>u \<in> y\<close>
+    for x :: "'a set" and y :: "'a set"  and u
+  proof-
+    have d4: \<open>(projection x) u \<in> x\<close>
+      by (simp add: a1 projection_intro2)                
+    hence d2: \<open>(projection x) u \<in> y\<close>
+      using a3 by auto
+    have d1: \<open>csubspace y\<close>
+      by (simp add: a2 closed_subspace.subspace)          
+    have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
+      by (simp add: a1 projection_intro1)        
+    moreover have  \<open>u - (projection x) u \<in> y\<close>
+      by (simp add: d1 d2 complex_vector.subspace_diff x1)      
+    ultimately have d3: \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
+      by simp
+    hence \<open>\<exists> v \<in> ((orthogonal_complement x) \<inter> y). u = (projection x) u + v\<close>
+      by (metis d3 diff_add_cancel ordered_field_class.sign_simps(2))
+    then obtain v where \<open>v \<in> ((orthogonal_complement x) \<inter> y)\<close> and \<open>u = (projection x) u + v\<close>
+      by blast
+    hence \<open>u \<in> x + ((orthogonal_complement x) \<inter> y)\<close>
+      by (metis d4 set_plus_intro)
+    thus ?thesis
+      unfolding closed_sum_def
+      using closure_subset by blast 
   qed
 
+  have c3: "y \<subseteq> x +\<^sub>M ((orthogonal_complement x) \<inter> y)"
+    if a1: "closed_subspace x" and a2: "closed_subspace y" and a3: "x \<subseteq> y"
+    for x y :: "'a set"   
+    using c2 a1 a2 a3 by auto 
+
+  show "sup x (inf (- x) y) = y"
+    if "x \<le> y"
+    for x y :: "'a clinear_space"
+    using that apply transfer
+    using c1 c3
+    by (simp add: subset_antisym)
+       
   show "x - y = inf x (- y)"
-    for x :: "'a clinear_space"
-      and y :: "'a clinear_space"
+    for x y :: "'a clinear_space"
     apply transfer
     by simp
 qed
 
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
-  \<open>cbounded_linear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+  assumes a1: "cbounded_linear A"
+  shows   \<open>bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
+  using a1
   by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
-  \<open>cbounded_linear A \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+  assumes a1: "cbounded_linear A"
+  shows \<open>bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
+  using a1
   by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
 
 
@@ -3389,11 +3281,7 @@ lemma is_ob_nonzero:
   using assms
   by (simp add: is_ortho_set_def) 
 
-(* TODO: From here until "TODO end move": Move to Complex_Vector_Spaces *)
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+(*here*)
 
 class basis_enum = complex_vector +
   fixes canonical_basis :: "'a list"
