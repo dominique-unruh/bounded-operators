@@ -1271,6 +1271,7 @@ sublocale bounded_bilinear
     by (fact bounded)
 qed
 
+(* TODO: Should be "bounded_bilinear: "bounded_bilinear prod"" (without c) *)
 lemma bounded_cbilinear: "bounded_cbilinear prod"
   by (fact bounded_cbilinear_axioms)
 
