@@ -3588,6 +3588,14 @@ proof-
       qed
       define A where \<open>A = insert \<sigma> A'\<close>
 
+      (* Example how to make a case distinction with more than two cases: *)
+      (* fix a a'
+      consider (both_in) \<open>a \<in> A' \<and> a' \<in> A'\<close> | (not_a) \<open>a \<notin> A'\<close> | (not_a') \<open>a' \<notin> A'\<close>
+        by auto
+      then have z1: "\<langle>a, a'\<rangle> = 0"
+        if "a\<in>A" and "a'\<in>A" and "a \<noteq> a'"
+      proof (cases) *)
+
       have z1: "\<langle>a, a'\<rangle> = 0"
         if "a\<in>A" and "a'\<in>A" and "a \<noteq> a'"
         for a a'
