@@ -3482,101 +3482,85 @@ qed
 
 
 lemma sesquilinear_superposition:
-  assumes \<open>bounded_sesquilinear B\<close> and \<open>\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
-    and \<open>x \<in> complex_vector.span S_left\<close> and \<open>y \<in> complex_vector.span S_right\<close>
+  assumes a1: "bounded_sesquilinear B" and a2: "\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0"
+    and a3: "x \<in> complex_vector.span S_left" and a4: "y \<in> complex_vector.span S_right"
   shows \<open>B x y = 0\<close>
 proof-
-  have \<open>y \<in> complex_vector.span S_right \<Longrightarrow> \<forall> p \<in> S_left. B p y = 0\<close>
-    for y
+  have b1: "(0::'c) \<in> complex_vector.span {0}"
+    by auto
+  have r1: \<open>B p t = 0\<close>
+    if e1: "t \<in> complex_vector.span S_right"
+      and d1: "p\<in>S_left"
+    for p t
   proof (rule complex_vector.span_induct)
     show "(0::'c) \<in> complex_vector.span {0}"
-      if "y \<in> complex_vector.span S_right"
       by auto
-    show "complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}"
-      if "y \<in> complex_vector.span S_right"
-    proof-
-      have "0 \<in> {a. \<forall>p\<in>S_left. B p y = a}"
-      proof-
-        have \<open>p\<in>S_left \<Longrightarrow> B p y = 0\<close>
-          for p
-        proof-
-          assume \<open>p\<in>S_left\<close>
-          moreover have \<open>t \<in> complex_vector.span S_right \<Longrightarrow> B p t = 0\<close>
-            for t
-          proof (rule complex_vector.span_induct)
-            show "(0::'c) \<in> complex_vector.span {0}"
-              if "t \<in> complex_vector.span S_right"
-              by auto
-            show "complex_vector.subspace {a. B p t = a}"
-              if "t \<in> complex_vector.span S_right"
-              unfolding complex_vector.subspace_def
-            proof
-              show "0 \<in> Collect ((=) (B p t))"
-              proof -
-                have "clinear (B p)"
-                  by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
-                hence "B p t = 0"
-                  using assms(2) calculation complex_vector.linear_eq_0_on_span that by fastforce
-                thus ?thesis
-                  by (metis (full_types) mem_Collect_eq)
-              qed
-              show "(\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t)))
+    have "0 \<in> Collect ((=) (B p t)) \<and>
+    (\<forall>x\<in>Collect ((=) (B p t)).
+        \<forall>y\<in>Collect ((=) (B p t)).
+           x + y \<in> Collect ((=) (B p t))) \<and>
+    (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)).
+            c *\<^sub>C x \<in> Collect ((=) (B p t)))"
+    proof
+      have "clinear (B p)"
+        by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
+      hence "B p t = 0"
+        using a2 d1 equal_span_0 that by blast            
+      thus "0 \<in> Collect ((=) (B p t))"
+        by (metis (full_types) mem_Collect_eq)
+      have "\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))"
+        using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+      moreover have "\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t))"
+        using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
+      ultimately show "(\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t)))
            \<and> (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t)))"
-              proof
-                show "\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))"
-                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
-                show "\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t))"
-                  using \<open>0 \<in> Collect ((=) (B p t))\<close> by auto              
-              qed
-            qed
-            show "B p t = x"
-              if "t \<in> complex_vector.span S_right"
-                and "(x::'c) \<in> {0}"
-              for x :: 'c
-              using that
-              using \<open>t \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. B p t = a}\<close> complex_vector.subspace_0 by blast 
-          qed
-          ultimately show ?thesis
-            by (simp add: that) 
-        qed
-        thus ?thesis
-          by simp
-      qed
-      moreover have "(\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a})
-   \<and> (\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a})"
-        using calculation by auto      
-      ultimately show ?thesis 
-        unfolding complex_vector.subspace_def
         by blast
     qed
-    show "\<forall>p\<in>S_left. B p y = x"
-      if "y \<in> complex_vector.span S_right"
-        and "(x::'c) \<in> {0}"
-      for x :: 'c
-      using that \<open>y \<in> complex_vector.span S_right \<Longrightarrow> complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}\<close> complex_vector.subspace_0 by blast 
+    show " \<And>x. x \<in> {0} \<Longrightarrow> B p t = x"
+      using \<open>0 \<in> Collect ((=) (B p t)) \<and> (\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). 
+          x + y \<in> Collect ((=) (B p t))) \<and> (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). 
+            c *\<^sub>C x \<in> Collect ((=) (B p t)))\<close> by blast       
+    show "csubspace {a. B p t = a}"
+      using \<open>0 \<in> Collect ((=) (B p t)) \<and> (\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))) \<and> (\<forall>c. \<forall>x\<in>Collect ((=) (B p t)). c *\<^sub>C x \<in> Collect ((=) (B p t)))\<close> by auto
   qed
-  hence \<open>\<forall> y \<in> complex_vector.span S_right. \<forall> p \<in> S_left. B p y = 0\<close>
+  have \<open>B p y = 0\<close>
+    if d1: "p\<in>S_left"
+    for p
+    by (simp add: a4 r1 that)
+  hence c1: "0 \<in> {a. \<forall>p\<in>S_left. B p y = a}"
+    by simp
+  hence "(\<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. \<forall>b\<in>{a. \<forall>p\<in>S_left. B p y = a}. a + b \<in> {a. \<forall>p\<in>S_left. B p y = a})
+   \<and> (\<forall>c. \<forall>a\<in>{a. \<forall>p\<in>S_left. B p y = a}. c *\<^sub>C a \<in> {a. \<forall>p\<in>S_left. B p y = a})"
+    by auto          
+  hence b2: "complex_vector.subspace {a. \<forall>p\<in>S_left. B p y = a}" 
+    unfolding complex_vector.subspace_def
+    using c1 by blast
+  have b3: "\<forall>p\<in>S_left. B p y = x"
+    if "y \<in> complex_vector.span S_right"
+      and "(x::'c) \<in> {0}"
+    for x :: 'c
+    using b2 complex_vector.span_induct that(2) by force    
+  have \<open>\<forall> p \<in> S_left. B p y = 0\<close>
+    by (simp add: a4 b3)       
+  hence \<open>\<forall> p \<in> S_left. B p y = 0\<close>
     by blast
-  hence \<open>\<forall> p \<in> S_left. \<forall> y \<in> complex_vector.span S_right. B p y = 0\<close>
+  hence w1: \<open>\<forall> p \<in> S_left. B p y = 0\<close>
     by blast
   have "B p y = 0"
     if "p \<in> complex_vector.span S_left"
-      and "y \<in> complex_vector.span S_right"
-    for y and p
+    for  p
   proof-
     have \<open>\<exists> t r. finite t \<and> t \<subseteq> S_left \<and> p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
       using complex_vector.span_explicit
       by (smt mem_Collect_eq that(1)) 
-    then obtain t r where \<open>finite t\<close> and \<open>t \<subseteq> S_left\<close> and \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
+    then obtain t r where t1: \<open>finite t\<close> and t2: \<open>t \<subseteq> S_left\<close> and t3: \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close>
       by blast
     have \<open>B p y = B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y\<close>
-      using \<open>p = (\<Sum>a\<in>t. (r a) *\<^sub>C a)\<close> by blast
+      using t3 by auto
     also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
-      using sesquilinear_finite_sum \<open>bounded_sesquilinear B\<close> \<open>finite t\<close>
-      by blast
+      using sesquilinear_finite_sum a1 t1 by auto      
     also have \<open>\<dots> = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C 0)\<close>
-      using  \<open>t \<subseteq> S_left\<close> \<open>\<And>y. y \<in> complex_vector.span S_right \<Longrightarrow> \<forall>p\<in>S_left. B p y = 0\<close>
-        in_mono that(2) by fastforce
+      using subsetD w1 t2 by fastforce 
     also have \<open>\<dots> = (\<Sum>a\<in>t. 0)\<close>
       by simp
     also have \<open>\<dots> = 0\<close>
@@ -3585,7 +3569,7 @@ proof-
       by blast
   qed
   thus ?thesis
-    by (simp add: assms(3) assms(4))        
+    by (simp add: a3 a4)
 qed
 
 
