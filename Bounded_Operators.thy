@@ -35,9 +35,8 @@ proof
 
   fix c::complex and f :: \<open>'a\<Rightarrow>'b\<close>
   assume \<open>bounded_linear f\<close>
-  show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K \<close>
-  proof-
-    have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
+
+have \<open>\<exists> K. \<forall> x. norm (f x) \<le> norm x * K\<close>
       using \<open>bounded_linear f\<close>
       by (simp add: bounded_linear.bounded)      
     then obtain K where \<open>\<forall> x. norm (f x) \<le> norm x * K\<close>
@@ -50,51 +49,47 @@ proof
     moreover have \<open>norm (c *\<^sub>C f x) = (cmod c) * norm (f x)\<close>
       for x
       by simp
-    ultimately show ?thesis
-      by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute) 
-  qed
+    ultimately show \<open>\<exists>K. \<forall>x. norm (c *\<^sub>C f x) \<le> norm x * K\<close>
+      by (metis ab_semigroup_mult_class.mult_ac(1) mult.commute)
 qed
 
 instance
 proof
-  show "((*\<^sub>R) r::('a, 'b) blinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  have "r *\<^sub>R (x::'a \<Rightarrow>\<^sub>L 'b) = complex_of_real r *\<^sub>C x"
+    for x :: "('a, 'b) blinfun"
+      and r :: real
+    apply transfer
+    by (simp add: scaleR_scaleC)
+  thus "((*\<^sub>R) r::'a \<Rightarrow>\<^sub>L 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
     for r :: real
-  proof
-    show "r *\<^sub>R (x::('a, 'b) blinfun) = complex_of_real r *\<^sub>C x"
-      for x :: "('a, 'b) blinfun"
-      apply transfer
-      by (simp add: scaleR_scaleC)
-  qed
-
-  show "a *\<^sub>C ((x::('a, 'b) blinfun) + y) = a *\<^sub>C x + a *\<^sub>C y"
+    by auto
+  show "a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y"
     for a :: complex
-      and x :: "('a, 'b) blinfun"
-      and y :: "('a, 'b) blinfun"
+      and x :: "'a \<Rightarrow>\<^sub>L 'b"
+      and y :: "'a \<Rightarrow>\<^sub>L 'b"
     apply transfer
     by (simp add: scaleC_add_right)
 
-  show "(a + b) *\<^sub>C (x::('a, 'b) blinfun) = a *\<^sub>C x + b *\<^sub>C x"
+  show "(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) blinfun"
+      and x :: "'a \<Rightarrow>\<^sub>L 'b"
     apply transfer
     by (simp add: scaleC_add_left)
 
-  show "a *\<^sub>C b *\<^sub>C (x::('a, 'b) blinfun) = (a * b) *\<^sub>C x"
+  show "a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x"
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) blinfun"
+      and x :: "'a \<Rightarrow>\<^sub>L 'b"
     apply transfer
     by simp
 
-  show "1 *\<^sub>C (x::('a, 'b) blinfun) = x"
-    for x :: "('a, 'b) blinfun"
-    apply transfer
-  proof
-    fix f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
-    show \<open>1 *\<^sub>C f x = f x\<close>
-      by auto
-  qed
+  have \<open>1 *\<^sub>C f x = f x\<close>
+    for f :: \<open>'a\<Rightarrow>'b\<close> and x :: 'a
+    by auto
+  thus "1 *\<^sub>C x = x"
+    for x :: "'a \<Rightarrow>\<^sub>L 'b"
+    by (simp add: Bounded_Operators.scaleC_blinfun.rep_eq blinfun_eqI)   
 qed  
 end
 
@@ -102,138 +97,129 @@ instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_no
 begin
 instance
 proof intro_classes 
-  {fix f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
-    assume \<open>bounded_linear f\<close>
-    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
-      by (simp add: onorm_def)
-    also have \<open>... = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
+  have \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+    if a1: \<open>bounded_linear f\<close>
+    for f::\<open>'a \<Rightarrow> 'b\<close> and a::complex
+  proof-
+    have \<open>cmod a \<ge> 0\<close>
       by simp
-    also have \<open>... =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
+    have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+      using \<open>bounded_linear f\<close> le_onorm by fastforce
+    then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+      by blast
+    hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
+      using \<open>cmod a \<ge> 0\<close> 
+      by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
+    hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
       by simp
-    also have \<open>... = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
-    proof-
-      have \<open>(UNIV::('a set)) \<noteq> {}\<close>
-        by simp
-      moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
-        by simp
-      moreover have \<open>cmod a \<ge> 0\<close>
-        by simp
-      ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
-        = ((cmod a)::ereal) * ( SUP i\<in>(UNIV::('a set)). (\<lambda> x. (norm (f x)) / norm x :: ereal) i )\<close>
-        by (simp add: Sup_ereal_mult_left')
-      hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
-        = ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
-        by simp
-      hence \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
-        = real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )\<close>
-        by simp
-      moreover have \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
-                  = (SUP x. cmod a * (norm (f x) / norm x))\<close>
-      proof-
-        have \<open>cmod a \<ge> 0\<close>
-          by simp
-        have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
-        proof-
-          have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-            using \<open>bounded_linear f\<close> le_onorm by fastforce
-          then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-            by blast
-          hence  \<open>\<forall> x. (cmod a) *(\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
-            using \<open>cmod a \<ge> 0\<close> 
-            by (metis abs_ereal.simps(1) abs_ereal_pos   abs_pos ereal_mult_left_mono  times_ereal.simps(1))
-          hence  \<open>\<forall> x.  (\<bar> ereal ((cmod a) * (norm (f x)) / (norm x)) \<bar>) \<le> (cmod a) * K\<close>
-            by simp
-          hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
-            by simp
-          moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-            by auto
-          ultimately have \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
-            using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
-              Sup_least mem_Collect_eq
-            by (simp add: SUP_le_iff) 
-          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
-              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>
-          proof-
-            have  \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
-              by simp              
-            thus ?thesis
-              using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
-                \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
-          qed
-          hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
-            using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
-            by simp
-          thus ?thesis
-            by auto 
-        qed
-        hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
+    hence \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+      by simp
+    moreover have \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+      by auto
+    ultimately have p1: \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+      using \<open>\<forall> x. \<bar> ereal (cmod a * (norm (f x)) / (norm x)) \<bar> \<le> cmod a * K\<close>
+        Sup_least mem_Collect_eq
+      by (simp add: SUP_le_iff) 
+    have  p2: \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (cmod a * norm (f i) / norm i)\<close>
+      by simp
+    hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar>
+              \<le> (SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>)\<close>    
+      using  \<open>bdd_above {ereal (cmod a * (norm (f x)) / (norm x)) | x. True}\<close>
+        \<open>{ereal (cmod a * (norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+      by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I 
+          p2 abs_ereal_ge0 ereal_le_real)
+    hence \<open>\<bar>SUP x. ereal (cmod a * (norm (f x)) / (norm x))\<bar> \<le> cmod a * K\<close>
+      using  \<open>(SUP x. \<bar>ereal (cmod a * (norm (f x)) / (norm x))\<bar>) \<le> cmod a * K\<close>
+      by simp
+    hence \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (cmod a) * (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+      by auto
+    hence w2: \<open>( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. cmod a * (norm (f x)) / norm x) i))
              = ereal ( Sup ((\<lambda> x. cmod a * (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
-          by (simp add: ereal_SUP) 
-        thus ?thesis
-          by simp
-      qed
-      moreover have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
-                = cmod a * (SUP x. norm (f x) / norm x)\<close>
-      proof-
-        have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+      by (simp add: ereal_SUP) 
+    have \<open>(UNIV::('a set)) \<noteq> {}\<close>
+      by simp
+    moreover have \<open>\<And> i. i \<in> (UNIV::('a set)) \<Longrightarrow> (\<lambda> x. (norm (f x)) / norm x :: ereal) i \<ge> 0\<close>
+      by simp
+    moreover have \<open>cmod a \<ge> 0\<close>
+      by simp
+    ultimately have \<open>(SUP i\<in>(UNIV::('a set)). ((cmod a)::ereal) * (\<lambda> x. (norm (f x)) / norm x :: ereal) i ) 
+        = ((cmod a)::ereal) * ( SUP i\<in>(UNIV::('a set)). (\<lambda> x. (norm (f x)) / norm x :: ereal) i )\<close>
+      by (simp add: Sup_ereal_mult_left')
+    hence \<open>(SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+        = ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
+      by simp
+    hence z1: \<open>real_of_ereal ( (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) )
+        = real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )\<close>
+      by simp
+    have z2: \<open>real_of_ereal (SUP x. ((cmod a)::ereal) * ( (norm (f x)) / norm x :: ereal) ) 
+                  = (SUP x. cmod a * (norm (f x) / norm x))\<close>
+      using w2
+      by auto 
+    have \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
                 =  (cmod a) * real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )\<close>
-          by simp
-        moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
+      by simp
+    moreover have \<open>real_of_ereal ( SUP x. ( (norm (f x)) / norm x :: ereal) )
                   = ( SUP x. ((norm (f x)) / norm x) )\<close>
-        proof-
-          have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
-          proof-
-            have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-              using \<open>bounded_linear f\<close> le_onorm by fastforce
-            then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
-              by blast
-            hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
-              by simp
-            moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-              by auto
-            ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
-              using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
-                Sup_least mem_Collect_eq
-              by (simp add: SUP_le_iff) 
-            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
+    proof-
+      have \<open>\<bar> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i)) \<bar> \<noteq> \<infinity>\<close>
+      proof-
+        have \<open>\<exists> K::real. \<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+          using \<open>bounded_linear f\<close> le_onorm by fastforce
+        then obtain K::real where \<open>\<forall> x. (\<bar> ereal ((norm (f x)) / (norm x)) \<bar>) \<le> K\<close>
+          by blast
+        hence \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+          by simp
+        moreover have \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+          by auto
+        ultimately have \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+          using \<open>\<forall> x. \<bar> ereal ((norm (f x)) / (norm x)) \<bar> \<le> K\<close>
+            Sup_least mem_Collect_eq
+          by (simp add: SUP_le_iff) 
+        hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar>
               \<le> (SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>)\<close>
-              using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
-                \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
-              by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
-            hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
-              using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
-              by simp
-            thus ?thesis
-              by auto 
-          qed
-          hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
-             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
-            by (simp add: ereal_SUP) 
-          thus ?thesis
-            by simp         
-        qed
-        show ?thesis
-          by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+          using  \<open>bdd_above {ereal ((norm (f x)) / (norm x)) | x. True}\<close>
+            \<open>{ereal ((norm (f x)) / (norm x)) | x. True} \<noteq> {}\<close>
+          by (metis (mono_tags, lifting) SUP_upper2 Sup.SUP_cong UNIV_I \<open>\<And>i. i \<in> UNIV \<Longrightarrow> 0 \<le> ereal (norm (f i) / norm i)\<close> abs_ereal_ge0 ereal_le_real)
+        hence \<open>\<bar>SUP x. ereal ((norm (f x)) / (norm x))\<bar> \<le> K\<close>
+          using  \<open>(SUP x. \<bar>ereal ((norm (f x)) / (norm x))\<bar>) \<le> K\<close>
+          by simp
+        thus ?thesis
+          by auto 
       qed
-      ultimately have \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
-          cmod a * (SUP x. norm (f x) / norm x)\<close>
-        by simp     
+      hence \<open> ( SUP i\<in>UNIV::'a set. ereal ((\<lambda> x. (norm (f x)) / norm x) i))
+             = ereal ( Sup ((\<lambda> x. (norm (f x)) / norm x) ` (UNIV::'a set) ))\<close>
+        by (simp add: ereal_SUP) 
       thus ?thesis
-        by simp 
+        by simp         
     qed
-    hence \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
-      by (simp add: onorm_def) 
-  } note 1 = this 
-
-  show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
+    have z3: \<open>real_of_ereal ( ((cmod a)::ereal) * ( SUP x. ( (norm (f x)) / norm x :: ereal) ) )
+                = cmod a * (SUP x. norm (f x) / norm x)\<close>
+      by (simp add: \<open>real_of_ereal (SUP x. ereal (norm (f x) / norm x)) = (SUP x. norm (f x) / norm x)\<close>)
+    hence w1: \<open>(SUP x. cmod a * (norm (f x) / norm x)) =
+          cmod a * (SUP x. norm (f x) / norm x)\<close>
+      using z1 z2 by linarith     
+    have v1: \<open>onorm (\<lambda>x. a *\<^sub>C f x) = (SUP x. norm (a *\<^sub>C f x) / norm x)\<close>
+      by (simp add: onorm_def)
+    have v2: \<open>(SUP x. norm (a *\<^sub>C f x) / norm x) = (SUP x. ((cmod a) * norm (f x)) / norm x)\<close>
+      by simp
+    have v3: \<open>(SUP x. ((cmod a) * norm (f x)) / norm x) =  (SUP x. (cmod a) * ((norm (f x)) / norm x))\<close>
+      by simp
+    have v4: \<open>(SUP x. (cmod a) * ((norm (f x)) / norm x)) = (cmod a) *  (SUP x. ((norm (f x)) / norm x))\<close>
+      using w1
+      by blast
+    show \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
+      using v1 v2 v3 v4
+      by (metis (mono_tags, lifting) onorm_def)
+  qed
+  thus \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close> 
     for a::complex and x::\<open>('a, 'b) blinfun\<close>
     apply transfer
-    apply (rule 1)
     by blast
 qed
 end
 
+
+(*here*)
 lemma trivia_UNIV_blinfun:
   fixes f::\<open>('a::real_normed_vector, 'b::real_normed_vector) blinfun\<close> 
   assumes \<open>(UNIV::'a set) = 0\<close>
@@ -4501,8 +4487,8 @@ proof-
     using \<open>finite T\<close> span_finite_dim by blast
   have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} =
     {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
-    using span_explicit_finite[where A = "T"] \<open>finite T\<close>
-    by blast
+    by (metis (mono_tags) UNIV_I a1 a2 a3 cdependent_raw_def is_ortho_set_independent 
+        span_explicit_finite subset_refl)
   hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
   proof -
     have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = Complex_Vector_Spaces.span A"
