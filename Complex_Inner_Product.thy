@@ -4224,7 +4224,6 @@ qed
 
 end
 
-(* TODO finish proof *)
 lemma Pythagorean_generalized:
   assumes q1: "\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>f a, f a'\<rangle> = 0"
     and q2: "finite t"
@@ -4236,9 +4235,23 @@ proof (insert q1, induction)
     by auto 
 next
   case (insert x F)
-(*TODO*)
-  have xF_ortho: "\<langle>f x, sum f F\<rangle> = 0"
-    sorry
+  have r1: "\<langle>f x, f a\<rangle> = 0"
+    if "a \<in> F"
+    for a
+    using that insert.hyps(2) insert.prems by auto 
+  have "sum f F = (\<Sum>a\<in>F. f a)"
+    by simp
+  hence s4: "\<langle>f x, sum f F\<rangle> = \<langle>f x, (\<Sum>a\<in>F. f a)\<rangle>"
+    by simp
+  also have s3: "\<dots> = (\<Sum>a\<in>F. \<langle>f x, f a\<rangle>)"
+    using cinner_sum_right by auto
+  also have s2: "\<dots> = (\<Sum>a\<in>F. 0)"
+    using r1
+    by simp
+  also have s1: "\<dots> = 0"
+    by simp
+  finally have xF_ortho: "\<langle>f x, sum f F\<rangle> = 0"
+    using s2 s3 by auto       
   have "(norm (sum f (insert x F)))\<^sup>2 = (norm (f x + sum f F))\<^sup>2"
     by (simp add: insert.hyps(1) insert.hyps(2))
   also have "\<dots> = (norm (f x))\<^sup>2 + (norm (sum f F))\<^sup>2"
@@ -4250,43 +4263,6 @@ next
   finally show ?case
     by simp
 qed
-
-(* proof-
-  have  \<open>\<And> t. card t = n \<Longrightarrow> (\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
- \<Longrightarrow> finite t 
- \<Longrightarrow> (norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
-    (* Ask to Dominique: How to simplify this statement *)
-    for n
-  proof(induction n)
-    case 0
-    show ?case
-      using "0.prems"(1) "0.prems"(3) by auto 
-  next
-    case (Suc n)
-    have \<open>\<exists> \<alpha> t'. t = insert \<alpha> t' \<and> \<alpha> \<notin> t'\<close>
-      using Suc.prems(1) card_eq_SucD by blast
-    then obtain \<alpha> t' where \<open>t = insert \<alpha> t'\<close> and \<open>\<alpha> \<notin> t'\<close>
-      by blast
-    have \<open>card t' = n\<close>
-      using Suc.prems(1) Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> by auto
-    have x1: \<open>\<langle>(\<Sum>a\<in>t'. a), \<alpha>\<rangle> = 0\<close>
-      by (metis (no_types, lifting) Suc.prems(2) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> cinner_sum_left 
-          insertCI sum.neutral)
-    have \<open>(norm  (\<Sum>a\<in>t. a))^2 = (norm  ((\<Sum>a\<in>t'. a) + \<alpha>))^2\<close>
-      by (metis Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> add.commute finite_insert sum.insert)    
-    also have \<open>\<dots> = (norm (\<Sum>a\<in>t'. a))^2 + (norm \<alpha>)^2\<close>
-      using x1
-      by (simp add: PythagoreanId) 
-    also have \<open>\<dots> = (\<Sum>a\<in>t'.(norm a)^2) + (norm \<alpha>)^2\<close>
-      using Suc.IH Suc.prems(2) Suc.prems(3) \<open>card t' = n\<close> \<open>t = insert \<alpha> t'\<close> by auto
-    also have \<open>\<dots> = (\<Sum>a\<in>t.(norm a)^2)\<close>
-      using Suc.prems(3) \<open>\<alpha> \<notin> t'\<close> \<open>t = insert \<alpha> t'\<close> by auto
-    finally show \<open>(norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
-      by blast      
-  qed
-  thus ?thesis
-    using q1 q2 by blast
-qed *)
 
 
 lemma projection_zero_subspace:
