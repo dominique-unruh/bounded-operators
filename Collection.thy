@@ -76,8 +76,6 @@ thm PythagoreanId
 
 thm Pythagorean_generalized
 
-thm Pythagorean_generalized_scalar
-
 thm triangIneq_ell2
 
 subsection "orthogonal_complement"

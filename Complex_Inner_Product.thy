@@ -525,12 +525,9 @@ lemma cGDERIV_diff:
   using a1 a2
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
-(* Ask to Dominique:
-(It works on Dominique's computer in commit 432c931ba428f7af47c1654436b4160493f3208a)
-
 lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
-*)
+
 
 (* Ask to Dominique
 lemma cGDERIV_scaleC:
@@ -543,18 +540,25 @@ lemma cGDERIV_scaleC:
   by (simp add: ac_simps)
 *)
 
-(* Ask to Dominique: how to simplify this lemma *)
+(* TODO: finish converting this proof to Isar style *)
 lemma cGDERIV_mult:
   assumes "cGDERIV f x :> df"
   assumes "cGDERIV g x :> dg"
   shows "cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
-  using assms apply -
-  unfolding cgderiv_def
-  apply (rule has_derivative_subst)
-   apply (erule (1) has_derivative_mult)
-  unfolding cinner_add
-  unfolding cinner_scaleC_left[THEN ext]
-  by (simp add: cinner_add ac_simps)
+proof -
+
+  have 1: "f x * \<langle>dg, h\<rangle> + \<langle>df, h\<rangle> * g x = cinner (cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df) h" for h
+    unfolding cinner_add
+    unfolding cinner_scaleC_left[THEN ext]
+    by (simp add: cinner_add ac_simps)
+
+  show ?thesis
+    using assms apply -
+    unfolding cgderiv_def
+    apply (rule has_derivative_subst[where df="(\<lambda>h. f x * \<langle>dg, h\<rangle> + \<langle>df, h\<rangle> * g x)"])
+     apply (erule (1) has_derivative_mult)
+    by (simp add: 1)
+qed
 
 lemma cGDERIV_inverse:
   assumes a1: "cGDERIV f x :> df" and a2: "f x \<noteq> 0"
@@ -4220,11 +4224,34 @@ qed
 
 end
 
+(* TODO finish proof *)
 lemma Pythagorean_generalized:
-  assumes q1: "\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0"
+  assumes q1: "\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>f a, f a'\<rangle> = 0"
     and q2: "finite t"
-  shows "(norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)"
-proof-
+  shows "(norm  (\<Sum>a\<in>t. f a))^2 = (\<Sum>a\<in>t.(norm (f a))^2)"
+  using q2
+proof (insert q1, induction)
+  case empty
+  show ?case
+    by auto 
+next
+  case (insert x F)
+(*TODO*)
+  have xF_ortho: "\<langle>f x, sum f F\<rangle> = 0"
+    sorry
+  have "(norm (sum f (insert x F)))\<^sup>2 = (norm (f x + sum f F))\<^sup>2"
+    by (simp add: insert.hyps(1) insert.hyps(2))
+  also have "\<dots> = (norm (f x))\<^sup>2 + (norm (sum f F))\<^sup>2"
+    using xF_ortho by (rule PythagoreanId)
+  also have "\<dots> = (norm (f x))\<^sup>2 + (\<Sum>a\<in>F.(norm (f a))^2)"
+    apply (subst insert.IH) using insert.prems by auto
+  also have "\<dots> = (\<Sum>a\<in>insert x F.(norm (f a))^2)"
+    by (simp add: insert.hyps(1) insert.hyps(2))
+  finally show ?case
+    by simp
+qed
+
+(* proof-
   have  \<open>\<And> t. card t = n \<Longrightarrow> (\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0)
  \<Longrightarrow> finite t 
  \<Longrightarrow> (norm  (\<Sum>a\<in>t. a))^2 = (\<Sum>a\<in>t.(norm a)^2)\<close>
@@ -4259,140 +4286,7 @@ proof-
   qed
   thus ?thesis
     using q1 q2 by blast
-qed
-
-corollary Pythagorean_generalized_scalar:
-  assumes a1: \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and a2: \<open>finite t\<close>
-  shows "(norm  (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)"
-proof-
-  have p1: "(norm  (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)"
-    if h1: \<open>\<And> a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and h2: \<open>finite t\<close>
-      and h3: \<open>\<And> a. a \<in> t \<Longrightarrow> r a \<noteq> 0\<close>
-    for t
-  proof-
-    define s where \<open>s = {r a *\<^sub>C a| a. a \<in> t}\<close>
-    have \<open>finite s\<close>
-      unfolding s_def
-      using  \<open>finite t\<close>
-      by simp
-    moreover have \<open>\<langle>a, a'\<rangle> = 0\<close> 
-      if \<open>a \<in> s\<close> and \<open>a' \<in> s\<close> and \<open>a \<noteq> a'\<close>
-      for a a'
-    proof-
-      have \<open>\<exists> b. a = r b *\<^sub>C b \<and> b \<in> t\<close>
-        using \<open>a \<in> s\<close> s_def by blast
-      then obtain b where \<open>a = r b *\<^sub>C b\<close> and \<open>b \<in> t\<close>
-        by blast
-      have \<open>\<exists>b'. a' = r b' *\<^sub>C b' \<and> b' \<in> t\<close>
-        using \<open>a' \<in> s\<close> s_def by blast
-      then obtain b' where \<open>a' = r b' *\<^sub>C b'\<close> and \<open>b' \<in> t\<close>
-        by blast
-      have \<open>b \<noteq> b'\<close>
-        using \<open>a = r b *\<^sub>C b\<close> \<open>a' = r b' *\<^sub>C b'\<close> that(3) by auto
-      hence \<open>\<langle>b, b'\<rangle> = 0\<close>
-        using \<open>b \<in> t\<close> \<open>b' \<in> t\<close> h1 by auto        
-      have \<open>\<langle>a, a'\<rangle> = \<langle>r b *\<^sub>C b, r b' *\<^sub>C b'\<rangle>\<close>
-        by (simp add: \<open>a = r b *\<^sub>C b\<close> \<open>a' = r b' *\<^sub>C b'\<close>)
-      also have \<open>\<dots> = r b' * \<langle>r b *\<^sub>C b, b'\<rangle>\<close>
-        by simp
-      also have \<open>\<dots> = r b' * (cnj (r b)) * \<langle>b, b'\<rangle>\<close>
-        by simp
-      also have \<open>\<dots> = 0\<close>
-        using \<open>\<langle>b, b'\<rangle> = 0\<close> by simp
-      finally show ?thesis
-        by simp 
-    qed
-    ultimately have s1: \<open>(norm (\<Sum>a\<in>s. a))^2 = (\<Sum>a\<in>s. (norm a)^2)\<close>
-      by (simp add: Pythagorean_generalized)
-    have p2: \<open>inj_on (\<lambda> a. r a *\<^sub>C a) t\<close>
-    proof(rule inj_onI, rule ccontr)
-      fix x y
-      assume w1: \<open>x \<in> t\<close> and w2: \<open>y \<in> t\<close> and w3: \<open>r x *\<^sub>C x = r y *\<^sub>C y\<close>
-        and w4: \<open>\<not> (x = y)\<close>
-      hence \<open>\<langle>x, y\<rangle> = 0\<close>
-        by (simp add: that(1))
-      moreover have \<open>\<langle>x, x\<rangle> = \<langle>x, y\<rangle>\<close>
-        by (metis (no_types, hide_lams) bounded_sesquilinear.scaleC_right 
-            bounded_sesquilinear_cinner calculation complex_vector.scale_eq_0_iff that(3) w1 w3)            
-      ultimately have \<open>\<langle>x, x\<rangle> = 0\<close>
-        by simp        
-      hence \<open>(norm x)^2 = 0\<close>
-        by simp        
-      hence \<open>x = 0\<close>
-        by auto        
-      hence \<open>y = 0\<close>
-        using that(3) w2 w3 by auto        
-      hence \<open>x = y\<close>
-        using \<open>x = 0\<close> \<open>y = 0\<close>
-        by simp
-      thus False
-        using \<open>x \<noteq> y\<close> by auto 
-    qed
-    hence p1: \<open>(\<lambda> a. r a *\<^sub>C a) ` t = s\<close>
-      by (simp add: Setcompr_eq_image s_def)
-    have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>s. a)\<close>
-      using p1 p2
-      by (metis (no_types, lifting) sum.reindex_cong)    
-    hence \<open>(norm (\<Sum>a\<in>t. r a *\<^sub>C a))\<^sup>2 = (norm (\<Sum>a\<in>s. a))\<^sup>2\<close>
-      by simp 
-    also have \<open>\<dots> = (\<Sum>a\<in>s. (norm a)^2)\<close>
-      by (simp add: s1)
-    also have \<open>\<dots> = (\<Sum>a\<in>t. (norm (r a *\<^sub>C a))^2)\<close>
-      using p1 p2
-      by (metis (no_types, lifting) sum.reindex_cong)
-    also have \<open>\<dots> = (\<Sum>a\<in>t. (cmod (r a))\<^sup>2 * (norm a)\<^sup>2)\<close>
-      by (simp add: semiring_normalization_rules(30))      
-    finally show ?thesis by blast    
-  qed
-  define t' where \<open>t' = {a|a. a\<in>t \<and> r a \<noteq> 0}\<close>
-  have \<open>t' \<subseteq> t\<close>
-    unfolding t'_def
-    by simp
-  have "r a \<noteq> 0"
-    if "a \<in> t'"
-    for a
-    using that unfolding t'_def  by blast
-  moreover have \<open>a \<in> t' \<Longrightarrow> a' \<in> t' \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>a, a'\<rangle> = 0\<close>
-    for a a'
-    unfolding t'_def
-    using a1
-    by auto
-  moreover have \<open>finite t'\<close>
-    unfolding t'_def
-    using \<open>finite t\<close>
-    by simp
-  ultimately have c3: \<open>(norm (\<Sum>a\<in>t'. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t'. norm (r a)^2 * (norm a)^2)\<close>
-    using p1[where t = "t'"]
-    by blast
-  have \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>t'. r a *\<^sub>C a) + (\<Sum>a\<in>t-t'. r a *\<^sub>C a)\<close>
-    using \<open>finite t\<close> \<open>t' \<subseteq> t\<close>
-    by (metis (no_types, lifting) add.commute sum.subset_diff)
-  moreover have \<open>(\<Sum>a\<in>t-t'. r a *\<^sub>C a) = 0\<close>
-    unfolding t'_def
-    by auto        
-  ultimately have b2: \<open>(\<Sum>a\<in>t. r a *\<^sub>C a) = (\<Sum>a\<in>t'. r a *\<^sub>C a)\<close>
-    by simp
-  have c1: \<open>(\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2) = (\<Sum>a\<in>t'. norm (r a)^2 * (norm a)^2)
-             + (\<Sum>a\<in>t-t'. norm (r a)^2 * (norm a)^2)\<close>
-    by (simp add: \<open>finite t\<close> \<open>t' \<subseteq> t\<close> sum_diff)  
-  have c2: \<open>norm (r a)^2 * (norm a)^2 = 0\<close>
-    if \<open>a\<in>t-t'\<close>
-    for a
-  proof-
-    have \<open>r a = 0\<close>
-      using that
-      unfolding t'_def
-      by blast
-    thus ?thesis
-      by simp 
-  qed  
-  hence c2: \<open>(\<Sum>a\<in>t-t'. norm (r a)^2 * (norm a)^2) = 0\<close>
-    by (simp add: c2) 
-  hence b1: \<open>(\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2) = (\<Sum>a\<in>t'. norm (r a)^2 * (norm a)^2)\<close>
-    by (simp add: c1)    
-  show \<open>(norm (\<Sum>a\<in>t. r a *\<^sub>C a))^2 = (\<Sum>a\<in>t. norm (r a)^2 * (norm a)^2)\<close>
-    by (simp add: c3 b1 b2)    
-qed
+qed *)
 
 
 lemma projection_zero_subspace:
@@ -4492,8 +4386,6 @@ lemma clinear_space_member_inf[simp]:
 lemma clinear_space_top_not_bot[simp]: 
   "(top::'a::{complex_vector,t1_space,not_singleton} clinear_space) \<noteq> bot"
   (* The type class t1_space is needed because the definition of bot in clinear_space needs it *)
-
-(* Ask to Dominique: when I delete t1_space, an error message appears *)
   by (metis UNIV_not_singleton bot_clinear_space.rep_eq top_clinear_space.rep_eq)
 
 lemma clinear_space_bot_not_top[simp]:
@@ -5686,8 +5578,6 @@ proof-
   finally show ?thesis.
 qed
 
-
-(* Ask to Dominique: Should I delete this TODO? *)
 (* TODO: replace by lemma projection_union:
   assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> orthogonal x y"
   shows projection (A \<union> B) = projection A + projection B

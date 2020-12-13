@@ -1271,9 +1271,9 @@ proof
     by (fact bounded)
 qed
 
-(* TODO: Should be "bounded_bilinear: "bounded_bilinear prod"" (without c) *)
-lemma bounded_cbilinear: "bounded_cbilinear prod"
-  by (fact bounded_cbilinear_axioms)
+
+lemma bounded_bilinear: "bounded_bilinear prod"
+  by (simp add: bounded_bilinear_axioms)
 
 lemma cbounded_linear_left: "cbounded_linear (\<lambda>a. prod a b)"
 proof (insert bounded)
