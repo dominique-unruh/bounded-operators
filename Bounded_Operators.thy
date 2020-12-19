@@ -1221,11 +1221,11 @@ declare [[coercion
 
 notation cblinfun_apply (infixr "*\<^sub>V" 70)
 
-lift_definition blinfun_of_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun
-\<Rightarrow> ('a,'b) blinfun\<close> is "id"
+lift_definition blinfun_of_cblinfun::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector 
+  \<Rightarrow> 'a \<Rightarrow>\<^sub>L 'b\<close> is "id"
 proof transfer
-  show "bounded_linear (id (F::'a \<Rightarrow> 'b))"
-    if "cbounded_linear (F::'a \<Rightarrow> 'b)"
+  show "bounded_linear (id F)"
+    if "cbounded_linear F"
     for F :: "'a \<Rightarrow> 'b"
     using that
     by (simp add: cbounded_linear.bounded_linear)
@@ -1238,51 +1238,59 @@ lemma blinfun_of_cblinfun_inj:
   by (metis cblinfun_apply_inject blinfun_of_cblinfun.rep_eq)
 
 lemma blinfun_of_cblinfun_inv:
-  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x) \<Longrightarrow> \<exists> g. blinfun_of_cblinfun g = f\<close>
-  proof transfer
-  show "\<exists>g\<in>Collect cbounded_linear. id (g::'a \<Rightarrow> 'b) = f"
-    if "bounded_linear (f::'a \<Rightarrow> 'b)"
-      and "\<forall>c x. f (c *\<^sub>C (x::'a)) = c *\<^sub>C (f x::'b)"
+  assumes "\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)"
+  shows "\<exists>g. blinfun_of_cblinfun g = f"
+  using assms
+proof transfer
+  show "\<exists>g\<in>Collect cbounded_linear. id g = f"
+    if "bounded_linear f"
+      and "\<And>c x. f (c *\<^sub>C x) = c *\<^sub>C f x"
     for f :: "'a \<Rightarrow> 'b"
-    using that
-  by (simp add: bounded_linear_cbounded_linear)
-qed
-  
+    using that bounded_linear_cbounded_linear by auto 
+qed  
 
 lemma blinfun_of_cblinfun_inv_uniq:
-  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x) \<Longrightarrow> \<exists>! g. blinfun_of_cblinfun g = f\<close>
-  using blinfun_of_cblinfun_inv blinfun_of_cblinfun_inj
+  assumes "\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)"
+  shows  \<open>\<exists>! g. blinfun_of_cblinfun g = f\<close>
+  using assms blinfun_of_cblinfun_inv blinfun_of_cblinfun_inj
   by blast
 
-(*here*)
-lemma blinfun_of_cblinfun_prelim:
-  \<open>\<forall> c. \<forall> x. blinfun_apply (blinfun_of_cblinfun g) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (blinfun_of_cblinfun g) x)\<close>
-  apply transfer
-  apply auto
-  using cbounded_linear_def
-  by (simp add: cbounded_linear_def complex_vector.linear_scale)
 
-definition cblinfun_of_blinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) blinfun \<Rightarrow>
-('a, 'b) cblinfun\<close> where
-  \<open>cblinfun_of_blinfun = inv blinfun_of_cblinfun\<close>
+lemma blinfun_of_cblinfun_prelim:
+  fixes c and x
+  shows \<open>(blinfun_of_cblinfun g) *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C ((blinfun_of_cblinfun g) *\<^sub>v x)\<close>
+proof transfer
+  show "id g (c *\<^sub>C x) = c *\<^sub>C (id g x)"
+    if "cbounded_linear g"
+    for g :: "'b \<Rightarrow> 'a"
+      and c :: complex
+      and x :: 'b
+    using that 
+    by (simp add: cbounded_linear_def complex_vector.linear_scale)
+qed
+
+definition cblinfun_of_blinfun::
+  "'a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::complex_normed_vector \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" 
+  where "cblinfun_of_blinfun = inv blinfun_of_cblinfun"
 
 lemma cblinfun_blinfun:
   \<open>cblinfun_of_blinfun (blinfun_of_cblinfun f) = f\<close>
   by (metis (no_types, hide_lams) cblinfun_apply_inverse UNIV_I cblinfun_of_blinfun_def f_inv_into_f image_iff blinfun_of_cblinfun.rep_eq)
 
 lemma blinfun_cblinfun:
-  \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x)
- = c *\<^sub>C (blinfun_apply f x)
- \<Longrightarrow> blinfun_of_cblinfun (cblinfun_of_blinfun f) = f\<close>
+  assumes "\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)"
+  shows \<open>blinfun_of_cblinfun (cblinfun_of_blinfun f) = f\<close>
+  using assms
   by (metis blinfun_of_cblinfun_inv cblinfun_blinfun) 
 
 
 instantiation cblinfun :: (complex_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
-lift_definition zero_cblinfun::"('a,'b) cblinfun" is "\<lambda>_. 0" by simp
+lift_definition zero_cblinfun::"'a \<Rightarrow>\<^sub>C\<^sub>L'b" is "\<lambda>_. 0" by simp
 
 lemma cblinfun_of_blinfun_zero:
-  "(0::('a::complex_normed_vector,'b::complex_normed_vector) cblinfun) = cblinfun_of_blinfun (0::('a,'b) blinfun)" 
+  "(0::('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector)) 
+  = cblinfun_of_blinfun (0::('a \<Rightarrow>\<^sub>L'b))" 
 proof-
   have \<open>cblinfun_apply 0 t  = cblinfun_apply (SOME x. Blinfun (cblinfun_apply x) = 0) t\<close>
     for t
@@ -1314,27 +1322,20 @@ lemma blinfun_of_cblinfun_zero:
   apply transfer by simp
 
 
-lift_definition plus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
+lift_definition plus_cblinfun::"'a \<Rightarrow>\<^sub>C\<^sub>L'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'b" is
   "\<lambda>f g x. f x + g x"
   by (rule cbounded_linear_add)
 
 
 lemma cblinfun_of_blinfun_plus:
-  assumes \<open>\<And>c. \<And>x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
-    and \<open>\<And>c. \<And>x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
+    and \<open>\<And>c. \<And>x. g *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (g *\<^sub>v x)\<close>
   shows \<open>cblinfun_of_blinfun (f + g) = cblinfun_of_blinfun f + cblinfun_of_blinfun g\<close>
-proof-
-  have "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
-    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-    apply auto
-    apply transfer
-    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
-  thus ?thesis using assms
-    by (metis blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim)
-qed
+  using assms
+  by (smt blinfun_cblinfun blinfun_eqI blinfun_of_cblinfun.rep_eq blinfun_of_cblinfun_inj 
+      plus_blinfun.rep_eq plus_cblinfun.rep_eq scaleC_add_right) 
 
-lift_definition uminus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
+lift_definition uminus_cblinfun::"'a \<Rightarrow>\<^sub>C\<^sub>L'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'b" is
   "\<lambda>f x. - f x"
   by (rule Complex_Vector_Spaces.cbounded_linear_minus)
 
@@ -1344,7 +1345,7 @@ lemma blinfun_of_cblinfun_uminus:
   by auto
 
 lemma cblinfun_of_blinfun_uminus:
-  assumes \<open>\<And>c. \<And>x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
   shows  \<open>cblinfun_of_blinfun (- f) = - (cblinfun_of_blinfun f)\<close>
   using assms
   by (metis (mono_tags) blinfun_cblinfun blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim blinfun_of_cblinfun_uminus)
@@ -1359,14 +1360,14 @@ lemma blinfun_of_cblinfun_minus:
   by auto
 
 lemma cblinfun_of_blinfun_minus:
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
-    and \<open>\<forall> c. \<forall> x. blinfun_apply g (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply g x)\<close>
+  assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
+      and \<open>\<And>c. \<And>x. g *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (g *\<^sub>v x)\<close>
   shows \<open>cblinfun_of_blinfun (f - g) = cblinfun_of_blinfun f - cblinfun_of_blinfun g\<close>
   using assms
   unfolding cblinfun_of_blinfun_def inv_def
   by (smt cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_minus someI_ex)
 
-lift_definition scaleC_cblinfun :: \<open>complex \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
+lift_definition scaleC_cblinfun :: \<open>complex \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   is  "\<lambda> c f x. c *\<^sub>C (f x)"
   by (rule Complex_Vector_Spaces.cbounded_linear_const_scaleC)
 
@@ -1377,13 +1378,12 @@ lemma blinfun_of_cblinfun_scaleC:
   by auto
 
 lemma cblinfun_of_blinfun_scaleC:
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
   shows \<open>cblinfun_of_blinfun ( c *\<^sub>C f ) = c *\<^sub>C (cblinfun_of_blinfun f)\<close>
   using assms
   by (metis (mono_tags) cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_scaleC)
 
-
-lift_definition scaleR_cblinfun :: \<open>real \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun\<close>
+lift_definition scaleR_cblinfun :: \<open>real \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   is  "\<lambda> c f x. c *\<^sub>R (f x)"
   by (rule Complex_Vector_Spaces.scalarR_cbounded_linear)
 
@@ -1392,7 +1392,7 @@ lemma blinfun_of_cblinfun_scaleR:
   apply transfer by auto
 
 lemma cblinfun_of_blinfun_scaleR:
-  assumes \<open>\<forall> c. \<forall> x. blinfun_apply f (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply f x)\<close>
+  assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
   shows \<open>cblinfun_of_blinfun ( c *\<^sub>R f ) = c *\<^sub>R (cblinfun_of_blinfun f)\<close>
   using assms
   by (metis (mono_tags) cblinfun_blinfun blinfun_cblinfun blinfun_of_cblinfun_scaleR)
@@ -1401,20 +1401,20 @@ lemma cblinfun_of_blinfun_Blinfun:
   \<open>cblinfun_of_blinfun ( Blinfun (cblinfun_apply f) ) = f\<close>
   by (metis Quotient_cblinfun Quotient_rel_rep cblinfun_apply_inverse cblinfun_blinfun blinfun_of_cblinfun.abs_eq)
 
-lift_definition norm_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> real\<close>
+lift_definition norm_cblinfun :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> real\<close>
   is onorm.
 
 lemma blinfun_of_cblinfun_norm:
-  fixes f::\<open>('a, 'b) cblinfun\<close>
+  fixes f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   shows \<open>norm f = norm (blinfun_of_cblinfun f)\<close>
   apply transfer
   by auto
 
-lift_definition dist_cblinfun :: \<open>('a, 'b) cblinfun \<Rightarrow> ('a, 'b) cblinfun \<Rightarrow> real\<close>
+lift_definition dist_cblinfun :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> real\<close>
   is \<open>\<lambda> f g. onorm (\<lambda> x. f x - g x)\<close>.
 
 lemma blinfun_of_cblinfun_dist:
-  fixes f::\<open>('a, 'b) cblinfun\<close>
+  fixes f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   shows \<open>dist f g = dist (blinfun_of_cblinfun f) (blinfun_of_cblinfun g)\<close>
   unfolding dist_cblinfun_def dist_blinfun_def apply auto apply transfer
   by auto
@@ -1427,111 +1427,79 @@ lemma blinfun_of_cblinfun_sgn:
   by (simp add: sgn_cblinfun_def sgn_blinfun_def
       blinfun_of_cblinfun_scaleR blinfun_of_cblinfun_norm)
 
-definition uniformity_cblinfun :: \<open>( ('a, 'b) cblinfun \<times> ('a, 'b) cblinfun ) filter\<close>
-  where \<open>uniformity_cblinfun = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) cblinfun) y < e})\<close>
+definition uniformity_cblinfun :: \<open>( ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<times> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) ) filter\<close>
+  where \<open>uniformity_cblinfun = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a \<Rightarrow>\<^sub>C\<^sub>L 'b)) y < e})\<close>
 
-definition open_cblinfun :: \<open>(('a, 'b) cblinfun) set \<Rightarrow> bool\<close>
-  where \<open>open_cblinfun U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) cblinfun) = x \<longrightarrow> y \<in> U)\<close>
+definition open_cblinfun :: \<open>('a \<Rightarrow>\<^sub>C\<^sub>L 'b) set \<Rightarrow> bool\<close>
+  where \<open>open_cblinfun U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a \<Rightarrow>\<^sub>C\<^sub>L 'b)) = x \<longrightarrow> y \<in> U)\<close>
 
 instance
 proof
   show \<open>a + b + c = a + (b + c)\<close>
-    for a :: "('a, 'b) cblinfun"
-      and b :: "('a, 'b) cblinfun"
-      and c :: "('a, 'b) cblinfun"
-  proof -
-    have blinfun_of_cblinfun_plus:
-      "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-      for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
-      unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-      apply auto
-      apply transfer
-      by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
-    have f1: "\<forall>r ra. ((\<exists>c a. blinfun_apply r (c *\<^sub>C (a::'a)) \<noteq> c *\<^sub>C (blinfun_apply r a::'b)) \<or> (\<exists>c a. blinfun_apply ra (c *\<^sub>C a) \<noteq> c *\<^sub>C blinfun_apply ra a)) \<or> cblinfun_of_blinfun (r + ra) = cblinfun_of_blinfun r + cblinfun_of_blinfun ra"
-      using cblinfun_of_blinfun_plus by blast
-    obtain cc :: "('a, 'b) blinfun \<Rightarrow> complex" and aa :: "('a, 'b) blinfun \<Rightarrow> 'a" where
-      "\<forall>x0. (\<exists>v2 v3. blinfun_apply x0 (v2 *\<^sub>C v3) \<noteq> v2 *\<^sub>C blinfun_apply x0 v3) = (blinfun_apply x0 (cc x0 *\<^sub>C aa x0) \<noteq> cc x0 *\<^sub>C blinfun_apply x0 (aa x0))"
-      by moura
-    then obtain cca :: "('a, 'b) blinfun \<Rightarrow> complex" and aaa :: "('a, 'b) blinfun \<Rightarrow> 'a" where
-      f2: "\<forall>r ra. (blinfun_apply r (cca r *\<^sub>C aaa r) \<noteq> cca r *\<^sub>C blinfun_apply r (aaa r) \<or> blinfun_apply ra (cc ra *\<^sub>C aa ra) \<noteq> cc ra *\<^sub>C blinfun_apply ra (aa ra)) \<or> cblinfun_of_blinfun (r + ra) = cblinfun_of_blinfun r + cblinfun_of_blinfun ra"
-      using f1 by simp
-    hence "cblinfun_of_blinfun (blinfun_of_cblinfun a + blinfun_of_cblinfun b + blinfun_of_cblinfun c) = cblinfun_of_blinfun (blinfun_of_cblinfun a + blinfun_of_cblinfun b) + cblinfun_of_blinfun (blinfun_of_cblinfun c)"
-      by (simp add: plus_blinfun.rep_eq blinfun_of_cblinfun_prelim scaleC_add_right)
-    hence f3: "cblinfun_of_blinfun (blinfun_of_cblinfun a + (blinfun_of_cblinfun b + blinfun_of_cblinfun c)) = a + b + c"
-      by (metis (mono_tags, lifting) ab_semigroup_add_class.add_ac(1) cblinfun_blinfun blinfun_of_cblinfun_plus)
-    have "cblinfun_of_blinfun (blinfun_of_cblinfun a) + cblinfun_of_blinfun (blinfun_of_cblinfun b + blinfun_of_cblinfun c) = a + (b + c)"
-      by (metis cblinfun_blinfun blinfun_of_cblinfun_plus)
-    thus ?thesis
-      using f3 f2 by (simp add: plus_blinfun.rep_eq blinfun_of_cblinfun_prelim scaleC_add_right)
-  qed
+    for a b c :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b"
+  proof transfer
+    show "(\<lambda>x. a x + b x + c x) = (\<lambda>x. a x + (b x + c x))"
+      if "cbounded_linear a"
+        and "cbounded_linear b"
+        and "cbounded_linear c"
+      for a b c :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: ordered_field_class.sign_simps(2) ordered_field_class.sign_simps(3)) 
+  qed  
 
-  show \<open>(0::('a, 'b) cblinfun) + a = a\<close>
-    for a :: "('a, 'b) cblinfun"
-  proof -
-    have blinfun_of_cblinfun_plus:
-      "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-      for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
-      unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-      apply auto
-      apply transfer
-      by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
-    have "blinfun_of_cblinfun (map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a) = blinfun_of_cblinfun 0 + blinfun_of_cblinfun a"
-      using blinfun_of_cblinfun_plus plus_cblinfun_def by auto
-    hence "map_fun cblinfun_apply (map_fun cblinfun_apply cBlinfun) (\<lambda>f fa a. f a + fa a) 0 a = a"
-      by (simp add: Bounded_Operators.blinfun_of_cblinfun_zero blinfun_of_cblinfun_inj)
-    thus ?thesis
-      unfolding plus_cblinfun_def
-      by blast
+  show \<open>0 + a = a\<close>
+    for a :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  proof transfer
+    show "(\<lambda>x. 0 + a x) = a"
+      if "cbounded_linear a"
+      for a :: "'a \<Rightarrow> 'b" by auto      
   qed
 
   show \<open>a + b = b + a\<close>
-    for a :: "('a, 'b) cblinfun"
-      and b :: "('a, 'b) cblinfun"
+    for a b :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"      
     by (simp add: add.commute plus_cblinfun_def)
-  have blinfun_of_cblinfun_plus:
-    "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
-    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-    apply auto
-    apply transfer
-    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
+
   show \<open>- a + a = 0\<close>
     for a :: "('a, 'b) cblinfun"
-    by (metis (mono_tags) add.left_inverse cblinfun_of_blinfun_zero cblinfun_blinfun blinfun_of_cblinfun_plus blinfun_of_cblinfun_uminus)
+  proof transfer
+    show "(\<lambda>x. - a x + a x) = (\<lambda>_. 0)"
+      if "cbounded_linear a"
+      for a :: "'a \<Rightarrow> 'b"
+      using that by auto
+  qed
 
   show \<open>a - b = a + - b\<close>
-    for a :: "('a, 'b) cblinfun"
-      and b :: "('a, 'b) cblinfun"
-    by (metis (mono_tags, lifting) ab_group_add_class.ab_diff_conv_add_uminus blinfun_of_cblinfun_inj blinfun_of_cblinfun_minus blinfun_of_cblinfun_plus blinfun_of_cblinfun_uminus)
+    for a b :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"      
+  proof transfer
+    show "(\<lambda>x. a x - b x) = (\<lambda>x. a x + - b x)"
+      if "cbounded_linear a"
+        and "cbounded_linear b"
+      for a b :: "'a \<Rightarrow> 'b"
+      using that by auto
+  qed
 
-  show \<open>((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
+  show \<open>((*\<^sub>R) r::('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close>
     for r :: real
   proof-
-    have \<open>r *\<^sub>R cblinfun_apply f t =
-          complex_of_real r *\<^sub>C cblinfun_apply f t\<close>
-      for f::\<open>('a, 'b) cblinfun\<close> and t
+    have \<open>r *\<^sub>R (f *\<^sub>V t) = complex_of_real r *\<^sub>C (f *\<^sub>V t)\<close>
+      for f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> and t
       by (simp add: scaleR_scaleC)      
-    hence \<open>(\<lambda>t. r *\<^sub>R cblinfun_apply f t) t =
-          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t) t\<close>
-      for f::\<open>('a, 'b) cblinfun\<close> and t
+    hence \<open>(\<lambda>t. r *\<^sub>R (f *\<^sub>V t)) t = (\<lambda>t. complex_of_real r *\<^sub>C (f *\<^sub>V t)) t\<close>
+      for f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> and t
       by simp      
-    hence \<open>(\<lambda>t. r *\<^sub>R cblinfun_apply f t) =
-          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)\<close>
-      for f::\<open>('a, 'b) cblinfun\<close>
+    hence \<open>(\<lambda>t. r *\<^sub>R (f *\<^sub>V t)) = (\<lambda>t. complex_of_real r *\<^sub>C (f *\<^sub>V t))\<close>
+      for f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
       by simp
-    hence \<open>cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t) =
-    cBlinfun
-          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)\<close>
-      for f::\<open>('a, 'b) cblinfun\<close>
+    hence \<open>cBlinfun (\<lambda>t. r *\<^sub>R (f *\<^sub>V t)) =
+           cBlinfun (\<lambda>t. complex_of_real r *\<^sub>C (f *\<^sub>V t))\<close>
+      for f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
       by simp
-    hence \<open>(\<lambda>f. cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t)) f =
-    (\<lambda>f. cBlinfun
-          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t)) f\<close>
-      for f::\<open>('a, 'b) cblinfun\<close>
+    hence \<open>(\<lambda>f. cBlinfun (\<lambda>t. r *\<^sub>R (f *\<^sub>V t))) f =
+           (\<lambda>f. cBlinfun (\<lambda>t. complex_of_real r *\<^sub>C (f *\<^sub>V t))) f\<close>
+      for f::\<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
       by blast
     hence \<open>(\<lambda>f. cBlinfun (\<lambda>t. r *\<^sub>R cblinfun_apply f t)) =
-    (\<lambda>f. cBlinfun
-          (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t))\<close>
+    (\<lambda>f. cBlinfun (\<lambda>t. complex_of_real r *\<^sub>C cblinfun_apply f t))\<close>
       by (simp add: scaleR_scaleC)      
     thus ?thesis
       unfolding scaleR_cblinfun_def scaleC_cblinfun_def o_def blinfun_of_cblinfun_def map_fun_def
@@ -1539,121 +1507,143 @@ proof
   qed
   show \<open>a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y\<close>
     for a :: complex
-      and x :: "('a, 'b) cblinfun"
-      and y :: "('a, 'b) cblinfun"
-    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_scaleC scaleC_add_right)
+      and x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    apply transfer
+    by (simp add: scaleC_add_right) 
 
   show \<open>(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x\<close>
     for a :: complex
       and b :: complex
-      and x :: "('a, 'b) cblinfun"
-    by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_plus blinfun_of_cblinfun_scaleC scaleC_left.add)
+      and x :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  proof transfer
+    show "(\<lambda>t. (a + b) *\<^sub>C (x t)) = (\<lambda>t. a *\<^sub>C x t + b *\<^sub>C x t)"
+      if "cbounded_linear x"
+      for a b :: complex
+        and x :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: scaleC_left.add) 
+  qed
+    
 
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
-    for a :: complex
-      and b :: complex
-      and x :: "('a, 'b) cblinfun"
+    for a b :: complex
+      and x ::  "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_scaleC)
 
   show \<open>1 *\<^sub>C x = x\<close>
-    for x :: "('a, 'b) cblinfun"
+    for x ::  "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     by (simp add: blinfun_of_cblinfun_inj blinfun_of_cblinfun_scaleC)
 
   show \<open>dist x y = norm (x - y)\<close>
-    for x :: "('a, 'b) cblinfun"
-      and y :: "('a, 'b) cblinfun"
+    for x y ::  "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     by (simp add: dist_norm blinfun_of_cblinfun_dist blinfun_of_cblinfun_minus blinfun_of_cblinfun_norm)
 
   show \<open>sgn x = (inverse (norm x)) *\<^sub>R x\<close>
-    for x :: "('a, 'b) cblinfun"
+    for x ::  "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     by (simp add: norm_cblinfun_def scaleR_cblinfun_def sgn_cblinfun_def sgn_div_norm)
 
-  show \<open>uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a, 'b) cblinfun) y < e})\<close>
+  show \<open>uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::('a \<Rightarrow>\<^sub>C\<^sub>L 'b)) y < e})\<close>
     by (simp add: Bounded_Operators.uniformity_cblinfun_def)
 
-  show \<open>open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a, 'b) cblinfun) = x \<longrightarrow> y \<in> U)\<close>
-    for U :: "('a, 'b) cblinfun set"
+  show \<open>open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::('a \<Rightarrow>\<^sub>C\<^sub>L 'b)) = x \<longrightarrow> y \<in> U)\<close>
+    for U :: "('a \<Rightarrow>\<^sub>C\<^sub>L 'b) set"
     by (simp add: Bounded_Operators.open_cblinfun_def)
 
   show \<open>(norm x = 0) = (x = 0)\<close>
-    for x :: "('a, 'b) cblinfun"
-  proof -
-    have f1: "cblinfun_of_blinfun (0::('a, 'b) blinfun) = 0"
-      by (simp add: cblinfun_of_blinfun_zero)
-
-    { assume "x \<noteq> 0"
-      hence "x \<noteq> 0 \<and> cblinfun_of_blinfun 0 \<noteq> x"
-        using f1 by meson
-      hence ?thesis
-        by (metis cblinfun_blinfun norm_eq_zero blinfun_of_cblinfun_norm)
-    }
-    thus ?thesis
-      using blinfun_of_cblinfun_norm blinfun_of_cblinfun_zero by auto     
-  qed
+    for x ::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    proof transfer
+  show "(onorm x = 0) = (x = (\<lambda>_. 0))"
+    if "cbounded_linear x"
+    for x :: "'a \<Rightarrow> 'b"
+    using that
+    using cbounded_linear.bounded_linear onorm_eq_0 by auto 
+qed
 
   show \<open>norm (x + y) \<le> norm x + norm y\<close>
-    for x :: "('a, 'b) cblinfun"
-      and y :: "('a, 'b) cblinfun"
-    by (simp add: norm_triangle_ineq blinfun_of_cblinfun_norm blinfun_of_cblinfun_plus)
+    for x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  proof transfer
+    show "onorm (\<lambda>t. x t + y t) \<le> onorm x + onorm y"
+      if h1: "cbounded_linear x" and h2: "cbounded_linear y"
+      for x y :: "'a \<Rightarrow> 'b"      
+    proof (rule Operator_Norm.onorm_triangle)
+      show "bounded_linear x"
+        using h1
+        by (simp add: cbounded_linear.bounded_linear) 
+      show "bounded_linear y"
+        using h2
+        by (simp add: cbounded_linear.bounded_linear) 
+    qed
+  qed
 
   show \<open>norm (a *\<^sub>C x) = cmod a * norm x\<close>
     for a :: complex
-      and x :: "('a, 'b) cblinfun"
+      and x :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     using blinfun_of_cblinfun_norm blinfun_of_cblinfun_scaleC by auto
 
 
   show \<open>norm (a *\<^sub>R x) = \<bar>a\<bar> * norm x\<close>
     for a :: real
       and x :: "('a, 'b) cblinfun"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x a. norm (a *\<^sub>C x) = cmod a * norm (x::('a, 'b) cblinfun)\<close>
+    using  \<open>\<And>r. ((*\<^sub>R) r::('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x a. norm (a *\<^sub>C x) = cmod a * norm (x::('a \<Rightarrow>\<^sub>C\<^sub>L 'b))\<close>
       of_real_mult
     by simp
 
   show \<open>a *\<^sub>R (x + y) = a *\<^sub>R x +  a *\<^sub>R y\<close>
     for a :: real
-      and x y :: "('a, 'b) cblinfun"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x y a. a *\<^sub>C (x + y) = a *\<^sub>C x +  a *\<^sub>C (y::('a, 'b) cblinfun)\<close>
-      of_real_mult
+      and x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x y a. a *\<^sub>C (x + y) = a *\<^sub>C x +  a *\<^sub>C (y::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)\<close> 
     by simp
 
   show \<open>(a + b) *\<^sub>R x = a *\<^sub>R x +  b *\<^sub>R x\<close>
     for a b :: real
-      and x :: "('a, 'b) cblinfun"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x b a. (a + b) *\<^sub>C (x::('a,'b) cblinfun) = a *\<^sub>C x +  b *\<^sub>C x\<close>
+      and x :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. (a + b) *\<^sub>C (x::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = a *\<^sub>C x +  b *\<^sub>C x\<close>
       of_real_mult
     by simp
 
   show \<open>a *\<^sub>R b *\<^sub>R x = (a * b) *\<^sub>R x\<close>
     for a b :: real
-      and x :: "('a, 'b) cblinfun"
-    using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x b a. a *\<^sub>C b *\<^sub>C (x::('a, 'b) cblinfun) = (a * b) *\<^sub>C x\<close>
-      of_real_mult
+      and x :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    using  \<open>\<And>r. ((*\<^sub>R) r::'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
+      \<open>\<And>x b a. a *\<^sub>C b *\<^sub>C (x::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (a * b) *\<^sub>C x\<close>
     by simp
 
   show \<open>1 *\<^sub>R x = x\<close>
-    for x :: "('a, 'b) cblinfun"
+    for x :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
     using  \<open>\<And>r. ((*\<^sub>R) r::('a, 'b) cblinfun \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)\<close> 
-      \<open>\<And>x. 1 *\<^sub>C (x::('a, 'b) cblinfun) = x\<close> of_real_1
+      \<open>\<And>x. 1 *\<^sub>C (x::('a, 'b) cblinfun) = x\<close>
     by simp
-
 qed
 
 end
 
 
 lemma cblinfun_apply_add: "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
-  apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
-  using module_hom.add by blast
+  proof transfer
+  show "F (b1 + b2) = F b1 + F b2"
+    if "cbounded_linear F"
+    for F :: "'b \<Rightarrow> 'a"
+      and b1 b2 :: 'b
+    using that unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+    using module_hom.add by blast
+qed
 
 
 lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
-  apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
-  using module_hom.scale by blast
-
+  proof transfer
+  show "F (r *\<^sub>C b) = r *\<^sub>C (F b)"
+    if "cbounded_linear F"
+    for F :: "'b \<Rightarrow> 'a"
+      and r :: complex
+      and b :: 'b
+    using that  
+    unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+    using module_hom.scale by blast
+qed 
+ 
 
 lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
@@ -1670,7 +1660,7 @@ lemma blinfun_of_cblinfun_Cauchy:
 
 lemma cblinfun_of_blinfun_Cauchy:
   assumes \<open>Cauchy f\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close>
+    \<open>\<And>n::nat. \<And>c. \<And>x. (f n) *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C ((f n) *\<^sub>v x)\<close>
   shows \<open>Cauchy (\<lambda> n. cblinfun_of_blinfun (f n))\<close>
   using assms  unfolding Cauchy_def 
   using blinfun_of_cblinfun_dist
@@ -1694,44 +1684,41 @@ proof
 qed
 
 lemma cblinfun_of_blinfun_complex_lim:
-  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) blinfun\<close>
-    and l::\<open>('a, 'b) blinfun\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::cbanach)\<close>
+    and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> and c x
   assumes  \<open>f \<longlonglongrightarrow> l\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close> 
-  shows \<open>\<forall> c. \<forall> x. blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)\<close>
+    \<open>\<And> n::nat. \<And>c. \<And>x. (f n) *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C ((f n) *\<^sub>v x)\<close> 
+  shows \<open>l *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (l *\<^sub>v x)\<close>
 proof-
-  have \<open>blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C blinfun_apply l x\<close>
+  have \<open>l *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (l *\<^sub>v x)\<close>
     for c::complex and x
   proof-
-    have \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)\<close>
+    have u1: \<open>(\<lambda> n. (f n) *\<^sub>v (c *\<^sub>C x) ) \<longlonglongrightarrow> l *\<^sub>v (c *\<^sub>C x)\<close>
       by (simp add: assms(1) onorm_strong)        
-    moreover have \<open>(\<lambda> n. c *\<^sub>C (blinfun_apply (f n) x) ) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)\<close>
-    proof-
-      have \<open>isCont ((*\<^sub>C) c) y\<close>
-        for y::'b
-        using isCont_scaleC by auto
-      hence \<open>isCont ((*\<^sub>C) c) (blinfun_apply l x)\<close>
-        by simp
-      thus ?thesis
-        using assms(1) isCont_tendsto_compose onorm_strong by blast 
-    qed
-    moreover have \<open>blinfun_apply (f n) (c *\<^sub>C x) =  c *\<^sub>C (blinfun_apply (f n) x)\<close>
+    have \<open>isCont ((*\<^sub>C) c) y\<close>
+      for y::'b
+      using isCont_scaleC by auto
+    hence \<open>isCont ((*\<^sub>C) c) (blinfun_apply l x)\<close>
+      by simp
+    hence u2: \<open>(\<lambda> n. c *\<^sub>C ((f n) *\<^sub>v x) ) \<longlonglongrightarrow> c *\<^sub>C (l *\<^sub>v x)\<close>
+      using assms(1) isCont_tendsto_compose onorm_strong by blast 
+    have u3: \<open>(f n) *\<^sub>v (c *\<^sub>C x) =  c *\<^sub>C ((f n) *\<^sub>v x)\<close>
       for n
       by (simp add: assms(2))
-    ultimately have \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> c *\<^sub>C (blinfun_apply l x)\<close>
+    have \<open>(\<lambda> n. (f n) *\<^sub>v (c *\<^sub>C x) ) \<longlonglongrightarrow> c *\<^sub>C (l *\<^sub>v x)\<close>
+      using u1 u2 u3
       by simp
     thus ?thesis
-      using  \<open>(\<lambda> n. blinfun_apply (f n) (c *\<^sub>C x) ) \<longlonglongrightarrow> blinfun_apply l (c *\<^sub>C x)\<close> LIMSEQ_unique 
+      using  \<open>(\<lambda> n. (f n) *\<^sub>v (c *\<^sub>C x) ) \<longlonglongrightarrow> l *\<^sub>v (c *\<^sub>C x)\<close> LIMSEQ_unique 
       by blast
   qed
   thus ?thesis by blast
 qed  
 
 lemma cblinfun_of_blinfun_lim:
-  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector, 'b::cbanach) blinfun\<close>
-    and l::\<open>('a, 'b) blinfun\<close>
-  assumes  \<open>f \<longlonglongrightarrow> l\<close> and
-    \<open>\<And> n::nat. \<forall> c. \<forall> x. blinfun_apply (f n) (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply (f n) x)\<close>
+  fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::cbanach)\<close>
+    and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
+  assumes  \<open>f \<longlonglongrightarrow> l\<close> and \<open>\<And>n::nat. \<And>c. \<And>x. (f n) *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C ((f n) *\<^sub>v x)\<close>
   shows \<open>(\<lambda> n. cblinfun_of_blinfun (f n)) \<longlonglongrightarrow> cblinfun_of_blinfun l\<close>
 proof
   show "\<forall>\<^sub>F x in sequentially. dist (cblinfun_of_blinfun (f x)) (cblinfun_of_blinfun l) < e"
@@ -1739,20 +1726,18 @@ proof
     for e :: real
   proof-
     from \<open>f \<longlonglongrightarrow> l\<close>
-    have \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
+    have u1: \<open>\<forall>\<^sub>F x in sequentially. dist (f x) l < e\<close>
       by (simp add: tendstoD that)
-    moreover have \<open>blinfun_of_cblinfun (cblinfun_of_blinfun (f n)) = f n\<close>
+    have u2: \<open>blinfun_of_cblinfun (cblinfun_of_blinfun (f n)) = f n\<close>
       for n
       by (simp add: assms(2) blinfun_cblinfun)
-    moreover have \<open>blinfun_of_cblinfun (cblinfun_of_blinfun l) = l\<close>
-    proof-
-      have \<open>\<forall> c. \<forall> x. blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)\<close>
-        using assms(1) assms(2) cblinfun_of_blinfun_complex_lim by blast        
-      thus ?thesis
-        by (simp add: blinfun_cblinfun) 
-    qed
-    ultimately show ?thesis 
+    have \<open>\<forall> c. \<forall> x. blinfun_apply l (c *\<^sub>C x) = c *\<^sub>C (blinfun_apply l x)\<close>
+      using assms(1) assms(2) cblinfun_of_blinfun_complex_lim by blast        
+    hence u3: \<open>blinfun_of_cblinfun (cblinfun_of_blinfun l) = l\<close>
+      by (simp add: blinfun_cblinfun) 
+    show ?thesis 
       unfolding blinfun_of_cblinfun_dist
+      using u1 u2 u3
       by simp  
   qed    
 qed
@@ -1763,13 +1748,13 @@ proof
     if "Cauchy f"
     for f :: "nat \<Rightarrow> ('a, 'b) cblinfun"
   proof-
-    have \<open>Cauchy (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
+    have \<open>Cauchy (\<lambda>n. blinfun_of_cblinfun (f n))\<close>
       by (simp add: blinfun_of_cblinfun_Cauchy that)
     hence \<open>convergent (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
       by (simp add: Cauchy_convergent_iff)
-    hence \<open>\<exists> l. (\<lambda> n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
+    hence \<open>\<exists>l. (\<lambda>n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
       by (metis (no_types, lifting) Bounded_Operators.cblinfun_of_blinfun_complex_lim convergent_LIMSEQ_iff blinfun_cblinfun blinfun_of_cblinfun_prelim)
-    then obtain l where \<open>(\<lambda> n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
+    then obtain l where \<open>(\<lambda>n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
       by blast
     hence \<open>(\<lambda> n. cblinfun_of_blinfun (blinfun_of_cblinfun (f n))) \<longlonglongrightarrow> cblinfun_of_blinfun (blinfun_of_cblinfun l)\<close>
       by (simp add: Bounded_Operators.cblinfun_of_blinfun_lim blinfun_of_cblinfun_prelim)
@@ -1784,6 +1769,7 @@ end
 
 subsection \<open>Adjoint\<close>
 
+(*here*)
 lift_definition
   adjoint :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
   is Adj by (fact Adj_cbounded_linear)
