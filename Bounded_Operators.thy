@@ -1769,7 +1769,6 @@ end
 
 subsection \<open>Adjoint\<close>
 
-(*here*)
 lift_definition
   adjoint :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
   is Adj by (fact Adj_cbounded_linear)
@@ -1786,14 +1785,14 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
 proof-
   have \<open>cbounded_linear ((cblinfun_apply A))\<close>
     using cblinfun_apply by blast
-  hence \<open>(\<lambda> t. a *\<^sub>C ((cblinfun_apply A) t))\<^sup>\<dagger> = (\<lambda> s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
+  hence \<open>(\<lambda>t. a *\<^sub>C (A *\<^sub>V t))\<^sup>\<dagger> = (\<lambda>s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
     using scalar_times_adjc_flatten
     unfolding cbounded_linear_def 
       scalar_times_adjc_flatten \<open>cbounded_linear (cblinfun_apply A)\<close>
     using scalar_times_adjc_flatten complex_vector.linear_scale
     by (simp add: complex_vector.linear_scale scalar_times_adjc_flatten \<open>cbounded_linear ((*\<^sub>V) A)\<close> 
         cbounded_linear.bounded_linear)
-  moreover have \<open>cblinfun_apply ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C ((cblinfun_apply A) t))\<^sup>\<dagger>\<close>
+  moreover have \<open>cblinfun_apply ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C (A *\<^sub>V t))\<^sup>\<dagger>\<close>
     unfolding Adj_def
     apply auto
     by (smt Adj_def Eps_cong adjoint.rep_eq cinner_scaleC_right scaleC_cblinfun.rep_eq)
@@ -1806,20 +1805,20 @@ proof-
 qed
 
 lemma Adj_cblinfun_plus:
-  fixes A B :: \<open>('a::chilbert_space, 'b::chilbert_space) cblinfun\<close>
+  fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
   shows \<open>(A + B)* = (A*) + (B*)\<close>
 proof transfer
   fix A B::\<open>'a \<Rightarrow> 'b\<close>
-  assume \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
+  assume a1: \<open>cbounded_linear A\<close> and a2: \<open>cbounded_linear B\<close>
   define F where \<open>F = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
   define G where \<open>G = (\<lambda>x. A x + B x)\<close>
   have \<open>cbounded_linear G\<close>
     unfolding G_def
-    by (simp add: \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear_add)
+    by (simp add: a1 a2 cbounded_linear_add)
   moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close>
     for u::'b and v::'a
     unfolding F_def G_def
-    using Adj_I \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> 
+    using Adj_I a1 a2 
       cinner_left_distrib
     by (simp add: Adj_I cinner_left_distrib cinner_right_distrib) 
   ultimately have \<open>F = G\<^sup>\<dagger> \<close>
@@ -1837,7 +1836,6 @@ lemma Adj_cblinfun_minus[simp]:
   \<open>(A - B)* = (A*) - (B*)\<close>
   by (metis Adj_cblinfun_plus add_right_cancel diff_add_cancel)
 
-
 lemma Adj_cblinfun_zero[simp]:
   \<open>0* = 0\<close>
   by (metis Adj_cblinfun_plus add_cancel_right_right)
@@ -1845,19 +1843,18 @@ lemma Adj_cblinfun_zero[simp]:
 subsection \<open>Composition\<close>
 
 lift_definition timesOp:: 
-  "('b::complex_normed_vector,'c::complex_normed_vector) cblinfun
-     \<Rightarrow> ('a::complex_normed_vector,'b) cblinfun \<Rightarrow> ('a,'c) cblinfun"
+  "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'c::complex_normed_vector
+     \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'c"
   is "(o)"
   unfolding o_def 
   by (rule cbounded_linear_compose, simp_all)
 
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
-lift_definition applyOpSpace::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun
+lift_definition applyOpSpace::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
 \<Rightarrow> 'a clinear_space \<Rightarrow> 'b clinear_space\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  cbounded_linear_def closed_closure  closed_subspace.intro
   by (simp add: cbounded_linear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
-
 
 
 bundle cblinfun_notation begin
@@ -1886,18 +1883,18 @@ end
 unbundle cblinfun_notation
 
 lemma adjoint_I:
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cblinfun"
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
   shows \<open>\<langle>G* *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>\<close>
   apply transfer using Adj_I by blast
 
 lemma adjoint_I':
-  fixes G :: "('b::chilbert_space, 'a::chilbert_space) cblinfun"
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
   shows \<open>\<langle>x, G* *\<^sub>V y\<rangle> = \<langle>G *\<^sub>V x, y\<rangle>\<close> 
   apply transfer using Adj_I' by blast
 
 lemma adjoint_D:
-  fixes G:: \<open>('b::chilbert_space, 'a::chilbert_space) cblinfun\<close>
-    and F:: \<open>('a, 'b) cblinfun\<close>
+  fixes G:: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space\<close>
+    and F:: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   assumes \<open>\<And>x y. \<langle>(cblinfun_apply F) x, y\<rangle> = \<langle>x, (cblinfun_apply G) y\<rangle>\<close>
   shows \<open>F = G*\<close>
   using assms apply transfer using Adj_D by auto
@@ -1908,8 +1905,8 @@ lemma adjoint_twice[simp]: "(U*)* = U"
   using dagger_dagger_id by blast
 
 lemma blinfun_of_cblinfun_timesOp:
-  fixes f::\<open>('b::complex_normed_vector,'c::complex_normed_vector) cblinfun\<close>
-    and g::\<open>('a::complex_normed_vector,'b) cblinfun\<close>
+  fixes f::\<open>'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector\<close>
+    and g::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   shows \<open>blinfun_of_cblinfun (f  o\<^sub>C\<^sub>L g) = (blinfun_of_cblinfun f) o\<^sub>L (blinfun_of_cblinfun g)\<close>
   apply transfer by auto
 
@@ -1925,20 +1922,19 @@ lemma cblinfun_apply_dist1:
   by auto
 
 lemma cblinfun_apply_dist2:
-  fixes a b :: "('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun"
-    and c :: "('b, 'c::complex_normed_vector) cblinfun"
+  fixes a b :: "'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector"
+    and c :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
   shows "c o\<^sub>C\<^sub>L (a + b) = (c o\<^sub>C\<^sub>L a) + (c o\<^sub>C\<^sub>L b)"
 proof-
-  have blinfun_of_cblinfun_plus:
-    "blinfun_of_cblinfun (f + g) =  (blinfun_of_cblinfun f)+(blinfun_of_cblinfun g)"
-    for f g :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L'b\<close>
-    unfolding cblinfun_of_blinfun_def blinfun_of_cblinfun_def inv_def
-    apply auto
-    apply transfer
-    by (simp add: cbounded_linear.bounded_linear eq_onp_same_args plus_blinfun.abs_eq)
-  thus ?thesis
-    apply transfer unfolding id_def apply auto   using  blinfun_of_cblinfun_inj  blinfun_of_cblinfun_timesOp times_blinfun_dist2
+  have u1: "c \<circ> (\<lambda>x. a x + b x) = (\<lambda>x. c (a x) + c (b x))"
+    if "cbounded_linear c"
+      and "cbounded_linear a"
+      and "cbounded_linear b"
+    for a b:: "'a \<Rightarrow> 'b" and c::"'b \<Rightarrow> 'c"
+    using that  blinfun_of_cblinfun_inj  blinfun_of_cblinfun_timesOp times_blinfun_dist2
     using cbounded_linear.bounded_linear linear_simps(1) by fastforce
+  show ?thesis
+    apply transfer by (simp add: u1)
 qed
 
 lemma timesOp_minus:
@@ -1949,10 +1945,10 @@ lemma timesOp_minus:
 
 lemma times_adjoint[simp]:
   fixes B::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and A::\<open>('b,'c::chilbert_space) cblinfun\<close> 
+    and A::\<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space\<close> 
   shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
 proof transfer
-  fix  A :: \<open>'b\<Rightarrow>'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
+  fix  A :: \<open>'b \<Rightarrow> 'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
   assume \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
   hence \<open>cbounded_linear (A \<circ> B)\<close>
     by (simp add: comp_cbounded_linear)
@@ -1973,338 +1969,249 @@ lemma OCL_zero [simp]:
 
 
 lemma applyOp_0[simp]:  
-  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-  shows   "U *\<^sub>S (0::'a clinear_space) = (0::'b clinear_space)"
-proof-
-  {
-    have \<open>cbounded_linear U \<Longrightarrow>
-          (closure
-            (U ` {0})) = {0}\<close>
-      for U::\<open>'a\<Rightarrow>'b\<close>
-    proof-
-      assume \<open>cbounded_linear U\<close>
-      have \<open>U ` {0} = {U 0}\<close>
-        by auto
-      moreover have \<open>U 0 = 0\<close>
-        using \<open>cbounded_linear U\<close>
-        unfolding cbounded_linear_def
-        by (simp add: complex_vector.linear_0)
-      ultimately have \<open>U ` {0} = {0}\<close>
-        by simp
-      thus ?thesis
-        by simp 
-    qed
-    hence \<open>cbounded_linear U \<Longrightarrow>
-         Abs_clinear_space
-          (closure
-            (U ` {0})) =
+  fixes U::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
+  shows "U *\<^sub>S 0 = 0"
+proof-  
+  have  \<open>closure (U ` {0}) = {0}\<close>
+    if a1: "cbounded_linear U"
+    for U::\<open>'a\<Rightarrow>'b\<close>
+  proof-
+    have \<open>U ` {0} = {U 0}\<close>
+      by auto
+    moreover have \<open>U 0 = 0\<close>
+      using a1
+      unfolding cbounded_linear_def
+      by (simp add: complex_vector.linear_0)
+    ultimately have \<open>U ` {0} = {0}\<close>
+      by simp
+    thus ?thesis
+      by simp 
+  qed
+  hence \<open>Abs_clinear_space (closure (U ` {0})) = Abs_clinear_space {0}\<close>
+    if "cbounded_linear U"
+    for U::\<open>'a\<Rightarrow>'b\<close>
+    using Abs_clinear_space_inject that
+    by presburger
+  hence u1: \<open>Abs_clinear_space (closure (U ` space_as_set (Abs_clinear_space {0}))) =
          Abs_clinear_space {0}\<close>
-      for U::\<open>'a\<Rightarrow>'b\<close>
-      using Abs_clinear_space_inject
-      by presburger
-    hence \<open>cbounded_linear U \<Longrightarrow>
-         Abs_clinear_space
-          (closure (U ` space_as_set (Abs_clinear_space {0}))) =
-         Abs_clinear_space {0}\<close>
-      for U::\<open>'a\<Rightarrow>'b\<close>
-      by (simp add: Abs_clinear_space_inverse)  } note 1 = this
-  thus ?thesis
+    if "cbounded_linear U"
+    for U::\<open>'a\<Rightarrow>'b\<close>
+    using that
+    by (simp add: Abs_clinear_space_inverse)
+  have u2: "(\<And>U::'a \<Rightarrow> 'b.
+        cbounded_linear U \<Longrightarrow>
+        Abs_clinear_space
+         (closure (U ` space_as_set (Abs_clinear_space {0::'a}))) =
+        Abs_clinear_space {0::'b}) \<Longrightarrow>
+    Abs_clinear_space (closure ((*\<^sub>V) U ` space_as_set \<bottom>)) = \<bottom>"
+    using bot_clinear_space.abs_eq   
+    by (metis (full_types) mem_Collect_eq cblinfun_apply)
+  show ?thesis
     unfolding zero_clinear_space_def applyOpSpace_def
-    apply auto
-    using 1 bot_clinear_space.abs_eq   
-    by (metis (full_types) mem_Collect_eq cblinfun_apply) 
+    by (simp add: u1 u2)    
 qed
 
-lemma times_comp: \<open>\<And>A B \<psi>.
-       cbounded_linear A \<Longrightarrow>
-       cbounded_linear B \<Longrightarrow>
-       closed_subspace \<psi> \<Longrightarrow>
-       closure ( (A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))\<close>
-proof
-  show "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
-    if "cbounded_linear (A::'a \<Rightarrow> 'b)"
-      and "cbounded_linear (B::'c \<Rightarrow> 'a)"
-      and "closed_subspace (\<psi>::'c set)"
-    for A :: "'a \<Rightarrow> 'b"
-      and B :: "'c \<Rightarrow> 'a"
-      and \<psi> :: "'c set"
-    using that
-    by (metis closure_mono closure_subset image_comp image_mono) 
-  show "closure (A ` closure (B ` (\<psi>::'c set)::'a set)) \<subseteq> closure ((A \<circ> B) ` \<psi>::'b set)"
-    if "cbounded_linear (A::'a \<Rightarrow> 'b)"
-      and "cbounded_linear (B::'c \<Rightarrow> 'a)"
-      and "closed_subspace (\<psi>::'c set)"
-    for A :: "'a \<Rightarrow> 'b"
-      and B :: "'c \<Rightarrow> 'a"
-      and \<psi> :: "'c set"
-    using that 
+lemma times_comp:
+  fixes A B \<psi>
+  assumes a1: "cbounded_linear A" and a2: "cbounded_linear B" and a3: "closed_subspace \<psi>"
+  shows "closure ((A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))"
+proof-
+  have b1: "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
+    by (metis closure_mono closure_subset image_comp image_mono)      
+  have "x \<in> closure ((A \<circ> B) ` \<psi>)"
+    if "x \<in> A ` closure (B ` \<psi>)"
+    for x :: 'b
   proof-
-    have \<open>A ` closure (B ` \<psi>) \<subseteq> closure ((A \<circ> B) ` \<psi>)\<close>
-    proof
-      show "x \<in> closure ((A \<circ> B) ` \<psi>)"
-        if "x \<in> A ` closure (B ` \<psi>)"
-        for x :: 'b
-        using that
-      proof-
-        have \<open>\<exists> t::nat \<Rightarrow> 'b. (\<forall> n. t n \<in> (A \<circ> B) ` \<psi>) \<and> (t \<longlonglongrightarrow> x)\<close>
-        proof-
-          have \<open>\<exists> y\<in>closure (B ` \<psi>). x = A y\<close>
-            using that by blast
-          then obtain y where \<open>y\<in>closure (B ` \<psi>)\<close> and \<open>x = A y\<close>
-            by blast
-          from \<open>y\<in>closure (B ` \<psi>)\<close>
-          have \<open>\<exists> s::nat \<Rightarrow> 'a. (\<forall>n. s n \<in> B ` \<psi>) \<and> s \<longlonglongrightarrow> y\<close>
-            using closure_sequential by blast
-          then obtain s::\<open>nat\<Rightarrow>'a\<close> where \<open>\<forall>n. s n \<in> B ` \<psi>\<close> and \<open>s \<longlonglongrightarrow> y\<close>
-            by blast
-          define t::"nat \<Rightarrow> 'b" where \<open>t n = A (s n)\<close> for n::nat
-          have \<open>\<forall>n. t n \<in> (A \<circ> B) ` \<psi>\<close>
-            by (metis \<open>\<forall>n. s n \<in> B ` \<psi>\<close> imageI image_comp t_def)
-          moreover have \<open>t \<longlonglongrightarrow> x\<close>
-          proof-
-            have \<open>isCont A y\<close>
-              using \<open>cbounded_linear A\<close>
-              by (simp add: bounded_linear_continuous) 
-            thus ?thesis unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
-              by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
-          qed
-          ultimately have "(\<forall>n. t n \<in> (A \<circ> B) ` \<psi>) \<and> t \<longlonglongrightarrow> x"
-            by blast
-          thus ?thesis by blast
-        qed
-        thus ?thesis
-          using closure_sequential by blast 
-      qed
-    qed
+    have \<open>\<exists>y\<in>closure (B ` \<psi>). x = A y\<close>
+      using that by blast
+    then obtain y where y_def1: \<open>y\<in>closure (B ` \<psi>)\<close> and y_def2: \<open>x = A y\<close>
+      by blast
+    from \<open>y\<in>closure (B ` \<psi>)\<close>
+    have \<open>\<exists> s::nat \<Rightarrow> 'a. (\<forall>n. s n \<in> B ` \<psi>) \<and> s \<longlonglongrightarrow> y\<close>
+      using closure_sequential by blast
+    then obtain s::\<open>nat\<Rightarrow>'a\<close> where \<open>\<forall>n. s n \<in> B ` \<psi>\<close> and \<open>s \<longlonglongrightarrow> y\<close>
+      by blast
+    define t::"nat \<Rightarrow> 'b" where \<open>t n = A (s n)\<close> for n::nat
+    have v1: \<open>t n \<in> (A \<circ> B) ` \<psi>\<close>
+      for n
+      by (metis \<open>\<forall>n. s n \<in> B ` \<psi>\<close> imageI image_comp t_def)
+    have \<open>isCont A y\<close>
+      using \<open>cbounded_linear A\<close>
+      by (simp add: bounded_linear_continuous)
+    hence v2: \<open>t \<longlonglongrightarrow> x\<close>
+      unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
+        by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
+    have "(\<forall>n. t n \<in> (A \<circ> B) ` \<psi>) \<and> t \<longlonglongrightarrow> x"
+      using v1 v2 by blast
     thus ?thesis
-      by (metis closure_closure closure_mono) 
+      using closure_sequential by blast 
   qed
+  hence \<open>A ` closure (B ` \<psi>) \<subseteq> closure ((A \<circ> B) ` \<psi>)\<close>
+    by blast    
+  hence b2: "closure (A ` closure (B ` (\<psi>::'c set)::'a set)) \<subseteq> closure ((A \<circ> B) ` \<psi>::'b set)"
+    by (metis closure_closure closure_mono)
+  show ?thesis
+    using b1 b2 a1 a2 a3 by blast 
 qed
 
 lemma cblinfun_apply_assoc_clinear_space: 
-  shows  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>S \<psi> =  A *\<^sub>S (B *\<^sub>S \<psi>)\<close>
-proof-
-  have \<open>cbounded_linear (cblinfun_apply A)\<close>
-    using cblinfun_apply by auto
-  moreover have \<open>cbounded_linear (cblinfun_apply B)\<close>
-    using cblinfun_apply by auto
-  moreover have \<open>closed_subspace (space_as_set \<psi>)\<close>
-    using space_as_set by auto
-  ultimately have  \<open>
-     (closure
-       ( (cblinfun_apply A \<circ> cblinfun_apply B) ` space_as_set \<psi>)) =
-     (closure
-       (cblinfun_apply A `
-      closure (cblinfun_apply B ` space_as_set \<psi>)))\<close>
-    using times_comp by blast
-  hence  \<open>
-     (closure
-       ( (cblinfun_apply A \<circ> cblinfun_apply B) ` space_as_set \<psi>)) =
-     (closure
-       (cblinfun_apply A `
-        space_as_set
-         (Abs_clinear_space
-           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
-    by (metis space_as_set_inverse applyOpSpace.rep_eq)    
-  hence  \<open>
-     (closure
-       (cblinfun_apply (timesOp A B) ` space_as_set \<psi>)) =
-     (closure
-       (cblinfun_apply A `
-        space_as_set
-         (Abs_clinear_space
-           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
-    by (simp add: timesOp.rep_eq)    
-  hence \<open> Abs_clinear_space
-     (closure
-       (cblinfun_apply (timesOp A B) ` space_as_set \<psi>)) =
-    Abs_clinear_space
-     (closure
-       (cblinfun_apply A `
-        space_as_set
-         (Abs_clinear_space
-           (closure (cblinfun_apply B ` space_as_set \<psi>)))))\<close>
-    using Abs_clinear_space_inject by auto
-  thus ?thesis
-    unfolding applyOpSpace_def
-    by auto
-qed
+  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>S \<psi> =  A *\<^sub>S (B *\<^sub>S \<psi>)\<close>
+  apply transfer
+  using times_comp by blast 
 
+lemmas assoc_left = cblinfun_apply_assoc[symmetric] cblinfun_apply_assoc_clinear_space[symmetric] 
+  add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space", symmetric]
+lemmas assoc_right = cblinfun_apply_assoc cblinfun_apply_assoc_clinear_space add.assoc
+  [where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
 
-lemmas assoc_left = cblinfun_apply_assoc[symmetric] cblinfun_apply_assoc_clinear_space[symmetric] add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space", symmetric]
-lemmas assoc_right = cblinfun_apply_assoc cblinfun_apply_assoc_clinear_space add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
-
-lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
+lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" 
+    for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
   by (simp add: scaleC_add_right)
 
-lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" for A B :: "(_::complex_normed_vector,_::complex_normed_vector) cblinfun"
+lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" 
+    for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 
 lemma applyOp_bot[simp]:
-  fixes U::\<open>('a::chilbert_space, 'b::chilbert_space) cblinfun\<close> 
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> 
   shows "U *\<^sub>S bot = bot"
 proof-
   have \<open>closed {0::'a}\<close>
     using Topological_Spaces.t1_space_class.closed_singleton by blast
-  hence \<open>closure {0::'a} = {0}\<close>
+  hence u1: \<open>closure {0::'a} = {0}\<close>
     by (simp add: closure_eq)    
-  moreover have \<open>cblinfun_apply U ` {0::'a} = {0}\<close>
-  proof-
-    have \<open>cbounded_linear (cblinfun_apply U)\<close>
-      using cblinfun_apply by auto
-    hence  \<open>cblinfun_apply U 0 = 0\<close>
-      by (simp add: cbounded_linear.clinear clinear_zero)
-    thus ?thesis
-      by simp 
-  qed
-  ultimately have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
+  have \<open>cbounded_linear (cblinfun_apply U)\<close>
+    using cblinfun_apply by auto
+  hence  \<open>cblinfun_apply U 0 = 0\<close>
+    by (simp add: cbounded_linear.clinear clinear_zero)  
+  hence u2: \<open>cblinfun_apply U ` {0::'a} = {0}\<close>
     by simp
+  have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
+    using u2 by auto    
   hence \<open>(closure (cblinfun_apply U ` space_as_set (Abs_clinear_space {0}))) = {0}\<close>
     by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq) 
   thus ?thesis
     unfolding applyOpSpace_def bot_clinear_space_def by simp
 qed
 
+(* TODO: change name *)
 lemma cdot_plus_distrib_transfer:
-  \<open>cbounded_linear U \<Longrightarrow>
-       closed_subspace A \<Longrightarrow>
-       closed_subspace B \<Longrightarrow>
-        (closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
-        (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
-  for U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
-proof-
-  assume \<open>cbounded_linear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
-  have \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) \<subseteq>
-        (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
-  proof-
-    have \<open>U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} \<subseteq>
-          {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
-    proof-
-      have \<open>U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
-        by auto
-      moreover have \<open> {U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}
-                      = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}\<close>
-      proof-
-        have \<open>{U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
-          using \<open>cbounded_linear U\<close>
-          unfolding cbounded_linear_def
-          by (metis (no_types, lifting) complex_vector.linear_add) 
-
-        also have \<open>{U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} 
+  fixes U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
+  assumes a1: \<open>cbounded_linear U\<close> and a2: \<open>closed_subspace A\<close> and a3: \<open>closed_subspace B\<close>
+  shows "(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
+         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})"
+proof- 
+  have v1: \<open>U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
+    by auto
+  have \<open>{U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} = {U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
+    using \<open>cbounded_linear U\<close>
+    unfolding cbounded_linear_def
+    by (metis (no_types, lifting) complex_vector.linear_add) 
+  also have \<open>{U \<psi> + U \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} 
             = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}\<close>
-          by blast
-        finally show ?thesis by blast
-      qed
-      moreover have \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}
+    by blast  
+  finally have v2: \<open>{U (\<psi> + \<phi>) |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}
+                      = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}\<close>
+    by blast
+  have v3: \<open>{\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> U ` A \<and> \<phi> \<in> U ` B}
            \<subseteq> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
-        by (smt closure_subset mem_Collect_eq subsetD subsetI)
-          (* > 1s *)
-      ultimately show ?thesis
-        by simp 
-    qed
-    hence \<open>closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}) \<subseteq>
+    by (smt Collect_mono_iff closure_subset subsetD)
+      (* > 1s*)      
+  have \<open>U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B} \<subseteq>
+          {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
+    by (simp add: v1 v2 v3)  
+  hence y1: \<open>closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}) \<subseteq>
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
-      by (simp add: closure_mono)      
-    moreover have \<open>(U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})
+    by (simp add: closure_mono)      
+  define S where \<open>S = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
+  from a1 have \<open>isCont U x\<close>
+    for x
+    by (simp add: bounded_linear_continuous)
+  hence \<open>continuous_on (closure S) U\<close>
+    by (simp add: continuous_at_imp_continuous_on)
+  hence \<open>U ` (closure S) \<subseteq> closure (U ` S)\<close>
+    using Abstract_Topology_2.image_closure_subset
+    by (simp add: image_closure_subset closure_subset)
+  hence y2: \<open>(U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})
             \<subseteq> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
-    proof-
-      define S where \<open>S = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
-      from  \<open>cbounded_linear U\<close>
-      have \<open>isCont U x\<close>
-        for x
-        by (simp add: bounded_linear_continuous)
-      hence \<open>continuous_on (closure S) U\<close>
-        by (simp add: continuous_at_imp_continuous_on)
-      hence \<open>U ` (closure S) \<subseteq> closure (U ` S)\<close>
-        using Abstract_Topology_2.image_closure_subset
-        by (simp add: image_closure_subset closure_subset)
-      thus ?thesis unfolding S_def by blast
-    qed
-    ultimately have \<open>(U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}) \<subseteq>
+    unfolding S_def by blast
+  have \<open>(U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}) \<subseteq>
         (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
-      by blast
-    thus ?thesis
-      by (metis (no_types, lifting) closure_closure closure_mono) 
-  qed
-  moreover have \<open>(closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})
-      \<subseteq> closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
+    using y1 y2 by blast    
+  hence x1: \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) \<subseteq>
+        (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})\<close>
+    by (metis (no_types, lifting) closure_closure closure_mono)
+  have \<open>x \<in> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
+    if q1: \<open>x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
+    for x
   proof-
-    have \<open>x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}
-      \<Longrightarrow> x \<in> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
-      for x
-    proof-
-      assume \<open>x \<in> {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)}\<close>
-      then obtain \<psi> \<phi> where \<open>x =  \<psi> + \<phi>\<close>  and \<open>\<psi> \<in> closure (U ` A)\<close> and \<open>\<phi> \<in> closure (U ` B)\<close>
-        by blast
-      from  \<open>\<psi> \<in> closure (U ` A)\<close>
-      have \<open>\<exists> psiU. (\<forall> n. psiU n \<in> (U ` A)) \<and> (\<lambda> n. psiU n) \<longlonglongrightarrow> \<psi>\<close>
-        using closure_sequential by blast
-      then obtain psiU where \<open>\<forall> n. psiU n \<in> (U ` A)\<close> and \<open>(\<lambda> n. psiU n) \<longlonglongrightarrow> \<psi>\<close>
-        by blast
-      from \<open>\<forall> n. psiU n \<in> (U ` A)\<close>
-      have \<open>\<forall> n. \<exists> psi.  psiU n = U psi \<and> psi \<in> A\<close>
-        by blast
-      hence \<open>\<exists> psi. \<forall> n. psiU n = U (psi n) \<and> psi n \<in> A\<close>
-        by metis
-      then obtain psi where \<open>\<forall> n. psiU n = U (psi n)\<close> and \<open>\<forall> n. psi n \<in> A\<close>
-        by blast
-      have  \<open>(\<lambda> n. U (psi n)) \<longlonglongrightarrow> \<psi>\<close>
-        using \<open>(\<lambda> n. psiU n) \<longlonglongrightarrow> \<psi>\<close> \<open>\<forall> n. psiU n = U (psi n)\<close>
-        by simp
-      from  \<open>\<phi> \<in> closure (U ` B)\<close>
-      have \<open>\<exists> phiU. (\<forall> n. phiU n \<in> (U ` B)) \<and> (\<lambda> n. phiU n) \<longlonglongrightarrow> \<phi>\<close>
-        using closure_sequential by blast
-      then obtain phiU where \<open>\<forall> n. phiU n \<in> (U ` B)\<close> and \<open>(\<lambda> n. phiU n) \<longlonglongrightarrow> \<phi>\<close>
-        by blast
-      from \<open>\<forall> n. phiU n \<in> (U ` B)\<close>
-      have \<open>\<forall> n. \<exists> phi.  phiU n = U phi \<and> phi \<in> B\<close>
-        by blast
-      hence \<open>\<exists> phi. \<forall> n. phiU n = U (phi n) \<and> phi n \<in> B\<close>
-        by metis
-      then obtain phi where \<open>\<forall> n. phiU n = U (phi n)\<close> and \<open>\<forall> n. phi n \<in> B\<close>
-        by blast
-      have  \<open>(\<lambda> n. U (phi n)) \<longlonglongrightarrow> \<phi>\<close>
-        using \<open>(\<lambda> n. phiU n) \<longlonglongrightarrow> \<phi>\<close> \<open>\<forall> n. phiU n = U (phi n)\<close>
-        by simp
-      from  \<open>(\<lambda> n. U (psi n)) \<longlonglongrightarrow> \<psi>\<close> \<open>(\<lambda> n. U (phi n)) \<longlonglongrightarrow> \<phi>\<close>
-      have \<open>(\<lambda> n. U (psi n) +  U (phi n) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
-        by (simp add: tendsto_add)
-      hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
-      proof-
-        have \<open>U (psi n) +  U (phi n) =  U ( (psi n) +  (phi n))\<close>
-          for n
-          using \<open>cbounded_linear U\<close>
-          unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
-            module_hom_def module_hom_axioms_def
-          by auto
-        thus ?thesis 
-          using  \<open>(\<lambda> n. U (psi n) +  U (phi n) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
-          by auto
-      qed
-      hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> x\<close>
-        by (simp add: \<open>x = \<psi> + \<phi>\<close>)
-      hence \<open>x \<in> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
-        by (smt \<open>\<forall>n. phi n \<in> B\<close> \<open>\<forall>n. psi n \<in> A\<close> closure_sequential mem_Collect_eq setcompr_eq_image)
-      thus ?thesis by blast
-    qed
-    moreover have \<open>closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})
-        \<subseteq> closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
-      by (simp add: closure_mono closure_subset image_mono)
-    ultimately show ?thesis
-      using closure_mono
-      by (metis (no_types, lifting) closure_closure dual_order.trans subsetI)  
+    from q1 obtain \<psi> \<phi> where q2: \<open>x =  \<psi> + \<phi>\<close>  and q3: \<open>\<psi> \<in> closure (U ` A)\<close> 
+      and q4: \<open>\<phi> \<in> closure (U ` B)\<close>
+      by blast
+    from  \<open>\<psi> \<in> closure (U ` A)\<close>
+    have \<open>\<exists>psiU. (\<forall> n. psiU n \<in> (U ` A)) \<and> (\<lambda> n. psiU n) \<longlonglongrightarrow> \<psi>\<close>
+      using closure_sequential by blast
+    then obtain psiU where o1: \<open>\<forall>n. psiU n \<in> (U ` A)\<close> and o2: \<open>(\<lambda> n. psiU n) \<longlonglongrightarrow> \<psi>\<close>
+      by blast
+    from \<open>\<forall> n. psiU n \<in> (U ` A)\<close>
+    have \<open>\<forall> n. \<exists> psi.  psiU n = U psi \<and> psi \<in> A\<close>
+      by blast
+    hence \<open>\<exists>psi. \<forall> n. psiU n = U (psi n) \<and> psi n \<in> A\<close>
+      by metis
+    then obtain psi where o3: \<open>\<And>n. psiU n = U (psi n)\<close> and o4: \<open>\<And>n. psi n \<in> A\<close>
+      by blast
+    have  t1: \<open>(\<lambda> n. U (psi n)) \<longlonglongrightarrow> \<psi>\<close>
+      using o2 o3
+      by simp
+    from  \<open>\<phi> \<in> closure (U ` B)\<close>
+    have \<open>\<exists>phiU. (\<forall> n. phiU n \<in> (U ` B)) \<and> (\<lambda> n. phiU n) \<longlonglongrightarrow> \<phi>\<close>
+      using closure_sequential by blast
+    then obtain phiU where h1: \<open>\<And>n. phiU n \<in> (U ` B)\<close> and h2: \<open>(\<lambda> n. phiU n) \<longlonglongrightarrow> \<phi>\<close>
+      by blast    
+    have \<open>\<exists>phi.  phiU n = U phi \<and> phi \<in> B\<close>
+      for n
+      using h1 by blast
+    hence \<open>\<exists>phi. \<forall> n. phiU n = U (phi n) \<and> phi n \<in> B\<close>
+      by metis
+    then obtain phi where h3: \<open>\<And>n. phiU n = U (phi n)\<close> and h4: \<open>\<And>n. phi n \<in> B\<close>
+      by blast
+    have t2:  \<open>(\<lambda> n. U (phi n)) \<longlonglongrightarrow> \<phi>\<close>
+      using h2 h3
+      by simp
+    have t3: \<open>(\<lambda> n. U (psi n) +  U (phi n) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
+      by (simp add: tendsto_add t2 t1)
+    have \<open>U (psi n) +  U (phi n) =  U ( (psi n) +  (phi n))\<close>
+      for n
+      using \<open>cbounded_linear U\<close>
+      unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
+        module_hom_def module_hom_axioms_def
+      by auto
+    hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> \<psi> + \<phi>\<close>
+      using t3 by auto  
+    hence \<open>(\<lambda> n. U ( (psi n) +  (phi n)) ) \<longlonglongrightarrow> x\<close>
+      by (simp add: q2)      
+    hence \<open>x \<in> closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
+      by (smt closure_sequential h4 mem_Collect_eq o4 v1)
+    thus ?thesis by blast
   qed
-  ultimately show ?thesis by blast
+  moreover have \<open>closure (U ` {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})
+        \<subseteq> closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
+    by (simp add: closure_mono closure_subset image_mono)
+  ultimately have x2: \<open>(closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})
+      \<subseteq> closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})\<close>
+    using closure_mono
+    by (metis (no_types, lifting) closure_closure dual_order.trans subsetI)  
+  show ?thesis
+    using x1 x2 by blast 
 qed
 
 lemma cdot_plus_distrib[simp]:   
-  fixes A B :: \<open>('a::chilbert_space) clinear_space\<close> and U :: "('a,'b::chilbert_space) cblinfun"
-  shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>
-  apply transfer
-proof-
+  fixes A B :: \<open>'a::chilbert_space clinear_space\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
+  shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>  
+proof transfer
   fix U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
-  assume \<open>cbounded_linear U\<close> and \<open>closed_subspace A\<close> and \<open>closed_subspace B\<close> 
+  assume a1: \<open>cbounded_linear U\<close> and a2: \<open>closed_subspace A\<close> and a3: \<open>closed_subspace B\<close> 
   hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
@@ -2313,8 +2220,7 @@ proof-
   thus \<open>closure (U ` (A +\<^sub>M B)) =
        closure (U ` A) +\<^sub>M closure (U ` B)\<close>
     unfolding closed_sum_def set_plus_def
-    by (smt Collect_cong)
-      (* > 1 s *)
+    by (smt Collect_cong)    
 qed
 
 
@@ -2334,12 +2240,14 @@ proof-
     \<alpha> *\<^sub>C
     Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_clinear_space.rep_eq)    
-  show ?thesis 
-    unfolding applyOpSpace_def apply auto
-    using \<open>Abs_clinear_space
+  have x1: "Abs_clinear_space (closure ((*\<^sub>V) (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+    \<alpha> *\<^sub>C Abs_clinear_space (closure ((*\<^sub>V) A ` space_as_set S))"
+        using \<open>Abs_clinear_space
      (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by blast
+  show ?thesis
+    unfolding applyOpSpace_def apply auto using x1 by blast
 qed
 
 lemma applyOpSpace_id[simp]: 
@@ -2358,17 +2266,19 @@ proof-
   hence \<open>Abs_clinear_space
      (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by (simp add: space_as_set_inverse)    
-  show ?thesis
-    unfolding applyOpSpace_def idOp_def
-    apply auto
+  have x1: "Abs_clinear_space
+     (closure ((*\<^sub>V) (cBlinfun id) ` space_as_set \<psi>)) = \<psi>"
     using  \<open>Abs_clinear_space
      (closure (cblinfun_apply (cBlinfun id) ` space_as_set \<psi>)) = \<psi>\<close>
     by blast
+  show ?thesis
+    unfolding applyOpSpace_def idOp_def
+    by (simp add: x1)    
 qed
 
 lemma scalar_op_op[simp]:
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) cblinfun"
-    and B::"('a::complex_normed_vector, 'b) cblinfun"
+  fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
+    and B::"'a::complex_normed_vector  \<Rightarrow>\<^sub>C\<^sub>L 'b"
   shows \<open>(a *\<^sub>C A) o\<^sub>C\<^sub>L B = a *\<^sub>C (A o\<^sub>C\<^sub>L B)\<close>
 proof-
   have \<open>(a *\<^sub>C (blinfun_of_cblinfun A) o\<^sub>L
@@ -2395,10 +2305,9 @@ proof-
     by (metis cblinfun_blinfun blinfun_of_cblinfun_timesOp)   
 qed
 
-
 lemma op_scalar_op[simp]:
-  fixes A::"('b::complex_normed_vector,'c::complex_normed_vector) cblinfun" 
-    and B::"('a::complex_normed_vector, 'b) cblinfun"
+  fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector" 
+    and B::"'a::complex_normed_vector  \<Rightarrow>\<^sub>C\<^sub>L 'b"
   shows \<open>A o\<^sub>C\<^sub>L (a *\<^sub>C B) = a *\<^sub>C (A o\<^sub>C\<^sub>L B)\<close>
   using op_rscalar_op
   by (simp add: op_rscalar_op blinfun_of_cblinfun_inj blinfun_of_cblinfun_prelim blinfun_of_cblinfun_scaleC blinfun_of_cblinfun_timesOp)
@@ -2412,24 +2321,11 @@ lemma times_idOp2[simp]:
   by (metis cblinfun_apply_inject idOp.rep_eq id_comp timesOp.rep_eq)
 
 lemma mult_INF1[simp]:
-  fixes U :: "('b::complex_normed_vector,'c::cbanach) cblinfun"
+  fixes U :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::cbanach"
     and V :: "'a \<Rightarrow> 'b clinear_space" 
   shows \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
-proof-
-  have \<open>cbounded_linear U \<Longrightarrow>
-       \<forall>j. closed_subspace (V j) \<Longrightarrow> closure (U ` \<Inter> (range V)) \<subseteq> closure (U ` V i)\<close>
-    for U::\<open>'b\<Rightarrow>'c\<close> and V::\<open>'a \<Rightarrow> 'b set\<close> and x::'c and i::'a
-  proof-
-    assume \<open>cbounded_linear U\<close> and \<open>\<forall>j. closed_subspace (V j)\<close> 
-    have \<open>U ` \<Inter> (range V) \<subseteq> U ` (V i)\<close>
-      by (simp add: Inter_lower image_mono)    
-    thus ?thesis
-      by (simp add: closure_mono) 
-  qed
-  thus ?thesis
-    apply transfer
-    by auto
-qed
+  apply transfer
+  by (simp add: INT_greatest Inter_lower closure_mono image_mono) 
 
 (* For mult_INF2:
 
@@ -2469,14 +2365,11 @@ lemma mult_inf_distrib':
   fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> and B C::"'a clinear_space"
   shows "U *\<^sub>S (inf B  C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
 proof-
-  have \<open>cbounded_linear U \<Longrightarrow>
-       closed_subspace B \<Longrightarrow>
-       closed_subspace C \<Longrightarrow>
-       closure (U ` (B \<inter> C))
+  have \<open>closure (U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
+    if \<open>cbounded_linear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     for U::\<open>'a\<Rightarrow>'b\<close> and B C::\<open>'a set\<close>
   proof-
-    assume \<open>cbounded_linear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
     have \<open>(U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
       using closure_subset by force      
@@ -2485,17 +2378,10 @@ proof-
     ultimately show ?thesis
       by (simp add: closure_minimal) 
   qed
-  show ?thesis 
-    apply transfer
-    using \<open>\<And>U B C.
-       cbounded_linear U \<Longrightarrow>
-       closed_subspace B \<Longrightarrow>
-       closed_subspace C \<Longrightarrow>
-       closure (U ` (B \<inter> C))
-       \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
-    by blast
+  thus ?thesis
+    by (metis (no_types, lifting) cdot_plus_distrib inf.cobounded2 inf.idem inf_commute le_inf_iff 
+        sup.bounded_iff sup_inf_absorb)
 qed
-
 
 
 lemma equal_span:
@@ -2530,44 +2416,42 @@ proof transfer
   hence \<open>isNSCont F t\<close>
     by (simp add: isCont_isNSCont)
   from \<open>t \<in> closure (complex_vector.span G)\<close>
-  have \<open>\<exists> T \<in> *s* (complex_vector.span G). T \<approx> star_of t\<close>
+  have \<open>\<exists>T \<in> *s* (complex_vector.span G). T \<approx> star_of t\<close>
     using approx_sym nsclosure_I by blast
   then obtain T where \<open>T \<in> *s* (complex_vector.span G)\<close> and \<open>T \<approx> star_of t\<close>
     by blast
   have \<open>(*f* F) T \<approx> (*f* F) (star_of t)\<close>
     using \<open>T \<approx> star_of t\<close>  \<open>isNSCont F t\<close>
     by (simp add: isNSCont_def)
-  moreover have \<open>(*f* F) T \<approx> 0\<close>
-  proof-
-    from  \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close>
-    have  \<open>\<And>x. x \<in> complex_vector.span G \<Longrightarrow> A x = B x\<close>
-      using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear.is_clinear equal_span by blast
-    hence \<open>\<forall>x.  x \<in> complex_vector.span G \<longrightarrow> F x = 0\<close>
-      unfolding F_def
-      by simp
-    hence \<open>\<forall> x. x \<in> *s* (complex_vector.span G) \<longrightarrow> (*f* F) x = 0\<close>
-      by StarDef.transfer
-    thus ?thesis
-      using \<open>T \<in> *s* complex_vector.span G\<close> by auto 
-  qed
-  hence \<open>F t = 0\<close>
-    using approx_sym approx_trans calculation by fastforce    
-  thus \<open>A t = B t\<close>
+
+  from  \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close>
+  have  \<open>\<And>x. x \<in> complex_vector.span G \<Longrightarrow> A x = B x\<close>
+    using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear.is_clinear equal_span by blast
+  hence \<open>\<forall>x.  x \<in> complex_vector.span G \<longrightarrow> F x = 0\<close>
     unfolding F_def
-    by auto
+    by simp
+  hence \<open>\<forall>x. x \<in> *s* (complex_vector.span G) \<longrightarrow> (*f* F) x = 0\<close>
+    by StarDef.transfer
+  hence \<open>(*f* F) T \<approx> 0\<close>
+    using \<open>T \<in> *s* complex_vector.span G\<close> by auto  
+  hence \<open>F t = 0\<close>
+    using approx_sym approx_trans \<open>(*f* F) T \<approx> (*f* F) (star_of t)\<close> by fastforce
+  thus \<open>A t = B t\<close>
+    unfolding F_def by auto
 qed
 
 lemma applyOpSpace_span:
-  fixes A B :: "('a::cbanach,'b::cbanach) cblinfun"
+  fixes A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and \<open>t \<in> space_as_set (Span G)\<close>
   shows "A *\<^sub>V t = B *\<^sub>V t"
   using assms
   apply transfer
   using equal_span_applyOpSpace by blast
 
+(*here*)
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::cbanach clinear_space" 
-    and A B :: "('a::cbanach,'b::cbanach) cblinfun"
+    and A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S \<le> B *\<^sub>S S"
   using assms
