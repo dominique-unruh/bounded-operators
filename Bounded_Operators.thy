@@ -1077,7 +1077,7 @@ proof-
 qed
 
 lemma times_blinfun_assoc: "(A o\<^sub>L B)  o\<^sub>L C = A  o\<^sub>L (B  o\<^sub>L C)" 
-  proof transfer
+proof transfer
   show "A \<circ> B \<circ> C = A \<circ> (B \<circ> C)"
     if "bounded_linear A"
       and "bounded_linear B"
@@ -1147,7 +1147,7 @@ proof-
     for x
   proof-
     have y1: \<open>blinfun_apply A ((blinfun_apply B) x) = ((blinfun_apply A \<circ> blinfun_apply B)) x\<close>
-        by simp
+      by simp
     have \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) x
        = a *\<^sub>C (blinfun_apply A ((blinfun_apply B) x))\<close>
       by (simp add: scaleC_blinfun.rep_eq)
@@ -1157,8 +1157,8 @@ proof-
     moreover have \<open>(blinfun_apply A ((blinfun_apply B) x))
         = (blinfun_apply ( Blinfun (blinfun_apply A \<circ> blinfun_apply B)) x)\<close>
       using y1
-        using Blinfun_inverse
-        by (metis blinfun_apply blinfun_compose.rep_eq)        
+      using Blinfun_inverse
+      by (metis blinfun_apply blinfun_compose.rep_eq)        
     ultimately show ?thesis by simp
   qed
   hence \<open>(blinfun_apply (a *\<^sub>C A) \<circ> blinfun_apply B) =
@@ -1230,8 +1230,8 @@ proof transfer
     using that
     by (simp add: cbounded_linear.bounded_linear)
 qed 
-  
-  
+
+
 
 lemma blinfun_of_cblinfun_inj:
   \<open>blinfun_of_cblinfun f = blinfun_of_cblinfun g \<Longrightarrow> f = g\<close>
@@ -1361,7 +1361,7 @@ lemma blinfun_of_cblinfun_minus:
 
 lemma cblinfun_of_blinfun_minus:
   assumes \<open>\<And>c. \<And>x. f *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (f *\<^sub>v x)\<close>
-      and \<open>\<And>c. \<And>x. g *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (g *\<^sub>v x)\<close>
+    and \<open>\<And>c. \<And>x. g *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C (g *\<^sub>v x)\<close>
   shows \<open>cblinfun_of_blinfun (f - g) = cblinfun_of_blinfun f - cblinfun_of_blinfun g\<close>
   using assms
   unfolding cblinfun_of_blinfun_def inv_def
@@ -1523,7 +1523,7 @@ proof
       using that
       by (simp add: scaleC_left.add) 
   qed
-    
+
 
   show \<open>a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x\<close>
     for a b :: complex
@@ -1551,13 +1551,13 @@ proof
 
   show \<open>(norm x = 0) = (x = 0)\<close>
     for x ::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-    proof transfer
-  show "(onorm x = 0) = (x = (\<lambda>_. 0))"
-    if "cbounded_linear x"
-    for x :: "'a \<Rightarrow> 'b"
-    using that
-    using cbounded_linear.bounded_linear onorm_eq_0 by auto 
-qed
+  proof transfer
+    show "(onorm x = 0) = (x = (\<lambda>_. 0))"
+      if "cbounded_linear x"
+      for x :: "'a \<Rightarrow> 'b"
+      using that
+      using cbounded_linear.bounded_linear onorm_eq_0 by auto 
+  qed
 
   show \<open>norm (x + y) \<le> norm x + norm y\<close>
     for x y :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -1622,7 +1622,7 @@ end
 
 
 lemma cblinfun_apply_add: "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
-  proof transfer
+proof transfer
   show "F (b1 + b2) = F b1 + F b2"
     if "cbounded_linear F"
     for F :: "'b \<Rightarrow> 'a"
@@ -1633,7 +1633,7 @@ qed
 
 
 lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
-  proof transfer
+proof transfer
   show "F (r *\<^sub>C b) = r *\<^sub>C (F b)"
     if "cbounded_linear F"
     for F :: "'b \<Rightarrow> 'a"
@@ -1643,7 +1643,7 @@ lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^s
     unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
     using module_hom.scale by blast
 qed 
- 
+
 
 lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
@@ -2040,7 +2040,7 @@ proof-
       by (simp add: bounded_linear_continuous)
     hence v2: \<open>t \<longlonglongrightarrow> x\<close>
       unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
-        by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
+      by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
     have "(\<forall>n. t n \<in> (A \<circ> B) ` \<psi>) \<and> t \<longlonglongrightarrow> x"
       using v1 v2 by blast
     thus ?thesis
@@ -2065,11 +2065,11 @@ lemmas assoc_right = cblinfun_apply_assoc cblinfun_apply_assoc_clinear_space add
   [where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
 
 lemma scalar_times_op_add[simp]: "a *\<^sub>C (A+B) = a *\<^sub>C A + a *\<^sub>C B" 
-    for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
+  for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
   by (simp add: scaleC_add_right)
 
 lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" 
-    for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
+  for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector"
   by (simp add: complex_vector.scale_right_diff_distrib)
 
 
@@ -2242,7 +2242,7 @@ proof-
     by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_clinear_space.rep_eq)    
   have x1: "Abs_clinear_space (closure ((*\<^sub>V) (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C Abs_clinear_space (closure ((*\<^sub>V) A ` space_as_set S))"
-        using \<open>Abs_clinear_space
+    using \<open>Abs_clinear_space
      (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by blast
@@ -2673,46 +2673,46 @@ proof-
     using v3
     by blast
 
-    have "x \<in> range (cblinfun_apply P)"
-      if "x \<in> (\<lambda>x. x - P *\<^sub>V x) -` {0}"
-      for x :: 'a
-    proof-
-      have x1:\<open>x - P *\<^sub>V x = 0\<close>
-        using that by blast
-      have \<open>x = P *\<^sub>V x\<close>
-        by (simp add: x1 eq_iff_diff_eq_0)
-      thus ?thesis
-        by blast 
-    qed
-    hence v2: "(\<lambda>x. x - cblinfun_apply P x) -` {0} \<subseteq> range (cblinfun_apply P)"
-      by blast
-    have i1: \<open>range (cblinfun_apply P) = (\<lambda> x. x - cblinfun_apply P x) -` {0}\<close>
-      using v1 v2
-      by (simp add: v1 dual_order.antisym) 
-    have p1: \<open>closed {(0::'a)}\<close>
-      by simp        
-    have p2: \<open>continuous (at x) (\<lambda> x. x - P *\<^sub>V x)\<close>
-      for x
-    proof-
-      have \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - P *\<^sub>V x)\<close>
-        by (simp add: idOp.rep_eq minus_cblinfun.rep_eq)                 
-      hence \<open>cbounded_linear (cblinfun_apply (idOp - P))\<close>
-        using cblinfun_apply
-        by blast 
-      hence \<open>continuous (at x) (cblinfun_apply (idOp - P))\<close>
-        by (simp add: bounded_linear_continuous)
-      thus ?thesis
-        using \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - P *\<^sub>V x)\<close>
-        by simp
-    qed
-
-    have i2: \<open>closed ( (\<lambda> x. x - P *\<^sub>V x) -` {0} )\<close>
-      using p1 p2
-      by (rule Abstract_Topology.continuous_closed_vimage)
-
-    have \<open>closed (range (cblinfun_apply P))\<close>
-      using i1 i2
+  have "x \<in> range (cblinfun_apply P)"
+    if "x \<in> (\<lambda>x. x - P *\<^sub>V x) -` {0}"
+    for x :: 'a
+  proof-
+    have x1:\<open>x - P *\<^sub>V x = 0\<close>
+      using that by blast
+    have \<open>x = P *\<^sub>V x\<close>
+      by (simp add: x1 eq_iff_diff_eq_0)
+    thus ?thesis
+      by blast 
+  qed
+  hence v2: "(\<lambda>x. x - cblinfun_apply P x) -` {0} \<subseteq> range (cblinfun_apply P)"
+    by blast
+  have i1: \<open>range (cblinfun_apply P) = (\<lambda> x. x - cblinfun_apply P x) -` {0}\<close>
+    using v1 v2
+    by (simp add: v1 dual_order.antisym) 
+  have p1: \<open>closed {(0::'a)}\<close>
+    by simp        
+  have p2: \<open>continuous (at x) (\<lambda> x. x - P *\<^sub>V x)\<close>
+    for x
+  proof-
+    have \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - P *\<^sub>V x)\<close>
+      by (simp add: idOp.rep_eq minus_cblinfun.rep_eq)                 
+    hence \<open>cbounded_linear (cblinfun_apply (idOp - P))\<close>
+      using cblinfun_apply
+      by blast 
+    hence \<open>continuous (at x) (cblinfun_apply (idOp - P))\<close>
+      by (simp add: bounded_linear_continuous)
+    thus ?thesis
+      using \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - P *\<^sub>V x)\<close>
       by simp
+  qed
+
+  have i2: \<open>closed ( (\<lambda> x. x - P *\<^sub>V x) -` {0} )\<close>
+    using p1 p2
+    by (rule Abstract_Topology.continuous_closed_vimage)
+
+  have \<open>closed (range (cblinfun_apply P))\<close>
+    using i1 i2
+    by simp
   have u2: \<open>cblinfun_apply P x \<in> space_as_set M\<close>
     for x
     by (simp add: M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq top_clinear_space.rep_eq)
@@ -3117,53 +3117,51 @@ lemma subspace_rel_interior:
   fixes S::\<open>'a::chilbert_space set\<close>
   assumes \<open>complex_vector.subspace S\<close>
   shows \<open>0 \<in> rel_interior S\<close>
-proof-
-  {  assume a1: "affine hull S \<subseteq> S"
-    have f2: "\<not> (1::real) \<le> 0"
-      by auto
-    have "\<forall>x0. ((0::real) < x0) = (\<not> x0 \<le> 0)"
-      by auto
-    hence "\<exists>r>0. ball 0 r \<inter> affine hull S \<subseteq> S"
-      using f2 a1 by (metis inf.coboundedI2)
-  } note 1 = this
-
-  have \<open>affine S\<close>
+proof-  
+  have f2: "\<not> (1::real) \<le> 0"
+    by auto
+  have "((0::real) < x) = (\<not> x \<le> 0)"
+    for x
+    by auto
+  hence 1: "\<exists>r>0. ball 0 r \<inter> affine hull S \<subseteq> S"
+    if "affine hull S \<subseteq> S"
+    using f2 that by (metis inf.coboundedI2)
+  have \<open>u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
+    if \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
+    for x y u v
   proof-
-    have \<open>x\<in>S \<Longrightarrow> y\<in>S \<Longrightarrow>  u + v = 1 \<Longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
-      for x y u v
-    proof-
-      assume \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
-      have \<open>(u::complex) *\<^sub>C x \<in> S\<close>
-        using \<open>complex_vector.subspace S\<close>
-        unfolding complex_vector.subspace_def
-        by (simp add: \<open>x \<in> S\<close>)
-      hence \<open>u *\<^sub>R x \<in> S\<close>
-        by (simp add: scaleR_scaleC)
-      have \<open>(v::complex) *\<^sub>C y \<in> S\<close>
-        using \<open>complex_vector.subspace S\<close>
-        unfolding complex_vector.subspace_def
-        by (simp add: \<open>y \<in> S\<close>)
-      hence \<open>v *\<^sub>R y \<in> S\<close>
-        by (simp add: scaleR_scaleC)
-      show \<open> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> 
-        using \<open>complex_vector.subspace S\<close>
-        unfolding complex_vector.subspace_def
-        by (simp add:  \<open>u *\<^sub>R x \<in> S\<close>  \<open>v *\<^sub>R y \<in> S\<close>)
-    qed
-    thus ?thesis 
-      unfolding affine_def by blast
+    have \<open>(u::complex) *\<^sub>C x \<in> S\<close>
+      using \<open>complex_vector.subspace S\<close>
+      unfolding complex_vector.subspace_def
+      by (simp add: \<open>x \<in> S\<close>)
+    hence y1: \<open>u *\<^sub>R x \<in> S\<close>
+      by (simp add: scaleR_scaleC)
+    have \<open>(v::complex) *\<^sub>C y \<in> S\<close>
+      using \<open>complex_vector.subspace S\<close>
+      unfolding complex_vector.subspace_def
+      by (simp add: \<open>y \<in> S\<close>)
+    hence y2: \<open>v *\<^sub>R y \<in> S\<close>
+      by (simp add: scaleR_scaleC)
+    show \<open> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> 
+      using \<open>complex_vector.subspace S\<close>
+      unfolding complex_vector.subspace_def
+      by (simp add:  y1 y2)
   qed
-  hence \<open>affine hull S \<subseteq> S\<close>
+  hence \<open>affine S\<close>
+    unfolding affine_def by blast
+  hence x: \<open>affine hull S \<subseteq> S\<close>
     unfolding  hull_def by auto
-  thus ?thesis 
-    apply (auto simp: rel_interior_ball)
-    using assms
-    apply (simp add: complex_vector.subspace_0)
-    apply (rule 1)
-    by blast
+  have u1: "0 \<in> S"
+    by (simp add: assms complex_vector.subspace_0)    
+  have u2: "\<exists>e>0. ball 0 e \<inter> affine hull S \<subseteq> S"
+    if "affine hull S \<subseteq> S"
+    by (simp add: "1" x)    
+  show ?thesis 
+    using u1 u2
+    by (simp add: rel_interior_ball x) 
 qed
 
-
+(* Ask to Dominique: What to do with this result? Delete it? *)
 (*
 lemma mult_INF_less_eq_transfer_bij:
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
@@ -3235,19 +3233,21 @@ lemma applyOpSpace_mono:
   by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_clinear_space.rep_eq)
 
 lemma apply_left_neutral:
-  assumes "A o\<^sub>C\<^sub>L B = B"
-  assumes "\<psi> \<in> space_as_set (B *\<^sub>S top)"
+  assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
   shows "A *\<^sub>V \<psi> = \<psi>" 
-proof -
-  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" and "rangeB' = range (cblinfun_apply B)"
+proof-
+  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
+    and "rangeB' = range (cblinfun_apply B)"
   from assms have "\<psi> \<in> closure rangeB'"
-    unfolding rangeB'_def apply (transfer fixing: \<psi>) by simp
+    by (simp add: applyOpSpace.rep_eq rangeB'_def top_clinear_space.rep_eq)
+
   then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
-    apply atomize_elim using closure_sequential by blast
-  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" for i
-  proof -
+    using closure_sequential by blast
+  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" 
+    for i
+  proof-
     from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>V \<phi>"
-      apply atomize_elim unfolding rangeB'_def apply transfer by auto
+      using rangeB'_def by blast      
     hence "A *\<^sub>V \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>V \<phi>"
       by (simp add: timesOp.rep_eq)
     also have "\<dots> = B *\<^sub>V \<phi>"
@@ -3280,8 +3280,8 @@ qed
 
 lemma mult_INF_general[simp]: 
   fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space"
-    and U :: "('b,'c::chilbert_space) cblinfun"
-    and Uinv :: "('c,'b) cblinfun" 
+    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L'c::chilbert_space"
+    and Uinv :: "'c \<Rightarrow>\<^sub>C\<^sub>L'b" 
   assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv"
     and UUinvU: "U o\<^sub>C\<^sub>L Uinv o\<^sub>C\<^sub>L U = U"
     and V: "\<And>i. V i \<le> Uinv *\<^sub>S top"
@@ -3291,47 +3291,99 @@ proof (rule antisym)
     by (rule mult_INF1)
 next
   define rangeU rangeUinv where "rangeU = U *\<^sub>S top" and "rangeUinv = Uinv *\<^sub>S top"
-  define INFUV INFV where "INFUV = (INF i. U *\<^sub>S V i)" and "INFV = (INF i. V i)"
-  have "INFUV = U *\<^sub>S Uinv *\<^sub>S INFUV"
-  proof -
-    have "U *\<^sub>S V i \<le> rangeU" for i
-      unfolding rangeU_def apply transfer apply auto
-      by (meson closure_mono image_mono subsetD top_greatest)
-    hence "INFUV \<le> rangeU"
-      unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
-    moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
-      apply (rule apply_left_neutral[where B=U])
-      using assms that rangeU_def by auto
-    ultimately have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
-      by (simp add: in_mono less_eq_clinear_space.rep_eq that)
-    hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
-      apply transfer apply auto
-      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
-      using closure_subset by blast
-    thus ?thesis
-      by (simp add: cblinfun_apply_assoc_clinear_space)
+  define INFUV INFV where INFUV_def: "INFUV = (INF i. U *\<^sub>S V i)" and INFV_def: "INFV = (INF i. V i)"
+  from assms have "V i \<le> rangeUinv" 
+    for i
+    unfolding rangeUinv_def by simp
+  moreover have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" 
+    for \<psi>
+    using UinvUUinv apply_left_neutral rangeUinv_def that by auto
+  ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" 
+    for \<psi> i
+    using less_eq_clinear_space.rep_eq that by blast
+  hence d1: "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
+  proof transfer
+    show "closure ((Uinv \<circ> U) ` V i) = V i"
+      if "pred_fun \<top> closed_subspace V"
+        and "cbounded_linear Uinv"
+        and "cbounded_linear U"
+        and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> (Uinv \<circ> U) \<psi> = \<psi>"
+      for V :: "'a \<Rightarrow> 'b set"
+        and Uinv :: "'c \<Rightarrow> 'b"
+        and U :: "'b \<Rightarrow> 'c"
+        and i :: 'a
+      using that proof auto
+      show "x \<in> V i"
+        if "\<forall>x. closed_subspace (V x)"
+          and "cbounded_linear Uinv"
+          and "cbounded_linear U"
+          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
+          and "x \<in> closure (V i)"
+        for x :: 'b
+        using that
+        by (metis OrthoClosedEq closed_subspace.subspace orthogonal_complement_twice subspace_I) 
+      show "x \<in> closure (V i)"
+        if "\<forall>x. closed_subspace (V x)"
+          and "cbounded_linear Uinv"
+          and "cbounded_linear U"
+          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
+          and "x \<in> V i"
+        for x :: 'b
+        using that
+        using setdist_eq_0_sing_1 setdist_sing_in_set
+        by blast  
+    qed
+  qed     
+  have "U *\<^sub>S V i \<le> rangeU" for i
+    by (simp add: applyOpSpace_mono rangeU_def)
+  hence "INFUV \<le> rangeU"
+    unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
+  moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
+    using UUinvU apply_left_neutral rangeU_def that by auto
+  ultimately have x: "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
+    by (simp add: in_mono less_eq_clinear_space.rep_eq that)
+
+  have "closure ((U \<circ> Uinv) ` INFUV) = INFUV"
+    if "closed_subspace INFUV"
+      and "cbounded_linear U"
+      and "cbounded_linear Uinv"
+      and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> (U \<circ> Uinv) \<psi> = \<psi>"
+    for INFUV :: "'c set"
+      and U :: "'b \<Rightarrow> 'c"
+      and Uinv :: "'c \<Rightarrow> 'b"
+    using that proof auto
+    show "x \<in> INFUV"
+      if "closed_subspace INFUV"
+        and "cbounded_linear U"
+        and "cbounded_linear Uinv"
+        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
+        and "x \<in> closure INFUV"
+      for x :: 'c
+      using that
+      by (metis OrthoClosedEq closed_subspace.subspace orthogonal_complement_twice subspace_I) 
+    show "x \<in> closure INFUV"
+      if "closed_subspace INFUV"
+        and "cbounded_linear U"
+        and "cbounded_linear Uinv"
+        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
+        and "x \<in> INFUV"
+      for x :: 'c
+      using that
+      using setdist_eq_0_sing_1 setdist_sing_in_set
+      by (simp add: closed_subspace.closed)  
   qed
+  hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
+    by (metis (mono_tags, hide_lams) x applyOpSpace.rep_eq applyOpSpace_id apply_idOp image_cong 
+        space_as_set_inject)
+  hence "INFUV = U *\<^sub>S Uinv *\<^sub>S INFUV"
+    by (simp add: cblinfun_apply_assoc_clinear_space)
   also have "\<dots> \<le> U *\<^sub>S (INF i. Uinv *\<^sub>S U *\<^sub>S V i)"
     unfolding INFUV_def
-    apply (rule applyOpSpace_mono)
-    by (rule mult_INF1)
+    by (metis applyOpSpace_mono mult_INF1)    
   also have "\<dots> = U *\<^sub>S INFV"
-  proof -
-    from assms have "V i \<le> rangeUinv" for i
-      unfolding rangeUinv_def by simp
-    moreover have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" for \<psi>
-      apply (rule apply_left_neutral[where B=Uinv])
-      using assms that rangeUinv_def by auto
-    ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" for \<psi> i
-      using less_eq_clinear_space.rep_eq that by blast
-    hence "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
-      apply transfer apply auto
-      apply (metis closed_sum_def closure_closure is_closed_subspace_zero)
-      using closure_subset by blast
-    thus ?thesis
-      unfolding INFV_def
-      by (simp add: cblinfun_apply_assoc_clinear_space)
-  qed
+    using d1
+    by (metis (no_types, lifting) Sup.SUP_cong \<open>INFV \<equiv> \<Sqinter> (range V)\<close> 
+        cblinfun_apply_assoc_clinear_space)
   finally show "INFUV \<le> U *\<^sub>S INFV".
 qed
 
@@ -3373,10 +3425,7 @@ lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) *\<^sub>V \<psi> = c *\<^sub>C (A 
   apply transfer by simp
 
 lemma applyOp_scaleC2[simp]: "A *\<^sub>V (c *\<^sub>C \<psi>) = c *\<^sub>C (A *\<^sub>V \<psi>)"
-  apply transfer 
-  using cbounded_linear.clinear
-  by (simp add: cbounded_linear.is_clinear complex_vector.linear_scale)
-
+  by (simp add: cblinfun_apply_scaleC)
 
 definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
   \<open>bifunctional x = (\<lambda>f. f x)\<close>
@@ -3396,14 +3445,22 @@ proof
       by (simp add: Bifunctional'.rep_eq bifunctional_def plus_cblinfun.rep_eq)
     show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
       for r :: complex
-        and b :: "('a, complex) cblinfun"
+        and b :: "'a \<Rightarrow>\<^sub>C\<^sub>L complex"
       by (simp add: Bifunctional'.rep_eq bifunctional_def)    
   qed
+
+  have "\<exists>K. \<forall>x. cbounded_linear x \<longrightarrow>
+            cmod (bifunctional a x) \<le> onorm x * K"
+    for a::'a
+    unfolding bifunctional_def
+    using cbounded_linear.bounded_linear onorm by blast
+  hence x1: "\<exists>K. \<forall>x\<in>Collect cbounded_linear. cmod (bifunctional (a::'a) x) \<le> onorm x * K"
+    for a :: 'a
+    by auto 
   show "\<exists>K. \<forall>x. cmod (Bifunctional' (a::'a) x) \<le> norm x * K"
     for a :: 'a
     apply transfer
-    apply auto unfolding bifunctional_def
-    using cbounded_linear.bounded_linear onorm by blast 
+    using x1.     
 qed
 
 lemma norm_of_cblinfun:
@@ -3433,6 +3490,8 @@ proof (cases \<open>z = 0\<close>)
     by (smt mult_left_le_one_le norm_ge_zero norm_of_cblinfun) 
 qed
 
+
+(*here*)
 lemma onormless1: 
   assumes a1: "norm x < 1" and a2: "cbounded_linear f"
   shows "norm (f x) \<le> onorm f"
@@ -3693,7 +3752,7 @@ lemma vector_to_cblinfun_applyOp:
 lemma vector_to_cblinfun_scalar_times: 
   "vector_to_cblinfun (a *\<^sub>C \<psi>) = a *\<^sub>C vector_to_cblinfun \<psi>" for a::complex
   apply (subst asm_rl[of "a *\<^sub>C \<psi> = (a *\<^sub>C idOp) *\<^sub>V \<psi>"])
-  apply simp
+   apply simp
   apply (subst vector_to_cblinfun_applyOp)
   by simp
 
@@ -3728,7 +3787,7 @@ theorem riesz_frechet_representation_cblinfun_existence_uniq:
   fixes f::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   shows \<open>\<exists>!t. \<forall>x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
   apply transfer apply auto
-  apply (simp add: riesz_frechet_representation_existence)
+   apply (simp add: riesz_frechet_representation_existence)
 proof-
   fix y t::'a and f:: \<open>'a \<Rightarrow> complex\<close>
   assume \<open>cbounded_linear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
