@@ -4467,6 +4467,7 @@ qed
 
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
+(* TODO: move to Complex_Vector_Spaces if possible (or wherever finite_span_complete_aux) *)
 lemma finite_span_representation_bounded:
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B" and "independent B"
@@ -4550,6 +4551,7 @@ next
     using nice_ordered_field_class.linordered_field_no_ub by fastforce
 qed
 
+(* TODO: remove (is duplicate) *)
 lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
@@ -4558,12 +4560,14 @@ lemma finite_span_complete:
   by (simp add: assms finite_span_complete)
 
 
+(* TODO: remove (is duplicate) *)
 lemma finite_span_closed: 
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B"
   shows "closed (real_vector.span B)"
   by (simp add: assms complete_imp_closed finite_span_complete)
 
+(* TODO: remove (is duplicate) *)
 lemma complex_real_span:
   "complex_vector.span B = real_vector.span (B \<union> (*\<^sub>C) \<i> ` B)"
   by (simp add: complex_real_span)

@@ -3821,6 +3821,7 @@ next
     using real_vector.span_induct rspan by blast  
 qed
 
+(* TODO: move to Complex_Vector_Spaces if possible *)
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
@@ -4078,6 +4079,7 @@ proof -
 qed
 
 
+(* TODO: move to Complex_Vector_Spaces if possible *)
 lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
@@ -4123,7 +4125,9 @@ next
     using complete_singleton by auto
 qed
 
+hide_fact finite_span_complete_aux
 
+(* TODO: move to Complex_Vector_Spaces if possible *)
 lemma finite_cspan_complete: 
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
@@ -4133,12 +4137,14 @@ proof (subst complex_real_span)
     by (simp add: assms finite_span_complete)
 qed
 
+(* TODO: move to Complex_Vector_Spaces if possible *)
 lemma finite_span_closed: 
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B"
   shows "closed (real_vector.span B)"
   by (simp add: assms complete_imp_closed finite_span_complete) 
 
+(* TODO: move to Complex_Vector_Spaces if possible *)
 lemma closed_finite_dim:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes a1: \<open>finite S\<close>
