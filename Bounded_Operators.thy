@@ -3113,7 +3113,7 @@ lemma rel_interior_sing_generalized:
 
 
 (* Move to Missing *)
-(* Ask to Dominique: where is Missing? *)
+(* TODO: move to complex_inner_product*)
 lemma subspace_rel_interior:
   fixes S::\<open>'a::chilbert_space set\<close>
   assumes \<open>complex_vector.subspace S\<close>
@@ -3162,68 +3162,6 @@ proof-
     by (simp add: rel_interior_ball x) 
 qed
 
-(* Ask to Dominique: What to do with this result? Delete it? *)
-(*
-lemma mult_INF_less_eq_transfer_bij:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space set" 
-    and U :: "'b \<Rightarrow>'c::chilbert_space"
-  assumes \<open>cbounded_linear U\<close> 
-       and \<open>\<forall>i. closed_subspace (V i)\<close>  
-       and \<open>bij U\<close>
-  shows \<open>\<Inter> (range (\<lambda> i. closure (U ` V i))) = closure (U ` \<Inter> (range V))\<close>
-proof-
-  define I where \<open>I = range (\<lambda> i. U ` (V i))\<close>
-  have \<open>S\<in>I \<Longrightarrow> complex_vector.subspace S\<close>
-    for S
-  proof-
-    assume \<open>S\<in>I\<close>
-    hence \<open>\<exists> i. S = U ` (V i)\<close>
-      unfolding I_def by auto
-    then obtain i where \<open>S = U ` (V i)\<close>
-      by blast
-    have \<open>closed_subspace (V i)\<close>
-      by (simp add: assms(2))
-    thus \<open>complex_vector.subspace S\<close>
-      using  \<open>S = U ` (V i)\<close> \<open>cbounded_linear U\<close>
-      by (simp add: cbounded_linear.clinear complex_vector.subspace_image closed_subspace.complex_vector.subspace)
-  qed
-  hence \<open>\<forall>S\<in>I. convex S\<close>
-    using linear_manifold_Convex by blast
-  moreover have \<open>\<Inter>{rel_interior S |S. S \<in> I} \<noteq> {}\<close>
-  proof-
-    have \<open>S \<in> I \<Longrightarrow> 0 \<in> rel_interior S\<close>
-      for S
-    proof-
-      assume \<open>S \<in> I\<close>
-      hence \<open>complex_vector.subspace S\<close>
-        by (simp add: \<open>\<And>S. S \<in> I \<Longrightarrow> complex_vector.subspace S\<close>)
-      thus ?thesis using complex_vector.subspace_rel_interior
-        by (simp add: complex_vector.subspace_rel_interior) 
-    qed
-    thus ?thesis by blast
-  qed
-  ultimately have "closure (\<Inter>I) = \<Inter>{closure S |S. S \<in> I}"
-    by (rule convex_closure_inter_generalized)
-  moreover have \<open>closure (\<Inter>I) = closure (U ` \<Inter> (range V))\<close>
-  proof-
-    have \<open>U ` \<Inter> (range V) = (\<Inter>i. U ` V i)\<close>
-      using \<open>bij U\<close>  Complete_Lattices.bij_image_INT
-      by metis      
-    hence \<open>(\<Inter>I) = (U ` \<Inter> (range V))\<close>
-      unfolding I_def
-      by auto
-    thus ?thesis
-      by simp 
-  qed
-  moreover have \<open>\<Inter>{closure S |S. S \<in> I} = \<Inter> (range (\<lambda> i. closure (U ` V i)))\<close>
-    unfolding I_def
-    by (simp add: Setcompr_eq_image)
-  ultimately show ?thesis by simp
-qed
-
-lift_definition BIJ::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> bool\<close> 
-is bij.
-*)
 
 lemma isCont_applyOp[simp]: "isCont ((*\<^sub>V) A) \<psi>"
   apply transfer
@@ -4527,28 +4465,6 @@ proof -
 qed
 
 
-lemma finite_span_complete_aux:
-  fixes b :: "'b::real_normed_vector" and B :: "'b set"
-    and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
-  assumes t: "type_definition rep abs B"
-  assumes "finite B" and "b\<in>B" and "independent B"
-  shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
-    and "complete (real_vector.span B)"
-
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
-     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
-     content of the lemmas. However, there is one difference: We additionally assume here
-     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
-     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
-     the type class \<^class>\<open>finite\<close>
-
-     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
-     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
-     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
-     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
-  using assms(2) assms(3) assms(4) finite_span_complete_aux(1) t apply blast
-  by (simp add: assms(2) finite_span_complete)
-
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
 lemma finite_span_representation_bounded:
@@ -4640,9 +4556,6 @@ lemma finite_span_complete:
   shows "complete (real_vector.span A)"
   text \<open>The span of a finite set is complete.\<close>
   by (simp add: assms finite_span_complete)
-
-hide_fact finite_span_complete_aux
-  (* Ask to Dominique: Delete finite_span_complete_aux ? *)
 
 
 lemma finite_span_closed: 

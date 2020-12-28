@@ -4064,13 +4064,7 @@ proof-
     unfolding d_def gs_def by auto
 qed
 
-(* Ask to Dominique:
-I tried to move it to Complex_Vector_Spaces,
-but there is a problem with Starlike
-
-\<Longrightarrow> What is the problem? Did you import the theory Starlike?
-
- *)
+(* TODO: move to complex_vector_spaces *)
 lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
 proof (transfer, auto)
   have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
