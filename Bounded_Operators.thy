@@ -2522,7 +2522,8 @@ lemma UadjU[simp]: "unitary U \<Longrightarrow> U o\<^sub>C\<^sub>L U* = idOp"
 lemma unitary_isometry[simp]: "unitary U \<Longrightarrow> isometry U"
   unfolding unitary_def isometry_def by simp
 
-lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" for U::"(_,_)cblinfun"
+lemma unitary_adjoint[simp]: "unitary (U*) = unitary U" 
+  for U::"_ \<Rightarrow>\<^sub>C\<^sub>L  _"
   unfolding unitary_def by auto
 
 lemma isometry_times[simp]: 
@@ -2773,7 +2774,6 @@ lemma Proj_range_closed:
   using assms apply transfer
   using closed_subspace.closed projectionPropertiesE' by blast
 
-
 lemma Proj_isProjector[simp]:
   fixes M::\<open>'a::chilbert_space clinear_space\<close>
   shows \<open>isProjector (Proj M)\<close>
@@ -2812,7 +2812,6 @@ proof
     if "isProjector P"
     using that
     by blast
-
   show "isProjector P"
     if "P o\<^sub>C\<^sub>L P = P \<and> P = P*"
     using that Proj_I Proj_isProjector by metis
@@ -2875,7 +2874,8 @@ qed
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
 
 lemma projection_scalar_mult[simp]: 
-  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" for a::complex and \<psi>::"'a::chilbert_space"
+  "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
+  for a::complex and \<psi>::"'a::chilbert_space"
   by (metis Span.abs_eq span_mult)
 
 lemma move_plus:
@@ -2940,11 +2940,12 @@ qed
 
 subsection \<open>Kernel\<close>
 
-lift_definition kernel :: "('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> 'a clinear_space" 
+lift_definition kernel :: "'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector
+   \<Rightarrow> 'a clinear_space" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-definition eigenspace :: "complex \<Rightarrow> ('a::complex_normed_vector,'a) cblinfun \<Rightarrow> 'a clinear_space" where
+definition eigenspace :: "complex \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'a \<Rightarrow> 'a clinear_space" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
@@ -3110,7 +3111,7 @@ lemma rel_interior_sing_generalized:
   apply (auto simp: rel_interior_ball)
   by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff)
 
-(*here*)
+
 (* Move to Missing *)
 (* Ask to Dominique: where is Missing? *)
 lemma subspace_rel_interior:
@@ -3130,7 +3131,7 @@ proof-
     if \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
     for x y u v
   proof-
-    have \<open>(u::complex) *\<^sub>C x \<in> S\<close>
+    have \<open>u *\<^sub>C x \<in> S\<close>
       using \<open>complex_vector.subspace S\<close>
       unfolding complex_vector.subspace_def
       by (simp add: \<open>x \<in> S\<close>)
@@ -3229,7 +3230,9 @@ lemma isCont_applyOp[simp]: "isCont ((*\<^sub>V) A) \<psi>"
   by (simp add: bounded_linear_continuous) 
 
 lemma applyOpSpace_mono:
-  "S \<le> T \<Longrightarrow> A *\<^sub>S S \<le> A *\<^sub>S T"
+  assumes a1: "S \<le> T"
+  shows "A *\<^sub>S S \<le> A *\<^sub>S T"
+  using a1
   by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_clinear_space.rep_eq)
 
 lemma apply_left_neutral:
@@ -3254,8 +3257,7 @@ proof-
       by (simp add: assms)
     also have "\<dots> = \<psi>i i"
       by (simp add: \<phi>)
-    finally show ?thesis
-      by -
+    finally show ?thesis.
   qed
   from \<psi>i_lim have "(\<lambda>i. A *\<^sub>V (\<psi>i i)) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
     by (rule isCont_tendsto_compose[rotated], simp)
@@ -3268,7 +3270,7 @@ qed
 lemma range_adjoint_isometry:
   assumes "isometry U"
   shows "U* *\<^sub>S top = top"
-proof -
+proof-
   from assms have "top = U* *\<^sub>S U *\<^sub>S top"
     by (metis adjUU applyOpSpace_id cblinfun_apply_assoc_clinear_space)
   also have "\<dots> \<le> U* *\<^sub>S top"
@@ -3470,13 +3472,15 @@ lemma norm_of_cblinfun:
   by (simp add: cbounded_linear.bounded_linear onorm ordered_field_class.sign_simps(47))
 
 lemma norm_of_cblinfun1:
-  \<open>norm z = 1 \<Longrightarrow> norm (L *\<^sub>V z) \<le> norm L\<close>
-  using norm_of_cblinfun
+  assumes a1: "norm z = 1"
+  shows  "norm (L *\<^sub>V z) \<le> norm L"
+  using a1 norm_of_cblinfun
   by (metis mult_cancel_right1) 
 
 lemma norm_of_cblinfun2:
-  \<open>norm z \<le> 1 \<Longrightarrow> norm (L *\<^sub>V z) \<le> norm L\<close>
-proof (cases \<open>z = 0\<close>)
+  assumes a1: "norm z \<le> 1"
+  shows "norm (L *\<^sub>V z) \<le> norm L"
+  using a1 proof (cases \<open>z = 0\<close>)
   show "norm (L *\<^sub>V z) \<le> norm L"
     if "norm z \<le> 1"
       and "z = 0"
@@ -3491,7 +3495,6 @@ proof (cases \<open>z = 0\<close>)
 qed
 
 
-(*here*)
 lemma onormless1: 
   assumes a1: "norm x < 1" and a2: "cbounded_linear f"
   shows "norm (f x) \<le> onorm f"
@@ -3543,34 +3546,40 @@ proof transfer
   assume a2: \<open>cbounded_linear S\<close>
   define X where X_def: "X = {norm (S x) |x. norm x < 1}"
   define a where a_def: "a = onorm S"
-  have "x \<in> X \<Longrightarrow> x \<le> a" for x
-    unfolding X_def a_def 
+  have "x \<le> a"
+    if "x \<in> X"
+    for x
   proof-
-    assume x1: "x \<in> {norm (S x) |x. norm x < 1}"
-    then obtain x' where x2: "x = norm (S x')" and x3: "norm x' < 1"
-      by blast
+    obtain x' where x2: "x = norm (S x')" and x3: "norm x' < 1"
+      using that X_def \<open>x \<in> X\<close> by auto 
     have "norm (S x') \<le> onorm S"
       using x3 a2 onormless1 cbounded_linear.bounded_linear by auto
-    thus "x \<le> onorm S"
+    hence "x \<le> onorm S"
       by (simp add: x2) 
+    thus ?thesis
+      unfolding X_def a_def
+      by simp 
   qed
-  moreover have "(\<And>x. x \<in> X \<Longrightarrow> x \<le> y) \<Longrightarrow> a \<le> y" for y
+  moreover have "a \<le> y" 
+    if b1: "\<And>x. x \<in> X \<Longrightarrow> x \<le> y"
+    for y
   proof-
-    assume "\<And>x. x \<in> X \<Longrightarrow> x \<le> y"
-    hence f1: "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
+    have f1: "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
+      using b1
       unfolding X_def by blast 
-    have "e>0 \<Longrightarrow> onorm S \<le> y+e" for e
+    have "onorm S \<le> y+e" 
+      if e0:"e>0"      
+      for e
     proof-
-      assume e0:"e>0"
       have \<open>cbounded_linear S\<close>
         using a2
         by (simp add: cbounded_linear.bounded_linear)
       hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
         using a1 onorm_sphere[where f = S]
         by (simp add: cbounded_linear.bounded_linear)
-      hence "onorm S - e/2 < Sup { norm (S t) |t. norm t = 1 }"
+      hence u1: "onorm S - e/2 < Sup { norm (S t) |t. norm t = 1 }"
         by (simp add: e0)        
-      moreover have "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
+      moreover have u2: "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
       proof-
         have "\<exists>t::'a. norm t = 1"
           using a1 ex_norm1
@@ -3578,7 +3587,7 @@ proof transfer
         thus ?thesis
           by simp 
       qed
-      ultimately have "\<exists>T\<in>{ norm (S t) |t. norm t = 1 }. onorm S - e/2 \<le> T"
+      ultimately have u3: "\<exists>T\<in>{ norm (S t) |t. norm t = 1 }. onorm S - e/2 \<le> T"
         using e0 Sup_real_def
         by (meson less_cSupE less_eq_real_def)
       hence "\<exists>t. norm t = 1 \<and> onorm S - e/2 \<le> norm (S t)"
@@ -3627,52 +3636,65 @@ qed
 
 subsection \<open>Inverse\<close>
 
-lemma invert_cblinfun_uniq':
-  \<open>A o\<^sub>C\<^sub>L B = idOp \<Longrightarrow> B o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> A o\<^sub>C\<^sub>L B' = idOp \<Longrightarrow> B' o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> B = B'\<close>
-proof-
-  assume \<open>A o\<^sub>C\<^sub>L B = idOp\<close> and \<open>B o\<^sub>C\<^sub>L A = idOp\<close> and \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> and \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>
-  have \<open>B *\<^sub>V x = B' *\<^sub>V x\<close>
-    for x
-  proof-
-    have \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>V x = x\<close>
-      using \<open>A o\<^sub>C\<^sub>L B = idOp\<close>
-      by simp
-    hence \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V x\<close>
-      by simp
-    moreover have \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B *\<^sub>V x\<close>
-    proof-
-      have \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V (A *\<^sub>V (B *\<^sub>V x))\<close>
-        by (simp add: times_applyOp)
-      also have \<open>\<dots> = (B' o\<^sub>C\<^sub>L A) *\<^sub>V (B *\<^sub>V x)\<close>
-        by (simp add: times_applyOp)
-      also have \<open>\<dots> = idOp *\<^sub>V (B *\<^sub>V x)\<close>
-        by (simp add: \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>)
-      also have \<open>\<dots> = B *\<^sub>V x\<close>
-        by simp
-      finally show ?thesis by blast
-    qed
-    ultimately show ?thesis by auto
-  qed
-  thus ?thesis
-    by (metis \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> \<open>B o\<^sub>C\<^sub>L A = idOp\<close> cblinfun_apply_assoc times_idOp1 times_idOp2) 
-qed
-
 definition invertible_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun \<Rightarrow> bool\<close> where
   \<open>invertible_cblinfun A = (\<exists> B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp)\<close>
 
 definition invert_cblinfun::\<open>('a::complex_normed_vector, 'b::complex_normed_vector) cblinfun \<Rightarrow> ('b,'a) cblinfun\<close> where
   \<open>invert_cblinfun A = (THE B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp)\<close>
 
+(*
+
+
+lemma invert_cblinfun_uniq':
+  \<open>A o\<^sub>C\<^sub>L B = idOp \<Longrightarrow> B o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> A o\<^sub>C\<^sub>L B' = idOp \<Longrightarrow> B' o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> B = B'\<close>
+proof-
+  assume \<open>A o\<^sub>C\<^sub>L B = idOp\<close> and \<open>B o\<^sub>C\<^sub>L A = idOp\<close> and \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> and \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>
+  
+  thus ?thesis
+    by (metis \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> \<open>B o\<^sub>C\<^sub>L A = idOp\<close> cblinfun_apply_assoc times_idOp1 times_idOp2) 
+qed
+
+
+*)
+
 lemma invert_cblinfun_well_defined:
-  \<open>invertible_cblinfun A \<Longrightarrow> \<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
-  by (meson invert_cblinfun_uniq' invertible_cblinfun_def)
+  assumes a1: "invertible_cblinfun A"
+  shows "\<exists>!B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp"
+proof-
+  have \<open>B *\<^sub>V x = B' *\<^sub>V x\<close>
+    if \<open>A o\<^sub>C\<^sub>L B = idOp\<close> and \<open>B o\<^sub>C\<^sub>L A = idOp\<close> and \<open>A o\<^sub>C\<^sub>L B' = idOp\<close> and \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>
+    for A::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b" and B B' and x
+  proof-
+    have \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>V x = x\<close>
+      using \<open>A o\<^sub>C\<^sub>L B = idOp\<close>
+      by simp
+    hence u1: \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V x\<close>
+      by simp
+    have \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V (A *\<^sub>V (B *\<^sub>V x))\<close>
+      by (simp add: times_applyOp)
+    also have \<open>\<dots> = (B' o\<^sub>C\<^sub>L A) *\<^sub>V (B *\<^sub>V x)\<close>
+      by (simp add: times_applyOp)
+    also have \<open>\<dots> = idOp *\<^sub>V (B *\<^sub>V x)\<close>
+      by (simp add: \<open>B' o\<^sub>C\<^sub>L A = idOp\<close>)
+    also have \<open>\<dots> = B *\<^sub>V x\<close>
+      by simp
+    finally have u2: \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B *\<^sub>V x\<close>
+      by blast
+    show ?thesis
+      using u1 u2
+      by auto
+  qed
+  thus ?thesis
+    by (metis (no_types, lifting) assms cblinfun_apply_assoc invertible_cblinfun_def times_idOp1 
+        times_idOp2) 
+qed
 
 lemma invert_cblinfun_left:
-  \<open>invertible_cblinfun A \<Longrightarrow> (invert_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
+  assumes a1: "invertible_cblinfun A"
+  shows "(invert_cblinfun A) o\<^sub>C\<^sub>L A = idOp"
 proof-
-  assume \<open>invertible_cblinfun A\<close>
-  hence \<open>\<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
-    using invert_cblinfun_well_defined by blast
+  have \<open>\<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
+    using a1 invert_cblinfun_well_defined by blast
   hence \<open>A o\<^sub>C\<^sub>L (invert_cblinfun A) = idOp \<and> (invert_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
     unfolding invert_cblinfun_def
     by (smt theI)
@@ -3680,11 +3702,11 @@ proof-
 qed
 
 lemma invert_cblinfun_right:
-  \<open>invertible_cblinfun A \<Longrightarrow> A o\<^sub>C\<^sub>L (invert_cblinfun A) = idOp\<close>
+  assumes a1: \<open>invertible_cblinfun A\<close>
+  shows \<open>A o\<^sub>C\<^sub>L (invert_cblinfun A) = idOp\<close>
 proof-
-  assume \<open>invertible_cblinfun A\<close>
-  hence \<open>\<exists>! B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
-    using invert_cblinfun_well_defined by blast
+  have \<open>\<exists>!B. A o\<^sub>C\<^sub>L B = idOp \<and> B o\<^sub>C\<^sub>L A = idOp\<close>
+    using a1 invert_cblinfun_well_defined by blast
   hence \<open>A o\<^sub>C\<^sub>L (invert_cblinfun A) = idOp \<and> (invert_cblinfun A) o\<^sub>C\<^sub>L A = idOp\<close>
     unfolding invert_cblinfun_def
     by (smt theI)
@@ -3692,12 +3714,10 @@ proof-
 qed
 
 lemma invert_cblinfun_uniq:
-  \<open>A o\<^sub>C\<^sub>L B = idOp \<Longrightarrow> B o\<^sub>C\<^sub>L A = idOp \<Longrightarrow> invert_cblinfun A = B\<close>
-  using invert_cblinfun_left invert_cblinfun_right invert_cblinfun_uniq' invertible_cblinfun_def 
-  by blast
-
-hide_fact invert_cblinfun_uniq'
-
+  assumes a1: "A o\<^sub>C\<^sub>L B = idOp" and a2: "B o\<^sub>C\<^sub>L A = idOp"
+  shows "invert_cblinfun A = B"
+  using a1 a2 invert_cblinfun_left invert_cblinfun_right  invertible_cblinfun_def 
+    invert_cblinfun_well_defined by fastforce 
 
 subsection \<open>Recovered theorems\<close>
 
@@ -3751,12 +3771,16 @@ lemma vector_to_cblinfun_applyOp:
 
 lemma vector_to_cblinfun_scalar_times: 
   "vector_to_cblinfun (a *\<^sub>C \<psi>) = a *\<^sub>C vector_to_cblinfun \<psi>" for a::complex
-  apply (subst asm_rl[of "a *\<^sub>C \<psi> = (a *\<^sub>C idOp) *\<^sub>V \<psi>"])
-   apply simp
-  apply (subst vector_to_cblinfun_applyOp)
-  by simp
+proof (subst asm_rl [of "a *\<^sub>C \<psi> = (a *\<^sub>C idOp) *\<^sub>V \<psi>"])
+  show "a *\<^sub>C \<psi> = a *\<^sub>C idOp *\<^sub>V \<psi>"
+    by simp    
+  show "vector_to_cblinfun (a *\<^sub>C idOp *\<^sub>V \<psi>) = a *\<^sub>C (vector_to_cblinfun \<psi>::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
+    by (metis apply_idOp scalar_op_op vector_to_cblinfun_applyOp)    
+qed
 
-lift_definition cblinfun_to_blinfun::\<open>('a::complex_normed_vector,'b::complex_normed_vector) cblinfun \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
+
+lift_definition cblinfun_to_blinfun::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector 
+  \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
   is \<open>(\<lambda>f. ((*\<^sub>V) f))\<close>
   apply transfer
   by (simp add: cbounded_linear.bounded_linear)
@@ -3765,8 +3789,8 @@ lemma cblinfun_to_blinfun_norm: "norm (cblinfun_to_blinfun F) = norm F"
   by (simp add: cblinfun_to_blinfun.rep_eq norm_blinfun.rep_eq norm_cblinfun.rep_eq)
 
 theorem banach_steinhaus_cblinfun:
-  fixes F :: \<open>'c \<Rightarrow> ('a::cbanach, 'b::complex_normed_vector) cblinfun\<close>
-  assumes \<open>\<And> x. \<exists> M. \<forall> n.  norm ((F n) *\<^sub>V x) \<le> M\<close>
+  fixes F :: \<open>'c \<Rightarrow> 'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
+  assumes \<open>\<And>x. \<exists>M. \<forall> n.  norm ((F n) *\<^sub>V x) \<le> M\<close>
   shows  \<open>\<exists> M. \<forall> n. norm (F n) \<le> M\<close>  
 proof-
   define f where f_def: "f x = cblinfun_to_blinfun (F x)" for x
@@ -3786,27 +3810,43 @@ qed
 theorem riesz_frechet_representation_cblinfun_existence_uniq:
   fixes f::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   shows \<open>\<exists>!t. \<forall>x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
-  apply transfer apply auto
-   apply (simp add: riesz_frechet_representation_existence)
-proof-
-  fix y t::'a and f:: \<open>'a \<Rightarrow> complex\<close>
-  assume \<open>cbounded_linear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
-    and \<open>\<forall>x. f x = \<langle>t, x\<rangle>\<close>
-  have  \<open>\<langle>y - t, x\<rangle> = 0\<close> 
-    for x
-  proof-
-    have \<open>\<langle>y - t, x\<rangle> = \<langle>y, x\<rangle> - \<langle>t, x\<rangle>\<close>
-      by (simp add: cinner_diff_left)
-    also have \<open>\<langle>y, x\<rangle> - \<langle>t, x\<rangle> = 0\<close>
-      using  \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
-      by simp
-    finally show ?thesis 
-      by blast
+proof transfer
+  show "\<exists>!t. \<forall>x. f x = \<langle>t, x\<rangle>"
+    if "cbounded_linear f"
+    for f :: "'a \<Rightarrow> complex"
+    using that proof auto
+    show "\<exists>t. \<forall>x. f x = \<langle>t, x\<rangle>"
+      if "cbounded_linear f"
+      using that
+      by (simp add: riesz_frechet_representation_existence) 
+    show "t = y"
+      if "cbounded_linear f"
+        and "\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>"
+        and "\<forall>x. f x = \<langle>t, x\<rangle>"
+      for t :: 'a
+        and y :: 'a
+      using that    
+    proof-
+      fix y t::'a and f:: \<open>'a \<Rightarrow> complex\<close>
+      assume \<open>cbounded_linear f\<close> and \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
+        and \<open>\<forall>x. f x = \<langle>t, x\<rangle>\<close>
+      have  \<open>\<langle>y - t, x\<rangle> = 0\<close> 
+        for x
+      proof-
+        have \<open>\<langle>y - t, x\<rangle> = \<langle>y, x\<rangle> - \<langle>t, x\<rangle>\<close>
+          by (simp add: cinner_diff_left)
+        also have \<open>\<langle>y, x\<rangle> - \<langle>t, x\<rangle> = 0\<close>
+          using  \<open>\<forall>x. \<langle>y, x\<rangle> = \<langle>t, x\<rangle>\<close> 
+          by simp
+        finally show ?thesis 
+          by blast
+      qed
+      hence \<open>y - t = 0\<close>
+        using cinner_eq_zero_iff by blast    
+      thus \<open>t = y\<close>
+        by auto
+    qed
   qed
-  hence \<open>y - t = 0\<close>
-    using cinner_eq_zero_iff by blast    
-  thus \<open>t = y\<close>
-    by auto
 qed
 
 theorem riesz_frechet_representation_cblinfun_norm:
@@ -3814,8 +3854,8 @@ theorem riesz_frechet_representation_cblinfun_norm:
   fixes f::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   assumes \<open>\<And>x.  f *\<^sub>V x = \<langle>t, x\<rangle>\<close>
   shows \<open>\<parallel>f\<parallel> = \<parallel>t\<parallel>\<close>
-  using assms apply transfer
-proof-
+  using assms 
+proof transfer
   fix f::\<open>'a \<Rightarrow> complex\<close> and t
   assume \<open>cbounded_linear f\<close> and \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
   from  \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> 
@@ -3868,7 +3908,8 @@ lemma clinear_finite_sum:
   assumes "finite S"
   shows "F *\<^sub>V (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>V a))"
 proof-
-  have "\<And>S. card S = n \<Longrightarrow> finite S \<Longrightarrow> F *\<^sub>V (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>V a))" for n
+  have "\<And>S. card S = n \<Longrightarrow> finite S \<Longrightarrow> F *\<^sub>V (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>V a))"
+    for n
   proof(induction n)
     case 0
     fix S::"'a set"
@@ -3915,7 +3956,8 @@ lemma vector_to_cblinfun_adj_times_vec[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
 proof -
-  have "one_dim_isom (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a)"
+  have "one_dim_isom (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) 
+        = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a)"
     by (simp add: one_dim_isom_def)
   also have *: "\<dots> = cinner (vector_to_cblinfun \<psi> *\<^sub>V (1::'a)) \<phi>"
     by (metis adjoint_I adjoint_twice)
@@ -3930,7 +3972,8 @@ qed
 instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
 text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
   and make cblinfun and relax the one_dim-sort constraint\<close>
-definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = cnj (one_dim_isom (A *\<^sub>V 1)) * one_dim_isom (B *\<^sub>V 1)"
+definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)
+             = cnj (one_dim_isom (A *\<^sub>V 1)) * one_dim_isom (B *\<^sub>V 1)"
 instance
 proof intro_classes
   fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -3943,13 +3986,29 @@ proof intro_classes
     unfolding cinner_cblinfun_def by auto
   show "0 \<le> \<langle>A, A\<rangle>"
     unfolding cinner_cblinfun_def by auto
-  show "(\<langle>A, A\<rangle> = 0) = (A = 0)"
-    apply (auto simp: cinner_cblinfun_def)
-    apply (drule one_dim_isom_0')
-    apply transfer
-    apply (rule one_dim_linear_eq[where x=1], auto)
-    using cbounded_linear.is_clinear apply auto[1]
-    using complex_vector.module_hom_zero by blast
+  have "cbounded_linear A \<Longrightarrow> A 1 = 0 \<Longrightarrow> A = (\<lambda>_. 0)"
+    for A::"'a \<Rightarrow> 'b"
+  proof (rule one_dim_linear_eq [where x = 1] , auto)
+    show "clinear A"
+      if "cbounded_linear A"
+        and "A 1 = 0"
+      for A :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: cbounded_linear.is_clinear) 
+    show "clinear ((\<lambda>_. 0)::'a \<Rightarrow> 'b)"
+      if "cbounded_linear A"
+        and "A 1 = 0"
+      for A :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: complex_vector.module_hom_zero) 
+  qed
+  hence "A *\<^sub>V 1 = 0 \<Longrightarrow> A = 0"
+    by transfer
+  hence "one_dim_isom (A *\<^sub>V 1) = 0 \<Longrightarrow> A = 0"
+    by (metis one_dim_isom_0 one_dim_isom_inj)    
+  thus "(\<langle>A, A\<rangle> = 0) = (A = 0)"
+    by (auto simp: cinner_cblinfun_def)
+
   show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
     unfolding cinner_cblinfun_def 
     apply transfer 
@@ -3977,35 +4036,45 @@ proof intro_classes
     and c c' :: complex
   show "distinct ?basis"
     unfolding canonical_basis_cblinfun_def by simp
-  show "cindependent (set ?basis)"
-    unfolding canonical_basis_cblinfun_def apply simp
+  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<noteq> (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
     by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom_one zero_neq_one)
-  show "cspan (set ?basis) = UNIV"
+  thus "cindependent (set ?basis)"
+    unfolding canonical_basis_cblinfun_def by simp
+
+
+
+  have "A \<in> cspan (set ?basis)" for A
   proof -
-    have "A \<in> cspan (set ?basis)" for A
-    proof -
-      define c :: complex where "c = one_dim_isom (A *\<^sub>V 1)"
-      have "A x = one_dim_isom (A 1) *\<^sub>C one_dim_isom x" for x
-        by (metis (mono_tags, hide_lams) applyOp_scaleC2 complex_vector.scale_left_commute mult.right_neutral of_complex_inner_1 of_complex_one_dim_isom one_dim_isom_def scaleC_conv_of_complex)
-      then have "A = one_dim_isom (A *\<^sub>V 1) *\<^sub>C 1"
-        apply transfer by metis
-      then show "A \<in> cspan (set ?basis)"
-        unfolding canonical_basis_cblinfun_def
-        by (smt complex_vector.span_base complex_vector.span_scale list.set_intros(1))
-    qed
-    then show ?thesis by auto
+    define c :: complex where "c = one_dim_isom (A *\<^sub>V 1)"
+    have "A x = one_dim_isom (A 1) *\<^sub>C one_dim_isom x" for x
+      by (metis (mono_tags, hide_lams) applyOp_scaleC2 complex_vector.scale_left_commute mult.right_neutral of_complex_inner_1 of_complex_one_dim_isom one_dim_isom_def scaleC_conv_of_complex)
+    hence "A = one_dim_isom (A *\<^sub>V 1) *\<^sub>C 1"
+      apply transfer by metis
+    thus "A \<in> cspan (set ?basis)"
+      unfolding canonical_basis_cblinfun_def
+      by (smt complex_vector.span_base complex_vector.span_scale list.set_intros(1))
   qed
+  thus "cspan (set ?basis) = UNIV" by auto
+
   show "canonical_basis_length TYPE('a \<Rightarrow>\<^sub>C\<^sub>L 'b) = length ?basis"
     unfolding canonical_basis_length_cblinfun_def canonical_basis_cblinfun_def by simp
-  show "A \<in> set ?basis \<Longrightarrow> norm A = 1"
-    unfolding canonical_basis_cblinfun_def apply simp apply transfer by simp
+
+
+  have "A = (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow>
+    norm (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (1::real)"
+    apply transfer by simp
+  thus "A \<in> set ?basis \<Longrightarrow> norm A = 1"
+    unfolding canonical_basis_cblinfun_def 
+    by simp
+
   show "?basis = [1]"
     unfolding canonical_basis_cblinfun_def by simp
   show "c *\<^sub>C 1 * c' *\<^sub>C 1 = (c * c') *\<^sub>C (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
     apply transfer by auto
-  show "is_ortho_set (set ?basis)"
-    unfolding is_ortho_set_def canonical_basis_cblinfun_def apply auto
+  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow> False"
     by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom_0' zero_neq_neg_one)
+  thus "is_ortho_set (set ?basis)"
+    unfolding is_ortho_set_def canonical_basis_cblinfun_def by auto
   show "A div B = A * inverse B"
     by (simp add: divide_cblinfun_def)
   show "inverse (c *\<^sub>C 1) = (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b) /\<^sub>C c"
@@ -4025,19 +4094,33 @@ lemma one_comp_one_cblinfun[simp]: "1 o\<^sub>C\<^sub>L 1 = 1"
   apply transfer unfolding o_def by simp
 
 lemma one_cblinfun_adj[simp]: "1* = 1"
-  apply (rule adjoint_D[symmetric])
-  apply transfer by (rule one_dim_isom_adjoint)
+proof (rule adjoint_D [symmetric])
+  show "\<langle>1 *\<^sub>V x, y\<rangle> = \<langle>x, 1 *\<^sub>V y\<rangle>"
+    for x :: 'a
+      and y :: 'b
+    apply transfer by (rule one_dim_isom_adjoint)
+qed
+
 
 lemma one_vector_to_cblinfun[simp]: 
   "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L 1 
      = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
-  apply (transfer fixing: s)
-  by (metis (full_types) comp_apply of_complex_inner_1 one_dim_isom_def)
+proof (transfer fixing: s)
+  show "(\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C s) \<circ> one_dim_isom = (\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C s)"
+    by (metis (full_types) comp_apply of_complex_inner_1 one_dim_isom_def)
+qed
 
 lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
-  apply transfer
-  apply (subst onorm_scaleC_left)
-  by auto
+proof transfer
+  have "cbounded_linear (one_dim_isom::'a \<Rightarrow> complex)"
+    by simp    
+  moreover have "onorm (one_dim_isom::'a \<Rightarrow> complex) * norm x = norm x"
+    for x :: 'b
+    by simp
+  ultimately show "onorm (\<lambda>\<phi>. one_dim_isom (\<phi>::'a) *\<^sub>C x) = norm x"
+    for x :: 'b
+    by (subst onorm_scaleC_left)
+qed
 
 lemma norm_cblinfun_times:
   "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B"
@@ -4077,10 +4160,10 @@ lemma kernel_memberI:
 lemma applyOpSpace_Span: 
   includes cblinfun_notation
   shows "A *\<^sub>S Span G = Span ((*\<^sub>V) A ` G)"
-  apply transfer
-proof
-  show "closure (A ` closure (complex_vector.span (G::'b set))) \<subseteq> closure (complex_vector.span (A ` G::'a set))"
-    if "cbounded_linear (A::'b \<Rightarrow> 'a)"
+proof-
+  have u1: "closure (A ` closure (complex_vector.span G))
+         \<subseteq> closure (complex_vector.span (A ` G))"
+    if "cbounded_linear A"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
   proof-
@@ -4088,72 +4171,93 @@ proof
       for r
       using that
       by (simp add: bounded_linear_continuous)
-    have \<open>A ` closure (complex_vector.span (G::'b set)) \<subseteq> closure (complex_vector.span (A ` G::'a set))\<close>
-    proof
-      show "x \<in> closure (complex_vector.span (A ` G))"
-        if "x \<in> A ` closure (complex_vector.span G)"
-        for x :: 'a
-      proof-
-        have \<open>\<exists> y. x = A y \<and> y \<in> closure (complex_vector.span G)\<close>
-          using that by auto
-        then obtain y where \<open>x = A y\<close> and \<open>y \<in> closure (complex_vector.span G)\<close>
-          by blast
-        from  \<open>y \<in> closure (complex_vector.span G)\<close>
-        have \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span G)\<close>
-          using closure_sequential by blast
-        then obtain t where \<open>t \<longlonglongrightarrow> y\<close> and \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
-          by blast
-        from \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
-        have \<open>\<forall> n. A (t n) \<in> complex_vector.span (A ` G)\<close>
-          using \<open>cbounded_linear A\<close>
-            complex_vector.linear_span_image 
-          unfolding cbounded_linear_def
-          by blast          
-        moreover have \<open>(\<lambda> n. A (t n)) \<longlonglongrightarrow> A y\<close>
-          using isContA  \<open>t \<longlonglongrightarrow> y\<close>
-          by (simp add: isCont_tendsto_compose) 
-        ultimately show ?thesis 
-          using \<open>x = A y\<close>
-          by (meson closure_sequential)
-      qed
+
+    have "x \<in> closure (complex_vector.span (A ` G))"
+      if "x \<in> A ` closure (complex_vector.span G)"
+      for x :: 'a
+    proof-
+      have \<open>\<exists> y. x = A y \<and> y \<in> closure (complex_vector.span G)\<close>
+        using that by auto
+      then obtain y where \<open>x = A y\<close> and \<open>y \<in> closure (complex_vector.span G)\<close>
+        by blast
+      from  \<open>y \<in> closure (complex_vector.span G)\<close>
+      have \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span G)\<close>
+        using closure_sequential by blast
+      then obtain t where \<open>t \<longlonglongrightarrow> y\<close> and \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
+        by blast
+      from \<open>\<forall> n. t n \<in> complex_vector.span G\<close>
+      have \<open>\<forall> n. A (t n) \<in> complex_vector.span (A ` G)\<close>
+        using \<open>cbounded_linear A\<close>
+          complex_vector.linear_span_image 
+        unfolding cbounded_linear_def
+        by blast          
+      moreover have \<open>(\<lambda> n. A (t n)) \<longlonglongrightarrow> A y\<close>
+        using isContA  \<open>t \<longlonglongrightarrow> y\<close>
+        by (simp add: isCont_tendsto_compose) 
+      ultimately show ?thesis 
+        using \<open>x = A y\<close>
+        by (meson closure_sequential)
     qed
+    hence \<open>A ` closure (complex_vector.span G)
+           \<subseteq> closure (complex_vector.span (A ` G))\<close>
+      by blast
     thus ?thesis
       by (metis closure_closure closure_mono)       
   qed
-  show "closure (complex_vector.span (A ` (G::'b set)::'a set)) \<subseteq> closure (A ` closure (complex_vector.span G))"
-    if "cbounded_linear (A::'b \<Rightarrow> 'a)"
+  have u2: "closure (complex_vector.span (A ` G))
+         \<subseteq> closure (A ` closure (complex_vector.span G))"
+    if "cbounded_linear A"
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
     using that
     by (simp add: cbounded_linear.is_clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
+  show ?thesis
+    apply transfer
+    using u1 u2
+    by blast 
 qed
 
 lemma span_ortho_span:
   assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
   shows "Span S \<le> - (Span T)"
-  using assms apply transfer
-proof
-  show "x \<in> orthogonal_complement (closure (complex_vector.span T))"
+proof-
+  have u1: "x \<in> orthogonal_complement (closure (complex_vector.span T))"
     if "\<And>s t. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t"
       and "x \<in> closure (complex_vector.span S)"
     for S :: "'a set"
       and T :: "'a set"
       and x :: 'a
   proof-
-    have discrete: \<open>x \<in> complex_vector.span S \<Longrightarrow> y \<in> complex_vector.span T \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+    have discrete: \<open>\<langle> x, y \<rangle> = 0\<close>
+      if t1: \<open>x \<in> complex_vector.span S\<close> and t2: \<open>y \<in> complex_vector.span T\<close>
       for x y
     proof-
-      assume \<open>x \<in> complex_vector.span S\<close> and \<open>y \<in> complex_vector.span T\<close>
-      have \<open>\<exists> T' r\<^sub>T. finite T' \<and>  T' \<subseteq> T \<and> y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>
+      have \<open>\<exists>T' r\<^sub>T. finite T' \<and>  T' \<subseteq> T \<and> y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>
         using complex_vector.span_explicit  \<open>y \<in> complex_vector.span T\<close>
         by (smt mem_Collect_eq)
       then obtain T' r\<^sub>T where \<open>finite T'\<close> and \<open>T' \<subseteq> T\<close> and \<open>y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>
         by blast
-      have \<open>\<exists> S' r\<^sub>S. finite S' \<and>  S' \<subseteq> S \<and> x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close>
+      have \<open>\<exists>S' r\<^sub>S. finite S' \<and>  S' \<subseteq> S \<and> x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close>
         using complex_vector.span_explicit  \<open>x \<in> complex_vector.span S\<close>
         by (smt mem_Collect_eq)
       then obtain S' r\<^sub>S where \<open>finite S'\<close> and \<open>S' \<subseteq> S\<close> and \<open>x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close>
         by blast
+      have x1: \<open>\<langle> a, r\<^sub>T b *\<^sub>C b \<rangle> =  r\<^sub>T b * \<langle> a, b \<rangle>\<close>
+        for a b
+        by simp
+
+      have x2: \<open>a \<in> S' \<Longrightarrow> b \<in> T' \<Longrightarrow> \<langle> a, b \<rangle> = 0\<close>
+        for a b
+      proof-
+        assume \<open>a \<in> S'\<close> and \<open>b \<in> T'\<close>
+        have \<open>a \<in> S\<close>
+          using \<open>S' \<subseteq> S\<close> \<open>a \<in> S'\<close> by blast            
+        moreover have \<open>b \<in> T\<close>
+          using \<open>T' \<subseteq> T\<close> \<open>b \<in> T'\<close> by blast
+        ultimately show ?thesis
+          using is_orthogonal_def \<open>\<And>t s. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t\<close> by blast
+      qed
+
       have \<open>\<langle> x, y \<rangle> = \<langle> (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a), (\<Sum>b\<in>T'. r\<^sub>T b *\<^sub>C b) \<rangle>\<close>
         by (simp add: \<open>x = (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a)\<close> \<open>y = (\<Sum>a\<in>T'. r\<^sub>T a *\<^sub>C a)\<close>)
       also have \<open>\<dots> = (\<Sum>a\<in>S'. \<langle> r\<^sub>S a *\<^sub>C a, (\<Sum>b\<in>T'. r\<^sub>T b *\<^sub>C b) \<rangle>)\<close>
@@ -4161,43 +4265,22 @@ proof
       also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. \<langle> r\<^sub>S a *\<^sub>C a,  r\<^sub>T b *\<^sub>C b \<rangle>))\<close>
         by (simp add: cinner_sum_right)
       also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * \<langle> a,  r\<^sub>T b *\<^sub>C b \<rangle>))\<close>
-      proof -
-        have "(\<Sum>a\<in>S'. \<Sum>aa\<in>T'. \<langle>r\<^sub>S a *\<^sub>C a, r\<^sub>T aa *\<^sub>C aa\<rangle>) = (\<Sum>a\<in>S'. \<Sum>aa\<in>T'. cnj (r\<^sub>S a) * \<langle>a, r\<^sub>T aa *\<^sub>C aa\<rangle>) \<or> (\<forall>a. (\<Sum>aa\<in>T'. \<langle>r\<^sub>S a *\<^sub>C a, r\<^sub>T aa *\<^sub>C aa\<rangle>) = (\<Sum>aa\<in>T'. cnj (r\<^sub>S a) * \<langle>a, r\<^sub>T aa *\<^sub>C aa\<rangle>))"
-          by (meson cinner_scaleC_left)
-        thus ?thesis
-          by presburger
-      qed
+        by (meson cinner_scaleC_left sum.cong)
       also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * ((r\<^sub>T b) * \<langle> a, b \<rangle>)))\<close>
-      proof-
-        have \<open>\<langle> a, r\<^sub>T b *\<^sub>C b \<rangle> =  r\<^sub>T b * \<langle> a, b \<rangle>\<close>
-          for a b
-          by simp
-        thus ?thesis by simp
-      qed
+        apply transfer
+        using x1
+        by auto 
       also have \<open>\<dots> = (\<Sum>a\<in>S'. (\<Sum>b\<in>T'. (cnj (r\<^sub>S a)) * ((r\<^sub>T b) * 0)))\<close>
-      proof-
-        have \<open>a \<in> S' \<Longrightarrow> b \<in> T' \<Longrightarrow> \<langle> a, b \<rangle> = 0\<close>
-          for a b
-        proof-
-          assume \<open>a \<in> S'\<close> and \<open>b \<in> T'\<close>
-          have \<open>a \<in> S\<close>
-            using \<open>S' \<subseteq> S\<close> \<open>a \<in> S'\<close> by blast            
-          moreover have \<open>b \<in> T\<close>
-            using \<open>T' \<subseteq> T\<close> \<open>b \<in> T'\<close> by blast
-          ultimately show ?thesis
-            using is_orthogonal_def that(1) by auto 
-        qed
-        thus ?thesis by simp
-      qed
+        by (simp add: x2)        
       finally show \<open>\<langle> x, y \<rangle> = 0\<close> by simp
     qed
-    have \<open>y \<in> complex_vector.span T \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+    have \<open>\<langle> x, y \<rangle> = 0\<close>
+      if \<open>y \<in> complex_vector.span T\<close>
       for y
     proof-
-      assume \<open>y \<in> complex_vector.span T\<close>
-      have \<open>\<exists> t. t \<longlonglongrightarrow> x \<and> (\<forall> n. t n \<in> complex_vector.span S)\<close>
-        using closure_sequential
-        by (metis that(2))  
+      have \<open>\<exists>t. t \<longlonglongrightarrow> x \<and> (\<forall> n. t n \<in> complex_vector.span S)\<close>
+        using closure_sequential \<open>x \<in> closure (cspan S)\<close>
+        by metis        
       then obtain t where \<open>t \<longlonglongrightarrow> x\<close> and \<open>\<forall> n. t n \<in> complex_vector.span S\<close>
         by blast
       from  \<open>\<forall> n. t n \<in> complex_vector.span S\<close>
@@ -4213,12 +4296,12 @@ proof
       thus ?thesis
         by (simp add: LIMSEQ_const_iff) 
     qed
-    hence \<open>y \<in> closure (complex_vector.span T) \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
+    hence \<open>\<langle> x, y \<rangle> = 0\<close>
+      if \<open>y \<in> closure (complex_vector.span T)\<close>
       for y
     proof-
-      assume \<open>y \<in> closure (complex_vector.span T)\<close>
-      hence \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span T)\<close>
-        using closure_sequential by blast
+      have \<open>\<exists> t. t \<longlonglongrightarrow> y \<and> (\<forall> n. t n \<in> complex_vector.span T)\<close>
+        using that closure_sequential by blast
       then obtain t where \<open>t \<longlonglongrightarrow> y\<close> and \<open>\<forall> n. t n \<in> complex_vector.span T\<close>
         by blast
       from  \<open>\<forall> n. t n \<in> complex_vector.span T\<close>
@@ -4236,9 +4319,11 @@ proof
     thus ?thesis
       using orthogonal_complement_I2 by blast 
   qed
+  thus ?thesis
+    by (metis Span.rep_eq assms clinear_space_leI uminus_clinear_space.rep_eq) 
 qed
 
-definition "positive_op A = (\<exists>B::('a::chilbert_space,'a) cblinfun. A = B* o\<^sub>C\<^sub>L B)"
+definition "positive_op A = (\<exists>B::'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a. A = B* o\<^sub>C\<^sub>L B)"
 
 lemma timesOp0[simp]: "0 o\<^sub>C\<^sub>L A = 0"
   apply transfer
@@ -4257,7 +4342,7 @@ abbreviation "loewner_leq A B == (positive_op (B-A))"
 
 
 lemma norm_mult_ineq_cblinfun:
-  fixes A B :: "(_,_) cblinfun"
+  fixes A B
   shows "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B"
   apply transfer
   by (simp add: cbounded_linear.bounded_linear onorm_compose)
@@ -4272,86 +4357,75 @@ lemma Ortho_expansion_finite:
 proof-
   have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
     using \<open>finite T\<close> span_finite_dim by blast
-  have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} =
-    {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
+  have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
     by (metis (mono_tags) UNIV_I a1 a2 a3 cdependent_raw_def is_ortho_set_independent 
         span_explicit_finite subset_refl)
+
+  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = Complex_Vector_Spaces.span A"
+    by (simp add: complex_vector.span_explicit)      
+  have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
+    using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
+  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
+    using f1 by blast
+  have "Complex_Vector_Spaces.span T = UNIV"
+    by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
   hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
-  proof -
-    have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = Complex_Vector_Spaces.span A"
-      by (simp add: complex_vector.span_explicit)      
-    have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
-      using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
-    have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
-      using f1 by blast
-    have "Complex_Vector_Spaces.span T = UNIV"
-      by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
-    thus ?thesis
-      using f3 f2 by blast
-  qed 
+    using f3 f2 by blast
   then obtain r where \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
     by blast
-  have \<open>a \<in> T \<Longrightarrow> r a = \<langle>a, x\<rangle>\<close>
+
+  have \<open>r a = \<langle>a, x\<rangle>\<close>
+    if \<open>a \<in> T\<close>
     for a
   proof-
-    assume \<open>a \<in> T\<close>
+    have \<open>norm a = 1\<close>
+      using a4
+      by (simp add: \<open>a \<in> T\<close>)
+    moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
+      using norm_eq_sqrt_cinner by auto        
+    ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
+      by simp
+    hence \<open>norm \<langle>a, a\<rangle> = 1\<close>
+      using real_sqrt_eq_1_iff by blast
+    moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
+      by (simp add: cinner_real)        
+    moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
+      by simp        
+    ultimately have w1: \<open>\<langle>a, a\<rangle> = 1\<close>
+      by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
+
+    have \<open>r t * \<langle>a, t\<rangle> = 0\<close>
+      if \<open>t \<in> T-{a}\<close>
+      for t
+    proof-
+      have \<open>t \<in> T\<close>
+        using that
+        by blast
+      have \<open>a \<noteq> t\<close>
+        using  \<open>t \<in> T-{a}\<close>
+        by auto
+      have \<open>\<langle>a, t\<rangle> = 0\<close>
+        using a3 unfolding is_ortho_set_def
+        by (simp add: \<open>a \<in> T\<close> \<open>a \<noteq> t\<close> \<open>t \<in> T\<close>) 
+      thus ?thesis by simp
+    qed
+    hence s1: \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
+      by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
     have \<open>\<langle>a, x\<rangle> = \<langle>a, (\<Sum> t\<in>T. r t *\<^sub>C t)\<rangle>\<close>
       using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
       by simp
     also have \<open>\<dots> = (\<Sum> t\<in>T. \<langle>a, r t *\<^sub>C t\<rangle>)\<close>
       using cinner_sum_right by blast
     also have \<open>\<dots> = (\<Sum> t\<in>T. r t * \<langle>a, t\<rangle>)\<close>
-    proof-
-      have \<open>\<langle>a, r t *\<^sub>C t\<rangle> = r t * \<langle>a, t\<rangle>\<close>
-        for t
-        by simp
-      thus ?thesis by simp
-    qed
+      by simp    
     also have \<open>\<dots> = r a * \<langle>a, a\<rangle> + (\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>)\<close>
       using \<open>a \<in> T\<close>
       by (meson assms(2) sum.remove)
     also have \<open>\<dots> = r a * \<langle>a, a\<rangle>\<close>
-    proof-
-      have \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
-      proof-
-        have \<open>t\<in>T-{a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>
-          for t
-        proof-
-          assume \<open>t \<in> T-{a}\<close>
-          hence \<open>t \<in> T\<close>
-            by blast
-          have \<open>a \<noteq> t\<close>
-            using  \<open>t \<in> T-{a}\<close>
-            by auto
-          have \<open>\<langle>a, t\<rangle> = 0\<close>
-            using a3 unfolding is_ortho_set_def
-            by (simp add: \<open>a \<in> T\<close> \<open>a \<noteq> t\<close> \<open>t \<in> T\<close>) 
-          thus ?thesis by simp
-        qed
-        show ?thesis
-          by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
-      qed
-      thus ?thesis by simp
-    qed
+      using s1
+      by simp
     also have \<open>\<dots> = r a\<close>
-    proof-
-      have \<open>norm a = 1\<close>
-        using a4
-        by (simp add: \<open>a \<in> T\<close>)
-      moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
-        using norm_eq_sqrt_cinner by auto        
-      ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
-        by simp
-      hence \<open>norm \<langle>a, a\<rangle> = 1\<close>
-        using real_sqrt_eq_1_iff by blast
-      moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
-        by (simp add: cinner_real)        
-      moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
-        by simp        
-      ultimately have \<open>\<langle>a, a\<rangle> = 1\<close>
-        by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
-      thus ?thesis by simp
-    qed
+      by (simp add: w1)
     finally show ?thesis by auto
   qed
   thus ?thesis 
@@ -4390,45 +4464,41 @@ proof
     then obtain L where \<open>\<And> t. t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
       by blast
     define l where \<open>l = (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
-    have \<open>X n = (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)\<close>
+    have x1: \<open>X n = (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)\<close>
       for n
       using Ortho_expansion_finite[where T = "set canonical_basis" and x = "X n"]
         \<open>finite (set canonical_basis)\<close> 
       by (smt  is_generator_set is_normal is_orthonormal)
 
-    moreover have  \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
+    have \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 
+      if r1: \<open>t\<in>set canonical_basis\<close>
+      for t
     proof-
-      have \<open>t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 
-        for t
-      proof-
-        assume \<open>t\<in>set canonical_basis\<close>
-        hence \<open>(\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
-          using  \<open>\<And> t. t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
-          by blast
-        hence \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close>
-        proof-
-          define f where \<open>f x = x *\<^sub>C t\<close> for x
-          have \<open>isCont f r\<close>
-            for r
-            unfolding f_def
-            by (simp add: cbounded_linear_scaleC_left bounded_linear_continuous)
-          hence \<open>(\<lambda> n. f \<langle> t, X n \<rangle>) \<longlonglongrightarrow> f (L t)\<close>
-            using \<open>(\<lambda>n. \<langle>t, X n\<rangle>) \<longlonglongrightarrow> L t\<close> isCont_tendsto_compose by blast
-          thus ?thesis unfolding f_def
-            by simp
-        qed
-        thus ?thesis by blast
-      qed
-      hence \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow>  (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
-        using \<open>finite (set canonical_basis)\<close>
-          tendsto_finite_sum[where T = "set canonical_basis" and X = "\<lambda> t. \<lambda> n. \<langle>t, X n\<rangle> *\<^sub>C t"
-            and L = "\<lambda> t. L t *\<^sub>C t"]
-        by auto
-      thus ?thesis
-        using l_def by blast 
+      have \<open>(\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+        using r1  \<open>\<And> t. t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+        by blast
+      define f where \<open>f x = x *\<^sub>C t\<close> for x
+      have \<open>isCont f r\<close>
+        for r
+        unfolding f_def
+        by (simp add: cbounded_linear_scaleC_left bounded_linear_continuous)
+      hence \<open>(\<lambda> n. f \<langle> t, X n \<rangle>) \<longlonglongrightarrow> f (L t)\<close>
+        using \<open>(\<lambda>n. \<langle>t, X n\<rangle>) \<longlonglongrightarrow> L t\<close> isCont_tendsto_compose by blast
+      hence \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close>
+        unfolding f_def
+        by simp
+      thus ?thesis by blast
     qed
-    ultimately have \<open>X \<longlonglongrightarrow> l\<close>
-      by simp
+    hence \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t))
+    \<longlonglongrightarrow>  (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
+      using \<open>finite (set canonical_basis)\<close>
+        tendsto_finite_sum[where T = "set canonical_basis" and X = "\<lambda> t. \<lambda> n. \<langle>t, X n\<rangle> *\<^sub>C t"
+          and L = "\<lambda> t. L t *\<^sub>C t"]
+      by auto      
+    hence x2: \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
+      using l_def by blast 
+    have \<open>X \<longlonglongrightarrow> l\<close>
+      using x1 x2 by simp
     thus ?thesis 
       unfolding convergent_def by blast
   qed
@@ -4438,10 +4508,15 @@ lemma vector_to_cblinfun_adj_times_vector_to_cblinfun[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
-  have "one_dim_isom ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = one_dim_isom ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
+  have "one_dim_isom \<gamma> *\<^sub>C one_dim_isom (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
+    \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_isom \<gamma>"
     for \<gamma> :: "'c::one_dim"
-    apply (simp add: times_applyOp)
-    by (metis (mono_tags, hide_lams) complex_vector.scale_left_commute id_apply of_complex_def of_complex_eq_id of_complex_inner_1 one_dim_isom_def)
+    by (metis (mono_tags, hide_lams) complex_vector.scale_left_commute id_apply of_complex_def 
+        of_complex_eq_id of_complex_inner_1 one_dim_isom_def)
+  hence "one_dim_isom ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
+      = one_dim_isom ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
+    for \<gamma> :: "'c::one_dim"
+    by (simp add: times_applyOp)
   hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
     by (rule one_dim_isom_inj)
@@ -4450,6 +4525,7 @@ proof -
         and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
     by auto
 qed
+
 
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
@@ -4470,175 +4546,8 @@ lemma finite_span_complete_aux:
      weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
      (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
      an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
-
-proof -
-  define repr  where "repr = real_vector.representation B"
-  define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
-  define comb  where "comb l = (\<Sum>b\<in>B. l b *\<^sub>R b)" for l
-  define comb' where "comb' l = comb (Rep_euclidean_space l o abs)" for l
-
-  have comb_cong: "comb x = comb y" if "\<And>z. z\<in>B \<Longrightarrow> x z = y z" for x y
-    unfolding comb_def using that by auto
-  have comb_repr[simp]: "comb (repr \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
-    unfolding comb_def repr_def 
-    apply (rule real_vector.sum_representation_eq)
-    using assms that by auto
-  have repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
-    unfolding repr_def comb_def
-    apply (rule real_vector.representation_eqI)
-    using \<open>independent B\<close> \<open>finite B\<close> apply (auto simp add: real_vector.span_base real_vector.span_scale real_vector.span_sum)
-    apply meson
-    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left) 
-      (* > 1s *)
-  have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
-    unfolding repr_def using that
-    by (simp add: real_vector.representation_def)
-  have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
-    unfolding repr'_def repr_bad[OF that]
-    apply transfer by auto
-  have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
-  proof -
-    have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
-      unfolding comb'_def repr'_def
-      by (subst Abs_euclidean_space_inverse; simp)
-    also have "\<dots> = comb (repr \<psi>)"
-      apply (rule comb_cong) unfolding o_def
-      by (subst type_definition.Abs_inverse[OF t]; simp)
-    also have "\<dots> = \<psi>"
-      using that by simp
-    finally show ?thesis by -
-  qed
-  have repr'_comb'[simp]: "repr' (comb' x) = x" for x
-    unfolding comb'_def repr'_def o_def
-    apply simp
-    apply (subst type_definition.Rep_inverse[OF t])
-    using type_definition.Rep[OF t] apply simp
-    apply (subst Rep_euclidean_space_inverse)
-    by simp
-  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" for d
-    using compact_sphere by blast
-
-  have "complete (UNIV :: 'basis euclidean_space set)"
-    by (simp add: complete_UNIV)
-
-  have blin_comb': "bounded_linear comb'"
-    unfolding comb_def comb'_def apply (rule bounded_linearI')
-    apply (transfer fixing: abs)
-    apply (simp add: scaleR_add_left sum.distrib)
-    apply (transfer fixing: abs)
-    by (simp add: real_vector.scale_sum_right)
-
-  hence "continuous_on X comb'" for X
-    by (simp add: linear_continuous_on)
-
-  hence "compact (comb' ` sphere 0 d)" for d
-    using sphere
-    apply (rule compact_continuous_image)
-    by -
-
-  hence compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
-    apply (rule compact_continuous_image[rotated])
-    apply (rule continuous_on_norm)
-    by auto
-
-  have not0: "0 \<notin> norm ` comb' ` sphere 0 1"
-  proof (rule ccontr, simp)
-    assume "0 \<in> norm ` comb' ` sphere 0 1"
-    then obtain x where nc0: "norm (comb' x) = 0" and x: "x \<in> sphere 0 1"
-      by auto
-    hence "comb' x = 0"
-      by simp
-    hence "repr' (comb' x) = 0"
-      unfolding repr'_def o_def repr_def apply simp
-      by (smt repr'_comb' blin_comb' dist_0_norm linear_simps(3) mem_sphere norm_zero x)
-    hence "x = 0"
-      by auto
-    with x show False
-      by simp
-  qed
-  have "\<exists>d>0. \<forall>x\<in>norm ` comb' ` sphere 0 1. d \<le> dist 0 x"
-    apply (rule_tac separate_point_closed)
-    using not0 compact_norm_comb'
-    apply auto
-    using compact_imp_closed by blast
-
-  then obtain d where d: "x\<in>norm ` comb' ` sphere 0 1 \<Longrightarrow> d \<le> dist 0 x"  
-    and "d > 0" for x
-    by metis
-  define D where "D = 1/d"
-  hence "D > 0"
-    using \<open>d>0\<close> unfolding D_def by auto
-  from d have "x \<ge> d"  if "x\<in>norm ` comb' ` sphere 0 1" for x
-    apply auto
-    using that by fastforce
-  hence *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
-    using that by auto
-  have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
-    apply (cases "x=0")
-    apply simp
-    using *[of "(1/norm x) *\<^sub>R x"]
-    unfolding linear_simps(5)[OF blin_comb']
-    apply auto
-    by (simp add: le_divide_eq)
-  have *:  "norm (repr' \<psi>) \<le> norm \<psi> * D" for \<psi>
-    apply (cases "\<psi> \<in> real_vector.span B")
-    unfolding D_def
-    using norm_comb'[of "repr' \<psi>"] \<open>d>0\<close>
-    by (simp_all add: linordered_field_class.mult_imp_le_div_pos mult.commute)
-  hence "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
-  proof -
-    have "(Rep_euclidean_space (repr' \<psi>) (abs b)) = repr' \<psi> \<bullet> euclidean_space_basis_vector (abs b)"
-      apply (transfer fixing: abs b)
-      apply auto by -
-    also have "\<bar>\<dots>\<bar> \<le> norm (repr' \<psi>)"
-      apply (rule Basis_le_norm)
-      unfolding Basis_euclidean_space_def by simp
-    also have "\<dots> \<le> norm \<psi> * D"
-      using * by auto
-    finally show ?thesis by simp
-  qed
-  hence "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
-    unfolding repr'_def apply (subst (asm) Abs_euclidean_space_inverse)
-    apply auto
-    unfolding type_definition.Abs_inverse[OF t \<open>b\<in>B\<close>] by simp
-  thus "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
-    using \<open>D>0\<close> by auto
-
-  have complete_comb': "complete (comb' ` UNIV)"
-    using \<open>d>0\<close> apply (rule complete_isometric_image)
-    using blin_comb' norm_comb' complete_UNIV by auto
-
-  have range_comb': "comb' ` UNIV = real_vector.span B"
-  proof (auto simp: image_def)
-    show "comb' x \<in> real_vector.span B" for x
-      by (metis comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb real_vector.representation_zero real_vector.span_zero)
-  next
-    fix \<psi> assume "\<psi> \<in> real_vector.span B"
-    then obtain f where f: "comb f = \<psi>"
-      apply atomize_elim
-      unfolding real_vector.span_finite[OF \<open>finite B\<close>] comb_def
-      by auto
-    define f' where "f' b = (if b\<in>B then f b else 0)" for b :: 'b
-    have f': "comb f' = \<psi>"
-      unfolding f[symmetric]
-      apply (rule comb_cong)
-      unfolding f'_def by simp
-    define x :: "'basis euclidean_space" where "x = Abs_euclidean_space (f' o rep)"
-    have "\<psi> = comb' x"
-      unfolding comb'_def x_def o_def
-      apply (subst Abs_euclidean_space_inverse, simp)
-      apply (subst comb_cong[of _ f'])
-      apply (subst type_definition.Abs_inverse[OF t]; simp)
-      using f' by simp
-    thus "\<exists>x. \<psi> = comb' x"
-      by auto
-  qed
-
-  from range_comb' complete_comb'
-  show "complete (real_vector.span B)"
-    by simp
-qed
-
+  using assms(2) assms(3) assms(4) finite_span_complete_aux(1) t apply blast
+  by (simp add: assms(2) finite_span_complete)
 
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
@@ -4673,7 +4582,7 @@ proof (cases "B\<noteq>{}")
       by auto
         (* Step 2: We show that our fake typedef 'basisT could be instantiated as type class finite *)
     have basisT_finite: "class.finite TYPE('basisT)"
-      apply intro_classes
+      apply intro_classes 
       using \<open>finite B\<close> t
       by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
         (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
@@ -4688,27 +4597,34 @@ proof (cases "B\<noteq>{}")
   *)
   note this[cancel_type_definition, OF True \<open>finite B\<close> _ \<open>independent B\<close>]
 
-  hence "\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
+  hence d2:"\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
     by (simp add: repr_def that True)
+  have d1: " (\<And>b. b \<in> B \<Longrightarrow>
+          \<exists>D. \<forall>\<psi>. 0 < D \<and> norm (repr \<psi> b) \<le> norm \<psi> * D) \<Longrightarrow>
+    \<exists>D. \<forall>b \<psi>. b \<in> B \<longrightarrow>
+               0 < D b \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b"
+    apply (rule choice) by auto
   then obtain D where D: "D b > 0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
-    apply atomize_elim apply (rule choice) by auto
-  hence Dpos: "D b > 0" and Dbound: "norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
+    apply atomize_elim
+    using d2 by blast
+
+  hence Dpos: "D b > 0" and Dbound: "norm (repr \<psi> b) \<le> norm \<psi> * D b" 
+    if "b\<in>B" for b \<psi>
     using that by auto
   define Dall where "Dall = Max (D`B)"
   have "Dall > 0"
     unfolding Dall_def using \<open>finite B\<close> \<open>B\<noteq>{}\<close> Dpos
-    apply auto
-    by (metis (mono_tags) Max_in True empty_is_image finite_imageI imageE)
-
+    by (metis (mono_tags, lifting) Max_in finite_imageI image_iff image_is_empty)
   have "Dall \<ge> D b" if "b\<in>B" for b
     unfolding Dall_def using \<open>finite B\<close> that by auto
   with Dbound
   have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<in>B" for b \<psi>
-    using that apply auto
-    by (meson mult_left_mono norm_ge_zero order_trans)
+    using that
+    by (smt mult_left_mono norm_not_less_zero) 
   moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
     unfolding repr_def using real_vector.representation_ne_zero True
-    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less subsetI subset_antisym)
+    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less 
+        subsetI subset_antisym)
   ultimately show "\<exists>D>0. \<forall>\<psi> b. abs (repr \<psi> b) \<le> norm \<psi> * D"
     using \<open>Dall > 0\<close> real_norm_def by metis
 next
@@ -4722,50 +4638,12 @@ lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
   shows "complete (real_vector.span A)"
-
   text \<open>The span of a finite set is complete.\<close>
-
-proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
-  case True
-  obtain B where
-    BT: "real_vector.span B = real_vector.span A"
-    and "independent B"  
-    and "finite B"
-    by (smt assms empty_subsetI real_vector.independent_empty 
-        real_vector.maximal_independent_subset_extend real_vector.span_eq rev_finite_subset 
-        subset_trans)
-  have "B\<noteq>{}"
-    apply (rule ccontr, simp)
-    using BT True
-    by (metis real_vector.span_superset real_vector.span_empty subset_singletonD)
-
-(* The following generalizes finite_span_complete_aux to hold without the assumption
-     that 'basis has type class finite *)
-  {
-    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux,
-       otherwise "internalize_sort" below fails *)
-    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
-    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
-      by auto
-    have basisT_finite: "class.finite TYPE('basisT)"
-      apply intro_classes
-      using \<open>finite B\<close> t
-      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-    note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
-    note this[OF basisT_finite t]
-  }
-  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
-  hence "complete (real_vector.span B)"
-    using \<open>B\<noteq>{}\<close> by auto 
-  thus "complete (real_vector.span A)"
-    unfolding BT by simp
-next
-  case False
-  thus ?thesis
-    using complete_singleton by auto
-qed
+  by (simp add: assms finite_span_complete)
 
 hide_fact finite_span_complete_aux
+  (* Ask to Dominique: Delete finite_span_complete_aux ? *)
+
 
 lemma finite_span_closed: 
   fixes B :: "'a::real_normed_vector set"
@@ -4775,38 +4653,7 @@ lemma finite_span_closed:
 
 lemma complex_real_span:
   "complex_vector.span B = real_vector.span (B \<union> (*\<^sub>C) \<i> ` B)"
-proof auto
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  fix \<psi>
-  assume cspan: "\<psi> \<in> ?cspan B"
-  obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
-    apply atomize_elim 
-    using complex_vector.span_explicit[of B] cspan
-    by auto
-  define R where "R = B \<union> scaleC \<i> ` B"
-  have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
-    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
-    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
-  hence "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
-    apply (subst sum.cartesian_product[symmetric])
-    by (simp add: UNIV_bool \<psi>_explicit)
-  also have "\<dots> \<in> ?rspan R"
-    unfolding R_def
-    apply (rule real_vector.span_sum)
-    using \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff) 
-  finally show "\<psi> \<in> ?rspan R" by -
-next
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  define R where "R = B \<union> scaleC \<i> ` B"
-  fix \<psi>
-  assume rspan: "\<psi> \<in> ?rspan R"
-  thus "\<psi> \<in> ?cspan B"
-    apply induction
-    apply (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
-    using R_def complex_vector.span_base complex_vector.span_scale by fastforce 
-qed
+  by (simp add: complex_real_span)
 
 lemma scaleC_cindependent:
   assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
@@ -4855,18 +4702,15 @@ proof-
       by blast 
     hence "inverse c *\<^sub>C y \<in> S'"
       using that(1) by blast 
+    have t: "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
+      using a3 Complex_Vector_Spaces.complex_vector.injective_scale[where c = c]
+      by blast
     have "0 = (\<Sum>x\<in>(*\<^sub>C) c ` S'. u x *\<^sub>C x)"
       using \<open>S = (*\<^sub>C) c ` S'\<close> that(2) by auto
     also have "\<dots> = (\<Sum>x\<in>S'. v x *\<^sub>C (c *\<^sub>C x))"
-    proof-
-      have "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
-        using a3 Complex_Vector_Spaces.complex_vector.injective_scale[where c = c]
-        by blast
-      thus ?thesis
-        unfolding v_def
-        using  Groups_Big.comm_monoid_add_class.sum.reindex[where h = "((*\<^sub>C) c)" and A = S' 
-            and g = "\<lambda>x. u x *\<^sub>C x"] subset_inj_on by auto     
-    qed
+      unfolding v_def
+      using t Groups_Big.comm_monoid_add_class.sum.reindex[where h = "((*\<^sub>C) c)" and A = S' 
+          and g = "\<lambda>x. u x *\<^sub>C x"] subset_inj_on by auto     
     also have "\<dots> = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)"
       by (metis (mono_tags, lifting) complex_vector.scale_left_commute scaleC_right.sum sum.cong)
     finally have "0 = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)".
@@ -4902,8 +4746,7 @@ proof(rule classical)
   have g1: "b = c *\<^sub>C b'"
     using u2 and u2' by simp
   hence "b \<in> complex_vector.span {b'}"
-    using complex_vector.span_base
-    using a2 by force 
+    using complex_vector.span_base a2 by force 
   hence "b = b'"
     using Diff_insert_absorb a1 complex_vector.dependent_def 
       complex_vector.span_base complex_vector.span_scale insert_Diff insert_Diff_if insert_absorb2
@@ -4914,7 +4757,7 @@ proof(rule classical)
   thus ?thesis
     using a1 a3 complex_vector.dependent_zero complex_vector.scale_cancel_right 
       mult_cancel_right2 scaleC_scaleC u3'
-    by (metis )    
+    by metis
 qed
 
 
@@ -4941,9 +4784,8 @@ qed
 lemma sum_3_sets:
   assumes "finite A" and "finite B" and "finite C"
     and "A \<inter> B = {}" and "A \<inter> C = {}" and "B \<inter> C = {}"
-  shows "sum f (A\<union>B\<union>C) = sum f A + sum f B + sum f C"
+  shows "sum f (A \<union> B \<union> C) = sum f A + sum f B + sum f C"
   by (simp add: Int_Un_distrib2 assms(1) assms(2) assms(3) assms(4) assms(5) assms(6) sum.union_disjoint)
-
 
 lemma complex_real_independent:
   assumes a1: "cindependent (B::'a::complex_vector set)"
@@ -4966,21 +4808,17 @@ proof-
       unfolding B'_def
       by (simp add: a1 inter_cindependent) 
     have "finite {x\<in>B. f x \<noteq> 0}"
-      using b1 by auto        
-    have "finite {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}"
-    proof-
-      have "finite {x\<in>B'. f x \<noteq> 0}"
-        using b1 by auto
-      moreover have "(*\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x\<in>B'. f x \<noteq> 0}"
-        unfolding B'_def by auto
-      ultimately have "finite ((*\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0})"
-        using finite_subset by blast
-      thus ?thesis
-        using inj_scaleC
-        by (metis (mono_tags, lifting) \<open>(*\<^sub>C) \<i> ` {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x \<in> B'. f x \<noteq> 0}\<close> 
-            \<open>finite {x \<in> B'. f x \<noteq> 0}\<close> inj_def inj_on_def inj_on_finite) 
-    qed
-
+      using b1 by auto
+    have "finite {x\<in>B'. f x \<noteq> 0}"
+      using b1 by auto
+    moreover have "(*\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x\<in>B'. f x \<noteq> 0}"
+      unfolding B'_def by auto
+    ultimately have "finite ((*\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0})"
+      using finite_subset by blast
+    hence "finite {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}"
+      using inj_scaleC
+      by (metis (mono_tags, lifting) \<open>(*\<^sub>C) \<i> ` {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x \<in> B'. f x \<noteq> 0}\<close> 
+          \<open>finite {x \<in> B'. f x \<noteq> 0}\<close> inj_def inj_on_def inj_on_finite) 
     define g where "g x = (if x \<in> B then f x + \<i> *\<^sub>C f (\<i> *\<^sub>C x) else 0)" for x
     have g0_inter: "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by blast
@@ -4990,126 +4828,127 @@ proof-
       by (simp add: \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)        
     have g2: "{x. g x \<noteq> 0} \<subseteq> B"
       unfolding g_def by auto
-    have g3: "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) = 0"
-    proof-
-      have "(\<Sum>x| f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B\<union>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
-        by (metis (mono_tags, lifting) Collect_cong UnI1 b2 mem_Collect_eq sup.absorb_iff2)
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) + (\<Sum>x|x\<in>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
-      proof-
-        have "finite {x\<in>B. f x \<noteq> 0}"
-          by (simp add: \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)            
-        moreover have "finite {x\<in>B'. f x \<noteq> 0}"
-          unfolding B'_def
-          by (simp add: b1)
-        moreover have "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B'. f x \<noteq> 0} = {}"
-          using z0 by auto
-        moreover have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} = {x\<in>B\<union>B'. f x \<noteq> 0}"
-        proof-
-          have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} 
+
+    have "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
+      for x
+      by auto
+    hence x1: "{x\<in>B. f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      by auto
+
+    have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} 
                 = {x. (x\<in>B \<and> f x \<noteq> 0) \<or> (x\<in>B' \<and> f x \<noteq> 0)}"
-            by blast
-          also have "\<dots> = {x. (x\<in>B \<or> x\<in>B') \<and> f x \<noteq> 0}"
-            by blast
-          also have "\<dots> = {x\<in>B\<union>B'. f x \<noteq> 0}"
-            by blast
-          finally show ?thesis by blast
-        qed
-        ultimately show ?thesis
-          by (metis (mono_tags, lifting) sum.union_disjoint)
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x)
-                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
-      proof-
-        have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}. f x *\<^sub>R x)
+      by blast
+    also have "\<dots> = {x. (x\<in>B \<or> x\<in>B') \<and> f x \<noteq> 0}"
+      by blast
+    also have "\<dots> = {x\<in>B\<union>B'. f x \<noteq> 0}"
+      by blast
+    finally have p2: " {x \<in> B. f x \<noteq> 0} \<union> {x \<in> B'. f x \<noteq> 0} =
+    {x \<in> B \<union> B'. f x \<noteq> 0}" by blast
+
+    have "finite {x\<in>B. f x \<noteq> 0}"
+      by (simp add: \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)            
+    moreover have "finite {x\<in>B'. f x \<noteq> 0}"
+      unfolding B'_def
+      by (simp add: b1)
+    moreover have "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B'. f x \<noteq> 0} = {}"
+      using z0 by auto
+    moreover have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} = {x\<in>B\<union>B'. f x \<noteq> 0}"
+      using p2
+      by simp 
+    ultimately have r1: "(\<Sum>x | x \<in> B \<union> B' \<and> f x \<noteq> 0. f x *\<^sub>R x) =
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
+    (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
+      by (metis (mono_tags, lifting) sum.union_disjoint)
+
+    have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}. f x *\<^sub>R x)
               = (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
-          using inj_scaleC Groups_Big.comm_monoid_add_class.sum.reindex
-            [where A = "{x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and h = "(*\<^sub>C) \<i>" and g = "\<lambda>x. f x *\<^sub>R x"]
-          unfolding comp_def inj_def inj_on_def by auto            
-        moreover have "{x|x. x\<in>B' \<and> f x \<noteq> 0} = (*\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-          unfolding B'_def by auto
-        ultimately show ?thesis by simp
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      proof-
-        have "(\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))
+      using inj_scaleC Groups_Big.comm_monoid_add_class.sum.reindex
+        [where A = "{x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and h = "(*\<^sub>C) \<i>" and g = "\<lambda>x. f x *\<^sub>R x"]
+      unfolding comp_def inj_def inj_on_def by auto            
+    moreover have "{x|x. x\<in>B' \<and> f x \<noteq> 0} = (*\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      unfolding B'_def by auto
+    ultimately have r2: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
+    (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x) =
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
+    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R \<i> *\<^sub>C x)" by simp
+
+    have "(\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))
               =  (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-          by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC 
-              scaleR_scaleC)
-        moreover have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)"
-          by (simp add: scaleR_scaleC)            
-        ultimately show ?thesis
-          by simp 
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-        by auto
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      proof-
-        have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
+      by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC 
+          scaleR_scaleC)
+    moreover have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)"
+      by (simp add: scaleR_scaleC)            
+    ultimately have r3: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
+    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R \<i> *\<^sub>C x) =
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. complex_of_real (f x) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
+      by simp
+
+    have "{x\<in>B. (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0}
+                = {x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      by blast
+    moreover have "{x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
+      by blast
+    ultimately have p1: "(\<Sum>x | x \<in> B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
+    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
+      by (metis (no_types, lifting) \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close>
+          finite_Un sum.union_disjoint)
+
+    have "{x\<in>B. f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}
+              = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      by blast
+    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
+      by blast
+    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
+      by (simp add: b1)                        
+    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      using \<open>finite {x \<in> B. f x \<noteq> 0}\<close> calculation(1) by auto              
+    ultimately have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
               = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x)
               + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)"
-        proof-
-          have "{x\<in>B. f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}
-              = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-            by blast
-          moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-            by blast
-          moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-            by (simp add: b1)                        
-          moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-            using \<open>finite {x \<in> B. f x \<noteq> 0}\<close> calculation(1) by auto              
-          ultimately show ?thesis
-            by (simp add: sum.union_disjoint) 
-        qed
-        moreover have "(\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+      by (simp add: sum.union_disjoint)
+    moreover have "(\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
               = (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
               + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-        proof-
-          have "{x\<in>B. (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0}
-                = {x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-            by blast
-          moreover have "{x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-            by blast
-          ultimately show ?thesis
-            by (metis (no_types, lifting) Collect_cong \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close>
-                finite_Un sum.union_disjoint)
-        qed
-        ultimately show ?thesis by simp
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-        by auto
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      proof-
-        have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
+      using p1 by simp        
+    ultimately have r4:"(\<Sum>x | x \<in> B \<and>
+           f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0).
+       complex_of_real (f x) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0.
+       complex_of_real (f x) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       complex_of_real (f x) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)" 
+      by simp
+
+    have r5: "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
               + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
             = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-          by (metis (mono_tags, lifting) sum.cong sum.distrib)            
-        thus ?thesis by simp
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      proof-
-        have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-          by blast
-        moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-          by blast
-        moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-          by blast
-        moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-          by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f x \<noteq> 0}\<close> rev_finite_subset)
-        moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-          by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)
-        moreover have "finite {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-          by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)            
-        ultimately have " (\<Sum>x\<in>{x \<in> B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} 
+      by (metis (mono_tags, lifting) sum.cong sum.distrib)            
+
+    have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
+      by blast
+    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
+      by blast
+    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
+      by blast
+    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
+      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f x \<noteq> 0}\<close> rev_finite_subset)
+    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)
+    moreover have "finite {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)            
+    ultimately have " (\<Sum>x\<in>{x \<in> B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} 
                                \<union> {x \<in> B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union>
                                  {x \<in> B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}.
        complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
@@ -5119,38 +4958,70 @@ proof-
        complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
     (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
        complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-          using sum_3_sets[where A = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-              and B = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and C = "{x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-              and f = "\<lambda>x. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x"] by auto
-        moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union>
+      using sum_3_sets[where A = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
+          and B = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and C = "{x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
+          and f = "\<lambda>x. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x"] by auto
+    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union>
                 {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union>
                 {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = 
                 {x\<in>B. (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}"
-          by auto
-        ultimately show ?thesis by auto            
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      proof-
-        have "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
-          for x
-          by auto
-        hence "{x\<in>B. f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0}"
-          by auto
-        thus ?thesis by auto            
-      qed
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-        by (metis complex_scaleC_def g_def)          
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. (f x +(\<i> * f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-        by (metis (no_types, lifting) scaleC_add_left sum.cong)          
-      also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. g x *\<^sub>C x)"
-        using g_def by auto
-      also have "\<dots> = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)"
-        by (metis (mono_tags, lifting) Collect_cong \<open>{x. g x \<noteq> 0} \<subseteq> B\<close> mem_Collect_eq subsetD)
-      finally have "(\<Sum>x | f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)".
-      thus ?thesis
-        using b3 by auto
-    qed
+      by auto
+    ultimately have r6: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0.
+       complex_of_real (f x) *\<^sub>C x +
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       complex_of_real (f x) *\<^sub>C x +
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
+    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
+       complex_of_real (f x) *\<^sub>C x +
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
+    (\<Sum>x | x \<in> B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0).
+       complex_of_real (f x) *\<^sub>C x +
+       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)" by auto
 
+    have "(\<Sum>x| f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B\<union>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
+      by (metis (mono_tags, lifting) UnI1 b2 mem_Collect_eq sup.absorb_iff2)
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) + (\<Sum>x|x\<in>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
+      using r1 by auto
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x)
+                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
+      using r1 r2 by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      using r3 by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      by auto
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      using r4 by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      by auto
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
+                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      using r5
+      by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      using r6 by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      by simp
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
+      by (metis complex_scaleC_def g_def)          
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. (f x +(\<i> * f (\<i> *\<^sub>C x))) *\<^sub>C x)"
+      by (metis (no_types, lifting) scaleC_add_left)          
+    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. g x *\<^sub>C x)"
+      using g_def by auto
+    also have "\<dots> = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)"
+      by (metis (mono_tags, lifting) \<open>{x. g x \<noteq> 0} \<subseteq> B\<close> mem_Collect_eq subsetD)
+    finally have "(\<Sum>x | f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)".
+    hence g3: "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) = 0"
+      using b3 by auto
     show ?thesis
     proof(cases "y \<in> B")
       case True     
@@ -5171,44 +5042,64 @@ proof-
           using y_notB by auto
         hence "y \<in> (*\<^sub>C) \<i> ` B"
           unfolding B'_def by blast
-        hence "(*\<^sub>C) (-\<i>) y \<in> (*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B"
+        hence v1: "(*\<^sub>C) (-\<i>) y \<in> (*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B"
           by simp
-        moreover have "(*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B = B"
-        proof-
-          have "(*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B = ((*\<^sub>C) (-\<i>) \<circ> (*\<^sub>C) \<i>) ` B"
-            by (simp add: image_comp)
-          also have "\<dots> = ((*\<^sub>C) ((-\<i>)*\<i>)) ` B"
-            by auto
-          also have "\<dots> = (*\<^sub>C) 1 ` B"
-            by simp
-          also have "\<dots> = B" by simp
-          finally show ?thesis.
-        qed
-        ultimately have yB: "(-\<i>) *\<^sub>C y \<in> B" by blast
+
+        have "(*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B = ((*\<^sub>C) (-\<i>) \<circ> (*\<^sub>C) \<i>) ` B"
+          by (simp add: image_comp)
+        also have "\<dots> = ((*\<^sub>C) ((-\<i>)*\<i>)) ` B"
+          by auto
+        also have "\<dots> = (*\<^sub>C) 1 ` B"
+          by simp
+        also have "\<dots> = B" by simp
+        finally have v2: "(*\<^sub>C) (-\<i>) ` (*\<^sub>C) \<i> ` B = B"
+          by blast
+        have yB: "(-\<i>) *\<^sub>C y \<in> B"
+          using v1 v2 by blast 
         define h::"'a \<Rightarrow> complex" where "h x = (-\<i>) * g ((-\<i>) *\<^sub>C x)" for x
-        have "cindependent B'"
+        have z1: "cindependent B'"
           using a1 unfolding B'_def
           by (simp add: scaleC_cindependent)
-        moreover have "finite {x. h x \<noteq> 0}"
+
+
+        have f1: "\<And>y. g y \<noteq> 0 \<Longrightarrow> \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)"
         proof-
-          have "{x. h x \<noteq> 0} = {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
-            unfolding h_def by auto
-          moreover have "bij_betw ((*\<^sub>C) (- \<i>)) {x. g (- \<i> *\<^sub>C x) \<noteq> 0} {x. g x \<noteq> 0}"
-            apply(rule bij_betwI') apply auto
-          proof-
-            fix y
-            assume hyp1: "g y \<noteq> 0"
-            define x where "x = \<i> *\<^sub>C y"
-            have "y = - (\<i> *\<^sub>C x)"
-              unfolding x_def by simp
-            moreover have "g (- (\<i> *\<^sub>C x)) \<noteq> 0"
-              unfolding x_def apply auto using hyp1 by blast
-            ultimately show " \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)" by blast
-          qed            
-          ultimately show ?thesis
-            by (simp add: bij_betw_finite g1) 
+          fix y
+          assume hyp1: "g y \<noteq> 0"
+          define x where "x = \<i> *\<^sub>C y"
+          have "y = - (\<i> *\<^sub>C x)"
+            unfolding x_def by simp
+          moreover have "g (- (\<i> *\<^sub>C x)) \<noteq> 0"
+            unfolding x_def
+            using hyp1 by auto 
+          ultimately show " \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)" by blast
         qed
-        moreover have "{x. h x \<noteq> 0} \<subseteq> B'"
+        have "{x. h x \<noteq> 0} = {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
+          unfolding h_def by auto
+        moreover have "bij_betw ((*\<^sub>C) (- \<i>)) {x. g (- \<i> *\<^sub>C x) \<noteq> 0} {x. g x \<noteq> 0}"
+        proof (rule bij_betwI')
+          show "(- \<i> *\<^sub>C x = - \<i> *\<^sub>C y) = (x = y)"
+            if "x \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
+              and "y \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
+            for x :: 'a
+              and y :: 'a
+            using that
+            by auto 
+          show "- \<i> *\<^sub>C x \<in> {x. g x \<noteq> 0}"
+            if "x \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
+            for x :: 'a
+            using that
+            by simp 
+          show "\<exists>x\<in>{x. g (- \<i> *\<^sub>C x) \<noteq> 0}. y = - \<i> *\<^sub>C x"
+            if "y \<in> {x. g x \<noteq> 0}"
+            for y :: 'a
+            using that
+            by (simp add: f1) 
+        qed           
+        ultimately have z2: "finite {x. h x \<noteq> 0}"
+          by (simp add: bij_betw_finite g1) 
+
+        have z3: "{x. h x \<noteq> 0} \<subseteq> B'"
         proof auto
           fix x
           assume "h x \<noteq> 0"
@@ -5220,53 +5111,60 @@ proof-
             unfolding B'_def
             using image_iff by fastforce 
         qed
-        moreover have "(\<Sum>x| h x \<noteq> 0. h x *\<^sub>C x) = 0"
-        proof-
-          have "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) 
+
+        have g1: "g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) = 0 \<longleftrightarrow> h (\<i> *\<^sub>C x) = 0"
+          for x
+          unfolding h_def by auto
+
+        have h1: "bij_betw ((*\<^sub>C) \<i>) {x. h (\<i> *\<^sub>C x) \<noteq> 0} {x. h x \<noteq> 0}"
+        proof (rule bij_betwI')
+          show "(\<i> *\<^sub>C x = \<i> *\<^sub>C y) = (x = y)"
+            if "x \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
+              and "y \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
+            for x :: 'a
+              and y :: 'a
+            using that
+            by auto 
+          show "\<i> *\<^sub>C x \<in> {x. h x \<noteq> 0}"
+            if "x \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
+            for x :: 'a
+            using that
+            by simp 
+          show "\<exists>x\<in>{x. h (\<i> *\<^sub>C x) \<noteq> 0}. y = \<i> *\<^sub>C x"
+            if "y \<in> {x. h x \<noteq> 0}"
+            for y :: 'a
+            using that
+          proof transfer
+            fix yb :: 'a and ha :: "'a \<Rightarrow> complex"
+            assume "yb \<in> {x. ha x \<noteq> 0}"
+            hence "ha yb \<noteq> 0"
+              by blast
+            hence "\<exists>a. \<i> *\<^sub>C a = yb \<and> ha (\<i> *\<^sub>C a) \<noteq> 0"
+              by (metis (full_types) Complex_Vector_Spaces.eq_vector_fraction_iff complex_i_not_zero)
+            thus "\<exists>a\<in>{a. ha (\<i> *\<^sub>C a) \<noteq> 0}. yb = \<i> *\<^sub>C a"
+              by blast
+          qed
+        qed
+
+        have "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) 
               = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0. g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) *\<^sub>C ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)))"
-            by simp
-          also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0. ((-\<i>) * g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x))) *\<^sub>C (\<i> *\<^sub>C x))"
-            by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC)
-          also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
-            unfolding h_def by auto
-          also have "\<dots> = (\<Sum>x| h (\<i> *\<^sub>C x) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
-          proof-
-            have "g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) = 0 \<longleftrightarrow> h (\<i> *\<^sub>C x) = 0"
-              for x
-              unfolding h_def by auto
-            thus ?thesis
-              by auto 
-          qed
-          also have "\<dots> = (\<Sum>t| h t \<noteq> 0.  h t *\<^sub>C t)"
-          proof-
-            have "bij_betw ((*\<^sub>C) \<i>) {x. h (\<i> *\<^sub>C x) \<noteq> 0} {x. h x \<noteq> 0}"
-              apply (rule bij_betwI')
-              apply simp
-              apply simp
-            proof-
-              fix r
-              assume q1: "r \<in> {x. h x \<noteq> 0}"
-              define s where "s = (-\<i>) *\<^sub>C r"
-              have "h (\<i> *\<^sub>C s) \<noteq> 0"
-                unfolding s_def using q1 by simp
-              hence "s\<in>{x. h (\<i> *\<^sub>C x) \<noteq> 0}"
-                by blast
-              moreover have "r = \<i> *\<^sub>C s"
-                unfolding s_def by auto
-              ultimately show "\<exists>s\<in>{x. h (\<i> *\<^sub>C x) \<noteq> 0}. r = \<i> *\<^sub>C s"
-                by blast
-            qed
-            thus ?thesis
-              using Groups_Big.comm_monoid_add_class.sum.reindex_bij_betw[where g = h and h = "(*\<^sub>C) \<i>" 
-                  and S = "{x. h (\<i> *\<^sub>C x) \<noteq> 0}" and T = "{x. h x \<noteq> 0}"]
-              by (metis (mono_tags, lifting) sum.cong sum.reindex_bij_betw)               
-          qed
-          finally have "(\<Sum>x | g x \<noteq> 0. g x *\<^sub>C x) = (\<Sum>t | h t \<noteq> 0. h t *\<^sub>C t)".
-          thus ?thesis
-            using g3 by auto 
-        qed        
-        ultimately have "h y = 0"
-          using complex_vector.independentD
+          by simp
+        also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0. ((-\<i>) * g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x))) *\<^sub>C (\<i> *\<^sub>C x))"
+          by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC)
+        also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
+          unfolding h_def by auto
+        also have "\<dots> = (\<Sum>x| h (\<i> *\<^sub>C x) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
+          using g1 by simp
+        also have "\<dots> = (\<Sum>t| h t \<noteq> 0.  h t *\<^sub>C t)"
+          using h1 Groups_Big.comm_monoid_add_class.sum.reindex_bij_betw[where g = h and h = "(*\<^sub>C) \<i>" 
+              and S = "{x. h (\<i> *\<^sub>C x) \<noteq> 0}" and T = "{x. h x \<noteq> 0}"]
+          by (metis (mono_tags, lifting) sum.cong sum.reindex_bij_betw)
+        finally have "(\<Sum>x | g x \<noteq> 0. g x *\<^sub>C x) = (\<Sum>t | h t \<noteq> 0. h t *\<^sub>C t)".
+        hence z4: "(\<Sum>x| h x \<noteq> 0. h x *\<^sub>C x) = 0"
+          using g3 by auto
+
+        have "h y = 0"
+          using z1 z2 z3 z4 complex_vector.independentD
           by blast 
         thus ?thesis
           unfolding h_def g_def using yB by simp
@@ -5278,7 +5176,7 @@ proof-
     by meson
 qed        
 
-
+(*here*)
 lemma finite_complex_span_representation_bounded:
   fixes B :: "'a::complex_normed_vector set"
   assumes a1: "finite B" and a2: "cindependent B"
@@ -5957,7 +5855,7 @@ proof-
     for u   
     apply(rule projection_insert)
     using ios unfolding is_ortho_set_def
-    apply (metis DiffD1 Diff_insert_absorb a1 aS is_ortho_set_def list.set_intros(1) list.simps(15))     
+     apply (metis DiffD1 Diff_insert_absorb a1 aS is_ortho_set_def list.set_intros(1) list.simps(15))     
     using aS
     by simp
   have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
