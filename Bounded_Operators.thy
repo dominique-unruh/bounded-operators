@@ -4465,6 +4465,7 @@ proof -
 qed
 
 
+(* Ask to Dominique: Why there are errors?
 (* We do not need this theorem for our development but we get it almost for
    free as a side effect of the proof of finite_span_complete. *)
 (* TODO: move to Complex_Vector_Spaces if possible (or wherever finite_span_complete_aux) *)
@@ -4550,45 +4551,24 @@ next
     unfolding repr_def using real_vector.representation_ne_zero[of B]
     using nice_ordered_field_class.linordered_field_no_ub by fastforce
 qed
-
-(* TODO: remove (is duplicate) *)
-lemma finite_span_complete:
-  fixes A :: "'a::real_normed_vector set"
-  assumes "finite A"
-  shows "complete (real_vector.span A)"
-  text \<open>The span of a finite set is complete.\<close>
-  by (simp add: assms finite_span_complete)
-
-
-(* TODO: remove (is duplicate) *)
-lemma finite_span_closed: 
-  fixes B :: "'a::real_normed_vector set"
-  assumes "finite B"
-  shows "closed (real_vector.span B)"
-  by (simp add: assms complete_imp_closed finite_span_complete)
-
-(* TODO: remove (is duplicate) *)
-lemma complex_real_span:
-  "complex_vector.span B = real_vector.span (B \<union> (*\<^sub>C) \<i> ` B)"
-  by (simp add: complex_real_span)
+*)
 
 lemma scaleC_cindependent:
   assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
   shows "cindependent ((*\<^sub>C) c ` B)"
 proof-
   have "u y = 0"
-    if "y\<in>S" and "(\<Sum>x\<in>S. u x *\<^sub>C x) = 0" and "finite S" and "S\<subseteq>(*\<^sub>C) c ` B"
+    if g1: "y\<in>S" and g2: "(\<Sum>x\<in>S. u x *\<^sub>C x) = 0" and g3: "finite S" and g4: "S\<subseteq>(*\<^sub>C) c ` B"
     for u y S
   proof-
     define v where "v x = u (c *\<^sub>C x)" for x
     obtain S' where "S'\<subseteq>B" and S_S': "S = (*\<^sub>C) c ` S'"
-      by (meson \<open>S \<subseteq> (*\<^sub>C) c ` B\<close> subset_imageE)
+      by (meson g4 subset_imageE)      
     have "inj ((*\<^sub>C) c::'a\<Rightarrow>_)"
       unfolding inj_def
       using a3 by auto 
     hence "finite S'"
-      using S_S' \<open>finite S\<close>
-      by (meson finite_imageD subset_inj_on top_greatest)      
+      using S_S' finite_imageD g3 subset_inj_on by blast            
     have "t \<in> (*\<^sub>C) (inverse c) ` S"
       if "t \<in> S'" for t
     proof-
@@ -4653,11 +4633,11 @@ proof(rule classical)
   assume "\<not>(B \<inter> (*\<^sub>C) c ` B = {})"
   hence "B \<inter> (*\<^sub>C) c ` B \<noteq> {}"
     by blast
-  then obtain x where u1: "x\<in>B \<inter> (*\<^sub>C) c ` B"
+  then obtain x where u1: "x \<in> B \<inter> (*\<^sub>C) c ` B"
     by blast
   then obtain b where u2: "x = b" and u3: "b\<in>B"
     by blast
-  then obtain b' where u2': "x = c *\<^sub>C b'" and u3': "b'\<in>B"
+  then  obtain b' where u2': "x = c *\<^sub>C b'" and u3': "b'\<in>B"
     using u1
     by blast
   have g1: "b = c *\<^sub>C b'"
@@ -4665,16 +4645,13 @@ proof(rule classical)
   hence "b \<in> complex_vector.span {b'}"
     using complex_vector.span_base a2 by force 
   hence "b = b'"
-    using Diff_insert_absorb a1 complex_vector.dependent_def 
-      complex_vector.span_base complex_vector.span_scale insert_Diff insert_Diff_if insert_absorb2
-      singletonD u2 u2' u3 u3'
-    by smt 
+    by (metis  u3' a1 complex_vector.dependent_def complex_vector.span_base 
+        complex_vector.span_scale insertE insert_Diff u2 u2' u3) 
   hence "b' = c *\<^sub>C b'"
     using g1 by blast
   thus ?thesis
-    using a1 a3 complex_vector.dependent_zero complex_vector.scale_cancel_right 
-      mult_cancel_right2 scaleC_scaleC u3'
-    by metis
+    by (metis a1 a3 complex_vector.dependent_zero complex_vector.scale_right_imp_eq
+        mult_cancel_right2 scaleC_scaleC u3')
 qed
 
 
@@ -4745,13 +4722,11 @@ proof-
       by (simp add: \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)        
     have g2: "{x. g x \<noteq> 0} \<subseteq> B"
       unfolding g_def by auto
-
     have "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
       for x
       by auto
     hence x1: "{x\<in>B. f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by auto
-
     have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} 
                 = {x. (x\<in>B \<and> f x \<noteq> 0) \<or> (x\<in>B' \<and> f x \<noteq> 0)}"
       by blast
@@ -4761,7 +4736,6 @@ proof-
       by blast
     finally have p2: " {x \<in> B. f x \<noteq> 0} \<union> {x \<in> B'. f x \<noteq> 0} =
     {x \<in> B \<union> B'. f x \<noteq> 0}" by blast
-
     have "finite {x\<in>B. f x \<noteq> 0}"
       by (simp add: \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)            
     moreover have "finite {x\<in>B'. f x \<noteq> 0}"
@@ -4776,9 +4750,8 @@ proof-
     (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
     (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
       by (metis (mono_tags, lifting) sum.union_disjoint)
-
     have "(\<Sum>x\<in>(*\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}. f x *\<^sub>R x)
-              = (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
+        = (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
       using inj_scaleC Groups_Big.comm_monoid_add_class.sum.reindex
         [where A = "{x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and h = "(*\<^sub>C) \<i>" and g = "\<lambda>x. f x *\<^sub>R x"]
       unfolding comp_def inj_def inj_on_def by auto            
@@ -4788,7 +4761,6 @@ proof-
     (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x) =
     (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
     (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R \<i> *\<^sub>C x)" by simp
-
     have "(\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))
               =  (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
       by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC 
@@ -4801,7 +4773,6 @@ proof-
     (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
        (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
       by simp
-
     have "{x\<in>B. (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0}
                 = {x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by blast
@@ -4815,7 +4786,6 @@ proof-
        (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
       by (metis (no_types, lifting) \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close>
           finite_Un sum.union_disjoint)
-
     have "{x\<in>B. f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}
               = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by blast
@@ -4847,12 +4817,10 @@ proof-
     (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
        (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)" 
       by simp
-
     have r5: "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
               + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
             = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by (metis (mono_tags, lifting) sum.cong sum.distrib)            
-
+      by (metis (mono_tags, lifting) sum.cong sum.distrib)
     have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
       by blast
     moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
@@ -4977,8 +4945,6 @@ proof-
         have z1: "cindependent B'"
           using a1 unfolding B'_def
           by (simp add: scaleC_cindependent)
-
-
         have f1: "\<And>y. g y \<noteq> 0 \<Longrightarrow> \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)"
         proof-
           fix y
@@ -5093,7 +5059,7 @@ proof-
     by meson
 qed        
 
-(*here*)
+
 lemma finite_complex_span_representation_bounded:
   fixes B :: "'a::complex_normed_vector set"
   assumes a1: "finite B" and a2: "cindependent B"
@@ -5142,7 +5108,6 @@ proof -
           neg_equal_0_iff_equal)
     have l2: "B \<inter> (*\<^sub>C) \<i> ` B = {}"
       by (simp add: a1 inter_cindependent)
-
     have rr1: "r (\<i> *\<^sub>C v) = r' v" for v
       unfolding r_def r'_def
       by simp 
@@ -5165,33 +5130,28 @@ proof -
           and v = \<psi>]  
       by (smt Real_Vector_Spaces.dependent_raw_def \<open>\<psi> \<in> Real_Vector_Spaces.span B'\<close> \<open>finite B'\<close> 
           equalityD2 k1)
-    have "(\<Sum>v\<in>B. f v *\<^sub>C v) = \<psi>"
-    proof-
-      have "(\<Sum>v\<in>B. (r v + \<i> * (r' v)) *\<^sub>C v) = (\<Sum>v\<in>B. r v *\<^sub>C v + (\<i> * r' v) *\<^sub>C v)"
-        by (meson scaleC_left.add)
-      also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. (\<i> * r' v) *\<^sub>C v)"
-        using sum.distrib by fastforce
-      also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r' v *\<^sub>C v))"
-        by auto
-      also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r (\<i> *\<^sub>C v) *\<^sub>R v))"
-        unfolding r'_def r_def
-        by (metis (mono_tags, lifting) scaleR_scaleC sum.cong) 
-      also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v))"
-        by (metis (no_types, lifting) complex_vector.scale_left_commute scaleR_scaleC)      
-      also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
-      proof-
-        have "(\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v)) = (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
-          using l0'
-          by (metis (mono_tags, lifting) inj_eq inj_on_def sum.reindex_cong)
-        thus ?thesis
-          by simp
-      qed
-      also have "\<dots> = \<psi>"
-        using l2 \<open>(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>\<close>
-        unfolding B'_def
-        by (simp add: a3 sum.union_disjoint) 
-      finally show ?thesis unfolding r'_def r_def f_def by simp
-    qed
+    have d1: "(\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v)) = (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
+      using l0'
+      by (metis (mono_tags, lifting) inj_eq inj_on_def sum.reindex_cong)
+    have "(\<Sum>v\<in>B. (r v + \<i> * (r' v)) *\<^sub>C v) = (\<Sum>v\<in>B. r v *\<^sub>C v + (\<i> * r' v) *\<^sub>C v)"
+      by (meson scaleC_left.add)
+    also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. (\<i> * r' v) *\<^sub>C v)"
+      using sum.distrib by fastforce
+    also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r' v *\<^sub>C v))"
+      by auto
+    also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r (\<i> *\<^sub>C v) *\<^sub>R v))"
+      unfolding r'_def r_def
+      by (metis (mono_tags, lifting) scaleR_scaleC sum.cong) 
+    also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v))"
+      by (metis (no_types, lifting) complex_vector.scale_left_commute scaleR_scaleC)      
+    also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
+      using d1
+      by simp
+    also have "\<dots> = \<psi>"
+      using l2 \<open>(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>\<close>
+      unfolding B'_def
+      by (simp add: a3 sum.union_disjoint) 
+    finally have "(\<Sum>v\<in>B. f v *\<^sub>C v) = \<psi>" unfolding r'_def r_def f_def by simp
     hence "0 = (\<Sum>v\<in>B. f v *\<^sub>C v) - (\<Sum>v\<in>B. complex_vector.representation B \<psi> v *\<^sub>C v)"
       using rep1
       unfolding g_def
@@ -5229,47 +5189,45 @@ proof -
       by (simp add: b2)
     ultimately show ?thesis unfolding B'_def by simp
   qed
-
   define B' where "B' = (B \<union> scaleC \<i> ` B)"
   have independent_B': "independent B'"
     using complex_real_independent B'_def \<open>cindependent B\<close>
     by (simp add: complex_real_independent a1) 
   have "finite B'"
     unfolding B'_def using \<open>finite B\<close> by simp
-  obtain D' where "D' > 0" and D': "norm (real_vector.representation B' \<psi> b) \<le> norm \<psi> * D'" for \<psi> b
+  obtain D' where "D' > 0" and D': "norm (real_vector.representation B' \<psi> b) \<le> norm \<psi> * D'" 
+    for \<psi> b
     apply atomize_elim
     using independent_B' \<open>finite B'\<close>
+      (*
     by (simp add: Real_Vector_Spaces.dependent_raw_def finite_span_representation_bounded)
+*)  sorry (* Ask to Dominique: why there is an error *)
   define D where "D = 2*D'" 
   from \<open>D' > 0\<close> have \<open>D > 0\<close>
     unfolding D_def by simp
   have "norm (complex_vector.representation B \<psi> b) \<le> norm \<psi> * D" for \<psi> b
   proof (cases "b\<in>B")
     case True
+    have d3: "norm \<i> = 1"
+      by simp          
+
+    have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm \<i> * norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using norm_scaleC by blast
+    also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using d3 by simp
+    finally have d2:"norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))".
     have "norm (complex_vector.representation B \<psi> b)
         = norm (complex_of_real (real_vector.representation B' \<psi> b)
             + \<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      apply (subst complex_real_vector_representation)
-      using \<open>cindependent B\<close> True B'_def a1 by auto
+      by (simp add: B'_def True a1 a2 complex_real_vector_representation)      
     also have "\<dots> \<le> norm (complex_of_real (real_vector.representation B' \<psi> b))
              + norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
       using norm_triangle_ineq by blast
     also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> b))
                   + norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-    proof-
-      have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
-          = norm \<i> * norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-        using norm_scaleC by blast
-      also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      proof-
-        have "norm \<i> = 1"
-          by simp          
-        thus ?thesis by simp
-      qed
-      finally have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
-          = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))".
-      thus ?thesis by simp
-    qed
+      using d2 by simp
     also have "\<dots> = norm (real_vector.representation B' \<psi> b)
                   + norm (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
       by simp
@@ -5295,10 +5253,7 @@ lemma finite_complex_span_complete:
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
   shows "complete (complex_vector.span B)"
-  apply (subst complex_real_span)
-  apply (rule finite_span_complete)
-  using assms by auto
-
+  by (simp add: assms finite_cspan_complete)
 
 
 lemma cblinfun_operator_S_zero_uniq_span:
@@ -5308,18 +5263,15 @@ lemma cblinfun_operator_S_zero_uniq_span:
     and a4: "\<And>s. s\<in>S \<Longrightarrow> F *\<^sub>V s = 0"
   shows \<open>F *\<^sub>V x = 0\<close>
 proof-
-  have "F x = 0"
-  proof-
-    have "\<exists>t r. finite t \<and> t \<subseteq> S \<and>  x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
-      using complex_vector.span_explicit a1 by (smt mem_Collect_eq)
-    then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
-      by blast
-    have  "F x = (\<Sum>a\<in>t. r a *\<^sub>C (F a))"
-      using b3
-      by (smt \<open>\<And>thesis. (\<And>t r. \<lbrakk>finite t; t \<subseteq> S; x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> a4 b2 clinear_finite_sum complex_vector.scale_eq_0_iff in_mono sum.neutral)
-    thus ?thesis using a4 b2
-      by (simp add: subset_eq) 
-  qed
+  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and>  x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+    using complex_vector.span_explicit a1 by (smt mem_Collect_eq)
+  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "x = (\<Sum>a\<in>t. r a *\<^sub>C a)"
+    by blast
+  have  "F x = (\<Sum>a\<in>t. r a *\<^sub>C (F a))"
+    by (simp add: b1 b3 clinear_finite_sum)    
+  hence "F x = 0"
+    using a4 b2
+    by (simp add: subset_eq) 
   thus ?thesis by (simp add: cblinfun_ext) 
 qed
 
@@ -5367,6 +5319,13 @@ proof-
     qed
     hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
       by simp
+
+    have v1: "v \<in> A"
+      using b2 b4 by blast        
+    hence "v \<noteq> 0"
+      using a1 unfolding is_ortho_set_def
+      by blast
+
     have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
       using b1
       by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong) 
@@ -5378,14 +5337,8 @@ proof-
       by blast
     hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
     moreover have "\<langle>v, v\<rangle> \<noteq> 0"
-    proof-
-      have "v \<in> A"
-        using b2 b4 by blast        
-      hence "v \<noteq> 0"
-        using a1 unfolding is_ortho_set_def
-        by blast
-      thus ?thesis by simp 
-    qed
+      using v1
+      by (simp add: \<open>v \<noteq> 0\<close>)  
     ultimately show "u v = 0" by simp
   qed
   thus ?thesis using independent_explicit_module
@@ -5417,26 +5370,20 @@ proof-
       by (simp add: b1)
     have f0: "v \<in> basis"
       if "r v \<noteq> 0" for v
-      using that
-      unfolding r_def Complex_Vector_Spaces.representation_def
-      using b2  x_span
       using complex_vector.representation_ne_zero r_def that by auto       
-    moreover have f1: "finite {a|a. r a \<noteq> 0}"
-    proof-
-      have "{a|a. r a \<noteq> 0} \<subseteq> basis"
-        using f0 by blast
-      thus ?thesis
-        using b3
-        using rev_finite_subset by auto 
-    qed
-    moreover have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
+    have w:"{a|a. r a \<noteq> 0} \<subseteq> basis"
+      using f0 by blast
+    hence f1: "finite {a|a. r a \<noteq> 0}"
+      using b3 rev_finite_subset by auto 
+    have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
       unfolding r_def
       using b2 complex_vector.sum_nonzero_representation_eq x_span
-        Collect_cong  by fastforce       
-    ultimately have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
+        Collect_cong  by fastforce
+    have g1: "(\<Sum>a\<in>basis. crepresentation basis x a *\<^sub>C a) = x"
+      by (simp add: b2 b3 complex_vector.sum_representation_eq x_span)
+    have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
       unfolding r_def
-      by (smt Diff_iff b3 complex_vector.scale_eq_0_iff mem_Collect_eq subset_iff 
-          sum.mono_neutral_cong_right) (* > 1s *)       
+      by (simp add: g1) 
     hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
       by simp
     also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
@@ -5516,41 +5463,38 @@ proof-
       by (simp add: a_def complex_vector.representation_ne_zero)      
     have "finite {v. a v \<noteq> 0}"
       by (simp add: a_def complex_vector.finite_representation)      
-    have "cindependent basis"
+    have f1: "cindependent basis"
       using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto
-    moreover have "x \<in> Complex_Vector_Spaces.span basis"
+    have "closure (Complex_Vector_Spaces.span basis) = UNIV"
+      using basis_def closure_UNIV is_generator_set
+      by (metis )
+    moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
+      by (simp add: basis_def span_finite_dim)        
+    ultimately have "Complex_Vector_Spaces.span basis = UNIV"
+      by blast
+    hence f2: "x \<in> Complex_Vector_Spaces.span basis"
+      by simp
+    have x1: "a v *\<^sub>C (cblinfun_apply f v) = 0" 
+      if "a v \<noteq> 0"
+      for v
     proof-
-      have "closure (Complex_Vector_Spaces.span basis) = UNIV"
-        using basis_def closure_UNIV is_generator_set
-        by (metis )
-      moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
-        by (simp add: basis_def span_finite_dim)        
-      ultimately have "Complex_Vector_Spaces.span basis = UNIV"
-        by blast
-      thus ?thesis by blast
+      have "v \<in> basis"
+        using that by (simp add: a1)
+      hence "cblinfun_apply f v = 0"
+        using assms(2) by auto          
+      thus ?thesis by simp
     qed
-    ultimately have "(\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v) = x"
+    have "(\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v) = x"
       unfolding a_def 
-      using sum.cong Collect_cong DiffD1 DiffD2 Eps_cong \<open>finite {v. a v \<noteq> 0}\<close> a_def complex_vector.representation_def complex_vector.sum_nonzero_representation_eq subset_iff sum.mono_neutral_cong_right
-      by (smt )
+      using f1 f2 sum.cong Collect_cong DiffD1 DiffD2 Eps_cong \<open>finite {v. a v \<noteq> 0}\<close> a_def complex_vector.representation_def complex_vector.sum_nonzero_representation_eq subset_iff sum.mono_neutral_cong_right
+      by fastforce      
     hence "cblinfun_apply f x = cblinfun_apply f (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C v)"
       by simp
     also have "\<dots> = (\<Sum>v | a v \<noteq> 0. a v *\<^sub>C cblinfun_apply f v)"
       using \<open>finite {v. a v \<noteq> 0}\<close> clinear_finite_sum by blast
     also have "\<dots> = 0"
-    proof-
-      have "a v \<noteq> 0 \<Longrightarrow> a v *\<^sub>C (cblinfun_apply f v) = 0" for v
-      proof-
-        assume "a v \<noteq> 0"
-        hence "v \<in> basis"
-          by (simp add: a1)
-        hence "cblinfun_apply f v = 0"
-          using assms(2) by auto          
-        thus ?thesis by simp
-      qed
-      thus ?thesis
-        by simp 
-    qed
+      using x1
+      by simp 
     finally show ?thesis
       by simp 
   qed
@@ -5603,7 +5547,6 @@ proof-
   thus ?thesis
     using basisA_def obn_enum_uniq_zero by auto 
 qed
-
 
 
 lemma cinner_unique_onb_enum:
@@ -5667,16 +5610,11 @@ next
   moreover have "cindependent AA"
     using a1
     by (simp add: AA_def  complex_vector.independent_extend_basis)
-
   ultimately have "card AA = cdim (UNIV::'a set)"
-    by (metis AA_def complex_vector.dim_eq_card_independent complex_vector.dim_span)
-
-
+    by (metis complex_vector.dim_eq_card_independent complex_vector.dim_span)
   also have "cdim (UNIV::'a set) = card (set (canonical_basis::'a list))"
     using complex_vector.dim_eq_card complex_vector.dim_span
     by (simp add: complex_vector.dim_eq_card is_cindependent_set is_generator_set)
-
-
   finally have r1: "card AA = card (set (canonical_basis::'a list))".
   have "finite (set (canonical_basis::'a list))"
     by simp    
@@ -5686,8 +5624,7 @@ next
     using r1 card_infinite by force
   thus ?thesis unfolding AA_def
     using assms complex_vector.extend_basis_superset rev_finite_subset
-    by (simp add: complex_vector.extend_basis_superset rev_finite_subset )
-
+    by (simp add: complex_vector.extend_basis_superset rev_finite_subset)
 qed
 
 lemma cblinfun_extension_exists_finite:
@@ -5723,7 +5660,6 @@ proof-
     by blast
 qed
 
-
 lemma cblinfun_extension_exists:
   assumes "cblinfun_extension_exists S f"
     and "v \<in> S"
@@ -5732,7 +5668,6 @@ lemma cblinfun_extension_exists:
 
 lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0"
   by (metis add_cancel_left_left cblinfun_apply_add)
-
 
 (* TODO: replace by a more general lemma that shows Proj (A\<union>B) = Proj A + Proj B
          under orthogonality assumptions (using projection_union (other TODO)) *)
@@ -5750,7 +5685,7 @@ proof-
     using a2 by auto   
   have "closure (cspan (set S)) = cspan (set S)"
     by (simp add: span_finite_dim)    
-  have "cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
+  have d: "cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
     using complex_vector.span_insert[where a = a and S = "(set S)"].
   moreover have "finite (insert a (set S))"
     by simp    
@@ -5766,24 +5701,29 @@ proof-
     by (simp add: IH')    
   have aS: "a \<notin> set S"
     using a2 by auto
-  have "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
+  have p: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
         = projection (cspan {a}) u
         + projection (cspan (set S)) u"
     for u   
-    apply(rule projection_insert)
-    using ios unfolding is_ortho_set_def
-     apply (metis DiffD1 Diff_insert_absorb a1 aS is_ortho_set_def list.set_intros(1) list.simps(15))     
-    using aS
-    by simp
+  proof (rule projection_insert)
+    show "\<langle>a, s\<rangle> = 0"
+      if "s \<in> set S"
+      for s :: 'a
+      using that
+      by (metis (no_types, lifting) Un_insert_right a1 aS insertI1 insert_is_Un is_ortho_set_def 
+          list.simps(15) mk_disjoint_insert) 
+    show "finite (set S)"
+      by simp    
+  qed
   have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
         = projection (cspan {a}) u + projection (cspan (set S)) u"
     for u
-    by (simp add: \<open>\<And>u. projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
-     = projection (cspan {a}) u + projection (cspan (set S)) u\<close>)
+    by (simp add: p)    
   have "Proj (Span (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)})"
-    unfolding Proj_def Span_def id_def apply auto
+    unfolding Proj_def Span_def id_def
     by (metis \<open>cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}\<close> 
-        complex_vector.span_span s2)
+        complex_vector.span_span list.simps(15) map_fun_apply s2) 
+
   also have "\<dots> = (cBlinfun (\<lambda>u. projection (cspan {a}) u
                    + projection (cspan (set S)) u))"
     using s1
@@ -5803,16 +5743,12 @@ proof-
   finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
 qed
 
-
 definition butterfly_def': "butterfly (s::'a::chilbert_space)
    = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
-
-
 
 lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)
                                  o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)*"
   (is "_ = ?rhs") for s :: "'b::chilbert_space"
-  using [[show_consts]]
 proof -
   let ?isoAC = "1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
   let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
@@ -5831,19 +5767,14 @@ qed
 
 
 lemma butterfly_apply: "butterfly \<psi> *\<^sub>V \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C \<psi>"
-  apply (subst butterfly_def)
-  by (simp add: times_applyOp)
+  by (simp add: butterfly_def' times_applyOp)
 
 
 lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
-  apply transfer by simp
-
+  by (metis cblinfun_apply_to_zero timesOp0 vector_to_cblinfun_applyOp)
 
 lemma butterfly_0[simp]: "butterfly 0 = 0"
-  apply (subst butterfly_def)
-  by simp
-
-
+  by (simp add: butterfly_def')
 
 lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"
 proof (cases "\<psi>=0")
@@ -5855,14 +5786,19 @@ next
     unfolding norm_cblinfun.rep_eq
   proof (rule onormI[OF _ False])
     fix x 
-    show "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
-      apply (simp add: butterfly_apply power2_eq_square)
-      using norm_cauchy_schwarz[of \<psi> x]
-      by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) ordered_field_class.sign_simps(47))
 
-    show "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
-      apply (simp add: butterfly_apply power2_eq_square)
+    have " cmod \<langle>\<psi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<psi> * norm x"
+      using norm_cauchy_schwarz[of \<psi> x]
+      by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) 
+          ordered_field_class.sign_simps(47))
+    thus "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
+      by (simp add: butterfly_apply power2_eq_square)
+
+
+    have "\<psi> = 0 \<or> cmod \<langle>\<psi>, \<psi>\<rangle> = norm \<psi> * norm \<psi>"
       by (simp add: power2_norm_eq_cinner semiring_normalization_rules(29))
+    thus "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
+      by (simp add: butterfly_apply power2_eq_square)
   qed
 qed
 
@@ -5884,8 +5820,7 @@ proof (cases "x = 0")
     using norm_butterfly
     by (metis True norm_eq_zero zero_less_power2)
   with True show ?thesis
-    apply (rule_tac exI[of _ 1])
-    by auto
+    using norm_one by fastforce
 next
   case False
   define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
@@ -5917,11 +5852,19 @@ lemma isometry_vector_to_cblinfun:
 
 
 lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
-  apply transfer
-  apply (rule arg_cong[where f=closure])
-  unfolding complex_vector.span_singleton
-  apply auto
-  by (smt one_dim_isom_inverse range_eqI)
+proof transfer
+  show "closure (range (\<lambda>\<phi>::'b. one_dim_isom \<phi> *\<^sub>C x)) = closure (cspan {x})"
+    for x :: 'a
+  proof (rule arg_cong [where f = closure])
+    have "k *\<^sub>C x \<in> range (\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C x)"
+      for k
+      by (smt one_dim_isom_inverse range_eqI)
+    thus "range (\<lambda>\<phi>. one_dim_isom (\<phi>::'b) *\<^sub>C x) = cspan {x}"
+      unfolding complex_vector.span_singleton
+      by auto
+  qed
+qed
+
 
 
 lemma butterfly_proj:
@@ -5938,13 +5881,11 @@ proof -
     by (simp add: B cblinfun_apply_assoc)
   also have "\<dots> = B"
     unfolding \<phi>adj\<phi> by (simp add: B)
-  finally have idem: "B o\<^sub>C\<^sub>L B = B"
-    by -
+  finally have idem: "B o\<^sub>C\<^sub>L B = B".
   have herm: "B = B*"
     unfolding B by simp
   from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
     by (rule Proj_I)
-
   have "B *\<^sub>S top = Span {x}"
     by (metis \<open>\<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>* = B\<close> \<phi>_def \<phi>adj\<phi> assms cblinfun_apply_assoc_subspace 
         image_vector_to_cblinfun isometry_vector_to_cblinfun range_adjoint_isometry times_idOp1) 
@@ -5953,18 +5894,24 @@ proof -
 qed
 
 lemma Proj_bot[simp]: "Proj bot = 0"
-  by (metis Bounded_Operators.timesScalarSpace_0 Proj_I isProjector0 isProjector_algebraic zero_clinear_space_def)
+  by (metis Bounded_Operators.timesScalarSpace_0 Proj_I isProjector0 isProjector_algebraic 
+      zero_clinear_space_def)
 
 lemma Proj_ortho_compl:
   "Proj (- X) = idOp - Proj X"
-  apply (transfer, auto)
-  using ortho_decomp
-  by (metis add_diff_cancel_left') 
+proof (transfer , auto)
+  show "projection (orthogonal_complement X) = (\<lambda>x. (x::'a) - projection X x)"
+    if "closed_subspace (X::'a set)"
+    for X :: "'a set"
+    using that ortho_decomp
+    by (metis add_diff_cancel_left') 
+qed
 
-lemma Proj_inj: "Proj X = Proj Y \<Longrightarrow> X = Y"
-  by (metis imageOp_Proj)
 
-
+lemma Proj_inj: 
+  assumes a1: "Proj X = Proj Y"
+  shows "X = Y"
+  by (metis a1 imageOp_Proj)
 
 unbundle no_cblinfun_notation
 
