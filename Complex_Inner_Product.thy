@@ -529,7 +529,7 @@ lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
 
 
-(* Ask to Dominique
+
 lemma cGDERIV_scaleC:
   "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
    \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
@@ -538,7 +538,7 @@ lemma cGDERIV_scaleC:
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_scaleC)
   by (simp add: ac_simps)
-*)
+
 
 (* TODO: finish converting this proof to Isar style *)
 lemma cGDERIV_mult:
@@ -546,7 +546,6 @@ lemma cGDERIV_mult:
   assumes "cGDERIV g x :> dg"
   shows "cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
 proof -
-
   have 1: "f x * \<langle>dg, h\<rangle> + \<langle>df, h\<rangle> * g x = cinner (cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df) h" for h
     unfolding cinner_add
     unfolding cinner_scaleC_left[THEN ext]
@@ -4124,6 +4123,95 @@ next
   thus ?thesis
     using complete_singleton by auto
 qed
+
+
+(* We do not need this theorem for our development but we get it almost for
+   free as a side effect of the proof of finite_span_complete. *)
+(* TODO: move to Complex_Vector_Spaces if possible (or wherever finite_span_complete_aux) *)
+lemma finite_span_representation_bounded:
+  fixes B :: "'a::real_normed_vector set"
+  assumes "finite B" and "independent B"
+  shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+
+  text \<open>
+  Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
+  Let $\alpha^\psi_b$ be the coefficients of $\psi$ expressed as a linear combination over $B$.
+  Then $\alpha$ is is uniformly cblinfun (i.e., $\lvert\alpha^\psi_b \leq D \lVert\psi\rVert\psi$
+  for some $D$ independent of $\psi,b$).
+
+  (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
+  is defined in this corner case.)\<close>
+
+proof (cases "B\<noteq>{}")
+  case True
+
+(* The following generalizes finite_span_complete_aux to hold without the assumption
+     that 'basis has type class finite *)
+  define repr  where "repr = real_vector.representation B"
+  {
+    (* Step 1: Create a fake type definition by introducing a new type variable 'basis
+               and then assuming the existence of the morphisms Rep/Abs to B
+               This is then roughly equivalent to "typedef 'basis = B" *)
+    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux
+       (I.e., we cannot call it 'basis) *)
+    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
+    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
+      by auto
+        (* Step 2: We show that our fake typedef 'basisT could be instantiated as type class finite *)
+    have basisT_finite: "class.finite TYPE('basisT)"
+      apply intro_classes 
+      using \<open>finite B\<close> t
+      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+        (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
+               (instead, a precondition "class.finite TYPE('basisT)" is introduced) *)
+    note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
+      (* Step 4: We instantiate the premises *)
+    note this[OF basisT_finite t]
+  }
+    (* Now we have the desired fact, except that it still assumes that B is isomorphic to some type 'basis
+     together with the assumption that there are morphisms between 'basis and B. 'basis and that premise
+     are removed using cancel_type_definition
+  *)
+  note this[cancel_type_definition, OF True \<open>finite B\<close> _ \<open>independent B\<close>]
+
+  hence d2:"\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
+    by (simp add: repr_def that True)
+  have d1: " (\<And>b. b \<in> B \<Longrightarrow>
+          \<exists>D. \<forall>\<psi>. 0 < D \<and> norm (repr \<psi> b) \<le> norm \<psi> * D) \<Longrightarrow>
+    \<exists>D. \<forall>b \<psi>. b \<in> B \<longrightarrow>
+               0 < D b \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b"
+    apply (rule choice) by auto
+  then obtain D where D: "D b > 0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
+    apply atomize_elim
+    using d2 by blast
+
+  hence Dpos: "D b > 0" and Dbound: "norm (repr \<psi> b) \<le> norm \<psi> * D b" 
+    if "b\<in>B" for b \<psi>
+    using that by auto
+  define Dall where "Dall = Max (D`B)"
+  have "Dall > 0"
+    unfolding Dall_def using \<open>finite B\<close> \<open>B\<noteq>{}\<close> Dpos
+    by (metis (mono_tags, lifting) Max_in finite_imageI image_iff image_is_empty)
+  have "Dall \<ge> D b" if "b\<in>B" for b
+    unfolding Dall_def using \<open>finite B\<close> that by auto
+  with Dbound
+  have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<in>B" for b \<psi>
+    using that
+    by (smt mult_left_mono norm_not_less_zero) 
+  moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
+    unfolding repr_def using real_vector.representation_ne_zero True
+    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less 
+        subsetI subset_antisym)
+  ultimately show "\<exists>D>0. \<forall>\<psi> b. abs (repr \<psi> b) \<le> norm \<psi> * D"
+    using \<open>Dall > 0\<close> real_norm_def by metis
+next
+  case False
+  thus ?thesis
+    unfolding repr_def using real_vector.representation_ne_zero[of B]
+    using nice_ordered_field_class.linordered_field_no_ub by fastforce
+qed
+
+
 
 hide_fact finite_span_complete_aux
 
