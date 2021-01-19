@@ -40,8 +40,23 @@ proof
     have "sum f F = infsetsum f F"
       using that by (rule infsetsum_finite[symmetric])
     also have "infsetsum f F \<le> infsetsum f UNIV"
-      apply (rule infsetsum_mono_neutral_left)
-      using fsums that f_def by auto
+    proof (rule infsetsum_mono_neutral_left)
+      show "f abs_summable_on F"
+        by (simp add: that)        
+      show "f abs_summable_on UNIV"
+        by (simp add: fsums)      
+      show "f x \<le> f x"
+        if "x \<in> F"
+        for x :: 'a
+        using that
+        by simp 
+      show "F \<subseteq> UNIV"
+        by simp        
+      show "0 \<le> f x"
+        if "x \<in> UNIV - F"
+        for x :: 'a
+        using that f_def by auto
+    qed
     finally show ?thesis 
       unfolding bound_def by assumption
   qed
@@ -49,23 +64,41 @@ proof
     unfolding has_ell2_norm_def f_def
     by (rule bdd_aboveI2[where M=bound], simp)
 next
+  have x1: "\<exists>B. \<forall>F. finite F \<longrightarrow> (\<Sum>s\<in>F. (cmod (x s))\<^sup>2) < B"
+    if "\<And>t. finite t \<Longrightarrow> (\<Sum>i\<in>t. (cmod (x i))\<^sup>2) \<le> M"
+    for M
+    using that by (meson gt_ex le_less_trans)
   assume "has_ell2_norm x"
   then obtain B where "(\<Sum>xa\<in>F. norm ((cmod (x xa))\<^sup>2)) < B" if "finite F" for F
-    apply atomize_elim unfolding has_ell2_norm_def unfolding bdd_above_def apply auto
-    by (meson gt_ex le_less_trans)
+  proof atomize_elim    
+    show "\<exists>B. \<forall>F. finite F \<longrightarrow> (\<Sum>xa\<in>F. norm ((cmod (x xa))\<^sup>2)) < B"
+      if "has_ell2_norm x"
+      using that x1
+      unfolding has_ell2_norm_def unfolding bdd_above_def
+      by auto
+  qed 
   thus "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
-    apply (rule_tac abs_summable_finiteI[where B=B]) by fastforce 
+  proof (rule_tac abs_summable_finiteI [where B = B])
+    show "(\<Sum>t\<in>F. norm ((cmod (x t))\<^sup>2)) \<le> B"
+      if "\<And>F. finite F \<Longrightarrow> (\<Sum>s\<in>F. norm ((cmod (x s))\<^sup>2)) < B"
+        and "finite F" and "F \<subseteq> UNIV"
+      for F :: "'a set"
+      using that by fastforce
+  qed     
 qed
 
 lemma has_ell2_norm_L2_set: "has_ell2_norm x = bdd_above (L2_set (norm o x) ` Collect finite)"
-proof -
-  have bdd_above_image_mono': "(\<And>x y. x\<le>y \<Longrightarrow> x:A \<Longrightarrow> y:A \<Longrightarrow> f x \<le> f y) \<Longrightarrow> (\<exists>M\<in>A. \<forall>x \<in> A. x \<le> M) \<Longrightarrow> bdd_above (f`A)" for f::"'a set\<Rightarrow>real" and A
+proof-
+  have bdd_above_image_mono': "bdd_above (f`A)"
+    if "\<And>x y. x\<le>y \<Longrightarrow> x:A \<Longrightarrow> y:A \<Longrightarrow> f x \<le> f y"
+      and "\<exists>M\<in>A. \<forall>x \<in> A. x \<le> M"
+    for f::"'a set\<Rightarrow>real" and A
+    using that
     unfolding bdd_above_def by auto
-
-  have "bdd_above X \<Longrightarrow> bdd_above (sqrt ` X)" for X
+  have t3: "bdd_above X \<Longrightarrow> bdd_above (sqrt ` X)" for X
     by (meson bdd_aboveI2 bdd_above_def real_sqrt_le_iff)
-  moreover have "bdd_above X" if bdd_sqrt: "bdd_above (sqrt ` X)" for X
-  proof -
+  moreover have t2: "bdd_above X" if bdd_sqrt: "bdd_above (sqrt ` X)" for X
+  proof-
     obtain y where y:"y \<ge> sqrt x" if "x:X" for x 
       using bdd_sqrt unfolding bdd_above_def by auto
     have "y*y \<ge> x" if "x:X" for x
@@ -75,14 +108,18 @@ proof -
   qed
   ultimately have bdd_sqrt: "bdd_above X \<longleftrightarrow> bdd_above (sqrt ` X)" for X
     by rule
-
-  show "has_ell2_norm x \<longleftrightarrow> bdd_above (L2_set (norm o x) ` Collect finite)"
-    unfolding has_ell2_norm_def unfolding L2_set_def
-    apply (rewrite asm_rl[of "(\<lambda>A. sqrt (sum (\<lambda>i. ((cmod \<circ> x) i)\<^sup>2) A)) ` Collect finite 
+  have t1: "bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite) =
+            bdd_above ((\<lambda>A. sqrt (\<Sum>i\<in>A. ((cmod \<circ> x) i)\<^sup>2)) ` Collect finite)"
+  proof (rewrite asm_rl [of "(\<lambda>A. sqrt (sum (\<lambda>i. ((cmod \<circ> x) i)\<^sup>2) A)) ` Collect finite 
                             = sqrt ` (\<lambda>A. (\<Sum>i\<in>A. (cmod (x i))\<^sup>2)) ` Collect finite"])
-     apply auto[1]
-    apply (subst bdd_sqrt[symmetric])
-    by (simp add: monoI)
+    show "(\<lambda>A. sqrt (\<Sum>i\<in>A. ((cmod \<circ> x) i)\<^sup>2)) ` Collect finite = sqrt ` sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite"
+      by auto      
+    show "bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite) = bdd_above (sqrt ` sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)"
+      by (meson t2 t3)      
+  qed
+  show "has_ell2_norm x \<longleftrightarrow> bdd_above (L2_set (norm o x) ` Collect finite)"
+    unfolding has_ell2_norm_def L2_set_def
+    using t1.
 qed
 
 subsection \<open>Subspaces\<close>
@@ -91,7 +128,6 @@ notation
   inf (infixl "\<sqinter>" 70) and
   sup (infixl "\<squnion>" 65) 
 
-
 typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
@@ -99,12 +135,16 @@ setup_lifting type_definition_ell2
 lemma SUP_max:
   fixes f::"'a::order\<Rightarrow>'b::conditionally_complete_lattice"
   assumes "mono f"
-  assumes "\<And>x. x:M \<Longrightarrow> x\<le>m"
-  assumes "m:M"
+  and "\<And>x. x:M \<Longrightarrow> x\<le>m"
+  and "m:M"
   shows "(SUP x\<in>M. f x) = f m"
-  apply (rule antisym)
-   apply (metis assms(1) assms(2) assms(3) cSUP_least empty_iff monoD)
-  by (metis assms(1) assms(2) assms(3) bdd_aboveI bdd_above_image_mono cSUP_upper)
+  proof (rule antisym)
+  show "\<Squnion> (f ` M) \<le> f m"
+    by (metis assms(1) assms(2) assms(3) cSUP_least equals0D mono_def)    
+  show "f m \<le> \<Squnion> (f ` M)"
+    by (smt assms(1) assms(2) assms(3) cSup_eq_maximum image_iff monoE)    
+qed
+
 
 
 definition "ell2_norm x = sqrt (SUP F\<in>{F. finite F}. sum (\<lambda>i. norm (x i)^2) F)"
@@ -112,58 +152,145 @@ definition "ell2_norm x = sqrt (SUP F\<in>{F. finite F}. sum (\<lambda>i. norm (
 lemma ell2_norm_L2_set: 
   assumes "has_ell2_norm x"
   shows "ell2_norm x = (SUP F\<in>{F. finite F}. L2_set (norm o x) F)"
-  unfolding ell2_norm_def L2_set_def o_def apply (subst continuous_at_Sup_mono)
-  using monoI real_sqrt_le_mono apply blast
-  using continuous_at_split isCont_real_sqrt apply blast
-  using assms unfolding has_ell2_norm_def by (auto simp: image_image)
-
+proof-
+  have "sqrt (\<Squnion> (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)) =
+      (SUP F\<in>{F. finite F}. sqrt (\<Sum>i\<in>F. (cmod (x i))\<^sup>2))"
+  proof (subst continuous_at_Sup_mono)
+    show "mono sqrt"
+      by (simp add: mono_def)      
+    show "continuous (at_left (\<Squnion> (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite))) sqrt"
+      using continuous_at_split isCont_real_sqrt by blast    
+    show "sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite \<noteq> {}"
+      by auto      
+    show "bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)"
+      by (metis assms has_ell2_norm_def)      
+    show "\<Squnion> (sqrt ` sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite) = (SUP F\<in>Collect finite. sqrt (\<Sum>i\<in>F. (cmod (x i))\<^sup>2))"
+      by (metis image_image)      
+  qed  
+  thus ?thesis 
+  unfolding ell2_norm_def L2_set_def o_def.
+qed
+  
 lemma ell2_norm_infsetsum:
   assumes "has_ell2_norm x"
   shows "ell2_norm x = sqrt (infsetsum (\<lambda>i. (norm(x i))^2) UNIV)"
-  unfolding ell2_norm_def apply (subst infsetsum_nonneg_is_SUPREMUM)
-  using assms has_ell2_norm_infsetsum by auto
+proof-
+  have "ell2_norm x = sqrt (\<Sum>\<^sub>ai. (cmod (x i))\<^sup>2)"
+  proof (subst infsetsum_nonneg_is_SUPREMUM)
+    show "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
+      using assms has_ell2_norm_infsetsum by fastforce      
+    show "0 \<le> (cmod (x t))\<^sup>2"
+      if "t \<in> UNIV"
+      for t :: 'a
+      using that
+      by simp 
+    show "ell2_norm x = sqrt (\<Squnion> (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` {F. finite F \<and> F \<subseteq> UNIV}))"
+      unfolding ell2_norm_def by auto   
+  qed
+  thus ?thesis 
+    by auto
+qed
 
 lemma has_ell2_norm_finite[simp]: "has_ell2_norm (x::'a::finite\<Rightarrow>_)"
   unfolding has_ell2_norm_def by simp
 
-lemma ell2_norm_finite_def: "ell2_norm (x::'a::finite\<Rightarrow>complex) = sqrt (sum (\<lambda>i. (norm(x i))^2) UNIV)"
-proof -
-  have mono: "mono (sum (\<lambda>i. (cmod (x i))\<^sup>2))"
-    unfolding mono_def apply auto apply (subst sum_mono2) by auto
+lemma ell2_norm_finite_def: 
+  "ell2_norm (x::'a::finite\<Rightarrow>complex) = sqrt (sum (\<lambda>i. (norm(x i))^2) UNIV)"
+proof-    
+  have "(\<Sum>i\<in>t. (cmod (x i))\<^sup>2) \<le> (\<Sum>i\<in>y. (cmod (x i))\<^sup>2)"
+    if "t \<subseteq> y"
+    for t y
+  proof (subst sum_mono2)
+    show "finite y"
+      by simp      
+    show "t \<subseteq> y"
+      using that.
+    show "0 \<le> (cmod (x b))\<^sup>2"
+      if "b \<in> y - t"
+      for b :: 'a
+      using that
+      by simp 
+    show True by blast
+  qed
+  hence mono: "mono (sum (\<lambda>i. (cmod (x i))\<^sup>2))"
+    unfolding mono_def
+    by blast 
   show ?thesis
     unfolding ell2_norm_def apply (subst SUP_max[where m=UNIV])
     using mono by auto
 qed
 
 lemma L2_set_mono2:
-  assumes "finite L"
-  assumes "K \<le> L"
+  assumes a1: "finite L" and a2: "K \<le> L"
   shows "L2_set f K \<le> L2_set f L"
-  unfolding L2_set_def apply (rule real_sqrt_le_mono)
-  apply (rule sum_mono2)
-  using assms by auto
+proof-
+  have "(\<Sum>i\<in>K. (f i)\<^sup>2) \<le> (\<Sum>i\<in>L. (f i)\<^sup>2)"
+  proof (rule sum_mono2)
+    show "finite L"
+      using a1.
+    show "K \<subseteq> L"
+      using a2.
+    show "0 \<le> (f b)\<^sup>2"
+      if "b \<in> L - K"
+      for b :: 'a
+      using that
+      by simp 
+  qed
+  hence "sqrt (\<Sum>i\<in>K. (f i)\<^sup>2) \<le> sqrt (\<Sum>i\<in>L. (f i)\<^sup>2)"
+    by (rule real_sqrt_le_mono)
+  thus ?thesis
+    unfolding L2_set_def.
+qed
 
 lemma ell2_norm_finite_def': "ell2_norm (x::'a::finite\<Rightarrow>complex) = L2_set (norm o x) UNIV"
-  apply (subst ell2_norm_L2_set) apply simp
-  apply (subst SUP_max[where m=UNIV])
-  by (auto simp: mono_def intro!: L2_set_mono2)
-
-lemma ell2_1: assumes  "finite F" shows "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) \<le> 1"
+proof (subst ell2_norm_L2_set)
+  show "has_ell2_norm x"
+    by simp    
+  show "\<Squnion> (L2_set (cmod \<circ> x) ` Collect finite) = L2_set (cmod \<circ> x) UNIV"
+  proof (subst SUP_max [where m = UNIV])
+    show "mono (L2_set (cmod \<circ> x))"
+      by (auto simp: mono_def intro!: L2_set_mono2)
+    show "(x::'a set) \<subseteq> UNIV"
+      if "(x::'a set) \<in> Collect finite"
+      for x :: "'a set"
+      using that
+      by simp 
+    show "(UNIV::'a set) \<in> Collect finite"
+      by simp      
+    show "L2_set (cmod \<circ> x) UNIV = L2_set (cmod \<circ> x) UNIV"
+      by simp
+  qed
+qed 
+  
+  
+lemma ell2_1: 
+  assumes  "finite F" 
+  shows "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) \<le> 1"
 proof - 
   have "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) = 0" if "a\<notin>F"
-    apply (subst sum.cong[where B=F and h="\<lambda>_. 0"]) using that by auto
+    proof (subst sum.cong [where B = F and h = "\<lambda>_. 0"])
+  show "F = F"
+    by blast
+  show "(cmod (if a = x then 1 else 0))\<^sup>2 = 0"
+    if "x \<in> F"
+    for x :: 'a
+    using that \<open>a \<notin> F\<close> by auto 
+  show "(\<Sum>_\<in>F. (0::real)) = 0"
+    by simp
+qed 
   moreover have "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) = 1" if "a\<in>F"
   proof -
     obtain F0 where "a\<notin>F0" and F_F0: "F=insert a F0"
       by (meson \<open>a \<in> F\<close> mk_disjoint_insert) 
-    show "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) = 1"
-      unfolding F_F0
-      apply (subst sum.insert_remove)
-      using F_F0 assms apply auto
-      apply (subst sum.cong[where B=F0 and h="\<lambda>_. 0"])
-        apply (simp add: \<open>a \<notin> F0\<close>)
-      using \<open>a \<notin> F0\<close> apply auto[1]
-      by simp
+    have "(\<Sum>i\<in>insert a F0. (cmod (if a = i then 1 else 0))\<^sup>2) = 1"
+    proof (subst sum.insert_remove)
+      show "finite F0"
+        using F_F0 assms by auto
+      show "(cmod (if a = a then 1 else 0))\<^sup>2 + (\<Sum>i\<in>F0 - {a}. (cmod (if a = i then 1 else 0))\<^sup>2) = 1"
+        using sum.not_neutral_contains_not_neutral by fastforce        
+    qed
+    thus "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) = 1"
+      unfolding F_F0.
   qed
   ultimately show "(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) \<le> 1"
     by linarith
@@ -178,22 +305,33 @@ lemma ell2_norm_0:
   assumes "has_ell2_norm x"
   shows "(ell2_norm x = 0) = (x = (\<lambda>_. 0))"
 proof
-  assume "x = (\<lambda>_. 0)"
-  thus "ell2_norm x = 0"
-    unfolding ell2_norm_def apply auto
+  assume u1: "x = (\<lambda>_. 0)"
+  have u2: "(SUP x::'a set\<in>Collect finite. (0::real)) = 0"
+    if "x = (\<lambda>_. 0)"
     by (metis cSUP_const empty_Collect_eq finite.emptyI)
+  show "ell2_norm x = 0"
+    unfolding ell2_norm_def
+    using u1 u2 by auto 
 next
   assume norm0: "ell2_norm x = 0"
   show "x = (\<lambda>_. 0)"
   proof
     fix i
     have "sum (\<lambda>i. (cmod (x i))\<^sup>2) {i} \<le> 0" 
-      apply (rule cSUP_leD[where A="Collect finite"])
-      using norm0 assms unfolding has_ell2_norm_def ell2_norm_def by auto
+    proof (rule cSUP_leD [where A = "Collect finite"])
+      show "bdd_above (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite)"
+        by (metis assms has_ell2_norm_def)        
+      show "\<Squnion> (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite) \<le> 0"
+         using norm0  unfolding has_ell2_norm_def ell2_norm_def by auto
+      show "{i} \<in> Collect finite"
+        by simp        
+    qed
     thus "x i = 0" by auto
   qed
 qed
 
+
+(*here*)
 lemma ell2_norm_smult:
   assumes "has_ell2_norm x"
   shows "has_ell2_norm (\<lambda>i. c * x i)" and "ell2_norm (\<lambda>i. c * x i) = cmod c * ell2_norm x"
@@ -3577,13 +3715,10 @@ proof -
   have b1: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
     apply (rule ext) unfolding inv_option_def o_def 
     using assms unfolding inj_def inv_def by auto
-(*   hence b2: "cblinfun_extension_exists (range ket)
-     (classical_function''
-       (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>)))"
-    using a4 by simp *)
   have b3: "classical_operator (inv_option (Some \<circ> \<pi>)) o\<^sub>C\<^sub>L
             classical_operator (Some \<circ> \<pi>) = classical_operator (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>))"
-    by (metis assms b0 b0' b1 classical_operator_Some classical_operator_def classical_operator_exists_inj classical_operator_mult inj_option_Some inj_option_Some_pi)
+    by (metis b0 b0' b1 classical_operator_Some classical_operator_exists_inj 
+        classical_operator_mult)
   show ?thesis
     unfolding isometry_def
     apply (subst classical_operator_adjoint)
