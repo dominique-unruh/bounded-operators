@@ -1815,85 +1815,89 @@ proof-
   thus ?thesis unfolding ell2_norm_def by blast
 qed
 
-(*here*)
+
 lemma ell2_Cauchy_pointwiseConverges:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
-  assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close> 
-    and \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+  assumes a1: \<open>\<And>k. has_ell2_norm (a k)\<close> 
+      and a2: \<open>\<And>\<epsilon>. \<epsilon>>0 \<Longrightarrow> \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall>S. finite S 
+      \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>\<close>
   shows \<open>\<exists> l. (a \<midarrow>pointwise\<rightarrow> l)\<close>
 proof-
-  have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( ((a m) x) - ((a n) x) ) \<le> \<epsilon>\<close>
-    for \<epsilon> :: real and x::'a 
+  have \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( a m x - a n x ) \<le> \<epsilon>\<close>
+    if e1: \<open>\<epsilon> > 0\<close>
+    for \<epsilon> and x::'a 
   proof-
-    assume \<open>\<epsilon> > 0\<close>
-    hence \<open>\<epsilon>^2 > 0\<close>
+    have \<open>\<epsilon>^2 > 0\<close>
+      using e1
       by simp
-    hence \<open>\<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
-      using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-      by blast
+    hence \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall>S. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>^2\<close>
+      by (simp add: a2)
     then obtain N
-      where \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+      where \<open>\<forall>m\<ge>N. \<forall>n \<ge>N. \<forall>S. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>^2\<close>
       by blast
-    have \<open>m \<ge> N \<Longrightarrow> n \<ge> N \<Longrightarrow> cmod ( ((a m) x) - ((a n) x) ) \<le> \<epsilon>\<close>
+    have \<open>cmod ( a m x - a n x ) \<le> \<epsilon>\<close>
+      if r1: \<open>m \<ge> N\<close> and r2: \<open>n \<ge> N\<close>
       for m n
     proof- 
-      assume \<open>m \<ge> N\<close>
-      moreover assume \<open>n \<ge> N\<close>
-      ultimately have \<open>\<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
-        using \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
+      have "(\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>^2"
+        if "finite S"
+        for S
+        using that r1 r2 \<open>\<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>^2\<close>
         by blast
       moreover have \<open>finite {x}\<close>
         by auto
-      ultimately have \<open>(\<Sum> t\<in>{x}. ( cmod ( ((a m) t) - ((a n) t) ) )^2)  \<le> \<epsilon>^2\<close>        
+      ultimately have \<open>(\<Sum> t\<in>{x}. ( cmod ( a m t - a n t ) )^2) \<le> \<epsilon>^2\<close>
         by blast
-      hence \<open> ( cmod ( ((a m) x) - ((a n) x) ) )^2  \<le> \<epsilon>^2\<close>        
+      hence \<open>( cmod ( a m x - a n x ) )^2  \<le> \<epsilon>^2\<close>        
         by simp
-      moreover have \<open> cmod ( ((a m) x) - ((a n) x) ) \<ge> 0\<close>
+      moreover have \<open>cmod ( a m x - a n x ) \<ge> 0\<close>
         by simp
-      ultimately have \<open> ( cmod ( ((a m) x) - ((a n) x) ) )  \<le> \<epsilon>\<close>        
+      ultimately have \<open>( cmod ( a m x - a n x ) )  \<le> \<epsilon>\<close>        
         using \<open>\<epsilon> > 0\<close>
         using power2_le_imp_le by fastforce   
       thus ?thesis by blast
     qed 
     thus ?thesis by blast
   qed 
-  hence \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
-    for \<epsilon> :: real and x::'a 
+  hence \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( (\<lambda> k. a k x) m - (\<lambda> k. a k x) n ) \<le> \<epsilon>\<close>
+    if "\<epsilon>>0"
+    for \<epsilon> and x
+    using that
     by blast
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
-    for x::'a 
+  hence "\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( (\<lambda> k. a k x) m - (\<lambda> k. a k x) n ) \<le> \<epsilon>"
+    if "\<epsilon>>0"
+    for x::'a and \<epsilon>
+    using that
     by blast
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) < \<epsilon>\<close>
-    for x::'a 
+  hence \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( (\<lambda> k. a k x) m - (\<lambda> k. a k x) n ) < \<epsilon>\<close>
+    if s1: "\<epsilon>>0"
+    for \<epsilon> and x::'a 
   proof-
-    from \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>\<close>
-    have \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
-      using half_gt_zero by blast
-    hence \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) < \<epsilon>\<close>
-      for \<epsilon>::real
-    proof-
-      assume \<open>\<epsilon> > 0\<close>
-      hence \<open> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
-        using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+    have \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+      using half_gt_zero
+        \<open>\<And>x \<epsilon>. 0 < \<epsilon> \<Longrightarrow> \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. cmod (a m x - a n x) \<le> \<epsilon>\<close> by blast 
+      have \<open>\<exists>N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
+        using s1 \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  cmod ( (\<lambda> k. (a k) x) m - (\<lambda> k. (a k) x) n ) \<le> \<epsilon>/2\<close>
         by blast
       moreover have \<open>\<epsilon>/2 < \<epsilon>\<close>
         using \<open>\<epsilon> > 0\<close>
         by simp
-      ultimately show ?thesis by smt
-    qed
+      ultimately have \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  cmod ( (\<lambda> k. a k x) m - (\<lambda> k. a k x) n ) < \<epsilon>\<close>
+        by fastforce
     thus ?thesis 
       by blast
   qed
-  hence \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N.  dist ((\<lambda> k. (a k) x) m) ((\<lambda> k. (a k) x) n)  < \<epsilon>\<close>
-    for x::'a
-    by (simp add: dist_norm)  
+  hence \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N.  dist ((\<lambda>k. a k x) m) ((\<lambda>k. a k x) n) < \<epsilon>\<close>
+    if "\<epsilon>>0"
+    for \<epsilon> and x
+    by (simp add: that dist_norm)  
   hence \<open>Cauchy (\<lambda> k. (a k) x)\<close>
     for x::'a
     using Cauchy_altdef2 by fastforce     
-  hence \<open>\<exists> r::complex. (\<lambda> n. (a n) x ) \<longlonglongrightarrow> r\<close>
+  hence \<open>\<exists>r. (\<lambda> n. a n x ) \<longlonglongrightarrow> r\<close>
     for x::'a
     by (simp add: convergent_eq_Cauchy) 
-  hence \<open>\<exists> l::'a \<Rightarrow> complex. \<forall> x::'a. (\<lambda> n. (a n) x ) \<longlonglongrightarrow> l x\<close>
+  hence \<open>\<exists>l. \<forall>x. (\<lambda> n. (a n) x) \<longlonglongrightarrow> l x\<close>
     by metis                                        
   thus ?thesis 
     unfolding pointwise_convergent_to_def
@@ -1903,29 +1907,27 @@ qed
 
 lemma completeness_ell2:
   fixes a :: \<open>nat \<Rightarrow> ('a \<Rightarrow> complex)\<close>
-  assumes  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
-    \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) < \<epsilon>\<close>
-  shows "\<exists>l. has_ell2_norm l \<and> (\<forall>\<epsilon>>0. \<exists>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a n x - l x) < \<epsilon>)" 
+  assumes a1: \<open>\<And>k. has_ell2_norm (a k)\<close> and
+    a2: \<open>\<And>\<epsilon>. \<epsilon>>0 \<Longrightarrow> \<exists>N.\<forall>m\<ge>N.\<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) < \<epsilon>\<close>
+  shows "\<exists>l. has_ell2_norm l \<and> (\<forall>\<epsilon>>0. \<exists>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a n x - l x) < \<epsilon>)"
 proof-
-  have  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-  proof-
-    have \<open>\<epsilon> > 0 \<Longrightarrow> \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+  have \<open>\<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall> S. finite S 
+  \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>\<close>
+    if s1: "\<epsilon> > 0"
       for \<epsilon>::real
     proof-
-      assume \<open>\<epsilon> > 0\<close>
-      hence \<open>sqrt \<epsilon> > 0\<close> by simp
+      have \<open>sqrt \<epsilon> > 0\<close> using s1 
+        by simp
       then obtain N where \<open>\<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) < sqrt \<epsilon>\<close>
-        using \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) < \<epsilon>\<close>
-        by smt
+        using a2 by blast        
       hence  \<open>\<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) \<le> sqrt \<epsilon>\<close>
         by fastforce
-      have  \<open>m\<ge>N \<Longrightarrow> n\<ge>N \<Longrightarrow> \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-        for m n
+      have  \<open>(\<Sum>x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>\<close>
+        if \<open>m \<ge> N\<close> and \<open>n \<ge> N\<close> and "finite S"
+        for m n S
       proof-
-        assume \<open>m \<ge> N\<close>
-        assume \<open>n \<ge> N\<close>
         have \<open>ell2_norm (\<lambda>x. a m x - a n x) \<le> sqrt \<epsilon>\<close>
-          using  \<open>\<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) \<le> sqrt \<epsilon>\<close>
+          using \<open>\<forall>m\<ge>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a m x - a n x) \<le> sqrt \<epsilon>\<close>
             \<open>m \<ge> N\<close>  \<open>n \<ge> N\<close>
           by blast
         have \<open>has_ell2_norm (a m)\<close>
@@ -1934,40 +1936,35 @@ proof-
           by (simp add: assms(1))
         ultimately have \<open>has_ell2_norm (a m - a n)\<close>
           by (simp add: has_ell2_norm_diff)
-        hence  \<open>ell2_norm (a m - a n) = Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
+        hence \<open>ell2_norm (a m - a n) = Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S.
+                                             finite S }\<close>
           using ellnorm_as_sup_set
           by blast
-        have \<open>{ sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S } \<noteq> {}\<close>
+        have \<open>{ sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S. finite S } \<noteq> {}\<close>
           by blast
-        have \<open>bdd_above { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
-        proof-
-          have \<open>bdd_above (sum (\<lambda>i. (cmod ((a m - a n) i))\<^sup>2) ` Collect finite)\<close>
-            using  \<open>has_ell2_norm (a m - a n)\<close>
-            unfolding has_ell2_norm_def
-            by blast
-          hence \<open>bdd_above { (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
-            by (simp add: setcompr_eq_image)
-          then obtain M where \<open> finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M \<close>
-            for S::\<open>'a set\<close>
-            using \<open>has_ell2_norm (a m - a n)\<close> has_ell2_norm_explicit by blast
-          have \<open>finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<ge> 0\<close> 
-            for S :: \<open>'a set\<close>
-            by (simp add: sum_nonneg)
-          have \<open>finite S \<Longrightarrow> M \<ge> 0\<close>
-            for S::\<open>'a set\<close>
-            using  \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M \<close>
-              \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<ge> 0\<close> 
-            by force
-          hence \<open>M \<ge> 0\<close>
-            by blast
-          have  \<open> finite S \<Longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> sqrt M \<close>
-            for S::\<open>'a set\<close>
-            using  \<open>M \<ge> 0\<close>  \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M \<close>
-              \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<ge> 0\<close>
-            by simp
-          thus ?thesis
-            by (smt bdd_aboveI mem_Collect_eq)   
-        qed
+        have \<open>bdd_above (sum (\<lambda>i. (cmod ((a m - a n) i))\<^sup>2) ` Collect finite)\<close>
+          using  \<open>has_ell2_norm (a m - a n)\<close>
+          unfolding has_ell2_norm_def
+          by blast
+        hence \<open>bdd_above { (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>  
+          by (simp add: setcompr_eq_image)
+        then obtain M where \<open> finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M \<close>
+          for S::\<open>'a set\<close>
+          using \<open>has_ell2_norm (a m - a n)\<close> has_ell2_norm_explicit by blast
+        have \<open>finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<ge> 0\<close> 
+          for S :: \<open>'a set\<close>
+          by (simp add: sum_nonneg)
+        have \<open>M \<ge> 0\<close>
+          for S::\<open>'a set\<close>
+          using  \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M\<close>            
+          by force
+        have  \<open>finite S \<Longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> sqrt M\<close>
+          for S::\<open>'a set\<close>
+          using  \<open>M \<ge> 0\<close>  \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> M \<close>
+            \<open>\<And> S. finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<ge> 0\<close>
+          by simp
+        hence \<open>bdd_above { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S}\<close>
+          by (smt bdd_aboveI mem_Collect_eq)   
         have \<open>(\<lambda> x. a m x - a n x) = a m - a n\<close>
           by auto
         hence \<open>ell2_norm (a m - a n) \<le> sqrt \<epsilon>\<close> 
@@ -1976,19 +1973,23 @@ proof-
         hence \<open>Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S } \<le> sqrt \<epsilon>\<close>
           using  \<open>ell2_norm (a m - a n) \<le> sqrt \<epsilon>\<close>  \<open>ell2_norm (a m - a n) = Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
           by simp
-        moreover have \<open>finite S \<Longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
+        moreover have \<open>sqrt (\<Sum> i \<in> S. 
+          (cmod ((a m - a n) i))\<^sup>2) \<le> Sup { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. 
+            finite S }\<close>
+          if fs: \<open>finite S\<close>
           for S::\<open>'a set\<close>
         proof-
-          assume \<open>finite S\<close>
-          hence \<open>sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<in> { sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  | S::'a set. finite S }\<close>
-            by blast
+          have \<open>sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)\<in>{ sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2)  
+                  | S::'a set. finite S }\<close>
+            using fs by blast
           thus ?thesis
-            by (metis (no_types, lifting) \<open>bdd_above {sqrt (\<Sum>i\<in>S. (cmod ((a m - a n) i))\<^sup>2) |S. finite S}\<close> cSup_upper)  
+            by (metis (no_types, lifting) \<open>bdd_above {sqrt (\<Sum>i\<in>S. (cmod ((a m - a n) i))\<^sup>2) 
+                |S. finite S}\<close> cSup_upper)  
         qed 
-        ultimately have \<open>finite S \<Longrightarrow> sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> sqrt \<epsilon>\<close>
+        ultimately have \<open>sqrt (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> sqrt \<epsilon>\<close>
           for S :: \<open>'a set \<close>
           by (smt \<open>0 < \<epsilon>\<close> real_sqrt_le_mono sum.infinite)
-        hence  \<open>finite S \<Longrightarrow> (\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> \<epsilon>\<close>
+        hence  \<open>(\<Sum> i \<in> S. (cmod ((a m - a n) i))\<^sup>2) \<le> \<epsilon>\<close>
           for S :: \<open>'a set \<close>
           by simp
         thus ?thesis by auto 
@@ -1996,37 +1997,37 @@ proof-
       thus ?thesis
         by blast 
     qed
-    thus ?thesis by blast
-  qed
-  have  \<open>\<exists> l. (a \<midarrow>pointwise\<rightarrow> l)\<close>
-    using ell2_Cauchy_pointwiseConverges
-      \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-      \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
-    by blast
-  then   obtain l :: \<open>'a \<Rightarrow> complex\<close> where  \<open>a \<midarrow>pointwise\<rightarrow> l\<close>
-    by blast
-  have \<open>has_ell2_norm l\<close> using convergence_pointwise_ell2_norm_exists 
-    using  \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-      \<open>a \<midarrow>pointwise\<rightarrow> l\<close>  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
-    by blast
-  moreover have \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a n x - l x) < \<epsilon>\<close> 
-  proof-
-    have  \<open>( \<lambda> k. ell2_norm ( (a k) - l ) ) \<longlonglongrightarrow> 0\<close>
-      using convergence_pointwise_to_ell2_same_limit  
-        \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
-        \<open>a \<midarrow>pointwise\<rightarrow> l\<close>  \<open>\<forall> k::nat. has_ell2_norm (a k)\<close>
+    hence  \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall>S. finite S
+         \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
       by blast
-    hence  \<open>\<forall> \<epsilon>>0. \<exists> N. \<forall> k \<ge> N. dist ( ell2_norm ( (a k) - l ) ) 0 < \<epsilon>\<close>
+  have  \<open>\<exists> l. a \<midarrow>pointwise\<rightarrow> l\<close>
+    using ell2_Cauchy_pointwiseConverges
+    by (simp add: ell2_Cauchy_pointwiseConverges \<open>\<And>\<epsilon>. 0 < \<epsilon> \<Longrightarrow> \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall>S. finite S
+   \<longrightarrow> (\<Sum>x\<in>S. (cmod (a m x - a n x))\<^sup>2) \<le> \<epsilon>\<close> a1)
+  then obtain l :: \<open>'a \<Rightarrow> complex\<close> where \<open>a \<midarrow>pointwise\<rightarrow> l\<close>
+    by blast
+  have a1: \<open>has_ell2_norm l\<close> using convergence_pointwise_ell2_norm_exists 
+    using  \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>m\<ge>N. \<forall>n\<ge>N. \<forall>S::'a set. finite S
+       \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( a m x - a n x ) )^2)  \<le> \<epsilon>\<close>
+      \<open>a \<midarrow>pointwise\<rightarrow> l\<close>  \<open>\<And>k. has_ell2_norm (a k)\<close>
+    by blast
+  have  \<open>(\<lambda>k. ell2_norm (a k - l) ) \<longlonglongrightarrow> 0\<close>
+    using convergence_pointwise_to_ell2_same_limit  
+        \<open>\<forall> \<epsilon> > 0. \<exists> N::nat. \<forall> m \<ge> N. \<forall> n \<ge> N. \<forall> S::'a set. finite S \<longrightarrow> (\<Sum> x\<in>S. ( cmod ( ((a m) x) - ((a n) x) ) )^2)  \<le> \<epsilon>\<close>
+        \<open>a \<midarrow>pointwise\<rightarrow> l\<close>  \<open>\<And>k::nat. has_ell2_norm (a k)\<close>
+      by blast
+    hence  \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>k\<ge>N. dist ( ell2_norm ( (a k) - l ) ) 0 < \<epsilon>\<close>
       using metric_LIMSEQ_D by blast
-    hence  \<open>\<forall> \<epsilon>>0. \<exists> N. \<forall> k \<ge> N.  \<bar>ell2_norm ( (a k) - l ) \<bar>  < \<epsilon>\<close>
+    hence  \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>k\<ge>N.  \<bar>ell2_norm ( (a k) - l ) \<bar>  < \<epsilon>\<close>
       by simp
-    hence  \<open>\<forall> \<epsilon>>0. \<exists> N. \<forall> k \<ge> N.  ell2_norm ( (a k) - l )   < \<epsilon>\<close>
+    hence  \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall> k \<ge> N.  ell2_norm ( (a k) - l )   < \<epsilon>\<close>
       by (metis diff_zero dist_commute dist_real_def lemma_interval_lt nice_ordered_field_class.linordered_field_no_lb)
     hence \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>k\<ge>N. ell2_norm (\<lambda>x. (a k - l) x) < \<epsilon>\<close>
       by smt
-    thus ?thesis by simp
-  qed 
-  ultimately show ?thesis by blast
+    hence a2: \<open>\<forall>\<epsilon>>0. \<exists>N. \<forall>n\<ge>N. ell2_norm (\<lambda>x. a n x - l x) < \<epsilon>\<close> 
+      by simp 
+    show ?thesis 
+      using a1 a2 by blast
 qed                                                    
 
 instantiation ell2 :: (type) chilbert_space
@@ -2034,24 +2035,70 @@ begin
 instance
 proof
   fix X :: "nat \<Rightarrow> 'a ell2"
-  assume cauchy: "Cauchy (X::nat \<Rightarrow> 'a ell2)"
+  have x:"\<And>X::nat \<Rightarrow> 'a \<Rightarrow> complex.
+       \<forall>x. has_ell2_norm (X x) \<Longrightarrow>
+       \<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>x. X m x - X n x) < e \<Longrightarrow>
+       \<exists>l. has_ell2_norm l \<and>
+          (\<forall>r>0. \<exists>no. \<forall>n\<ge>no. ell2_norm (\<lambda>x::'a. X n x - l x) < r)"
+  proof (rule completeness_ell2)
+    show "has_ell2_norm (\<lambda>x. X k x)"
+      if "\<forall>x::nat. has_ell2_norm (X x)"
+        and "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>x. X m x - X n x) < e"
+      for X :: "nat \<Rightarrow> 'a \<Rightarrow> complex"
+        and k :: nat
+      using that
+      by blast 
+    show "\<exists>no. \<forall>m\<ge>no. \<forall>n\<ge>no. ell2_norm (\<lambda>x. X m x - X n x) < r"
+      if "\<forall>x. has_ell2_norm (X x)"
+        and "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. ell2_norm (\<lambda>x. X m x - X n x) < e"
+        and "0 < r"
+      for X :: "nat \<Rightarrow> 'a \<Rightarrow> complex"
+        and r :: real
+      using that
+      by blast 
+  qed
+  assume cauchy: "Cauchy X"
+  hence "\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (X m - X n) < e"
+    unfolding Cauchy_def dist_norm.
+  hence "\<exists>l. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. norm (X n - l) < r"
+    apply transfer
+    using x
+    by simp
+  hence "\<exists>l. \<forall>r>0. \<exists>no. \<forall>n\<ge>no. dist (X n) l < r"
+    unfolding dist_norm.    
   hence "\<exists>l. X \<longlonglongrightarrow> l"
-    unfolding LIMSEQ_def Cauchy_def dist_norm
-    apply transfer apply simp
-    apply (rule completeness_ell2)
-    by auto
+    unfolding LIMSEQ_def.
   thus "convergent (X::nat \<Rightarrow> 'a ell2)"
     using convergent_def by blast
 qed
 end
 
 lemma ell2_ket[simp]: "norm (ket i) = 1"
-  apply transfer unfolding ell2_norm_def real_sqrt_eq_1_iff
-  apply (rule cSUP_eq_maximum)
-  apply (rule_tac x="{i}" in bexI)
-  apply auto
-  by (rule ell2_1)
+proof transfer
+  show "ell2_norm (\<lambda>y. if i = y then 1::complex else 0) = 1"
+    for i :: 'a
+    unfolding ell2_norm_def real_sqrt_eq_1_iff
+  proof (rule cSUP_eq_maximum)
+    show "\<exists>x\<in>Collect finite. (\<Sum>j\<in>x. (cmod (if i = j then 1 else 0))\<^sup>2) = 1"
+    proof (rule_tac x = "{i}" in bexI)
+      show "(\<Sum>j\<in>{i}. (cmod (if i = j then 1 else 0))\<^sup>2) = 1"
+        by simp
+      show "{i} \<in> Collect finite"
+        by blast
+    qed    
 
+    have "(\<Sum>j\<in>x. (cmod (if i = j then 1 else 0))\<^sup>2) \<le> 1"
+      if "finite x"
+      for x :: "'a set"
+      using that ell2_1[where F = x] by auto 
+    thus "(\<Sum>j\<in>x. (cmod (if i = j then 1 else 0))\<^sup>2) \<le> 1"
+      if "x \<in> Collect finite"
+      for x :: "'a set"
+      using that
+      by blast 
+  qed
+qed 
+  
 type_synonym 'a ell2_clinear_space = "'a ell2 clinear_space"
 
 lemma subspace_zero_not_top[simp]: 
@@ -2061,8 +2108,10 @@ lemma subspace_zero_not_top[simp]:
 instance ell2 :: (type) not_singleton
 proof standard
   have "ket undefined \<noteq> (0::'a ell2)"
-    apply transfer
-    by (meson one_neq_zero)
+  proof transfer
+    show "(\<lambda>y. if (undefined::'a) = y then 1::complex else 0) \<noteq> (\<lambda>_. 0)"
+      by (meson one_neq_zero)
+  qed   
   thus \<open>\<exists>x y::'a ell2. x \<noteq> y\<close>
     by blast    
 qed
@@ -2073,14 +2122,14 @@ definition left_shift :: \<open>(nat \<Rightarrow> 'a) \<Rightarrow> (nat \<Righ
 
 lift_definition left_shift_ell2 :: \<open>nat ell2 \<Rightarrow> nat ell2\<close> is left_shift
 proof-
-  fix x :: \<open>nat \<Rightarrow> complex\<close>
-  show \<open>has_ell2_norm x \<Longrightarrow> has_ell2_norm (left_shift x)\<close>
+  fix x :: "nat \<Rightarrow> complex"
+  show "has_ell2_norm (left_shift x)"
+    if "has_ell2_norm x"
   proof-
     define f where \<open>f n = (cmod (x n))^2\<close> for n :: nat
     define g :: \<open>nat \<Rightarrow> real\<close>  where \<open>g \<equiv> (\<lambda> n. (cmod (x (Suc n)))^2)\<close>
-    assume \<open>has_ell2_norm x\<close>
-    hence \<open>(\<lambda> n. (cmod (x n))^2) abs_summable_on UNIV\<close>
-      using has_ell2_norm_infsetsum by fastforce
+    have \<open>(\<lambda> n. (cmod (x n))^2) abs_summable_on UNIV\<close>
+      using that has_ell2_norm_infsetsum by fastforce
     hence \<open>summable (\<lambda> m. (cmod (x m))^2)\<close>
       using abs_summable_on_nat_iff' summable_norm_cancel by blast
     hence \<open>summable f\<close>
@@ -2093,19 +2142,16 @@ proof-
       by blast
     hence \<open>summable (\<lambda> n. g n)\<close>
       using g_def by blast
-    have \<open>summable (\<lambda> n. norm (g n))\<close>
+    have \<open>norm (g n) = g n\<close>
+      for n
     proof-
-      have \<open>norm (g n) = g n\<close>
-        for n
-      proof-
-        have \<open>g n \<ge> 0\<close>
-          unfolding g_def
-          by simp 
-        thus ?thesis by auto
-      qed
-      thus ?thesis
-        by (simp add: \<open>summable g\<close>) 
+      have \<open>g n \<ge> 0\<close>
+        unfolding g_def
+        by simp 
+      thus ?thesis by auto
     qed
+    hence \<open>summable (\<lambda> n. norm (g n))\<close>
+      by (simp add: \<open>summable g\<close>)
     hence \<open>g abs_summable_on UNIV\<close>
       by (simp add: abs_summable_on_nat_iff')
     hence \<open> (\<lambda> n. (cmod (x (Suc n)))^2) abs_summable_on UNIV\<close>
@@ -2117,7 +2163,7 @@ proof-
   qed
 qed
 
-
+(*here*)
 lemma ell2_norm_explicit_finite_support:
   assumes  \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
   shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
