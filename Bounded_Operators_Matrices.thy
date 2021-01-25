@@ -4064,51 +4064,6 @@ proof-
     unfolding d_def gs_def by auto
 qed
 
-(* TODO: move to complex_vector_spaces *)
-lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
-proof (transfer, auto)
-  have p0: "Complex_Vector_Spaces.span (A \<union> B) = 
-      Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B"
-    for A B::"'a set"
-    using Complex_Vector_Spaces.complex_vector.span_Un
-    by (smt Collect_cong set_plus_def)
-  hence p1: "closure (Complex_Vector_Spaces.span (A \<union> B)) = 
-             closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-    for A B::"'a set"
-    by simp
-
-  show "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
-    if "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
-            closure (Complex_Vector_Spaces.span B)"
-    for x::'a and A B
-  proof-
-    have "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B) \<subseteq>
-          closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)"
-      using Starlike.closure_sum by auto
-    hence "closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
-        \<subseteq> closure (Complex_Vector_Spaces.span (A \<union> B))"
-      by (metis \<open>closure (Complex_Vector_Spaces.span A) + closure (Complex_Vector_Spaces.span B)
-           \<subseteq> closure (Complex_Vector_Spaces.span A + Complex_Vector_Spaces.span B)\<close> p1)
-    thus ?thesis by (smt closed_sum_def closure_closure closure_mono subsetD that)
-  qed
-
-  show "x \<in> closure (Complex_Vector_Spaces.span A) +\<^sub>M
-            closure (Complex_Vector_Spaces.span B)"
-    if "x \<in> closure (Complex_Vector_Spaces.span (A \<union> B))"
-    for x::'a and A B
-  proof-
-    have "Complex_Vector_Spaces.span (A \<union> B) \<subseteq>
-           closure (Complex_Vector_Spaces.span A) +
-           closure (Complex_Vector_Spaces.span B)"
-      apply auto
-      by (metis closure_subset p0 set_plus_mono2_b) 
-    hence "closure (Complex_Vector_Spaces.span (A \<union> B)) \<subseteq>
-           closure (closure (Complex_Vector_Spaces.span A) +
-                    closure (Complex_Vector_Spaces.span B))"
-      by (smt closure_mono)
-    thus ?thesis by (smt closed_sum_def in_mono that)
-  qed
-qed
 
 
 unbundle no_jnf_notation

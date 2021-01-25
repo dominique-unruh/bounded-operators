@@ -13,7 +13,6 @@ theory Complex_Inner_Product
     Complex_Vector_Spaces
     "HOL-Analysis.Infinite_Set_Sum" 
     "HOL-Analysis.Inner_Product"  
-    "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -2038,10 +2037,6 @@ lemma ortho_bot[simp]:
 
 subsection \<open>Closed sum\<close>
 
-definition closed_sum:: \<open>'a::{complex_vector,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-  \<open>closed_sum A B = closure (A + B)\<close>
-
-notation closed_sum (infixl "+\<^sub>M" 65)
 
 lemma sum_existential:
   assumes  "x \<in> (A + B)"
@@ -2181,12 +2176,6 @@ proof-
   ultimately show ?thesis by blast
 qed
 
-lemma subspace_closed_plus:
-  fixes A B::"('a::complex_normed_vector) set"
-  assumes a1: \<open>closed_subspace A\<close> and a2: \<open>closed_subspace B\<close>
-  shows \<open>closed_subspace (A +\<^sub>M B)\<close>
-  using a1 a2 closed_sum_def 
-  by (metis closed_subspace.subspace subspace_I subspace_plus)
 
 lemma DeMorganOrtho:        
   fixes A B::"('a::complex_inner) set"
@@ -2962,12 +2951,6 @@ lift_definition inf_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_
   is "(\<inter>)" by simp
 instance .. end
 
-instantiation clinear_space :: (complex_normed_vector) sup begin
-lift_definition sup_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space" 
-  is "\<lambda>A B::'a set. A +\<^sub>M B"
-  by (simp add: subspace_closed_plus) 
-instance .. 
-end
 
 instantiation clinear_space :: (complex_inner) minus begin
 lift_definition minus_clinear_space :: "'a clinear_space \<Rightarrow> 'a clinear_space \<Rightarrow> 'a clinear_space"
@@ -3305,10 +3288,11 @@ setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan",
   SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", 
   SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-  (* TODO end move *)
 
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+
+
 
 class onb_enum = basis_enum + complex_inner +
   assumes is_orthonormal:
@@ -3768,477 +3752,6 @@ proof-
     by (smt cdependent_raw_def)
 qed
 
-
-
-lemma complex_real_span:
-  "complex_vector.span B = real_vector.span (B \<union> scaleC \<i> ` B)"
-proof auto
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  fix \<psi>
-  assume cspan: "\<psi> \<in> ?cspan B"
-  have "\<exists>B' r. finite B' \<and> B' \<subseteq> B \<and> \<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
-    using complex_vector.span_explicit[of B] cspan
-    by auto
-  then obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
-    by atomize_elim 
-  define R where "R = B \<union> scaleC \<i> ` B"
-
-  have x2: "(case x of (b, i) \<Rightarrow> if i 
-            then Im (r b) *\<^sub>R \<i> *\<^sub>C b 
-            else Re (r b) *\<^sub>R b) \<in> span (B \<union> (*\<^sub>C) \<i> ` B)"
-    if "x \<in> B' \<times> (UNIV::bool set)"
-    for x :: "'a \<times> bool"
-    using that \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff)
-  have x1: "\<psi> = (\<Sum>x\<in>B'. \<Sum>i\<in>UNIV. if i then Im (r x) *\<^sub>R \<i> *\<^sub>C x else Re (r x) *\<^sub>R x)"
-    if "\<And>b. r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b"
-    using that by (simp add: UNIV_bool \<psi>_explicit)
-  moreover have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
-    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
-    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
-  ultimately have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
-    by (simp add: sum.cartesian_product)     
-  also have "\<dots> \<in> ?rspan R"
-    unfolding R_def
-    using x2
-    by (rule real_vector.span_sum) 
-  finally show "\<psi> \<in> ?rspan R" by -
-next
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  define R where "R = B \<union> scaleC \<i> ` B"
-  fix \<psi>
-  assume rspan: "\<psi> \<in> ?rspan R"
-  have "subspace {a. a \<in> cspan B}"
-    by (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero 
-        complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
-  moreover have "x \<in> cspan B"
-    if "x \<in> R"
-    for x :: 'a
-    using that R_def complex_vector.span_base complex_vector.span_scale by fastforce
-  ultimately show "\<psi> \<in> ?cspan B"
-    using real_vector.span_induct rspan by blast  
-qed
-
-(* TODO: move to Complex_Vector_Spaces if possible *)
-lemma finite_span_complete_aux:
-  fixes b :: "'b::real_normed_vector" and B :: "'b set"
-    and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
-  assumes t: "type_definition rep abs B"
-    and t1: "finite B" and t2: "b\<in>B" and t3: "independent B"
-  shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
-    and "complete (real_vector.span B)"
-
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
-     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
-     content of the lemmas. However, there is one difference: We additionally assume here
-     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
-     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
-     the type class \<^class>\<open>finite\<close>
-
-     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
-     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
-     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
-     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
-
-proof -
-  define repr  where "repr = real_vector.representation B"
-  define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
-  define comb  where "comb l = (\<Sum>b\<in>B. l b *\<^sub>R b)" for l
-  define comb' where "comb' l = comb (Rep_euclidean_space l o abs)" for l
-
-  have comb_cong: "comb x = comb y" if "\<And>z. z\<in>B \<Longrightarrow> x z = y z" for x y
-    unfolding comb_def using that by auto
-  have comb_repr[simp]: "comb (repr \<psi>) = \<psi>" if "\<psi> \<in> real_vector.span B" for \<psi>
-    using \<open>comb \<equiv> \<lambda>l. \<Sum>b\<in>B. l b *\<^sub>R b\<close> local.repr_def real_vector.sum_representation_eq t1 t3 that 
-    by fastforce    
-
-  have w5:"(\<Sum>b | (b \<in> B \<longrightarrow> x b \<noteq> 0) \<and> b \<in> B. x b *\<^sub>R b) =
-    (\<Sum>b\<in>B. x b *\<^sub>R b)"
-    for x
-    using \<open>finite B\<close>
-    by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left)
-  have "representation B (\<Sum>b\<in>B. x b *\<^sub>R b) =  (\<lambda>b. if b \<in> B then x b else 0)"
-    for x
-  proof (rule real_vector.representation_eqI)
-    show "independent B"
-      by (simp add: t3)      
-    show "(\<Sum>b\<in>B. x b *\<^sub>R b) \<in> span B"
-      by (meson real_vector.span_scale real_vector.span_sum real_vector.span_superset subset_iff)      
-    show "b \<in> B"
-      if "(if b \<in> B then x b else 0) \<noteq> 0"
-      for b :: 'b
-      using that
-      by meson 
-    show "finite {b. (if b \<in> B then x b else 0) \<noteq> 0}"
-      using t1 by auto      
-    show "(\<Sum>b | (if b \<in> B then x b else 0) \<noteq> 0. (if b \<in> B then x b else 0) *\<^sub>R b) = (\<Sum>b\<in>B. x b *\<^sub>R b)"
-      using w5
-      by simp
-  qed
-  hence repr_comb[simp]: "repr (comb x) = (\<lambda>b. if b\<in>B then x b else 0)" for x
-    unfolding repr_def comb_def.
-  have repr_bad[simp]: "repr \<psi> = (\<lambda>_. 0)" if "\<psi> \<notin> real_vector.span B" for \<psi>
-    unfolding repr_def using that
-    by (simp add: real_vector.representation_def)
-  have [simp]: "repr' \<psi> = 0" if "\<psi> \<notin> real_vector.span B" for \<psi>
-    unfolding repr'_def repr_bad[OF that]
-    apply transfer
-    by auto
-  have comb'_repr'[simp]: "comb' (repr' \<psi>) = \<psi>" 
-    if "\<psi> \<in> real_vector.span B" for \<psi>
-  proof -
-    have x1: "(repr \<psi> \<circ> rep \<circ> abs) z = repr \<psi> z"
-      if "z \<in> B"
-      for z
-      unfolding o_def
-      using t that type_definition.Abs_inverse by fastforce
-    have "comb' (repr' \<psi>) = comb ((repr \<psi> \<circ> rep) \<circ> abs)"
-      unfolding comb'_def repr'_def
-      by (subst Abs_euclidean_space_inverse; simp)
-    also have "\<dots> = comb (repr \<psi>)"
-      using x1 comb_cong by blast
-    also have "\<dots> = \<psi>"
-      using that by simp
-    finally show ?thesis by -
-  qed
-
-  have t1: "Abs_euclidean_space (Rep_euclidean_space t) = t"
-    if "\<And>x. rep x \<in> B"
-    for t::"'a euclidean_space"
-    apply (subst Rep_euclidean_space_inverse)
-    by simp
-  have "Abs_euclidean_space
-     (\<lambda>y. if rep y \<in> B 
-           then Rep_euclidean_space x y
-           else 0) = x"
-    for x
-    using type_definition.Rep[OF t] apply simp
-    using t1 by blast
-  hence "Abs_euclidean_space
-     (\<lambda>y. if rep y \<in> B
-           then Rep_euclidean_space x (abs (rep y))
-           else 0) = x"
-    for x
-    apply (subst type_definition.Rep_inverse[OF t])
-    by simp
-  hence repr'_comb'[simp]: "repr' (comb' x) = x" for x
-    unfolding comb'_def repr'_def o_def
-    by simp
-  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" 
-    for d
-    using compact_sphere by blast
-  have "complete (UNIV :: 'basis euclidean_space set)"
-    by (simp add: complete_UNIV)
-
-
-  have "(\<Sum>b\<in>B. (Rep_euclidean_space (x + y) \<circ> abs) b *\<^sub>R b) = (\<Sum>b\<in>B. (Rep_euclidean_space x \<circ> abs) b *\<^sub>R b) + (\<Sum>b\<in>B. (Rep_euclidean_space y \<circ> abs) b *\<^sub>R b)"
-    for x :: "'basis euclidean_space"
-      and y :: "'basis euclidean_space"
-    apply (transfer fixing: abs)
-    by (simp add: scaleR_add_left sum.distrib)
-  moreover have "(\<Sum>b\<in>B. (Rep_euclidean_space (c *\<^sub>R x) \<circ> abs) b *\<^sub>R b) = c *\<^sub>R (\<Sum>b\<in>B. (Rep_euclidean_space x \<circ> abs) b *\<^sub>R b)"
-    for c :: real
-      and x :: "'basis euclidean_space"
-    apply (transfer fixing: abs)
-    by (simp add: real_vector.scale_sum_right)
-  ultimately have blin_comb': "bounded_linear comb'"
-    unfolding comb_def comb'_def 
-    by (rule bounded_linearI')
-  hence "continuous_on X comb'" for X
-    by (simp add: linear_continuous_on)
-  hence "compact (comb' ` sphere 0 d)" for d
-    using sphere
-    by (rule compact_continuous_image)
-  hence compact_norm_comb': "compact (norm ` comb' ` sphere 0 1)"
-    using compact_continuous_image continuous_on_norm_id by blast
-  have not0: "0 \<notin> norm ` comb' ` sphere 0 1"
-  proof (rule ccontr, simp)
-    assume "0 \<in> norm ` comb' ` sphere 0 1"
-    then obtain x where nc0: "norm (comb' x) = 0" and x: "x \<in> sphere 0 1"
-      by auto
-    hence "comb' x = 0"
-      by simp
-    hence "repr' (comb' x) = 0"
-      unfolding repr'_def o_def repr_def apply simp
-      by (smt repr'_comb' blin_comb' dist_0_norm linear_simps(3) mem_sphere norm_zero x)
-    hence "x = 0"
-      by auto
-    with x show False
-      by simp
-  qed
-
-  have "closed (norm ` comb' ` sphere 0 1)"
-    using compact_imp_closed compact_norm_comb' by blast    
-  moreover have "0 \<notin> norm ` comb' ` sphere 0 1"
-    by (simp add: not0)    
-  ultimately have "\<exists>d>0. \<forall>x\<in>norm ` comb' ` sphere 0 1. d \<le> dist 0 x"
-    by (meson separate_point_closed)
-
-  then obtain d where d: "x\<in>norm ` comb' ` sphere 0 1 \<Longrightarrow> d \<le> dist 0 x"  
-    and "d > 0" for x
-    by metis
-  define D where "D = 1/d"
-  hence "D > 0"
-    using \<open>d>0\<close> unfolding D_def by auto
-  have "x \<ge> d"  
-    if "x\<in>norm ` comb' ` sphere 0 1" 
-    for x
-    using d that
-    apply auto
-    by fastforce
-  hence *: "norm (comb' x) \<ge> d" if "norm x = 1" for x
-    using that by auto
-  have norm_comb': "norm (comb' x) \<ge> d * norm x" for x
-  proof (cases "x=0")
-    show "d * norm x \<le> norm (comb' x)"
-      if "x = 0"
-      using that
-      by simp 
-    show "d * norm x \<le> norm (comb' x)"
-      if "x \<noteq> 0"
-      using that
-      using *[of "(1/norm x) *\<^sub>R x"]
-      unfolding linear_simps(5)[OF blin_comb']
-      apply auto
-      by (simp add: le_divide_eq)
-  qed
-
-  have *:  "norm (repr' \<psi>) \<le> norm \<psi> * D" for \<psi>
-  proof (cases "\<psi> \<in> real_vector.span B")
-    show "norm (repr' \<psi>) \<le> norm \<psi> * D"
-      if "\<psi> \<in> span B"
-      using that     unfolding D_def
-      using norm_comb'[of "repr' \<psi>"] \<open>d>0\<close>
-      by (simp_all add: linordered_field_class.mult_imp_le_div_pos mult.commute)
-
-    show "norm (repr' \<psi>) \<le> norm \<psi> * D"
-      if "\<psi> \<notin> span B"
-      using that \<open>0 < D\<close> by auto 
-  qed
-
-  hence "norm (Rep_euclidean_space (repr' \<psi>) (abs b)) \<le> norm \<psi> * D" for \<psi>
-  proof -
-    have "(Rep_euclidean_space (repr' \<psi>) (abs b)) = repr' \<psi> \<bullet> euclidean_space_basis_vector (abs b)"
-      apply (transfer fixing: abs b)
-      by auto
-    also have "\<bar>\<dots>\<bar> \<le> norm (repr' \<psi>)"
-      apply (rule Basis_le_norm)
-      unfolding Basis_euclidean_space_def by simp
-    also have "\<dots> \<le> norm \<psi> * D"
-      using * by auto
-    finally show ?thesis by simp
-  qed
-  hence "norm (repr \<psi> b) \<le> norm \<psi> * D" for \<psi>
-    unfolding repr'_def
-    by (smt \<open>comb' \<equiv> \<lambda>l. comb (Rep_euclidean_space l \<circ> abs)\<close> 
-        \<open>repr' \<equiv> \<lambda>\<psi>. Abs_euclidean_space (repr \<psi> \<circ> rep)\<close> comb'_repr' comp_apply norm_le_zero_iff 
-        repr_bad repr_comb)     
-  thus "\<exists>D>0. \<forall>\<psi>. norm (repr \<psi> b) \<le> norm \<psi> * D"
-    using \<open>D>0\<close> by auto
-  from \<open>d>0\<close>
-  have complete_comb': "complete (comb' ` UNIV)"
-  proof (rule complete_isometric_image)
-    show "subspace (UNIV::'basis euclidean_space set)"
-      by simp      
-    show "bounded_linear comb'"
-      by (simp add: blin_comb')      
-    show "\<forall>x\<in>UNIV. d * norm x \<le> norm (comb' x)"
-      by (simp add: norm_comb')      
-    show "complete (UNIV::'basis euclidean_space set)"
-      by (simp add: \<open>complete UNIV\<close>)      
-  qed
-
-  have range_comb': "comb' ` UNIV = real_vector.span B"
-  proof (auto simp: image_def)
-    show "comb' x \<in> real_vector.span B" for x
-      by (metis comb'_def comb_cong comb_repr local.repr_def repr_bad repr_comb real_vector.representation_zero real_vector.span_zero)
-  next
-    fix \<psi> assume "\<psi> \<in> real_vector.span B"
-    then obtain f where f: "comb f = \<psi>"
-      apply atomize_elim
-      unfolding real_vector.span_finite[OF \<open>finite B\<close>] comb_def
-      by auto
-    define f' where "f' b = (if b\<in>B then f b else 0)" for b :: 'b
-    have f': "comb f' = \<psi>"
-      unfolding f[symmetric]
-      apply (rule comb_cong)
-      unfolding f'_def by simp
-    define x :: "'basis euclidean_space" where "x = Abs_euclidean_space (f' o rep)"
-    have "\<psi> = comb' x"
-      by (metis (no_types, lifting) \<open>\<psi> \<in> span B\<close> \<open>repr' \<equiv> \<lambda>\<psi>. Abs_euclidean_space (repr \<psi> \<circ> rep)\<close> 
-          comb'_repr' f' fun.map_cong repr_comb t type_definition.Rep_range x_def)
-    thus "\<exists>x. \<psi> = comb' x"
-      by auto
-  qed
-
-  from range_comb' complete_comb'
-  show "complete (real_vector.span B)"
-    by simp
-qed
-
-
-(* TODO: move to Complex_Vector_Spaces if possible *)
-lemma finite_span_complete:
-  fixes A :: "'a::real_normed_vector set"
-  assumes "finite A"
-  shows "complete (real_vector.span A)"
-  text \<open>The span of a finite set is complete.\<close>
-proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
-  case True
-  obtain B where
-    BT: "real_vector.span B = real_vector.span A"
-    and "independent B"  
-    and "finite B"
-    by (meson True assms finite_subset real_vector.maximal_independent_subset real_vector.span_eq
-        real_vector.span_superset subset_trans)
-
-  have "B\<noteq>{}"
-    apply (rule ccontr, simp)
-    using BT True
-    by (metis real_vector.span_superset real_vector.span_empty subset_singletonD)
-
-(* The following generalizes finite_span_complete_aux to hold without the assumption
-     that 'basis has type class finite *)
-  {
-    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux,
-       otherwise "internalize_sort" below fails *)
-    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
-    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
-      by auto
-    have basisT_finite: "class.finite TYPE('basisT)"
-      apply intro_classes
-      using \<open>finite B\<close> t
-      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-    note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
-    note this[OF basisT_finite t]
-  }
-  note this[cancel_type_definition, OF \<open>B\<noteq>{}\<close> \<open>finite B\<close> _ \<open>independent B\<close>]
-  hence "complete (real_vector.span B)"
-    using \<open>B\<noteq>{}\<close> by auto
-  thus "complete (real_vector.span A)"
-    unfolding BT by simp
-next
-  case False
-  thus ?thesis
-    using complete_singleton by auto
-qed
-
-
-(* We do not need this theorem for our development but we get it almost for
-   free as a side effect of the proof of finite_span_complete. *)
-(* TODO: move to Complex_Vector_Spaces if possible (or wherever finite_span_complete_aux) *)
-lemma finite_span_representation_bounded:
-  fixes B :: "'a::real_normed_vector set"
-  assumes "finite B" and "independent B"
-  shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
-
-  text \<open>
-  Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
-  Let $\alpha^\psi_b$ be the coefficients of $\psi$ expressed as a linear combination over $B$.
-  Then $\alpha$ is is uniformly cblinfun (i.e., $\lvert\alpha^\psi_b \leq D \lVert\psi\rVert\psi$
-  for some $D$ independent of $\psi,b$).
-
-  (This also holds when $b$ is not in the span of $B$ because of the way \<open>real_vector.representation\<close>
-  is defined in this corner case.)\<close>
-
-proof (cases "B\<noteq>{}")
-  case True
-
-(* The following generalizes finite_span_complete_aux to hold without the assumption
-     that 'basis has type class finite *)
-  define repr  where "repr = real_vector.representation B"
-  {
-    (* Step 1: Create a fake type definition by introducing a new type variable 'basis
-               and then assuming the existence of the morphisms Rep/Abs to B
-               This is then roughly equivalent to "typedef 'basis = B" *)
-    (* The type variable 'basisT must not be the same as the one used in finite_span_complete_aux
-       (I.e., we cannot call it 'basis) *)
-    assume "\<exists>(Rep :: 'basisT\<Rightarrow>'a) Abs. type_definition Rep Abs B"
-    then obtain rep :: "'basisT \<Rightarrow> 'a" and abs :: "'a \<Rightarrow> 'basisT" where t: "type_definition rep abs B"
-      by auto
-        (* Step 2: We show that our fake typedef 'basisT could be instantiated as type class finite *)
-    have basisT_finite: "class.finite TYPE('basisT)"
-      apply intro_classes 
-      using \<open>finite B\<close> t
-      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
-        (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
-               (instead, a precondition "class.finite TYPE('basisT)" is introduced) *)
-    note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
-      (* Step 4: We instantiate the premises *)
-    note this[OF basisT_finite t]
-  }
-    (* Now we have the desired fact, except that it still assumes that B is isomorphic to some type 'basis
-     together with the assumption that there are morphisms between 'basis and B. 'basis and that premise
-     are removed using cancel_type_definition
-  *)
-  note this[cancel_type_definition, OF True \<open>finite B\<close> _ \<open>independent B\<close>]
-
-  hence d2:"\<exists>D. \<forall>\<psi>. D>0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D" if \<open>b\<in>B\<close> for b
-    by (simp add: repr_def that True)
-  have d1: " (\<And>b. b \<in> B \<Longrightarrow>
-          \<exists>D. \<forall>\<psi>. 0 < D \<and> norm (repr \<psi> b) \<le> norm \<psi> * D) \<Longrightarrow>
-    \<exists>D. \<forall>b \<psi>. b \<in> B \<longrightarrow>
-               0 < D b \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b"
-    apply (rule choice) by auto
-  then obtain D where D: "D b > 0 \<and> norm (repr \<psi> b) \<le> norm \<psi> * D b" if "b\<in>B" for b \<psi>
-    apply atomize_elim
-    using d2 by blast
-
-  hence Dpos: "D b > 0" and Dbound: "norm (repr \<psi> b) \<le> norm \<psi> * D b" 
-    if "b\<in>B" for b \<psi>
-    using that by auto
-  define Dall where "Dall = Max (D`B)"
-  have "Dall > 0"
-    unfolding Dall_def using \<open>finite B\<close> \<open>B\<noteq>{}\<close> Dpos
-    by (metis (mono_tags, lifting) Max_in finite_imageI image_iff image_is_empty)
-  have "Dall \<ge> D b" if "b\<in>B" for b
-    unfolding Dall_def using \<open>finite B\<close> that by auto
-  with Dbound
-  have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<in>B" for b \<psi>
-    using that
-    by (smt mult_left_mono norm_not_less_zero) 
-  moreover have "norm (repr \<psi> b) \<le> norm \<psi> * Dall" if "b\<notin>B" for b \<psi>
-    unfolding repr_def using real_vector.representation_ne_zero True
-    by (metis calculation empty_subsetI less_le_trans local.repr_def norm_ge_zero norm_zero not_less 
-        subsetI subset_antisym)
-  ultimately show "\<exists>D>0. \<forall>\<psi> b. abs (repr \<psi> b) \<le> norm \<psi> * D"
-    using \<open>Dall > 0\<close> real_norm_def by metis
-next
-  case False
-  thus ?thesis
-    unfolding repr_def using real_vector.representation_ne_zero[of B]
-    using nice_ordered_field_class.linordered_field_no_ub by fastforce
-qed
-
-
-
-hide_fact finite_span_complete_aux
-
-(* TODO: move to Complex_Vector_Spaces if possible *)
-lemma finite_cspan_complete: 
-  fixes B :: "'a::complex_normed_vector set"
-  assumes "finite B"
-  shows "complete (complex_vector.span B)"
-proof (subst complex_real_span)
-  show "complete (span (B \<union> (*\<^sub>C) \<i> ` B))"
-    by (simp add: assms finite_span_complete)
-qed
-
-(* TODO: move to Complex_Vector_Spaces if possible *)
-lemma finite_span_closed: 
-  fixes B :: "'a::real_normed_vector set"
-  assumes "finite B"
-  shows "closed (real_vector.span B)"
-  by (simp add: assms complete_imp_closed finite_span_complete) 
-
-(* TODO: move to Complex_Vector_Spaces if possible *)
-lemma closed_finite_dim:
-  fixes S::\<open>'a::complex_normed_vector set\<close>
-  assumes a1: \<open>finite S\<close>
-  shows \<open>closed (complex_vector.span S)\<close>  
-  by (simp add: finite_cspan_complete assms complete_imp_closed)
-
 lemma is_ortho_set_independent:
   assumes c1: "is_ortho_set S"
   shows "cindependent S"
@@ -4294,6 +3807,8 @@ proof(rule ccontr)
     by auto
   thus False using \<open>u k \<noteq> 0\<close> by blast
 qed
+
+
 
 subsection \<open>Commutative monoid of subspaces\<close>
 

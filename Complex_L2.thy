@@ -934,16 +934,6 @@ proof-
     by (simp add: image_image setcompr_eq_image)
 qed
 
-(* Ask to Dominique: what to do with this *)
-(* NOTE: moved to Banach_Steinhaus *)
-(* definition pointwise_convergent_to :: 
-  \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close> where
-  \<open>pointwise_convergent_to x l = (\<forall> t::'a. (\<lambda> n. (x n) t ) \<longlonglongrightarrow> l t)\<close>
-
-abbreviation pointwise_convergent_to_abbr :: 
-  \<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool\<close>  ("/_/ \<midarrow>pointwise\<rightarrow> /_/") where
-  \<open>x \<midarrow>pointwise\<rightarrow> l \<equiv> pointwise_convergent_to x l\<close> *)
-
 definition pointwise_convergent::\<open>( nat \<Rightarrow> ('a \<Rightarrow> 'b::topological_space) ) \<Rightarrow> bool\<close> where
   \<open>pointwise_convergent x = (\<exists> l. (x \<midarrow>pointwise\<rightarrow> l) )\<close>
 
