@@ -2936,6 +2936,8 @@ lift_definition uminus_clinear_space::\<open>'a clinear_space  \<Rightarrow> 'a 
 instance ..
 end
 
+(* TODO: complex_inner should be complex_normed_vector *)
+(* TODO: move the definition to Complex_Vector_Spaces *)
 instantiation clinear_space :: (complex_inner) "Sup"
 begin
 lift_definition Sup_clinear_space::\<open>'a clinear_space set \<Rightarrow> 'a clinear_space\<close>
