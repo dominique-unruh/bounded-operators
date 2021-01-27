@@ -1849,6 +1849,7 @@ lift_definition timesOp::
   unfolding o_def 
   by (rule cbounded_linear_compose, simp_all)
 
+(*TODO: change name from "applyOpSpace" to "cblinfun_image" *)
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition applyOpSpace::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
 \<Rightarrow> 'a clinear_space \<Rightarrow> 'b clinear_space\<close> 
@@ -2095,8 +2096,7 @@ proof-
     unfolding applyOpSpace_def bot_clinear_space_def by simp
 qed
 
-(* TODO: change name *)
-lemma cdot_plus_distrib_transfer:
+lemma cbounded_minkowski_sum_exchange:
   fixes U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
   assumes a1: \<open>cbounded_linear U\<close> and a2: \<open>closed_subspace A\<close> and a3: \<open>closed_subspace B\<close>
   shows "(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
@@ -2206,7 +2206,7 @@ proof-
     using x1 x2 by blast 
 qed
 
-lemma cdot_plus_distrib[simp]:   
+lemma cblinfun_image_sup_exchange[simp]:   
   fixes A B :: \<open>'a::chilbert_space clinear_space\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
   shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>  
 proof transfer
@@ -2216,7 +2216,7 @@ proof transfer
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
            \<phi> \<in> closure (U ` B)})\<close>
-    using cdot_plus_distrib_transfer by blast    
+    using cbounded_minkowski_sum_exchange by blast    
   thus \<open>closure (U ` (A +\<^sub>M B)) =
        closure (U ` A) +\<^sub>M closure (U ` B)\<close>
     unfolding closed_sum_def set_plus_def
@@ -2379,7 +2379,7 @@ proof-
       by (simp add: closure_minimal) 
   qed
   thus ?thesis
-    by (metis (no_types, lifting) cdot_plus_distrib inf.cobounded2 inf.idem inf_commute le_inf_iff 
+    by (metis (no_types, lifting) cblinfun_image_sup_exchange inf.cobounded2 inf.idem inf_commute le_inf_iff 
         sup.bounded_iff sup_inf_absorb)
 qed
 
@@ -2825,7 +2825,7 @@ proof -
     using Complex_Vector_Spaces.subspace_UNIV is_closed_subspace_universal_inclusion_left 
     by blast 
   hence "sup S (Proj S *\<^sub>S A) = S"
-    by (metis (full_types) cdot_plus_distrib imageOp_Proj)
+    by (metis (full_types) cblinfun_image_sup_exchange imageOp_Proj)
   thus ?thesis
     by (meson sup.absorb_iff1)
 qed
@@ -2858,7 +2858,7 @@ proof-
     using P_def by presburger
   hence "(P o\<^sub>C\<^sub>L A) *\<^sub>S (c \<squnion> A* *\<^sub>S d) = P *\<^sub>S (A *\<^sub>S c \<squnion> d)"
     for c d
-    by (metis (no_types) cblinfun_apply_assoc_clinear_space cdot_plus_distrib)
+    by (metis (no_types) cblinfun_apply_assoc_clinear_space cblinfun_image_sup_exchange)
   hence "P *\<^sub>S (A *\<^sub>S \<top> \<squnion> c) = (P o\<^sub>C\<^sub>L A) *\<^sub>S \<top>"
     for c
     by (metis sup_top_left)
@@ -3110,57 +3110,6 @@ lemma rel_interior_sing_generalized:
   shows "rel_interior {a} = {a}"
   apply (auto simp: rel_interior_ball)
   by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff)
-
-
-(* Move to Missing *)
-(* TODO: move to complex_inner_product*)
-lemma subspace_rel_interior:
-  fixes S::\<open>'a::chilbert_space set\<close>
-  assumes \<open>complex_vector.subspace S\<close>
-  shows \<open>0 \<in> rel_interior S\<close>
-proof-  
-  have f2: "\<not> (1::real) \<le> 0"
-    by auto
-  have "((0::real) < x) = (\<not> x \<le> 0)"
-    for x
-    by auto
-  hence 1: "\<exists>r>0. ball 0 r \<inter> affine hull S \<subseteq> S"
-    if "affine hull S \<subseteq> S"
-    using f2 that by (metis inf.coboundedI2)
-  have \<open>u *\<^sub>R x + v *\<^sub>R y \<in> S\<close>
-    if \<open>x\<in>S\<close> and \<open>y\<in>S\<close> and \<open>u + v = 1\<close>
-    for x y u v
-  proof-
-    have \<open>u *\<^sub>C x \<in> S\<close>
-      using \<open>complex_vector.subspace S\<close>
-      unfolding complex_vector.subspace_def
-      by (simp add: \<open>x \<in> S\<close>)
-    hence y1: \<open>u *\<^sub>R x \<in> S\<close>
-      by (simp add: scaleR_scaleC)
-    have \<open>(v::complex) *\<^sub>C y \<in> S\<close>
-      using \<open>complex_vector.subspace S\<close>
-      unfolding complex_vector.subspace_def
-      by (simp add: \<open>y \<in> S\<close>)
-    hence y2: \<open>v *\<^sub>R y \<in> S\<close>
-      by (simp add: scaleR_scaleC)
-    show \<open> u *\<^sub>R x + v *\<^sub>R y \<in> S\<close> 
-      using \<open>complex_vector.subspace S\<close>
-      unfolding complex_vector.subspace_def
-      by (simp add:  y1 y2)
-  qed
-  hence \<open>affine S\<close>
-    unfolding affine_def by blast
-  hence x: \<open>affine hull S \<subseteq> S\<close>
-    unfolding  hull_def by auto
-  have u1: "0 \<in> S"
-    by (simp add: assms complex_vector.subspace_0)    
-  have u2: "\<exists>e>0. ball 0 e \<inter> affine hull S \<subseteq> S"
-    if "affine hull S \<subseteq> S"
-    by (simp add: "1" x)    
-  show ?thesis 
-    using u1 u2
-    by (simp add: rel_interior_ball x) 
-qed
 
 
 lemma isCont_applyOp[simp]: "isCont ((*\<^sub>V) A) \<psi>"
