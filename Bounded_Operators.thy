@@ -5481,7 +5481,7 @@ next
   hence "card (set (canonical_basis::'a list)) \<noteq> 0"
     using False by auto    
   hence "finite AA"
-    using r1 card_infinite by force
+    by (metis card.infinite r1)
   thus ?thesis unfolding AA_def
     using assms complex_vector.extend_basis_superset rev_finite_subset
     by (simp add: complex_vector.extend_basis_superset rev_finite_subset)

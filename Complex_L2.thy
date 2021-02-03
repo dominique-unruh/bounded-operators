@@ -362,8 +362,7 @@ proof -
     show "(SUP F\<in>Collect finite. cmod c * L2_set (cmod \<circ> x) F) = cmod c * \<Squnion> (L2_set (cmod \<circ> x) ` Collect finite)"
     proof (subst continuous_at_Sup_mono [where f = "\<lambda>x. cmod c * x"])
       show "mono ((*) (cmod c))"
-        by (smt mono_def norm_le_zero_iff norm_zero real_mult_le_cancel_iff2 
-            vector_space_over_itself.scale_eq_0_iff)        
+        by (simp add: mono_def ordered_comm_semiring_class.comm_mult_left_mono)
       show "continuous (at_left (\<Squnion> (L2_set (cmod \<circ> x) ` Collect finite))) ((*) (cmod c))"
       proof (rule continuous_mult)
         show "continuous (at_left (\<Squnion> (L2_set (cmod \<circ> x) ` Collect finite))) (\<lambda>x. cmod c)"

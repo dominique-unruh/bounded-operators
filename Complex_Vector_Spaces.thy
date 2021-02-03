@@ -1149,7 +1149,7 @@ proof-
     then obtain Kf where \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close>
       by blast        
     have "\<exists> Kg. \<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf"
-      by (metis g.pos_bounded mult.commute mult_eq_0_iff mult_le_cancel_left norm_ge_zero real_mult_le_cancel_iff2)        
+      by (metis g.pos_bounded le_cases mult.commute mult_left_mono norm_ge_zero vector_space_over_itself.scale_zero_left)
     then obtain Kg where \<open>\<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf\<close>
       by blast
     have \<open>\<forall>x. (norm x * Kg) * Kf = norm x * (Kg * Kf)\<close>
@@ -1876,8 +1876,8 @@ proof
         using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
         by blast
       also have \<open>norm a * norm (g b) * N \<le> norm a * (norm b * M) * N\<close>
-        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close>
-        by (smt \<open>0 \<le> N\<close> mult_cancel_right norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono real_mult_less_iff1)
+        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close> \<open>N \<ge> 0\<close>
+        by (simp add: mult_mono)
       also have \<open>norm a * (norm b * M) * N = norm a * norm b * K\<close>
         by (simp add: K_def)
       finally show ?thesis by blast

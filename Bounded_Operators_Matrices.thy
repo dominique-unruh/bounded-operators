@@ -3660,7 +3660,7 @@ proof-
       by (simp add: carrier_matI) 
     moreover have "v \<in> carrier_vec d"
       unfolding d_def v_def
-      using carrier_vecI d_def v_def vcdim by auto
+      using carrier_vecI d_def v_def vcdim by blast
     ultimately show ?thesis 
       using mult_mat_vec by auto
   qed
