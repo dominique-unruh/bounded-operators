@@ -185,7 +185,21 @@ lemma times_ell2_code'[code]:
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (\<psi> * \<phi>)
    = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_times) 
+  by (simp add: vec_of_ell2_def vec_of_onb_enum_times)
+
+lemma divide_ell2_code'[code]: 
+  \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
+  fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
+  shows "vec_of_ell2 (\<psi> / \<phi>)
+   = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 / vec_index (vec_of_ell2 \<phi>) 0]"
+  by (simp add: vec_of_ell2_def vec_of_onb_enum_divide)
+
+lemma inverse_ell2_code'[code]: 
+  \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
+  fixes \<psi> :: "'a::{CARD_1,enum} ell2"
+  shows "vec_of_ell2 (inverse \<psi>)
+   = vec_of_list [inverse (vec_index (vec_of_ell2 \<psi>) 0)]"
+  by (simp add: vec_of_ell2_def vec_of_onb_enum_inverse)
 
 lemma one_ell2_code'[code]: 
   \<comment> \<open>Code equation for the unit in the algebra of one-dimensional vectors\<close>

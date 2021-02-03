@@ -122,7 +122,6 @@ value "(1::unit ell2) * (1::unit ell2)"
 
 subsection \<open>Vector/Matrix\<close>
 
-
 value "idOp *\<^sub>V ket True"
 
 value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L _\<close>
@@ -164,6 +163,5 @@ value "eigenspace 1 idOp :: bool ell2 clinear_space"
 value "Inf {Span {ket False}, top}"
 
 value "Sup {Span {ket False}, top}"
-
 
 end

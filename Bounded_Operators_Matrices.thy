@@ -3170,6 +3170,267 @@ proof-
         vec_of_list [vec_of_onb_enum \<psi> $ 0 * vec_of_onb_enum \<phi> $ 0]".
 qed
 
+
+lemma vec_of_onb_enum_inverse: 
+  fixes \<psi> :: "'a::{CARD_1,enum} ell2"
+  shows "vec_of_onb_enum (inverse \<psi>)
+     = vec_of_list [inverse (vec_index (vec_of_onb_enum \<psi>) 0)]"
+proof-
+  obtain i where i_def: "i\<in>(UNIV::'a set)"
+    by blast
+  have "set (enum_class.enum::'a list) = UNIV"
+    using UNIV_enum by blast
+  moreover have "card (UNIV::'a set) = 1"
+    by (simp add: CARD_1)      
+  moreover have "distinct (enum_class.enum::'a list)"
+    using enum_distinct by auto
+  ultimately have "length (enum_class.enum::'a list) = 1"
+    using distinct_card by fastforce      
+  hence p0: "length (canonical_basis::'a ell2 list) = 1"
+    unfolding canonical_basis_ell2_def by simp
+  hence q1: "canonical_basis_length TYPE('a ell2) = 1"
+    using canonical_basis_length_eq[where 'a = "'a ell2"] by simp
+  have "vec_of_onb_enum f = vec_of_list [vec_of_onb_enum f $ 0]"
+    for f::"'a ell2" 
+  proof-
+    have p1: "dim_vec (vec_of_onb_enum f) = 1"
+      using p0
+      unfolding vec_of_onb_enum_def vec_of_onb_enum_def
+      by auto
+    have "(vec_of_onb_enum f) $ k = vec_of_list [vec_of_onb_enum f $ 0] $ k"
+      if "k < dim_vec (vec_of_onb_enum f)"
+      for k
+    proof-
+      have "k = 0"
+        using that p1 by auto
+      moreover have "vec_of_list [vec_of_onb_enum f $ 0] $ 0 = vec_of_onb_enum f $ 0"
+        by simp        
+      ultimately show ?thesis by simp
+    qed
+    moreover have "dim_vec (vec_of_list [vec_of_onb_enum f $ 0]) = 1"
+    proof-
+      have "length [vec_of_onb_enum f $ 0] = 1"
+        by simp
+      thus ?thesis
+        by simp 
+    qed
+    ultimately show ?thesis
+      by (metis eq_vecI p1) 
+  qed
+  hence "vec_of_onb_enum (inverse \<psi>) = vec_of_list [vec_of_onb_enum (inverse \<psi>) $ 0]"
+    by blast
+  also have "\<dots> = vec_of_list [inverse (vec_of_onb_enum \<psi> $ 0)]"
+  proof -
+    have "Rep_ell2 (inverse \<psi>) i = inverse (Rep_ell2 \<psi> i)"
+      by transfer auto
+    moreover have "vec_of_onb_enum x $ 0 = Rep_ell2 x i"
+      for x
+    proof-
+      have "(UNIV::'a set) = {i}"
+        using CARD_1[where 'a = 'a] i_def by auto
+      hence t1: "set (enum_class.enum::'a list) = {i}"
+        using UNIV_enum by auto
+      hence s0: "(enum_class.enum::'a list)!0 = i"
+        by auto
+      have "card (set (enum_class.enum::'a list)) = 1"
+        using t1 by simp
+      hence "length (enum_class.enum::'a list) = 1"
+        using enum_distinct List.distinct_card by smt
+      hence "(enum_class.enum::'a list) = [i]"
+        apply (subgoal_tac "\<And>(x::'a) xs. (x # xs) ! 0 = x")
+         apply (metis s0 One_nat_def length_0_conv length_Suc_conv)                    
+        by simp
+      hence "map ket (enum_class.enum::'a list) = [ket i]"
+        by (metis list.simps(8) list.simps(9))          
+      hence "(map ket (enum_class.enum::'a list)) ! 0 = ket i"
+        by simp
+      hence ket_canonical_basis: "(canonical_basis::'a ell2 list)!0 = ket i"
+        unfolding canonical_basis_ell2_def.
+      have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
+      proof-
+        have "x \<in> cspan (range ket)"
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
+          by (metis  iso_tuple_UNIV_I) 
+
+        moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
+          by (simp add: \<open>UNIV = {i}\<close>)
+        ultimately have "x \<in> cspan {ket i}"
+          by simp
+        hence "\<exists>\<alpha>. x = \<alpha> *\<^sub>C ket i"
+          using cspan_singleton by blast
+        then obtain \<alpha> where "x = \<alpha> *\<^sub>C ket i"
+          by blast
+        hence "(Rep_ell2 x) i = (Rep_ell2 (\<alpha> *\<^sub>C ket i)) i"
+          by simp
+        moreover have "(Rep_ell2 (\<alpha> *\<^sub>C ket i)) i = \<alpha>"
+          apply transfer
+          by simp
+        ultimately show ?thesis
+          by (simp add: \<open>x = \<alpha> *\<^sub>C ket i\<close>) 
+      qed
+      have "x = Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0"
+        using i_def x_ket ket_canonical_basis by simp
+      hence "vec_of_onb_enum x = vec_of_onb_enum (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
+        by simp
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_onb_enum ((canonical_basis::'a ell2 list)!0)"
+        by (simp add: vec_of_onb_enum_scaleC)
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
+        by (simp add: q1 vec_of_basis_vector)
+      finally have "vec_of_onb_enum x
+         = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0".
+      hence "vec_of_onb_enum x $ 0
+         = (Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0"
+        by simp
+      also have "\<dots> = Rep_ell2 x i * ((unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0)"
+        by (simp add: canonical_basis_length_ell2_def)
+      also have "\<dots> = Rep_ell2 x i"
+      proof-
+        have "(unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0 = 1"
+          using q1
+          by auto
+        thus ?thesis by auto
+      qed
+      finally show ?thesis.
+    qed  
+    ultimately have "vec_of_onb_enum (inverse \<psi>) $ 0 = inverse (vec_of_onb_enum \<psi> $ 0)"
+      by auto
+    thus ?thesis by simp
+  qed
+  finally show "vec_of_onb_enum (inverse \<psi>) =
+        vec_of_list [inverse (vec_of_onb_enum \<psi> $ 0)]".
+qed
+
+lemma vec_of_onb_enum_divide: 
+  fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
+  shows "vec_of_onb_enum (\<psi> / \<phi>)
+   = vec_of_list [vec_index (vec_of_onb_enum \<psi>) 0 / vec_index (vec_of_onb_enum \<phi>) 0]"
+proof-
+  have "\<exists>i. i\<in>(UNIV::'a set)"
+    by blast
+  then obtain i where i_def: "i\<in>(UNIV::'a set)"
+    by blast
+  have "set (enum_class.enum::'a list) = UNIV"
+    using UNIV_enum by blast
+  moreover have "card (UNIV::'a set) = 1"
+    by (simp add: CARD_1)      
+  moreover have "distinct (enum_class.enum::'a list)"
+    using enum_distinct by auto
+  ultimately have "length (enum_class.enum::'a list) = 1"
+    using distinct_card by fastforce      
+  hence p0: "length (canonical_basis::'a ell2 list) = 1"
+    unfolding canonical_basis_ell2_def by simp
+  hence q1: "canonical_basis_length TYPE('a ell2) = 1"
+    using canonical_basis_length_eq[where 'a = "'a ell2"] by simp
+  have "vec_of_onb_enum f = vec_of_list [vec_of_onb_enum f $ 0]"
+    for f::"'a ell2" 
+  proof-
+    have p1: "dim_vec (vec_of_onb_enum f) = 1"
+      using p0
+      unfolding vec_of_onb_enum_def vec_of_onb_enum_def
+      by auto
+    have "(vec_of_onb_enum f) $ k = vec_of_list [vec_of_onb_enum f $ 0] $ k"
+      if "k < dim_vec (vec_of_onb_enum f)"
+      for k
+    proof-
+      have "k = 0"
+        using that p1 by auto
+      moreover have "vec_of_list [vec_of_onb_enum f $ 0] $ 0 = vec_of_onb_enum f $ 0"
+        by simp        
+      ultimately show ?thesis by simp
+    qed
+    moreover have "dim_vec (vec_of_list [vec_of_onb_enum f $ 0]) = 1"
+    proof-
+      have "length [vec_of_onb_enum f $ 0] = 1"
+        by simp
+      thus ?thesis
+        by simp 
+    qed
+    ultimately show ?thesis
+      by (metis eq_vecI p1) 
+  qed
+  hence "vec_of_onb_enum (\<psi> / \<phi>) = vec_of_list [vec_of_onb_enum (\<psi> / \<phi>) $ 0]"
+    by blast
+  also have "\<dots> = vec_of_list [vec_of_onb_enum \<psi> $ 0 / vec_of_onb_enum \<phi> $ 0]"
+  proof-
+    have "Rep_ell2 (\<psi> / \<phi>) i = Rep_ell2 \<psi> i / Rep_ell2 \<phi> i"
+      by (simp add: divide_ell2.rep_eq)
+    moreover have "vec_of_onb_enum x $ 0 = Rep_ell2 x i"
+      for x
+    proof-
+      have "(UNIV::'a set) = {i}"
+        using CARD_1[where 'a = 'a] i_def by auto
+      hence t1: "set (enum_class.enum::'a list) = {i}"
+        using UNIV_enum by auto
+      hence s0: "(enum_class.enum::'a list)!0 = i"
+        by auto
+      have "card (set (enum_class.enum::'a list)) = 1"
+        using t1 by simp
+      hence "length (enum_class.enum::'a list) = 1"
+        using enum_distinct List.distinct_card by smt
+      hence "(enum_class.enum::'a list) = [i]"
+        apply (subgoal_tac "\<And>(x::'a) xs. (x # xs) ! 0 = x")
+         apply (metis s0 One_nat_def length_0_conv length_Suc_conv)                    
+        by simp
+      hence "map ket (enum_class.enum::'a list) = [ket i]"
+        by (metis list.simps(8) list.simps(9))          
+      hence "(map ket (enum_class.enum::'a list)) ! 0 = ket i"
+        by simp
+      hence ket_canonical_basis: "(canonical_basis::'a ell2 list)!0 = ket i"
+        unfolding canonical_basis_ell2_def.
+      have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
+      proof-
+        have "x \<in> cspan (range ket)"
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
+          by (metis  iso_tuple_UNIV_I) 
+
+        moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
+          by (simp add: \<open>UNIV = {i}\<close>)
+        ultimately have "x \<in> cspan {ket i}"
+          by simp
+        hence "\<exists>\<alpha>. x = \<alpha> *\<^sub>C ket i"
+          using cspan_singleton by blast
+        then obtain \<alpha> where "x = \<alpha> *\<^sub>C ket i"
+          by blast
+        hence "(Rep_ell2 x) i = (Rep_ell2 (\<alpha> *\<^sub>C ket i)) i"
+          by simp
+        moreover have "(Rep_ell2 (\<alpha> *\<^sub>C ket i)) i = \<alpha>"
+          apply transfer
+          by simp
+        ultimately show ?thesis
+          by (simp add: \<open>x = \<alpha> *\<^sub>C ket i\<close>) 
+      qed
+      have "x = Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0"
+        using i_def x_ket ket_canonical_basis by simp
+      hence "vec_of_onb_enum x = vec_of_onb_enum (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
+        by simp
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_onb_enum ((canonical_basis::'a ell2 list)!0)"
+        by (simp add: vec_of_onb_enum_scaleC)
+      also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
+        by (simp add: q1 vec_of_basis_vector)
+      finally have "vec_of_onb_enum x
+         = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0".
+      hence "vec_of_onb_enum x $ 0
+         = (Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0"
+        by simp
+      also have "\<dots> = Rep_ell2 x i * ((unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0)"
+        by (simp add: canonical_basis_length_ell2_def)
+      also have "\<dots> = Rep_ell2 x i"
+      proof-
+        have "(unit_vec (canonical_basis_length TYPE('a ell2)) 0) $ 0 = 1"
+          using q1
+          by auto
+        thus ?thesis by auto
+      qed
+      finally show ?thesis.
+    qed  
+    ultimately have "vec_of_onb_enum (\<psi> / \<phi>) $ 0 = vec_of_onb_enum \<psi> $ 0 / vec_of_onb_enum \<phi> $ 0"
+      by auto
+    thus ?thesis by simp
+  qed
+  finally show "vec_of_onb_enum (\<psi> / \<phi>) =
+        vec_of_list [vec_of_onb_enum \<psi> $ 0 / vec_of_onb_enum \<phi> $ 0]".
+qed
+
 lemma vec_of_onb_enum_1: "vec_of_onb_enum (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
 proof-
   have "\<exists>i. i\<in>(UNIV::'a set)"
