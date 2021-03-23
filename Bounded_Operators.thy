@@ -3858,7 +3858,7 @@ qed
 
 instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
 text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
-  and make cblinfun and relax the one_dim-sort constraint\<close>
+  and make cblinfun and relax the \<^class>\<open>one_dim\<close>-sort constraint\<close>
 definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)
              = cnj (one_dim_isom (A *\<^sub>V 1)) * one_dim_isom (B *\<^sub>V 1)"
 instance
@@ -5275,9 +5275,9 @@ qed
 lemma cblinfun_operator_basis_existence_uniq:
   fixes basis::"'a::chilbert_space set" and \<phi>::"'a \<Rightarrow> 'b::chilbert_space"
   assumes "complex_vector.span basis = UNIV"
-    and "cindependent basis"
+    and "cindependent basis" (* TODO: does this really need independence? *)
     and "finite basis" 
-    and "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>V s = \<phi> s"
+    and "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>V s = \<phi> s" (* TODO: why is this split into two? *)
     and "\<And>s. s\<in>basis \<Longrightarrow> G *\<^sub>V s = \<phi> s"
   shows \<open>F = G\<close>
 proof-

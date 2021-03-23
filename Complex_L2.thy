@@ -2255,6 +2255,7 @@ lemma shift_ket0:
   by auto
 
 
+(* TODO [simp] *)
 lemma ket_Kronecker_delta_eq:
   \<open>\<langle>ket i, ket i\<rangle> = 1\<close>
 proof-
@@ -2820,9 +2821,9 @@ proof (intro_classes; transfer)
 qed (auto simp add: divide_complex_def mult.commute ring_class.ring_distribs)
 end
 
-
+(* TODO Duplicate with equal_ket *)
 lemma superposition_principle_linear_ket:
-  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close>
+  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close> (* TODO: there shouldn't a cbanach in the 'a *)
   shows \<open>(\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)) \<Longrightarrow> A = B\<close>
 proof-
   assume \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
@@ -3094,6 +3095,7 @@ qed
 lemma [simp]: "ket i \<noteq> 0"
   using ell2_ket[of i] by force
 
+(* TODO: same as equal_basis *)
 lemma equal_ket:
   includes cblinfun_notation
   assumes "\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)"
