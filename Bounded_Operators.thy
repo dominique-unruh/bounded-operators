@@ -5603,21 +5603,23 @@ proof-
   finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
 qed
 
-definition butterfly_def': "butterfly (s::'a::chilbert_space)
-   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun s :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
+definition butterfly_def': "butterfly (s::'a::complex_normed_vector) (t::'b::chilbert_space)
+   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun t :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
 
-lemma butterfly_def: "butterfly s = (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)
-                                 o\<^sub>C\<^sub>L (vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'b)*"
-  (is "_ = ?rhs") for s :: "'b::chilbert_space"
+abbreviation "selfbutter s \<equiv> butterfly s s"
+
+lemma butterfly_def: "butterfly s t = (vector_to_cblinfun s :: 'c::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
+                                   o\<^sub>C\<^sub>L (vector_to_cblinfun t :: 'c \<Rightarrow>\<^sub>C\<^sub>L _)*"
+  (is "_ = ?rhs") for s :: "'a::complex_normed_vector" and t :: "'b::chilbert_space"
 proof -
-  let ?isoAC = "1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L complex"
-  let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
-  let ?vector = "vector_to_cblinfun :: 'b \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
+  let ?isoAC = "1 :: 'c \<Rightarrow>\<^sub>C\<^sub>L complex"
+  let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'c"
+  let ?vector = "vector_to_cblinfun :: _ \<Rightarrow> ('c \<Rightarrow>\<^sub>C\<^sub>L _)"
 
-  have "butterfly s =
-    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector s o\<^sub>C\<^sub>L ?isoCA)*"
+  have "butterfly s t =
+    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector t o\<^sub>C\<^sub>L ?isoCA)*"
     unfolding butterfly_def' one_vector_to_cblinfun by simp
-  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector s)*"
+  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector t)*"
     by (metis (no_types, lifting) cblinfun_apply_assoc times_adjoint)
   also have "\<dots> = ?rhs"
     by simp
@@ -5626,67 +5628,74 @@ proof -
 qed
 
 
-lemma butterfly_apply: "butterfly \<psi> *\<^sub>V \<phi> = \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C \<psi>"
+lemma butterfly_apply: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
   by (simp add: butterfly_def' times_applyOp)
 
 
 lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
   by (metis cblinfun_apply_to_zero timesOp0 vector_to_cblinfun_applyOp)
 
-lemma butterfly_0[simp]: "butterfly 0 = 0"
+lemma butterfly_0[simp]: "butterfly 0 a = 0"
   by (simp add: butterfly_def')
 
-lemma norm_butterfly: "norm (butterfly \<psi>) = norm \<psi> ^ 2"
-proof (cases "\<psi>=0")
+lemma butterfly_0'[simp]: "butterfly a 0 = 0"
+  by (simp add: butterfly_def')
+
+lemma norm_butterfly: "norm (butterfly \<psi> \<phi>) = norm \<psi> * norm \<phi>"
+proof (cases "\<phi>=0")
   case True
   then show ?thesis by simp
 next
   case False
   show ?thesis 
     unfolding norm_cblinfun.rep_eq
+    thm onormI[OF _ False]
   proof (rule onormI[OF _ False])
     fix x 
 
-    have " cmod \<langle>\<psi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<psi> * norm x"
-      using norm_cauchy_schwarz[of \<psi> x]
+    have "cmod \<langle>\<phi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<phi> * norm x"
+      using norm_cauchy_schwarz[of \<phi> x]
       by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) 
           ordered_field_class.sign_simps(47))
-    thus "norm (butterfly \<psi> *\<^sub>V x) \<le> (norm \<psi>)\<^sup>2 * norm x"
+    thus "norm (butterfly \<psi> \<phi> *\<^sub>V x) \<le> norm \<psi> * norm \<phi> * norm x"
       by (simp add: butterfly_apply power2_eq_square)
 
-
-    have "\<psi> = 0 \<or> cmod \<langle>\<psi>, \<psi>\<rangle> = norm \<psi> * norm \<psi>"
-      by (simp add: power2_norm_eq_cinner semiring_normalization_rules(29))
-    thus "norm (butterfly \<psi> *\<^sub>V \<psi>) = (norm \<psi>)\<^sup>2 * norm \<psi>"
-      by (simp add: butterfly_apply power2_eq_square)
+    show "norm (butterfly \<psi> \<phi> *\<^sub>V \<phi>) = norm \<psi> * norm \<phi> * norm \<phi>"
+      by (simp add: butterfly_apply power2_eq_square power2_norm_eq_cinner[symmetric])
+      thm power2_norm_eq_cinner
   qed
 qed
 
-lemma butterfly_scaleC: "butterfly (c *\<^sub>C \<psi>) = abs c ^ 2 *\<^sub>C butterfly \<psi>"
+lemma butterfly_scaleC1: "butterfly (c *\<^sub>C \<psi>) \<phi> = c *\<^sub>C butterfly \<psi> \<phi>"
   unfolding butterfly_def' vector_to_cblinfun_scalar_times scalar_times_adj
   by (simp add: cnj_x_x)
 
-lemma butterfly_scaleR: "butterfly (r *\<^sub>R \<psi>) = r ^ 2 *\<^sub>R butterfly \<psi>"
-  unfolding scaleR_scaleC butterfly_scaleC power2_abs cnj_x_x[symmetric]
-  unfolding power2_eq_square
-  by auto
+lemma butterfly_scaleC2: "butterfly \<psi> (c *\<^sub>C \<phi>) = cnj c *\<^sub>C butterfly \<psi> \<phi>"
+  unfolding butterfly_def' vector_to_cblinfun_scalar_times scalar_times_adj
+  by (simp add: cnj_x_x)
 
-lemma inj_butterfly: 
-  assumes "butterfly x = butterfly y"
+lemma butterfly_scaleR1: "butterfly (r *\<^sub>R \<psi>) \<phi> = r *\<^sub>C butterfly \<psi> \<phi>"
+  by (simp add: butterfly_scaleC1 scaleR_scaleC)
+
+lemma butterfly_scaleR2: "butterfly \<psi> (r *\<^sub>R \<phi>) = r *\<^sub>C butterfly \<psi> \<phi>"
+  by (simp add: butterfly_scaleC2 scaleR_scaleC)
+
+lemma inj_selfbutter: 
+  assumes "selfbutter x = selfbutter y"
   shows "\<exists>c. cmod c = 1 \<and> x = c *\<^sub>C y"
 proof (cases "x = 0")
   case True
   from assms have "y = 0"
     using norm_butterfly
-    by (metis True norm_eq_zero zero_less_power2)
+    by (metis True butterfly_0 divisors_zero norm_eq_zero)
   with True show ?thesis
     using norm_one by fastforce
 next
   case False
   define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
-  have "\<langle>x, x\<rangle> *\<^sub>C x = butterfly x *\<^sub>V x"
+  have "\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x"
     by (simp add: butterfly_apply)
-  also have "\<dots> = butterfly y *\<^sub>V x"
+  also have "\<dots> = selfbutter y *\<^sub>V x"
     using assms by simp
   also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
     by (simp add: butterfly_apply)
@@ -5694,7 +5703,7 @@ next
     by (simp add: c_def Complex_Vector_Spaces.eq_vector_fraction_iff)
   have "cmod c * norm x = cmod c * norm y"
     using assms norm_butterfly
-    by (metis norm_eq_sqrt_cinner power2_norm_eq_cinner) 
+    by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)
   also have "cmod c * norm y = norm (c *\<^sub>C y)"
     by simp
   also have "\<dots> = norm x"
@@ -5729,10 +5738,10 @@ qed
 
 lemma butterfly_proj:
   assumes "norm x = 1"
-  shows "butterfly x = proj x"
+  shows "selfbutter x = proj x"
 proof -
   define B and \<phi> :: "complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
-    where "B = butterfly x" and "\<phi> = vector_to_cblinfun x"
+    where "B = selfbutter x" and "\<phi> = vector_to_cblinfun x"
   then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
     unfolding butterfly_def' by simp
   have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = idOp"

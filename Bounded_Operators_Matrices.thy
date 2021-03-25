@@ -4178,13 +4178,13 @@ proof -
       unfolding x y scaleR_scaleC by auto
   qed
 
-  have inj_butter: "inj_on butterfly (set Snorm)"
+  have inj_butter: "inj_on selfbutter (set Snorm)"
   proof (rule inj_onI)
     fix x y 
     assume "x \<in> set Snorm" and "y \<in> set Snorm"
-    assume "butterfly x = butterfly y"
+    assume "selfbutter x = selfbutter y"
     then obtain c where xcy: "x = c *\<^sub>C y" and "cmod c = 1"
-      using inj_butterfly by auto
+      using inj_selfbutter by auto
     have "0 \<noteq> cmod (cinner x x)"
       using \<open>x \<in> set Snorm\<close> norm_Snorm
       by (simp add: cinner_norm_sq)
@@ -4200,7 +4200,7 @@ proof -
   qed
 
   from \<open>distinct Snorm\<close> inj_butter
-  have distinct': "distinct (map butterfly Snorm)"
+  have distinct': "distinct (map selfbutter Snorm)"
     unfolding distinct_map by simp
 
   have Span_Snorm: "Span (set Snorm) = Span (set S)"
@@ -4210,7 +4210,7 @@ proof -
     using is_ortho_set_def ortho by fastforce+
 
   have "mk_projector_orthog d (map vec_of_onb_enum S)
-      = mat_of_cblinfun (sum_list (map butterfly Snorm))"
+      = mat_of_cblinfun (sum_list (map selfbutter Snorm))"
     unfolding Snorm_def
   proof (induction S)
     case Nil
@@ -4218,7 +4218,7 @@ proof -
       by (simp add: d_def mat_of_cblinfun_zero)
   next
     case (Cons a S)
-    define sumS where "sumS = sum_list (map butterfly (map (\<lambda>s. s /\<^sub>R norm s) S))"
+    define sumS where "sumS = sum_list (map selfbutter (map (\<lambda>s. s /\<^sub>R norm s) S))"
     with Cons have IH: "mk_projector_orthog d (map vec_of_onb_enum S)
                   = mat_of_cblinfun sumS"
       by simp
@@ -4245,14 +4245,15 @@ proof -
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_cols_index) apply auto
       by (simp add: assms(1) canonical_basis_length_eq dim_vec_of_onb_enum_list')
-    also have "\<dots> = mat_of_cblinfun (butterfly (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
-      apply (simp add: butterfly_scaleR power_inverse mat_of_cblinfun_scaleR factor_def)
-      by (simp add: butterfly_def' cblinfun_of_mat_timesOp
+    also have "\<dots> = mat_of_cblinfun (selfbutter (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
+      apply (simp add: butterfly_scaleR1 butterfly_scaleR2 power_inverse mat_of_cblinfun_scaleR factor_def)
+      apply (simp add: butterfly_def' cblinfun_of_mat_timesOp
           mat_of_cblinfun_adjoint' mat_of_cblinfun_ell2_to_l2bounded d_def)
+      by (simp add: cblinfun_of_mat_timesOp mat_of_cblinfun_adjoint' mat_of_cblinfun_ell2_to_l2bounded mat_of_cblinfun_scalarMult power2_eq_square)
     finally show ?case
       by (simp add: mat_of_cblinfun_plus sumS_def)
   qed
-  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. butterfly s)"
+  also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. selfbutter s)"
     by (metis distinct' distinct_map sum.distinct_set_conv_list)
   also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. proj s)"
     apply (rule arg_cong[where f="mat_of_cblinfun"])
