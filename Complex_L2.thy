@@ -2641,7 +2641,7 @@ qed
 
 instantiation ell2 :: (enum) onb_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
-definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)"
+definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)" (* TODO: [simp] *)
 instance
 proof
   show "distinct (canonical_basis::'a ell2 list)"

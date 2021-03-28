@@ -2276,6 +2276,7 @@ proof-
     by (simp add: x1)    
 qed
 
+(* TODO: Same for scaleR *)
 lemma scalar_op_op[simp]:
   fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
     and B::"'a::complex_normed_vector  \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -2305,6 +2306,7 @@ proof-
     by (metis cblinfun_blinfun blinfun_of_cblinfun_timesOp)   
 qed
 
+(* TODO: Same for scaleR *)
 lemma op_scalar_op[simp]:
   fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector" 
     and B::"'a::complex_normed_vector  \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -3641,6 +3643,7 @@ lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
   for B::\<open>'a::complex_normed_vector clinear_space\<close>
   by simp
 
+(* TODO: identical to cblinfun_apply_assoc_subspace *)
 lemma cblinfun_apply_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)"
   by (simp add: cblinfun_apply_assoc_clinear_space) 
 
