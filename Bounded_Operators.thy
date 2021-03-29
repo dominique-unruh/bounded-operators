@@ -5606,6 +5606,7 @@ proof-
   finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
 qed
 
+(* TODO: rename to butterfly_def *)
 definition butterfly_def': "butterfly (s::'a::complex_normed_vector) (t::'b::chilbert_space)
    = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun t :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
 
