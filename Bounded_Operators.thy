@@ -5208,7 +5208,7 @@ proof-
     by smt    
 qed
 
-
+(* TODO move Complex_Normed *)
 lemma cblinfun_operator_finite_dim:
   fixes  F::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
     and basis::"'a set"
@@ -5272,6 +5272,23 @@ proof-
   qed
   thus ?thesis
     using b5 cbounded_linear_def by blast
+qed
+
+(* TODO move Complex_Normed *)
+lemma cbounded_linear_finite_dim[simp, intro!]:
+  fixes f :: \<open>'a::{cfinite_dim,complex_normed_vector} \<Rightarrow> 'b::complex_normed_vector\<close>
+  shows \<open>cbounded_linear f = clinear f\<close>
+proof (rule iffI)
+  assume \<open>clinear f\<close>
+  from finite_basis obtain basis :: \<open>'a set\<close> where basis: \<open>finite basis\<close> \<open>cindependent basis\<close> \<open>cspan basis = UNIV\<close>
+    by auto
+  with \<open>clinear f\<close> show \<open>cbounded_linear f\<close>
+    apply (rule_tac cblinfun_operator_finite_dim[where basis=\<open>basis\<close>])
+    by auto
+next
+  assume \<open>cbounded_linear f\<close>
+  then show \<open>clinear f\<close>
+    using cbounded_linear.is_clinear by blast
 qed
 
 

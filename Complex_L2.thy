@@ -2638,6 +2638,21 @@ proof
   qed
 qed
 
+lemma cspan_ket_finite[simp]: "cspan (range ket :: 'a::finite ell2 set) = UNIV"
+  by (metis ket_ell2_span span_finite_dim finite_class.finite_UNIV finite_imageI)
+
+instance ell2 :: (finite) cfinite_dim
+proof
+  define basis :: \<open>'a ell2 set\<close> where \<open>basis = range ket\<close>
+  have \<open>finite basis\<close>
+    unfolding basis_def by simp
+  moreover have \<open>cindependent basis\<close>
+    by (smt (verit, ccfv_SIG) basis_def ell2_ket f_inv_into_f is_ortho_set_def is_ortho_set_independent ket_Kronecker_delta_neq norm_zero)
+  moreover have \<open>cspan basis = UNIV\<close>
+    by (simp add: basis_def)
+  ultimately show \<open>\<exists>basis::'a ell2 set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV\<close>
+    by auto
+qed
 
 instantiation ell2 :: (enum) onb_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
@@ -2659,84 +2674,16 @@ proof
   qed    
 
   show "is_ortho_set (set (canonical_basis::'a ell2 list))"
-  proof-
-    have \<open>x\<in>set (canonical_basis::'a ell2 list) \<Longrightarrow> y\<in>set canonical_basis 
-      \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>
-      for x y
-    proof-
-      assume \<open>x\<in>set (canonical_basis::'a ell2 list)\<close> and \<open>y\<in>set canonical_basis\<close>
-        and \<open>x \<noteq> y\<close>
-      from \<open>x\<in>set (canonical_basis::'a ell2 list)\<close>
-      have \<open>\<exists> i. x = ket i\<close>
-        unfolding canonical_basis_ell2_def
-        by auto
-      then obtain i where \<open>x = ket i\<close>
-        by blast
-      from \<open>y\<in>set (canonical_basis::'a ell2 list)\<close>
-      have \<open>\<exists> j. y = ket j\<close>
-        unfolding canonical_basis_ell2_def
-        by auto
-      then obtain j where \<open>y = ket j\<close>
-        by blast
-      have \<open>i \<noteq> j\<close>
-        using \<open>x \<noteq> y\<close>  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-        by auto
-      hence \<open>\<langle>ket i, ket j\<rangle> = 0\<close>
-        by (simp add: ket_Kronecker_delta_neq)
-      thus \<open>\<langle>x, y\<rangle> = 0\<close>
-        using  \<open>x = ket i\<close>  \<open>y = ket j\<close>
-        by simp
-    qed
-    moreover have "0 \<notin> set (canonical_basis::'a ell2 list)"
-      unfolding canonical_basis_ell2_def
-      apply auto apply transfer
-      by (metis zero_neq_one) 
-    ultimately show ?thesis
-      unfolding is_ortho_set_def
-      by blast
-  qed
+    apply (auto simp: canonical_basis_ell2_def enum_UNIV)
+    by (smt (z3) ell2_ket f_inv_into_f is_ortho_set_def ket_Kronecker_delta_neq norm_zero)
 
   show "cindependent (set (canonical_basis::'a ell2 list))"
-  proof-
-    have \<open>0 \<notin> set (canonical_basis::'a ell2 list)\<close>
-    proof (rule classical)
-      assume \<open>\<not> (0::'a ell2) \<notin> set canonical_basis\<close>
-      hence \<open>(0::'a ell2) \<in> set canonical_basis\<close>
-        by blast
-      hence \<open>\<exists> i. (0::'a ell2) = ket i\<close>
-        unfolding canonical_basis_ell2_def
-        by auto
-      then obtain i where \<open>(0::'a ell2) = ket i\<close>
-        by blast
-      hence \<open>Rep_ell2 (0::'a ell2) i = Rep_ell2 (ket i) i\<close>
-        by simp
-      moreover have \<open>Rep_ell2 (0::'a ell2) i = 0\<close>
-        apply transfer by blast
-      moreover have \<open>Rep_ell2 (ket i) i = 1\<close>
-        apply transfer by auto
-      ultimately show ?thesis by simp
-    qed
-    thus ?thesis 
-      using  \<open>is_ortho_set (set (canonical_basis::'a ell2 list))\<close> is_ortho_set_independent
-      unfolding canonical_basis_ell2_def
-      by blast                  
-  qed
+    apply (auto simp: canonical_basis_ell2_def enum_UNIV)
+    by (smt (verit, best) ell2_ket f_inv_into_f is_ortho_set_def is_ortho_set_independent ket_Kronecker_delta_neq norm_zero)
 
   show "cspan (set (canonical_basis::'a ell2 list)) = UNIV"
-  proof-
-    have \<open>closure (complex_vector.span (ket ` UNIV)) = UNIV\<close>
-      by (simp add: ket_ell2_span)
-    moreover have \<open>set (enum_class.enum::'a list) = UNIV\<close>
-      using UNIV_enum
-      by blast
-    ultimately have \<open>closure
-              (complex_vector.span (ket ` set (enum_class.enum::'a list))) = UNIV\<close>
-      by simp
-    thus ?thesis
-      unfolding canonical_basis_ell2_def apply auto
-      using span_finite_dim
-      by (simp add: span_finite_dim )
-  qed
+    by (auto simp: canonical_basis_ell2_def enum_UNIV)
+
   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
     using card_UNIV_length_enum
@@ -2909,7 +2856,7 @@ proof-
   qed
 qed
 
-
+(* TODO remove (equal_basis below sufficient) *)
 lemma equal_basis_0:
   assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
   shows \<open>A = 0\<close>
@@ -2980,8 +2927,8 @@ proof-
     by fastforce 
 qed
 
-lemma equal_basis:
-  assumes \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close>
+lemma equal_ket:
+  assumes \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
   shows \<open>A = B\<close>
 proof-
   have \<open>\<And> j. cblinfun_apply A (ket j) - cblinfun_apply B (ket j) = 0\<close>
@@ -2992,6 +2939,16 @@ proof-
     using equal_basis_0 by blast
   thus ?thesis by simp
 qed
+
+lemma clinear_equal_ket:
+  fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
+  assumes \<open>clinear f\<close>
+  assumes \<open>clinear g\<close>
+  assumes \<open>\<And>i. f (ket i) = g (ket i)\<close>
+  shows \<open>f = g\<close>
+  apply (rule ext)
+  apply (rule complex_vector.linear_eq_on_span[where f=f and g=g and B=\<open>range ket\<close>])
+  using assms by auto
 
 
 subsection \<open>Recovered theorems\<close>
@@ -3094,14 +3051,6 @@ qed
 
 lemma [simp]: "ket i \<noteq> 0"
   using ell2_ket[of i] by force
-
-(* TODO: same as equal_basis *)
-lemma equal_ket:
-  includes cblinfun_notation
-  assumes "\<And>x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)"
-  shows "A = B"
-  by (simp add: assms equal_basis)
-
 
 lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
 proof -
@@ -3799,7 +3748,7 @@ proof -
   with C\<pi>\<rho>x' have "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = C\<pi>\<rho> *\<^sub>V (ket x)" for x
     by simp
   thus "C\<pi> o\<^sub>C\<^sub>L C\<rho> = C\<pi>\<rho>"
-    by (simp add: equal_basis)
+    by (simp add: equal_ket)
 qed
 
 (* proof -

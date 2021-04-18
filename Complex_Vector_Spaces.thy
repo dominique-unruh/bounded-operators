@@ -3135,6 +3135,33 @@ proof-
   thus ?thesis by blast
 qed
 
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cdependent\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cspan\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
+
+class cfinite_dim = complex_vector +
+  assumes finite_basis: "\<exists>basis::'a set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV"
+
+class basis_enum = complex_vector +
+  fixes canonical_basis :: "'a list"
+    and canonical_basis_length :: "'a itself \<Rightarrow> nat"
+  assumes distinct_canonical_basis[simp]: 
+    "distinct canonical_basis"
+    and is_cindependent_set:
+    "cindependent (set canonical_basis)"
+    and is_generator_set:
+    "cspan (set canonical_basis) = UNIV" 
+    and canonical_basis_length_eq:
+    "canonical_basis_length TYPE('a) = length canonical_basis"
+
+setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cdependent\<close>, SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cspan\<close>, SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
+
+instance basis_enum \<subseteq> cfinite_dim
+  apply intro_classes
+  apply (rule exI[of _ \<open>set canonical_basis\<close>])
+  using is_cindependent_set is_generator_set by auto
 
 subsection \<open>Recovered theorems\<close>
 
@@ -3284,11 +3311,6 @@ proof transfer
     by simp
 qed
 
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", 
-  SOME \<^typ>\<open>'a set \<Rightarrow> 'a set\<close>)\<close>
 
 
 lemma bounded_sesquilinear_0_left: 

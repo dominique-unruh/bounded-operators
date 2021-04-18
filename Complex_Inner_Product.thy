@@ -29,17 +29,10 @@ Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<op
 \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::open set \<Rightarrow> bool\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::dist \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::open set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::dist \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
 
 text \<open>Near-Hilbert space according to Definition 3, page 67, @{cite Helemskii}\<close>
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + 
@@ -301,17 +294,13 @@ Re-enable constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity
 \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::topological_space set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::topological_space set \<Rightarrow> bool\<close>)\<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
 
 lemma bounded_sesquilinear_cinner:
   "bounded_sesquilinear (cinner::'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex)"
@@ -3270,40 +3259,14 @@ lemma is_ob_nonzero:
   by (simp add: is_ortho_set_def) 
 
 
-class basis_enum = complex_vector +
-  fixes canonical_basis :: "'a list"
-    and canonical_basis_length :: "'a itself \<Rightarrow> nat"
-  assumes distinct_canonical_basis[simp]: 
-    "distinct canonical_basis"
-    and is_cindependent_set:
-    "cindependent (set canonical_basis)"
-    and is_generator_set:
-    "cspan (set canonical_basis) = UNIV" 
-    and canonical_basis_length_eq:
-    "canonical_basis_length TYPE('a) = length canonical_basis"
-
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cindependent", 
-  SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cdependent", 
-  SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.cspan", 
-  SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces.complex_vector.span", 
-  SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> 'a set\<close>)\<close>
-
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
-
-
 class onb_enum = basis_enum + complex_inner +
-  assumes is_orthonormal:
-    "is_ortho_set (set canonical_basis)"
-    and is_normal:
-    "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
+  assumes is_orthonormal: "is_ortho_set (set canonical_basis)"
+    and is_normal: "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
 
-setup \<open>Sign.add_const_constraint
-(\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
 
 lemma canonical_basis_non_zero:
@@ -3891,15 +3854,6 @@ proof-
 qed
 
 subsection \<open>Recovered theorems\<close>
-
-setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniform_space \<times> 'a) filter\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
-
-setup \<open>Sign.add_const_constraint
-  (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
 
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
