@@ -1215,7 +1215,7 @@ typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(
 
 setup_lifting type_definition_cblinfun
 
-
+(* TODO remove (confusing) *)
 declare [[coercion
       "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
 
@@ -1631,6 +1631,8 @@ proof transfer
     using module_hom.add by blast
 qed
 
+lemma apply_cblinfun_distr_left: "(A + B) *\<^sub>V x = A *\<^sub>V x + B *\<^sub>V x"
+  apply transfer by simp
 
 lemma cblinfun_apply_scaleC: "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
 proof transfer
