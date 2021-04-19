@@ -17,6 +17,7 @@ theory Complex_Vector_Spaces
     Preliminaries
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
+    Extra_Nonstandard_Analysis
 begin
 
 bundle notation_norm begin
