@@ -47,7 +47,7 @@ class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dis
 begin
 
 lemma cinner_real: "\<langle>x, x\<rangle> \<in> \<real>"
-  by (simp add: reals_zero_comparable_iff)
+  using local.cinner_ge_zero reals_zero_comparable_iff by presburger
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 
@@ -108,7 +108,7 @@ lemmas cinner_right_distrib = cinner_add_right
 lemmas cinner_distrib = cinner_left_distrib cinner_right_distrib
 
 lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x, x\<rangle> \<longleftrightarrow> x \<noteq> 0"
-  by (simp add: order_less_le)
+  by (smt (verit) antisym_conv2 local.cinner_eq_zero_iff local.cinner_ge_zero)
 
 lemma power2_norm_eq_cinner:
   includes notation_norm
@@ -119,7 +119,7 @@ lemma power2_norm_eq_cinner:
 lemma power2_norm_eq_cinner':
   includes notation_norm
   shows "complex_of_real (\<parallel> x \<parallel>\<^sup>2) = \<langle>x, x\<rangle>"
-  by (simp add: complex_of_real_cmod power2_norm_eq_cinner)
+  using complex_of_real_cmod local.cinner_ge_zero power2_norm_eq_cinner by presburger
 
 lemma power2_norm_eq_cinner'':
   includes notation_norm
@@ -162,7 +162,7 @@ next
   hence "cinner x y * cnj (cinner x y) / cinner y y \<le> cinner x x"
     by (simp add: le_diff_eq)
   thus "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
-    by (simp add: pos_divide_le_eq y)
+    by (meson cinner_gt_zero_iff nice_ordered_field_class.pos_divide_le_eq y)
 qed
 
 lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
@@ -184,7 +184,8 @@ proof -
     by (simp add: cinner_real)      
   have rpos: "r \<ge> 0"
     unfolding r_def
-    using complex_of_real_nn_iff r r_def by fastforce
+    using complex_of_real_nn_iff r r_def
+    using local.cinner_ge_zero by force
   show ?thesis
     unfolding power2_norm_eq_cinner
     unfolding r using rpos by auto
@@ -2627,64 +2628,30 @@ lemma Adj_cbounded_linear:
   shows \<open>cbounded_linear (A\<^sup>\<dagger>)\<close>
 proof-
   include notation_norm 
-  have b1: \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , A y\<rangle>\<close>
-    for x y
-    using Adj_I a1
-    by auto
-  have \<open>\<langle>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) , y\<rangle> = 0\<close>
-    for x1 x2 y
+  have b1: \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , A y\<rangle>\<close> for x y
+    using Adj_I a1 by auto
+  have \<open>\<langle>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) , y\<rangle> = 0\<close> for x1 x2 y
     by (simp add: b1 cinner_diff_left cinner_left_distrib)        
-  hence b2: \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close>
-    for x1 x2
+  hence b2: \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close> for x1 x2
     using cinner_eq_zero_iff by blast
-  hence z1: \<open>(A\<^sup>\<dagger>) (x1 + x2) = (A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2\<close>
-    for x1 x2
+  hence z1: \<open>(A\<^sup>\<dagger>) (x1 + x2) = (A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2\<close> for x1 x2
     by (simp add: b2 eq_iff_diff_eq_0)
 
-  have f1: \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x) - (r *\<^sub>C (A\<^sup>\<dagger>) x ), y\<rangle> = 0\<close>
-    for r x y
-  proof-
-    have \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x), y\<rangle> = \<langle>r *\<^sub>C x, A y\<rangle>\<close>
-      for y
-      by (simp add: Adj_I assms)      
-    hence \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x), y\<rangle> = (cnj r) * \<langle>x, A y\<rangle>\<close>
-      for y
-      by simp
-    hence \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x), y\<rangle> =  \<langle>x, (cnj r) *\<^sub>C A y\<rangle>\<close>
-      for y
-      by simp
-    hence \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x) , y\<rangle> =  (cnj r) * \<langle>x , A y\<rangle>\<close>
-      for y
-      by auto
-    hence \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x), y\<rangle> = (cnj r) * \<langle>(A\<^sup>\<dagger>) x , y\<rangle>\<close>
-      for y
-      by (simp add: b1)
-    hence b4: \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x) , y\<rangle> = \<langle>r *\<^sub>C (A\<^sup>\<dagger>) x , y\<rangle>\<close>
-      for y
-      by simp
-    show ?thesis
-      by (simp add: b4 cinner_diff_left)
-  qed
-  hence z2: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C (A\<^sup>\<dagger>) x\<close>
-    for r x
+  have f1: \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x) - (r *\<^sub>C (A\<^sup>\<dagger>) x ), y\<rangle> = 0\<close> for r x y
+    by (simp add: b1 cinner_diff_left)
+  hence z2: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C (A\<^sup>\<dagger>) x\<close> for r x
     using cinner_eq_zero_iff eq_iff_diff_eq_0 by blast
-  have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle>\<close>
-    for x
+  have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle>\<close> for x
     using power2_norm_eq_cinner' by auto
-  moreover have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<ge> 0\<close>
-    for x
+  moreover have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<ge> 0\<close> for x
     by simp
-  ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle> \<bar>\<close>
-    for x
-    by (simp add: abs_pos)
-  hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x, A ((A\<^sup>\<dagger>) x)\<rangle> \<bar>\<close>
-    for x
+  ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle> \<bar>\<close> for x
+    by (metis abs_pos cinner_ge_zero)
+  hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x, A ((A\<^sup>\<dagger>) x)\<rangle> \<bar>\<close> for x
     by (simp add: b1)
-  moreover have  \<open>\<bar>\<langle>x , A ((A\<^sup>\<dagger>) x)\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
-    for x
-    by (simp add: complex_inner_class.norm_cauchy_schwarz2)
-  ultimately have b5: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close>
-    for x
+  moreover have  \<open>\<bar>\<langle>x , A ((A\<^sup>\<dagger>) x)\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
+    using norm_cauchy_schwarz2 by auto
+  ultimately have b5: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
     by (simp add: b1 complex_inner_class.norm_cauchy_schwarz power2_norm_eq_cinner)
   have \<open>\<exists>M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
     using a1
@@ -2694,12 +2661,10 @@ proof-
     by blast
   have \<open>\<forall> x. \<parallel>x\<parallel> \<ge> 0\<close>
     by simp
-  hence b6: \<open>\<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
-    for x
+  hence b6: \<open>\<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close> for x
     using q2
     by (smt ordered_comm_semiring_class.comm_mult_left_mono vector_space_over_itself.scale_scale) 
-  have z3: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel> \<le> \<parallel>x\<parallel> * M\<close>
-    for x
+  have z3: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel> \<le> \<parallel>x\<parallel> * M\<close> for x
   proof(cases \<open>\<parallel>(A\<^sup>\<dagger>) x\<parallel> = 0\<close>)
     case True
     thus ?thesis
@@ -3886,7 +3851,7 @@ proof -
     by (metis cinner_commute cnj.simps(1) mult_2_right semiring_normalization_rules(7))
   have norm: "norm x = sqrt (Re \<langle>x, x\<rangle>)" for x :: 'a
     apply (subst norm_eq_sqrt_cinner, subst cmod_Re)
-    by auto
+    using cinner_ge_zero by auto
   have v2:"((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative
           (\<lambda>xa. (Re \<langle>x, xa\<rangle> + Re \<langle>xa, x\<rangle>) * (inverse (sqrt (Re \<langle>x, x\<rangle>)) / 2))) (at x)" 
     by (rule derivative_eq_intros | simp add: Re_pos)+
@@ -5257,9 +5222,9 @@ lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a c
   \<open>\<lambda>x y. cinner y x\<close>.
 instance 
   apply (intro_classes; transfer)
-  apply (simp_all add: )
-  apply (simp add: cinner_right_distrib)
-  using cinner_ge_zero norm_eq_sqrt_cinner by blast
+       apply (simp_all add: )
+    apply (simp add: cinner_right_distrib)
+  using cinner_ge_zero norm_eq_sqrt_cinner by auto
 end
 
 

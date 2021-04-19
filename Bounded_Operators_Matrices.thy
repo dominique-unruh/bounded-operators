@@ -3772,7 +3772,7 @@ next
       finally show ?thesis
         by simp
     qed     
-    have "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
+    have x0: "\<langle>a, (canonical_basis::'a list) ! j\<rangle> * cnj \<langle>a, (canonical_basis::'a list) ! i\<rangle>
         = ((mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)])) 
       $$ (i, j)"
       using \<open>\<langle>a, basis ! j\<rangle> * cnj \<langle>a, basis ! i\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a * cnj 
@@ -3800,7 +3800,7 @@ next
       by (simp add: norm2a)
     have y1:"(mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) 
           $$ (i, j) = \<langle>(canonical_basis::'a list) ! i, a\<rangle>*\<langle>a, (canonical_basis::'a list) ! j\<rangle>"
-      by (metis \<open>\<langle>a, canonical_basis ! j\<rangle> * cnj \<langle>a, canonical_basis ! i\<rangle> = (mat_of_cols d [vec_of_onb_enum a] * mat_of_rows d [conjugate (vec_of_onb_enum a)]) $$ (i, j)\<close> cinner_commute' ordered_field_class.sign_simps(47))
+      by (metis cinner_commute' mult.commute x0)
 
     have "(mat_of_cblinfun (proj a)) $$ (i, j)
           = ((mat_of_cols d [vec_of_onb_enum a]

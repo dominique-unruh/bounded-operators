@@ -3360,7 +3360,7 @@ lemma norm_of_cblinfun:
   \<open>norm (L *\<^sub>V z) \<le> norm z * norm L\<close>
   apply transfer
   using cbounded_linear.bounded_linear onorm
-  by (simp add: cbounded_linear.bounded_linear onorm ordered_field_class.sign_simps(47))
+  by (simp add: cbounded_linear.bounded_linear onorm algebra_simps)
 
 lemma norm_of_cblinfun1:
   assumes a1: "norm z = 1"
@@ -3777,7 +3777,8 @@ proof transfer
     have \<open>f t = \<langle>t, t\<rangle>\<close>
       using \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> by blast
     also have \<open>\<dots> = norm \<langle>t, t\<rangle>\<close>
-      using complex_of_real_cmod by auto
+      using complex_of_real_cmod
+      by (metis cinner_ge_zero)
     also have \<open>\<dots> = (norm t)^2\<close>
       by (simp add: power2_norm_eq_cinner)
     also have \<open>\<dots> = (norm t)*(norm t)\<close>
@@ -3873,7 +3874,7 @@ proof intro_classes
   show "\<langle>A, B\<rangle> = cnj \<langle>B, A\<rangle>"
     unfolding cinner_cblinfun_def by auto
   show "\<langle>A + B, C\<rangle> = \<langle>A, C\<rangle> + \<langle>B, C\<rangle>"
-    by (simp add: cinner_cblinfun_def ordered_field_class.sign_simps(43) plus_cblinfun.rep_eq) 
+    by (simp add: cinner_cblinfun_def algebra_simps plus_cblinfun.rep_eq) 
   show "\<langle>c *\<^sub>C A, B\<rangle> = cnj c * \<langle>A, B\<rangle>"
     unfolding cinner_cblinfun_def by auto
   show "0 \<le> \<langle>A, A\<rangle>"
@@ -4282,25 +4283,12 @@ proof-
     moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
       by (simp add: cinner_real)        
     moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
-      by simp        
+      using cinner_ge_zero by blast
     ultimately have w1: \<open>\<langle>a, a\<rangle> = 1\<close>
       by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
 
-    have \<open>r t * \<langle>a, t\<rangle> = 0\<close>
-      if \<open>t \<in> T-{a}\<close>
-      for t
-    proof-
-      have \<open>t \<in> T\<close>
-        using that
-        by blast
-      have \<open>a \<noteq> t\<close>
-        using  \<open>t \<in> T-{a}\<close>
-        by auto
-      have \<open>\<langle>a, t\<rangle> = 0\<close>
-        using a3 unfolding is_ortho_set_def
-        by (simp add: \<open>a \<in> T\<close> \<open>a \<noteq> t\<close> \<open>t \<in> T\<close>) 
-      thus ?thesis by simp
-    qed
+    have \<open>r t * \<langle>a, t\<rangle> = 0\<close> if \<open>t \<in> T-{a}\<close> for t
+      by (metis DiffD1 DiffD2 \<open>a \<in> T\<close> a3 is_ortho_set_def mult_eq_0_iff singletonI that)
     hence s1: \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
       by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
     have \<open>\<langle>a, x\<rangle> = \<langle>a, (\<Sum> t\<in>T. r t *\<^sub>C t)\<rangle>\<close>
@@ -5683,8 +5671,7 @@ next
 
     have "cmod \<langle>\<phi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<phi> * norm x"
       using norm_cauchy_schwarz[of \<phi> x]
-      by (smt mult_mono' norm_ge_zero ordered_field_class.sign_simps(46) 
-          ordered_field_class.sign_simps(47))
+      by (metis mult.assoc mult.commute norm_imp_pos_and_ge ordered_comm_semiring_class.comm_mult_left_mono)
     thus "norm (butterfly \<psi> \<phi> *\<^sub>V x) \<le> norm \<psi> * norm \<phi> * norm x"
       by (simp add: butterfly_apply power2_eq_square)
 

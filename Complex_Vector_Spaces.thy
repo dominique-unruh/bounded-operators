@@ -20,6 +20,7 @@ theory Complex_Vector_Spaces
 
     Extra_Nonstandard_Analysis
     Extra_Vector_Spaces
+    Extra_Ordered_Fields
 begin
 
 bundle notation_norm begin
@@ -99,7 +100,7 @@ proof
     for a :: complex
       and b :: complex
       and x :: complex
-    by (simp add: ordered_field_class.sign_simps(59))
+    by (simp add: algebra_simps)
 
   show "a *\<^sub>C b *\<^sub>C (x::complex) = (a * b) *\<^sub>C x"
     for a :: complex
@@ -621,13 +622,14 @@ lemma pos_le_divideRI:
     and "c *\<^sub>C a \<le> b"
   shows "a \<le> b /\<^sub>C c"
 proof -
-  have "a = inverse c *\<^sub>C c *\<^sub>C a" using assms(1) by auto
+  have "a = inverse c *\<^sub>C c *\<^sub>C a" using assms(1)
+    by (smt (verit, best) local.scaleC_one local.scaleC_scaleC mult.commute preorder_class.less_irrefl right_inverse)
   also have "\<dots> \<le> inverse c *\<^sub>C b"
   proof (rule scaleC_left_mono)
     show "c *\<^sub>C a \<le> b"
       by (simp add: assms(2))    
     show "0 \<le> inverse c"
-      by (simp add: assms(1) order_class.le_less)    
+      using assms(1) by force
   qed 
   finally show ?thesis by simp
 qed
@@ -643,31 +645,23 @@ proof -
     using assms local.pos_le_divideRI local.scaleC_left_mono preorder_class.less_imp_le by fastforce
 qed
 
-lemma scaleC_image_atLeastAtMost: "c > 0 \<Longrightarrow> scaleC c ` {x..y} = {c *\<^sub>C x..c *\<^sub>C y}"
-proof (auto intro !: scaleC_left_mono)
-  show "t \<in> (*\<^sub>C) c ` {x..y}"
-    if "0 < c"
-      and "c *\<^sub>C x \<le> t"
-      and "t \<le> c *\<^sub>C y"
-    for t :: 'a
-    using that proof (rule_tac x = "inverse c *\<^sub>C t" in image_eqI)
-    show "t = c *\<^sub>C (t /\<^sub>C c)"
-      if "0 < c"
-        and "c *\<^sub>C x \<le> t"
-        and "t \<le> c *\<^sub>C y"
-      using that
-      by auto 
-    show "t /\<^sub>C c \<in> {x..y}"
-      if "0 < c"
-        and "c *\<^sub>C x \<le> t"
-        and "t \<le> c *\<^sub>C y"
-      using that
-      by (metis inverse_inverse_eq local.atLeastAtMost_iff 
-          local.pos_le_divideR_eq nice_ordered_field_class.positive_imp_inverse_positive) 
-  qed
+lemma scaleC_image_atLeastAtMost: assumes "c > 0" shows "scaleC c ` {x..y} = {c *\<^sub>C x..c *\<^sub>C y}"
+proof (intro set_eqI iffI)
+  fix z :: 'a
+  assume \<open>z \<in> scaleC c ` {x..y}\<close>
+  then obtain z' where \<open>z = scaleC c z'\<close> and \<open>z' \<in> {x..y}\<close>
+    by auto
+  then show \<open>z \<in> {c *\<^sub>C x..c *\<^sub>C y}\<close>
+    using assms by (auto simp: scaleC_left_mono)
+next
+  fix z :: 'a
+  assume \<open>z \<in> {c *\<^sub>C x..c *\<^sub>C y}\<close>
+  then show \<open>z \<in> scaleC c ` {x..y}\<close>
+    using assms apply auto
+    using complex_is_Real_iff local.scaleR_image_atLeastAtMost local.scaleR_scaleC by force
 qed
 
-end
+end (* class ordered_complex_vector *)
 
 lemma neg_le_divideR_eq:
   fixes a :: "'a :: ordered_complex_vector"
@@ -760,20 +754,21 @@ next
   proof
     assume ?lhs
     from \<open>a \<noteq> 0\<close> consider "a > 0" | "a < 0"
-      using reals_zero_comparable[OF assms] by auto
+      using reals_zero_comparable[OF assms]
+      using antisym_conv2 by blast
     thus ?rhs
     proof cases
       case 1
       with \<open>?lhs\<close> have "inverse a *\<^sub>C 0 \<le> inverse a *\<^sub>C (a *\<^sub>C b)"
         by (intro scaleC_mono) auto
       with 1 show ?thesis
-        by simp
+        by auto
     next
       case 2
       with \<open>?lhs\<close> have "- inverse a *\<^sub>C 0 \<le> - inverse a *\<^sub>C (a *\<^sub>C b)"
-        by (intro scaleC_mono) auto
+        by (meson dual_order.strict_implies_order neg_0_le_iff_le nice_ordered_field_class.inverse_nonpositive_iff_nonpositive scaleC_left_mono)
       with 2 show ?thesis
-        by simp
+        by auto
     qed
   next
     assume ?rhs
@@ -797,52 +792,7 @@ lemma scaleC_le_cancel_left:
   fixes b :: "'a::ordered_complex_vector"
   assumes "c \<in> \<real>"
   shows "c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> (0 < c \<longrightarrow> a \<le> b) \<and> (c < 0 \<longrightarrow> b \<le> a)"
-  using assms proof (auto ; cases)
-  show "a \<le> b"
-    if "c \<in> \<real>"
-      and "c *\<^sub>C a \<le> c *\<^sub>C b"
-      and "0 < c"
-      and "c = complex_of_real r"
-    for r :: real
-    using that 
-    by (smt complex_of_real_pos_iff scaleR_scaleC[symmetric]  scaleR_le_cancel_left)
-
-  show "b \<le> a"
-    if "c \<in> \<real>"
-      and "c *\<^sub>C a \<le> c *\<^sub>C b"
-      and "c < 0"
-      and "c = complex_of_real r"
-    for r :: real
-    using that scaleR_scaleC[symmetric]  scaleR_le_cancel_left
-    by (smt complex_of_real_strict_mono_iff of_real_0)
-
-  show "c *\<^sub>C a \<le> c *\<^sub>C b"
-    if "c \<in> \<real>"
-      and "\<not> 0 < c"
-      and "\<not> c < 0"
-      and "c = complex_of_real r"
-    for r :: real
-    using that  less_complex_def
-    by simp
-
-  show "c *\<^sub>C a \<le> c *\<^sub>C b"
-    if "c \<in> \<real>"
-      and "\<not> 0 < c"
-      and "b \<le> a"
-      and "c = complex_of_real r"
-    for r :: real
-    using that    
-    by (smt less_le_not_le reals_zero_comparable scaleC_left_mono_neg)
-
-  show "c *\<^sub>C a \<le> c *\<^sub>C b"
-    if "c \<in> \<real>"
-      and "a \<le> b"
-      and "\<not> c < 0"
-      and "c = complex_of_real r"
-    for r :: real
-    using that  less_complex_def scaleC_left_mono by fastforce
-qed
-
+  by (smt (verit, ccfv_SIG) Complex_Vector_Spaces.neg_le_divideR_eq assms complex_vector.scale_cancel_left complex_vector.scale_minus_right dual_order.trans eq_refl neg_le_iff_le order.strict_iff_order ordered_complex_vector_class.pos_le_divideR_eq reals_zero_comparable_iff)
 
 lemma scaleC_le_cancel_left_pos: "0 < c \<Longrightarrow> c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> a \<le> b"
   for b :: "'a::ordered_complex_vector"
