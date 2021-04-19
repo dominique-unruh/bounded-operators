@@ -5249,6 +5249,23 @@ lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
     closure_UNIV is_generator_set
   by metis
 
+subsection \<open>Conjugate space\<close>
+
+
+instantiation conjugate_space :: (complex_inner) complex_inner begin
+lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> complex" is
+  \<open>\<lambda>x y. cinner y x\<close>.
+instance 
+  apply (intro_classes; transfer)
+  apply (simp_all add: )
+  apply (simp add: cinner_right_distrib)
+  using cinner_ge_zero norm_eq_sqrt_cinner by blast
+end
+
+
+instance conjugate_space :: (chilbert_space) chilbert_space..
+
+
 unbundle no_nsa_notation
 
 

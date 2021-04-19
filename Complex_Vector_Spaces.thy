@@ -1024,6 +1024,7 @@ lemma clinear: "clinear f"
 
 end
 
+
 lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
   by (auto simp: clinearI distrib_left)
@@ -1079,6 +1080,24 @@ lemma csemilinearI:
     and "\<And>c x. f (c *\<^sub>C x) = cnj c *\<^sub>C f x"
   shows "csemilinear f"
   by standard (rule assms)+
+
+
+
+lemma csemilinear_csemilinear: "csemilinear f \<Longrightarrow> csemilinear g \<Longrightarrow> clinear (g o f)"
+  apply (rule clinearI)
+  apply (simp add: additive.add csemilinear_def)
+  by (simp add: csemilinear.scaleC)
+
+lemma csemilinear_clinear: "csemilinear f \<Longrightarrow> clinear g \<Longrightarrow> csemilinear (g o f)"
+  apply (rule csemilinearI)
+  apply (simp add: additive.add clinear_additive_D csemilinear_def)
+  by (simp add: complex_vector.linear_scale csemilinear.scaleC)
+
+lemma clinear_csemilinear: "clinear f \<Longrightarrow> csemilinear g \<Longrightarrow> csemilinear (g o f)"
+  apply (rule csemilinearI)
+  apply (simp add: additive.add clinear_additive_D csemilinear_def)
+  by (simp add: complex_vector.linear_scale csemilinear.scaleC)
+
 
 locale bounded_csemilinear = csemilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
   assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
@@ -4125,6 +4144,57 @@ lemma closed_finite_dim:
   shows \<open>closed (complex_vector.span S)\<close>  
   by (simp add: finite_cspan_complete assms complete_imp_closed)
 
+subsection \<open>Conjugate space\<close>
+
+typedef 'a conjugate_space = "UNIV :: 'a set"
+  morphisms from_conjugate_space to_conjugate_space ..
+setup_lifting type_definition_conjugate_space
+
+instantiation conjugate_space :: (complex_vector) complex_vector begin
+lift_definition scaleC_conjugate_space :: \<open>complex \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>c x. cnj c *\<^sub>C x\<close>.
+lift_definition scaleR_conjugate_space :: \<open>real \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>r x. r *\<^sub>R x\<close>.
+lift_definition plus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(+)".
+lift_definition uminus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is \<open>\<lambda>x. -x\<close>.
+lift_definition zero_conjugate_space :: "'a conjugate_space" is 0.
+lift_definition minus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(-)".
+instance
+  apply (intro_classes; transfer)
+  by (simp_all add: scaleR_scaleC scaleC_add_right scaleC_left.add)
+end
+
+instantiation conjugate_space :: (complex_normed_vector) complex_normed_vector begin
+lift_definition sgn_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is "sgn".
+lift_definition norm_conjugate_space :: "'a conjugate_space \<Rightarrow> real" is norm.
+lift_definition dist_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> real" is dist.
+lift_definition uniformity_conjugate_space :: "('a conjugate_space \<times> 'a conjugate_space) filter" is uniformity.
+lift_definition  open_conjugate_space :: "'a conjugate_space set \<Rightarrow> bool" is "open".
+instance 
+  apply (intro_classes; transfer)
+  by (simp_all add: dist_norm sgn_div_norm open_uniformity uniformity_dist norm_triangle_ineq)
+end
+
+instantiation conjugate_space :: (cbanach) cbanach begin
+instance 
+  apply intro_classes
+  unfolding Cauchy_def convergent_def LIMSEQ_def apply transfer
+  using Cauchy_convergent unfolding Cauchy_def convergent_def LIMSEQ_def by metis
+end
+
+
+lemma csemilinear_to_conjugate_space: \<open>csemilinear to_conjugate_space\<close>
+  by (rule csemilinearI; transfer, auto)
+
+lemma csemilinear_from_conjugate_space: \<open>csemilinear from_conjugate_space\<close>
+  by (rule csemilinearI; transfer, auto)
+
+lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conjugate_space ` cspan X"
+  unfolding complex_vector.span_def complex_vector.subspace_def hull_def
+  apply transfer
+  apply simp
+  by (metis (no_types, hide_lams) complex_cnj_cnj)
+
+lemma surj_to_conjugate_space[simp]: "surj to_conjugate_space"
+  by (meson surj_def to_conjugate_space_cases)
 
 
 end
