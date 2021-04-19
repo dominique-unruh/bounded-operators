@@ -1,14 +1,23 @@
 theory Bounded_Operators_Matrices
-  imports Complex_L2 Jordan_Normal_Form_Missing Jordan_Normal_Form.Gram_Schmidt 
+  imports Jordan_Normal_Form.Gram_Schmidt 
           "HOL-Analysis.Starlike"
+
+          "Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
+
+          Complex_L2
 begin
 
 hide_const (open) Order.bottom Order.top
+hide_type (open) Finite_Cartesian_Product.vec
+hide_const (open) Finite_Cartesian_Product.mat
+hide_fact (open) Finite_Cartesian_Product.mat_def
+hide_const (open) Finite_Cartesian_Product.vec
+hide_fact (open) Finite_Cartesian_Product.vec_def
+hide_const (open) Finite_Cartesian_Product.row
+hide_fact (open) Finite_Cartesian_Product.row_def
+no_notation Finite_Cartesian_Product.vec_nth (infixl "$" 90)
 
 subsection\<open>\<open>Jordan_Normal_Form_Notation\<close> -- Cleaning up syntax from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
-
-text \<open>\<^const>\<open>Finite_Cartesian_Product.vec_nth\<close> collides with the notation from \<^session>\<open>Jordan_Normal_Form\<close>\<close>
-no_notation vec_nth (infixl "$" 90)
 
 unbundle jnf_notation
 unbundle cblinfun_notation

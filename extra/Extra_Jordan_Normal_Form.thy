@@ -5,7 +5,7 @@ Authors:
   Jose Manuel Rodriguez Caballero, University of Tartu, jose.manuel.rodriguez.caballero@ut.ee
 *)                 
 
-theory Jordan_Normal_Form_Missing
+theory Extra_Jordan_Normal_Form
   imports
     Jordan_Normal_Form.Matrix Jordan_Normal_Form.Schur_Decomposition
 begin
