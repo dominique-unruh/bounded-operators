@@ -2062,6 +2062,8 @@ proof
 qed
 end
 
+abbreviation bra :: "'a \<Rightarrow> (_,complex) cblinfun" where "bra i \<equiv> vector_to_cblinfun (ket i)*" for i
+
 lemma cinner_ket_left: \<open>\<langle>ket i, \<psi>\<rangle> = Rep_ell2 \<psi> i\<close>
   apply (transfer fixing: i)
   apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
@@ -2962,7 +2964,6 @@ lemma clinear_equal_ket:
   apply (rule ext)
   apply (rule complex_vector.linear_eq_on_span[where f=f and g=g and B=\<open>range ket\<close>])
   using assms by auto
-
 
 subsection \<open>Recovered theorems\<close>
 
@@ -4189,6 +4190,7 @@ proof auto
     by blast
 qed
 *)
+
 
 
 unbundle no_cblinfun_notation
