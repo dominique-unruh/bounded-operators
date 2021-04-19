@@ -2062,6 +2062,16 @@ proof
 qed
 end
 
+lemma cinner_ket_left: \<open>\<langle>ket i, \<psi>\<rangle> = Rep_ell2 \<psi> i\<close>
+  apply (transfer fixing: i)
+  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
+  by auto
+
+lemma cinner_ket_right: \<open>\<langle>\<psi>, ket i\<rangle> = cnj (Rep_ell2 \<psi> i)\<close>
+  apply (transfer fixing: i)
+  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
+  by auto
+
 lemma ell2_ket[simp]: "norm (ket i) = 1"
 proof transfer
   show "ell2_norm (\<lambda>y. if i = y then 1::complex else 0) = 1"

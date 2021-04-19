@@ -43,6 +43,9 @@ lemma dim_vec_of_onb_enum_list':
   using dim_vec_of_onb_enum_list
   by simp  
 
+lemma dim_vec_vec_of_onb_enum[simp]: "dim_vec (vec_of_onb_enum (a :: 'a::enum ell2)) = CARD('a)"
+  by (metis canonical_basis_length_ell2_def canonical_basis_length_eq dim_vec_of_onb_enum_list')
+
 lemma vec_of_onb_enum_list_add:
   \<open>vec_of_onb_enum_list (L::'a::{basis_enum,complex_inner} list) (v1 + v2) i =
    vec_of_onb_enum_list L v1 i + vec_of_onb_enum_list L v2 i\<close>
@@ -1446,6 +1449,14 @@ definition mat_of_cblinfun :: \<open>'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'
     \<lambda> (i, j). \<langle> (canonical_basis::'b list)!i, f *\<^sub>V ((canonical_basis::'a list)!j) \<rangle> )\<close>
   for f
 
+lemma mat_of_cblinfun_ell2_carrier[simp]: \<open>mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2) \<in> carrier_mat CARD('b) CARD('a)\<close>
+  by (simp add: canonical_basis_length_ell2_def mat_of_cblinfun_def)
+
+lemma dim_row_mat_of_cblinfun[simp]: \<open>dim_row (mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2)) = CARD('b)\<close>
+  by (simp add: canonical_basis_length_ell2_def mat_of_cblinfun_def)
+
+lemma dim_col_mat_of_cblinfun[simp]: \<open>dim_col (mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2)) = CARD('a)\<close>
+  by (simp add: canonical_basis_length_ell2_def mat_of_cblinfun_def)
 
 lemma cinner_mat_of_cblinfun_basis:
   fixes F::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
@@ -2541,8 +2552,8 @@ proof-
     ultimately show ?thesis
       by (simp add: a1 a2)            
   qed
-  ultimately show ?thesis using eq_matI
-    by auto
+  ultimately show ?thesis 
+    apply (rule_tac eq_matI) by auto
 qed
 
 lemma cblinfun_of_mat_timesOp:
@@ -4326,6 +4337,57 @@ proof-
     unfolding d_def gs_def by auto
 qed
 
+lemma vec_of_onb_enum_ell2_index:
+  fixes \<psi> :: \<open>'a::enum ell2\<close> 
+  assumes [simp]: \<open>i < CARD('a)\<close>
+  shows \<open>vec_of_onb_enum \<psi> $ i = Rep_ell2 \<psi> (Enum.enum ! i)\<close>
+proof -
+  let ?i = \<open>Enum.enum ! i\<close>
+  have \<open>Rep_ell2 \<psi> (Enum.enum ! i) = \<langle>ket ?i, \<psi>\<rangle>\<close>
+    by (simp add: cinner_ket_left)
+  also have \<open>\<dots> = vec_of_onb_enum \<psi> \<bullet>c vec_of_onb_enum (ket ?i :: 'a ell2)\<close>
+    by (rule cscalar_prod_cinner)
+  also have \<open>\<dots> = vec_of_onb_enum \<psi> \<bullet>c unit_vec (CARD('a)) i\<close>
+    by (simp add: vec_of_onb_enum_ket enum_idx_enum canonical_basis_length_ell2_def)
+  also have \<open>\<dots> = vec_of_onb_enum \<psi> \<bullet> unit_vec (CARD('a)) i\<close>
+    by (smt (verit, best) assms carrier_vecI conjugate_conjugate_sprod conjugate_id conjugate_vec_sprod_comm dim_vec_conjugate eq_vecI index_unit_vec(3) scalar_prod_left_unit vec_index_conjugate)
+  also have \<open>\<dots> = vec_of_onb_enum \<psi> $ i\<close>
+    by simp
+  finally show ?thesis
+    by simp
+qed
+
+
+lemma mat_of_cblinfun_ell2_index:
+  fixes a :: \<open>'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2\<close> 
+  assumes [simp]: \<open>i < CARD('b)\<close> \<open>j < CARD('a)\<close>
+  shows \<open>mat_of_cblinfun a $$ (i,j) = Rep_ell2 (a *\<^sub>V ket (Enum.enum ! j)) (Enum.enum ! i)\<close>
+proof -
+  let ?i = \<open>Enum.enum ! i\<close> and ?j = \<open>Enum.enum ! j\<close> and ?aj = \<open>a *\<^sub>V ket (Enum.enum ! j)\<close>
+  have \<open>Rep_ell2 ?aj (Enum.enum ! i) = vec_of_onb_enum ?aj $ i\<close>
+    by (rule vec_of_onb_enum_ell2_index[symmetric], simp)
+  also have \<open>\<dots> = (mat_of_cblinfun a *\<^sub>v vec_of_onb_enum (ket (enum_class.enum ! j) :: 'a ell2)) $ i\<close>
+    by (simp add: mat_of_cblinfun_description)
+  also have \<open>\<dots> = (mat_of_cblinfun a *\<^sub>v unit_vec CARD('a) j) $ i\<close>
+    by (simp add: vec_of_onb_enum_ket enum_idx_enum canonical_basis_length_ell2_def)
+  also have \<open>\<dots> = mat_of_cblinfun a $$ (i, j)\<close>
+    apply (subst mat_entry_explicit[where m=\<open>CARD('b)\<close>])
+    by auto
+  finally show ?thesis
+    by auto
+qed
+
+lemma cblinfun_eq_mat_of_cblinfunI: 
+  assumes "mat_of_cblinfun a = mat_of_cblinfun b"
+  shows "a = b"
+  by (metis assms mat_of_cblinfun_inverse)
+
+
+lemma ell2_eq_vec_of_onb_enumI:
+  fixes a b :: "_::onb_enum"
+  assumes "vec_of_onb_enum a = vec_of_onb_enum b"
+  shows "a = b"
+  by (metis assms onb_enum_of_vec_inverse)
 
 
 unbundle no_jnf_notation

@@ -4519,6 +4519,19 @@ proof-
     by auto   
 qed
 
+lemma index_of_nth:
+  assumes "distinct xs"
+  assumes "i < length xs"
+  shows "index_of (xs ! i) xs = i"
+  using assms
+  by (metis gr_implies_not_zero index_of_bound index_of_correct length_0_conv nth_eq_iff_index_eq nth_mem)
+
+lemma enum_idx_enum: 
+  assumes \<open>i < CARD('a::enum)\<close>
+  shows \<open>enum_idx (enum_class.enum ! i :: 'a) = i\<close>
+  unfolding enum_idx_def apply (rule index_of_nth)
+  using assms by (simp_all add: card_UNIV_length_enum enum_distinct)
+
 lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
   proof (cases x)
   show "cnj x * x = \<bar>x\<bar>\<^sup>2"

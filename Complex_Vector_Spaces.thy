@@ -3145,6 +3145,7 @@ class cfinite_dim = complex_vector +
 
 class basis_enum = complex_vector +
   fixes canonical_basis :: "'a list"
+  (* TODO: Remove canonical_basis_length. Can use CARD(...) instead. *)
     and canonical_basis_length :: "'a itself \<Rightarrow> nat"
   assumes distinct_canonical_basis[simp]: 
     "distinct canonical_basis"
