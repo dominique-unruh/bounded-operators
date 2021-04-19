@@ -10,10 +10,13 @@ session "Bounded_Operators-Prerequisites" in "fake-session-dir/1" = "HOL-Analysi
      "Banach_Steinhaus.Banach_Steinhaus" "Containers.Containers_Auxiliary"
      "Jordan_Normal_Form.Matrix_Impl"
     
+session "Bounded_Operators-Extra" in extra = "Bounded_Operators-Prerequisites" +
+  options [document = pdf, document_output = "output", 
+           document_variants = "document:outline=/proof,/ML"]
+  theories Extra_General Extra_Vector_Spaces Extra_Nonstandard_Analysis Extra_Ordered_Fields
 
-session Bounded_Operators = "Bounded_Operators-Prerequisites" +
+session Bounded_Operators = "Bounded_Operators-Extra" +
   options [record_proofs=1, document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
-  directories extra
   theories All
   document_files "root.tex"

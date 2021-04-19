@@ -4,9 +4,7 @@ theory Preliminaries
   imports
     Complex_Main            
     "HOL-Analysis.Infinite_Set_Sum"
-    "HOL-ex.Sketch_and_Explore" 
     HOL.Groups
-    (* "HOL-Nonstandard_Analysis.Nonstandard_Analysis"     *)
     "HOL-Library.Rewrite" 
     Containers.Containers_Auxiliary
     "HOL.Complex" 
@@ -15,13 +13,14 @@ theory Preliminaries
     Complex_Main
     Banach_Steinhaus.Banach_Steinhaus
     "HOL-Analysis.Operator_Norm"
-    "HOL-ex.Sketch_and_Explore"
     "HOL.Real_Vector_Spaces"
     "HOL-Analysis.Uniform_Limit"
 
   Extra_General
 
 begin
+
+(* TODO: Split this into separate files *)
 
 subsection\<open>Infinite Set Sum Missing\<close>
 

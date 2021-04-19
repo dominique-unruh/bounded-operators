@@ -9,18 +9,17 @@ Authors:
 
 theory Complex_Vector_Spaces
   imports 
-    "HOL-ex.Sketch_and_Explore"
     "HOL-Analysis.Elementary_Topology"
     "HOL-Analysis.Operator_Norm"
     "HOL-Analysis.Elementary_Normed_Spaces"
     "HOL-Library.Set_Algebras"
-    Preliminaries
+    "Bounded_Operators-Extra.Preliminaries"
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
 
-    Extra_Nonstandard_Analysis
-    Extra_Vector_Spaces
-    Extra_Ordered_Fields
+    "Bounded_Operators-Extra.Extra_Nonstandard_Analysis"
+    "Bounded_Operators-Extra.Extra_Vector_Spaces"
+    "Bounded_Operators-Extra.Extra_Ordered_Fields"
 begin
 
 bundle notation_norm begin

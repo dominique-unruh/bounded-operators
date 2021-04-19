@@ -15,8 +15,6 @@ theory Complex_L2
     "HOL-Analysis.Infinite_Set_Sum"
     Complex_Inner_Product
     Bounded_Operators
-    "HOL-ex.Sketch_and_Explore"
-    Preliminaries
 begin
 
 unbundle cblinfun_notation

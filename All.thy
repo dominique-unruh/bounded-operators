@@ -8,7 +8,6 @@ Authors:
 
 theory All
   imports 
-    Preliminaries
     Complex_Vector_Spaces
     Complex_Inner_Product
     Bounded_Operators
