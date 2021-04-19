@@ -5652,6 +5652,9 @@ proof -
     by simp
 qed
 
+lemma butterfly_times_right: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butterfly \<psi> (a* *\<^sub>V \<phi>)"
+  unfolding butterfly_def'
+  by (simp add: cblinfun_apply_assoc vector_to_cblinfun_applyOp)  
 
 lemma butterfly_apply: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
   by (simp add: butterfly_def' times_applyOp)
@@ -5786,6 +5789,10 @@ proof -
   with BProj show "B = proj x"
     by simp
 qed
+
+lemma butterfly_isProjector:
+  \<open>norm x = 1 \<Longrightarrow> isProjector (selfbutter x)\<close>
+  by (subst butterfly_proj, simp_all)
 
 lemma Proj_bot[simp]: "Proj bot = 0"
   by (metis Bounded_Operators.timesScalarSpace_0 Proj_I isProjector0 isProjector_algebraic 

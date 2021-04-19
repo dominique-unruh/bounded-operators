@@ -2965,6 +2965,31 @@ lemma clinear_equal_ket:
   apply (rule complex_vector.linear_eq_on_span[where f=f and g=g and B=\<open>range ket\<close>])
   using assms by auto
 
+lemma csemilinear_equal_ket:
+  fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
+  assumes \<open>csemilinear f\<close>
+  assumes \<open>csemilinear g\<close>
+  assumes \<open>\<And>i. f (ket i) = g (ket i)\<close>
+  shows \<open>f = g\<close>
+proof -
+  have [simp]: \<open>clinear (f \<circ> from_conjugate_space)\<close>
+    apply (rule csemilinear_csemilinear)
+    using assms by (simp_all add: csemilinear_from_conjugate_space)
+  have [simp]: \<open>clinear (g \<circ> from_conjugate_space)\<close>
+    apply (rule csemilinear_csemilinear)
+    using assms by (simp_all add: csemilinear_from_conjugate_space)
+  have [simp]: \<open>cspan (to_conjugate_space ` (range ket :: 'a ell2 set)) = UNIV\<close>
+    by simp
+  have "f o from_conjugate_space = g o from_conjugate_space"
+    apply (rule ext)
+    apply (rule complex_vector.linear_eq_on_span[where f="f o from_conjugate_space" and g="g o from_conjugate_space" and B=\<open>to_conjugate_space ` range ket\<close>])
+       apply (simp, simp)
+    using assms(3) by (auto simp: to_conjugate_space_inverse)
+  then show "f = g"
+    by (smt (verit) UNIV_I from_conjugate_space_inverse surj_def surj_fun_eq to_conjugate_space_inject) 
+qed
+
+
 subsection \<open>Recovered theorems\<close>
 
 lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
