@@ -1066,6 +1066,7 @@ corollary complex_csemilinearD:
   assumes "csemilinear f" obtains c where "f = (\<lambda>x. cnj (c * x))"
   by (rule csemilinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
 
+(* TODO: remove *)
 lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
 proof (simp add: csemilinear_def additive_def csemilinear_axioms_def)
   show "Modules.additive (\<lambda>x. cnj a * cnj x)"
