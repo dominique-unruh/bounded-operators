@@ -2,23 +2,12 @@ section\<open>Preliminaries\<close>
 
 theory Preliminaries
   imports
-    Complex_Main            
-    (* "HOL-Analysis.Infinite_Set_Sum" *)
-    HOL.Groups
-    "HOL-Library.Rewrite" 
-    Containers.Containers_Auxiliary
-    "HOL.Complex" 
     "Jordan_Normal_Form.Conjugate" 
-    HOL.Complete_Lattices
-    Complex_Main
     Banach_Steinhaus.Banach_Steinhaus
-    "HOL-Analysis.Operator_Norm"
     "HOL.Real_Vector_Spaces"
-    "HOL-Analysis.Uniform_Limit"
 
-  Extra_General
-  (* Extra_Lattice *)
-  Extra_Operator_Norm
+    Extra_General
+    Extra_Operator_Norm
 begin
 
 (* TODO: Split this into separate files *)
