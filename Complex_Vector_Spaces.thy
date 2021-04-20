@@ -20,6 +20,7 @@ theory Complex_Vector_Spaces
     "Bounded_Operators-Extra.Extra_Nonstandard_Analysis"
     "Bounded_Operators-Extra.Extra_Vector_Spaces"
     "Bounded_Operators-Extra.Extra_Ordered_Fields"
+    "Bounded_Operators-Extra.Extra_Lattice"
 begin
 
 bundle notation_norm begin
