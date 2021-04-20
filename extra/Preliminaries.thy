@@ -13,9 +13,9 @@ begin
 (* TODO: Split this into separate files *)
 
 
-subsection \<open>Banach-Steinhaus theorem\<close>
+(* subsection \<open>Banach-Steinhaus theorem\<close> *)
 
-lemma bounded_linear_ball:
+(* lemma bounded_linear_ball:
   fixes f :: \<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and K :: real
   assumes \<open>linear f\<close> and \<open>\<And> x. norm x = 1 \<Longrightarrow> norm (f x) \<le> K\<close>
@@ -60,7 +60,7 @@ proof-
       by (simp add: mult.commute t5)
   qed
   thus ?thesis using \<open>linear f\<close> unfolding bounded_linear_def bounded_linear_axioms_def by blast
-qed
+qed *)
 
 lemma norm_unit_sphere:
   includes notation_norm
@@ -145,7 +145,7 @@ proof-
 qed
 
 
-lemma sphere_nonzero:
+(* lemma sphere_nonzero:
   assumes \<open>S \<subseteq> sphere 0 r\<close> and \<open>r > 0\<close> and \<open>x \<in> S\<close>
   shows \<open>x \<noteq> 0\<close>
 proof-
@@ -156,7 +156,7 @@ proof-
     by (simp add: dist_commute)     
   thus ?thesis using \<open>r > 0\<close>
     by auto
-qed
+qed *)
 
 subsection\<open>Unclassified\<close>
 
@@ -193,7 +193,8 @@ next
     by (metis assms(2) assms(3) divide_eq_0_iff linordered_field_class.pos_divide_le_eq norm_ge_zero norm_zero zero_less_norm_iff)
 qed
 
-lemmas has_derivative_of_real [derivative_intros] = bounded_linear.has_derivative[OF bounded_linear_of_real]
+(* TODO: check used *)
+(* lemmas has_derivative_of_real [derivative_intros] = bounded_linear.has_derivative[OF bounded_linear_of_real] *)
 
 lemma cmod_Re:
   assumes "x \<ge> 0"
@@ -344,7 +345,6 @@ proof (induction l)
     by (metis comp_eq_dest_lhs list.simps(9))
 qed
 
-
 lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
   proof (induction l)
   show "List.map_filter (\<lambda>x. Some (f x)) [] = map f []"
@@ -357,7 +357,7 @@ lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f
 qed
 
 lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
-  unfolding Set.filter_def by auto
+  unfolding Set.filter_def by auto  
 
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
   using that unfolding Set.filter_def by auto
