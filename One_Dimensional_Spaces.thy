@@ -1,5 +1,6 @@
 theory One_Dimensional_Spaces
   imports Complex_Inner_Product
+    "Bounded_Operators-Extra.Extra_Operator_Norm"
 begin
 
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.

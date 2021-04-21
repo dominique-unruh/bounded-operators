@@ -1,6 +1,7 @@
 theory Extra_Operator_Norm
   imports "HOL-Analysis.Operator_Norm"
     Extra_General
+    "HOL-Analysis.Bounded_Linear_Function"
 begin
 
 
@@ -296,6 +297,100 @@ proof-
   thus ?thesis
     by (simp add: onorm_def)
 qed
+
+subsubsection \<open>Misc\<close>
+
+
+lemma onormI:
+  assumes "\<And>x. norm (f x) \<le> b * norm x"
+    and "x \<noteq> 0" and "norm (f x) = b * norm x"
+  shows "onorm f = b"
+  apply (unfold onorm_def, rule cSup_eq_maximum)
+  apply (smt (verit) UNIV_I assms(2) assms(3) image_iff nonzero_mult_div_cancel_right norm_eq_zero)
+  by (smt (verit, del_insts) assms(1) assms(2) divide_nonneg_nonpos norm_ge_zero norm_le_zero_iff pos_divide_le_eq rangeE zero_le_mult_iff)
+
+
+lemma norm_unit_sphere:
+  fixes f::\<open>'a::{real_normed_vector,not_singleton} \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
+  assumes a1: "bounded_linear f" and a2: "e > 0"     
+  shows \<open>\<exists>x\<in>(sphere 0 1). norm (norm (blinfun_apply f x) - norm f) < e\<close>
+proof-
+  define S::"real set" where \<open>S = { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+  have "\<exists>x::'a. norm x = 1"
+    by (metis (full_types) Collect_empty_eq Extra_General.UNIV_not_singleton UNIV_I equalityI mem_Collect_eq norm_sgn singleton_conv subsetI)
+  hence \<open>\<exists>x::'a. x \<in> sphere 0 1\<close>
+    by simp                
+  hence \<open>S\<noteq>{}\<close>unfolding S_def 
+    by auto 
+  hence t1: \<open>e > 0 \<Longrightarrow> \<exists> y \<in> S. Sup S - e < y\<close>
+    for e
+    by (simp add: less_cSupD)
+  have \<open>onorm f = Sup { norm (f x)| x. norm x = 1 }\<close>
+    using \<open>bounded_linear f\<close> onorm_sphere
+    by auto      
+  hence \<open>onorm f = Sup { norm (f x)| x. x \<in> sphere 0 1 }\<close>
+    unfolding sphere_def
+    by simp
+  hence t2: \<open>Sup S = onorm f\<close> unfolding S_def 
+    by auto
+  have s1: \<open>\<exists>y\<in>{norm (f x) |x. x \<in> sphere 0 1}. norm (onorm f - y) < e\<close>
+    if "0 < e"
+    for e
+  proof-
+    have \<open>\<exists> y \<in> S. (onorm f) - e < y\<close>
+      using t1 t2 that by auto
+    hence \<open>\<exists> y \<in> S. (onorm f) - y  < e\<close>
+      using that
+      by force
+    have \<open>\<exists> y \<in> S. (onorm f) - y  < e\<close>
+      using \<open>0 < e\<close> \<open>\<exists>y\<in>S. onorm f - y < e\<close> by auto
+    then obtain y where \<open>y \<in> S\<close> and \<open>(onorm f) - y  < e\<close>
+      by blast
+    have \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1} \<Longrightarrow> y \<le> onorm f\<close>
+    proof-
+      assume \<open>y \<in> {norm (f x) |x. x \<in> sphere 0 1}\<close>
+      hence \<open>\<exists> x \<in> sphere 0 1. y = norm (f x)\<close>
+        by blast
+      then obtain x where \<open>x \<in> sphere 0 1\<close> and \<open>y = norm (f x)\<close>
+        by blast
+      from \<open>y = norm (f x)\<close>
+      have \<open>y \<le> onorm f * norm x\<close>
+        using a1 onorm by auto
+      moreover have \<open>norm x = 1\<close>
+        using  \<open>x \<in> sphere 0 1\<close> unfolding sphere_def by auto
+      ultimately show ?thesis by simp
+    qed
+    hence \<open>bdd_above {norm (f x) |x. x \<in> sphere 0 1}\<close>
+      using a1 bdd_above_norm_f by force
+    hence \<open>bdd_above S\<close> unfolding S_def 
+      by blast
+    hence \<open>y \<le> Sup S\<close>
+      using \<open>y \<in> S\<close> \<open>S \<noteq> {}\<close> cSup_upper
+      by blast
+    hence \<open>0 \<le> Sup S - y\<close>
+      by simp
+    hence \<open>0 \<le> onorm f - y\<close>
+      using \<open>Sup S = onorm f\<close>
+      by simp
+    hence \<open>\<bar> (onorm f - y) \<bar> = onorm f - y\<close>
+      by simp
+    hence \<open>norm (onorm f - y)  = onorm f - y\<close>
+      by auto
+    hence \<open>\<exists> y \<in> S. norm ((onorm f) - y)  < e\<close>
+      using \<open>onorm f - y < e\<close> \<open>y \<in> S\<close> by force    
+    show ?thesis
+      unfolding S_def
+      using S_def \<open>\<exists>y\<in>S. norm (onorm (blinfun_apply f) - y) < e\<close> by blast      
+  qed
+  have f2: "onorm (blinfun_apply f) = Sup S"
+    using S_def \<open>onorm (blinfun_apply f) = Sup {norm (blinfun_apply f x) |x. x \<in> sphere 0 1}\<close> by blast
+  hence "\<exists>a. norm (norm (blinfun_apply f a) - Sup S) < e \<and> a \<in> sphere 0 1"
+    using a1 a2 s1 a2 t2 
+    by force 
+  thus ?thesis
+    using f2 by (metis (full_types) norm_blinfun.rep_eq)  
+qed
+
 
 
 end

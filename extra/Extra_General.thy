@@ -3,6 +3,7 @@ section \<open>General missing things\<close>
 theory Extra_General
   imports "HOL-Library.Cardinality"
     "HOL-Analysis.Elementary_Topology"
+    Jordan_Normal_Form.Conjugate
 begin
 
 subsection \<open>Not singleton\<close>
@@ -51,6 +52,16 @@ subclass (in card2) not_singleton
   apply standard using two_le_card
   by (meson card_2_iff' obtain_subset_with_card_n)
 
+lemma class_not_singletonI_monoid_add:
+  assumes "(UNIV::'a set) \<noteq> {0}"
+  shows "class.not_singleton TYPE('a::monoid_add)"
+proof intro_classes
+  let ?univ = "UNIV :: 'a set"
+  from assms obtain x::'a where "x \<noteq> 0"
+    by auto
+  thus "\<exists>x y :: 'a. x \<noteq> y"
+    by auto
+qed
 
 subsection \<open>CARD_1\<close>
 
@@ -73,6 +84,10 @@ proof (rule ext)
 qed 
 
 end
+
+instance unit :: CARD_1
+  apply standard by auto
+
 
 subsection \<open>Topology\<close>
 
@@ -157,5 +172,169 @@ lemma tendsto_principal_singleton:
   shows "(f \<longlongrightarrow> f x) (principal {x})"
   unfolding tendsto_def eventually_principal by simp
 
+lemma complete_singleton: 
+  "complete {s::'a::uniform_space}"
+proof-
+  have "F \<le> principal {s} \<Longrightarrow>
+         F \<noteq> bot \<Longrightarrow> cauchy_filter F \<Longrightarrow> F \<le> nhds s" for F
+    by (metis eventually_nhds eventually_principal le_filter_def singletonD)
+  thus ?thesis
+    unfolding complete_uniform
+    by simp
+qed
+
+subsection \<open>Complex numbers\<close>
+
+lemma cmod_Re:
+  assumes "x \<ge> 0"
+  shows "cmod x = Re x"
+  using assms unfolding less_eq_complex_def cmod_def
+  by auto
+
+lemma abs_complex_real[simp]: "abs x \<in> \<real>" for x :: complex
+  by (simp add: abs_complex_def)
+
+lemma Im_abs[simp]: "Im (abs x) = 0"
+  using abs_complex_real complex_is_Real_iff by blast
+
+
+lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
+  proof (cases x)
+  show "cnj x * x = \<bar>x\<bar>\<^sup>2"
+    if "x = Complex x1 x2"
+    for x1 :: real
+      and x2 :: real
+    using that   by (auto simp: complex_cnj complex_mult abs_complex_def 
+        complex_norm power2_eq_square complex_of_real_def)
+qed
+
+lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
+  proof (cases x)
+  show "0 \<le> cnj x * x"
+    if "x = Complex x1 x2"
+    for x1 :: real
+      and x2 :: real
+    using that by (auto simp: complex_cnj complex_mult complex_of_real_def)
+qed
+
+
+subsection \<open>List indices and enum\<close>
+
+
+fun index_of where
+  "index_of x [] = (0::nat)"
+| "index_of x (y#ys) = (if x=y then 0 else (index_of x ys + 1))"
+
+definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
+
+lemma index_of_correct:
+  assumes "x \<in> set y"
+  shows "y ! index_of x y = x"
+  using assms 
+proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  thus ?case by auto
+qed
+
+lemma enum_idx_correct: 
+  "Enum.enum ! enum_idx i = i"
+proof-
+  have "i \<in> set enum_class.enum"
+    using UNIV_enum by blast 
+  thus ?thesis
+    unfolding enum_idx_def
+    using index_of_correct by metis
+qed
+
+lemma index_of_bound: 
+  assumes "y \<noteq> []" and "x \<in> set y"
+  shows "index_of x y < length y"
+  using assms proof(induction y arbitrary: x)
+  case Nil
+  thus ?case by auto
+next
+  case (Cons a y)
+  show ?case 
+  proof(cases "a = x")
+    case True
+    thus ?thesis by auto
+  next
+    case False
+    moreover have "a \<noteq> x \<Longrightarrow> index_of x y < length y"
+      using Cons.IH Cons.prems(2) by fastforce      
+    ultimately show ?thesis by auto
+  qed
+qed
+
+lemma enum_idx_bound: "enum_idx x < length (Enum.enum :: 'a list)" for x :: "'a::enum"
+proof-
+  have p1: "False"
+    if "(Enum.enum :: 'a list) = []"
+  proof-
+    have "(UNIV::'a set) = set ([]::'a list)"
+      using that UNIV_enum by metis
+    also have "\<dots> = {}"
+      by blast
+    finally have "(UNIV::'a set) = {}".
+    thus ?thesis by simp
+  qed    
+  have p2: "x \<in> set (Enum.enum :: 'a list)"
+    using UNIV_enum by auto
+  moreover have "(enum_class.enum::'a list) \<noteq> []"
+    using p2 by auto
+  ultimately show ?thesis
+    unfolding enum_idx_def     
+    using index_of_bound [where x = x and y = "(Enum.enum :: 'a list)"]
+    by auto   
+qed
+
+lemma index_of_nth:
+  assumes "distinct xs"
+  assumes "i < length xs"
+  shows "index_of (xs ! i) xs = i"
+  using assms
+  by (metis gr_implies_not_zero index_of_bound index_of_correct length_0_conv nth_eq_iff_index_eq nth_mem)
+
+lemma enum_idx_enum: 
+  assumes \<open>i < CARD('a::enum)\<close>
+  shows \<open>enum_idx (enum_class.enum ! i :: 'a) = i\<close>
+  unfolding enum_idx_def apply (rule index_of_nth)
+  using assms by (simp_all add: card_UNIV_length_enum enum_distinct)
+
+subsubsection \<open>Filtering lists/sets\<close>
+
+
+
+lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
+proof (induction l)
+  show "List.map_filter f (map g []) = List.map_filter (f \<circ> g) []"
+    by (simp add: map_filter_simps)
+  show "List.map_filter f (map g (a # l)) = List.map_filter (f \<circ> g) (a # l)"
+    if "List.map_filter f (map g l) = List.map_filter (f \<circ> g) l"
+    for a :: 'c
+      and l :: "'c list"
+    using that  map_filter_simps(1)
+    by (metis comp_eq_dest_lhs list.simps(9))
+qed
+
+lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
+  proof (induction l)
+  show "List.map_filter (\<lambda>x. Some (f x)) [] = map f []"
+    by (simp add: map_filter_simps)
+  show "List.map_filter (\<lambda>x. Some (f x)) (a # l) = map f (a # l)"
+    if "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
+    for a :: 'b
+      and l :: "'b list"
+    using that by (simp add: map_filter_simps(1))
+qed
+
+lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filter f y"
+  unfolding Set.filter_def by auto  
+
+lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
+  using that unfolding Set.filter_def by auto
 
 end

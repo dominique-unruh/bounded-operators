@@ -13,7 +13,6 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Operator_Norm"
     "HOL-Analysis.Elementary_Normed_Spaces"
     "HOL-Library.Set_Algebras"
-    "Bounded_Operators-Extra.Preliminaries"
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
 
@@ -21,6 +20,7 @@ theory Complex_Vector_Spaces
     "Bounded_Operators-Extra.Extra_Vector_Spaces"
     "Bounded_Operators-Extra.Extra_Ordered_Fields"
     "Bounded_Operators-Extra.Extra_Lattice"
+    "Bounded_Operators-Extra.Extra_General"
 begin
 
 bundle notation_norm begin
@@ -1021,11 +1021,11 @@ corollary complex_csemilinearD:
   by (rule csemilinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
 
 (* TODO: remove *)
-lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
+(* lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
 proof (simp add: csemilinear_def additive_def csemilinear_axioms_def)
   show "Modules.additive (\<lambda>x. cnj a * cnj x)"
     by (simp add: distrib_left additive.intro)
-qed
+qed *)
 
 
 lemma csemilinearI:

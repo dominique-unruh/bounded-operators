@@ -392,7 +392,7 @@ lemma ustrong_onorm:
     and l::"'a \<Rightarrow>\<^sub>L 'b"
   assumes \<open>sphere 0 1: (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ((*\<^sub>v) l)\<close>
   shows \<open>f \<longlonglongrightarrow> l\<close> 
-proof(cases \<open>(UNIV::'a set) = 0\<close>)
+proof (cases \<open>(UNIV::'a set) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
     for n
@@ -434,7 +434,7 @@ next
           internalize_sort "'z::{not_singleton,real_normed_vector}"]
 
     have t1: "class.not_singleton (TYPE('a)::'a itself)"
-      using False by (rule class_not_singletonI_monoid_add)          
+      using False unfolding set_zero by (rule class_not_singletonI_monoid_add)          
     have t2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus (*\<^sub>R) sgn uniformity open"
       by (rule real_normed_vector_class.real_normed_vector_axioms)
     have q1: \<open>\<exists>x \<in> *s* (sphere 0 1). 
@@ -586,7 +586,7 @@ next
       for x
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast    
     have m1: "class.not_singleton (TYPE('a)::'a itself)"
-      using False by (rule class_not_singletonI_monoid_add)        
+      using False unfolding set_zero by (rule class_not_singletonI_monoid_add)        
     have m2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus (*\<^sub>R) sgn uniformity open"
       by (rule real_normed_vector_class.real_normed_vector_axioms)
     have n2: \<open>\<exists>x\<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
@@ -5821,7 +5821,7 @@ lemma one_dim_isom_adjoint[simp]: \<open>one_dim_isom (A*) = (one_dim_isom A)*\<
   by (smt (z3) one_cblinfun_adj one_dim_1_times_a_eq_a one_dim_isom_one one_dim_isom_scaleC scalar_times_adj)
 
 lemma one_dim_isom_adjoint_complex[simp]: \<open>one_dim_isom (A*) = cnj (one_dim_isom A)\<close>
-  by (metis (mono_tags, lifting) cinner_complex_def complex_scaleC_def of_complex_inner_1' one_cblinfun_adj one_dim_isom_idem one_dim_isom_scaleC one_dim_scaleC_1 scalar_times_adj)
+  by (metis (mono_tags, lifting) one_cblinfun_adj one_dim_isom_idem one_dim_scaleC_1 scalar_times_adj)
 
 
 unbundle no_cblinfun_notation
