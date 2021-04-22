@@ -3674,7 +3674,7 @@ proof-
       using a2 b2 b4 by auto    
     ultimately show "u v = 0" by simp
   qed
-  thus ?thesis using independent_explicit_module
+  thus ?thesis using complex_vector.independent_explicit_module
     by (smt cdependent_raw_def)
 qed
 

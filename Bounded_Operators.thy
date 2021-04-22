@@ -3621,7 +3621,7 @@ proof (auto, transfer)
   fix S :: "'b set"
   assume "closed_subspace S"
   hence "0 \<in> S"
-    unfolding closed_subspace_def subspace_def 
+    unfolding closed_subspace_def complex_vector.subspace_def 
     by blast
   hence "(\<lambda>_. 0) ` S = {0::'a}"
     by auto
@@ -5187,7 +5187,7 @@ proof-
       by (simp add: \<open>v \<noteq> 0\<close>)  
     ultimately show "u v = 0" by simp
   qed
-  thus ?thesis using independent_explicit_module
+  thus ?thesis using complex_vector.independent_explicit_module
     by smt    
 qed
 
@@ -5469,8 +5469,8 @@ next
   case False
   define AA where "AA = cextend_basis A"
   have "complex_vector.span AA = UNIV"
-    using span_extend_basis a1
-    using AA_def  by blast    
+    using complex_vector.span_extend_basis a1
+    using AA_def by blast    
   moreover have "cindependent AA"
     using a1
     by (simp add: AA_def  complex_vector.independent_extend_basis)

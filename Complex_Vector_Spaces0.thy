@@ -92,7 +92,7 @@ lemmas scaleC = scale
 end
 
 (* TODO: Does the global_interpretation command allow us to prefix all global names with a "c"? *)
-global_interpretation complex_vector?: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a :: complex_vector"
+global_interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a :: complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
   defines cdependent_raw_def: cdependent = complex_vector.dependent
@@ -118,7 +118,7 @@ hide_const (open)\<comment> \<open>locale constants\<close>
 abbreviation "cindependent x \<equiv> \<not> cdependent x"
 
 (* TODO: Does the global_interpretation command allow us to prefix all global names with a "c"? *)
-global_interpretation complex_vector?: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+global_interpretation complex_vector: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
   defines cconstruct_raw_def: cconstruct = complex_vector.construct
@@ -202,7 +202,7 @@ qed
 
 lemma linear_scale_complex:
   fixes c::complex shows "clinear f \<Longrightarrow> f (c * b) = c * f b"
-  using linear_scale by fastforce
+  using complex_vector.linear_scale by fastforce
 
 
 interpretation scaleC_left: additive "(\<lambda>a. scaleC a x :: 'a::complex_vector)"
@@ -218,7 +218,7 @@ lemma nonzero_inverse_scaleC_distrib:
 
 lemma inverse_scaleC_distrib: "inverse (scaleC a x) = scaleC (inverse a) (inverse x)"
   for x :: "'a::{complex_div_algebra,division_ring}"
-  by (metis inverse_zero nonzero_inverse_scaleC_distrib scale_eq_0_iff)
+  by (metis inverse_zero nonzero_inverse_scaleC_distrib complex_vector.scale_eq_0_iff)
 
 (* lemmas sum_constant_scaleC = real_vector.sum_constant_scale\<comment> \<open>legacy name\<close> *)
 

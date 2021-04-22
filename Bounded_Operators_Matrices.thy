@@ -2712,7 +2712,7 @@ proof -
   next
     fix x assume "x \<in> cspan X" 
     then obtain c' B where x: "x = (\<Sum>b\<in>B. c' b *\<^sub>C b)" and "finite B" and BX: "B \<subseteq> X"
-      unfolding span_explicit by auto
+      unfolding complex_vector.span_explicit by auto
     define A and c where "A = vec_of_onb_enum ` B"
       and "c b = c' (onb_enum_of_vec b)" for b
     have "vec_of_onb_enum x = vec_of_onb_enum (\<Sum>b\<in>B. c' b *\<^sub>C b)"
@@ -4166,7 +4166,7 @@ proof -
   have Span_Snorm: "Span (set Snorm) = Span (set S)"
     apply (transfer fixing: Snorm S)
     apply (simp add: scaleR_scaleC Snorm_def)
-    apply (subst span_image_scale) 
+    apply (subst complex_vector.span_image_scale) 
     using is_ortho_set_def ortho by fastforce+
 
   have "mk_projector_orthog d (map vec_of_onb_enum S)

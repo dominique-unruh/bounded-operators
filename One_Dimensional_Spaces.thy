@@ -330,7 +330,7 @@ proof intro_classes
   show "x / y = x * inverse y"
     by (simp add: one_dim_divide_inverse)
   show "inverse (0::'a) = 0"
-    by (subst scale_zero_left[symmetric], subst one_dim_inverse, simp)
+    by (subst complex_vector.scale_zero_left[symmetric], subst one_dim_inverse, simp)
 qed
 
 
