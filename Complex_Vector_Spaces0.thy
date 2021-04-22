@@ -10,6 +10,7 @@ theory Complex_Vector_Spaces0
     Complex_Main Jordan_Normal_Form.Conjugate
 begin                                   
 
+(* Jordan_Normal_Form.Conjugate declares these as simps. Seems too aggressive to me. *)
 declare less_complex_def[simp del]
 declare less_eq_complex_def[simp del]
 
@@ -91,7 +92,6 @@ lemmas scaleC = scale
 
 end
 
-(* TODO: Does the global_interpretation command allow us to prefix all global names with a "c"? *)
 global_interpretation complex_vector: vector_space "scaleC :: complex \<Rightarrow> 'a \<Rightarrow> 'a :: complex_vector"
   rewrites "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
@@ -106,6 +106,8 @@ proof unfold_locales
     by (force simp: clinear_def complex_scaleC_def[abs_def])+
 qed (use scaleC_add_right scaleC_add_left in auto)
 
+
+(* Not needed since we did the global_interpretation with mandatory complex_vector-prefix:
 hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.dependent
   complex_vector.independent
@@ -113,11 +115,10 @@ hide_const (open)\<comment> \<open>locale constants\<close>
   complex_vector.subspace
   complex_vector.span
   complex_vector.extend_basis
-  complex_vector.dim
+  complex_vector.dim *)
 
 abbreviation "cindependent x \<equiv> \<not> cdependent x"
 
-(* TODO: Does the global_interpretation command allow us to prefix all global names with a "c"? *)
 global_interpretation complex_vector: vector_space_pair "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
   rewrites  "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
     and "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
@@ -127,11 +128,12 @@ proof unfold_locales
   unfolding clinear_def complex_scaleC_def by auto
 qed (auto simp: clinear_def)
 
+(* Not needed since we did the global_interpretation with mandatory complex_vector-prefix:
 hide_const (open)\<comment> \<open>locale constants\<close>
-  complex_vector.construct
+  complex_vector.construct *)
 
-lemma linear_compose: "linear f \<Longrightarrow> linear g \<Longrightarrow> linear (g \<circ> f)"
-  unfolding linear_def by (rule Vector_Spaces.linear_compose)
+lemma clinear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
+  unfolding clinear_def by (rule Vector_Spaces.linear_compose)
 
 text \<open>Recover original theorem names\<close>
 
@@ -171,14 +173,14 @@ lemmas scaleC_left_diff_distrib = scaleC_diff_left
 lemmas scaleC_right_diff_distrib = scaleC_diff_right *)
 
 (* TODO: These with a c *)
-lemmas linear_injective_0 = linear_inj_iff_eq_0
-  and linear_injective_on_subspace_0 = linear_inj_on_iff_eq_0
-  and linear_cmul = linear_scale
-  and linear_scaleC = linear_scale_self
-  and subspace_mul = subspace_scale
-  and span_linear_image = linear_span_image
-  and span_0 = span_zero
-  and span_mul = span_scale
+lemmas clinear_injective_0 = linear_inj_iff_eq_0
+  and clinear_injective_on_subspace_0 = linear_inj_on_iff_eq_0
+  and clinear_cmul = linear_scale
+  and clinear_scaleC = linear_scale_self
+  and csubspace_mul = subspace_scale
+  and cspan_linear_image = linear_span_image
+  and cspan_0 = span_zero
+  and cspan_mul = span_scale
   and injective_scaleC = injective_scale
 
 lemma scaleC_minus1_left [simp]: "scaleC (-1) x = - x"
@@ -200,7 +202,7 @@ proof -
     by simp
 qed
 
-lemma linear_scale_complex:
+lemma clinear_scale_complex:
   fixes c::complex shows "clinear f \<Longrightarrow> f (c * b) = c * f b"
   using complex_vector.linear_scale by fastforce
 
@@ -222,7 +224,8 @@ lemma inverse_scaleC_distrib: "inverse (scaleC a x) = scaleC (inverse a) (invers
 
 (* lemmas sum_constant_scaleC = real_vector.sum_constant_scale\<comment> \<open>legacy name\<close> *)
 
-named_theorems vector_add_divide_simps "to simplify sums of scaled vectors"
+(* Defined in Real_Vector_Spaces:
+named_theorems vector_add_divide_simps "to simplify sums of scaled vectors" *)
 
 lemma [vector_add_divide_simps]:
   "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
@@ -236,15 +239,15 @@ lemma [vector_add_divide_simps]:
   for v :: "'a :: complex_vector"
   by (simp_all add: divide_inverse_commute scaleC_add_right scaleC_diff_right)
 
-lemma eq_vector_fraction_iff [vector_add_divide_simps]:
+lemma ceq_vector_fraction_iff [vector_add_divide_simps]:
   fixes x :: "'a :: complex_vector"
   shows "(x = (u / v) *\<^sub>C a) \<longleftrightarrow> (if v=0 then x = 0 else v *\<^sub>C x = u *\<^sub>C a)"
   by auto (metis (no_types) divide_eq_1_iff divide_inverse_commute scaleC_one scaleC_scaleC)
 
-lemma vector_fraction_eq_iff [vector_add_divide_simps]:
+lemma cvector_fraction_eq_iff [vector_add_divide_simps]:
   fixes x :: "'a :: complex_vector"
   shows "((u / v) *\<^sub>C a = x) \<longleftrightarrow> (if v=0 then x = 0 else u *\<^sub>C a = v *\<^sub>C x)"
-  by (metis eq_vector_fraction_iff)
+  by (metis ceq_vector_fraction_iff)
 
 lemma complex_vector_affinity_eq:
   fixes x :: "'a :: complex_vector"
@@ -400,7 +403,6 @@ lemma of_complex_eq_of_complex_power_int_cancel_iff [simp]:
      power_int b w = x"
   by (metis of_complex_power_int of_complex_eq_iff)
 
-term real_of_int
 lemma of_complex_in_Ints_iff [simp]: "of_complex x \<in> \<int> \<longleftrightarrow> x \<in> \<int>"
 proof safe
   fix x assume "(of_complex x :: 'a) \<in> \<int>"
@@ -419,8 +421,9 @@ lemma Ints_of_complex [intro]: "x \<in> \<int> \<Longrightarrow> of_complex x \<
 
 
 text \<open>Every complex algebra has characteristic zero.\<close>
+
 (* Inherited from real_algebra_1 *)
-instance complex_algebra_1 < ring_char_0 ..
+(* instance complex_algebra_1 < ring_char_0 .. *)
 
 lemma fraction_scaleC_times [simp]:
   fixes a :: "'a::complex_algebra_1"
@@ -437,7 +440,8 @@ lemma scaleC_times [simp]:
   shows "(numeral u) *\<^sub>C (numeral w * a) = (numeral u * numeral w) *\<^sub>C a"
   by (simp add: scaleC_conv_of_complex)
 
-instance complex_field < field_char_0 ..
+(* Inherited from real_field *)
+(* instance complex_field < field_char_0 .. *)
 
 
 subsection \<open>The Set of Real Numbers\<close>
@@ -550,7 +554,7 @@ lemma scaleC_mono':
   "a \<le> b \<Longrightarrow> c \<le> d \<Longrightarrow> 0 \<le> a \<Longrightarrow> 0 \<le> c \<Longrightarrow> a *\<^sub>C c \<le> b *\<^sub>C d"
   by (rule scaleC_mono) (auto intro: order.trans)
 
-lemma pos_le_divideR_eq [field_simps]:
+lemma pos_le_divideC_eq [field_simps]:
   "a \<le> b /\<^sub>C c \<longleftrightarrow> c *\<^sub>C a \<le> b" (is "?P \<longleftrightarrow> ?Q") if "0 < c"
 proof
   assume ?P
@@ -566,96 +570,96 @@ next
     by auto
 qed
 
-lemma pos_less_divideR_eq [field_simps]:
+lemma pos_less_divideC_eq [field_simps]:
   "a < b /\<^sub>C c \<longleftrightarrow> c *\<^sub>C a < b" if "c > 0"
-  using that pos_le_divideR_eq [of c a b]
+  using that pos_le_divideC_eq [of c a b]
   by (auto simp add: le_less)
 
-lemma pos_divideR_le_eq [field_simps]:
+lemma pos_divideC_le_eq [field_simps]:
   "b /\<^sub>C c \<le> a \<longleftrightarrow> b \<le> c *\<^sub>C a" if "c > 0"
-  using that pos_le_divideR_eq [of "inverse c" b a]
+  using that pos_le_divideC_eq [of "inverse c" b a]
     less_complex_def by auto
 
-lemma pos_divideR_less_eq [field_simps]:
+lemma pos_divideC_less_eq [field_simps]:
   "b /\<^sub>C c < a \<longleftrightarrow> b < c *\<^sub>C a" if "c > 0"
-  using that pos_less_divideR_eq [of "inverse c" b a]
-  by (simp add: local.less_le_not_le local.pos_divideR_le_eq local.pos_le_divideR_eq)
+  using that pos_less_divideC_eq [of "inverse c" b a]
+  by (simp add: local.less_le_not_le local.pos_divideC_le_eq local.pos_le_divideC_eq)
 
-lemma pos_le_minus_divideR_eq [field_simps]:
+lemma pos_le_minus_divideC_eq [field_simps]:
   "a \<le> - (b /\<^sub>C c) \<longleftrightarrow> c *\<^sub>C a \<le> - b" if "c > 0"
   using that
-  by (metis local.ab_left_minus local.add.inverse_unique local.add.right_inverse local.add_minus_cancel local.le_minus_iff local.pos_divideR_le_eq local.scaleC_add_right local.scaleC_one local.scaleC_scaleC)
+  by (metis local.ab_left_minus local.add.inverse_unique local.add.right_inverse local.add_minus_cancel local.le_minus_iff local.pos_divideC_le_eq local.scaleC_add_right local.scaleC_one local.scaleC_scaleC)
   
-lemma pos_less_minus_divideR_eq [field_simps]:
+lemma pos_less_minus_divideC_eq [field_simps]:
   "a < - (b /\<^sub>C c) \<longleftrightarrow> c *\<^sub>C a < - b" if "c > 0"
-  using that by (metis le_less less_le_not_le pos_divideR_le_eq
-    pos_divideR_less_eq pos_le_minus_divideR_eq)
+  using that by (metis le_less less_le_not_le pos_divideC_le_eq
+    pos_divideC_less_eq pos_le_minus_divideC_eq)
 
-lemma pos_minus_divideR_le_eq [field_simps]:
+lemma pos_minus_divideC_le_eq [field_simps]:
   "- (b /\<^sub>C c) \<le> a \<longleftrightarrow> - b \<le> c *\<^sub>C a" if "c > 0"
   using that
-  by (metis local.add_minus_cancel local.left_minus local.pos_divideR_le_eq local.scaleC_add_right)
+  by (metis local.add_minus_cancel local.left_minus local.pos_divideC_le_eq local.scaleC_add_right)
 
-lemma pos_minus_divideR_less_eq [field_simps]:
+lemma pos_minus_divideC_less_eq [field_simps]:
   "- (b /\<^sub>C c) < a \<longleftrightarrow> - b < c *\<^sub>C a" if "c > 0"
-  using that by (simp add: less_le_not_le pos_le_minus_divideR_eq pos_minus_divideR_le_eq) 
+  using that by (simp add: less_le_not_le pos_le_minus_divideC_eq pos_minus_divideC_le_eq) 
 
 lemma scaleC_image_atLeastAtMost: "c > 0 \<Longrightarrow> scaleC c ` {x..y} = {c *\<^sub>C x..c *\<^sub>C y}"
   apply (auto intro!: scaleC_left_mono simp: image_iff Bex_def)
-  by (meson local.eq_iff pos_divideR_le_eq pos_le_divideR_eq)
+  by (meson local.eq_iff pos_divideC_le_eq pos_le_divideC_eq)
 
 end (* class ordered_complex_vector *)
 
-lemma neg_le_divideR_eq [field_simps]:
+lemma neg_le_divideC_eq [field_simps]:
   "a \<le> b /\<^sub>C c \<longleftrightarrow> b \<le> c *\<^sub>C a" (is "?P \<longleftrightarrow> ?Q") if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that pos_le_divideR_eq [of "- c" a "- b"]
+  using that pos_le_divideC_eq [of "- c" a "- b"]
   by (simp add: less_complex_def)
 
-lemma neg_less_divideR_eq [field_simps]:
+lemma neg_less_divideC_eq [field_simps]:
   "a < b /\<^sub>C c \<longleftrightarrow> b < c *\<^sub>C a" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that neg_le_divideR_eq [of c a b]
-  by (smt (verit, ccfv_SIG) Complex_Vector_Spaces0.neg_le_divideR_eq antisym_conv2 complex_vector.scale_minus_right dual_order.strict_implies_order le_less_trans neg_le_iff_le scaleC_scaleC)
+  using that neg_le_divideC_eq [of c a b]
+  by (smt (verit, ccfv_SIG) neg_le_divideC_eq antisym_conv2 complex_vector.scale_minus_right dual_order.strict_implies_order le_less_trans neg_le_iff_le scaleC_scaleC)
 
-lemma neg_divideR_le_eq [field_simps]:
+lemma neg_divideC_le_eq [field_simps]:
   "b /\<^sub>C c \<le> a \<longleftrightarrow> c *\<^sub>C a \<le> b" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that pos_divideR_le_eq [of "- c" "- b" a]
+  using that pos_divideC_le_eq [of "- c" "- b" a]
   by (simp add: less_complex_def)
 
-lemma neg_divideR_less_eq [field_simps]:
+lemma neg_divideC_less_eq [field_simps]:
   "b /\<^sub>C c < a \<longleftrightarrow> c *\<^sub>C a < b" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that neg_divideR_le_eq [of c b a]
-  by (meson Complex_Vector_Spaces0.neg_le_divideR_eq less_le_not_le)
+  using that neg_divideC_le_eq [of c b a]
+  by (meson neg_le_divideC_eq less_le_not_le)
 
-lemma neg_le_minus_divideR_eq [field_simps]:
+lemma neg_le_minus_divideC_eq [field_simps]:
   "a \<le> - (b /\<^sub>C c) \<longleftrightarrow> - b \<le> c *\<^sub>C a" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that pos_le_minus_divideR_eq [of "- c" a "- b"]
-  by (metis Complex_Vector_Spaces0.neg_le_divideR_eq complex_vector.scale_minus_right)
+  using that pos_le_minus_divideC_eq [of "- c" a "- b"]
+  by (metis neg_le_divideC_eq complex_vector.scale_minus_right)
   
-lemma neg_less_minus_divideR_eq [field_simps]:
+lemma neg_less_minus_divideC_eq [field_simps]:
   "a < - (b /\<^sub>C c) \<longleftrightarrow> - b < c *\<^sub>C a" if "c < 0"
    for a b :: "'a :: ordered_complex_vector"
 proof -
   have *: "- b = c *\<^sub>C a \<longleftrightarrow> b = - (c *\<^sub>C a)"
     by (metis add.inverse_inverse)
-  from that neg_le_minus_divideR_eq [of c a b]
+  from that neg_le_minus_divideC_eq [of c a b]
   show ?thesis by (auto simp add: le_less *)
 qed
 
-lemma neg_minus_divideR_le_eq [field_simps]:
+lemma neg_minus_divideC_le_eq [field_simps]:
   "- (b /\<^sub>C c) \<le> a \<longleftrightarrow> c *\<^sub>C a \<le> - b" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that pos_minus_divideR_le_eq [of "- c" "- b" a]
-  by (metis Complex_Vector_Spaces0.neg_divideR_le_eq complex_vector.scale_minus_right)
+  using that pos_minus_divideC_le_eq [of "- c" "- b" a]
+  by (metis Complex_Vector_Spaces0.neg_divideC_le_eq complex_vector.scale_minus_right)
 
-lemma neg_minus_divideR_less_eq [field_simps]:
+lemma neg_minus_divideC_less_eq [field_simps]:
   "- (b /\<^sub>C c) < a \<longleftrightarrow> c *\<^sub>C a < - b" if "c < 0"
     for a b :: "'a :: ordered_complex_vector"
-  using that by (simp add: less_le_not_le neg_le_minus_divideR_eq neg_minus_divideR_le_eq)
+  using that by (simp add: less_le_not_le neg_le_minus_divideC_eq neg_minus_divideC_le_eq)
 
 lemma [field_split_simps]:
   "a = b /\<^sub>C c \<longleftrightarrow> (if c = 0 then a = 0 else c *\<^sub>C a = b)"
@@ -697,11 +701,11 @@ lemma split_scaleC_neg_le: "(0 \<le> a \<and> x \<le> 0) \<or> (a \<le> 0 \<and>
   for x :: "'a::ordered_complex_vector"
   by (auto simp: scaleC_nonneg_nonpos scaleC_nonpos_nonneg)
 
-lemma le_add_iff1: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> (a - b) *\<^sub>C e + c \<le> d"
+lemma cle_add_iff1: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> (a - b) *\<^sub>C e + c \<le> d"
   for c d e :: "'a::ordered_complex_vector"
   by (simp add: algebra_simps)
 
-lemma le_add_iff2: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> c \<le> (b - a) *\<^sub>C e + d"
+lemma cle_add_iff2: "a *\<^sub>C e + c \<le> b *\<^sub>C e + d \<longleftrightarrow> c \<le> (b - a) *\<^sub>C e + d"
   for c d e :: "'a::ordered_complex_vector"
   by (simp add: algebra_simps)
 
@@ -740,13 +744,13 @@ next
     proof cases
       case 1
       with \<open>?lhs\<close> have "inverse a *\<^sub>C 0 \<le> inverse a *\<^sub>C (a *\<^sub>C b)"
-        by (metis complex_vector.scale_zero_right ordered_complex_vector_class.pos_le_divideR_eq)
+        by (metis complex_vector.scale_zero_right ordered_complex_vector_class.pos_le_divideC_eq)
       with 1 show ?thesis
         by simp
     next
       case 2
       with \<open>?lhs\<close> have "- inverse a *\<^sub>C 0 \<le> - inverse a *\<^sub>C (a *\<^sub>C b)"
-        by (metis Complex_Vector_Spaces0.neg_le_minus_divideR_eq complex_vector.scale_zero_right neg_le_0_iff_le scaleC_left.minus)
+        by (metis Complex_Vector_Spaces0.neg_le_minus_divideC_eq complex_vector.scale_zero_right neg_le_0_iff_le scaleC_left.minus)
       with 2 show ?thesis
         by simp
     qed
@@ -768,7 +772,7 @@ lemma scaleC_le_0_iff:
 lemma scaleC_le_cancel_left: "c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> (0 < c \<longrightarrow> a \<le> b) \<and> (c < 0 \<longrightarrow> b \<le> a)"
   if "c \<in> \<real>" (* Not present in Real_Vector_Spaces *)
   for b :: "'a::ordered_complex_vector"
-  by (smt (verit, ccfv_threshold) Complex_Vector_Spaces0.neg_divideR_le_eq complex_vector.scale_cancel_left complex_vector.scale_zero_right dual_order.eq_iff dual_order.trans ordered_complex_vector_class.pos_le_divideR_eq that zero_le_scaleC_iff)
+  by (smt (verit, ccfv_threshold) Complex_Vector_Spaces0.neg_divideC_le_eq complex_vector.scale_cancel_left complex_vector.scale_zero_right dual_order.eq_iff dual_order.trans ordered_complex_vector_class.pos_le_divideC_eq that zero_le_scaleC_iff)
 
 lemma scaleC_le_cancel_left_pos: "0 < c \<Longrightarrow> c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> a \<le> b"
   for b :: "'a::ordered_complex_vector"
@@ -808,11 +812,11 @@ lemma (in complex_normed_algebra_1) scaleC_power [simp]: "(scaleC x y) ^ n = sca
 
 class complex_normed_div_algebra = complex_div_algebra + complex_normed_vector +
   real_normed_div_algebra (* Not present in Real_Normed_Vector *)
-  (* assumes norm_mult: "norm (x * y) = norm x * norm y" *) (* Not needed, included from complex_normed_div_algebra *)
+  (* assumes norm_mult: "norm (x * y) = norm x * norm y" *) (* Not needed, included from real_normed_div_algebra *)
 
-class complex_normed_field = complex_field + complex_normed_div_algebra +
-(* TODO: Just do a subclass instead? *)
-  real_normed_field (* Not present in Real_Normed_Vector *)
+class complex_normed_field = complex_field + complex_normed_div_algebra
+
+subclass (in complex_normed_field) real_normed_field ..
 
 instance complex_normed_div_algebra < complex_normed_algebra_1 ..
 
@@ -1041,13 +1045,13 @@ lemma complex_sgn_eq: "sgn x = x / \<bar>x\<bar>"
   for x :: complex
   by (simp add: abs_complex_def scaleR_scaleC sgn_div_norm divide_inverse)
 
-lemma zero_le_sgn_iff [simp]: "0 \<le> sgn x \<longleftrightarrow> 0 \<le> x"
+lemma czero_le_sgn_iff [simp]: "0 \<le> sgn x \<longleftrightarrow> 0 \<le> x"
   for x :: complex
   using cmod_eq_Re divide_eq_0_iff less_eq_complex_def by auto
 
-lemma sgn_le_0_iff [simp]: "sgn x \<le> 0 \<longleftrightarrow> x \<le> 0"
+lemma csgn_le_0_iff [simp]: "sgn x \<le> 0 \<longleftrightarrow> x \<le> 0"
   for x :: complex
-  by (smt (verit, best) Complex_Vector_Spaces0.zero_le_sgn_iff Im_sgn Re_sgn divide_eq_0_iff dual_order.eq_iff less_eq_complex_def sgn_zero_iff zero_complex.sel(1) zero_complex.sel(2))
+  by (smt (verit, best) czero_le_sgn_iff Im_sgn Re_sgn divide_eq_0_iff dual_order.eq_iff less_eq_complex_def sgn_zero_iff zero_complex.sel(1) zero_complex.sel(2))
 
 
 subsection \<open>Bounded Linear and Bilinear Operators\<close>
@@ -1455,7 +1459,7 @@ subsection \<open>Cauchy sequences\<close>
 (* lemma (in metric_space) metric_Cauchy_iff2:
   "Cauchy X = (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. dist (X m) (X n) < inverse(real (Suc j))))" *)
 
-lemma Cauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
+lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
   by (simp only: metric_Cauchy_iff2 dist_complex_def)
 
 (* Not specific to real/complex *)

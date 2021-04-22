@@ -2986,7 +2986,7 @@ lemma scaleC_eigenspace[simp]:
 proof -
   have "b *\<^sub>C (idOp::('a, _) cblinfun) = a *\<^sub>C (b / a) *\<^sub>C idOp"
     using a1
-    by (metis eq_vector_fraction_iff)
+    by (metis ceq_vector_fraction_iff)
   hence "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
     using a1 by (metis (no_types) complex_vector.scale_right_diff_distrib kernel_scalar_times)
   thus ?thesis 
@@ -4870,7 +4870,7 @@ proof-
             hence "ha yb \<noteq> 0"
               by blast
             hence "\<exists>a. \<i> *\<^sub>C a = yb \<and> ha (\<i> *\<^sub>C a) \<noteq> 0"
-              by (metis (full_types) eq_vector_fraction_iff complex_i_not_zero)
+              by (metis (full_types) ceq_vector_fraction_iff complex_i_not_zero)
             thus "\<exists>a\<in>{a. ha (\<i> *\<^sub>C a) \<noteq> 0}. yb = \<i> *\<^sub>C a"
               by blast
           qed
@@ -5709,7 +5709,7 @@ next
   also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
     by (simp add: butterfly_apply)
   finally have xcy: "x = c *\<^sub>C y"
-    by (simp add: c_def eq_vector_fraction_iff)
+    by (simp add: c_def ceq_vector_fraction_iff)
   have "cmod c * norm x = cmod c * norm y"
     using assms norm_butterfly
     by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)
