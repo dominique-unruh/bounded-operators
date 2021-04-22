@@ -926,8 +926,6 @@ lemma norm_power_diff:
   shows "norm (z^m - w^m) \<le> m * norm (z - w)"
 *)
 
-declare[[show_types]]
-
 lemma norm_of_complex_add1 [simp]: "norm (of_complex x + 1 :: 'a :: complex_normed_div_algebra) = cmod (x + 1)"
   by (metis norm_of_complex of_complex_1 of_complex_add)
 

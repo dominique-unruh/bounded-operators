@@ -1337,7 +1337,7 @@ lemma cblinfun_of_blinfun_plus:
 
 lift_definition uminus_cblinfun::"'a \<Rightarrow>\<^sub>C\<^sub>L'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'b" is
   "\<lambda>f x. - f x"
-  by (rule Complex_Vector_Spaces.cbounded_linear_minus)
+  by (rule cbounded_linear_minus)
 
 lemma blinfun_of_cblinfun_uminus:
   \<open>blinfun_of_cblinfun (- f) = - (blinfun_of_cblinfun f)\<close>
@@ -1352,7 +1352,7 @@ lemma cblinfun_of_blinfun_uminus:
 
 lift_definition minus_cblinfun::"('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'b) cblinfun" is
   "\<lambda>f g x. f x - g x"
-  by (rule Complex_Vector_Spaces.cbounded_linear_sub)
+  by (rule cbounded_linear_sub)
 
 lemma blinfun_of_cblinfun_minus:
   \<open>blinfun_of_cblinfun (f - g) = blinfun_of_cblinfun f - blinfun_of_cblinfun g\<close>
@@ -1369,7 +1369,7 @@ lemma cblinfun_of_blinfun_minus:
 
 lift_definition scaleC_cblinfun :: \<open>complex \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   is  "\<lambda> c f x. c *\<^sub>C (f x)"
-  by (rule Complex_Vector_Spaces.cbounded_linear_const_scaleC)
+  by (rule cbounded_linear_const_scaleC)
 
 
 lemma blinfun_of_cblinfun_scaleC:
@@ -1649,7 +1649,7 @@ qed
 
 lemma cblinfun_apply_norm: "\<exists>K. \<forall>x. norm (F *\<^sub>V x) \<le> norm x * K "
   apply transfer unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def
-  by simp
+  by (simp add: cbounded_linear_axioms_def)
 
 instantiation cblinfun :: (complex_normed_vector, cbanach) "cbanach"
 begin
@@ -2430,7 +2430,7 @@ proof transfer
 
   from  \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close>
   have  \<open>\<And>x. x \<in> complex_vector.span G \<Longrightarrow> A x = B x\<close>
-    using \<open>cbounded_linear A\<close> \<open>cbounded_linear B\<close> cbounded_linear.is_clinear equal_span by blast
+    by (simp add: \<open>cbounded_linear (A::'a \<Rightarrow> 'b)\<close> \<open>cbounded_linear (B::'a \<Rightarrow> 'b)\<close> cbounded_linear.clinear complex_vector.linear_eq_on)
   hence \<open>\<forall>x.  x \<in> complex_vector.span G \<longrightarrow> F x = 0\<close>
     unfolding F_def
     by simp
@@ -2986,7 +2986,7 @@ lemma scaleC_eigenspace[simp]:
 proof -
   have "b *\<^sub>C (idOp::('a, _) cblinfun) = a *\<^sub>C (b / a) *\<^sub>C idOp"
     using a1
-    by (metis Complex_Vector_Spaces.eq_vector_fraction_iff)
+    by (metis eq_vector_fraction_iff)
   hence "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
     using a1 by (metis (no_types) complex_vector.scale_right_diff_distrib kernel_scalar_times)
   thus ?thesis 
@@ -3329,18 +3329,11 @@ lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> 
 lift_definition Bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L complex) \<Rightarrow>\<^sub>C\<^sub>L complex\<close>
   is Bifunctional'
 proof
-  show "clinear (Bifunctional' (a::'a))"
-    for a :: 'a
-    unfolding clinear_def proof
-    show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
-      for b1 :: "('a, complex) cblinfun"
-        and b2 :: "('a, complex) cblinfun"
-      by (simp add: Bifunctional'.rep_eq bifunctional_def plus_cblinfun.rep_eq)
-    show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
-      for r :: complex
-        and b :: "'a \<Rightarrow>\<^sub>C\<^sub>L complex"
-      by (simp add: Bifunctional'.rep_eq bifunctional_def)    
-  qed
+  fix a :: 'a and b b1 b2 and r :: complex
+  show "Bifunctional' a (b1 + b2) = Bifunctional' a b1 + Bifunctional' a b2"
+    by (simp add: Bifunctional'.rep_eq bifunctional_def plus_cblinfun.rep_eq)
+  show "Bifunctional' a (r *\<^sub>C b) = r *\<^sub>C Bifunctional' a b"
+    by (simp add: Bifunctional'.rep_eq bifunctional_def)    
 
   have "\<exists>K. \<forall>x. cbounded_linear x \<longrightarrow>
             cmod (bifunctional a x) \<le> onorm x * K"
@@ -3628,7 +3621,7 @@ proof (auto, transfer)
   fix S :: "'b set"
   assume "closed_subspace S"
   hence "0 \<in> S"
-    unfolding closed_subspace_def Complex_Vector_Spaces.subspace_def 
+    unfolding closed_subspace_def subspace_def 
     by blast
   hence "(\<lambda>_. 0) ` S = {0::'a}"
     by auto
@@ -3887,7 +3880,7 @@ proof intro_classes
         and "A 1 = 0"
       for A :: "'a \<Rightarrow> 'b"
       using that
-      by (simp add: cbounded_linear.is_clinear) 
+      by (simp add: cbounded_linear.clinear)
     show "clinear ((\<lambda>_. 0)::'a \<Rightarrow> 'b)"
       if "cbounded_linear A"
         and "A 1 = 0"
@@ -3905,7 +3898,7 @@ proof intro_classes
   show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
     unfolding cinner_cblinfun_def 
     apply transfer 
-    by (simp add: norm_mult abs_complex_def one_dim_onorm' cnj_x_x power2_eq_square cbounded_linear.is_clinear)
+    by (simp add: norm_mult abs_complex_def one_dim_onorm' cnj_x_x power2_eq_square cbounded_linear.clinear)
 qed
 end
 
@@ -4103,7 +4096,7 @@ proof-
     for A :: "'b \<Rightarrow> 'a"
       and G :: "'b set"
     using that
-    by (simp add: cbounded_linear.is_clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
+    by (simp add: cbounded_linear.clinear closure_mono closure_subset complex_vector.linear_span_image image_mono) 
   show ?thesis
     apply transfer
     using u1 u2
@@ -4254,13 +4247,13 @@ proof-
     by (metis (mono_tags) UNIV_I a1 a2 a3 cdependent_raw_def is_ortho_set_independent 
         span_explicit_finite subset_refl)
 
-  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = Complex_Vector_Spaces.span A"
+  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = cspan A"
     by (simp add: complex_vector.span_explicit)      
   have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
     using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
-  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> Complex_Vector_Spaces.span A"
+  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> cspan A"
     using f1 by blast
-  have "Complex_Vector_Spaces.span T = UNIV"
+  have "cspan T = UNIV"
     by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
   hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
     using f3 f2 by blast
@@ -4454,7 +4447,7 @@ proof-
     hence "inverse c *\<^sub>C y \<in> S'"
       using that(1) by blast 
     have t: "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
-      using a3 Complex_Vector_Spaces.complex_vector.injective_scale[where c = c]
+      using a3 complex_vector.injective_scale[where c = c]
       by blast
     have "0 = (\<Sum>x\<in>(*\<^sub>C) c ` S'. u x *\<^sub>C x)"
       using \<open>S = (*\<^sub>C) c ` S'\<close> that(2) by auto
@@ -4765,7 +4758,7 @@ proof-
     proof(cases "y \<in> B")
       case True     
       have "g y = 0"
-        using g1 g2 g3 True a1 Complex_Vector_Spaces.complex_vector.independent_alt[where B = B]
+        using g1 g2 g3 True a1 complex_vector.independent_alt[where B = B]
         by (smt Collect_cong  sum.cong)
       thus ?thesis unfolding g_def
         using True by auto 
@@ -4877,7 +4870,7 @@ proof-
             hence "ha yb \<noteq> 0"
               by blast
             hence "\<exists>a. \<i> *\<^sub>C a = yb \<and> ha (\<i> *\<^sub>C a) \<noteq> 0"
-              by (metis (full_types) Complex_Vector_Spaces.eq_vector_fraction_iff complex_i_not_zero)
+              by (metis (full_types) eq_vector_fraction_iff complex_i_not_zero)
             thus "\<exists>a\<in>{a. ha (\<i> *\<^sub>C a) \<noteq> 0}. yb = \<i> *\<^sub>C a"
               by blast
           qed
@@ -5018,7 +5011,7 @@ proof -
     hence "(\<Sum>v\<in>B. (f v - complex_vector.representation B \<psi> v) *\<^sub>C v) = 0"
       by simp
     hence "f b - complex_vector.representation B \<psi> b = 0"
-      using a1 a2 a3 Complex_Vector_Spaces.complex_vector.independentD[where s = B and t = B 
+      using a1 a2 a3 complex_vector.independentD[where s = B and t = B 
           and u = "\<lambda>v. f v - complex_vector.representation B \<psi> v" and v = b]
         order_refl  by smt
     hence "complex_vector.representation B \<psi> b = f b"
@@ -5092,7 +5085,7 @@ proof -
       by auto
   next
     case False
-    hence "Complex_Vector_Spaces.representation B \<psi> b = 0"
+    hence "crepresentation B \<psi> b = 0"
       using complex_vector.representation_ne_zero by blast      
     thus ?thesis
       by (smt \<open>0 < D\<close> norm_ge_zero norm_zero split_mult_pos_le)
@@ -5209,16 +5202,16 @@ lemma cblinfun_operator_finite_dim:
   shows "cbounded_linear F"
 proof-
   include notation_norm
-  have "\<exists>C>0. \<forall>\<psi> b. cmod (Complex_Vector_Spaces.representation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
+  have "\<exists>C>0. \<forall>\<psi> b. cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
     using finite_complex_span_representation_bounded[where B = basis] b2 b3 by blast
-  then obtain C where s1: "cmod (Complex_Vector_Spaces.representation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
+  then obtain C where s1: "cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
     and s2: "C > 0"
   for \<psi> b by blast
   define M where "M = C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
   have "\<parallel>F x\<parallel> \<le> \<parallel>x\<parallel> * M"
     for x
   proof-
-    define r where "r b = Complex_Vector_Spaces.representation basis x b" for b
+    define r where "r b = crepresentation basis x b" for b
     have x_span: "x \<in> complex_vector.span basis"
       by (simp add: b1)
     have f0: "v \<in> basis"
@@ -5261,7 +5254,8 @@ proof-
     finally show ?thesis .
   qed
   thus ?thesis
-    using b5 cbounded_linear_def by blast
+    using b5 cbounded_linear_def
+    using cbounded_linear_axioms_def by blast
 qed
 
 (* TODO move Complex_Normed *)
@@ -5278,7 +5272,7 @@ proof (rule iffI)
 next
   assume \<open>cbounded_linear f\<close>
   then show \<open>clinear f\<close>
-    using cbounded_linear.is_clinear by blast
+    using cbounded_linear.clinear by blast
 qed
 
 
@@ -5335,14 +5329,14 @@ proof-
       by (simp add: a_def complex_vector.finite_representation)      
     have f1: "cindependent basis"
       using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto
-    have "closure (Complex_Vector_Spaces.span basis) = UNIV"
+    have "closure (cspan basis) = UNIV"
       using basis_def closure_UNIV is_generator_set
       by (metis )
-    moreover have "closure (Complex_Vector_Spaces.span basis) = Complex_Vector_Spaces.span basis"
+    moreover have "closure (cspan basis) = cspan basis"
       by (simp add: basis_def span_finite_dim)        
-    ultimately have "Complex_Vector_Spaces.span basis = UNIV"
+    ultimately have "cspan basis = UNIV"
       by blast
-    hence f2: "x \<in> Complex_Vector_Spaces.span basis"
+    hence f2: "x \<in> cspan basis"
       by simp
     have x1: "a v *\<^sub>C (cblinfun_apply f v) = 0" 
       if "a v \<noteq> 0"
@@ -5390,9 +5384,9 @@ proof-
       assume r1: "\<And>v. v\<in>basisB \<Longrightarrow> \<langle>v, x\<rangle> = 0"      
       have "\<langle>v, x\<rangle> = 0" for v
       proof-
-        have "Complex_Vector_Spaces.span basisB = UNIV"
+        have "cspan basisB = UNIV"
           using basisB_def is_generator_set  by auto 
-        hence "v \<in> Complex_Vector_Spaces.span basisB"
+        hence "v \<in> cspan basisB"
           by (smt iso_tuple_UNIV_I)
         hence "\<exists>t s. v = (\<Sum>a\<in>t. s a *\<^sub>C a) \<and> finite t \<and> t \<subseteq> basisB"
           using complex_vector.span_explicit
@@ -5473,7 +5467,7 @@ proof(cases "set (canonical_basis::'a list) = {}")
     using rev_finite_subset by auto 
 next
   case False
-  define AA where "AA = Complex_Vector_Spaces.extend_basis A"
+  define AA where "AA = cextend_basis A"
   have "complex_vector.span AA = UNIV"
     using span_extend_basis a1
     using AA_def  by blast    
@@ -5715,7 +5709,7 @@ next
   also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
     by (simp add: butterfly_apply)
   finally have xcy: "x = c *\<^sub>C y"
-    by (simp add: c_def Complex_Vector_Spaces.eq_vector_fraction_iff)
+    by (simp add: c_def eq_vector_fraction_iff)
   have "cmod c * norm x = cmod c * norm y"
     using assms norm_butterfly
     by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)

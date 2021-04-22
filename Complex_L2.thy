@@ -2857,7 +2857,7 @@ proof-
       hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). (*f2* B) p q = 0\<close>
         by StarDef.transfer
       thus ?thesis
-        using \<open>u \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> \<open>v \<in> *s* Complex_Vector_Spaces.complex_vector.span (range ket)\<close> by blast 
+        using \<open>u \<in> *s* cspan (range ket)\<close> \<open>v \<in> *s* cspan (range ket)\<close> by blast 
     qed
     moreover have \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
       using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
@@ -2906,7 +2906,7 @@ proof-
         using cblinfun_apply \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
-          \<open>cbounded_linear (cblinfun_apply A)\<close> cbounded_linear.is_clinear
+          \<open>cbounded_linear (cblinfun_apply A)\<close> cbounded_linear.clinear
         by smt
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (cblinfun_apply A a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
@@ -3477,7 +3477,8 @@ proof -
     apply transfer apply (rule exI[of _ 1]) by auto
 
   have "cbounded_linear C1"
-    using \<open>clinear C1\<close> bounded_C1 by (rule cbounded_linear.intro)
+    using \<open>clinear C1\<close> bounded_C1
+    using add cbounded_linear_intro scaleC by blast
 
   define C where "C = cBlinfun C1"
   have [transfer_rule]: "pcr_cblinfun (=) (=) C1 C"

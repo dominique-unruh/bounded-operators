@@ -1556,7 +1556,7 @@ theorem projectionPropertiesA':
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_subspace M"
   shows "cbounded_linear \<pi>"
-proof-
+proof
   have b1:  \<open>complex_vector.subspace (orthogonal_complement M)\<close>
     by (simp add: a2 closed_subspace.subspace)
   have f1: "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
@@ -1565,10 +1565,10 @@ proof-
     for c x
     by (metis (no_types) b1 
         add_diff_cancel_right' complex_vector.subspace_def diff_add_cancel scaleC_add_right)
-  hence r1: \<open>\<pi> (c *\<^sub>C x) = c *\<^sub>C (\<pi> x)\<close> for x c
+  thus r1: \<open>\<pi> (c *\<^sub>C x) = c *\<^sub>C (\<pi> x)\<close> for x c
     using f1 by (meson a2 a1 closed_subspace.subspace 
         complex_vector.subspace_def projection_uniq')
-  have r2: \<open>\<pi> (x + y) =  (\<pi> x) + (\<pi> y)\<close>
+  show r2: \<open>\<pi> (x + y) =  (\<pi> x) + (\<pi> y)\<close>
     for x y
   proof-
     have "\<forall>A. \<not> closed_subspace (A::'a set) \<or> complex_vector.subspace A"
@@ -1617,11 +1617,8 @@ proof-
     using a1 projectionPropertiesB' by auto
   hence \<open>\<forall> x. norm (\<pi> x) \<le> norm x * 1\<close>
     by simp
-  hence t1: \<open>\<exists> K. \<forall> x. norm (\<pi> x) \<le> norm x * K\<close>
+  thus t1: \<open>\<exists> K. \<forall> x. norm (\<pi> x) \<le> norm x * K\<close>
     by blast
-  show ?thesis 
-    unfolding cbounded_linear_def
-    by (simp add: t1 t2)    
 qed
 
 theorem projectionPropertiesA:
@@ -1666,8 +1663,8 @@ proof-
     have \<open>f x = 0\<close>
       using that by auto      
     hence  \<open>f  (t *\<^sub>C x) = 0\<close>
-      using a1 cbounded_linear.clinear
-      by (simp add: cbounded_linear.is_clinear complex_vector.linear_scale) 
+      using a1
+      by (simp add: cbounded_linear.clinear complex_vector.linear_scale)
     hence \<open> t *\<^sub>C x \<in> {x. f x = 0}\<close>
       by simp
     thus ?thesis 
@@ -2556,7 +2553,7 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
   have b2: \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
     using  \<open>cbounded_linear G\<close>
     unfolding cbounded_linear_def
-    by simp
+    using cbounded_linear_axioms_def by blast
   define g :: \<open>'a \<Rightarrow> 'b \<Rightarrow> complex\<close> 
     where \<open>g x y = \<langle>x , G y\<rangle>\<close> for x y
   have \<open>cbounded_linear (g x)\<close>
@@ -2579,7 +2576,7 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
       by (simp add: a1 cbounded_linear.bounded cbounded_linear_cinner_right_comp)
     ultimately show ?thesis unfolding bounded_linear_def
       using cbounded_linear.intro
-      by blast 
+      using cbounded_linear_axioms_def by blast
   qed
   hence  \<open>\<forall>x. \<exists>t. \<forall>y.  g x y = \<langle>t, y\<rangle>\<close>
     using  riesz_frechet_representation_existence by blast
@@ -2626,7 +2623,7 @@ lemma Adj_cbounded_linear:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::complex_inner"
   assumes a1: "cbounded_linear A"
   shows \<open>cbounded_linear (A\<^sup>\<dagger>)\<close>
-proof-
+proof
   include notation_norm 
   have b1: \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , A y\<rangle>\<close> for x y
     using Adj_I a1 by auto
@@ -2634,12 +2631,12 @@ proof-
     by (simp add: b1 cinner_diff_left cinner_left_distrib)        
   hence b2: \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close> for x1 x2
     using cinner_eq_zero_iff by blast
-  hence z1: \<open>(A\<^sup>\<dagger>) (x1 + x2) = (A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2\<close> for x1 x2
+  thus z1: \<open>(A\<^sup>\<dagger>) (x1 + x2) = (A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2\<close> for x1 x2
     by (simp add: b2 eq_iff_diff_eq_0)
 
   have f1: \<open>\<langle>(A\<^sup>\<dagger>) (r *\<^sub>C x) - (r *\<^sub>C (A\<^sup>\<dagger>) x ), y\<rangle> = 0\<close> for r x y
     by (simp add: b1 cinner_diff_left)
-  hence z2: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C (A\<^sup>\<dagger>) x\<close> for r x
+  thus z2: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C (A\<^sup>\<dagger>) x\<close> for r x
     using cinner_eq_zero_iff eq_iff_diff_eq_0 by blast
   have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle>\<close> for x
     using power2_norm_eq_cinner' by auto
@@ -2676,10 +2673,8 @@ proof-
     thus ?thesis
       by (smt False mult_right_cancel mult_right_mono norm_ge_zero semiring_normalization_rules(29)) 
   qed
-  show ?thesis 
-    unfolding cbounded_linear_def Modules.additive_def
-    using clinearI z1 z2 z3
-    by auto 
+  thus \<open>\<exists>K. \<forall>x. \<parallel>(A\<^sup>\<dagger>) x\<parallel> \<le> \<parallel>x\<parallel> * K\<close>
+    by auto
 qed
 
 instantiation complex :: "chilbert_space" begin
@@ -3259,7 +3254,8 @@ proof
     by auto
   show "cspan (set (canonical_basis::complex list)) = UNIV"
     unfolding canonical_basis_complex_def 
-    by (auto simp add: Complex_Vector_Spaces.cspan_raw_def vector_space_over_itself.span_Basis)
+    apply (auto simp add: cspan_raw_def vector_space_over_itself.span_Basis)
+    by (metis complex_scaleC_def complex_vector.span_base complex_vector.span_scale cspan_raw_def insertI1 mult.right_neutral)
   show "canonical_basis_length (TYPE(complex)::complex itself)
          = length (canonical_basis::complex list)"
     unfolding canonical_basis_complex_def canonical_basis_length_complex_def
@@ -5149,7 +5145,7 @@ proof-
     qed
     ultimately have "(u - projection (cspan S) u)
                     - projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
-      using Complex_Vector_Spaces.complex_vector.span_diff
+      using complex_vector.span_diff
       by (smt cinner_diff_left diff_zero orthogonal_complement_D1 orthogonal_complement_I2)
     hence "u - projection (cspan {a}) u 
             - projection (cspan S) u \<in> orthogonal_complement (cspan S)"

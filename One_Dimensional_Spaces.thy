@@ -307,7 +307,7 @@ instance one_dim \<subseteq> comm_ring
 proof intro_classes
   fix x y z :: 'a
   show "x * y = y * x"
-    by (metis one_dim_prod algebra_simps)
+    by (metis one_dim_prod ordered_field_class.sign_simps(5))
   show "(x + y) * z = x * z + y * z"
     by (simp add: ring_class.ring_distribs(2))
 qed

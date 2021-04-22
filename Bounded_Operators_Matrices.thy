@@ -318,15 +318,15 @@ lemma cinner_span_breakdown_eq:
   includes notation_norm
   assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "\<parallel>a\<parallel> = 1"
   shows
- "(x \<in> Complex_Vector_Spaces.span (insert a S)) = (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S)"
+ "(x \<in> cspan (insert a S)) = (x - \<langle>a, x\<rangle> *\<^sub>C a \<in> cspan S)"
 proof
-  show "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
-    if "x \<in> Complex_Vector_Spaces.span (insert a S)"
+  show "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> cspan S"
+    if "x \<in> cspan (insert a S)"
   proof-
-    have "\<exists>k. x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+    have "\<exists>k. x - k *\<^sub>C a \<in> cspan S"
       using that
       by (simp add: complex_vector.span_breakdown_eq)
-    then obtain k where "x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+    then obtain k where "x - k *\<^sub>C a \<in> cspan S"
       by blast
     hence "\<exists>t r. finite t \<and> t \<subseteq> S \<and> x - k *\<^sub>C a = (\<Sum>c\<in>t. r c *\<^sub>C c)"
       using complex_vector.span_explicit by (smt mem_Collect_eq)
@@ -371,10 +371,10 @@ proof
       ultimately show ?thesis
         using complex_of_real_cmod by force 
     qed
-    ultimately show ?thesis by (smt \<open>x - k *\<^sub>C a \<in> Complex_Vector_Spaces.span S\<close> mult_cancel_left1)
+    ultimately show ?thesis by (smt \<open>x - k *\<^sub>C a \<in> cspan S\<close> mult_cancel_left1)
   qed
-  show "x \<in> Complex_Vector_Spaces.span (insert a S)"
-    if "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> Complex_Vector_Spaces.span S"
+  show "x \<in> cspan (insert a S)"
+    if "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> cspan S"
     using that complex_vector.span_breakdown_eq by auto 
 qed
 
@@ -547,10 +547,10 @@ proof(rule classical)
   hence "complex_vector.span (set S) \<subseteq> (UNIV:: 'a set)"
     by simp
   hence "card (set S) \<le> cdim (UNIV:: 'a set)"
-    using f1 h1 Complex_Vector_Spaces.cdependent_raw_def 
+    using f1 h1 cdependent_raw_def 
       complex_vector.dim_le_card complex_vector.dim_span_eq_card_independent 
       distinct_canonical_basis distinct_card f2 
-    by (smt \<open>Complex_Vector_Spaces.span (set basis) = UNIV\<close> \<open>\<not> length S \<le> length basis\<close> 
+    by (smt \<open>cspan (set basis) = UNIV\<close> \<open>\<not> length S \<le> length basis\<close> 
         \<open>finite (set basis)\<close> basis_def) 
   thus ?thesis using g2 by (smt leD)
 qed
@@ -616,10 +616,10 @@ proof-
       using basis_def calculation is_cindependent_set
       by blast 
     ultimately show ?thesis 
-      by (metis Complex_Vector_Spaces.cdependent_raw_def)
+      by (metis cdependent_raw_def)
   qed
   moreover have "b \<noteq> 0"  
-    using Complex_Vector_Spaces.complex_vector.dependent_zero[where A = "set basis"]
+    using complex_vector.dependent_zero[where A = "set basis"]
       h1 is_cindependent_set unfolding basis_def
     by blast
   ultimately have "-f b = 0"
@@ -682,7 +682,7 @@ proof-
       assume h1: "i < length basis"
       have h2: "cindependent (set basis)"
         by (simp add: basis_def is_cindependent_set)
-      have h3: "onb_enum_of_vec_list basis w \<in> Complex_Vector_Spaces.span (set basis)"
+      have h3: "onb_enum_of_vec_list basis w \<in> cspan (set basis)"
         using basis_def is_generator_set
           by blast 
       define f where 
@@ -691,10 +691,10 @@ proof-
       have h4: "f x \<noteq> 0 \<Longrightarrow> x \<in> set basis" for x
         by (simp add: complex_vector.representation_ne_zero f_def)
       have h5: "finite {v. f v \<noteq> 0}"
-        by (metis \<open>f \<equiv> Complex_Vector_Spaces.representation (set basis) 
+        by (metis \<open>f \<equiv> crepresentation (set basis) 
             (onb_enum_of_vec_list basis w)\<close> complex_vector.finite_representation)
       have h6: "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = onb_enum_of_vec_list basis w"
-        using Collect_cong DiffD1 DiffD2 \<open>f \<equiv> Complex_Vector_Spaces.representation (set basis)
+        using Collect_cong DiffD1 DiffD2 \<open>f \<equiv> crepresentation (set basis)
          (onb_enum_of_vec_list basis w)\<close> 
             complex_vector.sum_nonzero_representation_eq h2 h3 h5 subset_iff 
             sum.mono_neutral_cong_left
@@ -764,19 +764,19 @@ qed
 lemma vec_of_onb_enum_add:
   "vec_of_onb_enum (b1 + b2) = vec_of_onb_enum b1 + vec_of_onb_enum b2"
 proof-
-  have "Complex_Vector_Spaces.span
+  have "cspan
          (set (canonical_basis::'a list)) = UNIV"
     using span_finite_dim is_generator_set
     by simp
-  hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (b1+b2) i
-      = Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b1 i + 
-        Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b2 i" for i
+  hence "crepresentation (set (canonical_basis::'a list)) (b1+b2) i
+      = crepresentation (set (canonical_basis::'a list)) b1 i + 
+        crepresentation (set (canonical_basis::'a list)) b2 i" for i
   proof -
-    have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
+    have "cindependent (set (canonical_basis::'a list))"
       using is_cindependent_set
       by (simp add: ) 
     thus ?thesis
-      by (metis UNIV_I \<open>Complex_Vector_Spaces.span (set canonical_basis) = UNIV\<close> complex_vector.representation_add) (* failed *)
+      by (metis UNIV_I \<open>cspan (set canonical_basis) = UNIV\<close> complex_vector.representation_add) (* failed *)
   qed 
   moreover have "vec_of_list (map (\<lambda>x. f x + g x) S) = vec_of_list (map f S) + vec_of_list (map g S)"
     for S::"'a list" and f g::"'a \<Rightarrow> complex" 
@@ -833,14 +833,14 @@ qed
 lemma vec_of_onb_enum_scaleC:
   "vec_of_onb_enum (c *\<^sub>C b) = c \<cdot>\<^sub>v (vec_of_onb_enum b)"
 proof-
-  have "Complex_Vector_Spaces.span
+  have "cspan
          (set (canonical_basis::'a list)) = UNIV"    
     using span_finite_dim is_generator_set
     by simp
-  hence "Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
-      = c *\<^sub>C (Complex_Vector_Spaces.representation (set (canonical_basis::'a list)) b i)" for i
-    using Complex_Vector_Spaces.complex_vector.representation_scale
-      Complex_Vector_Spaces.cdependent_raw_def UNIV_I complex_scaleC_def
+  hence "crepresentation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
+      = c *\<^sub>C (crepresentation (set (canonical_basis::'a list)) b i)" for i
+    using complex_vector.representation_scale
+      cdependent_raw_def UNIV_I complex_scaleC_def
      is_cindependent_set 
     by smt
   moreover have "vec_of_list (map (\<lambda>x. c *\<^sub>C (f x)) S) = c \<cdot>\<^sub>v vec_of_list (map f S)"
@@ -1342,96 +1342,37 @@ lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::{basis_e
            else 0)\<close>
 proof
   fix M :: "complex mat"
+  define m where "m = canonical_basis_length TYPE('b)"
+  define n where "n = canonical_basis_length TYPE('a)"
   define f::"complex mat \<Rightarrow> 'a \<Rightarrow> 'b" 
-    where "f M v = (if M\<in>carrier_mat (canonical_basis_length (TYPE('b)::'b itself)) 
-                                     (canonical_basis_length (TYPE('a)::'a itself)) 
+    where "f M v = (if M\<in>carrier_mat m n
         then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum (v::'a)) 
         else (0::'b))" 
     for M::"complex mat" and v::'a
-  define m where "m = canonical_basis_length TYPE('b)"
-  define n where "n = canonical_basis_length TYPE('a)"
 
-  show "clinear (f M)"
-  proof(cases "M\<in>carrier_mat m n")
-    case True
-    have "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum v))" for v
-      using True f_def m_def n_def by auto
-    have M_carrier_mat: 
-      "M \<in> carrier_mat m n"
-      by (simp add: True)
-    show ?thesis
-      unfolding clinear_def proof
-      show "f M (b1 + b2) = f M b1 + f M b2"
-        for b1 :: 'a
-          and b2 :: 'a
-      proof-
-        have cdim1: "dim_vec (vec_of_onb_enum b1) = n"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
+  show add: \<open>f M (b1 + b2) = f M b1 + f M b2\<close> for b1 b2
+    apply (auto simp: f_def)
+    by (metis (mono_tags, lifting) canonical_basis_length_eq carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum_list' m_def mult_add_distrib_mat_vec n_def onb_enum_of_vec_add vec_of_onb_enum_add)
 
-        have cdim2: "dim_vec (vec_of_onb_enum b2) = n"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
+  show scale: \<open>f M (c *\<^sub>C b) = c *\<^sub>C f M b\<close> for c b
+    apply (auto simp: f_def)
+    by (metis canonical_basis_length_eq carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum_list' m_def mult_mat_vec n_def onb_enum_of_vec_mult vec_of_onb_enum_scaleC)
 
-        have "vec_of_onb_enum (b1 + b2) = vec_of_onb_enum b1 + vec_of_onb_enum b2"
-          by (simp add: vec_of_onb_enum_add)
-        have "vec_of_onb_enum b1 \<in> carrier_vec n"
-          by (simp add: carrier_vecI cdim1)        
-        moreover have "vec_of_onb_enum b2 \<in> carrier_vec n"
-          by (simp add: carrier_dim_vec cdim2)        
-        ultimately have "M *\<^sub>v vec_of_onb_enum (b1 + b2) = M *\<^sub>v vec_of_onb_enum b1
-                                                        + M *\<^sub>v vec_of_onb_enum b2"
-          using  M_carrier_mat Matrix.mult_add_distrib_mat_vec[where A = M 
-              and v\<^sub>1 = "vec_of_onb_enum b1" and v\<^sub>2 = "vec_of_onb_enum b2"]
-            \<open>vec_of_onb_enum (b1 + b2) = vec_of_onb_enum b1 + vec_of_onb_enum b2\<close> by auto
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b1) = m" 
-          using cdim1
-          using True dim_mult_mat_vec by blast           
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b2) = m" 
-          using cdim2
-          using True by auto
-        ultimately show ?thesis
-          by (simp add: f_def m_def onb_enum_of_vec_add)
-      qed
+  from add scale have \<open>clinear (f M)\<close>
+    by (simp add: clinear_iff)
 
-      show "f M (r *\<^sub>C b) = r *\<^sub>C f M b"
-        for r :: complex
-          and b :: 'a
-      proof-
-        have cdim1: "dim_vec (vec_of_onb_enum b) = n"
-          by (simp add: canonical_basis_length_eq dim_vec_of_onb_enum_list' n_def)
-        have "vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v vec_of_onb_enum b"
-          by (simp add: vec_of_onb_enum_scaleC)
-        have "vec_of_onb_enum b \<in> carrier_vec n"
-          by (simp add: carrier_vecI cdim1)        
-        hence "M *\<^sub>v vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v (M *\<^sub>v vec_of_onb_enum b)"
-          using True \<open>vec_of_onb_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v vec_of_onb_enum b\<close> by auto
-        moreover have "dim_vec (M *\<^sub>v vec_of_onb_enum b) = m" 
-          using cdim1
-          using True by auto           
-        ultimately show ?thesis 
-          unfolding f_def
-          by (simp add: canonical_basis_length_eq m_def onb_enum_of_vec_mult)
-      qed
-    qed
-  next
-    case False
-    thus ?thesis
-      unfolding m_def n_def
-      by (simp add: clinearI f_def) 
-  qed
-
-  show "\<exists>K. \<forall>x. norm (f M x) \<le> norm x * K"
-  proof(cases "M\<in>carrier_mat m n")
+  show \<open>\<exists>K. \<forall>b. norm (f M b) \<le> norm b * K\<close>
+  proof (cases "M\<in>carrier_mat m n")
     case True
     have f_def': "f M v = onb_enum_of_vec (M *\<^sub>v (vec_of_onb_enum v))" for v
-      using True \<open>f \<equiv> \<lambda>M v. if M \<in> carrier_mat (canonical_basis_length TYPE('b)) 
-        (canonical_basis_length TYPE('a)) then onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v) else 0\<close> 
+      using True f_def 
         m_def n_def by auto      
     have M_carrier_mat: 
       "M \<in> carrier_mat m n"
       by (simp add: True)
     have "cbounded_linear (f M)"
-      apply (rule cblinfun_operator_finite_dim[where basis="set canonical_basis"]) 
-      using \<open>clinear (f M)\<close> is_generator_set is_cindependent_set by auto
+      apply (rule cblinfun_operator_finite_dim[where basis="set canonical_basis"])
+      using is_generator_set is_cindependent_set \<open>clinear (f M)\<close> by auto
     thus ?thesis
       by (simp add: cbounded_linear.bounded) 
   next
@@ -1593,7 +1534,7 @@ proof-
     using complex_vector.linear_eq_on that by blast
   moreover have "complex_vector.span basisA = UNIV"
   proof-
-    have "closure (Complex_Vector_Spaces.span basisA) = Complex_Vector_Spaces.span basisA"
+    have "closure (cspan basisA) = cspan basisA"
       by (simp add: basisA_def span_finite_dim)
     thus ?thesis
       using BasisA_def basisA_def is_generator_set
@@ -1850,7 +1791,7 @@ proof-
     also have "\<dots>
         = onb_enum_of_vec (M *\<^sub>v vec_of_onb_enum v + N *\<^sub>v vec_of_onb_enum v)"
       using onb_enum_of_vec_add w1
-      by (metis a2 a4 canonical_basis_length_eq carrier_matD(1) dim_mult_mat_vec) 
+      by (metis a2 a4 carrier_matD(1) dim_mult_mat_vec) 
     also have "\<dots>
         = onb_enum_of_vec ((M + N) *\<^sub>v vec_of_onb_enum v)"
       by (simp add: w2)
@@ -2878,7 +2819,7 @@ proof-
     for j
   proof-
     have j_bound: "j < length (canonical_basis::'a ell2 list)"
-      by (metis dim_vec_of_onb_enum_list' that vec_of_onb_enum_def)
+      by (metis dim_vec_of_onb_enum_list' that)
     have y1: "cindependent (set (canonical_basis::'a ell2 list))"
       using canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto        
     have y2: "canonical_basis ! j \<in> set (canonical_basis::'a ell2 list)"
@@ -2920,9 +2861,9 @@ proof-
     moreover have "vec_of_onb_enum (ket i) $ j = (if enum_idx i = j then 1 else 0)"
     proof(cases "enum_idx i = j")
       case True                        
-      have "Complex_Vector_Spaces.representation (set (canonical_basis::'a ell2 list)) 
+      have "crepresentation (set (canonical_basis::'a ell2 list)) 
           ((canonical_basis::'a ell2 list) ! j) ((canonical_basis::'a ell2 list) ! j) = 1"        
-        using y1 y2 Complex_Vector_Spaces.representation_basis[where 
+        using y1 y2 complex_vector.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
         by (smt ) 
@@ -2940,16 +2881,16 @@ proof-
       thus ?thesis using True unfolding vec_of_onb_enum_def by auto
     next
       case False
-      have "Complex_Vector_Spaces.representation (set (canonical_basis::'a ell2 list)) 
+      have "crepresentation (set (canonical_basis::'a ell2 list)) 
           ((canonical_basis::'a ell2 list) ! (enum_idx i)) ((canonical_basis::'a ell2 list) ! j) = 0"        
-        using y1 y2 Complex_Vector_Spaces.representation_basis[where 
+        using y1 y2 complex_vector.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
           False \<open>enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
           (enum_idx i))\<close> canonical_basis_length_eq 
           complex_vector.representation_basis distinct_canonical_basis index_unit_vec(3) 
           j_bound nth_eq_iff_index_eq nth_mem 
-        by (metis ) 
+        by metis
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
         unfolding vec_of_onb_enum_def by (smt j_bound nth_map vec_of_list_index)        
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) 
@@ -3004,30 +2945,30 @@ proof-
     have r2: "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = (if i = j then 1 else 0)"
     proof(cases "i = j")
       case True
-      have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
-        using is_cindependent_set
-        by (simp add: )       
+      have "cindependent (set (canonical_basis::'a list))"
+        using is_cindependent_set by simp
       moreover have "canonical_basis ! i \<in> set (canonical_basis::'a list)"
         by (simp add: True y2)        
-      ultimately have "(Complex_Vector_Spaces.representation
+      ultimately have "(crepresentation
             (set (canonical_basis::'a list)) ((canonical_basis::'a list) ! i)) 
           ((canonical_basis::'a list) ! i) = 1"       
-        using Complex_Vector_Spaces.representation_basis[where basis = "set (canonical_basis::'a list)" 
-            and b = "(canonical_basis::'a list)!i"] by simp
+        using complex_vector.representation_basis[where basis = "set (canonical_basis::'a list)" 
+            and b = "(canonical_basis::'a list)!i"]
+        using y1 by force
       hence "vec_of_onb_enum ((canonical_basis::'a list) ! i) $ j = 1"
         unfolding vec_of_onb_enum_def using True by (smt j_bound nth_map vec_of_list_index)
       thus ?thesis using True by simp
     next
       case False
-      have "\<not> Complex_Vector_Spaces.dependent (set (canonical_basis::'a list))"
+      have "cindependent (set (canonical_basis::'a list))"
         using is_cindependent_set
         by (simp add: )     
       moreover have "canonical_basis ! j \<in> set (canonical_basis::'a list)"
         by (simp add: y2)
-      ultimately have "(Complex_Vector_Spaces.representation
+      ultimately have "(crepresentation
             (set (canonical_basis::'a list)) ((canonical_basis::'a list) ! i)) 
           ((canonical_basis::'a list) ! j) = 0"       
-        using Complex_Vector_Spaces.representation_basis[where basis = 
+        using complex_vector.representation_basis[where basis = 
             "set (canonical_basis::'a list)" 
             and b = "(canonical_basis::'a list)!i"] False 
         by (smt assms canonical_basis_length_eq distinct_canonical_basis j_bound nth_eq_iff_index_eq 
@@ -3464,8 +3405,7 @@ proof-
   moreover have "distinct (enum_class.enum::'a list)"
     using enum_distinct by auto
   ultimately have "length (enum_class.enum::'a list) = 1"
-    by (metis One_nat_def UNIV_witness \<open>\<exists>i. i \<in> UNIV\<close> card_num1 class_semiring.one_closed
-        length_remdups_card_conv plus_1_eq_Suc remdups_id_iff_distinct top.extremum_unique)      
+    by (metis card_num1 length_remdups_card_conv remdups_id_iff_distinct)      
   hence p0: "length (canonical_basis::'a ell2 list) = 1"
     unfolding canonical_basis_ell2_def by simp
   have w1: "vec_of_onb_enum f = vec_of_list [vec_of_onb_enum f $ 0]"
@@ -3495,7 +3435,7 @@ proof-
     ultimately show ?thesis
       by (metis eq_vecI p1) 
   qed
-  have "(Complex_Vector_Spaces.representation (set (canonical_basis::'a ell2 list)) 1) 
+  have "(crepresentation (set (canonical_basis::'a ell2 list)) 1) 
         ((canonical_basis::'a ell2 list)!0) = 1"
     by (simp add: complex_vector.representation_basis one_dim_canonical_basis)    
   hence "vec_of_onb_enum (1 :: 'a::{CARD_1,enum} ell2) $ 0 = 1"
@@ -3568,7 +3508,7 @@ proof-
         using \<open>vec_of_onb_enum x = one_dim_isom x \<cdot>\<^sub>v vec_of_onb_enum 1\<close> dim_vec_b by auto
       also have "\<dots> = one_dim_isom x"
       proof-
-        have "Complex_Vector_Spaces.representation
+        have "crepresentation
          (set (canonical_basis::'b list)) 1 ((canonical_basis::'b list)!0) = 1"
           by (simp add: complex_vector.representation_basis one_dim_canonical_basis)          
         hence "(vec_of_onb_enum (1::'b))$0 = 1"
