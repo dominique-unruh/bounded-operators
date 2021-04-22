@@ -28,7 +28,7 @@ proof-
   hence \<open>\<parallel>1::'a::one_dim\<parallel>^2 = 1\<close>
     by simp
   moreover have  \<open>\<parallel>(1::('a::one_dim))\<parallel>^2 = \<langle>(1::('a::one_dim)), 1\<rangle>\<close>
-    using power2_norm_eq_cinner' by auto
+    by (metis cnorm_eq_square)
   ultimately show ?thesis by simp
 qed
 
@@ -79,7 +79,7 @@ proof
       and c :: 'a
   proof (simp add: one_dim_prod [where ?'a = 'a])
     show "(\<langle>1, a + b\<rangle> * \<langle>1, c\<rangle>) *\<^sub>C (1::'a) = (\<langle>1, a\<rangle> * \<langle>1, c\<rangle>) *\<^sub>C 1 + (\<langle>1, b\<rangle> * \<langle>1, c\<rangle>) *\<^sub>C 1"
-      by (metis (no_types, lifting) cinner_right_distrib scaleC_add_left scaleC_scaleC)
+      by (metis (no_types, lifting) cinner_add_right scaleC_add_left scaleC_scaleC)
   qed
 
   show "a * (b + c) = a * b + a * c"
@@ -88,7 +88,7 @@ proof
       and c :: 'a
   proof (simp add: one_dim_prod [where ?'a = 'a])
     show "(\<langle>1, a\<rangle> * \<langle>1, b + c\<rangle>) *\<^sub>C (1::'a) = (\<langle>1, a\<rangle> * \<langle>1, b\<rangle>) *\<^sub>C 1 + (\<langle>1, a\<rangle> * \<langle>1, c\<rangle>) *\<^sub>C 1"
-      by (simp add: cinner_right_distrib scaleC_add_left 
+      by (simp add: cinner_add_right scaleC_add_left 
           vector_space_over_itself.scale_right_distrib)
   qed
 
@@ -145,7 +145,7 @@ proof
     have q1: "\<langle>(1::'a), 1\<rangle> = 1"
       by (simp add: one_dim_1_times_1)
     hence "(norm (1::'a))^2 = 1"
-      by (simp add: power2_norm_eq_cinner)
+      using cnorm_eq_1 by force
     hence "norm (1::'a) = 1"
       by (smt abs_norm_cancel power2_eq_1_iff)
     hence "cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>) * norm (1::'a) = cmod (\<langle>1::'a, x\<rangle> * \<langle>1::'a, y\<rangle>)"
@@ -241,7 +241,7 @@ qed
 
 
 lemma one_dim_isom_times[simp]: "one_dim_isom (\<psi> * \<phi>) = one_dim_isom \<psi> * one_dim_isom \<phi>"
-  by (smt of_complex_inner_1 one_dim_isom_def one_dim_isom_one one_dim_isom_scaleC one_dim_prod)
+  by (metis mult.left_neutral mult_scaleC_left of_complex_def one_dim_1_times_a_eq_a one_dim_isom_def one_dim_isom_scaleC)
 
 lemma one_dim_isom_0[simp]: "one_dim_isom 0 = 0"
   by (simp add: complex_vector.linear_0)

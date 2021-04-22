@@ -12,11 +12,14 @@ theory Complex_Inner_Product
   imports 
     Complex_Vector_Spaces
     "HOL-Analysis.Infinite_Set_Sum" 
-    "HOL-Analysis.Inner_Product"  
+
+    Complex_Inner_Product0
 begin
 
 subsection \<open>Complex inner product spaces\<close>
 
+(* TODO: get rid of this notation, Isabelle uses \<bullet> for real inner product *)
+notation (input) cinner ("\<langle>_, _\<rangle>") 
 
 instantiation clinear_space :: ("{complex_vector,t1_space}") zero begin
 definition zero_clinear_space :: "'a clinear_space" where [simp]: "zero_clinear_space = bot"
@@ -24,7 +27,7 @@ instance ..
 end
 
 
-text \<open>
+(* text \<open>
 Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
 \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
@@ -32,61 +35,19 @@ Temporarily relax type constraints for \<^term>\<open>open\<close>, \<^term>\<op
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>open\<close>, SOME \<^typ>\<open>'a::open set \<Rightarrow> bool\<close>)\<close>
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::dist \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>uniformity\<close>, SOME \<^typ>\<open>('a::uniformity \<times> 'a) filter\<close>)\<close>
-setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::norm \<Rightarrow> real\<close>)\<close> *)
 
-text \<open>Near-Hilbert space according to Definition 3, page 67, @{cite Helemskii}\<close>
-class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + 
-  open_uniformity +
-  fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"  ("\<langle>_, _\<rangle>") 
-  assumes cinner_commute: "\<langle>x, y\<rangle> = cnj \<langle>y, x\<rangle>"
-    and cinner_add_left: "\<langle>x + y, z\<rangle> = \<langle>x, z\<rangle> +  \<langle>y, z\<rangle>"
-    and cinner_scaleC_left [simp]: "\<langle>r *\<^sub>C x, y\<rangle> = (cnj r) * \<langle>x, y\<rangle>"
-    and cinner_ge_zero [simp]: "0 \<le> \<langle>x, x\<rangle>"
-    and cinner_eq_zero_iff [simp]: "\<langle>x, x\<rangle> = 0 \<longleftrightarrow> x = 0"
-    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (\<langle>x, x\<rangle>))"
-begin
+(* context complex_inner begin *)
 
 lemma cinner_real: "\<langle>x, x\<rangle> \<in> \<real>"
-  using local.cinner_ge_zero reals_zero_comparable_iff by presburger
+  by (meson cinner_ge_zero reals_zero_comparable_iff)
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 
-lemma cinner_zero_left [simp]: "\<langle>0, x\<rangle> = 0"
-  using cinner_add_left [of 0 0 x] by simp
-
-lemma cinner_minus_left [simp]: "\<langle>-x, y\<rangle> = - \<langle>x, y\<rangle>"
-  using cinner_add_left [of x "- x" y]
-  by (metis (mono_tags, lifting) cancel_ab_semigroup_add_class.add_diff_cancel_left' cinner_zero_left group_add_class.diff_0 local.right_minus)
-
-lemma cinner_diff_left: "\<langle>x - y, z\<rangle> = \<langle>x, z\<rangle> - \<langle>y, z\<rangle>"
-  using cinner_add_left [of x "- y" z] by simp
-
-lemma cinner_sum_left: "\<langle>\<Sum>x\<in>A. f x, y\<rangle> = (\<Sum>x\<in>A. \<langle>f x, y\<rangle>)"
-  by (cases "finite A", induct set: finite, simp_all add: cinner_add_left)
-
 text \<open>Transfer distributivity rules to right argument.\<close>
 
-lemma cinner_add_right: "\<langle>x, y + z\<rangle> = \<langle>x, y\<rangle> + \<langle>x, z\<rangle>"
-  using cinner_add_left [of y z x]
-  by (metis complex_cnj_add local.cinner_commute)
 
-lemma cinner_scaleC_right [simp]: "\<langle>x , r *\<^sub>C y\<rangle> = r * \<langle>x , y\<rangle>"
-  using cinner_scaleC_left [of r y x]
-  by (metis complex_cnj_cnj complex_cnj_mult local.cinner_commute)
-
-lemma cinner_zero_right [simp]: "\<langle>x , 0\<rangle> = 0"
-  using cinner_zero_left [of x] 
-  by (metis (mono_tags, lifting) complex_cnj_zero local.cinner_commute) 
-
-lemma cinner_minus_right [simp]: "\<langle>x , (- y)\<rangle> = - (\<langle>x , y\<rangle>)"
-  using cinner_minus_left [of y x]
-  by (metis complex_cnj_minus local.cinner_commute)
-
-lemma cinner_diff_right: "\<langle>x , (y - z)\<rangle> = (\<langle>x , y\<rangle>) - (\<langle>x , z\<rangle>)"
-  using cinner_diff_left [of y z x]
-  by (metis complex_cnj_diff local.cinner_commute)
-
-lemma cinner_sum_right: "\<langle>x , (\<Sum>y\<in>A. f y)\<rangle> = (\<Sum>y\<in>A. \<langle>x , (f y)\<rangle>)"
+(* lemma cinner_sum_right: "\<langle>x , (\<Sum>y\<in>A. f y)\<rangle> = (\<Sum>y\<in>A. \<langle>x , (f y)\<rangle>)"
 proof (subst cinner_commute)
   have "(\<Sum>y\<in>A. \<langle>f y, x\<rangle>) = (\<Sum>y\<in>A. \<langle>f y, x\<rangle>)" 
     by blast   
@@ -96,21 +57,21 @@ proof (subst cinner_commute)
     by (simp add: cinner_sum_left)
   thus "cnj \<langle>sum f A, x\<rangle> = (\<Sum>y\<in>A. \<langle>x, f y\<rangle>)"
     by (subst (2) cinner_commute)    
-qed
+qed *)
 
-lemmas cinner_add [algebra_simps] = cinner_add_left cinner_add_right
+(* lemmas cinner_add [algebra_simps] = cinner_add_left cinner_add_right
 lemmas cinner_diff [algebra_simps]  = cinner_diff_left cinner_diff_right
-lemmas cinner_scaleC = cinner_scaleC_left cinner_scaleC_right
+lemmas cinner_scaleC = cinner_scaleC_left cinner_scaleC_right *)
 
-text \<open>Legacy theorem names\<close>
-lemmas cinner_left_distrib = cinner_add_left
-lemmas cinner_right_distrib = cinner_add_right
-lemmas cinner_distrib = cinner_left_distrib cinner_right_distrib
+(* text \<open>Legacy theorem names\<close>
+lemmas cinner_add_left = cinner_add_left
+lemmas cinner_add_right = cinner_add_right
+lemmas cinner_distrib = cinner_add_left cinner_add_right *)
 
-lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x, x\<rangle> \<longleftrightarrow> x \<noteq> 0"
-  by (smt (verit) antisym_conv2 local.cinner_eq_zero_iff local.cinner_ge_zero)
+(* lemma cinner_gt_zero_iff [simp]: "0 < \<langle>x, x\<rangle> \<longleftrightarrow> x \<noteq> 0"
+  by (smt (verit) antisym_conv2 local.cinner_eq_zero_iff local.cinner_ge_zero) *)
 
-lemma power2_norm_eq_cinner:
+(* lemma power2_norm_eq_cinner:
   includes notation_norm
   shows "\<parallel>x\<parallel>\<^sup>2 = cmod \<langle>x, x\<rangle>"
   by (simp add: norm_eq_sqrt_cinner)
@@ -125,10 +86,10 @@ lemma power2_norm_eq_cinner'':
   includes notation_norm
   shows "(complex_of_real \<parallel>x\<parallel>)\<^sup>2 = \<langle>x, x\<rangle>"
   using power2_norm_eq_cinner' by simp
-
+ *)
 text \<open>Identities involving complex multiplication and division.\<close>
 
-lemma cinner_mult_left: "\<langle>(of_complex m * a) , b\<rangle> =  (cnj m) * (\<langle>a , b\<rangle>)"
+(* lemma cinner_mult_left: "\<langle>(of_complex m * a) , b\<rangle> =  (cnj m) * (\<langle>a , b\<rangle>)"
   unfolding of_complex_def by simp
 
 lemma cinner_mult_right: "\<langle>a , (of_complex m * b)\<rangle> = m * (\<langle>a , b\<rangle>)"
@@ -138,9 +99,9 @@ lemma cinner_mult_left': "\<langle>(a * of_complex m) , b\<rangle> =  (cnj m) * 
   using cinner_mult_left by (simp add: of_complex_def)
 
 lemma cinner_mult_right': "\<langle>a , (b * of_complex m)\<rangle> = (\<langle>a , b\<rangle>) * m"
-  by (simp add: of_complex_def complex_inner_class.cinner_scaleC_right)
+  by (simp add: of_complex_def complex_inner_class.cinner_scaleC_right) *)
 
-lemma Cauchy_Schwarz_ineq:
+(* lemma Cauchy_Schwarz_ineq:
   "\<langle>x , y\<rangle> * (cnj \<langle>x , y\<rangle> ) \<le> \<langle>x , x\<rangle> * \<langle>y , y\<rangle>"
 proof (cases)
   assume "y = 0"
@@ -163,12 +124,12 @@ next
     by (simp add: le_diff_eq)
   thus "cinner x y * cnj (cinner x y) \<le> cinner x x * cinner y y"
     by (meson cinner_gt_zero_iff nice_ordered_field_class.pos_divide_le_eq y)
-qed
+qed *)
 
 lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp
 
-lemma cinner_norm_sq:
+(* lemma cinner_norm_sq:
   includes notation_norm
   shows "\<langle>x, x\<rangle> = complex_of_real (\<parallel>x\<parallel>^2)"
 proof -
@@ -189,9 +150,9 @@ proof -
   show ?thesis
     unfolding power2_norm_eq_cinner
     unfolding r using rpos by auto
-qed
+qed *)
 
-lemma norm_cauchy_schwarz:
+(* lemma norm_cauchy_schwarz:
   includes notation_norm 
   shows "norm \<langle>x , y\<rangle> \<le> \<parallel>x\<parallel> * \<parallel>y\<parallel>"
 proof (rule power2_le_imp_le)
@@ -208,16 +169,16 @@ proof (rule power2_le_imp_le)
   finally show "(cmod (cinner x y))^2 \<le> (norm x * norm y)\<^sup>2" .
   show "0 \<le> norm x * norm y"
     by (simp add: local.norm_eq_sqrt_cinner)
-qed
+qed *)
 
-lemma norm_cauchy_schwarz2:
+(* lemma norm_cauchy_schwarz2:
   includes notation_norm 
   shows "\<bar>\<langle>x , y\<rangle>\<bar> \<le> complex_of_real \<parallel>x\<parallel> * complex_of_real \<parallel>y\<parallel>"
   using norm_cauchy_schwarz [of x y, THEN complex_of_real_mono]
   unfolding abs_complex_def
-  by auto
+  by auto *)
 
-subclass complex_normed_vector
+(* subclass complex_normed_vector
 proof
   fix a :: complex and r :: real and x y :: 'a
   show "norm x = 0 \<longleftrightarrow> x = 0"
@@ -241,7 +202,7 @@ proof
       unfolding abs_complex_def by simp
     also have "\<dots> \<le> 2 * complex_of_real (norm x) * complex_of_real (norm y)"
       using norm_cauchy_schwarz2
-      by (metis add_mono_thms_linordered_semiring(1) mult.assoc mult_2) 
+      by (metis add_mono_thms_linordered_semiring(1) mult.assoc mult_2) x
     finally have xyyx: "cinner x y + cinner y x \<le> complex_of_real (2 * norm x * norm y)" 
       by auto
     have "complex_of_real ((norm (x + y))\<^sup>2) = cinner (x+y) (x+y)"
@@ -270,27 +231,28 @@ proof
   qed
   show "norm (r *\<^sub>R x) = \<bar>r\<bar> * norm x"
     unfolding scaleR_scaleC norm_scaleC by auto
-qed
+qed *)
 
 subsection \<open>Recovered theorems\<close>
 
-lemma Cauchy_Schwarz_ineq2:
+(* lemma Cauchy_Schwarz_ineq2:
   "norm (cinner x y) \<le> norm x * norm y"
-  by (simp add: local.norm_cauchy_schwarz)
+  by (simp add: local.norm_cauchy_schwarz) *)
 
-end
+(* end *)
 
-lemma cinner_divide_right:
+(* lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
   shows "cinner a (b / of_complex m) = (\<langle>a , b\<rangle>) / m"
   by (metis (no_types, lifting) cinner_mult_right' divide_inverse divide_self_if inverse_eq_divide of_complex_divide of_complex_eq_0_iff one_neq_zero)
+ *)
 
-lemma cinner_divide_left:
+(* lemma cinner_divide_left:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
   shows "\<langle>(a / of_complex m) , b\<rangle> = (\<langle>a , b\<rangle>) / (cnj m)"
-  by (metis cinner_commute' cinner_divide_right complex_cnj_divide)
+  by (metis cinner_commute' cinner_divide_right complex_cnj_divide) *)
 
-text \<open>
+(* text \<open>
 Re-enable constraints for \<^term>\<open>open\<close>, \<^term>\<open>uniformity\<close>,
 \<^term>\<open>dist\<close>, and \<^term>\<open>norm\<close>.
 \<close>
@@ -301,9 +263,9 @@ setup \<open>Sign.add_const_constraint (\<^const_name>\<open>uniformity\<close>,
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>dist\<close>, SOME \<^typ>\<open>'a::metric_space \<Rightarrow> 'a \<Rightarrow> real\<close>)\<close>
 
-setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close>
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>norm\<close>, SOME \<^typ>\<open>'a::real_normed_vector \<Rightarrow> real\<close>)\<close> *)
 
-lemma bounded_sesquilinear_cinner:
+(* lemma bounded_sesquilinear_cinner:
   "bounded_sesquilinear (cinner::'a::complex_inner \<Rightarrow> 'a \<Rightarrow> complex)"
 proof
   fix x y z :: 'a and r :: complex
@@ -319,14 +281,14 @@ proof
     by (simp add: norm_cauchy_schwarz)
   thus "\<exists>K. \<forall>x y::'a. norm (cinner x y) \<le> norm x * norm y * K"
     by metis
-qed
+qed *)
 
 (* FIXME
 lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
 
-lemma tendsto_cinner0: "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
+(* lemma tendsto_cinner0: "lim (\<lambda>n. \<langle>x n::'a, x n\<rangle>) = 0"
   if "Cauchy (x::nat \<Rightarrow> 'a)" and "Cauchy (\<lambda>n. 0::'a)" and "x \<longlonglongrightarrow> (0::'a)"
   for x :: "nat \<Rightarrow> 'a::complex_inner"
 proof-
@@ -344,7 +306,7 @@ proof-
   thus ?thesis
     by (simp add: limI) 
 qed
-
+ *)
 
 (* FIXME
 lemmas isCont_cinner [simp] =
@@ -356,7 +318,7 @@ lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
 
-lemmas bounded_csemilinear_cinner_left =
+(* lemmas bounded_csemilinear_cinner_left =
   bounded_sesquilinear.bounded_csemilinear_left [OF bounded_sesquilinear_cinner]
 
 lemmas cbounded_linear_cinner_right =
@@ -370,6 +332,7 @@ lemmas bounded_csemilinear_cinner_right_comp = cbounded_linear_cinner_right[THEN
 
 lemmas has_derivative_cinner_right [derivative_intros] =
   bounded_linear.has_derivative [OF cbounded_linear_cinner_right[THEN cbounded_linear.bounded_linear]]
+ *)
 
 (* FIXME 
 lemmas has_derivative_cinner_left [derivative_intros] =
@@ -385,7 +348,7 @@ lemma differentiable_cinner [simp]:
 
 subsection \<open>Class instances\<close>
 
-instantiation complex :: complex_inner
+(* instantiation complex :: complex_inner
 begin
 
 definition cinner_complex_def [simp]: "\<langle>x, y\<rangle> = (cnj x) * y"
@@ -413,13 +376,14 @@ proof
 qed
 
 end
-
-lemma
+ *)
+(* lemma
   shows complex_inner_1_left[simp]: "\<langle>1 , x\<rangle> = x"
     and complex_inner_1_right[simp]: "\<langle>x , 1\<rangle> = (cnj x)"
   by simp_all
+ *)
 
-lemma norm_eq_square: "norm x = a \<longleftrightarrow> 0 \<le> a \<and> \<langle>x , x\<rangle> = complex_of_real (a\<^sup>2)"
+(* lemma norm_eq_square: "norm x = a \<longleftrightarrow> 0 \<le> a \<and> \<langle>x , x\<rangle> = complex_of_real (a\<^sup>2)"
   by (metis cinner_norm_sq norm_ge_zero of_real_eq_iff power2_eq_imp_eq)
 
 lemma norm_le_square: "norm x \<le> a \<longleftrightarrow> 0 \<le> a \<and>  \<langle>x , x\<rangle> \<le> complex_of_real (a\<^sup>2)"
@@ -433,21 +397,28 @@ lemma norm_lt_square: "norm x < a \<longleftrightarrow> 0 < a \<and> \<langle>x 
 
 lemma norm_gt_square: "norm x > a \<longleftrightarrow> a < 0 \<or> \<langle>x , x\<rangle> > complex_of_real (a\<^sup>2)"
   by (smt Complex_Inner_Product.norm_le_square less_le norm_of_real of_real_power power2_norm_eq_cinner'')
+*)
 
 text\<open>Dot product in terms of the norm rather than conversely.\<close>
 
-lemmas cinner_simps = cinner_add_left cinner_add_right cinner_diff_right cinner_diff_left
+(* lemmas cinner_simps = cinner_add_left cinner_add_right cinner_diff_right cinner_diff_left
   cinner_scaleC_left cinner_scaleC_right
+ *)
 
-lemma of_complex_inner_1 [simp]: 
+(* lemma of_complex_inner_1 [simp]:
   "cinner (1 :: 'a :: {complex_inner, complex_normed_algebra_1}) (of_complex x) = x"  
   by (simp add: cinner_norm_sq of_complex_def)
 
 lemma of_complex_inner_1' [simp]:
   "cinner (of_complex x) (1 :: 'a :: {complex_inner, complex_normed_algebra_1}) = cnj x"  
-  by (simp add: cinner_norm_sq of_complex_def)
+  by (simp add: cinner_norm_sq of_complex_def) *)
 
-lemma summable_of_complex_iff: 
+lemma of_complex_inner_1' [simp]:
+  "cinner (1 :: 'a :: {complex_inner, complex_normed_algebra_1}) (of_complex x) = x"
+  by (metis cinner_commute complex_cnj_cnj of_complex_inner_1)
+
+
+(* lemma summable_of_complex_iff: 
   "summable (\<lambda>x. of_complex (f x) :: 'a :: {complex_normed_algebra_1,complex_inner}) \<longleftrightarrow> summable f"
 proof
   assume *: "summable (\<lambda>x. of_complex (f x) :: 'a)"
@@ -460,21 +431,23 @@ next
   assume sum: "summable f"
   thus "summable (\<lambda>x. of_complex (f x) :: 'a)"
     by (rule summable_of_complex)
-qed
+qed *)
 
 subsection \<open>Gradient derivative\<close>
 
-definition
+(* definition
   cgderiv ::
   "['a::complex_inner \<Rightarrow> complex, 'a, 'a] \<Rightarrow> bool"
   ("(cGDERIV (_)/ (_)/ :> (_))" [1000, 1000, 60] 60)
   where
-    "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> (cinner D)"
+    "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> (cinner D)" *)
 
-lemma cgderiv_deriv [simp]: "cGDERIV f x :> D \<longleftrightarrow> DERIV f x :> (cnj D)"
+(* lemma cgderiv_deriv [simp]: "cGDERIV f x :> D \<longleftrightarrow> DERIV f x :> (cnj D)"
   by (simp only: cgderiv_def has_field_derivative_def cinner_complex_def[THEN ext])
+ *)
 
-lemma cGDERIV_DERIV_compose:
+
+(* lemma cGDERIV_DERIV_compose:
   assumes "cGDERIV f x :> df" and "DERIV g (f x) :> cnj dg"
   shows "cGDERIV (\<lambda>x. g (f x)) x :> scaleC dg df"
 proof (insert assms)
@@ -486,8 +459,9 @@ proof (insert assms)
     by (simp add: cgderiv_def has_derivative_compose has_field_derivative_imp_has_derivative) 
 
 qed
+ *)
 
-lemma cGDERIV_subst: 
+(* lemma cGDERIV_subst: 
   assumes a1: "cGDERIV f x :> df" and a2: "df = d"
   shows  "cGDERIV f x :> d"
   using a1 a2
@@ -507,29 +481,29 @@ lemma cGDERIV_minus:
   shows "cGDERIV (\<lambda>x. - f x) x :> - df"
   using a1
   unfolding cgderiv_def cinner_minus_left[THEN ext] by (rule has_derivative_minus)
+ *)
 
-lemma cGDERIV_diff:
+
+(* lemma cGDERIV_diff:
   assumes a1: "cGDERIV f x :> df" and a2: "cGDERIV g x :> dg"
   shows "cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
   using a1 a2
-  unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
-
-lemmas has_derivative_scaleC[simp, derivative_intros] =
-  bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
+  unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff) *)
 
 
 
-lemma cGDERIV_scaleC:
+
+(* lemma cGDERIV_scaleC:
   "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
    \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
     :> (scaleC (cnj (f x)) dg + scaleC (cnj df) (cnj (g x)))"
   unfolding cgderiv_def has_field_derivative_def cinner_add_left cinner_scaleC_left
   apply (rule has_derivative_subst)
    apply (erule (1) has_derivative_scaleC)
-  by (simp add: ac_simps)
+  by (simp add: ac_simps) *)
 
 
-(* TODO: finish converting this proof to Isar style *)
+(* (* TODO: finish converting this proof to Isar style *)
 lemma cGDERIV_mult:
   assumes "cGDERIV f x :> df"
   assumes "cGDERIV g x :> dg"
@@ -547,8 +521,9 @@ proof -
      apply (erule (1) has_derivative_mult)
     by (simp add: 1)
 qed
+ *)
 
-lemma cGDERIV_inverse:
+(* lemma cGDERIV_inverse:
   assumes a1: "cGDERIV f x :> df" and a2: "f x \<noteq> 0"
   shows "cGDERIV (\<lambda>x. inverse (f x)) x :> cnj (- (inverse (f x))\<^sup>2) *\<^sub>C df"
 proof-
@@ -559,7 +534,7 @@ proof-
   thus ?thesis
     using cGDERIV_DERIV_compose
     by (metis a1 a2 complex_cnj_cnj)
-qed
+qed *)
 
 
 class chilbert_space =  complex_inner + complete_space
@@ -585,12 +560,12 @@ proof-
     by simp
   hence \<open>\<langle>x , y\<rangle> + \<langle>y , x\<rangle> = 2 * Re \<langle>x , y\<rangle> \<close>
     using complex_add_cnj by presburger
-  have \<open>\<parallel>x + y\<parallel>^2 = \<langle>x+y, x+y\<rangle>\<close> 
-    using power2_norm_eq_cinner' by auto
+  have \<open>\<parallel>x + y\<parallel>^2 = \<langle>x+y, x+y\<rangle>\<close>
+    by (simp add: cdot_square_norm) 
   hence \<open>\<parallel>x + y\<parallel>^2 = \<langle>x , x\<rangle> + \<langle>x , y\<rangle> + \<langle>y , x\<rangle> + \<langle>y , y\<rangle>\<close>
-    by (simp add: cinner_left_distrib cinner_right_distrib)
+    by (simp add: cinner_add_left cinner_add_right)
   thus ?thesis using  \<open>\<langle>x , y\<rangle> + \<langle>y , x\<rangle> = 2 * Re \<langle>x , y\<rangle>\<close>
-    by (smt Re_complex_of_real cinner_norm_sq plus_complex.simps(1))
+    by (smt (verit, ccfv_SIG) Re_complex_of_real plus_complex.simps(1) power2_norm_eq_cinner')
 qed
 
 lemma polarization_identity_minus:
@@ -725,13 +700,13 @@ proof-
   proof-
     have b1: \<open>cbounded_linear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
       for y::'a
-      by (simp add: cbounded_linear_cinner_right)
+      by (simp add: bounded_clinear_cinner_right)
     have \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
       using orthogonal_complement_D2
       by (simp add: orthogonal_complement_D2 that(1))
     moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
       using b1 bounded_linear_continuous
-      by (simp add: bounded_linear_continuous cbounded_linear_cinner_right)
+      by (simp add: bounded_linear_continuous bounded_clinear_cinner_right)
     ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
       using isCont_tendsto_compose
       by (simp add: isCont_tendsto_compose that(2))
@@ -759,7 +734,7 @@ proof-
     ultimately have \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> +  \<langle>z, y\<rangle> = 0\<close>
       by simp
     hence  \<open>\<forall> z \<in> A. \<langle> z , x + y \<rangle> = 0\<close> 
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     thus ?thesis
       by (simp add: orthogonal_complement_I1)       
   qed
@@ -823,12 +798,12 @@ proof-
     for x
   proof-
     have "\<forall>v. (\<exists>w. Re (\<langle>v , v\<rangle> ) = \<parallel>w\<parallel>\<^sup>2 \<and> w \<in> M) \<or> v \<notin> M"
-      by (metis (no_types) Re_complex_of_real power2_norm_eq_cinner')
+      by (metis (no_types) power2_norm_eq_cinner')
     hence "Re (\<langle>x , x\<rangle> ) \<in> {\<parallel>v\<parallel>\<^sup>2 |v. v \<in> M}"
       using a1 by blast
     thus ?thesis
       unfolding d_def
-      by (metis (lifting) Re_complex_of_real bdd_below1 cInf_lower power2_norm_eq_cinner')
+      by (metis (lifting) bdd_below1 cInf_lower power2_norm_eq_cinner')
   qed
 
   have \<open>\<forall> \<epsilon> > 0. \<exists> t \<in> { \<parallel>x\<parallel>^2 | x. x \<in> M }.  t < d + \<epsilon>\<close>
@@ -2218,7 +2193,7 @@ proof-
     hence \<open>\<forall> y\<in> B. \<langle> y , x \<rangle> = 0\<close>
       by (simp add: orthogonal_complement_D2)
     have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b , x \<rangle> = 0\<close>
-      by (simp add: \<open>\<forall>y\<in>A. \<langle>y , x\<rangle> = 0\<close> \<open>\<forall>y\<in>B. \<langle>y , x\<rangle> = 0\<close> cinner_left_distrib)
+      by (simp add: \<open>\<forall>y\<in>A. \<langle>y , x\<rangle> = 0\<close> \<open>\<forall>y\<in>B. \<langle>y , x\<rangle> = 0\<close> cinner_add_left)
     hence \<open>\<forall> y \<in> (A + B). \<langle> y , x \<rangle> = 0\<close>
       using sum_existential by blast
     hence \<open>x \<in> (orthogonal_complement (A + B))\<close>
@@ -2373,7 +2348,7 @@ proof-
  (\<langle>t , projection M x + projection (orthogonal_complement M) x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
     using a1 ortho_decomp by fastforce
   also have \<open>... = (\<langle>t , (projection M) x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
-    using t1 by (simp add: cinner_right_distrib) 
+    using t1 by (simp add: cinner_add_right) 
   also have \<open>... = (\<langle>t , (k *\<^sub>C t)\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
     using k_def 
     by simp
@@ -2562,8 +2537,8 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
     have \<open>g x (a + b) = g x a + g x b\<close>
       for a b
       unfolding g_def
-      using b1 additive.add cinner_right_distrib clinear_def
-      by (simp add: cinner_right_distrib complex_vector.linear_add)
+      using b1 additive.add cinner_add_right clinear_def
+      by (simp add: cinner_add_right complex_vector.linear_add)
     moreover have  \<open>g x (k *\<^sub>C a) = k *\<^sub>C (g x a)\<close>
       for a k
       unfolding g_def
@@ -2628,7 +2603,7 @@ proof
   have b1: \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , A y\<rangle>\<close> for x y
     using Adj_I a1 by auto
   have \<open>\<langle>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) , y\<rangle> = 0\<close> for x1 x2 y
-    by (simp add: b1 cinner_diff_left cinner_left_distrib)        
+    by (simp add: b1 cinner_diff_left cinner_add_left)        
   hence b2: \<open>(A\<^sup>\<dagger>) (x1 + x2) - ((A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2) = 0\<close> for x1 x2
     using cinner_eq_zero_iff by blast
   thus z1: \<open>(A\<^sup>\<dagger>) (x1 + x2) = (A\<^sup>\<dagger>) x1 + (A\<^sup>\<dagger>) x2\<close> for x1 x2
@@ -2639,7 +2614,7 @@ proof
   thus z2: \<open>(A\<^sup>\<dagger>) (r *\<^sub>C x) = r *\<^sub>C (A\<^sup>\<dagger>) x\<close> for r x
     using cinner_eq_zero_iff eq_iff_diff_eq_0 by blast
   have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle>\<close> for x
-    using power2_norm_eq_cinner' by auto
+    by (metis cnorm_eq_square)
   moreover have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 \<ge> 0\<close> for x
     by simp
   ultimately have \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>(A\<^sup>\<dagger>) x, (A\<^sup>\<dagger>) x\<rangle> \<bar>\<close> for x
@@ -2647,16 +2622,16 @@ proof
   hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x, A ((A\<^sup>\<dagger>) x)\<rangle> \<bar>\<close> for x
     by (simp add: b1)
   moreover have  \<open>\<bar>\<langle>x , A ((A\<^sup>\<dagger>) x)\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
-    using norm_cauchy_schwarz2 by auto
+    by (simp add: abs_complex_def complex_inner_class.Cauchy_Schwarz_ineq2)
   ultimately have b5: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
-    by (simp add: b1 complex_inner_class.norm_cauchy_schwarz power2_norm_eq_cinner)
+    by (metis complex_of_real_mono_iff)
   have \<open>\<exists>M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
     using a1
     by (metis (mono_tags, hide_lams) cbounded_linear.bounded linear mult_nonneg_nonpos
         mult_zero_right norm_ge_zero order.trans semiring_normalization_rules(7)) 
   then obtain M where q1: \<open>M \<ge> 0\<close> and q2: \<open>\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
     by blast
-  have \<open>\<forall> x. \<parallel>x\<parallel> \<ge> 0\<close>
+  have \<open>\<forall> x::'b. \<parallel>x\<parallel> \<ge> 0\<close>
     by simp
   hence b6: \<open>\<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le>  \<parallel>x\<parallel> * M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close> for x
     using q2
@@ -3916,18 +3891,18 @@ proof
       if u1: \<open>x\<in>*s* S\<close> and u2: \<open>y\<in>*s* S\<close>
       for x y
     proof-
-      have \<open>\<forall> xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close>
+      have \<open>\<forall> xx yy zz :: 'a. dist xx yy \<le> dist xx zz + dist zz yy\<close>
         by (simp add: dist_triangle)
-      hence \<open>\<forall> xx yy zz. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
+      hence \<open>\<forall> xx yy zz :: 'a star. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
         by StarDef.transfer
       hence z1: \<open>(*f2* dist) x y \<le> (*f2* dist) x z + (*f2* dist) z y\<close>
         by blast
       have l1:  \<open>(*f2* dist) z x \<in> HFinite\<close>
         using \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close> \<open>x\<in>*s* S \<close> 
         by blast
-      have \<open>\<forall> zz xx. dist zz xx = dist xx zz\<close>
+      have \<open>\<forall> zz xx :: 'a. dist zz xx = dist xx zz\<close>
         using dist_commute by blast
-      hence \<open>\<forall> zz xx. (*f2* dist) zz xx = (*f2* dist) xx zz\<close>
+      hence \<open>\<forall> zz xx :: 'a star. (*f2* dist) zz xx = (*f2* dist) xx zz\<close>
         by StarDef.transfer
       hence l2: \<open>(*f2* dist) z x = (*f2* dist) x z\<close>
         by blast
@@ -3938,9 +3913,9 @@ proof
         by blast
       ultimately have z2: \<open>(*f2* dist) x z + (*f2* dist) z y \<in> HFinite\<close>
         by (simp add: HFinite_add)
-      have \<open>\<forall> xx yy. 0 \<le> dist xx yy\<close>
-        by simp
-      hence \<open>\<forall> xx yy. 0 \<le> (*f2* dist) xx yy\<close>
+      have \<open>\<forall> xx yy :: 'a. 0 \<le> dist xx yy\<close>
+        by (smt (verit) \<open>\<forall>xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close> \<open>\<forall>zz xx. dist zz xx = dist xx zz\<close>)
+      hence \<open>\<forall> xx yy :: 'a star. 0 \<le> (*f2* dist) xx yy\<close>
         by StarDef.transfer
       hence z3: \<open>0 \<le> (*f2* dist) x y\<close>
         by (simp add: \<open>\<forall>xx yy. 0 \<le> (*f2* dist) xx yy\<close>) 
@@ -4680,7 +4655,7 @@ proof-
       hence \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) = norm \<langle> x n - x m, y n \<rangle>\<close>
         by simp
       moreover have \<open>norm \<langle> x n - x m, y n \<rangle> \<le> norm (x n - x m) * norm (y n)\<close>
-        using complex_inner_class.norm_cauchy_schwarz by auto
+        using complex_inner_class.Cauchy_Schwarz_ineq2 by blast
       moreover have \<open>norm (y n) < M\<close>
         by (simp add: M2)        
       moreover have \<open>norm (x n - x m) < e/(2*M)\<close>
@@ -4698,7 +4673,7 @@ proof-
       hence \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) = norm \<langle> x m, y n - y m \<rangle>\<close>
         by simp
       moreover have \<open>norm \<langle> x m, y n - y m \<rangle> \<le> norm (x m) * norm (y n - y m)\<close>
-        using complex_inner_class.norm_cauchy_schwarz by auto
+        by (meson complex_inner_class.Cauchy_Schwarz_ineq2)
       moreover have \<open>norm (x m) < M\<close>
         by (simp add: M1)
       moreover have \<open>norm (y n - y m) < e/(2*M)\<close>
@@ -5219,7 +5194,7 @@ lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a c
 instance 
   apply (intro_classes; transfer)
        apply (simp_all add: )
-    apply (simp add: cinner_right_distrib)
+    apply (simp add: cinner_add_right)
   using cinner_ge_zero norm_eq_sqrt_cinner by auto
 end
 

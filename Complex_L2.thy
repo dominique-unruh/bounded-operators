@@ -3554,7 +3554,7 @@ proof-
       for i
     proof-
       have "cbounded_linear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
-        by (simp add: cbounded_linear_cinner_right)      
+        by (simp add: bounded_clinear_cinner_right) 
       moreover have "cbounded_linear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
         using cblinfun_apply cbounded_linear_cinner_right_comp by auto      
       ultimately show ?thesis unfolding H_def using cbounded_linear_sub by blast
@@ -3581,7 +3581,7 @@ proof-
       for v
     proof-
       have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-        using bounded_csemilinear_compose1 cblinfun_apply cbounded_linear_cinner_left_comp 
+        using bounded_csemilinear_compose1 cblinfun_apply bounded_csemilinear_cinner_left_comp 
           cnj_bounded_csemilinear by blast      
       moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
         using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
@@ -3990,7 +3990,7 @@ lemma ell2_norm_list:
   shows "norm x = sqrt (\<Sum>t\<in>X. (norm (a t))\<^sup>2)"
 proof-
   have "(norm x)^2 = \<langle>x, x\<rangle>"
-    using power2_norm_eq_cinner' by auto
+    by (simp add: cdot_square_norm)
   also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * (a t))"   
     using h1 ell2_norm_cinner[where X = X and a = a and b = a]
     using x_def by blast    

@@ -1820,9 +1820,8 @@ proof transfer
   moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close>
     for u::'b and v::'a
     unfolding F_def G_def
-    using Adj_I a1 a2 
-      cinner_left_distrib
-    by (simp add: Adj_I cinner_left_distrib cinner_right_distrib) 
+    using Adj_I a1 a2 cinner_add_left
+    by (simp add: Adj_I cinner_add_left cinner_add_right) 
   ultimately have \<open>F = G\<^sup>\<dagger> \<close>
     by (rule Adj_D)
   thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
@@ -2986,7 +2985,7 @@ lemma scaleC_eigenspace[simp]:
 proof -
   have "b *\<^sub>C (idOp::('a, _) cblinfun) = a *\<^sub>C (b / a) *\<^sub>C idOp"
     using a1
-    by (metis eq_vector_fraction_iff)
+    by (metis ceq_vector_fraction_iff)
   hence "kernel (a *\<^sub>C A - b *\<^sub>C idOp) = kernel (A - (b / a) *\<^sub>C idOp)"
     using a1 by (metis (no_types) complex_vector.scale_right_diff_distrib kernel_scalar_times)
   thus ?thesis 
@@ -3769,17 +3768,14 @@ proof transfer
     case False
     have \<open>f t = \<langle>t, t\<rangle>\<close>
       using \<open>\<And>x. f x = \<langle>t, x\<rangle>\<close> by blast
-    also have \<open>\<dots> = norm \<langle>t, t\<rangle>\<close>
-      using complex_of_real_cmod
-      by (metis cinner_ge_zero)
     also have \<open>\<dots> = (norm t)^2\<close>
-      by (simp add: power2_norm_eq_cinner)
+      by (meson cnorm_eq_square)
     also have \<open>\<dots> = (norm t)*(norm t)\<close>
       by (simp add: power2_eq_square)
     finally have \<open>f t = (norm t)*(norm t)\<close>
       by blast
     thus ?thesis
-      by (metis False \<open>\<langle>t, t\<rangle> = complex_of_real (cmod \<langle>t, t\<rangle>)\<close> \<open>f t = \<langle>t, t\<rangle>\<close> nonzero_eq_divide_eq of_real_eq_iff) 
+      by (metis False Re_complex_of_real \<open>\<And>x. f x = cinner t x\<close> cinner_ge_zero complex_of_real_cmod nonzero_divide_eq_eq)
   qed
   ultimately have \<open>Sup {(norm (f x)) / (norm x)| x. True} = norm t\<close>
     by (smt cSup_eq_maximum mem_Collect_eq)    
@@ -3933,7 +3929,7 @@ proof intro_classes
   proof -
     define c :: complex where "c = one_dim_isom (A *\<^sub>V 1)"
     have "A x = one_dim_isom (A 1) *\<^sub>C one_dim_isom x" for x
-      by (metis (mono_tags, hide_lams) applyOp_scaleC2 complex_vector.scale_left_commute mult.right_neutral of_complex_inner_1 of_complex_one_dim_isom one_dim_isom_def scaleC_conv_of_complex)
+      by (smt (z3) applyOp_scaleC2 complex_vector.scale_left_commute one_dim_isom_idem one_dim_scaleC_1)
     hence "A = one_dim_isom (A *\<^sub>V 1) *\<^sub>C 1"
       apply transfer by metis
     thus "A \<in> cspan (set ?basis)"
@@ -3991,10 +3987,8 @@ qed
 lemma one_vector_to_cblinfun[simp]: 
   "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L 1 
      = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
-proof (transfer fixing: s)
-  show "(\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C s) \<circ> one_dim_isom = (\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C s)"
-    by (metis (full_types) comp_apply of_complex_inner_1 one_dim_isom_def)
-qed
+  apply (transfer fixing: s)
+  by fastforce
 
 lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
 proof transfer
@@ -4319,8 +4313,7 @@ proof
     proof-
       define f where \<open>f x = \<langle> t, x \<rangle>\<close> for x
       have \<open>cbounded_linear f\<close>
-        unfolding f_def
-        by (simp add: cbounded_linear_cinner_right)
+        using f_def[abs_def] bounded_clinear_cinner_right by blast
       hence \<open>Cauchy (\<lambda> n. f (X n))\<close>
         using that
         by (simp add: cbounded_linear_Cauchy) 
@@ -4383,9 +4376,8 @@ lemma vector_to_cblinfun_adj_times_vector_to_cblinfun[simp]:
 proof -
   have "one_dim_isom \<gamma> *\<^sub>C one_dim_isom (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
     \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_isom \<gamma>"
-    for \<gamma> :: "'c::one_dim"
-    by (metis (mono_tags, hide_lams) complex_vector.scale_left_commute id_apply of_complex_def 
-        of_complex_eq_id of_complex_inner_1 one_dim_isom_def)
+    for \<gamma> :: "'c::one_dim"      
+    by (metis complex_vector.scale_left_commute of_complex_def one_dim_isom_one one_dim_isom_scaleC one_dim_scaleC_1)
   hence "one_dim_isom ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
       = one_dim_isom ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
@@ -4870,7 +4862,7 @@ proof-
             hence "ha yb \<noteq> 0"
               by blast
             hence "\<exists>a. \<i> *\<^sub>C a = yb \<and> ha (\<i> *\<^sub>C a) \<noteq> 0"
-              by (metis (full_types) eq_vector_fraction_iff complex_i_not_zero)
+              by (metis (full_types) ceq_vector_fraction_iff complex_i_not_zero)
             thus "\<exists>a\<in>{a. ha (\<i> *\<^sub>C a) \<noteq> 0}. yb = \<i> *\<^sub>C a"
               by blast
           qed
@@ -5664,14 +5656,12 @@ next
     fix x 
 
     have "cmod \<langle>\<phi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<phi> * norm x"
-      using norm_cauchy_schwarz[of \<phi> x]
-      by (metis mult.assoc mult.commute norm_imp_pos_and_ge ordered_comm_semiring_class.comm_mult_left_mono)
+      by (metis ab_semigroup_mult_class.mult_ac(1) complex_inner_class.Cauchy_Schwarz_ineq2 mult.commute mult_left_mono norm_ge_zero)
     thus "norm (butterfly \<psi> \<phi> *\<^sub>V x) \<le> norm \<psi> * norm \<phi> * norm x"
       by (simp add: butterfly_apply power2_eq_square)
 
     show "norm (butterfly \<psi> \<phi> *\<^sub>V \<phi>) = norm \<psi> * norm \<phi> * norm \<phi>"
-      by (simp add: butterfly_apply power2_eq_square power2_norm_eq_cinner[symmetric])
-      thm power2_norm_eq_cinner
+      by (smt (z3) ab_semigroup_mult_class.mult_ac(1) butterfly_apply mult.commute norm_eq_sqrt_cinner norm_ge_zero norm_scaleC power2_eq_square real_sqrt_abs real_sqrt_eq_iff)
   qed
 qed
 
@@ -5709,7 +5699,7 @@ next
   also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
     by (simp add: butterfly_apply)
   finally have xcy: "x = c *\<^sub>C y"
-    by (simp add: c_def eq_vector_fraction_iff)
+    by (simp add: c_def ceq_vector_fraction_iff)
   have "cmod c * norm x = cmod c * norm y"
     using assms norm_butterfly
     by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)
@@ -5726,7 +5716,7 @@ qed
 lemma isometry_vector_to_cblinfun:
   assumes "norm x = 1"
   shows "isometry (vector_to_cblinfun x)"
-  by (simp add: isometry_def cinner_norm_sq assms)
+  using assms cnorm_eq_1 isometry_def by force
 
 
 lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
@@ -5753,8 +5743,8 @@ proof -
     where "B = selfbutter x" and "\<phi> = vector_to_cblinfun x"
   then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
     unfolding butterfly_def' by simp
-  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = idOp"
-    by (simp add: \<phi>_def cinner_norm_sq assms)
+  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = idOp"    
+    using \<phi>_def assms isometry_def isometry_vector_to_cblinfun by blast
   have "B o\<^sub>C\<^sub>L B = \<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>*"
     by (simp add: B cblinfun_apply_assoc)
   also have "\<dots> = B"

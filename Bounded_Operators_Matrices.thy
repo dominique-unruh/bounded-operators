@@ -72,7 +72,7 @@ next
   moreover have "\<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i = 
                  \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i + 
                  \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by (simp add: add_smult_distrib_vec cinner_right_distrib)
+    by (simp add: add_smult_distrib_vec cinner_add_right)
   ultimately have "vec_of_onb_enum_list (a # L) (v1 + v2) i = 
                    vec_of_onb_enum_list L v1 (Suc i)
                  + vec_of_onb_enum_list L v2 (Suc i)
@@ -904,7 +904,7 @@ proof-
     have "\<langle>b, sum_list (map2 (*\<^sub>C) (x # xs) (b' # B))\<rangle> = \<langle>b, x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
       by simp
     also have "\<dots> = \<langle>b, x *\<^sub>C b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> = x * \<langle>b, b'\<rangle> + \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
       by simp
     also have "\<dots> = \<langle>b, sum_list (map2 (*\<^sub>C) xs B)\<rangle>"
@@ -934,16 +934,16 @@ proof-
       by auto
     also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                 + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_left_distrib)
+      by (simp add: cinner_add_left)
     also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
                  +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                 + \<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> = \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
                  +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b\<rangle>
                  +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> = cnj x * y * \<langle>b, b\<rangle>
                  +cnj x * \<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
                  + y * \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>
@@ -959,7 +959,7 @@ proof-
       hence "(norm b)^2 = 1"
         by simp
       hence "\<langle>b, b\<rangle> = 1"
-        by (metis of_real_hom.hom_one power2_norm_eq_cinner')       
+        by (simp add: cdot_square_norm)
       moreover have "\<langle>b, sum_list (map2 (*\<^sub>C) ys B)\<rangle> = 0"
         using Cons.hyps(2) Cons.prems(1) Cons.prems(2) 
           is_ortho_setsum_list_map2_zero[where B = B and b = b and ys = ys]
@@ -1030,7 +1030,7 @@ proof-
       have "\<langle>sum_list (map2 (*\<^sub>C) (x # xs) (b' # B)), b\<rangle> = \<langle>x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
         by auto
       also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle> + \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
-        by (simp add: cinner_left_distrib)
+        by (simp add: cinner_add_left)
       also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle>"
         using Cons.IH Cons.prems b2 by simp
       also have "\<dots> = cnj x * \<langle>b', b\<rangle>"
@@ -1062,7 +1062,7 @@ proof-
       have "\<langle>sum_list (map2 (*\<^sub>C) (x # xs) (b' # B)), b\<rangle> = \<langle>x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
         by auto
       also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle> + \<langle>sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
-        by (simp add: cinner_left_distrib)
+        by (simp add: cinner_add_left)
       also have "\<dots> = \<langle>x *\<^sub>C b', b\<rangle>"
         using Cons.IH Cons.prems b2 by simp
       also have "\<dots> = cnj x * \<langle>b', b\<rangle>"
@@ -1079,18 +1079,18 @@ proof-
     also have "\<dots> =
     \<langle>x *\<^sub>C b, y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>
    +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_left_distrib)
+      by (simp add: cinner_add_left)
     also have "\<dots> =
     \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
    + \<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
    +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b + sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> =
     \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
    +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>
    +\<langle>sum_list (map2 (*\<^sub>C) xs B), y *\<^sub>C b\<rangle>
    +\<langle>sum_list (map2 (*\<^sub>C) xs B), sum_list (map2 (*\<^sub>C) ys B)\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> =
     \<langle>x *\<^sub>C b, y *\<^sub>C b\<rangle>
    +\<langle>x *\<^sub>C b, sum_list (map2 (*\<^sub>C) ys B)\<rangle>   
@@ -1119,7 +1119,7 @@ proof-
       hence "(norm b)^2 = 1"
         by simp
       hence "\<langle>b, b\<rangle> = 1"
-        by (metis of_real_hom.hom_one power2_norm_eq_cinner')        
+        by (simp add: cdot_square_norm)
       moreover have "\<langle>sum_list (map2 (*\<^sub>C) xs B), 
                       sum_list (map2 (*\<^sub>C) ys B)\<rangle> =
       sum_list (map2 (\<lambda>x. (*) (cnj x)) xs ys)"
@@ -1496,7 +1496,7 @@ proof-
         by (simp add: cblinfun_apply_add)        
       thus ?thesis
         unfolding Q_def
-        by (simp add: cinner_right_distrib)        
+        by (simp add: cinner_add_right)        
     qed
     show "Q (r *\<^sub>C b) = r *\<^sub>C Q b"
       for r :: complex
@@ -1506,7 +1506,7 @@ proof-
         by (simp add: cblinfun_apply_scaleC)        
       thus ?thesis
         unfolding Q_def
-        by (simp add: cinner_right_distrib)        
+        by (simp add: cinner_add_right)        
     qed
   qed
   moreover have "P x = Q x" 
@@ -1589,7 +1589,7 @@ proof-
     by simp
   also have "\<dots> = 
      (\<Sum>jB\<in>{0..<nB}. \<langle>BasisB!iB, (list_of_vec v)!jB *\<^sub>C BasisB!jB\<rangle>)"
-    using Complex_Inner_Product.complex_inner_class.cinner_sum_right[where 
+    using complex_inner_class.cinner_sum_right[where 
         x = "BasisB!iB" and f = "\<lambda>x. (list_of_vec v)!x *\<^sub>C BasisB!x" and A = "{0..<nB}"]
     by blast
   also have "\<dots> = 
@@ -1650,7 +1650,7 @@ proof-
     hence "(norm (BasisB!iB))^2 = 1"
       by simp
     hence "\<langle>BasisB!iB, BasisB!iB\<rangle> = 1"
-      by (metis of_real_hom.hom_one power2_norm_eq_cinner')
+      by (simp add: cdot_square_norm)
     thus ?thesis by simp
   qed
   also have "\<dots> = vec_index v iB"
@@ -1896,7 +1896,7 @@ proof-
       = \<langle>BasisB ! iB, F *\<^sub>V BasisA ! iA\<rangle> + \<langle>BasisB ! iB, G *\<^sub>V BasisA ! iA\<rangle>"
       by simp
     also have "\<dots> = \<langle>BasisB ! iB, F *\<^sub>V BasisA!iA +  G *\<^sub>V BasisA!iA\<rangle>"
-      by (simp add: cinner_right_distrib)
+      by (simp add: cinner_add_right)
     also have "\<dots> = \<langle>BasisB ! iB, (F + G) *\<^sub>V BasisA!iA\<rangle>"
       by (simp add: plus_cblinfun.rep_eq)
     also have "\<dots> = (mat_of_cblinfun (F + G)) $$ (iB,iA)"
@@ -1954,7 +1954,7 @@ proof-
       hence "(norm (Basis!i))^2 = 1"
         by simp
       thus ?thesis
-        by (metis True of_real_hom.hom_one power2_norm_eq_cinner') 
+        by (simp add: True cdot_square_norm)
     next
       case False
       have c1: "distinct Basis"
@@ -2300,7 +2300,7 @@ proof-
   hence "(norm (BasisA!i))^2 = 1"
     by simp
   thus ?thesis
-    by (metis of_real_hom.hom_one power2_norm_eq_cinner') 
+    by (simp add: cdot_square_norm)
 qed
 
 lemma enum_canonical_basis_length:
@@ -2572,7 +2572,7 @@ proof -
     hence "(norm (BasisB!i))^2 = 1"
       by simp
     thus ?thesis
-      by (metis True of_real_hom.hom_one power2_norm_eq_cinner') 
+      by (simp add: True cdot_square_norm)
   next
     case False
     moreover have "distinct BasisB"
@@ -4147,7 +4147,7 @@ proof -
       using inj_selfbutter by auto
     have "0 \<noteq> cmod (cinner x x)"
       using \<open>x \<in> set Snorm\<close> norm_Snorm
-      by (simp add: cinner_norm_sq)
+      by force
     also have "cmod (cinner x x) = cmod (c * \<langle>x, y\<rangle>)"
       apply (subst (2) xcy) by simp
     also have "\<dots> = cmod \<langle>x, y\<rangle>"
@@ -4186,7 +4186,7 @@ proof -
     define factor where "factor = inverse ((complex_of_real (norm a))\<^sup>2)"
     have factor': "factor = 1 / (vec_of_onb_enum a \<bullet>c vec_of_onb_enum a)"
       unfolding factor_def cscalar_prod_cinner[symmetric]
-      by (simp add: inverse_eq_divide power2_norm_eq_cinner'')
+      by (simp add: inverse_eq_divide power2_norm_eq_cinner)
 
     have "mk_projector_orthog d (map vec_of_onb_enum (a # S))
           = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_onb_enum a] 

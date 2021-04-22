@@ -33,6 +33,67 @@ lemma (in scaleC) scaleC_real: assumes "r\<in>\<real>" shows "r *\<^sub>C x = Re
   unfolding scaleR_scaleC using assms by simp
 
 
+
+subsection \<open>Conjugate space\<close>
+
+typedef 'a conjugate_space = "UNIV :: 'a set"
+  morphisms from_conjugate_space to_conjugate_space ..
+setup_lifting type_definition_conjugate_space
+
+instantiation conjugate_space :: (complex_vector) complex_vector begin
+lift_definition scaleC_conjugate_space :: \<open>complex \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>c x. cnj c *\<^sub>C x\<close>.
+lift_definition scaleR_conjugate_space :: \<open>real \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>r x. r *\<^sub>R x\<close>.
+lift_definition plus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(+)".
+lift_definition uminus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is \<open>\<lambda>x. -x\<close>.
+lift_definition zero_conjugate_space :: "'a conjugate_space" is 0.
+lift_definition minus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(-)".
+instance
+  apply (intro_classes; transfer)
+  by (simp_all add: scaleR_scaleC scaleC_add_right scaleC_left.add)
+end
+
+instantiation conjugate_space :: (complex_normed_vector) complex_normed_vector begin
+lift_definition sgn_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is "sgn".
+lift_definition norm_conjugate_space :: "'a conjugate_space \<Rightarrow> real" is norm.
+lift_definition dist_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> real" is dist.
+lift_definition uniformity_conjugate_space :: "('a conjugate_space \<times> 'a conjugate_space) filter" is uniformity.
+lift_definition  open_conjugate_space :: "'a conjugate_space set \<Rightarrow> bool" is "open".
+instance 
+  apply (intro_classes; transfer)
+  by (simp_all add: dist_norm sgn_div_norm open_uniformity uniformity_dist norm_triangle_ineq)
+end
+
+instantiation conjugate_space :: (cbanach) cbanach begin
+instance 
+  apply intro_classes
+  unfolding Cauchy_def convergent_def LIMSEQ_def apply transfer
+  using Cauchy_convergent unfolding Cauchy_def convergent_def LIMSEQ_def by metis
+end
+
+
+lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conjugate_space ` cspan X"
+  unfolding complex_vector.span_def complex_vector.subspace_def hull_def
+  apply transfer
+  apply simp
+  by (metis (no_types, hide_lams) complex_cnj_cnj)
+
+lemma surj_to_conjugate_space[simp]: "surj to_conjugate_space"
+  by (meson surj_def to_conjugate_space_cases)
+
+lemma linear_from_conjugate_space[simp]: "linear from_conjugate_space"
+  apply (rule linearI; transfer)
+  by auto
+
+lemma linear_to_conjugate_space[simp]: "linear to_conjugate_space"
+  apply (rule linearI; transfer)
+  by auto
+
+lemma to_conjugate_space_scaleC: "to_conjugate_space (c *\<^sub>C x) = cnj c *\<^sub>C to_conjugate_space x"
+  apply transfer by auto
+
+lemma from_conjugate_space_scaleC: "from_conjugate_space (c *\<^sub>C x) = cnj c *\<^sub>C from_conjugate_space x"
+  apply transfer by auto
+
 subsection \<open>Bounded Linear and Bilinear Operators\<close>
 
 
@@ -97,7 +158,6 @@ subsection \<open>Class instances for complex numbers\<close>
 
 subsection \<open>Sign function\<close>
 
-
 lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
   unfolding clinear_def  linear_def
 proof
@@ -139,19 +199,23 @@ lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
   by (auto simp: clinearI distrib_left)
 
-locale csemilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
-  assumes scaleC: "f (scaleC r x) = scaleC (cnj r) (f x)"
+lemma f_from_to_conjugate_space: "f x = f (from_conjugate_space (to_conjugate_space x))"
+    by (auto simp: to_conjugate_space_inverse o_def)
+
+locale csemilinear = f': clinear "f o from_conjugate_space" for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector"
+
+lemma (in csemilinear) scaleC: "f (r *\<^sub>C b) = cnj r *\<^sub>C f b"
+  apply (subst f_from_to_conjugate_space[of f])
+  by (simp add: to_conjugate_space_scaleC to_conjugate_space_inverse f'.scaleC[unfolded o_def])
 
 sublocale csemilinear \<subseteq> linear
-proof (rule linearI)
-  show "f (b1 + b2) = f b1 + f b2"
-    for b1 :: 'a
-      and b2 :: 'a
-    by (simp add: add)    
-  show "f (r *\<^sub>R b) = r *\<^sub>R f b"
-    for r :: real
-      and b :: 'a
-    unfolding scaleR_scaleC by (subst scaleC, simp)  
+proof -
+  have "linear (f o from_conjugate_space)"
+    by (simp add: clinear_is_linear f'.clinear_axioms)
+  then have "linear ((f o from_conjugate_space) o to_conjugate_space)"
+    by (simp add: Real_Vector_Spaces.linear_compose)
+  then show "linear f"
+    by (auto simp: to_conjugate_space_inverse o_def)
 qed
 
 lemma csemilinear_imp_scaleC:
@@ -177,167 +241,140 @@ proof (simp add: csemilinear_def additive_def csemilinear_axioms_def)
     by (simp add: distrib_left additive.intro)
 qed *)
 
+lemma csemilinearI: "csemilinear f"
+  if "\<And>b1 b2. f (b1 + b2) = f b1 + f b2"
+    "\<And>c b. f (c *\<^sub>C b) = cnj c *\<^sub>C f b"
+  apply unfold_locales
+  using that by (simp_all add: scaleC_conjugate_space.rep_eq plus_conjugate_space.rep_eq)
 
-lemma csemilinearI:
-  assumes "\<And>x y. f (x + y) = f x + f y"
-    and "\<And>c x. f (c *\<^sub>C x) = cnj c *\<^sub>C f x"
-  shows "csemilinear f"
-  by standard (rule assms)+
+lemma csemilinear_iff:
+  "csemilinear f \<longleftrightarrow> (\<forall>x y. f (x + y) = f x + f y) \<and> (\<forall>c x. f (c *\<^sub>C x) = cnj c *\<^sub>C f x)"
+  unfolding csemilinear_def clinear_iff o_def
+  by (metis from_conjugate_space_scaleC iso_tuple_UNIV_I plus_conjugate_space.rep_eq to_conjugate_space_inverse to_conjugate_space_scaleC)
 
+lemma csemilinear_to_conjugate_space: \<open>csemilinear to_conjugate_space\<close>
+  by (rule csemilinearI; transfer, auto)
+
+lemma csemilinear_from_conjugate_space: \<open>csemilinear from_conjugate_space\<close>
+  by (rule csemilinearI; transfer, auto)
 
 
 lemma csemilinear_csemilinear: "csemilinear f \<Longrightarrow> csemilinear g \<Longrightarrow> clinear (g o f)"
   apply (rule clinearI)
-  apply (simp add: additive.add csemilinear_def)
-  by (simp add: csemilinear.scaleC)
+  by (simp_all add: csemilinear_iff)
 
 lemma csemilinear_clinear: "csemilinear f \<Longrightarrow> clinear g \<Longrightarrow> csemilinear (g o f)"
   apply (rule csemilinearI)
-  apply (simp add: additive.add clinear_additive_D csemilinear_def)
-  by (simp add: complex_vector.linear_scale csemilinear.scaleC)
+  by (simp_all add: csemilinear_iff clinear_iff)
 
 lemma clinear_csemilinear: "clinear f \<Longrightarrow> csemilinear g \<Longrightarrow> csemilinear (g o f)"
   apply (rule csemilinearI)
-  apply (simp add: additive.add clinear_additive_D csemilinear_def)
-  by (simp add: complex_vector.linear_scale csemilinear.scaleC)
+  by (simp_all add: csemilinear_iff clinear_iff)
 
+locale bounded_csemilinear = f': cbounded_linear "f o from_conjugate_space" for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
 
-locale bounded_csemilinear = csemilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
-  assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-begin
+sublocale bounded_csemilinear \<subseteq> csemilinear..
 
-sublocale bounded_linear
+sublocale bounded_csemilinear \<subseteq> bounded_linear
 proof
-  show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-    by (fact bounded) 
+  from f'.bounded
+  obtain K where K: \<open>norm (f (from_conjugate_space x)) \<le> norm x * K\<close> for x
+    by auto
+  { fix x
+    have \<open>norm (f x) = norm (f (from_conjugate_space (to_conjugate_space x)))\<close>
+      by (simp add: to_conjugate_space_inverse)
+    also have \<open>\<dots> \<le> norm (to_conjugate_space x) * K\<close>
+      by (simp add: K)
+    also have \<open>\<dots> = norm x * K\<close>
+      by (simp add: norm_conjugate_space.abs_eq)
+    finally have \<open>norm (f x) \<le> norm x * K\<close>
+      by - }
+  then show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+    by auto
 qed
 
+lemma cbounded_linear_intro'_ex:
+  assumes \<open>clinear f\<close>
+    and "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+  shows "cbounded_linear f"
+  apply intro_locales
+   apply (meson assms(1) clinear_def module_hom.axioms(3) module_hom_eq_linear)
+  apply standard using assms by blast
 
-lemma bounded_linear: "bounded_linear f"
-  by (fact bounded_linear)
+lemma bounded_csemilinear_intro':
+  assumes \<open>csemilinear f\<close>
+    and "\<And>x. norm (f x) \<le> norm x * K"
+  shows "bounded_csemilinear f"
+  apply intro_locales apply (meson assms(1) clinear_iff csemilinear_csemilinear csemilinear_from_conjugate_space module_hom_axioms.intro)
+  apply standard using assms by (metis comp_apply norm_conjugate_space.rep_eq) 
 
-lemma csemilinear: "csemilinear f"
-  by (fact csemilinear_axioms)
-
-end
+lemma bounded_csemilinear_intro'_ex:
+  assumes \<open>csemilinear f\<close>
+    and "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+  shows "bounded_csemilinear f"
+  apply intro_locales apply (meson assms(1) clinear_iff csemilinear_csemilinear csemilinear_from_conjugate_space module_hom_axioms.intro)
+  apply standard using assms by (metis comp_apply norm_conjugate_space.rep_eq) 
 
 lemma bounded_csemilinear_intro:
   assumes "\<And>x y. f (x + y) = f x + f y"
     and "\<And>r x. f (scaleC r x) = scaleC (cnj r) (f x)"
     and "\<And>x. norm (f x) \<le> norm x * K"
   shows "bounded_csemilinear f"
-  by standard (blast intro: assms)+
+  apply (rule bounded_csemilinear_intro')
+   apply (rule csemilinearI)
+  using assms by auto
 
 lemma cnj_bounded_csemilinear[simp]: "bounded_csemilinear cnj"
-proof (rule bounded_csemilinear_intro [where K = 1])
-  show "cnj (x + y) = cnj x + cnj y"
-    for x :: complex
-      and y :: complex
-    by simp    
-  show "cnj (r *\<^sub>C x) = cnj r *\<^sub>C cnj x"
-    for r :: complex
-      and x :: complex
-    by simp    
-  show "cmod (cnj x) \<le> cmod x * 1"
-    for x :: complex
-    by simp    
-qed
-
+  apply (rule bounded_csemilinear_intro[where K = 1])
+  by auto
 
 lemma bounded_csemilinear_compose1:
   assumes "bounded_csemilinear f"
     and "bounded_csemilinear g"
   shows "cbounded_linear (\<lambda>x. f (g x))"
-proof
+proof (rule cbounded_linear_intro'_ex)
   interpret f: bounded_csemilinear f by fact
   interpret g: bounded_csemilinear g by fact
-  show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
-    for b1 :: 'c
-      and b2 :: 'c
-    by (simp add: f.add g.add)
-  show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
-    for r :: complex
-      and b :: 'c
-    by (simp add: f.scaleC g.scaleC)
-  have "\<exists> Kf. \<forall>x. norm (f (g x)) \<le> norm (g x) * Kf"
-    using f.pos_bounded by auto
-  then obtain Kf where \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close>
-    by blast        
-  have "\<exists> Kg. \<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf"
-    by (metis g.pos_bounded le_cases mult.commute mult_left_mono norm_ge_zero vector_space_over_itself.scale_zero_left)
-  then obtain Kg where \<open>\<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf\<close>
-    by blast
-  have \<open>\<forall>x. (norm x * Kg) * Kf = norm x * (Kg * Kf)\<close>
-    using mult.assoc
-    by simp 
-  define  K where \<open>K = Kg * Kf\<close>
-  have  \<open>\<forall>x. norm (f (g x)) \<le> norm x * K\<close>
-    unfolding K_def
-    by (metis K_def \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close> \<open>\<forall>x. norm (g x) * Kf \<le> norm x * Kg * Kf\<close> \<open>\<forall>x. norm x * Kg * Kf = norm x * (Kg * Kf)\<close> dual_order.trans) 
+  show \<open>clinear (\<lambda>x. f (g x))\<close>
+    using g.csemilinear_axioms f.csemilinear_axioms 
+    by (rule csemilinear_csemilinear[unfolded o_def])
+  have \<open>bounded_linear (\<lambda>x. f (g x))\<close>
+    by (simp add: bounded_linear_compose f.bounded_linear_axioms g.bounded_linear_axioms)
   thus "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    by blast
+    by (simp add: bounded_linear.bounded)
 qed
 
 lemma bounded_csemilinear_compose2:
   assumes "bounded_csemilinear f"
     and "cbounded_linear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
-proof
+proof (rule bounded_csemilinear_intro'_ex)
   interpret f: bounded_csemilinear f by fact
   interpret g: cbounded_linear g by fact
-  from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-    by blast
-  from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-    by blast
-  define K where "K = Kg * Kf"
-  have x: "norm (f (g x)) \<le> norm x * K" 
-    for x
-  proof-
-    have "norm (f (g x)) \<le> norm (g x) * Kf"
-      using f .
-    also have "\<dots> \<le> (norm x * Kg) * Kf"
-      using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-    also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-      by (rule mult.assoc)
-    finally show "norm (f (g x)) \<le> norm x * K"
-      unfolding K_def.
-  qed
-
-  show "f (g (x + y)) = f (g x) + f (g y)" for x y
-    by (simp only: f.add g.add)
-  show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-    by (simp add: f.scaleC g.scaleC)
-  show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    using x by (intro exI allI)
+  show \<open>csemilinear (\<lambda>x. f (g x))\<close>
+    using g.clinear f.csemilinear_axioms 
+    by (rule clinear_csemilinear[unfolded o_def])
+  have \<open>bounded_linear (\<lambda>x. f (g x))\<close>
+    by (simp add: bounded_linear_compose f.bounded_linear_axioms g.bounded_linear)
+  thus "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    by (simp add: bounded_linear.bounded)
 qed
 
 lemma bounded_csemilinear_compose3:
   assumes "cbounded_linear f"
     and "bounded_csemilinear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
-proof
+proof (rule bounded_csemilinear_intro'_ex)
   interpret f: cbounded_linear f by fact
   interpret g: bounded_csemilinear g by fact
 
-  show s3: "f (g (x + y)) = f (g x) + f (g y)" for x y
-    by (simp only: f.add g.add)
-  show s2: "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
-    using f.scaleC g.scaleC by fastforce
-  from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-    by blast
-  from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-    by blast
-  show s1: "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-  proof (intro exI allI)
-    fix x
-    have "norm (f (g x)) \<le> norm (g x) * Kf"
-      using f .
-    also have "\<dots> \<le> (norm x * Kg) * Kf"
-      using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-    also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-      by (rule mult.assoc)
-    finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-  qed
+  show \<open>csemilinear (\<lambda>x. f (g x))\<close>
+    using g.csemilinear_axioms f.clinear 
+    by (rule csemilinear_clinear[unfolded o_def])
+  have \<open>bounded_linear (\<lambda>x. f (g x))\<close>
+    by (simp add: bounded_linear_compose f.bounded_linear g.bounded_linear_axioms)
+  thus "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    by (simp add: bounded_linear.bounded)
 qed
 
 
@@ -370,7 +407,7 @@ proof-
     by (meson clinearI clinear_def a1 a2 t1 t2)
 qed
 
-locale bounded_sesquilinear =
+(* locale bounded_sesquilinear =
   fixes 
     prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
@@ -378,261 +415,88 @@ locale bounded_sesquilinear =
     and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
     and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-begin
+begin *)
 
-sublocale bounded_bilinear
-proof
-  show "prod (a + a') b = prod a b + prod a' b"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'b
-    by (simp add: add_left)
+locale cbilinear =
+  fixes prod :: "'a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector"
+    (infixl "**" 70)
+  assumes add_left: "prod (a + a') b = prod a b + prod a' b"
+    and add_right: "prod a (b + b') = prod a b + prod a b'"
+    and scaleC_left: "prod (scaleC r a) b = scaleC r (prod a b)"
+    and scaleC_right: "prod a (scaleC r b) = scaleC r (prod a b)"
 
-  show "prod a (b + b') = prod a b + prod a b'"
-    for a :: 'a
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: add_right)
+lemma (in cbilinear) clinear_left: "clinear (\<lambda>a. a ** b)"
+  apply standard
+  by (simp_all add: cbilinear.add_left cbilinear_axioms scaleC_left)
 
-  show "prod (r *\<^sub>R a) b = r *\<^sub>R prod a b"
-    for r :: real
-      and a :: 'a
-      and b :: 'b
-    unfolding scaleR_scaleC
-    by (simp add: scaleC_left)
+lemma (in cbilinear) clinear_right: "clinear (\<lambda>b. a ** b)"
+  apply standard
+  by (simp_all add: cbilinear.add_right cbilinear_axioms scaleC_right)
 
-  show "prod a (r *\<^sub>R b) = r *\<^sub>R prod a b"
-    for a :: 'a
-      and r :: real
-      and b :: 'b
-    unfolding scaleR_scaleC
-    by (fact scaleC_right)
+locale sesquilinear = prod': cbilinear \<open>prod o from_conjugate_space\<close>
+  for prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
+    (infixl "**" 70)
 
-  show "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    unfolding scaleR_scaleC
-    by (fact bounded)
-qed
+lemma (in sesquilinear) csemilinear_left: "csemilinear (\<lambda>a. a ** b)"
+  apply standard
+  using prod'.add_left apply force
+  using prod'.scaleC_left by auto
+
+lemma (in sesquilinear) clinear_right: "clinear (\<lambda>b. a ** b)"
+  apply standard
+  apply (metis UNIV_I comp_def prod'.add_right to_conjugate_space_inverse)
+  by (metis UNIV_I comp_def prod'.scaleC_right to_conjugate_space_inverse)
+
+lemma (in sesquilinear) bilinear: "bilinear prod"
+  unfolding bilinear_def apply auto
+  apply (simp add: clinear_is_linear clinear_right)
+  sorry
+
+locale bounded_sesquilinear = prod': bounded_cbilinear \<open>prod o from_conjugate_space\<close>
+  for prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
+    (infixl "**" 70)
+
+lemma (in bounded_sesquilinear) bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. a ** b)"
+  apply standard
+  using prod'.add_left apply auto[1]
+  using prod'.scaleC_left apply auto[1]
+  using cbounded_linear.bounded prod'.cbounded_linear_left by auto
+
+lemma (in bounded_sesquilinear) bounded_clinear_right: "cbounded_linear (\<lambda>b. a ** b)"
+  apply standard
+  apply (metis UNIV_I comp_def prod'.add_right to_conjugate_space_inverse)
+  apply (metis UNIV_I comp_def prod'.scaleC_right to_conjugate_space_inverse)
+  by (smt (z3) UNIV_I ab_semigroup_mult_class.mult_ac(1) comp_def ordered_field_class.sign_simps(33) prod'.pos_bounded to_conjugate_space_inverse)
+
+sublocale bounded_sesquilinear \<subseteq> bounded_bilinear
+  apply standard
+  sorry
+
+lemma (in bounded_sesquilinear) bounded_bilinear: "bounded_bilinear prod" 
+  by (fact bounded_bilinear_axioms)
 
 
-lemma bounded_bilinear: "bounded_bilinear prod" by (fact bounded_bilinear_axioms)
-
-lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
-proof (insert bounded)
-
-  have "prod (x + y) b = prod x b + prod y b"
-    for x :: 'a
-      and y :: 'a
-    by (simp add: add_left)      
-  moreover have "prod (r *\<^sub>C x) b = cnj r *\<^sub>C prod x b"
-    for r :: complex
-      and x :: 'a
-    by (simp add: scaleC_left)      
-  moreover have "norm (prod x b) \<le> norm x * (norm b * K)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K :: real and x :: 'a
-    by (simp add: that vector_space_over_itself.scale_scale)
-  ultimately  have "bounded_csemilinear (\<lambda>a. prod a b)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K :: real
-    by (meson bounded_csemilinear_intro that) 
-  thus "bounded_csemilinear (\<lambda>a. prod a b)"
-    if "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    using that by safe    
-qed
-
-lemma cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
-proof (insert bounded)
-  have "prod a (x + y) = prod a x + prod a y"
-    for x :: 'b
-      and y :: 'b
-    by (simp add: add_right)    
-  moreover have "prod a (r *\<^sub>C x) = r *\<^sub>C prod a x"
-    for r :: complex
-      and x :: 'b
-    by (simp add: scaleC_right)    
-  moreover have "norm (prod a x) \<le> norm x * (norm a * K)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for x :: 'b and K
-    by (simp add: that vector_space_over_itself.scale_left_commute 
-        vector_space_over_itself.scale_scale)        
-  ultimately have "cbounded_linear (prod a)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K
-    by (meson cbounded_linear_intro nonneg_bounded)    
-  thus "cbounded_linear (prod a)"
-    if "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    using that
-    by blast
-qed
-
-lemma comp1:
+lemma (in bounded_sesquilinear) comp1:
   assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
-proof
-  show "prod (g (a + a')) b = prod (g a) b + prod (g a') b"
-    for a :: 'd
-      and a' :: 'd
-      and b :: 'b
-  proof-
-    have \<open>g (a + a') = g a + g a'\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis
-      by (simp add: add_left) 
-  qed
-  show "prod (g a) (b + b') = prod (g a) b + prod (g a) b'"
-    for a :: 'd
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: add_right)
-  show "prod (g (r *\<^sub>C a)) b = cnj r *\<^sub>C prod (g a) b"
-    for r :: complex
-      and a :: 'd
-      and b :: 'b
-  proof-
-    have \<open>g (r *\<^sub>C a) = r *\<^sub>C (g a)\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      by (simp add: scaleC_left)      
-  qed  
-  show "prod (g a) (r *\<^sub>C b) = r *\<^sub>C prod (g a) b"
-    for a :: 'd
-      and r :: complex
-      and b :: 'b
-    by (simp add: scaleC_right)    
-  show "\<exists>K. \<forall>a b. norm (prod (g a) b) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      using cbounded_linear.pos_bounded cbounded_linear_def by blast
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-      using nonneg_bounded by blast    
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-    have \<open>norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close>
-      for a b
-      using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      by blast
-    hence \<open>norm (prod (g a) b) \<le> (norm a * M) * norm b * N\<close>
-      for a b
-    proof -
-      have "\<forall>d b. norm (b::'b) * norm (g d) \<le> norm b * (M * norm d)"
-        by (metis \<open>\<And>a. norm (g a) \<le> norm a * M\<close> mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono)
-      thus ?thesis
-        by (metis (no_types) \<open>0 \<le> N\<close> \<open>\<And>b a. norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close> dual_order.trans mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
-    qed
-    hence \<open>norm (prod (g a) b) \<le> norm a * norm b * K\<close>
-      for a b
-      unfolding K_def
-      by (simp add: mult.commute mult.left_commute)
-    thus ?thesis
-      by blast      
-  qed  
-qed
+  apply standard 
+      apply auto
+  sorry
 
-lemma comp2:
+lemma (in bounded_sesquilinear) comp2:
   assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x y. prod x (g y))\<close>
-proof
-  show "prod (a + a') (g b) = prod a (g b) + prod a' (g b)"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'd
-    by (simp add: add_left)    
-  show "prod a (g (b + b')) = prod a (g b) + prod a (g b')"
-    for a :: 'a
-      and b :: 'd
-      and b' :: 'd
-  proof-
-    have \<open>g (b + b') = g b + g b'\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis
-      by (simp add: add_right) 
-  qed
-  show "prod (r *\<^sub>C a) (g b) = cnj r *\<^sub>C prod a (g b)"
-    for r :: complex
-      and a :: 'a
-      and b :: 'd
-    by (simp add: scaleC_left)    
-  show "prod a (g (r *\<^sub>C b)) = r *\<^sub>C prod a (g b)"
-    for a :: 'a
-      and r :: complex
-      and b :: 'd
-  proof-
-    have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      by (simp add: scaleC_right) 
-  qed
-  show "\<exists>K. \<forall>a b. norm (prod a (g b)) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      using cbounded_linear_axioms_def by blast
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-      using nonneg_bounded by auto    
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-    have \<open>norm (prod a (g b)) \<le> norm a * norm b * K\<close>
-      for a b
-    proof-
-      have \<open>norm (prod a (g b)) \<le> norm a * norm (g b) * N\<close>
-        using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-        by blast
-      also have \<open>norm a * norm (g b) * N \<le> norm a * (norm b * M) * N\<close>
-        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close> \<open>N \<ge> 0\<close>
-        by (simp add: mult_mono)
-      also have \<open>norm a * (norm b * M) * N = norm a * norm b * K\<close>
-        by (simp add: K_def)
-      finally show ?thesis by blast
-    qed
-    thus ?thesis
-      by blast      
-  qed  
-qed
+  sorry
 
-lemma comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
+lemma (in bounded_sesquilinear) comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
-end
-
-lemma clinear_linear:
+(* lemma clinear_linear:
   fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
   assumes \<open>clinear f\<close>
   shows \<open>linear f\<close>
   using Complex_Vector_Spaces.clinear_is_linear
-  by (simp add: clinear_is_linear assms)
+  by (simp add: clinear_is_linear assms) *)
 
 lemma clinear_add:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
@@ -1917,13 +1781,10 @@ proof-
     using t1 t2 by blast    
 qed
 
-lemmas (in bounded_cbilinear) tendsto = tendsto
 
-lemmas (in bounded_sesquilinear) tendsto = tendsto
-
-lemmas (in bounded_cbilinear) isCont = isCont
-
-lemmas (in bounded_sesquilinear) isCont = isCont
+lemma (in bounded_cbilinear) tendsto:
+  "(f \<longlongrightarrow> a) F \<Longrightarrow> (g \<longlongrightarrow> b) F \<Longrightarrow> ((\<lambda>x. prod (f x) (g x)) \<longlongrightarrow> prod a b) F"
+  by (rule tendsto)
 
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
@@ -2823,60 +2684,5 @@ lemma closed_finite_dim:
   assumes a1: \<open>finite S\<close>
   shows \<open>closed (complex_vector.span S)\<close>  
   by (simp add: finite_cspan_complete assms complete_imp_closed)
-
-subsection \<open>Conjugate space\<close>
-
-typedef 'a conjugate_space = "UNIV :: 'a set"
-  morphisms from_conjugate_space to_conjugate_space ..
-setup_lifting type_definition_conjugate_space
-
-instantiation conjugate_space :: (complex_vector) complex_vector begin
-lift_definition scaleC_conjugate_space :: \<open>complex \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>c x. cnj c *\<^sub>C x\<close>.
-lift_definition scaleR_conjugate_space :: \<open>real \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space\<close> is \<open>\<lambda>r x. r *\<^sub>R x\<close>.
-lift_definition plus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(+)".
-lift_definition uminus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is \<open>\<lambda>x. -x\<close>.
-lift_definition zero_conjugate_space :: "'a conjugate_space" is 0.
-lift_definition minus_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> 'a conjugate_space" is "(-)".
-instance
-  apply (intro_classes; transfer)
-  by (simp_all add: scaleR_scaleC scaleC_add_right scaleC_left.add)
-end
-
-instantiation conjugate_space :: (complex_normed_vector) complex_normed_vector begin
-lift_definition sgn_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space" is "sgn".
-lift_definition norm_conjugate_space :: "'a conjugate_space \<Rightarrow> real" is norm.
-lift_definition dist_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> real" is dist.
-lift_definition uniformity_conjugate_space :: "('a conjugate_space \<times> 'a conjugate_space) filter" is uniformity.
-lift_definition  open_conjugate_space :: "'a conjugate_space set \<Rightarrow> bool" is "open".
-instance 
-  apply (intro_classes; transfer)
-  by (simp_all add: dist_norm sgn_div_norm open_uniformity uniformity_dist norm_triangle_ineq)
-end
-
-instantiation conjugate_space :: (cbanach) cbanach begin
-instance 
-  apply intro_classes
-  unfolding Cauchy_def convergent_def LIMSEQ_def apply transfer
-  using Cauchy_convergent unfolding Cauchy_def convergent_def LIMSEQ_def by metis
-end
-
-
-lemma csemilinear_to_conjugate_space: \<open>csemilinear to_conjugate_space\<close>
-  by (rule csemilinearI; transfer, auto)
-
-lemma csemilinear_from_conjugate_space: \<open>csemilinear from_conjugate_space\<close>
-  by (rule csemilinearI; transfer, auto)
-
-lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conjugate_space ` cspan X"
-  unfolding complex_vector.span_def complex_vector.subspace_def hull_def
-  apply transfer
-  apply simp
-  by (metis (no_types, hide_lams) complex_cnj_cnj)
-
-lemma surj_to_conjugate_space[simp]: "surj to_conjugate_space"
-  by (meson surj_def to_conjugate_space_cases)
-
-lemmas has_derivative_scaleC[simp, derivative_intros] =
-  bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
 
 end
