@@ -3,6 +3,8 @@ theory Extra_Nonstandard_Analysis
     "HOL-Nonstandard_Analysis.Nonstandard_Analysis"
     "HOL-Analysis.Uniform_Limit"
     "HOL-Analysis.Operator_Norm"
+
+    Extra_General
 begin
 
 subsection\<open>\<open>Unobtrusive_NSA\<close> -- Cleaning up syntax from \<open>Nonstandard_Analysis\<close>\<close>
@@ -75,10 +77,6 @@ subsection \<open>Nonstandard analog of uniform convergence\<close>
 
 unbundle nsa_notation
 
-abbreviation uniform_convergence_abbr::
-  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
-  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> (  uniform_limit S f l sequentially )\<close>
 
 lemma nsuniform_convergence_D:
   fixes l::\<open>'a \<Rightarrow> 'b::real_normed_vector\<close> and f::\<open>nat \<Rightarrow> ('a \<Rightarrow> 'b)\<close>

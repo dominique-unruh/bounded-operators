@@ -3873,54 +3873,54 @@ lemma clinear_space_bot_not_top[simp]:
 
 subsection\<open>NSA miscellany\<close>
 
-unbundle nsa_notation
+(* unbundle nsa_notation *)
 
 subsection \<open>Boundeness\<close>
 
-lemma nsbounded_existencial:
-  \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. ((*f2* dist) x) ` (*s* S) \<subseteq> HFinite)\<close>
+(* lemma nsbounded_existencial:
+  \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. (( *f2* dist) x) ` ( *s* S) \<subseteq> HFinite)\<close>
   for S::\<open>'a::metric_space set\<close>
 proof
-  show "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
-    if "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite"
+  show "\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite"
+    if "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite"
     using that image_subset_iff  by fastforce
-  show "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite"
-    if "\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite"
+  show "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite"
+    if "\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite"
   proof-
-    obtain z where \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close>
-      using \<open>\<exists>x. (*f2* dist) x ` (*s* S) \<subseteq> HFinite\<close> by blast
-    have \<open>(*f2* dist) x y \<in> HFinite\<close>
+    obtain z where \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close>
+      using \<open>\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite\<close> by blast
+    have \<open>( *f2* dist) x y \<in> HFinite\<close>
       if u1: \<open>x\<in>*s* S\<close> and u2: \<open>y\<in>*s* S\<close>
       for x y
     proof-
       have \<open>\<forall> xx yy zz :: 'a. dist xx yy \<le> dist xx zz + dist zz yy\<close>
         by (simp add: dist_triangle)
-      hence \<open>\<forall> xx yy zz :: 'a star. (*f2* dist) xx yy \<le> (*f2* dist) xx zz + (*f2* dist) zz yy\<close>
+      hence \<open>\<forall> xx yy zz :: 'a star. ( *f2* dist) xx yy \<le> ( *f2* dist) xx zz + ( *f2* dist) zz yy\<close>
         by StarDef.transfer
-      hence z1: \<open>(*f2* dist) x y \<le> (*f2* dist) x z + (*f2* dist) z y\<close>
+      hence z1: \<open>( *f2* dist) x y \<le> ( *f2* dist) x z + ( *f2* dist) z y\<close>
         by blast
-      have l1:  \<open>(*f2* dist) z x \<in> HFinite\<close>
-        using \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close> \<open>x\<in>*s* S \<close> 
+      have l1:  \<open>( *f2* dist) z x \<in> HFinite\<close>
+        using \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close> \<open>x\<in>*s* S \<close> 
         by blast
       have \<open>\<forall> zz xx :: 'a. dist zz xx = dist xx zz\<close>
         using dist_commute by blast
-      hence \<open>\<forall> zz xx :: 'a star. (*f2* dist) zz xx = (*f2* dist) xx zz\<close>
+      hence \<open>\<forall> zz xx :: 'a star. ( *f2* dist) zz xx = ( *f2* dist) xx zz\<close>
         by StarDef.transfer
-      hence l2: \<open>(*f2* dist) z x = (*f2* dist) x z\<close>
+      hence l2: \<open>( *f2* dist) z x = ( *f2* dist) x z\<close>
         by blast
-      have  \<open>(*f2* dist) x z \<in> HFinite\<close>
+      have  \<open>( *f2* dist) x z \<in> HFinite\<close>
         using l1 l2 by auto        
-      moreover have  \<open>(*f2* dist) z y \<in> HFinite\<close>
-        using \<open>(*f2* dist) z ` (*s* S) \<subseteq> HFinite\<close> \<open>y\<in>*s* S \<close> 
+      moreover have  \<open>( *f2* dist) z y \<in> HFinite\<close>
+        using \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close> \<open>y\<in>*s* S \<close> 
         by blast
-      ultimately have z2: \<open>(*f2* dist) x z + (*f2* dist) z y \<in> HFinite\<close>
+      ultimately have z2: \<open>( *f2* dist) x z + ( *f2* dist) z y \<in> HFinite\<close>
         by (simp add: HFinite_add)
       have \<open>\<forall> xx yy :: 'a. 0 \<le> dist xx yy\<close>
         by (smt (verit) \<open>\<forall>xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close> \<open>\<forall>zz xx. dist zz xx = dist xx zz\<close>)
-      hence \<open>\<forall> xx yy :: 'a star. 0 \<le> (*f2* dist) xx yy\<close>
+      hence \<open>\<forall> xx yy :: 'a star. 0 \<le> ( *f2* dist) xx yy\<close>
         by StarDef.transfer
-      hence z3: \<open>0 \<le> (*f2* dist) x y\<close>
-        by (simp add: \<open>\<forall>xx yy. 0 \<le> (*f2* dist) xx yy\<close>) 
+      hence z3: \<open>0 \<le> ( *f2* dist) x y\<close>
+        by (simp add: \<open>\<forall>xx yy. 0 \<le> ( *f2* dist) xx yy\<close>) 
       show ?thesis
         using HFinite_bounded z1 z2 z3 by blast  
     qed
@@ -3929,40 +3929,40 @@ proof
 qed
 
 lemma nsbounded_I:
-  \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
+  \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close>
   by blast
 
 lemma nsbounded_D:
-  \<open>\<exists>x. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite \<Longrightarrow> \<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close>
+  \<open>\<exists>x. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite \<Longrightarrow> \<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close>
   by (meson image_subsetI nsbounded_existencial)
 
 lemma bounded_nsbounded:
   fixes S :: \<open>('a::metric_space) set\<close>
   assumes h1: \<open>bounded S\<close> and h2: "x\<in>*s* S" and h3: "y\<in>*s* S"
-  shows \<open>(*f2* dist) x y \<in> HFinite\<close>
+  shows \<open>( *f2* dist) x y \<in> HFinite\<close>
 proof- 
   have \<open>\<exists>M. \<exists> u. \<forall> v \<in> S. dist u v < M\<close>
     using h1
     by (meson bounded_def gt_ex le_less_trans)
   then obtain M where \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close>
     by blast
-  hence \<open>\<exists> u. \<forall> v \<in> *s* S. (*f2* dist) u v < hypreal_of_real M\<close>
+  hence \<open>\<exists> u. \<forall> v \<in> *s* S. ( *f2* dist) u v < hypreal_of_real M\<close>
     by StarDef.transfer
-  then obtain u where u_def: \<open>\<And>v. v \<in> *s* S \<Longrightarrow> (*f2* dist) u v < hypreal_of_real M\<close>
+  then obtain u where u_def: \<open>\<And>v. v \<in> *s* S \<Longrightarrow> ( *f2* dist) u v < hypreal_of_real M\<close>
     by blast
-  have \<open>(*f2* dist) u v \<in> HFinite\<close>
+  have \<open>( *f2* dist) u v \<in> HFinite\<close>
     if \<open>v \<in> *s* S\<close>
     for v
   proof-
-    have q1: \<open>(*f2* dist) u v < hypreal_of_real M\<close>
+    have q1: \<open>( *f2* dist) u v < hypreal_of_real M\<close>
       by (simp add: u_def that)
     have \<open>\<forall> uu vv. norm (dist uu vv) =  dist uu vv\<close>
       by simp         
-    hence \<open>\<forall> uu vv. hnorm ((*f2* dist) uu vv) =  (*f2* dist) uu vv\<close>
+    hence \<open>\<forall> uu vv. hnorm (( *f2* dist) uu vv) =  ( *f2* dist) uu vv\<close>
       by StarDef.transfer
-    hence q2: \<open>hnorm ((*f2* dist) u v) = (*f2* dist) u v\<close>
+    hence q2: \<open>hnorm (( *f2* dist) u v) = ( *f2* dist) u v\<close>
       by blast
-    show \<open>(*f2* dist) u v \<in> HFinite\<close>
+    show \<open>( *f2* dist) u v \<in> HFinite\<close>
       using q1 q2
       by (metis HInfiniteD HInfinite_HFinite_disj SReal_hypreal_of_real order.asym) 
   qed  
@@ -3972,39 +3972,39 @@ qed
 
 lemma nsbounded_bounded:
   fixes S :: \<open>'a::metric_space set\<close>
-  assumes a1: "\<And>x y. x\<in>*s* S \<Longrightarrow> y\<in>*s* S \<Longrightarrow> (*f2* dist) x y \<in> HFinite"
+  assumes a1: "\<And>x y. x\<in>*s* S \<Longrightarrow> y\<in>*s* S \<Longrightarrow> ( *f2* dist) x y \<in> HFinite"
   shows \<open>bounded S\<close>
 proof-
   from a1
-  obtain x where \<open>\<forall> y \<in> *s* S. (*f2* dist) x y \<in> HFinite\<close>
+  obtain x where \<open>\<forall> y \<in> *s* S. ( *f2* dist) x y \<in> HFinite\<close>
     by blast
-  have \<open>\<exists>M. \<forall> y \<in> *s* S. (*f2* dist) x y < M\<close>
+  have \<open>\<exists>M. \<forall> y \<in> *s* S. ( *f2* dist) x y < M\<close>
   proof(rule classical)
-    assume \<open>\<not>(\<exists> M. \<forall> y \<in> *s* S. (*f2* dist) x y < M)\<close>
-    hence \<open>\<forall>M. \<exists> y \<in> *s* S. (*f2* dist) x y \<ge> M\<close>
+    assume \<open>\<not>(\<exists> M. \<forall> y \<in> *s* S. ( *f2* dist) x y < M)\<close>
+    hence \<open>\<forall>M. \<exists> y \<in> *s* S. ( *f2* dist) x y \<ge> M\<close>
       using leI by blast
-    hence \<open>\<exists>y \<in> *s* S. (*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+    hence \<open>\<exists>y \<in> *s* S. ( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
       by blast
-    then obtain y where \<open>y \<in> *s* S\<close> and \<open>(*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+    then obtain y where \<open>y \<in> *s* S\<close> and \<open>( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
       by blast
-    have \<open>(*f2* dist) x y \<notin> HFinite\<close>
+    have \<open>( *f2* dist) x y \<notin> HFinite\<close>
     proof(rule classical)
-      assume \<open>\<not>((*f2* dist) x y \<notin> HFinite)\<close>
-      hence \<open>(*f2* dist) x y \<in> HFinite\<close>
+      assume \<open>\<not>(( *f2* dist) x y \<notin> HFinite)\<close>
+      hence \<open>( *f2* dist) x y \<in> HFinite\<close>
         by blast
-      hence s1: \<open>\<exists> r \<in> \<real>. hnorm ((*f2* dist) x y) < r\<close>
+      hence s1: \<open>\<exists> r \<in> \<real>. hnorm (( *f2* dist) x y) < r\<close>
         using HFinite_def by blast
       have \<open>\<forall> xx. \<forall> yy. norm ( dist xx yy) = dist xx yy\<close>
         by simp
-      hence \<open>\<forall> xx. \<forall> yy. hnorm ((*f2* dist) xx yy) = (*f2* dist) xx yy\<close>
+      hence \<open>\<forall> xx. \<forall> yy. hnorm (( *f2* dist) xx yy) = ( *f2* dist) xx yy\<close>
         by StarDef.transfer
-      hence s2: \<open>hnorm ((*f2* dist) x y) = (*f2* dist) x y\<close>
+      hence s2: \<open>hnorm (( *f2* dist) x y) = ( *f2* dist) x y\<close>
         by blast
-      have \<open>\<exists> r \<in> \<real>. (*f2* dist) x y < r\<close>
+      have \<open>\<exists> r \<in> \<real>. ( *f2* dist) x y < r\<close>
         using s1 s2
         by simp
       hence \<open>\<exists>r \<in> \<real>. hypreal_of_hypnat whn < r\<close>
-        using \<open>(*f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
+        using \<open>( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
           order.not_eq_order_implies_strict by fastforce
       then obtain r where \<open>r \<in> \<real>\<close> and \<open>hypreal_of_hypnat whn < r\<close>
         by blast
@@ -4041,25 +4041,25 @@ proof-
       thus ?thesis by blast
     qed
     thus ?thesis
-      using \<open>\<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite\<close> \<open>y \<in> *s* S\<close> by auto 
+      using \<open>\<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close> \<open>y \<in> *s* S\<close> by auto 
   qed
-  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. (*f2* dist) x y < M\<close>
+  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. ( *f2* dist) x y < M\<close>
     by blast
-  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. (*f2* dist) x y \<le> M\<close>
+  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. ( *f2* dist) x y \<le> M\<close>
     using le_less by blast
   hence \<open>\<exists>x e. \<forall>y\<in>S. dist x y \<le> e\<close>  by StarDef.transfer
   thus ?thesis using bounded_def by blast
 qed
 
 proposition bounded_nsbounded_iff:
-  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. (*f2* dist) x y \<in> HFinite)\<close>
+  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite)\<close>
   using bounded_nsbounded nsbounded_bounded by blast
 
 lemma ex_approx:
   fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
     and S::\<open>'a set\<close> and l::'b
   assumes a1: \<open>\<And>e. e>0 \<Longrightarrow> \<exists> x\<in>S. norm (f x - l) < e\<close>
-  shows \<open>\<exists>x\<in>*s* S. (*f* f) x \<approx> star_of l\<close>
+  shows \<open>\<exists>x\<in>*s* S. ( *f* f) x \<approx> star_of l\<close>
 proof-
   have \<open>\<forall>e>0. \<exists>x. x\<in>S \<and> norm (f x - l) < e\<close>
     using a1
@@ -4069,19 +4069,19 @@ proof-
   then obtain x where w1: \<open>\<forall>e>0. x e \<in> S\<close> and w2: \<open>\<forall>e>0. norm (f (x e) - l) < e\<close>
     by blast
   from w1 
-  have \<open>\<forall>e>0. (*f* x) e \<in> *s* S\<close>
+  have \<open>\<forall>e>0. ( *f* x) e \<in> *s* S\<close>
     by StarDef.transfer
-  hence \<open>(*f* x) epsilon \<in> *s* S\<close>
+  hence \<open>( *f* x) epsilon \<in> *s* S\<close>
     using epsilon_gt_zero by auto
   from  w2
-  have  \<open>\<forall>e>0. hnorm ((*f* f) ((*f* x) e) - (star_of l)) < e\<close>
+  have  \<open>\<forall>e>0. hnorm (( *f* f) (( *f* x) e) - (star_of l)) < e\<close>
     by StarDef.transfer
-  hence \<open>hnorm ((*f* f) ((*f* x) epsilon) - (star_of l)) < epsilon\<close>
+  hence \<open>hnorm (( *f* f) (( *f* x) epsilon) - (star_of l)) < epsilon\<close>
     using epsilon_gt_zero by blast    
-  hence  \<open>(*f* f) ((*f* x) epsilon) \<approx> (star_of l)\<close>
+  hence  \<open>( *f* f) (( *f* x) epsilon) \<approx> (star_of l)\<close>
     by (metis Infinitesimal_epsilon add_diff_cancel_left' bex_Infinitesimal_iff2 diff_add_cancel 
         hnorm_less_Infinitesimal)
-  thus ?thesis using \<open>(*f* x) epsilon \<in> *s* S\<close> by blast
+  thus ?thesis using \<open>( *f* x) epsilon \<in> *s* S\<close> by blast
 qed
 
 
@@ -4103,11 +4103,11 @@ qed
 
 definition starfun3 :: "('a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'd) \<Rightarrow> 'a star \<Rightarrow> 'b star \<Rightarrow> 'c star \<Rightarrow> 'd star"  (\<open>*f3* _\<close> [80] 80)
   where "starfun3 f \<equiv> \<lambda>x y z. star_of f \<star> x \<star> y \<star> z"
-declare starfun3_def [StarDef.transfer_unfold]
+declare starfun3_def [StarDef.transfer_unfold] *)
 
 subsection \<open>Closure\<close>
 
-lemma nsclosure_I:
+(* lemma nsclosure_I:
   assumes a1: \<open>r \<in> closure A\<close>
   shows \<open>\<exists>a \<in> *s* A. star_of r \<approx> a\<close>
 proof-
@@ -4116,13 +4116,13 @@ proof-
   then obtain s::\<open>nat\<Rightarrow>_\<close> where b1: \<open>\<And>n. s n \<in> A\<close> and b2: \<open>s \<longlonglongrightarrow> r\<close>     
     by blast
   from  b1
-  have c1: \<open>\<And> n. (*f* s) n \<in> *s* A\<close>
+  have c1: \<open>\<And> n. ( *f* s) n \<in> *s* A\<close>
     by StarDef.transfer
   obtain N where N_def: \<open>N \<in> HNatInfinite\<close>
     using HNatInfinite_whn by blast
-  have \<open>(*f* s) N \<in> *s* A\<close>
+  have \<open>( *f* s) N \<in> *s* A\<close>
     by (simp add: c1)    
-  moreover have \<open>(*f* s) N \<approx> star_of r\<close>    
+  moreover have \<open>( *f* s) N \<approx> star_of r\<close>    
     using b2
     by (simp add: LIMSEQ_NSLIMSEQ NSLIMSEQ_D N_def)
   ultimately show ?thesis
@@ -4171,22 +4171,22 @@ proof-
   then obtain s where s_def1: \<open>\<And>n. s n \<in> A\<close> 
     and s_def2: \<open>\<And>n. norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close> 
     by blast
-  have s1: \<open>\<And>n. hnorm (star_of r - (*f* s) n)  <  (*f* (\<lambda>n. inverse (real (Suc n)))) n\<close>
+  have s1: \<open>\<And>n. hnorm (star_of r - ( *f* s) n)  <  ( *f* (\<lambda>n. inverse (real (Suc n)))) n\<close>
     using s_def2
     by StarDef.transfer
-  have \<open>(*f* s) N \<approx> star_of r\<close>
+  have \<open>( *f* s) N \<approx> star_of r\<close>
     if  \<open>N \<in> HNatInfinite\<close>
     for N
   proof-
-    have \<open>hnorm (star_of r - (*f* s) N)  <  (*f* (\<lambda>n. inverse (real (Suc n)))) N\<close>
+    have \<open>hnorm (star_of r - ( *f* s) N)  <  ( *f* (\<lambda>n. inverse (real (Suc n)))) N\<close>
       using s1 by blast
-    moreover have \<open>(*f* (\<lambda>n. inverse (real (Suc n)))) N \<in> Infinitesimal\<close>
+    moreover have \<open>( *f* (\<lambda>n. inverse (real (Suc n)))) N \<in> Infinitesimal\<close>
       using  \<open>N \<in> HNatInfinite\<close>
       by (metis (full_types) hSuc_def inv_hSuc_Infinite_Infinitesimal of_hypnat_def starfun_inverse2 
           starfun_o2)
-    ultimately have \<open>hnorm (star_of r - (*f* s) N) \<in> Infinitesimal\<close>
+    ultimately have \<open>hnorm (star_of r - ( *f* s) N) \<in> Infinitesimal\<close>
       using Infinitesimal_hnorm_iff hnorm_less_Infinitesimal by blast
-    thus \<open>(*f* s) N \<approx> star_of r\<close>
+    thus \<open>( *f* s) N \<approx> star_of r\<close>
       by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff)
   qed
   hence \<open>s \<longlonglongrightarrow> r\<close>
@@ -4201,96 +4201,99 @@ lemma nsclosure_iff:
   using nsclosure_D nsclosure_I by blast
 
 text \<open>Hyperfinite set\<close>
-definition hypfinite where \<open>hypfinite = (*p* finite)\<close> 
-
+definition hypfinite where \<open>hypfinite = ( *p* finite)\<close> 
+ *)
 
 subsection \<open>Unsorted\<close>
 
 lemma Cauchy_convergent_norm:
   assumes a1: "Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector)"
   shows  \<open>Cauchy (\<lambda> n. norm (x n))\<close>
-proof-
-  have \<open>(*f* x) N \<approx> (*f* x) M\<close>
+   sorry
+(* proof-
+  have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     using that
     by (simp add: Cauchy_NSCauchy NSCauchyD a1)
-  hence \<open>hnorm ((*f* x) N) \<approx> hnorm ((*f* x) M)\<close>
+  hence \<open>hnorm (( *f* x) N) \<approx> hnorm (( *f* x) M)\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     using that
     by (simp add: approx_hnorm)
   thus \<open>Cauchy (\<lambda> n. norm (x n))\<close>
     by (metis (full_types) NSCauchyI NSCauchy_Cauchy_iff starfun_hnorm)
-qed
+qed *)
 
 lemma Cauchy_add:
   fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
   shows \<open>Cauchy (\<lambda> n. f n + g n)\<close>
-proof-
+   sorry
+(* proof-
   from a1
-  have b1: \<open>(*f* f) N \<approx> (*f* f) M\<close>
+  have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M::hypnat
     using NSCauchy_Cauchy_iff NSCauchy_def that by blast
   from a2
-  have b2: \<open>(*f* g) N \<approx> (*f* g) M\<close>
+  have b2: \<open>( *f* g) N \<approx> ( *f* g) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M::hypnat
     using NSCauchy_Cauchy_iff NSCauchy_def that by blast  
-  have b3: \<open>(*f* (\<lambda> n. f n + g n)) N \<approx> (*f*  (\<lambda> n. f n + g n)) M\<close>
+  have b3: \<open>( *f* (\<lambda> n. f n + g n)) N \<approx> ( *f*  (\<lambda> n. f n + g n)) M\<close>
     if \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
     for N M::hypnat
     by (metis (mono_tags) b1 b2 approx_add starfun_add that(1) that(2))  
   thus \<open>Cauchy (\<lambda> n. f n + g n)\<close>
     by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed
+qed *)
 
 lemma lim_leq:
   fixes x y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. x n \<le> y n\<close> and \<open>convergent x\<close> and \<open>convergent y\<close>
   shows \<open>lim x \<le> lim y\<close>
-  by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI)
+   sorry
+  (* by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI) *)
 
 lemma lim_ge:
   fixes x ::real and y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. x \<le> y n\<close> and \<open>convergent y\<close>
   shows \<open>x \<le> lim y\<close>
-  using lim_leq
-  by (metis (full_types) NSLIMSEQ_le_const NSconvergent_NSLIMSEQ_iff assms(1) assms(2) convergent_NSconvergent_iff lim_nslim_iff) 
+  by (meson Lim_bounded2 assms(1) assms(2) convergent_LIMSEQ_iff)
 
 lemma lim_add:
   fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>convergent x\<close> and \<open>convergent y\<close>
   shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
-proof-
-  have b1: \<open>(*f* x) N \<approx> star_of (lim x)\<close>
+   sorry
+(* proof-
+  have b1: \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"
     for N
     using \<open>convergent x\<close> that
     by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  have b2: \<open>(*f* y) N \<approx> star_of (lim y)\<close>
+  have b2: \<open>( *f* y) N \<approx> star_of (lim y)\<close>
     if "N \<in> HNatInfinite"
     for N
     using \<open>convergent y\<close> that
     by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  have b3: \<open>(*f* x) N + (*f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
+  have b3: \<open>( *f* x) N + ( *f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
     if "N \<in> HNatInfinite"
     for N
     using that
     by (simp add: approx_add b1 b2)    
-  moreover have \<open>(*f* (\<lambda> n. x n + y n)) N = (*f* x) N + (*f* y) N\<close>
+  moreover have \<open>( *f* (\<lambda> n. x n + y n)) N = ( *f* x) N + ( *f* y) N\<close>
     for N
     by auto
   moreover have \<open>star_of (lim x + lim y) = star_of (lim x) + star_of (lim y)\<close>
     by auto
-  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  (*f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
+  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  ( *f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
     for N
     by simp
   thus ?thesis
     by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed
+qed *)
 
 
 lemma lim_add_const_left:
@@ -4326,68 +4329,71 @@ lemma lim_scaleR:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and r::real
   assumes a1: \<open>convergent x\<close> 
   shows \<open>lim (\<lambda> n. r *\<^sub>R x n ) = r *\<^sub>R lim x\<close>
-proof-
-  have \<open>(*f* x) N \<approx> star_of (lim x)\<close>
+   sorry
+(* proof-
+  have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"
     for N
     using \<open>convergent x\<close> that
     by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  hence \<open>r *\<^sub>R (*f* x) N \<approx> r *\<^sub>R (star_of (lim x))\<close>
+  hence \<open>r *\<^sub>R ( *f* x) N \<approx> r *\<^sub>R (star_of (lim x))\<close>
     if "N \<in> HNatInfinite"
     for N
     using that
     by (simp add: approx_scaleR2)
-  moreover have \<open>(*f* (\<lambda> n. r *\<^sub>R x n)) N = r *\<^sub>R (*f* x) N\<close>
+  moreover have \<open>( *f* (\<lambda> n. r *\<^sub>R x n)) N = r *\<^sub>R ( *f* x) N\<close>
     for N
     by (simp add: star_scaleR_def)    
   moreover have \<open>star_of (r *\<^sub>R lim x) = r *\<^sub>R star_of (lim x)\<close>
     by auto
-  ultimately have \<open>(*f* (\<lambda> n. r *\<^sub>R x n)) N \<approx> star_of (r *\<^sub>R lim x)\<close>
+  ultimately have \<open>( *f* (\<lambda> n. r *\<^sub>R x n)) N \<approx> star_of (r *\<^sub>R lim x)\<close>
     if "N \<in> HNatInfinite"
     for N
     using that by auto
   thus ?thesis
     by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
 qed
-
+ *)
 
 lemma Cauchy_minus:
   fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
   shows  \<open>Cauchy (\<lambda> n. f n - g n)\<close>
-proof-
+   sorry
+(* proof-
   from a1
-  have b1: \<open>(*f* f) N \<approx> (*f* f) M\<close>
+  have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M::hypnat
     using that NSCauchy_Cauchy_iff NSCauchy_def by blast
   from a2
-  have b2: \<open>(*f* g) N \<approx> (*f* g) M\<close>
+  have b2: \<open>( *f* g) N \<approx> ( *f* g) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M::hypnat
     using that NSCauchy_Cauchy_iff NSCauchy_def by blast  
-  have \<open>(*f* (\<lambda> n. f n -g n)) N \<approx> (*f*  (\<lambda> n. f n -g n)) M\<close>
+  have \<open>( *f* (\<lambda> n. f n -g n)) N \<approx> ( *f*  (\<lambda> n. f n -g n)) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M::hypnat
   proof-
-    have \<open>(*f* f) N - (*f* g) N \<approx> (*f* f) M - (*f* g) M\<close>
+    have \<open>( *f* f) N - ( *f* g) N \<approx> ( *f* f) M - ( *f* g) M\<close>
       by (simp add: approx_diff b1 b2 that(1) that(2))      
-    moreover have \<open>(*f* (\<lambda> n. f n - g n)) N = (*f* f) N - (*f* g) N\<close>
+    moreover have \<open>( *f* (\<lambda> n. f n - g n)) N = ( *f* f) N - ( *f* g) N\<close>
       by auto
-    moreover have \<open>(*f* (\<lambda> n. f n - g n)) M = (*f* f) M - (*f* g) M\<close>
+    moreover have \<open>( *f* (\<lambda> n. f n - g n)) M = ( *f* f) M - ( *f* g) M\<close>
       by auto
-    ultimately show \<open>(*f* (\<lambda> n. f n - g n)) N \<approx> (*f*  (\<lambda> n. f n - g n)) M\<close>
+    ultimately show \<open>( *f* (\<lambda> n. f n - g n)) N \<approx> ( *f*  (\<lambda> n. f n - g n)) M\<close>
       by simp
   qed
   thus \<open>Cauchy (\<lambda> n. f n - g n)\<close>
     by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed
+qed *)
 
 lemma Cauchy_sgn:
   fixes x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy x\<close>
   shows \<open>Cauchy (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)))\<close>
-proof-
+   sorry
+(* proof-
   have b1: \<open>\<exists>L. lim (\<lambda>n. norm (x n)) = L\<close>
     by auto
   then obtain L where L_def: \<open>lim (\<lambda>n. norm (x n)) = L\<close>
@@ -4414,24 +4420,24 @@ proof-
     have c1: \<open>(\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n))) = (\<lambda>n. x n /\<^sub>R L)\<close>
       by (simp add: L_def)
     from \<open>Cauchy x\<close>
-    have p1: \<open>(*f* x) N \<approx> (*f* x) M\<close>
+    have p1: \<open>( *f* x) N \<approx> ( *f* x) M\<close>
       if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
       for N M
       using that
       by (simp add: Cauchy_NSCauchy NSCauchyD)
-    hence \<open>(*f2* scaleR) (inverse (star_of L)) ((*f* x) N) \<approx> (*f2* scaleR) (inverse (star_of L)) ((*f* x) M)\<close>
+    hence \<open>( *f2* scaleR) (inverse (star_of L)) (( *f* x) N) \<approx> ( *f2* scaleR) (inverse (star_of L)) (( *f* x) M)\<close>
       if d1: "N \<in> HNatInfinite" and d2: "M \<in> HNatInfinite"
       for N M
     proof -
-      have "(*f* x) N \<approx> (*f* x) M"
+      have "( *f* x) N \<approx> ( *f* x) M"
         by (simp add: p1 d1 d2)
       thus ?thesis
         by (metis approx_scaleR2 star_of_inverse star_scaleR_def starfun2_star_of)        
     qed
-    moreover have \<open>(*f2* scaleR) (inverse (star_of L)) ((*f* x) N) =  (*f* (\<lambda>n. x n /\<^sub>R L)) N\<close>
+    moreover have \<open>( *f2* scaleR) (inverse (star_of L)) (( *f* x) N) =  ( *f* (\<lambda>n. x n /\<^sub>R L)) N\<close>
       for N
       by (metis star_of_inverse starfun2_star_of starfun_o2)
-    ultimately have \<open>(*f* (\<lambda>n. x n /\<^sub>R L)) N \<approx> (*f* (\<lambda>n. x n /\<^sub>R L)) M\<close>
+    ultimately have \<open>( *f* (\<lambda>n. x n /\<^sub>R L)) N \<approx> ( *f* (\<lambda>n. x n /\<^sub>R L)) M\<close>
       if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
       for N M
       using that
@@ -4441,35 +4447,36 @@ proof-
     thus ?thesis
       by (simp add: L_def)  
   qed
-qed
+qed *)
 
 
 lemma Cauchy_scaleR:
   fixes r::real and x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: "Cauchy x" 
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
-proof-
+  by (simp add: assms bounded_linear.Cauchy bounded_linear_scaleR_right)
+(* proof-
   have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
-    (*f* x) N \<approx> (*f* x) M\<close>
+    ( *f* x) N \<approx> ( *f* x) M\<close>
     for N M
     using a1
     by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
-  hence \<open>(*f2* scaleR) (star_of r) ((*f* x) N) \<approx> (*f2* scaleR) (star_of r) ((*f* x) M)\<close>
+  hence \<open>( *f2* scaleR) (star_of r) (( *f* x) N) \<approx> ( *f2* scaleR) (star_of r) (( *f* x) M)\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     by (metis approx_scaleR2 star_scaleR_def starfun2_star_of that(1) that(2))    
-  moreover have \<open>(*f2* scaleR) (star_of r) ((*f* x) N) = (*f* (\<lambda>n. r *\<^sub>R x n)) N\<close>
+  moreover have \<open>( *f2* scaleR) (star_of r) (( *f* x) N) = ( *f* (\<lambda>n. r *\<^sub>R x n)) N\<close>
     for N
     by auto
   ultimately have  \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
-      (*f* (\<lambda>n. r *\<^sub>R x n)) N \<approx> (*f* (\<lambda>n. r *\<^sub>R x n)) M\<close>
+      ( *f* (\<lambda>n. r *\<^sub>R x n)) N \<approx> ( *f* (\<lambda>n. r *\<^sub>R x n)) M\<close>
     for N M
     by simp
   thus \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
     by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed
+qed *)
 
-lemma Infinitesimal_scaleC2: 
+(* lemma Infinitesimal_scaleC2: 
   fixes x :: \<open>('a::complex_normed_vector) star\<close>
   assumes "x \<in> Infinitesimal" 
   shows "a *\<^sub>C x \<in> Infinitesimal"
@@ -4501,52 +4508,54 @@ proof-
   ultimately have \<open>c *\<^sub>C a - c *\<^sub>C b \<in> Infinitesimal\<close> 
     by simp
   thus ?thesis by (simp add: Infinitesimal_approx_minus)
-qed
+qed *)
 
 lemma Cauchy_scaleC:
   fixes r::complex and x::\<open>nat \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes a1: "Cauchy x"
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
-proof-
-  have \<open>(*f* x) N \<approx> (*f* x) M\<close>
+  by (simp add: cbounded_linear.bounded_linear assms bounded_linear.Cauchy cbounded_linear_scaleC_right)
+(* proof-
+  have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     using a1 that
     by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
-  hence d3: \<open>(*f2* scaleC) (star_of r) ((*f* x) N) \<approx> (*f2* scaleC) (star_of r) ((*f* x) M)\<close>
+  hence d3: \<open>( *f2* scaleC) (star_of r) (( *f* x) N) \<approx> ( *f2* scaleC) (star_of r) (( *f* x) M)\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     using that
     by (metis approx_scaleC2 star_scaleC_def starfun2_star_of)
   have \<open>\<forall> n. ( scaleC) ( r) (( x) n) = ( (\<lambda>n. r *\<^sub>C x n)) n\<close>
     by auto
-  hence d2:\<open>\<forall> n. (*f2* scaleC) (star_of r) ((*f* x) n) = (*f* (\<lambda>n. r *\<^sub>C x n)) n\<close>
+  hence d2:\<open>\<forall> n. ( *f2* scaleC) (star_of r) (( *f* x) n) = ( *f* (\<lambda>n. r *\<^sub>C x n)) n\<close>
     by StarDef.transfer
-  hence d1: \<open>(*f2* scaleC) (star_of r) ((*f* x) N) = (*f* (\<lambda>n. r *\<^sub>C x n)) N\<close>
+  hence d1: \<open>( *f2* scaleC) (star_of r) (( *f* x) N) = ( *f* (\<lambda>n. r *\<^sub>C x n)) N\<close>
     for N
     by blast
-  have  \<open>(*f* (\<lambda>n. r *\<^sub>C x n)) N \<approx> (*f* (\<lambda>n. r *\<^sub>C x n)) M\<close>
+  have  \<open>( *f* (\<lambda>n. r *\<^sub>C x n)) N \<approx> ( *f* (\<lambda>n. r *\<^sub>C x n)) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
     for N M
     using that d1 d3 by auto    
   thus \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed
+ *)
 
-
-lemma limit_point_Cauchy:
+(* lemma limit_point_Cauchy:
   assumes a1: \<open>Cauchy x\<close>
-  shows \<open>\<exists>L\<in>HFinite. \<forall>N\<in>HNatInfinite. (*f* x) N \<approx> L\<close>
+  shows \<open>\<exists>L\<in>HFinite. \<forall>N\<in>HNatInfinite. ( *f* x) N \<approx> L\<close>
 proof-
-  have \<open>\<exists>L. \<forall> N. N \<in> HNatInfinite \<longrightarrow> (*f* x) N \<approx> L\<close>
+  have \<open>\<exists>L. \<forall> N. N \<in> HNatInfinite \<longrightarrow> ( *f* x) N \<approx> L\<close>
     using Cauchy_NSCauchy NSCauchyD assms by blast
-  then obtain L where L_def: \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<approx> L\<close>
+  then obtain L where L_def: \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> ( *f* x) N \<approx> L\<close>
     by blast
-  moreover have \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> (*f* x) N \<in> HFinite\<close>
+  moreover have \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> ( *f* x) N \<in> HFinite\<close>
     by (simp add: Cauchy_NSCauchy NSBseqD2 NSCauchy_NSBseq assms)
   ultimately show ?thesis
     using HFinite_star_of approx_HFinite by blast 
 qed
+ *)
 
 lemma lim_initial_segment:
   assumes \<open>convergent x\<close>
@@ -4734,31 +4743,32 @@ lemma lim_scaleC:
   fixes x :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> and r::complex
   assumes a1: \<open>convergent x\<close> 
   shows \<open>lim (\<lambda> n. r *\<^sub>C x n ) = r *\<^sub>C lim x\<close>
-proof-
-  have \<open>(*f* x) N \<approx> star_of (lim x)\<close>
+   sorry
+(* proof-
+   have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"
     for N
     using a1 that
     by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  hence \<open>r *\<^sub>C (*f* x) N \<approx> r *\<^sub>C (star_of (lim x)) \<close>
+  hence \<open>r *\<^sub>C ( *f* x) N \<approx> r *\<^sub>C (star_of (lim x)) \<close>
     if "N \<in> HNatInfinite"
     for N
     using that
     by (simp add: approx_scaleC2)
-  moreover have \<open>(*f* (\<lambda> n. r *\<^sub>C x n)) N = r *\<^sub>C (*f* x) N\<close>
+  moreover have \<open>( *f* (\<lambda> n. r *\<^sub>C x n)) N = r *\<^sub>C ( *f* x) N\<close>
     for N
     using star_scaleC_def
     by (metis starfun_o2) 
   moreover have \<open>star_of (r *\<^sub>C lim x) = r *\<^sub>C star_of (lim x)\<close>
     by auto
-  ultimately have \<open>(*f* (\<lambda> n. r *\<^sub>C x n)) N \<approx> star_of (r *\<^sub>C lim x)\<close>
+  ultimately have \<open>( *f* (\<lambda> n. r *\<^sub>C x n)) N \<approx> star_of (r *\<^sub>C lim x)\<close>
     if "N \<in> HNatInfinite"
     for N
     using that
     by auto
   thus ?thesis
     by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed
+qed *)
 
 lemma lim_Lim_bounded2:
   fixes x::\<open>nat \<Rightarrow> real\<close>
@@ -4903,7 +4913,7 @@ lemma tendsto_finite_sum:
   by auto
 
 
-lemma infinitesimal_square:
+(* lemma infinitesimal_square:
   fixes x::hypreal
   shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
   by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
@@ -4941,16 +4951,16 @@ proof(rule classical)
     using x1 by simp 
   moreover have \<open>0\<in>*s* (insert 0 S)\<close>
     by auto
-  ultimately have \<open>(*f2* dist) 0 x \<in> HFinite\<close>
+  ultimately have \<open>( *f2* dist) 0 x \<in> HFinite\<close>
     using \<open>bounded (insert 0 S)\<close> bounded_nsbounded by blast
   have \<open>\<And>t::'a. dist 0 t = norm t\<close>
     using dist_norm  by auto
-  hence \<open>\<And> t::'a star. (*f2* dist) 0 t = hnorm t\<close>
+  hence \<open>\<And> t::'a star. ( *f2* dist) 0 t = hnorm t\<close>
     by StarDef.transfer
-  hence \<open>(*f2* dist) 0 x = hnorm x\<close>
+  hence \<open>( *f2* dist) 0 x = hnorm x\<close>
     by simp
   hence \<open>hnorm x \<in> HFinite\<close>
-    using \<open>(*f2* dist) 0 x \<in> HFinite\<close> by auto    
+    using \<open>( *f2* dist) 0 x \<in> HFinite\<close> by auto    
   hence \<open>x \<in> HFinite\<close>
     unfolding HFinite_def by auto   
   thus ?thesis using \<open>x \<in> HInfinite\<close>
@@ -4972,7 +4982,7 @@ proposition bounded_nsbounded_norm:
   \<open>(\<forall> x\<in>*s* S. x \<in> HFinite) \<longleftrightarrow> bounded S\<close>
   for S::\<open>'a::real_normed_vector set\<close>
   using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
-  by blast
+  by blast *)
 
 lemma span_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
@@ -5204,7 +5214,7 @@ end
 instance conjugate_space :: (chilbert_space) chilbert_space..
 
 
-unbundle no_nsa_notation
+(* unbundle no_nsa_notation *)
 
 
 end

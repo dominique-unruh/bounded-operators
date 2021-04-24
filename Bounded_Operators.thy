@@ -14,6 +14,8 @@ theory Bounded_Operators
     "HOL-Types_To_Sets.Types_To_Sets"
 begin
 
+term \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
+
 subsection \<open>Algebraic properties of real cblinfun operators\<close>
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_vector"
@@ -246,19 +248,19 @@ qed
 
 subsection \<open>Topological properties of real cblinfun operators\<close>
 
-lemma hnorm_unit_sphere:
+(* lemma hnorm_unit_sphere:
   includes nsa_notation
   fixes f::\<open>nat \<Rightarrow> 'a::{real_normed_vector,not_singleton} \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and N::hypnat
   assumes \<open>N\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f* f) N) \<approx> hnorm ( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x )\<close>
+    hnorm (( *f* f) N) \<approx> hnorm ( ( *f2* (\<lambda> n. ( *\<^sub>v) (f n))) N x )\<close>
 proof-
-  have \<open>bounded_linear ((*\<^sub>v) (f n))\<close>
+  have \<open>bounded_linear (( *\<^sub>v) (f n))\<close>
     for n
     using blinfun_apply by blast
   hence \<open>\<forall>e>0. \<exists> x\<in>(sphere 0 1).
-      norm (norm(((*\<^sub>v) (f n)) x) - (onorm ((*\<^sub>v) (f n)))) < e\<close>
+      norm (norm((( *\<^sub>v) (f n)) x) - (onorm (( *\<^sub>v) (f n)))) < e\<close>
     for n
     using norm_unit_sphere[where f = "Blinfun (f n)"]
     by (simp add: blinfun_apply_inverse norm_blinfun.rep_eq)
@@ -273,21 +275,21 @@ proof-
        norm ( norm ((\<lambda> m. blinfun_apply (f m)) n x) - norm (f n) ) < inverse (real (Suc n))\<close>
     by auto
   hence \<open>\<forall> n. \<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) n x) - hnorm ((*f* f) n) ) 
+       hnorm ( hnorm ( ( *f2* (\<lambda> m. blinfun_apply (f m))) n x) - hnorm (( *f* f) n) ) 
             < inverse (hypreal_of_hypnat (hSuc n))\<close>
     by StarDef.transfer
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm ((*f* f) N) ) 
+       hnorm ( hnorm ( ( *f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm (( *f* f) N) ) 
             < inverse (hypreal_of_hypnat (hSuc N))\<close>
     by blast
   moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
     using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
     by blast
   ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm ((*f* f) N) \<in> Infinitesimal\<close>
+       hnorm ( ( *f2* (\<lambda> m. blinfun_apply (f m))) N x) - hnorm (( *f* f) N) \<in> Infinitesimal\<close>
     using hnorm_less_Infinitesimal by blast
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f2* (\<lambda> m. blinfun_apply (f m))) N x) \<approx> hnorm ((*f* f) N)\<close>
+       hnorm ( ( *f2* (\<lambda> m. blinfun_apply (f m))) N x) \<approx> hnorm (( *f* f) N)\<close>
     using bex_Infinitesimal_iff by blast
   thus ?thesis
     using approx_sym by blast    
@@ -299,7 +301,7 @@ lemma hnorm_unit_sphere_double:
     and N M::hypnat 
   assumes \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> 
   shows \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f2* f) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. (*\<^sub>v) (f n m))) N M x )\<close>
+    hnorm (( *f2* f) N M) \<approx> hnorm ( ( *f3* (\<lambda> n m. ( *\<^sub>v) (f n m))) N M x )\<close>
 proof-
   have \<open>bounded_linear (blinfun_apply (f n m))\<close>
     for n m
@@ -320,21 +322,21 @@ proof-
        norm ( norm ((\<lambda> n m. blinfun_apply (f n m)) n m x) - norm (f n m) ) < inverse (real (Suc n))\<close>
     by auto
   hence \<open>\<forall> n m. \<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) n m x) - hnorm ((*f2* f) n m) ) 
+       hnorm ( hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (f n m))) n m x) - hnorm (( *f2* f) n m) ) 
             < inverse (hypreal_of_hypnat (hSuc n))\<close>
     by StarDef.transfer
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm ((*f2* f) N M) ) 
+       hnorm ( hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm (( *f2* f) N M) ) 
             < inverse (hypreal_of_hypnat (hSuc N))\<close>
     by blast
   moreover have \<open>inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal\<close>
     using inv_hSuc_Infinite_Infinitesimal \<open>N\<in>HNatInfinite\<close>
     by blast
   ultimately have \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm ((*f2* f) N M) \<in> Infinitesimal\<close>
+       hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) - hnorm (( *f2* f) N M) \<in> Infinitesimal\<close>
     using hnorm_less_Infinitesimal by blast
   hence \<open>\<exists> x\<in>*s*(sphere 0 1).
-       hnorm ( (*f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) \<approx> hnorm ((*f2* f) N M)\<close>
+       hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (f n m))) N M x) \<approx> hnorm (( *f2* f) N M)\<close>
     using bex_Infinitesimal_iff by blast
   thus ?thesis
     using approx_sym by blast    
@@ -345,25 +347,25 @@ lemma uCauchy_unit_sphere:
   fixes f::\<open>nat \<Rightarrow> ('a::{real_normed_vector,not_singleton},'b::real_normed_vector) blinfun\<close>
     and N M::hypnat
   assumes \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close>
-  shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
-         \<approx> hnorm( (*f2* (\<lambda> n. (*\<^sub>v) (f n))) N x - (*f2* (\<lambda> n. (*\<^sub>v) (f n))) M x )\<close>
+  shows  \<open>\<exists> x \<in>*s* (sphere 0 1). hnorm ( ( *f* f) N - ( *f* f) M )
+         \<approx> hnorm( ( *f2* (\<lambda> n. ( *\<^sub>v) (f n))) N x - ( *f2* (\<lambda> n. ( *\<^sub>v) (f n))) M x )\<close>
 proof-
   define g::\<open>nat \<Rightarrow> nat \<Rightarrow> ('a, 'b) blinfun\<close>
     where \<open>g n m = f n - f m\<close> for n and m
   have \<open>\<exists> x \<in> *s* (sphere 0 1). 
-    hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
+    hnorm (( *f2* g) N M) \<approx> hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     using assms by (rule hnorm_unit_sphere_double)
   then obtain x where \<open>x \<in> *s* (sphere 0 1)\<close> and
-    \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
+    \<open>hnorm (( *f2* g) N M) \<approx> hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     by blast
 
   have \<open>\<forall> N M. norm (( (\<lambda>n m. f n - f m)) N M) =
     norm (( f) N - ( f) M)\<close>
     by blast
-  hence \<open>\<forall> N M. hnorm ((*f2* (\<lambda>n m. f n - f m)) N M) =
-    hnorm ((*f* f) N - (*f* f) M)\<close>
+  hence \<open>\<forall> N M. hnorm (( *f2* (\<lambda>n m. f n - f m)) N M) =
+    hnorm (( *f* f) N - ( *f* f) M)\<close>
     by StarDef.transfer  
-  hence u1: \<open>\<forall> N M. hnorm ((*f2* g) N M) = hnorm ( (*f* f) N - (*f* f) M )\<close>
+  hence u1: \<open>\<forall> N M. hnorm (( *f2* g) N M) = hnorm ( ( *f* f) N - ( *f* f) M )\<close>
     unfolding g_def by blast
 
   have \<open>\<forall>N M x. norm
@@ -373,26 +375,27 @@ proof-
             ( (\<lambda>n. blinfun_apply (f n))) M x)\<close>
     by (simp add: minus_blinfun.rep_eq)      
   hence \<open>\<forall>N M x. hnorm
-           ((*f3* (\<lambda>n m. blinfun_apply (f n - f m))) N M x) =
+           (( *f3* (\<lambda>n m. blinfun_apply (f n - f m))) N M x) =
           hnorm
-           ((*f2* (\<lambda>n. blinfun_apply (f n))) N x -
-            (*f2* (\<lambda>n. blinfun_apply (f n))) M x)\<close>
+           (( *f2* (\<lambda>n. blinfun_apply (f n))) N x -
+            ( *f2* (\<lambda>n. blinfun_apply (f n))) M x)\<close>
     by StarDef.transfer
-  hence u2: \<open>\<forall> N M x. hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )
-      = hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
+  hence u2: \<open>\<forall> N M x. hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )
+      = hnorm( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
     unfolding g_def
     by simp 
   thus ?thesis using \<open>x \<in> *s* (sphere 0 1)\<close> 
-      \<open>hnorm ((*f2* g) N M) \<approx> hnorm ( (*f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
+      \<open>hnorm (( *f2* g) N M) \<approx> hnorm ( ( *f3* (\<lambda> n m. blinfun_apply (g n m))) N M x )\<close>
     using u1 by auto    
-qed
+qed *)
 
 lemma ustrong_onorm:
   fixes f::"nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector"
     and l::"'a \<Rightarrow>\<^sub>L 'b"
   assumes \<open>sphere 0 1: (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ((*\<^sub>v) l)\<close>
   shows \<open>f \<longlonglongrightarrow> l\<close> 
-proof (cases \<open>(UNIV::'a set) = 0\<close>)
+   sorry
+(* proof (cases \<open>(UNIV::'a set) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
     for n
@@ -406,25 +409,25 @@ proof (cases \<open>(UNIV::'a set) = 0\<close>)
 next
   case False
   include nsa_notation
-  have s1: \<open>(*f* f) N \<approx> (star_of l)\<close>
+  have s1: \<open>( *f* f) N \<approx> (star_of l)\<close>
     if "N\<in>HNatInfinite"
     for N::hypnat
   proof-
     from \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
     have \<open>NN\<in>HNatInfinite \<Longrightarrow> x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. blinfun_apply (f n))) NN x \<approx> (*f* (blinfun_apply l)) x\<close>
+              ( *f2* (\<lambda> n. blinfun_apply (f n))) NN x \<approx> ( *f* (blinfun_apply l)) x\<close>
       for x::\<open>'a star\<close> and NN::hypnat
       by (simp add: nsupointwise_convergence_D sphere_iff)
     hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* (blinfun_apply l)) x\<close>
+              ( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f* (blinfun_apply l)) x\<close>
       for x::\<open>'a star\<close>
       by (simp add: \<open>N \<in> HNatInfinite\<close>)
     hence \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-              (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x \<in> Infinitesimal\<close>
+              ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x \<in> Infinitesimal\<close>
       for x::\<open>'a star\<close>
       using Infinitesimal_approx_minus by blast
     hence u1: \<open>x \<in> *s* (sphere 0 1) \<Longrightarrow> 
-      hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x ) \<in> Infinitesimal\<close>
+      hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x ) \<in> Infinitesimal\<close>
       for x::\<open>'a star\<close>
       by (simp add: Infinitesimal_hnorm_iff)
     define g where \<open>g n = f n - l\<close> for n
@@ -435,10 +438,10 @@ next
 
     have t1: "class.not_singleton (TYPE('a)::'a itself)"
       using False unfolding set_zero by (rule class_not_singletonI_monoid_add)          
-    have t2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus (*\<^sub>R) sgn uniformity open"
+    have t2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus ( *\<^sub>R) sgn uniformity open"
       by (rule real_normed_vector_class.real_normed_vector_axioms)
     have q1: \<open>\<exists>x \<in> *s* (sphere 0 1). 
-        hnorm ((*f* g) N) \<approx> hnorm ( (*f2* (\<lambda> n. blinfun_apply (g n))) N x )\<close>
+        hnorm (( *f* g) N) \<approx> hnorm ( ( *f2* (\<lambda> n. blinfun_apply (g n))) N x )\<close>
       (* The attributes to hnorm_unit_sphere remove the sort from variable 'a in hnorm_unit_sphere.
           This is needed because 'a has sort not_singleton there that we don't have *)
       apply  (rule hnorm_unit_sphere [where 'a = "'z::{not_singleton,real_normed_vector}", 
@@ -446,34 +449,34 @@ next
       using t1 t2 that by auto    
     have  \<open>\<forall> NN. ( g) NN = ( f) NN - ( l)\<close>
       unfolding g_def by auto
-    hence  \<open>\<forall> NN. (*f* g) NN = (*f* f) NN - (star_of l)\<close>
+    hence  \<open>\<forall> NN. ( *f* g) NN = ( *f* f) NN - (star_of l)\<close>
       by StarDef.transfer
-    hence q2: \<open>(*f* g) N \<approx> (*f* f) N - (star_of l)\<close>
+    hence q2: \<open>( *f* g) N \<approx> ( *f* f) N - (star_of l)\<close>
       by auto
 
-    have q3: \<open>(*f2* (\<lambda> n. blinfun_apply (g n))) N x
-         = (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x\<close>
+    have q3: \<open>( *f2* (\<lambda> n. blinfun_apply (g n))) N x
+         = ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x\<close>
       for x
     proof-
       have  \<open>\<forall> NN xx. ( (\<lambda> n. blinfun_apply (g n))) NN xx
          = ( (\<lambda> n. blinfun_apply (f n))) NN xx - ( (blinfun_apply l)) xx\<close>
         unfolding g_def
         by (simp add: minus_blinfun.rep_eq) 
-      hence  \<open>\<forall> NN xx. (*f2* (\<lambda> n. blinfun_apply (g n))) NN xx
-         = (*f2* (\<lambda> n. blinfun_apply (f n))) NN xx - (*f* (blinfun_apply l)) xx\<close>
+      hence  \<open>\<forall> NN xx. ( *f2* (\<lambda> n. blinfun_apply (g n))) NN xx
+         = ( *f2* (\<lambda> n. blinfun_apply (f n))) NN xx - ( *f* (blinfun_apply l)) xx\<close>
         by StarDef.transfer
       thus ?thesis by auto
     qed
-    have \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
-        hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
+    have \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm (( *f* f) N - (star_of l)) \<approx>
+        hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )\<close>
       using q1 q2 q3
       by (metis (no_types, lifting) approx_hnorm approx_trans3)
-    hence u2: \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm ((*f* f) N - (star_of l)) \<approx>
-        hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
+    hence u2: \<open>\<exists> x\<in> *s* (sphere 0 1). hnorm (( *f* f) N - (star_of l)) \<approx>
+        hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )\<close>
       by simp
-    have \<open>hnorm ((*f* f) N - (star_of l)) \<in> Infinitesimal\<close>
+    have \<open>hnorm (( *f* f) N - (star_of l)) \<in> Infinitesimal\<close>
       using approx_trans mem_infmal_iff u1 u2  by blast
-    hence \<open>(*f* f) N - (star_of l) \<in> Infinitesimal\<close>
+    hence \<open>( *f* f) N - (star_of l) \<in> Infinitesimal\<close>
       by (simp add: Infinitesimal_hnorm_iff)      
     thus ?thesis
       using bex_Infinitesimal_iff by auto 
@@ -484,29 +487,30 @@ next
     by (simp add: LIMSEQ_NSLIMSEQ_iff) 
   thus ?thesis
     using LIM_zero_cancel tendsto_norm_zero_iff by blast 
-qed 
+qed  *)
 
 
 lemma oCauchy_uCauchy:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
-proof-
+   sorry
+(* proof-
   include nsa_notation
-  have  \<open>(*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
+  have  \<open>( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
     if \<open>N\<in>HNatInfinite\<close> and \<open>M\<in>HNatInfinite\<close> and \<open>x\<in>*s* (sphere 0 1)\<close>
     for N M x
   proof- 
     from \<open>Cauchy f\<close>
     have \<open>NSCauchy f\<close>
       by (simp add: NSCauchy_Cauchy_iff)
-    hence \<open>(*f* f) N \<approx> (*f* f) M\<close>
+    hence \<open>( *f* f) N \<approx> ( *f* f) M\<close>
       unfolding NSCauchy_def
       using \<open>N\<in>HNatInfinite\<close> \<open>M\<in>HNatInfinite\<close>
       by blast
-    hence \<open>(*f* f) N - (*f* f) M \<in> Infinitesimal\<close>
+    hence \<open>( *f* f) N - ( *f* f) M \<in> Infinitesimal\<close>
       using bex_Infinitesimal_iff by blast
-    hence x1: \<open>hnorm ((*f* f) N - (*f* f) M) \<in> Infinitesimal\<close>
+    hence x1: \<open>hnorm (( *f* f) N - ( *f* f) M) \<in> Infinitesimal\<close>
       by (simp add: Infinitesimal_hnorm_iff)
 
     have \<open>bounded_linear (blinfun_apply (f n))\<close>
@@ -526,9 +530,9 @@ proof-
         \<le> norm (( f) NN - ( f) MM)\<close>
       unfolding norm_blinfun_def
       by auto
-    hence z1: \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) NN xx
-                                 - (*f2* (\<lambda> n. blinfun_apply (f n))) MM xx )
-        \<le> hnorm ((*f* f) NN - (*f* f) MM)\<close>
+    hence z1: \<open>\<forall> NN MM xx. hnorm xx = 1 \<longrightarrow> hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) NN xx
+                                 - ( *f2* (\<lambda> n. blinfun_apply (f n))) MM xx )
+        \<le> hnorm (( *f* f) NN - ( *f* f) MM)\<close>
       by StarDef.transfer
 
     have \<open>\<forall> xx::'a. xx \<in> (sphere 0 1) \<longrightarrow> norm xx = 1\<close>
@@ -538,29 +542,30 @@ proof-
     hence \<open>hnorm x = 1\<close>
       using \<open>x \<in> *s* (sphere 0 1)\<close>
       by blast        
-    hence x2: \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x
-               - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )
-        \<le> hnorm ((*f* f) N - (*f* f) M)\<close>
+    hence x2: \<open>hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x
+               - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x )
+        \<le> hnorm (( *f* f) N - ( *f* f) M)\<close>
       using z1 by blast     
     have \<open>norm ( ( (\<lambda> n. blinfun_apply (f n))) NN xx - ( (\<lambda> n. blinfun_apply (f n))) MM xx ) \<ge> 0\<close>
       for NN MM xx
       by auto
-    hence x3: \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<ge> 0\<close>
+    hence x3: \<open>hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<ge> 0\<close>
       by simp    
-    have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
+    have \<open>hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
       using Infinitesimal_interval2 x1 x2 x3 by blast
     thus ?thesis
       using bex_Infinitesimal_iff hnorm_le_Infinitesimal by blast 
   qed
   thus ?thesis using nsuniformly_Cauchy_on_I by metis
-qed
+qed *)
 
 
 lemma uCauchy_oCauchy:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
   assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close> 
   shows \<open>Cauchy f\<close>
-proof(cases \<open>(UNIV::('a set)) = 0\<close>)
+   sorry
+(* proof(cases \<open>(UNIV::('a set)) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
     for n
@@ -572,39 +577,39 @@ proof(cases \<open>(UNIV::('a set)) = 0\<close>)
 next
   case False
   include nsa_notation
-  have \<open>(*f* f) N \<approx> (*f* f) M\<close>
+  have \<open>( *f* f) N \<approx> ( *f* f) M\<close>
     if \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
     for N M
   proof-
     have \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
-      (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
+      ( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
       for x
       using \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
       by (simp add: \<open>M \<in> HNatInfinite\<close> \<open>N \<in> HNatInfinite\<close> nsuniformly_Cauchy_on_iff)    
     hence n1: \<open>x \<in>*s* (sphere 0 1) \<Longrightarrow> 
-      hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
+      hnorm( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x ) \<in> Infinitesimal\<close>
       for x
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast    
     have m1: "class.not_singleton (TYPE('a)::'a itself)"
       using False unfolding set_zero by (rule class_not_singletonI_monoid_add)        
-    have m2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus (*\<^sub>R) sgn uniformity open"
+    have m2: "class.real_normed_vector (-) dist norm (+) (0::'a) uminus ( *\<^sub>R) sgn uniformity open"
       by (rule real_normed_vector_class.real_normed_vector_axioms)
-    have n2: \<open>\<exists>x\<in>*s* (sphere 0 1). hnorm ( (*f* f) N - (*f* f) M )
-         \<approx> hnorm( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
+    have n2: \<open>\<exists>x\<in>*s* (sphere 0 1). hnorm ( ( *f* f) N - ( *f* f) M )
+         \<approx> hnorm( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f2* (\<lambda> n. blinfun_apply (f n))) M x )\<close>
       (* The attributes to hnorm_unit_sphere remove the sort from variable 'a in hnorm_unit_sphere.
            This is needed because 'a has sort not_singleton there that we don't have *)
       apply  (rule uCauchy_unit_sphere [where 'a = "'z::{not_singleton,real_normed_vector}" , rule_format , internalize_sort "'z::{not_singleton,real_normed_vector}" , where M = M and N = N and f = f])
       using m1 m2 that by auto
-    have \<open>hnorm ( (*f* f) N - (*f* f) M ) \<in> Infinitesimal\<close>
+    have \<open>hnorm ( ( *f* f) N - ( *f* f) M ) \<in> Infinitesimal\<close>
       using n1 n2 approx_sym approx_trans3 mem_infmal_iff by blast
-    thus \<open>(*f* f) N \<approx> (*f* f) M\<close>
+    thus \<open>( *f* f) N \<approx> ( *f* f) M\<close>
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto      
   qed
   hence \<open>NSCauchy f\<close>
     by (simp add: NSCauchy_def)
   thus ?thesis
     by (simp add: NSCauchy_Cauchy_iff) 
-qed
+qed *)
 
 proposition oCauchy_uCauchy_iff:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
@@ -627,7 +632,8 @@ lemma uCauchy_ustrong:
   assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
   shows \<open>\<exists>l::'a \<Rightarrow>\<^sub>L 'b. 
     (sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
-proof-
+   sorry
+(* proof-
   include nsa_notation
   from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
   have \<open>\<exists>s::'a\<Rightarrow>'b.
@@ -676,7 +682,7 @@ proof-
     case False
     hence  \<open>norm x \<noteq> 0\<close> by simp
     have p1: \<open>\<forall>N\<in>HNatInfinite. \<forall>x\<in>*s* (sphere 0 1).
-                     (*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* s) x\<close>
+                     ( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f* s) x\<close>
       using \<open>sphere 0 1: (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close> nsuniform_convergence_D 
       by blast
 
@@ -688,19 +694,19 @@ proof-
       by (meson starset_mem)                
 
     have z1: \<open>\<forall> N\<in>HNatInfinite.
-     (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+     ( *f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) \<approx> ( *f* s) (star_of (x /\<^sub>R norm x))\<close>
       using p1 p2 by auto
     have  \<open>\<forall> N. ( (\<lambda> n. blinfun_apply (f n))) N ( (x /\<^sub>R norm x))
                         = ( (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
       by blast
-    hence \<open>\<forall> N. (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
-                        = (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
+    hence \<open>\<forall> N. ( *f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
+                        = ( *f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
       by StarDef.transfer
-    hence z2: \<open>\<forall> N. (*f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
-                        \<approx> (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
+    hence z2: \<open>\<forall> N. ( *f2* (\<lambda> n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x))
+                        \<approx> ( *f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N\<close>
       by simp
     have  \<open>\<forall> N\<in>HNatInfinite.
-               (*f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N \<approx> (*f* s) (star_of (x /\<^sub>R norm x))\<close>
+               ( *f* (\<lambda> n. blinfun_apply (f n) (x /\<^sub>R norm x) )) N \<approx> ( *f* s) (star_of (x /\<^sub>R norm x))\<close>
       using approx_trans3 using z1 z2
       by blast 
     hence \<open> (\<lambda>n. blinfun_apply (f n)  (x /\<^sub>R norm x)) \<longlonglongrightarrow>\<^sub>N\<^sub>S s  (x /\<^sub>R norm x)\<close>
@@ -895,7 +901,7 @@ proof-
     using L_def \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> s\<close>
     by (metis (no_types, lifting) uniform_limit_cong')
   thus ?thesis by blast
-qed
+qed *)
 
 
 lemma onorm_ustrong:
@@ -903,16 +909,17 @@ lemma onorm_ustrong:
     and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> 
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
-proof-
+   sorry
+(* proof-
   include nsa_notation
-  have \<open>(*f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> (*f* (blinfun_apply l)) x\<close>
+  have \<open>( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f* (blinfun_apply l)) x\<close>
     if \<open>N\<in>HNatInfinite\<close> and \<open>x \<in> *s* (sphere 0 1)\<close>
     for N and x
   proof-
-    have \<open>(*f* f) N \<approx> (star_of l)\<close>
+    have \<open>( *f* f) N \<approx> (star_of l)\<close>
       using \<open>f \<longlonglongrightarrow> l\<close> \<open>N\<in>HNatInfinite\<close>
       by (simp add: LIMSEQ_NSLIMSEQ_iff NSLIMSEQ_D)
-    hence y0: \<open>hnorm ( (*f* f) N - (star_of l) ) \<in> Infinitesimal\<close>
+    hence y0: \<open>hnorm ( ( *f* f) N - (star_of l) ) \<in> Infinitesimal\<close>
       using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
     have \<open>bounded_linear (\<lambda> t. blinfun_apply (f N) t - blinfun_apply l t)\<close>
       for N
@@ -938,15 +945,15 @@ proof-
       unfolding norm_blinfun_def
       by auto
     hence \<open>\<forall>N. \<forall>x. x \<in> *s* (sphere 0 1) \<longrightarrow> 
-         hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
-                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+         hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )
+                \<le> hnorm ( ( *f* f) N - (star_of l) )\<close>
       by StarDef.transfer
-    hence y1: \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
-                \<le> hnorm ( (*f* f) N - (star_of l) )\<close>
+    hence y1: \<open>hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )
+                \<le> hnorm ( ( *f* f) N - (star_of l) )\<close>
       using \<open>x\<in>*s* (sphere 0 1)\<close> by blast
-    have y2: \<open>0 \<le> hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )\<close>
+    have y2: \<open>0 \<le> hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )\<close>
       by simp      
-    have \<open>hnorm ( (*f2* (\<lambda> n. blinfun_apply (f n))) N x - (*f* (blinfun_apply l)) x )
+    have \<open>hnorm ( ( *f2* (\<lambda> n. blinfun_apply (f n))) N x - ( *f* (blinfun_apply l)) x )
             \<in> Infinitesimal\<close>
       using Infinitesimal_interval2 y0 y1 y2 by blast 
     thus ?thesis
@@ -955,7 +962,7 @@ proof-
   hence \<open>(sphere 0 1): (\<lambda> n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l\<close>
     by (simp add: nsupointwise_convergence_I sphere_iff)    
   thus ?thesis by blast
-qed
+qed *)
 
 proposition onorm_ustrong_iff:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
@@ -1000,9 +1007,10 @@ lemma onorm_strong:
     and l::\<open>'a  \<Rightarrow>\<^sub>L 'b\<close> and x::'a
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> (blinfun_apply l) x\<close>
-proof-
+   sorry
+(* proof-
   include nsa_notation
-  have \<open>(*f* (\<lambda>n. (blinfun_apply (f n)) x)) N \<approx> star_of ((blinfun_apply l) x)\<close>
+  have \<open>( *f* (\<lambda>n. (blinfun_apply (f n)) x)) N \<approx> star_of ((blinfun_apply l) x)\<close>
     if \<open>N\<in>HNatInfinite\<close>
     for N
   proof(cases \<open>x = 0\<close>)
@@ -1024,7 +1032,7 @@ proof-
     hence \<open>star_of ((blinfun_apply (f n)) x) = star_of ((blinfun_apply l) x)\<close>
       for n
       by StarDef.transfer
-    hence \<open>(*f* (\<lambda> n. (blinfun_apply (f n)) x)) N = star_of ((blinfun_apply l) x)\<close>
+    hence \<open>( *f* (\<lambda> n. (blinfun_apply (f n)) x)) N = star_of ((blinfun_apply l) x)\<close>
       by auto
     thus ?thesis by auto 
   next
@@ -1032,19 +1040,19 @@ proof-
     from \<open>f \<longlonglongrightarrow> l\<close>
     have \<open>sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> (blinfun_apply l)\<close>
       using onorm_ustrong by blast
-    hence c1: \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> (*f2* (\<lambda>n. blinfun_apply (f n))) N t \<approx> (*f* (blinfun_apply l)) t\<close>
+    hence c1: \<open>t \<in> *s*(sphere 0 1) \<Longrightarrow> ( *f2* (\<lambda>n. blinfun_apply (f n))) N t \<approx> ( *f* (blinfun_apply l)) t\<close>
       for t
       using \<open>N \<in> HNatInfinite\<close> nsupointwise_convergence_D sphere_iff by blast
     have \<open>(x /\<^sub>R norm x) \<in> (sphere 0 1)\<close>
       using False unfolding sphere_def by auto    
     hence c2: \<open>star_of (x /\<^sub>R norm x) \<in> *s*(sphere 0 1)\<close>
       by StarDef.transfer
-    have \<open>(*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) 
-          \<approx> (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x))\<close>
+    have \<open>( *f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) 
+          \<approx> ( *f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x))\<close>
       using c1 c2 by auto
-    hence d1: \<open>(*f2* scaleR) (star_of (norm x)) 
-          ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) ) 
-          \<approx> (*f2* scaleR) (star_of (norm x)) ( (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )\<close>
+    hence d1: \<open>( *f2* scaleR) (star_of (norm x)) 
+          ( ( *f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) ) 
+          \<approx> ( *f2* scaleR) (star_of (norm x)) ( ( *f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )\<close>
       using approx_scaleR2 star_scaleR_def starfun2_star_of
       by metis
     have \<open>bounded_linear (blinfun_apply (f n))\<close>
@@ -1053,18 +1061,18 @@ proof-
     hence \<open>\<forall>N. ( scaleR) ( (norm x)) ( ( (\<lambda>n. blinfun_apply (f n))) N ( (x /\<^sub>R norm x)) )
           = ( (\<lambda>n. blinfun_apply (f n) x)) N\<close>
       by (simp add: False blinfun.scaleR_right)      
-    hence  \<open>\<forall> N. (*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
-          = (*f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
+    hence  \<open>\<forall> N. ( *f2* scaleR) (star_of (norm x)) ( ( *f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = ( *f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
       by StarDef.transfer    
-    hence d2: \<open>(*f2* scaleR) (star_of (norm x)) ( (*f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
-          = (*f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
+    hence d2: \<open>( *f2* scaleR) (star_of (norm x)) ( ( *f2* (\<lambda>n. blinfun_apply (f n))) N (star_of (x /\<^sub>R norm x)) )
+          = ( *f* (\<lambda>n. blinfun_apply (f n) x)) N\<close>
       by auto
     have \<open>bounded_linear (blinfun_apply l)\<close>
       using blinfun_apply by auto          
     hence \<open>( scaleR) ( (norm x)) ( ( (blinfun_apply l)) ( (x /\<^sub>R norm x)) )
             =  (blinfun_apply l x)\<close>
       by (metis blinfun.scaleR_right div_self divide_real_def norm_eq_zero pth_1 pth_4(1) pth_5)
-    hence d3: \<open>(*f2* scaleR) (star_of (norm x)) ( (*f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )
+    hence d3: \<open>( *f2* scaleR) (star_of (norm x)) ( ( *f* (blinfun_apply l)) (star_of (x /\<^sub>R norm x)) )
             = star_of (blinfun_apply l x)\<close> 
       by StarDef.transfer
     show ?thesis
@@ -1074,7 +1082,7 @@ proof-
     by (simp add: NSLIMSEQ_I)
   thus ?thesis
     by (simp add: NSLIMSEQ_LIMSEQ)
-qed
+qed *)
 
 lemma times_blinfun_assoc: "(A o\<^sub>L B)  o\<^sub>L C = A  o\<^sub>L (B  o\<^sub>L C)" 
 proof transfer
@@ -2086,7 +2094,7 @@ proof-
   have \<open>cbounded_linear (cblinfun_apply U)\<close>
     using cblinfun_apply by auto
   hence  \<open>cblinfun_apply U 0 = 0\<close>
-    by (simp add: cbounded_linear.clinear clinear_zero)  
+    by (metis cblinfun_apply_scaleC complex_vector.scale_zero_left)
   hence u2: \<open>cblinfun_apply U ` {0::'a} = {0}\<close>
     by simp
   have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
@@ -2401,7 +2409,8 @@ lemma equal_span_applyOpSpace:
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (complex_vector.span G)\<close>
   shows \<open>A t = B t\<close>
   using assms 
-proof transfer
+   sorry
+(* proof transfer
   include nsa_notation
   fix A B::\<open>'a \<Rightarrow> 'b\<close> and G::\<open>'a set\<close> and t::'a
   assume \<open>cbounded_linear A\<close> and
@@ -2423,7 +2432,7 @@ proof transfer
     using approx_sym nsclosure_I by blast
   then obtain T where \<open>T \<in> *s* (complex_vector.span G)\<close> and \<open>T \<approx> star_of t\<close>
     by blast
-  have \<open>(*f* F) T \<approx> (*f* F) (star_of t)\<close>
+  have \<open>( *f* F) T \<approx> ( *f* F) (star_of t)\<close>
     using \<open>T \<approx> star_of t\<close>  \<open>isNSCont F t\<close>
     by (simp add: isNSCont_def)
 
@@ -2433,15 +2442,15 @@ proof transfer
   hence \<open>\<forall>x.  x \<in> complex_vector.span G \<longrightarrow> F x = 0\<close>
     unfolding F_def
     by simp
-  hence \<open>\<forall>x. x \<in> *s* (complex_vector.span G) \<longrightarrow> (*f* F) x = 0\<close>
+  hence \<open>\<forall>x. x \<in> *s* (complex_vector.span G) \<longrightarrow> ( *f* F) x = 0\<close>
     by StarDef.transfer
-  hence \<open>(*f* F) T \<approx> 0\<close>
+  hence \<open>( *f* F) T \<approx> 0\<close>
     using \<open>T \<in> *s* complex_vector.span G\<close> by auto  
   hence \<open>F t = 0\<close>
-    using approx_sym approx_trans \<open>(*f* F) T \<approx> (*f* F) (star_of t)\<close> by fastforce
+    using approx_sym approx_trans \<open>( *f* F) T \<approx> ( *f* F) (star_of t)\<close> by fastforce
   thus \<open>A t = B t\<close>
     unfolding F_def by auto
-qed
+qed *)
 
 lemma applyOpSpace_span:
   fixes A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
@@ -4556,14 +4565,15 @@ proof-
     have g0_inter: "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by blast
     have g0_union: "{x. g x \<noteq> 0} = {x\<in>B. f x \<noteq> 0} \<union> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}" 
-      unfolding g_def by auto
+      sorry
+      (* unfolding g_def by auto *)
     hence g1: "finite {x. g x \<noteq> 0}"
       by (simp add: \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)        
     have g2: "{x. g x \<noteq> 0} \<subseteq> B"
       unfolding g_def by auto
-    have "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
+    have x: "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
       for x
-      by auto
+     by (metis Im_complex_of_real add_cancel_right_right complex.sel(2) i_complex_of_real mult_eq_0_iff of_real_eq_0_iff plus_complex.sel(2))
     hence x1: "{x\<in>B. f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by auto
     have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} 
@@ -4734,7 +4744,7 @@ proof-
     also have "\<dots> = (\<Sum>x|x\<in>B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
       using r6 by simp
     also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by simp
+      using x1 by presburger
     also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
       by (metis complex_scaleC_def g_def)          
     also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. (f x +(\<i> * f (\<i> *\<^sub>C x))) *\<^sub>C x)"
@@ -4753,7 +4763,7 @@ proof-
         using g1 g2 g3 True a1 complex_vector.independent_alt[where B = B]
         by (smt Collect_cong  sum.cong)
       thus ?thesis unfolding g_def
-        using True by auto 
+        using True x by auto
     next
       case False
       hence y_notB: "y \<notin> B".
@@ -4889,7 +4899,7 @@ proof-
           using z1 z2 z3 z4 complex_vector.independentD
           by blast 
         thus ?thesis
-          unfolding h_def g_def using yB by simp
+          by (smt (z3) \<open>y \<in> (*\<^sub>C) \<i> ` B\<close> complex_i_not_zero complex_scaleC_def cvector_fraction_eq_iff g1 g_def i_squared image_iff mult_minus_left neg_equal_0_iff_equal nonzero_mult_div_cancel_left of_real_1 of_real_minus scaleC_one x)
       qed
     qed 
   qed

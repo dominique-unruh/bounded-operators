@@ -327,7 +327,7 @@ lemmas bounded_csemilinear_cinner_left =
 lemmas bounded_clinear_cinner_right =
   bounded_sesquilinear.cbounded_linear_right [OF bounded_sesquilinear_cinner]
 
-lemmas bounded_csemilinear_cinner_left_comp = bounded_csemilinear_cinner_left[THEN bounded_csemilinear_compose2]
+lemmas bounded_csemilinear_cinner_left_comp = bounded_csemilinear_cinner_left[THEN bounded_csemilinear_o_cbounded_linear]
 
 lemmas cbounded_linear_cinner_right_comp = bounded_clinear_cinner_right[THEN cbounded_linear_compose]
 

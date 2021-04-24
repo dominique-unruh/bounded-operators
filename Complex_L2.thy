@@ -2462,9 +2462,9 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-lemma trunc_ell2_lim:
+(* lemma trunc_ell2_lim:
   includes nsa_notation
-  shows \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  shows \<open>\<exists> S. hypfinite S \<and> ( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
 proof-
   define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
   have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
@@ -2493,14 +2493,14 @@ proof-
   then obtain t where \<open>t\<in>*s* (f ` Collect finite)\<close> and \<open>t \<approx> star_of ((norm x)^2)\<close>
     by blast
   from \<open>t\<in>*s* (f ` Collect finite)\<close>
-  have \<open>\<exists> S \<in> (*s* (Collect finite)). t = (*f* f) S\<close>
+  have \<open>\<exists> S \<in> ( *s* (Collect finite)). t = ( *f* f) S\<close>
     by (simp add: image_iff)
-  then obtain S where \<open>S \<in> (*s* (Collect finite))\<close> and \<open>t = (*f* f) S\<close>
+  then obtain S where \<open>S \<in> ( *s* (Collect finite))\<close> and \<open>t = ( *f* f) S\<close>
     by blast
-  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = (*f* f) S\<close>
-  have \<open>(*f* f) S \<approx> star_of ((norm x)^2)\<close>
+  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = ( *f* f) S\<close>
+  have \<open>( *f* f) S \<approx> star_of ((norm x)^2)\<close>
     by simp
-  hence \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+  hence \<open>( *f* f) S \<approx> (hnorm (star_of x))^2\<close>
     by simp    
   have \<open>hypfinite S\<close>
   proof-
@@ -2512,17 +2512,17 @@ proof-
     thus ?thesis
       using \<open>S \<in> *s* Collect finite\<close> by blast 
   qed
-  moreover have \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+  moreover have \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
   proof-
-    have \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+    have \<open>hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
     proof-
       have \<open>\<forall> S. (norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
         by (simp add: trunc_ell2_norm_diff)        
-      hence \<open>\<forall> S. (hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+      hence \<open>\<forall> S. (hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
         by StarDef.transfer
-      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+      hence \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
         by blast
-      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
       proof-
         have \<open>\<forall> S. finite S \<longrightarrow> sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
           using trunc_ell2_norm_explicit
@@ -2530,21 +2530,21 @@ proof-
         hence \<open>\<forall> S. finite S \<longrightarrow> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
           using real_sqrt_eq_iff
           by (smt norm_le_zero_iff norm_zero real_sqrt_unique)           
-        hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+        hence \<open>\<forall> S. hypfinite S \<longrightarrow> ( *f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
           unfolding hypfinite_def
           by StarDef.transfer
-        hence \<open>(*f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
+        hence \<open>( *f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
           using \<open>hypfinite S\<close> by blast
-        hence \<open>(*f* f) S = (hnorm ((*f2* trunc_ell2) S (star_of x)))^2\<close>
+        hence \<open>( *f* f) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
           unfolding f_def by blast
-        thus ?thesis using \<open>(*f* f) S \<approx> (hnorm (star_of x))^2\<close>
+        thus ?thesis using \<open>( *f* f) S \<approx> (hnorm (star_of x))^2\<close>
           by (simp add: approx_reorient)          
       qed
-      ultimately have \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
+      ultimately have \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
         using approx_minus_iff by auto
-      hence \<open>(hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
+      hence \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
         by (simp add: mem_infmal_iff)       
-      hence \<open>hnorm (star_of x - (*f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
+      hence \<open>hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
         using infinitesimal_square by blast        
       thus ?thesis
         by simp 
@@ -2554,7 +2554,7 @@ proof-
   qed
   ultimately show ?thesis
     by blast
-qed
+qed *)
 
 lemma trunc_ell2_cspan_induct:
   \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
@@ -2618,7 +2618,8 @@ lemma trunc_ell2_cspan:
 
 lemma ket_ell2_span:
   \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
-proof
+      sorry
+(* proof
   include nsa_notation
   show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
     by simp    
@@ -2630,28 +2631,28 @@ proof
     proof-
       have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
       proof-
-        have \<open>\<exists> S. hypfinite S \<and> (*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+        have \<open>\<exists> S. hypfinite S \<and> ( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
           using trunc_ell2_lim by auto
-        then obtain S where \<open>hypfinite S\<close> and \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+        then obtain S where \<open>hypfinite S\<close> and \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
           by blast
-        have \<open>(*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
+        have \<open>( *f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
         proof-
           have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
             by (simp add: trunc_ell2_cspan)
-          hence \<open>\<forall> S. hypfinite S \<longrightarrow> (*f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+          hence \<open>\<forall> S. hypfinite S \<longrightarrow> ( *f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
             unfolding hypfinite_def
             by StarDef.transfer
           thus ?thesis
             by (simp add: \<open>hypfinite S\<close>) 
         qed
-        thus ?thesis using \<open>(*f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
+        thus ?thesis using \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
           using approx_sym by blast          
       qed
       thus ?thesis using nsclosure_iff
         by blast
     qed
   qed
-qed
+qed *)
 
 lemma cspan_ket_finite[simp]: "cspan (range ket :: 'a::finite ell2 set) = UNIV"
   by (metis ket_ell2_span span_finite_dim finite_class.finite_UNIV finite_imageI)
@@ -2783,9 +2784,8 @@ proof (intro_classes; transfer)
 qed (auto simp add: divide_complex_def mult.commute ring_class.ring_distribs)
 end
 
-(* TODO Duplicate with equal_ket *)
-lemma superposition_principle_linear_ket:
-  fixes A B :: \<open>('a::cbanach ell2, 'b::cbanach) cblinfun\<close> (* TODO: there shouldn't a cbanach in the 'a *)
+lemma equal_ket:
+  fixes A B :: \<open>('a ell2, 'b::cbanach) cblinfun\<close>
   shows \<open>(\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)) \<Longrightarrow> A = B\<close>
 proof-
   assume \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
@@ -2814,7 +2814,8 @@ qed
 
 lemma superposition_principle_bounded_sesquilinear_ket:
   \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
-proof-
+      sorry
+(* proof-
   include nsa_notation
   assume \<open>bounded_sesquilinear B\<close>
     and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
@@ -2833,7 +2834,7 @@ proof-
       using nsclosure_I by blast
     then obtain v where \<open>v\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of y \<approx> v\<close>
       by blast
-    have \<open>(*f2* B) u v = 0\<close>
+    have \<open>( *f2* B) u v = 0\<close>
     proof-
       have  \<open>p \<in> (complex_vector.span (range ket)) \<Longrightarrow> q \<in> (complex_vector.span (range ket))
         \<Longrightarrow> B p q = 0\<close>
@@ -2854,28 +2855,29 @@ proof-
       qed
       hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
         by blast
-      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). (*f2* B) p q = 0\<close>
+      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). ( *f2* B) p q = 0\<close>
         by StarDef.transfer
       thus ?thesis
         using \<open>u \<in> *s* cspan (range ket)\<close> \<open>v \<in> *s* cspan (range ket)\<close> by blast 
     qed
-    moreover have \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+    moreover have \<open>( *f2* B) (star_of x) (star_of y) \<approx> ( *f2* B) u v\<close>
       using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
         \<open>star_of x \<approx> u\<close> \<open>star_of y \<approx> v\<close> by blast
-    ultimately have \<open>(*f2* B) (star_of x) (star_of y) \<approx> 0\<close>
+    ultimately have \<open>( *f2* B) (star_of x) (star_of y) \<approx> 0\<close>
       by simp
-    hence \<open>(*f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
+    hence \<open>( *f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
       by simp
     thus \<open>B x y = 0\<close>
       by simp
   qed
-qed
+qed *)
 
 (* TODO remove (equal_basis below sufficient) *)
-lemma equal_basis_0:
+(* lemma equal_basis_0:
   assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
   shows \<open>A = 0\<close>
-proof-
+      sorry *)
+(* proof-
   include nsa_notation
   have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> cblinfun_apply A x = 0\<close>
     for x
@@ -2916,15 +2918,15 @@ proof-
     qed
     hence \<open>\<forall> x \<in> complex_vector.span (range ket). (cblinfun_apply A) x = 0\<close>
       by blast
-    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). (*f* (cblinfun_apply A)) x = 0\<close>
+    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). ( *f* (cblinfun_apply A)) x = 0\<close>
       by StarDef.transfer
-    hence \<open>(*f* (cblinfun_apply A)) r = 0\<close>
+    hence \<open>( *f* (cblinfun_apply A)) r = 0\<close>
       using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
       by blast
-    moreover have \<open>(*f* (cblinfun_apply A)) r \<approx> (*f* (cblinfun_apply A)) (star_of x)\<close>
+    moreover have \<open>( *f* (cblinfun_apply A)) r \<approx> ( *f* (cblinfun_apply A)) (star_of x)\<close>
       using \<open>r \<approx> star_of x\<close> \<open>isNSCont (cblinfun_apply A) x\<close>
       by (simp add: isNSContD)
-    ultimately have \<open>(*f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
+    ultimately have \<open>( *f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
       by simp
     hence \<open>norm ( (cblinfun_apply A) x ) = 0\<close>
       by auto
@@ -2940,9 +2942,9 @@ proof-
     by blast
   thus ?thesis using cblinfun_apply_inject
     by fastforce 
-qed
+qed *)
 
-lemma equal_ket:
+(* lemma equal_ket:
   assumes \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
   shows \<open>A = B\<close>
 proof-
@@ -2953,7 +2955,7 @@ proof-
   hence \<open>A - B = 0\<close>
     using equal_basis_0 by blast
   thus ?thesis by simp
-qed
+qed *)
 
 lemma clinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
@@ -2973,10 +2975,10 @@ lemma csemilinear_equal_ket:
   shows \<open>f = g\<close>
 proof -
   have [simp]: \<open>clinear (f \<circ> from_conjugate_space)\<close>
-    apply (rule csemilinear_csemilinear)
+    apply (rule csemilinear_o_csemilinear)
     using assms by (simp_all add: csemilinear_from_conjugate_space)
   have [simp]: \<open>clinear (g \<circ> from_conjugate_space)\<close>
-    apply (rule csemilinear_csemilinear)
+    apply (rule csemilinear_o_csemilinear)
     using assms by (simp_all add: csemilinear_from_conjugate_space)
   have [simp]: \<open>cspan (to_conjugate_space ` (range ket :: 'a ell2 set)) = UNIV\<close>
     by simp
@@ -3581,11 +3583,13 @@ proof-
       for v
     proof-
       have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-        using bounded_csemilinear_compose1 cblinfun_apply bounded_csemilinear_cinner_left_comp 
-          cnj_bounded_csemilinear by blast      
+      sorry
+(*         using bounded_csemilinear_compose1 cblinfun_apply bounded_csemilinear_cinner_left_comp 
+          cnj_bounded_csemilinear by blast       *)
       moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
-        using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
-        by blast      
+      sorry
+(*         using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
+        by blast       *)
       ultimately show ?thesis unfolding H_def 
         using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
         by auto      

@@ -16,7 +16,7 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
 
-    "Bounded_Operators-Extra.Extra_Nonstandard_Analysis"
+    (* "Bounded_Operators-Extra.Extra_Nonstandard_Analysis" *)
     "Bounded_Operators-Extra.Extra_Vector_Spaces"
     "Bounded_Operators-Extra.Extra_Ordered_Fields"
     "Bounded_Operators-Extra.Extra_Lattice"
@@ -29,35 +29,17 @@ bundle notation_norm begin
 notation norm ("\<parallel>_\<parallel>")
 end
 
+subsection \<open>Misc\<close>
+
 lemma (in scaleC) scaleC_real: assumes "r\<in>\<real>" shows "r *\<^sub>C x = Re r *\<^sub>R x"
   unfolding scaleR_scaleC using assms by simp
 
-
-subsection \<open>Bounded Linear and Bilinear Operators\<close>
-
-
-lemma sum_constant_scaleC: "(\<Sum>x\<in>A. y) = of_nat (card A) *\<^sub>C y"
+(* lemma sum_constant_scaleC: "(\<Sum>x\<in>A. y) = of_nat (card A) *\<^sub>C y"
   for y :: "'a::complex_vector"
-  by (induct A rule: infinite_finite_induct) (simp_all add: algebra_simps)
-
-subsection \<open>Embedding of the Complex Numbers into any \<open>complex_algebra_1\<close>: \<open>of_complex\<close>\<close>
-
-
-
-
-
-text \<open>Collapse nested embeddings.\<close>
+  by (induct A rule: infinite_finite_induct) (simp_all add: algebra_simps) *)
 
 lemma of_complex_of_real_eq [simp]: "of_complex (of_real n) = of_real n"
   unfolding of_complex_def of_real_def unfolding scaleR_scaleC by simp
-
-
-
-
-
-
-subsection \<open>The Set of Complex Numbers\<close>
-
 
 lemma Complexs_of_real [simp]: "of_real r \<in> \<complex>"
   unfolding Complexs_def of_real_def of_complex_def 
@@ -66,7 +48,7 @@ lemma Complexs_of_real [simp]: "of_real r \<in> \<complex>"
 lemma Reals_in_Complexs: "\<real> \<subseteq> \<complex>"
   unfolding Reals_def by auto
 
-lemma Complexs_cases [cases set: Complexs]:
+(* lemma Complexs_cases [cases set: Complexs]:
   assumes "q \<in> \<complex>"
   obtains (of_complex) r where "q = of_complex r"
   unfolding Complexs_def
@@ -74,73 +56,75 @@ proof -
   from \<open>q \<in> \<complex>\<close> have "q \<in> range of_complex" unfolding Complexs_def .
   then obtain r where "q = of_complex r" ..
   thus thesis ..
-qed
+qed *)
 
-subsection \<open>Ordered complex vector spaces\<close>
-
+(* TODO: move to extras *)
 lemma reals_zero_comparable_iff:
   "(x::complex)\<in>\<real> \<longleftrightarrow> x \<le> 0 \<or> x \<ge> 0"
   unfolding complex_is_Real_iff less_eq_complex_def
   by auto
 
+(* TODO: move to extras *)
 lemma reals_zero_comparable:
   fixes x::complex
   assumes "x\<in>\<real>"
   shows "x \<le> 0 \<or> x \<ge> 0"
   using assms unfolding reals_zero_comparable_iff by assumption
 
-subsection \<open>Complex normed vector spaces\<close>
-
-
-subsection \<open>Class instances for complex numbers\<close>
-
-
-subsection \<open>Sign function\<close>
-
-
+(* (* TODO: \<rightarrow> (in clinear): linear *)
 lemma clinear_is_linear: \<open>clinear f \<Longrightarrow> linear f\<close>
   unfolding clinear_def  linear_def
 proof
   show "f (b1 + b2) = f b1 + f b2"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    if "Vector_Spaces.linear ( *\<^sub>C) ( *\<^sub>C) f"
     for b1 :: 'a
       and b2 :: 'a
     using that unfolding Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
     by auto
   show "f (r *\<^sub>R b) = r *\<^sub>R f b"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
+    if "Vector_Spaces.linear ( *\<^sub>C) ( *\<^sub>C) f"
     for r :: real
       and b :: 'a
     using that unfolding Vector_Spaces.linear_def module_hom_def module_hom_axioms_def
     by (simp add: scaleR_scaleC)
-qed
+qed *)
 
+(* \<rightarrow> clinear_compose
 lemma linear_compose: "clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (g \<circ> f)"
   unfolding clinear_def
   using Vector_Spaces.linear_compose
-  by blast
+  by blast *)
 
+(* thm complex_vector.linear_add
 lemma clinear_additive_D:
   \<open>clinear f \<Longrightarrow> (\<And> x y. f (x + y) = f x + f y)\<close>
-  by (simp add: additive.intro complex_vector.linear_add)
+  by (simp add: complex_vector.linear_add) *)
 
-lemma clinear_imp_scaleC:
+(* lemma clinear_imp_scaleC:
   assumes "clinear D"
   obtains d where "D = (\<lambda>x. x *\<^sub>C d)"
-  by (metis assms complex_scaleC_def complex_vector.linear_scale mult.commute mult.left_neutral)
+  by (metis assms complex_scaleC_def complex_vector.linear_scale mult.commute mult.left_neutral) *)
 
 lemma (in clinear) "linear f"
-  by (simp add: clinear_axioms clinear_is_linear)
+  apply standard
+  by (simp_all add: add scaleC scaleR_scaleC)
     
 lemma (in cbounded_linear) bounded_linear: "bounded_linear f"
-  using bounded_linear.intro bounded_linear_axioms.intro clinear_axioms clinear_is_linear nonneg_bounded by blast
+  by (simp add: add bounded bounded_linear.intro bounded_linear_axioms.intro linearI scaleC scaleR_scaleC)
 
 lemma clinear_times: "clinear (\<lambda>x. c * x)"
   for c :: "'a::complex_algebra"
   by (auto simp: clinearI distrib_left)
 
+lemma (in clinear) linear:
+  shows \<open>linear f\<close>
+  by (simp add: add linearI scaleC scaleR_scaleC)
+
+subsection \<open>Antilinear maps and friends\<close>
+
+(* TODO: rename \<rightarrow> antilinear *)
 locale csemilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
-  assumes scaleC: "f (scaleC r x) = scaleC (cnj r) (f x)"
+  assumes scaleC: "f (scaleC r x) = cnj r *\<^sub>C f x"
 
 sublocale csemilinear \<subseteq> linear
 proof (rule linearI)
@@ -154,29 +138,28 @@ proof (rule linearI)
     unfolding scaleR_scaleC by (subst scaleC, simp)  
 qed
 
+
 lemma csemilinear_imp_scaleC:
+  fixes D :: "complex \<Rightarrow> 'a::complex_vector"
   assumes "csemilinear D"
-  obtains d where "D = (\<lambda>x. cnj (x *\<^sub>C d))"
-proof (atomize_elim, rule exI[of _ "cnj (D 1)"], rule ext)
-  fix x
-  have "cnj (x *\<^sub>C cnj (D 1)) = cnj x *\<^sub>C D 1" by simp
-  also have "\<dots> = D (x *\<^sub>C 1)" by (rule csemilinear.scaleC[OF assms, symmetric])
-  also have "\<dots> = D x" by simp
-  finally show "D x = cnj (x *\<^sub>C cnj (D 1))" by simp
+  obtains d where "D = (\<lambda>x. cnj x *\<^sub>C d)"
+proof -
+  interpret clinear "D o cnj"
+    apply standard apply auto
+    apply (simp add: additive.add assms csemilinear.axioms(1))
+    using assms csemilinear.scaleC by fastforce
+  obtain d where "D o cnj = (\<lambda>x. x *\<^sub>C d)"
+    using clinear_axioms complex_vector.linear_imp_scale by blast
+  then have \<open>D = (\<lambda>x. cnj x *\<^sub>C d)\<close>
+    by (metis comp_apply complex_cnj_cnj)
+  then show ?thesis
+    by (rule that)
 qed
 
 corollary complex_csemilinearD:
   fixes f :: "complex \<Rightarrow> complex"
-  assumes "csemilinear f" obtains c where "f = (\<lambda>x. cnj (c * x))"
+  assumes "csemilinear f" obtains c where "f = (\<lambda>x. c * cnj x)"
   by (rule csemilinear_imp_scaleC [OF assms]) (force simp: scaleC_conv_of_complex)
-
-(* TODO: remove *)
-(* lemma csemilinear_times_of_complex: "csemilinear (\<lambda>x. cnj (a * of_complex x))"
-proof (simp add: csemilinear_def additive_def csemilinear_axioms_def)
-  show "Modules.additive (\<lambda>x. cnj a * cnj x)"
-    by (simp add: distrib_left additive.intro)
-qed *)
-
 
 lemma csemilinearI:
   assumes "\<And>x y. f (x + y) = f x + f y"
@@ -184,42 +167,32 @@ lemma csemilinearI:
   shows "csemilinear f"
   by standard (rule assms)+
 
-
-
-lemma csemilinear_csemilinear: "csemilinear f \<Longrightarrow> csemilinear g \<Longrightarrow> clinear (g o f)"
+lemma csemilinear_o_csemilinear: "csemilinear f \<Longrightarrow> csemilinear g \<Longrightarrow> clinear (g o f)"
   apply (rule clinearI)
   apply (simp add: additive.add csemilinear_def)
   by (simp add: csemilinear.scaleC)
 
-lemma csemilinear_clinear: "csemilinear f \<Longrightarrow> clinear g \<Longrightarrow> csemilinear (g o f)"
+lemma clinear_o_csemilinear: "csemilinear f \<Longrightarrow> clinear g \<Longrightarrow> csemilinear (g o f)"
   apply (rule csemilinearI)
-  apply (simp add: additive.add clinear_additive_D csemilinear_def)
+  apply (simp add: additive.add complex_vector.linear_add csemilinear_def)
   by (simp add: complex_vector.linear_scale csemilinear.scaleC)
 
-lemma clinear_csemilinear: "clinear f \<Longrightarrow> csemilinear g \<Longrightarrow> csemilinear (g o f)"
+lemma csemilinear_o_clinear: "clinear f \<Longrightarrow> csemilinear g \<Longrightarrow> csemilinear (g o f)"
   apply (rule csemilinearI)
-  apply (simp add: additive.add clinear_additive_D csemilinear_def)
+  apply (simp add: additive.add complex_vector.linear_add csemilinear_def)
   by (simp add: complex_vector.linear_scale csemilinear.scaleC)
-
 
 locale bounded_csemilinear = csemilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
   assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-begin
 
-sublocale bounded_linear
-proof
-  show "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
-    by (fact bounded) 
-qed
+sublocale bounded_csemilinear \<subseteq> bounded_linear
+  apply standard by (fact bounded)
 
-
-lemma bounded_linear: "bounded_linear f"
+lemma (in bounded_csemilinear) bounded_linear: "bounded_linear f"
   by (fact bounded_linear)
 
-lemma csemilinear: "csemilinear f"
+lemma (in bounded_csemilinear) csemilinear: "csemilinear f"
   by (fact csemilinear_axioms)
-
-end
 
 lemma bounded_csemilinear_intro:
   assumes "\<And>x y. f (x + y) = f x + f y"
@@ -229,425 +202,161 @@ lemma bounded_csemilinear_intro:
   by standard (blast intro: assms)+
 
 lemma cnj_bounded_csemilinear[simp]: "bounded_csemilinear cnj"
-proof (rule bounded_csemilinear_intro [where K = 1])
-  show "cnj (x + y) = cnj x + cnj y"
-    for x :: complex
-      and y :: complex
-    by simp    
-  show "cnj (r *\<^sub>C x) = cnj r *\<^sub>C cnj x"
-    for r :: complex
-      and x :: complex
-    by simp    
-  show "cmod (cnj x) \<le> cmod x * 1"
-    for x :: complex
-    by simp    
-qed
+  apply (rule bounded_csemilinear_intro [where K = 1])
+  by auto
 
-
-lemma bounded_csemilinear_compose1:
+lemma bounded_csemilinear_o_bounded_csemilinear:
   assumes "bounded_csemilinear f"
     and "bounded_csemilinear g"
   shows "cbounded_linear (\<lambda>x. f (g x))"
 proof
   interpret f: bounded_csemilinear f by fact
   interpret g: bounded_csemilinear g by fact
+  fix b1 b2 b r
   show "f (g (b1 + b2)) = f (g b1) + f (g b2)"
-    for b1 :: 'c
-      and b2 :: 'c
     by (simp add: f.add g.add)
   show "f (g (r *\<^sub>C b)) = r *\<^sub>C f (g b)"
-    for r :: complex
-      and b :: 'c
     by (simp add: f.scaleC g.scaleC)
-  have "\<exists> Kf. \<forall>x. norm (f (g x)) \<le> norm (g x) * Kf"
-    using f.pos_bounded by auto
-  then obtain Kf where \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close>
-    by blast        
-  have "\<exists> Kg. \<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf"
-    by (metis g.pos_bounded le_cases mult.commute mult_left_mono norm_ge_zero vector_space_over_itself.scale_zero_left)
-  then obtain Kg where \<open>\<forall>x. norm (g x) * Kf \<le> (norm x * Kg) * Kf\<close>
-    by blast
-  have \<open>\<forall>x. (norm x * Kg) * Kf = norm x * (Kg * Kf)\<close>
-    using mult.assoc
-    by simp 
-  define  K where \<open>K = Kg * Kf\<close>
-  have  \<open>\<forall>x. norm (f (g x)) \<le> norm x * K\<close>
-    unfolding K_def
-    by (metis K_def \<open>\<forall>x. norm (f (g x)) \<le> norm (g x) * Kf\<close> \<open>\<forall>x. norm (g x) * Kf \<le> norm x * Kg * Kf\<close> \<open>\<forall>x. norm x * Kg * Kf = norm x * (Kg * Kf)\<close> dual_order.trans) 
-  thus "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    by blast
+  have "bounded_linear (\<lambda>x. f (g x))"
+    using f.bounded_linear g.bounded_linear by (rule bounded_linear_compose)
+  then show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    by (rule bounded_linear.bounded)
 qed
 
-lemma bounded_csemilinear_compose2:
+lemma bounded_csemilinear_o_cbounded_linear:
   assumes "bounded_csemilinear f"
     and "cbounded_linear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
 proof
   interpret f: bounded_csemilinear f by fact
   interpret g: cbounded_linear g by fact
-  from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-    by blast
-  from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-    by blast
-  define K where "K = Kg * Kf"
-  have x: "norm (f (g x)) \<le> norm x * K" 
-    for x
-  proof-
-    have "norm (f (g x)) \<le> norm (g x) * Kf"
-      using f .
-    also have "\<dots> \<le> (norm x * Kg) * Kf"
-      using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-    also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-      by (rule mult.assoc)
-    finally show "norm (f (g x)) \<le> norm x * K"
-      unfolding K_def.
-  qed
-
   show "f (g (x + y)) = f (g x) + f (g y)" for x y
     by (simp only: f.add g.add)
   show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
     by (simp add: f.scaleC g.scaleC)
-  show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    using x by (intro exI allI)
+  have "bounded_linear (\<lambda>x. f (g x))"
+    using f.bounded_linear g.bounded_linear by (rule bounded_linear_compose)
+  then show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    by (rule bounded_linear.bounded)
 qed
 
-lemma bounded_csemilinear_compose3:
+lemma cbounded_linear_o_bounded_csemilinear:
   assumes "cbounded_linear f"
     and "bounded_csemilinear g"
   shows "bounded_csemilinear (\<lambda>x. f (g x))"
 proof
   interpret f: cbounded_linear f by fact
   interpret g: bounded_csemilinear g by fact
-
-  show s3: "f (g (x + y)) = f (g x) + f (g y)" for x y
+  show "f (g (x + y)) = f (g x) + f (g y)" for x y
     by (simp only: f.add g.add)
-  show s2: "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
+  show "f (g (scaleC r x)) = scaleC (cnj r) (f (g x))" for r x
     using f.scaleC g.scaleC by fastforce
-  from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-    by blast
-  from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-    by blast
-  show s1: "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-  proof (intro exI allI)
-    fix x
-    have "norm (f (g x)) \<le> norm (g x) * Kf"
-      using f .
-    also have "\<dots> \<le> (norm x * Kg) * Kf"
-      using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-    also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-      by (rule mult.assoc)
-    finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-  qed
+  have "bounded_linear (\<lambda>x. f (g x))"
+    using f.bounded_linear g.bounded_linear by (rule bounded_linear_compose)
+  then show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+    by (rule bounded_linear.bounded)
 qed
-
-
-
-
 
 lemma (in bounded_cbilinear) bounded_bilinear: "bounded_bilinear prod"
   by (simp add: bounded_bilinear_axioms)
 
-
 lemma bij_clinear_imp_inv_clinear: "clinear (inv f)"
   if a1: "clinear f" and a2: "bij f"
-proof-
-  have "f a + f b = f (a + b)"
-    for a b
-    by (simp add: a1 complex_vector.linear_add)    
-  hence t1: "inv f (b1 + b2) = inv f b1 + inv f b2"
-    for b1 :: 'b
-      and b2 :: 'b
-    by (metis (no_types) bij_inv_eq_iff that(2))
-  have t2: "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
-    if "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) f"
-      and "bij f"
-    for r :: complex
-      and b :: 'b
+proof
+  fix b1 b2 r b
+  show "inv f (b1 + b2) = inv f b1 + inv f b2"
+    by (simp add: a1 a2 bij_is_inj bij_is_surj complex_vector.linear_add inv_f_eq surj_f_inv_f)
+  show "inv f (r *\<^sub>C b) = r *\<^sub>C inv f b"
     using that
     by (smt bij_inv_eq_iff clinear_def complex_vector.linear_scale) 
-  show ?thesis
-    unfolding clinear_def
-    by (meson clinearI clinear_def a1 a2 t1 t2)
 qed
 
 locale bounded_sesquilinear =
   fixes 
     prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
+      (infixl "**" 70)
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
     and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
     and scaleC_right: "prod a (r *\<^sub>C b) = r *\<^sub>C (prod a b)"
     and bounded: "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-begin
 
-sublocale bounded_bilinear
-proof
-  show "prod (a + a') b = prod a b + prod a' b"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'b
-    by (simp add: add_left)
+sublocale bounded_sesquilinear \<subseteq> bounded_bilinear
+  apply standard
+  by (auto simp: add_left add_right scaleC_left scaleC_right bounded scaleR_scaleC)
 
-  show "prod a (b + b') = prod a b + prod a b'"
-    for a :: 'a
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: add_right)
+lemma (in bounded_sesquilinear) bounded_bilinear: "bounded_bilinear prod" 
+  by (fact bounded_bilinear_axioms)
 
-  show "prod (r *\<^sub>R a) b = r *\<^sub>R prod a b"
-    for r :: real
-      and a :: 'a
-      and b :: 'b
-    unfolding scaleR_scaleC
-    by (simp add: scaleC_left)
+lemma (in bounded_sesquilinear) bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
+  apply standard
+    apply (auto simp add: scaleC_left add_left)
+  by (metis ab_semigroup_mult_class.mult_ac(1) bounded)
 
-  show "prod a (r *\<^sub>R b) = r *\<^sub>R prod a b"
-    for a :: 'a
-      and r :: real
-      and b :: 'b
-    unfolding scaleR_scaleC
-    by (fact scaleC_right)
+lemma (in bounded_sesquilinear) cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
+  apply standard
+    apply (auto simp add: scaleC_right add_right)
+  by (metis ab_semigroup_mult_class.mult_ac(1) ordered_field_class.sign_simps(34) pos_bounded)
 
-  show "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    unfolding scaleR_scaleC
-    by (fact bounded)
-qed
-
-
-lemma bounded_bilinear: "bounded_bilinear prod" by (fact bounded_bilinear_axioms)
-
-lemma bounded_csemilinear_left: "bounded_csemilinear (\<lambda>a. prod a b)"
-proof (insert bounded)
-
-  have "prod (x + y) b = prod x b + prod y b"
-    for x :: 'a
-      and y :: 'a
-    by (simp add: add_left)      
-  moreover have "prod (r *\<^sub>C x) b = cnj r *\<^sub>C prod x b"
-    for r :: complex
-      and x :: 'a
-    by (simp add: scaleC_left)      
-  moreover have "norm (prod x b) \<le> norm x * (norm b * K)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K :: real and x :: 'a
-    by (simp add: that vector_space_over_itself.scale_scale)
-  ultimately  have "bounded_csemilinear (\<lambda>a. prod a b)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K :: real
-    by (meson bounded_csemilinear_intro that) 
-  thus "bounded_csemilinear (\<lambda>a. prod a b)"
-    if "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    using that by safe    
-qed
-
-lemma cbounded_linear_right: "cbounded_linear (\<lambda>b. prod a b)"
-proof (insert bounded)
-  have "prod a (x + y) = prod a x + prod a y"
-    for x :: 'b
-      and y :: 'b
-    by (simp add: add_right)    
-  moreover have "prod a (r *\<^sub>C x) = r *\<^sub>C prod a x"
-    for r :: complex
-      and x :: 'b
-    by (simp add: scaleC_right)    
-  moreover have "norm (prod a x) \<le> norm x * (norm a * K)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for x :: 'b and K
-    by (simp add: that vector_space_over_itself.scale_left_commute 
-        vector_space_over_itself.scale_scale)        
-  ultimately have "cbounded_linear (prod a)"
-    if "\<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    for K
-    by (meson cbounded_linear_intro nonneg_bounded)    
-  thus "cbounded_linear (prod a)"
-    if "\<exists>K. \<forall>a b. norm (prod a b) \<le> norm a * norm b * K"
-    using that
-    by blast
-qed
-
-lemma comp1:
+lemma (in bounded_sesquilinear) comp1:
   assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x. prod (g x))\<close>
 proof
+  interpret cbounded_linear g by fact
+  fix a a' b b' r
   show "prod (g (a + a')) b = prod (g a) b + prod (g a') b"
-    for a :: 'd
-      and a' :: 'd
-      and b :: 'b
-  proof-
-    have \<open>g (a + a') = g a + g a'\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis
-      by (simp add: add_left) 
-  qed
+    by (simp add: add add_left)
   show "prod (g a) (b + b') = prod (g a) b + prod (g a) b'"
-    for a :: 'd
-      and b :: 'b
-      and b' :: 'b
-    by (simp add: add_right)
+    by (simp add: add add_right)
   show "prod (g (r *\<^sub>C a)) b = cnj r *\<^sub>C prod (g a) b"
-    for r :: complex
-      and a :: 'd
-      and b :: 'b
-  proof-
-    have \<open>g (r *\<^sub>C a) = r *\<^sub>C (g a)\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      by (simp add: scaleC_left)      
-  qed  
+    by (simp add: scaleC scaleC_left)
   show "prod (g a) (r *\<^sub>C b) = r *\<^sub>C prod (g a) b"
-    for a :: 'd
-      and r :: complex
-      and b :: 'b
-    by (simp add: scaleC_right)    
+    by (simp add: scaleC_right)
+  interpret bounded_bilinear \<open>(\<lambda>x. prod (g x))\<close>
+    by (simp add: bounded_linear comp1)
   show "\<exists>K. \<forall>a b. norm (prod (g a) b) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      using cbounded_linear.pos_bounded cbounded_linear_def by blast
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-      using nonneg_bounded by blast    
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-    have \<open>norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close>
-      for a b
-      using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      by blast
-    hence \<open>norm (prod (g a) b) \<le> (norm a * M) * norm b * N\<close>
-      for a b
-    proof -
-      have "\<forall>d b. norm (b::'b) * norm (g d) \<le> norm b * (M * norm d)"
-        by (metis \<open>\<And>a. norm (g a) \<le> norm a * M\<close> mult.commute norm_ge_zero ordered_comm_semiring_class.comm_mult_left_mono)
-      thus ?thesis
-        by (metis (no_types) \<open>0 \<le> N\<close> \<open>\<And>b a. norm (prod (g a) b) \<le> norm (g a) * norm b * N\<close> dual_order.trans mult.commute ordered_comm_semiring_class.comm_mult_left_mono)
-    qed
-    hence \<open>norm (prod (g a) b) \<le> norm a * norm b * K\<close>
-      for a b
-      unfolding K_def
-      by (simp add: mult.commute mult.left_commute)
-    thus ?thesis
-      by blast      
-  qed  
+    using bounded by blast
 qed
 
-lemma comp2:
+lemma (in bounded_sesquilinear) comp2:
   assumes \<open>cbounded_linear g\<close>
   shows \<open>bounded_sesquilinear (\<lambda>x y. prod x (g y))\<close>
 proof
+  interpret cbounded_linear g by fact
+  fix a a' b b' r
   show "prod (a + a') (g b) = prod a (g b) + prod a' (g b)"
-    for a :: 'a
-      and a' :: 'a
-      and b :: 'd
-    by (simp add: add_left)    
+    by (simp add: add add_left)
   show "prod a (g (b + b')) = prod a (g b) + prod a (g b')"
-    for a :: 'a
-      and b :: 'd
-      and b' :: 'd
-  proof-
-    have \<open>g (b + b') = g b + g b'\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis
-      by (simp add: add_right) 
-  qed
+    by (simp add: add add_right)
   show "prod (r *\<^sub>C a) (g b) = cnj r *\<^sub>C prod a (g b)"
-    for r :: complex
-      and a :: 'a
-      and b :: 'd
-    by (simp add: scaleC_left)    
+    by (simp add: scaleC scaleC_left)
   show "prod a (g (r *\<^sub>C b)) = r *\<^sub>C prod a (g b)"
-    for a :: 'a
-      and r :: complex
-      and b :: 'd
-  proof-
-    have \<open>g (r *\<^sub>C b) = r *\<^sub>C g b\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      by (simp add: scaleC_right) 
-  qed
+    by (simp add: scaleC scaleC_right)
+  interpret bounded_bilinear \<open>(\<lambda>x y. prod x (g y))\<close>
+    apply (rule bounded_bilinear.flip)
+    using _ bounded_linear apply (rule bounded_bilinear.comp1)
+    using bounded_bilinear by (rule bounded_bilinear.flip)
   show "\<exists>K. \<forall>a b. norm (prod a (g b)) \<le> norm a * norm b * K"
-  proof-
-    have \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M\<close>
-      using \<open>cbounded_linear g\<close>
-      unfolding cbounded_linear_def
-      using cbounded_linear_axioms_def by blast
-    hence \<open>\<exists> M. \<forall> a. norm (g a) \<le> norm a * M \<and> M \<ge> 0\<close>
-      by (metis linear mult.commute mult_nonneg_nonpos2 mult_zero_left norm_ge_zero order.trans)
-    then obtain M where \<open>\<And> a. norm (g a) \<le> norm a * M\<close> and \<open>M \<ge> 0\<close>
-      by blast
-    have \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-      using bounded
-      by blast
-    hence \<open>\<exists>N. \<forall>a b. norm (prod a b) \<le> norm a * norm b * N \<and> N \<ge> 0\<close>
-      using nonneg_bounded by auto    
-    then obtain N where \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close> and \<open>N \<ge> 0\<close>
-      by blast
-    define K where \<open>K = M * N\<close>
-    have \<open>K \<ge> 0\<close>
-      unfolding K_def
-      by (simp add: \<open>0 \<le> M\<close> \<open>0 \<le> N\<close>)
-    have \<open>norm (prod a (g b)) \<le> norm a * norm b * K\<close>
-      for a b
-    proof-
-      have \<open>norm (prod a (g b)) \<le> norm a * norm (g b) * N\<close>
-        using \<open>\<And> a b. norm (prod a b) \<le> norm a * norm b * N\<close>
-        by blast
-      also have \<open>norm a * norm (g b) * N \<le> norm a * (norm b * M) * N\<close>
-        using  \<open>\<And> a. norm (g a) \<le> norm a * M\<close> \<open>M \<ge> 0\<close> \<open>N \<ge> 0\<close>
-        by (simp add: mult_mono)
-      also have \<open>norm a * (norm b * M) * N = norm a * norm b * K\<close>
-        by (simp add: K_def)
-      finally show ?thesis by blast
-    qed
-    thus ?thesis
-      by blast      
-  qed  
+    using bounded by blast
 qed
 
-lemma comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
+lemma (in bounded_sesquilinear) comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
-end
-
-lemma clinear_linear:
-  fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
-  assumes \<open>clinear f\<close>
-  shows \<open>linear f\<close>
-  using Complex_Vector_Spaces.clinear_is_linear
-  by (simp add: clinear_is_linear assms)
-
-lemma clinear_add:
+(* lemma clinear_add:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x + g x)\<close>
-  by (simp add: complex_vector.linear_compose_add)
+  by (simp add: complex_vector.linear_compose_add) *)
 
-lemma clinear_minus:
+(* lemma clinear_minus:
   \<open>clinear f \<Longrightarrow> clinear g \<Longrightarrow> clinear (\<lambda> x. f x - g x)\<close>
-  by (simp add: complex_vector.linear_compose_sub)
+  by (simp add: complex_vector.linear_compose_sub) *)
 
-lemma clinear_zero:
+(* lemma clinear_zero:
   fixes f :: \<open>'a::complex_vector \<Rightarrow> 'b::complex_vector\<close>
   shows \<open>clinear f \<Longrightarrow> f 0 = 0\<close>
-  by (rule complex_vector.linear_0)
+  by (rule complex_vector.linear_0) *)
 
-lemma clinear_sum_induction:
+(* lemma clinear_sum_induction:
   \<open>\<forall> f S. card S = n \<and> (\<forall> t \<in> S. clinear (f t))  \<longrightarrow> clinear (\<lambda> x. \<Sum> t\<in>S. f t x)\<close>
 proof (induction n)
   show "\<forall>f S. card S = 0 \<and> (\<forall>t\<in>S. clinear (\<lambda>a. f (t::'a) (a::'b)::'c)) \<longrightarrow> clinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
@@ -657,14 +366,18 @@ proof (induction n)
     if "\<forall>f S. card S = n \<and> (\<forall>t\<in>S. clinear (\<lambda>a. f (t::'a) (a::'b)::'c)) \<longrightarrow> clinear (\<lambda>x. \<Sum>t\<in>S. f t x)"
     for n :: nat
     using that complex_vector.linear_compose_sum by blast 
-qed
+qed *)
 
+(* \<rightarrow> complex_vector.linear_compose_sum
 lemma clinear_sum:
   \<open>finite S \<Longrightarrow> (\<And> t. t \<in> S \<Longrightarrow> clinear (f t)) \<Longrightarrow> clinear (\<lambda> x. \<Sum> t\<in>S. f t x)\<close>
-  using clinear_sum_induction by blast
+  using clinear_sum_induction by blast *)
 
-lemma cbounded_linearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
-  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale)
+(* \<rightarrow> complex_vector.module_hom_sub *)
+(* lemma cbounded_linearDiff: \<open>clinear A \<Longrightarrow> clinear B \<Longrightarrow> clinear (A - B)\<close>
+  by (simp add: add_diff_add additive.add clinearI complex_vector.scale_right_diff_distrib clinear_additive_D complex_vector.linear_scale) *)
+
+(* =============== TODO ================= *)
 
 lemma scalarR_cbounded_linear:
   fixes c :: real
@@ -687,13 +400,13 @@ lemma comp_cbounded_linear:
     and B :: \<open>'a::complex_normed_vector \<Rightarrow> 'b\<close>
   assumes \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close>
   shows \<open>cbounded_linear (A \<circ> B)\<close>
-  by (metis Complex_Vector_Spaces.linear_compose assms(1) assms(2) cbounded_linear_axioms_def cbounded_linear_compose cbounded_linear_def o_def)
+  by (metis clinear_compose assms(1) assms(2) cbounded_linear_axioms_def cbounded_linear_compose cbounded_linear_def o_def)
 
 
 
 subsection \<open>Nonstandard analysis\<close>
 
-unbundle nsa_notation
+(* unbundle nsa_notation
 
 definition scaleHC :: "complex star \<Rightarrow> 'a star \<Rightarrow> 'a::complex_normed_vector star"
   where [transfer_unfold]: "scaleHC = starfun2 scaleC"
@@ -703,7 +416,7 @@ begin
 definition star_scaleC_def [transfer_unfold]: "scaleC r \<equiv> *f* (scaleC r)"
 instance 
 proof
-  show "((*\<^sub>R) r::'a star \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
+  show "(( *\<^sub>R) r::'a star \<Rightarrow> _) = ( *\<^sub>C) (complex_of_real r)"
     for r :: real
     by (simp add: scaleR_scaleC star_scaleC_def star_scaleR_def)    
 qed
@@ -749,38 +462,16 @@ instance star :: (complex_algebra_1) complex_algebra_1 ..
 instance star :: (complex_div_algebra) complex_div_algebra ..
 
 instance star :: (complex_field) complex_field ..
+ *)
 
 lemma isCont_scaleC:
-  includes nsa_notation
+  (* includes nsa_notation *)
   fixes l :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
-proof-
-  have \<open>y \<approx> star_of l \<Longrightarrow> (*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
-    for y         
-  proof-
-    assume \<open>y \<approx> star_of l\<close> 
-    hence \<open>hnorm (y - star_of l) \<in> Infinitesimal\<close>
-      using Infinitesimal_hnorm_iff bex_Infinitesimal_iff by blast
-    hence \<open>(star_of (cmod a)) * hnorm (y - star_of l) \<in> Infinitesimal\<close>
-      using Infinitesimal_star_of_mult2 by blast      
-    hence \<open>hnorm ( a *\<^sub>C (y - star_of l)) \<in> Infinitesimal\<close>
-      by (simp add: hnorm_scaleC)
-    moreover have \<open>a *\<^sub>C (y - star_of l) = a *\<^sub>C y -  a *\<^sub>C (star_of l)\<close>
-      by (simp add: complex_vector.scale_right_diff_distrib)
-    ultimately have \<open>hnorm ( a *\<^sub>C y -  a *\<^sub>C (star_of l)) \<in> Infinitesimal\<close>
-      by auto
-    hence \<open>(*f* (*\<^sub>C) a) y \<approx> star_of (a *\<^sub>C l)\<close>
-      by (metis Infinitesimal_hnorm_iff bex_Infinitesimal_iff star_of_scaleC star_scaleC_def)      
-    thus ?thesis by blast
-  qed
-  hence \<open>isNSCont (\<lambda> v. scaleC a v) l\<close>
-    unfolding isNSCont_def
-    by auto
-  thus ?thesis
-    by (simp add: isNSCont_isCont_iff) 
-qed
+  apply (rule linear_continuous_at)
+  by (simp add: Complex_Vector_Spaces0.cbounded_linear.bounded_linear cbounded_linear_scaleC_right)
 
-unbundle no_nsa_notation
+(* unbundle no_nsa_notation *)
 
 subsection \<open>Cauchy sequences\<close>
 
@@ -2068,11 +1759,11 @@ lemma sesquilinear_finite_sum:
   shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
   by (simp add: sesquilinear_finite_sum_induction assms(1) assms(2))
 
-lemma bounded_sesquilinear_continuous:
+(* lemma bounded_sesquilinear_continuous:
   includes nsa_notation
   assumes \<open>bounded_sesquilinear B\<close>
     and \<open>star_of x \<approx> u\<close> and \<open>star_of y \<approx> v\<close>
-  shows \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+  shows \<open>( *f2* B) (star_of x) (star_of y) \<approx> ( *f2* B) u v\<close>
 proof-
   have \<open>B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
     for p q
@@ -2084,26 +1775,26 @@ proof-
   qed
   hence \<open>\<forall> p q. B x y = B (x - p) (y - q) + (B x q - B p q) + (B p y - B p q) + B p q\<close>
     by blast
-  hence \<open>\<forall> p q. (*f2* B) (star_of x) (star_of y) = (*f2* B) (star_of x - p) (star_of y - q)
-     + ((*f2* B) (star_of x) q - (*f2* B) p q)
-     + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+  hence \<open>\<forall> p q. ( *f2* B) (star_of x) (star_of y) = ( *f2* B) (star_of x - p) (star_of y - q)
+     + (( *f2* B) (star_of x) q - ( *f2* B) p q)
+     + (( *f2* B) p (star_of y) - ( *f2* B) p q) + ( *f2* B) p q\<close>
     by StarDef.transfer
-  hence \<open>(*f2* B) (star_of x) (star_of y) \<approx>
-     (*f2* B) (star_of x - p) (star_of y - q)
-   + ((*f2* B) (star_of x) q - (*f2* B) p q)
-   + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close>
+  hence \<open>( *f2* B) (star_of x) (star_of y) \<approx>
+     ( *f2* B) (star_of x - p) (star_of y - q)
+   + (( *f2* B) (star_of x) q - ( *f2* B) p q)
+   + (( *f2* B) p (star_of y) - ( *f2* B) p q) + ( *f2* B) p q\<close>
     for p q
     by auto
-  moreover have \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close>
+  moreover have \<open>( *f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close>
   proof-
     have \<open>\<exists> K. \<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
       using assms(1) bounded_sesquilinear.bounded by blast
     then obtain K where \<open>\<forall> p q. norm (B (x - p) (y - q)) \<le> norm (x - p) * norm (y - q) * K\<close>
       by blast
-    hence  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) (star_of y - q))
+    hence  \<open>\<forall> p q. hnorm (( *f2* B) (star_of x - p) (star_of y - q))
          \<le> hnorm (star_of x - p) * hnorm (star_of y - q) * (star_of K)\<close>
       by StarDef.transfer
-    hence \<open>hnorm ((*f2* B) (star_of x - u) (star_of y - v)) 
+    hence \<open>hnorm (( *f2* B) (star_of x - u) (star_of y - v)) 
       \<le> hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K)\<close>
       by blast
     moreover have \<open>hnorm (star_of x - u) * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
@@ -2111,28 +1802,28 @@ proof-
     ultimately show ?thesis
       using hnorm_le_Infinitesimal mem_infmal_iff by blast 
   qed
-  moreover have \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close>
+  moreover have \<open>( *f2* B) (star_of x) v - ( *f2* B) u v \<approx> 0\<close>
   proof-
-    have \<open>(*f2* B) (star_of x) v - (*f2* B) u v
-        = (*f2* B) (star_of x - u) v\<close>
+    have \<open>( *f2* B) (star_of x) v - ( *f2* B) u v
+        = ( *f2* B) (star_of x - u) v\<close>
     proof-
       have \<open>\<forall> p q. B x q - B p q = B (x - p) q\<close>
         by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_left eq_diff_eq)
-      hence \<open>\<forall> p q. (*f2* B) (star_of x) q - (*f2* B) p q = (*f2* B) (star_of x - p) q\<close>
+      hence \<open>\<forall> p q. ( *f2* B) (star_of x) q - ( *f2* B) p q = ( *f2* B) (star_of x - p) q\<close>
         by StarDef.transfer
       thus ?thesis by blast
     qed
-    moreover have \<open>(*f2* B) (star_of x - u) v \<approx> 0\<close>
+    moreover have \<open>( *f2* B) (star_of x - u) v \<approx> 0\<close>
     proof-
       have \<open>\<exists> K. \<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
         using assms(1) bounded_sesquilinear.bounded by blast
       then obtain K where \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
         by blast
       from  \<open>\<forall> p q. norm (B (x - p) q) \<le> norm (x - p) * norm q * K\<close>
-      have  \<open>\<forall> p q. hnorm ((*f2* B) (star_of x - p) q)
+      have  \<open>\<forall> p q. hnorm (( *f2* B) (star_of x - p) q)
            \<le> hnorm (star_of x - p) * hnorm q * (star_of K)\<close>
         by StarDef.transfer
-      hence \<open>hnorm ((*f2* B) (star_of x - u) v)
+      hence \<open>hnorm (( *f2* B) (star_of x - u) v)
            \<le> hnorm (star_of x - u) * hnorm v * (star_of K)\<close>
         by blast
       moreover have \<open>hnorm (star_of x - u) * hnorm v * (star_of K) \<in> Infinitesimal\<close>
@@ -2152,17 +1843,17 @@ proof-
     qed
     ultimately show ?thesis by simp
   qed
-  moreover have \<open>((*f2* B) u (star_of y) - (*f2* B) u v) \<approx> 0\<close>
+  moreover have \<open>(( *f2* B) u (star_of y) - ( *f2* B) u v) \<approx> 0\<close>
   proof-
     have \<open>\<exists> K. \<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
       using assms(1) bounded_sesquilinear.bounded by blast
     then obtain K where \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
       by blast
     from  \<open>\<forall> p q. norm (B p (y - q)) \<le> norm p * norm (y - q) * K\<close>
-    have  \<open>\<forall> p q. hnorm ((*f2* B) p (star_of y - q))
+    have  \<open>\<forall> p q. hnorm (( *f2* B) p (star_of y - q))
            \<le> hnorm p * hnorm (star_of y - q) * (star_of K)\<close>
       by StarDef.transfer
-    hence \<open>hnorm ((*f2* B) u (star_of y - v))
+    hence \<open>hnorm (( *f2* B) u (star_of y - v))
            \<le> hnorm u * hnorm (star_of y - v) * (star_of K)\<close>
       by blast
     moreover have \<open>hnorm u * hnorm (star_of y - v) * (star_of K) \<in> Infinitesimal\<close>
@@ -2177,33 +1868,33 @@ proof-
       ultimately show ?thesis
         by (meson Infinitesimal_HFinite_mult Infinitesimal_HFinite_mult2 \<open>hnorm (star_of y - v) \<in> Infinitesimal\<close> \<open>hnorm u \<in> HFinite\<close> \<open>hypreal_of_real K \<in> HFinite\<close>)
     qed
-    ultimately have \<open>(*f2* B) u (star_of y - v) \<in> Infinitesimal\<close>
+    ultimately have \<open>( *f2* B) u (star_of y - v) \<in> Infinitesimal\<close>
       using hnorm_le_Infinitesimal   
       by blast
-    moreover have \<open>(*f2* B) u (star_of y) - (*f2* B) u v
-        = (*f2* B) u (star_of y - v)\<close>
+    moreover have \<open>( *f2* B) u (star_of y) - ( *f2* B) u v
+        = ( *f2* B) u (star_of y - v)\<close>
     proof-
       have \<open>\<forall> p q. B p y - B p q = B p (y - q)\<close>
         by (metis (mono_tags, lifting) assms(1) bounded_sesquilinear.add_right eq_diff_eq)
-      hence \<open>\<forall> p q. (*f2* B) p (star_of y) - (*f2* B) p q = (*f2* B) p (star_of y - q)\<close>
+      hence \<open>\<forall> p q. ( *f2* B) p (star_of y) - ( *f2* B) p q = ( *f2* B) p (star_of y - q)\<close>
         by StarDef.transfer
       thus ?thesis by blast
     qed
     ultimately show ?thesis
       by (simp add: mem_infmal_iff) 
   qed
-  ultimately show \<open>(*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) u v\<close>
+  ultimately show \<open>( *f2* B) (star_of x) (star_of y) \<approx> ( *f2* B) u v\<close>
   proof -
-    have f1: "monad ((*f2* B) (star_of x) (star_of y)) = monad ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v) + ((*f2* B) u (star_of y) - (*f2* B) u v) + (*f2* B) u v)"
-      by (meson \<open>\<And>q p. (*f2* B) (star_of x) (star_of y) \<approx> (*f2* B) (star_of x - p) (star_of y - q) + ((*f2* B) (star_of x) q - (*f2* B) p q) + ((*f2* B) p (star_of y) - (*f2* B) p q) + (*f2* B) p q\<close> approx_monad_iff)
+    have f1: "monad (( *f2* B) (star_of x) (star_of y)) = monad (( *f2* B) (star_of x - u) (star_of y - v) + (( *f2* B) (star_of x) v - ( *f2* B) u v) + (( *f2* B) u (star_of y) - ( *f2* B) u v) + ( *f2* B) u v)"
+      by (meson \<open>\<And>q p. ( *f2* B) (star_of x) (star_of y) \<approx> ( *f2* B) (star_of x - p) (star_of y - q) + (( *f2* B) (star_of x) q - ( *f2* B) p q) + (( *f2* B) p (star_of y) - ( *f2* B) p q) + ( *f2* B) p q\<close> approx_monad_iff)
     have "(0::'c star) \<in> monad 0"
       by (meson Infinitesimal_monad_zero_iff Infinitesimal_zero)
-    hence "monad ((*f2* B) u v + ((*f2* B) u (star_of y) - (*f2* B) u v + ((*f2* B) (star_of x - u) (star_of y - v) + ((*f2* B) (star_of x) v - (*f2* B) u v)))) = monad ((*f2* B) u v)"
-      by (meson Infinitesimal_add Infinitesimal_monad_eq Infinitesimal_monad_zero_iff \<open>(*f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close> \<open>(*f2* B) (star_of x) v - (*f2* B) u v \<approx> 0\<close> \<open>(*f2* B) u (star_of y) - (*f2* B) u v \<approx> 0\<close> approx_mem_monad_zero approx_sym)
+    hence "monad (( *f2* B) u v + (( *f2* B) u (star_of y) - ( *f2* B) u v + (( *f2* B) (star_of x - u) (star_of y - v) + (( *f2* B) (star_of x) v - ( *f2* B) u v)))) = monad (( *f2* B) u v)"
+      by (meson Infinitesimal_add Infinitesimal_monad_eq Infinitesimal_monad_zero_iff \<open>( *f2* B) (star_of x - u) (star_of y - v) \<approx> 0\<close> \<open>( *f2* B) (star_of x) v - ( *f2* B) u v \<approx> 0\<close> \<open>( *f2* B) u (star_of y) - ( *f2* B) u v \<approx> 0\<close> approx_mem_monad_zero approx_sym)
     thus ?thesis
       using f1 by (simp add: approx_monad_iff ordered_field_class.sign_simps(2))
   qed
-qed
+qed *)
 
 
 lemma sesquilinear_superposition:
@@ -2396,8 +2087,7 @@ proof -
     by fastforce    
 
   have w5:"(\<Sum>b | (b \<in> B \<longrightarrow> x b \<noteq> 0) \<and> b \<in> B. x b *\<^sub>R b) =
-    (\<Sum>b\<in>B. x b *\<^sub>R b)"
-    for x
+    (\<Sum>b\<in>B. x b *\<^sub>R b)" for x
     using \<open>finite B\<close>
     by (smt DiffD1 DiffD2 mem_Collect_eq real_vector.scale_eq_0_iff subset_eq sum.mono_neutral_left)
   have "representation B (\<Sum>b\<in>B. x b *\<^sub>R b) =  (\<lambda>b. if b \<in> B then x b else 0)"
@@ -2467,8 +2157,7 @@ proof -
   hence repr'_comb'[simp]: "repr' (comb' x) = x" for x
     unfolding comb'_def repr'_def o_def
     by simp
-  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" 
-    for d
+  have sphere: "compact (sphere 0 d :: 'basis euclidean_space set)" for d
     using compact_sphere by blast
   have "complete (UNIV :: 'basis euclidean_space set)"
     by (simp add: complete_UNIV)

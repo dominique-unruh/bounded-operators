@@ -1085,14 +1085,15 @@ lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
   by (auto intro!: clinearI simp: distrib_left)
     (metis mult_scaleC_right scaleC_conv_of_complex)
 
+(* TODO rename \<rightarrow> bounded_clinear *)
 locale cbounded_linear = clinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
   assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
 begin
 
 (* Not present in Real_Vector_Spaces *)
-(* sublocale bounded_linear
+lemma bounded_linear: "bounded_linear f"
   apply standard
-  by (simp_all add: add scaleC scaleR_scaleC bounded) *)
+  by (simp_all add: add scaleC scaleR_scaleC bounded)
 
 lemma pos_bounded: "\<exists>K>0. \<forall>x. norm (f x) \<le> norm x * K"
 proof -
@@ -1183,22 +1184,17 @@ qed (simp_all add: add_right add_left scaleC_right scaleC_left)
 lemma comp1:
   assumes "cbounded_linear g"
   shows "bounded_cbilinear (\<lambda>x. (**) (g x))"
-proof unfold_locales
+proof
   interpret g: cbounded_linear g by fact
   show "\<And>a a' b. g (a + a') ** b = g a ** b + g a' ** b"
     "\<And>a b b'. g a ** (b + b') = g a ** b + g a ** b'"
     "\<And>r a b. g (r *\<^sub>C a) ** b = r *\<^sub>C (g a ** b)"
     "\<And>a r b. g a ** (r *\<^sub>C b) = r *\<^sub>C (g a ** b)"
     by (auto simp: g.add add_left add_right g.scaleC scaleC_left scaleC_right)
-  from g.nonneg_bounded nonneg_bounded obtain K L
-    where nn: "0 \<le> K" "0 \<le> L"
-      and K: "\<And>x. norm (g x) \<le> norm x * K"
-      and L: "\<And>a b. norm (a ** b) \<le> norm a * norm b * L"
-    by auto
-  have "norm (g a ** b) \<le> norm a * K * norm b * L" for a b
-    by (auto intro!:  order_trans[OF K] order_trans[OF L] mult_mono simp: nn)
+  have "bounded_bilinear (\<lambda>a b. g a ** b)"
+    using g.bounded_linear by (rule comp1)
   then show "\<exists>K. \<forall>a b. norm (g a ** b) \<le> norm a * norm b * K"
-    by (auto intro!: exI[where x="K * L"] simp: ac_simps)
+    by (rule bounded_bilinear.bounded)
 qed
 
 lemma comp: "cbounded_linear f \<Longrightarrow> cbounded_linear g \<Longrightarrow> bounded_cbilinear (\<lambda>x y. f x ** g y)"
@@ -1253,30 +1249,27 @@ lemma cbounded_linear_compose:
   assumes "cbounded_linear f"
     and "cbounded_linear g"
   shows "cbounded_linear (\<lambda>x. f (g x))"
-proof -
+proof
   interpret f: cbounded_linear f by fact
   interpret g: cbounded_linear g by fact
-  show ?thesis
-  proof unfold_locales
-    show "f (g (x + y)) = f (g x) + f (g y)" for x y
-      by (simp only: f.add g.add)
-    show "f (g (scaleC r x)) = scaleC r (f (g x))" for r x
-      by (simp only: f.scaleC g.scaleC)
-    from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
-      by blast
-    from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
-      by blast
-    show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
-    proof (intro exI allI)
-      fix x
-      have "norm (f (g x)) \<le> norm (g x) * Kf"
-        using f .
-      also have "\<dots> \<le> (norm x * Kg) * Kf"
-        using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
-      also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
-        by (rule mult.assoc)
-      finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
-    qed
+  show "f (g (x + y)) = f (g x) + f (g y)" for x y
+    by (simp only: f.add g.add)
+  show "f (g (scaleC r x)) = scaleC r (f (g x))" for r x
+    by (simp only: f.scaleC g.scaleC)
+  from f.pos_bounded obtain Kf where f: "\<And>x. norm (f x) \<le> norm x * Kf" and Kf: "0 < Kf"
+    by blast
+  from g.pos_bounded obtain Kg where g: "\<And>x. norm (g x) \<le> norm x * Kg"
+    by blast
+  show "\<exists>K. \<forall>x. norm (f (g x)) \<le> norm x * K"
+  proof (intro exI allI)
+    fix x
+    have "norm (f (g x)) \<le> norm (g x) * Kf"
+      using f .
+    also have "\<dots> \<le> (norm x * Kg) * Kf"
+      using g Kf [THEN order_less_imp_le] by (rule mult_right_mono)
+    also have "(norm x * Kg) * Kf = norm x * (Kg * Kf)"
+      by (rule mult.assoc)
+    finally show "norm (f (g x)) \<le> norm x * (Kg * Kf)" .
   qed
 qed
 

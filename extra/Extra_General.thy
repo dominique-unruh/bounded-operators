@@ -4,7 +4,16 @@ theory Extra_General
   imports "HOL-Library.Cardinality"
     "HOL-Analysis.Elementary_Topology"
     Jordan_Normal_Form.Conjugate
+    "HOL-Analysis.Uniform_Limit"
 begin
+
+subsection \<open>Misc\<close>
+
+(* TODO: remove *)
+abbreviation (input) uniform_convergence_abbr::
+  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
+  (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
+  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> (  uniform_limit S f l sequentially )\<close>
 
 subsection \<open>Not singleton\<close>
 
