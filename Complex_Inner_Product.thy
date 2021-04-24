@@ -3791,23 +3791,25 @@ qed
 
 subsection \<open>Recovered theorems\<close>
 
-lemmas tendsto_cinner [tendsto_intros] =
+(* lemmas tendsto_cinner [tendsto_intros] =
   bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 
 lemmas isCont_cinner [simp] =
   bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+ *)
 
-lemmas has_derivative_cinner [derivative_intros] =
+(* lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
+ *)
 
-lemmas has_derivative_cinner_left [derivative_intros] =
+(* lemmas has_derivative_cinner_left [derivative_intros] =
   bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
 
 lemma differentiable_cinner [simp]:
   "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
         (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
   unfolding differentiable_def by (blast intro: has_derivative_cinner)
-
+ *)
 
 lemma has_derivative_norm[derivative_intros]:
   fixes x :: "'a::complex_inner"
