@@ -2556,6 +2556,7 @@ proof-
     by blast
 qed *)
 
+(* TODO remove (merge into trunc_ell2_cspan) *)
 lemma trunc_ell2_cspan_induct:
   \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
 proof (induction n)
@@ -2613,12 +2614,102 @@ qed
 
 
 lemma trunc_ell2_cspan:
-  \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+  \<open>finite S \<Longrightarrow> trunc_ell2 S x \<in> (cspan (range (ket::('a \<Rightarrow>'a ell2))))\<close>
   using trunc_ell2_cspan_induct by auto
 
+lemma trunc_ell2_norm_sup:
+  \<open>(SUP S\<in>Collect finite. (norm (trunc_ell2 S \<psi>))) = norm \<psi>\<close>
+proof -
+  define N where \<open>N S = sqrt (\<Sum>i\<in>S. (cmod (Rep_ell2 \<psi> i))\<^sup>2)\<close> for S
+  have \<open>(SUP S\<in>Collect finite. (norm (trunc_ell2 S \<psi>))) = (SUP (S::'a set)\<in>Collect finite. N S)\<close>
+    apply (rule SUP_cong)
+    by (auto simp: N_def trunc_ell2_norm_explicit)
+  also have \<open>\<dots> = norm \<psi>\<close>
+    unfolding N_def apply transfer
+    unfolding ellnorm_as_sup_set
+    by (simp add: setcompr_eq_image)
+  finally show ?thesis
+    by -
+qed
+
+(* TODO: move *)
+lemma infsetsum'_tendsto:
+  assumes \<open>infsetsum'_converges f S\<close>
+  shows \<open>((\<lambda>F. sum f F) \<longlongrightarrow> infsetsum' f S) (finite_subsets_at_top S)\<close>
+  by (metis assms finite_subsets_at_top_neq_bot infsetsum'_converges_def infsetsum'_def tendsto_Lim)
+
+(* TODO: move *)
+lemma infsetsum_infsetsum':
+  assumes "f abs_summable_on S"
+  shows "infsetsum f S = infsetsum' f S"
+  sorry
+
+lemma trunc_ell2_norm_lim:
+  \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
+proof -
+  define f where \<open>f i = (cmod (Rep_ell2 \<psi> i))\<^sup>2\<close> for i
+
+  have has: \<open>has_ell2_norm (Rep_ell2 \<psi>)\<close>
+    using Rep_ell2 by blast
+  then have summable: "f abs_summable_on UNIV"
+    using f_def has_ell2_norm_infsetsum by fastforce
+  
+  have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
+    apply transfer by simp
+  also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
+    unfolding ell2_norm_infsetsum[OF has] f_def[symmetric]
+    using summable by (simp add: infsetsum_infsetsum')
+  finally have norm\<psi>: \<open>norm \<psi> = sqrt (infsetsum' f UNIV)\<close>
+    by -
+
+  have norm_trunc: \<open>norm (trunc_ell2 S \<psi>) = sqrt (sum f S)\<close> if \<open>finite S\<close> for S
+    using f_def that trunc_ell2_norm_explicit by fastforce
+
+  have \<open>(sum f \<longlongrightarrow> infsetsum' f UNIV) (finite_subsets_at_top UNIV)\<close>
+    by (simp add: abs_summable_infsetsum'_converges infsetsum'_tendsto summable)
+  then have \<open>((\<lambda>S. sqrt (sum f S)) \<longlongrightarrow> sqrt (infsetsum' f UNIV)) (finite_subsets_at_top UNIV)\<close>
+    using tendsto_real_sqrt by blast
+  then show \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
+    apply (subst tendsto_cong[where g=\<open>\<lambda>S. sqrt (sum f S)\<close>])
+    by (auto simp add: eventually_finite_subsets_at_top_weakI norm_trunc norm\<psi>)
+qed
+
+lemma trunc_ell2_limit:
+  \<open>((\<lambda>S. trunc_ell2 S \<psi>) \<longlongrightarrow> \<psi>) (finite_subsets_at_top UNIV)\<close>
+proof -
+  have \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
+    by (rule trunc_ell2_norm_lim)
+  then have \<open>((\<lambda>S. (norm (trunc_ell2 S \<psi>))\<^sup>2) \<longlongrightarrow> (norm \<psi>)\<^sup>2) (finite_subsets_at_top UNIV)\<close>
+    by (simp add: tendsto_power)
+  then have \<open>((\<lambda>S. (norm \<psi>)\<^sup>2 - (norm (trunc_ell2 S \<psi>))\<^sup>2) \<longlongrightarrow> 0) (finite_subsets_at_top UNIV)\<close>
+    apply (rule tendsto_diff[where a=\<open>(norm \<psi>)^2\<close> and b=\<open>(norm \<psi>)^2\<close>, simplified, rotated])
+    by auto
+  then have \<open>((\<lambda>S. (norm (\<psi> - trunc_ell2 S \<psi>))\<^sup>2) \<longlongrightarrow> 0) (finite_subsets_at_top UNIV)\<close>
+    unfolding trunc_ell2_norm_diff by simp
+  then have \<open>((\<lambda>S. norm (\<psi> - trunc_ell2 S \<psi>)) \<longlongrightarrow> 0) (finite_subsets_at_top UNIV)\<close>
+    by auto
+  then have \<open>((\<lambda>S. \<psi> - trunc_ell2 S \<psi>) \<longlongrightarrow> 0) (finite_subsets_at_top UNIV)\<close>
+    by (rule tendsto_norm_zero_cancel)
+  then show ?thesis
+    apply (rule Lim_transform2[where f=\<open>\<lambda>_. \<psi>\<close>, rotated])
+    by simp
+qed
+
 lemma ket_ell2_span:
-  \<open>closure (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2)))) = UNIV\<close>
-      sorry
+  \<open>closure (cspan (range ket)) = UNIV\<close>
+proof (intro set_eqI iffI UNIV_I closure_approachable[THEN iffD2] allI impI)
+  fix \<psi> :: \<open>'a ell2\<close>
+  fix e :: real assume \<open>e > 0\<close>
+  have \<open>((\<lambda>S. trunc_ell2 S \<psi>) \<longlongrightarrow> \<psi>) (finite_subsets_at_top UNIV)\<close>
+    by (rule trunc_ell2_limit)
+  then obtain F where \<open>finite F\<close> and \<open>dist (trunc_ell2 F \<psi>) \<psi> < e\<close>
+    apply (drule_tac tendstoD[OF _ \<open>e > 0\<close>])
+    by (auto dest: simp: eventually_finite_subsets_at_top)
+  moreover have \<open>trunc_ell2 F \<psi> \<in> cspan (range ket)\<close>
+    using \<open>finite F\<close> trunc_ell2_cspan by blast
+  ultimately show \<open>\<exists>\<phi>\<in>cspan (range ket). dist \<phi> \<psi> < e\<close>
+    by auto
+qed
 (* proof
   include nsa_notation
   show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
@@ -2812,9 +2903,9 @@ qed
 
 
 
-lemma superposition_principle_bounded_sesquilinear_ket:
+(* lemma superposition_principle_bounded_sesquilinear_ket:
   \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
-      sorry
+ *)
 (* proof-
   include nsa_notation
   assume \<open>bounded_sesquilinear B\<close>
@@ -2876,7 +2967,7 @@ qed *)
 (* lemma equal_basis_0:
   assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
   shows \<open>A = 0\<close>
-      sorry *)
+       *)
 (* proof-
   include nsa_notation
   have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> cblinfun_apply A x = 0\<close>
@@ -3583,13 +3674,11 @@ proof-
       for v
     proof-
       have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-      sorry
-(*         using bounded_csemilinear_compose1 cblinfun_apply bounded_csemilinear_cinner_left_comp 
-          cnj_bounded_csemilinear by blast       *)
+        using bounded_csemilinear_o_bounded_csemilinear cblinfun_apply bounded_csemilinear_cinner_left_comp 
+          cnj_bounded_csemilinear by blast      
       moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
-      sorry
-(*         using bounded_csemilinear_cinner_left bounded_csemilinear_compose1 cnj_bounded_csemilinear 
-        by blast       *)
+        using bounded_csemilinear_cinner_left bounded_csemilinear_o_bounded_csemilinear cnj_bounded_csemilinear 
+        by blast
       ultimately show ?thesis unfolding H_def 
         using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
         by auto      

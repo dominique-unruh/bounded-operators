@@ -4206,10 +4206,9 @@ definition hypfinite where \<open>hypfinite = ( *p* finite)\<close>
 
 subsection \<open>Unsorted\<close>
 
-lemma Cauchy_convergent_norm:
+(* lemma Cauchy_convergent_norm:
   assumes a1: "Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector)"
-  shows  \<open>Cauchy (\<lambda> n. norm (x n))\<close>
-   sorry
+  shows  \<open>Cauchy (\<lambda> n. norm (x n))\<close> *)
 (* proof-
   have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
@@ -4225,11 +4224,10 @@ lemma Cauchy_convergent_norm:
     by (metis (full_types) NSCauchyI NSCauchy_Cauchy_iff starfun_hnorm)
 qed *)
 
-lemma Cauchy_add:
+(* lemma Cauchy_add:
   fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
-  shows \<open>Cauchy (\<lambda> n. f n + g n)\<close>
-   sorry
+  shows \<open>Cauchy (\<lambda> n. f n + g n)\<close> *)
 (* proof-
   from a1
   have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
@@ -4249,11 +4247,10 @@ lemma Cauchy_add:
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed *)
 
-lemma lim_leq:
+(* lemma lim_leq:
   fixes x y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. x n \<le> y n\<close> and \<open>convergent x\<close> and \<open>convergent y\<close>
-  shows \<open>lim x \<le> lim y\<close>
-   sorry
+  shows \<open>lim x \<le> lim y\<close> *)
   (* by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI) *)
 
 lemma lim_ge:
@@ -4262,11 +4259,10 @@ lemma lim_ge:
   shows \<open>x \<le> lim y\<close>
   by (meson Lim_bounded2 assms(1) assms(2) convergent_LIMSEQ_iff)
 
-lemma lim_add:
+(* lemma lim_add:
   fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes \<open>convergent x\<close> and \<open>convergent y\<close>
-  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close>
-   sorry
+  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close> *)
 (* proof-
   have b1: \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"
@@ -4296,7 +4292,7 @@ lemma lim_add:
 qed *)
 
 
-lemma lim_add_const_left:
+(* lemma lim_add_const_left:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and c::'a
   assumes \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
@@ -4309,9 +4305,9 @@ proof-
   moreover have \<open>lim (\<lambda> i. c) = c\<close>
     by simp
   ultimately show ?thesis by auto
-qed
+qed *)
 
-lemma lim_add_const_right:
+(* lemma lim_add_const_right:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes  \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. x n + c) = lim x + c\<close>
@@ -4323,13 +4319,12 @@ proof-
   moreover have \<open>c + lim x = lim x + c\<close>
     by simp
   ultimately show ?thesis by simp
-qed
+qed *)
 
-lemma lim_scaleR:
+(* lemma lim_scaleR:
   fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and r::real
   assumes a1: \<open>convergent x\<close> 
-  shows \<open>lim (\<lambda> n. r *\<^sub>R x n ) = r *\<^sub>R lim x\<close>
-   sorry
+  shows \<open>lim (\<lambda> n. r *\<^sub>R x n ) = r *\<^sub>R lim x\<close> *)
 (* proof-
   have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"
@@ -4355,11 +4350,11 @@ lemma lim_scaleR:
 qed
  *)
 
-lemma Cauchy_minus:
+(* lemma Cauchy_minus:
   fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
   shows  \<open>Cauchy (\<lambda> n. f n - g n)\<close>
-   sorry
+ *)
 (* proof-
   from a1
   have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
@@ -4388,11 +4383,11 @@ lemma Cauchy_minus:
     by (simp add: NSCauchyI NSCauchy_Cauchy)
 qed *)
 
-lemma Cauchy_sgn:
+(* lemma Cauchy_sgn:
   fixes x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>Cauchy x\<close>
   shows \<open>Cauchy (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)))\<close>
-   sorry
+ *)
 (* proof-
   have b1: \<open>\<exists>L. lim (\<lambda>n. norm (x n)) = L\<close>
     by auto
@@ -4706,7 +4701,7 @@ proof-
     by (simp add: CauchyI)
 qed
 
-lemma Cauchy_cinner_convergent:
+(* lemma Cauchy_cinner_convergent:
   fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
   assumes a1: \<open>Cauchy x\<close> and a2: \<open>Cauchy y\<close>
   shows \<open>convergent (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
@@ -4720,9 +4715,9 @@ proof-
     using Cauchy_convergent_iff by auto
   thus ?thesis
     using Cauchy_convergent_iff b1 by auto
-qed
+qed *)
 
-lemma lim_minus:
+(* lemma lim_minus:
   fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>convergent x\<close> and a2: \<open>convergent y\<close>
   shows \<open>lim (\<lambda> n. x n - y n) = lim x - lim y\<close>
@@ -4737,13 +4732,13 @@ proof-
   ultimately have \<open>lim x = lim (\<lambda> i. x i - y i) + lim y\<close>
     by simp
   thus ?thesis by simp
-qed
+qed *)
 
-lemma lim_scaleC:
+(* lemma lim_scaleC:
   fixes x :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> and r::complex
   assumes a1: \<open>convergent x\<close> 
   shows \<open>lim (\<lambda> n. r *\<^sub>C x n ) = r *\<^sub>C lim x\<close>
-   sorry
+ *)
 (* proof-
    have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
     if "N \<in> HNatInfinite"

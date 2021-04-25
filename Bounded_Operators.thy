@@ -2408,11 +2408,11 @@ proof-
         sup.bounded_iff sup_inf_absorb)
 qed
 
-
+(* TODO: remove. \<rightarrow> complex_vector.linear_eq_on *)
 lemma equal_span:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
   assumes \<open>clinear A\<close> and \<open>clinear B\<close> and
-    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (complex_vector.span G)\<close>
+    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> (cspan G)\<close>
   shows \<open>A t = B t\<close>
   using assms(1) assms(2) assms(3) assms(4)
   by (metis complex_vector.linear_eq_on_span) 
@@ -2420,10 +2420,18 @@ lemma equal_span:
 lemma equal_span_applyOpSpace:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
   assumes \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close> and
-    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (cspan G)\<close>
+    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
   shows \<open>A t = B t\<close>
-  using assms 
-   sorry
+proof -
+  have eq': \<open>A t = B t\<close> if \<open>t \<in> cspan G\<close> for t
+    using _ _ that eq apply (rule complex_vector.linear_eq_on)
+    by (auto simp: assms cbounded_linear.clinear)
+  have \<open>A t - B t = 0\<close>
+    using _ _ t apply (rule continuous_constant_on_closure)
+    by (auto simp add: eq' assms(1) assms(2) bounded_linear_continuous continuous_at_imp_continuous_on)
+  then show ?thesis
+    by auto
+qed
 (* proof transfer
   include nsa_notation
   fix A B::\<open>'a \<Rightarrow> 'b\<close> and G::\<open>'a set\<close> and t::'a
