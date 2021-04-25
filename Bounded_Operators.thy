@@ -389,12 +389,11 @@ proof-
     using u1 by auto    
 qed *)
 
-lemma ustrong_onorm:
+(* lemma ustrong_onorm:
   fixes f::"nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector"
     and l::"'a \<Rightarrow>\<^sub>L 'b"
-  assumes \<open>sphere 0 1: (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ((*\<^sub>v) l)\<close>
-  shows \<open>f \<longlonglongrightarrow> l\<close> 
-   sorry
+  assumes \<open>sphere 0 1: (\<lambda> n. ( *\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (( *\<^sub>v) l)\<close>
+  shows \<open>f \<longlonglongrightarrow> l\<close>  *)
 (* proof (cases \<open>(UNIV::'a set) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
@@ -490,11 +489,10 @@ next
 qed  *)
 
 
-lemma oCauchy_uCauchy:
+(* lemma oCauchy_uCauchy:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
   assumes \<open>Cauchy f\<close>
-  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
-   sorry
+  shows \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. ( *\<^sub>v) (f n))\<close> *)
 (* proof-
   include nsa_notation
   have  \<open>( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f2* (\<lambda> n. blinfun_apply (f n))) M x\<close>
@@ -560,11 +558,10 @@ lemma oCauchy_uCauchy:
 qed *)
 
 
-lemma uCauchy_oCauchy:
+(* lemma uCauchy_oCauchy:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close> 
-  shows \<open>Cauchy f\<close>
-   sorry
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. ( *\<^sub>v) (f n))\<close> 
+  shows \<open>Cauchy f\<close> *)
 (* proof(cases \<open>(UNIV::('a set)) = 0\<close>)
   case True
   hence \<open>f n = 0\<close>
@@ -611,9 +608,9 @@ next
     by (simp add: NSCauchy_Cauchy_iff) 
 qed *)
 
-proposition oCauchy_uCauchy_iff:
+(* proposition oCauchy_uCauchy_iff:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
-  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
+  shows \<open>Cauchy f \<longleftrightarrow> uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. ( *\<^sub>v) (f n))\<close>
 proof
   show "uniformly_Cauchy_on (sphere 0 1) (\<lambda>n. blinfun_apply (f n))"
     if "Cauchy f"
@@ -624,15 +621,14 @@ proof
     using that
     by (simp add: uCauchy_oCauchy) 
 qed
+ *)
 
 
-
-lemma uCauchy_ustrong:
+(* lemma uCauchy_ustrong:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::banach\<close>
-  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. (*\<^sub>v) (f n))\<close>
+  assumes \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. ( *\<^sub>v) (f n))\<close>
   shows \<open>\<exists>l::'a \<Rightarrow>\<^sub>L 'b. 
-    (sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
-   sorry
+    (sphere 0 1): (\<lambda> n. ( *\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ( *\<^sub>v) l\<close> *)
 (* proof-
   include nsa_notation
   from \<open>uniformly_Cauchy_on (sphere 0 1) (\<lambda> n. blinfun_apply (f n))\<close>
@@ -904,12 +900,12 @@ lemma uCauchy_ustrong:
 qed *)
 
 
-lemma onorm_ustrong:
+(* lemma onorm_ustrong:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> 
   assumes \<open>f \<longlonglongrightarrow> l\<close>
-  shows \<open>(sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
-   sorry
+  shows \<open>(sphere 0 1): (\<lambda> n. ( *\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ( *\<^sub>v) l\<close>
+    *)
 (* proof-
   include nsa_notation
   have \<open>( *f2* (\<lambda> n. blinfun_apply (f n))) N x \<approx> ( *f* (blinfun_apply l)) x\<close>
@@ -964,10 +960,10 @@ lemma onorm_ustrong:
   thus ?thesis by blast
 qed *)
 
-proposition onorm_ustrong_iff:
+(* proposition onorm_ustrong_iff:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and l::\<open>'a  \<Rightarrow>\<^sub>L 'b\<close> 
-  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. (*\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> (*\<^sub>v) l\<close>
+  shows \<open>(f \<longlonglongrightarrow> l) \<longleftrightarrow> (sphere 0 1): (\<lambda> n. ( *\<^sub>v) (f n)) \<midarrow>uniformly\<rightarrow> ( *\<^sub>v) l\<close>
 proof
   show "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l"
     if "f \<longlonglongrightarrow> l"
@@ -977,9 +973,9 @@ proof
     if "sphere 0 1: (\<lambda>n. blinfun_apply (f n)) \<midarrow>uniformly\<rightarrow> blinfun_apply l"
     using that
     by (simp add: that ustrong_onorm) 
-qed
+qed *)
 
-theorem completeness_real_cblinfun:
+(* theorem completeness_real_cblinfun:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::banach\<close>
   assumes \<open>Cauchy f\<close>
   shows \<open>\<exists> L. f \<longlonglongrightarrow> L\<close>
@@ -995,19 +991,21 @@ proof-
     by blast
   thus ?thesis 
     using ustrong_onorm Lim_null tendsto_norm_zero_cancel by fastforce 
-qed
+qed *)
 
 instantiation blinfun :: (real_normed_vector, cbanach) "cbanach"
 begin
 instance..
 end
 
+(* TODO remove *)
 lemma onorm_strong:
   fixes f::\<open>nat \<Rightarrow> 'a::real_normed_vector \<Rightarrow>\<^sub>L 'b::real_normed_vector\<close>
     and l::\<open>'a  \<Rightarrow>\<^sub>L 'b\<close> and x::'a
   assumes \<open>f \<longlonglongrightarrow> l\<close>
   shows \<open>(\<lambda>n. (blinfun_apply (f n)) x) \<longlonglongrightarrow> (blinfun_apply l) x\<close>
-   sorry
+    using _ assms apply (rule tendsto_compose)
+    using continuous_within linear_continuous_at by blast
 (* proof-
   include nsa_notation
   have \<open>( *f* (\<lambda>n. (blinfun_apply (f n)) x)) N \<approx> star_of ((blinfun_apply l) x)\<close>
@@ -1262,7 +1260,6 @@ lemma blinfun_of_cblinfun_inv_uniq:
   shows  \<open>\<exists>! g. blinfun_of_cblinfun g = f\<close>
   using assms blinfun_of_cblinfun_inv blinfun_of_cblinfun_inj
   by blast
-
 
 lemma blinfun_of_cblinfun_prelim:
   fixes c and x
@@ -1693,7 +1690,7 @@ proof
   qed
 qed
 
-lemma cblinfun_of_blinfun_complex_lim:
+(* lemma cblinfun_of_blinfun_complex_lim:
   fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::cbanach)\<close>
     and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close> and c x
   assumes  \<open>f \<longlonglongrightarrow> l\<close> and
@@ -1705,10 +1702,10 @@ proof-
   proof-
     have u1: \<open>(\<lambda> n. (f n) *\<^sub>v (c *\<^sub>C x) ) \<longlonglongrightarrow> l *\<^sub>v (c *\<^sub>C x)\<close>
       by (simp add: assms(1) onorm_strong)        
-    have \<open>isCont ((*\<^sub>C) c) y\<close>
+    have \<open>isCont (( *\<^sub>C) c) y\<close>
       for y::'b
       using isCont_scaleC by auto
-    hence \<open>isCont ((*\<^sub>C) c) (blinfun_apply l x)\<close>
+    hence \<open>isCont (( *\<^sub>C) c) (blinfun_apply l x)\<close>
       by simp
     hence u2: \<open>(\<lambda> n. c *\<^sub>C ((f n) *\<^sub>v x) ) \<longlonglongrightarrow> c *\<^sub>C (l *\<^sub>v x)\<close>
       using assms(1) isCont_tendsto_compose onorm_strong by blast 
@@ -1723,9 +1720,9 @@ proof-
       by blast
   qed
   thus ?thesis by blast
-qed  
+qed   *)
 
-lemma cblinfun_of_blinfun_lim:
+(* lemma cblinfun_of_blinfun_lim:
   fixes f::\<open>nat \<Rightarrow> ('a::complex_normed_vector \<Rightarrow>\<^sub>L 'b::cbanach)\<close>
     and l::\<open>'a \<Rightarrow>\<^sub>L 'b\<close>
   assumes  \<open>f \<longlonglongrightarrow> l\<close> and \<open>\<And>n::nat. \<And>c. \<And>x. (f n) *\<^sub>v (c *\<^sub>C x) = c *\<^sub>C ((f n) *\<^sub>v x)\<close>
@@ -1750,29 +1747,46 @@ proof
       using u1 u2 u3
       by simp  
   qed    
-qed
+qed *)
 
 instance 
 proof
-  show "convergent f"
-    if "Cauchy f"
-    for f :: "nat \<Rightarrow> ('a, 'b) cblinfun"
-  proof-
-    have \<open>Cauchy (\<lambda>n. blinfun_of_cblinfun (f n))\<close>
-      by (simp add: blinfun_of_cblinfun_Cauchy that)
-    hence \<open>convergent (\<lambda> n. blinfun_of_cblinfun (f n))\<close>
-      by (simp add: Cauchy_convergent_iff)
-    hence \<open>\<exists>l. (\<lambda>n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
-      by (metis (no_types, lifting) Bounded_Operators.cblinfun_of_blinfun_complex_lim convergent_LIMSEQ_iff blinfun_cblinfun blinfun_of_cblinfun_prelim)
-    then obtain l where \<open>(\<lambda>n. blinfun_of_cblinfun (f n)) \<longlonglongrightarrow> blinfun_of_cblinfun l\<close>
-      by blast
-    hence \<open>(\<lambda> n. cblinfun_of_blinfun (blinfun_of_cblinfun (f n))) \<longlonglongrightarrow> cblinfun_of_blinfun (blinfun_of_cblinfun l)\<close>
-      by (simp add: Bounded_Operators.cblinfun_of_blinfun_lim blinfun_of_cblinfun_prelim)
-    hence \<open>f \<longlonglongrightarrow> l\<close>
-      by (simp add: cblinfun_blinfun)
-    thus ?thesis
-      using convergent_def by blast 
+  fix f :: "nat \<Rightarrow> ('a, 'b) cblinfun"
+  assume \<open>Cauchy f\<close>
+  define f' where \<open>f' n = blinfun_of_cblinfun (f n)\<close> for n
+  have "Cauchy f'"
+    by (simp add: blinfun_of_cblinfun_Cauchy \<open>Cauchy f\<close> f'_def[abs_def])
+  then obtain l' where f'l': \<open>f' \<longlonglongrightarrow> l'\<close>
+    using convergent_eq_Cauchy by blast
+  have scaleC: \<open>c *\<^sub>C (l' *\<^sub>v x) = l' *\<^sub>v (c *\<^sub>C x)\<close> for c x
+  proof -
+    from f'l' have f'x: \<open>(\<lambda>n. f' n *\<^sub>v x) \<longlonglongrightarrow> l' *\<^sub>v x\<close> for x
+      by (simp add: onorm_strong)
+    then have \<open>(\<lambda>n. c *\<^sub>C (f' n *\<^sub>v x)) \<longlonglongrightarrow> c *\<^sub>C (l' *\<^sub>v x)\<close>
+      apply (rule tendsto_compose[rotated])
+      by (simp add: isContD isCont_scaleC)
+    moreover from f'x have \<open>(\<lambda>n. f' n *\<^sub>v c *\<^sub>C x) \<longlonglongrightarrow> l' *\<^sub>v c *\<^sub>C x\<close>
+      by auto
+    ultimately show ?thesis
+      apply (rule_tac LIMSEQ_unique)
+      by (simp_all add: f'_def blinfun_of_cblinfun_prelim)
   qed
+  have \<open>cbounded_linear l'\<close>
+    apply standard
+    using blinfun.add_right scaleC apply auto
+    by (smt (z3) mult.commute norm_blinfun)
+  define l where \<open>l = cBlinfun l'\<close>
+  then have l_apply: \<open>cblinfun_apply l = blinfun_apply l'\<close>
+    unfolding l_def apply (subst cBlinfun_inverse)
+    using \<open>cbounded_linear l'\<close> by auto
+  have \<open>norm (f n x - l x) = norm (f' n x - l' x)\<close> for n x
+    unfolding l_apply f'_def apply transfer by auto
+  then have \<open>norm (f n - l) = norm (f' n - l')\<close> for n
+    apply transfer unfolding onorm_def by auto
+  with f'l' have \<open>f \<longlonglongrightarrow> l\<close>
+    unfolding LIMSEQ_iff by auto
+  then show \<open>convergent f\<close>
+    using convergent_def by blast
 qed
 end
 
@@ -2406,7 +2420,7 @@ lemma equal_span:
 lemma equal_span_applyOpSpace:
   fixes A B :: "'a::cbanach \<Rightarrow> 'b::cbanach"
   assumes \<open>cbounded_linear A\<close> and \<open>cbounded_linear B\<close> and
-    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (complex_vector.span G)\<close>
+    \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> closure (cspan G)\<close>
   shows \<open>A t = B t\<close>
   using assms 
    sorry
@@ -4565,8 +4579,7 @@ proof-
     have g0_inter: "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
       by blast
     have g0_union: "{x. g x \<noteq> 0} = {x\<in>B. f x \<noteq> 0} \<union> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}" 
-      sorry
-      (* unfolding g_def by auto *)
+      unfolding g_def using Complex_eq Complex_eq_0 by force
     hence g1: "finite {x. g x \<noteq> 0}"
       by (simp add: \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)        
     have g2: "{x. g x \<noteq> 0} \<subseteq> B"
