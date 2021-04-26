@@ -2864,7 +2864,7 @@ qed (auto simp add: divide_complex_def mult.commute ring_class.ring_distribs)
 end
 
 lemma equal_ket:
-  fixes A B :: \<open>('a ell2, 'b::cbanach) cblinfun\<close>
+  fixes A B :: \<open>('a ell2, 'b::complex_normed_vector) cblinfun\<close>
   shows \<open>(\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)) \<Longrightarrow> A = B\<close>
 proof-
   assume \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
