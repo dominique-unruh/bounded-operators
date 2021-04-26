@@ -2632,18 +2632,6 @@ proof -
     by -
 qed
 
-(* TODO: move *)
-lemma infsetsum'_tendsto:
-  assumes \<open>infsetsum'_converges f S\<close>
-  shows \<open>((\<lambda>F. sum f F) \<longlongrightarrow> infsetsum' f S) (finite_subsets_at_top S)\<close>
-  by (metis assms finite_subsets_at_top_neq_bot infsetsum'_converges_def infsetsum'_def tendsto_Lim)
-
-(* TODO: move *)
-lemma infsetsum_infsetsum':
-  assumes "f abs_summable_on S"
-  shows "infsetsum f S = infsetsum' f S"
-  sorry
-
 lemma trunc_ell2_norm_lim:
   \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
 proof -
