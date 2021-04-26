@@ -1875,10 +1875,10 @@ lift_definition timesOp::
 (*TODO: change name from "applyOpSpace" to "cblinfun_image" *)
 (* Closure is necessary. See thunderlink://messageid=47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition applyOpSpace::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
-\<Rightarrow> 'a clinear_space \<Rightarrow> 'b clinear_space\<close> 
+\<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close> 
   is "\<lambda>A S. closure (A ` S)"
-  using  bounded_clinear_def closed_closure  closed_subspace.intro
-  by (simp add: bounded_clinear_def closed_subspace.subspace complex_vector.linear_subspace_image subspace_I) 
+  using  bounded_clinear_def closed_closure  closed_csubspace.intro
+  by (simp add: bounded_clinear_def closed_csubspace.subspace complex_vector.linear_subspace_image subspace_I) 
 
 
 bundle cblinfun_notation begin
@@ -2028,16 +2028,16 @@ proof-
          (closure (U ` space_as_set (Abs_clinear_space {0::'a}))) =
         Abs_clinear_space {0::'b}) \<Longrightarrow>
     Abs_clinear_space (closure ((*\<^sub>V) U ` space_as_set \<bottom>)) = \<bottom>"
-    using bot_clinear_space.abs_eq   
+    using bot_ccsubspace.abs_eq   
     by (metis (full_types) mem_Collect_eq cblinfun_apply)
   show ?thesis
-    unfolding zero_clinear_space_def applyOpSpace_def
+    unfolding zero_ccsubspace_def applyOpSpace_def
     by (simp add: u1 u2)    
 qed
 
 lemma times_comp:
   fixes A B \<psi>
-  assumes a1: "bounded_clinear A" and a2: "bounded_clinear B" and a3: "closed_subspace \<psi>"
+  assumes a1: "bounded_clinear A" and a2: "bounded_clinear B" and a3: "closed_csubspace \<psi>"
   shows "closure ((A \<circ> B) ` \<psi>) = closure (A ` closure (B ` \<psi>))"
 proof-
   have b1: "closure ((A \<circ> B) ` (\<psi>::'c set)::'b set) \<subseteq> closure (A ` closure (B ` \<psi>::'a set))"
@@ -2114,14 +2114,14 @@ proof-
   have \<open>closure (cblinfun_apply U ` {0}) = {0}\<close>
     using u2 by auto    
   hence \<open>(closure (cblinfun_apply U ` space_as_set (Abs_clinear_space {0}))) = {0}\<close>
-    by (metis bot_clinear_space.abs_eq bot_clinear_space.rep_eq) 
+    by (metis bot_ccsubspace.abs_eq bot_ccsubspace.rep_eq) 
   thus ?thesis
-    unfolding applyOpSpace_def bot_clinear_space_def by simp
+    unfolding applyOpSpace_def bot_ccsubspace_def by simp
 qed
 
 lemma cbounded_minkowski_sum_exchange:
   fixes U::\<open>'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector\<close> and A B::\<open>'a set\<close>
-  assumes a1: \<open>bounded_clinear U\<close> and a2: \<open>closed_subspace A\<close> and a3: \<open>closed_subspace B\<close>
+  assumes a1: \<open>bounded_clinear U\<close> and a2: \<open>closed_csubspace A\<close> and a3: \<open>closed_csubspace B\<close>
   shows "(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
          (closure  {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> closure (U ` A) \<and> \<phi> \<in> closure (U ` B)})"
 proof- 
@@ -2230,11 +2230,11 @@ proof-
 qed
 
 lemma cblinfun_image_sup_exchange[simp]:   
-  fixes A B :: \<open>'a::chilbert_space clinear_space\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
+  fixes A B :: \<open>'a::chilbert_space ccsubspace\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
   shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>  
 proof transfer
   fix U::\<open>'a\<Rightarrow>'b\<close> and A B::\<open>'a set\<close>
-  assume a1: \<open>bounded_clinear U\<close> and a2: \<open>closed_subspace A\<close> and a3: \<open>closed_subspace B\<close> 
+  assume a1: \<open>bounded_clinear U\<close> and a2: \<open>closed_csubspace A\<close> and a3: \<open>closed_csubspace B\<close> 
   hence \<open>(closure (U ` closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B})) =
         (closure {\<psi> + \<phi> |\<psi> \<phi>.
            \<psi> \<in> closure (U ` A) \<and>
@@ -2249,7 +2249,7 @@ qed
 
 lemma scalar_op_clinear_space_assoc [simp]: 
   fixes A::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and S::\<open>'a clinear_space\<close> and \<alpha>::complex
+    and S::\<open>'a ccsubspace\<close> and \<alpha>::complex
   shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>S S  = \<alpha> *\<^sub>C (A *\<^sub>S S)\<close>
 proof-
   have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (cblinfun_apply A) ) ` space_as_set S) =
@@ -2262,7 +2262,7 @@ proof-
      (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C
     Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_clinear_space.rep_eq)    
+    by (metis space_as_set_inverse applyOpSpace.rep_eq scaleC_ccsubspace.rep_eq)    
   have x1: "Abs_clinear_space (closure ((*\<^sub>V) (\<alpha> *\<^sub>C A) ` space_as_set S)) =
     \<alpha> *\<^sub>C Abs_clinear_space (closure ((*\<^sub>V) A ` space_as_set S))"
     using \<open>Abs_clinear_space
@@ -2276,10 +2276,10 @@ qed
 lemma applyOpSpace_id[simp]: 
   "idOp *\<^sub>S \<psi> = \<psi>"
 proof-
-  have \<open>closed_subspace ( space_as_set \<psi>)\<close>
+  have \<open>closed_csubspace ( space_as_set \<psi>)\<close>
     using space_as_set by blast    
   hence \<open>closed ( space_as_set \<psi>)\<close>
-    unfolding closed_subspace_def by blast
+    unfolding closed_csubspace_def by blast
   hence \<open>closure ( space_as_set \<psi>) = space_as_set \<psi>\<close>
     by simp    
   hence \<open>(closure ( id ` space_as_set \<psi>)) = space_as_set \<psi>\<close>
@@ -2347,7 +2347,7 @@ lemma times_idOp2[simp]:
 
 lemma mult_INF1[simp]:
   fixes U :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::cbanach"
-    and V :: "'a \<Rightarrow> 'b clinear_space" 
+    and V :: "'a \<Rightarrow> 'b ccsubspace" 
   shows \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
   apply transfer
   by (simp add: INT_greatest Inter_lower closure_mono image_mono) 
@@ -2387,12 +2387,12 @@ Of course, I don't know how difficult it is to show the existence of the pseudoi
  *)
 
 lemma mult_inf_distrib':
-  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> and B C::"'a clinear_space"
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> and B C::"'a ccsubspace"
   shows "U *\<^sub>S (inf B  C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
 proof-
   have \<open>closure (U ` (B \<inter> C))
        \<subseteq> closure (U ` B) \<inter> closure (U ` C)\<close>
-    if \<open>bounded_clinear U\<close> and \<open>closed_subspace B\<close> and \<open>closed_subspace C\<close>
+    if \<open>bounded_clinear U\<close> and \<open>closed_csubspace B\<close> and \<open>closed_csubspace C\<close>
     for U::\<open>'a\<Rightarrow>'b\<close> and B C::\<open>'a set\<close>
   proof-
     have \<open>(U ` (B \<inter> C))
@@ -2483,7 +2483,7 @@ lemma applyOpSpace_span:
   using equal_span_applyOpSpace by blast
 
 lemma applyOpSpace_less_eq:
-  fixes S :: "'a::cbanach clinear_space" 
+  fixes S :: "'a::cbanach ccsubspace" 
     and A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S \<le> B *\<^sub>S S"
@@ -2529,7 +2529,7 @@ qed
 
 
 lemma applyOpSpace_eq:
-  fixes S :: "'a::chilbert_space clinear_space"
+  fixes S :: "'a::chilbert_space ccsubspace"
     and A B :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
   shows "A *\<^sub>S S = B *\<^sub>S S"
@@ -2625,7 +2625,7 @@ lemma unitary_id[simp]: "unitary idOp"
 
 subsection \<open>Projectors\<close>
 
-lift_definition Proj :: "('a::chilbert_space) clinear_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'a"
+lift_definition Proj :: "('a::chilbert_space) ccsubspace \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'a"
   is \<open>projection\<close>
   by (rule Complex_Inner_Product.projectionPropertiesA)
 
@@ -2633,12 +2633,12 @@ lift_definition Proj :: "('a::chilbert_space) clinear_space \<Rightarrow> 'a \<R
 lemma imageOp_Proj[simp]: "(Proj S) *\<^sub>S top = S"  
 proof-
   have "closure (range (projection S)) \<subseteq> S"
-    if "closed_subspace S"
+    if "closed_csubspace S"
     for S :: "'a set"
     using that OrthoClosedEq orthogonal_complement_twice 
-    by (metis closed_subspace.subspace pre_ortho_twice projectionPropertiesE subspace_cl)
+    by (metis closed_csubspace.subspace pre_ortho_twice projectionPropertiesE closure_is_csubspace)
   moreover have "S \<subseteq> closure (range (projection S))"
-    if "closed_subspace S"
+    if "closed_csubspace S"
     for S :: "'a set"
     using that
     by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points 
@@ -2658,7 +2658,7 @@ proof-
   have u1: \<open>(cblinfun_apply (Proj M)) = projection (space_as_set M)\<close>
     apply transfer
     by blast
-  have \<open>closed_subspace (space_as_set M)\<close>
+  have \<open>closed_csubspace (space_as_set M)\<close>
     using space_as_set by auto
   hence u2: \<open>(projection (space_as_set M))\<circ>(projection (space_as_set M))
                 = (projection (space_as_set M)) \<close>
@@ -2673,7 +2673,7 @@ proof-
 qed
 
 lift_definition isProjector::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a \<Rightarrow> bool\<close> is
-  \<open>\<lambda>P. \<exists> M. closed_subspace M \<and> is_projection_on P M\<close>.
+  \<open>\<lambda>P. \<exists> M. closed_csubspace M \<and> is_projection_on P M\<close>.
 
 lemma Proj_I:
   fixes P :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a\<close>
@@ -2750,7 +2750,7 @@ proof-
     by simp
   have u2: \<open>cblinfun_apply P x \<in> space_as_set M\<close>
     for x
-    by (simp add: M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq top_clinear_space.rep_eq)
+    by (simp add: M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq top_ccsubspace.rep_eq)
 
   have xy: \<open>\<langle> x - P *\<^sub>V x, y \<rangle> = 0\<close>
     if y1: \<open>y \<in> space_as_set M\<close>
@@ -2759,7 +2759,7 @@ proof-
     have \<open>\<exists>t. y = P *\<^sub>V t\<close>
       using y1
       by (simp add:  M_def \<open>closed (range ((*\<^sub>V) P))\<close> applyOpSpace.rep_eq image_iff 
-          top_clinear_space.rep_eq)
+          top_ccsubspace.rep_eq)
     then obtain t where t_def: \<open>y = P *\<^sub>V t\<close>
       by blast
     have \<open>\<langle> x - P *\<^sub>V x, y \<rangle> = \<langle> x - P *\<^sub>V x, P *\<^sub>V t \<rangle>\<close>
@@ -2779,7 +2779,7 @@ proof-
   hence u1: \<open>x - P *\<^sub>V x \<in> orthogonal_complement (space_as_set M)\<close> 
     for x
     by (simp add: orthogonal_complement_I2) 
-  have "closed_subspace (space_as_set M)"
+  have "closed_csubspace (space_as_set M)"
     using space_as_set by auto
   hence f1: "(Proj M) *\<^sub>V a = P *\<^sub>V a"
     for a
@@ -2806,13 +2806,13 @@ lemma Proj_range_closed:
   assumes "isProjector P"
   shows "closed (range (cblinfun_apply P))"
   using assms apply transfer
-  using closed_subspace.closed projectionPropertiesE' by blast
+  using closed_csubspace.closed projectionPropertiesE' by blast
 
 lemma Proj_isProjector[simp]:
-  fixes M::\<open>'a::chilbert_space clinear_space\<close>
+  fixes M::\<open>'a::chilbert_space ccsubspace\<close>
   shows \<open>isProjector (Proj M)\<close>
 proof-
-  have u1: "closed_subspace (space_as_set M)"
+  have u1: "closed_csubspace (space_as_set M)"
     using space_as_set by blast
   have v1: "h - Proj M *\<^sub>V h
          \<in> orthogonal_complement (space_as_set M)"
@@ -2856,7 +2856,7 @@ lemma Proj_leq: "(Proj S) *\<^sub>S A \<le> S"
 proof -
   have "top = sup top A"
     apply transfer
-    using Complex_Vector_Spaces.subspace_UNIV is_closed_subspace_universal_inclusion_left 
+    using Complex_Vector_Spaces.closed_csubspace_UNIV is_closed_subspace_universal_inclusion_left 
     by blast 
   hence "sup S (Proj S *\<^sub>S A) = S"
     by (metis (full_types) cblinfun_image_sup_exchange imageOp_Proj)
@@ -2913,7 +2913,7 @@ lemma projection_scalar_mult[simp]:
   by (metis Span.abs_eq span_mult)
 
 lemma move_plus:
-  fixes A B C::"'a::chilbert_space clinear_space"
+  fixes A B C::"'a::chilbert_space ccsubspace"
   assumes a1: \<open>(Proj (- C)) *\<^sub>S A \<le> B\<close>
   shows  "A \<le> sup B C"
 proof-
@@ -2922,13 +2922,13 @@ proof-
                    space_as_set A)"
     for x
     using that
-    by (metis Proj.rep_eq applyOpSpace.rep_eq assms less_eq_clinear_space.rep_eq subsetD 
-        uminus_clinear_space.rep_eq)
+    by (metis Proj.rep_eq applyOpSpace.rep_eq assms less_eq_ccsubspace.rep_eq subsetD 
+        uminus_ccsubspace.rep_eq)
   have q1: \<open>x \<in> closure {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> space_as_set B \<and> \<phi> \<in> space_as_set C}\<close>
     if \<open>x \<in> space_as_set A\<close>
     for x
   proof-
-    have p1: \<open>closed_subspace (space_as_set C)\<close>
+    have p1: \<open>closed_csubspace (space_as_set C)\<close>
       using space_as_set by auto
     hence \<open>x = (projection (space_as_set C)) x
        + (projection (orthogonal_complement (space_as_set C))) x\<close>
@@ -2966,20 +2966,20 @@ proof-
     if "x \<in> space_as_set A"
     for x
     using that
-    by (metis space_as_set_inverse sup_clinear_space.rep_eq)
+    by (metis space_as_set_inverse sup_ccsubspace.rep_eq)
   thus ?thesis 
-    by (simp add: x1 less_eq_clinear_space.rep_eq subset_eq sup_clinear_space.rep_eq)
+    by (simp add: x1 less_eq_ccsubspace.rep_eq subset_eq sup_ccsubspace.rep_eq)
 qed
 
 
 subsection \<open>Kernel\<close>
 
 lift_definition kernel :: "'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector
-   \<Rightarrow> 'a clinear_space" 
+   \<Rightarrow> 'a ccsubspace" 
   is "\<lambda> f. f -` {0}"
   by (metis ker_op_lin)
 
-definition eigenspace :: "complex \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'a \<Rightarrow> 'a clinear_space" where
+definition eigenspace :: "complex \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'a \<Rightarrow> 'a ccsubspace" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
 
 lemma kernel_scalar_times[simp]: "a\<noteq>0 \<Longrightarrow> kernel (a *\<^sub>C A) = kernel A"
@@ -3000,14 +3000,14 @@ proof-
     using Abs_clinear_space_inject
     by (simp add: \<open>(cblinfun_apply (cblinfun_of_blinfun 0)) -` {0} = UNIV\<close>)
   thus ?thesis
-    unfolding kernel_def zero_cblinfun_def top_clinear_space_def
+    unfolding kernel_def zero_cblinfun_def top_ccsubspace_def
     by (simp add: cBlinfun_inverse x1)   
 qed
 
 lemma kernel_id[simp]: "kernel idOp = 0"
   unfolding kernel_def
   apply transfer
-  by (simp add: bot_clinear_space.abs_eq)
+  by (simp add: bot_ccsubspace.abs_eq)
 
 
 lemma scaleC_eigenspace[simp]: 
@@ -3154,7 +3154,7 @@ lemma applyOpSpace_mono:
   assumes a1: "S \<le> T"
   shows "A *\<^sub>S S \<le> A *\<^sub>S T"
   using a1
-  by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_clinear_space.rep_eq)
+  by (simp add: applyOpSpace.rep_eq closure_mono image_mono less_eq_ccsubspace.rep_eq)
 
 lemma apply_left_neutral:
   assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
@@ -3163,7 +3163,7 @@ proof-
   define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
     and "rangeB' = range (cblinfun_apply B)"
   from assms have "\<psi> \<in> closure rangeB'"
-    by (simp add: applyOpSpace.rep_eq rangeB'_def top_clinear_space.rep_eq)
+    by (simp add: applyOpSpace.rep_eq rangeB'_def top_ccsubspace.rep_eq)
 
   then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
     using closure_sequential by blast
@@ -3202,7 +3202,7 @@ qed
 
 
 lemma mult_INF_general[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
     and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L'c::chilbert_space"
     and Uinv :: "'c \<Rightarrow>\<^sub>C\<^sub>L'b" 
   assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv"
@@ -3223,11 +3223,11 @@ next
     using UinvUUinv apply_left_neutral rangeUinv_def that by auto
   ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" 
     for \<psi> i
-    using less_eq_clinear_space.rep_eq that by blast
+    using less_eq_ccsubspace.rep_eq that by blast
   hence d1: "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
   proof transfer
     show "closure ((Uinv \<circ> U) ` V i) = V i"
-      if "pred_fun \<top> closed_subspace V"
+      if "pred_fun \<top> closed_csubspace V"
         and "bounded_clinear Uinv"
         and "bounded_clinear U"
         and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> (Uinv \<circ> U) \<psi> = \<psi>"
@@ -3237,16 +3237,16 @@ next
         and i :: 'a
       using that proof auto
       show "x \<in> V i"
-        if "\<forall>x. closed_subspace (V x)"
+        if "\<forall>x. closed_csubspace (V x)"
           and "bounded_clinear Uinv"
           and "bounded_clinear U"
           and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
           and "x \<in> closure (V i)"
         for x :: 'b
         using that
-        by (metis OrthoClosedEq closed_subspace.subspace orthogonal_complement_twice subspace_I) 
+        by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice subspace_I) 
       show "x \<in> closure (V i)"
-        if "\<forall>x. closed_subspace (V x)"
+        if "\<forall>x. closed_csubspace (V x)"
           and "bounded_clinear Uinv"
           and "bounded_clinear U"
           and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
@@ -3264,10 +3264,10 @@ next
   moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
     using UUinvU apply_left_neutral rangeU_def that by auto
   ultimately have x: "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
-    by (simp add: in_mono less_eq_clinear_space.rep_eq that)
+    by (simp add: in_mono less_eq_ccsubspace.rep_eq that)
 
   have "closure ((U \<circ> Uinv) ` INFUV) = INFUV"
-    if "closed_subspace INFUV"
+    if "closed_csubspace INFUV"
       and "bounded_clinear U"
       and "bounded_clinear Uinv"
       and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> (U \<circ> Uinv) \<psi> = \<psi>"
@@ -3276,16 +3276,16 @@ next
       and Uinv :: "'c \<Rightarrow> 'b"
     using that proof auto
     show "x \<in> INFUV"
-      if "closed_subspace INFUV"
+      if "closed_csubspace INFUV"
         and "bounded_clinear U"
         and "bounded_clinear Uinv"
         and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
         and "x \<in> closure INFUV"
       for x :: 'c
       using that
-      by (metis OrthoClosedEq closed_subspace.subspace orthogonal_complement_twice subspace_I) 
+      by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice subspace_I) 
     show "x \<in> closure INFUV"
-      if "closed_subspace INFUV"
+      if "closed_csubspace INFUV"
         and "bounded_clinear U"
         and "bounded_clinear Uinv"
         and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
@@ -3293,7 +3293,7 @@ next
       for x :: 'c
       using that
       using setdist_eq_0_sing_1 setdist_sing_in_set
-      by (simp add: closed_subspace.closed)  
+      by (simp add: closed_csubspace.closed)  
   qed
   hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
     by (metis (mono_tags, hide_lams) x applyOpSpace.rep_eq applyOpSpace_id apply_idOp image_cong 
@@ -3311,7 +3311,7 @@ next
 qed
 
 lemma mult_INF[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space" 
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace" 
     and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space"
   assumes \<open>isometry U\<close>
   shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
@@ -3328,7 +3328,7 @@ proof -
 qed
 
 lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space clinear_space"
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
   shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)"
   by (simp add: le_Inf_iff)
 
@@ -3337,7 +3337,7 @@ lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>V \<psi> = A *\<^sub>V (B 
 
 lemma mult_inf_distrib[simp]:
   fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and X Y::"'a clinear_space"
+    and X Y::"'a ccsubspace"
   assumes "isometry U"
   shows "U *\<^sub>S (inf X Y) = inf (U *\<^sub>S X) (U *\<^sub>S Y)"
   using mult_INF[where V="\<lambda>b. if b then X else Y" and U=U]
@@ -3646,12 +3646,12 @@ consts
 *)
 
 
-lemma timesScalarSpace_0[simp]: "0 *\<^sub>S S = (0::_::{complex_vector,t1_space} clinear_space)"
+lemma zero_scaleC_ccsubspace[simp]: "0 *\<^sub>S S = (0::_::{complex_vector,t1_space} ccsubspace)"
 proof (auto, transfer)
   fix S :: "'b set"
-  assume "closed_subspace S"
+  assume "closed_csubspace S"
   hence "0 \<in> S"
-    unfolding closed_subspace_def complex_vector.subspace_def 
+    unfolding closed_csubspace_def complex_vector.subspace_def 
     by blast
   hence "(\<lambda>_. 0) ` S = {0::'a}"
     by auto
@@ -3665,7 +3665,7 @@ qed
 
 
 lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
-  for B::\<open>'a::complex_normed_vector clinear_space\<close>
+  for B::\<open>'a::complex_normed_vector ccsubspace\<close>
   by simp
 
 (* TODO: identical to cblinfun_apply_assoc_subspace *)
@@ -4231,7 +4231,7 @@ proof-
       using orthogonal_complement_I2 by blast 
   qed
   thus ?thesis
-    by (metis Span.rep_eq assms clinear_space_leI uminus_clinear_space.rep_eq) 
+    by (metis Span.rep_eq assms clinear_space_leI uminus_ccsubspace.rep_eq) 
 qed
 
 definition "positive_op A = (\<exists>B::'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a. A = B* o\<^sub>C\<^sub>L B)"
@@ -4535,7 +4535,7 @@ proof-
   ultimately have "B \<union> (*\<^sub>C) c ` B \<subseteq> complex_vector.span B"
     by blast
   hence c2: "complex_vector.span (B \<union> (*\<^sub>C) c ` B) \<subseteq> complex_vector.span B"
-    by (smt complex_vector.span_minimal complex_vector.subspace_span)
+    by (simp add: complex_vector.span_minimal)
   have "B \<subseteq> B \<union> (*\<^sub>C) c ` B"
     by simp
   hence c1: "complex_vector.span B \<subseteq> complex_vector.span (B \<union> (*\<^sub>C) c ` B)"
@@ -5797,14 +5797,14 @@ lemma butterfly_isProjector:
   by (subst butterfly_proj, simp_all)
 
 lemma Proj_bot[simp]: "Proj bot = 0"
-  by (metis Bounded_Operators.timesScalarSpace_0 Proj_I isProjector0 isProjector_algebraic 
-      zero_clinear_space_def)
+  by (metis Bounded_Operators.zero_scaleC_ccsubspace Proj_I isProjector0 isProjector_algebraic 
+      zero_ccsubspace_def)
 
 lemma Proj_ortho_compl:
   "Proj (- X) = idOp - Proj X"
 proof (transfer , auto)
   show "projection (orthogonal_complement X) = (\<lambda>x. (x::'a) - projection X x)"
-    if "closed_subspace (X::'a set)"
+    if "closed_csubspace (X::'a set)"
     for X :: "'a set"
     using that ortho_decomp
     by (metis add_diff_cancel_left') 
@@ -5817,7 +5817,7 @@ lemma Proj_inj:
   by (metis a1 imageOp_Proj)
 
 lemma cblinfun_apply_in_image[simp]: "A *\<^sub>V \<psi> \<in> space_as_set (A *\<^sub>S \<top>)"
-  by (metis applyOpSpace.rep_eq closure_subset in_mono range_eqI top_clinear_space.rep_eq)
+  by (metis applyOpSpace.rep_eq closure_subset in_mono range_eqI top_ccsubspace.rep_eq)
 
 lemma cbilinear_timesOp[simp]: "cbilinear timesOp"
   by (auto intro!: clinearI simp add: cbilinear_def cblinfun_apply_dist1 cblinfun_apply_dist2)

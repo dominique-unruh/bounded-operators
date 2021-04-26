@@ -261,7 +261,7 @@ lemma vector_to_cblinfun_code[code]:
 subsection \<open>Subspaces\<close>
 
 text \<open>In this section, we define code equations for handling subspaces, i.e.,
-values of type \<^typ>\<open>'a clinear_space\<close>. We choose to computationally represent
+values of type \<^typ>\<open>'a ccsubspace\<close>. We choose to computationally represent
 a subspace by a list of vectors that span the subspace. That is,
 if \<^term>\<open>vecs\<close> are vectors (type \<^typ>\<open>complex vec\<close>), \<open>SPAN vecs\<close> is defined to be their
 span. Then the code generation can simply represent all subspaces in this form, and 
@@ -277,8 +277,8 @@ Then all code equations for different operations need to be formulated as
 functions of values of the form \<open>SPAN x\<close>. (E.g., \<open>SPAN x + SPAN y = SPAN (\<dots>)\<close>.)\<close>
 
 definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
-    Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a clinear_space)"
-  \<comment> \<open>The SPAN of vectors x, as a \<^type>\<open>clinear_space\<close>.
+    Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
+  \<comment> \<open>The SPAN of vectors x, as a \<^type>\<open>ccsubspace\<close>.
       We filter out vectors of the wrong dimension because \<open>SPAN\<close> needs to have
       well-defined behavior even in cases that would not actually occur in an execution.\<close>
 code_datatype SPAN
@@ -301,7 +301,7 @@ lemma mat_of_cblinfun_Proj_code_code[code]:
      the Gram-Schmidt procedure and then compute the projector
      as the sum of the "butterflies" \<open>x * x*\<close> of the vectors \<open>x\<in>S\<close>
      (done by \<^term>\<open>mk_projector_orthog\<close>).\<close>
-  "mat_of_cblinfun_Proj_code (SPAN S :: 'a::onb_enum clinear_space) = 
+  "mat_of_cblinfun_Proj_code (SPAN S :: 'a::onb_enum ccsubspace) = 
     (let d = canonical_basis_length TYPE('a) in mk_projector_orthog d 
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
@@ -318,10 +318,10 @@ proof -
     by (simp add: map_filter_map_filter[symmetric])
 qed
 
-lemma top_clinear_space_code[code]: 
+lemma top_ccsubspace_code[code]: 
   \<comment> \<open>Code equation for \<^term>\<open>top\<close>, the subspace containing everything.
       Top is represented as the span of the standard basis vectors.\<close>
-  "(top::'a clinear_space) =
+  "(top::'a ccsubspace) =
   (let n = canonical_basis_length TYPE('a::onb_enum) in
     SPAN (unit_vecs n))"
   unfolding SPAN_def
@@ -334,7 +334,7 @@ lemma top_clinear_space_code[code]:
 lemma bot_as_span[code]: 
   \<comment> \<open>Code equation for \<^term>\<open>bot\<close>, the subspace containing everything.
       Top is represented as the span of the standard basis vectors.\<close>
-  "(bot::'a::onb_enum clinear_space) = SPAN []"
+  "(bot::'a::onb_enum ccsubspace) = SPAN []"
   unfolding SPAN_def by (auto simp: Set.filter_def)
 
 
@@ -345,7 +345,7 @@ lemma sup_spans[code]:
   by (auto simp: Span_union image_Un filter_Un Let_def)
 
 text \<open>We do not need an equation for \<^term>\<open>(+)\<close> because \<^term>\<open>(+)\<close>
-is defined in terms of \<^term>\<open>(\<squnion>)\<close> (for \<^type>\<open>clinear_space\<close>), thus the code generation automatically
+is defined in terms of \<^term>\<open>(\<squnion>)\<close> (for \<^type>\<open>ccsubspace\<close>), thus the code generation automatically
 computes \<^term>\<open>(+)\<close> in terms of the code for \<^term>\<open>(\<squnion>)\<close>\<close>
 
 definition [code del,code_abbrev]: "Span_code (S::'a::enum ell2 set) = (Span S)"
@@ -360,20 +360,20 @@ lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l)
    apply (metis canonical_basis_length_eq dim_vec_of_onb_enum_list' imageE vec_of_ell2_def)
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
 
-text \<open>This instantiation defines a code equation for equality tests for \<^type>\<open>clinear_space\<close>.
-      The actual code for equality tests is given below (lemma \<open>equal_clinear_space_code\<close>).\<close>
-instantiation clinear_space :: (onb_enum) equal begin
-definition [code del]: "equal_clinear_space (A::'a clinear_space) B = (A=B)"
-instance apply intro_classes unfolding equal_clinear_space_def by simp
+text \<open>This instantiation defines a code equation for equality tests for \<^type>\<open>ccsubspace\<close>.
+      The actual code for equality tests is given below (lemma \<open>equal_ccsubspace_code\<close>).\<close>
+instantiation ccsubspace :: (onb_enum) equal begin
+definition [code del]: "equal_ccsubspace (A::'a ccsubspace) B = (A=B)"
+instance apply intro_classes unfolding equal_ccsubspace_def by simp
 end
 
-lemma leq_clinear_space_code[code]:
+lemma leq_ccsubspace_code[code]:
   \<comment> \<open>Code equation for deciding inclusion of one space in another.
      Uses the constant \<^term>\<open>is_subspace_of\<close> which implements the actual
      computation by checking for each generator of A whether it is in the
      span of B (by orthogonal projection onto an orthonormal basis of B
      which is computed using Gram-Schmidt).\<close>
-  "SPAN A \<le> (SPAN B :: 'a::onb_enum clinear_space)
+  "SPAN A \<le> (SPAN B :: 'a::onb_enum ccsubspace)
       \<longleftrightarrow> (let d = canonical_basis_length TYPE('a) in
           is_subspace_of d
           (filter (\<lambda>v. dim_vec v = d) A)
@@ -396,11 +396,11 @@ proof -
     by (simp_all add: B'_def d_def)
 qed
 
-lemma equal_clinear_space_code[code]:
+lemma equal_ccsubspace_code[code]:
   \<comment> \<open>Code equation for equality test. By checking mutual inclusion
       (for which we have code by the preceding code equation).\<close>
-  "HOL.equal (A::_ clinear_space) B = (A\<le>B \<and> B\<le>A)"
-  unfolding equal_clinear_space_def by auto
+  "HOL.equal (A::_ ccsubspace) B = (A\<le>B \<and> B\<le>A)"
+  unfolding equal_ccsubspace_def by auto
 
 lemma apply_cblinfun_code[code]:
   \<comment> \<open>Code equation for applying an operator \<^term>\<open>A\<close> to a subspace. 
@@ -458,7 +458,7 @@ proof -
 
   have "range_cblinfun_code A = A *\<^sub>S SPAN (unit_vecs dA)"
     unfolding range_cblinfun_code_def
-    by (metis dA_def top_clinear_space_code)
+    by (metis dA_def top_ccsubspace_code)
   also have "\<dots> = SPAN (map (\<lambda>i. mat_of_cblinfun A *\<^sub>v unit_vec dA i) [0..<dA])"
     unfolding apply_cblinfun_code dA_def[symmetric] Let_def
     apply (subst filter_True)
@@ -584,25 +584,25 @@ proof -
     by (simp add: base_def Ag_def Am_def)
 qed
 
-lemma inf_clinear_space_code[code]: 
+lemma inf_ccsubspace_code[code]: 
   \<comment> \<open>Code equation for intersection of subspaces.
      Reduced to orthogonal complement and sum of subspaces
      for which we already have code equations.\<close>
-  "(A::'a::onb_enum clinear_space) \<sqinter> B = - (- A \<squnion> - B)"
+  "(A::'a::onb_enum ccsubspace) \<sqinter> B = - (- A \<squnion> - B)"
   by (subst ortho_involution[symmetric], subst compl_inf, simp)
 
-lemma Sup_clinear_space_code[code]:
+lemma Sup_ccsubspace_code[code]:
   \<comment> \<open>Supremum (sum) of a set of subspaces. Implemented
      by repeated pairwise sum.\<close>
-  "Sup (Set_Monad l :: 'a::onb_enum clinear_space set) = fold sup l bot"
+  "Sup (Set_Monad l :: 'a::onb_enum ccsubspace set) = fold sup l bot"
   unfolding Set_Monad_def
   by (simp add: Sup_set_fold)
 
 
-lemma Inf_clinear_space_code[code]: 
+lemma Inf_ccsubspace_code[code]: 
   \<comment> \<open>Infimum (intersection) of a set of subspaces. 
       Implemented by the orthogonal complement of the supremum.\<close>
-  "Inf (Set_Monad l :: 'a::onb_enum clinear_space set)
+  "Inf (Set_Monad l :: 'a::onb_enum ccsubspace set)
   = - Sup (Set_Monad (map uminus l))"
   unfolding Set_Monad_def
   apply (induction l)
@@ -629,11 +629,11 @@ text \<open>Code equation for \<^term>\<open>UNIV\<close>.
 declare [[code drop: UNIV]]
 declare enum_class.UNIV_enum[code]
 
-text \<open>Setup for code generation involving sets of \<^type>\<open>ell2\<close>/\<^type>\<open>clinear_space\<close>.
+text \<open>Setup for code generation involving sets of \<^type>\<open>ell2\<close>/\<^type>\<open>ccsubspace\<close>.
   This configures to use lists for representing sets in code.\<close>
-derive (eq) ceq clinear_space
-derive (no) ccompare clinear_space
-derive (monad) set_impl clinear_space
+derive (eq) ceq ccsubspace
+derive (no) ccompare ccsubspace
+derive (monad) set_impl ccsubspace
 derive (eq) ceq ell2
 derive (no) ccompare ell2
 derive (monad) set_impl ell2

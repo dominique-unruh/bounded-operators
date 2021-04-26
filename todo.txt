@@ -1,0 +1,10 @@
+Files to clean up:
+- Extra_*
+- Complex_Vector_Spaces (in progress: renamings)
+- Complex_Inner_Product
+- One_Dimensional_Spaces
+- Bounded_Operators (split and rename)
+- Complex_L2
+- Bounded_Operator_Matrices
+- Bounded_Operators_Code
+- Bounded_Operators_Code_Examples

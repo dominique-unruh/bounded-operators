@@ -2100,10 +2100,10 @@ proof transfer
   qed
 qed 
   
-type_synonym 'a ell2_clinear_space = "'a ell2 clinear_space"
+type_synonym 'a ell2_clinear_space = "'a ell2 ccsubspace"
 
 lemma subspace_zero_not_top[simp]: 
-  "(0::'a::{complex_vector,t1_space,not_singleton} clinear_space) \<noteq> top"
+  "(0::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
   by simp
 
 instance ell2 :: (type) not_singleton
@@ -3102,38 +3102,18 @@ proof -
     by (meson le_less_trans) 
 qed
 
-lemma subspace_inter[simp]: 
-  assumes "complex_vector.subspace A" and "complex_vector.subspace B" 
-  shows "complex_vector.subspace (A\<inter>B)"
-  by (simp add: assms(1) assms(2) complex_vector.subspace_inter)
-
-lemma subspace_contains_0: "complex_vector.subspace A \<Longrightarrow> 0 \<in> A"
-  unfolding complex_vector.subspace_def by auto
-
-lemma subspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> complex_vector.subspace x) \<Longrightarrow> complex_vector.subspace (\<Inter>AA)"
+lemma closed_csubspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>AA)"
   by (simp add: complex_vector.subspace_Inter)
 
 lemma subspace_sup_plus: "(sup :: 'a ell2_clinear_space \<Rightarrow> _ \<Rightarrow> _) = (+)"
   by simp 
 
-
-
-lemma subspace_zero_bot: "(0::_ ell2_clinear_space) = bot" 
-  by simp
-
-lemma  subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
+lemma subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
   for x y z :: "'a ell2_clinear_space"
   unfolding subspace_sup_plus[symmetric] by auto
 
 lemma subspace_empty_Sup: "Sup {} = (0::'a ell2_clinear_space)"
-  unfolding subspace_zero_bot by auto
-
-lemma top_not_bot[simp]: "(top::'a ell2_clinear_space) \<noteq> bot"
-  by (metis subspace_zero_bot subspace_zero_not_top) 
-
-lemma bot_not_top[simp]: "(bot::'a ell2_clinear_space) \<noteq> top"
-  using top_not_bot
-  by simp 
+  unfolding zero_ccsubspace_def by auto
 
 lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
   for A B C :: "_ ell2_clinear_space"
@@ -3166,7 +3146,7 @@ proof-
   have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
     using Complex_L2.ket_ell2_span by blast
   thus ?thesis
-    by (simp add: Span.abs_eq top_clinear_space.abs_eq)
+    by (simp add: Span.abs_eq top_ccsubspace.abs_eq)
 qed
 
 lemma [simp]: "ket i \<noteq> 0"

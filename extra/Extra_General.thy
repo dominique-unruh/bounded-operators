@@ -9,6 +9,18 @@ begin
 
 subsection \<open>Misc\<close>
 
+lemma reals_zero_comparable_iff:
+  "(x::complex)\<in>\<real> \<longleftrightarrow> x \<le> 0 \<or> x \<ge> 0"
+  unfolding complex_is_Real_iff less_eq_complex_def
+  by auto
+
+(* TODO: move to extras *)
+lemma reals_zero_comparable:
+  fixes x::complex
+  assumes "x\<in>\<real>"
+  shows "x \<le> 0 \<or> x \<ge> 0"
+  using assms unfolding reals_zero_comparable_iff by assumption
+
 (* TODO: remove *)
 abbreviation (input) uniform_convergence_abbr::
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>

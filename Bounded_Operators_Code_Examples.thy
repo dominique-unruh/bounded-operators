@@ -132,11 +132,11 @@ value "Span {ket False}"
 
 value "Proj (Span {ket False})"
 
-value "top :: bool ell2 clinear_space"
+value "top :: bool ell2 ccsubspace"
 
-value "bot :: bool ell2 clinear_space"
+value "bot :: bool ell2 ccsubspace"
 
-value "0 :: bool ell2 clinear_space"
+value "0 :: bool ell2 ccsubspace"
 
 value "Span {ket False} \<squnion> Span {ket True}"
 
@@ -146,7 +146,7 @@ value "Span {ket False} \<sqinter> Span {ket True}"
 
 value "idOp *\<^sub>S Span {ket False}"
 
-value "idOp *\<^sub>S (top :: bool ell2 clinear_space)" (* Special case, using range_cblinfun_code for efficiency *)
+value "idOp *\<^sub>S (top :: bool ell2 ccsubspace)" (* Special case, using range_cblinfun_code for efficiency *)
 
 value "- Span {ket False}"
 
@@ -156,9 +156,9 @@ value "Span {ket False} \<le> Span {ket True}"
 
 value "applyOpSpace idOp (Span {ket True})"
 
-value "kernel idOp :: bool ell2 clinear_space"
+value "kernel idOp :: bool ell2 ccsubspace"
 
-value "eigenspace 1 idOp :: bool ell2 clinear_space"
+value "eigenspace 1 idOp :: bool ell2 ccsubspace"
 
 value "Inf {Span {ket False}, top}"
 
