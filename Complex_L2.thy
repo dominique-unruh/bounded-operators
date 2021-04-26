@@ -2966,7 +2966,7 @@ qed *)
       using approx_sym nsclosure_I by blast
     then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
       by blast
-    have \<open>cbounded_linear (cblinfun_apply A)\<close>
+    have \<open>bounded_clinear (cblinfun_apply A)\<close>
       using cblinfun_apply by blast
     hence \<open>isCont (cblinfun_apply A) x\<close>
       by simp
@@ -2983,11 +2983,11 @@ qed *)
         by blast
       from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
       have  \<open>cblinfun_apply A x = (\<Sum>a\<in>t. r a *\<^sub>C (cblinfun_apply A a))\<close>
-        unfolding cbounded_linear_def
+        unfolding bounded_clinear_def
         using cblinfun_apply \<open>finite t\<close>
           Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
           complex_vector.linear_sum
-          \<open>cbounded_linear (cblinfun_apply A)\<close> cbounded_linear.clinear
+          \<open>bounded_clinear (cblinfun_apply A)\<close> bounded_clinear.clinear
         by smt
       moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (cblinfun_apply A a) = 0\<close>
         using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
@@ -3046,19 +3046,19 @@ lemma clinear_equal_ket:
   apply (rule complex_vector.linear_eq_on_span[where f=f and g=g and B=\<open>range ket\<close>])
   using assms by auto
 
-lemma csemilinear_equal_ket:
+lemma antilinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
-  assumes \<open>csemilinear f\<close>
-  assumes \<open>csemilinear g\<close>
+  assumes \<open>antilinear f\<close>
+  assumes \<open>antilinear g\<close>
   assumes \<open>\<And>i. f (ket i) = g (ket i)\<close>
   shows \<open>f = g\<close>
 proof -
   have [simp]: \<open>clinear (f \<circ> from_conjugate_space)\<close>
-    apply (rule csemilinear_o_csemilinear)
-    using assms by (simp_all add: csemilinear_from_conjugate_space)
+    apply (rule antilinear_o_antilinear)
+    using assms by (simp_all add: antilinear_from_conjugate_space)
   have [simp]: \<open>clinear (g \<circ> from_conjugate_space)\<close>
-    apply (rule csemilinear_o_csemilinear)
-    using assms by (simp_all add: csemilinear_from_conjugate_space)
+    apply (rule antilinear_o_antilinear)
+    using assms by (simp_all add: antilinear_from_conjugate_space)
   have [simp]: \<open>cspan (to_conjugate_space ` (range ket :: 'a ell2 set)) = UNIV\<close>
     by simp
   have "f o from_conjugate_space = g o from_conjugate_space"
@@ -3557,15 +3557,15 @@ proof -
   hence bounded_C1: "\<exists>K. \<forall>x. norm (C1 x) \<le> norm x * K"
     apply transfer apply (rule exI[of _ 1]) by auto
 
-  have "cbounded_linear C1"
+  have "bounded_clinear C1"
     using \<open>clinear C1\<close> bounded_C1
-    using add cbounded_linear_intro scaleC by blast
+    using add bounded_clinear_intro scaleC by blast
 
   define C where "C = cBlinfun C1"
   have [transfer_rule]: "pcr_cblinfun (=) (=) C1 C"
     unfolding C_def unfolding cblinfun.pcr_cr_eq cr_cblinfun_def
     apply (subst cBlinfun_inverse)
-    using \<open>cbounded_linear C1\<close> by auto
+    using \<open>bounded_clinear C1\<close> by auto
 
   have C1_ket: "C1 (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     apply (transfer fixing: \<pi> x) unfolding C0_def
@@ -3631,16 +3631,16 @@ proof-
     have "H (ket i) (ket j) = 0"
       for i j
       unfolding H_def using a1 by simp
-    moreover have q1: "cbounded_linear (H (ket i))"
+    moreover have q1: "bounded_clinear (H (ket i))"
       for i
     proof-
-      have "cbounded_linear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
+      have "bounded_clinear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
         by (simp add: bounded_clinear_cinner_right) 
-      moreover have "cbounded_linear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
-        using cblinfun_apply cbounded_linear_cinner_right_comp by auto      
-      ultimately show ?thesis unfolding H_def using cbounded_linear_sub by blast
+      moreover have "bounded_clinear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
+        using cblinfun_apply bounded_clinear_cinner_right_comp by auto      
+      ultimately show ?thesis unfolding H_def using bounded_clinear_sub by blast
     qed
-    moreover have z1: "cbounded_linear (\<lambda>_. (0::complex))"
+    moreover have z1: "bounded_clinear (\<lambda>_. (0::complex))"
       by simp    
     ultimately have "H (ket i) v = 0"
       if "v \<in> complex_vector.span SB"
@@ -3658,17 +3658,17 @@ proof-
     hence "H (ket i) v = 0"
       for i v
       by (smt UNIV_I u2)
-    moreover have jj: "cbounded_linear (\<lambda>u. cnj (H u v))"
+    moreover have jj: "bounded_clinear (\<lambda>u. cnj (H u v))"
       for v
     proof-
-      have "cbounded_linear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-        using bounded_csemilinear_o_bounded_csemilinear cblinfun_apply bounded_csemilinear_cinner_left_comp 
-          cnj_bounded_csemilinear by blast      
-      moreover have "cbounded_linear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
-        using bounded_csemilinear_cinner_left bounded_csemilinear_o_bounded_csemilinear cnj_bounded_csemilinear 
+      have "bounded_clinear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
+        using bounded_antilinear_o_bounded_antilinear cblinfun_apply bounded_antilinear_cinner_left_comp 
+          cnj_bounded_antilinear by blast      
+      moreover have "bounded_clinear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
+        using bounded_antilinear_cinner_left bounded_antilinear_o_bounded_antilinear cnj_bounded_antilinear 
         by blast
       ultimately show ?thesis unfolding H_def 
-        using cbounded_linear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
+        using bounded_clinear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
         by auto      
     qed
     ultimately have cHu0: "cnj (H u v) = 0"

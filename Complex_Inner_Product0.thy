@@ -321,21 +321,21 @@ lemmas isCont_cinner [simp] =
 lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 
-lemmas bounded_csemilinear_cinner_left =
-  bounded_sesquilinear.bounded_csemilinear_left [OF bounded_sesquilinear_cinner]
+lemmas bounded_antilinear_cinner_left =
+  bounded_sesquilinear.bounded_antilinear_left [OF bounded_sesquilinear_cinner]
 
 lemmas bounded_clinear_cinner_right =
-  bounded_sesquilinear.cbounded_linear_right [OF bounded_sesquilinear_cinner]
+  bounded_sesquilinear.bounded_clinear_right [OF bounded_sesquilinear_cinner]
 
-lemmas bounded_csemilinear_cinner_left_comp = bounded_csemilinear_cinner_left[THEN bounded_csemilinear_o_cbounded_linear]
+lemmas bounded_antilinear_cinner_left_comp = bounded_antilinear_cinner_left[THEN bounded_antilinear_o_bounded_clinear]
 
-lemmas cbounded_linear_cinner_right_comp = bounded_clinear_cinner_right[THEN cbounded_linear_compose]
+lemmas bounded_clinear_cinner_right_comp = bounded_clinear_cinner_right[THEN bounded_clinear_compose]
 
 lemmas has_derivative_cinner_right [derivative_intros] =
-  bounded_linear.has_derivative [OF bounded_clinear_cinner_right[THEN cbounded_linear.bounded_linear]]
+  bounded_linear.has_derivative [OF bounded_clinear_cinner_right[THEN bounded_clinear.bounded_linear]]
 
 lemmas has_derivative_cinner_left [derivative_intros] =
-  bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
+  bounded_linear.has_derivative [OF bounded_antilinear_cinner_left[THEN bounded_antilinear.bounded_linear]]
 
 lemma differentiable_cinner [simp]:
   "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
@@ -422,10 +422,10 @@ lemma summable_of_complex_iff:
   "summable (\<lambda>x. of_complex (f x) :: 'a :: {complex_normed_algebra_1,complex_inner}) \<longleftrightarrow> summable f"
 proof
   assume *: "summable (\<lambda>x. of_complex (f x) :: 'a)"
-  have "cbounded_linear (cinner (1::'a))"
+  have "bounded_clinear (cinner (1::'a))"
     by (rule bounded_clinear_cinner_right)
   then interpret bounded_linear "\<lambda>x::'a. cinner 1 x"
-    by (rule cbounded_linear.bounded_linear)
+    by (rule bounded_clinear.bounded_linear)
   from summable [OF *] show "summable f"
     apply (subst (asm) cinner_commute) by simp
 next

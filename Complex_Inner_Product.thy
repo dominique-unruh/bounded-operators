@@ -318,25 +318,25 @@ lemmas has_derivative_cinner [derivative_intros] =
   bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
 *)
 
-(* lemmas bounded_csemilinear_cinner_left =
-  bounded_sesquilinear.bounded_csemilinear_left [OF bounded_sesquilinear_cinner]
+(* lemmas bounded_antilinear_cinner_left =
+  bounded_sesquilinear.bounded_antilinear_left [OF bounded_sesquilinear_cinner]
 
-lemmas cbounded_linear_cinner_right =
-  bounded_sesquilinear.cbounded_linear_right [OF bounded_sesquilinear_cinner]
+lemmas bounded_clinear_cinner_right =
+  bounded_sesquilinear.bounded_clinear_right [OF bounded_sesquilinear_cinner]
 
-lemmas cbounded_linear_cinner_left_comp = bounded_csemilinear_cinner_left[THEN bounded_csemilinear_compose2]
-lemmas bounded_csemilinear_cinner_left_comp = bounded_csemilinear_cinner_left[THEN bounded_csemilinear_compose1]
+lemmas bounded_clinear_cinner_left_comp = bounded_antilinear_cinner_left[THEN bounded_antilinear_compose2]
+lemmas bounded_antilinear_cinner_left_comp = bounded_antilinear_cinner_left[THEN bounded_antilinear_compose1]
 
-lemmas cbounded_linear_cinner_right_comp = cbounded_linear_cinner_right[THEN cbounded_linear_compose]
-lemmas bounded_csemilinear_cinner_right_comp = cbounded_linear_cinner_right[THEN bounded_csemilinear_compose3]
+lemmas bounded_clinear_cinner_right_comp = bounded_clinear_cinner_right[THEN bounded_clinear_compose]
+lemmas bounded_antilinear_cinner_right_comp = bounded_clinear_cinner_right[THEN bounded_antilinear_compose3]
 
 lemmas has_derivative_cinner_right [derivative_intros] =
-  bounded_linear.has_derivative [OF cbounded_linear_cinner_right[THEN cbounded_linear.bounded_linear]]
+  bounded_linear.has_derivative [OF bounded_clinear_cinner_right[THEN bounded_clinear.bounded_linear]]
  *)
 
 (* FIXME 
 lemmas has_derivative_cinner_left [derivative_intros] =
-  bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
+  bounded_linear.has_derivative [OF bounded_antilinear_cinner_left[THEN bounded_antilinear.bounded_linear]]
 *)
 
 (*
@@ -422,10 +422,10 @@ lemma of_complex_inner_1' [simp]:
   "summable (\<lambda>x. of_complex (f x) :: 'a :: {complex_normed_algebra_1,complex_inner}) \<longleftrightarrow> summable f"
 proof
   assume *: "summable (\<lambda>x. of_complex (f x) :: 'a)"
-  have "cbounded_linear (cinner (1::'a))"
-    by (rule cbounded_linear_cinner_right)
+  have "bounded_clinear (cinner (1::'a))"
+    by (rule bounded_clinear_cinner_right)
   then interpret bounded_linear "\<lambda>x::'a. cinner 1 x"
-    by (rule cbounded_linear.bounded_linear)
+    by (rule bounded_clinear.bounded_linear)
   from summable [OF *] show "summable f" by simp
 next
   assume sum: "summable f"
@@ -698,7 +698,7 @@ proof-
     if "\<forall>n::nat. x n \<in> orthogonal_complement A" and "x \<longlonglongrightarrow> l"
     for x::\<open>nat \<Rightarrow> 'a::complex_inner\<close> and l::"'a::complex_inner"
   proof-
-    have b1: \<open>cbounded_linear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
+    have b1: \<open>bounded_clinear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
       for y::'a
       by (simp add: bounded_clinear_cinner_right)
     have \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
@@ -1530,7 +1530,7 @@ proposition projectionPropertiesB:
 theorem projectionPropertiesA':
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_subspace M"
-  shows "cbounded_linear \<pi>"
+  shows "bounded_clinear \<pi>"
 proof
   have b1:  \<open>complex_vector.subspace (orthogonal_complement M)\<close>
     by (simp add: a2 closed_subspace.subspace)
@@ -1599,7 +1599,7 @@ qed
 theorem projectionPropertiesA:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_subspace M"
-  shows \<open>cbounded_linear (projection M)\<close> 
+  shows \<open>bounded_clinear (projection M)\<close> 
     \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
   by (meson assms is_projection_on_def projectionPropertiesA' projection_intro1 projection_intro2)
 
@@ -1628,7 +1628,7 @@ proposition projectionPropertiesC:
   by (metis is_projection_on_def projection_intro1 projection_intro2) 
 
 lemma ker_op_lin:
-  assumes a1: "cbounded_linear f"
+  assumes a1: "bounded_clinear f"
   shows "closed_subspace  (f -` {0})"
 proof-
   have w3: \<open>t *\<^sub>C x \<in> {x. f x = 0}\<close> 
@@ -1639,15 +1639,15 @@ proof-
       using that by auto      
     hence  \<open>f  (t *\<^sub>C x) = 0\<close>
       using a1
-      by (simp add: cbounded_linear.clinear complex_vector.linear_scale)
+      by (simp add: bounded_clinear.clinear complex_vector.linear_scale)
     hence \<open> t *\<^sub>C x \<in> {x. f x = 0}\<close>
       by simp
     thus ?thesis 
       by auto
   qed
   have \<open>clinear f\<close>
-    using \<open>cbounded_linear f\<close>
-    unfolding cbounded_linear_def by blast
+    using \<open>bounded_clinear f\<close>
+    unfolding bounded_clinear_def by blast
   hence \<open>f 0 = 0\<close>
     by (simp add: complex_vector.linear_0)      
   hence s2: \<open>0 \<in> {x. f x = 0}\<close>
@@ -1677,8 +1677,8 @@ proof-
     have w2: \<open>f y = 0\<close>
       using c2 by auto
     have  \<open>f (x + y) = f x + f y\<close>
-      using \<open>cbounded_linear f\<close>
-      unfolding cbounded_linear_def clinear_def Vector_Spaces.linear_def module_hom_def 
+      using \<open>bounded_clinear f\<close>
+      unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def module_hom_def 
         module_hom_axioms_def by auto
     hence  \<open>f (x + y) = 0\<close>
       by (simp add: w1 w2)
@@ -2315,10 +2315,10 @@ lemma is_closed_subspace_universal_inclusion_inverse:
 
 lemma projection_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
-  assumes \<open>cbounded_linear f\<close>
+  assumes \<open>bounded_clinear f\<close>
   shows \<open>f (projection (f -` {0}) x) = 0\<close>
 proof-
-  from \<open>cbounded_linear f\<close>
+  from \<open>bounded_clinear f\<close>
   have \<open>closed_subspace (f -` {0})\<close>
     by (simp add: ker_op_lin)
   hence \<open>projection (f -` {0}) x \<in> f -` {0}\<close>
@@ -2378,13 +2378,13 @@ type_synonym 'a functional = \<open>'a \<Rightarrow> complex\<close>
 
 lemma ker_ortho_nonzero:
   fixes f :: \<open>'a::chilbert_space functional\<close> and x :: 'a
-  assumes a1: \<open>cbounded_linear f\<close> and a2: \<open>x \<noteq> 0\<close> and a3: \<open>x \<in> orthogonal_complement (f -` {0})\<close> 
+  assumes a1: \<open>bounded_clinear f\<close> and a2: \<open>x \<noteq> 0\<close> and a3: \<open>x \<in> orthogonal_complement (f -` {0})\<close> 
   shows \<open>f x \<noteq> 0\<close>
   using a1 a2 a3 ker_op_lin projectionPropertiesD projection_fixed_points by force
 
 lemma ker_unidim:
   fixes f :: \<open>'a::chilbert_space functional\<close>
-  assumes a1: \<open>cbounded_linear f\<close>
+  assumes a1: \<open>bounded_clinear f\<close>
   shows \<open>proportion (orthogonal_complement (f -` {0}))\<close>
 proof-
   have "\<exists> k. x = k *\<^sub>C y"
@@ -2407,13 +2407,13 @@ proof-
       by blast
     hence  \<open>f x = f (k *\<^sub>C y)\<close>
       using a1
-      unfolding cbounded_linear_def
+      unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_scale)
     hence  \<open>f x - f (k *\<^sub>C y) = 0\<close>
       by simp
     hence s1: \<open>f (x - k *\<^sub>C y) = 0\<close>
       using additive.diff a1
-      unfolding cbounded_linear_def
+      unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_diff)        
     have  \<open>k *\<^sub>C y \<in> (orthogonal_complement (f -` {0}))\<close>
       using r3 complex_vector.subspace_scale
@@ -2438,7 +2438,7 @@ qed
 
 lemma riesz_frechet_representation_existence:
   fixes f::\<open>'a::chilbert_space functional\<close>
-  assumes a1: \<open>cbounded_linear f\<close>
+  assumes a1: \<open>bounded_clinear f\<close>
   shows \<open>\<exists>t. \<forall>x.  f x = \<langle>t, x\<rangle>\<close>
 proof(cases \<open>\<forall> x. f x = 0\<close>)
   case True
@@ -2487,7 +2487,7 @@ next
   hence l1: \<open>f (projection (orthogonal_complement (f -` {0})) x) = ((\<langle>t , x\<rangle>)/(\<langle>t , t\<rangle>)) * (f t)\<close>
     for x
     using a1
-    unfolding cbounded_linear_def
+    unfolding bounded_clinear_def
     by (simp add: complex_vector.linear_scale)
   hence l2: \<open>f (projection (orthogonal_complement (f -` {0})) x) = \<langle>((cnj (f t)/\<langle>t , t\<rangle>) *\<^sub>C t) , x\<rangle>\<close>
     for x
@@ -2502,7 +2502,7 @@ next
     using  assms ker_op_lin projection_intro2 by blast
   have "\<And>a b. f (projection (f -` {0}) a + b) = 0 + f b"
     using additive.add assms l3
-    by (simp add: cbounded_linear_def complex_vector.linear_add)
+    by (simp add: bounded_clinear_def complex_vector.linear_add)
   hence "\<And>a. 0 + f (projection (orthogonal_complement (f -` {0})) a) = f a"
     by (metis (no_types) assms ker_op_lin ortho_decomp)
   hence \<open>f x = \<langle>(cnj (f t)/\<langle>t , t\<rangle>) *\<^sub>C t, x\<rangle>\<close>
@@ -2518,20 +2518,20 @@ definition \<open>Adj G = (SOME F. \<forall>x. \<forall>y. \<langle>F x, y\<rang
 
 lemma Adj_I:
   fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
-  assumes a1: \<open>cbounded_linear G\<close>
+  assumes a1: \<open>bounded_clinear G\<close>
   shows \<open>\<forall>x. \<forall>y. \<langle>Adj G x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
 proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>"])
   include notation_norm
   have b1: \<open>clinear G\<close>
     using a1
-    unfolding cbounded_linear_def by blast
+    unfolding bounded_clinear_def by blast
   have b2: \<open>\<exists> M. \<forall> y. \<parallel> G y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
-    using  \<open>cbounded_linear G\<close>
-    unfolding cbounded_linear_def
-    using cbounded_linear_axioms_def by blast
+    using  \<open>bounded_clinear G\<close>
+    unfolding bounded_clinear_def
+    using bounded_clinear_axioms_def by blast
   define g :: \<open>'a \<Rightarrow> 'b \<Rightarrow> complex\<close> 
     where \<open>g x y = \<langle>x , G y\<rangle>\<close> for x y
-  have \<open>cbounded_linear (g x)\<close>
+  have \<open>bounded_clinear (g x)\<close>
     for x
   proof-
     have \<open>g x (a + b) = g x a + g x b\<close>
@@ -2548,10 +2548,10 @@ proof (unfold Adj_def, rule someI_ex[where P="\<lambda>F. \<forall>x. \<forall>y
       by (simp add: clinearI)    
     moreover have \<open>\<exists>M. \<forall>y. \<parallel> g x y \<parallel> \<le> \<parallel> y \<parallel> * M\<close>
       using b2 g_def
-      by (simp add: a1 cbounded_linear.bounded cbounded_linear_cinner_right_comp)
+      by (simp add: a1 bounded_clinear.bounded bounded_clinear_cinner_right_comp)
     ultimately show ?thesis unfolding bounded_linear_def
-      using cbounded_linear.intro
-      using cbounded_linear_axioms_def by blast
+      using bounded_clinear.intro
+      using bounded_clinear_axioms_def by blast
   qed
   hence  \<open>\<forall>x. \<exists>t. \<forall>y.  g x y = \<langle>t, y\<rangle>\<close>
     using  riesz_frechet_representation_existence by blast
@@ -2565,7 +2565,7 @@ qed
 
 lemma Adj_I':
   fixes G :: "'b::chilbert_space \<Rightarrow> 'a::complex_inner"
-  assumes a1: \<open>cbounded_linear G\<close>
+  assumes a1: \<open>bounded_clinear G\<close>
   shows \<open>\<forall>x. \<forall>y. \<langle>x, Adj G y\<rangle> = \<langle>G x, y\<rangle>\<close>
   by (metis Adj_I assms cinner_commute')
 
@@ -2574,7 +2574,7 @@ notation Adj ("_\<^sup>\<dagger>" [99] 100)
 lemma Adj_D:
   fixes G:: \<open>'b::chilbert_space \<Rightarrow> 'a::complex_inner\<close>
     and F:: \<open>'a \<Rightarrow> 'b\<close>
-  assumes a1: "cbounded_linear G" and
+  assumes a1: "bounded_clinear G" and
     F_is_adjoint: \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
   shows \<open>F = G\<^sup>\<dagger>\<close>
 proof-
@@ -2594,10 +2594,10 @@ proof-
 qed
 
 
-lemma Adj_cbounded_linear:
+lemma Adj_bounded_clinear:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::complex_inner"
-  assumes a1: "cbounded_linear A"
-  shows \<open>cbounded_linear (A\<^sup>\<dagger>)\<close>
+  assumes a1: "bounded_clinear A"
+  shows \<open>bounded_clinear (A\<^sup>\<dagger>)\<close>
 proof
   include notation_norm 
   have b1: \<open>\<langle>(A\<^sup>\<dagger>) x, y\<rangle> = \<langle>x , A y\<rangle>\<close> for x y
@@ -2627,7 +2627,7 @@ proof
     by (metis complex_of_real_mono_iff)
   have \<open>\<exists>M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
     using a1
-    by (metis (mono_tags, hide_lams) cbounded_linear.bounded linear mult_nonneg_nonpos
+    by (metis (mono_tags, hide_lams) bounded_clinear.bounded linear mult_nonneg_nonpos
         mult_zero_right norm_ge_zero order.trans semiring_normalization_rules(7)) 
   then obtain M where q1: \<open>M \<ge> 0\<close> and q2: \<open>\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
     by blast
@@ -2658,7 +2658,7 @@ end
 
 proposition dagger_dagger_id:
   fixes U :: \<open>'a::chilbert_space \<Rightarrow> 'b::chilbert_space\<close>
-  assumes a1: "cbounded_linear U"
+  assumes a1: "bounded_clinear U"
   shows "U\<^sup>\<dagger>\<^sup>\<dagger> = U"
 proof-
   have b1: \<open>\<langle> (U\<^sup>\<dagger>) r, s \<rangle> = \<langle> r, U s \<rangle>\<close>
@@ -2680,8 +2680,8 @@ proof-
       by simp
     thus ?thesis by simp
   qed
-  moreover have \<open>cbounded_linear (U\<^sup>\<dagger>)\<close>
-    by (simp add: Adj_cbounded_linear a1)
+  moreover have \<open>bounded_clinear (U\<^sup>\<dagger>)\<close>
+    by (simp add: Adj_bounded_clinear a1)
   ultimately show ?thesis
     using Adj_D by fastforce
 qed
@@ -2692,7 +2692,7 @@ proof-
     for x y::'a
     unfolding id_def by blast
   thus ?thesis
-    using id_cbounded_linear
+    using id_bounded_clinear
     by (smt Adj_D)  
 qed
 
@@ -2704,15 +2704,15 @@ lemma scalar_times_adjc_flatten:
 proof-
   have b1: \<open>bounded_linear (\<lambda> t. a *\<^sub>C (A t))\<close>
     using a1
-    by (simp add: cbounded_linear.bounded_linear cbounded_linear_scaleC_right 
+    by (simp add: bounded_clinear.bounded_linear bounded_clinear_scaleC_right 
         bounded_linear_compose)
 
   have \<open>bounded_linear (A\<^sup>\<dagger>)\<close>
-    using a1 a2 Adj_cbounded_linear cbounded_linear.bounded_linear bounded_linear_cbounded_linear 
+    using a1 a2 Adj_bounded_clinear bounded_clinear.bounded_linear bounded_linear_bounded_clinear 
     by blast
-  hence b2: \<open>cbounded_linear (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
-    by (simp add: Adj_cbounded_linear a1 a2 cbounded_linear_const_scaleC 
-        bounded_linear_cbounded_linear)
+  hence b2: \<open>bounded_clinear (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
+    by (simp add: Adj_bounded_clinear a1 a2 bounded_clinear_const_scaleC 
+        bounded_linear_bounded_clinear)
 
   have b3: \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
     for x y
@@ -2724,13 +2724,13 @@ proof-
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>y, (A\<^sup>\<dagger>) x\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>((A\<^sup>\<dagger>)\<^sup>\<dagger>) y, x\<rangle>\<close>
-      by (simp add: Adj_I Adj_cbounded_linear assms(1) assms(2) bounded_linear_cbounded_linear)
+      by (simp add: Adj_I Adj_bounded_clinear assms(1) assms(2) bounded_linear_bounded_clinear)
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj (cnj \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>)\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, A y\<rangle>\<close>
-      using Adj_I  assms(1) assms(2) bounded_linear_cbounded_linear by fastforce
+      using Adj_I  assms(1) assms(2) bounded_linear_bounded_clinear by fastforce
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, a *\<^sub>C A y\<rangle>\<close>
       by simp
     hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
@@ -2743,8 +2743,8 @@ proof-
   proof-
     have "\<forall>t c. c *\<^sub>C a *\<^sub>C A t = a *\<^sub>C A (c *\<^sub>C t)"
       using a2 by force
-    hence "cbounded_linear (\<lambda>t. a *\<^sub>C A t)"
-      by (simp add: b1 bounded_linear_cbounded_linear)
+    hence "bounded_clinear (\<lambda>t. a *\<^sub>C A t)"
+      by (simp add: b1 bounded_linear_bounded_clinear)
     thus ?thesis
       by (metis (no_types) Adj_D b3) 
   qed
@@ -3159,13 +3159,13 @@ qed
 
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
-  assumes a1: "cbounded_linear A"
+  assumes a1: "bounded_clinear A"
   shows   \<open>bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
   using a1
   by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
 
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
-  assumes a1: "cbounded_linear A"
+  assumes a1: "bounded_clinear A"
   shows \<open>bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
   using a1
   by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
@@ -3803,7 +3803,7 @@ lemmas isCont_cinner [simp] =
  *)
 
 (* lemmas has_derivative_cinner_left [derivative_intros] =
-  bounded_linear.has_derivative [OF bounded_csemilinear_cinner_left[THEN bounded_csemilinear.bounded_linear]]
+  bounded_linear.has_derivative [OF bounded_antilinear_cinner_left[THEN bounded_antilinear.bounded_linear]]
 
 lemma differentiable_cinner [simp]:
   "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
@@ -4509,7 +4509,7 @@ lemma Cauchy_scaleC:
   fixes r::complex and x::\<open>nat \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes a1: "Cauchy x"
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
-  by (simp add: cbounded_linear.bounded_linear assms bounded_linear.Cauchy cbounded_linear_scaleC_right)
+  by (simp add: bounded_clinear.bounded_linear assms bounded_linear.Cauchy bounded_clinear_scaleC_right)
 (* proof-
   have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
     if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
@@ -4847,8 +4847,8 @@ proof-
     by (simp add: limI) 
 qed
 
-lemma cbounded_linear_Cauchy:
-  assumes a1: \<open>Cauchy x\<close> and a2: \<open>cbounded_linear f\<close>
+lemma bounded_clinear_Cauchy:
+  assumes a1: \<open>Cauchy x\<close> and a2: \<open>bounded_clinear f\<close>
   shows \<open>Cauchy (\<lambda> n. f (x n))\<close>
 proof-
   have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f (x m) - f (x n)) < e\<close>
@@ -4856,7 +4856,7 @@ proof-
     for e
   proof-
     have b1: \<open>\<exists>M. \<forall> t. norm (f t) \<le> norm t * M \<and> M > 0\<close>
-      using a2 cbounded_linear.bounded_linear bounded_linear.pos_bounded
+      using a2 bounded_clinear.bounded_linear bounded_linear.pos_bounded
       by blast
     then obtain M where M_def: \<open>\<And> t. norm (f t) \<le> norm t * M\<close> and \<open>M > 0\<close>
       by blast
@@ -4865,7 +4865,7 @@ proof-
       using M_def by blast
     moreover have \<open>f (x m - x n) = f (x m) - f (x n)\<close>
       for m n
-      using \<open>cbounded_linear f\<close> unfolding cbounded_linear_def
+      using \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
       by (simp add: complex_vector.linear_diff) 
     ultimately have f1: \<open>norm (f (x m) - f (x n)) \<le> norm (x m - x n) * M\<close>
       for m n

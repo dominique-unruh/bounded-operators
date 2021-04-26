@@ -214,8 +214,8 @@ lemma clinear_one_dim_isom[simp]: "clinear one_dim_isom"
     
 qed 
 
-lemma cbounded_linear_one_dim_isom[simp]: "cbounded_linear one_dim_isom"
-  proof (rule cbounded_linear_intro [where K = 1] , auto)
+lemma bounded_clinear_one_dim_isom[simp]: "bounded_clinear one_dim_isom"
+  proof (rule bounded_clinear_intro [where K = 1] , auto)
   show "norm (one_dim_isom (x::'a)::'b) \<le> norm x"
     for x :: 'a
     by (metis (full_types) norm_of_complex of_complex_def one_dim_1_times_a_eq_a one_dim_isom_def 
