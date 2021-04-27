@@ -705,8 +705,8 @@ proof-
       using orthogonal_complement_D2
       by (simp add: orthogonal_complement_D2 that(1))
     moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
-      using b1 bounded_linear_continuous
-      by (simp add: bounded_linear_continuous bounded_clinear_cinner_right)
+      using b1 clinear_continuous_at
+      by (simp add: clinear_continuous_at bounded_clinear_cinner_right)
     ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
       using isCont_tendsto_compose
       by (simp add: isCont_tendsto_compose that(2))
@@ -1659,7 +1659,7 @@ proof-
     have d1: \<open>\<forall> n. f (r n) = 0\<close>
       using that(2) by auto
     have \<open>(\<lambda> n. f (r n)) \<longlonglongrightarrow> f L\<close>
-      using assms bounded_linear_continuous continuous_within_tendsto_compose' that(1) 
+      using assms clinear_continuous_at continuous_within_tendsto_compose' that(1) 
       by fastforce
     hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow> f L\<close>
       using d1 by simp        
@@ -2691,7 +2691,7 @@ proof-
     for x y::'a
     unfolding id_def by blast
   thus ?thesis
-    using id_bounded_clinear
+    using bounded_clinear_id
     by (smt Adj_D)  
 qed
 
@@ -2836,7 +2836,7 @@ proof -
     using that
     by (simp add: closure_is_csubspace) 
   show \<open>closed_csubspace (closure {f x |x. x \<in> S})\<close>
-    using b2 b1 subspace_I by auto
+    using b2 b1 closure_is_closed_csubspace by auto
 qed
 
 instantiation ccsubspace :: (complex_inner) "uminus"
@@ -2859,7 +2859,7 @@ proof
     if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_csubspace x"
     for S :: "'a set set"
     using that
-    by (simp add: closed_csubspace.subspace subspace_I) 
+    by (simp add: closed_csubspace.subspace closure_is_closed_csubspace) 
   show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
     for S :: "'a set set"
@@ -2974,7 +2974,7 @@ end
 
 
 lemma span_superset:
-  \<open>A \<subseteq> space_as_set (Span A)\<close> 
+  \<open>A \<subseteq> space_as_set (ccspan A)\<close> 
   for A :: \<open>'a::chilbert_space set\<close>
 proof-
   have b1: \<open>A \<subseteq> space_as_set S\<close>
@@ -2986,7 +2986,7 @@ proof-
     by blast
   hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
     using Inf_ccsubspace.rep_eq by fastforce    
-  thus ?thesis using span_def' by metis
+  thus ?thesis using ccspan_Inf_def by metis
 qed
 
 lemma bot_plus[simp]: "sup bot x = x" 
@@ -3036,8 +3036,8 @@ proof
       "x \<in> closure (cspan (\<Union> A))"
     for x::'a and z and A
     by (metis OrthoClosedEq Sup_subset_mono atMost_iff cSup_atMost closed_csubspace.subspace 
-        closure_mono orthogonal_complement_twice subset_iff subspace_I subspace_span_A that(2) 
-        that(3) that(4))    
+        closure_mono orthogonal_complement_twice subset_iff closure_is_closed_csubspace complex_vector.span_minimal that(2) 
+        that(3) that(4))
   show "Sup A \<le> z"
     if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> x \<le> z"
     for A :: "'a ccsubspace set"
@@ -4985,12 +4985,12 @@ lemma span_finite_dim:
 
 lemma Span_insert:
   assumes "finite (S::'a'::complex_inner set)"
-  shows "space_as_set (Span (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (Span S)}"
+  shows "space_as_set (ccspan (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (ccspan S)}"
 proof -
   have "closure (cspan (insert a S)) = cspan (insert a S)"
     by (metis assms finite_insert span_finite_dim)
   thus ?thesis
-    by (simp add: Span.rep_eq assms complex_vector.span_insert span_finite_dim)
+    by (simp add: ccspan.rep_eq assms complex_vector.span_insert span_finite_dim)
 qed
 
 lemma closed_subspace_cspan_finite:
@@ -5184,8 +5184,8 @@ proof-
     unfolding p_def M_def by auto
 qed
 
-lemma Span_canonical_basis[simp]: "Span (set canonical_basis) = top"
-  using Span.rep_eq space_as_set_inject top_ccsubspace.rep_eq
+lemma Span_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
+  using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
     closure_UNIV is_generator_set
   by metis
 

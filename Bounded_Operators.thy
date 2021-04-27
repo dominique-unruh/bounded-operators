@@ -1798,7 +1798,7 @@ lift_definition
   is Adj by (fact Adj_bounded_clinear)
 
 lift_definition idOp::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> is id
-  using id_bounded_clinear by blast
+  using bounded_clinear_id by blast
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
   apply transfer using id_dagger by blast
@@ -1878,7 +1878,7 @@ lift_definition applyOpSpace::\<open>'a::complex_normed_vector \<Rightarrow>\<^s
 \<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def closed_closure  closed_csubspace.intro
-  by (simp add: bounded_clinear_def closed_csubspace.subspace complex_vector.linear_subspace_image subspace_I) 
+  by (simp add: bounded_clinear_def closed_csubspace.subspace complex_vector.linear_subspace_image closure_is_closed_csubspace) 
 
 
 bundle cblinfun_notation begin
@@ -2061,7 +2061,7 @@ proof-
       by (metis \<open>\<forall>n. s n \<in> B ` \<psi>\<close> imageI image_comp t_def)
     have \<open>isCont A y\<close>
       using \<open>bounded_clinear A\<close>
-      by (simp add: bounded_linear_continuous)
+      by (simp add: clinear_continuous_at)
     hence v2: \<open>t \<longlonglongrightarrow> x\<close>
       unfolding t_def using \<open>s \<longlonglongrightarrow> y\<close>
       by (simp add: \<open>x = A y\<close> isCont_tendsto_compose) 
@@ -2150,7 +2150,7 @@ proof-
   define S where \<open>S = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close>
   from a1 have \<open>isCont U x\<close>
     for x
-    by (simp add: bounded_linear_continuous)
+    by (simp add: clinear_continuous_at)
   hence \<open>continuous_on (closure S) U\<close>
     by (simp add: continuous_at_imp_continuous_on)
   hence \<open>U ` (closure S) \<subseteq> closure (U ` S)\<close>
@@ -2428,7 +2428,7 @@ proof -
     by (auto simp: assms bounded_clinear.clinear)
   have \<open>A t - B t = 0\<close>
     using _ _ t apply (rule continuous_constant_on_closure)
-    by (auto simp add: eq' assms(1) assms(2) bounded_linear_continuous continuous_at_imp_continuous_on)
+    by (auto simp add: eq' assms(1) assms(2) clinear_continuous_at continuous_at_imp_continuous_on)
   then show ?thesis
     by auto
 qed
@@ -2446,7 +2446,7 @@ qed
       bounded_clinear_sub by auto
   hence \<open>isCont F t\<close>
     using linear_continuous_at
-    by (simp add: bounded_linear_continuous) 
+    by (simp add: clinear_continuous_at) 
   hence \<open>isNSCont F t\<close>
     by (simp add: isCont_isNSCont)
   from \<open>t \<in> closure (complex_vector.span G)\<close>
@@ -2476,7 +2476,7 @@ qed *)
 
 lemma applyOpSpace_span:
   fixes A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and \<open>t \<in> space_as_set (Span G)\<close>
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and \<open>t \<in> space_as_set (ccspan G)\<close>
   shows "A *\<^sub>V t = B *\<^sub>V t"
   using assms
   apply transfer
@@ -2485,7 +2485,7 @@ lemma applyOpSpace_span:
 lemma applyOpSpace_less_eq:
   fixes S :: "'a::cbanach ccsubspace" 
     and A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "ccspan G \<ge> S"
   shows "A *\<^sub>S S \<le> B *\<^sub>S S"
   using assms proof transfer
   fix G :: "'a set" and A :: "'a \<Rightarrow> 'b" and B :: "'a \<Rightarrow> 'b" and S :: "'a set"
@@ -2531,7 +2531,7 @@ qed
 lemma applyOpSpace_eq:
   fixes S :: "'a::chilbert_space ccsubspace"
     and A B :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "Span G \<ge> S"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "ccspan G \<ge> S"
   shows "A *\<^sub>S S = B *\<^sub>S S"
   by (metis applyOpSpace_less_eq assms(1) assms(2) dual_order.antisym)
 
@@ -2735,7 +2735,7 @@ proof-
       using cblinfun_apply
       by blast 
     hence \<open>continuous (at x) (cblinfun_apply (idOp - P))\<close>
-      by (simp add: bounded_linear_continuous)
+      by (simp add: clinear_continuous_at)
     thus ?thesis
       using \<open>cblinfun_apply (idOp - P) = (\<lambda> x. x - P *\<^sub>V x)\<close>
       by simp
@@ -2905,12 +2905,12 @@ proof-
     by blast
 qed
 
-abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (Span {\<psi>})"
+abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (ccspan {\<psi>})"
 
 lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
   for a::complex and \<psi>::"'a::chilbert_space"
-  by (metis Span.abs_eq span_mult)
+  by (metis ccspan.abs_eq cspan_singleton_scaleC)
 
 lemma move_plus:
   fixes A B C::"'a::chilbert_space ccsubspace"
@@ -3148,7 +3148,7 @@ lemma rel_interior_sing_generalized:
 
 lemma isCont_applyOp[simp]: "isCont ((*\<^sub>V) A) \<psi>"
   apply transfer
-  by (simp add: bounded_linear_continuous) 
+  by (simp add: clinear_continuous_at) 
 
 lemma applyOpSpace_mono:
   assumes a1: "S \<le> T"
@@ -3244,7 +3244,7 @@ next
           and "x \<in> closure (V i)"
         for x :: 'b
         using that
-        by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice subspace_I) 
+        by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice closure_is_closed_csubspace) 
       show "x \<in> closure (V i)"
         if "\<forall>x. closed_csubspace (V x)"
           and "bounded_clinear Uinv"
@@ -3283,7 +3283,7 @@ next
         and "x \<in> closure INFUV"
       for x :: 'c
       using that
-      by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice subspace_I) 
+      by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice closure_is_closed_csubspace) 
     show "x \<in> closure INFUV"
       if "closed_csubspace INFUV"
         and "bounded_clinear U"
@@ -3510,7 +3510,7 @@ proof transfer
         by blast
       have "isCont S w" for w
         using linear_continuous_at
-        by (simp add: a2 bounded_linear_continuous)
+        by (simp add: a2 clinear_continuous_at)
       hence "isCont (\<lambda>x. norm (S x)) w" for w
         by simp
       hence "e > 0 \<Longrightarrow> \<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow>  norm (norm (S t) - norm (S s)) < e" for e
@@ -4070,7 +4070,7 @@ lemma kernel_memberI:
 
 lemma applyOpSpace_Span: 
   includes cblinfun_notation
-  shows "A *\<^sub>S Span G = Span ((*\<^sub>V) A ` G)"
+  shows "A *\<^sub>S ccspan G = ccspan ((*\<^sub>V) A ` G)"
 proof-
   have u1: "closure (A ` closure (complex_vector.span G))
          \<subseteq> closure (complex_vector.span (A ` G))"
@@ -4081,7 +4081,7 @@ proof-
     have isContA: \<open>isCont A r\<close>
       for r
       using that
-      by (simp add: bounded_linear_continuous)
+      by (simp add: clinear_continuous_at)
 
     have "x \<in> closure (complex_vector.span (A ` G))"
       if "x \<in> A ` closure (complex_vector.span G)"
@@ -4130,7 +4130,7 @@ qed
 
 lemma span_ortho_span:
   assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
-  shows "Span S \<le> - (Span T)"
+  shows "ccspan S \<le> - (ccspan T)"
 proof-
   have u1: "x \<in> orthogonal_complement (closure (complex_vector.span T))"
     if "\<And>s t. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t"
@@ -4231,7 +4231,7 @@ proof-
       using orthogonal_complement_I2 by blast 
   qed
   thus ?thesis
-    by (metis Span.rep_eq assms clinear_space_leI uminus_ccsubspace.rep_eq) 
+    by (metis ccspan.rep_eq assms clinear_space_leI uminus_ccsubspace.rep_eq) 
 qed
 
 definition "positive_op A = (\<exists>B::'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a. A = B* o\<^sub>C\<^sub>L B)"
@@ -4378,7 +4378,7 @@ proof
       have \<open>isCont f r\<close>
         for r
         unfolding f_def
-        by (simp add: bounded_clinear_scaleC_left bounded_linear_continuous)
+        by (simp add: bounded_clinear_scaleC_left clinear_continuous_at)
       hence \<open>(\<lambda> n. f \<langle> t, X n \<rangle>) \<longlonglongrightarrow> f (L t)\<close>
         using \<open>(\<lambda>n. \<langle>t, X n\<rangle>) \<longlonglongrightarrow> L t\<close> isCont_tendsto_compose by blast
       hence \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close>
@@ -5565,7 +5565,7 @@ lemma Proj_Span_insert:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
     and a::'a 
   assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
-  shows "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))"
+  shows "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))"
 proof-
   define d where "d = canonical_basis_length TYPE('a)"
   hence IH': "is_ortho_set (set S)"
@@ -5583,7 +5583,7 @@ proof-
     by (metis complex_vector.span_span span_finite_dim)
   hence s2: "space_as_set (Abs_clinear_space (closure (cspan (insert a (set S))))) 
         = cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis Span.rep_eq space_as_set_inverse)
+    by (metis ccspan.rep_eq space_as_set_inverse)
   have "closure (cspan (set S)) = cspan (set S)"
     by (simp add: span_finite_dim)    
   have ios: "is_ortho_set (set S)"
@@ -5608,8 +5608,8 @@ proof-
         = projection (cspan {a}) u + projection (cspan (set S)) u"
     for u
     by (simp add: p)    
-  have "Proj (Span (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)})"
-    unfolding Proj_def Span_def id_def
+  have "Proj (ccspan (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)})"
+    unfolding Proj_def ccspan_def id_def
     by (metis \<open>cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}\<close> 
         complex_vector.span_span list.simps(15) map_fun_apply s2) 
 
@@ -5620,16 +5620,16 @@ proof-
   also have "\<dots> = cBlinfun (\<lambda>u. projection (cspan {a}) u)
                +  cBlinfun (\<lambda>u. projection (cspan (set S)) u)"
     unfolding plus_cblinfun_def apply auto
-    by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq Span.rep_eq
+    by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq ccspan.rep_eq
         cblinfun_apply_inverse finite.emptyI finite_list span_finite_dim)
   also have "\<dots> = Proj (Abs_clinear_space (cspan {a}))
                +  Proj (Abs_clinear_space (cspan (set S)))"
     unfolding Proj_def apply auto
-    by (metis Span.rep_eq \<open>closure (cspan (set S)) = cspan (set S)\<close> finite.emptyI 
+    by (metis ccspan.rep_eq \<open>closure (cspan (set S)) = cspan (set S)\<close> finite.emptyI 
         finite.insertI space_as_set_inverse span_finite_dim)
-  also have "\<dots> = Proj (Span {a}) + Proj (Span (set S))"
-    by (simp add: Span.abs_eq span_finite_dim)
-  finally show "Proj (Span (set (a#S))) = Proj (Span {a}) + Proj (Span (set S))".
+  also have "\<dots> = Proj (ccspan {a}) + Proj (ccspan (set S))"
+    by (simp add: ccspan.abs_eq span_finite_dim)
+  finally show "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))".
 qed
 
 (* TODO: rename to butterfly_def *)
@@ -5750,7 +5750,7 @@ lemma isometry_vector_to_cblinfun:
   using assms cnorm_eq_1 isometry_def by force
 
 
-lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = Span {x}"
+lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = ccspan {x}"
 proof transfer
   show "closure (range (\<lambda>\<phi>::'b. one_dim_isom \<phi> *\<^sub>C x)) = closure (cspan {x})"
     for x :: 'a
@@ -5785,7 +5785,7 @@ proof -
     unfolding B by simp
   from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
     by (rule Proj_I)
-  have "B *\<^sub>S top = Span {x}"
+  have "B *\<^sub>S top = ccspan {x}"
     by (metis \<open>\<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>* = B\<close> \<phi>_def \<phi>adj\<phi> assms cblinfun_apply_assoc_subspace 
         image_vector_to_cblinfun isometry_vector_to_cblinfun range_adjoint_isometry times_idOp1) 
   with BProj show "B = proj x"

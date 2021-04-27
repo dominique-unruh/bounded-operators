@@ -707,23 +707,20 @@ proof transfer
     by (auto intro !: exI [of _ 0])
 qed
 
-(* TODO: renamings from here *)
-
-lemma subspace_scale_invariant: 
+lemma csubspace_scaleC_invariant: 
   fixes a S
-  assumes \<open>a \<noteq> 0\<close> and \<open>closed_csubspace S\<close>
+  assumes \<open>a \<noteq> 0\<close> and \<open>csubspace S\<close>
   shows \<open>(*\<^sub>C) a ` S = S\<close>
 proof-
   have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
     for x
-    using assms(2) closed_csubspace.subspace complex_vector.subspace_scale by blast 
+    using assms(2) complex_vector.subspace_scale by blast 
   moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
     for x
   proof -
     assume "x \<in> S"
     hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
-      using assms(2) complex_vector.subspace_def scaleC_one
-      by (metis closed_csubspace.subspace) 
+      using assms(2) complex_vector.subspace_def scaleC_one by metis
     hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
       using assms(1) by auto
     thus ?thesis
@@ -733,15 +730,9 @@ proof-
 qed
 
 
-lemma timesScalarSpace_not0[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ ccsubspace"
-proof transfer
-  show "(*\<^sub>C) a ` S = S"
-    if "(a::complex) \<noteq> 0"
-      and "closed_csubspace S"
-    for a :: complex
-      and S :: "'b set"
-    using that by (simp add: subspace_scale_invariant) 
-qed
+lemma ccsubspace_scaleC_invariant[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ ccsubspace"
+  apply transfer
+  by (simp add: closed_csubspace.subspace csubspace_scaleC_invariant)
 
 
 instantiation ccsubspace :: ("{complex_vector,topological_space}") "top"
@@ -757,61 +748,53 @@ begin
 lift_definition Inf_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
   is \<open>\<lambda> S. \<Inter> S\<close>
 proof
+  fix S :: "'a set set"
+  assume closed: "closed_csubspace x" if \<open>x \<in> S\<close> for x
   show "csubspace (\<Inter> S::'a set)"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by (simp add: closed_csubspace.subspace) 
+    by (simp add: closed closed_csubspace.subspace) 
   show "closed (\<Inter> S::'a set)"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by (simp add: closed_csubspace.closed) 
+    by (simp add: closed closed_csubspace.closed) 
 qed
 
 instance ..
 end
 
 
-subsection \<open>Span\<close>
+subsection \<open>ccspan\<close>
 
-lift_definition Span :: "'a::complex_normed_vector set \<Rightarrow> 'a ccsubspace"
-  is "\<lambda>G. closure (complex_vector.span G)"
+lift_definition ccspan :: "'a::complex_normed_vector set \<Rightarrow> 'a ccsubspace"
+  is "\<lambda>G. closure (cspan G)"
 proof (rule closed_csubspace.intro)
+  fix S :: "'a set"
   show "csubspace (closure (cspan S))"
-    for S :: "'a set"
     by (simp add: closure_is_csubspace)    
   show "closed (closure (cspan S))"
-    for S :: "'a set"
     by simp
 qed
 
-lemma subspace_span_A:
+(* Replaced by complex_vector.span_minimal *)
+(* lemma cspan_inside_closed_csubspace:
   assumes \<open>closed_csubspace S\<close> and \<open>A \<subseteq> S\<close>
-  shows \<open>complex_vector.span A \<subseteq> S\<close>
-  using assms
-  unfolding complex_vector.span_def complex_vector.subspace_def
-    hull_def closed_csubspace_def complex_vector.subspace_def
-  by auto
+  shows \<open>cspan A \<subseteq> S\<close> *)
 
-lemma subspace_span_B:
-  assumes \<open>closed_csubspace S\<close> and \<open>complex_vector.span A \<subseteq> S\<close>
-  shows \<open>A \<subseteq> S\<close>
-  using assms(2) complex_vector.span_superset by blast
+(* Use complex_vector.span_superset instead *)
+(* lemma cspan_inside_closed_csubspace_converse:
+  assumes \<open>closed_csubspace S\<close> and \<open>cspan A \<subseteq> S\<close>
+  shows \<open>A \<subseteq> S\<close> *)
 
-lemma span_def': \<open>Span A = Inf {S. A \<subseteq> space_as_set S}\<close>
+lemma ccspan_Inf_def: \<open>ccspan A = Inf {S. A \<subseteq> space_as_set S}\<close>
   for A::\<open>('a::cbanach) set\<close>
 proof-
-  have \<open>x \<in> space_as_set (Span A) 
+  have \<open>x \<in> space_as_set (ccspan A) 
     \<Longrightarrow> x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     for x::'a
   proof-
-    assume \<open>x \<in> space_as_set (Span A)\<close>
+    assume \<open>x \<in> space_as_set (ccspan A)\<close>
     hence "x \<in> closure (cspan A)"
-      by (simp add: Span.rep_eq)
+      by (simp add: ccspan.rep_eq)
     hence \<open>x \<in> closure (complex_vector.span A)\<close>
-      unfolding Span_def
-      by simp     
+      unfolding ccspan_def
+      by simp
     hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
       by (simp add: closure_sequential)
     then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
@@ -831,7 +814,7 @@ proof-
       by blast
     moreover have \<open>{S. A \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
       using Collect_mono_iff
-      by (simp add: Collect_mono_iff subspace_span_A)  
+      by (simp add: Collect_mono_iff closed_csubspace.subspace complex_vector.span_minimal)
     ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
       by blast     
     moreover have "(x::'a) \<in> \<Inter> {x. A \<subseteq> x \<and> closed_csubspace x}"
@@ -844,7 +827,7 @@ proof-
       apply transfer.
   qed
   moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})
-             \<Longrightarrow> x \<in> space_as_set (Span A)\<close>
+             \<Longrightarrow> x \<in> space_as_set (ccspan A)\<close>
     for x::'a
   proof-
     assume \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
@@ -852,27 +835,26 @@ proof-
       apply transfer
       by blast
     moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
-      using Collect_mono_iff
-      by (simp add: Collect_mono_iff subspace_span_B) 
+      using Collect_mono_iff complex_vector.span_superset by fastforce
     ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
       by blast 
-    thus \<open>x \<in> space_as_set (Span A)\<close>
-      by (metis (no_types, lifting) Inter_iff space_as_set closure_subset mem_Collect_eq Span.rep_eq)      
+    thus \<open>x \<in> space_as_set (ccspan A)\<close>
+      by (metis (no_types, lifting) Inter_iff space_as_set closure_subset mem_Collect_eq ccspan.rep_eq)      
   qed
-  ultimately have \<open>space_as_set (Span A) = space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
+  ultimately have \<open>space_as_set (ccspan A) = space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
     by blast
   thus ?thesis
     using space_as_set_inject by auto 
 qed
 
-lemma span_mult[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> cspan { a *\<^sub>C \<psi> } = cspan {\<psi>}"
+lemma cspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> cspan { a *\<^sub>C \<psi> } = cspan {\<psi>}"
   for \<psi>::"'a::complex_vector"
   by (smt complex_vector.dependent_single complex_vector.independent_insert 
       complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant 
       complex_vector.span_scale doubleton_eq_iff insert_absorb insert_absorb2 insert_commute 
       singletonI)
 
-lemma subspace_I:
+lemma closure_is_closed_csubspace:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes \<open>csubspace S\<close>
   shows \<open>closed_csubspace (closure S)\<close>
@@ -928,17 +910,22 @@ proof-
     by (simp add: \<open>\<And>x c. x \<in> closure S \<Longrightarrow> c *\<^sub>C x \<in> closure S\<close> \<open>\<And>y x. \<lbrakk>x \<in> closure S; y \<in> closure S\<rbrakk> \<Longrightarrow> x + y \<in> closure S\<close> assms closed_csubspace.intro closure_is_csubspace) 
 qed
 
-lemma bounded_linear_continuous:
+lemma clinear_continuous_at:
   assumes \<open>bounded_clinear f\<close> 
   shows \<open>isCont f x\<close>
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
 
-lemma equal_span_0:
+lemma clinear_continuous_within:
+  assumes \<open>bounded_clinear f\<close> 
+  shows \<open>continuous (at x within s) f\<close>
+  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_within)
+
+(* Use complex_vector.linear_eq_0_on_span instead *)
+(* lemma equal_span_0:
   fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> 
     and S::\<open>'a set\<close> and x::'a
-  assumes \<open>clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> complex_vector.span S\<close> 
-  shows \<open>f x = 0\<close>
-  using assms(1) assms(2) complex_vector.linear_eq_0_on_span xS by blast
+  assumes \<open>clinear f\<close> and \<open>\<forall> t \<in> S. f t = 0\<close> and xS: \<open>x \<in> cspan S\<close> 
+  shows \<open>f x = 0\<close> *)
 
 instantiation ccsubspace :: ("{complex_vector,topological_space}") "order"
 begin
@@ -950,33 +937,22 @@ lift_definition less_ccsubspace :: \<open>'a ccsubspace \<Rightarrow> 'a ccsubsp
 declare less_ccsubspace_def[code del]
 instance
 proof
-  show "((x::'a ccsubspace) < y) = (x \<le> y \<and> \<not> y \<le> x)"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
+  fix x y z :: "'a ccsubspace"
+  show "(x < y) = (x \<le> y \<and> \<not> y \<le> x)"
     by (simp add: less_eq_ccsubspace.rep_eq less_le_not_le less_ccsubspace.rep_eq)    
-  show "(x::'a ccsubspace) \<le> x"
-    for x :: "'a ccsubspace"
+  show "x \<le> x"
     by (simp add: less_eq_ccsubspace.rep_eq)    
-  show "(x::'a ccsubspace) \<le> z"
-    if "(x::'a ccsubspace) \<le> y"
-      and "(y::'a ccsubspace) \<le> z"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-      and z :: "'a ccsubspace"
-    using that
-    using less_eq_ccsubspace.rep_eq by auto 
-  show "(x::'a ccsubspace) = y"
-    if "(x::'a ccsubspace) \<le> y"
-      and "(y::'a ccsubspace) \<le> x"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    using that
-    by (simp add: space_as_set_inject less_eq_ccsubspace.rep_eq) 
+  show "x \<le> z" if "x \<le> y" and "y \<le> z"
+    using that less_eq_ccsubspace.rep_eq by auto 
+  show "x = y" if "x \<le> y" and "y \<le> x"
+    using that by (simp add: space_as_set_inject less_eq_ccsubspace.rep_eq) 
 qed
 end
 
-lemma id_bounded_clinear: \<open>bounded_clinear id\<close>
+lemma bounded_clinear_id: \<open>bounded_clinear id\<close>
   by (simp add: id_def)
+
+(* TODO renamings from here *)
 
 lemma bounded_sesquilinear_diff:
   \<open>bounded_sesquilinear A \<Longrightarrow> bounded_sesquilinear B \<Longrightarrow> bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close>
@@ -1454,7 +1430,7 @@ proof-
   qed
 qed
 
-lemma Span_empty[simp]: "Span {} = bot"
+lemma Span_empty[simp]: "ccspan {} = bot"
 proof transfer
   show "closure (cspan {}) = {0::'a}"
     by simp
@@ -1678,7 +1654,7 @@ proof-
       have "clinear (B p)"
         by (meson assms(1) bounded_sesquilinear.add_right bounded_sesquilinear.scaleC_right clinearI)
       hence "B p t = 0"
-        using a2 d1 equal_span_0 that by blast            
+        using a2 d1 that complex_vector.linear_eq_0_on_span by blast
       thus "0 \<in> Collect ((=) (B p t))"
         by (metis (full_types) mem_Collect_eq)
       have "\<forall>x\<in>Collect ((=) (B p t)). \<forall>y\<in>Collect ((=) (B p t)). x + y \<in> Collect ((=) (B p t))"
@@ -1756,7 +1732,7 @@ lemma closure_is_csubspaceosed_plus:
   assumes a1: \<open>closed_csubspace A\<close> and a2: \<open>closed_csubspace B\<close>
   shows \<open>closed_csubspace (A +\<^sub>M B)\<close>
   using a1 a2 closed_sum_def 
-  by (metis closed_csubspace.subspace subspace_I csubspace_set_plus)
+  by (metis closed_csubspace.subspace closure_is_closed_csubspace csubspace_set_plus)
 
 
 instantiation ccsubspace :: (complex_normed_vector) sup begin
@@ -1766,7 +1742,7 @@ lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<R
 instance .. 
 end
 
-lemma Span_union: "Span A \<squnion> Span B = Span (A \<union> B)"
+lemma Span_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
 proof (transfer, auto)
   have p0: "cspan (A \<union> B) = 
       cspan A + cspan B"

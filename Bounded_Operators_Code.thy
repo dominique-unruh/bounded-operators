@@ -277,7 +277,7 @@ Then all code equations for different operations need to be formulated as
 functions of values of the form \<open>SPAN x\<close>. (E.g., \<open>SPAN x + SPAN y = SPAN (\<dots>)\<close>.)\<close>
 
 definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
-    Span (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
+    ccspan (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
   \<comment> \<open>The SPAN of vectors x, as a \<^type>\<open>ccsubspace\<close>.
       We filter out vectors of the wrong dimension because \<open>SPAN\<close> needs to have
       well-defined behavior even in cases that would not actually occur in an execution.\<close>
@@ -348,8 +348,8 @@ text \<open>We do not need an equation for \<^term>\<open>(+)\<close> because \<
 is defined in terms of \<^term>\<open>(\<squnion>)\<close> (for \<^type>\<open>ccsubspace\<close>), thus the code generation automatically
 computes \<^term>\<open>(+)\<close> in terms of the code for \<^term>\<open>(\<squnion>)\<close>\<close>
 
-definition [code del,code_abbrev]: "Span_code (S::'a::enum ell2 set) = (Span S)"
-  \<comment> \<open>A copy of \<^term>\<open>Span\<close> with restricted type. For analogous reasons as
+definition [code del,code_abbrev]: "Span_code (S::'a::enum ell2 set) = (ccspan S)"
+  \<comment> \<open>A copy of \<^term>\<open>ccspan\<close> with restricted type. For analogous reasons as
      \<^term>\<open>cblinfun_apply_code\<close>, see there for explanations\<close>
 
 lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l))"
@@ -415,14 +415,14 @@ proof -
       and "dB = canonical_basis_length TYPE('b)"
       and "S' = filter (\<lambda>v. dim_vec v = dA) S"
 
-  have "applyOpSpace A (SPAN S) = A *\<^sub>S Span (set (map onb_enum_of_vec S'))"
+  have "applyOpSpace A (SPAN S) = A *\<^sub>S ccspan (set (map onb_enum_of_vec S'))"
     unfolding SPAN_def dA_def[symmetric] Let_def S'_def filter_set
     by simp
-  also have "\<dots> = Span ((\<lambda>x. onb_enum_of_vec 
+  also have "\<dots> = ccspan ((\<lambda>x. onb_enum_of_vec 
             (mat_of_cblinfun A *\<^sub>v vec_of_onb_enum (onb_enum_of_vec x :: 'a))) ` set S')"
     apply (subst apply_cblinfun_Span)
     by (simp add: image_image)
-  also have "\<dots> = Span ((\<lambda>x. onb_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
+  also have "\<dots> = ccspan ((\<lambda>x. onb_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
     apply (subst image_cong[OF refl])
      apply (subst onb_enum_of_vec_inverse')
     by (auto simp add: S'_def dA_def)
@@ -530,7 +530,7 @@ proof -
 
 
   have "space_as_set (SPAN base)
-       = space_as_set (Span (onb_enum_of_vec ` set base :: 'a set))"
+       = space_as_set (ccspan (onb_enum_of_vec ` set base :: 'a set))"
     unfolding SPAN_def dA_def[symmetric] Let_def filter_set
     apply (subst filter_True)
     using base_carrier by auto

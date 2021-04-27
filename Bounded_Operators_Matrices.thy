@@ -2753,8 +2753,8 @@ lemma Span_onb_enum_gram_schmidt0:
   defines "onb_enum == (onb_enum_of_vec :: _ \<Rightarrow> 'a::onb_enum)"
   defines "n == canonical_basis_length TYPE('a)"
   assumes "set ws \<subseteq> carrier_vec n"
-  shows "Span (set (map onb_enum (gram_schmidt0 n ws)))
-     = Span (set (map onb_enum ws))"
+  shows "ccspan (set (map onb_enum (gram_schmidt0 n ws)))
+     = ccspan (set (map onb_enum ws))"
 proof (transfer fixing: n ws onb_enum)
   interpret complex_vec_space.
   define gs where "gs = gram_schmidt0 n ws"
@@ -3984,7 +3984,7 @@ definition "is_subspace_of n vs ws =
 
 lemma Span_leq:
   fixes A B :: "'a::onb_enum list"
-  shows "(Span (set A) \<le> Span (set B)) \<longleftrightarrow>
+  shows "(ccspan (set A) \<le> ccspan (set B)) \<longleftrightarrow>
     is_subspace_of (canonical_basis_length TYPE('a)) 
       (map vec_of_onb_enum A) (map vec_of_onb_enum B)"
 proof -
@@ -4012,7 +4012,7 @@ proof -
     apply (simp add: Bo_def)
     using Bv_carrier by (rule gram_schmidt0_result(2))
 
-  have "Span (set A) \<le> Span (set B) \<longleftrightarrow> cspan (set A) \<subseteq> cspan (set B)"
+  have "ccspan (set A) \<le> ccspan (set B) \<longleftrightarrow> cspan (set A) \<subseteq> cspan (set B)"
     apply (transfer fixing: A B)
     apply (subst span_finite_dim, simp)
     by (subst span_finite_dim, simp_all)
@@ -4055,12 +4055,12 @@ proof -
   qed
   also have "\<dots> = is_subspace_of d Av Bv"
     by (simp add: is_subspace_of_def d_def Bo_def)
-  finally show "Span (set A) \<le> Span (set B) \<longleftrightarrow> is_subspace_of d Av Bv"
+  finally show "ccspan (set A) \<le> ccspan (set B) \<longleftrightarrow> is_subspace_of d Av Bv"
     by simp
 qed
 
 lemma apply_cblinfun_Span: 
-  "A *\<^sub>S Span (set S) = Span (onb_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_onb_enum S)))"
+  "A *\<^sub>S ccspan (set S) = ccspan (onb_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_onb_enum S)))"
   apply (auto simp: applyOpSpace_Span image_image)
   by (metis mat_of_cblinfun_description onb_enum_of_vec_inverse)
 
@@ -4081,7 +4081,7 @@ lemma mat_of_cblinfun_Proj_Span_aux_1:
   defines "d == canonical_basis_length TYPE('a)"
   assumes ortho: "is_ortho_set (set S)" and distinct: "distinct S"
   shows "mk_projector_orthog d (map vec_of_onb_enum S) 
-       = mat_of_cblinfun (Proj (Span (set S)))"
+       = mat_of_cblinfun (Proj (ccspan (set S)))"
 proof -
   define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
   
@@ -4163,7 +4163,7 @@ proof -
   have distinct': "distinct (map selfbutter Snorm)"
     unfolding distinct_map by simp
 
-  have Span_Snorm: "Span (set Snorm) = Span (set S)"
+  have Span_Snorm: "ccspan (set Snorm) = ccspan (set S)"
     apply (transfer fixing: Snorm S)
     apply (simp add: scaleR_scaleC Snorm_def)
     apply (subst complex_vector.span_image_scale) 
@@ -4220,7 +4220,7 @@ proof -
     apply (rule sum.cong[OF refl])
     apply (rule butterfly_proj)
     using norm_Snorm by simp
-  also have "\<dots> = mat_of_cblinfun (Proj (Span (set Snorm)))"
+  also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set Snorm)))"
     apply (rule arg_cong[of _ _ mat_of_cblinfun])
   proof (insert ortho_Snorm, insert \<open>distinct Snorm\<close>, induction Snorm)
     case Nil
@@ -4234,17 +4234,17 @@ proof -
     have "sum proj (set (a # Snorm))
         = proj a + sum proj (set Snorm)"
       by auto
-    also have "\<dots> = proj a + Proj (Span (set Snorm))"
+    also have "\<dots> = proj a + Proj (ccspan (set Snorm))"
       apply (subst Cons.IH)
       using Cons.prems apply auto
       using is_onb_delete by blast
-    also have "\<dots> = Proj (Span (set (a # Snorm)))"
+    also have "\<dots> = Proj (ccspan (set (a # Snorm)))"
       apply (rule Proj_Span_insert[symmetric])
       using Cons.prems by auto
     finally show ?case
       by -
   qed
-  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+  also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set S)))"
     unfolding Span_Snorm by simp
   finally show ?thesis
     by -
@@ -4252,7 +4252,7 @@ qed
 
 lemma mat_of_cblinfun_Proj_Span: 
   fixes S :: "'a::onb_enum list"
-  shows "mat_of_cblinfun (Proj (Span (set S))) =
+  shows "mat_of_cblinfun (Proj (ccspan (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
       mk_projector_orthog d (gram_schmidt0 d (map vec_of_onb_enum S)))"
 proof-
@@ -4273,11 +4273,11 @@ proof-
     apply simp
     apply (subst map_cong[where ys=gs and g=id], simp)
     using gs_dim by (auto intro!: onb_enum_of_vec_inverse simp: d_def)
-  also have "\<dots> = mat_of_cblinfun (Proj (Span (set (map onb_enum_of_vec gs :: 'a list))))"
+  also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set (map onb_enum_of_vec gs :: 'a list))))"
     unfolding d_def
     apply (subst mat_of_cblinfun_Proj_Span_aux_1)
     using ortho_gs distinct_gs by auto
-  also have "\<dots> = mat_of_cblinfun (Proj (Span (set S)))"
+  also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set S)))"
     apply (rule arg_cong[where f="\<lambda>x. mat_of_cblinfun (Proj x)"])
     unfolding gs_def d_def
     apply (subst Span_onb_enum_gram_schmidt0)

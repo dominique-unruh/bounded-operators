@@ -128,9 +128,9 @@ value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^
 
 subsection \<open>Subspaces\<close>
 
-value "Span {ket False}"
+value "ccspan {ket False}"
 
-value "Proj (Span {ket False})"
+value "Proj (ccspan {ket False})"
 
 value "top :: bool ell2 ccsubspace"
 
@@ -138,30 +138,30 @@ value "bot :: bool ell2 ccsubspace"
 
 value "0 :: bool ell2 ccsubspace"
 
-value "Span {ket False} \<squnion> Span {ket True}"
+value "ccspan {ket False} \<squnion> ccspan {ket True}"
 
-value "Span {ket False} + Span {ket True}"
+value "ccspan {ket False} + ccspan {ket True}"
 
-value "Span {ket False} \<sqinter> Span {ket True}"
+value "ccspan {ket False} \<sqinter> ccspan {ket True}"
 
-value "idOp *\<^sub>S Span {ket False}"
+value "idOp *\<^sub>S ccspan {ket False}"
 
 value "idOp *\<^sub>S (top :: bool ell2 ccsubspace)" (* Special case, using range_cblinfun_code for efficiency *)
 
-value "- Span {ket False}"
+value "- ccspan {ket False}"
 
-value "Span {ket False, ket True} = top"
+value "ccspan {ket False, ket True} = top"
 
-value "Span {ket False} \<le> Span {ket True}"
+value "ccspan {ket False} \<le> ccspan {ket True}"
 
-value "applyOpSpace idOp (Span {ket True})"
+value "applyOpSpace idOp (ccspan {ket True})"
 
 value "kernel idOp :: bool ell2 ccsubspace"
 
 value "eigenspace 1 idOp :: bool ell2 ccsubspace"
 
-value "Inf {Span {ket False}, top}"
+value "Inf {ccspan {ket False}, top}"
 
-value "Sup {Span {ket False}, top}"
+value "Sup {ccspan {ket False}, top}"
 
 end

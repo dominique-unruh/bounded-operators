@@ -2881,7 +2881,7 @@ proof-
       thus ?thesis by blast
     qed
     thus ?thesis
-      using Span.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> applyOpSpace_span
+      using ccspan.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> applyOpSpace_span
       by smt
   qed
   hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
@@ -3141,12 +3141,12 @@ lemma ket_is_orthogonal[simp]:
   unfolding is_orthogonal_def
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
 
-lemma Span_range_ket[simp]: "Span (range ket) = (top::('a ell2_clinear_space))"
+lemma Span_range_ket[simp]: "ccspan (range ket) = (top::('a ell2_clinear_space))"
 proof-
   have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
     using Complex_L2.ket_ell2_span by blast
   thus ?thesis
-    by (simp add: Span.abs_eq top_ccsubspace.abs_eq)
+    by (simp add: ccspan.abs_eq top_ccsubspace.abs_eq)
 qed
 
 lemma [simp]: "ket i \<noteq> 0"
@@ -3629,7 +3629,7 @@ proof-
       by (smt SB_def UNIV_I rangeE u2)
     moreover have "continuous_on (closure (complex_vector.span SB)) (H (ket i))"
       for i
-      by (simp add: q1 bounded_linear_continuous continuous_at_imp_continuous_on)
+      by (simp add: q1 clinear_continuous_at continuous_at_imp_continuous_on)
     ultimately have "H (ket i) v = 0"
       if "v \<in> closure (complex_vector.span SB)"
       for i v
@@ -3662,7 +3662,7 @@ proof-
       by (smt complex_cnj_zero_iff that) 
     moreover have "continuous_on (closure (complex_vector.span SA)) (\<lambda>u. H u v)"
       for v
-      using jj bounded_linear_continuous continuous_at_imp_continuous_on
+      using jj clinear_continuous_at continuous_at_imp_continuous_on
         cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
         equal_span_applyOpSpace z1
       by smt (* > 1s *)
