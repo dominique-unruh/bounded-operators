@@ -2741,17 +2741,15 @@ proof
   define basis :: \<open>'a ell2 set\<close> where \<open>basis = range ket\<close>
   have \<open>finite basis\<close>
     unfolding basis_def by simp
-  moreover have \<open>cindependent basis\<close>
-    by (smt (verit, ccfv_SIG) basis_def ell2_ket f_inv_into_f is_ortho_set_def is_ortho_set_independent ket_Kronecker_delta_neq norm_zero)
   moreover have \<open>cspan basis = UNIV\<close>
     by (simp add: basis_def)
-  ultimately show \<open>\<exists>basis::'a ell2 set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV\<close>
+  ultimately show \<open>\<exists>basis::'a ell2 set. finite basis \<and> cspan basis = UNIV\<close>
     by auto
 qed
 
 instantiation ell2 :: (enum) onb_enum begin
 definition "canonical_basis_ell2 = map ket Enum.enum"
-definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)" (* TODO: [simp] *)
+(* definition "canonical_basis_length_ell2 (_::'a ell2 itself) = CARD('a)" (* TODO: [simp] *) *)
 instance
 proof
   show "distinct (canonical_basis::'a ell2 list)"
@@ -2779,10 +2777,10 @@ proof
   show "cspan (set (canonical_basis::'a ell2 list)) = UNIV"
     by (auto simp: canonical_basis_ell2_def enum_UNIV)
 
-  show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
+(*   show "canonical_basis_length (TYPE('a ell2)::'a ell2 itself) = length (canonical_basis::'a ell2 list)"
     unfolding canonical_basis_length_ell2_def canonical_basis_ell2_def
     using card_UNIV_length_enum
-    by auto
+    by auto *)
 
   show "norm (x::'a ell2) = 1"
     if "(x::'a ell2) \<in> set canonical_basis"
@@ -2792,6 +2790,10 @@ proof
 qed
 
 end
+
+lemma canonical_basis_length_ell2[code_unfold, simp]: "canonical_basis_length (_::'a::enum ell2 itself) = CARD('a)"
+  unfolding canonical_basis_ell2_def apply simp
+    using card_UNIV_length_enum by metis
 
 instantiation ell2 :: (CARD_1) complex_algebra_1 
 begin

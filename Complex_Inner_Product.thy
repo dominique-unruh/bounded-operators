@@ -2274,12 +2274,10 @@ qed
 
 
 lemma is_closed_subspace_zero:
-  fixes A :: \<open>('a::chilbert_space) set\<close>
+  fixes A :: \<open>('a::{complex_vector, topological_space}) set\<close>
   assumes \<open>closed_csubspace A\<close>
   shows \<open>(({0}::'a set) +\<^sub>M A) = A\<close>
-  using  DeMorganOrthoDual  assms  
-    ortho_top orthogonal_complement_twice orthogonal_complement_def
-  by (metis (no_types, lifting) Complex_Vector_Spaces.closed_csubspace_UNIV Int_UNIV_left subspace_orthog)
+  by (metis add.commute add.right_neutral assms closed_csubspace_def closed_sum_def closure_closed set_zero)
 
 lemma is_closed_subspace_ord:
   fixes A B C:: \<open>('a::chilbert_space) set\<close>
@@ -2288,7 +2286,7 @@ lemma is_closed_subspace_ord:
   shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
   by (metis DeMorganOrtho Int_mono assms(1) assms(2) assms(3) assms(4) order_refl ortho_leq closure_is_csubspaceosed_plus)
 
-
+(* Use closed_sum_left_subset instead *)
 lemma is_closed_subspace_universal_inclusion_left:
   fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close>
@@ -2296,13 +2294,14 @@ lemma is_closed_subspace_universal_inclusion_left:
   using DeMorganOrtho Int_lower1 assms(1) assms(2)  ortho_leq
   by (metis closure_is_csubspaceosed_plus)
 
-
+(* Use closed_sum_right_subset instead *)
 lemma is_closed_subspace_universal_inclusion_right:
   fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close>
   shows \<open>B \<subseteq> (A +\<^sub>M B)\<close>
   by (metis assms(1) assms(2)  is_closed_subspace_comm is_closed_subspace_universal_inclusion_left)
 
+(* Use closed_sum_is_sup instead *)
 lemma is_closed_subspace_universal_inclusion_inverse:
   fixes A B C:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close> and \<open>closed_csubspace C\<close>
@@ -2848,33 +2847,7 @@ lift_definition uminus_ccsubspace::\<open>'a ccsubspace  \<Rightarrow> 'a ccsubs
 instance ..
 end
 
-(* TODO: complex_inner should be complex_normed_vector *)
-(* TODO: move the definition to Complex_Vector_Spaces *)
-instantiation ccsubspace :: (complex_inner) "Sup"
-begin
-lift_definition Sup_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
-  is \<open>\<lambda>S. closure (complex_vector.span (Union S))\<close>
-proof
-  show "csubspace (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by (simp add: closed_csubspace.subspace closure_is_closed_csubspace) 
-  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by simp 
-qed
 
-instance..
-end
-
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") inf begin 
-lift_definition inf_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
-  is "(\<inter>)" by simp
-instance .. end
 
 
 instantiation ccsubspace :: (complex_inner) minus begin
@@ -2885,174 +2858,19 @@ instance..
 end
 
 
-instantiation ccsubspace :: ("{complex_vector,topological_space}") order_top begin
-instance 
-proof
-  show "a \<le> \<top>"
-    for a :: "'a ccsubspace"
-    apply transfer
-    by simp
-qed
-end
-
-instantiation ccsubspace :: (chilbert_space) order_bot begin
-instance 
-proof
-  show "(\<bottom>::'a ccsubspace) \<le> a"
-    for a :: "'a ccsubspace"
-    apply transfer
-    by (metis closed_csubspace_0 is_closed_subspace_universal_inclusion_left is_closed_subspace_zero)
-qed
-end
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") semilattice_inf begin
-instance 
-proof
-  show "x \<sqinter> y \<le> x"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    apply transfer
-    by simp
-
-  show "x \<sqinter> y \<le> y"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    apply transfer
-    by simp
-
-  show "x \<le> y \<sqinter> z"
-    if "x \<le> y"
-      and "x \<le> z"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-      and z :: "'a ccsubspace"
-    using that 
-    apply transfer
-    by simp
-qed  
-end
-
-
-(* 
-DOMINIQUE: Try if "ccsubspace :: (complex_inner) lattice"
-and "ccsubspace :: (complex_inner) complete_lattice" (below)
-work with something weaker than complex_inner
-(it does not work for "ccsubspace :: (complex_inner) orthocomplemented_lattice"). 
-
-Jose: I substituted al the "chilbert_spaces" by "complex_inner", I corrected
-lemma by lemma and even in that case, it does not work the elimination of the hypothesis
-of completeness.
-
-*)
-
-instantiation ccsubspace :: (chilbert_space) lattice begin
-instance 
-proof
-  show \<open>x \<le> (sup x y)\<close>
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    apply transfer
-    by (simp add: is_closed_subspace_universal_inclusion_left)
-
-  show "y \<le> sup x y"
-    for y :: "'a ccsubspace"
-      and x :: "'a ccsubspace"
-    apply transfer
-    by (simp add: is_closed_subspace_universal_inclusion_right) 
-
-  show "sup y z \<le> x"
-    if "y \<le> x" and "z \<le> x"
-    for y :: "'a ccsubspace"
-      and x :: "'a ccsubspace"
-      and z :: "'a ccsubspace"
-    using that
-    apply transfer
-    using is_closed_subspace_universal_inclusion_inverse by blast 
-qed
-end
-
-
-
 lemma span_superset:
   \<open>A \<subseteq> space_as_set (ccspan A)\<close> 
-  for A :: \<open>'a::chilbert_space set\<close>
-proof-
-  have b1: \<open>A \<subseteq> space_as_set S\<close>
-    if "S \<in> {S. A \<subseteq> space_as_set S}"
-    for S
-    using that
-    by simp
-  hence \<open>A \<subseteq> \<Inter> {space_as_set S| S. A \<subseteq> space_as_set S}\<close>
-    by blast
-  hence \<open>A \<subseteq> space_as_set( Inf {S| S. A \<subseteq> space_as_set S})\<close>
-    using Inf_ccsubspace.rep_eq by fastforce    
-  thus ?thesis using ccspan_Inf_def by metis
-qed
+  for A :: \<open>'a::complex_normed_vector set\<close>
+  apply transfer
+  by (meson closure_subset complex_vector.span_superset subset_trans)
 
 lemma bot_plus[simp]: "sup bot x = x" 
-  for x :: "'a::chilbert_space ccsubspace"
+  for x :: "'a::complex_normed_vector ccsubspace"
   apply transfer
-  using is_closed_subspace_zero
+  apply (rule is_closed_subspace_zero)
   unfolding sup_ccsubspace_def[symmetric] closed_sum_def set_plus_def
   by smt
 
-instantiation ccsubspace :: (chilbert_space) complete_lattice begin
-instance 
-proof
-  show "Inf A \<le> x"
-    if "x \<in> A"
-    for x :: "'a ccsubspace"
-      and A :: "'a ccsubspace set"
-    using that 
-    apply transfer
-    by auto
-
-  have b1: "z \<subseteq> \<Inter> A"
-    if "Ball A closed_csubspace" and
-      "closed_csubspace z" and
-      "(\<And>x. closed_csubspace x \<Longrightarrow> x \<in> A \<Longrightarrow> z \<subseteq> x)"
-    for z::"'a set" and A
-    using that
-    by auto 
-  show "z \<le> Inf A"
-    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> z \<le> x"
-    for A :: "'a ccsubspace set"
-      and z :: "'a ccsubspace"
-    using that 
-    apply transfer
-    using b1 by blast
-
-  show "x \<le> Sup A"
-    if "x \<in> A"
-    for x :: "'a ccsubspace"
-      and A :: "'a ccsubspace set"
-    using that 
-    apply transfer
-    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)  
-  have b2: "x \<in> z"
-    if "\<forall>x\<in>A. closed_csubspace x" and
-      "closed_csubspace z" and
-      "\<And>x. x \<in> A \<Longrightarrow> x \<subseteq> z" and
-      "x \<in> closure (cspan (\<Union> A))"
-    for x::'a and z and A
-    by (metis OrthoClosedEq Sup_subset_mono atMost_iff cSup_atMost closed_csubspace.subspace 
-        closure_mono orthogonal_complement_twice subset_iff closure_is_closed_csubspace complex_vector.span_minimal that(2) 
-        that(3) that(4))
-  show "Sup A \<le> z"
-    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> x \<le> z"
-    for A :: "'a ccsubspace set"
-      and z :: "'a ccsubspace"
-    using that 
-    apply transfer
-    using b2 by blast
-
-  show "Inf {} = (top::'a ccsubspace)"
-    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
-
-  show "Sup {} = (bot::'a ccsubspace)"
-    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto 
-qed
-end
 
 instance ccsubspace :: (chilbert_space) complete_orthomodular_lattice 
 proof
@@ -3209,31 +3027,6 @@ lemma canonical_basis_non_zero:
     is_cindependent_set
   by smt
 
-
-(* TODO: move to Complex_Vector_Spaces 
-  Reply: it does not work
-
-*)
-instantiation complex :: basis_enum begin
-definition "canonical_basis = [1::complex]"
-definition "canonical_basis_length (_::complex itself) = 1"
-instance
-proof
-  show "distinct (canonical_basis::complex list)"
-    by (simp add: canonical_basis_complex_def)    
-  show "cindependent (set (canonical_basis::complex list))"
-    unfolding canonical_basis_complex_def
-    by auto
-  show "cspan (set (canonical_basis::complex list)) = UNIV"
-    unfolding canonical_basis_complex_def 
-    apply (auto simp add: cspan_raw_def vector_space_over_itself.span_Basis)
-    by (metis complex_scaleC_def complex_vector.span_base complex_vector.span_scale cspan_raw_def insertI1 mult.right_neutral)
-  show "canonical_basis_length (TYPE(complex)::complex itself)
-         = length (canonical_basis::complex list)"
-    unfolding canonical_basis_complex_def canonical_basis_length_complex_def
-    by auto
-qed
-end
 
 
 lemma isCont_scalar_right:

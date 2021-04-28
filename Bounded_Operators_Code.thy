@@ -256,7 +256,7 @@ lemma vector_to_cblinfun_code[code]:
   \<comment> \<open>Code equation for translating a vector into an operation (single-column matrix)\<close>
   "mat_of_cblinfun (vector_to_cblinfun_code \<psi>) = mat_of_cols (CARD('a)) [vec_of_ell2 \<psi>]"
   for \<psi>::"'a::enum ell2"
-  by (simp add: mat_of_cblinfun_ell2_to_l2bounded canonical_basis_length_ell2_def vec_of_ell2_def vector_to_cblinfun_code_def)
+  by (simp add: mat_of_cblinfun_ell2_to_l2bounded  vec_of_ell2_def vector_to_cblinfun_code_def)
 
 subsection \<open>Subspaces\<close>
 
@@ -329,7 +329,7 @@ lemma top_ccsubspace_code[code]:
       map_filter_map o_def unit_vecs_def)
   apply (simp add: onb_enum_of_vec_unit_vec)
   apply (subst nth_image)
-  by (auto simp: canonical_basis_length_eq)
+  by (auto simp: )
 
 lemma bot_as_span[code]: 
   \<comment> \<open>Code equation for \<^term>\<open>bot\<close>, the subspace containing everything.
@@ -357,8 +357,9 @@ lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l)
      constructor that represents sets as lists in the computation.)\<close>
   apply (simp add: Span_code_def SPAN_def Let_def)
   apply (subst Set_filter_unchanged)
-   apply (metis canonical_basis_length_eq dim_vec_of_onb_enum_list' imageE vec_of_ell2_def)
+   apply (metis dim_vec_vec_of_onb_enum imageE vec_of_ell2_def)
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
+
 
 text \<open>This instantiation defines a code equation for equality tests for \<^type>\<open>ccsubspace\<close>.
       The actual code for equality tests is given below (lemma \<open>equal_ccsubspace_code\<close>).\<close>
@@ -570,7 +571,7 @@ proof -
       by simp
     also have "\<dots> = {w. A *\<^sub>V w = 0}"
       apply auto
-      by (metis (no_types, lifting) Am_carrier Am_def canonical_basis_length_eq carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum_list' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
+      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum_list' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
     finally show ?thesis
       by -
   qed

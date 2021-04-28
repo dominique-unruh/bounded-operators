@@ -3941,7 +3941,7 @@ lift_definition inverse_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Right
 definition divide_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" where
   "divide_cblinfun A B = A * inverse B"
 definition "canonical_basis_cblinfun = [1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b]"
-definition "canonical_basis_length_cblinfun (_::('a \<Rightarrow>\<^sub>C\<^sub>L 'b) itself) = (1::nat)"
+(* definition "canonical_basis_length_cblinfun (_::('a \<Rightarrow>\<^sub>C\<^sub>L 'b) itself) = (1::nat)" *)
 instance
 proof intro_classes
   let ?basis = "canonical_basis :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) list"
@@ -3969,8 +3969,8 @@ proof intro_classes
   qed
   thus "cspan (set ?basis) = UNIV" by auto
 
-  show "canonical_basis_length TYPE('a \<Rightarrow>\<^sub>C\<^sub>L 'b) = length ?basis"
-    unfolding canonical_basis_length_cblinfun_def canonical_basis_cblinfun_def by simp
+(*   show "canonical_basis_length TYPE('a \<Rightarrow>\<^sub>C\<^sub>L 'b) = length ?basis"
+    unfolding canonical_basis_length_cblinfun_def canonical_basis_cblinfun_def by simp *)
 
 
   have "A = (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow>
@@ -4269,8 +4269,10 @@ proof-
   have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
     using \<open>finite T\<close> span_finite_dim by blast
   have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
-    by (metis (mono_tags) UNIV_I a1 a2 a3 cdependent_raw_def is_ortho_set_independent 
-        span_explicit_finite subset_refl)
+    apply auto
+     apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
+    apply (simp add: a2 sum.mono_neutral_cong_right)
+    using a2 by blast
 
   have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = cspan A"
     by (simp add: complex_vector.span_explicit)      
