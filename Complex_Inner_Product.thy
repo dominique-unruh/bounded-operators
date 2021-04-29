@@ -4689,14 +4689,11 @@ qed
 
 
 
-
-lemma tendsto_finite_sum:
+(* Use tendsto_sum instead *)
+(* lemma tendsto_finite_sum:
   fixes X :: \<open>_ \<Rightarrow> _ \<Rightarrow> _::topological_monoid_add\<close>
   assumes  \<open>\<And> t. t\<in>T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close> \<open>finite T\<close>
-  shows \<open>(\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t)\<close>
-  using  Complex_Vector_Spaces.finite_sum_tendsto assms 
-  by auto
-
+  shows \<open>(\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t)\<close> *)
 
 (* lemma infinitesimal_square:
   fixes x::hypreal

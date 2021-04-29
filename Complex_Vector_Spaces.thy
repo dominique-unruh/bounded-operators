@@ -1298,63 +1298,17 @@ instance basis_enum \<subseteq> cfinite_dim
   using is_cindependent_set is_generator_set by auto
 
 
-(* TODO renamings from here *)
-
-subsection \<open>Recovered theorems\<close>
-
-lemma [vector_add_divide_simps]:
-  "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
-  "a *\<^sub>C v + (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v + w = (if z = 0 then w else (a *\<^sub>C v + z *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v + b *\<^sub>C w = (if z = 0 then b *\<^sub>C w else (a *\<^sub>C v + (b * z) *\<^sub>C w) /\<^sub>C z)"
-  "v - (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
-  "a *\<^sub>C v - (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v - b *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v - w = (if z = 0 then -w else (a *\<^sub>C v - z *\<^sub>C w) /\<^sub>C z)"
-  "(a / z) *\<^sub>C v - b *\<^sub>C w = (if z = 0 then -b *\<^sub>C w else (a *\<^sub>C v - (b * z) *\<^sub>C w) /\<^sub>C z)"
-  for v :: "'a :: complex_vector"
-  by (simp_all add: divide_inverse_commute scaleC_add_right complex_vector.scale_right_diff_distrib)
-
-
-lemma clinear_space_leI:
-  assumes t1: "\<And>x. x \<in> space_as_set A \<Longrightarrow> x \<in> space_as_set B"
+lemma ccsubspace_leI:
+  assumes t1: "space_as_set A \<subseteq> space_as_set B"
   shows "A \<le> B"
-  using t1  proof transfer
-  show "A \<subseteq> B"
-    if "closed_csubspace A"
-      and "closed_csubspace B"
-      and "\<And>x::'a. x \<in> A \<Longrightarrow> x \<in> B"
-    for A :: "'a set"
-      and B :: "'a set"
-    using that
-    by (simp add: subsetI) 
-qed 
+  using t1 apply transfer by -
 
-lemma finite_sum_tendsto:
+(* Use tendsto_sum instead *)
+(* lemma finite_sum_tendsto:
   fixes A::\<open>'a set\<close> and r :: "'a \<Rightarrow> nat \<Rightarrow> 'b::{comm_monoid_add,topological_monoid_add}"
   assumes t1: \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close> 
     and t2: \<open>finite A\<close>
-  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close>
-proof-
-  have "(\<lambda>n. \<Sum>a\<in>A. r a n) \<longlonglongrightarrow> sum \<phi> A"
-    if  \<open>finite A\<close> and \<open>\<And>a. a \<in> A \<Longrightarrow> r a \<longlonglongrightarrow> \<phi> a\<close>
-    for A
-    using that
-  proof induction
-    case empty
-    show ?case 
-      by auto
-  next
-    case (insert x F)
-    hence "r x \<longlonglongrightarrow> \<phi> x" and "(\<lambda>n. \<Sum>a\<in>F. r a n) \<longlonglongrightarrow> sum \<phi> F"
-      by auto
-    hence "(\<lambda>n. r x n + (\<Sum>a\<in>F. r a n)) \<longlonglongrightarrow> \<phi> x + sum \<phi> F"
-      using tendsto_add by blast
-    thus ?case 
-      using sum.insert insert by auto
-  qed
-  thus ?thesis
-    using t1 t2 by blast    
-qed
+  shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close> *)
 
 lemmas (in bounded_cbilinear) tendsto = tendsto
 
@@ -1367,90 +1321,45 @@ lemmas (in bounded_sesquilinear) isCont = isCont
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
-lemma independent_real_complex: 
-  assumes "complex_vector.independent (S::'a::complex_vector set)" and "finite S"
-  shows "real_vector.independent S"
-  using assms
-proof(induction "card S" arbitrary: S)
-  case 0
-  hence "card S = 0"
-    by auto    
-  hence "S = ({}::'a set)"
-    using "0.prems"(2) card_0_eq by blast    
-  moreover have "real_vector.independent ({}::'a set)"
-    by (metis dependent_raw_def real_vector.independent_empty)    
-  ultimately show ?case by simp
-next
-  case (Suc n)
-  have "\<exists>s S'. S = insert s S' \<and> s \<notin> S'"
-    by (metis Suc.hyps(2) card_le_Suc_iff order_refl)
-  then obtain s S' where g1: "S = insert s S'" and g2: "s \<notin> S'"
-    by blast
-  have "card S' = n"
-    using Suc.hyps(2) Suc.prems(2) g1 g2 by auto
-  moreover have "finite S'"
-    using Suc.prems(2) g1 by auto
-  moreover have "complex_vector.independent S'"
-    by (metis cdependent_raw_def Suc.prems(1) complex_vector.independent_insert g1 g2)
-  ultimately have "real_vector.independent S'"
-    by (simp add: Suc.hyps(1))
-  moreover have "s \<notin> real_vector.span S'"
-  proof(rule classical)
-    assume "\<not>(s \<notin> real_vector.span S')"
-    hence "s \<in> real_vector.span S'"
-      by blast
-    hence "\<exists> r R. s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R) \<and> R \<subseteq> S'"
-      by (smt mem_Collect_eq real_vector.span_explicit real_vector.span_explicit')
-    then obtain r R where s1: "s = (sum (\<lambda>s'. r s' *\<^sub>R s' ) R)" and s2: "R \<subseteq> S'"
-      by blast
-    have "s = (sum (\<lambda>s'. r s' *\<^sub>C s' ) R)"
-      using s1
-      by (metis (no_types, lifting) scaleR_scaleC sum.cong) 
-    hence "s \<in> complex_vector.span S'"
-      using  s2
-      by (meson complex_vector.span_scale complex_vector.span_sum complex_vector.span_superset in_mono) 
-    thus ?thesis 
-      by (smt cdependent_raw_def Suc.prems(1) complex_vector.independent_insert 
-          g1 g2)
-  qed
-  ultimately show ?case 
-    by (smt dependent_raw_def g1 real_vector.independent_insertI)
+lemma csubspace_is_subspace: "csubspace A \<Longrightarrow> subspace A"
+  apply (rule subspaceI) 
+  by (auto simp: complex_vector.subspace_def scaleR_scaleC)
 
-qed
+lemma span_subset_cspan: "span A \<subseteq> cspan A"
+  unfolding span_def complex_vector.span_def
+  by (simp add: csubspace_is_subspace hull_antimono)
 
+lemma cindependent_implies_independent: 
+  assumes "cindependent (S::'a::complex_vector set)"
+  shows "independent S"
+  using assms unfolding dependent_def complex_vector.dependent_def
+  using span_subset_cspan by blast
+
+lemma cspan_singleton: "cspan {x} = {\<alpha> *\<^sub>C x| \<alpha>. True}"
+(* Was:
 lemma cspan_singleton:
   fixes x y::"'a::complex_vector"
   assumes a1: "x \<in> cspan {y}"
   shows "\<exists>\<alpha>. x = \<alpha> *\<^sub>C y"
-proof-
-  have "\<exists>t r. x = (\<Sum>j\<in>t. r j *\<^sub>C j) \<and> finite t \<and> t \<subseteq> {y}"
-    using a1 using complex_vector.span_explicit[where b = "{y}"]
-    by (smt  mem_Collect_eq)
-  then obtain t r where b1: "x = (\<Sum>j\<in>t. r j *\<^sub>C j)" and b2: "finite t" and b3: "t \<subseteq> {y}"
-    by blast
-  show ?thesis
-  proof(cases "t = {}")
-    case True
-    hence "(\<Sum>j\<in>t. r j *\<^sub>C j) = 0"
-      using b2
-      by simp
-    thus ?thesis using b1 by simp
-  next
-    case False
-    hence "t = {y}"
-      using b3 by auto
-    moreover have "(\<Sum>j\<in>{y}. r j *\<^sub>C j) = r y *\<^sub>C y"
-      by auto
-    ultimately show  ?thesis using b1 by blast
-  qed
+*)
+proof -
+  have \<open>cspan {x} = {y. y\<in>cspan {x}}\<close>
+    by auto
+  also have \<open>\<dots> = {\<alpha> *\<^sub>C x| \<alpha>. True}\<close>
+    apply (subst complex_vector.span_breakdown_eq)
+    by auto
+  finally show ?thesis
+    by -
 qed
 
-lemma Span_empty[simp]: "ccspan {} = bot"
+lemma ccspan_of_empty[simp]: "ccspan {} = bot"
 proof transfer
   show "closure (cspan {}) = {0::'a}"
     by simp
 qed
 
+
+(* TODO renamings from here *)
 
 
 lemma bounded_sesquilinear_0_left: 

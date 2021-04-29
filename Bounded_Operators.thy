@@ -4231,7 +4231,8 @@ proof-
       using orthogonal_complement_I2 by blast 
   qed
   thus ?thesis
-    by (metis ccspan.rep_eq assms clinear_space_leI uminus_ccsubspace.rep_eq) 
+    apply (rule_tac ccsubspace_leI)
+    by (metis assms ccspan.rep_eq subsetI uminus_ccsubspace.rep_eq)
 qed
 
 definition "positive_op A = (\<exists>B::'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a. A = B* o\<^sub>C\<^sub>L B)"
@@ -4391,8 +4392,8 @@ proof
     hence \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t))
     \<longlonglongrightarrow>  (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
       using \<open>finite (set canonical_basis)\<close>
-        tendsto_finite_sum[where T = "set canonical_basis" and X = "\<lambda> t. \<lambda> n. \<langle>t, X n\<rangle> *\<^sub>C t"
-          and L = "\<lambda> t. L t *\<^sub>C t"]
+        tendsto_sum[where I = "set canonical_basis" and f = "\<lambda> t. \<lambda> n. \<langle>t, X n\<rangle> *\<^sub>C t"
+          and a = "\<lambda> t. L t *\<^sub>C t"]
       by auto      
     hence x2: \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
       using l_def by blast 
