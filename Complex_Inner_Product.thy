@@ -2231,7 +2231,7 @@ proof-
   also have \<open>... = (orthogonal_complement A +\<^sub>M orthogonal_complement B)\<close>
     using a1 a2 orthogonal_complement_twice
       complex_vector.subspace_def
-    by (simp add: orthogonal_complement_twice closure_is_csubspaceosed_plus)
+    by (simp add: orthogonal_complement_twice closed_subspace_closed_sum)
   finally show ?thesis by blast
 qed
 
@@ -2243,7 +2243,7 @@ lemma is_closed_subspace_asso:
 proof-
   have \<open>csubspace (B +\<^sub>M C)\<close>
     using assms(2) assms(3)  complex_vector.subspace_def
-    by (meson closed_csubspace.subspace closure_is_csubspaceosed_plus)
+    by (meson closed_csubspace.subspace closed_subspace_closed_sum)
   moreover have \<open>closed (B +\<^sub>M C)\<close>
     by (simp add: closed_sum_def)
   ultimately have \<open>closed_csubspace (B +\<^sub>M C)\<close>
@@ -2251,7 +2251,7 @@ proof-
   hence \<open>closed_csubspace (A +\<^sub>M (B +\<^sub>M C))\<close>
     using DeMorganOrthoDual assms(1)  orthogonal_complement_twice
       complex_vector.subspace_def
-    by (simp add: closure_is_csubspaceosed_plus)
+    by (simp add: closed_subspace_closed_sum)
   have \<open>(A +\<^sub>M (B +\<^sub>M C)) = (orthogonal_complement (orthogonal_complement (A +\<^sub>M (B +\<^sub>M C))))\<close>
     by (smt \<open>closed_csubspace (A +\<^sub>M (B +\<^sub>M C))\<close> orthogonal_complement_twice)
   also have  \<open>... = (orthogonal_complement (  (orthogonal_complement A) \<inter> (orthogonal_complement (B +\<^sub>M C))  ))\<close>
@@ -2266,10 +2266,10 @@ proof-
   also have  \<open>... = (orthogonal_complement ( orthogonal_complement ( (A +\<^sub>M B) +\<^sub>M C )  ))\<close>
     using DeMorganOrtho \<open>orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B \<inter> orthogonal_complement C) = orthogonal_complement (orthogonal_complement (orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B)) \<inter> orthogonal_complement C)\<close> assms(1) assms(2) assms(3) 
       complex_vector.subspace_def
-    by (simp add: DeMorganOrtho closure_is_csubspaceosed_plus)
+    by (simp add: DeMorganOrtho closed_subspace_closed_sum)
   finally show ?thesis
     using DeMorganOrthoDual assms(1) assms(2) assms(3) 
-    by (simp add: orthogonal_complement_twice closure_is_csubspaceosed_plus)
+    by (simp add: orthogonal_complement_twice closed_subspace_closed_sum)
 qed
 
 
@@ -2284,15 +2284,14 @@ lemma is_closed_subspace_ord:
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close> and \<open>closed_csubspace C\<close>
     and \<open>A \<subseteq> B\<close>
   shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
-  by (metis DeMorganOrtho Int_mono assms(1) assms(2) assms(3) assms(4) order_refl ortho_leq closure_is_csubspaceosed_plus)
+  by (meson assms(2) assms(3) assms(4) closed_csubspace_def closed_subspace_closed_sum closed_sum_is_sup closed_sum_left_subset closed_sum_right_subset complex_vector.subspace_0 order_trans)
 
 (* Use closed_sum_left_subset instead *)
 lemma is_closed_subspace_universal_inclusion_left:
   fixes A B:: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close>
   shows \<open>A \<subseteq> A +\<^sub>M B\<close>
-  using DeMorganOrtho Int_lower1 assms(1) assms(2)  ortho_leq
-  by (metis closure_is_csubspaceosed_plus)
+  by (meson assms(2) closed_csubspace_def closed_sum_left_subset complex_vector.subspace_0)
 
 (* Use closed_sum_right_subset instead *)
 lemma is_closed_subspace_universal_inclusion_right:
@@ -2307,9 +2306,7 @@ lemma is_closed_subspace_universal_inclusion_inverse:
   assumes \<open>closed_csubspace A\<close> and \<open>closed_csubspace B\<close> and \<open>closed_csubspace C\<close>
     and \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
-  using DeMorganOrtho assms(1) assms(2) assms(3) assms(4) assms(5) inf_greatest  ortho_leq
-  by (metis closure_is_csubspaceosed_plus)
-
+  by (simp add: assms(3) assms(4) assms(5) closed_sum_is_sup)
 
 lemma projection_ker_simp:
   fixes x :: \<open>'a::chilbert_space\<close>
@@ -2896,7 +2893,7 @@ proof
         \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
         \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
         is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
-      by (metis closed_csubspace.subspace closure_is_csubspaceosed_plus subspace_orthog) 
+      by (metis closed_csubspace.subspace closed_subspace_closed_sum subspace_orthog) 
   qed  
   hence b1: \<open>x +\<^sub>M orthogonal_complement x = UNIV\<close>
     if a1: \<open>closed_csubspace x\<close>
@@ -3459,8 +3456,8 @@ proof(rule ccontr)
   have \<open>bounded_sesquilinear cinner\<close>
     by (simp add: bounded_sesquilinear_cinner)
   hence \<open>\<langle>(\<Sum>i\<in>t. u i *\<^sub>C i), k\<rangle> = (\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    using \<open>finite t\<close> sesquilinear_finite_sum
-    by blast
+    using \<open>finite t\<close> bounded_sesquilinear.scaleC_left
+    by (smt (verit, ccfv_SIG) cinner_sum_left sum.cong)
   hence v1: \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
     by (simp add: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close>)
   have \<open>t = {k} \<union> (t-{k})\<close>
@@ -4770,8 +4767,8 @@ lemma span_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
   assumes \<open>finite T\<close>
   shows \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
-  using closed_finite_dim
-  by (simp add: closed_finite_dim assms)
+  using finite_cspan_closed
+  by (simp add: finite_cspan_closed assms)
 
 lemma Span_insert:
   assumes "finite (S::'a'::complex_inner set)"
@@ -4787,7 +4784,7 @@ lemma closed_subspace_cspan_finite:
   assumes "finite (S::'a::chilbert_space set)"
   shows "closed_csubspace (cspan S)"
   unfolding closed_csubspace_def apply auto
-  by (simp add: assms closed_finite_dim)
+  by (simp add: assms finite_cspan_closed)
 
 lemma projection_singleton:
   assumes "(a::'a::chilbert_space) \<noteq> 0"

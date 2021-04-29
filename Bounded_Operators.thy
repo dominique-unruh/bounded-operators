@@ -4988,7 +4988,7 @@ proof -
       unfolding B'_def using a1 complex_real_independent
       by (simp add: complex_real_independent)    
     have "\<psi> \<in> Real_Vector_Spaces.span B'"
-      using B'_def True complex_real_span by blast    
+      using B'_def True cspan_as_span by blast    
     have "v \<in> B'"
       if "r v \<noteq> 0"
       for v
@@ -5048,7 +5048,7 @@ proof -
     case False
     have b2: "\<psi> \<notin> real_vector.span B'"
       unfolding B'_def
-      using False complex_real_span by auto    
+      using False cspan_as_span by auto    
     have "\<psi> \<notin> complex_vector.span B"
       using False by blast
     have "complex_vector.representation B \<psi> b = 0"

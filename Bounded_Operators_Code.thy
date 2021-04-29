@@ -342,7 +342,7 @@ lemma sup_spans[code]:
   \<comment> \<open>Code equation for the join (lub) of two subspaces (union of the generating lists)\<close>
  "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
   unfolding SPAN_def 
-  by (auto simp: Span_union image_Un filter_Un Let_def)
+  by (auto simp: ccspan_union image_Un filter_Un Let_def)
 
 text \<open>We do not need an equation for \<^term>\<open>(+)\<close> because \<^term>\<open>(+)\<close>
 is defined in terms of \<^term>\<open>(\<squnion>)\<close> (for \<^type>\<open>ccsubspace\<close>), thus the code generation automatically

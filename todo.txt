@@ -1,6 +1,6 @@
 Files to clean up:
 - Extra_*
-- Complex_Vector_Spaces (in progress: renamings)
+- Complex_Vector_Spaces (renamings done. todo: sort & doc)
 - Complex_Inner_Product
 - One_Dimensional_Spaces
 - Bounded_Operators (split and rename)

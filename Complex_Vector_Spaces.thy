@@ -507,7 +507,10 @@ locale closed_csubspace =
   assumes subspace: "csubspace A"
   assumes closed: "closed A"
 
-lemma closure_is_csubspace:
+declare closed_csubspace.subspace[simp]
+(* declare closed_csubspace.closed[simp] *)
+
+lemma closure_is_csubspace[simp]:
   fixes A::"('a::complex_normed_vector) set"
   assumes \<open>csubspace A\<close>
   shows \<open>csubspace (closure A)\<close>
@@ -1359,28 +1362,18 @@ proof transfer
 qed
 
 
-(* TODO renamings from here *)
-
-
-lemma bounded_sesquilinear_0_left: 
+(* Use bounded_bilinear.zero_left instead *)
+(* lemma bounded_sesquilinear_0_left:
   assumes \<open>bounded_sesquilinear B\<close>
-  shows \<open>B 0 y = 0\<close>
-proof-
-  have \<open>B 0 y = B (0 + 0) y\<close>
-    by simp
-  also have \<open>\<dots> = B 0 y + B 0 y\<close>
-    using assms bounded_sesquilinear.add_left by blast
-  finally have \<open>B 0 y = B 0 y + B 0 y\<close>
-    by blast
-  thus ?thesis by simp
-qed
+  shows \<open>B 0 y = 0\<close> *)
 
-lemma sesquilinear_finite_sum_induction:
+
+(* lemma sesquilinear_finite_sum_induction:
   assumes \<open>bounded_sesquilinear B\<close>
   shows \<open>\<forall>t. finite t \<and> card t = n \<longrightarrow> B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
 proof(induction n)
   case 0 thus ?case
-    using assms bounded_sesquilinear_0_left by fastforce 
+    by (metis (no_types, lifting) assms bounded_sesquilinear.scaleC_left card_eq_0_iff complex_cnj_zero complex_vector.scale_eq_0_iff sum_clauses(1))
 next
   case (Suc n)
   have \<open>B (\<Sum>a\<in>t. r a *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
@@ -1409,12 +1402,13 @@ next
   qed
   thus ?case by blast
 qed
+ *)
 
 
-lemma sesquilinear_finite_sum:                     
+(* Use bounded_bilinear.sum_left and bounded_sesquilinear.scaleC_left instead *)
+(* lemma sesquilinear_finite_sum:                     
   assumes \<open>bounded_sesquilinear B\<close> and \<open>finite t\<close>
-  shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close>
-  by (simp add: sesquilinear_finite_sum_induction assms(1) assms(2))
+  shows \<open>B (\<Sum>a\<in>t. (r a) *\<^sub>C a) y = (\<Sum>a\<in>t. cnj (r a) *\<^sub>C B a y)\<close> *)
 
 (* lemma bounded_sesquilinear_continuous:
   includes nsa_notation
@@ -1554,7 +1548,7 @@ proof-
 qed *)
 
 
-lemma sesquilinear_superposition:
+(* lemma sesquilinear_superposition:
   assumes a1: "bounded_sesquilinear B" and a2: "\<And> p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0"
     and a3: "x \<in> complex_vector.span S_left" and a4: "y \<in> complex_vector.span S_right"
   shows \<open>B x y = 0\<close>
@@ -1643,7 +1637,7 @@ proof-
   qed
   thus ?thesis
     by (simp add: a3 a4)
-qed
+qed *)
 
 
 definition closed_sum:: \<open>'a::{complex_vector,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
@@ -1661,7 +1655,7 @@ lemma closed_sum_right_subset: \<open>0 \<in> A \<Longrightarrow> B \<subseteq> 
   using closed_sum_comm closed_sum_left_subset by blast
 
 lemma closed_sum_is_sup:
-  fixes A B C:: \<open>('a::{complex_vector,topological_space} ) set\<close>
+  fixes A B C:: \<open>('a::{complex_vector,topological_space}) set\<close>
   assumes \<open>closed_csubspace C\<close>
   assumes \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
   shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
@@ -1675,23 +1669,22 @@ proof -
     by (simp add: closed_csubspace.closed closure_minimal)
 qed
 
-(* TODO rename *)
-lemma closure_is_csubspaceosed_plus:
+lemma closed_subspace_closed_sum:
   fixes A B::"('a::complex_normed_vector) set"
-  assumes a1: \<open>closed_csubspace A\<close> and a2: \<open>closed_csubspace B\<close> (* TODO can be weakened *)
+  assumes a1: \<open>csubspace A\<close> and a2: \<open>csubspace B\<close>
   shows \<open>closed_csubspace (A +\<^sub>M B)\<close>
   using a1 a2 closed_sum_def 
-  by (metis closed_csubspace.subspace closure_is_closed_csubspace csubspace_set_plus)
+  by (metis closure_is_closed_csubspace csubspace_set_plus)
 
 
 instantiation ccsubspace :: (complex_normed_vector) sup begin
 lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
   is "\<lambda>A B::'a set. A +\<^sub>M B"
-  by (simp add: closure_is_csubspaceosed_plus) 
+  by (simp add: closed_subspace_closed_sum) 
 instance .. 
 end
 
-lemma Span_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
+lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
 proof (transfer, auto)
   have p0: "cspan (A \<union> B) = 
       cspan A + cspan B"
@@ -1890,18 +1883,17 @@ proof
     using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto 
 qed
 
-
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
     and  rep :: "'basis::finite \<Rightarrow> 'b" and abs :: "'b \<Rightarrow> 'basis"
   assumes t: "type_definition rep abs B"
     and t1: "finite B" and t2: "b\<in>B" and t3: "independent B"
-  shows "\<exists>D>0. \<forall>\<psi>. norm (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
-    and "complete (real_vector.span B)"
+  shows "\<exists>D>0. \<forall>\<psi>. norm (representation B \<psi> b) \<le> norm \<psi> * D"
+    and "complete (span B)"
 
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>
+  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>,
      \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
-     content of the lemmas. However, there is one difference: We additionally assume here
+     content of the lemmas). However, there is one difference: Here we additionally assume here
      that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
      This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
      the type class \<^class>\<open>finite\<close>
@@ -2148,7 +2140,7 @@ qed
 lemma finite_span_complete:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
-  shows "complete (real_vector.span A)"
+  shows "complete (span A)"
   text \<open>The span of a finite set is complete.\<close>
 proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
   case True
@@ -2194,7 +2186,7 @@ qed
 lemma finite_span_representation_bounded:
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B" and "independent B"
-  shows "\<exists>D>0. \<forall>\<psi> b. abs (real_vector.representation B \<psi> b) \<le> norm \<psi> * D"
+  shows "\<exists>D>0. \<forall>\<psi> b. abs (representation B \<psi> b) \<le> norm \<psi> * D"
 
   text \<open>
   Assume $B$ is a finite linear independent set of vectors (in a real normed vector space).
@@ -2276,8 +2268,8 @@ qed
 
 hide_fact finite_span_complete_aux
 
-lemma complex_real_span:
-  "complex_vector.span (B::'a::complex_vector set) = real_vector.span (B \<union> scaleC \<i> ` B)"
+lemma cspan_as_span:
+  "cspan (B::'a::complex_vector set) = span (B \<union> scaleC \<i> ` B)"
 proof auto
   let ?cspan = complex_vector.span
   let ?rspan = real_vector.span
@@ -2331,7 +2323,7 @@ lemma finite_cspan_complete:
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
   shows "complete (complex_vector.span B)"
-proof (subst complex_real_span)
+proof (subst cspan_as_span)
   show "complete (span (B \<union> (*\<^sub>C) \<i> ` B))"
     by (simp add: assms finite_span_complete)
 qed
@@ -2344,7 +2336,7 @@ lemma finite_span_closed:
   by (simp add: assms complete_imp_closed finite_span_complete) 
 
 
-lemma closed_finite_dim:
+lemma finite_cspan_closed:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes a1: \<open>finite S\<close>
   shows \<open>closed (complex_vector.span S)\<close>  
