@@ -2778,7 +2778,7 @@ proof-
   qed
   hence u1: \<open>x - P *\<^sub>V x \<in> orthogonal_complement (space_as_set M)\<close> 
     for x
-    by (simp add: orthogonal_complement_I2) 
+    by (simp add: orthogonal_complementI) 
   have "closed_csubspace (space_as_set M)"
     using space_as_set by auto
   hence f1: "(Proj M) *\<^sub>V a = P *\<^sub>V a"
@@ -4166,7 +4166,7 @@ proof-
         moreover have \<open>b \<in> T\<close>
           using \<open>T' \<subseteq> T\<close> \<open>b \<in> T'\<close> by blast
         ultimately show ?thesis
-          using is_orthogonal_def \<open>\<And>t s. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t\<close> by blast
+          using \<open>\<And>t s. \<lbrakk>s \<in> S; t \<in> T\<rbrakk> \<Longrightarrow> is_orthogonal s t\<close> by blast
       qed
 
       have \<open>\<langle> x, y \<rangle> = \<langle> (\<Sum>a\<in>S'. r\<^sub>S a *\<^sub>C a), (\<Sum>b\<in>T'. r\<^sub>T b *\<^sub>C b) \<rangle>\<close>
@@ -4228,7 +4228,7 @@ proof-
         by (simp add: LIMSEQ_const_iff) 
     qed
     thus ?thesis
-      using orthogonal_complement_I2 by blast 
+      using orthogonal_complementI by blast 
   qed
   thus ?thesis
     apply (rule_tac ccsubspace_leI)

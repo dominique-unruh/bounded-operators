@@ -52,7 +52,7 @@ subsection \<open>Some identities and inequalities\<close>
 
 (* TODO renaming from here *)
 
-lemma polarization_identity_plus:
+lemma polar_identity:
   includes notation_norm
   shows \<open>\<parallel>x + y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 + 2*Re \<langle>x, y\<rangle>\<close>
     \<comment> \<open>Shown in the proof of Corollary 1.5 in @{cite conway2013course}\<close>
@@ -69,25 +69,26 @@ proof -
     by (smt (verit, ccfv_SIG) Re_complex_of_real plus_complex.simps(1) power2_norm_eq_cinner')
 qed
 
-lemma polarization_identity_minus:
+lemma polar_identity_minus:
   includes notation_norm 
   shows \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2 * Re \<langle>x, y\<rangle>\<close>
 proof-
   have \<open>\<parallel>x + (-y)\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>-y\<parallel>^2 + 2 * Re \<langle>x , (-y)\<rangle>\<close>
-    using polarization_identity_plus by blast
+    using polar_identity by blast
   hence \<open>\<parallel>x - y\<parallel>^2 = \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 - 2*Re \<langle>x , y\<rangle>\<close>
     by simp
   thus ?thesis 
     by blast
 qed
 
-proposition ParallelogramLaw:
+proposition parallelogram_law:
   includes notation_norm
   fixes x y :: "'a::complex_inner"
   shows \<open>\<parallel>x+y\<parallel>^2 + \<parallel>x-y\<parallel>^2 = 2*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
     \<comment> \<open>Shown in the proof of Theorem 2.3 in @{cite conway2013course}\<close> 
-  by (simp add: polarization_identity_minus polarization_identity_plus)
+  by (simp add: polar_identity_minus polar_identity)
 
+(* TODO remove *)
 corollary ParallelogramLawVersion1:
   includes notation_norm
   fixes x :: "'a::complex_inner"
@@ -97,7 +98,7 @@ corollary ParallelogramLawVersion1:
 proof -
   have \<open>\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2 + \<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2 
   = 2*( \<parallel>(1/2) *\<^sub>C x\<parallel>^2 +  \<parallel>(1/2) *\<^sub>C y\<parallel>^2)\<close>
-    using ParallelogramLaw by blast
+    using parallelogram_law by blast
   also have \<open>... = 2*( ((1/2) * \<parallel>x\<parallel>)^2 + ((1/2) * \<parallel>y\<parallel>)^2)\<close>
     by auto
   also have \<open>... = 2*( (1/2)^2 * \<parallel>x\<parallel>^2 +  (1/2)^2 * \<parallel>y\<parallel>^2 )\<close>
@@ -118,42 +119,32 @@ proof -
 qed
 
 
-theorem PythagoreanId:
+theorem pythagorean_theorem:
   includes notation_norm
   shows \<open>\<langle>x , y\<rangle> = 0 \<Longrightarrow> \<parallel> x + y \<parallel>^2 = \<parallel> x \<parallel>^2 + \<parallel> y \<parallel>^2\<close> 
     \<comment> \<open>Shown in the proof of Theorem 2.2 in @{cite conway2013course}\<close> 
-  by (simp add: polarization_identity_plus)
+  by (simp add: polar_identity)
 
 
 subsection \<open>Orthogonality\<close>
 
 
-definition "orthogonal_complement S = {x | x. \<forall>y\<in>S. \<langle> x, y \<rangle> = 0}" 
+definition "orthogonal_complement S = {x| x. \<forall>y\<in>S. cinner x y = 0}" 
 
-lemma orthogonal_complement_D1:
+lemma orthogonal_complement_orthoI:
   \<open>x \<in> orthogonal_complement M \<Longrightarrow> y \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
   unfolding orthogonal_complement_def by auto
 
-lemma orthogonal_complement_D2:
+lemma orthogonal_complement_orthoI':
   \<open>x \<in> M \<Longrightarrow> y \<in> orthogonal_complement M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
-proof-
-  assume \<open>x \<in> M\<close> and \<open>y \<in> orthogonal_complement M\<close>
-  hence \<open>\<langle> y, x \<rangle> = 0\<close>
-    using orthogonal_complement_D1
-    by blast
-  moreover have \<open>\<langle> x, y \<rangle> = cnj \<langle> y, x \<rangle>\<close>
-    by simp    
-  moreover have \<open>0 = cnj (0::complex)\<close>
-    by simp
-  ultimately show ?thesis by simp
-qed
+  by (metis cinner_commute' complex_cnj_zero orthogonal_complement_orthoI)
 
-lemma orthogonal_complement_I2:
+lemma orthogonal_complementI:
   \<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> y, x \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
   unfolding orthogonal_complement_def
   by simp
 
-lemma orthogonal_complement_I1:
+(* lemma orthogonal_complement_I1:
   \<open>(\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0) \<Longrightarrow> y \<in> orthogonal_complement M\<close>
 proof-
   assume \<open>\<And>x. x \<in> M \<Longrightarrow> \<langle> x, y \<rangle> = 0\<close>
@@ -173,9 +164,9 @@ proof-
   thus \<open>y \<in> orthogonal_complement M\<close> 
     unfolding orthogonal_complement_def 
     by auto
-qed
+qed *)
 
-definition is_orthogonal::\<open>'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool\<close>  where
+abbreviation is_orthogonal::\<open>'a::complex_inner \<Rightarrow> 'a \<Rightarrow> bool\<close>  where
   \<open>is_orthogonal x y \<equiv> \<langle> x, y \<rangle> = 0\<close>
 
 bundle orthogonal_notation begin
@@ -187,82 +178,51 @@ no_notation is_orthogonal (infixl "\<bottom>" 69)
 end
 
 
-lemma orthogonal_comm: "is_orthogonal \<psi>  \<phi> = is_orthogonal \<phi> \<psi>"
-  by (metis is_orthogonal_def mem_Collect_eq orthogonal_complement_D2 orthogonal_complement_I2)
+lemma is_orthogonal_sym: "is_orthogonal \<psi>  \<phi> = is_orthogonal \<phi> \<psi>"
+  by (metis cinner_commute' complex_cnj_zero)
 
-lemma subspace_orthog[simp]: 
+lemma orthogonal_complement_closed_subspace[simp]: 
   "closed_csubspace (orthogonal_complement A)"
-  if "closed_csubspace A"
   for A :: \<open>('a::complex_inner) set\<close>
-proof-
-  have c1: "l \<in> orthogonal_complement A"
-    if "\<forall>n::nat. x n \<in> orthogonal_complement A" and "x \<longlonglongrightarrow> l"
-    for x::\<open>nat \<Rightarrow> 'a::complex_inner\<close> and l::"'a::complex_inner"
-  proof-
-    have b1: \<open>bounded_clinear (\<lambda> x. \<langle> y , x \<rangle>)\<close> 
-      for y::'a
-      by (simp add: bounded_clinear_cinner_right)
-    have \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close>
-      using orthogonal_complement_D2
-      by (simp add: orthogonal_complement_D2 that(1))
-    moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) l\<close> for y
-      using b1 clinear_continuous_at
-      by (simp add: clinear_continuous_at bounded_clinear_cinner_right)
-    ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (x n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) l\<close> for y
-      using isCont_tendsto_compose
-      by (simp add: isCont_tendsto_compose that(2))
-    hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y , x n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close>
-      by simp
-    hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y , l \<rangle>\<close> 
-      using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , x n \<rangle> = 0\<close> 
-      by fastforce
-    hence  \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
-      using limI by fastforce
-    thus ?thesis
-      by (simp add: orthogonal_complement_I1)         
-  qed
+proof (intro closed_csubspace.intro complex_vector.subspaceI)
+  fix x y and c
+  show \<open>0 \<in> orthogonal_complement A\<close>
+    by (rule orthogonal_complementI, simp)
+  show \<open>x + y \<in> orthogonal_complement A\<close>
+    if \<open>x \<in> orthogonal_complement A\<close> and \<open>y \<in> orthogonal_complement A\<close>
+    using that by (auto intro!: orthogonal_complementI dest!: orthogonal_complement_orthoI
+        simp add: cinner_add_left)
+  show \<open>c *\<^sub>C x \<in> orthogonal_complement A\<close> if \<open>x \<in> orthogonal_complement A\<close> 
+    using that by (auto intro!: orthogonal_complementI dest!: orthogonal_complement_orthoI)
 
-  have "x+y\<in>(orthogonal_complement A)"
-    if a1: "x\<in>(orthogonal_complement A)" and a2: "y\<in>(orthogonal_complement A)"
-    for x y
-  proof-
-    have  \<open>\<forall> z \<in> A. \<langle>z, y\<rangle> = 0\<close> 
-      using a2
-      by (simp add: orthogonal_complement_D2) 
-    moreover have   \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> = 0\<close>
-      using  \<open>x\<in>(orthogonal_complement A)\<close>
-      by (simp add: orthogonal_complement_D2)     
-    ultimately have \<open>\<forall> z \<in> A. \<langle>z, x\<rangle> +  \<langle>z, y\<rangle> = 0\<close>
+  show "closed (orthogonal_complement A)"
+  proof (auto simp add: closed_sequential_limits, rename_tac an a)
+    fix an a
+    assume ortho: \<open>\<forall>n::nat. an n \<in> orthogonal_complement A\<close>
+    assume lim: \<open>an \<longlonglongrightarrow> a\<close>
+
+    have \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , an n \<rangle> = 0\<close>
+      using orthogonal_complement_orthoI'
+      by (simp add: orthogonal_complement_orthoI' ortho)
+    moreover have \<open>isCont (\<lambda> x. \<langle> y , x \<rangle>) a\<close> for y
+      using bounded_clinear_cinner_right clinear_continuous_at
+      by (simp add: clinear_continuous_at bounded_clinear_cinner_right)
+    ultimately have \<open>(\<lambda> n. (\<lambda> v. \<langle> y , v \<rangle>) (an n)) \<longlonglongrightarrow> (\<lambda> v. \<langle> y , v \<rangle>) a\<close> for y
+      using isCont_tendsto_compose
+      by (simp add: isCont_tendsto_compose lim)
+    hence  \<open>\<forall> y\<in>A. (\<lambda> n. \<langle> y , an n \<rangle>  ) \<longlonglongrightarrow>  \<langle> y , a \<rangle>\<close>
       by simp
-    hence  \<open>\<forall> z \<in> A. \<langle> z , x + y \<rangle> = 0\<close> 
-      by (simp add: cinner_add_right)
-    thus ?thesis
-      by (simp add: orthogonal_complement_I1)       
+    hence  \<open>\<forall> y\<in>A. (\<lambda> n. 0  ) \<longlonglongrightarrow>  \<langle> y , a \<rangle>\<close> 
+      using \<open>\<forall> y \<in> A. \<forall> n. \<langle> y , an n \<rangle> = 0\<close> 
+      by fastforce
+    hence  \<open>\<forall> y \<in> A. \<langle> y , a \<rangle> = 0\<close> 
+      using limI by fastforce
+    then show \<open>a \<in> orthogonal_complement A\<close>
+      by (simp add: orthogonal_complementI is_orthogonal_sym)
   qed
-  moreover have "c *\<^sub>C x \<in> (orthogonal_complement A)" 
-    if "x\<in>(orthogonal_complement A)"
-    for x c
-  proof-
-    have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
-      using that
-      by (simp add: orthogonal_complement_D2)
-    hence \<open>\<forall> y \<in> A. c * \<langle> y , x \<rangle> = 0\<close>
-      by simp
-    hence \<open>\<forall> y \<in> A. \<langle> y , c *\<^sub>C x \<rangle> = 0\<close>
-      by simp
-    thus ?thesis
-      using orthogonal_complement_I1 by blast 
-  qed
-  moreover have  "closed (orthogonal_complement A)"
-    using closed_sequential_limits c1 by blast
-  moreover have  "0 \<in> orthogonal_complement A"
-    by (simp add: is_orthogonal_def orthogonal_complement_def)
-  ultimately show ?thesis 
-    using closed_csubspace_def
-    by (simp add: closed_csubspace_def complex_vector.subspaceI)
 qed
 
-lemma ortho_inter_zero:
+lemma orthogonal_complement_zero_intersection:
   assumes "0\<in>M"
   shows \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
 proof -
@@ -274,12 +234,13 @@ proof -
       by auto
   qed
   with assms show ?thesis
-    unfolding orthogonal_complement_def is_orthogonal_def 
-    by auto
+    unfolding orthogonal_complement_def by auto
 qed
 
 
 subsection \<open>Minimum distance\<close>
+
+(* TODO rename from here *)
 
 lemma ExistenceUniquenessMinNorm:
   includes notation_norm
@@ -693,7 +654,7 @@ proof-
     also have \<open>... \<le> \<parallel> (h - k) - f \<parallel>^2\<close>
       by (simp add: diff_diff_add)
     also have \<open>... \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
-      by (simp add: polarization_identity_minus)
+      by (simp add: polar_identity_minus)
     finally have \<open>\<parallel> (h - k) \<parallel>^2 \<le> \<parallel> (h - k) \<parallel>^2 + \<parallel> f \<parallel>^2 -  2 * Re (\<langle> h - k , f \<rangle>)\<close>
       by simp
     thus ?thesis by simp
@@ -796,7 +757,7 @@ proof-
       using complex_eq_iff
       by (simp add: \<open>\<forall>f. f \<in> M \<longrightarrow> Im \<langle>h - k, f\<rangle> = 0\<close> \<open>\<forall>f. f \<in> M \<longrightarrow> Re \<langle>h - k, f\<rangle> = 0\<close>)
     hence \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
-      by (simp add: \<open>k \<in> M\<close> orthogonal_complement_I2) 
+      by (simp add: \<open>k \<in> M\<close> orthogonal_complementI) 
     have  \<open>\<forall> c. c *\<^sub>R f \<in> M\<close>
       if "f \<in> M"
       for f
@@ -805,9 +766,9 @@ proof-
     have \<open>\<langle> h - k , f \<rangle> = 0\<close> 
       if "f \<in> M"
       for f
-      using \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> orthogonal_complement_D1 that by auto
+      using \<open>h - k \<in> orthogonal_complement M \<and> k \<in> M\<close> orthogonal_complement_orthoI that by auto
     hence \<open>h - k \<in> orthogonal_complement M\<close> 
-      by (simp add: is_orthogonal_def orthogonal_complement_def)
+      by (simp add: orthogonal_complement_def)
     thus ?thesis
       using \<open>k \<in> M\<close> by auto       
   qed
@@ -818,11 +779,11 @@ proof-
   proof-
     have \<open>\<langle> h - k,  k - f \<rangle> = 0\<close>
       by (metis (no_types, lifting) that 
-          cinner_diff_right diff_0_right orthogonal_complement_D1 that)
+          cinner_diff_right diff_0_right orthogonal_complement_orthoI that)
     have \<open>\<parallel> h - f \<parallel>^2 = \<parallel> (h - k) + (k - f) \<parallel>^2\<close>
       by simp
     also have \<open>... = \<parallel> h - k \<parallel>^2 + \<parallel> k - f \<parallel>^2\<close>
-      using  \<open>\<langle> h - k, k - f \<rangle> = 0\<close> PythagoreanId  is_orthogonal_def by blast
+      using  \<open>\<langle> h - k, k - f \<rangle> = 0\<close> pythagorean_theorem by blast
     also have \<open>... \<ge> \<parallel> h - k \<parallel>^2\<close>
       by simp
     finally have \<open>\<parallel>h - k\<parallel>\<^sup>2 \<le> \<parallel>h - f\<parallel>\<^sup>2 \<close>
@@ -964,7 +925,7 @@ proof-
   hence \<open>x - \<pi> h \<in> M \<inter> (orthogonal_complement M)\<close>
     using t5 by auto    
   moreover have \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
-    using a1 a3  ortho_inter_zero
+    using a1 a3  orthogonal_complement_zero_intersection
       complex_vector.subspace_def closed_csubspace.subspace by metis
   ultimately have \<open>x - \<pi> h = 0\<close>
     by auto
@@ -984,7 +945,7 @@ lemma projection_fixed_points':
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M" and a3: "x \<in> M"
   shows "\<pi> x = x"
   by (metis (no_types, lifting) a1 a2 a3 closed_csubspace.subspace complex_vector.subspace_0
-      diff_self projection_uniq' subspace_orthog)
+      diff_self projection_uniq' orthogonal_complement_closed_subspace)
 
 lemma projection_fixed_points:
   fixes M :: \<open>('a::chilbert_space) set\<close>
@@ -1004,15 +965,14 @@ proof-
     using a1
     by (simp add: projection_intro1')    
   hence \<open>\<forall> k \<in> M. \<langle>  h - \<pi> h , k \<rangle> = 0\<close>
-    using is_orthogonal_def
-    using orthogonal_complement_D1 by blast 
+    using orthogonal_complement_orthoI by blast 
   also have \<open>\<pi> h \<in>  M\<close>
     using \<open>is_projection_on \<pi> M\<close>
     by (simp add: projection_intro2')
   ultimately have \<open>\<langle>  h - \<pi> h , \<pi> h \<rangle> = 0\<close>
     by auto
   hence \<open>\<parallel> \<pi> h \<parallel>^2 + \<parallel> h - \<pi> h \<parallel>^2 = \<parallel> h \<parallel>^2\<close>
-    using PythagoreanId by fastforce
+    using pythagorean_theorem by fastforce
   hence \<open>\<parallel>\<pi> h \<parallel>^2 \<le> \<parallel> h \<parallel>^2\<close>
     by (smt zero_le_power2)    
   thus ?thesis 
@@ -1061,10 +1021,11 @@ proof
     have f2: "\<forall>a b. (b::'a) - b = a - a"
       by auto
     hence f3: "\<forall>a. a - a \<in> orthogonal_complement M"
-      using b1 complex_vector.subspace_def by auto      
+      by (simp add: complex_vector.subspace_0)
     have "\<forall>a b. (a \<in> orthogonal_complement M \<or> a + b \<notin> orthogonal_complement M)
              \<or> b \<notin> orthogonal_complement M"
-      using add_diff_cancel_right' b1 complex_vector.subspace_diff by force
+      using add_diff_cancel_right' b1 complex_vector.subspace_diff
+      by metis
     hence "\<forall>a b c. (a \<in> orthogonal_complement M \<or> c - (b + a) \<notin> orthogonal_complement M) 
               \<or> c - b \<notin> orthogonal_complement M"
       using f1 by (metis diff_diff_add)
@@ -1082,7 +1043,7 @@ proof
     hence \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) \<in> M \<inter> (orthogonal_complement M)\<close>
       by (simp add: \<open>\<pi> (x + y) - (\<pi> x + \<pi> y) \<in> M\<close>)      
     moreover have \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
-      by (simp add: \<open>closed_csubspace M\<close> closed_csubspace.subspace complex_vector.subspace_0 ortho_inter_zero)      
+      by (simp add: \<open>closed_csubspace M\<close> closed_csubspace.subspace complex_vector.subspace_0 orthogonal_complement_zero_intersection)      
     ultimately have \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) = 0\<close>
       by auto      
     thus ?thesis by simp
@@ -1228,7 +1189,7 @@ proof-
       by simp
     have "0 \<in> M"
       using f2 f1 by (metis (no_types) a1 cinner_gt_zero_iff cinner_minus_left cinner_zero_left 
-          is_projection_on_def orthogonal_complement_D1)
+          is_projection_on_def orthogonal_complement_orthoI)
     hence \<open>\<pi> x = 0\<close>
       using f3 by (metis (no_types) a1 a2 add.right_neutral diff_minus_eq_add projection_uniq' that)
     hence \<open>x \<in> (\<pi> -` {0})\<close>
@@ -1362,7 +1323,7 @@ proof-
     for x
   proof-
     have \<open>\<forall> y \<in> (orthogonal_complement M). \<langle> x, y \<rangle> = 0\<close>
-      using s1 orthogonal_complement_D2 by auto
+      using s1 orthogonal_complement_orthoI' by auto
     hence \<open>x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
       by (simp add: orthogonal_complement_def)
     thus ?thesis by blast
@@ -1389,11 +1350,11 @@ proof-
     hence b4: \<open>x - (id - \<pi>) x \<in>  M\<close>
       by simp
     hence b5: \<open>\<pi> x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
-      by (simp add: orthogonal_complement_D1 orthogonal_complement_I1)            
+      by (meson b3 orthogonal_complementI orthogonal_complement_orthoI')
     hence b6:\<open>x - (id -  \<pi>) x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
       by simp
     thus ?thesis
-      using a2 a3 b2 projection_uniq' subspace_orthog by fastforce
+      using a2 a3 b2 projection_uniq' orthogonal_complement_closed_subspace by fastforce
   qed
   thus ?thesis by blast
 qed
@@ -1404,7 +1365,7 @@ lemma ProjOntoOrtho:
   assumes a1: "closed_csubspace M"
   shows "id - projection M = projection (orthogonal_complement M)"
   using ProjOntoOrtho'
-  by (metis assms is_projection_on_def projection_intro1 projection_intro2 subspace_orthog)
+  by (metis assms is_projection_on_def projection_intro1 projection_intro2 orthogonal_complement_closed_subspace)
 
 
 \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close>
@@ -1485,9 +1446,9 @@ lemma ortho_top[simp]:
 proof-
   have \<open>({0}::'a set) \<subseteq>  (orthogonal_complement (top::'a set))\<close>
     using complex_vector.subspace_def
-    by (metis Int_iff complex_vector.subspace_0 complex_vector.subspace_UNIV empty_subsetI insert_subset ortho_inter_zero singletonI)
+    by (metis Int_iff complex_vector.subspace_0 complex_vector.subspace_UNIV empty_subsetI insert_subset orthogonal_complement_zero_intersection singletonI)
   moreover have  \<open>({0}::('a) set) \<supseteq>  (orthogonal_complement (top::('a) set))\<close>
-    by (metis complex_vector.subspace_0 complex_vector.subspace_UNIV equalityE inf_top_left ortho_inter_zero)
+    by (metis complex_vector.subspace_0 complex_vector.subspace_UNIV equalityE inf_top_left orthogonal_complement_zero_intersection)
   ultimately show ?thesis by blast
 qed
 
@@ -1582,7 +1543,7 @@ proof-
     for x l
   proof-
     have \<open>\<forall> n. \<forall> y \<in> A. \<langle> y , x n \<rangle> = 0\<close>
-      by (simp add: a1 orthogonal_complement_D2)      
+      by (simp add: a1 orthogonal_complement_orthoI')      
     moreover have \<open>isCont (\<lambda> t. \<langle> y , t \<rangle>) l\<close> for y
       using cinner_isCont_right by blast
     ultimately have \<open>(\<lambda> n. (\<langle> y , x n \<rangle>) ) \<longlonglongrightarrow> \<langle> y , l \<rangle>\<close> for y 
@@ -1595,7 +1556,7 @@ proof-
     hence \<open>\<forall> y \<in> A. \<langle> y , l \<rangle> = 0\<close> 
       using limI by fastforce
     thus ?thesis
-      by (simp add: orthogonal_complement_I1) 
+      by (simp add: orthogonal_complementI is_orthogonal_sym)
   qed
   thus ?thesis 
     using closed_sequential_limits by blast
@@ -1612,7 +1573,7 @@ proof-
     for x y
   proof-
     have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
-      by (simp add: a1 orthogonal_complement_D2)
+      by (simp add: a1 orthogonal_complement_orthoI')
     then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
       using a2 closure_sequential by blast       
     have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
@@ -1629,12 +1590,12 @@ proof-
     if a1: "x \<in> (orthogonal_complement A)"
     for x
     using that
-    by (simp add: orthogonal_complement_I1) 
+    by (meson orthogonal_complementI is_orthogonal_sym)
   moreover have \<open>x \<in> (orthogonal_complement A)\<close> 
     if "x \<in> (orthogonal_complement (closure A))"
     for x
     using that
-    by (meson closure_subset orthogonal_complement_D1 orthogonal_complement_I2 subset_eq)
+    by (meson closure_subset orthogonal_complement_orthoI orthogonal_complementI subset_eq)
   ultimately show ?thesis by blast
 qed
 
@@ -1653,7 +1614,7 @@ proof-
     hence \<open>x \<in> orthogonal_complement (A + B)\<close>
       using that by blast      
     hence t1: \<open>\<forall>z \<in> (A + B). \<langle> z , x \<rangle> = 0\<close>
-      by (simp add: orthogonal_complement_D2) 
+      by (simp add: orthogonal_complement_orthoI') 
     have \<open>0 \<in> B\<close>
       using assms(2) complex_vector.subspace_def
       unfolding closed_csubspace_def
@@ -1664,7 +1625,7 @@ proof-
     hence \<open>\<forall>z \<in> A. \<langle> z , x \<rangle> = 0\<close> 
       using t1 by auto
     hence w1: \<open>x \<in> (orthogonal_complement A)\<close>
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+      by (smt mem_Collect_eq is_orthogonal_sym orthogonal_complement_def)
     have \<open>0 \<in> A\<close>
       using assms(1) complex_vector.subspace_def
       unfolding closed_csubspace_def
@@ -1674,7 +1635,7 @@ proof-
     hence \<open>\<forall> z \<in> B. \<langle> z , x \<rangle> = 0\<close>
       using t1 by auto   
     hence \<open>x \<in> (orthogonal_complement B)\<close>
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+      by (smt mem_Collect_eq is_orthogonal_sym orthogonal_complement_def)
     thus ?thesis 
       using w1 by auto
   qed
@@ -1686,18 +1647,18 @@ proof-
       using v1
       by blast
     hence \<open>\<forall>y\<in> A. \<langle> y , x \<rangle> = 0\<close>
-      by (simp add: orthogonal_complement_D2)
+      by (simp add: orthogonal_complement_orthoI')
     have \<open>x \<in> (orthogonal_complement B)\<close> 
       using v1 
       by blast
     hence \<open>\<forall> y\<in> B. \<langle> y , x \<rangle> = 0\<close>
-      by (simp add: orthogonal_complement_D2)
+      by (simp add: orthogonal_complement_orthoI')
     have \<open>\<forall> a\<in>A. \<forall> b\<in>B. \<langle> a+b , x \<rangle> = 0\<close>
       by (simp add: \<open>\<forall>y\<in>A. \<langle>y , x\<rangle> = 0\<close> \<open>\<forall>y\<in>B. \<langle>y , x\<rangle> = 0\<close> cinner_add_left)
     hence \<open>\<forall> y \<in> (A + B). \<langle> y , x \<rangle> = 0\<close>
       using sum_existential by blast
     hence \<open>x \<in> (orthogonal_complement (A + B))\<close>
-      by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm orthogonal_complement_def)
+      by (smt mem_Collect_eq is_orthogonal_sym orthogonal_complement_def)
     moreover have \<open>(orthogonal_complement (A + B)) = (orthogonal_complement (A +\<^sub>M B))\<close>
       unfolding closed_sum_def by (subst OrthoClosedEq[symmetric], simp)
     ultimately have \<open>x \<in> (orthogonal_complement (A +\<^sub>M B))\<close>
@@ -1714,7 +1675,7 @@ theorem ortho_decomp:
   shows \<open>x = (projection M) x + (projection (orthogonal_complement M)) x\<close>
   using ProjOntoOrtho assms diff_add_cancel id_apply  minus_apply orthogonal_complement_twice
     complex_vector.subspace_def
-  by (smt subspace_orthog)
+  by (smt orthogonal_complement_closed_subspace)
 
 lemma DeMorganOrthoDual:
   fixes A B::"'a::chilbert_space set"
@@ -1838,8 +1799,8 @@ proof-
     by (simp add: a1 projection_intro2)
   hence t1: \<open>\<langle>t , projection (orthogonal_complement M) x\<rangle> = 0\<close>
     using a3
-    unfolding orthogonal_complement_def is_orthogonal_def
-    by (smt is_orthogonal_def mem_Collect_eq orthogonal_comm)
+    unfolding orthogonal_complement_def
+    by (smt mem_Collect_eq is_orthogonal_sym)
   have \<open>(\<langle>t , x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t =
  (\<langle>t , projection M x + projection (orthogonal_complement M) x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
     using a1 ortho_decomp by fastforce
@@ -1923,7 +1884,7 @@ proof-
       using s1
       by simp
     moreover have \<open>(f -` {0}) \<inter> (orthogonal_complement (f -` {0})) = {0}\<close>
-      by (metis f1 b1 ortho_inter_zero projectionPropertiesD projection_intro2 vimage_singleton_eq)    
+      by (metis f1 b1 orthogonal_complement_zero_intersection projectionPropertiesD projection_intro2 vimage_singleton_eq)    
     ultimately have \<open>x - (k *\<^sub>C y) = 0\<close>
       using s2 by blast
     thus ?thesis by simp
@@ -1973,7 +1934,7 @@ next
     by (simp add: k_def)
   moreover have \<open>(1/k) *\<^sub>C s \<in>  (orthogonal_complement (f -` {0}))\<close>
     unfolding closed_csubspace_def
-    by (simp add: s1 orthogonal_complement_D2 orthogonal_complement_I1)
+    by (meson closed_csubspace.subspace complex_vector.subspace_def q1 s1)
   ultimately have w3: \<open>t \<in> (orthogonal_complement (f -` {0}))\<close>
     by simp
   have \<open>projection (orthogonal_complement (f -` {0})) x = (\<langle>t , x\<rangle>/\<langle>t , t\<rangle>) *\<^sub>C t\<close>
@@ -2281,9 +2242,7 @@ proof-
         by simp 
     qed
     hence c2: "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
-      by (smt Adj_I' a1 a2 cinner_diff_right is_projection_on_def minus_diff_eq
-          orthogonal_complement_D2 orthogonal_complement_I1 projectionPropertiesA' 
-          projection_fixed_points')
+      by (smt (verit, ccfv_SIG) a1 cinner_diff_left eq_iff_diff_eq_0 is_projection_on_def orthogonal_complementI orthogonal_complement_orthoI)
     have "\<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
       if "y \<in> orthogonal_complement M"
       for y
@@ -2291,7 +2250,7 @@ proof-
       have \<open>\<pi> y = 0\<close>
         by (metis a1 a2 diff_0_right diff_self is_projection_on_existence 
             orthogonal_complement_twice projection_fixed_points' projection_intro1' projection_uniq' 
-            subspace_orthog that)           
+            orthogonal_complement_closed_subspace that)           
       hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
         by simp
       thus ?thesis
@@ -2300,8 +2259,7 @@ proof-
     qed
 
     hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
-      unfolding orthogonal_complement_def is_orthogonal_def
-      by simp        
+      unfolding orthogonal_complement_def by simp        
     hence c1: "(\<pi>\<^sup>\<dagger>) x \<in> M"
       by (simp add: assms orthogonal_complement_twice)    
     show ?thesis
@@ -2375,7 +2333,7 @@ proof
   show "inf x (- x) = bot"
     for x :: "'a ccsubspace"
     apply transfer
-    by (simp add: closed_csubspace_def complex_vector.subspace_0 ortho_inter_zero)
+    by (simp add: closed_csubspace_def complex_vector.subspace_0 orthogonal_complement_zero_intersection)
 
   have \<open>t \<in> x +\<^sub>M orthogonal_complement x\<close>
     if a1: \<open>closed_csubspace x\<close>
@@ -2394,7 +2352,7 @@ proof
         \<open>projection (orthogonal_complement x) t \<in> orthogonal_complement x\<close> \<open>projection x t \<in> x\<close>
         \<open>t = projection x t + projection (orthogonal_complement x) t\<close> in_mono 
         is_closed_subspace_universal_inclusion_left complex_vector.subspace_def
-      by (metis closed_csubspace.subspace closed_subspace_closed_sum subspace_orthog) 
+      by (metis closed_csubspace.subspace closed_subspace_closed_sum orthogonal_complement_closed_subspace) 
   qed  
   hence b1: \<open>x +\<^sub>M orthogonal_complement x = UNIV\<close>
     if a1: \<open>closed_csubspace x\<close>
@@ -2810,7 +2768,7 @@ proof-
           and w3: "a \<noteq> a'"
           and w4: "a' \<notin> A'"
         for a a'
-        using is_orthogonal_def orthogonal_comm s1x w1 w2 w3 w4 by blast      
+        using is_orthogonal_sym s1x w1 w2 w3 w4 by blast      
       ultimately have s1: "\<langle>a, a'\<rangle> = 0"
         if w1: "a \<in> A"
           and w2: "a' \<in> A"
@@ -3053,7 +3011,7 @@ next
   have "(norm (sum f (insert x F)))\<^sup>2 = (norm (f x + sum f F))\<^sup>2"
     by (simp add: insert.hyps(1) insert.hyps(2))
   also have "\<dots> = (norm (f x))\<^sup>2 + (norm (sum f F))\<^sup>2"
-    using xF_ortho by (rule PythagoreanId)
+    using xF_ortho by (rule pythagorean_theorem)
   also have "\<dots> = (norm (f x))\<^sup>2 + (\<Sum>a\<in>F.(norm (f a))^2)"
     apply (subst insert.IH) using insert.prems by auto
   also have "\<dots> = (\<Sum>a\<in>insert x F.(norm (f a))^2)"
@@ -3076,28 +3034,6 @@ proof-
     by blast
   thus ?thesis by auto
 qed
-
-subsection \<open>Recovered theorems\<close>
-
-(* lemmas tendsto_cinner [tendsto_intros] =
-  bounded_bilinear.tendsto [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
-
-lemmas isCont_cinner [simp] =
-  bounded_bilinear.isCont [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
- *)
-
-(* lemmas has_derivative_cinner [derivative_intros] =
-  bounded_bilinear.FDERIV [OF bounded_sesquilinear_cinner[THEN bounded_sesquilinear.bounded_bilinear]]
- *)
-
-(* lemmas has_derivative_cinner_left [derivative_intros] =
-  bounded_linear.has_derivative [OF bounded_antilinear_cinner_left[THEN bounded_antilinear.bounded_linear]]
-
-lemma differentiable_cinner [simp]:
-  "f differentiable (at x within s) \<Longrightarrow> g differentiable at x within s \<Longrightarrow> 
-        (\<lambda>x. cinner (f x) (g x)) differentiable at x within s"
-  unfolding differentiable_def by (blast intro: has_derivative_cinner)
- *)
 
 lemma has_derivative_norm[derivative_intros]:
   fixes x :: "'a::complex_inner"
@@ -3159,387 +3095,8 @@ lemma clinear_space_bot_not_top[simp]:
   "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
   using clinear_space_top_not_bot by metis
 
-subsection\<open>NSA miscellany\<close>
-
-(* unbundle nsa_notation *)
-
 subsection \<open>Boundeness\<close>
 
-(* lemma nsbounded_existencial:
-  \<open>(\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite) \<longleftrightarrow> (\<exists>x. (( *f2* dist) x) ` ( *s* S) \<subseteq> HFinite)\<close>
-  for S::\<open>'a::metric_space set\<close>
-proof
-  show "\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite"
-    if "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite"
-    using that image_subset_iff  by fastforce
-  show "\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite"
-    if "\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite"
-  proof-
-    obtain z where \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close>
-      using \<open>\<exists>x. ( *f2* dist) x ` ( *s* S) \<subseteq> HFinite\<close> by blast
-    have \<open>( *f2* dist) x y \<in> HFinite\<close>
-      if u1: \<open>x\<in>*s* S\<close> and u2: \<open>y\<in>*s* S\<close>
-      for x y
-    proof-
-      have \<open>\<forall> xx yy zz :: 'a. dist xx yy \<le> dist xx zz + dist zz yy\<close>
-        by (simp add: dist_triangle)
-      hence \<open>\<forall> xx yy zz :: 'a star. ( *f2* dist) xx yy \<le> ( *f2* dist) xx zz + ( *f2* dist) zz yy\<close>
-        by StarDef.transfer
-      hence z1: \<open>( *f2* dist) x y \<le> ( *f2* dist) x z + ( *f2* dist) z y\<close>
-        by blast
-      have l1:  \<open>( *f2* dist) z x \<in> HFinite\<close>
-        using \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close> \<open>x\<in>*s* S \<close> 
-        by blast
-      have \<open>\<forall> zz xx :: 'a. dist zz xx = dist xx zz\<close>
-        using dist_commute by blast
-      hence \<open>\<forall> zz xx :: 'a star. ( *f2* dist) zz xx = ( *f2* dist) xx zz\<close>
-        by StarDef.transfer
-      hence l2: \<open>( *f2* dist) z x = ( *f2* dist) x z\<close>
-        by blast
-      have  \<open>( *f2* dist) x z \<in> HFinite\<close>
-        using l1 l2 by auto        
-      moreover have  \<open>( *f2* dist) z y \<in> HFinite\<close>
-        using \<open>( *f2* dist) z ` ( *s* S) \<subseteq> HFinite\<close> \<open>y\<in>*s* S \<close> 
-        by blast
-      ultimately have z2: \<open>( *f2* dist) x z + ( *f2* dist) z y \<in> HFinite\<close>
-        by (simp add: HFinite_add)
-      have \<open>\<forall> xx yy :: 'a. 0 \<le> dist xx yy\<close>
-        by (smt (verit) \<open>\<forall>xx yy zz. dist xx yy \<le> dist xx zz + dist zz yy\<close> \<open>\<forall>zz xx. dist zz xx = dist xx zz\<close>)
-      hence \<open>\<forall> xx yy :: 'a star. 0 \<le> ( *f2* dist) xx yy\<close>
-        by StarDef.transfer
-      hence z3: \<open>0 \<le> ( *f2* dist) x y\<close>
-        by (simp add: \<open>\<forall>xx yy. 0 \<le> ( *f2* dist) xx yy\<close>) 
-      show ?thesis
-        using HFinite_bounded z1 z2 z3 by blast  
-    qed
-    thus ?thesis by blast
-  qed
-qed
-
-lemma nsbounded_I:
-  \<open>\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite \<Longrightarrow> \<exists>x. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close>
-  by blast
-
-lemma nsbounded_D:
-  \<open>\<exists>x. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite \<Longrightarrow> \<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close>
-  by (meson image_subsetI nsbounded_existencial)
-
-lemma bounded_nsbounded:
-  fixes S :: \<open>('a::metric_space) set\<close>
-  assumes h1: \<open>bounded S\<close> and h2: "x\<in>*s* S" and h3: "y\<in>*s* S"
-  shows \<open>( *f2* dist) x y \<in> HFinite\<close>
-proof- 
-  have \<open>\<exists>M. \<exists> u. \<forall> v \<in> S. dist u v < M\<close>
-    using h1
-    by (meson bounded_def gt_ex le_less_trans)
-  then obtain M where \<open>\<exists> u. \<forall> v \<in> S. dist u v < M\<close>
-    by blast
-  hence \<open>\<exists> u. \<forall> v \<in> *s* S. ( *f2* dist) u v < hypreal_of_real M\<close>
-    by StarDef.transfer
-  then obtain u where u_def: \<open>\<And>v. v \<in> *s* S \<Longrightarrow> ( *f2* dist) u v < hypreal_of_real M\<close>
-    by blast
-  have \<open>( *f2* dist) u v \<in> HFinite\<close>
-    if \<open>v \<in> *s* S\<close>
-    for v
-  proof-
-    have q1: \<open>( *f2* dist) u v < hypreal_of_real M\<close>
-      by (simp add: u_def that)
-    have \<open>\<forall> uu vv. norm (dist uu vv) =  dist uu vv\<close>
-      by simp         
-    hence \<open>\<forall> uu vv. hnorm (( *f2* dist) uu vv) =  ( *f2* dist) uu vv\<close>
-      by StarDef.transfer
-    hence q2: \<open>hnorm (( *f2* dist) u v) = ( *f2* dist) u v\<close>
-      by blast
-    show \<open>( *f2* dist) u v \<in> HFinite\<close>
-      using q1 q2
-      by (metis HInfiniteD HInfinite_HFinite_disj SReal_hypreal_of_real order.asym) 
-  qed  
-  thus ?thesis
-    using nsbounded_D h2 h3 by auto   
-qed
-
-lemma nsbounded_bounded:
-  fixes S :: \<open>'a::metric_space set\<close>
-  assumes a1: "\<And>x y. x\<in>*s* S \<Longrightarrow> y\<in>*s* S \<Longrightarrow> ( *f2* dist) x y \<in> HFinite"
-  shows \<open>bounded S\<close>
-proof-
-  from a1
-  obtain x where \<open>\<forall> y \<in> *s* S. ( *f2* dist) x y \<in> HFinite\<close>
-    by blast
-  have \<open>\<exists>M. \<forall> y \<in> *s* S. ( *f2* dist) x y < M\<close>
-  proof(rule classical)
-    assume \<open>\<not>(\<exists> M. \<forall> y \<in> *s* S. ( *f2* dist) x y < M)\<close>
-    hence \<open>\<forall>M. \<exists> y \<in> *s* S. ( *f2* dist) x y \<ge> M\<close>
-      using leI by blast
-    hence \<open>\<exists>y \<in> *s* S. ( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
-      by blast
-    then obtain y where \<open>y \<in> *s* S\<close> and \<open>( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
-      by blast
-    have \<open>( *f2* dist) x y \<notin> HFinite\<close>
-    proof(rule classical)
-      assume \<open>\<not>(( *f2* dist) x y \<notin> HFinite)\<close>
-      hence \<open>( *f2* dist) x y \<in> HFinite\<close>
-        by blast
-      hence s1: \<open>\<exists> r \<in> \<real>. hnorm (( *f2* dist) x y) < r\<close>
-        using HFinite_def by blast
-      have \<open>\<forall> xx. \<forall> yy. norm ( dist xx yy) = dist xx yy\<close>
-        by simp
-      hence \<open>\<forall> xx. \<forall> yy. hnorm (( *f2* dist) xx yy) = ( *f2* dist) xx yy\<close>
-        by StarDef.transfer
-      hence s2: \<open>hnorm (( *f2* dist) x y) = ( *f2* dist) x y\<close>
-        by blast
-      have \<open>\<exists> r \<in> \<real>. ( *f2* dist) x y < r\<close>
-        using s1 s2
-        by simp
-      hence \<open>\<exists>r \<in> \<real>. hypreal_of_hypnat whn < r\<close>
-        using \<open>( *f2* dist) x y \<ge> hypreal_of_hypnat whn\<close>
-          order.not_eq_order_implies_strict by fastforce
-      then obtain r where \<open>r \<in> \<real>\<close> and \<open>hypreal_of_hypnat whn < r\<close>
-        by blast
-      from \<open>r \<in> \<real>\<close>
-      have \<open>\<exists> s. r = hypreal_of_real s\<close>
-        by (simp add: SReal_iff)
-      then obtain s where \<open>r = hypreal_of_real s\<close>
-        by blast
-      have \<open>\<exists> n::nat. s < n\<close>
-        by (simp add: reals_Archimedean2)
-      then obtain n::nat where \<open>s < n\<close>
-        by blast
-      from \<open>s < n\<close>
-      have \<open>hypreal_of_real s < hypreal_of_nat n\<close>
-        by StarDef.transfer
-      hence \<open>\<exists>n. r < hypreal_of_nat n\<close> 
-        using \<open>r = hypreal_of_real s\<close> by blast
-      then obtain n where \<open>r < hypreal_of_nat n\<close>
-        by blast
-      from \<open>hypreal_of_hypnat whn < r\<close>  \<open>r < hypreal_of_nat n\<close>
-      have t1: \<open>hypreal_of_hypnat whn < hypreal_of_nat n\<close>
-        by simp
-
-      have  \<open>hypnat_of_nat n < whn\<close>
-        by simp
-      hence  \<open>hypreal_of_hypnat (hypnat_of_nat n) < hypreal_of_hypnat whn\<close>
-        by simp
-      moreover have \<open>hypreal_of_hypnat (hypnat_of_nat n) = hypreal_of_nat n\<close>
-        using hypreal_of_hypnat_hypnat_of_nat_hypreal_of_nat by blast
-      ultimately have t2: \<open>hypreal_of_nat n < hypreal_of_hypnat whn\<close>
-        by simp      
-      hence \<open>hypreal_of_hypnat whn < hypreal_of_hypnat whn\<close>
-        using t1 by auto        
-      thus ?thesis by blast
-    qed
-    thus ?thesis
-      using \<open>\<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite\<close> \<open>y \<in> *s* S\<close> by auto 
-  qed
-  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. ( *f2* dist) x y < M\<close>
-    by blast
-  hence \<open>\<exists> x. \<exists>M. \<forall>y\<in>*s* S. ( *f2* dist) x y \<le> M\<close>
-    using le_less by blast
-  hence \<open>\<exists>x e. \<forall>y\<in>S. dist x y \<le> e\<close>  by StarDef.transfer
-  thus ?thesis using bounded_def by blast
-qed
-
-proposition bounded_nsbounded_iff:
-  \<open>bounded S \<longleftrightarrow> (\<forall>x\<in>*s* S. \<forall>y\<in>*s* S. ( *f2* dist) x y \<in> HFinite)\<close>
-  using bounded_nsbounded nsbounded_bounded by blast
-
-lemma ex_approx:
-  fixes f::\<open>'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector\<close>
-    and S::\<open>'a set\<close> and l::'b
-  assumes a1: \<open>\<And>e. e>0 \<Longrightarrow> \<exists> x\<in>S. norm (f x - l) < e\<close>
-  shows \<open>\<exists>x\<in>*s* S. ( *f* f) x \<approx> star_of l\<close>
-proof-
-  have \<open>\<forall>e>0. \<exists>x. x\<in>S \<and> norm (f x - l) < e\<close>
-    using a1
-    by blast
-  hence \<open>\<exists>x. \<forall>e>0. x e \<in> S \<and> norm (f (x e) - l) < e\<close>
-    by metis
-  then obtain x where w1: \<open>\<forall>e>0. x e \<in> S\<close> and w2: \<open>\<forall>e>0. norm (f (x e) - l) < e\<close>
-    by blast
-  from w1 
-  have \<open>\<forall>e>0. ( *f* x) e \<in> *s* S\<close>
-    by StarDef.transfer
-  hence \<open>( *f* x) epsilon \<in> *s* S\<close>
-    using epsilon_gt_zero by auto
-  from  w2
-  have  \<open>\<forall>e>0. hnorm (( *f* f) (( *f* x) e) - (star_of l)) < e\<close>
-    by StarDef.transfer
-  hence \<open>hnorm (( *f* f) (( *f* x) epsilon) - (star_of l)) < epsilon\<close>
-    using epsilon_gt_zero by blast    
-  hence  \<open>( *f* f) (( *f* x) epsilon) \<approx> (star_of l)\<close>
-    by (metis Infinitesimal_epsilon add_diff_cancel_left' bex_Infinitesimal_iff2 diff_add_cancel 
-        hnorm_less_Infinitesimal)
-  thus ?thesis using \<open>( *f* x) epsilon \<in> *s* S\<close> by blast
-qed
-
-
-lemma inv_hSuc_Infinite_Infinitesimal:
-  assumes a1: "N\<in>HNatInfinite"
-  shows "inverse (hypreal_of_hypnat (hSuc N)) \<in> Infinitesimal"
-proof-
-  have \<open>\<And>n. n < Suc n\<close>
-    by auto
-  hence \<open>\<And>n. n < hSuc n\<close>
-    by StarDef.transfer
-  hence \<open>N < hSuc N\<close>
-    by blast
-  hence \<open>hSuc N \<in> HNatInfinite\<close>
-    using \<open>N\<in>HNatInfinite\<close> HNatInfinite_upward_closed dual_order.strict_implies_order by blast
-  thus ?thesis
-    by simp
-qed
-
-definition starfun3 :: "('a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'd) \<Rightarrow> 'a star \<Rightarrow> 'b star \<Rightarrow> 'c star \<Rightarrow> 'd star"  (\<open>*f3* _\<close> [80] 80)
-  where "starfun3 f \<equiv> \<lambda>x y z. star_of f \<star> x \<star> y \<star> z"
-declare starfun3_def [StarDef.transfer_unfold] *)
-
-subsection \<open>Closure\<close>
-
-(* lemma nsclosure_I:
-  assumes a1: \<open>r \<in> closure A\<close>
-  shows \<open>\<exists>a \<in> *s* A. star_of r \<approx> a\<close>
-proof-
-  have \<open>\<exists>s. (\<forall> n. s n \<in> A) \<and> s \<longlonglongrightarrow> r\<close>
-    using closure_sequential assms by auto
-  then obtain s::\<open>nat\<Rightarrow>_\<close> where b1: \<open>\<And>n. s n \<in> A\<close> and b2: \<open>s \<longlonglongrightarrow> r\<close>     
-    by blast
-  from  b1
-  have c1: \<open>\<And> n. ( *f* s) n \<in> *s* A\<close>
-    by StarDef.transfer
-  obtain N where N_def: \<open>N \<in> HNatInfinite\<close>
-    using HNatInfinite_whn by blast
-  have \<open>( *f* s) N \<in> *s* A\<close>
-    by (simp add: c1)    
-  moreover have \<open>( *f* s) N \<approx> star_of r\<close>    
-    using b2
-    by (simp add: LIMSEQ_NSLIMSEQ NSLIMSEQ_D N_def)
-  ultimately show ?thesis
-    using approx_reorient by blast 
-qed
-
-lemma nsclosure_D:
-  assumes a1: "\<exists>a \<in> *s* A. star_of r \<approx> a"
-  shows \<open>r \<in> closure A\<close>
-proof-
-  have \<open>\<exists>a \<in> *s* A. hnorm (star_of r - a) \<in> Infinitesimal\<close>
-    using a1 Infinitesimal_hnorm_iff bex_Infinitesimal_iff by auto
-  hence \<open>\<exists>a \<in> *s* A. \<forall> e\<in>Reals. e > 0 \<longrightarrow> hnorm (star_of r - a) <  e\<close>
-    using Infinitesimal_less_SReal2 by blast
-  hence \<open>\<exists>a \<in> *s* A. hnorm (star_of r - a) <  e\<close>
-    if "e\<in>Reals" and "e > 0"
-    for e
-    using that
-    by blast
-  hence \<open>\<exists>a \<in> *s* A. hnorm (star_of r - a)
-           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
-    if "hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n ) > 0"
-    for n::nat    
-    using that
-    by auto
-  hence \<open>\<exists>a \<in> *s* A. hnorm (star_of r - a)
-           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
-    for n::nat
-    by (meson InfinitesimalD2 assms bex_Infinitesimal_iff 
-        nice_ordered_field_class.inverse_positive_iff_positive of_nat_0_less_iff zero_less_Suc)    
-  have \<open>\<exists>a\<in>A. norm (r - a)
-           <  ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
-    for n::nat
-  proof-
-    have \<open>\<exists>a \<in> *s* A. hnorm (star_of r - a)
-           < hypreal_of_real ( (\<lambda>n. inverse (real (Suc n))) n )\<close>
-      using \<open>\<And>n. \<exists>a\<in>*s* A. hnorm (star_of r - a) < hypreal_of_real (inverse (real (Suc n)))\<close> 
-      by auto
-    thus ?thesis
-      by StarDef.transfer
-  qed
-  hence \<open>\<And>n. \<exists> a \<in>  A. norm (r - a)  <  (\<lambda>n. inverse (real (Suc n))) n\<close>
-    by blast
-  hence \<open>\<exists> s. \<forall> n. s n \<in> A \<and> norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close>
-    by metis
-  then obtain s where s_def1: \<open>\<And>n. s n \<in> A\<close> 
-    and s_def2: \<open>\<And>n. norm (r - s n)  <  (\<lambda>n. inverse (real (Suc n))) n\<close> 
-    by blast
-  have s1: \<open>\<And>n. hnorm (star_of r - ( *f* s) n)  <  ( *f* (\<lambda>n. inverse (real (Suc n)))) n\<close>
-    using s_def2
-    by StarDef.transfer
-  have \<open>( *f* s) N \<approx> star_of r\<close>
-    if  \<open>N \<in> HNatInfinite\<close>
-    for N
-  proof-
-    have \<open>hnorm (star_of r - ( *f* s) N)  <  ( *f* (\<lambda>n. inverse (real (Suc n)))) N\<close>
-      using s1 by blast
-    moreover have \<open>( *f* (\<lambda>n. inverse (real (Suc n)))) N \<in> Infinitesimal\<close>
-      using  \<open>N \<in> HNatInfinite\<close>
-      by (metis (full_types) hSuc_def inv_hSuc_Infinite_Infinitesimal of_hypnat_def starfun_inverse2 
-          starfun_o2)
-    ultimately have \<open>hnorm (star_of r - ( *f* s) N) \<in> Infinitesimal\<close>
-      using Infinitesimal_hnorm_iff hnorm_less_Infinitesimal by blast
-    thus \<open>( *f* s) N \<approx> star_of r\<close>
-      by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff)
-  qed
-  hence \<open>s \<longlonglongrightarrow> r\<close>
-    using NSLIMSEQ_I NSLIMSEQ_LIMSEQ by metis     
-  thus ?thesis
-    using closure_sequential s_def1 by auto 
-qed
-
-text \<open>Theorem 10.1.1 (3) of [goldblatt2012lectures]\<close>
-lemma nsclosure_iff:
-  \<open>r \<in> closure A \<longleftrightarrow> (\<exists> a \<in> *s* A. star_of r \<approx> a)\<close>
-  using nsclosure_D nsclosure_I by blast
-
-text \<open>Hyperfinite set\<close>
-definition hypfinite where \<open>hypfinite = ( *p* finite)\<close> 
- *)
-
-subsection \<open>Unsorted\<close>
-
-(* lemma Cauchy_convergent_norm:
-  assumes a1: "Cauchy (x::nat \<Rightarrow> 'a::real_normed_vector)"
-  shows  \<open>Cauchy (\<lambda> n. norm (x n))\<close> *)
-(* proof-
-  have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    using that
-    by (simp add: Cauchy_NSCauchy NSCauchyD a1)
-  hence \<open>hnorm (( *f* x) N) \<approx> hnorm (( *f* x) M)\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    using that
-    by (simp add: approx_hnorm)
-  thus \<open>Cauchy (\<lambda> n. norm (x n))\<close>
-    by (metis (full_types) NSCauchyI NSCauchy_Cauchy_iff starfun_hnorm)
-qed *)
-
-(* lemma Cauchy_add:
-  fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
-  shows \<open>Cauchy (\<lambda> n. f n + g n)\<close> *)
-(* proof-
-  from a1
-  have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M::hypnat
-    using NSCauchy_Cauchy_iff NSCauchy_def that by blast
-  from a2
-  have b2: \<open>( *f* g) N \<approx> ( *f* g) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M::hypnat
-    using NSCauchy_Cauchy_iff NSCauchy_def that by blast  
-  have b3: \<open>( *f* (\<lambda> n. f n + g n)) N \<approx> ( *f*  (\<lambda> n. f n + g n)) M\<close>
-    if \<open>N \<in> HNatInfinite\<close> and \<open>M \<in> HNatInfinite\<close>
-    for N M::hypnat
-    by (metis (mono_tags) b1 b2 approx_add starfun_add that(1) that(2))  
-  thus \<open>Cauchy (\<lambda> n. f n + g n)\<close>
-    by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed *)
-
-(* lemma lim_leq:
-  fixes x y :: \<open>nat \<Rightarrow> real\<close>
-  assumes \<open>\<And> n. x n \<le> y n\<close> and \<open>convergent x\<close> and \<open>convergent y\<close>
-  shows \<open>lim x \<le> lim y\<close> *)
-  (* by (metis NSLIMSEQ_le NSconvergent_def assms(1) assms(2) assms(3) convergent_NSconvergent_iff lim_nslim_iff nslimI) *)
 
 lemma lim_ge:
   fixes x ::real and y :: \<open>nat \<Rightarrow> real\<close>
@@ -3547,298 +3104,18 @@ lemma lim_ge:
   shows \<open>x \<le> lim y\<close>
   by (meson Lim_bounded2 assms(1) assms(2) convergent_LIMSEQ_iff)
 
-(* lemma lim_add:
-  fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes \<open>convergent x\<close> and \<open>convergent y\<close>
-  shows \<open>lim (\<lambda> n. x n + y n) = lim x + lim y\<close> *)
-(* proof-
-  have b1: \<open>( *f* x) N \<approx> star_of (lim x)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using \<open>convergent x\<close> that
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  have b2: \<open>( *f* y) N \<approx> star_of (lim y)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using \<open>convergent y\<close> that
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  have b3: \<open>( *f* x) N + ( *f* y) N \<approx> star_of (lim x) + star_of (lim y)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using that
-    by (simp add: approx_add b1 b2)    
-  moreover have \<open>( *f* (\<lambda> n. x n + y n)) N = ( *f* x) N + ( *f* y) N\<close>
-    for N
-    by auto
-  moreover have \<open>star_of (lim x + lim y) = star_of (lim x) + star_of (lim y)\<close>
-    by auto
-  ultimately have \<open>N \<in> HNatInfinite \<Longrightarrow>  ( *f* (\<lambda> n. x n + y n)) N \<approx> star_of (lim x + lim y)\<close>
-    for N
-    by simp
-  thus ?thesis
-    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed *)
-
-
-(* lemma lim_add_const_left:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and c::'a
-  assumes \<open>convergent x\<close>
-  shows \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
-proof-
-  have \<open>convergent (\<lambda> i. c)\<close>
-    by (simp add: convergent_const)    
-  hence \<open>lim (\<lambda> n. (\<lambda> i. c) n + x n) = lim (\<lambda> n. c) + lim x\<close>
-    using \<open>convergent x\<close> lim_add[where x = "(\<lambda> i. c)" and y = "x"]
-    by blast
-  moreover have \<open>lim (\<lambda> i. c) = c\<close>
-    by simp
-  ultimately show ?thesis by auto
-qed *)
-
-(* lemma lim_add_const_right:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes  \<open>convergent x\<close>
-  shows \<open>lim (\<lambda> n. x n + c) = lim x + c\<close>
-proof-
-  have \<open>lim (\<lambda> n. c + x n) = c + lim x\<close>
-    using assms lim_add_const_left by blast
-  moreover have \<open>(\<lambda> n. c + x n) = (\<lambda> n. x n + c)\<close>
-    by auto
-  moreover have \<open>c + lim x = lim x + c\<close>
-    by simp
-  ultimately show ?thesis by simp
-qed *)
-
-(* lemma lim_scaleR:
-  fixes x :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close> and r::real
-  assumes a1: \<open>convergent x\<close> 
-  shows \<open>lim (\<lambda> n. r *\<^sub>R x n ) = r *\<^sub>R lim x\<close> *)
-(* proof-
-  have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using \<open>convergent x\<close> that
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  hence \<open>r *\<^sub>R ( *f* x) N \<approx> r *\<^sub>R (star_of (lim x))\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using that
-    by (simp add: approx_scaleR2)
-  moreover have \<open>( *f* (\<lambda> n. r *\<^sub>R x n)) N = r *\<^sub>R ( *f* x) N\<close>
-    for N
-    by (simp add: star_scaleR_def)    
-  moreover have \<open>star_of (r *\<^sub>R lim x) = r *\<^sub>R star_of (lim x)\<close>
-    by auto
-  ultimately have \<open>( *f* (\<lambda> n. r *\<^sub>R x n)) N \<approx> star_of (r *\<^sub>R lim x)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using that by auto
-  thus ?thesis
-    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed
- *)
-
-(* lemma Cauchy_minus:
-  fixes f g::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes a1: \<open>Cauchy f\<close> and a2: \<open>Cauchy g\<close>
-  shows  \<open>Cauchy (\<lambda> n. f n - g n)\<close>
- *)
-(* proof-
-  from a1
-  have b1: \<open>( *f* f) N \<approx> ( *f* f) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M::hypnat
-    using that NSCauchy_Cauchy_iff NSCauchy_def by blast
-  from a2
-  have b2: \<open>( *f* g) N \<approx> ( *f* g) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M::hypnat
-    using that NSCauchy_Cauchy_iff NSCauchy_def by blast  
-  have \<open>( *f* (\<lambda> n. f n -g n)) N \<approx> ( *f*  (\<lambda> n. f n -g n)) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M::hypnat
-  proof-
-    have \<open>( *f* f) N - ( *f* g) N \<approx> ( *f* f) M - ( *f* g) M\<close>
-      by (simp add: approx_diff b1 b2 that(1) that(2))      
-    moreover have \<open>( *f* (\<lambda> n. f n - g n)) N = ( *f* f) N - ( *f* g) N\<close>
-      by auto
-    moreover have \<open>( *f* (\<lambda> n. f n - g n)) M = ( *f* f) M - ( *f* g) M\<close>
-      by auto
-    ultimately show \<open>( *f* (\<lambda> n. f n - g n)) N \<approx> ( *f*  (\<lambda> n. f n - g n)) M\<close>
-      by simp
-  qed
-  thus \<open>Cauchy (\<lambda> n. f n - g n)\<close>
-    by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed *)
-
-(* lemma Cauchy_sgn:
-  fixes x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes a1: \<open>Cauchy x\<close>
-  shows \<open>Cauchy (\<lambda> n. (x n) /\<^sub>R lim (\<lambda> n. norm (x n)))\<close>
- *)
-(* proof-
-  have b1: \<open>\<exists>L. lim (\<lambda>n. norm (x n)) = L\<close>
-    by auto
-  then obtain L where L_def: \<open>lim (\<lambda>n. norm (x n)) = L\<close>
-    by blast
-  show \<open>Cauchy (\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n)))\<close>
-  proof(cases "L = 0")
-    case True
-    have \<open>(x n) /\<^sub>R L = 0\<close>
-      for n
-      by (simp add: True)
-    hence \<open>(\<lambda>n. (x n) /\<^sub>R L) = (\<lambda> _. 0)\<close>
-      by blast
-    moreover have \<open>lim (\<lambda> _. 0) = 0\<close>
-      by auto
-    ultimately have \<open>(\<lambda>n. (x n) /\<^sub>R L) \<longlonglongrightarrow> 0\<close>
-      by simp
-    hence \<open>convergent (\<lambda>n. (x n) /\<^sub>R L)\<close>
-      unfolding convergent_def
-      by blast
-    thus ?thesis
-      using  \<open>lim (\<lambda>n. norm (x n)) = L\<close> LIMSEQ_imp_Cauchy \<open>(\<lambda>n. x n /\<^sub>R L) \<longlonglongrightarrow> 0\<close> by blast
-  next
-    case False
-    have c1: \<open>(\<lambda>n. x n /\<^sub>R lim (\<lambda>n. norm (x n))) = (\<lambda>n. x n /\<^sub>R L)\<close>
-      by (simp add: L_def)
-    from \<open>Cauchy x\<close>
-    have p1: \<open>( *f* x) N \<approx> ( *f* x) M\<close>
-      if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-      for N M
-      using that
-      by (simp add: Cauchy_NSCauchy NSCauchyD)
-    hence \<open>( *f2* scaleR) (inverse (star_of L)) (( *f* x) N) \<approx> ( *f2* scaleR) (inverse (star_of L)) (( *f* x) M)\<close>
-      if d1: "N \<in> HNatInfinite" and d2: "M \<in> HNatInfinite"
-      for N M
-    proof -
-      have "( *f* x) N \<approx> ( *f* x) M"
-        by (simp add: p1 d1 d2)
-      thus ?thesis
-        by (metis approx_scaleR2 star_of_inverse star_scaleR_def starfun2_star_of)        
-    qed
-    moreover have \<open>( *f2* scaleR) (inverse (star_of L)) (( *f* x) N) =  ( *f* (\<lambda>n. x n /\<^sub>R L)) N\<close>
-      for N
-      by (metis star_of_inverse starfun2_star_of starfun_o2)
-    ultimately have \<open>( *f* (\<lambda>n. x n /\<^sub>R L)) N \<approx> ( *f* (\<lambda>n. x n /\<^sub>R L)) M\<close>
-      if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-      for N M
-      using that
-      by simp
-    hence c2:\<open>Cauchy (\<lambda>n. x n /\<^sub>R L)\<close>
-      using NSCauchyI NSCauchy_Cauchy by blast    
-    thus ?thesis
-      by (simp add: L_def)  
-  qed
-qed *)
-
 
 lemma Cauchy_scaleR:
   fixes r::real and x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: "Cauchy x" 
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
   by (simp add: assms bounded_linear.Cauchy bounded_linear_scaleR_right)
-(* proof-
-  have \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
-    ( *f* x) N \<approx> ( *f* x) M\<close>
-    for N M
-    using a1
-    by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
-  hence \<open>( *f2* scaleR) (star_of r) (( *f* x) N) \<approx> ( *f2* scaleR) (star_of r) (( *f* x) M)\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    by (metis approx_scaleR2 star_scaleR_def starfun2_star_of that(1) that(2))    
-  moreover have \<open>( *f2* scaleR) (star_of r) (( *f* x) N) = ( *f* (\<lambda>n. r *\<^sub>R x n)) N\<close>
-    for N
-    by auto
-  ultimately have  \<open>N \<in> HNatInfinite \<Longrightarrow> M \<in> HNatInfinite \<Longrightarrow>
-      ( *f* (\<lambda>n. r *\<^sub>R x n)) N \<approx> ( *f* (\<lambda>n. r *\<^sub>R x n)) M\<close>
-    for N M
-    by simp
-  thus \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
-    by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed *)
-
-(* lemma Infinitesimal_scaleC2: 
-  fixes x :: \<open>('a::complex_normed_vector) star\<close>
-  assumes "x \<in> Infinitesimal" 
-  shows "a *\<^sub>C x \<in> Infinitesimal"
-proof-
-  have \<open>hnorm x \<in> Infinitesimal\<close>
-    using \<open>x \<in> Infinitesimal\<close>
-    by (simp add: Infinitesimal_hnorm_iff)
-  hence \<open>(star_of (cmod a)) * hnorm x \<in> Infinitesimal\<close>
-    using Infinitesimal_star_of_mult2 by blast
-  moreover have \<open>(star_of (cmod a)) * hnorm x = hnorm (a *\<^sub>C x)\<close>
-    by (simp add: hnorm_scaleC)
-  ultimately have \<open>hnorm (a *\<^sub>C x) \<in> Infinitesimal\<close>
-    by simp
-  thus ?thesis by (simp add: Infinitesimal_hnorm_iff)
-qed
-
-lemma approx_scaleC2: 
-  fixes a b :: \<open>('a::complex_normed_vector) star\<close>
-  assumes a1: \<open>a \<approx> b\<close>
-  shows "c *\<^sub>C a \<approx> c *\<^sub>C b"
-proof-
-  have \<open>a - b \<in> Infinitesimal\<close>
-    using a1
-    by (simp add: Infinitesimal_approx_minus)
-  hence \<open>c *\<^sub>C (a - b) \<in> Infinitesimal\<close>
-    by (simp add: Infinitesimal_scaleC2)
-  moreover have \<open>c *\<^sub>C (a - b) = c *\<^sub>C a - c *\<^sub>C b\<close>
-    by (simp add: complex_vector.scale_right_diff_distrib)
-  ultimately have \<open>c *\<^sub>C a - c *\<^sub>C b \<in> Infinitesimal\<close> 
-    by simp
-  thus ?thesis by (simp add: Infinitesimal_approx_minus)
-qed *)
 
 lemma Cauchy_scaleC:
   fixes r::complex and x::\<open>nat \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes a1: "Cauchy x"
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
   by (simp add: bounded_clinear.bounded_linear assms bounded_linear.Cauchy bounded_clinear_scaleC_right)
-(* proof-
-  have \<open>( *f* x) N \<approx> ( *f* x) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    using a1 that
-    by (simp add: NSCauchyD NSCauchy_Cauchy_iff)
-  hence d3: \<open>( *f2* scaleC) (star_of r) (( *f* x) N) \<approx> ( *f2* scaleC) (star_of r) (( *f* x) M)\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    using that
-    by (metis approx_scaleC2 star_scaleC_def starfun2_star_of)
-  have \<open>\<forall> n. ( scaleC) ( r) (( x) n) = ( (\<lambda>n. r *\<^sub>C x n)) n\<close>
-    by auto
-  hence d2:\<open>\<forall> n. ( *f2* scaleC) (star_of r) (( *f* x) n) = ( *f* (\<lambda>n. r *\<^sub>C x n)) n\<close>
-    by StarDef.transfer
-  hence d1: \<open>( *f2* scaleC) (star_of r) (( *f* x) N) = ( *f* (\<lambda>n. r *\<^sub>C x n)) N\<close>
-    for N
-    by blast
-  have  \<open>( *f* (\<lambda>n. r *\<^sub>C x n)) N \<approx> ( *f* (\<lambda>n. r *\<^sub>C x n)) M\<close>
-    if "N \<in> HNatInfinite" and "M \<in> HNatInfinite"
-    for N M
-    using that d1 d3 by auto    
-  thus \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
-    by (simp add: NSCauchyI NSCauchy_Cauchy)
-qed
- *)
-
-(* lemma limit_point_Cauchy:
-  assumes a1: \<open>Cauchy x\<close>
-  shows \<open>\<exists>L\<in>HFinite. \<forall>N\<in>HNatInfinite. ( *f* x) N \<approx> L\<close>
-proof-
-  have \<open>\<exists>L. \<forall> N. N \<in> HNatInfinite \<longrightarrow> ( *f* x) N \<approx> L\<close>
-    using Cauchy_NSCauchy NSCauchyD assms by blast
-  then obtain L where L_def: \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> ( *f* x) N \<approx> L\<close>
-    by blast
-  moreover have \<open>\<And>N. N \<in> HNatInfinite \<Longrightarrow> ( *f* x) N \<in> HFinite\<close>
-    by (simp add: Cauchy_NSCauchy NSBseqD2 NSCauchy_NSBseq assms)
-  ultimately show ?thesis
-    using HFinite_star_of approx_HFinite by blast 
-qed
- *)
 
 lemma lim_initial_segment:
   assumes \<open>convergent x\<close>
@@ -3989,69 +3266,6 @@ proof-
     by (simp add: CauchyI)
 qed
 
-(* lemma Cauchy_cinner_convergent:
-  fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
-  assumes a1: \<open>Cauchy x\<close> and a2: \<open>Cauchy y\<close>
-  shows \<open>convergent (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
-proof-
-  have b1: \<open>Cauchy (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
-    using a1 a2 Cauchy_cinner_Cauchy
-    by blast
-  hence \<open>Cauchy (\<lambda> n. norm \<langle> x n, y n \<rangle>)\<close>
-    by (simp add: Cauchy_convergent_norm)
-  hence \<open>convergent (\<lambda> n. norm \<langle> x n, y n \<rangle>)\<close>
-    using Cauchy_convergent_iff by auto
-  thus ?thesis
-    using Cauchy_convergent_iff b1 by auto
-qed *)
-
-(* lemma lim_minus:
-  fixes x y :: \<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
-  assumes a1: \<open>convergent x\<close> and a2: \<open>convergent y\<close>
-  shows \<open>lim (\<lambda> n. x n - y n) = lim x - lim y\<close>
-proof-
-  have \<open>convergent (\<lambda> i. x i - y i)\<close>
-    using a1 a2
-    by (simp add: convergent_diff)
-  hence \<open>lim (\<lambda> n. (\<lambda> i. x i - y i) n + y n) = lim (\<lambda> i. x i - y i) + lim y\<close>
-    using a2 lim_add by blast
-  moreover have \<open>(\<lambda> n. (\<lambda> i. x i - y i) n + y n) = x\<close>
-    by auto
-  ultimately have \<open>lim x = lim (\<lambda> i. x i - y i) + lim y\<close>
-    by simp
-  thus ?thesis by simp
-qed *)
-
-(* lemma lim_scaleC:
-  fixes x :: \<open>nat \<Rightarrow> 'a::complex_normed_vector\<close> and r::complex
-  assumes a1: \<open>convergent x\<close> 
-  shows \<open>lim (\<lambda> n. r *\<^sub>C x n ) = r *\<^sub>C lim x\<close>
- *)
-(* proof-
-   have \<open>( *f* x) N \<approx> star_of (lim x)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using a1 that
-    by (simp add: NSLIMSEQ_D NSconvergent_NSLIMSEQ_iff convergent_NSconvergent_iff lim_nslim_iff)
-  hence \<open>r *\<^sub>C ( *f* x) N \<approx> r *\<^sub>C (star_of (lim x)) \<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using that
-    by (simp add: approx_scaleC2)
-  moreover have \<open>( *f* (\<lambda> n. r *\<^sub>C x n)) N = r *\<^sub>C ( *f* x) N\<close>
-    for N
-    using star_scaleC_def
-    by (metis starfun_o2) 
-  moreover have \<open>star_of (r *\<^sub>C lim x) = r *\<^sub>C star_of (lim x)\<close>
-    by auto
-  ultimately have \<open>( *f* (\<lambda> n. r *\<^sub>C x n)) N \<approx> star_of (r *\<^sub>C lim x)\<close>
-    if "N \<in> HNatInfinite"
-    for N
-    using that
-    by auto
-  thus ?thesis
-    by (simp add: NSLIMSEQ_I lim_nslim_iff nslimI) 
-qed *)
 
 lemma lim_Lim_bounded2:
   fixes x::\<open>nat \<Rightarrow> real\<close>
@@ -4186,83 +3400,6 @@ proof-
 qed
 
 
-
-(* Use tendsto_sum instead *)
-(* lemma tendsto_finite_sum:
-  fixes X :: \<open>_ \<Rightarrow> _ \<Rightarrow> _::topological_monoid_add\<close>
-  assumes  \<open>\<And> t. t\<in>T \<Longrightarrow> X t \<longlonglongrightarrow> L t\<close> \<open>finite T\<close>
-  shows \<open>(\<lambda> n. (\<Sum>t\<in>T. X t n)) \<longlonglongrightarrow>  (\<Sum>t\<in>T. L t)\<close> *)
-
-(* lemma infinitesimal_square:
-  fixes x::hypreal
-  shows \<open>x^2 \<in> Infinitesimal \<Longrightarrow> x \<in> Infinitesimal\<close>
-  by (metis (full_types) NSA.Infinitesimal_mult_disj semiring_normalization_rules(29))
-
-
-proposition unbounded_nsbounded_D:
-  fixes S::\<open>'a::real_normed_vector set\<close>
-  assumes a1: \<open>\<not>(bounded S)\<close>
-  shows \<open>\<exists> x\<in>*s* S. x \<in> HInfinite\<close>
-proof-
-  have \<open>\<And> M. \<exists> x\<in>S. norm x > M\<close>
-    unfolding a1 bounded_def
-    by (meson assms boundedI not_less) 
-  hence \<open>\<And> M. \<exists> x\<in>*s* S. hnorm x > M\<close>
-    by StarDef.transfer
-  hence \<open>\<exists> x\<in>*s* S. hnorm x > \<omega>\<close>
-    by blast
-  thus ?thesis
-    using HInfiniteI SReal_less_omega less_trans by blast
-qed
-
-proposition unbounded_nsbounded_I:
-  fixes S::\<open>'a::real_normed_vector set\<close>
-  assumes a1: "\<exists>x\<in>*s* S. x \<in> HInfinite"
-  shows \<open>\<not>(bounded S)\<close>
-proof(rule classical)
-  assume c: \<open>\<not>( \<not>(bounded S))\<close>
-  hence \<open>bounded S\<close>
-    by blast
-  hence \<open>bounded (insert 0 S)\<close>
-    by simp
-  from  a1 obtain x where x1: \<open>x\<in>*s* S\<close> and x2: \<open>x \<in> HInfinite\<close>
-    by blast
-  have \<open>x\<in>*s* (insert 0 S)\<close>
-    using x1 by simp 
-  moreover have \<open>0\<in>*s* (insert 0 S)\<close>
-    by auto
-  ultimately have \<open>( *f2* dist) 0 x \<in> HFinite\<close>
-    using \<open>bounded (insert 0 S)\<close> bounded_nsbounded by blast
-  have \<open>\<And>t::'a. dist 0 t = norm t\<close>
-    using dist_norm  by auto
-  hence \<open>\<And> t::'a star. ( *f2* dist) 0 t = hnorm t\<close>
-    by StarDef.transfer
-  hence \<open>( *f2* dist) 0 x = hnorm x\<close>
-    by simp
-  hence \<open>hnorm x \<in> HFinite\<close>
-    using \<open>( *f2* dist) 0 x \<in> HFinite\<close> by auto    
-  hence \<open>x \<in> HFinite\<close>
-    unfolding HFinite_def by auto   
-  thus ?thesis using \<open>x \<in> HInfinite\<close>
-    by (simp add: HInfinite_HFinite_iff) 
-qed
-
-proposition bounded_nsbounded_norm_D:
-  \<open>bounded S \<Longrightarrow> (\<And>x. x\<in>*s* S \<Longrightarrow> x \<in> HFinite)\<close>
-  for S::\<open>'a::real_normed_vector set\<close>
-  using not_HFinite_HInfinite unbounded_nsbounded_I by blast
-
-proposition bounded_nsbounded_norm_I:
-  \<open>(\<And>x. x\<in>*s* S \<Longrightarrow> x \<in> HFinite) \<Longrightarrow> bounded S\<close>
-  for S::\<open>'a::real_normed_vector set\<close>
-  using HFinite_not_HInfinite unbounded_nsbounded_D
-  by blast
-
-proposition bounded_nsbounded_norm:
-  \<open>(\<forall> x\<in>*s* S. x \<in> HFinite) \<longleftrightarrow> bounded S\<close>
-  for S::\<open>'a::real_normed_vector set\<close>
-  using bounded_nsbounded_norm_I[where S = S] bounded_nsbounded_norm_D[where S = S] 
-  by blast *)
 
 lemma span_finite_dim:
   fixes T::\<open>'a::complex_inner set\<close>
@@ -4413,14 +3550,14 @@ proof-
     ultimately have "(u - projection (cspan S) u)
                     - projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
       using complex_vector.span_diff
-      by (smt cinner_diff_left diff_zero orthogonal_complement_D1 orthogonal_complement_I2)
+      by (smt cinner_diff_left diff_zero orthogonal_complement_orthoI orthogonal_complementI)
     hence "u - projection (cspan {a}) u 
             - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
       by (simp add: cancel_ab_semigroup_add_class.diff_right_commute)
     have "\<langle>u - projection (cspan {a}) u 
          - projection (cspan S) u, y - k *\<^sub>C a\<rangle> = 0"
       using \<open>u - projection (cspan {a}) u - projection (cspan S) u \<in> 
-        orthogonal_complement (cspan S)\<close> k_def orthogonal_complement_D1 by auto      
+        orthogonal_complement (cspan S)\<close> k_def orthogonal_complement_orthoI by auto      
     moreover have "\<langle>u - projection (cspan {a}) u 
          - projection (cspan S) u, k *\<^sub>C a\<rangle> = 0"
     proof-
@@ -4438,7 +3575,7 @@ proof-
         have "projection (cspan S) u \<in> cspan S"
           by (simp add: a2 closed_subspace_cspan_finite projection_intro2)          
         hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
-          by (meson a1 a2 ortho_cspan orthogonal_complement_D2 orthogonal_complement_I2)          
+          by (meson a1 a2 ortho_cspan orthogonal_complement_orthoI' orthogonal_complementI)          
         thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
           using ky
           by simp
@@ -4450,7 +3587,7 @@ proof-
                    \<in> orthogonal_complement (cspan {a})"
         by (smt complex_vector.subspace_diff)
       thus ?thesis
-        using complex_vector.span_base orthogonal_complement_D1 by fastforce 
+        using complex_vector.span_base orthogonal_complement_orthoI by fastforce 
     qed
     ultimately have "\<langle>u - projection (cspan {a}) u 
          - projection (cspan S) u, y\<rangle> = 0"

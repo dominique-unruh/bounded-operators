@@ -2443,7 +2443,7 @@ proof-
   hence \<open>\<langle> (trunc_ell2 S x), (x - trunc_ell2 S x) \<rangle> = 0\<close>
     using ell2_ortho by blast
   hence \<open>(norm x)^2 = (norm (trunc_ell2 S x))^2 + (norm (x - trunc_ell2 S x))^2\<close>
-    using PythagoreanId by fastforce    
+    using pythagorean_theorem by fastforce    
   thus ?thesis by simp
 qed
 
@@ -3140,7 +3140,6 @@ lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2_clinear_space"
 
 lemma ket_is_orthogonal[simp]:
   "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
-  unfolding is_orthogonal_def
   by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
 
 lemma Span_range_ket[simp]: "ccspan (range ket) = (top::('a ell2_clinear_space))"
@@ -3196,8 +3195,7 @@ lemma cindependent_ket:
 proof-
   define S where "S = range (ket::'a\<Rightarrow>_)"
   have "is_ortho_set S"
-    unfolding S_def is_ortho_set_def apply auto
-    by (metis ket_Kronecker_delta_neq)
+    unfolding S_def is_ortho_set_def by auto
   moreover have "0 \<notin> S"
     unfolding S_def
     using ket_nonzero
