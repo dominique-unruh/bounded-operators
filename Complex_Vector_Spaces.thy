@@ -2413,4 +2413,9 @@ proof
 qed
 end
 
+instantiation ccsubspace :: ("{complex_vector,t1_space}") zero begin
+definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = bot"
+instance ..
+end
+
 end
