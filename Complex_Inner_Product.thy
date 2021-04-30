@@ -239,12 +239,12 @@ qed
 
 subsection \<open>Minimum distance\<close>
 
-lemma unique_smallest_norm_exists:
+lemma smallest_norm_exists:
   \<comment> \<open>Theorem 2.5 in @{cite conway2013course} (inside the proof)\<close>
   includes notation_norm
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes q1: \<open>convex M\<close> and q2: \<open>closed M\<close> and q3: \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
+  shows  \<open>\<exists>k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close>
 proof-
   define d where \<open>d = Inf { \<parallel>x\<parallel>^2 | x. x \<in> M }\<close>    
   have w4: \<open>{ \<parallel>x\<parallel>^2 | x. x \<in> M } \<noteq> {}\<close>
@@ -406,66 +406,59 @@ proof-
     using \<open>k \<in> M\<close>
       is_arg_min_def \<open>d = \<parallel>k\<parallel>\<^sup>2\<close>
     by smt
-  hence r1: \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close> 
+  thus \<open>\<exists> k. is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) k\<close> 
     by (smt is_arg_min_def norm_ge_zero power2_eq_square power2_le_imp_le)
-  have rs: "r = s"
-    if y1: "is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r" and y2: "is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s"
-    for r s
-  proof-
-    have u1: \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
-      = (1/2)*( \<parallel>r\<parallel>^2 + \<parallel>s\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close> 
-      using  ParallelogramLawVersion1 
-      by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
-
-    have \<open>r \<in> M\<close> 
-      using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
-      by (simp add: is_arg_min_def)
-    moreover have \<open>s \<in> M\<close> 
-      using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
-      by (simp add: is_arg_min_def)
-    ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
-      by (simp add: convexD)
-    hence \<open> \<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
-      using  \<open>is_arg_min norm (\<lambda> t. t \<in> M) r\<close>
-      by (smt is_arg_min_def)
-    hence u2: \<open>\<parallel>r\<parallel>^2 \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close>
-      using norm_ge_zero power_mono by blast
-
-    have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
-      using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def
-    proof -
-      have f1: "\<forall>x0. (0 \<le> - 1 * \<parallel>r\<parallel> + \<parallel>x0::'a\<parallel>) = (\<parallel>r\<parallel> + - 1 * \<parallel>x0\<parallel> \<le> 0)"
-        by auto
-      have f2: "\<forall>x0. \<parallel>x0::'a\<parallel> + - 1 * \<parallel>r\<parallel> = - 1 * \<parallel>r\<parallel> + \<parallel>x0\<parallel>"
-        by auto
-      have "\<forall>x0 x1 x3. (x3 (x0::'a) < x3 x1) = (\<not> (0::real) \<le> x3 x0 + - 1 * x3 x1)"
-        by force
-      hence "\<parallel>r\<parallel> + - 1 * \<parallel>s\<parallel> \<le> 0"
-        using f2 f1 by (metis (no_types) \<open>is_arg_min norm (\<lambda>t. t \<in> M) r\<close> \<open>is_arg_min norm (\<lambda>t. t \<in> M) s\<close> is_arg_min_def)
-      thus ?thesis
-        by linarith
-    qed         
-    moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
-      using  \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close> \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>  is_arg_min_def 
-      by smt
-    ultimately have u3: \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close> by simp      
-
-    have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 \<le> 0\<close>
-      using u1 u2 u3
-      by simp
-    hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 = 0\<close>
-      by simp
-    hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel> = 0\<close>
-      by auto
-    hence \<open>(1/2) *\<^sub>R r - (1/2) *\<^sub>R s = 0\<close>
-      using norm_eq_zero by blast
-    thus ?thesis by simp
-  qed
-  show ?thesis
-    using r1 rs by blast     
 qed
 
-(* Use closed_translation
+
+lemma smallest_norm_unique:
+  \<comment> \<open>Theorem 2.5 in @{cite conway2013course} (inside the proof)\<close>
+  includes notation_norm
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes q1: \<open>convex M\<close> (* and q2: \<open>closed M\<close> and q3: \<open>M \<noteq> {}\<close> *)
+  assumes r: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
+  assumes s: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
+  shows \<open>r = s\<close>
+proof -
+  have u1: \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
+      = (1/2)*( \<parallel>r\<parallel>^2 + \<parallel>s\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close> 
+    using  ParallelogramLawVersion1 
+    by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
+
+  have \<open>r \<in> M\<close> 
+    using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
+    by (simp add: is_arg_min_def)
+  moreover have \<open>s \<in> M\<close> 
+    using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
+    by (simp add: is_arg_min_def)
+  ultimately have \<open>((1/2) *\<^sub>R r + (1/2) *\<^sub>R s) \<in> M\<close> using \<open>convex M\<close>
+    by (simp add: convexD)
+  hence \<open>\<parallel>r\<parallel> \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>\<close>
+    by (metis is_arg_min_linorder r)
+  hence u2: \<open>\<parallel>r\<parallel>^2 \<le> \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close>
+    using norm_ge_zero power_mono by blast
+
+  have \<open>\<parallel>r\<parallel> \<le> \<parallel>s\<parallel>\<close> 
+    using r s is_arg_min_def
+    by (metis is_arg_min_linorder)
+  moreover have \<open>\<parallel>s\<parallel> \<le> \<parallel>r\<parallel>\<close>
+    using r s is_arg_min_def
+    by (metis is_arg_min_linorder)
+  ultimately have u3: \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close> by simp      
+
+  have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 \<le> 0\<close>
+    using u1 u2 u3
+    by simp
+  hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 = 0\<close>
+    by simp
+  hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel> = 0\<close>
+    by auto
+  hence \<open>(1/2) *\<^sub>R r - (1/2) *\<^sub>R s = 0\<close>
+    using norm_eq_zero by blast
+  thus ?thesis by simp
+qed
+
+(* Use closed_translation instead
 lemma TransClosed:
   assumes t1:  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set)\<close>
   shows "closed {s + h| s. s \<in> S}"
@@ -533,20 +526,37 @@ proof-
 qed
 *)
 
-\<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
-theorem unique_smallest_dist_exists:
+theorem smallest_dist_exists:
+  \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
   fixes M::\<open>'a::chilbert_space set\<close> and h 
   assumes a1: \<open>convex M\<close> and a2: \<open>closed M\<close> and a3: \<open>M \<noteq> {}\<close>
-  shows  \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
+  shows  \<open>\<exists>k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
 proof-
   have *: "is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x\<in>M) (k+h) \<longleftrightarrow> is_arg_min (\<lambda>x. norm x) (\<lambda>x. x\<in>(\<lambda>x. x-h) ` M) k" for k
     unfolding dist_norm is_arg_min_def apply auto using add_implies_diff by blast
-  have \<open>\<exists>!k. is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x\<in>M) (k+h)\<close>
+  have \<open>\<exists>k. is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x\<in>M) (k+h)\<close>
     apply (subst *)
-    apply (rule unique_smallest_norm_exists)
+    apply (rule smallest_norm_exists)
     using assms by (auto simp: closed_translation_subtract)
-  then show \<open>\<exists>! k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
-    by (metis diff_add_cancel)
+  then show \<open>\<exists>k. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
+    by metis
+qed
+
+theorem smallest_dist_unique:
+  \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
+  fixes M::\<open>'a::complex_inner set\<close> and h 
+  assumes a1: \<open>convex M\<close>
+  assumes \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) r\<close>
+  assumes \<open>is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) s\<close>
+  shows  \<open>r = s\<close>
+proof-
+  have *: "is_arg_min (\<lambda>x. dist x h) (\<lambda>x. x\<in>M) k \<longleftrightarrow> is_arg_min (\<lambda>x. norm x) (\<lambda>x. x\<in>(\<lambda>x. x-h) ` M) (k-h)" for k
+    unfolding dist_norm is_arg_min_def by auto
+  have \<open>r - h = s - h\<close>
+    using _ assms(2,3)[unfolded *] apply (rule smallest_norm_unique)
+    by (simp add: a1)
+  thus \<open>r = s\<close>
+    by auto
 qed
 
 
@@ -744,55 +754,63 @@ qed
   by blast *)
 
 
-(* TODO rename from here *)
-
-corollary ExistenceUniquenessProj:
+corollary orthog_proj_exists:
   fixes M :: \<open>'a::chilbert_space set\<close> 
   assumes \<open>closed_csubspace M\<close>
-  shows  \<open>\<forall>h. \<exists>!k. h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
-proof-  
-  have \<open>csubspace M\<close>
-    using  \<open>closed_csubspace M\<close>
-    unfolding closed_csubspace_def
-    by blast
-  hence \<open>0 \<in> M\<close> 
-    using complex_vector.subspace_def
-    by auto    
-  hence \<open>M \<noteq> {}\<close> by blast
+  shows  \<open>\<exists>k. h - k \<in> orthogonal_complement M \<and> k \<in> M\<close>
+proof-
+  from  \<open>closed_csubspace M\<close>
+  have \<open>M \<noteq> {}\<close>
+    using closed_csubspace.subspace complex_vector.subspace_0 by blast
   have \<open>closed  M\<close>
     using  \<open>closed_csubspace M\<close>
     by (simp add: closed_csubspace.closed)
   have \<open>convex  M\<close>
     using  \<open>closed_csubspace M\<close>
     by (simp add: csubspace_is_convex)
-  have \<open>\<forall> h. \<exists>! k.  is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
-    by (simp add: unique_smallest_dist_exists \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
+  have \<open>\<exists>k.  is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
+    by (simp add: smallest_dist_exists \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
     by (simp add: assms smallest_dist_is_ortho)  
 qed
 
+corollary orthog_proj_unique:
+  fixes M :: \<open>'a::complex_inner set\<close> 
+  assumes \<open>closed_csubspace M\<close>
+  assumes \<open>h - r \<in> orthogonal_complement M \<and> r \<in> M\<close>
+  assumes \<open>h - s \<in> orthogonal_complement M \<and> s \<in> M\<close>
+  shows  \<open>r = s\<close>
+  using _ assms(2,3) unfolding smallest_dist_is_ortho[OF assms(1), symmetric]
+  apply (rule smallest_dist_unique)
+  using assms(1) by (simp add: csubspace_is_convex)
 
 definition is_projection_on::\<open>('a \<Rightarrow> 'a) \<Rightarrow> ('a::metric_space) set \<Rightarrow> bool\<close> where
-  (* \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. h - \<pi> h \<in> orthogonal_complement M \<and> \<pi> h \<in> M)\<close> *)
   \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) (\<pi> h))\<close>
 
 lemma is_projection_on_iff_orthog:
   \<open>closed_csubspace M \<Longrightarrow> is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. h - \<pi> h \<in> orthogonal_complement M \<and> \<pi> h \<in> M)\<close>
   by (simp add: is_projection_on_def smallest_dist_is_ortho)
 
-(* TODO: to Extra_Gen *)
-lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
-  apply (auto intro!: choice ext) by metis
-
-lemma is_projection_on_existence:
+lemma is_projection_on_exists:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-  shows "\<exists>!\<pi>. is_projection_on \<pi> M"
-  unfolding is_projection_on_def apply (rule unique_choice)
-  using unique_smallest_dist_exists[OF assms] by auto
+  shows "\<exists>\<pi>. is_projection_on \<pi> M"
+  unfolding is_projection_on_def apply (rule choice)
+  using smallest_dist_exists[OF assms] by auto
+
+lemma is_projection_on_unique:
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes \<open>convex M\<close>
+  assumes "is_projection_on \<pi>\<^sub>1 M"
+  assumes "is_projection_on \<pi>\<^sub>2 M"
+  shows "\<pi>\<^sub>1 = \<pi>\<^sub>2"
+  using smallest_dist_unique[OF assms(1)] using assms(2,3)
+  unfolding is_projection_on_def by blast
 
 definition projection :: \<open>'a::metric_space set \<Rightarrow> ('a \<Rightarrow> 'a)\<close> where
   \<open>projection M \<equiv> SOME \<pi>. is_projection_on \<pi> M\<close>
+
+(* TODO rename from here *)
 
 lemma projection_intro1':
   fixes M :: \<open>'a::complex_inner set\<close>
@@ -804,7 +822,7 @@ lemma projection_intro1:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes "closed_csubspace M"
   shows "h - projection M h \<in> orthogonal_complement M"
-  by (metis ExistenceUniquenessProj assms is_projection_on_def projection_def smallest_dist_is_ortho someI_ex)
+  by (metis assms is_projection_on_iff_orthog orthog_proj_exists projection_def someI_ex)
 
 lemma projection_intro2':
   assumes "is_projection_on \<pi> M"
@@ -815,10 +833,8 @@ lemma projection_intro2':
 lemma projection_intro2:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
-(* assumes "closed_csubspace M" *)
   shows "projection M h \<in> M"
-  using is_projection_on_existence[OF assms] projection_intro2'
-  unfolding projection_def by (metis someI)
+  by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def projection_intro2' someI_ex)
 
 lemma projection_uniq':
   fixes  M :: \<open>'a::complex_inner set\<close>
@@ -859,8 +875,7 @@ lemma projection_uniq:
   fixes  M :: \<open>('a::chilbert_space) set\<close>
   assumes  \<open>closed_csubspace M\<close> and \<open>h - x \<in> orthogonal_complement M\<close> and \<open>x \<in> M\<close>
   shows \<open>projection M h = x\<close>
-  using is_projection_on_iff_orthog[OF assms(1)] unfolding projection_def
-  by (metis ExistenceUniquenessProj assms someI_ex)
+  by (metis assms(1) assms(2) assms(3) is_projection_on_iff_orthog orthog_proj_exists projection_def projection_uniq' tfl_some)
 
 lemma projection_fixed_points':
   fixes M :: \<open>'a::complex_inner set\<close>
@@ -905,7 +920,7 @@ proposition projectionPropertiesB:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes a1: "closed_csubspace M"
   shows \<open>\<parallel> projection M h \<parallel> \<le> \<parallel> h \<parallel>\<close>
-  by (metis ExistenceUniquenessProj assms is_projection_on_iff_orthog projectionPropertiesB' projection_uniq)
+  using assms is_projection_on_iff_orthog orthog_proj_exists projectionPropertiesB' projection_uniq by blast
 
 \<comment> \<open>Theorem 2.7 (version) in @{cite conway2013course}\<close>
 theorem projectionPropertiesA':
@@ -983,8 +998,8 @@ theorem projectionPropertiesA:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_csubspace M"
   shows \<open>bounded_clinear (projection M)\<close> 
-    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>      
-  by (metis (full_types) ExistenceUniquenessProj assms is_projection_on_iff_orthog projectionPropertiesA' projection_uniq)
+    \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
+  using assms is_projection_on_iff_orthog orthog_proj_exists projectionPropertiesA' projection_uniq by blast      
 
 proposition projectionPropertiesC':
   fixes M :: \<open>('a::complex_inner) set\<close>
@@ -1007,7 +1022,7 @@ proposition projectionPropertiesC:
   fixes M :: "'a::chilbert_space set"
   assumes a1: "closed_csubspace M"
   shows "(projection M) \<circ> (projection M) = projection M"
-  by (metis (full_types) ExistenceUniquenessProj assms is_projection_on_iff_orthog projectionPropertiesC' projection_uniq)
+  by (metis assms closed_csubspace_def csubspace_is_convex empty_iff is_projection_on_exists orthog_proj_exists projectionPropertiesC' projection_def someI_ex)
 
 lemma ker_op_lin:
   assumes a1: "bounded_clinear f"
@@ -1138,10 +1153,9 @@ qed
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 proposition projectionPropertiesD:
   fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes a1: "closed_csubspace M"
+  assumes "closed_csubspace M"
   shows "(projection M) -` {0} = (orthogonal_complement M)"
-  using a1
-  by (smt (verit, ccfv_threshold) ExistenceUniquenessProj is_projection_on_iff_orthog projectionPropertiesD' projection_uniq)
+  by (metis assms closed_csubspace_def complex_vector.subspace_def csubspace_is_convex insert_absorb insert_not_empty is_projection_on_iff_orthog projectionPropertiesD' projection_intro1 projection_intro2)
 
 lemma range_lin:
   assumes a1: "clinear f"
@@ -1219,7 +1233,7 @@ theorem projectionPropertiesE:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_csubspace M"
   shows "range  (projection M) = M"
-  by (smt (verit, del_insts) ExistenceUniquenessProj assms is_projection_on_iff_orthog projectionPropertiesE' projection_uniq)
+  by (smt (verit, del_insts) orthog_proj_exists assms is_projection_on_iff_orthog projectionPropertiesE' projection_uniq)
 
 lemma pre_ortho_twice:
   assumes a1: "csubspace M"
@@ -1310,7 +1324,7 @@ proof-
     hence \<open>(projection M) x = x\<close>
       by auto
     hence \<open>(projection M) x \<in>  M\<close>
-      using ExistenceUniquenessProj assms projection_uniq by blast
+      using orthog_proj_exists assms projection_uniq by blast
     hence \<open>x \<in>  M\<close>
       using  \<open>(projection M) x = x\<close> 
       by simp
