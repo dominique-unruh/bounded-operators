@@ -2823,7 +2823,7 @@ proof-
     by (metis Proj.rep_eq projectionPropertiesE rangeI u1)
   have u2: "is_projection_on ((*\<^sub>V) (Proj M)) (space_as_set M)"
     unfolding is_projection_on_def
-    by (simp add: v1 v2)
+    by (simp add: smallest_dist_is_ortho u1 v1 v2)
   show ?thesis
     using u1 u2 isProjector.rep_eq by blast 
 qed
@@ -2940,13 +2940,12 @@ proof-
       using x2
       by (meson closure_subset image_subset_iff that)
     moreover have \<open>(projection (space_as_set C)) x \<in> space_as_set C\<close>
-      by (simp add: p1 projection_intro2)
+      using p1 projectionPropertiesE by blast
     ultimately show ?thesis
       using closure_subset by fastforce 
   qed
   have x1: \<open>x \<in> (space_as_set B +\<^sub>M space_as_set C)\<close>
-    if "x \<in> space_as_set A"
-    for x
+    if "x \<in> space_as_set A" for x
   proof -
     have f1: "x \<in> closure {a + b |a b. a \<in> space_as_set B \<and> b \<in> space_as_set C}"
       by (simp add: q1 that)
@@ -2961,10 +2960,8 @@ proof-
       by blast
   qed
 
-  hence \<open>x \<in> space_as_set
-               (Abs_clinear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
-    if "x \<in> space_as_set A"
-    for x
+  hence \<open>x \<in> space_as_set (Abs_clinear_space (space_as_set B +\<^sub>M space_as_set C))\<close>
+    if "x \<in> space_as_set A" for x
     using that
     by (metis space_as_set_inverse sup_ccsubspace.rep_eq)
   thus ?thesis 

@@ -1,7 +1,7 @@
 (*  Based on HOL/Real_Vector_Spaces.thy by Brian Huffman, Johannes Hölzl
     Adapted to the complex case by Dominique Unruh *)
 
-section \<open>Vector Spaces and Algebras over the Reals\<close>
+section \<open>Vector Spaces and Algebras over the Complex Numbers\<close>
 
 theory Complex_Vector_Spaces0
   imports HOL.Real_Vector_Spaces HOL.Topological_Spaces HOL.Vector_Spaces

@@ -2418,4 +2418,18 @@ definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = b
 instance ..
 end
 
+lemma csubspace_is_convex:
+  assumes a1: "csubspace M"
+  shows "convex M"
+proof-
+  have \<open>\<forall>x\<in>M. \<forall>y\<in> M. \<forall>u. \<forall>v. u *\<^sub>C x + v *\<^sub>C y \<in>  M\<close>
+    using a1
+    by (simp add:  complex_vector.subspace_def)
+  hence \<open>\<forall>x\<in>M. \<forall>y\<in>M. \<forall>u::real. \<forall>v::real. u *\<^sub>R x + v *\<^sub>R y \<in> M\<close>
+    by (simp add: scaleR_scaleC)
+  hence \<open>\<forall>x\<in>M. \<forall>y\<in>M. \<forall>u\<ge>0. \<forall>v\<ge>0. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in>M\<close>
+    by blast
+  thus ?thesis using convex_def by blast
+qed
+
 end

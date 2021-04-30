@@ -358,4 +358,7 @@ lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filt
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
   using that unfolding Set.filter_def by auto
 
+lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
+  apply (auto intro!: choice ext) by metis
+
 end
