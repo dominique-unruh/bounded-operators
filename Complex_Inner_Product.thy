@@ -767,7 +767,7 @@ proof-
     by (simp add: closed_csubspace.closed)
   have \<open>convex  M\<close>
     using  \<open>closed_csubspace M\<close>
-    by (simp add: csubspace_is_convex)
+    by (simp)
   have \<open>\<exists>k.  is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) k\<close>
     by (simp add: smallest_dist_exists \<open>closed M\<close> \<open>convex M\<close> \<open>M \<noteq> {}\<close>)
   thus ?thesis
@@ -782,7 +782,7 @@ corollary orthog_proj_unique:
   shows  \<open>r = s\<close>
   using _ assms(2,3) unfolding smallest_dist_is_ortho[OF assms(1), symmetric]
   apply (rule smallest_dist_unique)
-  using assms(1) by (simp add: csubspace_is_convex)
+  using assms(1) by (simp)
 
 definition is_projection_on::\<open>('a \<Rightarrow> 'a) \<Rightarrow> ('a::metric_space) set \<Rightarrow> bool\<close> where
   \<open>is_projection_on \<pi> M \<longleftrightarrow> (\<forall>h. is_arg_min (\<lambda> x. dist x h) (\<lambda> x. x \<in> M) (\<pi> h))\<close>
@@ -810,89 +810,100 @@ lemma is_projection_on_unique:
 definition projection :: \<open>'a::metric_space set \<Rightarrow> ('a \<Rightarrow> 'a)\<close> where
   \<open>projection M \<equiv> SOME \<pi>. is_projection_on \<pi> M\<close>
 
-(* TODO rename from here *)
-
-lemma projection_intro1':
+(* Use is_projection_on_iff_orthog instead 
+lemma is_projection_on_iff_orthog:
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_csubspace M\<close>
   shows "h - \<pi> h \<in> orthogonal_complement M"
   using assms smallest_dist_is_ortho unfolding is_projection_on_def by auto
+*)
 
-lemma projection_intro1:
+lemma projection_is_projection_on:
   fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes "closed_csubspace M"
-  shows "h - projection M h \<in> orthogonal_complement M"
-  by (metis assms is_projection_on_iff_orthog orthog_proj_exists projection_def someI_ex)
+  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
+  shows "is_projection_on (projection M) M"
+  by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def someI)
 
-lemma projection_intro2':
+(* lemma projection_is_projection_on'[simp]:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>closed_csubspace M\<close>
+  shows "is_projection_on (projection M) M"
+  by (metis assms closed_csubspace.closed closed_csubspace.subspace complex_vector.subspace_0 csubspace_is_convex equals0D projection_is_projection_on) *)
+
+lemma projection_orthogonal:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes "closed_csubspace M" and \<open>m \<in> M\<close>
+  shows \<open>is_orthogonal (h - projection M h) m\<close>
+  by (metis assms(1) assms(2) closed_csubspace.closed closed_csubspace.subspace csubspace_is_convex empty_iff is_projection_on_iff_orthog orthogonal_complement_orthoI projection_is_projection_on)
+
+lemma is_projection_on_in_image:
   assumes "is_projection_on \<pi> M"
   shows "\<pi> h \<in> M"
   using assms
   by (simp add: is_arg_min_def is_projection_on_def)
 
+lemma is_projection_on_image:
+  assumes "is_projection_on \<pi> M"
+  shows "range \<pi> = M"
+  using assms
+  apply (auto simp: is_projection_on_in_image)
+  by (smt (verit, ccfv_threshold) dist_pos_lt dist_self is_arg_min_def is_projection_on_def rangeI)
+
+lemma projection_in_image[simp]:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
+  shows \<open>projection M h \<in> M\<close>
+  by (simp add: assms(1) assms(2) assms(3) is_projection_on_in_image projection_is_projection_on)
+
+lemma projection_image[simp]:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
+  shows \<open>range (projection M) = M\<close>
+  by (simp add: assms(1) assms(2) assms(3) is_projection_on_image projection_is_projection_on)
+
+(* Use projection_orthogonal
+lemma projection_intro1:
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes "closed_csubspace M"
+  shows "h - projection M h \<in> orthogonal_complement M"
+  by (metis assms is_projection_on_iff_orthog orthog_proj_exists projection_def someI_ex)
+*)
+
+(* Use projection_in_image instead
 lemma projection_intro2:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>convex M\<close> and \<open>closed M\<close> and \<open>M \<noteq> {}\<close>
   shows "projection M h \<in> M"
-  by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def projection_intro2' someI_ex)
+  by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def is_projection_on_in_image someI_ex) *)
 
-lemma projection_uniq':
+lemma is_projection_on_eqI:
   fixes  M :: \<open>'a::complex_inner set\<close>
   assumes a1: \<open>closed_csubspace M\<close> and a2: \<open>h - x \<in> orthogonal_complement M\<close> and a3: \<open>x \<in> M\<close> 
     and a4: \<open>is_projection_on \<pi> M\<close>
   shows \<open>\<pi> h = x\<close>
-proof-
-  have t6: \<open>h - \<pi> h \<in> orthogonal_complement M \<and> \<pi> h \<in> M\<close>
-    by (simp add: a1 a4 projection_intro1' projection_intro2')
-  hence t1: \<open>\<pi> h \<in> M\<close> 
-    by blast
-  have t3: \<open>h - \<pi> h \<in> orthogonal_complement M\<close>
-    using t6 by blast
-  have t5: \<open>x - \<pi> h \<in> M\<close>
-    using a1 t1 a3
-    unfolding closed_csubspace_def
-    by (simp add: complex_vector.subspace_diff)
-  have t2: \<open>closed_csubspace (orthogonal_complement M)\<close>
-    by (simp add: a1)
-  have  \<open>(h - \<pi> h) - (h - x) \<in> orthogonal_complement M\<close>
-    using complex_vector.subspace_diff closed_csubspace_def
-    using t2 t3 a2 
-    by blast 
-  hence \<open>x - \<pi> h \<in> orthogonal_complement M\<close> 
-    by simp 
-  hence \<open>x - \<pi> h \<in> M \<inter> (orthogonal_complement M)\<close>
-    using t5 by auto    
-  moreover have \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
-    using a1 a3  orthogonal_complement_zero_intersection
-      complex_vector.subspace_def closed_csubspace.subspace by metis
-  ultimately have \<open>x - \<pi> h = 0\<close>
-    by auto
-  thus ?thesis
-    by simp
-qed
+  by (meson a1 a2 a3 a4 closed_csubspace.subspace csubspace_is_convex is_projection_on_def smallest_dist_is_ortho smallest_dist_unique)
 
-lemma projection_uniq:
+lemma projection_eqI:
   fixes  M :: \<open>('a::chilbert_space) set\<close>
   assumes  \<open>closed_csubspace M\<close> and \<open>h - x \<in> orthogonal_complement M\<close> and \<open>x \<in> M\<close>
   shows \<open>projection M h = x\<close>
-  by (metis assms(1) assms(2) assms(3) is_projection_on_iff_orthog orthog_proj_exists projection_def projection_uniq' tfl_some)
+  by (metis assms(1) assms(2) assms(3) is_projection_on_iff_orthog orthog_proj_exists projection_def is_projection_on_eqI tfl_some)
 
-lemma projection_fixed_points':
-  fixes M :: \<open>'a::complex_inner set\<close>
-  assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M" and a3: "x \<in> M"
+lemma is_projection_on_fixes_image:
+  fixes M :: \<open>'a::metric_space set\<close>
+  assumes a1: "is_projection_on \<pi> M" and a3: "x \<in> M"
   shows "\<pi> x = x"
-  by (metis (no_types, lifting) a1 a2 a3 closed_csubspace.subspace complex_vector.subspace_0
-      diff_self projection_uniq' orthogonal_complement_closed_subspace)
+  by (metis a1 a3 dist_pos_lt dist_self is_arg_min_def is_projection_on_def)
 
-lemma projection_fixed_points:
+lemma projection_fixes_image:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_csubspace M" and a2: "x \<in> M"
   shows "(projection M) x = x"
-  using projection_fixed_points'
+  using is_projection_on_fixes_image
     \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
-  by (simp add: a1 a2 complex_vector.subspace_0 projection_uniq)
+  by (simp add: a1 a2 complex_vector.subspace_0 projection_eqI)
 
-proposition projectionPropertiesB':
+proposition is_projection_on_reduces_norm:
   includes notation_norm
   fixes M :: \<open>('a::complex_inner) set\<close>
   assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_csubspace M\<close>
@@ -904,7 +915,7 @@ proof-
     using orthogonal_complement_orthoI by blast 
   also have \<open>\<pi> h \<in>  M\<close>
     using \<open>is_projection_on \<pi> M\<close>
-    by (simp add: projection_intro2')
+    by (simp add: is_projection_on_in_image)
   ultimately have \<open>\<langle>  h - \<pi> h , \<pi> h \<rangle> = 0\<close>
     by auto
   hence \<open>\<parallel> \<pi> h \<parallel>^2 + \<parallel> h - \<pi> h \<parallel>^2 = \<parallel> h \<parallel>^2\<close>
@@ -915,15 +926,15 @@ proof-
     using norm_ge_zero power2_le_imp_le by blast
 qed
 
-proposition projectionPropertiesB:
+proposition projection_reduces_norm:
   includes notation_norm
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes a1: "closed_csubspace M"
   shows \<open>\<parallel> projection M h \<parallel> \<le> \<parallel> h \<parallel>\<close>
-  using assms is_projection_on_iff_orthog orthog_proj_exists projectionPropertiesB' projection_uniq by blast
+  using assms is_projection_on_iff_orthog orthog_proj_exists is_projection_on_reduces_norm projection_eqI by blast
 
 \<comment> \<open>Theorem 2.7 (version) in @{cite conway2013course}\<close>
-theorem projectionPropertiesA':
+theorem is_projection_on_bounded_clinear:
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M"
   shows "bounded_clinear \<pi>"
@@ -938,7 +949,7 @@ proof
         add_diff_cancel_right' complex_vector.subspace_def diff_add_cancel scaleC_add_right)
   thus r1: \<open>\<pi> (c *\<^sub>C x) = c *\<^sub>C (\<pi> x)\<close> for x c
     using f1 by (meson a2 a1 closed_csubspace.subspace 
-        complex_vector.subspace_def projection_uniq')
+        complex_vector.subspace_def is_projection_on_eqI)
   show r2: \<open>\<pi> (x + y) =  (\<pi> x) + (\<pi> y)\<close>
     for x y
   proof-
@@ -967,11 +978,11 @@ proof
     hence f4: "\<forall>a b f. (f a - b \<in> orthogonal_complement M \<or> a - b \<notin> orthogonal_complement M) 
               \<or> \<not> is_projection_on f M"
       using f1
-      by (metis a2 projection_intro1')
+      by (metis a2 is_projection_on_iff_orthog)
     have f5: "\<forall>a b c d. (d::'a) - (c + (b - a)) = d + (a - (b + c))"
       by auto
     have "x - \<pi> x \<in> orthogonal_complement M"
-      by (simp add: a1 a2 projection_intro1')
+      using a1 a2 is_projection_on_iff_orthog by blast
     hence q1: \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) \<in> orthogonal_complement M\<close>
       using f5 f4 f3 by (metis \<open>csubspace (orthogonal_complement M)\<close> 
           \<open>is_projection_on \<pi> M\<close> add_diff_eq complex_vector.subspace_diff diff_diff_add 
@@ -979,405 +990,175 @@ proof
     hence \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) \<in> M \<inter> (orthogonal_complement M)\<close>
       by (simp add: \<open>\<pi> (x + y) - (\<pi> x + \<pi> y) \<in> M\<close>)      
     moreover have \<open>M \<inter> (orthogonal_complement M) = {0}\<close>
-      by (simp add: \<open>closed_csubspace M\<close> closed_csubspace.subspace complex_vector.subspace_0 orthogonal_complement_zero_intersection)      
+      by (simp add: \<open>closed_csubspace M\<close> complex_vector.subspace_0 orthogonal_complement_zero_intersection)
     ultimately have \<open>\<pi> (x + y) - ( (\<pi> x) + (\<pi> y) ) = 0\<close>
       by auto      
     thus ?thesis by simp
   qed
-  have t2: \<open>clinear \<pi>\<close>
-    by (simp add: clinearI r1 r2) 
-  have \<open>\<forall> x. norm (\<pi> x) \<le> norm x\<close>
-      using a1 a2 projectionPropertiesB' by blast
-  hence \<open>\<forall> x. norm (\<pi> x) \<le> norm x * 1\<close>
-    by simp
-  thus t1: \<open>\<exists> K. \<forall> x. norm (\<pi> x) \<le> norm x * K\<close>
-    by blast
+  from is_projection_on_reduces_norm
+  show t1: \<open>\<exists> K. \<forall> x. norm (\<pi> x) \<le> norm x * K\<close>
+    by (metis a1 a2 mult.left_neutral ordered_field_class.sign_simps(5))
 qed
 
-theorem projectionPropertiesA:
+theorem projection_bounded_clinear:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_csubspace M"
   shows \<open>bounded_clinear (projection M)\<close> 
     \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close>
-  using assms is_projection_on_iff_orthog orthog_proj_exists projectionPropertiesA' projection_uniq by blast      
+  using assms is_projection_on_iff_orthog orthog_proj_exists is_projection_on_bounded_clinear projection_eqI by blast      
 
-proposition projectionPropertiesC':
+proposition is_projection_on_idem:
   fixes M :: \<open>('a::complex_inner) set\<close>
-  assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M"
-  shows "\<pi> \<circ> \<pi> = \<pi>"
-proof-
-  have \<open>(\<pi> \<circ> \<pi>) x = \<pi> x\<close>
-    for x
-  proof-
-    have \<open>\<pi> x \<in> M\<close>
-      by (simp add: \<open>is_projection_on \<pi> M\<close> projection_intro2')      
-    hence \<open>\<pi> (\<pi> x) = \<pi> x\<close>
-      using a1 a2 projection_fixed_points' by auto
-    thus ?thesis by simp
-  qed
-  thus ?thesis by blast
-qed
+  assumes "is_projection_on \<pi> M"
+  shows "\<pi> (\<pi> x) = \<pi> x"
+  using is_projection_on_fixes_image is_projection_on_in_image assms by blast
 
-proposition projectionPropertiesC:
+proposition projection_idem:
   fixes M :: "'a::chilbert_space set"
   assumes a1: "closed_csubspace M"
-  shows "(projection M) \<circ> (projection M) = projection M"
-  by (metis assms closed_csubspace_def csubspace_is_convex empty_iff is_projection_on_exists orthog_proj_exists projectionPropertiesC' projection_def someI_ex)
-
-lemma ker_op_lin:
-  assumes a1: "bounded_clinear f"
-  shows "closed_csubspace  (f -` {0})"
-proof-
-  have w3: \<open>t *\<^sub>C x \<in> {x. f x = 0}\<close> 
-    if b1: "x \<in>  {x. f x = 0}"
-    for x t
-  proof-
-    have \<open>f x = 0\<close>
-      using that by auto      
-    hence  \<open>f  (t *\<^sub>C x) = 0\<close>
-      using a1
-      by (simp add: bounded_clinear.clinear complex_vector.linear_scale)
-    hence \<open> t *\<^sub>C x \<in> {x. f x = 0}\<close>
-      by simp
-    thus ?thesis 
-      by auto
-  qed
-  have \<open>clinear f\<close>
-    using \<open>bounded_clinear f\<close>
-    unfolding bounded_clinear_def by blast
-  hence \<open>f 0 = 0\<close>
-    by (simp add: complex_vector.linear_0)      
-  hence s2: \<open>0 \<in> {x. f x = 0}\<close>
-    by blast
-  have s1: "L \<in> {x. f x = 0}"
-    if "r \<longlonglongrightarrow> L" and "\<forall> n. r n \<in> {x. f x = 0}"
-    for r and  L 
-  proof-
-    have d1: \<open>\<forall> n. f (r n) = 0\<close>
-      using that(2) by auto
-    have \<open>(\<lambda> n. f (r n)) \<longlonglongrightarrow> f L\<close>
-      using assms clinear_continuous_at continuous_within_tendsto_compose' that(1) 
-      by fastforce
-    hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow> f L\<close>
-      using d1 by simp        
-    hence \<open>f L = 0\<close>
-      using limI by fastforce
-    thus ?thesis by blast
-  qed
-
-  have w4: "x + y \<in> {x. f x = 0}"
-    if c1: "x \<in> {x. f x = 0}" and c2: "y \<in> {x. f x = 0}"
-    for x y
-  proof-
-    have w1: \<open>f x = 0\<close> 
-      using c1 by auto
-    have w2: \<open>f y = 0\<close>
-      using c2 by auto
-    have  \<open>f (x + y) = f x + f y\<close>
-      using \<open>bounded_clinear f\<close>
-      unfolding bounded_clinear_def clinear_def Vector_Spaces.linear_def module_hom_def 
-        module_hom_axioms_def by auto
-    hence  \<open>f (x + y) = 0\<close>
-      by (simp add: w1 w2)
-    hence \<open>x + y \<in>  {x. f x = 0}\<close>
-      by simp
-    show ?thesis
-      using \<open>x + y \<in> {x. f x = 0}\<close> by blast 
-  qed
-  have s4: \<open>c *\<^sub>C t \<in> {x. f x = 0}\<close> 
-    if "t \<in> {x. f x = 0}"
-    for t c
-    using that w3 by auto
-  have s5: "u + v \<in> {x. f x = 0}"
-    if "u \<in> {x. f x = 0}" and "v \<in> {x. f x = 0}"
-    for u v
-    using w4 that(1) that(2) by auto    
-  have s3: \<open>closed {x. f x = 0}\<close>
-    using closed_sequential_limits s1 by blast 
-  have f3: "f -` {b. b = 0 \<or> b \<in> {}} = {a. f a = 0}"
-    by blast
-  have "closed_csubspace {a. f a = 0}"
-    by (metis closed_csubspace.intro complex_vector.subspace_def s2 s3 s4 s5)
-  thus ?thesis
-    using f3 by auto
-qed
+  shows "projection M (projection M x) = projection M x"
+  by (metis assms closed_csubspace.closed closed_csubspace.subspace complex_vector.subspace_0 csubspace_is_convex equals0D projection_fixes_image projection_in_image)
 
 
-proposition projectionPropertiesD':
+proposition is_projection_on_kernel_is_orthogonal_complement:
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M"
-  shows "\<pi> -` {0} = (orthogonal_complement M)"
+  shows "\<pi> -` {0} = orthogonal_complement M"
 proof-
   have "x \<in> (\<pi> -` {0})" 
     if "x \<in> orthogonal_complement M"
     for x
-  proof-
-    have \<open>\<pi> x \<in> M\<close>
-      using  \<open>is_projection_on \<pi> M\<close>
-      by (simp add: projection_intro2')
-    have f1: "\<forall>a. (a::'a) = 0 \<or> - \<langle>a, a\<rangle> < 0"
-      by (metis cinner_gt_zero_iff neg_less_0_iff_less)
-    have f2: "- \<pi> 0 \<in> orthogonal_complement M"
-      by (metis a1 a2 projection_intro1' verit_minus_simplify(3))
-    have f3: "- (0::'a) = 0"
-      by simp
-    have "0 \<in> M"
-      using f2 f1
-      by (simp add: a2 complex_vector.subspace_0)
-    hence \<open>\<pi> x = 0\<close>
-      using f3 by (metis (no_types) a1 a2 add.right_neutral diff_minus_eq_add projection_uniq' that)
-    hence \<open>x \<in> (\<pi> -` {0})\<close>
-      by simp
-    thus ?thesis
-      by simp
-  qed
+    by (smt (verit, ccfv_SIG) a1 a2 closed_csubspace_def complex_vector.subspace_def complex_vector.subspace_diff is_projection_on_eqI orthogonal_complement_closed_subspace that vimage_singleton_eq)
   moreover have "x \<in> orthogonal_complement M"
     if s1: "x \<in> \<pi> -` {0}" for x
-  proof-
-    have \<open>x \<in> {y.  \<pi> x = 0}\<close>
-      using s1
-      by simp      
-    hence \<open>\<pi> x = 0\<close>
-      by (metis (mono_tags, lifting) mem_Collect_eq)
-    hence  \<open>x \<in> orthogonal_complement M\<close>
-      by (metis a1 a2 diff_zero projection_intro1')
-    thus ?thesis
-      by simp
-  qed
-  ultimately have \<open>orthogonal_complement M = \<pi> -` {0}\<close>         
-    by blast
-  thus ?thesis 
+    by (metis a1 a2 diff_zero is_projection_on_iff_orthog that vimage_singleton_eq)
+  ultimately show ?thesis 
     by blast
 qed
 
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
-proposition projectionPropertiesD:
+proposition projection_kernel_is_orthogonal_complement:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes "closed_csubspace M"
   shows "(projection M) -` {0} = (orthogonal_complement M)"
-  by (metis assms closed_csubspace_def complex_vector.subspace_def csubspace_is_convex insert_absorb insert_not_empty is_projection_on_iff_orthog projectionPropertiesD' projection_intro1 projection_intro2)
+  by (metis assms closed_csubspace_def complex_vector.subspace_def csubspace_is_convex insert_absorb insert_not_empty is_projection_on_kernel_is_orthogonal_complement projection_is_projection_on)
 
-lemma range_lin:
-  assumes a1: "clinear f"
-  shows "csubspace (range f)"
-proof-
-  define A where "A = (range f)"
-  have add: "x+y\<in>A" 
-    if s1: "x\<in>A" and s2: "y\<in>A" 
-    for x y
-  proof-
-    obtain xx where \<open>x = f xx\<close> using  \<open>A = (range f)\<close> 
-      using s1 mem_Collect_eq
-      by blast
-    obtain yy where \<open>y = f yy\<close> using  \<open>A = (range f)\<close> 
-      using s2 mem_Collect_eq
-      by blast
-    have \<open>x + y = f (xx + yy)\<close> 
-      using Modules.additive_def \<open>clinear f\<close> \<open>x = f xx\<close> \<open>y = f yy\<close>  clinear_def
-      by (simp add: complex_vector.linear_add)
-    thus ?thesis 
-      unfolding A_def
-      using  mem_Collect_eq
-      by blast 
-  qed
-  have mult: "c *\<^sub>C x \<in> A" 
-    if s: "x\<in>A"
-    for x c
-  proof-
-    obtain y where y_def: \<open>x = f y\<close>
-      using s \<open>A = (range f)\<close> mem_Collect_eq
-      by blast
-    have \<open>c *\<^sub>C x = f (c *\<^sub>C y)\<close>
-      using  \<open>x = f y\<close> \<open>clinear f\<close>
-      by (simp add: complex_vector.linear_scale)
-    thus ?thesis
-      unfolding A_def
-      using y_def
-      by blast
-  qed
-  have  "0 \<in> A"
-  proof-
-    have \<open>0 = f 0\<close> 
-      using \<open>clinear f\<close> additive.zero clinear_def
-      by (simp add: complex_vector.linear_0)     
-    hence \<open>0 \<in> range f\<close>
-      using  mem_Collect_eq
-      by auto 
-    thus ?thesis 
-      unfolding A_def
-      by simp
-  qed
-  thus ?thesis 
-    unfolding A_def
-    using assms complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast 
-qed
-
+(* Use is_projection_on_image instead
 theorem projectionPropertiesE':
   fixes M :: "'a::complex_inner set"
   assumes a1: "is_projection_on \<pi> M" and a2: "closed_csubspace M"
   shows "range \<pi> = M"
-proof-
-  have \<open>x \<in> M\<close> 
-    if "x \<in> range \<pi>"
-    for x
-    using projection_intro2' a1 that by blast 
-  moreover have \<open>x \<in> range \<pi>\<close> 
-    if "x \<in> M" for x
-    using that \<open>closed_csubspace M\<close>
-    by (metis UNIV_I a1 image_eqI projection_fixed_points')     
-  ultimately show ?thesis by blast
-qed
+*)
 
+(* Use projection_image instead
 \<comment> \<open>Theorem 2.7 in @{cite conway2013course}\<close> 
 theorem projectionPropertiesE:
   fixes M :: \<open>('a::chilbert_space) set\<close>
   assumes a1: "closed_csubspace M"
-  shows "range  (projection M) = M"
-  by (smt (verit, del_insts) orthog_proj_exists assms is_projection_on_iff_orthog projectionPropertiesE' projection_uniq)
+  shows "range (projection M) = M"
+*)
 
-lemma pre_ortho_twice:
-  assumes a1: "csubspace M"
-  shows "M \<subseteq> (orthogonal_complement (orthogonal_complement M))"
-proof-
-  have "x \<in> (orthogonal_complement (orthogonal_complement M))"
-    if s1: "x \<in> M"
-    for x
-  proof-
-    have \<open>\<forall> y \<in> (orthogonal_complement M). \<langle> x, y \<rangle> = 0\<close>
-      using s1 orthogonal_complement_orthoI' by auto
-    hence \<open>x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
-      by (simp add: orthogonal_complement_def)
-    thus ?thesis by blast
-  qed            
-  thus ?thesis 
-    by (simp add: subsetI)
+(* TODO: move orthogonal_complement into corresponding section where possible *)
+
+lemma double_orthogonal_complement_increasing[simp]:
+  shows "M \<subseteq> orthogonal_complement (orthogonal_complement M)"
+proof (rule subsetI)
+  fix x assume s1: "x \<in> M"
+  have \<open>\<forall> y \<in> (orthogonal_complement M). \<langle> x, y \<rangle> = 0\<close>
+    using s1 orthogonal_complement_orthoI' by auto
+  hence \<open>x \<in> orthogonal_complement (orthogonal_complement M)\<close>
+    by (simp add: orthogonal_complement_def)
+  then show "x \<in> orthogonal_complement (orthogonal_complement M)"
+    by blast
 qed
 
+lemma is_projection_on_id_minus:
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes is_proj: "is_projection_on \<pi> M"
+    and cc: "closed_csubspace M"
+  shows "is_projection_on (id-\<pi>) (orthogonal_complement M)"
+  using is_proj apply (simp add: cc is_projection_on_iff_orthog)
+  using double_orthogonal_complement_increasing by blast
 
-lemma ProjOntoOrtho':
+(* lemma ProjOntoOrtho':
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes a1: "is_projection_on \<pi> M" and a2: "is_projection_on \<sigma> (orthogonal_complement M)"
     and a3: "closed_csubspace M"
   shows "id - \<pi> = \<sigma>"   
 proof-
   have \<open>(id - \<pi>) x = \<sigma> x\<close> for x
-  proof-
-    have b1:\<open>x - \<pi> x \<in> orthogonal_complement M\<close>
-      by (meson a1 a3 projection_intro1')
-    hence b2: \<open>(id -  \<pi>) x \<in> orthogonal_complement M\<close>
-      by simp
-    have b3: \<open>\<pi> x \<in>  M\<close>
-      by (simp add: a1 projection_intro2')      
-    hence b4: \<open>x - (id - \<pi>) x \<in>  M\<close>
-      by simp
-    hence b5: \<open>\<pi> x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
-      by (meson b3 orthogonal_complementI orthogonal_complement_orthoI')
-    hence b6:\<open>x - (id -  \<pi>) x \<in>  (orthogonal_complement (orthogonal_complement M))\<close>
-      by simp
-    thus ?thesis
-      using a2 a3 b2 projection_uniq' orthogonal_complement_closed_subspace by fastforce
-  qed
+    by (smt (verit, ccfv_threshold) a1 a2 a3 add_diff_cancel_left' diff_add_cancel double_orthogonal_complement_increasing id_apply is_projection_on_iff_orthog minus_apply orthog_proj_unique orthogonal_complement_closed_subspace subsetD)
   thus ?thesis by blast
-qed
+qed *)
 
 \<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close> 
-lemma ProjOntoOrtho:
+lemma projection_on_orthogonal_complement:
   fixes M :: "'a::chilbert_space set"
   assumes a1: "closed_csubspace M"
-  shows "id - projection M = projection (orthogonal_complement M)"
-  using ProjOntoOrtho'    
-  by (metis UNIV_I assms image_eqI is_projection_on_iff_orthog orthogonal_complement_closed_subspace projectionPropertiesD projectionPropertiesE projection_def projection_intro1)
+  shows "projection (orthogonal_complement M) = id - projection M"
+  apply (auto intro!: ext)
+  by (smt (verit, ccfv_SIG) add_diff_cancel_left' assms closed_csubspace.closed closed_csubspace.subspace complex_vector.subspace_0 csubspace_is_convex diff_add_cancel double_orthogonal_complement_increasing insert_absorb insert_not_empty is_projection_on_iff_orthog orthogonal_complement_closed_subspace projection_eqI projection_is_projection_on subset_eq)
 
 
 \<comment> \<open>Corollary 2.8 in  @{cite conway2013course}\<close>
-theorem orthogonal_complement_twice:
+theorem double_orthogonal_complement_id[simp]:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes a1: "closed_csubspace M"
   shows "orthogonal_complement (orthogonal_complement M) = M"  
 proof-
-  have b2: "x \<in>  ( ( id - (projection M) ) -` {0} )"
-    if c1: "x \<in>  M"
-    for x
-  proof-
-    have \<open>(projection M) x = x\<close>
-      by (simp add: assms projection_fixed_points that)
-    hence \<open>(id - (projection M)) x = 0\<close> 
-      by simp
-    hence \<open>x \<in> {v. (id - (projection M)) v = 0}\<close>
-      by simp
-    hence \<open>x \<in>  (real_vector.span {v. (id - (projection M)) v = 0})\<close>
-      using span_superset
-      by (simp add: real_vector.span_base)         
-    hence \<open>x \<in> ( ( id - (projection M) ) -` {0} )\<close>
-      using \<open>(id - projection M) x = 0\<close> by auto 
-    thus ?thesis 
-      by simp                  
-  qed
+  have b2: "x \<in> (id - projection M) -` {0}"
+    if c1: "x \<in> M" for x
+    by (simp add: assms projection_fixes_image that)
 
-  have b3: \<open>x \<in>  M\<close> 
-    if c1: \<open>x \<in> ( id - (projection M) ) -` {0}\<close>
-    for x
-  proof-
-    have \<open>(id - (projection M)) x = 0\<close>
-      using c1
-      by simp
-    hence \<open>(projection M) x = x\<close>
-      by auto
-    hence \<open>(projection M) x \<in>  M\<close>
-      using orthog_proj_exists assms projection_uniq by blast
-    hence \<open>x \<in>  M\<close>
-      using  \<open>(projection M) x = x\<close> 
-      by simp
-    thus ?thesis by blast
-  qed
-  have \<open>x \<in>  M \<longleftrightarrow> x \<in>  ( ( id - (projection M) ) -` {0} )\<close> for x
+  have b3: \<open>x \<in> M\<close> 
+    if c1: \<open>x \<in> (id - projection M) -` {0}\<close> for x
+    by (metis assms closed_csubspace.closed closed_csubspace.subspace complex_vector.subspace_0 csubspace_is_convex eq_id_iff equals0D fun_diff_def projection_in_image right_minus_eq that vimage_singleton_eq)
+  have \<open>x \<in>  M \<longleftrightarrow> x \<in> (id - projection M) -` {0}\<close> for x
     using b2 b3 by blast      
   hence b4: \<open>( id - (projection M) ) -` {0} =  M\<close>
     by blast
   have b1: "orthogonal_complement (orthogonal_complement M) 
           = (projection (orthogonal_complement M)) -` {0}"
-    by (simp add: a1 projectionPropertiesD)
+    by (simp add: a1 projection_kernel_is_orthogonal_complement)
   also have \<open>... = ( id - (projection M) ) -` {0}\<close>
-    by (simp add: ProjOntoOrtho a1)
+    by (simp add: projection_on_orthogonal_complement a1)
   also have \<open>... = M\<close>
     by (simp add: b4)     
   finally show ?thesis by blast
 qed
 
 
-lemma ortho_leq[simp]:
+lemma orthogonal_complement_antimono[simp]:
+  fixes  A B :: \<open>('a::complex_inner) set\<close>
+  assumes "A \<supseteq> B"
+  shows \<open>orthogonal_complement A \<subseteq> orthogonal_complement B\<close>
+  by (meson assms orthogonal_complementI orthogonal_complement_orthoI' subsetD subsetI)
+
+lemma orthogonal_complement_antimono_iff[simp]:
   fixes  A B :: \<open>('a::chilbert_space) set\<close>
   assumes \<open>closed_csubspace A\<close> and  \<open>closed_csubspace B\<close>
   shows \<open>orthogonal_complement A \<subseteq> orthogonal_complement B \<longleftrightarrow> A \<supseteq> B\<close>
-proof-
-  have \<open>A \<supseteq> B \<Longrightarrow> (orthogonal_complement A) \<subseteq> (orthogonal_complement B)\<close>
-    by (simp add: orthogonal_complement_def subset_eq)
-  moreover have  \<open> (orthogonal_complement A) \<subseteq> (orthogonal_complement B) \<Longrightarrow> (orthogonal_complement (orthogonal_complement A)) \<supseteq> (orthogonal_complement (orthogonal_complement B))\<close>
-    by (simp add: orthogonal_complement_def subset_eq)
-  moreover have \<open>A =  (orthogonal_complement (orthogonal_complement A))\<close> 
-    by (simp add: orthogonal_complement_twice assms(1))
-  moreover have \<open>B =  (orthogonal_complement (orthogonal_complement B))\<close> 
-    by (simp add: orthogonal_complement_twice assms(2))
-  ultimately show ?thesis 
-    by blast
+proof
+  show \<open>orthogonal_complement A \<subseteq> orthogonal_complement B\<close> if \<open>A \<supseteq> B\<close>
+    using that by auto
+
+  assume \<open>orthogonal_complement A \<subseteq> orthogonal_complement B\<close>
+  then have \<open>orthogonal_complement (orthogonal_complement A) \<supseteq> orthogonal_complement (orthogonal_complement B)\<close>
+    by simp
+  then show \<open>A \<supseteq> B\<close>
+    using assms by auto
 qed
 
-lemma ortho_top[simp]: 
-  "(orthogonal_complement (top::('a::chilbert_space) set)) = ({0}::'a set)"
-proof-
-  have \<open>({0}::'a set) \<subseteq>  (orthogonal_complement (top::'a set))\<close>
-    using complex_vector.subspace_def
-    by (metis Int_iff complex_vector.subspace_0 complex_vector.subspace_UNIV empty_subsetI insert_subset orthogonal_complement_zero_intersection singletonI)
-  moreover have  \<open>({0}::('a) set) \<supseteq>  (orthogonal_complement (top::('a) set))\<close>
-    by (metis complex_vector.subspace_0 complex_vector.subspace_UNIV equalityE inf_top_left orthogonal_complement_zero_intersection)
-  ultimately show ?thesis by blast
-qed
+lemma orthogonal_complement_UNIV[simp]: 
+  "orthogonal_complement UNIV = {0}"
+  by (metis Int_UNIV_left complex_vector.subspace_UNIV complex_vector.subspace_def orthogonal_complement_zero_intersection)
 
-lemma ortho_bot[simp]:
-  "orthogonal_complement ({0}::'a::chilbert_space set) = (top::'a set)"
-  using  orthogonal_complement_twice 
-  by (metis Complex_Vector_Spaces.closed_csubspace_UNIV ortho_top)
+lemma orthogonal_complement_zero[simp]:
+  "orthogonal_complement {0} = UNIV"
+  unfolding orthogonal_complement_def by auto
 
+
+(* TODO rename from here *)
 
 subsection \<open>Closed sum\<close>
 
@@ -1594,7 +1375,7 @@ theorem ortho_decomp:
   fixes x :: \<open>'a::chilbert_space\<close>
   assumes  \<open>closed_csubspace M\<close>
   shows \<open>x = (projection M) x + (projection (orthogonal_complement M)) x\<close>
-  using ProjOntoOrtho assms diff_add_cancel id_apply  minus_apply orthogonal_complement_twice
+  using projection_on_orthogonal_complement assms diff_add_cancel id_apply  minus_apply double_orthogonal_complement_id
     complex_vector.subspace_def
   by (smt orthogonal_complement_closed_subspace)
 
@@ -1606,15 +1387,15 @@ proof-
   have \<open>orthogonal_complement (A \<inter> B) 
     = orthogonal_complement ((orthogonal_complement (orthogonal_complement A)
    \<inter> orthogonal_complement (orthogonal_complement B) ))\<close>
-    by (metis assms(1) assms(2) orthogonal_complement_twice)
+    by (metis assms(1) assms(2) double_orthogonal_complement_id)
   also have \<open>... = orthogonal_complement ( orthogonal_complement ((orthogonal_complement A)
                      +\<^sub>M (orthogonal_complement B)) )\<close>
     using DeMorganOrtho assms(1) assms(2) complex_vector.subspace_def
     by (simp add: DeMorganOrtho)
   also have \<open>... = (orthogonal_complement A +\<^sub>M orthogonal_complement B)\<close>
-    using a1 a2 orthogonal_complement_twice
+    using a1 a2 double_orthogonal_complement_id
       complex_vector.subspace_def
-    by (simp add: orthogonal_complement_twice closed_subspace_closed_sum)
+    by (simp add: double_orthogonal_complement_id closed_subspace_closed_sum)
   finally show ?thesis by blast
 qed
 
@@ -1632,11 +1413,11 @@ proof-
   ultimately have \<open>closed_csubspace (B +\<^sub>M C)\<close>
     by (simp add: closed_csubspace_def)
   hence \<open>closed_csubspace (A +\<^sub>M (B +\<^sub>M C))\<close>
-    using DeMorganOrthoDual assms(1)  orthogonal_complement_twice
+    using DeMorganOrthoDual assms(1)  double_orthogonal_complement_id
       complex_vector.subspace_def
     by (simp add: closed_subspace_closed_sum)
   have \<open>(A +\<^sub>M (B +\<^sub>M C)) = (orthogonal_complement (orthogonal_complement (A +\<^sub>M (B +\<^sub>M C))))\<close>
-    by (smt \<open>closed_csubspace (A +\<^sub>M (B +\<^sub>M C))\<close> orthogonal_complement_twice)
+    by (smt \<open>closed_csubspace (A +\<^sub>M (B +\<^sub>M C))\<close> double_orthogonal_complement_id)
   also have  \<open>... = (orthogonal_complement (  (orthogonal_complement A) \<inter> (orthogonal_complement (B +\<^sub>M C))  ))\<close>
     by (simp add: DeMorganOrtho \<open>closed_csubspace (B +\<^sub>M C)\<close> assms(1))
   also have  \<open>... = (orthogonal_complement (  (orthogonal_complement A) \<inter> ((orthogonal_complement B) \<inter> (orthogonal_complement C))  ))\<close>
@@ -1645,14 +1426,14 @@ proof-
     by (simp add: inf_assoc)
   also have  \<open>... = (orthogonal_complement (orthogonal_complement  ((orthogonal_complement((orthogonal_complement A) \<inter> (orthogonal_complement B))))  \<inter> (orthogonal_complement C)  ))\<close>
     using assms(1) assms(2)  
-    by (simp add: orthogonal_complement_twice)
+    by (simp add: double_orthogonal_complement_id)
   also have  \<open>... = (orthogonal_complement ( orthogonal_complement ( (A +\<^sub>M B) +\<^sub>M C )  ))\<close>
     using DeMorganOrtho \<open>orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B \<inter> orthogonal_complement C) = orthogonal_complement (orthogonal_complement (orthogonal_complement (orthogonal_complement A \<inter> orthogonal_complement B)) \<inter> orthogonal_complement C)\<close> assms(1) assms(2) assms(3) 
       complex_vector.subspace_def
     by (simp add: DeMorganOrtho closed_subspace_closed_sum)
   finally show ?thesis
     using DeMorganOrthoDual assms(1) assms(2) assms(3) 
-    by (simp add: orthogonal_complement_twice closed_subspace_closed_sum)
+    by (simp add: double_orthogonal_complement_id closed_subspace_closed_sum)
 qed
 
 
@@ -1698,10 +1479,9 @@ lemma projection_ker_simp:
 proof-
   from \<open>bounded_clinear f\<close>
   have \<open>closed_csubspace (f -` {0})\<close>
-    by (simp add: ker_op_lin)
+    by simp
   hence \<open>projection (f -` {0}) x \<in> f -` {0}\<close>
-    using projection_intro2
-    by (metis UNIV_I image_eqI projectionPropertiesE)
+    using orthog_proj_exists projection_eqI by blast
   thus ?thesis
     by simp
 qed
@@ -1715,10 +1495,10 @@ proof-
   have tt: \<open>\<langle>t , t\<rangle> \<noteq> 0\<close>
     by (simp add: a2)
   obtain k where k_def: \<open>projection M x = k *\<^sub>C t\<close>
-    using assms(1) assms(4) projection_intro2 
-    by (metis UNIV_I projectionPropertiesE rev_image_eqI)
+    using assms(1) assms(4)
+    by (metis a3 closed_csubspace_def csubspace_is_convex insert_absorb insert_not_empty projection_in_image)
   have \<open>projection (orthogonal_complement M) x \<in> orthogonal_complement M\<close>
-    by (metis a1 add_diff_cancel_left' ortho_decomp projection_intro1)
+    by (metis a1 complex_vector.subspace_0 complex_vector.subspace_single_0 projection_bounded_clinear projection_ker_simp projection_kernel_is_orthogonal_complement vimage_eq)
   hence t1: \<open>\<langle>t , projection (orthogonal_complement M) x\<rangle> = 0\<close>
     using a3
     unfolding orthogonal_complement_def
@@ -1759,7 +1539,7 @@ lemma ker_ortho_nonzero:
   fixes f :: \<open>'a::chilbert_space functional\<close> and x :: 'a
   assumes a1: \<open>bounded_clinear f\<close> and a2: \<open>x \<noteq> 0\<close> and a3: \<open>x \<in> orthogonal_complement (f -` {0})\<close> 
   shows \<open>f x \<noteq> 0\<close>
-  using a1 a2 a3 ker_op_lin projectionPropertiesD projection_fixed_points by force
+  using a1 a2 a3 kernel_is_closed_csubspace projection_kernel_is_orthogonal_complement projection_fixes_image by force
 
 lemma ker_unidim:
   fixes f :: \<open>'a::chilbert_space functional\<close>
@@ -1773,7 +1553,7 @@ proof-
   proof-
     have f1: \<open>closed_csubspace (f -` {0})\<close>
       using a1
-      by (simp add: ker_op_lin)
+      by (simp)
     hence r3: \<open>closed_csubspace (orthogonal_complement (f -` {0}))\<close>
       by simp
     hence r1: \<open>f x \<noteq> 0\<close>
@@ -1828,18 +1608,17 @@ next
     by (simp add: ker_unidim)    
   have "(\<exists>a\<in>orthogonal_complement (f -` {0}). a \<noteq> 0)
      \<or> orthogonal_complement (f -` {0}) \<noteq> {} \<and> f -` {0} \<noteq> UNIV"
-    by (metis (no_types) False UNIV_I assms insert_absorb ker_op_lin ortho_bot 
-        orthogonal_complement_twice projection_intro1 vimage_singleton_eq)
+    by (metis False UNIV_I assms empty_iff orthogonal_complement_zero orthog_proj_exists orthogonal_complement_closed_subspace projection_fixes_image projection_ker_simp)
   hence  r2: \<open>\<exists> h \<in> (orthogonal_complement (f -` {0})). h \<noteq> 0\<close>
-    by (metis (no_types) assms insertI1 is_singletonE is_singletonI' ker_op_lin ortho_bot 
-        orthogonal_complement_twice)        
+    by (metis (no_types) assms insertI1 is_singletonE is_singletonI' kernel_is_closed_csubspace orthogonal_complement_zero 
+        double_orthogonal_complement_id)        
   have \<open>\<exists> t. t \<noteq> 0 \<and> (\<forall> x \<in>(orthogonal_complement (f -` {0})). \<exists> k. x = k *\<^sub>C t)\<close>
     using r1 r2
     by (metis complex_vector.scale_zero_right equals0D proportion_existence) 
   then obtain t where w1: \<open>t \<noteq> 0\<close> and w2: \<open>\<forall>x\<in>orthogonal_complement (f -` {0}). \<exists>k. x = k *\<^sub>C t\<close>
     by blast
   have q1: \<open>closed_csubspace (orthogonal_complement (f -` {0}))\<close>
-    by (simp add: assms ker_op_lin)
+    by (simp add: assms)
   have \<open>\<exists>s \<in> (orthogonal_complement (f -` {0})). s \<noteq> 0\<close>
     by (simp add: r2)
   then obtain s where s1: \<open>s \<in> (orthogonal_complement (f -` {0}))\<close> and s2: \<open>s \<noteq> 0\<close>
@@ -1876,13 +1655,13 @@ next
   qed
   have l3: \<open>f (projection (f -` {0}) x) = 0\<close>
     for x
-    using assms ker_op_lin projection_intro2
+    using assms kernel_is_closed_csubspace projection_in_image
     by (simp add: projection_ker_simp)
   have "\<And>a b. f (projection (f -` {0}) a + b) = 0 + f b"
     using additive.add assms l3
     by (simp add: bounded_clinear_def complex_vector.linear_add)
   hence "\<And>a. 0 + f (projection (orthogonal_complement (f -` {0})) a) = f a"
-    by (metis (no_types) assms ker_op_lin ortho_decomp)
+    by (metis (no_types) assms kernel_is_closed_csubspace ortho_decomp)
   hence \<open>f x = \<langle>(cnj (f t)/\<langle>t , t\<rangle>) *\<^sub>C t, x\<rangle>\<close>
     for x
     by (simp add: l2) 
@@ -2143,14 +1922,14 @@ proof-
       for y :: 'a
     proof-
       have \<open>y = \<pi> y\<close>
-        using that(1) assms(1) assms(2) projection_fixed_points' 
+        using that(1) assms(1) assms(2) is_projection_on_fixes_image 
         by fastforce 
       hence \<open>y - \<pi> y = 0\<close>
         by simp
       have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
         by (simp add: cinner_diff_left)
       also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
-        using Adj_I assms(1) assms(2) projectionPropertiesA' 
+        using Adj_I assms(1) assms(2) is_projection_on_bounded_clinear 
         by auto          
       also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
         by (simp add: cinner_diff_right)
@@ -2167,27 +1946,27 @@ proof-
       have "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
         using a1 a2 is_projection_on_iff_orthog by blast
       then show ?thesis
-        by (smt (z3) ProjOntoOrtho a2 cinner_diff_right d1 eq_id_iff eq_iff_diff_eq_0 is_orthogonal_sym minus_apply orthogonal_complementI orthogonal_complement_closed_subspace orthogonal_complement_orthoI' orthogonal_complement_twice projection_uniq)
+        by (smt (z3) projection_on_orthogonal_complement a2 cinner_diff_right d1 eq_id_iff eq_iff_diff_eq_0 is_orthogonal_sym minus_apply orthogonal_complementI orthogonal_complement_closed_subspace orthogonal_complement_orthoI' double_orthogonal_complement_id projection_eqI)
     qed
     have "\<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
       if "y \<in> orthogonal_complement M"
       for y
     proof-
       have \<open>\<pi> y = 0\<close>
-        by (metis a1 a2 closed_csubspace.subspace complex_vector.subspace_0 diff_zero projection_uniq' that)
+        by (metis a1 a2 closed_csubspace.subspace complex_vector.subspace_0 diff_zero is_projection_on_eqI that)
       hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
         by simp
       thus ?thesis
-        using Adj_I assms projectionPropertiesA'
+        using Adj_I assms is_projection_on_bounded_clinear
         by fastforce 
     qed
 
     hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
       unfolding orthogonal_complement_def by simp        
     hence c1: "(\<pi>\<^sup>\<dagger>) x \<in> M"
-      by (simp add: assms orthogonal_complement_twice)    
+      by (simp add: assms double_orthogonal_complement_id)    
     show ?thesis
-      by (meson a1 a2 c1 d1 orthogonal_complementI projection_uniq')
+      by (meson a1 a2 c1 d1 orthogonal_complementI is_projection_on_eqI)
   qed
   thus ?thesis by blast
 qed
@@ -2197,8 +1976,8 @@ lemma projection_D1:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>closed_csubspace M\<close>
   shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
-  using projection_D1' assms projection_intro1 
-  by (metis UNIV_I image_eqI is_projection_on_iff_orthog projectionPropertiesE)
+  using projection_D1' assms
+  by (metis closed_csubspace.closed closed_csubspace.subspace csubspace_is_convex empty_iff orthog_proj_exists projection_is_projection_on) 
 
 
 lemma closed_closure_is_csubspaceosure:
@@ -2213,7 +1992,7 @@ proof -
   have b2: "csubspace (closure {f x |x. x \<in> S})"
     if "csubspace {f x |x. x \<in> S}"
     using that
-    by (simp add: closure_is_csubspace) 
+    by (simp)
   show \<open>closed_csubspace (closure {f x |x. x \<in> S})\<close>
     using b2 b1 closure_is_closed_csubspace by auto
 qed
@@ -2266,9 +2045,9 @@ proof
     have e1: \<open>t = (projection x) t + (projection (orthogonal_complement x)) t\<close>
       using \<open>closed_csubspace x\<close> ortho_decomp by blast
     have e2: \<open>(projection x) t \<in> x\<close>
-      by (metis insert_subset projectionPropertiesE rev_image_eqI that top_greatest)
+      by (metis closed_csubspace.closed closed_csubspace.subspace csubspace_is_convex empty_iff orthog_proj_exists projection_in_image that)
     have e3: \<open>(projection (orthogonal_complement x)) t \<in> orthogonal_complement x\<close>
-      by (metis add_diff_cancel_left' e1 projection_intro1 that)
+      by (metis add_diff_cancel_left' e1 orthogonal_complementI projection_orthogonal that)
     have "orthogonal_complement x \<subseteq> x +\<^sub>M orthogonal_complement x"
       by (simp add: is_closed_subspace_universal_inclusion_right that)
     thus ?thesis
@@ -2289,7 +2068,7 @@ proof
   show "- (- x) = x"
     for x :: "'a ccsubspace"
     apply transfer
-    by (simp add: orthogonal_complement_twice)
+    by (simp add: double_orthogonal_complement_id)
 
   show "- y \<le> - x"
     if "x \<le> y"
@@ -2312,13 +2091,13 @@ proof
     for x :: "'a set" and y :: "'a set"  and u
   proof-
     have d4: \<open>(projection x) u \<in> x\<close>
-      using a1 projectionPropertiesE by blast
+      by (metis a1 closed_csubspace_def csubspace_is_convex equals0D orthog_proj_exists projection_in_image)
     hence d2: \<open>(projection x) u \<in> y\<close>
       using a3 by auto
     have d1: \<open>csubspace y\<close>
-      by (simp add: a2 closed_csubspace.subspace)          
+      by (simp add: a2)
     have \<open>u - (projection x) u \<in> orthogonal_complement x\<close>
-      by (simp add: a1 projection_intro1)        
+      by (simp add: a1 orthogonal_complementI projection_orthogonal)
     moreover have  \<open>u - (projection x) u \<in> y\<close>
       by (simp add: d1 d2 complex_vector.subspace_diff x1)      
     ultimately have d3: \<open>u - (projection x) u \<in> ((orthogonal_complement x) \<inter> y)\<close>
@@ -2951,7 +2730,7 @@ proof-
   have \<open>closed_csubspace {0::'a::chilbert_space}\<close>
     by simp
   hence \<open>(projection {0::'a::chilbert_space}) -` {0} = (orthogonal_complement {0::'a::chilbert_space})\<close>
-    by (simp add: projectionPropertiesD)
+    by (simp add: projection_kernel_is_orthogonal_complement)
   moreover have \<open>(orthogonal_complement {0::'a::chilbert_space}) = UNIV\<close>
     by simp
   ultimately have \<open>(projection {0::'a::chilbert_space}) -` {0} = UNIV\<close>
@@ -3382,7 +3161,7 @@ proof-
     unfolding p_def M_def
     by (simp add: complex_vector.span_base complex_vector.span_scale)
   have "projection M u = p u"
-    using y1 y2 y3 projection_uniq[where x = "p u" and h = u and M = M] by blast
+    using y1 y2 y3 projection_eqI[where x = "p u" and h = u and M = M] by blast
   thus ?thesis unfolding M_def p_def.
 qed
 
@@ -3440,7 +3219,7 @@ proof-
           projection (cspan S) u - k *\<^sub>C a
           \<in> cspan S"
       unfolding k_def
-      by (metis UNIV_I a2 add_diff_cancel_left' closed_subspace_cspan_finite image_iff projectionPropertiesE)
+      by (metis a2 add.commute add_diff_eq closed_subspace_cspan_finite diff_add_cancel orthog_proj_exists projection_eqI)
     thus "\<exists>k. projection (cspan {a}) u +
               projection (cspan S) u - k *\<^sub>C a
               \<in> cspan S"
@@ -3459,7 +3238,7 @@ proof-
     then obtain k where k_def: "y - k *\<^sub>C a \<in> cspan S"
       by blast
     have "u - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
-      by (simp add: a2 closed_subspace_cspan_finite projection_intro1)
+      by (simp add: a2 closed_subspace_cspan_finite orthogonal_complementI projection_orthogonal)
     moreover have "projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
       unfolding orthogonal_complement_def
     proof auto
@@ -3486,7 +3265,7 @@ proof-
          - projection (cspan S) u, k *\<^sub>C a\<rangle> = 0"
     proof-
       have "u - projection (cspan {a}) u \<in> orthogonal_complement (cspan {a})"
-        by (simp add: closed_subspace_cspan_finite projection_intro1)
+        by (simp add: closed_subspace_cspan_finite orthogonal_complementI projection_orthogonal)
       moreover have "projection (cspan S) u \<in> orthogonal_complement (cspan {a})"
         unfolding orthogonal_complement_def
       proof auto
@@ -3497,7 +3276,7 @@ proof-
         then obtain k where ky:"y = k *\<^sub>C a"
           by blast
         have "projection (cspan S) u \<in> cspan S"
-          by (metis UNIV_I a2 closed_subspace_cspan_finite projectionPropertiesE rev_image_eqI)
+          by (metis a2 closed_subspace_cspan_finite orthog_proj_exists projection_eqI)
         hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
           by (meson a1 a2 ortho_cspan orthogonal_complement_orthoI' orthogonal_complementI)          
         thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
@@ -3505,7 +3284,7 @@ proof-
           by simp
       qed
       moreover have "csubspace ( orthogonal_complement (cspan {a}))"
-        by (simp add: closed_csubspace.subspace closed_subspace_cspan_finite)
+        by (simp add: closed_subspace_cspan_finite)
 
       ultimately have "(u - projection (cspan {a}) u) - projection (cspan S) u
                    \<in> orthogonal_complement (cspan {a})"
@@ -3527,7 +3306,7 @@ proof-
     unfolding orthogonal_complement_def
     by blast
   hence "projection M u = p u"
-    using projection_uniq[where x = "p u" and h = u and M = M]
+    using projection_eqI[where x = "p u" and h = u and M = M]
       \<open>closed_csubspace M\<close> f1 by auto     
   thus ?thesis 
     unfolding p_def M_def by auto
@@ -3544,7 +3323,7 @@ subsection \<open>Conjugate space\<close>
 instantiation conjugate_space :: (complex_inner) complex_inner begin
 lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> complex" is
   \<open>\<lambda>x y. cinner y x\<close>.
-instance 
+instance
   apply (intro_classes; transfer)
        apply (simp_all add: )
     apply (simp add: cinner_add_right)

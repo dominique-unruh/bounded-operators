@@ -1739,7 +1739,7 @@ proof
     if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_csubspace x"
     for S :: "'a set set"
     using that
-    by (simp add: closed_csubspace.subspace closure_is_closed_csubspace) 
+    by (simp add: closure_is_closed_csubspace) 
   show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
     if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
     for S :: "'a set set"
@@ -2418,7 +2418,7 @@ definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = b
 instance ..
 end
 
-lemma csubspace_is_convex:
+lemma csubspace_is_convex[simp]:
   assumes a1: "csubspace M"
   shows "convex M"
 proof-
@@ -2431,5 +2431,72 @@ proof-
     by blast
   thus ?thesis using convex_def by blast
 qed
+
+lemma kernel_is_csubspace[simp]:
+  assumes a1: "clinear f"
+  shows "csubspace  (f -` {0})"
+proof-
+  have w3: \<open>t *\<^sub>C x \<in> {x. f x = 0}\<close> 
+    if b1: "x \<in> {x. f x = 0}"
+    for x t
+    by (metis assms complex_vector.linear_subspace_kernel complex_vector.subspace_def that)
+  have \<open>f 0 = 0\<close>
+    by (simp add: assms complex_vector.linear_0)
+  hence s2: \<open>0 \<in> {x. f x = 0}\<close>
+    by blast
+
+  have w4: "x + y \<in> {x. f x = 0}"
+    if c1: "x \<in> {x. f x = 0}" and c2: "y \<in> {x. f x = 0}"
+    for x y
+    using assms c1 c2 complex_vector.linear_add by fastforce
+  have s4: \<open>c *\<^sub>C t \<in> {x. f x = 0}\<close> 
+    if "t \<in> {x. f x = 0}"
+    for t c
+    using that w3 by auto
+  have s5: "u + v \<in> {x. f x = 0}"
+    if "u \<in> {x. f x = 0}" and "v \<in> {x. f x = 0}"
+    for u v
+    using w4 that(1) that(2) by auto    
+  have f3: "f -` {b. b = 0 \<or> b \<in> {}} = {a. f a = 0}"
+    by blast
+  have "csubspace {a. f a = 0}"
+    by (metis complex_vector.subspace_def s2 s4 s5)
+  thus ?thesis
+    using f3 by auto
+qed
+
+
+lemma kernel_is_closed_csubspace[simp]:
+  assumes a1: "bounded_clinear f"
+  shows "closed_csubspace (f -` {0})"
+proof-
+  have \<open>csubspace (f -` {0})\<close>
+    using assms bounded_clinear.clinear complex_vector.linear_subspace_vimage complex_vector.subspace_single_0 by blast
+  have "L \<in> {x. f x = 0}"
+    if "r \<longlonglongrightarrow> L" and "\<forall> n. r n \<in> {x. f x = 0}"
+    for r and  L 
+  proof-
+    have d1: \<open>\<forall> n. f (r n) = 0\<close>
+      using that(2) by auto
+    have \<open>(\<lambda> n. f (r n)) \<longlonglongrightarrow> f L\<close>
+      using assms clinear_continuous_at continuous_within_tendsto_compose' that(1) 
+      by fastforce
+    hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow> f L\<close>
+      using d1 by simp        
+    hence \<open>f L = 0\<close>
+      using limI by fastforce
+    thus ?thesis by blast
+  qed
+  then have s3: \<open>closed (f -` {0})\<close>
+    using closed_sequential_limits by force
+  with \<open>csubspace (f -` {0})\<close>
+  show ?thesis
+    using closed_csubspace.intro by blast
+qed
+
+lemma range_is_clinear[simp]:
+  assumes a1: "clinear f"
+  shows "csubspace (range f)"
+  using assms complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast
 
 end

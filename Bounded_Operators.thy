@@ -1878,7 +1878,7 @@ lift_definition applyOpSpace::\<open>'a::complex_normed_vector \<Rightarrow>\<^s
 \<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close> 
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def closed_closure  closed_csubspace.intro
-  by (simp add: bounded_clinear_def closed_csubspace.subspace complex_vector.linear_subspace_image closure_is_closed_csubspace) 
+  by (simp add: bounded_clinear_def complex_vector.linear_subspace_image closure_is_closed_csubspace) 
 
 
 bundle cblinfun_notation begin
@@ -2627,7 +2627,7 @@ subsection \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) ccsubspace \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'a"
   is \<open>projection\<close>
-  by (rule Complex_Inner_Product.projectionPropertiesA)
+  by (rule Complex_Inner_Product.projection_bounded_clinear)
 
 
 lemma imageOp_Proj[simp]: "(Proj S) *\<^sub>S top = S"  
@@ -2635,14 +2635,11 @@ proof-
   have "closure (range (projection S)) \<subseteq> S"
     if "closed_csubspace S"
     for S :: "'a set"
-    using that OrthoClosedEq orthogonal_complement_twice 
-    by (metis closed_csubspace.subspace pre_ortho_twice projectionPropertiesE closure_is_csubspace)
-  moreover have "S \<subseteq> closure (range (projection S))"
-    if "closed_csubspace S"
-    for S :: "'a set"
     using that
-    by (metis (no_types, lifting) closure_subset image_subset_iff in_mono projection_fixed_points 
-        subsetI subset_UNIV) 
+    by (metis closed_csubspace.closed closed_csubspace.subspace closure_closed complex_vector.subspace_0 csubspace_is_convex dual_order.eq_iff insert_absorb insert_not_empty projection_image)
+  moreover have "S \<subseteq> closure (range (projection S))" if "closed_csubspace S" for S :: "'a set"
+    using that
+    by (metis closed_csubspace_def closure_subset csubspace_is_convex equals0D projection_image subset_iff)
   ultimately show ?thesis 
     apply transfer by (simp add: set_eq_subset)
 qed
@@ -2661,8 +2658,8 @@ proof-
   have \<open>closed_csubspace (space_as_set M)\<close>
     using space_as_set by auto
   hence u2: \<open>(projection (space_as_set M))\<circ>(projection (space_as_set M))
-                = (projection (space_as_set M)) \<close>
-    by (simp add: projectionPropertiesC)
+                = (projection (space_as_set M))\<close>    
+    using projection_idem by fastforce
   have \<open>(cblinfun_apply (Proj M)) \<circ> (cblinfun_apply (Proj M)) = cblinfun_apply (Proj M)\<close>
     using u1 u2
     by simp    
@@ -2783,7 +2780,7 @@ proof-
     using space_as_set by auto
   hence f1: "(Proj M) *\<^sub>V a = P *\<^sub>V a"
     for a
-    by (simp add: Proj.rep_eq projection_uniq u1 u2)
+    by (simp add: Proj.rep_eq projection_eqI u1 u2)
   have "(+) (a - a) = id"
     for a::'a
     by auto
@@ -2805,8 +2802,8 @@ qed
 lemma Proj_range_closed:
   assumes "isProjector P"
   shows "closed (range (cblinfun_apply P))"
-  using assms apply transfer
-  using closed_csubspace.closed projectionPropertiesE' by blast
+  using assms apply transfer      
+  using closed_csubspace.closed is_projection_on_image by blast
 
 lemma Proj_isProjector[simp]:
   fixes M::\<open>'a::chilbert_space ccsubspace\<close>
@@ -2815,12 +2812,10 @@ proof-
   have u1: "closed_csubspace (space_as_set M)"
     using space_as_set by blast
   have v1: "h - Proj M *\<^sub>V h
-         \<in> orthogonal_complement (space_as_set M)"
-    for h
-    by (simp add: Proj.rep_eq projection_intro1 u1)    
-  have v2: "Proj M *\<^sub>V h \<in> space_as_set M"
-    for h
-    by (metis Proj.rep_eq projectionPropertiesE rangeI u1)
+         \<in> orthogonal_complement (space_as_set M)" for h
+    by (simp add: Proj.rep_eq orthogonal_complementI projection_orthogonal u1)
+  have v2: "Proj M *\<^sub>V h \<in> space_as_set M" for h
+    by (metis Proj.rep_eq mem_Collect_eq orthog_proj_exists projection_eqI space_as_set)
   have u2: "is_projection_on ((*\<^sub>V) (Proj M)) (space_as_set M)"
     unfolding is_projection_on_def
     by (simp add: smallest_dist_is_ortho u1 v1 v2)
@@ -2835,8 +2830,8 @@ proof
   have "P o\<^sub>C\<^sub>L P = P"
     if "isProjector P"
     using that apply transfer
-    using  projectionPropertiesC'
-    by auto
+    using is_projection_on_idem
+    by fastforce
   moreover have "P = P*"
     if "isProjector P"
     using that apply transfer
@@ -2881,7 +2876,7 @@ proof-
   ultimately have 
     \<open>\<exists>M. P = Proj M \<and> space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
     using P_def Proj_I
-    by (metis Proj.rep_eq mem_Collect_eq projectionPropertiesE space_as_set)
+    by (metis Proj_isProjector Proj_range_closed applyOpSpace.rep_eq closure_closed top_ccsubspace.rep_eq)
   then obtain M where \<open>P = Proj M\<close>
     and \<open>space_as_set M = range (cblinfun_apply (A o\<^sub>C\<^sub>L (Proj S) o\<^sub>C\<^sub>L (A*)))\<close>
     by blast
@@ -2940,7 +2935,7 @@ proof-
       using x2
       by (meson closure_subset image_subset_iff that)
     moreover have \<open>(projection (space_as_set C)) x \<in> space_as_set C\<close>
-      using p1 projectionPropertiesE by blast
+      by (metis mem_Collect_eq orthog_proj_exists projection_eqI space_as_set)
     ultimately show ?thesis
       using closure_subset by fastforce 
   qed
@@ -2974,7 +2969,7 @@ subsection \<open>Kernel\<close>
 lift_definition kernel :: "'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector
    \<Rightarrow> 'a ccsubspace" 
   is "\<lambda> f. f -` {0}"
-  by (metis ker_op_lin)
+  by (metis kernel_is_closed_csubspace)
 
 definition eigenspace :: "complex \<Rightarrow> 'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'a \<Rightarrow> 'a ccsubspace" where
   "eigenspace a A = kernel (A - a *\<^sub>C idOp)" 
@@ -3241,7 +3236,7 @@ next
           and "x \<in> closure (V i)"
         for x :: 'b
         using that
-        by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice closure_is_closed_csubspace) 
+        by (metis OrthoClosedEq closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
       show "x \<in> closure (V i)"
         if "\<forall>x. closed_csubspace (V x)"
           and "bounded_clinear Uinv"
@@ -3280,7 +3275,7 @@ next
         and "x \<in> closure INFUV"
       for x :: 'c
       using that
-      by (metis OrthoClosedEq closed_csubspace.subspace orthogonal_complement_twice closure_is_closed_csubspace) 
+      by (metis OrthoClosedEq closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
     show "x \<in> closure INFUV"
       if "closed_csubspace INFUV"
         and "bounded_clinear U"
