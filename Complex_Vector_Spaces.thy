@@ -302,11 +302,17 @@ lemma comp_bounded_clinear:
   shows \<open>bounded_clinear (A \<circ> B)\<close>
   by (metis clinear_compose assms(1) assms(2) bounded_clinear_axioms_def bounded_clinear_compose bounded_clinear_def o_def)
 
+
+lemmas isCont_scaleC [simp] =
+  bounded_bilinear.isCont [OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
+
+(* Use isCont_scaleC instead
 lemma isCont_scaleC:
   fixes l :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> v. scaleC a v) l\<close>
   apply (rule linear_continuous_at)
   by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_scaleC_right)
+*)
 
 subsection \<open>Cauchy sequences\<close>
 
@@ -346,7 +352,7 @@ next
   then have \<open>(*\<^sub>C) a ` S = (*\<^sub>C) (inverse a) -` S\<close>
     by (auto simp add: rev_image_eqI)
   moreover have \<open>closed ((*\<^sub>C) (inverse a) -` S)\<close>
-    using assms isCont_scaleC by (rule continuous_closed_vimage)
+    by (simp add: assms continuous_closed_vimage)
   ultimately show ?thesis
     by simp
 qed
@@ -376,7 +382,7 @@ proof
     moreover have \<open>(\<lambda> n. scaleC a (s n)) \<longlonglongrightarrow> x\<close>
     proof-
       have \<open>isCont (scaleC a) t\<close>
-        using isCont_scaleC by blast
+        by simp
       thus ?thesis
         using  \<open>s \<longlonglongrightarrow> t\<close>  \<open>x = ((*\<^sub>C) a) t\<close>
         by (simp add: isCont_tendsto_compose)
@@ -881,7 +887,7 @@ proof-
       by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
     ultimately show ?thesis
       using assms that(1) that(2)
-      by (simp add: complex_vector.subspace_add closure_is_csubspace) 
+      by (simp add: complex_vector.subspace_add) 
   qed
   moreover have "c *\<^sub>C x \<in> closure S"
     if "x \<in> closure S"
@@ -891,7 +897,7 @@ proof-
     then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
       by blast
     have \<open>isCont (scaleC c) x\<close>
-      using continuous_at continuous_on_def isCont_scaleC by blast
+      by simp
     hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
       using  \<open>y \<longlonglongrightarrow> x\<close>
       by (simp add: isCont_tendsto_compose) 
@@ -900,14 +906,14 @@ proof-
       using assms complex_vector.subspace_scale by auto
     thus ?thesis
       using assms that
-      by (simp add: complex_vector.subspace_scale closure_is_csubspace) 
+      by (simp add: complex_vector.subspace_scale) 
   qed
   moreover have "0 \<in> closure S"
-    by (simp add: assms closure_is_csubspace complex_vector.subspace_0)
+    by (simp add: assms complex_vector.subspace_0)
   moreover have "closed (closure S)"
     by auto
   ultimately show ?thesis
-    by (simp add: assms closed_csubspace_def closure_is_csubspace)
+    by (simp add: assms closed_csubspace_def)
 qed
 
 lemma clinear_continuous_at:
@@ -1640,19 +1646,19 @@ proof-
 qed *)
 
 
-definition closed_sum:: \<open>'a::{complex_vector,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+definition closed_sum:: \<open>'a::{semigroup_add,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
   \<open>closed_sum A B = closure (A + B)\<close>
 
 notation closed_sum (infixl "+\<^sub>M" 65)
 
-lemma closed_sum_comm: \<open>A +\<^sub>M B = B +\<^sub>M A\<close>
+lemma closed_sum_comm: \<open>A +\<^sub>M B = B +\<^sub>M A\<close> for A B :: "_::ab_semigroup_add"
   by (simp add: add.commute closed_sum_def)
 
-lemma closed_sum_left_subset: \<open>0 \<in> B \<Longrightarrow> A \<subseteq> A +\<^sub>M B\<close>
-  by (metis closed_sum_def closure_subset ordered_field_class.sign_simps(2) set_zero_plus2 subset_trans)
+lemma closed_sum_left_subset: \<open>0 \<in> B \<Longrightarrow> A \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
+  by (metis add.right_neutral closed_sum_def closure_subset in_mono set_plus_intro subsetI)
 
-lemma closed_sum_right_subset: \<open>0 \<in> A \<Longrightarrow> B \<subseteq> A +\<^sub>M B\<close>
-  using closed_sum_comm closed_sum_left_subset by blast
+lemma closed_sum_right_subset: \<open>0 \<in> A \<Longrightarrow> B \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
+  by (metis add.left_neutral closed_sum_def closure_subset set_plus_intro subset_iff)
 
 lemma closed_sum_is_sup:
   fixes A B C:: \<open>('a::{complex_vector,topological_space}) set\<close>
@@ -1675,6 +1681,52 @@ lemma closed_subspace_closed_sum:
   shows \<open>closed_csubspace (A +\<^sub>M B)\<close>
   using a1 a2 closed_sum_def 
   by (metis closure_is_closed_csubspace csubspace_set_plus)
+
+
+lemma closed_sum_assoc:
+  fixes A B C::"'a::real_normed_vector set"
+  shows \<open>A +\<^sub>M (B +\<^sub>M C) = (A +\<^sub>M B) +\<^sub>M C\<close>
+proof -
+  have \<open>A + closure B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
+    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
+  then have \<open>A +\<^sub>M (B +\<^sub>M C) = closure (A + (B + C))\<close>
+    unfolding closed_sum_def
+    by (meson antisym_conv closed_closure closure_minimal closure_mono closure_subset equalityD1 set_plus_mono2)
+  moreover 
+  have \<open>closure A + B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
+    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
+  then have \<open>(A +\<^sub>M B) +\<^sub>M C = closure ((A + B) + C)\<close>
+    unfolding closed_sum_def
+    by (meson closed_closure closure_minimal closure_mono closure_subset eq_iff set_plus_mono2)
+  ultimately show ?thesis
+    by (simp add: ab_semigroup_add_class.add_ac(1))
+qed
+
+
+lemma closed_sum_zero_left:
+  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
+  assumes \<open>closed A\<close>
+  shows \<open>{0} +\<^sub>M A = A\<close>
+  unfolding closed_sum_def
+  by (metis add.left_neutral assms closure_eq set_zero)
+
+lemma closed_sum_zero_right:
+  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
+  assumes \<open>closed A\<close>
+  shows \<open>A +\<^sub>M {0} = A\<close>
+  unfolding closed_sum_def
+  by (metis add.right_neutral assms closure_eq set_zero)
+
+
+lemma closed_sum_mono_left:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>A +\<^sub>M C \<subseteq> B +\<^sub>M C\<close>
+  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
+
+lemma closed_sum_mono_right:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
+  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
 
 
 instantiation ccsubspace :: (complex_normed_vector) sup begin

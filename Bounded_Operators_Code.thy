@@ -75,7 +75,7 @@ declare mat_of_cblinfun_scaleR[code]
   \<comment> \<open>Code equation for multiplication with real scalar\<close>
 
 declare mat_of_cblinfun_adjoint'[code]
-  \<comment> \<open>Code equation for computing the adjoint\<close>
+  \<comment> \<open>Code equation for computing the adj\<close>
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun.\<close>
 instantiation cblinfun :: (onb_enum,onb_enum) equal begin

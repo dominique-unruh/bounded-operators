@@ -1794,39 +1794,20 @@ end
 subsection \<open>Adjoint\<close>
 
 lift_definition
-  adjoint :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
-  is Adj by (fact Adj_bounded_clinear)
+  adj :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
+  is cadjoint by (fact cadjoint_bounded_clinear)
 
 lift_definition idOp::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> is id
   using bounded_clinear_id by blast
 
 lemma idOp_adjoint[simp]: "idOp* = idOp"
-  apply transfer using id_dagger by blast
+  apply transfer using cadjoint_id by blast
 
 lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
   for A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
     and a :: complex 
-proof-
-  have \<open>bounded_clinear ((cblinfun_apply A))\<close>
-    using cblinfun_apply by blast
-  hence \<open>(\<lambda>t. a *\<^sub>C (A *\<^sub>V t))\<^sup>\<dagger> = (\<lambda>s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
-    using scalar_times_adjc_flatten
-    unfolding bounded_clinear_def 
-      scalar_times_adjc_flatten \<open>bounded_clinear (cblinfun_apply A)\<close>
-    using scalar_times_adjc_flatten complex_vector.linear_scale
-    by (simp add: complex_vector.linear_scale scalar_times_adjc_flatten \<open>bounded_clinear ((*\<^sub>V) A)\<close> 
-        bounded_clinear.bounded_linear)
-  moreover have \<open>cblinfun_apply ((a *\<^sub>C A)*) = (\<lambda> t. a *\<^sub>C (A *\<^sub>V t))\<^sup>\<dagger>\<close>
-    unfolding Adj_def
-    apply auto
-    by (smt Adj_def Eps_cong adjoint.rep_eq cinner_scaleC_right scaleC_cblinfun.rep_eq)
-  moreover have \<open>cblinfun_apply (cnj a *\<^sub>C (A*)) = (\<lambda> s. (cnj a) *\<^sub>C (((cblinfun_apply A)\<^sup>\<dagger>) s))\<close>
-    unfolding Adj_def
-    by (simp add: Adj_def adjoint.rep_eq scaleC_cblinfun.rep_eq)    
-  ultimately show ?thesis
-    using cblinfun_apply_inject
-    by fastforce 
-qed
+  apply transfer
+  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_def complex_vector.linear_scale scalar_times_adjc_flatten)
 
 lemma Adj_cblinfun_plus:
   fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
@@ -1842,10 +1823,10 @@ proof transfer
   moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close>
     for u::'b and v::'a
     unfolding F_def G_def
-    using Adj_I a1 a2 cinner_add_left
-    by (simp add: Adj_I cinner_add_left cinner_add_right) 
+    using cadjoint_univ_prop a1 a2 cinner_add_left
+    by (simp add: cadjoint_univ_prop cinner_add_left cinner_add_right) 
   ultimately have \<open>F = G\<^sup>\<dagger> \<close>
-    by (rule Adj_D)
+    using cadjoint_eqI by blast
   thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
     unfolding F_def G_def
     by auto
@@ -1885,14 +1866,14 @@ bundle cblinfun_notation begin
 notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
 notation cblinfun_apply (infixr "*\<^sub>V" 70)
 notation applyOpSpace (infixr "*\<^sub>S" 70)
-notation adjoint ("_*" [99] 100)
+notation adj ("_*" [99] 100)
 end
 
 bundle no_cblinfun_notation begin
 no_notation timesOp (infixl "o\<^sub>C\<^sub>L" 69)
 no_notation cblinfun_apply (infixr "*\<^sub>V" 70)
 no_notation applyOpSpace (infixr "*\<^sub>S" 70)
-no_notation adjoint ("_*" [99] 100)
+no_notation adj ("_*" [99] 100)
 end
 
 bundle blinfun_notation begin
@@ -1909,24 +1890,24 @@ unbundle cblinfun_notation
 lemma adjoint_I:
   fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
   shows \<open>\<langle>G* *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>\<close>
-  apply transfer using Adj_I by blast
+  apply transfer using cadjoint_univ_prop by blast
 
 lemma adjoint_I':
   fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
   shows \<open>\<langle>x, G* *\<^sub>V y\<rangle> = \<langle>G *\<^sub>V x, y\<rangle>\<close> 
-  apply transfer using Adj_I' by blast
+  apply transfer using cadjoint_univ_prop' by blast
 
 lemma adjoint_D:
   fixes G:: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space\<close>
     and F:: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
   assumes \<open>\<And>x y. \<langle>(cblinfun_apply F) x, y\<rangle> = \<langle>x, (cblinfun_apply G) y\<rangle>\<close>
   shows \<open>F = G*\<close>
-  using assms apply transfer using Adj_D by auto
+  using assms apply transfer using cadjoint_eqI by auto
 
 lemma adjoint_twice[simp]: "(U*)* = U" 
   for U :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   apply transfer
-  using dagger_dagger_id by blast
+  using double_cadjoint by blast
 
 lemma blinfun_of_cblinfun_timesOp:
   fixes f::\<open>'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector\<close>
@@ -1978,10 +1959,10 @@ proof transfer
     by (simp add: comp_bounded_clinear)
   have \<open>\<langle> (A \<circ> B) u, v \<rangle> = \<langle> u, (B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>) v \<rangle>\<close>
     for u v
-    by (metis (no_types, lifting) Adj_I \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> cinner_commute' comp_def)    
+    by (metis (no_types, lifting) cadjoint_univ_prop \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> cinner_commute' comp_def)    
   thus \<open>(A \<circ> B)\<^sup>\<dagger> = B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>\<close>
     using \<open>bounded_clinear (A \<circ> B)\<close>
-    by (metis Adj_D cinner_commute')
+    by (metis cadjoint_eqI cinner_commute')
 qed
 
 lemma OCL_zero [simp]:  
@@ -2851,8 +2832,7 @@ lemma Proj_leq: "(Proj S) *\<^sub>S A \<le> S"
 proof -
   have "top = sup top A"
     apply transfer
-    using Complex_Vector_Spaces.closed_csubspace_UNIV is_closed_subspace_universal_inclusion_left 
-    by blast 
+    by (simp add: closed_sum_left_subset closed_csubspace_def complex_vector.subspace_def order_class.order.eq_iff)
   hence "sup S (Proj S *\<^sub>S A) = S"
     by (metis (full_types) cblinfun_image_sup_exchange imageOp_Proj)
   thus ?thesis
@@ -2927,7 +2907,7 @@ proof-
       using space_as_set by auto
     hence \<open>x = (projection (space_as_set C)) x
        + (projection (orthogonal_complement (space_as_set C))) x\<close>
-      by (simp add: ortho_decomp)
+      by simp
     hence \<open>x = (projection (orthogonal_complement (space_as_set C))) x
               + (projection (space_as_set C)) x\<close>
       by (metis ordered_field_class.sign_simps(2))
@@ -3236,7 +3216,7 @@ next
           and "x \<in> closure (V i)"
         for x :: 'b
         using that
-        by (metis OrthoClosedEq closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
+        by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
       show "x \<in> closure (V i)"
         if "\<forall>x. closed_csubspace (V x)"
           and "bounded_clinear Uinv"
@@ -3275,7 +3255,7 @@ next
         and "x \<in> closure INFUV"
       for x :: 'c
       using that
-      by (metis OrthoClosedEq closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
+      by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
     show "x \<in> closure INFUV"
       if "closed_csubspace INFUV"
         and "bounded_clinear U"
@@ -3629,7 +3609,7 @@ subsection \<open>Recovered theorems\<close>
 
 (*
 consts
-  adjoint :: "('a,'b) cblinfun \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
+  adj :: "('a,'b) cblinfun \<Rightarrow> ('b,'a) cblinfun" ("_*" [99] 100)
  timesOp :: "('b,'c) cblinfun \<Rightarrow> ('a,'b) cblinfun \<Rightarrow> ('a,'c) cblinfun" 
 (* and applyOp :: "('a,'b) cblinfun \<Rightarrow> 'a vector \<Rightarrow> 'b vector" *)
  applyOpSpace :: "('a,'b) cblinfun \<Rightarrow> 'a subspace \<Rightarrow> 'b subspace"
@@ -5797,13 +5777,7 @@ lemma Proj_bot[simp]: "Proj bot = 0"
 
 lemma Proj_ortho_compl:
   "Proj (- X) = idOp - Proj X"
-proof (transfer , auto)
-  show "projection (orthogonal_complement X) = (\<lambda>x. (x::'a) - projection X x)"
-    if "closed_csubspace (X::'a set)"
-    for X :: "'a set"
-    using that ortho_decomp
-    by (metis add_diff_cancel_left') 
-qed
+  by (transfer , auto)
 
 
 lemma Proj_inj: 
