@@ -1807,7 +1807,7 @@ lemma scalar_times_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)"
   for A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
     and a :: complex 
   apply transfer
-  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_def complex_vector.linear_scale scalar_times_adjc_flatten)
+  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_def complex_vector.linear_scale scaleC_cadjoint)
 
 lemma Adj_cblinfun_plus:
   fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
@@ -2628,7 +2628,7 @@ qed
 
 lemma Proj_D1: \<open>(Proj M) = (Proj M)*\<close>
   apply transfer
-  by (rule projection_D1)
+  by (simp add: projection_cadjoint)
 
 
 lemma Proj_D2[simp]: \<open>(Proj M) o\<^sub>C\<^sub>L (Proj M) = (Proj M)\<close>
@@ -2816,8 +2816,7 @@ proof
   moreover have "P = P*"
     if "isProjector P"
     using that apply transfer
-    using projection_D1'
-    by blast
+    by (metis is_projection_on_cadjoint)
   ultimately show "P o\<^sub>C\<^sub>L P = P \<and> P = P*"
     if "isProjector P"
     using that
@@ -4172,8 +4171,7 @@ proof-
         using discrete \<open>y \<in> complex_vector.span T\<close>
         by blast
       moreover have \<open>(\<lambda> n. \<langle> t n, y \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
-        using  \<open>t \<longlonglongrightarrow> x\<close> cinner_continuous_left
-        by (simp add: cinner_continuous_left)
+        using  \<open>t \<longlonglongrightarrow> x\<close> by (auto intro: tendsto_intros)
       ultimately have \<open>(\<lambda> n. 0) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
         by simp
       thus ?thesis
@@ -4192,8 +4190,7 @@ proof-
         for n
         by (simp add: \<open>\<And>y. y \<in> complex_vector.span T \<Longrightarrow> \<langle>x, y\<rangle> = 0\<close>)
       moreover have \<open>(\<lambda> n. \<langle> x, t n \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
-        using  \<open>t \<longlonglongrightarrow> y\<close>
-        by (simp add: cinner_continuous_right)        
+        using  \<open>t \<longlonglongrightarrow> y\<close> by (intro tendsto_intros)
       ultimately have \<open>(\<lambda> n. 0) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
         by simp
       thus ?thesis
@@ -5146,7 +5143,7 @@ lemma cblinfun_operator_basis_zero_uniq:
   by (metis UNIV_I a1 a2 a4 applyOp0 cblinfun_ext)
 
 
-lemma ortho_imples_independent:
+lemma is_ortho_set_cindependent:
   assumes a1: "is_ortho_set A"
   shows "cindependent A"
 proof-
@@ -5326,7 +5323,7 @@ proof-
     have "finite {v. a v \<noteq> 0}"
       by (simp add: a_def complex_vector.finite_representation)      
     have f1: "cindependent basis"
-      using basis_def canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto
+      by (simp add: basis_def is_cindependent_set)
     have "closure (cspan basis) = UNIV"
       using basis_def closure_UNIV is_generator_set
       by (metis )
@@ -5402,7 +5399,7 @@ proof-
         finally show ?thesis by simp
       qed
       thus ?thesis
-        by (simp add: \<open>\<And>v. \<langle>v, x\<rangle> = 0\<close> cinner_ext_0) 
+        by (simp add: \<open>\<And>v. \<langle>v, x\<rangle> = 0\<close> cinner_extensionality) 
     qed
     ultimately show ?thesis by simp
   qed
@@ -5544,7 +5541,7 @@ lemma Proj_Span_insert:
 proof-
   define d where "d = canonical_basis_length TYPE('a)"
   hence IH': "is_ortho_set (set S)"
-    using assms is_onb_delete by auto    
+    by (meson a1 is_ortho_set_def list.set_intros(2))
   have IH0: "distinct S"
     using a2 by auto   
   have "closure (cspan (set S)) = cspan (set S)"
@@ -5565,7 +5562,7 @@ proof-
     by (simp add: IH')    
   have aS: "a \<notin> set S"
     using a2 by auto
-  have p: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
+  have p: "projection (cspan (insert a (set S))) u
         = projection (cspan {a}) u
         + projection (cspan (set S)) u"
     for u   
@@ -5579,11 +5576,11 @@ proof-
     show "finite (set S)"
       by simp    
   qed
-  have s1: "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)} u
+  have s1: "projection (cspan (insert a (set S))) u
         = projection (cspan {a}) u + projection (cspan (set S)) u"
     for u
     by (simp add: p)    
-  have "Proj (ccspan (set (a#S))) = cBlinfun (projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)})"
+  have "Proj (ccspan (set (a#S))) = cBlinfun (projection (cspan (insert a (set S))))"
     unfolding Proj_def ccspan_def id_def
     by (metis \<open>cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}\<close> 
         complex_vector.span_span list.simps(15) map_fun_apply s2) 

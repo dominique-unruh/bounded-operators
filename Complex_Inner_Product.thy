@@ -21,7 +21,7 @@ subsection \<open>Complex inner product spaces\<close>
 (* TODO: get rid of this notation, Isabelle uses \<bullet> for real inner product *)
 notation (input) cinner ("\<langle>_, _\<rangle>") 
 
-lemma cinner_real: "\<langle>x, x\<rangle> \<in> \<real>"
+lemma cinner_real: "(cinner x x) \<in> \<real>"
   by (meson cinner_ge_zero reals_zero_comparable_iff)
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
@@ -121,6 +121,44 @@ theorem pythagorean_theorem:
     \<comment> \<open>Shown in the proof of Theorem 2.2 in @{cite conway2013course}\<close> 
   by (simp add: polar_identity)
 
+lemma pythagorean_theorem_sum:
+  assumes q1: "\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>f a, f a'\<rangle> = 0"
+    and q2: "finite t"
+  shows "(norm  (\<Sum>a\<in>t. f a))^2 = (\<Sum>a\<in>t.(norm (f a))^2)"
+proof (insert q1, use q2 in induction)
+  case empty
+  show ?case
+    by auto 
+next
+  case (insert x F)
+  have r1: "\<langle>f x, f a\<rangle> = 0"
+    if "a \<in> F"
+    for a
+    using that insert.hyps(2) insert.prems by auto 
+  have "sum f F = (\<Sum>a\<in>F. f a)"
+    by simp
+  hence s4: "\<langle>f x, sum f F\<rangle> = \<langle>f x, (\<Sum>a\<in>F. f a)\<rangle>"
+    by simp
+  also have s3: "\<dots> = (\<Sum>a\<in>F. \<langle>f x, f a\<rangle>)"
+    using cinner_sum_right by auto
+  also have s2: "\<dots> = (\<Sum>a\<in>F. 0)"
+    using r1
+    by simp
+  also have s1: "\<dots> = 0"
+    by simp
+  finally have xF_ortho: "\<langle>f x, sum f F\<rangle> = 0"
+    using s2 s3 by auto       
+  have "(norm (sum f (insert x F)))\<^sup>2 = (norm (f x + sum f F))\<^sup>2"
+    by (simp add: insert.hyps(1) insert.hyps(2))
+  also have "\<dots> = (norm (f x))\<^sup>2 + (norm (sum f F))\<^sup>2"
+    using xF_ortho by (rule pythagorean_theorem)
+  also have "\<dots> = (norm (f x))\<^sup>2 + (\<Sum>a\<in>F.(norm (f a))^2)"
+    apply (subst insert.IH) using insert.prems by auto
+  also have "\<dots> = (\<Sum>a\<in>insert x F.(norm (f a))^2)"
+    by (simp add: insert.hyps(1) insert.hyps(2))
+  finally show ?case
+    by simp
+qed
 
 subsection \<open>Orthogonality\<close>
 
@@ -232,6 +270,49 @@ proof -
   with assms show ?thesis
     unfolding orthogonal_complement_def by auto
 qed
+
+instantiation ccsubspace :: (complex_inner) "uminus"
+begin
+lift_definition uminus_ccsubspace::\<open>'a ccsubspace  \<Rightarrow> 'a ccsubspace\<close>
+  is \<open>orthogonal_complement\<close>
+  by simp
+
+instance ..
+end
+
+instantiation ccsubspace :: (complex_inner) minus begin
+lift_definition minus_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace"
+  is "\<lambda>A B. A \<inter> (orthogonal_complement B)"
+  by simp
+instance..
+end
+
+
+text \<open>Orthogonal set\<close>
+definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
+  \<open>is_ortho_set S = ((\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0) \<and> 0 \<notin> S)\<close>
+
+lemma is_ortho_set_empty[simp]: "is_ortho_set {}"
+  unfolding is_ortho_set_def by auto
+
+lemma is_ortho_set_antimono: \<open>A \<subseteq> B \<Longrightarrow> is_ortho_set B \<Longrightarrow> is_ortho_set A\<close>
+  unfolding is_ortho_set_def by auto
+
+(* Use is_ortho_set_antimono instead
+lemma is_onb_delete:
+  assumes "is_ortho_set (insert x B)"
+  shows "is_ortho_set B"
+  using assms
+  unfolding  is_ortho_set_def
+  by blast *)
+
+(* Use is_ortho_set_def instead
+lemma is_ob_nonzero:
+  assumes "is_ortho_set S" and 
+    "cindependent S" and
+    "closure (cspan S) = UNIV" 
+    and \<open>x \<in> S\<close>
+  shows \<open>x \<noteq> 0\<close> *)
 
 
 subsection \<open>Minimum distance\<close>
@@ -821,6 +902,14 @@ lemma projection_is_projection_on:
   shows "is_projection_on (projection M) M"
   by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def someI)
 
+lemma projection_is_projection_on'[simp]:
+  \<comment> \<open>Common special case of @{thm projection_is_projection_on}\<close>
+  fixes M :: \<open>'a::chilbert_space set\<close>
+  assumes \<open>closed_csubspace M\<close>
+  shows "is_projection_on (projection M) M"
+  apply (rule projection_is_projection_on)
+  apply (auto simp add: assms closed_csubspace.closed)
+  using assms closed_csubspace.subspace complex_vector.subspace_0 by blast
 
 
 (* lemma projection_is_projection_on'[simp]:
@@ -875,7 +964,6 @@ lemma projection_intro2:
   shows "projection M h \<in> M"
   by (metis assms(1) assms(2) assms(3) is_projection_on_exists projection_def is_projection_on_in_image someI_ex) *)
 
-(* TODO rename *)
 lemma projection_eqI':
   fixes M :: \<open>'a::complex_inner set\<close>
   assumes \<open>convex M\<close>
@@ -1694,57 +1782,20 @@ proposition double_cadjoint:
 lemma cadjoint_id: \<open>(id::'a::complex_inner\<Rightarrow>'a)\<^sup>\<dagger> = id\<close>
   by (simp add: cadjoint_eqI id_def)
 
-(* TODO rename from here *)
-
-(* Use cadjoint_bounded_clinear instead *)
-lemma scalar_times_adjc_flatten:
-  fixes A::"'a::chilbert_space \<Rightarrow> 'b::chilbert_space"
-  assumes a1: "bounded_linear A" and a2: "\<And>c x. A (c *\<^sub>C x) = c *\<^sub>C A x" (* TODO a1, a2 together same as bounded_clinear *)
+lemma scaleC_cadjoint:
+  fixes A::"'a::chilbert_space \<Rightarrow> 'b::complex_inner"
+  assumes "bounded_clinear A"
   shows \<open>(\<lambda>t. a *\<^sub>C (A t))\<^sup>\<dagger> = (\<lambda>s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
 proof-
-  have b1: \<open>bounded_linear (\<lambda> t. a *\<^sub>C (A t))\<close>
-    using a1
-    by (simp add: bounded_clinear.bounded_linear bounded_clinear_scaleC_right 
-        bounded_linear_compose)
-
-  have \<open>bounded_linear (A\<^sup>\<dagger>)\<close>
-    using a1 a2 cadjoint_bounded_clinear bounded_clinear.bounded_linear bounded_linear_bounded_clinear 
-    by blast
-  hence b2: \<open>bounded_clinear (\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s))\<close>
-    by (simp add: cadjoint_bounded_clinear a1 a2 bounded_clinear_const_scaleC 
-        bounded_linear_bounded_clinear)
-
   have b3: \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
     for x y
-  proof-
-    have \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>(cnj a) *\<^sub>C ((A\<^sup>\<dagger>) x), y \<rangle>\<close>
-      by blast
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a *  \<langle>(A\<^sup>\<dagger>) x, y \<rangle>\<close>
-      by simp
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>y, (A\<^sup>\<dagger>) x\<rangle>\<close>
-      by simp
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj \<langle>((A\<^sup>\<dagger>)\<^sup>\<dagger>) y, x\<rangle>\<close>
-      by (simp add: cadjoint_univ_prop cadjoint_bounded_clinear assms(1) assms(2) bounded_linear_bounded_clinear)
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * cnj (cnj \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>)\<close>
-      by simp
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, ((A\<^sup>\<dagger>)\<^sup>\<dagger>) y\<rangle>\<close>
-      by simp
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = a * \<langle>x, A y\<rangle>\<close>
-      using cadjoint_univ_prop  assms(1) assms(2) bounded_linear_bounded_clinear by fastforce
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, a *\<^sub>C A y\<rangle>\<close>
-      by simp
-    hence \<open>\<langle>(\<lambda> s. (cnj a) *\<^sub>C ((A\<^sup>\<dagger>) s)) x, y \<rangle> = \<langle>x, (\<lambda> t. a *\<^sub>C (A t)) y \<rangle>\<close>
-      by simp
-    thus ?thesis by blast
-  qed
+    by (simp add: assms cadjoint_univ_prop)
 
   have "((\<lambda>t. a *\<^sub>C A t)\<^sup>\<dagger>) b = cnj a *\<^sub>C (A\<^sup>\<dagger>) b"
     for b::'b
   proof-
-    have "\<forall>t c. c *\<^sub>C a *\<^sub>C A t = a *\<^sub>C A (c *\<^sub>C t)"
-      using a2 by force
-    hence "bounded_clinear (\<lambda>t. a *\<^sub>C A t)"
-      by (simp add: b1 bounded_linear_bounded_clinear)
+    have "bounded_clinear (\<lambda>t. a *\<^sub>C A t)"
+      by (simp add: assms bounded_clinear_const_scaleC)
     thus ?thesis
       by (metis (no_types) cadjoint_eqI b3) 
   qed
@@ -1752,125 +1803,56 @@ proof-
     by blast
 qed
 
-lemma projection_D1':
-  fixes M :: \<open>'a::chilbert_space set\<close>
-  assumes a1: \<open>is_projection_on \<pi> M\<close> and a2: \<open>closed_csubspace M\<close>
-  shows \<open>\<pi> = \<pi>\<^sup>\<dagger>\<close>
-proof-
-  have b1: \<open>\<pi> x = (\<pi>\<^sup>\<dagger>) x\<close>
-    for x
-  proof-
-    have d1: "\<langle>x - (\<pi>\<^sup>\<dagger>) x, y\<rangle> = 0"
-      if "y \<in> M"
-      for y :: 'a
-    proof-
-      have \<open>y = \<pi> y\<close>
-        using that(1) assms(1) assms(2) is_projection_on_fixes_image 
-        by fastforce 
-      hence \<open>y - \<pi> y = 0\<close>
-        by simp
-      have \<open>\<langle>x - ((\<pi>)\<^sup>\<dagger>) x, y\<rangle> = \<langle>x, y\<rangle> - \<langle>((\<pi>)\<^sup>\<dagger>) x, y\<rangle>\<close>
-        by (simp add: cinner_diff_left)
-      also have \<open>... = \<langle>x, y\<rangle> - \<langle>x, \<pi> y\<rangle>\<close>
-        using cadjoint_univ_prop assms(1) assms(2) is_projection_on_bounded_clinear 
-        by auto          
-      also have \<open>... = \<langle>x, y - \<pi> y\<rangle>\<close>
-        by (simp add: cinner_diff_right)
-      also have \<open>... = \<langle>x, 0\<rangle>\<close>
-        using  \<open>y - \<pi> y = 0\<close>
-        by simp
-      also have \<open>... = 0\<close>
-        by simp          
-      finally show ?thesis
-        by simp 
-    qed
-    hence c2: "\<pi> x - (\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement M"
-    proof -(* Sledgehammer proof *)
-      have "\<forall>a. a - \<pi> a \<in> orthogonal_complement M \<and> \<pi> a \<in> M"
-        using a1 a2 is_projection_on_iff_orthog by blast
-      then show ?thesis
-        by (smt (z3) projection_on_orthogonal_complement a2 cinner_diff_right d1 eq_id_iff eq_iff_diff_eq_0 is_orthogonal_sym minus_apply orthogonal_complementI orthogonal_complement_closed_subspace orthogonal_complement_orthoI' double_orthogonal_complement_id projection_eqI)
-    qed
-    have "\<langle> (\<pi>\<^sup>\<dagger>) x, y \<rangle> = 0"
-      if "y \<in> orthogonal_complement M"
-      for y
-    proof-
-      have \<open>\<pi> y = 0\<close>
-        by (metis a1 a2 closed_csubspace.subspace complex_vector.subspace_0 diff_zero is_projection_on_eqI that)
-      hence \<open>\<langle> x, \<pi> y \<rangle> = 0\<close>
-        by simp
-      thus ?thesis
-        using cadjoint_univ_prop assms is_projection_on_bounded_clinear
-        by fastforce 
-    qed
 
-    hence "(\<pi>\<^sup>\<dagger>) x \<in> orthogonal_complement (orthogonal_complement M)"
-      unfolding orthogonal_complement_def by simp        
-    hence c1: "(\<pi>\<^sup>\<dagger>) x \<in> M"
-      by (simp add: assms)    
-    show ?thesis
-      by (meson a1 a2 c1 d1 orthogonal_complementI is_projection_on_eqI)
-  qed
-  thus ?thesis by blast
+lemma is_projection_on_is_cadjoint:
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes a1: \<open>is_projection_on \<pi> M\<close> and a2: \<open>closed_csubspace M\<close>
+  shows \<open>is_cadjoint \<pi> \<pi>\<close>
+proof -
+  have \<open>cinner (x - \<pi> x) y = 0\<close> if \<open>y\<in>M\<close> for x y
+    using a1 a2 is_projection_on_iff_orthog orthogonal_complement_orthoI that by blast
+  then have \<open>cinner x y = cinner (\<pi> x) y\<close> if \<open>y\<in>M\<close> for x y
+    by (metis cinner_diff_left eq_iff_diff_eq_0 that)
+  moreover have \<open>cinner x y = cinner x (\<pi> y)\<close> if \<open>y\<in>M\<close> for x y
+    using a1 is_projection_on_fixes_image that by fastforce
+  ultimately have 1: \<open>cinner (\<pi> x) y = cinner x (\<pi> y)\<close> if \<open>y\<in>M\<close> for x y
+    using that by metis
+    
+  have \<open>cinner (\<pi> x) y = 0\<close> if \<open>y \<in> orthogonal_complement M\<close> for x y
+    by (meson a1 is_projection_on_in_image orthogonal_complement_orthoI' that)
+  also have \<open>0 = cinner x (\<pi> y)\<close> if \<open>y \<in> orthogonal_complement M\<close> for x y
+    by (metis a1 a2 cinner_zero_right closed_csubspace.subspace complex_vector.subspace_0 diff_zero is_projection_on_eqI that)
+  finally have 2: \<open>cinner (\<pi> x) y = cinner x (\<pi> y)\<close> if \<open>y \<in> orthogonal_complement M\<close> for x y
+    using that by simp
+
+  from 1 2
+  have \<open>cinner (\<pi> x) y = cinner x (\<pi> y)\<close> for x y
+    by (smt (verit, ccfv_threshold) a1 a2 cinner_commute cinner_diff_left eq_iff_diff_eq_0 is_projection_on_iff_orthog orthogonal_complement_orthoI)
+  then show ?thesis
+    by (simp add: is_cadjoint_def)
 qed
 
+lemma is_projection_on_cadjoint:
+  fixes M :: \<open>'a::complex_inner set\<close>
+  assumes \<open>is_projection_on \<pi> M\<close> and \<open>closed_csubspace M\<close>
+  shows \<open>\<pi>\<^sup>\<dagger> = \<pi>\<close>
+  using assms is_projection_on_is_cadjoint cadjoint_eqI is_cadjoint_def by blast
 
-lemma projection_D1:
+lemma projection_cadjoint:
   fixes M :: \<open>'a::chilbert_space set\<close>
   assumes \<open>closed_csubspace M\<close>
-  shows \<open>projection M = (projection M)\<^sup>\<dagger>\<close>
-  using projection_D1' assms
+  shows \<open>(projection M)\<^sup>\<dagger> = projection M\<close>
+  using is_projection_on_cadjoint assms
   by (metis closed_csubspace.closed closed_csubspace.subspace csubspace_is_convex empty_iff orthog_proj_exists projection_is_projection_on) 
 
 
-lemma closed_closure_is_csubspaceosure:
+(* Use complex_vector.linear_subspace_image + closure_is_closed_csubspace instead *)
+(* lemma closed_closure_is_csubspaceosure:
   fixes f::\<open>'a::complex_inner \<Rightarrow> 'b::complex_inner\<close>
     and S::\<open>'a set\<close>
   assumes a1: "clinear f" and a2: "csubspace S"
-  shows  \<open>closed_csubspace (closure {f x |x. x \<in> S})\<close>
-proof -
-  have b1: "csubspace {f x |x. x \<in> S}"
-    using assms Setcompr_eq_image
-    by (simp add: Setcompr_eq_image complex_vector.linear_subspace_image)
-  have b2: "csubspace (closure {f x |x. x \<in> S})"
-    if "csubspace {f x |x. x \<in> S}"
-    using that
-    by (simp)
-  show \<open>closed_csubspace (closure {f x |x. x \<in> S})\<close>
-    using b2 b1 closure_is_closed_csubspace by auto
-qed
+  shows  \<open>closed_csubspace (closure {f x |x. x \<in> S})\<close> *)
 
-instantiation ccsubspace :: (complex_inner) "uminus"
-begin
-lift_definition uminus_ccsubspace::\<open>'a ccsubspace  \<Rightarrow> 'a ccsubspace\<close>
-  is \<open>orthogonal_complement\<close>
-  by simp
-
-instance ..
-end
-
-
-
-
-instantiation ccsubspace :: (complex_inner) minus begin
-lift_definition minus_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace"
-  is "\<lambda>A B. A \<inter> (orthogonal_complement B)"
-  by simp
-instance..
-end
-
-
-lemma span_superset:
-  \<open>A \<subseteq> space_as_set (ccspan A)\<close> 
-  for A :: \<open>'a::complex_normed_vector set\<close>
-  apply transfer
-  by (meson closure_subset complex_vector.span_superset subset_trans)
-
-lemma bot_plus[simp]: "sup bot x = x" 
-  for x :: "'a::complex_normed_vector ccsubspace"
-  apply transfer
-  apply (rule closed_sum_zero_left)
-  using closed_csubspace_def by blast
 
 
 instance ccsubspace :: (chilbert_space) complete_orthomodular_lattice 
@@ -1973,42 +1955,22 @@ proof
     by simp
 qed
 
-
+(* Use bounded_sesquilinear.comp2 bounded_sesquilinear_cinner instead
 lemma bounded_sesquilinear_bounded_clinnear_cinner_right:
   assumes a1: "bounded_clinear A"
   shows   \<open>bounded_sesquilinear (\<lambda> x y. \<langle> x, A y \<rangle>)\<close>
   using a1
   by (simp add: bounded_sesquilinear.comp2 bounded_sesquilinear_cinner)
 
+Use bounded_sesquilinear.comp1 bounded_sesquilinear_cinner instead
 lemma bounded_sesquilinear_bounded_clinnear_cinner_left:
   assumes a1: "bounded_clinear A"
   shows \<open>bounded_sesquilinear (\<lambda> x y. \<langle> A x, y \<rangle>)\<close>
   using a1
   by (simp add: bounded_sesquilinear.comp1 bounded_sesquilinear_cinner)
-
+ *)
 
 subsection \<open>Unsorted\<close>
-
-text \<open>Orthogonal set\<close>
-definition is_ortho_set :: "'a::complex_inner set \<Rightarrow> bool" where
-  \<open>is_ortho_set S = ((\<forall>x\<in>S. \<forall>y\<in>S. x \<noteq> y \<longrightarrow> \<langle>x, y\<rangle> = 0) \<and> (\<forall>x\<in>S. x \<noteq> 0))\<close>
-
-lemma is_onb_delete:
-  assumes "is_ortho_set (insert x B)"
-  shows "is_ortho_set B"
-  using assms
-  unfolding  is_ortho_set_def
-  by blast
-
-lemma is_ob_nonzero:
-  assumes "is_ortho_set S" and 
-    "complex_vector.independent S" and
-    "closure (complex_vector.span S) = UNIV" 
-    and \<open>x \<in> S\<close>
-  shows \<open>x \<noteq> 0\<close>
-  using assms
-  by (simp add: is_ortho_set_def) 
-
 
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
@@ -2019,210 +1981,39 @@ class onb_enum = basis_enum + complex_inner +
 
 setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
-
+(* 
 lemma canonical_basis_non_zero:
   assumes \<open>x \<in> set (canonical_basis::('a::onb_enum list))\<close>
   shows \<open>x \<noteq> 0\<close>
-  using \<open>x \<in> set canonical_basis\<close> 
-    complex_vector.dependent_zero[where A = "set (canonical_basis::('a::onb_enum list))"]
-    is_cindependent_set
-  by smt
+*)
 
-
-
+(*
 lemma isCont_scalar_right:
   fixes k :: \<open>'a::complex_normed_vector\<close>
   shows \<open>isCont (\<lambda> t. t *\<^sub>C k) a\<close>
-proof(cases \<open>k = 0\<close>)
-  case True
-  thus ?thesis
-    by simp 
-next
-  case False
-  define f where \<open>f t = t *\<^sub>C k\<close> for t
-  have \<open>(f \<circ> c) \<longlonglongrightarrow> f a\<close>
-    if a1: "c \<longlonglongrightarrow> a"
-    for c
-  proof-
-    have  \<open>(\<lambda>n. norm (c n - a)) \<longlonglongrightarrow> 0\<close>
-      using a1
-      by (simp add: LIM_zero_iff tendsto_norm_zero) 
-    hence \<open>(\<lambda>n. norm (c n - a) * norm k ) \<longlonglongrightarrow> 0\<close>
-      using tendsto_mult_left_zero by auto      
-    moreover have \<open>norm ((c n - a) *\<^sub>C k) = norm (c n - a) * norm k\<close>
-      for n
-      by simp      
-    ultimately have  \<open>(\<lambda> n. norm ((c n - a) *\<^sub>C k)) \<longlonglongrightarrow> 0\<close>
-      by simp
-    moreover have \<open>(c n - a) *\<^sub>C k = (c n) *\<^sub>C k - a *\<^sub>C k\<close>
-      for n
-      by (simp add: scaleC_left.diff)
-    ultimately have  \<open>(\<lambda> n. norm ((c n) *\<^sub>C k - a *\<^sub>C k)) \<longlonglongrightarrow> 0\<close>
-      by simp
-    hence  \<open>(\<lambda> n. dist ((c n) *\<^sub>C k) (a *\<^sub>C k)) \<longlonglongrightarrow> 0\<close>
-      by (metis (no_types) LIM_zero_cancel \<open>(\<lambda>n. norm (c n *\<^sub>C k - a *\<^sub>C k)) \<longlonglongrightarrow> 0\<close> tendsto_dist_iff tendsto_norm_zero_iff)
-    hence  \<open>(\<lambda> n. dist (((\<lambda>t. t *\<^sub>C k) \<circ> c) n) (a *\<^sub>C k)) \<longlonglongrightarrow> 0\<close>
-      by simp
-    hence  \<open>((\<lambda>t. t *\<^sub>C k) \<circ> c) \<longlonglongrightarrow> a *\<^sub>C k\<close>
-      using tendsto_dist_iff by blast      
-    thus \<open>(f \<circ> c) \<longlonglongrightarrow> f a\<close> 
-      unfolding f_def by blast
-  qed
-  hence \<open>isCont f a\<close>
-    by (simp add: continuous_at_sequentially)
-  thus ?thesis 
-    unfolding f_def by blast
-qed
+  by simp
 
 lemma cinner_continuous_right:
   assumes a1: \<open>t \<longlonglongrightarrow> y\<close>
   shows \<open>(\<lambda> n. \<langle> x, t n \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
-proof-
-  have \<open>\<exists> K. \<forall> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
-    using bounded_sesquilinear.bounded bounded_sesquilinear_cinner by auto
-  then obtain K where \<open>\<And> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
-    by blast
-  have \<open>(\<lambda> n. norm x * norm (t n - y)) \<longlonglongrightarrow> 0\<close>
-  proof-
-    have \<open>(\<lambda> n. t n - y) \<longlonglongrightarrow> 0\<close>
-      using \<open>t \<longlonglongrightarrow> y\<close> LIM_zero by auto
-    thus ?thesis
-      by (simp add: tendsto_mult_right_zero tendsto_norm_zero) 
-  qed
-  moreover have \<open>norm \<langle> x, t n - y \<rangle> \<le> norm (norm x * norm (t n - y)) * K\<close>
-    for n
-    using \<open>\<And> a b::'a. norm \<langle>a, b\<rangle> \<le> norm a * norm b * K\<close>
-    by auto
-  ultimately have b1: \<open>(\<lambda> n. \<langle> x, t n - y \<rangle>) \<longlonglongrightarrow> 0\<close>
-    using Limits.tendsto_0_le
-    by (metis (no_types, lifting) eventually_sequentiallyI)
-
-  have b2: \<open>\<langle> x, t n - y \<rangle> =  \<langle> x, t n \<rangle> - \<langle> x, y \<rangle>\<close>
-    for n
-    by (simp add: cinner_diff_right)    
-  hence \<open>(\<lambda> n. \<langle> x, t n \<rangle> - \<langle> x, y \<rangle>) \<longlonglongrightarrow> 0\<close>
-    using b1
-    by simp
-  thus ?thesis
-    by (simp add: LIM_zero_iff) 
-qed
+  by (simp add: a1 isCont_tendsto_compose)
 
 lemma cinner_continuous_left:
   assumes a1: \<open>t \<longlonglongrightarrow> x\<close>
   shows \<open>(\<lambda> n. \<langle> t n, y \<rangle>) \<longlonglongrightarrow> \<langle> x, y \<rangle>\<close>
-proof-
-  have \<open>(\<lambda> n. \<langle> y, t n \<rangle>) \<longlonglongrightarrow> \<langle> y, x \<rangle>\<close>
-    by (simp add: a1 cinner_continuous_right)
-  hence \<open>(\<lambda> n. cnj \<langle> y, t n \<rangle>) \<longlonglongrightarrow> cnj \<langle> y, x \<rangle>\<close>
-    using lim_cnj by fastforce
-  moreover have \<open>cnj \<langle> y, t n \<rangle> = \<langle> t n, y \<rangle>\<close>
-    for n
-    by simp    
-  moreover have \<open>cnj \<langle> y, x \<rangle> = \<langle> x, y \<rangle>\<close>
-    by simp    
-  ultimately show ?thesis 
-    by simp
-qed
+  using _ a1 apply (rule isCont_tendsto_compose) by auto
+*)
+
+(* Use finite_cspan_closed instead *)
+(* lemma closed_line:
+  \<open>closed {c *\<^sub>C (k::'a::complex_inner)| c. True}\<close> *)
 
 
-lemma closed_line:
-  \<open>closed {c *\<^sub>C (k::'a::complex_inner)| c. True}\<close>
-proof(cases \<open>k = 0\<close>)
-  case True
-  hence \<open>{c *\<^sub>C k| c. True} = {0}\<close>
-    by auto
-  thus ?thesis
-    by simp
-next
-  case False
-  hence \<open>norm k > 0\<close>
-    by simp
-  have "l \<in> {c *\<^sub>C k| c. True}"
-    if b1: "\<And>n. x n \<in> {c *\<^sub>C k| c. True}"
-      and b2: "x \<longlonglongrightarrow> l"
-    for x l
-  proof-
-    have "\<exists> c. x n = c *\<^sub>C k"
-      for n
-      using b1 by auto      
-    hence \<open>\<exists> c. \<forall> n. x n = (c n) *\<^sub>C k\<close>
-      by metis
-    then obtain c where c_def: \<open>\<And> n. x n = (c n) *\<^sub>C k\<close>
-      by blast
-    have \<open>convergent x\<close>
-      using convergentI b2 by auto 
-    hence \<open>Cauchy x\<close>
-      using LIMSEQ_imp_Cauchy convergent_def by blast
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. dist (x m) (x n) < e\<close>
-      unfolding Cauchy_def
-      by blast
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (x m - x n) < e\<close>
-      using dist_norm
-      by (simp add: dist_norm)
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m *\<^sub>C k - c n *\<^sub>C k) < e\<close>
-      by (simp add: \<open>\<And>n. x n = c n *\<^sub>C k\<close>)
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m - c n) * norm k < e\<close>
-      by (metis complex_vector.scale_left_diff_distrib norm_scaleC)
-    hence f1: \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m - c n) < e/norm k\<close>
-      by (simp add: False linordered_field_class.pos_less_divide_eq)
-    have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m - c n) < (e*(norm k))/(norm k)\<close>
-      if z1: "e>0"
-      for e
-    proof-
-      have  \<open>e * norm k > 0\<close>
-        using z1 \<open>norm k > 0\<close>
-        by simp
-      thus ?thesis
-        using f1 by fastforce
-    qed
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m - c n) < (e*(norm k))/(norm k)\<close>
-      by blast
-    hence \<open>\<forall>e>0. \<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (c m - c n) < e\<close>
-      using \<open>norm k > 0\<close>
-      by simp
-    hence \<open>Cauchy c\<close>
-      by (simp add: CauchyI)
-    hence \<open>convergent c\<close>
-      by (simp add: Cauchy_convergent_iff)
-    hence \<open>\<exists> a. c \<longlonglongrightarrow> a\<close>
-      by (simp add: convergentD)
-    then obtain a where \<open>c \<longlonglongrightarrow> a\<close>
-      by blast
-    define f where \<open>f t = t *\<^sub>C k\<close> for t
-    have \<open>isCont f a\<close>
-      using isCont_scalar_right 
-      unfolding f_def by blast
-    hence \<open>(\<lambda> n. f (c n)) \<longlonglongrightarrow>  f a\<close>
-      using  \<open>c \<longlonglongrightarrow> a\<close> 
-        Topological_Spaces.isContD[where f = "f" and x = "a"]
-        isCont_tendsto_compose by blast 
-    hence \<open>(\<lambda> n. (c n) *\<^sub>C k) \<longlonglongrightarrow> a *\<^sub>C k\<close>
-      unfolding f_def
-      by simp
-    hence \<open>(\<lambda> n. x n) \<longlonglongrightarrow> a *\<^sub>C k\<close>
-      using \<open>\<And> n. x n = (c n) *\<^sub>C k\<close>
-      by simp
-    hence \<open>x \<longlonglongrightarrow> a *\<^sub>C k\<close>
-      by simp
-    hence \<open>l = a *\<^sub>C k\<close>
-      using LIMSEQ_unique \<open>x \<longlonglongrightarrow> l\<close> by blast
-    moreover have \<open>a *\<^sub>C k \<in> {c *\<^sub>C k |c. True}\<close>
-      by auto
-    ultimately show ?thesis by blast
-  qed
-  thus ?thesis
-    using closed_sequential_limits by blast 
-qed
-
-
-
-lemma Gram_Schmidt:
+lemma orthogonal_basis_of_cspan:
   fixes S::"'a::complex_inner set"
   assumes a1: "finite S"
-  shows "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> cspan A = cspan S
-           \<and> 0 \<notin> A \<and> finite A"
-proof-
+  shows "\<exists>A. is_ortho_set A \<and> cspan A = cspan S \<and> finite A"
+proof -
   have  \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n
        \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
            \<and> complex_vector.span A = complex_vector.span S
@@ -2408,22 +2199,21 @@ proof-
     by blast
   moreover have \<open>complex_vector.span (S - {0}) = complex_vector.span S\<close>
     by simp
-  ultimately show ?thesis by simp
+  ultimately show ?thesis
+    using is_ortho_set_def by auto
 qed
 
-lemma ortho_imples_independent:
-  assumes a1: "\<And>x y. x \<in> A \<Longrightarrow> y \<in> A \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
-    and a2: "0 \<notin> A" 
-  shows "complex_vector.independent A"
-proof-
+
+lemma is_ortho_set_cindependent:
+  assumes "is_ortho_set A" 
+  shows "cindependent A"
+proof -
   have "u v = 0"
     if b1: "finite t" and b2: "t \<subseteq> A" and b3: "(\<Sum>v\<in>t. u v *\<^sub>C v) = 0" and b4: "v \<in> t"
     for t u v
-  proof-
-    have "\<langle>v, v'\<rangle> = 0" 
-      if c1: "v'\<in>t-{v}"
-      for v'
-      by (metis DiffD1 DiffD2 a1 b2 b4 singleton_iff subsetD that)    
+  proof -
+    have "\<langle>v, v'\<rangle> = 0" if c1: "v'\<in>t-{v}" for v'
+      by (metis DiffE assms b2 b4 insertI1 is_ortho_set_antimono is_ortho_set_def that)
     hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
       by simp
     have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
@@ -2437,70 +2227,17 @@ proof-
       by blast
     hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
     moreover have "\<langle>v, v\<rangle> \<noteq> 0"
-      using a2 b2 b4 by auto    
+      using assms is_ortho_set_def b2 b4 by auto    
     ultimately show "u v = 0" by simp
   qed
   thus ?thesis using complex_vector.independent_explicit_module
     by (smt cdependent_raw_def)
 qed
 
-lemma is_ortho_set_independent:
+(* Use is_ortho_set_cindependent instead *)
+(* lemma is_ortho_set_independent:
   assumes c1: "is_ortho_set S"
-  shows "cindependent S"
-proof(rule ccontr)
-  assume constr: "\<not> cindependent S"
-  have \<open>\<exists>t u. finite t \<and> t \<subseteq> S \<and> (\<Sum>i\<in>t. u i *\<^sub>C i) = 0 \<and> (\<exists>i\<in>t. u i \<noteq> 0)\<close>
-    using complex_vector.dependent_explicit constr by blast 
-  then obtain t u where u1: \<open>finite t\<close> and u2: \<open>t \<subseteq> S\<close> and u3: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close> 
-    and u4: \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
-    by blast
-  from \<open>\<exists>k\<in>t. u k \<noteq> 0\<close>
-  obtain k where \<open>u k \<noteq> 0\<close> and \<open>k\<in>t\<close>
-    by blast
-  have \<open>bounded_sesquilinear cinner\<close>
-    by (simp add: bounded_sesquilinear_cinner)
-  hence \<open>\<langle>(\<Sum>i\<in>t. u i *\<^sub>C i), k\<rangle> = (\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    using \<open>finite t\<close> bounded_sesquilinear.scaleC_left
-    by (smt (verit, ccfv_SIG) cinner_sum_left sum.cong)
-  hence v1: \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
-    by (simp add: \<open>(\<Sum>i\<in>t. u i *\<^sub>C i) = 0\<close>)
-  have \<open>t = {k} \<union> (t-{k})\<close>
-    using  \<open>k \<in> t\<close>
-    by auto
-  moreover have \<open>{k} \<inter> (t-{k}) = {}\<close>
-    by simp
-  ultimately have \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)
-         = (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    by (metis (no_types, lifting) Un_upper1 \<open>finite t\<close> add.commute sum.subset_diff)
-  moreover have \<open> (\<Sum>i\<in>{k}. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle>\<close>
-    by simp
-  ultimately have v2: \<open>(\<Sum>i\<in>t. cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = cnj (u k) *\<^sub>C \<langle>k,k\<rangle> + (\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>)\<close>
-    by simp
-  have \<open>cnj (u i) *\<^sub>C \<langle>i,k\<rangle> = 0\<close>
-    if "i \<in> t-{k}"
-    for i
-    by (metis DiffD1 DiffD2 \<open>k \<in> t\<close> c1 complex_vector.scale_eq_0_iff in_mono is_ortho_set_def 
-        singletonI that u2)  
-  hence v3: \<open>(\<Sum>i\<in>(t-{k}). cnj (u i) *\<^sub>C \<langle>i,k\<rangle>) = 0\<close>
-    by (meson sum.not_neutral_contains_not_neutral)  
-  have y1: \<open>cnj (u k) *\<^sub>C \<langle>k,k\<rangle> = 0\<close>
-    using v1 v2 v3 by auto  
-  have \<open>0 \<notin> t\<close>
-    using \<open>t \<subseteq> S\<close>
-    by (meson c1 in_mono is_ortho_set_def) 
-  hence \<open>k \<noteq> 0\<close>
-    using \<open>k \<in> t\<close>
-    by blast
-  hence y2: \<open>\<langle>k,k\<rangle> \<noteq> 0\<close>
-    by simp 
-  have \<open>cnj (u k) = 0\<close>
-    using y1 y2 by auto    
-  hence \<open>u k = 0\<close>
-    by auto
-  thus False using \<open>u k \<noteq> 0\<close> by blast
-qed
-
-
+  shows "cindependent S" *)
 
 subsection \<open>Commutative monoid of subspaces\<close>
 
@@ -2509,63 +2246,18 @@ definition plus_ccsubspace :: "'a ccsubspace \<Rightarrow> _ \<Rightarrow> _"
   where [simp]: "plus_ccsubspace = sup"
 instance 
 proof
+  fix a b c :: \<open>'a ccsubspace\<close>
   show "a + b + c = a + (b + c)"
-    for a :: "'a ccsubspace"
-      and b :: "'a ccsubspace"
-      and c :: "'a ccsubspace"
     using sup.assoc by auto    
   show "a + b = b + a"
-    for a :: "'a ccsubspace"
-      and b :: "'a ccsubspace"
     by (simp add: sup.commute)    
   show "(0::'a ccsubspace) + a = a"
-    for a :: "'a ccsubspace"
     by simp    
 qed
-
 end
 
-lemma Pythagorean_generalized:
-  assumes q1: "\<And>a a'. a \<in> t \<Longrightarrow> a' \<in> t \<Longrightarrow> a \<noteq> a' \<Longrightarrow> \<langle>f a, f a'\<rangle> = 0"
-    and q2: "finite t"
-  shows "(norm  (\<Sum>a\<in>t. f a))^2 = (\<Sum>a\<in>t.(norm (f a))^2)"
-  using q2
-proof (insert q1, induction)
-  case empty
-  show ?case
-    by auto 
-next
-  case (insert x F)
-  have r1: "\<langle>f x, f a\<rangle> = 0"
-    if "a \<in> F"
-    for a
-    using that insert.hyps(2) insert.prems by auto 
-  have "sum f F = (\<Sum>a\<in>F. f a)"
-    by simp
-  hence s4: "\<langle>f x, sum f F\<rangle> = \<langle>f x, (\<Sum>a\<in>F. f a)\<rangle>"
-    by simp
-  also have s3: "\<dots> = (\<Sum>a\<in>F. \<langle>f x, f a\<rangle>)"
-    using cinner_sum_right by auto
-  also have s2: "\<dots> = (\<Sum>a\<in>F. 0)"
-    using r1
-    by simp
-  also have s1: "\<dots> = 0"
-    by simp
-  finally have xF_ortho: "\<langle>f x, sum f F\<rangle> = 0"
-    using s2 s3 by auto       
-  have "(norm (sum f (insert x F)))\<^sup>2 = (norm (f x + sum f F))\<^sup>2"
-    by (simp add: insert.hyps(1) insert.hyps(2))
-  also have "\<dots> = (norm (f x))\<^sup>2 + (norm (sum f F))\<^sup>2"
-    using xF_ortho by (rule pythagorean_theorem)
-  also have "\<dots> = (norm (f x))\<^sup>2 + (\<Sum>a\<in>F.(norm (f a))^2)"
-    apply (subst insert.IH) using insert.prems by auto
-  also have "\<dots> = (\<Sum>a\<in>insert x F.(norm (f a))^2)"
-    by (simp add: insert.hyps(1) insert.hyps(2))
-  finally show ?case
-    by simp
-qed
 
-
+(* Use projection_zero instead
 lemma projection_zero_subspace:
   \<open>projection {0::'a::chilbert_space} = (\<lambda> _. 0)\<close>
 proof-
@@ -2579,53 +2271,23 @@ proof-
     by blast
   thus ?thesis by auto
 qed
-
-lemma has_derivative_norm[derivative_intros]:
-  fixes x :: "'a::complex_inner"
-  assumes "x \<noteq> 0" 
-  shows "(norm has_derivative (\<lambda>y. Re \<langle>x, y\<rangle> / norm x)) (at x)"
-proof -
-  have Re_pos: "0 < Re \<langle>x, x\<rangle>"
-    using assms 
-    by (metis Re_strict_mono cinner_gt_zero_iff zero_complex.simps(1))
-  have Re_plus_Re: "Re \<langle>x, y\<rangle> + Re \<langle>y, x\<rangle> = 2 * Re \<langle>x, y\<rangle>" 
-    for x y :: 'a
-    by (metis cinner_commute cnj.simps(1) mult_2_right semiring_normalization_rules(7))
-  have norm: "norm x = sqrt (Re \<langle>x, x\<rangle>)" for x :: 'a
-    apply (subst norm_eq_sqrt_cinner, subst cmod_Re)
-    using cinner_ge_zero by auto
-  have v2:"((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative
-          (\<lambda>xa. (Re \<langle>x, xa\<rangle> + Re \<langle>xa, x\<rangle>) * (inverse (sqrt (Re \<langle>x, x\<rangle>)) / 2))) (at x)" 
-    by (rule derivative_eq_intros | simp add: Re_pos)+
-  have v1: "((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative (\<lambda>y. Re \<langle>x, y\<rangle> / sqrt (Re \<langle>x, x\<rangle>))) (at x)"
-    if "((\<lambda>x. sqrt (Re \<langle>x, x\<rangle>)) has_derivative (\<lambda>xa. Re \<langle>x, xa\<rangle> * inverse (sqrt (Re \<langle>x, x\<rangle>)))) (at x)"
-    using that apply (subst divide_real_def)
-    by simp
-  show ?thesis
-    using v2
-    apply (auto simp: Re_plus_Re norm [abs_def])
-    using v1 by blast    
-qed
+*)
 
 
-lemma cinner_ext_0: 
+
+(* Use cinner_eq_zero_iff instead
+lemma cinner_ext_0:
   assumes "\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = 0"
-  shows "\<psi> = 0"
-  using assms cinner_eq_zero_iff by blast
+  shows "\<psi> = 0" *)
 
 text \<open>This is a useful rule for establishing the equality of vectors\<close>
-lemma cinner_ext:
+lemma cinner_extensionality:
   assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
   shows \<open>\<psi> = \<phi>\<close>
-proof-
-  have \<open>\<langle>\<gamma>, \<psi> - \<phi>\<rangle> = 0\<close>
-    for \<gamma>
-    using \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
-    by (simp add: cinner_diff_right)    
-  hence \<open>\<psi> - \<phi> = 0\<close>
-    using cinner_ext_0[where \<psi> = "\<psi> - \<phi>"] by blast
-  thus ?thesis by simp
-qed
+  by (metis assms cinner_commute' riesz_frechet_representation_unique)
+
+
+(* TODO rename from here *)
 
 lemma clinear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
@@ -2640,7 +2302,7 @@ lemma clinear_space_bot_not_top[simp]:
   "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
   using clinear_space_top_not_bot by metis
 
-subsection \<open>Boundeness\<close>
+subsection \<open>Boundedness\<close>
 
 
 lemma lim_ge:
@@ -2696,19 +2358,7 @@ lemma Lim_bounded_lim:
   fixes x :: \<open>nat \<Rightarrow> 'a::linorder_topology\<close>
   assumes a1: \<open>convergent x\<close> and a2: \<open>\<And>n. n\<ge>M \<Longrightarrow> x n \<le> C\<close>
   shows \<open>lim x \<le> C\<close>
-proof-
-  have \<open>\<exists>l. x \<longlonglongrightarrow> l\<close>
-    using \<open>convergent x\<close>
-    unfolding convergent_def
-    by blast
-  then obtain l where l_def: \<open>x \<longlonglongrightarrow> l\<close>
-    by blast
-  hence \<open>l \<le> C\<close> using a2
-    using Topological_Spaces.Lim_bounded
-    by blast
-  thus ?thesis unfolding lim_def using l_def
-    by (metis limI t2_space_class.Lim_def) 
-qed
+  by (meson LIMSEQ_le_const2 a1 a2 convergent_LIMSEQ_iff)
 
 lemma Cauchy_cinner_Cauchy:
   fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
@@ -2733,8 +2383,7 @@ proof-
   have M3: \<open>M > 0\<close>
     by (smt M2 norm_not_less_zero)     
   have \<open>\<exists>N. \<forall>n \<ge> N. \<forall>m \<ge> N. norm ( (\<lambda> i. \<langle> x i, y i \<rangle>) n -  (\<lambda> i. \<langle> x i, y i \<rangle>) m ) < e\<close>
-    if "e > 0"
-    for e
+    if "e > 0" for e
   proof-
     have \<open>e / (2*M) > 0\<close>
       using M3
@@ -2759,7 +2408,7 @@ proof-
     have \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
       if \<open>n \<ge> N\<close> and \<open>m \<ge> N\<close>
       for n m
-    proof-
+    proof -
       have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> = (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) + (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
         by simp
       hence y1: \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle>) \<le> norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>)
@@ -2879,71 +2528,12 @@ lemma lim_sqrt:
   fixes x::\<open>nat \<Rightarrow> real\<close>
   assumes \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. sqrt (x n)) = sqrt (lim x)\<close>
-proof-
-  from \<open>convergent x\<close>
-  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
-    by (simp add: convergent_def)
-  then obtain l where \<open>x \<longlonglongrightarrow> l\<close>
-    by blast
-  hence lim:\<open>lim x = l\<close>
-    by (simp add: limI)
-  from \<open>x \<longlonglongrightarrow> l\<close>
-  have \<open>(\<lambda> n.  sqrt (x n)) \<longlonglongrightarrow> sqrt l\<close>
-    by (simp add: tendsto_real_sqrt)
-  thus ?thesis using lim
-    by (simp add: limI) 
-qed
+  by (metis assms convergentD sequentially_bot tendsto_Lim tendsto_real_sqrt)
 
 lemma bounded_clinear_Cauchy:
   assumes a1: \<open>Cauchy x\<close> and a2: \<open>bounded_clinear f\<close>
   shows \<open>Cauchy (\<lambda> n. f (x n))\<close>
-proof-
-  have \<open>\<exists>M. \<forall>m\<ge>M. \<forall>n\<ge>M. norm (f (x m) - f (x n)) < e\<close>
-    if h1: \<open>e > 0\<close>
-    for e
-  proof-
-    have b1: \<open>\<exists>M. \<forall> t. norm (f t) \<le> norm t * M \<and> M > 0\<close>
-      using a2 bounded_clinear.bounded_linear bounded_linear.pos_bounded
-      by blast
-    then obtain M where M_def: \<open>\<And> t. norm (f t) \<le> norm t * M\<close> and \<open>M > 0\<close>
-      by blast
-    have b2: \<open>norm (f (x m - x n)) \<le> norm (x m - x n) * M\<close>
-      for m n
-      using M_def by blast
-    moreover have \<open>f (x m - x n) = f (x m) - f (x n)\<close>
-      for m n
-      using \<open>bounded_clinear f\<close> unfolding bounded_clinear_def
-      by (simp add: complex_vector.linear_diff) 
-    ultimately have f1: \<open>norm (f (x m) - f (x n)) \<le> norm (x m - x n) * M\<close>
-      for m n
-      by simp
-    have \<open>e/M > 0\<close>
-      by (simp add: \<open>0 < M\<close> \<open>0 < e\<close>)
-    hence \<open>\<exists>K. \<forall>m\<ge>K. \<forall>n\<ge>K. norm (x m - x n) < e/M\<close>
-      using Cauchy_iff assms(1) by blast
-    then obtain K where \<open>\<And> m n. m\<ge>K \<Longrightarrow> n\<ge>K \<Longrightarrow> norm (x m - x n) < e/M\<close>
-      by blast
-    hence \<open>norm (f (x m) - f (x n)) < e\<close>
-      if \<open>m \<ge> K\<close> and \<open>n \<ge> K\<close>
-      for m n
-    proof-
-      have \<open>norm (f (x m) - f (x n)) \<le> norm (x m -x n) * M\<close>
-        by (simp add: f1)
-      also have \<open>\<dots> < e/M * M\<close>
-        using \<open>0 < M\<close> \<open>K \<le> m\<close> \<open>K \<le> n\<close> \<open>\<And>n m. \<lbrakk>K \<le> m; K \<le> n\<rbrakk> \<Longrightarrow> norm (x m - x n) < e / M\<close> linordered_semiring_strict_class.mult_strict_right_mono by blast
-      also have \<open>\<dots> = e\<close>
-        using \<open>0 < M\<close> by auto        
-      finally show ?thesis by blast
-    qed
-    thus ?thesis
-      by blast 
-  qed
-  thus ?thesis 
-    unfolding Cauchy_def
-    using dist_norm
-    by smt
-qed
-
+  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear a1 a2 bounded_linear.Cauchy)
 
 
 lemma span_finite_dim:
@@ -2967,45 +2557,12 @@ lemma closed_subspace_cspan_finite:
   assumes "finite (S::'a::chilbert_space set)"
   shows "closed_csubspace (cspan S)"
   unfolding closed_csubspace_def apply auto
-  by (simp add: assms finite_cspan_closed)
+  by (simp add: assms)
 
+(* Use projection_rank1 instead
 lemma projection_singleton:
   assumes "(a::'a::chilbert_space) \<noteq> 0"
-  shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-proof-
-  define p where "p u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" for u
-  define M where "M = cspan {a}"
-  have y1: "closed_csubspace M"
-    unfolding M_def 
-    using closed_subspace_cspan_finite
-    by (simp add: closed_subspace_cspan_finite)
-  have "u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a \<in> {x |x. \<forall>y\<in>cspan {a}. \<langle>x, y\<rangle> = 0}"
-  proof auto
-    fix y
-    assume "y \<in> cspan {a}" 
-    hence "\<exists>c. y = c *\<^sub>C a"
-      by (simp add: cspan_singleton)
-    then obtain c where c_def: "y = c *\<^sub>C a"
-      by blast
-    have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 
-          \<langle>u, c *\<^sub>C a\<rangle> - \<langle>(\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle>"
-      using cinner_diff_left by blast    
-    also have "\<dots> = 0"
-      by simp
-    finally have "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, c *\<^sub>C a\<rangle> = 0".
-    thus "\<langle>u - (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a, y\<rangle> = 0"
-      using c_def by simp
-  qed
-  hence y2: "u - p u \<in> orthogonal_complement M"
-    unfolding p_def M_def orthogonal_complement_def
-    by blast
-  have y3: "p u \<in> M"
-    unfolding p_def M_def
-    by (simp add: complex_vector.span_base complex_vector.span_scale)
-  have "projection M u = p u"
-    using y1 y2 y3 projection_eqI[where x = "p u" and h = u and M = M] by blast
-  thus ?thesis unfolding M_def p_def.
-qed
+  shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" *)
 
 lemma ortho_cspan:
   assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
@@ -3029,24 +2586,73 @@ proof-
   finally show ?thesis.
 qed
 
-(* TODO: replace by lemma projection_union:
-  assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> orthogonal x y"
-  shows projection (A \<union> B) = projection A + projection B
-  
-  do not assume that A and B are finite-dimensional
- *)
+
+(* TODO: similar lemma using "projection" as corollary *)
+lemma is_projection_on_plus:
+  assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> is_orthogonal x y"
+  assumes \<open>closed_csubspace A\<close>
+  assumes \<open>closed_csubspace B\<close>
+  assumes \<open>is_projection_on \<pi>A A\<close>
+  assumes \<open>is_projection_on \<pi>B B\<close>
+  shows \<open>is_projection_on (\<lambda>x. \<pi>A x + \<pi>B x) (A +\<^sub>M B)\<close>
+proof (rule is_projection_on_iff_orthog[THEN iffD2, rule_format])
+  show clAB: \<open>closed_csubspace (A +\<^sub>M B)\<close>
+    by (simp add: assms(2) assms(3) closed_subspace_closed_sum)
+  fix h
+  have 1: \<open>\<pi>A h + \<pi>B h \<in> A +\<^sub>M B\<close>
+    by (meson clAB assms(2) assms(3) assms(4) assms(5) closed_csubspace_def closed_sum_left_subset closed_sum_right_subset complex_vector.subspace_def in_mono is_projection_on_in_image)
+
+  have \<open>\<pi>A (\<pi>B h) = 0\<close>
+    by (smt (verit, del_insts) assms(1) assms(2) assms(4) assms(5) cinner_eq_zero_iff is_cadjoint_def is_projection_on_in_image is_projection_on_is_cadjoint)
+  then have \<open>h - (\<pi>A h + \<pi>B h) = (h - \<pi>B h) - \<pi>A (h - \<pi>B h)\<close>
+    by (smt (verit) add.right_neutral add_diff_cancel_left' assms(2) assms(4) closed_csubspace.subspace complex_vector.subspace_diff diff_add_eq_diff_diff_swap diff_diff_add is_projection_on_iff_orthog orthog_proj_unique orthogonal_complement_closed_subspace)
+  also have \<open>\<dots> \<in> orthogonal_complement A\<close>
+    using assms(2) assms(4) is_projection_on_iff_orthog by blast
+  finally have orthoA: \<open>h - (\<pi>A h + \<pi>B h) \<in> orthogonal_complement A\<close>
+    by -
+
+  have \<open>\<pi>B (\<pi>A h) = 0\<close>
+    by (smt (verit, del_insts) assms(1) assms(3) assms(4) assms(5) cinner_eq_zero_iff is_cadjoint_def is_projection_on_in_image is_projection_on_is_cadjoint)
+  then have \<open>h - (\<pi>A h + \<pi>B h) = (h - \<pi>A h) - \<pi>B (h - \<pi>A h)\<close>
+    by (smt (verit) add.right_neutral add_diff_cancel assms(3) assms(5) closed_csubspace.subspace complex_vector.subspace_diff diff_add_eq_diff_diff_swap diff_diff_add is_projection_on_iff_orthog orthog_proj_unique orthogonal_complement_closed_subspace)
+  also have \<open>\<dots> \<in> orthogonal_complement B\<close>
+    using assms(3) assms(5) is_projection_on_iff_orthog by blast
+  finally have orthoB: \<open>h - (\<pi>A h + \<pi>B h) \<in> orthogonal_complement B\<close>
+    by -
+
+  from orthoA orthoB
+  have 2: \<open>h - (\<pi>A h + \<pi>B h) \<in> orthogonal_complement (A +\<^sub>M B)\<close>
+    by (metis IntI assms(2) assms(3) closed_csubspace_def complex_vector.subspace_def de_morgan_orthogonal_complement_plus)
+
+  from 1 2 show \<open>h - (\<pi>A h + \<pi>B h) \<in> orthogonal_complement (A +\<^sub>M B) \<and> \<pi>A h + \<pi>B h \<in> A +\<^sub>M B\<close>
+    by simp
+qed
+
+lemma projection_plus:
+  fixes A B :: "'a::chilbert_space set"
+  assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> is_orthogonal x y"
+  assumes \<open>closed_csubspace A\<close>
+  assumes \<open>closed_csubspace B\<close>
+  shows \<open>projection (A +\<^sub>M B) = (\<lambda>x. projection A x + projection B x)\<close>
+proof -
+  have \<open>is_projection_on (\<lambda>x. projection A x + projection B x) (A +\<^sub>M B)\<close>
+    apply (rule is_projection_on_plus)
+    using assms by auto
+  then show ?thesis
+    by (meson assms(2) assms(3) closed_csubspace.subspace closed_subspace_closed_sum csubspace_is_convex projection_eqI')
+qed
+
+
 lemma projection_insert:
   assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
-  shows "projection {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S} u
-        = projection (cspan {a}) u
-        + projection (cspan S) u"
+  shows "projection (cspan (insert a S)) u
+        = projection (cspan {a}) u + projection (cspan S) u"
 proof-
   define p where "p u = projection (cspan {a}) u
                       + projection (cspan S) u" for u
   define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
   have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-    by (metis complex_vector.scale_zero_right complex_vector.span_empty complex_vector.span_insert_0 
-        projection_singleton projection_zero_subspace)
+    by (metis projection_rank1)
   have "closed_csubspace M"
     unfolding M_def
     by (metis (no_types) a2 closed_subspace_cspan_finite complex_vector.span_insert 
@@ -3150,8 +2756,8 @@ proof-
   hence "projection M u = p u"
     using projection_eqI[where x = "p u" and h = u and M = M]
       \<open>closed_csubspace M\<close> f1 by auto     
-  thus ?thesis 
-    unfolding p_def M_def by auto
+  thus ?thesis
+    by (simp add: M_def complex_vector.span_insert p_def) 
 qed
 
 lemma Span_canonical_basis[simp]: "ccspan (set canonical_basis) = top"

@@ -2772,7 +2772,7 @@ proof
 
   show "cindependent (set (canonical_basis::'a ell2 list))"
     apply (auto simp: canonical_basis_ell2_def enum_UNIV)
-    by (smt (verit, best) ell2_ket f_inv_into_f is_ortho_set_def is_ortho_set_independent ket_Kronecker_delta_neq norm_zero)
+    by (smt (verit, best) ell2_ket f_inv_into_f is_ortho_set_def is_ortho_set_cindependent ket_Kronecker_delta_neq norm_zero)
 
   show "cspan (set (canonical_basis::'a ell2 list)) = UNIV"
     by (auto simp: canonical_basis_ell2_def enum_UNIV)
@@ -3201,7 +3201,7 @@ proof-
     using ket_nonzero
     by (simp add: image_iff)
   ultimately show ?thesis
-    using is_ortho_set_independent[where S = S] unfolding S_def 
+    using is_ortho_set_cindependent[where A = S] unfolding S_def 
     by blast
 qed
 

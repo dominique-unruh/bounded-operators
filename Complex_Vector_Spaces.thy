@@ -926,6 +926,17 @@ lemma clinear_continuous_within:
   shows \<open>continuous (at x within s) f\<close>
   by (simp add: assms bounded_clinear.bounded_linear linear_continuous_within)
 
+lemma antilinear_continuous_at:
+  assumes \<open>bounded_antilinear f\<close> 
+  shows \<open>isCont f x\<close>
+  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_at)
+
+lemma antilinear_continuous_within:
+  assumes \<open>bounded_antilinear f\<close> 
+  shows \<open>continuous (at x within s) f\<close>
+  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_within)
+
+
 (* Use complex_vector.linear_eq_0_on_span instead *)
 (* lemma equal_span_0:
   fixes f::\<open>'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector\<close> 
@@ -1728,7 +1739,6 @@ lemma closed_sum_mono_right:
   shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
   by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
 
-
 instantiation ccsubspace :: (complex_normed_vector) sup begin
 lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
   is "\<lambda>A B::'a set. A +\<^sub>M B"
@@ -2189,7 +2199,7 @@ proof -
     by simp
 qed
 
-lemma finite_span_complete:
+lemma finite_span_complete[simp]:
   fixes A :: "'a::real_normed_vector set"
   assumes "finite A"
   shows "complete (span A)"
@@ -2371,27 +2381,27 @@ next
 qed
 
 
-lemma finite_cspan_complete: 
+lemma finite_cspan_complete[simp]: 
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
-  shows "complete (complex_vector.span B)"
+  shows "complete (cspan B)"
 proof (subst cspan_as_span)
   show "complete (span (B \<union> (*\<^sub>C) \<i> ` B))"
     by (simp add: assms finite_span_complete)
 qed
 
 
-lemma finite_span_closed: 
+lemma finite_span_closed[simp]:
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B"
   shows "closed (real_vector.span B)"
   by (simp add: assms complete_imp_closed finite_span_complete) 
 
 
-lemma finite_cspan_closed:
+lemma finite_cspan_closed[simp]:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes a1: \<open>finite S\<close>
-  shows \<open>closed (complex_vector.span S)\<close>  
+  shows \<open>closed (cspan S)\<close>  
   by (simp add: finite_cspan_complete assms complete_imp_closed)
 
 subsection \<open>Conjugate space\<close>
@@ -2550,5 +2560,13 @@ lemma range_is_clinear[simp]:
   assumes a1: "clinear f"
   shows "csubspace (range f)"
   using assms complex_vector.linear_subspace_image complex_vector.subspace_UNIV by blast
+
+lemma ccspan_superset:
+  \<open>A \<subseteq> space_as_set (ccspan A)\<close> 
+  for A :: \<open>'a::complex_normed_vector set\<close>
+  apply transfer
+  by (meson closure_subset complex_vector.span_superset subset_trans)
+
+
 
 end

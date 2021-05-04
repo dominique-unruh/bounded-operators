@@ -509,8 +509,38 @@ lemma cGDERIV_inverse:
 (* Don't know if this holds: *)
 (* lemma cGDERIV_norm:
   assumes "x \<noteq> 0" shows "cGDERIV (\<lambda>x. norm x) x :> sgn x" 
-lemmas has_derivative_norm = cGDERIV_norm [unfolded gderiv_def]
 *)
+
+
+lemma has_derivative_norm[derivative_intros]:
+  fixes x :: "'a::complex_inner"
+  assumes "x \<noteq> 0" 
+  shows "(norm has_derivative (\<lambda>h. Re (cinner (sgn x) h))) (at x)"
+  thm has_derivative_norm
+proof -
+  have Re_pos: "0 < Re (cinner x x)"
+    using assms 
+    by (metis Re_strict_mono cinner_gt_zero_iff zero_complex.simps(1))
+  have Re_plus_Re: "Re (cinner x y) + Re (cinner y x) = 2 * Re (cinner x y)" 
+    for x y :: 'a
+    by (metis cinner_commute cnj.simps(1) mult_2_right semiring_normalization_rules(7))
+  have norm: "norm x = sqrt (Re (cinner x x))" for x :: 'a
+    apply (subst norm_eq_sqrt_cinner, subst cmod_Re)
+    using cinner_ge_zero by auto
+  have v2:"((\<lambda>x. sqrt (Re (cinner x x))) has_derivative
+          (\<lambda>xa. (Re (cinner x xa) + Re (cinner xa x)) * (inverse (sqrt (Re (cinner x x))) / 2))) (at x)" 
+    by (rule derivative_eq_intros | simp add: Re_pos)+
+  have v1: "((\<lambda>x. sqrt (Re (cinner x x))) has_derivative (\<lambda>y. Re (cinner x y) / sqrt (Re (cinner x x)))) (at x)"
+    if "((\<lambda>x. sqrt (Re (cinner x x))) has_derivative (\<lambda>xa. Re (cinner x xa) * inverse (sqrt (Re (cinner x x))))) (at x)"
+    using that apply (subst divide_real_def)
+    by simp
+  have \<open>(norm has_derivative (\<lambda>y. Re (cinner x y) / norm x)) (at x)\<close>
+    using v2
+    apply (auto simp: Re_plus_Re norm [abs_def])
+    using v1 by blast
+  then show ?thesis
+    by (auto simp: power2_eq_square sgn_div_norm scaleR_scaleC)
+qed
 
 
 bundle cinner_syntax begin

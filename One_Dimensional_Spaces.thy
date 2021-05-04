@@ -128,7 +128,7 @@ proof
     hence \<open>1 \<in> set (canonical_basis::('a list))\<close>
       by (metis list.set_intros(1))
     thus ?thesis
-      using canonical_basis_non_zero by fastforce       
+      by (metis is_ortho_set_def is_orthonormal)
   qed
 qed
 

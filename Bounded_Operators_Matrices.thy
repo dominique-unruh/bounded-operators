@@ -418,7 +418,7 @@ next
   qed
   also have "\<dots> = \<langle>a, w\<rangle> *\<^sub>C a + (w - \<langle>a, w\<rangle> *\<^sub>C a)"
   proof-
-    have "set (a # L) = insert a (set L)"
+    have setaL: "set (a # L) = insert a (set L)"
       by simp
     moreover have "a \<in> sphere 0 1"
       using Cons.prems(4) by auto      
@@ -426,33 +426,12 @@ next
       using Cons.prems(1) cinner_span_breakdown_eq[where S = "set L" and x = w and a = a]
         Cons.prems(2) Cons.prems(3) distinct.simps(2) 
       by (smt mem_sphere_0) 
-    moreover have "is_ortho_set (set L)"
-      unfolding is_ortho_set_def 
-    proof auto
-      show "x \<in> set L \<Longrightarrow>
-           y \<in> set L \<Longrightarrow> x \<noteq> y \<Longrightarrow> \<langle>x, y\<rangle> = 0"
-        for x y
-      proof-
-      assume o1: "x \<in> set L" and o2: "y \<in> set L" and o3: "x \<noteq> y" 
-      have "x \<in> set (a#L)"
-        by (simp add: o1)        
-      moreover have "y \<in> set (a#L)"
-        by (simp add: o2)
-      ultimately show "\<langle>x, y\<rangle> = 0"
-        using o3 Cons.prems(3) is_ortho_set_def by metis
-      qed
-      show "0 \<in> set L \<Longrightarrow> False"
-        using Cons.prems(4) by auto        
-    qed
+    moreover have orthoL: "is_ortho_set (set L)"
+      by (metis Cons.prems(3) is_ortho_set_antimono setaL subset_insertI)
     moreover have "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
       using Cons.prems(4) by auto      
     ultimately have "(\<Sum>b\<in>(set L). \<langle>b, w - \<langle>a, w\<rangle> *\<^sub>C a\<rangle> *\<^sub>C b) = w - \<langle>a, w\<rangle> *\<^sub>C a"
-    proof -
-      have "is_ortho_set (set L)"
-        using Cons.prems(3) is_onb_delete by fastforce
-      thus ?thesis
-        using Cons.IH \<open>\<forall>a\<in>set L. \<parallel>a\<parallel> = 1\<close> \<open>distinct (a # L)\<close> \<open>w - \<langle>a, w\<rangle> *\<^sub>C a \<in> cspan (set L)\<close> by fastforce
-    qed
+      using orthoL Cons.IH \<open>\<forall>a\<in>set L. \<parallel>a\<parallel> = 1\<close> \<open>distinct (a # L)\<close> \<open>w - \<langle>a, w\<rangle> *\<^sub>C a \<in> cspan (set L)\<close> by fastforce
 
     thus ?thesis by simp
   qed
@@ -923,7 +902,7 @@ proof-
   next
     case (Cons x xs y ys b B)
     have h1: "is_ortho_set (set B)"
-      using Cons.prems(1) is_onb_delete by auto    
+      by (meson Cons.prems(1) is_ortho_set_antimono set_subset_Cons)
     have h2: "set B \<subseteq> sphere 0 1"
       using Cons.prems(3) by auto
     have h3: "distinct B"
@@ -1024,7 +1003,7 @@ proof-
         using Cons.prems(2)
         by (simp add: insert_commute) 
       hence b2: "is_ortho_set (set (b#B))"
-        using is_onb_delete by auto        
+        by (meson is_ortho_set_antimono set_subset_Cons)
       have b1: "\<langle>b', b\<rangle> = 0"
         by (meson Cons.prems(2) \<open>b' \<noteq> b\<close> is_ortho_set_def list.set_intros(1) list.set_intros(2))
       have "\<langle>sum_list (map2 (*\<^sub>C) (x # xs) (b' # B)), b\<rangle> = \<langle>x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
@@ -1056,7 +1035,7 @@ proof-
         using Cons.prems(2)
         by (simp add: insert_commute) 
       hence b2: "is_ortho_set (set (b#B))"
-        using is_onb_delete by auto        
+        by (meson is_ortho_set_antimono set_subset_Cons)
       have b1: "\<langle>b', b\<rangle> = 0"
         by (meson Cons.prems(2) \<open>b' \<noteq> b\<close> is_ortho_set_def list.set_intros(1) list.set_intros(2))
       have "\<langle>sum_list (map2 (*\<^sub>C) (x # xs) (b' # B)), b\<rangle> = \<langle>x *\<^sub>C b' + sum_list (map2 (*\<^sub>C) xs B), b\<rangle>"
@@ -1126,8 +1105,8 @@ proof-
         apply(rule sum_list_orthonormal)
             apply (simp add: Cons.hyps(1))
            apply (simp add: Cons.hyps(2))
-        using Cons.prems(1)  apply auto[1]
-        using is_onb_delete apply auto[1]
+        using Cons.prems(1) apply auto[1]
+        apply (metis is_ortho_set_antimono list.simps(15) set_subset_Cons)
         apply (simp add: w1)
         by (simp add: Cons.prems(4) subsetI)
       ultimately show " y * (cnj x * \<langle>b, b\<rangle>) +
@@ -2817,7 +2796,7 @@ proof-
     have j_bound: "j < length (canonical_basis::'a ell2 list)"
       by (metis dim_vec_of_onb_enum_list' that)
     have y1: "cindependent (set (canonical_basis::'a ell2 list))"
-      using canonical_basis_non_zero is_ortho_set_independent is_orthonormal by auto        
+      using is_cindependent_set by blast
     have y2: "canonical_basis ! j \<in> set (canonical_basis::'a ell2 list)"
       using j_bound by auto
     have p1: "enum_class.enum ! enum_idx i = i"
@@ -3621,7 +3600,7 @@ proof(cases "a = 0")
   have"proj a = 0"
     using True
     apply transfer
-    by (simp add: projection_zero_subspace)
+    by (simp add: projection_zero)
   hence "mat_of_cblinfun (proj a) = 0\<^sub>m d d"
     by (metis q1 cancel_comm_monoid_add_class.diff_cancel 
         cblinfun_of_mat_minusOp minus_r_inv_mat)
@@ -3724,7 +3703,7 @@ next
       $$ (i, j)\<close> basis_def calculation by auto
     have x1: "proj a *\<^sub>V (canonical_basis::'a list) ! j = 
          (\<langle>a, (canonical_basis::'a list) ! j\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-      using projection_singleton[where a = a and u = "(canonical_basis::'a list)!j"] False
+      using projection_rank1[where t = a and x = "(canonical_basis::'a list)!j"] False
       apply transfer
       by (simp add: span_finite_dim)
     have x2: "(mat_of_cblinfun (proj a)) $$ (i, j) =
@@ -3952,20 +3931,22 @@ lemma corthogonal_is_ortho_set:
   assumes "corthogonal (map vec_of_onb_enum vs)"
   shows "is_ortho_set (set vs)"
 proof (unfold is_ortho_set_def, intro conjI ballI impI)
-  fix x y :: 'a
-  assume "x \<in> set vs"
-  then have "vec_of_onb_enum x \<bullet>c vec_of_onb_enum x \<noteq> 0"
-    using assms unfolding corthogonal_def apply auto
-    by (metis in_set_conv_nth)
-  then have "\<langle>x, x\<rangle> \<noteq> 0"
-    apply (subst cscalar_prod_cinner)
-    by simp
-  then show "x \<noteq> 0"
+  { fix x assume "x \<in> set vs"
+    then have "vec_of_onb_enum x \<bullet>c vec_of_onb_enum x \<noteq> 0"
+      using assms unfolding corthogonal_def apply auto
+      by (metis in_set_conv_nth)
+    then have "\<langle>x, x\<rangle> \<noteq> 0"
+      apply (subst cscalar_prod_cinner)
+      by simp
+    then have "x \<noteq> 0"
+      by auto }
+  then show \<open>0 \<notin> set vs\<close>
     by auto
 
-  assume "y \<in> set vs" and "x \<noteq> y"
+  fix x y :: 'a
+  assume "x \<in> set vs" and "y \<in> set vs" and "x \<noteq> y"
   then have "vec_of_onb_enum x \<bullet>c vec_of_onb_enum y = 0"
-    using assms \<open>x \<in> set vs\<close> unfolding corthogonal_def apply auto
+    using assms unfolding corthogonal_def apply auto
     by (metis in_set_conv_nth)
   then show "\<langle>x, y\<rangle> = 0"
     apply (subst cscalar_prod_cinner)
@@ -4110,13 +4091,14 @@ proof -
   qed
 
   have norm_Snorm: "norm s = 1" if "s \<in> set Snorm" for s
-    using that ortho unfolding Snorm_def is_ortho_set_def by auto
+    using that ortho unfolding Snorm_def is_ortho_set_def apply auto
+    by (metis left_inverse norm_eq_zero)
 
   have ortho_Snorm: "is_ortho_set (set Snorm)"
     unfolding is_ortho_set_def
   proof (intro conjI ballI impI)
     fix x y
-    show "x \<in> set Snorm \<Longrightarrow> x \<noteq> 0"
+    show "0 \<notin> set Snorm"
       using norm_Snorm[of 0] by auto
     assume "x \<in> set Snorm" and "y \<in> set Snorm" and "x \<noteq> y"
     from \<open>x \<in> set Snorm\<close>
@@ -4231,7 +4213,7 @@ proof -
     also have "\<dots> = proj a + Proj (ccspan (set Snorm))"
       apply (subst Cons.IH)
       using Cons.prems apply auto
-      using is_onb_delete by blast
+      by (meson Cons.prems(1) is_ortho_set_antimono set_subset_Cons)
     also have "\<dots> = Proj (ccspan (set (a # Snorm)))"
       apply (rule Proj_Span_insert[symmetric])
       using Cons.prems by auto
