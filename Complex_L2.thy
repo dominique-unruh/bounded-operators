@@ -2734,7 +2734,7 @@ qed
 qed *)
 
 lemma cspan_ket_finite[simp]: "cspan (range ket :: 'a::finite ell2 set) = UNIV"
-  by (metis ket_ell2_span span_finite_dim finite_class.finite_UNIV finite_imageI)
+  by (metis ket_ell2_span closure_finite_cspan finite_class.finite_UNIV finite_imageI)
 
 instance ell2 :: (finite) cfinite_dim
 proof
@@ -3571,7 +3571,7 @@ lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> 
   unfolding classical_operator_exists_def
   apply (rule cblinfun_extension_exists_finite)
   using cindependent_ket apply blast
-  using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim apply blast
+  using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan apply blast
   by simp
 
 lemma classical_operator_basis:

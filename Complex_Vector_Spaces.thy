@@ -316,9 +316,8 @@ lemma isCont_scaleC:
 
 subsection \<open>Cauchy sequences\<close>
 
-lemma cCauchy_iff2: 
-  "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<forall>m \<ge> M. \<forall>n \<ge> M. cmod (X m - X n) < inverse (real (Suc j))))"
-  by (simp only: metric_Cauchy_iff2 dist_complex_def)
+lemma (in bounded_clinear) Cauchy: "Cauchy X \<Longrightarrow> Cauchy (\<lambda>n. f (X n))"
+  by (simp add: bounded_linear bounded_linear.Cauchy)
 
 subsection \<open>Cauchy Sequences are Convergent\<close>
 
@@ -751,6 +750,15 @@ lift_definition top_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>UNIV\<c
 
 instance ..
 end
+
+lemma ccsubspace_top_not_bot[simp]: 
+  "(top::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> bot"
+  (* The type class t1_space is needed because the definition of bot in ccsubspace needs it *)
+  by (metis UNIV_not_singleton bot_ccsubspace.rep_eq top_ccsubspace.rep_eq)
+
+lemma ccsubspace_bot_not_top[simp]:
+  "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
+  using ccsubspace_top_not_bot by metis
 
 instantiation ccsubspace :: ("{complex_vector,topological_space}") "Inf"
 begin
@@ -1293,6 +1301,11 @@ setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cspan\<close>, SOME
 
 (* TODO: remove *)
 abbreviation (input) canonical_basis_length :: "'a::basis_enum itself \<Rightarrow> nat" where \<open>canonical_basis_length _ \<equiv> length (canonical_basis::'a list)\<close>
+
+lemma ccspan_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
+  using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
+    closure_UNIV is_generator_set
+  by metis
 
 lemma finite_basis: "\<exists>basis::'a::cfinite_dim set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV"
 proof -
@@ -2385,24 +2398,32 @@ lemma finite_cspan_complete[simp]:
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
   shows "complete (cspan B)"
-proof (subst cspan_as_span)
-  show "complete (span (B \<union> (*\<^sub>C) \<i> ` B))"
-    by (simp add: assms finite_span_complete)
-qed
+  by (simp add: assms cspan_as_span)
 
 
 lemma finite_span_closed[simp]:
   fixes B :: "'a::real_normed_vector set"
   assumes "finite B"
   shows "closed (real_vector.span B)"
-  by (simp add: assms complete_imp_closed finite_span_complete) 
+  by (simp add: assms complete_imp_closed)
 
 
 lemma finite_cspan_closed[simp]:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes a1: \<open>finite S\<close>
   shows \<open>closed (cspan S)\<close>  
-  by (simp add: finite_cspan_complete assms complete_imp_closed)
+  by (simp add: assms complete_imp_closed)
+
+lemma closure_finite_cspan:
+  fixes T::\<open>'a::complex_normed_vector set\<close>
+  assumes \<open>finite T\<close>
+  shows \<open>closure (cspan T)  = cspan T\<close>
+  by (simp add: assms)
+
+lemma finite_cspan_closed_csubspace:
+  assumes "finite (S::'a::complex_normed_vector set)"
+  shows "closed_csubspace (cspan S)"
+  by (simp add: assms closed_csubspace.intro)
 
 subsection \<open>Conjugate space\<close>
 

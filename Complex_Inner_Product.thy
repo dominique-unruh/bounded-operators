@@ -2286,79 +2286,59 @@ lemma cinner_extensionality:
   shows \<open>\<psi> = \<phi>\<close>
   by (metis assms cinner_commute' riesz_frechet_representation_unique)
 
+(* TODO move *)
+lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
+  by (rule inf_ccsubspace.rep_eq)
 
-(* TODO rename from here *)
-
+(* 
+Use space_as_set_inf instead
 lemma clinear_space_member_inf[simp]:
   "x \<in> space_as_set (A \<sqinter> B) \<longleftrightarrow> x \<in> space_as_set A \<and> x \<in> space_as_set B"
-  apply transfer by simp
+  apply transfer by simp *)
 
-lemma clinear_space_top_not_bot[simp]: 
-  "(top::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> bot"
-  (* The type class t1_space is needed because the definition of bot in ccsubspace needs it *)
-  by (metis UNIV_not_singleton bot_ccsubspace.rep_eq top_ccsubspace.rep_eq)
-
-lemma clinear_space_bot_not_top[simp]:
-  "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
-  using clinear_space_top_not_bot by metis
 
 subsection \<open>Boundedness\<close>
 
 
+(* Use Lim_bounded2, convergent_LIMSEQ_iff instead
 lemma lim_ge:
   fixes x ::real and y :: \<open>nat \<Rightarrow> real\<close>
   assumes \<open>\<And> n. x \<le> y n\<close> and \<open>convergent y\<close>
   shows \<open>x \<le> lim y\<close>
-  by (meson Lim_bounded2 assms(1) assms(2) convergent_LIMSEQ_iff)
+*)
 
-
+(* Use bounded_linear.Cauchy bounded_linear_scaleR_right instead
 lemma Cauchy_scaleR:
   fixes r::real and x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: "Cauchy x" 
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>R x n)\<close>
-  by (simp add: assms bounded_linear.Cauchy bounded_linear_scaleR_right)
 
+Use bounded_linear.Cauchy bounded_clinear_scaleC_right instead
 lemma Cauchy_scaleC:
   fixes r::complex and x::\<open>nat \<Rightarrow> 'a::complex_normed_vector\<close>
   assumes a1: "Cauchy x"
   shows \<open>Cauchy (\<lambda>n. r *\<^sub>C x n)\<close>
-  by (simp add: bounded_clinear.bounded_linear assms bounded_linear.Cauchy bounded_clinear_scaleC_right)
+*)
 
+(* Use LIMSEQ_ignore_initial_segment instead
 lemma lim_initial_segment:
   assumes \<open>convergent x\<close>
   shows \<open>lim x = lim (\<lambda> n. x (n + k))\<close>
-proof-
-  have \<open>\<exists> L. x \<longlonglongrightarrow> L\<close>
-    using \<open>convergent x\<close>
-    unfolding convergent_def
-    by blast
-  then obtain L where L_def: \<open>x \<longlonglongrightarrow> L\<close>
-    by blast
-  hence \<open>(\<lambda> n. x (n + k)) \<longlonglongrightarrow> L\<close>
-    using Topological_Spaces.LIMSEQ_ignore_initial_segment
-    by auto
-  thus ?thesis 
-    unfolding lim_def
-    by (metis LIMSEQ_unique L_def) 
-qed
+*)
 
-lemma lim_initial_segment':
+
+(* Use LIMSEQ_ignore_initial_segment instead *)
+(* lemma lim_initial_segment':
   assumes \<open>convergent x\<close>
-  shows \<open>lim x = lim (\<lambda> n. x (k + n))\<close>
-proof-
-  have \<open>lim x = lim (\<lambda> n. x (n + k))\<close>
-    using \<open>convergent x\<close> lim_initial_segment by blast
-  moreover have \<open>n + k = k + n\<close>
-    for n
-    by simp
-  ultimately show ?thesis by auto
-qed
+  shows \<open>lim x = lim (\<lambda> n. x (k + n))\<close> *)
 
+
+(* Use Lim_bounded instead
 lemma Lim_bounded_lim:
   fixes x :: \<open>nat \<Rightarrow> 'a::linorder_topology\<close>
   assumes a1: \<open>convergent x\<close> and a2: \<open>\<And>n. n\<ge>M \<Longrightarrow> x n \<le> C\<close>
   shows \<open>lim x \<le> C\<close>
-  by (meson LIMSEQ_le_const2 a1 a2 convergent_LIMSEQ_iff)
+*)
 
 lemma Cauchy_cinner_Cauchy:
   fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
@@ -2460,112 +2440,60 @@ proof-
     by (simp add: CauchyI)
 qed
 
-
+(* Use Lim_bounded2 instead
 lemma lim_Lim_bounded2:
   fixes x::\<open>nat \<Rightarrow> real\<close>
   assumes a1: \<open>\<And>n.  n \<ge> N \<Longrightarrow> C \<le> x n\<close> and a2: \<open>convergent x\<close>
   shows \<open>C \<le> lim x\<close>
-proof-
-  have \<open>\<exists> l. x \<longlonglongrightarrow> l\<close>
-    using a2
-    unfolding convergent_def by blast
-  then obtain l where l_def: \<open>x \<longlonglongrightarrow> l\<close>
-    by blast
-  hence \<open>C \<le> l\<close>
-    using  Topological_Spaces.Lim_bounded2[where f = "x" and l="l" and N = "N"]
-    by (simp add: a1)
-  thus \<open>C \<le> lim x\<close>
-    using \<open>x \<longlonglongrightarrow> l\<close> limI by auto    
-qed
+*)
 
+(* Use tendsto_of_real instead
 lemma lim_complex_of_real:
   fixes x::\<open>nat \<Rightarrow> real\<close>
   assumes a1: \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. complex_of_real (x n)) = complex_of_real (lim x)\<close>
-proof-
-  have \<open>\<exists>l. x \<longlonglongrightarrow> l\<close>
-    using a1 unfolding convergent_def
-    by blast
-  then obtain l where l_def: \<open>x \<longlonglongrightarrow> l\<close>
-    by blast
-  moreover have \<open>(\<lambda>n. (0::real)) \<longlonglongrightarrow> 0\<close>
-    by auto
-  ultimately have \<open>(\<lambda>n. Complex (x n) ((\<lambda>n. (0::real)) n)) \<longlonglongrightarrow> Complex l 0\<close>
-    using Complex.tendsto_Complex[where f = "x" and g = "(\<lambda>n. (0::real))"]
-    by auto
-  hence \<open>(\<lambda>n. Complex (x n) 0) \<longlonglongrightarrow> Complex l 0\<close>
-    by simp
-  moreover  have \<open>lim x = l\<close>
-    using l_def limI by auto 
-  ultimately have \<open>(\<lambda>n. Complex (x n) 0) \<longlonglongrightarrow> Complex (lim x) 0\<close>
-    by simp
-  hence \<open>lim (\<lambda>n. Complex (x n) 0) = Complex (lim x) 0\<close>
-    using limI by auto
-  thus ?thesis
-    unfolding complex_of_real_def
-    by blast
-qed     
+*)
 
+(* Use tendsto_norm instead
 lemma lim_norm:
   fixes x::\<open>nat \<Rightarrow> 'a::real_normed_vector\<close>
   assumes a1: \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. norm (x n)) = norm (lim x)\<close>
-proof-
-  have \<open>\<exists>l. x \<longlonglongrightarrow> l\<close>
-    using a1 unfolding convergent_def by blast
-  then obtain l where l_def: \<open>x \<longlonglongrightarrow> l\<close>
-    by blast
-  hence \<open>(\<lambda> n. norm (x n) ) \<longlonglongrightarrow> norm l\<close>
-    by (simp add: tendsto_norm)
-  moreover have \<open>lim x = l\<close>
-    using  l_def
-    by (simp add: limI) 
-  ultimately show ?thesis
-    by (simp add: limI) 
-qed
+*)
 
+(* Use tendsto_real_sqrt instead
 lemma lim_sqrt:
   fixes x::\<open>nat \<Rightarrow> real\<close>
   assumes \<open>convergent x\<close>
   shows \<open>lim (\<lambda> n. sqrt (x n)) = sqrt (lim x)\<close>
   by (metis assms convergentD sequentially_bot tendsto_Lim tendsto_real_sqrt)
-
-lemma bounded_clinear_Cauchy:
-  assumes a1: \<open>Cauchy x\<close> and a2: \<open>bounded_clinear f\<close>
-  shows \<open>Cauchy (\<lambda> n. f (x n))\<close>
-  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear a1 a2 bounded_linear.Cauchy)
+*)
 
 
-lemma span_finite_dim:
-  fixes T::\<open>'a::complex_inner set\<close>
-  assumes \<open>finite T\<close>
-  shows \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
-  using finite_cspan_closed
-  by (simp add: finite_cspan_closed assms)
-
+(*
 lemma Span_insert:
   assumes "finite (S::'a'::complex_inner set)"
   shows "space_as_set (ccspan (insert a S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> space_as_set (ccspan S)}"
 proof -
   have "closure (cspan (insert a S)) = cspan (insert a S)"
-    by (metis assms finite_insert span_finite_dim)
+    by (metis assms finite_insert closure_finite_cspan)
   thus ?thesis
-    by (simp add: ccspan.rep_eq assms complex_vector.span_insert span_finite_dim)
+    by (simp add: ccspan.rep_eq assms complex_vector.span_insert closure_finite_cspan)
 qed
+*)
 
-lemma closed_subspace_cspan_finite:
-  assumes "finite (S::'a::chilbert_space set)"
-  shows "closed_csubspace (cspan S)"
-  unfolding closed_csubspace_def apply auto
-  by (simp add: assms)
+
 
 (* Use projection_rank1 instead
 lemma projection_singleton:
   assumes "(a::'a::chilbert_space) \<noteq> 0"
   shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" *)
 
+
+(* TODO rename from here *)
+
 lemma ortho_cspan:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::complex_inner set)"
     and a3: "x \<in> cspan S"
   shows "\<langle>a, x\<rangle> = 0"
 proof-
@@ -2651,34 +2579,21 @@ proof-
   define p where "p u = projection (cspan {a}) u
                       + projection (cspan S) u" for u
   define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
-  have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
+  have *: "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
     by (metis projection_rank1)
   have "closed_csubspace M"
     unfolding M_def
-    by (metis (no_types) a2 closed_subspace_cspan_finite complex_vector.span_insert 
+    by (metis (no_types) a2 finite_cspan_closed_csubspace complex_vector.span_insert 
         finite_insert) 
-  have "projection (cspan {a}) u + projection (cspan S) u
+  have *: "projection (cspan {a}) u + projection (cspan S) u
     \<in> {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
-  proof auto 
-    define k where "k = \<langle>a, u\<rangle>/\<langle>a, a\<rangle>"
-    have "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
-      by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)      
-    hence "projection (cspan {a}) u +
-          projection (cspan S) u - k *\<^sub>C a
-          \<in> cspan S"
-      unfolding k_def
-      by (metis a2 add.commute add_diff_eq closed_subspace_cspan_finite diff_add_cancel orthog_proj_exists projection_eqI)
-    thus "\<exists>k. projection (cspan {a}) u +
-              projection (cspan S) u - k *\<^sub>C a
-              \<in> cspan S"
-      by blast
-  qed
+  by (metis (mono_tags, lifting) * a2 add_diff_cancel_left' finite_cspan_closed_csubspace is_projection_on_in_image mem_Collect_eq projection_is_projection_on')
   hence f1: "p u \<in> M"
     unfolding p_def M_def 
     by blast
 
   have "u - p u \<in> {x |x. \<forall>y\<in>M. \<langle>x, y\<rangle> = 0}"
-  proof auto
+  proof auto?
     fix y
     assume b1: "y \<in> M"
     hence "\<exists>k. y - k *\<^sub>C a \<in> cspan S"
@@ -2686,7 +2601,7 @@ proof-
     then obtain k where k_def: "y - k *\<^sub>C a \<in> cspan S"
       by blast
     have "u - projection (cspan S) u \<in> orthogonal_complement (cspan S)"
-      by (simp add: a2 closed_subspace_cspan_finite orthogonal_complementI projection_orthogonal)
+      by (simp add: a2 finite_cspan_closed_csubspace orthogonal_complementI projection_orthogonal)
     moreover have "projection (cspan {a}) u \<in> orthogonal_complement (cspan S)"
       unfolding orthogonal_complement_def
     proof auto
@@ -2713,7 +2628,7 @@ proof-
          - projection (cspan S) u, k *\<^sub>C a\<rangle> = 0"
     proof-
       have "u - projection (cspan {a}) u \<in> orthogonal_complement (cspan {a})"
-        by (simp add: closed_subspace_cspan_finite orthogonal_complementI projection_orthogonal)
+        by (simp add: finite_cspan_closed_csubspace orthogonal_complementI projection_orthogonal)
       moreover have "projection (cspan S) u \<in> orthogonal_complement (cspan {a})"
         unfolding orthogonal_complement_def
       proof auto
@@ -2724,7 +2639,7 @@ proof-
         then obtain k where ky:"y = k *\<^sub>C a"
           by blast
         have "projection (cspan S) u \<in> cspan S"
-          by (metis a2 closed_subspace_cspan_finite orthog_proj_exists projection_eqI)
+          by (metis a2 finite_cspan_closed_csubspace orthog_proj_exists projection_eqI)
         hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
           by (meson a1 a2 ortho_cspan orthogonal_complement_orthoI' orthogonal_complementI)          
         thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
@@ -2732,7 +2647,7 @@ proof-
           by simp
       qed
       moreover have "csubspace ( orthogonal_complement (cspan {a}))"
-        by (simp add: closed_subspace_cspan_finite)
+        by (simp add: finite_cspan_closed_csubspace)
 
       ultimately have "(u - projection (cspan {a}) u) - projection (cspan S) u
                    \<in> orthogonal_complement (cspan {a})"
@@ -2760,10 +2675,6 @@ proof-
     by (simp add: M_def complex_vector.span_insert p_def) 
 qed
 
-lemma Span_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
-  using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
-    closure_UNIV is_generator_set
-  by metis
 
 subsection \<open>Conjugate space\<close>
 

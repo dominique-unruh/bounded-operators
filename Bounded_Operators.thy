@@ -4237,7 +4237,7 @@ lemma Ortho_expansion_finite:
   shows \<open>x = (\<Sum>t\<in>T. \<langle> t, x \<rangle> *\<^sub>C t)\<close>
 proof-
   have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
-    using \<open>finite T\<close> span_finite_dim by blast
+    using \<open>finite T\<close> closure_finite_cspan by blast
   have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
     apply auto
      apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
@@ -4319,7 +4319,7 @@ proof
         using f_def[abs_def] bounded_clinear_cinner_right by blast
       hence \<open>Cauchy (\<lambda> n. f (X n))\<close>
         using that
-        by (simp add: bounded_clinear_Cauchy) 
+        by (simp add: bounded_clinear.Cauchy) 
       thus ?thesis
         unfolding f_def by blast
     qed
@@ -5328,7 +5328,7 @@ proof-
       using basis_def closure_UNIV is_generator_set
       by (metis )
     moreover have "closure (cspan basis) = cspan basis"
-      by (simp add: basis_def span_finite_dim)        
+      by (simp add: basis_def closure_finite_cspan)        
     ultimately have "cspan basis = UNIV"
       by blast
     hence f2: "x \<in> cspan basis"
@@ -5545,19 +5545,19 @@ proof-
   have IH0: "distinct S"
     using a2 by auto   
   have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: span_finite_dim)    
+    by (simp add: closure_finite_cspan)    
   have d: "cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
     using complex_vector.span_insert[where a = a and S = "(set S)"].
   moreover have "finite (insert a (set S))"
     by simp    
   ultimately have "closure (cspan (insert a (set S))) = 
         cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis complex_vector.span_span span_finite_dim)
+    by (metis complex_vector.span_span closure_finite_cspan)
   hence s2: "space_as_set (Abs_clinear_space (closure (cspan (insert a (set S))))) 
         = cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
     by (metis ccspan.rep_eq space_as_set_inverse)
   have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: span_finite_dim)    
+    by (simp add: closure_finite_cspan)    
   have ios: "is_ortho_set (set S)"
     by (simp add: IH')    
   have aS: "a \<notin> set S"
@@ -5593,14 +5593,14 @@ proof-
                +  cBlinfun (\<lambda>u. projection (cspan (set S)) u)"
     unfolding plus_cblinfun_def apply auto
     by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq ccspan.rep_eq
-        cblinfun_apply_inverse finite.emptyI finite_list span_finite_dim)
+        cblinfun_apply_inverse finite.emptyI finite_list closure_finite_cspan)
   also have "\<dots> = Proj (Abs_clinear_space (cspan {a}))
                +  Proj (Abs_clinear_space (cspan (set S)))"
     unfolding Proj_def apply auto
     by (metis ccspan.rep_eq \<open>closure (cspan (set S)) = cspan (set S)\<close> finite.emptyI 
-        finite.insertI space_as_set_inverse span_finite_dim)
+        finite.insertI space_as_set_inverse closure_finite_cspan)
   also have "\<dots> = Proj (ccspan {a}) + Proj (ccspan (set S))"
-    by (simp add: ccspan.abs_eq span_finite_dim)
+    by (simp add: ccspan.abs_eq closure_finite_cspan)
   finally show "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))".
 qed
 

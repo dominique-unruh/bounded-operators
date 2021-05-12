@@ -745,7 +745,7 @@ lemma vec_of_onb_enum_add:
 proof-
   have "cspan
          (set (canonical_basis::'a list)) = UNIV"
-    using span_finite_dim is_generator_set
+    using closure_finite_cspan is_generator_set
     by simp
   hence "crepresentation (set (canonical_basis::'a list)) (b1+b2) i
       = crepresentation (set (canonical_basis::'a list)) b1 i + 
@@ -814,7 +814,7 @@ lemma vec_of_onb_enum_scaleC:
 proof-
   have "cspan
          (set (canonical_basis::'a list)) = UNIV"    
-    using span_finite_dim is_generator_set
+    using closure_finite_cspan is_generator_set
     by simp
   hence "crepresentation (set (canonical_basis::'a list)) (c *\<^sub>C b) i
       = c *\<^sub>C (crepresentation (set (canonical_basis::'a list)) b i)" for i
@@ -1514,7 +1514,7 @@ proof-
   moreover have "complex_vector.span basisA = UNIV"
   proof-
     have "closure (cspan basisA) = cspan basisA"
-      by (simp add: basisA_def span_finite_dim)
+      by (simp add: basisA_def closure_finite_cspan)
     thus ?thesis
       using BasisA_def basisA_def is_generator_set
         by (metis BasisA_def basisA_def  is_generator_set)
@@ -2736,7 +2736,7 @@ proof (transfer fixing: n ws onb_enum)
   define gs where "gs = gram_schmidt0 n ws"
   have "closure (cspan (set (map onb_enum gs)))
      = cspan (set (map onb_enum gs))"
-    apply (rule span_finite_dim)
+    apply (rule closure_finite_cspan)
     by simp
   also have "\<dots> = cspan (onb_enum ` set gs)"
     by simp
@@ -2757,7 +2757,7 @@ proof (transfer fixing: n ws onb_enum)
   also have "\<dots> = cspan (set (map onb_enum ws))"
     by simp
   also have "\<dots> = closure (cspan (set (map onb_enum ws)))"
-    apply (rule span_finite_dim[symmetric])
+    apply (rule closure_finite_cspan[symmetric])
     by simp
   finally show "closure (cspan (set (map onb_enum gs)))
               = closure (cspan (set (map onb_enum ws)))".
@@ -3054,7 +3054,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
@@ -3184,7 +3184,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
@@ -3315,7 +3315,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span span_finite_dim
+          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
@@ -3705,7 +3705,7 @@ next
          (\<langle>a, (canonical_basis::'a list) ! j\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a"
       using projection_rank1[where t = a and x = "(canonical_basis::'a list)!j"] False
       apply transfer
-      by (simp add: span_finite_dim)
+      by (simp add: closure_finite_cspan)
     have x2: "(mat_of_cblinfun (proj a)) $$ (i, j) =
         \<langle>(canonical_basis::'a list) ! i, 
           proj a *\<^sub>V (canonical_basis::'a list) ! j\<rangle>"
@@ -3989,8 +3989,8 @@ proof -
 
   have "ccspan (set A) \<le> ccspan (set B) \<longleftrightarrow> cspan (set A) \<subseteq> cspan (set B)"
     apply (transfer fixing: A B)
-    apply (subst span_finite_dim, simp)
-    by (subst span_finite_dim, simp_all)
+    apply (subst closure_finite_cspan, simp)
+    by (subst closure_finite_cspan, simp_all)
   also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bv)"
     apply (simp add: Av_def Bv_def)
     apply (subst module_span_cspan, simp add: d_def)

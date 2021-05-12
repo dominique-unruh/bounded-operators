@@ -537,7 +537,7 @@ proof -
     using base_carrier by auto
 
   also have "\<dots> = cspan (onb_enum_of_vec ` set base)"
-    apply transfer apply (subst span_finite_dim)
+    apply transfer apply (subst closure_finite_cspan)
     by simp_all
 
   also have "\<dots> = onb_enum_of_vec ` span (set base)"
