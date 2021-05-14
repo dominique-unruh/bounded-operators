@@ -5566,7 +5566,7 @@ proof-
         = projection (cspan {a}) u
         + projection (cspan (set S)) u"
     for u   
-  proof (rule projection_insert)
+  proof (rule projection_insert_finite)
     show "\<langle>a, s\<rangle> = 0"
       if "s \<in> set S"
       for s :: 'a

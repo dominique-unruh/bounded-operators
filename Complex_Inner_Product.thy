@@ -2286,10 +2286,6 @@ lemma cinner_extensionality:
   shows \<open>\<psi> = \<phi>\<close>
   by (metis assms cinner_commute' riesz_frechet_representation_unique)
 
-(* TODO move *)
-lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
-  by (rule inf_ccsubspace.rep_eq)
-
 (* 
 Use space_as_set_inf instead
 lemma clinear_space_member_inf[simp]:
@@ -2490,11 +2486,15 @@ lemma projection_singleton:
   shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" *)
 
 
-(* TODO rename from here *)
+lemma is_orthogonal_closure: 
+  assumes \<open>\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a  s\<close>
+  assumes \<open>x \<in> closure S\<close> 
+  shows \<open>is_orthogonal a x\<close>
+  by (metis assms(1) assms(2) orthogonal_complementI orthogonal_complement_of_closure orthogonal_complement_orthoI)
 
-lemma ortho_cspan:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::complex_inner set)"
-    and a3: "x \<in> cspan S"
+
+lemma is_orthogonal_cspan:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a s" and a3: "x \<in> cspan S"
   shows "\<langle>a, x\<rangle> = 0"
 proof-
   have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
@@ -2515,7 +2515,6 @@ proof-
 qed
 
 
-(* TODO: similar lemma using "projection" as corollary *)
 lemma is_projection_on_plus:
   assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> is_orthogonal x y"
   assumes \<open>closed_csubspace A\<close>
@@ -2570,12 +2569,34 @@ proof -
     by (meson assms(2) assms(3) closed_csubspace.subspace closed_subspace_closed_sum csubspace_is_convex projection_eqI')
 qed
 
+lemma is_projection_on_insert:
+  assumes ortho: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0"
+  assumes \<open>is_projection_on \<pi> (closure (cspan S))\<close>
+  assumes \<open>is_projection_on \<pi>a (cspan {a})\<close>
+  shows "is_projection_on (\<lambda>x. \<pi>a x + \<pi> x) (closure (cspan (insert a S)))"
+proof -
+  from ortho
+  have \<open>x \<in> cspan {a} \<Longrightarrow> y \<in> closure (cspan S) \<Longrightarrow> is_orthogonal x y\<close> for x y
+    using is_orthogonal_cspan is_orthogonal_closure is_orthogonal_sym
+    by (smt (verit, ccfv_threshold) empty_iff insert_iff)
+  then have \<open>is_projection_on (\<lambda>x. \<pi>a x + \<pi> x) (cspan {a} +\<^sub>M closure (cspan S))\<close>
+    apply (rule is_projection_on_plus)
+    using assms by (auto simp add: closed_csubspace.intro)
+  also have \<open>\<dots> = closure (cspan (insert a S))\<close>
+    using closed_sum_cspan[where A=\<open>{a}\<close>] by simp
+  finally show ?thesis
+    by -
+qed
 
 lemma projection_insert:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
-  shows "projection (cspan (insert a S)) u
-        = projection (cspan {a}) u + projection (cspan S) u"
-proof-
+  fixes a :: \<open>'a::chilbert_space\<close>
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" (* and a2: "finite (S::'a::chilbert_space set)" *)
+  shows "projection (closure (cspan (insert a S))) u
+        = projection (cspan {a}) u + projection (closure (cspan S)) u"
+  using is_projection_on_insert[where S=S, OF a1]
+  by (metis (no_types, lifting) closed_closure closed_csubspace.intro closure_is_csubspace complex_vector.subspace_span csubspace_is_convex finite.intros(1) finite.intros(2) finite_cspan_closed_csubspace projection_eqI' projection_is_projection_on')
+
+(*proof-
   define p where "p u = projection (cspan {a}) u
                       + projection (cspan S) u" for u
   define M where "M = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan S}"
@@ -2608,7 +2629,7 @@ proof-
       fix y
       assume "y \<in> cspan S"
       have "\<langle>a, y\<rangle> = 0"
-        using ortho_cspan
+        using is_orthogonal_cspan
           \<open>y \<in> cspan S\<close> a1 a2 by auto
       thus "\<langle>projection (cspan {a}) u, y\<rangle> = 0"
         by (simp add: \<open>projection (cspan {a}) u = (\<langle>a, u\<rangle> / \<langle>a, a\<rangle>) *\<^sub>C a\<close>)         
@@ -2641,7 +2662,7 @@ proof-
         have "projection (cspan S) u \<in> cspan S"
           by (metis a2 finite_cspan_closed_csubspace orthog_proj_exists projection_eqI)
         hence "\<langle>projection (cspan S) u, a\<rangle> = 0"
-          by (meson a1 a2 ortho_cspan orthogonal_complement_orthoI' orthogonal_complementI)          
+          by (meson a1 a2 is_orthogonal_cspan orthogonal_complement_orthoI' orthogonal_complementI)          
         thus "\<langle>projection (cspan S) u, y\<rangle> = 0"
           using ky
           by simp
@@ -2673,8 +2694,14 @@ proof-
       \<open>closed_csubspace M\<close> f1 by auto     
   thus ?thesis
     by (simp add: M_def complex_vector.span_insert p_def) 
-qed
+qed*)
 
+lemma projection_insert_finite:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> \<langle>a, s\<rangle> = 0" and a2: "finite (S::'a::chilbert_space set)"
+  shows "projection (cspan (insert a S)) u
+        = projection (cspan {a}) u + projection (cspan S) u"
+  using projection_insert
+  by (metis a1 a2 closure_finite_cspan finite.insertI) 
 
 subsection \<open>Conjugate space\<close>
 

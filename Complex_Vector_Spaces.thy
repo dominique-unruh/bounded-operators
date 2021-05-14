@@ -503,10 +503,6 @@ qed (simp add: onorm_zero)
 
 subsection \<open>Subspace\<close>
 
-(* TODO: what does this refer to? *)
-\<comment> \<open>The name "linear manifold" came from page 10 in @{cite conway2013course}\<close> 
-
-(* TODO: Should this be a locale? Or just a regular def *)
 locale closed_csubspace =
   fixes A::"('a::{complex_vector,topological_space}) set"
   assumes subspace: "csubspace A"
@@ -1759,8 +1755,9 @@ lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<R
 instance .. 
 end
 
-lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
-proof (transfer, auto)
+lemma closed_sum_cspan:
+  \<open>closure (cspan A) +\<^sub>M closure (cspan B) = closure (cspan (A \<union> B))\<close> for A B :: \<open>'a::complex_normed_vector set\<close>
+proof auto
   have p0: "cspan (A \<union> B) = 
       cspan A + cspan B"
     for A B::"'a set"
@@ -1804,6 +1801,8 @@ proof (transfer, auto)
   qed
 qed
 
+lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
+  apply  transfer by (rule closed_sum_cspan)
 
 instantiation ccsubspace :: (complex_normed_vector) "Sup"
 begin
@@ -1831,6 +1830,8 @@ lift_definition inf_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<R
   is "(\<inter>)" by simp
 instance .. end
 
+lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
+  by (rule inf_ccsubspace.rep_eq)
 
 instantiation ccsubspace :: ("{complex_vector,topological_space}") order_top begin
 instance 
