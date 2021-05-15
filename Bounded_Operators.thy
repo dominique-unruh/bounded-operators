@@ -1764,7 +1764,7 @@ proof
       by (simp add: onorm_strong)
     then have \<open>(\<lambda>n. c *\<^sub>C (f' n *\<^sub>v x)) \<longlonglongrightarrow> c *\<^sub>C (l' *\<^sub>v x)\<close>
       apply (rule tendsto_compose[rotated])
-      by (simp add: isContD isCont_scaleC)
+      by (simp add: isContD)
     moreover from f'x have \<open>(\<lambda>n. f' n *\<^sub>v c *\<^sub>C x) \<longlonglongrightarrow> l' *\<^sub>v c *\<^sub>C x\<close>
       by auto
     ultimately show ?thesis
@@ -3645,7 +3645,7 @@ lemma cblinfun_apply_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *
 
 
 lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L'a\<close> is
-  \<open>\<lambda>\<psi> \<phi>. one_dim_isom \<phi> *\<^sub>C \<psi>\<close>
+  \<open>\<lambda>\<psi> \<phi>. one_dim_iso \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: bounded_clinear_scaleC_const)
 
 lemma vector_to_cblinfun_applyOp: 
@@ -3833,31 +3833,31 @@ qed
 
 lemma vector_to_cblinfun_times_vec[simp]:
   includes cblinfun_notation
-  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_isom \<gamma> *\<^sub>C \<phi>"
+  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_iso \<gamma> *\<^sub>C \<phi>"
   apply transfer by (rule refl)
 
 lemma vector_to_cblinfun_adj_times_vec[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
 proof -
-  have "one_dim_isom (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) 
+  have "one_dim_iso (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) 
         = cinner 1 (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a)"
-    by (simp add: one_dim_isom_def)
+    by (simp add: one_dim_iso_def)
   also have *: "\<dots> = cinner (vector_to_cblinfun \<psi> *\<^sub>V (1::'a)) \<phi>"
     by (metis adjoint_I adjoint_twice)
   also have "\<dots> = \<langle>\<psi>, \<phi>\<rangle>"
     by simp
-  finally have "one_dim_isom (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>"
+  finally have "one_dim_iso (vector_to_cblinfun \<psi>* *\<^sub>V \<phi> :: 'a) = \<langle>\<psi>, \<phi>\<rangle>"
     using "*" by auto
   thus ?thesis
-    by (metis one_dim_isom_eq_of_complex one_dim_isom_inverse)
+    by (metis of_complex_def one_dim_scaleC_1)
 qed
 
 instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
 text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
   and make cblinfun and relax the \<^class>\<open>one_dim\<close>-sort constraint\<close>
 definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)
-             = cnj (one_dim_isom (A *\<^sub>V 1)) * one_dim_isom (B *\<^sub>V 1)"
+             = cnj (one_dim_iso (A *\<^sub>V 1)) * one_dim_iso (B *\<^sub>V 1)"
 instance
 proof intro_classes
   fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -3872,7 +3872,7 @@ proof intro_classes
     unfolding cinner_cblinfun_def by auto
   have "bounded_clinear A \<Longrightarrow> A 1 = 0 \<Longrightarrow> A = (\<lambda>_. 0)"
     for A::"'a \<Rightarrow> 'b"
-  proof (rule one_dim_linear_eq [where x = 1] , auto)
+  proof (rule one_dim_clinear_eqI [where x = 1] , auto)
     show "clinear A"
       if "bounded_clinear A"
         and "A 1 = 0"
@@ -3888,8 +3888,8 @@ proof intro_classes
   qed
   hence "A *\<^sub>V 1 = 0 \<Longrightarrow> A = 0"
     by transfer
-  hence "one_dim_isom (A *\<^sub>V 1) = 0 \<Longrightarrow> A = 0"
-    by (metis one_dim_isom_0 one_dim_isom_inj)    
+  hence "one_dim_iso (A *\<^sub>V 1) = 0 \<Longrightarrow> A = 0"
+    by (metis one_dim_iso_of_zero one_dim_iso_inj)    
   thus "(\<langle>A, A\<rangle> = 0) = (A = 0)"
     by (auto simp: cinner_cblinfun_def)
 
@@ -3901,13 +3901,13 @@ qed
 end
 
 instantiation cblinfun :: (one_dim, one_dim) one_dim begin
-lift_definition one_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "one_dim_isom"
-  by (rule bounded_clinear_one_dim_isom)
+lift_definition one_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "one_dim_iso"
+  by (rule bounded_clinear_one_dim_iso)
 lift_definition times_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-  is "\<lambda>f g. f o one_dim_isom o g"
+  is "\<lambda>f g. f o one_dim_iso o g"
   by (simp add: comp_bounded_clinear)
 lift_definition inverse_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is
-  "\<lambda>f. ((*) (one_dim_isom (inverse (f 1)))) o one_dim_isom"
+  "\<lambda>f. ((*) (one_dim_iso (inverse (f 1)))) o one_dim_iso"
   by (auto intro!: comp_bounded_clinear bounded_clinear_mult_right)
 definition divide_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" where
   "divide_cblinfun A B = A * inverse B"
@@ -3921,7 +3921,7 @@ proof intro_classes
   show "distinct ?basis"
     unfolding canonical_basis_cblinfun_def by simp
   have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<noteq> (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
-    by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom_one zero_neq_one)
+    by (metis applyOp0 one_cblinfun.rep_eq one_dim_iso_of_one zero_neq_one)
   thus "cindependent (set ?basis)"
     unfolding canonical_basis_cblinfun_def by simp
 
@@ -3929,10 +3929,10 @@ proof intro_classes
 
   have "A \<in> cspan (set ?basis)" for A
   proof -
-    define c :: complex where "c = one_dim_isom (A *\<^sub>V 1)"
-    have "A x = one_dim_isom (A 1) *\<^sub>C one_dim_isom x" for x
-      by (smt (z3) applyOp_scaleC2 complex_vector.scale_left_commute one_dim_isom_idem one_dim_scaleC_1)
-    hence "A = one_dim_isom (A *\<^sub>V 1) *\<^sub>C 1"
+    define c :: complex where "c = one_dim_iso (A *\<^sub>V 1)"
+    have "A x = one_dim_iso (A 1) *\<^sub>C one_dim_iso x" for x
+      by (smt (z3) applyOp_scaleC2 complex_vector.scale_left_commute one_dim_iso_idem one_dim_scaleC_1)
+    hence "A = one_dim_iso (A *\<^sub>V 1) *\<^sub>C 1"
       apply transfer by metis
     thus "A \<in> cspan (set ?basis)"
       unfolding canonical_basis_cblinfun_def
@@ -3956,7 +3956,7 @@ proof intro_classes
   show "c *\<^sub>C 1 * c' *\<^sub>C 1 = (c * c') *\<^sub>C (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
     apply transfer by auto
   have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow> False"
-    by (metis applyOp0 one_cblinfun.rep_eq one_dim_isom_0' zero_neq_neg_one)
+    by (metis applyOp0 one_cblinfun.rep_eq one_dim_iso_of_zero' zero_neq_neg_one)
   thus "is_ortho_set (set ?basis)"
     unfolding is_ortho_set_def canonical_basis_cblinfun_def by auto
   show "A div B = A * inverse B"
@@ -3982,7 +3982,8 @@ proof (rule adjoint_D [symmetric])
   show "\<langle>1 *\<^sub>V x, y\<rangle> = \<langle>x, 1 *\<^sub>V y\<rangle>"
     for x :: 'a
       and y :: 'b
-    apply transfer by (rule one_dim_isom_adjoint)
+    apply transfer
+    by (simp add: of_complex_def one_dim_iso_def)
 qed
 
 
@@ -3994,12 +3995,12 @@ lemma one_vector_to_cblinfun[simp]:
 
 lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
 proof transfer
-  have "bounded_clinear (one_dim_isom::'a \<Rightarrow> complex)"
+  have "bounded_clinear (one_dim_iso::'a \<Rightarrow> complex)"
     by simp    
-  moreover have "onorm (one_dim_isom::'a \<Rightarrow> complex) * norm x = norm x"
+  moreover have "onorm (one_dim_iso::'a \<Rightarrow> complex) * norm x = norm x"
     for x :: 'b
     by simp
-  ultimately show "onorm (\<lambda>\<phi>. one_dim_isom (\<phi>::'a) *\<^sub>C x) = norm x"
+  ultimately show "onorm (\<lambda>\<phi>. one_dim_iso (\<phi>::'a) *\<^sub>C x) = norm x"
     for x :: 'b
     by (subst onorm_scaleC_left)
 qed
@@ -4377,17 +4378,17 @@ lemma vector_to_cblinfun_adj_times_vector_to_cblinfun[simp]:
   includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C idOp"
 proof -
-  have "one_dim_isom \<gamma> *\<^sub>C one_dim_isom (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
-    \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_isom \<gamma>"
+  have "one_dim_iso \<gamma> *\<^sub>C one_dim_iso (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
+    \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_iso \<gamma>"
     for \<gamma> :: "'c::one_dim"      
-    by (metis complex_vector.scale_left_commute of_complex_def one_dim_isom_one one_dim_isom_scaleC one_dim_scaleC_1)
-  hence "one_dim_isom ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
-      = one_dim_isom ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
+    by (metis complex_vector.scale_left_commute of_complex_def one_dim_iso_of_one one_dim_iso_scaleC one_dim_scaleC_1)
+  hence "one_dim_iso ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
+      = one_dim_iso ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
     by (simp add: times_applyOp)
   hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C idOp) *\<^sub>V \<gamma>)" 
     for \<gamma> :: "'c::one_dim"
-    by (rule one_dim_isom_inj)
+    by (rule one_dim_iso_inj)
   thus ?thesis
     using  cblinfun_ext[where A = "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>"
         and B = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C idOp"]
@@ -5090,11 +5091,12 @@ proof -
     by auto
 qed
 
+(* Use finite_cspan_complete instead
 lemma finite_complex_span_complete: 
   fixes B :: "'a::complex_normed_vector set"
   assumes "finite B"
   shows "complete (complex_vector.span B)"
-  by (simp add: assms finite_cspan_complete)
+*)
 
 
 lemma cblinfun_operator_S_zero_uniq_span:
@@ -5724,13 +5726,12 @@ lemma isometry_vector_to_cblinfun:
 
 lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = ccspan {x}"
 proof transfer
-  show "closure (range (\<lambda>\<phi>::'b. one_dim_isom \<phi> *\<^sub>C x)) = closure (cspan {x})"
+  show "closure (range (\<lambda>\<phi>::'b. one_dim_iso \<phi> *\<^sub>C x)) = closure (cspan {x})"
     for x :: 'a
   proof (rule arg_cong [where f = closure])
-    have "k *\<^sub>C x \<in> range (\<lambda>\<phi>. one_dim_isom \<phi> *\<^sub>C x)"
-      for k
-      by (smt one_dim_isom_inverse range_eqI)
-    thus "range (\<lambda>\<phi>. one_dim_isom (\<phi>::'b) *\<^sub>C x) = cspan {x}"
+    have "k *\<^sub>C x \<in> range (\<lambda>\<phi>. one_dim_iso \<phi> *\<^sub>C x)" for k
+      by (smt (z3) id_apply one_dim_iso_id one_dim_iso_idem range_eqI)
+    thus "range (\<lambda>\<phi>. one_dim_iso (\<phi>::'b) *\<^sub>C x) = cspan {x}"
       unfolding complex_vector.span_singleton
       by auto
   qed
@@ -5789,20 +5790,20 @@ lemma cbilinear_timesOp[simp]: "cbilinear timesOp"
   by (auto intro!: clinearI simp add: cbilinear_def cblinfun_apply_dist1 cblinfun_apply_dist2)
 
 
-lemma one_dim_isom_idOp[simp]: \<open>one_dim_isom idOp = (1::complex)\<close>
-  by (metis one_dim_idOp one_dim_isom_one)
+lemma one_dim_iso_idOp[simp]: \<open>one_dim_iso idOp = (1::complex)\<close>
+  by (metis one_dim_idOp one_dim_iso_of_one)
 
-lemma one_dim_isom_cblinfun_apply[simp]: \<open>one_dim_isom (a o\<^sub>C\<^sub>L b) = one_dim_isom b o\<^sub>C\<^sub>L one_dim_isom a\<close>
-  by (smt (z3) of_complex_def one_comp_one_cblinfun one_dim_1_times_a_eq_a one_dim_isom_def one_dim_isom_scaleC op_scalar_op scalar_op_op)
+lemma one_dim_iso_cblinfun_apply[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso b o\<^sub>C\<^sub>L one_dim_iso a\<close>
+  by (smt (z3) of_complex_def one_comp_one_cblinfun one_cinner_a_scaleC_one one_dim_iso_def one_dim_iso_scaleC op_scalar_op scalar_op_op)
 
-lemma one_dim_isom_cblinfun_apply_complex[simp]: \<open>one_dim_isom (a o\<^sub>C\<^sub>L b) = one_dim_isom b * one_dim_isom a\<close>
-  by (smt (z3) complex_scaleC_def one_comp_one_cblinfun one_dim_1_times_a_eq_a one_dim_isom_def one_dim_isom_of_complex one_dim_isom_one one_dim_isom_scaleC one_dim_prod op_scalar_op scalar_op_op)
+lemma one_dim_iso_cblinfun_apply_complex[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso b * one_dim_iso a\<close>
+  by (smt (verit, del_insts) mult.left_neutral mult_scaleC_left one_cinner_a_scaleC_one one_comp_one_cblinfun one_dim_iso_of_one one_dim_iso_scaleC op_scalar_op scalar_op_op)
 
-lemma one_dim_isom_adjoint[simp]: \<open>one_dim_isom (A*) = (one_dim_isom A)*\<close>
-  by (smt (z3) one_cblinfun_adj one_dim_1_times_a_eq_a one_dim_isom_one one_dim_isom_scaleC scalar_times_adj)
+lemma one_dim_iso_adjoint[simp]: \<open>one_dim_iso (A*) = (one_dim_iso A)*\<close>
+  by (smt (z3) one_cblinfun_adj one_cinner_a_scaleC_one one_dim_iso_of_one one_dim_iso_scaleC scalar_times_adj)
 
-lemma one_dim_isom_adjoint_complex[simp]: \<open>one_dim_isom (A*) = cnj (one_dim_isom A)\<close>
-  by (metis (mono_tags, lifting) one_cblinfun_adj one_dim_isom_idem one_dim_scaleC_1 scalar_times_adj)
+lemma one_dim_iso_adjoint_complex[simp]: \<open>one_dim_iso (A*) = cnj (one_dim_iso A)\<close>
+  by (metis (mono_tags, lifting) one_cblinfun_adj one_dim_iso_idem one_dim_scaleC_1 scalar_times_adj)
 
 
 unbundle no_cblinfun_notation
