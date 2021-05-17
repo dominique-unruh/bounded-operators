@@ -2008,7 +2008,92 @@ lemma cinner_continuous_left:
 (* lemma closed_line:
   \<open>closed {c *\<^sub>C (k::'a::complex_inner)| c. True}\<close> *)
 
+lemma orthonormal_basis_of_cspan:
+  fixes S::"'a::complex_inner set"
+  assumes "finite S"
+  shows "\<exists>A. is_ortho_set A \<and> (\<forall>x\<in>A. norm x = 1) \<and> cspan A = cspan S \<and> finite A"
+proof (use assms in induction)
+  case empty
+  show ?case
+    apply (rule exI[of _ "{}"])
+    by auto
+next
+  case (insert s S)
+  from insert.IH
+  obtain A where orthoA: "is_ortho_set A" and normA: "\<And>x. x\<in>A \<Longrightarrow> norm x = 1" and spanA: "cspan A = cspan S" and finiteA: "finite A"
+    by auto
+  show ?case
+  proof (cases \<open>s \<in> cspan S\<close>)
+    case True
+    then have \<open>cspan (insert s S) = cspan S\<close>
+      by (simp add: complex_vector.span_redundant)
+    with orthoA normA spanA finiteA
+    show ?thesis
+      by auto
+  next
+    case False
+    obtain a where a_ortho: \<open>\<And>x. x\<in>A \<Longrightarrow> is_orthogonal x a\<close> and sa_span: \<open>s - a \<in> cspan A\<close>
+    proof (atomize_elim, use \<open>finite A\<close> \<open>is_ortho_set A\<close> in induction)
+      case empty
+      then show ?case
+        by auto
+    next
+      case (insert x A)
+      then obtain a where orthoA: \<open>\<And>x. x \<in> A \<Longrightarrow> is_orthogonal x a\<close> and sa: \<open>s - a \<in> cspan A\<close>
+        by (meson is_ortho_set_antimono subset_insertI)
+      define a' where \<open>a' = a - cinner x a *\<^sub>C inverse (cinner x x) *\<^sub>C x\<close>
+      have \<open>is_orthogonal x a'\<close>
+        unfolding a'_def cinner_diff_right cinner_scaleC_right
+        apply (cases \<open>cinner x x = 0\<close>)
+        by auto
+      have orthoA: \<open>is_orthogonal y a'\<close> if \<open>y \<in> A\<close> for y
+        unfolding a'_def cinner_diff_right cinner_scaleC_right
+        apply auto by (metis insert.prems insertCI is_ortho_set_def mult_not_zero orthoA that)
+      have \<open>s - a' \<in> cspan (insert x A)\<close>
+        unfolding a'_def apply auto
+        by (metis (no_types, lifting) complex_vector.span_breakdown_eq diff_add_cancel diff_diff_add sa)
+      with \<open>is_orthogonal x a'\<close> orthoA
+      show ?case
+        apply (rule_tac exI[of _ a'])
+        by auto
+    qed
 
+    from False sa_span
+    have \<open>a \<noteq> 0\<close>
+      unfolding spanA by auto
+    define a' where \<open>a' = inverse (norm a) *\<^sub>C a\<close>
+    with \<open>a \<noteq> 0\<close> have \<open>norm a' = 1\<close>
+      by (simp add: norm_inverse)
+    have a: \<open>a = norm a *\<^sub>C a'\<close>
+      by (simp add: \<open>a \<noteq> 0\<close> a'_def)
+
+    from sa_span spanA
+    have a'_span: \<open>a' \<in> cspan (insert s S)\<close>
+      unfolding a'_def
+      by (metis complex_vector.eq_span_insert_eq complex_vector.span_scale complex_vector.span_superset in_mono insertI1)
+    from sa_span
+    have s_span: \<open>s \<in> cspan (insert a' A)\<close>
+      apply (subst (asm) a)
+      using complex_vector.span_breakdown_eq by blast
+
+    from \<open>a \<noteq> 0\<close> a_ortho orthoA
+    have ortho: "is_ortho_set (insert a' A)"
+      unfolding is_ortho_set_def a'_def
+      apply auto
+      by (meson is_orthogonal_sym)
+
+    have span: \<open>cspan (insert a' A) = cspan (insert s S)\<close>
+      using a'_span s_span spanA apply auto
+      apply (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
+      by (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
+
+    show ?thesis
+      apply (rule exI[of _ \<open>insert a' A\<close>])
+      by (simp add: ortho \<open>norm a' = 1\<close> normA finiteA span)
+  qed
+qed
+
+(* TODO remove, use orthonormal_basis_of_cspan *)
 lemma orthogonal_basis_of_cspan:
   fixes S::"'a::complex_inner set"
   assumes a1: "finite S"
@@ -2016,8 +2101,7 @@ lemma orthogonal_basis_of_cspan:
 proof -
   have  \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n
        \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
-           \<and> 0 \<notin> A \<and> finite A)\<close> for n
+           \<and> cspan A = cspan S \<and> 0 \<notin> A \<and> finite A)\<close> for n
   proof (induction n)
     case 0 thus ?case using card_0_eq by auto 
   next
@@ -2035,7 +2119,7 @@ proof -
         using S'1 S'2 S'3 b3 by auto
       have \<open>\<exists>A'. (\<forall>a\<in>A'. \<forall>a'\<in>A'. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
           complex_vector.span A' = complex_vector.span S' \<and> 0 \<notin> A' \<and> finite A'\<close>
-        using Suc.IH S'1 S'3 s1 b1 by blast                  
+        using Suc.IH S'1 S'3 s1 b1 by blast
       then obtain A'::\<open>'a set\<close> where A'_def1: \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
         A'_def2: \<open>complex_vector.span A' = complex_vector.span S'\<close> and A'_def3: \<open>0 \<notin> A'\<close> 
         and A'_def4:\<open>finite A'\<close>
@@ -2285,6 +2369,11 @@ lemma cinner_extensionality:
   assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
   shows \<open>\<psi> = \<phi>\<close>
   by (metis assms cinner_commute' riesz_frechet_representation_unique)
+
+lemma cinner_extensionality':
+  assumes \<open>\<And>\<gamma>. \<langle>\<psi>, \<gamma>\<rangle> = \<langle>\<phi>, \<gamma>\<rangle>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+  by (metis assms riesz_frechet_representation_unique)
 
 (* TODO move *)
 lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
