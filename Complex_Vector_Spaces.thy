@@ -279,7 +279,7 @@ qed
 lemma (in bounded_sesquilinear) comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
-lemma scalarR_bounded_clinear:
+lemma scalarR_bounded_clinear: (* TODO rename \<rightarrow> bounded_clinear_const_scaleR *)
   fixes c :: real
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
@@ -2588,6 +2588,6 @@ lemma ccspan_superset:
   apply transfer
   by (meson closure_subset complex_vector.span_superset subset_trans)
 
-
+(* TODO move the following into right sections *)
 
 end
