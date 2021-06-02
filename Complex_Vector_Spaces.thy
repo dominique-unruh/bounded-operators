@@ -2462,10 +2462,10 @@ instance
 end
 
 
-lemma antilinear_to_conjugate_space: \<open>antilinear to_conjugate_space\<close>
+lemma antilinear_to_conjugate_space[simp]: \<open>antilinear to_conjugate_space\<close>
   by (rule antilinearI; transfer, auto)
 
-lemma antilinear_from_conjugate_space: \<open>antilinear from_conjugate_space\<close>
+lemma antilinear_from_conjugate_space[simp]: \<open>antilinear from_conjugate_space\<close>
   by (rule antilinearI; transfer, auto)
 
 lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conjugate_space ` cspan X"

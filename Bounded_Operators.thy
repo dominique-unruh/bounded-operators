@@ -2399,7 +2399,7 @@ lemma equal_span:
   by (metis complex_vector.linear_eq_on_span) 
 
 lemma equal_span_applyOpSpace:
-  fixes A B :: "'a::cbanach \<Rightarrow> 'b::complex_normed_vector"
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
     eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
   shows \<open>A t = B t\<close>
