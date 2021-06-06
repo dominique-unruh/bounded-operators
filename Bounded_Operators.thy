@@ -1243,7 +1243,7 @@ lemma equal_span:
   by (metis complex_vector.linear_eq_on_span) 
 
 lemma equal_span_applyOpSpace:
-  fixes A B :: "'a::cbanach \<Rightarrow> 'b::complex_normed_vector"
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
   assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
     eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
   shows \<open>A t = B t\<close>
@@ -3915,7 +3915,7 @@ lemma cblinfun_operator_basis_zero_uniq:
   using cblinfun_operator_S_zero_uniq_span
   by (metis UNIV_I a1 a2 a4 applyOp0 cblinfun_ext)
 
-
+(* TODO is duplicate *)
 lemma is_ortho_set_cindependent:
   assumes a1: "is_ortho_set A"
   shows "cindependent A"
@@ -4406,9 +4406,14 @@ lemma butterfly_times_right: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butt
   unfolding butterfly_def'
   by (simp add: cblinfun_apply_assoc vector_to_cblinfun_applyOp)  
 
-lemma butterfly_apply: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
+lemma butterfly_apply[simp]: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
   by (simp add: butterfly_def' times_applyOp)
 
+lemma butterfly_times[simp]: "butterfly \<psi>1 \<psi>2 o\<^sub>C\<^sub>L butterfly \<psi>3 \<psi>4 = \<langle>\<psi>2, \<psi>3\<rangle> *\<^sub>C butterfly \<psi>1 \<psi>4"
+  unfolding butterfly_def'
+  apply (subst cblinfun_apply_assoc)
+  apply (subst (2) cblinfun_apply_assoc[symmetric])
+  by simp
 
 lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
   by (metis cblinfun_apply_to_zero cblinfun_compose0 vector_to_cblinfun_applyOp)
@@ -4454,6 +4459,9 @@ lemma butterfly_scaleR1: "butterfly (r *\<^sub>R \<psi>) \<phi> = r *\<^sub>C bu
 
 lemma butterfly_scaleR2: "butterfly \<psi> (r *\<^sub>R \<phi>) = r *\<^sub>C butterfly \<psi> \<phi>"
   by (simp add: butterfly_scaleC2 scaleR_scaleC)
+
+lemma butterfly_adjoint[simp]: "(butterfly \<psi> \<phi>)* = butterfly \<phi> \<psi>"
+  unfolding butterfly_def' by auto
 
 lemma inj_selfbutter: 
   assumes "selfbutter x = selfbutter y"
