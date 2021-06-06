@@ -1562,7 +1562,7 @@ proof-
   qed
   ultimately have "sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)
       = (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)"
-    by (metis BasisB_def distinct_canonical_basis onb_enum_of_vec_expansion)
+    by (metis (full_types) BasisB_def distinct_canonical_basis onb_enum_of_vec_expansion)
   hence "\<langle>BasisB!iB, sum_list (map2 (*\<^sub>C) (list_of_vec v) BasisB)\<rangle> 
       =  \<langle>BasisB!iB, (\<Sum>iB=0..<nB. (list_of_vec v)!iB *\<^sub>C BasisB!iB)\<rangle>"
     by simp
