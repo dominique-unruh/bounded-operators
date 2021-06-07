@@ -2505,6 +2505,8 @@ end
 
 instantiation ccsubspace :: ("{complex_vector,t1_space}") zero begin
 definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = bot"
+lemma zero_ccsubspace_transfer[transfer_rule]: \<open>pcr_ccsubspace (=) {0} 0\<close>
+  unfolding zero_ccsubspace_def by transfer_prover
 instance ..
 end
 
