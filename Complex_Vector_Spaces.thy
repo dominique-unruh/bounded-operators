@@ -193,8 +193,8 @@ proof
     by (rule bounded_linear.bounded)
 qed
 
-lemma (in bounded_cbilinear) bounded_bilinear: "bounded_bilinear prod"
-  by (simp add: bounded_bilinear_axioms)
+(* lemma (in bounded_cbilinear) bounded_bilinear: "bounded_bilinear prod"
+  by (simp add: bounded_bilinear_axioms) *)
 
 lemma bij_clinear_imp_inv_clinear: "clinear (inv f)"
   if a1: "clinear f" and a2: "bij f"
@@ -221,7 +221,7 @@ sublocale bounded_sesquilinear \<subseteq> bounded_bilinear
   apply standard
   by (auto simp: add_left add_right scaleC_left scaleC_right bounded scaleR_scaleC)
 
-lemma (in bounded_sesquilinear) bounded_bilinear: "bounded_bilinear prod" 
+lemma (in bounded_sesquilinear) bounded_bilinear[simp]: "bounded_bilinear prod" 
   by (fact bounded_bilinear_axioms)
 
 lemma (in bounded_sesquilinear) bounded_antilinear_left: "bounded_antilinear (\<lambda>a. prod a b)"
@@ -279,7 +279,7 @@ qed
 lemma (in bounded_sesquilinear) comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
-lemma scalarR_bounded_clinear:
+lemma scalarR_bounded_clinear: (* TODO rename \<rightarrow> bounded_clinear_const_scaleR *)
   fixes c :: real
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>
@@ -1339,13 +1339,19 @@ lemma ccsubspace_leI:
     and t2: \<open>finite A\<close>
   shows \<open>(\<lambda> n. (\<Sum>a\<in>A. r a n)) \<longlonglongrightarrow>  (\<Sum>a\<in>A. \<phi> a)\<close> *)
 
-lemmas (in bounded_cbilinear) tendsto = tendsto
+context bounded_cbilinear begin
+interpretation bounded_bilinear prod by simp
+lemmas tendsto = tendsto
+lemmas isCont = isCont
+end
 
-lemmas (in bounded_sesquilinear) tendsto = tendsto
+context bounded_sesquilinear begin
+interpretation bounded_bilinear prod by simp
+lemmas tendsto = tendsto
+lemmas isCont = isCont
+end
 
-lemmas (in bounded_cbilinear) isCont = isCont
 
-lemmas (in bounded_sesquilinear) isCont = isCont
 
 lemmas tendsto_scaleC [tendsto_intros] =
   bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
@@ -2463,10 +2469,10 @@ instance
 end
 
 
-lemma antilinear_to_conjugate_space: \<open>antilinear to_conjugate_space\<close>
+lemma antilinear_to_conjugate_space[simp]: \<open>antilinear to_conjugate_space\<close>
   by (rule antilinearI; transfer, auto)
 
-lemma antilinear_from_conjugate_space: \<open>antilinear from_conjugate_space\<close>
+lemma antilinear_from_conjugate_space[simp]: \<open>antilinear from_conjugate_space\<close>
   by (rule antilinearI; transfer, auto)
 
 lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conjugate_space ` cspan X"
@@ -2588,6 +2594,80 @@ lemma ccspan_superset:
   for A :: \<open>'a::complex_normed_vector set\<close>
   apply transfer
   by (meson closure_subset complex_vector.span_superset subset_trans)
+
+
+subsection \<open>Product is a Complex Vector Space\<close>
+
+(* Follows closely Product_Vector.thy *)
+
+instantiation prod :: (complex_vector, complex_vector) complex_vector
+begin
+
+definition scaleC_prod_def:
+  "scaleC r A = (scaleC r (fst A), scaleC r (snd A))"
+
+lemma fst_scaleC [simp]: "fst (scaleC r A) = scaleC r (fst A)"
+  unfolding scaleC_prod_def by simp
+
+lemma snd_scaleC [simp]: "snd (scaleC r A) = scaleC r (snd A)"
+  unfolding scaleC_prod_def by simp
+
+proposition scaleC_Pair [simp]: "scaleC r (a, b) = (scaleC r a, scaleC r b)"
+  unfolding scaleC_prod_def by simp
+
+instance
+proof
+  fix a b :: complex and x y :: "'a \<times> 'b"
+  show "scaleC a (x + y) = scaleC a x + scaleC a y"
+    by (simp add: scaleC_add_right scaleC_prod_def)
+  show "scaleC (a + b) x = scaleC a x + scaleC b x"
+    by (simp add: Complex_Vector_Spaces.scaleC_prod_def scaleC_left.add)
+  show "scaleC a (scaleC b x) = scaleC (a * b) x"
+    by (simp add: prod_eq_iff)
+  show "scaleC 1 x = x"
+    by (simp add: prod_eq_iff)
+  show \<open>(scaleR :: _ \<Rightarrow> _ \<Rightarrow> 'a*'b) r = (*\<^sub>C) (complex_of_real r)\<close> for r
+    by (auto intro!: ext simp: scaleR_scaleC scaleC_prod_def scaleR_prod_def)
+qed
+
+end
+
+lemma module_prod_scale_eq_scaleC: "module_prod.scale (*\<^sub>C) (*\<^sub>C) = scaleC"
+  apply (rule ext) apply (rule ext)
+  apply (subst module_prod.scale_def)
+  subgoal by unfold_locales
+  by (simp add: scaleC_prod_def)
+
+interpretation complex_vector?: vector_space_prod "scaleC::_\<Rightarrow>_\<Rightarrow>'a::complex_vector" "scaleC::_\<Rightarrow>_\<Rightarrow>'b::complex_vector"
+  rewrites "scale = ((*\<^sub>C)::_\<Rightarrow>_\<Rightarrow>('a \<times> 'b))"
+    and "module.dependent (*\<^sub>C) = cdependent"
+    and "module.representation (*\<^sub>C) = crepresentation"
+    and "module.subspace (*\<^sub>C) = csubspace"
+    and "module.span (*\<^sub>C) = cspan"
+    and "vector_space.extend_basis (*\<^sub>C) = cextend_basis"
+    and "vector_space.dim (*\<^sub>C) = cdim"
+    and "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) = clinear"
+  subgoal by unfold_locales
+  subgoal by (fact module_prod_scale_eq_scaleC)
+  unfolding cdependent_raw_def crepresentation_raw_def csubspace_raw_def cspan_raw_def
+    cextend_basis_raw_def cdim_raw_def clinear_def
+  by (rule refl)+
+
+
+subsection \<open>Copying existing theorems into sublocales\<close>
+
+context bounded_clinear begin
+interpretation bounded_linear f by (rule bounded_linear)
+lemmas continuous = continuous
+lemmas uniform_limit = uniform_limit
+end
+
+context bounded_antilinear begin
+interpretation bounded_linear f by (rule bounded_linear)
+lemmas continuous = continuous
+lemmas uniform_limit = uniform_limit
+end
+
 
 
 

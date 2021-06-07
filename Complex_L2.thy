@@ -2268,7 +2268,7 @@ lemma shift_ket0:
 
 
 (* TODO [simp] *)
-lemma ket_Kronecker_delta_eq:
+lemma ket_Kronecker_delta_eq[simp]:
   \<open>\<langle>ket i, ket i\<rangle> = 1\<close>
 proof-
   have \<open>norm (ket i) = 1\<close>

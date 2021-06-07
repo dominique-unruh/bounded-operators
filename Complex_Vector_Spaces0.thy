@@ -1139,25 +1139,33 @@ locale bounded_cbilinear =
 begin
 
 (* Not present in Real_Vector_Spaces *)
-sublocale bounded_bilinear
+(* TODO: remove? leads to name conflicts upon interpretation of bounded_cbilinear *)
+(* sublocale bounded_bilinear
+  apply standard
+  by (auto simp add: add_left add_right scaleR_scaleC scaleC_left scaleC_right bounded) *)
+
+(* Not present in Real_Vector_Spaces *)
+lemma bounded_bilinear[simp]: "bounded_bilinear prod"
   apply standard
   by (auto simp add: add_left add_right scaleR_scaleC scaleC_left scaleC_right bounded)
 
-(* Inherited from bounded_bilinear: 
-lemma pos_bounded: "\<exists>K>0. \<forall>a b. norm (a ** b) \<le> norm a * norm b * K"
-lemma nonneg_bounded: "\<exists>K\<ge>0. \<forall>a b. norm (a ** b) \<le> norm a * norm b * K"
-lemma additive_right: "additive (\<lambda>b. prod a b)"
-lemma additive_left: "additive (\<lambda>a. prod a b)"
-lemma zero_left: "prod 0 b = 0"
-lemma zero_right: "prod a 0 = 0"
-lemma minus_left: "prod (- a) b = - prod a b"
-lemma minus_right: "prod a (- b) = - prod a b"
-lemma diff_left: "prod (a - a') b = prod a b - prod a' b"
-lemma diff_right: "prod a (b - b') = prod a b - prod a b'"
-lemma sum_left: "prod (sum g S) x = sum ((\<lambda>i. prod (g i) x)) S"
-lemma sum_right: "prod x (sum g S) = sum ((\<lambda>i. (prod x (g i)))) S"
-lemma prod_diff_prod: "(x ** y - a ** b) = (x - a) ** (y - b) + (x - a) ** b + a ** (y - b)"
-*)
+(* Not present in Real_Vector_Spaces. Has only temporary effect (until "end") *)
+interpretation bounded_bilinear prod
+  by simp
+
+lemmas pos_bounded = pos_bounded (* "\<exists>K>0. \<forall>a b. norm (a ** b) \<le> norm a * norm b * K" *)
+lemmas nonneg_bounded = nonneg_bounded (* "\<exists>K\<ge>0. \<forall>a b. norm (a ** b) \<le> norm a * norm b * K" *)
+lemmas additive_right = additive_right (* "additive (\<lambda>b. prod a b)" *)
+lemmas additive_left = additive_left (* "additive (\<lambda>a. prod a b)" *)
+lemmas zero_left = zero_left (* "prod 0 b = 0" *)
+lemmas zero_right = zero_right (* "prod a 0 = 0" *)
+lemmas minus_left = minus_left (* "prod (- a) b = - prod a b" *)
+lemmas minus_right = minus_right (* "prod a (- b) = - prod a b" *)
+lemmas diff_left = diff_left (* "prod (a - a') b = prod a b - prod a' b" *)
+lemmas diff_right = diff_right (* "prod a (b - b') = prod a b - prod a b'" *)
+lemmas sum_left = sum_left (* "prod (sum g S) x = sum ((\<lambda>i. prod (g i) x)) S" *)
+lemmas sum_right = sum_right (* "prod x (sum g S) = sum ((\<lambda>i. (prod x (g i)))) S" *)
+lemmas prod_diff_prod = prod_diff_prod (* "(x ** y - a ** b) = (x - a) ** (y - b) + (x - a) ** b + a ** (y - b)" *)
 
 lemma bounded_clinear_left: "bounded_clinear (\<lambda>a. a ** b)"
 proof -
@@ -1200,7 +1208,7 @@ qed
 lemma comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_cbilinear (\<lambda>x y. f x ** g y)"
   by (rule bounded_cbilinear.flip[OF bounded_cbilinear.comp1[OF bounded_cbilinear.flip[OF comp1]]])
 
-end
+end (* locale bounded_cbilinear *)
 
 lemma bounded_clinear_ident[simp]: "bounded_clinear (\<lambda>x. x)"
   by standard (auto intro!: exI[of _ 1])
