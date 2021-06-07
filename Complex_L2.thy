@@ -2462,100 +2462,6 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-(* lemma trunc_ell2_lim:
-  includes nsa_notation
-  shows \<open>\<exists> S. hypfinite S \<and> ( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-proof-
-  define f where \<open>f = sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)\<close>
-  have \<open>norm x = sqrt (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
-    apply transfer unfolding ell2_norm_def by blast
-  hence \<open>(norm x)^2 = Sup (f ` Collect finite)\<close>
-    unfolding f_def
-    by (smt norm_not_less_zero real_sqrt_ge_0_iff real_sqrt_pow2) 
-  have \<open>Sup (f ` Collect finite) \<in> closure (f ` Collect finite)\<close>
-  proof-
-    have "f ` Collect finite \<noteq> {}"
-      by blast      
-    moreover have "bdd_above (f ` Collect finite)"
-    proof-
-      have \<open>has_ell2_norm (Rep_ell2 x)\<close>
-        using Rep_ell2 by blast
-      thus ?thesis unfolding has_ell2_norm_def f_def
-        by simp
-    qed
-    ultimately show ?thesis 
-      by (simp add: closure_contains_Sup) 
-  qed
-  hence \<open>(norm x)^2 \<in> closure (f ` Collect finite)\<close>
-    by (simp add: \<open>(norm x)\<^sup>2 = Sup (f ` Collect finite)\<close>)
-  hence \<open>\<exists> t\<in>*s* (f ` Collect finite). t \<approx> star_of ((norm x)^2)\<close>
-    using approx_sym nsclosure_I by blast
-  then obtain t where \<open>t\<in>*s* (f ` Collect finite)\<close> and \<open>t \<approx> star_of ((norm x)^2)\<close>
-    by blast
-  from \<open>t\<in>*s* (f ` Collect finite)\<close>
-  have \<open>\<exists> S \<in> ( *s* (Collect finite)). t = ( *f* f) S\<close>
-    by (simp add: image_iff)
-  then obtain S where \<open>S \<in> ( *s* (Collect finite))\<close> and \<open>t = ( *f* f) S\<close>
-    by blast
-  from  \<open>t \<approx> star_of ((norm x)^2)\<close>  \<open>t = ( *f* f) S\<close>
-  have \<open>( *f* f) S \<approx> star_of ((norm x)^2)\<close>
-    by simp
-  hence \<open>( *f* f) S \<approx> (hnorm (star_of x))^2\<close>
-    by simp    
-  have \<open>hypfinite S\<close>
-  proof-
-    have \<open>\<forall> S. S \<in> Collect finite \<longleftrightarrow> finite S\<close>
-      by blast
-    hence \<open>\<forall> S. S \<in>*s* (Collect finite) \<longleftrightarrow> hypfinite S\<close>
-      unfolding hypfinite_def
-      by StarDef.transfer
-    thus ?thesis
-      using \<open>S \<in> *s* Collect finite\<close> by blast 
-  qed
-  moreover have \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-  proof-
-    have \<open>hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
-    proof-
-      have \<open>\<forall> S. (norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
-        by (simp add: trunc_ell2_norm_diff)        
-      hence \<open>\<forall> S. (hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
-        by StarDef.transfer
-      hence \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 = (hnorm (star_of x))^2 - (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
-        by blast
-      moreover have \<open>(hnorm (star_of x))^2 \<approx> (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
-      proof-
-        have \<open>\<forall> S. finite S \<longrightarrow> sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S) = (norm (trunc_ell2 S x))\<close>
-          using trunc_ell2_norm_explicit
-          by metis          
-        hence \<open>\<forall> S. finite S \<longrightarrow> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (norm (trunc_ell2 S x))\<^sup>2\<close>
-          using real_sqrt_eq_iff
-          by (smt norm_le_zero_iff norm_zero real_sqrt_unique)           
-        hence \<open>\<forall> S. hypfinite S \<longrightarrow> ( *f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
-          unfolding hypfinite_def
-          by StarDef.transfer
-        hence \<open>( *f* sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))\<^sup>2\<close>
-          using \<open>hypfinite S\<close> by blast
-        hence \<open>( *f* f) S = (hnorm (( *f2* trunc_ell2) S (star_of x)))^2\<close>
-          unfolding f_def by blast
-        thus ?thesis using \<open>( *f* f) S \<approx> (hnorm (star_of x))^2\<close>
-          by (simp add: approx_reorient)          
-      qed
-      ultimately have \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 \<approx> 0\<close>
-        using approx_minus_iff by auto
-      hence \<open>(hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)))^2 \<in> Infinitesimal\<close>
-        by (simp add: mem_infmal_iff)       
-      hence \<open>hnorm (star_of x - ( *f2* trunc_ell2) S (star_of x)) \<in> Infinitesimal\<close>
-        using infinitesimal_square by blast        
-      thus ?thesis
-        by simp 
-    qed
-    thus ?thesis
-      by (meson Infinitesimal_hnorm_iff approx_sym bex_Infinitesimal_iff) 
-  qed
-  ultimately show ?thesis
-    by blast
-qed *)
-
 (* TODO remove (merge into trunc_ell2_cspan) *)
 lemma trunc_ell2_cspan_induct:
   \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
@@ -2698,40 +2604,6 @@ proof (intro set_eqI iffI UNIV_I closure_approachable[THEN iffD2] allI impI)
   ultimately show \<open>\<exists>\<phi>\<in>cspan (range ket). dist \<phi> \<psi> < e\<close>
     by auto
 qed
-(* proof
-  include nsa_notation
-  show "closure (complex_vector.span (range ket)) \<subseteq> (UNIV::'a ell2 set)"
-    by simp    
-  show "(UNIV::'a ell2 set) \<subseteq> closure (complex_vector.span (range ket))"
-  proof
-    show "(x::'a ell2) \<in> closure (complex_vector.span (range ket))"
-      if "(x::'a ell2) \<in> UNIV"
-      for x :: "'a ell2"
-    proof-
-      have \<open>\<exists> a \<in> *s* (complex_vector.span (range ket)). star_of x \<approx> a\<close>
-      proof-
-        have \<open>\<exists> S. hypfinite S \<and> ( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          using trunc_ell2_lim by auto
-        then obtain S where \<open>hypfinite S\<close> and \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          by blast
-        have \<open>( *f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range ket))\<close>
-        proof-
-          have \<open>\<forall> S. finite S \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-            by (simp add: trunc_ell2_cspan)
-          hence \<open>\<forall> S. hypfinite S \<longrightarrow> ( *f2* trunc_ell2) S (star_of x) \<in> *s* (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-            unfolding hypfinite_def
-            by StarDef.transfer
-          thus ?thesis
-            by (simp add: \<open>hypfinite S\<close>) 
-        qed
-        thus ?thesis using \<open>( *f2* trunc_ell2) S (star_of x) \<approx> star_of x\<close>
-          using approx_sym by blast          
-      qed
-      thus ?thesis using nsclosure_iff
-        by blast
-    qed
-  qed
-qed *)
 
 lemma cspan_ket_finite[simp]: "cspan (range ket :: 'a::finite ell2 set) = UNIV"
   by (metis ket_ell2_span closure_finite_cspan finite_class.finite_UNIV finite_imageI)
@@ -2883,8 +2755,7 @@ proof-
       thus ?thesis by blast
     qed
     thus ?thesis
-      using ccspan.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> applyOpSpace_span
-      by smt
+      using ccspan.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> cblinfun_image_span by blast
   qed
   hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
     by blast
@@ -2892,151 +2763,6 @@ proof-
 qed
 
 
-
-(* lemma superposition_principle_bounded_sesquilinear_ket:
-  \<open>bounded_sesquilinear B \<Longrightarrow> (\<And> i j. B (ket i) (ket j) = 0) \<Longrightarrow> (\<And> x y. B x y = 0)\<close>
- *)
-(* proof-
-  include nsa_notation
-  assume \<open>bounded_sesquilinear B\<close>
-    and \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
-  show \<open>B x y = 0\<close>
-    for x y
-  proof-
-    have \<open>x \<in> closure (complex_vector.span (range ket))\<close>
-      by (metis iso_tuple_UNIV_I ket_ell2_span)      
-    hence \<open>\<exists> u\<in>*s* (complex_vector.span (range ket)). star_of x \<approx> u\<close>
-      using nsclosure_I by blast
-    then obtain u where \<open>u\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of x \<approx> u\<close>
-      by blast
-    have \<open>y \<in> closure (complex_vector.span (range ket))\<close>
-      by (simp add: ket_ell2_span)      
-    hence \<open>\<exists> v\<in>*s* (complex_vector.span (range ket)). star_of y \<approx> v\<close>
-      using nsclosure_I by blast
-    then obtain v where \<open>v\<in>*s* (complex_vector.span (range ket))\<close> and \<open>star_of y \<approx> v\<close>
-      by blast
-    have \<open>( *f2* B) u v = 0\<close>
-    proof-
-      have  \<open>p \<in> (complex_vector.span (range ket)) \<Longrightarrow> q \<in> (complex_vector.span (range ket))
-        \<Longrightarrow> B p q = 0\<close>
-        for p q
-      proof-
-        assume \<open>p \<in> (complex_vector.span (range ket))\<close>
-          and \<open>q \<in> (complex_vector.span (range ket))\<close>
-        define S_left::\<open>('a ell2) set\<close> where \<open>S_left = range (ket)\<close>
-        define S_right::\<open>('b ell2) set\<close> where \<open>S_right = range (ket)\<close>
-        from \<open>\<And> i j. B (ket i) (ket j) = 0\<close>
-        have \<open>\<And>p q. p \<in> S_left \<Longrightarrow> q \<in> S_right \<Longrightarrow> B p q = 0\<close>
-          using S_left_def S_right_def by blast          
-        thus \<open>B p q = 0\<close>
-          using  \<open>bounded_sesquilinear B\<close> sesquilinear_superposition
-            S_left_def S_right_def \<open>p \<in> complex_vector.span (range ket)\<close> 
-            \<open>q \<in> complex_vector.span (range ket)\<close>
-          by smt (* > 1s *)
-      qed
-      hence  \<open>\<forall> p \<in> (complex_vector.span (range ket)). \<forall> q \<in> (complex_vector.span (range ket)). B p q = 0\<close>
-        by blast
-      hence \<open>\<forall> p \<in> *s* (complex_vector.span (range ket)). \<forall> q \<in> *s* (complex_vector.span (range ket)). ( *f2* B) p q = 0\<close>
-        by StarDef.transfer
-      thus ?thesis
-        using \<open>u \<in> *s* cspan (range ket)\<close> \<open>v \<in> *s* cspan (range ket)\<close> by blast 
-    qed
-    moreover have \<open>( *f2* B) (star_of x) (star_of y) \<approx> ( *f2* B) u v\<close>
-      using bounded_sesquilinear_continuous  \<open>bounded_sesquilinear B\<close>
-        \<open>star_of x \<approx> u\<close> \<open>star_of y \<approx> v\<close> by blast
-    ultimately have \<open>( *f2* B) (star_of x) (star_of y) \<approx> 0\<close>
-      by simp
-    hence \<open>( *f2* B) (star_of x) (star_of y) \<in> Infinitesimal\<close>
-      by simp
-    thus \<open>B x y = 0\<close>
-      by simp
-  qed
-qed *)
-
-(* TODO remove (equal_basis below sufficient) *)
-(* lemma equal_basis_0:
-  assumes \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
-  shows \<open>A = 0\<close>
-       *)
-(* proof-
-  include nsa_notation
-  have \<open>x \<in> closure (complex_vector.span (range ket)) \<Longrightarrow> cblinfun_apply A x = 0\<close>
-    for x
-  proof-
-    assume \<open>x \<in> closure (complex_vector.span (range ket))\<close>
-    hence \<open>\<exists> r \<in> *s* (complex_vector.span (range ket)). r \<approx> star_of x\<close>
-      using approx_sym nsclosure_I by blast
-    then obtain r where \<open>r \<in> *s* (complex_vector.span (range ket))\<close> and \<open>r \<approx> star_of x\<close>
-      by blast
-    have \<open>bounded_clinear (cblinfun_apply A)\<close>
-      using cblinfun_apply by blast
-    hence \<open>isCont (cblinfun_apply A) x\<close>
-      by simp
-    hence \<open>isNSCont (cblinfun_apply A) x\<close>
-      by (simp add: isCont_isNSCont)
-    have \<open>x \<in> complex_vector.span (range ket) \<Longrightarrow> cblinfun_apply A x = 0\<close>
-      for x
-    proof-
-      assume \<open>x \<in> complex_vector.span (range ket)\<close>
-      have \<open>\<exists> t r. finite t \<and> t \<subseteq> (range ket) \<and> x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        using complex_vector.span_explicit
-        by (smt \<open>x \<in> complex_vector.span (range ket)\<close> mem_Collect_eq)
-      then obtain t r where  \<open>finite t\<close> and \<open>t \<subseteq> (range ket)\<close> and \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-        by blast
-      from  \<open>x = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
-      have  \<open>cblinfun_apply A x = (\<Sum>a\<in>t. r a *\<^sub>C (cblinfun_apply A a))\<close>
-        unfolding bounded_clinear_def
-        using cblinfun_apply \<open>finite t\<close>
-          Finite_Cartesian_Product.sum_cong_aux assms complex_vector.linear_scale
-          complex_vector.linear_sum
-          \<open>bounded_clinear (cblinfun_apply A)\<close> bounded_clinear.clinear
-        by smt
-      moreover have \<open>\<forall> a\<in>t. r a *\<^sub>C (cblinfun_apply A a) = 0\<close>
-        using \<open>t \<subseteq> (range ket)\<close> \<open>\<And> j. cblinfun_apply A (ket j) = 0\<close>
-          complex_vector.scale_eq_0_iff by blast
-      ultimately show \<open>cblinfun_apply A x = 0\<close>
-        by simp
-    qed
-    hence \<open>\<forall> x \<in> complex_vector.span (range ket). (cblinfun_apply A) x = 0\<close>
-      by blast
-    hence \<open>\<forall> x \<in>*s* (complex_vector.span (range ket)). ( *f* (cblinfun_apply A)) x = 0\<close>
-      by StarDef.transfer
-    hence \<open>( *f* (cblinfun_apply A)) r = 0\<close>
-      using \<open>r \<in> *s* (complex_vector.span (range ket))\<close>
-      by blast
-    moreover have \<open>( *f* (cblinfun_apply A)) r \<approx> ( *f* (cblinfun_apply A)) (star_of x)\<close>
-      using \<open>r \<approx> star_of x\<close> \<open>isNSCont (cblinfun_apply A) x\<close>
-      by (simp add: isNSContD)
-    ultimately have \<open>( *f* (cblinfun_apply A)) (star_of x) \<approx> 0\<close>
-      by simp
-    hence \<open>norm ( (cblinfun_apply A) x ) = 0\<close>
-      by auto
-    thus \<open>cblinfun_apply A x = 0\<close>
-      by auto
-  qed
-  moreover have \<open>closure (complex_vector.span (range ket)) = UNIV\<close>
-    by (simp add: ket_ell2_span)        
-  ultimately have \<open>cblinfun_apply A x = 0\<close>
-    for x
-    by blast
-  hence \<open>cblinfun_apply A = (\<lambda> _. 0)\<close>
-    by blast
-  thus ?thesis using cblinfun_apply_inject
-    by fastforce 
-qed *)
-
-(* lemma equal_ket:
-  assumes \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
-  shows \<open>A = B\<close>
-proof-
-  have \<open>\<And> j. cblinfun_apply A (ket j) - cblinfun_apply B (ket j) = 0\<close>
-    using \<open>\<And> j. cblinfun_apply A (ket j) = cblinfun_apply B (ket j)\<close> by simp
-  hence \<open>\<And> j. cblinfun_apply (A - B) (ket j) = 0\<close>
-    by (simp add: minus_cblinfun.rep_eq)
-  hence \<open>A - B = 0\<close>
-    using equal_basis_0 by blast
-  thus ?thesis by simp
-qed *)
 
 lemma clinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
@@ -3593,7 +3319,9 @@ lemma cinner_ket_adjointI:
   fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
   assumes a1: "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
   shows "F = G*" 
-proof-
+(* TODO redo from scratch (should be very simple) *)
+  sorry
+(* proof-
   have "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
     for x::"'a ell2" and y::"'b ell2"
   proof-
@@ -3654,7 +3382,7 @@ proof-
     ultimately have cHu0: "cnj (H u v) = 0"
       if "u \<in> complex_vector.span SA"
       for u v
-      using z1 SA_def equal_span_applyOpSpace iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
+      using z1 SA_def  iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
       by smt (* > 1s *)
     hence Hu0: "H u v = 0"
       if "u \<in> complex_vector.span SA"
@@ -3664,8 +3392,8 @@ proof-
       for v
       using jj clinear_continuous_at continuous_at_imp_continuous_on
         cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
-        equal_span_applyOpSpace z1
-      by smt (* > 1s *)
+         z1
+      sorry
     ultimately have "H u v = 0"
       if "u \<in> closure (complex_vector.span SA)"
       for u v
@@ -3678,20 +3406,12 @@ proof-
       unfolding H_def by simp
   qed
   thus ?thesis
-    using adjoint_D by auto 
-qed
+    using adjoint_eqI by auto 
+qed *)
 
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
-    (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
-      and  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "inj_option \<pi>"
-    (*     and a2:"cblinfun_extension_exists (range (ket::'a\<Rightarrow>_)) (classical_function \<pi>)"
-    and a3:"cblinfun_extension_exists (range (ket::'b\<Rightarrow>_)) (classical_function' (inv_option \<pi>))" *)
   shows  "(classical_operator \<pi>)* = classical_operator (inv_option \<pi>)"
 proof-
   define F where "F = classical_operator (inv_option \<pi>)"
@@ -3820,22 +3540,8 @@ qed
 
 lemma
   fixes \<pi>::"'b \<Rightarrow> 'c option" and \<rho>::"'a \<Rightarrow> 'b option"
-    (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  defines  "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'c ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  defines  "classical_function''  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'c ell2) 
-                          | Some i \<Rightarrow> ket i)" *)
   assumes "classical_operator_exists \<pi>"
   assumes "classical_operator_exists \<rho>"
-    (*   assumes a1: "inj_option \<pi>" 
-    and a2: "inj_option \<rho>"  
-    and a3:"classical_operator_exists \<pi>"
-    and a4:"classical_operator_exists \<rho>"
-    and a5: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"  *)
   shows classical_operator_exists_comp[simp]: "classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)"
     and classical_operator_mult[simp]: "classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
 proof -
@@ -3860,43 +3566,6 @@ proof -
     by (simp add: equal_ket)
 qed
 
-(* proof -
-  have "(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>V (ket i)
-      = (classical_operator (\<pi> \<circ>\<^sub>m \<rho>)) *\<^sub>V ket i"
-    for i
-  proof-
-    have "(classical_operator \<pi> o\<^sub>C\<^sub>L classical_operator \<rho>) *\<^sub>V (ket i)
-        = (classical_operator \<pi>) *\<^sub>V ((classical_operator \<rho>) *\<^sub>V (ket i))"
-      by (simp add: times_applyOp)
-    also have "\<dots> = (classical_operator \<pi>) *\<^sub>V (case \<rho> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      by (simp add: a4 classical_operator_basis)
-    also have "\<dots> = (case \<rho> i of Some k \<Rightarrow> (classical_operator \<pi>) *\<^sub>V (ket k) 
-        | None \<Rightarrow> (classical_operator \<pi>) *\<^sub>V 0)"
-      by (metis option.case_distrib)
-    also have "\<dots> = (case \<rho> i of Some k \<Rightarrow> (classical_operator \<pi>) *\<^sub>V (ket k) 
-        | None \<Rightarrow> 0)"
-      by (metis applyOp_scaleC2 complex_vector.scale_zero_left)
-    also have "\<dots> = (case \<rho> i of Some k \<Rightarrow> (case \<pi> k of Some j \<Rightarrow> ket j | None \<Rightarrow> 0) 
-        | None \<Rightarrow> 0)"
-      using a3 classical_operator_basis by metis
-    also have "\<dots> = (case (\<pi> \<circ>\<^sub>m \<rho>) i of Some t \<Rightarrow> ket t | None \<Rightarrow> 0)"
-    proof(induction "\<rho> i")
-      case None
-      thus ?case
-        by auto 
-    next
-      case (Some c)
-      thus ?case
-        by (metis map_comp_simps(2) option.simps(5)) 
-    qed
-    also have "\<dots> = (classical_operator (\<pi> \<circ>\<^sub>m \<rho>)) *\<^sub>V (ket i)"
-      using a5 classical_operator_basis by metis
-    finally show ?thesis .
-  qed
-  thus ?thesis
-    by (simp add: equal_basis) 
-qed *)
-
 lemma classical_operator_Some[simp]: 
   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'a ell2) 
@@ -3908,18 +3577,6 @@ proof-
     apply (subst classical_operator_basis)
     apply (rule classical_operator_exists_inj)
     by auto
-      (*   proof-
-    have a1: "cblinfun_extension_exists (range ket) (classical_function (Some::'a\<Rightarrow>_))"
-      unfolding cblinfun_extension_exists_def classical_function_def
-      by (metis apply_idOp f_inv_into_f option.simps(5))
-    have "(classical_operator Some) *\<^sub>V (ket i) = (case Some i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      using a1 classical_operator_basis unfolding classical_function_def by metisx
-    also have "\<dots> = ket i"
-      by simp
-    also have "\<dots> = idOp *\<^sub>V (ket i)"
-      by simp      
-    finally show ?thesis .
-  qed *)
   thus ?thesis
     using equal_ket[where A = "classical_operator (Some::'a \<Rightarrow> _ option)"
         and B = "idOp::'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _"]
@@ -3950,24 +3607,7 @@ qed
 
 lemma unitary_classical_operator[simp]:
   fixes \<pi>::"'a \<Rightarrow> 'b"
-    (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  and "classical_function'  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  and  "classical_functionA  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
-  and  "classical_functionB  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'b\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'b ell2) 
-                          | Some i \<Rightarrow> ket i)" *)
   assumes a1: "bij \<pi>"
-    (*     and a2: "cblinfun_extension_exists (range ket) (classical_function (Some \<circ> \<pi>))"
-    and a3: "cblinfun_extension_exists (range ket)
-     (classical_function' (inv_option (Some \<circ> \<pi>)))"
-    and a4: "cblinfun_extension_exists (range ket) (classical_functionA (Some::'a\<Rightarrow>_))"
-    and a5: "cblinfun_extension_exists (range ket) (classical_functionB (Some::'b\<Rightarrow>_))" *)
   shows "unitary (classical_operator (Some o \<pi>))"
 proof (unfold unitary_def, rule conjI)
   have "inj \<pi>"
