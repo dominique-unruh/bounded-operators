@@ -2755,7 +2755,7 @@ proof-
       thus ?thesis by blast
     qed
     thus ?thesis
-      using ccspan.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> cblinfun_image_span by blast
+      using ccspan.rep_eq \<open>\<And>x. x \<in> S \<Longrightarrow> cblinfun_apply A x = cblinfun_apply B x\<close> cblinfun_eq_on by blast
   qed
   hence \<open>cblinfun_apply A = cblinfun_apply B\<close>
     by blast

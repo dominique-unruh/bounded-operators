@@ -486,7 +486,7 @@ lemma uminus_Span_code[code]: "- X = range_cblinfun_code (idOp - Proj X)"
   \<comment> \<open>Code equation for the orthogonal complement of a subspace \<^term>\<open>X\<close>. 
       Computed as the range of one minus the projector on \<^term>\<open>X\<close>\<close>
   unfolding range_cblinfun_code_def
-  by (metis Proj_ortho_compl imageOp_Proj)
+  by (metis Proj_ortho_compl Proj_range)
 
 lemma kernel_code[code]: 
   \<comment> \<open>Computes the kernel of an operator \<^term>\<open>A\<close>.

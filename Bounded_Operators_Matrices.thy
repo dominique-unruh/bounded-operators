@@ -2228,7 +2228,7 @@ lemma mat_of_cblinfun_adjoint:
   assumes "M \<in> carrier_mat nB nA"
   shows "((cblinfun_of_mat (mat_adjoint M)) :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)
        = ((cblinfun_of_mat M) :: 'a \<Rightarrow>\<^sub>C\<^sub>L'b)*"
-proof (rule adjoint_D)
+proof (rule adjoint_eqI)
   show "\<langle>cblinfun_of_mat (mat_adjoint M) *\<^sub>V x, y\<rangle> =
            \<langle>x, cblinfun_of_mat M *\<^sub>V y\<rangle>"
     for x::'b and y::'a
@@ -4036,7 +4036,7 @@ qed
 
 lemma apply_cblinfun_Span: 
   "A *\<^sub>S ccspan (set S) = ccspan (onb_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_onb_enum S)))"
-  apply (auto simp: applyOpSpace_Span image_image)
+  apply (auto simp: cblinfun_image_Span image_image)
   by (metis mat_of_cblinfun_description onb_enum_of_vec_inverse)
 
 
