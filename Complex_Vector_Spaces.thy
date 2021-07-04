@@ -970,7 +970,7 @@ proof
 qed
 end
 
-lemma bounded_clinear_id: \<open>bounded_clinear id\<close>
+lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
   by (simp add: id_def)
 
 lemma bounded_sesquilinear_add:

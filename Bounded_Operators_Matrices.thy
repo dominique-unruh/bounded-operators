@@ -2154,7 +2154,7 @@ proof -
     finally show ?thesis by simp
   qed
   thus ?thesis using b1 b2 b3
-    by (simp add: cblinfun_ext times_applyOp)    
+    by (simp add: cblinfun_ext scaleC_cblinfun.rep_eq)    
 qed
 
 
@@ -2304,7 +2304,7 @@ qed
 
 lemma mat_of_cblinfun_classical_operator:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
-  (* assumes r1: "inj_option f"  *)
+  (* assumes r1: "inj_map f"  *)
   shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
            (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
 proof-
@@ -2568,7 +2568,7 @@ proof -
   qed
   hence w2: "mat_of_cblinfun G = a \<cdot>\<^sub>m (1\<^sub>m nB)"
     unfolding BasisB_def nB_def mat_of_cblinfun_def G_def smult_mat_def one_mat_def
-    by auto
+    by (auto simp add: cblinfun.scaleC_left)
   have w3: "1\<^sub>m nB \<in> carrier_mat nB nB"
     unfolding nB_def  mat_of_cblinfun_def by auto
   have w4: "mat_of_cblinfun F \<in> carrier_mat nB nA"

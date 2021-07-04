@@ -721,7 +721,7 @@ end
 lift_definition id_cblinfun::"'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'a" is "\<lambda>x. x"
   by (rule bounded_clinear_ident)
 
-lemmas cblinfun_apply_id_cblinfun[simp] = id_cblinfun.rep_eq
+lemmas cblinfun_id_cblinfun_apply[simp] = id_cblinfun.rep_eq
 
 lemma norm_cblinfun_id[simp]:
   "norm (id_cblinfun::'a::{complex_normed_vector, perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"
@@ -772,7 +772,7 @@ lemma cblinfun_bij2:
 proof (rule bijI)
   show "inj g"
     using assms
-    by (metis cblinfun_apply_id_cblinfun cblinfun_compose.rep_eq injI inj_on_imageI2)
+    by (metis cblinfun_id_cblinfun_apply cblinfun_compose.rep_eq injI inj_on_imageI2)
   then show "surj g"
     using bounded_clinear_def cblinfun.bounded_clinear_right ceucl.linear_inj_imp_surj by blast
 qed
@@ -783,7 +783,7 @@ lemma cblinfun_bij1:
   shows "bij (cblinfun_apply f)"
 proof (rule bijI)
   show "surj (cblinfun_apply f)"
-    by (metis assms cblinfun_apply_cblinfun_compose cblinfun_apply_id_cblinfun surjI)
+    by (metis assms cblinfun_apply_cblinfun_compose cblinfun_id_cblinfun_apply surjI)
   then show "inj (cblinfun_apply f)"
     using bounded_clinear_def cblinfun.bounded_clinear_right ceucl.linear_surjective_imp_injective by blast
 qed
