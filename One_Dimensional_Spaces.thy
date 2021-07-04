@@ -61,7 +61,7 @@ proof-
     by (simp add: s_def) 
 qed
 
-lemma one_dim_times_def:
+lemma one_dim_apply_is_times_def:
   "\<psi> * \<phi> = (\<langle>1, \<psi>\<rangle> * \<langle>1, \<phi>\<rangle>) *\<^sub>C 1" for \<psi> :: \<open>'a::one_dim\<close>
   by (metis one_cinner_a_scaleC_one one_dim_prod_scale1)
 
@@ -69,19 +69,19 @@ instance one_dim \<subseteq> complex_algebra_1
 proof
   fix x y z :: \<open>'a::one_dim\<close> and c :: complex
   show "(x * y) * z = x * (y * z)"
-    by (simp add: one_dim_times_def[where ?'a='a])
+    by (simp add: one_dim_apply_is_times_def[where ?'a='a])
   show "(x + y) * z = x * z + y * z"
-    by (metis (no_types, lifting) cinner_simps(2) complex_vector.vector_space_assms(2) complex_vector.vector_space_assms(3) one_dim_times_def)
+    by (metis (no_types, lifting) cinner_simps(2) complex_vector.vector_space_assms(2) complex_vector.vector_space_assms(3) one_dim_apply_is_times_def)
   show "x * (y + z) = x * y + x * z"
-    by (metis (mono_tags, lifting) cinner_simps(2) complex_vector.vector_space_assms(2) distrib_left one_dim_times_def)
+    by (metis (mono_tags, lifting) cinner_simps(2) complex_vector.vector_space_assms(2) distrib_left one_dim_apply_is_times_def)
   show "(c *\<^sub>C x) * y = c *\<^sub>C (x * y)"
-    by (simp add: one_dim_times_def[where ?'a='a])
+    by (simp add: one_dim_apply_is_times_def[where ?'a='a])
   show "x * (c *\<^sub>C y) = c *\<^sub>C (x * y)"
-    by (simp add: one_dim_times_def[where ?'a='a])
+    by (simp add: one_dim_apply_is_times_def[where ?'a='a])
   show "1 * x = x"
-    by (metis mult.left_neutral one_cinner_a_scaleC_one one_cinner_one one_dim_times_def)
+    by (metis mult.left_neutral one_cinner_a_scaleC_one one_cinner_one one_dim_apply_is_times_def)
   show "x * 1 = x"
-    by (simp add: one_dim_times_def [where ?'a = 'a])
+    by (simp add: one_dim_apply_is_times_def [where ?'a = 'a])
   show "(0::'a) \<noteq> 1"
     by (metis cinner_eq_zero_iff one_cinner_one zero_neq_one)
 qed
@@ -111,7 +111,7 @@ proof
     also have "\<dots> = norm x * norm y"
       by (simp add: \<open>norm 1 = 1\<close>)
     finally show ?thesis
-      by (simp add: one_dim_times_def[where ?'a='a])
+      by (simp add: one_dim_apply_is_times_def[where ?'a='a])
   qed
 qed
 
@@ -257,7 +257,7 @@ instance one_dim \<subseteq> comm_ring
 proof intro_classes
   fix x y z :: 'a
   show "x * y = y * x"
-    by (metis one_dim_times_def ordered_field_class.sign_simps(5))
+    by (metis one_dim_apply_is_times_def ordered_field_class.sign_simps(5))
   show "(x + y) * z = x * z + y * z"
     by (simp add: ring_class.ring_distribs(2))
 qed

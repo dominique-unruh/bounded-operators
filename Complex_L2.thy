@@ -2935,7 +2935,7 @@ qed
 lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = idOp\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: apply_cblinfun_distr_left clinearI butterfly_def' times_applyOp ket_Kronecker_delta)
+  apply (auto simp add: scaleC_cblinfun.rep_eq apply_cblinfun_distr_left clinearI butterfly_def' cblinfun_compose_image ket_Kronecker_delta)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
 
@@ -2968,10 +2968,10 @@ lemma classical_operator_existsI:
   by (auto simp: inv_f_f[OF inj_ket])
 
 lemma classical_operator_exists_inj:
-  assumes "inj_option \<pi>"
+  assumes "inj_map \<pi>"
   shows "classical_operator_exists \<pi>"
 proof -
-  define C0 where "C0 \<psi> = (\<lambda>b. case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
+  define C0 where "C0 \<psi> = (\<lambda>b. case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
   have has_ell2_norm_C0: \<open>has_ell2_norm \<psi> \<Longrightarrow> has_ell2_norm (C0 \<psi>)\<close> for \<psi>
   proof -
@@ -2984,18 +2984,18 @@ proof -
     then obtain M::real where \<open>\<And> S::'a set. finite S \<Longrightarrow> ( sum (\<lambda>i. (cmod (\<psi> i))\<^sup>2) S ) \<le> M\<close>
       by blast
     define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
-      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+      \<open>\<phi> b = (case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
     have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le> M\<close>
       for R::\<open>'b set\<close>
     proof-
       assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
       from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_map \<pi> i\<close>
         unfolding \<phi>_def
         by (metis option.case_eq_if option.collapse)
-      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close>
         by metis
-      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> 
         by blast
       define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
       have \<open>finite S\<close>
@@ -3007,13 +3007,13 @@ proof -
         proof(rule inj_onI)
           fix x y :: 'b
           assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
-          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+          from \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> 
           have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
-            by (metis inv_option_def option.distinct(1))
+            by (metis inv_map_def option.distinct(1))
           hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
             by blast
           hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> f_inv_into_f inv_map_def option.distinct(1)) 
           have \<open>\<pi> (f x) = Some x\<close>
             using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
           moreover have \<open>\<pi> (f y) = Some y\<close>
@@ -3028,7 +3028,7 @@ proof -
           assume \<open>i \<in> R\<close>
           hence \<open>\<phi> i = \<psi> (f i)\<close>
             unfolding \<phi>_def
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> option.simps(5))
           thus ?thesis
             by simp 
         qed
@@ -3083,13 +3083,13 @@ proof -
   have add: "C1 (x + y) = C1 x + C1 y" for x y
     apply transfer unfolding C0_def 
     apply (rule ext, rename_tac b)
-    apply (case_tac "inv_option \<pi> b")
+    apply (case_tac "inv_map \<pi> b")
     by auto
 
   have scaleC: "C1 (c *\<^sub>C x) = c *\<^sub>C C1 x" for c x
     apply transfer unfolding C0_def 
     apply (rule ext, rename_tac b)
-    apply (case_tac "inv_option \<pi> b")
+    apply (case_tac "inv_map \<pi> b")
     by auto
 
   have "clinear C1"
@@ -3101,18 +3101,18 @@ proof -
       using \<open>has_ell2_norm \<psi>\<close> ell2_norm_def
       by (smt cSUP_upper has_ell2_norm_def mem_Collect_eq sqrt_le_D sum.cong)
     define \<phi>::\<open>'b \<Rightarrow> complex\<close> where
-      \<open>\<phi> b = (case inv_option \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
+      \<open>\<phi> b = (case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)\<close> for b
     have \<open>\<lbrakk>finite R; \<forall>i\<in>R. \<phi> i \<noteq> 0\<rbrakk> \<Longrightarrow> (\<Sum>i\<in>R. (cmod (\<phi> i))\<^sup>2) \<le>  (ell2_norm \<psi>)^2\<close>
       for R::\<open>'b set\<close>
     proof-
       assume \<open>finite R\<close> and \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
       from  \<open>\<forall>i\<in>R. \<phi> i \<noteq> 0\<close>
-      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_option \<pi> i\<close>
+      have  \<open>\<forall>i\<in>R. \<exists> x. Some x = inv_map \<pi> i\<close>
         unfolding \<phi>_def
         by (metis option.case_eq_if option.collapse)
-      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close>
+      hence  \<open>\<exists> f. \<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close>
         by metis
-      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+      then obtain f::\<open>'b\<Rightarrow>'a\<close> where \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> 
         by blast
       define S::\<open>'a set\<close> where \<open>S = f ` R\<close>
       have \<open>finite S\<close>
@@ -3124,13 +3124,13 @@ proof -
         proof(rule inj_onI)
           fix x y :: 'b
           assume \<open>x \<in> R\<close> and \<open>y \<in> R\<close> and \<open>f x = f y\<close>
-          from \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> 
+          from \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> 
           have \<open>\<forall>i\<in>R. Some (f i) = Some (inv \<pi> (Some i))\<close>
-            by (metis inv_option_def option.distinct(1))
+            by (metis inv_map_def option.distinct(1))
           hence \<open>\<forall>i\<in>R. f i = inv \<pi> (Some i)\<close>
             by blast
           hence \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close>
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> f_inv_into_f inv_option_def option.distinct(1)) 
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> f_inv_into_f inv_map_def option.distinct(1)) 
           have \<open>\<pi> (f x) = Some x\<close>
             using \<open>\<forall>i\<in>R. \<pi> (f i) = Some i\<close> \<open>x\<in>R\<close> by blast
           moreover have \<open>\<pi> (f y) = Some y\<close>
@@ -3145,7 +3145,7 @@ proof -
           assume \<open>i \<in> R\<close>
           hence \<open>\<phi> i = \<psi> (f i)\<close>
             unfolding \<phi>_def
-            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_option \<pi> i\<close> option.simps(5))
+            by (metis \<open>\<forall>i\<in>R. Some (f i) = inv_map \<pi> i\<close> option.simps(5))
           thus ?thesis
             by simp 
         qed
@@ -3276,12 +3276,12 @@ proof -
   have C1_ket: "C1 (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     apply (transfer fixing: \<pi> x) unfolding C0_def
     apply (rule ext, rename_tac b)
-    apply (case_tac "inv_option \<pi> b"; cases "\<pi> x")
+    apply (case_tac "inv_map \<pi> b"; cases "\<pi> x")
     apply auto
-    apply (metis inv_option_def option.simps(3) range_eqI)
-    apply (metis f_inv_into_f inv_option_def option.distinct(1) option.sel)
-    apply (metis f_inv_into_f inv_option_def option.sel option.simps(3))
-    by (metis (no_types, lifting) assms f_inv_into_f inj_option_def inv_option_def option.sel option.simps(3))
+    apply (metis inv_map_def option.simps(3) range_eqI)
+    apply (metis f_inv_into_f inv_map_def option.distinct(1) option.sel)
+    apply (metis f_inv_into_f inv_map_def option.sel option.simps(3))
+    by (metis (no_types, lifting) assms f_inv_into_f inj_map_def inv_map_def option.sel option.simps(3))
 
   have "C *\<^sub>V ket x = (case \<pi> x of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)" for x
     using ket.transfer[transfer_rule del] zero_ell2.transfer[transfer_rule del] 
@@ -3411,27 +3411,27 @@ qed *)
 
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
-  assumes a1: "inj_option \<pi>"
-  shows  "(classical_operator \<pi>)* = classical_operator (inv_option \<pi>)"
+  assumes a1: "inj_map \<pi>"
+  shows  "(classical_operator \<pi>)* = classical_operator (inv_map \<pi>)"
 proof-
-  define F where "F = classical_operator (inv_option \<pi>)"
+  define F where "F = classical_operator (inv_map \<pi>)"
   define G where "G = classical_operator \<pi>"
   have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>" for i j
   proof-
-    have w1: "(classical_operator (inv_option \<pi>)) *\<^sub>V (ket i)
-     = (case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
+    have w1: "(classical_operator (inv_map \<pi>)) *\<^sub>V (ket i)
+     = (case inv_map \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
       by (simp add: classical_operator_basis classical_operator_exists_inj)
     have w2: "(classical_operator \<pi>) *\<^sub>V (ket j)
      = (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
       by (simp add: assms classical_operator_basis classical_operator_exists_inj)
-    have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>classical_operator (inv_option \<pi>) *\<^sub>V ket i, ket j\<rangle>"
+    have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>classical_operator (inv_map \<pi>) *\<^sub>V ket i, ket j\<rangle>"
       unfolding F_def by blast
-    also have "\<dots> = \<langle>(case inv_option \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0), ket j\<rangle>"
+    also have "\<dots> = \<langle>(case inv_map \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0), ket j\<rangle>"
       using w1 by simp
     also have "\<dots> = \<langle>ket i, (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)\<rangle>"
-    proof(induction "inv_option \<pi> i")
+    proof(induction "inv_map \<pi> i")
       case None
-      hence pi1: "None = inv_option \<pi> i".
+      hence pi1: "None = inv_map \<pi> i".
       show ?case 
       proof (induction "\<pi> j")
         case None
@@ -3444,14 +3444,14 @@ proof-
           assume "\<not>(c \<noteq> i)"
           hence "c = i"
             by blast
-          hence "inv_option \<pi> c = inv_option \<pi> i"
+          hence "inv_map \<pi> c = inv_map \<pi> i"
             by simp
-          hence "inv_option \<pi> c = None"
+          hence "inv_map \<pi> c = None"
             by (simp add: pi1)
-          moreover have "inv_option \<pi> c = Some j"
-            using Some.hyps unfolding inv_option_def
+          moreover have "inv_map \<pi> c = Some j"
+            using Some.hyps unfolding inv_map_def
             apply auto
-            by (metis a1 f_inv_into_f inj_option_def option.distinct(1) rangeI)
+            by (metis a1 f_inv_into_f inj_map_def option.distinct(1) rangeI)
           ultimately show ?thesis by simp
         qed
         thus ?thesis
@@ -3460,8 +3460,8 @@ proof-
       qed       
     next
       case (Some d)
-      hence s1: "Some d = inv_option \<pi> i".
-      show "\<langle>case inv_option \<pi> i of 
+      hence s1: "Some d = inv_map \<pi> i".
+      show "\<langle>case inv_map \<pi> i of 
             None \<Rightarrow> 0
         | Some a \<Rightarrow> ket a, ket j\<rangle> =
        \<langle>ket i, case \<pi> j of 
@@ -3479,7 +3479,7 @@ proof-
           hence "\<pi> d = None"
             by (simp add: None.hyps)
           moreover have "\<pi> d = Some i"
-            using Some.hyps unfolding inv_option_def
+            using Some.hyps unfolding inv_map_def
             apply auto
             by (metis f_inv_into_f option.distinct(1) option.inject)
           ultimately show ?thesis 
@@ -3494,9 +3494,9 @@ proof-
         have "\<langle>ket d, ket j\<rangle> = \<langle>ket i, ket c\<rangle>"
         proof(cases "\<pi> j = Some i")
           case True
-          hence ij: "Some j = inv_option \<pi> i"
-            unfolding inv_option_def apply auto
-            apply (metis a1 f_inv_into_f inj_option_def option.discI range_eqI)
+          hence ij: "Some j = inv_map \<pi> i"
+            unfolding inv_map_def apply auto
+            apply (metis a1 f_inv_into_f inj_map_def option.discI range_eqI)
             by (metis range_eqI)
           have "i = c"
             using True s2 by auto
@@ -3507,7 +3507,7 @@ proof-
         next
           case False
           moreover have "\<pi> d = Some i"
-            using s1 unfolding inv_option_def
+            using s1 unfolding inv_map_def
             by (metis f_inv_into_f option.distinct(1) option.inject)            
           ultimately have "j \<noteq> d"
             by auto            
@@ -3520,7 +3520,7 @@ proof-
         | Some a \<Rightarrow> ket a, ket j\<rangle> =
        \<langle>ket i, case Some c of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a\<rangle>"
           by simp          
-        thus "\<langle>case inv_option \<pi> i of None \<Rightarrow> 0
+        thus "\<langle>case inv_map \<pi> i of None \<Rightarrow> 0
         | Some a \<Rightarrow> ket a, ket j\<rangle> =
        \<langle>ket i, case \<pi> j of None \<Rightarrow> 0 | Some a \<Rightarrow> ket a\<rangle>"
           by (simp add: Some.hyps s1)          
@@ -3552,7 +3552,7 @@ proof -
   have C\<rho>x: "C\<rho> *\<^sub>V (ket x) = (case \<rho> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     unfolding C\<rho>_def using \<open>classical_operator_exists \<rho>\<close> by (rule classical_operator_basis)
   have C\<pi>\<rho>x': "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
-    apply (simp add: times_applyOp C\<rho>x)
+    apply (simp add: scaleC_cblinfun.rep_eq C\<rho>x)
     apply (cases "\<rho> x")
     by (auto simp: C\<pi>x)
   thus \<open>classical_operator_exists (\<pi> \<circ>\<^sub>m \<rho>)\<close>
@@ -3588,15 +3588,15 @@ lemma isometry_classical_operator[simp]:
   assumes a1: "inj \<pi>"
   shows "isometry (classical_operator (Some o \<pi>))"
 proof -
-  have b0: "inj_option (Some \<circ> \<pi>)"
+  have b0: "inj_map (Some \<circ> \<pi>)"
     by (simp add: a1)
-  have b0': "inj_option (inv_option (Some \<circ> \<pi>))"
+  have b0': "inj_map (inv_map (Some \<circ> \<pi>))"
     by simp
-  have b1: "inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
-    apply (rule ext) unfolding inv_option_def o_def 
+  have b1: "inv_map (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>) = Some" 
+    apply (rule ext) unfolding inv_map_def o_def 
     using assms unfolding inj_def inv_def by auto
-  have b3: "classical_operator (inv_option (Some \<circ> \<pi>)) o\<^sub>C\<^sub>L
-            classical_operator (Some \<circ> \<pi>) = classical_operator (inv_option (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>))"
+  have b3: "classical_operator (inv_map (Some \<circ> \<pi>)) o\<^sub>C\<^sub>L
+            classical_operator (Some \<circ> \<pi>) = classical_operator (inv_map (Some \<circ> \<pi>) \<circ>\<^sub>m (Some \<circ> \<pi>))"
     by (metis b0 b0' b1 classical_operator_Some classical_operator_exists_inj 
         classical_operator_mult)
   show ?thesis
@@ -3621,17 +3621,17 @@ proof (unfold unitary_def, rule conjI)
 next
   have "inj \<pi>"
     by (simp add: assms bij_is_inj)
-  have comp: "Some \<circ> \<pi> \<circ>\<^sub>m inv_option (Some \<circ> \<pi>) = Some"
+  have comp: "Some \<circ> \<pi> \<circ>\<^sub>m inv_map (Some \<circ> \<pi>) = Some"
     apply (rule ext)
-    unfolding inv_option_def o_def map_comp_def
+    unfolding inv_map_def o_def map_comp_def
     unfolding inv_def apply auto
     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     using bij_def image_iff range_eqI
     by (metis a1)
   have "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)*
-      = classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (inv_option (Some \<circ> \<pi>))"
+      = classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (inv_map (Some \<circ> \<pi>))"
     by (simp add: \<open>inj \<pi>\<close>)
-  also have "\<dots> = classical_operator ((Some \<circ> \<pi>) \<circ>\<^sub>m (inv_option (Some \<circ> \<pi>)))"
+  also have "\<dots> = classical_operator ((Some \<circ> \<pi>) \<circ>\<^sub>m (inv_map (Some \<circ> \<pi>)))"
     by (simp add: \<open>inj \<pi>\<close> classical_operator_exists_inj)
   also have "\<dots> = classical_operator (Some::'b\<Rightarrow>_)"
     using comp

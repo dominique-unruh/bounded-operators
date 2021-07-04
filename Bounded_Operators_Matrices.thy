@@ -1785,7 +1785,7 @@ proof-
       by (simp add: plus_cblinfun.rep_eq) 
   qed
   thus ?thesis
-    by (simp add: cblinfun_ext) 
+    by (simp add: cblinfun_eqI) 
 qed
 
 lemma vec_of_onb_enum_zero:
@@ -2154,7 +2154,7 @@ proof -
     finally show ?thesis by simp
   qed
   thus ?thesis using b1 b2 b3
-    by (simp add: cblinfun_ext times_applyOp)    
+    by (simp add: cblinfun_eqI scaleC_cblinfun.rep_eq)    
 qed
 
 
@@ -2304,7 +2304,7 @@ qed
 
 lemma mat_of_cblinfun_classical_operator:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
-  (* assumes r1: "inj_option f"  *)
+  (* assumes r1: "inj_map f"  *)
   shows "mat_of_cblinfun (classical_operator f) = mat (CARD('b)) (CARD('a))
            (\<lambda>(r,c). if f (Enum.enum!c) = Some (Enum.enum!r) then 1 else 0)"
 proof-
@@ -2568,7 +2568,7 @@ proof -
   qed
   hence w2: "mat_of_cblinfun G = a \<cdot>\<^sub>m (1\<^sub>m nB)"
     unfolding BasisB_def nB_def mat_of_cblinfun_def G_def smult_mat_def one_mat_def
-    by auto
+    by (auto simp add: cblinfun.scaleC_left)
   have w3: "1\<^sub>m nB \<in> carrier_mat nB nB"
     unfolding nB_def  mat_of_cblinfun_def by auto
   have w4: "mat_of_cblinfun F \<in> carrier_mat nB nA"
@@ -3569,7 +3569,7 @@ proof-
     by (simp add: cblinfun_of_mat.rep_eq)
   hence  "((vector_to_cblinfun \<psi>)::'b\<Rightarrow>\<^sub>C\<^sub>L'a)
        = ((cblinfun_of_mat (mat_of_cols nA [vec_of_onb_enum \<psi>]))::'b\<Rightarrow>\<^sub>C\<^sub>L'a)"
-    using cblinfun_ext by blast        
+    using cblinfun_eqI by blast        
   hence  "mat_of_cblinfun ((vector_to_cblinfun \<psi>)::'b\<Rightarrow>\<^sub>C\<^sub>L'a)
        = mat_of_cblinfun ((cblinfun_of_mat (mat_of_cols nA [vec_of_onb_enum \<psi>]))::'b\<Rightarrow>\<^sub>C\<^sub>L'a)"
     using [[show_sorts]]    
