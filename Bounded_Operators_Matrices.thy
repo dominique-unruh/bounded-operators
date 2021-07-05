@@ -40,7 +40,7 @@ primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,com
 
 
 definition vec_of_onb_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
-  \<open>vec_of_onb_enum v = vec_of_list (map (complex_vector.representation (set canonical_basis) v) canonical_basis)\<close>
+  \<open>vec_of_onb_enum v = vec_of_list (map (crepresentation (set canonical_basis) v) canonical_basis)\<close>
 
 lemma dim_vec_of_onb_enum_list:
   \<open>dim_vec (vec_of_onb_enum_list (L::'a list) v i) = length (canonical_basis::'a::{basis_enum,complex_inner} list)\<close>
@@ -444,11 +444,8 @@ qed
 
 lemma canonical_basis_inner:
   "w = (\<Sum>b\<in>set (canonical_basis::'a::onb_enum list). \<langle>b, w\<rangle> *\<^sub>C b)"
-  apply (rule Ortho_expansion_finite)
-  using is_generator_set apply auto[1]
-  apply auto[1]
-  apply (simp add: is_orthonormal)
-  by (simp add: is_normal)
+  apply (rule onb_expansion_finite)
+  using is_generator_set by (auto simp add: is_orthonormal is_normal)
 
 lemma onb_enum_of_vec_expansion:  
   fixes S::"'a::basis_enum list" and L::"complex list"
@@ -652,10 +649,10 @@ proof-
     by simp 
   hence length_basis: "length basis = length w"
     by (simp add: basis_def f1 n_def)    
-  have "map (complex_vector.representation (set basis) (onb_enum_of_vec_list basis w)) basis = w"
+  have "map (crepresentation (set basis) (onb_enum_of_vec_list basis w)) basis = w"
   proof-
     have "i < length basis \<Longrightarrow> 
-        complex_vector.representation (set basis) (onb_enum_of_vec_list basis w) (basis!i) = w!i"
+        crepresentation (set basis) (onb_enum_of_vec_list basis w) (basis!i) = w!i"
       for i
     proof-
       assume h1: "i < length basis"
@@ -665,7 +662,7 @@ proof-
         using basis_def is_generator_set
           by blast 
       define f where 
-        "f x = complex_vector.representation (set basis) (onb_enum_of_vec_list basis w) x"
+        "f x = crepresentation (set basis) (onb_enum_of_vec_list basis w) x"
       for x
       have h4: "f x \<noteq> 0 \<Longrightarrow> x \<in> set basis" for x
         by (simp add: complex_vector.representation_ne_zero f_def)
@@ -677,7 +674,7 @@ proof-
          (onb_enum_of_vec_list basis w)\<close> 
             complex_vector.sum_nonzero_representation_eq h2 h3 h5 subset_iff 
             sum.mono_neutral_cong_left
-        by (smt ) (* > 1 s*)
+        by smt (* > 1 s*)
       have h7: "distinct basis"
         by (simp add: basis_def)
       have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
@@ -1684,7 +1681,7 @@ qed
       by (metis r1 distinct_Ex1)     
   qed
   hence "onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u) = F *\<^sub>V u"
-    using cinner_unique_onb_enum
+    using cinner_canonical_basis_eq
     by (metis BasisA_def BasisB_def M_def basisA_def basisB_def carrier_M cblinfun_of_mat.rep_eq
         nA_def nB_def)    
   hence "vec_of_onb_enum ((onb_enum_of_vec (mat_of_cblinfun F *\<^sub>v vec_of_onb_enum u))::'b) 
@@ -1726,9 +1723,9 @@ proof -
   qed
   hence "(cblinfun_of_mat M) *\<^sub>V u = B *\<^sub>V u"
     if "u \<in> basisA" for u
-    using BasisA_def BasisB_def basisA_def basisB_def cinner_unique_onb_enum by auto
+    using BasisA_def BasisB_def basisA_def basisB_def cinner_canonical_basis_eq by auto
   hence "cblinfun_apply (cblinfun_of_mat M) = cblinfun_apply B"
-    using obn_enum_uniq BasisA_def basisA_def by blast    
+    using cblinfun_eq_on_canonical_basis BasisA_def basisA_def by blast    
   thus ?thesis
     using cblinfun_apply_inject unfolding M_def by blast
 qed
@@ -2841,7 +2838,7 @@ proof-
         using y1 y2 complex_vector.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
-        by (smt ) 
+        by smt
 
       hence "vec_of_onb_enum ((canonical_basis::'a ell2 list) ! j) $ j = 1"
         unfolding vec_of_onb_enum_def 
@@ -4120,7 +4117,7 @@ proof -
     assume "x \<in> set Snorm" and "y \<in> set Snorm"
     assume "selfbutter x = selfbutter y"
     then obtain c where xcy: "x = c *\<^sub>C y" and "cmod c = 1"
-      using inj_selfbutter by auto
+      using inj_selfbutter_upto_phase by auto
     have "0 \<noteq> cmod (cinner x x)"
       using \<open>x \<in> set Snorm\<close> norm_Snorm
       by force
@@ -4182,8 +4179,8 @@ proof -
       apply (subst mat_of_cols_index) apply auto
       by (simp add: assms(1) dim_vec_of_onb_enum_list')
     also have "\<dots> = mat_of_cblinfun (selfbutter (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
-      apply (simp add: butterfly_scaleR1 butterfly_scaleR2 power_inverse mat_of_cblinfun_scaleR factor_def)
-      apply (simp add: butterfly_def' cblinfun_of_mat_timesOp
+      apply (simp add: butterfly_scaleR_left butterfly_scaleR_right power_inverse mat_of_cblinfun_scaleR factor_def)
+      apply (simp add: butterfly_def cblinfun_of_mat_timesOp
           mat_of_cblinfun_adjoint' mat_of_cblinfun_ell2_to_l2bounded d_def)
       by (simp add: cblinfun_of_mat_timesOp mat_of_cblinfun_adjoint' mat_of_cblinfun_ell2_to_l2bounded mat_of_cblinfun_scalarMult power2_eq_square)
     finally show ?case
@@ -4194,7 +4191,7 @@ proof -
   also have "\<dots> = mat_of_cblinfun (\<Sum>s\<in>set Snorm. proj s)"
     apply (rule arg_cong[where f="mat_of_cblinfun"])
     apply (rule sum.cong[OF refl])
-    apply (rule butterfly_proj)
+    apply (rule butterfly_eq_proj)
     using norm_Snorm by simp
   also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set Snorm)))"
     apply (rule arg_cong[of _ _ mat_of_cblinfun])

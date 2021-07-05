@@ -1326,6 +1326,10 @@ instance basis_enum \<subseteq> cfinite_dim
   apply (rule exI[of _ \<open>set canonical_basis\<close>])
   using is_cindependent_set is_generator_set by auto
 
+lemma cindependent_cfinite_dim_finite:
+  assumes \<open>cindependent (S::'a::cfinite_dim set)\<close>
+  shows \<open>finite S\<close>
+  by (metis assms cfinitely_spanned complex_vector.independent_span_bound top_greatest)
 
 lemma ccsubspace_leI:
   assumes t1: "space_as_set A \<subseteq> space_as_set B"

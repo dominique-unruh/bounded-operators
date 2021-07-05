@@ -2935,7 +2935,7 @@ qed
 lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = idOp\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: scaleC_cblinfun.rep_eq apply_cblinfun_distr_left clinearI butterfly_def' cblinfun_compose_image ket_Kronecker_delta)
+  apply (auto simp add: scaleC_cblinfun.rep_eq apply_cblinfun_distr_left clinearI butterfly_def cblinfun_compose_image ket_Kronecker_delta)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
 
@@ -3295,7 +3295,7 @@ qed
 
 lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> :: _::finite \<Rightarrow> _)"
   unfolding classical_operator_exists_def
-  apply (rule cblinfun_extension_exists_finite)
+  apply (rule cblinfun_extension_exists_finite_dim)
   using cindependent_ket apply blast
   using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan apply blast
   by simp
