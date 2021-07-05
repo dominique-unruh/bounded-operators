@@ -2472,6 +2472,11 @@ instance
   using Cauchy_convergent unfolding Cauchy_def convergent_def LIMSEQ_def by metis
 end
 
+lemma bounded_antilinear_to_conjugate_space[simp]: \<open>bounded_antilinear to_conjugate_space\<close>
+  by (rule bounded_antilinear_intro[where K=1]; transfer; auto)
+
+lemma bounded_antilinear_from_conjugate_space[simp]: \<open>bounded_antilinear from_conjugate_space\<close>
+  by (rule bounded_antilinear_intro[where K=1]; transfer; auto)
 
 lemma antilinear_to_conjugate_space[simp]: \<open>antilinear to_conjugate_space\<close>
   by (rule antilinearI; transfer, auto)

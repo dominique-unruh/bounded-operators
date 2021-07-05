@@ -1347,8 +1347,7 @@ proof
       "M \<in> carrier_mat m n"
       by (simp add: True)
     have "bounded_clinear (f M)"
-      apply (rule cblinfun_operator_finite_dim[where basis="set canonical_basis"])
-      using is_generator_set is_cindependent_set \<open>clinear (f M)\<close> by auto
+      apply (rule bounded_clinear_finite_dim) using \<open>clinear (f M)\<close> by auto
     thus ?thesis
       by (simp add: bounded_clinear.bounded) 
   next

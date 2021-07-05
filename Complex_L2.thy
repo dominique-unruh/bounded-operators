@@ -3297,8 +3297,7 @@ lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> 
   unfolding classical_operator_exists_def
   apply (rule cblinfun_extension_exists_finite_dim)
   using cindependent_ket apply blast
-  using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan apply blast
-  by simp
+  using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan by blast
 
 lemma classical_operator_basis:
   (*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
@@ -3308,8 +3307,8 @@ lemma classical_operator_basis:
   assumes "classical_operator_exists \<pi>"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
   unfolding classical_operator_def 
-  using    f_inv_into_f ket_distinct rangeI
-  by (metis (mono_tags, lifting) assms cblinfun_extension_exists classical_operator_exists_def)
+  using f_inv_into_f ket_distinct rangeI
+  by (metis assms cblinfun_extension_apply classical_operator_exists_def)
 
 lemma classical_operator_finite:
   "(classical_operator \<pi>) *\<^sub>V (ket (x::'a::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
@@ -3317,97 +3316,21 @@ lemma classical_operator_finite:
 
 lemma cinner_ket_adjointI:
   fixes F::"'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _" and G::"'b ell2 \<Rightarrow>\<^sub>C\<^sub>L_"
-  assumes a1: "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
-  shows "F = G*" 
-(* TODO redo from scratch (should be very simple) *)
-  sorry
-(* proof-
-  have "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
-    for x::"'a ell2" and y::"'b ell2"
-  proof-
-    define H where "H u v = \<langle>F *\<^sub>V u, v\<rangle> - \<langle>u, G *\<^sub>V v\<rangle>" for u v
-    define SA where "SA = range (ket::'a\<Rightarrow>_)"
-    define SB where "SB = range (ket::'b\<Rightarrow>_)"
-    have u1: "closure (complex_vector.span SA) = UNIV"
-      unfolding SA_def using ket_ell2_span by blast
-    hence v1: "x \<in> closure (complex_vector.span (range ket))"
-      unfolding SA_def by blast
-    have u2: "closure (complex_vector.span SB) = UNIV"
-      unfolding SB_def using ket_ell2_span by blast
-    hence v2: "y \<in> closure (complex_vector.span (range ket))"
-      unfolding SB_def by blast
-    have "H (ket i) (ket j) = 0"
-      for i j
-      unfolding H_def using a1 by simp
-    moreover have q1: "bounded_clinear (H (ket i))"
-      for i
-    proof-
-      have "bounded_clinear (\<lambda>v. \<langle>F *\<^sub>V (ket i), v\<rangle>)"
-        by (simp add: bounded_clinear_cinner_right) 
-      moreover have "bounded_clinear (\<lambda>v. \<langle>ket i, G *\<^sub>V v\<rangle>)"
-        using cblinfun_apply bounded_clinear_cinner_right_comp by auto      
-      ultimately show ?thesis unfolding H_def using bounded_clinear_sub by blast
-    qed
-    moreover have z1: "bounded_clinear (\<lambda>_. (0::complex))"
-      by simp    
-    ultimately have "H (ket i) v = 0"
-      if "v \<in> complex_vector.span SB"
-      for i v
-      using equal_span_applyOpSpace[where G = SB and A = "H (ket i)" and B = "\<lambda>_. (0::complex)"]
-      by (smt SB_def UNIV_I rangeE u2)
-    moreover have "continuous_on (closure (complex_vector.span SB)) (H (ket i))"
-      for i
-      by (simp add: q1 clinear_continuous_at continuous_at_imp_continuous_on)
-    ultimately have "H (ket i) v = 0"
-      if "v \<in> closure (complex_vector.span SB)"
-      for i v
-      using continuous_constant_on_closure that
-      by smt
-    hence "H (ket i) v = 0"
-      for i v
-      by (smt UNIV_I u2)
-    moreover have jj: "bounded_clinear (\<lambda>u. cnj (H u v))"
-      for v
-    proof-
-      have "bounded_clinear (\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>)"
-        using bounded_antilinear_o_bounded_antilinear cblinfun_apply bounded_antilinear_cinner_left_comp 
-          cnj_bounded_antilinear by blast      
-      moreover have "bounded_clinear (\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>)"
-        using bounded_antilinear_cinner_left bounded_antilinear_o_bounded_antilinear cnj_bounded_antilinear 
-        by blast
-      ultimately show ?thesis unfolding H_def 
-        using bounded_clinear_sub [where f = "\<lambda>u. cnj \<langle>F *\<^sub>V u, v\<rangle>" and g = "\<lambda>u. cnj \<langle>u, G *\<^sub>V v\<rangle>"]
-        by auto      
-    qed
-    ultimately have cHu0: "cnj (H u v) = 0"
-      if "u \<in> complex_vector.span SA"
-      for u v
-      using z1 SA_def  iso_tuple_UNIV_I rangeE u1 complex_cnj_zero
-      by smt (* > 1s *)
-    hence Hu0: "H u v = 0"
-      if "u \<in> complex_vector.span SA"
-      for u v
-      by (smt complex_cnj_zero_iff that) 
-    moreover have "continuous_on (closure (complex_vector.span SA)) (\<lambda>u. H u v)"
-      for v
-      using jj clinear_continuous_at continuous_at_imp_continuous_on
-        cHu0 complex_cnj_cancel_iff complex_cnj_zero complex_vector.span_span continuous_on_cong 
-         z1
-      sorry
-    ultimately have "H u v = 0"
-      if "u \<in> closure (complex_vector.span SA)"
-      for u v
-      using continuous_constant_on_closure that
-      by smt
-    hence "H u v = 0"
-      for u v
-      by (smt UNIV_I u1)
-    thus "\<langle>F *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>"
-      unfolding H_def by simp
-  qed
-  thus ?thesis
-    using adjoint_eqI by auto 
-qed *)
+  assumes "\<And> i j. \<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>ket i, G *\<^sub>V ket j\<rangle>"
+  shows "F = G*"
+proof -
+  from assms
+  have \<open>(F *\<^sub>V x) \<bullet>\<^sub>C y = x \<bullet>\<^sub>C (G *\<^sub>V y)\<close> if \<open>x \<in> range ket\<close> and \<open>y \<in> range ket\<close> for x y
+    using that by auto
+  then have \<open>(F *\<^sub>V x) \<bullet>\<^sub>C y = x \<bullet>\<^sub>C (G *\<^sub>V y)\<close> if \<open>x \<in> range ket\<close> for x y
+    apply (rule bounded_clinear_eq_on[where G=\<open>range ket\<close> and t=y, rotated 2])
+    using that by (auto simp add: ket_ell2_span  intro!: bounded_linear_intros)
+  then have \<open>(F *\<^sub>V x) \<bullet>\<^sub>C y = x \<bullet>\<^sub>C (G *\<^sub>V y)\<close> for x y
+    apply (rule bounded_antilinear_eq_on[where G=\<open>range ket\<close> and t=x, rotated 2])
+    by (auto simp add: ket_ell2_span intro!: bounded_linear_intros)
+  then show ?thesis
+    by (rule adjoint_eqI)
+qed
 
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"

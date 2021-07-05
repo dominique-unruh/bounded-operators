@@ -1304,6 +1304,27 @@ proof -
     by auto
 qed
 
+(* TODO move *)
+lemma bounded_antilinear_eq_on:
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+  assumes \<open>bounded_antilinear A\<close> and \<open>bounded_antilinear B\<close> and
+    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
+  shows \<open>A t = B t\<close>
+proof -
+  let ?A = \<open>\<lambda>x. A (from_conjugate_space x)\<close> and ?B = \<open>\<lambda>x. B (from_conjugate_space x)\<close>
+    and ?G = \<open>to_conjugate_space ` G\<close> and ?t = \<open>to_conjugate_space t\<close>
+  have \<open>bounded_clinear ?A\<close> and \<open>bounded_clinear ?B\<close>
+    by (auto intro!: bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear A\<close>]
+        bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear B\<close>])
+  moreover from eq have \<open>\<And>x. x \<in> ?G \<Longrightarrow> ?A x = ?B x\<close>
+    by (metis image_iff iso_tuple_UNIV_I to_conjugate_space_inverse)
+  moreover from t have \<open>?t \<in> closure (cspan ?G)\<close>
+    by (metis bounded_antilinear.bounded_linear bounded_antilinear_to_conjugate_space closure_bounded_linear_image_subset cspan_to_conjugate_space imageI subsetD)
+  ultimately have \<open>?A ?t = ?B ?t\<close>
+    by (rule bounded_clinear_eq_on)
+  then show \<open>A t = B t\<close>
+    by (simp add: to_conjugate_space_inverse)
+qed
 
 (* Renamed from cblinfun_image_span *)
 lemma cblinfun_eq_on:
@@ -3905,24 +3926,35 @@ proof-
 qed *)
 
 
-(* TODO inline in bounded_clinear_finite_dim *)
-lemma cblinfun_operator_finite_dim:
-  fixes  F::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
+(* Use bounded_clinear_finite_dim instead *)
+(* lemma cblinfun_operator_finite_dim:
+  fixes  F::"'a::{complex_normed_vector,cfinite_dim} \<Rightarrow> 'b::complex_normed_vector" 
     and basis::"'a set"
   assumes b1: "complex_vector.span basis = UNIV"
     and b2: "cindependent basis"
     and b3:"finite basis" 
     and b5:"clinear F"
-  shows "bounded_clinear F"
-proof-
+  shows "bounded_clinear F" *)
+
+
+(* TODO move Complex_Normed *)
+lemma bounded_clinear_finite_dim[simp]:
+  fixes f :: \<open>'a::{cfinite_dim,complex_normed_vector} \<Rightarrow> 'b::complex_normed_vector\<close>
+  assumes \<open>clinear f\<close>
+  shows \<open>bounded_clinear f\<close>
+proof -
   include notation_norm
+  obtain basis :: \<open>'a set\<close> where b1: "complex_vector.span basis = UNIV"
+    and b2: "cindependent basis"
+    and b3:"finite basis" 
+    using finite_basis by auto
   have "\<exists>C>0. \<forall>\<psi> b. cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
     using finite_cspan_crepresentation_bounded[where B = basis] b2 b3 by blast
   then obtain C where s1: "cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
     and s2: "C > 0"
   for \<psi> b by blast
-  define M where "M = C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
-  have "\<parallel>F x\<parallel> \<le> \<parallel>x\<parallel> * M"
+  define M where "M = C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
+  have "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * M"
     for x
   proof-
     define r where "r b = crepresentation basis x b" for b
@@ -3944,22 +3976,21 @@ proof-
     have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
       unfolding r_def
       by (simp add: g1) 
-    hence "F x = F (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+    hence "f x = f (\<Sum>a\<in>basis. r a *\<^sub>C a)"
       by simp
-    also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C F a)"
-      by (smt Finite_Cartesian_Product.sum_cong_aux b5 complex_vector.linear_scale 
-          complex_vector.linear_sum)
-    finally have "F x = (\<Sum>a\<in>basis. r a *\<^sub>C F a)".
-    hence "\<parallel>F x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C F a)\<parallel>"
+    also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C f a)"
+      by (smt (verit, ccfv_SIG) assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    finally have "f x = (\<Sum>a\<in>basis. r a *\<^sub>C f a)".
+    hence "\<parallel>f x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C f a)\<parallel>"
       by simp
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a *\<^sub>C F a\<parallel>)"
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a *\<^sub>C f a\<parallel>)"
       by (simp add: sum_norm_le)
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>F a\<parallel>)"
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>f a\<parallel>)"
       by simp
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>x\<parallel> * C * \<parallel>F a\<parallel>)"      
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>x\<parallel> * C * \<parallel>f a\<parallel>)"      
       using sum_mono s1 unfolding r_def
       by (simp add: sum_mono mult_right_mono)
-    also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>F a\<parallel>)"
+    also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
       using sum_distrib_left
       by (smt sum.cong)
     also have "\<dots> = \<parallel>x\<parallel> * M"
@@ -3968,73 +3999,37 @@ proof-
     finally show ?thesis .
   qed
   thus ?thesis
-    using b5 bounded_clinear_def
-    using bounded_clinear_axioms_def by blast
-qed
-
-(* TODO move Complex_Normed *)
-lemma bounded_clinear_finite_dim[simp, intro!]:
-  fixes f :: \<open>'a::{cfinite_dim,complex_normed_vector} \<Rightarrow> 'b::complex_normed_vector\<close>
-  assumes \<open>clinear f\<close>
-  shows \<open>bounded_clinear f\<close>
-proof (rule iffI)
-  assume \<open>clinear f\<close>
-  from finite_basis obtain basis :: \<open>'a set\<close> where basis: \<open>finite basis\<close> \<open>cindependent basis\<close> \<open>cspan basis = UNIV\<close>
-    by auto
-  with \<open>clinear f\<close> show \<open>bounded_clinear f\<close>
-    apply (rule_tac cblinfun_operator_finite_dim[where basis=\<open>basis\<close>])
-    by auto
-next
-  assume \<open>bounded_clinear f\<close>
-  then show \<open>clinear f\<close>
-    using bounded_clinear.clinear by blast
+    using assms bounded_clinear_def bounded_clinear_axioms_def by blast
 qed
 
 (* Renamed from cblinfun_operator_basis_existence_uniq *)
 lemma cblinfun_eq_on_UNIV_span:
-  fixes basis::"'a::chilbert_space set" and \<phi>::"'a \<Rightarrow> 'b::chilbert_space" (* complex_normed_vector *)
+  fixes basis::"'a::complex_normed_vector set" and \<phi>::"'a \<Rightarrow> 'b::complex_normed_vector" (* complex_normed_vector *)
   assumes "cspan basis = UNIV"
-    and "cindependent basis" (* TODO: does this really need independence? *)
-    and "finite basis" 
     and "\<And>s. s\<in>basis \<Longrightarrow> F *\<^sub>V s = G *\<^sub>V s"
   shows \<open>F = G\<close>
 proof-
-  have "s\<in>basis \<Longrightarrow> (F-G) s = 0" for s
-    using minus_cblinfun.rep_eq
-    by (simp add: minus_cblinfun.rep_eq assms(4) assms(5))
-  hence "F - G = 0"
-    using cblinfun_operator_basis_zero_uniq[where F = "F - G" and basis = basis]
-      assms(1) assms(2) assms(3) by auto
+  have "F - G = 0"
+    apply (rule cblinfun_eq_0_on_UNIV_span[where basis=basis])
+    using assms by (auto simp add: cblinfun.diff_left)
   thus ?thesis by simp
 qed
 
 
 (* Renamed from obn_enum_uniq *)
 lemma cblinfun_eq_on_canonical_basis:
-  fixes f g::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" (* TODO basis_enum *)
+  fixes f g::"'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" (* TODO basis_enum *)
   defines "basis == set (canonical_basis::'a list)"
   assumes "\<And>u. u \<in> basis \<Longrightarrow> f *\<^sub>V u = g *\<^sub>V u"
   shows  "f = g" 
-(* TODO Shorter proof using cblinfun_eq_on_UNIV_span? *)
-proof-
-  define h where "h = f - g"
-  have "\<And>u. u \<in> basis \<Longrightarrow> h *\<^sub>V u = 0"
-    using assms unfolding h_def
-    by (simp add: assms(2) minus_cblinfun.rep_eq)
-  hence "h = 0"
-    using basis_def cblinfun_operator_basis_zero_uniq
-      is_cindependent_set is_generator_set by auto
-  thus ?thesis 
-    unfolding h_def
-    using eq_iff_diff_eq_0 by blast 
-qed
-
+  apply (rule cblinfun_eq_on_UNIV_span[where basis=basis])
+  using assms is_generator_set is_cindependent_set by auto
 
 lemma cblinfun_eq_0_on_canonical_basis:
   fixes f ::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum" (* TODO: basis_enum? *)
   defines "basis == set (canonical_basis::'a list)"
   assumes "\<And>u. u \<in> basis \<Longrightarrow> f *\<^sub>V u = 0"
-  shows  "f = 0" 
+  shows  "f = 0"
 (* TODO replace proof *)
 proof-
   have "cblinfun_apply f x = 0" for x
@@ -4217,19 +4212,17 @@ qed
 
 (* Renamed from cblinfun_extension_exists_finite *)
 lemma cblinfun_extension_exists_finite_dim:
-  fixes \<phi>::"'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" 
-  assumes a1: "cindependent S"
-    and a2: "cspan S = UNIV"
-    and a3: "finite S" (* TODO: Use type class cfinite_dim instead *)
+  fixes \<phi>::"'a::{complex_normed_vector,cfinite_dim} \<Rightarrow> 'b::complex_normed_vector" 
+  assumes "cindependent S"
+    and "cspan S = UNIV"
   shows "cblinfun_extension_exists S \<phi>"
 proof-
-  define f::"'a \<Rightarrow> 'b" 
+  define f::"'a \<Rightarrow> 'b"
     where "f = complex_vector.construct S \<phi>"
   have "clinear f"
-    using linear_construct a1 f_def
-    by (simp add: complex_vector.linear_construct ) 
+    by (simp add: complex_vector.linear_construct assms linear_construct f_def) 
   have "bounded_clinear f"
-    using \<open>clinear f\<close> a1 a2 a3  cblinfun_operator_finite_dim by auto    
+    using \<open>clinear f\<close> assms by auto    
   then obtain B::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b" 
     where "B *\<^sub>V x = f x" for x
     using cblinfun_apply_cases by blast
@@ -4240,14 +4233,16 @@ proof-
     have "B *\<^sub>V x = f x"
       by (simp add: \<open>\<And>x. B *\<^sub>V x = f x\<close>)
     also have "\<dots> = \<phi> x"
-      using a1 complex_vector.construct_basis f_def that
-      by (simp add: complex_vector.construct_basis ) 
+      using assms complex_vector.construct_basis f_def that
+      by (simp add: complex_vector.construct_basis) 
     finally show?thesis by blast
   qed
   thus ?thesis 
     unfolding cblinfun_extension_exists_def
     by blast
 qed
+
+(* TODO: BLT theorem *)
 
 (* Renamed from cblinfun_extension_exists *)
 lemma cblinfun_extension_apply:
@@ -4530,24 +4525,31 @@ lemma Proj_inj:
   shows "X = Y"
   by (metis assms Proj_range)
 
-(* TODO rename from here *)
-
 lemma cblinfun_apply_in_image[simp]: "A *\<^sub>V \<psi> \<in> space_as_set (A *\<^sub>S \<top>)"
   by (metis cblinfun_image.rep_eq closure_subset in_mono range_eqI top_ccsubspace.rep_eq)
 
 lemma cbilinear_cblinfun_compose[simp]: "cbilinear cblinfun_compose"
   by (auto intro!: clinearI simp add: cbilinear_def bounded_cbilinear.add_left bounded_cbilinear.add_right bounded_cbilinear_cblinfun_compose)
 
-lemma one_dim_iso_id_cblinfun[simp]: \<open>one_dim_iso id_cblinfun = (1::complex)\<close>
+lemma one_dim_iso_id_cblinfun[simp]: \<open>one_dim_iso id_cblinfun = id_cblinfun\<close>
   by (metis one_dim_id_cblinfun one_dim_iso_of_one)
 
-(* TODO swap a,b in rhs*)
-lemma one_dim_iso_cblinfun_apply[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso b o\<^sub>C\<^sub>L one_dim_iso a\<close>
+(* Renamed from one_dim_iso_id_cblinfun *)
+lemma one_dim_iso_id_cblinfun_eq_1[simp]: \<open>one_dim_iso id_cblinfun = 1\<close>
+  by (metis one_dim_id_cblinfun one_dim_iso_of_one)
+
+lemma id_cblinfun_eq_1[simp]: \<open>id_cblinfun = 1\<close>
+  by (simp add: one_dim_id_cblinfun)
+
+(* Renamed from one_dim_iso_cblinfun_apply *)
+lemma one_dim_iso_comp_distr[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso a o\<^sub>C\<^sub>L one_dim_iso b\<close>
   by (smt (z3) cblinfun_compose_scaleC_left cblinfun_compose_scaleC_right one_cinner_a_scaleC_one one_comp_one_cblinfun one_dim_iso_of_one one_dim_iso_scaleC)
 
-(* TODO swap a,b in rhs*)
+
+(* TODO rename from here *)
+
 (* TODO: misnomer. Not specific to complex *)
-lemma one_dim_iso_cblinfun_apply_complex[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso b * one_dim_iso a\<close>
+lemma one_dim_iso_comp_distr_complex[simp]: \<open>one_dim_iso (a o\<^sub>C\<^sub>L b) = one_dim_iso a * one_dim_iso b\<close>
   by (smt (verit, del_insts) mult.left_neutral mult_scaleC_left one_cinner_a_scaleC_one one_comp_one_cblinfun one_dim_iso_of_one one_dim_iso_scaleC cblinfun_compose_scaleC_right cblinfun_compose_scaleC_left)
 
 lemma one_dim_iso_adjoint[simp]: \<open>one_dim_iso (A*) = (one_dim_iso A)*\<close>
@@ -4570,7 +4572,7 @@ proof -
     by (simp add: less_eq_cblinfun_def)
   also have \<open>\<dots> \<longleftrightarrow> (\<forall>\<psi>::'a. one_dim_iso B * (\<psi> \<bullet>\<^sub>C \<psi>) \<le> one_dim_iso A * (\<psi> \<bullet>\<^sub>C \<psi>))\<close>
     apply (subst A, subst B)
-    by (auto simp: cblinfun.scaleC_left)
+    by (metis (no_types, hide_lams) cinner_scaleC_right id_cblinfun_apply scaleC_cblinfun.rep_eq)
   also have \<open>\<dots> \<longleftrightarrow> one_dim_iso A \<ge> (one_dim_iso B :: complex)\<close>
     by (auto intro!: mult_right_mono elim!: allE[where x=1])
   finally show ?thesis
