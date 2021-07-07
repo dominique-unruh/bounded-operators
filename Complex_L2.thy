@@ -2932,10 +2932,10 @@ proof-
 qed
 
 (* TODO rename \<rightarrow> sum_butterfly_ket *)
-lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = idOp\<close>
+lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: scaleC_cblinfun.rep_eq apply_cblinfun_distr_left clinearI butterfly_def cblinfun_compose_image ket_Kronecker_delta)
+  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image ket_Kronecker_delta)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
 
@@ -3493,16 +3493,16 @@ lemma classical_operator_Some[simp]:
   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'a ell2) 
                           | Some i \<Rightarrow> ket i)"
-  shows "classical_operator (Some::'a\<Rightarrow>_) = idOp"
+  shows "classical_operator (Some::'a\<Rightarrow>_) = id_cblinfun"
 proof-
-  have "(classical_operator Some) *\<^sub>V (ket i)  = idOp *\<^sub>V (ket i)"
+  have "(classical_operator Some) *\<^sub>V (ket i)  = id_cblinfun *\<^sub>V (ket i)"
     for i::'a
     apply (subst classical_operator_basis)
     apply (rule classical_operator_exists_inj)
     by auto
   thus ?thesis
     using equal_ket[where A = "classical_operator (Some::'a \<Rightarrow> _ option)"
-        and B = "idOp::'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _"]
+        and B = "id_cblinfun::'a ell2 \<Rightarrow>\<^sub>C\<^sub>L _"]
     by blast
 qed
 
@@ -3537,9 +3537,9 @@ proof (unfold unitary_def, rule conjI)
     using a1 bij_betw_imp_inj_on by auto
   hence "isometry (classical_operator (Some o \<pi>))"
     by simp
-  hence "classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp"
+  hence "classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = id_cblinfun"
     unfolding isometry_def by simp
-  thus \<open>classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = idOp\<close>
+  thus \<open>classical_operator (Some \<circ> \<pi>)* o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>) = id_cblinfun\<close>
     by simp 
 next
   have "inj \<pi>"
@@ -3559,9 +3559,9 @@ next
   also have "\<dots> = classical_operator (Some::'b\<Rightarrow>_)"
     using comp
     by simp 
-  also have "\<dots> = (idOp:: 'b ell2 \<Rightarrow>\<^sub>C\<^sub>L _)"
+  also have "\<dots> = (id_cblinfun:: 'b ell2 \<Rightarrow>\<^sub>C\<^sub>L _)"
     by simp
-  finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = idOp".
+  finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = id_cblinfun".
 qed
 
 lemma ell2_norm_cinner:
