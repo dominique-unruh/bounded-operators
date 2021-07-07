@@ -1468,7 +1468,7 @@ proof-
         and b2 :: 'a
     proof-
       have "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
-        by (simp add: cblinfun_apply_add)        
+        by (simp add: cblinfun.add_right)        
       thus ?thesis
         unfolding Q_def
         by (simp add: cinner_add_right)        
@@ -1478,7 +1478,7 @@ proof-
         and b :: 'a
     proof-
       have "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
-        by (simp add: cblinfun_apply_scaleC)        
+        by (simp add: cblinfun.scaleC_right)        
       thus ?thesis
         unfolding Q_def
         by (simp add: cinner_add_right)        
@@ -1893,11 +1893,11 @@ qed
 
 
 lemma cblinfun_of_mat_id:
-  "mat_of_cblinfun (idOp :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L'a)) = 1\<^sub>m (canonical_basis_length TYPE('a))"
+  "mat_of_cblinfun (id_cblinfun :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L'a)) = 1\<^sub>m (canonical_basis_length TYPE('a))"
 proof-
   define n where "n = canonical_basis_length TYPE('a)"
   define Basis where "Basis = (canonical_basis::'a list)"
-  define I where "I = (idOp ::'a \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+  define I where "I = (id_cblinfun ::'a \<Rightarrow>\<^sub>C\<^sub>L 'a)"
   have b1: "dim_row (mat_of_cblinfun I) = n"
     unfolding mat_of_cblinfun_def n_def
     by simp
@@ -2527,7 +2527,7 @@ proof -
   define BasisA where "BasisA = (canonical_basis::'a list)"
   define BasisB where "BasisB = (canonical_basis::'b list)"
 
-  define G where "G = (a::complex) *\<^sub>C (idOp:: 'b \<Rightarrow>\<^sub>C\<^sub>L 'b)"
+  define G where "G = (a::complex) *\<^sub>C (id_cblinfun:: 'b \<Rightarrow>\<^sub>C\<^sub>L 'b)"
   have w1: "a *\<^sub>C F = G o\<^sub>C\<^sub>L F"
     unfolding G_def
     by simp
@@ -2564,7 +2564,7 @@ proof -
   qed
   hence w2: "mat_of_cblinfun G = a \<cdot>\<^sub>m (1\<^sub>m nB)"
     unfolding BasisB_def nB_def mat_of_cblinfun_def G_def smult_mat_def one_mat_def
-    by (auto simp add: cblinfun.scaleC_left)
+    by (auto simp add: cblinfun.scaleC_left del: scaleC_conv_of_complex)
   have w3: "1\<^sub>m nB \<in> carrier_mat nB nB"
     unfolding nB_def  mat_of_cblinfun_def by auto
   have w4: "mat_of_cblinfun F \<in> carrier_mat nB nA"
@@ -3074,7 +3074,7 @@ proof-
       hence "vec_of_onb_enum x = vec_of_onb_enum (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
         by simp
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_onb_enum ((canonical_basis::'a ell2 list)!0)"
-        by (simp add: vec_of_onb_enum_scaleC)
+        by (simp add: vec_of_onb_enum_scaleC del: scaleC_conv_of_complex)
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
         by (simp add: q1 vec_of_basis_vector)
       finally have "vec_of_onb_enum x
@@ -3204,7 +3204,7 @@ proof-
       hence "vec_of_onb_enum x = vec_of_onb_enum (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
         by simp
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_onb_enum ((canonical_basis::'a ell2 list)!0)"
-        by (simp add: vec_of_onb_enum_scaleC)
+        by (simp add: vec_of_onb_enum_scaleC del: scaleC_conv_of_complex)
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
         by (simp add: q1 vec_of_basis_vector)
       finally have "vec_of_onb_enum x
@@ -3335,7 +3335,7 @@ proof-
       hence "vec_of_onb_enum x = vec_of_onb_enum (Rep_ell2 x i *\<^sub>C (canonical_basis::'a ell2 list)!0)"
         by simp
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v vec_of_onb_enum ((canonical_basis::'a ell2 list)!0)"
-        by (simp add: vec_of_onb_enum_scaleC)
+        by (simp add: vec_of_onb_enum_scaleC del: scaleC_conv_of_complex)
       also have "\<dots> = Rep_ell2 x i \<cdot>\<^sub>v unit_vec (canonical_basis_length TYPE('a ell2)) 0"
         by (simp add: q1 vec_of_basis_vector)
       finally have "vec_of_onb_enum x

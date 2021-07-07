@@ -482,7 +482,7 @@ proof -
 qed
 
 
-lemma uminus_Span_code[code]: "- X = range_cblinfun_code (idOp - Proj X)"
+lemma uminus_Span_code[code]: "- X = range_cblinfun_code (id_cblinfun - Proj X)"
   \<comment> \<open>Code equation for the orthogonal complement of a subspace \<^term>\<open>X\<close>. 
       Computed as the range of one minus the projector on \<^term>\<open>X\<close>\<close>
   unfolding range_cblinfun_code_def

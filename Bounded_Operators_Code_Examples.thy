@@ -70,27 +70,27 @@ section \<open>Examples\<close>
 
 subsection \<open>Operators\<close>
 
-value "idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
-value "idOp + idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "id_cblinfun + id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "0 :: (bool ell2 \<Rightarrow>\<^sub>C\<^sub>L Enum.finite_3 ell2)"
 
-value "- idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "- id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
-value "idOp - idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "id_cblinfun - id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "classical_operator (\<lambda>b. Some (\<not> b))"
 
-value "idOp = (0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2)"
+value "id_cblinfun = (0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2)"
 
-value "2 *\<^sub>R idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "2 *\<^sub>R id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
-value "imaginary_unit *\<^sub>C idOp :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "imaginary_unit *\<^sub>C id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
-value "idOp o\<^sub>C\<^sub>L 0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "id_cblinfun o\<^sub>C\<^sub>L 0 :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
-value "idOp* :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
+value "id_cblinfun* :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 subsection \<open>Vectors\<close>
 
@@ -122,7 +122,7 @@ value "(1::unit ell2) * (1::unit ell2)"
 
 subsection \<open>Vector/Matrix\<close>
 
-value "idOp *\<^sub>V ket True"
+value "id_cblinfun *\<^sub>V ket True"
 
 value \<open>vector_to_cblinfun (ket True) :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L _\<close>
 
@@ -144,9 +144,9 @@ value "ccspan {ket False} + ccspan {ket True}"
 
 value "ccspan {ket False} \<sqinter> ccspan {ket True}"
 
-value "idOp *\<^sub>S ccspan {ket False}"
+value "id_cblinfun *\<^sub>S ccspan {ket False}"
 
-value "idOp *\<^sub>S (top :: bool ell2 ccsubspace)" (* Special case, using range_cblinfun_code for efficiency *)
+value "id_cblinfun *\<^sub>S (top :: bool ell2 ccsubspace)" (* Special case, using range_cblinfun_code for efficiency *)
 
 value "- ccspan {ket False}"
 
@@ -154,11 +154,11 @@ value "ccspan {ket False, ket True} = top"
 
 value "ccspan {ket False} \<le> ccspan {ket True}"
 
-value "applyOpSpace idOp (ccspan {ket True})"
+value "applyOpSpace id_cblinfun (ccspan {ket True})"
 
-value "kernel idOp :: bool ell2 ccsubspace"
+value "kernel id_cblinfun :: bool ell2 ccsubspace"
 
-value "eigenspace 1 idOp :: bool ell2 ccsubspace"
+value "eigenspace 1 id_cblinfun :: bool ell2 ccsubspace"
 
 value "Inf {ccspan {ket False}, top}"
 
