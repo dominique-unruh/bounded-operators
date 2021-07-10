@@ -2056,10 +2056,10 @@ lemma mult_inf_distrib[simp]:
   unfolding INF_UNIV_bool_expand
   using assms by auto
 
-(* Use cblinfun.scaleC_left instead (TODO?: [simp] in QRHL) *)
+(* Use cblinfun.scaleC_left instead *)
 (* lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) *\<^sub>V \<psi> = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
 
-(* Use cblinfun.scaleC_right instead (TODO?: [simp] in QRHL) *)
+(* Use cblinfun.scaleC_right instead *)
 (* lemma applyOp_scaleC2[simp]: "A *\<^sub>V (c *\<^sub>C \<psi>) = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
 
 (* definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where

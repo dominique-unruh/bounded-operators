@@ -72,6 +72,8 @@ subsection \<open>Operators\<close>
 
 value "id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
+value "1 :: unit ell2 \<Rightarrow>\<^sub>C\<^sub>L unit ell2"
+
 value "id_cblinfun + id_cblinfun :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 
 value "0 :: (bool ell2 \<Rightarrow>\<^sub>C\<^sub>L Enum.finite_3 ell2)"
@@ -95,6 +97,8 @@ value "id_cblinfun* :: bool ell2 \<Rightarrow>\<^sub>C\<^sub>L bool ell2"
 subsection \<open>Vectors\<close>
 
 value "0 :: bool ell2"
+
+value "1 :: unit ell2"
 
 value "ket False"
 

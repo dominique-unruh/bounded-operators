@@ -50,6 +50,9 @@ declare mat_of_cblinfun_plus[code]
 declare cblinfun_of_mat_id[code]
   \<comment> \<open>Code equation for computing the identity operator\<close>
 
+declare cblinfun_of_mat_1[code]
+  \<comment> \<open>Code equation for computing the one-dimensional identity\<close>
+
 declare mat_of_cblinfun_zero[code]
   \<comment> \<open>Code equation for computing the zero operator\<close>
 

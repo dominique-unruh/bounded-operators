@@ -1964,6 +1964,27 @@ proof-
     using I_def b2 n_def by auto
 qed
 
+lemma cblinfun_of_mat_1:
+  "mat_of_cblinfun (1 :: ('a::one_dim \<Rightarrow>\<^sub>C\<^sub>L'b::one_dim)) = 1\<^sub>m 1"
+proof -
+  let ?one = \<open>1 :: ('a::one_dim \<Rightarrow>\<^sub>C\<^sub>L'b::one_dim)\<close>
+  let ?basisa = \<open>canonical_basis::'a list\<close> and ?basisb = \<open>canonical_basis::'b list\<close>
+  note one_dim_canonical_basis[simp]
+  have [simp]: "dim_row (mat_of_cblinfun ?one) = 1"
+    unfolding mat_of_cblinfun_def by simp
+  have [simp]: "dim_col (mat_of_cblinfun ?one) = 1"
+    unfolding mat_of_cblinfun_def by simp
+
+  have "(mat_of_cblinfun ?one)$$(0, 0) = 1 \<bullet>\<^sub>C (?one *\<^sub>V 1)"
+    unfolding mat_of_cblinfun_def by simp
+  also have \<open>\<dots> = 1\<close>
+    apply transfer by auto
+  also have \<open>\<dots> = (1\<^sub>m 1)$$(0,0)\<close>
+    by auto
+
+  finally show ?thesis
+    by auto
+qed
 
 lemma mat_of_cblinfun_zero:
   "mat_of_cblinfun (0 :: ('a::onb_enum  \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum)) 
