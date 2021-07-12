@@ -16,6 +16,8 @@ theory Bounded_Operators
     Complex_Bounded_Linear_Function0
 begin
 
+declare cblinfun.scaleC_left[simp]
+
 subsection \<open>Algebraic properties of real cblinfun operators\<close>
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
@@ -1149,7 +1151,7 @@ proof-
             \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
     by blast
   show ?thesis
-    unfolding cblinfun_image_def apply auto using x1 by blast
+    unfolding cblinfun_image_def using x1 by force
 qed
 
 lemma cblinfun_image_id[simp]: 
@@ -1220,46 +1222,6 @@ qed
   assumes \<open>clinear A\<close> and \<open>clinear B\<close> and
     \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and \<open>t \<in> cspan G\<close>
   shows \<open>A t = B t\<close> *)
-
-(* TODO: move *)
-(* Renamed from equal_span_cblinfun_image *)
-lemma bounded_clinear_eq_on:
-  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
-    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
-  shows \<open>A t = B t\<close>
-proof -
-  have eq': \<open>A t = B t\<close> if \<open>t \<in> cspan G\<close> for t
-    using _ _ that eq apply (rule complex_vector.linear_eq_on)
-    by (auto simp: assms bounded_clinear.clinear)
-  have \<open>A t - B t = 0\<close>
-    using _ _ t apply (rule continuous_constant_on_closure)
-    by (auto simp add: eq' assms(1) assms(2) clinear_continuous_at continuous_at_imp_continuous_on)
-  then show ?thesis
-    by auto
-qed
-
-(* TODO move *)
-lemma bounded_antilinear_eq_on:
-  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  assumes \<open>bounded_antilinear A\<close> and \<open>bounded_antilinear B\<close> and
-    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
-  shows \<open>A t = B t\<close>
-proof -
-  let ?A = \<open>\<lambda>x. A (from_conjugate_space x)\<close> and ?B = \<open>\<lambda>x. B (from_conjugate_space x)\<close>
-    and ?G = \<open>to_conjugate_space ` G\<close> and ?t = \<open>to_conjugate_space t\<close>
-  have \<open>bounded_clinear ?A\<close> and \<open>bounded_clinear ?B\<close>
-    by (auto intro!: bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear A\<close>]
-        bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear B\<close>])
-  moreover from eq have \<open>\<And>x. x \<in> ?G \<Longrightarrow> ?A x = ?B x\<close>
-    by (metis image_iff iso_tuple_UNIV_I to_conjugate_space_inverse)
-  moreover from t have \<open>?t \<in> closure (cspan ?G)\<close>
-    by (metis bounded_antilinear.bounded_linear bounded_antilinear_to_conjugate_space closure_bounded_linear_image_subset cspan_to_conjugate_space imageI subsetD)
-  ultimately have \<open>?A ?t = ?B ?t\<close>
-    by (rule bounded_clinear_eq_on)
-  then show \<open>A t = B t\<close>
-    by (simp add: to_conjugate_space_inverse)
-qed
 
 (* Renamed from cblinfun_image_span *)
 lemma cblinfun_eq_on:
@@ -1364,6 +1326,29 @@ lemma unitary_range[simp]:
 
 lemma unitary_id[simp]: "unitary id_cblinfun"
   by (simp add: unitary_def) 
+
+lemma orthogonal_on_basis_is_isometry:
+  assumes spanB: \<open>ccspan B = \<top>\<close>
+  assumes orthoU: \<open>\<And>b c. b\<in>B \<Longrightarrow> c\<in>B \<Longrightarrow> cinner (U *\<^sub>V b) (U *\<^sub>V c) = cinner b c\<close>
+  shows \<open>isometry U\<close>
+proof -
+  have [simp]: \<open>b \<in> closure (cspan B)\<close> for b
+    using spanB apply transfer by simp
+  have *: \<open>cinner (U* *\<^sub>V U *\<^sub>V \<psi>) \<phi> = cinner \<psi> \<phi>\<close> if \<open>\<psi>\<in>B\<close> and \<open>\<phi>\<in>B\<close> for \<psi> \<phi>
+    by (simp add: cinner_adj_left orthoU that(1) that(2))
+  have *: \<open>cinner (U* *\<^sub>V U *\<^sub>V \<psi>) \<phi> = cinner \<psi> \<phi>\<close> if \<open>\<psi>\<in>B\<close> for \<psi> \<phi>
+    apply (rule bounded_clinear_eq_on[where t=\<phi> and G=B])
+    using bounded_clinear_cinner_right *[OF that]
+    by auto
+  have \<open>U* *\<^sub>V U *\<^sub>V \<phi> = \<phi>\<close> if \<open>\<phi>\<in>B\<close> for \<phi>
+    apply (rule cinner_extensionality)
+    apply (subst cinner_eq_flip)
+    by (simp add: * that)
+  then have \<open>U* o\<^sub>C\<^sub>L U = id_cblinfun\<close>
+    by (metis cblinfun_apply_cblinfun_compose cblinfun_eq_gen_eqI cblinfun_id_cblinfun_apply spanB)
+  then show \<open>isometry U\<close>
+    using isometry_def by blast
+qed
 
 subsection \<open>Projectors\<close>
 
@@ -1633,7 +1618,28 @@ proof-
     by blast
 qed
 
+lemma Proj_orthog_ccspan_plus:
+  assumes "\<And>x y. x \<in> X \<Longrightarrow> y \<in> Y \<Longrightarrow> is_orthogonal x y"
+  shows \<open>Proj (ccspan X) + Proj (ccspan Y) = Proj (ccspan (X \<union> Y))\<close>
+proof -
+  have \<open>x \<in> cspan X \<Longrightarrow> y \<in> cspan Y \<Longrightarrow> is_orthogonal x y\<close> for x y
+    apply (rule is_orthogonal_closure_cspan[where X=X and Y=Y])
+    using closure_subset assms by auto
+  then have \<open>x \<in> closure (cspan X) \<Longrightarrow> y \<in> closure (cspan Y) \<Longrightarrow> is_orthogonal x y\<close> for x y
+    by (metis orthogonal_complementI orthogonal_complement_of_closure orthogonal_complement_orthoI')
+  then show ?thesis
+    apply (transfer fixing: X Y)
+    apply (subst projection_plus[symmetric])
+    by auto
+qed
+
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (ccspan {\<psi>})"
+
+lemma surj_isometry_is_unitary:
+  assumes \<open>isometry U\<close>
+  assumes \<open>U *\<^sub>S \<top> = \<top>\<close>
+  shows \<open>unitary U\<close>
+  by (metis Proj_congruence Proj_on_own_range' assms(1) assms(2) cblinfun_compose_id_right isometry_def unitary_def unitary_id unitary_range)
 
 (* TODO move *)
 lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> ccspan { a *\<^sub>C \<psi> } = ccspan {\<psi>}"
@@ -4278,6 +4284,9 @@ lemma cblinfun_extension_apply:
 subsection \<open>Unsorted\<close>
 
 (* TODO sort this into the right sections *)
+
+lemma id_cblinfun_not_0[simp]: \<open>(id_cblinfun :: 'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) \<noteq> 0\<close>
+  by (metis ccsubspace_top_not_bot kernel_0 kernel_id zero_ccsubspace_def)
 
 (* Use cblinfun.zero_right instead *)
 (* lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0" *)

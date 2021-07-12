@@ -2074,6 +2074,11 @@ lemma cinner_ket_right: \<open>\<langle>\<psi>, ket i\<rangle> = cnj (Rep_ell2 \
   apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
   by auto
 
+lemma cinner_ket_eqI:
+  assumes \<open>\<And>i. cinner (ket i) \<psi> = cinner (ket i) \<phi>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+  by (metis Rep_ell2_inject assms cinner_ket_left ext)
+
 lemma ell2_ket[simp]: "norm (ket i) = 1"
 proof transfer
   show "ell2_norm (\<lambda>y. if i = y then 1::complex else 0) = 1"
@@ -3688,7 +3693,13 @@ proof-
 qed
 
 
+subsection \<open>Unsorted\<close>
 
+lemma cdim_UNIV_ell2[simp]: \<open>cdim (UNIV::'a::finite ell2 set) = CARD('a)\<close>
+  apply (subst cspan_ket_finite[symmetric])
+  apply (subst complex_vector.dim_span_eq_card_independent)
+  using cindependent_ket apply blast
+  using card_image inj_ket by blast
 
 unbundle no_cblinfun_notation
 

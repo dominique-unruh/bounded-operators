@@ -271,6 +271,20 @@ proof -
     unfolding orthogonal_complement_def by auto
 qed
 
+lemma is_orthogonal_closure_cspan:
+  assumes "\<And>x y. x \<in> X \<Longrightarrow> y \<in> Y \<Longrightarrow> is_orthogonal x y"
+  assumes \<open>x \<in> closure (cspan X)\<close> \<open>y \<in> closure (cspan Y)\<close>
+  shows "is_orthogonal x y"
+proof -
+  have *: \<open>cinner x y = 0\<close> if \<open>y \<in> Y\<close> for y
+    using bounded_antilinear_cinner_left apply (rule bounded_antilinear_eq_on[where G=X])
+    using assms that by auto
+  show \<open>cinner x y = 0\<close>
+    using bounded_clinear_cinner_right apply (rule bounded_clinear_eq_on[where G=Y])
+    using * assms by auto
+qed
+
+
 instantiation ccsubspace :: (complex_inner) "uminus"
 begin
 lift_definition uminus_ccsubspace::\<open>'a ccsubspace  \<Rightarrow> 'a ccsubspace\<close>
@@ -2667,7 +2681,7 @@ proof -
     apply (rule is_projection_on_plus)
     using assms by (auto simp add: closed_csubspace.intro)
   also have \<open>\<dots> = closure (cspan (insert a S))\<close>
-    using closed_sum_cspan[where A=\<open>{a}\<close>] by simp
+    using closed_sum_cspan[where X=\<open>{a}\<close>] by simp
   finally show ?thesis
     by -
 qed

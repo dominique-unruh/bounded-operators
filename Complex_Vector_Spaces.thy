@@ -137,6 +137,9 @@ lemma bounded_antilinear_intro:
   shows "bounded_antilinear f"
   by standard (blast intro: assms)+
 
+lemma bounded_antilinear_0[simp]: \<open>bounded_antilinear (\<lambda>_. 0)\<close>
+  by (rule bounded_antilinear_intro[where K=0], auto)
+
 lemma cnj_bounded_antilinear[simp]: "bounded_antilinear cnj"
   apply (rule bounded_antilinear_intro [where K = 1])
   by auto
@@ -206,6 +209,7 @@ proof
     using that
     by (smt bij_inv_eq_iff clinear_def complex_vector.linear_scale) 
 qed
+
 
 locale bounded_sesquilinear =
   fixes 
@@ -645,8 +649,10 @@ typedef (overloaded) ('a::"{complex_vector,topological_space}")
   morphisms space_as_set Abs_clinear_space
   using Complex_Vector_Spaces.closed_csubspace_UNIV by blast
 
-
 setup_lifting type_definition_ccsubspace
+
+lemma csubspace_space_as_set[simp]: \<open>csubspace (space_as_set S)\<close>
+  by (metis closed_csubspace_def mem_Collect_eq space_as_set)
 
 instantiation ccsubspace :: (complex_normed_vector) scaleC begin
 lift_definition scaleC_ccsubspace :: "complex \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" is
@@ -867,7 +873,7 @@ lemma cspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> csp
       complex_vector.span_scale doubleton_eq_iff insert_absorb insert_absorb2 insert_commute 
       singletonI)
 
-lemma closure_is_closed_csubspace:
+lemma closure_is_closed_csubspace[simp]:
   fixes S::\<open>'a::complex_normed_vector set\<close>
   assumes \<open>csubspace S\<close>
   shows \<open>closed_csubspace (closure S)\<close>
@@ -940,6 +946,24 @@ lemma antilinear_continuous_within:
   shows \<open>continuous (at x within s) f\<close>
   by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_within)
 
+(* Renamed from equal_span_cblinfun_image *)
+lemma bounded_clinear_eq_on:
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
+    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
+  shows \<open>A t = B t\<close>
+proof -
+  have eq': \<open>A t = B t\<close> if \<open>t \<in> cspan G\<close> for t
+    using _ _ that eq apply (rule complex_vector.linear_eq_on)
+    by (auto simp: assms bounded_clinear.clinear)
+  have \<open>A t - B t = 0\<close>
+    using _ _ t apply (rule continuous_constant_on_closure)
+    by (auto simp add: eq' assms(1) assms(2) clinear_continuous_at continuous_at_imp_continuous_on)
+  then show ?thesis
+    by auto
+qed
+
+
 
 (* Use complex_vector.linear_eq_0_on_span instead *)
 (* lemma equal_span_0:
@@ -969,6 +993,12 @@ proof
     using that by (simp add: space_as_set_inject less_eq_ccsubspace.rep_eq) 
 qed
 end
+
+lemma ccspan_leqI:
+  assumes \<open>M \<subseteq> space_as_set S\<close>
+  shows \<open>ccspan M \<le> S\<close>
+  using assms apply transfer
+  by (simp add: closed_csubspace.closed closure_minimal complex_vector.span_minimal)
 
 lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
   by (simp add: id_def)
@@ -1298,6 +1328,12 @@ setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cspan\<close>, SOME
 (* TODO: remove *)
 abbreviation (input) canonical_basis_length :: "'a::basis_enum itself \<Rightarrow> nat" where \<open>canonical_basis_length _ \<equiv> length (canonical_basis::'a list)\<close>
 
+lemma cdim_UNIV_basis_enum[simp]: \<open>cdim (UNIV::'a::basis_enum set) = length (canonical_basis::'a list)\<close>
+  apply (subst is_generator_set[symmetric])
+  apply (subst complex_vector.dim_span_eq_card_independent)
+   apply (rule is_cindependent_set)
+  using distinct_canonical_basis distinct_card by blast
+
 lemma ccspan_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
   using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
     closure_UNIV is_generator_set
@@ -1330,6 +1366,11 @@ lemma cindependent_cfinite_dim_finite:
   assumes \<open>cindependent (S::'a::cfinite_dim set)\<close>
   shows \<open>finite S\<close>
   by (metis assms cfinitely_spanned complex_vector.independent_span_bound top_greatest)
+
+lemma cfinite_dim_finite_subspace_basis:
+  assumes \<open>csubspace X\<close>
+  shows "\<exists>basis::'a::cfinite_dim set. finite basis \<and> cindependent basis \<and> cspan basis = X"
+  by (meson assms cindependent_cfinite_dim_finite complex_vector.basis_exists complex_vector.span_subspace)
 
 lemma ccsubspace_leI:
   assumes t1: "space_as_set A \<subseteq> space_as_set B"
@@ -1733,20 +1774,27 @@ proof -
 qed
 
 
-lemma closed_sum_zero_left:
+lemma closed_sum_zero_left[simp]:
   fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
-  assumes \<open>closed A\<close>
-  shows \<open>{0} +\<^sub>M A = A\<close>
+  shows \<open>{0} +\<^sub>M A = closure A\<close>
   unfolding closed_sum_def
-  by (metis add.left_neutral assms closure_eq set_zero)
+  by (metis add.left_neutral set_zero)
 
-lemma closed_sum_zero_right:
+lemma closed_sum_zero_right[simp]:
   fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
-  assumes \<open>closed A\<close>
-  shows \<open>A +\<^sub>M {0} = A\<close>
+  shows \<open>A +\<^sub>M {0} = closure A\<close>
   unfolding closed_sum_def
-  by (metis add.right_neutral assms closure_eq set_zero)
+  by (metis add.right_neutral set_zero)
 
+lemma closed_sum_closure_right[simp]:
+  fixes A B :: \<open>'a::real_normed_vector set\<close>
+  shows \<open>A +\<^sub>M closure B = A +\<^sub>M B\<close>
+  by (metis closed_sum_assoc closed_sum_def closed_sum_zero_right closure_closure)
+
+lemma closed_sum_closure_left[simp]:
+  fixes A B :: \<open>'a::real_normed_vector set\<close>
+  shows \<open>closure A +\<^sub>M B = A +\<^sub>M B\<close>
+  by (simp add: closed_sum_comm)
 
 lemma closed_sum_mono_left:
   assumes \<open>A \<subseteq> B\<close>
@@ -1765,54 +1813,12 @@ lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<R
 instance .. 
 end
 
-lemma closed_sum_cspan:
-  \<open>closure (cspan A) +\<^sub>M closure (cspan B) = closure (cspan (A \<union> B))\<close> for A B :: \<open>'a::complex_normed_vector set\<close>
-proof auto
-  have p0: "cspan (A \<union> B) = 
-      cspan A + cspan B"
-    for A B::"'a set"
-    using complex_vector.span_Un
-    by (smt Collect_cong set_plus_def)
-  hence p1: "closure (cspan (A \<union> B)) = 
-             closure (cspan A + cspan B)"
-    for A B::"'a set"
-    by simp
-
-  show "x \<in> closure (cspan (A \<union> B))"
-    if "x \<in> closure (cspan A) +\<^sub>M
-            closure (cspan B)"
-    for x::'a and A B
-  proof-
-    have "closure (cspan A) + closure (cspan B) \<subseteq>
-          closure (cspan A + cspan B)"
-      using Starlike.closure_sum by auto
-    hence "closure (cspan A) + closure (cspan B)
-        \<subseteq> closure (cspan (A \<union> B))"
-      by (metis \<open>closure (cspan A) + closure (cspan B)
-           \<subseteq> closure (cspan A + cspan B)\<close> p1)
-    thus ?thesis by (smt closed_sum_def closure_closure closure_mono subsetD that)
-  qed
-
-  show "x \<in> closure (cspan A) +\<^sub>M
-            closure (cspan B)"
-    if "x \<in> closure (cspan (A \<union> B))"
-    for x::'a and A B
-  proof-
-    have "cspan (A \<union> B) \<subseteq>
-           closure (cspan A) +
-           closure (cspan B)"
-      apply auto
-      by (metis closure_subset p0 set_plus_mono2_b) 
-    hence "closure (cspan (A \<union> B)) \<subseteq>
-           closure (closure (cspan A) +
-                    closure (cspan B))"
-      by (smt closure_mono)
-    thus ?thesis by (smt closed_sum_def in_mono that)
-  qed
-qed
+lemma closed_sum_cspan[simp]:
+  shows \<open>cspan X +\<^sub>M cspan Y = closure (cspan (X \<union> Y))\<close>
+  by (smt (verit, best) Collect_cong closed_sum_def complex_vector.span_Un set_plus_def)
 
 lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
-  apply  transfer by (rule closed_sum_cspan)
+  apply transfer by simp
 
 instantiation ccsubspace :: (complex_normed_vector) "Sup"
 begin
@@ -2495,6 +2501,67 @@ lemma surj_to_conjugate_space[simp]: "surj to_conjugate_space"
 
 lemmas has_derivative_scaleC[simp, derivative_intros] =
   bounded_bilinear.FDERIV[OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
+
+lemma norm_to_conjugate_space[simp]: \<open>norm (to_conjugate_space x) = norm x\<close>
+  by (fact norm_conjugate_space.abs_eq)
+
+lemma norm_from_conjugate_space[simp]: \<open>norm (from_conjugate_space x) = norm x\<close>
+  by (simp add: norm_conjugate_space.rep_eq)
+
+lemma closure_to_conjugate_space: \<open>closure (to_conjugate_space ` X) = to_conjugate_space ` closure X\<close>
+proof -
+  have 1: \<open>to_conjugate_space ` closure X \<subseteq> closure (to_conjugate_space ` X)\<close>
+    apply (rule closure_bounded_linear_image_subset)
+    by (simp add: bounded_antilinear.bounded_linear)
+  have \<open>\<dots> = to_conjugate_space ` from_conjugate_space ` closure (to_conjugate_space ` X)\<close>
+    by (simp add: from_conjugate_space_inverse image_image)
+  also have \<open>\<dots> \<subseteq> to_conjugate_space ` closure (from_conjugate_space ` to_conjugate_space ` X)\<close>
+    apply (rule image_mono)
+    apply (rule closure_bounded_linear_image_subset)
+    by (simp add: bounded_antilinear.bounded_linear)
+  also have \<open>\<dots> = to_conjugate_space ` closure X\<close>
+    by (simp add: to_conjugate_space_inverse image_image)
+  finally show ?thesis
+    using 1 by simp
+qed
+
+lemma closure_from_conjugate_space: \<open>closure (from_conjugate_space ` X) = from_conjugate_space ` closure X\<close>
+proof -
+  have 1: \<open>from_conjugate_space ` closure X \<subseteq> closure (from_conjugate_space ` X)\<close>
+    apply (rule closure_bounded_linear_image_subset)
+    by (simp add: bounded_antilinear.bounded_linear)
+  have \<open>\<dots> = from_conjugate_space ` to_conjugate_space ` closure (from_conjugate_space ` X)\<close>
+    by (simp add: to_conjugate_space_inverse image_image)
+  also have \<open>\<dots> \<subseteq> from_conjugate_space ` closure (to_conjugate_space ` from_conjugate_space ` X)\<close>
+    apply (rule image_mono)
+    apply (rule closure_bounded_linear_image_subset)
+    by (simp add: bounded_antilinear.bounded_linear)
+  also have \<open>\<dots> = from_conjugate_space ` closure X\<close>
+    by (simp add: from_conjugate_space_inverse image_image)
+  finally show ?thesis
+    using 1 by simp
+qed
+
+lemma bounded_antilinear_eq_on:
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+  assumes \<open>bounded_antilinear A\<close> and \<open>bounded_antilinear B\<close> and
+    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
+  shows \<open>A t = B t\<close>
+proof -
+  let ?A = \<open>\<lambda>x. A (from_conjugate_space x)\<close> and ?B = \<open>\<lambda>x. B (from_conjugate_space x)\<close>
+    and ?G = \<open>to_conjugate_space ` G\<close> and ?t = \<open>to_conjugate_space t\<close>
+  have \<open>bounded_clinear ?A\<close> and \<open>bounded_clinear ?B\<close>
+    by (auto intro!: bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear A\<close>]
+        bounded_antilinear_o_bounded_antilinear[OF \<open>bounded_antilinear B\<close>])
+  moreover from eq have \<open>\<And>x. x \<in> ?G \<Longrightarrow> ?A x = ?B x\<close>
+    by (metis image_iff iso_tuple_UNIV_I to_conjugate_space_inverse)
+  moreover from t have \<open>?t \<in> closure (cspan ?G)\<close>
+    by (metis bounded_antilinear.bounded_linear bounded_antilinear_to_conjugate_space closure_bounded_linear_image_subset cspan_to_conjugate_space imageI subsetD)
+  ultimately have \<open>?A ?t = ?B ?t\<close>
+    by (rule bounded_clinear_eq_on)
+  then show \<open>A t = B t\<close>
+    by (simp add: to_conjugate_space_inverse)
+qed
 
 instantiation complex :: basis_enum begin
 definition "canonical_basis = [1::complex]"

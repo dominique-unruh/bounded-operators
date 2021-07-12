@@ -517,8 +517,7 @@ proof(rule classical)
     using basis_def is_generator_set
     using basis_def  is_generator_set by blast
   hence g2: "card (set S) > cdim (UNIV:: 'a set)"
-    using g1
-    by (simp add: basis_def complex_vector.dim_eq_card is_cindependent_set) 
+    by (metis \<open>length basis < length S\<close> basis_def cdim_UNIV_basis_enum distinct_card f2)
 
   hence "complex_vector.span (set S) \<subseteq> (UNIV:: 'a set)"
     by simp
