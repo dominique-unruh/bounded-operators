@@ -724,7 +724,7 @@ lift_definition id_cblinfun::"'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^
 lemmas cblinfun_id_cblinfun_apply[simp] = id_cblinfun.rep_eq
 
 lemma norm_cblinfun_id[simp]:
-  "norm (id_cblinfun::'a::{complex_normed_vector, perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"
+  "norm (id_cblinfun::'a::{complex_normed_vector, perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"  (* TODO: weaken: not_singleton *)
   by transfer (auto simp: onorm_id)
 
 lemma norm_blinfun_id_le:

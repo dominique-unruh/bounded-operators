@@ -620,7 +620,7 @@ lemma blinfun_of_cblinfun_norm:
 subsection \<open>Adjoint\<close>
 
 lift_definition
-  adj :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> 'b \<Rightarrow>\<^sub>C\<^sub>L 'a" ("_*" [99] 100)
+  adj :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> 'b \<Rightarrow>\<^sub>C\<^sub>L 'a" ("_*" [99] 100)
   is cadjoint by (fact cadjoint_bounded_clinear)
 
 (* Use id_cblinfun instead *)
@@ -763,13 +763,13 @@ lemma cinner_sup_norm_cblinfun:
 
 (* Renamed from adjoint_I *)
 lemma cinner_adj_left:
-  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
   shows \<open>\<langle>G* *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>\<close>
   apply transfer using cadjoint_univ_prop by blast
 
 (* Renamed from adjoint_I' *)
 lemma cinner_adj_right:
-  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space"
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
   shows \<open>\<langle>x, G* *\<^sub>V y\<rangle> = \<langle>G *\<^sub>V x, y\<rangle>\<close> 
   apply transfer using cadjoint_univ_prop' by blast
 
@@ -777,7 +777,7 @@ lemma adj_0[simp]: \<open>0* = 0\<close>
   by (metis add_cancel_right_left adj_plus)
 
 lemma norm_adj[simp]: \<open>norm (A*) = norm A\<close> 
-  for A :: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space\<close>
+  for A :: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close>
 proof (cases \<open>(\<exists>x y :: 'b. x \<noteq> y) \<and> (\<exists>x y :: 'c. x \<noteq> y)\<close>)
   case True
   then have c1: \<open>class.not_singleton TYPE('b)\<close>
@@ -905,7 +905,7 @@ lemma cblinfun_compose_assoc:
 (* Renamed from times_adjoint *)
 lemma adj_cblinfun_compose[simp]:
   fixes B::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and A::\<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space\<close> 
+    and A::\<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close> 
   shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
 proof transfer
   fix  A :: \<open>'b \<Rightarrow> 'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
@@ -1264,10 +1264,10 @@ qed
 subsection \<open>Unitary\<close>
 
 
-definition isometry::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> bool\<close> where
+definition isometry::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> bool\<close> where
   \<open>isometry U \<longleftrightarrow> U* o\<^sub>C\<^sub>L U = id_cblinfun\<close>
 
-definition unitary::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space \<Rightarrow> bool\<close> where
+definition unitary::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> bool\<close> where
   \<open>unitary U \<longleftrightarrow> (U* o\<^sub>C\<^sub>L U  = id_cblinfun) \<and> (U o\<^sub>C\<^sub>L U* = id_cblinfun)\<close>
 
 (* Renamed from unitary_def' *)
@@ -1308,7 +1308,8 @@ qed
 (* Rename from unitary_times *)
 lemma unitary_cblinfun_compose[simp]: "unitary (A o\<^sub>C\<^sub>L B)"
   if "unitary A" and "unitary B"
-  using that unfolding unitary_twosided_isometry by simp
+  using that
+  by (smt (z3) adj_cblinfun_compose cblinfun_compose_assoc cblinfun_compose_id_right double_adj isometryD isometry_cblinfun_compose unitary_def unitary_isometry) 
 
 lemma unitary_surj: 
   assumes "unitary U"
@@ -1577,6 +1578,7 @@ lemma Proj_image_leq: "(Proj S) *\<^sub>S A \<le> S"
   by (metis Proj_range inf_top_left le_inf_iff mult_inf_distrib')
 
 (* Renamed from Proj_times *)
+(* TODO use sandwich, rename *)
 lemma Proj_congruence:
   fixes A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   assumes "isometry A"
@@ -1636,13 +1638,14 @@ qed
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (ccspan {\<psi>})"
 
 lemma surj_isometry_is_unitary:
+  fixes U :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
   assumes \<open>isometry U\<close>
   assumes \<open>U *\<^sub>S \<top> = \<top>\<close>
   shows \<open>unitary U\<close>
   by (metis Proj_congruence Proj_on_own_range' assms(1) assms(2) cblinfun_compose_id_right isometry_def unitary_def unitary_id unitary_range)
 
 (* TODO move *)
-lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> ccspan { a *\<^sub>C \<psi> } = ccspan {\<psi>}"
+lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> ccspan {a *\<^sub>C \<psi>} = ccspan {\<psi>}"
   apply transfer by simp
 
 (* Use ccspan_singleton_scaleC instead *)
@@ -4610,6 +4613,118 @@ qed
 
 lemma one_dim_positive: \<open>A \<ge> 0 \<longleftrightarrow> one_dim_iso A \<ge> (0::complex)\<close> for A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a::{chilbert_space, one_dim}\<close>
   using one_dim_loewner_order[where B=0] by auto
+
+(* TODO move *)
+lemma cbilinear_add_left:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f (a + b) c = f a c + f b c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
+
+lemma cbilinear_add_right:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f a (b + c) = f a b + f a c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
+
+
+lift_definition sandwich :: \<open>('a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> (('a \<Rightarrow>\<^sub>C\<^sub>L 'a) \<Rightarrow>\<^sub>C\<^sub>L ('b \<Rightarrow>\<^sub>C\<^sub>L 'b))\<close> is
+  \<open>\<lambda>(A::'a\<Rightarrow>\<^sub>C\<^sub>L'b) B. A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
+proof 
+  fix A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> and B B1 B2 :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> and c :: complex
+  show \<open>A o\<^sub>C\<^sub>L (B1 + B2) o\<^sub>C\<^sub>L A* = (A o\<^sub>C\<^sub>L B1 o\<^sub>C\<^sub>L A*) + (A o\<^sub>C\<^sub>L B2 o\<^sub>C\<^sub>L A*)\<close>
+    by (auto simp: cbilinear_add_left cbilinear_add_right)
+  show \<open>A o\<^sub>C\<^sub>L (c *\<^sub>C B) o\<^sub>C\<^sub>L A* = c *\<^sub>C (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*)\<close>
+    by auto
+  show \<open>\<exists>K. \<forall>B. norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * K\<close>
+  proof (rule exI[of _ \<open>norm A * norm (A*)\<close>], rule allI)
+    fix B
+    have \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
+      using norm_cblinfun_compose by blast
+    also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
+      by (simp add: mult_right_mono norm_cblinfun_compose)
+    finally show \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * (norm A * norm (A*))\<close>
+      by (simp add: mult.assoc vector_space_over_itself.scale_left_commute)
+  qed
+qed
+
+lemma sandwich_apply: \<open>sandwich A *\<^sub>V B = A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
+  apply (transfer fixing: A B) by auto
+
+lemma cblinfun_norm_witness:
+  fixes A :: \<open>'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
+  shows \<open>\<exists>\<psi>. norm (A *\<^sub>V \<psi>) = norm A \<and> norm \<psi> = 1\<close>
+  sorry
+
+(* TODO move *)
+subclass (in perfect_space) not_singleton
+  apply intro_classes
+  by (metis (mono_tags) Collect_cong Collect_mem_eq UNIV_I local.UNIV_not_singleton local.not_open_singleton local.open_subopen)
+
+lemma norm_AAadj[simp]: \<open>norm (A o\<^sub>C\<^sub>L A*) = (norm A)\<^sup>2\<close> for A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner,not_singleton}\<close>
+(* TODO: remove perfect_space *)
+proof -
+  have 1: \<open>(norm A)\<^sup>2 \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
+  proof -
+    obtain \<psi> where [simp]: \<open>norm ((A*) *\<^sub>V \<psi>) = norm (A*)\<close> and [simp]: \<open>norm \<psi> = 1\<close>
+      apply atomize_elim by (rule cblinfun_norm_witness)
+    have \<open>(norm A)\<^sup>2 = (norm (A*))\<^sup>2\<close>
+      by auto
+    also have \<open>(norm (A*))\<^sup>2 = cinner (A* *\<^sub>V \<psi>) (A* *\<^sub>V \<psi>)\<close>
+      by (auto simp flip: power2_norm_eq_cinner)
+    also have \<open>\<dots> = cinner \<psi> (A *\<^sub>V A* *\<^sub>V \<psi>)\<close>
+      by (simp add: cinner_adj_left)
+    also have \<open>\<dots> = cinner \<psi> ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>)\<close>
+      by auto
+    also have \<open>\<dots> \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
+      using \<open>norm \<psi> = 1\<close> 
+      by (smt (verit, del_insts) calculation complex_inner_class.Cauchy_Schwarz_ineq2 complex_of_real_mono mult.commute mult_cancel_left1 norm_cblinfun norm_of_real)
+    finally show ?thesis
+      by auto
+  qed
+
+  have 2: \<open>norm (A o\<^sub>C\<^sub>L A*) \<le> (norm A)\<^sup>2\<close>
+  proof (rule norm_cblinfun_bound)
+    show \<open>0 \<le> (norm A)\<^sup>2\<close> by simp
+    fix \<psi>
+    have \<open>norm ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>) = norm (A *\<^sub>V A* *\<^sub>V \<psi>)\<close>
+      by auto
+    also have \<open>\<dots> \<le> norm A * norm (A* *\<^sub>V \<psi>)\<close>
+      by (simp add: norm_cblinfun)
+    also have \<open>\<dots> \<le> norm A * norm (A*) * norm \<psi>\<close>
+      by (metis mult.assoc norm_cblinfun norm_imp_pos_and_ge ordered_comm_semiring_class.comm_mult_left_mono)
+    also have \<open>\<dots> = (norm A)\<^sup>2 * norm \<psi>\<close>
+      by (simp add: power2_eq_square)
+    finally show \<open>norm ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>) \<le> (norm A)\<^sup>2 * norm \<psi>\<close>
+      by -
+  qed
+
+  from 1 2 show ?thesis by simp
+qed
+
+lemma norm_sandwich: \<open>norm (sandwich A) = (norm A)\<^sup>2\<close> for A :: \<open>'a::{chilbert_space,perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner,perfect_space}\<close>
+    (* TODO remove not_singleton *)
+proof (rule norm_cblinfun_eqI)
+  show \<open>(norm A)\<^sup>2 \<le> norm (sandwich A *\<^sub>V id_cblinfun) / norm (id_cblinfun :: 'a \<Rightarrow>\<^sub>C\<^sub>L _)\<close>
+    apply (auto simp: sandwich_apply)
+    by -
+  fix B
+  have \<open>norm (sandwich A *\<^sub>V B) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
+    using norm_cblinfun_compose by (auto simp: sandwich_apply simp del: norm_adj)
+  also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
+    by (simp add: mult_right_mono norm_cblinfun_compose)
+  also have \<open>\<dots> \<le> (norm A)\<^sup>2 * norm B\<close>
+    by (simp add: power2_eq_square mult.assoc vector_space_over_itself.scale_left_commute)
+  finally show \<open>norm (sandwich A *\<^sub>V B) \<le> (norm A)\<^sup>2 * norm B\<close>
+    by -
+  show \<open>0 \<le> (norm A)\<^sup>2\<close>
+    by auto
+qed
+
+lemma sandwich_apply_adj: \<open>sandwich A (B*) = (sandwich A B)*\<close>
+  by (simp add: cblinfun_assoc_left(1) sandwich_apply)
+
+lemma sandwich_id[simp]: "sandwich id_cblinfun = id_cblinfun"
+  apply (rule cblinfun_eqI)
+  by (auto simp: sandwich_apply)
 
 unbundle no_cblinfun_notation
 

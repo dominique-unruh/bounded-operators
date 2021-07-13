@@ -4331,6 +4331,12 @@ lemma ell2_eq_vec_of_onb_enumI:
   by (metis assms onb_enum_of_vec_inverse)
 
 
+lemma mat_of_cblinfun_sandwich:
+  fixes a :: "(_::onb_enum, _::onb_enum) cblinfun"
+  shows \<open>mat_of_cblinfun (sandwich a *\<^sub>V b) = (let a' = mat_of_cblinfun a in a' * mat_of_cblinfun b * mat_adjoint a')\<close>
+  by (simp add: cblinfun_of_mat_timesOp sandwich_apply Let_def mat_of_cblinfun_adjoint')
+
+
 unbundle no_jnf_notation
 unbundle no_cblinfun_notation
 
