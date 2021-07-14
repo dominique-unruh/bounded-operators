@@ -3695,11 +3695,44 @@ qed
 
 subsection \<open>Unsorted\<close>
 
+lemma is_ortho_set_ket[simp]: \<open>is_ortho_set (range ket)\<close>
+  using is_ortho_set_def by fastforce
+
 lemma cdim_UNIV_ell2[simp]: \<open>cdim (UNIV::'a::finite ell2 set) = CARD('a)\<close>
   apply (subst cspan_ket_finite[symmetric])
   apply (subst complex_vector.dim_span_eq_card_independent)
   using cindependent_ket apply blast
   using card_image inj_ket by blast
+
+lemma cspan_butterfly_ket_UNIV: \<open>cspan {butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True} = UNIV\<close>
+proof -
+  have *: \<open>{butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True} = {butterfly a b |a b. a \<in> range ket \<and> b \<in> range ket}\<close>
+    by auto
+  show ?thesis
+    apply (subst *)
+    apply (rule cspan_butterfly_UNIV)
+    by auto
+qed
+
+lemma cindependent_butterfly_ket: \<open>cindependent {butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True}\<close>
+proof -
+  have *: \<open>{butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True} = {butterfly a b |a b. a \<in> range ket \<and> b \<in> range ket}\<close>
+    by auto
+  show ?thesis
+    apply (subst *)
+    apply (rule cindependent_butterfly)
+    by auto
+qed
+
+lemma clinear_eq_butterfly_ketI:
+  fixes F G :: \<open>('a::finite ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::finite ell2) \<Rightarrow> 'c::complex_vector\<close>
+  assumes "clinear F" and "clinear G"
+  assumes "\<And>i j. F (butterfly (ket i) (ket j)) = G (butterfly (ket i) (ket j))"
+  shows "F = G"
+ apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
+     apply (subst cspan_butterfly_ket_UNIV)
+  using assms by auto
+
 
 unbundle no_cblinfun_notation
 

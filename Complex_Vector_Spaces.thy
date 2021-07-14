@@ -2747,6 +2747,32 @@ lemmas uniform_limit = uniform_limit
 end
 
 
+subsection \<open>Unsorted\<close>
 
+lemma isomorphic_equal_cdim:
+  assumes lin_f: \<open>clinear f\<close>
+  assumes inj_f: \<open>inj_on f (cspan S)\<close>
+  assumes im_S: \<open>f ` S = T\<close>
+  shows \<open>cdim S = cdim T\<close>
+proof -
+  obtain SB where SB_span: "cspan SB = cspan S" and indep_SB: \<open>cindependent SB\<close>
+    by (metis complex_vector.basis_exists complex_vector.span_mono complex_vector.span_span subset_antisym)
+  with lin_f inj_f have indep_fSB: \<open>cindependent (f ` SB)\<close>
+    apply (rule_tac complex_vector.linear_independent_injective_image)
+    by auto
+  from lin_f have \<open>cspan (f ` SB) = f ` cspan SB\<close>
+    by (meson complex_vector.linear_span_image)
+  also from SB_span lin_f have \<open>\<dots> = cspan T\<close>
+    by (metis complex_vector.linear_span_image im_S)
+  finally have \<open>cdim T = card (f ` SB)\<close>
+    using indep_fSB complex_vector.dim_eq_card by blast
+  also have \<open>\<dots> = card SB\<close>
+    apply (rule card_image) using inj_f
+    by (metis SB_span complex_vector.linear_inj_on_span_iff_independent_image indep_fSB lin_f)
+  also have \<open>\<dots> = cdim S\<close>
+    using indep_SB SB_span
+    by (metis complex_vector.dim_eq_card)
+  finally show ?thesis by simp
+qed
 
 end

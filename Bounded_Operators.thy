@@ -18,6 +18,9 @@ begin
 
 declare cblinfun.scaleC_left[simp]
 
+lemma cblinfun_apply_clinear[simp]: \<open>clinear (cblinfun_apply A)\<close>
+  using bounded_clinear.axioms(1) cblinfun_apply by blast
+
 subsection \<open>Algebraic properties of real cblinfun operators\<close>
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
@@ -821,6 +824,10 @@ next
     by simp
 qed
 
+
+lemma antilinear_adj[simp]: \<open>antilinear adj\<close>
+  apply (rule antilinearI) by (auto simp add: adj_plus)
+
 lemma bounded_antilinear_adj[bounded_antilinear, simp]: \<open>bounded_antilinear adj\<close>
   by (auto intro!: antilinearI exI[of _ 1] simp: bounded_antilinear_def bounded_antilinear_axioms_def adj_plus)
 
@@ -834,6 +841,8 @@ lift_definition cblinfun_image :: \<open>'a::complex_normed_vector \<Rightarrow>
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def closed_closure  closed_csubspace.intro
   by (simp add: bounded_clinear_def complex_vector.linear_subspace_image closure_is_closed_csubspace) 
+
+(* TODO remove *)
 abbreviation (input) "applyOpSpace == cblinfun_image"
 
 bundle cblinfun_notation begin
@@ -4725,6 +4734,222 @@ lemma sandwich_apply_adj: \<open>sandwich A (B*) = (sandwich A B)*\<close>
 lemma sandwich_id[simp]: "sandwich id_cblinfun = id_cblinfun"
   apply (rule cblinfun_eqI)
   by (auto simp: sandwich_apply)
+
+
+lemma cblinfun_plus_image_distr:
+  \<open>(A + B) *\<^sub>S S \<le> A *\<^sub>S S \<squnion> B *\<^sub>S S\<close>
+  apply transfer
+  by (smt (verit, ccfv_threshold) closed_closure closed_sum_def closure_minimal closure_subset image_subset_iff set_plus_intro subset_eq)
+
+lemma cblinfun_sum_image_distr:
+  \<open>(\<Sum>i\<in>I. A i) *\<^sub>S S \<le> (SUP i\<in>I. A i *\<^sub>S S)\<close>
+proof (cases \<open>finite I\<close>)
+  case True
+  then show ?thesis
+  proof induction
+    case empty
+    then show ?case
+      by auto
+  next
+    case (insert x F)
+    then show ?case
+      apply auto by (smt (z3) cblinfun_plus_image_distr inf_sup_aci(6) le_iff_sup)
+  qed
+next
+  case False
+  then show ?thesis 
+    by auto
+qed
+
+
+lemma cblinfun_cspan_UNIV:
+  fixes basis :: \<open>('a::{complex_normed_vector,cfinite_dim} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector) set\<close>
+    and basisA :: \<open>'a set\<close> and basisB :: \<open>'b set\<close>
+  assumes \<open>cspan basisA = UNIV\<close> and \<open>cspan basisB = UNIV\<close>
+  assumes basis: \<open>\<And>a b. a\<in>basisA \<Longrightarrow> b\<in>basisB \<Longrightarrow> \<exists>F\<in>basis. \<forall>a'\<in>basisA. F *\<^sub>V a' = (if a'=a then b else 0)\<close>
+  shows \<open>cspan basis = UNIV\<close>
+proof -
+  obtain basisA' where \<open>basisA' \<subseteq> basisA\<close> and \<open>cindependent basisA'\<close> and \<open>cspan basisA' = UNIV\<close>
+    by (metis assms(1) complex_vector.maximal_independent_subset complex_vector.span_eq top_greatest)
+  then have [simp]: \<open>finite basisA'\<close>
+    by (simp add: cindependent_cfinite_dim_finite)
+  have basis': \<open>\<And>a b. a\<in>basisA' \<Longrightarrow> b\<in>basisB \<Longrightarrow> \<exists>F\<in>basis. \<forall>a'\<in>basisA'. F *\<^sub>V a' = (if a'=a then b else 0)\<close>
+    using basis \<open>basisA' \<subseteq> basisA\<close> by fastforce
+
+  obtain F where F: \<open>F a b \<in> basis \<and> F a b *\<^sub>V a' = (if a'=a then b else 0)\<close> 
+    if \<open>a\<in>basisA'\<close> \<open>b\<in>basisB\<close> \<open>a'\<in>basisA'\<close> for a b a'
+    apply atomize_elim apply (intro choice allI)
+    using basis' by metis
+  then have F_apply: \<open>F a b *\<^sub>V a' = (if a'=a then b else 0)\<close>
+    if \<open>a\<in>basisA'\<close> \<open>b\<in>basisB\<close> \<open>a'\<in>basisA'\<close> for a b a'
+    using that by auto
+  have F_basis: \<open>F a b \<in> basis\<close> 
+    if \<open>a\<in>basisA'\<close> \<open>b\<in>basisB\<close> for a b
+    using that F by auto
+  have b_span: \<open>\<exists>G\<in>cspan {F a b|b. b\<in>basisB}. \<forall>a'\<in>basisA'. G *\<^sub>V a' = (if a'=a then b else 0)\<close> if \<open>a\<in>basisA'\<close> for a b
+  proof -
+    from \<open>cspan basisB = UNIV\<close>
+    obtain r t where \<open>finite t\<close> and \<open>t \<subseteq> basisB\<close> and b_lincom: \<open>b = (\<Sum>a\<in>t. r a *\<^sub>C a)\<close>
+      unfolding complex_vector.span_alt apply atomize_elim by blast
+    define G where \<open>G = (\<Sum>i\<in>t. r i *\<^sub>C F a i)\<close>
+    have \<open>G \<in> cspan {F a b|b. b\<in>basisB}\<close>
+      using \<open>finite t\<close> \<open>t \<subseteq> basisB\<close> unfolding G_def
+      by (smt (verit, ccfv_threshold) complex_vector.span_base complex_vector.span_scale complex_vector.span_sum mem_Collect_eq subset_eq)
+    moreover have \<open>G *\<^sub>V a' = (if a'=a then b else 0)\<close> if \<open>a'\<in>basisA'\<close> for a'
+      apply (cases \<open>a'=a\<close>)
+      using \<open>t \<subseteq> basisB\<close> \<open>a\<in>basisA'\<close> \<open>a'\<in>basisA'\<close>
+      by (auto simp: b_lincom G_def cblinfun.sum_left F_apply intro!: sum.neutral sum.cong) 
+    ultimately show ?thesis
+      by blast
+  qed
+
+  have a_span: \<open>cspan (\<Union>a\<in>basisA'. cspan {F a b|b. b\<in>basisB}) = UNIV\<close>
+  proof (intro equalityI subset_UNIV subsetI, rename_tac H)
+    fix H
+    obtain G where G: \<open>G a b \<in> cspan {F a b|b. b\<in>basisB} \<and> G a b *\<^sub>V a' = (if a'=a then b else 0)\<close> if \<open>a\<in>basisA'\<close> and \<open>a'\<in>basisA'\<close> for a b a'
+      apply atomize_elim apply (intro choice allI)
+      using b_span by blast
+    then have G_cspan: \<open>G a b \<in> cspan {F a b|b. b\<in>basisB}\<close> if \<open>a\<in>basisA'\<close> for a b
+      using that by auto
+    from G have G: \<open>G a b *\<^sub>V a' = (if a'=a then b else 0)\<close> if \<open>a\<in>basisA'\<close> and \<open>a'\<in>basisA'\<close> for a b a'
+      using that by auto
+    define H' where \<open>H' = (\<Sum>a\<in>basisA'. G a (H *\<^sub>V a))\<close>
+    have \<open>H' \<in> cspan (\<Union>a\<in>basisA'. cspan {F a b|b. b\<in>basisB})\<close>
+      unfolding H'_def using G_cspan
+      by (smt (verit, del_insts) UN_iff complex_vector.span_clauses(1) complex_vector.span_sum) 
+    moreover have \<open>H' = H\<close>
+      using \<open>cspan basisA' = UNIV\<close> apply (rule cblinfun_eq_on_UNIV_span)
+      apply (auto simp: H'_def cblinfun.sum_left)
+      apply (subst sum_single)
+      by (auto simp: G)
+    ultimately show \<open>H \<in> cspan (\<Union>a\<in>basisA'. cspan {F a b |b. b \<in> basisB})\<close>
+      by simp
+  qed
+
+  moreover have \<open>cspan basis \<supseteq> cspan (\<Union>a\<in>basisA'. cspan {F a b|b. b\<in>basisB})\<close>
+    using F_basis
+    by (smt (z3) UN_subset_iff complex_vector.span_alt complex_vector.span_minimal complex_vector.subspace_span mem_Collect_eq subset_iff)
+
+  ultimately show \<open>cspan basis = UNIV\<close>
+    by auto
+qed
+
+lemma cspan_butterfly_UNIV:
+  assumes \<open>cspan basisA = UNIV\<close>
+  assumes \<open>cspan basisB = UNIV\<close>
+  assumes \<open>is_ortho_set basisB\<close>
+  assumes \<open>\<And>b. b \<in> basisB \<Longrightarrow> norm b = 1\<close>
+  shows \<open>cspan {butterfly a b| (a::'a::{complex_normed_vector}) (b::'b::{chilbert_space,cfinite_dim}). a \<in> basisA \<and> b \<in> basisB} = UNIV\<close>
+proof -
+  have F: \<open>\<exists>F\<in>{butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}. \<forall>b'\<in>basisB. F *\<^sub>V b' = (if b' = b then a else 0)\<close>
+    if \<open>a \<in> basisA\<close> and \<open>b \<in> basisB\<close> for a b
+    apply (rule bexI[where x=\<open>butterfly a b\<close>])
+    using assms that by (auto simp: is_ortho_set_def cnorm_eq_1)
+  show ?thesis
+    apply (rule cblinfun_cspan_UNIV[where basisA=basisB and basisB=basisA])
+    using assms apply auto[2]
+    using F by (smt (verit, ccfv_SIG) image_iff)
+qed
+
+lemma cindependent_butterfly: 
+  fixes basisA :: \<open>'a::chilbert_space set\<close> and basisB :: \<open>'b::chilbert_space set\<close>
+  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
+  assumes normA: \<open>\<And>a. a\<in>basisA \<Longrightarrow> norm a = 1\<close> and normB: \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
+  shows \<open>cindependent {butterfly a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
+proof (unfold complex_vector.independent_explicit_module, intro allI impI, rename_tac T f g)
+  fix T :: \<open>('b \<Rightarrow>\<^sub>C\<^sub>L 'a) set\<close> and f :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a \<Rightarrow> complex\<close> and g :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
+  assume \<open>finite T\<close>
+  assume T_subset: \<open>T \<subseteq> {butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}\<close>
+  define lin where \<open>lin = (\<Sum>g\<in>T. f g *\<^sub>C g)\<close>
+  assume \<open>lin = 0\<close>
+  assume \<open>g \<in> T\<close>
+  (* To show: f g = 0 *)
+  then obtain a b where g: \<open>g = butterfly a b\<close> and [simp]: \<open>a \<in> basisA\<close> \<open>b \<in> basisB\<close>
+    using T_subset by auto
+
+  have *: "(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0"
+    if \<open>g \<in> T - {butterfly a b}\<close> for g 
+  proof -
+    from that
+    obtain a' b' where g: \<open>g = butterfly a' b'\<close> and [simp]: \<open>a' \<in> basisA\<close> \<open>b' \<in> basisB\<close>
+      using T_subset by auto
+    from that have \<open>g \<noteq> butterfly a b\<close> by auto
+    with g consider (a) \<open>a\<noteq>a'\<close> | (b) \<open>b\<noteq>b'\<close>
+      by auto
+    then show \<open>(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0\<close>
+    proof cases
+      case a
+      then show ?thesis 
+        using  \<open>is_ortho_set basisA\<close> unfolding g 
+        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
+    next
+      case b
+      then show ?thesis
+        using  \<open>is_ortho_set basisB\<close> unfolding g 
+        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
+    qed
+  qed
+
+  have \<open>0 = (vector_to_cblinfun a)* *\<^sub>V lin *\<^sub>V b\<close>
+    using \<open>lin = 0\<close> by auto
+  also have \<open>\<dots> = (\<Sum>g\<in>T. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
+    unfolding lin_def
+    apply (rule complex_vector.linear_sum)
+    by (smt (z3) cblinfun.scaleC_left cblinfun.scaleC_right cblinfun.add_right clinearI plus_cblinfun.rep_eq)
+  also have \<open>\<dots> = (\<Sum>g\<in>{butterfly a b}. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
+    apply (rule sum.mono_neutral_right)
+    using \<open>finite T\<close> * \<open>g \<in> T\<close> g by auto
+  also have \<open>\<dots> = (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b\<close>
+    by (simp add: g)
+  also have \<open>\<dots> = f g\<close>
+    unfolding g 
+    using normA normB by (auto simp: butterfly_def scaleC_cblinfun.rep_eq cnorm_eq_1)
+  finally show \<open>f g = 0\<close>
+    by simp
+qed
+
+lemma clinear_eq_butterflyI:
+  fixes F G :: \<open>('a::{chilbert_space,cfinite_dim} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> 'c::complex_vector\<close>
+  assumes "clinear F" and "clinear G"
+  assumes \<open>cspan basisA = UNIV\<close> \<open>cspan basisB = UNIV\<close>
+  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
+  assumes "\<And>a b. a\<in>basisA \<Longrightarrow> b\<in>basisB \<Longrightarrow> F (butterfly a b) = G (butterfly a b)"
+  assumes \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
+  shows "F = G"
+  apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
+     apply (subst cspan_butterfly_UNIV)
+  using assms by auto
+
+instance cblinfun :: (\<open>{cfinite_dim,complex_normed_vector}\<close>, \<open>{cfinite_dim,complex_normed_vector}\<close>) cfinite_dim
+proof intro_classes
+  obtain basisA :: \<open>'a set\<close> where [simp]: \<open>cspan basisA = UNIV\<close> \<open>cindependent basisA\<close> \<open>finite basisA\<close>
+    using finite_basis by blast
+  obtain basisB :: \<open>'b set\<close> where [simp]: \<open>cspan basisB = UNIV\<close> \<open>cindependent basisB\<close> \<open>finite basisB\<close>
+    using finite_basis by blast
+  define f where \<open>f a b = cconstruct basisA (\<lambda>x. if x=a then b else 0)\<close> for a :: 'a and b :: 'b
+  have f_a: \<open>f a b a = b\<close> if \<open>a : basisA\<close> for a b
+    by (simp add: complex_vector.construct_basis f_def that)
+  have f_not_a: \<open>f a b c = 0\<close> if \<open>a : basisA\<close> and \<open>c : basisA\<close> and \<open>a \<noteq> c\<close>for a b c
+    using that by (simp add: complex_vector.construct_basis f_def)
+  define F where \<open>F a b = cBlinfun (f a b)\<close> for a b
+  have \<open>clinear (f a b)\<close> for a b
+    by (auto intro: complex_vector.linear_construct simp: f_def)
+  then have \<open>bounded_clinear (f a b)\<close> for a b
+    by auto
+  then have F_apply: \<open>cblinfun_apply (F a b) = f a b\<close> for a b
+    by (simp add: F_def bounded_clinear_cBlinfun_apply)
+  define basis where \<open>basis = {F a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
+  have \<open>cspan basis = UNIV\<close>
+    apply (rule cblinfun_cspan_UNIV[where basisA=basisA and basisB=basisB])
+    apply (auto simp: basis_def)
+    by (metis F_apply f_a f_not_a)
+
+  moreover have \<open>finite basis\<close>
+    unfolding basis_def apply (rule finite_image_set2) by auto
+
+  ultimately show \<open>\<exists>S :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) set. finite S \<and> cspan S = UNIV\<close>
+    by auto
+qed  
 
 unbundle no_cblinfun_notation
 

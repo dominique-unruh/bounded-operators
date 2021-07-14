@@ -109,6 +109,13 @@ end
 instance unit :: CARD_1
   apply standard by auto
 
+instance prod :: (CARD_1, CARD_1) CARD_1
+  apply intro_classes
+  by (simp add: CARD_1)
+
+instance "fun" :: (CARD_1, CARD_1) CARD_1
+  apply intro_classes
+  by (auto simp add: card_fun CARD_1)
 
 subsection \<open>Topology\<close>
 
@@ -360,5 +367,12 @@ lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrigh
 
 lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
   apply (auto intro!: choice ext) by metis
+
+lemma sum_single: 
+  assumes "finite A"
+  assumes "\<And>j. j \<noteq> i \<Longrightarrow> j\<in>A \<Longrightarrow> f j = 0"
+  shows "sum f A = (if i\<in>A then f i else 0)"
+  apply (subst sum.mono_neutral_cong_right[where S=\<open>A \<inter> {i}\<close> and h=f])
+  using assms by auto
 
 end
